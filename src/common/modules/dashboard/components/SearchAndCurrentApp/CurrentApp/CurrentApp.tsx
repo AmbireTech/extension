@@ -37,7 +37,7 @@ const CurrentApp = () => {
         style={{
           width: 40,
           height: 40,
-          backgroundColor: !isBlacklisted ? theme.secondaryBackground : theme.errorBackground,
+          backgroundColor: !isBlacklisted ? theme.primaryBackground : theme.errorBackground,
           borderRadius: 20,
           ...spacings.ml,
           ...flexbox.center

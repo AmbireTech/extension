@@ -46,6 +46,7 @@ const SearchAndCurrentApp = ({ control, displayCurrentApp = false, isHidden }: P
         cssStyle={{
           pointerEvents: 'all'
         }}
+        isSimpleBlur={false}
       >
         <View style={[spacings.phTy, spacings.pvTy, flexbox.directionRow, flexbox.alignCenter]}>
           <DashboardSearch control={control} />

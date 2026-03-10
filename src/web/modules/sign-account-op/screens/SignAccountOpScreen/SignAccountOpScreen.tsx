@@ -12,6 +12,15 @@ import useController from '@common/hooks/useController'
 import useSign from '@common/hooks/useSign'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
+import ErrorInformation from '@common/modules/sign-account-op/components/ErrorInformation'
+import Estimation from '@common/modules/sign-account-op/components/Estimation'
+import Footer from '@common/modules/sign-account-op/components/Footer'
+import PendingTransactions from '@common/modules/sign-account-op/components/PendingTransactions'
+import SafeOwners from '@common/modules/sign-account-op/components/SafeOwners'
+import SafetyChecksOverlay from '@common/modules/sign-account-op/components/SafetyChecksOverlay'
+import SectionHeading from '@common/modules/sign-account-op/components/SectionHeading'
+import Simulation from '@common/modules/sign-account-op/components/Simulation'
+import KeySelect from '@common/modules/sign-message/components/KeySelect'
 import spacings from '@common/styles/spacings'
 import { hexToRgba } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
@@ -22,17 +31,8 @@ import {
 } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
 import { closeCurrentWindow } from '@web/extension-services/background/webapi/window'
 import ActionHeader from '@web/modules/action-requests/components/ActionHeader'
-import Estimation from '@web/modules/sign-account-op/components/Estimation'
-import Footer from '@web/modules/sign-account-op/components/Footer'
 import Modals from '@web/modules/sign-account-op/components/Modals/Modals'
-import PendingTransactions from '@web/modules/sign-account-op/components/PendingTransactions'
-import SafetyChecksOverlay from '@web/modules/sign-account-op/components/SafetyChecksOverlay'
-import SectionHeading from '@web/modules/sign-account-op/components/SectionHeading'
-import Simulation from '@web/modules/sign-account-op/components/Simulation'
-import KeySelect from '@web/modules/sign-message/components/KeySelect'
 
-import ErrorInformation from '../../components/ErrorInformation'
-import SafeOwners from '../../components/SafeOwners'
 import Gradient from './Gradient'
 import getStyles from './styles'
 
@@ -107,11 +107,12 @@ const SignAccountOpScreen = () => {
     bundlerNonceDiscrepancy,
     primaryButtonText,
     shouldHoldToProceed,
-    handleSetMultisigSigners
+    disabledReason
   } = useSign({
     handleUpdateStatus,
     signAccountOpState,
-    handleUpdate: updateController
+    handleUpdate: updateController,
+    hasReachedBottom
   })
 
   const accountOpRequest = useMemo(() => {
@@ -198,7 +199,7 @@ const SignAccountOpScreen = () => {
         header={<ActionHeader />}
         renderDirectChildren={() => (
           <View style={[spacings.mh, spacings.mv]}>
-            <GlassView tintColor2={hexToRgba('#D1D1D1', 0.12)}>
+            <GlassView isSimpleBlur={false} tintColor2={hexToRgba('#D1D1D1', 0.12)}>
               {/* Gradient */}
               <Gradient
                 style={{
@@ -233,7 +234,16 @@ const SignAccountOpScreen = () => {
                   !signAccountOpState.canBroadcast &&
                   !!signAccountOpState.account.safeCreation && (
                     <ScrollView style={[{ maxHeight: 140 }, spacings.mb]}>
-                      <SafeOwners signAccountOpController={signAccountOpState} />
+                      <SafeOwners
+                        account={signAccountOpState.account}
+                        onSign={handleChangeSigningKey}
+                        isSignLoading={isSignLoading}
+                        signingKeyAddr={signAccountOpState.accountOp.signingKeyAddr}
+                        chainId={signAccountOpState.accountOp.chainId.toString()}
+                        signed={signAccountOpState.accountOp.signed || []}
+                        importedKeys={signAccountOpState.accountKeyStoreKeys}
+                        threshold={signAccountOpState.threshold}
+                      />
                     </ScrollView>
                   )}
 
@@ -247,20 +257,12 @@ const SignAccountOpScreen = () => {
                   }
                   isSignLoading={isSignLoading}
                   isSignDisabled={isSignDisabled || !hasReachedBottom}
-                  buttonTooltipText={
-                    typeof hasReachedBottom === 'boolean' && !hasReachedBottom
-                      ? t('Scroll to the bottom of the transaction overview to sign.')
-                      : undefined
-                  }
+                  buttonTooltipText={disabledReason}
                   // Allow view only accounts or if no funds for gas to add to cart even if the txn is not ready to sign
                   // because they can't sign it anyway
                   isAddToCartDisabled={isAddToCartDisabled}
                   onSign={onSignButtonClick}
-                  inProgressButtonText={
-                    signAccountOpState?.status?.type === SigningStatus.WaitingForPaymaster
-                      ? t('Sending...')
-                      : t('Signing...')
-                  }
+                  inProgressButtonText={primaryButtonText}
                   buttonText={primaryButtonText}
                   shouldHoldToProceed={shouldHoldToProceed}
                 />
@@ -274,7 +276,6 @@ const SignAccountOpScreen = () => {
             isSigning={isSignLoading || !signAccountOpState.readyToSign}
             isChooseSignerShown={isChooseSignerShown}
             isChooseFeePayerKeyShown={isChooseFeePayerKeyShown}
-            handleSetMultisigSigners={handleSetMultisigSigners}
             handleChooseKey={
               isChooseFeePayerKeyShown ? handleChangeFeePayerKeyType : handleChangeSigningKey
             }
@@ -288,8 +289,6 @@ const SignAccountOpScreen = () => {
               setIsChooseSignerShown(false)
               setIsChooseFeePayerKeyShown(false)
             }}
-            signed={signAccountOpState.accountOp.signed || []}
-            threshold={signAccountOpState.threshold}
           />
         )}
         <TabLayoutWrapperMainContent withScroll={false}>

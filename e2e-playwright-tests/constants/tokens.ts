@@ -28,6 +28,12 @@ const tokens: Tokens = {
       chainId: '8453',
       chainName: 'base',
       symbol: 'ETH'
+    },
+    optimism: {
+      address: '0x0000000000000000000000000000000000000000',
+      chainId: '10',
+      chainName: 'optimism',
+      symbol: 'ETH'
     }
   },
   wcres: {

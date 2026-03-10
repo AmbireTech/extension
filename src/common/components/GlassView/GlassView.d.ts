@@ -15,6 +15,10 @@ export type GlassViewProps = {
    * SVG filters produce a much better effect but have a tendency to cause
    * visual glitches when rendered above optimized images. Setting this to true will
    * fallback to a css blur which is less visually impressive but more stable.
+   *
+   * Use false (complex blur) if the glass view is positioned absolutely above other components.
+   *
+   * @default true
    */
   isSimpleBlur?: boolean
 }

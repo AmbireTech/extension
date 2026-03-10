@@ -30,7 +30,7 @@ const GasTankButton = ({ onPress, portfolio, account }: Props) => {
     state: { networks }
   } = useController('NetworksController')
   const totalBalanceGasTankDetails = useMemo(
-    () => getGasTankTokenDetails(portfolio, account, networks, 'amount'),
+    () => getGasTankTokenDetails(portfolio, account, networks),
     [account, networks, portfolio]
   )
 

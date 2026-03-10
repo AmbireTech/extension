@@ -40,14 +40,7 @@ const AccountPersonalizeCard = ({
 
   return (
     <View style={[styles.container, !hasBottomSpacing && spacings.mb0]}>
-      <View
-        style={[
-          flexbox.flex1,
-          flexbox.justifySpaceBetween,
-          flexbox.alignCenter,
-          flexbox.directionRow
-        ]}
-      >
+      <View style={[flexbox.justifySpaceBetween, flexbox.alignCenter, flexbox.directionRow]}>
         <View
           testID="personalize-account"
           style={[flexbox.flex1, flexbox.directionRow, flexbox.alignCenter]}

@@ -45,7 +45,7 @@ const DashboardSearch: FC<Props> = ({ control }) => {
           height: 40,
           backgroundColor: isSearchFieldDisplayed
             ? theme.tertiaryBackground
-            : theme.secondaryBackground,
+            : theme.primaryBackground,
           borderRadius: 20,
           ...flexbox.center
         }}

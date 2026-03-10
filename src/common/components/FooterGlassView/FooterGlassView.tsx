@@ -26,6 +26,7 @@ const FooterGlassView: FC<{
   innerContainerStyle?: ViewStyle
   size?: 'sm' | 'md'
   absolute?: boolean
+  isSimpleBlur?: boolean
   glassViewProps?: Partial<React.ComponentProps<typeof GlassView>>
 }> = ({
   children,
@@ -33,7 +34,8 @@ const FooterGlassView: FC<{
   innerContainerStyle,
   size = 'md',
   glassViewProps = {},
-  absolute = true
+  absolute = true,
+  isSimpleBlur
 }) => {
   return (
     <View
@@ -44,10 +46,19 @@ const FooterGlassView: FC<{
         width: '100%',
         ...flexbox.center,
         zIndex: 3,
+        pointerEvents: 'none',
         ...style
       }}
     >
-      <GlassView borderRadius={Number(params[size].borderRadius)} {...glassViewProps}>
+      <GlassView
+        {...glassViewProps}
+        isSimpleBlur={isSimpleBlur ?? glassViewProps.isSimpleBlur}
+        borderRadius={Number(params[size].borderRadius)}
+        cssStyle={{
+          pointerEvents: 'all',
+          ...(glassViewProps?.cssStyle || {})
+        }}
+      >
         <View
           style={[
             flexbox.directionRow,

@@ -5,7 +5,7 @@ import DAppsIcon from '@common/assets/svg/DAppsIcon'
 import SendIcon from '@common/assets/svg/SendIcon'
 import SwapAndBridgeIcon from '@common/assets/svg/SwapAndBridgeIcon'
 import { useTranslation } from '@common/config/localization'
-import { WEB_ROUTES } from '@common/modules/router/constants/common'
+import { ROUTES } from '@common/modules/router/constants/common'
 import flexbox from '@common/styles/utils/flexbox'
 
 import RouteItem from './RouteItem'
@@ -19,7 +19,7 @@ const Routes = () => {
       testID: 'dashboard-button-send',
       icon: SendIcon,
       label: t('Send'),
-      route: WEB_ROUTES.transfer,
+      route: ROUTES.transfer,
       scale: 1.08,
       scaleOnHover: 1.18
     },
@@ -27,7 +27,7 @@ const Routes = () => {
       testID: 'dashboard-button-swap-and-bridge',
       icon: SwapAndBridgeIcon,
       label: t('Swap & Bridge'),
-      route: WEB_ROUTES.swapAndBridge,
+      route: ROUTES.swapAndBridge,
       scale: 0.95,
       scaleOnHover: 1
     },
@@ -35,7 +35,7 @@ const Routes = () => {
       testID: 'dashboard-button-apps',
       icon: DAppsIcon,
       label: t('Apps'),
-      route: WEB_ROUTES.apps,
+      route: ROUTES.apps,
       scale: 0.95,
       scaleOnHover: 1.02
     }

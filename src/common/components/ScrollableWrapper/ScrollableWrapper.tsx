@@ -67,6 +67,7 @@ const ScrollableWrapper = ({
   renderItem,
   keyExtractor,
   data,
+  showsVerticalScrollIndicator = isWeb,
   ...rest
 }: WrapperProps) => {
   const { styles } = useTheme(createStyles)
@@ -90,6 +91,7 @@ const ScrollableWrapper = ({
         renderItem={renderItem ?? (() => null)}
         style={scrollableWrapperStyles}
         contentContainerStyle={scrollableWrapperContentContainerStyles}
+        showsVerticalScrollIndicator={showsVerticalScrollIndicator}
         keyboardShouldPersistTaps={keyboardShouldPersistTaps || 'handled'}
         keyboardDismissMode={keyboardDismissMode || 'none'}
         {...rest}
@@ -106,6 +108,7 @@ const ScrollableWrapper = ({
         keyExtractor={keyExtractor || ((item, index) => item.key ?? index.toString())}
         style={scrollableWrapperStyles}
         contentContainerStyle={scrollableWrapperContentContainerStyles}
+        showsVerticalScrollIndicator={showsVerticalScrollIndicator}
         keyboardShouldPersistTaps={keyboardShouldPersistTaps || 'handled'}
         keyboardDismissMode={keyboardDismissMode || 'none'}
         alwaysBounceVertical={false}
@@ -123,6 +126,7 @@ const ScrollableWrapper = ({
         keyExtractor={keyExtractor || ((item, index) => item.key ?? index.toString())}
         style={scrollableWrapperStyles}
         contentContainerStyle={scrollableWrapperContentContainerStyles}
+        showsVerticalScrollIndicator={showsVerticalScrollIndicator}
         keyboardShouldPersistTaps={keyboardShouldPersistTaps || 'handled'}
         keyboardDismissMode={keyboardDismissMode || 'none'}
         alwaysBounceVertical={false}
@@ -140,6 +144,7 @@ const ScrollableWrapper = ({
       ref={wrapperRef}
       style={scrollableWrapperStyles}
       contentContainerStyle={scrollableWrapperContentContainerStyles}
+      showsVerticalScrollIndicator={showsVerticalScrollIndicator}
       keyboardShouldPersistTaps={keyboardShouldPersistTaps || 'handled'}
       keyboardDismissMode={keyboardDismissMode || 'none'}
       alwaysBounceVertical={false}
