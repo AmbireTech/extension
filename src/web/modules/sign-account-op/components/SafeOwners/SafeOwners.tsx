@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
-import { ColorValue, View } from 'react-native'
+import { View } from 'react-native'
 
 import { Account } from '@ambire-common/interfaces/account'
 import { Key } from '@ambire-common/interfaces/keystore'
@@ -10,11 +10,11 @@ import Text from '@common/components/Text'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
+import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
 
 const SafeOwners = ({
   account,
-  backgroundColor = '#fff',
   onSign,
   isSignLoading,
   signingKeyAddr,
@@ -24,7 +24,6 @@ const SafeOwners = ({
   threshold
 }: {
   account: Account
-  backgroundColor?: ColorValue
   onSign?: (signingKeyAddr: Key['addr'], _chosenSigningKeyType: Key['type']) => void
   isSignLoading: boolean
   signingKeyAddr: string | null
@@ -34,7 +33,7 @@ const SafeOwners = ({
   threshold: number
 }) => {
   const { t } = useTranslation()
-  const { theme } = useTheme()
+  const { theme, themeType } = useTheme()
   const { accountStates } = useController('AccountsController').state
 
   const owners = useMemo(() => {
@@ -99,7 +98,7 @@ const SafeOwners = ({
               containerStyle={{
                 borderWidth: 1,
                 borderColor: 'transparent',
-                backgroundColor
+                backgroundColor: themeType === THEME_TYPES.LIGHT ? '#fff' : '#000'
               }}
             />
           </SafeKeyWrapper>
