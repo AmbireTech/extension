@@ -246,10 +246,7 @@ test.describe('dashboard', { tag: '@dashboard' }, () => {
       await pages.basePage.click(selectors.dashboard.yesHideItButton)
 
       // return to dashboard
-      // TODO: change selector when we add I
-      await pages.basePage.page
-        .locator('//*[@id="root"]/div/div/div[1]/div/div/div[1]/div/div')
-        .click()
+      await pages.basePage.click(selectors.backArrowButton)
     })
 
     await test.step('assert WALLET token not visible on Dashboard', async () => {
