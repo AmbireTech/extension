@@ -7,7 +7,7 @@ const ImportIcon: React.FC<any> = ({ width = 24, height = 24, color, ...rest }) 
   const { theme } = useTheme()
   return (
     <Svg
-      style={{ transform: 'rotate(90deg)' }}
+      style={{ transform: [{ rotate: '90deg' }] }}
       width={width}
       height={height}
       viewBox="0 0 24 24"

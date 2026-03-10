@@ -1,5 +1,4 @@
 import React from 'react'
-import { View } from 'react-native'
 import Svg, { Path } from 'react-native-svg'
 
 import useTheme from '@common/hooks/useTheme'
@@ -19,19 +18,18 @@ const RightArrowIcon: React.FC<Props> = ({
   ...rest
 }) => {
   const { theme } = useTheme()
-  return <View />
-  // return (
-  //   <Svg width={width} height={height} viewBox="0 0 8.467 14.879" {...rest}>
-  //     <Path
-  //       d="M-5813.015-21729.285l-6.348,6.373,6.348,6.385"
-  //       transform="translate(-5811.954 -21715.467) rotate(180)"
-  //       fill="none"
-  //       stroke={color || theme.iconPrimary}
-  //       strokeLinecap="round"
-  //       strokeWidth={weight}
-  //     />
-  //   </Svg>
-  // )
+  return (
+    <Svg width={width} height={height} viewBox="0 0 8.467 14.879" {...rest}>
+      <Path
+        d="M-5813.015-21729.285l-6.348,6.373,6.348,6.385"
+        transform="translate(-5811.954 -21715.467) rotate(180)"
+        fill="none"
+        stroke={color || theme.iconPrimary}
+        strokeLinecap="round"
+        strokeWidth={weight}
+      />
+    </Svg>
+  )
 }
 
 export default React.memo(RightArrowIcon)

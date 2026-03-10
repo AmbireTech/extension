@@ -236,11 +236,10 @@ const AccountKey: React.FC<Props> = ({
                       width={16}
                       height={16}
                       color={theme.secondaryText}
-                      // @ts-ignore
                       style={
                         isShowingDetails
-                          ? { transform: 'rotate(270deg)' }
-                          : { transform: 'rotate(90deg)' }
+                          ? { transform: [{ rotate: '270deg' }] }
+                          : { transform: [{ rotate: '90deg' }] }
                       }
                     />
                   </Animated.View>

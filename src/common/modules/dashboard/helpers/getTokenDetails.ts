@@ -85,7 +85,7 @@ const getAndFormatTokenDetails = (
   const priceUSD = priceIn.find(
     ({ baseCurrency }: { baseCurrency: string }) => baseCurrency.toLowerCase() === 'usd'
   )?.price
-  const usdMarketData = marketDataIn.find(
+  const usdMarketData = marketDataIn?.find(
     ({ baseCurrency }: { baseCurrency: string }) => baseCurrency.toLowerCase() === 'usd'
   )
   const balanceUSD = priceUSD
