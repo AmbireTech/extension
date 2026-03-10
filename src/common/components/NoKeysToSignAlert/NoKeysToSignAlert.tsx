@@ -51,9 +51,7 @@ const NoKeysToSignAlert: FC<Props> = ({ style, isTransaction = true, type = 'lon
             }
           ]}
         >
-          <View style={{ width: 18, height: 20 }}>
-            <NoKeysIcon width={18} height={20} color={theme.secondaryText} />
-          </View>
+          <NoKeysIcon />
           <Text fontSize={14} appearance="errorText" style={spacings.mhSm}>
             {!!account.safeCreation
               ? t(`No owners imported to sign this ${isTransaction ? 'transaction' : 'message'}`)
@@ -81,7 +79,7 @@ const NoKeysToSignAlert: FC<Props> = ({ style, isTransaction = true, type = 'lon
               ? 'Import your Safe account owners'
               : "This account was imported in view-only mode, which means that there isn't an imported key that can sign for this account. \nIf you do have such a key, please re-import the account with it."
           )}
-          customIcon={() => <NoKeysIcon color={theme.secondaryText} />}
+          customIcon={() => <NoKeysIcon />}
           buttonProps={{
             onPress: () => openBottomSheet(),
             text: !!account.safeCreation ? t('Import Owner') : t('Import Key'),
