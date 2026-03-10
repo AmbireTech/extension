@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { TokenResult } from '@ambire-common/libs/portfolio'
 import { SelectValue } from '@common/components/Select/types'
 import SendToken from '@common/components/SendToken'
+import SkeletonLoader from '@common/components/SkeletonLoader'
 import useController from '@common/hooks/useController'
 import useSwapAndBridgeForm from '@common/modules/swap-and-bridge/hooks/useSwapAndBridgeForm'
 import { getTokenId } from '@common/utils/token'
@@ -15,7 +16,7 @@ type Props = Pick<
   | 'fromAmountValue'
   | 'fromTokenAmountSelectDisabled'
   | 'onFromAmountChange'
-> & { simulationFailed?: boolean }
+> & { simulationFailed?: boolean; isLoading: boolean }
 
 const FromToken: FC<Props> = ({
   fromTokenOptions,
@@ -23,7 +24,8 @@ const FromToken: FC<Props> = ({
   fromAmountValue,
   fromTokenAmountSelectDisabled,
   onFromAmountChange,
-  simulationFailed
+  simulationFailed,
+  isLoading
 }) => {
   const { dispatch: swapAndBridgeDispatch } = useController('SwapAndBridgeController')
   const { t } = useTranslation()
@@ -87,7 +89,7 @@ const FromToken: FC<Props> = ({
     })
   }, [fromAmountFieldMode, swapAndBridgeDispatch])
 
-  return (
+  return !isLoading ? (
     <SendToken
       label={t('You send')}
       fromTokenOptions={fromTokenOptions}
@@ -108,6 +110,8 @@ const FromToken: FC<Props> = ({
       selectTestId="from-token-select"
       simulationFailed={simulationFailed}
     />
+  ) : (
+    <SkeletonLoader width="100%" height={156} />
   )
 }
 

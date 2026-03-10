@@ -213,18 +213,6 @@ const SwapAndBridgeScreen = () => {
     shouldDisableAddToBatch
   ])
 
-  if (!sessionIds.includes(sessionId)) {
-    // If the portfolio has loaded we can skip the spinner as initializing the screen
-    // takes a short time and the spinner will only flash.
-    if (portfolio.isReadyToVisualize) return null
-
-    return (
-      <View style={[flexbox.flex1, flexbox.justifyCenter, flexbox.alignCenter]}>
-        <Spinner />
-      </View>
-    )
-  }
-
   if (activeRoute && displayedView === 'track') {
     return (
       <TrackProgress
@@ -276,6 +264,7 @@ const SwapAndBridgeScreen = () => {
               fromTokenAmountSelectDisabled={fromTokenAmountSelectDisabled}
               onFromAmountChange={onFromAmountChange}
               simulationFailed={!!fromChainSimulationError}
+              isLoading={!sessionIds.includes(sessionId) || !portfolio.isReadyToVisualize}
             />
           </View>
           <ToToken simulationFailed={!!toChainSimulationError} />
