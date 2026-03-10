@@ -12,6 +12,7 @@ import LeftPointerArrowIcon from '@common/assets/svg/LeftPointerArrowIcon'
 import TrezorLockIcon from '@common/assets/svg/TrezorLockIcon'
 import BottomSheet from '@common/components/BottomSheet'
 import ModalHeader from '@common/components/BottomSheet/ModalHeader'
+import Button from '@common/components/Button'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
 import useTheme from '@common/hooks/useTheme'
@@ -23,6 +24,7 @@ type Props = {
   keyType: ExternalKey['type']
   isVisible: boolean
   children?: React.ReactNode
+  cancelReq?: () => void
 }
 
 const iconByKeyType = {
@@ -33,7 +35,7 @@ const iconByKeyType = {
 
 const { isTab } = getUiType()
 
-const HardwareWalletSigningModal = ({ keyType, isVisible, children }: Props) => {
+const HardwareWalletSigningModal = ({ keyType, isVisible, children, cancelReq }: Props) => {
   const { t } = useTranslation()
   const { ref, open, close } = useModalize()
   const { theme } = useTheme()
@@ -47,6 +49,10 @@ const HardwareWalletSigningModal = ({ keyType, isVisible, children }: Props) => 
     if (!Icon) return undefined
 
     return <Icon style={spacings.mlTy} width={32} height={32} />
+  }, [keyType])
+
+  const isTrezor = useMemo(() => {
+    return HARDWARE_WALLET_DEVICE_NAMES[keyType] === 'Trezor'
   }, [keyType])
 
   return (
@@ -85,10 +91,22 @@ const HardwareWalletSigningModal = ({ keyType, isVisible, children }: Props) => 
         </View>
         <AmbireDevice />
       </View>
-      <View style={[flexbox.alignSelfCenter, spacings.mbLg]}>
-        <Text weight="regular" style={spacings.mbTy} fontSize={20}>
-          {t('Sending signing request...')}
-        </Text>
+      <View style={[flexbox.alignSelfCenter, spacings.mbLg, flexbox.alignCenter]}>
+        <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mbTy]}>
+          <Text weight="regular" fontSize={20}>
+            {t('Sending signing request...')}
+          </Text>
+          {isTrezor && !!cancelReq && (
+            <Button
+              type="danger"
+              text={t('Cancel')}
+              onPress={cancelReq}
+              hasBottomSpacing={false}
+              style={spacings.ml}
+              size="small"
+            />
+          )}
+        </View>
         {children}
       </View>
     </BottomSheet>
