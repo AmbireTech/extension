@@ -25,7 +25,7 @@ import {
 } from '@common/components/Select/types'
 import Text from '@common/components/Text'
 import TitleAndIcon from '@common/components/TitleAndIcon'
-import { isMobile } from '@common/config/env'
+import { isMobile, isWeb } from '@common/config/env'
 import useController from '@common/hooks/useController'
 import useHover, { AnimatedPressable } from '@common/hooks/useHover'
 import useNavigation from '@common/hooks/useNavigation'
@@ -315,16 +315,18 @@ const Recipient: React.FC<Props> = ({
 
       return section.key === 'contacts' ? (
         <TitleAndIcon title={t('Address Book')} icon={AddressBookIcon}>
-          <AnimatedPressable
-            style={[flexbox.directionRow, flexbox.alignCenter, manageBtnAnimStyle]}
-            onPress={onManagePress}
-            {...bindManageBtnAnim}
-          >
-            <SettingsIcon width={18} height={18} color={theme.secondaryText} />
-            <Text fontSize={14} style={spacings.mlMi} appearance="secondaryText">
-              {t('Manage contacts')}
-            </Text>
-          </AnimatedPressable>
+          {isWeb && (
+            <AnimatedPressable
+              style={[flexbox.directionRow, flexbox.alignCenter, manageBtnAnimStyle]}
+              onPress={onManagePress}
+              {...bindManageBtnAnim}
+            >
+              <SettingsIcon width={18} height={18} color={theme.secondaryText} />
+              <Text fontSize={14} style={spacings.mlMi} appearance="secondaryText">
+                {t('Manage contacts')}
+              </Text>
+            </AnimatedPressable>
+          )}
         </TitleAndIcon>
       ) : (
         <TitleAndIcon title={t('My wallets')} icon={WalletIcon} />
