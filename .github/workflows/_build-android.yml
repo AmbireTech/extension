@@ -39,10 +39,10 @@ jobs:
 
     steps:
       - name: Checkout code 🛎️
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Add SSH key to checkout a private repo
-        uses: webfactory/ssh-agent@v0.5.4
+        uses: webfactory/ssh-agent@v0.9.1
         with:
           ssh-private-key: ${{ secrets.DEPLOY_KEY }}
 
@@ -125,8 +125,8 @@ jobs:
           # - Disable Gradle daemon and parallelism to avoid long-lived processes and high memory usage.
           # - Increase Metaspace limit to reduce risk of OutOfMemoryError: Metaspace during large native builds.
           # These settings apply only in GitHub Actions and do NOT affect local builds.
-          JAVA_TOOL_OPTIONS: "-XX:MaxMetaspaceSize=1024m"
-          GRADLE_OPTS: "-Dorg.gradle.daemon=false -Dorg.gradle.parallel=false"
+          JAVA_TOOL_OPTIONS: '-XX:MaxMetaspaceSize=1024m'
+          GRADLE_OPTS: '-Dorg.gradle.daemon=false -Dorg.gradle.parallel=false'
         run: ${{ inputs.build_command }}
         shell: bash
 
@@ -191,7 +191,7 @@ jobs:
         shell: bash
 
       - name: Upload Android build 📦
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: ambire-android-v${{ steps.version.outputs.VERSION }}-${{ inputs.artifact_suffix }}
           path: ${{ env.PACKAGE_PATH }}
