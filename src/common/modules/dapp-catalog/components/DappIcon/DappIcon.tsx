@@ -1,8 +1,10 @@
 import React, { FC, useCallback, useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 
 import { Dapp } from '@ambire-common/interfaces/dapp'
 import ManifestFallbackIcon from '@common/assets/svg/ManifestFallbackIcon'
+import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import NetworkIcon from '@common/components/NetworkIcon'
 import Text from '@common/components/Text'
 import useTheme from '@common/hooks/useTheme'
@@ -13,10 +15,11 @@ import NotConnected from './NotConnected'
 
 type Props = {
   dapp: Dapp
-  withNetworkIcon?: boolean
+  isDashboard?: boolean
 }
 
-const DappIcon: FC<Props> = ({ dapp, withNetworkIcon }) => {
+const DappIcon: FC<Props> = ({ dapp, isDashboard }) => {
+  const { t } = useTranslation()
   const { theme } = useTheme()
   const isBlacklisted = dapp.blacklisted === 'BLACKLISTED'
 
@@ -48,35 +51,54 @@ const DappIcon: FC<Props> = ({ dapp, withNetworkIcon }) => {
     )
   }, [dappInitials, isBlacklisted])
 
+  const tooltipDataset = useMemo(() => {
+    if (!isDashboard) return {}
+
+    if (isBlacklisted) {
+      return createGlobalTooltipDataSet({
+        id: `dapp-${dapp.id}-blacklisted-tooltip`,
+        content: t('This app is blacklisted and may be harmful. We recommend not connecting to it.')
+      })
+    }
+
+    if (!dapp.isConnected) {
+      return createGlobalTooltipDataSet({
+        id: `dapp-${dapp.id}-not-connected-tooltip`,
+        content: t('Not connected')
+      })
+    }
+
+    return {}
+  }, [dapp.id, dapp.isConnected, isBlacklisted, isDashboard, t])
+
   return (
-    <View>
-      {dapp.isConnected ? (
-        <View
-          style={{
-            width: 8,
-            height: 8,
-            borderRadius: 3,
-            backgroundColor: !isBlacklisted ? theme.successDecorative : theme.errorDecorative,
-            position: 'absolute',
-            top: 0,
-            right: 0,
-            zIndex: 2,
-            borderWidth: 1,
-            borderColor: !isBlacklisted ? theme.primaryBackground : theme.errorBackground
-          }}
-        />
-      ) : (
-        <NotConnected
-          style={{
-            position: 'absolute',
-            top: 0,
-            right: 0,
-            zIndex: 2
-          }}
-          isBlacklisted={isBlacklisted}
-        />
-      )}
-      {dapp.isConnected && withNetworkIcon && (
+    <View dataSet={tooltipDataset}>
+      <View
+        style={{
+          minWidth: 8,
+          minHeight: 8,
+          borderRadius: 10,
+          backgroundColor: !isBlacklisted ? theme.successDecorative : theme.errorDecorative,
+          position: 'absolute',
+          top: 0,
+          right: 0,
+          zIndex: 2,
+          borderWidth: 1,
+          borderColor: !isBlacklisted ? theme.primaryBackground : theme.errorBackground
+        }}
+      >
+        {!dapp.isConnected && (
+          <NotConnected
+            style={{
+              minWidth: 8,
+              minHeight: 8
+            }}
+            isBlacklisted={isBlacklisted}
+          />
+        )}
+      </View>
+
+      {dapp.isConnected && isDashboard && (
         <View
           style={{
             position: 'absolute',

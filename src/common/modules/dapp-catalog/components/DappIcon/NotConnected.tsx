@@ -10,17 +10,10 @@ const NotConnected: FC<{ style?: SvgProps['style']; isBlacklisted: boolean }> = 
   const { theme } = useTheme()
 
   return (
-    <Svg width="9" height="9" viewBox="0 0 8 8" fill="none" style={style}>
-      <Circle
-        cx="4"
-        cy="4"
-        r="3.5"
-        fill={isBlacklisted ? theme.errorDecorative : theme.neutral700}
-        stroke={theme.primaryBackground}
-        strokeLinecap="round"
-      />
-      <Path d="M5.5 5.5L2.5 2.5" stroke="white" />
-      <Path d="M2.5 5.5L5.5 2.5" stroke="white" />
+    <Svg width="8" height="8" viewBox="0 0 8 8" fill="none" style={style}>
+      <Circle cx="4" cy="4" r="4" fill={isBlacklisted ? theme.errorDecorative : theme.neutral600} />
+      <Path d="M6 6L2 2" stroke="white" />
+      <Path d="M2 6L6 2" stroke="white" />
     </Svg>
   )
 }

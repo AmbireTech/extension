@@ -81,7 +81,7 @@ const CurrentApp = () => {
           setIsNetworkSelectorExpanded(false)
         }}
       >
-        <DappIcon dapp={currentDapp} withNetworkIcon />
+        <DappIcon dapp={currentDapp} isDashboard />
       </Pressable>
     </View>
   )
