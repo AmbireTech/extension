@@ -231,7 +231,6 @@ test.describe('dashboard', { tag: '@dashboard' }, () => {
     await test.step('open hide wallet modal', async () => {
       await pages.dashboard.click(`token-balance-${wallet.address}.${wallet.chainId}`)
       await pages.dashboard.click(selectors.dashboard.hideTokenButton)
-      await pages.auth.pause()
     })
 
     await test.step('assert hide token modal text and confirm hide token', async () => {
