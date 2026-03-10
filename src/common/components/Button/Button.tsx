@@ -6,7 +6,7 @@ import { AnimatedPressable, useCustomHover, useMultiHover } from '@common/hooks/
 import { AnimatedText } from '@common/hooks/useHover/useHover'
 import { AnimationValues } from '@common/hooks/useHover/useMultiHover'
 import useTheme from '@common/hooks/useTheme'
-import spacings, { SPACING_MI, SPACING_TY } from '@common/styles/spacings'
+import spacings from '@common/styles/spacings'
 import common, { hexToRgba } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import useOnEnterKeyPress from '@web/hooks/useOnEnterKeyPress'
@@ -22,7 +22,6 @@ type ButtonTypes =
   | 'outline'
   | 'ghost'
   | 'ghost2'
-  | 'error'
   | 'warning'
   | 'info'
   | 'success'
@@ -87,7 +86,6 @@ const ButtonInnerContainer = ({
         }
       ],
       ghost2: [],
-      error: [],
       warning: [],
       info: [],
       info2: [],
@@ -215,7 +213,6 @@ const Button = ({
       ],
       ghost: [],
       ghost2: [],
-      error: [OPACITY_ANIMATION],
       warning: [OPACITY_ANIMATION],
       info: [OPACITY_ANIMATION],
       success: [OPACITY_ANIMATION],
@@ -243,10 +240,6 @@ const Button = ({
     outline: styles.buttonContainerOutline,
     ghost: styles.buttonContainerGhost,
     ghost2: {},
-    error: {
-      backgroundColor: theme.error200,
-      borderWidth: 0
-    },
     warning: {
       backgroundColor: theme.warningText,
       borderWidth: 0
@@ -325,13 +318,6 @@ const Button = ({
           property: 'color',
           from: theme.secondaryText,
           to: theme.primaryText
-        }
-      ],
-      error: [
-        {
-          property: 'color',
-          from: '#fff',
-          to: '#fff'
         }
       ],
       warning: [

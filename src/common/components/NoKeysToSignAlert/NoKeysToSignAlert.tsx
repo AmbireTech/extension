@@ -62,7 +62,7 @@ const NoKeysToSignAlert: FC<Props> = ({ style, isTransaction = true, type = 'lon
           <Button
             hasBottomSpacing={false}
             size="small"
-            type="error"
+            type="danger"
             textStyle={{ fontSize: 12 }}
             onPress={() => openBottomSheet()}
             text={t('Check')}
@@ -85,7 +85,7 @@ const NoKeysToSignAlert: FC<Props> = ({ style, isTransaction = true, type = 'lon
           buttonProps={{
             onPress: () => openBottomSheet(),
             text: !!account.safeCreation ? t('Import Owner') : t('Import Key'),
-            type: 'error'
+            type: 'danger'
           }}
         />
       )}

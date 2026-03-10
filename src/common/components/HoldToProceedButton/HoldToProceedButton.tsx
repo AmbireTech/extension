@@ -11,7 +11,7 @@ type Props = Omit<CommonButtonProps, 'style' | 'children' | 'childrenPosition' |
   holdDuration?: number // in milliseconds
   holdText?: string
   completeText?: string
-  buttonType?: 'primary' | 'error' | 'warning'
+  buttonType?: 'primary' | 'danger' | 'warning'
 }
 
 const HoldToProceedButton: FC<Props> = ({
@@ -38,7 +38,7 @@ const HoldToProceedButton: FC<Props> = ({
 
   const colorTypes = {
     primary: theme.primaryAccent100,
-    error: theme.errorText,
+    danger: theme.errorText,
     warning: theme.warningText
   }
 
