@@ -13,7 +13,8 @@ const PendingBadge = ({
   label,
   Icon,
   backgroundColor,
-  textColor
+  textColor,
+  borderColor = 'transparent'
 }: {
   amount: bigint
   amountFormatted: string
@@ -21,6 +22,7 @@ const PendingBadge = ({
   Icon: React.ComponentType<SvgProps>
   backgroundColor: ColorValue
   textColor: ColorValue
+  borderColor?: ColorValue
 }) => {
   const { t } = useTranslation()
 
@@ -37,7 +39,9 @@ const PendingBadge = ({
         {
           borderRadius: 64,
           height: 32,
-          backgroundColor
+          backgroundColor,
+          borderColor,
+          borderWidth: 1
         }
       ]}
     >

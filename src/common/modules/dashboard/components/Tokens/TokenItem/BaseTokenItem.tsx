@@ -64,6 +64,10 @@ const BaseTokenItem = ({
     property: 'backgroundColor',
     values: { from: theme.primaryBackground, to: theme.secondaryBackground }
   })
+  const [bindAnimPending, animStylePending, isHoveredPending] = useCustomHover({
+    property: 'borderColor',
+    values: { from: 'transparent', to: theme.warningText }
+  })
 
   const tokenId = getTokenId(token)
   const simulatedAccountOp = portfolio.networkSimulatedAccountOp[token.chainId.toString()]
@@ -204,64 +208,76 @@ const BaseTokenItem = ({
           </View>
         </View>
 
-        {isPending && (
-          <AnimatedPressable
-            onPress={() => {
-              if (!simulatedAccountOp) return
-              requestsDispatch({
-                type: 'method',
-                params: {
-                  method: 'setCurrentUserRequestById',
-                  args: [`${simulatedAccountOp.accountAddr}-${simulatedAccountOp.chainId}`]
-                }
-              })
-            }}
-            style={[{ marginLeft: SPACING_2XL + SPACING_TY, cursor: 'pointer' }, spacings.mtSm]}
-          >
-            <View>
-              {!!pendingToBeSigned && !!pendingToBeSignedFormatted && (
-                <PendingBadge
-                  amount={pendingToBeSigned}
-                  amountFormatted={pendingToBeSignedFormatted}
-                  label="awaiting signature"
-                  backgroundColor={theme.warningBackground}
-                  textColor={theme.warningText}
-                  Icon={BatchIcon}
-                />
-              )}
-              {!!pendingToBeConfirmed && !!pendingToBeConfirmedFormatted && (
-                <PendingBadge
-                  amount={pendingToBeConfirmed}
-                  amountFormatted={pendingToBeConfirmedFormatted}
-                  label="confirming"
-                  backgroundColor={theme.infoBackground}
-                  textColor={theme.infoText}
-                  Icon={PendingToBeConfirmedIcon}
-                />
-              )}
-            </View>
-
-            <View
+        <View>
+          {!!pendingToBeSigned && !!pendingToBeSignedFormatted && isPending && (
+            <AnimatedPressable
+              onPress={() => {
+                if (!simulatedAccountOp) return
+                requestsDispatch({
+                  type: 'method',
+                  params: {
+                    method: 'setCurrentUserRequestById',
+                    args: [`${simulatedAccountOp.accountAddr}-${simulatedAccountOp.chainId}`]
+                  }
+                })
+              }}
               style={[
-                flexboxStyles.directionRow,
-                flexboxStyles.alignCenter,
-                spacings.phSm,
                 {
-                  height: 30
-                }
+                  marginLeft: SPACING_2XL + SPACING_TY,
+                  // @ts-ignore react-native-web supports `cursor`, but it's missing from React Native StyleProp<ViewStyle> types
+                  cursor: simulatedAccountOp ? 'pointer' : 'auto'
+                },
+                spacings.mtSm,
+                animStylePending
               ]}
+              {...bindAnimPending}
             >
-              <Text
-                selectable
-                color={theme.successText}
-                weight="medium"
-                fontSize={12}
-                numberOfLines={1}
-              >
-                {balanceLatestFormatted} {t('(Onchain)')}
-              </Text>
-            </View>
-          </AnimatedPressable>
+              <PendingBadge
+                amount={pendingToBeSigned}
+                amountFormatted={pendingToBeSignedFormatted}
+                label="awaiting signature"
+                backgroundColor={theme.warningBackground}
+                textColor={theme.warningText}
+                Icon={BatchIcon}
+                borderColor={isHoveredPending ? theme.warningText : 'transparent'}
+              />
+            </AnimatedPressable>
+          )}
+
+          {!!pendingToBeConfirmed && !!pendingToBeConfirmedFormatted && (
+            <PendingBadge
+              amount={pendingToBeConfirmed}
+              amountFormatted={pendingToBeConfirmedFormatted}
+              label="confirming"
+              backgroundColor={theme.infoBackground}
+              textColor={theme.infoText}
+              Icon={PendingToBeConfirmedIcon}
+              borderColor={'transparent'}
+            />
+          )}
+        </View>
+
+        {!!pendingToBeSigned && !!pendingToBeSignedFormatted && isPending && (
+          <View
+            style={[
+              flexboxStyles.directionRow,
+              flexboxStyles.alignCenter,
+              spacings.phSm,
+              {
+                height: 30
+              }
+            ]}
+          >
+            <Text
+              selectable
+              color={theme.successText}
+              weight="medium"
+              fontSize={12}
+              numberOfLines={1}
+            >
+              {balanceLatestFormatted} {t('(Onchain)')}
+            </Text>
+          </View>
         )}
       </View>
     </AnimatedPressable>
