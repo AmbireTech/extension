@@ -18,6 +18,11 @@ on:
         description: Packaging mode (apk or aab)
         required: true
         type: string
+      architectures:
+        description: Comma-separated list of ABIs to build (reactNativeArchitectures)
+        required: false
+        default: arm64-v8a
+        type: string
       enable_signing:
         description: Whether Play Store signing (release keystore) is required
         required: false
@@ -115,7 +120,7 @@ jobs:
           LI_FI_API_KEY: ${{ vars.LI_FI_API_KEY }}
           BUNGEE_API_KEY: ${{ vars.BUNGEE_API_KEY }}
           SAFE_API: ${{ vars.SAFE_API }}
-          ORG_GRADLE_PROJECT_reactNativeArchitectures: arm64-v8a
+          ORG_GRADLE_PROJECT_reactNativeArchitectures: ${{ inputs.architectures }}
           # CI-only Gradle/JVM tuning:
           # - Disable Gradle daemon and parallelism to avoid long-lived processes and high memory usage.
           # - Increase Metaspace limit to reduce risk of OutOfMemoryError: Metaspace during large native builds.
