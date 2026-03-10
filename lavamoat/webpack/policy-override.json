@@ -15,11 +15,6 @@
         "primordialMutations": true
       }
     },
-    "ses": {
-      "allow": {
-        "primordialMutations": true
-      }
-    },
     "@ledgerhq/context-module>inversify>@inversifyjs/common": {
       "packages": {
         "@ledgerhq/context-module>reflect-metadata": true
@@ -40,11 +35,6 @@
       "globals": {
         "crypto": true,
         "msCrypto": true
-      }
-    },
-    "@endo/immutable-arraybuffer": {
-      "allow": {
-        "primordialMutations": true
       }
     },
     "react-dom": {
@@ -146,7 +136,7 @@
         "note": "Auto policy could not be generated for this module; access is explicitly disabled here to silence the build warning."
       }
     },
-    "@safe-global/protocol-kit>@peculiar/asn1-schema>asn1js>pvutils": {
+    "@safe-global/api-kit>@safe-global/protocol-kit>@peculiar/asn1-schema>asn1js>pvutils": {
       "meta": {
         "note": "Auto policy could not be generated for this module; access is explicitly disabled here to silence the build warning."
       }
@@ -226,7 +216,7 @@
         "note": "Auto policy could not be generated for this module; access is explicitly disabled here to silence the build warning."
       }
     },
-    "@safe-global/protocol-kit>@safe-global/safe-modules-deployments": {
+    "@safe-global/api-kit>@safe-global/protocol-kit>@safe-global/safe-modules-deployments": {
       "meta": {
         "note": "Auto policy could not be generated for this module; access is explicitly disabled here to silence the build warning."
       }

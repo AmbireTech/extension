@@ -716,10 +716,10 @@
         "crypto": true
       }
     },
-    "@safe-global/protocol-kit>@peculiar/asn1-schema": {
+    "@safe-global/api-kit>@safe-global/protocol-kit>@peculiar/asn1-schema": {
       "packages": {
-        "@safe-global/protocol-kit>@peculiar/asn1-schema>asn1js": true,
-        "@safe-global/protocol-kit>@peculiar/asn1-schema>pvtsutils": true
+        "@safe-global/api-kit>@safe-global/protocol-kit>@peculiar/asn1-schema>asn1js": true,
+        "@safe-global/api-kit>@safe-global/protocol-kit>@peculiar/asn1-schema>pvtsutils": true
       }
     },
     "@raugfer/jazzicon": {
@@ -751,11 +751,11 @@
         "fetch": true
       },
       "packages": {
-        "@safe-global/protocol-kit": true,
+        "@safe-global/api-kit>@safe-global/protocol-kit": true,
         "@safe-global/api-kit>node-fetch": true
       }
     },
-    "@safe-global/protocol-kit": {
+    "@safe-global/api-kit>@safe-global/protocol-kit": {
       "globals": {
         "crypto.subtle.exportKey": true,
         "crypto.subtle.importKey": true,
@@ -769,9 +769,9 @@
       },
       "packages": {
         "ox>@noble/curves": true,
-        "@safe-global/protocol-kit>@peculiar/asn1-schema": true,
-        "@safe-global/protocol-kit>@safe-global/safe-deployments": true,
-        "@safe-global/protocol-kit>@safe-global/safe-modules-deployments": true,
+        "@safe-global/api-kit>@safe-global/protocol-kit>@peculiar/asn1-schema": true,
+        "@safe-global/api-kit>@safe-global/protocol-kit>@safe-global/safe-deployments": true,
+        "@safe-global/api-kit>@safe-global/protocol-kit>@safe-global/safe-modules-deployments": true,
         "@safe-global/api-kit>@safe-global/types-kit": true,
         "ox>abitype": true,
         "buffer": true,
@@ -779,7 +779,7 @@
         "viem": true
       }
     },
-    "@safe-global/protocol-kit>@safe-global/safe-deployments": {
+    "@safe-global/api-kit>@safe-global/protocol-kit>@safe-global/safe-deployments": {
       "packages": {
         "ts-jest>semver": true
       }
@@ -982,10 +982,10 @@
         "node-polyfill-webpack-plugin>vm-browserify": true
       }
     },
-    "@safe-global/protocol-kit>@peculiar/asn1-schema>asn1js": {
+    "@safe-global/api-kit>@safe-global/protocol-kit>@peculiar/asn1-schema>asn1js": {
       "packages": {
-        "@safe-global/protocol-kit>@peculiar/asn1-schema>pvtsutils": true,
-        "@safe-global/protocol-kit>@peculiar/asn1-schema>asn1js>pvutils": true
+        "@safe-global/api-kit>@safe-global/protocol-kit>@peculiar/asn1-schema>pvtsutils": true,
+        "@safe-global/api-kit>@safe-global/protocol-kit>@peculiar/asn1-schema>asn1js>pvutils": true
       }
     },
     "node-polyfill-webpack-plugin>assert": {
@@ -2126,7 +2126,7 @@
         "define": true
       }
     },
-    "@safe-global/protocol-kit>@peculiar/asn1-schema>pvtsutils": {
+    "@safe-global/api-kit>@safe-global/protocol-kit>@peculiar/asn1-schema>pvtsutils": {
       "globals": {
         "Buffer.from": true,
         "atob": true,
