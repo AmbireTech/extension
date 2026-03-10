@@ -43,6 +43,13 @@ export const handleActions = async (
       break
     }
 
+    case 'ADDRESS_BOOK_CONTROLLER_ADD_CONTACT': {
+      await mainCtrl.addressBook.addContact(params.name, params.address)
+      await mainCtrl.transfer.checkIsRecipientAddressUnknown()
+
+      return
+    }
+
     default:
       // eslint-disable-next-line no-console
       return console.error(
