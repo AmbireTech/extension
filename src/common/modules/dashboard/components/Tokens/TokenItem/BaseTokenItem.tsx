@@ -76,7 +76,6 @@ const BaseTokenItem = ({
     balanceFormatted,
     balance,
     balanceLatestFormatted,
-    priceUSDFormatted,
     balanceUSDFormatted,
     isPending: hasPendingBadges,
     pendingBalance,
@@ -192,17 +191,6 @@ const BaseTokenItem = ({
               {isPending ? pendingBalanceUSDFormatted : balanceUSDFormatted}
             </Text>
             <View style={[flexboxStyles.directionRow, flexboxStyles.alignCenter]}>
-              <Text
-                style={{
-                  lineHeight: 15
-                }}
-                selectable
-                fontSize={13}
-                appearance="secondaryText"
-                weight="number_medium"
-              >
-                {priceUSDFormatted}
-              </Text>
               {typeof change24h === 'number' && (
                 <Text
                   fontSize={13}
