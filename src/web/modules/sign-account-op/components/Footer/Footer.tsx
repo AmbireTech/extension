@@ -53,7 +53,7 @@ const Footer = ({
   const {
     state: { account }
   } = useController('SelectedAccountController')
-  const { accountOp, status, canBroadcast } = useController('SignAccountOpController').state || {}
+  const { accountOp } = useController('SignAccountOpController').state || {}
   const chainId = accountOp?.chainId
 
   const batchCount = useMemo(() => {
@@ -151,7 +151,7 @@ const Footer = ({
               size="large"
             />
           )}
-          {!shouldHoldToProceed && canBroadcast && (
+          {!shouldHoldToProceed && (
             <ButtonWithLoader
               testID="transaction-button-sign"
               type="primary"
