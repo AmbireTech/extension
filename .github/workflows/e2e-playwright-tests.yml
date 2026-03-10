@@ -162,3 +162,4 @@ jobs:
           path: |
             ./e2e-playwright-tests/playwright-report.zip
             ./build/webkit-prod/
+            ./lavamoat/webpack/
