@@ -10,7 +10,7 @@ const NotConnected: FC<{ style?: SvgProps['style']; isBlacklisted: boolean }> = 
   const { theme } = useTheme()
 
   return (
-    <Svg width="10" height="10" viewBox="0 0 8 8" fill="none" style={style}>
+    <Svg width="9" height="9" viewBox="0 0 8 8" fill="none" style={style}>
       <Circle
         cx="4"
         cy="4"
