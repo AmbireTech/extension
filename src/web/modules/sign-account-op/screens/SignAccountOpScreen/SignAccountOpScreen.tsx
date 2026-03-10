@@ -107,7 +107,8 @@ const SignAccountOpScreen = () => {
     bundlerNonceDiscrepancy,
     primaryButtonText,
     shouldHoldToProceed,
-    disabledReason
+    disabledReason,
+    showSafeSigners
   } = useSign({
     handleUpdateStatus,
     signAccountOpState,
@@ -232,7 +233,8 @@ const SignAccountOpScreen = () => {
                   signAccountOpState &&
                   signAccountOpState?.errors.length === 0 &&
                   !signAccountOpState.canBroadcast &&
-                  !!signAccountOpState.account.safeCreation && (
+                  !!signAccountOpState.account.safeCreation &&
+                  showSafeSigners && (
                     <ScrollView style={[{ maxHeight: 140 }, spacings.mb]}>
                       <SafeOwners
                         account={signAccountOpState.account}

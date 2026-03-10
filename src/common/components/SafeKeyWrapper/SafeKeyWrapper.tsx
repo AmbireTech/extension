@@ -9,7 +9,6 @@ import useTheme from '@common/hooks/useTheme'
 import { default as flexbox } from '@common/styles/utils/flexbox'
 
 import ButtonWithLoader from '../ButtonWithLoader/ButtonWithLoader'
-import Spinner from '../Spinner'
 import getStyles from './styles'
 
 interface Props {
@@ -17,7 +16,6 @@ interface Props {
   style?: ViewProps['style']
   isDisabled?: boolean
   hasSigned?: boolean
-  isQueued?: boolean
   isSignLoading?: boolean
   addr: Key['addr']
   type: Key['type']
@@ -29,7 +27,6 @@ const SafeKeyWrapper = ({
   style,
   isDisabled,
   hasSigned,
-  isQueued,
   isSignLoading,
   onSign,
   addr,
@@ -56,12 +53,7 @@ const SafeKeyWrapper = ({
           style={[styles.icon, { minWidth: 60 }]}
         />
       )}
-      {!isQueued && isDisabled && !hasSigned && (
-        <NoEntryIcon width={18} height={18} style={styles.icon} />
-      )}
-      {isQueued && isDisabled && !hasSigned && (
-        <Spinner style={{ width: 17, height: 17, ...styles.icon }} />
-      )}
+      {isDisabled && !hasSigned && <NoEntryIcon width={18} height={18} style={styles.icon} />}
     </View>
   )
 }
