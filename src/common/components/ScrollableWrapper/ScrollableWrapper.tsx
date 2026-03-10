@@ -83,6 +83,7 @@ const ScrollableWrapper = ({
     return (
       <DraggableFlatList
         ref={wrapperRef}
+        bounces={false}
         data={data}
         keyExtractor={
           keyExtractor ? (item: any) => keyExtractor(item, 0) : (item: any) => item.key ?? ''
@@ -103,6 +104,7 @@ const ScrollableWrapper = ({
     return (
       <FlatList
         ref={wrapperRef}
+        bounces={false}
         data={data}
         renderItem={renderItem}
         keyExtractor={keyExtractor || ((item, index) => item.key ?? index.toString())}
@@ -121,6 +123,7 @@ const ScrollableWrapper = ({
     return (
       <SectionList
         ref={wrapperRef}
+        bounces={false}
         sections={data}
         renderItem={renderItem}
         keyExtractor={keyExtractor || ((item, index) => item.key ?? index.toString())}
@@ -142,6 +145,7 @@ const ScrollableWrapper = ({
   return (
     <ScrollView
       ref={wrapperRef}
+      bounces={false}
       style={scrollableWrapperStyles}
       contentContainerStyle={scrollableWrapperContentContainerStyles}
       showsVerticalScrollIndicator={showsVerticalScrollIndicator}

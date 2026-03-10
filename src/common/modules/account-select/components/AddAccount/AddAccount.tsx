@@ -18,12 +18,13 @@ import ViewOnlyIcon from '@common/assets/svg/ViewOnlyIcon'
 import BottomSheet from '@common/components/BottomSheet'
 import ModalHeader from '@common/components/BottomSheet/ModalHeader'
 import Option from '@common/components/Option'
+import { isMobile, isWeb } from '@common/config/env'
 import useController from '@common/hooks/useController'
 import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
+import SavedSeedPhrases from '@common/modules/account-select/components/SavedSeedPhrases'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
-import { WEB_ROUTES } from '@common/modules/router/constants/common'
+import { ROUTES, WEB_ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
-import SavedSeedPhrases from '@web/modules/account-select/components/SavedSeedPhrases'
 
 import ExpandableOptionSection from './ExpandableOptionSection'
 
@@ -54,6 +55,8 @@ const AddAccount = ({
   const { seeds } = useController('KeystoreController').state
 
   const optionsHW = useMemo(() => {
+    if (isMobile) return []
+
     return [
       {
         key: 'trezor',
@@ -94,30 +97,34 @@ const AddAccount = ({
         key: 'recovery-phrase',
         text: t('Recovery phrase'),
         icon: SeedPhraseIcon,
-        onPress: () => goToNextRoute(WEB_ROUTES.importSeedPhrase),
+        onPress: () => goToNextRoute(ROUTES.importSeedPhrase),
         testID: 'import-recovery-phrase'
       },
       {
         key: 'private-key',
         text: t('Private key'),
         icon: PrivateKeyIcon,
-        onPress: () => goToNextRoute(WEB_ROUTES.importPrivateKey),
+        onPress: () => goToNextRoute(ROUTES.importPrivateKey),
         testID: 'import-private-key'
       },
-      {
-        key: 'import-safe',
-        text: t('Safe account'),
-        icon: SafeIcon,
-        onPress: () => goToNextRoute(WEB_ROUTES.safeImport),
-        testID: 'import-safe'
-      },
-      {
-        key: 'json-backup-file',
-        text: t('JSON backup file'),
-        icon: ImportJsonIcon,
-        onPress: () => goToNextRoute(WEB_ROUTES.importSmartAccountJson),
-        testID: 'import-json-backup-file'
-      }
+      ...(!isMobile
+        ? [
+            {
+              key: 'import-safe',
+              text: t('Safe account'),
+              icon: SafeIcon,
+              onPress: () => goToNextRoute(ROUTES.safeImport),
+              testID: 'import-safe'
+            },
+            {
+              key: 'json-backup-file',
+              text: t('JSON backup file'),
+              icon: ImportJsonIcon,
+              onPress: () => goToNextRoute(ROUTES.importSmartAccountJson),
+              testID: 'import-json-backup-file'
+            }
+          ]
+        : [])
     ]
   }, [goToNextRoute, t])
 
@@ -126,13 +133,17 @@ const AddAccount = ({
       id="add-account-bottom-sheet"
       sheetRef={sheetRef}
       closeBottomSheet={closeBottomSheet}
-      scrollViewProps={{
-        // Prevent the scroll view from expanding when a dropdown is open
-        style: { maxHeight: height },
-        showsVerticalScrollIndicator: false
-      }}
+      scrollViewProps={
+        isWeb
+          ? {
+              // Prevent the scroll view from expanding when a dropdown is open
+              style: { maxHeight: height },
+              showsVerticalScrollIndicator: false
+            }
+          : undefined
+      }
       scrollViewRef={scrollViewRef}
-      containerInnerWrapperStyles={spacings.pr0}
+      containerInnerWrapperStyles={isWeb ? spacings.pr0 : {}}
     >
       <View
         onLayout={(e) => {
@@ -162,7 +173,7 @@ const AddAccount = ({
           <Option
             text={t('Create new recovery phrase')}
             icon={AddCircularIcon}
-            onPress={() => goToNextRoute(WEB_ROUTES.createSeedPhrasePrepare)}
+            onPress={() => goToNextRoute(ROUTES.createSeedPhrasePrepare)}
             testID="create-new-recovery-phrase"
             status="none"
           />
@@ -173,17 +184,19 @@ const AddAccount = ({
           dropdownTestID="import-account"
           options={optionsImportAccount}
         />
-        <ExpandableOptionSection
-          dropdownText={t('Connect a hardware wallet')}
-          dropdownIcon={HWIcon}
-          dropdownTestID="connect-hardware-wallet"
-          options={optionsHW}
-        />
+        {!!optionsHW.length && (
+          <ExpandableOptionSection
+            dropdownText={t('Connect a hardware wallet')}
+            dropdownIcon={HWIcon}
+            dropdownTestID="connect-hardware-wallet"
+            options={optionsHW}
+          />
+        )}
         {!showImportOnly && (
           <Option
             text={t('Watch an address')}
             icon={ViewOnlyIcon}
-            onPress={() => goToNextRoute(WEB_ROUTES.viewOnlyAccountAdder)}
+            onPress={() => goToNextRoute(ROUTES.viewOnlyAccountAdder)}
             testID="watch-an-address-button"
             status="none"
           />

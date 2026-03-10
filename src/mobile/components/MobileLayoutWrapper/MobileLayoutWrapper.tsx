@@ -54,7 +54,6 @@ export const MobileLayoutContainer = ({
       <View style={[flexbox.flex1, withHorizontalPadding ? spacings.phSm : undefined]}>
         <View
           style={[
-            flexbox.directionRow,
             flexbox.flex1,
             {
               backgroundColor: backgroundColor || theme.primaryBackground,

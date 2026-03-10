@@ -6,6 +6,7 @@ import KeystoreUnlockedRoute from '@common/modules/router/components/KeystoreUnl
 import { ROUTES } from '@common/modules/router/constants/common'
 import AccountPersonalizeScreen from '@mobile/modules/account-personalize/screens/AccountPersonalizeScreen'
 import AccountPickerScreen from '@mobile/modules/account-picker/screens/AccountPickerScreen'
+import AccountSelectScreen from '@mobile/modules/account-select/screens/AccountSelectScreen'
 import CreateSeedPhrasePrepareScreen from '@mobile/modules/auth/screens/CreateSeedPhrasePrepareScreen'
 import CreateSeedPhraseWriteScreen from '@mobile/modules/auth/screens/CreateSeedPhraseWriteScreen'
 import GetStartedScreen from '@mobile/modules/auth/screens/GetStartedScreen'
@@ -44,6 +45,7 @@ const MainRoutes = () => {
         <Route element={<AuthenticatedRoute />}>
           <Route path={ROUTES.transfer} element={<TransferScreen />} />
           <Route path={ROUTES.topUpGasTank} element={<TransferScreen isTopUpScreen />} />
+          <Route path={ROUTES.accountSelect} element={<AccountSelectScreen />} />
         </Route>
       </Route>
       {/* Fallback route to suppress "No routes matched location" warnings when multiple Routes blocks are rendered */}

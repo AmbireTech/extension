@@ -7,8 +7,6 @@ import { Account as AccountType } from '@ambire-common/interfaces/account'
 import AddCircularIcon from '@common/assets/svg/AddCircularIcon'
 import SettingsWheelIcon from '@common/assets/svg/SettingsWheelIcon'
 import Button from '@common/components/Button'
-import FooterGlassView from '@common/components/FooterGlassView'
-import LayoutWrapper from '@common/components/LayoutWrapper'
 import ScrollableWrapper, { WRAPPER_TYPES } from '@common/components/ScrollableWrapper'
 import Search from '@common/components/Search'
 import Text from '@common/components/Text'
@@ -24,6 +22,7 @@ import { HeaderWithTitle } from '@common/modules/header/components/Header/Header
 import { ROUTES, WEB_ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
+import { MobileLayoutContainer } from '@mobile/components/MobileLayoutWrapper'
 
 import getStyles from './styles'
 
@@ -50,14 +49,9 @@ const extractTriggerAddAccountSheetParam = (search: string | undefined): boolean
 const AccountSelectScreen = () => {
   const { styles } = useTheme(getStyles)
   const flatlistRef = useRef(null)
-  const {
-    accounts,
-    control,
-    keyExtractor,
-    getItemLayout,
-    selectedAccountIndex,
-    shouldDisplayAccounts
-  } = useAccountsList({ flatlistRef })
+  const { accounts, control, keyExtractor, getItemLayout, shouldDisplayAccounts } = useAccountsList(
+    { flatlistRef }
+  )
   const { search: routeParams } = useRoute()
   const { navigate } = useNavigation()
   const {
@@ -111,13 +105,13 @@ const AccountSelectScreen = () => {
   }, [account, navigate, pendingToBeSetSelectedAccount])
 
   return !pendingToBeSetSelectedAccount ? (
-    <LayoutWrapper>
+    <MobileLayoutContainer>
       <HeaderWithTitle>
         <Pressable onPress={() => navigate(WEB_ROUTES.accountsSettings)}>
           <SettingsWheelIcon width={28} height={28} />
         </Pressable>
       </HeaderWithTitle>
-      <View style={[spacings.pt, spacings.phSm, flexbox.flex1]} ref={accountsContainerRef}>
+      <View style={[spacings.phSm, flexbox.flex1]} ref={accountsContainerRef}>
         <Search autoFocus control={control} style={styles.searchBar} />
         <ScrollableWrapper
           type={WRAPPER_TYPES.FLAT_LIST}
@@ -127,7 +121,6 @@ const AccountSelectScreen = () => {
               opacity: shouldDisplayAccounts ? 1 : 0
             }
           ]}
-          contentContainerStyle={{ paddingBottom: 88 }}
           wrapperRef={flatlistRef}
           data={accounts}
           renderItem={renderItem}
@@ -135,11 +128,12 @@ const AccountSelectScreen = () => {
           keyExtractor={keyExtractor}
           ListEmptyComponent={<Text>{t('No accounts found')}</Text>}
         />
-        <FooterGlassView isSimpleBlur={false}>
+
+        <View style={spacings.ptSm}>
           <Button
             testID="button-add-account"
             text={t('Add account')}
-            size="smaller"
+            size="regular"
             hasBottomSpacing={false}
             onPress={openBottomSheet as any}
             childrenPosition="left"
@@ -147,10 +141,10 @@ const AccountSelectScreen = () => {
           >
             <AddCircularIcon width={24} height={24} color="#fff" style={spacings.mrTy} />
           </Button>
-        </FooterGlassView>
+        </View>
       </View>
       <AddAccount sheetRef={sheetRef} closeBottomSheet={closeBottomSheet} />
-    </LayoutWrapper>
+    </MobileLayoutContainer>
   ) : (
     <DashboardSkeleton />
   )
