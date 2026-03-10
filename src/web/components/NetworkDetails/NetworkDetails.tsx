@@ -336,7 +336,7 @@ const NetworkDetails = ({
               disabled={statuses.updateNetwork !== 'INITIAL'}
               text={!networkData?.disabled ? t('Disable') : t('Enable')}
               testID="disable-network-btn" // @TODO
-              type={!networkData?.disabled ? 'danger' : 'primary'}
+              type={!networkData?.disabled ? 'dangerFilled' : 'primary'}
               onPress={() => {
                 if (!chainId || !allowRemoveNetwork) return
 

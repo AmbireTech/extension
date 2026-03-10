@@ -92,9 +92,9 @@ const DappConnectScreen = () => {
                 holdDuration={1600}
                 style={{ height: 56 }}
                 text={resolveButtonText}
-                buttonType={((): 'danger' | 'warning' => {
+                buttonType={((): 'dangerFilled' | 'warning' => {
                   if (!!dappToConnect && dappToConnect.blacklisted === 'BLACKLISTED')
-                    return 'danger'
+                    return 'dangerFilled'
                   return 'warning'
                 })()}
               />

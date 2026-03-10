@@ -83,7 +83,7 @@ const NoKeysToSignAlert: FC<Props> = ({ style, isTransaction = true, type = 'lon
           buttonProps={{
             onPress: () => openBottomSheet(),
             text: !!account.safeCreation ? t('Import Owner') : t('Import Key'),
-            type: 'danger'
+            type: 'dangerFilled'
           }}
         />
       )}

@@ -18,7 +18,10 @@ type ButtonTypes =
   | 'primary'
   | 'secondary'
   | 'tertiary'
+  // Use danger if the button is a secondary action and dangerFilled
+  // if it's the primary action on the screen
   | 'danger'
+  | 'dangerFilled'
   | 'outline'
   | 'ghost'
   | 'ghost2'
@@ -77,6 +80,7 @@ const ButtonInnerContainer = ({
       secondary: [],
       tertiary: [],
       danger: [],
+      dangerFilled: [],
       outline: [],
       ghost: [
         {
@@ -199,6 +203,13 @@ const Button = ({
           to: theme.error300
         }
       ],
+      dangerFilled: [
+        {
+          property: 'backgroundColor',
+          from: theme.error200,
+          to: theme.error300
+        }
+      ],
       outline: [
         {
           property: 'backgroundColor',
@@ -213,7 +224,13 @@ const Button = ({
       ],
       ghost: [],
       ghost2: [],
-      warning: [OPACITY_ANIMATION],
+      warning: [
+        {
+          property: 'backgroundColor',
+          from: theme.warningBackground,
+          to: theme.warning400
+        }
+      ],
       info: [OPACITY_ANIMATION],
       success: [OPACITY_ANIMATION],
       gray: [
@@ -240,9 +257,13 @@ const Button = ({
     outline: styles.buttonContainerOutline,
     ghost: styles.buttonContainerGhost,
     ghost2: {},
-    warning: {
-      backgroundColor: theme.warningText,
+    dangerFilled: {
+      backgroundColor: theme.error200,
       borderWidth: 0
+    },
+    warning: {
+      borderColor: theme.warningDecorative,
+      borderWidth: 1
     },
     info: {
       backgroundColor: theme.infoText,
@@ -299,6 +320,13 @@ const Button = ({
           to: theme.error100
         }
       ],
+      dangerFilled: [
+        {
+          property: 'color',
+          from: '#fff',
+          to: '#fff'
+        }
+      ],
       outline: [
         {
           property: 'color',
@@ -323,8 +351,8 @@ const Button = ({
       warning: [
         {
           property: 'color',
-          from: theme.primaryBackground,
-          to: theme.primaryBackground
+          from: theme.warningText,
+          to: theme.warning100
         }
       ],
       info: [

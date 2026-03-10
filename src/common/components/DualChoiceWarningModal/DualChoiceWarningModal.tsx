@@ -118,7 +118,7 @@ const DualChoiceWarningModal = ({
         <Button
           text={primaryButtonText}
           onPress={onPrimaryButtonPress}
-          type={type === 'error' ? 'danger' : type}
+          type={type === 'error' ? 'dangerFilled' : type}
           hasBottomSpacing={false}
           size="smaller"
           {...primaryButtonProps}

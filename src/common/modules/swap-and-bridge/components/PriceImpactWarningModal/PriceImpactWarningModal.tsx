@@ -106,7 +106,7 @@ const PriceImpactWarningModal: FC<Props> = ({
         secondaryButtonText={t('Cancel')}
         primaryButtonProps={{
           disabled: !isConfirmed,
-          type: 'danger'
+          type: 'dangerFilled'
         }}
         onPrimaryButtonPress={acknowledgeWarningWrapped}
         onSecondaryButtonPress={closeBottomSheetWrapped}

@@ -204,7 +204,7 @@ const AccountSmartSettingsBottomSheet: FC<Props> = ({ sheetRef, closeBottomSheet
                           type={
                             !accountState?.[net.chainId.toString()]?.delegatedContract
                               ? 'secondary'
-                              : 'danger'
+                              : 'dangerFilled'
                           }
                           size="tiny"
                           style={[spacings.mb0, { minWidth: 78, height: 32 }]}
