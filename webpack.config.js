@@ -418,7 +418,7 @@ module.exports = async function (env, argv) {
               //   1: Moderate logging (useful for debugging policy issues)
               //   2: Verbose logging (use only when investigating deep issues)
               // Set to 0 to avoid error logging conflicts with Expo's progress bar.
-              diagnosticsVerbosity: process.env.LAVAMOAT_GENERATE_POLICY === 'true' ? 1 : 0
+              diagnosticsVerbosity: 2
             }),
             // Verify that any modules LavaMoat is forced to ignore at runtime
             // are either fully tree-shaken or otherwise empty placeholders.

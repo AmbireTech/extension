@@ -161,4 +161,4 @@ jobs:
           name: playwright-report
           path: |
             ./e2e-playwright-tests/playwright-report.zip
-            ./build/webkit-prod/main.js
+            ./build/webkit-prod/
