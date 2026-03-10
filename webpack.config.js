@@ -22,6 +22,8 @@ const createConsoleWarnShimPlugin = require('./lavamoat/shims/console-warn-shim-
 const createLavamoatUnsafeLayerPlugin = require('./lavamoat/plugins/lavamoat-unsafe-layer-plugin')
 const LavamoatIgnoredModulesVerifyPlugin = require('./lavamoat/plugins/lavamoat-ignored-modules-verify-plugin')
 
+console.log('Trigger CI.')
+
 // Entries that run outside LavaMoat protection.
 //
 // Important: this list controls TWO mechanisms that must stay aligned:
