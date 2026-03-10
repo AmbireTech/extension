@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { Pressable, View } from 'react-native'
 
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
+import SkeletonLoader from '@common/components/SkeletonLoader'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import DappIcon from '@common/modules/dapp-catalog/components/DappIcon'
@@ -19,7 +20,22 @@ const CurrentApp = () => {
   const isBlacklisted = currentDapp?.blacklisted === 'BLACKLISTED'
   const pressableRef = useRef<View>(null)
 
-  if (!currentDapp) return null
+  if (!currentDapp) {
+    // It's undefined while the helpers store is initializing
+    if (typeof isLoadingCurrentDapp === 'undefined' || isLoadingCurrentDapp) {
+      return (
+        <SkeletonLoader
+          width={40}
+          height={40}
+          borderRadius={20}
+          appearance="primaryBackground"
+          style={spacings.ml}
+        />
+      )
+    }
+
+    return null
+  }
 
   return (
     // Wrap on purpose so ManageApp is outside the pressable
