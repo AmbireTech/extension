@@ -32,7 +32,6 @@ const AccountPersonalizeScreen = () => {
 
   const {
     isLoading,
-    completed,
     fields,
     control,
     accountPickerState,
@@ -57,6 +56,8 @@ const AccountPersonalizeScreen = () => {
                 : t('No new accounts added')
               : undefined
         }
+        withScroll
+        keyboardAwareScrollViewProps={{ bottomOffset: 200 }}
       >
         {isLoading && !accountPickerState.pageError ? (
           <View style={[flexbox.alignCenter]}>
@@ -93,37 +94,30 @@ const AccountPersonalizeScreen = () => {
           </View>
         ) : (
           <>
-            <SuccessAnimation
-              style={{ ...spacings.mbXl, marginTop: -SPACING_TY, ...flexbox.alignSelfCenter }}
-            />
-            <ScrollView style={spacings.mbLg}>
+            <SuccessAnimation style={{ ...spacings.mbXl, ...flexbox.alignSelfCenter }} />
+            <View style={[spacings.mbLg, flexbox.flex1]}>
               {accountsToPersonalize.map((acc, index) => (
                 <AccountPersonalizeCard
-                  key={acc.addr + completed}
+                  key={acc.addr}
                   control={control}
                   index={index}
                   account={acc}
                   hasBottomSpacing={index !== fields.length - 1}
                   onSave={handleSave as any}
-                  disableEdit={!!completed}
                 />
               ))}
-            </ScrollView>
-            {completed ? (
-              <Text appearance="secondaryText" weight="medium" style={[text.center]}>
-                {t('You can access your accounts from the dashboard via the extension icon.')}
-              </Text>
-            ) : (
-              <Button
-                testID="button-save-and-continue"
-                size="large"
-                onPress={handleComplete}
-                hasBottomSpacing={false}
-                text={t('Complete')}
-                disabled={!accounts.length}
-              />
-            )}
-            {!completed && ['seed', 'hw'].includes(accountPickerState.subType as any) && (
+            </View>
+
+            <Button
+              testID="button-save-and-continue"
+              size="large"
+              onPress={handleComplete}
+              hasBottomSpacing={false}
+              text={t('Complete')}
+              disabled={!accounts.length}
+            />
+
+            {['seed', 'hw'].includes(accountPickerState.subType as any) && (
               <Button
                 testID="add-more-accounts-btn"
                 type="outline"

@@ -25,17 +25,6 @@ export const ControllersMiddlewareProvider: React.FC<{
   const [isUnlocked, setIsUnlocked] = useState(false)
   const { controllerStore, debounceControllerUpdates } = useContext(ControllerStoreContext)
 
-  useEffect(() => {
-    controllerStore.init(
-      Object.keys(controllers.current) as (keyof MobileBaseControllersMappingType)[],
-      (allCtrls: (keyof AllControllersMappingType)[]) => {
-        allCtrls.forEach((ctrlName) => {
-          controllerStore.update(ctrlName, (controllers.current as any)[ctrlName])
-        })
-      }
-    )
-  }, [controllerStore])
-
   const eventEmitterRegistry = useRef<EventEmitterRegistryController>(
     new EventEmitterRegistryController(() => {
       eventEmitterRegistry.current.values().forEach((ctrl) => {
@@ -93,6 +82,22 @@ export const ControllersMiddlewareProvider: React.FC<{
   const controllers = useRef<MobileBaseControllersMappingType>(
     {} as MobileBaseControllersMappingType
   )
+
+  useEffect(() => {
+    controllerStore.init(
+      eventEmitterRegistry.current
+        .values()
+        .map((c) => c.name) as (keyof MobileBaseControllersMappingType)[],
+      (allCtrls: (keyof AllControllersMappingType)[]) => {
+        allCtrls.forEach((ctrlName) => {
+          controllerStore.update(
+            ctrlName,
+            eventEmitterRegistry.current.values().find((c) => c.name === ctrlName) as any
+          )
+        })
+      }
+    )
+  }, [controllerStore])
 
   // Skip adding custom headers and URL modifications for 3rd party URLs
   // (only internal Ambire APIs need the x-app-* headers and tracking params)

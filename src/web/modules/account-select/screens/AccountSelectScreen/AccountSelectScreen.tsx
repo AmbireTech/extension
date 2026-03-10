@@ -50,9 +50,14 @@ const extractTriggerAddAccountSheetParam = (search: string | undefined): boolean
 const AccountSelectScreen = () => {
   const { styles } = useTheme(getStyles)
   const flatlistRef = useRef(null)
-  const { accounts, control, keyExtractor, getItemLayout, shouldDisplayAccounts } = useAccountsList(
-    { flatlistRef }
-  )
+  const {
+    accounts,
+    control,
+    keyExtractor,
+    getItemLayout,
+    selectedAccountIndex,
+    shouldDisplayAccounts
+  } = useAccountsList({ flatlistRef })
   const { search: routeParams } = useRoute()
   const { navigate } = useNavigation()
   const {
@@ -130,7 +135,7 @@ const AccountSelectScreen = () => {
           keyExtractor={keyExtractor}
           ListEmptyComponent={<Text>{t('No accounts found')}</Text>}
         />
-        <FooterGlassView>
+        <FooterGlassView isSimpleBlur={false}>
           <Button
             testID="button-add-account"
             text={t('Add account')}

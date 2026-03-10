@@ -1,8 +1,7 @@
 import React from 'react'
 import { ViewStyle } from 'react-native'
 
-import Toggle from '@common/components/Toggle'
-import { ToggleProps } from '@common/components/Toggle/types'
+import Toggle, { ToggleProps } from '@common/components/Toggle/Toggle'
 import { isWeb } from '@common/config/env'
 
 const FatToggle: React.FC<
@@ -25,8 +24,8 @@ const FatToggle: React.FC<
         width: height - 4,
         height: height - 4,
         transform: isWeb
-          ? ((props.isOn ? `translateX(${width / 2}px)` : 'translateX(2px)') as any)
-          : [{ translateX: props.isOn ? width / 2 - 4 : -2 }],
+          ? ((props.isOn ? `translateX(${width - height + 2}px)` : 'translateX(2px)') as any)
+          : [{ translateX: props.isOn ? width - height - 2 : -2 }],
         ...(props.toggleStyle as ViewStyle)
       }}
     />

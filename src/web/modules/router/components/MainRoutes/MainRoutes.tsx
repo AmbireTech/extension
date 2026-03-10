@@ -3,6 +3,8 @@ import { useTranslation } from 'react-i18next'
 import { Route, Routes, useLocation } from 'react-router-dom'
 
 import NoConnectionScreen from '@common/modules/no-connection/screens/NoConnectionScreen'
+import AuthenticatedRoute from '@common/modules/router/components/AuthenticatedRoute'
+import KeystoreUnlockedRoute from '@common/modules/router/components/KeystoreUnlockedRoute'
 import routesConfig from '@common/modules/router/config/routesConfig'
 import { WEB_ROUTES } from '@common/modules/router/constants/common'
 import AccountPersonalizeScreen from '@web/modules/account-personalize/screens/AccountPersonalizeScreen'
@@ -37,8 +39,6 @@ import KeyStoreSetupScreen from '@web/modules/keystore/screens/KeyStoreSetupScre
 import NetworksConfiguration from '@web/modules/network-settings/screens'
 import NetworksScreen from '@web/modules/networks/screens'
 import ReceiveScreen from '@web/modules/receive'
-import AuthenticatedRoute from '@web/modules/router/components/AuthenticatedRoute'
-import KeystoreUnlockedRoute from '@web/modules/router/components/KeystoreUnlockedRoute'
 import NavMenu from '@web/modules/router/components/NavMenu'
 import TabOnlyRoute from '@web/modules/router/components/TabOnlyRoute'
 import { SettingsRoutesProvider } from '@web/modules/settings/contexts/SettingsRoutesContext'
@@ -59,6 +59,7 @@ import TransactionHistorySettingsScreen from '@web/modules/settings/screens/Tran
 import SignAccountOpScreen from '@web/modules/sign-account-op/screens/SignAccountOpScreen'
 import SignMessageScreen from '@web/modules/sign-message/screens/SignMessageScreen'
 import SwapAndBridgeScreen from '@web/modules/swap-and-bridge/screens/SwapAndBridgeScreen'
+import TokenDetailsScreen from '@web/modules/token-details/screens/TokenDetailsScreen'
 import TransferScreen from '@web/modules/transfer/screens/TransferScreen'
 
 const MainRoutes = () => {
@@ -182,6 +183,7 @@ const MainRoutes = () => {
           <Route path={WEB_ROUTES.decryptRequest} element={<DecryptRequestScreen />} />
 
           <Route path={WEB_ROUTES.menu} element={<NavMenu />} />
+          <Route path={WEB_ROUTES.tokenDetails} element={<TokenDetailsScreen />} />
           <Route path={WEB_ROUTES.accountSelect} element={<AccountSelectScreen />} />
           <Route path={WEB_ROUTES.receive} element={<ReceiveScreen />} />
           <Route path={WEB_ROUTES.apps} element={<DappCatalogScreen />} />

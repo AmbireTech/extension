@@ -2131,21 +2131,6 @@
   dependencies:
     prop-types "^15.8.1"
 
-"@gnosis.pm/safe-apps-sdk@6.2.0":
-  version "6.2.0"
-  resolved "https://registry.npmjs.org/@gnosis.pm/safe-apps-sdk/-/safe-apps-sdk-6.2.0.tgz"
-  integrity sha512-dOpVBlu+Nv7bOrOl9llTeRriEpdUnnbXEM/RgTkS1v8Q2swT6+M+WIKTuKB/cadFXbjUsBD/nd3IsihHP24b5g==
-  dependencies:
-    "@gnosis.pm/safe-react-gateway-sdk" "^2.5.6"
-    ethers "^5.4.7"
-
-"@gnosis.pm/safe-react-gateway-sdk@^2.5.6":
-  version "2.10.3"
-  resolved "https://registry.npmjs.org/@gnosis.pm/safe-react-gateway-sdk/-/safe-react-gateway-sdk-2.10.3.tgz"
-  integrity sha512-ukaLACozdJQb2YGSAZgBUkF4CT9iKVjpnKFCKUnGGghXqp+Yyn9jpdcfFK0VYQJ6ZSwAm40tHtQaN3K9817Bcg==
-  dependencies:
-    cross-fetch "^3.1.5"
-
 "@gorhom/portal@1.0.14":
   version "1.0.14"
   resolved "https://registry.yarnpkg.com/@gorhom/portal/-/portal-1.0.14.tgz#1953edb76aaba80fb24021dc774550194a18e111"
@@ -2605,6 +2590,18 @@
   dependencies:
     call-bind "^1.0.8"
 
+"@lottiefiles/dotlottie-react@0.18.3":
+  version "0.18.3"
+  resolved "https://registry.yarnpkg.com/@lottiefiles/dotlottie-react/-/dotlottie-react-0.18.3.tgz#96431ef0f95fce371d74b37075fbc580b64594a7"
+  integrity sha512-/6iVC4y9KCyPKS2gDUFp+omYndo3KPombAsZXB0h5sSyEO/+ydVppd5fIoHg2ogGAPOCPK97Y5Eos65JnyTjww==
+  dependencies:
+    "@lottiefiles/dotlottie-web" "0.65.0"
+
+"@lottiefiles/dotlottie-web@0.65.0":
+  version "0.65.0"
+  resolved "https://registry.yarnpkg.com/@lottiefiles/dotlottie-web/-/dotlottie-web-0.65.0.tgz#8b769275b5f2d69885309e585dc22e5dff549e2b"
+  integrity sha512-D5ALEwZerjy+MkOv9mMjY7bxRfe7rQPWMtDl8hlNYLnrDKj4AzTaRztZ2u5hBHHiSfSc7TnA4MJgq+ktNZPpIg==
+
 "@metamask/abi-utils@^3.0.0":
   version "3.0.0"
   resolved "https://registry.yarnpkg.com/@metamask/abi-utils/-/abi-utils-3.0.0.tgz#2eab9cb895922b94305364d9111b6dde724f6f9b"
@@ -3057,7 +3054,7 @@
     node-fetch "^2.7.0"
     viem "^2.21.8"
 
-"@safe-global/protocol-kit@6.1.2", "@safe-global/protocol-kit@^6.1.2":
+"@safe-global/protocol-kit@^6.1.2":
   version "6.1.2"
   resolved "https://registry.yarnpkg.com/@safe-global/protocol-kit/-/protocol-kit-6.1.2.tgz#6cafd55aaf119998b794ff3a0cdaa2556ba2374c"
   integrity sha512-cTpPdUAS2AMfGCkD1T601rQNjT0rtMQLA2TH7L/C+iFPAC6WrrDFop2B9lzeHjczlnVzrRpfFe4cL1bLrJ9NZw==
@@ -7821,7 +7818,7 @@ ethereumjs-util@7.1.5, ethereumjs-util@^7.1.5:
     ethereum-cryptography "^0.1.3"
     rlp "^2.2.4"
 
-ethers@5.8.0, ethers@^5.4.7, ethers@^5.6.5:
+ethers@5.8.0, ethers@^5.6.5:
   version "5.8.0"
   resolved "https://registry.yarnpkg.com/ethers/-/ethers-5.8.0.tgz#97858dc4d4c74afce83ea7562fe9493cedb4d377"
   integrity sha512-DUq+7fHrCg1aPDFCHx6UIPb3nmt2XMpM7Y/g2gLhsl3lIBqeAfOJIl1qEvRf2uq3BiKxmh6Fh5pfp2ieyek7Kg==
@@ -7999,7 +7996,7 @@ expo-font@14.0.11, expo-font@~14.0.11:
   dependencies:
     fontfaceobserver "^2.1.0"
 
-expo-glass-effect@^0.1.9:
+expo-glass-effect@0.1.9:
   version "0.1.9"
   resolved "https://registry.yarnpkg.com/expo-glass-effect/-/expo-glass-effect-0.1.9.tgz#4b20cd9376cb530eaffef1af3a3be7c3ca6b388f"
   integrity sha512-mDnoQKrvdkKEk1kUDgCKRdw1fHsouG25BclBico9lZSrLb7HpfGla3jnlz9rYGqXIiO8i9BTxpsmFhDnc1/4hg==
@@ -12741,6 +12738,13 @@ react-native-is-edge-to-edge@^1.2.1:
   version "1.2.1"
   resolved "https://registry.yarnpkg.com/react-native-is-edge-to-edge/-/react-native-is-edge-to-edge-1.2.1.tgz#64e10851abd9d176cbf2b40562f751622bde3358"
   integrity sha512-FLbPWl/MyYQWz+KwqOZsSyj2JmLKglHatd3xLZWskXOpRaio4LfEDEz8E/A6uD8QoTHW6Aobw1jbEwK7KMgR7Q==
+
+react-native-keyboard-controller@1.20.7:
+  version "1.20.7"
+  resolved "https://registry.yarnpkg.com/react-native-keyboard-controller/-/react-native-keyboard-controller-1.20.7.tgz#e1be1c15a5eb10b96a40a0812d8472e6e4bd8f29"
+  integrity sha512-G8S5jz1FufPrcL1vPtReATx+jJhT/j+sTqxMIb30b1z7cYEfMlkIzOCyaHgf6IMB2KA9uBmnA5M6ve2A9Ou4kw==
+  dependencies:
+    react-native-is-edge-to-edge "^1.2.1"
 
 react-native-linear-gradient@2.6.2:
   version "2.6.2"

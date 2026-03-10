@@ -34,6 +34,7 @@ jobs:
       REACT_APP_PIMLICO_API_KEY: ${{ vars.REACT_APP_PIMLICO_API_KEY }}
       REACT_APP_ETHERSPOT_API_KEY: ${{ vars.REACT_APP_ETHERSPOT_API_KEY }}
       REACT_APP_CANDIDE_API_KEY: ${{ vars.REACT_APP_CANDIDE_API_KEY }}
+      REACT_APP_GELATO_API_KEY: ${{ vars.REACT_APP_GELATO_API_KEY }}
       KEYSTORE_PASS: ${{ secrets.KEYSTORE_PASS }}
       SEED: ${{ secrets.SEED }}
       SEED_24_WORDS: ${{ secrets.SEED_24_WORDS }}
@@ -60,7 +61,7 @@ jobs:
       # We use it to mock or block background requests that can't be intercepted via page.route().
       PW_EXPERIMENTAL_SERVICE_WORKER_NETWORK_EVENTS: '1'
       IS_LEDGER_EMULATOR: 'true'
-
+      
     steps:
       - name: Checkout full Git history
         uses: actions/checkout@v4

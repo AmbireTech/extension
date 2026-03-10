@@ -2,7 +2,6 @@
   "extends": "./src/ambire-common/tsconfig.json",
   "compilerOptions": {
     "baseUrl": ".",
-    "moduleSuffixes": [".native", ".web", ".ios", ".android", ""],
     "jsx": "react-native",
     "module": "ES2020",
     "lib": ["ES2020", "ESNext", "DOM", "WebWorker"],

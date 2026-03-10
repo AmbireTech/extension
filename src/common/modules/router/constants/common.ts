@@ -15,7 +15,10 @@ const COMMON_ROUTES = {
   accountPicker: 'account-picker',
   onboardingCompleted: 'wallet-setup-completed',
   viewOnlyAccountAdder: 'view-only-account-adder',
-  safeImport: 'safe-import'
+  safeImport: 'safe-import',
+  transfer: 'transfer',
+  topUpGasTank: 'top-up-gas-tank',
+  tokenDetails: 'token-details'
 }
 
 const MOBILE_ROUTES = {
@@ -26,8 +29,6 @@ const WEB_ROUTES = {
   ...COMMON_ROUTES,
   rewards: 'rewards',
   earn: 'earn',
-  transfer: 'transfer',
-  topUpGasTank: 'top-up-gas-tank',
   signAccountOp: 'sign-account-op',
   transactions: 'transactions',
   signedMessages: 'signed-messages',

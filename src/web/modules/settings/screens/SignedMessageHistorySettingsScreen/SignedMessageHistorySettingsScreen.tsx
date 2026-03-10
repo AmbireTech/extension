@@ -1,5 +1,5 @@
 import { nanoid } from 'nanoid'
-import React, { FC, useState } from 'react'
+import React, { FC, useMemo, useState } from 'react'
 import { Trans } from 'react-i18next'
 import { StyleSheet, View } from 'react-native'
 
@@ -21,6 +21,9 @@ const SignedMessageHistory: FC<{
   sessionId: string
 }> = ({ page, account, sessionId }) => {
   const activityState = useController('ActivityController').state
+  const signedMessages = useMemo(() => {
+    return (activityState.signedMessages?.[sessionId]?.result?.items || [])
+  }, [activityState.signedMessages, sessionId])
 
   if (!activityState?.signedMessages?.[sessionId]?.result.items.length && page) {
     return (
@@ -51,12 +54,12 @@ const SignedMessageHistory: FC<{
 
   return (
     <>
-      {(activityState?.signedMessages?.[sessionId]?.result.items || []).map((item, i) => (
+      {signedMessages.map((item, i) => (
         <SignedMessageSummary
           key={item.timestamp}
           signedMessage={item as SignedMessage}
           style={
-            i !== activityState.signedMessages[sessionId].result.items.length - 1
+            i !== signedMessages.length - 1
               ? spacings.mbSm
               : {}
           }

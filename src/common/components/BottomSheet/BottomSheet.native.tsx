@@ -1,6 +1,7 @@
 import React, { RefObject } from 'react'
 import { ScrollView, View } from 'react-native'
 import { Modalize } from 'react-native-modalize'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import { isWeb } from '@common/config/env'
 import useTheme from '@common/hooks/useTheme'
@@ -10,8 +11,8 @@ import { getUiType } from '@common/utils/uiType'
 import { Portal } from '@gorhom/portal'
 
 import Backdrop from './Backdrop'
+import { BottomSheetProps } from './BottomSheet'
 import getStyles from './styles'
-import { BottomSheetProps } from './types'
 import useBottomSheetInternal from './useBottomSheetInternal'
 
 const ANIMATION_DURATION: number = 250
@@ -42,6 +43,7 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
   } = props
 
   const { styles, theme } = useTheme(getStyles)
+  const { bottom } = useSafeAreaInsets()
 
   const scrollViewRef = externalScrollViewRef
 
@@ -158,7 +160,7 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
           {!flatListProps && (
             <View
               testID={isOpen ? 'bottom-sheet' : undefined}
-              style={[common.fullWidth, containerInnerWrapperStyles]}
+              style={[common.fullWidth, { marginBottom: bottom }, containerInnerWrapperStyles]}
             >
               {children}
             </View>
