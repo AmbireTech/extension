@@ -11,7 +11,7 @@ jobs:
     uses: ./.github/workflows/_build-ios.yml
     with:
       build_command: yarn build:ios:production
-      artifact_suffix: production
+      artifact_suffix: ipa
       package_mode: production
       enable_signing: true
     secrets: inherit
