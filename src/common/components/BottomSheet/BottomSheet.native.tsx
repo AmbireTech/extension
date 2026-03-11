@@ -11,7 +11,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import useTheme from '@common/hooks/useTheme'
 import spacings, { SPACING_SM } from '@common/styles/spacings'
 import common from '@common/styles/utils/common'
-import { getUiType } from '@common/utils/uiType'
 import { Portal } from '@gorhom/portal'
 
 import Backdrop from './Backdrop'
