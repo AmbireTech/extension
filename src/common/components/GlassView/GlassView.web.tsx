@@ -27,6 +27,7 @@ const GlassView: React.FC<GlassViewProps & ViewProps> = ({
   blurAmount = 4,
   isSimpleBlur = true
 }) => {
+  return children
   const { themeType } = useTheme()
   const divRef = useRef<HTMLDivElement>(null)
   const [specularDataUrl, setSpecularDataUrl] = useState<string | null>(null)
