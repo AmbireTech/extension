@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { Animated, View } from 'react-native'
 import QRCode from 'react-native-qrcode-svg'
 
+import { isAmbireV1LinkedAccount, isAmbireV2Account } from '@ambire-common/libs/account/account'
 import { getIsViewOnly } from '@ambire-common/utils/accounts'
 import DiagonalRightArrowIcon from '@common/assets/svg/DiagonalRightArrowIcon/DiagonalRightArrowIcon'
 import AccountAddress from '@common/components/AccountAddress'
@@ -85,8 +86,28 @@ const ReceiveScreen: FC = () => {
   const MAX_VISIBLE_NETWORKS = 10
   const [showAllNetworks, setShowAllNetworks] = useState(false)
 
+  // Consider moving this to some controller or helper since we may
+  // need it to warn the user about unsupported networks in other places
+  // (e.g., when trying to send to an account that doesn't support a particular network)
   const supportedNetworks = useMemo(() => {
-    if (!account || !account.safeCreation) return networks
+    if (!account) return []
+
+    // NOT a [Gnosis] Safe account
+    if (!account.safeCreation) {
+      // EOA
+      if (!account?.creation) return networks
+
+      // v1 SA
+      if (isAmbireV1LinkedAccount(account.creation.factoryAddr)) {
+        // v1s don't work without the relayer
+        return networks.filter((network) => !!network.hasRelayer)
+      }
+
+      // v2 SA
+      return networks.filter(
+        (network) => network.areContractsDeployed && (network.hasRelayer || network.erc4337.enabled)
+      )
+    }
     if (!accountStates[account.addr]) return []
 
     return networks.filter((n) => {
@@ -117,8 +138,8 @@ const ReceiveScreen: FC = () => {
   })
 
   const hasMoreNetworks = useMemo(() => {
-    return networks.length > MAX_VISIBLE_NETWORKS
-  }, [networks.length])
+    return supportedNetworks.length > MAX_VISIBLE_NETWORKS
+  }, [supportedNetworks.length])
 
   const alwaysVisible = useMemo(() => {
     return supportedNetworks.slice(0, MAX_VISIBLE_NETWORKS)
