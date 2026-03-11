@@ -1,5 +1,4 @@
 import * as Application from 'expo-application'
-import * as Updates from 'expo-updates'
 import { Platform } from 'react-native'
 
 import {
@@ -42,8 +41,8 @@ export const APP_VERSION = appJSON.version
  */
 export const BUILD_NUMBER = Application.nativeBuildVersion || 'N/A'
 
-export const RELEASE_CHANNEL = Updates.channel || 'N/A'
-export const RUNTIME_VERSION = Updates.runtimeVersion || 'N/A'
+export const RELEASE_CHANNEL = 'N/A' // TODO: Get the release channel
+export const RUNTIME_VERSION = 'N/A' // TODO: Get the runtime version
 // FIXME: We should figure out a way to get this,
 // because 'expo-constants' uses window refs that break our extension service worker
 // export const EXPO_SDK = Constants?.manifest?.sdkVersion || 'N/A'
