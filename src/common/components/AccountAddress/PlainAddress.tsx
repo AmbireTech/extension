@@ -18,7 +18,7 @@ const PlainAddress: FC<Props> = ({ style, maxLength, address, hideParentheses, f
     fontSize={fontSize}
     appearance="secondaryText"
     weight="mono_regular"
-    style={[spacings.mrMi, flexbox.flex1, style]}
+    style={[spacings.mrMi, { flexShrink: 1 }, style]}
     numberOfLines={1}
     ellipsizeMode="middle"
   >
