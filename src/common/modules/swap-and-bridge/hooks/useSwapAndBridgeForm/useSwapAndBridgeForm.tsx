@@ -314,7 +314,8 @@ const useSwapAndBridgeForm = () => {
               {
                 type: 'swapAndBridgeRequest',
                 params: {
-                  openActionWindow: true
+                  openActionWindow: true,
+                  quote: !!account?.safeCreation && quote ? { ...quote } : undefined
                 }
               }
             ]
@@ -350,7 +351,8 @@ const useSwapAndBridgeForm = () => {
     setShowAddedToBatch,
     networkUserRequests,
     fromSelectedToken,
-    account?.safeCreation
+    account?.safeCreation,
+    quote
   ])
 
   const handleSubmitForm = useCallback(
@@ -374,7 +376,8 @@ const useSwapAndBridgeForm = () => {
                 {
                   type: 'swapAndBridgeRequest',
                   params: {
-                    openActionWindow: true
+                    openActionWindow: true,
+                    quote: !!account?.safeCreation && quote ? { ...quote } : undefined
                   }
                 }
               ]
