@@ -1,4 +1,7 @@
 <resources>
   <string name="app_name">Ambire</string>
   <string name="expo_runtime_version">11</string>
+  <!-- Stallion OTA config (values injected at build time by scripts/inject-mobile-ota-config.sh) -->
+  <string name="StallionProjectId">__STALLION_PROJECT_ID__</string>
+  <string name="StallionAppToken">__STALLION_APP_TOKEN__</string>
 </resources>

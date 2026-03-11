@@ -70,5 +70,9 @@
     <string>Light</string>
     <key>UIViewControllerBasedStatusBarAppearance</key>
     <false/>
+    <key>StallionProjectId</key>
+    <string>__STALLION_PROJECT_ID__</string>
+    <key>StallionAppToken</key>
+    <string>__STALLION_APP_TOKEN__</string>
   </dict>
 </plist>
