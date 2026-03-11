@@ -107,6 +107,8 @@ const SendToken: FC<Props> = ({
       >
         <ItemPanel
           style={{
+            // magic number to match the curve of the outer container
+            // which is with borderRadius: 16
             borderRadius: 13,
             ...spacings.pv,
             ...spacings.prMd,
