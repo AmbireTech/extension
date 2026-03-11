@@ -143,9 +143,9 @@ jobs:
         working-directory: ./e2e-playwright-tests
         run: npm run balance:test
 
-      - name: Run Playwright tests
+      - name: Run Playwright tests (autoLogin:test, debugging)
         working-directory: ./e2e-playwright-tests
-        run: npm run test
+        run: npm run autoLogin:test
 
       - name: Zip HTML report
         if: always()
