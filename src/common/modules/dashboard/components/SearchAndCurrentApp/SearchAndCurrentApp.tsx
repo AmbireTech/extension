@@ -44,12 +44,16 @@ const SearchAndCurrentApp = ({ control, displayCurrentApp = false, isHidden }: P
       style={[
         {
           position: 'absolute',
+          zIndex: 3,
+          ...flexbox.center
+        },
+        isWeb && {
           left: 0,
           width: '100%',
-          ...flexbox.center,
-          zIndex: 3,
-          // Allow clicking elements behind
-          pointerEvents: isWeb ? 'none' : 'auto'
+          pointerEvents: 'none'
+        },
+        isMobile && {
+          ...flexbox.alignSelfCenter
         },
         animatedStyle
       ]}
