@@ -11,12 +11,19 @@ interface Style {
 
 const getStyles = () =>
   StyleSheet.create<Style>({
-    action: {
-      width: isMobile ? 52 : 104,
-      ...flexbox.alignCenter,
-      ...flexbox.justifyCenter,
-      ...common.borderRadiusPrimary
-    }
+    action: isMobile
+      ? {
+          ...flexbox.center,
+          ...common.borderRadiusPrimary,
+          flex: 1,
+          flexShrink: 1
+        }
+      : {
+          width: 104,
+          ...flexbox.alignCenter,
+          ...flexbox.justifyCenter,
+          ...common.borderRadiusPrimary
+        }
   })
 
 export default getStyles

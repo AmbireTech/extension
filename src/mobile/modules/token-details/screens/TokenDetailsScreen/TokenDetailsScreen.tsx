@@ -58,10 +58,7 @@ const TokenDetailsScreen = () => {
         <Header.BackButton />
         <Header.Logo />
       </Header.Wrapper>
-      <ScrollableWrapper
-        // The bottom padding is because of the footer, to make sure the content is not hidden behind it.
-        contentContainerStyle={[flexbox.flex1, spacings.phSm, { paddingBottom: 124 }]}
-      >
+      <ScrollableWrapper contentContainerStyle={spacings.phSm}>
         <HideTokenModal
           modalRef={hideTokenModalRef}
           handleClose={closeHideTokenModal}
@@ -133,7 +130,7 @@ const TokenDetailsScreen = () => {
         <Exchanges exchanges={token.meta?.exchanges || []} />
         <TokenDetailsTransactionHistory />
       </ScrollableWrapper>
-      {/* <FooterGlassView size="sm">
+      <View style={styles.actionsContainer}>
         {actions.map((action) => (
           <TokenDetailsButton
             key={action.id}
@@ -143,7 +140,7 @@ const TokenDetailsScreen = () => {
             iconWidth={action.iconWidth}
           />
         ))}
-      </FooterGlassView> */}
+      </View>
     </MobileLayoutContainer>
   )
 }

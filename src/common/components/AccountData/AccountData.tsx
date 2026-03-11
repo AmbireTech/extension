@@ -7,7 +7,7 @@ import CopyIcon from '@common/assets/svg/CopyIcon'
 import RightArrowIcon from '@common/assets/svg/RightArrowIcon'
 import Avatar from '@common/components/Avatar'
 import Text from '@common/components/Text'
-import { isWeb } from '@common/config/env'
+import { isMobile, isWeb } from '@common/config/env'
 import useController from '@common/hooks/useController'
 import useHover, { AnimatedPressable, useCustomHover } from '@common/hooks/useHover'
 import useTheme from '@common/hooks/useTheme'
@@ -97,11 +97,17 @@ const AccountData: FC<Props> = ({ onPress, withArrowRightIcon }) => {
         >
           {account.preferences.label}
         </Text>
-        {maxWidthSize(480) && (
-          <>
-            <Text color="#B9BFC9" style={spacings.mrTy} weight="mono_regular" fontSize={12}>
-              ({shortenAddress(account.addr, 13)})
-            </Text>
+
+        <>
+          <Text
+            color="#B9BFC9"
+            style={isWeb ? spacings.mrTy : undefined}
+            weight="mono_regular"
+            fontSize={12}
+          >
+            ({shortenAddress(account.addr, isWeb ? 13 : 10)})
+          </Text>
+          {isWeb && (
             <AnimatedPressable
               style={addressAnimStyle}
               onPress={handleCopyText}
@@ -109,14 +115,15 @@ const AccountData: FC<Props> = ({ onPress, withArrowRightIcon }) => {
             >
               <CopyIcon width={24} height={24} color="#E3E6EB" />
             </AnimatedPressable>
-          </>
-        )}
+          )}
+        </>
+
         {!!withArrowRightIcon && (
           <Animated.View style={accountBtnAnimStyle}>
             <RightArrowIcon
               style={[
                 styles.accountButtonRightIcon,
-                maxWidthSize(480) ? spacings.mlMd : spacings.mlSm
+                maxWidthSize(480) ? spacings.mlMd : spacings.mlTy
               ]}
               width={12}
               color="#E3E6EB"

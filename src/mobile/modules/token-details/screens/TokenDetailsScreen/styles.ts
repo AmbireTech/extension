@@ -44,11 +44,11 @@ const getStyles = (theme: ThemeProps) =>
       ...flexbox.directionRow
     },
     actionsContainer: {
-      ...flexbox.flex1,
       ...spacings.phSm,
       ...spacings.pvSm,
       ...flexbox.directionRow,
-      ...flexbox.wrap
+      columnGap: SPACING_MI,
+      flexWrap: 'nowrap'
     },
     action: {
       width: '25%',

@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Pressable, View } from 'react-native'
+import { Pressable, StyleSheet, View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 
 import { Account as AccountType } from '@ambire-common/interfaces/account'
@@ -10,6 +10,7 @@ import Button from '@common/components/Button'
 import ScrollableWrapper, { WRAPPER_TYPES } from '@common/components/ScrollableWrapper'
 import Search from '@common/components/Search'
 import Text from '@common/components/Text'
+import { isMobile, isWeb } from '@common/config/env'
 import useAccountsList from '@common/hooks/useAccountsList'
 import useController from '@common/hooks/useController'
 import useNavigation from '@common/hooks/useNavigation'
@@ -20,6 +21,7 @@ import AddAccount from '@common/modules/account-select/components/AddAccount'
 import DashboardSkeleton from '@common/modules/dashboard/components/Skeleton'
 import { HeaderWithTitle } from '@common/modules/header/components/Header/Header'
 import { ROUTES, WEB_ROUTES } from '@common/modules/router/constants/common'
+import alert from '@common/services/alert'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { MobileLayoutContainer } from '@mobile/components/MobileLayoutWrapper'
@@ -107,7 +109,15 @@ const AccountSelectScreen = () => {
   return !pendingToBeSetSelectedAccount ? (
     <MobileLayoutContainer>
       <HeaderWithTitle>
-        <Pressable onPress={() => navigate(WEB_ROUTES.accountsSettings)}>
+        <Pressable
+          onPress={() => {
+            if (isMobile) {
+              alert('Coming soon!')
+              return
+            }
+            navigate(WEB_ROUTES.accountsSettings)
+          }}
+        >
           <SettingsWheelIcon width={28} height={28} />
         </Pressable>
       </HeaderWithTitle>
@@ -126,7 +136,11 @@ const AccountSelectScreen = () => {
           renderItem={renderItem}
           getItemLayout={getItemLayout}
           keyExtractor={keyExtractor}
-          ListEmptyComponent={<Text>{t('No accounts found')}</Text>}
+          ListEmptyComponent={
+            <View style={[flexbox.flex1, flexbox.center]}>
+              <Text>{t('No accounts found')}</Text>
+            </View>
+          }
         />
 
         <View style={spacings.ptSm}>
@@ -134,7 +148,6 @@ const AccountSelectScreen = () => {
             testID="button-add-account"
             text={t('Add account')}
             size="regular"
-            hasBottomSpacing={false}
             onPress={openBottomSheet as any}
             childrenPosition="left"
             style={{ ...flexbox.alignSelfCenter, width: '100%' }}

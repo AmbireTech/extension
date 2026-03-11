@@ -21,7 +21,7 @@ import Option from '@common/components/Option'
 import { isMobile, isWeb } from '@common/config/env'
 import useController from '@common/hooks/useController'
 import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
-import SavedSeedPhrases from '@common/modules/account-select/components/SavedSeedPhrases'
+import SavedSeedPhrasesBottomSheet from '@common/modules/account-select/components/SavedSeedPhrasesBottomSheet'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
 import { ROUTES, WEB_ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
@@ -202,15 +202,13 @@ const AddAccount = ({
           />
         )}
       </View>
-      <BottomSheet
-        id="seed-phrases-bottom-sheet"
+
+      <SavedSeedPhrasesBottomSheet
         sheetRef={seedPhraseSheetRef}
-        adjustToContentHeight
-        isScrollEnabled={true}
-        closeBottomSheet={closeSeedPhraseBottomSheet}
-      >
-        <SavedSeedPhrases handleClose={closeSeedPhraseBottomSheet as any} />
-      </BottomSheet>
+        open={openSeedPhraseBottomSheet}
+        close={closeSeedPhraseBottomSheet}
+        handleClose={closeSeedPhraseBottomSheet as any}
+      />
     </BottomSheet>
   )
 }

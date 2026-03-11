@@ -1,5 +1,6 @@
 import { StyleSheet, ViewStyle } from 'react-native'
 
+import { isWeb } from '@common/config/env'
 import spacings from '@common/styles/spacings'
 import { ThemeProps } from '@common/styles/themeConfig'
 import common from '@common/styles/utils/common'
@@ -19,7 +20,7 @@ const getStyles = (theme: ThemeProps) =>
   StyleSheet.create<Style>({
     containerInnerWrapper: {
       ...common.shadowSecondary,
-      maxHeight: 600
+      maxHeight: isWeb ? 600 : 'auto'
     },
     content: {
       ...common.borderRadiusPrimary,

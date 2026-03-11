@@ -1,6 +1,6 @@
 import { GlassView as ExpoGlassView } from 'expo-glass-effect'
 import React, { FC } from 'react'
-import { StyleSheet, View, ViewStyle } from 'react-native'
+import { StyleSheet, ViewStyle } from 'react-native'
 
 import { BORDER_RADIUS_PRIMARY, hexToRgba } from '@common/styles/utils/common'
 
@@ -20,19 +20,16 @@ const GlassView: FC<GlassViewProps> = ({
 
   // iOS uses expo-glass-effect which wraps the native visual effect view
   return (
-    <View
+    <ExpoGlassView
       testID={testID}
-      pointerEvents={mappedPointerEvents}
+      glassEffectStyle="clear"
+      colorScheme="auto"
+      tintColor={defaultTint1}
       style={[styles.container, { borderRadius }, style, restCssStyle as ViewStyle]}
+      pointerEvents={mappedPointerEvents}
     >
-      <ExpoGlassView
-        glassEffectStyle="regular"
-        colorScheme="auto"
-        tintColor={defaultTint1}
-        style={StyleSheet.absoluteFill}
-      />
       {children}
-    </View>
+    </ExpoGlassView>
   )
 }
 

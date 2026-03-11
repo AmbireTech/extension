@@ -11,7 +11,7 @@ import SendIcon from '@common/assets/svg/SendIcon'
 import SwapAndBridgeIcon from '@common/assets/svg/SwapAndBridgeIcon'
 import TopUpIcon from '@common/assets/svg/TopUpIcon'
 import VisibilityIcon from '@common/assets/svg/VisibilityIcon'
-import { isMobile } from '@common/config/env'
+import { isMobile, isWeb } from '@common/config/env'
 import useController from '@common/hooks/useController'
 import useHasGasTank from '@common/hooks/useHasGasTank'
 import useNavigation from '@common/hooks/useNavigation'
@@ -162,16 +162,12 @@ const useTokenDetails = () => {
         strokeWidth: 1.5,
         testID: 'token-send'
       },
-      {
+      isWeb && {
         id: 'swap-or-bridge',
         text: t('Swap or Bridge'),
         icon: SwapAndBridgeIcon,
         iconWidth: 86,
         onPress: ({ chainId, address }: TokenResult) => {
-          if (isMobile) {
-            alert(t('Coming soon!'))
-            return
-          }
           navigate(ROUTES.swapAndBridge, {
             state: {
               preselectedFromToken: { address, chainId }
@@ -260,7 +256,7 @@ const useTokenDetails = () => {
         // @TODO: Handle unhide and make the UX good
         onPress: handleHideTokenFromButton
       }
-    ],
+    ].filter(Boolean) as any[],
     [
       t,
       isGasTankOrRewardsToken,
@@ -277,6 +273,7 @@ const useTokenDetails = () => {
       handleHideTokenFromButton,
       navigate,
       gasTankAssets,
+      isWeb,
       addToast
     ]
   )

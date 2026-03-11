@@ -35,7 +35,7 @@ const Wrapper = ({
       style={[
         spacings.phSm,
         isWeb && spacings.pvSm,
-        isMobile && spacings.mbXl,
+        isMobile && spacings.mbLg,
         {
           width: '100%'
         },
