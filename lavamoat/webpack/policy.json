@@ -80,6 +80,11 @@
         "node-polyfill-webpack-plugin>punycode": true
       }
     },
+    "@ensdomains/ethers-patch-v6": {
+      "packages": {
+        "ethers": true
+      }
+    },
     "eth-crypto>@ethereumjs/tx>@ethereumjs/common": {
       "globals": {
         "Buffer.alloc": true,
