@@ -96,6 +96,10 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
 
   return (
     <Portal hostName="global">
+      {/* Wrapping the content in a View with a stable `key` prevents Portal */}
+      {/* from losing track of its subtree during React reconciliation and re-renders. */}
+      {/* Without this, the backdrop stays, but Modalize could disappear */}
+      {/* without even triggering `onClose` or (this) component unmount */}
       <Animated.View
         key={`portal-host-${id}`}
         style={[

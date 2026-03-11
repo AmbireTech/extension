@@ -12,7 +12,7 @@ import {
 
 import InformationIcon from '@common/assets/svg/InformationIcon'
 import Text, { TextAppearance } from '@common/components/Text'
-import { isWeb } from '@common/config/env'
+import { isMobile, isWeb } from '@common/config/env'
 import useHover, { AnimatedPressable } from '@common/hooks/useHover'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
@@ -245,9 +245,9 @@ const Input = ({
             {' '}
           </Text>
         )}
-        {!!renderConfirmAddress && isWeb && renderConfirmAddress()}
+        {isWeb && !!renderConfirmAddress && renderConfirmAddress()}
       </View>
-      {!!renderConfirmAddress && !isWeb && renderConfirmAddress()}
+      {isMobile && !!renderConfirmAddress && renderConfirmAddress()}
     </View>
   )
 }
