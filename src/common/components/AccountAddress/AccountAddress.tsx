@@ -86,7 +86,7 @@ const AccountAddress: FC<Props> = ({
               <PlainAddress
                 maxLength={18}
                 address={address}
-                style={{ ...spacings.mlMi, flex: 1 }}
+                style={{ ...spacings.mlMi }}
                 fontSize={fontSize}
               />
               {withReceive && <ReceiveButton address={address} fontSize={fontSize} />}

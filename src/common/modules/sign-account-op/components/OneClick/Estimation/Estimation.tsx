@@ -16,7 +16,7 @@ import ButtonWithLoader from '@common/components/ButtonWithLoader/ButtonWithLoad
 import FooterGlassView from '@common/components/FooterGlassView'
 import HoldToProceedButton from '@common/components/HoldToProceedButton'
 import NoKeysToSignAlert from '@common/components/NoKeysToSignAlert'
-import { isMobile } from '@common/config/env'
+import { isMobile, isWeb } from '@common/config/env'
 import useSign from '@common/hooks/useSign'
 import Estimation from '@common/modules/sign-account-op/components/Estimation'
 import BundlerWarning from '@common/modules/sign-account-op/components/Estimation/components/bundlerWarning'
@@ -104,7 +104,7 @@ const OneClickEstimation = ({
         // NOTE: This must be lower than SigningKeySelect's z-index
         customZIndex={5}
         style={spacings.pb}
-        closeBottomSheet={closeEstimationModal}
+        closeBottomSheet={isWeb ? undefined : closeEstimationModal}
         autoOpen={hasProceeded || (isRequestWindow && !!signAccountOpController)}
         isScrollEnabled={isMobile}
         shouldBeClosableOnDrag={isMobile}

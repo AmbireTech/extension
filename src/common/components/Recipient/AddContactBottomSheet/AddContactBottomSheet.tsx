@@ -1,6 +1,5 @@
 import React, { FC, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { View } from 'react-native'
 
 import AddressBookContact from '@common/components/AddressBookContact'
 import BottomSheet from '@common/components/BottomSheet'
@@ -41,28 +40,6 @@ const AddContactBottomSheet: FC<Props> = ({ sheetRef, closeBottomSheet, address 
     addToast(t('Contact added to Address Book'))
   }
 
-  const buttonsContent = (
-    <>
-      <Button
-        hasBottomSpacing={false}
-        type="secondary"
-        text={t('Cancel')}
-        onPress={closeBottomSheet}
-        style={isWeb && { minWidth: 96, ...spacings.mrLg }}
-        size={isWeb ? 'smaller' : 'regular'}
-      />
-      <Button
-        testID="form-add-to-contacts-button"
-        style={isWeb && { minWidth: 160 }}
-        disabled={!address || name.length === 0 || name.length > 32}
-        hasBottomSpacing={isMobile}
-        text={!name.length ? t('Name your contact') : t('Add to contacts')}
-        onPress={handleAddContact}
-        size={isWeb ? 'smaller' : 'regular'}
-      />
-    </>
-  )
-
   return (
     <BottomSheet id="transfer-add-contact" sheetRef={sheetRef} closeBottomSheet={closeBottomSheet}>
       <ModalHeader title={t('Add contact')} handleClose={closeBottomSheet} />
@@ -86,13 +63,26 @@ const AddContactBottomSheet: FC<Props> = ({ sheetRef, closeBottomSheet, address 
         isEditable={false}
         style={spacings.mb2Xl}
       />
-      {isWeb ? (
-        <FooterGlassView size="sm" absolute={false}>
-          {buttonsContent}
-        </FooterGlassView>
-      ) : (
-        <View style={{ flexDirection: 'column-reverse' }}>{buttonsContent}</View>
-      )}
+
+      <FooterGlassView size="sm" absolute={false}>
+        <Button
+          hasBottomSpacing={false}
+          type="secondary"
+          text={t('Cancel')}
+          onPress={closeBottomSheet}
+          style={isWeb && { minWidth: 96, ...spacings.mrLg }}
+          size={isWeb ? 'smaller' : 'regular'}
+        />
+        <Button
+          testID="form-add-to-contacts-button"
+          style={isWeb && { minWidth: 160 }}
+          disabled={!address || name.length === 0 || name.length > 32}
+          hasBottomSpacing={isMobile}
+          text={!name.length ? t('Name your contact') : t('Add to contacts')}
+          onPress={handleAddContact}
+          size={isWeb ? 'smaller' : 'regular'}
+        />
+      </FooterGlassView>
     </BottomSheet>
   )
 }

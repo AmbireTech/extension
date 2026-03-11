@@ -65,7 +65,7 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
     id
   } = useBottomSheetInternal(props)
 
-  const renderChildren = useMemo(() => {
+  const renderContent = useCallback(() => {
     if (flatListProps || customRenderer) return null
 
     if (sectionListProps) {
@@ -90,7 +90,16 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
         {children}
       </View>
     )
-  }, [])
+  }, [
+    children,
+    containerInnerWrapperStyles,
+    customRenderer,
+    flatListProps,
+    isOpen,
+    isScrollEnabled,
+    isScrollable,
+    sectionListProps
+  ])
 
   return (
     <Portal hostName="global">
@@ -207,7 +216,7 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
             ) : undefined
           }
         >
-          {renderChildren}
+          {renderContent()}
         </Modalize>
       </View>
     </Portal>

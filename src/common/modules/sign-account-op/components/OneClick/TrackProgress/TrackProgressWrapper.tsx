@@ -89,13 +89,9 @@ const TrackProgressWrapper: FC<TrackProgressProps> = ({
           <View style={{ height: 1, backgroundColor: theme.secondaryBorder, ...spacings.mvLg }} />
         )}
 
-        {isWeb ? (
-          <FooterGlassView absolute={false} size="sm" style={spacings.mbTy}>
-            {buttonsContent}
-          </FooterGlassView>
-        ) : (
-          <View style={{ flexDirection: 'column-reverse' }}>{buttonsContent}</View>
-        )}
+        <FooterGlassView absolute={false} size="sm" style={spacings.mbTy}>
+          {buttonsContent}
+        </FooterGlassView>
       </View>
     </LayoutWrapper>
   )

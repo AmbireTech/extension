@@ -11,6 +11,7 @@ import flexbox from '@common/styles/utils/flexbox'
 const SuccessAnimation = ({
   style = {},
   size = 72,
+  // isLoading needed to avoid shift of content when switching between loading and success state
   isLoading
 }: {
   style?: ViewStyle
@@ -21,13 +22,15 @@ const SuccessAnimation = ({
   const scaleAnim = useRef(new Animated.Value(0)).current
 
   useEffect(() => {
+    if (isLoading) return
+
     Animated.spring(scaleAnim, {
       toValue: 1,
       useNativeDriver: !isWeb,
       tension: 50,
       friction: 7
     }).start()
-  }, [scaleAnim])
+  }, [scaleAnim, isLoading])
 
   return (
     <View
@@ -46,7 +49,7 @@ const SuccessAnimation = ({
           height: size,
           borderRadius: size / 2,
           backgroundColor: isLoading ? 'transparent' : theme.successBackground,
-          transform: [{ scale: scaleAnim }]
+          transform: [{ scale: isLoading ? 1 : scaleAnim }]
         }}
       >
         {isLoading ? (
