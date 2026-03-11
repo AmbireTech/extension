@@ -74,7 +74,6 @@ const AddAccount = ({
         },
         testID: 'ledger-option'
       },
-
       {
         key: 'lattice',
         text: t('GridPlus'),
@@ -84,6 +83,15 @@ const AddAccount = ({
           dispatch({ type: 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_LATTICE' })
         },
         testID: 'lattice-option'
+      },
+      {
+        key: 'qr',
+        text: t('QR Wallet'), // TODO: changed it
+        icon: LatticeIcon,
+        onPress: () => {
+          goToNextRoute(WEB_ROUTES.qrConnect)
+        },
+        testID: 'qr-option'
       }
     ]
   }, [dispatch, goToNextRoute, setTriggeredHwWalletFlow, t])

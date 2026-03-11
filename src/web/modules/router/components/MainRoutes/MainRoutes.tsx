@@ -31,6 +31,7 @@ import ViewOnlyAccountAdderScreen from '@web/modules/auth/screens/ViewOnlyAccoun
 import DappCatalogScreen from '@web/modules/dapp-catalog/screens/DappCatalogScreen'
 import ExtensionRewardsScreen from '@web/modules/extension-rewards/screens/ExtensionRewardsScreen'
 import LedgerConnectScreen from '@web/modules/hardware-wallet/screens/LedgerConnectScreen/LedgerConnectScreen'
+import QrConnectScreen from '@web/modules/hardware-wallet/screens/QrConnectScreen/QrConnectScreen'
 import KeyStoreEmailRecoveryScreen from '@web/modules/keystore/screens/KeyStoreEmailRecoveryScreen/KeyStoreEmailRecoveryScreen'
 import KeyStoreEmailRecoverySetNewPasswordScreen from '@web/modules/keystore/screens/KeyStoreEmailRecoverySetNewPasswordScreen'
 import KeyStoreSetupScreen from '@web/modules/keystore/screens/KeyStoreSetupScreen'
@@ -99,9 +100,8 @@ const MainRoutes = () => {
             element={<ImportExistingAccountSelectorScreen />}
           />
           <Route path={WEB_ROUTES.ledgerConnect} element={<LedgerConnectScreen />} />
-
           <Route path={WEB_ROUTES.safeImport} element={<SafeImportScreen />} />
-
+          <Route path={WEB_ROUTES.qrConnect} element={<QrConnectScreen />} />
           <Route path={WEB_ROUTES.importPrivateKey} element={<PrivateKeyImportScreen />} />
           <Route path={WEB_ROUTES.importSeedPhrase} element={<SeedPhraseImportScreen />} />
           <Route

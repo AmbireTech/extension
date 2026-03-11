@@ -60,10 +60,12 @@ import {
 } from '@web/extension-services/messengers'
 import LatticeController from '@web/modules/hardware-wallet/controllers/LatticeController'
 import LedgerController from '@web/modules/hardware-wallet/controllers/LedgerController'
+import QrHardwareController from '@web/modules/hardware-wallet/controllers/QrHardwareController/QrHardwareController'
 import TrezorController from '@web/modules/hardware-wallet/controllers/TrezorController'
 import LatticeSigner from '@web/modules/hardware-wallet/libs/LatticeSigner'
 import LedgerSigner from '@web/modules/hardware-wallet/libs/LedgerSigner'
 import TrezorSigner from '@web/modules/hardware-wallet/libs/TrezorSigner'
+import UrQrProtocolAdapter from '@web/modules/hardware-wallet/qr/protocol/UrQrProtocolAdapter'
 import { getExtensionInstanceId } from '@web/utils/analytics'
 import { LOG_LEVELS, logInfoWithPrefix } from '@web/utils/logger'
 
@@ -338,6 +340,7 @@ const init = async () => {
   const ledgerCtrl = new LedgerController()
   const trezorCtrl = new TrezorController(windowManager as UiManager['window'])
   const latticeCtrl = new LatticeController()
+  const qrCtrl = new QrHardwareController(new UrQrProtocolAdapter())
 
   // Skip adding custom headers and URL modifications for 3rd party URLs
   // (only internal Ambire APIs need the x-app-* headers and tracking params)
@@ -497,7 +500,8 @@ const init = async () => {
     externalSignerControllers: {
       ledger: ledgerCtrl,
       trezor: trezorCtrl,
-      lattice: latticeCtrl
+      lattice: latticeCtrl,
+      qr: qrCtrl
     } as any,
     uiManager: {
       window: {
@@ -709,6 +713,7 @@ const init = async () => {
             // eslint-disable-next-line @typescript-eslint/no-floating-promises
             ledgerCtrl.cleanUp()
             trezorCtrl.cleanUp()
+            // TODO: check does qrCtrl need clean up as well
           }
         })
       })

@@ -50,6 +50,10 @@ type MainControllerAccountPickerInitTrezorAction = {
 type MainControllerAccountPickerInitLatticeAction = {
   type: 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_LATTICE'
 }
+type MainControllerAccountPickerInitQrWalletAction = {
+  type: 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_QR_WALLET'
+  params: { payload: string | Uint8Array }
+}
 type MainControllerAccountPickerInitFromSavedSeedPhraseAction = {
   type: 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_FROM_SAVED_SEED_PHRASE'
   params: { id: string }
@@ -104,6 +108,7 @@ type OpenExtensionPopupAction = {
 export type Action =
   | UpdateNavigationUrl
   | InitControllerStateAction
+  | MainControllerAccountPickerInitQrWalletAction
   | MainControllerAccountPickerInitLatticeAction
   | MainControllerAccountPickerInitTrezorAction
   | MainControllerAccountPickerInitLedgerAction

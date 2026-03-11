@@ -130,6 +130,13 @@ const ImportExistingAccountSelectorScreen = () => {
         icon: SafeIcon
       },
       {
+        title: 'QR Wallet', // TODO: change to better name if needed
+        onPress: () => {
+          goToNextRoute(WEB_ROUTES.qrConnect)
+        },
+        icon: LedgerLetterIcon
+      },
+      {
         title: 'JSON backup file',
         onPress: () => {
           goToNextRoute(WEB_ROUTES.importSmartAccountJson)
