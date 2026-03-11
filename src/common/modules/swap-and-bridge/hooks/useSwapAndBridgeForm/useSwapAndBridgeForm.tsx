@@ -41,7 +41,8 @@ const useSwapAndBridgeForm = () => {
     supportedChainIds,
     updateQuoteStatus,
     sessionIds,
-    toSelectedToken
+    toSelectedToken,
+    toChainId
   } = useController('SwapAndBridgeController').state
   const { dispatch: swapAndBridgeDispatch } = useController('SwapAndBridgeController')
   const { dispatch: requestsDispatch, state: requestsState } = useController('RequestsController')
@@ -304,7 +305,7 @@ const useSwapAndBridgeForm = () => {
     closePriceImpactModal()
 
     if (isOneClickModeDuringPriceImpact) {
-      if (networkUserRequests.length > 0) {
+      if (!!account?.safeCreation || networkUserRequests.length > 0) {
         requestsDispatch({
           type: 'method',
           params: {
@@ -348,7 +349,8 @@ const useSwapAndBridgeForm = () => {
     isOneClickModeDuringPriceImpact,
     setShowAddedToBatch,
     networkUserRequests,
-    fromSelectedToken
+    fromSelectedToken,
+    account?.safeCreation
   ])
 
   const handleSubmitForm = useCallback(
