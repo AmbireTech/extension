@@ -1,3 +1,3 @@
-import BatchModal from './BatchModal'
+import BatchModal from './BatchAdded'
 
 export default BatchModal

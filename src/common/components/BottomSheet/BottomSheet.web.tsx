@@ -1,4 +1,4 @@
-import React, { RefObject } from 'react'
+import React, { RefObject, useCallback, useMemo } from 'react'
 import { ScrollView, SectionList, View } from 'react-native'
 import { Modalize } from 'react-native-modalize'
 
@@ -64,6 +64,34 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
     setIsBackdropVisible,
     id
   } = useBottomSheetInternal(props)
+
+  const renderChildren = useMemo(() => {
+    if (flatListProps || customRenderer) return null
+
+    if (sectionListProps) {
+      return (
+        <SectionList
+          bounces={false}
+          keyboardShouldPersistTaps="handled"
+          {...(sectionListProps as any)}
+        />
+      )
+    }
+
+    return (
+      <View
+        testID={isOpen ? 'bottom-sheet' : undefined}
+        style={[
+          isScrollEnabled && isScrollable ? spacings.prTy : {},
+          common.fullWidth,
+          containerInnerWrapperStyles
+        ]}
+      >
+        {children}
+      </View>
+    )
+  }, [])
+
   return (
     <Portal hostName="global">
       {/* Wrapping the content in a View with a stable `key` prevents Portal */}
@@ -179,32 +207,7 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
             ) : undefined
           }
         >
-          {(() => {
-            if (flatListProps || customRenderer) return null
-
-            if (sectionListProps) {
-              return (
-                <SectionList
-                  bounces={false}
-                  keyboardShouldPersistTaps="handled"
-                  {...(sectionListProps as any)}
-                />
-              )
-            }
-
-            return (
-              <View
-                testID={isOpen ? 'bottom-sheet' : undefined}
-                style={[
-                  isScrollEnabled && isScrollable ? spacings.prTy : {},
-                  common.fullWidth,
-                  containerInnerWrapperStyles
-                ]}
-              >
-                {children}
-              </View>
-            )
-          })()}
+          {renderChildren}
         </Modalize>
       </View>
     </Portal>

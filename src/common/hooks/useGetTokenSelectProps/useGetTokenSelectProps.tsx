@@ -37,7 +37,7 @@ const getTokenOptionsEmptyState = (isToToken = false) => [
     value: 'noTokens',
     label: (
       <TextFallbackState>
-        {isToToken ? 'Failed to retrieve tokens' : "You don't have any tokens"}
+        {isToToken ? 'Failed to retrieve tokens' : 'No tokens found'}
       </TextFallbackState>
     ),
     icon: null

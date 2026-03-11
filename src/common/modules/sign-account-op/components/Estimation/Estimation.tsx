@@ -13,10 +13,11 @@ import AssetIcon from '@common/assets/svg/AssetIcon'
 import FeeIcon from '@common/assets/svg/FeeIcon'
 import Alert from '@common/components/Alert'
 import Select, { SectionedSelect } from '@common/components/Select'
+import BottomSheetHeader from '@common/components/Select/components/BottomSheetHeader'
 import { SelectValue } from '@common/components/Select/types'
 import Text from '@common/components/Text'
 import TitleAndIcon from '@common/components/TitleAndIcon'
-import { isMobile } from '@common/config/env'
+import { isMobile, isWeb } from '@common/config/env'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import BundlerWarning from '@common/modules/sign-account-op/components/Estimation/components/bundlerWarning'
@@ -64,7 +65,7 @@ const FeeSpeedLabel = ({
       ]}
       testID={SPEED_TEST_IDS[speed.type]}
     >
-      <Text weight="medium" fontSize={12} style={spacings.mrMi}>
+      <Text weight="medium" fontSize={isMobile ? 14 : 12} style={spacings.mrMi}>
         {t(speed.type.charAt(0).toUpperCase() + speed.type.slice(1))}
       </Text>
       {!isValue && (
@@ -482,13 +483,14 @@ const Estimation = ({
               height: 40,
               backgroundColor: isOneClick ? theme.secondaryBackground : theme.primaryBackground
             }}
-            menuOptionHeight={40}
+            menuOptionHeight={isWeb ? 40 : undefined}
             // Display a wider menu if the fee token price is unavailable
             // as the native amount takes up more space
             menuLeftHorizontalOffset={feeTokenPriceUnavailableWarning ? 100 : 48}
             menuStyle={{ minWidth: feeTokenPriceUnavailableWarning ? 200 : 148 }}
+            bottomSheetTitle={t('Gas fee')}
             withSearch={false}
-            containerStyle={{ ...spacings.mb0, width: 116 }}
+            containerStyle={{ ...spacings.mb0, width: isWeb ? 116 : 126 }}
             testID="fee-speed-select"
           />
         )}

@@ -21,6 +21,7 @@
     "transfer": "npx playwright test -g @transfer",
     "ambire:rewards": "npx playwright test -g @rewards",
     "auto:login": "npx playwright test -g @autoLogin",
+    "relayer": "npx playwright test -g @relayer",
     "postinstall": "patch-package"
   },
   "author": "Filip",

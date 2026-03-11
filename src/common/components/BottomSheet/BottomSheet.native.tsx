@@ -11,7 +11,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import useTheme from '@common/hooks/useTheme'
 import spacings, { SPACING_SM } from '@common/styles/spacings'
 import common from '@common/styles/utils/common'
-import { getUiType } from '@common/utils/uiType'
 import { Portal } from '@gorhom/portal'
 
 import Backdrop from './Backdrop'
@@ -96,6 +95,10 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
 
   return (
     <Portal hostName="global">
+      {/* Wrapping the content in a View with a stable `key` prevents Portal */}
+      {/* from losing track of its subtree during React reconciliation and re-renders. */}
+      {/* Without this, the backdrop stays, but Modalize could disappear */}
+      {/* without even triggering `onClose` or (this) component unmount */}
       <Animated.View
         key={`portal-host-${id}`}
         style={[

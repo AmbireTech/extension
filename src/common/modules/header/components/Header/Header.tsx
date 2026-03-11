@@ -34,8 +34,7 @@ const Wrapper = ({
     <View
       style={[
         spacings.phSm,
-        isWeb && spacings.pbSm,
-        isWeb && spacings.ptMd,
+        isWeb && spacings.pvSm,
         isMobile && spacings.mbXl,
         {
           width: '100%'

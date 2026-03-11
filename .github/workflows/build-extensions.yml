@@ -28,10 +28,10 @@ jobs:
       group: ${{ github.workflow }}-${{ github.ref }}-${{ matrix.build_variant }}
     steps:
       - name: Checkout code 🛎️
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Add SSH key to checkout a private repo
-        uses: webfactory/ssh-agent@v0.5.4
+        uses: webfactory/ssh-agent@v0.9.1
         with:
           ssh-private-key: ${{ secrets.DEPLOY_KEY }}
 
@@ -99,13 +99,13 @@ jobs:
       #   shell: bash
 
       # - name: Upload source code 📦
-      #   uses: actions/upload-artifact@v4
+      #   uses: actions/upload-artifact@v6
       #   with:
       #     name: extension-source-code
       #     path: ./extension-source-code.zip
 
       - name: Upload extension builds 📦
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: ambire-extension-v${{ steps.version.outputs.VERSION }}-${{ matrix.artifact_suffix }}-with-sourcemaps
           path: ./build/*.zip

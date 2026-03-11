@@ -34,7 +34,8 @@ const Modals: FC<ModalsProps> = ({
   const {
     state: { signAccountOpController: transferSignAccountOp }
   } = useController('TransferController')
-  const currentSignAccountOp = useController('SignAccountOpController').state
+  const { state: currentSignAccountOp, dispatch: signAccountOpDispatch } =
+    useController('SignAccountOpController')
 
   if (renderedButNotNecessarilyVisibleModal === 'warnings') {
     return (
@@ -111,6 +112,15 @@ const Modals: FC<ModalsProps> = ({
         signedTransactionsCount={signAccountOpState.signedTransactionsCount}
         accountOp={signAccountOpState.accountOp}
         actionType={actionType}
+        cancelReq={() => {
+          signAccountOpDispatch({
+            type: 'method',
+            params: {
+              method: 'cancelSignReq',
+              args: []
+            }
+          })
+        }}
       />
     )
   }

@@ -2,7 +2,7 @@ import { View } from 'react-native'
 import { SvgProps } from 'react-native-svg'
 
 import DownArrowIcon from '@common/assets/svg/DownArrowIcon'
-// import RightArrowIcon from '@common/assets/svg/RightArrowIcon'
+import RightArrowIcon from '@common/assets/svg/RightArrowIcon'
 import UpArrowIcon from '@common/assets/svg/UpArrowIcon'
 import Text from '@common/components/Text'
 import { AnimatedPressable, useCustomHover } from '@common/hooks/useHover'
@@ -85,7 +85,7 @@ const Option = ({
         )}
 
         <View style={spacings.mrSm}>
-          {/* {status === 'default' && <RightArrowIcon />} */}
+          {status === 'default' && <RightArrowIcon />}
           {status === 'expanded' && <UpArrowIcon />}
           {status === 'collapsed' && <DownArrowIcon />}
         </View>
