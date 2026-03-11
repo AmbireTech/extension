@@ -51,7 +51,6 @@ const Exchanges: FC<Props> = ({ exchanges }) => {
           }
         })
         .filter((exchange): exchange is ExchangeInfo => exchange !== null)
-        .slice(0, 3)
     )
   }, [exchangeData, exchanges])
 
@@ -78,7 +77,7 @@ const Exchanges: FC<Props> = ({ exchanges }) => {
           {t('Supported exchanges')}
         </Text>
         <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-          {exchangesWithData.map((exchange) => (
+          {exchangesWithData.slice(0, 3).map((exchange) => (
             <View
               key={exchange.name}
               style={{
