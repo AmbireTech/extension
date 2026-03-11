@@ -6,10 +6,12 @@ import ReceiveIcon from '@common/assets/svg/ReceiveIcon'
 import PlainAddress from '@common/components/AccountAddress/PlainAddress'
 import PlainAddressWithCopy from '@common/components/AccountAddress/PlainAddressWithCopy'
 import Text from '@common/components/Text'
+import { isMobile } from '@common/config/env'
 import useHover, { AnimatedPressable } from '@common/hooks/useHover/useHover'
 import useNavigation from '@common/hooks/useNavigation'
 import useReverseLookup from '@common/hooks/useReverseLookup'
 import { WEB_ROUTES } from '@common/modules/router/constants/common'
+import alert from '@common/services/alert'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
@@ -29,6 +31,10 @@ const ReceiveButton = memo(({ address, fontSize }: { address: string; fontSize: 
   const { navigate } = useNavigation()
 
   const handleReceive = useCallback(async () => {
+    if (isMobile) {
+      alert('Coming soon')
+      return
+    }
     navigate(WEB_ROUTES.receive, { state: { address } })
   }, [navigate, address])
 

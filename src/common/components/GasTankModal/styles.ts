@@ -19,7 +19,7 @@ type Style = {
 const getStyles = (theme: ThemeProps) =>
   StyleSheet.create<Style>({
     containerInnerWrapper: {
-      ...common.shadowSecondary,
+      ...(isWeb ? common.shadowSecondary : {}),
       maxHeight: isWeb ? 600 : 'auto'
     },
     content: {
@@ -50,14 +50,14 @@ const getStyles = (theme: ThemeProps) =>
       ...flexbox.alignCenter
     },
     bulletWrapper: {
-      maxWidth: 422,
+      maxWidth: isWeb ? 422 : 'auto',
       ...spacings.pvSm,
       ...spacings.phSm,
       ...spacings.mtMd,
       ...flexbox.directionRow,
       ...flexbox.alignCenter,
       ...common.borderRadiusPrimary,
-      ...common.shadowPrimary,
+      ...(isWeb ? common.shadowPrimary : {}),
       backgroundColor: theme.primaryBackground
     }
   })

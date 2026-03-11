@@ -230,12 +230,14 @@ const GasTankModal = ({ modalRef, handleClose, portfolio, account }: Props) => {
         </>
       ) : (
         <>
-          <View style={[flexbox.directionRow, flexbox.center, common.fullWidth, spacings.mtLg]}>
+          <View
+            style={[flexbox.directionRow, flexbox.center, common.fullWidth, isWeb && spacings.mtLg]}
+          >
             <Text fontSize={16} weight="semiBold" appearance="secondaryText">
               {t('Experience the benefits of the Gas Tank:')}
             </Text>
           </View>
-          <View style={[flexbox.justifyStart, flexbox.alignCenter, { height: 276 }]}>
+          <View style={isWeb ? [flexbox.justifyStart, flexbox.alignCenter, { height: 276 }] : []}>
             {bulletsContent.map(
               (bullet, index) =>
                 index < visibleCount && (
@@ -262,7 +264,7 @@ const GasTankModal = ({ modalRef, handleClose, portfolio, account }: Props) => {
                       <Text
                         appearance="secondaryText"
                         weight="medium"
-                        style={[spacings.mlSm, { lineHeight: 24 }]}
+                        style={[spacings.mlSm, flexbox.flex1, { lineHeight: 24 }]}
                       >
                         {t(bullet.text)}
                       </Text>
