@@ -2,8 +2,6 @@ import { GlassView as ExpoGlassView } from 'expo-glass-effect'
 import React, { FC } from 'react'
 import { StyleSheet, View, ViewStyle } from 'react-native'
 
-import useTheme from '@common/hooks/useTheme'
-import { THEME_TYPES } from '@common/styles/themeConfig'
 import { BORDER_RADIUS_PRIMARY, hexToRgba } from '@common/styles/utils/common'
 
 import { GlassViewProps } from './GlassView'
@@ -16,8 +14,6 @@ const GlassView: FC<GlassViewProps> = ({
   tintColor1,
   borderRadius = BORDER_RADIUS_PRIMARY
 }) => {
-  const { themeType } = useTheme()
-
   const defaultTint1 = tintColor1 || hexToRgba('#D1D1D1', 0.16)
   const { pointerEvents, ...restCssStyle } = (cssStyle || {}) as any
   const mappedPointerEvents = pointerEvents === 'all' ? 'auto' : pointerEvents
