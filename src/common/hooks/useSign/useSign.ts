@@ -39,8 +39,8 @@ const PRIMARY_BUTTON_LABELS: Record<
     isLoading: 'Signing...'
   },
   Safe: {
-    default: 'Sign',
-    isLoading: 'Signing...'
+    default: 'Begin signing',
+    isLoading: 'Close signing'
   }
 }
 
@@ -70,6 +70,7 @@ const useSign = ({
     state: { accountStates }
   } = useController('AccountsController')
   const [isChooseSignerShown, setIsChooseSignerShown] = useState(false)
+  const [showSafeSigners, setShowSafeSigners] = useState(false)
   const [isChooseFeePayerKeyShown, setIsChooseFeePayerKeyShown] = useState(false)
   const [shouldDisplayLedgerConnectModal, setShouldDisplayLedgerConnectModal] = useState(false)
   const prevIsChooseSignerShown = usePrevious(isChooseSignerShown)
@@ -285,6 +286,11 @@ const useSign = ({
   const onSignButtonClick = useCallback(() => {
     if (!signAccountOpState) return
 
+    if (!!signAccountOpState.account.safeCreation && !signAccountOpState.canBroadcast) {
+      setShowSafeSigners((prev) => !prev)
+      return
+    }
+
     if (
       signAccountOpState?.accountKeyStoreKeys.length === 1 ||
       !!signAccountOpState?.account.safeCreation
@@ -381,7 +387,9 @@ const useSign = ({
       }
 
       // always use the default state of Safes
-      return PRIMARY_BUTTON_LABELS['Safe'].default
+      return !showSafeSigners
+        ? PRIMARY_BUTTON_LABELS['Safe'].default
+        : PRIMARY_BUTTON_LABELS['Safe'].isLoading
     }
 
     return t(
@@ -396,7 +404,8 @@ const useSign = ({
     updateType,
     signAccountOpState?.account.safeCreation,
     signAccountOpState?.accountOp.signed?.length,
-    signAccountOpState?.threshold
+    signAccountOpState?.threshold,
+    showSafeSigners
   ])
 
   // When being done, there is a corner case if the sign succeeds, but the broadcast fails.
@@ -410,19 +419,15 @@ const useSign = ({
       isSignLoading ||
       notReadyToSignButAlsoNotDone ||
       !signAccountOpState?.readyToSign ||
-      (signAccountOpState && signAccountOpState.estimation.status === EstimationStatus.Loading) ||
-      (!signAccountOpState.canBroadcast && signAccountOpState.status?.type !== SigningStatus.Queued)
+      (signAccountOpState && signAccountOpState.estimation.status === EstimationStatus.Loading)
     )
   }, [isViewOnly, isSignLoading, notReadyToSignButAlsoNotDone, signAccountOpState])
 
   const disabledReason = useMemo(() => {
     return typeof hasReachedBottom === 'boolean' && !hasReachedBottom
       ? t('Scroll to the bottom of the transaction overview to sign.')
-      : !signAccountOpState?.canBroadcast &&
-          signAccountOpState?.status?.type !== SigningStatus.Queued
-        ? t('Please sign with each owner individually from the action buttons above.')
-        : undefined
-  }, [hasReachedBottom, signAccountOpState?.canBroadcast, signAccountOpState?.status, t])
+      : undefined
+  }, [hasReachedBottom, t])
 
   const bundlerNonceDiscrepancy = useMemo(
     () =>
@@ -459,7 +464,8 @@ const useSign = ({
     isChooseFeePayerKeyShown,
     setIsChooseFeePayerKeyShown,
     shouldHoldToProceed: !!signAccountOpState?.banners?.length,
-    disabledReason
+    disabledReason,
+    showSafeSigners
   }
 }
 

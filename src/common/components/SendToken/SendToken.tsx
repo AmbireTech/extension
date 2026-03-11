@@ -66,7 +66,7 @@ const SendToken: FC<Props> = ({
   const {
     state: { portfolio }
   } = useController('SelectedAccountController')
-  const { theme, styles, themeType } = useTheme(getStyles)
+  const { theme, styles } = useTheme(getStyles)
   const { t } = useTranslation()
 
   const handleOnChangeTextAndFormat = useCallback(
@@ -189,7 +189,7 @@ const SendToken: FC<Props> = ({
               spacings.ptMd
             ]}
           >
-            {!fromTokenAmountSelectDisabled && (
+            {!fromTokenAmountSelectDisabled ? (
               <MaxAmount
                 isLoading={!portfolio?.isReadyToVisualize}
                 maxAmount={Number(maxFromAmount)}
@@ -198,6 +198,9 @@ const SendToken: FC<Props> = ({
                 disabled={maxAmountDisabled}
                 simulationFailed={simulationFailed}
               />
+            ) : (
+              // Prevent layout shifting
+              <View style={{ height: 22 }} />
             )}
             {fromSelectedToken && fromSelectedToken.priceIn.length !== 0 ? (
               <>

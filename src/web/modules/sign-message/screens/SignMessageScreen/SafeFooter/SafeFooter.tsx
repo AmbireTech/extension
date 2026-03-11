@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { GestureResponderEvent, ScrollView, View } from 'react-native'
 
@@ -7,6 +7,7 @@ import { Key } from '@ambire-common/interfaces/keystore'
 import Button from '@common/components/Button'
 import GlassView from '@common/components/GlassView'
 import SpinnerWeb from '@common/components/Spinner/Spinner.web'
+import ActionsPagination from '@common/modules/action-requests/components/ActionsPagination'
 import SafeOwners from '@common/modules/sign-account-op/components/SafeOwners'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
@@ -34,42 +35,56 @@ const SafeFooter = ({
   onReject: (event: GestureResponderEvent) => void
 }) => {
   const { t } = useTranslation()
+  const [showSafeSigners, setShowSafeSigners] = useState(false)
 
   return (
-    <View style={[spacings.pbMd, spacings.phMd]}>
+    <View style={[spacings.pbMd, spacings.ph]}>
       <GlassView borderRadius={28} cssStyle={{ flexDirection: 'column' }}>
-        <ScrollView style={[{ maxHeight: 140 }, spacings.mbMd, spacings.phMd]}>
-          <SafeOwners
-            account={account}
-            isSignLoading={isSignLoading}
-            onSign={onSign}
-            chainId={chainId}
-            signed={signed}
-            importedKeys={importedKeys}
-            threshold={threshold}
-            signingKeyAddr={signingKeyAddr}
-          />
-        </ScrollView>
-        <View style={[flexbox.directionRow, flexbox.justifyCenter, spacings.pbSm]}>
+        {showSafeSigners && (
+          <ScrollView style={[{ maxHeight: 140 }, spacings.pl, spacings.prSm]}>
+            <SafeOwners
+              account={account}
+              isSignLoading={isSignLoading}
+              onSign={onSign}
+              chainId={chainId}
+              signed={signed}
+              importedKeys={importedKeys}
+              threshold={threshold}
+              signingKeyAddr={signingKeyAddr}
+            />
+          </ScrollView>
+        )}
+        <View style={[flexbox.directionRow, spacings.pv, spacings.ph]}>
           {threshold > signed.length ? (
-            <View style={[flexbox.directionRow]}>
+            <View style={[flexbox.directionRow, flexbox.justifySpaceBetween, { width: '100%' }]}>
               <Button
                 text={t('Reject')}
                 type="danger"
                 hasBottomSpacing={false}
                 size="large"
                 onPress={onReject}
-                style={[{ maxWidth: 100 }]}
+                style={[{ maxWidth: 'auto' }]}
               />
-              <Button
-                size="large"
-                type="secondary"
-                hasBottomSpacing={false}
-                onPress={() => closeCurrentWindow()}
-                text={'Close'}
-                disabled={signed.length === 0}
-                style={[{ maxWidth: 100 }, spacings.ml]}
-              />
+              <ActionsPagination />
+              <View style={[flexbox.directionRow, flexbox.alignCenter]}>
+                <Button
+                  size="large"
+                  type="secondary"
+                  hasBottomSpacing={false}
+                  onPress={() => closeCurrentWindow()}
+                  text={'Sign later'}
+                  disabled={signed.length === 0}
+                  style={[{ maxWidth: 'auto' }]}
+                />
+                <Button
+                  size="large"
+                  type="primary"
+                  hasBottomSpacing={false}
+                  onPress={() => setShowSafeSigners((prev) => !prev)}
+                  text={!showSafeSigners ? 'Begin signing' : 'Close signing'}
+                  style={[{ maxWidth: 'auto' }, spacings.ml]}
+                />
+              </View>
             </View>
           ) : (
             <SpinnerWeb style={{ width: 28, height: 28, marginTop: 14, marginBottom: 14 }} />

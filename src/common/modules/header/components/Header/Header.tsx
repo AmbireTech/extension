@@ -8,7 +8,6 @@ import Text from '@common/components/Text'
 import { isMobile } from '@common/config/env'
 import { titleChangeEventStream } from '@common/hooks/useNavigation'
 import useRoute from '@common/hooks/useRoute'
-import useWindowSize from '@common/hooks/useWindowSize'
 import routesConfig from '@common/modules/router/config/routesConfig'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
@@ -31,14 +30,11 @@ const Wrapper = ({
   containerStyle?: ViewStyle
   width?: Width
 }) => {
-  const { maxWidthSize } = useWindowSize()
-
   return (
     <View
       style={[
         spacings.phSm,
-        spacings.pbSm,
-        spacings.ptMd,
+        spacings.pvSm,
         {
           width: '100%'
         },
