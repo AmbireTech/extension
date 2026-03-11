@@ -96,7 +96,7 @@ android {
         minSdkVersion rootProject.ext.minSdkVersion
         // targetSdkVersion is also provided by the React Native Gradle plugin; for React Native 0.81.x the default is 36 (Android 16).
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 55
+        versionCode 56
         // This is planned to be in sync with app.json 's "version" two components, e.g. 5.39
         versionName "6.0"
 
