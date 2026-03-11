@@ -31,7 +31,7 @@ const GlassView: FC<GlassViewProps> = ({
     >
       <ExpoGlassView
         glassEffectStyle="regular"
-        colorScheme={themeType === THEME_TYPES.LIGHT ? 'light' : 'dark'}
+        colorScheme="auto"
         tintColor={defaultTint1}
         style={StyleSheet.absoluteFill}
       />
