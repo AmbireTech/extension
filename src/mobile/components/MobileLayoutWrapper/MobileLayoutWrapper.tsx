@@ -24,6 +24,7 @@ type MobileLayoutContainerProps = {
   renderDirectChildren?: () => ReactNode
   style?: ViewStyle
   withHorizontalPadding?: boolean
+  withBottomInset?: boolean
 }
 
 export const MobileLayoutContainer = ({
@@ -34,7 +35,8 @@ export const MobileLayoutContainer = ({
   children,
   renderDirectChildren,
   style,
-  withHorizontalPadding = false
+  withHorizontalPadding = false,
+  withBottomInset = true
 }: MobileLayoutContainerProps) => {
   const { theme, styles } = useTheme(getStyles)
   const insets = useSafeAreaInsets()
@@ -46,7 +48,7 @@ export const MobileLayoutContainer = ({
         {
           backgroundColor: backgroundColor || theme.primaryBackground,
           paddingTop: insets.top,
-          paddingBottom: insets.bottom
+          paddingBottom: withBottomInset ? insets.bottom : 0
         }
       ]}
     >

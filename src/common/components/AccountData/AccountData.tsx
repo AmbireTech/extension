@@ -40,12 +40,10 @@ const AccountData: FC<Props> = ({ onPress, withArrowRightIcon }) => {
     preset: 'opacityInverted',
     duration: 50
   })
+
   const [bindAccountBtnAnim, accountBtnAnimStyle] = useCustomHover({
-    property: 'left',
-    values: {
-      from: 0,
-      to: 2
-    },
+    property: isWeb ? 'left' : 'opacity',
+    values: isWeb ? { from: 0, to: 2 } : { from: 1, to: 1 },
     duration: 50
   })
 

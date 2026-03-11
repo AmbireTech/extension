@@ -16,7 +16,7 @@ const styles = () =>
     },
     contentContainerStyle: {
       flexGrow: 1,
-      paddingRight: isWeb ? SPACING_MI / 2 : 0
+      ...(isWeb ? { paddingRight: SPACING_MI / 2 } : {})
     }
   })
 

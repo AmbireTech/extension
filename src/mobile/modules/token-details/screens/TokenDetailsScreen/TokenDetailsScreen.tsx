@@ -3,7 +3,6 @@ import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 
 import FooterGlassView from '@common/components/FooterGlassView'
-import LayoutWrapper from '@common/components/LayoutWrapper'
 import ScrollableWrapper from '@common/components/ScrollableWrapper'
 import Text from '@common/components/Text'
 import TokenIcon from '@common/components/TokenIcon'
@@ -18,6 +17,7 @@ import TokenDetailsTransactionHistory from '@common/modules/token-details/compon
 import useTokenDetails from '@common/modules/token-details/hooks/useTokenDetails'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
+import { MobileLayoutContainer } from '@mobile/components/MobileLayoutWrapper'
 
 import getStyles from './styles'
 
@@ -53,8 +53,8 @@ const TokenDetailsScreen = () => {
   } = getAndFormatTokenDetails(token, networks)
 
   return (
-    <LayoutWrapper>
-      <Header.Wrapper containerStyle={spacings.pbMd}>
+    <MobileLayoutContainer>
+      <Header.Wrapper>
         <Header.BackButton />
         <Header.Logo />
       </Header.Wrapper>
@@ -133,7 +133,7 @@ const TokenDetailsScreen = () => {
         <Exchanges exchanges={token.meta?.exchanges || []} />
         <TokenDetailsTransactionHistory />
       </ScrollableWrapper>
-      <FooterGlassView size="sm">
+      {/* <FooterGlassView size="sm">
         {actions.map((action) => (
           <TokenDetailsButton
             key={action.id}
@@ -143,8 +143,8 @@ const TokenDetailsScreen = () => {
             iconWidth={action.iconWidth}
           />
         ))}
-      </FooterGlassView>
-    </LayoutWrapper>
+      </FooterGlassView> */}
+    </MobileLayoutContainer>
   )
 }
 
