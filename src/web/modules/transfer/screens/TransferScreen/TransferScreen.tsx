@@ -213,6 +213,7 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
   }, [latestBroadcastedAccountOp?.accountAddr, latestBroadcastedAccountOp?.chainId, sessionHandler])
 
   const displayedView: 'transfer' | 'batch' | 'track' | 'loading' = useMemo(() => {
+    return 'track'
     // If the screen type doesn't match the controller state, we show a loading state
     // This avoids showing the wrong screen for a brief moment0
     if (!!isTopUpScreen !== !!isTopUp) return 'loading'
@@ -556,13 +557,12 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
           })
         }}
       >
-        {submittedAccountOp?.status === AccountOpStatus.BroadcastedButNotConfirmed && (
-          <InProgress title={isTopUp ? t('Confirming your top-up') : t('Confirming your transfer')}>
-            <Text fontSize={16} weight="medium" appearance="secondaryText">
-              {t('Almost there!')}
-            </Text>
-          </InProgress>
-        )}
+        <InProgress title={isTopUp ? t('Confirming your top-up') : t('Confirming your transfer')}>
+          <Text fontSize={16} weight="medium" appearance="secondaryText">
+            {t('Almost there!')}
+          </Text>
+        </InProgress>
+
         {(submittedAccountOp?.status === AccountOpStatus.Success ||
           submittedAccountOp?.status === AccountOpStatus.UnknownButPastNonce) && (
           <Completed

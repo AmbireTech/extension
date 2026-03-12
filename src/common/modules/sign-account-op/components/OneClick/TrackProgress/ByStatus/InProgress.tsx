@@ -1,7 +1,6 @@
 import React, { FC } from 'react'
 import { View } from 'react-native'
 
-import Spinner from '@common/components/Spinner'
 import Text from '@common/components/Text'
 import AccountsLoadingDotsAnimation from '@common/modules/account-personalize/components/AccountsLoadingDotsAnimation'
 import spacings from '@common/styles/spacings'
@@ -15,8 +14,13 @@ type InProgressProps = {
 
 const InProgress: FC<InProgressProps> = ({ title, children }) => (
   <>
-    <View style={[flexbox.alignCenter, flexbox.justifyCenter, spacings.mbLg, { gap: 12 }]}>
-      <Text testID="confirming-your" fontSize={20} weight="medium" style={text.center}>
+    <View style={[flexbox.alignCenter, flexbox.justifyCenter, spacings.mbLg]}>
+      <Text
+        testID="confirming-your"
+        fontSize={20}
+        weight="medium"
+        style={[text.center, spacings.mbSm]}
+      >
         {title}
       </Text>
       <AccountsLoadingDotsAnimation />

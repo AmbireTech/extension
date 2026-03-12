@@ -39,7 +39,7 @@ const RouteStepsToken: React.FC<Props> = ({
         styles.tokenWrapper,
         wrapperStyle,
         {
-          backgroundColor: themeType === THEME_TYPES.LIGHT ? theme.neutral100 : theme.backdrop,
+          backgroundColor: theme.secondaryBackground,
           borderRadius: BORDER_RADIUS_PRIMARY
         }
       ]}

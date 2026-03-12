@@ -151,8 +151,7 @@ const TrackProgress: FC<Props> = ({ activeRoute, handleClose }) => {
                   flexbox.directionRow,
                   flexbox.justifySpaceBetween,
                   {
-                    alignItems: 'baseline',
-                    position: 'relative'
+                    alignItems: 'baseline'
                   },
                   spacings.mbLg
                 ]}
@@ -174,18 +173,14 @@ const TrackProgress: FC<Props> = ({ activeRoute, handleClose }) => {
                   }
                 />
                 <View
-                  style={[
-                    flexbox.alignCenter,
-                    flexbox.justifyCenter,
-                    { width: 8, position: 'relative', zIndex: 100 }
-                  ]}
+                  style={[flexbox.alignCenter, flexbox.justifyCenter, { width: 8, zIndex: 100 }]}
                 >
                   <View
                     style={{
                       borderRadius: 100,
                       backgroundColor: theme.secondaryBackground,
                       borderWidth: 4,
-                      borderColor: themeType === THEME_TYPES.LIGHT ? '#fff' : theme.backdrop,
+                      borderColor: theme.secondaryBorder,
                       ...flexbox.alignCenter,
                       ...flexbox.justifyCenter,
                       width: 36,
