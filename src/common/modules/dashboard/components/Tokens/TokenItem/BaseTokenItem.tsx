@@ -62,10 +62,6 @@ const BaseTokenItem = ({
     property: 'backgroundColor',
     values: { from: theme.primaryBackground, to: theme.secondaryBackground }
   })
-  const [bindAnimPending, animStylePending, isHoveredPending] = useCustomHover({
-    property: 'borderColor',
-    values: { from: 'transparent', to: theme.warningText }
-  })
 
   const tokenId = getTokenId(token)
   const simulatedAccountOp = portfolio.networkSimulatedAccountOp[token.chainId.toString()]
@@ -227,7 +223,15 @@ const BaseTokenItem = ({
 
         <View>
           {!!pendingToBeSigned && !!pendingToBeSignedFormatted && isPending && (
-            <AnimatedPressable
+            <PendingBadge
+              amount={pendingToBeSigned}
+              amountFormatted={pendingToBeSignedFormatted}
+              label="awaiting signature"
+              backgroundColor={theme.warningBackground}
+              textColor={theme.warningText}
+              Icon={BatchIcon}
+              borderColor="transparent"
+              hoverBorderColor={theme.warning400}
               onPress={() => {
                 if (!simulatedAccountOp) return
                 requestsDispatch({
@@ -238,27 +242,7 @@ const BaseTokenItem = ({
                   }
                 })
               }}
-              style={[
-                {
-                  marginLeft: SPACING_2XL + SPACING_TY,
-                  // @ts-ignore react-native-web supports `cursor`, but it's missing from React Native StyleProp<ViewStyle> types
-                  cursor: simulatedAccountOp ? 'pointer' : 'auto'
-                },
-                spacings.mtSm,
-                animStylePending
-              ]}
-              {...bindAnimPending}
-            >
-              <PendingBadge
-                amount={pendingToBeSigned}
-                amountFormatted={pendingToBeSignedFormatted}
-                label="awaiting signature"
-                backgroundColor={theme.warningBackground}
-                textColor={theme.warningText}
-                Icon={BatchIcon}
-                borderColor={isHoveredPending ? theme.warningText : 'transparent'}
-              />
-            </AnimatedPressable>
+            />
           )}
 
           {!!pendingToBeConfirmed && !!pendingToBeConfirmedFormatted && (
@@ -269,7 +253,6 @@ const BaseTokenItem = ({
               backgroundColor={theme.infoBackground}
               textColor={theme.infoText}
               Icon={PendingToBeConfirmedIcon}
-              borderColor={'transparent'}
             />
           )}
         </View>

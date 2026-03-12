@@ -1,9 +1,10 @@
 import React from 'react'
-import { ColorValue, View } from 'react-native'
+import { ColorValue } from 'react-native'
 import { SvgProps } from 'react-native-svg'
 
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
+import { AnimatedPressable, useCustomHover } from '@common/hooks/useHover'
 import spacings from '@common/styles/spacings'
 import flexboxStyles from '@common/styles/utils/flexbox'
 
@@ -14,7 +15,9 @@ const PendingBadge = ({
   Icon,
   backgroundColor,
   textColor,
-  borderColor = 'transparent'
+  borderColor = 'transparent',
+  hoverBorderColor,
+  onPress
 }: {
   amount: bigint
   amountFormatted: string
@@ -23,11 +26,24 @@ const PendingBadge = ({
   backgroundColor: ColorValue
   textColor: ColorValue
   borderColor?: ColorValue
+  hoverBorderColor?: ColorValue
+  onPress?: () => void
 }) => {
   const { t } = useTranslation()
+  const isInteractive = !!onPress
+
+  const fromBorder = String(borderColor)
+  const toBorder = String(isInteractive ? hoverBorderColor ?? borderColor : borderColor)
+
+  const [bindAnim, animStyle] = useCustomHover({
+    property: 'borderColor',
+    values: { from: fromBorder, to: toBorder }
+  })
 
   return (
-    <View
+    <AnimatedPressable
+      onPress={onPress}
+      disabled={!isInteractive}
       style={[
         spacings.pvMi,
         spacings.plSm,
@@ -41,9 +57,13 @@ const PendingBadge = ({
           height: 32,
           backgroundColor,
           borderColor,
-          borderWidth: 1
-        }
+          borderWidth: 1,
+          // @ts-ignore react-native-web supports `cursor`
+          cursor: isInteractive ? 'pointer' : 'auto'
+        },
+        animStyle
       ]}
+      {...(isInteractive ? bindAnim : {})}
     >
       <Text
         selectable
@@ -56,7 +76,7 @@ const PendingBadge = ({
         {t(`${amount > 0n ? '+' : ''}${amountFormatted} ${label}`)}
       </Text>
       <Icon color={textColor} width={20} height={20} />
-    </View>
+    </AnimatedPressable>
   )
 }
 
