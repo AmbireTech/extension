@@ -8,7 +8,8 @@ const getStyles = (theme: ThemeProps) =>
     outerContainer: {
       borderWidth: 2,
       borderRadius: BORDER_RADIUS_PRIMARY,
-      borderColor: 'transparent'
+      borderColor: theme.secondaryBackground,
+      overflow: 'hidden'
     },
     outerContainerWarning: {
       borderColor: theme.errorBackground

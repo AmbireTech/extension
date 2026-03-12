@@ -19,6 +19,7 @@ import ExportKey from '@common/components/ExportKey'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import NetworkIcon from '@common/components/NetworkIcon'
 import Text from '@common/components/Text'
+import { isWeb } from '@common/config/env'
 import useHover, { AnimatedPressable, useCustomHover } from '@common/hooks/useHover'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
@@ -235,11 +236,10 @@ const AccountKey: React.FC<Props> = ({
                       width={16}
                       height={16}
                       color={theme.secondaryText}
-                      // @ts-ignore
                       style={
                         isShowingDetails
-                          ? { transform: 'rotate(270deg)' }
-                          : { transform: 'rotate(90deg)' }
+                          ? { transform: [{ rotate: '270deg' }] }
+                          : { transform: [{ rotate: '90deg' }] }
                       }
                     />
                   </Animated.View>
@@ -280,11 +280,11 @@ const AccountKey: React.FC<Props> = ({
       <BottomSheet
         sheetRef={sheetRefExportKey}
         id="confirm-password-bottom-sheet"
-        type="modal"
+        type={isWeb ? 'modal' : 'bottom-sheet'}
         closeBottomSheet={closeExportKey}
-        scrollViewProps={{ contentContainerStyle: { flex: 1 } }}
+        scrollViewProps={isWeb ? { contentContainerStyle: { flex: 1 } } : undefined}
         containerInnerWrapperStyles={{ flex: 1 }}
-        style={{ maxWidth: 432, minHeight: 432, ...spacings.pvLg }}
+        style={isWeb ? { maxWidth: 432, minHeight: 432, ...spacings.pvLg } : undefined}
       >
         <ExportKey
           account={account}

@@ -2,6 +2,7 @@ import React, { FC, useCallback, useEffect, useRef, useState } from 'react'
 import { Animated, PanResponder, StyleProp, ViewStyle } from 'react-native'
 
 import Button, { Props as CommonButtonProps } from '@common/components/Button'
+import { isWeb } from '@common/config/env'
 import useTheme from '@common/hooks/useTheme'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 
@@ -234,7 +235,7 @@ const HoldToProceedButton: FC<Props> = ({
           },
           style
         ]}
-        size="smaller"
+        size={isWeb ? 'smaller' : 'regular'}
         hasBottomSpacing={false}
         text={buttonText}
         disabled={disabled}

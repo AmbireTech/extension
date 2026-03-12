@@ -1,6 +1,7 @@
 import Fuse from 'fuse.js'
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { Pressable } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 
 import { Contact } from '@ambire-common/controllers/addressBook/addressBook'
@@ -24,6 +25,7 @@ import {
 } from '@common/components/Select/types'
 import Text from '@common/components/Text'
 import TitleAndIcon from '@common/components/TitleAndIcon'
+import { isMobile, isWeb } from '@common/config/env'
 import useController from '@common/hooks/useController'
 import useHover, { AnimatedPressable } from '@common/hooks/useHover'
 import useNavigation from '@common/hooks/useNavigation'
@@ -55,7 +57,7 @@ const ADDRESS_BOOK_VISIBLE_VALIDATION: Validation = {
 }
 
 const SelectedMenuOption: React.FC<{
-  selectRef: React.RefObject<any>
+  selectRef?: React.RefObject<any>
   validation: Validation
   isMenuOpen: boolean
   ensAddress: string
@@ -66,6 +68,7 @@ const SelectedMenuOption: React.FC<{
   setIsMenuOpen: (isMenuOpen: boolean) => void
   filteredContacts: Contact[]
   renderConfirmAddress?: () => React.ReactNode
+  type?: 'input' | 'selected-menu-option'
 }> = ({
   selectRef,
   filteredContacts,
@@ -77,9 +80,11 @@ const SelectedMenuOption: React.FC<{
   setAddress,
   disabled,
   setIsMenuOpen,
-  renderConfirmAddress
+  renderConfirmAddress,
+  type = 'selected-menu-option'
 }) => {
   const [isFocused, setIsFocused] = useState(false)
+  const { theme } = useTheme()
   const prevFilteredContactsLength = usePrevious(filteredContacts.length)
 
   const isValidAddress = useMemo(
@@ -89,6 +94,8 @@ const SelectedMenuOption: React.FC<{
   const prevIsValidAddress = usePrevious(isValidAddress)
 
   useEffect(() => {
+    if (type === 'input') return
+
     if (isMenuOpen && !filteredContacts.length && !!isFocused) {
       setIsMenuOpen(false)
     }
@@ -109,29 +116,41 @@ const SelectedMenuOption: React.FC<{
     isValidAddress
   ])
 
-  return (
+  const isButtonMode = type === 'selected-menu-option' && isMobile
+
+  const content = (
     <AddressInput
       inputBorderWrapperRef={selectRef}
-      validation={isMenuOpen ? ADDRESS_BOOK_VISIBLE_VALIDATION : validation}
+      validation={
+        isMenuOpen && type === 'selected-menu-option' ? ADDRESS_BOOK_VISIBLE_VALIDATION : validation
+      }
       containerStyle={styles.inputContainer}
       ensAddress={ensAddress}
       isRecipientDomainResolving={isRecipientDomainResolving}
       value={address}
-      withDetails
+      withDetails={type === 'selected-menu-option'}
       onChangeText={setAddress}
       disabled={disabled}
+      editable={!isButtonMode}
+      pointerEvents={isButtonMode ? 'none' : 'auto'}
       renderConfirmAddress={renderConfirmAddress}
       onFocus={() => {
         setIsFocused(true)
+        if (type === 'input') return
+
         if (filteredContacts.length) {
           setIsMenuOpen(true)
         }
       }}
       onBlur={() => {
+        if (type === 'input') return
+
         setIsFocused(false)
       }}
       onClearButtonPress={() => setIsMenuOpen(true)}
-      button={address ? undefined : isMenuOpen ? <UpArrowIcon /> : <DownArrowIcon />}
+      button={
+        type === 'input' || address ? undefined : isMenuOpen ? <UpArrowIcon /> : <DownArrowIcon />
+      }
       buttonProps={{
         onPress: () => {
           if (!address || filteredContacts.length) {
@@ -139,8 +158,15 @@ const SelectedMenuOption: React.FC<{
           }
         }
       }}
+      inputWrapperStyle={type === 'input' ? { backgroundColor: theme.neutral400 } : undefined}
       buttonStyle={{ ...spacings.pv0, ...spacings.ph, ...spacings.mr0, ...spacings.ml0 }}
     />
+  )
+
+  return isButtonMode ? (
+    <Pressable onPress={() => setIsMenuOpen(true)}>{content}</Pressable>
+  ) : (
+    content
   )
 }
 
@@ -215,7 +241,7 @@ const Recipient: React.FC<Props> = ({
 
   const walletAccountsSourcedContactOptions = useMemo(
     () =>
-      filteredContacts
+      (isMobile ? contacts : filteredContacts)
         .filter((contact) => contact.isWalletAccount)
         .map((contact, index) => ({
           value: contact.address,
@@ -239,7 +265,7 @@ const Recipient: React.FC<Props> = ({
 
   const manuallyAddedContactOptions = useMemo(
     () =>
-      filteredContacts
+      (isMobile ? contacts : filteredContacts)
         .filter((contact) => !contact.isWalletAccount)
         .map((contact) => ({
           value: contact.address,
@@ -289,16 +315,18 @@ const Recipient: React.FC<Props> = ({
 
       return section.key === 'contacts' ? (
         <TitleAndIcon title={t('Address Book')} icon={AddressBookIcon}>
-          <AnimatedPressable
-            style={[flexbox.directionRow, flexbox.alignCenter, manageBtnAnimStyle]}
-            onPress={onManagePress}
-            {...bindManageBtnAnim}
-          >
-            <SettingsIcon width={18} height={18} color={theme.secondaryText} />
-            <Text fontSize={14} style={spacings.mlMi} appearance="secondaryText">
-              {t('Manage contacts')}
-            </Text>
-          </AnimatedPressable>
+          {isWeb && (
+            <AnimatedPressable
+              style={[flexbox.directionRow, flexbox.alignCenter, manageBtnAnimStyle]}
+              onPress={onManagePress}
+              {...bindManageBtnAnim}
+            >
+              <SettingsIcon width={18} height={18} color={theme.secondaryText} />
+              <Text fontSize={14} style={spacings.mlMi} appearance="secondaryText">
+                {t('Manage contacts')}
+              </Text>
+            </AnimatedPressable>
+          )}
         </TitleAndIcon>
       ) : (
         <TitleAndIcon title={t('My wallets')} icon={WalletIcon} />
@@ -354,12 +382,7 @@ const Recipient: React.FC<Props> = ({
 
   return (
     <ItemPanel style={{ ...spacings.pbTy, ...spacings.mbTy }}>
-      <Text
-        appearance="secondaryText"
-        fontSize={14}
-        weight="medium"
-        style={[spacings.mbSm, spacings.mlTy]}
-      >
+      <Text appearance="secondaryText" fontSize={14} weight="medium" style={[spacings.mbSm]}>
         {t('Add recipient')}
       </Text>
       <SectionedSelect
@@ -373,6 +396,22 @@ const Recipient: React.FC<Props> = ({
         renderSelectedOption={renderSelectedOption}
         emptyListPlaceholderText={t('No contacts found')}
         menuPosition="bottom"
+        bottomSheetTitle={t('Add recipient')}
+        renderHeaderChildren={({ toggleMenu, isMenuOpen, selectRef }) => (
+          <SelectedMenuOption
+            type="input"
+            selectRef={selectRef}
+            setIsMenuOpen={toggleMenu}
+            filteredContacts={filteredContacts}
+            isMenuOpen={isMenuOpen}
+            validation={validation}
+            ensAddress={ensAddress}
+            isRecipientDomainResolving={isRecipientDomainResolving}
+            address={address}
+            setAddress={setAddress}
+            disabled={disabled}
+          />
+        )}
         containerStyle={spacings.mb0}
       />
 

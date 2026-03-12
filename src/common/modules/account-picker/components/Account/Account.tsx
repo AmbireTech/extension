@@ -119,14 +119,20 @@ const Account = ({
           isOn={isSelected}
           onToggle={toggleSelectedState}
           disabled={isDisabled}
-          style={flexbox.alignSelfStart}
+          style={{ ...flexbox.alignSelfStart, ...(isMobile ? spacings.mrMi : {}) }}
           width={44}
           height={24}
         />
 
         <View style={[flexbox.flex1, flexbox.directionRow, flexbox.alignCenter]}>
           <View style={[flexbox.flex1, flexbox.directionRow, flexbox.alignCenter]}>
-            <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mrMd]}>
+            <View
+              style={[
+                flexbox.directionRow,
+                flexbox.alignCenter,
+                isMobile ? spacings.mrTy : spacings.mrMd
+              ]}
+            >
               {isAccountImported ? (
                 <>
                   <Avatar
