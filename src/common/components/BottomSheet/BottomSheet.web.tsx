@@ -1,5 +1,5 @@
 import React, { RefObject, useCallback, useMemo } from 'react'
-import { ScrollView, SectionList, View } from 'react-native'
+import { FlatList, ScrollView, SectionList, View } from 'react-native'
 import { Modalize } from 'react-native-modalize'
 
 import { isWeb } from '@common/config/env'
@@ -66,15 +66,43 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
   } = useBottomSheetInternal(props)
 
   const renderContent = useCallback(() => {
-    if (flatListProps || customRenderer) return null
+    if (customRenderer) return null
+
+    if (flatListProps) {
+      return (
+        <View
+          testID={isOpen ? 'bottom-sheet' : undefined}
+          style={[
+            isScrollEnabled && isScrollable ? spacings.prTy : {},
+            common.fullWidth,
+            containerInnerWrapperStyles
+          ]}
+        >
+          <FlatList
+            bounces={false}
+            keyboardShouldPersistTaps="handled"
+            {...(flatListProps as any)}
+          />
+        </View>
+      )
+    }
 
     if (sectionListProps) {
       return (
-        <SectionList
-          bounces={false}
-          keyboardShouldPersistTaps="handled"
-          {...(sectionListProps as any)}
-        />
+        <View
+          testID={isOpen ? 'bottom-sheet' : undefined}
+          style={[
+            isScrollEnabled && isScrollable ? spacings.prTy : {},
+            common.fullWidth,
+            containerInnerWrapperStyles
+          ]}
+        >
+          <SectionList
+            bounces={false}
+            keyboardShouldPersistTaps="handled"
+            {...(sectionListProps as any)}
+          />
+        </View>
       )
     }
 
@@ -174,15 +202,6 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
                     contentContainerStyle: { flex: 1 }
                   }),
                   ...(scrollViewProps || {})
-                }
-              }
-            : {})}
-          {...(flatListProps
-            ? {
-                flatListProps: {
-                  bounces: false,
-                  keyboardShouldPersistTaps: 'handled',
-                  ...(flatListProps || {})
                 }
               }
             : {})}
