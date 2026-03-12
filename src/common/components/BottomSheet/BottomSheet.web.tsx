@@ -71,6 +71,7 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
     if (sectionListProps) {
       return (
         <SectionList
+          testID={isOpen ? 'bottom-sheet' : undefined}
           bounces={false}
           keyboardShouldPersistTaps="handled"
           {...(sectionListProps as any)}
