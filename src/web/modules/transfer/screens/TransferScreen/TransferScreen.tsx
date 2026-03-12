@@ -556,11 +556,13 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
           })
         }}
       >
-        <InProgress title={isTopUp ? t('Confirming your top-up') : t('Confirming your transfer')}>
-          <Text fontSize={16} weight="medium" appearance="secondaryText">
-            {t('Almost there!')}
-          </Text>
-        </InProgress>
+        {submittedAccountOp?.status === AccountOpStatus.BroadcastedButNotConfirmed && (
+          <InProgress title={isTopUp ? t('Confirming your top-up') : t('Confirming your transfer')}>
+            <Text fontSize={16} weight="medium" appearance="secondaryText">
+              {t('Almost there!')}
+            </Text>
+          </InProgress>
+        )}
 
         {(submittedAccountOp?.status === AccountOpStatus.Success ||
           submittedAccountOp?.status === AccountOpStatus.UnknownButPastNonce) && (

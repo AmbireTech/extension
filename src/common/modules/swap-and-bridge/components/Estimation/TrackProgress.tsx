@@ -189,7 +189,7 @@ const TrackProgress: FC<Props> = ({ activeRoute, handleClose }) => {
                       zIndex: 100
                     }}
                   >
-                    <RightArrowIcon color="#808EA2" />
+                    <RightArrowIcon color={theme.neutral600} />
                   </View>
                 </View>
                 <RouteStepsToken
