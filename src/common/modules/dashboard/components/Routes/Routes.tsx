@@ -53,7 +53,7 @@ const Routes = () => {
       testID: 'dashboard-button-apps',
       icon: DAppsIcon,
       label: t('Apps'),
-      // route: ROUTES.apps,
+      route: ROUTES.apps,
       scale: 0.95,
       scaleOnHover: 1.02
     }

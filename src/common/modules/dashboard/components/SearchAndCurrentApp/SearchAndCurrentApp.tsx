@@ -23,7 +23,7 @@ const SearchAndCurrentApp = ({ control, displayCurrentApp = false, isHidden }: P
   const { bottom: safeBottom } = useSafeAreaInsets()
   const { height } = useReanimatedKeyboardAnimation()
 
-  const animatedBaseBottom = useDerivedValue(() => {
+  const animatedBottom = useDerivedValue(() => {
     const toValue = isHidden ? -60 - safeBottom : SPACING + safeBottom
     return withSpring(toValue, {
       damping: 20,
@@ -35,7 +35,7 @@ const SearchAndCurrentApp = ({ control, displayCurrentApp = false, isHidden }: P
   const animatedStyle = useAnimatedStyle(() => {
     const keyboardOffset = isMobile ? Math.abs(height.value) : 0
     return {
-      bottom: animatedBaseBottom.value + keyboardOffset
+      bottom: animatedBottom.value + keyboardOffset
     }
   }, [isMobile, height])
 
