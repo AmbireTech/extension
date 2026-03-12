@@ -87,8 +87,13 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
       }
     }
 
-    currentTranslateY.value = -shift
-    return { transform: [{ translateY: -shift + SPACING_SM }] }
+    let shiftValue = shift
+    if (shift !== 0) {
+      shiftValue = shift + SPACING_SM
+    }
+
+    currentTranslateY.value = -shiftValue
+    return { transform: [{ translateY: -shiftValue }] }
   })
 
   const scrollViewRef = externalScrollViewRef
