@@ -1,4 +1,4 @@
-import React, { FC, memo, useCallback } from 'react'
+import React, { FC, memo, useCallback, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { View, ViewStyle } from 'react-native'
 
@@ -24,26 +24,30 @@ interface Props extends ReturnType<typeof useReverseLookup> {
   withReceive?: boolean
 }
 
-const ReceiveButton = memo(({ address, fontSize }: { address: string; fontSize: number }) => {
-  const [bindAnim, animStyle] = useHover({
-    preset: 'opacityInverted'
-  })
-  const { navigate } = useNavigation()
+export const ReceiveButton = memo(
+  ({ address, fontSize }: { address: string; fontSize: number }) => {
+    const [bindAnim, animStyle] = useHover({
+      preset: 'opacityInverted'
+    })
+    const { navigate } = useNavigation()
 
-  const handleReceive = useCallback(async () => {
-    if (isMobile) {
-      alert('Coming soon')
-      return
-    }
-    navigate(WEB_ROUTES.receive, { state: { address } })
-  }, [navigate, address])
+    const handleReceive = useCallback(async () => {
+      if (isMobile) {
+        alert('Coming soon')
+        return
+      }
+      navigate(WEB_ROUTES.receive, { state: { address } })
+    }, [navigate, address])
 
-  return (
-    <AnimatedPressable onPress={handleReceive} style={animStyle} {...bindAnim}>
-      <ReceiveIcon width={fontSize + 8} height={fontSize + 8} style={spacings.mlMi} />
-    </AnimatedPressable>
-  )
-})
+    const size = useMemo(() => fontSize + 8, [fontSize])
+
+    return (
+      <AnimatedPressable onPress={handleReceive} style={[spacings.mlTy, animStyle]} {...bindAnim}>
+        <ReceiveIcon width={size} height={size} strokeWidth={size < 24 ? '1.5' : '1.2'} />
+      </AnimatedPressable>
+    )
+  }
+)
 
 const AccountAddress: FC<Props> = ({
   isLoading,

@@ -17,7 +17,7 @@ const getStyles = () =>
       ...spacings.phTy,
       ...spacings.pvTy,
       ...spacings.mbTy,
-      ...spacings.pr,
+      // ...spacings.pr,
       ...common.borderRadiusPrimary
     }
   })
