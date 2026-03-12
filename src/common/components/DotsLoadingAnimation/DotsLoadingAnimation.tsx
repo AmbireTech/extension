@@ -2,9 +2,9 @@ import React from 'react'
 
 import LottieView from '@common/components/LottieView'
 
-import animation from './accounts-loading-dots-animation.json'
+import animation from './dots-loading-animation.json'
 
-const AccountsLoadingDotsAnimation = () => {
+const DotsLoadingAnimation = () => {
   return (
     <LottieView
       animationData={animation}
@@ -12,11 +12,10 @@ const AccountsLoadingDotsAnimation = () => {
       loop
       style={{
         width: 64,
-        height: 38,
-        backgroundColor: 'transparent'
+        height: 38
       }}
     />
   )
 }
 
-export default React.memo(AccountsLoadingDotsAnimation)
+export default React.memo(DotsLoadingAnimation)

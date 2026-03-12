@@ -1,8 +1,8 @@
 import React, { FC } from 'react'
 import { View } from 'react-native'
 
+import DotsLoadingAnimation from '@common/components/DotsLoadingAnimation'
 import Text from '@common/components/Text'
-import AccountsLoadingDotsAnimation from '@common/modules/account-personalize/components/AccountsLoadingDotsAnimation'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
@@ -23,7 +23,7 @@ const InProgress: FC<InProgressProps> = ({ title, children }) => (
       >
         {title}
       </Text>
-      <AccountsLoadingDotsAnimation />
+      <DotsLoadingAnimation />
     </View>
     {children}
   </>
