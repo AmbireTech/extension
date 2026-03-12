@@ -120,9 +120,12 @@ jobs:
             ethers@6.14.1
           ts-node ledger-emulator-health-check.ts
 
+
       - name: Install e2e test dependencies
         working-directory: ./e2e-playwright-tests
-        run: yarn install --frozen-lockfile
+        run: |
+          yarn install --frozen-lockfile
+          yarn postinstall
 
       - name: Get Playwright version
         id: playwright-version
