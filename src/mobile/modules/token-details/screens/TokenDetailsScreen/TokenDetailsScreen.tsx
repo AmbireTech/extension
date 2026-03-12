@@ -2,7 +2,6 @@ import React from 'react'
 import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 
-import FooterGlassView from '@common/components/FooterGlassView'
 import ScrollableWrapper from '@common/components/ScrollableWrapper'
 import Text from '@common/components/Text'
 import TokenIcon from '@common/components/TokenIcon'
@@ -100,7 +99,7 @@ const TokenDetailsScreen = () => {
                   weight="number_regular"
                   numberOfLines={1}
                 >
-                  (This token is a gas tank one and therefore actions are limited)
+                  {t('This token is a gas tank one and therefore actions are limited')}
                 </Text>
               </View>
             )}

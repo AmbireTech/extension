@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Pressable, StyleSheet, View } from 'react-native'
+import { Pressable, View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 
 import { Account as AccountType } from '@ambire-common/interfaces/account'
@@ -39,8 +39,10 @@ const extractTriggerAddAccountSheetParam = (search: string | undefined): boolean
     params.delete('triggerAddAccountBottomSheet')
     const updatedSearch = params.toString()
 
-    // Updated URL back into the app, handle it here.
-    window.history.replaceState(null, '', `?${updatedSearch}`)
+    if (isWeb) {
+      // Updated URL back into the app, handle it here.
+      window.history.replaceState(null, '', `?${updatedSearch}`)
+    }
 
     return addAccount === 'true'
   }

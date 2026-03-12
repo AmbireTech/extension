@@ -1,7 +1,6 @@
 import { StyleSheet, ViewStyle } from 'react-native'
 
 import { isMobile } from '@common/config/env'
-import spacings from '@common/styles/spacings'
 import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 
