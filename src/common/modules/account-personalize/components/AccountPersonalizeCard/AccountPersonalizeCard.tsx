@@ -6,7 +6,6 @@ import { Account } from '@ambire-common/interfaces/account'
 import AccountAddress from '@common/components/AccountAddress'
 import AccountBadges from '@common/components/AccountBadges'
 import Avatar from '@common/components/Avatar'
-import DomainBadge from '@common/components/Avatar/DomainBadge'
 import Editable from '@common/components/Editable'
 import useReverseLookup from '@common/hooks/useReverseLookup'
 import useTheme from '@common/hooks/useTheme'
@@ -71,7 +70,6 @@ const AccountPersonalizeCard = ({
               <AccountBadges accountData={account} />
             </View>
             <View style={[flexbox.flex1, flexbox.directionRow, flexbox.alignCenter]}>
-              <DomainBadge ens={ens} />
               <AccountAddress
                 ens={ens}
                 isLoading={isLoading}

@@ -19,7 +19,8 @@ const COMMON_ROUTES = {
   transfer: 'transfer',
   topUpGasTank: 'top-up-gas-tank',
   tokenDetails: 'token-details',
-  accountSelect: 'account-select'
+  accountSelect: 'account-select',
+  receive: 'receive'
 }
 
 const MOBILE_ROUTES = {
@@ -65,7 +66,6 @@ const WEB_ROUTES = {
   benzin: 'benzin',
   swapAndBridge: 'swap-and-bridge',
   recoveryPhrasesSettings: 'settings/recovery-phrases',
-  receive: 'receive',
   safeImport: 'safe-import',
   optOuts: 'settings/opt-outs'
 }

@@ -2,9 +2,10 @@ import React from 'react'
 import { View } from 'react-native'
 
 import DAppsIcon from '@common/assets/svg/DAppsIcon'
+import ReceiveIcon from '@common/assets/svg/ReceiveIcon'
 import SendIcon from '@common/assets/svg/SendIcon'
 import SwapAndBridgeIcon from '@common/assets/svg/SwapAndBridgeIcon'
-import { isWeb } from '@common/config/env'
+import { isMobile, isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import { ROUTES } from '@common/modules/router/constants/common'
 import flexbox from '@common/styles/utils/flexbox'
@@ -24,6 +25,18 @@ const Routes = () => {
       scale: 1.08,
       scaleOnHover: 1.18
     },
+    ...(isMobile
+      ? [
+          {
+            testID: 'dashboard-button-receive',
+            icon: ReceiveIcon,
+            label: t('Receive'),
+            route: ROUTES.receive,
+            scale: 1.08,
+            scaleOnHover: 1.18
+          }
+        ]
+      : []),
     ...(isWeb
       ? [
           {

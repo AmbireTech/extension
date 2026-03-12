@@ -3,7 +3,6 @@ import { FC } from 'react'
 import shortenAddress from '@ambire-common/utils/shortenAddress'
 import Text from '@common/components/Text'
 import spacings from '@common/styles/spacings'
-import flexbox from '@common/styles/utils/flexbox'
 
 interface Props {
   maxLength: number
