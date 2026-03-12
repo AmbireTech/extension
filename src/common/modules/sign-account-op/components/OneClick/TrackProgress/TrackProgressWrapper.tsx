@@ -6,7 +6,7 @@ import { SwapAndBridgeActiveRoute } from '@ambire-common/interfaces/swapAndBridg
 import Button from '@common/components/Button'
 import FooterGlassView from '@common/components/FooterGlassView'
 import LayoutWrapper from '@common/components/LayoutWrapper'
-import { isMobile, isWeb } from '@common/config/env'
+import { isMobile } from '@common/config/env'
 import useTheme from '@common/hooks/useTheme'
 import { HeaderWithLogoOnly } from '@common/modules/header/components/Header/Header'
 import spacings from '@common/styles/spacings'

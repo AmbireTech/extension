@@ -87,8 +87,13 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
       }
     }
 
-    currentTranslateY.value = -shift
-    return { transform: [{ translateY: -shift + SPACING_SM }] }
+    let shiftValue = shift
+    if (shift !== 0) {
+      shiftValue = shift + SPACING_SM
+    }
+
+    currentTranslateY.value = -shiftValue
+    return { transform: [{ translateY: -shiftValue }] }
   })
 
   const scrollViewRef = externalScrollViewRef
@@ -99,27 +104,28 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
       {/* from losing track of its subtree during React reconciliation and re-renders. */}
       {/* Without this, the backdrop stays, but Modalize could disappear */}
       {/* without even triggering `onClose` or (this) component unmount */}
+      {!!isBackdropVisible && (
+        <Backdrop
+          isVisible={isBackdropVisible}
+          isBottomSheetVisible={isOpen}
+          customZIndex={customZIndex ? customZIndex - 1 : undefined}
+          onPress={() => {
+            closeBottomSheet()
+            !!onBackdropPress && onBackdropPress()
+          }}
+          withBlur={withBackdropBlur}
+        />
+      )}
       <Animated.View
         key={`portal-host-${id}`}
         style={[
           styles.portalHost,
           customZIndex ? { zIndex: customZIndex } : {},
+
           keyboardOffsetStyle
         ]}
         pointerEvents="box-none"
       >
-        {!!isBackdropVisible && (
-          <Backdrop
-            isVisible={isBackdropVisible}
-            isBottomSheetVisible={isOpen}
-            customZIndex={customZIndex ? customZIndex - 1 : undefined}
-            onPress={() => {
-              closeBottomSheet()
-              !!onBackdropPress && onBackdropPress()
-            }}
-            withBlur={withBackdropBlur}
-          />
-        )}
         <Modalize
           // The key is used to force the re-render of the component when there is an opened
           // bottom sheet and the user navigates to a route that also has a bottom sheet. Without
