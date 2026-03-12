@@ -10,7 +10,7 @@ import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useToast from '@common/hooks/useToast'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
 
-// import QrScanner from './QrScanner'
+import QrScanner from './QrScanner'
 
 const QrConnectScreen = () => {
   const { t } = useTranslation()
@@ -56,7 +56,7 @@ const QrConnectScreen = () => {
     >
       <Text>{t('Scan the QR code exported by your hardware wallet.')}</Text>
       <View style={{ marginTop: 16 }}>
-        {/* <QrScanner onComplete={onQrComplete} disabled={isSubmitting} /> */}
+        <QrScanner onComplete={onQrComplete} disabled={isSubmitting} />
       </View>
     </Panel>
   )

@@ -3,12 +3,7 @@ import { parse as uuidParse, v4 as uuidv4 } from 'uuid'
 import ExternalSignerError from '@ambire-common/classes/ExternalSignerError'
 import { TypedMessageUserRequest } from '@ambire-common/interfaces/userRequest'
 import { stripHexPrefix } from '@ambire-common/utils/stripHexPrefix'
-import {
-  CryptoAccount,
-  DataType,
-  ETHSignature,
-  EthSignRequest
-} from '@keystonehq/bc-ur-registry-eth'
+import { CryptoHDKey, DataType, ETHSignature, EthSignRequest } from '@keystonehq/bc-ur-registry-eth'
 import { UREncoder } from '@ngraveio/bc-ur'
 
 import { QrProtocolAdapter, QrRequest, QrSignaturePayload } from '../types'
@@ -164,24 +159,22 @@ class UrQrProtocolAdapter implements QrProtocolAdapter {
           ? Buffer.from(stripHexPrefix(payload), 'hex')
           : Buffer.from(payload)
 
-      const account = CryptoAccount.fromCBOR(cbor)
-
-      const masterFingerprint = account.getMasterFingerprint()?.toString('hex')
-
-      const outputDescriptors = account.getOutputDescriptors()
-
-      const accounts = outputDescriptors.map((desc: any) => {
-        const hdKey = desc.getCryptoKey()
-
-        return {
-          xpub: hdKey.getKey().toString('hex'),
-          index: 0
-        }
-      })
+      const hdKey = CryptoHDKey.fromCBOR(cbor)
+      const parentFingerprintHex = hdKey.getParentFingerprint().toString('hex')
+      const origin = hdKey.getOrigin()
+      const xpub = hdKey.getBip32Key()
+      if (!xpub) throw new Error('Missing BIP32 key in UR payload')
+      const masterFingerprint =
+        origin?.getSourceFingerprint?.()?.toString('hex') || parentFingerprintHex
 
       return {
         masterFingerprint,
-        accounts
+        accounts: [
+          {
+            xpub,
+            index: 0
+          }
+        ]
       }
     } catch (e: any) {
       throw new ExternalSignerError(e?.message || 'Failed to parse UR account payload', {
