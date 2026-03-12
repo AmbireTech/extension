@@ -11,9 +11,7 @@ import NoKeysToSignAlert from '@common/components/NoKeysToSignAlert'
 import useController from '@common/hooks/useController'
 import useSign from '@common/hooks/useSign'
 import useTheme from '@common/hooks/useTheme'
-import useToast from '@common/hooks/useToast'
 import spacings from '@common/styles/spacings'
-import { hexToRgba } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import SmallNotificationWindowWrapper from '@web/components/SmallNotificationWindowWrapper'
 import {
@@ -33,8 +31,6 @@ import KeySelect from '@web/modules/sign-message/components/KeySelect'
 
 import ErrorInformation from '../../components/ErrorInformation'
 import SafeOwners from '../../components/SafeOwners'
-import Gradient from './Gradient'
-import getStyles from './styles'
 
 const isCloseToBottom = ({ layoutMeasurement, contentOffset, contentSize }: NativeScrollEvent) => {
   const paddingToBottom = 20
@@ -49,8 +45,7 @@ const SignAccountOpScreen = () => {
   const { state: signAccountOpState, dispatch: signAccountOpDispatch } =
     useController('SignAccountOpController')
   const { t } = useTranslation()
-  const { addToast } = useToast()
-  const { styles, theme, themeType } = useTheme(getStyles)
+  const { theme } = useTheme()
   const [containerHeight, setContainerHeight] = useState(0)
   const [contentHeight, setContentHeight] = useState(0)
   const [hasReachedBottom, setHasReachedBottom] = useState<boolean | null>(null)
@@ -200,16 +195,7 @@ const SignAccountOpScreen = () => {
         header={<ActionHeader />}
         renderDirectChildren={() => (
           <View style={[spacings.mh, spacings.mv]}>
-            <GlassView isSimpleBlur={false} tintColor2={hexToRgba('#D1D1D1', 0.12)}>
-              {/* Gradient */}
-              <Gradient
-                style={{
-                  position: 'absolute',
-                  top: -70,
-                  right: -70,
-                  zIndex: -1
-                }}
-              />
+            <GlassView>
               <View style={[spacings.ph, spacings.pv, flexbox.flex1]}>
                 {!estimationFailed &&
                 signAccountOpState?.canBroadcast &&
