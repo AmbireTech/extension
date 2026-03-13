@@ -22,8 +22,6 @@ const createConsoleWarnShimPlugin = require('./lavamoat/shims/console-warn-shim-
 const createLavamoatUnsafeLayerPlugin = require('./lavamoat/plugins/lavamoat-unsafe-layer-plugin')
 const LavamoatIgnoredModulesVerifyPlugin = require('./lavamoat/plugins/lavamoat-ignored-modules-verify-plugin')
 
-console.log('Trigger CI.')
-
 // Entries that run outside LavaMoat protection.
 //
 // Important: this list controls TWO mechanisms that must stay aligned:
@@ -420,8 +418,7 @@ module.exports = async function (env, argv) {
               //   1: Moderate logging (useful for debugging policy issues)
               //   2: Verbose logging (use only when investigating deep issues)
               // Set to 0 to avoid error logging conflicts with Expo's progress bar.
-              // Triger CI.
-              diagnosticsVerbosity: 2
+              diagnosticsVerbosity: process.env.LAVAMOAT_GENERATE_POLICY === 'true' ? 1 : 0
             }),
             // Verify that any modules LavaMoat is forced to ignore at runtime
             // are either fully tree-shaken or otherwise empty placeholders.
