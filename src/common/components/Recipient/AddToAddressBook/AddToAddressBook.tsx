@@ -4,6 +4,7 @@ import { Pressable, View } from 'react-native'
 import AddCircularIcon from '@common/assets/svg/AddCircularIcon'
 import AddIcon from '@common/assets/svg/AddIcon'
 import Text from '@common/components/Text'
+import { isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
@@ -36,8 +37,8 @@ const AddToAddressBook = ({
     addressValidationMsg !== 'Invalid address.' ? (
     <Pressable
       style={({ hovered }: any) => [
-        spacings.mb,
-        spacings.mtTy,
+        ...(isWeb ? [spacings.mb] : []),
+        ...(isWeb ? [spacings.mtTy] : [spacings.mtSm]),
         styles.addressBookButton,
         {
           backgroundColor: hovered
@@ -48,8 +49,8 @@ const AddToAddressBook = ({
       onPress={onAddToAddressBookPress}
     >
       <AddCircularIcon
-        width={16}
-        height={16}
+        width={isWeb ? 16 : 18}
+        height={isWeb ? 16 : 18}
         style={spacings.mrMi}
         color={theme.primaryAccent300}
       />

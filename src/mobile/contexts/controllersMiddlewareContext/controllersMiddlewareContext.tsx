@@ -13,17 +13,22 @@ import { APP_VERSION } from '@common/config/env'
 import { AllControllersMappingType } from '@common/constants/controllersMapping'
 import { ControllersMiddlewareContext } from '@common/contexts/controllersMiddlewareContext'
 import { ControllerStoreContext } from '@common/contexts/controllerStoreContext'
+import useRoute from '@common/hooks/useRoute'
 import eventBus from '@common/services/event/eventBus'
 import { storage } from '@common/services/storage'
 import { Action, MethodAction } from '@common/types/actions'
 import { BUNGEE_API_KEY, RELAYER_URL, VELCRO_URL } from '@env'
 import { MobileBaseControllersMappingType } from '@mobile/constants/controllersMapping'
+import { handleActions } from '@mobile/handlers/handleActions'
 
 export const ControllersMiddlewareProvider: React.FC<{
   children: React.ReactNode
 }> = ({ children }) => {
   const [isUnlocked, setIsUnlocked] = useState(false)
-  const { controllerStore, debounceControllerUpdates } = useContext(ControllerStoreContext)
+  const { controllerStore, isStoreReady, debounceControllerUpdates } =
+    useContext(ControllerStoreContext)
+
+  const route = useRoute()
 
   const eventEmitterRegistry = useRef<EventEmitterRegistryController>(
     new EventEmitterRegistryController(() => {
@@ -247,26 +252,34 @@ export const ControllersMiddlewareProvider: React.FC<{
   }
 
   const dispatch = useCallback((action: MethodAction | Action) => {
-    if (action.type === 'method') {
-      const { ctrlName, method, args } = action.params
-
-      let targetCtrl: any = Object.values(eventEmitterRegistry.current.values()).find(
-        (ctrl: any) => ctrl.name === ctrlName
-      )
-      if (!targetCtrl) {
-        console.error(`handleAction: Controller ${ctrlName.toString()} not found`)
-        return
-      }
-
-      if (targetCtrl && typeof targetCtrl[method] === 'function') {
-        targetCtrl[method](...args)
-      }
-
-      return
-    }
-
-    //TODO: handle common actions for the mobile app
+    handleActions(action, {
+      eventEmitterRegistry: eventEmitterRegistry.current,
+      mainCtrl: controllers.current.MainController
+    })
   }, [])
+
+  useEffect(() => {
+    controllers.current.MainController.ui.addView({
+      id: 'default-mobile-app-view',
+      type: 'mobile'
+    })
+  }, [])
+
+  useEffect(() => {
+    const { pathname = '/', search = '' } = route
+
+    const searchParams = new URLSearchParams(search)
+    const searchParamsFormatted = Object.fromEntries(searchParams.entries())
+
+    dispatch({
+      type: 'UPDATE_UI_VIEW_ROUTE',
+      params: {
+        id: 'default-mobile-app-view',
+        route: pathname.startsWith('/') ? pathname.slice(1) : pathname,
+        searchParams: searchParamsFormatted
+      }
+    })
+  }, [route, dispatch])
 
   return (
     <ControllersMiddlewareContext.Provider value={useMemo(() => ({ dispatch }), [dispatch])}>

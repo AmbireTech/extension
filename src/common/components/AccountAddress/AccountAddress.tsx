@@ -80,7 +80,7 @@ const AccountAddress: FC<Props> = ({
               <PlainAddress
                 maxLength={18}
                 address={address}
-                style={spacings.mlMi}
+                style={{ ...spacings.mlMi }}
                 fontSize={fontSize}
               />
               {withReceive && <ReceiveButton address={address} fontSize={fontSize} />}
@@ -99,7 +99,7 @@ const AccountAddress: FC<Props> = ({
           </PlainAddressWithCopy>
         </>
       ) : (
-        <>
+        <View style={[flexbox.directionRow]}>
           <PlainAddress
             maxLength={plainAddressMaxLength}
             address={address}
@@ -107,7 +107,7 @@ const AccountAddress: FC<Props> = ({
             fontSize={fontSize}
           />
           {withReceive && <ReceiveButton address={address} fontSize={fontSize} />}
-        </>
+        </View>
       )}
     </View>
   )
