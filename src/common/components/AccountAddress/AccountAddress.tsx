@@ -60,18 +60,33 @@ const AccountAddress: FC<Props> = ({
   const { t } = useTranslation()
 
   return (
-    <View style={[{ flexShrink: 1 }, containerStyle]} testID="address">
+    <View
+      style={[{ flexShrink: 1, minWidth: 0, maxWidth: '100%' }, containerStyle]}
+      testID="address"
+    >
       {ens || isLoading ? (
-        <View style={[flexbox.directionRow, flexbox.alignCenter, withWrap && flexbox.wrap]}>
+        <View
+          style={[
+            flexbox.directionRow,
+            flexbox.alignCenter,
+            withWrap ? flexbox.wrap : { flexShrink: 1, minWidth: 0, maxWidth: '100%' }
+          ]}
+        >
           {!isLoading ? (
-            <View style={[flexbox.directionRow, flexbox.alignCenter, { flexShrink: 1 }]}>
+            <View
+              style={[
+                flexbox.directionRow,
+                flexbox.alignCenter,
+                { flexShrink: 1, minWidth: 0, maxWidth: '100%' }
+              ]}
+            >
               <DomainBadge ens={ens} />
               <Text
                 fontSize={fontSize}
                 weight="semiBold"
                 appearance="primary"
                 numberOfLines={1}
-                style={[spacings.mrMi, { flexShrink: 1 }]}
+                style={[spacings.mrMi, { flexShrink: 1, minWidth: 0 }]}
               >
                 {ens}
               </Text>

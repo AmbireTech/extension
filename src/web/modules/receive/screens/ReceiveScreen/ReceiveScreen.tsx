@@ -83,7 +83,13 @@ const ReceiveScreen: FC = () => {
         </View>
         <View style={spacings.phSm}>
           <View style={[styles.accountAddressWrapper]}>
-            <View style={[flexbox.directionRow, flexbox.center, { flexShrink: 1 }]}>
+            <View
+              style={[
+                flexbox.directionRow,
+                flexbox.center,
+                { flexShrink: 1, minWidth: 0, maxWidth: '100%' }
+              ]}
+            >
               <AccountAddress
                 isLoading={isDomainResolving}
                 ens={ens}
