@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { getIsViewOnly } from '@ambire-common/utils/accounts'
+import { isMobile } from '@common/config/env'
 import useController from '@common/hooks/useController'
 import { useMultiHover } from '@common/hooks/useHover'
 import useReverseLookup from '@common/hooks/useReverseLookup'
@@ -65,7 +66,7 @@ const useReceive = () => {
 
   const { label, pfp } = account?.preferences || { label: '', pfp: '' }
 
-  const MAX_VISIBLE_NETWORKS = 10
+  const MAX_VISIBLE_NETWORKS = isMobile ? 8 : 10
   const [showAllNetworks, setShowAllNetworks] = useState(false)
 
   const supportedNetworks = useMemo(() => {

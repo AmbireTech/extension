@@ -49,9 +49,14 @@ const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
       ...flexbox.alignCenter,
       borderTopWidth: 1,
       borderBottomWidth: 0,
-      borderColor: theme.neutral100
+      borderColor: theme.neutral100,
+      position: 'absolute',
+      width: '100%',
+      bottom: 0,
+      ...spacings.pvSm,
+      ...spacings.phSm
     },
-    supportedNetworksTitle: { ...spacings.mbSm, ...text.center, ...spacings.mt },
+    supportedNetworksTitle: { ...spacings.mbSm, ...text.center },
     supportedNetworks: {
       flexDirection: 'row',
       flexWrap: 'wrap',
@@ -78,7 +83,7 @@ const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
     seeMoreWrapper: {
       ...flexbox.directionRow,
       ...flexbox.center,
-      ...spacings.mtTy
+      ...spacings.pvMi
     },
     extraNetwork: {
       opacity: 0,
