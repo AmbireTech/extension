@@ -85,7 +85,6 @@ const Alert = ({
         !isSmall ? spacings.pv : spacings.pvSm,
         flexbox.directionRow,
         common.borderRadiusPrimary,
-        flexbox.alignCenter,
         {
           backgroundColor: theme[`${type}Background`]
         },

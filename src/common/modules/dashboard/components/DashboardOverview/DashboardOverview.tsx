@@ -91,7 +91,7 @@ const DashboardOverview: FC<Props> = ({
   }, [dashboardNetworkFilter, mainDispatch])
 
   return (
-    <View style={[spacings.phSm, banners.length ? {} : spacings.mbTy]}>
+    <View style={[spacings.phSm, spacings.mbTy]}>
       <Animated.View
         style={[
           common.borderRadiusPrimary,

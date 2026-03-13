@@ -6,7 +6,7 @@ import { AnimatedPressable, useCustomHover, useMultiHover } from '@common/hooks/
 import { AnimatedText } from '@common/hooks/useHover/useHover'
 import { AnimationValues } from '@common/hooks/useHover/useMultiHover'
 import useTheme from '@common/hooks/useTheme'
-import spacings, { SPACING_MI, SPACING_TY } from '@common/styles/spacings'
+import spacings from '@common/styles/spacings'
 import common, { hexToRgba } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import useOnEnterKeyPress from '@web/hooks/useOnEnterKeyPress'
@@ -18,11 +18,13 @@ type ButtonTypes =
   | 'primary'
   | 'secondary'
   | 'tertiary'
+  // Use danger if the button is a secondary action and dangerFilled
+  // if it's the primary action on the screen
   | 'danger'
+  | 'dangerFilled'
   | 'outline'
   | 'ghost'
   | 'ghost2'
-  | 'error'
   | 'warning'
   | 'info'
   | 'success'
@@ -78,6 +80,7 @@ const ButtonInnerContainer = ({
       secondary: [],
       tertiary: [],
       danger: [],
+      dangerFilled: [],
       outline: [],
       ghost: [
         {
@@ -87,7 +90,6 @@ const ButtonInnerContainer = ({
         }
       ],
       ghost2: [],
-      error: [],
       warning: [],
       info: [],
       info2: [],
@@ -201,6 +203,13 @@ const Button = ({
           to: theme.error300
         }
       ],
+      dangerFilled: [
+        {
+          property: 'backgroundColor',
+          from: theme.error200,
+          to: theme.error300
+        }
+      ],
       outline: [
         {
           property: 'backgroundColor',
@@ -215,8 +224,13 @@ const Button = ({
       ],
       ghost: [],
       ghost2: [],
-      error: [OPACITY_ANIMATION],
-      warning: [OPACITY_ANIMATION],
+      warning: [
+        {
+          property: 'backgroundColor',
+          from: theme.warningBackground,
+          to: theme.warning400
+        }
+      ],
       info: [OPACITY_ANIMATION],
       success: [OPACITY_ANIMATION],
       gray: [
@@ -243,13 +257,13 @@ const Button = ({
     outline: styles.buttonContainerOutline,
     ghost: styles.buttonContainerGhost,
     ghost2: {},
-    error: {
+    dangerFilled: {
       backgroundColor: theme.error200,
       borderWidth: 0
     },
     warning: {
-      backgroundColor: theme.warningText,
-      borderWidth: 0
+      borderColor: theme.warningDecorative,
+      borderWidth: 1
     },
     info: {
       backgroundColor: theme.infoText,
@@ -306,6 +320,13 @@ const Button = ({
           to: theme.error100
         }
       ],
+      dangerFilled: [
+        {
+          property: 'color',
+          from: '#fff',
+          to: '#fff'
+        }
+      ],
       outline: [
         {
           property: 'color',
@@ -327,18 +348,11 @@ const Button = ({
           to: theme.primaryText
         }
       ],
-      error: [
-        {
-          property: 'color',
-          from: '#fff',
-          to: '#fff'
-        }
-      ],
       warning: [
         {
           property: 'color',
-          from: theme.primaryBackground,
-          to: theme.primaryBackground
+          from: theme.warningText,
+          to: theme.warning100
         }
       ],
       info: [
