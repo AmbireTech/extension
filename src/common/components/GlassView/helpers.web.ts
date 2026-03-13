@@ -262,16 +262,12 @@ export function generateSpecularMap({
     const sinPixelAngleNum = dy // numerator for atan2 (denominator is dx = px-cx)
 
     // Process pixels in the row using two sub-spans when there is a hollow centre.
-    // spans: array of [xStart, xEnd] pairs to iterate
-    const spans: [number, number][] =
-      innerR > 0 && xInnerMin > xOuterMin && xInnerMax < xOuterMax
-        ? [
-            [xOuterMin, xInnerMin],
-            [xInnerMax, xOuterMax]
-          ]
-        : [[xOuterMin, xOuterMax]]
+    // Plain index loop avoids per-row array + tuple allocations and for-of iterator overhead.
+    const hasTwoSpans = innerR > 0 && xInnerMin > xOuterMin && xInnerMax < xOuterMax
 
-    for (const [xStart, xEnd] of spans) {
+    for (let s = 0; s < (hasTwoSpans ? 2 : 1); s++) {
+      const xStart = s === 0 ? xOuterMin : xInnerMax
+      const xEnd = hasTwoSpans && s === 0 ? xInnerMin : xOuterMax
       for (let px = xStart; px <= xEnd; px++) {
         // Inlined sdRoundedRect — avoids a function call and reuses qdy2 from the row
         const dx = px - cx // also reused for the dot-product below
