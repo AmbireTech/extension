@@ -7,6 +7,7 @@ import PlainAddress from '@common/components/AccountAddress/PlainAddress'
 import PlainAddressWithCopy from '@common/components/AccountAddress/PlainAddressWithCopy'
 import DomainBadge from '@common/components/Avatar/DomainBadge'
 import Text from '@common/components/Text'
+import { isMobile } from '@common/config/env'
 import useHover, { AnimatedPressable } from '@common/hooks/useHover/useHover'
 import useNavigation from '@common/hooks/useNavigation'
 import useReverseLookup from '@common/hooks/useReverseLookup'
@@ -21,6 +22,7 @@ interface Props extends ReturnType<typeof useReverseLookup> {
   fontSize?: number
   containerStyle?: ViewStyle
   withReceive?: boolean
+  withWrap?: boolean
 }
 
 export const ReceiveButton = memo(
@@ -52,14 +54,15 @@ const AccountAddress: FC<Props> = ({
   withCopy = true,
   fontSize = 12,
   containerStyle = {},
-  withReceive = false
+  withReceive = false,
+  withWrap = false
 }) => {
   const { t } = useTranslation()
 
   return (
     <View style={[{ flexShrink: 1 }, containerStyle]} testID="address">
       {ens || isLoading ? (
-        <View style={[flexbox.directionRow, flexbox.alignCenter, flexbox.wrap]}>
+        <View style={[flexbox.directionRow, flexbox.alignCenter, withWrap && flexbox.wrap]}>
           {!isLoading ? (
             <View style={[flexbox.directionRow, flexbox.alignCenter, { flexShrink: 1 }]}>
               <DomainBadge ens={ens} />
@@ -80,14 +83,19 @@ const AccountAddress: FC<Props> = ({
           )}
           {withCopy ? (
             <>
-              <PlainAddressWithCopy maxLength={18} address={address} fontSize={fontSize}>
+              <PlainAddressWithCopy
+                maxLength={withWrap && isMobile ? 42 : 18}
+                address={address}
+                fontSize={fontSize}
+                withWrap={withWrap}
+              >
                 {withReceive && <ReceiveButton address={address} fontSize={fontSize} />}
               </PlainAddressWithCopy>
             </>
           ) : (
             <>
               <PlainAddress
-                maxLength={18}
+                maxLength={isMobile ? 13 : 18}
                 address={address}
                 style={{ ...spacings.mlMi }}
                 fontSize={fontSize}
@@ -103,6 +111,7 @@ const AccountAddress: FC<Props> = ({
             address={address}
             hideParentheses
             fontSize={fontSize}
+            withWrap={withWrap}
           >
             {withReceive && <ReceiveButton address={address} fontSize={fontSize} />}
           </PlainAddressWithCopy>

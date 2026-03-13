@@ -74,6 +74,7 @@ const AccountData: FC<Props> = ({ onPress, withArrowRightIcon }) => {
         styles.accountButton,
         {
           backgroundColor: '#000000A3',
+          flexShrink: 1,
           // @ts-ignore
           ...(isWeb && !onPress ? { cursor: 'auto' } : {})
         }
@@ -91,7 +92,7 @@ const AccountData: FC<Props> = ({ onPress, withArrowRightIcon }) => {
         <Text
           numberOfLines={1}
           weight="semiBold"
-          style={[spacings.mrMi, { maxWidth: isPopup ? 112 : 160 }]}
+          style={[spacings.mrMi, { maxWidth: isPopup ? 112 : 160, flexShrink: 1 }]}
           color="#FFFFFF"
           fontSize={14}
         >
@@ -101,11 +102,11 @@ const AccountData: FC<Props> = ({ onPress, withArrowRightIcon }) => {
         <>
           <Text
             color="#B9BFC9"
-            style={isWeb ? spacings.mrTy : undefined}
+            style={[isWeb ? spacings.mrTy : undefined]}
             weight="mono_regular"
             fontSize={12}
           >
-            ({shortenAddress(account.addr, isWeb ? 13 : 10)})
+            ({shortenAddress(account.addr, 13)})
           </Text>
           {isWeb && (
             <AnimatedPressable

@@ -82,14 +82,15 @@ const ReceiveScreen: FC = () => {
         </View>
 
         <View style={[styles.accountAddressWrapper]}>
-          <View style={[flexbox.directionRow, flexbox.alignCenter]}>
+          <View style={[flexbox.directionRow, flexbox.alignCenter, { flexShrink: 1 }]}>
             <AccountAddress
               isLoading={isDomainResolving}
               ens={ens}
               address={account?.addr || ''}
               plainAddressMaxLength={42}
               fontSize={14}
-              containerStyle={{ ...spacings.pv0 }}
+              containerStyle={spacings.pv0}
+              withWrap
             />
           </View>
         </View>

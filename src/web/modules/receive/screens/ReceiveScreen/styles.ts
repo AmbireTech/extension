@@ -70,6 +70,7 @@ const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
     },
     accountAddressWrapper: {
       marginHorizontal: 'auto',
+      maxWidth: '100%',
       ...flexbox.center,
       ...spacings.phSm,
       ...spacings.pvSm,
