@@ -5,6 +5,7 @@ import { NativeScrollEvent, ScrollView, View } from 'react-native'
 import { SigningStatus } from '@ambire-common/controllers/signAccountOp/signAccountOp'
 import { Key } from '@ambire-common/interfaces/keystore'
 import { CallsUserRequest } from '@ambire-common/interfaces/userRequest'
+import Alert from '@common/components/Alert'
 import GlassView from '@common/components/GlassView'
 import NetworkBadge from '@common/components/NetworkBadge'
 import NoKeysToSignAlert from '@common/components/NoKeysToSignAlert'
@@ -320,6 +321,15 @@ const SignAccountOpScreen = () => {
                 network={network}
                 isViewOnly={isViewOnly}
                 isEstimationComplete={!!signAccountOpState?.isInitialized && !!network}
+              />
+            )}
+            {signAccountOpState?.hasSafeApiFailed && (
+              <Alert
+                size="sm"
+                type="warning"
+                title={t('Safe API failure')}
+                text={t('Transaction was not sent to safe global due to a Safe API failure')}
+                style={spacings.mt}
               />
             )}
             {isViewOnly && <NoKeysToSignAlert chainId={signAccountOpState?.accountOp?.chainId} />}
