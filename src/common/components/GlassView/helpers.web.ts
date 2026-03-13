@@ -212,14 +212,18 @@ export function generateSpecularMap({
   const eps = 4.0
   const innerLimit = -(pbw + eps)
   const strengthScale = strength * 2.5
+  // Precomputed reciprocals — replaces per-pixel division with multiply
+  const invPbw = 1 / pbw
+  const invEps = 1 / eps
 
   for (let py = 0; py < ph; py++) {
     const dy = py - cy
     const absDy = Math.abs(dy)
 
     const qdy_outer = Math.max(absDy - hh, 0)
+    const qdy2 = qdy_outer * qdy_outer // hoisted — reused for inner RSq and inlined SDF
     const outerR = pr + eps
-    const outerRSq = outerR * outerR - qdy_outer * qdy_outer
+    const outerRSq = outerR * outerR - qdy2
     if (outerRSq < 0) continue // entire row is outside the outer shell — skip
     const outerQdxMax = Math.sqrt(outerRSq)
     const xOuterMin = Math.max(0, Math.ceil(cx - hw - outerQdxMax))
@@ -236,8 +240,7 @@ export function generateSpecularMap({
     let xInnerMax = xOuterMax
 
     if (innerR > 0) {
-      const qdy_inner = Math.max(absDy - hh, 0)
-      const innerRSq = innerR * innerR - qdy_inner * qdy_inner
+      const innerRSq = innerR * innerR - qdy2
       if (innerRSq > 0) {
         // There is a "hole" in the centre: pixels with |qdx| < sqrt(innerRSq)
         // are too deep inside and will be skipped by the per-pixel check anyway.
@@ -255,6 +258,7 @@ export function generateSpecularMap({
     }
 
     // Precompute per-row values reused across all x iterations
+    const rowBase = py * pw * 4
     const sinPixelAngleNum = dy // numerator for atan2 (denominator is dx = px-cx)
 
     // Process pixels in the row using two sub-spans when there is a hollow centre.
@@ -269,7 +273,11 @@ export function generateSpecularMap({
 
     for (const [xStart, xEnd] of spans) {
       for (let px = xStart; px <= xEnd; px++) {
-        const sdf = sdRoundedRect(px, py, cx, cy, hw, hh, pr)
+        // Inlined sdRoundedRect — avoids a function call and reuses qdy2 from the row
+        const dx = px - cx // also reused for the dot-product below
+        const absDx = Math.abs(dx)
+        const qdx = Math.max(absDx - hw, 0)
+        const sdf = Math.sqrt(qdx * qdx + qdy2) - pr
 
         // Bezel band + smooth fringe on both edges
         if (sdf > eps || sdf < innerLimit) continue
@@ -280,7 +288,6 @@ export function generateSpecularMap({
         // cos(pixelAngle - primaryRad) = (dx*cosPrimary + dy*sinPrimary) / dist
         // The magnitude cancels inside cos², so we work with unnormalised values
         // and normalise once with the squared distance.
-        const dx = px - cx
         const distSq = dx * dx + sinPixelAngleNum * sinPixelAngleNum
         // Avoid division by zero at the exact centre (degenerate, never in bezel)
         if (distSq === 0) continue
@@ -295,21 +302,26 @@ export function generateSpecularMap({
         // Math.max(primary, secondary) == primary == secondary == cos² * 0.4
         const angularIntensity = cosSqNorm * 0.4
 
-        // Exponential radial falloff: bright at the outer rim, near-zero inward
-        const rimT = Math.max(0, -sdf) / pbw
-        const radialFalloff = Math.exp(-8 * rimT)
+        // Radial falloff: 1 at the outer rim, 0 at the inner boundary
+        const rimT = Math.max(0, -sdf) * invPbw
+        // (1 - rimT)^8 via repeated squaring replaces Math.exp(-8 * rimT) —
+        // same outer=1 / inner=0 qualitative shape, no transcendental call
+        const t = 1 - rimT
+        const t2 = t * t
+        const t4 = t2 * t2
+        const radialFalloff = t4 * t4
 
         // Smooth outer edge (sdf: +eps → 0)
-        const outerAA = Math.max(0, Math.min(1, (eps - sdf) / eps))
+        const outerAA = Math.max(0, Math.min(1, (eps - sdf) * invEps))
         // Smooth inner edge (sdf: -pbw → -(pbw+eps))
-        const innerAA = Math.max(0, Math.min(1, (sdf + pbw + eps) / eps))
+        const innerAA = Math.max(0, Math.min(1, (sdf + pbw + eps) * invEps))
 
         const intensity = Math.min(
           1.0,
           angularIntensity * radialFalloff * outerAA * innerAA * strengthScale
         )
 
-        const idx = (py * pw + px) * 4
+        const idx = rowBase + px * 4
         data[idx] = tR
         data[idx + 1] = tG
         data[idx + 2] = tB
