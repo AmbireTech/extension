@@ -12,7 +12,7 @@ type Props = Omit<CommonButtonProps, 'style' | 'children' | 'childrenPosition' |
   holdDuration?: number // in milliseconds
   holdText?: string
   completeText?: string
-  buttonType?: 'primary' | 'error' | 'warning'
+  buttonType?: 'primary' | 'dangerFilled' | 'warning'
 }
 
 const HoldToProceedButton: FC<Props> = ({
@@ -37,10 +37,10 @@ const HoldToProceedButton: FC<Props> = ({
   const holdStartTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const isCurrentlyHoldingRef = useRef(false)
 
-  const colorTypes = {
+  const progressColorMap = {
     primary: theme.primaryAccent100,
-    error: theme.errorText,
-    warning: theme.warningText
+    dangerFilled: theme.error100,
+    warning: theme.warning100
   }
 
   const startHold = useCallback(() => {
@@ -207,7 +207,7 @@ const HoldToProceedButton: FC<Props> = ({
   const progressColor = isCompleted
     ? theme.successDecorative
     : isHolding
-      ? colorTypes[buttonType]
+      ? progressColorMap[buttonType]
       : 'transparent'
 
   return (
@@ -231,7 +231,7 @@ const HoldToProceedButton: FC<Props> = ({
           {
             minWidth: buttonWidth || 108,
             position: 'relative',
-            backgroundColor: colorTypes[buttonType]
+            backgroundColor: progressColorMap[buttonType]
           },
           style
         ]}

@@ -57,7 +57,7 @@ const Checkbox = ({
           disabled={isDisabled}
         >
           {!!value && (
-            <CheckIcon2 color={theme.success400} checkColor={checkedColor || theme.neutral100} />
+            <CheckIcon2 color={checkedColor || theme.success400} checkColor={theme.neutral100} />
           )}
         </TouchableOpacity>
       </View>
