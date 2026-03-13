@@ -1,4 +1,4 @@
-name: Build production iOS app ⚡
+name: Build production iOS app (App Store .ipa) ⚡
 
 on:
   workflow_dispatch: # Manual trigger
@@ -7,11 +7,11 @@ on:
 
 jobs:
   build-ios-production:
-    name: Build iOS production .ipa and upload artifact
+    name: Build iOS production .ipa (App Store) and upload artifact
     uses: ./.github/workflows/_build-ios.yml
     with:
       build_command: yarn build:ios:production
-      artifact_suffix: production
+      artifact_suffix: ipa
       package_mode: production
       enable_signing: true
     secrets: inherit

@@ -1,5 +1,5 @@
 import React, { FC } from 'react'
-import { G, Path, Svg, SvgProps } from 'react-native-svg'
+import { G, Path, Rect, Svg, SvgProps } from 'react-native-svg'
 
 const NoKeysIcon: FC<SvgProps> = ({ width = 20, height = 21, color = '#fff' }) => {
   return (
@@ -9,10 +9,10 @@ const NoKeysIcon: FC<SvgProps> = ({ width = 20, height = 21, color = '#fff' }) =
         <Path d="m7.31 16.881 1.829 1.829" />
         <Path d="M13.36 12.279a1.748 1.748 0 1 0-1.748-1.752 1.748 1.748 0 0 0 1.748 1.752Z" />
       </G>
-      <rect width="12" height="12" rx="6" transform="rotate(180 6 6)" fill="#ea0129" />
+      <Rect width="12" height="12" rx="6" transform="rotate(180 6 6)" fill="#ea0129" />
       <G transform="rotate(180 4.5 4.5)" fill="none" stroke="#fff">
-        <rect width="6" height="6" rx="3" stroke="none" />
-        <rect x="-.5" y="-.5" width="7" height="7" rx="3.5" />
+        <Rect width="6" height="6" rx="3" stroke="none" />
+        <Rect x="-.5" y="-.5" width="7" height="7" rx="3.5" />
       </G>
       <Path fill="none" stroke="#fff" strokeLinecap="round" d="M8.366 3.63 3.75 8.25" />
     </Svg>

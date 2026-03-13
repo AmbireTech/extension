@@ -1,5 +1,5 @@
 import { ZeroAddress } from 'ethers'
-import React, { ReactNode } from 'react'
+import React from 'react'
 import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 
@@ -16,6 +16,7 @@ import PendingToBeConfirmedIcon from '@common/assets/svg/PendingToBeConfirmedIco
 import Text from '@common/components/Text'
 import TokenIcon from '@common/components/TokenIcon'
 import Tooltip from '@common/components/Tooltip'
+import { isMobile } from '@common/config/env'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import PendingBadge from '@common/modules/dashboard/components/Tokens/TokenItem/PendingBadge'
@@ -264,7 +265,7 @@ const useGetTokenSelectProps = ({
           ]}
         >
           <Text
-            fontSize={16}
+            fontSize={isSelected && isMobile ? 14 : 16}
             weight="semiBold"
             style={{ lineHeight: 20 }}
             numberOfLines={1}

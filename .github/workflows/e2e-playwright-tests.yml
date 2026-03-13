@@ -60,7 +60,7 @@ jobs:
       # We use it to mock or block background requests that can't be intercepted via page.route().
       PW_EXPERIMENTAL_SERVICE_WORKER_NETWORK_EVENTS: '1'
       IS_LEDGER_EMULATOR: 'true'
-      
+
     steps:
       - name: Checkout full Git history
         uses: actions/checkout@v6
@@ -87,6 +87,7 @@ jobs:
         uses: actions/setup-node@v6
         with:
           node-version-file: '.nvmrc'
+          cache: 'yarn'
 
       - name: Install root dependencies
         run: yarn setup:ci
@@ -111,16 +112,19 @@ jobs:
       - name: Check ledger emulator connection
         working-directory: ./e2e-playwright-tests/ledger-emulator
         run: |
-          npm -g i ts-node
-          npm i \
-           @ledgerhq/hw-transport-node-speculos@6.28.0  \
-           @ledgerhq/hw-app-eth@7.3.2 \
+          yarn global add ts-node
+          yarn add \
+            @ledgerhq/hw-transport-node-speculos@6.28.0 \
+            @ledgerhq/hw-app-eth@7.3.2 \
             ethers@6.14.1
           ts-node ledger-emulator-health-check.ts
 
+
       - name: Install e2e test dependencies
         working-directory: ./e2e-playwright-tests
-        run: npm ci
+        run: |
+          yarn install --frozen-lockfile
+          yarn postinstall
 
       - name: Get Playwright version
         id: playwright-version
@@ -136,16 +140,16 @@ jobs:
 
       - name: Install Playwright browsers
         working-directory: ./e2e-playwright-tests
-        run: npx playwright install --with-deps chromium
+        run: yarn playwright install --with-deps chromium
         if: steps.playwright-cache.outputs.cache-hit != 'true'
 
       - name: Run Balance Check test for SA and BA
         working-directory: ./e2e-playwright-tests
-        run: npm run balance:test
+        run: yarn balance:test
 
       - name: Run Playwright tests
         working-directory: ./e2e-playwright-tests
-        run: npm run test
+        run: yarn test
 
       - name: Zip HTML report
         if: always()
