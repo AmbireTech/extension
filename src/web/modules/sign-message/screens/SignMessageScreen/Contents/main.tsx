@@ -19,6 +19,7 @@ import { TabLayoutWrapperMainContent } from '@web/components/TabLayoutWrapper'
 import useResponsiveActionWindow from '@web/hooks/useResponsiveActionWindow'
 import HardwareWalletSigningModal from '@web/modules/hardware-wallet/components/HardwareWalletSigningModal'
 import LedgerConnectModal from '@web/modules/hardware-wallet/components/LedgerConnectModal'
+// import QrSigningFlowScreen from '@web/modules/hardware-wallet/screens/QrSigningFlowScreen/QrSigningFlowScreen'
 import FallbackVisualization from '@web/modules/sign-message/screens/SignMessageScreen/FallbackVisualization'
 import Info from '@web/modules/sign-message/screens/SignMessageScreen/Info'
 import getStyles from '@web/modules/sign-message/screens/SignMessageScreen/styles'
@@ -44,6 +45,7 @@ const Main = ({
 }: Props) => {
   const { t } = useTranslation()
   const signMessageState = useController('SignMessageController').state
+  // const { currentRequest } = useController('QrHardwareController').state
   const signStatus = signMessageState.statuses.sign
   const { styles, theme, themeType } = useTheme(getStyles)
   const { responsiveSizeMultiplier } = useResponsiveActionWindow()
@@ -71,6 +73,9 @@ const Main = ({
       signMessageState.messageToSign?.content.kind,
     [network, humanizedMessage, signMessageState.messageToSign?.content?.kind]
   )
+
+  console.log('signMessageState', signMessageState)
+  console.log('hjere', signMessageState.signer && signMessageState.signer.key.type !== 'internal')
 
   return (
     <TabLayoutWrapperMainContent style={spacings.mbLg}>
@@ -199,12 +204,17 @@ const Main = ({
             })}
           </ExpandableCard>
         </View>
-        {signMessageState.signer && signMessageState.signer.key.type !== 'internal' && (
-          <HardwareWalletSigningModal
-            keyType={signMessageState.signer.key.type}
-            isVisible={signStatus === 'LOADING'}
-          />
-        )}
+        {signMessageState.signer &&
+          signMessageState.signer.key.type !== 'internal' &&
+          signMessageState.signer.key.type !== 'qr' && (
+            <HardwareWalletSigningModal
+              keyType={signMessageState.signer.key.type}
+              isVisible={signStatus === 'LOADING'}
+            />
+          )}
+        {/* {signMessageState.signer && signMessageState.signer.key.type === 'qr' && currentRequest && (
+          <QrSigningFlowScreen />
+        )} */}
         {shouldDisplayLedgerConnectModal && (
           <LedgerConnectModal
             isVisible={!isLedgerConnected}

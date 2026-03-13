@@ -66,6 +66,7 @@ import LatticeSigner from '@web/modules/hardware-wallet/libs/LatticeSigner'
 import LedgerSigner from '@web/modules/hardware-wallet/libs/LedgerSigner'
 import TrezorSigner from '@web/modules/hardware-wallet/libs/TrezorSigner'
 import UrQrProtocolAdapter from '@web/modules/hardware-wallet/qr/protocol/UrQrProtocolAdapter'
+import QrHardwareSigner from '@web/modules/hardware-wallet/signers/QrHardwareSigner'
 import { getExtensionInstanceId } from '@web/utils/analytics'
 import { LOG_LEVELS, logInfoWithPrefix } from '@web/utils/logger'
 
@@ -495,7 +496,8 @@ const init = async () => {
       // TODO: there is a mismatch in hw signer types, it's not a big deal
       ledger: LedgerSigner,
       trezor: TrezorSigner,
-      lattice: LatticeSigner
+      lattice: LatticeSigner,
+      qr: QrHardwareSigner
     } as any,
     externalSignerControllers: {
       ledger: ledgerCtrl,

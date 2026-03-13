@@ -1,4 +1,4 @@
-import { parse as uuidParse, v4 as uuidv4 } from 'uuid'
+import { v4 as uuidv4 } from 'uuid'
 
 import ExternalSignerError from '@ambire-common/classes/ExternalSignerError'
 import { TypedMessageUserRequest } from '@ambire-common/interfaces/userRequest'
@@ -29,6 +29,7 @@ class UrQrProtocolAdapter implements QrProtocolAdapter {
   async buildSignMessageRequest(args: {
     hex: string
     derivationPath: string
+    masterFingerprint: string
     address?: string
     chainId?: bigint
   }): Promise<QrRequest> {
@@ -49,6 +50,8 @@ class UrQrProtocolAdapter implements QrProtocolAdapter {
         signData,
         DataType.personalMessage,
         args.derivationPath,
+        args.masterFingerprint,
+        uuidv4(),
         args.chainId !== undefined ? Number(args.chainId) : undefined,
         undefined,
         args.address
@@ -70,6 +73,7 @@ class UrQrProtocolAdapter implements QrProtocolAdapter {
 
   async buildSignTypedDataRequest(args: {
     typedData: TypedMessageUserRequest['meta']['params']
+    masterFingerprint: string
     derivationPath: string
     address?: string
   }): Promise<QrRequest> {
@@ -87,8 +91,7 @@ class UrQrProtocolAdapter implements QrProtocolAdapter {
         signData,
         DataType.typedData,
         args.derivationPath,
-        // undefined, // xfp for now
-        '', // xfp for now
+        args.masterFingerprint, // xfp for now
         // uuidParse(requestId),
         requestId,
         undefined, // chainId

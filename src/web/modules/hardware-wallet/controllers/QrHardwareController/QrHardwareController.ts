@@ -5,10 +5,12 @@ import {
 } from '@ambire-common/interfaces/keystore'
 import { TypedMessageUserRequest } from '@ambire-common/interfaces/userRequest'
 
-import { QrProtocolAdapter, QrRequest, QrSignaturePayload } from '../../qr/types'
+import { QrProtocolAdapter, QrRequest, QrSignaturePayload, QrSigningStep } from '../../qr/types'
+import { importQrAccountsToReadyToAddKeys } from '../../qr/utils'
 
 class QrHardwareController implements ExternalSignerController, QrAccountImportController {
   type = 'qr'
+  // TODO: check if we can get more specific info from the QR payloads in the future to populate these fields better
   deviceModel = 'unknown'
   deviceId = ''
 
@@ -17,6 +19,8 @@ class QrHardwareController implements ExternalSignerController, QrAccountImportC
   currentRequest: QrRequest | null = null
 
   activeRequestId: string | null = null
+
+  signingStep: QrSigningStep = 'idle'
 
   private resolveSession: ((payload: string | Uint8Array) => void) | null = null
   private rejectSession: ((error: Error) => void) | null = null
@@ -37,11 +41,20 @@ class QrHardwareController implements ExternalSignerController, QrAccountImportC
 
     this.currentRequest = request
     this.activeRequestId = request.requestId || null
+    this.signingStep = 'show-request'
 
     return new Promise((resolve, reject) => {
       this.resolveSession = resolve
       this.rejectSession = reject
     })
+  }
+
+  moveToResponseScan() {
+    if (!this.currentRequest) {
+      throw new ExternalSignerError('No active QR signing session.')
+    }
+
+    this.signingStep = 'scan-response'
   }
 
   submitSignatureResponse(payload: string | Uint8Array) {
@@ -56,11 +69,14 @@ class QrHardwareController implements ExternalSignerController, QrAccountImportC
   async signMessageQR(args: {
     hex: string
     derivationPath: string
+    masterFingerprint: string
     address: string
   }): Promise<QrSignaturePayload> {
+    console.log('4. QrHardwareController: signMessageQR called with args:', args) // Debug log
     const request = await this.protocolAdapter.buildSignMessageRequest({
       hex: args.hex,
       derivationPath: args.derivationPath,
+      masterFingerprint: args.masterFingerprint,
       address: args.address
     })
 
@@ -74,11 +90,13 @@ class QrHardwareController implements ExternalSignerController, QrAccountImportC
   async signTypedDataQR(args: {
     typedData: TypedMessageUserRequest['meta']['params']
     derivationPath: string
+    masterFingerprint: string
     address: string
   }): Promise<QrSignaturePayload> {
     const request = await this.protocolAdapter.buildSignTypedDataRequest({
       typedData: args.typedData,
       derivationPath: args.derivationPath,
+      masterFingerprint: args.masterFingerprint,
       address: args.address
     })
 
@@ -104,6 +122,7 @@ class QrHardwareController implements ExternalSignerController, QrAccountImportC
     this.activeRequestId = null
     this.resolveSession = null
     this.rejectSession = null
+    this.signingStep = 'idle'
   }
 
   async importAccountQR(payload: string | Uint8Array) {
@@ -111,7 +130,9 @@ class QrHardwareController implements ExternalSignerController, QrAccountImportC
       throw new ExternalSignerError('QR protocol adapter does not support account import')
     }
 
-    return this.protocolAdapter.parseAccountPayload(payload)
+    const parsedAccount = await this.protocolAdapter.parseAccountPayload(payload)
+
+    return parsedAccount
   }
 }
 

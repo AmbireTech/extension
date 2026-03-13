@@ -45,6 +45,8 @@ class QrHardwareSigner implements KeystoreSignerInterface {
       const res = await this.controller!.signMessageQR({
         hex,
         derivationPath: path,
+        // TODO: check if masterFingerprint can be ''
+        masterFingerprint: this.key.meta.masterFingerprint || '',
         address: this.key.addr
       })
 
@@ -67,6 +69,8 @@ class QrHardwareSigner implements KeystoreSignerInterface {
       const res = await this.controller!.signTypedDataQR({
         typedData,
         derivationPath: path,
+        // TODO: check if masterFingerprint can be ''
+        masterFingerprint: this.key.meta.masterFingerprint || '',
         address: this.key.addr
       })
 
