@@ -136,7 +136,7 @@ const NavMenu = () => {
               </View>
             </View>
             {hasPasswordSecret && (
-              <FooterGlassView>
+              <FooterGlassView isSimpleBlur={false}>
                 <Button
                   text="Lock Ambire"
                   size="smaller"

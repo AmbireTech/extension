@@ -107,7 +107,8 @@ const SignAccountOpScreen = () => {
     bundlerNonceDiscrepancy,
     primaryButtonText,
     shouldHoldToProceed,
-    disabledReason
+    disabledReason,
+    showSafeSigners
   } = useSign({
     handleUpdateStatus,
     signAccountOpState,
@@ -199,7 +200,7 @@ const SignAccountOpScreen = () => {
         header={<ActionHeader />}
         renderDirectChildren={() => (
           <View style={[spacings.mh, spacings.mv]}>
-            <GlassView tintColor2={hexToRgba('#D1D1D1', 0.12)}>
+            <GlassView isSimpleBlur={false} tintColor2={hexToRgba('#D1D1D1', 0.12)}>
               {/* Gradient */}
               <Gradient
                 style={{
@@ -232,7 +233,8 @@ const SignAccountOpScreen = () => {
                   signAccountOpState &&
                   signAccountOpState?.errors.length === 0 &&
                   !signAccountOpState.canBroadcast &&
-                  !!signAccountOpState.account.safeCreation && (
+                  !!signAccountOpState.account.safeCreation &&
+                  showSafeSigners && (
                     <ScrollView style={[{ maxHeight: 140 }, spacings.mb]}>
                       <SafeOwners
                         account={signAccountOpState.account}

@@ -14,16 +14,13 @@ type InProgressProps = {
 
 const InProgress: FC<InProgressProps> = ({ title, children }) => (
   <>
-    <View style={[flexbox.alignCenter, flexbox.justifyCenter, spacings.mbLg]}>
-      <Text
-        testID="confirming-your"
-        fontSize={20}
-        weight="medium"
-        style={[text.center, spacings.mbSm]}
-      >
+    <View style={[flexbox.alignCenter]}>
+      <Text testID="confirming-your" fontSize={20} weight="medium" style={text.center}>
         {title}
       </Text>
-      <DotsLoadingAnimation />
+      <View style={[{ width: 72, height: 72 }, flexbox.center, spacings.mbSm]}>
+        <DotsLoadingAnimation />
+      </View>
     </View>
     {children}
   </>

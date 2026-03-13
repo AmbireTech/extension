@@ -1,13 +1,16 @@
 import React, { RefObject } from 'react'
-import { ScrollView, View } from 'react-native'
+import { ScrollView, useWindowDimensions, View } from 'react-native'
+import {
+  useReanimatedFocusedInput,
+  useReanimatedKeyboardAnimation
+} from 'react-native-keyboard-controller'
 import { Modalize } from 'react-native-modalize'
+import Animated, { useAnimatedStyle, useSharedValue } from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
-import { isWeb } from '@common/config/env'
 import useTheme from '@common/hooks/useTheme'
-import spacings, { SPACING, SPACING_MD, SPACING_SM } from '@common/styles/spacings'
+import spacings, { SPACING_SM } from '@common/styles/spacings'
 import common from '@common/styles/utils/common'
-import { getUiType } from '@common/utils/uiType'
 import { Portal } from '@gorhom/portal'
 
 import Backdrop from './Backdrop'
@@ -16,8 +19,6 @@ import getStyles from './styles'
 import useBottomSheetInternal from './useBottomSheetInternal'
 
 const ANIMATION_DURATION: number = 250
-
-const { isPopup } = getUiType()
 
 const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
   const {
@@ -32,20 +33,25 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
     onClosed,
     onOpen,
     onBackdropPress,
+    HeaderComponent,
     flatListProps,
+    sectionListProps,
     scrollViewProps,
     backgroundColor = 'primaryBackground',
     autoWidth = false,
     shouldBeClosableOnDrag = true,
     withBackdropBlur,
     customZIndex,
-    isScrollEnabled = true
+    isScrollEnabled = true,
+    customRenderer
   } = props
 
   const { styles, theme } = useTheme(getStyles)
   const { bottom } = useSafeAreaInsets()
-
-  const scrollViewRef = externalScrollViewRef
+  const { height: keyboardHeight } = useReanimatedKeyboardAnimation()
+  const { input } = useReanimatedFocusedInput()
+  const { height: windowHeight } = useWindowDimensions()
+  const currentTranslateY = useSharedValue(0)
 
   const {
     modalTopOffset,
@@ -58,29 +64,68 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
     id
   } = useBottomSheetInternal(props)
 
+  const keyboardOffsetStyle = useAnimatedStyle(() => {
+    const kbHeight = Math.abs(keyboardHeight.value)
+    if (kbHeight === 0) {
+      currentTranslateY.value = 0
+      return { transform: [{ translateY: 0 }] }
+    }
+
+    let shift = kbHeight
+
+    if (input.value) {
+      const restingY = input.value.layout.absoluteY - currentTranslateY.value
+      const inputBottomY = restingY + input.value.layout.height
+      const keyboardTopY = windowHeight - kbHeight
+      const requiredShift = inputBottomY + 24 - keyboardTopY
+      const maxShift = Math.max(0, restingY - modalTopOffset - 24)
+
+      if (requiredShift > 0) {
+        shift = Math.min(kbHeight, requiredShift, maxShift)
+      } else {
+        shift = 0
+      }
+    }
+
+    let shiftValue = shift
+    if (shift !== 0) {
+      shiftValue = shift + SPACING_SM
+    }
+
+    currentTranslateY.value = -shiftValue
+    return { transform: [{ translateY: -shiftValue }] }
+  })
+
+  const scrollViewRef = externalScrollViewRef
+
   return (
     <Portal hostName="global">
       {/* Wrapping the content in a View with a stable `key` prevents Portal */}
       {/* from losing track of its subtree during React reconciliation and re-renders. */}
       {/* Without this, the backdrop stays, but Modalize could disappear */}
       {/* without even triggering `onClose` or (this) component unmount */}
-      <View
+      {!!isBackdropVisible && (
+        <Backdrop
+          isVisible={isBackdropVisible}
+          isBottomSheetVisible={isOpen}
+          customZIndex={customZIndex ? customZIndex - 1 : undefined}
+          onPress={() => {
+            closeBottomSheet()
+            !!onBackdropPress && onBackdropPress()
+          }}
+          withBlur={withBackdropBlur}
+        />
+      )}
+      <Animated.View
         key={`portal-host-${id}`}
-        style={[styles.portalHost, customZIndex ? { zIndex: customZIndex } : {}]}
+        style={[
+          styles.portalHost,
+          customZIndex ? { zIndex: customZIndex } : {},
+
+          keyboardOffsetStyle
+        ]}
         pointerEvents="box-none"
       >
-        {!!isBackdropVisible && (
-          <Backdrop
-            isVisible={isBackdropVisible}
-            isBottomSheetVisible={isOpen}
-            customZIndex={customZIndex ? customZIndex - 1 : undefined}
-            onPress={() => {
-              closeBottomSheet()
-              !!onBackdropPress && onBackdropPress()
-            }}
-            withBlur={withBackdropBlur}
-          />
-        )}
         <Modalize
           // The key is used to force the re-render of the component when there is an opened
           // bottom sheet and the user navigates to a route that also has a bottom sheet. Without
@@ -96,12 +141,12 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
               : {},
 
             {
-              paddingHorizontal: isWeb ? (isModal ? SPACING_MD : SPACING_SM) : SPACING_SM,
+              paddingHorizontal: SPACING_SM,
               backgroundColor: theme[backgroundColor]
             },
             style
           ]}
-          rootStyle={[isPopup && isModal ? spacings.phSm : {}]}
+          rootStyle={[isModal && spacings.phSm]}
           handleStyle={[
             styles.dragger,
             isModal
@@ -112,15 +157,16 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
           ]}
           handlePosition="inside"
           useNativeDriver={false}
-          avoidKeyboardLikeIOS
+          avoidKeyboardLikeIOS={false}
           modalTopOffset={modalTopOffset}
           threshold={90}
-          adjustToContentHeight={adjustToContentHeight}
+          HeaderComponent={HeaderComponent}
+          adjustToContentHeight={customRenderer ? false : adjustToContentHeight}
           disableScrollIfPossible={false}
           withOverlay={false}
           onBackButtonPress={() => true}
           panGestureEnabled={shouldBeClosableOnDrag}
-          {...(!flatListProps
+          {...(!flatListProps && !sectionListProps
             ? {
                 scrollViewProps: {
                   bounces: false,
@@ -128,8 +174,9 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
                   ...(!isScrollEnabled && {
                     scrollEnabled: false,
                     nestedScrollEnabled: true,
-                    contentContainerStyle: { flex: 1 }
+                    contentContainerStyle: { flexGrow: 1 }
                   }),
+                  style: { marginBottom: bottom + SPACING_SM },
                   ...(scrollViewProps || {})
                 }
               }
@@ -139,7 +186,18 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
                 flatListProps: {
                   bounces: false,
                   keyboardShouldPersistTaps: 'handled',
+                  style: { marginBottom: bottom + SPACING_SM },
                   ...(flatListProps || {})
+                }
+              }
+            : {})}
+          {...(sectionListProps
+            ? {
+                sectionListProps: {
+                  bounces: false,
+                  keyboardShouldPersistTaps: 'handled',
+                  style: { marginBottom: bottom + SPACING_SM },
+                  ...(sectionListProps || {})
                 }
               }
             : {})}
@@ -156,17 +214,27 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
           }}
           onClose={() => setIsOpen(false)}
           onClosed={() => !!onClosed && onClosed()}
+          customRenderer={
+            customRenderer ? (
+              <View
+                testID={isOpen ? 'bottom-sheet' : undefined}
+                style={[common.fullWidth, containerInnerWrapperStyles]}
+              >
+                {customRenderer}
+              </View>
+            ) : undefined
+          }
         >
-          {!flatListProps && (
+          {!flatListProps && !sectionListProps && !customRenderer && (
             <View
               testID={isOpen ? 'bottom-sheet' : undefined}
-              style={[common.fullWidth, { marginBottom: bottom }, containerInnerWrapperStyles]}
+              style={[common.fullWidth, containerInnerWrapperStyles]}
             >
               {children}
             </View>
           )}
         </Modalize>
-      </View>
+      </Animated.View>
     </Portal>
   )
 }

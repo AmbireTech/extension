@@ -173,7 +173,6 @@ const SignMessageScreen = () => {
     (signers?: { addr: Key['addr']; type: Key['type'] }[]) => {
       // Has more than one key, should first choose the key to sign with
       const hasChosenSigningKey = signers && signers.length
-      console.log('the signers', signers)
       if (!hasChosenSigningKey) {
         return setIsChooseSignerShown(true)
       }

@@ -1,5 +1,5 @@
 import React from 'react'
-import { ScrollView, View } from 'react-native'
+import { View } from 'react-native'
 
 import AddCircularIcon from '@common/assets/svg/AddCircularIcon'
 import Alert from '@common/components/Alert'
@@ -15,7 +15,7 @@ import AccountsLoadingAnimation from '@common/modules/account-personalize/compon
 import useAccountPersonalize from '@common/modules/account-personalize/hooks/useAccountPersonalize'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
 import { WEB_ROUTES } from '@common/modules/router/constants/common'
-import spacings, { SPACING_TY } from '@common/styles/spacings'
+import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
 import {

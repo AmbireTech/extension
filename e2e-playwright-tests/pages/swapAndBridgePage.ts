@@ -325,11 +325,11 @@ export class SwapAndBridgePage extends BasePage {
     await this.click(selectors.selectRouteButton)
 
     if ((await oneInchRoute.count()) > 0) {
-      await this.page.locator(selectors.swapAndBridge.oneInchSwapRoute).click()
+      await this.page.locator(selectors.swapAndBridge.oneInchSwapRoute).first().click()
       await this.click(selectors.selectRouteButton)
       await this.assertSelectedAggregator('1Inch')
     } else if ((await kyberRoute.count()) > 0) {
-      await this.page.locator(selectors.swapAndBridge.kyberSwapRoute).click()
+      await this.page.locator(selectors.swapAndBridge.kyberSwapRoute).first().click()
       await this.click(selectors.selectRouteButton)
       await this.assertSelectedAggregator('Kyberswap')
     } else {
