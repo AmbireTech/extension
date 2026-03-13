@@ -7,7 +7,6 @@ import DiagonalRightArrowIcon from '@common/assets/svg/DiagonalRightArrowIcon/Di
 import AccountAddress from '@common/components/AccountAddress'
 import Alert from '@common/components/Alert'
 import Avatar from '@common/components/Avatar/Avatar'
-import DomainBadge from '@common/components/Avatar/DomainBadge'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import LayoutWrapper from '@common/components/LayoutWrapper'
 import NetworkIcon from '@common/components/NetworkIcon'

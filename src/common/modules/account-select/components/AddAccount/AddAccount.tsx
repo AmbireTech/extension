@@ -28,10 +28,6 @@ import spacings from '@common/styles/spacings'
 
 import ExpandableOptionSection from './ExpandableOptionSection'
 
-// Consider deleting the auto scroll logic if it remains disabled
-// for a long time. It's temporarily disabled so it can be added back
-const IS_AUTO_SCROLL_ENABLED = false
-
 const AddAccount = ({
   sheetRef,
   closeBottomSheet,
@@ -147,11 +143,11 @@ const AddAccount = ({
     >
       <View
         onLayout={(e) => {
-          if (scrollViewRef.current && IS_AUTO_SCROLL_ENABLED) {
-            // Scroll to the bottom of the scroll view if the new height is
-            // larger than the current height, ensuring that the user sees the newly expanded options
+          if (scrollViewRef.current) {
+            const heightChange = Math.abs(e.nativeEvent.layout.height - height)
+            // Scroll down a bit so the user can see the options
             if (e.nativeEvent.layout.height > height) {
-              scrollViewRef.current.scrollToEnd({ animated: true })
+              scrollViewRef.current.scrollTo({ y: heightChange / 2, animated: true })
             }
           }
 
