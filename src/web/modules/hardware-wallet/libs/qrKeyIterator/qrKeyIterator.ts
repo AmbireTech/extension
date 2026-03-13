@@ -7,8 +7,12 @@ import { ParsedQrAccount } from '@ambire-common/interfaces/keystore'
 import { getParentHdPathFromTemplate } from '@ambire-common/utils/hdPath'
 import QrHardwareController from '@web/modules/hardware-wallet/controllers/QrHardwareController'
 
+import { QrWalletRegistry, QrWalletType } from '../../qr/wallets'
+import { QrWalletConfig } from '../../qr/wallets/KeystoneQrWallet'
+
 interface KeyIteratorProps {
   controller: QrHardwareController
+  walletType: QrWalletType
 }
 
 const MISSING_CONTROLLER_MSG =
@@ -21,6 +25,7 @@ class QrKeyIterator implements KeyIteratorInterface {
   subType = 'hw' as const
 
   controller: QrHardwareController
+  walletConfig: QrWalletConfig | null = null
 
   #parsedAccount?: ParsedQrAccount
   #xpub?: string
@@ -48,6 +53,15 @@ class QrKeyIterator implements KeyIteratorInterface {
         'Multiple QR accounts are not supported yet in this import flow.'
       )
     }
+
+    const walletType = parsed.walletType || 'keystone' // TODO: fix the default value
+    const wallet = QrWalletRegistry[walletType]
+
+    if (!wallet) {
+      throw new ExternalSignerError(`Unsupported QR wallet type: ${walletType}`)
+    }
+
+    this.walletConfig = wallet
 
     const firstAccount = parsed.accounts[0]
 
@@ -100,6 +114,9 @@ class QrKeyIterator implements KeyIteratorInterface {
     fromToArr: { from: number; to: number }[],
     hdPathTemplate?: HD_PATH_TEMPLATE_TYPE
   ): Promise<string[]> {
+    if (!this.walletConfig) {
+      throw new ExternalSignerError('QR wallet configuration has not been resolved yet.')
+    }
     if (!this.controller) throw new Error(MISSING_CONTROLLER_MSG)
     if (!this.#parsedAccount || !this.#xpub) {
       throw new ExternalSignerError('QR accounts have not been imported yet.')

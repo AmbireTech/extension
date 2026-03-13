@@ -7,6 +7,7 @@ import { CryptoHDKey, DataType, ETHSignature, EthSignRequest } from '@keystonehq
 import { UREncoder } from '@ngraveio/bc-ur'
 
 import { QrProtocolAdapter, QrRequest, QrSignaturePayload } from '../types'
+import { QrWalletType } from '../wallets'
 
 const MAX_QR_FRAGMENT_LENGTH = 200
 
@@ -170,7 +171,14 @@ class UrQrProtocolAdapter implements QrProtocolAdapter {
       const masterFingerprint =
         origin?.getSourceFingerprint?.()?.toString('hex') || parentFingerprintHex
 
+      const deviceModel = hdKey.getName?.().split('-')[0]?.toLowerCase() || 'keystone' // Default to 'keystone' if the model cannot be determined
+      const walletType = deviceModel.toLowerCase() as QrWalletType
+      const deviceId = `${walletType}-${masterFingerprint || 'unknown'}`
+
       return {
+        walletType,
+        deviceModel,
+        deviceId,
         masterFingerprint,
         accounts: [
           {
