@@ -8,8 +8,6 @@ import useReverseLookup from '@common/hooks/useReverseLookup'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
-import DomainBadge from '../Avatar/DomainBadge'
-
 const AccountOption = ({ acc }: { acc: Account }) => {
   const { ens, isLoading } = useReverseLookup({ address: acc.addr })
 
@@ -27,7 +25,6 @@ const AccountOption = ({ acc }: { acc: Account }) => {
           {acc.preferences.label}
         </Text>
         <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-          <DomainBadge ens={ens} />
           <AccountAddress
             isLoading={isLoading}
             ens={ens}

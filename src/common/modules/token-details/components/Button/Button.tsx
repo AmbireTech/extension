@@ -4,6 +4,7 @@ import { Animated, Pressable } from 'react-native'
 import { TokenResult } from '@ambire-common/libs/portfolio'
 import Text from '@common/components/Text'
 import Tooltip from '@common/components/Tooltip'
+import { isMobile, isWeb } from '@common/config/env'
 import { useCustomHover } from '@common/hooks/useHover'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
@@ -42,8 +43,8 @@ const TokenDetailsButton: FC<Props> = ({
   const [bindAnim, animStyle, isHovered] = useCustomHover({
     property: 'backgroundColor',
     values: {
-      from: theme.primaryBackground,
-      to: theme.secondaryBackground
+      from: isWeb ? theme.primaryBackground : theme.secondaryBackground,
+      to: isWeb ? theme.secondaryBackground : theme.tertiaryBackground
     }
   })
   const tooltipId = `tooltip-${id}`
@@ -57,7 +58,8 @@ const TokenDetailsButton: FC<Props> = ({
         style={[
           styles.action,
           isDisabled && { opacity: 0.4 },
-          id !== 'hide-unhide' && { marginRight: 6 }
+          isWeb && id !== 'hide-unhide' && { marginRight: 6 },
+          isMobile && { minWidth: 0 }
         ]}
         // Purposely don't disable the button (but block the onPress action) in
         // case of a tooltip, because it should be clickable to show the tooltip.
@@ -82,7 +84,7 @@ const TokenDetailsButton: FC<Props> = ({
             strokeWidth={strokeWidth}
           />
         </Animated.View>
-        <Text fontSize={12} weight="medium" style={text.center} numberOfLines={1}>
+        <Text fontSize={isMobile ? 10 : 12} weight="medium" style={text.center}>
           {btnText}
         </Text>
       </Pressable>

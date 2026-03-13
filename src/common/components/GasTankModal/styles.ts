@@ -1,5 +1,6 @@
 import { StyleSheet, ViewStyle } from 'react-native'
 
+import { isWeb } from '@common/config/env'
 import spacings from '@common/styles/spacings'
 import { ThemeProps } from '@common/styles/themeConfig'
 import common from '@common/styles/utils/common'
@@ -18,8 +19,8 @@ type Style = {
 const getStyles = (theme: ThemeProps) =>
   StyleSheet.create<Style>({
     containerInnerWrapper: {
-      ...common.shadowSecondary,
-      maxHeight: 600
+      ...(isWeb ? common.shadowSecondary : {}),
+      maxHeight: isWeb ? 600 : 'auto'
     },
     content: {
       ...common.borderRadiusPrimary,
@@ -49,14 +50,14 @@ const getStyles = (theme: ThemeProps) =>
       ...flexbox.alignCenter
     },
     bulletWrapper: {
-      maxWidth: 422,
+      maxWidth: isWeb ? 422 : 'auto',
       ...spacings.pvSm,
       ...spacings.phSm,
       ...spacings.mtMd,
       ...flexbox.directionRow,
       ...flexbox.alignCenter,
       ...common.borderRadiusPrimary,
-      ...common.shadowPrimary,
+      ...(isWeb ? common.shadowPrimary : {}),
       backgroundColor: theme.primaryBackground
     }
   })

@@ -47,12 +47,16 @@ const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
     },
     supportedNetworksContainer: {
       ...flexbox.alignCenter,
-      ...spacings.mb,
       borderTopWidth: 1,
       borderBottomWidth: 0,
-      borderColor: theme.neutral100
+      borderColor: theme.neutral100,
+      position: 'absolute',
+      width: '100%',
+      bottom: 0,
+      ...spacings.pvSm,
+      ...spacings.phSm
     },
-    supportedNetworksTitle: { ...spacings.mbSm, ...text.center, ...spacings.mt },
+    supportedNetworksTitle: { ...spacings.mbSm, ...text.center },
     supportedNetworks: {
       flexDirection: 'row',
       flexWrap: 'wrap',
@@ -70,7 +74,6 @@ const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
     },
     accountAddressWrapper: {
       marginHorizontal: 'auto',
-      ...flexbox.center,
       ...spacings.phSm,
       ...spacings.pvSm,
       ...spacings.mbSm,
@@ -79,7 +82,8 @@ const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
     },
     seeMoreWrapper: {
       ...flexbox.directionRow,
-      ...flexbox.center
+      ...flexbox.center,
+      ...spacings.pvMi
     },
     extraNetwork: {
       opacity: 0,

@@ -69,19 +69,15 @@ const ExchangesBottomSheet: FC<Props> = ({ handleClose, exchangesToRender, sheet
       sheetRef={sheetRef}
       closeBottomSheet={handleClose}
       id="exchanges-bottom-sheet"
-      isScrollEnabled={false}
       containerInnerWrapperStyles={flexbox.flex1}
-    >
-      <ModalHeader handleClose={handleClose} title={t('Supported exchanges')} />
-      <ScrollableWrapper
-        type={WRAPPER_TYPES.FLAT_LIST}
-        data={exchangesToRender}
-        style={flexbox.flex1}
-        keyExtractor={(item) => item.name}
-        renderItem={({ item }) => <ExchangeItem {...item} />}
-        showsVerticalScrollIndicator={false}
-      />
-    </BottomSheet>
+      HeaderComponent={<ModalHeader handleClose={handleClose} title={t('Supported exchanges')} />}
+      flatListProps={{
+        data: exchangesToRender,
+        renderItem: ({ item }) => <ExchangeItem {...item} />,
+        keyExtractor: (item) => item.name,
+        showsVerticalScrollIndicator: false
+      }}
+    />
   )
 }
 

@@ -1,19 +1,22 @@
+import { setStringAsync } from 'expo-clipboard'
 import React, { useCallback, useMemo, useState } from 'react'
 import { View, ViewStyle } from 'react-native'
 
 import { Account as AccountInterface } from '@ambire-common/interfaces/account'
 import { canBecomeSmarter } from '@ambire-common/libs/account/account'
+import CopyIcon from '@common/assets/svg/CopyIcon'
 import AccountAddress from '@common/components/AccountAddress'
+import { ReceiveButton } from '@common/components/AccountAddress/AccountAddress'
 import AccountBadges from '@common/components/AccountBadges'
 import AccountKeyIcons from '@common/components/AccountKeyIcons'
 import Avatar from '@common/components/Avatar'
-import DomainBadge from '@common/components/Avatar/DomainBadge'
 import Dropdown from '@common/components/Dropdown'
 import Editable from '@common/components/Editable'
 import Text from '@common/components/Text'
+import { isMobile, isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
-import { AnimatedPressable, useCustomHover } from '@common/hooks/useHover'
+import useHover, { AnimatedPressable, useCustomHover } from '@common/hooks/useHover'
 import useReverseLookup from '@common/hooks/useReverseLookup'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
@@ -76,6 +79,10 @@ const Account = ({
       to: !inverseInteractionColors ? theme.secondaryBackground : theme.primaryBackground
     },
     forceHoveredStyle: options.markSelected && addr === selectedAccount?.addr
+  })
+
+  const [bindOpacityAnim, opacityAnimStyle] = useHover({
+    preset: 'opacityInverted'
   })
 
   const [dropdownPosition, setDropdownPosition] = useState({ x: 0, y: 0 })
@@ -147,6 +154,15 @@ const Account = ({
     return add7702Option ? [...submenuOptions7702, ...submenuOptions] : submenuOptions
   }, [account, getAccKeys, options.withOptionsButton, theme.errorDecorative])
 
+  const handleCopy = async () => {
+    try {
+      await setStringAsync(addr)
+      addToast(t('Address copied to clipboard'))
+    } catch {
+      addToast(t('Failed to copy address'))
+    }
+  }
+
   return (
     <AnimatedPressable
       disabled={mainStatuses.selectAccount !== 'INITIAL'}
@@ -210,20 +226,28 @@ const Account = ({
             )}
           </View>
           <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-            <DomainBadge ens={ens} />
             <AccountAddress
               containerStyle={spacings.pb0}
               isLoading={isLoading}
               ens={ens}
               address={addr}
               plainAddressMaxLength={maxAccountAddrLength}
-              withReceive={withReceive}
+              withCopy={isWeb}
+              withReceive={isWeb ? withReceive : false}
             />
           </View>
         </View>
       </View>
       <View style={[flexbox.directionRow, flexbox.alignCenter]}>
         {renderRightChildren && renderRightChildren()}
+        {isMobile && (
+          <>
+            <AnimatedPressable onPress={handleCopy} style={opacityAnimStyle} {...bindOpacityAnim}>
+              <CopyIcon width={32} height={32} strokeWidth="1" />
+            </AnimatedPressable>
+            {withReceive && <ReceiveButton address={addr} fontSize={24} />}
+          </>
+        )}
         {!!options.withOptionsButton && (
           <Dropdown
             data={submenu}

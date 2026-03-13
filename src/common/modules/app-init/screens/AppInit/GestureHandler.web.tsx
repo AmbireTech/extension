@@ -6,6 +6,7 @@ import flexbox from '@common/styles/utils/flexbox'
 
 const GestureHandler = ({ children }: { children: ReactNode }) => {
   const { theme } = useTheme()
+
   return (
     <GestureHandlerRootView style={[flexbox.flex1, { backgroundColor: theme.primaryBackground }]}>
       {children}

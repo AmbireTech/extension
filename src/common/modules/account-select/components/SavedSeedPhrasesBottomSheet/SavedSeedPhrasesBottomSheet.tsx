@@ -1,25 +1,39 @@
 import React, { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { FlatList, ListRenderItemInfo, Pressable, View } from 'react-native'
+import { ListRenderItemInfo, Pressable, View } from 'react-native'
+import { IHandles } from 'react-native-modalize/lib/options'
 
 import AddCircularIcon from '@common/assets/svg/AddCircularIcon'
 import SettingsWheelIcon from '@common/assets/svg/SettingsWheelIcon'
+import BottomSheet from '@common/components/BottomSheet'
 import ModalHeader from '@common/components/BottomSheet/ModalHeader'
 import Button from '@common/components/Button'
 import Text from '@common/components/Text'
+import { isMobile } from '@common/config/env'
 import useController from '@common/hooks/useController'
 import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useNavigation from '@common/hooks/useNavigation'
 import useTheme from '@common/hooks/useTheme'
+import Account from '@common/modules/account-select/components/Account'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
 import { WEB_ROUTES } from '@common/modules/router/constants/common'
+import alert from '@common/services/alert'
 import spacings from '@common/styles/spacings'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
-import Account from '@web/modules/account-select/components/Account'
 
-const SavedSeedPhrases = ({ handleClose }: { handleClose: () => void }) => {
+const SavedSeedPhrasesBottomSheet = ({
+  sheetRef,
+  open,
+  close,
+  handleClose
+}: {
+  sheetRef: React.RefObject<IHandles>
+  open: (dest?: 'default' | 'top' | undefined) => void
+  close: (dest?: 'default' | 'alwaysOpen' | undefined) => void
+  handleClose: () => void
+}) => {
   const { t } = useTranslation()
   const { theme } = useTheme()
   const { statuses } = useController('StorageController').state
@@ -136,25 +150,38 @@ const SavedSeedPhrases = ({ handleClose }: { handleClose: () => void }) => {
   }
 
   return (
-    <View style={[spacings.ptSm, flexbox.flex1]}>
-      <ModalHeader handleClose={handleClose} title={t('Add from recovery phrase')}>
-        <Pressable
-          onPress={() => {
-            navigate(WEB_ROUTES.recoveryPhrasesSettings)
-          }}
-        >
-          {({ hovered }: any) => (
-            <SettingsWheelIcon
-              width={28}
-              height={28}
-              color={hovered ? theme.primaryText : theme.iconPrimary}
-            />
-          )}
-        </Pressable>
-      </ModalHeader>
-      <FlatList data={seeds} renderItem={renderItem} keyExtractor={(item) => item.id} />
-    </View>
+    <BottomSheet
+      id="seed-phrases-bottom-sheet"
+      sheetRef={sheetRef}
+      closeBottomSheet={close}
+      HeaderComponent={
+        <ModalHeader handleClose={handleClose} title={t('Add from recovery phrase')}>
+          <Pressable
+            onPress={() => {
+              if (isMobile) {
+                alert('Coming soon!')
+                return
+              }
+              navigate(WEB_ROUTES.recoveryPhrasesSettings)
+            }}
+          >
+            {({ hovered }: any) => (
+              <SettingsWheelIcon
+                width={28}
+                height={28}
+                color={hovered ? theme.primaryText : theme.iconPrimary}
+              />
+            )}
+          </Pressable>
+        </ModalHeader>
+      }
+      flatListProps={{
+        data: seeds,
+        renderItem,
+        keyExtractor: (item) => item.id
+      }}
+    />
   )
 }
 
-export default React.memo(SavedSeedPhrases)
+export default React.memo(SavedSeedPhrasesBottomSheet)

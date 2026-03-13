@@ -55,7 +55,7 @@ const Search = ({
           ]}
           placeholderTextColor={theme.secondaryText}
           onBlur={onBlur}
-          onChange={onChange}
+          onChangeText={onChange}
           nativeInputStyle={{ fontSize: height >= 36 ? 16 : 14 }}
           value={value}
           button={

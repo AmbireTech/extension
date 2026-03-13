@@ -6,7 +6,7 @@
   "runtimeVersion": "11",
   "jsEngine": "hermes",
   "updates": {
-    "enabled": true,
+    "enabled": false,
     "fallbackToCacheTimeout": 45000
   },
   "ios": {

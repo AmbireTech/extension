@@ -69,6 +69,7 @@ const SelectedMenuOption: React.FC<{
   filteredContacts: Contact[]
   renderConfirmAddress?: () => React.ReactNode
   type?: 'input' | 'selected-menu-option'
+  autoFocus?: boolean
 }> = ({
   selectRef,
   filteredContacts,
@@ -81,7 +82,8 @@ const SelectedMenuOption: React.FC<{
   disabled,
   setIsMenuOpen,
   renderConfirmAddress,
-  type = 'selected-menu-option'
+  type = 'selected-menu-option',
+  autoFocus = false
 }) => {
   const [isFocused, setIsFocused] = useState(false)
   const { theme } = useTheme()
@@ -124,6 +126,7 @@ const SelectedMenuOption: React.FC<{
       validation={
         isMenuOpen && type === 'selected-menu-option' ? ADDRESS_BOOK_VISIBLE_VALIDATION : validation
       }
+      autoFocus={autoFocus}
       containerStyle={styles.inputContainer}
       ensAddress={ensAddress}
       isRecipientDomainResolving={isRecipientDomainResolving}
@@ -380,6 +383,13 @@ const Recipient: React.FC<Props> = ({
     ]
   )
 
+  const shouldAutoFocus = useMemo(() => {
+    if (walletAccountsSourcedContactOptions.length || manuallyAddedContactOptions.length)
+      return false
+
+    return true
+  }, [walletAccountsSourcedContactOptions, manuallyAddedContactOptions])
+
   return (
     <ItemPanel style={{ ...spacings.pbTy, ...spacings.mbTy }}>
       <Text appearance="secondaryText" fontSize={14} weight="medium" style={[spacings.mbSm]}>
@@ -401,6 +411,7 @@ const Recipient: React.FC<Props> = ({
           <SelectedMenuOption
             type="input"
             selectRef={selectRef}
+            autoFocus={shouldAutoFocus}
             setIsMenuOpen={toggleMenu}
             filteredContacts={filteredContacts}
             isMenuOpen={isMenuOpen}
