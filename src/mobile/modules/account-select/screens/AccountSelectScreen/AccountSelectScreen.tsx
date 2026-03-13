@@ -124,7 +124,7 @@ const AccountSelectScreen = () => {
         </Pressable>
       </HeaderWithTitle>
       <View style={[spacings.phSm, flexbox.flex1]} ref={accountsContainerRef}>
-        <Search autoFocus control={control} style={styles.searchBar} />
+        <Search autoFocus={isWeb} control={control} style={styles.searchBar} />
         <ScrollableWrapper
           type={WRAPPER_TYPES.FLAT_LIST}
           style={[
