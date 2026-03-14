@@ -5,6 +5,7 @@ import { Platform as RNPlatform } from 'react-native'
 
 import { EventEmitterRegistryController } from '@ambire-common/controllers/eventEmitterRegistry/eventEmitterRegistry'
 import { MainController } from '@ambire-common/controllers/main/main'
+import { relayerCall } from '@ambire-common/libs/relayerCall/relayerCall'
 import { IKeystoreController } from '@ambire-common/interfaces/keystore'
 import { WindowProps } from '@ambire-common/interfaces/ui'
 import { KeystoreSigner } from '@ambire-common/libs/keystoreSigner/keystoreSigner'
@@ -20,6 +21,64 @@ import { Action, MethodAction } from '@common/types/actions'
 import { BUNGEE_API_KEY, RELAYER_URL, VELCRO_URL } from '@env'
 import { MobileBaseControllersMappingType } from '@mobile/constants/controllersMapping'
 import { handleActions } from '@mobile/handlers/handleActions'
+
+let mainControllerInstance: MainController | null = null
+const fetchWithAnalytics: any = (url: any, init: any) => {
+  const urlString = url.toString()
+  try {
+    const urlObj = new URL(urlString)
+    if (!urlObj.hostname.endsWith('.ambire.com') && urlObj.hostname !== 'ambire.com') {
+      return fetch(url, init)
+    }
+  } catch (error) {
+    // eslint-disable-next-line no-console
+    console.error(error)
+    return fetch(url, init)
+  }
+
+  const initWithCustomHeaders = init || { headers: { 'x-app-source': '', 'x-app-version': '' } }
+  initWithCustomHeaders.headers = initWithCustomHeaders.headers || {}
+
+  if (mainControllerInstance?.keystore?.keyStoreUid) {
+    // TODO: implement analytics headers if needed
+  }
+
+  return fetch(url, initWithCustomHeaders)
+}
+
+// Monkey-patch relayerCall.bind globally to bypass Hermes/Babel argument shifting bugs
+// associated with bound functions that had a TypeScript `this` parameter.
+const originalBind = relayerCall.bind
+// @ts-ignore
+relayerCall.bind = function (context: any, ...boundArgs: any[]) {
+  return async function (...args: any[]) {
+    try {
+      // First, try a standard closure call.
+      // @ts-ignore
+      return await (relayerCall as any).call(context, ...boundArgs, ...args)
+    } catch (e: any) {
+      // If Babel/Hermes shifted default parameters (e.g. method=GET) because it counted the
+      // stripped `this` keyword as an argument, we will encounter a "bad method" error here
+      // because `method` read from `arguments[2]` instead of `arguments[1]`.
+      if (e?.message === 'bad method' || e?.message?.includes('bad method')) {
+        // Pad the arguments to realign the Babel `arguments[n]` indexes.
+        // Inserting a dummy `undefined` at index 1 offsets everything cleanly.
+        // @ts-ignore
+        return await (relayerCall as any).call(
+          context,
+          ...boundArgs,
+          args[0],
+          undefined,
+          args[1],
+          args[2],
+          args[3],
+          args[4]
+        )
+      }
+      throw e
+    }
+  }
+}
 
 export const ControllersMiddlewareProvider: React.FC<{
   children: React.ReactNode
@@ -104,86 +163,7 @@ export const ControllersMiddlewareProvider: React.FC<{
     )
   }, [controllerStore])
 
-  // Skip adding custom headers and URL modifications for 3rd party URLs
-  // (only internal Ambire APIs need the x-app-* headers and tracking params)
-  // @ts-ignore
-  const fetchWithAnalytics: Fetch = useCallback((url, init) => {
-    const urlString = url.toString()
-    try {
-      const urlObj = new URL(urlString)
-      if (!urlObj.hostname.endsWith('.ambire.com') && urlObj.hostname !== 'ambire.com') {
-        // @ts-ignore
-        return fetch(url, init)
-      }
-    } catch (error) {
-      // eslint-disable-next-line no-console
-      console.error(error)
-      // If URL parsing fails, skip analytics for safety
-      // @ts-ignore
-      return fetch(url, init)
-    }
-
-    // As of v4.26.0, custom extension-specific headers. TBD for the other apps.
-    const initWithCustomHeaders = init || { headers: { 'x-app-source': '', 'x-app-version': '' } }
-    initWithCustomHeaders.headers = initWithCustomHeaders.headers || {}
-
-    // if the fetch method is called while the keystore is constructing the keyStoreUid won't be defined yet
-    // in that case we can still fetch but without our custom header
-    if (controllers.current.MainController?.keystore?.keyStoreUid) {
-      // const instanceId = getExtensionInstanceId(
-      //   controllers.current.MainController.keystore.keyStoreUid,
-      //   controllers.current.MainController.invite?.verifiedCode || ''
-      // )
-      // initWithCustomHeaders.headers['x-app-source'] = instanceId
-      // const versionHeader = `extension-${APP_VERSION}-${process.env.WEB_ENGINE}`
-      // initWithCustomHeaders.headers['x-app-version'] = versionHeader
-    }
-
-    // we want to calculate the TVL of our users
-    // we can achieve this by making a relayer (server-side trusted environment) script that gets the balances of all our users
-    // but doing this with all our users would be 'expensive'.
-    // we already calculate the user balance in the extension, but is not 100% trusted as any user can modify it
-    // that why we will use the user balance from the extension as a 'hint' so we can determine
-    // on which accounts we should execute the 'expensive' script on the backend
-    // those addresses should be 1) loaded with key in the extension 2) have more than $0 balance
-    /*
-    const currentAccount = controllers.current.MainController.selectedAccount.account
-    const hasCurrentAccountKeys =
-      currentAccount &&
-      getAccountKeysCount({
-        accountAddr: currentAccount.addr,
-        keys: controllers.current.MainController.keystore.keys,
-        accounts: controllers.current.MainController.accounts.accounts
-      })
-    // we use any cena request, because if we narrow it down to one route we might not have the full balance loaded
-    // // on the relayer side we will simply use middleware that captures all routes and looks for the specific params with balance
-    // // we want to attach the data only if the user has keys for the account
-    const currentBalance = controllers.current.MainController.selectedAccount.portfolio.totalBalance
-    if (
-      currentAccount &&
-      (backgroundState.userBalances[currentAccount?.addr] || 0) < currentBalance
-    )
-      backgroundState.userBalances[currentAccount?.addr] = currentBalance
-
-    const shouldAttachBalance =
-      url.toString().startsWith('https://cena.ambire.com/') && hasCurrentAccountKeys
-    if (shouldAttachBalance) {
-      const urlObj = new URL(url.toString())
-      const balance = backgroundState.userBalances[currentAccount?.addr] || 0
-
-      urlObj.searchParams.append('panVal', JSON.stringify({ a: currentAccount.addr, b: balance }))
-
-      // eslint-disable-next-line no-param-reassign
-      url = decodeURIComponent(urlObj.toString())
-    }
-    */
-
-    // Use the native fetch (instead of node-fetch or whatever else) since
-    // browser extensions are designed to run within the web environment,
-    // which already provides a native and well-optimized fetch API.
-    // @ts-ignore
-    return fetch(url, initWithCustomHeaders)
-  }, [])
+  // fetchWithAnalytics moved outside the component
 
   if (Object.keys(controllers.current).length === 0) {
     const ctrls: MobileBaseControllersMappingType = {} as MobileBaseControllersMappingType
@@ -249,6 +229,7 @@ export const ControllersMiddlewareProvider: React.FC<{
     })
 
     controllers.current = ctrls
+    mainControllerInstance = ctrls.MainController
   }
 
   const dispatch = useCallback((action: MethodAction | Action) => {
