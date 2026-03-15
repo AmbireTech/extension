@@ -185,8 +185,6 @@ export const ControllersMiddlewareProvider: React.FC<{
     )
   }, [controllerStore])
 
-  // fetchWithAnalytics moved outside the component
-
   if (Object.keys(controllers.current).length === 0) {
     const ctrls: MobileBaseControllersMappingType = {} as MobileBaseControllersMappingType
     ctrls.MainController = new MainController({
