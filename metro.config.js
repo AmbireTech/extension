@@ -12,8 +12,7 @@ config.transformer.assetPlugins = ['expo-asset/tools/hashAssetFiles']
 // so we enforce it at the Metro resolver level which is authoritative.
 const shimRedirects = {
   'scrypt-js': path.resolve(__dirname, 'src/mobile/shims/scrypt-js.ts'),
-  pbkdf2: path.resolve(__dirname, 'src/mobile/shims/pbkdf2.ts'),
-  crypto: require.resolve('react-native-quick-crypto')
+  pbkdf2: path.resolve(__dirname, 'src/mobile/shims/pbkdf2.ts')
 }
 
 const originalResolveRequest = config.resolver.resolveRequest
