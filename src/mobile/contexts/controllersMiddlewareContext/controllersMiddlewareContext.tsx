@@ -5,7 +5,6 @@ import { Platform as RNPlatform } from 'react-native'
 
 import { EventEmitterRegistryController } from '@ambire-common/controllers/eventEmitterRegistry/eventEmitterRegistry'
 import { MainController } from '@ambire-common/controllers/main/main'
-import { relayerCall } from '@ambire-common/libs/relayerCall/relayerCall'
 import { IKeystoreController } from '@ambire-common/interfaces/keystore'
 import { WindowProps } from '@ambire-common/interfaces/ui'
 import { KeystoreSigner } from '@ambire-common/libs/keystoreSigner/keystoreSigner'
@@ -46,25 +45,48 @@ const fetchWithAnalytics: any = (url: any, init: any) => {
   return fetch(url, initWithCustomHeaders)
 }
 
-// Monkey-patch relayerCall.bind globally to bypass Hermes/Babel argument shifting bugs
-// associated with bound functions that had a TypeScript `this` parameter.
-const originalBind = relayerCall.bind
+// --- POLYFILL FOR REACT NATIVE HERMES / METRO BIND BUG ---
+// In certain cases on React Native, when a function with a TypeScript `this:` parameter
+// and default arguments is compiled, the native `Function.prototype.bind` misaligns
+// the injected arguments (specifically, offsets them by 1 because it counts the stripped `this`).
+// The fix is to override `Function.prototype.bind` globally here before any controllers execute.
+
+const originalBind = Function.prototype.bind
 // @ts-ignore
-relayerCall.bind = function (context: any, ...boundArgs: any[]) {
-  return async function (...args: any[]) {
+Function.prototype.bind = function (context: any, ...boundArgs: any[]) {
+  const targetFunction = this
+
+  // We return an async closure by default because almost all bound functions
+  // in the controllers that suffer from this bug are async or return promises (like relayerCall).
+  // If a synchronous function throws an error, it will just throw synchronously.
+  return function (...args: any[]) {
     try {
-      // First, try a standard closure call.
-      // @ts-ignore
-      return await (relayerCall as any).call(context, ...boundArgs, ...args)
+      // First, try standard execution
+      const result = targetFunction.call(context, ...boundArgs, ...args)
+
+      // If it's a promise, we must intercept rejections to catch the "bad method" error asynchronously
+      if (result && typeof result.then === 'function') {
+        return result.catch((e: any) => {
+          if (e?.message === 'bad method' || e?.message?.includes('bad method')) {
+            // Argument shift detected! Try with padded offset.
+            return targetFunction.call(
+              context,
+              ...boundArgs,
+              args[0],
+              undefined, // Dummy pad
+              args[1],
+              args[2],
+              args[3],
+              args[4]
+            )
+          }
+          throw e
+        })
+      }
+      return result
     } catch (e: any) {
-      // If Babel/Hermes shifted default parameters (e.g. method=GET) because it counted the
-      // stripped `this` keyword as an argument, we will encounter a "bad method" error here
-      // because `method` read from `arguments[2]` instead of `arguments[1]`.
       if (e?.message === 'bad method' || e?.message?.includes('bad method')) {
-        // Pad the arguments to realign the Babel `arguments[n]` indexes.
-        // Inserting a dummy `undefined` at index 1 offsets everything cleanly.
-        // @ts-ignore
-        return await (relayerCall as any).call(
+        return targetFunction.call(
           context,
           ...boundArgs,
           args[0],
