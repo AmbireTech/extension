@@ -234,8 +234,9 @@ const ActivityPositions: FC<Props> = ({
                         })
                       },
                       {
-                        itemsPerPage: ITEMS_PER_PAGE,
-                        fromPage: result.currentPage + 1
+                        itemsPerPage:
+                          (accountsOps[sessionId]?.pagination.itemsPerPage || 0) + ITEMS_PER_PAGE,
+                        fromPage: 0
                       }
                     ]
                   }
