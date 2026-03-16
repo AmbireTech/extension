@@ -20,7 +20,8 @@ jobs:
   e2e-tests:
     runs-on: ubuntu-latest
     environment: testing
-    # This will run for pushes, PRs, and manual dispatch
+    # This will run for pushes, PRs (ready_for_review/synchronize), and manual dispatch
+    if: github.event_name != 'pull_request' || github.event.pull_request.draft == false || github.event_name == 'workflow_dispatch'
 
     env:
       IS_TESTING: 'true'
@@ -163,5 +164,4 @@ jobs:
         uses: actions/upload-artifact@v6
         with:
           name: playwright-report
-          path: |
-            ./e2e-playwright-tests/playwright-report.zip
+          path: ./e2e-playwright-tests/playwright-report.zip
