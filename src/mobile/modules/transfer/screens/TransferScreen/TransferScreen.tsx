@@ -160,6 +160,7 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
         onBackButtonPress={handleGoBackPress}
         title={isTopUp ? t('Top Up Gas Tank') : t('Send')}
         withScroll
+        keyboardAwareScrollViewProps={{ bottomOffset: 250 }}
       >
         {transferState?.isInitialized ? (
           <View>

@@ -13,7 +13,7 @@ import {
 import ModalHeader from '@common/components/BottomSheet/ModalHeader'
 import Search from '@common/components/Search'
 import Text from '@common/components/Text'
-import { isMobile } from '@common/config/env'
+import { isMobile, isWeb } from '@common/config/env'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 
@@ -81,7 +81,7 @@ const SelectContainer: FC<Props> = ({
   // This is most likely due to the BottomSheet's absolute positioning - when it starts opening,
   // it's positioned outside of the viewport along with the Search input.
   useEffect(() => {
-    if (isMenuOpen && mode === 'bottomSheet') {
+    if (isMenuOpen && mode === 'bottomSheet' && isWeb) {
       setTimeout(() => {
         searchInputRef.current?.focus()
       }, 300)

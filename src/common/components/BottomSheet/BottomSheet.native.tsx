@@ -1,6 +1,8 @@
-import React, { RefObject } from 'react'
+import React, { RefObject, useEffect, useState } from 'react'
 import { ScrollView, useWindowDimensions, View } from 'react-native'
 import {
+  KeyboardController,
+  KeyboardEvents,
   useReanimatedFocusedInput,
   useReanimatedKeyboardAnimation
 } from 'react-native-keyboard-controller'
@@ -9,8 +11,8 @@ import Animated, { useAnimatedStyle, useSharedValue } from 'react-native-reanima
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import useTheme from '@common/hooks/useTheme'
-import spacings, { SPACING_SM } from '@common/styles/spacings'
-import common from '@common/styles/utils/common'
+import spacings, { SPACING, SPACING_SM } from '@common/styles/spacings'
+import common, { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import { Portal } from '@gorhom/portal'
 
 import Backdrop from './Backdrop'
@@ -51,7 +53,18 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
   const { height: keyboardHeight } = useReanimatedKeyboardAnimation()
   const { input } = useReanimatedFocusedInput()
   const { height: windowHeight } = useWindowDimensions()
+  const [isKeyboardVisible, setIsKeyboardVisible] = useState(false)
   const currentTranslateY = useSharedValue(0)
+
+  useEffect(() => {
+    const showSub = KeyboardEvents.addListener('keyboardWillShow', () => setIsKeyboardVisible(true))
+    const hideSub = KeyboardEvents.addListener('keyboardWillHide', () => setIsKeyboardVisible(false))
+
+    return () => {
+      showSub.remove()
+      hideSub.remove()
+    }
+  }, [])
 
   const {
     modalTopOffset,
@@ -89,7 +102,7 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
 
     let shiftValue = shift
     if (shift !== 0) {
-      shiftValue = shift + SPACING_SM
+      shiftValue = shift
     }
 
     currentTranslateY.value = -shiftValue
@@ -136,6 +149,10 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
           contentRef={scrollViewRef as RefObject<ScrollView>}
           modalStyle={[
             styles.bottomSheet,
+            {
+              borderBottomEndRadius: isKeyboardVisible ? BORDER_RADIUS_PRIMARY : 0,
+              borderBottomStartRadius: isKeyboardVisible ? BORDER_RADIUS_PRIMARY : 0
+            },
             isModal
               ? { ...styles.modal, ...(autoWidth ? { maxWidth: null, width: 'auto' } : {}) }
               : {},
@@ -208,6 +225,7 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
             timing: { duration: ANIMATION_DURATION, delay: 0 }
           }}
           onOpen={() => {
+            KeyboardController.dismiss()
             setIsOpen(true)
             setIsBackdropVisible(true)
             !!onOpen && onOpen()
