@@ -1,8 +1,7 @@
 import * as LocalAuthentication from 'expo-local-authentication'
 import React, { createContext, useCallback, useEffect, useMemo, useState } from 'react'
-import { Platform } from 'react-native'
 
-import i18n, { useTranslation } from '@common/config/localization/localization'
+import { useTranslation } from '@common/config/localization/localization'
 import useToast from '@common/hooks/useToast'
 import useAuth from '@common/modules/auth/hooks/useAuth'
 import { getDeviceSupportedAuthTypesLabel } from '@common/services/device'
@@ -13,7 +12,7 @@ import { biometricsContextDefaults, BiometricsContextReturnType } from './types'
 
 const BiometricsContext = createContext<BiometricsContextReturnType>(biometricsContextDefaults)
 
-const BiometricsProvider: React.FC = ({ children }) => {
+const BiometricsProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { t } = useTranslation()
   const { authStatus } = useAuth()
   const { addToast } = useToast()
@@ -87,12 +86,6 @@ const BiometricsProvider: React.FC = ({ children }) => {
     }
   }, [addToast, t])
 
-  const fallbackSupportedAuthTypesLabel =
-    Platform.select({
-      ios: i18n.t('passcode'),
-      android: i18n.t('PIN / pattern')
-    }) || biometricsContextDefaults.fallbackSupportedAuthTypesLabel
-
   return (
     <BiometricsContext.Provider
       value={useMemo(
@@ -102,7 +95,6 @@ const BiometricsProvider: React.FC = ({ children }) => {
           deviceSecurityLevel,
           deviceSupportedAuthTypes,
           deviceSupportedAuthTypesLabel,
-          fallbackSupportedAuthTypesLabel,
           authenticateWithLocalAuth
         }),
         [
@@ -111,7 +103,6 @@ const BiometricsProvider: React.FC = ({ children }) => {
           deviceSecurityLevel,
           deviceSupportedAuthTypes,
           deviceSupportedAuthTypesLabel,
-          fallbackSupportedAuthTypesLabel,
           authenticateWithLocalAuth
         ]
       )}
