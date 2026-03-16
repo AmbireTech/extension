@@ -19,7 +19,7 @@ import useKeyStoreSetup from '@web/modules/keystore/components/KeyStoreSetupForm
 
 type Props = {
   agreedWithTerms: boolean
-  onBeforeKeystoreSetup?: () => Promise<boolean>
+  onBeforeKeystoreSetup?: (password: string) => Promise<boolean>
   onConfirmSuccess?: (password: string) => void | Promise<void>
   children?: React.ReactNode
 }
@@ -53,11 +53,11 @@ const KeyStoreSetupForm = ({
 
   const onConfirmAction = useCallback(async () => {
     if (onBeforeKeystoreSetup) {
-      const proceed = await onBeforeKeystoreSetup()
+      const proceed = await onBeforeKeystoreSetup(password)
       if (!proceed) return
     }
     await handleKeystoreSetup()
-  }, [handleKeystoreSetup, onBeforeKeystoreSetup])
+  }, [handleKeystoreSetup, onBeforeKeystoreSetup, password])
 
   const handleCreateButtonPress = useCallback(async () => {
     await storage.set('termsState', { version: TERMS_VERSION, acceptedAt: Date.now() })

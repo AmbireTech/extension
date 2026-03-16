@@ -69,14 +69,10 @@ const secureStorage = {
       keychainAccessible: SecureStore.WHEN_UNLOCKED_THIS_DEVICE_ONLY
     })
   },
-  set: async (
-    key: string,
-    value: string,
-    options: { requireAuthentication?: boolean } = { requireAuthentication: true }
-  ) => {
+  set: async (key: string, value: string) => {
     await SecureStore.setItemAsync(key, value, {
       keychainAccessible: SecureStore.WHEN_UNLOCKED_THIS_DEVICE_ONLY,
-      requireAuthentication: options.requireAuthentication ?? true
+      requireAuthentication: true
     })
   },
   remove: async (key: string) => {

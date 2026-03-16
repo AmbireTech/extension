@@ -95,12 +95,9 @@ const BiometricsProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   }, [addToast, t])
 
-  const saveBiometricsSecret = useCallback(
-    async (password: string, options?: { requireAuthentication?: boolean }) => {
-      await secureStorage.set(BIOMETRICS_SECRET_KEY, password, options)
-    },
-    []
-  )
+  const saveBiometricsSecret = useCallback(async (password: string) => {
+    await secureStorage.set(BIOMETRICS_SECRET_KEY, password)
+  }, [])
 
   const getBiometricsSecret = useCallback(async () => {
     try {

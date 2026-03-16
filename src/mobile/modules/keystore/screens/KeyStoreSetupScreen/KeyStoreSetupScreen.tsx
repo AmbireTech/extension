@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react'
-import { Animated, TouchableOpacity, View } from 'react-native'
+import { Animated, Keyboard, TouchableOpacity, View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 
 import AmbireLogo from '@common/assets/svg/AmbireLogo'
@@ -64,6 +64,7 @@ const KeyStoreSetupScreen = () => {
         <KeyStoreSetupForm
           agreedWithTerms={agreedWithTerms}
           onBeforeKeystoreSetup={async () => {
+            Keyboard.dismiss()
             if (biometricsEnabled) {
               return await authenticateWithLocalAuth()
             }
@@ -71,7 +72,7 @@ const KeyStoreSetupScreen = () => {
           }}
           onConfirmSuccess={async (password) => {
             if (biometricsEnabled) {
-              await saveBiometricsSecret(password, { requireAuthentication: false })
+              await saveBiometricsSecret(password)
             }
           }}
         >

@@ -15,10 +15,6 @@ export const syncSessionStorage: {
 }
 export const secureStorage: {
   get: (key: string, prompt?: string) => Promise<string | null>
-  set: (
-    key: string,
-    value: string,
-    options?: { requireAuthentication?: boolean }
-  ) => Promise<void>
+  set: (key: string, value: string) => Promise<void>
   remove: (key: string) => Promise<void>
 }

@@ -55,17 +55,8 @@ const KeyStoreUnlockScreen = () => {
 
   const handleBiometricsPrompt = useCallback(async () => {
     try {
-      console.log('Biometrics: Requesting secret...')
       const password = await getBiometricsSecret()
-      console.log('Biometrics: Secret retrieved successfully')
-
-      if (password) {
-        handleUnlock({ password })
-      } else {
-        console.log('Biometrics: No secret found')
-        alert(t('Biometrics not set up for this device.'))
-        setUnlockMethod('password')
-      }
+      if (password) handleUnlock({ password })
     } catch (e) {
       console.log('Biometrics: Authentication failed or cancelled', e)
       // User cancelled or authentication failed (SecureStore throws/rejects on failure with requireAuthentication)
