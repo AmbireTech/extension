@@ -10,6 +10,7 @@ import { isValidURL } from '@ambire-common/services/validations'
 import CopyIcon from '@common/assets/svg/CopyIcon'
 import WarningIcon from '@common/assets/svg/WarningIcon'
 import Button from '@common/components/Button'
+import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import Input from '@common/components/Input'
 import NetworkIcon from '@common/components/NetworkIcon'
 import NumberInput from '@common/components/NumberInput'
@@ -42,6 +43,7 @@ type RpcSelectorItemType = {
   style?: ViewStyle
   onPress: (url: string) => void
   onRemove?: (url: string) => void
+  removeDisabledReason?: string
 }
 
 export const RpcSelectorItem = React.memo(
@@ -54,7 +56,8 @@ export const RpcSelectorItem = React.memo(
     shouldShowRemove,
     style,
     onPress,
-    onRemove
+    onRemove,
+    removeDisabledReason
   }: RpcSelectorItemType) => {
     const { t } = useTranslation()
     const { addToast } = useToast()
@@ -74,62 +77,70 @@ export const RpcSelectorItem = React.memo(
     }, [addToast, t, url])
 
     return (
-      <div onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)}>
-        <Pressable
-          style={[
-            styles.selectRpcItem,
-            index !== rpcUrlsLength - 1 && styles.selectRpcItemBorder,
-            (rpcUrlsLength <= 2 || forceLargeItems) && { height: 40 },
-            style,
-            hovered && { backgroundColor: theme.secondaryBackground }
-          ]}
-          onPress={() => {
-            if (url !== selectedRpcUrl) onPress(url)
-          }}
-        >
-          <View
-            style={[
-              styles.radio,
-              selectedRpcUrl === url && styles.radioSelected,
-              hovered && styles.radioHovered
-            ]}
+      <Pressable
+        style={[
+          styles.selectRpcItem,
+          index !== rpcUrlsLength - 1 && styles.selectRpcItemBorder,
+          (rpcUrlsLength <= 2 || forceLargeItems) && { height: 40 },
+          style,
+          hovered && { backgroundColor: theme.secondaryBackground }
+        ]}
+        onPress={() => {
+          if (url !== selectedRpcUrl) onPress(url)
+        }}
+        onHoverIn={() => setHovered(true)}
+        onHoverOut={() => setHovered(false)}
+      >
+        <View style={[styles.radio]}>
+          {(selectedRpcUrl === url || hovered) && <View style={styles.radioSelectedInner} />}
+        </View>
+        <View style={[flexbox.directionRow, flexbox.alignCenter, flexbox.flex1]}>
+          <Text
+            fontSize={14}
+            appearance={selectedRpcUrl === url ? 'primaryText' : 'secondaryText'}
+            numberOfLines={1}
+            style={flexbox.flex1}
           >
-            {selectedRpcUrl === url && <View style={styles.radioSelectedInner} />}
-          </View>
-          <View style={[flexbox.directionRow, flexbox.alignCenter, flexbox.flex1]}>
-            <Text
-              fontSize={14}
-              appearance={selectedRpcUrl === url ? 'primaryText' : 'secondaryText'}
-              numberOfLines={1}
-              style={flexbox.flex1}
-            >
-              {url}
-            </Text>
-            <AnimatedPressable
-              onPress={handleCopy}
-              style={[spacings.mlMi, copyIconAnimStyle]}
-              {...bindCopyIconAnim}
-            >
-              <CopyIcon width={16} height={16} />
-            </AnimatedPressable>
-          </View>
-          {!!shouldShowRemove && !!hovered && (
-            <View style={spacings.plLg}>
-              <Pressable onPress={() => !!onRemove && onRemove(url)}>
-                {({ hovered: removeButtonHovered }: any) => (
-                  <Text
-                    fontSize={12}
-                    underline
-                    color={removeButtonHovered ? theme.errorText : theme.errorDecorative}
-                  >
-                    {t('Remove')}
-                  </Text>
-                )}
-              </Pressable>
-            </View>
-          )}
-        </Pressable>
-      </div>
+            {url}
+          </Text>
+          <AnimatedPressable
+            onPress={handleCopy}
+            style={[spacings.mlMi, copyIconAnimStyle]}
+            {...bindCopyIconAnim}
+          >
+            <CopyIcon width={16} height={16} />
+          </AnimatedPressable>
+        </View>
+        {!!shouldShowRemove && !!hovered && (
+          <Pressable
+            style={{
+              ...spacings.mlLg,
+              opacity: removeDisabledReason ? 0.5 : 1
+            }}
+            onPress={() => !!onRemove && onRemove(url)}
+            onHoverIn={() => setHovered(true)}
+            dataSet={
+              removeDisabledReason
+                ? createGlobalTooltipDataSet({
+                    id: 'rpc-remove-disabled-reason',
+                    content: removeDisabledReason
+                  })
+                : undefined
+            }
+            disabled={!!removeDisabledReason}
+          >
+            {({ hovered: removeButtonHovered }: any) => (
+              <Text
+                fontSize={12}
+                underline
+                color={removeButtonHovered ? theme.errorText : theme.errorDecorative}
+              >
+                {t('Remove')}
+              </Text>
+            )}
+          </Pressable>
+        )}
+      </Pressable>
     )
   }
 )
@@ -720,11 +731,25 @@ const NetworkForm = ({
                 {t('Select default RPC URL')}
               </Text>
               <ScrollableWrapper
-                style={styles.rpcUrlsContainer}
+                style={[
+                  styles.rpcUrlsContainer,
+                  // @ts-ignore
+                  { flex: 'unset', minHeight: rpcUrls.length > 1 ? 80 : 40 }
+                ]}
                 contentContainerStyle={{ flexGrow: 1 }}
               >
                 {!!rpcUrls.length &&
                   rpcUrls.map((url, i) => {
+                    let removeDisabledReason: string | undefined
+
+                    if (selectedNetwork?.rpcUrls.length === 1) {
+                      removeDisabledReason = 'There must be at least one RPC provider'
+                    } else if (url === selectedNetwork?.selectedRpcUrl) {
+                      removeDisabledReason = 'Cannot remove the selected RPC URL'
+                    } else if (url.includes('invictus.ambire.com')) {
+                      removeDisabledReason = 'Default RPC URL cannot be removed'
+                    }
+
                     return (
                       <RpcSelectorItem
                         key={url}
@@ -733,12 +758,8 @@ const NetworkForm = ({
                         selectedRpcUrl={selectedRpcUrl}
                         rpcUrlsLength={rpcUrls.length}
                         onPress={handleSelectRpcUrl}
-                        shouldShowRemove={
-                          !!selectedNetwork?.rpcUrls.length &&
-                          selectedNetwork.rpcUrls.length > 1 &&
-                          url !== selectedNetwork?.selectedRpcUrl &&
-                          !url.includes('invictus.ambire.com')
-                        }
+                        shouldShowRemove
+                        removeDisabledReason={removeDisabledReason}
                         onRemove={handleRemoveRpcUrl}
                       />
                     )
