@@ -19,6 +19,8 @@ const useKeyStoreSetup = () => {
       confirmPassword: isDev && !isTesting ? (DEFAULT_KEYSTORE_PASSWORD_DEV ?? '') : ''
     }
   })
+
+  const [biometricsEnabled, setBiometricsEnabled] = useState(false)
   const [isKeystoreReady, setKeystoreReady] = useState(false)
   const password = watch('password', '')
 
@@ -59,7 +61,9 @@ const useKeyStoreSetup = () => {
     control,
     password,
     handleKeystoreSetup,
-    hasPasswordSecret: state.hasPasswordSecret
+    hasPasswordSecret: state.hasPasswordSecret,
+    setBiometricsEnabled,
+    biometricsEnabled
   }
 }
 

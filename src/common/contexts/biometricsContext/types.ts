@@ -11,6 +11,11 @@ export interface BiometricsContextReturnType {
   // Determines whether the device has saved fingerprints or facial data enrolled.
   isEnrolled: boolean
   authenticateWithLocalAuth: () => Promise<boolean>
+  saveBiometricsSecret: (
+    password: string,
+    options?: { requireAuthentication?: boolean }
+  ) => Promise<void>
+  getBiometricsSecret: () => Promise<string | null>
 }
 
 export const biometricsContextDefaults: BiometricsContextReturnType = {
@@ -20,5 +25,7 @@ export const biometricsContextDefaults: BiometricsContextReturnType = {
   isLoading: true,
   hasBiometricsHardware: null,
   isEnrolled: false,
-  authenticateWithLocalAuth: () => Promise.resolve(false)
+  authenticateWithLocalAuth: () => Promise.resolve(false),
+  saveBiometricsSecret: () => Promise.resolve(),
+  getBiometricsSecret: () => Promise.resolve(null)
 }

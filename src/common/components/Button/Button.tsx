@@ -2,7 +2,7 @@ import React, { useMemo } from 'react'
 import { Animated, ColorValue, PressableProps, TextStyle, ViewStyle } from 'react-native'
 
 import InfoIcon from '@common/assets/svg/InfoIcon'
-import { isWeb } from '@common/config/env'
+import { isMobile, isWeb } from '@common/config/env'
 import { AnimatedPressable, useCustomHover, useMultiHover } from '@common/hooks/useHover'
 import { AnimatedText } from '@common/hooks/useHover/useHover'
 import { AnimationValues } from '@common/hooks/useHover/useMultiHover'
@@ -186,7 +186,7 @@ const Button = ({
       secondary: [
         {
           property: 'backgroundColor',
-          from: theme.primaryBackground,
+          from: isMobile ? theme.secondaryBackground : theme.primaryBackground,
           to: theme.tertiaryBackground
         }
       ],

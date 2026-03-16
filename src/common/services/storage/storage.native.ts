@@ -1,10 +1,10 @@
+import * as SecureStore from 'expo-secure-store'
 import { createMMKV, MMKV } from 'react-native-mmkv'
 
 import { Storage } from '@ambire-common/interfaces/storage'
 import { parse, stringify } from '@ambire-common/libs/richJson/richJson'
 
 const asyncStorageInstance: MMKV = createMMKV({ id: 'asyncStorage' })
-// asyncStorageInstance.clearAll()
 const syncStorageInstance: MMKV = createMMKV({ id: 'syncStorage' })
 // NOTE: for testing while settings are still not implemented
 // syncStorageInstance.set('fallbackSelectedThemeType', 'light')
@@ -13,6 +13,14 @@ const syncStorageInstance: MMKV = createMMKV({ id: 'syncStorage' })
 const syncSessionStorageInstance: MMKV = createMMKV({ id: 'syncSessionStorage' })
 // Clearing it on initialization ensures it starts empty when the app is launched.
 syncSessionStorageInstance.clearAll()
+
+const clearAllStorages = () => {
+  asyncStorageInstance.clearAll()
+  syncStorageInstance.clearAll()
+  syncSessionStorageInstance.clearAll()
+}
+
+// clearAllStorages()
 
 const storage: Storage = {
   get: (key: string, defaultValue: any): any => {
@@ -53,4 +61,27 @@ const syncSessionStorage = {
   }
 }
 
-export { storage, syncStorage, syncSessionStorage }
+const secureStorage = {
+  get: async (key: string, prompt?: string) => {
+    return SecureStore.getItemAsync(key, {
+      requireAuthentication: true,
+      authenticationPrompt: prompt,
+      keychainAccessible: SecureStore.WHEN_UNLOCKED_THIS_DEVICE_ONLY
+    })
+  },
+  set: async (
+    key: string,
+    value: string,
+    options: { requireAuthentication?: boolean } = { requireAuthentication: true }
+  ) => {
+    await SecureStore.setItemAsync(key, value, {
+      keychainAccessible: SecureStore.WHEN_UNLOCKED_THIS_DEVICE_ONLY,
+      requireAuthentication: options.requireAuthentication ?? true
+    })
+  },
+  remove: async (key: string) => {
+    await SecureStore.deleteItemAsync(key)
+  }
+}
+
+export { storage, syncStorage, syncSessionStorage, secureStorage }

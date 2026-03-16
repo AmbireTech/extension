@@ -5,9 +5,12 @@ import { useTranslation } from '@common/config/localization/localization'
 import useToast from '@common/hooks/useToast'
 import { getDeviceSupportedAuthTypesLabel } from '@common/services/device'
 import { requestLocalAuthFlagging } from '@common/services/requestPermissionFlagging'
+import { secureStorage } from '@common/services/storage'
 
 import { DEVICE_SECURITY_LEVEL, DEVICE_SUPPORTED_AUTH_TYPES } from './constants'
 import { biometricsContextDefaults, BiometricsContextReturnType } from './types'
+
+const BIOMETRICS_SECRET_KEY = 'biometricsSecret_v2'
 
 const BiometricsContext = createContext<BiometricsContextReturnType>(biometricsContextDefaults)
 
@@ -51,7 +54,7 @@ const BiometricsProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         const validSecurityLevels = Object.values(DEVICE_SECURITY_LEVEL) as number[]
         setDeviceSecurityLevel(
           validSecurityLevels.includes(securityLevel)
-            ? ((securityLevel as unknown) as DEVICE_SECURITY_LEVEL)
+            ? (securityLevel as unknown as DEVICE_SECURITY_LEVEL)
             : DEVICE_SECURITY_LEVEL.NONE
         )
       } catch {
@@ -59,7 +62,8 @@ const BiometricsProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       }
 
       try {
-        const deviceAuthTypes = ((await LocalAuthentication.supportedAuthenticationTypesAsync()) as unknown) as DEVICE_SUPPORTED_AUTH_TYPES[]
+        const deviceAuthTypes =
+          (await LocalAuthentication.supportedAuthenticationTypesAsync()) as unknown as DEVICE_SUPPORTED_AUTH_TYPES[]
         setDeviceSupportedAuthTypes(deviceAuthTypes)
         setDeviceSupportedAuthTypesLabel(getDeviceSupportedAuthTypesLabel(deviceAuthTypes))
       } catch {
@@ -67,7 +71,7 @@ const BiometricsProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       }
 
       setIsLoading(false)
-    })()
+    })().catch(() => {})
     // Run once on mount — hardware capabilities and enrollment don't change
     // during a session and don't need to re-query on auth status changes.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -91,6 +95,21 @@ const BiometricsProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   }, [addToast, t])
 
+  const saveBiometricsSecret = useCallback(
+    async (password: string, options?: { requireAuthentication?: boolean }) => {
+      await secureStorage.set(BIOMETRICS_SECRET_KEY, password, options)
+    },
+    []
+  )
+
+  const getBiometricsSecret = useCallback(async () => {
+    try {
+      return await secureStorage.get(BIOMETRICS_SECRET_KEY, t('Confirm your identity'))
+    } catch {
+      return null
+    }
+  }, [t])
+
   return (
     <BiometricsContext.Provider
       value={useMemo(
@@ -101,7 +120,9 @@ const BiometricsProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           deviceSecurityLevel,
           deviceSupportedAuthTypes,
           deviceSupportedAuthTypesLabel,
-          authenticateWithLocalAuth
+          authenticateWithLocalAuth,
+          saveBiometricsSecret,
+          getBiometricsSecret
         }),
         [
           isLoading,
@@ -110,7 +131,9 @@ const BiometricsProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           deviceSecurityLevel,
           deviceSupportedAuthTypes,
           deviceSupportedAuthTypesLabel,
-          authenticateWithLocalAuth
+          authenticateWithLocalAuth,
+          saveBiometricsSecret,
+          getBiometricsSecret
         ]
       )}
     >
