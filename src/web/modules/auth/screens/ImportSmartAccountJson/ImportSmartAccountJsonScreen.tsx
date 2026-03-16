@@ -293,7 +293,7 @@ const SmartAccountImportScreen = () => {
   const handleGuideLinkPressed = useCallback(
     () =>
       Linking.openURL(
-        'https://help.ambire.com/hc/en-us/articles/15468208978332--Extension-How-to-add-your-v1-account-to-Ambire-Wallet-extension'
+        'https://help.ambire.com/en/articles/13714255-how-to-add-your-v1-ambire-smart-account-legacy-to-the-extension'
       ),
     []
   )

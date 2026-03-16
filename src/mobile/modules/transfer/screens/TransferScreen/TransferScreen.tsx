@@ -190,7 +190,7 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
                         onPress={async () => {
                           try {
                             await openInTab({
-                              url: 'https://help.ambire.com/hc/en-us/articles/5397969913884-What-is-the-Gas-Tank'
+                              url: 'https://help.ambire.com/en/articles/13752152-what-is-the-gas-tank'
                             })
                           } catch {
                             addToast("Couldn't open link", { type: 'error' })

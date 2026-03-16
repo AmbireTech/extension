@@ -104,9 +104,7 @@ const DAppConnectBody: FC<{
                     color={theme.errorDecorative}
                     style={{ lineHeight: 18 * responsiveSizeMultiplier }}
                     underline
-                    onPress={() =>
-                      openInTab({ url: 'https://help.ambire.com/hc/en-us/requests/new' })
-                    }
+                    onPress={() => openInTab({ url: 'https://help.ambire.com/en' })}
                   >
                     let us know.
                   </Text>

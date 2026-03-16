@@ -91,7 +91,7 @@ const ErrorBoundaryInner = ({ error }: Props) => {
             Please share it with{' '}
             <TouchableOpacity
               onPress={() =>
-                openInTab({ url: 'https://help.ambire.com/hc', shouldCloseCurrentWindow: true })
+                openInTab({ url: 'https://help.ambire.com/en', shouldCloseCurrentWindow: true })
               }
             >
               <Text
@@ -186,7 +186,7 @@ const ErrorBoundaryInner = ({ error }: Props) => {
               {t('Try reloading the page. If the issue persists, restart your browser or ')}
               <TouchableOpacity
                 onPress={() =>
-                  openInTab({ url: 'https://help.ambire.com/hc', shouldCloseCurrentWindow: true })
+                  openInTab({ url: 'https://help.ambire.com/en', shouldCloseCurrentWindow: true })
                 }
               >
                 <Text
