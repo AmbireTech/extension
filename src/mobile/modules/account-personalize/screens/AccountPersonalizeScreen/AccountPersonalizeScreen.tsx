@@ -4,6 +4,7 @@ import { View } from 'react-native'
 import AddCircularIcon from '@common/assets/svg/AddCircularIcon'
 import Alert from '@common/components/Alert'
 import Button from '@common/components/Button'
+import DotsLoadingAnimation from '@common/components/DotsLoadingAnimation'
 import SuccessAnimation from '@common/components/SuccessAnimation'
 import Text from '@common/components/Text'
 import { isWeb } from '@common/config/env'
@@ -11,7 +12,6 @@ import { Trans, useTranslation } from '@common/config/localization'
 import useTheme from '@common/hooks/useTheme'
 import AccountPersonalizeCard from '@common/modules/account-personalize/components/AccountPersonalizeCard'
 import AccountsLoadingAnimation from '@common/modules/account-personalize/components/AccountsLoadingAnimation'
-import AccountsLoadingDotsAnimation from '@common/modules/account-personalize/components/AccountsLoadingDotsAnimation'
 import useAccountPersonalize from '@common/modules/account-personalize/hooks/useAccountPersonalize'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
 import { WEB_ROUTES } from '@common/modules/router/constants/common'
@@ -67,7 +67,7 @@ const AccountPersonalizeScreen = () => {
             <Text fontSize={20} weight="semiBold" style={[text.center, spacings.mbSm]}>
               {t('Loading accounts')}
             </Text>
-            <AccountsLoadingDotsAnimation />
+            <DotsLoadingAnimation />
           </View>
         ) : accountPickerState.pageError ? (
           <View style={flexbox.alignCenter}>
