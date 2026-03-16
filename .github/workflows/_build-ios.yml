@@ -32,10 +32,10 @@ jobs:
 
     steps:
       - name: Checkout code 🛎️
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Add SSH key to checkout a private repo
-        uses: webfactory/ssh-agent@v0.5.4
+        uses: webfactory/ssh-agent@v0.9.1
         with:
           ssh-private-key: ${{ secrets.DEPLOY_KEY }}
 
@@ -195,7 +195,7 @@ jobs:
         shell: bash
 
       - name: Upload iOS build 📦
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: ambire-ios-v${{ steps.version.outputs.VERSION }}-${{ inputs.artifact_suffix }}
           path: ${{ env.PACKAGE_PATH }}

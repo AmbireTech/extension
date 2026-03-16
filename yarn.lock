@@ -1189,6 +1189,11 @@
   resolved "https://registry.yarnpkg.com/@ensdomains/eth-ens-namehash/-/eth-ens-namehash-2.0.15.tgz#5e5f2f24ba802aff8bc19edd822c9a11200cdf4a"
   integrity sha512-JRDFP6+Hczb1E0/HhIg0PONgBYasfGfDheujmfxaZaAv/NAH4jE6Kf48WbqfRZdxt4IZI3jl3Ri7sZ1nP09lgw==
 
+"@ensdomains/ethers-patch-v6@0.0.4":
+  version "0.0.4"
+  resolved "https://registry.yarnpkg.com/@ensdomains/ethers-patch-v6/-/ethers-patch-v6-0.0.4.tgz#c0197dfc2f4e699327307dd2e3b7b0e13741d932"
+  integrity sha512-jELdSlwtLl10HA18PfHyaPSCqtgTOazNLc95+5+wMb0XTx+XozHYWLPHVPOUhmSt2Ag0cz9ufZviLRzwQIgxGw==
+
 "@eslint-community/eslint-utils@^4.2.0", "@eslint-community/eslint-utils@^4.4.0":
   version "4.9.1"
   resolved "https://registry.yarnpkg.com/@eslint-community/eslint-utils/-/eslint-utils-4.9.1.tgz#4e90af67bc51ddee6cdef5284edf572ec376b595"

@@ -85,7 +85,7 @@ const KeyStoreUnlockScreen = () => {
             spacings.mbSm
           ]}
         >
-          <Text appearance="secondaryText">Hide balances</Text>
+          <Text appearance="secondaryText">{t('Hide balances')}</Text>
           <FatToggle
             isOn={false}
             onToggle={() => alert('Coming soon!')}

@@ -85,7 +85,7 @@ const ActionsPagination = () => {
         flexbox.directionRow,
         flexbox.alignCenter,
         flexbox.flex1,
-        spacings.ph,
+        spacings.phSm,
         flexbox.justifyCenter
       ]}
     >

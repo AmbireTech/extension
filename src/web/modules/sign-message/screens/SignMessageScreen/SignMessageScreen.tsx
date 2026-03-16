@@ -173,7 +173,6 @@ const SignMessageScreen = () => {
     (signers?: { addr: Key['addr']; type: Key['type'] }[]) => {
       // Has more than one key, should first choose the key to sign with
       const hasChosenSigningKey = signers && signers.length
-      console.log('the signers', signers)
       if (!hasChosenSigningKey) {
         return setIsChooseSignerShown(true)
       }
@@ -214,12 +213,17 @@ const SignMessageScreen = () => {
     [handleSign]
   )
 
-  const signWithDefaultSigner = useCallback(() => {
+  const signWithDefaultSignerIfPossible = useCallback(() => {
+    if (!account?.safeCreation && selectedAccountKeyStoreKeys.length > 1) {
+      handleSign()
+      return
+    }
+
     const key = selectedAccountKeyStoreKeys?.[0]
     if (!key) return
 
     setSigner(key.addr, key.type)
-  }, [selectedAccountKeyStoreKeys, setSigner])
+  }, [selectedAccountKeyStoreKeys, setSigner, account?.safeCreation, handleSign])
 
   const resolveButtonText = useMemo(() => {
     if (signMessageState.status === SignMessageStatus.Partial) return 'Close'
@@ -303,7 +307,7 @@ const SignMessageScreen = () => {
           return (
             <ActionFooter
               onReject={handleReject}
-              onResolve={signWithDefaultSigner}
+              onResolve={signWithDefaultSignerIfPossible}
               resolveButtonText={resolveButtonText}
               resolveDisabled={
                 signStatus === 'LOADING' ||

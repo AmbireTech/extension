@@ -2,6 +2,7 @@ import React, { FC, useEffect, useRef, useState } from 'react'
 import { View } from 'react-native'
 import { useSearchParams } from 'react-router-dom'
 
+import { isWeb } from '@common/config/env'
 import useTheme from '@common/hooks/useTheme'
 import useWindowSize from '@common/hooks/useWindowSize'
 import { TabType } from '@common/modules/dashboard/components/TabsAndSearch/Tabs/Tab/Tab'
@@ -56,7 +57,7 @@ const TabsAndSearch: FC<Props> = ({ openTab, setOpenTab, currentTab, sessionId }
       style={[
         styles.container,
         !!controllerBanners.length && spacings.ptTy,
-        minWidthSize(480) && spacings.pl
+        isWeb && minWidthSize(480) && spacings.pl
       ]}
     >
       <Tabs

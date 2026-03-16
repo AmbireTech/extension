@@ -41,11 +41,11 @@ const useSwapAndBridgeForm = () => {
     supportedChainIds,
     updateQuoteStatus,
     sessionIds,
-    toSelectedToken
+    toSelectedToken,
+    toChainId
   } = useController('SwapAndBridgeController').state
   const { dispatch: swapAndBridgeDispatch } = useController('SwapAndBridgeController')
   const { dispatch: requestsDispatch, state: requestsState } = useController('RequestsController')
-  const { dispatch: mainDispatch } = useController('MainController')
   const { userRequests } = requestsState
   const {
     state: { account, portfolio }
@@ -305,7 +305,7 @@ const useSwapAndBridgeForm = () => {
     closePriceImpactModal()
 
     if (isOneClickModeDuringPriceImpact) {
-      if (networkUserRequests.length > 0) {
+      if (!!account?.safeCreation || networkUserRequests.length > 0) {
         requestsDispatch({
           type: 'method',
           params: {
@@ -314,7 +314,8 @@ const useSwapAndBridgeForm = () => {
               {
                 type: 'swapAndBridgeRequest',
                 params: {
-                  openActionWindow: true
+                  openActionWindow: true,
+                  quote: !!account?.safeCreation && quote ? { ...quote } : undefined
                 }
               }
             ]
@@ -349,7 +350,9 @@ const useSwapAndBridgeForm = () => {
     isOneClickModeDuringPriceImpact,
     setShowAddedToBatch,
     networkUserRequests,
-    fromSelectedToken
+    fromSelectedToken,
+    account?.safeCreation,
+    quote
   ])
 
   const handleSubmitForm = useCallback(
@@ -373,7 +376,8 @@ const useSwapAndBridgeForm = () => {
                 {
                   type: 'swapAndBridgeRequest',
                   params: {
-                    openActionWindow: true
+                    openActionWindow: true,
+                    quote: !!account?.safeCreation && quote ? { ...quote } : undefined
                   }
                 }
               ]

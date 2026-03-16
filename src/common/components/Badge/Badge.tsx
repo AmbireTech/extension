@@ -49,7 +49,7 @@ const getBadgeTypes = (theme: ThemeProps) => ({
     backgroundColor: theme.secondaryAccent100
   },
   new: {
-    color: '#fff',
+    color: theme.neutral400,
     backgroundColor: 'transparent'
   }
 })
