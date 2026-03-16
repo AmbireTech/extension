@@ -1,4 +1,4 @@
-import { FC } from 'react'
+import React, { FC } from 'react'
 
 import shortenAddress from '@ambire-common/utils/shortenAddress'
 import Text from '@common/components/Text'
@@ -28,4 +28,4 @@ const PlainAddress: FC<Props> = ({ style, maxLength, address, hideParentheses, f
   </Text>
 )
 
-export default PlainAddress
+export default React.memo(PlainAddress)

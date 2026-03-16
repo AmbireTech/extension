@@ -90,7 +90,7 @@ const ReceiveScreen: FC = () => {
               plainAddressMaxLength={42}
               fontSize={14}
               containerStyle={spacings.pv0}
-              withWrap
+              withWrap={!!ens}
             />
           </View>
         </View>
