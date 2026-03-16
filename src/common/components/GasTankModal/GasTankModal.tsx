@@ -12,7 +12,7 @@ import TupUpWithBgIcon from '@common/assets/svg/TupUpWithBgIcon'
 import BottomSheet from '@common/components/BottomSheet'
 import ModalHeader from '@common/components/BottomSheet/ModalHeader'
 import Button from '@common/components/Button'
-import GlassView from '@common/components/GlassView'
+import FooterGlassView from '@common/components/FooterGlassView'
 import Text from '@common/components/Text'
 import TokenIcon from '@common/components/TokenIcon'
 import useController from '@common/hooks/useController'
@@ -27,7 +27,6 @@ import { getGasTankTokenDetails } from '@common/utils/getGasTankTokenDetails'
 import { openInTab } from '@common/utils/links'
 import { getUiType } from '@common/utils/uiType'
 
-import FooterGlassView from '../FooterGlassView'
 import getStyles from './styles'
 
 type Props = {
