@@ -209,62 +209,66 @@ const BaseTokenItem = ({
           </View>
         </View>
 
-        <View>
-          {!!pendingToBeSigned && !!pendingToBeSignedFormatted && isPending && (
-            <PendingBadge
-              amount={pendingToBeSigned}
-              amountFormatted={pendingToBeSignedFormatted}
-              label="awaiting signature"
-              backgroundColor={theme.warningBackground}
-              textColor={theme.warningText}
-              Icon={BatchIcon}
-              borderColor="transparent"
-              hoverBorderColor={theme.warning400}
-              onPress={() => {
-                if (!simulatedAccountOp) return
-                requestsDispatch({
-                  type: 'method',
-                  params: {
-                    method: 'setCurrentUserRequestById',
-                    args: [`${simulatedAccountOp.accountAddr}-${simulatedAccountOp.chainId}`]
+        {isPending && (
+          <View style={[{ marginLeft: SPACING_2XL + SPACING_TY }, spacings.mtSm]}>
+            <View>
+              {!!pendingToBeSigned && !!pendingToBeSignedFormatted && isPending && (
+                <PendingBadge
+                  amount={pendingToBeSigned}
+                  amountFormatted={pendingToBeSignedFormatted}
+                  label="awaiting signature"
+                  backgroundColor={theme.warningBackground}
+                  textColor={theme.warningText}
+                  Icon={BatchIcon}
+                  borderColor="transparent"
+                  hoverBorderColor={theme.warning400}
+                  onPress={() => {
+                    if (!simulatedAccountOp) return
+                    requestsDispatch({
+                      type: 'method',
+                      params: {
+                        method: 'setCurrentUserRequestById',
+                        args: [`${simulatedAccountOp.accountAddr}-${simulatedAccountOp.chainId}`]
+                      }
+                    })
+                  }}
+                />
+              )}
+
+              {!!pendingToBeConfirmed && !!pendingToBeConfirmedFormatted && (
+                <PendingBadge
+                  amount={pendingToBeConfirmed}
+                  amountFormatted={pendingToBeConfirmedFormatted}
+                  label="confirming"
+                  backgroundColor={theme.infoBackground}
+                  textColor={theme.infoText}
+                  Icon={PendingToBeConfirmedIcon}
+                />
+              )}
+            </View>
+
+            {!!pendingToBeSigned && !!pendingToBeSignedFormatted && isPending && (
+              <View
+                style={[
+                  flexboxStyles.directionRow,
+                  flexboxStyles.alignCenter,
+                  spacings.phSm,
+                  {
+                    height: 30
                   }
-                })
-              }}
-            />
-          )}
-
-          {!!pendingToBeConfirmed && !!pendingToBeConfirmedFormatted && (
-            <PendingBadge
-              amount={pendingToBeConfirmed}
-              amountFormatted={pendingToBeConfirmedFormatted}
-              label="confirming"
-              backgroundColor={theme.infoBackground}
-              textColor={theme.infoText}
-              Icon={PendingToBeConfirmedIcon}
-            />
-          )}
-        </View>
-
-        {!!pendingToBeSigned && !!pendingToBeSignedFormatted && isPending && (
-          <View
-            style={[
-              flexboxStyles.directionRow,
-              flexboxStyles.alignCenter,
-              spacings.phSm,
-              {
-                height: 30
-              }
-            ]}
-          >
-            <Text
-              selectable
-              color={theme.successText}
-              weight="medium"
-              fontSize={12}
-              numberOfLines={1}
-            >
-              {balanceLatestFormatted} {t('(Onchain)')}
-            </Text>
+                ]}
+              >
+                <Text
+                  selectable
+                  color={theme.successText}
+                  weight="medium"
+                  fontSize={12}
+                  numberOfLines={1}
+                >
+                  {balanceLatestFormatted} {t('(Onchain)')}
+                </Text>
+              </View>
+            )}
           </View>
         )}
       </View>
