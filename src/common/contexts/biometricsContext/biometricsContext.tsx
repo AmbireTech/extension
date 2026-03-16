@@ -3,7 +3,6 @@ import React, { createContext, useCallback, useEffect, useMemo, useState } from 
 
 import { useTranslation } from '@common/config/localization/localization'
 import useToast from '@common/hooks/useToast'
-import useAuth from '@common/modules/auth/hooks/useAuth'
 import { getDeviceSupportedAuthTypesLabel } from '@common/services/device'
 import { requestLocalAuthFlagging } from '@common/services/requestPermissionFlagging'
 
@@ -14,7 +13,6 @@ const BiometricsContext = createContext<BiometricsContextReturnType>(biometricsC
 
 const BiometricsProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { t } = useTranslation()
-  const { authStatus } = useAuth()
   const { addToast } = useToast()
 
   const [deviceSecurityLevel, setDeviceSecurityLevel] = useState<DEVICE_SECURITY_LEVEL>(
@@ -29,6 +27,7 @@ const BiometricsProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [hasBiometricsHardware, setHasBiometricsHardware] = useState<null | boolean>(
     biometricsContextDefaults.hasBiometricsHardware
   )
+  const [isEnrolled, setIsEnrolled] = useState<boolean>(biometricsContextDefaults.isEnrolled)
   const [isLoading, setIsLoading] = useState<boolean>(true)
 
   useEffect(() => {
@@ -41,27 +40,27 @@ const BiometricsProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       }
 
       try {
+        const enrolled = await LocalAuthentication.isEnrolledAsync()
+        setIsEnrolled(enrolled)
+      } catch {
+        // Assume nothing is enrolled, that's fine.
+      }
+
+      try {
         const securityLevel = await LocalAuthentication.getEnrolledLevelAsync()
-        const existingDeviceSecurityLevel =
-          // @ts-ignore `LocalAuthentication.SecurityLevel` and `DEVICE_SECURITY_LEVEL`
-          // overlap each other. So this should match.
-          Object.values(DEVICE_SECURITY_LEVEL).includes(securityLevel)
+        const validSecurityLevels = Object.values(DEVICE_SECURITY_LEVEL) as number[]
         setDeviceSecurityLevel(
-          // @ts-ignore `LocalAuthentication.SecurityLevel` and `DEVICE_SECURITY_LEVEL`
-          // overlap each other. So this should always result a valid setting.
-          existingDeviceSecurityLevel ? securityLevel : DEVICE_SECURITY_LEVEL.NONE
+          validSecurityLevels.includes(securityLevel)
+            ? ((securityLevel as unknown) as DEVICE_SECURITY_LEVEL)
+            : DEVICE_SECURITY_LEVEL.NONE
         )
       } catch {
         // Assume the lowest device security level (the default one), that's fine.
       }
 
       try {
-        const deviceAuthTypes = await LocalAuthentication.supportedAuthenticationTypesAsync()
-        // @ts-ignore `LocalAuthentication.AuthenticationType` and `DEVICE_SUPPORTED_AUTH_TYPES`
-        // overlap each other. So these should match.
+        const deviceAuthTypes = ((await LocalAuthentication.supportedAuthenticationTypesAsync()) as unknown) as DEVICE_SUPPORTED_AUTH_TYPES[]
         setDeviceSupportedAuthTypes(deviceAuthTypes)
-        // @ts-ignore `LocalAuthentication.AuthenticationType` and `DEVICE_SUPPORTED_AUTH_TYPES`
-        // overlap each other. So these should match.
         setDeviceSupportedAuthTypesLabel(getDeviceSupportedAuthTypesLabel(deviceAuthTypes))
       } catch {
         // Fallback with defaults, that's fine.
@@ -69,13 +68,19 @@ const BiometricsProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
       setIsLoading(false)
     })()
-  }, [authStatus])
+    // Run once on mount — hardware capabilities and enrollment don't change
+    // during a session and don't need to re-query on auth status changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const authenticateWithLocalAuth = useCallback(async () => {
     try {
       const { success } = await requestLocalAuthFlagging(() =>
         LocalAuthentication.authenticateAsync({
-          promptMessage: t('Confirm your identity')
+          promptMessage: t('Confirm your identity'),
+          // Prefer Android Class 3 (strong) biometrics, e.g. fingerprint or 3D face scan.
+          // Falls back to Class 2 on devices that only support weak biometrics.
+          biometricsSecurityLevel: 'strong'
         })
       )
 
@@ -92,6 +97,7 @@ const BiometricsProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         () => ({
           isLoading,
           hasBiometricsHardware,
+          isEnrolled,
           deviceSecurityLevel,
           deviceSupportedAuthTypes,
           deviceSupportedAuthTypesLabel,
@@ -100,6 +106,7 @@ const BiometricsProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         [
           isLoading,
           hasBiometricsHardware,
+          isEnrolled,
           deviceSecurityLevel,
           deviceSupportedAuthTypes,
           deviceSupportedAuthTypesLabel,

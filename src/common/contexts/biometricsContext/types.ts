@@ -6,8 +6,10 @@ export interface BiometricsContextReturnType {
   // Determine what kinds of authentications are available on the device.
   deviceSupportedAuthTypesLabel: string
   isLoading: boolean
-  // Determines whether a face or fingerprint scanner is available on the device
+  // Determines whether a face or fingerprint scanner is available on the device.
   hasBiometricsHardware: null | boolean
+  // Determines whether the device has saved fingerprints or facial data enrolled.
+  isEnrolled: boolean
   authenticateWithLocalAuth: () => Promise<boolean>
 }
 
@@ -17,5 +19,6 @@ export const biometricsContextDefaults: BiometricsContextReturnType = {
   deviceSupportedAuthTypesLabel: '',
   isLoading: true,
   hasBiometricsHardware: null,
+  isEnrolled: false,
   authenticateWithLocalAuth: () => Promise.resolve(false)
 }
