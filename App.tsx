@@ -4,7 +4,6 @@ import * as SplashScreen from 'expo-splash-screen'
 import React, { useEffect } from 'react'
 import { Alert } from 'react-native'
 
-import AppInit from '@common/modules/app-init/screens/AppInit'
 import { RELAYER_URL } from '@env'
 
 SplashScreen.preventAutoHideAsync().catch(console.warn) // TODO: log a sentry error
@@ -19,7 +18,7 @@ const App = () => {
     )
   }, [])
 
-  return <AppInit />
+  return null
 }
 
 export default App
