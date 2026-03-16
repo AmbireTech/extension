@@ -60,6 +60,7 @@ const SubmittedOn = ({
             ...spacings.pv0,
             ...spacings.pl0,
             ...spacings.pr0,
+            ...spacings.mlMi,
             borderWidth: 0,
             height: 'auto'
           }}

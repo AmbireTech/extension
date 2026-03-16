@@ -213,12 +213,17 @@ const SignMessageScreen = () => {
     [handleSign]
   )
 
-  const signWithDefaultSigner = useCallback(() => {
+  const signWithDefaultSignerIfPossible = useCallback(() => {
+    if (!account?.safeCreation && selectedAccountKeyStoreKeys.length > 1) {
+      handleSign()
+      return
+    }
+
     const key = selectedAccountKeyStoreKeys?.[0]
     if (!key) return
 
     setSigner(key.addr, key.type)
-  }, [selectedAccountKeyStoreKeys, setSigner])
+  }, [selectedAccountKeyStoreKeys, setSigner, account?.safeCreation, handleSign])
 
   const resolveButtonText = useMemo(() => {
     if (signMessageState.status === SignMessageStatus.Partial) return 'Close'
@@ -302,7 +307,7 @@ const SignMessageScreen = () => {
           return (
             <ActionFooter
               onReject={handleReject}
-              onResolve={signWithDefaultSigner}
+              onResolve={signWithDefaultSignerIfPossible}
               resolveButtonText={resolveButtonText}
               resolveDisabled={
                 signStatus === 'LOADING' ||

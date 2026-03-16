@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { View, ViewStyle } from 'react-native'
 
 import CopyIcon from '@common/assets/svg/CopyIcon'
+import { isMobile, isWeb } from '@common/config/env'
 import useHover, { AnimatedPressable } from '@common/hooks/useHover'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
@@ -18,6 +19,7 @@ interface Props {
   hideParentheses?: boolean
   fontSize?: number
   children?: React.ReactNode
+  withWrap?: boolean
 }
 
 const PlainAddressWithCopy: FC<Props> = ({
@@ -26,7 +28,8 @@ const PlainAddressWithCopy: FC<Props> = ({
   style,
   hideParentheses,
   fontSize = 12,
-  children
+  children,
+  withWrap = false
 }) => {
   const { t } = useTranslation()
   const { addToast } = useToast()
@@ -45,12 +48,23 @@ const PlainAddressWithCopy: FC<Props> = ({
   }
 
   return (
-    <View style={[flexbox.directionRow, flexbox.alignCenter]}>
+    <View
+      style={[
+        flexbox.directionRow,
+        flexbox.alignCenter,
+        withWrap ? { flexBasis: 110, flexGrow: 1, flexShrink: 1 } : {}
+      ]}
+    >
       <PlainAddress
         maxLength={maxLength}
         address={address}
         hideParentheses={hideParentheses}
-        style={style}
+        style={{
+          ...style,
+          ...(maxLength === 42 ? { flexShrink: 1 } : {}),
+          ...(isWeb ? { flexShrink: 0 } : {}),
+          ...(withWrap ? { minWidth: isMobile ? 70 : 170 } : {})
+        }}
         fontSize={fontSize}
       />
       <AnimatedPressable onPress={handleCopy} style={animStyle} {...bindAnim}>

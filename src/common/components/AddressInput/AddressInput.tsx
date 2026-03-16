@@ -11,6 +11,7 @@ import EnsIcon from '@common/assets/svg/EnsIcon'
 import AddressBookContact from '@common/components/AddressBookContact'
 import Input, { InputProps } from '@common/components/Input'
 import Text from '@common/components/Text'
+import { isWeb } from '@common/config/env'
 import useController from '@common/hooks/useController'
 import useHover, { AnimatedPressable } from '@common/hooks/useHover'
 import useTheme from '@common/hooks/useTheme'
@@ -156,6 +157,7 @@ const AddressInput: React.FC<Props> = ({
                 }}
                 address={address}
                 name={contacts.find((c) => c.address.toLowerCase() === address.toLowerCase())?.name}
+                withCopy={isWeb}
               />
             </View>
           ) : null

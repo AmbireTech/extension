@@ -2,6 +2,7 @@ import React, { FC } from 'react'
 import { View, ViewStyle } from 'react-native'
 
 import GlassView from '@common/components/GlassView'
+import { isMobile } from '@common/config/env'
 import { SPACING, SPACING_SM } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
@@ -37,6 +38,10 @@ const FooterGlassView: FC<{
   absolute = true,
   isSimpleBlur
 }) => {
+  if (isMobile) {
+    return <View style={{ flexDirection: 'column-reverse' }}>{children}</View>
+  }
+
   return (
     <View
       style={{

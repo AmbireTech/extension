@@ -13,17 +13,103 @@ import { APP_VERSION } from '@common/config/env'
 import { AllControllersMappingType } from '@common/constants/controllersMapping'
 import { ControllersMiddlewareContext } from '@common/contexts/controllersMiddlewareContext'
 import { ControllerStoreContext } from '@common/contexts/controllerStoreContext'
+import useRoute from '@common/hooks/useRoute'
 import eventBus from '@common/services/event/eventBus'
 import { storage } from '@common/services/storage'
 import { Action, MethodAction } from '@common/types/actions'
 import { BUNGEE_API_KEY, RELAYER_URL, VELCRO_URL } from '@env'
 import { MobileBaseControllersMappingType } from '@mobile/constants/controllersMapping'
+import { handleActions } from '@mobile/handlers/handleActions'
+
+let mainControllerInstance: MainController | null = null
+const fetchWithAnalytics: any = (url: any, init: any) => {
+  const urlString = url.toString()
+  try {
+    const urlObj = new URL(urlString)
+    if (!urlObj.hostname.endsWith('.ambire.com') && urlObj.hostname !== 'ambire.com') {
+      return fetch(url, init)
+    }
+  } catch (error) {
+    // eslint-disable-next-line no-console
+    console.error(error)
+    return fetch(url, init)
+  }
+
+  const initWithCustomHeaders = init || { headers: { 'x-app-source': '', 'x-app-version': '' } }
+  initWithCustomHeaders.headers = initWithCustomHeaders.headers || {}
+
+  if (mainControllerInstance?.keystore?.keyStoreUid) {
+    // TODO: implement analytics headers if needed
+  }
+
+  return fetch(url, initWithCustomHeaders)
+}
+
+// --- POLYFILL FOR REACT NATIVE HERMES / METRO BIND BUG ---
+// In certain cases on React Native, when a function with a TypeScript `this:` parameter
+// and default arguments is compiled, the native `Function.prototype.bind` misaligns
+// the injected arguments (specifically, offsets them by 1 because it counts the stripped `this`).
+// The fix is to override `Function.prototype.bind` globally here before any controllers execute.
+
+const originalBind = Function.prototype.bind
+// @ts-ignore
+Function.prototype.bind = function (context: any, ...boundArgs: any[]) {
+  const targetFunction = this
+
+  // We return an async closure by default because almost all bound functions
+  // in the controllers that suffer from this bug are async or return promises (like relayerCall).
+  // If a synchronous function throws an error, it will just throw synchronously.
+  return function (...args: any[]) {
+    try {
+      // First, try standard execution
+      const result = targetFunction.call(context, ...boundArgs, ...args)
+
+      // If it's a promise, we must intercept rejections to catch the "bad method" error asynchronously
+      if (result && typeof result.then === 'function') {
+        return result.catch((e: any) => {
+          if (e?.message === 'bad method' || e?.message?.includes('bad method')) {
+            // Argument shift detected! Try with padded offset.
+            return targetFunction.call(
+              context,
+              ...boundArgs,
+              args[0],
+              undefined, // Dummy pad
+              args[1],
+              args[2],
+              args[3],
+              args[4]
+            )
+          }
+          throw e
+        })
+      }
+      return result
+    } catch (e: any) {
+      if (e?.message === 'bad method' || e?.message?.includes('bad method')) {
+        return targetFunction.call(
+          context,
+          ...boundArgs,
+          args[0],
+          undefined,
+          args[1],
+          args[2],
+          args[3],
+          args[4]
+        )
+      }
+      throw e
+    }
+  }
+}
 
 export const ControllersMiddlewareProvider: React.FC<{
   children: React.ReactNode
 }> = ({ children }) => {
   const [isUnlocked, setIsUnlocked] = useState(false)
-  const { controllerStore, debounceControllerUpdates } = useContext(ControllerStoreContext)
+  const { controllerStore, isStoreReady, debounceControllerUpdates } =
+    useContext(ControllerStoreContext)
+
+  const route = useRoute()
 
   const eventEmitterRegistry = useRef<EventEmitterRegistryController>(
     new EventEmitterRegistryController(() => {
@@ -99,87 +185,6 @@ export const ControllersMiddlewareProvider: React.FC<{
     )
   }, [controllerStore])
 
-  // Skip adding custom headers and URL modifications for 3rd party URLs
-  // (only internal Ambire APIs need the x-app-* headers and tracking params)
-  // @ts-ignore
-  const fetchWithAnalytics: Fetch = useCallback((url, init) => {
-    const urlString = url.toString()
-    try {
-      const urlObj = new URL(urlString)
-      if (!urlObj.hostname.endsWith('.ambire.com') && urlObj.hostname !== 'ambire.com') {
-        // @ts-ignore
-        return fetch(url, init)
-      }
-    } catch (error) {
-      // eslint-disable-next-line no-console
-      console.error(error)
-      // If URL parsing fails, skip analytics for safety
-      // @ts-ignore
-      return fetch(url, init)
-    }
-
-    // As of v4.26.0, custom extension-specific headers. TBD for the other apps.
-    const initWithCustomHeaders = init || { headers: { 'x-app-source': '', 'x-app-version': '' } }
-    initWithCustomHeaders.headers = initWithCustomHeaders.headers || {}
-
-    // if the fetch method is called while the keystore is constructing the keyStoreUid won't be defined yet
-    // in that case we can still fetch but without our custom header
-    if (controllers.current.MainController?.keystore?.keyStoreUid) {
-      // const instanceId = getExtensionInstanceId(
-      //   controllers.current.MainController.keystore.keyStoreUid,
-      //   controllers.current.MainController.invite?.verifiedCode || ''
-      // )
-      // initWithCustomHeaders.headers['x-app-source'] = instanceId
-      // const versionHeader = `extension-${APP_VERSION}-${process.env.WEB_ENGINE}`
-      // initWithCustomHeaders.headers['x-app-version'] = versionHeader
-    }
-
-    // we want to calculate the TVL of our users
-    // we can achieve this by making a relayer (server-side trusted environment) script that gets the balances of all our users
-    // but doing this with all our users would be 'expensive'.
-    // we already calculate the user balance in the extension, but is not 100% trusted as any user can modify it
-    // that why we will use the user balance from the extension as a 'hint' so we can determine
-    // on which accounts we should execute the 'expensive' script on the backend
-    // those addresses should be 1) loaded with key in the extension 2) have more than $0 balance
-    /*
-    const currentAccount = controllers.current.MainController.selectedAccount.account
-    const hasCurrentAccountKeys =
-      currentAccount &&
-      getAccountKeysCount({
-        accountAddr: currentAccount.addr,
-        keys: controllers.current.MainController.keystore.keys,
-        accounts: controllers.current.MainController.accounts.accounts
-      })
-    // we use any cena request, because if we narrow it down to one route we might not have the full balance loaded
-    // // on the relayer side we will simply use middleware that captures all routes and looks for the specific params with balance
-    // // we want to attach the data only if the user has keys for the account
-    const currentBalance = controllers.current.MainController.selectedAccount.portfolio.totalBalance
-    if (
-      currentAccount &&
-      (backgroundState.userBalances[currentAccount?.addr] || 0) < currentBalance
-    )
-      backgroundState.userBalances[currentAccount?.addr] = currentBalance
-
-    const shouldAttachBalance =
-      url.toString().startsWith('https://cena.ambire.com/') && hasCurrentAccountKeys
-    if (shouldAttachBalance) {
-      const urlObj = new URL(url.toString())
-      const balance = backgroundState.userBalances[currentAccount?.addr] || 0
-
-      urlObj.searchParams.append('panVal', JSON.stringify({ a: currentAccount.addr, b: balance }))
-
-      // eslint-disable-next-line no-param-reassign
-      url = decodeURIComponent(urlObj.toString())
-    }
-    */
-
-    // Use the native fetch (instead of node-fetch or whatever else) since
-    // browser extensions are designed to run within the web environment,
-    // which already provides a native and well-optimized fetch API.
-    // @ts-ignore
-    return fetch(url, initWithCustomHeaders)
-  }, [])
-
   if (Object.keys(controllers.current).length === 0) {
     const ctrls: MobileBaseControllersMappingType = {} as MobileBaseControllersMappingType
     ctrls.MainController = new MainController({
@@ -244,29 +249,38 @@ export const ControllersMiddlewareProvider: React.FC<{
     })
 
     controllers.current = ctrls
+    mainControllerInstance = ctrls.MainController
   }
 
   const dispatch = useCallback((action: MethodAction | Action) => {
-    if (action.type === 'method') {
-      const { ctrlName, method, args } = action.params
-
-      let targetCtrl: any = Object.values(eventEmitterRegistry.current.values()).find(
-        (ctrl: any) => ctrl.name === ctrlName
-      )
-      if (!targetCtrl) {
-        console.error(`handleAction: Controller ${ctrlName.toString()} not found`)
-        return
-      }
-
-      if (targetCtrl && typeof targetCtrl[method] === 'function') {
-        targetCtrl[method](...args)
-      }
-
-      return
-    }
-
-    //TODO: handle common actions for the mobile app
+    handleActions(action, {
+      eventEmitterRegistry: eventEmitterRegistry.current,
+      mainCtrl: controllers.current.MainController
+    })
   }, [])
+
+  useEffect(() => {
+    controllers.current.MainController.ui.addView({
+      id: 'default-mobile-app-view',
+      type: 'mobile'
+    })
+  }, [])
+
+  useEffect(() => {
+    const { pathname = '/', search = '' } = route
+
+    const searchParams = new URLSearchParams(search)
+    const searchParamsFormatted = Object.fromEntries(searchParams.entries())
+
+    dispatch({
+      type: 'UPDATE_UI_VIEW_ROUTE',
+      params: {
+        id: 'default-mobile-app-view',
+        route: pathname.startsWith('/') ? pathname.slice(1) : pathname,
+        searchParams: searchParamsFormatted
+      }
+    })
+  }, [route, dispatch])
 
   return (
     <ControllersMiddlewareContext.Provider value={useMemo(() => ({ dispatch }), [dispatch])}>
