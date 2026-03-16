@@ -1644,16 +1644,6 @@
         "node-polyfill-webpack-plugin>console-browserify": true
       }
     },
-    "expo-updates": {
-      "globals": {
-        "location.reload": true
-      },
-      "packages": {
-        "@babel/runtime": true,
-        "expo>expo-modules-core": true,
-        "react-native-web": true
-      }
-    },
     "react-native-web>fbjs": {
       "globals": {
         "console": true,
@@ -2334,6 +2324,19 @@
         "react-native-gesture-handler>hoist-non-react-statics": true,
         "expo-linking>invariant": true,
         "react": true,
+        "react-native-reanimated": true,
+        "react-native-web": true
+      }
+    },
+    "react-native-keyboard-controller": {
+      "globals": {
+        "console.warn": true,
+        "queueMicrotask": true
+      },
+      "packages": {
+        "@babel/runtime": true,
+        "react": true,
+        "expo-status-bar>react-native-is-edge-to-edge": true,
         "react-native-reanimated": true,
         "react-native-web": true
       }
