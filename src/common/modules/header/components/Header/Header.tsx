@@ -5,7 +5,7 @@ import AccountData from '@common/components/AccountData'
 import AccountDataDetailed from '@common/components/AccountDataDetailed'
 import AmbireLogoHorizontalWithOG from '@common/components/AmbireLogoHorizontalWithOG'
 import Text from '@common/components/Text'
-import { isMobile } from '@common/config/env'
+import { isMobile, isWeb } from '@common/config/env'
 import { titleChangeEventStream } from '@common/hooks/useNavigation'
 import useRoute from '@common/hooks/useRoute'
 import routesConfig from '@common/modules/router/config/routesConfig'
@@ -34,7 +34,8 @@ const Wrapper = ({
     <View
       style={[
         spacings.phSm,
-        spacings.pvSm,
+        isWeb && spacings.pvSm,
+        isMobile && spacings.mbLg,
         {
           width: '100%'
         },

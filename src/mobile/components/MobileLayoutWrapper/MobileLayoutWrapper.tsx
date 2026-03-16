@@ -24,6 +24,8 @@ type MobileLayoutContainerProps = {
   renderDirectChildren?: () => ReactNode
   style?: ViewStyle
   withHorizontalPadding?: boolean
+  withTopPadding?: boolean
+  withBottomInset?: boolean
 }
 
 export const MobileLayoutContainer = ({
@@ -34,7 +36,9 @@ export const MobileLayoutContainer = ({
   children,
   renderDirectChildren,
   style,
-  withHorizontalPadding = false
+  withHorizontalPadding = false,
+  withTopPadding = true,
+  withBottomInset = true
 }: MobileLayoutContainerProps) => {
   const { theme, styles } = useTheme(getStyles)
   const insets = useSafeAreaInsets()
@@ -45,8 +49,8 @@ export const MobileLayoutContainer = ({
         flexbox.flex1,
         {
           backgroundColor: backgroundColor || theme.primaryBackground,
-          paddingTop: insets.top,
-          paddingBottom: insets.bottom
+          paddingTop: insets.top + (withTopPadding ? SPACING_SM : 0),
+          paddingBottom: withBottomInset ? insets.bottom : 0
         }
       ]}
     >
@@ -54,7 +58,6 @@ export const MobileLayoutContainer = ({
       <View style={[flexbox.flex1, withHorizontalPadding ? spacings.phSm : undefined]}>
         <View
           style={[
-            flexbox.directionRow,
             flexbox.flex1,
             {
               backgroundColor: backgroundColor || theme.primaryBackground,
@@ -84,7 +87,7 @@ interface MobileLayoutWrapperMainContentProps extends WrapperProps {
   keyboardAwareScrollViewProps?: KeyboardAwareScrollViewProps
   onBackButtonPress?: () => void
   rightIcon?: ReactNode
-  onRightIconPress?: () => void
+
   title?: string
   step?: number
   totalSteps?: number
@@ -99,7 +102,6 @@ export const MobileLayoutWrapperMainContent: React.FC<MobileLayoutWrapperMainCon
   withBackButton = false,
   onBackButtonPress = () => {},
   rightIcon,
-  onRightIconPress = () => {},
   title,
   step = 0,
   totalSteps = 2,
@@ -128,13 +130,9 @@ export const MobileLayoutWrapperMainContent: React.FC<MobileLayoutWrapperMainCon
   if (withScroll) {
     return (
       <View style={[flexbox.flex1, spacings.phSm]}>
-        {step > 0 ? (
-          renderProgress()
-        ) : (
-          <View style={{ height: isOnboardingRoute ? 28 : SPACING_SM }} />
-        )}
+        {step > 0 ? renderProgress() : <View style={{ height: isOnboardingRoute ? 24 : 0 }} />}
         {(!!title || !!withBackButton) && (
-          <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mbXl]}>
+          <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mbLg]}>
             {!!withBackButton && <PanelBackButton onPress={onBackButtonPress} />}
             {!!title && <PanelTitle title={title} size={18} />}
             {!!withBackButton && (
@@ -163,17 +161,13 @@ export const MobileLayoutWrapperMainContent: React.FC<MobileLayoutWrapperMainCon
       ref={wrapperRef}
       style={[flexbox.flex1, spacings.phSm, spacings.pbSm, contentContainerStyle]}
     >
-      {step > 0 ? (
-        renderProgress()
-      ) : (
-        <View style={{ height: isOnboardingRoute ? 28 : SPACING_SM }} />
-      )}
+      {step > 0 ? renderProgress() : <View style={{ height: isOnboardingRoute ? 24 : 0 }} />}
       {(!!title || !!withBackButton) && (
-        <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mbXl]}>
+        <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mbLg]}>
           {!!withBackButton && <PanelBackButton onPress={onBackButtonPress} />}
           {!!title && <PanelTitle title={title} size={18} />}
           {!!withBackButton && (
-            <View style={[{ width: 28 }, flexbox.alignCenter]}>{rightIcon}</View>
+            <View style={[{ width: 28, maxHeight: 15 }, flexbox.center]}>{rightIcon}</View>
           )}
         </View>
       )}

@@ -1,9 +1,9 @@
-import { FC } from 'react'
+import React, { FC } from 'react'
 
 import shortenAddress from '@ambire-common/utils/shortenAddress'
 import Text from '@common/components/Text'
+import { isMobile, isWeb } from '@common/config/env'
 import spacings from '@common/styles/spacings'
-import flexbox from '@common/styles/utils/flexbox'
 
 interface Props {
   maxLength: number
@@ -18,9 +18,9 @@ const PlainAddress: FC<Props> = ({ style, maxLength, address, hideParentheses, f
     fontSize={fontSize}
     appearance="secondaryText"
     weight="mono_regular"
-    style={[spacings.mrMi, { flexShrink: 1 }, style]}
+    style={[spacings.mrMi, style]}
     numberOfLines={1}
-    ellipsizeMode="middle"
+    ellipsizeMode={isMobile ? 'middle' : undefined}
   >
     {hideParentheses ? '' : '('}
     {shortenAddress(address, maxLength)}
@@ -28,4 +28,4 @@ const PlainAddress: FC<Props> = ({ style, maxLength, address, hideParentheses, f
   </Text>
 )
 
-export default PlainAddress
+export default React.memo(PlainAddress)

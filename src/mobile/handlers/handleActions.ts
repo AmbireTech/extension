@@ -3,6 +3,7 @@
 /* eslint-disable @typescript-eslint/return-await */
 import { MainController } from '@ambire-common/controllers/main/main'
 import { IEventEmitterRegistryController } from '@ambire-common/interfaces/eventEmitter'
+import { KeyIterator } from '@ambire-common/libs/keyIterator/keyIterator'
 import { Action, MethodAction } from '@common/types/actions'
 
 export const handleActions = async (
@@ -48,6 +49,18 @@ export const handleActions = async (
       await mainCtrl.transfer.checkIsRecipientAddressUnknown()
 
       return
+    }
+
+    case 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_FROM_SAVED_SEED_PHRASE': {
+      const keystoreSavedSeed = await mainCtrl.keystore.getSavedSeed(params.id)
+      if (!keystoreSavedSeed) return
+
+      const keyIterator = new KeyIterator(keystoreSavedSeed.seed, keystoreSavedSeed.seedPassphrase)
+      await mainCtrl.accountPicker.setInitParams({
+        keyIterator,
+        hdPathTemplate: keystoreSavedSeed.hdPathTemplate
+      })
+      break
     }
 
     default:

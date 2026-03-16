@@ -159,7 +159,6 @@ const AddressBookContact: FC<Props> = ({
             </View>
           )}
           <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-            <DomainBadge ens={ens} />
             <AccountAddress
               isLoading={isLoading}
               ens={ens}

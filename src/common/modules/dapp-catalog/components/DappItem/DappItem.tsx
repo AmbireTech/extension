@@ -4,7 +4,7 @@ import { View } from 'react-native'
 
 import { Dapp } from '@ambire-common/interfaces/dapp'
 import ConnectedIcon from '@common/assets/svg/ConnectedIcon'
-import SettingsIcon from '@common/assets/svg/SettingsIcon'
+import SettingsWheelIcon from '@common/assets/svg/SettingsWheelIcon'
 import StarIcon from '@common/assets/svg/StarIcon'
 import TwitterIcon from '@common/assets/svg/TwitterIcon'
 import Badge from '@common/components/Badge'
@@ -14,6 +14,7 @@ import useController from '@common/hooks/useController'
 import { AnimatedPressable, useCustomHover } from '@common/hooks/useHover'
 import useTheme from '@common/hooks/useTheme'
 import spacings, { SPACING_TY } from '@common/styles/spacings'
+import { hexToRgba } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
 import ManifestImage from '@web/components/ManifestImage'
@@ -60,7 +61,7 @@ const DappItem = (dapp: Dapp) => {
   const [isNetworkSelectorOpen, setIsNetworkSelectorOpen] = useState(false)
   const settingsButtonRef = React.useRef<View>(null)
 
-  const [bindAnim, animStyle, isHovered] = useCustomHover({
+  const [bindAnim, animStyle] = useCustomHover({
     property: 'backgroundColor',
     values: {
       from: blacklisted === 'BLACKLISTED' ? theme.errorBackground : theme.secondaryBackground,
@@ -105,15 +106,7 @@ const DappItem = (dapp: Dapp) => {
         onMouseLeave={() => setHovered(false)}
       >
         <AnimatedPressable
-          style={[
-            styles.container,
-            isFeatured && {
-              // @ts-ignore
-              boxShadow: `0 ${isHovered ? 2 : 3}px 0 0 ${String(theme.primaryAccent200)}`,
-              borderColor: theme.primaryAccent200
-            },
-            animStyle
-          ]}
+          style={[styles.container, animStyle]}
           onPress={() => openInTab({ url })}
           {...bindAnim}
         >
@@ -194,7 +187,12 @@ const DappItem = (dapp: Dapp) => {
                         spacings.phTy,
                         flexbox.alignCenter,
                         flexbox.justifyCenter,
-                        { height: 20 }
+                        {
+                          height: 20,
+                          borderLeftWidth: 1,
+                          borderRightWidth: 1,
+                          borderColor: hexToRgba(theme.neutral600, 0.4)
+                        }
                       ]}
                     >
                       <Text fontSize={12} weight="semiBold" appearance="secondaryText">
@@ -235,9 +233,9 @@ const DappItem = (dapp: Dapp) => {
                       ]}
                       ref={settingsButtonRef}
                     >
-                      <SettingsIcon
-                        width={18}
-                        height={18}
+                      <SettingsWheelIcon
+                        width={20}
+                        height={20}
                         strokeWidth="1.8"
                         color={theme.iconPrimary}
                       />

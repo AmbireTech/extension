@@ -32,7 +32,8 @@ const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
     progressContainer: {
       ...flexbox.directionRow,
       ...flexbox.justifyCenter,
-      ...spacings.pv
+      ...spacings.pb,
+      ...spacings.ptMi
     },
     progress: {
       width: 64,

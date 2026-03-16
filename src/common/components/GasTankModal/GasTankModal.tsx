@@ -15,6 +15,7 @@ import Button from '@common/components/Button'
 import GlassView from '@common/components/GlassView'
 import Text from '@common/components/Text'
 import TokenIcon from '@common/components/TokenIcon'
+import { isMobile, isWeb } from '@common/config/env'
 import useController from '@common/hooks/useController'
 import useHasGasTank from '@common/hooks/useHasGasTank'
 import useNavigation from '@common/hooks/useNavigation'
@@ -133,14 +134,16 @@ const GasTankModal = ({ modalRef, handleClose, portfolio, account }: Props) => {
     }, 500) // Wait for modal animation
   }, [animations, bulletsContent])
 
+  const Wrapper = isMobile ? View : GlassView
+
   return (
     <BottomSheet
       id="gas-tank-modal"
-      type={isPopup ? 'bottom-sheet' : 'modal'}
+      type={isPopup || isMobile ? 'bottom-sheet' : 'modal'}
       sheetRef={modalRef}
       containerInnerWrapperStyles={styles.containerInnerWrapper}
       closeBottomSheet={handleClose}
-      style={{ maxWidth: 600 }}
+      style={isWeb ? { maxWidth: 600 } : undefined}
       onOpen={handleOpen}
     >
       {hasGasTank ? (
@@ -166,15 +169,10 @@ const GasTankModal = ({ modalRef, handleClose, portfolio, account }: Props) => {
               </Text>
             </Pressable>
           </View>
-          <GlassView
+          <Wrapper
             borderRadius={28}
-            style={{
-              ...spacings.phSm,
-              ...spacings.pvSm
-            }}
-            cssStyle={{
-              padding: 12
-            }}
+            style={{ ...spacings.phSm, ...spacings.pvSm }}
+            cssStyle={{ padding: 12 }}
           >
             <View
               style={[
@@ -228,16 +226,18 @@ const GasTankModal = ({ modalRef, handleClose, portfolio, account }: Props) => {
                 <TopUpIcon color="#fff" width={24} height={24} style={spacings.mrMi} />
               </Button>
             </View>
-          </GlassView>
+          </Wrapper>
         </>
       ) : (
         <>
-          <View style={[flexbox.directionRow, flexbox.center, common.fullWidth, spacings.mtLg]}>
+          <View
+            style={[flexbox.directionRow, flexbox.center, common.fullWidth, isWeb && spacings.mtLg]}
+          >
             <Text fontSize={16} weight="semiBold" appearance="secondaryText">
               {t('Experience the benefits of the Gas Tank:')}
             </Text>
           </View>
-          <View style={[flexbox.justifyStart, flexbox.alignCenter, { height: 276 }]}>
+          <View style={isWeb ? [flexbox.justifyStart, flexbox.alignCenter, { height: 276 }] : []}>
             {bulletsContent.map(
               (bullet, index) =>
                 index < visibleCount && (
@@ -264,7 +264,7 @@ const GasTankModal = ({ modalRef, handleClose, portfolio, account }: Props) => {
                       <Text
                         appearance="secondaryText"
                         weight="medium"
-                        style={[spacings.mlSm, { lineHeight: 24 }]}
+                        style={[spacings.mlSm, flexbox.flex1, { lineHeight: 24 }]}
                       >
                         {t(bullet.text)}
                       </Text>

@@ -85,8 +85,13 @@ const Banner = React.memo(
           <Icon width={24} height={24} color={theme[`${type}Text`]} />
         </View>
 
-        <View style={[flexbox.wrap, flexbox.flex1]}>
-          <Text appearance={`${type}Text`} fontSize={titleFontSize || 16} weight="medium">
+        <View style={flexbox.flex1}>
+          <Text
+            appearance={`${type}Text`}
+            fontSize={titleFontSize || 16}
+            weight="medium"
+            style={spacings.mbMi}
+          >
             {title}
           </Text>
           {!!text && (
@@ -102,7 +107,8 @@ const Banner = React.memo(
             style={{
               width: 24,
               height: 24,
-              ...flexbox.center
+              ...flexbox.center,
+              ...spacings.mlTy
             }}
             testID="banner-button-reject"
           >

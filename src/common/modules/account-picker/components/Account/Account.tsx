@@ -119,7 +119,7 @@ const Account = ({
           isOn={isSelected}
           onToggle={toggleSelectedState}
           disabled={isDisabled}
-          style={{ ...flexbox.alignSelfStart, ...(isMobile ? spacings.mrMi : {}) }}
+          style={flexbox.alignSelfStart}
           width={44}
           height={24}
         />

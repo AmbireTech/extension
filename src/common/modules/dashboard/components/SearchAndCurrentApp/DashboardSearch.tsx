@@ -82,7 +82,7 @@ const DashboardSearch: FC<Props> = ({ control }) => {
               autoFocus
               placeholderTextColor={theme.secondaryText}
               nativeInputStyle={{ fontSize: 14 }}
-              onChange={onChange}
+              onChangeText={onChange}
               onBlur={onBlur}
               buttonStyle={spacings.ph0}
               value={value}
