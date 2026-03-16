@@ -48,7 +48,7 @@ const ServiceFee = ({
               <Pressable
                 onPress={() => {
                   // eslint-disable-next-line @typescript-eslint/no-floating-promises
-                  openInTab({ url: 'https://help.ambire.com/hc/en-us/articles/20618326653596' })
+                  openInTab({ url: 'https://help.ambire.com/en/articles/13752133-bridge-fees' })
                 }}
               >
                 <Text fontSize={14} weight="medium" appearance="primary">

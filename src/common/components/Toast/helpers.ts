@@ -29,8 +29,7 @@ const addInteractiveSupportLinks = (text: string): string => {
   return text
     .split(/(\bcontact support\b)/i)
     .map((part) => {
-      if (part.toLowerCase() === 'contact support')
-        return `[${part}](https://help.ambire.com/hc/en-us/requests/new)`
+      if (part.toLowerCase() === 'contact support') return `[${part}](https://help.ambire.com/en)`
 
       return part
     })
