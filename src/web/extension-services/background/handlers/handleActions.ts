@@ -87,6 +87,9 @@ export const handleActions = async (
     case 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_QR_WALLET': {
       return await mainCtrl.handleAccountPickerInitQr(QrKeyIterator, params.payload)
     }
+    case 'MAIN_CONTROLLER_MOVE_TO_RESPONSE_SCAN_QR_WALLET': {
+      return mainCtrl.handleMoveToResponseScan()
+    }
     case 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_FROM_SAVED_SEED_PHRASE': {
       const keystoreSavedSeed = await mainCtrl.keystore.getSavedSeed(params.id)
       if (!keystoreSavedSeed) return

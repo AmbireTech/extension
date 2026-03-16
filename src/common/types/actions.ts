@@ -1,4 +1,3 @@
-import { HD_PATH_TEMPLATE_TYPE } from '@ambire-common/consts/derivation'
 import { Contact } from '@ambire-common/controllers/addressBook/addressBook'
 import { Account } from '@ambire-common/interfaces/account'
 import { Dapp } from '@ambire-common/interfaces/dapp'
@@ -53,6 +52,9 @@ type MainControllerAccountPickerInitLatticeAction = {
 type MainControllerAccountPickerInitQrWalletAction = {
   type: 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_QR_WALLET'
   params: { payload: string | Uint8Array }
+}
+type MainControllerMoveToResponseScanQrWalletAction = {
+  type: 'MAIN_CONTROLLER_MOVE_TO_RESPONSE_SCAN_QR_WALLET'
 }
 type MainControllerAccountPickerInitFromSavedSeedPhraseAction = {
   type: 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_FROM_SAVED_SEED_PHRASE'
@@ -109,6 +111,7 @@ export type Action =
   | UpdateNavigationUrl
   | InitControllerStateAction
   | MainControllerAccountPickerInitQrWalletAction
+  | MainControllerMoveToResponseScanQrWalletAction
   | MainControllerAccountPickerInitLatticeAction
   | MainControllerAccountPickerInitTrezorAction
   | MainControllerAccountPickerInitLedgerAction

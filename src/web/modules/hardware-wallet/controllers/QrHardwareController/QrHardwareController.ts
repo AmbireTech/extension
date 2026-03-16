@@ -1,4 +1,6 @@
 import ExternalSignerError from '@ambire-common/classes/ExternalSignerError'
+import EventEmitter from '@ambire-common/controllers/eventEmitter/eventEmitter'
+import { IEventEmitterRegistryController } from '@ambire-common/interfaces/eventEmitter'
 import {
   ExternalSignerController,
   QrAccountImportController
@@ -6,13 +8,16 @@ import {
 import { TypedMessageUserRequest } from '@ambire-common/interfaces/userRequest'
 
 import { QrProtocolAdapter, QrRequest, QrSignaturePayload, QrSigningStep } from '../../qr/types'
-import { importQrAccountsToReadyToAddKeys } from '../../qr/utils'
 
-class QrHardwareController implements ExternalSignerController, QrAccountImportController {
+class QrHardwareController
+  extends EventEmitter
+  implements ExternalSignerController, QrAccountImportController
+{
   type = 'qr'
   // TODO: check if we can get more specific info from the QR payloads in the future to populate these fields better
   deviceModel = 'unknown'
   deviceId = ''
+  masterFingerprint = ''
 
   protocolAdapter: QrProtocolAdapter
 
@@ -25,7 +30,11 @@ class QrHardwareController implements ExternalSignerController, QrAccountImportC
   private resolveSession: ((payload: string | Uint8Array) => void) | null = null
   private rejectSession: ((error: Error) => void) | null = null
 
-  constructor(protocolAdapter: QrProtocolAdapter) {
+  constructor(
+    protocolAdapter: QrProtocolAdapter,
+    eventEmitterRegistry: IEventEmitterRegistryController
+  ) {
+    super(eventEmitterRegistry)
     this.protocolAdapter = protocolAdapter
   }
 
@@ -42,6 +51,7 @@ class QrHardwareController implements ExternalSignerController, QrAccountImportC
     this.currentRequest = request
     this.activeRequestId = request.requestId || null
     this.signingStep = 'show-request'
+    this.emitUpdate()
 
     return new Promise((resolve, reject) => {
       this.resolveSession = resolve
@@ -131,6 +141,9 @@ class QrHardwareController implements ExternalSignerController, QrAccountImportC
     }
 
     const parsedAccount = await this.protocolAdapter.parseAccountPayload(payload)
+    this.deviceId = parsedAccount.deviceId || this.deviceId
+    this.deviceModel = parsedAccount.deviceModel || this.deviceModel
+    this.masterFingerprint = parsedAccount.masterFingerprint || this.masterFingerprint
 
     return parsedAccount
   }

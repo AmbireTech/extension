@@ -341,7 +341,6 @@ const init = async () => {
   const ledgerCtrl = new LedgerController()
   const trezorCtrl = new TrezorController(windowManager as UiManager['window'])
   const latticeCtrl = new LatticeController()
-  const qrCtrl = new QrHardwareController(new UrQrProtocolAdapter())
 
   // Skip adding custom headers and URL modifications for 3rd party URLs
   // (only internal Ambire APIs need the x-app-* headers and tracking params)
@@ -479,6 +478,8 @@ const init = async () => {
       }
     })
   })
+
+  const qrCtrl = new QrHardwareController(new UrQrProtocolAdapter(), eventEmitterRegistry)
 
   mainCtrl = new MainController({
     eventEmitterRegistry,

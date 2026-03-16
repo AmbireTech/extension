@@ -16,15 +16,7 @@ class UrQrProtocolAdapter implements QrProtocolAdapter {
 
   private encodeUrToFrames(ur: any): string[] {
     const encoder = new UREncoder(ur, MAX_QR_FRAGMENT_LENGTH)
-    const frames: string[] = []
-
-    // Some encoder impls expose isComplete(); some flows are effectively
-    // “collect until the first full cycle is generated”.
-    do {
-      frames.push(encoder.nextPart())
-    } while (!encoder.isComplete())
-
-    return frames
+    return encoder.encodeWhole()
   }
 
   async buildSignMessageRequest(args: {
