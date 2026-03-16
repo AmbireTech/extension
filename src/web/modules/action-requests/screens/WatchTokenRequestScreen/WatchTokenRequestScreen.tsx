@@ -240,7 +240,8 @@ const WatchTokenRequestScreen = () => {
     if (!tokenNetwork?.chainId) return
     if (!account) return
 
-    // Only add if temporaryToken exists (like AddTokenBottomSheet does)
+    // Only add if temporaryToken exists (like AddTokenBottomSheet does), to avoid adding tokens with
+    // missing/invalid info (e.g. decimals) that would cause issues in the portfolio
     if (!temporaryToken?.address || !temporaryToken?.symbol || !temporaryToken?.decimals) {
       return
     }
