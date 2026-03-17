@@ -1,3 +1,4 @@
+import { hexlify } from 'ethers'
 import { v4 as uuidv4 } from 'uuid'
 
 import ExternalSignerError from '@ambire-common/classes/ExternalSignerError'
@@ -136,6 +137,10 @@ class UrQrProtocolAdapter implements QrProtocolAdapter {
         return { signature }
       }
 
+      if (signature instanceof Uint8Array || ArrayBuffer.isView(signature)) {
+        const hexSignature = hexlify(signature)
+        return { signature: hexSignature }
+      }
       return {
         r: signature.r,
         s: signature.s,

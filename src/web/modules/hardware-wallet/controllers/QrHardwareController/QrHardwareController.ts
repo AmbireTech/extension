@@ -65,6 +65,7 @@ class QrHardwareController
     }
 
     this.signingStep = 'scan-response'
+    this.emitUpdate()
   }
 
   submitSignatureResponse(payload: string | Uint8Array) {
@@ -74,6 +75,7 @@ class QrHardwareController
 
     this.resolveSession(payload)
     this.resetSession()
+    this.emitUpdate()
   }
 
   async signMessageQR(args: {

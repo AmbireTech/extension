@@ -13,7 +13,7 @@ type Props = {
   frames: string[]
 }
 
-const FRAME_INTERVAL = 120
+const FRAME_INTERVAL = 300
 
 const QrSignRequestScreen = ({ frames, onContinue }: Props & { onContinue: () => void }) => {
   const { t } = useTranslation()
@@ -35,7 +35,13 @@ const QrSignRequestScreen = ({ frames, onContinue }: Props & { onContinue: () =>
         {t('Scan this QR code with your Keystone device to sign the message.')}
       </Text>
       <View style={[flexbox.center, spacings.mtSm]}>
-        <QRCode value={frames[frameIndex]} size={280} />
+        <QRCode
+          key={frames[frameIndex]}
+          value={frames[frameIndex]}
+          size={320}
+          backgroundColor="white"
+          color="black"
+        />
         <Button style={spacings.mtTy} text={t('I have scanned the QR code')} onPress={onContinue} />
       </View>
     </Panel>

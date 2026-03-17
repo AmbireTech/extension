@@ -1,4 +1,4 @@
-import React, { Dispatch, SetStateAction, useMemo } from 'react'
+import React, { Dispatch, SetStateAction, useCallback, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 
@@ -45,7 +45,10 @@ const Main = ({
 }: Props) => {
   const { t } = useTranslation()
   const signMessageState = useController('SignMessageController').state
-  const { currentRequest, signingStep } = useController('QrHardwareController').state
+  const {
+    state: { currentRequest, signingStep },
+    dispatch: qrHardwareDispatch
+  } = useController('QrHardwareController')
   const signStatus = signMessageState.statuses.sign
   const { styles, theme, themeType } = useTheme(getStyles)
   const { responsiveSizeMultiplier } = useResponsiveActionWindow()
@@ -74,9 +77,30 @@ const Main = ({
     [network, humanizedMessage, signMessageState.messageToSign?.content?.kind]
   )
 
-  // console.log('signMessageState', signMessageState)
-  // console.log('hjere', signMessageState.signer && signMessageState.signer.key.type !== 'internal')
-  console.log('signMessageState', signMessageState)
+  const handleOnContinue = useCallback(
+    () =>
+      qrHardwareDispatch({
+        type: 'method',
+        params: {
+          method: 'moveToResponseScan',
+          args: []
+        }
+      }),
+    [qrHardwareDispatch]
+  )
+
+  const handleSubmitSignatureResponse = useCallback(
+    (payload: string | Uint8Array) => {
+      qrHardwareDispatch({
+        type: 'method',
+        params: {
+          method: 'submitSignatureResponse',
+          args: [payload]
+        }
+      })
+    },
+    [qrHardwareDispatch]
+  )
 
   return (
     <TabLayoutWrapperMainContent style={spacings.mbLg}>
@@ -215,7 +239,12 @@ const Main = ({
             />
           )}
         {signMessageState.signer && signMessageState.signer.key.type === 'qr' && (
-          <QrSigningFlowScreen currentRequest={currentRequest} signingStep={signingStep} />
+          <QrSigningFlowScreen
+            onContinue={handleOnContinue}
+            currentRequest={currentRequest}
+            signingStep={signingStep}
+            submitSignatureResponse={handleSubmitSignatureResponse}
+          />
         )}
         {shouldDisplayLedgerConnectModal && (
           <LedgerConnectModal
