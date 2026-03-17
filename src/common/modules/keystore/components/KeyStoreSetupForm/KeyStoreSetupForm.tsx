@@ -1,6 +1,6 @@
-import React, { useCallback, useEffect } from 'react'
+import React, { useCallback, useEffect, useRef } from 'react'
 import { Controller } from 'react-hook-form'
-import { View } from 'react-native'
+import { TextInput, View } from 'react-native'
 
 import { isValidPassword } from '@ambire-common/services/validations'
 import Button from '@common/components/Button'
@@ -36,11 +36,13 @@ const KeyStoreSetupForm = ({
     control,
     handleKeystoreSetup,
     password,
+    confirmPassword,
     isKeystoreSetupLoading,
     isKeystoreReady,
     formState
   } = useKeyStoreSetup()
   const { goToNextRoute } = useOnboardingNavigation()
+  const confirmPasswordRef = useRef<TextInput>(null)
   useEffect(() => {
     const handleSuccess = async () => {
       if (isKeystoreReady) {
@@ -88,7 +90,13 @@ const KeyStoreSetupForm = ({
                 (t('Your password must be unique and at least 8 characters long.') as string)
               }
               containerStyle={spacings.mbXl}
-              onSubmitEditing={handleCreateButtonPress}
+              onSubmitEditing={() => {
+                if (password && confirmPassword) {
+                  handleCreateButtonPress()
+                } else {
+                  confirmPasswordRef.current?.focus()
+                }
+              }}
             />
           )}
           name="password"
@@ -100,6 +108,9 @@ const KeyStoreSetupForm = ({
           }}
           render={({ field: { onChange, onBlur, value } }) => (
             <Input
+              setInputRef={(r) => {
+                confirmPasswordRef.current = r
+              }}
               backgroundColor={theme.secondaryBackground}
               label={t('Repeat password')}
               testID="repeat-pass-field"

@@ -1,5 +1,6 @@
 import * as LocalAuthentication from 'expo-local-authentication'
 import React, { createContext, useCallback, useEffect, useMemo, useState } from 'react'
+import { Platform } from 'react-native'
 
 import { useTranslation } from '@common/config/localization/localization'
 import useToast from '@common/hooks/useToast'
@@ -77,14 +78,12 @@ const BiometricsProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  const authenticateWithLocalAuth = useCallback(async () => {
+  const authenticate = useCallback(async () => {
     try {
       const { success } = await requestLocalAuthFlagging(() =>
         LocalAuthentication.authenticateAsync({
           promptMessage: t('Confirm your identity'),
-          // Prefer Android Class 3 (strong) biometrics, e.g. fingerprint or 3D face scan.
-          // Falls back to Class 2 on devices that only support weak biometrics.
-          biometricsSecurityLevel: 'strong'
+          biometricsSecurityLevel: 'strong' // android only
         })
       )
 
@@ -95,9 +94,27 @@ const BiometricsProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   }, [addToast, t])
 
-  const saveBiometricsSecret = useCallback(async (password: string) => {
-    await secureStorage.set(BIOMETRICS_SECRET_KEY, password)
-  }, [])
+  const saveBiometricsSecret = useCallback(
+    async (password: string) => {
+      // on iOS secureStorage.set does not trigger the biometric prompt
+      // so we need to trigger it manually
+
+      if (Platform.OS === 'ios') {
+        const success = await authenticate()
+        if (!success) return false
+
+        await secureStorage.remove(BIOMETRICS_SECRET_KEY)
+      }
+
+      try {
+        await secureStorage.set(BIOMETRICS_SECRET_KEY, password)
+        return true
+      } catch (e) {
+        return false
+      }
+    },
+    [authenticate]
+  )
 
   const getBiometricsSecret = useCallback(async () => {
     try {
@@ -117,7 +134,7 @@ const BiometricsProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           deviceSecurityLevel,
           deviceSupportedAuthTypes,
           deviceSupportedAuthTypesLabel,
-          authenticateWithLocalAuth,
+          authenticate,
           saveBiometricsSecret,
           getBiometricsSecret
         }),
@@ -128,7 +145,7 @@ const BiometricsProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           deviceSecurityLevel,
           deviceSupportedAuthTypes,
           deviceSupportedAuthTypesLabel,
-          authenticateWithLocalAuth,
+          authenticate,
           saveBiometricsSecret,
           getBiometricsSecret
         ]

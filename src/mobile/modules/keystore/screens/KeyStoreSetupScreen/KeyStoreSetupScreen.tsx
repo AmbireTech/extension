@@ -31,7 +31,7 @@ const KeyStoreSetupScreen = () => {
   const { ref: termsModalRef, open: openTermsModal, close: closeTermsModal } = useModalize()
   const animation = useRef(new Animated.Value(0)).current
 
-  const { isEnrolled, isLoading, authenticateWithLocalAuth, saveBiometricsSecret } = useBiometrics()
+  const { isEnrolled, isLoading, saveBiometricsSecret } = useBiometrics()
   const [biometricsEnabled, setBiometricsEnabled] = useState(false)
 
   useEffect(() => {
@@ -63,17 +63,17 @@ const KeyStoreSetupScreen = () => {
 
         <KeyStoreSetupForm
           agreedWithTerms={agreedWithTerms}
-          onBeforeKeystoreSetup={async () => {
+          onBeforeKeystoreSetup={async (password) => {
             Keyboard.dismiss()
+            // On iOS: setItemAsync with requireAuthentication: true is silent on first write
+            // (per expo docs, iOS only prompts on read/update, not on initial save).
+            // On Android: setItemAsync prompts for biometrics itself.
+            // Either way, the unlock flow will always prompt via getItemAsync.
             if (biometricsEnabled) {
-              return await authenticateWithLocalAuth()
+              const success = await saveBiometricsSecret(password)
+              if (!success) return false
             }
             return true
-          }}
-          onConfirmSuccess={async (password) => {
-            if (biometricsEnabled) {
-              await saveBiometricsSecret(password)
-            }
           }}
         >
           {isEnrolled && (
