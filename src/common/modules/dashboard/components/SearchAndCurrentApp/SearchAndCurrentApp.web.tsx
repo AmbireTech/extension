@@ -1,7 +1,6 @@
-import React from 'react'
+import React, { useMemo } from 'react'
 import { Control } from 'react-hook-form'
 import { View } from 'react-native'
-import Animated, { useDerivedValue, withSpring } from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import GlassView from '@common/components/GlassView'
@@ -17,30 +16,34 @@ type Props = {
   isHidden: boolean
 }
 
+const VISIBLE_BOTTOM_OFFSET = 0
+
 const SearchAndCurrentApp = ({ control, displayCurrentApp = false, isHidden }: Props) => {
   const { bottom: safeBottom } = useSafeAreaInsets()
 
-  const animatedBottom = useDerivedValue(() => {
-    const toValue = isHidden ? -60 - safeBottom : SPACING + safeBottom
-    return withSpring(toValue, {
-      damping: 20,
-      stiffness: 90,
-      overshootClamping: true
-    })
-  }, [isHidden, safeBottom])
+  const baseBottom = useMemo(() => SPACING + safeBottom, [safeBottom])
+
+  const translateY = useMemo(
+    () => (isHidden ? 60 + safeBottom + SPACING : VISIBLE_BOTTOM_OFFSET),
+    [isHidden, safeBottom]
+  )
 
   return (
-    <Animated.View
+    <View
       style={[
         {
           position: 'absolute',
-          bottom: animatedBottom.value,
+          bottom: baseBottom,
           zIndex: 3,
           left: 0,
           width: '100%',
           pointerEvents: 'none',
+          transform: `translateY(${translateY}px)`,
+          transitionProperty: 'transform',
+          transitionDuration: '450ms',
+          transitionTimingFunction: 'cubic-bezier(0.45, 0, 0.55, 1)',
           ...flexbox.center
-        }
+        } as any
       ]}
     >
       <GlassView borderRadius={28} cssStyle={{ pointerEvents: 'all' }} isSimpleBlur={false}>
@@ -49,7 +52,7 @@ const SearchAndCurrentApp = ({ control, displayCurrentApp = false, isHidden }: P
           {displayCurrentApp && <CurrentApp />}
         </View>
       </GlassView>
-    </Animated.View>
+    </View>
   )
 }
 
