@@ -96,7 +96,7 @@ const TokenIcon: React.FC<Props> = ({
 
   useEffect(() => {
     // eslint-disable-next-line @typescript-eslint/no-floating-promises
-    ;(async () => {
+    ; (async () => {
       const hasAmbireUriRequiredData = !!(network?.platformId && address)
       if (hasAmbireUriRequiredData) {
         const ambireUri = `https://cena.ambire.com/iconProxy/${network.platformId}/${address}`
