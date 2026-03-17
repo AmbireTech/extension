@@ -58,7 +58,6 @@ const GasTankInfoModal = ({
       id={id}
       sheetRef={sheetRef}
       closeBottomSheet={closeBottomSheet}
-      backgroundColor="secondaryBackground"
       style={{ overflow: 'hidden', maxWidth: 496, ...spacings.ph0, ...spacings.pv0 }}
       type="modal"
     >

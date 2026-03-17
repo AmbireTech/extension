@@ -167,9 +167,6 @@ const Footer = ({
             id="confirm-hide"
             type="modal"
             sheetRef={sheetRef}
-            backgroundColor={
-              themeType === THEME_TYPES.DARK ? 'secondaryBackground' : 'primaryBackground'
-            }
             closeBottomSheet={closeModal}
             onBackdropPress={closeModal}
           >
