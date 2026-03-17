@@ -80,7 +80,7 @@ const Banner = React.memo(
             }
           ]}
         >
-          <View style={flexbox.directionRow}>
+          <View style={[flexbox.directionRow, flexbox.flex1]}>
             <Icon width={24} height={24} color={theme[`${type}Text`]} style={{ marginTop: 1 }} />
             <Text fontSize={titleFontSize || 16} weight="medium" style={spacings.mlMi}>
               {title}
