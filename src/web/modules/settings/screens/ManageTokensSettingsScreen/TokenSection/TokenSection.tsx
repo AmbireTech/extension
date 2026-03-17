@@ -56,7 +56,7 @@ const TokenSection: FC<Props> = ({
   return (
     <View style={[variant === 'custom' && spacings.mbLg]}>
       <Text fontSize={16} weight="medium" style={spacings.mbTy}>
-        {t(variant === 'custom' ? 'Custom Tokens' : 'Hidden Tokens')}
+        {t(variant === 'custom' ? 'Custom tokens' : 'Hidden tokens')}
       </Text>
       <TokenListHeader />
       {!isLoading && !data.length && (
