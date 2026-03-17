@@ -63,6 +63,7 @@ export const RpcSelectorItem = React.memo(
     const { addToast } = useToast()
     const { styles, theme } = useTheme(getStyles)
     const [hovered, setHovered] = useState(false)
+    const [isRemoveHovered, setRemoveHovered] = useState(false)
     const [bindCopyIconAnim, copyIconAnimStyle] = useHover({
       preset: 'opacity'
     })
@@ -92,7 +93,9 @@ export const RpcSelectorItem = React.memo(
         onHoverOut={() => setHovered(false)}
       >
         <View style={[styles.radio]}>
-          {(selectedRpcUrl === url || hovered) && <View style={styles.radioSelectedInner} />}
+          {(selectedRpcUrl === url || (hovered && !isRemoveHovered)) && (
+            <View style={styles.radioSelectedInner} />
+          )}
         </View>
         <View style={[flexbox.directionRow, flexbox.alignCenter, flexbox.flex1]}>
           <Text
@@ -107,18 +110,28 @@ export const RpcSelectorItem = React.memo(
             onPress={handleCopy}
             style={[spacings.mlMi, copyIconAnimStyle]}
             {...bindCopyIconAnim}
+            onHoverIn={() => {
+              // Persist hover of the parent to prevent
+              // layout shifting
+              setHovered(true)
+            }}
           >
             <CopyIcon width={16} height={16} />
           </AnimatedPressable>
         </View>
-        {!!shouldShowRemove && !!hovered && (
+        {!!shouldShowRemove && (!!hovered || isRemoveHovered) && (
           <Pressable
             style={{
               ...spacings.mlLg,
               opacity: removeDisabledReason ? 0.5 : 1
             }}
             onPress={() => !!onRemove && onRemove(url)}
-            onHoverIn={() => setHovered(true)}
+            onHoverIn={() => {
+              setRemoveHovered(true)
+            }}
+            onHoverOut={() => {
+              setRemoveHovered(false)
+            }}
             dataSet={
               removeDisabledReason
                 ? createGlobalTooltipDataSet({
