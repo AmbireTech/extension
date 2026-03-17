@@ -8,10 +8,9 @@ import InfoIcon from '@common/assets/svg/InfoIcon'
 import SuccessIcon from '@common/assets/svg/SuccessIcon'
 import WarningIcon from '@common/assets/svg/WarningIcon'
 import Text from '@common/components/Text'
-import { AnimatedPressable, useCustomHover } from '@common/hooks/useHover'
 import useTheme from '@common/hooks/useTheme'
+import BannerButton from '@common/modules/dashboard/components/DashboardBanners/DashboardBanner/BannerButton'
 import spacings from '@common/styles/spacings'
-import { hexToRgba } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 
 import getStyles from './styles'
@@ -34,6 +33,7 @@ export interface Props {
   style?: ViewStyle
   contentContainerStyle?: ViewStyle
   titleFontSize?: number
+  buttonText?: string
   onPress?: () => void
   onClosePress?: () => void
 }
@@ -46,20 +46,13 @@ const Banner = React.memo(
     children,
     CustomIcon,
     titleFontSize,
+    buttonText,
     style,
     onClosePress,
     onPress
   }: Props) => {
     const { styles, theme } = useTheme(getStyles)
-    const [bindAnim, animStyle] = useCustomHover({
-      property: 'borderColor',
-      values: {
-        from: hexToRgba(theme[`${type}Text`], 0),
-        to: hexToRgba(theme[`${type}Text`], 1)
-      }
-    })
 
-    const WrapperElement = onPress ? AnimatedPressable : View
     const Icon = useMemo(() => {
       if (CustomIcon) return CustomIcon
 
@@ -67,25 +60,49 @@ const Banner = React.memo(
     }, [CustomIcon, type])
 
     return (
-      <WrapperElement
+      <View
         style={[
           styles.container,
           flexbox.alignStart,
           {
-            backgroundColor: theme[`${type}Background`],
-            borderWidth: 1,
-            borderColor: !onPress ? 'transparent' : animStyle.borderColor
+            backgroundColor: theme[`${type}Background`]
           },
           style
         ]}
-        {...(onPress ? { ...bindAnim, onPress } : {})}
-        testID={`dashboard-${type}-banner`}
       >
-        <View style={[spacings.mrMi, { marginTop: 1 }]}>
-          <Icon width={24} height={24} color={theme[`${type}Text`]} />
+        <View
+          style={[
+            flexbox.directionRow,
+            flexbox.justifySpaceBetween,
+            spacings.mbTy,
+            {
+              width: '100%'
+            }
+          ]}
+        >
+          <View style={[flexbox.directionRow, flexbox.flex1]}>
+            <Icon width={24} height={24} color={theme[`${type}Text`]} style={{ marginTop: 1 }} />
+            <Text fontSize={titleFontSize || 16} weight="medium" style={spacings.mlMi}>
+              {title}
+            </Text>
+          </View>
+          {!!onClosePress && (
+            <Pressable
+              onPress={onClosePress}
+              hitSlop={8}
+              style={{
+                width: 24,
+                height: 24,
+                ...flexbox.center
+              }}
+              testID="banner-button-reject"
+            >
+              <CloseIcon color={theme.iconPrimary} strokeWidth="2" width={12} height={12} />
+            </Pressable>
+          )}
         </View>
 
-        <View style={flexbox.flex1}>
+        <View style={[flexbox.wrap, flexbox.flex1]}>
           <Text
             appearance={`${type}Text`}
             fontSize={titleFontSize || 16}
@@ -95,9 +112,24 @@ const Banner = React.memo(
             {title}
           </Text>
           {!!text && (
-            <Text fontSize={14} weight="regular" appearance={`${type}Text`}>
+            <Text
+              fontSize={14}
+              weight="regular"
+              appearance="secondaryText"
+              style={!!buttonText && !!onPress ? spacings.mbSm : undefined}
+            >
               {text}
             </Text>
+          )}
+          {!!buttonText && !!onPress && (
+            <BannerButton
+              type="primary"
+              colorType={type}
+              onPress={onPress}
+              testID={`dashboard-${type}-banner`}
+            >
+              {buttonText}
+            </BannerButton>
           )}
         </View>
         {!!onClosePress && (
@@ -116,7 +148,7 @@ const Banner = React.memo(
           </Pressable>
         )}
         {children}
-      </WrapperElement>
+      </View>
     )
   }
 )

@@ -36,6 +36,7 @@ const Wrapper = ({
         spacings.phSm,
         isWeb && spacings.pvSm,
         isMobile && spacings.mbLg,
+        spacings.ptMd,
         {
           width: '100%'
         },
@@ -85,16 +86,10 @@ type CommonHeaderProps = {
   withOG?: boolean
 }
 
-const Header = ({
-  width,
-  withOG,
-  withDetailedAccountData
-}: CommonHeaderProps & {
-  withDetailedAccountData?: boolean
-}) => {
+const Header = ({ width, withOG }: CommonHeaderProps) => {
   return (
     <Wrapper width={width}>
-      {withDetailedAccountData ? <AccountDataDetailed /> : <AccountData />}
+      <AccountData />
       <AmbireLogoHorizontalWithOG withOG={withOG} />
     </Wrapper>
   )
