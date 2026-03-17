@@ -65,10 +65,6 @@ const KeyStoreSetupScreen = () => {
           agreedWithTerms={agreedWithTerms}
           onBeforeKeystoreSetup={async (password) => {
             Keyboard.dismiss()
-            // On iOS: setItemAsync with requireAuthentication: true is silent on first write
-            // (per expo docs, iOS only prompts on read/update, not on initial save).
-            // On Android: setItemAsync prompts for biometrics itself.
-            // Either way, the unlock flow will always prompt via getItemAsync.
             if (biometricsEnabled) {
               const success = await saveBiometricsSecret(password)
               if (!success) return false
