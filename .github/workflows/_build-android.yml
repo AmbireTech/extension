@@ -109,6 +109,7 @@ jobs:
 
       - name: Build Android app
         env:
+          NODE_ENV: production
           RELAYER_URL: ${{ vars.RELAYER_URL }}
           VELCRO_URL: ${{ vars.VELCRO_URL }}
           REACT_APP_PIMLICO_API_KEY: ${{ vars.REACT_APP_PIMLICO_API_KEY }}
