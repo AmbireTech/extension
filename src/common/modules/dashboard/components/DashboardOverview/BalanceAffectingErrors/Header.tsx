@@ -12,10 +12,7 @@ const Header: FC = () => {
   const { theme } = useTheme()
   const { t } = useTranslation()
 
-  const openHelpCenter = useCallback(
-    () => openInTab({ url: 'https://help.ambire.com/hc/en-us/requests/new' }),
-    []
-  )
+  const openHelpCenter = useCallback(() => openInTab({ url: 'https://help.ambire.com/en' }), [])
   return (
     <View
       style={[

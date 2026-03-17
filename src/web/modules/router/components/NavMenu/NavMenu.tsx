@@ -46,14 +46,14 @@ const OTHER_LINKS = [
     key: 'help-center',
     Icon: React.memo(HelpIcon),
     label: 'Help Center',
-    path: 'https://help.ambire.com/hc/en-us',
+    path: 'https://help.ambire.com/en',
     isExternal: true
   },
   {
     key: 'report-issue',
     Icon: React.memo(BugIcon),
     label: 'Report an issue',
-    path: 'https://help.ambire.com/hc/en-us/requests/new',
+    path: 'https://help.ambire.com/en',
     isExternal: true
   },
   {
