@@ -1,5 +1,5 @@
 import { hexlify } from 'ethers'
-import { v4 as uuidv4 } from 'uuid'
+import { stringify as uuidStringify, v4 as uuidv4 } from 'uuid'
 
 import ExternalSignerError from '@ambire-common/classes/ExternalSignerError'
 import { TypedMessageUserRequest } from '@ambire-common/interfaces/userRequest'
@@ -86,7 +86,6 @@ class UrQrProtocolAdapter implements QrProtocolAdapter {
         DataType.typedData,
         args.derivationPath,
         args.masterFingerprint, // xfp for now
-        // uuidParse(requestId),
         requestId,
         undefined, // chainId
         args.address
@@ -126,7 +125,17 @@ class UrQrProtocolAdapter implements QrProtocolAdapter {
       if (expectedRequestId) {
         const responseId = ethSignature.getRequestId?.()
 
-        if (responseId && responseId.toString() !== expectedRequestId) {
+        let normalizedResponseId: string | undefined
+
+        if (responseId) {
+          if (typeof responseId === 'string') {
+            normalizedResponseId = responseId
+          } else if (responseId instanceof Uint8Array || ArrayBuffer.isView(responseId)) {
+            normalizedResponseId = uuidStringify(Uint8Array.from(responseId))
+          }
+        }
+
+        if (normalizedResponseId && normalizedResponseId !== expectedRequestId) {
           throw new ExternalSignerError('QR signature response does not match the active request.')
         }
       }
@@ -138,9 +147,9 @@ class UrQrProtocolAdapter implements QrProtocolAdapter {
       }
 
       if (signature instanceof Uint8Array || ArrayBuffer.isView(signature)) {
-        const hexSignature = hexlify(signature)
-        return { signature: hexSignature }
+        return { signature: hexlify(signature) }
       }
+
       return {
         r: signature.r,
         s: signature.s,
