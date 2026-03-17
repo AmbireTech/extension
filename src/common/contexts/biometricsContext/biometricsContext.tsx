@@ -1,12 +1,19 @@
+import { BlurView } from 'expo-blur'
 import * as LocalAuthentication from 'expo-local-authentication'
 import React, { createContext, useCallback, useEffect, useMemo, useState } from 'react'
-import { Platform } from 'react-native'
+import { Platform, StyleSheet, View } from 'react-native'
 
 import { useTranslation } from '@common/config/localization/localization'
+import useController from '@common/hooks/useController'
+import useIsAppFocused from '@common/hooks/useIsAppFocused'
+import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import { getDeviceSupportedAuthTypesLabel } from '@common/services/device'
 import { requestLocalAuthFlagging } from '@common/services/requestPermissionFlagging'
 import { secureStorage } from '@common/services/storage'
+import { hexToRgba } from '@common/styles/utils/common'
+import flexbox from '@common/styles/utils/flexbox'
+import { Portal } from '@gorhom/portal'
 
 import { DEVICE_SECURITY_LEVEL, DEVICE_SUPPORTED_AUTH_TYPES } from './constants'
 import { biometricsContextDefaults, BiometricsContextReturnType } from './types'
@@ -18,6 +25,11 @@ const BiometricsContext = createContext<BiometricsContextReturnType>(biometricsC
 const BiometricsProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { t } = useTranslation()
   const { addToast } = useToast()
+  const { theme, themeType } = useTheme()
+  const isAppFocused = useIsAppFocused()
+  const {
+    state: { isUnlocked }
+  } = useController('KeystoreController')
 
   const [deviceSecurityLevel, setDeviceSecurityLevel] = useState<DEVICE_SECURITY_LEVEL>(
     biometricsContextDefaults.deviceSecurityLevel
@@ -124,6 +136,8 @@ const BiometricsProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   }, [t])
 
+  const showOverlay = !isAppFocused && isUnlocked && isEnrolled
+
   return (
     <BiometricsContext.Provider
       value={useMemo(
@@ -151,7 +165,21 @@ const BiometricsProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         ]
       )}
     >
-      {children}
+      <View style={flexbox.flex1}>
+        {children}
+        {showOverlay && (
+          <Portal hostName="global">
+            <BlurView
+              intensity={80}
+              tint={themeType}
+              style={[
+                StyleSheet.absoluteFill,
+                { backgroundColor: hexToRgba(theme.neutral800, 0.4), zIndex: 1000 }
+              ]}
+            />
+          </Portal>
+        )}
+      </View>
     </BiometricsContext.Provider>
   )
 }
