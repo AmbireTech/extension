@@ -8,6 +8,7 @@ import { SelectValue } from '@common/components/Select/types'
 type FeeOption = Pick<SelectValue, 'value' | 'label' | 'disabled'> &
   Pick<FeePaymentOption, 'paidBy'> & {
     token: TokenResult | null
+    paidByAccountLabel?: string
   }
 
 type Props = {
@@ -24,6 +25,8 @@ type Props = {
     title: string
   }
   serviceFee?: SwapAndBridgeRoute['serviceFee']
+  withTitle?: boolean
+  isOneClick?: boolean
 }
 
 export type { FeeOption, Props }

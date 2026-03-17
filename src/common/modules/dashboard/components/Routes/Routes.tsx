@@ -1,8 +1,6 @@
 import React from 'react'
 import { View } from 'react-native'
 
-import rewardsBg from '@common/assets/images/rewards-bg.png'
-import BadgeIcon from '@common/assets/svg/BadgeIcon'
 import DAppsIcon from '@common/assets/svg/DAppsIcon'
 import SendIcon from '@common/assets/svg/SendIcon'
 import SwapAndBridgeIcon from '@common/assets/svg/SwapAndBridgeIcon'
@@ -40,15 +38,6 @@ const Routes = () => {
       route: WEB_ROUTES.apps,
       scale: 0.95,
       scaleOnHover: 1.02
-    },
-    {
-      testID: 'dashboard-button-rewards',
-      icon: BadgeIcon,
-      label: t('Rewards'),
-      route: WEB_ROUTES.rewards,
-      scale: 1,
-      scaleOnHover: 1.2,
-      backgroundImage: rewardsBg
     }
   ]
 

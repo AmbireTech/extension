@@ -1,5 +1,4 @@
-import { formatUnits } from 'ethers'
-
+import { Contacts } from '@ambire-common/controllers/addressBook/addressBook'
 import { getFeeSpeedIdentifier } from '@ambire-common/controllers/signAccountOp/helper'
 import { FeeSpeed } from '@ambire-common/controllers/signAccountOp/signAccountOp'
 import { ISignAccountOpController } from '@ambire-common/interfaces/signAccountOp'
@@ -8,23 +7,14 @@ import { FeePaymentOption } from '@ambire-common/libs/estimate/interfaces'
 import { ZERO_ADDRESS } from '@ambire-common/services/socket/constants'
 
 import PayOption from './components/PayOption'
-import { NO_FEE_OPTIONS } from './consts'
-import { FeeOption } from './types'
 
 const sortBasedOnUSDValue = (a: FeePaymentOption, b: FeePaymentOption) => {
   if (!a || !b) return 0
 
   const aPrice = a.token?.priceIn?.[0]?.price
   const bPrice = b.token?.priceIn?.[0]?.price
-
-  if (!aPrice || !bPrice) return 0
-  const aBalance = formatUnits(a.availableAmount, a.token.decimals)
-  const bBalance = formatUnits(b.availableAmount, b.token.decimals)
-  const aValue = parseFloat(aBalance) * aPrice
-  const bValue = parseFloat(bBalance) * bPrice
-
-  if (aValue > bValue) return -1
-  if (aValue < bValue) return 1
+  if (aPrice && !bPrice) return -1
+  if (!aPrice && bPrice) return 1
   return 0
 }
 
@@ -66,7 +56,8 @@ const sortFeeOptions = (
 
 const mapFeeOptions = (
   feeOption: FeePaymentOption,
-  signAccountOpState: ISignAccountOpController
+  signAccountOpState: ISignAccountOpController,
+  addressBookContacts: Contacts
 ) => {
   let disabledReason: string | undefined
   let disabledTextAppearance: 'errorText' | 'infoText' | undefined
@@ -88,6 +79,11 @@ const mapFeeOptions = (
   if (!speedCoverage.includes(FeeSpeed.Slow)) {
     if (!feeOption.token.priceIn.length) {
       disabledReason = 'No price data'
+    } else if (
+      feeOption.paidBy === signAccountOpState.account.addr &&
+      signAccountOpState.account.safeCreation
+    ) {
+      disabledReason = 'Coming soon'
     } else {
       disabledReason = 'Insufficient amount'
     }
@@ -111,6 +107,12 @@ const mapFeeOptions = (
     disabledTextAppearance = 'infoText'
   }
 
+  const paidByAccountLabel = feeOption.paidBy
+    ? addressBookContacts.find(
+        (contact) => contact.address.toLowerCase() === feeOption.paidBy.toLowerCase()
+      )?.name
+    : undefined
+
   return {
     value:
       feeOption.paidBy +
@@ -124,8 +126,13 @@ const mapFeeOptions = (
         feeOption={feeOption}
         disabledReason={disabledReason}
         disabledTextAppearance={disabledTextAppearance}
+        paidByAccountLabel={paidByAccountLabel}
       />
     ),
+    extraSearchProps: {
+      paidByAccountLabel
+    },
+    paidByAccountLabel,
     paidBy: feeOption.paidBy,
     token: feeOption.token,
     disabled: !!disabledReason,

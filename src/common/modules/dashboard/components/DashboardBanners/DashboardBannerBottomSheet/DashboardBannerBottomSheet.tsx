@@ -6,11 +6,10 @@ import { getIsBridgeRoute } from '@ambire-common/libs/swapAndBridge/swapAndBridg
 import BottomSheet from '@common/components/BottomSheet'
 import DualChoiceModal from '@common/components/DualChoiceModal'
 import Text from '@common/components/Text'
+import useController from '@common/hooks/useController'
+import ActiveRouteCard from '@common/modules/swap-and-bridge/components/ActiveRouteCard'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import useBackgroundService from '@web/hooks/useBackgroundService'
-import useSwapAndBridgeControllerState from '@web/hooks/useSwapAndBridgeControllerState'
-import ActiveRouteCard from '@web/modules/swap-and-bridge/components/ActiveRouteCard'
 
 type Props = {
   id: string
@@ -34,8 +33,8 @@ const style: {
 
 const DashboardBannerBottomSheet: FC<Props> = ({ id, sheetRef, closeBottomSheet }) => {
   const { t } = useTranslation()
-  const { dispatch } = useBackgroundService()
-  const { activeRoutes } = useSwapAndBridgeControllerState()
+  const { dispatch: extensionUpdateDispatch } = useController('ExtensionUpdateController')
+  const { activeRoutes } = useController('SwapAndBridgeController').state
 
   if (!WITH_BOTTOM_SHEET.includes(id)) return null
 
@@ -44,7 +43,6 @@ const DashboardBannerBottomSheet: FC<Props> = ({ id, sheetRef, closeBottomSheet 
       id={`${id}-bottom-sheet`}
       sheetRef={sheetRef}
       closeBottomSheet={closeBottomSheet}
-      backgroundColor="secondaryBackground"
       style={style[id]}
       type={RENDER_AS_MODAL.includes(id) ? 'modal' : undefined}
     >
@@ -58,8 +56,12 @@ const DashboardBannerBottomSheet: FC<Props> = ({ id, sheetRef, closeBottomSheet 
           }
           primaryButtonText={t('Reload now')}
           onPrimaryButtonPress={() =>
-            dispatch({
-              type: 'EXTENSION_UPDATE_CONTROLLER_APPLY_UPDATE'
+            extensionUpdateDispatch({
+              type: 'method',
+              params: {
+                method: 'applyUpdate',
+                args: []
+              }
             })
           }
           secondaryButtonText={t('Cancel')}

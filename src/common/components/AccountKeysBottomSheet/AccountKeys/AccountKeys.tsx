@@ -1,4 +1,4 @@
-import React, { FC, useMemo } from 'react'
+import React, { FC, useEffect, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ScrollView, View } from 'react-native'
 
@@ -8,10 +8,10 @@ import { isAmbireV1LinkedAccount } from '@ambire-common/libs/account/account'
 import AccountKey, { AccountKeyType } from '@common/components/AccountKey/AccountKey'
 import Alert from '@common/components/Alert'
 import { PanelBackButton, PanelTitle } from '@common/components/Panel/Panel'
+import useController from '@common/hooks/useController'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
-import useKeystoreControllerState from '@web/hooks/useKeystoreControllerState'
 
 interface Props {
   account: Account
@@ -19,6 +19,7 @@ interface Props {
   closeBottomSheet: () => void
   keyIconColor?: string
   showExportImport?: boolean
+  chainId?: bigint
 }
 
 const AccountKeys: FC<Props> = ({
@@ -26,12 +27,85 @@ const AccountKeys: FC<Props> = ({
   openAddAccountBottomSheet,
   closeBottomSheet,
   keyIconColor,
-  showExportImport
+  showExportImport,
+  chainId
 }) => {
   const { t } = useTranslation()
+  const { state: accounstState, dispatch: accountsDispatch } = useController('AccountsController')
+  const { networks } = useController('NetworksController').state
+  const { keys } = useController('KeystoreController').state
+  const accountStateCheckedForRef = React.useRef<string | null>(null)
 
-  const { keys } = useKeystoreControllerState()
-  const associatedKeys = account?.associatedKeys || []
+  const accountState = useMemo(() => {
+    if (!account) return null
+
+    return accounstState.accountStates[account.addr] || null
+  }, [account, accounstState.accountStates])
+
+  const usedNetworks = useMemo(() => {
+    return account.safeCreation && chainId
+      ? networks.filter((n) => n.chainId === chainId)
+      : networks
+  }, [chainId, networks, account.safeCreation])
+
+  useEffect(() => {
+    const checkedForThisAcc = accountStateCheckedForRef.current === account?.addr
+    const networkStates = usedNetworks.filter(
+      (n) => !accountState || !accountState[n.chainId.toString()]
+    )
+    if (checkedForThisAcc && (!account || networkStates.length === 0 || usedNetworks.length === 0))
+      return
+
+    accountStateCheckedForRef.current = account.addr
+
+    accountsDispatch({
+      type: 'method',
+      params: {
+        method: 'updateAccountState',
+        args: [account.addr, 'latest', networkStates.map((n) => n.chainId)]
+      }
+    })
+  }, [accountState, usedNetworks, account, accountsDispatch])
+
+  /**
+   * Get the safe owners by network if the account is a safe
+   * We do not display network icons for the others as it doesn't make sense
+   */
+  const safeOwnersByNetwork: { [address: string]: bigint[] } = useMemo(() => {
+    if (!account.safeCreation || !usedNetworks.length || !accountState) return {}
+
+    const associatedKeysByNetwork: { [address: string]: bigint[] } = {}
+    usedNetworks.forEach((n) => {
+      const networkState = accountState[n.chainId.toString()]
+      if (!networkState) return
+      networkState.associatedKeys.forEach((key) => {
+        if (!associatedKeysByNetwork[key]) associatedKeysByNetwork[key] = []
+        associatedKeysByNetwork[key].push(n.chainId)
+      })
+    })
+    return associatedKeysByNetwork
+  }, [accountState, usedNetworks, account.safeCreation])
+
+  /**
+   * Get all the associatedKeys for this account found accross networks.
+   * This is especially important for Safe accounts as they may have
+   * different owners across networks
+   */
+  const associatedKeys: string[] = useMemo(() => {
+    if (!usedNetworks.length || !accountState) return []
+    return [
+      ...new Set(
+        usedNetworks
+          .map((n) => {
+            const networkState = accountState[n.chainId.toString()]
+            if (!networkState) return []
+            return networkState.associatedKeys
+          })
+          .flat()
+      )
+    ]
+  }, [accountState, usedNetworks])
+
   const importedAccountKeys = keys.filter(({ addr }) => associatedKeys.includes(addr))
   const notImportedAccountKeys = associatedKeys.filter(
     (keyAddr) =>
@@ -78,9 +152,9 @@ const AccountKeys: FC<Props> = ({
         style={[!!withAlert && spacings.mb, flexbox.flex1]}
         contentContainerStyle={{ flexGrow: 1 }}
       >
-        {accountKeys.map(({ type, addr, label, isImported, meta, dedicatedToOneSA }, index) => {
+        {accountKeys.map(({ type, addr, isImported, meta, dedicatedToOneSA }, index) => {
           const isLast = index === accountKeys.length - 1
-          const accountKeyProps = { label, addr, type, isLast, isImported }
+          const accountKeyProps = { addr, type, isLast, isImported }
 
           return (
             <AccountKey
@@ -93,6 +167,7 @@ const AccountKeys: FC<Props> = ({
               openAddAccountBottomSheet={openAddAccountBottomSheet}
               keyIconColor={keyIconColor}
               showExportImport={showExportImport}
+              onChains={safeOwnersByNetwork[addr]}
             />
           )
         })}

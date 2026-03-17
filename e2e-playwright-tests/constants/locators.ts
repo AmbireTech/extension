@@ -50,7 +50,7 @@ const locators = {
   addToBatchButton: 'div[data-tooltip-id="batch-btn-tooltip"]',
   closeBatchButton: 'div:has-text("Close") >> nth=10',
   bannerButtonReject: 'div[data-testid="banner-button-reject"]',
-  bannerButtonOpen: 'div[data-testid="banner-button-open"]',
+  bannerButtonOpen: 'div[data-testid="banner-info-open"]',
   selectRouteButton: '//div[contains(text(),"Select route")]',
   liFiRoute: 'div:has-text("LI.FI DEX Aggregator")',
   proceedButton: 'div[data-testid="proceed-btn"]',

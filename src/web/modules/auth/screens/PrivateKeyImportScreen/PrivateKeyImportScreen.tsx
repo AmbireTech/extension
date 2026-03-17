@@ -9,18 +9,16 @@ import Input from '@common/components/Input'
 import Panel from '@common/components/Panel'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
+import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
-import Header from '@common/modules/header/components/Header'
+import { storage } from '@common/services/storage'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import {
   TabLayoutContainer,
   TabLayoutWrapperMainContent
 } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
-import storage from '@web/extension-services/background/webapi/storage'
-import useAccountPickerControllerState from '@web/hooks/useAccountPickerControllerState'
-import useBackgroundService from '@web/hooks/useBackgroundService'
 
 export const CARD_WIDTH = 400
 
@@ -38,8 +36,8 @@ const PrivateKeyImportScreen = () => {
   const { t } = useTranslation()
 
   const { theme } = useTheme()
-  const { dispatch } = useBackgroundService()
-  const { initParams, subType } = useAccountPickerControllerState()
+  const { initParams, subType } = useController('AccountPickerController').state
+  const { dispatch: mainDispatch } = useController('MainController')
   const [agreedToBackupWarning, setAgreedToBackupWarning] = useState(false)
   const [importButtonPressed, setImportButtonPressed] = useState(false)
 
@@ -52,12 +50,15 @@ const PrivateKeyImportScreen = () => {
       const noPrefixPrivateKey =
         trimmedPrivateKey.slice(0, 2) === '0x' ? trimmedPrivateKey.slice(2) : trimmedPrivateKey
 
-      dispatch({
-        type: 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_PRIVATE_KEY_OR_SEED_PHRASE',
-        params: { privKeyOrSeed: noPrefixPrivateKey }
+      mainDispatch({
+        type: 'method',
+        params: {
+          method: 'accountPickerSetInitParamsFromPrivateKeyOrSeedPhrase',
+          args: [{ privKeyOrSeed: noPrefixPrivateKey }]
+        }
       })
     })()
-  }, [dispatch, handleSubmit])
+  }, [mainDispatch, handleSubmit])
 
   useEffect(() => {
     if (!getValues('privateKey')) return
@@ -65,7 +66,7 @@ const PrivateKeyImportScreen = () => {
       setImportButtonPressed(false)
       goToNextRoute()
     }
-  }, [goToNextRoute, dispatch, getValues, initParams, importButtonPressed, subType])
+  }, [goToNextRoute, getValues, initParams, importButtonPressed, subType])
 
   const handleValidation = (value: string) => {
     const trimmedValue = value.trim()
@@ -80,10 +81,7 @@ const PrivateKeyImportScreen = () => {
   }
 
   return (
-    <TabLayoutContainer
-      backgroundColor={theme.secondaryBackground}
-      header={<Header mode="custom-inner-content" withAmbireLogo />}
-    >
+    <TabLayoutContainer backgroundColor={theme.secondaryBackground}>
       <TabLayoutWrapperMainContent>
         <Panel
           type="onboarding"
@@ -111,6 +109,8 @@ const PrivateKeyImportScreen = () => {
                     isValid={!handleValidation(value) && !!value.length}
                     validLabel={t('✅ Valid private key')}
                     secureTextEntry
+                    containerStyle={spacings.mbLg}
+                    backgroundColor={theme.secondaryBackground}
                     error={value.length ? errors?.privateKey?.message : ''}
                     autoCorrect={false}
                     onSubmitEditing={handleFormSubmit}

@@ -31,7 +31,7 @@ const StatsHeading = () => {
         weight="medium"
         color="#8E98A8"
         style={{
-          flex: 0.6
+          flex: 0.65
         }}
       >
         {t('Criteria')}
@@ -41,7 +41,7 @@ const StatsHeading = () => {
         weight="medium"
         color="#8E98A8"
         style={{
-          flex: 0.2,
+          flex: 0.15,
           textAlign: 'right'
         }}
       >

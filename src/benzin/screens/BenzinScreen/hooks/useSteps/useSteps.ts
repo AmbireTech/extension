@@ -4,7 +4,6 @@ import {
   formatUnits,
   getAddress,
   isAddress,
-  JsonRpcProvider,
   keccak256,
   TransactionReceipt,
   TransactionResponse,
@@ -34,14 +33,14 @@ import { BundlerSwitcher } from '@ambire-common/services/bundlers/bundlerSwitche
 import { BundlerTransactionReceipt } from '@ambire-common/services/bundlers/types'
 import { getBenzinUrlParams } from '@ambire-common/utils/benzin'
 import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
+import { generateUuid } from '@ambire-common/utils/uuid'
 import {
   handleOps060,
   handleOps070
 } from '@benzin/screens/BenzinScreen/constants/humanizerInterfaces'
 import { ActiveStepType, FinalizedStatusType } from '@benzin/screens/BenzinScreen/interfaces/steps'
 import { UserOperation } from '@benzin/screens/BenzinScreen/interfaces/userOperation'
-import useActivityControllerState from '@web/hooks/useActivityControllerState'
-import useBackgroundService from '@web/hooks/useBackgroundService'
+import useController from '@common/hooks/useController'
 
 import { decodeUserOp, entryPointTxnSplit, reproduceCallsFromTxn } from './utils/reproduceCalls'
 
@@ -68,7 +67,6 @@ interface Props {
     callRelayer: any
   }
   setActiveStep: (step: ActiveStepType) => void
-  provider: JsonRpcProvider | null
   extensionAccOp?: SubmittedAccountOp // only for in-app benzina
   networks: Network[]
   switcher: BundlerSwitcher | null
@@ -152,7 +150,6 @@ const useSteps = ({
   network,
   standardOptions,
   setActiveStep,
-  provider,
   switcher,
   extensionAccOp,
   networks
@@ -182,8 +179,11 @@ const useSteps = ({
   const [activityAccOp, setActivityAccOp] = useState<SubmittedAccountOp | null>(null)
   const [shouldTryBlockFetch, setShouldTryBlockFetch] = useState<boolean>(true)
   const [refetchStatus, setRefetchStatus] = useState<number>(0)
-  const { dispatch } = useBackgroundService()
-  const { accountsOps } = useActivityControllerState()
+  const {
+    state: { accountsOps },
+    dispatch: activityDispatch
+  } = useController('ActivityController')
+  const { dispatchAndWait } = useController('ProvidersController')
 
   const getIdentifiedBy = useCallback((): AccountOpIdentifiedBy => {
     if (relayerId) return { type: 'Relayer', identifier: relayerId }
@@ -214,26 +214,29 @@ const useSteps = ({
       setRefetchStatus((prev) => prev + 1)
     }, 2000)
 
-    dispatch({
-      type: 'MAIN_CONTROLLER_ACTIVITY_SET_ACC_OPS_FILTERS',
+    activityDispatch({
+      type: 'method',
       params: {
-        sessionId: 'benzin',
-        filters: {
-          identifiedBy: extensionAccOp.identifiedBy,
-          account: extensionAccOp.accountAddr,
-          chainId: extensionAccOp.chainId
-        },
-        pagination: {
-          itemsPerPage: 1,
-          fromPage: 0
-        }
+        method: 'filterAccountsOps',
+        args: [
+          'benzin',
+          {
+            identifiedBy: extensionAccOp.identifiedBy,
+            account: extensionAccOp.accountAddr,
+            chainId: extensionAccOp.chainId
+          },
+          {
+            itemsPerPage: 1,
+            fromPage: 0
+          }
+        ]
       }
     })
 
     return () => {
       if (timeout) clearTimeout(timeout)
     }
-  }, [extensionAccOp, activityAccOp, setRefetchStatus, refetchStatus, dispatch])
+  }, [extensionAccOp, activityAccOp, setRefetchStatus, refetchStatus, activityDispatch])
 
   // set the found account op from the activity
   useEffect(() => {
@@ -371,7 +374,7 @@ const useSteps = ({
     // don't do requests if there's an account op from the extension
     if (extensionAccOp) return
 
-    if (txn || !foundTxnId || !provider || refetchTxnCounter > 10) return
+    if (txn || !foundTxnId || !network || refetchTxnCounter > 10) return
 
     if (refetchTxnCounter === 10) {
       setRefetchTxnCounter((prev) => prev + 1)
@@ -380,8 +383,13 @@ const useSteps = ({
       return
     }
 
-    provider
-      .getTransaction(foundTxnId)
+    dispatchAndWait({
+      type: 'method',
+      params: {
+        method: 'callProviderAndSendResToUi',
+        args: [{ chainId: network.chainId, method: 'getTransaction', args: [foundTxnId] }]
+      }
+    })
       .then((fetchedTxn: null | TransactionResponse) => {
         if (!fetchedTxn) {
           // start a refetch
@@ -406,7 +414,8 @@ const useSteps = ({
     foundTxnId,
     txn,
     setActiveStep,
-    provider,
+    dispatchAndWait,
+    network,
     getIdentifiedBy,
     refetchTxnCounter,
     finalizedStatus,
@@ -420,7 +429,7 @@ const useSteps = ({
     if (extensionAccOp) return
 
     let timeout: any
-    if (!userOpHash || !provider || !network || !switcher || fetchingConcluded || isFetching) return
+    if (!userOpHash || !network || !switcher || fetchingConcluded || isFetching) return
 
     if (refetchReceiptCounter >= 10) {
       setFinalizedStatus({ status: 'not-found' })
@@ -486,7 +495,6 @@ const useSteps = ({
   }, [
     foundTxnId,
     network,
-    provider,
     setActiveStep,
     relayerId,
     userOpHash,
@@ -504,7 +512,7 @@ const useSteps = ({
     if (extensionAccOp) return
 
     let timeout: any
-    if (!!userOpHash || !foundTxnId || !provider || fetchingConcluded) return
+    if (!!userOpHash || !foundTxnId || !network || fetchingConcluded) return
 
     if (refetchReceiptCounter >= 10) {
       if (txn) {
@@ -519,8 +527,13 @@ const useSteps = ({
     }
 
     setIsFetching(true)
-    provider
-      .getTransactionReceipt(foundTxnId)
+    dispatchAndWait({
+      type: 'method',
+      params: {
+        method: 'callProviderAndSendResToUi',
+        args: [{ chainId: network.chainId, method: 'getTransactionReceipt', args: [foundTxnId] }]
+      }
+    })
       .then((receipt: null | TransactionReceipt) => {
         if (!receipt) {
           // if there is a txn but no receipt, it means it is pending
@@ -546,7 +559,8 @@ const useSteps = ({
     }
   }, [
     foundTxnId,
-    provider,
+    dispatchAndWait,
+    network,
     setActiveStep,
     userOpHash,
     refetchReceiptCounter,
@@ -595,23 +609,36 @@ const useSteps = ({
       !txnReceipt ||
       (finalizedStatus && finalizedStatus.status !== 'failed') ||
       (finalizedStatus && finalizedStatus.reason) ||
-      !provider
+      !network
     )
       return
 
-    provider
-      .call({
-        to: txn.to,
-        from: txn.from,
-        nonce: txn.nonce,
-        gasLimit: txn.gasLimit,
-        gasPrice: txn.gasPrice,
-        data: txn.data,
-        value: txn.value,
-        chainId: txn.chainId,
-        type: txn.type ?? undefined,
-        accessList: txn.accessList
-      })
+    dispatchAndWait({
+      type: 'method',
+      params: {
+        method: 'callProviderAndSendResToUi',
+        args: [
+          {
+            chainId: network.chainId,
+            method: 'call',
+            args: [
+              {
+                to: txn.to,
+                from: txn.from,
+                nonce: txn.nonce,
+                gasLimit: txn.gasLimit,
+                gasPrice: txn.gasPrice,
+                data: txn.data,
+                value: txn.value,
+                chainId: txn.chainId,
+                type: txn.type ?? undefined,
+                accessList: txn.accessList
+              }
+            ]
+          }
+        ]
+      }
+    })
       .then(() => null)
       .catch((error: Error) => {
         if (error.message.includes('missing revert data')) {
@@ -630,17 +657,22 @@ const useSteps = ({
               : error.message
         })
       })
-  }, [provider, txn, finalizedStatus, userOpHash, txnReceipt, extensionAccOp])
+  }, [dispatchAndWait, network, txn, finalizedStatus, userOpHash, txnReceipt, extensionAccOp])
 
   // get block
   useEffect(() => {
     let timeout: any
     const blockNumber = txnReceipt.blockNumber || activityAccOp?.blockNumber
-    if (!blockNumber || blockData !== null || !provider || !shouldTryBlockFetch) return
+    if (!blockNumber || blockData !== null || !network || !shouldTryBlockFetch) return
 
     setShouldTryBlockFetch(false)
-    provider
-      .getBlock(Number(blockNumber))
+    dispatchAndWait({
+      type: 'method',
+      params: {
+        method: 'callProviderAndSendResToUi',
+        args: [{ chainId: network.chainId, method: 'getBlock', args: [blockNumber] }]
+      }
+    })
       .then((fetchedBlockData) => {
         // we have to retry the req if the block data is not found initially
         if (!fetchedBlockData) {
@@ -657,7 +689,7 @@ const useSteps = ({
     return () => {
       if (timeout) clearTimeout(timeout)
     }
-  }, [provider, txnReceipt, blockData, shouldTryBlockFetch, activityAccOp])
+  }, [dispatchAndWait, network, txnReceipt, blockData, shouldTryBlockFetch, activityAccOp])
 
   // if it's an user op,
   // we need to call the entry point to fetch the hashes
@@ -911,6 +943,7 @@ const useSteps = ({
         feeCall: decodedFeeCall
       } = userOp ? decodeUserOp(userOp) : reproduceCallsFromTxn(txn)
       const accountOp: AccountOp = {
+        id: generateUuid(),
         accountAddr: userOp?.sender || account || txnReceipt.originatedFrom || 'Loading...',
         chainId: network.chainId,
         signingKeyAddr: txnReceipt.originatedFrom, // irrelevant

@@ -1,6 +1,6 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Pressable, View } from 'react-native'
+import { DimensionValue, Pressable, View } from 'react-native'
 
 import Option from '@common/components/Option'
 import Text from '@common/components/Text'
@@ -23,25 +23,30 @@ type OptionType = {
   icon: React.FC<any>
   onPress: () => void
   testID: string
+  wrapperWidth?: DimensionValue
 }
 
-const OptionItem = ({ text, icon: Icon, onPress, testID }: Omit<OptionType, 'key'>) => {
+const OptionItem = ({
+  text,
+  icon: Icon,
+  onPress,
+  testID,
+  wrapperWidth = '33%'
+}: Omit<OptionType, 'key'>) => {
   const { styles } = useTheme(getStyles)
   const { t } = useTranslation()
 
   return (
-    <View style={styles.optionWrapper}>
-      <Pressable
-        style={({ hovered }: any) => [styles.option, hovered && styles.optionHovered]}
-        onPress={onPress}
-        testID={testID}
-      >
-        <Icon width={44} height={44} />
-        <Text fontSize={14} weight="medium" style={spacings.mtMi} numberOfLines={1}>
-          {t(text)}
-        </Text>
-      </Pressable>
-    </View>
+    <Pressable
+      style={({ hovered }: any) => [styles.option, hovered && styles.optionHovered]}
+      onPress={onPress}
+      testID={testID}
+    >
+      <Icon width={24} height={24} />
+      <Text weight="medium" fontSize={14} style={spacings.mlSm} numberOfLines={1}>
+        {t(text)}
+      </Text>
+    </Pressable>
   )
 }
 
@@ -60,11 +65,14 @@ const ExpandableOptionSection = ({
     setIsOptionExpanded((p) => !p)
   }, [])
 
+  const wrapperWidth = useMemo(() => {
+    return `${100 / options.length}%` as DimensionValue
+  }, [options])
+
   return (
     <Option
       text={t(dropdownText)}
       icon={dropdownIcon}
-      iconProps={{ width: 30, height: 30 }}
       onPress={toggleHwOptions}
       testID={dropdownTestID}
       status={isOptionExpanded ? 'expanded' : 'collapsed'}
@@ -79,6 +87,7 @@ const ExpandableOptionSection = ({
               icon={option.icon}
               onPress={option.onPress}
               testID={option.testID}
+              wrapperWidth={wrapperWidth}
             />
           ))}
         </View>

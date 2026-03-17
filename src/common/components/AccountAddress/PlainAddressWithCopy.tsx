@@ -3,11 +3,11 @@ import { useTranslation } from 'react-i18next'
 import { View, ViewStyle } from 'react-native'
 
 import CopyIcon from '@common/assets/svg/CopyIcon'
+import useHover, { AnimatedPressable } from '@common/hooks/useHover'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import flexbox from '@common/styles/utils/flexbox'
 import { setStringAsync } from '@common/utils/clipboard'
-import useHover, { AnimatedPressable } from '@web/hooks/useHover'
 
 import PlainAddress from './PlainAddress'
 
@@ -17,6 +17,7 @@ interface Props {
   style?: ViewStyle
   hideParentheses?: boolean
   fontSize?: number
+  children?: React.ReactNode
 }
 
 const PlainAddressWithCopy: FC<Props> = ({
@@ -24,7 +25,8 @@ const PlainAddressWithCopy: FC<Props> = ({
   address,
   style,
   hideParentheses,
-  fontSize = 12
+  fontSize = 12,
+  children
 }) => {
   const { t } = useTranslation()
   const { addToast } = useToast()
@@ -52,8 +54,9 @@ const PlainAddressWithCopy: FC<Props> = ({
         fontSize={fontSize}
       />
       <AnimatedPressable onPress={handleCopy} style={animStyle} {...bindAnim}>
-        <CopyIcon width={fontSize + 2} height={fontSize + 2} color={theme.secondaryText} />
+        <CopyIcon width={fontSize + 8} height={fontSize + 8} color={theme.secondaryText} />
       </AnimatedPressable>
+      {children}
     </View>
   )
 }

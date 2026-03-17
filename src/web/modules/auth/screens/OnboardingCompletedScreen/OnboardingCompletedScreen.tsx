@@ -1,14 +1,15 @@
 import React, { useCallback, useEffect } from 'react'
 import { View } from 'react-native'
 
-import AmbireLogo from '@common/assets/svg/AmbireLogo'
+import AmbireLogoWithBackgroundAndLogotype from '@common/assets/svg/AmbireLogoWithBackgroundAndLogotype'
 import Button from '@common/components/Button'
 import Panel from '@common/components/Panel'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
+import useController from '@common/hooks/useController'
+import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useTheme from '@common/hooks/useTheme'
 import ConfettiAnimation from '@common/modules/dashboard/components/ConfettiAnimation'
-import Header from '@common/modules/header/components/Header'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
@@ -18,22 +19,29 @@ import {
 } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
 import { engine } from '@web/constants/browserapi'
 import { TAB_CONTENT_WIDTH } from '@web/constants/spacings'
-import useBackgroundService from '@web/hooks/useBackgroundService'
-import useWalletStateController from '@web/hooks/useWalletStateController'
 import PinExtension from '@web/modules/auth/components/PinExtension'
 
 export const CARD_WIDTH = 400
 
 const OnboardingCompletedScreen = () => {
   const { t } = useTranslation()
-  const { dispatch } = useBackgroundService()
-  const { isPinned } = useWalletStateController()
+  const { dispatch } = useControllersMiddleware()
+  const {
+    state: { isPinned },
+    dispatch: walletStateDispatch
+  } = useController('WalletStateController')
 
   const { theme } = useTheme()
 
   useEffect(() => {
-    dispatch({ type: 'SET_IS_SETUP_COMPLETE', params: { isSetupComplete: true } })
-  }, [dispatch])
+    walletStateDispatch({
+      type: 'method',
+      params: {
+        method: 'setIsSetupComplete',
+        args: [true]
+      }
+    })
+  }, [walletStateDispatch])
 
   const handleOpenDashboardPress = useCallback(async () => {
     dispatch({ type: 'OPEN_EXTENSION_POPUP' })
@@ -42,22 +50,29 @@ const OnboardingCompletedScreen = () => {
   return (
     <>
       <PinExtension />
-      <TabLayoutContainer
-        backgroundColor={theme.secondaryBackground}
-        header={<Header customTitle={' '} />}
-      >
-        <TabLayoutWrapperMainContent>
-          <Panel type="onboarding" spacingsSize="small" style={{ overflow: 'visible' }}>
+      <TabLayoutContainer backgroundColor={theme.secondaryBackground}>
+        {/* Padding to fit the pin info */}
+        <TabLayoutWrapperMainContent withScroll={false} contentContainerStyle={{ paddingTop: 128 }}>
+          <Panel
+            type="onboarding"
+            spacingsSize="small"
+            style={{ overflow: 'visible', minHeight: 520 }}
+          >
             <View style={[flexbox.flex1, flexbox.alignCenter, spacings.pt3Xl]}>
               <View style={[flexbox.alignCenter, flexbox.justifyCenter]}>
-                <ConfettiAnimation width={TAB_CONTENT_WIDTH} height={380} autoPlay={false} />
-                <AmbireLogo height={96} withWrapper />
+                <ConfettiAnimation
+                  width={TAB_CONTENT_WIDTH}
+                  height={380}
+                  autoPlay={false}
+                  loop={false}
+                />
+                <AmbireLogoWithBackgroundAndLogotype />
               </View>
               <Text
-                style={[spacings.mtLg, spacings.mb, text.center]}
+                style={[spacings.mtXl, spacings.mb, text.center]}
                 weight="semiBold"
                 fontSize={20}
-                testID='wallet-ready-to-use-text'
+                testID="wallet-ready-to-use-text"
               >
                 {t('Ambire Wallet is ready to use')}
               </Text>
@@ -71,11 +86,12 @@ const OnboardingCompletedScreen = () => {
                 </Text>
               )}
               {engine !== 'gecko' && (
-                <View style={[flexbox.flex1, flexbox.justifyEnd]}>
+                <View style={{ ...flexbox.flex1, width: '100%', ...flexbox.justifyEnd }}>
                   <Button
                     testID="onboarding-completed-open-dashboard-btn"
                     text={t('Open wallet')}
                     hasBottomSpacing={false}
+                    style={{ width: '100%' }}
                     onPress={handleOpenDashboardPress}
                   />
                 </View>

@@ -8,14 +8,14 @@ import { getValueFromKey, SECTIONS, Stat } from '@common/components/RewardsStat'
 import SkeletonLoaderWeb from '@common/components/SkeletonLoader/SkeletonLoader.web'
 import Text from '@common/components/Text'
 import { APP_VERSION } from '@common/config/env'
+import useController from '@common/hooks/useController'
+import useHover, { AnimatedPressable } from '@common/hooks/useHover'
 import HeaderBackButton from '@common/modules/header/components/HeaderBackButton'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
-import { openInTab } from '@web/extension-services/background/webapi/tab'
-import useHover, { AnimatedPressable } from '@web/hooks/useHover'
-import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
-import { getUiType } from '@web/utils/uiType'
+import { openInTab } from '@common/utils/links'
+import { getUiType } from '@common/utils/uiType'
 
 import rewardsPageBackground from '../../../assets/images/rewardsPageBackground.png'
 import userBlacklistedIcon from '../../../assets/images/userBlacklisted.png'
@@ -54,7 +54,9 @@ type PastProjectedRewardsScores = {
  * hook here and colors are hardcoded.
  */
 const ExtensionRewardsScreen = () => {
-  const { portfolio, account } = useSelectedAccountControllerState()
+  const {
+    state: { portfolio, account }
+  } = useController('SelectedAccountController')
   const [bindAnim, animStyle] = useHover({ preset: 'opacityInverted' })
 
   const projectedRewardsStats = portfolio.projectedRewardsStats
@@ -63,7 +65,8 @@ const ExtensionRewardsScreen = () => {
   const [arePastProjectedRewardsScoresLoading, setArePastProjectedRewardsScoresLoading] =
     useState(true)
   const isProjectedRewardsLoading =
-    !portfolio.portfolioState.projectedRewards?.isReady || arePastProjectedRewardsScoresLoading
+    portfolio.portfolioState.projectedRewards?.isReady !== true &&
+    arePastProjectedRewardsScoresLoading
 
   const sections: Stat[] = useMemo(
     () =>
@@ -158,7 +161,7 @@ const ExtensionRewardsScreen = () => {
         ...flexbox.flex1,
         ...spacings.ph,
         ...spacings.pv,
-        backgroundColor: '#101114'
+        backgroundColor: '#1B1D20'
       }}
     >
       {projectedRewardsStats?.reasonToNotDisplayProjectedRewards && (
@@ -194,7 +197,7 @@ const ExtensionRewardsScreen = () => {
             ...spacings.mbLg
           }}
         >
-          <HeaderBackButton color="#8E98A8" displayIn="always" />
+          <HeaderBackButton color="#8E98A8" />
 
           <AnimatedPressable
             {...bindAnim}
@@ -237,17 +240,18 @@ const ExtensionRewardsScreen = () => {
         >
           {!isProjectedRewardsLoading ? (
             <View
-              style={{
-                ...spacings.phLg,
-                ...spacings.pvLg,
-                backgroundColor: '#191A1F',
-                borderWidth: 1,
-                borderColor: '#6A6F8633',
-                borderRadius: 16,
-                ...(projectedRewardsStats?.reasonToNotDisplayProjectedRewards
-                  ? { top: '6.25rem' }
-                  : {})
-              }}
+              style={[
+                spacings.phMd,
+                spacings.pvMd,
+                {
+                  backgroundColor: '#191A1F',
+                  borderWidth: 1,
+                  borderColor: '#6A6F8633',
+                  borderRadius: 16
+                },
+                // @ts-ignore rem values are not supported / missing type on mobile, but available on web
+                projectedRewardsStats?.reasonToNotDisplayProjectedRewards && { top: '6.25rem' }
+              ]}
             >
               {projectedRewardsStats?.reasonToNotDisplayProjectedRewards ? (
                 <View
@@ -261,7 +265,7 @@ const ExtensionRewardsScreen = () => {
                   <View style={spacings.mbLg}>
                     <Image
                       source={userBlacklistedIcon as ImageSourcePropType}
-                      style={{ width: '54px', height: '54px' }}
+                      style={{ width: 54, height: 54 }}
                     />
                   </View>
                   <Text

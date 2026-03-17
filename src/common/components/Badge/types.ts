@@ -4,16 +4,16 @@ import { TextWeight } from '@common/components/Text'
 
 type BadgeType =
   | 'info'
-  | 'info2'
   | 'warning'
   | 'default'
   | 'success'
   | 'error'
-  | 'ok'
+  | 'primaryAccent'
+  | 'secondaryAccent'
   | 'new'
-  | 'projectedRewards'
+  | 'outline'
 
-type SpecialBadgeType = 'metamask'
+type SpecialBadgeType = 'metamask' | 'safe'
 
 type Props = {
   text: string

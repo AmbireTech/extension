@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import { AddressState, AddressStateOptional } from '@ambire-common/interfaces/domains'
 import { Validation } from '@ambire-common/services/validations'
+import useController from '@common/hooks/useController'
 
 import useResolveDomain from '../useResolveDomain'
 import getAddressInputValidation from './utils/validation'
@@ -37,6 +38,7 @@ const useAddressInput = ({
 }: Props) => {
   const fieldValueRef = useRef(addressState.fieldValue)
   const fieldValue = addressState.fieldValue
+  const resolvingForFieldValue = useRef<string | null>(null)
   const [hasDomainResolveFailed, setHasDomainResolveFailed] = useState(false)
   const { resolveDomain } = useResolveDomain()
   const [debouncedValidation, setDebouncedValidation] = useState<Validation>({
@@ -100,6 +102,7 @@ const useAddressInput = ({
   ])
 
   useEffect(() => {
+    if (resolvingForFieldValue.current && resolvingForFieldValue.current === fieldValue) return
     const trimmedAddress = fieldValue.trim()
     const dotIndexInAddress = trimmedAddress.indexOf('.')
     // There is a dot and it is not the first or last character
@@ -118,14 +121,10 @@ const useAddressInput = ({
       return
     }
 
-    // If we already have an ENS address for this domain, don't resolve again
-    if (addressState.ensAddress && !addressState.isDomainResolving) {
-      return
-    }
-
     setAddressState({
       isDomainResolving: true
     })
+    resolvingForFieldValue.current = fieldValue
 
     // Debounce domain resolving
     const timeout = setTimeout(() => {
@@ -145,13 +144,7 @@ const useAddressInput = ({
     return () => {
       clearTimeout(timeout)
     }
-  }, [
-    fieldValue,
-    addressState.ensAddress,
-    addressState.isDomainResolving,
-    setAddressState,
-    resolveDomain
-  ])
+  }, [fieldValue, setAddressState, resolveDomain])
 
   useEffect(() => {
     fieldValueRef.current = addressState.fieldValue
@@ -171,29 +164,33 @@ const useAddressInput = ({
     })
   }, [setAddressState])
 
+  // react-hook-form must work with the latest validation, otherwise
+  // the component may rerender with the old validation
+  // (e.g., showing an error message that is no longer relevant after the user has changed the input)
   const RHFValidate = useCallback(() => {
-    // Disable the form if the address is not the same as the debounced address
-    // This disables the submit button in the delay window
-    if (validation.message !== debouncedValidation?.message) return false
+    // Disable the form if the resolved data is for another field value
+    // e.g., the user just changed the input
+    if (resolvingForFieldValue.current && fieldValue !== resolvingForFieldValue.current)
+      return false
 
     // Disable the form if the address is resolving
-    if (debouncedValidation.id === 'resolving_domain') {
+    if (validation.id === 'resolving_domain') {
       return false
     }
 
     // Disable the form if there is an error
-    if (debouncedValidation?.severity === 'error')
-      return !(debouncedValidation?.severity === 'error') && debouncedValidation.message === ''
+    if (validation?.severity === 'error')
+      return !(validation?.severity === 'error') && validation.message === ''
 
     if (addressState.isDomainResolving) return false
 
     return true
   }, [
     addressState.isDomainResolving,
-    debouncedValidation.id,
-    debouncedValidation.message,
-    debouncedValidation?.severity,
-    validation.message
+    fieldValue,
+    validation.id,
+    validation.message,
+    validation?.severity
   ])
 
   return {

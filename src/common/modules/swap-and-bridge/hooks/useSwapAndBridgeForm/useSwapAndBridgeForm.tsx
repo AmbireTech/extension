@@ -1,0 +1,552 @@
+import { getAddress } from 'ethers'
+import { nanoid } from 'nanoid'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useModalize } from 'react-native-modalize'
+import { useLocation } from 'react-router-dom'
+
+import { SwapAndBridgeFormStatus } from '@ambire-common/controllers/swapAndBridge/swapAndBridge'
+import { SwapAndBridgeActiveRoute } from '@ambire-common/interfaces/swapAndBridge'
+import { CallsUserRequest } from '@ambire-common/interfaces/userRequest'
+import {
+  calculateAmountWarnings,
+  getIsTokenEligibleForSwapAndBridge
+} from '@ambire-common/libs/swapAndBridge/swapAndBridge'
+import { getCallsCount } from '@ambire-common/utils/userRequest'
+import useController from '@common/hooks/useController'
+import useGetTokenSelectProps from '@common/hooks/useGetTokenSelectProps'
+import useNavigation from '@common/hooks/useNavigation'
+import useSyncedState from '@common/hooks/useSyncedState'
+import { ROUTES } from '@common/modules/router/constants/common'
+import { getTokenId } from '@common/utils/token'
+import { getUiType } from '@common/utils/uiType'
+
+type SessionId = ReturnType<typeof nanoid>
+
+const { isPopup, isRequestWindow } = getUiType()
+
+const useSwapAndBridgeForm = () => {
+  const {
+    fromAmount,
+    fromChainId,
+    fromSelectedToken,
+    fromAmountFieldMode,
+    portfolioTokenList,
+    isTokenListLoading,
+    quote,
+    fromAmountInFiat,
+    activeRoutes,
+    signAccountOpController,
+    fromAmountUpdateCounter,
+    formStatus,
+    supportedChainIds,
+    updateQuoteStatus,
+    sessionIds,
+    toSelectedToken,
+    toChainId
+  } = useController('SwapAndBridgeController').state
+  const { dispatch: swapAndBridgeDispatch } = useController('SwapAndBridgeController')
+  const { dispatch: requestsDispatch, state: requestsState } = useController('RequestsController')
+  const { userRequests } = requestsState
+  const {
+    state: { account, portfolio }
+  } = useController('SelectedAccountController')
+  const controllerAmountFieldValue = fromAmountFieldMode === 'token' ? fromAmount : fromAmountInFiat
+  const [fromAmountValue, setFromAmountValue] = useSyncedState<string>({
+    backgroundState: controllerAmountFieldValue,
+    updateBackgroundState: (newAmount) => {
+      swapAndBridgeDispatch({
+        type: 'method',
+        params: {
+          method: 'updateForm',
+          args: [{ fromAmount: newAmount }, undefined]
+        }
+      })
+    },
+    forceUpdateOnChangeList: [fromAmountUpdateCounter, fromAmountFieldMode]
+  })
+
+  const isLocalStateOutOfSync = controllerAmountFieldValue !== fromAmountValue
+  /**
+   * @deprecated - the settings menu is not used anymore
+   */
+  const [settingModalVisible, setSettingsModalVisible] = useState<boolean>(false)
+  const [activeRoute, setActiveRoute] = useState<SwapAndBridgeActiveRoute | undefined>(undefined)
+  const [showAddedToBatch, setShowAddedToBatch] = useState(false)
+  const [latestBatchedNetwork, setLatestBatchedNetwork] = useState<bigint | undefined>()
+  const [isOneClickModeDuringPriceImpact, setIsOneClickModeDuringPriceImpact] =
+    useState<boolean>(false)
+  const { networks } = useController('NetworksController').state
+  const currentRoute = useLocation()
+  const { setSearchParams, navigate } = useNavigation()
+  const { ref: routesModalRef, open: openRoutesModal, close: closeRoutesModal } = useModalize()
+  const {
+    ref: estimationModalRef,
+    open: openEstimationModal,
+    close: closeEstimationModal
+  } = useModalize()
+  const {
+    ref: priceImpactModalRef,
+    open: openPriceImpactModal,
+    close: closePriceImpactModal
+  } = useModalize()
+  const { visibleUserRequests } = useController('RequestsController').state
+  const sessionIdsRequestedToBeInit = useRef<SessionId[]>([])
+  const sessionId = useMemo(() => {
+    if (isPopup) return 'popup'
+    if (isRequestWindow) return 'request-window'
+
+    return nanoid()
+  }, []) // purposely, so it is unique per hook lifetime
+
+  const isBridge = useMemo(() => {
+    if (!fromSelectedToken || !toSelectedToken) return false
+    return fromSelectedToken.chainId !== BigInt(toSelectedToken.chainId)
+  }, [fromSelectedToken, toSelectedToken])
+
+  const networkUserRequests = useMemo(() => {
+    if (!fromSelectedToken || !account || !userRequests.length) return []
+    return userRequests.filter(
+      (r) =>
+        r.kind === 'calls' &&
+        r.meta.accountAddr === account.addr &&
+        r.meta.chainId === fromSelectedToken.chainId &&
+        !r.signAccountOp.accountOp.signature
+    )
+  }, [fromSelectedToken, userRequests, account])
+
+  const batchNetworkUserRequestsCount = useMemo(() => {
+    if (!latestBatchedNetwork || !account || !userRequests.length) return 0
+
+    const reqs = userRequests.filter(
+      (r) =>
+        r.kind === 'calls' &&
+        r.meta.accountAddr === account.addr &&
+        r.meta.chainId === latestBatchedNetwork &&
+        !r.signAccountOp.accountOp.signature
+    )
+
+    return getCallsCount(reqs)
+  }, [latestBatchedNetwork, userRequests, account])
+
+  useEffect(() => {
+    const hasSwapAndBridgeAction = visibleUserRequests.some((req) => req.kind === 'swapAndBridge')
+
+    // Cleanup sessions
+    if (hasSwapAndBridgeAction) {
+      // If there is an open swap and bridge window
+      // 1. Focus it if there is a signAccountOp controller
+      // 2. Close it if there isn't as that means the screen is displaying
+      // the progress of the operation
+      if (isPopup) {
+        if (signAccountOpController) {
+          window.close()
+          requestsDispatch({
+            type: 'method',
+            params: {
+              method: 'focusRequestWindow',
+              args: []
+            }
+          })
+          return
+        }
+
+        if (!account) return
+
+        requestsDispatch({
+          type: 'method',
+          params: {
+            method: 'removeUserRequests',
+            args: [[`${account.addr}-swap-and-bridge-sign`]]
+          }
+        })
+        navigate(ROUTES.dashboard)
+
+        return
+      }
+      // Forcefully unload the popup session after the request window session is added.
+      // Otherwise when the user is done with the operation
+      // and closes the window the popup session will remain open and the swap and bridge
+      // screen will open on load
+      if (isRequestWindow && sessionIds.includes('popup') && sessionIds.includes(sessionId)) {
+        swapAndBridgeDispatch({
+          type: 'method',
+          params: {
+            method: 'unloadScreen',
+            args: ['popup', true]
+          }
+        })
+      }
+    }
+
+    // Init each session only once after the cleanup
+    if (sessionIdsRequestedToBeInit.current.includes(sessionId)) return
+
+    if (!portfolio.isReadyToVisualize) return
+
+    const routeState = currentRoute.state as
+      | {
+          preselectedFromToken?: { address: string; chainId: bigint }
+          preselectedToToken?: { address: string; chainId: bigint }
+          fromAmount?: string
+          activeRouteIdToDelete?: string
+        }
+      | undefined
+
+    const tokenToSelectOnInit = portfolio.tokens.find(
+      (t) =>
+        t.address === routeState?.preselectedFromToken?.address &&
+        t.chainId === routeState?.preselectedFromToken?.chainId &&
+        getIsTokenEligibleForSwapAndBridge(t)
+    )
+
+    swapAndBridgeDispatch({
+      type: 'method',
+      params: {
+        method: 'initForm',
+        args: [
+          sessionId,
+          {
+            preselectedFromToken: tokenToSelectOnInit,
+            preselectedToToken: routeState?.preselectedToToken,
+            fromAmount: routeState?.fromAmount,
+            activeRouteIdToDelete: routeState?.activeRouteIdToDelete
+          }
+        ]
+      }
+    })
+    sessionIdsRequestedToBeInit.current.push(sessionId)
+    setSearchParams((prev: any) => {
+      prev.set('sessionId', sessionId)
+      return prev
+    })
+  }, [
+    account,
+    currentRoute.state,
+    navigate,
+    portfolio.isReadyToVisualize,
+    portfolio.tokens,
+    requestsDispatch,
+    sessionId,
+    sessionIds,
+    setSearchParams,
+    signAccountOpController,
+    swapAndBridgeDispatch,
+    visibleUserRequests
+  ])
+
+  // remove session - this will be triggered only
+  // when navigation to another screen internally in the extension
+  // the session removal when the window is forcefully closed is handled
+  // in the port.onDisconnect callback in the background
+  useEffect(() => {
+    return () => {
+      swapAndBridgeDispatch({
+        type: 'method',
+        params: { method: 'unloadScreen', args: [sessionId, undefined] }
+      })
+    }
+  }, [swapAndBridgeDispatch, sessionId])
+
+  const {
+    options: fromTokenOptions,
+    value: fromTokenValue,
+    amountSelectDisabled: fromTokenAmountSelectDisabled
+  } = useGetTokenSelectProps({
+    tokens: portfolioTokenList,
+    token: fromSelectedToken ? getTokenId(fromSelectedToken) : '',
+    isLoading: isTokenListLoading,
+    networks,
+    supportedChainIds
+  })
+
+  const highPriceImpactOrSlippageWarning:
+    | { type: 'highPriceImpact'; percentageDiff: number }
+    | {
+        type: 'slippageImpact'
+        possibleSlippage: number
+        minInUsd: number
+        minInToken: string
+        symbol: string
+      }
+    | null = useMemo(() => {
+    if (updateQuoteStatus === 'LOADING') return null
+
+    if (formStatus !== SwapAndBridgeFormStatus.ReadyToSubmit) return null
+
+    if (!quote || !fromSelectedToken?.decimals) return null
+
+    return calculateAmountWarnings(
+      quote.selectedRoute,
+      fromAmountInFiat,
+      fromAmount,
+      fromSelectedToken.decimals
+    )
+  }, [
+    quote,
+    formStatus,
+    fromAmount,
+    fromAmountInFiat,
+    fromSelectedToken?.decimals,
+    updateQuoteStatus
+  ])
+
+  const openEstimationModalAndDispatch = useCallback(() => {
+    swapAndBridgeDispatch({
+      type: 'method',
+      params: {
+        method: 'setUserProceeded',
+        args: [true]
+      }
+    })
+    openEstimationModal()
+  }, [openEstimationModal, swapAndBridgeDispatch])
+
+  const acknowledgeHighPriceImpact = useCallback(() => {
+    closePriceImpactModal()
+
+    if (isOneClickModeDuringPriceImpact) {
+      if (!!account?.safeCreation || networkUserRequests.length > 0) {
+        requestsDispatch({
+          type: 'method',
+          params: {
+            method: 'build',
+            args: [
+              {
+                type: 'swapAndBridgeRequest',
+                params: {
+                  openActionWindow: true,
+                  quote: !!account?.safeCreation && quote ? { ...quote } : undefined
+                }
+              }
+            ]
+          }
+        })
+        if (isPopup) window.close()
+      } else {
+        openEstimationModalAndDispatch()
+      }
+    } else {
+      requestsDispatch({
+        type: 'method',
+        params: {
+          method: 'build',
+          args: [
+            {
+              type: 'swapAndBridgeRequest',
+              params: {
+                openActionWindow: false
+              }
+            }
+          ]
+        }
+      })
+      setShowAddedToBatch(true)
+      setLatestBatchedNetwork(fromSelectedToken?.chainId)
+    }
+  }, [
+    closePriceImpactModal,
+    openEstimationModalAndDispatch,
+    requestsDispatch,
+    isOneClickModeDuringPriceImpact,
+    setShowAddedToBatch,
+    networkUserRequests,
+    fromSelectedToken,
+    account?.safeCreation,
+    quote
+  ])
+
+  const handleSubmitForm = useCallback(
+    (isOneClickMode: boolean) => {
+      setIsOneClickModeDuringPriceImpact(isOneClickMode)
+      if (highPriceImpactOrSlippageWarning) {
+        openPriceImpactModal()
+        return
+      }
+      if (!quote || !quote.selectedRoute) return
+
+      // open the estimation modal on one click method;
+      // build/add a swap user request on batch
+      if (isOneClickMode) {
+        if (!!account?.safeCreation || networkUserRequests.length > 0) {
+          requestsDispatch({
+            type: 'method',
+            params: {
+              method: 'build',
+              args: [
+                {
+                  type: 'swapAndBridgeRequest',
+                  params: {
+                    openActionWindow: true,
+                    quote: !!account?.safeCreation && quote ? { ...quote } : undefined
+                  }
+                }
+              ]
+            }
+          })
+          if (isPopup) window.close()
+        } else {
+          openEstimationModalAndDispatch()
+        }
+      } else {
+        requestsDispatch({
+          type: 'method',
+          params: {
+            method: 'build',
+            args: [
+              {
+                type: 'swapAndBridgeRequest',
+                params: {
+                  openActionWindow: false
+                }
+              }
+            ]
+          }
+        })
+        setShowAddedToBatch(true)
+        setLatestBatchedNetwork(fromSelectedToken?.chainId)
+      }
+    },
+    [
+      requestsDispatch,
+      highPriceImpactOrSlippageWarning,
+      openEstimationModalAndDispatch,
+      openPriceImpactModal,
+      quote,
+      networkUserRequests,
+      fromSelectedToken,
+      account?.safeCreation
+    ]
+  )
+
+  const closeEstimationModalWrapped = useCallback(() => {
+    // Destroy the existing signAccountOp if the form was cleared
+    // Example: The user clicks on sign and is using a hardware wallet
+    // The form is cleared and the user decides to reject the txn.
+    // The signAccountOp must be destroyed
+    if (formStatus === SwapAndBridgeFormStatus.Empty) {
+      swapAndBridgeDispatch({
+        type: 'method',
+        params: {
+          method: 'destroySignAccountOp',
+          args: []
+        }
+      })
+    } else {
+      swapAndBridgeDispatch({
+        type: 'method',
+        params: {
+          method: 'setUserProceeded',
+          args: [false]
+        }
+      })
+    }
+    closeEstimationModal()
+  }, [closeEstimationModal, swapAndBridgeDispatch, formStatus])
+  /**
+   * @deprecated - the settings menu is not used anymore
+   */
+  const handleToggleSettingsMenu = useCallback(() => {
+    setSettingsModalVisible((p) => !p)
+  }, [])
+
+  const selectedAccActiveRoutes = useMemo(() => {
+    return (
+      (activeRoutes || [])
+        .filter((r) => r.route && getAddress(r.route.userAddress) === account?.addr)
+        .reverse() || []
+    )
+  }, [activeRoutes, account])
+
+  const displayedView: 'estimate' | 'batch' | 'track' = useMemo(() => {
+    if (showAddedToBatch) return 'batch'
+
+    if (activeRoute) return 'track'
+
+    return 'estimate'
+  }, [activeRoute, showAddedToBatch])
+
+  useEffect(() => {
+    if (!account) return
+    if (
+      signAccountOpController?.broadcastStatus === 'SUCCESS' &&
+      selectedAccActiveRoutes.length &&
+      !activeRoute
+    ) {
+      const route = selectedAccActiveRoutes.find(
+        (r) => r.activeRouteId === signAccountOpController?.accountOp.meta?.swapTxn?.activeRouteId
+      )
+
+      if (!route && isRequestWindow) {
+        requestsDispatch({
+          type: 'method',
+          params: {
+            method: 'removeUserRequests',
+            args: [[`${account.addr}-swap-and-bridge-sign`]]
+          }
+        })
+        return
+      }
+
+      setActiveRoute(route)
+    }
+  }, [
+    selectedAccActiveRoutes,
+    signAccountOpController?.broadcastStatus,
+    signAccountOpController?.accountOp.meta?.swapTxn?.activeRouteId,
+    requestsDispatch,
+    activeRoute,
+    account
+  ])
+
+  useEffect(() => {
+    if (!signAccountOpController) {
+      closeEstimationModalWrapped()
+    }
+  }, [closeEstimationModalWrapped, signAccountOpController])
+
+  const shouldDisableAddToBatch = useMemo(() => {
+    if (!account || !userRequests.length || !fromChainId) return false
+
+    const signAccountOpRequest = userRequests.find(
+      (r) =>
+        r.kind === 'calls' &&
+        r.meta.accountAddr === account.addr &&
+        r.meta.chainId.toString() === fromChainId.toString()
+    ) as CallsUserRequest | undefined
+    return !!signAccountOpRequest?.signAccountOp.isSignAndBroadcastInProgress
+  }, [account, fromChainId, userRequests])
+
+  return {
+    sessionId,
+    fromAmountValue,
+    onFromAmountChange: setFromAmountValue,
+    fromTokenAmountSelectDisabled,
+    fromTokenOptions,
+    fromTokenValue,
+    closeEstimationModalWrapped,
+    handleSubmitForm,
+    highPriceImpactOrSlippageWarning,
+    priceImpactModalRef,
+    closePriceImpactModal,
+    acknowledgeHighPriceImpact,
+    settingModalVisible,
+    handleToggleSettingsMenu,
+    selectedAccActiveRoutes,
+    routesModalRef,
+    displayedView,
+    activeRoute,
+    setActiveRoute,
+    openRoutesModal,
+    closeRoutesModal,
+    estimationModalRef,
+    isBridge,
+    setShowAddedToBatch,
+    latestBatchedNetwork,
+    batchNetworkUserRequestsCount,
+    networkUserRequests,
+    isLocalStateOutOfSync,
+    shouldDisableAddToBatch
+  }
+}
+
+export default useSwapAndBridgeForm

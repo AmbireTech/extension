@@ -2,7 +2,6 @@ import React, { FC } from 'react'
 import { View, ViewStyle } from 'react-native'
 
 import ErrorIcon from '@common/assets/svg/ErrorIcon'
-import InfoIcon from '@common/assets/svg/InfoIcon'
 import WarningIcon from '@common/assets/svg/WarningIcon'
 import Button, { Props as ButtonProps } from '@common/components/Button'
 import { Props as DualChoiceModalProps } from '@common/components/DualChoiceModal/DualChoiceModal'
@@ -11,9 +10,10 @@ import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
+import GlassView from '../GlassView'
 import getStyles from './styles'
 
-type Type = 'error' | 'warning' | 'info3'
+type Type = 'error' | 'warning' | 'info'
 
 const DEFAULT_TYPE = 'warning'
 
@@ -33,23 +33,30 @@ const TitleAndIcon = ({
   style?: ViewStyle
 }) => {
   const { styles, theme } = useTheme(getStyles)
-  const Icon = type === 'error' ? ErrorIcon : type === 'info3' ? InfoIcon : WarningIcon
+  const Icon = type === 'error' ? ErrorIcon : WarningIcon
 
   return (
     <View style={[styles.titleAndIcon, style]}>
-      <View style={spacings.mbTy}>
-        <Icon width={32} height={32} color={theme[`${type}Decorative`]} />
+      <View style={spacings.mrTy}>
+        <Icon width={24} height={24} color={theme[`${type}Text`]} />
       </View>
-      <CommonText appearance={`${type}Text`} weight="medium" fontSize={20}>
+      <CommonText appearance={`${type}Text`} weight="semiBold">
         {title}
       </CommonText>
     </View>
   )
 }
 
-const Text = ({ text, ...rest }: { text: string } & Props) => {
+const Text = ({ text, type, ...rest }: { text: string; type?: Type } & Omit<Props, 'type'>) => {
+  const { theme } = useTheme()
+
   return (
-    <CommonText fontSize={16} appearance="secondaryText" {...rest}>
+    <CommonText
+      fontSize={16}
+      color={theme[`${type || 'secondary'}Text`]}
+      style={spacings.mb3Xl}
+      {...rest}
+    >
       {text}
     </CommonText>
   )
@@ -70,7 +77,13 @@ const ButtonWrapper = ({
 }) => {
   const { styles } = useTheme(getStyles)
 
-  return <View style={[styles.buttons, reverse && flexbox.directionRowReverse]}>{children}</View>
+  return (
+    <View style={[flexbox.directionRow, flexbox.justifyCenter]}>
+      <GlassView borderRadius={28}>
+        <View style={[styles.buttons, reverse && flexbox.directionRowReverse]}>{children}</View>
+      </GlassView>
+    </View>
+  )
 }
 
 const DualChoiceWarningModal = ({
@@ -96,29 +109,30 @@ const DualChoiceWarningModal = ({
 
   return (
     <Wrapper>
-      <ContentWrapper style={{ backgroundColor: theme[`${type}Background`] }}>
-        <TitleAndIcon type={type} title={title} />
-        {!!description && <Text text={description} />}
+      <ContentWrapper>
+        <TitleAndIcon type={type} title={title} style={{ backgroundColor: 'transparent' }} />
+        {!!description && <Text text={description} type={type} />}
         {children}
       </ContentWrapper>
-      <ButtonWrapper reverse={type === 'info3'}>
+      <ButtonWrapper reverse={false}>
         <Button
           text={primaryButtonText}
           onPress={onPrimaryButtonPress}
-          type={type}
+          type={type === 'error' ? 'dangerFilled' : type}
           hasBottomSpacing={false}
-          style={spacings.ph2Xl}
+          size="smaller"
           {...primaryButtonProps}
         />
         {secondaryButtonText && onSecondaryButtonPress && (
           <Button
             text={secondaryButtonText}
             onPress={onSecondaryButtonPress}
-            type="outline"
+            type="secondary"
             hasBottomSpacing={false}
-            style={spacings.phXl}
             accentColor={theme.secondaryText}
+            size="smaller"
             {...secondaryButtonProps}
+            style={[spacings.mlLg, secondaryButtonProps?.style as ViewStyle | undefined]}
           />
         )}
       </ButtonWrapper>

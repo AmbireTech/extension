@@ -6,16 +6,13 @@ import { SignAccountOpError } from '@ambire-common/interfaces/signAccountOp'
 import { UserRequest } from '@ambire-common/interfaces/userRequest'
 import { getCallsCount } from '@ambire-common/utils/userRequest'
 import BatchIcon from '@common/assets/svg/BatchIcon'
-import InfoIcon from '@common/assets/svg/InfoIcon'
 import Button from '@common/components/Button'
 import ButtonWithLoader from '@common/components/ButtonWithLoader/ButtonWithLoader'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import HoldToProceedButton from '@common/components/HoldToProceedButton'
-import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import { AnimatedPressable, useCustomHover } from '@web/hooks/useHover'
-import { getUiType } from '@web/utils/uiType'
+import { getUiType } from '@common/utils/uiType'
 
 type Props = {
   handleSubmitForm: (isOneClickMode: boolean) => void
@@ -52,11 +49,10 @@ const Buttons: FC<Props> = ({
 }) => {
   const { t } = useTranslation()
   const callsCount = getCallsCount(networkUserRequests)
-  const { theme } = useTheme()
 
   const oneClickDisabledReason = useMemo(() => {
     if (signAccountOpErrors.length > 0) {
-      return signAccountOpErrors[0].title
+      return signAccountOpErrors[0]?.title
     }
 
     if (callsCount && isBridge) {
@@ -97,60 +93,42 @@ const Buttons: FC<Props> = ({
       : proceedBtnText
   }, [proceedBtnText, callsCount, t])
 
-  const [bindAnim, animStyle] = useCustomHover({
-    property: 'backgroundColor',
-    values: {
-      from: 'transparent',
-      to: theme.quaternaryBackground
-    }
-  })
-
   return (
     <View style={[flexbox.directionRow, flexbox.alignCenter, flexbox.justifyEnd]}>
       {!isRequestWindow && (
-        <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-          <View
-            dataSet={createGlobalTooltipDataSet({
-              id: 'batch-btn-tooltip',
-              content: batchDisabledReason
-            })}
-          >
-            <Button
-              hasBottomSpacing={false}
-              text={
-                callsCount > 0 && !batchDisabledReason
-                  ? t('Add to batch ({{count}})', {
-                      count: callsCount
-                    })
-                  : t('Start a batch')
-              }
-              disabled={startBatchingDisabled}
-              type="secondary"
-              style={{ minWidth: 160, ...spacings.phMd }}
-              onPress={() => {
-                if (isLocalStateOutOfSync) return
-
-                handleSubmitForm(false)
-              }}
-              testID="batch-btn"
-            >
-              <BatchIcon style={spacings.mlTy} />
-            </Button>
-          </View>
-          <View
-            dataSet={createGlobalTooltipDataSet({
+        <View
+          dataSet={createGlobalTooltipDataSet({
+            id: 'batch-btn-tooltip',
+            content: batchDisabledReason
+          })}
+          style={spacings.mrLg}
+        >
+          <Button
+            hasBottomSpacing={false}
+            text={
+              callsCount > 0 && !batchDisabledReason
+                ? t('Add to batch ({{count}})', {
+                    count: callsCount
+                  })
+                : t('Start a batch')
+            }
+            size="smaller"
+            disabled={startBatchingDisabled}
+            type="secondary"
+            tooltipDataSet={createGlobalTooltipDataSet({
               id: 'start-batch-info-tooltip',
               content: startBatchingInfo
             })}
-            style={spacings.mlTy}
+            childrenPosition="left"
+            style={{ minWidth: 160, ...spacings.phMd }}
+            onPress={() => {
+              if (isLocalStateOutOfSync) return
+              handleSubmitForm(false)
+            }}
+            testID="batch-btn"
           >
-            <AnimatedPressable
-              style={[spacings.phTy, spacings.pvTy, { borderRadius: 50 }, animStyle]}
-              {...bindAnim}
-            >
-              <InfoIcon color={theme.tertiaryText} width={20} height={20} />
-            </AnimatedPressable>
-          </View>
+            <BatchIcon style={spacings.mrMi} />
+          </Button>
         </View>
       )}
       <View
@@ -181,6 +159,7 @@ const Buttons: FC<Props> = ({
 
               handleSubmitForm(true)
             }}
+            size="smaller"
             testID="proceed-btn"
           />
         )}

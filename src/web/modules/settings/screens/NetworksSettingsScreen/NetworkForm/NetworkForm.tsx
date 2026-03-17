@@ -10,12 +10,15 @@ import { isValidURL } from '@ambire-common/services/validations'
 import CopyIcon from '@common/assets/svg/CopyIcon'
 import WarningIcon from '@common/assets/svg/WarningIcon'
 import Button from '@common/components/Button'
+import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import Input from '@common/components/Input'
 import NetworkIcon from '@common/components/NetworkIcon'
 import NumberInput from '@common/components/NumberInput'
 import ScrollableWrapper from '@common/components/ScrollableWrapper'
 import Text from '@common/components/Text'
 import Tooltip from '@common/components/Tooltip'
+import useController from '@common/hooks/useController'
+import useHover, { AnimatedPressable } from '@common/hooks/useHover'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import spacings from '@common/styles/spacings'
@@ -23,9 +26,6 @@ import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
 import { setStringAsync } from '@common/utils/clipboard'
 import NetworkAvailableFeatures from '@web/components/NetworkAvailableFeatures'
-import useBackgroundService from '@web/hooks/useBackgroundService'
-import useHover, { AnimatedPressable } from '@web/hooks/useHover'
-import useNetworksControllerState from '@web/hooks/useNetworksControllerState'
 import {
   getAreDefaultsChanged,
   handleErrors
@@ -43,6 +43,7 @@ type RpcSelectorItemType = {
   style?: ViewStyle
   onPress: (url: string) => void
   onRemove?: (url: string) => void
+  removeDisabledReason?: string
 }
 
 export const RpcSelectorItem = React.memo(
@@ -55,12 +56,14 @@ export const RpcSelectorItem = React.memo(
     shouldShowRemove,
     style,
     onPress,
-    onRemove
+    onRemove,
+    removeDisabledReason
   }: RpcSelectorItemType) => {
     const { t } = useTranslation()
     const { addToast } = useToast()
     const { styles, theme } = useTheme(getStyles)
     const [hovered, setHovered] = useState(false)
+    const [isRemoveHovered, setRemoveHovered] = useState(false)
     const [bindCopyIconAnim, copyIconAnimStyle] = useHover({
       preset: 'opacity'
     })
@@ -75,62 +78,82 @@ export const RpcSelectorItem = React.memo(
     }, [addToast, t, url])
 
     return (
-      <div onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)}>
-        <Pressable
-          style={[
-            styles.selectRpcItem,
-            index !== rpcUrlsLength - 1 && styles.selectRpcItemBorder,
-            (rpcUrlsLength <= 2 || forceLargeItems) && { height: 40 },
-            style,
-            hovered && { backgroundColor: theme.tertiaryBackground }
-          ]}
-          onPress={() => {
-            if (url !== selectedRpcUrl) onPress(url)
-          }}
-        >
-          <View
-            style={[
-              styles.radio,
-              selectedRpcUrl === url && styles.radioSelected,
-              hovered && styles.radioHovered
-            ]}
-          >
-            {selectedRpcUrl === url && <View style={styles.radioSelectedInner} />}
-          </View>
-          <View style={[flexbox.directionRow, flexbox.alignCenter, flexbox.flex1]}>
-            <Text
-              fontSize={14}
-              appearance={selectedRpcUrl === url ? 'primaryText' : 'secondaryText'}
-              numberOfLines={1}
-              style={flexbox.flex1}
-            >
-              {url}
-            </Text>
-            <AnimatedPressable
-              onPress={handleCopy}
-              style={[spacings.mlMi, copyIconAnimStyle]}
-              {...bindCopyIconAnim}
-            >
-              <CopyIcon width={16} height={16} />
-            </AnimatedPressable>
-          </View>
-          {!!shouldShowRemove && !!hovered && (
-            <View style={spacings.plLg}>
-              <Pressable onPress={() => !!onRemove && onRemove(url)}>
-                {({ hovered: removeButtonHovered }: any) => (
-                  <Text
-                    fontSize={12}
-                    underline
-                    color={removeButtonHovered ? theme.errorText : theme.errorDecorative}
-                  >
-                    {t('Remove')}
-                  </Text>
-                )}
-              </Pressable>
-            </View>
+      <Pressable
+        style={[
+          styles.selectRpcItem,
+          index !== rpcUrlsLength - 1 && styles.selectRpcItemBorder,
+          (rpcUrlsLength <= 2 || forceLargeItems) && { height: 40 },
+          style,
+          hovered && { backgroundColor: theme.secondaryBackground }
+        ]}
+        onPress={() => {
+          if (url !== selectedRpcUrl) onPress(url)
+        }}
+        onHoverIn={() => setHovered(true)}
+        onHoverOut={() => setHovered(false)}
+      >
+        <View style={[styles.radio]}>
+          {(selectedRpcUrl === url || (hovered && !isRemoveHovered)) && (
+            <View style={styles.radioSelectedInner} />
           )}
-        </Pressable>
-      </div>
+        </View>
+        <View style={[flexbox.directionRow, flexbox.alignCenter, flexbox.flex1]}>
+          <Text
+            fontSize={14}
+            appearance={selectedRpcUrl === url ? 'primaryText' : 'secondaryText'}
+            numberOfLines={1}
+            style={flexbox.flex1}
+          >
+            {url}
+          </Text>
+          <AnimatedPressable
+            onPress={handleCopy}
+            style={[spacings.mlMi, copyIconAnimStyle]}
+            {...bindCopyIconAnim}
+            onHoverIn={() => {
+              // Persist hover of the parent to prevent
+              // layout shifting
+              setHovered(true)
+            }}
+          >
+            <CopyIcon width={16} height={16} />
+          </AnimatedPressable>
+        </View>
+        {!!shouldShowRemove && (!!hovered || isRemoveHovered) && (
+          <Pressable
+            style={{
+              ...spacings.mlLg,
+              opacity: removeDisabledReason ? 0.5 : 1
+            }}
+            onPress={() => !!onRemove && onRemove(url)}
+            onHoverIn={() => {
+              setRemoveHovered(true)
+            }}
+            onHoverOut={() => {
+              setRemoveHovered(false)
+            }}
+            dataSet={
+              removeDisabledReason
+                ? createGlobalTooltipDataSet({
+                    id: 'rpc-remove-disabled-reason',
+                    content: removeDisabledReason
+                  })
+                : undefined
+            }
+            disabled={!!removeDisabledReason}
+          >
+            {({ hovered: removeButtonHovered }: any) => (
+              <Text
+                fontSize={12}
+                underline
+                color={removeButtonHovered ? theme.errorText : theme.errorDecorative}
+              >
+                {t('Remove')}
+              </Text>
+            )}
+          </Pressable>
+        )}
+      </Pressable>
     )
   }
 )
@@ -145,9 +168,11 @@ const NetworkForm = ({
   onSaved: () => void
 }) => {
   const { t } = useTranslation()
-  const { dispatch } = useBackgroundService()
   const { addToast } = useToast()
-  const { allNetworks, networkToAddOrUpdate, statuses } = useNetworksControllerState()
+  const {
+    state: { allNetworks, networkToAddOrUpdate, statuses },
+    dispatch: networksDispatch
+  } = useController('NetworksController')
   const [isValidatingRPC, setValidatingRPC] = useState<boolean>(false)
   const { styles, theme } = useTheme(getStyles)
 
@@ -210,16 +235,26 @@ const NetworkForm = ({
   )
 
   useEffect(() => {
-    dispatch({
-      type: 'NETWORKS_CONTROLLER_RESET_NETWORK_TO_ADD_OR_UPDATE'
+    networksDispatch({
+      type: 'method',
+      params: {
+        method: 'setNetworkToAddOrUpdate',
+        args: [null]
+      }
     })
-  }, [dispatch])
+  }, [networksDispatch])
 
   const validateRpcUrlAndRecalculateFeatures = useCallback(
     async (rpcUrl?: string, chainId?: string | number, type: 'add' | 'change' = 'change') => {
       setValidatingRPC(true)
       if (type === 'change') {
-        dispatch({ type: 'NETWORKS_CONTROLLER_RESET_NETWORK_TO_ADD_OR_UPDATE' })
+        networksDispatch({
+          type: 'method',
+          params: {
+            method: 'setNetworkToAddOrUpdate',
+            args: [null]
+          }
+        })
       }
       if (!rpcUrl && !selectedRpcUrl) {
         setValidatingRPC(false)
@@ -293,9 +328,13 @@ const NetworkForm = ({
             addToast('Invalid RPC url', { type: 'error' })
             return
           }
-          dispatch({
-            type: 'NETWORKS_CONTROLLER_SET_NETWORK_TO_ADD_OR_UPDATE',
-            params: { rpcUrl: rpcUrl as string, chainId: BigInt(chainId) }
+
+          networksDispatch({
+            type: 'method',
+            params: {
+              method: 'setNetworkToAddOrUpdate',
+              args: [{ rpcUrl: rpcUrl as string, chainId: BigInt(chainId) }]
+            }
           })
         }
         setValidatingRPC(false)
@@ -310,7 +349,7 @@ const NetworkForm = ({
     [
       selectedRpcUrl,
       rpcUrls,
-      dispatch,
+      networksDispatch,
       setError,
       allNetworks,
       selectedChainId,
@@ -464,32 +503,40 @@ const NetworkForm = ({
       if (emptyFields.length || !rpcUrls.length || !selectedRpcUrl) return
 
       if (selectedChainId === 'add-custom-network') {
-        dispatch({
-          type: 'MAIN_CONTROLLER_ADD_NETWORK',
+        networksDispatch({
+          type: 'method',
           params: {
-            ...networkFormValues,
-            name: networkFormValues.name,
-            nativeAssetSymbol: networkFormValues.nativeAssetSymbol,
-            nativeAssetName: networkFormValues.nativeAssetName,
-            explorerUrl: networkFormValues.explorerUrl,
-            rpcUrls,
-            selectedRpcUrl,
-            chainId: BigInt(networkFormValues.chainId),
-            iconUrls: [],
-            customBundlerUrl: networkFormValues.customBundlerUrl
+            method: 'addNetwork',
+            args: [
+              {
+                ...networkFormValues,
+                name: networkFormValues.name,
+                nativeAssetSymbol: networkFormValues.nativeAssetSymbol,
+                nativeAssetName: networkFormValues.nativeAssetName,
+                explorerUrl: networkFormValues.explorerUrl,
+                rpcUrls,
+                selectedRpcUrl,
+                chainId: BigInt(networkFormValues.chainId),
+                iconUrls: [],
+                customBundlerUrl: networkFormValues.customBundlerUrl
+              }
+            ]
           }
         })
       } else {
-        dispatch({
-          type: 'MAIN_CONTROLLER_UPDATE_NETWORK',
+        networksDispatch({
+          type: 'method',
           params: {
-            network: {
-              rpcUrls,
-              selectedRpcUrl,
-              explorerUrl: networkFormValues.explorerUrl,
-              customBundlerUrl: networkFormValues.customBundlerUrl
-            },
-            chainId: BigInt(networkFormValues.chainId)
+            method: 'updateNetwork',
+            args: [
+              {
+                rpcUrls,
+                selectedRpcUrl,
+                explorerUrl: networkFormValues.explorerUrl,
+                customBundlerUrl: networkFormValues.customBundlerUrl
+              },
+              BigInt(networkFormValues.chainId)
+            ]
           }
         })
       }
@@ -503,14 +550,17 @@ const NetworkForm = ({
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
         const chainId = watch('chainId')
         if (chainId) {
-          dispatch({
-            type: 'NETWORKS_CONTROLLER_SET_NETWORK_TO_ADD_OR_UPDATE',
-            params: { rpcUrl: url, chainId: BigInt(chainId) }
+          networksDispatch({
+            type: 'method',
+            params: {
+              method: 'setNetworkToAddOrUpdate',
+              args: [{ rpcUrl: url, chainId: BigInt(chainId) }]
+            }
           })
         }
       }
     },
-    [selectedRpcUrl, dispatch, watch]
+    [selectedRpcUrl, networksDispatch, watch]
   )
 
   const handleRemoveRpcUrl = useCallback(
@@ -574,7 +624,7 @@ const NetworkForm = ({
               <NetworkIcon
                 id={selectedNetwork.chainId.toString()}
                 style={spacings.mrTy}
-                size={40}
+                size={28}
               />
               <Text appearance="secondaryText" weight="regular" style={spacings.mrMi} fontSize={16}>
                 {selectedNetwork.name || t('Unknown network')}
@@ -598,6 +648,7 @@ const NetworkForm = ({
                 control={control}
                 render={({ field: { onChange, onBlur, value } }) => (
                   <Input
+                    backgroundColor={theme.secondaryBackground}
                     onBlur={onBlur}
                     onChangeText={onChange}
                     value={value}
@@ -616,12 +667,13 @@ const NetworkForm = ({
                   control={control}
                   render={({ field: { onChange, onBlur, value } }) => (
                     <Input
+                      backgroundColor={theme.secondaryBackground}
                       onBlur={onBlur}
                       onChangeText={onChange}
                       value={value}
                       inputWrapperStyle={{ height: 40 }}
                       inputStyle={{ height: 40 }}
-                      containerStyle={{ ...spacings.mb, ...spacings.mlMi, flex: 1 }}
+                      containerStyle={{ ...spacings.mb, flex: 1 }}
                       label={t('Currency Symbol')}
                       disabled={selectedChainId !== 'add-custom-network'}
                       error={handleErrors(errors.nativeAssetSymbol)}
@@ -633,6 +685,7 @@ const NetworkForm = ({
                   control={control}
                   render={({ field: { onChange, onBlur, value } }) => (
                     <Input
+                      backgroundColor={theme.secondaryBackground}
                       onBlur={onBlur}
                       onChangeText={onChange}
                       value={value}
@@ -653,6 +706,7 @@ const NetworkForm = ({
                 render={({ field: { onChange, onBlur, value } }) => (
                   <View style={[flexbox.directionRow, flexbox.alignStart]}>
                     <Input
+                      backgroundColor={theme.secondaryBackground}
                       onBlur={onBlur}
                       onChangeText={onChange}
                       value={value}
@@ -669,7 +723,7 @@ const NetworkForm = ({
                             ? t('Adding...')
                             : t('Add')
                         }
-                        type="secondary"
+                        type="gray"
                         disabled={
                           !value.length ||
                           (!!errors.rpcUrl &&
@@ -690,11 +744,25 @@ const NetworkForm = ({
                 {t('Select default RPC URL')}
               </Text>
               <ScrollableWrapper
-                style={styles.rpcUrlsContainer}
+                style={[
+                  styles.rpcUrlsContainer,
+                  // @ts-ignore
+                  { flex: 'unset', minHeight: rpcUrls.length > 1 ? 80 : 40 }
+                ]}
                 contentContainerStyle={{ flexGrow: 1 }}
               >
                 {!!rpcUrls.length &&
                   rpcUrls.map((url, i) => {
+                    let removeDisabledReason: string | undefined
+
+                    if (selectedNetwork?.rpcUrls.length === 1) {
+                      removeDisabledReason = 'There must be at least one RPC provider'
+                    } else if (url === selectedNetwork?.selectedRpcUrl) {
+                      removeDisabledReason = 'Cannot remove the selected RPC URL'
+                    } else if (url.includes('invictus.ambire.com')) {
+                      removeDisabledReason = 'Default RPC URL cannot be removed'
+                    }
+
                     return (
                       <RpcSelectorItem
                         key={url}
@@ -703,12 +771,8 @@ const NetworkForm = ({
                         selectedRpcUrl={selectedRpcUrl}
                         rpcUrlsLength={rpcUrls.length}
                         onPress={handleSelectRpcUrl}
-                        shouldShowRemove={
-                          !!selectedNetwork?.rpcUrls.length &&
-                          selectedNetwork.rpcUrls.length > 1 &&
-                          url !== selectedNetwork?.selectedRpcUrl &&
-                          !url.includes('invictus.ambire.com')
-                        }
+                        shouldShowRemove
+                        removeDisabledReason={removeDisabledReason}
                         onRemove={handleRemoveRpcUrl}
                       />
                     )
@@ -733,6 +797,7 @@ const NetworkForm = ({
                   control={control}
                   render={({ field: { onChange, onBlur, value } }) => (
                     <NumberInput
+                      backgroundColor={theme.secondaryBackground}
                       onBlur={onBlur}
                       onChangeText={onChange}
                       value={value as any}
@@ -750,6 +815,7 @@ const NetworkForm = ({
                   control={control}
                   render={({ field: { onChange, onBlur, value } }) => (
                     <Input
+                      backgroundColor={theme.secondaryBackground}
                       onBlur={onBlur}
                       onChangeText={onChange}
                       value={value}
@@ -768,6 +834,7 @@ const NetworkForm = ({
                   control={control}
                   render={({ field: { onChange, onBlur, value } }) => (
                     <NumberInput
+                      backgroundColor={theme.secondaryBackground}
                       onBlur={onBlur}
                       onChangeText={onChange}
                       value={value as any}
@@ -786,6 +853,7 @@ const NetworkForm = ({
                   control={control}
                   render={({ field: { onChange, onBlur, value } }) => (
                     <Input
+                      backgroundColor={theme.secondaryBackground}
                       onBlur={onBlur}
                       onChangeText={onChange}
                       value={value}
@@ -806,6 +874,7 @@ const NetworkForm = ({
                   control={control}
                   render={({ field: { onChange, onBlur, value } }) => (
                     <Input
+                      backgroundColor={theme.secondaryBackground}
                       onBlur={onBlur}
                       onChangeText={onChange}
                       value={value}
@@ -855,19 +924,19 @@ const NetworkForm = ({
                   <Button
                     onPress={onCancel}
                     text={t('Cancel')}
-                    type="secondary"
+                    type="gray"
                     hasBottomSpacing={false}
-                    style={[flexbox.flex1, spacings.mr, { width: 160 }]}
-                    size="large"
+                    style={[flexbox.flex1, spacings.mrSm, { width: 90 }]}
+                    size="smaller"
                   />
 
                   <Button
                     onPress={handleSubmitButtonPress}
                     text={isSomethingUpdated ? t('Save') : t('No changes')}
                     disabled={!isSomethingUpdated || isSaveOrAddButtonDisabled}
-                    style={[spacings.mlMi, flexbox.flex1, { width: 180 }]}
+                    style={[spacings.mlMi, flexbox.flex1, { minWidth: 124 }]}
                     hasBottomSpacing={false}
-                    size="large"
+                    size="smaller"
                   />
                 </View>
               )}

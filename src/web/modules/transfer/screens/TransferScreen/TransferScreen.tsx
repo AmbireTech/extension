@@ -14,27 +14,22 @@ import { getSanitizedAmount } from '@ambire-common/libs/transfer/amount'
 import { getBenzinUrlParams } from '@ambire-common/utils/benzin'
 import { getAddressFromAddressState } from '@ambire-common/utils/domains'
 import { getCallsCount } from '@ambire-common/utils/userRequest'
-import InfoIcon from '@common/assets/svg/InfoIcon'
 import Alert from '@common/components/Alert'
-import BackButton from '@common/components/BackButton'
 import SkeletonLoader from '@common/components/SkeletonLoader'
 import Spinner from '@common/components/Spinner'
 import Text from '@common/components/Text'
 import useAddressInput from '@common/hooks/useAddressInput'
+import useController from '@common/hooks/useController'
+import useHasGasTank from '@common/hooks/useHasGasTank'
 import useNavigation from '@common/hooks/useNavigation'
+import useSyncedState from '@common/hooks/useSyncedState'
 import useToast from '@common/hooks/useToast'
 import { ROUTES, WEB_ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import { Content, Form, Wrapper } from '@web/components/TransactionsScreen'
-import { createTab } from '@web/extension-services/background/webapi/tab'
-import useActivityControllerState from '@web/hooks/useActivityControllerState'
-import useBackgroundService from '@web/hooks/useBackgroundService'
-import useHasGasTank from '@web/hooks/useHasGasTank'
-import useRequestsControllerState from '@web/hooks/useRequestsControllerState'
-import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
-import useSyncedState from '@web/hooks/useSyncedState'
-import useTransferControllerState from '@web/hooks/useTransferControllerState'
+import { openInTab } from '@common/utils/links'
+import { getUiType } from '@common/utils/uiType'
+import { Content, Wrapper } from '@web/components/TransactionsScreen'
 import BatchAdded from '@web/modules/sign-account-op/components/OneClick/BatchModal/BatchAdded'
 import Buttons from '@web/modules/sign-account-op/components/OneClick/Buttons'
 import Estimation from '@web/modules/sign-account-op/components/OneClick/Estimation'
@@ -45,14 +40,14 @@ import InProgress from '@web/modules/sign-account-op/components/OneClick/TrackPr
 import useTrackAccountOp from '@web/modules/sign-account-op/hooks/OneClick/useTrackAccountOp'
 import GasTankInfoModal from '@web/modules/transfer/components/GasTankInfoModal'
 import SendForm from '@web/modules/transfer/components/SendForm/SendForm'
-import { getUiType } from '@web/utils/uiType'
 
-const { isTab, isRequestWindow } = getUiType()
+const { isRequestWindow, isPopup } = getUiType()
 
 const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
-  const { dispatch } = useBackgroundService()
   const { addToast } = useToast()
-  const { state } = useTransferControllerState()
+  const { state: transferState, dispatch: transferDispatch } = useController('TransferController')
+  const { dispatch: requestsDispatch } = useController('RequestsController')
+  const { dispatch: mainDispatch } = useController('MainController')
   const {
     isTopUp,
     validationFormMsgs,
@@ -71,7 +66,7 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
     amount: controllerAmount,
     amountInFiat,
     isRecipientAddressViewOnly
-  } = state
+  } = transferState
 
   const amountInFiatBigInt = useMemo(() => {
     try {
@@ -83,16 +78,18 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
 
   const { navigate } = useNavigation()
   const { t } = useTranslation()
-  const { visibleUserRequests } = useRequestsControllerState()
-  const { account, portfolio } = useSelectedAccountControllerState()
-  const { userRequests } = useRequestsControllerState()
+  const { visibleUserRequests } = useController('RequestsController').state
+  const {
+    state: { account, portfolio }
+  } = useController('SelectedAccountController')
+  const { userRequests } = useController('RequestsController').state
 
   const {
     ref: gasTankSheetRef,
     open: openGasTankInfoBottomSheet,
     close: closeGasTankInfoBottomSheet
   } = useModalize()
-  const { accountsOps } = useActivityControllerState()
+  const { accountsOps } = useController('ActivityController').state
   const { hasGasTank } = useHasGasTank({ account })
   const recipientMenuClosedAutomatically = useRef(false)
 
@@ -103,22 +100,25 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
   const [amountFieldValue, setAmountFieldValue] = useSyncedState<string>({
     backgroundState: controllerAmountFieldValue,
     updateBackgroundState: (newAmount) => {
-      dispatch({
-        type: 'TRANSFER_CONTROLLER_UPDATE_FORM',
-        params: { formValues: { amount: newAmount } }
+      transferDispatch({
+        type: 'method',
+        params: { method: 'update', args: [{ amount: newAmount }] }
       })
     },
-    forceUpdateOnChangeList: [state.programmaticUpdateCounter, state.amountFieldMode]
+    forceUpdateOnChangeList: [
+      transferState.programmaticUpdateCounter,
+      transferState.amountFieldMode
+    ]
   })
   const [addressStateFieldValue, setAddressStateFieldValue] = useSyncedState<string>({
     backgroundState: addressState.fieldValue,
     updateBackgroundState: (newAddress: string) => {
-      dispatch({
-        type: 'TRANSFER_CONTROLLER_UPDATE_FORM',
-        params: { formValues: { addressState: { fieldValue: newAddress } } }
+      transferDispatch({
+        type: 'method',
+        params: { method: 'update', args: [{ addressState: { fieldValue: newAddress } }] }
       })
     },
-    forceUpdateOnChangeList: [state.programmaticUpdateCounter]
+    forceUpdateOnChangeList: [transferState.programmaticUpdateCounter]
   })
 
   const isLocalStateOutOfSync =
@@ -140,7 +140,8 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
       (r) =>
         r.kind === 'calls' &&
         r.meta.accountAddr === account.addr &&
-        !r.signAccountOp.isSignAndBroadcastInProgress
+        !r.signAccountOp.isSignAndBroadcastInProgress &&
+        !r.signAccountOp.accountOp.signature
     )
   }, [userRequests, account])
 
@@ -160,16 +161,19 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
 
   const navigateOut = useCallback(() => {
     if (isRequestWindow) {
-      dispatch({
-        type: 'CLOSE_SIGNING_REQUEST_WINDOW',
+      if (!account) return
+
+      requestsDispatch({
+        type: 'method',
         params: {
-          type: 'transfer'
+          method: 'removeUserRequests',
+          args: [[`${account.addr}-transfer-sign`]]
         }
       })
     } else {
       navigate(WEB_ROUTES.dashboard)
     }
-  }, [dispatch, navigate])
+  }, [requestsDispatch, navigate, account])
 
   const { sessionHandler } = useTrackAccountOp({
     address: latestBroadcastedAccountOp?.accountAddr,
@@ -217,69 +221,75 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
   } = useModalize()
 
   const closeEstimationModalAndDispatch = useCallback(() => {
-    dispatch({
-      type: 'TRANSFER_CONTROLLER_HAS_USER_PROCEEDED',
+    transferDispatch({
+      type: 'method',
       params: {
-        proceeded: false
+        method: 'setUserProceeded',
+        args: [false]
       }
     })
     closeEstimationModal()
-  }, [closeEstimationModal, dispatch])
+  }, [closeEstimationModal, transferDispatch])
 
   const openEstimationModalAndDispatch = useCallback(() => {
-    dispatch({
-      type: 'TRANSFER_CONTROLLER_HAS_USER_PROCEEDED',
+    transferDispatch({
+      type: 'method',
       params: {
-        proceeded: true
+        method: 'setUserProceeded',
+        args: [true]
       }
     })
     openEstimationModal()
-  }, [openEstimationModal, dispatch])
+  }, [openEstimationModal, transferDispatch])
 
   const handleUpdateStatus = useCallback(
     (status: SigningStatus) => {
-      dispatch({
-        type: 'CURRENT_SIGN_ACCOUNT_OP_UPDATE_STATUS',
+      transferDispatch({
+        type: 'method',
         params: {
-          updateType: 'Transfer&TopUp',
-          status
+          method: 'callSignAccountOpMethod',
+          args: ['update', [status]]
         }
       })
     },
-    [dispatch]
+    [transferDispatch]
   )
   const updateController = useCallback(
     (params: { signingKeyAddr?: Key['addr']; signingKeyType?: Key['type'] }) => {
-      dispatch({
-        type: 'CURRENT_SIGN_ACCOUNT_OP_UPDATE',
+      transferDispatch({
+        type: 'method',
         params: {
-          updateType: 'Transfer&TopUp',
-          ...params
+          method: 'callSignAccountOpMethod',
+          args: ['update', [params]]
         }
       })
     },
-    [dispatch]
+    [transferDispatch]
   )
 
   // Used to resolve ENS, not to update the field value
   const setAddressState = useCallback(
     (newPartialAddressState: AddressStateOptional) => {
-      dispatch({
-        type: 'TRANSFER_CONTROLLER_UPDATE_FORM',
-        params: { formValues: { addressState: newPartialAddressState } }
+      transferDispatch({
+        type: 'method',
+        params: {
+          method: 'update',
+          args: [{ addressState: newPartialAddressState }]
+        }
       })
     },
-    [dispatch]
+    [transferDispatch]
   )
 
   const onRecipientAddressUnknownAgree = useCallback(() => {
-    dispatch({
-      type: 'TRANSFER_CONTROLLER_UPDATE_FORM',
+    transferDispatch({
+      type: 'method',
       params: {
-        formValues: { isRecipientAddressUnknownAgreed: true }
+        method: 'update',
+        args: [{ isRecipientAddressUnknownAgreed: true }]
       }
     })
-  }, [dispatch])
+  }, [transferDispatch])
 
   const addressInputState = useAddressInput({
     addressState: {
@@ -296,7 +306,7 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
    * Used to allow the user to open the SignAccountOp window to sign the requests.
    */
   const isSendingBatch =
-    accountUserRequests.length > 0 && !state.amount && visibleUserRequests.length > 0
+    accountUserRequests.length > 0 && !transferState.amount && visibleUserRequests.length > 0
 
   const submitButtonText = useMemo(() => {
     const callsCount = getCallsCount(isSendingBatch ? accountUserRequests : networkUserRequests)
@@ -316,16 +326,13 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
       : isFormValid && addressInputState.validation.severity !== 'error')
   }, [addressInputState.validation.severity, isFormValid, isTopUp])
 
-  const onBack = useCallback(() => {
-    navigate(ROUTES.dashboard)
-  }, [navigate])
-
   const resetTransferForm = useCallback(() => {
-    dispatch({
-      type: 'TRANSFER_CONTROLLER_RESET_FORM'
+    transferDispatch({
+      type: 'method',
+      params: { method: 'resetForm', args: [] }
     })
     recipientMenuClosedAutomatically.current = false
-  }, [dispatch])
+  }, [transferDispatch])
 
   const addTransaction = useCallback(
     (executionType: RequestExecutionType) => {
@@ -340,36 +347,42 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
           return
         }
 
-        dispatch({
-          type: 'REQUESTS_CONTROLLER_SET_CURRENT_REQUEST_BY_ID',
+        requestsDispatch({
+          type: 'method',
           params: {
-            requestId: request.id
+            method: 'setCurrentUserRequestById',
+            args: [request.id]
           }
         })
         return
       }
 
-      if (isFormValid && state.selectedToken) {
+      if (isFormValid && transferState.selectedToken) {
         // Proceed in OneClick txn
         if (executionType === 'open-request-window') {
           // one click mode opens signAccountOp if more than 1 req in batch
-          if (networkUserRequests.length > 0) {
-            dispatch({
-              type: 'REQUESTS_CONTROLLER_BUILD_REQUEST',
+          if (!!account?.safeCreation || networkUserRequests.length > 0) {
+            requestsDispatch({
+              type: 'method',
               params: {
-                type: 'transferRequest',
-                params: {
-                  amount: state.amount,
-                  amountInFiat: amountInFiatBigInt, // used only for topUp calcs
-                  selectedToken: state.selectedToken,
-                  recipientAddress: isTopUp
-                    ? FEE_COLLECTOR
-                    : getAddressFromAddressState(addressState),
-                  executionType
-                }
+                method: 'build',
+                args: [
+                  {
+                    type: 'transferRequest',
+                    params: {
+                      amount: transferState.amount,
+                      amountInFiat: amountInFiatBigInt, // used only for topUp calcs
+                      selectedToken: transferState.selectedToken,
+                      recipientAddress: isTopUp
+                        ? FEE_COLLECTOR
+                        : getAddressFromAddressState(addressState),
+                      executionType
+                    }
+                  }
+                ]
               }
             })
-            window.close()
+            if (isPopup) window.close()
           } else {
             openEstimationModalAndDispatch()
           }
@@ -377,22 +390,29 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
         }
 
         // Batch
-        dispatch({
-          type: 'REQUESTS_CONTROLLER_BUILD_REQUEST',
+        requestsDispatch({
+          type: 'method',
           params: {
-            type: 'transferRequest',
-            params: {
-              amount: state.amount,
-              amountInFiat: amountInFiatBigInt, // used only for topUp calcs
-              selectedToken: state.selectedToken,
-              recipientAddress: isTopUp ? FEE_COLLECTOR : getAddressFromAddressState(addressState),
-              executionType
-            }
+            method: 'build',
+            args: [
+              {
+                type: 'transferRequest',
+                params: {
+                  amount: transferState.amount,
+                  amountInFiat: amountInFiatBigInt, // used only for topUp calcs
+                  selectedToken: transferState.selectedToken,
+                  recipientAddress: isTopUp
+                    ? FEE_COLLECTOR
+                    : getAddressFromAddressState(addressState),
+                  executionType
+                }
+              }
+            ]
           }
         })
 
         setShowAddedToBatch(true)
-        setLatestBatchedNetwork(state.selectedToken?.chainId)
+        setLatestBatchedNetwork(transferState.selectedToken?.chainId)
 
         resetTransferForm()
       }
@@ -400,49 +420,20 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
     [
       isSendingBatch,
       isFormValid,
-      state.selectedToken,
-      state.amount,
+      transferState.selectedToken,
+      transferState.amount,
       amountInFiatBigInt,
       visibleUserRequests,
-      dispatch,
+      requestsDispatch,
       addToast,
       t,
       isTopUp,
       addressState,
       resetTransferForm,
       networkUserRequests.length,
-      openEstimationModalAndDispatch
+      openEstimationModalAndDispatch,
+      account?.safeCreation
     ]
-  )
-
-  const handleGasTankInfoPressed = useCallback(
-    () => openGasTankInfoBottomSheet(),
-    [openGasTankInfoBottomSheet]
-  )
-
-  const gasTankLabelWithInfo = useMemo(() => {
-    return (
-      <View style={[flexbox.directionRow, flexbox.flex1, flexbox.alignCenter]}>
-        <Text
-          fontSize={20}
-          weight="medium"
-          appearance="primaryText"
-          numberOfLines={1}
-          style={spacings.mrMi}
-        >
-          {t('Top Up Gas Tank')}
-        </Text>
-        <Pressable onPress={handleGasTankInfoPressed}>
-          <InfoIcon width={20} height={20} />
-        </Pressable>
-      </View>
-    )
-  }, [handleGasTankInfoPressed, t])
-
-  // Title shown in BottomSheet header
-  const headerTitle = useMemo(
-    () => (state.isTopUp ? gasTankLabelWithInfo : t('Send')),
-    [state.isTopUp, gasTankLabelWithInfo, t]
   )
 
   const isSignAccountOpInProgress = useMemo(() => {
@@ -459,31 +450,27 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
 
   const buttons = useMemo(() => {
     return (
-      <>
-        {isTab && <BackButton onPress={onBack} />}
-        <Buttons
-          handleSubmitForm={(isOneClickMode) =>
-            addTransaction(isOneClickMode ? 'open-request-window' : 'queue')
-          }
-          proceedBtnText={submitButtonText}
-          isBatchDisabled={isSendingBatch || isSignAccountOpInProgress}
-          isNotReadyToProceed={!isTransferFormValid}
-          signAccountOpErrors={[]}
-          networkUserRequests={networkUserRequests}
-          isLocalStateOutOfSync={isLocalStateOutOfSync}
-          shouldHoldToProceed={
-            (isRecipientAddressUnknown &&
-              !isRecipientAddressUnknownAgreed &&
-              !isRecipientHumanizerKnownTokenOrSmartContract &&
-              isRecipientAddressFirstTimeSend) ||
-            isRecipientAddressViewOnly
-          }
-          onRecipientAddressUnknownAgree={onRecipientAddressUnknownAgree}
-        />
-      </>
+      <Buttons
+        handleSubmitForm={(isOneClickMode) =>
+          addTransaction(isOneClickMode ? 'open-request-window' : 'queue')
+        }
+        proceedBtnText={submitButtonText}
+        isBatchDisabled={isSendingBatch || isSignAccountOpInProgress}
+        isNotReadyToProceed={!isTransferFormValid}
+        signAccountOpErrors={[]}
+        networkUserRequests={networkUserRequests}
+        isLocalStateOutOfSync={isLocalStateOutOfSync}
+        shouldHoldToProceed={
+          (isRecipientAddressUnknown &&
+            !isRecipientAddressUnknownAgreed &&
+            !isRecipientHumanizerKnownTokenOrSmartContract &&
+            isRecipientAddressFirstTimeSend) ||
+          isRecipientAddressViewOnly
+        }
+        onRecipientAddressUnknownAgree={onRecipientAddressUnknownAgree}
+      />
     )
   }, [
-    onBack,
     submitButtonText,
     isSendingBatch,
     isSignAccountOpInProgress,
@@ -503,27 +490,38 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
     if (!isRequestWindow) {
       navigate(ROUTES.dashboard)
     } else {
-      dispatch({
-        type: 'CLOSE_SIGNING_REQUEST_WINDOW',
+      if (!account) return
+
+      requestsDispatch({
+        type: 'method',
         params: {
-          type: 'transfer'
+          method: 'removeUserRequests',
+          args: [[`${account.addr}-transfer-sign`]]
         }
       })
     }
-  }, [navigate, dispatch])
+  }, [navigate, requestsDispatch, account])
 
   const onBatchAddedPrimaryButtonPress = useCallback(() => {
-    dispatch({
-      type: 'TRANSFER_CONTROLLER_DESTROY_LATEST_BROADCASTED_ACCOUNT_OP'
+    transferDispatch({
+      type: 'method',
+      params: {
+        method: 'destroyLatestBroadcastedAccountOp',
+        args: []
+      }
     })
     navigate(WEB_ROUTES.dashboard)
-  }, [dispatch, navigate])
+  }, [transferDispatch, navigate])
   const onBatchAddedSecondaryButtonPress = useCallback(() => {
-    dispatch({
-      type: 'TRANSFER_CONTROLLER_DESTROY_LATEST_BROADCASTED_ACCOUNT_OP'
+    transferDispatch({
+      type: 'method',
+      params: {
+        method: 'destroyLatestBroadcastedAccountOp',
+        args: []
+      }
     })
     setShowAddedToBatch(false)
-  }, [dispatch, setShowAddedToBatch])
+  }, [transferDispatch, setShowAddedToBatch])
 
   if (displayedView === 'loading') {
     return (
@@ -539,8 +537,12 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
         onPrimaryButtonPress={navigateOut}
         secondaryButtonText={t('Add more')}
         handleClose={() => {
-          dispatch({
-            type: 'TRANSFER_CONTROLLER_DESTROY_LATEST_BROADCASTED_ACCOUNT_OP'
+          transferDispatch({
+            type: 'method',
+            params: {
+              method: 'destroyLatestBroadcastedAccountOp',
+              args: []
+            }
           })
         }}
       >
@@ -604,10 +606,10 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
   }
 
   return (
-    <Wrapper title={headerTitle} buttons={buttons}>
+    <Wrapper>
       <Content buttons={buttons}>
-        {state?.isInitialized ? (
-          <Form>
+        {transferState?.isInitialized ? (
+          <View>
             <SendForm
               handleGoBack={handleGoBackPress}
               addressInputState={addressInputState}
@@ -634,9 +636,9 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
                       <Pressable
                         onPress={async () => {
                           try {
-                            await createTab(
-                              'https://help.ambire.com/hc/en-us/articles/5397969913884-What-is-the-Gas-Tank'
-                            )
+                            await openInTab({
+                              url: 'https://help.ambire.com/hc/en-us/articles/5397969913884-What-is-the-Gas-Tank'
+                            })
                           } catch {
                             addToast("Couldn't open link", { type: 'error' })
                           }
@@ -662,7 +664,7 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
                 />
               </View>
             )}
-          </Form>
+          </View>
         ) : (
           <SkeletonLoader
             width={640}

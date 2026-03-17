@@ -1,17 +1,16 @@
-import React, { FC, useMemo } from 'react'
+import React, { FC } from 'react'
 import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 
 import { SwapAndBridgeActiveRoute } from '@ambire-common/interfaces/swapAndBridge'
 import Button from '@common/components/Button'
+import FooterGlassView from '@common/components/FooterGlassView'
+import LayoutWrapper from '@common/components/LayoutWrapper'
 import useTheme from '@common/hooks/useTheme'
-import useWindowSize from '@common/hooks/useWindowSize'
-import Header from '@common/modules/header/components/Header'
+import { HeaderWithLogoOnly } from '@common/modules/header/components/Header/Header'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import { TabLayoutContainer, TabLayoutWrapperMainContent } from '@web/components/TabLayoutWrapper'
-import { getTabLayoutPadding } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
-import { getUiType } from '@web/utils/uiType'
+import { getUiType } from '@common/utils/uiType'
 
 const { isRequestWindow } = getUiType()
 
@@ -32,59 +31,46 @@ const TrackProgressWrapper: FC<TrackProgressProps> = ({
 }) => {
   const { t } = useTranslation()
   const { theme } = useTheme()
-  const { maxWidthSize } = useWindowSize()
-  const paddingHorizontalStyle = useMemo(() => getTabLayoutPadding(maxWidthSize), [maxWidthSize])
 
   return (
-    <TabLayoutContainer
-      backgroundColor={theme.primaryBackground}
-      header={
-        <Header
-          backgroundColor="primaryBackground"
-          displayBackButtonIn="never"
-          mode="custom-inner-content"
-          withAmbireLogo
-        />
-      }
-      withHorizontalPadding={false}
-      footer={null}
-      style={{ ...flexbox.alignEnd, ...spacings.pb }}
-    >
-      <TabLayoutWrapperMainContent
-        contentContainerStyle={{ ...spacings.pv0, ...paddingHorizontalStyle, ...flexbox.flex1 }}
-        withScroll={false}
-      >
-        <View style={[flexbox.flex1, flexbox.justifyCenter]}>
-          <View
-            style={[
-              flexbox.alignCenter,
-              flexbox.justifyCenter,
-              isRequestWindow ? {} : flexbox.flex1,
-              spacings.pt0
-            ]}
-          >
-            {children}
-          </View>
+    <LayoutWrapper>
+      <HeaderWithLogoOnly />
+      <View style={[spacings.phSm, flexbox.flex1, spacings.pbSm]}>
+        <View
+          style={[
+            flexbox.flex1,
+            flexbox.alignCenter,
+            flexbox.justifyCenter,
+            isRequestWindow ? {} : flexbox.flex1
+          ]}
+        >
+          {children}
+        </View>
 
-          {!isRequestWindow && (
-            <View style={{ height: 1, backgroundColor: theme.secondaryBorder, ...spacings.mvLg }} />
-          )}
+        {!isRequestWindow && (
+          <View style={{ height: 1, backgroundColor: theme.secondaryBorder, ...spacings.mvLg }} />
+        )}
 
+        <FooterGlassView absolute={false} size="sm" style={spacings.mbTy}>
           <View
             style={[
               routeStatus !== 'failed' ? flexbox.directionRow : flexbox.directionRowReverse,
               flexbox.alignCenter,
-              !isRequestWindow ? flexbox.justifySpaceBetween : flexbox.justifyCenter,
-              isRequestWindow && spacings.pt2Xl
+              !isRequestWindow ? flexbox.justifySpaceBetween : flexbox.justifyCenter
             ]}
           >
             {!isRequestWindow ? (
               <Button
                 onPress={handleClose}
                 hasBottomSpacing={false}
+                size="smaller"
                 type={routeStatus !== 'failed' ? 'secondary' : 'primary'}
                 text={secondaryButtonText}
                 testID="track-progress-secondary-button"
+                style={{
+                  ...(routeStatus !== 'failed' ? spacings.mrLg : spacings.mlLg),
+                  minWidth: 144
+                }}
               />
             ) : (
               <View />
@@ -92,15 +78,16 @@ const TrackProgressWrapper: FC<TrackProgressProps> = ({
             <Button
               onPress={onPrimaryButtonPress}
               hasBottomSpacing={false}
-              style={{ width: isRequestWindow ? 240 : 160 }}
+              style={{ width: isRequestWindow ? 160 : 104 }}
               text={t('Close')}
+              size="smaller"
               type={routeStatus !== 'failed' ? 'primary' : 'secondary'}
               testID="track-progress-primary-button"
             />
           </View>
-        </View>
-      </TabLayoutWrapperMainContent>
-    </TabLayoutContainer>
+        </FooterGlassView>
+      </View>
+    </LayoutWrapper>
   )
 }
 

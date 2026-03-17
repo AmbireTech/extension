@@ -7,10 +7,10 @@ import { Key } from '@ambire-common/interfaces/keystore'
 import AccountKey from '@common/components/AccountKey'
 import Spinner from '@common/components/Spinner'
 import Text from '@common/components/Text'
+import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import spacings, { SPACING_LG } from '@common/styles/spacings'
 import { Portal } from '@gorhom/portal'
-import useKeystoreControllerState from '@web/hooks/useKeystoreControllerState'
 
 import getStyles from './styles'
 
@@ -35,7 +35,7 @@ const SigningKeySelect = ({
 }: Props) => {
   const { t } = useTranslation()
   const { theme, styles } = useTheme(getStyles)
-  const { keys } = useKeystoreControllerState()
+  const { keys } = useController('KeystoreController').state
 
   if (!isVisible) return null
 
@@ -69,9 +69,7 @@ const SigningKeySelect = ({
                     addr={key.addr}
                     type={key.type}
                     dedicatedToOneSA={key.dedicatedToOneSA}
-                    label={key.label || `Key ${i + 1}`}
                     isImported={isImported}
-                    enableEditing={false}
                     account={account}
                     keyIconColor={theme.iconPrimary as string}
                     isLast

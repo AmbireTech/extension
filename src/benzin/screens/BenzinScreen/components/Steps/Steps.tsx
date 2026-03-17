@@ -48,11 +48,9 @@ const Steps: FC<Props> = ({ activeStep, txnId, userOpHash, stepsState, summary, 
               spacings.mlTy,
               spacings.pvMi,
               spacings.phSm,
-              {
-                backgroundColor: '#6000FF14',
-                borderRadius: 20,
-                width: 'fit-content'
-              }
+              { backgroundColor: '#6000FF14', borderRadius: 20 },
+              // @ts-ignore value missing in the props, but it's available on web
+              { width: 'fit-content' }
             ]}
           >
             <StarsIcon width={14} height={14} />
@@ -137,7 +135,7 @@ const Steps: FC<Props> = ({ activeStep, txnId, userOpHash, stepsState, summary, 
           style={{ zIndex: 1 }}
         />
       )}
-      <View style={IS_MOBILE_UP_BENZIN_BREAKPOINT ? spacings.mb3Xl : spacings.mbXl}>
+      <View style={IS_MOBILE_UP_BENZIN_BREAKPOINT ? spacings.mb2Xl : spacings.mbXl}>
         <Step
           title="Signed"
           stepName="signed"

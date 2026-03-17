@@ -5,7 +5,6 @@ import { Route, Routes, useLocation } from 'react-router-dom'
 import NoConnectionScreen from '@common/modules/no-connection/screens/NoConnectionScreen'
 import routesConfig from '@common/modules/router/config/routesConfig'
 import { WEB_ROUTES } from '@common/modules/router/constants/common'
-import { SignAccountOpControllerStateProvider } from '@web/contexts/signAccountOpControllerStateContext'
 import AccountPersonalizeScreen from '@web/modules/account-personalize/screens/AccountPersonalizeScreen'
 import AccountPickerScreen from '@web/modules/account-picker/screens/AccountPickerScreen'
 import AccountSelectScreen from '@web/modules/account-select/screens/AccountSelectScreen'
@@ -16,8 +15,8 @@ import DecryptRequestScreen from '@web/modules/action-requests/screens/DecryptRe
 import GetEncryptionPublicKeyRequestScreen from '@web/modules/action-requests/screens/GetEncryptionPublicKeyRequestScreen'
 import SwitchAccountScreen from '@web/modules/action-requests/screens/SwitchAccountScreen'
 import WatchTokenRequestScreen from '@web/modules/action-requests/screens/WatchTokenRequestScreen'
-import CreateSeedPhrasePrepareScreen from '@web/modules/auth/modules/create-seed-phrase/screens/CreateSeedPhrasePrepareScreen'
-import CreateSeedPhraseWriteScreen from '@web/modules/auth/modules/create-seed-phrase/screens/CreateSeedPhraseWriteScreen'
+import CreateSeedPhrasePrepareScreen from '@web/modules/auth/screens/CreateSeedPhrasePrepareScreen'
+import CreateSeedPhraseWriteScreen from '@web/modules/auth/screens/CreateSeedPhraseWriteScreen'
 import EmailAccountScreen from '@web/modules/auth/screens/EmailAccountScreen'
 import EmailLoginScreen from '@web/modules/auth/screens/EmailLoginScreen'
 import EmailRegisterScreen from '@web/modules/auth/screens/EmailRegisterScreen'
@@ -26,7 +25,9 @@ import ImportExistingAccountSelectorScreen from '@web/modules/auth/screens/Impor
 import ImportSmartAccountJsonScreen from '@web/modules/auth/screens/ImportSmartAccountJson'
 import OnboardingCompletedScreen from '@web/modules/auth/screens/OnboardingCompletedScreen'
 import PrivateKeyImportScreen from '@web/modules/auth/screens/PrivateKeyImportScreen'
+import SafeImportScreen from '@web/modules/auth/screens/SafeImportScreen'
 import SeedPhraseImportScreen from '@web/modules/auth/screens/SeedPhraseImportScreen'
+import ViewOnlyAccountAdderScreen from '@web/modules/auth/screens/ViewOnlyAccountAdderScreen'
 import DappCatalogScreen from '@web/modules/dapp-catalog/screens/DappCatalogScreen'
 import ExtensionRewardsScreen from '@web/modules/extension-rewards/screens/ExtensionRewardsScreen'
 import LedgerConnectScreen from '@web/modules/hardware-wallet/screens/LedgerConnectScreen/LedgerConnectScreen'
@@ -58,8 +59,8 @@ import TransactionHistorySettingsScreen from '@web/modules/settings/screens/Tran
 import SignAccountOpScreen from '@web/modules/sign-account-op/screens/SignAccountOpScreen'
 import SignMessageScreen from '@web/modules/sign-message/screens/SignMessageScreen'
 import SwapAndBridgeScreen from '@web/modules/swap-and-bridge/screens/SwapAndBridgeScreen'
+import TokenDetailsScreen from '@web/modules/token-details/screens/TokenDetailsScreen'
 import TransferScreen from '@web/modules/transfer/screens/TransferScreen'
-import ViewOnlyAccountAdderScreen from '@web/modules/view-only-account-adder/ViewOnlyAccountAdderScreen'
 
 const MainRoutes = () => {
   const location = useLocation()
@@ -99,6 +100,8 @@ const MainRoutes = () => {
             element={<ImportExistingAccountSelectorScreen />}
           />
           <Route path={WEB_ROUTES.ledgerConnect} element={<LedgerConnectScreen />} />
+
+          <Route path={WEB_ROUTES.safeImport} element={<SafeImportScreen />} />
 
           <Route path={WEB_ROUTES.importPrivateKey} element={<PrivateKeyImportScreen />} />
           <Route path={WEB_ROUTES.importSeedPhrase} element={<SeedPhraseImportScreen />} />
@@ -163,14 +166,7 @@ const MainRoutes = () => {
         <Route element={<AuthenticatedRoute />}>
           <Route path={WEB_ROUTES.transfer} element={<TransferScreen />} />
           <Route path={WEB_ROUTES.topUpGasTank} element={<TransferScreen isTopUpScreen />} />
-          <Route
-            path={WEB_ROUTES.signAccountOp}
-            element={
-              <SignAccountOpControllerStateProvider>
-                <SignAccountOpScreen />
-              </SignAccountOpControllerStateProvider>
-            }
-          />
+          <Route path={WEB_ROUTES.signAccountOp} element={<SignAccountOpScreen />} />
           <Route path={WEB_ROUTES.swapAndBridge} element={<SwapAndBridgeScreen />} />
           <Route path={WEB_ROUTES.signMessage} element={<SignMessageScreen />} />
           <Route path={WEB_ROUTES.benzin} element={<BenzinScreen />} />
@@ -187,6 +183,7 @@ const MainRoutes = () => {
           <Route path={WEB_ROUTES.decryptRequest} element={<DecryptRequestScreen />} />
 
           <Route path={WEB_ROUTES.menu} element={<NavMenu />} />
+          <Route path={WEB_ROUTES.tokenDetails} element={<TokenDetailsScreen />} />
           <Route path={WEB_ROUTES.accountSelect} element={<AccountSelectScreen />} />
           <Route path={WEB_ROUTES.receive} element={<ReceiveScreen />} />
           <Route path={WEB_ROUTES.apps} element={<DappCatalogScreen />} />

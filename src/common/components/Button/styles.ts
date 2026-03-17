@@ -2,7 +2,7 @@ import { StyleSheet, TextStyle, ViewStyle } from 'react-native'
 
 import { FONT_FAMILIES } from '@common/hooks/useFonts'
 import spacings from '@common/styles/spacings'
-import { THEME_TYPES, ThemeProps, ThemeType } from '@common/styles/themeConfig'
+import { ThemeProps, ThemeType } from '@common/styles/themeConfig'
 import commonStyles from '@common/styles/utils/common'
 import text from '@common/styles/utils/text'
 
@@ -19,11 +19,13 @@ interface Style {
 
   buttonContainerStylesSizeLarge: ViewStyle
   buttonContainerStylesSizeRegular: ViewStyle
+  buttonContainerStylesSmaller: ViewStyle
   buttonContainerStylesSizeSmall: ViewStyle
   buttonContainerStylesSizeTiny: ViewStyle
 
   buttonTextStylesSizeLarge: TextStyle
   buttonTextStylesSizeRegular: TextStyle
+  buttonTextStylesSizeSmaller: TextStyle
   buttonTextStylesSizeSmall: TextStyle
   buttonTextStylesSizeTiny: TextStyle
 
@@ -56,19 +58,19 @@ const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
       borderWidth: 0
     },
     buttonContainerSecondary: {
-      backgroundColor: 'transparent',
-      borderWidth: 1,
-      borderColor: theme.primary
+      borderWidth: 0
     },
     buttonContainerDanger: {
-      borderColor: theme.errorDecorative
+      borderColor: theme.errorDecorative,
+      borderWidth: 1
     },
     buttonContainerOutline: {
-      borderColor: themeType === THEME_TYPES.DARK ? theme.primary : theme.successDecorative
+      borderColor: theme.primaryBorder
     },
     buttonContainerGhost: {
       backgroundColor: 'transparent',
       minHeight: 'auto',
+      height: 'auto',
       ...spacings.pv0
     },
 
@@ -83,6 +85,12 @@ const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
       height: 56,
       ...spacings.pvMi,
       ...spacings.phSm,
+      ...spacings.mbSm
+    },
+    buttonContainerStylesSmaller: {
+      height: 48,
+      ...spacings.phSm,
+      ...spacings.pvSm,
       ...spacings.mbSm
     },
     buttonContainerStylesSizeSmall: {
@@ -100,10 +108,13 @@ const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
 
     // Button text sizes (regular/small)
     buttonTextStylesSizeRegular: {
-      fontSize: 16
+      fontSize: 14
     },
     buttonTextStylesSizeLarge: {
-      fontSize: 16
+      fontSize: 14
+    },
+    buttonTextStylesSizeSmaller: {
+      fontSize: 14
     },
     buttonTextStylesSizeSmall: {
       fontSize: 14,

@@ -40,7 +40,7 @@ const getStyles = (theme: ThemeProps) =>
       borderColor: theme.secondaryBorder
     },
     nextCircle: {
-      borderColor: theme.successDecorative
+      borderColor: theme.success400
     },
     title: {
       ...spacings.mrMi,
@@ -51,8 +51,7 @@ const getStyles = (theme: ThemeProps) =>
     arrow: {
       ...spacings.pvTy,
       ...spacings.phMi,
-      ...spacings.mlMi,
-      color: theme.linkText
+      ...spacings.mlMi
     },
     arrowHovered: {
       backgroundColor: `${String(theme.linkText)}14`,

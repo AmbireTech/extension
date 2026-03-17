@@ -55,6 +55,8 @@ jobs:
       - name: Ensure no new Typescript errors are introduced
         run: yarn extension:type:check-new
         shell: bash
+        env:
+          NODE_OPTIONS: '--max-old-space-size=4096'
       - name: Comment on PR with TypeScript errors
         if: failure() && github.event_name == 'pull_request'
         uses: actions/github-script@v7

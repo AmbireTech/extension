@@ -32,20 +32,22 @@ const PaginationItem: FC<Props> = ({ number, setPage, isActive, isDisabled }) =>
 
         setPage(number)
       }}
-      style={({ hovered }: any) => ({
+      style={{
         ...spacings.phMi,
         ...spacings.mhMi,
         ...flexbox.center,
         minWidth: 24,
-        height: '100%',
-        borderRadius: 4,
-        borderWidth: 1,
+        height: 21,
         borderColor,
-        backgroundColor: number && hovered ? theme.secondaryBackground : theme.primaryBackground,
         opacity: isDisabled ? 0.4 : 1
-      })}
+      }}
     >
-      <Text weight={isActive ? 'medium' : 'regular'}>{!number ? '...' : number}</Text>
+      <Text
+        appearance={isActive ? 'primaryText' : 'secondaryText'}
+        weight={isActive ? 'medium' : 'regular'}
+      >
+        {!number ? '...' : number}
+      </Text>
     </Pressable>
   )
 }

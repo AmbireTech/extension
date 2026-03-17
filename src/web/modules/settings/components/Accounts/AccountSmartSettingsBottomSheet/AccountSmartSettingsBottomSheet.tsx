@@ -2,7 +2,6 @@ import React, { FC, useEffect, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 import { Modalize } from 'react-native-modalize'
-import { v4 as uuidv4 } from 'uuid'
 
 import { Account } from '@ambire-common/interfaces/account'
 import { has7702 } from '@ambire-common/libs/7702/7702'
@@ -18,16 +17,12 @@ import NetworkIcon from '@common/components/NetworkIcon'
 import { PanelBackButton, PanelTitle } from '@common/components/Panel/Panel'
 import SkeletonLoader from '@common/components/SkeletonLoader'
 import Text from '@common/components/Text'
+import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
-import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
 import { TAB_CONTENT_WIDTH } from '@web/constants/spacings'
-import useAccountsControllerState from '@web/hooks/useAccountsControllerState'
-import useBackgroundService from '@web/hooks/useBackgroundService'
-import useKeystoreControllerState from '@web/hooks/useKeystoreControllerState'
-import useNetworksControllerState from '@web/hooks/useNetworksControllerState'
 import Authorization7702 from '@web/modules/sign-message/screens/SignMessageScreen/Contents/authorization7702'
 
 interface Props {
@@ -37,11 +32,14 @@ interface Props {
 }
 
 const AccountSmartSettingsBottomSheet: FC<Props> = ({ sheetRef, closeBottomSheet, account }) => {
-  const { accountStates } = useAccountsControllerState()
-  const { keys } = useKeystoreControllerState()
-  const { networks } = useNetworksControllerState()
-  const { theme, themeType } = useTheme()
-  const { dispatch } = useBackgroundService()
+  const {
+    state: { accountStates },
+    dispatch: accountsDispatch
+  } = useController('AccountsController')
+  const { keys } = useController('KeystoreController').state
+  const { networks } = useController('NetworksController').state
+  const { dispatch: requestsDispatch } = useController('RequestsController')
+  const { theme } = useTheme()
   const { t } = useTranslation()
   const accountStateCheckedForRef = React.useRef<string | null>(null)
 
@@ -60,14 +58,14 @@ const AccountSmartSettingsBottomSheet: FC<Props> = ({ sheetRef, closeBottomSheet
 
     accountStateCheckedForRef.current = account.addr
 
-    dispatch({
-      type: 'ACCOUNTS_CONTROLLER_UPDATE_ACCOUNT_STATE',
+    accountsDispatch({
+      type: 'method',
       params: {
-        addr: account.addr,
-        chainIds: delegationNetworks.map((n) => n.chainId)
+        method: 'updateAccountState',
+        args: [account.addr, 'latest', delegationNetworks.map((n) => n.chainId)]
       }
     })
-  }, [accountState, delegationNetworks, account, dispatch])
+  }, [accountState, delegationNetworks, account, accountsDispatch])
 
   const is7702 = useMemo(() => {
     if (!account) return false
@@ -82,18 +80,25 @@ const AccountSmartSettingsBottomSheet: FC<Props> = ({ sheetRef, closeBottomSheet
     const network = networks.find((n) => n.chainId === chainId)
     if (!network || !account || !accountState || !accountState[chainId.toString()]) return
 
-    dispatch({
-      type: 'REQUESTS_CONTROLLER_ADD_CALLS_USER_REQUEST',
+    requestsDispatch({
+      type: 'method',
       params: {
-        userRequestParams: {
-          calls: [{ to: ZERO_ADDRESS, data: '0x', value: BigInt(0) }],
-          meta: {
-            chainId: network.chainId,
-            accountAddr: account.addr,
-            setDelegation: !accountState[chainId.toString()].delegatedContract
+        method: 'build',
+        args: [
+          {
+            type: 'calls',
+            params: {
+              userRequestParams: {
+                calls: [{ to: ZERO_ADDRESS, data: '0x', value: BigInt(0) }],
+                meta: {
+                  chainId: network.chainId,
+                  accountAddr: account.addr,
+                  setDelegation: !accountState?.[chainId.toString()]?.delegatedContract
+                }
+              }
+            }
           }
-        },
-        allowAccountSwitch: true
+        ]
       }
     })
   }
@@ -103,7 +108,6 @@ const AccountSmartSettingsBottomSheet: FC<Props> = ({ sheetRef, closeBottomSheet
       id="account-delegations-bottom-sheet"
       sheetRef={sheetRef}
       closeBottomSheet={closeBottomSheet}
-      backgroundColor={themeType === THEME_TYPES.DARK ? 'secondaryBackground' : 'primaryBackground'}
       scrollViewProps={{ contentContainerStyle: { flex: 1 } }}
       isScrollEnabled={false}
       containerInnerWrapperStyles={{ flex: 1 }}
@@ -158,10 +162,7 @@ const AccountSmartSettingsBottomSheet: FC<Props> = ({ sheetRef, closeBottomSheet
                   style={[
                     {
                       borderBottomWidth: i !== delegationNetworks.length - 1 ? 1 : 0,
-                      borderBottomColor:
-                        themeType === THEME_TYPES.DARK
-                          ? theme.primaryBorder
-                          : theme.tertiaryBackground
+                      borderBottomColor: theme.secondaryBorder
                     },
                     flexbox.directionRow,
                     flexbox.alignCenter,
@@ -179,13 +180,13 @@ const AccountSmartSettingsBottomSheet: FC<Props> = ({ sheetRef, closeBottomSheet
                   <View style={[flexbox.flex1, flexbox.alignCenter]}>
                     {accountState && accountState[net.chainId.toString()] ? (
                       <View style={[flexbox.directionRow]}>
-                        {accountState[net.chainId.toString()].delegatedContractName ? (
+                        {accountState?.[net.chainId.toString()]?.delegatedContractName ? (
                           <>
-                            {accountState[net.chainId.toString()].delegatedContractName ===
+                            {accountState?.[net.chainId.toString()]?.delegatedContractName ===
                               'AMBIRE' && <AmbireLogo width={20} height={20} />}
-                            {accountState[net.chainId.toString()].delegatedContractName ===
+                            {accountState?.[net.chainId.toString()]?.delegatedContractName ===
                               'METAMASK' && <MetamaskIcon width={20} height={20} />}
-                            {accountState[net.chainId.toString()].delegatedContractName ===
+                            {accountState?.[net.chainId.toString()]?.delegatedContractName ===
                               'UNKNOWN' && <Badge type="success" text={t('unknown')} />}
                           </>
                         ) : (
@@ -201,7 +202,7 @@ const AccountSmartSettingsBottomSheet: FC<Props> = ({ sheetRef, closeBottomSheet
                       <View style={[flexbox.directionRow]}>
                         <Button
                           type={
-                            !accountState[net.chainId.toString()].delegatedContract
+                            !accountState?.[net.chainId.toString()]?.delegatedContract
                               ? 'secondary'
                               : 'danger'
                           }
@@ -209,7 +210,7 @@ const AccountSmartSettingsBottomSheet: FC<Props> = ({ sheetRef, closeBottomSheet
                           style={[spacings.mb0, { minWidth: 78, height: 32 }]}
                           onPress={() => delegate(net.chainId)}
                           text={
-                            !accountState[net.chainId.toString()].delegatedContract
+                            !accountState?.[net.chainId.toString()]?.delegatedContract
                               ? t('Enable')
                               : t('Revoke')
                           }

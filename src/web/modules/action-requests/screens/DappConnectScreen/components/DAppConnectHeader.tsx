@@ -12,7 +12,6 @@ import Text from '@common/components/Text'
 import useTheme from '@common/hooks/useTheme'
 import useWindowSize from '@common/hooks/useWindowSize'
 import spacings, { SPACING, SPACING_LG, SPACING_MD, SPACING_TY } from '@common/styles/spacings'
-import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
 import ManifestImage from '@web/components/ManifestImage'
 
@@ -32,7 +31,7 @@ const DAppConnectHeader: FC<Props> = ({
   securityCheck
 }) => {
   const { t } = useTranslation()
-  const { styles, theme, themeType } = useTheme(getStyles)
+  const { styles, theme } = useTheme(getStyles)
 
   const { minHeightSize } = useWindowSize()
 
@@ -54,9 +53,7 @@ const DAppConnectHeader: FC<Props> = ({
               ? theme.errorBackground
               : securityCheck === 'FAILED_TO_GET'
                 ? theme.warningBackground
-                : themeType === THEME_TYPES.DARK
-                  ? theme.secondaryBackground
-                  : theme.tertiaryBackground
+                : theme.tertiaryBackground
         },
         spacingsStyle
       ]}
@@ -64,6 +61,7 @@ const DAppConnectHeader: FC<Props> = ({
       <Text
         weight="medium"
         fontSize={responsiveSizeMultiplier * 20}
+        appearance="secondaryText"
         style={{
           marginBottom: SPACING * responsiveSizeMultiplier
         }}
@@ -92,7 +90,7 @@ const DAppConnectHeader: FC<Props> = ({
                 top: -5
               }}
               dataSet={createGlobalTooltipDataSet({
-                id,
+                id: `verified-${id}`,
                 content: t('Verified app'),
                 delayShow: 250,
                 border: `1px solid ${theme.successDecorative as string}`,
@@ -104,7 +102,7 @@ const DAppConnectHeader: FC<Props> = ({
                 }
               })}
             >
-              <TrustedIcon borderColor={theme.tertiaryBackground} />
+              <TrustedIcon />
             </View>
           )}
           {securityCheck === 'BLACKLISTED' && (

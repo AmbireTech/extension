@@ -1,5 +1,5 @@
 import { ZeroAddress } from 'ethers'
-import React from 'react'
+import React, { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 
@@ -16,17 +16,17 @@ import PendingToBeConfirmedIcon from '@common/assets/svg/PendingToBeConfirmedIco
 import Text from '@common/components/Text'
 import TokenIcon from '@common/components/TokenIcon'
 import Tooltip from '@common/components/Tooltip'
+import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import PendingBadge from '@common/modules/dashboard/components/Tokens/TokenItem/PendingBadge'
 import getAndFormatTokenDetails from '@common/modules/dashboard/helpers/getTokenDetails'
+import NotSupportedNetworkTooltip from '@common/modules/swap-and-bridge/components/NotSupportedNetworkTooltip'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
-import NotSupportedNetworkTooltip from '@web/modules/swap-and-bridge/components/NotSupportedNetworkTooltip'
-import { getTokenId } from '@web/utils/token'
+import { getTokenId } from '@common/utils/token'
 
 const TextFallbackState: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <Text weight="medium" fontSize={14}>
+  <Text fontSize={14} appearance="secondaryText" style={spacings.plTy}>
     {children}
   </Text>
 )
@@ -36,7 +36,7 @@ const getTokenOptionsEmptyState = (isToToken = false) => [
     value: 'noTokens',
     label: (
       <TextFallbackState>
-        {isToToken ? 'Failed to retrieve tokens' : "You don't have any tokens"}
+        {isToToken ? 'Failed to retrieve tokens' : 'No tokens found'}
       </TextFallbackState>
     ),
     icon: null
@@ -46,7 +46,7 @@ const getTokenOptionsEmptyState = (isToToken = false) => [
 const LOADING_TOKEN_ITEMS = [
   {
     value: 'loading',
-    label: <TextFallbackState>Fetching tokens...</TextFallbackState>,
+    label: <TextFallbackState>Loading tokens...</TextFallbackState>,
     icon: null
   }
 ]
@@ -54,7 +54,7 @@ const LOADING_TOKEN_ITEMS = [
 const NO_VALUE_SELECTED = [
   {
     value: 'no-selection',
-    label: <TextFallbackState>Please select token</TextFallbackState>,
+    label: <TextFallbackState>Select a token</TextFallbackState>,
     icon: null
   }
 ]
@@ -76,7 +76,9 @@ const useGetTokenSelectProps = ({
 }) => {
   const { t } = useTranslation()
   const { theme } = useTheme()
-  const { portfolio } = useSelectedAccountControllerState()
+  const {
+    state: { portfolio }
+  } = useController('SelectedAccountController')
 
   if (isLoading)
     return {
@@ -208,8 +210,8 @@ const useGetTokenSelectProps = ({
                   amount={pendingToBeConfirmed}
                   amountFormatted={pendingToBeConfirmedFormatted}
                   label={t('confirming')}
-                  backgroundColor={theme.info2Background}
-                  textColor={theme.info2Text}
+                  backgroundColor={theme.infoBackground}
+                  textColor={theme.infoText}
                   Icon={PendingToBeConfirmedIcon}
                 />
               )}
@@ -219,6 +221,8 @@ const useGetTokenSelectProps = ({
       </View>
     )
 
+    const networkName = network?.name || (tokenInPortfolio?.flags.onGasTank ? 'Gas Tank' : '')
+
     const isNameDifferentThanSymbol = name.toLowerCase() !== symbol.toLowerCase()
     const label = getIsToTokenTypeGuard(currentToken) ? (
       <>
@@ -226,7 +230,7 @@ const useGetTokenSelectProps = ({
           dataSet={tooltipIdNotSupported ? { tooltipId: tooltipIdNotSupported } : undefined}
           style={flexbox.flex1}
         >
-          <Text numberOfLines={1}>
+          <Text numberOfLines={1} style={{ lineHeight: 20 }}>
             <Text fontSize={16} weight="medium" numberOfLines={1}>
               {symbol}{' '}
             </Text>
@@ -238,7 +242,7 @@ const useGetTokenSelectProps = ({
               </Text>
             )}
           </Text>
-          <Text numberOfLines={1} fontSize={12} appearance="secondaryText">
+          <Text numberOfLines={1} fontSize={12} appearance="secondaryText" weight="mono_regular">
             {isNative && 'Native'}
             {!isNative && isSelected && shortenAddress(currentToken.address, 13)}
             {!isNative && !isSelected && currentToken.address}
@@ -252,21 +256,35 @@ const useGetTokenSelectProps = ({
       </>
     ) : (
       <>
-        <Text
-          numberOfLines={1}
-          dataSet={{ tooltipId: tooltipIdNotSupported }}
-          style={flexbox.flex1}
+        <View
+          style={[
+            flexbox.flex1,
+            !isSelected && flexbox.directionRow,
+            !isSelected && flexbox.alignEnd
+          ]}
         >
-          <Text fontSize={16} weight="medium">
+          <Text
+            fontSize={16}
+            weight="semiBold"
+            style={{ lineHeight: 20 }}
+            numberOfLines={1}
+            dataSet={{ tooltipId: tooltipIdNotSupported }}
+          >
             {symbol}
           </Text>
-          <Text fontSize={14} appearance="secondaryText">
-            {' on '}
-          </Text>
-          <Text fontSize={14} appearance="secondaryText">
-            {network?.name || 'Unknown network'}
-          </Text>
-        </Text>
+          {!!networkName && (
+            <Text
+              fontSize={isSelected ? 12 : 14}
+              weight={isSelected ? 'regular' : 'medium'}
+              appearance="secondaryText"
+              ellipsizeMode="tail"
+              numberOfLines={1}
+              style={!isSelected && spacings.mlTy}
+            >
+              {`${isSelected ? '' : ' '}on ${networkName}`}
+            </Text>
+          )}
+        </View>
         {!isSelected && formattedBalancesLabel}
         {!isTokenNetworkSupported && (
           <NotSupportedNetworkTooltip tooltipId={tooltipIdNotSupported} network={network} />
@@ -288,9 +306,11 @@ const useGetTokenSelectProps = ({
       icon: (
         <TokenIcon
           key={`${currentToken.chainId}-${currentToken.address}`}
-          containerHeight={30}
-          containerWidth={30}
-          networkSize={12}
+          containerHeight={isSelected ? 28 : 32}
+          containerWidth={isSelected ? 28 : 32}
+          width={isSelected ? 24 : 28}
+          height={isSelected ? 24 : 28}
+          networkSize={isSelected ? 12 : 14}
           withContainer
           withNetworkIcon={!_isToToken}
           uri={getIsToTokenTypeGuard(currentToken) ? currentToken.icon : undefined}

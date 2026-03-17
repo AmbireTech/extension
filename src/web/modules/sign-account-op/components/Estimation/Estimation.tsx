@@ -15,12 +15,11 @@ import Alert from '@common/components/Alert'
 import Select, { SectionedSelect } from '@common/components/Select'
 import { SelectValue } from '@common/components/Select/types'
 import Text from '@common/components/Text'
+import TitleAndIcon from '@common/components/TitleAndIcon'
+import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
-import useWindowSize from '@common/hooks/useWindowSize'
 import spacings from '@common/styles/spacings'
-import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
-import useBackgroundService from '@web/hooks/useBackgroundService'
 
 import BundlerWarning from './components/bundlerWarning'
 import EstimationSkeleton from './components/EstimationSkeleton'
@@ -95,12 +94,15 @@ const Estimation = ({
   updateType,
   slowRequest,
   bundlerNonceDiscrepancy,
-  serviceFee
+  serviceFee,
+  isOneClick
 }: Props) => {
-  const { dispatch } = useBackgroundService()
+  const { dispatch: signAccountOpDispatch } = useController('SignAccountOpController')
+  const { dispatch: swapAndBridgeDispatch } = useController('SwapAndBridgeController')
+  const { dispatch: transferDispatch } = useController('TransferController')
+  const { state } = useController('AddressBookController')
   const { t } = useTranslation()
-  const { theme, themeType } = useTheme(getStyles)
-  const { minWidthSize } = useWindowSize()
+  const { theme } = useTheme(getStyles)
 
   const feeTokenPriceUnavailableWarning = useMemo(() => {
     return signAccountOpState?.warnings.find((warning) => warning.id === 'feeTokenPriceUnavailable')
@@ -112,8 +114,8 @@ const Estimation = ({
     return signAccountOpState.estimation.availableFeeOptions
       .filter((feeOption) => feeOption.paidBy === signAccountOpState.accountOp.accountAddr)
       .sort((a: FeePaymentOption, b: FeePaymentOption) => sortFeeOptions(a, b, signAccountOpState))
-      .map((feeOption) => mapFeeOptions(feeOption, signAccountOpState))
-  }, [hasEstimation, signAccountOpState])
+      .map((feeOption) => mapFeeOptions(feeOption, signAccountOpState, state.contacts))
+  }, [hasEstimation, signAccountOpState, state.contacts])
 
   const payOptionsPaidByEOA = useMemo(() => {
     if (!signAccountOpState?.estimation.availableFeeOptions.length || !hasEstimation) return []
@@ -121,8 +123,8 @@ const Estimation = ({
     return signAccountOpState.estimation.availableFeeOptions
       .filter((feeOption) => feeOption.paidBy !== signAccountOpState.accountOp.accountAddr)
       .sort((a: FeePaymentOption, b: FeePaymentOption) => sortFeeOptions(a, b, signAccountOpState))
-      .map((feeOption) => mapFeeOptions(feeOption, signAccountOpState))
-  }, [hasEstimation, signAccountOpState])
+      .map((feeOption) => mapFeeOptions(feeOption, signAccountOpState, state.contacts))
+  }, [hasEstimation, signAccountOpState, state.contacts])
 
   const [selectedFeeOption, setSelectedFeeOption] = useState<SelectValue['value'] | null>(null)
 
@@ -139,30 +141,82 @@ const Estimation = ({
       setSelectedFeeOption(localPayValue.value)
 
       if (!skipDispatch) {
-        dispatch({
-          type: 'CURRENT_SIGN_ACCOUNT_OP_UPDATE',
-          params: {
-            updateType,
-            feeToken: localPayValue.token,
-            paidBy: localPayValue.paidBy,
-            speed: localPayValue.speedCoverage.includes(signAccountOpState.selectedFeeSpeed)
-              ? signAccountOpState.selectedFeeSpeed
-              : FeeSpeed.Fast
-          }
-        })
+        if (updateType === 'Swap&Bridge') {
+          swapAndBridgeDispatch({
+            type: 'method',
+            params: {
+              method: 'callSignAccountOpMethod',
+              args: [
+                'update',
+                [
+                  {
+                    feeToken: localPayValue.token,
+                    paidBy: localPayValue.paidBy,
+                    speed: localPayValue.speedCoverage.includes(signAccountOpState.selectedFeeSpeed)
+                      ? signAccountOpState.selectedFeeSpeed
+                      : FeeSpeed.Fast
+                  }
+                ]
+              ]
+            }
+          })
+        } else if (updateType === 'Transfer&TopUp') {
+          transferDispatch({
+            type: 'method',
+            params: {
+              method: 'callSignAccountOpMethod',
+              args: [
+                'update',
+                [
+                  {
+                    feeToken: localPayValue.token,
+                    paidBy: localPayValue.paidBy,
+                    speed: localPayValue.speedCoverage.includes(signAccountOpState.selectedFeeSpeed)
+                      ? signAccountOpState.selectedFeeSpeed
+                      : FeeSpeed.Fast
+                  }
+                ]
+              ]
+            }
+          })
+        } else {
+          signAccountOpDispatch({
+            type: 'method',
+            params: {
+              method: 'update',
+              args: [
+                {
+                  feeToken: localPayValue.token,
+                  paidBy: localPayValue.paidBy,
+                  speed: localPayValue.speedCoverage.includes(signAccountOpState.selectedFeeSpeed)
+                    ? signAccountOpState.selectedFeeSpeed
+                    : FeeSpeed.Fast
+                }
+              ]
+            }
+          })
+        }
       }
     },
-    [dispatch, signAccountOpState?.selectedFeeSpeed, updateType]
+    [
+      signAccountOpDispatch,
+      updateType,
+      signAccountOpState?.selectedFeeSpeed,
+      swapAndBridgeDispatch,
+      transferDispatch
+    ]
   )
 
   useEffect(() => {
     if (!hasEstimation || !signAccountOpState) return
 
     if (!payValue && signAccountOpState.selectedOption) {
-      setFeeOption(mapFeeOptions(signAccountOpState.selectedOption, signAccountOpState), true)
+      setFeeOption(
+        mapFeeOptions(signAccountOpState.selectedOption, signAccountOpState, state.contacts),
+        true
+      )
     }
-  }, [payValue, setFeeOption, hasEstimation, signAccountOpState])
-
+  }, [payValue, setFeeOption, hasEstimation, signAccountOpState, state.contacts])
   const feeSpeeds = useMemo(() => {
     if (!signAccountOpState?.selectedOption) return []
 
@@ -237,15 +291,51 @@ const Estimation = ({
         return
       }
 
-      dispatch({
-        type: 'CURRENT_SIGN_ACCOUNT_OP_UPDATE',
-        params: {
-          updateType,
-          speed: value as FeeSpeed
-        }
-      })
+      if (updateType === 'Swap&Bridge') {
+        swapAndBridgeDispatch({
+          type: 'method',
+          params: {
+            method: 'callSignAccountOpMethod',
+            args: [
+              'update',
+              [
+                {
+                  speed: value as FeeSpeed
+                }
+              ]
+            ]
+          }
+        })
+      } else if (updateType === 'Transfer&TopUp') {
+        transferDispatch({
+          type: 'method',
+          params: {
+            method: 'callSignAccountOpMethod',
+            args: [
+              'update',
+              [
+                {
+                  speed: value as FeeSpeed
+                }
+              ]
+            ]
+          }
+        })
+      } else {
+        signAccountOpDispatch({
+          type: 'method',
+          params: {
+            method: 'update',
+            args: [
+              {
+                speed: value as FeeSpeed
+              }
+            ]
+          }
+        })
+      }
     },
-    [dispatch, updateType]
+    [signAccountOpDispatch, swapAndBridgeDispatch, transferDispatch, updateType]
   )
 
   const feeOptionSelectSections = useMemo(() => {
@@ -260,7 +350,7 @@ const Estimation = ({
     return [
       {
         title: {
-          icon: <FeeIcon color={theme.secondaryText} width={16} height={16} />,
+          icon: FeeIcon,
           text: t('With fee tokens from current account')
         },
         data: payOptionsPaidByUsOrGasTank,
@@ -268,14 +358,14 @@ const Estimation = ({
       },
       {
         title: {
-          icon: <AssetIcon color={theme.secondaryText} width={16} height={16} />,
+          icon: AssetIcon,
           text: t('With native assets of my EOA accounts')
         },
         data: payOptionsPaidByEOA,
         key: 'eoa-tokens'
       }
     ]
-  }, [payOptionsPaidByEOA, payOptionsPaidByUsOrGasTank, t, theme.secondaryText])
+  }, [payOptionsPaidByEOA, payOptionsPaidByUsOrGasTank, t])
 
   const nativeFeeOption = signAccountOpState?.estimation.availableFeeOptions.find(
     (feeOption) =>
@@ -289,56 +379,27 @@ const Estimation = ({
 
     if (!nativeFeeOption) return
 
-    const mappedFeeOption = mapFeeOptions(nativeFeeOption, signAccountOpState)
+    const mappedFeeOption = mapFeeOptions(nativeFeeOption, signAccountOpState, state.contacts)
     mappedFeeOption.label = (
       <PayOption
         amount={BigInt(serviceFee.amount)}
         amountUsd={serviceFee.amountUSD}
         feeOption={nativeFeeOption}
+        paidByAccountLabel={mappedFeeOption.paidByAccountLabel}
       />
     )
     return mappedFeeOption
-  }, [hasEstimation, signAccountOpState, serviceFee, nativeFeeOption])
+  }, [serviceFee, signAccountOpState, hasEstimation, nativeFeeOption, state.contacts])
 
   const v1warning = useMemo(() => {
     return signAccountOpState?.warnings.find((w) => w.id === 'v1Acc')
   }, [signAccountOpState?.warnings])
 
-  const renderFeeOptionSectionHeader = useCallback(
-    ({ section }: any) => {
-      if (section.data.length === 0 || !section.title) return null
+  const renderFeeOptionSectionHeader = useCallback(({ section }: any) => {
+    if (section.data.length === 0 || !section.title) return null
 
-      return (
-        <View
-          style={[
-            flexbox.directionRow,
-            flexbox.alignCenter,
-            spacings.phTy,
-            spacings.pvTy,
-            {
-              backgroundColor: theme.primaryBackground,
-              height: FEE_SECTION_LIST_MENU_HEADER_HEIGHT
-            },
-            section?.key === 'eoa-tokens' && {
-              borderTopWidth: 1,
-              borderTopColor: theme.secondaryBorder
-            }
-          ]}
-        >
-          {section.title.icon}
-          <Text
-            style={minWidthSize('xl') ? spacings.mlMi : spacings.mlTy}
-            fontSize={minWidthSize('xl') ? 12 : 14}
-            weight="medium"
-            appearance="secondaryText"
-          >
-            {section.title.text}
-          </Text>
-        </View>
-      )
-    },
-    [minWidthSize, theme.primaryBackground, theme.secondaryBorder]
-  )
+    return <TitleAndIcon icon={section.title.icon} title={section.title.text} />
+  }, [])
 
   if (!hasEstimation && !!slowRequest) {
     return (
@@ -373,7 +434,9 @@ const Estimation = ({
   if (isSponsored) {
     return (
       <>
-        {(!serviceFee || !paidByNativeValue || !nativeFeeOption) && <Sponsored sponsor={sponsor} />}
+        {(!serviceFee || !paidByNativeValue || !nativeFeeOption) && (
+          <Sponsored sponsor={sponsor} isOneClick={isOneClick} />
+        )}
         <ServiceFee
           serviceFee={serviceFee}
           paidByNativeValue={paidByNativeValue}
@@ -401,11 +464,11 @@ const Estimation = ({
           flexbox.directionRow,
           flexbox.alignCenter,
           flexbox.justifySpaceBetween,
-          spacings.mbMi
+          spacings.mbSm
         ]}
       >
-        <Text fontSize={18} weight="medium">
-          {t('Pay fee with')}
+        <Text fontSize={20} weight="medium">
+          {t(signAccountOpState.canAccountBroadcastByItself ? 'Pay fee with' : 'Broadcast from')}
         </Text>
         {selectedFee && (
           <Select
@@ -413,8 +476,11 @@ const Estimation = ({
             // @ts-ignore
             setValue={onFeeSelect}
             options={feeSpeedOptions}
-            selectStyle={{ height: 32, borderWidth: themeType === THEME_TYPES.DARK ? 0 : 1 }}
-            menuOptionHeight={32}
+            selectStyle={{
+              height: 40,
+              backgroundColor: isOneClick ? theme.secondaryBackground : theme.primaryBackground
+            }}
+            menuOptionHeight={40}
             // Display a wider menu if the fee token price is unavailable
             // as the native amount takes up more space
             menuLeftHorizontalOffset={feeTokenPriceUnavailableWarning ? 100 : 48}
@@ -438,10 +504,11 @@ const Estimation = ({
           (!payOptionsPaidByUsOrGasTank.length && !payOptionsPaidByEOA.length) ||
           !signAccountOpState.selectedOption
         }
-        defaultValue={payValue ?? undefined}
         selectStyle={{
-          borderWidth: themeType === THEME_TYPES.DARK ? 0 : 1
+          backgroundColor: isOneClick ? theme.secondaryBackground : theme.primaryBackground,
+          ...spacings.phSm
         }}
+        defaultValue={payValue ?? undefined}
         withSearch={!!payOptionsPaidByUsOrGasTank.length || !!payOptionsPaidByEOA.length}
         stickySectionHeadersEnabled
       />

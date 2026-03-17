@@ -1,43 +1,37 @@
 import React, { useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Pressable, ScrollView, View } from 'react-native'
+import { ScrollView, View } from 'react-native'
 
+import AmbireLogoSquare from '@common/assets/svg/AmbireLogoSquare'
 import BugIcon from '@common/assets/svg/BugIcon'
-import BulbIcon from '@common/assets/svg/BulbIcon'
 import DiscordIcon from '@common/assets/svg/DiscordIcon'
 import HelpIcon from '@common/assets/svg/HelpIcon'
-import LockFilledIcon from '@common/assets/svg/LockFilledIcon'
+import LockIcon from '@common/assets/svg/LockIcon'
 import MaximizeIcon from '@common/assets/svg/MaximizeIcon'
 import TelegramIcon from '@common/assets/svg/TelegramIcon'
 import TwitterIcon from '@common/assets/svg/TwitterIcon'
 import BackButton from '@common/components/BackButton'
 import Button from '@common/components/Button'
+import FooterGlassView from '@common/components/FooterGlassView/FooterGlassView'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import Text from '@common/components/Text'
+import useController from '@common/hooks/useController'
 import useNavigation from '@common/hooks/useNavigation'
 import useTheme from '@common/hooks/useTheme'
-import Header from '@common/modules/header/components/Header'
-import getHeaderStyles from '@common/modules/header/components/Header/styles'
-import HeaderBackButton from '@common/modules/header/components/HeaderBackButton'
+import { HeaderWithTitle } from '@common/modules/header/components/Header/Header'
 import { ROUTES, WEB_ROUTES } from '@common/modules/router/constants/common'
-import spacings, { SPACING_SM } from '@common/styles/spacings'
-import common, { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
+import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import text from '@common/styles/utils/text'
+import { openInTab } from '@common/utils/links'
+import { getUiType } from '@common/utils/uiType'
 import {
   TabLayoutContainer,
   tabLayoutWidths
 } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
 import { DISCORD_URL, TELEGRAM_URL, TWITTER_URL } from '@web/constants/social'
-import { getAutoLockLabel } from '@web/extension-services/background/controllers/auto-lock'
-import { createTab, openInTab } from '@web/extension-services/background/webapi/tab'
-import useAutoLockStateController from '@web/hooks/useAutoLockStateController'
-import useBackgroundService from '@web/hooks/useBackgroundService'
-import useKeystoreControllerState from '@web/hooks/useKeystoreControllerState'
 import SettingsLink from '@web/modules/settings/components/SettingsLink'
 import { SETTINGS_LINKS } from '@web/modules/settings/components/Sidebar/Sidebar'
 import commonWebStyles from '@web/styles/utils/common'
-import { getUiType } from '@web/utils/uiType'
 
 import getStyles from './styles'
 
@@ -51,7 +45,7 @@ const OTHER_LINKS = [
   {
     key: 'help-center',
     Icon: React.memo(HelpIcon),
-    label: 'Help Center',
+    label: 'Help center',
     path: 'https://help.ambire.com/hc/en-us',
     isExternal: true
   },
@@ -64,7 +58,7 @@ const OTHER_LINKS = [
   },
   {
     key: 'about',
-    Icon: BulbIcon,
+    Icon: AmbireLogoSquare,
     label: 'About',
     path: ROUTES.settingsAbout
   }
@@ -76,15 +70,11 @@ const expandViewTooltipId = 'expand-view-tooltip'
 const NavMenu = () => {
   const { t } = useTranslation()
   const { navigate } = useNavigation()
-  const { styles, theme } = useTheme(getStyles)
-  const { styles: headerStyles } = useTheme(getHeaderStyles)
-  const { hasPasswordSecret } = useKeystoreControllerState()
-  const { dispatch } = useBackgroundService()
-  const autoLockState = useAutoLockStateController()
+  const { theme } = useTheme(getStyles)
+  const { hasPasswordSecret } = useController('KeystoreController').state
+  const { dispatch: mainDispatch } = useController('MainController')
   const handleLockAmbire = () => {
-    dispatch({
-      type: 'MAIN_CONTROLLER_LOCK'
-    })
+    mainDispatch({ type: 'method', params: { method: 'lock', args: [] } })
   }
 
   useEffect(() => {
@@ -99,47 +89,7 @@ const NavMenu = () => {
       width="full"
       footer={<BackButton />}
       footerStyle={{ maxWidth: tabLayoutWidths.xl }}
-      header={
-        <Header mode="custom">
-          <View style={[headerStyles.widthContainer, { maxWidth: tabLayoutWidths.xl }]}>
-            <View style={[headerStyles.sideContainer, { width: 180 }]}>
-              <HeaderBackButton />
-            </View>
-            <View style={headerStyles.containerInner}>
-              <Text
-                weight="medium"
-                fontSize={isTab ? 24 : 20}
-                style={headerStyles.title}
-                numberOfLines={2}
-              >
-                {t('Menu')}
-              </Text>
-            </View>
-            <View style={[headerStyles.sideContainer, { width: 180, alignItems: 'flex-end' }]}>
-              {hasPasswordSecret && (
-                <View style={[flexbox.justifyCenter, flexbox.alignCenter]}>
-                  <Button
-                    text="Lock Ambire"
-                    type="secondary"
-                    size="small"
-                    childrenPosition="left"
-                    style={{ height: 32, ...spacings.phTy, ...spacings.mbMi, maxWidth: 130 }}
-                    onPress={handleLockAmbire}
-                  >
-                    <LockFilledIcon style={spacings.mrTy} color={theme.primary} height={20} />
-                  </Button>
-                  <Text appearance="tertiaryText" fontSize={12} style={text.center}>
-                    {t('Auto lock time:')}{' '}
-                    <Text appearance="tertiaryText" fontSize={12} weight="medium">
-                      {getAutoLockLabel(autoLockState.autoLockTime)}
-                    </Text>
-                  </Text>
-                </View>
-              )}
-            </View>
-          </View>
-        </Header>
-      }
+      header={<HeaderWithTitle title={t('Menu')} />}
       style={spacings.ph0}
       withHorizontalPadding={false}
     >
@@ -151,8 +101,7 @@ const NavMenu = () => {
                 flexbox.directionRow,
                 flexbox.justifySpaceBetween,
                 flexbox.alignCenter,
-                SETTINGS_LINKS.length > 8 ? spacings.mbSm : spacings.mb,
-                spacings.pl
+                spacings.mb
               ]}
             >
               <Text fontSize={20} weight="medium">
@@ -173,114 +122,61 @@ const NavMenu = () => {
                       }
                     >
                       <MaximizeIcon
-                        color={theme.secondaryBackgroundInverted}
+                        color={theme.iconPrimary}
                         dataSet={createGlobalTooltipDataSet({
                           id: expandViewTooltipId,
                           content: t('Expand view')
                         })}
-                        width={16}
-                        height={16}
+                        width={24}
+                        height={24}
                       />
                     </Button>
                   </View>
                 )}
               </View>
             </View>
-            <ScrollView style={flexbox.flex1} contentContainerStyle={{ flexGrow: 1 }}>
-              <View style={[flexbox.directionRow, flexbox.wrap, flexbox.alignStart]}>
+            {hasPasswordSecret && (
+              <FooterGlassView isSimpleBlur={false}>
+                <Button
+                  text="Lock Ambire"
+                  size="smaller"
+                  childrenPosition="left"
+                  onPress={handleLockAmbire}
+                  hasBottomSpacing={false}
+                >
+                  <LockIcon style={spacings.mrTy} color="#fff" />
+                </Button>
+              </FooterGlassView>
+            )}
+            <ScrollView
+              style={[flexbox.flex1, spacings.pbXl]}
+              contentContainerStyle={{
+                flexGrow: 1,
+                paddingRight: 2,
+                paddingBottom: 80
+              }}
+            >
+              <View style={spacings.mbXl}>
                 {SETTINGS_LINKS.map((link, i) => (
-                  <SettingsLink
-                    {...link}
-                    key={link.key}
-                    isActive={false}
-                    initialBackground={theme.primaryBackground}
-                    style={{
-                      width: '50%',
-                      ...(i !== SETTINGS_LINKS.length - 1 && i !== SETTINGS_LINKS.length - 2
-                        ? spacings.mbTy
-                        : spacings.mb0)
-                    }}
-                  />
+                  <SettingsLink {...link} key={link.key} isActive={false} />
                 ))}
               </View>
+              <View style={spacings.mbXl}>
+                {OTHER_LINKS.map(({ Icon, ...link }) => (
+                  <SettingsLink {...link} Icon={Icon} key={link.key} isActive={false} />
+                ))}
+              </View>
+              {SOCIAL.map(({ Icon, ...link }) => (
+                <SettingsLink
+                  {...link}
+                  Icon={Icon}
+                  key={link.url}
+                  path={link.url}
+                  isActive={false}
+                  isExternal
+                />
+              ))}
             </ScrollView>
-          </View>
-          <View style={styles.separatorWrapper}>
-            <View style={styles.separator} />
-          </View>
-          <View
-            style={[flexbox.directionRow, flexbox.justifySpaceBetween, spacings.plMd, spacings.pb]}
-          >
-            <View style={[flexbox.directionRow, flexbox.flex1]}>
-              {OTHER_LINKS.map(({ Icon, path, label, isExternal }, i) => (
-                <Pressable
-                  style={() => [
-                    flexbox.directionRow,
-                    flexbox.alignCenter,
-                    spacings.mrMd,
-                    common.borderRadiusPrimary
-                  ]}
-                  key={path}
-                  onPress={() => {
-                    if (isExternal) {
-                      createTab(path)
-                    } else {
-                      navigate(path)
-                    }
-                  }}
-                >
-                  {({ hovered }: any) => (
-                    <>
-                      <View
-                        style={{
-                          backgroundColor: theme.secondaryBackground,
-                          paddingVertical: SPACING_SM / 2,
-                          paddingHorizontal: SPACING_SM / 2,
-                          borderRadius: BORDER_RADIUS_PRIMARY,
-                          ...flexbox.justifyCenter,
-                          ...spacings.mrTy
-                        }}
-                      >
-                        <Icon
-                          width={20}
-                          height={20}
-                          color={hovered ? theme.iconSecondary : theme.iconPrimary}
-                        />
-                      </View>
-                      <Text
-                        fontSize={14}
-                        weight="medium"
-                        appearance={hovered ? 'primaryText' : 'secondaryText'}
-                      >
-                        {label}
-                      </Text>
-                    </>
-                  )}
-                </Pressable>
-              ))}
-            </View>
-            <View style={[flexbox.directionRow, flexbox.wrap]}>
-              {SOCIAL.map(({ Icon, url, label }) => (
-                <Pressable
-                  style={() => [
-                    flexbox.directionRow,
-                    flexbox.alignCenter,
-                    flexbox.flex1,
-
-                    common.borderRadiusPrimary
-                  ]}
-                  key={url}
-                  onPress={() => createTab(url)}
-                >
-                  {({ hovered }: any) => (
-                    <Icon
-                      style={spacings.mrSm}
-                      color={hovered ? theme.iconSecondary : theme.iconPrimary}
-                    />
-                  )}
-                </Pressable>
-              ))}
-            </View>
           </View>
         </View>
       </View>

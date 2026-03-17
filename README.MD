@@ -225,6 +225,50 @@ And find the resulting build in the "build/legends-prod" folder.
 
 ## Others
 
+### Starting the Ledger Emulator Locally
+
+You can run the Ledger emulator locally for testing purposes. Make sure **Docker** is installed on your machine before proceeding.
+
+#### Steps
+
+1. **Navigate to the emulator folder**:
+
+```bash
+cd e2e-playwright-tests/ledger-emulator
+```
+
+2. **Start the emulator**:
+
+```bash
+$LEDGER_EMULATOR_SEED='<LEDGER-SEED-PHRASE>' ./start-emulator.sh
+```
+
+**Note:** Make sure port `5000` is available before starting the emulator.
+
+1. **Check if port 5000 is in use:**
+```bash
+lsof -i :5000
+```
+If nothing is returned, the port is free.
+If you see a process listed, the port is occupied.
+
+2. **macOS specific context**
+
+On macOS, port 5000 is commonly taken by AirPlay Receiver (enabled by default on newer macOS versions).
+To check:
+
+System Settings → General → AirDrop & Handoff → AirPlay Receiver
+
+If enabled, it may bind to port 5000.
+
+You can either:
+- Disable AirPlay Receiver, or
+- Kill the process manually:
+
+```bash
+kill -9 $(lsof -t -i :5000)
+```
+
 ### Browser Extensions E2E Tests
 
 #### Configuration

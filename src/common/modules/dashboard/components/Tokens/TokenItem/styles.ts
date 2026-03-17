@@ -13,9 +13,8 @@ const getStyles = () =>
       display: 'flex',
       ...flexbox.directionRow,
       ...flexbox.justifySpaceBetween,
-      ...spacings.pvTy,
+      paddingVertical: 6,
       ...spacings.phTy
-      // ...common.borderRadiusPrimary
     }
   })
 

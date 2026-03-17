@@ -796,12 +796,6 @@
       "count": 3,
       "message": "Type 'ViewStyle | TextStyle | ImageStyle | undefined' is not assignable to type 'ViewStyle | TextStyle | ImageStyle'."
     },
-    "b64ea2792ad762ca0624597a2bb314d461ca7940": {
-      "file": "src/common/components/RequireLocation/RequireLocation.tsx",
-      "code": "TS2345",
-      "count": 1,
-      "message": "Argument of type 'Permission | undefined' is not assignable to parameter of type 'Permission'."
-    },
     "27a6b1bddfac06c31882089da2f8dbea8ef93908": {
       "file": "src/common/components/ScrollableWrapper/DraggableFlatList/DraggableItem.tsx",
       "code": "TS2769",
@@ -1660,12 +1654,6 @@
       "count": 1,
       "message": "Object is possibly 'undefined'."
     },
-    "64d5bb7f37743ec9989f466d85d6974962b7224e": {
-      "file": "src/web/modules/sign-account-op/components/CustomFee/CustomFee.tsx",
-      "code": "TS2307",
-      "count": 1,
-      "message": "Cannot find module '@web/modules/sign-account-op/components/FeeWrapper' or its corresponding type declarations."
-    },
     "49c0448283c4d97bc8ff47c130eb2ed2c40c4771": {
       "file": "src/web/modules/sign-account-op/components/Estimation/Estimation.tsx",
       "code": "TS18048",
@@ -1815,6 +1803,42 @@
       "code": "TS7053",
       "count": 1,
       "message": "Element implicitly has an 'any' type because expression of type '`is${string}`' can't be used to index type 'UiTypeCheck'."
+    },
+    "bb52b19b4610e264dbe65f39fd09a5d0994f9780": {
+      "file": "node_modules/viem/node_modules/ox/core/AbiParameters.ts",
+      "code": "TS2322",
+      "count": 1,
+      "message": "Type 'string' is not assignable to type '`0x${string}`'."
+    },
+    "d1eef087f7274730f6577ad7c57ef0c8130d08f7": {
+      "file": "node_modules/viem/node_modules/ox/core/Secp256k1.ts",
+      "code": "TS2345",
+      "count": 1,
+      "message": "Argument of type '{ prefix: number; x: bigint; y: bigint; } | { prefix: number; x: bigint; y?: undefined; } | undefined' is not assignable to parameter of type '{ prefix: number; x: bigint; y: bigint; } | { prefix: number; x: bigint; y?: undefined; }'."
+    },
+    "73bdcd59700acbda1b3eab25e0a1b5402840ce65": {
+      "file": "node_modules/viem/node_modules/ox/tempo/KeyAuthorization.ts",
+      "code": "TS2345",
+      "count": 1,
+      "message": "Argument of type 'BaseTuple | readonly [chainId: `0x${string}`, keyType: `0x${string}`, keyId: string, expiry: `0x${string}`] | readonly [chainId: `0x${string}`, keyType: `0x${string}`, keyId: string, expiry: `0x${string}`, limits: readonly [token: string, limit: `0x${string}`][]]' is not assignable to parameter of type 'RecursiveArray<`0x${string}`>'."
+    },
+    "21dfb8ac75cf23906e5bd1ddf213965592052e69": {
+      "file": "node_modules/viem/node_modules/ox/tempo/SignatureEnvelope.ts",
+      "code": "TS2345",
+      "count": 1,
+      "message": "Argument of type 'string' is not assignable to parameter of type '`0x${string}`'."
+    },
+    "0437a4fb715917cf0a5a9eadf98c94fc02299cc3": {
+      "file": "node_modules/viem/node_modules/ox/tempo/TokenId.ts",
+      "code": "TS2345",
+      "count": 1,
+      "message": "Argument of type 'string' is not assignable to parameter of type '`0x${string}`'."
+    },
+    "cde7caa24d6b0c6136ce6c02fbdde1b704eec5a7": {
+      "file": "node_modules/viem/node_modules/ox/tempo/TxEnvelopeTempo.ts",
+      "code": "TS2345",
+      "count": 1,
+      "message": "Argument of type 'readonly [`0x${string}`, `0x${string}`, `0x${string}`, `0x${string}`, string[][], readonly [address: string, storageKeys: readonly `0x${string}`[]][], `0x${string}`, `0x${string}`, `0x${string}`, `0x${string}`, string, string | Tuple, readonly (readonly [chainId: `0x${string}`, address: `0x${string}`, nonce: `0x${string}`])[]]' is not assignable to parameter of type 'RecursiveArray<`0x${string}`>'."
     }
   }
 }

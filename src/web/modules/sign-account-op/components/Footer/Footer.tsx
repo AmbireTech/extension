@@ -1,21 +1,21 @@
 import React, { useMemo } from 'react'
 import { View } from 'react-native'
+import { useModalize } from 'react-native-modalize'
 
 import { getCallsCount } from '@ambire-common/utils/userRequest'
 import BatchIcon from '@common/assets/svg/BatchIcon'
-import InfoIcon from '@common/assets/svg/InfoIcon'
+import BottomSheet from '@common/components/BottomSheet'
 import Button from '@common/components/Button'
 import ButtonWithLoader from '@common/components/ButtonWithLoader/ButtonWithLoader'
+import DualChoiceWarningModal from '@common/components/DualChoiceWarningModal'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import HoldToProceedButton from '@common/components/HoldToProceedButton'
 import { useTranslation } from '@common/config/localization'
+import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
+import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
-import { AnimatedPressable, useCustomHover } from '@web/hooks/useHover'
-import useRequestsControllerState from '@web/hooks/useRequestsControllerState'
-import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
-import useSignAccountOpControllerState from '@web/hooks/useSignAccountOpControllerState'
 import ActionsPagination from '@web/modules/action-requests/components/ActionsPagination'
 
 import getStyles from './styles'
@@ -48,10 +48,12 @@ const Footer = ({
   shouldHoldToProceed
 }: Props) => {
   const { t } = useTranslation()
-  const { styles, theme } = useTheme(getStyles)
-  const { userRequests } = useRequestsControllerState()
-  const { account } = useSelectedAccountControllerState()
-  const { accountOp } = useSignAccountOpControllerState() || {}
+  const { styles, themeType } = useTheme(getStyles)
+  const { userRequests } = useController('RequestsController').state
+  const {
+    state: { account }
+  } = useController('SelectedAccountController')
+  const { accountOp } = useController('SignAccountOpController').state || {}
   const chainId = accountOp?.chainId
 
   const batchCount = useMemo(() => {
@@ -72,13 +74,20 @@ const Footer = ({
     [t]
   )
 
-  const [bindAnim, animStyle] = useCustomHover({
-    property: 'backgroundColor',
-    values: {
-      from: 'transparent',
-      to: theme.quaternaryBackground
-    }
-  })
+  const isMultisigSigned = useMemo(() => {
+    return !!accountOp?.signature
+  }, [accountOp?.signature])
+
+  const batchBtnText = useMemo(() => {
+    if (isMultisigSigned) return t('Sign later')
+    return batchCount > 1
+      ? t('Add to batch ({{batchCount}})', {
+          batchCount
+        })
+      : t('Start a batch')
+  }, [isMultisigSigned, batchCount, t])
+
+  const { ref: sheetRef, open: openModal, close: closeModal } = useModalize()
 
   return (
     <View style={styles.container}>
@@ -87,7 +96,13 @@ const Footer = ({
           testID="transaction-button-reject"
           type="danger"
           text={t('Reject')}
-          onPress={onReject}
+          onPress={() => {
+            if (isMultisigSigned) {
+              openModal()
+            } else {
+              onReject()
+            }
+          }}
           hasBottomSpacing={false}
           size="large"
           disabled={isSignLoading}
@@ -99,41 +114,25 @@ const Footer = ({
         style={[flexbox.directionRow, !isAddToCartDisplayed && flexbox.flex1, flexbox.justifyEnd]}
       >
         {isAddToCartDisplayed && (
-          <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-            <Button
-              testID="queue-and-sign-later-button"
-              type="outline"
-              accentColor={theme.primary}
-              text={
-                batchCount > 1
-                  ? t('Add to batch ({{batchCount}})', {
-                      batchCount
-                    })
-                  : t('Start a batch')
-              }
-              onPress={onAddToCart}
-              disabled={isAddToCartDisabled}
-              hasBottomSpacing={false}
-              style={{ minWidth: 160, ...spacings.ph }}
-              size="large"
-            >
-              <BatchIcon style={spacings.mlTy} />
-            </Button>
-            <View
-              style={spacings.mlMi}
-              dataSet={createGlobalTooltipDataSet({
+          <Button
+            testID="queue-and-sign-later-button"
+            type="secondary"
+            childrenPosition="left"
+            text={batchBtnText}
+            onPress={onAddToCart}
+            disabled={isAddToCartDisabled}
+            hasBottomSpacing={false}
+            style={{ minWidth: 160, ...spacings.ph }}
+            size="large"
+            {...(!isMultisigSigned && {
+              tooltipDataSet: createGlobalTooltipDataSet({
                 id: 'start-batch-info-tooltip',
                 content: startBatchingInfo
-              })}
-            >
-              <AnimatedPressable
-                style={[spacings.phTy, spacings.pvTy, { borderRadius: 50 }, animStyle]}
-                {...bindAnim}
-              >
-                <InfoIcon color={theme.tertiaryText} width={20} height={20} />
-              </AnimatedPressable>
-            </View>
-          </View>
+              })
+            })}
+          >
+            {!isMultisigSigned && <BatchIcon style={spacings.mlTy} />}
+          </Button>
         )}
         <View
           dataSet={createGlobalTooltipDataSet({
@@ -142,14 +141,17 @@ const Footer = ({
             content: buttonTooltipText
           })}
         >
-          {shouldHoldToProceed ? (
+          {shouldHoldToProceed && (
             <HoldToProceedButton
               text={t('Hold to sign')}
               disabled={isSignDisabled}
               onHoldComplete={onSign}
               testID="proceed-btn"
+              style={[{ minWidth: 128 }, spacings.mlLg]}
+              size="large"
             />
-          ) : (
+          )}
+          {!shouldHoldToProceed && (
             <ButtonWithLoader
               testID="transaction-button-sign"
               type="primary"
@@ -158,8 +160,28 @@ const Footer = ({
               text={isSignLoading ? inProgressButtonText : buttonText}
               onPress={onSign}
               size="large"
+              style={[{ minWidth: 128 }, spacings.mlLg]}
             />
           )}
+          <BottomSheet
+            id="confirm-hide"
+            type="modal"
+            sheetRef={sheetRef}
+            closeBottomSheet={closeModal}
+            onBackdropPress={closeModal}
+          >
+            <DualChoiceWarningModal
+              title={t('Are you sure?')}
+              description={t(
+                'You are about to reject an already signed transcation. It will no longer be visible in Ambire.'
+              )}
+              primaryButtonText={t('Proceed')}
+              secondaryButtonText={t('Return')}
+              onPrimaryButtonPress={onReject}
+              onSecondaryButtonPress={closeModal}
+              type="error"
+            />
+          </BottomSheet>
         </View>
       </View>
     </View>

@@ -4,14 +4,11 @@ import { useTranslation } from 'react-i18next'
 import { Animated, NativeScrollEvent, NativeSyntheticEvent, View } from 'react-native'
 import { useSearchParams } from 'react-router-dom'
 
+import useController from '@common/hooks/useController'
 import usePrevious from '@common/hooks/usePrevious'
 import useRoute from '@common/hooks/useRoute'
-import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import useBackgroundService from '@web/hooks/useBackgroundService'
-import useNetworksControllerState from '@web/hooks/useNetworksControllerState'
-import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
-import { getUiType } from '@web/utils/uiType'
+import { getUiType } from '@common/utils/uiType'
 
 import Activity from '../Activity'
 import Collections from '../Collections'
@@ -22,18 +19,24 @@ import Tokens from '../Tokens'
 interface Props {
   onScroll: (event: NativeSyntheticEvent<NativeScrollEvent>) => void
   animatedOverviewHeight: Animated.Value
+  isSearchHidden: boolean
 }
 
 const { isTab } = getUiType()
 
-const DashboardPages = ({ onScroll, animatedOverviewHeight }: Props) => {
+const DashboardPages = ({ onScroll, isSearchHidden, animatedOverviewHeight }: Props) => {
   const { t } = useTranslation()
   const route = useRoute()
   const [sessionId] = useState(`dashboard-${nanoid()}`)
   const [, setSearchParams] = useSearchParams()
-  const { dashboardNetworkFilter } = useSelectedAccountControllerState()
-  const { networks } = useNetworksControllerState()
-  const { dispatch } = useBackgroundService()
+  const {
+    state: { dashboardNetworkFilter }
+  } = useController('SelectedAccountController')
+
+  const {
+    state: { networks }
+  } = useController('NetworksController')
+  const { dispatch: activityDispatch } = useController('ActivityController')
 
   const [openTab, setOpenTab] = useState(() => {
     const params = new URLSearchParams(route?.search)
@@ -85,15 +88,18 @@ const DashboardPages = ({ onScroll, animatedOverviewHeight }: Props) => {
       // Remove session - this will be triggered only when navigation to another screen internally in the extension.
       // The session removal when the window is forcefully closed is handled
       // in the port.onDisconnect callback in the background.
-      dispatch({ type: 'MAIN_CONTROLLER_ACTIVITY_RESET_ACC_OPS_FILTERS', params: { sessionId } })
+      activityDispatch({
+        type: 'method',
+        params: { method: 'resetAccountsOpsFilters', args: [sessionId] }
+      })
     }
     // setSearchParams must not be in the dependency array
     // as it changes on call and kills the session prematurely
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dispatch, sessionId])
+  }, [activityDispatch, sessionId])
 
   return (
-    <View style={[flexbox.flex1, isTab ? spacings.phSm : {}]}>
+    <View style={flexbox.flex1}>
       <Tokens
         openTab={openTab}
         sessionId={sessionId}
@@ -102,6 +108,7 @@ const DashboardPages = ({ onScroll, animatedOverviewHeight }: Props) => {
         initTab={initTab}
         dashboardNetworkFilterName={dashboardNetworkFilterName}
         animatedOverviewHeight={animatedOverviewHeight}
+        isSearchHidden={isSearchHidden}
       />
       <Collections
         openTab={openTab}
@@ -112,6 +119,7 @@ const DashboardPages = ({ onScroll, animatedOverviewHeight }: Props) => {
         networks={networks}
         dashboardNetworkFilterName={dashboardNetworkFilterName}
         animatedOverviewHeight={animatedOverviewHeight}
+        isSearchHidden={isSearchHidden}
       />
 
       <DeFiPositions
@@ -122,6 +130,7 @@ const DashboardPages = ({ onScroll, animatedOverviewHeight }: Props) => {
         initTab={initTab}
         dashboardNetworkFilterName={dashboardNetworkFilterName}
         animatedOverviewHeight={animatedOverviewHeight}
+        isSearchHidden={isSearchHidden}
       />
 
       <Activity

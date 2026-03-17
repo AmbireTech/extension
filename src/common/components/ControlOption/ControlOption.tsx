@@ -3,14 +3,13 @@ import { useTranslation } from 'react-i18next'
 import { View, ViewStyle } from 'react-native'
 
 import Text from '@common/components/Text'
+import { AnimatedPressable, useCustomHover } from '@common/hooks/useHover'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import spacings from '@common/styles/spacings'
-import { THEME_TYPES } from '@common/styles/themeConfig'
 import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
-import { openInTab } from '@web/extension-services/background/webapi/tab'
-import { AnimatedPressable, useCustomHover } from '@web/hooks/useHover'
+import { openInTab } from '@common/utils/links'
 
 interface Props {
   title: string
@@ -81,14 +80,14 @@ const ControlOption: FC<Props> = ({
           </Text>
           <Text appearance="secondaryText" fontSize={14}>
             {description}
-            {readMoreLink && (
+            {!!readMoreLink && ' '}
+            {!!readMoreLink && (
               <Text
                 fontSize={14}
-                color={themeType === THEME_TYPES.DARK ? theme.linkText : theme.primary}
-                style={{ fontStyle: 'italic' }}
+                color={theme.linkText}
+                style={{ textDecorationLine: 'underline' }}
                 onPress={openReadMoreLink}
               >
-                {' '}
                 {t('Read more')}
               </Text>
             )}

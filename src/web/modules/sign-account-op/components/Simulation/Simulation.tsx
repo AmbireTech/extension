@@ -14,13 +14,10 @@ import ScrollableWrapper from '@common/components/ScrollableWrapper'
 import Text from '@common/components/Text'
 import Nft from '@common/components/TokenOrNft/components/Nft'
 import { Trans, useTranslation } from '@common/config/localization'
+import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import useDappsControllerState from '@web/hooks/useDappsControllerState'
-import useNetworksControllerState from '@web/hooks/useNetworksControllerState'
-import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
-import useSignAccountOpControllerState from '@web/hooks/useSignAccountOpControllerState'
 import PendingTokenSummary from '@web/modules/sign-account-op/components/PendingTokenSummary'
 
 import SimulationSkeleton from './SimulationSkeleton'
@@ -37,16 +34,18 @@ interface Props {
 const Simulation: FC<Props> = ({ network, isEstimationComplete, isViewOnly }) => {
   const { t } = useTranslation()
   const { styles, theme } = useTheme(getStyles)
-  const signAccountOpState = useSignAccountOpControllerState()
+  const signAccountOpState = useController('SignAccountOpController').state
   const {
-    portfolio: { tokens, collections, portfolioState, networkSimulatedAccountOp }
-  } = useSelectedAccountControllerState()
+    state: {
+      portfolio: { tokens, collections, portfolioState, networkSimulatedAccountOp }
+    }
+  } = useController('SelectedAccountController')
   const [initialSimulationLoaded, setInitialSimulationLoaded] = useState(false)
   const [shouldRespectIsLoading, setShouldRespectIsLoading] = useState(true)
-  const { networks } = useNetworksControllerState()
+  const { networks } = useController('NetworksController').state
   const {
     state: { dapps }
-  } = useDappsControllerState()
+  } = useController('DappsController')
 
   const pendingTokens = useMemo(() => {
     if (signAccountOpState?.accountOp && network) {
@@ -202,7 +201,7 @@ const Simulation: FC<Props> = ({ network, isEstimationComplete, isViewOnly }) =>
 
     // If the user is view only we are not displaying the error elsewhere
     // thus we have to show it in the Simulation
-    if (signAccountOpState.status?.type === SigningStatus.EstimationError && !isViewOnly)
+    if (signAccountOpState?.status?.type === SigningStatus.EstimationError && !isViewOnly)
       return 'error-handled-elsewhere'
 
     if (simulationErrorMsg) return 'error'
@@ -211,7 +210,11 @@ const Simulation: FC<Props> = ({ network, isEstimationComplete, isViewOnly }) =>
       return 'changes'
 
     // no-changes from here
-    if (!isSmartAccount(signAccountOpState.account) && !!network?.rpcNoStateOverride)
+    if (
+      signAccountOpState?.account &&
+      !isSmartAccount(signAccountOpState.account) &&
+      !!network?.rpcNoStateOverride
+    )
       return 'simulation-not-supported'
 
     return 'no-changes'
@@ -243,7 +246,7 @@ const Simulation: FC<Props> = ({ network, isEstimationComplete, isViewOnly }) =>
               style={[styles.simulationContainer, !!pendingReceiveTokens.length && spacings.mrTy]}
             >
               <View style={styles.simulationContainerHeader}>
-                <Text fontSize={14} appearance="secondaryText" numberOfLines={1}>
+                <Text fontSize={14} weight="semiBold" appearance="secondaryText" numberOfLines={1}>
                   {t('Assets out')}
                 </Text>
               </View>
@@ -287,9 +290,9 @@ const Simulation: FC<Props> = ({ network, isEstimationComplete, isViewOnly }) =>
             </View>
           )}
           {(!!pendingReceiveTokens.length || !!pendingReceiveCollection.length) && (
-            <View style={[styles.simulationContainer, spacings.mlTy]}>
+            <View style={styles.simulationContainer}>
               <View style={styles.simulationContainerHeader}>
-                <Text fontSize={14} appearance="secondaryText" numberOfLines={1}>
+                <Text fontSize={14} weight="semiBold" appearance="secondaryText" numberOfLines={1}>
                   {t('Assets in')}
                 </Text>
               </View>
@@ -380,6 +383,7 @@ const Simulation: FC<Props> = ({ network, isEstimationComplete, isViewOnly }) =>
       {containsDappsNotInCatalog && containsPermit2 && (
         <AlertVertical
           type="warning"
+          style={spacings.mt}
           customIcon={() => <WarningFilledIcon width={48} height={44} />}
           text={
             <Text appearance="warningText" weight="semiBold">

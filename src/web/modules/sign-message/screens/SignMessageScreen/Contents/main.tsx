@@ -3,22 +3,20 @@ import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 
 import { humanizeMessage } from '@ambire-common/libs/humanizer'
-import ErrorOutlineIcon from '@common/assets/svg/ErrorOutlineIcon'
+import WarningIcon from '@common/assets/svg/WarningIcon'
 import Alert from '@common/components/Alert'
 import ExpandableCard from '@common/components/ExpandableCard'
 import HumanizedVisualization from '@common/components/HumanizedVisualization'
 import Label from '@common/components/Label'
 import NetworkBadge from '@common/components/NetworkBadge'
 import Text from '@common/components/Text'
+import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import useWindowSize from '@common/hooks/useWindowSize'
 import spacings, { SPACING_LG, SPACING_MD, SPACING_TY } from '@common/styles/spacings'
-import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
 import { TabLayoutWrapperMainContent } from '@web/components/TabLayoutWrapper'
-import useNetworksControllerState from '@web/hooks/useNetworksControllerState'
 import useResponsiveActionWindow from '@web/hooks/useResponsiveActionWindow'
-import useSignMessageControllerState from '@web/hooks/useSignMessageControllerState'
 import HardwareWalletSigningModal from '@web/modules/hardware-wallet/components/HardwareWalletSigningModal'
 import LedgerConnectModal from '@web/modules/hardware-wallet/components/LedgerConnectModal'
 import FallbackVisualization from '@web/modules/sign-message/screens/SignMessageScreen/FallbackVisualization'
@@ -32,6 +30,7 @@ interface Props {
   hasReachedBottom: boolean | null
   setHasReachedBottom: Dispatch<SetStateAction<boolean | null>>
   shouldDisplayEIP1271Warning: boolean
+  isSafeNotDeployed: boolean
 }
 
 const Main = ({
@@ -40,15 +39,17 @@ const Main = ({
   handleDismissLedgerConnectModal,
   hasReachedBottom,
   setHasReachedBottom,
-  shouldDisplayEIP1271Warning
+  shouldDisplayEIP1271Warning,
+  isSafeNotDeployed
 }: Props) => {
   const { t } = useTranslation()
-  const signMessageState = useSignMessageControllerState()
+  const { state: signMessageState, dispatch: signMessageDispatch } =
+    useController('SignMessageController')
   const signStatus = signMessageState.statuses.sign
   const { styles, theme, themeType } = useTheme(getStyles)
   const { responsiveSizeMultiplier } = useResponsiveActionWindow()
   const { minHeightSize } = useWindowSize()
-  const { networks } = useNetworksControllerState()
+  const { networks } = useController('NetworksController').state
   const network = useMemo(
     () =>
       networks.find((n) => {
@@ -115,8 +116,16 @@ const Main = ({
           {shouldDisplayEIP1271Warning && (
             <Alert
               type="error"
+              size="sm"
+              style={spacings.mt}
               title="This app has been flagged to not support Smart Account signatures."
               text="If you encounter issues, please use an EOA account and contact the app to resolve this."
+            />
+          )}
+          {isSafeNotDeployed && (
+            <Alert
+              type="error"
+              title="Safe account not enabled on this network. Please activate it from Safe global"
             />
           )}
         </View>
@@ -130,8 +139,7 @@ const Main = ({
               // Setting maxHeight on larger screens introduced internal content scroll
               // (which aligns the content better - with internal scrollbar).
               ...(minHeightSize(660) ? {} : { maxHeight: '100%' }),
-              backgroundColor:
-                themeType === THEME_TYPES.DARK ? theme.tertiaryBackground : theme.primaryBackground,
+              backgroundColor: theme.secondaryBackground,
               ...(humanizedMessage?.warnings?.length ? styles.warningContainer : {})
             }}
             content={
@@ -151,9 +159,10 @@ const Main = ({
                       marginRight: SPACING_TY * responsiveSizeMultiplier
                     }}
                   >
-                    <ErrorOutlineIcon
+                    <WarningIcon
                       width={24 * responsiveSizeMultiplier}
                       height={24 * responsiveSizeMultiplier}
+                      color={theme.warningText}
                     />
                   </View>
                   <Text fontSize={14 * responsiveSizeMultiplier} appearance="warningText">
@@ -191,10 +200,19 @@ const Main = ({
             })}
           </ExpandableCard>
         </View>
-        {signMessageState.signingKeyType && signMessageState.signingKeyType !== 'internal' && (
+        {signMessageState.signer && signMessageState.signer.key.type !== 'internal' && (
           <HardwareWalletSigningModal
-            keyType={signMessageState.signingKeyType}
+            keyType={signMessageState.signer.key.type}
             isVisible={signStatus === 'LOADING'}
+            cancelReq={() => {
+              signMessageDispatch({
+                type: 'method',
+                params: {
+                  method: 'cancelSignReq',
+                  args: []
+                }
+              })
+            }}
           />
         )}
         {shouldDisplayLedgerConnectModal && (

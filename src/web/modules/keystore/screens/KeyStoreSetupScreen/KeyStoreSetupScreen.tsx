@@ -11,23 +11,21 @@ import Text from '@common/components/Text'
 import { Trans, useTranslation } from '@common/config/localization'
 import useTheme from '@common/hooks/useTheme'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
-import Header from '@common/modules/header/components/Header'
+import KeyStoreSetupForm from '@common/modules/keystore/components/KeyStoreSetupForm'
+import TermsComponent from '@common/modules/terms/components'
 import spacings from '@common/styles/spacings'
-import { THEME_TYPES } from '@common/styles/themeConfig'
 import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import {
   TabLayoutContainer,
   TabLayoutWrapperMainContent
 } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
-import KeyStoreSetupForm from '@web/modules/keystore/components/KeyStoreSetupForm'
-import TermsComponent from '@web/modules/terms/components'
 
 const KeyStoreSetupScreen = () => {
   const { t } = useTranslation()
 
   const { goToPrevRoute } = useOnboardingNavigation()
-  const { theme, themeType } = useTheme()
+  const { theme } = useTheme()
   const [agreedWithTerms, setAgreedWithTerms] = useState(true)
   const { ref: termsModalRef, open: openTermsModal, close: closeTermsModal } = useModalize()
   const animation = useRef(new Animated.Value(0)).current
@@ -41,10 +39,7 @@ const KeyStoreSetupScreen = () => {
   }, [animation])
 
   return (
-    <TabLayoutContainer
-      backgroundColor={theme.secondaryBackground}
-      header={<Header mode="custom-inner-content" withAmbireLogo />}
-    >
+    <TabLayoutContainer backgroundColor={theme.secondaryBackground}>
       <TabLayoutWrapperMainContent withScroll={false}>
         <Panel
           type="onboarding"
@@ -55,11 +50,7 @@ const KeyStoreSetupScreen = () => {
           step={2}
           totalSteps={2}
         >
-          <Text
-            weight="medium"
-            appearance="secondaryText"
-            style={[spacings.mbXl, spacings.phSm, { textAlign: 'center' }]}
-          >
+          <Text weight="medium" appearance="secondaryText" style={spacings.mbXl}>
             {t('Used to access your local wallet and encrypt your data.')}
           </Text>
 
@@ -68,18 +59,14 @@ const KeyStoreSetupScreen = () => {
               testID="keystore-setup-checkbox"
               value={agreedWithTerms}
               onValueChange={setAgreedWithTerms}
-              style={[spacings.mlSm, spacings.ptXl, spacings.mb0]}
+              style={[spacings.ptXl, spacings.mbTy]}
               label={
                 <Trans>
-                  <Text fontSize={14} appearance="secondaryText">
+                  <Text fontSize={12} appearance="secondaryText">
                     I agree to the{' '}
                   </Text>
                   <TouchableOpacity testID="terms-of-service-btn" onPress={() => openTermsModal()}>
-                    <Text
-                      fontSize={14}
-                      underline
-                      color={themeType === THEME_TYPES.DARK ? theme.primary : theme.infoDecorative}
-                    >
+                    <Text fontSize={12} color={theme.linkText}>
                       Terms of Service
                     </Text>
                   </TouchableOpacity>
@@ -94,9 +81,6 @@ const KeyStoreSetupScreen = () => {
         id="terms-modal"
         style={{ maxWidth: 800 }}
         closeBottomSheet={closeTermsModal}
-        backgroundColor={
-          themeType === THEME_TYPES.DARK ? 'secondaryBackground' : 'primaryBackground'
-        }
         sheetRef={termsModalRef}
       >
         <View style={[flexbox.alignCenter, flexbox.justifyCenter]}>

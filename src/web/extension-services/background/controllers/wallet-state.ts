@@ -6,9 +6,10 @@ import {
   CRASH_ANALYTICS_ENABLED_STORAGE_KEY
 } from '@common/config/analytics/CrashAnalytics.web'
 import { APP_VERSION } from '@common/config/env'
-import { DEFAULT_THEME, ThemeType } from '@common/styles/themeConfig'
+import { storage } from '@common/services/storage'
+import { DEFAULT_THEME } from '@common/styles/theme/types'
+import { ThemeType } from '@common/styles/themeConfig'
 import { browser, isSafari } from '@web/constants/browserapi'
-import { storage } from '@web/extension-services/background/webapi/storage'
 import { DEFAULT_LOG_LEVEL, LOG_LEVELS, setLoggerInstanceLogLevel } from '@web/utils/logger'
 
 export type AvatarType = 'blockies' | 'jazzicons' | 'polycons' | 'ens'
@@ -102,6 +103,10 @@ export class WalletStateController extends EventEmitter {
     }
 
     this.#isPinnedTimeout = setTimeout(this.#initContinuousCheckIsPinned.bind(this), 1000)
+  }
+
+  setIsSetupComplete(isSetupComplete: boolean) {
+    this.#isSetupComplete = isSetupComplete
   }
 
   async setThemeType(type: ThemeType) {

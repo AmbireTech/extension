@@ -5,7 +5,7 @@ import { THEME_TYPES, ThemeProps, ThemeType } from '@common/styles/themeConfig'
 import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
-import { getUiType } from '@web/utils/uiType'
+import { getUiType } from '@common/utils/uiType'
 
 interface Style {
   content: ViewStyle
@@ -27,17 +27,12 @@ const { isTab } = getUiType()
 
 const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
   StyleSheet.create<Style>({
-    content: {
-      backgroundColor:
-        themeType === THEME_TYPES.DARK ? theme.secondaryBackground : theme.primaryBackground,
-      ...common.borderRadiusSecondary,
-      ...(themeType === THEME_TYPES.DARK ? {} : common.shadowTertiary),
-      width: '100%',
-      maxWidth: 600
-    },
-    qrCodeContainer: { ...flexbox.alignCenter, ...spacings.mvTy },
+    qrCodeContainer: { ...flexbox.alignCenter, ...spacings.mb },
     qrCode: {
+      ...spacings.phTy,
+      ...spacings.pvTy,
       ...common.borderRadiusPrimary,
+      backgroundColor: themeType === THEME_TYPES.DARK ? '#fff' : theme.secondaryBackground,
       overflow: 'hidden'
     },
     accountAddress: {
@@ -50,8 +45,14 @@ const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
       marginHorizontal: 'auto',
       marginBottom: isTab ? SPACING_XL : SPACING_MD
     },
-    supportedNetworksContainer: { ...flexbox.alignCenter, ...spacings.mb },
-    supportedNetworksTitle: { ...spacings.mbSm, ...text.center },
+    supportedNetworksContainer: {
+      ...flexbox.alignCenter,
+      ...spacings.mb,
+      borderTopWidth: 1,
+      borderBottomWidth: 0,
+      borderColor: theme.neutral100
+    },
+    supportedNetworksTitle: { ...spacings.mbSm, ...text.center, ...spacings.mt },
     supportedNetworks: {
       flexDirection: 'row',
       flexWrap: 'wrap',
@@ -61,7 +62,7 @@ const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
     },
     supportedNetwork: {
       ...flexbox.center,
-      ...spacings.mhTy,
+      ...spacings.mhMi,
       ...spacings.mvMi,
       borderRadius: 32,
       borderWidth: 1,
@@ -74,12 +75,11 @@ const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
       ...spacings.pvSm,
       ...spacings.mbSm,
       ...common.borderRadiusPrimary,
-      backgroundColor:
-        themeType === THEME_TYPES.DARK ? theme.primaryBackground : theme.secondaryBackground
+      backgroundColor: theme.secondaryBackground
     },
     seeMoreWrapper: {
-      ...flexbox.center,
-      ...spacings.mbSm
+      ...flexbox.directionRow,
+      ...flexbox.center
     },
     extraNetwork: {
       opacity: 0,
@@ -87,6 +87,7 @@ const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
       // @ts-ignore
       pointerEvents: 'none',
       position: 'absolute',
+      // @ts-ignore prop doesn't exist on ViewStyle, used for web
       transitionProperty: 'opacity, transform',
       transitionDuration: '500ms',
       transitionTimingFunction: 'ease'

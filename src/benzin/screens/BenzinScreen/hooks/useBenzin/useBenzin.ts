@@ -1,4 +1,3 @@
-import { JsonRpcProvider } from 'ethers'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Linking } from 'react-native'
 
@@ -9,16 +8,15 @@ import {
 } from '@ambire-common/libs/accountOp/submittedAccountOp'
 import { relayerCall } from '@ambire-common/libs/relayerCall/relayerCall'
 import { BundlerSwitcher } from '@ambire-common/services/bundlers/bundlerSwitcher'
-import { getRpcProvider } from '@ambire-common/services/provider'
 import { getBenzinUrlParams } from '@ambire-common/utils/benzin'
 import useBenzinNetworksContext from '@benzin/hooks/useBenzinNetworksContext'
 import useSteps from '@benzin/screens/BenzinScreen/hooks/useSteps'
 import { ActiveStepType } from '@benzin/screens/BenzinScreen/interfaces/steps'
+import useController from '@common/hooks/useController'
 import useRoute from '@common/hooks/useRoute'
 import useToast from '@common/hooks/useToast'
 import { setStringAsync } from '@common/utils/clipboard'
 import { RELAYER_URL } from '@env'
-import useNetworksControllerState from '@web/hooks/useNetworksControllerState'
 
 const fetch = window.fetch.bind(window) as any
 const standardOptions = {
@@ -38,7 +36,6 @@ const getParams = (search?: string) => {
     txnId: params.get('txnId') ?? null,
     userOpHash: params.get('userOpHash') ?? null,
     relayerId: params.get('relayerId') ?? null,
-    isRenderedInternally: typeof params.get('isInternal') === 'string',
     chainId: params.get('chainId'),
     bundler: params.get('bundler') ?? null
   }
@@ -47,11 +44,11 @@ const getParams = (search?: string) => {
 const useBenzin = ({ onOpenExplorer, extensionAccOp }: Props = {}) => {
   const { addToast } = useToast()
   const route = useRoute()
-  const { txnId, userOpHash, relayerId, isRenderedInternally, chainId, bundler } = getParams(
-    route?.search
-  )
+  const { txnId, userOpHash, relayerId, chainId, bundler } = getParams(route?.search)
 
-  const { networks } = useNetworksControllerState()
+  const {
+    state: { networks }
+  } = useController('NetworksController')
   const {
     benzinNetworks,
     loadingBenzinNetworks = [],
@@ -70,17 +67,17 @@ const useBenzin = ({ onOpenExplorer, extensionAccOp }: Props = {}) => {
     return actualNetworks.find((n) => n.chainId === bigintChainId) || null
   }, [actualNetworks, bigintChainId])
 
-  const provider = useMemo(() => {
-    if (!network || bigintChainId === 0n) return null
-    // We are using ethers 6.14 in the app, while ambire-common is on 6.8. This causes ts errors
-    // TODO: Implement the callProvider func to use the global provider once the refactor is complete and
-    // all controllers from the MainController are shared across Benzin, Legends, Extension, and Mobile
-    return getRpcProvider(
-      network.rpcUrls,
-      bigintChainId,
-      network.selectedRpcUrl
-    ) as unknown as JsonRpcProvider
-  }, [network, bigintChainId])
+  const {
+    dispatch: providerDispatch,
+    state: { providers }
+  } = useController('ProvidersController')
+
+  useEffect(() => {
+    if (!network) return
+    if (providers[network.chainId.toString()]) return
+
+    providerDispatch({ type: 'method', params: { method: 'setProvider', args: [network] } })
+  }, [network, providers, providerDispatch])
 
   const switcher = useMemo(() => {
     if (!network) return null
@@ -103,7 +100,6 @@ const useBenzin = ({ onOpenExplorer, extensionAccOp }: Props = {}) => {
     network,
     standardOptions,
     setActiveStep,
-    provider,
     switcher,
     extensionAccOp,
     networks: actualNetworks
@@ -187,7 +183,6 @@ const useBenzin = ({ onOpenExplorer, extensionAccOp }: Props = {}) => {
     network,
     txnId: stepsState.txnId,
     userOpHash,
-    isRenderedInternally,
     bigintChainId,
     showCopyBtn,
     showOpenExplorerBtn,

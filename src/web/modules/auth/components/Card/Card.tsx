@@ -1,21 +1,21 @@
 import React from 'react'
 import { Trans, useTranslation } from 'react-i18next'
-import { TextStyle, View, ViewStyle } from 'react-native'
+import { TextStyle, View, ViewProps } from 'react-native'
 import { SvgProps } from 'react-native-svg'
 
 import Button from '@common/components/Button'
 import Text, { Props as TextProps } from '@common/components/Text'
 import { isWeb } from '@common/config/env'
+import { AnimatedPressable, useCustomHover } from '@common/hooks/useHover'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import textStyles from '@common/styles/utils/text'
-import { AnimatedPressable, useCustomHover } from '@web/hooks/useHover'
 
 import getStyles from './styles'
 
 interface Props {
-  style?: ViewStyle | ViewStyle[]
+  style?: ViewProps['style']
   titleProps?: TextProps
   text?: string | React.ReactNode
   textProps?: TextProps
@@ -71,11 +71,8 @@ const Card: React.FC<Props> = ({
         },
         animStyle,
         isDisabled && { opacity: 0.7 },
-        isDisabled &&
-          isWeb && {
-            // @ts-ignore cursor only works on web
-            cursor: 'not-allowed'
-          },
+        // @ts-ignore react-native-web supports `cursor`, but it's missing from React Native StyleProp<ViewStyle> types
+        isDisabled && isWeb && { cursor: 'not-allowed' },
         style
       ]}
       {...bindAnim}

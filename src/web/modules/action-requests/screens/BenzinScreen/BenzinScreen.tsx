@@ -10,18 +10,20 @@ import {
 import useBenzin from '@benzin/screens/BenzinScreen/hooks/useBenzin'
 import RightArrowIcon from '@common/assets/svg/RightArrowIcon'
 import Button from '@common/components/Button'
+import FooterGlassView from '@common/components/FooterGlassView'
+import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
+import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
-import { TabLayoutContainer } from '@web/components/TabLayoutWrapper'
-import useBackgroundService from '@web/hooks/useBackgroundService'
-import useRequestsControllerState from '@web/hooks/useRequestsControllerState'
 
 const BenzinScreen = () => {
   const { t } = useTranslation()
-  const { dispatch } = useBackgroundService()
-  const { currentUserRequest, visibleUserRequests } = useRequestsControllerState()
-  const { theme } = useTheme()
+  const {
+    state: { currentUserRequest, visibleUserRequests },
+    dispatch: requestsDispatch
+  } = useController('RequestsController')
+  const { themeType } = useTheme()
 
   const userRequest = useMemo(
     () => (currentUserRequest?.kind === 'benzin' ? currentUserRequest : undefined),
@@ -30,11 +32,14 @@ const BenzinScreen = () => {
 
   const resolveAction = useCallback(() => {
     if (!userRequest) return
-    dispatch({
-      type: 'REQUESTS_CONTROLLER_RESOLVE_USER_REQUEST',
-      params: { data: {}, id: userRequest.id as number }
+    requestsDispatch({
+      type: 'method',
+      params: {
+        method: 'resolveUserRequest',
+        args: [{}, userRequest.id as number]
+      }
     })
-  }, [userRequest, dispatch])
+  }, [userRequest, requestsDispatch])
 
   const extensionAccOp = userRequest?.meta?.submittedAccountOp
 
@@ -47,36 +52,31 @@ const BenzinScreen = () => {
   }, [visibleUserRequests])
 
   return (
-    <TabLayoutContainer
-      width="full"
-      withHorizontalPadding={false}
-      footer={
-        <>
-          {!!state?.handleOpenExplorer && (
-            <OpenExplorerButton handleOpenExplorer={state.handleOpenExplorer} />
+    <Benzin state={state}>
+      <FooterGlassView>
+        {!!state?.handleOpenExplorer && (
+          <OpenExplorerButton handleOpenExplorer={state.handleOpenExplorer} />
+        )}
+        <View style={[flexbox.directionRow, flexbox.alignCenter]}>
+          {!!state?.showCopyBtn && !!state?.handleCopyText && (
+            <CopyButton handleCopyText={state.handleCopyText} />
           )}
-          <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-            {!!state?.showCopyBtn && !!state?.handleCopyText && (
-              <CopyButton handleCopyText={state.handleCopyText} />
+          <Button
+            onPress={resolveAction}
+            style={{ minWidth: 180, ...spacings.mlSm }}
+            hasBottomSpacing={false}
+            size="large"
+            text={pendingRequests.length ? t('Proceed to Next Request') : t('Close')}
+          >
+            {!!pendingRequests.length && (
+              <View style={spacings.pl}>
+                <RightArrowIcon color="#fff" />
+              </View>
             )}
-            <Button
-              onPress={resolveAction}
-              style={{ minWidth: 180, ...spacings.mlSm }}
-              hasBottomSpacing={false}
-              text={pendingRequests.length ? t('Proceed to Next Request') : t('Close')}
-            >
-              {!!pendingRequests.length && (
-                <View style={spacings.pl}>
-                  <RightArrowIcon color={theme.primary} />
-                </View>
-              )}
-            </Button>
-          </View>
-        </>
-      }
-    >
-      <Benzin state={state} />
-    </TabLayoutContainer>
+          </Button>
+        </View>
+      </FooterGlassView>
+    </Benzin>
   )
 }
 
