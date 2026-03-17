@@ -1,12 +1,13 @@
-import '@common/config/localization'
+// import '@common/config/localization'
 
-import * as SplashScreen from 'expo-splash-screen'
+// import * as SplashScreen from 'expo-splash-screen'
 import React, { useEffect } from 'react'
-import { Alert } from 'react-native'
+import { Alert, Text } from 'react-native'
 
+// import { Alert } from 'react-native'
 import { RELAYER_URL } from '@env'
 
-SplashScreen.preventAutoHideAsync().catch(console.warn) // TODO: log a sentry error
+// SplashScreen.preventAutoHideAsync().catch(console.warn) // TODO: log a sentry error
 
 const App = () => {
   useEffect(() => {
