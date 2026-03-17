@@ -5,9 +5,10 @@ import { useModalize } from 'react-native-modalize'
 
 import { Account as AccountType } from '@ambire-common/interfaces/account'
 import AddCircularIcon from '@common/assets/svg/AddCircularIcon'
-import SettingsWheelIcon from '@common/assets/svg/SettingsWheelIcon'
+import SettingsIcon from '@common/assets/svg/SettingsIcon'
 import Button from '@common/components/Button'
 import FooterGlassView from '@common/components/FooterGlassView'
+import HoverablePressable from '@common/components/HoverablePressable'
 import LayoutWrapper from '@common/components/LayoutWrapper'
 import ScrollableWrapper, { WRAPPER_TYPES } from '@common/components/ScrollableWrapper'
 import Search from '@common/components/Search'
@@ -113,9 +114,9 @@ const AccountSelectScreen = () => {
   return !pendingToBeSetSelectedAccount ? (
     <LayoutWrapper>
       <HeaderWithTitle>
-        <Pressable onPress={() => navigate(WEB_ROUTES.accountsSettings)}>
-          <SettingsWheelIcon width={28} height={28} />
-        </Pressable>
+        <HoverablePressable onPress={() => navigate(WEB_ROUTES.accountsSettings)}>
+          <SettingsIcon width={28} height={28} />
+        </HoverablePressable>
       </HeaderWithTitle>
       <View style={[spacings.pt, spacings.phSm, flexbox.flex1]} ref={accountsContainerRef}>
         <Search autoFocus control={control} style={styles.searchBar} />
