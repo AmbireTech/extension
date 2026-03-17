@@ -39,7 +39,7 @@ const Header: FC<Props> = ({ openAddTokenBottomSheet }) => {
         childrenPosition="left"
         size="smaller"
         style={[spacings.phSm, { height: 40 }]}
-        textStyle={{ fontSize: 12, marginTop: 2 }}
+        textStyle={{ fontSize: 12 }}
         text={t('Add custom token')}
         onPress={openAddTokenBottomSheet}
       >

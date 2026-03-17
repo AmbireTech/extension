@@ -24,7 +24,7 @@ export class TransferPage extends BasePage {
     await this.clickOnMenuToken(token)
     // Amount
     await this.page.waitForTimeout(2000) // script misses input due to modal animation sometimes
-    await this.entertext(selectors.amountField, '0.001')
+    await this.entertext(selectors.transaction.amountField, '0.001')
   }
 
   async fillRecipient(address: string) {
@@ -115,8 +115,8 @@ export class TransferPage extends BasePage {
   }) {
     let feeSelector
     // Proceed
-    await this.expectButtonEnabled(selectors.proceedBtn)
-    await this.longPressButton(selectors.proceedBtn, 5)
+    await this.expectButtonEnabled(selectors.transaction.proceedBtn)
+    await this.longPressButton(selectors.transaction.proceedBtn, 5)
 
     // approve the high impact modal if appears
     await this.handlePriceWarningModals()

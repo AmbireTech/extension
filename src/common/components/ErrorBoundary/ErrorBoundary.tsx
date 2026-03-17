@@ -18,10 +18,10 @@ import common, { hexToRgba } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
 import { setStringAsync } from '@common/utils/clipboard'
+import { openInTab } from '@common/utils/links'
+import { getUiType } from '@common/utils/uiType'
 import { PortalHost } from '@gorhom/portal'
 import { isExtension } from '@web/constants/browserapi'
-import { openInTab } from '@web/extension-services/background/webapi/tab'
-import { getUiType } from '@web/utils/uiType'
 
 import AmbireLogoHorizontal from '../AmbireLogoHorizontal'
 import Button from '../Button'
@@ -91,7 +91,7 @@ const ErrorBoundaryInner = ({ error }: Props) => {
             Please share it with{' '}
             <TouchableOpacity
               onPress={() =>
-                openInTab({ url: 'https://help.ambire.com/hc', shouldCloseCurrentWindow: true })
+                openInTab({ url: 'https://help.ambire.com/en', shouldCloseCurrentWindow: true })
               }
             >
               <Text
@@ -186,7 +186,7 @@ const ErrorBoundaryInner = ({ error }: Props) => {
               {t('Try reloading the page. If the issue persists, restart your browser or ')}
               <TouchableOpacity
                 onPress={() =>
-                  openInTab({ url: 'https://help.ambire.com/hc', shouldCloseCurrentWindow: true })
+                  openInTab({ url: 'https://help.ambire.com/en', shouldCloseCurrentWindow: true })
                 }
               >
                 <Text

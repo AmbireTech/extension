@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import CheckIcon from '@common/assets/svg/CheckIcon'
 import Text from '@common/components/Text'
 import useController from '@common/hooks/useController'
+import { AnimatedPressable, useCustomHover } from '@common/hooks/useHover'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import spacings from '@common/styles/spacings'
@@ -13,7 +14,6 @@ import {
   AUTO_LOCK_TIMES,
   getAutoLockLabel
 } from '@web/extension-services/background/controllers/auto-lock'
-import { AnimatedPressable, useCustomHover } from '@web/hooks/useHover'
 
 type Props = {
   time: AUTO_LOCK_TIMES

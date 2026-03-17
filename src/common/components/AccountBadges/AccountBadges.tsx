@@ -27,11 +27,13 @@ const AccountBadges: FC<Props> = ({ accountData }) => {
     return getIsAmbireV1LinkedAccount(accountData?.creation?.factoryAddr)
   }, [accountData?.creation?.factoryAddr])
 
+  const isSafeAccount = !!accountData.safeCreation
+
   return (
     <>
-      {keystoreCtrl.keys.every((k) => !accountData?.associatedKeys.includes(k.addr)) && (
-        <BadgeWithPreset preset="view-only" style={spacings.mlTy} />
-      )}
+      {keystoreCtrl.keys.every((k) => !accountData?.associatedKeys.includes(k.addr)) &&
+        !isSafeAccount && <BadgeWithPreset preset="view-only" style={spacings.mlTy} />}
+
       {isSmartAccount && isAmbireV1LinkedAccount && (
         <BadgeWithPreset preset="ambire-v1" style={spacings.mlTy} />
       )}

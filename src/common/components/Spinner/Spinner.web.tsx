@@ -1,5 +1,6 @@
-import LottieView from 'lottie-react'
 import React, { useMemo } from 'react'
+
+import LottieView from '@common/components/LottieView'
 
 import SpinnerAnimation from './spinner-animation.json'
 import BlackSpinnerAnimation from './spinner-black-animation.json'
@@ -10,7 +11,7 @@ const Spinner = ({
   style,
   variant = 'gradient'
 }: {
-  style: any
+  style?: any
   variant?: 'gradient' | 'white' | 'info' | 'black'
 }) => {
   const animation = useMemo(() => {

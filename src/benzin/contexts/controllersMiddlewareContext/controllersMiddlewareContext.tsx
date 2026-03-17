@@ -11,9 +11,9 @@ import { StorageController } from '@ambire-common/controllers/storage/storage'
 import { ExplorerBaseControllersMappingType } from '@benzin/constants/controllersMapping'
 import { ControllersMiddlewareContext } from '@common/contexts/controllersMiddlewareContext'
 import { ControllerStoreContext } from '@common/contexts/controllerStoreContext'
+import eventBus from '@common/services/event/eventBus'
+import { storage } from '@common/services/storage'
 import { Action, MethodAction } from '@common/types/actions'
-import { storage } from '@web/extension-services/background/webapi/storage'
-import eventBus from '@web/extension-services/event/eventBus'
 
 export const ControllersMiddlewareProvider: React.FC<{
   children: React.ReactNode

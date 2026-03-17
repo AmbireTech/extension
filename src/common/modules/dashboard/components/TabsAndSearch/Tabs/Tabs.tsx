@@ -6,6 +6,7 @@ import Spinner from '@common/components/Spinner'
 import Text from '@common/components/Text'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
+import useWindowSize from '@common/hooks/useWindowSize'
 import flexbox from '@common/styles/utils/flexbox'
 
 import getStyles from './styles'
@@ -48,7 +49,7 @@ const TABS: {
 
 const Tabs: React.FC<Props> = ({ openTab, setOpenTab, handleChangeQuery }) => {
   const { styles, theme } = useTheme(getStyles)
-
+  const { minWidthSize } = useWindowSize()
   const { banners } = useController('ActivityController').state
   const {
     state: { account, banners: defiBanners }
@@ -72,7 +73,13 @@ const Tabs: React.FC<Props> = ({ openTab, setOpenTab, handleChangeQuery }) => {
   }, [currentAccountBanners])
 
   return (
-    <View style={[styles.container]}>
+    <View
+      style={[
+        styles.container,
+        minWidthSize(480) && { flex: 1 },
+        minWidthSize(480) && flexbox.justifySpaceBetween
+      ]}
+    >
       {TABS.map(({ type, tabLabel, disabled, testID }, tabIndex) => {
         const isActive = openTab === type
 

@@ -3,7 +3,7 @@ import React, { useCallback } from 'react'
 import { TokenResult } from '@ambire-common/libs/portfolio'
 import useController from '@common/hooks/useController'
 import getAndFormatTokenDetails from '@common/modules/dashboard/helpers/getTokenDetails'
-import { getUiType } from '@web/utils/uiType'
+import { getUiType } from '@common/utils/uiType'
 
 import BaseTokenItem from './BaseTokenItem'
 import RewardsTokenItem from './RewardsTokenItem'

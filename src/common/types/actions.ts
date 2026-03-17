@@ -41,6 +41,11 @@ type UpdateNavigationUrl = {
   params: { url: string; route?: string; searchParams?: { [key: string]: string } }
 }
 
+type UpdateUiViewRoute = {
+  type: 'UPDATE_UI_VIEW_ROUTE'
+  params: { id: string; route?: string; searchParams?: { [key: string]: string } }
+}
+
 type MainControllerAccountPickerInitLedgerAction = {
   type: 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_LEDGER'
 }
@@ -49,14 +54,6 @@ type MainControllerAccountPickerInitTrezorAction = {
 }
 type MainControllerAccountPickerInitLatticeAction = {
   type: 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_LATTICE'
-}
-type MainControllerAccountPickerInitPrivateKeyOrSeedPhraseAction = {
-  type: 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_PRIVATE_KEY_OR_SEED_PHRASE'
-  params: {
-    privKeyOrSeed: string
-    seedPassphrase?: string | null
-    hdPathTemplate?: HD_PATH_TEMPLATE_TYPE
-  }
 }
 type MainControllerAccountPickerInitFromSavedSeedPhraseAction = {
   type: 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_FROM_SAVED_SEED_PHRASE'
@@ -69,7 +66,7 @@ type ResetAccountAddingOnPageErrorAction = {
 
 type MainControllerHandleSignMessage = {
   type: 'MAIN_CONTROLLER_HANDLE_SIGN_MESSAGE'
-  params: { keyAddr: Key['addr']; keyType: Key['type'] }
+  params: { signers: { addr: Key['addr']; type: Key['type'] }[] }
 }
 
 type DappsControllerRemoveConnectedSiteAction = {
@@ -111,11 +108,11 @@ type OpenExtensionPopupAction = {
 
 export type Action =
   | UpdateNavigationUrl
+  | UpdateUiViewRoute
   | InitControllerStateAction
   | MainControllerAccountPickerInitLatticeAction
   | MainControllerAccountPickerInitTrezorAction
   | MainControllerAccountPickerInitLedgerAction
-  | MainControllerAccountPickerInitPrivateKeyOrSeedPhraseAction
   | MainControllerAccountPickerInitFromSavedSeedPhraseAction
   | HandshakeAction
   | ResetAccountAddingOnPageErrorAction

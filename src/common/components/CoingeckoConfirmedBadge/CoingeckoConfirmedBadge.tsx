@@ -12,7 +12,7 @@ import Text from '@common/components/Text'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import spacings from '@common/styles/spacings'
-import { createTab } from '@web/extension-services/background/webapi/tab'
+import { openInTab } from '@common/utils/links'
 
 import getStyles from './styles'
 
@@ -33,7 +33,7 @@ const CoingeckoConfirmedBadge = ({ text, address, network, containerStyle }: Pro
 
   const onCoingeckoBadgePress = useCallback(async () => {
     try {
-      await createTab(getCoinGeckoTokenUrl(coinGeckoTokenSlug))
+      await openInTab({ url: getCoinGeckoTokenUrl(coinGeckoTokenSlug) })
     } catch {
       addToast(t('Could not open token info'), { type: 'error' })
     }

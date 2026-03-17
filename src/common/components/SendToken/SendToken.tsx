@@ -12,11 +12,11 @@ import Text from '@common/components/Text'
 import useController from '@common/hooks/useController'
 import { FONT_FAMILIES } from '@common/hooks/useFonts'
 import useTheme from '@common/hooks/useTheme'
+import MaxAmount from '@common/modules/swap-and-bridge/components/MaxAmount'
 import spacings from '@common/styles/spacings'
 import { hexToRgba } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import { ItemPanel } from '@web/components/TransactionsScreen'
-import MaxAmount from '@web/modules/swap-and-bridge/components/MaxAmount'
 
 import getStyles from './styles'
 
@@ -66,7 +66,7 @@ const SendToken: FC<Props> = ({
   const {
     state: { portfolio }
   } = useController('SelectedAccountController')
-  const { theme, styles, themeType } = useTheme(getStyles)
+  const { theme, styles } = useTheme(getStyles)
   const { t } = useTranslation()
 
   const handleOnChangeTextAndFormat = useCallback(
@@ -107,6 +107,9 @@ const SendToken: FC<Props> = ({
       >
         <ItemPanel
           style={{
+            // magic number to match the curve of the outer container
+            // which is with borderRadius: 16
+            borderRadius: 13,
             ...spacings.pv,
             ...spacings.prMd,
             ...(validateFromAmount?.message ? styles.containerWarning : {})
@@ -188,7 +191,7 @@ const SendToken: FC<Props> = ({
               spacings.ptMd
             ]}
           >
-            {!fromTokenAmountSelectDisabled && (
+            {!fromTokenAmountSelectDisabled ? (
               <MaxAmount
                 isLoading={!portfolio?.isReadyToVisualize}
                 maxAmount={Number(maxFromAmount)}
@@ -197,6 +200,9 @@ const SendToken: FC<Props> = ({
                 disabled={maxAmountDisabled}
                 simulationFailed={simulationFailed}
               />
+            ) : (
+              // Prevent layout shifting
+              <View style={{ height: 22 }} />
             )}
             {fromSelectedToken && fromSelectedToken.priceIn.length !== 0 ? (
               <>

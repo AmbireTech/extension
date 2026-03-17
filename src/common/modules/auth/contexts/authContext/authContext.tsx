@@ -12,7 +12,7 @@ const AuthContext = createContext<AuthContextData>({
   authStatus: AUTH_STATUS.LOADING
 })
 
-const AuthProvider: React.FC = ({ children }: any) => {
+const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const accountsState = useController('AccountsController').state
   const {
     state: { account, isReady }

@@ -4,7 +4,7 @@ import Text from '@common/components/Text'
 import useTheme from '@common/hooks/useTheme'
 import { hexToRgba } from '@common/styles/utils/common'
 
-import { ToggleProps } from './types'
+import { ToggleProps } from './Toggle'
 
 const Toggle: React.FC<ToggleProps> = ({
   id,
@@ -32,6 +32,7 @@ const Toggle: React.FC<ToggleProps> = ({
         alignItems: 'center',
         display: 'flex',
         cursor: 'pointer',
+        flexShrink: 0,
         opacity: disabled ? 0.4 : 1
       }}
     >

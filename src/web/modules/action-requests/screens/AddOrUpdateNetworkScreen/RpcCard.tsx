@@ -38,7 +38,7 @@ const RpcCard = ({
           }
         ]}
       >
-        <View>
+        <View style={flexbox.flex1}>
           <Text
             fontSize={14}
             color={isNew ? theme.neutral100 : theme.tertiaryText}

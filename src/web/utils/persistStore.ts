@@ -3,7 +3,7 @@ import 'reflect-metadata'
 import { debounce } from 'debounce'
 
 /* eslint-disable @typescript-eslint/ban-types */
-import { storage } from '@web/extension-services/background/webapi/storage'
+import { storage } from '@common/services/storage'
 
 const persistStorage = (name: string, obj: object) => {
   debounce(storage.set(name, obj), 1000)

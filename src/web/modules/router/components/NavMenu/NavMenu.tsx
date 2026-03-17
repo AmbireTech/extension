@@ -22,16 +22,16 @@ import { HeaderWithTitle } from '@common/modules/header/components/Header/Header
 import { ROUTES, WEB_ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
+import { openInTab } from '@common/utils/links'
+import { getUiType } from '@common/utils/uiType'
 import {
   TabLayoutContainer,
   tabLayoutWidths
 } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
 import { DISCORD_URL, TELEGRAM_URL, TWITTER_URL } from '@web/constants/social'
-import { openInTab } from '@web/extension-services/background/webapi/tab'
 import SettingsLink from '@web/modules/settings/components/SettingsLink'
 import { SETTINGS_LINKS } from '@web/modules/settings/components/Sidebar/Sidebar'
 import commonWebStyles from '@web/styles/utils/common'
-import { getUiType } from '@web/utils/uiType'
 
 import getStyles from './styles'
 
@@ -46,14 +46,14 @@ const OTHER_LINKS = [
     key: 'help-center',
     Icon: React.memo(HelpIcon),
     label: 'Help Center',
-    path: 'https://help.ambire.com/hc/en-us',
+    path: 'https://help.ambire.com/en',
     isExternal: true
   },
   {
     key: 'report-issue',
     Icon: React.memo(BugIcon),
     label: 'Report an issue',
-    path: 'https://help.ambire.com/hc/en-us/requests/new',
+    path: 'https://help.ambire.com/en',
     isExternal: true
   },
   {
@@ -136,7 +136,7 @@ const NavMenu = () => {
               </View>
             </View>
             {hasPasswordSecret && (
-              <FooterGlassView>
+              <FooterGlassView isSimpleBlur={false}>
                 <Button
                   text="Lock Ambire"
                   size="smaller"

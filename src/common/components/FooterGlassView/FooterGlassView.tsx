@@ -2,6 +2,7 @@ import React, { FC } from 'react'
 import { View, ViewStyle } from 'react-native'
 
 import GlassView from '@common/components/GlassView'
+import { isMobile } from '@common/config/env'
 import { SPACING, SPACING_SM } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
@@ -26,7 +27,21 @@ const FooterGlassView: FC<{
   innerContainerStyle?: ViewStyle
   size?: 'sm' | 'md'
   absolute?: boolean
-}> = ({ children, style = {}, innerContainerStyle, size = 'md', absolute = true }) => {
+  isSimpleBlur?: boolean
+  glassViewProps?: Partial<React.ComponentProps<typeof GlassView>>
+}> = ({
+  children,
+  style = {},
+  innerContainerStyle,
+  size = 'md',
+  glassViewProps = {},
+  absolute = true,
+  isSimpleBlur
+}) => {
+  if (isMobile) {
+    return <View style={{ flexDirection: 'column-reverse' }}>{children}</View>
+  }
+
   return (
     <View
       style={{
@@ -36,14 +51,18 @@ const FooterGlassView: FC<{
         width: '100%',
         ...flexbox.center,
         zIndex: 3,
+        pointerEvents: 'none',
         ...style
       }}
     >
       <GlassView
-        style={{
-          borderRadius: params[size].borderRadius
+        {...glassViewProps}
+        isSimpleBlur={isSimpleBlur ?? glassViewProps.isSimpleBlur}
+        borderRadius={Number(params[size].borderRadius)}
+        cssStyle={{
+          pointerEvents: 'all',
+          ...(glassViewProps?.cssStyle || {})
         }}
-        cssStyle={{ borderRadius: params[size].borderRadius as number }}
       >
         <View
           style={[

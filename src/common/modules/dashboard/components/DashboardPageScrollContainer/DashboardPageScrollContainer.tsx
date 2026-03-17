@@ -1,11 +1,12 @@
 import React, { FC, useEffect, useMemo, useRef } from 'react'
 import { Animated, FlatList, FlatListProps, ViewStyle } from 'react-native'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
-import { isWeb } from '@common/config/env'
-import { OVERVIEW_CONTENT_MAX_HEIGHT } from '@common/modules/dashboard/screens/DashboardScreen'
+import { isMobile } from '@common/config/env'
 import spacings from '@common/styles/spacings'
 
 import useBanners from '../../hooks/useBanners'
+import { OVERVIEW_CONTENT_MAX_HEIGHT } from '../DashboardOverview/DashboardOverview'
 import { TabType } from '../TabsAndSearch/Tabs/Tab/Tab'
 
 interface Props extends FlatListProps<any> {
@@ -36,12 +37,16 @@ const DashboardPageScrollContainer: FC<Props> = ({
 }) => {
   const [controllerBanners] = useBanners()
   const flatlistRef = useRef<FlatList | null>(null)
-
+  const { bottom } = useSafeAreaInsets()
   const style = useMemo(() => getFlatListStyle(tab, openTab), [openTab, tab])
 
   const contentContainerStyle = useMemo(() => {
-    return [controllerBanners.length ? spacings.ptTy : spacings.pt0, { flexGrow: 1 }]
-  }, [controllerBanners.length])
+    return [
+      controllerBanners.length ? spacings.ptTy : spacings.pt0,
+      { flexGrow: 1 },
+      isMobile && { paddingBottom: bottom }
+    ]
+  }, [bottom, controllerBanners.length])
 
   // Reset scroll position when switching tabs (new)
   useEffect(() => {
@@ -57,7 +62,7 @@ const DashboardPageScrollContainer: FC<Props> = ({
         bounciness: 0,
         speed: 2.8,
         overshootClamping: true,
-        useNativeDriver: !isWeb
+        useNativeDriver: false
       }).start()
     }
   }, [animatedOverviewHeight, openTab, tab])
@@ -71,6 +76,7 @@ const DashboardPageScrollContainer: FC<Props> = ({
       removeClippedSubviews
       bounces={false}
       alwaysBounceVertical={false}
+      scrollEventThrottle={16}
       {...rest}
     />
   )

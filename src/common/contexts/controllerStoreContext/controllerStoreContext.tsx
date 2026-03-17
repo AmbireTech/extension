@@ -8,7 +8,7 @@ import { allControllersMapping } from '@common/constants/controllersMapping'
 import { ToastOptions } from '@common/contexts/toastContext'
 import useNavigation from '@common/hooks/useNavigation'
 import useToast from '@common/hooks/useToast'
-import eventBus from '@web/extension-services/event/eventBus'
+import eventBus from '@common/services/event/eventBus'
 
 import { ControllerHelpersStore } from './controllerHelpersStore'
 import { ControllerStore } from './controllerStore'

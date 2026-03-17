@@ -1,7 +1,6 @@
 /* eslint-disable no-await-in-loop */
 /* eslint-disable no-param-reassign */
 /* eslint-disable @typescript-eslint/return-await */
-import { BIP44_STANDARD_DERIVATION_TEMPLATE } from '@ambire-common/consts/derivation'
 import { MainController } from '@ambire-common/controllers/main/main'
 import { IEventEmitterRegistryController } from '@ambire-common/interfaces/eventEmitter'
 import { KeyIterator } from '@ambire-common/libs/keyIterator/keyIterator'
@@ -83,12 +82,6 @@ export const handleActions = async (
     case 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_LATTICE': {
       return await mainCtrl.handleAccountPickerInitLattice(LatticeKeyIterator)
     }
-    case 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_PRIVATE_KEY_OR_SEED_PHRASE': {
-      const hdPathTemplate = BIP44_STANDARD_DERIVATION_TEMPLATE
-      const keyIterator = new KeyIterator(params.privKeyOrSeed, params.seedPassphrase)
-      await mainCtrl.accountPicker.setInitParams({ keyIterator, hdPathTemplate })
-      break
-    }
     case 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_FROM_SAVED_SEED_PHRASE': {
       const keystoreSavedSeed = await mainCtrl.keystore.getSavedSeed(params.id)
       if (!keystoreSavedSeed) return
@@ -114,7 +107,6 @@ export const handleActions = async (
 
       break
     }
-
     case 'IMPORT_SMART_ACCOUNT_JSON': {
       // Add accounts first, because some of the next steps have validation
       // if accounts exists.
@@ -130,7 +122,7 @@ export const handleActions = async (
     }
 
     case 'MAIN_CONTROLLER_HANDLE_SIGN_MESSAGE': {
-      mainCtrl.signMessage.setSigningKey(params.keyAddr, params.keyType)
+      mainCtrl.signMessage.setSigners(params.signers)
       return await mainCtrl.handleSignMessage()
     }
 

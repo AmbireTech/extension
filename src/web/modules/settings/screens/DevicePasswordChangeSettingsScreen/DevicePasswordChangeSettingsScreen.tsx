@@ -89,7 +89,7 @@ const DevicePasswordChangeSettingsScreen = () => {
         type: 'method',
         params: {
           method: 'changeKeystorePassword',
-          args: [password, newPasswordFieldValue, getExtraEntropy()]
+          args: [newPasswordFieldValue, password, getExtraEntropy()]
         }
       })
   )

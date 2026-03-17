@@ -4,7 +4,7 @@ import { Pressable, View, ViewStyle } from 'react-native'
 
 import Text from '@common/components/Text'
 import useTheme from '@common/hooks/useTheme'
-import spacings from '@common/styles/spacings'
+import spacings, { SPACING_TY } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
 export type TabType = 'tokens' | 'collectibles' | 'defi' | 'activity'
@@ -36,6 +36,8 @@ const Tab = ({
   const { theme } = useTheme()
 
   const isActive = openTab === tab
+  const leftSpacing = tab === 'tokens' ? 0 : SPACING_TY
+  const rightSpacing = tab === 'activity' ? 0 : SPACING_TY
 
   return (
     <Pressable
@@ -46,23 +48,29 @@ const Tab = ({
         setOpenTab(tab)
       }}
       style={[
-        spacings.mr,
         {
-          borderBottomColor: isActive ? theme.primaryText : 'transparent',
-          borderBottomWidth: 2
+          paddingLeft: leftSpacing,
+          paddingRight: rightSpacing
         }
       ]}
     >
       {({ hovered }: any) => (
-        <View style={[flexbox.directionRow, style]}>
-          <Text
-            weight="medium"
-            color={isActive || hovered ? theme.primaryText : theme.neutral500}
-            fontSize={16}
-          >
-            {t(tabLabel)}
-          </Text>
-          {children}
+        <View
+          style={{
+            borderBottomColor: isActive ? theme.primaryText : 'transparent',
+            borderBottomWidth: 2
+          }}
+        >
+          <View style={[flexbox.directionRow, style]}>
+            <Text
+              weight="medium"
+              color={isActive || hovered ? theme.primaryText : theme.tertiaryText}
+              fontSize={16}
+            >
+              {t(tabLabel)}
+            </Text>
+            {children}
+          </View>
         </View>
       )}
     </Pressable>

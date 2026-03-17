@@ -121,14 +121,14 @@ const OTHER_LINKS = [
     key: 'help-center',
     Icon: HelpIcon,
     label: 'Help Center',
-    path: 'https://help.ambire.com/hc/en-us',
+    path: 'https://help.ambire.com/en',
     isExternal: true
   },
   {
     key: 'report-issue',
     Icon: BugIcon,
     label: 'Report an issue',
-    path: 'https://help.ambire.com/hc/en-us/requests/new',
+    path: 'https://help.ambire.com/en',
     isExternal: true
   }
 ]
@@ -155,12 +155,12 @@ const Sidebar = ({ activeLink }: { activeLink?: string }) => {
   }, [isDashboardPreviousPage, isTransferPreviousPage, validBackRoute])
 
   const glassViewStyle: ViewStyle & React.CSSProperties = {
-    borderRadius: BORDER_RADIUS_PRIMARY,
     flexDirection: 'column',
     paddingLeft: SPACING_TY,
     paddingBottom: SPACING_TY,
     paddingRight: SPACING_TY,
-    height: '100%'
+    height: '100%',
+    display: 'flex'
   }
 
   return (
@@ -169,9 +169,7 @@ const Sidebar = ({ activeLink }: { activeLink?: string }) => {
         ...spacings.pbLg,
         ...spacings.mlTy,
         ...spacings.mvTy,
-        maxHeight: '100%',
-        // @ts-ignore
-        height: 'fit-content',
+        height: '100%',
         position: 'relative'
       }}
     >

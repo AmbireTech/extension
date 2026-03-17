@@ -4,10 +4,10 @@ import { Animated, View } from 'react-native'
 import RightArrowIcon from '@common/assets/svg/RightArrowIcon'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import Text from '@common/components/Text'
+import { AnimatedPressable, useMultiHover } from '@common/hooks/useHover'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import { AnimatedPressable, useMultiHover } from '@web/hooks/useHover'
 import getStyles from '@web/modules/networks/components/NetworkBottomSheet/styles'
 
 const Option = ({

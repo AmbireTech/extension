@@ -3,9 +3,9 @@ import { Outlet } from 'react-router-dom'
 
 import useController from '@common/hooks/useController'
 import useRoute from '@common/hooks/useRoute'
+import { getUiType } from '@common/utils/uiType'
 import { isExtension } from '@web/constants/browserapi'
 import { openInternalPageInTab } from '@web/extension-services/background/webapi/tab'
-import { getUiType } from '@web/utils/uiType'
 
 const { isTab } = getUiType()
 

@@ -6,10 +6,10 @@ import {
   CRASH_ANALYTICS_ENABLED_STORAGE_KEY
 } from '@common/config/analytics/CrashAnalytics.web'
 import { APP_VERSION } from '@common/config/env'
+import { storage } from '@common/services/storage'
 import { DEFAULT_THEME } from '@common/styles/theme/types'
 import { ThemeType } from '@common/styles/themeConfig'
 import { browser, isSafari } from '@web/constants/browserapi'
-import { storage } from '@web/extension-services/background/webapi/storage'
 import { DEFAULT_LOG_LEVEL, LOG_LEVELS, setLoggerInstanceLogLevel } from '@web/utils/logger'
 
 export type AvatarType = 'blockies' | 'jazzicons' | 'polycons' | 'ens'

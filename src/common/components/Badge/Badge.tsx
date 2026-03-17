@@ -21,11 +21,11 @@ const getBadgeTypes = (theme: ThemeProps) => ({
     backgroundColor: theme.infoBackground
   },
   default: {
-    color: theme.neutral500,
+    color: theme.neutral600,
     backgroundColor: theme.secondaryBackground
   },
   outline: {
-    color: theme.neutral500,
+    color: theme.neutral600,
     backgroundColor: 'transparent'
   },
   success: {
@@ -49,7 +49,7 @@ const getBadgeTypes = (theme: ThemeProps) => ({
     backgroundColor: theme.secondaryAccent100
   },
   new: {
-    color: '#fff',
+    color: theme.neutral400,
     backgroundColor: 'transparent'
   }
 })

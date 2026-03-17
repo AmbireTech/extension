@@ -10,6 +10,7 @@ import Banner from '@common/components/Banner'
 import Button from '@common/components/Button'
 import Spinner from '@common/components/Spinner'
 import Text from '@common/components/Text'
+import { isWeb } from '@common/config/env'
 import useController from '@common/hooks/useController'
 import usePrevious from '@common/hooks/usePrevious'
 import useTheme from '@common/hooks/useTheme'
@@ -18,11 +19,11 @@ import DashboardBanners from '@common/modules/dashboard/components/DashboardBann
 import DashboardPageScrollContainer from '@common/modules/dashboard/components/DashboardPageScrollContainer'
 import TabsAndSearch from '@common/modules/dashboard/components/TabsAndSearch'
 import { TabType } from '@common/modules/dashboard/components/TabsAndSearch/Tabs/Tab/Tab'
+import SubmittedTransactionSummary from '@common/modules/settings/components/TransactionHistory/SubmittedTransactionSummary'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import { openInTab } from '@web/extension-services/background/webapi/tab'
-import SubmittedTransactionSummary from '@web/modules/settings/components/TransactionHistory/SubmittedTransactionSummary'
-import { getUiType } from '@web/utils/uiType'
+import { openInTab } from '@common/utils/links'
+import { getUiType } from '@common/utils/uiType'
 
 import styles from './styles'
 
@@ -175,7 +176,7 @@ const ActivityPositions: FC<Props> = ({
               style={styles.noPositions}
             >
               {t(
-                "Ambire doesn't retrieve transactions made\n before installing the extension, but you can \ncheck your address on "
+                `Ambire doesn't retrieve transactions made${isWeb ? '\n' : ''} before installing the extension, but you can ${isWeb ? '\n' : ''}check your address on `
               )}
               <TouchableOpacity
                 onPress={() =>
@@ -299,6 +300,7 @@ const ActivityPositions: FC<Props> = ({
       initialNumToRender={isPopup ? 10 : 20}
       windowSize={9} // Larger values can cause performance issues.
       onScroll={onScroll}
+      scrollEventThrottle={16}
       animatedOverviewHeight={animatedOverviewHeight}
     />
   )

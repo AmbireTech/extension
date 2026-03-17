@@ -1,21 +1,18 @@
 import React, { useEffect, useState } from 'react'
-import { View } from 'react-native'
 
-import LedgerLetterIcon from '@common/assets/svg/LedgerLetterIcon'
 import LedgerLetterIconFilled from '@common/assets/svg/LedgerLetterIconFilled'
 import Button from '@common/components/Button'
 import Panel from '@common/components/Panel'
 import Text from '@common/components/Text'
+import { isLedgerEmulator } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useRoute from '@common/hooks/useRoute'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
-import useWindowSize from '@common/hooks/useWindowSize'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
 import spacings from '@common/styles/spacings'
-import flexbox from '@common/styles/utils/flexbox'
 import {
   TabLayoutContainer,
   TabLayoutWrapperMainContent
@@ -38,14 +35,15 @@ const LedgerConnectScreen = () => {
   const { initParams, type } = useController('AccountPickerController').state
   const [authorizeButtonPressed, setAuthorizeButtonPressed] = useState(false)
   const route = useRoute()
-  const { minHeightSize } = useWindowSize()
 
   const onPressNext = async () => {
     try {
-      // Request Ledger access first, before any state updates to prevent error:
-      // "Failed to execute 'requestDevice' on 'HID': Must be handling a user
-      // gesture to show a permission request." on Vivaldi browser.
-      await requestLedgerDeviceAccess()
+      if (!isLedgerEmulator) {
+        // Request Ledger access first, before any state updates to prevent error:
+        // "Failed to execute 'requestDevice' on 'HID': Must be handling a user
+        // gesture to show a permission request." on Vivaldi browser.
+        await requestLedgerDeviceAccess()
+      }
 
       setIsGrantingPermission(true)
       setAuthorizeButtonPressed(true)
@@ -75,11 +73,29 @@ const LedgerConnectScreen = () => {
   }
 
   useEffect(() => {
-    if (!!authorizeButtonPressed && initParams && type === 'ledger') {
+    // In Emulator mode, automatically proceed with the connection flow without
+    // requiring a USB/HID permission gesture.
+    if (isLedgerEmulator && !authorizeButtonPressed && !isGrantingPermission) {
+      // Fire and forget; errors will be surfaced via toast from onPressNext
+      // eslint-disable-next-line @typescript-eslint/no-floating-promises
+      onPressNext()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [authorizeButtonPressed, isGrantingPermission])
+
+  useEffect(() => {
+    if (!isLedgerEmulator && !!authorizeButtonPressed && initParams && type === 'ledger') {
       setAuthorizeButtonPressed(false)
       goToNextRoute()
     }
   }, [authorizeButtonPressed, goToNextRoute, dispatch, initParams, type])
+
+  useEffect(() => {
+    // In Emulator mode, once the Ledger account picker init succeeds, move to the next screen
+    if (isLedgerEmulator && mainCtrlState.statuses.handleAccountPickerInitLedger === 'SUCCESS') {
+      goToNextRoute()
+    }
+  }, [goToNextRoute, mainCtrlState.statuses.handleAccountPickerInitLedger])
 
   const isLoading =
     isGrantingPermission || mainCtrlState.statuses.handleAccountPickerInitLedger === 'LOADING'
@@ -100,22 +116,28 @@ const LedgerConnectScreen = () => {
             height={96}
           />
           <Text weight="medium" style={spacings.mbSm} fontSize={14}>
-            {t('1. Plug in your Ledger and enter a PIN to unlock it.')}
+            {isLedgerEmulator
+              ? t('1. Make sure your Ledger emulator is running.')
+              : t('1. Plug in your Ledger and enter a PIN to unlock it.')}
           </Text>
           <Text weight="medium" fontSize={14} style={spacings.mbXl}>
             {t('2. Open the Ethereum app.')}
           </Text>
           <Text style={spacings.mbXl} fontSize={14} appearance="secondaryText">
-            {t(
-              'If not previously granted, Ambire will ask for permission to connect to a HID device.'
-            )}
+            {isLedgerEmulator
+              ? t('Connecting to the Ledger emulator configured for this environment.')
+              : t(
+                  'If not previously granted, Ambire will ask for permission to connect to a HID device.'
+                )}
           </Text>
-          <Button
-            text={isLoading ? t('Connecting...') : t('Authorize & connect')}
-            disabled={isLoading}
-            onPress={onPressNext}
-            hasBottomSpacing={false}
-          />
+          {!isLedgerEmulator && (
+            <Button
+              text={isLoading ? t('Connecting...') : t('Authorize & connect')}
+              disabled={isLoading}
+              onPress={onPressNext}
+              hasBottomSpacing={false}
+            />
+          )}
         </Panel>
       </TabLayoutWrapperMainContent>
     </TabLayoutContainer>

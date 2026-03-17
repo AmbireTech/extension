@@ -1,41 +1,19 @@
 import { FC } from 'react'
 import { useTranslation } from 'react-i18next'
 
-import { ISignAccountOpController } from '@ambire-common/interfaces/signAccountOp'
 import BottomSheet from '@common/components/BottomSheet'
 import DualChoiceWarningModal from '@common/components/DualChoiceWarningModal'
 import useController from '@common/hooks/useController'
-import useSign from '@common/hooks/useSign'
-import useTheme from '@common/hooks/useTheme'
+import SignAccountOpHardwareWalletSigningModal from '@common/modules/sign-account-op/components/SignAccountOpHardwareWalletSigningModal'
+import { ModalsProps } from '@common/modules/sign-account-op/types/modals'
 import spacings from '@common/styles/spacings'
 import text from '@common/styles/utils/text'
+import { getUiType } from '@common/utils/uiType'
 import LedgerConnectModal from '@web/modules/hardware-wallet/components/LedgerConnectModal'
-import SignAccountOpHardwareWalletSigningModal from '@web/modules/sign-account-op/components/SignAccountOpHardwareWalletSigningModal'
-import { getUiType } from '@web/utils/uiType'
-
-import getStyles from './styles'
 
 const { isTab } = getUiType()
 
-type Props = Pick<
-  ReturnType<typeof useSign>,
-  | 'renderedButNotNecessarilyVisibleModal'
-  | 'warningModalRef'
-  | 'feePayerKeyType'
-  | 'signingKeyType'
-  | 'slowPaymasterRequest'
-  | 'shouldDisplayLedgerConnectModal'
-  | 'handleDismissLedgerConnectModal'
-  | 'warningToPromptBeforeSign'
-  | 'acknowledgeWarning'
-  | 'dismissWarning'
-> & {
-  signAccountOpState: ISignAccountOpController | null
-  autoOpen?: 'warnings'
-  actionType?: 'swapAndBridge' | 'transfer'
-}
-
-const Modals: FC<Props> = ({
+const Modals: FC<ModalsProps> = ({
   renderedButNotNecessarilyVisibleModal,
   signAccountOpState,
   warningModalRef,
@@ -50,14 +28,14 @@ const Modals: FC<Props> = ({
   autoOpen,
   actionType
 }) => {
-  const { styles } = useTheme(getStyles)
   const { t } = useTranslation()
   const { signAccountOpController: swapAndBridgeSignAccountOp } =
     useController('SwapAndBridgeController').state
   const {
     state: { signAccountOpController: transferSignAccountOp }
   } = useController('TransferController')
-  const currentSignAccountOp = useController('SignAccountOpController').state
+  const { state: currentSignAccountOp, dispatch: signAccountOpDispatch } =
+    useController('SignAccountOpController')
 
   if (renderedButNotNecessarilyVisibleModal === 'warnings') {
     return (
@@ -65,7 +43,6 @@ const Modals: FC<Props> = ({
         id="warning-modal"
         closeBottomSheet={!slowPaymasterRequest ? dismissWarning : undefined}
         sheetRef={warningModalRef}
-        style={styles.warningsModal}
         type={isTab ? 'modal' : 'bottom-sheet'}
         withBackdropBlur={false}
         shouldBeClosableOnDrag={false}
@@ -135,6 +112,15 @@ const Modals: FC<Props> = ({
         signedTransactionsCount={signAccountOpState.signedTransactionsCount}
         accountOp={signAccountOpState.accountOp}
         actionType={actionType}
+        cancelReq={() => {
+          signAccountOpDispatch({
+            type: 'method',
+            params: {
+              method: 'cancelSignReq',
+              args: []
+            }
+          })
+        }}
       />
     )
   }

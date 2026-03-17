@@ -8,21 +8,21 @@ import { AllControllersMappingType } from '@common/constants/controllersMapping'
 import { ControllersMiddlewareContext } from '@common/contexts/controllersMiddlewareContext/controllersMiddlewareContext'
 import { ControllersMiddlewareContextReturnType } from '@common/contexts/controllersMiddlewareContext/types'
 import { ControllerStoreContext } from '@common/contexts/controllerStoreContext'
-import useIsScreenFocused from '@common/hooks/useIsScreenFocused'
+import useIsAppFocused from '@common/hooks/useIsAppFocused'
 import useRoute from '@common/hooks/useRoute'
 import useToast from '@common/hooks/useToast'
+import eventBus from '@common/services/event/eventBus'
 import { Action, MethodAction } from '@common/types/actions'
+import { getUiType } from '@common/utils/uiType'
 import { isExtension } from '@web/constants/browserapi'
 import { controllersMapping } from '@web/constants/controllersMapping'
 import { closeCurrentWindow } from '@web/extension-services/background/webapi/window'
-import eventBus from '@web/extension-services/event/eventBus'
 import { PortMessenger } from '@web/extension-services/messengers'
 import useAutoLockControllerHelpers from '@web/hooks/useAutoLockControllerHelpers'
 import useDappsControllerHelpers from '@web/hooks/useDappsControllerHelpers'
 import useKeystoreControllerHelpers from '@web/hooks/useKeystoreControllerHelpers'
 import useRequestsControllerHelpers from '@web/hooks/useRequestsControllerHelpers'
 import useSelectedAccountControllerHelpers from '@web/hooks/useSelectedAccountControllerHelpers'
-import { getUiType } from '@web/utils/uiType'
 
 let globalDispatch: ControllersMiddlewareContextReturnType['dispatch']
 let pm: PortMessenger
@@ -156,7 +156,7 @@ export const ControllersMiddlewareProvider: React.FC<{ children: React.ReactNode
   const { addToast } = useToast()
   const route = useRoute()
   const timer = useRef<NodeJS.Timeout>(null)
-  const isFocused = useIsScreenFocused()
+  const isFocused = useIsAppFocused()
   const [windowId, setWindowId] = useState<number | undefined>()
   const hasConnectedToTheBackground = useRef(false)
   const { controllerStore } = useContext(ControllerStoreContext)

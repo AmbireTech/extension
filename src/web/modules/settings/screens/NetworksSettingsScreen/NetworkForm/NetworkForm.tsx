@@ -17,6 +17,7 @@ import ScrollableWrapper from '@common/components/ScrollableWrapper'
 import Text from '@common/components/Text'
 import Tooltip from '@common/components/Tooltip'
 import useController from '@common/hooks/useController'
+import useHover, { AnimatedPressable } from '@common/hooks/useHover'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import spacings from '@common/styles/spacings'
@@ -24,7 +25,6 @@ import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
 import { setStringAsync } from '@common/utils/clipboard'
 import NetworkAvailableFeatures from '@web/components/NetworkAvailableFeatures'
-import useHover, { AnimatedPressable } from '@web/hooks/useHover'
 import {
   getAreDefaultsChanged,
   handleErrors
@@ -624,10 +624,11 @@ const NetworkForm = ({
                 control={control}
                 render={({ field: { onChange, onBlur, value } }) => (
                   <Input
+                    backgroundColor={theme.secondaryBackground}
                     onBlur={onBlur}
                     onChangeText={onChange}
                     value={value}
-                    inputWrapperStyle={{ height: 40, backgroundColor: theme.tertiaryBackground }}
+                    inputWrapperStyle={{ height: 40 }}
                     inputStyle={{ height: 40 }}
                     containerStyle={{ ...spacings.mb, ...spacings.mrMi, flex: 1 }}
                     label={t('Network name')}
@@ -642,10 +643,11 @@ const NetworkForm = ({
                   control={control}
                   render={({ field: { onChange, onBlur, value } }) => (
                     <Input
+                      backgroundColor={theme.secondaryBackground}
                       onBlur={onBlur}
                       onChangeText={onChange}
                       value={value}
-                      inputWrapperStyle={{ height: 40, backgroundColor: theme.tertiaryBackground }}
+                      inputWrapperStyle={{ height: 40 }}
                       inputStyle={{ height: 40 }}
                       containerStyle={{ ...spacings.mb, flex: 1 }}
                       label={t('Currency Symbol')}
@@ -659,10 +661,11 @@ const NetworkForm = ({
                   control={control}
                   render={({ field: { onChange, onBlur, value } }) => (
                     <Input
+                      backgroundColor={theme.secondaryBackground}
                       onBlur={onBlur}
                       onChangeText={onChange}
                       value={value}
-                      inputWrapperStyle={{ height: 40, backgroundColor: theme.tertiaryBackground }}
+                      inputWrapperStyle={{ height: 40 }}
                       inputStyle={{ height: 40 }}
                       containerStyle={{ ...spacings.mb, ...spacings.mlMi, flex: 1 }}
                       label={t('Currency Name')}
@@ -679,10 +682,11 @@ const NetworkForm = ({
                 render={({ field: { onChange, onBlur, value } }) => (
                   <View style={[flexbox.directionRow, flexbox.alignStart]}>
                     <Input
+                      backgroundColor={theme.secondaryBackground}
                       onBlur={onBlur}
                       onChangeText={onChange}
                       value={value}
-                      inputWrapperStyle={{ height: 40, backgroundColor: theme.tertiaryBackground }}
+                      inputWrapperStyle={{ height: 40 }}
                       inputStyle={{ height: 40 }}
                       containerStyle={{ ...spacings.mb, ...spacings.mrTy, flex: 1 }}
                       label={t('RPC URL')}
@@ -759,10 +763,11 @@ const NetworkForm = ({
                   control={control}
                   render={({ field: { onChange, onBlur, value } }) => (
                     <NumberInput
+                      backgroundColor={theme.secondaryBackground}
                       onBlur={onBlur}
                       onChangeText={onChange}
                       value={value as any}
-                      inputWrapperStyle={{ height: 40, backgroundColor: theme.tertiaryBackground }}
+                      inputWrapperStyle={{ height: 40 }}
                       inputStyle={{ height: 40 }}
                       containerStyle={{ ...spacings.mrMi, flex: 1 }}
                       label={t('Chain ID')}
@@ -776,10 +781,11 @@ const NetworkForm = ({
                   control={control}
                   render={({ field: { onChange, onBlur, value } }) => (
                     <Input
+                      backgroundColor={theme.secondaryBackground}
                       onBlur={onBlur}
                       onChangeText={onChange}
                       value={value}
-                      inputWrapperStyle={{ height: 40, backgroundColor: theme.tertiaryBackground }}
+                      inputWrapperStyle={{ height: 40 }}
                       inputStyle={{ height: 40 }}
                       containerStyle={{ ...spacings.mlMi, flex: 2 }}
                       label={t('Block Explorer URL')}
@@ -794,12 +800,13 @@ const NetworkForm = ({
                   control={control}
                   render={({ field: { onChange, onBlur, value } }) => (
                     <NumberInput
+                      backgroundColor={theme.secondaryBackground}
                       onBlur={onBlur}
                       onChangeText={onChange}
                       value={value as any}
                       disabled
                       placeholder="Coming soon..."
-                      inputWrapperStyle={{ height: 40, backgroundColor: theme.tertiaryBackground }}
+                      inputWrapperStyle={{ height: 40 }}
                       inputStyle={{ height: 40 }}
                       containerStyle={{ ...spacings.mrMi, flex: 1 }}
                       label={t('Coingecko platform ID')}
@@ -812,12 +819,13 @@ const NetworkForm = ({
                   control={control}
                   render={({ field: { onChange, onBlur, value } }) => (
                     <Input
+                      backgroundColor={theme.secondaryBackground}
                       onBlur={onBlur}
                       onChangeText={onChange}
                       value={value}
                       disabled
                       placeholder="Coming soon..."
-                      inputWrapperStyle={{ height: 40, backgroundColor: theme.tertiaryBackground }}
+                      inputWrapperStyle={{ height: 40 }}
                       inputStyle={{ height: 40 }}
                       containerStyle={{ ...spacings.mlMi, flex: 1 }}
                       label={t('Coingecko native asset ID')}
@@ -832,6 +840,7 @@ const NetworkForm = ({
                   control={control}
                   render={({ field: { onChange, onBlur, value } }) => (
                     <Input
+                      backgroundColor={theme.secondaryBackground}
                       onBlur={onBlur}
                       onChangeText={onChange}
                       value={value}
@@ -849,7 +858,7 @@ const NetworkForm = ({
                           </>
                         )
                       }}
-                      inputWrapperStyle={{ height: 40, backgroundColor: theme.tertiaryBackground }}
+                      inputWrapperStyle={{ height: 40 }}
                       inputStyle={{ height: 40 }}
                       containerStyle={{ ...spacings.mb, ...spacings.mrMi, flex: 1 }}
                       label={t('Custom bundler url (Experimental)')}

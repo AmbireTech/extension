@@ -21,6 +21,7 @@ import useController from '@common/hooks/useController'
 import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useTheme from '@common/hooks/useTheme'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
+import eventBus from '@common/services/event/eventBus'
 import spacings from '@common/styles/spacings'
 import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
@@ -29,7 +30,6 @@ import {
   TabLayoutContainer,
   TabLayoutWrapperMainContent
 } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
-import eventBus from '@web/extension-services/event/eventBus'
 import PasswordConfirmation from '@web/modules/settings/components/PasswordConfirmation'
 
 import getStyles from './styles'
@@ -293,7 +293,7 @@ const SmartAccountImportScreen = () => {
   const handleGuideLinkPressed = useCallback(
     () =>
       Linking.openURL(
-        'https://help.ambire.com/hc/en-us/articles/15468208978332--Extension-How-to-add-your-v1-account-to-Ambire-Wallet-extension'
+        'https://help.ambire.com/en/articles/13714255-how-to-add-your-v1-ambire-smart-account-legacy-to-the-extension'
       ),
     []
   )

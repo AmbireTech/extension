@@ -18,11 +18,12 @@ const getStyles = () =>
       height: 40,
       ...spacings.plMi,
       ...spacings.prSm,
-      borderRadius: 50
+      ...spacings.mrTy,
+      borderRadius: 50,
+      overflow: 'hidden'
     },
     accountButtonRightIcon: {
-      borderColor: 'transparent',
-      ...spacings.mlMd
+      borderColor: 'transparent'
     },
     accountCopyIcon: { backgroundColor: 'transparent', borderColor: 'transparent' }
   })

@@ -1,14 +1,15 @@
 import React, { useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Pressable, View } from 'react-native'
+import { Pressable, View, ViewStyle } from 'react-native'
 
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
+import { isWeb } from '@common/config/env'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
+import DappIcon from '@common/modules/dapp-catalog/components/DappIcon'
+import ManageApp from '@common/modules/dapp-catalog/components/ManageApp'
 import spacings, { SPACING_TY } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import DappIcon from '@web/modules/dapp-catalog/components/DappIcon'
-import ManageApp from '@web/modules/dapp-catalog/components/ManageApp'
 
 const CurrentApp = () => {
   const { theme } = useTheme()
@@ -37,10 +38,11 @@ const CurrentApp = () => {
         style={{
           width: 40,
           height: 40,
-          backgroundColor: !isBlacklisted ? theme.secondaryBackground : theme.errorBackground,
+          backgroundColor: !isBlacklisted ? theme.primaryBackground : theme.errorBackground,
           borderRadius: 20,
           ...spacings.ml,
-          ...flexbox.center
+          ...flexbox.center,
+          ...(isWeb && !currentDapp.isConnected ? ({ cursor: 'default' } as any as ViewStyle) : {})
         }}
         dataSet={
           isBlacklisted
@@ -65,7 +67,7 @@ const CurrentApp = () => {
           setIsNetworkSelectorExpanded(false)
         }}
       >
-        <DappIcon dapp={currentDapp} withNetworkIcon />
+        <DappIcon dapp={currentDapp} isDashboard />
       </Pressable>
     </View>
   )

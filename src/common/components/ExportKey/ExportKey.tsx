@@ -3,22 +3,23 @@ import { View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 
 import { Account } from '@ambire-common/interfaces/account'
-import { isAmbireV1LinkedAccount, isSmartAccount } from '@ambire-common/libs/account/account'
+import { isAmbireV1LinkedAccount } from '@ambire-common/libs/account/account'
 import Alert from '@common/components/Alert'
 import BottomSheet from '@common/components/BottomSheet'
 import PrivateKeyExport from '@common/components/ExportKey/PrivateKeyExport'
 import SmartAccountExport from '@common/components/ExportKey/SmartAccountExport'
 import Text from '@common/components/Text'
+import { isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import useExtraEntropy from '@common/hooks/useExtraEntropy'
 import usePrevious from '@common/hooks/usePrevious'
+import eventBus from '@common/services/event/eventBus'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
-import eventBus from '@web/extension-services/event/eventBus'
+import { getUiType } from '@common/utils/uiType'
 import PasswordConfirmation from '@web/modules/settings/components/PasswordConfirmation'
-import { getUiType } from '@web/utils/uiType'
 
 import { PanelBackButton, PanelTitle } from '../Panel/Panel'
 
@@ -56,7 +57,7 @@ const ExportKey = ({
   }, [blurred, prevBlurred])
 
   const isExportingV2SA =
-    isSmartAccount(account) && !isAmbireV1LinkedAccount(account?.creation?.factoryAddr)
+    !!account.creation && !isAmbireV1LinkedAccount(account?.creation?.factoryAddr)
 
   const key = useMemo(
     () => keystoreState.keys.find((aKey) => aKey.addr === keyAddr),
@@ -119,9 +120,9 @@ const ExportKey = ({
 
   return (
     <View style={flexbox.flex1}>
-      <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mbLg]}>
-        <PanelBackButton onPress={onBackButtonPress} style={spacings.mrTy} />
-        <PanelTitle title={t('Private key export')} style={text.left} />
+      <View style={[flexbox.directionRow, flexbox.alignCenter, isWeb && spacings.mbLg]}>
+        {isWeb && <PanelBackButton onPress={onBackButtonPress} style={spacings.mrTy} />}
+        <PanelTitle title={t('Private key export')} style={isWeb ? text.left : text.center} />
       </View>
       <Text weight="semiBold" fontSize={fontSize} numberOfLines={1} style={spacings.mb}>
         {keyLabel}
@@ -147,17 +148,21 @@ const ExportKey = ({
       <BottomSheet
         sheetRef={sheetRefConfirmPassword}
         id="confirm-password-bottom-sheet"
-        type="modal"
+        type={isWeb ? 'modal' : 'bottom-sheet'}
         closeBottomSheet={closeConfirmPassword}
-        scrollViewProps={{ contentContainerStyle: { flex: 1 } }}
-        containerInnerWrapperStyles={{ flex: 1 }}
-        style={{ maxWidth: 432, minHeight: 432, ...spacings.pvLg }}
+        scrollViewProps={isWeb ? { contentContainerStyle: { flex: 1 } } : undefined}
+        containerInnerWrapperStyles={isWeb ? { flex: 1 } : undefined}
+        style={isWeb ? { maxWidth: 432, minHeight: 432, ...spacings.pvLg } : undefined}
       >
         <PasswordConfirmation
           text={
             isExportingV2SA
-              ? t('Please enter your extension password to export your JSON file.')
-              : t('Please enter your extension password to reveal your private key.')
+              ? t(
+                  `Please enter your ${isWeb ? 'extension ' : ''}password to export your JSON file.`
+                )
+              : t(
+                  `Please enter your ${isWeb ? 'extension ' : ''}password to reveal your private key.`
+                )
           }
           onPasswordConfirmed={onPasswordConfirmed}
           onBackButtonPress={closeConfirmPassword}

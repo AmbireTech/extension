@@ -32,7 +32,7 @@ const getStyles = (theme: ThemeProps) =>
       width: 60,
       height: 3,
       borderRadius: 4,
-      backgroundColor: theme.neutral500,
+      backgroundColor: theme.neutral600,
       top: 10
     },
     backDrop: {

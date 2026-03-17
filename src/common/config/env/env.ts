@@ -1,5 +1,4 @@
 import * as Application from 'expo-application'
-import * as Updates from 'expo-updates'
 import { Platform } from 'react-native'
 
 import {
@@ -20,6 +19,7 @@ export const isProd = process.env.APP_ENV === 'production'
 export const isStaging = process.env.APP_ENV === 'staging'
 export const isBenzin = process.env.BENZIN === 'true'
 export const isLegends = process.env.LEGENDS === 'true'
+export const isLedgerEmulator = process.env.IS_LEDGER_EMULATOR === 'true'
 /**
  * Ambire Next is a separate production build variant used for beta testing and preview
  * before releasing features to the main production build. It allows us to have two
@@ -41,13 +41,14 @@ export const APP_VERSION = appJSON.version
  */
 export const BUILD_NUMBER = Application.nativeBuildVersion || 'N/A'
 
-export const RELEASE_CHANNEL = Updates.channel || 'N/A'
-export const RUNTIME_VERSION = Updates.runtimeVersion || 'N/A'
+export const RELEASE_CHANNEL = 'N/A' // TODO: Get the release channel
+export const RUNTIME_VERSION = 'N/A' // TODO: Get the runtime version
 // FIXME: We should figure out a way to get this,
 // because 'expo-constants' uses window refs that break our extension service worker
 // export const EXPO_SDK = Constants?.manifest?.sdkVersion || 'N/A'
 export const EXPO_SDK = 'N/A'
 
+export const isMobile = Platform.OS === 'ios' || Platform.OS === 'android'
 export const isiOS = Platform.OS === 'ios'
 export const isAndroid = Platform.OS === 'android'
 export const isWeb = Platform.OS === 'web'
@@ -84,6 +85,9 @@ if (isProd) {
 } else if (isStaging) {
   CONFIG.APP_ENV = APP_ENV.STAGING
 }
+
+// This is only used for development builds, and it is not a secret, so it's fine to log it.
+export const LEDGER_EMULATOR_HTTP_URL = process.env.LEDGER_EMULATOR_HTTP_URL
 
 /**
  * Option to run the app without the Ambire Relayer. See `RELAYER_URL`

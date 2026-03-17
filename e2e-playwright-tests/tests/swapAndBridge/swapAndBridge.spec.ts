@@ -16,6 +16,7 @@ test.describe('swapAndBridge Smart Account', { tag: '@swapAndBridge' }, () => {
   }) => {
     const fromToken = tokens.dai.optimism
     const toToken = tokens.usdc.optimism
+
     await pages.swapAndBridge.prepareSwapAndBridge(0.1, fromToken, toToken)
     await pages.swapAndBridge.enterNumber('00.01', true)
   })

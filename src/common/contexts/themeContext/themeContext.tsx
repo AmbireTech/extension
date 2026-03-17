@@ -1,24 +1,12 @@
-import React, { createContext, useCallback, useEffect, useMemo } from 'react'
+import React, { useCallback, useEffect, useMemo } from 'react'
 import { useColorScheme } from 'react-native'
 
 import useController from '@common/hooks/useController'
+import { syncStorage } from '@common/services/storage'
 import { DEFAULT_THEME } from '@common/styles/theme/types'
 import ThemeColors, { THEME_TYPES, ThemeProps, ThemeType } from '@common/styles/themeConfig'
-import { isExtension } from '@web/constants/browserapi'
 
-export interface ThemeContextReturnType {
-  theme: ThemeProps
-  themeType: THEME_TYPES.DARK | THEME_TYPES.LIGHT
-  selectedThemeType: ThemeType
-  setThemeType: (item: ThemeType) => void
-}
-
-const ThemeContext = createContext<ThemeContextReturnType>({
-  theme: {} as ThemeProps,
-  themeType: DEFAULT_THEME,
-  selectedThemeType: DEFAULT_THEME,
-  setThemeType: () => {}
-})
+import { ThemeContext } from './context'
 
 const ThemeProvider: React.FC<{
   children: React.ReactNode
@@ -29,38 +17,26 @@ const ThemeProvider: React.FC<{
   const { themeType: selectedThemeType } = useController('WalletStateController').state || {}
 
   useEffect(() => {
-    if (!isExtension) return
     if (!selectedThemeType) return
 
-    if (localStorage.getItem('fallbackSelectedThemeType') !== selectedThemeType) {
-      localStorage.setItem('fallbackSelectedThemeType', selectedThemeType)
+    if (syncStorage.get('fallbackSelectedThemeType') !== selectedThemeType) {
+      syncStorage.set('fallbackSelectedThemeType', selectedThemeType)
     }
   }, [selectedThemeType])
 
   const themeType = useMemo(() => {
-    const type =
-      forceThemeType ?? selectedThemeType ?? localStorage.getItem('fallbackSelectedThemeType')
+    const type = forceThemeType ?? selectedThemeType ?? syncStorage.get('fallbackSelectedThemeType')
 
     return type === THEME_TYPES.SYSTEM
       ? (systemThemeType as THEME_TYPES.LIGHT | THEME_TYPES.DARK)
-      : type
+      : (type as THEME_TYPES.LIGHT | THEME_TYPES.DARK)
   }, [selectedThemeType, systemThemeType, forceThemeType])
-
-  useEffect(() => {
-    if (themeType === THEME_TYPES.DARK) {
-      document.body.classList.add('dark-scrollbar')
-      document.body.classList.remove('light-scrollbar')
-    } else {
-      document.body.classList.add('light-scrollbar')
-      document.body.classList.remove('dark-scrollbar')
-    }
-  }, [themeType])
 
   const theme = useMemo(() => {
     const currentTheme = Object.fromEntries(
       Object.entries(ThemeColors).map(([key, value]) => [
         key,
-        value[themeType] || value[DEFAULT_THEME]
+        (value as any)[themeType] || (value as any)[DEFAULT_THEME]
       ])
     ) as ThemeProps
 

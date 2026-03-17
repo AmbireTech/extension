@@ -25,7 +25,7 @@ import SettingsPageHeader from '@web/modules/settings/components/SettingsPageHea
 
 import AddContactFormModal from '../AddContactFormModal'
 
-const ContactWrapper = ({ children }: { children: React.ReactNode }) => {
+export const ContactWrapper = ({ children }: { children: React.ReactNode }) => {
   const { theme } = useTheme()
 
   return (
@@ -134,7 +134,7 @@ const ContactsList = () => {
             text={t('Add a contact')}
             type="primary"
             size="smaller"
-            textStyle={{ fontSize: 12, marginTop: 2 }}
+            textStyle={{ fontSize: 12 }}
             style={[spacings.phSm, { height: 40 }]}
             hasBottomSpacing={false}
             onPress={openAddContactForm as any}

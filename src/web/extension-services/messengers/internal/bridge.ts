@@ -31,7 +31,7 @@ export const bridgeMessenger = createMessenger({
   }
 })
 
-export async function setupBridgeMessengerRelay() {
+export async function setupBridgeMessengerRelay(isCrossOrigin = false) {
   if (detectScriptType() !== 'contentScript') {
     throw new Error('`setupBridgeMessengerRelay` is only supported in Content Scripts.')
   }
@@ -101,10 +101,12 @@ export async function setupBridgeMessengerRelay() {
   // next tick
   setTimeout(() => {
     // Notify the background that the content script is ready to receive messages
-    tabMessenger.send(
-      globalIsAmbireNext ? 'ambireNextBuildProviderRequest' : 'ambireProviderRequest',
-      { id: 0, method: 'contentScriptReady' },
-      { id: 0 }
-    )
+    if (!isCrossOrigin) {
+      tabMessenger.send(
+        globalIsAmbireNext ? 'ambireNextBuildProviderRequest' : 'ambireProviderRequest',
+        { id: 0, method: 'contentScriptReady' },
+        { id: 0 }
+      )
+    }
   }, 0)
 }

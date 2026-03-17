@@ -5,13 +5,13 @@ import { Banner, MarketingBannerTypes } from '@ambire-common/interfaces/banner'
 import CloseIcon from '@common/assets/svg/CloseIcon'
 import Text from '@common/components/Text'
 import useController from '@common/hooks/useController'
+import { AnimatedPressable, useMultiHover } from '@common/hooks/useHover'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import { BORDER_RADIUS_PRIMARY, hexToRgba } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
-import { openInTab } from '@web/extension-services/background/webapi/tab'
-import { AnimatedPressable, useMultiHover } from '@web/hooks/useHover'
-import { getUiType } from '@web/utils/uiType'
+import { openInTab } from '@common/utils/links'
+import { getUiType } from '@common/utils/uiType'
 
 import temporaryImage from './assets/temporary-image.png'
 
@@ -43,6 +43,9 @@ const MarketingBanner: React.FC<Props> = ({ banner }) => {
   ) as Exclude<MarketingBannerTypes, 'alert'>
   const action = actions?.[0]
   const url = action?.actionName === 'open-link' ? action.meta.url : ''
+  const size = (banner.text?.length || 0) > 50 ? 'large' : 'normal'
+  const imageSize = size === 'large' ? 64 : 48
+
   const [bindAnim, animStyle] = useMultiHover({
     values: [
       {
@@ -74,10 +77,15 @@ const MarketingBanner: React.FC<Props> = ({ banner }) => {
       {...bindAnim}
     >
       <Image
-        source={{ uri: typeImageMap[type] }}
-        width={64}
-        height={64}
-        style={{ width: 64, height: 64 }}
+        source={
+          typeof typeImageMap[type] === 'number' ? typeImageMap[type] : { uri: typeImageMap[type] }
+        }
+        width={imageSize}
+        height={imageSize}
+        style={{
+          width: imageSize,
+          height: imageSize
+        }}
       />
       <View style={[spacings.ml, flexbox.flex1]}>
         <View style={[flexbox.directionRow, flexbox.justifySpaceBetween]}>
@@ -103,7 +111,7 @@ const MarketingBanner: React.FC<Props> = ({ banner }) => {
             <CloseIcon color={theme.iconPrimary} strokeWidth="2" width={12} height={12} />
           </Pressable>
         </View>
-        <Text appearance="secondaryText" fontSize={14} style={spacings.prLg}>
+        <Text appearance="secondaryText" fontSize={14} style={spacings.mrLg}>
           {text}
         </Text>
       </View>

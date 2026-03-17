@@ -12,10 +12,10 @@ import {
 
 import InformationIcon from '@common/assets/svg/InformationIcon'
 import Text, { TextAppearance } from '@common/components/Text'
-import { isWeb } from '@common/config/env'
+import { isMobile, isWeb } from '@common/config/env'
+import useHover, { AnimatedPressable } from '@common/hooks/useHover'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
-import useHover, { AnimatedPressable } from '@web/hooks/useHover'
 
 import getStyles from './styles'
 
@@ -117,7 +117,9 @@ const Input = ({
       borderColor: 'transparent'
     },
     isValid ? { borderColor: theme.successDecorative } : {},
-    isFocused ? { backgroundColor: theme.tertiaryBackground } : {},
+    isFocused
+      ? { backgroundColor: theme.tertiaryBackground, borderColor: theme.primaryBorder }
+      : {},
     error ? { borderColor: theme.errorDecorative } : {},
     info ? { borderColor: theme.warningText } : {},
     disabled ? styles.disabled : {},
@@ -243,8 +245,9 @@ const Input = ({
             {' '}
           </Text>
         )}
-        {renderConfirmAddress && renderConfirmAddress()}
+        {isWeb && !!renderConfirmAddress && renderConfirmAddress()}
       </View>
+      {isMobile && !!renderConfirmAddress && renderConfirmAddress()}
     </View>
   )
 }

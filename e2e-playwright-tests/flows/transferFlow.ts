@@ -1,5 +1,7 @@
-import { test, expect, Page } from '@playwright/test'
 import selectors from 'constants/selectors'
+
+import { expect, Page, test } from '@playwright/test'
+
 import type Token from 'interfaces/token'
 import type { PageManager } from 'pages/utils/page_instances'
 
@@ -128,12 +130,9 @@ export async function runBatchTransferFlow({
     })
   })
 
-  await test.step(
-    'stop monitoring requests and expect no uncategorized requests to be made',
-    async () => {
-      const { uncategorized } = pages.transfer.getCategorizedRequests()
-      pages.transfer.stopMonitorRequests()
-      expect(uncategorized.length).toBeLessThanOrEqual(0)
-    }
-  )
+  await test.step('stop monitoring requests and expect no uncategorized requests to be made', async () => {
+    const { uncategorized } = pages.transfer.getCategorizedRequests()
+    pages.transfer.stopMonitorRequests()
+    expect(uncategorized.length).toBeLessThanOrEqual(0)
+  })
 }

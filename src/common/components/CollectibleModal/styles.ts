@@ -2,7 +2,7 @@ import { ImageStyle, StyleSheet, ViewStyle } from 'react-native'
 
 import spacings, { SPACING_SM } from '@common/styles/spacings'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
-import { getUiType } from '@web/utils/uiType'
+import { getUiType } from '@common/utils/uiType'
 
 interface Style {
   modal: ViewStyle

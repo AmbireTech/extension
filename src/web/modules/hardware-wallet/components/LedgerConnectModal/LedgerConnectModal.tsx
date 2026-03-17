@@ -15,12 +15,11 @@ import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import { WEB_ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
-import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
+import { getUiType } from '@common/utils/uiType'
 import { openInternalPageInTab } from '@web/extension-services/background/webapi/tab'
 import useLedger from '@web/modules/hardware-wallet/hooks/useLedger'
-import { getUiType } from '@web/utils/uiType'
 
 type Props = {
   isVisible: boolean
@@ -48,7 +47,7 @@ const LedgerConnectModal = ({
   const { t } = useTranslation()
   const [isGrantingPermission, setIsGrantingPermission] = useState(false)
   const { currentUserRequest, requestWindow } = useController('RequestsController').state
-  const { theme, themeType } = useTheme()
+  const { theme } = useTheme()
 
   useEffect(() => {
     if (isVisible) open()

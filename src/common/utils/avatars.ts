@@ -26,14 +26,14 @@ const getAvatarColors = (avatarType: AvatarType, address: string): AvatarColors 
       return FALLBACK_COLORS
     }
 
-    return [colors[2]!, colors[1]!, colors[0]!]
+    return [colors[1]!, colors[2]!, colors[3]!]
   }
 
   if (avatarType === 'polycons') {
     const seed = generateSeedEthereum(address)
     const polyconColors = getPolyconColors(seed)
 
-    return [polyconColors.bgColor, polyconColors.fgColor, polyconColors.fgColor]
+    return [polyconColors.fgColor, polyconColors.fgColor, polyconColors.bgColor]
   }
 
   return FALLBACK_COLORS

@@ -1,4 +1,4 @@
-import { Props as BadgeProps, BadgeType, SpecialBadgeType } from '../Badge/types'
+import { BadgeType, Props as BadgeProps, SpecialBadgeType } from '../Badge/types'
 
 type BadgePreset = {
   text: string

@@ -18,10 +18,8 @@ import Text from '@common/components/Text'
 import TokenIcon from '@common/components/TokenIcon'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
-import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import spacings from '@common/styles/spacings'
-import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
 import {
   getTokenEligibility,
@@ -52,7 +50,6 @@ const AddTokenBottomSheet: FC<Props> = ({ sheetRef, handleClose }) => {
   const {
     state: { portfolio: selectedAccountPortfolio, account }
   } = useController('SelectedAccountController')
-  const { themeType } = useTheme()
   const [network, setNetwork] = useState<Network | undefined>(
     isInitialized ? (networks.find((n) => n.chainId.toString() === '1') ?? networks[0]) : undefined
   )
@@ -280,7 +277,6 @@ const AddTokenBottomSheet: FC<Props> = ({ sheetRef, handleClose }) => {
       sheetRef={sheetRef}
       closeBottomSheet={handleCloseAndReset}
       style={{ maxWidth: 720 }}
-      backgroundColor={themeType === THEME_TYPES.DARK ? 'secondaryBackground' : 'primaryBackground'}
     >
       <Text testID="add-token-modal-title-text" fontSize={20} style={spacings.mbXl} weight="medium">
         {t('Add Token')}

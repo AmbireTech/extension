@@ -13,12 +13,12 @@ import Toggle from '@common/components/Toggle'
 import Tooltip from '@common/components/Tooltip'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
+import HardwareWalletSigningModal from '@common/modules/hardware-wallets/components/HardwareWalletSigningModal'
 import spacings, { SPACING, SPACING_LG, SPACING_MD, SPACING_SM } from '@common/styles/spacings'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import { TabLayoutWrapperMainContent } from '@web/components/TabLayoutWrapper'
 import useResponsiveActionWindow from '@web/hooks/useResponsiveActionWindow'
-import HardwareWalletSigningModal from '@web/modules/hardware-wallet/components/HardwareWalletSigningModal'
 import LedgerConnectModal from '@web/modules/hardware-wallet/components/LedgerConnectModal'
 import Info from '@web/modules/sign-message/screens/SignMessageScreen/Info'
 import getStyles from '@web/modules/sign-message/screens/SignMessageScreen/styles'
@@ -27,6 +27,7 @@ interface Props {
   shouldDisplayLedgerConnectModal: boolean
   isLedgerConnected: boolean
   handleDismissLedgerConnectModal: () => void
+  isSafeNotDeployed: boolean
 }
 
 const Label = ({
@@ -89,7 +90,8 @@ const Row = ({
 const SignInWithEthereum = ({
   shouldDisplayLedgerConnectModal,
   isLedgerConnected,
-  handleDismissLedgerConnectModal
+  handleDismissLedgerConnectModal,
+  isSafeNotDeployed
 }: Props) => {
   const { t } = useTranslation()
   const { state: signMessageState, dispatch: signMessageDispatch } =
@@ -327,9 +329,15 @@ const SignInWithEthereum = ({
             )}
           />
         )}
-        {signMessageState.signingKeyType && signMessageState.signingKeyType !== 'internal' && (
+        {isSafeNotDeployed && (
+          <Alert
+            type="error"
+            title="Safe account not enabled on this network. Please activate it from Safe global"
+          />
+        )}
+        {signMessageState.signer && signMessageState.signer.key.type !== 'internal' && (
           <HardwareWalletSigningModal
-            keyType={signMessageState.signingKeyType}
+            keyType={signMessageState.signer.key.type}
             isVisible={signStatus === 'LOADING'}
           />
         )}

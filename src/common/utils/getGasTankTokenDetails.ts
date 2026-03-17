@@ -7,18 +7,16 @@ import {
 import { GasTankTokenResult } from '@ambire-common/libs/portfolio'
 import getAndFormatTokenDetails from '@common/modules/dashboard/helpers/getTokenDetails'
 
-const parseGasTankToken = (token: GasTankTokenResult, type: keyof GasTankTokenResult) => {
-  const amount = token[type]
+const parseGasTankToken = (token: GasTankTokenResult): SelectedAccountPortfolioTokenResult => {
   const { availableAmount, ...rest } = token
 
-  return { ...rest, amount } as SelectedAccountPortfolioTokenResult
+  return rest
 }
 
 export const getGasTankTokenDetails = (
   portfolio: SelectedAccountPortfolio,
   account: Account | null,
-  networks: Network[],
-  key: 'amount'
+  networks: Network[]
 ) => {
   const gasTankResult = portfolio?.portfolioState?.gasTank?.result as
     | { gasTankTokens: GasTankTokenResult[] }
@@ -36,7 +34,13 @@ export const getGasTankTokenDetails = (
     return { token: null, balanceFormatted: null }
   }
 
-  const token = parseGasTankToken(gasTankResult.gasTankTokens[0], key)
+  const token = gasTankResult.gasTankTokens[0]
+    ? parseGasTankToken(gasTankResult.gasTankTokens[0])
+    : null
+
+  if (!token) {
+    return { token: null, balanceFormatted: null }
+  }
 
   return {
     token,

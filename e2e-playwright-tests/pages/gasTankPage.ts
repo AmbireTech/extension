@@ -14,7 +14,7 @@ export class GasTankPage extends BasePage {
   }
 
   async topUpGasTank(token: Token, amount: string) {
-    await this.page.getByTestId(selectors.dashboardGasTankButton).click()
+    await this.page.getByTestId(selectors.dashboardGasTankBalance).click()
     await this.page.getByTestId(selectors.topUpButton).click()
 
     await this.clickOnMenuToken(token)
@@ -28,14 +28,14 @@ export class GasTankPage extends BasePage {
 
     // Amount
     await this.page.waitForTimeout(1000) // script misses input due to modal animation sometimes
-    const amountField = this.page.getByTestId(selectors.amountField)
+    const amountField = this.page.getByTestId(selectors.transaction.amountField)
     await amountField.fill(amount)
   }
 
   async signAndValidate() {
     // Proceed
-    await this.expectButtonEnabled(selectors.proceedBtn)
-    await this.click(selectors.proceedBtn)
+    await this.expectButtonEnabled(selectors.transaction.proceedBtn)
+    await this.click(selectors.transaction.proceedBtn)
 
     // Sign & Broadcast
     await this.click(selectors.signButton)

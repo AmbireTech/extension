@@ -1,0 +1,29 @@
+import React, { FC } from 'react'
+import { View } from 'react-native'
+
+import DotsLoadingAnimation from '@common/components/DotsLoadingAnimation'
+import Text from '@common/components/Text'
+import spacings from '@common/styles/spacings'
+import flexbox from '@common/styles/utils/flexbox'
+import text from '@common/styles/utils/text'
+
+type InProgressProps = {
+  title: string
+  children: React.ReactNode
+}
+
+const InProgress: FC<InProgressProps> = ({ title, children }) => (
+  <>
+    <View style={[flexbox.alignCenter]}>
+      <Text testID="confirming-your" fontSize={20} weight="medium" style={text.center}>
+        {title}
+      </Text>
+      <View style={[{ width: 72, height: 72 }, flexbox.center, spacings.mbSm]}>
+        <DotsLoadingAnimation />
+      </View>
+    </View>
+    {children}
+  </>
+)
+
+export default InProgress

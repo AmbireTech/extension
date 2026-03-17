@@ -1,17 +1,18 @@
 import React, { FC, useCallback, useEffect, useRef, useState } from 'react'
-import { Animated, PanResponder, ViewStyle } from 'react-native'
+import { Animated, PanResponder, StyleProp, ViewStyle } from 'react-native'
 
 import Button, { Props as CommonButtonProps } from '@common/components/Button'
+import { isWeb } from '@common/config/env'
 import useTheme from '@common/hooks/useTheme'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 
 type Props = Omit<CommonButtonProps, 'style' | 'children' | 'childrenPosition' | 'onPress'> & {
-  style?: ViewStyle
+  style?: StyleProp<ViewStyle>
   onHoldComplete: () => void
   holdDuration?: number // in milliseconds
   holdText?: string
   completeText?: string
-  buttonType?: 'primary' | 'error' | 'warning'
+  buttonType?: 'primary' | 'dangerFilled' | 'warning'
 }
 
 const HoldToProceedButton: FC<Props> = ({
@@ -36,10 +37,10 @@ const HoldToProceedButton: FC<Props> = ({
   const holdStartTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const isCurrentlyHoldingRef = useRef(false)
 
-  const colorTypes = {
-    primary: theme.primary,
-    error: theme.errorText,
-    warning: theme.warningText
+  const progressColorMap = {
+    primary: theme.primaryAccent100,
+    dangerFilled: theme.error100,
+    warning: theme.warning100
   }
 
   const startHold = useCallback(() => {
@@ -206,7 +207,7 @@ const HoldToProceedButton: FC<Props> = ({
   const progressColor = isCompleted
     ? theme.successDecorative
     : isHolding
-      ? colorTypes[buttonType]
+      ? progressColorMap[buttonType]
       : 'transparent'
 
   return (
@@ -230,11 +231,11 @@ const HoldToProceedButton: FC<Props> = ({
           {
             minWidth: buttonWidth || 108,
             position: 'relative',
-            backgroundColor: colorTypes[buttonType]
+            backgroundColor: progressColorMap[buttonType]
           },
           style
         ]}
-        size="smaller"
+        size={isWeb ? 'smaller' : 'regular'}
         hasBottomSpacing={false}
         text={buttonText}
         disabled={disabled}

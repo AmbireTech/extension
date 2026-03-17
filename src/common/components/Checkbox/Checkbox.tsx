@@ -1,7 +1,6 @@
 import React, { ReactNode } from 'react'
 import { ColorValue, TouchableOpacity, View, ViewProps } from 'react-native'
 
-import CheckIcon from '@common/assets/svg/CheckIcon'
 import CheckIcon2 from '@common/assets/svg/CheckIcon2'
 import Text, { Props as TextProps } from '@common/components/Text'
 import useTheme from '@common/hooks/useTheme'
@@ -58,7 +57,7 @@ const Checkbox = ({
           disabled={isDisabled}
         >
           {!!value && (
-            <CheckIcon2 color={theme.success400} checkColor={checkedColor || theme.neutral100} />
+            <CheckIcon2 color={checkedColor || theme.success400} checkColor={theme.neutral100} />
           )}
         </TouchableOpacity>
       </View>

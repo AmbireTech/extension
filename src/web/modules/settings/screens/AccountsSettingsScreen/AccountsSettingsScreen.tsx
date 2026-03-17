@@ -19,13 +19,13 @@ import useController from '@common/hooks/useController'
 import useElementSize from '@common/hooks/useElementSize'
 import useTheme from '@common/hooks/useTheme'
 import useWindowSize from '@common/hooks/useWindowSize'
+import Account from '@common/modules/account-select/components/Account'
+import AddAccount from '@common/modules/account-select/components/AddAccount'
 import spacings from '@common/styles/spacings'
 import { THEME_TYPES } from '@common/styles/themeConfig'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
-import Account from '@web/modules/account-select/components/Account'
-import AddAccount from '@web/modules/account-select/components/AddAccount'
 import AccountSmartSettingsBottomSheet from '@web/modules/settings/components/Accounts/AccountSmartSettingsBottomSheet'
 import SettingsPageHeader from '@web/modules/settings/components/SettingsPageHeader'
 import { SettingsRoutesContext } from '@web/modules/settings/contexts/SettingsRoutesContext'
@@ -181,6 +181,7 @@ const AccountsSettingsScreen = () => {
               inverseInteractionColors
               isSelectable={false}
               containerStyle={{ ...spacings.mb0, ...spacings.pvSm }}
+              withReceive
             />
           </View>
         </View>
@@ -207,7 +208,7 @@ const AccountsSettingsScreen = () => {
             text={t('Add account')}
             type="primary"
             size="smaller"
-            textStyle={{ fontSize: 12, marginTop: 2 }}
+            textStyle={{ fontSize: 12 }}
             style={[spacings.phSm, { height: 40 }]}
             hasBottomSpacing={false}
             onPress={openBottomSheet as any}
@@ -288,6 +289,7 @@ const AccountsSettingsScreen = () => {
         </View>
         <View style={flexbox.alignCenter}>
           <Button
+            testID="confirm-remove-account-button"
             type="danger"
             style={spacings.mtTy}
             text={t('Remove account')}

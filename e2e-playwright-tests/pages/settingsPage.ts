@@ -36,6 +36,14 @@ export class SettingsPage extends BasePage {
     await this.checkUrl('/settings/manage-tokens')
   }
 
+  async removeLastAccount() {
+    const account = this.page.getByTestId(selectors.settings.manageAccountTreeDotsButton).last()
+    await account.locator('div>div>div>div>svg').last().click() // should be last, try to add ID for more test
+
+    await this.page.locator(selectors.settings.removeAccountButton).click({ timeout: 5000 })
+    await this.click(selectors.settings.confirmRemoveAccountButton)
+  }
+
   async lockKeystore(): Promise<void> {
     await this.openSettingsGeneral()
 
@@ -87,10 +95,12 @@ export class SettingsPage extends BasePage {
 
     // confirm adding rpc url
     await this.page.locator(selectors.addRPCURLButton).click()
+    await this.page.waitForTimeout(5000) // wait for adding rpc
     await this.typeNetworkField('Block Explorer URL', network.explorerUrl)
 
     // add network
-    await this.page.locator(selectors.addNetworkButton).click({ timeout: 5000 })
+    await this.page.locator(selectors.addNetworkButton).click()
+
     await expect(this.page.locator(selectors.networkSuccessfullyAddedSnackbar)).toHaveText(
       'Network successfully added!'
     )

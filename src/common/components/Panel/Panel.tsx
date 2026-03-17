@@ -48,10 +48,18 @@ const PanelBackButton = ({ onPress, style }: { onPress: () => void; style?: View
   )
 }
 
-const PanelTitle = ({ title, style }: { title: string | ReactNode; style?: TextStyle }) => {
+const PanelTitle = ({
+  title,
+  size,
+  style
+}: {
+  title: string | ReactNode
+  size?: number
+  style?: TextStyle
+}) => {
   return (
     <Text
-      fontSize={20}
+      fontSize={size || 20}
       weight="medium"
       numberOfLines={1}
       style={[text.center, flexbox.flex1, style]}

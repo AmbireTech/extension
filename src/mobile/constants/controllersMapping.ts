@@ -1,10 +1,8 @@
 import { MainController } from '@ambire-common/controllers/main/main'
 import { controllersNestedInMainMapping } from '@common/constants/controllersMapping'
-import { WalletStateController } from '@web/extension-services/background/controllers/wallet-state'
 
 export const baseControllersMapping = {
-  MainController,
-  WalletStateController
+  MainController
 }
 
 export const controllersMapping = {

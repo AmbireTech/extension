@@ -7,7 +7,7 @@ import GlassView from '@common/components/GlassView'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
-import ActionsPagination from '../ActionsPagination'
+import ActionsPagination from '../../../../../common/modules/action-requests/components/ActionsPagination'
 
 type Props = {
   onReject?: () => void
@@ -40,21 +40,23 @@ const ActionFooter = ({
 
   return (
     <View style={[flexbox.alignCenter, spacings.pb]}>
-      <GlassView style={{ borderRadius: 28 }} cssStyle={{ borderRadius: 28 }}>
+      <GlassView borderRadius={28}>
         <View style={[flexbox.directionRow, spacings.phSm, spacings.pvSm]}>
-          {showReject && (
-            <View style={[flexbox.flex1, spacings.mrLg]}>
-              <Button
-                text={rejectButtonText || t('Reject')}
-                type="danger"
-                hasBottomSpacing={false}
-                size="large"
-                onPress={onReject}
-                testID={rejectButtonTestID}
-                style={flexbox.alignSelfStart}
-              />
-            </View>
-          )}
+          <View style={flexbox.flex1}>
+            {showReject && (
+              <View style={[flexbox.flex1, spacings.mrLg]}>
+                <Button
+                  text={rejectButtonText || t('Reject')}
+                  type="danger"
+                  hasBottomSpacing={false}
+                  size="large"
+                  onPress={onReject}
+                  testID={rejectButtonTestID}
+                  style={flexbox.alignSelfStart}
+                />
+              </View>
+            )}
+          </View>
           <ActionsPagination />
           {resolveNode || (
             <View style={flexbox.flex1}>

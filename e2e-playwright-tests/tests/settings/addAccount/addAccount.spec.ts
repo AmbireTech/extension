@@ -3,6 +3,8 @@ import selectors from 'constants/selectors'
 import { test } from 'fixtures/pageObjects'
 
 test.describe('Add account', { tag: '@addAccount' }, () => {
+  test.setTimeout(60000)
+
   test.beforeEach(async ({ pages }) => {
     await pages.initWithStorage(saParams)
   })

@@ -79,7 +79,7 @@ const ButtonWrapper = ({
 
   return (
     <View style={[flexbox.directionRow, flexbox.justifyCenter]}>
-      <GlassView style={{ borderRadius: 28 }} cssStyle={{ borderRadius: 28 }}>
+      <GlassView borderRadius={28}>
         <View style={[styles.buttons, reverse && flexbox.directionRowReverse]}>{children}</View>
       </GlassView>
     </View>
@@ -118,7 +118,7 @@ const DualChoiceWarningModal = ({
         <Button
           text={primaryButtonText}
           onPress={onPrimaryButtonPress}
-          type={type}
+          type={type === 'error' ? 'dangerFilled' : type}
           hasBottomSpacing={false}
           size="smaller"
           {...primaryButtonProps}

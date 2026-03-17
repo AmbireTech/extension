@@ -16,14 +16,15 @@ import PendingToBeConfirmedIcon from '@common/assets/svg/PendingToBeConfirmedIco
 import Text from '@common/components/Text'
 import TokenIcon from '@common/components/TokenIcon'
 import Tooltip from '@common/components/Tooltip'
+import { isMobile } from '@common/config/env'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import PendingBadge from '@common/modules/dashboard/components/Tokens/TokenItem/PendingBadge'
 import getAndFormatTokenDetails from '@common/modules/dashboard/helpers/getTokenDetails'
+import NotSupportedNetworkTooltip from '@common/modules/swap-and-bridge/components/NotSupportedNetworkTooltip'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import NotSupportedNetworkTooltip from '@web/modules/swap-and-bridge/components/NotSupportedNetworkTooltip'
-import { getTokenId } from '@web/utils/token'
+import { getTokenId } from '@common/utils/token'
 
 const TextFallbackState: React.FC<{ children: React.ReactNode }> = ({ children }) => (
   <Text fontSize={14} appearance="secondaryText" style={spacings.plTy}>
@@ -36,7 +37,7 @@ const getTokenOptionsEmptyState = (isToToken = false) => [
     value: 'noTokens',
     label: (
       <TextFallbackState>
-        {isToToken ? 'Failed to retrieve tokens' : "You don't have any tokens"}
+        {isToToken ? 'Failed to retrieve tokens' : 'No tokens found'}
       </TextFallbackState>
     ),
     icon: null
@@ -221,6 +222,8 @@ const useGetTokenSelectProps = ({
       </View>
     )
 
+    const networkName = network?.name || (tokenInPortfolio?.flags.onGasTank ? 'Gas Tank' : '')
+
     const isNameDifferentThanSymbol = name.toLowerCase() !== symbol.toLowerCase()
     const label = getIsToTokenTypeGuard(currentToken) ? (
       <>
@@ -228,7 +231,7 @@ const useGetTokenSelectProps = ({
           dataSet={tooltipIdNotSupported ? { tooltipId: tooltipIdNotSupported } : undefined}
           style={flexbox.flex1}
         >
-          <Text numberOfLines={1}>
+          <Text numberOfLines={1} style={{ lineHeight: 20 }}>
             <Text fontSize={16} weight="medium" numberOfLines={1}>
               {symbol}{' '}
             </Text>
@@ -254,15 +257,35 @@ const useGetTokenSelectProps = ({
       </>
     ) : (
       <>
-        <Text
-          numberOfLines={1}
-          dataSet={{ tooltipId: tooltipIdNotSupported }}
-          style={flexbox.flex1}
+        <View
+          style={[
+            flexbox.flex1,
+            !isSelected && flexbox.directionRow,
+            !isSelected && flexbox.alignEnd
+          ]}
         >
-          <Text fontSize={16} weight="semiBold">
+          <Text
+            fontSize={isSelected && isMobile ? 14 : 16}
+            weight="semiBold"
+            style={{ lineHeight: 20 }}
+            numberOfLines={1}
+            dataSet={{ tooltipId: tooltipIdNotSupported }}
+          >
             {symbol}
           </Text>
-        </Text>
+          {!!networkName && (
+            <Text
+              fontSize={isSelected ? 12 : 14}
+              weight={isSelected ? 'regular' : 'medium'}
+              appearance="secondaryText"
+              ellipsizeMode="tail"
+              numberOfLines={1}
+              style={!isSelected && spacings.mlTy}
+            >
+              {`${isSelected ? '' : ' '}on ${networkName}`}
+            </Text>
+          )}
+        </View>
         {!isSelected && formattedBalancesLabel}
         {!isTokenNetworkSupported && (
           <NotSupportedNetworkTooltip tooltipId={tooltipIdNotSupported} network={network} />

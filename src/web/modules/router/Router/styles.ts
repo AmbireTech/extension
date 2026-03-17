@@ -1,9 +1,9 @@
 import { StyleSheet, ViewStyle } from 'react-native'
 
 import flexbox from '@common/styles/utils/flexbox'
+import { getUiType } from '@common/utils/uiType'
 import { isOpera, isSafari } from '@web/constants/browserapi'
 import { POPUP_WIDTH } from '@web/constants/spacings'
-import { getUiType } from '@web/utils/uiType'
 
 interface Style {
   container: ViewStyle
