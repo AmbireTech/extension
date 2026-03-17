@@ -21,7 +21,14 @@ const QrSigningFlowScreen = ({
   if (!request) return null
 
   if (step === 'show-request') {
-    return <QrSignRequestScreen frames={request.frames} onContinue={onContinue} />
+    return (
+      <QrSignRequestScreen
+        frames={request.frames}
+        urType={request.urType}
+        urCborHex={request.urCborHex}
+        onContinue={onContinue}
+      />
+    )
   }
 
   if (step === 'scan-response') {

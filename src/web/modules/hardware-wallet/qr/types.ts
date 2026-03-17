@@ -20,6 +20,8 @@ export type QrRequest = {
   type: QrRequestType
   frames: string[]
   requestId?: string
+  urType?: string
+  urCborHex?: any
 }
 
 export type QrSignaturePayload = { signature: string } | { r: string; s: string; v: number }

@@ -83,6 +83,7 @@
     "@fortawesome/free-solid-svg-icons": "6.6.0",
     "@fortawesome/react-fontawesome": "0.2.2",
     "@gorhom/portal": "1.0.14",
+    "@keystonehq/animated-qr": "^0.10.0",
     "@keystonehq/bc-ur-registry-eth": "0.22.1",
     "@ledgerhq/context-module": "1.14.0",
     "@ledgerhq/device-management-kit": "1.0.1",

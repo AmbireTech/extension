@@ -35,6 +35,8 @@ class UrQrProtocolAdapter implements QrProtocolAdapter {
       }
 
       const signData = Buffer.from(strippedHex, 'hex')
+      const requestId = uuidv4()
+      const masterFingerprint = stripHexPrefix(args.masterFingerprint)
 
       // The exact constructor signature can vary slightly by installed version.
       // In current Keystone ETH UR packages, EthSignRequest is the right type
@@ -44,8 +46,8 @@ class UrQrProtocolAdapter implements QrProtocolAdapter {
         signData,
         DataType.personalMessage,
         args.derivationPath,
-        args.masterFingerprint,
-        uuidv4(),
+        masterFingerprint,
+        requestId,
         args.chainId !== undefined ? Number(args.chainId) : undefined,
         undefined,
         args.address
@@ -56,7 +58,10 @@ class UrQrProtocolAdapter implements QrProtocolAdapter {
 
       return {
         type: 'sign-message',
-        frames
+        frames,
+        requestId,
+        urType: ur.type,
+        urCborHex: ur.cbor.toString('hex')
       }
     } catch (e: any) {
       throw new ExternalSignerError(e?.message || 'Failed to build UR sign-message request.', {
@@ -97,7 +102,9 @@ class UrQrProtocolAdapter implements QrProtocolAdapter {
       return {
         type: 'sign-typed-data',
         frames,
-        requestId
+        requestId,
+        urType: ur.type,
+        urCborHex: ur.cbor.toString('hex')
       }
     } catch (e: any) {
       throw new ExternalSignerError(e?.message || 'Failed to build UR sign-typed-data request.', {
