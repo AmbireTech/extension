@@ -6,7 +6,6 @@ import Animated, { useAnimatedStyle, useDerivedValue, withSpring } from 'react-n
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import GlassView from '@common/components/GlassView'
-import { isMobile, isWeb } from '@common/config/env'
 import spacings, { SPACING } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
@@ -33,11 +32,11 @@ const SearchAndCurrentApp = ({ control, displayCurrentApp = false, isHidden }: P
   }, [isHidden, safeBottom])
 
   const animatedStyle = useAnimatedStyle(() => {
-    const keyboardOffset = isMobile ? Math.abs(height.value) : 0
+    const keyboardOffset = Math.abs(height.value)
     return {
       bottom: animatedBottom.value + keyboardOffset
     }
-  }, [isMobile, height])
+  }, [height])
 
   return (
     <Animated.View
@@ -45,14 +44,7 @@ const SearchAndCurrentApp = ({ control, displayCurrentApp = false, isHidden }: P
         {
           position: 'absolute',
           zIndex: 3,
-          ...flexbox.center
-        },
-        isWeb && {
-          left: 0,
-          width: '100%',
-          pointerEvents: 'none'
-        },
-        isMobile && {
+          ...flexbox.center,
           ...flexbox.alignSelfCenter
         },
         animatedStyle

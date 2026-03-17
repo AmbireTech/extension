@@ -2328,19 +2328,6 @@
         "react-native-web": true
       }
     },
-    "react-native-keyboard-controller": {
-      "globals": {
-        "console.warn": true,
-        "queueMicrotask": true
-      },
-      "packages": {
-        "@babel/runtime": true,
-        "react": true,
-        "expo-status-bar>react-native-is-edge-to-edge": true,
-        "react-native-reanimated": true,
-        "react-native-web": true
-      }
-    },
     "react-native-modalize": {
       "packages": {
         "react": true,
