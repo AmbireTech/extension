@@ -91,7 +91,7 @@ const TokenDetailsScreen = () => {
   const shouldDisableSwapAndBridge =
     isNetworkNotSupportedForSwapAndBridge || isGasTankOrRewardsToken || isAmountZero
 
-  const { hasGasTank } = useHasGasTank({ account })
+  const { hasGasTank, isViewOnly } = useHasGasTank({ account })
 
   const unavailableBecauseGasTankOrRewardsTokenTooltipText = t(
     'Unavailable. {{tokenType}} tokens cannot be sent, swapped, or bridged.',
@@ -163,6 +163,27 @@ const TokenDetailsScreen = () => {
     },
     [hideToken, closeHideTokenModal]
   )
+
+  const topUpDisabledTooltipText = useMemo(() => {
+    if (!hasGasTank) {
+      if (isViewOnly) {
+        return t('Not available for view-only accounts.')
+      }
+      return t(`Not available for ${account?.safeCreation ? 'safe' : 'hardware'} wallets, yet.`)
+    }
+
+    if (!canToToppedUp) {
+      return t(
+        'This token is not eligible for filling up the Gas Tank. Please select a supported token instead.'
+      )
+    }
+
+    if (gasTankAssetsError) {
+      return gasTankAssetsError
+    }
+
+    return undefined
+  }, [hasGasTank, canToToppedUp, gasTankAssetsError, isViewOnly, t, account?.safeCreation])
 
   const actions = useMemo(
     () => [
@@ -240,14 +261,8 @@ const TokenDetailsScreen = () => {
           if (canTopUp) navigate(`${WEB_ROUTES.topUpGasTank}?chainId=${chainId}&address=${address}`)
           else addToast('We have disabled top ups with this token.', { type: 'error' })
         },
-        isDisabled: !canToToppedUp || !hasGasTank,
-        tooltipText: !hasGasTank
-          ? t(`Not available for ${account?.safeCreation ? 'safe' : 'hardware'} wallets, yet.`)
-          : !canToToppedUp
-            ? t(
-                'This token is not eligible for filling up the Gas Tank. Please select a supported token instead.'
-              )
-            : gasTankAssetsError || undefined,
+        isDisabled: !!topUpDisabledTooltipText,
+        tooltipText: topUpDisabledTooltipText,
         strokeWidth: 1,
         testID: 'top-up-button'
       },
@@ -284,14 +299,12 @@ const TokenDetailsScreen = () => {
       shouldDisableSwapAndBridge,
       isNetworkNotSupportedForSwapAndBridge,
       network?.name,
-      canToToppedUp,
-      hasGasTank,
-      account?.safeCreation,
-      gasTankAssetsError,
+      topUpDisabledTooltipText,
       isHidden,
       handleHideTokenFromButton,
       navigate,
       gasTankAssets,
+      gasTankAssetsError,
       addToast
     ]
   )
