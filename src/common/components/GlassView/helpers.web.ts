@@ -159,6 +159,8 @@ export function generateSpecularMap({
   strength = 1,
   tintHex = '#ffffff'
 }: SpecularMapOptions): string {
+  // The comments are left on purpose so AI tools
+  // can better understand the code
   const bw = bezelWidth ?? radius
 
   // Render at 4× CSS pixel size (supersampling). CSS background-size: 100% 100%
@@ -197,57 +199,130 @@ export function generateSpecularMap({
   // corner is brightest.
   // ---------------------------------------------------------------------------
   const primaryRad = (lightAngleDeg * Math.PI) / 180
-  const secondaryRad = primaryRad + Math.PI
 
-  // Helper: wrap angle difference to [-π, π]
-  const wrapDiff = (a: number, b: number) => Math.atan2(Math.sin(a - b), Math.cos(a - b))
+  // Precompute sin/cos of both hotspot angles so that angular distance can be
+  // computed with a dot-product instead of atan2(sin(a-b), cos(a-b)) per pixel.
+  // cos(pixelAngle - hotspotAngle) = cos(pixelAngle)*cos(hotspot) + sin(pixelAngle)*sin(hotspot)
+  // The secondary hotspot is exactly opposite (primaryRad + π), so its
+  // sin/cos are just the negations — no extra trig needed.
+  const cosPrimary = Math.cos(primaryRad)
+  const sinPrimary = Math.sin(primaryRad)
 
   // 4-supersampled-pixel fringe for smooth AA at both edges
   const eps = 4.0
+  const innerLimit = -(pbw + eps)
+  const strengthScale = strength * 2.5
+  // Precomputed reciprocals — replaces per-pixel division with multiply
+  const invPbw = 1 / pbw
+  const invEps = 1 / eps
 
   for (let py = 0; py < ph; py++) {
-    for (let px = 0; px < pw; px++) {
-      const sdf = sdRoundedRect(px, py, cx, cy, hw, hh, pr)
+    const dy = py - cy
+    const absDy = Math.abs(dy)
 
-      // Bezel band + smooth fringe on both edges
-      if (sdf > eps || sdf < -(pbw + eps)) continue
+    const qdy_outer = Math.max(absDy - hh, 0)
+    const qdy2 = qdy_outer * qdy_outer // hoisted — reused for inner RSq and inlined SDF
+    const outerR = pr + eps
+    const outerRSq = outerR * outerR - qdy2
+    if (outerRSq < 0) continue // entire row is outside the outer shell — skip
+    const outerQdxMax = Math.sqrt(outerRSq)
+    const xOuterMin = Math.max(0, Math.ceil(cx - hw - outerQdxMax))
+    const xOuterMax = Math.min(pw - 1, Math.floor(cx + hw + outerQdxMax))
 
-      // Angular position of this rim pixel relative to the shape centre.
-      // This is what drives the corner-focused falloff: pixels near the
-      // top-left corner have an angle close to primaryRad, so they get the
-      // strongest intensity; pixels on the far side of the rim are ≈ 180° away
-      // and get near-zero weight — producing the "fades from the corner" look.
-      const pixelAngle = Math.atan2(py - cy, px - cx)
+    // --- Inner bound: pixels where sdf ≥ innerLimit exist ---
+    // sdf ≥ innerLimit  =>  sqrt(qdx²+qdy²) - pr ≥ innerLimit
+    //                   =>  qdx² + qdy² ≥ (pr + innerLimit)²   (when pr+innerLimit > 0)
+    // Inside the shape innerLimit is negative, so pr + innerLimit = pr - (pbw+eps).
+    // If pr + innerLimit ≤ 0 the whole row satisfies the inner condition.
+    const innerR = pr + innerLimit // pr - pbw - eps  (can be ≤ 0 for wide bezels)
 
-      // Angular distance to each hotspot, in [0, π]
-      const dPrimary = Math.abs(wrapDiff(pixelAngle, primaryRad))
-      const dSecondary = Math.abs(wrapDiff(pixelAngle, secondaryRad))
+    let xInnerMin = xOuterMin
+    let xInnerMax = xOuterMax
 
-      // Identical formula for both corners — same power, same weight, just
-      // mirrored angles. This guarantees both hotspots look exactly the same.
-      const primary = Math.pow(Math.max(0, Math.cos(dPrimary)), 2) * 0.4
-      const secondary = Math.pow(Math.max(0, Math.cos(dSecondary)), 2) * 0.4
-      const angularIntensity = Math.max(primary, secondary)
+    if (innerR > 0) {
+      const innerRSq = innerR * innerR - qdy2
+      if (innerRSq > 0) {
+        // There is a "hole" in the centre: pixels with |qdx| < sqrt(innerRSq)
+        // are too deep inside and will be skipped by the per-pixel check anyway.
+        // We split the row into two spans: left fringe and right fringe.
+        // For simplicity we keep the outer span and let the per-pixel SDF guard
+        // handle the inner rejection — the expensive part (pure interior) is
+        // already culled by the outer bound computed above.
+        // The left-right split would save a bit more but complicates the loop;
+        // the dominant saving is already achieved by the outer-bound clip.
+        const innerQdxMin = Math.sqrt(innerRSq)
+        xInnerMin = Math.max(xOuterMin, Math.ceil(cx - hw - innerQdxMin - 1))
+        xInnerMax = Math.min(xOuterMax, Math.floor(cx + hw + innerQdxMin + 1))
+        // We process two sub-spans: [xOuterMin, xInnerMin] and [xInnerMax, xOuterMax]
+      }
+    }
 
-      // Exponential radial falloff: bright at the outer rim, near-zero inward
-      const rimT = Math.max(0, -sdf) / pbw
-      const radialFalloff = Math.exp(-8 * rimT)
+    // Precompute per-row values reused across all x iterations
+    const rowBase = py * pw * 4
+    const sinPixelAngleNum = dy // numerator for atan2 (denominator is dx = px-cx)
 
-      // Smooth outer edge (sdf: +eps → 0)
-      const outerAA = Math.max(0, Math.min(1, (eps - sdf) / eps))
-      // Smooth inner edge (sdf: -pbw → -(pbw+eps))
-      const innerAA = Math.max(0, Math.min(1, (sdf + pbw + eps) / eps))
+    // Process pixels in the row using two sub-spans when there is a hollow centre.
+    // Plain index loop avoids per-row array + tuple allocations and for-of iterator overhead.
+    const hasTwoSpans = innerR > 0 && xInnerMin > xOuterMin && xInnerMax < xOuterMax
 
-      const intensity = Math.min(
-        1.0,
-        angularIntensity * radialFalloff * outerAA * innerAA * strength * 2.5
-      )
+    for (let s = 0; s < (hasTwoSpans ? 2 : 1); s++) {
+      const xStart = s === 0 ? xOuterMin : xInnerMax
+      const xEnd = hasTwoSpans && s === 0 ? xInnerMin : xOuterMax
+      for (let px = xStart; px <= xEnd; px++) {
+        // Inlined sdRoundedRect — avoids a function call and reuses qdy2 from the row
+        const dx = px - cx // also reused for the dot-product below
+        const absDx = Math.abs(dx)
+        const qdx = Math.max(absDx - hw, 0)
+        const sdf = Math.sqrt(qdx * qdx + qdy2) - pr
 
-      const idx = (py * pw + px) * 4
-      data[idx] = tR
-      data[idx + 1] = tG
-      data[idx + 2] = tB
-      data[idx + 3] = Math.round(intensity * 255)
+        // Bezel band + smooth fringe on both edges
+        if (sdf > eps || sdf < innerLimit) continue
+
+        // Angular position of this rim pixel relative to the shape centre.
+        // Use dot-product to compute cos(pixelAngle - hotspotAngle) directly,
+        // avoiding atan2 + wrapDiff per pixel.
+        // cos(pixelAngle - primaryRad) = (dx*cosPrimary + dy*sinPrimary) / dist
+        // The magnitude cancels inside cos², so we work with unnormalised values
+        // and normalise once with the squared distance.
+        const distSq = dx * dx + sinPixelAngleNum * sinPixelAngleNum
+        // Avoid division by zero at the exact centre (degenerate, never in bezel)
+        if (distSq === 0) continue
+
+        // dot = cos(pixelAngle - primaryRad) * dist  (unnormalised)
+        const dotPrimary = dx * cosPrimary + sinPixelAngleNum * sinPrimary
+        // Secondary is opposite: cos(pixelAngle - (primaryRad+π)) = -dotPrimary/dist
+        // cos² of both distances, normalised: dot²/distSq
+        const cosSqNorm = (dotPrimary * dotPrimary) / distSq // == cos²(dPrimary) == cos²(dSecondary)
+
+        // Both hotspots share the same cos² value (they are π apart), so
+        // Math.max(primary, secondary) == primary == secondary == cos² * 0.4
+        const angularIntensity = cosSqNorm * 0.4
+
+        // Radial falloff: 1 at the outer rim, 0 at the inner boundary
+        const rimT = Math.max(0, -sdf) * invPbw
+        // (1 - rimT)^8 via repeated squaring replaces Math.exp(-8 * rimT) —
+        // same outer=1 / inner=0 qualitative shape, no transcendental call
+        const t = 1 - rimT
+        const t2 = t * t
+        const t4 = t2 * t2
+        const radialFalloff = t4 * t4
+
+        // Smooth outer edge (sdf: +eps → 0)
+        const outerAA = Math.max(0, Math.min(1, (eps - sdf) * invEps))
+        // Smooth inner edge (sdf: -pbw → -(pbw+eps))
+        const innerAA = Math.max(0, Math.min(1, (sdf + pbw + eps) * invEps))
+
+        const intensity = Math.min(
+          1.0,
+          angularIntensity * radialFalloff * outerAA * innerAA * strengthScale
+        )
+
+        const idx = rowBase + px * 4
+        data[idx] = tR
+        data[idx + 1] = tG
+        data[idx + 2] = tB
+        data[idx + 3] = Math.round(intensity * 255)
+      }
     }
   }
 

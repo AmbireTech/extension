@@ -1,6 +1,6 @@
 import './GlassView.css'
 
-import React, { useLayoutEffect, useMemo, useRef, useState } from 'react'
+import React, { useLayoutEffect, useMemo, useRef } from 'react'
 import { ViewProps } from 'react-native'
 
 import useTheme from '@common/hooks/useTheme'
@@ -29,17 +29,11 @@ const GlassView: React.FC<GlassViewProps & ViewProps> = ({
 }) => {
   const { themeType } = useTheme()
   const divRef = useRef<HTMLDivElement>(null)
-  const [specularDataUrl, setSpecularDataUrl] = useState<string | null>(null)
-  const [displacementDataUrl, setDisplacementDataUrl] = useState<string | null>(null)
+  // Lets us update the background and backdrop-filter
+  // in the layout effect without triggering a React re-render on every resize.
+  const specularRef = useRef<HTMLDivElement>(null)
 
   const shineBase = shineColor || (themeType === THEME_TYPES.LIGHT ? '#ffffff' : '#96A1B1')
-
-  const backdropFilter = useMemo(() => {
-    if (engine !== 'webkit' || isSimpleBlur || !displacementDataUrl) return `blur(${blurAmount}px)`
-    const brightness = themeType === THEME_TYPES.DARK ? 1.1 : 1
-    const saturate = themeType === THEME_TYPES.DARK ? 1.5 : 1
-    return `blur(${blurAmount / 2}px) url('${displacementDataUrl}') blur(${blurAmount}px) brightness(${brightness}) saturate(${saturate})`
-  }, [blurAmount, displacementDataUrl, isSimpleBlur, themeType])
 
   const customProperties = useMemo(
     () =>
@@ -49,10 +43,9 @@ const GlassView: React.FC<GlassViewProps & ViewProps> = ({
         '--glass-blur-amount': `${blurAmount}px`,
         fontSize: `${borderRadius}px`,
         borderRadius,
-        backdropFilter,
         ...cssStyle
       }) as React.CSSProperties,
-    [tintColor1, tintColor2, blurAmount, borderRadius, backdropFilter, cssStyle]
+    [tintColor1, tintColor2, blurAmount, borderRadius, cssStyle]
   )
 
   useLayoutEffect(() => {
@@ -69,73 +62,69 @@ const GlassView: React.FC<GlassViewProps & ViewProps> = ({
       tintHex: shineBase
     })
 
-    const buildDisplaceOpts = (w: number, h: number) => ({
-      width: w,
-      height: h,
-      radius: borderRadius,
-      depth: 2,
-      strength: themeType === THEME_TYPES.DARK ? 100 : 25,
-      chromaticAberration: 3
-    })
-
-    const updateDisplacement = (w: number, h: number) => {
-      if (engine !== 'webkit' || isSimpleBlur) {
-        setDisplacementDataUrl(null)
-        return
+    // Compute and apply backdropFilter directly — no setState, no re-render.
+    // blurAmount is in the deps array so this re-runs whenever it changes.
+    const applyBackdropFilter = (displacementUrl: string | null) => {
+      let filter: string
+      if (engine !== 'webkit' || isSimpleBlur || !displacementUrl) {
+        filter = `blur(${blurAmount}px)`
+      } else {
+        const brightness = themeType === THEME_TYPES.DARK ? 1.1 : 1
+        const saturate = themeType === THEME_TYPES.DARK ? 1.5 : 1
+        filter = `blur(${blurAmount / 2}px) url('${displacementUrl}') blur(${blurAmount}px) brightness(${brightness}) saturate(${saturate})`
       }
-      setDisplacementDataUrl(getCachedDisplacementFilter(buildDisplaceOpts(w, h)))
+      el.style.backdropFilter = filter
     }
 
-    // Calculate or get cached first
+    const computeDisplacementUrl = (w: number, h: number): string | null => {
+      if (engine !== 'webkit' || isSimpleBlur) return null
+      return getCachedDisplacementFilter({
+        width: w,
+        height: h,
+        radius: borderRadius,
+        depth: 2,
+        strength: themeType === THEME_TYPES.DARK ? 100 : 25,
+        chromaticAberration: 3
+      })
+    }
+
+    // Set the specular background directly on the overlay div — no setState, no re-render.
+    const applySpecular = (w: number, h: number) => {
+      const opts = buildSpecularOpts(w, h)
+      const cached = getCachedSpecularMap(opts)
+      const dataUrl = cached ?? generateSpecularMap(opts)
+      if (!cached) setCachedSpecularMap(opts, dataUrl)
+      if (specularRef.current) specularRef.current.style.backgroundImage = `url(${dataUrl})`
+    }
+
+    // Apply immediately for the current size (runs before first paint).
     const w0 = el.offsetWidth
     const h0 = el.offsetHeight
     if (w0 && h0) {
-      const opts0 = buildSpecularOpts(w0, h0)
-      const cached0 = getCachedSpecularMap(opts0)
-      if (cached0) {
-        setSpecularDataUrl(cached0)
-      } else {
-        const dataUrl = generateSpecularMap(opts0)
-        setCachedSpecularMap(opts0, dataUrl)
-        setSpecularDataUrl(dataUrl)
-      }
-      updateDisplacement(w0, h0)
-    }
-
-    const scheduleResize = (w: number, h: number) => {
-      updateDisplacement(w, h)
-
-      const opts = buildSpecularOpts(w, h)
-      const cached = getCachedSpecularMap(opts)
-      if (cached) {
-        setSpecularDataUrl(cached)
-        return
-      }
-
-      const dataUrl = generateSpecularMap(opts)
-      setCachedSpecularMap(opts, dataUrl)
-      setSpecularDataUrl(dataUrl)
+      applySpecular(w0, h0)
+      applyBackdropFilter(computeDisplacementUrl(w0, h0))
     }
 
     const observer = new ResizeObserver((entries) => {
       const entry = entries[0]
       if (!entry) return
       const { width, height } = entry.contentRect
-      if (width && height) scheduleResize(width, height)
+      if (width && height) {
+        applySpecular(width, height)
+        applyBackdropFilter(computeDisplacementUrl(width, height))
+      }
     })
     observer.observe(el)
 
     return () => {
       observer.disconnect()
     }
-  }, [borderRadius, themeType, shineBase, shineColor, isSimpleBlur])
+  }, [borderRadius, themeType, shineBase, shineColor, isSimpleBlur, blurAmount])
 
   return (
     <div ref={divRef} className="liquidGlass" style={customProperties} data-testid={testID}>
       {children}
-      {specularDataUrl && (
-        <div className="specular-shine" style={{ backgroundImage: `url(${specularDataUrl})` }} />
-      )}
+      <div ref={specularRef} className="specular-shine" />
     </div>
   )
 }
