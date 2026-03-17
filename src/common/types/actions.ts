@@ -53,9 +53,6 @@ type MainControllerAccountPickerInitQrWalletAction = {
   type: 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_QR_WALLET'
   params: { payload: string | Uint8Array }
 }
-type MainControllerMoveToResponseScanQrWalletAction = {
-  type: 'MAIN_CONTROLLER_MOVE_TO_RESPONSE_SCAN_QR_WALLET'
-}
 type MainControllerAccountPickerInitFromSavedSeedPhraseAction = {
   type: 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_FROM_SAVED_SEED_PHRASE'
   params: { id: string }
@@ -111,7 +108,6 @@ export type Action =
   | UpdateNavigationUrl
   | InitControllerStateAction
   | MainControllerAccountPickerInitQrWalletAction
-  | MainControllerMoveToResponseScanQrWalletAction
   | MainControllerAccountPickerInitLatticeAction
   | MainControllerAccountPickerInitTrezorAction
   | MainControllerAccountPickerInitLedgerAction
