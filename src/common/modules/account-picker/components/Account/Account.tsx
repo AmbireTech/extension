@@ -187,7 +187,7 @@ const Account = ({
                 </>
               )}
 
-              {!isMobile && (minWidthSize('l') || isAccountImported || domainName) && (
+              {!isMobile && (maxWidthSize('l') || isAccountImported || domainName) && (
                 <Pressable onPress={handleCopyAddress}>
                   <CopyIcon width={14} height={14} />
                 </Pressable>
