@@ -1,5 +1,4 @@
 import React, { useMemo } from 'react'
-import { Control } from 'react-hook-form'
 import { View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
@@ -10,15 +9,15 @@ import flexbox from '@common/styles/utils/flexbox'
 import CurrentApp from './CurrentApp'
 import DashboardSearch from './DashboardSearch'
 
-type Props = {
-  control: Control<{ search: string }, any>
-  displayCurrentApp?: boolean
-  isHidden: boolean
-}
+import { SearchAndCurrentAppProps } from './SearchAndCurrentApp'
 
 const VISIBLE_BOTTOM_OFFSET = 0
 
-const SearchAndCurrentApp = ({ control, displayCurrentApp = false, isHidden }: Props) => {
+const SearchAndCurrentApp: React.FC<SearchAndCurrentAppProps> = ({
+  control,
+  displayCurrentApp = false,
+  isHidden
+}) => {
   const { bottom: safeBottom } = useSafeAreaInsets()
 
   const baseBottom = useMemo(() => SPACING + safeBottom, [safeBottom])
@@ -56,4 +55,4 @@ const SearchAndCurrentApp = ({ control, displayCurrentApp = false, isHidden }: P
   )
 }
 
-export default SearchAndCurrentApp
+export default React.memo(SearchAndCurrentApp)
