@@ -1,4 +1,4 @@
-name: E2E Playwright Tests
+name: E2E Tests & LavaMoat Policy Validation
 
 on:
   push:
