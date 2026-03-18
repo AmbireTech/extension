@@ -242,6 +242,7 @@
     "@lavamoat/preinstall-always-fail": "2.1.1",
     "@lifi/types": "17.46.0",
     "@react-native-community/cli": "20.1.2",
+    "@react-native/metro-config": "0.84.1",
     "@sentry/cli": "3.1.0",
     "@types/aes-js": "3.1.4",
     "@types/chrome": "0.0.212",
