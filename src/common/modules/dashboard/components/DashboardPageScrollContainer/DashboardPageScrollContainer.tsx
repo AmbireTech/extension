@@ -87,6 +87,7 @@ const DashboardPageScrollContainer: FC<Props> = ({
           refreshing={!!refreshing}
           onRefresh={onRefresh}
           tintColor={theme.iconPrimary}
+          progressBackgroundColor={theme.secondaryBackground}
         />
       }
       {...rest}

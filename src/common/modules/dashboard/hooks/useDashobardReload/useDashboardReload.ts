@@ -1,13 +1,16 @@
-import { useCallback } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 
 import useController from '@common/hooks/useController'
 
 const useDashboardReload = () => {
   const { dispatch: mainDispatch } = useController('MainController')
   const { dashboardNetworkFilter, portfolio } = useController('SelectedAccountController').state
+  const [isManuallyRefreshing, setIsManuallyRefreshing] = useState(false)
 
   const reloadAccount = useCallback(() => {
     if (!portfolio.isAllReady || portfolio.isReloading) return
+
+    setIsManuallyRefreshing(true)
 
     mainDispatch({
       type: 'method',
@@ -25,7 +28,13 @@ const useDashboardReload = () => {
 
   const refreshing = !portfolio.isAllReady || portfolio.isReloading
 
-  return { reloadAccount, refreshing }
+  useEffect(() => {
+    if (!refreshing) {
+      setIsManuallyRefreshing(false)
+    }
+  }, [refreshing])
+
+  return { reloadAccount, refreshing, isManuallyRefreshing }
 }
 
 export default useDashboardReload

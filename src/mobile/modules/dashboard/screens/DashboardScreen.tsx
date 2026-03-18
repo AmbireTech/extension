@@ -32,7 +32,7 @@ const DashboardScreen = () => {
     state: { account, portfolio }
   } = useController('SelectedAccountController')
 
-  const { reloadAccount, refreshing } = useDashboardReload()
+  const { reloadAccount, isManuallyRefreshing } = useDashboardReload()
 
   const isOverviewExpandedRef = useRef(true)
 
@@ -104,7 +104,7 @@ const DashboardScreen = () => {
             animatedOverviewHeight={animatedOverviewHeight}
             isSearchHidden={isSearchHidden}
             onRefresh={reloadAccount}
-            refreshing={refreshing}
+            refreshing={isManuallyRefreshing}
           />
         </View>
       </View>
