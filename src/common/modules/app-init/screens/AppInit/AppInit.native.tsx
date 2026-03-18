@@ -1,6 +1,8 @@
 import React from 'react'
+import { Button, Text, View } from 'react-native'
 import { KeyboardProvider } from 'react-native-keyboard-controller'
 import { SafeAreaProvider } from 'react-native-safe-area-context'
+import { restart, useStallionUpdate } from 'react-native-stallion'
 import { NativeRouter } from 'react-router-native'
 
 import { ControllerStoreProvider } from '@common/contexts/controllerStoreContext'
@@ -18,6 +20,7 @@ import { ControllersStateLoadedProvider } from '@mobile/contexts/controllersStat
 
 const AppInit = () => {
   const { fontsLoaded } = useFonts()
+  const { isRestartRequired, currentlyRunningBundle, newReleaseBundle } = useStallionUpdate()
 
   if (!fontsLoaded) return null
 
@@ -35,6 +38,56 @@ const AppInit = () => {
                         <NetInfoProvider>
                           <AuthProvider>
                             <OnboardingNavigationProvider>
+                              <View
+                                pointerEvents="none"
+                                style={{
+                                  position: 'absolute',
+                                  top: 80,
+                                  right: 8,
+                                  zIndex: 9999,
+                                  paddingHorizontal: 10,
+                                  paddingVertical: 6,
+                                  borderRadius: 10,
+                                  backgroundColor: 'rgba(0,0,0,0.55)'
+                                }}
+                              >
+                                <Text style={{ color: '#fff', fontSize: 12, fontWeight: '600' }}>
+                                  OTA test: v3
+                                </Text>
+                              </View>
+
+                              <View
+                                style={{
+                                  position: 'absolute',
+                                  top: 80,
+                                  left: 8,
+                                  zIndex: 9999,
+                                  paddingHorizontal: 10,
+                                  paddingVertical: 8,
+                                  borderRadius: 10,
+                                  backgroundColor: 'rgba(0,0,0,0.55)',
+                                  maxWidth: 260
+                                }}
+                              >
+                                <Text style={{ color: '#fff', fontSize: 11, fontWeight: '700' }}>
+                                  Stallion debug
+                                </Text>
+                                <Text style={{ color: '#fff', fontSize: 11 }}>
+                                  running: {currentlyRunningBundle?.id ?? 'n/a'}
+                                </Text>
+                                <Text style={{ color: '#fff', fontSize: 11 }}>
+                                  new: {newReleaseBundle?.id ?? 'n/a'}
+                                </Text>
+                                <Text style={{ color: '#fff', fontSize: 11 }}>
+                                  restartRequired: {String(isRestartRequired)}
+                                </Text>
+                                {isRestartRequired ? (
+                                  <View style={{ marginTop: 6 }}>
+                                    <Button title="Restart to apply OTA" onPress={restart} />
+                                  </View>
+                                ) : null}
+                              </View>
+
                               <AppRouter />
                               <PortalHost name="global" />
                             </OnboardingNavigationProvider>
