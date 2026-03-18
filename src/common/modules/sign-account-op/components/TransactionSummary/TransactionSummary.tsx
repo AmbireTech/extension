@@ -15,7 +15,7 @@ import useController from '@common/hooks/useController'
 import useHover, { AnimatedPressable } from '@common/hooks/useHover'
 import useTheme from '@common/hooks/useTheme'
 import FallbackVisualization from '@common/modules/sign-account-op/components/TransactionSummary/FallbackVisualization'
-import spacings, { SPACING_SM, SPACING_TY } from '@common/styles/spacings'
+import { SPACING_SM, SPACING_TY } from '@common/styles/spacings'
 
 import getStyles from './styles'
 
@@ -165,9 +165,7 @@ const TransactionSummary = ({
               hasPadding={enableExpand}
             />
           )}
-          {hasCallFailed && (
-            <Alert type="error" title="Broadcast failed" size="sm" style={spacings.mrTy} />
-          )}
+          {hasCallFailed && <Alert type="error" title="Broadcast failed" size="sm" />}
           {!!call.id && type === 'default' && !rightIcon && !hideDeleteIcon && (
             <AnimatedPressable
               style={deleteIconAnimStyle}
