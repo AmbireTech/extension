@@ -329,8 +329,6 @@ export class SwapAndBridgePage extends BasePage {
       await this.click(selectors.selectRouteButton)
       await this.assertSelectedAggregator('1Inch')
     } else if ((await kyberRoute.count()) > 0) {
-      console.log('DEBUG: running with .first()')
-
       await kyberRoute.first().click()
       await this.click(selectors.selectRouteButton)
       await this.assertSelectedAggregator('Kyberswap')
