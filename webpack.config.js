@@ -414,7 +414,9 @@ module.exports = async function (env, argv) {
         // for two of the resulting js bundles, so we re-enabled maxSize.
         // On theory, it should be deterministic with chunkIds/moduleIds set to
         // 'deterministic' and chunkFilename = '[id].js'.
-        maxSize: 5 * 1024 * 1024,
+        // Note: maxSize uses estimated sizes; keep some headroom so emitted
+        // bundles stay under the linter's real per-file limit.
+        maxSize: 4.5 * 1024 * 1024,
         minSize: 0, // prevents merging small modules together automatically
         chunks(chunk) {
           // do not split into chunks the files that should be injected
