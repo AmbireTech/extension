@@ -103,14 +103,6 @@ const Banner = React.memo(
         </View>
 
         <View style={[flexbox.wrap, flexbox.flex1]}>
-          <Text
-            appearance={`${type}Text`}
-            fontSize={titleFontSize || 16}
-            weight="medium"
-            style={spacings.mbMi}
-          >
-            {title}
-          </Text>
           {!!text && (
             <Text
               fontSize={14}
@@ -132,21 +124,6 @@ const Banner = React.memo(
             </BannerButton>
           )}
         </View>
-        {!!onClosePress && (
-          <Pressable
-            onPress={onClosePress}
-            hitSlop={8}
-            style={{
-              width: 24,
-              height: 24,
-              ...flexbox.center,
-              ...spacings.mlTy
-            }}
-            testID="banner-button-reject"
-          >
-            <CloseIcon color={theme.iconPrimary} strokeWidth="2" width={12} height={12} />
-          </Pressable>
-        )}
         {children}
       </View>
     )

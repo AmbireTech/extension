@@ -134,8 +134,6 @@ const GasTankModal = ({ modalRef, handleClose, portfolio, account }: Props) => {
     }, 500) // Wait for modal animation
   }, [animations, bulletsContent])
 
-  const Wrapper = isMobile ? View : FooterGlassView
-
   return (
     <BottomSheet
       id="gas-tank-modal"
@@ -170,7 +168,7 @@ const GasTankModal = ({ modalRef, handleClose, portfolio, account }: Props) => {
               </Text>
             </Pressable>
           </View>
-          <Wrapper
+          <FooterGlassView
             size="sm"
             style={{ ...flexbox.flex1, alignItems: 'stretch' }}
             innerContainerStyle={{
@@ -223,7 +221,7 @@ const GasTankModal = ({ modalRef, handleClose, portfolio, account }: Props) => {
             >
               <TopUpIcon color="#fff" width={24} height={24} style={spacings.mrMi} />
             </Button>
-          </Wrapper>
+          </FooterGlassView>
         </>
       ) : (
         <>
