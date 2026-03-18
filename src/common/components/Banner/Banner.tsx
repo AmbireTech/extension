@@ -131,7 +131,7 @@ const Banner = React.memo(
                 type="secondary"
                 colorType="error"
                 onPress={onDismissButtonPress}
-                testID={`dashboard-${type}-banner-reject`}
+                testID="banner-button-reject"
                 style={!!buttonText && !!onPress && spacings.mrTy}
               >
                 {dismissButtonText}
