@@ -44,7 +44,7 @@ const RouteInfo: FC<Props> = ({
   const updateQuote = useCallback(() => {
     swapAndBridgeDispatch({
       type: 'method',
-      params: { method: 'updateQuote', args: [] }
+      params: { method: 'updateQuote', args: [{ skipQuoteUpdateOnSameValues: false }] }
     })
   }, [swapAndBridgeDispatch])
 

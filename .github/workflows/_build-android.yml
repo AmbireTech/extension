@@ -109,6 +109,8 @@ jobs:
 
       - name: Build Android app
         env:
+          # Force production React/Metro bundle in CI (avoids dev/prod mismatch with NODE_ENV undefined)
+          NODE_ENV: production
           RELAYER_URL: ${{ vars.RELAYER_URL }}
           VELCRO_URL: ${{ vars.VELCRO_URL }}
           REACT_APP_PIMLICO_API_KEY: ${{ vars.REACT_APP_PIMLICO_API_KEY }}

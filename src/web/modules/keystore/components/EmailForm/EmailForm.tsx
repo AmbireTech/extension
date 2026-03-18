@@ -16,16 +16,13 @@ import { isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import usePrevious from '@common/hooks/usePrevious'
-import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
-import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
 
 import EmailConfirmation from '../EmailConfirmation'
 
 const EmailForm = () => {
   const { t } = useTranslation()
-  const { themeType } = useTheme()
   const {
     control,
     setValue,
@@ -148,9 +145,6 @@ const EmailForm = () => {
         id="keystore-reset-confirmation-modal"
         sheetRef={confirmationModalRef}
         style={{ width: 400 }}
-        backgroundColor={
-          themeType === THEME_TYPES.DARK ? 'secondaryBackground' : 'primaryBackground'
-        }
         autoOpen={isWaitingConfirmation}
         shouldBeClosableOnDrag={false}
       >

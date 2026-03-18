@@ -95,7 +95,8 @@ export class ExtensionUpdateController extends EventEmitter {
           actions: isAmbireNext
             ? [
                 {
-                  actionName: 'update-extension-version'
+                  actionName: 'update-extension-version',
+                  label: 'Reload'
                 }
               ]
             : []

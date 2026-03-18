@@ -22,7 +22,6 @@ import useWindowSize from '@common/hooks/useWindowSize'
 import Account from '@common/modules/account-select/components/Account'
 import AddAccount from '@common/modules/account-select/components/AddAccount'
 import spacings from '@common/styles/spacings'
-import { THEME_TYPES } from '@common/styles/themeConfig'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
@@ -252,9 +251,6 @@ const AccountsSettingsScreen = () => {
         id="remove-account-seed-sheet"
         type="modal"
         sheetRef={sheetRefRemoveAccount}
-        backgroundColor={
-          themeType === THEME_TYPES.DARK ? 'secondaryBackground' : 'primaryBackground'
-        }
         closeBottomSheet={() => {
           setAccountToRemove(null)
           closeRemoveAccount()

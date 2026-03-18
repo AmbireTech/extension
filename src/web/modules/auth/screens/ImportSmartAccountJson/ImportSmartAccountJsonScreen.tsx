@@ -23,7 +23,6 @@ import useTheme from '@common/hooks/useTheme'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
 import eventBus from '@common/services/event/eventBus'
 import spacings from '@common/styles/spacings'
-import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
 import {
@@ -168,7 +167,7 @@ const validateJson = (json: ImportedJson): { error?: string; success: boolean } 
 
 const SmartAccountImportScreen = () => {
   const { t } = useTranslation()
-  const { theme, styles, themeType } = useTheme(getStyles)
+  const { theme, styles } = useTheme(getStyles)
   const [error, setError] = useState('')
   const [accountToImport, setAccountToImport] = useState<Account | null>(null)
   const [privateKey, setPrivateKey] = useState<string | null>(null)
@@ -293,7 +292,7 @@ const SmartAccountImportScreen = () => {
   const handleGuideLinkPressed = useCallback(
     () =>
       Linking.openURL(
-        'https://help.ambire.com/hc/en-us/articles/15468208978332--Extension-How-to-add-your-v1-account-to-Ambire-Wallet-extension'
+        'https://help.ambire.com/en/articles/13714255-how-to-add-your-v1-ambire-smart-account-legacy-to-the-extension'
       ),
     []
   )
@@ -400,9 +399,6 @@ const SmartAccountImportScreen = () => {
           sheetRef={sheetRefConfirmKeyPassword}
           id="confirm-password-bottom-sheet"
           type="modal"
-          backgroundColor={
-            themeType === THEME_TYPES.DARK ? 'secondaryBackground' : 'primaryBackground'
-          }
           closeBottomSheet={closeConfirmKeyPassword}
           scrollViewProps={{ contentContainerStyle: { flex: 1 } }}
           containerInnerWrapperStyles={{ flex: 1 }}

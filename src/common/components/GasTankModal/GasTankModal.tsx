@@ -12,7 +12,7 @@ import TupUpWithBgIcon from '@common/assets/svg/TupUpWithBgIcon'
 import BottomSheet from '@common/components/BottomSheet'
 import ModalHeader from '@common/components/BottomSheet/ModalHeader'
 import Button from '@common/components/Button'
-import GlassView from '@common/components/GlassView'
+import FooterGlassView from '@common/components/FooterGlassView'
 import Text from '@common/components/Text'
 import TokenIcon from '@common/components/TokenIcon'
 import { isMobile, isWeb } from '@common/config/env'
@@ -134,8 +134,6 @@ const GasTankModal = ({ modalRef, handleClose, portfolio, account }: Props) => {
     }, 500) // Wait for modal animation
   }, [animations, bulletsContent])
 
-  const Wrapper = isMobile ? View : GlassView
-
   return (
     <BottomSheet
       id="gas-tank-modal"
@@ -144,6 +142,7 @@ const GasTankModal = ({ modalRef, handleClose, portfolio, account }: Props) => {
       containerInnerWrapperStyles={styles.containerInnerWrapper}
       closeBottomSheet={handleClose}
       style={isWeb ? { maxWidth: 600 } : undefined}
+      isScrollEnabled={false}
       onOpen={handleOpen}
     >
       {hasGasTank ? (
@@ -157,7 +156,7 @@ const GasTankModal = ({ modalRef, handleClose, portfolio, account }: Props) => {
               onPress={async () => {
                 try {
                   await openInTab({
-                    url: 'https://help.ambire.com/hc/en-us/articles/5397969913884-What-is-the-Gas-Tank'
+                    url: 'https://help.ambire.com/en/articles/13752152-what-is-the-gas-tank'
                   })
                 } catch {
                   addToast("Couldn't open link", { type: 'error' })
@@ -169,64 +168,60 @@ const GasTankModal = ({ modalRef, handleClose, portfolio, account }: Props) => {
               </Text>
             </Pressable>
           </View>
-          <Wrapper
-            borderRadius={28}
-            style={{ ...spacings.phSm, ...spacings.pvSm }}
-            cssStyle={{ padding: 12 }}
+          <FooterGlassView
+            size="sm"
+            style={{ ...flexbox.flex1, alignItems: 'stretch' }}
+            innerContainerStyle={{
+              ...flexbox.justifySpaceBetween,
+              ...flexbox.alignCenter,
+              ...flexbox.flex1
+            }}
+            absolute={false}
           >
-            <View
-              style={[
-                flexbox.flex1,
-                flexbox.directionRow,
-                flexbox.alignCenter,
-                flexbox.justifySpaceBetween
-              ]}
-            >
-              <View style={flexbox.directionRow}>
-                <TokenIcon
-                  withContainer
-                  address={token?.address || ''}
-                  chainId={token?.chainId}
-                  onGasTank={token?.flags.onGasTank || false}
-                  containerHeight={40}
-                  containerWidth={40}
-                  width={32}
-                  height={32}
-                  withNetworkIcon={false}
-                />
-                <View style={spacings.ml}>
-                  <Text fontSize={14} appearance="secondaryText">
-                    {t('Balance')}
-                  </Text>
-                  <Text fontSize={20} weight="number_bold" testID="gas-tank-balance">
-                    {`${balanceFormatted} ${token?.symbol || ''}`}
-                  </Text>
-                </View>
+            <View style={flexbox.directionRow}>
+              <TokenIcon
+                withContainer
+                address={token?.address || ''}
+                chainId={token?.chainId}
+                onGasTank={token?.flags.onGasTank || false}
+                containerHeight={40}
+                containerWidth={40}
+                width={32}
+                height={32}
+                withNetworkIcon={false}
+              />
+              <View style={spacings.ml}>
+                <Text fontSize={14} appearance="secondaryText">
+                  {t('Balance')}
+                </Text>
+                <Text fontSize={20} weight="number_bold" testID="gas-tank-balance">
+                  {`${balanceFormatted} ${token?.symbol || ''}`}
+                </Text>
               </View>
-              <Button
-                testID={
-                  hasGasTank
-                    ? 'top-up-gas-tank-modal-button'
-                    : 'create-smart-account-gas-tank-modal-button'
-                }
-                type="primary"
-                text={hasGasTank ? t('Top up') : t('Ok, create a Smart Account')}
-                size="large"
-                hasBottomSpacing={false}
-                style={{
-                  minWidth: 128
-                }}
-                onPress={() =>
-                  hasGasTank
-                    ? navigate('top-up-gas-tank')
-                    : navigate('account-select?triggerAddAccountBottomSheet=true')
-                }
-                childrenPosition="left"
-              >
-                <TopUpIcon color="#fff" width={24} height={24} style={spacings.mrMi} />
-              </Button>
             </View>
-          </Wrapper>
+            <Button
+              testID={
+                hasGasTank
+                  ? 'top-up-gas-tank-modal-button'
+                  : 'create-smart-account-gas-tank-modal-button'
+              }
+              type="primary"
+              text={hasGasTank ? t('Top up') : t('Ok, create a Smart Account')}
+              size="smaller"
+              hasBottomSpacing={false}
+              style={{
+                minWidth: 128
+              }}
+              onPress={() =>
+                hasGasTank
+                  ? navigate('top-up-gas-tank')
+                  : navigate('account-select?triggerAddAccountBottomSheet=true')
+              }
+              childrenPosition="left"
+            >
+              <TopUpIcon color="#fff" width={24} height={24} style={spacings.mrMi} />
+            </Button>
+          </FooterGlassView>
         </>
       ) : (
         <>
