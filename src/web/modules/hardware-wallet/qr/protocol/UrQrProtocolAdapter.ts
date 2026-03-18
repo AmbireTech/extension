@@ -8,6 +8,7 @@ import { CryptoHDKey, DataType, ETHSignature, EthSignRequest } from '@keystonehq
 import { UREncoder } from '@ngraveio/bc-ur'
 
 import { QrProtocolAdapter, QrRequest, QrSignaturePayload } from '../types'
+import { normalizeOriginHdPath } from '../utils'
 import { QrWalletType } from '../wallets'
 
 const MAX_QR_FRAGMENT_LENGTH = 200
@@ -179,6 +180,8 @@ class UrQrProtocolAdapter implements QrProtocolAdapter {
       const hdKey = CryptoHDKey.fromCBOR(cbor)
       const parentFingerprintHex = hdKey.getParentFingerprint().toString('hex')
       const origin = hdKey.getOrigin()
+      const originPath = origin?.getPath?.()
+      const normalizedOriginPath = normalizeOriginHdPath(originPath)
       const xpub = hdKey.getBip32Key()
       if (!xpub) throw new Error('Missing BIP32 key in UR payload')
       const masterFingerprint =
@@ -193,10 +196,12 @@ class UrQrProtocolAdapter implements QrProtocolAdapter {
         deviceModel,
         deviceId,
         masterFingerprint,
+        hdPath: normalizedOriginPath,
         accounts: [
           {
             xpub,
-            index: 0
+            index: 0,
+            hdPath: normalizedOriginPath
           }
         ]
       }

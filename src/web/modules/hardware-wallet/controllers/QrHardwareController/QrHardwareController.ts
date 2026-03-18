@@ -84,7 +84,6 @@ class QrHardwareController
     masterFingerprint: string
     address: string
   }): Promise<QrSignaturePayload> {
-    console.log('4. QrHardwareController: signMessageQR called with args:', args) // Debug log
     const request = await this.protocolAdapter.buildSignMessageRequest({
       hex: args.hex,
       derivationPath: args.derivationPath,

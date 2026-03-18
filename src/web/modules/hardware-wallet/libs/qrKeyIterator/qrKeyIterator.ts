@@ -2,13 +2,15 @@ import { HDNodeWallet } from 'ethers'
 
 import ExternalSignerError from '@ambire-common/classes/ExternalSignerError'
 import { HD_PATH_TEMPLATE_TYPE } from '@ambire-common/consts/derivation'
-import { KeyIterator as KeyIteratorInterface } from '@ambire-common/interfaces/keyIterator'
+import {
+  KeyIterator as KeyIteratorInterface,
+  QrWalletConfig
+} from '@ambire-common/interfaces/keyIterator'
 import { ParsedQrAccount } from '@ambire-common/interfaces/keystore'
-import { getParentHdPathFromTemplate } from '@ambire-common/utils/hdPath'
 import QrHardwareController from '@web/modules/hardware-wallet/controllers/QrHardwareController'
 
+import { getRelativePathTemplateFromOrigin } from '../../qr/utils'
 import { QrWalletRegistry, QrWalletType } from '../../qr/wallets'
-import { QrWalletConfig } from '../../qr/wallets/KeystoneQrWallet'
 
 interface KeyIteratorProps {
   controller: QrHardwareController
@@ -25,11 +27,15 @@ class QrKeyIterator implements KeyIteratorInterface {
   subType = 'hw' as const
 
   controller: QrHardwareController
-  walletConfig: QrWalletConfig | null = null
+  walletConfig: QrWalletConfig | undefined = undefined
 
   #parsedAccount?: ParsedQrAccount
   #xpub?: string
   #importedHdPath?: string
+
+  get parsedAccount() {
+    return this.#parsedAccount
+  }
 
   constructor({ controller }: KeyIteratorProps) {
     if (!controller) throw new Error(MISSING_CONTROLLER_MSG)
@@ -61,7 +67,13 @@ class QrKeyIterator implements KeyIteratorInterface {
       throw new ExternalSignerError(`Unsupported QR wallet type: ${walletType}`)
     }
 
-    this.walletConfig = wallet
+    const originPath = parsed.accounts[0]?.hdPath || parsed.hdPath
+    const relativePathTemplate = getRelativePathTemplateFromOrigin(originPath)
+
+    this.walletConfig = {
+      ...wallet,
+      relativePathTemplate
+    }
 
     const firstAccount = parsed.accounts[0]
 
@@ -98,16 +110,22 @@ class QrKeyIterator implements KeyIteratorInterface {
     }
   }
 
-  #getRelativePath(index: number, hdPathTemplate: HD_PATH_TEMPLATE_TYPE): string {
-    const requestedParentPath = getParentHdPathFromTemplate(hdPathTemplate)
-
-    // First assumption: imported xpub already corresponds to the requested parent path
-    if (this.#importedHdPath === requestedParentPath) {
-      return `${index}`
+  getSigningDerivationPath(index: number) {
+    if (!this.walletConfig) {
+      throw new ExternalSignerError('QR wallet configuration not resolved')
     }
 
-    // Second common Ethereum case: xpub is one level above the address index
-    return `0/${index}`
+    const relative = this.walletConfig.relativePathTemplate.replace('{index}', String(index))
+
+    return this.walletConfig.hdPathTemplate.replace('<account>', relative)
+  }
+
+  #buildRelativePath(index: number): string {
+    if (!this.walletConfig) {
+      throw new ExternalSignerError('QR wallet configuration has not been resolved yet.')
+    }
+
+    return this.walletConfig.relativePathTemplate.replace('{index}', String(index))
   }
 
   async retrieve(
@@ -121,7 +139,6 @@ class QrKeyIterator implements KeyIteratorInterface {
     if (!this.#parsedAccount || !this.#xpub) {
       throw new ExternalSignerError('QR accounts have not been imported yet.')
     }
-    if (!hdPathTemplate) throw new Error(INVALID_PARAMS_MSG)
 
     const keys: string[] = []
 
@@ -131,8 +148,9 @@ class QrKeyIterator implements KeyIteratorInterface {
       }
 
       for (let i = from; i <= to; i++) {
-        const relativePath = this.#getRelativePath(i, hdPathTemplate)
-        keys.push(this.#deriveAddressFromRelativePath(relativePath))
+        const relativePath = this.#buildRelativePath(i)
+        const derivedAddr = this.#deriveAddressFromRelativePath(relativePath)
+        keys.push(derivedAddr)
       }
     }
 

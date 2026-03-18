@@ -40,12 +40,26 @@ class QrHardwareSigner implements KeystoreSignerInterface {
     await this.#prepareForSigning()
 
     try {
-      const path = getHdPathFromTemplate(this.key.meta.hdPathTemplate, this.key.meta.index)
+      const { originHdPath, relativePathTemplate, hdPathTemplate, index } = this.key.meta
+
+      const normalizedOriginHdPath =
+        originHdPath && originHdPath.startsWith('m/')
+          ? originHdPath
+          : originHdPath
+            ? `m/${originHdPath}`
+            : ''
+
+      const relative =
+        relativePathTemplate && relativePathTemplate.replace('{index}', String(index))
+
+      const path =
+        normalizedOriginHdPath && relative
+          ? `${normalizedOriginHdPath}/${relative}`
+          : getHdPathFromTemplate(hdPathTemplate, index)
 
       const res = await this.controller!.signMessageQR({
         hex,
         derivationPath: path,
-        // TODO: check if masterFingerprint can be ''
         masterFingerprint: this.key.meta.masterFingerprint || '',
         address: this.key.addr
       })
