@@ -10,7 +10,7 @@ import DashboardOverview from '@common/modules/dashboard/components/DashboardOve
 import { OVERVIEW_CONTENT_MAX_HEIGHT } from '@common/modules/dashboard/components/DashboardOverview/DashboardOverview'
 import DashboardPages from '@common/modules/dashboard/components/DashboardPages'
 import PendingActionWindowModal from '@common/modules/dashboard/components/PendingActionWindowModal'
-import useDashboardReload from '@common/modules/dashboard/hooks/useDashobardReload'
+import useDashboardReload from '@common/modules/dashboard/hooks/useDashboardReload'
 import getStyles from '@common/modules/dashboard/screens/styles' // Keeping styles in common
 import flexbox from '@common/styles/utils/flexbox'
 import { MobileLayoutContainer } from '@mobile/components/MobileLayoutWrapper'
