@@ -12,8 +12,6 @@ interface Style {
 const getStyles = () =>
   StyleSheet.create<Style>({
     container: {
-      ...flexbox.directionRow,
-      ...flexbox.justifySpaceBetween,
       ...(isMobile ? spacings.phTy : spacings.phSm),
       ...spacings.ptTy,
       ...spacings.pbTy,

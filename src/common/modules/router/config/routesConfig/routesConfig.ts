@@ -401,8 +401,8 @@ const routesConfig: RouteConfig = {
   },
   [ROUTES.receive]: {
     route: ROUTES.receive,
-    title: Platform.select({ default: i18n.t('Receive Assets') }),
-    name: Platform.select({ default: i18n.t('Receive Assets') })
+    title: Platform.select({ default: i18n.t('Receive assets') }),
+    name: Platform.select({ default: i18n.t('Receive assets') })
   }
 }
 

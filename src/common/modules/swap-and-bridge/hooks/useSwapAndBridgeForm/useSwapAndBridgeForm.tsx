@@ -321,7 +321,7 @@ const useSwapAndBridgeForm = () => {
             ]
           }
         })
-        window.close()
+        if (isPopup) window.close()
       } else {
         openEstimationModalAndDispatch()
       }
@@ -383,7 +383,7 @@ const useSwapAndBridgeForm = () => {
               ]
             }
           })
-          window.close()
+          if (isPopup) window.close()
         } else {
           openEstimationModalAndDispatch()
         }
