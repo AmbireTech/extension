@@ -78,7 +78,7 @@ const Banner = React.memo(
           style={[
             flexbox.directionRow,
             flexbox.justifySpaceBetween,
-            spacings.mbTy,
+            !!text ? spacings.mbTy : spacings.mbSm,
             {
               width: '100%'
             }
