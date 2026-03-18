@@ -15,6 +15,7 @@ import { isWeb } from '@common/config/env'
 import useController from '@common/hooks/useController'
 import useHasGasTank from '@common/hooks/useHasGasTank'
 import useNavigation from '@common/hooks/useNavigation'
+import useNetworks from '@common/hooks/useNetworks'
 import useRoute from '@common/hooks/useRoute'
 import useToast from '@common/hooks/useToast'
 import { ROUTES } from '@common/modules/router/constants/common'
@@ -67,11 +68,19 @@ const useTokenDetails = () => {
   const isGasTankToken = !!token?.flags.onGasTank
   const isRewardsToken = !!token?.flags.rewardsType
   const isGasTankOrRewardsToken = isGasTankToken || isRewardsToken
+  const accountSupportedNetworks = useNetworks({ account })
   const isAmountZero = token && getTokenAmount(token) === 0n
   const canToToppedUp = token?.flags.canTopUpGasTank
   const isNetworkNotSupportedForSwapAndBridge = !getIsNetworkSupported(supportedChainIds, network)
+  const isAccountNetworkNotSupported = !getIsNetworkSupported(
+    accountSupportedNetworks.map((n) => n.chainId),
+    network
+  )
   const shouldDisableSwapAndBridge =
-    isNetworkNotSupportedForSwapAndBridge || isGasTankOrRewardsToken || isAmountZero
+    isNetworkNotSupportedForSwapAndBridge ||
+    isGasTankOrRewardsToken ||
+    isAmountZero ||
+    isAccountNetworkNotSupported
 
   const { hasGasTank, isViewOnly } = useHasGasTank({ account })
 
@@ -85,6 +94,11 @@ const useTokenDetails = () => {
   // const notImplementedYetTooltipText = t('Coming sometime in {{year}}.', {
   //   year: new Date().getFullYear()
   // })
+  const accountNotAvailableText = useMemo(() => {
+    if (!account) return ''
+    if (!!account.safeCreation) return 'Safe account not deployed on this network'
+    return 'Account unavailable on this network'
+  }, [account])
 
   useEffect(() => {
     storage
@@ -176,10 +190,12 @@ const useTokenDetails = () => {
           icon: SendIcon,
           onPress: ({ chainId, address }: TokenResult) =>
             navigate(`${ROUTES.transfer}?chainId=${chainId}&address=${address}`),
-          isDisabled: isGasTankOrRewardsToken || isAmountZero,
+          isDisabled: isGasTankOrRewardsToken || isAmountZero || isAccountNetworkNotSupported,
           tooltipText: isGasTankOrRewardsToken
             ? unavailableBecauseGasTankOrRewardsTokenTooltipText
-            : undefined,
+            : isAccountNetworkNotSupported
+              ? accountNotAvailableText
+              : '',
           strokeWidth: 1.5,
           testID: 'token-send'
         },
@@ -205,7 +221,9 @@ const useTokenDetails = () => {
               )
             : isGasTankOrRewardsToken
               ? unavailableBecauseGasTankOrRewardsTokenTooltipText
-              : undefined,
+              : isAccountNetworkNotSupported
+                ? accountNotAvailableText
+                : undefined,
           strokeWidth: 1.5
         },
         // TODO: Temporarily hidden as of v4.49.0, because displaying it disabled
@@ -288,7 +306,9 @@ const useTokenDetails = () => {
       navigate,
       gasTankAssets,
       gasTankAssetsError,
-      addToast
+      addToast,
+      accountNotAvailableText,
+      isAccountNetworkNotSupported
     ]
   )
 

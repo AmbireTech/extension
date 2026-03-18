@@ -1,11 +1,11 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
-import { isAmbireV1LinkedAccount } from '@ambire-common/libs/account/account'
 import { getIsViewOnly } from '@ambire-common/utils/accounts'
 import { isMobile } from '@common/config/env'
 import useController from '@common/hooks/useController'
 import { useMultiHover } from '@common/hooks/useHover'
+import useNetworks from '@common/hooks/useNetworks'
 import useReverseLookup from '@common/hooks/useReverseLookup'
 import useRoute from '@common/hooks/useRoute'
 import useTheme from '@common/hooks/useTheme'
@@ -71,36 +71,7 @@ const useReceive = () => {
 
   const [showAllNetworks, setShowAllNetworks] = useState(false)
 
-  // Consider moving this to some controller or helper since we may
-  // need it to warn the user about unsupported networks in other places
-  // (e.g., when trying to send to an account that doesn't support a particular network)
-  const supportedNetworks = useMemo(() => {
-    if (!account) return []
-
-    // NOT a [Gnosis] Safe account
-    if (!account.safeCreation) {
-      // EOA
-      if (!account?.creation) return networks
-
-      // v1 SA
-      if (isAmbireV1LinkedAccount(account.creation.factoryAddr)) {
-        // v1s don't work without the relayer
-        return networks.filter((network) => !!network.hasRelayer)
-      }
-
-      // v2 SA
-      return networks.filter(
-        (network) => network.areContractsDeployed && (network.hasRelayer || network.erc4337.enabled)
-      )
-    }
-    if (!accountStates[account.addr]) return []
-
-    return networks.filter((n) => {
-      const networkAccState = accountStates[account.addr]?.[n.chainId.toString()]
-      if (!networkAccState) return true
-      return networkAccState.isDeployed
-    })
-  }, [account, accountStates, networks])
+  const supportedNetworks = useNetworks({ account })
 
   const [bindAnim, animStyle] = useMultiHover({
     values: [
