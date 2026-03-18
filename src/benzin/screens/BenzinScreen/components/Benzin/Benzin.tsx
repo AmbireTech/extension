@@ -2,6 +2,7 @@ import { randomBytes } from 'ethers'
 import React, { memo, useMemo } from 'react'
 import { Image, ScrollView, View, ViewStyle } from 'react-native'
 
+import { AccountOpStatus } from '@ambire-common/libs/accountOp/types'
 import gradient1560 from '@benzin/assets/images/gradient-1560.png'
 import gradient1920 from '@benzin/assets/images/gradient-1920.png'
 import gradient2560 from '@benzin/assets/images/gradient-2560.png'
@@ -54,6 +55,7 @@ const Benzin = ({
         onRightIconPress={state?.handleOpenExplorer}
         size={IS_MOBILE_UP_BENZIN_BREAKPOINT ? 'lg' : 'sm'}
         type="benzin"
+        hasCallFailed={call.status === AccountOpStatus.Rejected}
       />
     ))
     // Prevents unnecessary re-renders of the humanizer
