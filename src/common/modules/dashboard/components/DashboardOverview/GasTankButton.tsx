@@ -61,8 +61,8 @@ const GasTankButton = ({ onPress, portfolio, account }: Props) => {
   const text = useMemo(() => {
     if (buttonState === 'balance') return `${totalBalanceGasTankDetails.balanceUSDFormatted}`
     if (buttonState === 'topup') return t('Top up')
-    if (buttonState === 'soon') return isViewOnly ? '' : t('Soon')
-    if (buttonState === 'error') return t('Unavailable')
+    if (buttonState === 'soon') return isViewOnly ? '' : t('soon')
+    if (buttonState === 'error') return t('unavailable')
 
     return ''
   }, [buttonState, totalBalanceGasTankDetails.balanceUSDFormatted, isViewOnly, t])

@@ -47,7 +47,7 @@ import { getTabLayoutPadding } from '@web/components/TabLayoutWrapper/TabLayoutW
 import { Content, Wrapper } from '@web/components/TransactionsScreen'
 import Modals from '@web/modules/sign-account-op/components/Modals'
 
-const { isRequestWindow } = getUiType()
+const { isRequestWindow, isPopup } = getUiType()
 
 const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
   const { addToast } = useToast()
@@ -392,7 +392,7 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
                 ]
               }
             })
-            window.close()
+            if (isPopup) window.close()
           } else {
             openEstimationModalAndDispatch()
           }
