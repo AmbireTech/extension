@@ -35,6 +35,7 @@ const DashboardScreen = () => {
 
   const onScroll = useCallback(
     (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+      return // TODO: fix behavior on mobile
       // Mobile does not have isPopup, so we handle it similarly.
       const {
         contentOffset: { y },
@@ -72,13 +73,14 @@ const DashboardScreen = () => {
     [animatedOverviewHeight, dashboardOverviewSize.height, lastOffsetY, scrollUpStartedAt]
   )
 
-  const { state } = useController('RequestsController')
-  console.log(state)
-
   if (!account) return null
 
   return (
-    <MobileLayoutContainer withHorizontalPadding={false}>
+    <MobileLayoutContainer
+      withHorizontalPadding={false}
+      withTopPadding={false}
+      withBottomInset={false}
+    >
       <View style={flexbox.flex1}>
         <GasTankModal
           modalRef={gasTankModalRef}

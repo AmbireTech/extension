@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 
+import { isMobile } from '@common/config/env'
 import usePrevious from '@common/hooks/usePrevious'
 import useSelect from '@common/hooks/useSelect'
 
@@ -27,7 +28,7 @@ const useSelectInternal = ({
   stickySectionHeadersEnabled,
   headerHeight = 0,
   attemptToFetchMoreOptions,
-  mode = 'select',
+  mode = isMobile ? 'bottomSheet' : 'select',
   menuPosition,
   onSearch
 }: Props) => {

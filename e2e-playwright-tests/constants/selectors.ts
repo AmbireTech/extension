@@ -199,6 +199,7 @@ const selectors = {
     kyberSwapRoute: '//div[contains(text(), "Kyberswap")]',
     sushiSwapRoute: 'div:has-text("SushiSwap Aggregator")' // no route
   },
+  backArrowButton: 'back-arrow-button',
   account: 'account',
   importMethodTrezor: 'import-method-trezor',
   trezorConnectConfirmTerms: '@analytics/continue-button',

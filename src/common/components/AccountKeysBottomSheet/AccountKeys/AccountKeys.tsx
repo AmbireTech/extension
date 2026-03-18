@@ -8,6 +8,7 @@ import { isAmbireV1LinkedAccount } from '@ambire-common/libs/account/account'
 import AccountKey, { AccountKeyType } from '@common/components/AccountKey/AccountKey'
 import Alert from '@common/components/Alert'
 import { PanelBackButton, PanelTitle } from '@common/components/Panel/Panel'
+import { isWeb } from '@common/config/env'
 import useController from '@common/hooks/useController'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
@@ -140,17 +141,19 @@ const AccountKeys: FC<Props> = ({
   )
 
   return (
-    <View style={{ maxHeight: 384, flex: 1 }}>
+    <View style={isWeb ? { maxHeight: 384, flex: 1 } : undefined}>
       <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mbLg]}>
-        <PanelBackButton onPress={closeBottomSheet} style={spacings.mrSm} />
+        {isWeb && <PanelBackButton onPress={closeBottomSheet} style={spacings.mrSm} />}
         <PanelTitle
           title={t('{{accName}} keys', { accName: account.preferences.label })}
-          style={text.left}
+          style={isWeb ? text.left : text.center}
         />
       </View>
       <ScrollView
-        style={[!!withAlert && spacings.mb, flexbox.flex1]}
+        bounces={false}
+        style={[!!withAlert && spacings.mb, isWeb && flexbox.flex1]}
         contentContainerStyle={{ flexGrow: 1 }}
+        showsVerticalScrollIndicator={isWeb}
       >
         {accountKeys.map(({ type, addr, isImported, meta, dedicatedToOneSA }, index) => {
           const isLast = index === accountKeys.length - 1

@@ -47,7 +47,7 @@ import { getTabLayoutPadding } from '@web/components/TabLayoutWrapper/TabLayoutW
 import { Content, Wrapper } from '@web/components/TransactionsScreen'
 import Modals from '@web/modules/sign-account-op/components/Modals'
 
-const { isRequestWindow } = getUiType()
+const { isRequestWindow, isPopup } = getUiType()
 
 const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
   const { addToast } = useToast()
@@ -392,7 +392,7 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
                 ]
               }
             })
-            window.close()
+            if (isPopup) window.close()
           } else {
             openEstimationModalAndDispatch()
           }
@@ -563,6 +563,7 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
             </Text>
           </InProgress>
         )}
+
         {(submittedAccountOp?.status === AccountOpStatus.Success ||
           submittedAccountOp?.status === AccountOpStatus.UnknownButPastNonce) && (
           <Completed
@@ -659,7 +660,7 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
                         onPress={async () => {
                           try {
                             await openInTab({
-                              url: 'https://help.ambire.com/hc/en-us/articles/5397969913884-What-is-the-Gas-Tank'
+                              url: 'https://help.ambire.com/en/articles/13752152-what-is-the-gas-tank'
                             })
                           } catch {
                             addToast("Couldn't open link", { type: 'error' })

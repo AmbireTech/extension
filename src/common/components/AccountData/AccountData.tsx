@@ -7,7 +7,7 @@ import CopyIcon from '@common/assets/svg/CopyIcon'
 import RightArrowIcon from '@common/assets/svg/RightArrowIcon'
 import Avatar from '@common/components/Avatar'
 import Text from '@common/components/Text'
-import { isWeb } from '@common/config/env'
+import { isMobile, isWeb } from '@common/config/env'
 import useController from '@common/hooks/useController'
 import useHover, { AnimatedPressable, useCustomHover } from '@common/hooks/useHover'
 import useTheme from '@common/hooks/useTheme'
@@ -40,12 +40,10 @@ const AccountData: FC<Props> = ({ onPress, withArrowRightIcon }) => {
     preset: 'opacityInverted',
     duration: 50
   })
+
   const [bindAccountBtnAnim, accountBtnAnimStyle] = useCustomHover({
-    property: 'left',
-    values: {
-      from: 0,
-      to: 2
-    },
+    property: isWeb ? 'left' : 'opacity',
+    values: isWeb ? { from: 0, to: 2 } : { from: 1, to: 1 },
     duration: 50
   })
 
@@ -76,6 +74,7 @@ const AccountData: FC<Props> = ({ onPress, withArrowRightIcon }) => {
         styles.accountButton,
         {
           backgroundColor: '#000000A3',
+          flexShrink: 1,
           // @ts-ignore
           ...(isWeb && !onPress ? { cursor: 'auto' } : {})
         }
@@ -93,17 +92,23 @@ const AccountData: FC<Props> = ({ onPress, withArrowRightIcon }) => {
         <Text
           numberOfLines={1}
           weight="semiBold"
-          style={[spacings.mrMi, { maxWidth: isPopup ? 112 : 160 }]}
+          style={[spacings.mrMi, { maxWidth: isPopup ? 112 : 160, flexShrink: 1 }]}
           color="#FFFFFF"
           fontSize={14}
         >
           {account.preferences.label}
         </Text>
-        {maxWidthSize(480) && (
-          <>
-            <Text color="#B9BFC9" style={spacings.mrTy} weight="mono_regular" fontSize={12}>
-              ({shortenAddress(account.addr, 13)})
-            </Text>
+
+        <>
+          <Text
+            color="#B9BFC9"
+            style={[isWeb ? spacings.mrTy : undefined]}
+            weight="mono_regular"
+            fontSize={12}
+          >
+            ({shortenAddress(account.addr, 13)})
+          </Text>
+          {isWeb && (
             <AnimatedPressable
               style={addressAnimStyle}
               onPress={handleCopyText}
@@ -111,14 +116,15 @@ const AccountData: FC<Props> = ({ onPress, withArrowRightIcon }) => {
             >
               <CopyIcon width={24} height={24} color="#E3E6EB" />
             </AnimatedPressable>
-          </>
-        )}
+          )}
+        </>
+
         {!!withArrowRightIcon && (
           <Animated.View style={accountBtnAnimStyle}>
             <RightArrowIcon
               style={[
                 styles.accountButtonRightIcon,
-                maxWidthSize(480) ? spacings.mlMd : spacings.mlSm
+                maxWidthSize(480) ? spacings.mlMd : spacings.mlTy
               ]}
               width={12}
               color="#E3E6EB"

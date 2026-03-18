@@ -90,7 +90,7 @@ export const SETTINGS_LINKS = [
   {
     key: 'opt-outs',
     Icon: PrivacyIcon,
-    label: 'Privacy Opt-outs',
+    label: 'Privacy opt-outs',
     path: ROUTES.optOuts
   },
   // Disabled for now - will be added in future releases
@@ -120,15 +120,15 @@ const OTHER_LINKS = [
   {
     key: 'help-center',
     Icon: HelpIcon,
-    label: 'Help Center',
-    path: 'https://help.ambire.com/hc/en-us',
+    label: 'Help center',
+    path: 'https://help.ambire.com/en',
     isExternal: true
   },
   {
     key: 'report-issue',
     Icon: BugIcon,
     label: 'Report an issue',
-    path: 'https://help.ambire.com/hc/en-us/requests/new',
+    path: 'https://help.ambire.com/en',
     isExternal: true
   }
 ]

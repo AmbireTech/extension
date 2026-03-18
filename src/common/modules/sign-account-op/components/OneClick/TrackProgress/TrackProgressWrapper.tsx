@@ -6,6 +6,7 @@ import { SwapAndBridgeActiveRoute } from '@ambire-common/interfaces/swapAndBridg
 import Button from '@common/components/Button'
 import FooterGlassView from '@common/components/FooterGlassView'
 import LayoutWrapper from '@common/components/LayoutWrapper'
+import { isMobile } from '@common/config/env'
 import useTheme from '@common/hooks/useTheme'
 import { HeaderWithLogoOnly } from '@common/modules/header/components/Header/Header'
 import spacings from '@common/styles/spacings'
@@ -32,6 +33,43 @@ const TrackProgressWrapper: FC<TrackProgressProps> = ({
   const { t } = useTranslation()
   const { theme } = useTheme()
 
+  const buttonsContent = (
+    <View
+      style={[
+        routeStatus !== 'failed' ? flexbox.directionRow : flexbox.directionRowReverse,
+        isMobile && { flexDirection: 'column-reverse' },
+        !isMobile && flexbox.alignCenter,
+        !isRequestWindow ? flexbox.justifySpaceBetween : flexbox.justifyCenter
+      ]}
+    >
+      {!isRequestWindow ? (
+        <Button
+          onPress={handleClose}
+          hasBottomSpacing={false}
+          size={isMobile ? 'regular' : 'smaller'}
+          type={routeStatus !== 'failed' ? 'secondary' : 'primary'}
+          text={secondaryButtonText}
+          testID="track-progress-secondary-button"
+          style={{
+            ...(isMobile ? {} : routeStatus !== 'failed' ? spacings.mrLg : spacings.mlLg),
+            minWidth: 144
+          }}
+        />
+      ) : (
+        <View />
+      )}
+      <Button
+        onPress={onPrimaryButtonPress}
+        hasBottomSpacing={isMobile}
+        style={!isMobile ? { width: isRequestWindow ? 160 : 104 } : {}}
+        text={t('Close')}
+        size={isMobile ? 'regular' : 'smaller'}
+        type={routeStatus !== 'failed' ? 'primary' : 'secondary'}
+        testID="track-progress-primary-button"
+      />
+    </View>
+  )
+
   return (
     <LayoutWrapper>
       <HeaderWithLogoOnly />
@@ -52,39 +90,7 @@ const TrackProgressWrapper: FC<TrackProgressProps> = ({
         )}
 
         <FooterGlassView absolute={false} size="sm" style={spacings.mbTy}>
-          <View
-            style={[
-              routeStatus !== 'failed' ? flexbox.directionRow : flexbox.directionRowReverse,
-              flexbox.alignCenter,
-              !isRequestWindow ? flexbox.justifySpaceBetween : flexbox.justifyCenter
-            ]}
-          >
-            {!isRequestWindow ? (
-              <Button
-                onPress={handleClose}
-                hasBottomSpacing={false}
-                size="smaller"
-                type={routeStatus !== 'failed' ? 'secondary' : 'primary'}
-                text={secondaryButtonText}
-                testID="track-progress-secondary-button"
-                style={{
-                  ...(routeStatus !== 'failed' ? spacings.mrLg : spacings.mlLg),
-                  minWidth: 144
-                }}
-              />
-            ) : (
-              <View />
-            )}
-            <Button
-              onPress={onPrimaryButtonPress}
-              hasBottomSpacing={false}
-              style={{ width: isRequestWindow ? 160 : 104 }}
-              text={t('Close')}
-              size="smaller"
-              type={routeStatus !== 'failed' ? 'primary' : 'secondary'}
-              testID="track-progress-primary-button"
-            />
-          </View>
+          {buttonsContent}
         </FooterGlassView>
       </View>
     </LayoutWrapper>

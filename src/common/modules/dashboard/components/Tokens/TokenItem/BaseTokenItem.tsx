@@ -53,6 +53,7 @@ const BaseTokenItem = ({
   )
 
   const { state: networks } = useController('NetworksController', (state) => state.networks)
+  const { dispatch: requestsDispatch } = useController('RequestsController')
   const { t } = useTranslation()
   const { styles, theme } = useTheme(getStyles)
   const { navigate } = useNavigation()
@@ -211,7 +212,7 @@ const BaseTokenItem = ({
         {isPending && (
           <View style={[{ marginLeft: SPACING_2XL + SPACING_TY }, spacings.mtSm]}>
             <View>
-              {!!pendingToBeSigned && !!pendingToBeSignedFormatted && (
+              {!!pendingToBeSigned && !!pendingToBeSignedFormatted && isPending && (
                 <PendingBadge
                   amount={pendingToBeSigned}
                   amountFormatted={pendingToBeSignedFormatted}
@@ -219,8 +220,21 @@ const BaseTokenItem = ({
                   backgroundColor={theme.warningBackground}
                   textColor={theme.warningText}
                   Icon={BatchIcon}
+                  borderColor="transparent"
+                  hoverBorderColor={theme.warning400}
+                  onPress={() => {
+                    if (!simulatedAccountOp) return
+                    requestsDispatch({
+                      type: 'method',
+                      params: {
+                        method: 'setCurrentUserRequestById',
+                        args: [`${simulatedAccountOp.accountAddr}-${simulatedAccountOp.chainId}`]
+                      }
+                    })
+                  }}
                 />
               )}
+
               {!!pendingToBeConfirmed && !!pendingToBeConfirmedFormatted && (
                 <PendingBadge
                   amount={pendingToBeConfirmed}
@@ -233,26 +247,28 @@ const BaseTokenItem = ({
               )}
             </View>
 
-            <View
-              style={[
-                flexboxStyles.directionRow,
-                flexboxStyles.alignCenter,
-                spacings.phSm,
-                {
-                  height: 30
-                }
-              ]}
-            >
-              <Text
-                selectable
-                color={theme.successText}
-                weight="medium"
-                fontSize={12}
-                numberOfLines={1}
+            {!!pendingToBeSigned && !!pendingToBeSignedFormatted && isPending && (
+              <View
+                style={[
+                  flexboxStyles.directionRow,
+                  flexboxStyles.alignCenter,
+                  spacings.phSm,
+                  {
+                    height: 30
+                  }
+                ]}
               >
-                {balanceLatestFormatted} {t('(Onchain)')}
-              </Text>
-            </View>
+                <Text
+                  selectable
+                  color={theme.successText}
+                  weight="medium"
+                  fontSize={12}
+                  numberOfLines={1}
+                >
+                  {balanceLatestFormatted} {t('(Onchain)')}
+                </Text>
+              </View>
+            )}
           </View>
         )}
       </View>

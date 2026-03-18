@@ -43,7 +43,6 @@ const DashboardBannerBottomSheet: FC<Props> = ({ id, sheetRef, closeBottomSheet 
       id={`${id}-bottom-sheet`}
       sheetRef={sheetRef}
       closeBottomSheet={closeBottomSheet}
-      backgroundColor="secondaryBackground"
       style={style[id]}
       type={RENDER_AS_MODAL.includes(id) ? 'modal' : undefined}
     >

@@ -58,7 +58,6 @@ const GasTankInfoModal = ({
       id={id}
       sheetRef={sheetRef}
       closeBottomSheet={closeBottomSheet}
-      backgroundColor="secondaryBackground"
       style={{ overflow: 'hidden', maxWidth: 496, ...spacings.ph0, ...spacings.pv0 }}
       type="modal"
     >
@@ -87,7 +86,7 @@ const GasTankInfoModal = ({
                 onPress={async () => {
                   try {
                     await openInTab({
-                      url: 'https://help.ambire.com/hc/en-us/articles/5397969913884-What-is-the-Gas-Tank'
+                      url: 'https://help.ambire.com/en/articles/13752152-what-is-the-gas-tank'
                     })
                   } catch {
                     addToast("Couldn't open link", { type: 'error' })

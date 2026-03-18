@@ -40,7 +40,6 @@ const AccountDataDetailed = () => {
           <AccountBadges accountData={account} />
         </View>
         <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-          <DomainBadge ens={ens} />
           <AccountAddress isLoading={isLoading} ens={ens} address={account.addr} />
         </View>
       </View>

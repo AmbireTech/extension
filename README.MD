@@ -24,7 +24,7 @@
     <br />
     🐞
     <a href="https://github.com/AmbireTech/extension/issues">Report a Bug</a> ·
-    <a href="https://help.ambire.com/hc/en-us/requests/new" target="_blank">Get help</a>
+    <a href="https://help.ambire.com/en" target="_blank">Get help</a>
   </p>
 </div>
 
@@ -246,9 +246,11 @@ $LEDGER_EMULATOR_SEED='<LEDGER-SEED-PHRASE>' ./start-emulator.sh
 **Note:** Make sure port `5000` is available before starting the emulator.
 
 1. **Check if port 5000 is in use:**
+
 ```bash
 lsof -i :5000
 ```
+
 If nothing is returned, the port is free.
 If you see a process listed, the port is occupied.
 
@@ -262,6 +264,7 @@ System Settings → General → AirDrop & Handoff → AirPlay Receiver
 If enabled, it may bind to port 5000.
 
 You can either:
+
 - Disable AirPlay Receiver, or
 - Kill the process manually:
 

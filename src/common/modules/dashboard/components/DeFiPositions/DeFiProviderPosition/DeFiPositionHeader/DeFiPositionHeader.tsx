@@ -6,6 +6,7 @@ import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
 import DownArrowIcon from '@common/assets/svg/DownArrowIcon'
 import OpenIcon from '@common/assets/svg/OpenIcon'
 import Text from '@common/components/Text'
+import { isMobile, isWeb } from '@common/config/env'
 import useController from '@common/hooks/useController'
 import useHover, { AnimatedPressable, useCustomHover, useMultiHover } from '@common/hooks/useHover'
 import useTheme from '@common/hooks/useTheme'
@@ -102,16 +103,37 @@ const DeFiPositionHeader: FC<Props> = ({
     >
       <View style={styles.providerData}>
         <ProtocolIcon iconUrl={iconUrl} providerName={providerName} chainId={chainId} />
-        <Text fontSize={16} weight="semiBold" style={spacings.mrMi}>
-          {providerName}
-        </Text>
-        {dappUrl && (
-          <AnimatedPressable onPress={openDAppUrl} style={openIconAnimStyle} {...bindOpenIconAnim}>
-            <OpenIcon width={14} height={14} color={theme.secondaryText} />
-          </AnimatedPressable>
-        )}
-        <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mlLg]}>
-          {healthRate && (
+        <View>
+          <View style={[flexbox.directionRow, flexbox.alignCenter]}>
+            <Text fontSize={16} weight="semiBold" style={spacings.mrMi}>
+              {providerName}
+            </Text>
+            {dappUrl && (
+              <AnimatedPressable
+                onPress={openDAppUrl}
+                style={openIconAnimStyle}
+                {...bindOpenIconAnim}
+              >
+                <OpenIcon width={14} height={14} color={theme.secondaryText} />
+              </AnimatedPressable>
+            )}
+          </View>
+          {isMobile && !!healthRate && (
+            <Badge
+              text={`Health Rate: ${healthRate <= 10 ? formatDecimals(healthRate) : '>10'}`}
+              type={HEALTH_RATE_LEVELS.find((level) => level.to >= healthRate)?.color || 'success'}
+              style={spacings.mtMi}
+            />
+          )}
+        </View>
+        <View
+          style={[
+            flexbox.directionRow,
+            flexbox.alignCenter,
+            isMobile ? spacings.mlTy : spacings.mlLg
+          ]}
+        >
+          {isWeb && !!healthRate && (
             <Badge
               text={`Health Rate: ${healthRate <= 10 ? formatDecimals(healthRate) : '>10'}`}
               type={HEALTH_RATE_LEVELS.find((level) => level.to >= healthRate)?.color || 'success'}

@@ -5,6 +5,7 @@ import AccountData from '@common/components/AccountData'
 import AccountDataDetailed from '@common/components/AccountDataDetailed'
 import AmbireLogoHorizontalWithOG from '@common/components/AmbireLogoHorizontalWithOG'
 import Text from '@common/components/Text'
+import { isMobile, isWeb } from '@common/config/env'
 import { titleChangeEventStream } from '@common/hooks/useNavigation'
 import useRoute from '@common/hooks/useRoute'
 import routesConfig from '@common/modules/router/config/routesConfig'
@@ -33,7 +34,9 @@ const Wrapper = ({
     <View
       style={[
         spacings.phSm,
-        spacings.pvSm,
+        isWeb && spacings.pvSm,
+        isWeb && spacings.ptMd,
+        isMobile && spacings.mbLg,
         {
           width: '100%'
         },
@@ -58,7 +61,7 @@ const Wrapper = ({
 const Title = ({ children }: { children: React.ReactNode }) => {
   return (
     <Text
-      fontSize={20}
+      fontSize={isMobile ? 18 : 20}
       weight="medium"
       style={[
         {
@@ -83,16 +86,10 @@ type CommonHeaderProps = {
   withOG?: boolean
 }
 
-const Header = ({
-  width,
-  withOG,
-  withDetailedAccountData
-}: CommonHeaderProps & {
-  withDetailedAccountData?: boolean
-}) => {
+const Header = ({ width, withOG }: CommonHeaderProps) => {
   return (
     <Wrapper width={width}>
-      {withDetailedAccountData ? <AccountDataDetailed /> : <AccountData />}
+      <AccountData />
       <AmbireLogoHorizontalWithOG withOG={withOG} />
     </Wrapper>
   )

@@ -29,7 +29,7 @@ const AccountsRetrieveError: React.FC<Props> = ({ pageError, page, setPage }) =>
 
   const handleContactSupport = useCallback(async () => {
     try {
-      await openInTab({ url: 'https://help.ambire.com/hc/en-us/requests/new' })
+      await openInTab({ url: 'https://help.ambire.com/en' })
     } catch {
       addToast("Couldn't open link", { type: 'error' })
     }

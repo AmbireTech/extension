@@ -87,7 +87,7 @@ const RoutesRefreshButton = ({ width = 32, height = 32 }: SvgProps) => {
   const handleOnPress = useCallback(() => {
     swapAndBridgeDispatch({
       type: 'method',
-      params: { method: 'updateQuote', args: [] }
+      params: { method: 'updateQuote', args: [{ skipQuoteUpdateOnSameValues: false }] }
     })
   }, [swapAndBridgeDispatch])
 

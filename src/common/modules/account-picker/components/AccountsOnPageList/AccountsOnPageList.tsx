@@ -236,12 +236,7 @@ const AccountsOnPageList = ({
           />
         )}
         <ScrollableWrapper
-          style={[
-            isMobile ? spacings.mbMd : spacings.mbLg,
-            {
-              maxHeight: isMobile ? undefined : 480
-            }
-          ]}
+          style={[isMobile ? spacings.mbMd : spacings.mbLg]}
           contentContainerStyle={{ flexGrow: 1 }}
           onScroll={(e) => {
             if (isCloseToBottom(e.nativeEvent) && setHasReachedBottom) setHasReachedBottom(true)

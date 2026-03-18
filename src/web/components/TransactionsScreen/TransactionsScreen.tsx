@@ -49,7 +49,14 @@ const ItemPanel: FC<ItemPanelProps> = ({ children, style = {} }) => {
 const Wrapper: FC<WrapperProps> = ({ children }) => {
   return (
     <LayoutWrapper>
-      {isPopup ? <Header /> : <ActionHeader />}
+      {isPopup ? (
+        <Header.Wrapper containerStyle={spacings.ptSm}>
+          <Header.AccountData />
+          <Header.Logo withOG />
+        </Header.Wrapper>
+      ) : (
+        <ActionHeader />
+      )}
       {children}
     </LayoutWrapper>
   )

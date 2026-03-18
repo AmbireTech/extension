@@ -1,6 +1,8 @@
 import React, { FC, useEffect, useMemo, useRef } from 'react'
 import { Animated, FlatList, FlatListProps, ViewStyle } from 'react-native'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
+import { isMobile } from '@common/config/env'
 import spacings from '@common/styles/spacings'
 
 import useBanners from '../../hooks/useBanners'
@@ -35,12 +37,16 @@ const DashboardPageScrollContainer: FC<Props> = ({
 }) => {
   const [controllerBanners] = useBanners()
   const flatlistRef = useRef<FlatList | null>(null)
-
+  const { bottom } = useSafeAreaInsets()
   const style = useMemo(() => getFlatListStyle(tab, openTab), [openTab, tab])
 
   const contentContainerStyle = useMemo(() => {
-    return [controllerBanners.length ? spacings.ptTy : spacings.pt0, { flexGrow: 1 }]
-  }, [controllerBanners.length])
+    return [
+      controllerBanners.length ? spacings.ptTy : spacings.pt0,
+      { flexGrow: 1 },
+      isMobile && { paddingBottom: bottom }
+    ]
+  }, [bottom, controllerBanners.length])
 
   // Reset scroll position when switching tabs (new)
   useEffect(() => {

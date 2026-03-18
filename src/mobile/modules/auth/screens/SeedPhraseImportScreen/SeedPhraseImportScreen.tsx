@@ -8,6 +8,7 @@ import FatToggle from '@common/components/FatToggle'
 import InputPassword from '@common/components/InputPassword'
 import Text from '@common/components/Text'
 import TextArea from '@common/components/TextArea'
+import { isAndroid } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import useTheme from '@common/hooks/useTheme'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
@@ -94,7 +95,7 @@ const SeedPhraseImportScreen = () => {
 
             return (
               <View style={styles.textAreaWrapper}>
-                {styledOverlay}
+                {!isAndroid && styledOverlay}
                 <TextArea
                   testID="enter-seed-phrase-field"
                   value={value}
@@ -118,7 +119,7 @@ const SeedPhraseImportScreen = () => {
                   placeholderTextColor={theme.secondaryText}
                   onSubmitEditing={handleFormSubmit}
                   nativeInputStyle={{
-                    color: 'rgba(0, 0, 0, 0)',
+                    ...(isAndroid ? {} : { color: 'rgba(0, 0, 0, 0)' }),
                     // @ts-ignore caretColor: theme.primaryText
                     caretColor: theme.primaryText,
                     fontSize: 14,

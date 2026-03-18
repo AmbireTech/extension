@@ -126,7 +126,13 @@ const Account = ({
 
         <View style={[flexbox.flex1, flexbox.directionRow, flexbox.alignCenter]}>
           <View style={[flexbox.flex1, flexbox.directionRow, flexbox.alignCenter]}>
-            <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mrMd]}>
+            <View
+              style={[
+                flexbox.directionRow,
+                flexbox.alignCenter,
+                isMobile ? spacings.mrTy : spacings.mrMd
+              ]}
+            >
               {isAccountImported ? (
                 <>
                   <Avatar
@@ -186,7 +192,7 @@ const Account = ({
                 </>
               )}
 
-              {!isMobile && (minWidthSize('l') || isAccountImported || domainName) && (
+              {!isMobile && (maxWidthSize('l') || isAccountImported || domainName) && (
                 <Pressable onPress={handleCopyAddress}>
                   <CopyIcon width={14} height={14} />
                 </Pressable>

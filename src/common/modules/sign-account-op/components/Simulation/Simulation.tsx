@@ -383,6 +383,7 @@ const Simulation: FC<Props> = ({ network, isEstimationComplete, isViewOnly }) =>
       {containsDappsNotInCatalog && containsPermit2 && (
         <AlertVertical
           type="warning"
+          style={spacings.mt}
           customIcon={() => <WarningFilledIcon width={48} height={44} />}
           text={
             <Text appearance="warningText" weight="semiBold">

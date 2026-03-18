@@ -177,6 +177,10 @@ const HumanizedVisualization: FC<Props> = ({
           )
         }
 
+        if (item.type === 'break') {
+          return <View key={key} style={{ flexBasis: '100%', height: 0 }} />
+        }
+
         return null
       })}
     </View>

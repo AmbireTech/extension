@@ -5,6 +5,7 @@ import { NativeScrollEvent, ScrollView, View } from 'react-native'
 import { SigningStatus } from '@ambire-common/controllers/signAccountOp/signAccountOp'
 import { Key } from '@ambire-common/interfaces/keystore'
 import { CallsUserRequest } from '@ambire-common/interfaces/userRequest'
+import Alert from '@common/components/Alert'
 import GlassView from '@common/components/GlassView'
 import NetworkBadge from '@common/components/NetworkBadge'
 import NoKeysToSignAlert from '@common/components/NoKeysToSignAlert'
@@ -22,7 +23,6 @@ import SectionHeading from '@common/modules/sign-account-op/components/SectionHe
 import Simulation from '@common/modules/sign-account-op/components/Simulation'
 import KeySelect from '@common/modules/sign-message/components/KeySelect'
 import spacings from '@common/styles/spacings'
-import { hexToRgba } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import SmallNotificationWindowWrapper from '@web/components/SmallNotificationWindowWrapper'
 import {
@@ -32,9 +32,6 @@ import {
 import { closeCurrentWindow } from '@web/extension-services/background/webapi/window'
 import ActionHeader from '@web/modules/action-requests/components/ActionHeader'
 import Modals from '@web/modules/sign-account-op/components/Modals/Modals'
-
-import Gradient from './Gradient'
-import getStyles from './styles'
 
 const isCloseToBottom = ({ layoutMeasurement, contentOffset, contentSize }: NativeScrollEvent) => {
   const paddingToBottom = 20
@@ -49,8 +46,7 @@ const SignAccountOpScreen = () => {
   const { state: signAccountOpState, dispatch: signAccountOpDispatch } =
     useController('SignAccountOpController')
   const { t } = useTranslation()
-  const { addToast } = useToast()
-  const { styles, theme, themeType } = useTheme(getStyles)
+  const { theme } = useTheme()
   const [containerHeight, setContainerHeight] = useState(0)
   const [contentHeight, setContentHeight] = useState(0)
   const [hasReachedBottom, setHasReachedBottom] = useState<boolean | null>(null)
@@ -200,16 +196,7 @@ const SignAccountOpScreen = () => {
         header={<ActionHeader />}
         renderDirectChildren={() => (
           <View style={[spacings.mh, spacings.mv]}>
-            <GlassView isSimpleBlur={false} tintColor2={hexToRgba('#D1D1D1', 0.12)}>
-              {/* Gradient */}
-              <Gradient
-                style={{
-                  position: 'absolute',
-                  top: -70,
-                  right: -70,
-                  zIndex: -1
-                }}
-              />
+            <GlassView>
               <View style={[spacings.ph, spacings.pv, flexbox.flex1]}>
                 {!estimationFailed &&
                 signAccountOpState?.canBroadcast &&
@@ -334,6 +321,15 @@ const SignAccountOpScreen = () => {
                 network={network}
                 isViewOnly={isViewOnly}
                 isEstimationComplete={!!signAccountOpState?.isInitialized && !!network}
+              />
+            )}
+            {signAccountOpState?.hasSafeApiFailed && (
+              <Alert
+                size="sm"
+                type="warning"
+                title={t('Safe API failure')}
+                text={t('Transaction was not sent to safe global due to a Safe API failure')}
+                style={spacings.mt}
               />
             )}
             {isViewOnly && <NoKeysToSignAlert chainId={signAccountOpState?.accountOp?.chainId} />}

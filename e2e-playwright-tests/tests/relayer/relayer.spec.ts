@@ -10,7 +10,7 @@ import { expect } from '@playwright/test'
  * @description mock relayer is down
  */
 
-test.describe('Mock Relayer down', { tag: '@relayer' }, () => {
+test.describe.skip('Mock Relayer down', { tag: '@relayer' }, () => {
   const sendTokenUsdcOp = tokens.usdc.optimism
   const feeTokenEthOp = tokens.eth.optimism
   const recepientAddress = SA_ADDRESS

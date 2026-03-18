@@ -4,11 +4,12 @@ import { useModalize } from 'react-native-modalize'
 
 import BurgerIcon from '@common/assets/svg/BurgerIcon'
 import NetworkStatusesIcon from '@common/assets/svg/NetworkStatusIcon'
-import { isAmbireNext, isDev } from '@common/config/env'
+import { isAmbireNext, isDev, isMobile, isWeb } from '@common/config/env'
 import useController from '@common/hooks/useController'
 import useHover from '@common/hooks/useHover'
 import useNavigation from '@common/hooks/useNavigation'
 import { WEB_ROUTES } from '@common/modules/router/constants/common'
+import alert from '@common/services/alert'
 import spacings from '@common/styles/spacings'
 import flexboxStyles from '@common/styles/utils/flexbox'
 import { getUiType } from '@common/utils/uiType'
@@ -68,6 +69,7 @@ const DashboardHeader = () => {
               </Animated.View>
             </Pressable>
           )}
+
           <Pressable
             testID="dashboard-hamburger-btn"
             style={[
@@ -81,9 +83,13 @@ const DashboardHeader = () => {
                 backgroundColor: '#000000A3'
               }
             ]}
-            onPress={() =>
+            onPress={() => {
+              if (isMobile) {
+                alert('Coming soon!')
+                return
+              }
               isPopup ? navigate(WEB_ROUTES.menu) : navigate(WEB_ROUTES.generalSettings)
-            }
+            }}
             {...bindBurgerAnim}
           >
             <Animated.View style={burgerAnimStyle}>

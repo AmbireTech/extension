@@ -10,13 +10,14 @@ interface Style {
   text: TextStyle
 }
 
-const WIDTH = 70
+const WIDTH = 160
 
 const styles = StyleSheet.create<Style>({
   tokenWrapper: {
     ...spacings.phMi,
-    ...spacings.pvMi,
-    width: WIDTH
+    ...spacings.pv,
+    width: WIDTH,
+    zIndex: 1
   },
   textContainer: {
     // Gets centered when text is short, but grows left (or right) if long, based on the flex model
@@ -29,7 +30,7 @@ const styles = StyleSheet.create<Style>({
   },
   tokenContainer: {
     ...flexbox.alignSelfCenter,
-    ...spacings.mbMi
+    ...spacings.mbSm
   }
 })
 

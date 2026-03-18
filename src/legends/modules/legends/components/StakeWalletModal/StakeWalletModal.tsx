@@ -486,7 +486,7 @@ const StakeWalletModal: React.FC<{ isOpen: boolean; handleClose: () => void }> =
             Learn more about{' '}
             <a
               target="_blank"
-              href="https://help.ambire.com/hc/en-us/sections/4421155466130-Staking/"
+              href="https://help.ambire.com/en/collections/18211458-wallet-token-governance"
               rel="noreferrer"
             >
               how staking works

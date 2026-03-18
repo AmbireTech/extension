@@ -1,6 +1,8 @@
 import { StyleSheet, ViewStyle } from 'react-native'
 
+import { isMobile } from '@common/config/env'
 import spacings from '@common/styles/spacings'
+import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 
 interface Style {
@@ -13,8 +15,9 @@ const getStyles = () =>
       ...spacings.phTy,
       ...flexbox.directionRow,
       ...flexbox.alignCenter,
-      height: 32,
-      borderRadius: 64
+      ...(isMobile && flexbox.justifyCenter),
+      height: isMobile ? 40 : 32,
+      borderRadius: isMobile ? BORDER_RADIUS_PRIMARY : 64
     }
   })
 

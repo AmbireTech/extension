@@ -59,7 +59,7 @@ const KeyStoreSetupForm = ({ agreedWithTerms, children }: Props) => {
               placeholder={t('Enter password')}
               onChangeText={onChange}
               isValid={isValidPassword(value)}
-              autoFocus={isWeb}
+              autoFocus
               value={value}
               error={
                 formState.errors.password &&

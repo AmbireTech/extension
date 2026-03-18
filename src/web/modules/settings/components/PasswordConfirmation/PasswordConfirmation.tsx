@@ -7,6 +7,7 @@ import wait from '@ambire-common/utils/wait'
 import Button from '@common/components/Button'
 import InputPassword from '@common/components/InputPassword'
 import { PanelBackButton, PanelTitle } from '@common/components/Panel/Panel'
+import { isMobile, isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import useNavigation from '@common/hooks/useNavigation'
@@ -118,8 +119,8 @@ const PasswordConfirmation: React.FC<Props> = ({
   return (
     <View style={flexbox.flex1}>
       <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mbLg]}>
-        <PanelBackButton onPress={onBackButtonPress} style={spacings.mrSm} />
-        <PanelTitle title={t(title)} style={textStyles.left} />
+        {isWeb && <PanelBackButton onPress={onBackButtonPress} style={spacings.mrSm} />}
+        <PanelTitle title={t(title)} style={isWeb ? textStyles.left : textStyles.center} />
       </View>
       <Controller
         control={control}
@@ -151,7 +152,14 @@ const PasswordConfirmation: React.FC<Props> = ({
         )}
         name="password"
       />
-      <View style={[flexbox.alignCenter, flexbox.flex1, flexbox.justifyEnd]}>
+      <View
+        style={[
+          isMobile && spacings.pt,
+          isWeb && flexbox.alignCenter,
+          flexbox.flex1,
+          flexbox.justifyEnd
+        ]}
+      >
         <Button
           testID="button-submit"
           disabled={keystoreState.statuses.unlockWithSecret !== 'INITIAL' || !isValid}

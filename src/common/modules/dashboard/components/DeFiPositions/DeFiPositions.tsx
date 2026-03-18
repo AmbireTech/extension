@@ -203,7 +203,7 @@ const DeFiPositions: FC<Props> = ({
                 color={theme.linkText}
                 onPress={() => {
                   // eslint-disable-next-line @typescript-eslint/no-floating-promises
-                  openInTab({ url: 'https://help.ambire.com/hc/en-us' })
+                  openInTab({ url: 'https://help.ambire.com/en' })
                 }}
               >
                 {t('open a ticket.')}

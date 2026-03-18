@@ -49,7 +49,6 @@ const Toggle = ({ isOn, onToggle, label, style, disabled, trackStyle, toggleStyl
           width: 28,
           height: 12,
           padding: 0,
-          ...spacings.mrSm,
           backgroundColor: hexToRgba(String(theme.success400)),
           ...trackStyle
         }}
@@ -57,7 +56,6 @@ const Toggle = ({ isOn, onToggle, label, style, disabled, trackStyle, toggleStyl
           width: 28,
           height: 12,
           padding: 0,
-          ...spacings.mrSm,
           backgroundColor: hexToRgba(String(theme.neutral600)),
           ...trackStyle
         }}

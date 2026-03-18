@@ -28,8 +28,6 @@ const getStyles = (theme: ThemeProps) =>
     container: {
       width: '100%',
       height: '100%',
-      borderWidth: 1,
-      borderColor: 'transparent',
       ...common.borderRadiusPrimary,
       ...spacings.phSm,
       ...spacings.pvSm

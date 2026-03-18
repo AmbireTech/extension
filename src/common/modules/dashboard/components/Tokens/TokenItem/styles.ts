@@ -1,5 +1,6 @@
 import { StyleSheet, ViewStyle } from 'react-native'
 
+import { isMobile } from '@common/config/env'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
@@ -14,7 +15,8 @@ const getStyles = () =>
       ...flexbox.directionRow,
       ...flexbox.justifySpaceBetween,
       paddingVertical: 6,
-      ...spacings.phTy
+      ...spacings.phTy,
+      ...(isMobile ? spacings.mvMi : {})
     }
   })
 

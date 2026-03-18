@@ -2,8 +2,6 @@ name: Build production Android APK ⚡
 
 on:
   workflow_dispatch: # Manual trigger
-  release:
-    types: [published] # Triggers on new releases (from any branch)
 
 jobs:
   build-android-apk:

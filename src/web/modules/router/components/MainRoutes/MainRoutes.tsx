@@ -38,7 +38,7 @@ import KeyStoreEmailRecoverySetNewPasswordScreen from '@web/modules/keystore/scr
 import KeyStoreSetupScreen from '@web/modules/keystore/screens/KeyStoreSetupScreen'
 import NetworksConfiguration from '@web/modules/network-settings/screens'
 import NetworksScreen from '@web/modules/networks/screens'
-import ReceiveScreen from '@web/modules/receive'
+import ReceiveScreen from '@web/modules/receive/screens/ReceiveScreen'
 import NavMenu from '@web/modules/router/components/NavMenu'
 import TabOnlyRoute from '@web/modules/router/components/TabOnlyRoute'
 import { SettingsRoutesProvider } from '@web/modules/settings/contexts/SettingsRoutesContext'
