@@ -17,7 +17,7 @@
     "start:production": "APP_ENV=production yarn start",
     "start:clean:production": "APP_ENV=production yarn start:clean",
     "build:inject:mobile-ota-config": "sh ./scripts/inject-mobile-ota-config.sh",
-    "build:ios:simulator": "yarn inject:ota-config && APP_ENV=production xcodebuild -workspace ios/ambire.xcworkspace -scheme Ambire -configuration Release -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' -derivedDataPath ios/build",
+    "build:ios:simulator": "yarn build:inject:mobile-ota-config && APP_ENV=production xcodebuild -workspace ios/ambire.xcworkspace -scheme Ambire -configuration Release -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' -derivedDataPath ios/build",
     "build:ios:simulator:install": "xcrun simctl install booted ios/build/Build/Products/Release-iphonesimulator/Ambire.app",
     "build:ios:archive": "APP_ENV=production xcodebuild -workspace ios/ambire.xcworkspace -scheme Ambire -configuration Release -sdk iphoneos -destination 'generic/platform=iOS' -archivePath ios/build/Ambire.xcarchive -derivedDataPath ios/build archive",
     "build:ios:export": "xcodebuild -exportArchive -archivePath ios/build/Ambire.xcarchive -exportPath ios/build/ipa -exportOptionsPlist ios/ExportOptions.plist",
