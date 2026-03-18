@@ -10,6 +10,7 @@ import DashboardOverview from '@common/modules/dashboard/components/DashboardOve
 import { OVERVIEW_CONTENT_MAX_HEIGHT } from '@common/modules/dashboard/components/DashboardOverview/DashboardOverview'
 import DashboardPages from '@common/modules/dashboard/components/DashboardPages'
 import PendingActionWindowModal from '@common/modules/dashboard/components/PendingActionWindowModal'
+import useDashboardReload from '@common/modules/dashboard/hooks/useDashobardReload'
 import getStyles from '@common/modules/dashboard/screens/styles' // Keeping styles in common
 import flexbox from '@common/styles/utils/flexbox'
 import { MobileLayoutContainer } from '@mobile/components/MobileLayoutWrapper'
@@ -30,6 +31,8 @@ const DashboardScreen = () => {
   const {
     state: { account, portfolio }
   } = useController('SelectedAccountController')
+
+  const { reloadAccount, refreshing } = useDashboardReload()
 
   const isOverviewExpandedRef = useRef(true)
 
@@ -100,6 +103,8 @@ const DashboardScreen = () => {
             onScroll={onScroll}
             animatedOverviewHeight={animatedOverviewHeight}
             isSearchHidden={isSearchHidden}
+            onRefresh={reloadAccount}
+            refreshing={refreshing}
           />
         </View>
       </View>

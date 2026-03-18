@@ -12,6 +12,7 @@ import DashboardHeader from '@common/modules/dashboard/components/DashboardHeade
 import Routes from '@common/modules/dashboard/components/Routes'
 import useBalanceAffectingErrors from '@common/modules/dashboard/hooks/useBalanceAffectingErrors'
 import useBanners from '@common/modules/dashboard/hooks/useBanners'
+import useDashboardReload from '@common/modules/dashboard/hooks/useDashobardReload'
 import spacings, { SPACING, SPACING_TY, SPACING_XL } from '@common/styles/spacings'
 import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
@@ -76,20 +77,7 @@ const DashboardOverview: FC<Props> = ({
   const [totalPortfolioAmountIntegerFormattedPart, totalPortfolioAmountDecimalFormattedPart] =
     formatDecimals(totalPortfolioAmount, 'value').split('.')
 
-  const reloadAccount = useCallback(() => {
-    mainDispatch({
-      type: 'method',
-      params: {
-        method: 'reloadSelectedAccount',
-        args: [
-          {
-            chainIds: dashboardNetworkFilter ? [BigInt(dashboardNetworkFilter)] : undefined,
-            isManualReload: true
-          }
-        ]
-      }
-    })
-  }, [dashboardNetworkFilter, mainDispatch])
+  const { reloadAccount, refreshing } = useDashboardReload()
 
   return (
     <View style={[spacings.phSm, spacings.mbTy]}>
@@ -194,18 +182,13 @@ const DashboardOverview: FC<Props> = ({
                       opacity: shouldShowRefreshButton ? (hovered ? 1 : 0.7) : 0
                     })}
                     onPress={reloadAccount}
-                    disabled={!portfolio.isAllReady || portfolio.isReloading}
+                    disabled={refreshing}
                     testID="refresh-button"
                     onHoverIn={() => setIsBalanceHovered(true)}
                     // Increase clickable area using prop
                     hitSlop={10}
                   >
-                    <RefreshIcon
-                      spin={!portfolio.isAllReady || portfolio.isReloading}
-                      color="#E3E6EB"
-                      width={28}
-                      height={28}
-                    />
+                    <RefreshIcon spin={refreshing} color="#E3E6EB" width={28} height={28} />
                   </Pressable>
                 )}
               </Pressable>

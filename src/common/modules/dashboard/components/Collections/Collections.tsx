@@ -34,6 +34,8 @@ interface Props {
   dashboardNetworkFilterName: string | null
   animatedOverviewHeight: Animated.Value
   isSearchHidden: boolean
+  refreshing?: boolean
+  onRefresh?: () => void
 }
 
 const { isPopup } = getUiType()
@@ -47,7 +49,9 @@ const Collections: FC<Props> = ({
   networks,
   dashboardNetworkFilterName,
   animatedOverviewHeight,
-  isSearchHidden
+  isSearchHidden,
+  refreshing,
+  onRefresh
 }) => {
   const {
     state: { portfolio, dashboardNetworkFilter }
@@ -196,7 +200,6 @@ const Collections: FC<Props> = ({
       <DashboardPageScrollContainer
         tab="collectibles"
         openTab={openTab}
-        onScroll={onScroll}
         ListHeaderComponent={<DashboardBanners />}
         data={[
           'header',
@@ -210,6 +213,10 @@ const Collections: FC<Props> = ({
         windowSize={15}
         bounces={false}
         animatedOverviewHeight={animatedOverviewHeight}
+        onScroll={onScroll}
+        scrollEventThrottle={16}
+        refreshing={refreshing}
+        onRefresh={onRefresh}
       />
       {openTab === 'collectibles' && (
         <SearchAndCurrentApp control={control} isHidden={isSearchHidden} />
