@@ -546,7 +546,7 @@
     "@babel/helper-create-class-features-plugin" "^7.28.6"
     "@babel/helper-plugin-utils" "^7.28.6"
 
-"@babel/plugin-transform-class-static-block@^7.27.1", "@babel/plugin-transform-class-static-block@^7.28.6":
+"@babel/plugin-transform-class-static-block@7.28.6", "@babel/plugin-transform-class-static-block@^7.27.1", "@babel/plugin-transform-class-static-block@^7.28.6":
   version "7.28.6"
   resolved "https://registry.yarnpkg.com/@babel/plugin-transform-class-static-block/-/plugin-transform-class-static-block-7.28.6.tgz#1257491e8259c6d125ac4d9a6f39f9d2bf3dba70"
   integrity sha512-rfQ++ghVwTWTqQ7w8qyDxL1XGihjBss4CmTgGRCTAC9RIbhVpyp4fOeZtta0Lbf+dTNIVJer6ych2ibHwkZqsQ==
