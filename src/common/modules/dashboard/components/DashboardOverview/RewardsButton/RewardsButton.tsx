@@ -41,9 +41,17 @@ const RewardsButton = () => {
     )
   }, [portfolio.tokens])
 
-  const totalFormatted = useMemo(() => {
-    return `+$${formatDecimals(total, 'noDecimal')}`
+  const totalNoDecimal = useMemo(() => {
+    return formatDecimals(total, 'noDecimal')
   }, [total])
+
+  const shouldShowEarnRewards = useMemo(() => {
+    return totalNoDecimal === '0'
+  }, [totalNoDecimal])
+
+  const totalFormatted = useMemo(() => {
+    return `+$${totalNoDecimal}`
+  }, [totalNoDecimal])
 
   if (!portfolio.isReadyToVisualize) {
     return (
@@ -72,19 +80,23 @@ const RewardsButton = () => {
           style={{ ...spacings.mhMi, lineHeight: 16 }}
           weight="number_medium"
         >
-          {totalFormatted}
+          {shouldShowEarnRewards ? t('Earn Rewards') : totalFormatted}
         </Text>
-        <Text
-          fontSize={10}
-          color="#fff"
-          style={{ ...spacings.mrMi, lineHeight: 15 }}
-          weight="medium"
-        >
-          {t('from')}
-        </Text>
-        <Text color="#D7FF00" fontSize={10} weight="medium" style={{ lineHeight: 15 }}>
-          {t('Rewards')}
-        </Text>
+        {!shouldShowEarnRewards && (
+          <>
+            <Text
+              fontSize={10}
+              color="#fff"
+              style={{ ...spacings.mrMi, lineHeight: 15 }}
+              weight="medium"
+            >
+              {t('from')}
+            </Text>
+            <Text color="#D7FF00" fontSize={10} weight="medium" style={{ lineHeight: 15 }}>
+              {t('Rewards')}
+            </Text>
+          </>
+        )}
       </View>
     </RewardsButtonWrapper>
   )
