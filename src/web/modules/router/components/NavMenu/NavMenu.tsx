@@ -45,7 +45,7 @@ const OTHER_LINKS = [
   {
     key: 'help-center',
     Icon: React.memo(HelpIcon),
-    label: 'Help Center',
+    label: 'Help center',
     path: 'https://help.ambire.com/hc/en-us',
     isExternal: true
   },
