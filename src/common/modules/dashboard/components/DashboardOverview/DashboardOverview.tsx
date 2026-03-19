@@ -141,7 +141,20 @@ const DashboardOverview: FC<Props> = ({
                 hitSlop={8}
               >
                 {/* Placeholder matching the refresh button size to keep the balance centered */}
-                <View style={{ width: 28, height: 28 }} />
+                <View
+                  style={{ width: 28, height: 28, ...flexbox.justifyCenter, ...flexbox.alignEnd }}
+                >
+                  <BalanceAffectingErrors
+                    reloadAccount={reloadAccount}
+                    networksWithErrors={networksWithErrors}
+                    sheetRef={sheetRef}
+                    balanceAffectingErrorsSnapshot={balanceAffectingErrorsSnapshot}
+                    warningMessage={warningMessage}
+                    onIconPress={onIconPress}
+                    closeBottomSheetWrapped={closeBottomSheetWrapped}
+                    isLoadingTakingTooLong={isLoadingTakingTooLong}
+                  />
+                </View>
                 <View style={[flexbox.flex1, flexbox.alignCenter, spacings.mhTy]}>
                   {!portfolio?.isReadyToVisualize ? (
                     <SkeletonLoader
@@ -208,16 +221,6 @@ const DashboardOverview: FC<Props> = ({
               </Pressable>
 
               <View style={[flexbox.directionRow, flexbox.justifyCenter, flexbox.alignCenter]}>
-                <BalanceAffectingErrors
-                  reloadAccount={reloadAccount}
-                  networksWithErrors={networksWithErrors}
-                  sheetRef={sheetRef}
-                  balanceAffectingErrorsSnapshot={balanceAffectingErrorsSnapshot}
-                  warningMessage={warningMessage}
-                  onIconPress={onIconPress}
-                  closeBottomSheetWrapped={closeBottomSheetWrapped}
-                  isLoadingTakingTooLong={isLoadingTakingTooLong}
-                />
                 <GasTankButton
                   onPress={() => openGasTankModal?.()}
                   portfolio={portfolio}
