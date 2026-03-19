@@ -14,6 +14,7 @@ import { WEB_ROUTES } from '@common/modules/router/constants/common'
 import alert from '@common/services/alert'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
+import { privateValue } from '@common/utils/ui'
 
 import RewardsButtonWrapper from './RewardsButtonWrapper'
 
@@ -21,6 +22,7 @@ const RewardsButton = () => {
   const {
     state: { portfolio }
   } = useController('SelectedAccountController')
+  const { isPrivacyModeEnabled } = useController('WalletStateController').state
   const { navigate } = useNavigation()
   const { t } = useTranslation()
 
@@ -69,10 +71,11 @@ const RewardsButton = () => {
         <Text
           color="#D7FF00"
           fontSize={12}
-          style={{ ...spacings.mhMi, lineHeight: 16 }}
+          // Center the dots relative to the text on the right if isPrivacyModeEnabled
+          style={{ ...spacings.mhMi, lineHeight: isPrivacyModeEnabled ? 14 : 16 }}
           weight="number_medium"
         >
-          {totalFormatted}
+          {privateValue(totalFormatted, isPrivacyModeEnabled, 4)}
         </Text>
         <Text
           fontSize={10}

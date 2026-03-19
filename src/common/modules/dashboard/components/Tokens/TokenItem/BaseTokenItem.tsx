@@ -21,6 +21,7 @@ import spacings, { SPACING_2XL, SPACING_TY } from '@common/styles/spacings'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexboxStyles from '@common/styles/utils/flexbox'
 import { getTokenId } from '@common/utils/token'
+import { privateValue } from '@common/utils/ui'
 
 import PendingBadge from './PendingBadge'
 import getStyles from './styles'
@@ -51,7 +52,7 @@ const BaseTokenItem = ({
     'SelectedAccountController',
     (state) => state.portfolio
   )
-
+  const { isPrivacyModeEnabled } = useController('WalletStateController').state
   const { state: networks } = useController('NetworksController', (state) => state.networks)
   const { dispatch: requestsDispatch } = useController('RequestsController')
   const { t } = useTranslation()
@@ -174,7 +175,10 @@ const BaseTokenItem = ({
                   appearance="secondaryText"
                   testID={`token-balance-${tokenId}`}
                 >
-                  {isPending ? pendingBalanceFormatted : balanceFormatted}
+                  {privateValue(
+                    isPending ? pendingBalanceFormatted : balanceFormatted,
+                    isPrivacyModeEnabled
+                  )}
                 </Text>
               </View>
               {/* area for optional actions (Claim button etc) */}
@@ -189,7 +193,11 @@ const BaseTokenItem = ({
               color={textColor}
               style={{ lineHeight: 20 }}
             >
-              {isPending ? pendingBalanceUSDFormatted : balanceUSDFormatted}
+              {privateValue(
+                isPending ? pendingBalanceUSDFormatted : balanceUSDFormatted,
+                isPrivacyModeEnabled,
+                8
+              )}
             </Text>
             <View style={[flexboxStyles.directionRow, flexboxStyles.alignCenter]}>
               {typeof change24h === 'number' && (
