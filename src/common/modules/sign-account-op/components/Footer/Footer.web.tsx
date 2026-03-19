@@ -15,24 +15,10 @@ import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import ActionsPagination from '@common/modules/action-requests/components/ActionsPagination'
 import spacings from '@common/styles/spacings'
-import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
 
+import { Props } from './Footer'
 import getStyles from './styles'
-
-type Props = {
-  onReject: () => void
-  onAddToCart: () => void
-  onSign: () => void
-  isSignLoading: boolean
-  isSignDisabled: boolean
-  isAddToCartDisplayed: boolean
-  isAddToCartDisabled: boolean
-  inProgressButtonText: string
-  shouldHoldToProceed: boolean
-  buttonText: string
-  buttonTooltipText?: string
-}
 
 const Footer = ({
   onReject,

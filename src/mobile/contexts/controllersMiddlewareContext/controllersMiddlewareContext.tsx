@@ -13,7 +13,9 @@ import { APP_VERSION } from '@common/config/env'
 import { AllControllersMappingType } from '@common/constants/controllersMapping'
 import { ControllersMiddlewareContext } from '@common/contexts/controllersMiddlewareContext'
 import { ControllerStoreContext } from '@common/contexts/controllerStoreContext'
+import useNavigation from '@common/hooks/useNavigation'
 import useRoute from '@common/hooks/useRoute'
+import { getInitialRoute } from '@common/modules/router/helpers'
 import eventBus from '@common/services/event/eventBus'
 import { storage } from '@common/services/storage'
 import { Action, MethodAction } from '@common/types/actions'
@@ -106,11 +108,15 @@ export const ControllersMiddlewareProvider: React.FC<{
   children: React.ReactNode
 }> = ({ children }) => {
   const [isUnlocked, setIsUnlocked] = useState(false)
-  const { controllerStore, isStoreReady, debounceControllerUpdates } =
-    useContext(ControllerStoreContext)
+  const { controllerStore, debounceControllerUpdates } = useContext(ControllerStoreContext)
 
   const route = useRoute()
+  const navigation = useNavigation()
+  const navigationRef = useRef(navigation)
 
+  useEffect(() => {
+    navigationRef.current = navigation
+  }, [navigation])
   const eventEmitterRegistry = useRef<EventEmitterRegistryController>(
     new EventEmitterRegistryController(() => {
       eventEmitterRegistry.current.values().forEach((ctrl) => {
@@ -205,6 +211,22 @@ export const ControllersMiddlewareProvider: React.FC<{
       uiManager: {
         window: {
           open: async () => {
+            const initialRoute = getInitialRoute({
+              keystoreState: ctrls.MainController.keystore,
+              requestsState: ctrls.MainController.requests,
+              swapAndBridgeState: ctrls.MainController.swapAndBridge,
+              transferState: ctrls.MainController.transfer
+            })
+
+            const currentPathname = navigationRef.current.searchParams.get('pathname') || route.pathname
+            const currentRoute = currentPathname.startsWith('/')
+              ? currentPathname.slice(1)
+              : currentPathname
+
+            if (initialRoute && initialRoute !== currentRoute) {
+              navigationRef.current.navigate(initialRoute)
+            }
+
             return {
               id: 1,
               width: 0,
@@ -216,6 +238,21 @@ export const ControllersMiddlewareProvider: React.FC<{
             } as WindowProps
           },
           focus: async () => {
+            const initialRoute = getInitialRoute({
+              keystoreState: ctrls.MainController.keystore,
+              requestsState: ctrls.MainController.requests,
+              swapAndBridgeState: ctrls.MainController.swapAndBridge,
+              transferState: ctrls.MainController.transfer
+            })
+
+            const currentPathname = navigationRef.current.searchParams.get('pathname') || route.pathname
+            const currentRoute = currentPathname.startsWith('/')
+              ? currentPathname.slice(1)
+              : currentPathname
+
+            if (initialRoute && initialRoute !== currentRoute) {
+              navigationRef.current.navigate(initialRoute)
+            }
             return {
               id: 1,
               width: 0,
@@ -227,7 +264,23 @@ export const ControllersMiddlewareProvider: React.FC<{
             } as WindowProps
           },
           closePopupWithUrl: async () => {},
-          remove: async () => {},
+          remove: async () => {
+            const initialRoute = getInitialRoute({
+              keystoreState: ctrls.MainController.keystore,
+              requestsState: ctrls.MainController.requests,
+              swapAndBridgeState: ctrls.MainController.swapAndBridge,
+              transferState: ctrls.MainController.transfer
+            })
+
+            const currentPathname = navigationRef.current.searchParams.get('pathname') || route.pathname
+            const currentRoute = currentPathname.startsWith('/')
+              ? currentPathname.slice(1)
+              : currentPathname
+
+            if (initialRoute && initialRoute !== currentRoute) {
+              navigationRef.current.navigate(initialRoute)
+            }
+          },
           event: new Emitter()
         },
         notification: {
