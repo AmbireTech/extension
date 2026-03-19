@@ -1,28 +1,23 @@
 import React from 'react'
 import { useTranslation } from 'react-i18next'
-import { View } from 'react-native'
 
 import FooterGlassView from '@common/components/FooterGlassView'
 import LayoutWrapper from '@common/components/LayoutWrapper'
 import ScrollableWrapper from '@common/components/ScrollableWrapper'
-import Text from '@common/components/Text'
-import TokenIcon from '@common/components/TokenIcon'
-import useTheme from '@common/hooks/useTheme'
 import getAndFormatTokenDetails from '@common/modules/dashboard/helpers/getTokenDetails'
 import Header from '@common/modules/header/components/Header/Header'
 import TokenDetailsButton from '@common/modules/token-details/components/Button'
 import Exchanges from '@common/modules/token-details/components/Exchanges'
 import HideTokenModal from '@common/modules/token-details/components/HideTokenModal'
+import TokenBalanceCard from '@common/modules/token-details/components/TokenBalanceCard'
 import TokenData from '@common/modules/token-details/components/TokenData'
+import TokenPriceDisplay from '@common/modules/token-details/components/TokenPriceDisplay'
 import TokenDetailsTransactionHistory from '@common/modules/token-details/components/TransactionHistory'
 import useTokenDetails from '@common/modules/token-details/hooks/useTokenDetails'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
-import getStyles from './styles'
-
 const TokenDetailsScreen = () => {
-  const { styles, theme } = useTheme(getStyles)
   const { t } = useTranslation()
   const {
     token,
@@ -67,68 +62,27 @@ const TokenDetailsScreen = () => {
           handleClose={closeHideTokenModal}
           handleHideToken={handleHideTokenFromModal}
         />
-        <View style={styles.tokenInfoAndIcon}>
-          <TokenIcon
-            containerHeight={40}
-            containerWidth={40}
-            width={32}
-            height={32}
-            networkSize={16}
-            withContainer
-            address={address}
-            onGasTank={onGasTank}
-            chainId={chainId}
-          />
-          <View style={styles.tokenInfo}>
-            <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-              <Text selectable weight="semiBold" style={spacings.mrSm}>
-                {symbol}
-              </Text>
-              <Text fontSize={12} weight="medium">
-                {isRewards && t('Claimable rewards')}
-              </Text>
-              <Text fontSize={12} weight="medium">
-                {isVesting && t('Claimable early supporters vesting')}
-              </Text>
-            </View>
-            <Text fontSize={14} appearance="secondaryText" weight="medium">
-              {balanceFormatted}
-            </Text>
-            {!!onGasTank && (
-              <View style={styles.balance}>
-                <Text
-                  style={spacings.mtMi}
-                  color={theme.errorDecorative}
-                  fontSize={12}
-                  weight="number_regular"
-                  numberOfLines={1}
-                >
-                  (This token is a gas tank one and therefore actions are limited)
-                </Text>
-              </View>
-            )}
-          </View>
-          <View style={flexbox.alignEnd}>
-            <Text fontSize={20} weight="number_bold">
-              {balanceUSDFormatted}
-            </Text>
-            <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-              <Text fontSize={14} weight="number_medium" appearance="secondaryText">
-                {priceUSDFormatted}
-              </Text>
-              {typeof change24h === 'number' && (
-                <Text
-                  fontSize={14}
-                  weight="number_medium"
-                  appearance={change24h >= 0 ? 'successText' : 'errorText'}
-                  style={spacings.mlMi}
-                >
-                  {change24hFormatted}
-                </Text>
-              )}
-            </View>
-          </View>
-        </View>
+        <TokenPriceDisplay
+          symbol={symbol}
+          address={address}
+          chainId={chainId}
+          onGasTank={onGasTank}
+          priceUSDFormatted={priceUSDFormatted}
+          change24h={change24h}
+          change24hFormatted={change24hFormatted}
+        />
+        <TokenBalanceCard
+          symbol={symbol}
+          address={address}
+          chainId={chainId}
+          onGasTank={onGasTank}
+          balanceFormatted={balanceFormatted}
+          balanceUSDFormatted={balanceUSDFormatted}
+          change24h={change24h}
+          change24hFormatted={change24hFormatted}
+          isRewards={isRewards}
+          isVesting={isVesting}
+        />
         <TokenData token={token} />
         <Exchanges exchanges={token.meta?.exchanges || []} />
         <TokenDetailsTransactionHistory />

@@ -5,6 +5,7 @@ import { View, ViewStyle } from 'react-native'
 import humanizerInfo from '@ambire-common/consts/humanizer/humanizerInfo.json'
 import { IrCall } from '@ambire-common/libs/humanizer/interfaces'
 import DeleteIcon from '@common/assets/svg/DeleteIcon'
+import Alert from '@common/components/Alert'
 import ExpandableCard from '@common/components/ExpandableCard'
 import HumanizedVisualization from '@common/components/HumanizedVisualization'
 import Label from '@common/components/Label'
@@ -30,6 +31,7 @@ interface Props {
   onRightIconPress?: () => void
   hideLinks?: boolean
   hideDeleteIcon?: boolean
+  hasCallFailed?: boolean
 }
 
 export const sizeMultiplier = {
@@ -49,7 +51,8 @@ const TransactionSummary = ({
   rightIcon,
   onRightIconPress,
   hideLinks = false,
-  hideDeleteIcon
+  hideDeleteIcon,
+  hasCallFailed
 }: Props) => {
   const textSize = 16 * sizeMultiplier[size]
   const imageSize = 32 * sizeMultiplier[size]
@@ -137,7 +140,8 @@ const TransactionSummary = ({
       }}
       contentStyle={{
         paddingHorizontal: SPACING_SM,
-        paddingVertical: type !== 'history' ? SPACING_SM * sizeMultiplier[size] : 0
+        paddingVertical: type !== 'history' ? SPACING_SM * sizeMultiplier[size] : 0,
+        borderColor: 'red'
       }}
       content={
         <>
@@ -161,6 +165,7 @@ const TransactionSummary = ({
               hasPadding={enableExpand}
             />
           )}
+          {hasCallFailed && <Alert type="error" title="Broadcast failed" size="sm" />}
           {!!call.id && type === 'default' && !rightIcon && !hideDeleteIcon && (
             <AnimatedPressable
               style={deleteIconAnimStyle}
@@ -172,7 +177,7 @@ const TransactionSummary = ({
               <DeleteIcon width={28} height={28} />
             </AnimatedPressable>
           )}
-          {rightIcon && onRightIconPress && (
+          {rightIcon && onRightIconPress && !hasCallFailed && (
             <AnimatedPressable
               style={deleteIconAnimStyle}
               onPress={onRightIconPress}
