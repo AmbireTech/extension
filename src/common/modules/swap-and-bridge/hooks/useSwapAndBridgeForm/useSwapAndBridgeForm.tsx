@@ -76,9 +76,7 @@ const useSwapAndBridgeForm = () => {
   const [isOneClickModeDuringPriceImpact, setIsOneClickModeDuringPriceImpact] =
     useState<boolean>(false)
   const networks = useNetworks({
-    isSafe: !!account?.safeCreation,
-    factoryAddr: account?.creation?.factoryAddr,
-    accAddr: account?.addr,
+    acc: account,
     bridgeChainIds: supportedChainIds
   })
   const currentRoute = useLocation()

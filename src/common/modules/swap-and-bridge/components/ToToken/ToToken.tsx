@@ -57,9 +57,7 @@ const ToToken: FC<Props> = ({ simulationFailed }) => {
     state: { account }
   } = useController('SelectedAccountController')
   const networks = useNetworks({
-    isSafe: !!account?.safeCreation,
-    factoryAddr: account?.creation?.factoryAddr,
-    accAddr: account?.addr,
+    acc: account,
     bridgeChainIds: supportedChainIds
   })
 

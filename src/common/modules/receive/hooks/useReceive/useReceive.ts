@@ -68,11 +68,7 @@ const useReceive = () => {
 
   const [showAllNetworks, setShowAllNetworks] = useState(false)
 
-  const { accountNetworks } = useAccountNetworks({
-    isSafe: !!account?.safeCreation,
-    factoryAddr: account?.creation?.factoryAddr,
-    accAddr: account?.addr
-  })
+  const { accountNetworks } = useAccountNetworks({ acc: account })
 
   const [bindAnim, animStyle] = useMultiHover({
     values: [

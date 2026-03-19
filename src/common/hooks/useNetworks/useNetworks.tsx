@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import { Account } from '@ambire-common/interfaces/account'
 import { SupportedNetworks } from '@ambire-common/interfaces/network'
 import useController from '@common/hooks/useController'
 
@@ -12,22 +13,14 @@ import useAccountNetworks from './useAccountNetworks'
  * by the account OR the swap and bridge provider
  */
 const useNetworks = ({
-  accAddr,
-  isSafe,
-  factoryAddr,
-  bridgeChainIds = []
+  acc,
+  bridgeChainIds
 }: {
-  accAddr?: string
-  isSafe?: boolean
-  factoryAddr?: string
+  acc?: Account | null
   bridgeChainIds?: bigint[]
 }) => {
   const { state: networks } = useController('NetworksController', (state) => state.networks)
-  const { accountNetworks, accountNotSupportedReason } = useAccountNetworks({
-    accAddr,
-    isSafe,
-    factoryAddr
-  })
+  const { accountNetworks, accountNotSupportedReason } = useAccountNetworks({ acc })
   const { t } = useTranslation()
 
   const accountNetworkChainIds = useMemo(() => {

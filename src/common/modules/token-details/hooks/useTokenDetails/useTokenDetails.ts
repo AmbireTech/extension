@@ -44,9 +44,7 @@ const useTokenDetails = () => {
     state: { tokenPreferences }
   } = useController('PortfolioController')
   const networks = useNetworks({
-    isSafe: !!account?.safeCreation,
-    factoryAddr: account?.creation?.factoryAddr,
-    accAddr: account?.addr,
+    acc: account,
     bridgeChainIds: supportedChainIds
   })
   const [doNotDisplayHideTokenModal, setDoNotDisplayHideTokenModal] = useState(false)

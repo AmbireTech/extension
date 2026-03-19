@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import { Account } from '@ambire-common/interfaces/account'
 import { isAmbireV1LinkedAccount } from '@ambire-common/libs/account/account'
 import useController from '@common/hooks/useController'
 
@@ -11,15 +12,7 @@ import useController from '@common/hooks/useController'
  * V2   : if the contracts are deployed and we either have a relayer or 4337
  * Safe : if the safe account is deployed on the network
  */
-const useAccountNetworks = ({
-  accAddr,
-  isSafe,
-  factoryAddr
-}: {
-  accAddr?: string
-  isSafe?: boolean
-  factoryAddr?: string
-}) => {
+const useAccountNetworks = ({ acc }: { acc?: Account | null }) => {
   const {
     state: { accountStates }
   } = useController('AccountsController')
@@ -27,15 +20,15 @@ const useAccountNetworks = ({
   const { t } = useTranslation()
 
   const accountNetworks = useMemo(() => {
-    if (!accAddr) return []
+    if (!acc) return []
 
     // NOT a [Gnosis] Safe account
-    if (!isSafe) {
+    if (!acc.safeCreation) {
       // EOA
-      if (!factoryAddr) return networks
+      if (!acc.creation) return networks
 
       // v1 SA
-      if (isAmbireV1LinkedAccount(factoryAddr)) {
+      if (isAmbireV1LinkedAccount(acc.creation.factoryAddr)) {
         // v1s don't work without the relayer
         return networks.filter((network) => !!network.hasRelayer)
       }
@@ -45,20 +38,20 @@ const useAccountNetworks = ({
         (network) => network.areContractsDeployed && (network.hasRelayer || network.erc4337.enabled)
       )
     }
-    if (!accountStates[accAddr]) return []
+    if (!accountStates[acc.addr]) return []
 
     return networks.filter((n) => {
-      const networkAccState = accountStates[accAddr]?.[n.chainId.toString()]
+      const networkAccState = accountStates[acc.addr]?.[n.chainId.toString()]
       if (!networkAccState) return true
       return networkAccState.isDeployed
     })
-  }, [accAddr, isSafe, factoryAddr, accountStates, networks])
+  }, [acc, accountStates, networks])
 
   const accountNotSupportedReason = useMemo(() => {
-    if (!accAddr) return ''
-    if (!isSafe) {
-      if (!factoryAddr) return '' // EOA
-      if (isAmbireV1LinkedAccount(factoryAddr)) {
+    if (!acc?.addr) return ''
+    if (!acc.safeCreation) {
+      if (!acc.creation) return '' // EOA
+      if (isAmbireV1LinkedAccount(acc.creation.factoryAddr)) {
         return t('Ambire v1 accounts are not supported on this network')
       }
       // v2
@@ -66,7 +59,7 @@ const useAccountNetworks = ({
     }
     // safe
     return t('Safe account is not activated on this network')
-  }, [accAddr, isSafe, factoryAddr, t])
+  }, [acc, t])
 
   return { accountNetworks, accountNotSupportedReason }
 }
