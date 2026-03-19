@@ -36,6 +36,7 @@ const HoldToProceedButton: FC<Props> = ({
   const animationRef = useRef<Animated.CompositeAnimation | null>(null)
   const holdStartTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const isCurrentlyHoldingRef = useRef(false)
+  const isCompletedRef = useRef(false)
 
   const progressColorMap = {
     primary: theme.primaryAccent100,
@@ -45,7 +46,10 @@ const HoldToProceedButton: FC<Props> = ({
 
   const startHold = useCallback(() => {
     if (disabled) return
-
+    if (isCompleted) {
+      onHoldComplete()
+      return
+    }
     // Scale down animation for immediate visual feedback
     Animated.timing(scaleAnim, {
       toValue: 0.98,
@@ -67,6 +71,7 @@ const HoldToProceedButton: FC<Props> = ({
 
       animationRef.current.start(({ finished }) => {
         if (finished && isCurrentlyHoldingRef.current) {
+          isCompletedRef.current = true
           setIsCompleted(true)
           // Add a small delay before calling completion handler
           holdTimeoutRef.current = setTimeout(() => {
@@ -76,19 +81,18 @@ const HoldToProceedButton: FC<Props> = ({
         }
       })
     }, 200)
-  }, [disabled, holdDuration, progressAnim, scaleAnim, onHoldComplete])
+  }, [disabled, isCompleted, holdDuration, progressAnim, scaleAnim, onHoldComplete])
 
   const endHold = useCallback(() => {
     // Don't reset if already completed
-    if (isCompleted) return
-
+    if (isCompletedRef.current || isCompleted) return
     // Mark that we're no longer holding
     isCurrentlyHoldingRef.current = false
 
     // Clear the hold start timeout if still waiting
-    if (holdStartTimeoutRef.current) {
-      clearTimeout(holdStartTimeoutRef.current)
-      holdStartTimeoutRef.current = null
+    if (holdTimeoutRef.current && !isCompletedRef.current) {
+      clearTimeout(holdTimeoutRef.current)
+      holdTimeoutRef.current = null
     }
 
     // If we're in the middle of holding, stop everything
@@ -123,15 +127,7 @@ const HoldToProceedButton: FC<Props> = ({
     // Always reset the holding state
     setIsHolding(false)
     // Don't reset isCompleted here - let it stay true if the action completed
-  }, [
-    isHolding,
-    isCompleted,
-    animationRef,
-    holdTimeoutRef,
-    holdStartTimeoutRef,
-    progressAnim,
-    scaleAnim
-  ])
+  }, [isHolding, isCompleted, animationRef, holdTimeoutRef, progressAnim, scaleAnim])
 
   const panResponder = useRef(
     PanResponder.create({
@@ -204,11 +200,7 @@ const HoldToProceedButton: FC<Props> = ({
   })
 
   // Progress bar background color - using theme colors for consistency
-  const progressColor = isCompleted
-    ? theme.successDecorative
-    : isHolding
-      ? progressColorMap[buttonType]
-      : 'transparent'
+  const progressColor = isHolding && !isCompleted ? progressColorMap[buttonType] : 'transparent'
 
   return (
     <Animated.View
@@ -253,7 +245,7 @@ const HoldToProceedButton: FC<Props> = ({
           width: progressWidth,
           backgroundColor: progressColor,
           borderRadius: BORDER_RADIUS_PRIMARY,
-          opacity: 0.3,
+          opacity: isHolding && !isCompleted ? 0.3 : 0,
           zIndex: 10
         }}
       />
