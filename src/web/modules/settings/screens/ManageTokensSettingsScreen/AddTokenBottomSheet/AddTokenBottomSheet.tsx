@@ -276,7 +276,11 @@ const AddTokenBottomSheet: FC<Props> = ({ sheetRef, handleClose }) => {
 
   return (
     <BottomSheet id="add-custom-token" sheetRef={sheetRef} closeBottomSheet={handleCloseAndReset}>
-      <ModalHeader title={t('Add Token')} handleClose={handleCloseAndReset} />
+      <ModalHeader
+        title={t('Add Token')}
+        handleClose={handleCloseAndReset}
+        headerTestID="add-token-modal-title-text"
+      />
       {isInitialized && network ? (
         <View>
           <Select
