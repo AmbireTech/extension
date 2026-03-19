@@ -374,8 +374,9 @@ module.exports = async function (env, argv) {
               // immutable-arraybuffer shim limitations.
               // Note: Chunk files (e.g. 738.js in build/webpack-prod) do NOT need inline SES:
               // they are always loaded by the webpack runtime inside background.js or
-              // main.js and execute in the same realm, which is already locked down.
-              inlineLockdown: /^(background|main)\.js$/,
+              // main.js (including background-*.js / main-*.js variants) and execute
+              // in the same realm, which is already locked down.
+              inlineLockdown: /^(background|main)(-.*)?\.js$/,
               lockdown: {
                 // 'unsafe' preserves Error.stack for Sentry and debugging
                 errorTaming: 'unsafe',

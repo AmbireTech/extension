@@ -26,7 +26,7 @@ function createConsoleWarnShimPlugin() {
           },
           () => {
             for (const file in compilation.assets) {
-              if (!/^(background|main)\.js$/.test(file)) continue
+              if (!/^(background|main)(-.*)?\.js$/.test(file)) continue
 
               const source = compilation.assets[file].source()
               const marker = '/*! end SES */'

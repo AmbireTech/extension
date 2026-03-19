@@ -39,7 +39,7 @@ function createSetImmediateShimPlugin() {
           },
           () => {
             for (const file in compilation.assets) {
-              if (!/^background\.js$/.test(file)) continue
+              if (!/^background(-.*)?\.js$/.test(file)) continue
 
               const source = compilation.assets[file].source()
 
