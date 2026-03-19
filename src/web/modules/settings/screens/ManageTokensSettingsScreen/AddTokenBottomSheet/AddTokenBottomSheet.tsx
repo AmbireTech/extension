@@ -7,6 +7,7 @@ import { Network } from '@ambire-common/interfaces/network'
 import { isValidAddress } from '@ambire-common/services/address'
 import Alert from '@common/components/Alert/Alert'
 import BottomSheet from '@common/components/BottomSheet'
+import ModalHeader from '@common/components/BottomSheet/ModalHeader'
 import Button from '@common/components/Button'
 import CoingeckoConfirmedBadge from '@common/components/CoingeckoConfirmedBadge'
 import Input from '@common/components/Input'
@@ -18,6 +19,7 @@ import Text from '@common/components/Text'
 import TokenIcon from '@common/components/TokenIcon'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
+import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
@@ -43,6 +45,7 @@ const AddTokenBottomSheet: FC<Props> = ({ sheetRef, handleClose }) => {
   const { t } = useTranslation()
   const { networks, isInitialized } = useController('NetworksController').state
   const { addToast } = useToast()
+  const { theme } = useTheme()
   const {
     state: { validTokens, customTokens, temporaryTokens },
     dispatch: portfolioDispatch
@@ -272,15 +275,8 @@ const AddTokenBottomSheet: FC<Props> = ({ sheetRef, handleClose }) => {
   }, [address, network])
 
   return (
-    <BottomSheet
-      id="add-custom-token"
-      sheetRef={sheetRef}
-      closeBottomSheet={handleCloseAndReset}
-      style={{ maxWidth: 720 }}
-    >
-      <Text testID="add-token-modal-title-text" fontSize={20} style={spacings.mbXl} weight="medium">
-        {t('Add Token')}
-      </Text>
+    <BottomSheet id="add-custom-token" sheetRef={sheetRef} closeBottomSheet={handleCloseAndReset}>
+      <ModalHeader title={t('Add Token')} handleClose={handleCloseAndReset} />
       {isInitialized && network ? (
         <View>
           <Select
@@ -289,6 +285,9 @@ const AddTokenBottomSheet: FC<Props> = ({ sheetRef, handleClose }) => {
             value={networksOptions.filter((opt) => opt.value === network.name)[0]}
             label={t('Choose Network')}
             containerStyle={spacings.mbMd}
+            selectStyle={{
+              backgroundColor: theme.secondaryBackground
+            }}
           />
           <Controller
             control={control}
@@ -304,6 +303,7 @@ const AddTokenBottomSheet: FC<Props> = ({ sheetRef, handleClose }) => {
                 inputStyle={spacings.mbSm}
                 containerStyle={spacings.mbSm}
                 error={errors.address && errors.address.message}
+                backgroundColor={theme.secondaryBackground}
               />
             )}
           />
