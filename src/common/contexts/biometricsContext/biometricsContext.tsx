@@ -9,7 +9,6 @@ import useIsAppFocused from '@common/hooks/useIsAppFocused'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import { getDeviceSupportedAuthTypesLabel } from '@common/services/device'
-import { requestLocalAuthFlagging } from '@common/services/requestPermissionFlagging'
 import { secureStorage } from '@common/services/storage'
 import { hexToRgba } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
@@ -45,6 +44,22 @@ const BiometricsProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   )
   const [isEnrolled, setIsEnrolled] = useState<boolean>(biometricsContextDefaults.isEnrolled)
   const [isLoading, setIsLoading] = useState<boolean>(true)
+  const [isAuthInProcess, setIsAuthInProcess] = useState(false)
+
+  // When the app becomes focused, we can stop the "auth in process" suppression after a small delay.
+  // This ensures that all transitions (like navigation after setup) have completed before the blur
+  // is allowed to show again.
+  useEffect(() => {
+    let timer: NodeJS.Timeout
+    if (isAppFocused && isAuthInProcess) {
+      timer = setTimeout(() => {
+        setIsAuthInProcess(false)
+      }, 500)
+    }
+    return () => {
+      if (timer) clearTimeout(timer)
+    }
+  }, [isAppFocused, isAuthInProcess])
 
   useEffect(() => {
     ;(async () => {
@@ -91,13 +106,12 @@ const BiometricsProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   }, [])
 
   const authenticate = useCallback(async () => {
+    setIsAuthInProcess(true)
     try {
-      const { success } = await requestLocalAuthFlagging(() =>
-        LocalAuthentication.authenticateAsync({
-          promptMessage: t('Confirm your identity'),
-          biometricsSecurityLevel: 'strong' // android only
-        })
-      )
+      const { success } = await LocalAuthentication.authenticateAsync({
+        promptMessage: t('Confirm your identity'),
+        biometricsSecurityLevel: 'strong' // android only
+      })
 
       return success
     } catch (e) {
@@ -108,6 +122,8 @@ const BiometricsProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const saveBiometricsSecret = useCallback(
     async (password: string) => {
+      setIsAuthInProcess(true)
+
       // on iOS secureStorage.set does not trigger the biometric prompt
       // so we need to trigger it manually
 
@@ -129,6 +145,7 @@ const BiometricsProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   )
 
   const getBiometricsSecret = useCallback(async () => {
+    setIsAuthInProcess(true)
     try {
       return await secureStorage.get(BIOMETRICS_SECRET_KEY, t('Confirm your identity'))
     } catch {
@@ -136,7 +153,7 @@ const BiometricsProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   }, [t])
 
-  const showOverlay = !isAppFocused && isUnlocked && isEnrolled
+  const showOverlay = !isAppFocused && isUnlocked && isEnrolled && !isAuthInProcess
 
   return (
     <BiometricsContext.Provider
