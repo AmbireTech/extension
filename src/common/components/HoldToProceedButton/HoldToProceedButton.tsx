@@ -89,10 +89,10 @@ const HoldToProceedButton: FC<Props> = ({
     // Mark that we're no longer holding
     isCurrentlyHoldingRef.current = false
 
-    // Clear the hold start timeout if still waiting
-    if (holdTimeoutRef.current && !isCompletedRef.current) {
-      clearTimeout(holdTimeoutRef.current)
-      holdTimeoutRef.current = null
+    // Clear the pre-hold delay timeout if we're still in the 200ms grace period
+    if (holdStartTimeoutRef.current && !isCompletedRef.current) {
+      clearTimeout(holdStartTimeoutRef.current)
+      holdStartTimeoutRef.current = null
     }
 
     // If we're in the middle of holding, stop everything
