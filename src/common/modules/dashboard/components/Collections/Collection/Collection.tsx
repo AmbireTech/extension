@@ -112,9 +112,12 @@ const Collection: FC<Props> = ({
         </View>
       </View>
       <View style={[flexbox.directionRow, flexbox.wrap]}>
-        {collectibles.map((collectible) => (
+        {collectibles.map((collectible, index) => (
           <Collectible
-            style={{ ...spacings.mbSm, ...spacings.mrTy }}
+            style={{
+              ...spacings.mbSm,
+              ...((index + 1) % 6 !== 0 ? spacings.mrTy : {})
+            }}
             key={address + collectible}
             id={collectible}
             collectionData={{
