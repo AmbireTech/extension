@@ -1,11 +1,10 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
-import { useTranslation } from 'react-i18next'
 
 import { getIsViewOnly } from '@ambire-common/utils/accounts'
 import { isMobile } from '@common/config/env'
 import useController from '@common/hooks/useController'
 import { useMultiHover } from '@common/hooks/useHover'
-import useNetworks from '@common/hooks/useNetworks'
+import useAccountNetworks from '@common/hooks/useNetworks/useAccountNetworks'
 import useReverseLookup from '@common/hooks/useReverseLookup'
 import useRoute from '@common/hooks/useRoute'
 import useTheme from '@common/hooks/useTheme'
@@ -39,9 +38,7 @@ const useReceive = () => {
   const { isLoading: isDomainResolving, ens } = useReverseLookup({
     address: account?.addr || ''
   })
-  const { networks } = useController('NetworksController').state
   const { keys } = useController('KeystoreController').state
-  const { t } = useTranslation()
   const { theme } = useTheme()
   const qrCodeRef: any = useRef(null)
   const [qrCodeError, setQrCodeError] = useState<string | boolean | null>(null)
@@ -71,7 +68,11 @@ const useReceive = () => {
 
   const [showAllNetworks, setShowAllNetworks] = useState(false)
 
-  const supportedNetworks = useNetworks({ account })
+  const { accountNetworks } = useAccountNetworks({
+    isSafe: !!account?.safeCreation,
+    factoryAddr: account?.creation?.factoryAddr,
+    accAddr: account?.addr
+  })
 
   const [bindAnim, animStyle] = useMultiHover({
     values: [
@@ -94,16 +95,16 @@ const useReceive = () => {
   })
 
   const hasMoreNetworks = useMemo(() => {
-    return supportedNetworks.length > MAX_VISIBLE_NETWORKS
-  }, [supportedNetworks.length])
+    return accountNetworks.length > MAX_VISIBLE_NETWORKS
+  }, [accountNetworks.length])
 
   const alwaysVisible = useMemo(() => {
-    return supportedNetworks.slice(0, MAX_VISIBLE_NETWORKS)
-  }, [supportedNetworks])
+    return accountNetworks.slice(0, MAX_VISIBLE_NETWORKS)
+  }, [accountNetworks])
 
   const extraNetworks = useMemo(() => {
-    return supportedNetworks.slice(MAX_VISIBLE_NETWORKS)
-  }, [supportedNetworks])
+    return accountNetworks.slice(MAX_VISIBLE_NETWORKS)
+  }, [accountNetworks])
 
   return {
     account,

@@ -15,6 +15,7 @@ import { getCallsCount } from '@ambire-common/utils/userRequest'
 import useController from '@common/hooks/useController'
 import useGetTokenSelectProps from '@common/hooks/useGetTokenSelectProps'
 import useNavigation from '@common/hooks/useNavigation'
+import useNetworks from '@common/hooks/useNetworks'
 import useSyncedState from '@common/hooks/useSyncedState'
 import { ROUTES } from '@common/modules/router/constants/common'
 import { getTokenId } from '@common/utils/token'
@@ -41,8 +42,7 @@ const useSwapAndBridgeForm = () => {
     supportedChainIds,
     updateQuoteStatus,
     sessionIds,
-    toSelectedToken,
-    toChainId
+    toSelectedToken
   } = useController('SwapAndBridgeController').state
   const { dispatch: swapAndBridgeDispatch } = useController('SwapAndBridgeController')
   const { dispatch: requestsDispatch, state: requestsState } = useController('RequestsController')
@@ -75,7 +75,12 @@ const useSwapAndBridgeForm = () => {
   const [latestBatchedNetwork, setLatestBatchedNetwork] = useState<bigint | undefined>()
   const [isOneClickModeDuringPriceImpact, setIsOneClickModeDuringPriceImpact] =
     useState<boolean>(false)
-  const { networks } = useController('NetworksController').state
+  const networks = useNetworks({
+    isSafe: !!account?.safeCreation,
+    factoryAddr: account?.creation?.factoryAddr,
+    accAddr: account?.addr,
+    bridgeChainIds: supportedChainIds
+  })
   const currentRoute = useLocation()
   const { setSearchParams, navigate } = useNavigation()
   const { ref: routesModalRef, open: openRoutesModal, close: closeRoutesModal } = useModalize()
@@ -255,8 +260,7 @@ const useSwapAndBridgeForm = () => {
     tokens: portfolioTokenList,
     token: fromSelectedToken ? getTokenId(fromSelectedToken) : '',
     isLoading: isTokenListLoading,
-    networks,
-    supportedChainIds
+    networks
   })
 
   const highPriceImpactOrSlippageWarning:

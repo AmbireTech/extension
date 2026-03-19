@@ -5,7 +5,6 @@ import { useModalize } from 'react-native-modalize'
 
 import { TokenResult } from '@ambire-common/libs/portfolio'
 import { getTokenAmount } from '@ambire-common/libs/portfolio/helpers'
-import { getIsNetworkSupported } from '@ambire-common/libs/swapAndBridge/swapAndBridge'
 import InvisibilityIcon from '@common/assets/svg/InvisibilityIcon'
 import SendIcon from '@common/assets/svg/SendIcon'
 import SwapAndBridgeIcon from '@common/assets/svg/SwapAndBridgeIcon'
@@ -44,7 +43,12 @@ const useTokenDetails = () => {
     dispatch: portfolioDispatch,
     state: { tokenPreferences }
   } = useController('PortfolioController')
-  const { state: networks } = useController('NetworksController', (state) => state.networks)
+  const networks = useNetworks({
+    isSafe: !!account?.safeCreation,
+    factoryAddr: account?.creation?.factoryAddr,
+    accAddr: account?.addr,
+    bridgeChainIds: supportedChainIds
+  })
   const [doNotDisplayHideTokenModal, setDoNotDisplayHideTokenModal] = useState(false)
   const [gasTankAssets, setGasTankAssets] = useState<{ chainId: number; address: string }[] | null>(
     null
@@ -68,19 +72,10 @@ const useTokenDetails = () => {
   const isGasTankToken = !!token?.flags.onGasTank
   const isRewardsToken = !!token?.flags.rewardsType
   const isGasTankOrRewardsToken = isGasTankToken || isRewardsToken
-  const accountSupportedNetworks = useNetworks({ account })
   const isAmountZero = token && getTokenAmount(token) === 0n
   const canToToppedUp = token?.flags.canTopUpGasTank
-  const isNetworkNotSupportedForSwapAndBridge = !getIsNetworkSupported(supportedChainIds, network)
-  const isAccountNetworkNotSupported = !getIsNetworkSupported(
-    accountSupportedNetworks.map((n) => n.chainId),
-    network
-  )
   const shouldDisableSwapAndBridge =
-    isNetworkNotSupportedForSwapAndBridge ||
-    isGasTankOrRewardsToken ||
-    isAmountZero ||
-    isAccountNetworkNotSupported
+    network?.isNotSupported || isGasTankOrRewardsToken || isAmountZero
 
   const { hasGasTank, isViewOnly } = useHasGasTank({ account })
 
@@ -90,15 +85,6 @@ const useTokenDetails = () => {
       tokenType: isGasTankToken ? t('Gas Tank') : t('Reward')
     }
   )
-  // TODO: Temporarily moved to the "Deposit" place as of v4.49.0, due to aesthetic reasons solely.
-  // const notImplementedYetTooltipText = t('Coming sometime in {{year}}.', {
-  //   year: new Date().getFullYear()
-  // })
-  const accountNotAvailableText = useMemo(() => {
-    if (!account) return ''
-    if (!!account.safeCreation) return 'Safe account not deployed on this network'
-    return 'Account unavailable on this network'
-  }, [account])
 
   useEffect(() => {
     storage
@@ -190,11 +176,11 @@ const useTokenDetails = () => {
           icon: SendIcon,
           onPress: ({ chainId, address }: TokenResult) =>
             navigate(`${ROUTES.transfer}?chainId=${chainId}&address=${address}`),
-          isDisabled: isGasTankOrRewardsToken || isAmountZero || isAccountNetworkNotSupported,
+          isDisabled: isGasTankOrRewardsToken || isAmountZero || network?.isNotSupported,
           tooltipText: isGasTankOrRewardsToken
             ? unavailableBecauseGasTankOrRewardsTokenTooltipText
-            : isAccountNetworkNotSupported
-              ? accountNotAvailableText
+            : network?.isNotSupported
+              ? network?.notSupportedReason
               : '',
           strokeWidth: 1.5,
           testID: 'token-send'
@@ -214,16 +200,11 @@ const useTokenDetails = () => {
               }
             }),
           isDisabled: shouldDisableSwapAndBridge,
-          tooltipText: isNetworkNotSupportedForSwapAndBridge
-            ? t(
-                'Unavailable. {{network}} network is not supported by our Swap & Bridge service provider.',
-                { network: network?.name || t('This') }
-              )
-            : isGasTankOrRewardsToken
-              ? unavailableBecauseGasTankOrRewardsTokenTooltipText
-              : isAccountNetworkNotSupported
-                ? accountNotAvailableText
-                : undefined,
+          tooltipText: isGasTankOrRewardsToken
+            ? unavailableBecauseGasTankOrRewardsTokenTooltipText
+            : network?.isNotSupported
+              ? network?.notSupportedReason
+              : '',
           strokeWidth: 1.5
         },
         // TODO: Temporarily hidden as of v4.49.0, because displaying it disabled
@@ -298,17 +279,15 @@ const useTokenDetails = () => {
       isAmountZero,
       unavailableBecauseGasTankOrRewardsTokenTooltipText,
       shouldDisableSwapAndBridge,
-      isNetworkNotSupportedForSwapAndBridge,
-      network?.name,
+      network?.isNotSupported,
+      network?.notSupportedReason,
       topUpDisabledTooltipText,
       isHidden,
       handleHideTokenFromButton,
       navigate,
       gasTankAssets,
       gasTankAssetsError,
-      addToast,
-      accountNotAvailableText,
-      isAccountNetworkNotSupported
+      addToast
     ]
   )
 

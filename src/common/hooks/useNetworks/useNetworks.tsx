@@ -1,49 +1,59 @@
 import { useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 
-import { Account } from '@ambire-common/interfaces/account'
-import { isAmbireV1LinkedAccount } from '@ambire-common/libs/account/account'
+import { SupportedNetworks } from '@ambire-common/interfaces/network'
 import useController from '@common/hooks/useController'
 
+import useAccountNetworks from './useAccountNetworks'
+
 /**
- * Hook for getting the account supported networks.
- * EOA  : all of them
- * V1   : if the network has relayer
- * V2   : if the contracts are deployed and we either have a relayer or 4337
- * Safe : if the safe account is deployed on the network
+ * This returns all enabled networks in the extension with
+ * a disabled flag & reason for those that are not supported
+ * by the account OR the swap and bridge provider
  */
-const useNetworks = ({ account }: { account?: Account | null }) => {
-  const {
-    state: { accountStates }
-  } = useController('AccountsController')
+const useNetworks = ({
+  accAddr,
+  isSafe,
+  factoryAddr,
+  bridgeChainIds = []
+}: {
+  accAddr?: string
+  isSafe?: boolean
+  factoryAddr?: string
+  bridgeChainIds?: bigint[]
+}) => {
   const { state: networks } = useController('NetworksController', (state) => state.networks)
+  const { accountNetworks, accountNotSupportedReason } = useAccountNetworks({
+    accAddr,
+    isSafe,
+    factoryAddr
+  })
+  const { t } = useTranslation()
+
+  const accountNetworkChainIds = useMemo(() => {
+    return accountNetworks.map((n) => n.chainId)
+  }, [accountNetworks])
 
   const supportedNetworks = useMemo(() => {
-    if (!account) return []
-
-    // NOT a [Gnosis] Safe account
-    if (!account.safeCreation) {
-      // EOA
-      if (!account?.creation) return networks
-
-      // v1 SA
-      if (isAmbireV1LinkedAccount(account.creation.factoryAddr)) {
-        // v1s don't work without the relayer
-        return networks.filter((network) => !!network.hasRelayer)
+    // make a shallow copy of each object in networks
+    // below, we are mutating simple properties so a shallow copy is enough
+    const finalNetworks: SupportedNetworks[] = networks.map((n) => ({ ...n }))
+    return finalNetworks.map((n) => {
+      if (!accountNetworkChainIds.includes(n.chainId)) {
+        n.isNotSupported = true
+        n.notSupportedReason = accountNotSupportedReason
+        return n
       }
 
-      // v2 SA
-      return networks.filter(
-        (network) => network.areContractsDeployed && (network.hasRelayer || network.erc4337.enabled)
-      )
-    }
-    if (!accountStates[account.addr]) return []
+      if (bridgeChainIds && !bridgeChainIds.includes(n.chainId)) {
+        n.isNotSupported = true
+        n.notSupportedReason = t(`${n.name} network is not supported by our service provider.`)
+        return n
+      }
 
-    return networks.filter((n) => {
-      const networkAccState = accountStates[account.addr]?.[n.chainId.toString()]
-      if (!networkAccState) return true
-      return networkAccState.isDeployed
+      return n
     })
-  }, [account, accountStates, networks])
+  }, [accountNetworkChainIds, networks, accountNotSupportedReason, bridgeChainIds, t])
 
   return supportedNetworks
 }
