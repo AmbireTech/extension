@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { View, ViewStyle } from 'react-native'
+import { TextProps } from 'react-native-svg'
 
 import AccountData from '@common/components/AccountData'
 import AccountDataDetailed from '@common/components/AccountDataDetailed'
@@ -56,9 +57,10 @@ const Wrapper = ({
   )
 }
 
-const Title = ({ children }: { children: React.ReactNode }) => {
+const Title = ({ children, ...rest }: { children: React.ReactNode } & TextProps) => {
   return (
     <Text
+      {...rest}
       fontSize={20}
       weight="medium"
       style={[
