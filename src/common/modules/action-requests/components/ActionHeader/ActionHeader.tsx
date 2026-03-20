@@ -1,6 +1,7 @@
 import React from 'react'
 import { View } from 'react-native'
 
+import { isMobile, isWeb } from '@common/config/env'
 import useTheme from '@common/hooks/useTheme'
 import Header from '@common/modules/header/components/Header'
 import spacings from '@common/styles/spacings'
@@ -14,20 +15,20 @@ const ActionHeader = () => {
         flexbox.directionRow,
         flexbox.justifySpaceBetween,
         flexbox.alignCenter,
-        spacings.mhMi,
-        spacings.mvMi,
-        spacings.ph,
+        isWeb && spacings.mhMi,
+        isWeb && spacings.mvMi,
+        isMobile ? spacings.phSm : spacings.ph,
         {
           borderRadius: 12,
-          height: 68,
+          height: isMobile ? 56 : 68,
           backgroundColor: theme.secondaryBackground,
-          borderBottomWidth: 1,
+          borderBottomWidth: isMobile ? 0 : 1,
           borderBottomColor: theme.neutral400
         }
       ]}
     >
       <Header.AccountDataDetailed />
-      <Header.Logo />
+      {isWeb && <Header.Logo />}
     </View>
   )
 }
