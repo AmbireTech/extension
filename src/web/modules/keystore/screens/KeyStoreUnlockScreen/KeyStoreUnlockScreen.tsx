@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import { Controller } from 'react-hook-form'
 import { Image, TouchableOpacity, View } from 'react-native'
 
@@ -9,6 +9,10 @@ import LockIcon from '@common/assets/svg/LockIcon'
 import VisibilityIcon from '@common/assets/svg/VisibilityIcon'
 import Button from '@common/components/Button'
 import FatToggle from '@common/components/FatToggle'
+import {
+  createGlobalTooltipDataSet,
+  GLOBAL_TOOLTIP_REFRESH_EVENT
+} from '@common/components/GlobalTooltip'
 import InputPassword from '@common/components/InputPassword'
 import LayoutWrapper from '@common/components/LayoutWrapper'
 import Text from '@common/components/Text'
@@ -46,6 +50,14 @@ const KeyStoreUnlockScreen = () => {
   } = useController('KeystoreController')
   const { requestWindow } = useController('RequestsController').state
   const { theme } = useTheme()
+
+  // Refresh tooltip content when privacy mode changes while tooltip is active
+  useEffect(() => {
+    if (!isWeb) return
+
+    const event = new CustomEvent(GLOBAL_TOOLTIP_REFRESH_EVENT)
+    window.dispatchEvent(event)
+  }, [isPrivacyModeEnabled])
 
   return (
     <LayoutWrapper style={styles.panel}>
@@ -88,27 +100,34 @@ const KeyStoreUnlockScreen = () => {
               spacings.mb3Xl
             ]}
           >
-            <FatToggle
-              isOn={isPrivacyModeEnabled}
-              onToggle={() =>
-                walletStateDispatch({
-                  type: 'method',
-                  params: {
-                    method: 'togglePrivacyMode',
-                    args: []
-                  }
-                })
-              }
-              width={44}
-              height={24}
-              style={spacings.mr0}
+            <View
+              dataSet={createGlobalTooltipDataSet({
+                id: `privacy-mode`,
+                content: t(`Balances: ${isPrivacyModeEnabled ? 'Hidden' : 'Visible'}`)
+              })}
             >
-              {isPrivacyModeEnabled ? (
-                <VisibilityIcon width={18} height={18} />
-              ) : (
-                <InvisibilityIcon width={18} height={18} />
-              )}
-            </FatToggle>
+              <FatToggle
+                isOn={!isPrivacyModeEnabled}
+                onToggle={() =>
+                  walletStateDispatch({
+                    type: 'method',
+                    params: {
+                      method: 'togglePrivacyMode',
+                      args: []
+                    }
+                  })
+                }
+                width={44}
+                height={24}
+                style={spacings.mr0}
+              >
+                {!isPrivacyModeEnabled ? (
+                  <VisibilityIcon width={18} height={18} />
+                ) : (
+                  <InvisibilityIcon width={18} height={18} />
+                )}
+              </FatToggle>
+            </View>
             <View style={[flexbox.directionRow, flexbox.alignCenter]}>
               <Text fontSize={20} weight="semiBold" color="#fff" appearance="primaryText">
                 {t('Welcome Back')}
