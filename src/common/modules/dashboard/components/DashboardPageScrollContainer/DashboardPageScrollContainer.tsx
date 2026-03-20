@@ -74,7 +74,6 @@ const DashboardPageScrollContainer: FC<Props> = ({
       contentContainerStyle={contentContainerStyle}
       stickyHeaderIndices={[1]} // Makes the header sticky
       removeClippedSubviews
-      bounces={false}
       alwaysBounceVertical={false}
       scrollEventThrottle={16}
       {...rest}
