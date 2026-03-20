@@ -156,8 +156,21 @@ const DashboardOverview: FC<Props> = ({
                 onMouseLeave={() => setIsBalanceHovered(false)}
               >
                 {/* Placeholder matching the refresh button size to keep the balance centered */}
-                {isWeb && <View style={{ width: 28, height: 28 }} />}
-                <View style={[flexbox.alignCenter, spacings.mhTy]}>
+                <View
+                  style={{ width: 28, height: 28, ...flexbox.justifyCenter, ...flexbox.alignEnd }}
+                >
+                  <BalanceAffectingErrors
+                    reloadAccount={reloadAccount}
+                    networksWithErrors={networksWithErrors}
+                    sheetRef={sheetRef}
+                    balanceAffectingErrorsSnapshot={balanceAffectingErrorsSnapshot}
+                    warningMessage={warningMessage}
+                    onIconPress={onIconPress}
+                    closeBottomSheetWrapped={closeBottomSheetWrapped}
+                    isLoadingTakingTooLong={isLoadingTakingTooLong}
+                  />
+                </View>
+                <View style={[flexbox.flex1, flexbox.alignCenter, spacings.mhTy]}>
                   {!portfolio?.isReadyToVisualize ? (
                     <SkeletonLoader
                       lowOpacity
@@ -212,41 +225,34 @@ const DashboardOverview: FC<Props> = ({
                     </Pressable>
                   )}
                 </View>
-                {isWeb && (
-                  <Pressable
-                    style={({ hovered }: any) => ({
-                      width: 28,
-                      height: 28,
-                      opacity: shouldShowRefreshButton ? (hovered ? 1 : 0.7) : 0
-                    })}
-                    onPress={reloadAccount}
-                    disabled={!portfolio.isAllReady || portfolio.isReloading}
-                    testID="refresh-button"
-                    onHoverIn={() => setIsBalanceHovered(true)}
-                    // Increase clickable area using prop
-                    hitSlop={10}
-                  >
-                    <RefreshIcon
-                      spin={!portfolio.isAllReady || portfolio.isReloading}
-                      color="#E3E6EB"
-                      width={28}
-                      height={28}
-                    />
-                  </Pressable>
-                )}
+                {
+                  isWeb ? (
+                    <Pressable
+                      style={({ hovered }: any) => ({
+                        width: 28,
+                        height: 28,
+                        opacity: shouldShowRefreshButton ? (hovered ? 1 : 0.7) : 0
+                      })}
+                      onPress={reloadAccount}
+                      disabled={!portfolio.isAllReady || portfolio.isReloading}
+                      testID="refresh-button"
+                      onHoverIn={() => setIsBalanceHovered(true)}
+                      // Increase clickable area using prop
+                      hitSlop={10}
+                    >
+                      <RefreshIcon
+                        spin={!portfolio.isAllReady || portfolio.isReloading}
+                        color="#E3E6EB"
+                        width={28}
+                        height={28}
+                      />
+                    </Pressable>
+                  ) : (
+                    <View style={{ width: 28, height: 28 }} />
+                  ) /* Placeholder to keep balance centered on mobile */
+                }
               </View>
-
               <View style={[flexbox.directionRow, flexbox.justifyCenter, flexbox.alignCenter]}>
-                <BalanceAffectingErrors
-                  reloadAccount={reloadAccount}
-                  networksWithErrors={networksWithErrors}
-                  sheetRef={sheetRef}
-                  balanceAffectingErrorsSnapshot={balanceAffectingErrorsSnapshot}
-                  warningMessage={warningMessage}
-                  onIconPress={onIconPress}
-                  closeBottomSheetWrapped={closeBottomSheetWrapped}
-                  isLoadingTakingTooLong={isLoadingTakingTooLong}
-                />
                 <GasTankButton
                   onPress={() => openGasTankModal?.()}
                   portfolio={portfolio}
