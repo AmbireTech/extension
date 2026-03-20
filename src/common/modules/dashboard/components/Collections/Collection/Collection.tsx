@@ -71,15 +71,15 @@ const Collection: FC<Props> = ({
           spacings.mbMd
         ]}
       >
-        <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-          <Text testID="collection-item" fontSize={16} weight="medium">
+        <View style={[flexbox.directionRow, flexbox.alignCenter, flexbox.flex1, spacings.mrXl]}>
+          <Text testID="collection-item" weight="medium" numberOfLines={1} lineBreakMode="tail">
             {name}
           </Text>
           <Text
             fontSize={12}
             appearance="secondaryText"
             style={{
-              width: 20,
+              minWidth: 20,
               height: 20,
               display: 'flex',
               ...flexbox.center,
@@ -112,9 +112,12 @@ const Collection: FC<Props> = ({
         </View>
       </View>
       <View style={[flexbox.directionRow, flexbox.wrap]}>
-        {collectibles.map((collectible) => (
+        {collectibles.map((collectible, index) => (
           <Collectible
-            style={{ ...spacings.mbSm, ...spacings.mrTy }}
+            style={{
+              ...spacings.mbSm,
+              ...((index + 1) % 6 !== 0 ? spacings.mrTy : {})
+            }}
             key={address + collectible}
             id={collectible}
             collectionData={{

@@ -10,9 +10,10 @@ interface Props {
   style?: ViewStyle
   hasAmbireLogo?: boolean
   children?: React.ReactNode
+  headerTestID?: string
 }
 
-const ModalHeader: FC<Props> = ({ handleClose, title, style, children }) => {
+const ModalHeader: FC<Props> = ({ handleClose, title, style, children, headerTestID }) => {
   const withSideContainers = !!handleClose || !!children
 
   return (
@@ -40,7 +41,7 @@ const ModalHeader: FC<Props> = ({ handleClose, title, style, children }) => {
           pointerEvents: 'none'
         }}
       >
-        <Header.Title>{title}</Header.Title>
+        <Header.Title testID={headerTestID}>{title}</Header.Title>
       </View>
       {withSideContainers && <Header.Container side="right">{children}</Header.Container>}
     </Header.Wrapper>
