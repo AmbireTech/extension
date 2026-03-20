@@ -203,6 +203,7 @@ const DashboardOverview: FC<Props> = ({
                                 ? theme.warningDecorative2
                                 : '#FFFFFF'
                             }
+                            style={{ lineHeight: 20 }}
                           >
                             {t('.')}
                             {totalPortfolioAmountDecimalFormattedPart}
