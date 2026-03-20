@@ -13,6 +13,7 @@ import flexbox from '@common/styles/utils/flexbox'
 import ImageIcon from '@web/assets/svg/ImageIcon'
 import ManifestImage from '@web/components/ManifestImage'
 
+import { openInTab } from '@common/utils/links/links'
 import { COLLECTIBLE_SIZE } from '../Collectible/styles'
 import ChainVisualization from './ChainVisualization/ChainVisualization'
 import DeadlineItem from './DeadlineItem'
@@ -145,6 +146,25 @@ const HumanizedVisualization: FC<Props> = ({
           )
         }
         if (item.type === 'link' && !hideLinks) {
+          const content = (
+            <Text
+              fontSize={textSize}
+              weight="semiBold"
+              appearance="successText"
+              onPress={isMobile ? () => openInTab({ url: item.url! }) : undefined}
+            >
+              {item.content}
+            </Text>
+          )
+
+          if (isMobile) {
+            return (
+              <View key={key} style={{ maxWidth: '100%', marginRight }}>
+                {content}
+              </View>
+            )
+          }
+
           return (
             <a
               onClick={stopPropagation}
@@ -152,9 +172,7 @@ const HumanizedVisualization: FC<Props> = ({
               key={key}
               href={item.url!}
             >
-              <Text fontSize={textSize} weight="semiBold" appearance="successText">
-                {item.content}
-              </Text>
+              {content}
             </a>
           )
         }
