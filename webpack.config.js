@@ -16,9 +16,6 @@ const LavaMoatPlugin = require('@lavamoat/webpack')
 const { validateEnvVariables } = require('./scripts/validateEnv')
 const appJSON = require('./app.json')
 const AssetReplacePlugin = require('./plugins/AssetReplacePlugin')
-const createReflectMetadataShimPlugin = require('./lavamoat/shims/reflect-metadata-shim-plugin')
-const createSetImmediateShimPlugin = require('./lavamoat/shims/setimmediate-shim-plugin')
-const createConsoleWarnShimPlugin = require('./lavamoat/shims/console-warn-shim-plugin')
 const createLavamoatUnsafeLayerPlugin = require('./lavamoat/plugins/lavamoat-unsafe-layer-plugin')
 const LavamoatIgnoredModulesVerifyPlugin = require('./lavamoat/plugins/lavamoat-ignored-modules-verify-plugin')
 
@@ -246,6 +243,9 @@ module.exports = async function (env, argv) {
     '@web': path.resolve(__dirname, 'src/web'),
     '@benzin': path.resolve(__dirname, 'src/benzin'),
     '@legends': path.resolve(__dirname, 'src/legends'),
+    // reflect-metadata is installed early via LavaMoat staticShims_experimental.
+    // Alias it to a noop module to prevent a second execution after harden.
+    'reflect-metadata$': path.resolve(__dirname, 'lavamoat/shims/reflect-metadata-noop.js'),
     react: path.resolve(__dirname, 'node_modules/react')
   }
 
@@ -378,17 +378,13 @@ module.exports = async function (env, argv) {
               // in the same realm, which is already locked down.
               inlineLockdown: /^(background|main)(-.*)?\.js$/,
               lockdown: {
-                // 'unsafe' preserves Error.stack for Sentry and debugging
-                errorTaming: 'unsafe',
-                // 'verbose' keeps full stack traces (no filtering of SES frames)
+                errorTaming: 'unsafe-debug',
                 stackFiltering: 'verbose',
-                // 'severe' allows Object.defineProperty overrides on frozen prototypes,
-                // needed by ProvidePlugin globals (Buffer, process) and many libraries
+                consoleTaming: 'unsafe',
+                errorTrapping: 'none',
+                unhandledRejectionTrapping: 'none',
                 overrideTaming: 'severe',
-                // 'unsafe' preserves locale-dependent methods (toLocaleString, etc.)
-                localeTaming: 'unsafe',
-                // 'unsafe' preserves original console behavior for debugging
-                consoleTaming: 'unsafe'
+                localeTaming: 'unsafe'
               },
               // Keep resource IDs readable for easier debugging and policy maintenance.
               // Set to true during policy generation for easier debugging, false in production
@@ -412,7 +408,18 @@ module.exports = async function (env, argv) {
                 if (chunk.name && LAVAMOAT_UNSAFE_ENTRIES.has(chunk.name)) {
                   return { mode: 'null_unsafe' }
                 }
-                return { mode: 'safe' }
+                const staticShims = [
+                  'reflect-metadata',
+                  path.resolve('./lavamoat/shims/console-warn.js')
+                ]
+
+                // setimmediate is needed only in background runtime paths.
+                // Keeping it scoped avoids side effects in UI chunks.
+                if (chunk.name === 'background') {
+                  staticShims.push('setimmediate')
+                }
+
+                return { mode: 'safe', staticShims }
               },
               // Diagnostics verbosity (0-2):
               //   0: Minimal logging (recommended for normal builds)
@@ -425,13 +432,7 @@ module.exports = async function (env, argv) {
             // are either fully tree-shaken or otherwise empty placeholders.
             // The plugin appends a short ✅/❌ status and explanation to the
             // original LavaMoat warning message.
-            new LavamoatIgnoredModulesVerifyPlugin(),
-            // Inject reflect-metadata between SES repair and harden in background.js.
-            // See createReflectMetadataShimPlugin() comments above.
-            // Only needed when LavaMoatPlugin is active (production builds).
-            createReflectMetadataShimPlugin(),
-            createSetImmediateShimPlugin(),
-            createConsoleWarnShimPlugin()
+            new LavamoatIgnoredModulesVerifyPlugin()
           ]
         : []),
       new NodePolyfillPlugin(),
