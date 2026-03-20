@@ -12,6 +12,7 @@ import CurrentApp from '@common/modules/dashboard/components/SearchAndCurrentApp
 import DashboardSearch from '@common/modules/dashboard/components/SearchAndCurrentApp/DashboardSearch'
 import SelectNetwork from '@common/modules/dashboard/components/TabsAndSearch/SelectNetwork'
 import spacings, { SPACING, SPACING_TY } from '@common/styles/spacings'
+import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 
 type Props = {
@@ -61,7 +62,11 @@ const SearchAndCurrentApp = ({
           pointerEvents: 'none'
         },
         isMobile && {
-          ...flexbox.alignSelfCenter
+          ...flexbox.alignSelfCenter,
+          shadowColor: theme.neutral400,
+          shadowOffset: { width: 0, height: 1 },
+          shadowOpacity: 1,
+          shadowRadius: 8
         },
         animatedStyle
       ]}
