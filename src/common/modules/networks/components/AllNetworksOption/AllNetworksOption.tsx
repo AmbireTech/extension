@@ -8,10 +8,10 @@ import Text from '@common/components/Text'
 import useController from '@common/hooks/useController'
 import { AnimatedPressable, useMultiHover } from '@common/hooks/useHover'
 import useTheme from '@common/hooks/useTheme'
+import getStyles from '@common/modules/networks/styles'
 import spacings from '@common/styles/spacings'
 import { hexToRgba } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
-import getStyles from '@web/modules/networks/screens/styles'
 
 const AllNetworksOption = ({ onPress }: { onPress: (chainId: bigint | null) => void }) => {
   const { t } = useTranslation()
@@ -32,8 +32,7 @@ const AllNetworksOption = ({ onPress }: { onPress: (chainId: bigint | null) => v
         from: hexToRgba(theme.neutral400, 0),
         to: theme.neutral400
       }
-    ],
-    forceHoveredStyle: !dashboardNetworkFilter
+    ]
   })
 
   const handleOnPress = useCallback(() => {
@@ -43,7 +42,16 @@ const AllNetworksOption = ({ onPress }: { onPress: (chainId: bigint | null) => v
   return (
     <AnimatedPressable
       onPress={handleOnPress}
-      style={[styles.network, { borderWidth: 2 }, styles.noKebabNetwork, animStyle]}
+      style={[
+        styles.network,
+        { borderWidth: 2 },
+        styles.noKebabNetwork,
+        animStyle,
+        !dashboardNetworkFilter && {
+          backgroundColor: theme.secondaryBackground,
+          borderColor: theme.neutral400
+        }
+      ]}
       {...bindAnim}
     >
       <View style={[flexbox.alignCenter, flexbox.directionRow]}>
