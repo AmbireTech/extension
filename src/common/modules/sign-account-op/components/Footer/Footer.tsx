@@ -15,7 +15,6 @@ import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import ActionsPagination from '@common/modules/action-requests/components/ActionsPagination'
 import spacings from '@common/styles/spacings'
-import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
 
 import getStyles from './styles'
@@ -75,8 +74,8 @@ const Footer = ({
   )
 
   const isMultisigSigned = useMemo(() => {
-    return !!accountOp?.signature
-  }, [accountOp?.signature])
+    return !!account?.safeCreation && !!accountOp?.signature && accountOp?.signature !== '0x'
+  }, [accountOp?.signature, account?.safeCreation])
 
   const batchBtnText = useMemo(() => {
     if (isMultisigSigned) return t('Sign later')
