@@ -11,7 +11,7 @@ import {
   ViewStyle
 } from 'react-native'
 
-import { isWeb } from '@common/config/env'
+import { isMobile, isWeb } from '@common/config/env'
 import useTheme from '@common/hooks/useTheme'
 
 import DraggableFlatList from './DraggableFlatList'
@@ -83,7 +83,7 @@ const ScrollableWrapper = ({
     return (
       <DraggableFlatList
         ref={wrapperRef}
-        bounces={false}
+        bounces={isMobile}
         data={data}
         keyExtractor={
           keyExtractor ? (item: any) => keyExtractor(item, 0) : (item: any) => item.key ?? ''
@@ -104,7 +104,7 @@ const ScrollableWrapper = ({
     return (
       <FlatList
         ref={wrapperRef}
-        bounces={false}
+        bounces={isMobile}
         data={data}
         renderItem={renderItem}
         keyExtractor={keyExtractor || ((item, index) => item.key ?? index.toString())}
@@ -123,7 +123,7 @@ const ScrollableWrapper = ({
     return (
       <SectionList
         ref={wrapperRef}
-        bounces={false}
+        bounces={isMobile}
         sections={data}
         renderItem={renderItem}
         keyExtractor={keyExtractor || ((item, index) => item.key ?? index.toString())}
@@ -145,7 +145,7 @@ const ScrollableWrapper = ({
   return (
     <ScrollView
       ref={wrapperRef}
-      bounces={false}
+      bounces={isMobile}
       style={scrollableWrapperStyles}
       contentContainerStyle={scrollableWrapperContentContainerStyles}
       showsVerticalScrollIndicator={showsVerticalScrollIndicator}

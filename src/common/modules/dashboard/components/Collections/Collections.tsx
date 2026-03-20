@@ -207,7 +207,6 @@ const Collections: FC<Props> = ({
         keyExtractor={keyExtractor}
         initialNumToRender={isPopup ? 4 : 10}
         windowSize={15}
-        bounces={false}
         animatedOverviewHeight={animatedOverviewHeight}
       />
       {openTab === 'collectibles' && (

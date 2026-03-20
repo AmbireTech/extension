@@ -347,7 +347,12 @@ const Tokens = ({
         scrollEventThrottle={16}
       />
       {openTab === 'tokens' && (
-        <SearchAndCurrentApp control={control} displayCurrentApp isHidden={isSearchHidden} />
+        <SearchAndCurrentApp
+          control={control}
+          displayCurrentApp
+          displayNetworkFilter
+          isHidden={isSearchHidden}
+        />
       )}
     </>
   )

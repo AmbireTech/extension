@@ -22,6 +22,7 @@ import NetworkBottomSheet, {
 } from '@common/modules/networks/components/NetworkBottomSheet'
 import Networks from '@common/modules/networks/components/Networks'
 import { WEB_ROUTES } from '@common/modules/router/constants/common'
+import alert from '@common/services/alert'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { openInTab } from '@common/utils/links'
@@ -93,7 +94,8 @@ const NetworksScreen = () => {
   }, [closeSettingsBottomSheet])
 
   const handleOpenAddNetworkBottomSheet = useCallback(() => {
-    openAddNetworkBottomSheet()
+    alert('Coming soon!')
+    // openAddNetworkBottomSheet()
   }, [openAddNetworkBottomSheet])
 
   const openBlockExplorer = useCallback(
@@ -119,7 +121,7 @@ const NetworksScreen = () => {
   return (
     <LayoutWrapper>
       <HeaderWithTitle displayBackButtonIn="always" />
-      <View style={[flexbox.flex1, spacings.pv, spacings.phSm]}>
+      <View style={[flexbox.flex1, spacings.phSm]}>
         <Search control={control} autoFocus containerStyle={spacings.mbSm} />
         <NetworkBottomSheet
           chainId={settingsChainId}
@@ -131,7 +133,7 @@ const NetworksScreen = () => {
           sheetRef={addNetworkBottomSheetRef}
           closeBottomSheet={closeAddNetworkBottomSheet}
         />
-        <ScrollableWrapper style={{ paddingBottom: 72 }}>
+        <ScrollableWrapper>
           <AllNetworksOption onPress={handleChangeNetwork} />
           <Networks
             search={search}
@@ -145,7 +147,7 @@ const NetworksScreen = () => {
             text={t('Add new network')}
             size="smaller"
             hasBottomSpacing={false}
-            style={{ minWidth: 174 }}
+            style={spacings.mtSm}
             childrenPosition="left"
             onPress={handleOpenAddNetworkBottomSheet}
           >
