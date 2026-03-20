@@ -10,6 +10,7 @@ import FatToggle from '@common/components/FatToggle'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
 import useBiometrics from '@common/hooks/useBiometrics'
+import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
 import KeyStoreSetupForm from '@common/modules/keystore/components/KeyStoreSetupForm'
@@ -32,11 +33,35 @@ const KeyStoreSetupScreen = () => {
   const animation = useRef(new Animated.Value(0)).current
 
   const { isEnrolled, isLoading, saveBiometricsSecret } = useBiometrics()
+  const {
+    state: { isReadyToStoreKeys, statuses },
+    dispatch: keystoreDispatch
+  } = useController('KeystoreController')
   const [biometricsEnabled, setBiometricsEnabled] = useState(false)
+
+  // Holds the random biometrics secret between the onBeforeKeystoreSetup step
+  // (biometric prompt + secure store save) and the keystore registration step
+  // (which happens silently after the keystore is unlocked).
+  const pendingBiometricsSecret = useRef<string | null>(null)
 
   useEffect(() => {
     if (!isLoading && isEnrolled) setBiometricsEnabled(true)
   }, [isLoading, isEnrolled])
+
+  // Once the keystore is unlocked (after addSecret('password', ...) succeeds),
+  // register the pending biometrics secret with the keystore.
+  useEffect(() => {
+    if (isReadyToStoreKeys && statuses.addSecret === 'SUCCESS' && pendingBiometricsSecret.current) {
+      keystoreDispatch({
+        type: 'method',
+        params: {
+          method: 'addSecret',
+          args: ['biometrics', pendingBiometricsSecret.current, '', true]
+        }
+      })
+      pendingBiometricsSecret.current = null
+    }
+  }, [isReadyToStoreKeys, statuses.addSecret, keystoreDispatch])
 
   useEffect(() => {
     Animated.timing(animation, {
@@ -63,11 +88,13 @@ const KeyStoreSetupScreen = () => {
 
         <KeyStoreSetupForm
           agreedWithTerms={agreedWithTerms}
-          onBeforeKeystoreSetup={async (password) => {
+          onBeforeKeystoreSetup={async () => {
             Keyboard.dismiss()
             if (biometricsEnabled) {
-              const success = await saveBiometricsSecret(password)
-              if (!success) return false
+              const secret = await saveBiometricsSecret()
+              if (!secret) return false
+
+              pendingBiometricsSecret.current = secret
             }
             return true
           }}

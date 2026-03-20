@@ -55,14 +55,22 @@ const KeyStoreUnlockScreen = () => {
 
   const handleBiometricsPrompt = useCallback(async () => {
     try {
-      const password = await getBiometricsSecret()
-      if (password) handleUnlock({ password })
+      const biometricsSecret = await getBiometricsSecret()
+      if (biometricsSecret) {
+        keystoreDispatch({
+          type: 'method',
+          params: {
+            method: 'unlockWithSecret',
+            args: ['biometrics', biometricsSecret]
+          }
+        })
+      }
     } catch (e) {
       console.log('Biometrics: Authentication failed or cancelled', e)
       // User cancelled or authentication failed (SecureStore throws/rejects on failure with requireAuthentication)
       // We don't need to do much here, the OS already showed the error/prompt.
     }
-  }, [getBiometricsSecret, handleUnlock, t])
+  }, [getBiometricsSecret, keystoreDispatch])
 
   React.useEffect(() => {
     if (!isLoading && !initialCheckDone) {

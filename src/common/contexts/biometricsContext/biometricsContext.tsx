@@ -1,5 +1,6 @@
 import { BlurView } from 'expo-blur'
 import * as LocalAuthentication from 'expo-local-authentication'
+import { hexlify, randomBytes } from 'ethers'
 import React, { createContext, useCallback, useEffect, useMemo, useState } from 'react'
 import { Platform, StyleSheet, View } from 'react-native'
 
@@ -120,29 +121,27 @@ const BiometricsProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   }, [addToast, t])
 
-  const saveBiometricsSecret = useCallback(
-    async (password: string) => {
-      setIsAuthInProcess(true)
+  const saveBiometricsSecret = useCallback(async () => {
+    setIsAuthInProcess(true)
 
-      // on iOS secureStorage.set does not trigger the biometric prompt
-      // so we need to trigger it manually
+    const biometricsSecret = hexlify(randomBytes(32))
 
-      if (Platform.OS === 'ios') {
-        const success = await authenticate()
-        if (!success) return false
+    // on iOS secureStorage.set does not trigger the biometric prompt
+    // so we need to trigger it manually
+    if (Platform.OS === 'ios') {
+      const success = await authenticate()
+      if (!success) return null
 
-        await secureStorage.remove(BIOMETRICS_SECRET_KEY)
-      }
+      await secureStorage.remove(BIOMETRICS_SECRET_KEY)
+    }
 
-      try {
-        await secureStorage.set(BIOMETRICS_SECRET_KEY, password)
-        return true
-      } catch (e) {
-        return false
-      }
-    },
-    [authenticate]
-  )
+    try {
+      await secureStorage.set(BIOMETRICS_SECRET_KEY, biometricsSecret)
+      return biometricsSecret
+    } catch (e) {
+      return null
+    }
+  }, [authenticate])
 
   const getBiometricsSecret = useCallback(async () => {
     setIsAuthInProcess(true)
