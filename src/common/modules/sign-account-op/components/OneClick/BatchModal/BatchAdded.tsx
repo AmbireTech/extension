@@ -16,6 +16,7 @@ import { HeaderWithTitle } from '@common/modules/header/components/Header/Header
 import spacings, { SPACING_MD } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
+import { getUiType } from '@common/utils/uiType'
 
 type Props = {
   title: string
@@ -25,6 +26,8 @@ type Props = {
   onPrimaryButtonPress: () => void
   onSecondaryButtonPress: () => void
 }
+
+const { isRequestWindow } = getUiType()
 
 const BatchAdded: FC<Props> = ({
   title,
@@ -41,7 +44,10 @@ const BatchAdded: FC<Props> = ({
     isWeb ? <View style={style}>{children}</View> : <Fragment>{children}</Fragment>
 
   return (
-    <LayoutWrapper>
+    <LayoutWrapper
+      style={isRequestWindow ? { borderRadius: 0, height: '100%' } : {}}
+      backgroundStyle={isRequestWindow ? spacings.pt0 : {}}
+    >
       {isWeb ? <Header /> : <HeaderWithTitle title={t('Batch')} withBackButton={false} />}
       <View
         style={[

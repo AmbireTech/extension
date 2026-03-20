@@ -61,8 +61,8 @@ const Footer = ({
   )
 
   const isMultisigSigned = useMemo(() => {
-    return !!accountOp?.signature
-  }, [accountOp?.signature])
+    return !!account?.safeCreation && !!accountOp?.signature && accountOp?.signature !== '0x'
+  }, [accountOp?.signature, account?.safeCreation])
 
   const batchBtnText = useMemo(() => {
     if (isMultisigSigned) return t('Sign later')
