@@ -8,6 +8,7 @@ import InfoIcon from '@common/assets/svg/InfoIcon'
 import SuccessIcon from '@common/assets/svg/SuccessIcon'
 import WarningIcon from '@common/assets/svg/WarningIcon'
 import Text from '@common/components/Text'
+import { isMobile, isWeb } from '@common/config/env'
 import useTheme from '@common/hooks/useTheme'
 import BannerButton from '@common/modules/dashboard/components/DashboardBanners/DashboardBanner/BannerButton'
 import spacings from '@common/styles/spacings'
@@ -35,7 +36,9 @@ export interface Props {
   titleFontSize?: number
   buttonText?: string
   onPress?: () => void
-  onClosePress?: () => void
+  onCloseIconPress?: () => void
+  dismissButtonText?: string
+  onDismissButtonPress?: () => void
 }
 
 const Banner = React.memo(
@@ -48,7 +51,9 @@ const Banner = React.memo(
     titleFontSize,
     buttonText,
     style,
-    onClosePress,
+    onCloseIconPress,
+    onDismissButtonPress,
+    dismissButtonText,
     onPress
   }: Props) => {
     const { styles, theme } = useTheme(getStyles)
@@ -74,21 +79,30 @@ const Banner = React.memo(
           style={[
             flexbox.directionRow,
             flexbox.justifySpaceBetween,
-            spacings.mbTy,
+            !!text ? spacings.mbTy : spacings.mbSm,
             {
               width: '100%'
             }
           ]}
         >
           <View style={[flexbox.directionRow, flexbox.flex1]}>
-            <Icon width={24} height={24} color={theme[`${type}Text`]} style={{ marginTop: 1 }} />
-            <Text fontSize={titleFontSize || 16} weight="medium" style={spacings.mlMi}>
+            <Icon
+              width={isMobile ? 22 : 24}
+              height={isMobile ? 22 : 24}
+              color={theme[`${type}Text`]}
+              style={{ marginTop: 1 }}
+            />
+            <Text
+              fontSize={titleFontSize || (isMobile ? 14 : 16)}
+              weight="medium"
+              style={[flexbox.flex1, spacings.mlMi, isMobile && { marginTop: 2 }]}
+            >
               {title}
             </Text>
           </View>
-          {!!onClosePress && (
+          {!!onCloseIconPress && (
             <Pressable
-              onPress={onClosePress}
+              onPress={onCloseIconPress}
               hitSlop={8}
               style={{
                 width: 24,
@@ -102,10 +116,10 @@ const Banner = React.memo(
           )}
         </View>
 
-        <View style={[flexbox.wrap, flexbox.flex1]}>
+        <View style={[isWeb && flexbox.wrap, flexbox.flex1, { width: '100%' }]}>
           {!!text && (
             <Text
-              fontSize={14}
+              fontSize={isMobile ? 12 : 14}
               weight="regular"
               appearance="secondaryText"
               style={!!buttonText && !!onPress ? spacings.mbSm : undefined}
@@ -113,16 +127,37 @@ const Banner = React.memo(
               {text}
             </Text>
           )}
-          {!!buttonText && !!onPress && (
-            <BannerButton
-              type="primary"
-              colorType={type}
-              onPress={onPress}
-              testID={`dashboard-${type}-banner`}
-            >
-              {buttonText}
-            </BannerButton>
-          )}
+          <View
+            style={[
+              flexbox.flex1,
+              flexbox.directionRow,
+              flexbox.alignCenter,
+              flexbox.justifyEnd,
+              { width: '100%' }
+            ]}
+          >
+            {!!dismissButtonText && !!onDismissButtonPress && (
+              <BannerButton
+                type="secondary"
+                colorType="error"
+                onPress={onDismissButtonPress}
+                testID="banner-button-reject"
+                style={!!buttonText && !!onPress && spacings.mrTy}
+              >
+                {dismissButtonText}
+              </BannerButton>
+            )}
+            {!!buttonText && !!onPress && (
+              <BannerButton
+                type="primary"
+                colorType={type}
+                onPress={onPress}
+                testID={`dashboard-${type}-banner`}
+              >
+                {buttonText}
+              </BannerButton>
+            )}
+          </View>
         </View>
         {children}
       </View>

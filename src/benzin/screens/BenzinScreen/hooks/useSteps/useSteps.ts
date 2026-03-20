@@ -40,6 +40,7 @@ import {
 } from '@benzin/screens/BenzinScreen/constants/humanizerInterfaces'
 import { ActiveStepType, FinalizedStatusType } from '@benzin/screens/BenzinScreen/interfaces/steps'
 import { UserOperation } from '@benzin/screens/BenzinScreen/interfaces/userOperation'
+import { isWeb } from '@common/config/env'
 import useController from '@common/hooks/useController'
 
 import { decodeUserOp, entryPointTxnSplit, reproduceCallsFromTxn } from './utils/reproduceCalls'
@@ -94,6 +95,8 @@ const setUrlToTxnId = (
   chainId: bigint,
   switcher: BundlerSwitcher
 ) => {
+  if (!isWeb) return
+
   const splitUrl = (window.location.href || '').split('?')
   const search = splitUrl[1]
   const searchParams = new URLSearchParams(search)

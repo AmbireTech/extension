@@ -6,7 +6,7 @@ import { SwapAndBridgeActiveRoute } from '@ambire-common/interfaces/swapAndBridg
 import Button from '@common/components/Button'
 import FooterGlassView from '@common/components/FooterGlassView'
 import LayoutWrapper from '@common/components/LayoutWrapper'
-import { isMobile } from '@common/config/env'
+import { isMobile, isWeb } from '@common/config/env'
 import useTheme from '@common/hooks/useTheme'
 import { HeaderWithLogoOnly } from '@common/modules/header/components/Header/Header'
 import spacings from '@common/styles/spacings'
@@ -73,7 +73,7 @@ const TrackProgressWrapper: FC<TrackProgressProps> = ({
   return (
     <LayoutWrapper>
       <HeaderWithLogoOnly />
-      <View style={[spacings.phSm, flexbox.flex1, spacings.pbSm]}>
+      <View style={[spacings.phSm, flexbox.flex1, isWeb && spacings.pbSm]}>
         <View
           style={[
             flexbox.flex1,
@@ -89,7 +89,7 @@ const TrackProgressWrapper: FC<TrackProgressProps> = ({
           <View style={{ height: 1, backgroundColor: theme.secondaryBorder, ...spacings.mvLg }} />
         )}
 
-        <FooterGlassView absolute={false} size="sm" style={spacings.mbTy}>
+        <FooterGlassView absolute={false} size="sm" style={isWeb ? spacings.mbTy : {}}>
           {buttonsContent}
         </FooterGlassView>
       </View>

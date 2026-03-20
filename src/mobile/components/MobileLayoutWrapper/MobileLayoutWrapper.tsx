@@ -54,7 +54,7 @@ export const MobileLayoutContainer = ({
         }
       ]}
     >
-      {!!header && header}
+      {!!header && <View style={[spacings.phSm, spacings.mbSm]}>{header}</View>}
       <View style={[flexbox.flex1, withHorizontalPadding ? spacings.phSm : undefined]}>
         <View
           style={[
@@ -69,11 +69,7 @@ export const MobileLayoutContainer = ({
           {children}
         </View>
       </View>
-      {!!footer && (
-        <View style={styles.footerContainer}>
-          <View style={[styles.footer, footerStyle]}>{footer}</View>
-        </View>
-      )}
+      {footer && footer}
       {renderDirectChildren && renderDirectChildren()}
     </View>
   )
