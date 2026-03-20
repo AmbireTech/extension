@@ -282,7 +282,7 @@ export const ControllersMiddlewareProvider: React.FC<{
     })
   }, [route, dispatch])
 
-  useRequestsControllerHelpers()
+  useRequestsControllerHelpers(controllers.current)
 
   return (
     <ControllersMiddlewareContext.Provider value={useMemo(() => ({ dispatch }), [dispatch])}>
