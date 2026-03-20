@@ -10,7 +10,7 @@ import flexbox from '@common/styles/utils/flexbox'
 import { AnimatedQRCode } from '@keystonehq/animated-qr'
 
 type Props = {
-  frames: string[]
+  // frames: string[]
   urType: string | undefined
   urCborHex: any
 }
@@ -18,28 +18,28 @@ type Props = {
 const FRAME_INTERVAL = 300
 
 const QrSignRequestScreen = ({
-  frames,
+  // frames,
   onContinue,
   urType,
   urCborHex
 }: Props & { onContinue: () => void }) => {
   const { t } = useTranslation()
-  const [frameIndex, setFrameIndex] = useState(0)
+  // const [frameIndex, setFrameIndex] = useState(0)
 
-  const qrValue = useMemo(
-    () => (frames.length === 1 ? frames[0] : frames[frameIndex]),
-    [frameIndex, frames]
-  )
+  // // const qrValue = useMemo(
+  // //   () => (frames.length === 1 ? frames[0] : frames[frameIndex]),
+  // //   [frameIndex, frames]
+  // // )
 
-  useEffect(() => {
-    if (!frames.length) return
+  // // useEffect(() => {
+  // //   if (!frames.length) return
 
-    const interval = setInterval(() => {
-      setFrameIndex((prev) => (prev + 1) % frames.length)
-    }, FRAME_INTERVAL)
+  // //   const interval = setInterval(() => {
+  // //     setFrameIndex((prev) => (prev + 1) % frames.length)
+  // //   }, FRAME_INTERVAL)
 
-    return () => clearInterval(interval)
-  }, [frames])
+  // //   return () => clearInterval(interval)
+  // // }, [frames])
 
   return (
     <Panel type="onboarding" title={t('Scan with your hardware wallet')}>

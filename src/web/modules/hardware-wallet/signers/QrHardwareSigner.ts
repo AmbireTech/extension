@@ -1,3 +1,5 @@
+import { Signature, Transaction, TransactionLike } from 'ethers'
+
 import ExternalSignerError from '@ambire-common/classes/ExternalSignerError'
 import {
   ExternalKey,
@@ -98,8 +100,51 @@ class QrHardwareSigner implements KeystoreSignerInterface {
     }
   }
 
-  signRawTransaction: KeystoreSignerInterface['signRawTransaction'] = async (_txnRequest) => {
-    throw new Error('Not implemented yet')
+  signRawTransaction: KeystoreSignerInterface['signRawTransaction'] = async (txnRequest) => {
+    await this.#prepareForSigning()
+
+    try {
+      const { originHdPath, relativePathTemplate, hdPathTemplate, index } = this.key.meta
+
+      const normalizedOriginHdPath =
+        originHdPath && originHdPath.startsWith('m/')
+          ? originHdPath
+          : originHdPath
+            ? `m/${originHdPath}`
+            : ''
+
+      const relative =
+        relativePathTemplate && relativePathTemplate.replace('{index}', String(index))
+
+      const path =
+        normalizedOriginHdPath && relative
+          ? `${normalizedOriginHdPath}/${relative}`
+          : getHdPathFromTemplate(hdPathTemplate, index)
+
+      const type = typeof txnRequest.maxFeePerGas === 'bigint' ? 2 : 0
+      const unsignedTxn: TransactionLike = { ...txnRequest, type }
+      const unsignedSerializedTxn = Transaction.from(unsignedTxn).unsignedSerialized
+
+      const res = await this.controller!.signTransactionQR({
+        txHex: unsignedSerializedTxn,
+        derivationPath: path,
+        masterFingerprint: this.key.meta.masterFingerprint || '',
+        address: this.key.addr,
+        chainId: txnRequest.chainId
+      })
+
+      const hexSignature = 'signature' in res ? res.signature : normalizeSignatureHex(res)
+      const signature = Signature.from(hexSignature)
+
+      return Transaction.from({
+        ...unsignedTxn,
+        signature
+      }).serialized
+    } catch (e: any) {
+      throw new ExternalSignerError(e?.message || 'QR transaction signing failed', {
+        sendCrashReport: e instanceof ExternalSignerError ? e.sendCrashReport : true
+      })
+    }
   }
 
   sign7702 = () => {

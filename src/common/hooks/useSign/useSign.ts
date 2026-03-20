@@ -71,8 +71,13 @@ const useSign = ({
   const [isChooseSignerShown, setIsChooseSignerShown] = useState(false)
   const [isChooseFeePayerKeyShown, setIsChooseFeePayerKeyShown] = useState(false)
   const [shouldDisplayLedgerConnectModal, setShouldDisplayLedgerConnectModal] = useState(false)
+  const [shouldDisplayQrSigningModal, setShouldDisplayQrSigningModal] = useState(false)
   const prevIsChooseSignerShown = usePrevious(isChooseSignerShown)
   const { isLedgerConnected } = useLedger()
+  const {
+    state: { currentRequest, signingStep },
+    dispatch: qrHardwareDispatch
+  } = useController('QrHardwareController')
   const [slowRequest, setSlowRequest] = useState<boolean>(false)
   const [slowPaymasterRequest, setSlowPaymasterRequest] = useState<boolean>(true)
   const [acknowledgedWarnings, setAcknowledgedWarnings] = useState<string[]>([])
@@ -165,6 +170,36 @@ const useSign = ({
     setShouldDisplayLedgerConnectModal(false)
   }, [])
 
+  const handleQrSigningFlowOnClosePressed = useCallback(
+    () => setShouldDisplayQrSigningModal(false),
+    []
+  )
+
+  const handleQrSingingFlowOnContinuePressed = useCallback(
+    () =>
+      qrHardwareDispatch({
+        type: 'method',
+        params: {
+          method: 'moveToResponseScan',
+          args: []
+        }
+      }),
+    [qrHardwareDispatch]
+  )
+
+  const handleQrSigningFlowSubmitSignatureResponse = useCallback(
+    (payload: string | Uint8Array) => {
+      qrHardwareDispatch({
+        type: 'method',
+        params: {
+          method: 'submitSignatureResponse',
+          args: [payload]
+        }
+      })
+    },
+    [qrHardwareDispatch]
+  )
+
   const warningToPromptBeforeSign = useMemo(
     () =>
       signAccountOpState?.warnings.find((warning) => {
@@ -211,6 +246,9 @@ const useSign = ({
         return
       }
 
+      const isExternalQr =
+        signAccountOpState?.accountOp.signingKeyType === 'qr' ||
+        signAccountOpState?.accountOp.gasFeePayment?.paidByKeyType === 'qr'
       const isFeePayerSameAsSigner =
         signAccountOpState?.accountOp.signingKeyAddr ===
         signAccountOpState?.accountOp.gasFeePayment?.paidBy
@@ -229,13 +267,19 @@ const useSign = ({
         return
       }
 
+      if (isExternalQr) {
+        setShouldDisplayQrSigningModal(true)
+      }
+
       handleBroadcast()
     },
     [
-      warningToPromptBeforeSign,
       signAccountOpState?.accountOp.signingKeyAddr,
       signAccountOpState?.accountOp.gasFeePayment?.paidBy,
       signAccountOpState?.feePayerKeyStoreKeys?.length,
+      signAccountOpState?.accountOp.signingKeyType,
+      signAccountOpState?.accountOp.gasFeePayment?.paidByKeyType,
+      warningToPromptBeforeSign,
       feePayerKeyType,
       isAtLeastOneOfTheKeysInvolvedLedger,
       isLedgerConnected,
@@ -346,29 +390,36 @@ const useSign = ({
     [feePayerKeyType, signingKeyType]
   )
 
-  const renderedButNotNecessarilyVisibleModal: 'warnings' | 'ledger-connect' | 'hw-sign' | null =
-    useMemo(() => {
-      // Prioritize warning(s) modals over all others
-      if (
-        warningToPromptBeforeSign ||
-        // We render the warning modal if the paymaster is loading, but
-        // don't display it to the user until the paymaster has been loading for too long.
-        // This is required because opening the modal isn't possible if it isn't rendered.
-        signAccountOpState?.status?.type === SigningStatus.WaitingForPaymaster
-      )
-        return 'warnings'
+  const renderedButNotNecessarilyVisibleModal:
+    | 'warnings'
+    | 'ledger-connect'
+    | 'hw-sign'
+    | 'qr-sign'
+    | null = useMemo(() => {
+    // Prioritize warning(s) modals over all others
+    if (
+      warningToPromptBeforeSign ||
+      // We render the warning modal if the paymaster is loading, but
+      // don't display it to the user until the paymaster has been loading for too long.
+      // This is required because opening the modal isn't possible if it isn't rendered.
+      signAccountOpState?.status?.type === SigningStatus.WaitingForPaymaster
+    )
+      return 'warnings'
 
-      if (shouldDisplayLedgerConnectModal) return 'ledger-connect'
+    if (shouldDisplayLedgerConnectModal) return 'ledger-connect'
 
-      if (isAtLeastOneOfTheKeysInvolvedExternal) return 'hw-sign'
+    if (shouldDisplayQrSigningModal) return 'qr-sign'
 
-      return null
-    }, [
-      isAtLeastOneOfTheKeysInvolvedExternal,
-      shouldDisplayLedgerConnectModal,
-      signAccountOpState?.status?.type,
-      warningToPromptBeforeSign
-    ])
+    if (isAtLeastOneOfTheKeysInvolvedExternal) return 'hw-sign'
+
+    return null
+  }, [
+    isAtLeastOneOfTheKeysInvolvedExternal,
+    shouldDisplayLedgerConnectModal,
+    shouldDisplayQrSigningModal,
+    signAccountOpState?.status?.type,
+    warningToPromptBeforeSign
+  ])
 
   const primaryButtonText = useMemo(() => {
     let buttonLabelType: ButtonMode =
@@ -458,7 +509,13 @@ const useSign = ({
     isChooseFeePayerKeyShown,
     setIsChooseFeePayerKeyShown,
     shouldHoldToProceed: !!signAccountOpState?.banners?.length,
-    handleSetMultisigSigners
+    handleSetMultisigSigners,
+    shouldDisplayQrSigningModal,
+    handleQrSingingFlowOnContinuePressed,
+    handleQrSigningFlowSubmitSignatureResponse,
+    handleQrSigningFlowOnClosePressed,
+    currentRequest,
+    signingStep
   }
 }
 

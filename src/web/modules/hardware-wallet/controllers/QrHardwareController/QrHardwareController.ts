@@ -116,6 +116,26 @@ class QrHardwareController
     return this.protocolAdapter.parseSignatureResponse(response, request.requestId)
   }
 
+  async signTransactionQR(args: {
+    txHex: string
+    derivationPath: string
+    masterFingerprint: string
+    address: string
+    chainId?: bigint
+  }): Promise<QrSignaturePayload> {
+    const request = await this.protocolAdapter.buildSignTransactionRequest({
+      txHex: args.txHex,
+      derivationPath: args.derivationPath,
+      masterFingerprint: args.masterFingerprint,
+      address: args.address,
+      chainId: args.chainId
+    })
+
+    const response = await this.requestSignature(request)
+
+    return this.protocolAdapter.parseSignatureResponse(response, request.requestId)
+  }
+
   async signingCleanup() {
     if (this.rejectSession) {
       this.rejectSession(new ExternalSignerError('Operation cancelled by user'))

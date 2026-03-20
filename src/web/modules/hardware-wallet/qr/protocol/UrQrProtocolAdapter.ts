@@ -91,13 +91,14 @@ class UrQrProtocolAdapter implements QrProtocolAdapter {
         signData,
         DataType.typedData,
         args.derivationPath,
-        args.masterFingerprint, // xfp for now
+        args.masterFingerprint,
         requestId,
         undefined, // chainId
         args.address
       )
 
       const ur = request.toUR()
+      // TODO: remove frames
       const frames = this.encodeUrToFrames(ur)
 
       return {
@@ -114,8 +115,59 @@ class UrQrProtocolAdapter implements QrProtocolAdapter {
     }
   }
 
-  async buildSignTransactionRequest(): Promise<QrRequest> {
-    throw new Error('Not implemented yet')
+  async buildSignTransactionRequest(args: {
+    txHex: string
+    derivationPath: string
+    masterFingerprint: string
+    address?: string
+    chainId?: bigint
+  }): Promise<QrRequest> {
+    try {
+      const strippedHex = stripHexPrefix(args.txHex)
+
+      if (!strippedHex) {
+        throw new ExternalSignerError('Cannot create QR sign request for an empty transaction.')
+      }
+
+      const txData = Buffer.from(strippedHex, 'hex')
+      const requestId = uuidv4()
+      const masterFingerprint = stripHexPrefix(args.masterFingerprint)
+
+      const request = EthSignRequest.constructETHRequest(
+        // signData: Buffer,
+        txData,
+        // signDataType: DataType,
+        DataType.typedTransaction,
+        // hdPath: string,
+        args.derivationPath,
+        // xfp: string,
+        masterFingerprint,
+        // uuidString?: string
+        requestId,
+        // chainId?: number
+        args.chainId !== undefined ? Number(args.chainId) : undefined,
+        // address?: string,
+        undefined,
+        /// origin?: string
+        args.address
+      )
+
+      const ur = request.toUR()
+      // TODO: remove frames
+      const frames = this.encodeUrToFrames(ur)
+
+      return {
+        type: 'sign-transaction',
+        frames,
+        requestId,
+        urType: ur.type,
+        urCborHex: ur.cbor.toString('hex')
+      }
+    } catch (e: any) {
+      throw new ExternalSignerError(e?.message || 'Failed to build UR sign-transaction request.', {
+        sendCrashReport: true
+      })
+    }
   }
 
   async parseSignatureResponse(

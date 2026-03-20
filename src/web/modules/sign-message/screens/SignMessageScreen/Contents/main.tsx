@@ -240,6 +240,7 @@ const Main = ({
           )}
         {signMessageState.signer && signMessageState.signer.key.type === 'qr' && (
           <QrSigningFlowScreen
+            isVisible={true}
             onContinue={handleOnContinue}
             currentRequest={currentRequest}
             signingStep={signingStep}

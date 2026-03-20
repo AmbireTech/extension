@@ -10,6 +10,7 @@ import spacings from '@common/styles/spacings'
 import text from '@common/styles/utils/text'
 import { getUiType } from '@common/utils/uiType'
 import LedgerConnectModal from '@web/modules/hardware-wallet/components/LedgerConnectModal'
+import QrSigningFlowScreen from '@web/modules/hardware-wallet/screens/QrSigningFlowScreen'
 import SignAccountOpHardwareWalletSigningModal from '@web/modules/sign-account-op/components/SignAccountOpHardwareWalletSigningModal'
 
 const { isTab } = getUiType()
@@ -23,6 +24,12 @@ type Props = Pick<
   | 'slowPaymasterRequest'
   | 'shouldDisplayLedgerConnectModal'
   | 'handleDismissLedgerConnectModal'
+  | 'shouldDisplayQrSigningModal'
+  | 'handleQrSingingFlowOnContinuePressed'
+  | 'handleQrSigningFlowSubmitSignatureResponse'
+  | 'handleQrSigningFlowOnClosePressed'
+  | 'currentRequest'
+  | 'signingStep'
   | 'warningToPromptBeforeSign'
   | 'acknowledgeWarning'
   | 'dismissWarning'
@@ -41,6 +48,12 @@ const Modals: FC<Props> = ({
   slowPaymasterRequest,
   shouldDisplayLedgerConnectModal,
   handleDismissLedgerConnectModal,
+  shouldDisplayQrSigningModal,
+  handleQrSingingFlowOnContinuePressed,
+  handleQrSigningFlowSubmitSignatureResponse,
+  handleQrSigningFlowOnClosePressed,
+  currentRequest,
+  signingStep,
   warningToPromptBeforeSign,
   acknowledgeWarning,
   dismissWarning,
@@ -106,6 +119,19 @@ const Modals: FC<Props> = ({
         isVisible={shouldDisplayLedgerConnectModal}
         handleClose={handleDismissLedgerConnectModal}
         displayOptionToAuthorize={false}
+      />
+    )
+  }
+
+  if (renderedButNotNecessarilyVisibleModal === 'qr-sign' && currentRequest && signingStep) {
+    return (
+      <QrSigningFlowScreen
+        handleClose={handleQrSigningFlowOnClosePressed}
+        isVisible={shouldDisplayQrSigningModal}
+        onContinue={handleQrSingingFlowOnContinuePressed}
+        currentRequest={currentRequest}
+        signingStep={signingStep}
+        submitSignatureResponse={handleQrSigningFlowSubmitSignatureResponse}
       />
     )
   }

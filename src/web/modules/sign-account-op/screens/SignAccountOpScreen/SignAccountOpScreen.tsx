@@ -107,7 +107,13 @@ const SignAccountOpScreen = () => {
     bundlerNonceDiscrepancy,
     primaryButtonText,
     shouldHoldToProceed,
-    handleSetMultisigSigners
+    handleSetMultisigSigners,
+    shouldDisplayQrSigningModal,
+    handleQrSingingFlowOnContinuePressed,
+    handleQrSigningFlowSubmitSignatureResponse,
+    handleQrSigningFlowOnClosePressed,
+    currentRequest,
+    signingStep
   } = useSign({
     handleUpdateStatus,
     signAccountOpState,
@@ -189,6 +195,12 @@ const SignAccountOpScreen = () => {
         warningToPromptBeforeSign={warningToPromptBeforeSign}
         acknowledgeWarning={acknowledgeWarning}
         dismissWarning={dismissWarning}
+        currentRequest={currentRequest}
+        signingStep={signingStep}
+        shouldDisplayQrSigningModal={shouldDisplayQrSigningModal}
+        handleQrSingingFlowOnContinuePressed={handleQrSingingFlowOnContinuePressed}
+        handleQrSigningFlowSubmitSignatureResponse={handleQrSigningFlowSubmitSignatureResponse}
+        handleQrSigningFlowOnClosePressed={handleQrSigningFlowOnClosePressed}
       />
       <TabLayoutContainer
         width="full"

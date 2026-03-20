@@ -45,9 +45,11 @@ export interface QrProtocolAdapter {
   }): Promise<QrRequest>
 
   buildSignTransactionRequest(args: {
-    txnRequest: TxnRequest
+    txHex: string
     derivationPath: string
+    masterFingerprint: string
     address?: string
+    chainId?: bigint
   }): Promise<QrRequest>
 
   parseSignatureResponse(
