@@ -240,7 +240,13 @@ const DashboardBanner = ({
         type={type}
         text={text}
         buttonText={primaryAction?.label}
-        onClosePress={dismissAction ? () => handleActionPress(dismissAction) : undefined}
+        onCloseIconPress={
+          dismissAction && !dismissAction.label ? () => handleActionPress(dismissAction) : undefined
+        }
+        onDismissButtonPress={
+          dismissAction && dismissAction.label ? () => handleActionPress(dismissAction) : undefined
+        }
+        dismissButtonText={dismissAction?.label}
         onPress={primaryAction ? () => handleActionPress(primaryAction) : undefined}
       />
       <DashboardBannerBottomSheet

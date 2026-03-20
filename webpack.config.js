@@ -213,6 +213,8 @@ module.exports = async function (env, argv) {
 
   config.resolve.alias = {
     ...(config.resolve.alias || {}),
+    '@': path.resolve(__dirname, 'src/ambire-common/src'),
+    '@test': path.resolve(__dirname, 'src/ambire-common/test'),
     '@ambire-common': path.resolve(__dirname, 'src/ambire-common/src'),
     '@contracts': path.resolve(__dirname, 'src/ambire-common/contracts'),
     '@ambire-common-v1': path.resolve(__dirname, 'src/ambire-common/v1'),

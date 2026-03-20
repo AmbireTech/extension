@@ -13,8 +13,8 @@ const getStyles = () =>
   StyleSheet.create<Style>({
     container: {
       ...(isMobile ? spacings.phTy : spacings.phSm),
+      ...(isMobile ? spacings.pbTy : spacings.pbSm),
       ...spacings.ptTy,
-      ...spacings.pbTy,
       ...spacings.mbTy,
       ...commonStyles.borderRadiusPrimary,
       ...flexbox.flex1

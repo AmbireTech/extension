@@ -1,5 +1,5 @@
 import React, { FC, useMemo } from 'react'
-import { ViewStyle } from 'react-native'
+import { PressableProps, ViewStyle } from 'react-native'
 
 import Text from '@common/components/Text'
 import useHover, { AnimatedPressable } from '@common/hooks/useHover'
@@ -14,9 +14,9 @@ type Props = {
   onPress: () => void
   children: React.ReactNode
   testID?: string
-}
+} & Partial<PressableProps>
 
-const BannerButton: FC<Props> = ({ type, colorType, onPress, children, testID }) => {
+const BannerButton: FC<Props> = ({ type, colorType, onPress, children, testID, ...rest }) => {
   const { theme } = useTheme()
   const [bindAnim, animStyle] = useHover({ preset: 'opacityInverted' })
 
@@ -35,6 +35,7 @@ const BannerButton: FC<Props> = ({ type, colorType, onPress, children, testID })
 
   return (
     <AnimatedPressable
+      {...rest}
       style={[
         typeStyle,
         {
@@ -44,11 +45,12 @@ const BannerButton: FC<Props> = ({ type, colorType, onPress, children, testID })
           height: 30,
           borderRadius: BORDER_RADIUS_PRIMARY
         },
-        animStyle
+        animStyle,
+        rest?.style as ViewStyle
       ]}
       onPress={onPress}
-      {...bindAnim}
       testID={testID}
+      {...bindAnim}
     >
       <Text
         color={type === 'primary' ? theme.neutral100 : theme[`${colorType}Text`]}

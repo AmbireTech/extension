@@ -69,7 +69,7 @@ const ThemeControlOption = () => {
         withSearch={false}
         options={THEME_SELECT_OPTIONS}
         value={selectedOption}
-        containerStyle={{ width: 120, ...spacings.mb0 }}
+        containerStyle={{ width: 132, ...spacings.mb0 }}
         size="sm"
       />
     </ControlOption>

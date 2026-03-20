@@ -21,15 +21,13 @@ concurrency:
 jobs:
   typescript-errors:
     # Prevent running this workflow for PRs that are not ready for review
-    if: github.event_name != 'pull_request' || github.event.pull_request.draft == false 
+    if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
 
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout full Git history
+      - name: Checkout code 🛎️
         uses: actions/checkout@v6
-        with:
-          fetch-depth: 0
 
       - name: Add SSH key to checkout a private repo
         uses: webfactory/ssh-agent@v0.9.1

@@ -6,6 +6,7 @@ import { Animated, FlatListProps, View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 
 import { Network } from '@ambire-common/interfaces/network'
+import { TokenResult } from '@ambire-common/libs/portfolio'
 import CollectibleModal, { SelectedCollectible } from '@common/components/CollectibleModal'
 import Text from '@common/components/Text'
 import useController from '@common/hooks/useController'
@@ -75,13 +76,12 @@ const Collections: FC<Props> = ({
     const searchableCollections = (portfolio?.collections || []).filter(
       ({ chainId, collectibles }) => {
         let isMatchingNetwork = true
-        let isMatchingSearch = true
 
         if (dashboardNetworkFilter) {
           isMatchingNetwork = chainId === BigInt(dashboardNetworkFilter)
         }
 
-        return isMatchingNetwork && isMatchingSearch && collectibles.length
+        return isMatchingNetwork && collectibles.length
       }
     )
 
@@ -166,7 +166,6 @@ const Collections: FC<Props> = ({
       theme.primaryBackground,
       openTab,
       setOpenTab,
-      control,
       sessionId,
       searchValue,
       dashboardNetworkFilterName,
@@ -176,10 +175,10 @@ const Collections: FC<Props> = ({
     ]
   )
 
-  const keyExtractor = useCallback((collectionOrElement: any) => {
+  const keyExtractor = useCallback((collectionOrElement: TokenResult) => {
     if (typeof collectionOrElement === 'string') return collectionOrElement
 
-    return collectionOrElement.address
+    return `${collectionOrElement.address}-${collectionOrElement.chainId?.toString() || 'unknown-chain'}-${collectionOrElement.name}`
   }, [])
 
   useEffect(() => {

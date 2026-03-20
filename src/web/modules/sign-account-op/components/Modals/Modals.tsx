@@ -29,10 +29,13 @@ const Modals: FC<ModalsProps> = ({
   actionType
 }) => {
   const { t } = useTranslation()
-  const { signAccountOpController: swapAndBridgeSignAccountOp } =
-    useController('SwapAndBridgeController').state
   const {
-    state: { signAccountOpController: transferSignAccountOp }
+    state: { signAccountOpController: swapAndBridgeSignAccountOp },
+    dispatch: swapAndBridgeDispatch
+  } = useController('SwapAndBridgeController')
+  const {
+    state: { signAccountOpController: transferSignAccountOp },
+    dispatch: transferDispatch
   } = useController('TransferController')
   const { state: currentSignAccountOp, dispatch: signAccountOpDispatch } =
     useController('SignAccountOpController')
@@ -113,6 +116,25 @@ const Modals: FC<ModalsProps> = ({
         accountOp={signAccountOpState.accountOp}
         actionType={actionType}
         cancelReq={() => {
+          if (actionType === 'swapAndBridge') {
+            return swapAndBridgeDispatch({
+              type: 'method',
+              params: {
+                method: 'cancelSignReq',
+                args: []
+              }
+            })
+          }
+          if (actionType === 'transfer') {
+            return transferDispatch({
+              type: 'method',
+              params: {
+                method: 'cancelSignReq',
+                args: []
+              }
+            })
+          }
+
           signAccountOpDispatch({
             type: 'method',
             params: {

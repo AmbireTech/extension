@@ -1,10 +1,11 @@
 import React, { useEffect, useMemo } from 'react'
-import { View } from 'react-native'
+import { Pressable, View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 
 import { HARDWARE_WALLET_DEVICE_NAMES } from '@ambire-common/consts/hardwareWallets'
 import { ExternalKey } from '@ambire-common/interfaces/keystore'
 import AmbireDevice from '@common/assets/svg/AmbireDevice'
+import CloseIcon from '@common/assets/svg/CloseIcon'
 import DriveIcon from '@common/assets/svg/DriveIcon'
 import LatticeIcon from '@common/assets/svg/LatticeIcon'
 import LedgerLetterIcon from '@common/assets/svg/LedgerLetterIcon'
@@ -12,8 +13,8 @@ import LeftPointerArrowIcon from '@common/assets/svg/LeftPointerArrowIcon'
 import TrezorLockIcon from '@common/assets/svg/TrezorLockIcon'
 import BottomSheet from '@common/components/BottomSheet'
 import ModalHeader from '@common/components/BottomSheet/ModalHeader'
-import Button from '@common/components/Button'
 import Text from '@common/components/Text'
+import Tooltip from '@common/components/Tooltip'
 import { useTranslation } from '@common/config/localization'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
@@ -97,14 +98,20 @@ const HardwareWalletSigningModal = ({ keyType, isVisible, children, cancelReq }:
             {t('Sending signing request...')}
           </Text>
           {isTrezor && !!cancelReq && (
-            <Button
-              type="danger"
-              text={t('Cancel')}
-              onPress={cancelReq}
-              hasBottomSpacing={false}
-              style={spacings.ml}
-              size="small"
-            />
+            <View>
+              <Pressable
+                onPress={cancelReq}
+                style={spacings.ml}
+                dataSet={{ tooltipId: 'trezor-cancel-sign-tooltip' }}
+              >
+                <CloseIcon />
+              </Pressable>
+              <Tooltip id="trezor-cancel-sign-tooltip">
+                <Text fontSize={14} appearance="secondaryText">
+                  {t('Cancel request')}
+                </Text>
+              </Tooltip>
+            </View>
           )}
         </View>
         {children}

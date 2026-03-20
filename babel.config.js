@@ -3,6 +3,8 @@ module.exports = function (api) {
   api.cache(true)
 
   const pathAliases = {
+    '@': './src/ambire-common/src',
+    '@test': './src/ambire-common/test',
     '@ambire-common': './src/ambire-common/src',
     '@contracts': './src/ambire-common/contracts',
     '@common': './src/common',
