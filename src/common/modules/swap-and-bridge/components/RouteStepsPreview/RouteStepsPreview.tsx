@@ -189,7 +189,7 @@ const RouteStepsPreview = ({
                     symbol={step.fromAsset.symbol}
                     amount={isOnlyOneStep ? formattedFromAmount : formattedRefundedAmount}
                     amountInUsd={inputValueInUsd}
-                    align={isOnlyOneStep ? 'right' : 'center'}
+                    align={isOnlyOneStep ? 'left' : 'center'}
                   />
                   <View style={flexbox.flex1} />
                   <RouteStepsTokenAmount
