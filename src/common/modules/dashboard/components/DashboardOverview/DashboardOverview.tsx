@@ -170,7 +170,7 @@ const DashboardOverview: FC<Props> = ({
                     isLoadingTakingTooLong={isLoadingTakingTooLong}
                   />
                 </View>
-                <View style={[flexbox.flex1, flexbox.alignCenter, spacings.mhTy]}>
+                <View style={[flexbox.alignCenter, spacings.mhTy]}>
                   {!portfolio?.isReadyToVisualize ? (
                     <SkeletonLoader
                       lowOpacity
