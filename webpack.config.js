@@ -361,7 +361,10 @@ module.exports = async function (env, argv) {
       // it runs before optimization/minification plugins.
       // See README.MD for policy generation workflow and when to regenerate policies.
       // Only enabled in production builds to avoid HMR conflicts in development.
-      ...(config.mode === 'production'
+      // TODO: Enable for Gecko soon as well.
+      // Gecko currently has a conflict with inlineLockdown because main.js and background.js are split into chunks there,
+      // and ses lockdown is initialized multiple times in the same realm.
+      ...(config.mode === 'production' && isWebkit
         ? [
             new LavaMoatPlugin({
               generatePolicy: process.env.LAVAMOAT_GENERATE_POLICY === 'true',
@@ -532,32 +535,39 @@ module.exports = async function (env, argv) {
       config.optimization.moduleIds = 'deterministic' // Ensures same id for modules across builds
       // Disables auto-generated runtime chunks, because they cause ID drift
       config.optimization.runtimeChunk = false
-      config.optimization.splitChunks = {
-        ...config.optimization.splitChunks,
-        // Firefox enforces a 5MB per-file size limit for extensions.
-        // In the v5 extension series we intentionally avoided setting maxSize,
-        // because 1) it could lead to non-reproducible chunk filenames and
-        // 2) it wasn't needed at the time (no bundle was > 5MB).
-        // With v6 extension series + new features/core lib updates exceeded 5MB
-        // for two of the resulting js bundles, so we re-enabled maxSize.
-        // On theory, it should be deterministic with chunkIds/moduleIds set to
-        // 'deterministic' and chunkFilename = '[id].js'.
-        // Note: maxSize uses estimated sizes; keep some headroom so emitted
-        // bundles stay under the linter's real per-file limit.
-        maxSize: 4.5 * 1024 * 1024,
-        minSize: 0, // prevents merging small modules together automatically
-        chunks(chunk) {
-          // do not split into chunks the files that should be injected
-          return (
-            chunk.name !== 'ambire-inpage' &&
-            chunk.name !== 'ethereum-inpage' &&
-            chunk.name !== 'content-script'
-          )
-        },
-        // Disable random cache groups (resulting non-deterministic chunk names)
-        cacheGroups: {
-          default: false,
-          vendors: false
+
+      if (isWebkit) {
+        // No extra chunks for webkit, because it conflicts with LavaMoat plugin,
+        // and currently there's no other benefit to enable it.
+        config.optimization.splitChunks = false
+      } else {
+        config.optimization.splitChunks = {
+          ...config.optimization.splitChunks,
+          // Firefox enforces a 5MB per-file size limit for extensions.
+          // In the v5 extension series we intentionally avoided setting maxSize,
+          // because 1) it could lead to non-reproducible chunk filenames and
+          // 2) it wasn't needed at the time (no bundle was > 5MB).
+          // With v6 extension series + new features/core lib updates exceeded 5MB
+          // for two of the resulting js bundles, so we re-enabled maxSize.
+          // On theory, it should be deterministic with chunkIds/moduleIds set to
+          // 'deterministic' and chunkFilename = '[id].js'.
+          // Note: maxSize uses estimated sizes; keep some headroom so emitted
+          // bundles stay under the linter's real per-file limit.
+          maxSize: 4.5 * 1024 * 1024,
+          minSize: 0, // prevents merging small modules together automatically
+          chunks(chunk) {
+            // do not split into chunks the files that should be injected
+            return (
+              chunk.name !== 'ambire-inpage' &&
+              chunk.name !== 'ethereum-inpage' &&
+              chunk.name !== 'content-script'
+            )
+          },
+          // Disable random cache groups (resulting non-deterministic chunk names)
+          cacheGroups: {
+            default: false,
+            vendors: false
+          }
         }
       }
 

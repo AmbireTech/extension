@@ -1430,8 +1430,8 @@
           "Dependency 'eth-crypto>ethers' reexports from 'eth-crypto>ethers>@ethersproject/keccak256' and webpack collapsed that to a direct import.",
           "Dependency 'eth-crypto>ethers' reexports from '@ethersproject/providers>@ethersproject/bytes' and webpack collapsed that to a direct import.",
           "Dependency 'eth-crypto>ethers' reexports from '@ethersproject/providers>@ethersproject/random' and webpack collapsed that to a direct import.",
-          "Dependency 'eth-crypto>ethers' reexports from 'eth-crypto>ethers>@ethersproject/solidity' and webpack collapsed that to a direct import.",
-          "Dependency 'eth-crypto>ethers' reexports from 'eth-crypto>ethers>@ethersproject/contracts' and webpack collapsed that to a direct import."
+          "Dependency 'eth-crypto>ethers' reexports from 'eth-crypto>ethers>@ethersproject/contracts' and webpack collapsed that to a direct import.",
+          "Dependency 'eth-crypto>ethers' reexports from 'eth-crypto>ethers>@ethersproject/solidity' and webpack collapsed that to a direct import."
         ]
       },
       "packages": {
