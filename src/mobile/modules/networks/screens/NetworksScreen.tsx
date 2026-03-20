@@ -11,7 +11,6 @@ import FooterGlassView from '@common/components/FooterGlassView'
 import LayoutWrapper from '@common/components/LayoutWrapper'
 import ScrollableWrapper from '@common/components/ScrollableWrapper'
 import Search from '@common/components/Search'
-import { isMobile, isWeb } from '@common/config/env'
 import useController from '@common/hooks/useController'
 import useNavigation from '@common/hooks/useNavigation/useNavigation.web'
 import useToast from '@common/hooks/useToast'
@@ -95,11 +94,8 @@ const NetworksScreen = () => {
   }, [closeSettingsBottomSheet])
 
   const handleOpenAddNetworkBottomSheet = useCallback(() => {
-    if (isMobile) {
-      alert('Coming soon!')
-    } else {
-      openAddNetworkBottomSheet()
-    }
+    alert('Coming soon!')
+    // openAddNetworkBottomSheet()
   }, [openAddNetworkBottomSheet])
 
   const openBlockExplorer = useCallback(
@@ -125,7 +121,7 @@ const NetworksScreen = () => {
   return (
     <LayoutWrapper>
       <HeaderWithTitle displayBackButtonIn="always" />
-      <View style={[flexbox.flex1, isWeb && spacings.pv, spacings.phSm]}>
+      <View style={[flexbox.flex1, spacings.phSm]}>
         <Search control={control} autoFocus containerStyle={spacings.mbSm} />
         <NetworkBottomSheet
           chainId={settingsChainId}
@@ -137,7 +133,7 @@ const NetworksScreen = () => {
           sheetRef={addNetworkBottomSheetRef}
           closeBottomSheet={closeAddNetworkBottomSheet}
         />
-        <ScrollableWrapper style={{ paddingBottom: 72 }}>
+        <ScrollableWrapper>
           <AllNetworksOption onPress={handleChangeNetwork} />
           <Networks
             search={search}
@@ -151,7 +147,7 @@ const NetworksScreen = () => {
             text={t('Add new network')}
             size="smaller"
             hasBottomSpacing={false}
-            style={isWeb ? { minWidth: 174 } : spacings.mtSm}
+            style={spacings.mtSm}
             childrenPosition="left"
             onPress={handleOpenAddNetworkBottomSheet}
           >
