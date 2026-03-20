@@ -11,6 +11,7 @@ import useTheme from '@common/hooks/useTheme'
 import DashboardHeader from '@common/modules/dashboard/components/DashboardHeader'
 import Routes from '@common/modules/dashboard/components/Routes'
 import useBalanceAffectingErrors from '@common/modules/dashboard/hooks/useBalanceAffectingErrors'
+import useDashboardReload from '@common/modules/dashboard/hooks/useDashboardReload'
 import spacings, { SPACING, SPACING_TY, SPACING_XL } from '@common/styles/spacings'
 import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
@@ -78,20 +79,7 @@ const DashboardOverview: FC<Props> = ({
   const [totalPortfolioAmountIntegerFormattedPart, totalPortfolioAmountDecimalFormattedPart] =
     formatDecimals(totalPortfolioAmount, 'value').split('.')
 
-  const reloadAccount = useCallback(() => {
-    mainDispatch({
-      type: 'method',
-      params: {
-        method: 'reloadSelectedAccount',
-        args: [
-          {
-            chainIds: dashboardNetworkFilter ? [BigInt(dashboardNetworkFilter)] : undefined,
-            isManualReload: true
-          }
-        ]
-      }
-    })
-  }, [dashboardNetworkFilter, mainDispatch])
+  const { reloadAccount, refreshing } = useDashboardReload()
 
   const togglePrivacyMode = useCallback(() => {
     walletStateDispatch({
