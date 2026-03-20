@@ -18,6 +18,7 @@ import SeedPhraseImportScreen from '@mobile/modules/auth/screens/SeedPhraseImpor
 import ViewOnlyAccountAdderScreen from '@mobile/modules/auth/screens/ViewOnlyAccountAdderScreen'
 import LedgerConnectScreen from '@mobile/modules/hardware-wallet/screens/LedgerConnectScreen'
 import KeyStoreSetupScreen from '@mobile/modules/keystore/screens/KeyStoreSetupScreen'
+import NetworksScreen from '@mobile/modules/networks/screens'
 import ReceiveScreen from '@mobile/modules/receive/screens/ReceiveScreen'
 import SignAccountOpScreen from '@mobile/modules/sign-account-op/screens/SignAccountOpScreen'
 import TokenDetailsScreen from '@mobile/modules/token-details/screens/TokenDetailsScreen'
@@ -54,6 +55,7 @@ const MainRoutes = () => {
           <Route path={ROUTES.tokenDetails} element={<TokenDetailsScreen />} />
           <Route path={ROUTES.signAccountOp} element={<SignAccountOpScreen />} />
           <Route path={ROUTES.benzin} element={<BenzinScreen />} />
+          <Route path={ROUTES.networks} element={<NetworksScreen />} />
         </Route>
       </Route>
       {/* Fallback route to suppress "No routes matched location" warnings when multiple Routes blocks are rendered */}

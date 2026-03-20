@@ -7,14 +7,15 @@ import OpenIcon from '@common/assets/svg/OpenIcon'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import NetworkIcon from '@common/components/NetworkIcon'
 import Text from '@common/components/Text'
+import { isMobile } from '@common/config/env'
 import useController from '@common/hooks/useController'
 import { AnimatedPressable, DURATIONS, useCustomHover } from '@common/hooks/useHover'
 import useTheme from '@common/hooks/useTheme'
+import { NO_BLOCK_EXPLORER_AVAILABLE_TOOLTIP } from '@common/modules/networks/components/NetworkBottomSheet'
+import getStyles from '@common/modules/networks/styles'
 import spacings from '@common/styles/spacings'
 import { hexToRgba } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
-import { NO_BLOCK_EXPLORER_AVAILABLE_TOOLTIP } from '@web/modules/networks/components/NetworkBottomSheet'
-import getStyles from '@web/modules/networks/screens/styles'
 
 interface Props {
   chainId: bigint | string
@@ -41,11 +42,7 @@ const Network: FC<Props> = ({ chainId, openBlockExplorer, openSettingsBottomShee
   // Doesn't have to be binded
   const [, explorerIconAnimStyle] = useCustomHover({
     property: 'opacity',
-    values: {
-      from: 0,
-      to: 1
-    },
-    forceHoveredStyle: (dashboardNetworkFilter === chainId || isHovered) && !isInternalNetwork,
+    values: { from: 0, to: 1 },
     duration: DURATIONS.REGULAR
   })
 
@@ -75,7 +72,12 @@ const Network: FC<Props> = ({ chainId, openBlockExplorer, openSettingsBottomShee
     <AnimatedPressable
       key={chainId.toString()}
       onPress={handleOnPress}
-      style={[styles.network, isInternalNetwork ? styles.noKebabNetwork : {}, animStyle]}
+      style={[
+        styles.network,
+        isInternalNetwork ? styles.noKebabNetwork : {},
+        animStyle,
+        dashboardNetworkFilter === chainId && styles.highlightedNetwork
+      ]}
       {...bindAnim}
     >
       <View style={[flexbox.alignCenter, flexbox.directionRow]}>
@@ -97,7 +99,12 @@ const Network: FC<Props> = ({ chainId, openBlockExplorer, openSettingsBottomShee
             content: NO_BLOCK_EXPLORER_AVAILABLE_TOOLTIP,
             hidden: !isBlockExplorerMissing
           })}
-          style={[spacings.mlSm, explorerIconAnimStyle]}
+          style={[
+            spacings.mlSm,
+            explorerIconAnimStyle,
+            (dashboardNetworkFilter === chainId || isHovered) &&
+              !isInternalNetwork && { opacity: 1 }
+          ]}
         >
           {({ hovered }: any) => (
             <OpenIcon
@@ -116,7 +123,7 @@ const Network: FC<Props> = ({ chainId, openBlockExplorer, openSettingsBottomShee
         >
           {`${formatDecimals(networkBalance, 'value')}` || '$-'}
         </Text>
-        {!isInternalNetwork && (
+        {!isInternalNetwork && !isMobile && (
           <Pressable
             onHoverIn={triggerHovered}
             onPress={() => openSettingsBottomSheet(chainId)}

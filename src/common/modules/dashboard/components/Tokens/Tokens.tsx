@@ -353,7 +353,12 @@ const Tokens = ({
         onRefresh={onRefresh}
       />
       {openTab === 'tokens' && (
-        <SearchAndCurrentApp control={control} displayCurrentApp isHidden={isSearchHidden} />
+        <SearchAndCurrentApp
+          control={control}
+          displayCurrentApp
+          displayNetworkFilter
+          isHidden={isSearchHidden}
+        />
       )}
     </>
   )

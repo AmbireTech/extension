@@ -2,6 +2,7 @@ import Fuse from 'fuse.js'
 import React, { useMemo } from 'react'
 import { View } from 'react-native'
 
+import { isWeb } from '@common/config/env'
 import useController from '@common/hooks/useController'
 import spacings from '@common/styles/spacings'
 
@@ -68,7 +69,7 @@ const Networks = ({
   }, [networkChainIdToNameMap, portfolio.balancePerNetwork, search])
 
   return (
-    <View style={spacings.mbLg}>
+    <View style={isWeb ? spacings.mbLg : {}}>
       {!!account &&
         filteredAndSortedPortfolio.map((chainId) => (
           <NetworkComponent

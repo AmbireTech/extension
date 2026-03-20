@@ -1,10 +1,14 @@
-import React, { useMemo } from 'react'
-import { View } from 'react-native'
+import React, { useCallback, useMemo } from 'react'
+import { Pressable, View } from 'react-native'
 import { useSearchParams } from 'react-router-dom'
 
+import FilterAlternativeIcon from '@common/assets/svg/FilterAlternativeIcon'
 import FilterIcon from '@common/assets/svg/FilterIcon'
 import RightArrowIcon from '@common/assets/svg/RightArrowIcon'
+import NetworkIcon from '@common/components/NetworkIcon'
 import Text from '@common/components/Text'
+import getTokenIconStyles from '@common/components/TokenIcon/styles'
+import { isMobile, isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import { AnimatedPressable, DURATIONS, useMultiHover } from '@common/hooks/useHover'
@@ -26,11 +30,12 @@ const maxNetworkNameLengths = {
 } as const
 
 interface Props {
-  currentTab: TabType
+  currentTab?: TabType
 }
 
 const SelectNetwork = ({ currentTab }: Props) => {
   const { styles } = useTheme(getStyles)
+  const { styles: tokenIconStyles } = useTheme(getTokenIconStyles)
   const { t } = useTranslation()
   const {
     state: { dashboardNetworkFilter }
@@ -55,7 +60,7 @@ const SelectNetwork = ({ currentTab }: Props) => {
 
   const filterByNetworkName = useMemo(() => {
     if (!dashboardNetworkFilter) return ''
-
+    tokenIconStyles
     const network = networks.find((n) => n.chainId.toString() === dashboardNetworkFilter.toString())
 
     let networkName = network?.name ?? t('Unknown Network') ?? 'Unknown Network'
@@ -69,16 +74,49 @@ const SelectNetwork = ({ currentTab }: Props) => {
     return networkName
   }, [dashboardNetworkFilter, networks, t])
 
+  const handlePress = useCallback(() => {
+    const urlParams = new URLSearchParams(searchParams)
+
+    const url = urlParams
+      ? `${WEB_ROUTES.networks}?prevSearchParams=${encodeURIComponent(urlParams.toString())}`
+      : WEB_ROUTES.networks
+
+    navigate(url)
+  }, [searchParams])
+
+  if (isMobile) {
+    return (
+      <Pressable
+        style={{
+          width: 40,
+          height: 40,
+          backgroundColor: theme.primaryBackground,
+          borderRadius: 20,
+          ...flexbox.center
+        }}
+        onPress={handlePress}
+      >
+        <FilterAlternativeIcon width={24} height={24} color={theme.iconPrimary} />
+        {dashboardNetworkFilter && (
+          <View
+            style={[
+              tokenIconStyles.networkIconWrapper,
+              { left: -5, top: -2, borderWidth: 1, borderColor: theme.neutral100 }
+            ]}
+          >
+            <NetworkIcon
+              id={dashboardNetworkFilter.toString()}
+              size={17}
+              style={tokenIconStyles.networkIcon}
+            />
+          </View>
+        )}
+      </Pressable>
+    )
+  }
+
   return (
-    <View
-      style={[
-        flexbox.directionRow,
-        flexbox.alignCenter,
-        {
-          width: 168
-        }
-      ]}
-    >
+    <View style={[flexbox.directionRow, flexbox.alignCenter, { width: 168 }]}>
       <AnimatedPressable
         style={[
           styles.container,
@@ -94,15 +132,7 @@ const SelectNetwork = ({ currentTab }: Props) => {
             })
           }
         ]}
-        onPress={() => {
-          const urlParams = new URLSearchParams(searchParams)
-
-          const url = urlParams
-            ? `${WEB_ROUTES.networks}?prevSearchParams=${encodeURIComponent(urlParams.toString())}`
-            : WEB_ROUTES.networks
-
-          navigate(url)
-        }}
+        onPress={handlePress}
         {...bindNetworkButtonAnim}
       >
         {dashboardNetworkFilter ? (

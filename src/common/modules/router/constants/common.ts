@@ -22,7 +22,8 @@ const COMMON_ROUTES = {
   accountSelect: 'account-select',
   receive: 'receive',
   signAccountOp: 'sign-account-op',
-  benzin: 'benzin'
+  benzin: 'benzin',
+  networks: 'networks'
 }
 
 const MOBILE_ROUTES = {
@@ -52,7 +53,6 @@ const WEB_ROUTES = {
   authEmailAccount: 'auth-email-account',
   authEmailLogin: 'auth-email-login',
   authEmailRegister: 'auth-email-register',
-  networks: 'networks',
   networksConfiguration: 'networks-configuration',
   generalSettings: 'settings/general',
   settingsTerms: 'settings/terms',

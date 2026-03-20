@@ -6,9 +6,9 @@ import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import Text from '@common/components/Text'
 import { AnimatedPressable, useMultiHover } from '@common/hooks/useHover'
 import useTheme from '@common/hooks/useTheme'
+import getStyles from '@common/modules/networks/components/NetworkBottomSheet/styles'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import getStyles from '@web/modules/networks/components/NetworkBottomSheet/styles'
 
 const Option = ({
   renderIcon,

@@ -1,6 +1,7 @@
 import { StyleSheet, ViewStyle } from 'react-native'
 
-import spacings, { SPACING_MI, SPACING_TY, SPACING_XL } from '@common/styles/spacings'
+import { isMobile } from '@common/config/env'
+import spacings, { SPACING_MI, SPACING_SM, SPACING_TY, SPACING_XL } from '@common/styles/spacings'
 import { ThemeProps } from '@common/styles/themeConfig'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
@@ -19,11 +20,11 @@ const getStyles = (theme: ThemeProps) =>
       ...flexbox.directionRow,
       ...spacings.phSm,
       ...spacings.pvSm,
-      marginBottom: SPACING_MI / 2,
+      marginBottom: isMobile ? 0 : SPACING_MI / 2,
       borderRadius: BORDER_RADIUS_PRIMARY
     },
     noKebabNetwork: {
-      paddingRight: SPACING_XL + SPACING_TY
+      paddingRight: isMobile ? SPACING_SM : SPACING_XL + SPACING_TY
     },
     highlightedNetwork: {
       backgroundColor: theme.secondaryBackground,
