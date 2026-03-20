@@ -25,7 +25,6 @@ const ThemeProvider: React.FC<{
   }, [selectedThemeType])
 
   const themeType = useMemo(() => {
-    console.log('systemThemeType', systemThemeType)
     // const type = forceThemeType ?? selectedThemeType ?? syncStorage.get('fallbackSelectedThemeType')
     // NOTE: temp here
     const type = THEME_TYPES.SYSTEM
