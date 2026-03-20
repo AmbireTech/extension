@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { ColorValue, View, ViewStyle } from 'react-native'
 import { SvgProps } from 'react-native-svg'
 
+import ExternalLinkIcon from '@common/assets/svg/ExternalLinkIcon'
 import LeftArrowIcon from '@common/assets/svg/LeftArrowIcon'
 import Text from '@common/components/Text'
 import { AnimatedPressable, useCustomHover } from '@common/hooks/useHover'
@@ -21,6 +22,7 @@ interface Props {
   isActive: boolean
   Icon?: FC<SvgProps>
   isExternal?: boolean
+  onPress?: () => void | Promise<void>
   style?: ViewStyle
   isSidebarLink?: boolean
 }
@@ -31,6 +33,7 @@ const SettingsLink: FC<Props> = ({
   Icon,
   isActive,
   isExternal,
+  onPress,
   style,
   isSidebarLink
 }) => {
@@ -45,11 +48,16 @@ const SettingsLink: FC<Props> = ({
       to: isSidebarLink ? theme.primaryBackground : theme.secondaryBackground
     }
   })
-  const isDisabled = !Object.values(ROUTES).includes(path) && !isExternal
+  const isDisabled = !onPress && !Object.values(ROUTES).includes(path) && !isExternal
 
   return (
     <AnimatedPressable
       onPress={async () => {
+        if (onPress) {
+          await onPress()
+          return
+        }
+
         if (isExternal) {
           try {
             await openInTab({ url: path })
@@ -102,10 +110,18 @@ const SettingsLink: FC<Props> = ({
             ...flexbox.center
           }}
         >
-          <LeftArrowIcon
-            style={{ transform: [{ rotate: '180deg' }] }}
-            color={isHovered || isActive ? theme.primaryText : theme.iconPrimary}
-          />
+          {isExternal ? (
+            <ExternalLinkIcon
+              width={24}
+              height={24}
+              color={isHovered || isActive ? theme.primaryText : theme.iconPrimary}
+            />
+          ) : (
+            <LeftArrowIcon
+              style={{ transform: [{ rotate: '180deg' }] }}
+              color={isHovered || isActive ? theme.primaryText : theme.iconPrimary}
+            />
+          )}
         </View>
       )}
     </AnimatedPressable>
