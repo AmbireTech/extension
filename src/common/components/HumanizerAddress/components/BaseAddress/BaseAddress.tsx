@@ -14,6 +14,7 @@ import InfoIcon from '@common/assets/svg/InfoIcon'
 import OpenIcon from '@common/assets/svg/OpenIcon'
 import Text, { Props as TextProps } from '@common/components/Text'
 import Tooltip from '@common/components/Tooltip'
+import { isWeb } from '@common/config/env'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
@@ -99,7 +100,7 @@ const BaseAddress: FC<Props> = ({
   const tooltipId = useMemo(() => `address-${address}-${nanoid(6)}`, [address])
 
   return (
-    <View style={[flexbox.alignCenter, flexbox.directionRow, flexbox.flex1]}>
+    <View style={[flexbox.alignCenter, flexbox.directionRow, isWeb && flexbox.flex1]}>
       <Text
         weight={isDisplayingPlainAddress ? 'mono_regular' : 'medium'}
         fontSize={14}
@@ -108,16 +109,18 @@ const BaseAddress: FC<Props> = ({
         {...rest}
       >
         {children}
-        <Pressable style={spacings.mlMi}>
-          {({ hovered }: any) => (
-            <InfoIcon
-              data-tooltip-id={tooltipId}
-              color={hovered ? theme.primaryText : theme.secondaryText}
-              width={14}
-              height={14}
-            />
-          )}
-        </Pressable>
+        {isWeb && (
+          <Pressable style={spacings.mlMi}>
+            {({ hovered }: any) => (
+              <InfoIcon
+                data-tooltip-id={tooltipId}
+                color={hovered ? theme.primaryText : theme.secondaryText}
+                width={14}
+                height={14}
+              />
+            )}
+          </Pressable>
+        )}
       </Text>
       <Tooltip
         id={tooltipId}

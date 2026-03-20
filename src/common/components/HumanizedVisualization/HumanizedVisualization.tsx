@@ -5,6 +5,7 @@ import { IrCall } from '@ambire-common/libs/humanizer/interfaces'
 import HumanizerAddress from '@common/components/HumanizerAddress'
 import Text from '@common/components/Text'
 import TokenOrNft from '@common/components/TokenOrNft'
+import { isMobile } from '@common/config/env'
 import useTheme from '@common/hooks/useTheme'
 import spacings, { SPACING_SM, SPACING_TY } from '@common/styles/spacings'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
@@ -56,7 +57,9 @@ const HumanizedVisualization: FC<Props> = ({
         flexbox.alignCenter,
         flexbox.wrap,
         {
-          marginHorizontal: hasPadding ? SPACING_SM * sizeMultiplierSize : 0
+          marginHorizontal: hasPadding
+            ? (isMobile ? SPACING_TY : SPACING_SM) * sizeMultiplierSize
+            : 0
         },
         style
       ]}

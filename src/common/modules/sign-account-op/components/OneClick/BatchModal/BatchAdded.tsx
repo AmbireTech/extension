@@ -1,4 +1,4 @@
-import React, { FC } from 'react'
+import React, { FC, Fragment } from 'react'
 import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 
@@ -9,8 +9,10 @@ import Button from '@common/components/Button'
 import FooterGlassView from '@common/components/FooterGlassView'
 import LayoutWrapper from '@common/components/LayoutWrapper'
 import Text from '@common/components/Text'
+import { isMobile, isWeb } from '@common/config/env'
 import useTheme from '@common/hooks/useTheme'
 import Header from '@common/modules/header/components/Header'
+import { HeaderWithTitle } from '@common/modules/header/components/Header/Header'
 import spacings, { SPACING_MD } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
@@ -35,15 +37,26 @@ const BatchAdded: FC<Props> = ({
   const { t } = useTranslation()
   const { theme } = useTheme()
 
+  const ButtonWrapper: FC<{ children: React.ReactNode; style?: any }> = ({ children, style }) =>
+    isWeb ? <View style={style}>{children}</View> : <Fragment>{children}</Fragment>
+
   return (
     <LayoutWrapper>
-      <Header />
+      {isWeb ? <Header /> : <HeaderWithTitle title={t('Batch')} withBackButton={false} />}
       <View
-        style={[spacings.phSm, flexbox.flex1, flexbox.alignCenter, spacings.ptMd, spacings.pbSm]}
+        style={[
+          spacings.phSm,
+          flexbox.flex1,
+          flexbox.alignCenter,
+          isWeb && spacings.ptMd,
+          isWeb && spacings.pbSm
+        ]}
       >
-        <Text fontSize={20} weight="medium" style={[spacings.mbMd, text.center]}>
-          {title}
-        </Text>
+        {isWeb && (
+          <Text fontSize={20} weight="medium" style={[spacings.mbMd, text.center]}>
+            {title}
+          </Text>
+        )}
         <BatchIconAnimated />
         <Text fontSize={20} weight="medium" style={[spacings.mbSm, spacings.mtLg, text.center]}>
           {t('Successfully added to batch!')}
@@ -76,9 +89,11 @@ const BatchAdded: FC<Props> = ({
         <Text fontSize={12} weight="medium" appearance="tertiaryText" style={text.center}>
           {t('You can add more transactions or\nmanage this batch in the dashboard.')}
         </Text>
-
+        {isMobile && <View style={flexbox.flex1} />}
         <FooterGlassView size="sm">
-          <View style={[flexbox.directionRow, flexbox.alignCenter, flexbox.justifySpaceBetween]}>
+          <ButtonWrapper
+            style={[flexbox.directionRow, flexbox.alignCenter, flexbox.justifySpaceBetween]}
+          >
             <Button
               onPress={onSecondaryButtonPress}
               hasBottomSpacing={false}
@@ -86,21 +101,21 @@ const BatchAdded: FC<Props> = ({
               text={secondaryButtonText}
               textStyle={spacings.mlMi}
               testID="add-more-button"
-              size="smaller"
+              size={isWeb ? 'smaller' : 'regular'}
               childrenPosition="left"
-              style={spacings.mrLg}
+              style={isWeb ? spacings.mrLg : {}}
             >
               <AddCircularIcon width={24} height={24} color={theme.primaryText} />
             </Button>
             <Button
               onPress={onPrimaryButtonPress}
-              hasBottomSpacing={false}
+              hasBottomSpacing={isMobile}
               textStyle={spacings.phTy}
               text={primaryButtonText}
-              size="smaller"
+              size={isWeb ? 'smaller' : 'regular'}
               testID="go-dashboard-button"
             />
-          </View>
+          </ButtonWrapper>
         </FooterGlassView>
       </View>
     </LayoutWrapper>

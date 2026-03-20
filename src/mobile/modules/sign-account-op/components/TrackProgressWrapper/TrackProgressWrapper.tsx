@@ -6,6 +6,7 @@ import { SwapAndBridgeActiveRoute } from '@ambire-common/interfaces/swapAndBridg
 import Button from '@common/components/Button'
 import FooterGlassView from '@common/components/FooterGlassView'
 import LayoutWrapper from '@common/components/LayoutWrapper'
+import { isWeb } from '@common/config/env'
 import useTheme from '@common/hooks/useTheme'
 import { HeaderWithLogoOnly } from '@common/modules/header/components/Header/Header'
 import spacings from '@common/styles/spacings'
@@ -35,7 +36,7 @@ const TrackProgressWrapper: FC<TrackProgressProps> = ({
   return (
     <LayoutWrapper>
       <HeaderWithLogoOnly />
-      <View style={[spacings.phSm, flexbox.flex1, spacings.pbSm]}>
+      <View style={[spacings.phSm, flexbox.flex1, isWeb && spacings.pbSm]}>
         <View
           style={[
             flexbox.flex1,
@@ -51,7 +52,7 @@ const TrackProgressWrapper: FC<TrackProgressProps> = ({
           <View style={{ height: 1, backgroundColor: theme.secondaryBorder, ...spacings.mvLg }} />
         )}
 
-        <FooterGlassView absolute={false} size="sm" style={spacings.mbTy}>
+        <FooterGlassView absolute={false} size="sm" style={isWeb ? spacings.mbTy : {}}>
           <View
             style={[
               routeStatus !== 'failed' ? flexbox.directionRow : flexbox.directionRowReverse,
@@ -67,10 +68,14 @@ const TrackProgressWrapper: FC<TrackProgressProps> = ({
                 type={routeStatus !== 'failed' ? 'secondary' : 'primary'}
                 text={secondaryButtonText}
                 testID="track-progress-secondary-button"
-                style={{
-                  ...(routeStatus !== 'failed' ? spacings.mrLg : spacings.mlLg),
-                  minWidth: 144
-                }}
+                style={
+                  isWeb
+                    ? {
+                        ...(routeStatus !== 'failed' ? spacings.mrLg : spacings.mlLg),
+                        minWidth: 144
+                      }
+                    : {}
+                }
               />
             ) : (
               <View />
@@ -78,7 +83,7 @@ const TrackProgressWrapper: FC<TrackProgressProps> = ({
             <Button
               onPress={onPrimaryButtonPress}
               hasBottomSpacing={false}
-              style={{ width: isRequestWindow ? 160 : 104 }}
+              style={isWeb ? { width: isRequestWindow ? 160 : 104 } : {}}
               text={t('Close')}
               size="smaller"
               type={routeStatus !== 'failed' ? 'primary' : 'secondary'}

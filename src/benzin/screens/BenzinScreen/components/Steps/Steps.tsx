@@ -45,7 +45,6 @@ const Steps: FC<Props> = ({ activeStep, txnId, userOpHash, stepsState, summary, 
             style={[
               flexbox.directionRow,
               flexbox.alignCenter,
-              spacings.mlTy,
               spacings.pvMi,
               spacings.phSm,
               { backgroundColor: '#6000FF14', borderRadius: 20 },

@@ -10,6 +10,7 @@ import ExpandableCard from '@common/components/ExpandableCard'
 import HumanizedVisualization from '@common/components/HumanizedVisualization'
 import Label from '@common/components/Label'
 import Text from '@common/components/Text'
+import { isMobile } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import useHover, { AnimatedPressable } from '@common/hooks/useHover'
@@ -174,7 +175,7 @@ const TransactionSummary = ({
               {...bindDeleteIconAnim}
               testID={`delete-txn-call-${index}`}
             >
-              <DeleteIcon width={28} height={28} />
+              <DeleteIcon width={isMobile ? 26 : 28} height={isMobile ? 26 : 28} />
             </AnimatedPressable>
           )}
           {rightIcon && onRightIconPress && !hasCallFailed && (

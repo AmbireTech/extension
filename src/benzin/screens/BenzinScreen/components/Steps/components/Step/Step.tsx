@@ -8,6 +8,7 @@ import ConfirmedIcon from '@common/assets/svg/ConfirmedIcon'
 import DiagonalRightArrowIcon from '@common/assets/svg/DiagonalRightArrowIcon'
 import RejectedIcon from '@common/assets/svg/RejectedIcon'
 import Text from '@common/components/Text'
+import { isWeb } from '@common/config/env'
 import { AnimatedPressable, useMultiHover } from '@common/hooks/useHover'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
@@ -151,13 +152,17 @@ const Step: FC<StepProps> = ({
         )}
       </View>
       <View
-        style={[
-          spacings.plMd,
-          flexbox.flex1,
-          stepIndex !== STEPS.length - 1
-            ? spacings[IS_MOBILE_UP_BENZIN_BREAKPOINT ? 'pb2Xl' : 'pbLg']
-            : {}
-        ]}
+        style={
+          isWeb
+            ? [
+                spacings.plMd,
+                flexbox.flex1,
+                stepIndex !== STEPS.length - 1
+                  ? spacings[IS_MOBILE_UP_BENZIN_BREAKPOINT ? 'pb2Xl' : 'pbLg']
+                  : {}
+              ]
+            : [spacings.plMd, flexbox.flex1, spacings.pbXl]
+        }
       >
         {!!title && (
           <View style={[flexbox.directionRow, flexbox.alignCenter, flexbox.justifySpaceBetween]}>
