@@ -17,21 +17,8 @@ import ActionsPagination from '@common/modules/action-requests/components/Action
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
+import { Props } from './Footer'
 import getStyles from './styles'
-
-type Props = {
-  onReject: () => void
-  onAddToCart: () => void
-  onSign: () => void
-  isSignLoading: boolean
-  isSignDisabled: boolean
-  isAddToCartDisplayed: boolean
-  isAddToCartDisabled: boolean
-  inProgressButtonText: string
-  shouldHoldToProceed: boolean
-  buttonText: string
-  buttonTooltipText?: string
-}
 
 const Footer = ({
   onReject,

@@ -2,7 +2,7 @@ import React, { FC, useEffect, useMemo, useRef } from 'react'
 import { Animated, FlatList, FlatListProps, ViewStyle } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
-import { isMobile } from '@common/config/env'
+import { isMobile, isWeb } from '@common/config/env'
 import spacings from '@common/styles/spacings'
 
 import useBanners from '../../hooks/useBanners'
@@ -42,7 +42,7 @@ const DashboardPageScrollContainer: FC<Props> = ({
 
   const contentContainerStyle = useMemo(() => {
     return [
-      controllerBanners.length ? spacings.ptTy : spacings.pt0,
+      controllerBanners.length && isWeb ? spacings.ptTy : spacings.pt0,
       { flexGrow: 1 },
       isMobile && { paddingBottom: bottom }
     ]

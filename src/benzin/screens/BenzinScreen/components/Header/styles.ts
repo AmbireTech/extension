@@ -1,6 +1,7 @@
 import { StyleSheet, ViewStyle } from 'react-native'
 
 import { IS_MOBILE_UP_BENZIN_BREAKPOINT } from '@benzin/screens/BenzinScreen/styles'
+import { isWeb } from '@common/config/env'
 import spacings from '@common/styles/spacings'
 import { ThemeProps } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
@@ -22,7 +23,7 @@ const getStyles = (theme: ThemeProps) =>
       ...flexbox.directionRow,
       ...flexbox.alignCenter,
       ...flexbox.justifyCenter,
-      ...spacings.mbXl,
+      ...(isWeb ? spacings.mbXl : spacings.mb),
       ...spacings.pvTy,
       ...spacings.plSm,
       ...spacings.prTy,

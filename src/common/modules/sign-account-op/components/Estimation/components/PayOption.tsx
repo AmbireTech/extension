@@ -110,8 +110,10 @@ const PayOption = ({
         )}
 
         <View style={[flexbox.flex1, spacings.mlTy]}>
-          <Text weight="semiBold" fontSize={13} numberOfLines={1}>
-            {formattedAmount} {feeOption.token.symbol}{' '}
+          <View style={[flexbox.directionRow, flexbox.alignCenter]}>
+            <Text weight="semiBold" fontSize={13} numberOfLines={1}>
+              {formattedAmount} {feeOption.token.symbol}{' '}
+            </Text>
             {!!feeOption.token.flags.onGasTank && (
               <View style={styles.gasTankBadge}>
                 <Text fontSize={10} color="white" weight="medium">
@@ -119,7 +121,7 @@ const PayOption = ({
                 </Text>
               </View>
             )}
-          </Text>
+          </View>
 
           {disabledReason ? (
             <Text
