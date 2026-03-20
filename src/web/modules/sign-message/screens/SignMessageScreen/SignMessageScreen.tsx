@@ -144,7 +144,8 @@ const SignMessageScreen = () => {
               signature: null
             },
             signed: userRequest.meta.signed,
-            hash: userRequest.meta.hash
+            hash: userRequest.meta.hash,
+            signatures: userRequest.meta.signatures
           }
         ]
       }
