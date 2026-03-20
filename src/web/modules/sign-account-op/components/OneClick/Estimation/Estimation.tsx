@@ -89,6 +89,7 @@ const OneClickEstimation = ({
     handleQrSingingFlowOnContinuePressed,
     handleQrSigningFlowSubmitSignatureResponse,
     handleQrSigningFlowOnClosePressed,
+    handleQrSigningFlowOnRejectPressed,
     currentRequest,
     signingStep
   } = useSign({
@@ -237,6 +238,7 @@ const OneClickEstimation = ({
         handleQrSingingFlowOnContinuePressed={handleQrSingingFlowOnContinuePressed}
         handleQrSigningFlowSubmitSignatureResponse={handleQrSigningFlowSubmitSignatureResponse}
         handleQrSigningFlowOnClosePressed={handleQrSigningFlowOnClosePressed}
+        handleQrSigningFlowOnRejectPressed={handleQrSigningFlowOnRejectPressed}
         warningToPromptBeforeSign={warningToPromptBeforeSign}
         acknowledgeWarning={acknowledgeWarning}
         dismissWarning={dismissWarning}

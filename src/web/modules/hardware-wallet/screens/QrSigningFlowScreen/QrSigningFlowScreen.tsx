@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo } from 'react'
+import React, { useCallback, useEffect, useMemo } from 'react'
 import { useModalize } from 'react-native-modalize'
 
 import BottomSheet from '@common/components/BottomSheet'
@@ -21,6 +21,7 @@ type Props = {
   signingStep: QrSigningStep
   onContinue: () => void
   submitSignatureResponse: (payload: string | Uint8Array) => void
+  onReject: () => void
 }
 
 const QrSigningFlowScreen = ({
@@ -29,7 +30,8 @@ const QrSigningFlowScreen = ({
   currentRequest,
   signingStep,
   onContinue,
-  submitSignatureResponse
+  submitSignatureResponse,
+  onReject
 }: Props) => {
   const { ref, open, close } = useModalize()
   const { t } = useTranslation()
@@ -43,6 +45,11 @@ const QrSigningFlowScreen = ({
   }, [open, close, isVisible])
 
   const title = step === 'scan-response' ? t('Scan QR response') : t('Sign with QR wallet')
+
+  const handleOnRejectPressed = useCallback(() => {
+    close()
+    onReject()
+  }, [close, onReject])
 
   return (
     <BottomSheet
@@ -59,12 +66,14 @@ const QrSigningFlowScreen = ({
       <ModalHeader title={title} handleClose={handleClose} />
 
       {!request ? (
+        // TODO: added Error view
         <Text>{t('ERROR')}</Text>
       ) : step === 'show-request' ? (
         <QrSignRequestScreen
           urType={request.urType}
           urCborHex={request.urCborHex}
           onContinue={onContinue}
+          onReject={handleOnRejectPressed}
         />
       ) : step === 'scan-response' ? (
         <QrSignResponseScanner onSignatureScanned={(payload) => submitSignatureResponse(payload)} />

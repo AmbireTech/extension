@@ -200,6 +200,18 @@ const useSign = ({
     [qrHardwareDispatch]
   )
 
+  const handleQrSigningFlowOnRejectPressed = useCallback(() => {
+    qrHardwareDispatch({
+      type: 'method',
+      params: {
+        method: 'signingCleanup',
+        args: []
+      }
+    })
+
+    setShouldDisplayQrSigningModal(false)
+  }, [qrHardwareDispatch])
+
   const warningToPromptBeforeSign = useMemo(
     () =>
       signAccountOpState?.warnings.find((warning) => {
@@ -514,6 +526,7 @@ const useSign = ({
     handleQrSingingFlowOnContinuePressed,
     handleQrSigningFlowSubmitSignatureResponse,
     handleQrSigningFlowOnClosePressed,
+    handleQrSigningFlowOnRejectPressed,
     currentRequest,
     signingStep
   }

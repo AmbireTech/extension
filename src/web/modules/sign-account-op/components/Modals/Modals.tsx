@@ -28,6 +28,7 @@ type Props = Pick<
   | 'handleQrSingingFlowOnContinuePressed'
   | 'handleQrSigningFlowSubmitSignatureResponse'
   | 'handleQrSigningFlowOnClosePressed'
+  | 'handleQrSigningFlowOnRejectPressed'
   | 'currentRequest'
   | 'signingStep'
   | 'warningToPromptBeforeSign'
@@ -52,6 +53,7 @@ const Modals: FC<Props> = ({
   handleQrSingingFlowOnContinuePressed,
   handleQrSigningFlowSubmitSignatureResponse,
   handleQrSigningFlowOnClosePressed,
+  handleQrSigningFlowOnRejectPressed,
   currentRequest,
   signingStep,
   warningToPromptBeforeSign,
@@ -132,6 +134,7 @@ const Modals: FC<Props> = ({
         currentRequest={currentRequest}
         signingStep={signingStep}
         submitSignatureResponse={handleQrSigningFlowSubmitSignatureResponse}
+        onReject={handleQrSigningFlowOnRejectPressed}
       />
     )
   }

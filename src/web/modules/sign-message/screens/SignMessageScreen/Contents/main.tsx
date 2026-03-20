@@ -102,6 +102,18 @@ const Main = ({
     [qrHardwareDispatch]
   )
 
+  const handleQrSigningFlowOnRejectPressed = useCallback(
+    () =>
+      qrHardwareDispatch({
+        type: 'method',
+        params: {
+          method: 'signingCleanup',
+          args: []
+        }
+      }),
+    [qrHardwareDispatch]
+  )
+
   return (
     <TabLayoutWrapperMainContent style={spacings.mbLg}>
       <View
@@ -245,6 +257,7 @@ const Main = ({
             currentRequest={currentRequest}
             signingStep={signingStep}
             submitSignatureResponse={handleSubmitSignatureResponse}
+            onReject={handleQrSigningFlowOnRejectPressed}
           />
         )}
         {shouldDisplayLedgerConnectModal && (
