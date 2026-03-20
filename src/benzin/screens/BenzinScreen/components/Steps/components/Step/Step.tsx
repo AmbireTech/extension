@@ -161,7 +161,7 @@ const Step: FC<StepProps> = ({
                   ? spacings[IS_MOBILE_UP_BENZIN_BREAKPOINT ? 'pb2Xl' : 'pbLg']
                   : {}
               ]
-            : [spacings.plMd, flexbox.flex1, spacings.pbXl]
+            : [spacings.plMd, flexbox.flex1, stepIndex !== STEPS.length - 1 && spacings.pbXl]
         }
       >
         {!!title && (

@@ -25,9 +25,16 @@ const StepRow: FC<StepRowProps> = ({ label, value, renderValue, isValueSmall, er
             flexbox.alignCenter,
             flexbox.justifySpaceBetween,
             spacings.mbTy,
-            { rowGap: 2 }
+            { rowGap: SPACING_MI }
           ]
-        : [spacings.mbTy, { rowGap: 2 }]
+        : [
+            flexbox.directionRow,
+            flexbox.alignCenter,
+            flexbox.justifySpaceBetween,
+            flexbox.wrap,
+            spacings.mbTy,
+            { columnGap: SPACING_TY, rowGap: 2 }
+          ]
     }
     key={label}
   >

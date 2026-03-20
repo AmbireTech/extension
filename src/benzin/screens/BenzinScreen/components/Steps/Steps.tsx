@@ -9,6 +9,7 @@ import { IS_MOBILE_UP_BENZIN_BREAKPOINT } from '@benzin/screens/BenzinScreen/sty
 import StarsIcon from '@common/assets/svg/StarsIcon'
 import Text from '@common/components/Text'
 import TokenIcon from '@common/components/TokenIcon'
+import { isMobile } from '@common/config/env'
 import ConfettiAnimation from '@common/modules/dashboard/components/ConfettiAnimation'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
@@ -134,7 +135,7 @@ const Steps: FC<Props> = ({ activeStep, txnId, userOpHash, stepsState, summary, 
           style={{ zIndex: 1 }}
         />
       )}
-      <View style={IS_MOBILE_UP_BENZIN_BREAKPOINT ? spacings.mb2Xl : spacings.mbXl}>
+      <View style={isMobile ? {} : IS_MOBILE_UP_BENZIN_BREAKPOINT ? spacings.mb2Xl : spacings.mbXl}>
         <Step
           title="Signed"
           stepName="signed"
