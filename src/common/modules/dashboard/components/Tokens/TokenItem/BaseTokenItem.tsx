@@ -168,10 +168,14 @@ const BaseTokenItem = ({
                   fontSize={13}
                   weight="number_medium"
                   numberOfLines={1}
-                  dataSet={createGlobalTooltipDataSet({
-                    id: `${tokenId}-balance`,
-                    content: String(isPending ? pendingBalance : balance)
-                  })}
+                  dataSet={
+                    !isPrivacyModeEnabled
+                      ? createGlobalTooltipDataSet({
+                          id: `${tokenId}-balance`,
+                          content: String(isPending ? pendingBalance : balance)
+                        })
+                      : undefined
+                  }
                   appearance="secondaryText"
                   testID={`token-balance-${tokenId}`}
                 >
