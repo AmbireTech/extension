@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useEffect, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { Account } from '@ambire-common/interfaces/account'
@@ -14,10 +14,25 @@ import useController from '@common/hooks/useController'
  */
 const useAccountNetworks = ({ acc }: { acc?: Account | null }) => {
   const {
-    state: { accountStates }
+    state: { accountStates },
+    dispatch: accountsDispatch
   } = useController('AccountsController')
   const { state: networks } = useController('NetworksController', (state) => state.networks)
   const { t } = useTranslation()
+
+  // safe accounts are dependant on the account state so be sure to fetch it
+  // if it's not already fetched
+  useEffect(() => {
+    if (!acc || !acc.safeCreation || !!accountStates[acc.addr]) return
+
+    accountsDispatch({
+      type: 'method',
+      params: {
+        method: 'updateAccountState',
+        args: [acc.addr, 'latest']
+      }
+    })
+  }, [acc, accountStates, accountsDispatch])
 
   const accountNetworks = useMemo(() => {
     if (!acc) return []
@@ -38,7 +53,7 @@ const useAccountNetworks = ({ acc }: { acc?: Account | null }) => {
         (network) => network.areContractsDeployed && (network.hasRelayer || network.erc4337.enabled)
       )
     }
-    if (!accountStates[acc.addr]) return []
+    if (!accountStates[acc.addr]) return networks
 
     return networks.filter((n) => {
       const networkAccState = accountStates[acc.addr]?.[n.chainId.toString()]

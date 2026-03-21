@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 
 import { getIsViewOnly } from '@ambire-common/utils/accounts'
 import { isMobile } from '@common/config/env'
@@ -15,15 +15,13 @@ const MAX_VISIBLE_NETWORKS = isMobile ? 8 : 10
 const useReceive = () => {
   const { state } = useRoute()
   const { address } = state || {}
-  const accountStateCheckedForRef = React.useRef<string | null>(null)
 
   const {
     state: { account: stateAccount }
   } = useController('SelectedAccountController')
 
   const {
-    state: { accounts, accountStates },
-    dispatch: accountsDispatch
+    state: { accounts }
   } = useController('AccountsController')
 
   const account = useMemo(() => {
@@ -42,23 +40,6 @@ const useReceive = () => {
   const { theme } = useTheme()
   const qrCodeRef: any = useRef(null)
   const [qrCodeError, setQrCodeError] = useState<string | boolean | null>(null)
-
-  useEffect(() => {
-    // fetch the account state for this account if not fetched
-    const checkedForThisAcc = accountStateCheckedForRef.current === account?.addr
-    if (checkedForThisAcc || !account || !account.safeCreation || !!accountStates[account.addr])
-      return
-
-    accountStateCheckedForRef.current = account.addr
-
-    accountsDispatch({
-      type: 'method',
-      params: {
-        method: 'updateAccountState',
-        args: [account.addr, 'latest']
-      }
-    })
-  }, [account, accountStates, accountsDispatch])
 
   const isViewOnly = useMemo(() => {
     return !account?.safeCreation && getIsViewOnly(keys, account?.associatedKeys || [])
