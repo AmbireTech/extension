@@ -280,7 +280,7 @@ export const ControllersMiddlewareProvider: React.FC<{
         searchParams: searchParamsFormatted
       }
     })
-  }, [route, dispatch])
+  }, [route.pathname, route.search, dispatch])
 
   useRequestsControllerHelpers(controllers.current)
 
