@@ -2,15 +2,12 @@ import { ImageStyle, StyleSheet, ViewStyle } from 'react-native'
 
 import spacings, { SPACING_SM } from '@common/styles/spacings'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
-import { getUiType } from '@common/utils/uiType'
 
 interface Style {
   modal: ViewStyle
   imageContainer: ViewStyle
   image: ImageStyle
 }
-
-const { isTab } = getUiType()
 
 export const COLLECTIBLE_IMAGE_SIZE = 300
 
@@ -22,7 +19,7 @@ const getStyles = () =>
       maxWidth: COLLECTIBLE_IMAGE_SIZE + SPACING_SM * 2
     },
     imageContainer: {
-      ...spacings.mbSm
+      ...spacings.mbLg
     },
     image: {
       borderRadius: BORDER_RADIUS_PRIMARY,

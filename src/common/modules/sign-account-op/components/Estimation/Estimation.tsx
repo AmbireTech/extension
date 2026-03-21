@@ -481,7 +481,8 @@ const Estimation = ({
             options={feeSpeedOptions}
             selectStyle={{
               height: 40,
-              backgroundColor: isOneClick ? theme.secondaryBackground : theme.primaryBackground
+              backgroundColor:
+                isOneClick || isMobile ? theme.secondaryBackground : theme.primaryBackground
             }}
             menuOptionHeight={isWeb ? 40 : undefined}
             // Display a wider menu if the fee token price is unavailable
@@ -509,12 +510,14 @@ const Estimation = ({
           !signAccountOpState.selectedOption
         }
         selectStyle={{
-          backgroundColor: isOneClick ? theme.secondaryBackground : theme.primaryBackground,
+          backgroundColor:
+            isOneClick || isMobile ? theme.secondaryBackground : theme.primaryBackground,
           ...spacings.phSm
         }}
         defaultValue={payValue ?? undefined}
         withSearch={!!payOptionsPaidByUsOrGasTank.length || !!payOptionsPaidByEOA.length}
         stickySectionHeadersEnabled
+        bottomSheetTitle={t('Gas token')}
       />
       <ServiceFee
         serviceFee={serviceFee}

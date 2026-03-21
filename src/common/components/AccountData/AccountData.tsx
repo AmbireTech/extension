@@ -1,6 +1,6 @@
 import React, { FC, memo, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Animated } from 'react-native'
+import { Animated, View } from 'react-native'
 
 import shortenAddress from '@ambire-common/utils/shortenAddress'
 import CopyIcon from '@common/assets/svg/CopyIcon'
@@ -68,71 +68,73 @@ const AccountData: FC<Props> = ({ onPress, withArrowRightIcon }) => {
   }, [account])
 
   return (
-    <AnimatedPressable
-      testID="account-select-btn"
-      style={[
-        styles.accountButton,
-        {
-          backgroundColor: '#000000A3',
-          flexShrink: 1,
-          // @ts-ignore
-          ...(isWeb && !onPress ? { cursor: 'auto' } : {})
-        }
-      ]}
-      onPress={onPress}
-      {...(onPress ? bindAccountBtnAnim : {})}
-    >
-      <>
-        <Avatar
-          pfp={account.preferences.pfp}
-          address={account.addr}
-          size={32}
-          smartAccountType={smartAccountType}
-        />
-        <Text
-          numberOfLines={1}
-          weight="semiBold"
-          style={[spacings.mrMi, { maxWidth: isPopup ? 112 : 160, flexShrink: 1 }]}
-          color="#FFFFFF"
-          fontSize={14}
-        >
-          {account.preferences.label}
-        </Text>
-
+    <View style={{ overflow: 'hidden', borderTopRightRadius: 50, borderBottomRightRadius: 50 }}>
+      <AnimatedPressable
+        testID="account-select-btn"
+        style={[
+          styles.accountButton,
+          {
+            backgroundColor: '#000000A3',
+            flexShrink: 1,
+            // @ts-ignore
+            ...(isWeb && !onPress ? { cursor: 'auto' } : {})
+          }
+        ]}
+        onPress={onPress}
+        {...(onPress ? bindAccountBtnAnim : {})}
+      >
         <>
+          <Avatar
+            pfp={account.preferences.pfp}
+            address={account.addr}
+            size={32}
+            smartAccountType={smartAccountType}
+          />
           <Text
-            color="#B9BFC9"
-            style={[isWeb ? spacings.mrTy : undefined]}
-            weight="mono_regular"
-            fontSize={12}
+            numberOfLines={1}
+            weight="semiBold"
+            style={[spacings.mrMi, { maxWidth: isPopup ? 112 : 160, flexShrink: 1 }]}
+            color="#FFFFFF"
+            fontSize={14}
           >
-            ({shortenAddress(account.addr, 13)})
+            {account.preferences.label}
           </Text>
-          {isWeb && (
-            <AnimatedPressable
-              style={addressAnimStyle}
-              onPress={handleCopyText}
-              {...bindAddressAnim}
+
+          <>
+            <Text
+              color="#B9BFC9"
+              style={[isWeb ? spacings.mrTy : undefined]}
+              weight="mono_regular"
+              fontSize={12}
             >
-              <CopyIcon width={24} height={24} color="#E3E6EB" />
-            </AnimatedPressable>
+              ({shortenAddress(account.addr, 13)})
+            </Text>
+            {isWeb && (
+              <AnimatedPressable
+                style={addressAnimStyle}
+                onPress={handleCopyText}
+                {...bindAddressAnim}
+              >
+                <CopyIcon width={24} height={24} color="#E3E6EB" />
+              </AnimatedPressable>
+            )}
+          </>
+
+          {!!withArrowRightIcon && (
+            <Animated.View style={accountBtnAnimStyle}>
+              <RightArrowIcon
+                style={[
+                  styles.accountButtonRightIcon,
+                  maxWidthSize(480) ? spacings.mlMd : spacings.mlTy
+                ]}
+                width={12}
+                color="#E3E6EB"
+              />
+            </Animated.View>
           )}
         </>
-
-        {!!withArrowRightIcon && (
-          <Animated.View style={accountBtnAnimStyle}>
-            <RightArrowIcon
-              style={[
-                styles.accountButtonRightIcon,
-                maxWidthSize(480) ? spacings.mlMd : spacings.mlTy
-              ]}
-              width={12}
-              color="#E3E6EB"
-            />
-          </Animated.View>
-        )}
-      </>
-    </AnimatedPressable>
+      </AnimatedPressable>
+    </View>
   )
 }
 

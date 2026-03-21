@@ -3,6 +3,7 @@ import { KeyboardProvider } from 'react-native-keyboard-controller'
 import { SafeAreaProvider } from 'react-native-safe-area-context'
 import { NativeRouter } from 'react-router-native'
 
+import { BiometricsProvider } from '@common/contexts/biometricsContext'
 import { ControllerStoreProvider } from '@common/contexts/controllerStoreContext'
 import { NetInfoProvider } from '@common/contexts/netInfoContext'
 import { ThemeProvider } from '@common/contexts/themeContext'
@@ -34,10 +35,12 @@ const AppInit = () => {
                       <KeyboardProvider>
                         <NetInfoProvider>
                           <AuthProvider>
-                            <OnboardingNavigationProvider>
-                              <AppRouter />
-                              <PortalHost name="global" />
-                            </OnboardingNavigationProvider>
+                            <BiometricsProvider>
+                              <OnboardingNavigationProvider>
+                                <AppRouter />
+                                <PortalHost name="global" />
+                              </OnboardingNavigationProvider>
+                            </BiometricsProvider>
                           </AuthProvider>
                         </NetInfoProvider>
                       </KeyboardProvider>

@@ -6,6 +6,7 @@ import { Animated, FlatListProps, View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 
 import { Network } from '@ambire-common/interfaces/network'
+import { TokenResult } from '@ambire-common/libs/portfolio'
 import CollectibleModal, { SelectedCollectible } from '@common/components/CollectibleModal'
 import Text from '@common/components/Text'
 import useController from '@common/hooks/useController'
@@ -34,6 +35,8 @@ interface Props {
   dashboardNetworkFilterName: string | null
   animatedOverviewHeight: Animated.Value
   isSearchHidden: boolean
+  refreshing?: boolean
+  onRefresh?: () => void
 }
 
 const { isPopup } = getUiType()
@@ -47,7 +50,9 @@ const Collections: FC<Props> = ({
   networks,
   dashboardNetworkFilterName,
   animatedOverviewHeight,
-  isSearchHidden
+  isSearchHidden,
+  refreshing,
+  onRefresh
 }) => {
   const {
     state: { portfolio, dashboardNetworkFilter }
@@ -75,13 +80,12 @@ const Collections: FC<Props> = ({
     const searchableCollections = (portfolio?.collections || []).filter(
       ({ chainId, collectibles }) => {
         let isMatchingNetwork = true
-        let isMatchingSearch = true
 
         if (dashboardNetworkFilter) {
           isMatchingNetwork = chainId === BigInt(dashboardNetworkFilter)
         }
 
-        return isMatchingNetwork && isMatchingSearch && collectibles.length
+        return isMatchingNetwork && collectibles.length
       }
     )
 
@@ -166,7 +170,6 @@ const Collections: FC<Props> = ({
       theme.primaryBackground,
       openTab,
       setOpenTab,
-      control,
       sessionId,
       searchValue,
       dashboardNetworkFilterName,
@@ -176,10 +179,10 @@ const Collections: FC<Props> = ({
     ]
   )
 
-  const keyExtractor = useCallback((collectionOrElement: any) => {
+  const keyExtractor = useCallback((collectionOrElement: TokenResult) => {
     if (typeof collectionOrElement === 'string') return collectionOrElement
 
-    return collectionOrElement.address
+    return `${collectionOrElement.address}-${collectionOrElement.chainId?.toString() || 'unknown-chain'}-${collectionOrElement.name}`
   }, [])
 
   useEffect(() => {
@@ -196,7 +199,6 @@ const Collections: FC<Props> = ({
       <DashboardPageScrollContainer
         tab="collectibles"
         openTab={openTab}
-        onScroll={onScroll}
         ListHeaderComponent={<DashboardBanners />}
         data={[
           'header',
@@ -208,8 +210,11 @@ const Collections: FC<Props> = ({
         keyExtractor={keyExtractor}
         initialNumToRender={isPopup ? 4 : 10}
         windowSize={15}
-        bounces={false}
         animatedOverviewHeight={animatedOverviewHeight}
+        onScroll={onScroll}
+        scrollEventThrottle={16}
+        refreshing={refreshing}
+        onRefresh={onRefresh}
       />
       {openTab === 'collectibles' && (
         <SearchAndCurrentApp control={control} isHidden={isSearchHidden} />

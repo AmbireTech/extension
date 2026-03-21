@@ -1,11 +1,18 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import { Controller } from 'react-hook-form'
 import { Image, TouchableOpacity, View } from 'react-native'
 
 import { isValidPassword } from '@ambire-common/services/validations'
 import AmbireLogoWithBackgroundAndLogotype from '@common/assets/svg/AmbireLogoWithBackgroundAndLogotype'
+import InvisibilityIcon from '@common/assets/svg/InvisibilityIcon'
 import LockIcon from '@common/assets/svg/LockIcon'
+import VisibilityIcon from '@common/assets/svg/VisibilityIcon'
 import Button from '@common/components/Button'
+import FatToggle from '@common/components/FatToggle'
+import {
+  createGlobalTooltipDataSet,
+  GLOBAL_TOOLTIP_REFRESH_EVENT
+} from '@common/components/GlobalTooltip'
 import InputPassword from '@common/components/InputPassword'
 import LayoutWrapper from '@common/components/LayoutWrapper'
 import Text from '@common/components/Text'
@@ -32,7 +39,10 @@ const KeyStoreUnlockScreen = () => {
     useKeyStoreUnlock()
   const { t } = useTranslation()
   const { styles } = useTheme(getStyles)
-
+  const {
+    state: { isPrivacyModeEnabled },
+    dispatch: walletStateDispatch
+  } = useController('WalletStateController')
   const { hasKeystoreRecovery } = useController('EmailVaultController').state
   const {
     state: { statuses, errorMessage },
@@ -40,6 +50,14 @@ const KeyStoreUnlockScreen = () => {
   } = useController('KeystoreController')
   const { requestWindow } = useController('RequestsController').state
   const { theme } = useTheme()
+
+  // Refresh tooltip content when privacy mode changes while tooltip is active
+  useEffect(() => {
+    if (!isWeb) return
+
+    const event = new CustomEvent(GLOBAL_TOOLTIP_REFRESH_EVENT)
+    window.dispatchEvent(event)
+  }, [isPrivacyModeEnabled])
 
   return (
     <LayoutWrapper style={styles.panel}>
@@ -72,11 +90,51 @@ const KeyStoreUnlockScreen = () => {
               zIndex: -1
             }}
           />
-          <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mb3Xl]}>
-            <Text fontSize={20} weight="semiBold" color="#fff" appearance="primaryText">
-              {t('Welcome Back')}
-            </Text>
-            <LockIcon width={24} height={24} color="#fff" style={spacings.mlTy} />
+          <View
+            style={[
+              { width: '100%' },
+              flexbox.directionRow,
+              flexbox.justifySpaceBetween,
+              flexbox.alignCenter,
+              spacings.phSm,
+              spacings.mb3Xl
+            ]}
+          >
+            <View
+              dataSet={createGlobalTooltipDataSet({
+                id: `privacy-mode`,
+                content: t(`Balances: ${isPrivacyModeEnabled ? 'Hidden' : 'Visible'}`)
+              })}
+            >
+              <FatToggle
+                isOn={!isPrivacyModeEnabled}
+                onToggle={() =>
+                  walletStateDispatch({
+                    type: 'method',
+                    params: {
+                      method: 'togglePrivacyMode',
+                      args: []
+                    }
+                  })
+                }
+                width={44}
+                height={24}
+                style={spacings.mr0}
+              >
+                {!isPrivacyModeEnabled ? (
+                  <VisibilityIcon width={18} height={18} />
+                ) : (
+                  <InvisibilityIcon width={18} height={18} />
+                )}
+              </FatToggle>
+            </View>
+            <View style={[flexbox.directionRow, flexbox.alignCenter]}>
+              <Text fontSize={20} weight="semiBold" color="#fff" appearance="primaryText">
+                {t('Welcome Back')}
+              </Text>
+              <LockIcon width={24} height={24} color="#fff" style={spacings.mlTy} />
+            </View>
+            <View style={{ width: 44, height: 24 }} />
           </View>
           <AmbireLogoWithBackgroundAndLogotype color="#fff" style={spacings.mbXl} />
           <Text weight="medium" color="#B9BFC9" style={text.center}>

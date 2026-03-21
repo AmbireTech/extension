@@ -7,12 +7,12 @@ import { Network } from '@ambire-common/interfaces/network'
 import SuccessAnimation from '@common/components/SuccessAnimation'
 import Text from '@common/components/Text'
 import useTheme from '@common/hooks/useTheme'
+import ActionHeader from '@common/modules/action-requests/components/ActionHeader'
 import spacings from '@common/styles/spacings'
 import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import { TabLayoutContainer, TabLayoutWrapperMainContent } from '@web/components/TabLayoutWrapper'
 import ActionFooter from '@web/modules/action-requests/components/ActionFooter'
-import ActionHeader from '@web/modules/action-requests/components/ActionHeader'
 
 type AlreadyAddedChainProps = {
   handleCloseOnAlreadyAdded: () => void

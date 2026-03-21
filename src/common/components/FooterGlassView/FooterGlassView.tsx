@@ -39,7 +39,7 @@ const FooterGlassView: FC<{
   isSimpleBlur
 }) => {
   if (isMobile) {
-    return <View style={{ flexDirection: 'column-reverse' }}>{children}</View>
+    return <View style={{ flexDirection: 'column-reverse', width: '100%' }}>{children}</View>
   }
 
   return (

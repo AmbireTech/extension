@@ -20,6 +20,7 @@ import { Action, MethodAction } from '@common/types/actions'
 import { BUNGEE_API_KEY, RELAYER_URL, VELCRO_URL } from '@env'
 import { MobileBaseControllersMappingType } from '@mobile/constants/controllersMapping'
 import { handleActions } from '@mobile/handlers/handleActions'
+import useRequestsControllerHelpers from '@mobile/hooks/useRequestsControllerHelpers'
 
 let mainControllerInstance: MainController | null = null
 const fetchWithAnalytics: any = (url: any, init: any) => {
@@ -106,8 +107,7 @@ export const ControllersMiddlewareProvider: React.FC<{
   children: React.ReactNode
 }> = ({ children }) => {
   const [isUnlocked, setIsUnlocked] = useState(false)
-  const { controllerStore, isStoreReady, debounceControllerUpdates } =
-    useContext(ControllerStoreContext)
+  const { controllerStore, debounceControllerUpdates } = useContext(ControllerStoreContext)
 
   const route = useRoute()
 
@@ -281,6 +281,8 @@ export const ControllersMiddlewareProvider: React.FC<{
       }
     })
   }, [route, dispatch])
+
+  useRequestsControllerHelpers(controllers.current)
 
   return (
     <ControllersMiddlewareContext.Provider value={useMemo(() => ({ dispatch }), [dispatch])}>

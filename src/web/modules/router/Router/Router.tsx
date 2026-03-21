@@ -13,13 +13,13 @@ import useAuth from '@common/modules/auth/hooks/useAuth'
 import AuthenticatedRoute from '@common/modules/router/components/AuthenticatedRoute'
 import KeystoreUnlockedRoute from '@common/modules/router/components/KeystoreUnlockedRoute'
 import { WEB_ROUTES } from '@common/modules/router/constants/common'
+import { getInitialRoute } from '@common/modules/router/helpers'
 import flexbox from '@common/styles/utils/flexbox'
 import Splash from '@web/components/Splash'
 import useCurrentActionSideEffects from '@web/hooks/useCurrentActionSideEffects'
 import DashboardScreen from '@web/modules/dashboard/screens/DashboardScreen'
 import KeyStoreUnlockScreen from '@web/modules/keystore/screens/KeyStoreUnlockScreen'
 
-import { getInitialRoute } from './helpers'
 import getStyles from './styles'
 
 const AsyncMainRoute = lazy(() => import('@web/modules/router/components/MainRoutes'))
