@@ -24,8 +24,8 @@ import useAddressInput from '@common/hooks/useAddressInput'
 import useController from '@common/hooks/useController'
 import useHasGasTank from '@common/hooks/useHasGasTank'
 import useNavigation from '@common/hooks/useNavigation'
+import useNetworks from '@common/hooks/useNetworks'
 import useSyncedState from '@common/hooks/useSyncedState'
-import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import useWindowSize from '@common/hooks/useWindowSize'
 import { ROUTES, WEB_ROUTES } from '@common/modules/router/constants/common'
@@ -51,10 +51,11 @@ const { isRequestWindow, isPopup } = getUiType()
 
 const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
   const { addToast } = useToast()
-  const { theme } = useTheme()
   const { state: transferState, dispatch: transferDispatch } = useController('TransferController')
+  const {
+    state: { accounts }
+  } = useController('AccountsController')
   const { dispatch: requestsDispatch } = useController('RequestsController')
-  const { dispatch: mainDispatch } = useController('MainController')
   const {
     isTopUp,
     validationFormMsgs,
@@ -74,6 +75,20 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
     amountInFiat,
     isRecipientAddressViewOnly
   } = transferState
+
+  const recipientAccount = useMemo(() => {
+    const addr = getAddressFromAddressState(addressState)
+    if (!addr) return undefined
+    return accounts.find((a) => a.addr === addr)
+  }, [addressState, accounts])
+
+  const supportedRecipientNetworks = useNetworks({ acc: recipientAccount })
+
+  const isRecipientNetworkNotSupportedReason = useMemo(() => {
+    if (!selectedToken?.chainId) return null
+    return supportedRecipientNetworks.find((n) => n.chainId === selectedToken.chainId)
+      ?.notSupportedReason
+  }, [selectedToken?.chainId, supportedRecipientNetworks])
 
   const amountInFiatBigInt = useMemo(() => {
     try {
@@ -647,6 +662,15 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
                 setAddressStateFieldValue={setAddressStateFieldValue}
               />
             </ScrollableWrapper>
+            {isRecipientNetworkNotSupportedReason && (
+              <View style={spacings.ptLg}>
+                <Alert
+                  type="warning"
+                  title={isRecipientNetworkNotSupportedReason}
+                  isTypeLabelHidden
+                />
+              </View>
+            )}
             {isTopUp && !hasGasTank && (
               <View style={spacings.ptLg}>
                 <Alert
