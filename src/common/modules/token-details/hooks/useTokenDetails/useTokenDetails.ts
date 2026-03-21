@@ -19,6 +19,7 @@ import useRoute from '@common/hooks/useRoute'
 import useToast from '@common/hooks/useToast'
 import { ROUTES } from '@common/modules/router/constants/common'
 import { storage } from '@common/services/storage'
+import { getBridgeNetworkNotSupportedReason } from '@common/utils/supportedNetworks'
 import { getTokenId } from '@common/utils/token'
 import { RELAYER_URL } from '@env'
 
@@ -45,7 +46,8 @@ const useTokenDetails = () => {
   } = useController('PortfolioController')
   const networks = useNetworks({
     acc: account,
-    bridgeChainIds: supportedChainIds
+    getAdditionalNotSupportedReason: getBridgeNetworkNotSupportedReason,
+    additionalFunctionParams: [supportedChainIds]
   })
   const [doNotDisplayHideTokenModal, setDoNotDisplayHideTokenModal] = useState(false)
   const [gasTankAssets, setGasTankAssets] = useState<{ chainId: number; address: string }[] | null>(

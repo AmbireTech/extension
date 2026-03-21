@@ -23,6 +23,7 @@ import ToTokenSelect from '@common/modules/swap-and-bridge/components/ToToken/To
 import spacings from '@common/styles/spacings'
 import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
+import { getBridgeNetworkNotSupportedReason } from '@common/utils/supportedNetworks'
 import { getTokenId } from '@common/utils/token'
 import { ItemPanel } from '@web/components/TransactionsScreen'
 
@@ -58,7 +59,8 @@ const ToToken: FC<Props> = ({ simulationFailed }) => {
   } = useController('SelectedAccountController')
   const networks = useNetworks({
     acc: account,
-    bridgeChainIds: supportedChainIds
+    getAdditionalNotSupportedReason: getBridgeNetworkNotSupportedReason,
+    additionalFunctionParams: [supportedChainIds]
   })
 
   const handleSwitchFromAndToTokens = useCallback(

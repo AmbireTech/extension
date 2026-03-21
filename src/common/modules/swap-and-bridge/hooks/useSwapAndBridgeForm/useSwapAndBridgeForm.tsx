@@ -1,6 +1,7 @@
 import { getAddress } from 'ethers'
 import { nanoid } from 'nanoid'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useModalize } from 'react-native-modalize'
 import { useLocation } from 'react-router-dom'
 
@@ -18,6 +19,7 @@ import useNavigation from '@common/hooks/useNavigation'
 import useNetworks from '@common/hooks/useNetworks'
 import useSyncedState from '@common/hooks/useSyncedState'
 import { ROUTES } from '@common/modules/router/constants/common'
+import { getBridgeNetworkNotSupportedReason } from '@common/utils/supportedNetworks'
 import { getTokenId } from '@common/utils/token'
 import { getUiType } from '@common/utils/uiType'
 
@@ -75,9 +77,11 @@ const useSwapAndBridgeForm = () => {
   const [latestBatchedNetwork, setLatestBatchedNetwork] = useState<bigint | undefined>()
   const [isOneClickModeDuringPriceImpact, setIsOneClickModeDuringPriceImpact] =
     useState<boolean>(false)
+  const { t } = useTranslation()
   const networks = useNetworks({
     acc: account,
-    bridgeChainIds: supportedChainIds
+    getAdditionalNotSupportedReason: getBridgeNetworkNotSupportedReason,
+    additionalFunctionParams: [supportedChainIds]
   })
   const currentRoute = useLocation()
   const { setSearchParams, navigate } = useNavigation()

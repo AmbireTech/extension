@@ -2,7 +2,7 @@ import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { Account } from '@ambire-common/interfaces/account'
-import { SupportedNetworks } from '@ambire-common/interfaces/network'
+import { Network, SupportedNetworks } from '@ambire-common/interfaces/network'
 import useController from '@common/hooks/useController'
 
 import useAccountNetworks from './useAccountNetworks'
@@ -14,10 +14,12 @@ import useAccountNetworks from './useAccountNetworks'
  */
 const useNetworks = ({
   acc,
-  bridgeChainIds
+  getAdditionalNotSupportedReason,
+  additionalFunctionParams
 }: {
   acc?: Account | null
-  bridgeChainIds?: bigint[]
+  getAdditionalNotSupportedReason?: (network: Network, ...params: any) => string | null
+  additionalFunctionParams?: any[]
 }) => {
   const { state: networks } = useController('NetworksController', (state) => state.networks)
   const { accountNetworks, accountNotSupportedReason } = useAccountNetworks({ acc })
@@ -38,15 +40,27 @@ const useNetworks = ({
         return n
       }
 
-      if (bridgeChainIds && !bridgeChainIds.includes(n.chainId)) {
-        n.isNotSupported = true
-        n.notSupportedReason = t(`${n.name} network is not supported by our service provider.`)
-        return n
+      if (!!getAdditionalNotSupportedReason) {
+        const additionalNotSupportedReason = additionalFunctionParams?.length
+          ? getAdditionalNotSupportedReason(n, ...additionalFunctionParams)
+          : null
+        if (additionalNotSupportedReason) {
+          n.isNotSupported = true
+          n.notSupportedReason = t(additionalNotSupportedReason)
+          return n
+        }
       }
 
       return n
     })
-  }, [accountNetworkChainIds, networks, accountNotSupportedReason, bridgeChainIds, t])
+  }, [
+    accountNetworkChainIds,
+    networks,
+    accountNotSupportedReason,
+    getAdditionalNotSupportedReason,
+    additionalFunctionParams,
+    t
+  ])
 
   return supportedNetworks
 }
