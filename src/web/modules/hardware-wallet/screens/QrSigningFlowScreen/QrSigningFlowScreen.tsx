@@ -5,6 +5,7 @@ import { useModalize } from 'react-native-modalize'
 import BottomSheet from '@common/components/BottomSheet'
 import ModalHeader from '@common/components/BottomSheet/ModalHeader'
 import Button from '@common/components/Button'
+import FooterGlassView from '@common/components/FooterGlassView'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
 import spacings from '@common/styles/spacings'
@@ -81,7 +82,15 @@ const QrSigningFlowScreen = ({
           <Text fontSize={12} appearance="secondaryText" style={[flexbox.center, spacings.mbLg]}>
             {t('Please close this window and try again.')}
           </Text>
-          <Button text={t('Close')} onPress={() => close()} style={{ minWidth: 160 }} />
+          <FooterGlassView size="sm" absolute={false} style={spacings.pt}>
+            <Button
+              text={t('Close')}
+              onPress={() => close()}
+              size="smaller"
+              hasBottomSpacing={false}
+              type="secondary"
+            />
+          </FooterGlassView>
         </View>
       ) : step === 'show-request' ? (
         <QrSignRequestScreen
