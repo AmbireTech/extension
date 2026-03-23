@@ -176,7 +176,7 @@ const NavMenu = () => {
                 spacings.phSm,
                 {
                   borderBottomWidth: 1,
-                  borderBottomColor: theme.neutral100
+                  borderBottomColor: theme.primaryBorder
                 }
               ]}
             >
@@ -194,7 +194,7 @@ const NavMenu = () => {
                 spacings.phSm,
                 {
                   borderBottomWidth: 1,
-                  borderBottomColor: theme.neutral100
+                  borderBottomColor: theme.primaryBorder
                 }
               ]}
             >
@@ -208,7 +208,7 @@ const NavMenu = () => {
                 spacings.phSm,
                 {
                   borderBottomWidth: 1,
-                  borderBottomColor: theme.neutral100
+                  borderBottomColor: theme.primaryBorder
                 }
               ]}
             >
