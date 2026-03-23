@@ -4,9 +4,6 @@ import { View, ViewStyle } from 'react-native'
 import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
 import Text from '@common/components/Text'
 import TokenIcon from '@common/components/TokenIcon'
-import useTheme from '@common/hooks/useTheme'
-import { THEME_TYPES } from '@common/styles/themeConfig'
-import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 
 import styles from './styles'
 
@@ -19,55 +16,92 @@ interface Props {
   amount?: string
   amountInUsd?: number
   wrapperStyle?: ViewStyle
+  align?: 'left' | 'right' | 'center'
+}
+
+type RouteStepsTokenIconProps = Pick<Props, 'address' | 'chainId' | 'uri'>
+type RouteStepsTokenAmountProps = Pick<
+  Props,
+  'symbol' | 'amount' | 'amountInUsd' | 'wrapperStyle' | 'align'
+>
+type RouteStepsTokenWrapperProps = {
+  wrapperStyle?: ViewStyle
+  children: React.ReactNode
+}
+
+export const RouteStepsTokenWrapper: React.FC<RouteStepsTokenWrapperProps> = ({
+  wrapperStyle,
+  children
+}) => {
+  return <View style={wrapperStyle}>{children}</View>
+}
+
+export const RouteStepsTokenIcon: React.FC<RouteStepsTokenIconProps> = ({
+  address,
+  chainId,
+  uri
+}) => {
+  return (
+    <View style={styles.tokenContainer}>
+      <TokenIcon
+        uri={uri}
+        width={28}
+        height={28}
+        address={address}
+        chainId={chainId}
+        withNetworkIcon
+        withContainer
+      />
+    </View>
+  )
+}
+
+export const RouteStepsTokenAmount: React.FC<RouteStepsTokenAmountProps> = ({
+  symbol,
+  amount = '',
+  amountInUsd,
+  wrapperStyle,
+  align = 'center'
+}) => {
+  return (
+    <View
+      style={[
+        styles.amountWrapper,
+        wrapperStyle,
+        { alignItems: align === 'left' ? 'flex-start' : align === 'right' ? 'flex-end' : 'center' }
+      ]}
+    >
+      <Text fontSize={14} weight="medium" style={styles.text}>
+        {amount ? `${amount} ` : ''}
+        {symbol}
+      </Text>
+      {!!amountInUsd && (
+        <Text style={styles.text} fontSize={12} appearance="secondaryText" weight="medium">
+          {formatDecimals(amountInUsd, 'price')}
+        </Text>
+      )}
+    </View>
+  )
 }
 
 const RouteStepsToken: React.FC<Props> = ({
   symbol,
-  address,
-  chainId,
-  uri,
-  isLast = false,
   amount = '',
   amountInUsd,
-  wrapperStyle
+  wrapperStyle,
+  align,
+  ...iconProps
 }) => {
-  const { theme, themeType } = useTheme()
-
   return (
-    <View
-      style={[
-        styles.tokenWrapper,
-        wrapperStyle,
-        {
-          backgroundColor: theme.secondaryBackground,
-          borderRadius: BORDER_RADIUS_PRIMARY
-        }
-      ]}
-    >
-      <View style={styles.tokenContainer}>
-        <TokenIcon
-          uri={uri}
-          width={28}
-          height={28}
-          address={address}
-          chainId={chainId}
-          withNetworkIcon
-          withContainer
-        />
-      </View>
-
-      <View style={[styles.textContainer]}>
-        <Text fontSize={14} weight="medium" style={styles.text}>
-          {amount ? `${amount} ` : ''}
-          {symbol}
-        </Text>
-        {!!amountInUsd && (
-          <Text style={styles.text} fontSize={12} appearance="secondaryText" weight="medium">
-            {formatDecimals(amountInUsd, 'price')}
-          </Text>
-        )}
-      </View>
-    </View>
+    <RouteStepsTokenWrapper wrapperStyle={wrapperStyle}>
+      <RouteStepsTokenIcon {...iconProps} />
+      <RouteStepsTokenAmount
+        symbol={symbol}
+        amount={amount}
+        amountInUsd={amountInUsd}
+        align={align}
+      />
+    </RouteStepsTokenWrapper>
   )
 }
 
