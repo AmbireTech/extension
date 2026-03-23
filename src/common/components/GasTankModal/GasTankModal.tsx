@@ -171,6 +171,7 @@ const GasTankModal = ({ modalRef, handleClose, portfolio, account }: Props) => {
           <FooterGlassView
             size="sm"
             style={{ ...flexbox.flex1, alignItems: 'stretch' }}
+            mobileStyle={{ flexDirection: 'column' }}
             innerContainerStyle={{
               ...flexbox.justifySpaceBetween,
               ...flexbox.alignCenter,
@@ -178,7 +179,7 @@ const GasTankModal = ({ modalRef, handleClose, portfolio, account }: Props) => {
             }}
             absolute={false}
           >
-            <View style={flexbox.directionRow}>
+            <View style={[flexbox.directionRow, isMobile && spacings.mbLg]}>
               <TokenIcon
                 withContainer
                 address={token?.address || ''}
@@ -207,7 +208,7 @@ const GasTankModal = ({ modalRef, handleClose, portfolio, account }: Props) => {
               }
               type="primary"
               text={hasGasTank ? t('Top up') : t('Ok, create a Smart Account')}
-              size="smaller"
+              size={isMobile ? 'regular' : 'smaller'}
               hasBottomSpacing={false}
               style={{
                 minWidth: 128

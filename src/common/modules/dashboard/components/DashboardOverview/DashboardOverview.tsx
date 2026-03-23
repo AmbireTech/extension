@@ -1,10 +1,10 @@
 import React, { FC, useCallback, useMemo, useState } from 'react'
-import { Animated, Platform, Pressable, View } from 'react-native'
+import { Animated, Pressable, View } from 'react-native'
 
 import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
 import SkeletonLoader from '@common/components/SkeletonLoader'
 import Text from '@common/components/Text'
-import { isWeb } from '@common/config/env'
+import { isiOS, isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
@@ -179,7 +179,7 @@ const DashboardOverview: FC<Props> = ({
                         shouldScale={false}
                         weight="number_bold"
                         // Line height should be constant based on font size, not on parent height
-                        style={Platform.OS !== 'web' ? { lineHeight: 36 } : { lineHeight: 28 }}
+                        style={!isWeb ? { lineHeight: 36 } : { lineHeight: 28 }}
                         color={
                           networksWithErrors.length || isOffline
                             ? theme.warningDecorative2
@@ -204,7 +204,7 @@ const DashboardOverview: FC<Props> = ({
                                 ? theme.warningDecorative2
                                 : '#FFFFFF'
                             }
-                            style={{ lineHeight: 20 }}
+                            style={!isWeb ? { lineHeight: isiOS ? 30 : 28 } : { lineHeight: 20 }}
                           >
                             {t('.')}
                             {totalPortfolioAmountDecimalFormattedPart}
