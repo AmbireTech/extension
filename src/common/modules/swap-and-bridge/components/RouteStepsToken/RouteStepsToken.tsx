@@ -16,55 +16,92 @@ interface Props {
   amount?: string
   amountInUsd?: number
   wrapperStyle?: ViewStyle
+  align?: 'left' | 'right' | 'center'
 }
 
-const RouteStepsToken: React.FC<Props> = ({
-  symbol,
+type RouteStepsTokenIconProps = Pick<Props, 'address' | 'chainId' | 'uri'>
+type RouteStepsTokenAmountProps = Pick<
+  Props,
+  'symbol' | 'amount' | 'amountInUsd' | 'wrapperStyle' | 'align'
+>
+type RouteStepsTokenWrapperProps = {
+  wrapperStyle?: ViewStyle
+  children: React.ReactNode
+}
+
+export const RouteStepsTokenWrapper: React.FC<RouteStepsTokenWrapperProps> = ({
+  wrapperStyle,
+  children
+}) => {
+  return <View style={wrapperStyle}>{children}</View>
+}
+
+export const RouteStepsTokenIcon: React.FC<RouteStepsTokenIconProps> = ({
   address,
   chainId,
-  uri,
-  isLast = false,
+  uri
+}) => {
+  return (
+    <View style={styles.tokenContainer}>
+      <TokenIcon
+        uri={uri}
+        width={28}
+        height={28}
+        address={address}
+        chainId={chainId}
+        withNetworkIcon
+        withContainer
+      />
+    </View>
+  )
+}
+
+export const RouteStepsTokenAmount: React.FC<RouteStepsTokenAmountProps> = ({
+  symbol,
   amount = '',
   amountInUsd,
-  wrapperStyle
+  wrapperStyle,
+  align = 'center'
 }) => {
   return (
     <View
       style={[
-        styles.tokenWrapper,
+        styles.amountWrapper,
         wrapperStyle,
-        { alignItems: isLast ? 'flex-end' : 'flex-start' }
+        { alignItems: align === 'left' ? 'flex-start' : align === 'right' ? 'flex-end' : 'center' }
       ]}
     >
-      <View style={styles.tokenContainer}>
-        <TokenIcon
-          uri={uri}
-          width={28}
-          height={28}
-          address={address}
-          chainId={chainId}
-          withNetworkIcon
-          withContainer
-        />
-      </View>
-
-      <View
-        style={[
-          styles.textContainer,
-          { alignItems: amount.length > 5 ? (isLast ? 'flex-end' : 'flex-start') : 'center' }
-        ]}
-      >
-        <Text fontSize={14} weight="medium" style={styles.text}>
-          {amount ? `${amount} ` : ''}
-          {symbol}
+      <Text fontSize={14} weight="medium" style={styles.text}>
+        {amount ? `${amount} ` : ''}
+        {symbol}
+      </Text>
+      {!!amountInUsd && (
+        <Text style={styles.text} fontSize={12} appearance="secondaryText" weight="medium">
+          {formatDecimals(amountInUsd, 'price')}
         </Text>
-        {!!amountInUsd && (
-          <Text style={styles.text} fontSize={12} appearance="secondaryText" weight="medium">
-            {formatDecimals(amountInUsd, 'price')}
-          </Text>
-        )}
-      </View>
+      )}
     </View>
+  )
+}
+
+const RouteStepsToken: React.FC<Props> = ({
+  symbol,
+  amount = '',
+  amountInUsd,
+  wrapperStyle,
+  align,
+  ...iconProps
+}) => {
+  return (
+    <RouteStepsTokenWrapper wrapperStyle={wrapperStyle}>
+      <RouteStepsTokenIcon {...iconProps} />
+      <RouteStepsTokenAmount
+        symbol={symbol}
+        amount={amount}
+        amountInUsd={amountInUsd}
+        align={align}
+      />
+    </RouteStepsTokenWrapper>
   )
 }
 

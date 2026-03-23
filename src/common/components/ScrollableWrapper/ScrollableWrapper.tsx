@@ -11,7 +11,7 @@ import {
   ViewStyle
 } from 'react-native'
 
-import { isWeb } from '@common/config/env'
+import { isMobile, isWeb } from '@common/config/env'
 import useTheme from '@common/hooks/useTheme'
 
 import DraggableFlatList from './DraggableFlatList'
@@ -67,6 +67,7 @@ const ScrollableWrapper = ({
   renderItem,
   keyExtractor,
   data,
+  showsVerticalScrollIndicator = isWeb,
   ...rest
 }: WrapperProps) => {
   const { styles } = useTheme(createStyles)
@@ -82,6 +83,7 @@ const ScrollableWrapper = ({
     return (
       <DraggableFlatList
         ref={wrapperRef}
+        bounces={isMobile}
         data={data}
         keyExtractor={
           keyExtractor ? (item: any) => keyExtractor(item, 0) : (item: any) => item.key ?? ''
@@ -90,6 +92,7 @@ const ScrollableWrapper = ({
         renderItem={renderItem ?? (() => null)}
         style={scrollableWrapperStyles}
         contentContainerStyle={scrollableWrapperContentContainerStyles}
+        showsVerticalScrollIndicator={showsVerticalScrollIndicator}
         keyboardShouldPersistTaps={keyboardShouldPersistTaps || 'handled'}
         keyboardDismissMode={keyboardDismissMode || 'none'}
         {...rest}
@@ -101,11 +104,13 @@ const ScrollableWrapper = ({
     return (
       <FlatList
         ref={wrapperRef}
+        bounces={isMobile}
         data={data}
         renderItem={renderItem}
         keyExtractor={keyExtractor || ((item, index) => item.key ?? index.toString())}
         style={scrollableWrapperStyles}
         contentContainerStyle={scrollableWrapperContentContainerStyles}
+        showsVerticalScrollIndicator={showsVerticalScrollIndicator}
         keyboardShouldPersistTaps={keyboardShouldPersistTaps || 'handled'}
         keyboardDismissMode={keyboardDismissMode || 'none'}
         alwaysBounceVertical={false}
@@ -118,11 +123,13 @@ const ScrollableWrapper = ({
     return (
       <SectionList
         ref={wrapperRef}
+        bounces={isMobile}
         sections={data}
         renderItem={renderItem}
         keyExtractor={keyExtractor || ((item, index) => item.key ?? index.toString())}
         style={scrollableWrapperStyles}
         contentContainerStyle={scrollableWrapperContentContainerStyles}
+        showsVerticalScrollIndicator={showsVerticalScrollIndicator}
         keyboardShouldPersistTaps={keyboardShouldPersistTaps || 'handled'}
         keyboardDismissMode={keyboardDismissMode || 'none'}
         alwaysBounceVertical={false}
@@ -138,8 +145,10 @@ const ScrollableWrapper = ({
   return (
     <ScrollView
       ref={wrapperRef}
+      bounces={isMobile}
       style={scrollableWrapperStyles}
       contentContainerStyle={scrollableWrapperContentContainerStyles}
+      showsVerticalScrollIndicator={showsVerticalScrollIndicator}
       keyboardShouldPersistTaps={keyboardShouldPersistTaps || 'handled'}
       keyboardDismissMode={keyboardDismissMode || 'none'}
       alwaysBounceVertical={false}

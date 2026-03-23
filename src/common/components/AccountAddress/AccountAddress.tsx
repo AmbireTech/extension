@@ -1,11 +1,13 @@
-import React, { FC, useCallback, useMemo } from 'react'
+import React, { FC, memo, useCallback, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { View, ViewStyle } from 'react-native'
 
 import ReceiveIcon from '@common/assets/svg/ReceiveIcon'
 import PlainAddress from '@common/components/AccountAddress/PlainAddress'
 import PlainAddressWithCopy from '@common/components/AccountAddress/PlainAddressWithCopy'
+import DomainBadge from '@common/components/Avatar/DomainBadge'
 import Text from '@common/components/Text'
+import { isMobile } from '@common/config/env'
 import useHover, { AnimatedPressable } from '@common/hooks/useHover/useHover'
 import useNavigation from '@common/hooks/useNavigation'
 import useReverseLookup from '@common/hooks/useReverseLookup'
@@ -20,7 +22,29 @@ interface Props extends ReturnType<typeof useReverseLookup> {
   fontSize?: number
   containerStyle?: ViewStyle
   withReceive?: boolean
+  withWrap?: boolean
 }
+
+export const ReceiveButton = memo(
+  ({ address, fontSize }: { address: string; fontSize: number }) => {
+    const [bindAnim, animStyle] = useHover({
+      preset: 'opacityInverted'
+    })
+    const { navigate } = useNavigation()
+
+    const handleReceive = useCallback(async () => {
+      navigate(WEB_ROUTES.receive, { state: { address } })
+    }, [navigate, address])
+
+    const size = useMemo(() => fontSize + 8, [fontSize])
+
+    return (
+      <AnimatedPressable onPress={handleReceive} style={[spacings.mlTy, animStyle]} {...bindAnim}>
+        <ReceiveIcon width={size} height={size} strokeWidth={size < 24 ? '1.5' : '1.2'} />
+      </AnimatedPressable>
+    )
+  }
+)
 
 const AccountAddress: FC<Props> = ({
   isLoading,
@@ -30,37 +54,43 @@ const AccountAddress: FC<Props> = ({
   withCopy = true,
   fontSize = 12,
   containerStyle = {},
-  withReceive = false
+  withReceive = false,
+  withWrap = false
 }) => {
   const { t } = useTranslation()
-  const { navigate } = useNavigation()
-
-  const [bindAnim, animStyle] = useHover({
-    preset: 'opacityInverted'
-  })
-
-  const handleReceive = useCallback(async () => {
-    await navigate(WEB_ROUTES.receive, { state: { address: address } })
-  }, [navigate, address])
-
-  const receiveButton = useMemo(
-    () =>
-      withReceive ? (
-        <AnimatedPressable onPress={handleReceive} style={animStyle} {...bindAnim}>
-          <ReceiveIcon width={fontSize + 8} height={fontSize + 8} style={spacings.mlMi} />
-        </AnimatedPressable>
-      ) : null,
-    [withReceive, handleReceive, animStyle, bindAnim, fontSize]
-  )
 
   return (
-    <View style={[flexbox.flex1, { paddingVertical: 3 }, containerStyle]} testID="address">
+    <View
+      style={[{ flexShrink: 1, minWidth: 0, maxWidth: '100%' }, containerStyle]}
+      testID="address"
+    >
       {ens || isLoading ? (
-        <View style={[flexbox.flex1, flexbox.directionRow, flexbox.alignCenter]}>
+        <View
+          style={[
+            flexbox.directionRow,
+            flexbox.alignCenter,
+            withWrap ? flexbox.wrap : { flexShrink: 1, minWidth: 0, maxWidth: '100%' }
+          ]}
+        >
           {!isLoading ? (
-            <Text fontSize={fontSize} weight="semiBold" appearance="primary" numberOfLines={1}>
-              {ens}
-            </Text>
+            <View
+              style={[
+                flexbox.directionRow,
+                flexbox.alignCenter,
+                { flexShrink: 1, minWidth: 0, maxWidth: '100%' }
+              ]}
+            >
+              <DomainBadge ens={ens} />
+              <Text
+                fontSize={fontSize}
+                weight="semiBold"
+                appearance="primary"
+                numberOfLines={1}
+                style={[spacings.mrMi, { flexShrink: 1, minWidth: 0 }]}
+              >
+                {ens}
+              </Text>
+            </View>
           ) : (
             <Text fontSize={12} appearance="secondaryText">
               {t('Resolving domain...')}
@@ -69,23 +99,23 @@ const AccountAddress: FC<Props> = ({
           {withCopy ? (
             <>
               <PlainAddressWithCopy
-                maxLength={18}
+                maxLength={withWrap && isMobile ? 42 : 18}
                 address={address}
-                style={spacings.mlMi}
                 fontSize={fontSize}
+                withWrap={withWrap}
               >
-                {receiveButton}
+                {withReceive && <ReceiveButton address={address} fontSize={fontSize} />}
               </PlainAddressWithCopy>
             </>
           ) : (
             <>
               <PlainAddress
-                maxLength={18}
+                maxLength={isMobile ? 13 : 18}
                 address={address}
-                style={spacings.mlMi}
+                style={{ ...spacings.mlMi }}
                 fontSize={fontSize}
               />
-              {receiveButton}
+              {withReceive && <ReceiveButton address={address} fontSize={fontSize} />}
             </>
           )}
         </View>
@@ -96,23 +126,24 @@ const AccountAddress: FC<Props> = ({
             address={address}
             hideParentheses
             fontSize={fontSize}
+            withWrap={withWrap}
           >
-            {receiveButton}
+            {withReceive && <ReceiveButton address={address} fontSize={fontSize} />}
           </PlainAddressWithCopy>
         </>
       ) : (
-        <>
+        <View style={[flexbox.directionRow]}>
           <PlainAddress
             maxLength={plainAddressMaxLength}
             address={address}
             hideParentheses
             fontSize={fontSize}
           />
-          {receiveButton}
-        </>
+          {withReceive && <ReceiveButton address={address} fontSize={fontSize} />}
+        </View>
       )}
     </View>
   )
 }
 
-export default React.memo(AccountAddress)
+export default memo(AccountAddress)

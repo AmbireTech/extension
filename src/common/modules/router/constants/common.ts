@@ -16,7 +16,15 @@ const COMMON_ROUTES = {
   onboardingCompleted: 'wallet-setup-completed',
   viewOnlyAccountAdder: 'view-only-account-adder',
   safeImport: 'safe-import',
-  qrConnect: 'qr-connect'
+  qrConnect: 'qr-connect',
+  transfer: 'transfer',
+  topUpGasTank: 'top-up-gas-tank',
+  tokenDetails: 'token-details',
+  accountSelect: 'account-select',
+  receive: 'receive',
+  signAccountOp: 'sign-account-op',
+  benzin: 'benzin',
+  networks: 'networks'
 }
 
 const MOBILE_ROUTES = {
@@ -27,9 +35,6 @@ const WEB_ROUTES = {
   ...COMMON_ROUTES,
   rewards: 'rewards',
   earn: 'earn',
-  transfer: 'transfer',
-  topUpGasTank: 'top-up-gas-tank',
-  signAccountOp: 'sign-account-op',
   transactions: 'transactions',
   signedMessages: 'signed-messages',
   signMessage: 'sign-message',
@@ -49,8 +54,6 @@ const WEB_ROUTES = {
   authEmailAccount: 'auth-email-account',
   authEmailLogin: 'auth-email-login',
   authEmailRegister: 'auth-email-register',
-  accountSelect: 'account-select',
-  networks: 'networks',
   networksConfiguration: 'networks-configuration',
   generalSettings: 'settings/general',
   settingsTerms: 'settings/terms',
@@ -62,10 +65,8 @@ const WEB_ROUTES = {
   devicePasswordRecovery: 'settings/device-password-recovery',
   addressBook: 'settings/address-book',
   manageTokens: 'settings/manage-tokens',
-  benzin: 'benzin',
   swapAndBridge: 'swap-and-bridge',
   recoveryPhrasesSettings: 'settings/recovery-phrases',
-  receive: 'receive',
   safeImport: 'safe-import',
   optOuts: 'settings/opt-outs',
   qrImport: 'qr-import'

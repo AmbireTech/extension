@@ -10,6 +10,7 @@ import Banner from '@common/components/Banner'
 import Button from '@common/components/Button'
 import Spinner from '@common/components/Spinner'
 import Text from '@common/components/Text'
+import { isWeb } from '@common/config/env'
 import useController from '@common/hooks/useController'
 import usePrevious from '@common/hooks/usePrevious'
 import useTheme from '@common/hooks/useTheme'
@@ -34,6 +35,8 @@ interface Props {
   onScroll: FlatListProps<any>['onScroll']
   animatedOverviewHeight: Animated.Value
   network: Network | null
+  refreshing?: boolean
+  onRefresh?: () => void
 }
 
 const { isPopup, isRequestWindow } = getUiType()
@@ -55,7 +58,9 @@ const ActivityPositions: FC<Props> = ({
   initTab,
   onScroll,
   animatedOverviewHeight,
-  network
+  network,
+  refreshing,
+  onRefresh
 }) => {
   const { t } = useTranslation()
   const { theme } = useTheme()
@@ -175,7 +180,7 @@ const ActivityPositions: FC<Props> = ({
               style={styles.noPositions}
             >
               {t(
-                "Ambire doesn't retrieve transactions made\n before installing the extension, but you can \ncheck your address on "
+                `Ambire doesn't retrieve transactions made${isWeb ? '\n' : ''} before installing the extension, but you can ${isWeb ? '\n' : ''}check your address on `
               )}
               <TouchableOpacity
                 onPress={() =>
@@ -234,8 +239,9 @@ const ActivityPositions: FC<Props> = ({
                         })
                       },
                       {
-                        itemsPerPage: ITEMS_PER_PAGE,
-                        fromPage: result.currentPage + 1
+                        itemsPerPage:
+                          (accountsOps[sessionId]?.pagination.itemsPerPage || 0) + ITEMS_PER_PAGE,
+                        fromPage: 0
                       }
                     ]
                   }
@@ -300,6 +306,8 @@ const ActivityPositions: FC<Props> = ({
       windowSize={9} // Larger values can cause performance issues.
       onScroll={onScroll}
       scrollEventThrottle={16}
+      refreshing={refreshing}
+      onRefresh={onRefresh}
       animatedOverviewHeight={animatedOverviewHeight}
     />
   )

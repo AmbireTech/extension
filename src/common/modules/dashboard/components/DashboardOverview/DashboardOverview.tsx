@@ -4,16 +4,18 @@ import { Animated, Platform, Pressable, View } from 'react-native'
 import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
 import SkeletonLoader from '@common/components/SkeletonLoader'
 import Text from '@common/components/Text'
+import { isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import DashboardHeader from '@common/modules/dashboard/components/DashboardHeader'
 import Routes from '@common/modules/dashboard/components/Routes'
 import useBalanceAffectingErrors from '@common/modules/dashboard/hooks/useBalanceAffectingErrors'
-import useBanners from '@common/modules/dashboard/hooks/useBanners'
+import useDashboardReload from '@common/modules/dashboard/hooks/useDashboardReload'
 import spacings, { SPACING, SPACING_TY, SPACING_XL } from '@common/styles/spacings'
 import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
+import { privateValue } from '@common/utils/ui'
 import { isExtension } from '@web/constants/browserapi'
 
 import BalanceAffectingErrors from './BalanceAffectingErrors'
@@ -47,8 +49,6 @@ const DashboardOverview: FC<Props> = ({
 }) => {
   const { t } = useTranslation()
   const { theme } = useTheme(getStyles)
-  const [controllerBanners, marketingBanners] = useBanners()
-  const banners = [...controllerBanners, ...marketingBanners]
   const {
     state: { isOffline },
     dispatch: mainDispatch
@@ -56,6 +56,10 @@ const DashboardOverview: FC<Props> = ({
   const { account, dashboardNetworkFilter, portfolio } = useController(
     'SelectedAccountController'
   ).state
+  const {
+    state: { isPrivacyModeEnabled },
+    dispatch: walletStateDispatch
+  } = useController('WalletStateController')
   const [isBalanceHovered, setIsBalanceHovered] = useState(false)
 
   const {
@@ -75,23 +79,20 @@ const DashboardOverview: FC<Props> = ({
   const [totalPortfolioAmountIntegerFormattedPart, totalPortfolioAmountDecimalFormattedPart] =
     formatDecimals(totalPortfolioAmount, 'value').split('.')
 
-  const reloadAccount = useCallback(() => {
-    mainDispatch({
+  const { reloadAccount, refreshing } = useDashboardReload()
+
+  const togglePrivacyMode = useCallback(() => {
+    walletStateDispatch({
       type: 'method',
       params: {
-        method: 'reloadSelectedAccount',
-        args: [
-          {
-            chainIds: dashboardNetworkFilter ? [BigInt(dashboardNetworkFilter)] : undefined,
-            isManualReload: true
-          }
-        ]
+        method: 'togglePrivacyMode',
+        args: []
       }
     })
-  }, [dashboardNetworkFilter, mainDispatch])
+  }, [walletStateDispatch])
 
   return (
-    <View style={[spacings.phSm, banners.length ? {} : spacings.mbTy]}>
+    <View style={[spacings.phSm, spacings.mbTy]}>
       <Animated.View
         style={[
           common.borderRadiusPrimary,
@@ -128,21 +129,36 @@ const DashboardOverview: FC<Props> = ({
               overflow: 'hidden'
             }}
           >
-            <View style={[spacings.mb, flexbox.alignCenter]}>
-              <Pressable
+            {/* These width: 100%s are needed to make sure that hovering the entire row of the balance
+            displays the refresh button */}
+            <View style={[{ width: '100%' }, spacings.mb, flexbox.alignCenter]}>
+              <View
                 style={[
                   flexbox.directionRow,
                   flexbox.alignCenter,
+                  flexbox.justifyCenter,
                   spacings.mbMi,
-                  { height: BALANCE_HEIGHT }
+                  { height: BALANCE_HEIGHT, width: '100%' }
                 ]}
-                onHoverIn={() => setIsBalanceHovered(true)}
-                onHoverOut={() => setIsBalanceHovered(false)}
-                hitSlop={8}
+                onMouseEnter={() => setIsBalanceHovered(true)}
+                onMouseLeave={() => setIsBalanceHovered(false)}
               >
                 {/* Placeholder matching the refresh button size to keep the balance centered */}
-                <View style={{ width: 28, height: 28 }} />
-                <View style={[flexbox.flex1, flexbox.alignCenter, spacings.mhTy]}>
+                <View
+                  style={{ width: 28, height: 28, ...flexbox.justifyCenter, ...flexbox.alignEnd }}
+                >
+                  <BalanceAffectingErrors
+                    reloadAccount={reloadAccount}
+                    networksWithErrors={networksWithErrors}
+                    sheetRef={sheetRef}
+                    balanceAffectingErrorsSnapshot={balanceAffectingErrorsSnapshot}
+                    warningMessage={warningMessage}
+                    onIconPress={onIconPress}
+                    closeBottomSheetWrapped={closeBottomSheetWrapped}
+                    isLoadingTakingTooLong={isLoadingTakingTooLong}
+                  />
+                </View>
+                <View style={[flexbox.alignCenter, spacings.mhTy]}>
                   {!portfolio?.isReadyToVisualize ? (
                     <SkeletonLoader
                       lowOpacity
@@ -151,9 +167,15 @@ const DashboardOverview: FC<Props> = ({
                       borderRadius={8}
                     />
                   ) : (
-                    <Text testID="full-balance">
+                    <Pressable
+                      testID="full-balance"
+                      onPress={togglePrivacyMode}
+                      style={[flexbox.directionRow, flexbox.alignEnd]}
+                      // Works only on web for now
+                      disabled={!isWeb}
+                    >
                       <Text
-                        fontSize={32}
+                        fontSize={34}
                         shouldScale={false}
                         weight="number_bold"
                         // Line height should be constant based on font size, not on parent height
@@ -165,59 +187,60 @@ const DashboardOverview: FC<Props> = ({
                         }
                         testID="total-portfolio-amount-integer"
                       >
-                        {totalPortfolioAmountIntegerFormattedPart}
+                        {privateValue(
+                          totalPortfolioAmountIntegerFormattedPart,
+                          isPrivacyModeEnabled,
+                          7
+                        )}
                       </Text>
-                      {totalPortfolioAmount < THRESHOLD_AMOUNT_TO_HIDE_BALANCE_DECIMALS && (
-                        <Text
-                          fontSize={20}
-                          shouldScale={false}
-                          weight="number_bold"
-                          color={
-                            networksWithErrors.length || isOffline
-                              ? theme.warningDecorative2
-                              : '#FFFFFF'
-                          }
-                        >
-                          {t('.')}
-                          {totalPortfolioAmountDecimalFormattedPart}
-                        </Text>
-                      )}
-                    </Text>
+                      {totalPortfolioAmount < THRESHOLD_AMOUNT_TO_HIDE_BALANCE_DECIMALS &&
+                        !isPrivacyModeEnabled && (
+                          <Text
+                            fontSize={20}
+                            shouldScale={false}
+                            weight="number_bold"
+                            color={
+                              networksWithErrors.length || isOffline
+                                ? theme.warningDecorative2
+                                : '#FFFFFF'
+                            }
+                            style={{ lineHeight: 20 }}
+                          >
+                            {t('.')}
+                            {totalPortfolioAmountDecimalFormattedPart}
+                          </Text>
+                        )}
+                    </Pressable>
                   )}
                 </View>
-                <Pressable
-                  style={({ hovered }: any) => ({
-                    width: 28,
-                    height: 28,
-                    opacity: shouldShowRefreshButton ? (hovered ? 1 : 0.7) : 0
-                  })}
-                  onPress={reloadAccount}
-                  disabled={!portfolio.isAllReady || portfolio.isReloading}
-                  testID="refresh-button"
-                  onHoverIn={() => setIsBalanceHovered(true)}
-                  // Increase clickable area using prop
-                  hitSlop={10}
-                >
-                  <RefreshIcon
-                    spin={!portfolio.isAllReady || portfolio.isReloading}
-                    color="#E3E6EB"
-                    width={28}
-                    height={28}
-                  />
-                </Pressable>
-              </Pressable>
-
+                {
+                  isWeb ? (
+                    <Pressable
+                      style={({ hovered }: any) => ({
+                        width: 28,
+                        height: 28,
+                        opacity: shouldShowRefreshButton ? (hovered ? 1 : 0.7) : 0
+                      })}
+                      onPress={reloadAccount}
+                      disabled={!portfolio.isAllReady || portfolio.isReloading}
+                      testID="refresh-button"
+                      onHoverIn={() => setIsBalanceHovered(true)}
+                      // Increase clickable area using prop
+                      hitSlop={10}
+                    >
+                      <RefreshIcon
+                        spin={!portfolio.isAllReady || portfolio.isReloading}
+                        color="#E3E6EB"
+                        width={28}
+                        height={28}
+                      />
+                    </Pressable>
+                  ) : (
+                    <View style={{ width: 28, height: 28 }} />
+                  ) /* Placeholder to keep balance centered on mobile */
+                }
+              </View>
               <View style={[flexbox.directionRow, flexbox.justifyCenter, flexbox.alignCenter]}>
-                <BalanceAffectingErrors
-                  reloadAccount={reloadAccount}
-                  networksWithErrors={networksWithErrors}
-                  sheetRef={sheetRef}
-                  balanceAffectingErrorsSnapshot={balanceAffectingErrorsSnapshot}
-                  warningMessage={warningMessage}
-                  onIconPress={onIconPress}
-                  closeBottomSheetWrapped={closeBottomSheetWrapped}
-                  isLoadingTakingTooLong={isLoadingTakingTooLong}
-                />
                 <GasTankButton
                   onPress={() => openGasTankModal?.()}
                   portfolio={portfolio}

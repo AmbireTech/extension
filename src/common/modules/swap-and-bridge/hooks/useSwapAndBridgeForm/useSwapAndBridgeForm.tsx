@@ -4,7 +4,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useModalize } from 'react-native-modalize'
 import { useLocation } from 'react-router-dom'
 
-import { SigningStatus } from '@ambire-common/controllers/signAccountOp/signAccountOp'
 import { SwapAndBridgeFormStatus } from '@ambire-common/controllers/swapAndBridge/swapAndBridge'
 import { SwapAndBridgeActiveRoute } from '@ambire-common/interfaces/swapAndBridge'
 import { CallsUserRequest } from '@ambire-common/interfaces/userRequest'
@@ -42,11 +41,11 @@ const useSwapAndBridgeForm = () => {
     supportedChainIds,
     updateQuoteStatus,
     sessionIds,
-    toSelectedToken
+    toSelectedToken,
+    toChainId
   } = useController('SwapAndBridgeController').state
   const { dispatch: swapAndBridgeDispatch } = useController('SwapAndBridgeController')
   const { dispatch: requestsDispatch, state: requestsState } = useController('RequestsController')
-  const { dispatch: mainDispatch } = useController('MainController')
   const { userRequests } = requestsState
   const {
     state: { account, portfolio }
@@ -76,7 +75,6 @@ const useSwapAndBridgeForm = () => {
   const [latestBatchedNetwork, setLatestBatchedNetwork] = useState<bigint | undefined>()
   const [isOneClickModeDuringPriceImpact, setIsOneClickModeDuringPriceImpact] =
     useState<boolean>(false)
-  const [showSafeSigned, setShowSafeSigned] = useState(false)
   const { networks } = useController('NetworksController').state
   const currentRoute = useLocation()
   const { setSearchParams, navigate } = useNavigation()
@@ -236,24 +234,6 @@ const useSwapAndBridgeForm = () => {
     visibleUserRequests
   ])
 
-  useEffect(() => {
-    if (showSafeSigned) return
-    if (
-      signAccountOpController &&
-      signAccountOpController.account.safeCreation &&
-      signAccountOpController.status?.type === SigningStatus.Queued
-    ) {
-      setShowSafeSigned(true)
-      mainDispatch({
-        type: 'method',
-        params: {
-          method: 'fetchSafeTxns',
-          args: [[signAccountOpController.accountOp.chainId]]
-        }
-      })
-    }
-  }, [showSafeSigned, signAccountOpController, mainDispatch])
-
   // remove session - this will be triggered only
   // when navigation to another screen internally in the extension
   // the session removal when the window is forcefully closed is handled
@@ -325,7 +305,7 @@ const useSwapAndBridgeForm = () => {
     closePriceImpactModal()
 
     if (isOneClickModeDuringPriceImpact) {
-      if (networkUserRequests.length > 0) {
+      if (!!account?.safeCreation || networkUserRequests.length > 0) {
         requestsDispatch({
           type: 'method',
           params: {
@@ -334,13 +314,14 @@ const useSwapAndBridgeForm = () => {
               {
                 type: 'swapAndBridgeRequest',
                 params: {
-                  openActionWindow: true
+                  openActionWindow: true,
+                  quote: !!account?.safeCreation && quote ? { ...quote } : undefined
                 }
               }
             ]
           }
         })
-        window.close()
+        if (isPopup) window.close()
       } else {
         openEstimationModalAndDispatch()
       }
@@ -369,7 +350,9 @@ const useSwapAndBridgeForm = () => {
     isOneClickModeDuringPriceImpact,
     setShowAddedToBatch,
     networkUserRequests,
-    fromSelectedToken
+    fromSelectedToken,
+    account?.safeCreation,
+    quote
   ])
 
   const handleSubmitForm = useCallback(
@@ -384,7 +367,7 @@ const useSwapAndBridgeForm = () => {
       // open the estimation modal on one click method;
       // build/add a swap user request on batch
       if (isOneClickMode) {
-        if (networkUserRequests.length > 0) {
+        if (!!account?.safeCreation || networkUserRequests.length > 0) {
           requestsDispatch({
             type: 'method',
             params: {
@@ -393,13 +376,14 @@ const useSwapAndBridgeForm = () => {
                 {
                   type: 'swapAndBridgeRequest',
                   params: {
-                    openActionWindow: true
+                    openActionWindow: true,
+                    quote: !!account?.safeCreation && quote ? { ...quote } : undefined
                   }
                 }
               ]
             }
           })
-          window.close()
+          if (isPopup) window.close()
         } else {
           openEstimationModalAndDispatch()
         }
@@ -429,7 +413,8 @@ const useSwapAndBridgeForm = () => {
       openPriceImpactModal,
       quote,
       networkUserRequests,
-      fromSelectedToken
+      fromSelectedToken,
+      account?.safeCreation
     ]
   )
 
@@ -472,15 +457,13 @@ const useSwapAndBridgeForm = () => {
     )
   }, [activeRoutes, account])
 
-  const displayedView: 'estimate' | 'batch' | 'track' | 'safe-signed' = useMemo(() => {
-    if (showSafeSigned) return 'safe-signed'
-
+  const displayedView: 'estimate' | 'batch' | 'track' = useMemo(() => {
     if (showAddedToBatch) return 'batch'
 
     if (activeRoute) return 'track'
 
     return 'estimate'
-  }, [activeRoute, showAddedToBatch, showSafeSigned])
+  }, [activeRoute, showAddedToBatch])
 
   useEffect(() => {
     if (!account) return
@@ -562,8 +545,7 @@ const useSwapAndBridgeForm = () => {
     batchNetworkUserRequestsCount,
     networkUserRequests,
     isLocalStateOutOfSync,
-    shouldDisableAddToBatch,
-    setShowSafeSigned
+    shouldDisableAddToBatch
   }
 }
 

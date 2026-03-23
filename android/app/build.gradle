@@ -1,3 +1,5 @@
+import groovy.json.JsonSlurper
+
 apply plugin: "com.android.application"
 apply plugin: "org.jetbrains.kotlin.android"
 apply plugin: "com.facebook.react"
@@ -90,10 +92,13 @@ android {
     namespace 'com.ambire.wallet'
     defaultConfig {
         applicationId 'com.ambire.wallet'
+        // minSdkVersion is provided by the React Native Gradle plugin; for React Native 0.81.x the default is 24 (API 24+).
         minSdkVersion rootProject.ext.minSdkVersion
+        // targetSdkVersion is also provided by the React Native Gradle plugin; for React Native 0.81.x the default is 36 (Android 16).
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 1
-        versionName "5.39.0"
+        versionCode 59
+        // This is planned to be in sync with app.json 's "version" two components, e.g. 5.39
+        versionName "6.1"
 
         buildConfigField "String", "REACT_NATIVE_RELEASE_LEVEL", "\"${findProperty('reactNativeReleaseLevel') ?: 'stable'}\""
     }
@@ -104,15 +109,51 @@ android {
             keyAlias 'androiddebugkey'
             keyPassword 'android'
         }
+        release {
+            // Release signing configuration:
+            // 1) In CI: provided via Gradle properties (MYAPP_UPLOAD_*), written by the workflow.
+            // 2) Locally (non-CI): loaded from credentials.json if present.
+            // 3) Fallback: debug keystore (for local development without credentials).
+
+            // Fallback by default
+            def releaseStoreFile = file('debug.keystore')
+            def releaseStorePassword = 'android'
+            def releaseKeyAlias = 'androiddebugkey'
+            def releaseKeyPassword = 'android'
+
+            // Local-only credentials from credentials.json (guarded to avoid CI using it).
+            def isCi = System.getenv('CI') != null
+            def credentialsFile = new File(projectRoot, "credentials.json")
+            if (!isCi && credentialsFile.exists()) {
+                def json = new JsonSlurper().parse(credentialsFile)
+                def androidCreds = json.android?.keystore
+                if (androidCreds?.keystorePath && androidCreds?.keystorePassword && androidCreds?.keyAlias && androidCreds?.keyPassword) {
+                    // keystorePath in credentials.json is relative to project root (where package.json is)
+                    releaseStoreFile = file(new File(projectRoot, androidCreds.keystorePath).absolutePath)
+                    releaseStorePassword = androidCreds.keystorePassword
+                    releaseKeyAlias = androidCreds.keyAlias
+                    releaseKeyPassword = androidCreds.keyPassword
+                }
+            } else if (project.hasProperty('MYAPP_UPLOAD_STORE_FILE')) {
+                // CI path: values injected by GitHub Actions into Gradle properties.
+                releaseStoreFile = file(MYAPP_UPLOAD_STORE_FILE)
+                releaseStorePassword = MYAPP_UPLOAD_STORE_PASSWORD
+                releaseKeyAlias = MYAPP_UPLOAD_KEY_ALIAS
+                releaseKeyPassword = MYAPP_UPLOAD_KEY_PASSWORD
+            }
+
+            storeFile releaseStoreFile
+            storePassword releaseStorePassword
+            keyAlias releaseKeyAlias
+            keyPassword releaseKeyPassword
+        }
     }
     buildTypes {
         debug {
             signingConfig signingConfigs.debug
         }
         release {
-            // Caution! In production, you need to generate your own keystore file.
-            // see https://reactnative.dev/docs/signed-apk-android.
-            signingConfig signingConfigs.debug
+            signingConfig signingConfigs.release
             def enableShrinkResources = findProperty('android.enableShrinkResourcesInReleaseBuilds') ?: 'false'
             shrinkResources enableShrinkResources.toBoolean()
             minifyEnabled enableMinifyInReleaseBuilds
@@ -120,6 +161,12 @@ android {
             def enablePngCrunchInRelease = findProperty('android.enablePngCrunchInReleaseBuilds') ?: 'true'
             crunchPngs enablePngCrunchInRelease.toBoolean()
         }
+    }
+    lint {
+        // Lint can be very heavy in CI for large projects.
+        // We keep it enabled in debug / local, but do not block release builds on lint.
+        checkReleaseBuilds false
+        abortOnError false
     }
     packagingOptions {
         jniLibs {

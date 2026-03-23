@@ -1,6 +1,7 @@
 import React, { FC } from 'react'
 import { View, ViewStyle } from 'react-native'
 
+import { isMobile } from '@common/config/env'
 import Header from '@common/modules/header/components/Header'
 import spacings from '@common/styles/spacings'
 
@@ -10,19 +11,20 @@ interface Props {
   style?: ViewStyle
   hasAmbireLogo?: boolean
   children?: React.ReactNode
+  headerTestID?: string
 }
 
-const ModalHeader: FC<Props> = ({ handleClose, title, style, children }) => {
+const ModalHeader: FC<Props> = ({ handleClose, title, style, children, headerTestID }) => {
   const withSideContainers = !!handleClose || !!children
 
   return (
     <Header.Wrapper
-      containerStyle={{ ...spacings.ptTy, ...spacings.pb0, ...spacings.ph0 }}
-      style={{ ...spacings.mbLg, ...style, minHeight: 28 }}
+      containerStyle={{ ...spacings.ptTy, ...spacings.pb0, ...spacings.ph0, ...spacings.mb0 }}
+      style={{ ...(isMobile ? spacings.mb : spacings.mbLg), ...style, minHeight: 28 }}
     >
       {withSideContainers && (
         <Header.Container side="left">
-          {handleClose && (
+          {handleClose && !isMobile && (
             <Header.BackButton onGoBackPress={handleClose} forceBack displayIn="always" />
           )}
         </Header.Container>
@@ -40,7 +42,7 @@ const ModalHeader: FC<Props> = ({ handleClose, title, style, children }) => {
           pointerEvents: 'none'
         }}
       >
-        <Header.Title>{title}</Header.Title>
+        <Header.Title testID={headerTestID}>{title}</Header.Title>
       </View>
       {withSideContainers && <Header.Container side="right">{children}</Header.Container>}
     </Header.Wrapper>

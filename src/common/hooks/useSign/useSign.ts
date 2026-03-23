@@ -12,8 +12,8 @@ import { Key } from '@ambire-common/interfaces/keystore'
 import { ISignAccountOpController } from '@ambire-common/interfaces/signAccountOp'
 import useController from '@common/hooks/useController'
 import usePrevious from '@common/hooks/usePrevious'
+import { OneClickEstimationProps } from '@common/modules/sign-account-op/components/OneClick/Estimation/Estimation'
 import useLedger from '@web/modules/hardware-wallet/hooks/useLedger'
-import { OneClickEstimationProps } from '@web/modules/sign-account-op/components/OneClick/Estimation/Estimation'
 import { getIsSignLoading } from '@web/modules/sign-account-op/utils/helpers'
 
 type ButtonMode = OneClickEstimationProps['updateType'] | 'Sign' | 'HW' | 'Safe'
@@ -39,9 +39,8 @@ const PRIMARY_BUTTON_LABELS: Record<
     isLoading: 'Signing...'
   },
   Safe: {
-    default: 'Sign',
-    isLoading: 'Signing...',
-    config: 'Choose signers'
+    default: 'Begin signing',
+    isLoading: 'Close signing'
   }
 }
 
@@ -51,6 +50,7 @@ type Props = {
   signAccountOpState: ISignAccountOpController | null
   isOneClickSign?: boolean
   updateType?: OneClickEstimationProps['updateType'] | undefined
+  hasReachedBottom?: boolean | null
 }
 
 const useSign = ({
@@ -58,7 +58,8 @@ const useSign = ({
   signAccountOpState,
   handleUpdate,
   isOneClickSign,
-  updateType = undefined
+  updateType = undefined,
+  hasReachedBottom
 }: Props) => {
   const { t } = useTranslation()
   const {
@@ -69,6 +70,7 @@ const useSign = ({
     state: { accountStates }
   } = useController('AccountsController')
   const [isChooseSignerShown, setIsChooseSignerShown] = useState(false)
+  const [showSafeSigners, setShowSafeSigners] = useState(false)
   const [isChooseFeePayerKeyShown, setIsChooseFeePayerKeyShown] = useState(false)
   const [shouldDisplayLedgerConnectModal, setShouldDisplayLedgerConnectModal] = useState(false)
   const [shouldDisplayQrSigningModal, setShouldDisplayQrSigningModal] = useState(false)
@@ -163,8 +165,22 @@ const useSign = ({
 
   const signingKeyType = signAccountOpState?.accountOp?.signingKeyType
   const feePayerKeyType = signAccountOpState?.accountOp?.gasFeePayment?.paidByKeyType
-  const isAtLeastOneOfTheKeysInvolvedLedger =
-    signingKeyType === 'ledger' || feePayerKeyType === 'ledger'
+
+  const isAtLeastOneOfTheKeysInvolvedLedger = useMemo(() => {
+    // if we're broadcasting with ledger, return true
+    if (feePayerKeyType === 'ledger') return true
+
+    // if the account is not a safe, check the txn signer
+    if (!signAccountOpState?.account.safeCreation) return signingKeyType === 'ledger'
+
+    // if it's a safe, check all the signers
+    return !!signAccountOpState.accountOp.signers?.find((s) => s.type === 'ledger')
+  }, [
+    signAccountOpState?.account.safeCreation,
+    signAccountOpState?.accountOp.signers,
+    signingKeyType,
+    feePayerKeyType
+  ])
 
   const handleDismissLedgerConnectModal = useCallback(() => {
     setShouldDisplayLedgerConnectModal(false)
@@ -313,16 +329,6 @@ const useSign = ({
     [handleSign, handleUpdate]
   )
 
-  const handleSetMultisigSigners = useCallback(
-    (signers: { addr: Key['addr']; type: Key['type'] }[]) => {
-      handleUpdate({ signers })
-
-      // pass all the key types to check if ledger is there
-      handleSign(signers.map((s) => s.type))
-    },
-    [handleSign, handleUpdate]
-  )
-
   const handleChangeFeePayerKeyType = useCallback(
     // Done for compatibility with the select component
     (_: Key['addr'], newFeePayerKeyType: Key['type']) => {
@@ -336,16 +342,15 @@ const useSign = ({
   const onSignButtonClick = useCallback(() => {
     if (!signAccountOpState) return
 
-    const isSafeWithManualSigners =
-      !!signAccountOpState?.account.safeCreation &&
-      !signAccountOpState.accountOp.signers?.length &&
-      (signAccountOpState.accountOp.signed?.length || 0) < signAccountOpState.threshold
+    if (!!signAccountOpState.account.safeCreation && !signAccountOpState.canBroadcast) {
+      setShowSafeSigners((prev) => !prev)
+      return
+    }
 
-    // If the account has only one signer, we don't need to show the select signer overlay,
-    // and we will sign the transaction with the only one available signer (it is set by default in the controller).
-    // Or if the account is a safe with hot signers OR signers from one hardware wallet only,
-    // the user can sign automatically
-    if (signAccountOpState?.accountKeyStoreKeys.length === 1 || !isSafeWithManualSigners) {
+    if (
+      signAccountOpState?.accountKeyStoreKeys.length === 1 ||
+      !!signAccountOpState?.account.safeCreation
+    ) {
       handleSign()
       return
     }
@@ -444,14 +449,10 @@ const useSign = ({
         return isSignLoading ? 'Broadcasting...' : 'Broadcast'
       }
 
-      buttonLabelType = 'Safe'
-
-      // if signers are not configured and configurable, prompt the user to do so
-      if (
-        signAccountOpState?.accountOp.signingKeyAddr &&
-        (signAccountOpState?.accountOp.signers?.length || 0) === 0
-      )
-        return PRIMARY_BUTTON_LABELS[buttonLabelType].config as string
+      // always use the default state of Safes
+      return !showSafeSigners
+        ? PRIMARY_BUTTON_LABELS['Safe'].default
+        : PRIMARY_BUTTON_LABELS['Safe'].isLoading
     }
 
     return t(
@@ -466,9 +467,8 @@ const useSign = ({
     updateType,
     signAccountOpState?.account.safeCreation,
     signAccountOpState?.accountOp.signed?.length,
-    signAccountOpState?.accountOp.signers?.length,
     signAccountOpState?.threshold,
-    signAccountOpState?.accountOp.signingKeyAddr
+    showSafeSigners
   ])
 
   // When being done, there is a corner case if the sign succeeds, but the broadcast fails.
@@ -485,6 +485,12 @@ const useSign = ({
       (signAccountOpState && signAccountOpState.estimation.status === EstimationStatus.Loading)
     )
   }, [isViewOnly, isSignLoading, notReadyToSignButAlsoNotDone, signAccountOpState])
+
+  const disabledReason = useMemo(() => {
+    return typeof hasReachedBottom === 'boolean' && !hasReachedBottom
+      ? t('Scroll to the bottom of the transaction overview to sign.')
+      : undefined
+  }, [hasReachedBottom, t])
 
   const bundlerNonceDiscrepancy = useMemo(
     () =>
@@ -521,14 +527,15 @@ const useSign = ({
     isChooseFeePayerKeyShown,
     setIsChooseFeePayerKeyShown,
     shouldHoldToProceed: !!signAccountOpState?.banners?.length,
-    handleSetMultisigSigners,
     shouldDisplayQrSigningModal,
     handleQrSingingFlowOnContinuePressed,
     handleQrSigningFlowSubmitSignatureResponse,
     handleQrSigningFlowOnClosePressed,
     handleQrSigningFlowOnRejectPressed,
     currentRequest,
-    signingStep
+    signingStep,
+    disabledReason,
+    showSafeSigners
   }
 }
 

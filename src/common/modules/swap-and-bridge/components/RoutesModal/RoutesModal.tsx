@@ -84,7 +84,7 @@ const RoutesModal = ({
   const updateQuote = useCallback(() => {
     swapAndBridgeDispatch({
       type: 'method',
-      params: { method: 'updateQuote', args: [] }
+      params: { method: 'updateQuote', args: [{ skipQuoteUpdateOnSameValues: false }] }
     })
   }, [swapAndBridgeDispatch])
 
@@ -202,7 +202,7 @@ const RoutesModal = ({
     return selectedRouteIdx
   }, [quote?.routes, userSelectedRoute])
 
-  if (!quote?.routes || !quote.routes.length) return null
+  if ((!quote?.routes || !quote.routes.length) && updateQuoteStatus !== 'LOADING') return null
 
   return (
     <BottomSheet
@@ -246,7 +246,7 @@ const RoutesModal = ({
           isLarge
         />
       </ModalHeader>
-      {isQuoteLoading ? (
+      {isQuoteLoading || !quote ? (
         <SkeletonLoader width="100%" height={700} appearance="secondaryBackground" />
       ) : (
         <ScrollableWrapper

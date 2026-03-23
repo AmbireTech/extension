@@ -4,7 +4,6 @@ import { FlatList, ListRenderItemInfo, StyleSheet, View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 
 import { HD_PATH_TEMPLATE_TYPE } from '@ambire-common/consts/derivation'
-import SettingsIcon from '@common/assets/svg/SettingsIcon'
 import SettingsWheelIcon from '@common/assets/svg/SettingsWheelIcon'
 import BottomSheet from '@common/components/BottomSheet'
 import Button from '@common/components/Button'
@@ -12,18 +11,17 @@ import Panel from '@common/components/Panel/Panel'
 import Text from '@common/components/Text'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
+import Account from '@common/modules/account-select/components/Account'
 import spacings, { SPACING_TY } from '@common/styles/spacings'
-import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
-import Account from '@web/modules/account-select/components/Account'
 import SettingsPageHeader from '@web/modules/settings/components/SettingsPageHeader'
 import { SettingsRoutesContext } from '@web/modules/settings/contexts/SettingsRoutesContext'
 import ManageRecoveryPhrase from '@web/modules/settings/ManageRecoveryPhrase'
 
 const RecoveryPhraseSettingsScreen = () => {
   const { t } = useTranslation()
-  const { theme, themeType } = useTheme()
+  const { theme } = useTheme()
   const { statuses } = useController('StorageController').state
   const { accounts } = useController('AccountsController').state
   const { seeds, keys } = useController('KeystoreController').state
@@ -147,9 +145,6 @@ const RecoveryPhraseSettingsScreen = () => {
       <BottomSheet
         sheetRef={sheetRef}
         id="manage-recovery-phrase-bottom-sheet"
-        backgroundColor={
-          themeType === THEME_TYPES.DARK ? 'secondaryBackground' : 'primaryBackground'
-        }
         onBackdropPress={() => {
           setRecoveryPhraseToManage(null)
           closeBottomSheet()

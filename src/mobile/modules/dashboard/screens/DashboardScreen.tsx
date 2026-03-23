@@ -10,6 +10,7 @@ import DashboardOverview from '@common/modules/dashboard/components/DashboardOve
 import { OVERVIEW_CONTENT_MAX_HEIGHT } from '@common/modules/dashboard/components/DashboardOverview/DashboardOverview'
 import DashboardPages from '@common/modules/dashboard/components/DashboardPages'
 import PendingActionWindowModal from '@common/modules/dashboard/components/PendingActionWindowModal'
+import useDashboardReload from '@common/modules/dashboard/hooks/useDashboardReload'
 import getStyles from '@common/modules/dashboard/screens/styles' // Keeping styles in common
 import flexbox from '@common/styles/utils/flexbox'
 import { MobileLayoutContainer } from '@mobile/components/MobileLayoutWrapper'
@@ -31,10 +32,13 @@ const DashboardScreen = () => {
     state: { account, portfolio }
   } = useController('SelectedAccountController')
 
+  const { reloadAccount, isManuallyRefreshing } = useDashboardReload()
+
   const isOverviewExpandedRef = useRef(true)
 
   const onScroll = useCallback(
     (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+      return // TODO: fix behavior on mobile
       // Mobile does not have isPopup, so we handle it similarly.
       const {
         contentOffset: { y },
@@ -75,7 +79,11 @@ const DashboardScreen = () => {
   if (!account) return null
 
   return (
-    <MobileLayoutContainer withHorizontalPadding={false}>
+    <MobileLayoutContainer
+      withHorizontalPadding={false}
+      withTopPadding={false}
+      withBottomInset={false}
+    >
       <View style={flexbox.flex1}>
         <GasTankModal
           modalRef={gasTankModalRef}
@@ -95,6 +103,8 @@ const DashboardScreen = () => {
             onScroll={onScroll}
             animatedOverviewHeight={animatedOverviewHeight}
             isSearchHidden={isSearchHidden}
+            onRefresh={reloadAccount}
+            refreshing={isManuallyRefreshing}
           />
         </View>
       </View>

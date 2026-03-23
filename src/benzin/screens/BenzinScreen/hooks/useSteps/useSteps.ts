@@ -33,12 +33,14 @@ import { BundlerSwitcher } from '@ambire-common/services/bundlers/bundlerSwitche
 import { BundlerTransactionReceipt } from '@ambire-common/services/bundlers/types'
 import { getBenzinUrlParams } from '@ambire-common/utils/benzin'
 import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
+import { generateUuid } from '@ambire-common/utils/uuid'
 import {
   handleOps060,
   handleOps070
 } from '@benzin/screens/BenzinScreen/constants/humanizerInterfaces'
 import { ActiveStepType, FinalizedStatusType } from '@benzin/screens/BenzinScreen/interfaces/steps'
 import { UserOperation } from '@benzin/screens/BenzinScreen/interfaces/userOperation'
+import { isWeb } from '@common/config/env'
 import useController from '@common/hooks/useController'
 
 import { decodeUserOp, entryPointTxnSplit, reproduceCallsFromTxn } from './utils/reproduceCalls'
@@ -93,6 +95,8 @@ const setUrlToTxnId = (
   chainId: bigint,
   switcher: BundlerSwitcher
 ) => {
+  if (!isWeb) return
+
   const splitUrl = (window.location.href || '').split('?')
   const search = splitUrl[1]
   const searchParams = new URLSearchParams(search)
@@ -942,6 +946,7 @@ const useSteps = ({
         feeCall: decodedFeeCall
       } = userOp ? decodeUserOp(userOp) : reproduceCallsFromTxn(txn)
       const accountOp: AccountOp = {
+        id: generateUuid(),
         accountAddr: userOp?.sender || account || txnReceipt.originatedFrom || 'Loading...',
         chainId: network.chainId,
         signingKeyAddr: txnReceipt.originatedFrom, // irrelevant

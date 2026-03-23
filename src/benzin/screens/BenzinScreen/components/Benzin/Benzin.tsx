@@ -2,6 +2,7 @@ import { randomBytes } from 'ethers'
 import React, { memo, useMemo } from 'react'
 import { Image, ScrollView, View, ViewStyle } from 'react-native'
 
+import { AccountOpStatus } from '@ambire-common/libs/accountOp/types'
 import gradient1560 from '@benzin/assets/images/gradient-1560.png'
 import gradient1920 from '@benzin/assets/images/gradient-1920.png'
 import gradient2560 from '@benzin/assets/images/gradient-2560.png'
@@ -13,13 +14,15 @@ import useBenzin from '@benzin/screens/BenzinScreen/hooks/useBenzin'
 import OpenIcon from '@common/assets/svg/OpenIcon'
 import Spinner from '@common/components/Spinner'
 import Text from '@common/components/Text'
+import { isMobile, isWeb } from '@common/config/env'
 import useControllerStore from '@common/hooks/useControllerStore'
 import useTheme from '@common/hooks/useTheme'
 import useWindowSize from '@common/hooks/useWindowSize'
+import TransactionSummary from '@common/modules/sign-account-op/components/TransactionSummary'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
+import { MobileLayoutContainer } from '@mobile/components/MobileLayoutWrapper'
 import { isExtension } from '@web/constants/browserapi'
-import TransactionSummary from '@web/modules/sign-account-op/components/TransactionSummary'
 
 import { IS_MOBILE_UP_BENZIN_BREAKPOINT } from '../../styles'
 import getStyles from './styles'
@@ -47,13 +50,14 @@ const Benzin = ({
         chainId={state.network!.chainId}
         rightIcon={
           <OpenIcon
-            width={IS_MOBILE_UP_BENZIN_BREAKPOINT ? 20 : 14}
-            height={IS_MOBILE_UP_BENZIN_BREAKPOINT ? 20 : 14}
+            width={IS_MOBILE_UP_BENZIN_BREAKPOINT || isMobile ? 20 : 14}
+            height={IS_MOBILE_UP_BENZIN_BREAKPOINT || isMobile ? 20 : 14}
           />
         }
         onRightIconPress={state?.handleOpenExplorer}
-        size={IS_MOBILE_UP_BENZIN_BREAKPOINT ? 'lg' : 'sm'}
+        size={IS_MOBILE_UP_BENZIN_BREAKPOINT || isMobile ? 'lg' : 'sm'}
         type="benzin"
+        hasCallFailed={call.status === AccountOpStatus.Rejected}
       />
     ))
     // Prevents unnecessary re-renders of the humanizer
@@ -121,8 +125,10 @@ const Benzin = ({
     showOpenExplorerBtn
   } = state
 
+  const Container = isMobile ? MobileLayoutContainer : View
+
   return (
-    <View style={flexbox.flex1}>
+    <Container style={flexbox.flex1}>
       <Image style={styles.backgroundImage} source={{ uri: backgroundSource }} resizeMode="cover" />
       <ScrollView contentContainerStyle={styles.container}>
         <View style={styles.content}>
@@ -144,12 +150,12 @@ const Benzin = ({
             />
           ) : (
             // Leave enough space for the absolutely positioned buttons
-            <View style={{ marginBottom: 80 }} />
+            <View style={{ marginBottom: isMobile ? 0 : 80 }} />
           )}
         </View>
       </ScrollView>
       {children}
-    </View>
+    </Container>
   )
 }
 

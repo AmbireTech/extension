@@ -213,6 +213,8 @@ module.exports = async function (env, argv) {
 
   config.resolve.alias = {
     ...(config.resolve.alias || {}),
+    '@': path.resolve(__dirname, 'src/ambire-common/src'),
+    '@test': path.resolve(__dirname, 'src/ambire-common/test'),
     '@ambire-common': path.resolve(__dirname, 'src/ambire-common/src'),
     '@contracts': path.resolve(__dirname, 'src/ambire-common/contracts'),
     '@ambire-common-v1': path.resolve(__dirname, 'src/ambire-common/v1'),
@@ -406,11 +408,17 @@ module.exports = async function (env, argv) {
       config.optimization.runtimeChunk = false
       config.optimization.splitChunks = {
         ...config.optimization.splitChunks,
-        // Since v5.0.1 we're no longer setting maxSize (4 * 1024 * 1024) to ensure max file size that
-        // complies with Firefox requirements. This is because it turns on automatic chunk splitting
-        // which creates random chunk names, making the build non-deterministic.
-        // maxSize = 4 * 1024 * 1024
-        maxSize: undefined,
+        // Firefox enforces a 5MB per-file size limit for extensions.
+        // In the v5 extension series we intentionally avoided setting maxSize,
+        // because 1) it could lead to non-reproducible chunk filenames and
+        // 2) it wasn't needed at the time (no bundle was > 5MB).
+        // With v6 extension series + new features/core lib updates exceeded 5MB
+        // for two of the resulting js bundles, so we re-enabled maxSize.
+        // On theory, it should be deterministic with chunkIds/moduleIds set to
+        // 'deterministic' and chunkFilename = '[id].js'.
+        // Note: maxSize uses estimated sizes; keep some headroom so emitted
+        // bundles stay under the linter's real per-file limit.
+        maxSize: 4.5 * 1024 * 1024,
         minSize: 0, // prevents merging small modules together automatically
         chunks(chunk) {
           // do not split into chunks the files that should be injected

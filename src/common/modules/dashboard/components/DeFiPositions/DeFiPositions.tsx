@@ -40,6 +40,8 @@ interface Props {
   dashboardNetworkFilterName: string | null
   animatedOverviewHeight: Animated.Value
   isSearchHidden: boolean
+  refreshing?: boolean
+  onRefresh?: () => void
 }
 
 const { isPopup } = getUiType()
@@ -52,7 +54,9 @@ const DeFiPositions: FC<Props> = ({
   onScroll,
   dashboardNetworkFilterName,
   animatedOverviewHeight,
-  isSearchHidden
+  isSearchHidden,
+  refreshing,
+  onRefresh
 }) => {
   const { t } = useTranslation()
   const { flags } = useController('FeatureFlagsController').state
@@ -203,7 +207,7 @@ const DeFiPositions: FC<Props> = ({
                 color={theme.linkText}
                 onPress={() => {
                   // eslint-disable-next-line @typescript-eslint/no-floating-promises
-                  openInTab({ url: 'https://help.ambire.com/hc/en-us' })
+                  openInTab({ url: 'https://help.ambire.com/en' })
                 }}
               >
                 {t('open a ticket.')}
@@ -308,6 +312,8 @@ const DeFiPositions: FC<Props> = ({
         onScroll={onScroll}
         scrollEventThrottle={16}
         animatedOverviewHeight={animatedOverviewHeight}
+        refreshing={refreshing}
+        onRefresh={onRefresh}
       />
       {openTab === 'defi' && <SearchAndCurrentApp control={control} isHidden={isSearchHidden} />}
     </>

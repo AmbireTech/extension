@@ -12,9 +12,10 @@ import TupUpWithBgIcon from '@common/assets/svg/TupUpWithBgIcon'
 import BottomSheet from '@common/components/BottomSheet'
 import ModalHeader from '@common/components/BottomSheet/ModalHeader'
 import Button from '@common/components/Button'
-import GlassView from '@common/components/GlassView'
+import FooterGlassView from '@common/components/FooterGlassView'
 import Text from '@common/components/Text'
 import TokenIcon from '@common/components/TokenIcon'
+import { isMobile, isWeb } from '@common/config/env'
 import useController from '@common/hooks/useController'
 import useHasGasTank from '@common/hooks/useHasGasTank'
 import useNavigation from '@common/hooks/useNavigation'
@@ -52,7 +53,7 @@ const createAnimation = (): Animation => ({
 
 const GasTankModal = ({ modalRef, handleClose, portfolio, account }: Props) => {
   const { isPopup } = getUiType()
-  const { styles, theme, themeType } = useTheme(getStyles)
+  const { styles, theme } = useTheme(getStyles)
   const { addToast } = useToast()
   const { t } = useTranslation()
   const { navigate } = useNavigation()
@@ -63,7 +64,7 @@ const GasTankModal = ({ modalRef, handleClose, portfolio, account }: Props) => {
 
   // Note: total balance Gas Tank details
   const { token, balanceFormatted } = useMemo(
-    () => getGasTankTokenDetails(portfolio, account, networks, 'amount'),
+    () => getGasTankTokenDetails(portfolio, account, networks),
     [account, networks, portfolio]
   )
 
@@ -136,11 +137,12 @@ const GasTankModal = ({ modalRef, handleClose, portfolio, account }: Props) => {
   return (
     <BottomSheet
       id="gas-tank-modal"
-      type={isPopup ? 'bottom-sheet' : 'modal'}
+      type={isPopup || isMobile ? 'bottom-sheet' : 'modal'}
       sheetRef={modalRef}
       containerInnerWrapperStyles={styles.containerInnerWrapper}
       closeBottomSheet={handleClose}
-      style={{ maxWidth: 600 }}
+      style={isWeb ? { maxWidth: 600 } : undefined}
+      isScrollEnabled={false}
       onOpen={handleOpen}
     >
       {hasGasTank ? (
@@ -154,7 +156,7 @@ const GasTankModal = ({ modalRef, handleClose, portfolio, account }: Props) => {
               onPress={async () => {
                 try {
                   await openInTab({
-                    url: 'https://help.ambire.com/hc/en-us/articles/5397969913884-What-is-the-Gas-Tank'
+                    url: 'https://help.ambire.com/en/articles/13752152-what-is-the-gas-tank'
                   })
                 } catch {
                   addToast("Couldn't open link", { type: 'error' })
@@ -166,78 +168,71 @@ const GasTankModal = ({ modalRef, handleClose, portfolio, account }: Props) => {
               </Text>
             </Pressable>
           </View>
-          <GlassView
-            borderRadius={28}
-            style={{
-              ...spacings.phSm,
-              ...spacings.pvSm
+          <FooterGlassView
+            size="sm"
+            style={{ ...flexbox.flex1, alignItems: 'stretch' }}
+            innerContainerStyle={{
+              ...flexbox.justifySpaceBetween,
+              ...flexbox.alignCenter,
+              ...flexbox.flex1
             }}
-            cssStyle={{
-              padding: 12
-            }}
+            absolute={false}
           >
-            <View
-              style={[
-                flexbox.flex1,
-                flexbox.directionRow,
-                flexbox.alignCenter,
-                flexbox.justifySpaceBetween
-              ]}
-            >
-              <View style={flexbox.directionRow}>
-                <TokenIcon
-                  withContainer
-                  address={token?.address || ''}
-                  chainId={token?.chainId}
-                  onGasTank={token?.flags.onGasTank || false}
-                  containerHeight={40}
-                  containerWidth={40}
-                  width={32}
-                  height={32}
-                  withNetworkIcon={false}
-                />
-                <View style={spacings.ml}>
-                  <Text fontSize={14} appearance="secondaryText">
-                    {t('Balance')}
-                  </Text>
-                  <Text fontSize={20} weight="number_bold" testID="gas-tank-balance">
-                    {`${balanceFormatted} ${token?.symbol || ''}`}
-                  </Text>
-                </View>
+            <View style={flexbox.directionRow}>
+              <TokenIcon
+                withContainer
+                address={token?.address || ''}
+                chainId={token?.chainId}
+                onGasTank={token?.flags.onGasTank || false}
+                containerHeight={40}
+                containerWidth={40}
+                width={32}
+                height={32}
+                withNetworkIcon={false}
+              />
+              <View style={spacings.ml}>
+                <Text fontSize={14} appearance="secondaryText">
+                  {t('Balance')}
+                </Text>
+                <Text fontSize={20} weight="number_bold" testID="gas-tank-balance">
+                  {`${balanceFormatted} ${token?.symbol || ''}`}
+                </Text>
               </View>
-              <Button
-                testID={
-                  hasGasTank
-                    ? 'top-up-gas-tank-modal-button'
-                    : 'create-smart-account-gas-tank-modal-button'
-                }
-                type="primary"
-                text={hasGasTank ? t('Top up') : t('Ok, create a Smart Account')}
-                size="large"
-                hasBottomSpacing={false}
-                style={{
-                  minWidth: 128
-                }}
-                onPress={() =>
-                  hasGasTank
-                    ? navigate('top-up-gas-tank')
-                    : navigate('account-select?triggerAddAccountBottomSheet=true')
-                }
-                childrenPosition="left"
-              >
-                <TopUpIcon color="#fff" width={24} height={24} style={spacings.mrMi} />
-              </Button>
             </View>
-          </GlassView>
+            <Button
+              testID={
+                hasGasTank
+                  ? 'top-up-gas-tank-modal-button'
+                  : 'create-smart-account-gas-tank-modal-button'
+              }
+              type="primary"
+              text={hasGasTank ? t('Top up') : t('Ok, create a Smart Account')}
+              size="smaller"
+              hasBottomSpacing={false}
+              style={{
+                minWidth: 128
+              }}
+              onPress={() =>
+                hasGasTank
+                  ? navigate('top-up-gas-tank')
+                  : navigate('account-select?triggerAddAccountBottomSheet=true')
+              }
+              childrenPosition="left"
+            >
+              <TopUpIcon color="#fff" width={24} height={24} style={spacings.mrMi} />
+            </Button>
+          </FooterGlassView>
         </>
       ) : (
         <>
-          <View style={[flexbox.directionRow, flexbox.center, common.fullWidth, spacings.mtLg]}>
+          <View
+            style={[flexbox.directionRow, flexbox.center, common.fullWidth, isWeb && spacings.mtLg]}
+          >
             <Text fontSize={16} weight="semiBold" appearance="secondaryText">
               {t('Experience the benefits of the Gas Tank:')}
             </Text>
           </View>
-          <View style={[flexbox.justifyStart, flexbox.alignCenter, { height: 276 }]}>
+          <View style={isWeb ? [flexbox.justifyStart, flexbox.alignCenter, { height: 276 }] : []}>
             {bulletsContent.map(
               (bullet, index) =>
                 index < visibleCount && (
@@ -264,7 +259,7 @@ const GasTankModal = ({ modalRef, handleClose, portfolio, account }: Props) => {
                       <Text
                         appearance="secondaryText"
                         weight="medium"
-                        style={[spacings.mlSm, { lineHeight: 24 }]}
+                        style={[spacings.mlSm, flexbox.flex1, { lineHeight: 24 }]}
                       >
                         {t(bullet.text)}
                       </Text>

@@ -45,7 +45,7 @@ const DashboardSearch: FC<Props> = ({ control }) => {
           height: 40,
           backgroundColor: isSearchFieldDisplayed
             ? theme.tertiaryBackground
-            : theme.secondaryBackground,
+            : theme.primaryBackground,
           borderRadius: 20,
           ...flexbox.center
         }}
@@ -82,7 +82,7 @@ const DashboardSearch: FC<Props> = ({ control }) => {
               autoFocus
               placeholderTextColor={theme.secondaryText}
               nativeInputStyle={{ fontSize: 14 }}
-              onChange={onChange}
+              onChangeText={onChange}
               onBlur={onBlur}
               buttonStyle={spacings.ph0}
               value={value}

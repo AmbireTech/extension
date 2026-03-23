@@ -32,6 +32,7 @@ const Toggle: React.FC<ToggleProps> = ({
         alignItems: 'center',
         display: 'flex',
         cursor: 'pointer',
+        flexShrink: 0,
         opacity: disabled ? 0.4 : 1
       }}
     >
@@ -70,10 +71,14 @@ const Toggle: React.FC<ToggleProps> = ({
             border: 'transparent',
             transform: isOn ? 'translateX(12px)' : '',
             boxShadow: '0px 2px 2px 0px #00000040',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
             ...(toggleStyle as React.CSSProperties)
           }}
-        />
-        {children}
+        >
+          {children}
+        </div>
       </div>
       <Text fontSize={12} weight="medium" {...labelProps}>
         {label}

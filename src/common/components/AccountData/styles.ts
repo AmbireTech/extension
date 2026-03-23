@@ -18,6 +18,7 @@ const getStyles = () =>
       height: 40,
       ...spacings.plMi,
       ...spacings.prSm,
+      ...spacings.mrTy,
       borderRadius: 50
     },
     accountButtonRightIcon: {

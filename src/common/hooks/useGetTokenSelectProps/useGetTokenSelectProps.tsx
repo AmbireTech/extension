@@ -1,5 +1,5 @@
 import { ZeroAddress } from 'ethers'
-import React, { ReactNode } from 'react'
+import React from 'react'
 import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 
@@ -16,6 +16,7 @@ import PendingToBeConfirmedIcon from '@common/assets/svg/PendingToBeConfirmedIco
 import Text from '@common/components/Text'
 import TokenIcon from '@common/components/TokenIcon'
 import Tooltip from '@common/components/Tooltip'
+import { isMobile } from '@common/config/env'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import PendingBadge from '@common/modules/dashboard/components/Tokens/TokenItem/PendingBadge'
@@ -36,7 +37,7 @@ const getTokenOptionsEmptyState = (isToToken = false) => [
     value: 'noTokens',
     label: (
       <TextFallbackState>
-        {isToToken ? 'Failed to retrieve tokens' : "You don't have any tokens"}
+        {isToToken ? 'Failed to retrieve tokens' : 'No tokens found'}
       </TextFallbackState>
     ),
     icon: null
@@ -230,7 +231,7 @@ const useGetTokenSelectProps = ({
           dataSet={tooltipIdNotSupported ? { tooltipId: tooltipIdNotSupported } : undefined}
           style={flexbox.flex1}
         >
-          <Text numberOfLines={1}>
+          <Text numberOfLines={1} style={{ lineHeight: 20 }}>
             <Text fontSize={16} weight="medium" numberOfLines={1}>
               {symbol}{' '}
             </Text>
@@ -256,20 +257,34 @@ const useGetTokenSelectProps = ({
       </>
     ) : (
       <>
-        <View style={[flexbox.directionRow, flexbox.flex1, flexbox.alignEnd]}>
+        <View
+          style={[
+            flexbox.flex1,
+            !isSelected && flexbox.directionRow,
+            !isSelected && flexbox.alignEnd
+          ]}
+        >
           <Text
-            fontSize={16}
+            fontSize={isSelected && isMobile ? 14 : 16}
             weight="semiBold"
+            style={{ lineHeight: 20 }}
             numberOfLines={1}
             dataSet={{ tooltipId: tooltipIdNotSupported }}
           >
             {symbol}
           </Text>
-          {networkName && !isSelected ? (
-            <Text fontSize={14} weight="medium" appearance="secondaryText" style={spacings.mlTy}>
-              {` on ${networkName}`}
+          {!!networkName && (
+            <Text
+              fontSize={isSelected ? 12 : 14}
+              weight={isSelected ? 'regular' : 'medium'}
+              appearance="secondaryText"
+              ellipsizeMode="tail"
+              numberOfLines={1}
+              style={!isSelected && spacings.mlTy}
+            >
+              {`${isSelected ? '' : ' '}on ${networkName}`}
             </Text>
-          ) : null}
+          )}
         </View>
         {!isSelected && formattedBalancesLabel}
         {!isTokenNetworkSupported && (

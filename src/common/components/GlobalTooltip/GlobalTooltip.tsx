@@ -3,6 +3,11 @@ import { ITooltip, TooltipRefProps } from 'react-tooltip'
 
 import Tooltip from '@common/components/Tooltip'
 
+// Used to trigger a tooltip content update from anywhere
+// E.g. state changes and you need to update the tooltip text without
+// the user moving his pointer
+export const GLOBAL_TOOLTIP_REFRESH_EVENT = 'global-tooltip-refresh'
+
 interface TooltipProps {
   id: string | null
   props: any | null
@@ -29,6 +34,16 @@ export function GlobalTooltip() {
 
     const applyTooltip = (data: any | null) => {
       setCurrent(data ? { id: data.id, props: data } : { id: null, props: null })
+    }
+
+    const refreshTooltip = () => {
+      let target = lastEl.current
+
+      if (!target && (pointerPos.current.x || pointerPos.current.y)) {
+        target = document.elementFromPoint(pointerPos.current.x, pointerPos.current.y)
+      }
+
+      applyTooltip(extractTooltip(target))
     }
 
     const handlePointerMove = (e: PointerEvent) => {
@@ -62,12 +77,21 @@ export function GlobalTooltip() {
       }, 80)
     }
 
+    const handleRefreshTooltip = () => {
+      refreshTooltip()
+    }
+
     document.addEventListener('pointermove', handlePointerMove, true)
     document.addEventListener('scroll', handleScroll, true)
+    window.addEventListener(GLOBAL_TOOLTIP_REFRESH_EVENT, handleRefreshTooltip as EventListener)
 
     return () => {
       document.removeEventListener('pointermove', handlePointerMove, true)
       document.removeEventListener('scroll', handleScroll, true)
+      window.removeEventListener(
+        GLOBAL_TOOLTIP_REFRESH_EVENT,
+        handleRefreshTooltip as EventListener
+      )
     }
   }, [])
 
@@ -88,7 +112,10 @@ export function GlobalTooltip() {
 }
 
 export function createGlobalTooltipDataSet(
-  props: Omit<ITooltip, 'render' | 'html' | 'children' | 'wrapper'>
+  props: Omit<ITooltip, 'render' | 'html' | 'children' | 'wrapper' | 'id'> & {
+    // The implementation doesn't work without id
+    id: string
+  }
 ) {
   return { tooltip: JSON.stringify(props) }
 }

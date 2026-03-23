@@ -13,11 +13,11 @@ import Text from '@common/components/Text'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import useWindowSize from '@common/hooks/useWindowSize'
+import HardwareWalletSigningModal from '@common/modules/hardware-wallets/components/HardwareWalletSigningModal'
 import spacings, { SPACING_LG, SPACING_MD, SPACING_TY } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { TabLayoutWrapperMainContent } from '@web/components/TabLayoutWrapper'
 import useResponsiveActionWindow from '@web/hooks/useResponsiveActionWindow'
-import HardwareWalletSigningModal from '@web/modules/hardware-wallet/components/HardwareWalletSigningModal'
 import LedgerConnectModal from '@web/modules/hardware-wallet/components/LedgerConnectModal'
 import { QrRequest, QrSigningStep } from '@web/modules/hardware-wallet/qr/types'
 import QrSigningFlowScreen from '@web/modules/hardware-wallet/screens/QrSigningFlowScreen'
@@ -55,7 +55,8 @@ const Main = ({
   handleQrSigningFlowOnRejectPressed
 }: Props) => {
   const { t } = useTranslation()
-  const signMessageState = useController('SignMessageController').state
+  const { state: signMessageState, dispatch: signMessageDispatch } =
+    useController('SignMessageController')
   const signStatus = signMessageState.statuses.sign
   const { styles, theme, themeType } = useTheme(getStyles)
   const { responsiveSizeMultiplier } = useResponsiveActionWindow()
@@ -217,6 +218,15 @@ const Main = ({
             <HardwareWalletSigningModal
               keyType={signMessageState.signer.key.type}
               isVisible={signStatus === 'LOADING'}
+              cancelReq={() => {
+                signMessageDispatch({
+                  type: 'method',
+                  params: {
+                    method: 'cancelSignReq',
+                    args: []
+                  }
+                })
+              }}
             />
           )}
         {shouldDisplayLedgerConnectModal && (

@@ -17,6 +17,7 @@ import Pagination from '@common/components/Pagination'
 import ScrollableWrapper from '@common/components/ScrollableWrapper'
 import Spinner from '@common/components/Spinner'
 import Text from '@common/components/Text'
+import { isMobile } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
@@ -42,8 +43,6 @@ type Props = {
   lookingForLinkedAccounts: boolean
   children?: any
 }
-
-const isMobile = Platform.OS === 'ios' || Platform.OS === 'android'
 
 const AccountsOnPageList = ({
   state,
@@ -237,12 +236,7 @@ const AccountsOnPageList = ({
           />
         )}
         <ScrollableWrapper
-          style={[
-            isMobile ? spacings.mbMd : spacings.mbLg,
-            {
-              maxHeight: isMobile ? undefined : 480
-            }
-          ]}
+          style={[isMobile ? spacings.mbMd : spacings.mbLg]}
           contentContainerStyle={{ flexGrow: 1 }}
           onScroll={(e) => {
             if (isCloseToBottom(e.nativeEvent) && setHasReachedBottom) setHasReachedBottom(true)

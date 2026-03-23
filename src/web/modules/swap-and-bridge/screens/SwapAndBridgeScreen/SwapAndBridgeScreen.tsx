@@ -12,7 +12,12 @@ import Spinner from '@common/components/Spinner'
 import useController from '@common/hooks/useController'
 import useNavigation from '@common/hooks/useNavigation'
 import usePrevious from '@common/hooks/usePrevious'
+import useTheme from '@common/hooks/useTheme'
+import useWindowSize from '@common/hooks/useWindowSize'
 import { ROUTES, WEB_ROUTES } from '@common/modules/router/constants/common'
+import BatchAdded from '@common/modules/sign-account-op/components/OneClick/BatchModal/BatchAdded'
+import Buttons from '@common/modules/sign-account-op/components/OneClick/Buttons'
+import Estimation from '@common/modules/sign-account-op/components/OneClick/Estimation'
 import TrackProgress from '@common/modules/swap-and-bridge/components/Estimation/TrackProgress'
 import FromToken from '@common/modules/swap-and-bridge/components/FromToken'
 import PriceImpactWarningModal from '@common/modules/swap-and-bridge/components/PriceImpactWarningModal'
@@ -23,18 +28,17 @@ import useSwapAndBridgeForm from '@common/modules/swap-and-bridge/hooks/useSwapA
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { getUiType } from '@common/utils/uiType'
+import { getTabLayoutPadding } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
 import { Content, Wrapper } from '@web/components/TransactionsScreen'
 import useSimulationError from '@web/modules/portfolio/hooks/SimulationError/useSimulationError'
-import BatchAdded from '@web/modules/sign-account-op/components/OneClick/BatchModal/BatchAdded'
-import Buttons from '@web/modules/sign-account-op/components/OneClick/Buttons'
-import Estimation from '@web/modules/sign-account-op/components/OneClick/Estimation'
-import SafeSigned from '@web/modules/sign-account-op/components/OneClick/SafeSigned'
+import Modals from '@web/modules/sign-account-op/components/Modals'
 
 const { isRequestWindow } = getUiType()
 
 const SwapAndBridgeScreen = () => {
   const { t } = useTranslation()
   const { navigate } = useNavigation()
+  const { theme } = useTheme()
   const {
     sessionId,
     fromAmountValue,
@@ -89,6 +93,9 @@ const SwapAndBridgeScreen = () => {
   } = useController('RequestsController')
   const prevSelectedAccActiveRoutes: any[] | undefined = usePrevious(selectedAccActiveRoutes)
   const scrollViewRef: any = useRef(null)
+
+  const { maxWidthSize } = useWindowSize()
+  const paddingHorizontalStyle = useMemo(() => getTabLayoutPadding(maxWidthSize), [maxWidthSize])
 
   const { simulationError: fromChainSimulationError } = useSimulationError({ chainId: fromChainId })
   const { simulationError: toChainSimulationError } = useSimulationError({ chainId: toChainId })
@@ -214,18 +221,6 @@ const SwapAndBridgeScreen = () => {
     shouldDisableAddToBatch
   ])
 
-  if (!sessionIds.includes(sessionId)) {
-    // If the portfolio has loaded we can skip the spinner as initializing the screen
-    // takes a short time and the spinner will only flash.
-    if (portfolio.isReadyToVisualize) return null
-
-    return (
-      <View style={[flexbox.flex1, flexbox.justifyCenter, flexbox.alignCenter]}>
-        <Spinner />
-      </View>
-    )
-  }
-
   if (activeRoute && displayedView === 'track') {
     return (
       <TrackProgress
@@ -246,16 +241,6 @@ const SwapAndBridgeScreen = () => {
         secondaryButtonText={t('Add more')}
         onPrimaryButtonPress={onBatchAddedPrimaryButtonPress}
         onSecondaryButtonPress={onBatchAddedSecondaryButtonPress}
-      />
-    )
-  }
-
-  if (displayedView === 'safe-signed') {
-    return (
-      <SafeSigned
-        title={t('Swap & Bridge')}
-        primaryButtonText={t('Open dashboard')}
-        onPrimaryButtonPress={onBatchAddedPrimaryButtonPress}
       />
     )
   }
@@ -287,6 +272,7 @@ const SwapAndBridgeScreen = () => {
               fromTokenAmountSelectDisabled={fromTokenAmountSelectDisabled}
               onFromAmountChange={onFromAmountChange}
               simulationFailed={!!fromChainSimulationError}
+              isLoading={!sessionIds.includes(sessionId) || !portfolio.isReadyToVisualize}
             />
           </View>
           <ToToken simulationFailed={!!toChainSimulationError} />
@@ -307,6 +293,7 @@ const SwapAndBridgeScreen = () => {
         hasProceeded={hasProceeded}
         signAccountOpController={signAccountOpController}
         serviceFee={quote?.selectedRoute?.serviceFee}
+        Modals={Modals}
       />
       <PriceImpactWarningModal
         sheetRef={priceImpactModalRef}

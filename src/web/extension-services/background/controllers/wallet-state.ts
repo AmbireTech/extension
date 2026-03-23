@@ -23,6 +23,8 @@ export class WalletStateController extends EventEmitter {
 
   #isSetupComplete: boolean = false
 
+  isPrivacyModeEnabled: boolean = false
+
   themeType: ThemeType = DEFAULT_THEME
 
   avatarType: AvatarType = 'jazzicons'
@@ -65,6 +67,7 @@ export class WalletStateController extends EventEmitter {
     this.#isSetupComplete = await storage.get('isSetupComplete', false)
     this.themeType = await storage.get('themeType', DEFAULT_THEME)
     this.avatarType = await storage.get('avatarType', this.avatarType)
+    this.isPrivacyModeEnabled = await storage.get('isPrivacyModeEnabled', this.isPrivacyModeEnabled)
     this.isPinned = await this.#checkIsPinned()
     if (!this.isPinned) this.#initContinuousCheckIsPinned()
 
@@ -137,6 +140,12 @@ export class WalletStateController extends EventEmitter {
     this.emitUpdate()
 
     await storage.set(CRASH_ANALYTICS_ENABLED_STORAGE_KEY, enabled)
+  }
+
+  async togglePrivacyMode() {
+    this.isPrivacyModeEnabled = !this.isPrivacyModeEnabled
+    await storage.set('isPrivacyModeEnabled', this.isPrivacyModeEnabled)
+    this.emitUpdate()
   }
 
   toJSON() {
