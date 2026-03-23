@@ -12,7 +12,6 @@ import NoKeysToSignAlert from '@common/components/NoKeysToSignAlert'
 import useController from '@common/hooks/useController'
 import useSign from '@common/hooks/useSign'
 import useTheme from '@common/hooks/useTheme'
-import useToast from '@common/hooks/useToast'
 import ActionHeader from '@common/modules/action-requests/components/ActionHeader'
 import ErrorInformation from '@common/modules/sign-account-op/components/ErrorInformation'
 import Estimation from '@common/modules/sign-account-op/components/Estimation'
@@ -170,9 +169,7 @@ const SignAccountOpScreen = () => {
     <SmallNotificationWindowWrapper>
       <SafetyChecksOverlay
         shouldBeVisible={
-          !signAccountOpState?.isInitialized ||
-          !signAccountOpState?.estimation.estimation ||
-          !!signAccountOpState.safetyChecksLoading
+          !signAccountOpState?.isInitialized || !!signAccountOpState.safetyChecksLoading
         }
       />
       <Modals
