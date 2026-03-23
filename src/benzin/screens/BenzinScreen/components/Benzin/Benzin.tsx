@@ -1,5 +1,5 @@
 import { randomBytes } from 'ethers'
-import React, { memo, useMemo } from 'react'
+import React, { memo, ReactNode, useMemo } from 'react'
 import { Image, ScrollView, StyleSheet, View, ViewStyle } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
@@ -127,10 +127,15 @@ const Benzin = ({
     showOpenExplorerBtn
   } = state
 
-  const Container = isMobile ? MobileLayoutContainer : View
+  const Container = ({ children }: { children: React.ReactNode }) => {
+    if (isMobile) {
+      return <MobileLayoutContainer withBottomInset={false}>{children}</MobileLayoutContainer>
+    }
+    return <View style={flexbox.flex1}>{children}</View>
+  }
 
   return (
-    <Container style={flexbox.flex1}>
+    <Container>
       <View
         pointerEvents="none"
         style={

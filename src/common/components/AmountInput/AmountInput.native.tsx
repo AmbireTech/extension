@@ -31,16 +31,14 @@ const AmountInput = ({ type, value, onChangeText, disabled, inputTestId }: Amoun
         onPress={() => inputRef.current?.focus()}
       />
       {type === 'fiat' && (
-        <Text
-          fontSize={24}
-          weight="medium"
-          appearance="secondaryText"
-          style={{
-            transform: [{ translateY: -1 }]
-          }}
+        <Pressable
+          style={{ transform: [{ translateY: -1 }] }}
+          onPress={() => inputRef.current?.focus()}
         >
-          $
-        </Text>
+          <Text fontSize={24} weight="medium" appearance="secondaryText">
+            $
+          </Text>
+        </Pressable>
       )}
       <NumberInput
         setInputRef={(r) => {

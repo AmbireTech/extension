@@ -1,6 +1,7 @@
 import React, { useCallback, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import Benzin from '@benzin/screens/BenzinScreen/components/Benzin/Benzin'
 import {
@@ -10,12 +11,10 @@ import {
 import useBenzin from '@benzin/screens/BenzinScreen/hooks/useBenzin'
 import RightArrowIcon from '@common/assets/svg/RightArrowIcon'
 import Button from '@common/components/Button'
-import FooterGlassView from '@common/components/FooterGlassView'
-import { isMobile } from '@common/config/env'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import spacings, { SPACING_SM } from '@common/styles/spacings'
-import { THEME_TYPES } from '@common/styles/themeConfig'
+import { hexToRgba } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 
 const BenzinScreen = () => {
@@ -24,7 +23,8 @@ const BenzinScreen = () => {
     state: { currentUserRequest, visibleUserRequests },
     dispatch: requestsDispatch
   } = useController('RequestsController')
-  const { themeType } = useTheme()
+  const { theme } = useTheme()
+  const { bottom } = useSafeAreaInsets()
 
   const userRequest = useMemo(
     () => (currentUserRequest?.kind === 'benzin' ? currentUserRequest : undefined),
@@ -54,57 +54,42 @@ const BenzinScreen = () => {
 
   return (
     <Benzin state={state}>
-      {isMobile ? (
-        <View style={[spacings.phSm, spacings.ptSm]}>
-          <View style={[flexbox.directionRow, flexbox.alignCenter, { columnGap: SPACING_SM }]}>
-            <View style={flexbox.flex1}>
-              {!!state?.showCopyBtn && !!state?.handleCopyText && (
-                <CopyButton handleCopyText={state.handleCopyText} />
-              )}
-            </View>
-            <View style={flexbox.flex1}>
-              {!!state?.handleOpenExplorer && (
-                <OpenExplorerButton handleOpenExplorer={state.handleOpenExplorer} />
-              )}
-            </View>
-          </View>
-          <Button
-            onPress={resolveAction}
-            size="regular"
-            text={pendingRequests.length ? t('Proceed to Next Request') : t('Close')}
-          >
-            {!!pendingRequests.length && (
-              <View style={spacings.pl}>
-                <RightArrowIcon color="#fff" />
-              </View>
-            )}
-          </Button>
-        </View>
-      ) : (
-        <FooterGlassView>
-          {!!state?.handleOpenExplorer && (
-            <OpenExplorerButton handleOpenExplorer={state.handleOpenExplorer} />
-          )}
-          <View style={[flexbox.directionRow, flexbox.alignCenter]}>
+      <View
+        style={[
+          spacings.phSm,
+          spacings.ptSm,
+          {
+            borderTopWidth: 1,
+            borderTopColor: theme.primaryBorder,
+            backgroundColor: hexToRgba(theme.primaryBackground, 0.75),
+            paddingBottom: bottom
+          }
+        ]}
+      >
+        <View style={[flexbox.directionRow, flexbox.alignCenter, { columnGap: SPACING_SM }]}>
+          <View style={flexbox.flex1}>
             {!!state?.showCopyBtn && !!state?.handleCopyText && (
               <CopyButton handleCopyText={state.handleCopyText} />
             )}
-            <Button
-              onPress={resolveAction}
-              style={{ minWidth: 180, ...spacings.mlSm }}
-              hasBottomSpacing={false}
-              size="large"
-              text={pendingRequests.length ? t('Proceed to Next Request') : t('Close')}
-            >
-              {!!pendingRequests.length && (
-                <View style={spacings.pl}>
-                  <RightArrowIcon color="#fff" />
-                </View>
-              )}
-            </Button>
           </View>
-        </FooterGlassView>
-      )}
+          <View style={flexbox.flex1}>
+            {!!state?.handleOpenExplorer && (
+              <OpenExplorerButton handleOpenExplorer={state.handleOpenExplorer} />
+            )}
+          </View>
+        </View>
+        <Button
+          onPress={resolveAction}
+          size="regular"
+          text={pendingRequests.length ? t('Proceed to Next Request') : t('Close')}
+        >
+          {!!pendingRequests.length && (
+            <View style={spacings.pl}>
+              <RightArrowIcon color="#fff" />
+            </View>
+          )}
+        </Button>
+      </View>
     </Benzin>
   )
 }
