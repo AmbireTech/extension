@@ -7,6 +7,7 @@ import ImportJsonIcon from '@common/assets/svg/ImportJsonIcon'
 import LatticeWithBorderIcon from '@common/assets/svg/LatticeWithBorderIcon'
 import LedgerLetterIcon from '@common/assets/svg/LedgerLetterIcon'
 import PrivateKeyIcon from '@common/assets/svg/PrivateKeyIcon'
+import ReceiveIcon from '@common/assets/svg/ReceiveIcon'
 import RightArrowIcon from '@common/assets/svg/RightArrowIcon'
 import SafeIcon from '@common/assets/svg/SafeIcon'
 import SeedPhraseIcon from '@common/assets/svg/SeedPhraseIcon'
@@ -130,11 +131,11 @@ const ImportExistingAccountSelectorScreen = () => {
         icon: SafeIcon
       },
       {
-        title: 'QR Wallet', // TODO: change to better name if needed
+        title: 'QR-based',
         onPress: () => {
           goToNextRoute(WEB_ROUTES.qrConnect)
         },
-        icon: LedgerLetterIcon
+        icon: ReceiveIcon
       },
       {
         title: 'JSON backup file',

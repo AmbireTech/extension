@@ -11,6 +11,7 @@ import ImportJsonIcon from '@common/assets/svg/ImportJsonIcon'
 import LatticeIcon from '@common/assets/svg/LatticeIcon'
 import LedgerLetterIcon from '@common/assets/svg/LedgerLetterIcon'
 import PrivateKeyIcon from '@common/assets/svg/PrivateKeyIcon'
+import ReceiveIcon from '@common/assets/svg/ReceiveIcon'
 import SafeIcon from '@common/assets/svg/SafeIcon'
 import SeedPhraseIcon from '@common/assets/svg/SeedPhraseIcon'
 import TrezorLockIcon from '@common/assets/svg/TrezorLockIcon'
@@ -85,8 +86,8 @@ const AddAccount = ({
       },
       {
         key: 'qr',
-        text: t('QR Wallet'), // TODO: changed it
-        icon: LatticeIcon,
+        text: t('QR-based'),
+        icon: ReceiveIcon,
         onPress: () => {
           goToNextRoute(WEB_ROUTES.qrConnect)
         },
