@@ -83,12 +83,14 @@ const DashboardPageScrollContainer: FC<Props> = ({
       alwaysBounceVertical
       scrollEventThrottle={16}
       refreshControl={
-        <RefreshControl
-          refreshing={!!refreshing}
-          onRefresh={onRefresh}
-          tintColor={theme.iconPrimary}
-          progressBackgroundColor={theme.secondaryBackground}
-        />
+        isMobile ? (
+          <RefreshControl
+            refreshing={!!refreshing}
+            onRefresh={onRefresh}
+            tintColor={theme.iconPrimary}
+            progressBackgroundColor={theme.secondaryBackground}
+          />
+        ) : undefined
       }
       {...rest}
     />
