@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react'
+import React, { useCallback, useEffect, useState } from 'react'
 import { Controller } from 'react-hook-form'
 import { Image, Pressable, View } from 'react-native'
 import Animated from 'react-native-reanimated'
@@ -38,19 +38,19 @@ const KeyStoreUnlockScreen = () => {
 
   const { hasKeystoreRecovery } = useController('EmailVaultController').state
   const {
-    state: { statuses, errorMessage },
+    state: { statuses, errorMessage, hasBiometricsSecret },
     dispatch: keystoreDispatch
   } = useController('KeystoreController')
   const { theme } = useTheme()
   const { height } = useWindowSize()
 
-  const { isEnrolled, isLoading, getBiometricsSecret, deviceSupportedAuthTypes } = useBiometrics()
+  const { isLoading, getBiometricsSecret, deviceSupportedAuthTypes } = useBiometrics()
   const hasFaceId = deviceSupportedAuthTypes.includes(
     DEVICE_SUPPORTED_AUTH_TYPES.FACIAL_RECOGNITION
   )
   const BiometricsIcon = hasFaceId ? FaceIDIcon : FingerprintIcon
 
-  const [unlockMethod, setUnlockMethod] = useState<'biometrics' | 'password'>('password')
+  const [unlockMethod, setUnlockMethod] = useState<'biometrics' | 'password' | null>(null)
   const [initialCheckDone, setInitialCheckDone] = useState(false)
 
   const handleBiometricsPrompt = useCallback(async () => {
@@ -72,15 +72,31 @@ const KeyStoreUnlockScreen = () => {
     }
   }, [getBiometricsSecret, keystoreDispatch])
 
-  React.useEffect(() => {
+  useEffect(() => {
+    if (unlockMethod) return
+
+    if (hasBiometricsSecret) {
+      setUnlockMethod('biometrics')
+    } else {
+      setUnlockMethod('password')
+    }
+  }, [hasBiometricsSecret])
+
+  useEffect(() => {
     if (!isLoading && !initialCheckDone) {
       setInitialCheckDone(true)
-      if (isEnrolled) {
+      if (hasBiometricsSecret) {
         setUnlockMethod('biometrics')
         handleBiometricsPrompt().catch(() => {})
       }
     }
-  }, [isLoading, isEnrolled, initialCheckDone, handleBiometricsPrompt, getBiometricsSecret])
+  }, [
+    isLoading,
+    hasBiometricsSecret,
+    initialCheckDone,
+    handleBiometricsPrompt,
+    getBiometricsSecret
+  ])
 
   return (
     <MobileLayoutContainer>
@@ -145,7 +161,7 @@ const KeyStoreUnlockScreen = () => {
           />
         </View>
         <Animated.View style={flexbox.flex1} />
-        {unlockMethod === 'password' ? (
+        {unlockMethod === 'password' && (
           <>
             <Controller
               control={control}
@@ -196,7 +212,7 @@ const KeyStoreUnlockScreen = () => {
                 textStyle={{ textDecorationLine: 'underline' }}
               />
             )}
-            {isEnrolled && (
+            {hasBiometricsSecret && (
               <Button
                 text={hasFaceId ? t('Unlock with Face ID') : t('Unlock with fingerprint')}
                 type="secondary"
@@ -217,7 +233,8 @@ const KeyStoreUnlockScreen = () => {
               </Button>
             )}
           </>
-        ) : (
+        )}
+        {unlockMethod === 'biometrics' && (
           <>
             <View style={[flexbox.alignCenter, flexbox.justifyCenter, flexbox.flex1]}>
               <Pressable
