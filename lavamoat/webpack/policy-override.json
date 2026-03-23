@@ -1,20 +1,5 @@
 {
   "resources": {
-    "patch-package>json-stable-stringify>object-keys": {
-      "allow": {
-        "primordialMutations": true
-      }
-    },
-    "@sentry/react>@sentry/core": {
-      "allow": {
-        "primordialMutations": true
-      }
-    },
-    "eth-crypto>ethers>@ethersproject/keccak256>js-sha3": {
-      "allow": {
-        "primordialMutations": true
-      }
-    },
     "@ledgerhq/context-module>inversify>@inversifyjs/common": {
       "packages": {
         "@ledgerhq/context-module>reflect-metadata": true
@@ -54,6 +39,11 @@
         "document": true,
         "screen": true,
         "visualViewport": true
+      }
+    },
+    "patch-package>json-stable-stringify>object-keys": {
+      "meta": {
+        "note": "Auto policy could not be generated for this module; access is explicitly disabled here to silence the build warning."
       }
     },
     "util>inherits": {
