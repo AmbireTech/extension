@@ -53,6 +53,10 @@ const SignMessageScreen = () => {
     state: { currentUserRequest },
     dispatch: requestsDispatch
   } = useController('RequestsController')
+  const {
+    state: { currentRequest, signingStep },
+    dispatch: qrHardwareDispatch
+  } = useController('QrHardwareController')
   const { addToast } = useToast()
 
   const userRequest = useMemo(() => {
@@ -209,12 +213,12 @@ const SignMessageScreen = () => {
     },
     [
       selectedAccountKeyStoreKeys,
+      account?.safeCreation,
+      signMessageState.signers,
       isLedgerConnected,
       dispatch,
       addToast,
-      t,
-      signMessageState.signers,
-      account?.safeCreation
+      t
     ]
   )
 
@@ -258,6 +262,45 @@ const SignMessageScreen = () => {
   const handleDismissLedgerConnectModal = useCallback(() => {
     setShouldDisplayLedgerConnectModal(false)
   }, [])
+
+  // QR-based
+  const handleOnContinue = useCallback(
+    () =>
+      qrHardwareDispatch({
+        type: 'method',
+        params: {
+          method: 'moveToResponseScan',
+          args: []
+        }
+      }),
+    [qrHardwareDispatch]
+  )
+
+  const handleSubmitSignatureResponse = useCallback(
+    (payload: string | Uint8Array) => {
+      qrHardwareDispatch({
+        type: 'method',
+        params: {
+          method: 'submitSignatureResponse',
+          args: [payload]
+        }
+      })
+    },
+    [qrHardwareDispatch]
+  )
+
+  const handleQrSigningFlowOnRejectPressed = useCallback(
+    () =>
+      qrHardwareDispatch({
+        type: 'method',
+        params: {
+          method: 'signingCleanup',
+          args: []
+        }
+      }),
+
+    [qrHardwareDispatch]
+  )
 
   const shouldDisplayEIP1271Warning = useMemo(() => {
     const dappOrigin = userRequest?.dappPromises[0]?.session?.origin
@@ -380,6 +423,11 @@ const SignMessageScreen = () => {
             setHasReachedBottom={setHasReachedBottom}
             shouldDisplayEIP1271Warning={shouldDisplayEIP1271Warning}
             isSafeNotDeployed={isSafeNotDeployed}
+            currentRequest={currentRequest}
+            signingStep={signingStep}
+            handleOnContinue={handleOnContinue}
+            handleSubmitSignatureResponse={handleSubmitSignatureResponse}
+            handleQrSigningFlowOnRejectPressed={handleQrSigningFlowOnRejectPressed}
           />
         )}
         {view === 'siwe' && (
@@ -388,6 +436,11 @@ const SignMessageScreen = () => {
             isLedgerConnected={isLedgerConnected}
             handleDismissLedgerConnectModal={handleDismissLedgerConnectModal}
             isSafeNotDeployed={isSafeNotDeployed}
+            currentRequest={currentRequest}
+            signingStep={signingStep}
+            handleOnContinue={handleOnContinue}
+            handleSubmitSignatureResponse={handleSubmitSignatureResponse}
+            handleQrSigningFlowOnRejectPressed={handleQrSigningFlowOnRejectPressed}
           />
         )}
       </TabLayoutContainer>

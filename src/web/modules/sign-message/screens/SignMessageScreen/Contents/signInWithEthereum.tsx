@@ -20,6 +20,8 @@ import { TabLayoutWrapperMainContent } from '@web/components/TabLayoutWrapper'
 import useResponsiveActionWindow from '@web/hooks/useResponsiveActionWindow'
 import HardwareWalletSigningModal from '@web/modules/hardware-wallet/components/HardwareWalletSigningModal'
 import LedgerConnectModal from '@web/modules/hardware-wallet/components/LedgerConnectModal'
+import { QrRequest, QrSigningStep } from '@web/modules/hardware-wallet/qr/types'
+import QrSigningFlowScreen from '@web/modules/hardware-wallet/screens/QrSigningFlowScreen'
 import Info from '@web/modules/sign-message/screens/SignMessageScreen/Info'
 import getStyles from '@web/modules/sign-message/screens/SignMessageScreen/styles'
 
@@ -28,6 +30,11 @@ interface Props {
   isLedgerConnected: boolean
   handleDismissLedgerConnectModal: () => void
   isSafeNotDeployed: boolean
+  currentRequest: QrRequest | null
+  signingStep: QrSigningStep
+  handleOnContinue: () => void
+  handleSubmitSignatureResponse: (payload: string | Uint8Array) => void
+  handleQrSigningFlowOnRejectPressed: () => void
 }
 
 const Label = ({
@@ -91,7 +98,12 @@ const SignInWithEthereum = ({
   shouldDisplayLedgerConnectModal,
   isLedgerConnected,
   handleDismissLedgerConnectModal,
-  isSafeNotDeployed
+  isSafeNotDeployed,
+  currentRequest,
+  signingStep,
+  handleOnContinue,
+  handleSubmitSignatureResponse,
+  handleQrSigningFlowOnRejectPressed
 }: Props) => {
   const { t } = useTranslation()
   const { state: signMessageState, dispatch: signMessageDispatch } =
@@ -347,6 +359,16 @@ const SignInWithEthereum = ({
             handleOnConnect={handleDismissLedgerConnectModal}
             handleClose={handleDismissLedgerConnectModal}
             displayOptionToAuthorize={false}
+          />
+        )}
+        {signMessageState.signer && signMessageState.signer.key.type === 'qr' && (
+          <QrSigningFlowScreen
+            isVisible={true}
+            onContinue={handleOnContinue}
+            currentRequest={currentRequest}
+            signingStep={signingStep}
+            submitSignatureResponse={handleSubmitSignatureResponse}
+            onReject={handleQrSigningFlowOnRejectPressed}
           />
         )}
       </View>

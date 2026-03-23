@@ -1,4 +1,4 @@
-import React, { Dispatch, SetStateAction, useCallback, useMemo } from 'react'
+import React, { Dispatch, SetStateAction, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 
@@ -19,6 +19,7 @@ import { TabLayoutWrapperMainContent } from '@web/components/TabLayoutWrapper'
 import useResponsiveActionWindow from '@web/hooks/useResponsiveActionWindow'
 import HardwareWalletSigningModal from '@web/modules/hardware-wallet/components/HardwareWalletSigningModal'
 import LedgerConnectModal from '@web/modules/hardware-wallet/components/LedgerConnectModal'
+import { QrRequest, QrSigningStep } from '@web/modules/hardware-wallet/qr/types'
 import QrSigningFlowScreen from '@web/modules/hardware-wallet/screens/QrSigningFlowScreen'
 import FallbackVisualization from '@web/modules/sign-message/screens/SignMessageScreen/FallbackVisualization'
 import Info from '@web/modules/sign-message/screens/SignMessageScreen/Info'
@@ -32,6 +33,11 @@ interface Props {
   setHasReachedBottom: Dispatch<SetStateAction<boolean | null>>
   shouldDisplayEIP1271Warning: boolean
   isSafeNotDeployed: boolean
+  currentRequest: QrRequest | null
+  signingStep: QrSigningStep
+  handleOnContinue: () => void
+  handleSubmitSignatureResponse: (payload: string | Uint8Array) => void
+  handleQrSigningFlowOnRejectPressed: () => void
 }
 
 const Main = ({
@@ -41,14 +47,15 @@ const Main = ({
   hasReachedBottom,
   setHasReachedBottom,
   shouldDisplayEIP1271Warning,
-  isSafeNotDeployed
+  isSafeNotDeployed,
+  currentRequest,
+  signingStep,
+  handleOnContinue,
+  handleSubmitSignatureResponse,
+  handleQrSigningFlowOnRejectPressed
 }: Props) => {
   const { t } = useTranslation()
   const signMessageState = useController('SignMessageController').state
-  const {
-    state: { currentRequest, signingStep },
-    dispatch: qrHardwareDispatch
-  } = useController('QrHardwareController')
   const signStatus = signMessageState.statuses.sign
   const { styles, theme, themeType } = useTheme(getStyles)
   const { responsiveSizeMultiplier } = useResponsiveActionWindow()
@@ -75,43 +82,6 @@ const Main = ({
       network &&
       signMessageState.messageToSign?.content.kind,
     [network, humanizedMessage, signMessageState.messageToSign?.content?.kind]
-  )
-
-  const handleOnContinue = useCallback(
-    () =>
-      qrHardwareDispatch({
-        type: 'method',
-        params: {
-          method: 'moveToResponseScan',
-          args: []
-        }
-      }),
-    [qrHardwareDispatch]
-  )
-
-  const handleSubmitSignatureResponse = useCallback(
-    (payload: string | Uint8Array) => {
-      qrHardwareDispatch({
-        type: 'method',
-        params: {
-          method: 'submitSignatureResponse',
-          args: [payload]
-        }
-      })
-    },
-    [qrHardwareDispatch]
-  )
-
-  const handleQrSigningFlowOnRejectPressed = useCallback(
-    () =>
-      qrHardwareDispatch({
-        type: 'method',
-        params: {
-          method: 'signingCleanup',
-          args: []
-        }
-      }),
-    [qrHardwareDispatch]
   )
 
   return (
@@ -243,13 +213,20 @@ const Main = ({
         </View>
         {signMessageState.signer &&
           signMessageState.signer.key.type !== 'internal' &&
-          signMessageState.signer.key.type !== 'qr' &&
-          currentRequest && (
+          signMessageState.signer.key.type !== 'qr' && (
             <HardwareWalletSigningModal
               keyType={signMessageState.signer.key.type}
               isVisible={signStatus === 'LOADING'}
             />
           )}
+        {shouldDisplayLedgerConnectModal && (
+          <LedgerConnectModal
+            isVisible={!isLedgerConnected}
+            handleOnConnect={handleDismissLedgerConnectModal}
+            handleClose={handleDismissLedgerConnectModal}
+            displayOptionToAuthorize={false}
+          />
+        )}
         {signMessageState.signer && signMessageState.signer.key.type === 'qr' && (
           <QrSigningFlowScreen
             isVisible={true}
@@ -258,14 +235,6 @@ const Main = ({
             signingStep={signingStep}
             submitSignatureResponse={handleSubmitSignatureResponse}
             onReject={handleQrSigningFlowOnRejectPressed}
-          />
-        )}
-        {shouldDisplayLedgerConnectModal && (
-          <LedgerConnectModal
-            isVisible={!isLedgerConnected}
-            handleOnConnect={handleDismissLedgerConnectModal}
-            handleClose={handleDismissLedgerConnectModal}
-            displayOptionToAuthorize={false}
           />
         )}
       </View>
