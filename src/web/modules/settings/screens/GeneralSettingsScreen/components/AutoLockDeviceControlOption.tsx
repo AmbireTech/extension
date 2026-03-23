@@ -6,37 +6,8 @@ import ControlOption from '@common/components/ControlOption'
 import Select from '@common/components/Select'
 import useController from '@common/hooks/useController'
 import spacings from '@common/styles/spacings'
-import {
-  AUTO_LOCK_TIMES,
-  getAutoLockLabel
-} from '@web/extension-services/background/controllers/auto-lock'
-
-const AUTO_LOCK_OPTIONS = [
-  {
-    value: AUTO_LOCK_TIMES.never,
-    label: getAutoLockLabel(AUTO_LOCK_TIMES.never)
-  },
-  {
-    value: AUTO_LOCK_TIMES._7days,
-    label: getAutoLockLabel(AUTO_LOCK_TIMES._7days)
-  },
-  {
-    value: AUTO_LOCK_TIMES._1day,
-    label: getAutoLockLabel(AUTO_LOCK_TIMES._1day)
-  },
-  {
-    value: AUTO_LOCK_TIMES._8hours,
-    label: getAutoLockLabel(AUTO_LOCK_TIMES._8hours)
-  },
-  {
-    value: AUTO_LOCK_TIMES._1hour,
-    label: getAutoLockLabel(AUTO_LOCK_TIMES._1hour)
-  },
-  {
-    value: AUTO_LOCK_TIMES._10minutes,
-    label: getAutoLockLabel(AUTO_LOCK_TIMES._10minutes)
-  }
-]
+import { AUTO_LOCK_OPTIONS } from '@web/constants/autoLock'
+import { AUTO_LOCK_TIMES } from '@web/extension-services/background/controllers/auto-lock'
 
 const AutoLockDeviceControlOption = () => {
   const { t } = useTranslation()
