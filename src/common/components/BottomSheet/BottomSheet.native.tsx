@@ -58,7 +58,9 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
 
   useEffect(() => {
     const showSub = KeyboardEvents.addListener('keyboardWillShow', () => setIsKeyboardVisible(true))
-    const hideSub = KeyboardEvents.addListener('keyboardWillHide', () => setIsKeyboardVisible(false))
+    const hideSub = KeyboardEvents.addListener('keyboardWillHide', () =>
+      setIsKeyboardVisible(false)
+    )
 
     return () => {
       showSub.remove()
@@ -188,6 +190,7 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
                 scrollViewProps: {
                   bounces: false,
                   keyboardShouldPersistTaps: 'handled',
+                  showsVerticalScrollIndicator: false,
                   ...(!isScrollEnabled && {
                     scrollEnabled: false,
                     nestedScrollEnabled: true,
@@ -203,6 +206,7 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
                 flatListProps: {
                   bounces: false,
                   keyboardShouldPersistTaps: 'handled',
+                  showsVerticalScrollIndicator: false,
                   style: { marginBottom: bottom + SPACING_SM },
                   ...(flatListProps || {})
                 }
@@ -213,6 +217,7 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
                 sectionListProps: {
                   bounces: false,
                   keyboardShouldPersistTaps: 'handled',
+                  showsVerticalScrollIndicator: false,
                   style: { marginBottom: bottom + SPACING_SM },
                   ...(sectionListProps || {})
                 }

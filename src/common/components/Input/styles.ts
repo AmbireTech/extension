@@ -52,7 +52,13 @@ const getStyles = (theme: ThemeProps) =>
       fontFamily: isWeb ? FONT_FAMILIES.REGULAR : FONT_FAMILIES.LIGHT,
       color: theme.secondaryText,
       fontSize: 14,
-      ...(isAndroid ? { includeFontPadding: false, paddingVertical: 0 } : {})
+      ...(isAndroid
+        ? {
+            includeFontPadding: false,
+            paddingVertical: 0,
+            paddingHorizontal: 0
+          }
+        : {})
     },
     bottomLabel: {
       ...spacings.phMi,
