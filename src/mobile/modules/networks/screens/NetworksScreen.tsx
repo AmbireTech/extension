@@ -122,7 +122,7 @@ const NetworksScreen = () => {
     <LayoutWrapper>
       <HeaderWithTitle displayBackButtonIn="always" />
       <View style={[flexbox.flex1, spacings.phSm]}>
-        <Search control={control} autoFocus containerStyle={spacings.mbSm} />
+        <Search control={control} containerStyle={spacings.mbSm} />
         <NetworkBottomSheet
           chainId={settingsChainId}
           sheetRef={settingsBottomSheetRef}
