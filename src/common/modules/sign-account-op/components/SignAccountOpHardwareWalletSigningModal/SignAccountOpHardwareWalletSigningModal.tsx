@@ -126,7 +126,8 @@ const SignAccountOpHardwareWalletSigningModal: React.FC<Props> = ({
     accountOp.accountAddr
   ])
 
-  if (!currentlyInvolvedSignOrBroadcastKeyType) return null
+  if (!currentlyInvolvedSignOrBroadcastKeyType || currentlyInvolvedSignOrBroadcastKeyType === 'qr')
+    return null
 
   return (
     <HardwareWalletSigningModal
