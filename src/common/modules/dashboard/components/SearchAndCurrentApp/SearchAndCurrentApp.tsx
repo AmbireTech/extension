@@ -7,21 +7,30 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import GlassView from '@common/components/GlassView'
 import { isMobile, isWeb } from '@common/config/env'
-import spacings, { SPACING } from '@common/styles/spacings'
+import useTheme from '@common/hooks/useTheme'
+import CurrentApp from '@common/modules/dashboard/components/SearchAndCurrentApp/CurrentApp'
+import DashboardSearch from '@common/modules/dashboard/components/SearchAndCurrentApp/DashboardSearch'
+import SelectNetwork from '@common/modules/dashboard/components/TabsAndSearch/SelectNetwork'
+import spacings, { SPACING, SPACING_TY } from '@common/styles/spacings'
+import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
-
-import CurrentApp from './CurrentApp'
-import DashboardSearch from './DashboardSearch'
 
 type Props = {
   control: Control<{ search: string }, any>
   displayCurrentApp?: boolean
+  displayNetworkFilter?: boolean
   isHidden: boolean
 }
 
-const SearchAndCurrentApp = ({ control, displayCurrentApp = false, isHidden }: Props) => {
+const SearchAndCurrentApp = ({
+  control,
+  displayCurrentApp = false,
+  displayNetworkFilter = false,
+  isHidden
+}: Props) => {
   const { bottom: safeBottom } = useSafeAreaInsets()
   const { height } = useReanimatedKeyboardAnimation()
+  const { theme } = useTheme()
 
   const animatedBottom = useDerivedValue(() => {
     const toValue = isHidden ? -60 - safeBottom : SPACING + safeBottom
@@ -53,15 +62,28 @@ const SearchAndCurrentApp = ({ control, displayCurrentApp = false, isHidden }: P
           pointerEvents: 'none'
         },
         isMobile && {
-          ...flexbox.alignSelfCenter
+          ...flexbox.alignSelfCenter,
+          shadowColor: theme.neutral400,
+          shadowOffset: { width: 0, height: 1 },
+          shadowOpacity: 1,
+          shadowRadius: 8
         },
         animatedStyle
       ]}
     >
       <GlassView borderRadius={28} cssStyle={{ pointerEvents: 'all' }} isSimpleBlur={false}>
-        <View style={[spacings.phTy, spacings.pvTy, flexbox.directionRow, flexbox.alignCenter]}>
+        <View
+          style={[
+            spacings.phTy,
+            spacings.pvTy,
+            flexbox.directionRow,
+            flexbox.alignCenter,
+            isMobile && { columnGap: SPACING }
+          ]}
+        >
           <DashboardSearch control={control} />
-          {displayCurrentApp && <CurrentApp />}
+          {isWeb && displayCurrentApp && <CurrentApp />}
+          {isMobile && displayNetworkFilter && <SelectNetwork />}
         </View>
       </GlassView>
     </Animated.View>

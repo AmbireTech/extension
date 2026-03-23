@@ -17,15 +17,15 @@ import useController from '@common/hooks/useController'
 import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
+import ActionHeader from '@common/modules/action-requests/components/ActionHeader'
+import KeySelect from '@common/modules/sign-message/components/KeySelect'
 import flexbox from '@common/styles/utils/flexbox'
 import SmallNotificationWindowWrapper from '@web/components/SmallNotificationWindowWrapper'
 import { TabLayoutContainer } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
 import useDappInfo from '@web/hooks/useDappInfo/useDappInfo'
 import ActionFooter from '@web/modules/action-requests/components/ActionFooter'
-import ActionHeader from '@web/modules/action-requests/components/ActionHeader'
 import useLedger from '@web/modules/hardware-wallet/hooks/useLedger'
 
-import KeySelect from '../../../../../common/modules/sign-message/components/KeySelect'
 import Main from './Contents/main'
 import SignInWithEthereum from './Contents/signInWithEthereum'
 import SafeFooter from './SafeFooter'
@@ -144,7 +144,8 @@ const SignMessageScreen = () => {
               signature: null
             },
             signed: userRequest.meta.signed,
-            hash: userRequest.meta.hash
+            hash: userRequest.meta.hash,
+            signatures: userRequest.meta.signatures
           }
         ]
       }

@@ -19,8 +19,7 @@ const getStyles = () =>
       ...spacings.plMi,
       ...spacings.prSm,
       ...spacings.mrTy,
-      borderRadius: 50,
-      overflow: 'hidden'
+      borderRadius: 50
     },
     accountButtonRightIcon: {
       borderColor: 'transparent'

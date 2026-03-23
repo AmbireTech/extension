@@ -13,6 +13,7 @@ import useController from '@common/hooks/useController'
 import useSign from '@common/hooks/useSign'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
+import ActionHeader from '@common/modules/action-requests/components/ActionHeader'
 import ErrorInformation from '@common/modules/sign-account-op/components/ErrorInformation'
 import Estimation from '@common/modules/sign-account-op/components/Estimation'
 import Footer from '@common/modules/sign-account-op/components/Footer'
@@ -30,7 +31,6 @@ import {
   TabLayoutWrapperMainContent
 } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
 import { closeCurrentWindow } from '@web/extension-services/background/webapi/window'
-import ActionHeader from '@web/modules/action-requests/components/ActionHeader'
 import Modals from '@web/modules/sign-account-op/components/Modals/Modals'
 
 const isCloseToBottom = ({ layoutMeasurement, contentOffset, contentSize }: NativeScrollEvent) => {

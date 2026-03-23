@@ -41,6 +41,8 @@ interface Props {
   animatedOverviewHeight: Animated.Value
   isSearchHidden: boolean
   onAddCustomToken?: () => void
+  refreshing?: boolean
+  onRefresh?: () => void
 }
 
 // if any of the post amount (during simulation) or the current state
@@ -68,7 +70,9 @@ const Tokens = ({
   animatedOverviewHeight,
   dashboardNetworkFilterName,
   isSearchHidden,
-  onAddCustomToken
+  onAddCustomToken,
+  refreshing,
+  onRefresh
 }: Props) => {
   const { t } = useTranslation()
   const { navigate } = useNavigation()
@@ -345,9 +349,16 @@ const Tokens = ({
         windowSize={9} // Larger values can cause performance issues.
         onScroll={onScroll}
         scrollEventThrottle={16}
+        refreshing={refreshing}
+        onRefresh={onRefresh}
       />
       {openTab === 'tokens' && (
-        <SearchAndCurrentApp control={control} displayCurrentApp isHidden={isSearchHidden} />
+        <SearchAndCurrentApp
+          control={control}
+          displayCurrentApp
+          displayNetworkFilter
+          isHidden={isSearchHidden}
+        />
       )}
     </>
   )
