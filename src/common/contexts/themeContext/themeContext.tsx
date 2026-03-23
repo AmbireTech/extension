@@ -1,7 +1,6 @@
 import React, { useCallback } from 'react'
 
 import useController from '@common/hooks/useController'
-import { syncStorage } from '@common/services/storage'
 import { THEME_TYPES } from '@common/styles/themeConfig'
 
 import { LeanThemeProvider, ThemeContext } from './context'
@@ -27,11 +26,7 @@ const ThemeProvider: React.FC<{
   )
 
   return (
-    <LeanThemeProvider
-      storage={syncStorage}
-      selectedThemeType={selectedThemeType}
-      updateThemeType={setThemeType}
-    >
+    <LeanThemeProvider selectedThemeType={selectedThemeType} updateThemeType={setThemeType}>
       {children}
     </LeanThemeProvider>
   )

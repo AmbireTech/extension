@@ -228,14 +228,7 @@ const ErrorBoundary = ({ error }: Props) => {
     // The global theme provider is rendered below the ErrorBoundary as it requires state from other contexts.
     // To ensure that the ErrorBoundary has access to the theme and wraps as many components as possible,
     // we render a ThemeProvider with a forced theme type.
-    <LeanThemeProvider
-      selectedThemeType={themeType}
-      updateThemeType={() => {}}
-      storage={{
-        get: localStorage.getItem.bind(localStorage),
-        set: localStorage.setItem.bind(localStorage)
-      }}
-    >
+    <LeanThemeProvider selectedThemeType={themeType} updateThemeType={() => {}}>
       <ErrorBoundaryInner error={error} />
     </LeanThemeProvider>
   )
