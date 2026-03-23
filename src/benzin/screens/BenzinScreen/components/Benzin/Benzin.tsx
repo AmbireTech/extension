@@ -1,5 +1,5 @@
 import { randomBytes } from 'ethers'
-import React, { memo, ReactNode, useMemo } from 'react'
+import React, { Fragment, memo, useMemo } from 'react'
 import { Image, ScrollView, StyleSheet, View, ViewStyle } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
@@ -22,7 +22,6 @@ import useWindowSize from '@common/hooks/useWindowSize'
 import TransactionSummary from '@common/modules/sign-account-op/components/TransactionSummary'
 import spacings, { DEVICE_HEIGHT, DEVICE_WIDTH, SPACING_SM } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import { MobileLayoutContainer } from '@mobile/components/MobileLayoutWrapper'
 import { isExtension } from '@web/constants/browserapi'
 
 import { IS_MOBILE_UP_BENZIN_BREAKPOINT } from '../../styles'
@@ -128,9 +127,7 @@ const Benzin = ({
   } = state
 
   const Container = ({ children }: { children: React.ReactNode }) => {
-    if (isMobile) {
-      return <MobileLayoutContainer withBottomInset={false}>{children}</MobileLayoutContainer>
-    }
+    if (isMobile) return <Fragment>{children}</Fragment>
     return <View style={flexbox.flex1}>{children}</View>
   }
 

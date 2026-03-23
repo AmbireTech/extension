@@ -16,6 +16,7 @@ import useTheme from '@common/hooks/useTheme'
 import spacings, { SPACING_SM } from '@common/styles/spacings'
 import { hexToRgba } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
+import { MobileLayoutContainer } from '@mobile/components/MobileLayoutWrapper'
 
 const BenzinScreen = () => {
   const { t } = useTranslation()
@@ -53,44 +54,46 @@ const BenzinScreen = () => {
   }, [visibleUserRequests])
 
   return (
-    <Benzin state={state}>
-      <View
-        style={[
-          spacings.phSm,
-          spacings.ptSm,
-          {
-            borderTopWidth: 1,
-            borderTopColor: theme.primaryBorder,
-            backgroundColor: hexToRgba(theme.primaryBackground, 0.75),
-            paddingBottom: bottom
-          }
-        ]}
-      >
-        <View style={[flexbox.directionRow, flexbox.alignCenter, { columnGap: SPACING_SM }]}>
-          <View style={flexbox.flex1}>
-            {!!state?.showCopyBtn && !!state?.handleCopyText && (
-              <CopyButton handleCopyText={state.handleCopyText} />
-            )}
-          </View>
-          <View style={flexbox.flex1}>
-            {!!state?.handleOpenExplorer && (
-              <OpenExplorerButton handleOpenExplorer={state.handleOpenExplorer} />
-            )}
-          </View>
-        </View>
-        <Button
-          onPress={resolveAction}
-          size="regular"
-          text={pendingRequests.length ? t('Proceed to Next Request') : t('Close')}
+    <MobileLayoutContainer withBottomInset={false}>
+      <Benzin state={state}>
+        <View
+          style={[
+            spacings.phSm,
+            spacings.ptSm,
+            {
+              borderTopWidth: 1,
+              borderTopColor: theme.primaryBorder,
+              backgroundColor: hexToRgba(theme.primaryBackground, 0.75),
+              paddingBottom: bottom
+            }
+          ]}
         >
-          {!!pendingRequests.length && (
-            <View style={spacings.pl}>
-              <RightArrowIcon color="#fff" />
+          <View style={[flexbox.directionRow, flexbox.alignCenter, { columnGap: SPACING_SM }]}>
+            <View style={flexbox.flex1}>
+              {!!state?.showCopyBtn && !!state?.handleCopyText && (
+                <CopyButton handleCopyText={state.handleCopyText} />
+              )}
             </View>
-          )}
-        </Button>
-      </View>
-    </Benzin>
+            <View style={flexbox.flex1}>
+              {!!state?.handleOpenExplorer && (
+                <OpenExplorerButton handleOpenExplorer={state.handleOpenExplorer} />
+              )}
+            </View>
+          </View>
+          <Button
+            onPress={resolveAction}
+            size="regular"
+            text={pendingRequests.length ? t('Proceed to Next Request') : t('Close')}
+          >
+            {!!pendingRequests.length && (
+              <View style={spacings.pl}>
+                <RightArrowIcon color="#fff" />
+              </View>
+            )}
+          </Button>
+        </View>
+      </Benzin>
+    </MobileLayoutContainer>
   )
 }
 
