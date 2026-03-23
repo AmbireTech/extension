@@ -1,11 +1,14 @@
 import React, { useCallback, useEffect, useMemo } from 'react'
+import { View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 
 import BottomSheet from '@common/components/BottomSheet'
 import ModalHeader from '@common/components/BottomSheet/ModalHeader'
+import Button from '@common/components/Button'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
 import spacings from '@common/styles/spacings'
+import flexbox from '@common/styles/utils/flexbox'
 import { getUiType } from '@common/utils/uiType'
 
 import { QrRequest, QrSigningStep } from '../../qr/types'
@@ -66,8 +69,18 @@ const QrSigningFlowScreen = ({
       <ModalHeader title={title} handleClose={handleClose} />
 
       {!request ? (
-        // TODO: added Error view
-        <Text>{t('ERROR')}</Text>
+        <View style={[flexbox.alignCenter, spacings.ptXl, spacings.pbLg]}>
+          <Text weight="medium" fontSize={18} style={[flexbox.center, spacings.mbSm]}>
+            {t('Unable to start QR signing')}
+          </Text>
+          <Text fontSize={12} appearance="secondaryText" style={[flexbox.center]}>
+            {t('The QR signing request is missing or invalid.')}
+          </Text>
+          <Text fontSize={12} appearance="secondaryText" style={[flexbox.center, spacings.mbLg]}>
+            {t('Please close this window and try again.')}
+          </Text>
+          <Button text={t('Close')} onPress={() => close()} style={{ minWidth: 160 }} />
+        </View>
       ) : step === 'show-request' ? (
         <QrSignRequestScreen
           urType={request.urType}
