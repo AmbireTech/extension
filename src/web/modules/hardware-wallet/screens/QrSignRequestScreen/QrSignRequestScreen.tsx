@@ -23,7 +23,7 @@ const QrSignRequestScreen = ({ onContinue, onReject, urType, urCborHex }: Props)
 
   return (
     <View style={flexbox.center}>
-      <Text style={spacings.mbTy}>{t('Scan this QR code with your QR-based device to sign.')}</Text>
+      <Text>{t('Scan this QR code with your QR-based device to sign.')}</Text>
       <View style={[flexbox.center, spacings.mtSm]}>
         <AnimatedQRCode options={{ size: 300 }} type={urType} cbor={urCborHex} />
         <FooterGlassView size="sm" absolute={false} style={spacings.pt}>

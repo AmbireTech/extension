@@ -38,6 +38,7 @@ interface Props {
   handleOnContinue: () => void
   handleSubmitSignatureResponse: (payload: string | Uint8Array) => void
   handleQrSigningFlowOnRejectPressed: () => void
+  handleQrSigningFlowOnBackPressed: () => void
 }
 
 const Main = ({
@@ -52,7 +53,8 @@ const Main = ({
   signingStep,
   handleOnContinue,
   handleSubmitSignatureResponse,
-  handleQrSigningFlowOnRejectPressed
+  handleQrSigningFlowOnRejectPressed,
+  handleQrSigningFlowOnBackPressed
 }: Props) => {
   const { t } = useTranslation()
   const { state: signMessageState, dispatch: signMessageDispatch } =
@@ -245,6 +247,7 @@ const Main = ({
             signingStep={signingStep}
             submitSignatureResponse={handleSubmitSignatureResponse}
             onReject={handleQrSigningFlowOnRejectPressed}
+            handleQrSigningFlowOnBackPressed={handleQrSigningFlowOnBackPressed}
           />
         )}
       </View>

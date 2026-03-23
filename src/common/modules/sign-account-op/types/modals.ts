@@ -15,6 +15,7 @@ export type ModalsProps = Pick<
   | 'handleQrSigningFlowSubmitSignatureResponse'
   | 'handleQrSigningFlowOnClosePressed'
   | 'handleQrSigningFlowOnRejectPressed'
+  | 'handleQrSigningFlowOnBackPressed'
   | 'currentRequest'
   | 'signingStep'
   | 'warningToPromptBeforeSign'

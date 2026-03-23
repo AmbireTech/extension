@@ -68,6 +68,27 @@ class QrHardwareController
     this.emitUpdate()
   }
 
+  moveBack() {
+    switch (this.signingStep) {
+      case 'scan-response': {
+        this.signingStep = 'show-request'
+        this.emitUpdate()
+        return
+      }
+
+      case 'show-request': {
+        this.resetSession()
+        this.emitUpdate()
+        return
+      }
+
+      case 'idle':
+      default: {
+        throw new ExternalSignerError('No active QR signing session.')
+      }
+    }
+  }
+
   submitSignatureResponse(payload: string | Uint8Array) {
     if (!this.resolveSession) {
       throw new ExternalSignerError('No active QR signing session.')

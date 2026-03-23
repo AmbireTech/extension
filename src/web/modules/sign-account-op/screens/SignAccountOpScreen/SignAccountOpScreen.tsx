@@ -107,6 +107,7 @@ const SignAccountOpScreen = () => {
     handleQrSigningFlowSubmitSignatureResponse,
     handleQrSigningFlowOnClosePressed,
     handleQrSigningFlowOnRejectPressed,
+    handleQrSigningFlowOnBackPressed,
     currentRequest,
     signingStep,
     disabledReason,
@@ -198,6 +199,7 @@ const SignAccountOpScreen = () => {
         handleQrSigningFlowSubmitSignatureResponse={handleQrSigningFlowSubmitSignatureResponse}
         handleQrSigningFlowOnClosePressed={handleQrSigningFlowOnClosePressed}
         handleQrSigningFlowOnRejectPressed={handleQrSigningFlowOnRejectPressed}
+        handleQrSigningFlowOnBackPressed={handleQrSigningFlowOnBackPressed}
       />
       <TabLayoutContainer
         width="full"

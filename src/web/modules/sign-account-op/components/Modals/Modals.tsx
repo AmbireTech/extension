@@ -28,6 +28,7 @@ const Modals: FC<ModalsProps> = ({
   handleQrSigningFlowSubmitSignatureResponse,
   handleQrSigningFlowOnClosePressed,
   handleQrSigningFlowOnRejectPressed,
+  handleQrSigningFlowOnBackPressed,
   currentRequest,
   signingStep,
   warningToPromptBeforeSign,
@@ -113,6 +114,7 @@ const Modals: FC<ModalsProps> = ({
         signingStep={signingStep}
         submitSignatureResponse={handleQrSigningFlowSubmitSignatureResponse}
         onReject={handleQrSigningFlowOnRejectPressed}
+        handleQrSigningFlowOnBackPressed={handleQrSigningFlowOnBackPressed}
       />
     )
   }

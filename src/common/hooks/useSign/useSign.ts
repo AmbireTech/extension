@@ -203,6 +203,18 @@ const useSign = ({
     [qrHardwareDispatch]
   )
 
+  const handleQrSigningFlowOnBackPressed = useCallback(
+    () =>
+      qrHardwareDispatch({
+        type: 'method',
+        params: {
+          method: 'moveBack',
+          args: []
+        }
+      }),
+    [qrHardwareDispatch]
+  )
+
   const handleQrSigningFlowSubmitSignatureResponse = useCallback(
     (payload: string | Uint8Array) => {
       qrHardwareDispatch({
@@ -532,6 +544,7 @@ const useSign = ({
     handleQrSigningFlowSubmitSignatureResponse,
     handleQrSigningFlowOnClosePressed,
     handleQrSigningFlowOnRejectPressed,
+    handleQrSigningFlowOnBackPressed,
     currentRequest,
     signingStep,
     disabledReason,

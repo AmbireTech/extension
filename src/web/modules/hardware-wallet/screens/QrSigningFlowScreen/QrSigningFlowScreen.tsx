@@ -25,6 +25,7 @@ type Props = {
   onContinue: () => void
   submitSignatureResponse: (payload: string | Uint8Array) => void
   onReject: () => void
+  handleQrSigningFlowOnBackPressed: () => void
 }
 
 const QrSigningFlowScreen = ({
@@ -34,7 +35,8 @@ const QrSigningFlowScreen = ({
   signingStep,
   onContinue,
   submitSignatureResponse,
-  onReject
+  onReject,
+  handleQrSigningFlowOnBackPressed
 }: Props) => {
   const { ref, open, close } = useModalize()
   const { t } = useTranslation()
@@ -89,7 +91,10 @@ const QrSigningFlowScreen = ({
           onReject={handleOnRejectPressed}
         />
       ) : step === 'scan-response' ? (
-        <QrSignResponseScanner onSignatureScanned={(payload) => submitSignatureResponse(payload)} />
+        <QrSignResponseScanner
+          onSignatureScanned={(payload) => submitSignatureResponse(payload)}
+          onBack={handleQrSigningFlowOnBackPressed}
+        />
       ) : null}
     </BottomSheet>
   )

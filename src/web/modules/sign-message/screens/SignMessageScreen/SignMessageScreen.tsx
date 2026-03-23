@@ -257,6 +257,18 @@ const SignMessageScreen = () => {
     [qrHardwareDispatch]
   )
 
+  const handleQrSigningFlowOnBackPressed = useCallback(
+    () =>
+      qrHardwareDispatch({
+        type: 'method',
+        params: {
+          method: 'moveBack',
+          args: []
+        }
+      }),
+    [qrHardwareDispatch]
+  )
+
   const handleSubmitSignatureResponse = useCallback(
     (payload: string | Uint8Array) => {
       qrHardwareDispatch({
@@ -407,6 +419,7 @@ const SignMessageScreen = () => {
             handleOnContinue={handleOnContinue}
             handleSubmitSignatureResponse={handleSubmitSignatureResponse}
             handleQrSigningFlowOnRejectPressed={handleQrSigningFlowOnRejectPressed}
+            handleQrSigningFlowOnBackPressed={handleQrSigningFlowOnBackPressed}
           />
         )}
         {view === 'siwe' && (
