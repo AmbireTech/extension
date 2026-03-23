@@ -1,5 +1,4 @@
 import React from 'react'
-import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 
 import ScrollableWrapper from '@common/components/ScrollableWrapper'
@@ -21,7 +20,6 @@ import getStyles from './styles'
 
 const TokenDetailsScreen = () => {
   const { styles } = useTheme(getStyles)
-  const { t } = useTranslation()
   const {
     token,
     networks,
@@ -45,6 +43,7 @@ const TokenDetailsScreen = () => {
     balanceUSDFormatted,
     change24h,
     change24hFormatted,
+    balance,
     isRewards,
     isVesting,
     balanceFormatted
@@ -74,6 +73,7 @@ const TokenDetailsScreen = () => {
         <TokenBalanceCard
           symbol={symbol}
           address={address}
+          balance={balance}
           chainId={chainId}
           onGasTank={onGasTank}
           balanceFormatted={balanceFormatted}
