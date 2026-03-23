@@ -28,13 +28,14 @@ const SafetyChecksOverlay: FC<Props> = ({ shouldBeVisible }) => {
   }, [])
 
   useEffect(() => {
-    if (shouldBeVisible && !isOverlayActuallyVisible && startedLoadingTimestamp) return
     let timeout: any
     const now = Date.now()
 
     if (shouldBeVisible) {
-      setStartedLoadingTimestamp(now)
-      setIsOverlayActuallyVisible(true)
+      if (!isOverlayActuallyVisible || !startedLoadingTimestamp) {
+        setStartedLoadingTimestamp(now)
+        setIsOverlayActuallyVisible(true)
+      }
 
       timeout = setTimeout(handleHide, MAX_DISPLAY_TIME)
     } else if (!shouldBeVisible && isOverlayActuallyVisible && startedLoadingTimestamp) {

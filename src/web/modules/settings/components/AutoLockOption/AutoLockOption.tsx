@@ -34,8 +34,7 @@ const AutoLockOption: FC<Props> = ({ time }: Props) => {
     values: {
       from: theme.secondaryBackground,
       to: theme.tertiaryBackground
-    },
-    forceHoveredStyle: isSelected
+    }
   })
 
   return (
@@ -62,7 +61,10 @@ const AutoLockOption: FC<Props> = ({ time }: Props) => {
           borderWidth: 1,
           borderColor: theme.secondaryBorder
         },
-        animStyle
+        animStyle,
+        isSelected && {
+          backgroundColor: theme.tertiaryBackground
+        }
       ]}
       {...bindAnim}
     >

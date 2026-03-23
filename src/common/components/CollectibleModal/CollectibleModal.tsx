@@ -42,7 +42,7 @@ const CollectibleModal = ({
   hideSendNft?: boolean
 }) => {
   const { t } = useTranslation()
-  const { styles, theme, themeType } = useTheme(getStyles)
+  const { styles, theme } = useTheme(getStyles)
   const {
     state: { networks }
   } = useController('NetworksController')
@@ -78,22 +78,23 @@ const CollectibleModal = ({
           style={[
             flexbox.directionRow,
             flexbox.alignCenter,
-            spacings.mbSm,
+            spacings.mbMd,
             flexbox.justifyCenter,
             { width: '100%' }
           ]}
         >
           <Text
             fontSize={isTab ? 18 : 16}
-            weight="medium"
+            weight="semiBold"
             style={[spacings.mrMi]}
             numberOfLines={1}
+            ellipsizeMode="tail"
             selectable
           >
             {name || 'Unknown Name'}
           </Text>
           <Pressable
-            style={spacings.mlTy}
+            style={spacings.mlSm}
             onPress={() =>
               openInTab({ url: `${networkData?.explorerUrl}/nft/${address}/${String(id)}` })
             }
@@ -101,8 +102,8 @@ const CollectibleModal = ({
             {({ hovered }: any) => (
               <OpenIcon
                 color={hovered ? theme.primaryText : theme.secondaryText}
-                width={isTab ? 16 : 12}
-                height={isTab ? 16 : 12}
+                width={20}
+                height={20}
                 strokeWidth="2"
               />
             )}

@@ -1,19 +1,19 @@
 import React, { FC, memo, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Pressable, View, ViewStyle } from 'react-native'
+import { Pressable, View } from 'react-native'
 
 import { TokenResult } from '@ambire-common/libs/portfolio'
 import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
 import FlipIcon from '@common/assets/svg/FlipIcon'
-import NumberInput from '@common/components/NumberInput'
+import AmountInput from '@common/components/AmountInput'
 import Select from '@common/components/Select'
 import { SelectValue } from '@common/components/Select/types'
 import Text from '@common/components/Text'
+import { isMobile, isWeb } from '@common/config/env'
 import useController from '@common/hooks/useController'
-import { FONT_FAMILIES } from '@common/hooks/useFonts'
 import useTheme from '@common/hooks/useTheme'
 import MaxAmount from '@common/modules/swap-and-bridge/components/MaxAmount'
-import spacings from '@common/styles/spacings'
+import spacings, { SPACING, SPACING_SM } from '@common/styles/spacings'
 import { hexToRgba } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import { ItemPanel } from '@web/components/TransactionsScreen'
@@ -111,76 +111,41 @@ const SendToken: FC<Props> = ({
             // which is with borderRadius: 16
             borderRadius: 13,
             ...spacings.pv,
-            ...spacings.prMd,
+            ...(isWeb ? spacings.prMd : spacings.prSm),
             ...(validateFromAmount?.message ? styles.containerWarning : {})
           }}
         >
           <Text appearance="secondaryText" fontSize={14} weight="medium" style={spacings.mbSm}>
             {label}
           </Text>
-          <View style={[flexbox.flex1, flexbox.directionRow, flexbox.alignCenter]}>
-            <Select
-              setValue={handleChangeFromToken}
-              options={fromTokenOptions}
-              value={fromTokenValue}
-              testID={selectTestId}
-              bottomSheetTitle={t('Send token')}
-              searchPlaceholder={t('Token name or address...')}
-              emptyListPlaceholderText={t('No tokens found.')}
-              containerStyle={{ ...flexbox.flex1, ...spacings.mb0, ...spacings.mrMd }}
-              selectStyle={{ ...spacings.plTy, ...spacings.prSm }}
-              mode="bottomSheet"
-            />
-            <NumberInput
+          <View
+            style={[
+              flexbox.flex1,
+              flexbox.directionRow,
+              flexbox.alignCenter,
+              { columnGap: isMobile ? SPACING_SM : SPACING }
+            ]}
+          >
+            <View style={flexbox.flex1}>
+              <Select
+                setValue={handleChangeFromToken}
+                options={fromTokenOptions}
+                value={fromTokenValue}
+                testID={selectTestId}
+                bottomSheetTitle={t('Send token')}
+                searchPlaceholder={t('Token name or address...')}
+                emptyListPlaceholderText={t('No tokens found.')}
+                containerStyle={{ ...flexbox.flex1, ...spacings.mb0 }}
+                selectStyle={{ ...spacings.plTy, ...spacings.prSm }}
+                mode="bottomSheet"
+              />
+            </View>
+            <AmountInput
+              type={fromAmountFieldMode}
               value={fromAmountValue}
               onChangeText={handleOnChangeTextAndFormat}
-              placeholder="0"
-              borderless
-              inputWrapperStyle={{ backgroundColor: 'transparent' }}
-              nativeInputStyle={{
-                fontFamily: FONT_FAMILIES.MEDIUM,
-                fontSize: 24,
-                textAlign: 'right',
-                color: theme.primaryText
-              }}
               disabled={fromTokenAmountSelectDisabled}
-              containerStyle={[spacings.mb0 as ViewStyle, flexbox.flex1, { overflow: 'hidden' }]}
-              inputStyle={spacings.ph0}
-              testID={inputTestId}
-              childrenBelowInput={
-                fromAmountFieldMode === 'fiat' && (
-                  <View
-                    style={{
-                      position: 'absolute',
-                      right: 0,
-                      top: -2,
-                      zIndex: -1,
-                      width: '100%',
-                      height: '100%',
-                      flexDirection: 'row',
-                      justifyContent: 'flex-end',
-                      alignItems: 'center'
-                    }}
-                  >
-                    <Text
-                      fontSize={24}
-                      weight="medium"
-                      style={{ zIndex: 3 }}
-                      appearance="secondaryText"
-                    >
-                      $
-                      <Text
-                        fontSize={24}
-                        weight="medium"
-                        style={{ opacity: 0 }}
-                        appearance="secondaryText"
-                      >
-                        {fromAmountValue || '0'}
-                      </Text>
-                    </Text>
-                  </View>
-                )
-              }
+              inputTestId={inputTestId}
             />
           </View>
           <View

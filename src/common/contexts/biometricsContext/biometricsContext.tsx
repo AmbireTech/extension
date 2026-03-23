@@ -1,22 +1,35 @@
+import { hexlify, randomBytes } from 'ethers'
+import { BlurView } from 'expo-blur'
 import * as LocalAuthentication from 'expo-local-authentication'
 import React, { createContext, useCallback, useEffect, useMemo, useState } from 'react'
-import { Platform } from 'react-native'
+import { Platform, StyleSheet, View } from 'react-native'
 
-import i18n, { useTranslation } from '@common/config/localization/localization'
+import { useTranslation } from '@common/config/localization/localization'
+import useController from '@common/hooks/useController'
+import useIsAppFocused from '@common/hooks/useIsAppFocused'
+import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
-import useAuth from '@common/modules/auth/hooks/useAuth'
 import { getDeviceSupportedAuthTypesLabel } from '@common/services/device'
-import { requestLocalAuthFlagging } from '@common/services/requestPermissionFlagging'
+import { secureStorage } from '@common/services/storage'
+import { hexToRgba } from '@common/styles/utils/common'
+import flexbox from '@common/styles/utils/flexbox'
+import { Portal } from '@gorhom/portal'
 
 import { DEVICE_SECURITY_LEVEL, DEVICE_SUPPORTED_AUTH_TYPES } from './constants'
 import { biometricsContextDefaults, BiometricsContextReturnType } from './types'
 
+const BIOMETRICS_SECRET_KEY = 'biometricsSecret_v2'
+
 const BiometricsContext = createContext<BiometricsContextReturnType>(biometricsContextDefaults)
 
-const BiometricsProvider: React.FC = ({ children }) => {
+const BiometricsProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { t } = useTranslation()
-  const { authStatus } = useAuth()
   const { addToast } = useToast()
+  const { theme, themeType } = useTheme()
+  const isAppFocused = useIsAppFocused()
+  const {
+    state: { isUnlocked, hasBiometricsSecret }
+  } = useController('KeystoreController')
 
   const [deviceSecurityLevel, setDeviceSecurityLevel] = useState<DEVICE_SECURITY_LEVEL>(
     biometricsContextDefaults.deviceSecurityLevel
@@ -30,7 +43,24 @@ const BiometricsProvider: React.FC = ({ children }) => {
   const [hasBiometricsHardware, setHasBiometricsHardware] = useState<null | boolean>(
     biometricsContextDefaults.hasBiometricsHardware
   )
+  const [isEnrolled, setIsEnrolled] = useState<boolean>(biometricsContextDefaults.isEnrolled)
   const [isLoading, setIsLoading] = useState<boolean>(true)
+  const [isAuthInProcess, setIsAuthInProcess] = useState(false)
+
+  // When the app becomes focused, we can stop the "auth in process" suppression after a small delay.
+  // This ensures that all transitions (like navigation after setup) have completed before the blur
+  // is allowed to show again.
+  useEffect(() => {
+    let timer: NodeJS.Timeout
+    if (isAppFocused && isAuthInProcess) {
+      timer = setTimeout(() => {
+        setIsAuthInProcess(false)
+      }, 500)
+    }
+    return () => {
+      if (timer) clearTimeout(timer)
+    }
+  }, [isAppFocused, isAuthInProcess])
 
   useEffect(() => {
     ;(async () => {
@@ -42,43 +72,47 @@ const BiometricsProvider: React.FC = ({ children }) => {
       }
 
       try {
+        const enrolled = await LocalAuthentication.isEnrolledAsync()
+        setIsEnrolled(enrolled)
+      } catch {
+        // Assume nothing is enrolled, that's fine.
+      }
+
+      try {
         const securityLevel = await LocalAuthentication.getEnrolledLevelAsync()
-        const existingDeviceSecurityLevel =
-          // @ts-ignore `LocalAuthentication.SecurityLevel` and `DEVICE_SECURITY_LEVEL`
-          // overlap each other. So this should match.
-          Object.values(DEVICE_SECURITY_LEVEL).includes(securityLevel)
+        const validSecurityLevels = Object.values(DEVICE_SECURITY_LEVEL) as number[]
         setDeviceSecurityLevel(
-          // @ts-ignore `LocalAuthentication.SecurityLevel` and `DEVICE_SECURITY_LEVEL`
-          // overlap each other. So this should always result a valid setting.
-          existingDeviceSecurityLevel ? securityLevel : DEVICE_SECURITY_LEVEL.NONE
+          validSecurityLevels.includes(securityLevel)
+            ? (securityLevel as unknown as DEVICE_SECURITY_LEVEL)
+            : DEVICE_SECURITY_LEVEL.NONE
         )
       } catch {
         // Assume the lowest device security level (the default one), that's fine.
       }
 
       try {
-        const deviceAuthTypes = await LocalAuthentication.supportedAuthenticationTypesAsync()
-        // @ts-ignore `LocalAuthentication.AuthenticationType` and `DEVICE_SUPPORTED_AUTH_TYPES`
-        // overlap each other. So these should match.
+        const deviceAuthTypes =
+          (await LocalAuthentication.supportedAuthenticationTypesAsync()) as unknown as DEVICE_SUPPORTED_AUTH_TYPES[]
         setDeviceSupportedAuthTypes(deviceAuthTypes)
-        // @ts-ignore `LocalAuthentication.AuthenticationType` and `DEVICE_SUPPORTED_AUTH_TYPES`
-        // overlap each other. So these should match.
         setDeviceSupportedAuthTypesLabel(getDeviceSupportedAuthTypesLabel(deviceAuthTypes))
       } catch {
         // Fallback with defaults, that's fine.
       }
 
       setIsLoading(false)
-    })()
-  }, [authStatus])
+    })().catch(() => {})
+    // Run once on mount — hardware capabilities and enrollment don't change
+    // during a session and don't need to re-query on auth status changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
-  const authenticateWithLocalAuth = useCallback(async () => {
+  const authenticate = useCallback(async () => {
+    setIsAuthInProcess(true)
     try {
-      const { success } = await requestLocalAuthFlagging(() =>
-        LocalAuthentication.authenticateAsync({
-          promptMessage: t('Confirm your identity')
-        })
-      )
+      const { success } = await LocalAuthentication.authenticateAsync({
+        promptMessage: t('Confirm your identity'),
+        biometricsSecurityLevel: 'strong' // android only
+      })
 
       return success
     } catch (e) {
@@ -87,11 +121,38 @@ const BiometricsProvider: React.FC = ({ children }) => {
     }
   }, [addToast, t])
 
-  const fallbackSupportedAuthTypesLabel =
-    Platform.select({
-      ios: i18n.t('passcode'),
-      android: i18n.t('PIN / pattern')
-    }) || biometricsContextDefaults.fallbackSupportedAuthTypesLabel
+  const saveBiometricsSecret = useCallback(async () => {
+    setIsAuthInProcess(true)
+
+    const biometricsSecret = hexlify(randomBytes(32))
+
+    // on iOS secureStorage.set does not trigger the biometric prompt
+    // so we need to trigger it manually
+    if (Platform.OS === 'ios') {
+      const success = await authenticate()
+      if (!success) return null
+
+      await secureStorage.remove(BIOMETRICS_SECRET_KEY)
+    }
+
+    try {
+      await secureStorage.set(BIOMETRICS_SECRET_KEY, biometricsSecret)
+      return biometricsSecret
+    } catch (e) {
+      return null
+    }
+  }, [authenticate])
+
+  const getBiometricsSecret = useCallback(async () => {
+    setIsAuthInProcess(true)
+    try {
+      return await secureStorage.get(BIOMETRICS_SECRET_KEY, t('Confirm your identity'))
+    } catch {
+      return null
+    }
+  }, [t])
+
+  const showOverlay = !isAppFocused && isUnlocked && hasBiometricsSecret && !isAuthInProcess
 
   return (
     <BiometricsContext.Provider
@@ -99,24 +160,42 @@ const BiometricsProvider: React.FC = ({ children }) => {
         () => ({
           isLoading,
           hasBiometricsHardware,
+          isEnrolled,
           deviceSecurityLevel,
           deviceSupportedAuthTypes,
           deviceSupportedAuthTypesLabel,
-          fallbackSupportedAuthTypesLabel,
-          authenticateWithLocalAuth
+          authenticate,
+          saveBiometricsSecret,
+          getBiometricsSecret
         }),
         [
           isLoading,
           hasBiometricsHardware,
+          isEnrolled,
           deviceSecurityLevel,
           deviceSupportedAuthTypes,
           deviceSupportedAuthTypesLabel,
-          fallbackSupportedAuthTypesLabel,
-          authenticateWithLocalAuth
+          authenticate,
+          saveBiometricsSecret,
+          getBiometricsSecret
         ]
       )}
     >
-      {children}
+      <View style={flexbox.flex1}>
+        {children}
+        {showOverlay && (
+          <Portal hostName="global">
+            <BlurView
+              intensity={80}
+              tint={themeType}
+              style={[
+                StyleSheet.absoluteFill,
+                { backgroundColor: hexToRgba(theme.neutral800, 0.4), zIndex: 1000 }
+              ]}
+            />
+          </Portal>
+        )}
+      </View>
     </BiometricsContext.Provider>
   )
 }

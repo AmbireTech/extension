@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { View, ViewStyle } from 'react-native'
 
 import { TokenResult } from '@ambire-common/libs/portfolio'
+import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import Text from '@common/components/Text'
 import TokenIcon from '@common/components/TokenIcon'
 import useTheme from '@common/hooks/useTheme'
@@ -15,7 +16,7 @@ import getStyles from './styles'
 
 type TokenBalanceCardProps = Pick<
   ReturnType<typeof getAndFormatTokenDetails>,
-  'balanceFormatted' | 'balanceUSDFormatted' | 'change24h' | 'change24hFormatted'
+  'balanceFormatted' | 'balanceUSDFormatted' | 'change24h' | 'change24hFormatted' | 'balance'
 > &
   Pick<TokenResult, 'symbol' | 'address' | 'chainId'> & {
     onGasTank?: boolean
@@ -31,6 +32,7 @@ const TokenBalanceCard = ({
   onGasTank,
   balanceFormatted,
   balanceUSDFormatted,
+  balance,
   change24h,
   change24hFormatted,
   isRewards,
@@ -76,7 +78,15 @@ const TokenBalanceCard = ({
               </Text>
             )}
           </View>
-          <Text fontSize={13} appearance="secondaryText" weight="medium">
+          <Text
+            fontSize={13}
+            appearance="secondaryText"
+            weight="medium"
+            dataSet={createGlobalTooltipDataSet({
+              id: `token-balance`,
+              content: balance
+            })}
+          >
             {balanceFormatted}
           </Text>
           {!!onGasTank && (

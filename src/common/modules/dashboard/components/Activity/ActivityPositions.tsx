@@ -35,6 +35,8 @@ interface Props {
   onScroll: FlatListProps<any>['onScroll']
   animatedOverviewHeight: Animated.Value
   network: Network | null
+  refreshing?: boolean
+  onRefresh?: () => void
 }
 
 const { isPopup, isRequestWindow } = getUiType()
@@ -56,7 +58,9 @@ const ActivityPositions: FC<Props> = ({
   initTab,
   onScroll,
   animatedOverviewHeight,
-  network
+  network,
+  refreshing,
+  onRefresh
 }) => {
   const { t } = useTranslation()
   const { theme } = useTheme()
@@ -302,6 +306,8 @@ const ActivityPositions: FC<Props> = ({
       windowSize={9} // Larger values can cause performance issues.
       onScroll={onScroll}
       scrollEventThrottle={16}
+      refreshing={refreshing}
+      onRefresh={onRefresh}
       animatedOverviewHeight={animatedOverviewHeight}
     />
   )

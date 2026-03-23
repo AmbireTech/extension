@@ -77,8 +77,7 @@ const Account = ({
     values: {
       from: !inverseInteractionColors ? theme.primaryBackground : theme.secondaryBackground,
       to: !inverseInteractionColors ? theme.secondaryBackground : theme.primaryBackground
-    },
-    forceHoveredStyle: options.markSelected && addr === selectedAccount?.addr
+    }
   })
 
   const [bindOpacityAnim, opacityAnimStyle] = useHover({
@@ -173,7 +172,14 @@ const Account = ({
         styles.accountContainer,
         containerStyle,
         // @ts-ignore
-        isSelectable ? animStyle : { cursor: 'default' }
+        isSelectable ? animStyle : { cursor: 'default' },
+        isSelectable &&
+          options.markSelected &&
+          addr === selectedAccount?.addr && {
+            backgroundColor: !inverseInteractionColors
+              ? theme.secondaryBackground
+              : theme.primaryBackground
+          }
       ]}
     >
       <View style={[flexbox.flex1, flexbox.directionRow]}>

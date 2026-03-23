@@ -1,3 +1,4 @@
+import { useMemo } from 'react'
 import { useLocation } from 'react-router-native'
 
 import { UseRouteReturnType } from './types'
@@ -17,11 +18,18 @@ function getSearchParamsAsObject(searchString: string) {
 const useRoute = (): UseRouteReturnType => {
   const route = useLocation()
 
-  return {
-    ...route,
-    params: (route.state as any) || getSearchParamsAsObject(route.search) || {},
-    path: route.pathname
-  }
+  const params = useMemo(() => {
+    return (route.state as any) || getSearchParamsAsObject(route.search) || {}
+  }, [route.state, route.search])
+
+  return useMemo(
+    () => ({
+      ...route,
+      params,
+      path: route.pathname
+    }),
+    [route, params]
+  )
 }
 
 export default useRoute

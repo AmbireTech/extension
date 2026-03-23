@@ -42,7 +42,7 @@ const AutoLockDeviceControlOption = () => {
         options={AUTO_LOCK_OPTIONS}
         value={selectedOption}
         containerStyle={{
-          width: 120,
+          width: 132,
           ...spacings.mb0
         }}
         size="sm"
