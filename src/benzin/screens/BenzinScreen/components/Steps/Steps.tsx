@@ -125,15 +125,19 @@ const Steps: FC<Props> = ({ activeStep, txnId, userOpHash, stepsState, summary, 
 
   return (
     <>
-      {showConfetti && (
-        <ConfettiAnimation
-          type="tertiary"
-          width={windowWidth}
-          height={windowHeight}
-          autoPlay
-          loop={false}
-          style={{ zIndex: 1 }}
-        />
+      {!!showConfetti && (
+        <View
+          style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 1 }}
+          pointerEvents="none"
+        >
+          <ConfettiAnimation
+            type="tertiary"
+            width={windowWidth}
+            height={windowHeight}
+            autoPlay
+            loop={false}
+          />
+        </View>
       )}
       <View style={isMobile ? {} : IS_MOBILE_UP_BENZIN_BREAKPOINT ? spacings.mb2Xl : spacings.mbXl}>
         <Step

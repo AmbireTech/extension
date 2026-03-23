@@ -100,12 +100,16 @@ const BaseAddress: FC<Props> = ({
   const tooltipId = useMemo(() => `address-${address}-${nanoid(6)}`, [address])
 
   return (
-    <View style={[flexbox.alignCenter, flexbox.directionRow, isWeb && flexbox.flex1]}>
+    <View style={[flexbox.alignCenter, flexbox.directionRow, flexbox.wrap, isWeb && flexbox.flex1]}>
       <Text
         weight={isDisplayingPlainAddress ? 'mono_regular' : 'medium'}
         fontSize={14}
         appearance={verification === 'BLACKLISTED' ? 'errorText' : 'primaryText'}
         selectable
+        style={{
+          flexShrink: 1,
+          ...(isWeb ? { wordBreak: 'break-all' } : {})
+        }}
         {...rest}
       >
         {children}

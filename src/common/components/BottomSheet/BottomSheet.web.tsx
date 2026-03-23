@@ -25,7 +25,7 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
     type: _type,
     scrollViewRef: externalScrollViewRef,
     children,
-    closeBottomSheet = () => {},
+    closeBottomSheet: _closeBottomSheet = () => {},
     adjustToContentHeight = true,
     style = {},
     containerInnerWrapperStyles = {},
@@ -52,6 +52,7 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
     checkIsScrollable,
     scrollViewRef: internalScrollViewRef
   } = useIsScrollable()
+  const closeBottomSheet = useCallback(_closeBottomSheet, [_closeBottomSheet])
   const scrollViewRef = externalScrollViewRef || internalScrollViewRef
 
   const {
@@ -189,7 +190,10 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
           adjustToContentHeight={customRenderer ? false : adjustToContentHeight}
           disableScrollIfPossible={false}
           withOverlay={false}
-          onBackButtonPress={() => true}
+          onBackButtonPress={() => {
+            closeBottomSheet()
+            return true
+          }}
           panGestureEnabled={shouldBeClosableOnDrag}
           {...(!flatListProps && !sectionListProps
             ? {

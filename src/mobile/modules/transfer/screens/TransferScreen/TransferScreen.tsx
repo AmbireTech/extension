@@ -178,7 +178,7 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
               setAddressStateFieldValue={setAddressStateFieldValue}
             />
             {isTopUp && !hasGasTank && (
-              <View style={spacings.ptLg}>
+              <View style={spacings.pt}>
                 <Alert
                   type="warning"
                   title={
@@ -209,7 +209,7 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
               </View>
             )}
             {isTopUp && hasGasTank && (
-              <View style={spacings.ptLg}>
+              <View style={spacings.pt}>
                 <Alert
                   type="warning"
                   title={t('Gas Tank deposits cannot be withdrawn')}

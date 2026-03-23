@@ -25,7 +25,7 @@ const OpenExplorerButton: FC<Pick<Props, 'handleOpenExplorer'>> = ({ handleOpenE
 
   return (
     <Button
-      type={isExtension || isMobile ? 'ghost' : 'secondary'}
+      type={isExtension ? 'ghost' : 'secondary'}
       onPress={handleOpenExplorer}
       text="Open explorer"
       childrenPosition="left"
@@ -38,7 +38,7 @@ const OpenExplorerButton: FC<Pick<Props, 'handleOpenExplorer'>> = ({ handleOpenE
               ...spacings.phTy,
               marginRight: maxWidthSize('s') ? SPACING_LG : 0
             }
-          : {}
+          : { height: 46 }
       }
     >
       <OpenIcon width={24} height={24} color={theme.primaryText} style={spacings.mrMi} />
@@ -57,7 +57,7 @@ const CopyButton: FC<Pick<Props, 'handleCopyText'>> = ({ handleCopyText }) => {
               ...spacings.phTy,
               marginTop: maxWidthSize('s') ? 0 : SPACING_TY
             }
-          : {}
+          : { height: 46 }
       }
       onPress={handleCopyText}
       text="Copy link"

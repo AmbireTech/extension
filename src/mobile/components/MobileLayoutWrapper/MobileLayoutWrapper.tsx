@@ -143,6 +143,7 @@ export const MobileLayoutWrapperMainContent: React.FC<MobileLayoutWrapperMainCon
           bottomOffset={100}
           keyboardShouldPersistTaps="handled"
           bounces={false}
+          showsVerticalScrollIndicator={false}
           {...keyboardAwareScrollViewProps}
           {...rest}
         >
