@@ -1,29 +1,28 @@
-name: Benzin 🔥
+name: Ambire Explorer - Build and Deploy 🔥
+env:
+  APP_ENV: production
 
 on:
   push:
     branches:
-      - v2
-  pull_request:
-    branches:
-      - v2
+      - benzin-prod
 permissions:
   contents: write
 jobs:
   build:
-    name: Build & Deploy Standalone Benzin
+    environment: benzin
+    name: Ambire Explorer - Build and Deploy
     runs-on: ubuntu-latest
     concurrency:
       group: ${{ github.workflow }}-${{ github.ref }}
-    environment: benzin
     steps:
       - name: Add SSH key to checkout a private repo
-        uses: webfactory/ssh-agent@v0.5.4
+        uses: webfactory/ssh-agent@v0.9.1
         with:
           ssh-private-key: ${{ secrets.DEPLOY_KEY }}
 
       - name: Checkout code 🛎️
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Git submodules init
         run: git submodule init
@@ -51,10 +50,20 @@ jobs:
           RELAYER_URL: ${{ vars.RELAYER_URL }}
         run: yarn build:web:benzin
 
-      - name: Deploy 🚀🌕
-        if: github.ref == 'refs/heads/v2'
-        uses: JamesIves/github-pages-deploy-action@v4.4.1
+      - name: Setup SSH agent
+        uses: webfactory/ssh-agent@v0.9.1
         with:
-          branch: gh-pages
-          folder: build/benzin-prod
-          cname: explorer.ambire.com
+          ssh-private-key: ${{ secrets.BENZIN_DEPLOY_KEY }}
+
+      - name: Deploy to Ambire Explorer Repo gh-pages 🚀🌕
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git clone git@github.com:AmbireTech/benzin-prod-gh-pages.git benzin-prod-gh-pages
+          cd benzin-prod-gh-pages
+          git checkout gh-pages
+          cp -R ../build/benzin-prod/* .
+          date > deployDate
+          git add .
+          git commit -m "Automated deploy from ambire-app"
+          git push origin gh-pages --force
