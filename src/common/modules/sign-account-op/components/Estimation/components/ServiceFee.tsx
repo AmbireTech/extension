@@ -28,7 +28,7 @@ const ServiceFee = ({
   serviceFee?: SwapAndBridgeRoute['serviceFee']
 }) => {
   const { t } = useTranslation()
-  const { themeType, styles } = useTheme(getStyles)
+  const { theme, styles } = useTheme(getStyles)
 
   if (!serviceFee || !paidByNativeValue || !nativeFeeOption) return null
 
@@ -65,9 +65,6 @@ const ServiceFee = ({
         value={paidByNativeValue}
         disabled
         defaultValue={paidByNativeValue}
-        selectStyle={{
-          borderWidth: themeType === THEME_TYPES.DARK ? 0 : 1
-        }}
         renderSelectedOption={() => (
           <View style={styles.nativeBridgeFeeContainer}>
             <PayOption

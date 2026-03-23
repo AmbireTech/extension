@@ -4,24 +4,14 @@ import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
 interface Style {
+  amountWrapper: ViewStyle
   tokenContainer: ViewStyle
-  textContainer: ViewStyle
-  tokenWrapper: ViewStyle
   text: TextStyle
 }
 
-const WIDTH = 160
-
 const styles = StyleSheet.create<Style>({
-  tokenWrapper: {
-    ...spacings.phMi,
-    ...spacings.pv,
-    width: WIDTH,
-    zIndex: 1
-  },
-  textContainer: {
-    // Gets centered when text is short, but grows left (or right) if long, based on the flex model
-    minWidth: '100%'
+  amountWrapper: {
+    maxWidth: 120
   },
   text: {
     textAlign: 'center',
@@ -29,8 +19,10 @@ const styles = StyleSheet.create<Style>({
     whiteSpace: 'nowrap'
   },
   tokenContainer: {
+    zIndex: 1,
+    ...spacings.phMi,
     ...flexbox.alignSelfCenter,
-    ...spacings.mbSm
+    ...spacings.mbMi
   }
 })
 
