@@ -117,31 +117,29 @@ const NavMenu = () => {
       footerStyle={{ maxWidth: tabLayoutWidths.xl }}
       header={
         <HeaderWithTitle title={t('Menu')}>
-          {isPopup && (
-            <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-              <Button
-                type="ghost2"
-                size="small"
-                hasBottomSpacing={false}
-                onPress={() =>
-                  openInTab({
-                    url: `tab.html#/${WEB_ROUTES.dashboard}`,
-                    shouldCloseCurrentWindow: true
-                  })
-                }
-              >
-                <MaximizeIcon
-                  color={theme.iconPrimary}
-                  dataSet={createGlobalTooltipDataSet({
-                    id: expandViewTooltipId,
-                    content: t('Expand view')
-                  })}
-                  width={24}
-                  height={24}
-                />
-              </Button>
-            </View>
-          )}
+          <View style={[flexbox.directionRow, flexbox.alignCenter]}>
+            <Button
+              type="ghost2"
+              size="small"
+              hasBottomSpacing={false}
+              onPress={() =>
+                openInTab({
+                  url: `tab.html#/${WEB_ROUTES.dashboard}`,
+                  shouldCloseCurrentWindow: true
+                })
+              }
+            >
+              <MaximizeIcon
+                color={theme.iconPrimary}
+                dataSet={createGlobalTooltipDataSet({
+                  id: expandViewTooltipId,
+                  content: t('Expand view')
+                })}
+                width={24}
+                height={24}
+              />
+            </Button>
+          </View>
         </HeaderWithTitle>
       }
       style={spacings.ph0}
