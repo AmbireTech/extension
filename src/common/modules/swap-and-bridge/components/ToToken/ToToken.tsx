@@ -5,6 +5,7 @@ import { View } from 'react-native'
 
 import { EstimationStatus } from '@ambire-common/controllers/estimation/types'
 import { SwapAndBridgeFormStatus } from '@ambire-common/controllers/swapAndBridge/swapAndBridge'
+import { Network } from '@ambire-common/interfaces/network'
 import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
 import WalletIcon from '@common/assets/svg/WalletIcon'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
@@ -59,8 +60,8 @@ const ToToken: FC<Props> = ({ simulationFailed }) => {
   } = useController('SelectedAccountController')
   const networks = useNetworks({
     acc: account,
-    getAdditionalNotSupportedReason: getBridgeNetworkNotSupportedReason,
-    additionalFunctionParams: [supportedChainIds]
+    getAdditionalNotSupportedReason: (network: Network) =>
+      getBridgeNetworkNotSupportedReason(network, supportedChainIds)
   })
 
   const handleSwitchFromAndToTokens = useCallback(

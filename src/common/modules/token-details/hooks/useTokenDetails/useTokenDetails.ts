@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useModalize } from 'react-native-modalize'
 
+import { Network } from '@ambire-common/interfaces/network'
 import { TokenResult } from '@ambire-common/libs/portfolio'
 import { getTokenAmount } from '@ambire-common/libs/portfolio/helpers'
 import InvisibilityIcon from '@common/assets/svg/InvisibilityIcon'
@@ -46,8 +47,8 @@ const useTokenDetails = () => {
   } = useController('PortfolioController')
   const networks = useNetworks({
     acc: account,
-    getAdditionalNotSupportedReason: getBridgeNetworkNotSupportedReason,
-    additionalFunctionParams: [supportedChainIds]
+    getAdditionalNotSupportedReason: (network: Network) =>
+      getBridgeNetworkNotSupportedReason(network, supportedChainIds)
   })
   const [doNotDisplayHideTokenModal, setDoNotDisplayHideTokenModal] = useState(false)
   const [gasTankAssets, setGasTankAssets] = useState<{ chainId: number; address: string }[] | null>(

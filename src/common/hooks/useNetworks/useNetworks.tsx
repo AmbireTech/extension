@@ -14,12 +14,10 @@ import useAccountNetworks from './useAccountNetworks'
  */
 const useNetworks = ({
   acc,
-  getAdditionalNotSupportedReason,
-  additionalFunctionParams
+  getAdditionalNotSupportedReason
 }: {
   acc?: Account | null
-  getAdditionalNotSupportedReason?: (network: Network, ...params: any) => string | null
-  additionalFunctionParams?: any[]
+  getAdditionalNotSupportedReason?: (network: Network) => string | null
 }) => {
   const { state: networks } = useController('NetworksController', (state) => state.networks)
   const { accountNetworks, accountNotSupportedReason } = useAccountNetworks({ acc })
@@ -41,9 +39,7 @@ const useNetworks = ({
       }
 
       if (!!getAdditionalNotSupportedReason) {
-        const additionalNotSupportedReason = additionalFunctionParams?.length
-          ? getAdditionalNotSupportedReason(n, ...additionalFunctionParams)
-          : null
+        const additionalNotSupportedReason = getAdditionalNotSupportedReason(n)
         if (additionalNotSupportedReason) {
           n.isNotSupported = true
           n.notSupportedReason = t(additionalNotSupportedReason)
@@ -58,7 +54,6 @@ const useNetworks = ({
     networks,
     accountNotSupportedReason,
     getAdditionalNotSupportedReason,
-    additionalFunctionParams,
     t
   ])
 

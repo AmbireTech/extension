@@ -6,6 +6,7 @@ import { useModalize } from 'react-native-modalize'
 import { useLocation } from 'react-router-dom'
 
 import { SwapAndBridgeFormStatus } from '@ambire-common/controllers/swapAndBridge/swapAndBridge'
+import { Network } from '@ambire-common/interfaces/network'
 import { SwapAndBridgeActiveRoute } from '@ambire-common/interfaces/swapAndBridge'
 import { CallsUserRequest } from '@ambire-common/interfaces/userRequest'
 import {
@@ -80,8 +81,8 @@ const useSwapAndBridgeForm = () => {
   const { t } = useTranslation()
   const networks = useNetworks({
     acc: account,
-    getAdditionalNotSupportedReason: getBridgeNetworkNotSupportedReason,
-    additionalFunctionParams: [supportedChainIds]
+    getAdditionalNotSupportedReason: (network: Network) =>
+      getBridgeNetworkNotSupportedReason(network, supportedChainIds)
   })
   const currentRoute = useLocation()
   const { setSearchParams, navigate } = useNavigation()
