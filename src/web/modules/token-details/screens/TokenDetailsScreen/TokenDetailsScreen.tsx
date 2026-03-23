@@ -13,6 +13,7 @@ import SwapAndBridgeIcon from '@common/assets/svg/SwapAndBridgeIcon'
 import TopUpIcon from '@common/assets/svg/TopUpIcon'
 import VisibilityIcon from '@common/assets/svg/VisibilityIcon'
 import FooterGlassView from '@common/components/FooterGlassView'
+import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import LayoutWrapper from '@common/components/LayoutWrapper'
 import ScrollableWrapper from '@common/components/ScrollableWrapper'
 import Text from '@common/components/Text'
@@ -325,6 +326,7 @@ const TokenDetailsScreen = () => {
     change24hFormatted,
     isRewards,
     isVesting,
+    balance,
     balanceFormatted
   } = getAndFormatTokenDetails(token, networks)
 
@@ -367,7 +369,15 @@ const TokenDetailsScreen = () => {
                 {isVesting && t('Claimable early supporters vesting')}
               </Text>
             </View>
-            <Text fontSize={14} appearance="secondaryText" weight="medium">
+            <Text
+              fontSize={14}
+              appearance="secondaryText"
+              weight="medium"
+              dataSet={createGlobalTooltipDataSet({
+                id: `token-balance`,
+                content: balance
+              })}
+            >
               {balanceFormatted}
             </Text>
             {!!onGasTank && (

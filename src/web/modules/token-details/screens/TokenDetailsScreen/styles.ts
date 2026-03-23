@@ -26,6 +26,7 @@ const getStyles = (theme: ThemeProps) =>
     },
     tokenInfo: {
       ...spacings.mh,
+      ...flexbox.alignStart,
       ...flexbox.flex1
     },
     balance: {
