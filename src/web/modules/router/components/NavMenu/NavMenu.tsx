@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo } from 'react'
+import React, { useCallback, useEffect, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 
@@ -28,13 +28,11 @@ import { openInTab } from '@common/utils/links'
 import { getUiType } from '@common/utils/uiType'
 import {
   TabLayoutContainer,
-  tabLayoutWidths
+  tabLayoutWidths,
+  TabLayoutWrapperMainContent
 } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
+import { AUTO_LOCK_OPTIONS } from '@web/constants/autoLock'
 import { DISCORD_URL, TELEGRAM_URL, TWITTER_URL } from '@web/constants/social'
-import {
-  AUTO_LOCK_TIMES,
-  getAutoLockLabel
-} from '@web/extension-services/background/controllers/auto-lock'
 import SettingsLink from '@web/modules/settings/components/SettingsLink'
 import commonWebStyles from '@web/styles/utils/common'
 
@@ -71,41 +69,20 @@ const OTHER_LINKS = [
 const { isTab, isPopup } = getUiType()
 const expandViewTooltipId = 'expand-view-tooltip'
 
-const AUTO_LOCK_OPTIONS = [
-  {
-    value: AUTO_LOCK_TIMES.never,
-    label: getAutoLockLabel(AUTO_LOCK_TIMES.never)
-  },
-  {
-    value: AUTO_LOCK_TIMES._7days,
-    label: getAutoLockLabel(AUTO_LOCK_TIMES._7days)
-  },
-  {
-    value: AUTO_LOCK_TIMES._1day,
-    label: getAutoLockLabel(AUTO_LOCK_TIMES._1day)
-  },
-  {
-    value: AUTO_LOCK_TIMES._8hours,
-    label: getAutoLockLabel(AUTO_LOCK_TIMES._8hours)
-  },
-  {
-    value: AUTO_LOCK_TIMES._1hour,
-    label: getAutoLockLabel(AUTO_LOCK_TIMES._1hour)
-  },
-  {
-    value: AUTO_LOCK_TIMES._10minutes,
-    label: getAutoLockLabel(AUTO_LOCK_TIMES._10minutes)
-  }
-]
-
 const NavMenu = () => {
   const { t } = useTranslation()
   const { navigate } = useNavigation()
   const { theme } = useTheme(getStyles)
   const { dispatch: mainDispatch } = useController('MainController')
-  const handleLockAmbire = () => {
+  const { hasPasswordSecret } = useController('KeystoreController').state
+
+  const handleLockAmbire = useCallback(() => {
     mainDispatch({ type: 'method', params: { method: 'lock', args: [] } })
-  }
+  }, [mainDispatch])
+
+  const handleGoToDevicePasswordSet = useCallback(() => {
+    navigate(WEB_ROUTES.devicePasswordSet)
+  }, [navigate])
 
   const {
     state: { autoLockTime }
@@ -122,6 +99,9 @@ const NavMenu = () => {
   const selectedOption = useMemo(() => {
     return AUTO_LOCK_OPTIONS.find((option) => option.value === autoLockTime) || AUTO_LOCK_OPTIONS[0]
   }, [autoLockTime])
+
+  const lockLabel = hasPasswordSecret ? t('Lock Wallet') : t('Set extension password')
+  const lockActionLabel = hasPasswordSecret ? selectedOption?.label || '' : t('Create')
 
   useEffect(() => {
     if (isTab) {
@@ -167,9 +147,9 @@ const NavMenu = () => {
       style={spacings.ph0}
       withHorizontalPadding={false}
     >
-      <View style={[flexbox.flex1]}>
+      <TabLayoutWrapperMainContent contentContainerStyle={spacings.pbLg}>
         <View style={[commonWebStyles.contentContainer, flexbox.flex1]}>
-          <View style={[flexbox.flex1]}>
+          <View style={flexbox.flex1}>
             <View
               style={[
                 spacings.pbSm,
@@ -226,7 +206,7 @@ const NavMenu = () => {
 
             <View style={[spacings.ptSm, spacings.phSm]}>
               <AnimatedPressable
-                onPress={handleLockAmbire}
+                onPress={hasPasswordSecret ? handleLockAmbire : handleGoToDevicePasswordSet}
                 style={[
                   flexbox.directionRow,
                   flexbox.justifySpaceBetween,
@@ -234,6 +214,9 @@ const NavMenu = () => {
                   spacings.phSm,
                   spacings.pv,
                   flexbox.flex1,
+                  spacings.ptSm,
+                  spacings.phSm,
+
                   {
                     borderRadius: BORDER_RADIUS_PRIMARY
                   },
@@ -241,19 +224,21 @@ const NavMenu = () => {
                 ]}
                 {...bindLockAnim}
               >
-                <View style={flexbox.directionRow}>
+                <View style={[flexbox.directionRow, flexbox.alignCenter]}>
                   <LockIcon width={24} height={24} color={theme.iconPrimary} />
                   <Text style={spacings.mlSm} weight="medium">
-                    {t('Lock Wallet')}
+                    {lockLabel}
                   </Text>
                 </View>
 
-                <Text>{selectedOption?.label || ''}</Text>
+                <Text appearance="tertiaryText">
+                  {t('Auto lock')}: {lockActionLabel}
+                </Text>
               </AnimatedPressable>
             </View>
           </View>
         </View>
-      </View>
+      </TabLayoutWrapperMainContent>
     </TabLayoutContainer>
   )
 }

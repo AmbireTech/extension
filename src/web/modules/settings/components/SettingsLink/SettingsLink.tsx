@@ -3,8 +3,8 @@ import { useTranslation } from 'react-i18next'
 import { ColorValue, View, ViewStyle } from 'react-native'
 import { SvgProps } from 'react-native-svg'
 
-import ExternalLinkIcon from '@common/assets/svg/ExternalLinkIcon'
 import LeftArrowIcon from '@common/assets/svg/LeftArrowIcon'
+import OpenIcon from '@common/assets/svg/OpenIcon'
 import Text from '@common/components/Text'
 import { AnimatedPressable, useCustomHover } from '@common/hooks/useHover'
 import useNavigation from '@common/hooks/useNavigation'
@@ -111,7 +111,7 @@ const SettingsLink: FC<Props> = ({
           }}
         >
           {isExternal ? (
-            <ExternalLinkIcon
+            <OpenIcon
               width={24}
               height={24}
               color={isHovered || isActive ? theme.primaryText : theme.iconPrimary}
