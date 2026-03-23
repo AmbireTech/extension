@@ -5,6 +5,7 @@ import { View } from 'react-native'
 import { AUTO_LOGIN_DURATION_OPTIONS } from '@ambire-common/controllers/autoLogin/autoLogin'
 import { SiweMessageUserRequest } from '@ambire-common/interfaces/userRequest'
 import Alert from '@common/components/Alert'
+import FatToggle from '@common/components/FatToggle'
 import NetworkBadge from '@common/components/NetworkBadge'
 import ScrollableWrapper from '@common/components/ScrollableWrapper'
 import Select from '@common/components/Select'
@@ -293,7 +294,12 @@ const SignInWithEthereum = ({
           siweMessageToSign.siweValidityStatus === 'valid' && (
             <View style={[flexbox.directionRow, flexbox.justifyEnd, flexbox.alignCenter]}>
               <View style={[flexbox.directionRow, flexbox.alignCenter, flexbox.justifyEnd]}>
-                <Toggle isOn={isAutoLoginEnabledByUser} onToggle={updateIsAutoLoginEnabled} />
+                <FatToggle
+                  isOn={isAutoLoginEnabledByUser}
+                  onToggle={updateIsAutoLoginEnabled}
+                  width={36}
+                  height={20}
+                />
 
                 <Text
                   fontSize={14 * responsiveSizeMultiplier}
@@ -315,6 +321,7 @@ const SignInWithEthereum = ({
                     // Convert the duration to hours for comparison with the option values
                     Number(option.value) === siweMessageToSign.autoLoginDuration
                 )}
+                selectStyle={{ backgroundColor: theme.secondaryBackground }}
                 withSearch={false}
                 disabled={!isAutoLoginEnabledByUser}
               />
