@@ -36,6 +36,7 @@ interface Props {
   handleOnContinue: () => void
   handleSubmitSignatureResponse: (payload: string | Uint8Array) => void
   handleQrSigningFlowOnRejectPressed: () => void
+  handleQrSigningFlowOnBackPressed: () => void
 }
 
 const Label = ({
@@ -104,7 +105,8 @@ const SignInWithEthereum = ({
   signingStep,
   handleOnContinue,
   handleSubmitSignatureResponse,
-  handleQrSigningFlowOnRejectPressed
+  handleQrSigningFlowOnRejectPressed,
+  handleQrSigningFlowOnBackPressed
 }: Props) => {
   const { t } = useTranslation()
   const { state: signMessageState, dispatch: signMessageDispatch } =
@@ -376,6 +378,7 @@ const SignInWithEthereum = ({
             signingStep={signingStep}
             submitSignatureResponse={handleSubmitSignatureResponse}
             onReject={handleQrSigningFlowOnRejectPressed}
+            handleQrSigningFlowOnBackPressed={handleQrSigningFlowOnBackPressed}
           />
         )}
       </View>

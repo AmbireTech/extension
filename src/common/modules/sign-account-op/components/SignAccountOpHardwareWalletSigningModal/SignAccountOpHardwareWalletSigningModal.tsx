@@ -131,7 +131,7 @@ const SignAccountOpHardwareWalletSigningModal: React.FC<Props> = ({
   return (
     <HardwareWalletSigningModal
       isVisible={shouldBeVisible}
-      keyType={currentlyInvolvedSignOrBroadcastKeyType as 'trezor' | 'ledger' | 'lattice'}
+      keyType={currentlyInvolvedSignOrBroadcastKeyType as 'trezor' | 'ledger' | 'lattice' | 'qr'}
       cancelReq={cancelReq}
     >
       {typeof signedTransactionsCount === 'number' ? (

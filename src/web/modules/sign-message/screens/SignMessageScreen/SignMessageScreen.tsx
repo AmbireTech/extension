@@ -433,6 +433,7 @@ const SignMessageScreen = () => {
             handleOnContinue={handleOnContinue}
             handleSubmitSignatureResponse={handleSubmitSignatureResponse}
             handleQrSigningFlowOnRejectPressed={handleQrSigningFlowOnRejectPressed}
+            handleQrSigningFlowOnBackPressed={handleQrSigningFlowOnBackPressed}
           />
         )}
       </TabLayoutContainer>
