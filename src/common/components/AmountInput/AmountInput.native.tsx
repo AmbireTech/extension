@@ -1,5 +1,5 @@
-import React, { useState } from 'react'
-import { View, ViewStyle } from 'react-native'
+import React, { useRef, useState } from 'react'
+import { Pressable, TextInput, View, ViewStyle } from 'react-native'
 
 import NumberInput from '@common/components/NumberInput'
 import Text from '@common/components/Text'
@@ -14,6 +14,7 @@ import { AmountInputProps } from './AmountInput'
 const AmountInput = ({ type, value, onChangeText, disabled, inputTestId }: AmountInputProps) => {
   const { theme } = useTheme()
   const [isFocused, setIsFocused] = useState(false)
+  const inputRef = useRef<TextInput>(null)
 
   return (
     <View
@@ -25,6 +26,10 @@ const AmountInput = ({ type, value, onChangeText, disabled, inputTestId }: Amoun
         isMobile && { maxWidth: '40%' }
       ]}
     >
+      <Pressable
+        style={[flexbox.flex1, { height: 28 }]}
+        onPress={() => inputRef.current?.focus()}
+      />
       {type === 'fiat' && (
         <Text
           fontSize={24}
@@ -38,6 +43,9 @@ const AmountInput = ({ type, value, onChangeText, disabled, inputTestId }: Amoun
         </Text>
       )}
       <NumberInput
+        setInputRef={(r) => {
+          inputRef.current = r
+        }}
         value={value}
         onChangeText={onChangeText}
         placeholder="0"
@@ -58,7 +66,13 @@ const AmountInput = ({ type, value, onChangeText, disabled, inputTestId }: Amoun
         inputStyle={{ ...spacings.ph0, flex: 0 }}
         onFocus={() => setIsFocused(true)}
         onBlur={() => setIsFocused(false)}
-        selection={isAndroid && !isFocused ? { start: 0, end: 0 } : undefined}
+        selection={
+          isAndroid
+            ? isFocused
+              ? { start: value?.length || 0, end: value?.length || 0 }
+              : { start: 0, end: 0 }
+            : undefined
+        }
         testID={inputTestId}
       />
     </View>

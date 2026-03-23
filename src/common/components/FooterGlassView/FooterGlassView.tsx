@@ -24,6 +24,7 @@ const params: {
 const FooterGlassView: FC<{
   children: React.ReactNode
   style?: ViewStyle
+  mobileStyle?: ViewStyle
   innerContainerStyle?: ViewStyle
   size?: 'sm' | 'md'
   absolute?: boolean
@@ -32,6 +33,7 @@ const FooterGlassView: FC<{
 }> = ({
   children,
   style = {},
+  mobileStyle = {},
   innerContainerStyle,
   size = 'md',
   glassViewProps = {},
@@ -39,7 +41,11 @@ const FooterGlassView: FC<{
   isSimpleBlur
 }) => {
   if (isMobile) {
-    return <View style={{ flexDirection: 'column-reverse', width: '100%' }}>{children}</View>
+    return (
+      <View style={[{ flexDirection: 'column-reverse', width: '100%' }, mobileStyle]}>
+        {children}
+      </View>
+    )
   }
 
   return (
