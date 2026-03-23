@@ -22,6 +22,7 @@ import Refunded from '@common/modules/sign-account-op/components/OneClick/TrackP
 import useTrackAccountOp from '@common/modules/sign-account-op/hooks/OneClick/useTrackAccountOp'
 import spacings from '@common/styles/spacings'
 import { THEME_TYPES } from '@common/styles/theme/types'
+import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
 import formatTime from '@common/utils/formatTime'
@@ -171,6 +172,13 @@ const TrackProgress: FC<Props> = ({ activeRoute, handleClose }) => {
                         )
                       : ''
                   }
+                  wrapperStyle={{
+                    width: 160,
+                    height: 112,
+                    backgroundColor: theme.secondaryBackground,
+                    borderRadius: BORDER_RADIUS_PRIMARY,
+                    ...flexbox.center
+                  }}
                 />
                 <View
                   style={[flexbox.alignCenter, flexbox.justifyCenter, { width: 8, zIndex: 100 }]}
@@ -206,6 +214,13 @@ const TrackProgress: FC<Props> = ({ activeRoute, handleClose }) => {
                         )
                       : ''
                   }
+                  wrapperStyle={{
+                    width: 160,
+                    height: 112,
+                    backgroundColor: theme.secondaryBackground,
+                    borderRadius: BORDER_RADIUS_PRIMARY,
+                    ...flexbox.center
+                  }}
                 />
               </View>
               <View>

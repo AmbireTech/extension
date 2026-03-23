@@ -4,12 +4,21 @@ import flexbox from '@common/styles/utils/flexbox'
 
 interface Style {
   container: ViewStyle
+  iconsRow: ViewStyle
+  amountsRow: ViewStyle
 }
 
 const styles = StyleSheet.create<Style>({
   container: {
-    ...flexbox.directionRow,
     marginHorizontal: -5
+  },
+  iconsRow: {
+    ...flexbox.directionRow,
+    ...flexbox.alignCenter
+  },
+  amountsRow: {
+    ...flexbox.directionRow,
+    ...flexbox.justifySpaceBetween
   }
 })
 

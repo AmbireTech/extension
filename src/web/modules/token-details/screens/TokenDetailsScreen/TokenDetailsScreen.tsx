@@ -2,6 +2,7 @@ import React from 'react'
 import { useTranslation } from 'react-i18next'
 
 import FooterGlassView from '@common/components/FooterGlassView'
+import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import LayoutWrapper from '@common/components/LayoutWrapper'
 import ScrollableWrapper from '@common/components/ScrollableWrapper'
 import getAndFormatTokenDetails from '@common/modules/dashboard/helpers/getTokenDetails'
@@ -44,6 +45,7 @@ const TokenDetailsScreen = () => {
     change24hFormatted,
     isRewards,
     isVesting,
+    balance,
     balanceFormatted
   } = getAndFormatTokenDetails(token, networks)
 
@@ -74,6 +76,7 @@ const TokenDetailsScreen = () => {
         <TokenBalanceCard
           symbol={symbol}
           address={address}
+          balance={balance}
           chainId={chainId}
           onGasTank={onGasTank}
           balanceFormatted={balanceFormatted}
