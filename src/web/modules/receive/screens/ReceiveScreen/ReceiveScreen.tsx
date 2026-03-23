@@ -115,6 +115,7 @@ const ReceiveScreen: FC = () => {
           )}
         </View>
 
+        {!!(account?.creation || account?.safeCreation) && (
         <View style={styles.supportedNetworksContainer}>
           <Text
             weight="regular"
@@ -195,6 +196,7 @@ const ReceiveScreen: FC = () => {
             </AnimatedPressable>
           )}
         </View>
+        )}
       </ScrollableWrapper>
     </LayoutWrapper>
   )
