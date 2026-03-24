@@ -15,6 +15,7 @@ import Button from '@common/components/Button'
 import FooterGlassView from '@common/components/FooterGlassView'
 import Text from '@common/components/Text'
 import TokenIcon from '@common/components/TokenIcon'
+import { isMobile, isWeb } from '@common/config/env'
 import useController from '@common/hooks/useController'
 import useHasGasTank from '@common/hooks/useHasGasTank'
 import useNavigation from '@common/hooks/useNavigation'
@@ -136,11 +137,11 @@ const GasTankModal = ({ modalRef, handleClose, portfolio, account }: Props) => {
   return (
     <BottomSheet
       id="gas-tank-modal"
-      type={isPopup ? 'bottom-sheet' : 'modal'}
+      type={isPopup || isMobile ? 'bottom-sheet' : 'modal'}
       sheetRef={modalRef}
       containerInnerWrapperStyles={styles.containerInnerWrapper}
       closeBottomSheet={handleClose}
-      style={{ maxWidth: 600 }}
+      style={isWeb ? { maxWidth: 600 } : undefined}
       isScrollEnabled={false}
       onOpen={handleOpen}
     >
@@ -155,7 +156,7 @@ const GasTankModal = ({ modalRef, handleClose, portfolio, account }: Props) => {
               onPress={async () => {
                 try {
                   await openInTab({
-                    url: 'https://help.ambire.com/hc/en-us/articles/5397969913884-What-is-the-Gas-Tank'
+                    url: 'https://help.ambire.com/en/articles/13752152-what-is-the-gas-tank'
                   })
                 } catch {
                   addToast("Couldn't open link", { type: 'error' })
@@ -224,12 +225,14 @@ const GasTankModal = ({ modalRef, handleClose, portfolio, account }: Props) => {
         </>
       ) : (
         <>
-          <View style={[flexbox.directionRow, flexbox.center, common.fullWidth, spacings.mtLg]}>
+          <View
+            style={[flexbox.directionRow, flexbox.center, common.fullWidth, isWeb && spacings.mtLg]}
+          >
             <Text fontSize={16} weight="semiBold" appearance="secondaryText">
               {t('Experience the benefits of the Gas Tank:')}
             </Text>
           </View>
-          <View style={[flexbox.justifyStart, flexbox.alignCenter, { height: 276 }]}>
+          <View style={isWeb ? [flexbox.justifyStart, flexbox.alignCenter, { height: 276 }] : []}>
             {bulletsContent.map(
               (bullet, index) =>
                 index < visibleCount && (
@@ -256,7 +259,7 @@ const GasTankModal = ({ modalRef, handleClose, portfolio, account }: Props) => {
                       <Text
                         appearance="secondaryText"
                         weight="medium"
-                        style={[spacings.mlSm, { lineHeight: 24 }]}
+                        style={[spacings.mlSm, flexbox.flex1, { lineHeight: 24 }]}
                       >
                         {t(bullet.text)}
                       </Text>

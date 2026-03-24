@@ -4,6 +4,7 @@ import { Animated, Platform, Pressable, View } from 'react-native'
 import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
 import SkeletonLoader from '@common/components/SkeletonLoader'
 import Text from '@common/components/Text'
+import { isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
@@ -198,26 +199,32 @@ const DashboardOverview: FC<Props> = ({
                     </Text>
                   )}
                 </View>
-                <Pressable
-                  style={({ hovered }: any) => ({
-                    width: 28,
-                    height: 28,
-                    opacity: shouldShowRefreshButton ? (hovered ? 1 : 0.7) : 0
-                  })}
-                  onPress={reloadAccount}
-                  disabled={!portfolio.isAllReady || portfolio.isReloading}
-                  testID="refresh-button"
-                  onHoverIn={() => setIsBalanceHovered(true)}
-                  // Increase clickable area using prop
-                  hitSlop={10}
-                >
-                  <RefreshIcon
-                    spin={!portfolio.isAllReady || portfolio.isReloading}
-                    color="#E3E6EB"
-                    width={28}
-                    height={28}
-                  />
-                </Pressable>
+                {
+                  isWeb ? (
+                    <Pressable
+                      style={({ hovered }: any) => ({
+                        width: 28,
+                        height: 28,
+                        opacity: shouldShowRefreshButton ? (hovered ? 1 : 0.7) : 0
+                      })}
+                      onPress={reloadAccount}
+                      disabled={!portfolio.isAllReady || portfolio.isReloading}
+                      testID="refresh-button"
+                      onHoverIn={() => setIsBalanceHovered(true)}
+                      // Increase clickable area using prop
+                      hitSlop={10}
+                    >
+                      <RefreshIcon
+                        spin={!portfolio.isAllReady || portfolio.isReloading}
+                        color="#E3E6EB"
+                        width={28}
+                        height={28}
+                      />
+                    </Pressable>
+                  ) : (
+                    <View style={{ width: 28, height: 28 }} />
+                  ) /* Placeholder to keep balance centered on mobile */
+                }
               </Pressable>
 
               <View style={[flexbox.directionRow, flexbox.justifyCenter, flexbox.alignCenter]}>

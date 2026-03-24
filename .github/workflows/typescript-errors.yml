@@ -7,6 +7,7 @@ on:
       - main
       - 'release/*'
   pull_request:
+    types: ['opened', 'ready_for_review', 'synchronize']
     branches:
       - v2
       - main
@@ -19,16 +20,19 @@ concurrency:
 
 jobs:
   typescript-errors:
+    # Prevent running this workflow for PRs that are not ready for review
+    if: github.event_name != 'pull_request' || github.event.pull_request.draft == false 
+
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout full Git history
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
       - name: Add SSH key to checkout a private repo
-        uses: webfactory/ssh-agent@v0.5.4
+        uses: webfactory/ssh-agent@v0.9.1
         with:
           ssh-private-key: ${{ secrets.DEPLOY_KEY }}
 

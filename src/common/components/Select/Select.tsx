@@ -1,5 +1,4 @@
 import React from 'react'
-import { FlatList } from 'react-native'
 
 import EmptyListPlaceholder from './components/EmptyListPlaceholder'
 import SelectContainer from './components/SelectContainer'
@@ -46,24 +45,23 @@ const Select = ({
       menuProps={{ ...selectData.menuProps, ...(props.menuProps || {}) }}
       id={testID}
       testID={testID}
-    >
-      <FlatList
-        ref={listRef}
-        // get the data (the options) from the default section
-        data={filteredData?.[0]?.data || []}
-        renderItem={renderItem as any}
-        keyExtractor={keyExtractor}
-        onLayout={handleLayout}
-        initialNumToRender={15}
-        windowSize={10}
-        maxToRenderPerBatch={20}
-        removeClippedSubviews
-        getItemLayout={getItemLayout}
-        ListEmptyComponent={<EmptyListPlaceholder placeholderText={emptyListPlaceholderText} />}
-        onScroll={handleScroll}
-        scrollEventThrottle={16}
-      />
-    </SelectContainer>
+      listRef={listRef}
+      flatListProps={{
+        ref: listRef,
+        data: filteredData?.[0]?.data || [],
+        renderItem: renderItem as any,
+        keyExtractor: keyExtractor,
+        onLayout: handleLayout,
+        initialNumToRender: 15,
+        windowSize: 10,
+        maxToRenderPerBatch: 20,
+        removeClippedSubviews: true,
+        getItemLayout: getItemLayout,
+        ListEmptyComponent: <EmptyListPlaceholder placeholderText={emptyListPlaceholderText} />,
+        onScroll: handleScroll,
+        scrollEventThrottle: 16
+      }}
+    />
   )
 }
 

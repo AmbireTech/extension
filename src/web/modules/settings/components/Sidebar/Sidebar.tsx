@@ -121,14 +121,14 @@ const OTHER_LINKS = [
     key: 'help-center',
     Icon: HelpIcon,
     label: 'Help center',
-    path: 'https://help.ambire.com/hc/en-us',
+    path: 'https://help.ambire.com/en',
     isExternal: true
   },
   {
     key: 'report-issue',
     Icon: BugIcon,
     label: 'Report an issue',
-    path: 'https://help.ambire.com/hc/en-us/requests/new',
+    path: 'https://help.ambire.com/en',
     isExternal: true
   }
 ]

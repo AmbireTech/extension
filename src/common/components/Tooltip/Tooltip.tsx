@@ -1,6 +1,7 @@
 import React from 'react'
 import { ITooltip, Tooltip as ReactTooltip } from 'react-tooltip'
 
+import { isMobile } from '@common/config/env'
 import { FONT_FAMILIES } from '@common/hooks/useFonts'
 import useTheme from '@common/hooks/useTheme'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
@@ -39,6 +40,8 @@ const TooltipInner = ({ tooltipRef, style, border, ...rest }: Props) => {
 }
 
 const Tooltip = ({ tooltipRef, withPortal = true, style, ...rest }: Props) => {
+  if (isMobile) return null
+
   if (!withPortal)
     return <TooltipInner withPortal={withPortal} tooltipRef={tooltipRef} style={style} {...rest} />
 

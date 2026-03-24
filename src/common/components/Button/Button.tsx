@@ -2,6 +2,7 @@ import React, { useMemo } from 'react'
 import { Animated, ColorValue, PressableProps, TextStyle, ViewStyle } from 'react-native'
 
 import InfoIcon from '@common/assets/svg/InfoIcon'
+import { isWeb } from '@common/config/env'
 import { AnimatedPressable, useCustomHover, useMultiHover } from '@common/hooks/useHover'
 import { AnimatedText } from '@common/hooks/useHover/useHover'
 import { AnimationValues } from '@common/hooks/useHover/useMultiHover'
@@ -526,7 +527,7 @@ const Button = ({
             {text}
           </AnimatedText>
         )}
-        {!!tooltipDataSet && (
+        {!!tooltipDataSet && isWeb && (
           <InfoIcon
             width={16}
             height={16}

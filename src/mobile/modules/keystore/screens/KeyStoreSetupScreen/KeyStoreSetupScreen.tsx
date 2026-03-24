@@ -45,6 +45,8 @@ const KeyStoreSetupScreen = () => {
         title={t('Set app password')}
         step={2}
         totalSteps={2}
+        withScroll
+        keyboardAwareScrollViewProps={{ bottomOffset: 220 }}
       >
         <Text weight="medium" appearance="secondaryText" style={spacings.mbXl}>
           {t('Used to access your local wallet and encrypt your data.')}

@@ -6,6 +6,7 @@ import AccountData from '@common/components/AccountData'
 import AccountDataDetailed from '@common/components/AccountDataDetailed'
 import AmbireLogoHorizontalWithOG from '@common/components/AmbireLogoHorizontalWithOG'
 import Text from '@common/components/Text'
+import { isMobile, isWeb } from '@common/config/env'
 import { titleChangeEventStream } from '@common/hooks/useNavigation'
 import useRoute from '@common/hooks/useRoute'
 import routesConfig from '@common/modules/router/config/routesConfig'
@@ -34,8 +35,9 @@ const Wrapper = ({
     <View
       style={[
         spacings.phSm,
-        spacings.pvSm,
-        spacings.ptMd,
+        isWeb && spacings.pvSm,
+        isWeb && spacings.ptMd,
+        isMobile && spacings.mbLg,
         {
           width: '100%'
         },
@@ -61,7 +63,7 @@ const Title = ({ children, ...rest }: { children: React.ReactNode } & TextProps)
   return (
     <Text
       {...rest}
-      fontSize={20}
+      fontSize={isMobile ? 18 : 20}
       weight="medium"
       style={[
         {

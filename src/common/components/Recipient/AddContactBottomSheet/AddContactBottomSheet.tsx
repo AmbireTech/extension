@@ -8,6 +8,7 @@ import Button from '@common/components/Button'
 import FooterGlassView from '@common/components/FooterGlassView'
 import Input from '@common/components/Input'
 import Text from '@common/components/Text'
+import { isMobile, isWeb } from '@common/config/env'
 import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
@@ -62,28 +63,24 @@ const AddContactBottomSheet: FC<Props> = ({ sheetRef, closeBottomSheet, address 
         isEditable={false}
         style={spacings.mb2Xl}
       />
+
       <FooterGlassView size="sm" absolute={false}>
         <Button
           hasBottomSpacing={false}
           type="secondary"
           text={t('Cancel')}
           onPress={closeBottomSheet}
-          style={{
-            minWidth: 96,
-            ...spacings.mrLg
-          }}
-          size="smaller"
+          style={isWeb && { minWidth: 96, ...spacings.mrLg }}
+          size={isWeb ? 'smaller' : 'regular'}
         />
         <Button
           testID="form-add-to-contacts-button"
-          style={{
-            minWidth: 160
-          }}
+          style={isWeb && { minWidth: 160 }}
           disabled={!address || name.length === 0 || name.length > 32}
-          hasBottomSpacing={false}
+          hasBottomSpacing={isMobile}
           text={!name.length ? t('Name your contact') : t('Add to contacts')}
           onPress={handleAddContact}
-          size="smaller"
+          size={isWeb ? 'smaller' : 'regular'}
         />
       </FooterGlassView>
     </BottomSheet>
