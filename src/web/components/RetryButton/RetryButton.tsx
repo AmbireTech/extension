@@ -4,10 +4,11 @@ import { Animated } from 'react-native'
 
 import RetryIcon from '@common/assets/svg/RetryIcon'
 import Text from '@common/components/Text'
+import { isMobile } from '@common/config/env'
 import { AnimatedPressable, useCustomHover } from '@common/hooks/useHover'
 import useTheme from '@common/hooks/useTheme'
-import spacings from '@common/styles/spacings'
-import { hexToRgba } from '@common/styles/utils/common'
+import spacings, { SPACING_SM, SPACING_TY } from '@common/styles/spacings'
+import { BORDER_RADIUS_PRIMARY, hexToRgba } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 
 type Props = {
@@ -72,12 +73,12 @@ const RetryButton: FC<Props> = ({ onPress, label, disabled, isLarge }) => {
 
   const buttonStyle = useMemo(
     () => ({
-      borderRadius: 14,
+      borderRadius: isMobile ? BORDER_RADIUS_PRIMARY : 14,
       ...flexbox.directionRow,
       ...flexbox.alignCenter,
       ...animStyle,
-      paddingLeft: 6,
-      paddingRight: 2,
+      paddingLeft: isMobile ? SPACING_SM : 6,
+      paddingRight: isMobile ? SPACING_TY : 2,
       minHeight: isLarge ? 28 : 20,
       ...(disabled && { opacity: 0.5 })
     }),

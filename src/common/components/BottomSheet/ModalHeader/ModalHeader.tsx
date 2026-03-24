@@ -8,13 +8,21 @@ import spacings from '@common/styles/spacings'
 interface Props {
   handleClose?: () => void
   title?: React.ReactNode
+  titlePosition?: 'left' | 'center'
   style?: ViewStyle
   hasAmbireLogo?: boolean
   children?: React.ReactNode
   headerTestID?: string
 }
 
-const ModalHeader: FC<Props> = ({ handleClose, title, style, children, headerTestID }) => {
+const ModalHeader: FC<Props> = ({
+  handleClose,
+  title,
+  titlePosition = 'center',
+  style,
+  children,
+  headerTestID
+}) => {
   const withSideContainers = !!handleClose || !!children
 
   return (
@@ -38,7 +46,7 @@ const ModalHeader: FC<Props> = ({ handleClose, title, style, children, headerTes
           left: 0,
           height: '100%',
           justifyContent: 'center',
-          alignItems: 'center',
+          alignItems: titlePosition === 'left' ? 'flex-start' : 'center',
           pointerEvents: 'none'
         }}
       >

@@ -25,6 +25,14 @@ const Routes = () => {
       scale: 1.08,
       scaleOnHover: 1.18
     },
+    {
+      testID: 'dashboard-button-swap-and-bridge',
+      icon: SwapAndBridgeIcon,
+      label: t('Swap & Bridge'),
+      route: ROUTES.swapAndBridge,
+      scale: 0.95,
+      scaleOnHover: 1
+    },
     ...(isMobile
       ? [
           {
@@ -39,14 +47,6 @@ const Routes = () => {
       : []),
     ...(isWeb
       ? [
-          {
-            testID: 'dashboard-button-swap-and-bridge',
-            icon: SwapAndBridgeIcon,
-            label: t('Swap & Bridge'),
-            route: ROUTES.swapAndBridge,
-            scale: 0.95,
-            scaleOnHover: 1
-          },
           {
             testID: 'dashboard-button-apps',
             icon: DAppsIcon,
