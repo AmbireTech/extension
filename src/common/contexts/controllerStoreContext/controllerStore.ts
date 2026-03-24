@@ -48,7 +48,12 @@ export class ControllerStore {
   ) {
     if (ctrl === undefined) return
     try {
-      this.#states[id] = isExtension ? { ...ctrl } : parse(stringify(ctrl))
+      if (isExtension) {
+        this.#states[id] = { ...ctrl }
+      } else {
+        this.#states[id] =
+          typeof (ctrl as any).toJSON === 'function' ? { ...ctrl.toJSON() } : parse(stringify(ctrl))
+      }
     } catch (error) {
       console.error(error)
     }
