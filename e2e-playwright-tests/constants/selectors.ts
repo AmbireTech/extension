@@ -128,7 +128,6 @@ const selectors = {
     feeSpeedMedium: 'option-medium',
     feeSpeedFast: 'option-fast',
     feeSpeedApe: 'option-ape',
-    feeGasTankInDollars: '//span[contains(text(),"Gas Tank")]/../../../div[contains(text(),"$")]', // returning e.g. "<$0.01"
     feeTokenInDollars: '//div[contains(text(),"<$")]',
     confirmingYourTransactionText: 'confirming-your',
     explorer: {

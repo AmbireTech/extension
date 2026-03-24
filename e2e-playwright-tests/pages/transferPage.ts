@@ -113,7 +113,6 @@ export class TransferPage extends BasePage {
     payWithGasTank?: boolean
     message: string
   }) {
-    let feeSelector
     // Proceed
     await this.expectButtonEnabled(selectors.transaction.proceedBtn)
     await this.longPressButton(selectors.transaction.proceedBtn, 5)
@@ -128,14 +127,12 @@ export class TransferPage extends BasePage {
     // Select fee token; default Gas Tank
     if (!payWithGasTank) {
       await this.selectFeeToken(baParams.envSelectedAccount, feeToken, payWithGasTank)
-      feeSelector = await this.page
-        .locator(selectors.transaction.feeTokenInDollars)
-        .innerText({ timeout: 10000 }) // returns e.g. '<$0.01'
-    } else {
-      feeSelector = await this.page
-        .locator(selectors.transaction.feeGasTankInDollars)
-        .innerText({ timeout: 10000 }) // returns e.g. '<$0.01'
     }
+
+    // returns e.g. '<$0.01'
+    const feeSelector = await this.page
+      .locator(selectors.transaction.feeTokenInDollars)
+      .innerText({ timeout: 10000 })
 
     const feeDollarsAmount = Number(feeSelector.replace(/[<$]/g, ''))
 

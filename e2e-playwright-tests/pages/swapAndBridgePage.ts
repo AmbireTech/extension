@@ -220,7 +220,7 @@ export class SwapAndBridgePage extends BasePage {
       await page.getByTestId(selectors.transaction.feeSpeedSlow).first().click()
 
       // check fee
-      const feeSelector = await page.locator(selectors.transaction.feeGasTankInDollars).innerText() // returns e.g. '<$0.01'
+      const feeSelector = await page.locator(selectors.transaction.feeTokenInDollars).innerText() // returns e.g. '<$0.01'
 
       const feeDollarsAmount = Number(feeSelector.replace(/[<$]/g, ''))
 
@@ -413,7 +413,7 @@ export class SwapAndBridgePage extends BasePage {
     await page.getByTestId(selectors.transaction.feeSpeedSlow).first().click()
 
     // check fee
-    const feeSelector = await page.locator(selectors.transaction.feeGasTankInDollars).innerText() // returns e.g. '<$0.01'
+    const feeSelector = await page.locator(selectors.transaction.feeTokenInDollars).innerText() // returns e.g. '<$0.01'
 
     const feeDollarsAmount = Number(feeSelector.replace(/[<$]/g, ''))
 
