@@ -543,7 +543,7 @@ module.exports = async function (env, argv) {
       // Disables auto-generated runtime chunks, because they cause ID drift
       config.optimization.runtimeChunk = false
 
-      if (isWebkit) {
+      if (enableLavaMoat) {
         // No extra chunks for webkit, because it conflicts with LavaMoat plugin,
         // and currently there's no other benefit to enable it.
         config.optimization.splitChunks = false
@@ -560,7 +560,7 @@ module.exports = async function (env, argv) {
           // 'deterministic' and chunkFilename = '[id].js'.
           // Note: maxSize uses estimated sizes; keep some headroom so emitted
           // bundles stay under the linter's real per-file limit.
-          maxSize: 4.5 * 1024 * 1024,
+          maxSize: isGecko ? 4.5 * 1024 * 1024 : 0,
           minSize: 0, // prevents merging small modules together automatically
           chunks(chunk) {
             // do not split into chunks the files that should be injected
