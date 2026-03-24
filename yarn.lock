@@ -2502,10 +2502,10 @@
   resolved "https://registry.yarnpkg.com/@lavamoat/preinstall-always-fail/-/preinstall-always-fail-2.1.1.tgz#1df713b4c6ede11461b148a80615a8ec92d682b3"
   integrity sha512-8eyQm26cQtEek2z1vM+iSVOoKrchkHBEvUQ3VnbDEqQ7hDL5sU/rhHo/FnoMgY8J31r6LSesEzpwYQe4omgqbA==
 
-"@ledgerhq/context-module@1.14.0":
-  version "1.14.0"
-  resolved "https://registry.yarnpkg.com/@ledgerhq/context-module/-/context-module-1.14.0.tgz#73cdaa6a1ba5b136c1cf680f6343e1bce0c0df6f"
-  integrity sha512-q4N6YxYS9YE4FlMlD2aZZZKxFkUX1pMLMUsT8R8+LSPPPNlZfVUzFoJ1qid8XO3N1Q2we8hB4WKhUjKxvfcwtw==
+"@ledgerhq/context-module@1.14.1":
+  version "1.14.1"
+  resolved "https://registry.yarnpkg.com/@ledgerhq/context-module/-/context-module-1.14.1.tgz#b3af34260ff8055b7d30e38c1f18048af757d99d"
+  integrity sha512-e5ONWaL0v5CQSJ80+D7sg/H6XztK+cupQnVnpjOUwIg+BJIWksENnEBABmIregLNDQu9vWGykqiN5yMMQhwANA==
   dependencies:
     axios "1.13.2"
     crypto-js "^4.2.0"
@@ -2514,10 +2514,10 @@
     purify-ts "2.1.0"
     reflect-metadata "0.2.2"
 
-"@ledgerhq/device-management-kit@1.0.1":
-  version "1.0.1"
-  resolved "https://registry.yarnpkg.com/@ledgerhq/device-management-kit/-/device-management-kit-1.0.1.tgz#8bca7d0d34945b72adb0e50d18233f08589ef5f4"
-  integrity sha512-IiQ2HQTqpH2+oXvjO6j8X8rel3hlEFN5+UPwyXh/bx4AELIhl9eY283tIQRtW8BxdycjN7jXu+bNFxiOPv3KzA==
+"@ledgerhq/device-management-kit@1.1.0":
+  version "1.1.0"
+  resolved "https://registry.yarnpkg.com/@ledgerhq/device-management-kit/-/device-management-kit-1.1.0.tgz#080db8fc65a04230c3b67a12ecc843044345bc0d"
+  integrity sha512-vpFLOwLnvagGwTXAeuiTFAk8Mq6HlY0bhYgK5OKH8gILIYPgzp+OouNGILz4byRZr0dSOAMHTzSU5bwokBzykA==
   dependencies:
     "@noble/hashes" "^1.8.0"
     "@sentry/minimal" "6.19.7"
@@ -2532,10 +2532,10 @@
     ws "^8.18.0"
     xstate "5.19.2"
 
-"@ledgerhq/device-signer-kit-ethereum@1.10.0":
-  version "1.10.0"
-  resolved "https://registry.yarnpkg.com/@ledgerhq/device-signer-kit-ethereum/-/device-signer-kit-ethereum-1.10.0.tgz#4495d836e4aa031bd4e9af7a2895eef532ac0de8"
-  integrity sha512-5vDioYyG7Y+r5nbYMvMZGWjmKRhkI1TG8sLhfsRyEEeSlVnWC9nahZANic7zv/Exd4AoctW4vf0+B+oN2zDToA==
+"@ledgerhq/device-signer-kit-ethereum@1.11.1":
+  version "1.11.1"
+  resolved "https://registry.yarnpkg.com/@ledgerhq/device-signer-kit-ethereum/-/device-signer-kit-ethereum-1.11.1.tgz#081a89efc4c9830f850d2cd38ab6757dbd6ad981"
+  integrity sha512-Q/hG1BZE3QAkNRZkOq1Hk4kSCUEMNRwM6ZgrJlYy94d4syabEU2Wr7IjcBzPlejqavdRW1wrE2cxGbFTnFXjjw==
   dependencies:
     "@ledgerhq/signer-utils" "^1.1.2"
     ethers "6.14.1"
