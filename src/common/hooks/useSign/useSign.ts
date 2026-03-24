@@ -308,6 +308,8 @@ const useSign = ({
       }
 
       if (isExternalQr) {
+        // don't return here — QR flow is part of the signing itself,
+        // unlike Ledger where we need to stop and wait for connection
         setShouldDisplayQrSigningModal(true)
       }
 
