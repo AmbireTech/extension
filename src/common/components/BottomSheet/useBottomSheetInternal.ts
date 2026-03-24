@@ -10,6 +10,7 @@ import { SPACING_SM } from '@common/styles/spacings'
 import { getUiType } from '@common/utils/uiType'
 
 import { BottomSheetProps } from './BottomSheet'
+import { bottomSheetCloseEventStream, openBottomSheetsCount } from './bottomSheetEventStream'
 
 const ANIMATION_DURATION: number = 250
 
@@ -50,6 +51,12 @@ const useBottomSheetInternal = (props: BottomSheetProps) => {
         setIsBackdropVisible(false)
       }, ANIMATION_DURATION)
     }
+
+    if (isOpen && !prevIsOpen) {
+      openBottomSheetsCount.next(openBottomSheetsCount.value + 1)
+    } else if (!isOpen && prevIsOpen) {
+      openBottomSheetsCount.next(Math.max(0, openBottomSheetsCount.value - 1))
+    }
   }, [isOpen, prevIsOpen])
 
   // Hook up the back button (or action) to close the bottom sheet
@@ -67,8 +74,18 @@ const useBottomSheetInternal = (props: BottomSheetProps) => {
     }
 
     const backHandler = BackHandler.addEventListener('hardwareBackPress', backAction)
+    
+    // Subscribe to the global close event stream
+    const subscription = bottomSheetCloseEventStream.subscribe(() => {
+      if (isOpen) {
+        closeBottomSheet()
+      }
+    })
 
-    return () => backHandler.remove()
+    return () => {
+      backHandler.remove()
+      subscription.unsubscribe()
+    }
   }, [closeBottomSheet, isOpen])
 
   const modalTopOffset = useMemo(() => {

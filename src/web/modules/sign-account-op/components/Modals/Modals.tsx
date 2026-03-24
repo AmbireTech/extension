@@ -1,38 +1,19 @@
 import { FC } from 'react'
 import { useTranslation } from 'react-i18next'
 
-import { ISignAccountOpController } from '@ambire-common/interfaces/signAccountOp'
 import BottomSheet from '@common/components/BottomSheet'
 import DualChoiceWarningModal from '@common/components/DualChoiceWarningModal'
 import useController from '@common/hooks/useController'
-import useSign from '@common/hooks/useSign'
+import SignAccountOpHardwareWalletSigningModal from '@common/modules/sign-account-op/components/SignAccountOpHardwareWalletSigningModal'
+import { ModalsProps } from '@common/modules/sign-account-op/types/modals'
 import spacings from '@common/styles/spacings'
 import text from '@common/styles/utils/text'
 import { getUiType } from '@common/utils/uiType'
 import LedgerConnectModal from '@web/modules/hardware-wallet/components/LedgerConnectModal'
-import SignAccountOpHardwareWalletSigningModal from '@web/modules/sign-account-op/components/SignAccountOpHardwareWalletSigningModal'
 
 const { isTab } = getUiType()
 
-type Props = Pick<
-  ReturnType<typeof useSign>,
-  | 'renderedButNotNecessarilyVisibleModal'
-  | 'warningModalRef'
-  | 'feePayerKeyType'
-  | 'signingKeyType'
-  | 'slowPaymasterRequest'
-  | 'shouldDisplayLedgerConnectModal'
-  | 'handleDismissLedgerConnectModal'
-  | 'warningToPromptBeforeSign'
-  | 'acknowledgeWarning'
-  | 'dismissWarning'
-> & {
-  signAccountOpState: ISignAccountOpController | null
-  autoOpen?: 'warnings'
-  actionType?: 'swapAndBridge' | 'transfer'
-}
-
-const Modals: FC<Props> = ({
+const Modals: FC<ModalsProps> = ({
   renderedButNotNecessarilyVisibleModal,
   signAccountOpState,
   warningModalRef,

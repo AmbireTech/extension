@@ -102,7 +102,7 @@ const Alert = ({
         </View>
       )}
 
-      <View style={flexbox.flex1}>
+      <View style={{ flexShrink: 1 }}>
         {!!title && (
           <Text style={text ? (!isSmall ? spacings.mbTy : spacings.mbMi) : {}}>
             {!isTypeLabelHidden && (

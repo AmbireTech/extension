@@ -240,13 +240,19 @@ const WatchTokenRequestScreen = () => {
     if (!tokenNetwork?.chainId) return
     if (!account) return
 
+    // Only add if temporaryToken exists (like AddTokenBottomSheet does), to avoid adding tokens with
+    // missing/invalid info (e.g. decimals) that would cause issues in the portfolio
+    if (!temporaryToken?.address || !temporaryToken?.symbol || !temporaryToken?.decimals) {
+      return
+    }
+
     portfolioDispatch({
       type: 'method',
       params: {
         method: 'addCustomToken',
         args: [
           {
-            address: getAddress(tokenData.address),
+            address: temporaryToken.address,
             standard: 'ERC20',
             chainId: tokenNetwork?.chainId
           },
@@ -263,7 +269,7 @@ const WatchTokenRequestScreen = () => {
         args: [null, userRequest.id]
       }
     })
-  }, [requestsDispatch, portfolioDispatch, userRequest, tokenData, tokenNetwork, account])
+  }, [requestsDispatch, portfolioDispatch, userRequest, temporaryToken, tokenNetwork, account])
 
   const tokenDetails = useMemo(() => {
     const token = portfolioToken || temporaryToken
@@ -294,8 +300,11 @@ const WatchTokenRequestScreen = () => {
           resolveDisabled={
             isLoading ||
             showAlreadyInPortfolioMessage ||
-            (!tokenTypeEligibility && !temporaryToken) ||
-            !!tokenValidation?.error?.message
+            (!temporaryToken && !tokenTypeEligibility) ||
+            !!tokenValidation?.error?.message ||
+            !temporaryToken?.address ||
+            !temporaryToken?.symbol ||
+            !temporaryToken?.decimals
           }
         />
       )}

@@ -2,6 +2,7 @@ import { randomBytes } from 'ethers'
 import React, { memo, useMemo } from 'react'
 import { Image, ScrollView, View, ViewStyle } from 'react-native'
 
+import { AccountOpStatus } from '@ambire-common/libs/accountOp/types'
 import gradient1560 from '@benzin/assets/images/gradient-1560.png'
 import gradient1920 from '@benzin/assets/images/gradient-1920.png'
 import gradient2560 from '@benzin/assets/images/gradient-2560.png'
@@ -16,10 +17,10 @@ import Text from '@common/components/Text'
 import useControllerStore from '@common/hooks/useControllerStore'
 import useTheme from '@common/hooks/useTheme'
 import useWindowSize from '@common/hooks/useWindowSize'
+import TransactionSummary from '@common/modules/sign-account-op/components/TransactionSummary'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { isExtension } from '@web/constants/browserapi'
-import TransactionSummary from '@web/modules/sign-account-op/components/TransactionSummary'
 
 import { IS_MOBILE_UP_BENZIN_BREAKPOINT } from '../../styles'
 import getStyles from './styles'
@@ -54,6 +55,7 @@ const Benzin = ({
         onRightIconPress={state?.handleOpenExplorer}
         size={IS_MOBILE_UP_BENZIN_BREAKPOINT ? 'lg' : 'sm'}
         type="benzin"
+        hasCallFailed={call.status === AccountOpStatus.Rejected}
       />
     ))
     // Prevents unnecessary re-renders of the humanizer

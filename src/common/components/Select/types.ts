@@ -57,6 +57,11 @@ export type CommonSelectProps = {
   searchPlaceholder?: string
   testID?: string
   extraSearchProps?: { [key: string]: string }
+  renderHeaderChildren?: ({
+    toggleMenu,
+    isMenuOpen,
+    selectRef
+  }: RenderSelectedOptionParams) => ReactNode
   attemptToFetchMoreOptions?: (search: string) => void
   onSearch?: (search: string) => void
   renderSelectedOption?: ({

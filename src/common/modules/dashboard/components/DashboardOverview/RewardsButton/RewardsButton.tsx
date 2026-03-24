@@ -7,9 +7,11 @@ import { safeTokenAmountAndNumberMultiplication } from '@ambire-common/utils/num
 import RewardsCircularIcon from '@common/assets/svg/RewardsCircularIcon/RewardsCircularIcon'
 import SkeletonLoader from '@common/components/SkeletonLoader'
 import Text from '@common/components/Text'
+import { isMobile } from '@common/config/env'
 import useController from '@common/hooks/useController'
 import useNavigation from '@common/hooks/useNavigation'
 import { WEB_ROUTES } from '@common/modules/router/constants/common'
+import alert from '@common/services/alert'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
@@ -50,7 +52,15 @@ const RewardsButton = () => {
   }
 
   return (
-    <RewardsButtonWrapper onPress={() => navigate(WEB_ROUTES.rewards)}>
+    <RewardsButtonWrapper
+      onPress={() => {
+        if (isMobile) {
+          alert('Coming soon!')
+          return
+        }
+        navigate(WEB_ROUTES.rewards)
+      }}
+    >
       <RewardsCircularIcon width={14} height={14} />
       <View
         style={[flexbox.directionRow, flexbox.justifyCenter, flexbox.alignEnd]}

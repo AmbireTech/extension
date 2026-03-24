@@ -1,9 +1,12 @@
 import React from 'react'
 import { Route, Routes } from 'react-router-native'
 
+import AuthenticatedRoute from '@common/modules/router/components/AuthenticatedRoute'
+import KeystoreUnlockedRoute from '@common/modules/router/components/KeystoreUnlockedRoute'
 import { ROUTES } from '@common/modules/router/constants/common'
 import AccountPersonalizeScreen from '@mobile/modules/account-personalize/screens/AccountPersonalizeScreen'
 import AccountPickerScreen from '@mobile/modules/account-picker/screens/AccountPickerScreen'
+import AccountSelectScreen from '@mobile/modules/account-select/screens/AccountSelectScreen'
 import CreateSeedPhrasePrepareScreen from '@mobile/modules/auth/screens/CreateSeedPhrasePrepareScreen'
 import CreateSeedPhraseWriteScreen from '@mobile/modules/auth/screens/CreateSeedPhraseWriteScreen'
 import GetStartedScreen from '@mobile/modules/auth/screens/GetStartedScreen'
@@ -14,7 +17,9 @@ import SeedPhraseImportScreen from '@mobile/modules/auth/screens/SeedPhraseImpor
 import ViewOnlyAccountAdderScreen from '@mobile/modules/auth/screens/ViewOnlyAccountAdderScreen'
 import LedgerConnectScreen from '@mobile/modules/hardware-wallet/screens/LedgerConnectScreen'
 import KeyStoreSetupScreen from '@mobile/modules/keystore/screens/KeyStoreSetupScreen'
-import KeystoreUnlockedRoute from '@mobile/modules/router/components/KeystoreUnlockedRoute'
+import ReceiveScreen from '@mobile/modules/receive/screens/ReceiveScreen'
+import TokenDetailsScreen from '@mobile/modules/token-details/screens/TokenDetailsScreen'
+import TransferScreen from '@mobile/modules/transfer/screens/TransferScreen'
 
 const MainRoutes = () => {
   return (
@@ -38,6 +43,14 @@ const MainRoutes = () => {
 
         <Route path={ROUTES.accountPicker} element={<AccountPickerScreen />} />
         <Route path={ROUTES.accountPersonalize} element={<AccountPersonalizeScreen />} />
+
+        <Route element={<AuthenticatedRoute />}>
+          <Route path={ROUTES.receive} element={<ReceiveScreen />} />
+          <Route path={ROUTES.transfer} element={<TransferScreen />} />
+          <Route path={ROUTES.topUpGasTank} element={<TransferScreen isTopUpScreen />} />
+          <Route path={ROUTES.accountSelect} element={<AccountSelectScreen />} />
+          <Route path={ROUTES.tokenDetails} element={<TokenDetailsScreen />} />
+        </Route>
       </Route>
       {/* Fallback route to suppress "No routes matched location" warnings when multiple Routes blocks are rendered */}
       <Route path="*" element={null} />

@@ -15,6 +15,8 @@ import { getBenzinUrlParams } from '@ambire-common/utils/benzin'
 import { getAddressFromAddressState } from '@ambire-common/utils/domains'
 import { getCallsCount } from '@ambire-common/utils/userRequest'
 import Alert from '@common/components/Alert'
+import { PanelBackButton, PanelTitle } from '@common/components/Panel/Panel'
+import ScrollableWrapper from '@common/components/ScrollableWrapper'
 import SkeletonLoader from '@common/components/SkeletonLoader'
 import Spinner from '@common/components/Spinner'
 import Text from '@common/components/Text'
@@ -23,28 +25,33 @@ import useController from '@common/hooks/useController'
 import useHasGasTank from '@common/hooks/useHasGasTank'
 import useNavigation from '@common/hooks/useNavigation'
 import useSyncedState from '@common/hooks/useSyncedState'
+import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
+import useWindowSize from '@common/hooks/useWindowSize'
 import { ROUTES, WEB_ROUTES } from '@common/modules/router/constants/common'
+import BatchAdded from '@common/modules/sign-account-op/components/OneClick/BatchModal/BatchAdded'
+import Buttons from '@common/modules/sign-account-op/components/OneClick/Buttons'
+import Estimation from '@common/modules/sign-account-op/components/OneClick/Estimation'
+import TrackProgress from '@common/modules/sign-account-op/components/OneClick/TrackProgress'
+import Completed from '@common/modules/sign-account-op/components/OneClick/TrackProgress/ByStatus/Completed'
+import Failed from '@common/modules/sign-account-op/components/OneClick/TrackProgress/ByStatus/Failed'
+import InProgress from '@common/modules/sign-account-op/components/OneClick/TrackProgress/ByStatus/InProgress'
+import useTrackAccountOp from '@common/modules/sign-account-op/hooks/OneClick/useTrackAccountOp'
+import GasTankInfoModal from '@common/modules/transfer/components/GasTankInfoModal'
+import SendForm from '@common/modules/transfer/components/SendForm/SendForm'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { openInTab } from '@common/utils/links'
 import { getUiType } from '@common/utils/uiType'
+import { getTabLayoutPadding } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
 import { Content, Wrapper } from '@web/components/TransactionsScreen'
-import BatchAdded from '@web/modules/sign-account-op/components/OneClick/BatchModal/BatchAdded'
-import Buttons from '@web/modules/sign-account-op/components/OneClick/Buttons'
-import Estimation from '@web/modules/sign-account-op/components/OneClick/Estimation'
-import TrackProgress from '@web/modules/sign-account-op/components/OneClick/TrackProgress'
-import Completed from '@web/modules/sign-account-op/components/OneClick/TrackProgress/ByStatus/Completed'
-import Failed from '@web/modules/sign-account-op/components/OneClick/TrackProgress/ByStatus/Failed'
-import InProgress from '@web/modules/sign-account-op/components/OneClick/TrackProgress/ByStatus/InProgress'
-import useTrackAccountOp from '@web/modules/sign-account-op/hooks/OneClick/useTrackAccountOp'
-import GasTankInfoModal from '@web/modules/transfer/components/GasTankInfoModal'
-import SendForm from '@web/modules/transfer/components/SendForm/SendForm'
+import Modals from '@web/modules/sign-account-op/components/Modals'
 
 const { isRequestWindow, isPopup } = getUiType()
 
 const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
   const { addToast } = useToast()
+  const { theme } = useTheme()
   const { state: transferState, dispatch: transferDispatch } = useController('TransferController')
   const { dispatch: requestsDispatch } = useController('RequestsController')
   const { dispatch: mainDispatch } = useController('MainController')
@@ -120,6 +127,9 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
     },
     forceUpdateOnChangeList: [transferState.programmaticUpdateCounter]
   })
+
+  const { maxWidthSize } = useWindowSize()
+  const paddingHorizontalStyle = useMemo(() => getTabLayoutPadding(maxWidthSize), [maxWidthSize])
 
   const isLocalStateOutOfSync =
     controllerAmountFieldValue !== amountFieldValue ||
@@ -553,6 +563,7 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
             </Text>
           </InProgress>
         )}
+
         {(submittedAccountOp?.status === AccountOpStatus.Success ||
           submittedAccountOp?.status === AccountOpStatus.UnknownButPastNonce) && (
           <Completed
@@ -610,20 +621,32 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
       <Content buttons={buttons}>
         {transferState?.isInitialized ? (
           <View>
-            <SendForm
-              handleGoBack={handleGoBackPress}
-              addressInputState={addressInputState}
-              hasGasTank={hasGasTank}
-              amountErrorMessage={validationFormMsgs.amount.message || ''}
-              isRecipientAddressUnknown={isRecipientAddressUnknown}
-              isRecipientHumanizerKnownTokenOrSmartContract={
-                isRecipientHumanizerKnownTokenOrSmartContract
-              }
-              amountFieldValue={amountFieldValue}
-              setAmountFieldValue={setAmountFieldValue}
-              addressStateFieldValue={addressStateFieldValue}
-              setAddressStateFieldValue={setAddressStateFieldValue}
-            />
+            <ScrollableWrapper
+              style={flexbox.flex1}
+              contentContainerStyle={[
+                flexbox.flex1,
+                isTopUp ? { maxWidth: '100%', width: '100%' } : {}
+              ]}
+            >
+              <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mb]}>
+                <PanelBackButton onPress={handleGoBackPress} style={spacings.mrSm} />
+                <PanelTitle title={isTopUp ? t('Top up Gas Tank') : t('Send')} />
+                <View style={{ width: 40 }} />
+              </View>
+              <SendForm
+                addressInputState={addressInputState}
+                hasGasTank={hasGasTank}
+                amountErrorMessage={validationFormMsgs.amount.message || ''}
+                isRecipientAddressUnknown={isRecipientAddressUnknown}
+                isRecipientHumanizerKnownTokenOrSmartContract={
+                  isRecipientHumanizerKnownTokenOrSmartContract
+                }
+                amountFieldValue={amountFieldValue}
+                setAmountFieldValue={setAmountFieldValue}
+                addressStateFieldValue={addressStateFieldValue}
+                setAddressStateFieldValue={setAddressStateFieldValue}
+              />
+            </ScrollableWrapper>
             {isTopUp && !hasGasTank && (
               <View style={spacings.ptLg}>
                 <Alert
@@ -637,7 +660,7 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
                         onPress={async () => {
                           try {
                             await openInTab({
-                              url: 'https://help.ambire.com/hc/en-us/articles/5397969913884-What-is-the-Gas-Tank'
+                              url: 'https://help.ambire.com/en/articles/13752152-what-is-the-gas-tank'
                             })
                           } catch {
                             addToast("Couldn't open link", { type: 'error' })
@@ -690,6 +713,7 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
         handleUpdateStatus={handleUpdateStatus}
         hasProceeded={hasProceeded}
         signAccountOpController={signAccountOpController}
+        Modals={Modals}
       />
     </Wrapper>
   )
