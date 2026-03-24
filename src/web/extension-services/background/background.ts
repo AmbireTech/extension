@@ -716,7 +716,7 @@ const init = async () => {
             // eslint-disable-next-line @typescript-eslint/no-floating-promises
             ledgerCtrl.cleanUp()
             trezorCtrl.cleanUp()
-            // TODO: check does qrCtrl need clean up as well
+            qrCtrl.cleanUp()
           }
         })
       })
