@@ -68,6 +68,22 @@ const HardwareWalletSigningModal = ({ keyType, isVisible, children, cancelReq }:
       withBackdropBlur={false}
       containerInnerWrapperStyles={isTab ? { ...spacings.pv2Xl, ...spacings.ph2Xl } : {}}
     >
+      {isTrezor && !!cancelReq && (
+        <View style={{ position: 'absolute', top: 0, right: 10, zIndex: 1 }}>
+          <Pressable
+            onPress={cancelReq}
+            style={spacings.ml}
+            dataSet={{ tooltipId: 'trezor-cancel-sign-tooltip' }}
+          >
+            <CloseIcon />
+          </Pressable>
+          <Tooltip id="trezor-cancel-sign-tooltip">
+            <Text fontSize={14} appearance="secondaryText">
+              {t('Cancel request')}
+            </Text>
+          </Tooltip>
+        </View>
+      )}
       <ModalHeader
         title={
           <>
@@ -97,22 +113,6 @@ const HardwareWalletSigningModal = ({ keyType, isVisible, children, cancelReq }:
           <Text weight="regular" fontSize={20}>
             {t('Sending signing request...')}
           </Text>
-          {isTrezor && !!cancelReq && (
-            <View>
-              <Pressable
-                onPress={cancelReq}
-                style={spacings.ml}
-                dataSet={{ tooltipId: 'trezor-cancel-sign-tooltip' }}
-              >
-                <CloseIcon />
-              </Pressable>
-              <Tooltip id="trezor-cancel-sign-tooltip">
-                <Text fontSize={14} appearance="secondaryText">
-                  {t('Cancel request')}
-                </Text>
-              </Tooltip>
-            </View>
-          )}
         </View>
         {children}
       </View>
