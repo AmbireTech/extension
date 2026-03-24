@@ -3,13 +3,10 @@ import React from 'react'
 import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 
-import { Network } from '@ambire-common/interfaces/network'
+import { SupportedNetworks } from '@ambire-common/interfaces/network'
 import { SwapAndBridgeToToken } from '@ambire-common/interfaces/swapAndBridge'
 import { TokenResult } from '@ambire-common/libs/portfolio'
-import {
-  getIsNetworkSupported,
-  getIsTokenEligibleForSwapAndBridge
-} from '@ambire-common/libs/swapAndBridge/swapAndBridge'
+import { getIsTokenEligibleForSwapAndBridge } from '@ambire-common/libs/swapAndBridge/swapAndBridge'
 import shortenAddress from '@ambire-common/utils/shortenAddress'
 import BatchIcon from '@common/assets/svg/BatchIcon'
 import PendingToBeConfirmedIcon from '@common/assets/svg/PendingToBeConfirmedIcon'
@@ -64,14 +61,12 @@ const useGetTokenSelectProps = ({
   tokens,
   token,
   networks,
-  supportedChainIds,
   isLoading,
   isToToken: _isToToken = false
 }: {
   tokens: (SwapAndBridgeToToken | TokenResult)[]
   token: string
-  networks: Network[]
-  supportedChainIds?: Network['chainId'][]
+  networks: SupportedNetworks[]
   isLoading?: boolean
   isToToken?: boolean
 }) => {
@@ -123,9 +118,6 @@ const useGetTokenSelectProps = ({
     )
     const tooltipIdNotSupported = `token-${currentToken.address}-on-network-${currentToken.chainId}-not-supported-tooltip`
     const tooltipIdPendingBalance = `token-${currentToken.address}-on-network-${currentToken.chainId}-pending-balance`
-    const isTokenNetworkSupported = supportedChainIds
-      ? getIsNetworkSupported(supportedChainIds, network)
-      : true
 
     const simulatedAccountOp =
       portfolio.networkSimulatedAccountOp[currentToken.chainId.toString() || '']
@@ -251,8 +243,11 @@ const useGetTokenSelectProps = ({
         </View>
 
         {!isSelected && formattedBalancesLabel}
-        {!isTokenNetworkSupported && (
-          <NotSupportedNetworkTooltip tooltipId={tooltipIdNotSupported} network={network} />
+        {network?.isNotSupported && (
+          <NotSupportedNetworkTooltip
+            tooltipId={tooltipIdNotSupported}
+            message={network.notSupportedReason || t('Network unavailable')}
+          />
         )}
       </>
     ) : (
@@ -287,8 +282,11 @@ const useGetTokenSelectProps = ({
           )}
         </View>
         {!isSelected && formattedBalancesLabel}
-        {!isTokenNetworkSupported && (
-          <NotSupportedNetworkTooltip tooltipId={tooltipIdNotSupported} network={network} />
+        {network?.isNotSupported && (
+          <NotSupportedNetworkTooltip
+            tooltipId={tooltipIdNotSupported}
+            message={network?.notSupportedReason || t('Network unavailable')}
+          />
         )}
       </>
     )
@@ -297,7 +295,7 @@ const useGetTokenSelectProps = ({
       value: getTokenId(currentToken),
       address: currentToken.address,
       chainId: currentToken.chainId,
-      disabled: !isTokenNetworkSupported,
+      disabled: network?.isNotSupported,
       extraSearchProps: { symbol, name, address: currentToken.address, networkName: network?.name },
       isPending,
       pendingBalanceFormatted: pendingBalanceFormatted || '0',

@@ -4,7 +4,7 @@ import { Image, View } from 'react-native'
 
 import humanizerInfo from '@ambire-common/consts/humanizer/humanizerInfo.json'
 import { BlacklistedStatus } from '@ambire-common/interfaces/phishing'
-import { HumanizerMeta } from '@ambire-common/libs/humanizer/interfaces'
+import { HumanizerMeta, HumanizerMetaAddress } from '@ambire-common/libs/humanizer/interfaces'
 import { Props as TextProps } from '@common/components/Text'
 import useTheme from '@common/hooks/useTheme'
 import flexbox from '@common/styles/utils/flexbox'
@@ -35,10 +35,18 @@ const HumanizerAddress: FC<Props> = ({
 }) => {
   const { styles } = useTheme(getStyles)
 
-  const addressInfo: any = useMemo(
-    () => HUMANIZER_META.knownAddresses[getAddress(address)],
-    [address]
-  )
+  const addressInfo: HumanizerMetaAddress | undefined = useMemo(() => {
+    let checksummedAddress: string | undefined
+
+    try {
+      checksummedAddress = getAddress(address)
+    } catch (e) {
+      console.error('Invalid address provided to HumanizerAddress component:', address)
+      return undefined
+    }
+
+    return HUMANIZER_META.knownAddresses[getAddress(checksummedAddress)] ?? undefined
+  }, [address])
 
   return (
     <View style={{ ...flexbox.directionRow, marginRight }}>

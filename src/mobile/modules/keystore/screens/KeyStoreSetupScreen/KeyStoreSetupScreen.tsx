@@ -1,13 +1,16 @@
 import React, { useEffect, useRef, useState } from 'react'
-import { Animated, TouchableOpacity, View } from 'react-native'
+import { Animated, Keyboard, TouchableOpacity, View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 
 import AmbireLogo from '@common/assets/svg/AmbireLogo'
 import BottomSheet from '@common/components/BottomSheet'
 import Checkbox from '@common/components/Checkbox'
 import DualChoiceModal from '@common/components/DualChoiceModal'
+import FatToggle from '@common/components/FatToggle'
 import Text from '@common/components/Text'
-import { Trans, useTranslation } from '@common/config/localization'
+import { useTranslation } from '@common/config/localization'
+import useBiometrics from '@common/hooks/useBiometrics'
+import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
 import KeyStoreSetupForm from '@common/modules/keystore/components/KeyStoreSetupForm'
@@ -28,6 +31,37 @@ const KeyStoreSetupScreen = () => {
   const [agreedWithTerms, setAgreedWithTerms] = useState(true)
   const { ref: termsModalRef, open: openTermsModal, close: closeTermsModal } = useModalize()
   const animation = useRef(new Animated.Value(0)).current
+
+  const { isEnrolled, isLoading, saveBiometricsSecret } = useBiometrics()
+  const {
+    state: { isReadyToStoreKeys, statuses },
+    dispatch: keystoreDispatch
+  } = useController('KeystoreController')
+  const [biometricsEnabled, setBiometricsEnabled] = useState(false)
+
+  // Holds the random biometrics secret between the onBeforeKeystoreSetup step
+  // (biometric prompt + secure store save) and the keystore registration step
+  // (which happens silently after the keystore is unlocked).
+  const pendingBiometricsSecret = useRef<string | null>(null)
+
+  useEffect(() => {
+    if (!isLoading && isEnrolled) setBiometricsEnabled(true)
+  }, [isLoading, isEnrolled])
+
+  // Once the keystore is unlocked (after addSecret('password', ...) succeeds),
+  // register the pending biometrics secret with the keystore.
+  useEffect(() => {
+    if (isReadyToStoreKeys && statuses.addSecret === 'SUCCESS' && pendingBiometricsSecret.current) {
+      keystoreDispatch({
+        type: 'method',
+        params: {
+          method: 'addSecret',
+          args: ['biometrics', pendingBiometricsSecret.current, '', true]
+        }
+      })
+      pendingBiometricsSecret.current = null
+    }
+  }, [isReadyToStoreKeys, statuses.addSecret, keystoreDispatch])
 
   useEffect(() => {
     Animated.timing(animation, {
@@ -52,34 +86,61 @@ const KeyStoreSetupScreen = () => {
           {t('Used to access your local wallet and encrypt your data.')}
         </Text>
 
-        <KeyStoreSetupForm agreedWithTerms={agreedWithTerms}>
-          <Checkbox
-            testID="keystore-setup-checkbox"
-            value={agreedWithTerms}
-            onValueChange={setAgreedWithTerms}
-            style={[spacings.ptXl, spacings.mbTy]}
-            label={
-              <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-                <Text fontSize={12} appearance="secondaryText">
-                  I agree to the{' '}
-                </Text>
-                <TouchableOpacity testID="terms-of-service-btn" onPress={() => openTermsModal()}>
-                  <Text fontSize={12} color={theme.linkText}>
-                    Terms of Service
-                  </Text>
-                </TouchableOpacity>
-                <Text>.</Text>
-              </View>
+        <KeyStoreSetupForm
+          agreedWithTerms={agreedWithTerms}
+          onBeforeKeystoreSetup={async () => {
+            Keyboard.dismiss()
+            if (biometricsEnabled) {
+              const secret = await saveBiometricsSecret()
+              if (!secret) return false
+
+              pendingBiometricsSecret.current = secret
             }
-          />
+            return true
+          }}
+        >
+          {isEnrolled && (
+            <View
+              style={[
+                flexbox.directionRow,
+                flexbox.alignCenter,
+                flexbox.justifySpaceBetween,
+                spacings.mvSm
+              ]}
+            >
+              <Text appearance="secondaryText">{t('Enable biometrics')}</Text>
+              <FatToggle
+                isOn={biometricsEnabled}
+                onToggle={() => setBiometricsEnabled(!biometricsEnabled)}
+                width={44}
+                height={22}
+                style={spacings.mr0}
+              />
+            </View>
+          )}
+          <View style={[spacings.ptSm, flexbox.flex1, flexbox.justifyEnd]}>
+            <Checkbox
+              testID="keystore-setup-checkbox"
+              value={agreedWithTerms}
+              onValueChange={setAgreedWithTerms}
+              label={
+                <View style={[flexbox.directionRow, flexbox.alignCenter]}>
+                  <Text fontSize={12} appearance="secondaryText">
+                    I agree to the{' '}
+                  </Text>
+                  <TouchableOpacity testID="terms-of-service-btn" onPress={() => openTermsModal()}>
+                    <Text fontSize={12} color={theme.linkText}>
+                      Terms of Service
+                    </Text>
+                  </TouchableOpacity>
+                  <Text>.</Text>
+                </View>
+              }
+            />
+          </View>
         </KeyStoreSetupForm>
       </MobileLayoutWrapperMainContent>
-      <BottomSheet
-        id="terms-modal"
-        style={{ maxWidth: 800 }}
-        closeBottomSheet={closeTermsModal}
-        sheetRef={termsModalRef}
-      >
+      <BottomSheet id="terms-modal" closeBottomSheet={closeTermsModal} sheetRef={termsModalRef}>
         <View style={[flexbox.alignCenter, flexbox.justifyCenter]}>
           <AmbireLogo style={[spacings.mbLg, flexbox.alignCenter]} width={185} height={92} />
           <Text fontSize={32} weight="regular" style={[{ textAlign: 'center' }, spacings.mbXl]}>

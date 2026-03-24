@@ -70,8 +70,7 @@ const DeFiPositionHeader: FC<Props> = ({
         from: hexToRgba(theme.primaryBorder, 0),
         to: theme.primaryBorder
       }
-    ],
-    forceHoveredStyle: isExpanded
+    ]
   })
   const [bindOpenIconAnim, openIconAnimStyle] = useHover({
     preset: 'opacityInverted'
@@ -98,7 +97,15 @@ const DeFiPositionHeader: FC<Props> = ({
   return (
     <AnimatedPressable
       onPress={toggleExpanded}
-      style={[styles.header, animStyle, !!isExpanded && styles.expandedHeader]}
+      style={[
+        styles.header,
+        animStyle,
+        !!isExpanded && styles.expandedHeader,
+        isExpanded && {
+          backgroundColor: theme.tertiaryBackground,
+          borderColor: theme.primaryBorder
+        }
+      ]}
       {...bindAnim}
     >
       <View style={styles.providerData}>

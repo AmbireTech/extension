@@ -11,8 +11,7 @@ const getStyles = (theme: ThemeProps) =>
       borderWidth: 2,
       borderRadius: BORDER_RADIUS_PRIMARY,
       borderColor: theme.secondaryBackground,
-      overflow: 'hidden',
-      ...(isMobile ? spacings.mbSm : {})
+      overflow: 'hidden'
     },
     outerContainerWarning: {
       borderColor: theme.errorBackground
