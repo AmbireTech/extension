@@ -37,6 +37,7 @@ const QrSignResponseScanner = ({ onSignatureScanned, onBack }: Props) => {
             type="secondary"
             text={t('Back')}
             onPress={onBack}
+            style={{ width: 98 }}
           />
         </FooterGlassView>
       </View>

@@ -33,7 +33,7 @@ const QrSignRequestScreen = ({ onContinue, onReject, urType, urCborHex }: Props)
             type="secondary"
             text={t('Back')}
             onPress={onReject}
-            style={spacings.mrSm}
+            style={{ width: 98, ...spacings.mrLg }}
           />
           <Button
             size="smaller"
