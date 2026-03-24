@@ -129,12 +129,11 @@ export class TransferPage extends BasePage {
       await this.selectFeeToken(baParams.envSelectedAccount, feeToken, payWithGasTank)
     }
 
-    // returns e.g. '<$0.01'
     const feeSelector = await this.page
+      .getByTestId(selectors.transaction.feeTokensSelectDropdown)
       .locator(selectors.transaction.feeTokenInDollars)
-      .innerText({ timeout: 10000 })
-
-    const feeDollarsAmount = Number(feeSelector.replace(/[<$]/g, ''))
+      .innerText()
+    const feeDollarsAmount = Number.parseFloat(feeSelector.replace(/[^0-9.]/g, ''))
 
     if (feeDollarsAmount > 0.1) {
       console.warn(

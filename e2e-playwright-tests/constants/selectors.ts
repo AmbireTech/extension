@@ -128,7 +128,7 @@ const selectors = {
     feeSpeedMedium: 'option-medium',
     feeSpeedFast: 'option-fast',
     feeSpeedApe: 'option-ape',
-    feeTokenInDollars: '//div[contains(text(),"<$")]',
+    feeTokenInDollars: '//div[contains(text(), "<$") or contains(text(), "$")]',
     confirmingYourTransactionText: 'confirming-your',
     explorer: {
       txnSignedStep: 'signed-step',
