@@ -45,7 +45,7 @@ const AccountKeyBanner = ({ type }: { type: KeyType }) => {
 
   if (type === 'qr')
     return (
-      <Wrapper text="Qr-base">
+      <Wrapper text="Qr-based">
         <ReceiveIcon {...props} />
       </Wrapper>
     )

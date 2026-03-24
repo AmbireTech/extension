@@ -68,8 +68,9 @@ const QrSigningFlowScreen = ({
       type={!isTab ? 'bottom-sheet' : 'modal'}
       containerInnerWrapperStyles={isTab ? { ...spacings.pv2Xl, ...spacings.ph2Xl } : {}}
       withBackdropBlur={false}
+      shouldBeClosableOnDrag={false}
     >
-      <ModalHeader title={title} handleClose={handleClose} />
+      <ModalHeader title={title} />
 
       {!request ? (
         <View style={[flexbox.alignCenter, spacings.ptXl, spacings.pbLg]}>
