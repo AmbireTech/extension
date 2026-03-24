@@ -12,9 +12,31 @@ const HtmlWebpackPlugin = require('html-webpack-plugin')
 const expoEnv = require('@expo/webpack-config/env')
 const NodePolyfillPlugin = require('node-polyfill-webpack-plugin')
 const MiniCssExtractPlugin = require('mini-css-extract-plugin')
+const LavaMoatPlugin = require('@lavamoat/webpack')
 const { validateEnvVariables } = require('./scripts/validateEnv')
 const appJSON = require('./app.json')
 const AssetReplacePlugin = require('./plugins/AssetReplacePlugin')
+const createLavamoatUnsafeLayerPlugin = require('./lavamoat/plugins/lavamoat-unsafe-layer-plugin')
+const LavamoatIgnoredModulesVerifyPlugin = require('./lavamoat/plugins/lavamoat-ignored-modules-verify-plugin')
+
+// Entries that run outside LavaMoat protection.
+//
+// Important: this list controls TWO mechanisms that must stay aligned:
+// 1) runtimeConfigurationPerChunk_experimental -> returns { mode: 'null_unsafe' } for these names
+//    so no LavaMoat runtime is injected in those chunks.
+// 2) createLavamoatUnsafeLayerPlugin(...) -> marks the same entries with layer 'unsafe'
+//    and applies LavaMoat.exclude so their modules are not wrapped in Compartments.
+//
+// If only (1) is enabled, runtime code is removed but wrapped modules may remain, which can cause
+// runtime failures due to missing LavaMoat bootstrapping symbols.
+const LAVAMOAT_UNSAFE_ENTRIES = new Set([
+  'rootTheme',
+  'ambire-inpage',
+  'ethereum-inpage',
+  'content-script',
+  'content-script-ambire-injection',
+  'content-script-ethereum-injection'
+])
 
 const isWebkit = process.env.WEB_ENGINE?.startsWith('webkit')
 const isGecko = process.env.WEB_ENGINE === 'gecko'
@@ -223,6 +245,9 @@ module.exports = async function (env, argv) {
     '@web': path.resolve(__dirname, 'src/web'),
     '@benzin': path.resolve(__dirname, 'src/benzin'),
     '@legends': path.resolve(__dirname, 'src/legends'),
+    // reflect-metadata is installed early via LavaMoat staticShims_experimental.
+    // Alias it to a noop module to prevent a second execution after harden.
+    'reflect-metadata$': path.resolve(__dirname, 'lavamoat/shims/reflect-metadata-noop.js'),
     react: path.resolve(__dirname, 'node_modules/react')
   }
 
@@ -331,6 +356,90 @@ module.exports = async function (env, argv) {
 
     config.plugins = [
       ...defaultExpoConfigPlugins,
+      // LavaMoatPlugin wraps module generators (normalModuleFactory.hooks.generator)
+      // and must be registered before other plugins that process modules (like Terser)
+      // to avoid conflicts. Note: plugin order in array doesn't guarantee execution order;
+      // LavaMoatPlugin registers on early hooks (beforeRun, thisCompilation) which ensures
+      // it runs before optimization/minification plugins.
+      // See README.MD for policy generation workflow and when to regenerate policies.
+      // Only enabled in production builds to avoid HMR conflicts in development.
+      // TODO: Enable for Gecko soon as well.
+      // Gecko currently has a conflict with inlineLockdown because main.js and background.js are split into chunks there,
+      // and ses lockdown is initialized multiple times in the same realm.
+      ...(config.mode === 'production' && isWebkit
+        ? [
+            new LavaMoatPlugin({
+              generatePolicy: process.env.LAVAMOAT_GENERATE_POLICY === 'true',
+              // Where policy.json and policy-override.json live
+              policyLocation: path.resolve(__dirname, 'lavamoat/webpack'),
+              // Inline the SES lockdown shim directly into the background and main UI chunks.
+              // This is critical for MV3 service workers where we can't control
+              // script load order via <script> tags and ensures that popup/tab UIs
+              // run under SES lockdown. rootTheme runs outside SES for now due to
+              // immutable-arraybuffer shim limitations.
+              // Note: Chunk files (e.g. 738.js in build/webpack-prod) do NOT need inline SES:
+              // they are always loaded by the webpack runtime inside background.js or
+              // main.js (including background-*.js / main-*.js variants) and execute
+              // in the same realm, which is already locked down.
+              inlineLockdown: /^(background|main)(-.*)?\.js$/,
+              lockdown: {
+                errorTaming: 'unsafe-debug',
+                stackFiltering: 'verbose',
+                consoleTaming: 'unsafe',
+                errorTrapping: 'none',
+                unhandledRejectionTrapping: 'none',
+                overrideTaming: 'severe',
+                localeTaming: 'unsafe'
+              },
+              // Keep resource IDs readable for easier debugging and policy maintenance.
+              // Set to true during policy generation for easier debugging, false in production
+              // to reduce bundle size. Same policy works for both gecko and webkit builds.
+              readableResourceIds: process.env.LAVAMOAT_GENERATE_POLICY === 'true',
+              // HtmlWebpackPluginInterop is only used when inlineLockdown is NOT set.
+              // Since we use inlineLockdown (required for MV3 service workers), this
+              // is a no-op. SES is prepended directly into background.js, which works
+              // for both MV3 (service worker) and Gecko (loaded via <script> tag).
+              HtmlWebpackPluginInterop: false,
+              // Policy validation checks. Disable during initial policy generation to
+              // avoid CodeGenerationError issues. Re-enable once policy.json is stable
+              // to catch policy violations early.
+              runChecks: process.env.LAVAMOAT_GENERATE_POLICY !== 'true',
+              // Per-chunk LavaMoat mode:
+              // - null_unsafe for entries listed in LAVAMOAT_UNSAFE_ENTRIES
+              //   (no LavaMoat runtime injected in that chunk)
+              // - safe for all other chunks
+              //   (Compartment runtime + policy enforcement; lockdown where inlineLockdown matches)
+              runtimeConfigurationPerChunk_experimental: (chunk) => {
+                if (chunk.name && LAVAMOAT_UNSAFE_ENTRIES.has(chunk.name)) {
+                  return { mode: 'null_unsafe' }
+                }
+                const staticShims = [
+                  'reflect-metadata',
+                  path.resolve('./lavamoat/shims/console-warn.js')
+                ]
+
+                // setimmediate is needed only in background runtime paths.
+                // Keeping it scoped avoids side effects in UI chunks.
+                if (chunk.name === 'background') {
+                  staticShims.push('setimmediate')
+                }
+
+                return { mode: 'safe', staticShims }
+              },
+              // Diagnostics verbosity (0-2):
+              //   0: Minimal logging (recommended for normal builds)
+              //   1: Moderate logging (useful for debugging policy issues)
+              //   2: Verbose logging (use only when investigating deep issues)
+              // Set to 0 to avoid error logging conflicts with Expo's progress bar.
+              diagnosticsVerbosity: process.env.LAVAMOAT_GENERATE_POLICY === 'true' ? 1 : 0
+            }),
+            // Verify that any modules LavaMoat is forced to ignore at runtime
+            // are either fully tree-shaken or otherwise empty placeholders.
+            // The plugin appends a short ✅/❌ status and explanation to the
+            // original LavaMoat warning message.
+            new LavamoatIgnoredModulesVerifyPlugin()
+          ]
+        : []),
       new NodePolyfillPlugin(),
       new webpack.ProvidePlugin({ Buffer: ['buffer', 'Buffer'], process: 'process' }),
       new HtmlWebpackPlugin({
@@ -370,6 +479,28 @@ module.exports = async function (env, argv) {
       type: 'javascript/auto'
     })
 
+    // Allow @expo-google-fonts assets (TTF/WOFF/etc) to be emitted explicitly instead of
+    // relying on Webpack's "ambient" asset behavior. LavaMoat treats ambient assets from
+    // node_modules (type === 'asset/resource' with no loaders) as suspicious and blocks
+    // them with a "silently emitted to the dist directory" warning. By declaring a
+    // dedicated asset rule for these fonts and using type: 'asset', we:
+    //   - keep them under explicit build control (they are no longer "ambient" assets)
+    //   - avoid the LavaMoat ambient-asset guard for these known-safe font files
+    //   - still reuse the global assetModuleFilename ('[name]-[hash:8][ext]'), so
+    //     filenames like GeistMono_100Thin-a5a6a661.ttf remain unchanged.
+    config.module.rules.push({
+      test: /\.(ttf|otf|eot|woff2?)$/i,
+      include: /node_modules\/@expo-google-fonts\//,
+      type: 'asset'
+    })
+
+    // Register unsafe-layer plugin only in production (same environment as LavaMoatPlugin).
+    // The plugin adds a rule and assigns layer='unsafe' for LAVAMOAT_UNSAFE_ENTRIES.
+    // This must stay in sync with runtimeConfigurationPerChunk_experimental above.
+    if (config.mode === 'production') {
+      config.plugins.push(createLavamoatUnsafeLayerPlugin(LAVAMOAT_UNSAFE_ENTRIES))
+    }
+
     if (isWebkit) {
       // This plugin enables code-splitting support for the service worker, allowing it to import chunks dynamically.
       config.plugins.push(
@@ -406,64 +537,84 @@ module.exports = async function (env, argv) {
       config.optimization.moduleIds = 'deterministic' // Ensures same id for modules across builds
       // Disables auto-generated runtime chunks, because they cause ID drift
       config.optimization.runtimeChunk = false
-      config.optimization.splitChunks = {
-        ...config.optimization.splitChunks,
-        // Firefox enforces a 5MB per-file size limit for extensions.
-        // In the v5 extension series we intentionally avoided setting maxSize,
-        // because 1) it could lead to non-reproducible chunk filenames and
-        // 2) it wasn't needed at the time (no bundle was > 5MB).
-        // With v6 extension series + new features/core lib updates exceeded 5MB
-        // for two of the resulting js bundles, so we re-enabled maxSize.
-        // On theory, it should be deterministic with chunkIds/moduleIds set to
-        // 'deterministic' and chunkFilename = '[id].js'.
-        // Note: maxSize uses estimated sizes; keep some headroom so emitted
-        // bundles stay under the linter's real per-file limit.
-        maxSize: 4.5 * 1024 * 1024,
-        minSize: 0, // prevents merging small modules together automatically
-        chunks(chunk) {
-          // do not split into chunks the files that should be injected
-          return (
-            chunk.name !== 'ambire-inpage' &&
-            chunk.name !== 'ethereum-inpage' &&
-            chunk.name !== 'content-script'
-          )
-        },
-        // Disable random cache groups (resulting non-deterministic chunk names)
-        cacheGroups: {
-          default: false,
-          vendors: false
+
+      if (isWebkit) {
+        // No extra chunks for webkit, because it conflicts with LavaMoat plugin,
+        // and currently there's no other benefit to enable it.
+        config.optimization.splitChunks = false
+      } else {
+        config.optimization.splitChunks = {
+          ...config.optimization.splitChunks,
+          // Firefox enforces a 5MB per-file size limit for extensions.
+          // In the v5 extension series we intentionally avoided setting maxSize,
+          // because 1) it could lead to non-reproducible chunk filenames and
+          // 2) it wasn't needed at the time (no bundle was > 5MB).
+          // With v6 extension series + new features/core lib updates exceeded 5MB
+          // for two of the resulting js bundles, so we re-enabled maxSize.
+          // On theory, it should be deterministic with chunkIds/moduleIds set to
+          // 'deterministic' and chunkFilename = '[id].js'.
+          // Note: maxSize uses estimated sizes; keep some headroom so emitted
+          // bundles stay under the linter's real per-file limit.
+          maxSize: 4.5 * 1024 * 1024,
+          minSize: 0, // prevents merging small modules together automatically
+          chunks(chunk) {
+            // do not split into chunks the files that should be injected
+            return (
+              chunk.name !== 'ambire-inpage' &&
+              chunk.name !== 'ethereum-inpage' &&
+              chunk.name !== 'content-script'
+            )
+          },
+          // Disable random cache groups (resulting non-deterministic chunk names)
+          cacheGroups: {
+            default: false,
+            vendors: false
+          }
         }
       }
+
+      // Check if we're generating LavaMoat policy - disable minification during policy generation
+      // because Terser cannot properly parse LavaMoat-wrapped modules
+      const isGeneratingPolicy = config.plugins.some(
+        (plugin) =>
+          plugin.constructor.name === 'LavaMoatPlugin' && plugin.options?.generatePolicy === true
+      )
 
       // Find and configure TerserPlugin in the minimizer array
       const terserPlugin = config.optimization.minimizer?.find(
         (minimizer) => minimizer.constructor.name === 'TerserPlugin'
       )
       if (terserPlugin) {
-        const terserRealOptions = terserPlugin.options.minimizer?.options
+        // Disable minification entirely when generating LavaMoat policy
+        // to avoid Terser conflicts with wrapped modules
+        if (isGeneratingPolicy) {
+          config.optimization.minimize = false
+        } else {
+          const terserRealOptions = terserPlugin.options.minimizer?.options
 
-        if (terserRealOptions) {
-          terserRealOptions.compress = {
-            ...(terserRealOptions.compress || {}),
-            pure_getters: true,
-            passes: 3
+          if (terserRealOptions) {
+            terserRealOptions.compress = {
+              ...(terserRealOptions.compress || {}),
+              pure_getters: true,
+              passes: 3
+            }
+
+            terserRealOptions.output = {
+              ...(terserRealOptions.output || {}),
+              ascii_only: true,
+              comments: false
+            }
+
+            // Disable mangling:
+            // 1) For Firefox, to ensure bit-for-bit deterministic builds across
+            // platforms (e.g. x64 vs arm64). This avoids differences in
+            // variable/function names (e.g. P vs x) that can cause review rejections.
+            // 2) For Webkit as well avoid issues with GridPlus SDK - signing
+            // EIP-712 messages fail with PROD build on Linux (work just fine on DEV)
+            // because the mangling messes up the gridplus-sdk package somehow.
+            // The drawback is larger bundle size.
+            terserRealOptions.mangle = false
           }
-
-          terserRealOptions.output = {
-            ...(terserRealOptions.output || {}),
-            ascii_only: true,
-            comments: false
-          }
-
-          // Disable mangling:
-          // 1) For Firefox, to ensure bit-for-bit deterministic builds across
-          // platforms (e.g. x64 vs arm64). This avoids differences in
-          // variable/function names (e.g. P vs x) that can cause review rejections.
-          // 2) For Webkit as well avoid issues with GridPlus SDK - signing
-          // EIP-712 messages fail with PROD build on Linux (work just fine on DEV)
-          // because the mangling messes up the gridplus-sdk package somehow.
-          // The drawback is larger bundle size.
-          terserRealOptions.mangle = false
           // Preserve class names so `this.constructor.name` logic works dynamically
           terserRealOptions.keep_classnames = true
         }
