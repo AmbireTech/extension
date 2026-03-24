@@ -41,6 +41,7 @@ const HumanizerAddress: FC<Props> = ({
     try {
       checksummedAddress = getAddress(address)
     } catch (e) {
+      console.error('Invalid address provided to HumanizerAddress component:', address)
       return undefined
     }
 
