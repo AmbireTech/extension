@@ -35,7 +35,9 @@ export interface Props {
   titleFontSize?: number
   buttonText?: string
   onPress?: () => void
-  onClosePress?: () => void
+  onCloseIconPress?: () => void
+  dismissButtonText?: string
+  onDismissButtonPress?: () => void
 }
 
 const Banner = React.memo(
@@ -48,7 +50,9 @@ const Banner = React.memo(
     titleFontSize,
     buttonText,
     style,
-    onClosePress,
+    onCloseIconPress,
+    onDismissButtonPress,
+    dismissButtonText,
     onPress
   }: Props) => {
     const { styles, theme } = useTheme(getStyles)
@@ -74,7 +78,7 @@ const Banner = React.memo(
           style={[
             flexbox.directionRow,
             flexbox.justifySpaceBetween,
-            spacings.mbTy,
+            !!text ? spacings.mbTy : spacings.mbSm,
             {
               width: '100%'
             }
@@ -86,9 +90,9 @@ const Banner = React.memo(
               {title}
             </Text>
           </View>
-          {!!onClosePress && (
+          {!!onCloseIconPress && (
             <Pressable
-              onPress={onClosePress}
+              onPress={onCloseIconPress}
               hitSlop={8}
               style={{
                 width: 24,
@@ -102,7 +106,7 @@ const Banner = React.memo(
           )}
         </View>
 
-        <View style={[flexbox.wrap, flexbox.flex1]}>
+        <View style={[flexbox.wrap, flexbox.flex1, { width: '100%' }]}>
           {!!text && (
             <Text
               fontSize={14}
@@ -113,18 +117,38 @@ const Banner = React.memo(
               {text}
             </Text>
           )}
-          {!!buttonText && !!onPress && (
-            <BannerButton
-              type="primary"
-              colorType={type}
-              onPress={onPress}
-              testID={`dashboard-${type}-banner`}
-            >
-              {buttonText}
-            </BannerButton>
-          )}
+          <View
+            style={[
+              flexbox.flex1,
+              flexbox.directionRow,
+              flexbox.alignCenter,
+              flexbox.justifyEnd,
+              { width: '100%' }
+            ]}
+          >
+            {!!dismissButtonText && !!onDismissButtonPress && (
+              <BannerButton
+                type="secondary"
+                colorType="error"
+                onPress={onDismissButtonPress}
+                testID="banner-button-reject"
+                style={!!buttonText && !!onPress && spacings.mrTy}
+              >
+                {dismissButtonText}
+              </BannerButton>
+            )}
+            {!!buttonText && !!onPress && (
+              <BannerButton
+                type="primary"
+                colorType={type}
+                onPress={onPress}
+                testID={`dashboard-${type}-banner`}
+              >
+                {buttonText}
+              </BannerButton>
+            )}
+          </View>
         </View>
-
         {children}
       </View>
     )

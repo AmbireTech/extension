@@ -21,6 +21,7 @@
     "transfer": "npx playwright test -g @transfer",
     "ambire:rewards": "npx playwright test -g @rewards",
     "auto:login": "npx playwright test -g @autoLogin",
+    "relayer": "npx playwright test -g @relayer",
     "postinstall": "patch-package"
   },
   "author": "Filip",
@@ -42,7 +43,7 @@
   "dependencies": {
     "@trezor/connect-plugin-ethereum": "9.1.5",
     "@trezor/connect-webextension": "9.7.1",
-    "@trezor/trezor-user-env-link": "^1.0.0",
+    "@trezor/trezor-user-env-link": "1.0.0",
     "dotenv": "^16.4.5",
     "qs": "^6.12.0"
   }

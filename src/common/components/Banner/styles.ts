@@ -1,7 +1,9 @@
 import { StyleSheet, ViewStyle } from 'react-native'
 
+import { isMobile } from '@common/config/env'
 import spacings from '@common/styles/spacings'
 import commonStyles from '@common/styles/utils/common'
+import flexbox from '@common/styles/utils/flexbox'
 
 interface Style {
   container: ViewStyle
@@ -10,11 +12,12 @@ interface Style {
 const getStyles = () =>
   StyleSheet.create<Style>({
     container: {
-      ...spacings.phSm,
+      ...(isMobile ? spacings.phTy : spacings.phSm),
+      ...(isMobile ? spacings.pbTy : spacings.pbSm),
       ...spacings.ptTy,
-      ...spacings.pbTy,
       ...spacings.mbTy,
-      ...commonStyles.borderRadiusPrimary
+      ...commonStyles.borderRadiusPrimary,
+      ...flexbox.flex1
     }
   })
 

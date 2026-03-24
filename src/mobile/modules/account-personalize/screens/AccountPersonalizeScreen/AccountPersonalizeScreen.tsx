@@ -1,9 +1,10 @@
 import React from 'react'
-import { ScrollView, View } from 'react-native'
+import { View } from 'react-native'
 
 import AddCircularIcon from '@common/assets/svg/AddCircularIcon'
 import Alert from '@common/components/Alert'
 import Button from '@common/components/Button'
+import DotsLoadingAnimation from '@common/components/DotsLoadingAnimation'
 import SuccessAnimation from '@common/components/SuccessAnimation'
 import Text from '@common/components/Text'
 import { isWeb } from '@common/config/env'
@@ -11,11 +12,10 @@ import { Trans, useTranslation } from '@common/config/localization'
 import useTheme from '@common/hooks/useTheme'
 import AccountPersonalizeCard from '@common/modules/account-personalize/components/AccountPersonalizeCard'
 import AccountsLoadingAnimation from '@common/modules/account-personalize/components/AccountsLoadingAnimation'
-import AccountsLoadingDotsAnimation from '@common/modules/account-personalize/components/AccountsLoadingDotsAnimation'
 import useAccountPersonalize from '@common/modules/account-personalize/hooks/useAccountPersonalize'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
 import { WEB_ROUTES } from '@common/modules/router/constants/common'
-import spacings, { SPACING_TY } from '@common/styles/spacings'
+import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
 import {
@@ -32,7 +32,6 @@ const AccountPersonalizeScreen = () => {
 
   const {
     isLoading,
-    completed,
     fields,
     control,
     accountPickerState,
@@ -57,6 +56,8 @@ const AccountPersonalizeScreen = () => {
                 : t('No new accounts added')
               : undefined
         }
+        withScroll
+        keyboardAwareScrollViewProps={{ bottomOffset: 200 }}
       >
         {isLoading && !accountPickerState.pageError ? (
           <View style={[flexbox.alignCenter]}>
@@ -66,7 +67,7 @@ const AccountPersonalizeScreen = () => {
             <Text fontSize={20} weight="semiBold" style={[text.center, spacings.mbSm]}>
               {t('Loading accounts')}
             </Text>
-            <AccountsLoadingDotsAnimation />
+            <DotsLoadingAnimation />
           </View>
         ) : accountPickerState.pageError ? (
           <View style={flexbox.alignCenter}>
@@ -93,37 +94,30 @@ const AccountPersonalizeScreen = () => {
           </View>
         ) : (
           <>
-            <SuccessAnimation
-              style={{ ...spacings.mbXl, marginTop: -SPACING_TY, ...flexbox.alignSelfCenter }}
-            />
-            <ScrollView style={spacings.mbLg}>
+            <SuccessAnimation style={{ ...spacings.mbXl, ...flexbox.alignSelfCenter }} />
+            <View style={[spacings.mbLg, flexbox.flex1]}>
               {accountsToPersonalize.map((acc, index) => (
                 <AccountPersonalizeCard
-                  key={acc.addr + completed}
+                  key={acc.addr}
                   control={control}
                   index={index}
                   account={acc}
                   hasBottomSpacing={index !== fields.length - 1}
                   onSave={handleSave as any}
-                  disableEdit={!!completed}
                 />
               ))}
-            </ScrollView>
-            {completed ? (
-              <Text appearance="secondaryText" weight="medium" style={[text.center]}>
-                {t('You can access your accounts from the dashboard via the extension icon.')}
-              </Text>
-            ) : (
-              <Button
-                testID="button-save-and-continue"
-                size="large"
-                onPress={handleComplete}
-                hasBottomSpacing={false}
-                text={t('Complete')}
-                disabled={!accounts.length}
-              />
-            )}
-            {!completed && ['seed', 'hw'].includes(accountPickerState.subType as any) && (
+            </View>
+
+            <Button
+              testID="button-save-and-continue"
+              size="large"
+              onPress={handleComplete}
+              hasBottomSpacing={false}
+              text={t('Complete')}
+              disabled={!accounts.length}
+            />
+
+            {['seed', 'hw'].includes(accountPickerState.subType as any) && (
               <Button
                 testID="add-more-accounts-btn"
                 type="outline"

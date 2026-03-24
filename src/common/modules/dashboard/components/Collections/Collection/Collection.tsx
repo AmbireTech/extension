@@ -68,28 +68,28 @@ const Collection: FC<Props> = ({
           flexbox.directionRow,
           flexbox.alignCenter,
           flexbox.justifySpaceBetween,
-          spacings.mbMd
+          spacings.mbMd,
+          flexbox.flex1
         ]}
       >
         <View style={[flexbox.directionRow, flexbox.alignCenter, flexbox.flex1, spacings.mrXl]}>
           <Text testID="collection-item" weight="medium" numberOfLines={1} lineBreakMode="tail">
             {name}
           </Text>
-          <Text
-            fontSize={12}
-            appearance="secondaryText"
+          <View
             style={{
               minWidth: 20,
               height: 20,
-              display: 'flex',
               ...flexbox.center,
               ...spacings.mlTy,
               ...common.borderRadiusPrimary,
               backgroundColor: theme.primaryBackground
             }}
           >
-            {collectibles.length}
-          </Text>
+            <Text fontSize={12} appearance="secondaryText">
+              {collectibles.length}
+            </Text>
+          </View>
         </View>
         <View style={[flexbox.directionRow, flexbox.alignCenter]}>
           <View

@@ -5,6 +5,7 @@ import { DERIVATION_OPTIONS, HD_PATH_TEMPLATE_TYPE } from '@ambire-common/consts
 import SettingsIcon from '@common/assets/svg/SettingsIcon'
 import Button from '@common/components/Button'
 import { SelectValue } from '@common/components/Select/types'
+import { isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import { FONT_FAMILIES } from '@common/hooks/useFonts'
@@ -62,11 +63,12 @@ const ChangeHdPath: React.FC<Props> = ({ setPage, disabled }) => {
         onPress={() => openBottomSheet()}
         hasBottomSpacing={false}
         disabled={disabled}
-        text={t('Advanced mode')}
+        text={isWeb ? t('Advanced mode') : undefined}
         childrenPosition="left"
         textStyle={{ fontSize: 14, fontFamily: FONT_FAMILIES.REGULAR }}
+        style={isWeb ? undefined : { paddingHorizontal: 0 }}
       >
-        <SettingsIcon width={20} style={spacings.mrTy} />
+        <SettingsIcon width={20} style={isWeb ? spacings.mrTy : undefined} />
       </Button>
 
       <AdvancedModeBottomSheet

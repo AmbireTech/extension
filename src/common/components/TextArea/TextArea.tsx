@@ -86,6 +86,7 @@ const TextArea = ({
             onFocus={handleOnFocus}
             {...rest}
             style={{
+              textAlignVertical: 'top',
               ...styles.nativeInput,
               // @ts-ignore outline: 'none'
               outline: 'none',

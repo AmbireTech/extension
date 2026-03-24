@@ -1,6 +1,7 @@
 import React, { FC } from 'react'
 import { View, ViewStyle } from 'react-native'
 
+import { isMobile } from '@common/config/env'
 import Header from '@common/modules/header/components/Header'
 import spacings from '@common/styles/spacings'
 
@@ -18,12 +19,12 @@ const ModalHeader: FC<Props> = ({ handleClose, title, style, children, headerTes
 
   return (
     <Header.Wrapper
-      containerStyle={{ ...spacings.ptTy, ...spacings.pb0, ...spacings.ph0 }}
-      style={{ ...spacings.mbLg, ...style, minHeight: 28 }}
+      containerStyle={{ ...spacings.ptTy, ...spacings.pb0, ...spacings.ph0, ...spacings.mb0 }}
+      style={{ ...(isMobile ? spacings.mb : spacings.mbLg), ...style, minHeight: 28 }}
     >
       {withSideContainers && (
         <Header.Container side="left">
-          {handleClose && (
+          {handleClose && !isMobile && (
             <Header.BackButton onGoBackPress={handleClose} forceBack displayIn="always" />
           )}
         </Header.Container>

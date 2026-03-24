@@ -5,6 +5,7 @@ import { View } from 'react-native'
 import { AUTO_LOGIN_DURATION_OPTIONS } from '@ambire-common/controllers/autoLogin/autoLogin'
 import { SiweMessageUserRequest } from '@ambire-common/interfaces/userRequest'
 import Alert from '@common/components/Alert'
+import FatToggle from '@common/components/FatToggle'
 import NetworkBadge from '@common/components/NetworkBadge'
 import ScrollableWrapper from '@common/components/ScrollableWrapper'
 import Select from '@common/components/Select'
@@ -13,12 +14,12 @@ import Toggle from '@common/components/Toggle'
 import Tooltip from '@common/components/Tooltip'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
+import HardwareWalletSigningModal from '@common/modules/hardware-wallets/components/HardwareWalletSigningModal'
 import spacings, { SPACING, SPACING_LG, SPACING_MD, SPACING_SM } from '@common/styles/spacings'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import { TabLayoutWrapperMainContent } from '@web/components/TabLayoutWrapper'
 import useResponsiveActionWindow from '@web/hooks/useResponsiveActionWindow'
-import HardwareWalletSigningModal from '@web/modules/hardware-wallet/components/HardwareWalletSigningModal'
 import LedgerConnectModal from '@web/modules/hardware-wallet/components/LedgerConnectModal'
 import Info from '@web/modules/sign-message/screens/SignMessageScreen/Info'
 import getStyles from '@web/modules/sign-message/screens/SignMessageScreen/styles'
@@ -293,7 +294,12 @@ const SignInWithEthereum = ({
           siweMessageToSign.siweValidityStatus === 'valid' && (
             <View style={[flexbox.directionRow, flexbox.justifyEnd, flexbox.alignCenter]}>
               <View style={[flexbox.directionRow, flexbox.alignCenter, flexbox.justifyEnd]}>
-                <Toggle isOn={isAutoLoginEnabledByUser} onToggle={updateIsAutoLoginEnabled} />
+                <FatToggle
+                  isOn={isAutoLoginEnabledByUser}
+                  onToggle={updateIsAutoLoginEnabled}
+                  width={36}
+                  height={20}
+                />
 
                 <Text
                   fontSize={14 * responsiveSizeMultiplier}
@@ -315,6 +321,7 @@ const SignInWithEthereum = ({
                     // Convert the duration to hours for comparison with the option values
                     Number(option.value) === siweMessageToSign.autoLoginDuration
                 )}
+                selectStyle={{ backgroundColor: theme.secondaryBackground }}
                 withSearch={false}
                 disabled={!isAutoLoginEnabledByUser}
               />

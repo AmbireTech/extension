@@ -1,5 +1,6 @@
-import LottieView from 'lottie-react'
 import React from 'react'
+
+import LottieView from '@common/components/LottieView'
 
 import animation from './animated-arrows.json'
 
@@ -10,7 +11,7 @@ const AnimatedArrows = () => {
       style={{
         width: 45,
         height: 45,
-        transform: 'rotate(-90deg)'
+        transform: [{ rotate: '-90deg' }]
       }}
       autoPlay
       loop

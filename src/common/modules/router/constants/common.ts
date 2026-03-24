@@ -16,7 +16,11 @@ const COMMON_ROUTES = {
   onboardingCompleted: 'wallet-setup-completed',
   viewOnlyAccountAdder: 'view-only-account-adder',
   safeImport: 'safe-import',
-  tokenDetails: 'token-details'
+  transfer: 'transfer',
+  topUpGasTank: 'top-up-gas-tank',
+  tokenDetails: 'token-details',
+  accountSelect: 'account-select',
+  receive: 'receive'
 }
 
 const MOBILE_ROUTES = {
@@ -27,8 +31,6 @@ const WEB_ROUTES = {
   ...COMMON_ROUTES,
   rewards: 'rewards',
   earn: 'earn',
-  transfer: 'transfer',
-  topUpGasTank: 'top-up-gas-tank',
   signAccountOp: 'sign-account-op',
   transactions: 'transactions',
   signedMessages: 'signed-messages',
@@ -49,7 +51,6 @@ const WEB_ROUTES = {
   authEmailAccount: 'auth-email-account',
   authEmailLogin: 'auth-email-login',
   authEmailRegister: 'auth-email-register',
-  accountSelect: 'account-select',
   networks: 'networks',
   networksConfiguration: 'networks-configuration',
   generalSettings: 'settings/general',
@@ -65,7 +66,6 @@ const WEB_ROUTES = {
   benzin: 'benzin',
   swapAndBridge: 'swap-and-bridge',
   recoveryPhrasesSettings: 'settings/recovery-phrases',
-  receive: 'receive',
   safeImport: 'safe-import',
   optOuts: 'settings/opt-outs'
 }
