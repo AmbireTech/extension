@@ -16,11 +16,6 @@ const MAX_QR_FRAGMENT_LENGTH = 200
 class UrQrProtocolAdapter implements QrProtocolAdapter {
   protocol: 'ur' = 'ur'
 
-  private encodeUrToFrames(ur: any): string[] {
-    const encoder = new UREncoder(ur, MAX_QR_FRAGMENT_LENGTH)
-    return encoder.encodeWhole()
-  }
-
   async buildSignMessageRequest(args: {
     hex: string
     derivationPath: string
@@ -55,11 +50,9 @@ class UrQrProtocolAdapter implements QrProtocolAdapter {
       )
 
       const ur = request.toUR()
-      const frames = this.encodeUrToFrames(ur)
 
       return {
         type: 'sign-message',
-        frames,
         requestId,
         urType: ur.type,
         urCborHex: ur.cbor.toString('hex')
@@ -98,12 +91,9 @@ class UrQrProtocolAdapter implements QrProtocolAdapter {
       )
 
       const ur = request.toUR()
-      // TODO: remove frames
-      const frames = this.encodeUrToFrames(ur)
 
       return {
         type: 'sign-typed-data',
-        frames,
         requestId,
         urType: ur.type,
         urCborHex: ur.cbor.toString('hex')
@@ -153,12 +143,9 @@ class UrQrProtocolAdapter implements QrProtocolAdapter {
       )
 
       const ur = request.toUR()
-      // TODO: remove frames
-      const frames = this.encodeUrToFrames(ur)
 
       return {
         type: 'sign-transaction',
-        frames,
         requestId,
         urType: ur.type,
         urCborHex: ur.cbor.toString('hex')

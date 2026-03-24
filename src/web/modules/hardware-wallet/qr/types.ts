@@ -18,7 +18,6 @@ export type QrRequestType =
 
 export type QrRequest = {
   type: QrRequestType
-  frames: string[]
   requestId?: string
   urType?: string
   urCborHex?: any
