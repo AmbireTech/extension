@@ -11,6 +11,7 @@ interface Props {
   titlePosition?: 'left' | 'center'
   style?: ViewStyle
   hasAmbireLogo?: boolean
+  forceBackButtonOnMobile?: boolean
   children?: React.ReactNode
   headerTestID?: string
 }
@@ -21,6 +22,7 @@ const ModalHeader: FC<Props> = ({
   titlePosition = 'center',
   style,
   children,
+  forceBackButtonOnMobile,
   headerTestID
 }) => {
   const withSideContainers = !!handleClose || !!children
@@ -32,7 +34,7 @@ const ModalHeader: FC<Props> = ({
     >
       {withSideContainers && (
         <Header.Container side="left">
-          {handleClose && !isMobile && (
+          {((handleClose && !isMobile) || forceBackButtonOnMobile) && (
             <Header.BackButton onGoBackPress={handleClose} forceBack displayIn="always" />
           )}
         </Header.Container>

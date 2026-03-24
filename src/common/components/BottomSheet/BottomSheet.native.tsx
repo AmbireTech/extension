@@ -11,7 +11,7 @@ import Animated, { useAnimatedStyle, useSharedValue } from 'react-native-reanima
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import useTheme from '@common/hooks/useTheme'
-import spacings, { SPACING, SPACING_SM } from '@common/styles/spacings'
+import spacings, { SPACING, SPACING_LG, SPACING_SM } from '@common/styles/spacings'
 import common, { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import { Portal } from '@gorhom/portal'
 
@@ -154,14 +154,22 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
             styles.bottomSheet,
             {
               borderBottomEndRadius: isKeyboardVisible ? BORDER_RADIUS_PRIMARY : 0,
-              borderBottomStartRadius: isKeyboardVisible ? BORDER_RADIUS_PRIMARY : 0
+              borderBottomStartRadius: isKeyboardVisible ? BORDER_RADIUS_PRIMARY : 0,
+              paddingHorizontal: SPACING_SM
             },
             isModal
-              ? { ...styles.modal, ...(autoWidth ? { maxWidth: null, width: 'auto' } : {}) }
+              ? {
+                  ...styles.modal,
+                  ...(autoWidth ? { maxWidth: null, width: 'auto' } : {}),
+                  borderBottomEndRadius: 30,
+                  borderTopLeftRadius: 30,
+                  borderBottomStartRadius: 30,
+                  borderTopRightRadius: 30,
+                  paddingHorizontal: SPACING_LG
+                }
               : {},
 
             {
-              paddingHorizontal: SPACING_SM,
               backgroundColor: theme[backgroundColor]
             },
             style
@@ -200,7 +208,7 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
                     nestedScrollEnabled: true,
                     contentContainerStyle: { flexGrow: 1 }
                   }),
-                  style: { marginBottom: bottom + SPACING_SM },
+                  style: { marginBottom: isModal ? SPACING_LG : bottom + SPACING_SM },
                   ...(scrollViewProps || {})
                 }
               }
@@ -211,7 +219,7 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
                   bounces: false,
                   keyboardShouldPersistTaps: 'handled',
                   showsVerticalScrollIndicator: false,
-                  style: { marginBottom: bottom + SPACING_SM },
+                  style: { marginBottom: isModal ? SPACING_LG : bottom + SPACING_SM },
                   ...(flatListProps || {})
                 }
               }
@@ -222,7 +230,7 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
                   bounces: false,
                   keyboardShouldPersistTaps: 'handled',
                   showsVerticalScrollIndicator: false,
-                  style: { marginBottom: bottom + SPACING_SM },
+                  style: { marginBottom: isModal ? SPACING_LG : bottom + SPACING_SM },
                   ...(sectionListProps || {})
                 }
               }

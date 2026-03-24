@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { ITooltip, TooltipRefProps } from 'react-tooltip'
+import { TooltipRefProps } from 'react-tooltip'
 
 import Tooltip from '@common/components/Tooltip'
 
@@ -109,13 +109,4 @@ export function GlobalTooltip() {
       {...(current.props || {})}
     />
   )
-}
-
-export function createGlobalTooltipDataSet(
-  props: Omit<ITooltip, 'render' | 'html' | 'children' | 'wrapper' | 'id'> & {
-    // The implementation doesn't work without id
-    id: string
-  }
-) {
-  return { tooltip: JSON.stringify(props) }
 }
