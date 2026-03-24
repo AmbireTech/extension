@@ -1,12 +1,10 @@
 import { getAddress } from 'ethers'
 import { nanoid } from 'nanoid'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { useTranslation } from 'react-i18next'
 import { useModalize } from 'react-native-modalize'
 import { useLocation } from 'react-router-dom'
 
 import { SwapAndBridgeFormStatus } from '@ambire-common/controllers/swapAndBridge/swapAndBridge'
-import { Network } from '@ambire-common/interfaces/network'
 import { SwapAndBridgeActiveRoute } from '@ambire-common/interfaces/swapAndBridge'
 import { CallsUserRequest } from '@ambire-common/interfaces/userRequest'
 import {
@@ -20,7 +18,6 @@ import useNavigation from '@common/hooks/useNavigation'
 import useNetworks from '@common/hooks/useNetworks'
 import useSyncedState from '@common/hooks/useSyncedState'
 import { ROUTES } from '@common/modules/router/constants/common'
-import { getBridgeNetworkNotSupportedReason } from '@common/utils/supportedNetworks'
 import { getTokenId } from '@common/utils/token'
 import { getUiType } from '@common/utils/uiType'
 
@@ -78,11 +75,12 @@ const useSwapAndBridgeForm = () => {
   const [latestBatchedNetwork, setLatestBatchedNetwork] = useState<bigint | undefined>()
   const [isOneClickModeDuringPriceImpact, setIsOneClickModeDuringPriceImpact] =
     useState<boolean>(false)
-  const { t } = useTranslation()
   const networks = useNetworks({
     acc: account,
-    getAdditionalNotSupportedReason: (network: Network) =>
-      getBridgeNetworkNotSupportedReason(network, supportedChainIds)
+    additionalCheck: {
+      chainIds: supportedChainIds,
+      reason: 'Network is not supported by our service provider.'
+    }
   })
   const currentRoute = useLocation()
   const { setSearchParams, navigate } = useNavigation()

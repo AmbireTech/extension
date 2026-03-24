@@ -4,7 +4,7 @@ import { getIsViewOnly } from '@ambire-common/utils/accounts'
 import { isMobile } from '@common/config/env'
 import useController from '@common/hooks/useController'
 import { useMultiHover } from '@common/hooks/useHover'
-import useAccountNetworks from '@common/hooks/useNetworks/useAccountNetworks'
+import useNetworks from '@common/hooks/useNetworks'
 import useReverseLookup from '@common/hooks/useReverseLookup'
 import useRoute from '@common/hooks/useRoute'
 import useTheme from '@common/hooks/useTheme'
@@ -49,7 +49,8 @@ const useReceive = () => {
 
   const [showAllNetworks, setShowAllNetworks] = useState(false)
 
-  const { accountNetworks } = useAccountNetworks({ acc: account })
+  const supportedNetworks = useNetworks({ acc: account })
+  const accountNetworks = supportedNetworks.filter((n) => !n.isNotSupported)
 
   const [bindAnim, animStyle] = useMultiHover({
     values: [

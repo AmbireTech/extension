@@ -3,7 +3,6 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useModalize } from 'react-native-modalize'
 
-import { Network } from '@ambire-common/interfaces/network'
 import { TokenResult } from '@ambire-common/libs/portfolio'
 import { getTokenAmount } from '@ambire-common/libs/portfolio/helpers'
 import InvisibilityIcon from '@common/assets/svg/InvisibilityIcon'
@@ -20,7 +19,6 @@ import useRoute from '@common/hooks/useRoute'
 import useToast from '@common/hooks/useToast'
 import { ROUTES } from '@common/modules/router/constants/common'
 import { storage } from '@common/services/storage'
-import { getBridgeNetworkNotSupportedReason } from '@common/utils/supportedNetworks'
 import { getTokenId } from '@common/utils/token'
 import { RELAYER_URL } from '@env'
 
@@ -47,8 +45,10 @@ const useTokenDetails = () => {
   } = useController('PortfolioController')
   const networks = useNetworks({
     acc: account,
-    getAdditionalNotSupportedReason: (network: Network) =>
-      getBridgeNetworkNotSupportedReason(network, supportedChainIds)
+    additionalCheck: {
+      chainIds: supportedChainIds,
+      reason: 'Network is not supported by our service provider.'
+    }
   })
   const [doNotDisplayHideTokenModal, setDoNotDisplayHideTokenModal] = useState(false)
   const [gasTankAssets, setGasTankAssets] = useState<{ chainId: number; address: string }[] | null>(

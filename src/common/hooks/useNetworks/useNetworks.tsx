@@ -1,11 +1,8 @@
-import { useMemo } from 'react'
-import { useTranslation } from 'react-i18next'
+import { useEffect, useMemo } from 'react'
 
 import { Account } from '@ambire-common/interfaces/account'
-import { Network, SupportedNetworks } from '@ambire-common/interfaces/network'
+import { getSupportedNetworks } from '@ambire-common/libs/networks/networks'
 import useController from '@common/hooks/useController'
-
-import useAccountNetworks from './useAccountNetworks'
 
 /**
  * This returns all enabled networks in the extension with
@@ -14,48 +11,37 @@ import useAccountNetworks from './useAccountNetworks'
  */
 const useNetworks = ({
   acc,
-  getAdditionalNotSupportedReason
+  additionalCheck
 }: {
   acc?: Account | null
-  getAdditionalNotSupportedReason?: (network: Network) => string | null
+  additionalCheck?: {
+    chainIds: bigint[]
+    reason: string
+  }
 }) => {
   const { state: networks } = useController('NetworksController', (state) => state.networks)
-  const { accountNetworks, accountNotSupportedReason } = useAccountNetworks({ acc })
-  const { t } = useTranslation()
+  const {
+    state: { accountStates },
+    dispatch: accountsDispatch
+  } = useController('AccountsController')
 
-  const accountNetworkChainIds = useMemo(() => {
-    return accountNetworks.map((n) => n.chainId)
-  }, [accountNetworks])
+  // safe accounts are dependant on the account state so be sure to fetch it
+  // if it's not already fetched
+  useEffect(() => {
+    if (!acc || !acc.safeCreation || !!accountStates[acc.addr]) return
+
+    accountsDispatch({
+      type: 'method',
+      params: {
+        method: 'updateAccountState',
+        args: [acc.addr, 'latest']
+      }
+    })
+  }, [acc, accountStates, accountsDispatch])
 
   const supportedNetworks = useMemo(() => {
-    // make a shallow copy of each object in networks
-    // below, we are mutating simple properties so a shallow copy is enough
-    const finalNetworks: SupportedNetworks[] = networks.map((n) => ({ ...n }))
-    return finalNetworks.map((n) => {
-      if (!accountNetworkChainIds.includes(n.chainId)) {
-        n.isNotSupported = true
-        n.notSupportedReason = accountNotSupportedReason
-        return n
-      }
-
-      if (!!getAdditionalNotSupportedReason) {
-        const additionalNotSupportedReason = getAdditionalNotSupportedReason(n)
-        if (additionalNotSupportedReason) {
-          n.isNotSupported = true
-          n.notSupportedReason = t(additionalNotSupportedReason)
-          return n
-        }
-      }
-
-      return n
-    })
-  }, [
-    accountNetworkChainIds,
-    networks,
-    accountNotSupportedReason,
-    getAdditionalNotSupportedReason,
-    t
-  ])
+    return getSupportedNetworks(networks, accountStates, acc, additionalCheck)
+  }, [networks, accountStates, acc, additionalCheck])
 
   return supportedNetworks
 }

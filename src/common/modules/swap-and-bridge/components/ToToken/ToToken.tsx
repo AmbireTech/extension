@@ -5,7 +5,6 @@ import { View } from 'react-native'
 
 import { EstimationStatus } from '@ambire-common/controllers/estimation/types'
 import { SwapAndBridgeFormStatus } from '@ambire-common/controllers/swapAndBridge/swapAndBridge'
-import { Network } from '@ambire-common/interfaces/network'
 import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
 import WalletIcon from '@common/assets/svg/WalletIcon'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
@@ -24,7 +23,6 @@ import ToTokenSelect from '@common/modules/swap-and-bridge/components/ToToken/To
 import spacings from '@common/styles/spacings'
 import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
-import { getBridgeNetworkNotSupportedReason } from '@common/utils/supportedNetworks'
 import { getTokenId } from '@common/utils/token'
 import { ItemPanel } from '@web/components/TransactionsScreen'
 
@@ -60,8 +58,10 @@ const ToToken: FC<Props> = ({ simulationFailed }) => {
   } = useController('SelectedAccountController')
   const networks = useNetworks({
     acc: account,
-    getAdditionalNotSupportedReason: (network: Network) =>
-      getBridgeNetworkNotSupportedReason(network, supportedChainIds)
+    additionalCheck: {
+      chainIds: supportedChainIds,
+      reason: 'Network is not supported by our service provider.'
+    }
   })
 
   const handleSwitchFromAndToTokens = useCallback(
