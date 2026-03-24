@@ -9,6 +9,20 @@ import { TypedMessageUserRequest } from '@ambire-common/interfaces/userRequest'
 
 import { QrProtocolAdapter, QrRequest, QrSignaturePayload, QrSigningStep } from '../../qr/types'
 
+/**
+ * The QrHardwareController is responsible for managing QR-based hardware wallet interactions.
+ * It acts as the bridge between Ambire's signing flow and QR-capable external signers by
+ * creating signing sessions, exposing the active QR request, and resolving scanned responses.
+ *
+ * Its responsibilities include:
+ * - handling the QR signing lifecycle (request → scan → response)
+ * - delegating QR request generation and response parsing to the selected QR protocol adapter
+ * - exposing account import functionality for QR-exported wallet data
+ * - storing QR wallet metadata such as device model, device id, and master fingerprint
+ *
+ * Unlike Ledger/Trezor-style controllers, communication with the signer is not transport-based
+ * (USB/HID/Web SDK), but happens through QR payload exchange coordinated by the UI layer.
+ */
 class QrHardwareController
   extends EventEmitter
   implements ExternalSignerController, QrAccountImportController

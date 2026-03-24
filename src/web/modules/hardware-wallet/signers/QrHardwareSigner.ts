@@ -10,6 +10,21 @@ import { getHdPathFromTemplate } from '@ambire-common/utils/hdPath'
 import { normalizeSignatureHex } from '@ambire-common/utils/normalizeSignatureHex'
 import QrHardwareController from '@web/modules/hardware-wallet/controllers/QrHardwareController'
 
+/**
+ * The QrHardwareSigner is responsible for signing data with QR-based hardware wallets.
+ * It integrates with Ambire's keystore signer flow and delegates the actual QR request /
+ * response exchange to the QrHardwareController.
+ *
+ * Its responsibilities include:
+ * - building the correct derivation path for the selected QR wallet account
+ * - initiating QR-based signing for messages, typed data, and raw transactions
+ * - normalizing returned QR signatures into formats usable by Ambire
+ * - reconstructing signed transactions from the returned signature payload
+ *
+ * Unlike SDK/transport-based signers, this signer does not communicate with the hardware
+ * wallet directly. Instead, it relies on the QR controller to drive the interactive
+ * request → scan → response signing flow.
+ */
 class QrHardwareSigner implements KeystoreSignerInterface {
   key: ExternalKey & { isExternallyStored: boolean }
 

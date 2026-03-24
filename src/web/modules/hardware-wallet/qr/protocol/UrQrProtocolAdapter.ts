@@ -13,6 +13,24 @@ import { QrWalletType } from '../wallets'
 
 const MAX_QR_FRAGMENT_LENGTH = 200
 
+/**
+ * The UrQrProtocolAdapter is responsible for handling QR payloads that follow the UR protocol.
+ * It converts Ambire signing and account import requests into UR-compatible payloads and parses
+ * scanned UR responses back into usable data.
+ *
+ * Its responsibilities include:
+ * - building UR requests for signing messages, typed data, and transactions
+ * - encoding requests into CBOR/UR format for QR transmission
+ * - parsing UR signature responses and normalizing them into standard signature formats
+ * - validating request/response pairing via requestId
+ * - parsing account export payloads (CryptoHDKey) to extract xpub, derivation path, and metadata
+ *
+ * This adapter encapsulates all UR-specific logic and dependencies, keeping higher-level
+ * controllers and signers independent from protocol implementation details.
+ *
+ * It is protocol-focused (UR), not wallet-specific — allowing multiple QR wallets (e.g. Keystone,
+ * imToken) to reuse the same adapter while applying their own derivation or behavioral constraints.
+ */
 class UrQrProtocolAdapter implements QrProtocolAdapter {
   protocol: 'ur' = 'ur'
 
