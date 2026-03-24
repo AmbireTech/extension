@@ -35,7 +35,7 @@ import Modals from '@mobile/modules/sign-account-op/components/Modals/Modals'
 import getStyles from './styles'
 
 const isCloseToBottom = ({ layoutMeasurement, contentOffset, contentSize }: NativeScrollEvent) => {
-  const paddingToBottom = 20
+  const paddingToBottom = 40
   return layoutMeasurement.height + contentOffset.y >= contentSize.height - paddingToBottom
 }
 
@@ -286,7 +286,7 @@ const SignAccountOpScreen = () => {
           onContentSizeChange={(_, height) => {
             setContentHeight(height)
           }}
-          scrollEventThrottle={400}
+          scrollEventThrottle={16}
           contentContainerStyle={spacings.pbSm}
           showsVerticalScrollIndicator={false}
         >

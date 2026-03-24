@@ -99,6 +99,7 @@ const Buttons: FC<Props> = ({
       style={[
         isWeb ? flexbox.directionRow : { flexDirection: 'column-reverse' },
         isWeb && flexbox.alignCenter,
+        isMobile && spacings.ptSm,
         flexbox.justifyEnd
       ]}
     >

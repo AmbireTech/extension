@@ -33,7 +33,7 @@ import { closeCurrentWindow } from '@web/extension-services/background/webapi/wi
 import Modals from '@web/modules/sign-account-op/components/Modals/Modals'
 
 const isCloseToBottom = ({ layoutMeasurement, contentOffset, contentSize }: NativeScrollEvent) => {
-  const paddingToBottom = 20
+  const paddingToBottom = 40
   return layoutMeasurement.height + contentOffset.y >= contentSize.height - paddingToBottom
 }
 
@@ -301,7 +301,7 @@ const SignAccountOpScreen = () => {
             onContentSizeChange={(_, height) => {
               setContentHeight(height)
             }}
-            scrollEventThrottle={400}
+            scrollEventThrottle={16}
             style={contentHeight > containerHeight ? spacings.prMi : {}}
           >
             <PendingTransactions
