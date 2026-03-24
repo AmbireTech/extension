@@ -182,7 +182,11 @@ const ActivityPositions: FC<Props> = ({
               {t(
                 `Ambire doesn't retrieve transactions made${isWeb ? '\n' : ''} before installing the extension, but you can ${isWeb ? '\n' : ''}check your address on `
               )}
-              <TouchableOpacity
+              <Text
+                weight="medium"
+                color={theme.linkText}
+                fontSize={16}
+                style={{ textDecorationLine: 'none' }}
                 onPress={() =>
                   openInTab({
                     url: blockExplorerUrl(
@@ -193,10 +197,8 @@ const ActivityPositions: FC<Props> = ({
                   })
                 }
               >
-                <Text weight="medium" color={theme.linkText} style={{ textDecorationLine: 'none' }}>
-                  {blockExplorerName(network?.explorerUrl || 'https://etherscan.io')}
-                </Text>
-              </TouchableOpacity>
+                {blockExplorerName(network?.explorerUrl || 'https://etherscan.io')}
+              </Text>
               .
             </Text>
           </View>
