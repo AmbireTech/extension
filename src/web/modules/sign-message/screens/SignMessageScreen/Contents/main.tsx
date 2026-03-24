@@ -55,8 +55,7 @@ const Main = ({
       networks.find((n) => {
         return signMessageState.messageToSign?.content.kind === 'typedMessage' &&
           signMessageState.messageToSign?.content.domain.chainId
-          ? n.chainId.toString() ===
-              signMessageState.messageToSign?.content.domain.chainId.toString()
+          ? BigInt(n.chainId) === BigInt(signMessageState.messageToSign?.content.domain.chainId)
           : n.chainId === signMessageState.messageToSign?.chainId
       }),
     [networks, signMessageState.messageToSign]
