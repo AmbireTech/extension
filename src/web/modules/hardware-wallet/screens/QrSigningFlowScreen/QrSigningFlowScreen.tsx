@@ -62,7 +62,6 @@ const QrSigningFlowScreen = ({
       id="qr-signing-flow-screen"
       sheetRef={ref}
       autoWidth={false}
-      closeBottomSheet={handleClose}
       onClosed={handleClose}
       autoOpen={isVisible}
       type={!isTab ? 'bottom-sheet' : 'modal'}
