@@ -51,9 +51,6 @@ const { isRequestWindow, isPopup } = getUiType()
 const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
   const { addToast } = useToast()
   const { state: transferState, dispatch: transferDispatch } = useController('TransferController')
-  const {
-    state: { accounts }
-  } = useController('AccountsController')
   const { dispatch: requestsDispatch } = useController('RequestsController')
   const {
     isTopUp,
