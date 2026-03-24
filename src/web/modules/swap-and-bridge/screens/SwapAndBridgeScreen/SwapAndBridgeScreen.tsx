@@ -8,12 +8,9 @@ import { SwapAndBridgeFormStatus } from '@ambire-common/controllers/swapAndBridg
 import { Key } from '@ambire-common/interfaces/keystore'
 import Alert from '@common/components/Alert'
 import { PanelBackButton, PanelTitle } from '@common/components/Panel/Panel'
-import Spinner from '@common/components/Spinner'
 import useController from '@common/hooks/useController'
 import useNavigation from '@common/hooks/useNavigation'
 import usePrevious from '@common/hooks/usePrevious'
-import useTheme from '@common/hooks/useTheme'
-import useWindowSize from '@common/hooks/useWindowSize'
 import { ROUTES, WEB_ROUTES } from '@common/modules/router/constants/common'
 import BatchAdded from '@common/modules/sign-account-op/components/OneClick/BatchModal/BatchAdded'
 import Buttons from '@common/modules/sign-account-op/components/OneClick/Buttons'
@@ -28,7 +25,6 @@ import useSwapAndBridgeForm from '@common/modules/swap-and-bridge/hooks/useSwapA
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { getUiType } from '@common/utils/uiType'
-import { getTabLayoutPadding } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
 import { Content, Wrapper } from '@web/components/TransactionsScreen'
 import useSimulationError from '@web/modules/portfolio/hooks/SimulationError/useSimulationError'
 import Modals from '@web/modules/sign-account-op/components/Modals'
@@ -38,7 +34,6 @@ const { isRequestWindow } = getUiType()
 const SwapAndBridgeScreen = () => {
   const { t } = useTranslation()
   const { navigate } = useNavigation()
-  const { theme } = useTheme()
   const {
     sessionId,
     fromAmountValue,
@@ -93,9 +88,6 @@ const SwapAndBridgeScreen = () => {
   } = useController('RequestsController')
   const prevSelectedAccActiveRoutes: any[] | undefined = usePrevious(selectedAccActiveRoutes)
   const scrollViewRef: any = useRef(null)
-
-  const { maxWidthSize } = useWindowSize()
-  const paddingHorizontalStyle = useMemo(() => getTabLayoutPadding(maxWidthSize), [maxWidthSize])
 
   const { simulationError: fromChainSimulationError } = useSimulationError({ chainId: fromChainId })
   const { simulationError: toChainSimulationError } = useSimulationError({ chainId: toChainId })
