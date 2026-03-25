@@ -1,5 +1,6 @@
 import { StyleSheet, ViewStyle } from 'react-native'
 
+import { isMobile } from '@common/config/env'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
@@ -17,7 +18,7 @@ const getStyles = () =>
       ...flexbox.alignCenter,
       height: 40,
       ...spacings.plMi,
-      ...spacings.prSm,
+      ...(isMobile ? spacings.prTy : spacings.prSm),
       ...spacings.mrTy,
       borderRadius: 50
     },

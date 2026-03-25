@@ -38,7 +38,7 @@ export const getPanelPaddings = (
 const PanelBackButton = ({ onPress, style }: { onPress: () => void; style?: ViewStyle }) => {
   const { styles, theme } = useTheme(getStyles)
   return (
-    <Pressable testID="panel-back-btn" onPress={onPress} style={style}>
+    <Pressable testID="panel-back-btn" onPress={onPress} style={style} hitSlop={8}>
       {({ hovered }: any) => (
         <View style={[styles.backBtnWrapper]}>
           <LeftArrowIcon color={hovered ? theme.primaryText : theme.iconPrimary} />

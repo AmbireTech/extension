@@ -4,7 +4,7 @@ import { Animated, Pressable, View } from 'react-native'
 import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
 import SkeletonLoader from '@common/components/SkeletonLoader'
 import Text from '@common/components/Text'
-import { isiOS, isWeb } from '@common/config/env'
+import { isiOS, isMobile, isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
@@ -12,7 +12,7 @@ import DashboardHeader from '@common/modules/dashboard/components/DashboardHeade
 import Routes from '@common/modules/dashboard/components/Routes'
 import useBalanceAffectingErrors from '@common/modules/dashboard/hooks/useBalanceAffectingErrors'
 import useDashboardReload from '@common/modules/dashboard/hooks/useDashboardReload'
-import spacings, { SPACING, SPACING_TY, SPACING_XL } from '@common/styles/spacings'
+import spacings, { SPACING, SPACING_SM, SPACING_TY, SPACING_XL } from '@common/styles/spacings'
 import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import { privateValue } from '@common/utils/ui'
@@ -97,13 +97,16 @@ const DashboardOverview: FC<Props> = ({
         style={[
           common.borderRadiusPrimary,
           spacings.ptTy,
-          spacings.phSm,
+          isWeb && spacings.phSm,
+          isMobile && spacings.phTy,
           {
-            paddingBottom: animatedOverviewHeight.interpolate({
-              inputRange: [0, OVERVIEW_CONTENT_MAX_HEIGHT],
-              outputRange: [SPACING_TY, SPACING],
-              extrapolate: 'clamp'
-            }),
+            paddingBottom: isMobile
+              ? SPACING_SM
+              : animatedOverviewHeight.interpolate({
+                  inputRange: [0, OVERVIEW_CONTENT_MAX_HEIGHT],
+                  outputRange: [SPACING_TY, SPACING],
+                  extrapolate: 'clamp'
+                }),
             overflow: 'hidden'
           }
         ]}
