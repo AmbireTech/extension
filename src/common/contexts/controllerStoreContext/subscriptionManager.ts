@@ -76,10 +76,16 @@ export class SubscriptionManager {
       const { listener, selector, lastValue } = entry
       const newValue = selector ? selector(newState) : newState
 
+      // Shallow check for performance
+      if (newValue === lastValue) return
+
       // Deep equality check using react-fast-compare
       if (!isEqual(newValue, lastValue)) {
         entry.lastValue = newValue
         listener()
+      } else {
+        // Update the reference even if they are deeply equal to optimize future shallow checks
+        entry.lastValue = newValue
       }
     })
   }

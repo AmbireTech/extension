@@ -60,6 +60,7 @@ function processStyleGecko(content) {
 
 module.exports = async function (env, argv) {
   const config = await createExpoWebpackConfigAsync(env, argv)
+  const enableLavaMoat = config.mode === 'production' && isWebkit
 
   function processManifest(content) {
     const manifest = JSON.parse(content.toString())
@@ -245,9 +246,13 @@ module.exports = async function (env, argv) {
     '@web': path.resolve(__dirname, 'src/web'),
     '@benzin': path.resolve(__dirname, 'src/benzin'),
     '@legends': path.resolve(__dirname, 'src/legends'),
-    // reflect-metadata is installed early via LavaMoat staticShims_experimental.
-    // Alias it to a noop module to prevent a second execution after harden.
-    'reflect-metadata$': path.resolve(__dirname, 'lavamoat/shims/reflect-metadata-noop.js'),
+    ...(enableLavaMoat
+      ? {
+          // reflect-metadata is installed early via LavaMoat staticShims_experimental.
+          // Alias it to a noop module to prevent a second execution after harden.
+          'reflect-metadata$': path.resolve(__dirname, 'lavamoat/shims/reflect-metadata-noop.js')
+        }
+      : {}),
     react: path.resolve(__dirname, 'node_modules/react')
   }
 
@@ -366,7 +371,7 @@ module.exports = async function (env, argv) {
       // TODO: Enable for Gecko soon as well.
       // Gecko currently has a conflict with inlineLockdown because main.js and background.js are split into chunks there,
       // and ses lockdown is initialized multiple times in the same realm.
-      ...(config.mode === 'production' && isWebkit
+      ...(enableLavaMoat
         ? [
             new LavaMoatPlugin({
               generatePolicy: process.env.LAVAMOAT_GENERATE_POLICY === 'true',
@@ -497,7 +502,7 @@ module.exports = async function (env, argv) {
     // Register unsafe-layer plugin only in production (same environment as LavaMoatPlugin).
     // The plugin adds a rule and assigns layer='unsafe' for LAVAMOAT_UNSAFE_ENTRIES.
     // This must stay in sync with runtimeConfigurationPerChunk_experimental above.
-    if (config.mode === 'production') {
+    if (enableLavaMoat) {
       config.plugins.push(createLavamoatUnsafeLayerPlugin(LAVAMOAT_UNSAFE_ENTRIES))
     }
 
@@ -538,7 +543,7 @@ module.exports = async function (env, argv) {
       // Disables auto-generated runtime chunks, because they cause ID drift
       config.optimization.runtimeChunk = false
 
-      if (isWebkit) {
+      if (enableLavaMoat) {
         // No extra chunks for webkit, because it conflicts with LavaMoat plugin,
         // and currently there's no other benefit to enable it.
         config.optimization.splitChunks = false
@@ -555,7 +560,7 @@ module.exports = async function (env, argv) {
           // 'deterministic' and chunkFilename = '[id].js'.
           // Note: maxSize uses estimated sizes; keep some headroom so emitted
           // bundles stay under the linter's real per-file limit.
-          maxSize: 4.5 * 1024 * 1024,
+          maxSize: isGecko ? 4.5 * 1024 * 1024 : undefined,
           minSize: 0, // prevents merging small modules together automatically
           chunks(chunk) {
             // do not split into chunks the files that should be injected
