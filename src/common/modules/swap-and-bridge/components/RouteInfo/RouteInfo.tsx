@@ -9,6 +9,7 @@ import InfoIcon from '@common/assets/svg/InfoIcon'
 import WarningIcon from '@common/assets/svg/WarningIcon'
 import Text from '@common/components/Text'
 import Tooltip from '@common/components/Tooltip'
+import { isMobile, isWeb } from '@common/config/env'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
@@ -54,14 +55,21 @@ const RouteInfo: FC<Props> = ({
         flexbox.directionRow,
         flexbox.alignCenter,
         flexbox.justifySpaceBetween,
-        { height: 20 }, // Prevents layout shifts,
+        { minHeight: 20 }, // Prevents layout shifts,
         spacings.mtSm
       ]}
     >
       {swapSignErrors.length > 0 && (
         <View style={[flexbox.directionRow, flexbox.alignCenter, { maxWidth: '100%' }]}>
-          <WarningIcon strokeWidth={2} width={20} height={20} color={theme.warningText} />
-          <Text fontSize={12} weight="medium" appearance="warningText" style={spacings.mlMi}>
+          {isWeb && (
+            <WarningIcon strokeWidth={2} width={20} height={20} color={theme.warningText} />
+          )}
+          <Text
+            fontSize={isMobile ? 14 : 12}
+            weight="medium"
+            appearance="warningText"
+            style={{ ...(isMobile ? {} : spacings.mlMi), flexShrink: 1 }}
+          >
             {swapSignErrors[0]!.title}
           </Text>
         </View>
@@ -76,8 +84,15 @@ const RouteInfo: FC<Props> = ({
           ]}
         >
           <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-            <WarningIcon strokeWidth={2} width={20} height={20} color={theme.warningText} />
-            <Text fontSize={12} weight="medium" appearance="warningText" style={spacings.mlMi}>
+            {isWeb && (
+              <WarningIcon strokeWidth={2} width={20} height={20} color={theme.warningText} />
+            )}
+            <Text
+              fontSize={isMobile ? 14 : 12}
+              weight="medium"
+              appearance="warningText"
+              style={{ ...(isMobile ? {} : spacings.mlMi), flexShrink: 1 }}
+            >
               {t('No routes now, but note some markets may change often.')}
             </Text>
           </View>
@@ -166,48 +181,40 @@ const RouteInfo: FC<Props> = ({
               <View
                 style={[
                   flexbox.directionRow,
-                  flexbox.alignCenter,
                   flexbox.justifySpaceBetween,
-                  { width: '100%' }
+                  { width: '100%' },
+                  flexbox.flex1
                 ]}
               >
-                <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-                  <WarningIcon strokeWidth={2} width={20} height={20} color={theme.warningText} />
+                <View style={[flexbox.directionRow, { flexShrink: 1 }, spacings.mrTy]}>
+                  {isWeb && (
+                    <WarningIcon strokeWidth={2} width={20} height={20} color={theme.warningText} />
+                  )}
                   <Text
-                    fontSize={12}
+                    fontSize={isMobile ? 14 : 12}
                     weight="medium"
                     appearance="warningText"
-                    style={spacings.mlMi}
+                    style={[spacings.mlMi, { flexShrink: 1 }]}
                   >
                     {quote?.routes.length === 1
                       ? t("1 route found, but it'd fail onchain.")
                       : t("{{count}} routes found, but they'd all fail onchain.", {
                           count: quote?.routes.length
-                        })}
-                  </Text>
-                  <Pressable
-                    style={{
-                      paddingVertical: 2,
-                      ...spacings.phTy,
-                      ...flexbox.directionRow,
-                      ...flexbox.alignCenter,
-                      opacity: 1
-                    }}
-                    onPress={openRoutesModal as any}
-                  >
+                        })}{' '}
                     <Text
-                      fontSize={12}
+                      fontSize={isMobile ? 14 : 12}
                       weight="medium"
                       color={theme.warningText}
+                      onPress={openRoutesModal as any}
                       style={{
                         ...spacings.mr,
                         textDecorationColor: theme.warningText,
                         textDecorationLine: 'underline'
                       }}
                     >
-                      {t('See details')}
+                      {t('See\u00A0details')}
                     </Text>
-                  </Pressable>
+                  </Text>
                 </View>
                 <RetryButton onPress={updateQuote} />
               </View>
@@ -225,12 +232,19 @@ const RouteInfo: FC<Props> = ({
                   ]}
                 >
                   <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-                    <WarningIcon strokeWidth={2} width={20} height={20} color={theme.warningText} />
+                    {isWeb && (
+                      <WarningIcon
+                        strokeWidth={2}
+                        width={20}
+                        height={20}
+                        color={theme.warningText}
+                      />
+                    )}
                     <Text
-                      fontSize={12}
+                      fontSize={isMobile ? 14 : 12}
                       weight="medium"
                       appearance="warningText"
-                      style={spacings.mlMi}
+                      style={{ ...(isMobile ? {} : spacings.mlMi), flexShrink: 1 }}
                     >
                       {t('An error occurred. More details:')}
                     </Text>

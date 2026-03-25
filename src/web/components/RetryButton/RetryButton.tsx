@@ -79,7 +79,7 @@ const RetryButton: FC<Props> = ({ onPress, label, disabled, isLarge }) => {
       ...animStyle,
       paddingLeft: isMobile ? SPACING_SM : 6,
       paddingRight: isMobile ? SPACING_TY : 2,
-      minHeight: isLarge ? 28 : 20,
+      height: isMobile ? 32 : isLarge ? 28 : 20,
       ...(disabled && { opacity: 0.5 })
     }),
     [animStyle, disabled, isLarge]

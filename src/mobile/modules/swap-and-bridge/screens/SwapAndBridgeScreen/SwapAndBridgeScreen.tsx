@@ -248,6 +248,7 @@ const SwapAndBridgeScreen = () => {
         onBackButtonPress={onBackButtonPress}
         title={t('Swap & Bridge')}
         withScroll
+        keyboardAwareScrollViewProps={{ bottomOffset: 250 }}
       >
         {isHealthy === false && (
           <Alert

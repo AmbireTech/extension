@@ -45,6 +45,7 @@ const RoutesModal = ({
     undefined
   )
   const [isEstimationLoading, setIsEstimationLoading] = useState<boolean>(false)
+  const [listHeight, setListHeight] = useState<number>(500)
 
   const persistedSelectedRoute = useMemo(() => {
     return quote?.selectedRoute
@@ -127,6 +128,10 @@ const RoutesModal = ({
   const renderItem = useCallback(
     // eslint-disable-next-line react/no-unused-prop-types
     ({ item, index }: { item: SwapAndBridgeRoute; index: number }) => {
+      if ((item as any).isSkeleton) {
+        return <SkeletonLoader width="100%" height={listHeight} appearance="secondaryBackground" />
+      }
+
       const { steps, inputValueInUsd, outputValueInUsd, fromChainId, toChainId } = item
       const isEstimatingRoute = isEstimationLoading && item.routeId === userSelectedRoute?.routeId
       const isSelected = item.routeId === userSelectedRoute?.routeId && !isEstimatingRoute
@@ -222,19 +227,21 @@ const RoutesModal = ({
         </ModalHeader>
       }
       flatListProps={{
-        data: quote?.routes,
+        data: isQuoteLoading || !quote ? ([{ isSkeleton: true }] as any) : quote?.routes,
         renderItem,
-        keyExtractor: (r: SwapAndBridgeRoute) => r.routeId.toString(),
+        keyExtractor: (r: SwapAndBridgeRoute) =>
+          (r as any).isSkeleton ? 'skeleton' : r.routeId.toString(),
         initialNumToRender: 6,
         windowSize: 6,
         maxToRenderPerBatch: 6,
-        removeClippedSubviews: true
+        removeClippedSubviews: true,
+        onContentSizeChange: (_, contentHeight: number) => {
+          if (contentHeight > 0 && contentHeight !== listHeight) {
+            setListHeight(contentHeight)
+          }
+        }
       }}
-      customRenderer={
-        isQuoteLoading || !quote ? (
-          <SkeletonLoader width="100%" height={700} appearance="secondaryBackground" />
-        ) : undefined
-      }
+      customRenderer={undefined}
       style={{
         overflow: 'hidden',
         width: isMobile ? 'auto' : !isPopup ? TRANSACTION_FORM_WIDTH : '100%',
