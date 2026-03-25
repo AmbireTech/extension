@@ -100,7 +100,8 @@ const useReceive = () => {
     alwaysVisible,
     extraNetworks,
     showAllNetworks,
-    setShowAllNetworks
+    setShowAllNetworks,
+    isEOA: !account?.creation && !account?.safeCreation
   }
 }
 
