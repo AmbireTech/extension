@@ -8,7 +8,7 @@ import useController from '@common/hooks/useController'
 import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
-import { LOG_LEVELS } from '@web/utils/logger'
+import { LOG_LEVELS } from '@common/utils/logger'
 
 const LogLevelControlOption = () => {
   const { t } = useTranslation()

@@ -79,7 +79,7 @@ const DashboardOverview: FC<Props> = ({
   const [totalPortfolioAmountIntegerFormattedPart, totalPortfolioAmountDecimalFormattedPart] =
     formatDecimals(totalPortfolioAmount, 'value').split('.')
 
-  const { reloadAccount, refreshing } = useDashboardReload()
+  const { reloadAccount } = useDashboardReload()
 
   const togglePrivacyMode = useCallback(() => {
     walletStateDispatch({
@@ -174,8 +174,6 @@ const DashboardOverview: FC<Props> = ({
                       testID="full-balance"
                       onPress={togglePrivacyMode}
                       style={[flexbox.directionRow, flexbox.alignEnd]}
-                      // Works only on web for now
-                      disabled={!isWeb}
                     >
                       <Text
                         fontSize={34}

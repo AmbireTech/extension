@@ -32,8 +32,10 @@ import { parse, stringify } from '@ambire-common/libs/richJson/richJson'
 import wait from '@ambire-common/utils/wait'
 import CONFIG, { APP_VERSION, isAmbireNext, isDev, isProd } from '@common/config/env'
 import { controllersNestedInMainMapping } from '@common/constants/controllersMapping'
+import { WalletStateController } from '@common/controllers/wallet-state'
 import { storage } from '@common/services/storage'
 import { Action, MethodAction } from '@common/types/actions'
+import { LOG_LEVELS, logInfoWithPrefix } from '@common/utils/logger'
 import {
   BROWSER_EXTENSION_LOG_UPDATED_CONTROLLER_STATE_ONLY,
   BROWSER_EXTENSION_MEMORY_INTENSIVE_LOGS,
@@ -47,7 +49,6 @@ import { browser, platform } from '@web/constants/browserapi'
 import AutoLockController from '@web/extension-services/background/controllers/auto-lock'
 import { BadgesController } from '@web/extension-services/background/controllers/badges'
 import ExtensionUpdateController from '@web/extension-services/background/controllers/extension-update'
-import { WalletStateController } from '@web/extension-services/background/controllers/wallet-state'
 import { handleActions } from '@web/extension-services/background/handlers/handleActions'
 import { handleCleanUpOnPortDisconnect } from '@web/extension-services/background/handlers/handleCleanUpOnPortDisconnect'
 import { handleKeepAlive } from '@web/extension-services/background/handlers/handleKeepAlive'
@@ -72,7 +73,6 @@ import LatticeSigner from '@web/modules/hardware-wallet/libs/LatticeSigner'
 import LedgerSigner from '@web/modules/hardware-wallet/libs/LedgerSigner'
 import TrezorSigner from '@web/modules/hardware-wallet/libs/TrezorSigner'
 import { getExtensionInstanceId } from '@web/utils/analytics'
-import { LOG_LEVELS, logInfoWithPrefix } from '@web/utils/logger'
 
 import {
   captureBackgroundException,

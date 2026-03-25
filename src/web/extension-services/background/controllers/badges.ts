@@ -1,10 +1,9 @@
 import { MainController } from '@ambire-common/controllers/main/main'
 import { CallsUserRequest } from '@ambire-common/interfaces/userRequest'
+import { WalletStateController } from '@common/controllers/wallet-state'
 import ThemeColors from '@common/styles/themeConfig'
 import { browser } from '@web/constants/browserapi'
 import { setExtensionIcon } from '@web/extension-services/background/webapi/icon'
-
-import { WalletStateController } from './wallet-state'
 
 export class BadgesController {
   #mainCtrl: MainController
