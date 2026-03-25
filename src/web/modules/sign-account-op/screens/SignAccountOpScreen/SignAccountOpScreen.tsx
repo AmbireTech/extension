@@ -325,7 +325,7 @@ const SignAccountOpScreen = () => {
                 size="sm"
                 type="warning"
                 title={t('Safe API failure')}
-                text={t('Transaction was not sent to safe global due to a Safe API failure')}
+                text={t('Transaction was not sent to Safe Global due to a Safe API failure')}
                 style={spacings.mt}
               />
             )}
