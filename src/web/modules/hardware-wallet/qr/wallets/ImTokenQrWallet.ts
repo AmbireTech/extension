@@ -6,5 +6,6 @@ export const ImTokenQrWallet: QrWalletConfig = {
   protocol: 'ur' as const,
   label: 'imToken',
   hdPathTemplate: BIP44_STANDARD_DERIVATION_TEMPLATE,
-  relativePathTemplate: '{index}'
+  relativePathTemplate: '{index}',
+  tutorialUrl: 'https://token.im' // TODO: replace it with real one
 }

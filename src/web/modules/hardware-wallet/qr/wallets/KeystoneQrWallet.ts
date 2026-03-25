@@ -6,5 +6,6 @@ export const KeystoneQrWallet: QrWalletConfig = {
   protocol: 'ur',
   label: 'Keystone',
   hdPathTemplate: BIP44_STANDARD_DERIVATION_TEMPLATE,
-  relativePathTemplate: '{index}'
+  relativePathTemplate: '{index}',
+  tutorialUrl: 'https://keyst.one' // TODO: replace it with real one
 }
