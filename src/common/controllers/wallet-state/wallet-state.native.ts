@@ -11,9 +11,11 @@ import { DEFAULT_THEME, THEME_TYPES } from '@common/styles/theme/types'
 import { ThemeType } from '@common/styles/themeConfig'
 import { DEFAULT_LOG_LEVEL, LOG_LEVELS, setLoggerInstanceLogLevel } from '@common/utils/logger'
 
+import { WalletStateController as IWalletStateController } from './wallet-state'
+
 export type AvatarType = 'blockies' | 'jazzicons' | 'polycons' | 'ens'
 
-export class WalletStateController extends EventEmitter {
+export class WalletStateController extends EventEmitter implements IWalletStateController {
   isReady: boolean = false
 
   isPinned: boolean = true
