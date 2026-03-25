@@ -588,7 +588,6 @@
         "ethers": true,
         "@ledgerhq/context-module>inversify": true,
         "purify-ts": true,
-        "@ledgerhq/device-signer-kit-ethereum>semver": true,
         "@ledgerhq/device-management-kit>xstate": true
       }
     },
@@ -2793,16 +2792,6 @@
       }
     },
     "@ledgerhq/device-management-kit>semver": {
-      "globals": {
-        "console.error": true,
-        "process": true
-      },
-      "packages": {
-        "node-polyfill-webpack-plugin>console-browserify": true,
-        "process": true
-      }
-    },
-    "@ledgerhq/device-signer-kit-ethereum>semver": {
       "globals": {
         "console.error": true,
         "process": true
