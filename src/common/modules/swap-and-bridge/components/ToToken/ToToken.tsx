@@ -5,7 +5,6 @@ import { View } from 'react-native'
 
 import { EstimationStatus } from '@ambire-common/controllers/estimation/types'
 import { SwapAndBridgeFormStatus } from '@ambire-common/controllers/swapAndBridge/swapAndBridge'
-import { getIsNetworkSupported } from '@ambire-common/libs/swapAndBridge/swapAndBridge'
 import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
 import WalletIcon from '@common/assets/svg/WalletIcon'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
@@ -18,6 +17,7 @@ import Text from '@common/components/Text'
 import { isMobile } from '@common/config/env'
 import useController from '@common/hooks/useController'
 import useGetTokenSelectProps from '@common/hooks/useGetTokenSelectProps'
+import useNetworks from '@common/hooks/useNetworks'
 import useTheme from '@common/hooks/useTheme'
 import SwitchTokensButton from '@common/modules/swap-and-bridge/components/SwitchTokensButton'
 import ToTokenSelect from '@common/modules/swap-and-bridge/components/ToToken/ToTokenSelect'
@@ -34,7 +34,7 @@ type Props = {
 }
 
 const ToToken: FC<Props> = ({ simulationFailed }) => {
-  const { theme, styles, themeType } = useTheme(getStyles)
+  const { theme, themeType } = useTheme(getStyles)
   const { t } = useTranslation()
   const {
     statuses: swapAndBridgeCtrlStatuses,
@@ -54,10 +54,16 @@ const ToToken: FC<Props> = ({ simulationFailed }) => {
   } = useController('SwapAndBridgeController').state
   const { dispatch: swapAndBridgeDispatch } = useController('SwapAndBridgeController')
 
-  const { networks } = useController('NetworksController').state
   const {
     state: { account }
   } = useController('SelectedAccountController')
+  const networks = useNetworks({
+    acc: account,
+    additionalCheck: {
+      chainIds: supportedChainIds,
+      reason: 'Network is not supported by our service provider.'
+    }
+  })
 
   const handleSwitchFromAndToTokens = useCallback(
     () =>
@@ -110,7 +116,6 @@ const ToToken: FC<Props> = ({ simulationFailed }) => {
     tokens: tokensInToTokenSelect,
     token: toSelectedToken ? getTokenId(toSelectedToken) : '',
     networks,
-    supportedChainIds,
     isLoading: !toTokenShortList.length && updateToTokenListStatus !== 'INITIAL',
     isToToken: true
   })
@@ -137,20 +142,19 @@ const ToToken: FC<Props> = ({ simulationFailed }) => {
     () =>
       networks
         .sort((a, b) => {
-          const aIsSupported = getIsNetworkSupported(supportedChainIds, a)
-          const bIsSupported = getIsNetworkSupported(supportedChainIds, b)
+          const aIsSupported = !a.isNotSupported
+          const bIsSupported = !b.isNotSupported
           if (aIsSupported && !bIsSupported) return -1
           if (!aIsSupported && bIsSupported) return 1
           return 0
         })
         .map((n) => {
           const tooltipId = `network-${n.chainId}-not-supported-tooltip`
-          const isNetworkSupported = getIsNetworkSupported(supportedChainIds, n)
 
           return {
             value: String(n.chainId),
             extraSearchProps: [n.name],
-            disabled: !isNetworkSupported,
+            disabled: n.isNotSupported,
             label: (
               <>
                 <Text
@@ -163,15 +167,18 @@ const ToToken: FC<Props> = ({ simulationFailed }) => {
                 >
                   {n.name}
                 </Text>
-                {!isNetworkSupported && (
-                  <NotSupportedNetworkTooltip tooltipId={tooltipId} network={n} account={account} />
+                {n.isNotSupported && (
+                  <NotSupportedNetworkTooltip
+                    tooltipId={tooltipId}
+                    message={n.notSupportedReason || t('Network unavailable')}
+                  />
                 )}
               </>
             ),
             icon: <NetworkIcon key={n.chainId.toString()} id={n.chainId.toString()} size={28} />
           }
         }),
-    [account, networks, supportedChainIds]
+    [networks, t]
   )
 
   const getToNetworkSelectValue = useMemo(() => {

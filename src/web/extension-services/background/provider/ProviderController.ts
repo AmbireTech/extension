@@ -1,6 +1,4 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import 'reflect-metadata'
-
 import { ethErrors } from 'eth-rpc-errors'
 import { getAddress, isAddress } from 'ethers'
 import cloneDeep from 'lodash/cloneDeep'
@@ -29,6 +27,7 @@ import { openInTab } from '@common/utils/links'
 import { SAFE_RPC_METHODS } from '@web/constants/common'
 import { notificationManager } from '@web/extension-services/background/webapi/notification'
 
+import { metadata } from './metadata'
 import { RequestRes, Web3WalletPermission } from './types'
 
 type ProviderRequest = DappProviderRequest & { requestRes: RequestRes }
@@ -214,7 +213,7 @@ export class ProviderController {
     return res
   }
 
-  @Reflect.metadata('SAFE', true)
+  @metadata('SAFE', true)
   ethAccounts = async ({ session: { id, origin } }: DappProviderRequest) => {
     if (!this.mainCtrl.dapps.hasPermission(id) || !this.isUnlocked) {
       return []
@@ -231,7 +230,7 @@ export class ProviderController {
     return this.mainCtrl.selectedAccount.account?.addr || null
   }
 
-  @Reflect.metadata('SAFE', true)
+  @metadata('SAFE', true)
   ethChainId = async ({ session: { id } }: DappProviderRequest) => {
     if (this.mainCtrl.dapps.hasPermission(id)) {
       return networkChainIdToHex(this.mainCtrl.dapps.getDapp(id)?.chainId || 1)
@@ -239,47 +238,47 @@ export class ProviderController {
     return networkChainIdToHex(1)
   }
 
-  @Reflect.metadata('ACTION_REQUEST', ['SendTransaction', false])
+  @metadata('ACTION_REQUEST', ['SendTransaction', false])
   ethSendTransaction = async (request: ProviderRequest) => {
     const { requestRes } = cloneDeep(request)
     if (requestRes?.hash) return requestRes.hash
     throw new Error('Transaction failed!')
   }
 
-  @Reflect.metadata('SAFE', true)
+  @metadata('SAFE', true)
   netVersion = ({ session: { id } }: any) => this.getDappNetwork(id).chainId.toString()
 
-  @Reflect.metadata('SAFE', true)
+  @metadata('SAFE', true)
   web3ClientVersion = () => {
     return `Ambire v${APP_VERSION}`
   }
 
-  @Reflect.metadata('ACTION_REQUEST', ['SignText', false])
+  @metadata('ACTION_REQUEST', ['SignText', false])
   personalSign = async ({ requestRes }: ProviderRequest) => {
     return handleSignMessage(requestRes)
   }
 
-  @Reflect.metadata('ACTION_REQUEST', ['SignTypedData', false])
+  @metadata('ACTION_REQUEST', ['SignTypedData', false])
   ethSignTypedData = async ({ requestRes }: ProviderRequest) => {
     return handleSignMessage(requestRes)
   }
 
-  @Reflect.metadata('ACTION_REQUEST', ['SignTypedData', false])
+  @metadata('ACTION_REQUEST', ['SignTypedData', false])
   ethSignTypedDataV1 = async ({ requestRes }: ProviderRequest) => {
     return handleSignMessage(requestRes)
   }
 
-  @Reflect.metadata('ACTION_REQUEST', ['SignTypedData', false])
+  @metadata('ACTION_REQUEST', ['SignTypedData', false])
   ethSignTypedDataV3 = async ({ requestRes }: ProviderRequest) => {
     return handleSignMessage(requestRes)
   }
 
-  @Reflect.metadata('ACTION_REQUEST', ['SignTypedData', false])
+  @metadata('ACTION_REQUEST', ['SignTypedData', false])
   ethSignTypedDataV4 = async ({ requestRes }: ProviderRequest) => {
     return handleSignMessage(requestRes)
   }
 
-  @Reflect.metadata('ACTION_REQUEST', [
+  @metadata('ACTION_REQUEST', [
     'AddChain',
     ({ request }: { request: ProviderRequest; mainCtrl: MainController }) => {
       const chainParams = request.params[0]
@@ -437,7 +436,7 @@ export class ProviderController {
     return capabilities
   }
 
-  @Reflect.metadata('ACTION_REQUEST', ['SendTransaction', false])
+  @metadata('ACTION_REQUEST', ['SendTransaction', false])
   walletSendCalls = async (data: any) => {
     if (data.requestRes && data.requestRes.hash) {
       const version = data.params?.[0]?.version
@@ -633,7 +632,7 @@ export class ProviderController {
     await openInTab({ url: link })
   }
 
-  @Reflect.metadata('ACTION_REQUEST', [
+  @metadata('ACTION_REQUEST', [
     'AddChain',
     ({ request, mainCtrl }: { request: ProviderRequest; mainCtrl: MainController }) => {
       const chainParams = request.params[0]
@@ -708,7 +707,7 @@ export class ProviderController {
     return null
   }
 
-  @Reflect.metadata('ACTION_REQUEST', [
+  @metadata('ACTION_REQUEST', [
     'WalletWatchAsset',
     ({ request }: { request: ProviderRequest; mainCtrl: MainController }) => {
       const options = request.params?.options
@@ -759,7 +758,7 @@ export class ProviderController {
   ])
   walletWatchAsset = () => true
 
-  @Reflect.metadata('ACTION_REQUEST', [
+  @metadata('ACTION_REQUEST', [
     'GetEncryptionPublicKey',
     ({ request, mainCtrl }: { request: ProviderRequest; mainCtrl: MainController }) => {
       let incomingAddress
@@ -796,7 +795,7 @@ export class ProviderController {
     return signer.getEncryptionPublicKey()
   }
 
-  @Reflect.metadata('ACTION_REQUEST', [
+  @metadata('ACTION_REQUEST', [
     'Decrypt',
     ({ request, mainCtrl }: { request: ProviderRequest; mainCtrl: MainController }) => {
       let incomingAddress
@@ -871,7 +870,7 @@ export class ProviderController {
    * Revokes the current dapp permissions. Experimental, but supported in MetaMask. Specified by MIP-2:
    * {@link https://github.com/MetaMask/metamask-improvement-proposals/blob/main/MIPs/mip-2.md}
    */
-  @Reflect.metadata('SAFE', true)
+  @metadata('SAFE', true)
   walletRevokePermissions = async ({ session: { id } }: DappProviderRequest) => {
     await this.mainCtrl.dapps.broadcastDappSessionEvent('disconnect', undefined, id)
     this.mainCtrl.dapps.updateDapp(id, {
@@ -882,7 +881,7 @@ export class ProviderController {
     return null
   }
 
-  @Reflect.metadata('SAFE', true)
+  @metadata('SAFE', true)
   walletGetPermissions = ({ session: { id, origin } }: DappProviderRequest) => {
     const result: Web3WalletPermission[] = []
     const { grantedPermissionId, grantedPermissionAt } = this.mainCtrl.dapps.getDapp(id) || {}
@@ -919,7 +918,7 @@ export class ProviderController {
     // TODO:
   }
 
-  @Reflect.metadata('SAFE', true)
+  @metadata('SAFE', true)
   netListening = () => {
     return true
   }

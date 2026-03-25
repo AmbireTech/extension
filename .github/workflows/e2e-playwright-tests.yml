@@ -1,4 +1,4 @@
-name: E2E Playwright Tests
+name: E2E Tests & LavaMoat Policy Validation
 
 on:
   push:
@@ -94,8 +94,43 @@ jobs:
         run: yarn setup:ci
         shell: bash
 
-      - name: Build webkit extension
-        run: yarn build:web:webkit
+      - name: Build webkit extension and generate LavaMoat policy
+        run: yarn build:web:webkit:generate-policy
+
+      - name: Validate LavaMoat policy
+        shell: bash
+        run: |
+          set -euo pipefail
+          POLICY_PATH="lavamoat/webpack/policy.json"
+
+          if [[ ! -f "$POLICY_PATH" ]]; then
+            echo "❌ Policy file is missing: $POLICY_PATH"
+            exit 1
+          fi
+          echo "✅ Policy exists: $POLICY_PATH"
+
+          if [[ ! -s "$POLICY_PATH" ]]; then
+            echo "❌ Policy file is empty: $POLICY_PATH"
+            exit 1
+          fi
+          echo "✅ Policy is not empty"
+
+          if ! git diff --quiet HEAD -- "$POLICY_PATH"; then
+            echo "❌ LavaMoat policy validation failed: new or changed package usage was detected."
+            echo "The generated policy differs from the committed one."
+            echo
+            echo "Update locally:"
+            echo "  yarn build:web:webkit:generate-policy"
+            echo
+            echo "Then commit:"
+            echo "  $POLICY_PATH"
+            echo
+            echo "Diff (first 200 lines):"
+            git --no-pager diff HEAD -- "$POLICY_PATH" | sed -n '1,200p'
+            exit 1
+          fi
+
+          echo "✅ LavaMoat policy validation passed"
 
       - name: Start trezor-emulator container
         run: |

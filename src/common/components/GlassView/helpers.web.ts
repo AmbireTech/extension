@@ -1,5 +1,8 @@
 import { hexToRgba } from '@common/styles/utils/common'
 
+// Local aliases for Math - lets us avoid repeated global lookups under LavaMoat/SES.
+const { max, min, abs, sqrt, round, cos, sin } = Math
+
 // ---------------------------------------------------------------------------
 // Specular map cache
 // Key: dimensions + visual params.
@@ -132,9 +135,9 @@ function sdRoundedRect(
   hh: number,
   r: number
 ): number {
-  const dx = Math.max(Math.abs(px - cx) - hw, 0)
-  const dy = Math.max(Math.abs(py - cy) - hh, 0)
-  return Math.sqrt(dx * dx + dy * dy) - r
+  const dx = max(abs(px - cx) - hw, 0)
+  const dy = max(abs(py - cy) - hh, 0)
+  return sqrt(dx * dx + dy * dy) - r
 }
 
 /**
@@ -167,8 +170,8 @@ export function generateSpecularMap({
   // downscales it back to the element's CSS size, which acts as a free 4× AA
   // pass — perfectly rotationally symmetric, so both corners look equally smooth.
   const ss = 4
-  const pw = Math.round(width * ss)
-  const ph = Math.round(height * ss)
+  const pw = round(width * ss)
+  const ph = round(height * ss)
   const pr = radius * ss
   const pbw = bw * ss
 
@@ -182,8 +185,8 @@ export function generateSpecularMap({
   // Shape geometry (in physical pixels)
   const cx = pw / 2
   const cy = ph / 2
-  const hw = Math.max(0, pw / 2 - pr)
-  const hh = Math.max(0, ph / 2 - pr)
+  const hw = max(0, pw / 2 - pr)
+  const hh = max(0, ph / 2 - pr)
 
   const rgb = hexToRgba(tintHex, 1)
   const [tR = 255, tG = 255, tB = 255] = rgb.match(/\d+/g)?.map(Number) || []
@@ -205,8 +208,8 @@ export function generateSpecularMap({
   // cos(pixelAngle - hotspotAngle) = cos(pixelAngle)*cos(hotspot) + sin(pixelAngle)*sin(hotspot)
   // The secondary hotspot is exactly opposite (primaryRad + π), so its
   // sin/cos are just the negations — no extra trig needed.
-  const cosPrimary = Math.cos(primaryRad)
-  const sinPrimary = Math.sin(primaryRad)
+  const cosPrimary = cos(primaryRad)
+  const sinPrimary = sin(primaryRad)
 
   // 4-supersampled-pixel fringe for smooth AA at both edges
   const eps = 4.0
@@ -218,16 +221,16 @@ export function generateSpecularMap({
 
   for (let py = 0; py < ph; py++) {
     const dy = py - cy
-    const absDy = Math.abs(dy)
+    const absDy = abs(dy)
 
-    const qdy_outer = Math.max(absDy - hh, 0)
+    const qdy_outer = max(absDy - hh, 0)
     const qdy2 = qdy_outer * qdy_outer // hoisted — reused for inner RSq and inlined SDF
     const outerR = pr + eps
     const outerRSq = outerR * outerR - qdy2
     if (outerRSq < 0) continue // entire row is outside the outer shell — skip
-    const outerQdxMax = Math.sqrt(outerRSq)
-    const xOuterMin = Math.max(0, Math.ceil(cx - hw - outerQdxMax))
-    const xOuterMax = Math.min(pw - 1, Math.floor(cx + hw + outerQdxMax))
+    const outerQdxMax = sqrt(outerRSq)
+    const xOuterMin = max(0, Math.ceil(cx - hw - outerQdxMax))
+    const xOuterMax = min(pw - 1, Math.floor(cx + hw + outerQdxMax))
 
     // --- Inner bound: pixels where sdf ≥ innerLimit exist ---
     // sdf ≥ innerLimit  =>  sqrt(qdx²+qdy²) - pr ≥ innerLimit
@@ -250,9 +253,9 @@ export function generateSpecularMap({
         // already culled by the outer bound computed above.
         // The left-right split would save a bit more but complicates the loop;
         // the dominant saving is already achieved by the outer-bound clip.
-        const innerQdxMin = Math.sqrt(innerRSq)
-        xInnerMin = Math.max(xOuterMin, Math.ceil(cx - hw - innerQdxMin - 1))
-        xInnerMax = Math.min(xOuterMax, Math.floor(cx + hw + innerQdxMin + 1))
+        const innerQdxMin = sqrt(innerRSq)
+        xInnerMin = max(xOuterMin, Math.ceil(cx - hw - innerQdxMin - 1))
+        xInnerMax = min(xOuterMax, Math.floor(cx + hw + innerQdxMin + 1))
         // We process two sub-spans: [xOuterMin, xInnerMin] and [xInnerMax, xOuterMax]
       }
     }
@@ -271,9 +274,9 @@ export function generateSpecularMap({
       for (let px = xStart; px <= xEnd; px++) {
         // Inlined sdRoundedRect — avoids a function call and reuses qdy2 from the row
         const dx = px - cx // also reused for the dot-product below
-        const absDx = Math.abs(dx)
-        const qdx = Math.max(absDx - hw, 0)
-        const sdf = Math.sqrt(qdx * qdx + qdy2) - pr
+        const absDx = abs(dx)
+        const qdx = max(absDx - hw, 0)
+        const sdf = sqrt(qdx * qdx + qdy2) - pr
 
         // Bezel band + smooth fringe on both edges
         if (sdf > eps || sdf < innerLimit) continue
@@ -299,7 +302,7 @@ export function generateSpecularMap({
         const angularIntensity = cosSqNorm * 0.4
 
         // Radial falloff: 1 at the outer rim, 0 at the inner boundary
-        const rimT = Math.max(0, -sdf) * invPbw
+        const rimT = max(0, -sdf) * invPbw
         // (1 - rimT)^8 via repeated squaring replaces Math.exp(-8 * rimT) —
         // same outer=1 / inner=0 qualitative shape, no transcendental call
         const t = 1 - rimT
@@ -308,11 +311,11 @@ export function generateSpecularMap({
         const radialFalloff = t4 * t4
 
         // Smooth outer edge (sdf: +eps → 0)
-        const outerAA = Math.max(0, Math.min(1, (eps - sdf) * invEps))
+        const outerAA = max(0, min(1, (eps - sdf) * invEps))
         // Smooth inner edge (sdf: -pbw → -(pbw+eps))
-        const innerAA = Math.max(0, Math.min(1, (sdf + pbw + eps) * invEps))
+        const innerAA = max(0, min(1, (sdf + pbw + eps) * invEps))
 
-        const intensity = Math.min(
+        const intensity = min(
           1.0,
           angularIntensity * radialFalloff * outerAA * innerAA * strengthScale
         )
@@ -321,7 +324,7 @@ export function generateSpecularMap({
         data[idx] = tR
         data[idx + 1] = tG
         data[idx + 2] = tB
-        data[idx + 3] = Math.round(intensity * 255)
+        data[idx + 3] = round(intensity * 255)
       }
     }
   }
