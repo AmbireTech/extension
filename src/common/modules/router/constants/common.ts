@@ -24,7 +24,8 @@ const COMMON_ROUTES = {
   receive: 'receive',
   signAccountOp: 'sign-account-op',
   benzin: 'benzin',
-  networks: 'networks'
+  networks: 'networks',
+  swapAndBridge: 'swap-and-bridge'
 }
 
 const MOBILE_ROUTES = {
@@ -65,7 +66,6 @@ const WEB_ROUTES = {
   devicePasswordRecovery: 'settings/device-password-recovery',
   addressBook: 'settings/address-book',
   manageTokens: 'settings/manage-tokens',
-  swapAndBridge: 'swap-and-bridge',
   recoveryPhrasesSettings: 'settings/recovery-phrases',
   safeImport: 'safe-import',
   optOuts: 'settings/opt-outs',

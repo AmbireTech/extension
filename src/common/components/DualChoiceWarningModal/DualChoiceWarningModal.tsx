@@ -6,6 +6,7 @@ import WarningIcon from '@common/assets/svg/WarningIcon'
 import Button, { Props as ButtonProps } from '@common/components/Button'
 import { Props as DualChoiceModalProps } from '@common/components/DualChoiceModal/DualChoiceModal'
 import CommonText, { Props } from '@common/components/Text'
+import { isMobile, isWeb } from '@common/config/env'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
@@ -77,6 +78,10 @@ const ButtonWrapper = ({
 }) => {
   const { styles } = useTheme(getStyles)
 
+  if (isMobile) {
+    return <View style={spacings.ptSm}>{children}</View>
+  }
+
   return (
     <View style={[flexbox.directionRow, flexbox.justifyCenter]}>
       <GlassView borderRadius={28}>
@@ -119,8 +124,8 @@ const DualChoiceWarningModal = ({
           text={primaryButtonText}
           onPress={onPrimaryButtonPress}
           type={type === 'error' ? 'dangerFilled' : type}
-          hasBottomSpacing={false}
-          size="smaller"
+          hasBottomSpacing={isMobile ? true : false}
+          size={isMobile ? 'regular' : 'smaller'}
           {...primaryButtonProps}
         />
         {secondaryButtonText && onSecondaryButtonPress && (
@@ -130,9 +135,9 @@ const DualChoiceWarningModal = ({
             type="secondary"
             hasBottomSpacing={false}
             accentColor={theme.secondaryText}
-            size="smaller"
+            size={isMobile ? 'regular' : 'smaller'}
             {...secondaryButtonProps}
-            style={[spacings.mlLg, secondaryButtonProps?.style as ViewStyle | undefined]}
+            style={[isWeb && spacings.mlLg, secondaryButtonProps?.style as ViewStyle | undefined]}
           />
         )}
       </ButtonWrapper>

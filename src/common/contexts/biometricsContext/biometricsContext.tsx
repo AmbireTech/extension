@@ -1,6 +1,6 @@
+import { hexlify, randomBytes } from 'ethers'
 import { BlurView } from 'expo-blur'
 import * as LocalAuthentication from 'expo-local-authentication'
-import { hexlify, randomBytes } from 'ethers'
 import React, { createContext, useCallback, useEffect, useMemo, useState } from 'react'
 import { Platform, StyleSheet, View } from 'react-native'
 
@@ -28,7 +28,7 @@ const BiometricsProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const { theme, themeType } = useTheme()
   const isAppFocused = useIsAppFocused()
   const {
-    state: { isUnlocked }
+    state: { isUnlocked, hasBiometricsSecret }
   } = useController('KeystoreController')
 
   const [deviceSecurityLevel, setDeviceSecurityLevel] = useState<DEVICE_SECURITY_LEVEL>(
@@ -152,7 +152,7 @@ const BiometricsProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   }, [t])
 
-  const showOverlay = !isAppFocused && isUnlocked && isEnrolled && !isAuthInProcess
+  const showOverlay = !isAppFocused && isUnlocked && hasBiometricsSecret && !isAuthInProcess
 
   return (
     <BiometricsContext.Provider

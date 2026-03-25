@@ -47,7 +47,8 @@ const ReceiveScreen: FC = () => {
   } = useReceive()
 
   return (
-    <MobileLayoutContainer header={<HeaderWithTitle />}>
+    <MobileLayoutContainer>
+      <HeaderWithTitle />
       <MobileLayoutWrapperMainContent>
         <View style={[spacings.ptLg, spacings.mb, flexbox.alignCenter]}>
           <Avatar

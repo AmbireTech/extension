@@ -2,8 +2,8 @@ import React, { useCallback, useMemo } from 'react'
 import { Pressable, View } from 'react-native'
 import { useSearchParams } from 'react-router-dom'
 
-import FilterAlternativeIcon from '@common/assets/svg/FilterAlternativeIcon'
 import FilterIcon from '@common/assets/svg/FilterIcon'
+import NetworksIcon from '@common/assets/svg/NetworksIcon'
 import RightArrowIcon from '@common/assets/svg/RightArrowIcon'
 import NetworkIcon from '@common/components/NetworkIcon'
 import Text from '@common/components/Text'
@@ -96,7 +96,7 @@ const SelectNetwork = ({ currentTab }: Props) => {
         }}
         onPress={handlePress}
       >
-        <FilterAlternativeIcon width={24} height={24} color={theme.iconPrimary} />
+        <NetworksIcon width={24} height={24} color={theme.iconPrimary} />
         {dashboardNetworkFilter && (
           <View
             style={[

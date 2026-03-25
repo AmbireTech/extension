@@ -1,33 +1,26 @@
 import React from 'react'
-import { Control } from 'react-hook-form'
 import { View } from 'react-native'
 import { useReanimatedKeyboardAnimation } from 'react-native-keyboard-controller'
 import Animated, { useAnimatedStyle, useDerivedValue, withSpring } from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import GlassView from '@common/components/GlassView'
-import { isMobile, isWeb } from '@common/config/env'
-import useTheme from '@common/hooks/useTheme'
-import CurrentApp from '@common/modules/dashboard/components/SearchAndCurrentApp/CurrentApp'
-import DashboardSearch from '@common/modules/dashboard/components/SearchAndCurrentApp/DashboardSearch'
 import SelectNetwork from '@common/modules/dashboard/components/TabsAndSearch/SelectNetwork'
-import spacings, { SPACING, SPACING_TY } from '@common/styles/spacings'
-import common from '@common/styles/utils/common'
+import spacings, { SPACING } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
+import useTheme from '@common/hooks/useTheme'
 
-type Props = {
-  control: Control<{ search: string }, any>
-  displayCurrentApp?: boolean
-  displayNetworkFilter?: boolean
-  isHidden: boolean
-}
+import CurrentApp from './CurrentApp'
+import DashboardSearch from './DashboardSearch'
 
-const SearchAndCurrentApp = ({
+import { SearchAndCurrentAppProps } from './SearchAndCurrentApp'
+
+const SearchAndCurrentApp: React.FC<SearchAndCurrentAppProps> = ({
   control,
   displayCurrentApp = false,
   displayNetworkFilter = false,
   isHidden
-}: Props) => {
+}) => {
   const { bottom: safeBottom } = useSafeAreaInsets()
   const { height } = useReanimatedKeyboardAnimation()
   const { theme } = useTheme()
@@ -42,11 +35,11 @@ const SearchAndCurrentApp = ({
   }, [isHidden, safeBottom])
 
   const animatedStyle = useAnimatedStyle(() => {
-    const keyboardOffset = isMobile ? Math.abs(height.value) : 0
+    const keyboardOffset = Math.abs(height.value)
     return {
       bottom: animatedBottom.value + keyboardOffset
     }
-  }, [isMobile, height])
+  }, [height])
 
   return (
     <Animated.View
@@ -54,14 +47,7 @@ const SearchAndCurrentApp = ({
         {
           position: 'absolute',
           zIndex: 3,
-          ...flexbox.center
-        },
-        isWeb && {
-          left: 0,
-          width: '100%',
-          pointerEvents: 'none'
-        },
-        isMobile && {
+          ...flexbox.center,
           ...flexbox.alignSelfCenter,
           shadowColor: theme.neutral400,
           shadowOffset: { width: 0, height: 1 },
@@ -78,16 +64,16 @@ const SearchAndCurrentApp = ({
             spacings.pvTy,
             flexbox.directionRow,
             flexbox.alignCenter,
-            isMobile && { columnGap: SPACING }
+            { columnGap: SPACING }
           ]}
         >
           <DashboardSearch control={control} />
-          {isWeb && displayCurrentApp && <CurrentApp />}
-          {isMobile && displayNetworkFilter && <SelectNetwork />}
+          {displayCurrentApp && <CurrentApp />}
+          {displayNetworkFilter && <SelectNetwork />}
         </View>
       </GlassView>
     </Animated.View>
   )
 }
 
-export default SearchAndCurrentApp
+export default React.memo(SearchAndCurrentApp)
