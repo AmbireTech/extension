@@ -7,7 +7,6 @@ import { SigningStatus } from '@ambire-common/controllers/signAccountOp/signAcco
 import { SwapAndBridgeFormStatus } from '@ambire-common/controllers/swapAndBridge/swapAndBridge'
 import { Key } from '@ambire-common/interfaces/keystore'
 import Alert from '@common/components/Alert'
-import { PanelBackButton, PanelTitle } from '@common/components/Panel/Panel'
 import useController from '@common/hooks/useController'
 import useNavigation from '@common/hooks/useNavigation'
 import usePrevious from '@common/hooks/usePrevious'
@@ -24,16 +23,17 @@ import ToToken from '@common/modules/swap-and-bridge/components/ToToken'
 import useSwapAndBridgeForm from '@common/modules/swap-and-bridge/hooks/useSwapAndBridgeForm'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import { getUiType } from '@common/utils/uiType'
-import { Content, Wrapper } from '@web/components/TransactionsScreen'
+import {
+  MobileLayoutContainer,
+  MobileLayoutWrapperMainContent
+} from '@mobile/components/MobileLayoutWrapper'
+import Modals from '@mobile/modules/sign-account-op/components/Modals'
 import useSimulationError from '@web/modules/portfolio/hooks/SimulationError/useSimulationError'
-import Modals from '@web/modules/sign-account-op/components/Modals'
-
-const { isRequestWindow } = getUiType()
 
 const SwapAndBridgeScreen = () => {
   const { t } = useTranslation()
   const { navigate } = useNavigation()
+
   const {
     sessionId,
     fromAmountValue,
@@ -143,19 +143,8 @@ const SwapAndBridgeScreen = () => {
       type: 'method',
       params: { method: 'unloadScreen', args: [sessionId, true] }
     })
-    if (isRequestWindow) {
-      if (!account) return
 
-      requestsCtrlDispatch({
-        type: 'method',
-        params: {
-          method: 'removeUserRequests',
-          args: [[`${account.addr}-swap-and-bridge-sign`]]
-        }
-      })
-    } else {
-      navigate(ROUTES.dashboard)
-    }
+    navigate(ROUTES.dashboard)
   }, [requestsCtrlDispatch, account, navigate, sessionId, swapAndBridgeDispatch])
 
   const handleUpdateStatus = useCallback(
@@ -232,8 +221,14 @@ const SwapAndBridgeScreen = () => {
   }
 
   return (
-    <Wrapper>
-      <Content buttons={buttons}>
+    <MobileLayoutContainer>
+      <MobileLayoutWrapperMainContent
+        withBackButton
+        onBackButtonPress={onBackButtonPress}
+        title={t('Swap & Bridge')}
+        withScroll
+        keyboardAwareScrollViewProps={{ bottomOffset: 250 }}
+      >
         {isHealthy === false && (
           <Alert
             type="error"
@@ -244,50 +239,49 @@ const SwapAndBridgeScreen = () => {
             style={spacings.mb}
           />
         )}
-        <View>
-          <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mb]}>
-            <PanelBackButton onPress={onBackButtonPress} style={spacings.mrSm} />
-            <PanelTitle title={t('Swap & Bridge')} />
-            <View style={{ width: 40 }} />
-          </View>
-          <View style={spacings.mbTy}>
-            <FromToken
-              fromTokenOptions={fromTokenOptions}
-              fromTokenValue={fromTokenValue}
-              fromAmountValue={fromAmountValue}
-              fromTokenAmountSelectDisabled={fromTokenAmountSelectDisabled}
-              onFromAmountChange={onFromAmountChange}
-              simulationFailed={!!fromChainSimulationError}
-              isLoading={!sessionIds.includes(sessionId) || !portfolio.isReadyToVisualize}
-            />
-          </View>
-          <ToToken simulationFailed={!!toChainSimulationError} />
+
+        <View style={spacings.mbSm}>
+          <FromToken
+            fromTokenOptions={fromTokenOptions}
+            fromTokenValue={fromTokenValue}
+            fromAmountValue={fromAmountValue}
+            fromTokenAmountSelectDisabled={fromTokenAmountSelectDisabled}
+            onFromAmountChange={onFromAmountChange}
+            simulationFailed={!!fromChainSimulationError}
+            isLoading={!sessionIds.includes(sessionId) || !portfolio.isReadyToVisualize}
+          />
         </View>
+        <ToToken simulationFailed={!!toChainSimulationError} />
+
         <RouteInfo
           isEstimatingRoute={isEstimatingRoute}
           openRoutesModal={openRoutesModal}
           shouldEnableRoutesSelection={shouldEnableRoutesSelection}
         />
-      </Content>
-      <RoutesModal sheetRef={routesModalRef} closeBottomSheet={closeRoutesModal} />
-      <Estimation
-        updateType="Swap&Bridge"
-        estimationModalRef={estimationModalRef}
-        closeEstimationModal={closeEstimationModalWrapped}
-        updateController={updateController}
-        handleUpdateStatus={handleUpdateStatus}
-        hasProceeded={hasProceeded}
-        signAccountOpController={signAccountOpController}
-        serviceFee={quote?.selectedRoute?.serviceFee}
-        Modals={Modals}
-      />
-      <PriceImpactWarningModal
-        sheetRef={priceImpactModalRef}
-        closeBottomSheet={closePriceImpactModal}
-        acknowledgeHighPriceImpact={acknowledgeHighPriceImpact}
-        highPriceImpactOrSlippageWarning={highPriceImpactOrSlippageWarning}
-      />
-    </Wrapper>
+
+        <View style={flexbox.flex1} />
+        {buttons}
+
+        <RoutesModal sheetRef={routesModalRef} closeBottomSheet={closeRoutesModal} />
+        <Estimation
+          updateType="Swap&Bridge"
+          estimationModalRef={estimationModalRef}
+          closeEstimationModal={closeEstimationModalWrapped}
+          updateController={updateController}
+          handleUpdateStatus={handleUpdateStatus}
+          hasProceeded={hasProceeded}
+          signAccountOpController={signAccountOpController}
+          serviceFee={quote?.selectedRoute?.serviceFee}
+          Modals={Modals}
+        />
+        <PriceImpactWarningModal
+          sheetRef={priceImpactModalRef}
+          closeBottomSheet={closePriceImpactModal}
+          acknowledgeHighPriceImpact={acknowledgeHighPriceImpact}
+          highPriceImpactOrSlippageWarning={highPriceImpactOrSlippageWarning}
+        />
+      </MobileLayoutWrapperMainContent>
+    </MobileLayoutContainer>
   )
 }
 

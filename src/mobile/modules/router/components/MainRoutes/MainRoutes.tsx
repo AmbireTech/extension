@@ -21,6 +21,7 @@ import KeyStoreSetupScreen from '@mobile/modules/keystore/screens/KeyStoreSetupS
 import NetworksScreen from '@mobile/modules/networks/screens'
 import ReceiveScreen from '@mobile/modules/receive/screens/ReceiveScreen'
 import SignAccountOpScreen from '@mobile/modules/sign-account-op/screens/SignAccountOpScreen'
+import SwapAndBridgeScreen from '@mobile/modules/swap-and-bridge/screens/SwapAndBridgeScreen'
 import TokenDetailsScreen from '@mobile/modules/token-details/screens/TokenDetailsScreen'
 import TransferScreen from '@mobile/modules/transfer/screens/TransferScreen'
 
@@ -56,6 +57,7 @@ const MainRoutes = () => {
           <Route path={ROUTES.signAccountOp} element={<SignAccountOpScreen />} />
           <Route path={ROUTES.benzin} element={<BenzinScreen />} />
           <Route path={ROUTES.networks} element={<NetworksScreen />} />
+          <Route path={ROUTES.swapAndBridge} element={<SwapAndBridgeScreen />} />
         </Route>
       </Route>
       {/* Fallback route to suppress "No routes matched location" warnings when multiple Routes blocks are rendered */}

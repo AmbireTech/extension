@@ -190,19 +190,19 @@ const Account = ({
           showTooltip
         />
         <View style={flexbox.flex1}>
-          <View style={[flexbox.flex1, flexbox.directionRow, flexbox.alignCenter]}>
+          <View style={[flexbox.flex1, flexbox.directionRow, flexbox.alignCenter, spacings.mrTy]}>
             {!withSettings ? (
               <>
                 <Text
                   fontSize={withSettings ? 16 : 14}
                   weight="medium"
                   numberOfLines={1}
-                  style={!withSettings ? { maxWidth: 200 } : {}}
+                  style={{ flexShrink: 1 }}
                 >
                   {account.preferences.label}
                 </Text>
                 {!!withKeyType && (
-                  <View style={[spacings.mlMi]}>
+                  <View style={[isWeb && spacings.mlMi]}>
                     <AccountKeyIcons isExtended account={account} />
                   </View>
                 )}

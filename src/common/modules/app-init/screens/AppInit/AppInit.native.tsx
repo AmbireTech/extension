@@ -3,6 +3,7 @@ import { KeyboardProvider } from 'react-native-keyboard-controller'
 import { SafeAreaProvider } from 'react-native-safe-area-context'
 import { NativeRouter } from 'react-router-native'
 
+import { GlobalTooltip } from '@common/components/GlobalTooltip'
 import { BiometricsProvider } from '@common/contexts/biometricsContext'
 import { ControllerStoreProvider } from '@common/contexts/controllerStoreContext'
 import { NetInfoProvider } from '@common/contexts/netInfoContext'
@@ -32,6 +33,7 @@ const AppInit = () => {
                 <ThemeProvider>
                   <GestureHandler>
                     <ControllersStateLoadedProvider>
+                      <GlobalTooltip />
                       <KeyboardProvider>
                         <NetInfoProvider>
                           <AuthProvider>
