@@ -35,6 +35,7 @@ import { controllersNestedInMainMapping } from '@common/constants/controllersMap
 import { WalletStateController } from '@common/controllers/wallet-state'
 import { storage } from '@common/services/storage'
 import { Action, MethodAction } from '@common/types/actions'
+import { LOG_LEVELS, logInfoWithPrefix } from '@common/utils/logger'
 import {
   BROWSER_EXTENSION_LOG_UPDATED_CONTROLLER_STATE_ONLY,
   BROWSER_EXTENSION_MEMORY_INTENSIVE_LOGS,
@@ -72,7 +73,6 @@ import LatticeSigner from '@web/modules/hardware-wallet/libs/LatticeSigner'
 import LedgerSigner from '@web/modules/hardware-wallet/libs/LedgerSigner'
 import TrezorSigner from '@web/modules/hardware-wallet/libs/TrezorSigner'
 import { getExtensionInstanceId } from '@web/utils/analytics'
-import { LOG_LEVELS, logInfoWithPrefix } from '@web/utils/logger'
 
 import {
   captureBackgroundException,
