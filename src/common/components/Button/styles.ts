@@ -1,5 +1,6 @@
 import { StyleSheet, TextStyle, ViewStyle } from 'react-native'
 
+import { isWeb } from '@common/config/env'
 import { FONT_FAMILIES } from '@common/hooks/useFonts'
 import spacings from '@common/styles/spacings'
 import { ThemeProps, ThemeType } from '@common/styles/themeConfig'
@@ -42,7 +43,10 @@ const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
       borderWidth: 1,
       borderColor: 'transparent',
       ...commonStyles.borderRadiusPrimary,
-      overflow: 'hidden'
+      // Without overflow and willChange there is a squared background
+      // on webkit browsers when hardware acceleration is disabled
+      overflow: 'hidden',
+      ...(isWeb ? { willChange: 'opacity' } : {})
     },
 
     buttonText: {
