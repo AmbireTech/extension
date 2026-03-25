@@ -15,6 +15,8 @@ import DappIcon from '../DappIcon'
 import DisconnectButton from './DisconnectButton'
 import NetworkSelector from './NetworkSelector'
 
+const MAX_APP_NAME_LENGTH = 20
+
 const AppData = ({ dapp }: { dapp: Dapp }) => {
   let hostname = ''
   try {
@@ -34,7 +36,9 @@ const AppData = ({ dapp }: { dapp: Dapp }) => {
       <DappIcon dapp={dapp} />
       <View style={[flexbox.flex1, spacings.mlSm]}>
         <Text weight="medium" numberOfLines={1} fontSize={14}>
-          {dapp.name}
+          {dapp.name.length > MAX_APP_NAME_LENGTH
+            ? `${dapp.name.slice(0, MAX_APP_NAME_LENGTH)}...`
+            : dapp.name}
         </Text>
         <Text fontSize={12} appearance="tertiaryText">
           {hostname}
