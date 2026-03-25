@@ -23,15 +23,12 @@ import ToToken from '@common/modules/swap-and-bridge/components/ToToken'
 import useSwapAndBridgeForm from '@common/modules/swap-and-bridge/hooks/useSwapAndBridgeForm'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import { getUiType } from '@common/utils/uiType'
 import {
   MobileLayoutContainer,
   MobileLayoutWrapperMainContent
 } from '@mobile/components/MobileLayoutWrapper'
 import Modals from '@mobile/modules/sign-account-op/components/Modals'
 import useSimulationError from '@web/modules/portfolio/hooks/SimulationError/useSimulationError'
-
-const { isRequestWindow } = getUiType()
 
 const SwapAndBridgeScreen = () => {
   const { t } = useTranslation()
@@ -146,19 +143,8 @@ const SwapAndBridgeScreen = () => {
       type: 'method',
       params: { method: 'unloadScreen', args: [sessionId, true] }
     })
-    if (isRequestWindow) {
-      if (!account) return
 
-      requestsCtrlDispatch({
-        type: 'method',
-        params: {
-          method: 'removeUserRequests',
-          args: [[`${account.addr}-swap-and-bridge-sign`]]
-        }
-      })
-    } else {
-      navigate(ROUTES.dashboard)
-    }
+    navigate(ROUTES.dashboard)
   }, [requestsCtrlDispatch, account, navigate, sessionId, swapAndBridgeDispatch])
 
   const handleUpdateStatus = useCallback(
