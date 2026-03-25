@@ -25,7 +25,7 @@ const useNetworks = ({
     dispatch: accountsDispatch
   } = useController('AccountsController')
 
-  // safe accounts are dependant on the account state so be sure to fetch it
+  // Safe accounts are dependant on the account state so be sure to fetch it
   // if it's not already fetched
   useEffect(() => {
     if (!acc || !acc.safeCreation || !!accountStates[acc.addr]) return

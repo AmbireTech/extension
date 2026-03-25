@@ -176,10 +176,10 @@ const useSign = ({
     // if we're broadcasting with ledger, return true
     if (feePayerKeyType === 'ledger') return true
 
-    // if the account is not a safe, check the txn signer
+    // if the account is not a Safe, check the txn signer
     if (!signAccountOpState?.account.safeCreation) return signingKeyType === 'ledger'
 
-    // if it's a safe, check all the signers
+    // if it's a Safe, check all the signers
     return !!signAccountOpState.accountOp.signers?.find((s) => s.type === 'ledger')
   }, [
     signAccountOpState?.account.safeCreation,
@@ -359,11 +359,11 @@ const useSign = ({
   }, [handleUpdateStatus, closeWarningModal])
 
   const isViewOnly = useMemo(() => {
-    // for all accounts except safe, check if the account has keys
+    // for all accounts except Safe, check if the account has keys
     const noKeysImported = signAccountOpState?.accountKeyStoreKeys.length === 0
     if (!signAccountOpState?.account.safeCreation) return noKeysImported
 
-    // for safe accounts, do not treat accounts that are not deployed
+    // for Safe accounts, do not treat accounts that are not deployed
     // on the network as view only as it will mislead the user into
     // thinking that the account is deployed but no owners have been
     // imported

@@ -138,7 +138,7 @@ const Main = ({
           {isSafeNotDeployed && (
             <Alert
               type="error"
-              title="Safe account not enabled on this network. Please activate it from Safe global"
+              title="Safe account not enabled on this network. Please activate it from Safe Global"
             />
           )}
         </View>
