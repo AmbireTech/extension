@@ -1,5 +1,5 @@
 diff --git a/node_modules/@trezor/connect-webextension/build/trezor-connect-webextension.js b/node_modules/@trezor/connect-webextension/build/trezor-connect-webextension.js
-index 65bf5a3..9918815 100644
+index 0f1fc7c..3bd0e85 100644
 --- a/node_modules/@trezor/connect-webextension/build/trezor-connect-webextension.js
 +++ b/node_modules/@trezor/connect-webextension/build/trezor-connect-webextension.js
 @@ -2508,18 +2508,39 @@ class PopupManager extends (events_default()) {
