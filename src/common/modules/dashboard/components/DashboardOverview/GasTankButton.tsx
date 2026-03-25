@@ -72,7 +72,7 @@ const GasTankButton = ({ onPress, portfolio, account }: Props) => {
 
   const tooltipText = useMemo(() => {
     if (buttonState === 'soon') {
-      if (!!account?.safeCreation) return t('Not available for safe wallets, yet.')
+      if (!!account?.safeCreation) return t('Not available for Safe wallets, yet.')
       return t('Not available for hardware wallets, yet.')
     }
 
