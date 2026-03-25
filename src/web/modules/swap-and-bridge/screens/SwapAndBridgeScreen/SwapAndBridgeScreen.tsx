@@ -101,12 +101,6 @@ const SwapAndBridgeScreen = () => {
     }
   }, [selectedAccActiveRoutes, prevSelectedAccActiveRoutes])
 
-  // TODO: Disable tokens that are NOT supported
-  // (not in the `fromTokenList` of the SwapAndBridge controller)
-
-  // TODO: Confirmation modal (warn) if the diff in dollar amount between the
-  // FROM and TO tokens is too high (therefore, user will lose money).
-
   const isEstimatingRoute =
     formStatus === SwapAndBridgeFormStatus.ReadyToEstimate &&
     (!signAccountOpController ||

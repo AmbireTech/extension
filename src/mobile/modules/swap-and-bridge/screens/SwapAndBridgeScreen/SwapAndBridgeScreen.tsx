@@ -7,7 +7,6 @@ import { SigningStatus } from '@ambire-common/controllers/signAccountOp/signAcco
 import { SwapAndBridgeFormStatus } from '@ambire-common/controllers/swapAndBridge/swapAndBridge'
 import { Key } from '@ambire-common/interfaces/keystore'
 import Alert from '@common/components/Alert'
-import { PanelBackButton, PanelTitle } from '@common/components/Panel/Panel'
 import useController from '@common/hooks/useController'
 import useNavigation from '@common/hooks/useNavigation'
 import usePrevious from '@common/hooks/usePrevious'
@@ -104,12 +103,6 @@ const SwapAndBridgeScreen = () => {
       scrollViewRef.current?.scrollTo({ y: 0 })
     }
   }, [selectedAccActiveRoutes, prevSelectedAccActiveRoutes])
-
-  // TODO: Disable tokens that are NOT supported
-  // (not in the `fromTokenList` of the SwapAndBridge controller)
-
-  // TODO: Confirmation modal (warn) if the diff in dollar amount between the
-  // FROM and TO tokens is too high (therefore, user will lose money).
 
   const isEstimatingRoute =
     formStatus === SwapAndBridgeFormStatus.ReadyToEstimate &&
