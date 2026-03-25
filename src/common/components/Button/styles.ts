@@ -41,7 +41,8 @@ const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
       alignItems: 'center',
       borderWidth: 1,
       borderColor: 'transparent',
-      ...commonStyles.borderRadiusPrimary
+      ...commonStyles.borderRadiusPrimary,
+      overflow: 'hidden'
     },
 
     buttonText: {
