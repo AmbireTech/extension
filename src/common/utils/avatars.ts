@@ -1,7 +1,7 @@
 import { blockyColors } from '@common/components/Avatar/Blockies/utils'
 import { generateSeedEthereum, getPolyconColors } from '@common/components/Avatar/Polycons/utils'
+import { AvatarType } from '@common/controllers/wallet-state'
 import Jazzicon from '@raugfer/jazzicon'
-import { AvatarType } from '@web/extension-services/background/controllers/wallet-state'
 
 const FALLBACK_COLORS: AvatarColors = ['#6000FF', '#A36AF8', '#35008C']
 

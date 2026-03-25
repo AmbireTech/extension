@@ -9,7 +9,6 @@ import FaceIDIcon from '@common/assets/svg/FaceIDIcon'
 import FingerprintIcon from '@common/assets/svg/FingerprintIcon'
 import LockIcon from '@common/assets/svg/LockIcon'
 import Button from '@common/components/Button'
-import FatToggle from '@common/components/FatToggle'
 import InputPassword from '@common/components/InputPassword'
 import Text from '@common/components/Text'
 import { isWeb } from '@common/config/env'
@@ -143,23 +142,6 @@ const KeyStoreUnlockScreen = () => {
           </View>
         </View>
 
-        <View
-          style={[
-            flexbox.directionRow,
-            flexbox.alignCenter,
-            flexbox.justifySpaceBetween,
-            spacings.mbSm
-          ]}
-        >
-          <Text appearance="secondaryText">{t('Hide balances')}</Text>
-          <FatToggle
-            isOn={false}
-            onToggle={() => alert('Coming soon!')}
-            width={44}
-            height={22}
-            style={spacings.mr0}
-          />
-        </View>
         <Animated.View style={flexbox.flex1} />
         {unlockMethod === 'password' && (
           <>
