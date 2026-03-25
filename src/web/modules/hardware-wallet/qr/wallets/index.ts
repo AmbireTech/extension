@@ -4,6 +4,7 @@ import { KeystoneQrWallet } from './KeystoneQrWallet'
 /**
  * Registry of supported QR-based hardware wallets.
  *
+ *
  * To add a new wallet:
  * 1. Create a wallet config (e.g. `NewWalletQrWallet.ts`) with:
  *    - walletType
