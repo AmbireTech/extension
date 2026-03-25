@@ -50,7 +50,7 @@ const ReceiveScreen: FC = () => {
       <HeaderWithTitle />
 
       <ScrollableWrapper showsVerticalScrollIndicator={false}>
-        <View style={[spacings.ptLg, spacings.mb, flexbox.alignCenter]}>
+        <View style={[isEOA ? spacings.pt3Xl : spacings.ptLg, spacings.mb, flexbox.alignCenter]}>
           <Avatar
             size={40}
             pfp={pfp}
