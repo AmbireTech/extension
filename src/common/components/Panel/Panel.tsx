@@ -3,10 +3,11 @@ import { Pressable, TextStyle, View, ViewProps, ViewStyle } from 'react-native'
 
 import LeftArrowIcon from '@common/assets/svg/LeftArrowIcon'
 import Text from '@common/components/Text'
+import { isMobile } from '@common/config/env'
 import useTheme from '@common/hooks/useTheme'
 import useWindowSize from '@common/hooks/useWindowSize'
 import { WindowSizes } from '@common/hooks/useWindowSize/types'
-import spacings, { SPACING_3XL, SPACING_LG, SPACING_XL } from '@common/styles/spacings'
+import spacings, { SPACING_3XL, SPACING_LG, SPACING_SM, SPACING_XL } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
 
@@ -30,8 +31,16 @@ export const getPanelPaddings = (
   spacingsSize: 'small' | 'large' = 'large'
 ) => {
   return {
-    paddingHorizontal: maxWidthSize('xl') && spacingsSize === 'large' ? SPACING_3XL : SPACING_LG,
-    paddingVertical: maxWidthSize('xl') && spacingsSize === 'large' ? SPACING_XL : SPACING_LG
+    paddingHorizontal: isMobile
+      ? SPACING_SM
+      : maxWidthSize('xl') && spacingsSize === 'large'
+        ? SPACING_3XL
+        : SPACING_LG,
+    paddingVertical: isMobile
+      ? SPACING_SM
+      : maxWidthSize('xl') && spacingsSize === 'large'
+        ? SPACING_XL
+        : SPACING_LG
   }
 }
 

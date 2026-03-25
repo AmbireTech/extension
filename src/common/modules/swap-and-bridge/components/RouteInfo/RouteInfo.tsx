@@ -194,7 +194,7 @@ const RouteInfo: FC<Props> = ({
                     fontSize={isMobile ? 14 : 12}
                     weight="medium"
                     appearance="warningText"
-                    style={[spacings.mlMi, { flexShrink: 1 }]}
+                    style={[isMobile ? {} : spacings.mlMi, { flexShrink: 1 }]}
                   >
                     {quote?.routes.length === 1
                       ? t("1 route found, but it'd fail onchain.")

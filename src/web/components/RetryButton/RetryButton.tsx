@@ -79,7 +79,7 @@ const RetryButton: FC<Props> = ({ onPress, label, disabled, isLarge }) => {
       ...animStyle,
       paddingLeft: isMobile ? SPACING_SM : 6,
       paddingRight: isMobile ? SPACING_TY : 2,
-      height: isMobile ? 32 : isLarge ? 28 : 20,
+      height: isMobile ? 34 : isLarge ? 28 : 20,
       ...(disabled && { opacity: 0.5 })
     }),
     [animStyle, disabled, isLarge]
@@ -92,14 +92,23 @@ const RetryButton: FC<Props> = ({ onPress, label, disabled, isLarge }) => {
       disabled={disabled}
       {...mergedBindAnim}
     >
-      <Text fontSize={12} weight="medium" color={theme.primaryAccent300} style={spacings.mrMi}>
+      <Text
+        fontSize={isMobile ? 14 : 12}
+        weight="medium"
+        color={theme.primaryAccent300}
+        style={spacings.mrMi}
+      >
         {buttonLabel}
       </Text>
       <Animated.View style={{ transform: [{ rotateZ: rotateInterpolate }] }}>
-        <RetryIcon color={theme.primaryAccent300} />
+        <RetryIcon
+          color={theme.primaryAccent300}
+          width={isMobile ? 18 : 16}
+          height={isMobile ? 19 : 17}
+        />
       </Animated.View>
     </AnimatedPressable>
   )
 }
 
-export default RetryButton
+export default React.memo(RetryButton)
