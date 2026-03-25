@@ -2,16 +2,18 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Animated, Linking, TouchableOpacity, View } from 'react-native'
 
 import DiagonalRightArrowIcon from '@common/assets/svg/DiagonalRightArrowIcon'
-import LinkIcon from '@common/assets/svg/LinkIcon'
+import OpenIcon from '@common/assets/svg/OpenIcon'
 import Panel from '@common/components/Panel'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
+import { AnimatedPressable, useMultiHover } from '@common/hooks/useHover'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
 import spacings from '@common/styles/spacings'
+import { hexToRgba } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import { TabLayoutContainer, TabLayoutWrapperMainContent } from '@web/components/TabLayoutWrapper'
 import { QrWalletRegistry } from '@web/modules/hardware-wallet/qr/wallets'
@@ -49,6 +51,26 @@ const QrConnectScreen = () => {
       }),
     [animatedHeight, hiddenContentHeight]
   )
+
+  const [bindAnim, animStyle] = useMultiHover({
+    values: [
+      {
+        property: 'backgroundColor',
+        from: hexToRgba(theme.secondaryBackground, 0),
+        to: theme.secondaryBackground
+      },
+      {
+        property: 'translateX',
+        from: 0,
+        to: showMore ? -2 : 2
+      },
+      {
+        property: 'translateY',
+        from: 0,
+        to: 2
+      }
+    ]
+  })
 
   const onQrComplete = useCallback(
     async (payload: string | Uint8Array) => {
@@ -145,7 +167,7 @@ const QrConnectScreen = () => {
             <Text fontSize={14} weight="medium" appearance="secondaryText" style={spacings.mrTy}>
               {t('Tutorial')}
             </Text>
-            <LinkIcon color={theme.iconPrimary} width={18} height={18} />
+            <OpenIcon color={theme.iconPrimary} width={18} height={18} />
           </View>
         </TouchableOpacity>
       </View>
@@ -170,10 +192,9 @@ const QrConnectScreen = () => {
           onBackButtonPress={handleBackButtonPressed}
           title={t('Connect QR wallet')}
         >
-          <Text fontSize={16} style={spacings.mbTy}>
+          <Text fontSize={14} style={[spacings.mbSm, { textAlign: 'center' }]}>
             {t('Scan the QR code exported by your hardware wallet.')}
           </Text>
-
           <QrScanner
             key={scannerKey}
             onComplete={onQrComplete}
@@ -181,7 +202,7 @@ const QrConnectScreen = () => {
             disabled={isSubmitting}
           />
 
-          <Text fontSize={16} style={spacings.mtLg}>
+          <Text fontSize={14} style={spacings.mt}>
             {t('You can choose from a list of official QR-code supporting partners bellow.')}
           </Text>
 
@@ -199,25 +220,48 @@ const QrConnectScreen = () => {
             </Animated.View>
 
             {qrWallets.length > VISIBLE_WALLETS_COUNT && (
-              <TouchableOpacity
-                onPress={handleToggleShowMore}
-                testID="show-more-qr-wallets-btn"
-                style={[flexbox.directionRow, flexbox.alignCenter, flexbox.justifyCenter]}
+              <AnimatedPressable
+                onPress={() => setShowMore(!showMore)}
+                testID="show-more-btn"
+                style={[
+                  flexbox.directionRow,
+                  flexbox.alignCenter,
+                  spacings.pvMi,
+                  spacings.prTy,
+                  spacings.plSm,
+                  {
+                    borderRadius: 50,
+                    alignSelf: 'center',
+                    backgroundColor: animStyle.backgroundColor
+                  }
+                ]}
+                {...bindAnim}
               >
-                <Text appearance="tertiaryText" fontSize={14} weight="medium" style={spacings.mrMi}>
+                <Text appearance="tertiaryText" style={spacings.mrMi} fontSize={14} weight="medium">
                   {t(showMore ? 'Less' : 'More')}
                 </Text>
-                <Animated.View>
+                <Animated.View
+                  style={{
+                    transform: [
+                      {
+                        translateX: animStyle.translateX as any
+                      },
+                      {
+                        translateY: animStyle.translateY as any
+                      }
+                    ]
+                  }}
+                >
                   <DiagonalRightArrowIcon
                     color={theme.iconPrimary}
-                    width={18}
-                    height={18}
+                    height={20}
+                    width={20}
                     style={{
-                      transform: [{ rotate: showMore ? '90deg' : '0deg' }]
+                      transform: [{ rotate: showMore ? '270deg' : '0deg' }]
                     }}
                   />
                 </Animated.View>
-              </TouchableOpacity>
+              </AnimatedPressable>
             )}
           </View>
         </Panel>

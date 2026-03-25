@@ -267,7 +267,7 @@ const ImportExistingAccountSelectorScreen = () => {
                     height={20}
                     width={20}
                     style={{
-                      transform: [{ rotate: showMore ? '90deg' : '0deg' }]
+                      transform: [{ rotate: showMore ? '270deg' : '0deg' }]
                     }}
                   />
                 </Animated.View>
