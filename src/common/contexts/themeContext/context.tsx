@@ -1,7 +1,7 @@
 import { createContext, useEffect, useMemo } from 'react'
 import { useColorScheme } from 'react-native'
 
-import { isBenzin, isMobile, isWeb } from '@common/config/env'
+import { isBenzin, isWeb } from '@common/config/env'
 import { syncStorage } from '@common/services/storage'
 import { DEFAULT_THEME, THEME_TYPES, ThemeType } from '@common/styles/theme/types'
 import ThemeColors, { ThemeProps } from '@common/styles/themeConfig'
@@ -36,8 +36,6 @@ const LeanThemeProvider: React.FC<{
     if (isBenzin) return THEME_TYPES.LIGHT
 
     let type = selectedThemeType ?? syncStorage.get('fallbackSelectedThemeType')
-
-    if (isMobile) type = THEME_TYPES.SYSTEM
 
     return type === THEME_TYPES.SYSTEM
       ? (systemThemeType as THEME_TYPES.LIGHT | THEME_TYPES.DARK)
