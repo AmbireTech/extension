@@ -37,6 +37,7 @@ const ReceiveScreen: FC = () => {
     qrCodeError,
     setQrCodeError,
     qrCodeRef,
+    isEOA,
     bindAnim,
     animStyle,
     hasMoreNetworks,
@@ -108,7 +109,7 @@ const ReceiveScreen: FC = () => {
 
         <View style={flexbox.flex1} />
       </MobileLayoutWrapperMainContent>
-      {!!(account?.creation || account?.safeCreation) && (
+      {!isEOA && (
         <View style={styles.supportedNetworksContainer}>
           <Text
             weight="regular"
