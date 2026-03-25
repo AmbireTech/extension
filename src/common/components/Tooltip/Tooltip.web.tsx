@@ -1,18 +1,14 @@
 import React from 'react'
-import { ITooltip, Tooltip as ReactTooltip } from 'react-tooltip'
+import { Tooltip as ReactTooltip } from 'react-tooltip'
 
-import { isMobile } from '@common/config/env'
 import { FONT_FAMILIES } from '@common/hooks/useFonts'
 import useTheme from '@common/hooks/useTheme'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import { Portal } from '@gorhom/portal'
 
-type Props = ITooltip & {
-  tooltipRef?: any
-  withPortal?: boolean
-}
+import type { TooltipProps } from './Tooltip'
 
-const TooltipInner = ({ tooltipRef, style, border, ...rest }: Props) => {
+const TooltipInner = ({ tooltipRef, style, border, ...rest }: TooltipProps) => {
   const { theme } = useTheme()
 
   return (
@@ -39,9 +35,7 @@ const TooltipInner = ({ tooltipRef, style, border, ...rest }: Props) => {
   )
 }
 
-const Tooltip = ({ tooltipRef, withPortal = true, style, ...rest }: Props) => {
-  if (isMobile) return null
-
+const Tooltip = ({ tooltipRef, withPortal = true, style, ...rest }: TooltipProps) => {
   if (!withPortal)
     return <TooltipInner withPortal={withPortal} tooltipRef={tooltipRef} style={style} {...rest} />
 

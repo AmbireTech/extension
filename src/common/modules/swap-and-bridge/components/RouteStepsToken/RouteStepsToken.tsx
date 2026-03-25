@@ -4,6 +4,7 @@ import { View, ViewStyle } from 'react-native'
 import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
 import Text from '@common/components/Text'
 import TokenIcon from '@common/components/TokenIcon'
+import { isMobile } from '@common/config/env'
 
 import styles from './styles'
 
@@ -71,7 +72,7 @@ export const RouteStepsTokenAmount: React.FC<RouteStepsTokenAmountProps> = ({
         { alignItems: align === 'left' ? 'flex-start' : align === 'right' ? 'flex-end' : 'center' }
       ]}
     >
-      <Text fontSize={14} weight="medium" style={styles.text}>
+      <Text fontSize={isMobile ? 12 : 14} weight="medium" style={styles.text}>
         {amount ? `${amount} ` : ''}
         {symbol}
       </Text>

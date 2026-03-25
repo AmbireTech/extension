@@ -1,6 +1,7 @@
 import React from 'react'
 
 import AccountData from '@common/components/AccountData'
+import { isWeb } from '@common/config/env'
 import useNavigation from '@common/hooks/useNavigation'
 import { WEB_ROUTES } from '@common/modules/router/constants/common'
 
@@ -12,7 +13,7 @@ const AccountButton = () => {
       onPress={() => {
         navigate(WEB_ROUTES.accountSelect)
       }}
-      withArrowRightIcon
+      withArrowRightIcon={isWeb}
     />
   )
 }

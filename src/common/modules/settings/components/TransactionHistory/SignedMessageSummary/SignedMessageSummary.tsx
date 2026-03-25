@@ -36,7 +36,7 @@ const SignedMessageSummary = ({ signedMessage, style }: Props) => {
       networks.find((n) => {
         return signedMessage?.content.kind === 'typedMessage' &&
           signedMessage?.content.domain.chainId
-          ? n.chainId.toString() === signedMessage?.content.domain.chainId.toString()
+          ? BigInt(n.chainId) === BigInt(signedMessage?.content.domain.chainId)
           : n.chainId === signedMessage?.chainId
       }),
     [networks, signedMessage]

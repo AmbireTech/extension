@@ -4,10 +4,11 @@ import { Animated } from 'react-native'
 
 import RetryIcon from '@common/assets/svg/RetryIcon'
 import Text from '@common/components/Text'
+import { isMobile } from '@common/config/env'
 import { AnimatedPressable, useCustomHover } from '@common/hooks/useHover'
 import useTheme from '@common/hooks/useTheme'
-import spacings from '@common/styles/spacings'
-import { hexToRgba } from '@common/styles/utils/common'
+import spacings, { SPACING_SM, SPACING_TY } from '@common/styles/spacings'
+import { BORDER_RADIUS_PRIMARY, hexToRgba } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 
 type Props = {
@@ -72,13 +73,13 @@ const RetryButton: FC<Props> = ({ onPress, label, disabled, isLarge }) => {
 
   const buttonStyle = useMemo(
     () => ({
-      borderRadius: 14,
+      borderRadius: isMobile ? BORDER_RADIUS_PRIMARY : 14,
       ...flexbox.directionRow,
       ...flexbox.alignCenter,
       ...animStyle,
-      paddingLeft: 6,
-      paddingRight: 2,
-      minHeight: isLarge ? 28 : 20,
+      paddingLeft: isMobile ? SPACING_SM : 6,
+      paddingRight: isMobile ? SPACING_TY : 2,
+      height: isMobile ? 34 : isLarge ? 28 : 20,
       ...(disabled && { opacity: 0.5 })
     }),
     [animStyle, disabled, isLarge]
@@ -91,14 +92,23 @@ const RetryButton: FC<Props> = ({ onPress, label, disabled, isLarge }) => {
       disabled={disabled}
       {...mergedBindAnim}
     >
-      <Text fontSize={12} weight="medium" color={theme.primaryAccent300} style={spacings.mrMi}>
+      <Text
+        fontSize={isMobile ? 14 : 12}
+        weight="medium"
+        color={theme.primaryAccent300}
+        style={spacings.mrMi}
+      >
         {buttonLabel}
       </Text>
       <Animated.View style={{ transform: [{ rotateZ: rotateInterpolate }] }}>
-        <RetryIcon color={theme.primaryAccent300} />
+        <RetryIcon
+          color={theme.primaryAccent300}
+          width={isMobile ? 18 : 16}
+          height={isMobile ? 19 : 17}
+        />
       </Animated.View>
     </AnimatedPressable>
   )
 }
 
-export default RetryButton
+export default React.memo(RetryButton)
