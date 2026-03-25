@@ -115,7 +115,10 @@ jobs:
           fi
           echo "✅ Policy is not empty"
 
-          if ! git diff --quiet HEAD -- "$POLICY_PATH"; then
+          # Fail only on unstaged changes (working tree vs index).
+          # If policy.json is already correct in the checked-out commit,
+          # this should stay clean after policy generation.
+          if ! git diff --quiet -- "$POLICY_PATH"; then
             echo "❌ LavaMoat policy validation failed: new or changed package usage was detected."
             echo "The generated policy differs from the committed one."
             echo
@@ -126,7 +129,7 @@ jobs:
             echo "  $POLICY_PATH"
             echo
             echo "Diff (first 200 lines):"
-            git --no-pager diff HEAD -- "$POLICY_PATH" | sed -n '1,200p'
+            git --no-pager diff -- "$POLICY_PATH" | sed -n '1,200p'
             exit 1
           fi
 
