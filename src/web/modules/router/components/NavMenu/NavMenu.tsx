@@ -15,12 +15,14 @@ import BackButton from '@common/components/BackButton'
 import Button from '@common/components/Button'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import Text from '@common/components/Text'
+import { DISCORD_URL, TELEGRAM_URL, TWITTER_URL } from '@common/constants/social'
 import useController from '@common/hooks/useController'
 import { AnimatedPressable, useCustomHover } from '@common/hooks/useHover'
 import useNavigation from '@common/hooks/useNavigation'
 import useTheme from '@common/hooks/useTheme'
 import { HeaderWithTitle } from '@common/modules/header/components/Header/Header'
 import { ROUTES, WEB_ROUTES } from '@common/modules/router/constants/common'
+import SettingsLink from '@common/modules/settings/components/SettingsLink'
 import spacings from '@common/styles/spacings'
 import { BORDER_RADIUS_PRIMARY, hexToRgba } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
@@ -32,8 +34,6 @@ import {
   TabLayoutWrapperMainContent
 } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
 import { AUTO_LOCK_OPTIONS } from '@web/constants/autoLock'
-import { DISCORD_URL, TELEGRAM_URL, TWITTER_URL } from '@web/constants/social'
-import SettingsLink from '@web/modules/settings/components/SettingsLink'
 import commonWebStyles from '@web/styles/utils/common'
 
 import getStyles from './styles'
@@ -66,7 +66,7 @@ const OTHER_LINKS = [
   }
 ]
 
-const { isTab, isPopup } = getUiType()
+const { isTab } = getUiType()
 const expandViewTooltipId = 'expand-view-tooltip'
 
 const NavMenu = () => {
