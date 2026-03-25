@@ -14,13 +14,14 @@ import { SelectValue } from '@common/components/Select/types'
 import getStyles from '@common/components/SendToken/styles'
 import SkeletonLoader from '@common/components/SkeletonLoader'
 import Text from '@common/components/Text'
+import { isMobile } from '@common/config/env'
 import useController from '@common/hooks/useController'
 import useGetTokenSelectProps from '@common/hooks/useGetTokenSelectProps'
 import useNetworks from '@common/hooks/useNetworks'
 import useTheme from '@common/hooks/useTheme'
 import SwitchTokensButton from '@common/modules/swap-and-bridge/components/SwitchTokensButton'
 import ToTokenSelect from '@common/modules/swap-and-bridge/components/ToToken/ToTokenSelect'
-import spacings from '@common/styles/spacings'
+import spacings, { SPACING, SPACING_SM } from '@common/styles/spacings'
 import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
 import { getTokenId } from '@common/utils/token'
@@ -157,7 +158,7 @@ const ToToken: FC<Props> = ({ simulationFailed }) => {
             label: (
               <>
                 <Text
-                  fontSize={16}
+                  fontSize={isMobile ? 14 : 16}
                   appearance="secondaryText"
                   weight="medium"
                   dataSet={{ tooltipId }}
@@ -257,7 +258,7 @@ const ToToken: FC<Props> = ({ simulationFailed }) => {
       style={{
         ...spacings.pv,
         ...spacings.pl,
-        ...spacings.prMd
+        ...(isMobile ? {} : spacings.prMd)
       }}
     >
       <SwitchTokensButton
@@ -276,7 +277,7 @@ const ToToken: FC<Props> = ({ simulationFailed }) => {
         </Text>
         <Select
           setValue={handleSetToNetworkValue}
-          containerStyle={{ ...spacings.mb0, width: 168 }}
+          containerStyle={{ ...spacings.mb0, width: isMobile ? 150 : 168 }}
           options={toNetworksOptions}
           selectStyle={{ ...spacings.phMi, ...spacings.prTy }}
           size="sm"
@@ -285,16 +286,24 @@ const ToToken: FC<Props> = ({ simulationFailed }) => {
           bottomSheetTitle={t('Receive token network')}
         />
       </View>
-      <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-        <ToTokenSelect
-          toTokenOptions={toTokenOptions}
-          toTokenValue={toTokenValue}
-          handleChangeToToken={handleChangeToToken}
-          toTokenAmountSelectDisabled={toTokenAmountSelectDisabled}
-          addToTokenByAddressStatus={swapAndBridgeCtrlStatuses.addToTokenByAddress}
-          handleAddToTokenByAddress={handleAddToTokenByAddress}
-        />
-        <View style={[spacings.plSm, flexbox.flex1]}>
+      <View
+        style={[
+          flexbox.directionRow,
+          flexbox.alignCenter,
+          { columnGap: isMobile ? SPACING_SM : SPACING }
+        ]}
+      >
+        <View style={[flexbox.flex1]}>
+          <ToTokenSelect
+            toTokenOptions={toTokenOptions}
+            toTokenValue={toTokenValue}
+            handleChangeToToken={handleChangeToToken}
+            toTokenAmountSelectDisabled={toTokenAmountSelectDisabled}
+            addToTokenByAddressStatus={swapAndBridgeCtrlStatuses.addToTokenByAddress}
+            handleAddToTokenByAddress={handleAddToTokenByAddress}
+          />
+        </View>
+        <View style={[flexbox.flex1, isMobile ? { maxWidth: '40%' } : {}]}>
           {isReadyToDisplayAmounts ? (
             <Text
               fontSize={20}

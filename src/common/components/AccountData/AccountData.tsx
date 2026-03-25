@@ -68,7 +68,14 @@ const AccountData: FC<Props> = ({ onPress, withArrowRightIcon }) => {
   }, [account])
 
   return (
-    <View style={{ overflow: 'hidden', borderTopRightRadius: 50, borderBottomRightRadius: 50 }}>
+    <View
+      style={{
+        overflow: 'hidden',
+        flexShrink: 1,
+        borderTopRightRadius: 50,
+        borderBottomRightRadius: 50
+      }}
+    >
       <AnimatedPressable
         testID="account-select-btn"
         style={[
@@ -78,6 +85,10 @@ const AccountData: FC<Props> = ({ onPress, withArrowRightIcon }) => {
             flexShrink: 1,
             // @ts-ignore
             ...(isWeb && !onPress ? { cursor: 'auto' } : {})
+          },
+          isMobile && {
+            borderWidth: 1,
+            borderColor: '#FFFFFF1F'
           }
         ]}
         onPress={onPress}
@@ -92,7 +103,7 @@ const AccountData: FC<Props> = ({ onPress, withArrowRightIcon }) => {
           />
           <Text
             numberOfLines={1}
-            weight="semiBold"
+            weight={isMobile ? 'medium' : 'semiBold'}
             style={[spacings.mrMi, { maxWidth: isPopup ? 112 : 160, flexShrink: 1 }]}
             color="#FFFFFF"
             fontSize={14}

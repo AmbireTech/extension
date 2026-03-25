@@ -11,6 +11,7 @@ import Button from '@common/components/Button'
 import Panel from '@common/components/Panel'
 import Spinner from '@common/components/Spinner'
 import Text from '@common/components/Text'
+import { isMobile } from '@common/config/env'
 import useController from '@common/hooks/useController'
 import useNavigation from '@common/hooks/useNavigation'
 import useTheme from '@common/hooks/useTheme'
@@ -117,7 +118,12 @@ const ActiveRouteCard = ({ activeRoute }: { activeRoute: SwapAndBridgeActiveRout
           <CloseIcon />
         </Pressable>
       )}
-      <Text appearance="secondaryText" fontSize={14} weight="medium" style={spacings.mbMi}>
+      <Text
+        appearance="secondaryText"
+        fontSize={14}
+        weight="medium"
+        style={isMobile ? spacings.mbSm : spacings.mbMi}
+      >
         {t(routeText)}
       </Text>
       <View

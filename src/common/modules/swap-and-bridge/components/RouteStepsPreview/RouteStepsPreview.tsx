@@ -255,7 +255,9 @@ const RouteStepsPreview = ({
               weight="medium"
               color={theme.warningText}
               style={[
-                spacings.phTy,
+                spacings.phSm,
+                spacings.pvTy,
+                common.borderRadiusSecondary,
                 {
                   backgroundColor: theme.warningBackground
                 }
