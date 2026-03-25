@@ -25,6 +25,7 @@ import { TabLayoutContainer } from '@web/components/TabLayoutWrapper/TabLayoutWr
 import useDappInfo from '@web/hooks/useDappInfo/useDappInfo'
 import ActionFooter from '@web/modules/action-requests/components/ActionFooter'
 import useLedger from '@web/modules/hardware-wallet/hooks/useLedger'
+import useQrSigningFlow from '@web/modules/hardware-wallet/hooks/useQrSigningFlow'
 
 import Main from './Contents/main'
 import SignInWithEthereum from './Contents/signInWithEthereum'
@@ -51,9 +52,13 @@ const SignMessageScreen = () => {
     dispatch: requestsDispatch
   } = useController('RequestsController')
   const {
-    state: { currentRequest, signingStep },
-    dispatch: qrHardwareDispatch
-  } = useController('QrHardwareController')
+    currentRequest,
+    signingStep,
+    moveToResponseScan,
+    moveBack,
+    submitSignatureResponse,
+    signingCleanup
+  } = useQrSigningFlow()
   const { addToast } = useToast()
 
   const userRequest = useMemo(() => {
@@ -244,57 +249,6 @@ const SignMessageScreen = () => {
     setShouldDisplayLedgerConnectModal(false)
   }, [])
 
-  // QR-based
-  const handleOnContinue = useCallback(
-    () =>
-      qrHardwareDispatch({
-        type: 'method',
-        params: {
-          method: 'moveToResponseScan',
-          args: []
-        }
-      }),
-    [qrHardwareDispatch]
-  )
-
-  const handleQrSigningFlowOnBackPressed = useCallback(
-    () =>
-      qrHardwareDispatch({
-        type: 'method',
-        params: {
-          method: 'moveBack',
-          args: []
-        }
-      }),
-    [qrHardwareDispatch]
-  )
-
-  const handleSubmitSignatureResponse = useCallback(
-    (payload: string | Uint8Array) => {
-      qrHardwareDispatch({
-        type: 'method',
-        params: {
-          method: 'submitSignatureResponse',
-          args: [payload]
-        }
-      })
-    },
-    [qrHardwareDispatch]
-  )
-
-  const handleQrSigningFlowOnRejectPressed = useCallback(
-    () =>
-      qrHardwareDispatch({
-        type: 'method',
-        params: {
-          method: 'signingCleanup',
-          args: []
-        }
-      }),
-
-    [qrHardwareDispatch]
-  )
-
   const shouldDisplayEIP1271Warning = useMemo(() => {
     const dappOrigin = userRequest?.dappPromises[0]?.session?.origin
 
@@ -416,10 +370,10 @@ const SignMessageScreen = () => {
             isSafeNotDeployed={isSafeNotDeployed}
             currentRequest={currentRequest}
             signingStep={signingStep}
-            handleOnContinue={handleOnContinue}
-            handleSubmitSignatureResponse={handleSubmitSignatureResponse}
-            handleQrSigningFlowOnRejectPressed={handleQrSigningFlowOnRejectPressed}
-            handleQrSigningFlowOnBackPressed={handleQrSigningFlowOnBackPressed}
+            handleOnContinue={moveToResponseScan}
+            handleSubmitSignatureResponse={submitSignatureResponse}
+            handleQrSigningFlowOnRejectPressed={signingCleanup}
+            handleQrSigningFlowOnBackPressed={moveBack}
           />
         )}
         {view === 'siwe' && (
@@ -430,10 +384,10 @@ const SignMessageScreen = () => {
             isSafeNotDeployed={isSafeNotDeployed}
             currentRequest={currentRequest}
             signingStep={signingStep}
-            handleOnContinue={handleOnContinue}
-            handleSubmitSignatureResponse={handleSubmitSignatureResponse}
-            handleQrSigningFlowOnRejectPressed={handleQrSigningFlowOnRejectPressed}
-            handleQrSigningFlowOnBackPressed={handleQrSigningFlowOnBackPressed}
+            handleOnContinue={moveToResponseScan}
+            handleSubmitSignatureResponse={submitSignatureResponse}
+            handleQrSigningFlowOnRejectPressed={signingCleanup}
+            handleQrSigningFlowOnBackPressed={moveBack}
           />
         )}
       </TabLayoutContainer>

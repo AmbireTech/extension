@@ -14,6 +14,7 @@ import useController from '@common/hooks/useController'
 import usePrevious from '@common/hooks/usePrevious'
 import { OneClickEstimationProps } from '@common/modules/sign-account-op/components/OneClick/Estimation/Estimation'
 import useLedger from '@web/modules/hardware-wallet/hooks/useLedger'
+import useQrSigningFlow from '@web/modules/hardware-wallet/hooks/useQrSigningFlow'
 import { getIsSignLoading } from '@web/modules/sign-account-op/utils/helpers'
 
 type ButtonMode = OneClickEstimationProps['updateType'] | 'Sign' | 'HW' | 'Safe'
@@ -77,9 +78,14 @@ const useSign = ({
   const prevIsChooseSignerShown = usePrevious(isChooseSignerShown)
   const { isLedgerConnected } = useLedger()
   const {
-    state: { currentRequest, signingStep },
-    dispatch: qrHardwareDispatch
-  } = useController('QrHardwareController')
+    currentRequest,
+    signingStep,
+    moveToResponseScan,
+    moveBack,
+    submitSignatureResponse,
+    signingCleanup
+  } = useQrSigningFlow()
+
   const [slowRequest, setSlowRequest] = useState<boolean>(false)
   const [slowPaymasterRequest, setSlowPaymasterRequest] = useState<boolean>(true)
   const [acknowledgedWarnings, setAcknowledgedWarnings] = useState<string[]>([])
@@ -191,54 +197,14 @@ const useSign = ({
     []
   )
 
-  const handleQrSingingFlowOnContinuePressed = useCallback(
-    () =>
-      qrHardwareDispatch({
-        type: 'method',
-        params: {
-          method: 'moveToResponseScan',
-          args: []
-        }
-      }),
-    [qrHardwareDispatch]
-  )
-
-  const handleQrSigningFlowOnBackPressed = useCallback(
-    () =>
-      qrHardwareDispatch({
-        type: 'method',
-        params: {
-          method: 'moveBack',
-          args: []
-        }
-      }),
-    [qrHardwareDispatch]
-  )
-
-  const handleQrSigningFlowSubmitSignatureResponse = useCallback(
-    (payload: string | Uint8Array) => {
-      qrHardwareDispatch({
-        type: 'method',
-        params: {
-          method: 'submitSignatureResponse',
-          args: [payload]
-        }
-      })
-    },
-    [qrHardwareDispatch]
-  )
+  const handleQrSingingFlowOnContinuePressed = moveToResponseScan
+  const handleQrSigningFlowOnBackPressed = moveBack
+  const handleQrSigningFlowSubmitSignatureResponse = submitSignatureResponse
 
   const handleQrSigningFlowOnRejectPressed = useCallback(() => {
-    qrHardwareDispatch({
-      type: 'method',
-      params: {
-        method: 'signingCleanup',
-        args: []
-      }
-    })
-
+    signingCleanup()
     setShouldDisplayQrSigningModal(false)
-  }, [qrHardwareDispatch])
+  }, [signingCleanup])
 
   const warningToPromptBeforeSign = useMemo(
     () =>
