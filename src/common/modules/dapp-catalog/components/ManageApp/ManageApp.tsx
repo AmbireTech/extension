@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { Animated, Dimensions, View, ViewStyle } from 'react-native'
 
 import { Dapp } from '@ambire-common/interfaces/dapp'
+import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import Text from '@common/components/Text'
 import { isWeb } from '@common/config/env'
 import usePrevious from '@common/hooks/usePrevious'
@@ -35,7 +36,19 @@ const AppData = ({ dapp }: { dapp: Dapp }) => {
     >
       <DappIcon dapp={dapp} />
       <View style={[flexbox.flex1, spacings.mlSm]}>
-        <Text weight="medium" numberOfLines={1} fontSize={14}>
+        <Text
+          weight="medium"
+          numberOfLines={1}
+          fontSize={14}
+          dataSet={
+            dapp.name.length <= MAX_APP_NAME_LENGTH
+              ? undefined
+              : createGlobalTooltipDataSet({
+                  id: 'dapp-name-tooltip',
+                  content: dapp.name
+                })
+          }
+        >
           {dapp.name.length > MAX_APP_NAME_LENGTH
             ? `${dapp.name.slice(0, MAX_APP_NAME_LENGTH)}...`
             : dapp.name}
