@@ -1,6 +1,7 @@
 import { flushSync } from 'react-dom'
 
 import { cloneDeep } from '@ambire-common/libs/richJson/richJson'
+import { isMobile } from '@common/config/env'
 import { AllControllersMappingType } from '@common/constants/controllersMapping'
 import { isExtension } from '@web/constants/browserapi'
 
@@ -48,7 +49,7 @@ export class ControllerStore {
   ) {
     if (ctrl === undefined) return
     try {
-      this.#states[id] = isExtension ? { ...ctrl } : cloneDeep(ctrl)
+      this.#states[id] = isExtension || isMobile ? { ...ctrl } : cloneDeep(ctrl)
     } catch (error) {
       console.error(error)
     }

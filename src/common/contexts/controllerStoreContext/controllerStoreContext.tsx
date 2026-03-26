@@ -1,4 +1,3 @@
-import { EventEmitter as Emitter } from 'events'
 /* eslint-disable @typescript-eslint/no-floating-promises */
 import React, { createContext, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
