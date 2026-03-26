@@ -588,7 +588,6 @@
         "ethers": true,
         "@ledgerhq/context-module>inversify": true,
         "purify-ts": true,
-        "@ledgerhq/device-signer-kit-ethereum>semver": true,
         "@ledgerhq/device-management-kit>xstate": true
       }
     },
@@ -1209,7 +1208,7 @@
         "patch-package>json-stable-stringify>call-bind>set-function-length": true
       }
     },
-    "@lavamoat/webpack>json-stable-stringify>call-bound": {
+    "patch-package>json-stable-stringify>call-bound": {
       "packages": {
         "patch-package>json-stable-stringify>call-bind>call-bind-apply-helpers": true,
         "eslint-plugin-react>array-includes>get-intrinsic": true
@@ -1839,7 +1838,7 @@
     },
     "react-native-quick-crypto>util>is-arguments": {
       "packages": {
-        "@lavamoat/webpack>json-stable-stringify>call-bound": true,
+        "patch-package>json-stable-stringify>call-bound": true,
         "eslint-plugin-react>array-includes>is-string>has-tostringtag": true
       }
     },
@@ -1850,7 +1849,7 @@
     },
     "react-native-quick-crypto>util>is-generator-function": {
       "packages": {
-        "@lavamoat/webpack>json-stable-stringify>call-bound": true,
+        "patch-package>json-stable-stringify>call-bound": true,
         "eslint-plugin-react>array-includes>es-abstract>get-proto": true,
         "eslint-plugin-react>array-includes>is-string>has-tostringtag": true,
         "eslint-plugin-jsx-a11y>safe-regex-test": true
@@ -1864,7 +1863,7 @@
     },
     "eslint-plugin-jsx-a11y>safe-regex-test>is-regex": {
       "packages": {
-        "@lavamoat/webpack>json-stable-stringify>call-bound": true,
+        "patch-package>json-stable-stringify>call-bound": true,
         "eslint-plugin-react>es-iterator-helpers>gopd": true,
         "eslint-plugin-react>array-includes>is-string>has-tostringtag": true,
         "eslint-plugin-react>hasown": true
@@ -2756,7 +2755,7 @@
     },
     "eslint-plugin-jsx-a11y>safe-regex-test": {
       "packages": {
-        "@lavamoat/webpack>json-stable-stringify>call-bound": true,
+        "patch-package>json-stable-stringify>call-bound": true,
         "eslint-plugin-react>es-iterator-helpers>es-errors": true,
         "eslint-plugin-jsx-a11y>safe-regex-test>is-regex": true
       }
@@ -2793,16 +2792,6 @@
       }
     },
     "@ledgerhq/device-management-kit>semver": {
-      "globals": {
-        "console.error": true,
-        "process": true
-      },
-      "packages": {
-        "node-polyfill-webpack-plugin>console-browserify": true,
-        "process": true
-      }
-    },
-    "@ledgerhq/device-signer-kit-ethereum>semver": {
       "globals": {
         "console.error": true,
         "process": true
@@ -2856,7 +2845,7 @@
     },
     "eslint-plugin-react>string.prototype.matchall>side-channel>side-channel-map": {
       "packages": {
-        "@lavamoat/webpack>json-stable-stringify>call-bound": true,
+        "patch-package>json-stable-stringify>call-bound": true,
         "eslint-plugin-react>es-iterator-helpers>es-errors": true,
         "eslint-plugin-react>array-includes>get-intrinsic": true,
         "@ambire/signature-validator>tape>object-inspect": true
@@ -2864,7 +2853,7 @@
     },
     "eslint-plugin-react>string.prototype.matchall>side-channel>side-channel-weakmap": {
       "packages": {
-        "@lavamoat/webpack>json-stable-stringify>call-bound": true,
+        "patch-package>json-stable-stringify>call-bound": true,
         "eslint-plugin-react>es-iterator-helpers>es-errors": true,
         "eslint-plugin-react>array-includes>get-intrinsic": true,
         "@ambire/signature-validator>tape>object-inspect": true,
@@ -3003,7 +2992,7 @@
     },
     "crypto-browserify>pbkdf2>to-buffer>typed-array-buffer": {
       "packages": {
-        "@lavamoat/webpack>json-stable-stringify>call-bound": true,
+        "patch-package>json-stable-stringify>call-bound": true,
         "eslint-plugin-react>es-iterator-helpers>es-errors": true,
         "react-native-quick-crypto>util>is-typed-array": true
       }
@@ -3125,7 +3114,7 @@
       "packages": {
         "eslint-plugin-react>array-includes>es-abstract>available-typed-arrays": true,
         "patch-package>json-stable-stringify>call-bind": true,
-        "@lavamoat/webpack>json-stable-stringify>call-bound": true,
+        "patch-package>json-stable-stringify>call-bound": true,
         "@ambire/signature-validator>tape>for-each": true,
         "eslint-plugin-react>array-includes>es-abstract>get-proto": true,
         "eslint-plugin-react>es-iterator-helpers>gopd": true,

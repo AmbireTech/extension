@@ -69,7 +69,7 @@ const AccountKeys: FC<Props> = ({
   }, [accountState, usedNetworks, account, accountsDispatch])
 
   /**
-   * Get the safe owners by network if the account is a safe
+   * Get the Safe owners by network if the account is a Safe
    * We do not display network icons for the others as it doesn't make sense
    */
   const safeOwnersByNetwork: { [address: string]: bigint[] } = useMemo(() => {
