@@ -26,7 +26,11 @@ const getStyles = (theme: ThemeProps) =>
       backgroundColor: theme.secondaryBackground,
       minWidth: 160,
       ...common.shadowSecondary,
-      ...common.borderRadiusPrimary
+      ...common.borderRadiusPrimary,
+      shadowColor: theme.neutral400,
+      shadowOffset: { width: 0, height: 1 },
+      shadowOpacity: 1,
+      shadowRadius: 8
     },
     overlay: {
       width: '100%',
