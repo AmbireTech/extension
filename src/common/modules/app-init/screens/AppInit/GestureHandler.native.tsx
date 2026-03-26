@@ -1,8 +1,12 @@
-import { ReactNode } from 'react'
-import { Dimensions } from 'react-native'
+import { ReactNode, useEffect } from 'react'
+import { BackHandler, Dimensions, Platform } from 'react-native'
 import { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler'
 
-import { bottomSheetCloseEventStream, openBottomSheetsCount } from '@common/components/BottomSheet/bottomSheetEventStream'
+import {
+  bottomSheetCloseEventStream,
+  openBottomSheetsCount
+} from '@common/components/BottomSheet/bottomSheetEventStream'
+import { isAndroid } from '@common/config/env'
 import useNavigation from '@common/hooks/useNavigation'
 import useRoute from '@common/hooks/useRoute'
 import useTheme from '@common/hooks/useTheme'
@@ -15,10 +19,35 @@ const GestureHandler = ({ children }: { children: ReactNode }) => {
   const { goBack, canGoBack } = useNavigation()
   const { path } = useRoute()
 
+  useEffect(() => {
+    if (!isAndroid) return
+
+    const backAction = () => {
+      const isRootPath =
+        path === '/' || [ROUTES.dashboard, ROUTES.getStarted, ROUTES.keyStoreUnlock].includes(path)
+
+      if (!isRootPath && canGoBack) {
+        if (openBottomSheetsCount.value > 0) {
+          bottomSheetCloseEventStream.next()
+        } else {
+          goBack()
+        }
+      }
+
+      return true
+    }
+
+    const backHandler = BackHandler.addEventListener('hardwareBackPress', backAction)
+
+    return () => backHandler.remove()
+  }, [path, canGoBack, goBack])
+
   const panGesture = Gesture.Pan()
     .activeOffsetX(10) // Sensitivity
     .runOnJS(true)
     .onEnd((e) => {
+      if (isAndroid) return
+
       // 1. Path Guard
       if (
         path === '/' ||
@@ -30,7 +59,7 @@ const GestureHandler = ({ children }: { children: ReactNode }) => {
       // 2. Logic: Calculate starting point (10% threshold)
       const startX = e.absoluteX - e.translationX
       const isFromLeftEdge = startX < width * 0.1
-      
+
       // 3. Logic: Trigger if moved 30% OR flicked fast (velocity > 500)
       const isSwipedRight = e.translationX > width * 0.3 || e.velocityX > 500
 
