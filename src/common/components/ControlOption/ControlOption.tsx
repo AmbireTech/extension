@@ -52,7 +52,7 @@ const ControlOption: FC<Props> = ({
     <ParentElement
       style={[
         isWeb && spacings.pv,
-        isMobile && { height: 68 },
+        isMobile && { height: 66 },
         spacings.ph,
         common.borderRadiusPrimary,
         flexbox.directionRow,

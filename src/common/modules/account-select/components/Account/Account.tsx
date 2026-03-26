@@ -152,7 +152,7 @@ const Account = ({
     ]
     const submenuOptions7702 = [{ label: 'Smart settings', value: 'toSmarter' }]
 
-    return add7702Option ? [...submenuOptions7702, ...submenuOptions] : submenuOptions
+    return add7702Option && isWeb ? [...submenuOptions7702, ...submenuOptions] : submenuOptions
   }, [account, getAccKeys, options.withOptionsButton, theme.errorDecorative])
 
   const handleCopy = async () => {

@@ -163,12 +163,15 @@ const AccountsSettingsScreen = () => {
                 isWeb && spacings.phSm,
                 isMobile && spacings.plSm,
                 isMobile && spacings.prMi,
-                spacings.mbMi,
+                isWeb && spacings.mbMi,
                 //@ts-ignore
                 { cursor: 'grab', touchAction: 'manipulation' }
               ]}
             >
-              <DragIndicatorIcon color={isDragging ? theme.primary : theme.iconPrimary} />
+              <DragIndicatorIcon
+                color={isDragging ? theme.primary : theme.iconPrimary}
+                width={isMobile ? 10 : 12.5}
+              />
             </Pressable>
           </View>
           <View style={flexbox.flex1}>
@@ -210,18 +213,18 @@ const AccountsSettingsScreen = () => {
             ListEmptyComponent={<Text>{t('No accounts found')}</Text>}
           />
         </View>
-        <View style={spacings.ptSm}>
-          <Button
-            testID="button-add-account"
-            text={t('Add account')}
-            size="regular"
-            onPress={openBottomSheet as any}
-            childrenPosition="left"
-            style={{ ...flexbox.alignSelfCenter, width: '100%' }}
-          >
-            <AddCircularIcon width={24} height={24} color="#fff" style={spacings.mrTy} />
-          </Button>
-        </View>
+
+        <Button
+          testID="button-add-account"
+          text={t('Add account')}
+          size="regular"
+          onPress={openBottomSheet as any}
+          childrenPosition="left"
+          hasBottomSpacing={false}
+          style={{ ...flexbox.alignSelfCenter, width: '100%' }}
+        >
+          <AddCircularIcon width={24} height={24} color="#fff" style={spacings.mrTy} />
+        </Button>
 
         <AccountSmartSettingsBottomSheet
           sheetRef={sheetRefAccountSmartSettings}
@@ -243,7 +246,7 @@ const AccountsSettingsScreen = () => {
         />
         <BottomSheet
           id="remove-account-seed-sheet"
-          type="modal"
+          type={isWeb ? 'modal' : 'bottom-sheet'}
           sheetRef={sheetRefRemoveAccount}
           closeBottomSheet={() => {
             setAccountToRemove(null)
@@ -253,23 +256,25 @@ const AccountsSettingsScreen = () => {
             setAccountToRemove(null)
             closeRemoveAccount()
           }}
-          scrollViewProps={{ contentContainerStyle: { flex: 1 } }}
+          scrollViewProps={isWeb ? { contentContainerStyle: { flex: 1 } } : undefined}
           containerInnerWrapperStyles={{ flex: 1 }}
-          style={{ maxWidth: 432, minHeight: 432, ...spacings.pvLg }}
+          style={isWeb ? { maxWidth: 432, minHeight: 432, ...spacings.pvLg } : undefined}
         >
           <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mbLg]}>
-            <PanelBackButton
-              onPress={() => {
-                setAccountToRemove(null)
-                closeRemoveAccount()
-              }}
-              style={spacings.mrSm}
-            />
+            {!isMobile && (
+              <PanelBackButton
+                onPress={() => {
+                  setAccountToRemove(null)
+                  closeRemoveAccount()
+                }}
+                style={spacings.mrSm}
+              />
+            )}
             <PanelTitle
               title={t('Remove {{ label }}', {
                 label: accountToRemove?.preferences?.label || 'account'
               })}
-              style={text.left}
+              style={isMobile ? text.center : text.left}
             />
           </View>
           <View style={[flexbox.flex1, flexbox.alignCenter, flexbox.justifyCenter]}>
@@ -277,11 +282,12 @@ const AccountsSettingsScreen = () => {
               {t('Are you sure you want to remove this account?')}
             </Text>
           </View>
-          <View style={flexbox.alignCenter}>
+          <View style={isWeb ? flexbox.alignCenter : {}}>
             <Button
               testID="confirm-remove-account-button"
               type="danger"
               style={spacings.mtTy}
+              hasBottomSpacing={false}
               text={t('Remove account')}
               onPress={removeAccount}
             />
