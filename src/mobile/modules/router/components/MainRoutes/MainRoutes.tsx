@@ -21,6 +21,7 @@ import KeyStoreSetupScreen from '@mobile/modules/keystore/screens/KeyStoreSetupS
 import NetworksScreen from '@mobile/modules/networks/screens'
 import ReceiveScreen from '@mobile/modules/receive/screens/ReceiveScreen'
 import NavMenu from '@mobile/modules/router/components/NavMenu'
+import AccountsSettingsScreen from '@mobile/modules/settings/screens/AccountsSettingsScreen'
 import GeneralSettingsScreen from '@mobile/modules/settings/screens/GeneralSettingsScreen'
 import SignAccountOpScreen from '@mobile/modules/sign-account-op/screens/SignAccountOpScreen'
 import SwapAndBridgeScreen from '@mobile/modules/swap-and-bridge/screens/SwapAndBridgeScreen'
@@ -62,6 +63,7 @@ const MainRoutes = () => {
           <Route path={ROUTES.swapAndBridge} element={<SwapAndBridgeScreen />} />
           <Route path={ROUTES.menu} element={<NavMenu />} />
           <Route path={ROUTES.generalSettings} element={<GeneralSettingsScreen />} />
+          <Route path={ROUTES.accountsSettings} element={<AccountsSettingsScreen />} />
         </Route>
       </Route>
       {/* Fallback route to suppress "No routes matched location" warnings when multiple Routes blocks are rendered */}

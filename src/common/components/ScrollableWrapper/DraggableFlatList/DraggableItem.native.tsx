@@ -8,8 +8,9 @@ type Props = {
 
 const DraggableItem = ({ id, children }: Props) => {
   return (
-    // @ts-ignore
-    <View>{children(false, undefined, undefined)}</View>
+    <View>
+      {children(false, undefined, undefined)}
+    </View>
   )
 }
 

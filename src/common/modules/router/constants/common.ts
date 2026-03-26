@@ -26,7 +26,8 @@ const COMMON_ROUTES = {
   networks: 'networks',
   swapAndBridge: 'swap-and-bridge',
   menu: 'menu',
-  generalSettings: 'settings/general'
+  generalSettings: 'settings/general',
+  accountsSettings: 'settings/accounts'
 }
 
 const MOBILE_ROUTES = {
@@ -59,7 +60,6 @@ const WEB_ROUTES = {
   settingsTerms: 'settings/terms',
   settingsAbout: 'settings/about',
   networksSettings: 'settings/networks',
-  accountsSettings: 'settings/accounts',
   devicePasswordSet: 'settings/device-password-set',
   devicePasswordChange: 'settings/device-password-change',
   devicePasswordRecovery: 'settings/device-password-recovery',
