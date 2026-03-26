@@ -14,11 +14,11 @@ import { PanelBackButton, PanelTitle } from '@common/components/Panel/Panel'
 import ScrollableWrapper, { WRAPPER_TYPES } from '@common/components/ScrollableWrapper'
 import Search from '@common/components/Search'
 import Text from '@common/components/Text'
+import { isMobile, isWeb } from '@common/config/env'
 import useAccountsList from '@common/hooks/useAccountsList'
 import useController from '@common/hooks/useController'
 import useElementSize from '@common/hooks/useElementSize'
 import useTheme from '@common/hooks/useTheme'
-import useWindowSize from '@common/hooks/useWindowSize'
 import Account from '@common/modules/account-select/components/Account'
 import AddAccount from '@common/modules/account-select/components/AddAccount'
 import spacings from '@common/styles/spacings'
@@ -160,7 +160,9 @@ const AccountsSettingsScreen = () => {
                 flexbox.alignCenter,
                 flexbox.justifyCenter,
                 spacings.pvMi,
-                spacings.phSm,
+                isWeb && spacings.phSm,
+                isMobile && spacings.plSm,
+                isMobile && spacings.prMi,
                 spacings.mbMi,
                 //@ts-ignore
                 { cursor: 'grab', touchAction: 'manipulation' }
@@ -177,7 +179,8 @@ const AccountsSettingsScreen = () => {
               inverseInteractionColors
               isSelectable={false}
               containerStyle={{ ...spacings.mb0, ...spacings.pvSm }}
-              withReceive
+              withReceive={!isMobile}
+              withCopy={!isMobile}
             />
           </View>
         </View>
@@ -191,38 +194,35 @@ const AccountsSettingsScreen = () => {
       accountOptions
     ]
   )
-  const { maxWidthSize } = useWindowSize()
-  const isWidthS = maxWidthSize('s')
 
   return (
     <MobileLayoutContainer>
       <MobileLayoutWrapperMainContent withBackButton title="Accounts">
-        <Search autoFocus control={control} containerStyle={{ width: isWidthS ? 320 : 200 }} />
+        <Search control={control} containerStyle={spacings.mbLg} />
         <View style={[flexbox.flex1]} ref={accountsContainerRef}>
           <ScrollableWrapper
             type={WRAPPER_TYPES.DRAGGABLE_FLAT_LIST}
             data={localAccounts}
             keyExtractor={keyExtractor}
             onDragEnd={handleAccDragEnd}
-            renderItem={renderItem}
+            renderItem={renderItem as any}
             getItemLayout={getItemLayout}
             ListEmptyComponent={<Text>{t('No accounts found')}</Text>}
           />
         </View>
-        <Button
-          testID="add-account-modal"
-          text={t('Add account')}
-          type="primary"
-          size="smaller"
-          textStyle={{ fontSize: 12 }}
-          style={[spacings.phSm, { height: 40 }]}
-          hasBottomSpacing={false}
-          onPress={openBottomSheet as any}
-          submitOnEnter={false}
-          childrenPosition="left"
-        >
-          <AddCircularIcon color="#fff" width={20} height={20} style={spacings.mrMi} />
-        </Button>
+        <View style={spacings.ptSm}>
+          <Button
+            testID="button-add-account"
+            text={t('Add account')}
+            size="regular"
+            onPress={openBottomSheet as any}
+            childrenPosition="left"
+            style={{ ...flexbox.alignSelfCenter, width: '100%' }}
+          >
+            <AddCircularIcon width={24} height={24} color="#fff" style={spacings.mrTy} />
+          </Button>
+        </View>
+
         <AccountSmartSettingsBottomSheet
           sheetRef={sheetRefAccountSmartSettings}
           closeBottomSheet={() => {
