@@ -5,13 +5,10 @@ import ExternalSignerError from '@ambire-common/classes/ExternalSignerError'
 import { TypedMessageUserRequest } from '@ambire-common/interfaces/userRequest'
 import { stripHexPrefix } from '@ambire-common/utils/stripHexPrefix'
 import { CryptoHDKey, DataType, ETHSignature, EthSignRequest } from '@keystonehq/bc-ur-registry-eth'
-import { UREncoder } from '@ngraveio/bc-ur'
 
 import { QrProtocolAdapter, QrRequest, QrSignaturePayload } from '../types'
-import { normalizeOriginHdPath } from '../utils'
+import { isSignatureParts, normalizeOriginHdPath } from '../utils'
 import { QrWalletType } from '../wallets'
-
-const MAX_QR_FRAGMENT_LENGTH = 200
 
 /**
  * The UrQrProtocolAdapter is responsible for handling QR payloads that follow the UR protocol.
@@ -205,21 +202,33 @@ class UrQrProtocolAdapter implements QrProtocolAdapter {
         }
       }
 
-      const signature = ethSignature.getSignature()
+      const signature: unknown = ethSignature.getSignature()
 
       if (typeof signature === 'string') {
         return { signature }
       }
 
-      if (signature instanceof Uint8Array || ArrayBuffer.isView(signature)) {
+      if (signature instanceof Uint8Array) {
         return { signature: hexlify(signature) }
       }
 
-      return {
-        r: signature.r,
-        s: signature.s,
-        v: signature.v
+      if (ArrayBuffer.isView(signature)) {
+        return {
+          signature: hexlify(
+            new Uint8Array(signature.buffer, signature.byteOffset, signature.byteLength)
+          )
+        }
       }
+
+      if (isSignatureParts(signature)) {
+        return {
+          r: signature.r,
+          s: signature.s,
+          v: signature.v
+        }
+      }
+
+      throw new ExternalSignerError('Unsupported QR signature format.')
     } catch (e: any) {
       throw new ExternalSignerError(e?.message || 'Failed to parse UR signature response.', {
         sendCrashReport: true

@@ -25,6 +25,12 @@ export type QrRequest = {
 
 export type QrSignaturePayload = { signature: string } | { r: string; s: string; v: number }
 
+export type SignatureParts = {
+  r: string
+  s: string
+  v: number
+}
+
 export interface QrProtocolAdapter {
   protocol: 'ur' | 'airgap'
 
