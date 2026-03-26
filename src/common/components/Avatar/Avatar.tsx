@@ -5,7 +5,6 @@ import SkeletonLoader from '@common/components/SkeletonLoader'
 import { isBenzin, isLegends } from '@common/config/env'
 import { AvatarType } from '@common/controllers/wallet-state'
 import useController from '@common/hooks/useController'
-import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
@@ -72,7 +71,6 @@ const Avatar: FC<Props> = ({
   showTooltip = false,
   displayTypeBadge = true
 }) => {
-  const { theme } = useTheme()
   // the ENS avatar may point to an image that no longer exists or just fails to load
   // In that case we must fallback to the next avatar type
   const [ensAvatarImageFetchFailed, setEnsAvatarImageFetchFailed] = useState(false)
