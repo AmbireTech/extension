@@ -20,7 +20,7 @@ export class WalletStateController extends EventEmitter implements IWalletStateC
 
   isPinned: boolean = true
 
-  #isSetupComplete: boolean = true
+  #isSetupComplete: boolean = false
 
   isPrivacyModeEnabled: boolean = false
 
