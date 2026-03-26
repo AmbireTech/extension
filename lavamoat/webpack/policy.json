@@ -130,6 +130,18 @@
         "eth-crypto>ethereumjs-util": true
       }
     },
+    "@keystonehq/bc-ur-registry-eth>@ethereumjs/util": {
+      "globals": {
+        "console.warn": true,
+        "fetch": true
+      },
+      "packages": {
+        "@ethereumjs/rlp": true,
+        "node-polyfill-webpack-plugin>console-browserify": true,
+        "@metamask/eth-sig-util>ethereum-cryptography": true,
+        "events": true
+      }
+    },
     "@metamask/eth-sig-util>@ethereumjs/util": {
       "globals": {
         "Buffer.alloc": true,
@@ -532,6 +544,64 @@
         "@ledgerhq/context-module>inversify>@inversifyjs/core>@inversifyjs/reflect-metadata-utils": true
       }
     },
+    "@keystonehq/animated-qr": {
+      "globals": {
+        "Buffer.from": true,
+        "clearInterval": true,
+        "clearTimeout": true,
+        "console.error": true,
+        "document.getElementById": true,
+        "process.env.NODE_ENV": true,
+        "setInterval": true,
+        "setTimeout": true
+      },
+      "packages": {
+        "@keystonehq/animated-qr>@keystonehq/animated-qr-base": true,
+        "@ngraveio/bc-ur": true,
+        "@keystonehq/animated-qr>@zxing/browser": true,
+        "@keystonehq/animated-qr>@zxing/library": true,
+        "buffer": true,
+        "node-polyfill-webpack-plugin>console-browserify": true,
+        "@keystonehq/animated-qr>qrcode.react": true,
+        "react": true
+      }
+    },
+    "@keystonehq/animated-qr>@keystonehq/animated-qr-base": {
+      "globals": {
+        "URL": true,
+        "location.href": true,
+        "navigator": true
+      },
+      "packages": {
+        "@ngraveio/bc-ur": true,
+        "tslib": true
+      }
+    },
+    "@keystonehq/bc-ur-registry-eth": {
+      "globals": {
+        "Buffer.from": true,
+        "process.env.NODE_ENV": true
+      },
+      "packages": {
+        "@keystonehq/bc-ur-registry-eth>@ethereumjs/util": true,
+        "@keystonehq/bc-ur-registry-eth>@keystonehq/bc-ur-registry": true,
+        "buffer": true,
+        "@keystonehq/bc-ur-registry-eth>hdkey": true,
+        "@keystonehq/bc-ur-registry-eth>uuid": true
+      }
+    },
+    "@keystonehq/bc-ur-registry-eth>@keystonehq/bc-ur-registry": {
+      "globals": {
+        "Buffer": true,
+        "define": true
+      },
+      "packages": {
+        "@ngraveio/bc-ur": true,
+        "@keystonehq/bc-ur-registry-eth>@keystonehq/bc-ur-registry>bs58check": true,
+        "buffer": true,
+        "tslib": true
+      }
+    },
     "@ledgerhq/context-module": {
       "packages": {
         "$root$": true,
@@ -665,6 +735,25 @@
         "eslint>debug": true,
         "@metamask/eth-sig-util>@metamask/utils>pony-cause": true,
         "ts-jest>semver": true
+      }
+    },
+    "@ngraveio/bc-ur": {
+      "globals": {
+        "Buffer.alloc": true,
+        "Buffer.allocUnsafe": true,
+        "Buffer.concat": true,
+        "Buffer.from": true,
+        "Buffer.isBuffer": true
+      },
+      "packages": {
+        "@ngraveio/bc-ur>@keystonehq/alias-sampling": true,
+        "@ngraveio/bc-ur>assert": true,
+        "gridplus-sdk>bignumber.js": true,
+        "buffer": true,
+        "@ngraveio/bc-ur>cbor-sync": true,
+        "@ngraveio/bc-ur>crc": true,
+        "@ngraveio/bc-ur>jsbi": true,
+        "@ngraveio/bc-ur>sha.js": true
       }
     },
     "@metamask/eth-sig-util>ethereum-cryptography>@noble/curves": {
@@ -962,6 +1051,42 @@
         "node-polyfill-webpack-plugin>console-browserify": true
       }
     },
+    "@keystonehq/animated-qr>@zxing/browser": {
+      "globals": {
+        "HTMLElement": true,
+        "HTMLImageElement": true,
+        "HTMLVideoElement": true,
+        "clearTimeout": true,
+        "console.error": true,
+        "console.warn": true,
+        "document": true,
+        "navigator": true,
+        "setTimeout": true
+      },
+      "packages": {
+        "@keystonehq/animated-qr>@zxing/library": true,
+        "node-polyfill-webpack-plugin>console-browserify": true
+      }
+    },
+    "@keystonehq/animated-qr>@zxing/library": {
+      "globals": {
+        "HTMLImageElement": true,
+        "HTMLVideoElement": true,
+        "TextDecoder": true,
+        "TextEncoder": true,
+        "URL.createObjectURL": true,
+        "btoa": true,
+        "console.log": true,
+        "console.warn": true,
+        "document": true,
+        "navigator": true,
+        "setTimeout": true
+      },
+      "packages": {
+        "node-polyfill-webpack-plugin>console-browserify": true,
+        "react-qr-reader>@zxing/library>ts-custom-error": true
+      }
+    },
     "aes-js": {
       "globals": {
         "define": true
@@ -992,7 +1117,7 @@
         "@safe-global/api-kit>@safe-global/protocol-kit>@peculiar/asn1-schema>asn1js>pvutils": true
       }
     },
-    "node-polyfill-webpack-plugin>assert": {
+    "@ngraveio/bc-ur>assert": {
       "globals": {
         "console": true,
         "process.emitWarning": true,
@@ -1000,11 +1125,11 @@
       },
       "packages": {
         "node-polyfill-webpack-plugin>console-browserify": true,
-        "node-polyfill-webpack-plugin>assert>es6-object-assign": true,
-        "node-polyfill-webpack-plugin>assert>is-nan": true,
-        "@ambire/signature-validator>tape>object-is": true,
+        "@ngraveio/bc-ur>assert>es6-object-assign": true,
+        "@ngraveio/bc-ur>assert>is-nan": true,
+        "@ngraveio/bc-ur>assert>object-is": true,
         "process": true,
-        "node-polyfill-webpack-plugin>assert>util": true
+        "@ngraveio/bc-ur>assert>util": true
       }
     },
     "eslint-plugin-react>array-includes>es-abstract>available-typed-arrays": {
@@ -1040,6 +1165,16 @@
         "buffer": true,
         "node-polyfill-webpack-plugin>console-browserify": true,
         "process": true
+      }
+    },
+    "@keystonehq/bc-ur-registry-eth>@keystonehq/bc-ur-registry>bs58check>bs58>base-x": {
+      "packages": {
+        "react-native-quick-crypto>safe-buffer": true
+      }
+    },
+    "@keystonehq/bc-ur-registry-eth>hdkey>bs58check>bs58>base-x": {
+      "packages": {
+        "react-native-quick-crypto>safe-buffer": true
       }
     },
     "gridplus-sdk>bignumber.js": {
@@ -1158,7 +1293,7 @@
         "process.nextTick": true
       },
       "packages": {
-        "node-polyfill-webpack-plugin>assert": true,
+        "@ngraveio/bc-ur>assert": true,
         "buffer": true,
         "browserify-zlib>pako": true,
         "process": true,
@@ -1166,15 +1301,39 @@
         "util": true
       }
     },
+    "@keystonehq/bc-ur-registry-eth>@keystonehq/bc-ur-registry>bs58check>bs58": {
+      "packages": {
+        "@keystonehq/bc-ur-registry-eth>@keystonehq/bc-ur-registry>bs58check>bs58>base-x": true
+      }
+    },
     "gridplus-sdk>bs58check>bs58": {
       "packages": {
         "gridplus-sdk>bs58check>bs58>base-x": true
+      }
+    },
+    "@keystonehq/bc-ur-registry-eth>hdkey>bs58check>bs58": {
+      "packages": {
+        "@keystonehq/bc-ur-registry-eth>hdkey>bs58check>bs58>base-x": true
+      }
+    },
+    "@keystonehq/bc-ur-registry-eth>@keystonehq/bc-ur-registry>bs58check": {
+      "packages": {
+        "@keystonehq/bc-ur-registry-eth>@keystonehq/bc-ur-registry>bs58check>bs58": true,
+        "crypto-browserify>create-hash": true,
+        "react-native-quick-crypto>safe-buffer": true
       }
     },
     "gridplus-sdk>bs58check": {
       "packages": {
         "@noble/hashes": true,
         "gridplus-sdk>bs58check>bs58": true
+      }
+    },
+    "@keystonehq/bc-ur-registry-eth>hdkey>bs58check": {
+      "packages": {
+        "@keystonehq/bc-ur-registry-eth>hdkey>bs58check>bs58": true,
+        "crypto-browserify>create-hash": true,
+        "react-native-quick-crypto>safe-buffer": true
       }
     },
     "buffer": {
@@ -1193,6 +1352,16 @@
       },
       "packages": {
         "buffer": true
+      }
+    },
+    "@ngraveio/bc-ur>crc>buffer": {
+      "globals": {
+        "console": true
+      },
+      "packages": {
+        "buffer>base64-js": true,
+        "node-polyfill-webpack-plugin>console-browserify": true,
+        "buffer>ieee754": true
       }
     },
     "patch-package>json-stable-stringify>call-bind>call-bind-apply-helpers": {
@@ -1220,6 +1389,15 @@
       },
       "packages": {
         "gridplus-sdk>bignumber.js": true
+      }
+    },
+    "@ngraveio/bc-ur>cbor-sync": {
+      "globals": {
+        "Buffer": true,
+        "define": true
+      },
+      "packages": {
+        "buffer": true
       }
     },
     "gridplus-sdk>cbor": {
@@ -1269,7 +1447,7 @@
         "console": true
       },
       "packages": {
-        "node-polyfill-webpack-plugin>assert": true,
+        "@ngraveio/bc-ur>assert": true,
         "util": true
       }
     },
@@ -1282,6 +1460,11 @@
       "globals": {
         "DO_NOT_EXPORT_CRC": true,
         "define": true
+      }
+    },
+    "@ngraveio/bc-ur>crc": {
+      "packages": {
+        "@ngraveio/bc-ur>crc>buffer": true
       }
     },
     "crypto-browserify>create-ecdh": {
@@ -1300,7 +1483,7 @@
         "stream-http>inherits": true,
         "crypto-browserify>create-hash>md5.js": true,
         "crypto-browserify>pbkdf2>ripemd160": true,
-        "crypto-browserify>pbkdf2>sha.js": true
+        "@ngraveio/bc-ur>sha.js": true
       }
     },
     "crypto-browserify>create-hmac": {
@@ -1310,7 +1493,7 @@
         "stream-http>inherits": true,
         "crypto-browserify>pbkdf2>ripemd160": true,
         "react-native-quick-crypto>safe-buffer": true,
-        "crypto-browserify>pbkdf2>sha.js": true
+        "@ngraveio/bc-ur>sha.js": true
       }
     },
     "crypto-browserify": {
@@ -1480,7 +1663,7 @@
         "Buffer": true
       },
       "packages": {
-        "node-polyfill-webpack-plugin>assert": true,
+        "@ngraveio/bc-ur>assert": true,
         "eth-crypto>ethereumjs-util>bn.js": true,
         "buffer": true,
         "crypto-browserify>create-hash": true,
@@ -1769,7 +1952,7 @@
         "stream-http>inherits": true,
         "crypto-browserify>pbkdf2>ripemd160>hash-base>readable-stream": true,
         "react-native-quick-crypto>safe-buffer": true,
-        "crypto-browserify>pbkdf2>to-buffer": true
+        "@ngraveio/bc-ur>sha.js>to-buffer": true
       }
     },
     "gridplus-sdk>hash.js": {
@@ -1781,6 +1964,16 @@
     "eslint-plugin-react>hasown": {
       "packages": {
         "eslint-plugin-react>hasown>function-bind": true
+      }
+    },
+    "@keystonehq/bc-ur-registry-eth>hdkey": {
+      "packages": {
+        "@ngraveio/bc-ur>assert": true,
+        "@keystonehq/bc-ur-registry-eth>hdkey>bs58check": true,
+        "crypto-browserify": true,
+        "crypto-browserify>pbkdf2>ripemd160": true,
+        "react-native-quick-crypto>safe-buffer": true,
+        "@keystonehq/bc-ur-registry-eth>hdkey>secp256k1": true
       }
     },
     "secp256k1>elliptic>hmac-drbg": {
@@ -1855,7 +2048,7 @@
         "eslint-plugin-jsx-a11y>safe-regex-test": true
       }
     },
-    "node-polyfill-webpack-plugin>assert>is-nan": {
+    "@ngraveio/bc-ur>assert>is-nan": {
       "packages": {
         "patch-package>json-stable-stringify>call-bind": true,
         "eslint-plugin-react>object.values>define-properties": true
@@ -1887,6 +2080,11 @@
       },
       "packages": {
         "process": true
+      }
+    },
+    "@ngraveio/bc-ur>jsbi": {
+      "globals": {
+        "define": true
       }
     },
     "eth-crypto>ethereumjs-util>ethereum-cryptography>keccak": {
@@ -2009,7 +2207,7 @@
         "WeakRef": true
       }
     },
-    "@ambire/signature-validator>tape>object-is": {
+    "@ngraveio/bc-ur>assert>object-is": {
       "packages": {
         "patch-package>json-stable-stringify>call-bind": true,
         "eslint-plugin-react>object.values>define-properties": true
@@ -2077,8 +2275,8 @@
         "process": true,
         "crypto-browserify>pbkdf2>ripemd160": true,
         "react-native-quick-crypto>safe-buffer": true,
-        "crypto-browserify>pbkdf2>sha.js": true,
-        "crypto-browserify>pbkdf2>to-buffer": true
+        "@ngraveio/bc-ur>sha.js": true,
+        "@ngraveio/bc-ur>sha.js>to-buffer": true
       }
     },
     "process": {
@@ -2128,6 +2326,52 @@
       },
       "packages": {
         "buffer": true
+      }
+    },
+    "qr-scanner": {
+      "globals": {
+        "BarcodeDetector": true,
+        "Blob": true,
+        "ErrorEvent": true,
+        "File": true,
+        "HTMLCanvasElement": true,
+        "HTMLVideoElement": true,
+        "Image": true,
+        "ImageBitmap": true,
+        "MediaStream": true,
+        "OffscreenCanvas": true,
+        "SVGImageElement": true,
+        "URL": true,
+        "Worker": true,
+        "addEventListener": true,
+        "clearTimeout": true,
+        "console.log": true,
+        "console.warn": true,
+        "document.addEventListener": true,
+        "document.body.appendChild": true,
+        "document.body.contains": true,
+        "document.createElement": true,
+        "document.hidden": true,
+        "document.removeEventListener": true,
+        "getComputedStyle": true,
+        "location.protocol": true,
+        "navigator.mediaDevices": true,
+        "navigator.userAgentData": true,
+        "removeEventListener": true,
+        "requestAnimationFrame": true,
+        "setTimeout": true
+      },
+      "packages": {
+        "node-polyfill-webpack-plugin>console-browserify": true
+      }
+    },
+    "@keystonehq/animated-qr>qrcode.react": {
+      "globals": {
+        "Path2D": true,
+        "devicePixelRatio": true
+      },
+      "packages": {
+        "react": true
       }
     },
     "react-native-qrcode-svg>qrcode": {
@@ -2791,6 +3035,11 @@
         "secp256k1>elliptic": true
       }
     },
+    "@keystonehq/bc-ur-registry-eth>hdkey>secp256k1": {
+      "packages": {
+        "secp256k1>elliptic": true
+      }
+    },
     "@ledgerhq/device-management-kit>semver": {
       "globals": {
         "console.error": true,
@@ -2830,11 +3079,11 @@
         "process": true
       }
     },
-    "crypto-browserify>pbkdf2>sha.js": {
+    "@ngraveio/bc-ur>sha.js": {
       "packages": {
         "stream-http>inherits": true,
         "react-native-quick-crypto>safe-buffer": true,
-        "crypto-browserify>pbkdf2>to-buffer": true
+        "@ngraveio/bc-ur>sha.js>to-buffer": true
       }
     },
     "eslint-plugin-react>string.prototype.matchall>side-channel>side-channel-list": {
@@ -2962,11 +3211,11 @@
         "tldts>tldts-core": true
       }
     },
-    "crypto-browserify>pbkdf2>to-buffer": {
+    "@ngraveio/bc-ur>sha.js>to-buffer": {
       "packages": {
         "patch-package>json-stable-stringify>isarray": true,
         "react-native-quick-crypto>safe-buffer": true,
-        "crypto-browserify>pbkdf2>to-buffer>typed-array-buffer": true
+        "@ngraveio/bc-ur>sha.js>to-buffer>typed-array-buffer": true
       }
     },
     "tslib": {
@@ -2990,7 +3239,7 @@
         "nacl": "write"
       }
     },
-    "crypto-browserify>pbkdf2>to-buffer>typed-array-buffer": {
+    "@ngraveio/bc-ur>sha.js>to-buffer>typed-array-buffer": {
       "packages": {
         "patch-package>json-stable-stringify>call-bound": true,
         "eslint-plugin-react>es-iterator-helpers>es-errors": true,
@@ -3032,7 +3281,7 @@
         "node-polyfill-webpack-plugin>console-browserify": true
       }
     },
-    "node-polyfill-webpack-plugin>assert>util": {
+    "@ngraveio/bc-ur>assert>util": {
       "globals": {
         "console.error": true,
         "console.log": true,
@@ -3052,6 +3301,12 @@
     "uuid": {
       "globals": {
         "crypto": true
+      }
+    },
+    "@keystonehq/bc-ur-registry-eth>uuid": {
+      "globals": {
+        "crypto": true,
+        "msCrypto": true
       }
     },
     "@ledgerhq/device-management-kit>uuid": {
