@@ -1,9 +1,11 @@
 import React, { FC, useEffect, useRef, useState } from 'react'
-import { Animated, ViewStyle } from 'react-native'
+import { Animated, View, ViewStyle } from 'react-native'
 
+import SkeletonLoader from '@common/components/SkeletonLoader'
 import { isBenzin, isLegends } from '@common/config/env'
 import { AvatarType } from '@common/controllers/wallet-state'
 import useController from '@common/hooks/useController'
+import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
@@ -70,6 +72,7 @@ const Avatar: FC<Props> = ({
   showTooltip = false,
   displayTypeBadge = true
 }) => {
+  const { theme } = useTheme()
   // the ENS avatar may point to an image that no longer exists or just fails to load
   // In that case we must fallback to the next avatar type
   const [ensAvatarImageFetchFailed, setEnsAvatarImageFetchFailed] = useState(false)
@@ -97,6 +100,20 @@ const Avatar: FC<Props> = ({
     propAvatarType
   })
   const borderRadius = size / 2
+
+  // The avatar may take too long to load
+  useEffect(() => {
+    if (avatarType === 'ens' && ensAvatar && !ensAvatarImageFetchFailed) {
+      const timeout = setTimeout(() => {
+        setEnsAvatarImageFetchFailed(true)
+      }, 5000)
+
+      return () => clearTimeout(timeout)
+    }
+
+    // Stop eslint from crying
+    return undefined
+  }, [avatarType, ensAvatar, ensAvatarImageFetchFailed])
 
   // Pulsating animation
   const pulseAnim = useRef(new Animated.Value(1)).current
@@ -135,6 +152,17 @@ const Avatar: FC<Props> = ({
         { opacity: pulseAnim }
       ]}
     >
+      {/* The skeleton is displayed while the ENS image is loading, while the whole avatar is pulsing when we don't know
+      if the user has an ENS avatar or not. */}
+      {!isEnsLoading && avatarType === 'ens' && (
+        <SkeletonLoader
+          width={size}
+          height={size}
+          borderRadius={borderRadius}
+          appearance="secondaryBackground"
+          style={{ zIndex: -1, position: 'absolute' }}
+        />
+      )}
       {avatarType === 'jazzicons' && (
         <JazzIcon borderRadius={borderRadius} address={address} size={size} />
       )}
