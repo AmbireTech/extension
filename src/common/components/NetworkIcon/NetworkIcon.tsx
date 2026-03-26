@@ -127,6 +127,8 @@ const NetworkIcon = ({
         },
         style
       ]}
+      // Force a rerender when the network changes to ensure the correct icon is displayed
+      key={id}
     >
       {Icon ? (
         <Icon width={size} height={size} {...rest} />
