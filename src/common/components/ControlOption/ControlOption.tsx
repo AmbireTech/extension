@@ -17,7 +17,7 @@ interface Props {
   description: string
   readMoreLink?: string
   renderIcon: React.ReactNode
-  children: React.ReactNode
+  children?: React.ReactNode
   style?: ViewStyle
   onPress?: () => void
 }
@@ -31,7 +31,7 @@ const ControlOption: FC<Props> = ({
   style,
   onPress
 }) => {
-  const { theme, themeType } = useTheme()
+  const { theme } = useTheme()
   const { addToast } = useToast()
   const { t } = useTranslation()
   const [bindAnim, animStyle] = useCustomHover({

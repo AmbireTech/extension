@@ -27,7 +27,9 @@ const COMMON_ROUTES = {
   swapAndBridge: 'swap-and-bridge',
   menu: 'menu',
   generalSettings: 'settings/general',
-  accountsSettings: 'settings/accounts'
+  accountsSettings: 'settings/accounts',
+  settingsAbout: 'settings/about',
+  settingsTerms: 'settings/terms'
 }
 
 const MOBILE_ROUTES = {
@@ -57,8 +59,6 @@ const WEB_ROUTES = {
   authEmailLogin: 'auth-email-login',
   authEmailRegister: 'auth-email-register',
   networksConfiguration: 'networks-configuration',
-  settingsTerms: 'settings/terms',
-  settingsAbout: 'settings/about',
   networksSettings: 'settings/networks',
   devicePasswordSet: 'settings/device-password-set',
   devicePasswordChange: 'settings/device-password-change',
