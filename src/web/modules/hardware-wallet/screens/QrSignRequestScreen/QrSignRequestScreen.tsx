@@ -12,7 +12,7 @@ import { AnimatedQRCode } from '@keystonehq/animated-qr'
 type Props = {
   onContinue: () => void
   onReject: () => void
-  urType: string | undefined
+  urType: any
   urCborHex: any
 }
 
