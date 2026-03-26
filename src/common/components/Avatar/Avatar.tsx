@@ -2,10 +2,10 @@ import React, { FC, useEffect, useRef, useState } from 'react'
 import { Animated, ViewStyle } from 'react-native'
 
 import { isBenzin, isLegends } from '@common/config/env'
+import { AvatarType } from '@common/controllers/wallet-state'
 import useController from '@common/hooks/useController'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import { AvatarType } from '@web/extension-services/background/controllers/wallet-state'
 
 import Blockie from './Blockies/Blockies'
 import EnsAvatar from './EnsAvatar'

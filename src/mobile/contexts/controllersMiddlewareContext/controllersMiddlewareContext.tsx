@@ -13,6 +13,7 @@ import { APP_VERSION } from '@common/config/env'
 import { AllControllersMappingType } from '@common/constants/controllersMapping'
 import { ControllersMiddlewareContext } from '@common/contexts/controllersMiddlewareContext'
 import { ControllerStoreContext } from '@common/contexts/controllerStoreContext'
+import { WalletStateController } from '@common/controllers/wallet-state'
 import useRoute from '@common/hooks/useRoute'
 import eventBus from '@common/services/event/eventBus'
 import { storage } from '@common/services/storage'
@@ -246,6 +247,10 @@ export const ControllersMiddlewareProvider: React.FC<{
           }
         }
       }
+    })
+    ctrls.WalletStateController = new WalletStateController({
+      eventEmitterRegistry: eventEmitterRegistry.current,
+      onLogLevelUpdateCallback: () => Promise.resolve()
     })
 
     controllers.current = ctrls

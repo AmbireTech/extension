@@ -37,6 +37,7 @@ const ReceiveScreen: FC = () => {
     qrCodeError,
     setQrCodeError,
     qrCodeRef,
+    isEOA,
     bindAnim,
     animStyle,
     hasMoreNetworks,
@@ -50,7 +51,7 @@ const ReceiveScreen: FC = () => {
     <MobileLayoutContainer>
       <HeaderWithTitle />
       <MobileLayoutWrapperMainContent>
-        <View style={[spacings.ptLg, spacings.mb, flexbox.alignCenter]}>
+        <View style={[isEOA ? spacings.pt3Xl : spacings.ptLg, spacings.mb, flexbox.alignCenter]}>
           <Avatar
             size={40}
             pfp={pfp}
@@ -108,87 +109,89 @@ const ReceiveScreen: FC = () => {
 
         <View style={flexbox.flex1} />
       </MobileLayoutWrapperMainContent>
-      <View style={styles.supportedNetworksContainer}>
-        <Text
-          weight="regular"
-          color={theme.neutral700}
-          fontSize={14}
-          style={styles.supportedNetworksTitle}
-        >
-          {t('Following networks supported on this address:')}
-        </Text>
-        <View style={styles.supportedNetworks}>
-          {alwaysVisible.map(({ chainId, name }: any) => (
-            <View key={chainId.toString()} style={styles.supportedNetwork}>
-              <NetworkIcon
-                id={chainId.toString()}
-                size={32}
-                scale={1}
-                dataSet={createGlobalTooltipDataSet({
-                  id: `network-icon-${chainId.toString()}`,
-                  content: name
-                })}
-              />
-            </View>
-          ))}
-
-          {extraNetworks.map(({ chainId, name }: any) => (
-            <View
-              key={chainId.toString()}
-              style={[
-                styles.supportedNetwork,
-                styles.extraNetwork,
-                showAllNetworks && styles.extraNetworkVisible
-              ]}
-            >
-              <NetworkIcon
-                id={chainId.toString()}
-                size={32}
-                scale={1}
-                dataSet={createGlobalTooltipDataSet({
-                  id: `network-icon-${chainId.toString()}`,
-                  content: name
-                })}
-              />
-            </View>
-          ))}
-        </View>
-
-        {!!hasMoreNetworks && (
-          <AnimatedPressable
-            style={styles.seeMoreWrapper}
-            onPress={() => setShowAllNetworks((prev) => !prev)}
-            hitSlop={{ top: 10, bottom: 10 }}
-            {...bindAnim}
+      {!isEOA && (
+        <View style={styles.supportedNetworksContainer}>
+          <Text
+            weight="regular"
+            color={theme.neutral700}
+            fontSize={14}
+            style={styles.supportedNetworksTitle}
           >
-            <Text color={theme.neutral700} fontSize={14}>
-              {showAllNetworks ? t('View less') : t('View more')}
-            </Text>
+            {t('Following networks supported on this address:')}
+          </Text>
+          <View style={styles.supportedNetworks}>
+            {alwaysVisible.map(({ chainId, name }: any) => (
+              <View key={chainId.toString()} style={styles.supportedNetwork}>
+                <NetworkIcon
+                  id={chainId.toString()}
+                  size={32}
+                  scale={1}
+                  dataSet={createGlobalTooltipDataSet({
+                    id: `network-icon-${chainId.toString()}`,
+                    content: name
+                  })}
+                />
+              </View>
+            ))}
 
-            <Animated.View
-              style={{
-                transform: [
-                  {
-                    translateX: animStyle.translateX as any
-                  },
-                  {
-                    translateY: animStyle.translateY as any
-                  }
-                ]
-              }}
+            {extraNetworks.map(({ chainId, name }: any) => (
+              <View
+                key={chainId.toString()}
+                style={[
+                  styles.supportedNetwork,
+                  styles.extraNetwork,
+                  showAllNetworks && styles.extraNetworkVisible
+                ]}
+              >
+                <NetworkIcon
+                  id={chainId.toString()}
+                  size={32}
+                  scale={1}
+                  dataSet={createGlobalTooltipDataSet({
+                    id: `network-icon-${chainId.toString()}`,
+                    content: name
+                  })}
+                />
+              </View>
+            ))}
+          </View>
+
+          {!!hasMoreNetworks && (
+            <AnimatedPressable
+              style={styles.seeMoreWrapper}
+              onPress={() => setShowAllNetworks((prev) => !prev)}
+              hitSlop={{ top: 10, bottom: 10 }}
+              {...bindAnim}
             >
-              <DiagonalRightArrowIcon
-                color="#808EA2"
-                height={20}
-                width={20}
+              <Text color={theme.neutral700} fontSize={14}>
+                {showAllNetworks ? t('View less') : t('View more')}
+              </Text>
+
+              <Animated.View
                 style={{
-                  transform: [{ rotate: showAllNetworks ? '90deg' : '0deg' }]
+                  transform: [
+                    {
+                      translateX: animStyle.translateX as any
+                    },
+                    {
+                      translateY: animStyle.translateY as any
+                    }
+                  ]
                 }}
-              />
-            </Animated.View>
-          </AnimatedPressable>
-        )}
-      </View>
+              >
+                <DiagonalRightArrowIcon
+                  color="#808EA2"
+                  height={20}
+                  width={20}
+                  style={{
+                    transform: [{ rotate: showAllNetworks ? '90deg' : '0deg' }]
+                  }}
+                />
+              </Animated.View>
+            </AnimatedPressable>
+          )}
+        </View>
+      )}
     </MobileLayoutContainer>
   )
 }
