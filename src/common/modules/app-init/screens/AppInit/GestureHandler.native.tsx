@@ -58,10 +58,10 @@ const GestureHandler = ({ children }: { children: ReactNode }) => {
 
       // 2. Logic: Calculate starting point (10% threshold)
       const startX = e.absoluteX - e.translationX
-      const isFromLeftEdge = startX < width * 0.1
+      const isFromLeftEdge = startX < width * 0.2
 
       // 3. Logic: Trigger if moved 30% OR flicked fast (velocity > 500)
-      const isSwipedRight = e.translationX > width * 0.3 || e.velocityX > 500
+      const isSwipedRight = e.translationX > width * 0.2 || e.velocityX > 500
 
       if (isFromLeftEdge && isSwipedRight) {
         if (openBottomSheetsCount.value > 0) {
