@@ -13,6 +13,8 @@ import { BUNGEE_API_KEY, RELAYER_URL, VELCRO_URL } from '@env'
 import { MobileBaseControllersMappingType } from '@mobile/constants/controllersMapping'
 import useRequestsControllerHelpers from '@mobile/hooks/useRequestsControllerHelpers'
 
+import { WebViewWorker, WebViewWorkerRef } from '../../services/WebViewWorker/WebViewWorker'
+
 // --- POLYFILL FOR REACT NATIVE HERMES / METRO BIND BUG ---
 const originalBind = Function.prototype.bind
 // @ts-ignore
@@ -57,15 +59,13 @@ Function.prototype.bind = function (context: any, ...boundArgs: any[]) {
   }
 }
 
-import { WebViewWorker, WebViewWorkerRef } from '../../services/WebViewWorker/WebViewWorker'
-
 export const ControllersMiddlewareProvider: React.FC<{
   children: React.ReactNode
 }> = ({ children }) => {
-  const { controllerStore, debounceControllerUpdates } = useContext(ControllerStoreContext)
+  const { controllerStore } = useContext(ControllerStoreContext)
   const route = useRoute()
   const webviewRef = useRef<WebViewWorkerRef>(null)
-  
+
   const controllers = useRef<MobileBaseControllersMappingType>(
     {} as MobileBaseControllersMappingType
   )
@@ -77,19 +77,24 @@ export const ControllersMiddlewareProvider: React.FC<{
     // Dummy controllers.current to satisfy hooks temporarily
     controllers.current = { MainController: {} } as any
 
-    webviewRef.current?.init({
-      APP_VERSION,
-      platform: `mobile-${RNPlatform.OS}`,
-      RELAYER_URL,
-      VELCRO_URL,
-      LIFI_EXPLORER_URL,
-      BUNGEE_API_KEY
-    }).then((ctrlsNames) => {
-      console.log('[ControllersMiddlewareProvider] WebView init resolved with:', ctrlsNames)
-      controllerStore.init(ctrlsNames as any, () => {
-        // We do not need to do anything here since the WebView emits plain JSON on updates
+    webviewRef.current
+      ?.init({
+        APP_VERSION,
+        platform: `mobile-${RNPlatform.OS}`,
+        RELAYER_URL,
+        VELCRO_URL,
+        LIFI_EXPLORER_URL,
+        BUNGEE_API_KEY
       })
-    })
+      .then((ctrlsNames) => {
+        const ctrlsToInit = ctrlsNames.filter(
+          (ctrlName) => ctrlName !== 'ContinuousUpdatesController'
+        )
+        controllerStore.init(ctrlsToInit as any, () => {
+          console.log('dispatching batched init controllers state', ctrlsToInit.length)
+          dispatch({ type: 'INIT_ALL_CONTROLLERS', params: { controllers: ctrlsToInit as any } })
+        })
+      })
   }, [controllerStore])
 
   const dispatch = useCallback((action: MethodAction | Action) => {

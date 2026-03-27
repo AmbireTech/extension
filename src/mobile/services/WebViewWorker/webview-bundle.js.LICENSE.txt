@@ -16,6 +16,8 @@
 
 /*! MIT License. Copyright 2015-2022 Richard Moore <me@ricmoo.com>. See LICENSE.txt. */
 
+/*! crc32.js (C) 2014-present SheetJS -- http://sheetjs.com */
+
 /*! https://mths.be/punycode v1.3.2 by @mathias */
 
 /*! ieee754. BSD-3-Clause License. Feross Aboukhadijeh <https://feross.org/opensource> */
@@ -23,10 +25,6 @@
 /*! safe-buffer. MIT License. Feross Aboukhadijeh <https://feross.org/opensource> */
 
 /*! scure-base - MIT License (c) 2022 Paul Miller (paulmillr.com) */
-
-/*! scure-bip32 - MIT License (c) 2022 Patricio Palladino, Paul Miller (paulmillr.com) */
-
-/*! scure-bip39 - MIT License (c) 2022 Patricio Palladino, Paul Miller (paulmillr.com) */
 
 /**
 	 * [js-sha3]{@link https://github.com/emn178/js-sha3}

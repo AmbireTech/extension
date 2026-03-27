@@ -10,10 +10,12 @@ export const handleActions = async (
   action: MethodAction | Action,
   {
     eventEmitterRegistry,
-    mainCtrl
+    mainCtrl,
+    sendToReactEvent
   }: {
     eventEmitterRegistry: IEventEmitterRegistryController
     mainCtrl: MainController
+    sendToReactEvent: (type: string, payload: any) => void
   }
 ) => {
   // @ts-ignore
@@ -33,6 +35,24 @@ export const handleActions = async (
       if (ctrl && typeof ctrl[method] === 'function') {
         ctrl[method](...args)
       }
+      break
+    }
+
+    case 'INIT_CONTROLLER_STATE': {
+      const ctrl = eventEmitterRegistry.values().find((c) => c.name === params.controller)
+      if (ctrl) {
+        sendToReactEvent('ctrl.update', { ctrlName: ctrl.name, state: ctrl.toJSON() })
+      }
+      break
+    }
+
+    case 'INIT_ALL_CONTROLLERS': {
+      params.controllers.forEach((ctrlName: string) => {
+        const ctrl = eventEmitterRegistry.values().find((c) => c.name === ctrlName)
+        if (ctrl) {
+          sendToReactEvent('ctrl.update', { ctrlName: ctrl.name, state: ctrl.toJSON() })
+        }
+      })
       break
     }
 

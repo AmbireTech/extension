@@ -1,7 +1,7 @@
 const path = require('path')
 const webpack = require('webpack')
 const NodePolyfillPlugin = require('node-polyfill-webpack-plugin')
-const TerserPlugin = require('terser-webpack-plugin');
+const TerserPlugin = require('terser-webpack-plugin')
 
 module.exports = {
   entry: './src/mobile/services/WebViewWorker/injectedLogic.ts',
@@ -52,7 +52,8 @@ module.exports = {
       {
         test: /\.(js|jsx|ts|tsx|mjs)$/,
         // Exclude Node modules EXCEPT for the core libraries that have ESM/TS syntax
-        exclude: /node_modules\/(?!(.*@metamask.*|.*@noble.*|.*ethers.*|.*@ambire-common.*|.*@babel\/runtime.*|.*siwe.*|.*valibot.*|.*expo.*))/,
+        exclude:
+          /node_modules\/(?!(.*@metamask.*|.*@noble.*|.*ethers.*|.*@ambire-common.*|.*@babel\/runtime.*|.*siwe.*|.*valibot.*|.*expo.*))/,
         use: [
           {
             loader: 'babel-loader',

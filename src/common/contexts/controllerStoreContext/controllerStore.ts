@@ -35,10 +35,10 @@ export class ControllerStore {
 
   init(
     allControllersByName: (keyof AllControllersMappingType)[],
-    onInitReady: (allControllersByName: (keyof AllControllersMappingType)[]) => void
+    onInitReady?: (allControllersByName: (keyof AllControllersMappingType)[]) => void
   ) {
     this.controllersByName = allControllersByName
-    onInitReady(allControllersByName)
+    onInitReady?.(allControllersByName)
     this.#checkReadiness()
   }
 
@@ -115,6 +115,11 @@ export class ControllerStore {
 
       return true
     })
+
+    console.log(
+      'not ready controllers',
+      this.controllersByName.filter((ctrlName) => !this.initializedControllers.has(ctrlName))
+    )
 
     if (allReady) {
       this.isReady = true

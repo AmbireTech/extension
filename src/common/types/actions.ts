@@ -32,6 +32,13 @@ type InitControllerStateAction = {
   }
 }
 
+type InitAllControllersAction = {
+  type: 'INIT_ALL_CONTROLLERS'
+  params: {
+    controllers: (keyof AllControllersMappingType)[]
+  }
+}
+
 type HandshakeAction = {
   type: 'HANDSHAKE'
 }
@@ -123,3 +130,4 @@ export type Action =
   | ChangeCurrentDappNetworkAction
   | ImportSmartAccountJson
   | OpenExtensionPopupAction
+  | InitAllControllersAction

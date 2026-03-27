@@ -1,10 +1,11 @@
+import { EventEmitter as Emitter } from 'events'
+
 import { EventEmitterRegistryController } from '@ambire-common/controllers/eventEmitterRegistry/eventEmitterRegistry'
 import { MainController } from '@ambire-common/controllers/main/main'
-import { WalletStateController } from '@common/controllers/wallet-state'
 import { KeystoreSigner } from '@ambire-common/libs/keystoreSigner/keystoreSigner'
-import { handleActions } from '@mobile/handlers/handleActions'
-import { EventEmitter as Emitter } from 'events'
 import * as richJson from '@ambire-common/libs/richJson/richJson'
+import { WalletStateController } from '@common/controllers/wallet-state'
+import { handleActions } from '@mobile/handlers/handleActions'
 
 // Bridge setup
 const pendingPromises: Record<number, { resolve: any; reject: any }> = {}
@@ -43,80 +44,105 @@ let walletStateCtrl: any = null
 const initControllers = (config: any) => {
   console.log('[WebView] Initializing controllers with config', config)
   try {
-  mainCtrl = new MainController({
-    eventEmitterRegistry,
-    storageAPI,
-    appVersion: config.APP_VERSION,
-    platform: config.platform,
-    fetch: fetch, // standard fetch in webview
-    relayerUrl: config.RELAYER_URL,
-    velcroUrl: config.VELCRO_URL,
-    liFiApiKey: config.LIFI_EXPLORER_URL,
-    bungeeApiKey: config.BUNGEE_API_KEY,
-    featureFlags: {},
-    keystoreSigners: {
-      internal: KeystoreSigner
-    },
-    externalSignerControllers: {},
-    uiManager: {
-      window: {
-        open: async () => ({ id: 1, width: 0, height: 0, left: 0, top: 0, focused: true, createdFromWindowId: 0 }),
-        focus: async () => ({ id: 1, width: 0, height: 0, left: 0, top: 0, focused: true, createdFromWindowId: 0 }),
-        closePopupWithUrl: async () => {},
-        remove: async () => {},
-        event: new Emitter()
+    mainCtrl = new MainController({
+      eventEmitterRegistry,
+      storageAPI,
+      appVersion: config.APP_VERSION,
+      platform: config.platform,
+      fetch: fetch.bind(window), // standard fetch in webview, bound to window instance
+      relayerUrl: config.RELAYER_URL,
+      velcroUrl: config.VELCRO_URL,
+      liFiApiKey: config.LIFI_EXPLORER_URL,
+      bungeeApiKey: config.BUNGEE_API_KEY,
+      featureFlags: {},
+      keystoreSigners: {
+        internal: KeystoreSigner
       },
-      notification: {
-        create: async () => {}
-      },
-      message: {
-        sendToastMessage: (text: string, options: any) => sendToReactEvent('action.addToast', { text, options }),
-        sendUiMessage: (params: any) => sendToReactEvent('action.receiveOneTimeData', params),
-        sendNavigateMessage: () => {}
+      externalSignerControllers: {},
+      uiManager: {
+        window: {
+          open: async () => ({
+            id: 1,
+            width: 0,
+            height: 0,
+            left: 0,
+            top: 0,
+            focused: true,
+            createdFromWindowId: 0
+          }),
+          focus: async () => ({
+            id: 1,
+            width: 0,
+            height: 0,
+            left: 0,
+            top: 0,
+            focused: true,
+            createdFromWindowId: 0
+          }),
+          closePopupWithUrl: async () => {},
+          remove: async () => {},
+          event: new Emitter()
+        },
+        notification: {
+          create: async () => {}
+        },
+        message: {
+          sendToastMessage: (text: string, options: any) =>
+            sendToReactEvent('action.addToast', { text, options }),
+          sendUiMessage: (params: any) => sendToReactEvent('action.receiveOneTimeData', params),
+          sendNavigateMessage: () => {}
+        }
       }
-    }
-  })
+    })
 
-  walletStateCtrl = new WalletStateController({
-    eventEmitterRegistry,
-    onLogLevelUpdateCallback: () => Promise.resolve()
-  })
+    walletStateCtrl = new WalletStateController({
+      eventEmitterRegistry,
+      onLogLevelUpdateCallback: () => Promise.resolve()
+    })
 
-  const ctrls = [mainCtrl, walletStateCtrl]
+    const ctrls = [mainCtrl, walletStateCtrl]
 
-  // Initialize UI view inside the WebView worker context natively
-  mainCtrl.ui.addView({
-    id: 'default-mobile-app-view',
-    type: 'mobile'
-  })
+    // Initialize UI view inside the WebView worker context natively
+    mainCtrl.ui.addView({
+      id: 'default-mobile-app-view',
+      type: 'mobile'
+    })
 
-  // Subscribe to ALL controllers in the registry to sync state back to React Native
-  eventEmitterRegistry.values().forEach((ctrl) => {
-    ctrl.onUpdate(() => {
-      sendToReactEvent('ctrl.update', { ctrlName: ctrl.name, state: ctrl.toJSON() })
-    }, 'webview')
+    // Subscribe to ALL controllers in the registry to sync state back to React Native
+    eventEmitterRegistry.values().forEach((ctrl) => {
+      ctrl.onUpdate(() => {
+        if (ctrl.name === 'PhishingController') return // Too large for Hermes, not needed in Native UI
+        console.log(`[WebView] Detected update for: ${ctrl.name}`)
+        sendToReactEvent('ctrl.update', { ctrlName: ctrl.name, state: ctrl.toJSON() })
+      }, 'webview')
 
-    ctrl.onError(() => {
-      sendToReactEvent('ctrl.error', { ctrlName: ctrl.name, errors: ctrl.emittedErrors })
-    }, 'webview')
-  })
+      ctrl.onError(() => {
+        sendToReactEvent('ctrl.error', { ctrlName: ctrl.name, errors: ctrl.emittedErrors })
+      }, 'webview')
+    })
 
-  // Notify RN that we are ready with ALL controller names
-  console.log('[WebView] Controllers initialized, sending system.ready')
-  const allControllerNames = eventEmitterRegistry.values().map((c) => c.name)
-  sendToReactEvent('system.ready', { controllers: allControllerNames })
-  isConfigured = true
-} catch (e: any) {
-  console.error('[WebView] initControllers failed', e)
-  sendToReactEvent('ctrl.error', { ctrlName: 'Init', errors: [{ message: e.message, stack: e.stack }] })
-}
+    // Notify RN that we are ready with ALL controller names
+    const allControllerNames = eventEmitterRegistry.values().map((c) => c.name)
+    sendToReactEvent('system.ready', { controllers: allControllerNames })
+    isConfigured = true
+  } catch (e: any) {
+    console.error('[WebView] initControllers failed', e)
+    sendToReactEvent('ctrl.error', {
+      ctrlName: 'Init',
+      errors: [{ message: e.message, stack: e.stack }]
+    })
+  }
 }
 
 // Proxy Listener
 window.addEventListener('message', (event) => {
-  console.log('[WebView] Received window message', event.data)
+  console.log('[WebView] window message raw event received:', {
+    origin: event.origin,
+    data: typeof event.data === 'string' ? (event.data.length > 100 ? event.data.substring(0, 100) + '...' : event.data) : 'non-string'
+  })
   try {
     const data = typeof event.data === 'string' ? richJson.parse(event.data) : event.data
+    console.log('[WebView] Parsed message type:', data?.type)
     if (data.type === 'response') {
       const { id, result, error } = data
       if (error) pendingPromises[id]?.reject(new Error(error))
@@ -129,13 +155,39 @@ window.addEventListener('message', (event) => {
         console.warn('[WebView] Received action before init')
         return
       }
-      handleActions(data.action, { eventEmitterRegistry, mainCtrl })
+      handleActions(data.action, { eventEmitterRegistry, mainCtrl, sendToReactEvent })
     }
   } catch (e) {
     console.error('WebView failed to parse message', e, event.data)
   }
 })
 
+// Direct bridge for reliable communication
+// @ts-ignore
+window.__POST_MESSAGE__ = (dataStr: string) => {
+  console.log('[WebView] __POST_MESSAGE__ received data length:', dataStr.length)
+  try {
+    const data = richJson.parse(dataStr)
+    console.log('[WebView] __POST_MESSAGE__ parsed type:', data.type)
+    if (data.type === 'dispatchAction') {
+      if (!isConfigured) {
+        console.warn('[WebView] __POST_MESSAGE__ rejected: NOT CONFIGURED')
+        return
+      }
+      handleActions(data.action, { eventEmitterRegistry, mainCtrl, sendToReactEvent })
+    } else if (data.type === 'init') {
+      initControllers(data.config)
+    } else if (data.type === 'response') {
+      const { id, result, error } = data
+      if (error) pendingPromises[id]?.reject(new Error(error))
+      else pendingPromises[id]?.resolve(result)
+      delete pendingPromises[id]
+    }
+  } catch (e: any) {
+    console.error('[WebView] __POST_MESSAGE__ failed', e)
+    sendToReactEvent('ctrl.error', { ctrlName: 'BridgeError', errors: [{ message: e.message, stack: e.stack }] })
+  }
+}
+
 console.log('[WebView] injectedLogic loaded and listening')
 window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'system.loaded' }))
-
