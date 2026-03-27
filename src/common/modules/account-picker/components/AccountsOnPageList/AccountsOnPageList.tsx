@@ -1,7 +1,7 @@
 import { uniqBy } from 'lodash'
 import groupBy from 'lodash/groupBy'
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
-import { NativeScrollEvent, Platform, View } from 'react-native'
+import { NativeScrollEvent, View } from 'react-native'
 
 import {
   Account as AccountInterface,
@@ -219,6 +219,10 @@ const AccountsOnPageList = ({
     !isAccountPickerEmpty &&
     !state.pageError
 
+  const hasSmartAccounts = useMemo(() => {
+    return !!state.accountsOnPage.find((p) => !!p.account.creation)
+  }, [state.accountsOnPage])
+
   // Prevents the user from temporarily seeing (flashing) empty (error) states
   // while being navigated back (resetting the Account Picker state).
   if (!state.isInitialized) return null
@@ -276,7 +280,7 @@ const AccountsOnPageList = ({
                   )
                 })}
               </View>
-              {!!Object.keys(slots).length && (
+              {hasSmartAccounts && (
                 <View style={[styles.smartAccountWrapper, isMobile && spacings.ptSm]}>
                   <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mbSm]}>
                     <Text fontSize={16} weight="medium" style={[text.center, spacings.mrTy]}>
