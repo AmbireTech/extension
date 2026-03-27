@@ -40,18 +40,20 @@ export const handleActions = async (
 
     case 'INIT_CONTROLLER_STATE': {
       const ctrl = eventEmitterRegistry.values().find((c) => c.name === params.controller)
-      if (ctrl) {
-        sendToReactEvent('ctrl.update', { ctrlName: ctrl.name, state: ctrl.toJSON() })
-      }
+
+      sendToReactEvent('ctrl.update', {
+        ctrlName: params.controller,
+        state: ctrl?.toJSON() || null
+      })
+
       break
     }
 
     case 'INIT_ALL_CONTROLLERS': {
       params.controllers.forEach((ctrlName: string) => {
         const ctrl = eventEmitterRegistry.values().find((c) => c.name === ctrlName)
-        if (ctrl) {
-          sendToReactEvent('ctrl.update', { ctrlName: ctrl.name, state: ctrl.toJSON() })
-        }
+
+        sendToReactEvent('ctrl.update', { ctrlName, state: ctrl?.toJSON() || null })
       })
       break
     }

@@ -33,8 +33,27 @@ const storageAPI = {
   remove: (key: string) => sendToRNAsync('storage.remove', { key })
 }
 
-// Global initialization
-const eventEmitterRegistry = new EventEmitterRegistryController(() => {})
+const eventEmitterRegistry = new EventEmitterRegistryController(() => {
+  console.log('values', eventEmitterRegistry.values())
+  eventEmitterRegistry.values().forEach((ctrl: any) => {
+    const hasOnUpdateInitialized = ctrl.onUpdateIds.includes('webview')
+    if (!hasOnUpdateInitialized) {
+      console.log(`[WebView] Attaching onUpdate bridge listener to: ${ctrl.name}`)
+      ctrl.onUpdate(() => {
+        console.log(`[WebView] Detected update for: ${ctrl.name}`)
+        sendToReactEvent('ctrl.update', { ctrlName: ctrl.name, state: ctrl.toJSON() })
+      }, 'webview')
+    }
+
+    const hasOnErrorInitialized = ctrl.onErrorIds.includes('webview')
+    if (!hasOnErrorInitialized) {
+      console.log(`[WebView] Attaching onError bridge listener to: ${ctrl.name}`)
+      ctrl.onError(() => {
+        sendToReactEvent('ctrl.error', { ctrlName: ctrl.name, errors: ctrl.emittedErrors })
+      }, 'webview')
+    }
+  })
+})
 
 // We temporarily pause handling actions until config is fully loaded
 let isConfigured = false
@@ -49,7 +68,7 @@ const initControllers = (config: any) => {
       storageAPI,
       appVersion: config.APP_VERSION,
       platform: config.platform,
-      fetch: fetch.bind(window), // standard fetch in webview, bound to window instance
+      fetch: fetch.bind(window),
       relayerUrl: config.RELAYER_URL,
       velcroUrl: config.VELCRO_URL,
       liFiApiKey: config.LIFI_EXPLORER_URL,
@@ -100,26 +119,8 @@ const initControllers = (config: any) => {
       onLogLevelUpdateCallback: () => Promise.resolve()
     })
 
-    const ctrls = [mainCtrl, walletStateCtrl]
-
     // Initialize UI view inside the WebView worker context natively
-    mainCtrl.ui.addView({
-      id: 'default-mobile-app-view',
-      type: 'mobile'
-    })
-
-    // Subscribe to ALL controllers in the registry to sync state back to React Native
-    eventEmitterRegistry.values().forEach((ctrl) => {
-      ctrl.onUpdate(() => {
-        if (ctrl.name === 'PhishingController') return // Too large for Hermes, not needed in Native UI
-        console.log(`[WebView] Detected update for: ${ctrl.name}`)
-        sendToReactEvent('ctrl.update', { ctrlName: ctrl.name, state: ctrl.toJSON() })
-      }, 'webview')
-
-      ctrl.onError(() => {
-        sendToReactEvent('ctrl.error', { ctrlName: ctrl.name, errors: ctrl.emittedErrors })
-      }, 'webview')
-    })
+    mainCtrl.ui.addView({ id: 'default-mobile-app-view', type: 'mobile' })
 
     // Notify RN that we are ready with ALL controller names
     const allControllerNames = eventEmitterRegistry.values().map((c) => c.name)
@@ -136,13 +137,8 @@ const initControllers = (config: any) => {
 
 // Proxy Listener
 window.addEventListener('message', (event) => {
-  console.log('[WebView] window message raw event received:', {
-    origin: event.origin,
-    data: typeof event.data === 'string' ? (event.data.length > 100 ? event.data.substring(0, 100) + '...' : event.data) : 'non-string'
-  })
   try {
     const data = typeof event.data === 'string' ? richJson.parse(event.data) : event.data
-    console.log('[WebView] Parsed message type:', data?.type)
     if (data.type === 'response') {
       const { id, result, error } = data
       if (error) pendingPromises[id]?.reject(new Error(error))
@@ -185,7 +181,10 @@ window.__POST_MESSAGE__ = (dataStr: string) => {
     }
   } catch (e: any) {
     console.error('[WebView] __POST_MESSAGE__ failed', e)
-    sendToReactEvent('ctrl.error', { ctrlName: 'BridgeError', errors: [{ message: e.message, stack: e.stack }] })
+    sendToReactEvent('ctrl.error', {
+      ctrlName: 'BridgeError',
+      errors: [{ message: e.message, stack: e.stack }]
+    })
   }
 }
 

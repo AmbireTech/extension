@@ -171,9 +171,7 @@ const SignAccountOpScreen = () => {
     <View style={flexbox.flex1}>
       <SafetyChecksOverlay
         shouldBeVisible={
-          !signAccountOpState?.isInitialized ||
-          !signAccountOpState?.estimation.estimation ||
-          !!signAccountOpState.safetyChecksLoading
+          !signAccountOpState?.isInitialized || !!signAccountOpState.safetyChecksLoading
         }
       />
       <Modals
