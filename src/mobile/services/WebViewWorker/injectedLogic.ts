@@ -26,6 +26,9 @@ const sendToRNAsync = (type: string, payload: any): Promise<any> => {
   })
 }
 
+// @ts-ignore
+window.sendToRNAsync = sendToRNAsync
+
 // Proxied Storage API
 const storageAPI = {
   get: (key: string, defaultValue?: any) => sendToRNAsync('storage.get', { key, defaultValue }),

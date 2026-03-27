@@ -43,8 +43,8 @@ module.exports = {
       'react-native$': 'react-native-web',
       'react-native-quick-crypto': 'crypto-browserify',
       'react-native-quick-base64': 'buffer',
-      'scrypt-js': require.resolve('scrypt-js'),
-      pbkdf2: require.resolve('pbkdf2'),
+      'scrypt-js': path.resolve(__dirname, 'src/mobile/shims/scrypt-js.ts'),
+      pbkdf2: path.resolve(__dirname, 'src/mobile/shims/pbkdf2.ts'),
       '@react-native-community/netinfo': false,
       'react-native-mmkv': false
     }

@@ -8,6 +8,8 @@
 import { scrypt as quickScrypt, scryptSync as quickScryptSync } from 'react-native-quick-crypto'
 
 // 256 MB — covers N=131072, r=8 which needs 128*N*r = 128 MB
+const isWebView = typeof process !== 'undefined' && process.env.WEB_ENGINE === 'webview'
+// 256 MB — covers N=131072, r=8 which needs 128*N*r = 128 MB
 const MAX_MEM = 256 * 1024 * 1024
 
 /**
@@ -23,6 +25,17 @@ export async function scrypt(
   dkLen: number,
   _progressCallback?: (progress: number) => void
 ): Promise<Uint8Array> {
+  if (isWebView) {
+    return (window as any).sendToRNAsync('crypto.scrypt', {
+      password,
+      salt,
+      N,
+      r,
+      p,
+      dkLen
+    }).then((res: any) => new Uint8Array(res))
+  }
+
   return new Promise((resolve, reject) => {
     try {
       quickScrypt(password as any, salt as any, dkLen, { N, r, p, maxmem: MAX_MEM }, ((

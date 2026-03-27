@@ -4,6 +4,7 @@ import { WebView } from 'react-native-webview'
 import * as richJson from '@ambire-common/libs/richJson/richJson'
 import eventBus from '@common/services/event/eventBus'
 import { storage } from '@common/services/storage'
+import { scrypt, pbkdf2Sync } from 'react-native-quick-crypto'
 
 // @ts-ignore
 import webviewBundle from './webview-bundle.json'
@@ -114,6 +115,48 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, {}>((_, ref) => {
         case 'storage.remove':
           await storage.remove(data.payload.key)
           sendResponse(data.id, null)
+          break
+        
+        // --- CRYPTO DELEGATION HANDLERS ---
+        case 'crypto.scrypt':
+          {
+            const { password, salt, N, r, p, dkLen } = data.payload
+            
+            // Reconstruct Uint8Arrays as richJson doesn't support them natively
+            const passwordUint8 = password instanceof Uint8Array ? password : new Uint8Array(Object.values(password))
+            const saltUint8 = salt instanceof Uint8Array ? salt : new Uint8Array(Object.values(salt))
+
+            scrypt(
+              passwordUint8,
+              saltUint8,
+              dkLen,
+              { N, r, p, maxmem: 256 * 1024 * 1024 },
+              (err: Error | null, derivedKey?: any) => {
+                if (err) {
+                  sendResponse(data.id, null, err.message)
+                } else {
+                  // Ensure we send a plain array across the bridge
+                  sendResponse(data.id, Array.from(derivedKey))
+                }
+              }
+            )
+          }
+          break
+        case 'crypto.pbkdf2':
+          {
+            const { password, salt, iterations, keylen, digest } = data.payload
+            try {
+              // Reconstruct Uint8Arrays
+              const passwordUint8 = password instanceof Uint8Array ? password : new Uint8Array(Object.values(password))
+              const saltUint8 = salt instanceof Uint8Array ? salt : new Uint8Array(Object.values(salt))
+
+              const res = pbkdf2Sync(passwordUint8, saltUint8, iterations, keylen, digest)
+              // Ensure we send a plain array across the bridge
+              sendResponse(data.id, Array.from(res))
+            } catch (err: any) {
+              sendResponse(data.id, null, err.message)
+            }
+          }
           break
 
         default:
