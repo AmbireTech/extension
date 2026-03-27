@@ -2,14 +2,9 @@ import React, { FC, memo } from 'react'
 import { Image, View } from 'react-native'
 import { SvgUri, SvgXml } from 'react-native-svg'
 
-type Props = {
-  setEnsAvatarImageState: React.Dispatch<React.SetStateAction<'loading' | 'loaded' | 'failed'>>
-  avatar: string | undefined
-  size?: number
-  borderRadius?: number
-}
+import { EnsAvatarProps } from '@common/components/Avatar/EnsAvatar/EnsAvatar'
 
-const EnsAvatar: FC<Props> = ({ avatar, setEnsAvatarImageState, size, borderRadius }) => {
+const EnsAvatar: FC<EnsAvatarProps> = ({ avatar, setEnsAvatarImageState, size, borderRadius }) => {
   if (!avatar) return null
 
   const isSvgDataUrl = avatar.startsWith('data:image/svg+xml')
