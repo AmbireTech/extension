@@ -163,8 +163,9 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, {}>((_, ref) => {
       onMessage={handleMessage}
       javaScriptEnabled={true}
       originWhitelist={['*']}
-      style={{ width: 0, height: 0, opacity: 0 }}
-      containerStyle={{ width: 0, height: 0, opacity: 0 }}
+      style={{ position: 'absolute', width: 0, height: 0, opacity: 0 }}
+      containerStyle={{ position: 'absolute', width: 0, height: 0, opacity: 0 }}
+      pointerEvents="none"
     />
   )
 })
