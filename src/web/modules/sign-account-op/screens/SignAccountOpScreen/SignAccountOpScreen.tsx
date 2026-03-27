@@ -222,7 +222,9 @@ const SignAccountOpScreen = () => {
                   !signAccountOpState.canBroadcast &&
                   !!signAccountOpState.account.safeCreation &&
                   showSafeSigners && (
-                    <ScrollView style={[{ maxHeight: 140 }, spacings.mb]}>
+                    <ScrollView
+                      style={[{ maxHeight: 140, minHeight: 100 }, flexbox.flex1, spacings.mb]}
+                    >
                       <SafeOwners
                         account={signAccountOpState.account}
                         onSign={handleChangeSigningKey}
