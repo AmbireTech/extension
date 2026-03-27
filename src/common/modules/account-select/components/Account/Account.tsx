@@ -4,6 +4,7 @@ import { View, ViewStyle } from 'react-native'
 
 import { Account as AccountInterface } from '@ambire-common/interfaces/account'
 import { canBecomeSmarter } from '@ambire-common/libs/account/account'
+import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
 import CopyIcon from '@common/assets/svg/CopyIcon'
 import AccountAddress from '@common/components/AccountAddress'
 import { ReceiveButton } from '@common/components/AccountAddress/AccountAddress'
@@ -67,7 +68,7 @@ const Account = ({
     dispatch: mainDispatch
   } = useController('MainController')
   const {
-    state: { account: selectedAccount }
+    state: { account: selectedAccount, balanceByAccounts }
   } = useController('SelectedAccountController')
   const { dispatch: accountsDispatch } = useController('AccountsController')
   const { ens, isLoading } = useReverseLookup({ address: addr })
@@ -79,6 +80,7 @@ const Account = ({
       to: !inverseInteractionColors ? theme.secondaryBackground : theme.primaryBackground
     }
   })
+  const balance = balanceByAccounts[account.addr] ?? null
 
   const [bindOpacityAnim, opacityAnimStyle] = useHover({
     preset: 'opacityInverted'
@@ -245,6 +247,11 @@ const Account = ({
         </View>
       </View>
       <View style={[flexbox.directionRow, flexbox.alignCenter]}>
+        {balance !== null && (
+          <Text fontSize={14} weight="medium" color={theme.secondaryText} style={[spacings.mrTy]}>
+            {formatDecimals(balance, 'value')}
+          </Text>
+        )}
         {renderRightChildren && renderRightChildren()}
         {isMobile && (
           <>
