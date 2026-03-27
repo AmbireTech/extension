@@ -1,17 +1,17 @@
 import React, { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
-import { View } from 'react-native'
+import { View, ViewStyle } from 'react-native'
 
 import { Account } from '@ambire-common/interfaces/account'
 import { Key } from '@ambire-common/interfaces/keystore'
 import AccountKey from '@common/components/AccountKey'
 import SafeKeyWrapper from '@common/components/SafeKeyWrapper'
+import ScrollableWrapper from '@common/components/ScrollableWrapper'
 import Text from '@common/components/Text'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import { THEME_TYPES } from '@common/styles/themeConfig'
-import flexbox from '@common/styles/utils/flexbox'
 
 const SafeOwners = ({
   account,
@@ -21,7 +21,8 @@ const SafeOwners = ({
   chainId,
   signed = [],
   importedKeys,
-  threshold
+  threshold,
+  style
 }: {
   account: Account
   onSign?: (signingKeyAddr: Key['addr'], _chosenSigningKeyType: Key['type']) => void
@@ -31,6 +32,7 @@ const SafeOwners = ({
   signed: string[]
   importedKeys: Key[]
   threshold: number
+  style?: ViewStyle
 }) => {
   const { t } = useTranslation()
   const { theme, themeType } = useTheme()
@@ -61,13 +63,14 @@ const SafeOwners = ({
   }, [importedKeys, account.addr, chainId, accountStates, signed])
 
   return (
-    <View style={[flexbox.justifyCenter, flexbox.alignCenter, spacings.mtTy]}>
-      <View style={[flexbox.directionRow, flexbox.justifyCenter, flexbox.alignCenter]}>
-        <Text fontSize={16} appearance="primaryText" weight="semiBold">
-          {t(`${threshold} out of ${owners.length} signatures required:`)}
-        </Text>
-      </View>
-      <View style={[flexbox.justifyCenter, flexbox.alignCenter, spacings.mt, { width: '100%' }]}>
+    <View style={[spacings.ptTy, style]}>
+      <Text weight="semiBold" style={{ textAlign: 'center', ...spacings.mb }}>
+        {t(`${threshold} out of ${owners.length} signatures required:`)}
+      </Text>
+      <ScrollableWrapper
+        style={{ maxHeight: 120, flexShrink: 0 }}
+        contentContainerStyle={{ flexGrow: 0 }}
+      >
         {owners.map((o, i) => (
           <SafeKeyWrapper
             key={o.addr}
@@ -98,7 +101,7 @@ const SafeOwners = ({
             />
           </SafeKeyWrapper>
         ))}
-      </View>
+      </ScrollableWrapper>
     </View>
   )
 }
