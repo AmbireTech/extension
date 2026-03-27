@@ -62,15 +62,15 @@ module.exports = {
             options: {
               sourceType: 'unambiguous',
               presets: [
-                ['@babel/preset-env', { targets: 'defaults', modules: false }],
+                ['@babel/preset-env', { targets: { ios: '15', chrome: '100' }, modules: false }],
                 '@babel/preset-typescript',
                 ['@babel/preset-react', { runtime: 'automatic' }]
               ],
               plugins: [
                 ['@babel/plugin-proposal-decorators', { legacy: true }],
-                ['@babel/plugin-transform-class-properties', { loose: true }],
-                ['@babel/plugin-transform-private-methods', { loose: true }],
-                ['@babel/plugin-transform-private-property-in-object', { loose: true }]
+                ['@babel/plugin-transform-class-properties'],
+                ['@babel/plugin-transform-private-methods'],
+                ['@babel/plugin-transform-private-property-in-object']
               ]
             }
           }

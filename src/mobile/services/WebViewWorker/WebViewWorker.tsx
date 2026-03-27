@@ -102,6 +102,10 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, {}>((_, ref) => {
         case 'ctrl.error':
           eventBus.emit('error', { errors: data.payload.errors, controller: data.payload.ctrlName })
           break
+        
+        case 'ctrl.debug':
+          console.log(data.payload.log)
+          break
 
         // --- PROXY HANDLERS FOR STORAGE ---
         case 'storage.get':

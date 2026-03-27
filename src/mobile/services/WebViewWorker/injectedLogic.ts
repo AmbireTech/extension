@@ -43,7 +43,6 @@ const eventEmitterRegistry = new EventEmitterRegistryController(() => {
     if (!hasOnUpdateInitialized) {
       console.log(`[WebView] Attaching onUpdate bridge listener to: ${ctrl.name}`)
       ctrl.onUpdate(() => {
-        console.log(`[WebView] Detected update for: ${ctrl.name}`)
         sendToReactEvent('ctrl.update', { ctrlName: ctrl.name, state: ctrl.toJSON() })
       }, 'webview')
     }

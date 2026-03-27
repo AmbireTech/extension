@@ -116,10 +116,10 @@ export class ControllerStore {
       return true
     })
 
-    console.log(
-      'not ready controllers',
-      this.controllersByName.filter((ctrlName) => !this.initializedControllers.has(ctrlName))
-    )
+    // console.log(
+    //   'not ready controllers',
+    //   this.controllersByName.filter((ctrlName) => !this.initializedControllers.has(ctrlName))
+    // )
 
     if (allReady) {
       this.isReady = true
