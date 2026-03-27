@@ -12,7 +12,6 @@ const pendingPromises: Record<number, { resolve: any; reject: any }> = {}
 let messageIdCounter = 0
 
 const sendToReactEvent = (type: string, payload: any) => {
-  console.log(`[WebView] Sending event: ${type}`, payload)
   // @ts-ignore
   window.ReactNativeWebView.postMessage(richJson.stringify({ type, payload }))
 }
@@ -41,32 +40,13 @@ const eventEmitterRegistry = new EventEmitterRegistryController(() => {
   eventEmitterRegistry.values().forEach((ctrl: any) => {
     const hasOnUpdateInitialized = ctrl.onUpdateIds.includes('webview')
     if (!hasOnUpdateInitialized) {
-      console.log(`[WebView] Attaching onUpdate bridge listener to: ${ctrl.name}`)
       ctrl.onUpdate(() => {
-        const start = performance.now()
-        const state = ctrl.toJSON()
-        const stateStr = richJson.stringify(state)
-        const end = performance.now()
-        
-        const logMsg = `[WebView Bridge Debug] ${ctrl.name} update | Size: ${stateStr.length} chars | toJSON took: ${(end - start).toFixed(2)}ms`
-        
-        // Log key fields for specific controllers to track progress
-        let extraInfo = ''
-        if (ctrl.name === 'EstimationController') {
-          extraInfo = ` | status: ${state.status} | hasEstimated: ${state.hasEstimated}`
-        } else if (ctrl.name === 'SignAccountOpController') {
-          extraInfo = ` | status: ${state.status?.type} | hasEstimation: ${!!state.estimation?.estimation}`
-        }
-        
-        console.log(logMsg + extraInfo)
-        sendToReactEvent('ctrl.debug', { log: logMsg + extraInfo })
-        sendToReactEvent('ctrl.update', { ctrlName: ctrl.name, state })
+        sendToReactEvent('ctrl.update', { ctrlName: ctrl.name, state: ctrl.toJSON() })
       }, 'webview')
     }
 
     const hasOnErrorInitialized = ctrl.onErrorIds.includes('webview')
     if (!hasOnErrorInitialized) {
-      console.log(`[WebView] Attaching onError bridge listener to: ${ctrl.name}`)
       ctrl.onError(() => {
         sendToReactEvent('ctrl.error', { ctrlName: ctrl.name, errors: ctrl.emittedErrors })
       }, 'webview')
@@ -80,7 +60,6 @@ let mainCtrl: any = null
 let walletStateCtrl: any = null
 
 const initControllers = (config: any) => {
-  console.log('[WebView] Initializing controllers with config', config)
   try {
     mainCtrl = new MainController({
       eventEmitterRegistry,
@@ -146,7 +125,6 @@ const initControllers = (config: any) => {
     sendToReactEvent('system.ready', { controllers: allControllerNames })
     isConfigured = true
   } catch (e: any) {
-    console.error('[WebView] initControllers failed', e)
     sendToReactEvent('ctrl.error', {
       ctrlName: 'Init',
       errors: [{ message: e.message, stack: e.stack }]
@@ -167,7 +145,6 @@ window.addEventListener('message', (event) => {
       initControllers(data.config)
     } else if (data.type === 'dispatchAction') {
       if (!isConfigured) {
-        console.warn('[WebView] Received action before init')
         return
       }
       handleActions(data.action, { eventEmitterRegistry, mainCtrl, sendToReactEvent })
@@ -180,10 +157,8 @@ window.addEventListener('message', (event) => {
 // Direct bridge for reliable communication
 // @ts-ignore
 window.__POST_MESSAGE__ = (dataStr: string) => {
-  console.log('[WebView] __POST_MESSAGE__ received data length:', dataStr.length)
   try {
     const data = richJson.parse(dataStr)
-    console.log('[WebView] __POST_MESSAGE__ parsed type:', data.type)
     if (data.type === 'dispatchAction') {
       if (!isConfigured) {
         console.warn('[WebView] __POST_MESSAGE__ rejected: NOT CONFIGURED')
@@ -199,7 +174,6 @@ window.__POST_MESSAGE__ = (dataStr: string) => {
       delete pendingPromises[id]
     }
   } catch (e: any) {
-    console.error('[WebView] __POST_MESSAGE__ failed', e)
     sendToReactEvent('ctrl.error', {
       ctrlName: 'BridgeError',
       errors: [{ message: e.message, stack: e.stack }]
