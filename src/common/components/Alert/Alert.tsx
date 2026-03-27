@@ -7,6 +7,7 @@ import InfoIcon from '@common/assets/svg/InfoIcon'
 import SuccessIcon from '@common/assets/svg/SuccessIcon'
 import WarningIcon from '@common/assets/svg/WarningIcon'
 import Button, { Props as ButtonProps } from '@common/components/Button'
+import { isMobile } from '@common/config/env'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import common from '@common/styles/utils/common'
@@ -102,7 +103,7 @@ const Alert = ({
         </View>
       )}
 
-      <View style={{ flexShrink: 1 }}>
+      <View style={isMobile ? { flexShrink: 1 } : flexbox.flex1}>
         {!!title && (
           <Text style={text ? (!isSmall ? spacings.mbTy : spacings.mbMi) : {}}>
             {!isTypeLabelHidden && (
