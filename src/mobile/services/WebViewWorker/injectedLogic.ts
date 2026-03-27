@@ -43,7 +43,24 @@ const eventEmitterRegistry = new EventEmitterRegistryController(() => {
     if (!hasOnUpdateInitialized) {
       console.log(`[WebView] Attaching onUpdate bridge listener to: ${ctrl.name}`)
       ctrl.onUpdate(() => {
-        sendToReactEvent('ctrl.update', { ctrlName: ctrl.name, state: ctrl.toJSON() })
+        const start = performance.now()
+        const state = ctrl.toJSON()
+        const stateStr = richJson.stringify(state)
+        const end = performance.now()
+        
+        const logMsg = `[WebView Bridge Debug] ${ctrl.name} update | Size: ${stateStr.length} chars | toJSON took: ${(end - start).toFixed(2)}ms`
+        
+        // Log key fields for specific controllers to track progress
+        let extraInfo = ''
+        if (ctrl.name === 'EstimationController') {
+          extraInfo = ` | status: ${state.status} | hasEstimated: ${state.hasEstimated}`
+        } else if (ctrl.name === 'SignAccountOpController') {
+          extraInfo = ` | status: ${state.status?.type} | hasEstimation: ${!!state.estimation?.estimation}`
+        }
+        
+        console.log(logMsg + extraInfo)
+        sendToReactEvent('ctrl.debug', { log: logMsg + extraInfo })
+        sendToReactEvent('ctrl.update', { ctrlName: ctrl.name, state })
       }, 'webview')
     }
 

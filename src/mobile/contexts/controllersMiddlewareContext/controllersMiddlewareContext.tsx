@@ -1,4 +1,3 @@
-import { EventEmitter as Emitter } from 'events'
 /* eslint-disable @typescript-eslint/no-floating-promises */
 import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { Platform as RNPlatform } from 'react-native'
@@ -12,8 +11,7 @@ import { Action, MethodAction } from '@common/types/actions'
 import { BUNGEE_API_KEY, RELAYER_URL, VELCRO_URL } from '@env'
 import { MobileBaseControllersMappingType } from '@mobile/constants/controllersMapping'
 import useRequestsControllerHelpers from '@mobile/hooks/useRequestsControllerHelpers'
-
-import { WebViewWorker, WebViewWorkerRef } from '../../services/WebViewWorker/WebViewWorker'
+import { WebViewWorker, WebViewWorkerRef } from '@mobile/services/WebViewWorker/WebViewWorker'
 
 // --- POLYFILL FOR REACT NATIVE HERMES / METRO BIND BUG ---
 const originalBind = Function.prototype.bind
@@ -66,17 +64,7 @@ export const ControllersMiddlewareProvider: React.FC<{
   const route = useRoute()
   const webviewRef = useRef<WebViewWorkerRef>(null)
 
-  const controllers = useRef<MobileBaseControllersMappingType>(
-    {} as MobileBaseControllersMappingType
-  )
-
   useEffect(() => {
-    // We do not re-initialize if the component re-renders
-    if (controllers.current.MainController) return
-
-    // Dummy controllers.current to satisfy hooks temporarily
-    controllers.current = { MainController: {} } as any
-
     webviewRef.current
       ?.init({
         APP_VERSION,
@@ -116,7 +104,7 @@ export const ControllersMiddlewareProvider: React.FC<{
     })
   }, [route.pathname, route.search, dispatch])
 
-  useRequestsControllerHelpers(controllers.current)
+  useRequestsControllerHelpers(dispatch)
 
   return (
     <ControllersMiddlewareContext.Provider value={useMemo(() => ({ dispatch }), [dispatch])}>

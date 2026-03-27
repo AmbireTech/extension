@@ -113,6 +113,11 @@ type OpenExtensionPopupAction = {
   type: 'OPEN_EXTENSION_POPUP'
 }
 
+type WindowRemovedAction = {
+  type: 'WINDOW_REMOVED'
+  params: { id: number }
+}
+
 export type Action =
   | UpdateNavigationUrl
   | UpdateUiViewRoute
@@ -131,3 +136,4 @@ export type Action =
   | ImportSmartAccountJson
   | OpenExtensionPopupAction
   | InitAllControllersAction
+  | WindowRemovedAction

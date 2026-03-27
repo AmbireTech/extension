@@ -65,6 +65,10 @@ export const handleActions = async (
       })
       break
     }
+    case 'WINDOW_REMOVED': {
+      mainCtrl.ui.window.event.emit('windowRemoved', params.id)
+      break
+    }
 
     case 'ADDRESS_BOOK_CONTROLLER_ADD_CONTACT': {
       await mainCtrl.addressBook.addContact(params.name, params.address)
