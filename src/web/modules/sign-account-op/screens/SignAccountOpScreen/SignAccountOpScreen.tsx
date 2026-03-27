@@ -12,7 +12,6 @@ import NoKeysToSignAlert from '@common/components/NoKeysToSignAlert'
 import useController from '@common/hooks/useController'
 import useSign from '@common/hooks/useSign'
 import useTheme from '@common/hooks/useTheme'
-import useToast from '@common/hooks/useToast'
 import ErrorInformation from '@common/modules/sign-account-op/components/ErrorInformation'
 import Estimation from '@common/modules/sign-account-op/components/Estimation'
 import Footer from '@common/modules/sign-account-op/components/Footer'
@@ -222,18 +221,17 @@ const SignAccountOpScreen = () => {
                   !signAccountOpState.canBroadcast &&
                   !!signAccountOpState.account.safeCreation &&
                   showSafeSigners && (
-                    <ScrollView style={[{ maxHeight: 140 }, spacings.mb]}>
-                      <SafeOwners
-                        account={signAccountOpState.account}
-                        onSign={handleChangeSigningKey}
-                        isSignLoading={isSignLoading}
-                        signingKeyAddr={signAccountOpState.accountOp.signingKeyAddr}
-                        chainId={signAccountOpState.accountOp.chainId.toString()}
-                        signed={signAccountOpState.accountOp.signed || []}
-                        importedKeys={signAccountOpState.accountKeyStoreKeys}
-                        threshold={signAccountOpState.threshold}
-                      />
-                    </ScrollView>
+                    <SafeOwners
+                      account={signAccountOpState.account}
+                      onSign={handleChangeSigningKey}
+                      isSignLoading={isSignLoading}
+                      signingKeyAddr={signAccountOpState.accountOp.signingKeyAddr}
+                      chainId={signAccountOpState.accountOp.chainId.toString()}
+                      signed={signAccountOpState.accountOp.signed || []}
+                      importedKeys={signAccountOpState.accountKeyStoreKeys}
+                      threshold={signAccountOpState.threshold}
+                      style={spacings.mb}
+                    />
                   )}
 
                 <Footer
