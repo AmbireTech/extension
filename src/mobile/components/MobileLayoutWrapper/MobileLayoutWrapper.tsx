@@ -8,6 +8,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import { PanelBackButton, PanelTitle } from '@common/components/Panel/Panel'
 import { WrapperProps } from '@common/components/ScrollableWrapper'
+import useNavigation from '@common/hooks/useNavigation'
 import useTheme from '@common/hooks/useTheme'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
 import spacings, { SPACING_SM } from '@common/styles/spacings'
@@ -96,7 +97,7 @@ export const MobileLayoutWrapperMainContent: React.FC<MobileLayoutWrapperMainCon
   withScroll = false,
   keyboardAwareScrollViewProps = {},
   withBackButton = false,
-  onBackButtonPress = () => {},
+  onBackButtonPress,
   rightIcon,
   title,
   step = 0,
@@ -105,6 +106,15 @@ export const MobileLayoutWrapperMainContent: React.FC<MobileLayoutWrapperMainCon
 }: MobileLayoutWrapperMainContentProps) => {
   const { styles, theme } = useTheme(getStyles)
   const { isOnboardingRoute } = useOnboardingNavigation()
+  const { goBack } = useNavigation()
+
+  const handleBackButtonPress = () => {
+    if (onBackButtonPress) {
+      onBackButtonPress()
+    } else {
+      goBack()
+    }
+  }
 
   const renderProgress = () => (
     <View style={[styles.progressContainer]}>
@@ -129,7 +139,7 @@ export const MobileLayoutWrapperMainContent: React.FC<MobileLayoutWrapperMainCon
         {step > 0 ? renderProgress() : <View style={{ height: isOnboardingRoute ? 24 : 0 }} />}
         {(!!title || !!withBackButton) && (
           <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mbLg]}>
-            {!!withBackButton && <PanelBackButton onPress={onBackButtonPress} />}
+            {!!withBackButton && <PanelBackButton onPress={handleBackButtonPress} />}
             {!!title && <PanelTitle title={title} size={18} />}
             {!!withBackButton && (
               <View style={[{ width: 28 }, flexbox.alignCenter]}>{rightIcon}</View>
@@ -161,7 +171,7 @@ export const MobileLayoutWrapperMainContent: React.FC<MobileLayoutWrapperMainCon
       {step > 0 ? renderProgress() : <View style={{ height: isOnboardingRoute ? 24 : 0 }} />}
       {(!!title || !!withBackButton) && (
         <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mbLg]}>
-          {!!withBackButton && <PanelBackButton onPress={onBackButtonPress} />}
+          {!!withBackButton && <PanelBackButton onPress={handleBackButtonPress} />}
           {!!title && <PanelTitle title={title} size={18} />}
           {!!withBackButton && (
             <View style={[{ width: 28, maxHeight: 15 }, flexbox.center]}>{rightIcon}</View>

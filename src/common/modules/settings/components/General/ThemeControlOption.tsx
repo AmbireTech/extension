@@ -6,6 +6,7 @@ import LightThemeIcon from '@common/assets/svg/LightThemeIcon'
 import SystemThemeIcon from '@common/assets/svg/SystemThemeIcon'
 import ControlOption from '@common/components/ControlOption'
 import Select from '@common/components/Select'
+import { isMobile } from '@common/config/env'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
@@ -69,7 +70,8 @@ const ThemeControlOption = () => {
         withSearch={false}
         options={THEME_SELECT_OPTIONS}
         value={selectedOption}
-        containerStyle={{ width: 132, ...spacings.mb0 }}
+        selectStyle={isMobile ? { height: 42 } : undefined}
+        containerStyle={{ width: isMobile ? 124 : 132, ...spacings.mb0 }}
         size="sm"
       />
     </ControlOption>

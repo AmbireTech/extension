@@ -18,7 +18,7 @@ import { Portal } from '@gorhom/portal'
 import { DEVICE_SECURITY_LEVEL, DEVICE_SUPPORTED_AUTH_TYPES } from './constants'
 import { biometricsContextDefaults, BiometricsContextReturnType } from './types'
 
-const BIOMETRICS_SECRET_KEY = 'biometricsSecret_v2'
+export const BIOMETRICS_SECRET_KEY = 'biometricsSecret_v2'
 
 const BiometricsContext = createContext<BiometricsContextReturnType>(biometricsContextDefaults)
 

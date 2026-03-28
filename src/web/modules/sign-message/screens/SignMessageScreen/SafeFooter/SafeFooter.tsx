@@ -41,20 +41,19 @@ const SafeFooter = ({
     <View style={[spacings.pbMd, spacings.ph]}>
       <GlassView borderRadius={28} cssStyle={{ flexDirection: 'column' }}>
         {showSafeSigners && (
-          <ScrollView style={[{ maxHeight: 140 }, spacings.pl, spacings.prSm]}>
-            <SafeOwners
-              account={account}
-              isSignLoading={isSignLoading}
-              onSign={onSign}
-              chainId={chainId}
-              signed={signed}
-              importedKeys={importedKeys}
-              threshold={threshold}
-              signingKeyAddr={signingKeyAddr}
-            />
-          </ScrollView>
+          <SafeOwners
+            account={account}
+            isSignLoading={isSignLoading}
+            onSign={onSign}
+            chainId={chainId}
+            signed={signed}
+            importedKeys={importedKeys}
+            threshold={threshold}
+            signingKeyAddr={signingKeyAddr}
+            style={{ ...spacings.ptLg, ...spacings.ph }}
+          />
         )}
-        <View style={[flexbox.directionRow, spacings.pv, spacings.ph]}>
+        <View style={[flexbox.directionRow, flexbox.justifyCenter, spacings.pv, spacings.ph]}>
           {threshold > signed.length ? (
             <View style={[flexbox.directionRow, flexbox.justifySpaceBetween, { width: '100%' }]}>
               <Button
@@ -87,7 +86,14 @@ const SafeFooter = ({
               </View>
             </View>
           ) : (
-            <SpinnerWeb style={{ width: 28, height: 28, marginTop: 14, marginBottom: 14 }} />
+            <SpinnerWeb
+              style={{
+                width: 28,
+                height: 28,
+                marginTop: 14,
+                marginBottom: 14
+              }}
+            />
           )}
         </View>
       </GlassView>

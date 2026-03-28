@@ -1,4 +1,4 @@
-import { ReactNode, useEffect } from 'react'
+import { ReactNode, useEffect, useMemo } from 'react'
 import { BackHandler, Dimensions, Platform } from 'react-native'
 import { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler'
 
@@ -6,6 +6,7 @@ import {
   bottomSheetCloseEventStream,
   openBottomSheetsCount
 } from '@common/components/BottomSheet/bottomSheetEventStream'
+import { checkDropdownDismiss } from '@common/components/Dropdown/dropdownDismissManager'
 import { isAndroid } from '@common/config/env'
 import useNavigation from '@common/hooks/useNavigation'
 import useRoute from '@common/hooks/useRoute'
@@ -75,9 +76,27 @@ const GestureHandler = ({ children }: { children: ReactNode }) => {
       }
     })
 
+  const touchObserver = useMemo(
+    () =>
+      Gesture.Manual()
+        .runOnJS(true)
+        .onTouchesDown((event) => {
+          const touch = event.allTouches[0]
+          if (touch) {
+            checkDropdownDismiss(touch.absoluteX, touch.absoluteY)
+          }
+        }),
+    []
+  )
+
+  const composedGesture = useMemo(
+    () => Gesture.Simultaneous(panGesture, touchObserver),
+    [panGesture, touchObserver]
+  )
+
   return (
     <GestureHandlerRootView style={[flexbox.flex1, { backgroundColor: theme.primaryBackground }]}>
-      <GestureDetector gesture={panGesture}>{children}</GestureDetector>
+      <GestureDetector gesture={composedGesture}>{children}</GestureDetector>
     </GestureHandlerRootView>
   )
 }
