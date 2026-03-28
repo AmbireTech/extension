@@ -10,7 +10,6 @@ import SendIcon from '@common/assets/svg/SendIcon'
 import SwapAndBridgeIcon from '@common/assets/svg/SwapAndBridgeIcon'
 import TopUpIcon from '@common/assets/svg/TopUpIcon'
 import VisibilityIcon from '@common/assets/svg/VisibilityIcon'
-import { isWeb } from '@common/config/env'
 import useController from '@common/hooks/useController'
 import useHasGasTank from '@common/hooks/useHasGasTank'
 import useNavigation from '@common/hooks/useNavigation'
@@ -186,7 +185,7 @@ const useTokenDetails = () => {
           strokeWidth: 1.5,
           testID: 'token-send'
         },
-        isWeb && {
+        {
           id: 'swap-or-bridge',
           text: t('Swap or Bridge'),
           icon: SwapAndBridgeIcon,

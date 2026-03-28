@@ -10,7 +10,7 @@ import Button from '@common/components/Button'
 import ScrollableWrapper, { WRAPPER_TYPES } from '@common/components/ScrollableWrapper'
 import Search from '@common/components/Search'
 import Text from '@common/components/Text'
-import { isMobile, isWeb } from '@common/config/env'
+import { isWeb } from '@common/config/env'
 import useAccountsList from '@common/hooks/useAccountsList'
 import useController from '@common/hooks/useController'
 import useNavigation from '@common/hooks/useNavigation'
@@ -21,7 +21,6 @@ import AddAccount from '@common/modules/account-select/components/AddAccount'
 import DashboardSkeleton from '@common/modules/dashboard/components/Skeleton'
 import { HeaderWithTitle } from '@common/modules/header/components/Header/Header'
 import { ROUTES, WEB_ROUTES } from '@common/modules/router/constants/common'
-import alert from '@common/services/alert'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { MobileLayoutContainer } from '@mobile/components/MobileLayoutWrapper'
@@ -112,10 +111,6 @@ const AccountSelectScreen = () => {
       <HeaderWithTitle>
         <Pressable
           onPress={() => {
-            if (isMobile) {
-              alert('Coming soon!')
-              return
-            }
             navigate(WEB_ROUTES.accountsSettings)
           }}
         >
@@ -123,7 +118,12 @@ const AccountSelectScreen = () => {
         </Pressable>
       </HeaderWithTitle>
       <View style={[spacings.phSm, flexbox.flex1]} ref={accountsContainerRef}>
-        <Search autoFocus={isWeb} control={control} style={styles.searchBar} />
+        <Search
+          autoFocus={isWeb}
+          control={control}
+          style={styles.searchBar}
+          containerStyle={spacings.mbTy}
+        />
         <ScrollableWrapper
           type={WRAPPER_TYPES.FLAT_LIST}
           style={[
