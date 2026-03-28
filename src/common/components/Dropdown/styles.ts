@@ -1,5 +1,6 @@
 import { StyleSheet, ViewStyle } from 'react-native'
 
+import { isMobile } from '@common/config/env'
 import spacings from '@common/styles/spacings'
 import { ThemeProps } from '@common/styles/themeConfig'
 import common from '@common/styles/utils/common'
@@ -27,10 +28,10 @@ const getStyles = (theme: ThemeProps) =>
       minWidth: 160,
       ...common.shadowSecondary,
       ...common.borderRadiusPrimary,
-      shadowColor: theme.neutral400,
-      shadowOffset: { width: 0, height: 1 },
-      shadowOpacity: 1,
-      shadowRadius: 8
+      ...(isMobile ? { shadowColor: theme.neutral400 } : {}),
+      ...(isMobile ? { shadowOffset: { width: 0, height: 1 } } : {}),
+      ...(isMobile ? { shadowOpacity: 1 } : {}),
+      ...(isMobile ? { shadowRadius: 8 } : {})
     },
     overlay: {
       width: '100%',
