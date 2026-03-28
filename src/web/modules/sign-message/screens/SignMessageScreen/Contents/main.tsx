@@ -125,6 +125,7 @@ const Main = ({
             <Alert
               type="error"
               title="Safe account not enabled on this network. Please activate it from Safe Global"
+              style={spacings.mt}
             />
           )}
         </View>
