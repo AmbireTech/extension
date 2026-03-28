@@ -95,7 +95,8 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, {}>((_, ref) => {
         case 'ctrl.update':
           eventBus.emit('ctrlUpdate', {
             ctrlName: data.payload.ctrlName,
-            ctrlState: data.payload.state
+            ctrlState: data.payload.state,
+            forceEmit: data.payload.forceEmit
           })
           break
 

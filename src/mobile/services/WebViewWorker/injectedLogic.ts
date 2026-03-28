@@ -4,7 +4,9 @@ import { EventEmitterRegistryController } from '@ambire-common/controllers/event
 import { MainController } from '@ambire-common/controllers/main/main'
 import { KeystoreSigner } from '@ambire-common/libs/keystoreSigner/keystoreSigner'
 import * as richJson from '@ambire-common/libs/richJson/richJson'
+import { controllersNestedInMainMapping } from '@common/constants/controllersMapping'
 import { WalletStateController } from '@common/controllers/wallet-state'
+import { LOG_LEVELS } from '@common/utils/logger'
 import { handleActions } from '@mobile/handlers/handleActions'
 
 // Bridge setup
@@ -14,6 +16,65 @@ let messageIdCounter = 0
 const sendToReactEvent = (type: string, payload: any) => {
   // @ts-ignore
   window.ReactNativeWebView.postMessage(richJson.stringify({ type, payload }))
+}
+
+const ctrlOnUpdateIsDirtyFlags: Record<string, boolean> = {}
+
+function debounceFrontEndEventUpdatesOnSameTick(
+  ctrlName: string,
+  ctrl: any,
+  mainCtrl: any,
+  forceEmit?: boolean
+): 'DEBOUNCED' | 'EMITTED' {
+  const sendUpdate = () => {
+    // Controller updates
+    const stateToSendToFE = ctrl.toJSON()
+
+    if (ctrlName === 'MainController') {
+      // We are removing the state of the nested controllers in main to avoid the CPU-intensive task of parsing + stringifying.
+      // We should access the state of the nested controllers directly from their context instead of accessing them through the main ctrl state on the FE.
+      Object.keys(controllersNestedInMainMapping).forEach((nestedCtrlName) => {
+        delete (stateToSendToFE as any)[nestedCtrlName]
+      })
+    }
+
+    sendToReactEvent('ctrl.update', { ctrlName, state: stateToSendToFE, forceEmit })
+  }
+
+  /**
+   * Bypasses both background and React batching,
+   * ensuring that the state update is immediately applied at the application level (React/Extension).
+   */
+  if (forceEmit) {
+    sendUpdate()
+    return 'EMITTED'
+  }
+
+  if (ctrlOnUpdateIsDirtyFlags[ctrlName]) return 'DEBOUNCED'
+  ctrlOnUpdateIsDirtyFlags[ctrlName] = true
+
+  // Debounce multiple emits in the same tick and only execute one of them
+  setTimeout(() => {
+    if (ctrlOnUpdateIsDirtyFlags[ctrlName]) {
+      // If the toJSON method of a controller ever throws, we want to catch it here
+      // otherwise the ctrlOnUpdateIsDirtyFlags flag will remain true forever and no further updates
+      // will be sent to the UI for that controller
+      try {
+        sendUpdate()
+      } catch (err) {
+        ;(err as any).controllerName = ctrlName
+        console.error('Debug: Failed to send update to UI for ctrl', ctrlName, err)
+        // Send error back to React Native
+        sendToReactEvent('ctrl.error', {
+          ctrlName,
+          errors: [{ message: (err as any).message, stack: (err as any).stack }]
+        })
+      }
+    }
+    ctrlOnUpdateIsDirtyFlags[ctrlName] = false
+  }, 0)
+
+  return 'EMITTED'
 }
 
 const sendToRNAsync = (type: string, payload: any): Promise<any> => {
@@ -40,8 +101,8 @@ const eventEmitterRegistry = new EventEmitterRegistryController(() => {
   eventEmitterRegistry.values().forEach((ctrl: any) => {
     const hasOnUpdateInitialized = ctrl.onUpdateIds.includes('webview')
     if (!hasOnUpdateInitialized) {
-      ctrl.onUpdate(() => {
-        sendToReactEvent('ctrl.update', { ctrlName: ctrl.name, state: ctrl.toJSON() })
+      ctrl.onUpdate((forceEmit: boolean) => {
+        debounceFrontEndEventUpdatesOnSameTick(ctrl.name, ctrl, mainCtrl, forceEmit)
       }, 'webview')
     }
 

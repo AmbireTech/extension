@@ -73,7 +73,8 @@ if (isExtension) {
           eventBus.emit(method, params, forceEmit)
           eventBus.emit('ctrlUpdate', {
             ctrlName: method,
-            ctrlState: params
+            ctrlState: params,
+            forceEmit
           })
         }
       }

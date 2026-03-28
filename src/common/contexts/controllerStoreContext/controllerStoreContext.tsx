@@ -71,9 +71,17 @@ export const ControllerStoreProvider: React.FC<{
   )
 
   useEffect(() => {
-    const onCtrlUpdate = ({ ctrlName, ctrlState }: { ctrlName: string; ctrlState: any }) => {
+    const onCtrlUpdate = ({
+      ctrlName,
+      ctrlState,
+      forceEmit
+    }: {
+      ctrlName: string
+      ctrlState: any
+      forceEmit?: boolean
+    }) => {
       if ((allControllersMapping as any)[ctrlName])
-        controllerStore.update(ctrlName as any, ctrlState)
+        controllerStore.update(ctrlName as any, ctrlState, forceEmit)
     }
 
     eventBus.addEventListener('ctrlUpdate', onCtrlUpdate)
