@@ -209,7 +209,11 @@ class UrQrProtocolAdapter implements QrProtocolAdapter {
       }
 
       if (signature instanceof Uint8Array) {
-        return { signature: hexlify(signature) }
+        return {
+          r: hexlify(signature.slice(0, 32)),
+          s: hexlify(signature.slice(32, 64)),
+          v: Number(hexlify(signature.slice(64)))
+        }
       }
 
       if (ArrayBuffer.isView(signature)) {
