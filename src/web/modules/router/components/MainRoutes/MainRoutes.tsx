@@ -33,6 +33,7 @@ import ViewOnlyAccountAdderScreen from '@web/modules/auth/screens/ViewOnlyAccoun
 import DappCatalogScreen from '@web/modules/dapp-catalog/screens/DappCatalogScreen'
 import ExtensionRewardsScreen from '@web/modules/extension-rewards/screens/ExtensionRewardsScreen'
 import LedgerConnectScreen from '@web/modules/hardware-wallet/screens/LedgerConnectScreen/LedgerConnectScreen'
+import QrCameraPermissionPage from '@web/modules/hardware-wallet/screens/QrCameraPermissionPage'
 import QrConnectScreen from '@web/modules/hardware-wallet/screens/QrConnectScreen/QrConnectScreen'
 import KeyStoreEmailRecoveryScreen from '@web/modules/keystore/screens/KeyStoreEmailRecoveryScreen/KeyStoreEmailRecoveryScreen'
 import KeyStoreEmailRecoverySetNewPasswordScreen from '@web/modules/keystore/screens/KeyStoreEmailRecoverySetNewPasswordScreen'
@@ -122,6 +123,7 @@ const MainRoutes = () => {
           <Route path={WEB_ROUTES.accountPicker} element={<AccountPickerScreen />} />
           <Route path={WEB_ROUTES.accountPersonalize} element={<AccountPersonalizeScreen />} />
           <Route path={WEB_ROUTES.onboardingCompleted} element={<OnboardingCompletedScreen />} />
+          <Route path={WEB_ROUTES.qrPermission} element={<QrCameraPermissionPage />} />
 
           <Route element={<AuthenticatedRoute />}>
             <Route element={<SettingsRoutesProvider />}>

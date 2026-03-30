@@ -17,8 +17,7 @@ import { hexToRgba } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import { TabLayoutContainer, TabLayoutWrapperMainContent } from '@web/components/TabLayoutWrapper'
 import { QrWalletRegistry } from '@web/modules/hardware-wallet/qr/wallets'
-
-import QrScanner from './QrScanner'
+import QrScannerWithPermission from '@web/modules/hardware-wallet/screens/QrScannerWithPermission'
 
 const VISIBLE_WALLETS_COUNT = 2
 const QR_WALLET_ROW_HEIGHT = 56
@@ -92,17 +91,12 @@ const QrConnectScreen = () => {
   const onResetScannerPress = useCallback(() => {
     setIsSubmitting(false)
     setScannerKey((prev) => prev + 1)
-    console.count('onResetScannerPress')
   }, [])
 
   const handleBackButtonPressed = useCallback(() => {
     onResetScannerPress()
     goToPrevRoute()
   }, [goToPrevRoute, onResetScannerPress])
-
-  const handleToggleShowMore = useCallback(() => {
-    setShowMore((prev) => !prev)
-  }, [])
 
   const handleOpenTutorial = useCallback(
     async (tutorialUrl?: string) => {
@@ -195,10 +189,9 @@ const QrConnectScreen = () => {
           <Text fontSize={14} style={[spacings.mbSm, { textAlign: 'center' }]}>
             {t('Scan the QR code exported by your hardware wallet.')}
           </Text>
-          <QrScanner
+          <QrScannerWithPermission
             key={scannerKey}
             onComplete={onQrComplete}
-            onError={handleQrError}
             disabled={isSubmitting}
           />
 

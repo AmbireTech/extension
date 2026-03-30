@@ -69,7 +69,8 @@ const WEB_ROUTES = {
   recoveryPhrasesSettings: 'settings/recovery-phrases',
   safeImport: 'safe-import',
   optOuts: 'settings/opt-outs',
-  qrImport: 'qr-import'
+  qrImport: 'qr-import',
+  qrPermission: 'qr-permission'
 }
 
 const ROUTES = { ...MOBILE_ROUTES, ...WEB_ROUTES }

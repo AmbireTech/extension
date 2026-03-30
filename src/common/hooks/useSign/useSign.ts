@@ -405,16 +405,20 @@ const useSign = ({
 
     if (shouldDisplayLedgerConnectModal) return 'ledger-connect'
 
-    if (shouldDisplayQrSigningModal) return 'qr-sign'
+    const hasActiveQrFlow = !!currentRequest || !!signingStep
+
+    if (shouldDisplayQrSigningModal || hasActiveQrFlow) return 'qr-sign'
 
     if (isAtLeastOneOfTheKeysInvolvedExternal) return 'hw-sign'
 
     return null
   }, [
+    currentRequest,
     isAtLeastOneOfTheKeysInvolvedExternal,
     shouldDisplayLedgerConnectModal,
     shouldDisplayQrSigningModal,
     signAccountOpState?.status?.type,
+    signingStep,
     warningToPromptBeforeSign
   ])
 
@@ -478,6 +482,23 @@ const useSign = ({
       signAccountOpState?.warnings.find((warning) => warning.id === 'bundler-failure'),
     [signAccountOpState?.warnings]
   )
+
+  useEffect(() => {
+    const isExternalQr =
+      signAccountOpState?.accountOp.signingKeyType === 'qr' ||
+      signAccountOpState?.accountOp.gasFeePayment?.paidByKeyType === 'qr'
+
+    const hasActiveQrFlow = !!currentRequest || !!signingStep
+
+    if (isExternalQr && hasActiveQrFlow) {
+      setShouldDisplayQrSigningModal(true)
+    }
+  }, [
+    currentRequest,
+    signingStep,
+    signAccountOpState?.accountOp.signingKeyType,
+    signAccountOpState?.accountOp.gasFeePayment?.paidByKeyType
+  ])
 
   return {
     renderedButNotNecessarilyVisibleModal,
