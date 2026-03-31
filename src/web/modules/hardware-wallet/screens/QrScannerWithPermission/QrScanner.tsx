@@ -29,6 +29,13 @@ const getCameraErrorMessage = (error: any) => {
   }
 }
 
+const getFragmentFromResult = (result: string | { data?: unknown }) => {
+  if (typeof result === 'string') return result
+  if (typeof result?.data === 'string') return result.data
+
+  throw new Error('Invalid QR scan result.')
+}
+
 const QrScanner = ({ onComplete, onError, disabled }: Props) => {
   const videoRef = useRef<HTMLVideoElement | null>(null)
   const scannerRef = useRef<QrScannerLib | null>(null)
@@ -45,30 +52,49 @@ const QrScanner = ({ onComplete, onError, disabled }: Props) => {
     isCompletedRef.current = false
     decoderRef.current.reset()
 
+    const reportError = (error: any, fallbackMessage = 'Failed to decode QR payload.') => {
+      if (disposed) return
+      onError?.(error?.message || fallbackMessage, error)
+    }
+
     const scanner = new QrScannerLib(
       video,
       (result) => {
         if (disabled || isCompletedRef.current || disposed) return
 
-        const fragment = typeof result === 'string' ? result : result.data
-
         try {
+          const fragment = getFragmentFromResult(result)
+
           if (fragment.toLowerCase().startsWith('ur:')) {
             decoderRef.current.add(fragment)
 
-            if (decoderRef.current.isComplete()) {
-              isCompletedRef.current = true
-              const payload = decoderRef.current.result()
-              void scanner.stop()
-              onComplete(payload)
-            }
-          } else {
+            if (!decoderRef.current.isComplete()) return
+
             isCompletedRef.current = true
+            const payload = decoderRef.current.result()
             void scanner.stop()
-            onComplete(new TextEncoder().encode(fragment))
+
+            try {
+              onComplete(payload)
+            } catch (error: any) {
+              isCompletedRef.current = false
+              reportError(error)
+            }
+
+            return
           }
-        } catch (e: any) {
-          onError?.(e?.message || 'Failed to decode QR payload.', e)
+
+          isCompletedRef.current = true
+          void scanner.stop()
+
+          try {
+            onComplete(new TextEncoder().encode(fragment))
+          } catch (error: any) {
+            isCompletedRef.current = false
+            reportError(error)
+          }
+        } catch (error: any) {
+          reportError(error)
         }
       },
       {

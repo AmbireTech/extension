@@ -169,13 +169,6 @@ const QrConnectScreen = () => {
     [handleOpenTutorial, t, theme.iconPrimary]
   )
 
-  const handleQrError = useCallback(
-    (message: string) => {
-      addToast(message, { type: 'error' })
-    },
-    [addToast]
-  )
-
   return (
     <TabLayoutContainer backgroundColor={theme.secondaryBackground}>
       <TabLayoutWrapperMainContent wrapperRef={wrapperRef} contentContainerStyle={spacings.mbLg}>

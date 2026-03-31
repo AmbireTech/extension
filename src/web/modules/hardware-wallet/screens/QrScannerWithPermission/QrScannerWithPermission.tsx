@@ -36,7 +36,11 @@ const QrScannerWithPermission = ({ onComplete, onOpenFullScreenScanner, disabled
   const { t } = useTranslation()
   const { theme } = useTheme()
 
-  const [cameraError, setCameraError] = useState<string | null>(null)
+  const [cameraError, setCameraError] = useState<{
+    message: string
+    rawError?: any
+  } | null>(null)
+
   const [scannerKey, setScannerKey] = useState(0)
   const [showFullScreenFallback, setShowFullScreenFallback] = useState(false)
 
@@ -56,20 +60,31 @@ const QrScannerWithPermission = ({ onComplete, onOpenFullScreenScanner, disabled
   )
 
   const handleError = useCallback(
-    (message: string, rawError?: any) => {
-      setCameraError(message)
+    (message?: string, rawError?: any) => {
+      const normalizedMessage =
+        (typeof message === 'string' && message.trim()) ||
+        (typeof rawError?.message === 'string' && rawError.message.trim()) ||
+        t('Failed to start camera. Please try again.')
 
-      if (isPopup && shouldUseFullScreenFallback(message, rawError)) {
+      setCameraError({
+        message: normalizedMessage,
+        rawError
+      })
+
+      if (isPopup && shouldUseFullScreenFallback(normalizedMessage, rawError)) {
         setShowFullScreenFallback(true)
+        return
       }
+
+      setShowFullScreenFallback(false)
     },
-    [isPopup]
+    [isPopup, t]
   )
 
   const message = useMemo(() => {
     if (!cameraError) return null
 
-    const value = cameraError.toLowerCase()
+    const value = cameraError.message.toLowerCase()
 
     if (showFullScreenFallback) {
       return t(
@@ -91,7 +106,7 @@ const QrScannerWithPermission = ({ onComplete, onOpenFullScreenScanner, disabled
           )
     }
 
-    return cameraError
+    return cameraError.message
   }, [cameraError, isPopup, showFullScreenFallback, t])
 
   if (showFullScreenFallback) {
@@ -103,8 +118,6 @@ const QrScannerWithPermission = ({ onComplete, onOpenFullScreenScanner, disabled
           common.borderRadiusPrimary,
           spacings.pv,
           spacings.ph,
-
-          ,
           {
             minHeight: 290,
             backgroundColor: theme.secondaryBackground
@@ -131,6 +144,7 @@ const QrScannerWithPermission = ({ onComplete, onOpenFullScreenScanner, disabled
           fontSize={14}
           style={[
             spacings.pbSm,
+            spacings.phSm,
             {
               textAlign: 'center'
             }
@@ -188,6 +202,7 @@ const QrScannerWithPermission = ({ onComplete, onOpenFullScreenScanner, disabled
             appearance="primaryText"
             style={[
               spacings.mbSm,
+              spacings.phSm,
               {
                 textAlign: 'center'
               }
