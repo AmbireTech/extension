@@ -28,7 +28,6 @@ class QrHardwareController
   implements ExternalSignerController, QrAccountImportController
 {
   type = 'qr'
-  // TODO: check if we can get more specific info from the QR payloads in the future to populate these fields better
   deviceModel = 'unknown'
   deviceId = ''
   masterFingerprint = ''
@@ -82,6 +81,15 @@ class QrHardwareController
     this.emitUpdate()
   }
 
+  private cancelSession(message = 'Operation cancelled by user') {
+    if (this.rejectSession) {
+      this.rejectSession(new ExternalSignerError(message))
+    }
+
+    this.resetSession()
+    this.emitUpdate()
+  }
+
   moveBack() {
     switch (this.signingStep) {
       case 'scan-response': {
@@ -91,8 +99,7 @@ class QrHardwareController
       }
 
       case 'show-request': {
-        this.resetSession()
-        this.emitUpdate()
+        this.cancelSession()
         return
       }
 
@@ -104,8 +111,12 @@ class QrHardwareController
   }
 
   submitSignatureResponse(payload: string | Uint8Array) {
-    if (!this.resolveSession) {
+    if (!this.currentRequest) {
       throw new ExternalSignerError('No active QR signing session.')
+    }
+
+    if (!this.resolveSession) {
+      throw new ExternalSignerError('QR signing session was interrupted. Please restart signing.')
     }
 
     this.resolveSession(payload)
@@ -172,15 +183,11 @@ class QrHardwareController
   }
 
   async signingCleanup() {
-    if (this.rejectSession) {
-      this.rejectSession(new ExternalSignerError('Operation cancelled by user'))
-    }
-
-    this.resetSession()
+    this.cancelSession()
   }
 
-  cleanUp = () => {
-    this.resetSession()
+  cleanUp = async () => {
+    this.cancelSession('QR signing session was interrupted. Please restart signing.')
   }
 
   private resetSession() {

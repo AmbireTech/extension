@@ -1,4 +1,4 @@
-import { ParsedQrAccount, TxnRequest } from '@ambire-common/interfaces/keystore'
+import { ParsedQrAccount } from '@ambire-common/interfaces/keystore'
 import { TypedMessageUserRequest } from '@ambire-common/interfaces/userRequest'
 
 export type QrSigningStep = 'idle' | 'show-request' | 'scan-response'

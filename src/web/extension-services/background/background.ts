@@ -723,7 +723,7 @@ const init = async () => {
             // eslint-disable-next-line @typescript-eslint/no-floating-promises
             ledgerCtrl.cleanUp()
             trezorCtrl.cleanUp()
-            qrCtrl.cleanUp()
+            qrCtrl.signingCleanup()
           }
         })
       })
