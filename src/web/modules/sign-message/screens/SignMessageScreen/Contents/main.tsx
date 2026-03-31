@@ -60,7 +60,7 @@ const Main = ({
   const { state: signMessageState, dispatch: signMessageDispatch } =
     useController('SignMessageController')
   const signStatus = signMessageState.statuses.sign
-  const { styles, theme, themeType } = useTheme(getStyles)
+  const { styles, theme } = useTheme(getStyles)
   const { responsiveSizeMultiplier } = useResponsiveActionWindow()
   const { minHeightSize } = useWindowSize()
   const { networks } = useController('NetworksController').state
@@ -238,17 +238,20 @@ const Main = ({
             displayOptionToAuthorize={false}
           />
         )}
-        {signMessageState.signer && signMessageState.signer.key.type === 'qr' && (
-          <QrSigningFlowScreen
-            isVisible={true}
-            onContinue={handleOnContinue}
-            currentRequest={currentRequest}
-            signingStep={signingStep}
-            submitSignatureResponse={handleSubmitSignatureResponse}
-            onReject={handleQrSigningFlowOnRejectPressed}
-            handleQrSigningFlowOnBackPressed={handleQrSigningFlowOnBackPressed}
-          />
-        )}
+        {signMessageState.signer &&
+          signMessageState.signer.key.type === 'qr' &&
+          currentRequest &&
+          signingStep !== 'idle' && (
+            <QrSigningFlowScreen
+              isVisible={true}
+              onContinue={handleOnContinue}
+              currentRequest={currentRequest}
+              signingStep={signingStep}
+              submitSignatureResponse={handleSubmitSignatureResponse}
+              onReject={handleQrSigningFlowOnRejectPressed}
+              handleQrSigningFlowOnBackPressed={handleQrSigningFlowOnBackPressed}
+            />
+          )}
       </View>
     </TabLayoutWrapperMainContent>
   )

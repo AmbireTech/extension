@@ -212,6 +212,31 @@ const SignMessageScreen = () => {
     [isLedgerConnected, dispatch, addToast, t, signMessageState.signers]
   )
 
+  const cancelQrSigningFlow = useCallback(() => {
+    signingCleanup()
+
+    signMessageDispatch({
+      type: 'method',
+      params: {
+        method: 'cancelSignReq',
+        args: []
+      }
+    })
+  }, [signingCleanup, signMessageDispatch])
+
+  const handleQrSigningFlowOnBackPressed = useCallback(() => {
+    if (signingStep === 'show-request') {
+      cancelQrSigningFlow()
+      return
+    }
+
+    moveBack()
+  }, [signingStep, cancelQrSigningFlow, moveBack])
+
+  const handleQrSigningFlowOnRejectPressed = useCallback(() => {
+    cancelQrSigningFlow()
+  }, [cancelQrSigningFlow])
+
   const setSigner = useCallback(
     (chosenSigningKeyAddr?: Key['addr'], chosenSigningKeyType?: Key['type']) => {
       const signers =
@@ -372,8 +397,8 @@ const SignMessageScreen = () => {
             signingStep={signingStep}
             handleOnContinue={moveToResponseScan}
             handleSubmitSignatureResponse={submitSignatureResponse}
-            handleQrSigningFlowOnRejectPressed={signingCleanup}
-            handleQrSigningFlowOnBackPressed={moveBack}
+            handleQrSigningFlowOnRejectPressed={handleQrSigningFlowOnRejectPressed}
+            handleQrSigningFlowOnBackPressed={handleQrSigningFlowOnBackPressed}
           />
         )}
         {view === 'siwe' && (
@@ -386,8 +411,8 @@ const SignMessageScreen = () => {
             signingStep={signingStep}
             handleOnContinue={moveToResponseScan}
             handleSubmitSignatureResponse={submitSignatureResponse}
-            handleQrSigningFlowOnRejectPressed={signingCleanup}
-            handleQrSigningFlowOnBackPressed={moveBack}
+            handleQrSigningFlowOnRejectPressed={handleQrSigningFlowOnRejectPressed}
+            handleQrSigningFlowOnBackPressed={handleQrSigningFlowOnBackPressed}
           />
         )}
       </TabLayoutContainer>
