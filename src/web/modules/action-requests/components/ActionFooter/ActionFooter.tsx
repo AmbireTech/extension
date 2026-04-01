@@ -7,7 +7,7 @@ import GlassView from '@common/components/GlassView'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
-import ActionsPagination from '../ActionsPagination'
+import ActionsPagination from '../../../../../common/modules/action-requests/components/ActionsPagination'
 
 type Props = {
   onReject?: () => void
@@ -20,7 +20,6 @@ type Props = {
   resolveButtonTestID?: string
   /** Optional custom node to replace the default resolve button */
   resolveNode?: React.ReactNode
-  informationalNode?: React.ReactNode
 }
 
 const ActionFooter = ({
@@ -32,8 +31,7 @@ const ActionFooter = ({
   resolveType = 'primary',
   rejectButtonTestID,
   resolveButtonTestID,
-  resolveNode,
-  informationalNode
+  resolveNode
 }: Props) => {
   const { t } = useTranslation()
 
@@ -58,7 +56,6 @@ const ActionFooter = ({
                 />
               </View>
             )}
-            {informationalNode}
           </View>
           <ActionsPagination />
           {resolveNode || (

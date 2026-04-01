@@ -8,6 +8,7 @@ import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
+import ActionHeader from '@common/modules/action-requests/components/ActionHeader'
 import eventBus from '@common/services/event/eventBus'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
@@ -16,7 +17,6 @@ import SmallNotificationWindowWrapper from '@web/components/SmallNotificationWin
 import { TabLayoutContainer, TabLayoutWrapperMainContent } from '@web/components/TabLayoutWrapper'
 import useDappInfo from '@web/hooks/useDappInfo'
 import ActionFooter from '@web/modules/action-requests/components/ActionFooter'
-import ActionHeader from '@web/modules/action-requests/components/ActionHeader'
 import { useEncryptionCapability } from '@web/modules/action-requests/hooks'
 
 const DecryptRequestScreen = () => {

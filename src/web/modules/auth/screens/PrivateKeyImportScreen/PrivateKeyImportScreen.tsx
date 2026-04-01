@@ -1,18 +1,16 @@
-import React, { useCallback, useEffect, useState } from 'react'
-import { Controller, useForm } from 'react-hook-form'
+import React from 'react'
+import { Controller } from 'react-hook-form'
 import { View } from 'react-native'
 
-import { isValidPrivateKey } from '@ambire-common/libs/keyIterator/keyIterator'
 import Button from '@common/components/Button'
 import Checkbox from '@common/components/Checkbox'
 import Input from '@common/components/Input'
 import Panel from '@common/components/Panel'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
-import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
-import { storage } from '@common/services/storage'
+import usePrivateKeyImport from '@common/modules/auth/hooks/usePrivateKeyImport'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import {
@@ -25,60 +23,18 @@ export const CARD_WIDTH = 400
 const PrivateKeyImportScreen = () => {
   const {
     control,
-    handleSubmit,
-    getValues,
-    formState: { errors, isValid }
-  } = useForm({
-    mode: 'all',
-    defaultValues: { privateKey: '' }
-  })
-  const { goToPrevRoute, goToNextRoute } = useOnboardingNavigation()
+    handleFormSubmit,
+    errors,
+    isValid,
+    handleValidation,
+    agreedToBackupWarning,
+    setAgreedToBackupWarning
+  } = usePrivateKeyImport()
+
+  const { goToPrevRoute } = useOnboardingNavigation()
   const { t } = useTranslation()
 
   const { theme } = useTheme()
-  const { initParams, subType } = useController('AccountPickerController').state
-  const { dispatch: mainDispatch } = useController('MainController')
-  const [agreedToBackupWarning, setAgreedToBackupWarning] = useState(false)
-  const [importButtonPressed, setImportButtonPressed] = useState(false)
-
-  const handleFormSubmit = useCallback(async () => {
-    await storage.set('agreedToBackupWarning', { acceptedAt: Date.now() })
-
-    await handleSubmit(({ privateKey }) => {
-      setImportButtonPressed(true)
-      const trimmedPrivateKey = privateKey.trim()
-      const noPrefixPrivateKey =
-        trimmedPrivateKey.slice(0, 2) === '0x' ? trimmedPrivateKey.slice(2) : trimmedPrivateKey
-
-      mainDispatch({
-        type: 'method',
-        params: {
-          method: 'accountPickerSetInitParamsFromPrivateKeyOrSeedPhrase',
-          args: [{ privKeyOrSeed: noPrefixPrivateKey }]
-        }
-      })
-    })()
-  }, [mainDispatch, handleSubmit])
-
-  useEffect(() => {
-    if (!getValues('privateKey')) return
-    if (!!importButtonPressed && initParams && subType === 'private-key') {
-      setImportButtonPressed(false)
-      goToNextRoute()
-    }
-  }, [goToNextRoute, getValues, initParams, importButtonPressed, subType])
-
-  const handleValidation = (value: string) => {
-    const trimmedValue = value.trim()
-
-    if (!trimmedValue.length) return t('Field is required.')
-
-    if (!isValidPrivateKey(trimmedValue)) {
-      return t('Invalid private key.')
-    }
-
-    return undefined
-  }
 
   return (
     <TabLayoutContainer backgroundColor={theme.secondaryBackground}>

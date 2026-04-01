@@ -158,7 +158,7 @@ const SafeImportScreen = () => {
           spacingsSize="small"
           withBackButton
           onBackButtonPress={goToPrevRoute}
-          title={t('Import safe address')}
+          title={t('Import Safe address')}
           step={1}
           totalSteps={1}
         >
@@ -173,7 +173,7 @@ const SafeImportScreen = () => {
                     testID="add-safe-address-field"
                     onBlur={onBlur}
                     autoFocus
-                    placeholder={t('Add safe address')}
+                    placeholder={t('Add Safe address')}
                     onChangeText={onChange}
                     value={value}
                     isValid={!handleValidation(value) && !!value.length}

@@ -3,10 +3,12 @@ import { Pressable, View } from 'react-native'
 
 import GlassView from '@common/components/GlassView'
 import Text from '@common/components/Text'
+import { isMobile } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import useNavigation from '@common/hooks/useNavigation'
 import useToast from '@common/hooks/useToast'
 import { WEB_ROUTES } from '@common/modules/router/constants/common'
+import alert from '@common/services/alert'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { openInTab } from '@common/utils/links'
@@ -56,7 +58,12 @@ const RouteItem: FC<Props> = ({ routeItem, index, routeItemsLength }) => {
           }
           return
         }
-        if (!routeItem.route) return
+        if (!routeItem.route) {
+          if (isMobile) {
+            alert('Coming soon!')
+          }
+          return
+        }
 
         navigate(routeItem.route)
       }}
@@ -66,7 +73,6 @@ const RouteItem: FC<Props> = ({ routeItem, index, routeItemsLength }) => {
           <GlassView
             tintColor1={hovered ? '#fff' : undefined}
             tintColor2={hovered ? '#fff' : undefined}
-            blurAmount={20}
             shineColor="#aaaaaa"
             testID={routeItem.testID}
             cssStyle={{

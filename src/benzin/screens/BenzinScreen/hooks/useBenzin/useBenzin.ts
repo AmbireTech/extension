@@ -12,13 +12,14 @@ import { getBenzinUrlParams } from '@ambire-common/utils/benzin'
 import useBenzinNetworksContext from '@benzin/hooks/useBenzinNetworksContext'
 import useSteps from '@benzin/screens/BenzinScreen/hooks/useSteps'
 import { ActiveStepType } from '@benzin/screens/BenzinScreen/interfaces/steps'
+import { isWeb } from '@common/config/env'
 import useController from '@common/hooks/useController'
 import useRoute from '@common/hooks/useRoute'
 import useToast from '@common/hooks/useToast'
 import { setStringAsync } from '@common/utils/clipboard'
 import { RELAYER_URL } from '@env'
 
-const fetch = window.fetch.bind(window) as any
+const fetch = (typeof window !== 'undefined' ? window.fetch.bind(window) : global.fetch) as any
 const standardOptions = {
   fetch,
   callRelayer: relayerCall.bind({ url: RELAYER_URL, fetch })
@@ -124,7 +125,7 @@ const useBenzin = ({ onOpenExplorer, extensionAccOp }: Props = {}) => {
 
   const handleCopyText = useCallback(async () => {
     try {
-      let address = window.location.href
+      let address = isWeb ? window.location.href : ''
 
       if (chainId) {
         address = `https://explorer.ambire.com/${getBenzinUrlParams({

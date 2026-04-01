@@ -1,13 +1,9 @@
 import React from 'react'
-import { ColorValue } from 'react-native'
 import { G, Path, Svg, SvgProps } from 'react-native-svg'
 
 import useTheme from '@common/hooks/useTheme'
 
-interface Props extends SvgProps {
-  borderColor?: ColorValue
-}
-const TrustedIcon: React.FC<Props> = ({ width = 17, height = 19, borderColor, ...rest }) => {
+const TrustedIcon: React.FC<SvgProps> = ({ width = 17, height = 19, ...rest }) => {
   const { theme } = useTheme()
   return (
     <Svg width={width} height={height} viewBox="0 0 17.117 19.933" {...rest}>
@@ -27,7 +23,7 @@ const TrustedIcon: React.FC<Props> = ({ width = 17, height = 19, borderColor, ..
           d="M27.75,31.425,30,33.68l4.518-4.51"
           transform="translate(-23.939 -22.82)"
           fill="none"
-          stroke="#FFF"
+          stroke="#fff"
           strokeLinecap="round"
           strokeLinejoin="round"
           strokeWidth="1.5"

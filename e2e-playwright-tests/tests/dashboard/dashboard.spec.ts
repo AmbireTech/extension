@@ -244,6 +244,9 @@ test.describe('dashboard', { tag: '@dashboard' }, () => {
       )
 
       await pages.basePage.click(selectors.dashboard.yesHideItButton)
+
+      // return to dashboard
+      await pages.basePage.click(selectors.backArrowButton)
     })
 
     await test.step('assert WALLET token not visible on Dashboard', async () => {

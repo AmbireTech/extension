@@ -24,7 +24,7 @@
     <br />
     🐞
     <a href="https://github.com/AmbireTech/extension/issues">Report a Bug</a> ·
-    <a href="https://help.ambire.com/hc/en-us/requests/new" target="_blank">Get help</a>
+    <a href="https://help.ambire.com/en" target="_blank">Get help</a>
   </p>
 </div>
 
@@ -141,6 +141,50 @@ Make sure your code editor has plugins that support the following configuration 
   - For the macOS target: General - App Category: "Utilities"
   - For the extension target: General - Identity - Bundle Identifier: `com.ambire.app.wallet.extension`
 
+### LavaMoat Policy Generation
+
+The extension uses [LavaMoat](https://github.com/LavaMoat/LavaMoat) with SES (Secure EcmaScript) to harden the background service worker. LavaMoat uses a policy file (`lavamoat/webpack/policy.json`) to control which packages can import what and access which globals.
+
+#### When to Regenerate Policy
+
+Regenerate the policy when:
+
+- Adding/removing dependencies
+- Updating dependencies that change their import patterns
+- Runtime errors: "Policy does not allow importing X from Y"
+- Runtime errors: "Policy does not allow accessing global X"
+
+Do NOT regenerate for:
+
+- Every build (policy is stable and should be version-controlled)
+- Code changes that don't affect dependencies
+- UI changes (UI chunks are unlocked and don't use policy)
+
+#### Policy Generation Workflow
+
+1. **Generate policy:**
+
+   ```bash
+   yarn build:extensions:generate-policy
+   ```
+
+2. **Review generated policy:**
+
+   - Check `lavamoat/webpack/policy.json` for any unexpected entries
+   - Review package dependencies and global access patterns
+
+3. **Update policy overrides:**
+
+   - Manually edit `lavamoat/webpack/policy-override.json` for custom overrides
+   - Common overrides: primordial mutations, font packages, reflect-metadata globals
+
+4. **Commit policy files:**
+
+   - Both `policy.json` and `policy-override.json` should be version-controlled
+   - This ensures consistent builds across environments
+
+**Note:** The same policy works for both gecko and webkit builds since they share the same dependencies and only differ in entry points (which are mostly unlocked).
+
 ### Extract Source Maps
 
 The production-optimized builds come with source maps files included. When preparing a production build for a browser store release, run the following commands to extract the source maps in separate directories:
@@ -246,9 +290,11 @@ $LEDGER_EMULATOR_SEED='<LEDGER-SEED-PHRASE>' ./start-emulator.sh
 **Note:** Make sure port `5000` is available before starting the emulator.
 
 1. **Check if port 5000 is in use:**
+
 ```bash
 lsof -i :5000
 ```
+
 If nothing is returned, the port is free.
 If you see a process listed, the port is occupied.
 
@@ -262,6 +308,7 @@ System Settings → General → AirDrop & Handoff → AirPlay Receiver
 If enabled, it may bind to port 5000.
 
 You can either:
+
 - Disable AirPlay Receiver, or
 - Kill the process manually:
 

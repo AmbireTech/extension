@@ -1,10 +1,19 @@
+import React from 'react'
 import { Animated, Pressable, Text, ViewStyle } from 'react-native'
+
+import { isAndroid } from '@common/config/env'
 
 import useCustomHover from './useCustomHover'
 
 export const AnimatedPressable = Animated.createAnimatedComponent(Pressable)
 
-export const AnimatedText = Animated.createAnimatedComponent(Text)
+const RNTextWithFixes = (props: any) =>
+  React.createElement(Text, {
+    ...props,
+    style: [isAndroid ? { includeFontPadding: false } : {}, props.style]
+  })
+
+export const AnimatedText = Animated.createAnimatedComponent(RNTextWithFixes)
 
 type Preset = 'opacity' | 'opacityInverted'
 

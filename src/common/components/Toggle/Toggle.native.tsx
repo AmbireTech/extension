@@ -7,6 +7,7 @@ import Text, { Props as TextProps } from '@common/components/Text'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import { hexToRgba } from '@common/styles/utils/common'
+import flexbox from '@common/styles/utils/flexbox'
 
 import { ToggleProps } from './Toggle'
 
@@ -21,8 +22,9 @@ const Toggle = ({ isOn, onToggle, label, style, disabled, trackStyle, toggleStyl
   const { theme } = useTheme()
 
   return (
-    <View style={[spacings.mrSm, style]}>
-      {!!label && <Text style={spacings.mrTy}>{label}</Text>}
+    <View
+      style={[spacings.mrSm, flexbox.alignCenter, flexbox.directionRow, { flexShrink: 0 }, style]}
+    >
       <ToggleSwitch
         isOn={isOn}
         disabled={disabled}
@@ -59,6 +61,7 @@ const Toggle = ({ isOn, onToggle, label, style, disabled, trackStyle, toggleStyl
         }}
         hitSlop={{ top: 15, bottom: 15, left: 5, right: 5 }}
       />
+      {!!label && <Text style={spacings.mlSm}>{label}</Text>}
     </View>
   )
 }

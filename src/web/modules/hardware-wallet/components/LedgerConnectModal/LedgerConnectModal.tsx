@@ -47,7 +47,7 @@ const LedgerConnectModal = ({
   const { t } = useTranslation()
   const [isGrantingPermission, setIsGrantingPermission] = useState(false)
   const { currentUserRequest, requestWindow } = useController('RequestsController').state
-  const { theme, themeType } = useTheme()
+  const { theme } = useTheme()
 
   useEffect(() => {
     if (isVisible) open()

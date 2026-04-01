@@ -7,10 +7,11 @@ import VisibilityIcon from '@common/assets/svg/VisibilityIcon'
 import Alert from '@common/components/Alert'
 import Button from '@common/components/Button'
 import Text from '@common/components/Text'
+import { isMobile, isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
-import spacings from '@common/styles/spacings'
+import spacings, { SPACING_SM } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { setStringAsync } from '@common/utils/clipboard'
 
@@ -26,7 +27,7 @@ interface Props {
 const PrivateKeyExport: FC<Props> = ({ privateKey, blurred, setBlurred, openConfirmPassword }) => {
   const { t } = useTranslation()
 
-  const { theme, styles, themeType } = useTheme(getStyles)
+  const { theme, styles } = useTheme(getStyles)
   const { addToast } = useToast()
 
   const handleCopyText = useCallback(async () => {
@@ -50,7 +51,7 @@ const PrivateKeyExport: FC<Props> = ({ privateKey, blurred, setBlurred, openConf
 
   return (
     <>
-      <View style={flexbox.flex1}>
+      <View style={[flexbox.flex1, isMobile && spacings.mb]}>
         <View
           style={[
             blurred ? styles.blurred : styles.notBlurred,
@@ -68,38 +69,44 @@ const PrivateKeyExport: FC<Props> = ({ privateKey, blurred, setBlurred, openConf
         <View
           style={[
             flexbox.directionRow,
-            flexbox.alignCenter,
-            flexbox.justifySpaceBetween,
-            spacings.mtTy
+            isWeb && flexbox.alignCenter,
+            isWeb && flexbox.justifySpaceBetween,
+            isWeb ? spacings.mtTy : spacings.mtSm
           ]}
         >
-          <View style={{ opacity: privateKey ? 1 : 0 }}>
+          {((isMobile && privateKey) || isWeb) && (
+            <>
+              <View style={[isMobile && { flex: 1 }, { opacity: privateKey ? 1 : 0 }]}>
+                <Button
+                  onPress={handleCopyText}
+                  hasBottomSpacing={false}
+                  type={isWeb ? 'ghost' : 'outline'}
+                  size={isWeb ? 'small' : 'regular'}
+                  text={t('Copy key')}
+                  // @ts-ignore react-native-web supports `cursor`, but it's missing from React Native StyleProp<ViewStyle> types
+                  style={isWeb && { cursor: !privateKey ? 'default' : 'pointer' }}
+                >
+                  <CopyIcon style={spacings.mlTy} width={18} color={theme.iconPrimary} />
+                </Button>
+              </View>
+              {isMobile && <View style={{ width: SPACING_SM }} />}
+            </>
+          )}
+          <View style={isMobile && flexbox.flex1}>
             <Button
-              onPress={handleCopyText}
+              onPress={toggleKeyVisibility}
               hasBottomSpacing={false}
-              type="ghost"
-              size="small"
-              text={t('Copy key')}
-              // @ts-ignore react-native-web supports `cursor`, but it's missing from React Native StyleProp<ViewStyle> types
-              style={{ cursor: !privateKey ? 'default' : 'pointer' }}
+              type={isWeb ? 'ghost' : 'outline'}
+              size={isWeb ? 'small' : 'regular'}
+              text={blurred ? t('Reveal key') : t('Hide key')}
             >
-              <CopyIcon style={spacings.mlTy} width={18} color={theme.iconPrimary} />
+              {blurred ? (
+                <VisibilityIcon color={theme.iconPrimary} style={spacings.mlTy} width={18} />
+              ) : (
+                <InvisibilityIcon color={theme.iconPrimary} style={spacings.mlTy} width={18} />
+              )}
             </Button>
           </View>
-
-          <Button
-            onPress={toggleKeyVisibility}
-            hasBottomSpacing={false}
-            type="ghost"
-            size="small"
-            text={blurred ? t('Reveal key') : t('Hide key')}
-          >
-            {blurred ? (
-              <VisibilityIcon color={theme.iconPrimary} style={spacings.mlTy} width={18} />
-            ) : (
-              <InvisibilityIcon color={theme.iconPrimary} style={spacings.mlTy} width={18} />
-            )}
-          </Button>
         </View>
       </View>
       <Alert

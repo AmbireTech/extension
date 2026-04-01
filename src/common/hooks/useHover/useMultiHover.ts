@@ -151,6 +151,17 @@ const useMultiHover = ({ values, forceHoveredStyle = false }: Props) => {
           duration: 0,
           useNativeDriver: true
         }).start()
+      },
+      onPressOut: (_event?: GestureResponderEvent) => {
+        const opacity = animatedValues.find(({ property }) => property === 'opacity')
+
+        if (!opacity) return
+
+        Animated.timing(opacity.value, {
+          toValue: 1,
+          duration: 0,
+          useNativeDriver: true
+        }).start()
       }
     }),
     [animate, animatedValues, forceHoveredStyle, onHoverIn]
@@ -178,6 +189,7 @@ const useMultiHover = ({ values, forceHoveredStyle = false }: Props) => {
       onHoverIn: (event: MouseEvent) => void
       onHoverOut: (event: MouseEvent) => void
       onPressIn: (event: GestureResponderEvent) => void
+      onPressOut: (event: GestureResponderEvent) => void
     },
     ViewStyle,
     boolean,

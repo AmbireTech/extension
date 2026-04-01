@@ -1,5 +1,5 @@
 import React, { FC, useMemo } from 'react'
-import { View, ViewStyle } from 'react-native'
+import { View } from 'react-native'
 
 import useTheme from '@common/hooks/useTheme'
 import useWindowSize from '@common/hooks/useWindowSize'
@@ -8,15 +8,11 @@ import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import { getUiType } from '@common/utils/uiType'
 
-type Props = {
-  children: React.ReactNode
-  backgroundStyle?: ViewStyle
-  style?: ViewStyle
-}
+import { LayoutWrapperProps } from './types'
 
 const { isPopup, isRequestWindow } = getUiType()
 
-const LayoutWrapper: FC<Props> = ({ children, backgroundStyle = {}, style = {} }) => {
+const LayoutWrapper: FC<LayoutWrapperProps> = ({ children, backgroundStyle = {}, style = {} }) => {
   const { theme } = useTheme()
   const { minHeightSize } = useWindowSize()
 

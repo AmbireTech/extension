@@ -4,6 +4,7 @@ import { Modalize } from 'react-native-modalize'
 import { Account } from '@ambire-common/interfaces/account'
 import AccountKeys from '@common/components/AccountKeysBottomSheet/AccountKeys'
 import BottomSheet from '@common/components/BottomSheet'
+import { isMobile, isWeb } from '@common/config/env'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 
@@ -34,11 +35,11 @@ const AccountKeysBottomSheet: FC<Props> = ({
       id="account-keys-bottom-sheet"
       sheetRef={sheetRef}
       closeBottomSheet={closeBottomSheet}
-      scrollViewProps={{ contentContainerStyle: { flex: 1 } }}
+      scrollViewProps={isWeb ? { contentContainerStyle: { flex: 1 } } : undefined}
       isScrollEnabled={false}
       containerInnerWrapperStyles={{ flex: 1 }}
-      style={{ maxWidth: 492, minHeight: 432, ...spacings.pvLg }}
-      shouldBeClosableOnDrag={false}
+      style={isWeb ? { maxWidth: 492, minHeight: 432, ...spacings.pvLg } : undefined}
+      shouldBeClosableOnDrag={isMobile}
     >
       {!!account && (
         <AccountKeys

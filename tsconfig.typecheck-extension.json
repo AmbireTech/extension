@@ -1,5 +1,19 @@
 {
   "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "paths": {
+      "@/*": ["src/ambire-common/src/*"],
+      "@test/*": ["src/ambire-common/test/*"],
+      "@ambire-common/*": ["src/ambire-common/src/*"],
+      "@contracts/*": ["src/ambire-common/contracts/*"],
+      "@ambire-common-v1/*": ["src/ambire-common/v1/*"],
+      "@common/*": ["src/common/*"],
+      "@mobile/*": ["src/mobile/*"],
+      "@web/*": ["src/web/*"],
+      "@benzin/*": ["src/benzin/*"],
+      "@legends/*": ["src/legends/*"]
+    }
+  },
   "exclude": [
     "node_modules",
     "**/node_modules",

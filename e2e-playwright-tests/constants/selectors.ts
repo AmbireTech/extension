@@ -43,6 +43,7 @@ const selectors = {
     smartAccountPicker: 'add-account-' // need add index 5
   },
   dashboard: {
+    dashboardGasTankBalance: 'dashboard-gas-tank-balance',
     appsButton: 'dashboard-button-apps',
     tokensTabButton: 'tokens-defi',
     noTokensText: 'no-tokens-text',
@@ -127,15 +128,18 @@ const selectors = {
     feeSpeedMedium: 'option-medium',
     feeSpeedFast: 'option-fast',
     feeSpeedApe: 'option-ape',
-    feeGasTankInDollars: '//span[contains(text(),"Gas Tank")]/../../../div[contains(text(),"$")]', // returning e.g. "<$0.01"
-    feeTokenInDollars: '//div[contains(text(),"<$")]',
+    feeTokenInDollars: '//div[contains(text(), "<$") or contains(text(), "$")]',
     confirmingYourTransactionText: 'confirming-your',
     explorer: {
       txnSignedStep: 'signed-step',
       txnProgressStep: 'txn-progress-step',
       txnConfirmedStep: 'finalized-rows',
       recepientAddressBlock: 'recipient-address-undefined'
-    }
+    },
+    backButton: 'back-button',
+    amountField: 'amount-field',
+    proceedBtn: 'proceed-btn',
+    transactionError: '//span[contains(text(),"Error")]' // e.g. snackbar when relayer is down
   },
   // TODO: update selectors wiyh testID
   ambireRewards: {
@@ -194,6 +198,7 @@ const selectors = {
     kyberSwapRoute: '//div[contains(text(), "Kyberswap")]',
     sushiSwapRoute: 'div:has-text("SushiSwap Aggregator")' // no route
   },
+  backArrowButton: 'back-arrow-button',
   account: 'account',
   importMethodTrezor: 'import-method-trezor',
   trezorConnectConfirmTerms: '@analytics/continue-button',
@@ -257,7 +262,6 @@ const selectors = {
   addressBookMyWalletContactDyn: 'address-book-my-wallet-contact',
   continueAnywayCheckboxSaB: 'checkbox',
   continueAnywayButton: '//div[contains(text(),"Continue anyway")]',
-  amountField: 'amount-field',
   transferButtonConfirm: 'transfer-button-confirm',
   addAccountField: 'add-account-field',
   importExistingSeedBtn: 'import-existing-seed-btn',
@@ -274,7 +278,6 @@ const selectors = {
   feeApe: 'option-ape',
   transactionButtonReject: 'transaction-button-reject',
   totalPortfolioAmountInteger: 'total-portfolio-amount-integer',
-  proceedBtn: 'proceed-btn',
   privateKeyWarningCheckbox1: 'private-key-warning-checkbox-1',
   privateKeyWarningCheckbox2: 'private-key-warning-checkbox-2',
   nativeTokenBaseDashboard: 'token-0x0000000000000000000000000000000000000000-8453',

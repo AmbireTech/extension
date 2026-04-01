@@ -88,7 +88,7 @@ const FEEDBACK_PRIMITIVES = {
     [THEME_TYPES.DARK]: '#70B4FF'
   },
   info300: {
-    [THEME_TYPES.LIGHT]: '#295E96',
+    [THEME_TYPES.LIGHT]: '#1563B6',
     [THEME_TYPES.DARK]: '#70B4FF'
   },
   info400: {
@@ -112,7 +112,7 @@ const FEEDBACK_PRIMITIVES = {
     [THEME_TYPES.DARK]: '#29963F'
   },
   success400: {
-    [THEME_TYPES.LIGHT]: '#096A1D',
+    [THEME_TYPES.LIGHT]: '#00861B',
     [THEME_TYPES.DARK]: '#70FF8D'
   },
   success500: {
@@ -132,7 +132,7 @@ const FEEDBACK_PRIMITIVES = {
     [THEME_TYPES.DARK]: '#967929'
   },
   warning400: {
-    [THEME_TYPES.LIGHT]: '#6A5009',
+    [THEME_TYPES.LIGHT]: '#936C00',
     [THEME_TYPES.DARK]: '#FFD970'
   },
   warning500: {
@@ -148,7 +148,7 @@ const FEEDBACK_PRIMITIVES = {
     [THEME_TYPES.DARK]: '#FF7089'
   },
   error300: {
-    [THEME_TYPES.LIGHT]: '#96293B',
+    [THEME_TYPES.LIGHT]: '#B30522',
     [THEME_TYPES.DARK]: '#FF7089'
   },
   error400: {

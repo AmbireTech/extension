@@ -1,50 +1,76 @@
-import React, { useCallback, useEffect } from 'react'
+import React, { useCallback, useEffect, useRef } from 'react'
 import { Controller } from 'react-hook-form'
-import { View } from 'react-native'
+import { TextInput, View } from 'react-native'
 
 import { isValidPassword } from '@ambire-common/services/validations'
 import Button from '@common/components/Button'
 import Input from '@common/components/Input'
 import InputPassword from '@common/components/InputPassword'
 import ScrollableWrapper from '@common/components/ScrollableWrapper'
-import { isWeb } from '@common/config/env'
+import { isMobile, isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import useTheme from '@common/hooks/useTheme'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
 import { TERMS_VERSION } from '@common/modules/terms/components/TermsComponent'
 import { storage } from '@common/services/storage'
 import spacings from '@common/styles/spacings'
+import flexbox from '@common/styles/utils/flexbox'
 import useKeyStoreSetup from '@web/modules/keystore/components/KeyStoreSetupForm/hooks/useKeyStoreSetup'
 
 type Props = {
   agreedWithTerms: boolean
+  onBeforeKeystoreSetup?: (password: string) => Promise<boolean>
+  onConfirmSuccess?: (password: string) => void | Promise<void>
   children?: React.ReactNode
 }
 
-const KeyStoreSetupForm = ({ agreedWithTerms, children }: Props) => {
+const KeyStoreSetupForm = ({
+  agreedWithTerms,
+  onBeforeKeystoreSetup,
+  onConfirmSuccess,
+  children
+}: Props) => {
   const { t } = useTranslation()
   const { theme } = useTheme()
   const {
     control,
     handleKeystoreSetup,
     password,
+    confirmPassword,
     isKeystoreSetupLoading,
     isKeystoreReady,
     formState
   } = useKeyStoreSetup()
   const { goToNextRoute } = useOnboardingNavigation()
+  const confirmPasswordRef = useRef<TextInput>(null)
   useEffect(() => {
-    if (isKeystoreReady) goToNextRoute()
-  }, [isKeystoreReady, goToNextRoute])
+    const handleSuccess = async () => {
+      if (isKeystoreReady) {
+        if (onConfirmSuccess) await onConfirmSuccess(password)
+        goToNextRoute()
+      }
+    }
+    handleSuccess().catch(() => {})
+  }, [isKeystoreReady, goToNextRoute, onConfirmSuccess, password])
+
+  const onConfirmAction = useCallback(async () => {
+    if (onBeforeKeystoreSetup) {
+      const proceed = await onBeforeKeystoreSetup(password)
+      if (!proceed) return
+    }
+    await handleKeystoreSetup()
+  }, [handleKeystoreSetup, onBeforeKeystoreSetup, password])
 
   const handleCreateButtonPress = useCallback(async () => {
     await storage.set('termsState', { version: TERMS_VERSION, acceptedAt: Date.now() })
-    await handleKeystoreSetup()
-  }, [handleKeystoreSetup])
+    await onConfirmAction()
+  }, [onConfirmAction])
+
+  const Wrapper = isWeb ? ScrollableWrapper : View
 
   return (
     <>
-      <ScrollableWrapper>
+      <Wrapper style={isMobile ? flexbox.flex1 : {}}>
         <Controller
           control={control}
           rules={{ validate: isValidPassword }}
@@ -57,14 +83,20 @@ const KeyStoreSetupForm = ({ agreedWithTerms, children }: Props) => {
               placeholder={t('Enter password')}
               onChangeText={onChange}
               isValid={isValidPassword(value)}
-              autoFocus={isWeb}
+              autoFocus
               value={value}
               error={
                 formState.errors.password &&
                 (t('Your password must be unique and at least 8 characters long.') as string)
               }
               containerStyle={spacings.mbXl}
-              onSubmitEditing={handleCreateButtonPress}
+              onSubmitEditing={() => {
+                if (password && confirmPassword) {
+                  handleCreateButtonPress()
+                } else {
+                  confirmPasswordRef.current?.focus()
+                }
+              }}
             />
           )}
           name="password"
@@ -76,6 +108,9 @@ const KeyStoreSetupForm = ({ agreedWithTerms, children }: Props) => {
           }}
           render={({ field: { onChange, onBlur, value } }) => (
             <Input
+              setInputRef={(r) => {
+                confirmPasswordRef.current = r
+              }}
               backgroundColor={theme.secondaryBackground}
               label={t('Repeat password')}
               testID="repeat-pass-field"
@@ -88,13 +123,13 @@ const KeyStoreSetupForm = ({ agreedWithTerms, children }: Props) => {
               secureTextEntry
               error={formState.errors.confirmPassword && (t("Passwords don't match.") as string)}
               autoCorrect={false}
-              onSubmitEditing={handleKeystoreSetup}
+              onSubmitEditing={onConfirmAction}
             />
           )}
           name="confirmPassword"
         />
         {children}
-      </ScrollableWrapper>
+      </Wrapper>
       <View style={spacings.pt}>
         <Button
           testID="create-keystore-pass-btn"
@@ -106,7 +141,7 @@ const KeyStoreSetupForm = ({ agreedWithTerms, children }: Props) => {
             !agreedWithTerms
           }
           text={formState.isSubmitting || isKeystoreSetupLoading ? t('Loading...') : t('Confirm')}
-          onPress={handleKeystoreSetup}
+          onPress={onConfirmAction}
           hasBottomSpacing={false}
         />
       </View>

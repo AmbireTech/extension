@@ -4,13 +4,13 @@ import { useModalize } from 'react-native-modalize'
 
 import BurgerIcon from '@common/assets/svg/BurgerIcon'
 import NetworkStatusesIcon from '@common/assets/svg/NetworkStatusIcon'
-import { isAmbireNext, isDev } from '@common/config/env'
+import { isAmbireNext, isDev, isMobile, isWeb } from '@common/config/env'
 import useController from '@common/hooks/useController'
 import useHover from '@common/hooks/useHover'
 import useNavigation from '@common/hooks/useNavigation'
 import { WEB_ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
-import flexboxStyles from '@common/styles/utils/flexbox'
+import flexbox from '@common/styles/utils/flexbox'
 import { getUiType } from '@common/utils/uiType'
 
 import NetworkStatusesBottomSheet from '../NetworkStatusesBottomSheet'
@@ -40,26 +40,19 @@ const DashboardHeader = () => {
   if (!account) return null
 
   return (
-    <View style={[flexboxStyles.directionRow, flexboxStyles.alignCenter, { width: '100%' }]}>
+    <View style={[flexbox.directionRow, flexbox.alignCenter, { width: '100%' }]}>
       {SHOULD_DISPLAY_NETWORK_STATUSES && (
         <NetworkStatusesBottomSheet
           sheetRef={networkStatusesSheetRef}
           closeBottomSheet={closeNetworkStatusesSheet}
         />
       )}
-      <View style={[flexboxStyles.directionRow, { flex: 1 }, flexboxStyles.justifySpaceBetween]}>
+      <View style={[flexbox.directionRow, flexbox.flex1, flexbox.justifySpaceBetween]}>
         <AccountButton />
-        <View style={[flexboxStyles.directionRow, flexboxStyles.alignStart]}>
+        <View style={[flexbox.directionRow, flexbox.alignStart]}>
           {SHOULD_DISPLAY_NETWORK_STATUSES && (
             <Pressable
-              style={[
-                flexboxStyles.justifyCenter,
-                flexboxStyles.alignCenter,
-                {
-                  width: 40,
-                  height: 40
-                }
-              ]}
+              style={[flexbox.justifyCenter, flexbox.alignCenter, { width: 40, height: 40 }]}
               onPress={() => openNetworkStatusesSheet()}
               {...bindNetworkStatusesAnim}
             >
@@ -68,22 +61,27 @@ const DashboardHeader = () => {
               </Animated.View>
             </Pressable>
           )}
+
           <Pressable
             testID="dashboard-hamburger-btn"
             style={[
               spacings.mlTy,
-              flexboxStyles.justifyCenter,
-              flexboxStyles.alignCenter,
+              flexbox.justifyCenter,
+              flexbox.alignCenter,
               {
-                borderRadius: 20,
+                borderRadius: 50,
                 width: 40,
                 height: 40,
                 backgroundColor: '#000000A3'
+              },
+              isMobile && {
+                borderWidth: 1,
+                borderColor: '#FFFFFF1F'
               }
             ]}
-            onPress={() =>
-              isPopup ? navigate(WEB_ROUTES.menu) : navigate(WEB_ROUTES.generalSettings)
-            }
+            onPress={() => {
+              isPopup || isMobile ? navigate(WEB_ROUTES.menu) : navigate(WEB_ROUTES.generalSettings)
+            }}
             {...bindBurgerAnim}
           >
             <Animated.View style={burgerAnimStyle}>

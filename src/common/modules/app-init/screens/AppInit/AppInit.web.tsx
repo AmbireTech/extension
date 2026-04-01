@@ -8,7 +8,6 @@ import ErrorComponent from '@common/components/ErrorBoundary'
 import { GlobalTooltip } from '@common/components/GlobalTooltip'
 import { ErrorBoundary } from '@common/config/analytics/CrashAnalytics.web'
 import { ControllerStoreProvider } from '@common/contexts/controllerStoreContext'
-import { KeyboardProvider } from '@common/contexts/keyboardContext'
 import { NetInfoProvider } from '@common/contexts/netInfoContext'
 import { ThemeProvider } from '@common/contexts/themeContext'
 import { ToastProvider } from '@common/contexts/toastContext'
@@ -50,15 +49,13 @@ const AppInit = () => {
                   <ThemeProvider>
                     <GestureHandler>
                       <ControllersStateLoadedProvider>
-                        <KeyboardProvider>
-                          <NetInfoProvider>
-                            <AuthProvider>
-                              <OnboardingNavigationProvider>
-                                {appContent}
-                              </OnboardingNavigationProvider>
-                            </AuthProvider>
-                          </NetInfoProvider>
-                        </KeyboardProvider>
+                        <NetInfoProvider>
+                          <AuthProvider>
+                            <OnboardingNavigationProvider>
+                              {appContent}
+                            </OnboardingNavigationProvider>
+                          </AuthProvider>
+                        </NetInfoProvider>
                       </ControllersStateLoadedProvider>
                     </GestureHandler>
                   </ThemeProvider>

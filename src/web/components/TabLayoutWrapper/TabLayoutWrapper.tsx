@@ -148,7 +148,7 @@ export const TabLayoutWrapperMainContent: React.FC<TabLayoutWrapperMainContentPr
       ref={wrapperRef}
       style={[
         styles.contentContainer,
-        isOnboardingRoute && (minHeightSize('l') ? spacings.pv : spacings.pt2Xl),
+        isOnboardingRoute && (minHeightSize('xl') ? spacings.pv : spacings.pt2Xl),
         isTab && minHeightSize('m') && spacings.mt0,
         contentContainerStyle
       ]}

@@ -10,13 +10,16 @@ import { SPACING_SM } from '@common/styles/spacings'
 import { getUiType } from '@common/utils/uiType'
 
 import { BottomSheetProps } from './BottomSheet'
+import { bottomSheetCloseEventStream, openBottomSheetsCount } from './bottomSheetEventStream'
 
 const ANIMATION_DURATION: number = 250
 
 const { isPopup, isMobileApp } = getUiType()
 
 const useBottomSheetInternal = (props: BottomSheetProps) => {
-  const { id: _id, type: _type, sheetRef, closeBottomSheet = () => {}, autoOpen = false } = props
+  const { id: _id, type: _type, sheetRef, autoOpen = false } = props
+  const { closeBottomSheet: _closeBottomSheet = () => {} } = props
+  const closeBottomSheet = useCallback(_closeBottomSheet, [_closeBottomSheet])
   const type = _type || (isPopup || isMobileApp ? 'bottom-sheet' : 'modal')
   const isModal = type === 'modal'
   const [isOpen, setIsOpen] = useState(false)
@@ -43,32 +46,48 @@ const useBottomSheetInternal = (props: BottomSheetProps) => {
     [autoOpen]
   )
 
+  const isOpenRef = useRef(isOpen)
+
   useEffect(() => {
+    isOpenRef.current = isOpen
     if (prevIsOpen && !isOpen) {
       setTimeout(() => {
         // Delays the backdrop unmounting because of the closing animation duration
         setIsBackdropVisible(false)
       }, ANIMATION_DURATION)
     }
-  }, [isOpen, prevIsOpen])
+
+    if (isOpen && !prevIsOpen) {
+      openBottomSheetsCount.next(openBottomSheetsCount.value + 1)
+    } else if (!isOpen && prevIsOpen) {
+      openBottomSheetsCount.next(Math.max(0, openBottomSheetsCount.value - 1))
+    }
+  }, [id, isOpen, prevIsOpen])
+
+  // Cleanup: ensure count is decremented if unmounted while open
+  useEffect(() => {
+    return () => {
+      if (isOpenRef.current) {
+        openBottomSheetsCount.next(Math.max(0, openBottomSheetsCount.value - 1))
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id])
 
   // Hook up the back button (or action) to close the bottom sheet
   useEffect(() => {
     if (!isOpen) return
 
-    const backAction = () => {
+    // Subscribe to the global close event stream
+    const subscription = bottomSheetCloseEventStream.subscribe(() => {
       if (isOpen) {
         closeBottomSheet()
-        // Returning true prevents execution of the default native back handling
-        return true
       }
+    })
 
-      return false
+    return () => {
+      subscription.unsubscribe()
     }
-
-    const backHandler = BackHandler.addEventListener('hardwareBackPress', backAction)
-
-    return () => backHandler.remove()
   }, [closeBottomSheet, isOpen])
 
   const modalTopOffset = useMemo(() => {

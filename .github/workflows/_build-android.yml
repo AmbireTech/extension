@@ -1,0 +1,199 @@
+# Reusable Android build steps (APK or AAB).
+# Call from build-android-apk.yml / build-android-aab.yml with appropriate inputs.
+
+name: The reusable (common) Android build steps
+
+on:
+  workflow_call:
+    inputs:
+      build_command:
+        description: Yarn command used to build Android artifact
+        required: true
+        type: string
+      artifact_suffix:
+        description: Suffix appended to uploaded artifact name
+        required: true
+        type: string
+      package_mode:
+        description: Packaging mode (apk or aab)
+        required: true
+        type: string
+      architectures:
+        description: Comma-separated list of ABIs to build (reactNativeArchitectures)
+        required: false
+        default: arm64-v8a
+        type: string
+      enable_signing:
+        description: Whether Play Store signing (release keystore) is required
+        required: false
+        default: false
+        type: boolean
+
+jobs:
+  build-android:
+    name: Build Android artifact and upload
+    environment: extension-production
+    runs-on: ubuntu-latest
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.ref }}
+
+    steps:
+      - name: Checkout code 🛎️
+        uses: actions/checkout@v6
+
+      - name: Add SSH key to checkout a private repo
+        uses: webfactory/ssh-agent@v0.9.1
+        with:
+          ssh-private-key: ${{ secrets.DEPLOY_KEY }}
+
+      - name: Git submodule init
+        run: git submodule init
+        shell: bash
+
+      - name: Git submodule update
+        run: git submodule update
+        shell: bash
+
+      - name: Install Node.js ⚙️
+        uses: actions/setup-node@v6
+        with:
+          node-version-file: .nvmrc
+
+      - name: Install JS dependencies
+        run: yarn setup:ci
+        shell: bash
+
+      - name: Get version from app.json
+        id: version
+        run: echo "VERSION=$(grep '"version"' ./app.json | head -n1 | cut -d':' -f2 | tr -d ' ",')" >> $GITHUB_OUTPUT
+        shell: bash
+
+      - name: Set up JDK (from .java-version)
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version-file: .java-version
+          cache: gradle
+
+      # Configure Gradle caching and build optimizations for CI.
+      # This speeds up builds by caching Gradle dependencies and wrapper files
+      # between workflow runs.
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v5
+
+      - name: Prepare Android signing config
+        if: inputs.enable_signing
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_ALIAS_PASSWORD: ${{ secrets.ANDROID_KEY_ALIAS_PASSWORD }}
+        run: |
+          set -euo pipefail
+          if [[ -z "${ANDROID_KEYSTORE_BASE64:-}" || -z "${ANDROID_KEYSTORE_PASSWORD:-}" || -z "${ANDROID_KEY_ALIAS:-}" || -z "${ANDROID_KEY_ALIAS_PASSWORD:-}" ]]; then
+            echo "Android signing secrets are missing. Required: ANDROID_KEYSTORE_BASE64, ANDROID_KEYSTORE_PASSWORD, ANDROID_KEY_ALIAS, ANDROID_KEY_ALIAS_PASSWORD"
+            exit 1
+          fi
+
+          KEYSTORE_PATH="$RUNNER_TEMP/android-release.keystore"
+          (echo -n "$ANDROID_KEYSTORE_BASE64" | base64 --decode > "$KEYSTORE_PATH") || \
+          (echo -n "$ANDROID_KEYSTORE_BASE64" | base64 -D > "$KEYSTORE_PATH")
+
+          mkdir -p "$HOME/.gradle"
+          {
+            echo "MYAPP_UPLOAD_STORE_FILE=$KEYSTORE_PATH"
+            echo "MYAPP_UPLOAD_STORE_PASSWORD=$ANDROID_KEYSTORE_PASSWORD"
+            echo "MYAPP_UPLOAD_KEY_ALIAS=$ANDROID_KEY_ALIAS"
+            echo "MYAPP_UPLOAD_KEY_PASSWORD=$ANDROID_KEY_ALIAS_PASSWORD"
+          } >> "$HOME/.gradle/gradle.properties"
+
+      - name: Build Android app
+        env:
+          # Force production React/Metro bundle in CI (avoids dev/prod mismatch with NODE_ENV undefined)
+          NODE_ENV: production
+          RELAYER_URL: ${{ vars.RELAYER_URL }}
+          VELCRO_URL: ${{ vars.VELCRO_URL }}
+          REACT_APP_PIMLICO_API_KEY: ${{ vars.REACT_APP_PIMLICO_API_KEY }}
+          REACT_APP_ETHERSPOT_API_KEY: ${{ vars.REACT_APP_ETHERSPOT_API_KEY }}
+          REACT_APP_CANDIDE_API_KEY: ${{ vars.REACT_APP_CANDIDE_API_KEY }}
+          REACT_APP_GELATO_API_KEY: ${{ vars.REACT_APP_GELATO_API_KEY }}
+          NFT_CDN_URL: ${{ vars.NFT_CDN_URL }}
+          LEGENDS_NFT_ADDRESS: ${{ vars.LEGENDS_NFT_ADDRESS }}
+          LI_FI_API_KEY: ${{ vars.LI_FI_API_KEY }}
+          BUNGEE_API_KEY: ${{ vars.BUNGEE_API_KEY }}
+          SAFE_API: ${{ vars.SAFE_API }}
+          ORG_GRADLE_PROJECT_reactNativeArchitectures: ${{ inputs.architectures }}
+          # CI-only Gradle/JVM tuning:
+          # - Disable Gradle daemon and parallelism to avoid long-lived processes and high memory usage.
+          # - Increase Metaspace limit to reduce risk of OutOfMemoryError: Metaspace during large native builds.
+          # These settings apply only in GitHub Actions and do NOT affect local builds.
+          JAVA_TOOL_OPTIONS: '-XX:MaxMetaspaceSize=1024m'
+          GRADLE_OPTS: '-Dorg.gradle.daemon=false -Dorg.gradle.parallel=false'
+        run: ${{ inputs.build_command }}
+        shell: bash
+
+      - name: Package Android APK
+        if: inputs.package_mode == 'apk'
+        run: |
+          set -euo pipefail
+          APK_DIR="android/app/build/outputs/apk/release"
+          OUTPUT_ZIP="ambire-android-v${{ steps.version.outputs.VERSION }}-apk.zip"
+
+          if [ ! -d "$APK_DIR" ]; then
+            echo "Expected APK output dir not found at $APK_DIR"
+            ls -R android/app/build/outputs || true
+            exit 1
+          fi
+
+          APK_PATH=$(find "$APK_DIR" -maxdepth 1 -type f -name '*.apk' | head -n1)
+          if [ -z "$APK_PATH" ]; then
+            echo "No .apk found in $APK_DIR"
+            ls -la "$APK_DIR" || true
+            exit 1
+          fi
+
+          ZIP_PATH="$(pwd)/$OUTPUT_ZIP"
+          TEMP_DIR="$RUNNER_TEMP/android-apk-package"
+          rm -rf "$TEMP_DIR"
+          mkdir -p "$TEMP_DIR"
+          cp "$APK_PATH" "$TEMP_DIR/Ambire.apk"
+          cd "$TEMP_DIR"
+          zip -r "$ZIP_PATH" "Ambire.apk"
+          echo "PACKAGE_PATH=$ZIP_PATH" >> $GITHUB_ENV
+        shell: bash
+
+      - name: Package Android AAB
+        if: inputs.package_mode == 'aab'
+        run: |
+          set -euo pipefail
+          BUNDLE_DIR="android/app/build/outputs/bundle/release"
+          OUTPUT_ZIP="ambire-android-v${{ steps.version.outputs.VERSION }}-aab.zip"
+
+          if [ ! -d "$BUNDLE_DIR" ]; then
+            echo "Expected bundle output dir not found at $BUNDLE_DIR"
+            ls -R android/app/build/outputs || true
+            exit 1
+          fi
+
+          AAB_PATH=$(find "$BUNDLE_DIR" -maxdepth 1 -type f -name '*.aab' | head -n1)
+          if [ -z "$AAB_PATH" ]; then
+            echo "No .aab found in $BUNDLE_DIR"
+            ls -la "$BUNDLE_DIR" || true
+            exit 1
+          fi
+
+          ZIP_PATH="$(pwd)/$OUTPUT_ZIP"
+          TEMP_DIR="$RUNNER_TEMP/android-aab-package"
+          rm -rf "$TEMP_DIR"
+          mkdir -p "$TEMP_DIR"
+          cp "$AAB_PATH" "$TEMP_DIR/Ambire.aab"
+          cd "$TEMP_DIR"
+          zip -r "$ZIP_PATH" "Ambire.aab"
+          echo "PACKAGE_PATH=$ZIP_PATH" >> $GITHUB_ENV
+        shell: bash
+
+      - name: Upload Android build 📦
+        uses: actions/upload-artifact@v6
+        with:
+          name: ambire-android-v${{ steps.version.outputs.VERSION }}-${{ inputs.artifact_suffix }}
+          path: ${{ env.PACKAGE_PATH }}

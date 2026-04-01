@@ -10,10 +10,10 @@ import Button from '@common/components/Button'
 import Text from '@common/components/Text'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
+import AddAccount from '@common/modules/account-select/components/AddAccount'
 import spacings from '@common/styles/spacings'
 import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
-import AddAccount from '@web/modules/account-select/components/AddAccount'
 
 interface Props {
   style?: ViewStyle
@@ -51,9 +51,7 @@ const NoKeysToSignAlert: FC<Props> = ({ style, isTransaction = true, type = 'lon
             }
           ]}
         >
-          <View style={{ width: 18, height: 20 }}>
-            <NoKeysIcon width={18} height={20} color={theme.secondaryText} />
-          </View>
+          <NoKeysIcon />
           <Text fontSize={14} appearance="errorText" style={spacings.mhSm}>
             {!!account.safeCreation
               ? t(`No owners imported to sign this ${isTransaction ? 'transaction' : 'message'}`)
@@ -62,7 +60,7 @@ const NoKeysToSignAlert: FC<Props> = ({ style, isTransaction = true, type = 'lon
           <Button
             hasBottomSpacing={false}
             size="small"
-            type="error"
+            type="dangerFilled"
             textStyle={{ fontSize: 12 }}
             onPress={() => openBottomSheet()}
             text={t('Check')}
@@ -81,11 +79,11 @@ const NoKeysToSignAlert: FC<Props> = ({ style, isTransaction = true, type = 'lon
               ? 'Import your Safe account owners'
               : "This account was imported in view-only mode, which means that there isn't an imported key that can sign for this account. \nIf you do have such a key, please re-import the account with it."
           )}
-          customIcon={() => <NoKeysIcon color={theme.secondaryText} />}
+          customIcon={() => <NoKeysIcon />}
           buttonProps={{
             onPress: () => openBottomSheet(),
             text: !!account.safeCreation ? t('Import Owner') : t('Import Key'),
-            type: 'error'
+            type: 'dangerFilled'
           }}
         />
       )}

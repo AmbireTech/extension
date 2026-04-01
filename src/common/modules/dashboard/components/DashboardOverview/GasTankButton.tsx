@@ -14,6 +14,7 @@ import useHover, { AnimatedPressable } from '@common/hooks/useHover'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { getGasTankTokenDetails } from '@common/utils/getGasTankTokenDetails'
+import { privateValue } from '@common/utils/ui'
 
 interface Props {
   onPress: () => void
@@ -25,12 +26,14 @@ const GasTankButton = ({ onPress, portfolio, account }: Props) => {
   const { t } = useTranslation()
   const [bindBtnAnim, btnAnimStyle] = useHover({ preset: 'opacityInverted' })
   const { hasGasTank, isViewOnly } = useHasGasTank({ account })
+  const { isPrivacyModeEnabled } = useController('WalletStateController').state
 
   const {
     state: { networks }
   } = useController('NetworksController')
+
   const totalBalanceGasTankDetails = useMemo(
-    () => getGasTankTokenDetails(portfolio, account, networks, 'amount'),
+    () => getGasTankTokenDetails(portfolio, account, networks),
     [account, networks, portfolio]
   )
 
@@ -61,15 +64,15 @@ const GasTankButton = ({ onPress, portfolio, account }: Props) => {
   const text = useMemo(() => {
     if (buttonState === 'balance') return `${totalBalanceGasTankDetails.balanceUSDFormatted}`
     if (buttonState === 'topup') return t('Top up')
-    if (buttonState === 'soon') return isViewOnly ? '' : t('Soon')
-    if (buttonState === 'error') return t('Unavailable')
+    if (buttonState === 'soon') return isViewOnly ? '' : t('soon')
+    if (buttonState === 'error') return t('unavailable')
 
     return ''
   }, [buttonState, totalBalanceGasTankDetails.balanceUSDFormatted, isViewOnly, t])
 
   const tooltipText = useMemo(() => {
     if (buttonState === 'soon') {
-      if (!!account?.safeCreation) return t('Not available for safe wallets, yet.')
+      if (!!account?.safeCreation) return t('Not available for Safe wallets, yet.')
       return t('Not available for hardware wallets, yet.')
     }
 
@@ -109,7 +112,7 @@ const GasTankButton = ({ onPress, portfolio, account }: Props) => {
     >
       <GasTankIcon width={14} height={14} color="#FFFFFF" />
       <Text
-        style={spacings.mlMi}
+        style={{ ...spacings.mlMi, ...(isPrivacyModeEnabled ? { lineHeight: 14 } : {}) }}
         dataSet={
           tooltipText
             ? createGlobalTooltipDataSet({
@@ -122,7 +125,7 @@ const GasTankButton = ({ onPress, portfolio, account }: Props) => {
         weight="number_medium"
         fontSize={12}
       >
-        {text}
+        {privateValue(text, isPrivacyModeEnabled, 4)}
       </Text>
     </AnimatedPressable>
   )

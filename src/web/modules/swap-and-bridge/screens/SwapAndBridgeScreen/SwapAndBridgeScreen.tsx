@@ -8,11 +8,13 @@ import { SwapAndBridgeFormStatus } from '@ambire-common/controllers/swapAndBridg
 import { Key } from '@ambire-common/interfaces/keystore'
 import Alert from '@common/components/Alert'
 import { PanelBackButton, PanelTitle } from '@common/components/Panel/Panel'
-import Spinner from '@common/components/Spinner'
 import useController from '@common/hooks/useController'
 import useNavigation from '@common/hooks/useNavigation'
 import usePrevious from '@common/hooks/usePrevious'
 import { ROUTES, WEB_ROUTES } from '@common/modules/router/constants/common'
+import BatchAdded from '@common/modules/sign-account-op/components/OneClick/BatchModal/BatchAdded'
+import Buttons from '@common/modules/sign-account-op/components/OneClick/Buttons'
+import Estimation from '@common/modules/sign-account-op/components/OneClick/Estimation'
 import TrackProgress from '@common/modules/swap-and-bridge/components/Estimation/TrackProgress'
 import FromToken from '@common/modules/swap-and-bridge/components/FromToken'
 import PriceImpactWarningModal from '@common/modules/swap-and-bridge/components/PriceImpactWarningModal'
@@ -25,10 +27,7 @@ import flexbox from '@common/styles/utils/flexbox'
 import { getUiType } from '@common/utils/uiType'
 import { Content, Wrapper } from '@web/components/TransactionsScreen'
 import useSimulationError from '@web/modules/portfolio/hooks/SimulationError/useSimulationError'
-import BatchAdded from '@web/modules/sign-account-op/components/OneClick/BatchModal/BatchAdded'
-import Buttons from '@web/modules/sign-account-op/components/OneClick/Buttons'
-import Estimation from '@web/modules/sign-account-op/components/OneClick/Estimation'
-import SafeSigned from '@web/modules/sign-account-op/components/OneClick/SafeSigned'
+import Modals from '@web/modules/sign-account-op/components/Modals'
 
 const { isRequestWindow } = getUiType()
 
@@ -101,12 +100,6 @@ const SwapAndBridgeScreen = () => {
       scrollViewRef.current?.scrollTo({ y: 0 })
     }
   }, [selectedAccActiveRoutes, prevSelectedAccActiveRoutes])
-
-  // TODO: Disable tokens that are NOT supported
-  // (not in the `fromTokenList` of the SwapAndBridge controller)
-
-  // TODO: Confirmation modal (warn) if the diff in dollar amount between the
-  // FROM and TO tokens is too high (therefore, user will lose money).
 
   const isEstimatingRoute =
     formStatus === SwapAndBridgeFormStatus.ReadyToEstimate &&
@@ -214,18 +207,6 @@ const SwapAndBridgeScreen = () => {
     shouldDisableAddToBatch
   ])
 
-  if (!sessionIds.includes(sessionId)) {
-    // If the portfolio has loaded we can skip the spinner as initializing the screen
-    // takes a short time and the spinner will only flash.
-    if (portfolio.isReadyToVisualize) return null
-
-    return (
-      <View style={[flexbox.flex1, flexbox.justifyCenter, flexbox.alignCenter]}>
-        <Spinner />
-      </View>
-    )
-  }
-
   if (activeRoute && displayedView === 'track') {
     return (
       <TrackProgress
@@ -246,16 +227,6 @@ const SwapAndBridgeScreen = () => {
         secondaryButtonText={t('Add more')}
         onPrimaryButtonPress={onBatchAddedPrimaryButtonPress}
         onSecondaryButtonPress={onBatchAddedSecondaryButtonPress}
-      />
-    )
-  }
-
-  if (displayedView === 'safe-signed') {
-    return (
-      <SafeSigned
-        title={t('Swap & Bridge')}
-        primaryButtonText={t('Open dashboard')}
-        onPrimaryButtonPress={onBatchAddedPrimaryButtonPress}
       />
     )
   }
@@ -287,6 +258,7 @@ const SwapAndBridgeScreen = () => {
               fromTokenAmountSelectDisabled={fromTokenAmountSelectDisabled}
               onFromAmountChange={onFromAmountChange}
               simulationFailed={!!fromChainSimulationError}
+              isLoading={!sessionIds.includes(sessionId) || !portfolio.isReadyToVisualize}
             />
           </View>
           <ToToken simulationFailed={!!toChainSimulationError} />
@@ -307,6 +279,7 @@ const SwapAndBridgeScreen = () => {
         hasProceeded={hasProceeded}
         signAccountOpController={signAccountOpController}
         serviceFee={quote?.selectedRoute?.serviceFee}
+        Modals={Modals}
       />
       <PriceImpactWarningModal
         sheetRef={priceImpactModalRef}

@@ -14,17 +14,19 @@ import useController from '@common/hooks/useController'
 import useNavigation from '@common/hooks/useNavigation'
 import useTheme from '@common/hooks/useTheme'
 import { WEB_ROUTES } from '@common/modules/router/constants/common'
+import TrackProgressWrapper from '@common/modules/sign-account-op/components/OneClick/TrackProgress'
+import Completed from '@common/modules/sign-account-op/components/OneClick/TrackProgress/ByStatus/Completed'
+import Failed from '@common/modules/sign-account-op/components/OneClick/TrackProgress/ByStatus/Failed'
+import InProgress from '@common/modules/sign-account-op/components/OneClick/TrackProgress/ByStatus/InProgress'
+import Refunded from '@common/modules/sign-account-op/components/OneClick/TrackProgress/ByStatus/Refunded'
+import useTrackAccountOp from '@common/modules/sign-account-op/hooks/OneClick/useTrackAccountOp'
 import spacings from '@common/styles/spacings'
+import { THEME_TYPES } from '@common/styles/theme/types'
+import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
 import formatTime from '@common/utils/formatTime'
 import { getUiType } from '@common/utils/uiType'
-import TrackProgressWrapper from '@web/modules/sign-account-op/components/OneClick/TrackProgress'
-import Completed from '@web/modules/sign-account-op/components/OneClick/TrackProgress/ByStatus/Completed'
-import Failed from '@web/modules/sign-account-op/components/OneClick/TrackProgress/ByStatus/Failed'
-import InProgress from '@web/modules/sign-account-op/components/OneClick/TrackProgress/ByStatus/InProgress'
-import Refunded from '@web/modules/sign-account-op/components/OneClick/TrackProgress/ByStatus/Refunded'
-import useTrackAccountOp from '@web/modules/sign-account-op/hooks/OneClick/useTrackAccountOp'
 
 import RouteStepsToken from '../RouteStepsToken'
 
@@ -37,7 +39,7 @@ type Props = {
 
 const TrackProgress: FC<Props> = ({ activeRoute, handleClose }) => {
   const { t } = useTranslation()
-  const { theme } = useTheme()
+  const { theme, themeType } = useTheme()
   const { navigate } = useNavigation()
   const { activeRoutes } = useController('SwapAndBridgeController').state
   const { dispatch: requestsDispatch } = useController('RequestsController')
@@ -144,48 +146,84 @@ const TrackProgress: FC<Props> = ({ activeRoute, handleClose }) => {
       {lastCompletedRoute?.routeStatus === 'in-progress' && (
         <InProgress title={t('Confirming your trade')}>
           {!!fromAsset && !!toAsset && (
-            <View
-              style={[
-                flexbox.directionRow,
-                flexbox.justifySpaceBetween,
-                { alignItems: 'baseline' },
-                spacings.mbLg
-              ]}
-            >
-              <RouteStepsToken
-                wrapperStyle={{
-                  width: 'auto'
-                }}
-                uri={fromAsset.icon}
-                chainId={BigInt(fromAsset.chainId)}
-                address={fromAsset.address}
-                symbol={fromAsset.symbol}
-                amount={
-                  lastCompletedRoute?.route?.fromAmount
-                    ? formatDecimals(
-                        Number(
-                          formatUnits(lastCompletedRoute.route?.fromAmount, fromAsset.decimals)
-                        ),
-                        'amount'
-                      )
-                    : ''
-                }
-              />
-              <View style={[flexbox.alignCenter, flexbox.justifyCenter]}>
-                <View
-                  style={{
-                    width: 32,
-                    height: 32,
-                    borderRadius: 16,
+            <>
+              <View
+                style={[
+                  flexbox.directionRow,
+                  flexbox.justifySpaceBetween,
+                  {
+                    alignItems: 'baseline'
+                  },
+                  spacings.mbLg
+                ]}
+              >
+                <RouteStepsToken
+                  uri={fromAsset.icon}
+                  chainId={BigInt(fromAsset.chainId)}
+                  address={fromAsset.address}
+                  symbol={fromAsset.symbol}
+                  amount={
+                    lastCompletedRoute?.route?.fromAmount
+                      ? formatDecimals(
+                          Number(
+                            formatUnits(lastCompletedRoute.route?.fromAmount, fromAsset.decimals)
+                          ),
+                          'amount'
+                        )
+                      : ''
+                  }
+                  wrapperStyle={{
+                    width: 160,
+                    height: 112,
                     backgroundColor: theme.secondaryBackground,
-                    ...flexbox.alignCenter,
-                    ...flexbox.justifyCenter,
-                    ...spacings.mhLg,
-                    ...spacings.mb2Xl
+                    borderRadius: BORDER_RADIUS_PRIMARY,
+                    ...flexbox.center
                   }}
+                />
+                <View
+                  style={[flexbox.alignCenter, flexbox.justifyCenter, { width: 8, zIndex: 100 }]}
                 >
-                  <RightArrowIcon />
+                  <View
+                    style={{
+                      borderRadius: 100,
+                      backgroundColor: theme.secondaryBackground,
+                      borderWidth: 4,
+                      borderColor: theme.secondaryBorder,
+                      ...flexbox.alignCenter,
+                      ...flexbox.justifyCenter,
+                      width: 36,
+                      height: 36,
+                      position: 'absolute',
+                      zIndex: 100
+                    }}
+                  >
+                    <RightArrowIcon color={theme.neutral600} />
+                  </View>
                 </View>
+                <RouteStepsToken
+                  uri={toAsset.icon}
+                  chainId={BigInt(toAsset.chainId)}
+                  address={toAsset.address}
+                  symbol={toAsset.symbol}
+                  isLast
+                  amount={
+                    lastCompletedRoute.route?.toAmount
+                      ? formatDecimals(
+                          Number(formatUnits(lastCompletedRoute.route?.toAmount, toAsset.decimals)),
+                          'amount'
+                        )
+                      : ''
+                  }
+                  wrapperStyle={{
+                    width: 160,
+                    height: 112,
+                    backgroundColor: theme.secondaryBackground,
+                    borderRadius: BORDER_RADIUS_PRIMARY,
+                    ...flexbox.center
+                  }}
+                />
+              </View>
+              <View>
                 {!!lastCompletedRoute.route?.serviceTime && (
                   <Text
                     fontSize={12}
@@ -202,25 +240,7 @@ const TrackProgress: FC<Props> = ({ activeRoute, handleClose }) => {
                   </Text>
                 )}
               </View>
-              <RouteStepsToken
-                wrapperStyle={{
-                  width: 'auto'
-                }}
-                uri={toAsset.icon}
-                chainId={BigInt(toAsset.chainId)}
-                address={toAsset.address}
-                symbol={toAsset.symbol}
-                isLast
-                amount={
-                  lastCompletedRoute.route?.toAmount
-                    ? formatDecimals(
-                        Number(formatUnits(lastCompletedRoute.route?.toAmount, toAsset.decimals)),
-                        'amount'
-                      )
-                    : ''
-                }
-              />
-            </View>
+            </>
           )}
         </InProgress>
       )}

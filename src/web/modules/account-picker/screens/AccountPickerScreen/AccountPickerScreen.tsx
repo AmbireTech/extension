@@ -38,13 +38,13 @@ const AccountPickerScreen = () => {
 
   return (
     <TabLayoutContainer backgroundColor={theme.secondaryBackground} width="lg">
-      <TabLayoutWrapperMainContent>
+      <TabLayoutWrapperMainContent contentContainerStyle={spacings.pb2Xl}>
         <Panel
           type="onboarding"
           spacingsSize="small"
           panelWidth={800}
           innerStyle={{ ...spacings.phSm }}
-          style={{ maxHeight: 680, height: '100%' }}
+          style={{ maxHeight: 900, height: '100%' }}
         >
           <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mbMd]}>
             <PanelBackButton onPress={goToPrevRoute} style={spacings.mr} />

@@ -12,10 +12,11 @@ declare const globalIsAmbireNext: boolean
 
   // eslint-disable-next-line import/newline-after-import
 ;(() => {
-  if (isCrossOriginFrame() || isTooDeepFrameInTheFrameHierarchy()) return
+  if (isTooDeepFrameInTheFrameHierarchy()) return
+  const isCrossOrigin = isCrossOriginFrame()
 
   // Run setup bridge messenger in all frames
-  setupBridgeMessengerRelay()
+  setupBridgeMessengerRelay(isCrossOrigin)
 
   // Run the reactivation logic only in the top frame (skip iframes)
   if (window.top === window) {

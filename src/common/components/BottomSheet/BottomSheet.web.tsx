@@ -1,5 +1,5 @@
-import React, { RefObject } from 'react'
-import { ScrollView, View } from 'react-native'
+import React, { RefObject, useCallback, useMemo } from 'react'
+import { FlatList, ScrollView, SectionList, View } from 'react-native'
 import { Modalize } from 'react-native-modalize'
 
 import { isWeb } from '@common/config/env'
@@ -25,19 +25,22 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
     type: _type,
     scrollViewRef: externalScrollViewRef,
     children,
-    closeBottomSheet = () => {},
+    closeBottomSheet: _closeBottomSheet = () => {},
     adjustToContentHeight = true,
     style = {},
     containerInnerWrapperStyles = {},
     onClosed,
     onOpen,
     onBackdropPress,
+    HeaderComponent,
     flatListProps,
+    sectionListProps,
     scrollViewProps,
     backgroundColor = 'primaryBackground',
     autoWidth = false,
     shouldBeClosableOnDrag = true,
     withBackdropBlur,
+    customRenderer,
     customZIndex,
     isScrollEnabled = true
   } = props
@@ -49,6 +52,7 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
     checkIsScrollable,
     scrollViewRef: internalScrollViewRef
   } = useIsScrollable()
+  const closeBottomSheet = useCallback(_closeBottomSheet, [_closeBottomSheet])
   const scrollViewRef = externalScrollViewRef || internalScrollViewRef
 
   const {
@@ -61,6 +65,71 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
     setIsBackdropVisible,
     id
   } = useBottomSheetInternal(props)
+
+  const renderContent = useCallback(() => {
+    if (customRenderer) return null
+
+    if (flatListProps) {
+      return (
+        <View
+          testID={isOpen ? 'bottom-sheet' : undefined}
+          style={[
+            isScrollEnabled && isScrollable ? spacings.prTy : {},
+            common.fullWidth,
+            containerInnerWrapperStyles
+          ]}
+        >
+          <FlatList
+            bounces={false}
+            keyboardShouldPersistTaps="handled"
+            {...(flatListProps as any)}
+          />
+        </View>
+      )
+    }
+
+    if (sectionListProps) {
+      return (
+        <View
+          testID={isOpen ? 'bottom-sheet' : undefined}
+          style={[
+            isScrollEnabled && isScrollable ? spacings.prTy : {},
+            common.fullWidth,
+            containerInnerWrapperStyles
+          ]}
+        >
+          <SectionList
+            bounces={false}
+            keyboardShouldPersistTaps="handled"
+            {...(sectionListProps as any)}
+          />
+        </View>
+      )
+    }
+
+    return (
+      <View
+        testID={isOpen ? 'bottom-sheet' : undefined}
+        style={[
+          isScrollEnabled && isScrollable ? spacings.prTy : {},
+          common.fullWidth,
+          containerInnerWrapperStyles
+        ]}
+      >
+        {children}
+      </View>
+    )
+  }, [
+    children,
+    containerInnerWrapperStyles,
+    customRenderer,
+    flatListProps,
+    isOpen,
+    isScrollEnabled,
+    isScrollable,
+    sectionListProps
+  ])
+
   return (
     <Portal hostName="global">
       {/* Wrapping the content in a View with a stable `key` prevents Portal */}
@@ -117,12 +186,16 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
           avoidKeyboardLikeIOS
           modalTopOffset={modalTopOffset}
           threshold={90}
-          adjustToContentHeight={adjustToContentHeight}
+          HeaderComponent={HeaderComponent}
+          adjustToContentHeight={customRenderer ? false : adjustToContentHeight}
           disableScrollIfPossible={false}
           withOverlay={false}
-          onBackButtonPress={() => true}
+          onBackButtonPress={() => {
+            closeBottomSheet()
+            return true
+          }}
           panGestureEnabled={shouldBeClosableOnDrag}
-          {...(!flatListProps
+          {...(!flatListProps && !sectionListProps
             ? {
                 scrollViewProps: {
                   bounces: false,
@@ -133,15 +206,6 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
                     contentContainerStyle: { flex: 1 }
                   }),
                   ...(scrollViewProps || {})
-                }
-              }
-            : {})}
-          {...(flatListProps
-            ? {
-                flatListProps: {
-                  bounces: false,
-                  keyboardShouldPersistTaps: 'handled',
-                  ...(flatListProps || {})
                 }
               }
             : {})}
@@ -159,19 +223,23 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
           }}
           onClose={() => setIsOpen(false)}
           onClosed={() => !!onClosed && onClosed()}
+          customRenderer={
+            customRenderer ? (
+              <View
+                testID={isOpen ? 'bottom-sheet' : undefined}
+                style={[
+                  isScrollEnabled && isScrollable ? spacings.prTy : {},
+                  common.fullWidth,
+                  { flex: 1 },
+                  containerInnerWrapperStyles
+                ]}
+              >
+                {customRenderer}
+              </View>
+            ) : undefined
+          }
         >
-          {!flatListProps && (
-            <View
-              testID={isOpen ? 'bottom-sheet' : undefined}
-              style={[
-                isScrollEnabled && isScrollable ? spacings.prTy : {},
-                common.fullWidth,
-                containerInnerWrapperStyles
-              ]}
-            >
-              {children}
-            </View>
-          )}
+          {renderContent()}
         </Modalize>
       </View>
     </Portal>

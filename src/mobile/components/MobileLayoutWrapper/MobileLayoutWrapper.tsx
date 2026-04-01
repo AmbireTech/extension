@@ -1,12 +1,17 @@
 import React, { ReactNode } from 'react'
 import { ColorValue, View, ViewStyle } from 'react-native'
+import {
+  KeyboardAwareScrollView,
+  KeyboardAwareScrollViewProps
+} from 'react-native-keyboard-controller'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import { PanelBackButton, PanelTitle } from '@common/components/Panel/Panel'
-import ScrollableWrapper, { WrapperProps } from '@common/components/ScrollableWrapper'
+import { WrapperProps } from '@common/components/ScrollableWrapper'
+import useNavigation from '@common/hooks/useNavigation'
 import useTheme from '@common/hooks/useTheme'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
-import spacings from '@common/styles/spacings'
+import spacings, { SPACING_SM } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
 import getStyles from './styles'
@@ -20,6 +25,8 @@ type MobileLayoutContainerProps = {
   renderDirectChildren?: () => ReactNode
   style?: ViewStyle
   withHorizontalPadding?: boolean
+  withTopPadding?: boolean
+  withBottomInset?: boolean
 }
 
 export const MobileLayoutContainer = ({
@@ -30,7 +37,9 @@ export const MobileLayoutContainer = ({
   children,
   renderDirectChildren,
   style,
-  withHorizontalPadding = false
+  withHorizontalPadding = false,
+  withTopPadding = true,
+  withBottomInset = true
 }: MobileLayoutContainerProps) => {
   const { theme, styles } = useTheme(getStyles)
   const insets = useSafeAreaInsets()
@@ -41,16 +50,15 @@ export const MobileLayoutContainer = ({
         flexbox.flex1,
         {
           backgroundColor: backgroundColor || theme.primaryBackground,
-          paddingTop: insets.top,
-          paddingBottom: insets.bottom
+          paddingTop: insets.top + (withTopPadding ? SPACING_SM : 0),
+          paddingBottom: withBottomInset ? insets.bottom : 0
         }
       ]}
     >
-      {!!header && header}
+      {!!header && <View style={[spacings.phSm, spacings.mbSm]}>{header}</View>}
       <View style={[flexbox.flex1, withHorizontalPadding ? spacings.phSm : undefined]}>
         <View
           style={[
-            flexbox.directionRow,
             flexbox.flex1,
             {
               backgroundColor: backgroundColor || theme.primaryBackground,
@@ -62,11 +70,7 @@ export const MobileLayoutContainer = ({
           {children}
         </View>
       </View>
-      {!!footer && (
-        <View style={styles.footerContainer}>
-          <View style={[styles.footer, footerStyle]}>{footer}</View>
-        </View>
-      )}
+      {footer && footer}
       {renderDirectChildren && renderDirectChildren()}
     </View>
   )
@@ -77,9 +81,10 @@ interface MobileLayoutWrapperMainContentProps extends WrapperProps {
   withScroll?: boolean
   wrapperRef?: any
   withBackButton?: boolean
+  keyboardAwareScrollViewProps?: KeyboardAwareScrollViewProps
   onBackButtonPress?: () => void
   rightIcon?: ReactNode
-  onRightIconPress?: () => void
+
   title?: string
   step?: number
   totalSteps?: number
@@ -89,11 +94,11 @@ export const MobileLayoutWrapperMainContent: React.FC<MobileLayoutWrapperMainCon
   children,
   wrapperRef,
   contentContainerStyle = {},
-  withScroll = true,
+  withScroll = false,
+  keyboardAwareScrollViewProps = {},
   withBackButton = false,
-  onBackButtonPress = () => {},
+  onBackButtonPress,
   rightIcon,
-  onRightIconPress = () => {},
   title,
   step = 0,
   totalSteps = 2,
@@ -101,6 +106,15 @@ export const MobileLayoutWrapperMainContent: React.FC<MobileLayoutWrapperMainCon
 }: MobileLayoutWrapperMainContentProps) => {
   const { styles, theme } = useTheme(getStyles)
   const { isOnboardingRoute } = useOnboardingNavigation()
+  const { goBack } = useNavigation()
+
+  const handleBackButtonPress = () => {
+    if (onBackButtonPress) {
+      onBackButtonPress()
+    } else {
+      goBack()
+    }
+  }
 
   const renderProgress = () => (
     <View style={[styles.progressContainer]}>
@@ -119,35 +133,49 @@ export const MobileLayoutWrapperMainContent: React.FC<MobileLayoutWrapperMainCon
     </View>
   )
 
-  if (withScroll && !isOnboardingRoute) {
+  if (withScroll) {
     return (
-      <ScrollableWrapper
-        contentContainerStyle={[styles.contentContainer, contentContainerStyle]}
-        showsVerticalScrollIndicator={false}
-        wrapperRef={wrapperRef}
-        {...rest}
-      >
-        {step > 0 ? renderProgress() : <View style={{ height: 28 }} />}
+      <View style={[flexbox.flex1, spacings.phSm]}>
+        {step > 0 ? renderProgress() : <View style={{ height: isOnboardingRoute ? 24 : 0 }} />}
         {(!!title || !!withBackButton) && (
-          <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mb2Xl]}>
-            {!!withBackButton && <PanelBackButton onPress={onBackButtonPress} />}
+          <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mbLg]}>
+            {!!withBackButton && <PanelBackButton onPress={handleBackButtonPress} />}
             {!!title && <PanelTitle title={title} size={18} />}
-            {!!withBackButton && <View style={[{ width: 28 }, flexbox.alignEnd]}>{rightIcon}</View>}
+            {!!withBackButton && (
+              <View style={[{ width: 28 }, flexbox.alignCenter]}>{rightIcon}</View>
+            )}
           </View>
         )}
-        {children}
-      </ScrollableWrapper>
+        <KeyboardAwareScrollView
+          ref={wrapperRef}
+          style={flexbox.flex1}
+          contentContainerStyle={[{ flexGrow: 1 }, spacings.pbSm, contentContainerStyle]}
+          bottomOffset={100}
+          keyboardShouldPersistTaps="handled"
+          bounces={false}
+          showsVerticalScrollIndicator={false}
+          {...keyboardAwareScrollViewProps}
+          {...rest}
+        >
+          {children}
+        </KeyboardAwareScrollView>
+      </View>
     )
   }
 
   return (
-    <View ref={wrapperRef} style={[styles.contentContainer, contentContainerStyle]}>
-      {step > 0 ? renderProgress() : <View style={{ height: 28 }} />}
+    <View
+      ref={wrapperRef}
+      style={[flexbox.flex1, spacings.phSm, spacings.pbSm, contentContainerStyle]}
+    >
+      {step > 0 ? renderProgress() : <View style={{ height: isOnboardingRoute ? 24 : 0 }} />}
       {(!!title || !!withBackButton) && (
-        <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mbXl]}>
-          {!!withBackButton && <PanelBackButton onPress={onBackButtonPress} />}
+        <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mbLg]}>
+          {!!withBackButton && <PanelBackButton onPress={handleBackButtonPress} />}
           {!!title && <PanelTitle title={title} size={18} />}
-          {!!withBackButton && <View style={{ width: 28 }} />}
+          {!!withBackButton && (
+            <View style={[{ width: 28, maxHeight: 15 }, flexbox.center]}>{rightIcon}</View>
+          )}
         </View>
       )}
       {children}

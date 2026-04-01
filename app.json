@@ -1,12 +1,12 @@
 {
   "name": "Ambire",
   "slug": "ambire-mobile-wallet",
-  "version": "5.39.0",
+  "version": "6.2.1",
   "assetBundlePatterns": ["**/*"],
   "runtimeVersion": "11",
   "jsEngine": "hermes",
   "updates": {
-    "enabled": true,
+    "enabled": false,
     "fallbackToCacheTimeout": 45000
   },
   "ios": {

@@ -25,10 +25,10 @@ import useNavigation from '@common/hooks/useNavigation'
 import useRoute from '@common/hooks/useRoute'
 import useTheme from '@common/hooks/useTheme'
 import { ROUTES, WEB_ROUTES } from '@common/modules/router/constants/common'
+import SettingsLink from '@common/modules/settings/components/SettingsLink'
 import spacings, { SPACING_TY } from '@common/styles/spacings'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
-import SettingsLink from '@web/modules/settings/components/SettingsLink'
 
 import getStyles from './styles'
 
@@ -90,7 +90,7 @@ export const SETTINGS_LINKS = [
   {
     key: 'opt-outs',
     Icon: PrivacyIcon,
-    label: 'Privacy Opt-outs',
+    label: 'Privacy opt-outs',
     path: ROUTES.optOuts
   },
   // Disabled for now - will be added in future releases
@@ -120,15 +120,15 @@ const OTHER_LINKS = [
   {
     key: 'help-center',
     Icon: HelpIcon,
-    label: 'Help Center',
-    path: 'https://help.ambire.com/hc/en-us',
+    label: 'Help center',
+    path: 'https://help.ambire.com/en',
     isExternal: true
   },
   {
     key: 'report-issue',
     Icon: BugIcon,
     label: 'Report an issue',
-    path: 'https://help.ambire.com/hc/en-us/requests/new',
+    path: 'https://help.ambire.com/en',
     isExternal: true
   }
 ]

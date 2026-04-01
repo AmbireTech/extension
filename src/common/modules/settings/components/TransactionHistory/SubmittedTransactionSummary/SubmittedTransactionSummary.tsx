@@ -12,11 +12,11 @@ import { IrCall } from '@ambire-common/libs/humanizer/interfaces'
 import SkeletonLoader from '@common/components/SkeletonLoader'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
-import spacings, { SPACING_SM } from '@common/styles/spacings'
-import DelegationHumanization from '@web/components/DelegationHumanization'
 import TransactionSummary, {
   sizeMultiplier
-} from '@web/modules/sign-account-op/components/TransactionSummary'
+} from '@common/modules/sign-account-op/components/TransactionSummary'
+import spacings, { SPACING_SM } from '@common/styles/spacings'
+import DelegationHumanization from '@web/components/DelegationHumanization'
 
 import Footer from './Footer'
 import StatusBadge from './StatusBadge'

@@ -1,5 +1,6 @@
 import React, { FC } from 'react'
 import { useTranslation } from 'react-i18next'
+import { Platform } from 'react-native'
 
 import Badge from '@common/components/Badge'
 
@@ -15,8 +16,8 @@ const BadgeWithPreset: FC<Props> = ({ preset, ...rest }) => {
       {...rest}
       text={t(text)}
       type={type}
-      specialType={specialType}
-      tooltipText={t(tooltipText)}
+      specialType={Platform.OS === 'web' ? specialType : undefined}
+      tooltipText={Platform.OS === 'web' ? t(tooltipText) : undefined}
     />
   )
 }

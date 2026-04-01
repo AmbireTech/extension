@@ -1,13 +1,14 @@
 import React, { useEffect, useState } from 'react'
 import { View, ViewStyle } from 'react-native'
+import { TextProps } from 'react-native-svg'
 
 import AccountData from '@common/components/AccountData'
 import AccountDataDetailed from '@common/components/AccountDataDetailed'
 import AmbireLogoHorizontalWithOG from '@common/components/AmbireLogoHorizontalWithOG'
 import Text from '@common/components/Text'
+import { isMobile, isWeb } from '@common/config/env'
 import { titleChangeEventStream } from '@common/hooks/useNavigation'
 import useRoute from '@common/hooks/useRoute'
-import useWindowSize from '@common/hooks/useWindowSize'
 import routesConfig from '@common/modules/router/config/routesConfig'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
@@ -30,14 +31,13 @@ const Wrapper = ({
   containerStyle?: ViewStyle
   width?: Width
 }) => {
-  const { maxWidthSize } = useWindowSize()
-
   return (
     <View
       style={[
         spacings.phSm,
-        spacings.pbSm,
-        spacings.ptMd,
+        isWeb && spacings.pvSm,
+        isWeb && spacings.ptMd,
+        isMobile && spacings.mbLg,
         {
           width: '100%'
         },
@@ -59,10 +59,11 @@ const Wrapper = ({
   )
 }
 
-const Title = ({ children }: { children: React.ReactNode }) => {
+const Title = ({ children, ...rest }: { children: React.ReactNode } & TextProps) => {
   return (
     <Text
-      fontSize={20}
+      {...rest}
+      fontSize={isMobile ? 18 : 20}
       weight="medium"
       style={[
         {
@@ -87,16 +88,10 @@ type CommonHeaderProps = {
   withOG?: boolean
 }
 
-const Header = ({
-  width,
-  withOG,
-  withDetailedAccountData
-}: CommonHeaderProps & {
-  withDetailedAccountData?: boolean
-}) => {
+const Header = ({ width, withOG }: CommonHeaderProps) => {
   return (
     <Wrapper width={width}>
-      {withDetailedAccountData ? <AccountDataDetailed /> : <AccountData />}
+      <AccountData />
       <AmbireLogoHorizontalWithOG withOG={withOG} />
     </Wrapper>
   )
@@ -123,11 +118,13 @@ const HeaderWithTitle = ({
   displayBackButtonIn,
   children,
   withOG,
+  withBackButton = true,
   width
 }: {
   title?: string
   displayBackButtonIn?: DisplayIn | DisplayIn[]
   children?: React.ReactNode
+  withBackButton?: boolean
 } & CommonHeaderProps) => {
   const [title, setTitle] = useState('')
   const { path } = useRoute()
@@ -147,7 +144,7 @@ const HeaderWithTitle = ({
   return (
     <Wrapper width={width}>
       <Container side="left">
-        <HeaderBackButton displayIn={displayBackButtonIn} />
+        {withBackButton && <HeaderBackButton displayIn={displayBackButtonIn} />}
       </Container>
       <Title>{customTitle || title}</Title>
       <Container side="right">

@@ -5,6 +5,7 @@ import CopyIcon from '@common/assets/svg/CopyIcon'
 import OpenIcon from '@common/assets/svg/OpenIcon'
 import Button from '@common/components/Button'
 import FooterGlassView from '@common/components/FooterGlassView'
+import { isMobile, isWeb } from '@common/config/env'
 import useTheme from '@common/hooks/useTheme'
 import useWindowSize from '@common/hooks/useWindowSize'
 import spacings, { SPACING_LG, SPACING_TY } from '@common/styles/spacings'
@@ -28,13 +29,17 @@ const OpenExplorerButton: FC<Pick<Props, 'handleOpenExplorer'>> = ({ handleOpenE
       onPress={handleOpenExplorer}
       text="Open explorer"
       childrenPosition="left"
-      hasBottomSpacing={false}
-      size={maxWidthSize('s') ? 'large' : 'smaller'}
-      style={{
-        width: maxWidthSize('s') ? 170 : 240,
-        ...spacings.phTy,
-        marginRight: maxWidthSize('s') ? SPACING_LG : 0
-      }}
+      hasBottomSpacing={isMobile}
+      size={isMobile ? 'regular' : maxWidthSize('s') ? 'large' : 'smaller'}
+      style={
+        isWeb
+          ? {
+              width: maxWidthSize('s') ? 170 : 240,
+              ...spacings.phTy,
+              marginRight: maxWidthSize('s') ? SPACING_LG : 0
+            }
+          : { height: 46 }
+      }
     >
       <OpenIcon width={24} height={24} color={theme.primaryText} style={spacings.mrMi} />
     </Button>
@@ -45,17 +50,21 @@ const CopyButton: FC<Pick<Props, 'handleCopyText'>> = ({ handleCopyText }) => {
   const { maxWidthSize } = useWindowSize()
   return (
     <Button
-      style={{
-        width: maxWidthSize('s') ? 150 : 240,
-        ...spacings.phTy,
-        marginTop: maxWidthSize('s') ? 0 : SPACING_TY
-      }}
+      style={
+        isWeb
+          ? {
+              width: maxWidthSize('s') ? 150 : 240,
+              ...spacings.phTy,
+              marginTop: maxWidthSize('s') ? 0 : SPACING_TY
+            }
+          : { height: 46 }
+      }
       onPress={handleCopyText}
       text="Copy link"
-      hasBottomSpacing={false}
-      type={isExtension ? 'secondary' : 'primary'}
+      hasBottomSpacing={isMobile}
+      type={isExtension || isMobile ? 'secondary' : 'primary'}
       childrenPosition="left"
-      size={maxWidthSize('s') ? 'large' : 'smaller'}
+      size={isMobile ? 'regular' : maxWidthSize('s') ? 'large' : 'smaller'}
     >
       <CopyIcon style={spacings.mrMi} />
     </Button>

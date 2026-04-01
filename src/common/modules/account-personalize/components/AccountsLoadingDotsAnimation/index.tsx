@@ -1,3 +1,0 @@
-import AccountsLoadingDotsAnimation from './AccountsLoadingDotsAnimation'
-
-export default AccountsLoadingDotsAnimation

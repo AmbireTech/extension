@@ -65,6 +65,7 @@ const HeaderBackButton = ({
         }
       ]}
       onPress={onGoBackPress || handleGoBack}
+      testID="back-arrow-button"
     >
       {({ hovered }: any) => (
         <>

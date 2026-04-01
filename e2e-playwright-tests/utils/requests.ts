@@ -32,6 +32,7 @@ function categorizeRequests(requests: string[]) {
     'api.llama.fi',
     'base-mainnet.public.blastapi.io',
     'rpc.monad.xyz',
+    'api.gelato.cloud',
     // Token images
     'static.debank.com'
   ]

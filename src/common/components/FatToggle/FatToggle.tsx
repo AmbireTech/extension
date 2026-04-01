@@ -24,8 +24,8 @@ const FatToggle: React.FC<
         width: height - 4,
         height: height - 4,
         transform: isWeb
-          ? ((props.isOn ? `translateX(${width / 2}px)` : 'translateX(2px)') as any)
-          : [{ translateX: props.isOn ? width / 2 - 4 : -2 }],
+          ? ((props.isOn ? `translateX(${width - height + 2}px)` : 'translateX(2px)') as any)
+          : [{ translateX: props.isOn ? width - height - 2 : -2 }],
         ...(props.toggleStyle as ViewStyle)
       }}
     />
