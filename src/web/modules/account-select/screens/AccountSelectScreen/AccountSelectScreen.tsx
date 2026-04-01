@@ -92,7 +92,6 @@ const AccountSelectScreen = () => {
     return (
       <Account
         onSelect={onAccountSelect}
-        key={acc.addr}
         account={acc}
         withSettings={false}
         options={{ markSelected: true }}

@@ -44,7 +44,13 @@ const EnsAvatar: FC<Props> = ({ avatar, setImageFetchFailed, size, borderRadius 
   if (isSvgUrl) {
     return (
       <View style={{ width: size, height: size, borderRadius, overflow: 'hidden' }}>
-        <SvgUri uri={avatar} width={size} height={size} onError={() => setImageFetchFailed(true)} />
+        <SvgUri
+          uri={avatar}
+          width={size}
+          height={size}
+          onError={() => setImageFetchFailed(true)}
+          onLoad={() => setImageFetchFailed(false)}
+        />
       </View>
     )
   }
@@ -55,6 +61,7 @@ const EnsAvatar: FC<Props> = ({ avatar, setImageFetchFailed, size, borderRadius 
       style={{ width: size, height: size, borderRadius }}
       resizeMode="contain"
       onError={() => setImageFetchFailed(true)}
+      onLoad={() => setImageFetchFailed(false)}
     />
   )
 }

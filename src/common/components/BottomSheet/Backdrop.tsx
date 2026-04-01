@@ -78,7 +78,7 @@ const Backdrop = ({
             style={[
               StyleSheet.absoluteFillObject,
               {
-                opacity: 0.98
+                opacity: 0.95
               }
             ]}
           />

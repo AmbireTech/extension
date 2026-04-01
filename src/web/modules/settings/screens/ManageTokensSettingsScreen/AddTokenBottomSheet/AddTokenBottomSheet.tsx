@@ -304,7 +304,6 @@ const AddTokenBottomSheet: FC<Props> = ({ sheetRef, handleClose }) => {
                 label={t('Token Address')}
                 placeholder={t('0x...')}
                 value={value}
-                inputStyle={spacings.mbSm}
                 containerStyle={spacings.mbSm}
                 error={errors.address && errors.address.message}
                 backgroundColor={theme.secondaryBackground}

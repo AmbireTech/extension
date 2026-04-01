@@ -7,7 +7,7 @@ import { Account as AccountType } from '@ambire-common/interfaces/account'
 import { isSmartAccount } from '@ambire-common/libs/account/account'
 import useController from '@common/hooks/useController'
 
-const ITEM_HEIGHT = 68
+const ITEM_HEIGHT = 65
 
 const useAccountsList = ({
   flatlistRef

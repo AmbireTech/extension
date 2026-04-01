@@ -38,7 +38,7 @@ const AccountsSettingsScreen = () => {
   const { setCurrentSettingsPage } = useContext(SettingsRoutesContext)
   const { dispatch: accountsDispatch } = useController('AccountsController')
   const { dispatch: mainDispatch } = useController('MainController')
-  const { themeType, theme } = useTheme()
+  const { theme } = useTheme()
   const {
     ref: sheetRefExportImportKey,
     open: openExportImportKey,

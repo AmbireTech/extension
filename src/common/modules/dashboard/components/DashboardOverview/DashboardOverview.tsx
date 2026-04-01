@@ -125,11 +125,11 @@ const DashboardOverview: FC<Props> = ({
               ...flexbox.alignCenter,
               paddingTop: animatedOverviewHeight.interpolate({
                 inputRange: [0, SPACING_XL],
-                outputRange: [0, SPACING],
+                outputRange: [0, isMobile ? SPACING_SM : SPACING],
                 extrapolate: 'clamp'
               }),
               maxHeight: animatedOverviewHeight,
-              overflow: 'hidden'
+              overflow: isWeb ? 'hidden' : 'visible'
             }}
           >
             {/* These width: 100%s are needed to make sure that hovering the entire row of the balance
@@ -140,7 +140,8 @@ const DashboardOverview: FC<Props> = ({
                   flexbox.directionRow,
                   flexbox.alignCenter,
                   flexbox.justifyCenter,
-                  spacings.mbMi,
+                  isWeb && spacings.mbMi,
+                  isMobile && spacings.mbTy,
                   { height: BALANCE_HEIGHT, width: '100%' }
                 ]}
                 onMouseEnter={() => setIsBalanceHovered(true)}

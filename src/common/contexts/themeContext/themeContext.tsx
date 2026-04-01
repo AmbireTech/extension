@@ -1,4 +1,5 @@
 import React, { useCallback } from 'react'
+import { Appearance } from 'react-native'
 
 import useController from '@common/hooks/useController'
 import { THEME_TYPES } from '@common/styles/themeConfig'
@@ -14,6 +15,8 @@ const ThemeProvider: React.FC<{
 
   const setThemeType = useCallback(
     (type: THEME_TYPES) => {
+      if (type !== THEME_TYPES.SYSTEM) Appearance.setColorScheme(type)
+
       dispatch({
         type: 'method',
         params: {
