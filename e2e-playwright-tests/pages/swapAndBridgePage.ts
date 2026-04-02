@@ -234,10 +234,6 @@ export class SwapAndBridgePage extends BasePage {
         await expect(signButton).toBeVisible({ timeout: 5000 })
         await expect(signButton).toBeEnabled({ timeout: 5000 })
 
-        // if (ledgerSimulatorControls) {
-        //   await this.page.waitForTimeout(10000)
-        // } // wait for the transaction details to be displayed on the Ledger simulator
-
         signButton.click()
 
         if (ledgerSimulatorControls) {
