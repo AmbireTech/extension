@@ -22,13 +22,20 @@ const PrivacyOptOutsConfiguration = () => {
   const { navigate } = useNavigation()
 
   return (
-    <TabLayoutContainer backgroundColor={theme.secondaryBackground} style={spacings.pt3Xl}>
-      <View style={styles.contentContainer}>
-        <PanelBackButton onPress={() => navigate(ROUTES.getStarted)} style={spacings.mbSm} />
-        <SettingsPageHeader
-          title={t('Privacy Opt-outs configuration')}
-          style={{ ...spacings.mt0, ...spacings.mbSm }}
-        />
+    <TabLayoutContainer backgroundColor={theme.secondaryBackground}>
+      <View
+        style={[
+          styles.contentContainer,
+          flexbox.flex1,
+          flexbox.alignSelfCenter,
+          spacings.pbSLg,
+          { maxWidth: 568, height: 300 }
+        ]}
+      >
+        <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mbSm]}>
+          <PanelBackButton onPress={() => navigate(ROUTES.getStarted)} style={spacings.mrTy} />
+          <SettingsPageHeader title={t('Privacy Opt-outs configuration')} style={spacings.mh0} />
+        </View>
         <View style={spacings.mb2Xl}>
           <OptOutControlOption
             title={t('Tokens, NFTs & DeFi positions auto discovery')}
@@ -39,7 +46,7 @@ const PrivacyOptOutsConfiguration = () => {
             flag="tokenAndDefiAutoDiscovery"
           />
         </View>
-        <View style={[spacings.mt, flexbox.directionRow, flexbox.alignSelfEnd]}>
+        <View style={[flexbox.directionRow, flexbox.alignSelfEnd]}>
           <Button
             type="primary"
             style={{ minWidth: 220 }}

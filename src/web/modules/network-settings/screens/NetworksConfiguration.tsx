@@ -23,11 +23,11 @@ const NetworksConfiguration = () => {
   return (
     <TabLayoutContainer backgroundColor={theme.secondaryBackground} style={spacings.pt3Xl}>
       <View style={[styles.contentContainer]}>
-        <View style={[flexbox.directionRow]}>
+        <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mbSm]}>
           <PanelBackButton onPress={() => navigate(ROUTES.getStarted)} style={spacings.mrTy} />
           <SettingsPageHeader
             title={t('Network And RPC configuration')}
-            style={{ ...spacings.mt0, ...spacings.mbSm }}
+            style={{ ...spacings.mt0, ...spacings.mb0 }}
           />
         </View>
         <NetworkSettings />

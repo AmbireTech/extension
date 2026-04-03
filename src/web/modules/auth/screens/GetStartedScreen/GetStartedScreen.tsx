@@ -160,9 +160,9 @@ const GetStartedScreen = () => {
                       flexbox.directionRow,
                       flexbox.alignCenter,
                       flexbox.justifyCenter,
+                      spacings.phSm,
+                      spacings.pvSm,
                       {
-                        paddingHorizontal: 12,
-                        paddingVertical: 12,
                         borderRadius: BORDER_RADIUS_PRIMARY,
                         backgroundColor: hovered ? theme.secondaryBackground : 'transparent'
                       }
@@ -178,9 +178,9 @@ const GetStartedScreen = () => {
                       flexbox.directionRow,
                       flexbox.alignCenter,
                       flexbox.justifyCenter,
+                      spacings.phSm,
+                      spacings.pvSm,
                       {
-                        paddingHorizontal: 12,
-                        paddingVertical: 12,
                         borderRadius: BORDER_RADIUS_PRIMARY,
                         backgroundColor: hovered ? theme.secondaryBackground : 'transparent'
                       }
