@@ -26,10 +26,9 @@ const PrivacyOptOutsConfiguration = () => {
       <View
         style={[
           styles.contentContainer,
-          flexbox.flex1,
           flexbox.alignSelfCenter,
           spacings.pbSLg,
-          { maxWidth: 568, height: 300 }
+          { maxWidth: 568 }
         ]}
       >
         <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mbSm]}>

@@ -26,7 +26,7 @@ const NetworksConfiguration = () => {
         <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mbSm]}>
           <PanelBackButton onPress={() => navigate(ROUTES.getStarted)} style={spacings.mrTy} />
           <SettingsPageHeader
-            title={t('Network And RPC configuration')}
+            title={t('Network and RPC configuration')}
             style={{ ...spacings.mt0, ...spacings.mb0 }}
           />
         </View>

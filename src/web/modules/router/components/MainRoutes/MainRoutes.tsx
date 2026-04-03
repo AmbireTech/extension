@@ -99,7 +99,6 @@ const MainRoutes = () => {
           <Route path={WEB_ROUTES.authEmailLogin} element={<EmailLoginScreen />} />
           <Route path={WEB_ROUTES.authEmailRegister} element={<EmailRegisterScreen />} />
           <Route path={WEB_ROUTES.viewOnlyAccountAdder} element={<ViewOnlyAccountAdderScreen />} />
-          <Route path={WEB_ROUTES.optOuts} element={<OptOutsScreen />} />
 
           <Route
             path={WEB_ROUTES.importExistingAccount}

@@ -97,7 +97,7 @@ const GetStartedScreen = () => {
             </Button>
             <View style={[flexbox.alignSelfCenter, spacings.mt, { width: '100%' }]}>
               <Pressable
-                onPress={() => setIsMenuOpen(!isMenuOpen)}
+                onPress={() => setIsMenuOpen((prev) => !prev)}
                 style={[
                   flexbox.directionRow,
                   flexbox.alignCenter,
