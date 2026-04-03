@@ -60,8 +60,7 @@ jobs:
       # Enables Playwright to intercept network requests initiated by Service Workers.
       # We use it to mock or block background requests that can't be intercepted via page.route().
       PW_EXPERIMENTAL_SERVICE_WORKER_NETWORK_EVENTS: '1'
-      #IS_LEDGER_EMULATOR: ${{ vars.IS_LEDGER_EMULATOR }}
-      IS_LEDGER_EMULATOR: 'true'
+      IS_LEDGER_EMULATOR: ${{ vars.IS_LEDGER_EMULATOR }}
       LEDGER_BA_SELECTED_ACCOUNT: ${{ vars.LEDGER_BA_SELECTED_ACCOUNT }}
       LEDGER_BA_ACCOUNTS: ${{ vars.LEDGER_BA_ACCOUNTS }}
       LEDGER_BA_KEYSTORE_UID: ${{ vars.LEDGER_BA_KEYSTORE_UID }}
