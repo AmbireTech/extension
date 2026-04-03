@@ -34,7 +34,7 @@ const PrivacyOptOutsConfiguration = () => {
       >
         <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mbSm]}>
           <PanelBackButton onPress={() => navigate(ROUTES.getStarted)} style={spacings.mrTy} />
-          <SettingsPageHeader title={t('Privacy Opt-outs configuration')} style={spacings.mh0} />
+          <SettingsPageHeader title={t('Privacy Opt-outs configuration')} style={spacings.mb0} />
         </View>
         <View style={spacings.mb2Xl}>
           <OptOutControlOption

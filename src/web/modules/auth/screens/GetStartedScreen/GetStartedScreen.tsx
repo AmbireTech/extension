@@ -104,10 +104,7 @@ const GetStartedScreen = () => {
                   flexbox.justifyCenter,
                   flexbox.flex1,
                   spacings.phSm,
-                  spacings.pvTy,
-                  {
-                    borderRadius: 8
-                  }
+                  spacings.pvTy
                 ]}
               >
                 {({ hovered }: any) => (
