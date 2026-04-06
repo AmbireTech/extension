@@ -2230,15 +2230,6 @@
         "react": true
       }
     },
-    "react-fast-compare": {
-      "globals": {
-        "Element": true,
-        "console.warn": true
-      },
-      "packages": {
-        "node-polyfill-webpack-plugin>console-browserify": true
-      }
-    },
     "react-hook-form": {
       "globals": {
         "Blob": true,
