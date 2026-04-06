@@ -1,7 +1,7 @@
 import { flushSync } from 'react-dom'
 
 import { cloneDeep } from '@ambire-common/libs/richJson/richJson'
-import { AllControllersMappingType } from '@common/constants/controllersMapping'
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 import { isExtension } from '@web/constants/browserapi'
 
 const MAX_LOADING_TIME = 10000
