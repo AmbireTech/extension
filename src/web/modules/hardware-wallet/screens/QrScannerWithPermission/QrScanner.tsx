@@ -2,6 +2,7 @@ import QrScannerLib from 'qr-scanner'
 import React, { useEffect, useRef } from 'react'
 import { View } from 'react-native'
 
+import { useTranslation } from '@common/config/localization'
 import { UrFragmentDecoder } from '@web/modules/hardware-wallet/qr/utils/UrFragmentDecoder'
 
 type Props = {
@@ -10,22 +11,44 @@ type Props = {
   disabled?: boolean
 }
 
-const getCameraErrorMessage = (error: any) => {
-  switch (error?.name) {
+const getCameraErrorMessage = (error: any, t: (message: string) => string) => {
+  const rawMessage = typeof error === 'string' ? error : error?.message
+  const normalizedMessage = rawMessage?.toLowerCase?.() || ''
+  const cameraErrorType = error?.name || error?.type
+
+  switch (cameraErrorType) {
     case 'NotAllowedError':
-      return 'Camera access was denied.'
+      return t('Camera access was denied.')
     case 'NotFoundError':
-      return 'No camera device was found.'
+      return t('No camera device was found.')
     case 'NotReadableError':
-      return 'The camera is unavailable or already being used by another app or browser tab.'
+      return t('The camera is unavailable or already being used by another app or browser tab.')
     case 'OverconstrainedError':
-      return 'The selected camera does not support the required settings.'
+      return t('The selected camera does not support the required settings.')
     case 'SecurityError':
-      return 'Camera access is only available on HTTPS or localhost.'
+      return t('Camera access is only available on HTTPS or localhost.')
     case 'AbortError':
-      return 'Camera startup was interrupted. Please try again.'
+      return t('Camera startup was interrupted. Please try again.')
     default:
-      return error?.message || 'Failed to start camera scanner.'
+      if (normalizedMessage.includes('camera not found')) {
+        return t('Camera permissions blocked. Please enable them from browser settings')
+      }
+      if (normalizedMessage.includes('notallowederror') || normalizedMessage.includes('permission')) {
+        return t('Camera access was denied.')
+      }
+      if (normalizedMessage.includes('notreadableerror')) {
+        return t('The camera is unavailable or already being used by another app or browser tab.')
+      }
+      if (normalizedMessage.includes('overconstrainederror')) {
+        return t('The selected camera does not support the required settings.')
+      }
+      if (normalizedMessage.includes('securityerror') || normalizedMessage.includes('https')) {
+        return t('Camera access is only available on HTTPS or localhost.')
+      }
+      if (normalizedMessage.includes('aborterror')) {
+        return t('Camera startup was interrupted. Please try again.')
+      }
+      return rawMessage || t('Failed to start camera scanner.')
   }
 }
 
@@ -37,6 +60,7 @@ const getFragmentFromResult = (result: string | { data?: unknown }) => {
 }
 
 const QrScanner = ({ onComplete, onError, disabled }: Props) => {
+  const { t } = useTranslation()
   const videoRef = useRef<HTMLVideoElement | null>(null)
   const scannerRef = useRef<QrScannerLib | null>(null)
   const decoderRef = useRef(new UrFragmentDecoder())
@@ -119,7 +143,7 @@ const QrScanner = ({ onComplete, onError, disabled }: Props) => {
         }
 
         if (!disposed) {
-          onError?.(getCameraErrorMessage(err), err)
+          onError?.(getCameraErrorMessage(err, t), err)
         }
       }
     })()
@@ -136,7 +160,7 @@ const QrScanner = ({ onComplete, onError, disabled }: Props) => {
         scannerRef.current = null
       }
     }
-  }, [disabled, onComplete, onError])
+  }, [disabled, onComplete, onError, t])
 
   return (
     <View

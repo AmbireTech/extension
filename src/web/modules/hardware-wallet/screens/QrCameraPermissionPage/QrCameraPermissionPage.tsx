@@ -76,7 +76,7 @@ const QrCameraPermissionPage = () => {
         return t('Waiting for camera permission...')
       default:
         return t(
-          'Camera permission cannot always be requested from the extension popup. Enable it here, then go back and continue scanning in the popup.'
+          'Enable forever camera access to enjoy seamless qr hardware wallet support'
         )
     }
   }, [state, t, error])
