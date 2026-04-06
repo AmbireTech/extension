@@ -2,6 +2,15 @@ import 'dotenv/config'
 
 import { PlaywrightTestConfig } from '@playwright/test'
 
+const workersFromEnv = process.env.PLAYWRIGHT_WORKERS
+  ? Number.parseInt(process.env.PLAYWRIGHT_WORKERS, 10)
+  : NaN
+const workers = Number.isFinite(workersFromEnv)
+  ? workersFromEnv
+  : process.env.CI
+    ? 2
+    : 3
+
 const config: PlaywrightTestConfig = {
   forbidOnly: true,
   expect: {
@@ -17,7 +26,8 @@ const config: PlaywrightTestConfig = {
   reportSlowTests: null,
   snapshotPathTemplate: 'data/screenshots/{projectName}/{testFilePath}/{arg}/text',
   retries: process.env.CI ? 3 : 0,
-  workers: 3,
+  // CI runners are small; fewer workers avoids fighting Speculos + Docker for CPU/RAM.
+  workers,
   fullyParallel: true,
   use: {
     viewport: { width: 1920, height: 1080 },

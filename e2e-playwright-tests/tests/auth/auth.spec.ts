@@ -74,7 +74,7 @@ test.describe('auth', { tag: '@auth' }, () => {
   })
 })
 
-test.describe('trezor', () => {
+test.describe('trezor', { tag: '@trezorTests' }, () => {
   const controller = getController()
 
   test.beforeAll(async () => {

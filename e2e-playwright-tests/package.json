@@ -9,6 +9,7 @@
     "show:trace": "playwright show-trace",
     "balance:test": "npx playwright test -g @balanceCheck --retries 1",
     "ledger:tests": "npx playwright test -g @ledgerTests --retries 0",
+    "trezor:test": "npx playwright test -g @trezorTests",
     "auth": "npx playwright test -g @auth",
     "dashboard": "npx playwright test -g @dashboard",
     "gas:tank": "npx playwright test -g @gasTank",
@@ -42,6 +43,7 @@
     "patch-package": "^8.0.0",
     "postinstall-postinstall": "^2.1.0",
     "prettier": "^2.7.1",
+    "ts-node": "^10.9.2",
     "typescript": "^4.1.5"
   },
   "dependencies": {

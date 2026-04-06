@@ -1,0 +1,15 @@
+# Resource caps for shared CI runners (merge with docker-compose.yml).
+# Usage: docker compose -f docker-compose.yml -f docker-compose.e2e-ci.yml up -d
+services:
+  trezor-user-env-unix:
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 768M
+  trezor-user-env-regtest:
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M

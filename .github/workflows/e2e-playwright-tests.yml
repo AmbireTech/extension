@@ -111,6 +111,7 @@ jobs:
         run: yarn setup:ci
         shell: bash
 
+      # Single webpack+LavaMoat pass; validate only diffs policy.json (cheap vs the build).
       - name: Build webkit extension and generate LavaMoat policy
         run: yarn build:web:webkit:generate-policy
 
@@ -152,27 +153,32 @@ jobs:
 
           echo "✅ LavaMoat policy validation passed"
 
-      - name: Start trezor-emulator container
-        run: |
-          docker pull ghcr.io/trezor/trezor-user-env
-          docker compose -f ./docker-compose-mac.yml up --force-recreate -d
-
-      - name: Start ledger emulator
-        working-directory: ./e2e-playwright-tests/ledger-emulator
-        run: |
-          ./start-emulator.sh
-
+      # Install Playwright deps before starting emulators so yarn install is not competing with Docker.
       - name: Install e2e test dependencies
         working-directory: ./e2e-playwright-tests
         run: |
           yarn install --frozen-lockfile
           yarn postinstall
 
-      - name: Check ledger emulator connection
+      # Linux CI: unix compose + DISPLAY for trezor-user-env (see docker-compose.yml).
+      # docker-compose.e2e-ci.yml adds CPU/memory limits for shared runners.
+      - name: Start Trezor emulator (docker compose)
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq xvfb
+          export DISPLAY=:99
+          Xvfb :99 -screen 0 1280x960x24 &
+          sleep 2
+          docker compose -f ./docker-compose.yml -f ./docker-compose.e2e-ci.yml pull
+          docker compose -f ./docker-compose.yml -f ./docker-compose.e2e-ci.yml up --force-recreate -d
+
+      - name: Start ledger emulator
         working-directory: ./e2e-playwright-tests/ledger-emulator
         run: |
-          yarn global add ts-node
-          ts-node ledger-emulator-health-check.ts
+          ./start-emulator.sh
+
+      - name: Check ledger emulator connection
+        working-directory: ./e2e-playwright-tests
+        run: yarn exec ts-node ./ledger-emulator/ledger-emulator-health-check.ts
 
       - name: Get Playwright version
         id: playwright-version
@@ -195,13 +201,14 @@ jobs:
         working-directory: ./e2e-playwright-tests
         run: yarn balance:test
 
-      - name: Run Ledger tests
-        working-directory: ./e2e-playwright-tests
-        run: npm run ledger:tests
-
-      - name: Run Playwright tests
+      # Ledger suite (@ledgerTests). Separate from Trezor to avoid parallel worker contention on emulators.
+      - name: Run Playwright tests (Ledger)
         working-directory: ./e2e-playwright-tests
         run: yarn test
+
+      - name: Run Trezor tests
+        working-directory: ./e2e-playwright-tests
+        run: yarn trezor:test
 
       - name: Zip HTML report
         if: always()
