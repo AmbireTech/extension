@@ -111,7 +111,6 @@ jobs:
         run: yarn setup:ci
         shell: bash
 
-      # Single webpack+LavaMoat pass; validate only diffs policy.json (cheap vs the build).
       - name: Build webkit extension and generate LavaMoat policy
         run: yarn build:web:webkit:generate-policy
 
@@ -160,16 +159,11 @@ jobs:
           yarn install --frozen-lockfile
           yarn postinstall
 
-      # Linux CI: unix compose + DISPLAY for trezor-user-env (see docker-compose.yml).
-      # docker-compose.e2e-ci.yml adds CPU/memory limits for shared runners.
-      - name: Start Trezor emulator (docker compose)
+      # Same stack the Trezor e2e flow was validated against (do not switch compose files lightly).
+      - name: Start trezor-emulator container
         run: |
-          sudo apt-get update -qq && sudo apt-get install -y -qq xvfb
-          export DISPLAY=:99
-          Xvfb :99 -screen 0 1280x960x24 &
-          sleep 2
-          docker compose -f ./docker-compose.yml -f ./docker-compose.e2e-ci.yml pull
-          docker compose -f ./docker-compose.yml -f ./docker-compose.e2e-ci.yml up --force-recreate -d
+          docker pull ghcr.io/trezor/trezor-user-env
+          docker compose -f ./docker-compose-mac.yml up --force-recreate -d
 
       - name: Start ledger emulator
         working-directory: ./e2e-playwright-tests/ledger-emulator
