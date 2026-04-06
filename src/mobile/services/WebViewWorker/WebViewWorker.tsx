@@ -1,13 +1,28 @@
 import React, { forwardRef, useImperativeHandle, useRef, useState } from 'react'
+import { Platform } from 'react-native'
+import { pbkdf2Sync, scrypt } from 'react-native-quick-crypto'
 import { WebView } from 'react-native-webview'
 
 import * as richJson from '@ambire-common/libs/richJson/richJson'
 import eventBus from '@common/services/event/eventBus'
 import { storage } from '@common/services/storage'
-import { scrypt, pbkdf2Sync } from 'react-native-quick-crypto'
 
+// In production, the bundle is inlined via the JSON import.
+// In dev, we load from webpack-dev-server so this import is unused.
 // @ts-ignore
-import webviewBundle from './webview-bundle.json'
+const webviewBundle = __DEV__ ? null : require('./webview-bundle.json')
+
+// The dev server URL for webpack-dev-server.
+// - iOS Simulator: localhost works directly
+// - Android Emulator: 10.0.2.2 maps to host machine's localhost
+// - Physical device: replace with your machine's LAN IP
+const WEBVIEW_DEV_SERVER_PORT = 8082
+const getDevServerUrl = () => {
+  if (Platform.OS === 'android') {
+    return `http://10.0.2.2:${WEBVIEW_DEV_SERVER_PORT}`
+  }
+  return `http://localhost:${WEBVIEW_DEV_SERVER_PORT}`
+}
 
 export interface WebViewWorkerRef {
   dispatch: (action: any) => void
@@ -21,6 +36,8 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, {}>((_, ref) => {
   const isReadyRef = useRef(false)
   const initResolver = useRef<((ctrls: string[]) => void) | null>(null)
   const pendingConfig = useRef<any>(null)
+  // Stores the last config so we can re-send it when the WebView reloads (dev HMR/live reload)
+  const lastConfig = useRef<any>(null)
 
   useImperativeHandle(ref, () => ({
     dispatch: (action: any) => {
@@ -47,6 +64,7 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, {}>((_, ref) => {
     },
     init: (config: any) => {
       console.log('[WebViewWorker] init called, setting resolver')
+      lastConfig.current = config
       return new Promise((resolve) => {
         initResolver.current = resolve
         if (isLoaded) {
@@ -67,21 +85,33 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, {}>((_, ref) => {
     try {
       const data = richJson.parse(event.nativeEvent.data)
 
-      // console.log(`[WebViewWorker] Received message from WebView: ${data.type}`, data.payload)
-
       switch (data.type) {
-        case 'system.loaded':
-          console.log('[WebViewWorker] WebView internal script loaded')
+        case 'system.loaded': {
+          const isReload = isReadyRef.current
+          console.log(
+            `[WebViewWorker] WebView internal script loaded${isReload ? ' (RELOAD detected)' : ''}`
+          )
+
+          // Reset ready state — the WebView has a fresh JS context
+          isReadyRef.current = false
+          setIsReady(false)
           setIsLoaded(true)
-          if (pendingConfig.current) {
-            console.log('[WebViewWorker] Sending buffered config to WebView')
+
+          // Determine which config to send:
+          // - On first load: use pendingConfig (set by init())
+          // - On reload (dev HMR): use lastConfig (the previously sent config)
+          const configToSend = pendingConfig.current || (isReload ? lastConfig.current : null)
+
+          if (configToSend) {
+            console.log('[WebViewWorker] Sending config to WebView')
             webviewRef.current?.injectJavaScript(`
-                window.postMessage(${JSON.stringify(richJson.stringify({ type: 'init', config: pendingConfig.current }))}, '*');
+                window.postMessage(${JSON.stringify(richJson.stringify({ type: 'init', config: configToSend }))}, '*');
                 true;
               `)
             pendingConfig.current = null
           }
           break
+        }
 
         case 'system.ready':
           isReadyRef.current = true
@@ -103,7 +133,7 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, {}>((_, ref) => {
         case 'ctrl.error':
           eventBus.emit('error', { errors: data.payload.errors, controller: data.payload.ctrlName })
           break
-        
+
         case 'ctrl.debug':
           console.log(data.payload.log)
           break
@@ -121,15 +151,17 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, {}>((_, ref) => {
           await storage.remove(data.payload.key)
           sendResponse(data.id, null)
           break
-        
+
         // --- CRYPTO DELEGATION HANDLERS ---
         case 'crypto.scrypt':
           {
             const { password, salt, N, r, p, dkLen } = data.payload
-            
+
             // Reconstruct Uint8Arrays as richJson doesn't support them natively
-            const passwordUint8 = password instanceof Uint8Array ? password : new Uint8Array(Object.values(password))
-            const saltUint8 = salt instanceof Uint8Array ? salt : new Uint8Array(Object.values(salt))
+            const passwordUint8 =
+              password instanceof Uint8Array ? password : new Uint8Array(Object.values(password))
+            const saltUint8 =
+              salt instanceof Uint8Array ? salt : new Uint8Array(Object.values(salt))
 
             scrypt(
               passwordUint8,
@@ -152,8 +184,10 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, {}>((_, ref) => {
             const { password, salt, iterations, keylen, digest } = data.payload
             try {
               // Reconstruct Uint8Arrays
-              const passwordUint8 = password instanceof Uint8Array ? password : new Uint8Array(Object.values(password))
-              const saltUint8 = salt instanceof Uint8Array ? salt : new Uint8Array(Object.values(salt))
+              const passwordUint8 =
+                password instanceof Uint8Array ? password : new Uint8Array(Object.values(password))
+              const saltUint8 =
+                salt instanceof Uint8Array ? salt : new Uint8Array(Object.values(salt))
 
               const res = pbkdf2Sync(passwordUint8, saltUint8, iterations, keylen, digest)
               // Ensure we send a plain array across the bridge
@@ -177,6 +211,36 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, {}>((_, ref) => {
         window.postMessage(${JSON.stringify(richJson.stringify({ type: 'response', id, result, error: error?.message || error }))}, '*');
         true;
       `)
+  }
+
+  // In dev mode, load from webpack-dev-server for HMR.
+  // In production, inline the bundle into HTML.
+  if (__DEV__) {
+    const devUrl = getDevServerUrl()
+    console.log(`[WebViewWorker] DEV mode — loading from ${devUrl}`)
+
+    return (
+      <WebView
+        ref={webviewRef}
+        source={{ uri: devUrl }}
+        onError={(syntheticEvent) => {
+          const { nativeEvent } = syntheticEvent
+          console.warn('[WebViewWorker] WebView Error:', nativeEvent)
+        }}
+        onHttpError={(syntheticEvent) => {
+          const { nativeEvent } = syntheticEvent
+          console.warn('[WebViewWorker] WebView HTTP Error:', nativeEvent)
+        }}
+        onMessage={handleMessage}
+        javaScriptEnabled={true}
+        originWhitelist={['*']}
+        // Allow loading from http:// in dev
+        mixedContentMode="always"
+        style={{ position: 'absolute', width: 0, height: 0, opacity: 0 }}
+        containerStyle={{ position: 'absolute', width: 0, height: 0, opacity: 0 }}
+        pointerEvents="none"
+      />
+    )
   }
 
   const htmlContent = `

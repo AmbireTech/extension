@@ -6,17 +6,13 @@ import { KeystoreSigner } from '@ambire-common/libs/keystoreSigner/keystoreSigne
 import * as richJson from '@ambire-common/libs/richJson/richJson'
 import { controllersNestedInMainMapping } from '@common/constants/controllersMapping'
 import { WalletStateController } from '@common/controllers/wallet-state'
-import { LOG_LEVELS } from '@common/utils/logger'
 import { handleActions } from '@mobile/handlers/handleActions'
+
+import { sendToReactEvent } from './webviewLogger'
 
 // Bridge setup
 const pendingPromises: Record<number, { resolve: any; reject: any }> = {}
 let messageIdCounter = 0
-
-const sendToReactEvent = (type: string, payload: any) => {
-  // @ts-ignore
-  window.ReactNativeWebView.postMessage(richJson.stringify({ type, payload }))
-}
 
 const ctrlOnUpdateIsDirtyFlags: Record<string, boolean> = {}
 
@@ -243,4 +239,6 @@ window.__POST_MESSAGE__ = (dataStr: string) => {
 }
 
 console.log('[WebView] injectedLogic loaded and listening')
-window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'system.loaded' }))
+if (window.ReactNativeWebView) {
+  window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'system.loaded' }))
+}
