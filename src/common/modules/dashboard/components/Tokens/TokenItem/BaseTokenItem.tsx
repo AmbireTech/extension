@@ -98,6 +98,8 @@ const BaseTokenItem = ({
     return pendingToBeSigned ? theme.warningText : theme.infoText
   }, [isPending, pendingToBeSigned, theme.primaryText, theme.warningText, theme.infoText])
 
+  const shouldDisplayChange24h = typeof change24h === 'number' && change24h >= 0.01
+
   return (
     <AnimatedPressable
       testID={wrapperTestID || undefined}
@@ -204,7 +206,7 @@ const BaseTokenItem = ({
               )}
             </Text>
             <View style={[flexboxStyles.directionRow, flexboxStyles.alignCenter]}>
-              {typeof change24h === 'number' && (
+              {shouldDisplayChange24h && (
                 <Text
                   fontSize={13}
                   style={{
