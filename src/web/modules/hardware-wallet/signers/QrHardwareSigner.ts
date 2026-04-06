@@ -145,7 +145,8 @@ class QrHardwareSigner implements KeystoreSignerInterface {
         derivationPath: path,
         masterFingerprint: this.key.meta.masterFingerprint || '',
         address: this.key.addr,
-        chainId: txnRequest.chainId
+        chainId: txnRequest.chainId,
+        type
       })
 
       const hexSignature = 'signature' in res ? res.signature : normalizeSignatureHex(res)

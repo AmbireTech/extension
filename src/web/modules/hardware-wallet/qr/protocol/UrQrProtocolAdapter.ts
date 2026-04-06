@@ -126,6 +126,7 @@ class UrQrProtocolAdapter implements QrProtocolAdapter {
     masterFingerprint: string
     address?: string
     chainId?: bigint
+    type?: number
   }): Promise<QrRequest> {
     try {
       const strippedHex = stripHexPrefix(args.txHex)
@@ -142,7 +143,7 @@ class UrQrProtocolAdapter implements QrProtocolAdapter {
         // signData: Buffer,
         txData,
         // signDataType: DataType,
-        DataType.typedTransaction,
+        args?.type === 0 ? DataType.transaction : DataType.typedTransaction,
         // hdPath: string,
         args.derivationPath,
         // xfp: string,

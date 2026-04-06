@@ -168,13 +168,15 @@ class QrHardwareController
     masterFingerprint: string
     address: string
     chainId?: bigint
+    type?: number
   }): Promise<QrSignaturePayload> {
     const request = await this.protocolAdapter.buildSignTransactionRequest({
       txHex: args.txHex,
       derivationPath: args.derivationPath,
       masterFingerprint: args.masterFingerprint,
       address: args.address,
-      chainId: args.chainId
+      chainId: args.chainId,
+      type: args.type
     })
 
     const response = await this.requestSignature(request)
