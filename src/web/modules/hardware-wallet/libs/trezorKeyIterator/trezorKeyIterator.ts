@@ -1,4 +1,4 @@
-import { HDNodeWallet } from 'ethers'
+import { computeAddress, HDNodeWallet } from 'ethers'
 
 import ExternalSignerError from '@ambire-common/classes/ExternalSignerError'
 import {
@@ -56,18 +56,30 @@ class TrezorKeyIterator implements KeyIteratorInterface {
     }
   }
 
+  #deriveAddressFromPublicKey(publicKey: string): string {
+    if (!publicKey)
+      throw new ExternalSignerError(
+        'Could not generate an Ethereum address because the public key is missing.'
+      )
+
+    try {
+      return computeAddress(publicKey.startsWith('0x') ? publicKey : `0x${publicKey}`)
+    } catch (error: any) {
+      throw new ExternalSignerError(
+        `Could not generate Ethereum address from the public key received from your Trezor device. Technical details: <${error?.message}>.`,
+        {
+          sendCrashReport: true
+        }
+      )
+    }
+  }
+
   async retrieve(
     fromToArr: { from: number; to: number }[],
     hdPathTemplate?: HD_PATH_TEMPLATE_TYPE
   ) {
     if (!this.#walletSDK) throw new Error('trezorKeyIterator: walletSDK not initialized')
     if (!hdPathTemplate) throw new Error('trezorKeyIterator: missing hdPathTemplate')
-
-    // TODO: Not implemented. Unlikely the BIP 44 standard, we can't iterate on this one
-    //  with the xpub of the parent (m/44'/60') because of the hardened part (').
-    // We need to request from the device every single address.
-    if (hdPathTemplate === BIP44_LEDGER_DERIVATION_TEMPLATE)
-      throw new Error('"Ledger Live" as a custom HD path is not supported on a Trezor device.')
 
     const addrBundleToBeRequested: { path: string; index: number }[] = []
     fromToArr.forEach(({ from, to }) => {
@@ -79,6 +91,42 @@ class TrezorKeyIterator implements KeyIteratorInterface {
         addrBundleToBeRequested.push({ path, index: i })
       }
     })
+
+    // Ledger Live varies the hardened account segment (`<account>'`), so unlike
+    // the standard BIP44 path we cannot start from the parent xpub at m/44'/60'
+    // and derive children locally. We must request the full public key for each
+    // concrete path from the device and then compute the Ethereum address from it.
+    if (hdPathTemplate === BIP44_LEDGER_DERIVATION_TEMPLATE) {
+      try {
+        const res = await this.#walletSDK.getPublicKey({
+          bundle: addrBundleToBeRequested.map(({ path }) => ({
+            coin: 'ETH',
+            path,
+            showOnTrezor: false
+          }))
+        })
+
+        if (!res.success)
+          throw new ExternalSignerError(
+            getMessageFromTrezorErrorCode(res.payload.code, res.payload.error)
+          )
+
+        if (res.payload.length !== addrBundleToBeRequested.length)
+          throw new ExternalSignerError(
+            `Could not receive the expected number of public keys from your Trezor device. Technical details: <Expected ${addrBundleToBeRequested.length}, received ${res.payload.length}>.`,
+            { sendCrashReport: true }
+          )
+
+        return res.payload.map(({ publicKey }) => this.#deriveAddressFromPublicKey(publicKey))
+      } catch (error: any) {
+        if (error instanceof ExternalSignerError) throw error
+
+        throw new ExternalSignerError(
+          `Could not receive the public keys from your Trezor device. Technical details: <${error?.message}>.`,
+          { sendCrashReport: true }
+        )
+      }
+    }
 
     if (!this.#xpubs[hdPathTemplate]) {
       const parentPath = getParentHdPathFromTemplate(hdPathTemplate)

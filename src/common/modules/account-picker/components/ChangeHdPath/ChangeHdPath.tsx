@@ -41,16 +41,6 @@ const ChangeHdPath: React.FC<Props> = ({ setPage, disabled, type }) => {
   const availableOptions = useMemo(
     () =>
       DERIVATION_OPTIONS.filter((d) => {
-        // TODO: Disabled for Trezor because the flow that retrieves accounts
-        // from the device as of v4.32.0 throws "forbidden key path" when
-        // accessing non-"BIP44 Standard" paths. Alternatively, this could be
-        // enabled in Trezor Suit (settings - safety checks), but even if enabled,
-        // 1) user must explicitly allow retrieving each address (that means 25
-        // clicks to retrieve accounts of the first 5 pages, blah) and 2) The
-        // Trezor device shows a scarry note: "Wrong address path for selected
-        // coin. Continue at your own risk!", which is pretty bad UX.
-        // Note: We can't use the xpub trick because of the hardened part ('), see TrezorKeyIterator
-        if (type === 'trezor' && d.value === BIP44_LEDGER_DERIVATION_TEMPLATE) return false
         // Popular only for Trezor devices, skip for all others to prevent confusion
         if (type !== 'trezor' && d.value === BIP44_STANDARD_TESTNET_DERIVATION_TEMPLATE)
           return false
