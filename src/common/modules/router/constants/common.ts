@@ -24,7 +24,12 @@ const COMMON_ROUTES = {
   signAccountOp: 'sign-account-op',
   benzin: 'benzin',
   networks: 'networks',
-  swapAndBridge: 'swap-and-bridge'
+  swapAndBridge: 'swap-and-bridge',
+  menu: 'menu',
+  generalSettings: 'settings/general',
+  accountsSettings: 'settings/accounts',
+  settingsAbout: 'settings/about',
+  settingsTerms: 'settings/terms'
 }
 
 const MOBILE_ROUTES = {
@@ -38,7 +43,6 @@ const WEB_ROUTES = {
   transactions: 'transactions',
   signedMessages: 'signed-messages',
   signMessage: 'sign-message',
-  menu: 'menu',
   swap: 'swap',
   noConnection: 'no-connection',
   accounts: 'accounts',
@@ -55,11 +59,8 @@ const WEB_ROUTES = {
   authEmailLogin: 'auth-email-login',
   authEmailRegister: 'auth-email-register',
   networksConfiguration: 'networks-configuration',
-  generalSettings: 'settings/general',
-  settingsTerms: 'settings/terms',
-  settingsAbout: 'settings/about',
+  privacyOptOutsConfiguration: 'privacy-opt-outs-configuration',
   networksSettings: 'settings/networks',
-  accountsSettings: 'settings/accounts',
   devicePasswordSet: 'settings/device-password-set',
   devicePasswordChange: 'settings/device-password-change',
   devicePasswordRecovery: 'settings/device-password-recovery',
