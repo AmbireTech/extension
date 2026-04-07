@@ -5,7 +5,7 @@ import CopyIcon from '@common/assets/svg/CopyIcon'
 import OpenIcon from '@common/assets/svg/OpenIcon'
 import Button from '@common/components/Button'
 import FooterGlassView from '@common/components/FooterGlassView'
-import { isMobile, isWeb } from '@common/config/env'
+import { isBenzin, isMobile, isWeb } from '@common/config/env'
 import useTheme from '@common/hooks/useTheme'
 import useWindowSize from '@common/hooks/useWindowSize'
 import spacings, { SPACING_LG, SPACING_TY } from '@common/styles/spacings'
@@ -22,6 +22,7 @@ interface Props {
 const OpenExplorerButton: FC<Pick<Props, 'handleOpenExplorer'>> = ({ handleOpenExplorer }) => {
   const { theme } = useTheme()
   const { maxWidthSize } = useWindowSize()
+  const isMobileInStandaloneBenzin = !maxWidthSize('s') && isBenzin
 
   return (
     <Button
@@ -30,13 +31,13 @@ const OpenExplorerButton: FC<Pick<Props, 'handleOpenExplorer'>> = ({ handleOpenE
       text="Open explorer"
       childrenPosition="left"
       hasBottomSpacing={isMobile}
-      size={isMobile ? 'regular' : maxWidthSize('s') ? 'large' : 'smaller'}
+      size={isMobile ? 'regular' : isMobileInStandaloneBenzin ? 'large' : 'smaller'}
       style={
         isWeb
           ? {
-              width: maxWidthSize('s') ? 170 : 240,
               ...spacings.phTy,
-              marginRight: maxWidthSize('s') ? SPACING_LG : 0
+              width: isMobileInStandaloneBenzin ? 240 : 170,
+              marginRight: isMobileInStandaloneBenzin ? SPACING_LG : 0
             }
           : { height: 46 }
       }
@@ -48,14 +49,16 @@ const OpenExplorerButton: FC<Pick<Props, 'handleOpenExplorer'>> = ({ handleOpenE
 
 const CopyButton: FC<Pick<Props, 'handleCopyText'>> = ({ handleCopyText }) => {
   const { maxWidthSize } = useWindowSize()
+  const isMobileInStandaloneBenzin = !maxWidthSize('s') && isBenzin
+
   return (
     <Button
       style={
         isWeb
           ? {
-              width: maxWidthSize('s') ? 150 : 240,
+              width: isMobileInStandaloneBenzin ? 240 : 150,
               ...spacings.phTy,
-              marginTop: maxWidthSize('s') ? 0 : SPACING_TY
+              marginTop: isMobileInStandaloneBenzin ? SPACING_TY : 0
             }
           : { height: 46 }
       }
@@ -64,7 +67,7 @@ const CopyButton: FC<Pick<Props, 'handleCopyText'>> = ({ handleCopyText }) => {
       hasBottomSpacing={isMobile}
       type={isExtension || isMobile ? 'secondary' : 'primary'}
       childrenPosition="left"
-      size={isMobile ? 'regular' : maxWidthSize('s') ? 'large' : 'smaller'}
+      size={isMobile ? 'regular' : isMobileInStandaloneBenzin ? 'smaller' : 'large'}
     >
       <CopyIcon style={spacings.mrMi} />
     </Button>
@@ -78,12 +81,14 @@ const Buttons: FC<Props> = ({
   showOpenExplorerBtn
 }) => {
   const { maxWidthSize } = useWindowSize()
+  const isMobileInStandaloneBenzin = !maxWidthSize('s') && isBenzin
+
   return (
     <FooterGlassView
       absolute={false}
       style={spacings.mb}
       innerContainerStyle={{
-        flexDirection: maxWidthSize('s') ? 'row' : 'column'
+        flexDirection: isMobileInStandaloneBenzin ? 'column' : 'row'
       }}
     >
       {showOpenExplorerBtn && <OpenExplorerButton handleOpenExplorer={handleOpenExplorer} />}

@@ -12,18 +12,18 @@ import RightArrowIcon from '@common/assets/svg/RightArrowIcon'
 import Button from '@common/components/Button'
 import FooterGlassView from '@common/components/FooterGlassView'
 import useController from '@common/hooks/useController'
-import useTheme from '@common/hooks/useTheme'
+import useWindowSize from '@common/hooks/useWindowSize'
 import spacings from '@common/styles/spacings'
-import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
 
 const BenzinScreen = () => {
   const { t } = useTranslation()
+  const { maxWidthSize } = useWindowSize()
+
   const {
     state: { currentUserRequest, visibleUserRequests },
     dispatch: requestsDispatch
   } = useController('RequestsController')
-  const { themeType } = useTheme()
 
   const userRequest = useMemo(
     () => (currentUserRequest?.kind === 'benzin' ? currentUserRequest : undefined),
@@ -63,7 +63,7 @@ const BenzinScreen = () => {
           )}
           <Button
             onPress={resolveAction}
-            style={{ minWidth: 180, ...spacings.mlSm }}
+            style={{ minWidth: maxWidthSize('s') ? 180 : 120, ...spacings.mlSm }}
             hasBottomSpacing={false}
             size="large"
             text={pendingRequests.length ? t('Proceed to Next Request') : t('Close')}
