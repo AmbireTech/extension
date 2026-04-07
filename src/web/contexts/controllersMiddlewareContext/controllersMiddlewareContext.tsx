@@ -4,7 +4,7 @@ import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } 
 
 import wait from '@ambire-common/utils/wait'
 import { captureMessage } from '@common/config/analytics/CrashAnalytics.web'
-import { AllControllersMappingType } from '@common/constants/controllersMapping'
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 import { ControllersMiddlewareContext } from '@common/contexts/controllersMiddlewareContext/controllersMiddlewareContext'
 import { ControllersMiddlewareContextReturnType } from '@common/contexts/controllersMiddlewareContext/types'
 import { ControllerStoreContext } from '@common/contexts/controllerStoreContext'
@@ -15,7 +15,6 @@ import eventBus from '@common/services/event/eventBus'
 import { Action, MethodAction } from '@common/types/actions'
 import { getUiType } from '@common/utils/uiType'
 import { isExtension } from '@web/constants/browserapi'
-import { controllersMapping } from '@web/constants/controllersMapping'
 import { closeCurrentWindow } from '@web/extension-services/background/webapi/window'
 import { PortMessenger } from '@web/extension-services/messengers'
 import useAutoLockControllerHelpers from '@web/hooks/useAutoLockControllerHelpers'
@@ -30,6 +29,7 @@ const actionsBeforeBackgroundReady: (MethodAction | Action)[] = []
 let backgroundReady: boolean = false
 let controllerReady: boolean = false
 let connectPort: () => Promise<void> = () => Promise.resolve()
+
 const MAX_RETRIES = 20
 // Facilitate communication between the different parts of the browser extension.
 // Utilizes the PortMessenger class to establish a connection between the popup
@@ -64,6 +64,10 @@ if (isExtension) {
         })()
         actionsBeforeBackgroundReady.forEach((a) => globalDispatch(a))
         actionsBeforeBackgroundReady.length = 0
+        return
+      }
+      if (method === 'allControllerNames') {
+        eventBus.emit('allControllerNames', params.names)
         return
       }
       if (messageType === '> ui') {
@@ -118,7 +122,10 @@ if (isExtension) {
 }
 
 if (isExtension) {
-  const ACTION_TYPES_TO_DISPATCH_EVEN_WHEN_HIDDEN = ['INIT_CONTROLLER_STATE']
+  const ACTION_TYPES_TO_DISPATCH_EVEN_WHEN_HIDDEN = [
+    'INIT_CONTROLLER_STATE',
+    'GET_ALL_CONTROLLER_NAMES'
+  ]
 
   const ACTION_METHODS_TO_DISPATCH_EVEN_WHEN_HIDDEN = [
     'filterAccountsOps',
@@ -169,20 +176,31 @@ export const ControllersMiddlewareProvider: React.FC<{ children: React.ReactNode
   )
 
   useEffect(() => {
-    const initControllers = () => {
+    const onAllControllerNames = (names: string[]) => {
       controllerStore.init(
-        Object.keys(controllersMapping) as (keyof AllControllersMappingType)[],
+        names as (keyof AllControllersMappingType)[],
         (allCtrls: (keyof AllControllersMappingType)[]) => {
           allCtrls.forEach((ctrlName) => {
             dispatch({ type: 'INIT_CONTROLLER_STATE', params: { controller: ctrlName } })
           })
         }
       )
-      eventBus.removeEventListener('onReady', initControllers)
+      eventBus.removeEventListener('allControllerNames', onAllControllerNames)
     }
 
-    eventBus.addEventListener('onReady', initControllers)
+    const onReady = () => {
+      dispatch({ type: 'GET_ALL_CONTROLLER_NAMES' })
+      eventBus.removeEventListener('onReady', onReady)
+    }
+
+    eventBus.addEventListener('allControllerNames', onAllControllerNames)
+    eventBus.addEventListener('onReady', onReady)
     if (!controllerReady) controllerReady = true
+
+    return () => {
+      eventBus.removeEventListener('allControllerNames', onAllControllerNames)
+      eventBus.removeEventListener('onReady', onReady)
+    }
   }, [controllerStore, dispatch])
 
   useEffect(() => {
