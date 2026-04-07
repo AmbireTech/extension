@@ -1,20 +1,21 @@
 import React, { FC, useCallback, useMemo, useState } from 'react'
-import { Animated, Platform, Pressable, View } from 'react-native'
+import { Animated, Pressable, View } from 'react-native'
 
 import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
 import SkeletonLoader from '@common/components/SkeletonLoader'
 import Text from '@common/components/Text'
-import { isWeb } from '@common/config/env'
+import { isiOS, isMobile, isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import DashboardHeader from '@common/modules/dashboard/components/DashboardHeader'
 import Routes from '@common/modules/dashboard/components/Routes'
 import useBalanceAffectingErrors from '@common/modules/dashboard/hooks/useBalanceAffectingErrors'
-import useBanners from '@common/modules/dashboard/hooks/useBanners'
-import spacings, { SPACING, SPACING_TY, SPACING_XL } from '@common/styles/spacings'
+import useDashboardReload from '@common/modules/dashboard/hooks/useDashboardReload'
+import spacings, { SPACING, SPACING_SM, SPACING_TY, SPACING_XL } from '@common/styles/spacings'
 import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
+import { privateValue } from '@common/utils/ui'
 import { isExtension } from '@web/constants/browserapi'
 
 import BalanceAffectingErrors from './BalanceAffectingErrors'
@@ -48,8 +49,6 @@ const DashboardOverview: FC<Props> = ({
 }) => {
   const { t } = useTranslation()
   const { theme } = useTheme(getStyles)
-  const [controllerBanners, marketingBanners] = useBanners()
-  const banners = [...controllerBanners, ...marketingBanners]
   const {
     state: { isOffline },
     dispatch: mainDispatch
@@ -57,6 +56,10 @@ const DashboardOverview: FC<Props> = ({
   const { account, dashboardNetworkFilter, portfolio } = useController(
     'SelectedAccountController'
   ).state
+  const {
+    state: { isPrivacyModeEnabled },
+    dispatch: walletStateDispatch
+  } = useController('WalletStateController')
   const [isBalanceHovered, setIsBalanceHovered] = useState(false)
 
   const {
@@ -76,20 +79,17 @@ const DashboardOverview: FC<Props> = ({
   const [totalPortfolioAmountIntegerFormattedPart, totalPortfolioAmountDecimalFormattedPart] =
     formatDecimals(totalPortfolioAmount, 'value').split('.')
 
-  const reloadAccount = useCallback(() => {
-    mainDispatch({
+  const { reloadAccount } = useDashboardReload()
+
+  const togglePrivacyMode = useCallback(() => {
+    walletStateDispatch({
       type: 'method',
       params: {
-        method: 'reloadSelectedAccount',
-        args: [
-          {
-            chainIds: dashboardNetworkFilter ? [BigInt(dashboardNetworkFilter)] : undefined,
-            isManualReload: true
-          }
-        ]
+        method: 'togglePrivacyMode',
+        args: []
       }
     })
-  }, [dashboardNetworkFilter, mainDispatch])
+  }, [walletStateDispatch])
 
   return (
     <View style={[spacings.phSm, spacings.mbTy]}>
@@ -97,13 +97,16 @@ const DashboardOverview: FC<Props> = ({
         style={[
           common.borderRadiusPrimary,
           spacings.ptTy,
-          spacings.phSm,
+          isWeb && spacings.phSm,
+          isMobile && spacings.phTy,
           {
-            paddingBottom: animatedOverviewHeight.interpolate({
-              inputRange: [0, OVERVIEW_CONTENT_MAX_HEIGHT],
-              outputRange: [SPACING_TY, SPACING],
-              extrapolate: 'clamp'
-            }),
+            paddingBottom: isMobile
+              ? SPACING_SM
+              : animatedOverviewHeight.interpolate({
+                  inputRange: [0, OVERVIEW_CONTENT_MAX_HEIGHT],
+                  outputRange: [SPACING_TY, SPACING],
+                  extrapolate: 'clamp'
+                }),
             overflow: 'hidden'
           }
         ]}
@@ -129,17 +132,19 @@ const DashboardOverview: FC<Props> = ({
               overflow: 'hidden'
             }}
           >
-            <View style={[spacings.mb, flexbox.alignCenter]}>
-              <Pressable
+            {/* These width: 100%s are needed to make sure that hovering the entire row of the balance
+            displays the refresh button */}
+            <View style={[{ width: '100%' }, spacings.mb, flexbox.alignCenter]}>
+              <View
                 style={[
                   flexbox.directionRow,
                   flexbox.alignCenter,
+                  flexbox.justifyCenter,
                   spacings.mbMi,
-                  { height: BALANCE_HEIGHT }
+                  { height: BALANCE_HEIGHT, width: '100%' }
                 ]}
-                onHoverIn={() => setIsBalanceHovered(true)}
-                onHoverOut={() => setIsBalanceHovered(false)}
-                hitSlop={8}
+                onMouseEnter={() => setIsBalanceHovered(true)}
+                onMouseLeave={() => setIsBalanceHovered(false)}
               >
                 {/* Placeholder matching the refresh button size to keep the balance centered */}
                 <View
@@ -156,7 +161,7 @@ const DashboardOverview: FC<Props> = ({
                     isLoadingTakingTooLong={isLoadingTakingTooLong}
                   />
                 </View>
-                <View style={[flexbox.flex1, flexbox.alignCenter, spacings.mhTy]}>
+                <View style={[flexbox.alignCenter, spacings.mhTy]}>
                   {!portfolio?.isReadyToVisualize ? (
                     <SkeletonLoader
                       lowOpacity
@@ -165,13 +170,17 @@ const DashboardOverview: FC<Props> = ({
                       borderRadius={8}
                     />
                   ) : (
-                    <Text testID="full-balance">
+                    <Pressable
+                      testID="full-balance"
+                      onPress={togglePrivacyMode}
+                      style={[flexbox.directionRow, flexbox.alignEnd]}
+                    >
                       <Text
                         fontSize={34}
                         shouldScale={false}
                         weight="number_bold"
                         // Line height should be constant based on font size, not on parent height
-                        style={Platform.OS !== 'web' ? { lineHeight: 36 } : { lineHeight: 28 }}
+                        style={!isWeb ? { lineHeight: 36 } : { lineHeight: 28 }}
                         color={
                           networksWithErrors.length || isOffline
                             ? theme.warningDecorative2
@@ -179,24 +188,30 @@ const DashboardOverview: FC<Props> = ({
                         }
                         testID="total-portfolio-amount-integer"
                       >
-                        {totalPortfolioAmountIntegerFormattedPart}
+                        {privateValue(
+                          totalPortfolioAmountIntegerFormattedPart,
+                          isPrivacyModeEnabled,
+                          7
+                        )}
                       </Text>
-                      {totalPortfolioAmount < THRESHOLD_AMOUNT_TO_HIDE_BALANCE_DECIMALS && (
-                        <Text
-                          fontSize={20}
-                          shouldScale={false}
-                          weight="number_bold"
-                          color={
-                            networksWithErrors.length || isOffline
-                              ? theme.warningDecorative2
-                              : '#FFFFFF'
-                          }
-                        >
-                          {t('.')}
-                          {totalPortfolioAmountDecimalFormattedPart}
-                        </Text>
-                      )}
-                    </Text>
+                      {totalPortfolioAmount < THRESHOLD_AMOUNT_TO_HIDE_BALANCE_DECIMALS &&
+                        !isPrivacyModeEnabled && (
+                          <Text
+                            fontSize={20}
+                            shouldScale={false}
+                            weight="number_bold"
+                            color={
+                              networksWithErrors.length || isOffline
+                                ? theme.warningDecorative2
+                                : '#FFFFFF'
+                            }
+                            style={!isWeb ? { lineHeight: isiOS ? 30 : 28 } : { lineHeight: 20 }}
+                          >
+                            {t('.')}
+                            {totalPortfolioAmountDecimalFormattedPart}
+                          </Text>
+                        )}
+                    </Pressable>
                   )}
                 </View>
                 {
@@ -225,8 +240,7 @@ const DashboardOverview: FC<Props> = ({
                     <View style={{ width: 28, height: 28 }} />
                   ) /* Placeholder to keep balance centered on mobile */
                 }
-              </Pressable>
-
+              </View>
               <View style={[flexbox.directionRow, flexbox.justifyCenter, flexbox.alignCenter]}>
                 <GasTankButton
                   onPress={() => openGasTankModal?.()}

@@ -11,7 +11,7 @@ import ImportJsonIcon from '@common/assets/svg/ImportJsonIcon'
 import LatticeIcon from '@common/assets/svg/LatticeIcon'
 import LedgerLetterIcon from '@common/assets/svg/LedgerLetterIcon'
 import PrivateKeyIcon from '@common/assets/svg/PrivateKeyIcon'
-import SafeIcon from '@common/assets/svg/SafeIcon'
+import SafeIconGray from '@common/assets/svg/SafeIconGray'
 import SeedPhraseIcon from '@common/assets/svg/SeedPhraseIcon'
 import TrezorLockIcon from '@common/assets/svg/TrezorLockIcon'
 import ViewOnlyIcon from '@common/assets/svg/ViewOnlyIcon'
@@ -108,7 +108,7 @@ const AddAccount = ({
             {
               key: 'import-safe',
               text: t('Safe account'),
-              icon: SafeIcon,
+              icon: SafeIconGray,
               onPress: () => goToNextRoute(ROUTES.safeImport),
               testID: 'import-safe'
             },

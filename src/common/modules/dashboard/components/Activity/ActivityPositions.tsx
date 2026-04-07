@@ -35,6 +35,8 @@ interface Props {
   onScroll: FlatListProps<any>['onScroll']
   animatedOverviewHeight: Animated.Value
   network: Network | null
+  refreshing?: boolean
+  onRefresh?: () => void
 }
 
 const { isPopup, isRequestWindow } = getUiType()
@@ -56,7 +58,9 @@ const ActivityPositions: FC<Props> = ({
   initTab,
   onScroll,
   animatedOverviewHeight,
-  network
+  network,
+  refreshing,
+  onRefresh
 }) => {
   const { t } = useTranslation()
   const { theme } = useTheme()
@@ -178,7 +182,11 @@ const ActivityPositions: FC<Props> = ({
               {t(
                 `Ambire doesn't retrieve transactions made${isWeb ? '\n' : ''} before installing the extension, but you can ${isWeb ? '\n' : ''}check your address on `
               )}
-              <TouchableOpacity
+              <Text
+                weight="medium"
+                color={theme.linkText}
+                fontSize={16}
+                style={{ textDecorationLine: 'none' }}
                 onPress={() =>
                   openInTab({
                     url: blockExplorerUrl(
@@ -189,10 +197,8 @@ const ActivityPositions: FC<Props> = ({
                   })
                 }
               >
-                <Text weight="medium" color={theme.linkText} style={{ textDecorationLine: 'none' }}>
-                  {blockExplorerName(network?.explorerUrl || 'https://etherscan.io')}
-                </Text>
-              </TouchableOpacity>
+                {blockExplorerName(network?.explorerUrl || 'https://etherscan.io')}
+              </Text>
               .
             </Text>
           </View>
@@ -302,6 +308,8 @@ const ActivityPositions: FC<Props> = ({
       windowSize={9} // Larger values can cause performance issues.
       onScroll={onScroll}
       scrollEventThrottle={16}
+      refreshing={refreshing}
+      onRefresh={onRefresh}
       animatedOverviewHeight={animatedOverviewHeight}
     />
   )

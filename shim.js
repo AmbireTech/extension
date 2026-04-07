@@ -68,6 +68,7 @@ if (typeof CustomeEvent === 'undefined') {
 // Event listener shims for mobile app compatibility for cetain common files between web and mobile
 window.addEventListener = window.addEventListener || (() => {})
 window.removeEventListener = window.removeEventListener || (() => {})
+window.close = window.close || (() => {})
 document.addEventListener = document.addEventListener || (() => {})
 document.removeEventListener = document.removeEventListener || (() => {})
 document.querySelector = document.querySelector || (() => null)

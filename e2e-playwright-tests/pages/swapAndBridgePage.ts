@@ -219,10 +219,11 @@ export class SwapAndBridgePage extends BasePage {
       await page.getByTestId(selectors.transaction.feeSpeedSelectDropdown).click()
       await page.getByTestId(selectors.transaction.feeSpeedSlow).first().click()
 
-      // check fee
-      const feeSelector = await page.locator(selectors.transaction.feeGasTankInDollars).innerText() // returns e.g. '<$0.01'
-
-      const feeDollarsAmount = Number(feeSelector.replace(/[<$]/g, ''))
+      const feeSelector = await page
+        .getByTestId(selectors.transaction.feeTokensSelectDropdown)
+        .locator(selectors.transaction.feeTokenInDollars)
+        .innerText()
+      const feeDollarsAmount = Number.parseFloat(feeSelector.replace(/[^0-9.]/g, ''))
 
       if (feeDollarsAmount > 0.1) {
         console.warn(
@@ -238,7 +239,7 @@ export class SwapAndBridgePage extends BasePage {
         await page.locator(selectors.closeTransactionProgressPopUpButton).click()
       }
     } catch (error) {
-      console.warn("⚠️ The 'Sign' button is not clickable, but it should be.")
+      console.warn("⚠️ We couldn't sign the transaction.", { error })
     }
   }
 
@@ -329,7 +330,7 @@ export class SwapAndBridgePage extends BasePage {
       await this.click(selectors.selectRouteButton)
       await this.assertSelectedAggregator('1Inch')
     } else if ((await kyberRoute.count()) > 0) {
-      await this.page.locator(selectors.swapAndBridge.kyberSwapRoute).first().click()
+      await kyberRoute.first().click()
       await this.click(selectors.selectRouteButton)
       await this.assertSelectedAggregator('Kyberswap')
     } else {
@@ -412,10 +413,11 @@ export class SwapAndBridgePage extends BasePage {
     await page.getByTestId(selectors.transaction.feeSpeedSelectDropdown).click()
     await page.getByTestId(selectors.transaction.feeSpeedSlow).first().click()
 
-    // check fee
-    const feeSelector = await page.locator(selectors.transaction.feeGasTankInDollars).innerText() // returns e.g. '<$0.01'
-
-    const feeDollarsAmount = Number(feeSelector.replace(/[<$]/g, ''))
+    const feeSelector = await page
+      .getByTestId(selectors.transaction.feeTokensSelectDropdown)
+      .locator(selectors.transaction.feeTokenInDollars)
+      .innerText()
+    const feeDollarsAmount = Number.parseFloat(feeSelector.replace(/[^0-9.]/g, ''))
 
     if (feeDollarsAmount > 0.1) {
       console.warn(

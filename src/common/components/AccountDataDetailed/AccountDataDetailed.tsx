@@ -4,7 +4,6 @@ import { View } from 'react-native'
 import AccountAddress from '@common/components/AccountAddress'
 import AccountBadges from '@common/components/AccountBadges'
 import Avatar from '@common/components/Avatar'
-import DomainBadge from '@common/components/Avatar/DomainBadge'
 import Text from '@common/components/Text'
 import useController from '@common/hooks/useController'
 import useReverseLookup from '@common/hooks/useReverseLookup'
@@ -32,11 +31,10 @@ const AccountDataDetailed = () => {
         smartAccountType={smartAccountType}
       />
       <View style={flexbox.flex1}>
-        <View style={[flexbox.flex1, flexbox.directionRow]}>
+        <View style={[flexbox.directionRow]}>
           <Text fontSize={16} weight="semiBold" numberOfLines={1}>
             {account.preferences.label}
           </Text>
-
           <AccountBadges accountData={account} />
         </View>
         <View style={[flexbox.directionRow, flexbox.alignCenter]}>

@@ -10,12 +10,13 @@ import ExpandableCard from '@common/components/ExpandableCard'
 import HumanizedVisualization from '@common/components/HumanizedVisualization'
 import Label from '@common/components/Label'
 import Text from '@common/components/Text'
+import { isMobile, isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import useHover, { AnimatedPressable } from '@common/hooks/useHover'
 import useTheme from '@common/hooks/useTheme'
 import FallbackVisualization from '@common/modules/sign-account-op/components/TransactionSummary/FallbackVisualization'
-import { SPACING_SM, SPACING_TY } from '@common/styles/spacings'
+import spacings, { SPACING_SM, SPACING_TY } from '@common/styles/spacings'
 
 import getStyles from './styles'
 
@@ -138,11 +139,14 @@ const TransactionSummary = ({
           ? { ...styles.warningContainer, ...style }
           : { ...style })
       }}
-      contentStyle={{
-        paddingHorizontal: SPACING_SM,
-        paddingVertical: type !== 'history' ? SPACING_SM * sizeMultiplier[size] : 0,
-        borderColor: 'red'
-      }}
+      contentStyle={
+        isWeb
+          ? {
+              paddingHorizontal: SPACING_SM,
+              paddingVertical: type !== 'history' ? SPACING_SM * sizeMultiplier[size] : 0
+            }
+          : {}
+      }
       content={
         <>
           {call.fullVisualization ? (
@@ -174,7 +178,7 @@ const TransactionSummary = ({
               {...bindDeleteIconAnim}
               testID={`delete-txn-call-${index}`}
             >
-              <DeleteIcon width={28} height={28} />
+              <DeleteIcon width={isMobile ? 26 : 28} height={isMobile ? 26 : 28} />
             </AnimatedPressable>
           )}
           {rightIcon && onRightIconPress && !hasCallFailed && (

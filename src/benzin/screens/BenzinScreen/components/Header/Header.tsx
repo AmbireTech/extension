@@ -7,6 +7,7 @@ import { IS_MOBILE_UP_BENZIN_BREAKPOINT } from '@benzin/screens/BenzinScreen/sty
 import AmbireLogoHorizontalMonochrome from '@common/assets/svg/AmbireLogoHorizontalMonochrome'
 import NetworkIcon from '@common/components/NetworkIcon'
 import Text from '@common/components/Text'
+import { isWeb } from '@common/config/env'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
@@ -33,7 +34,10 @@ const Header: FC<Props> = ({ activeStep, network }) => {
         ]}
       >
         <View style={styles.logoWrapper}>
-          <AmbireLogoHorizontalMonochrome width={96} height={32} />
+          <AmbireLogoHorizontalMonochrome
+            width={isWeb ? 96 : undefined}
+            height={isWeb ? 32 : undefined}
+          />
         </View>
         <Text
           fontSize={IS_MOBILE_UP_BENZIN_BREAKPOINT ? 20 : 18}

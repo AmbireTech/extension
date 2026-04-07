@@ -11,6 +11,9 @@ import { Portal } from '@gorhom/portal'
 
 import getStyles from './styles'
 
+const DROPDOWN_ITEM_HEIGHT = 40
+const VIEWPORT_MARGIN = 8
+
 interface Props {
   kebabIconProps?: SvgProps
   data: Array<{ label: string; value: string; style?: TextStyle }>
@@ -27,9 +30,8 @@ const Dropdown: FC<Props> = ({
   onSelect
 }) => {
   const DropdownButton = useRef(null)
-  const { styles, theme, themeType } = useTheme(getStyles)
-  const dropdownButtonRef = useRef(null)
-  const { width: windowWidth } = useWindowSize()
+  const { styles, theme } = useTheme(getStyles)
+  const { width: windowWidth, height: windowHeight } = useWindowSize()
   const modalRef: any = useRef(null)
   const [internalPosition, setInternalPosition] = useState({ x: 0, y: 0 })
 
@@ -46,6 +48,23 @@ const Dropdown: FC<Props> = ({
       }
     },
     [setExternalPosition]
+  )
+
+  const dropdownHeight = useMemo(
+    () =>
+      Math.max(0, Math.min(data.length * DROPDOWN_ITEM_HEIGHT, windowHeight - VIEWPORT_MARGIN * 2)),
+    [data.length, windowHeight]
+  )
+
+  const isOpen = useMemo(() => position.x !== 0 || position.y !== 0, [position.x, position.y])
+
+  const dropdownTop = useMemo(
+    () =>
+      Math.min(
+        Math.max(VIEWPORT_MARGIN, position.y),
+        windowHeight - dropdownHeight - VIEWPORT_MARGIN
+      ),
+    [dropdownHeight, position.y, windowHeight]
   )
 
   // close menu on click outside
@@ -105,21 +124,22 @@ const Dropdown: FC<Props> = ({
 
   return (
     <>
-      <View ref={dropdownButtonRef}>
+      <View>
         <Pressable onPress={toggleDropdown} ref={DropdownButton}>
           <View style={styles.button}>
             <KebabMenuIcon {...kebabIconProps} />
           </View>
         </Pressable>
       </View>
-      {!!position.x && !!position.y && (
+      {isOpen && (
         <Portal hostName="global">
           <View
             style={[
               styles.dropdown,
               {
                 right: windowWidth - position.x,
-                top: position.y
+                top: dropdownTop,
+                maxHeight: dropdownHeight
               }
             ]}
             ref={modalRef}
@@ -128,6 +148,7 @@ const Dropdown: FC<Props> = ({
               data={data}
               renderItem={renderItem}
               keyExtractor={(_, index) => index.toString()}
+              style={{ maxHeight: dropdownHeight }}
             />
           </View>
         </Portal>
