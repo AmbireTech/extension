@@ -4,7 +4,6 @@ import React, { createContext, useCallback, useEffect, useMemo, useRef, useState
 
 import EventEmitter from '@ambire-common/controllers/eventEmitter/eventEmitter'
 import { ErrorRef } from '@ambire-common/interfaces/eventEmitter'
-import { allControllersMapping } from '@common/constants/controllersMapping'
 import { ToastOptions } from '@common/contexts/toastContext'
 import useNavigation from '@common/hooks/useNavigation'
 import useToast from '@common/hooks/useToast'
@@ -73,8 +72,11 @@ export const ControllerStoreProvider: React.FC<{
 
   useEffect(() => {
     const onCtrlUpdate = ({ ctrlName, ctrlState }: { ctrlName: string; ctrlState: any }) => {
-      if ((allControllersMapping as any)[ctrlName])
+      try {
         controllerStore.update(ctrlName as any, ctrlState)
+      } catch (e) {
+        console.error(`controllerStore.update failed for controller "${ctrlName}":`, e)
+      }
     }
 
     eventBus.addEventListener('ctrlUpdate', onCtrlUpdate)
