@@ -1,6 +1,6 @@
 import React, { FC, useEffect, useMemo, useState } from 'react'
 import { Control, Controller } from 'react-hook-form'
-import { Animated, Pressable } from 'react-native'
+import { Animated, Pressable, View } from 'react-native'
 
 import CloseIcon from '@common/assets/svg/CloseIcon'
 import SearchIcon from '@common/assets/svg/SearchIcon'
@@ -32,35 +32,49 @@ const DashboardSearch: FC<Props> = ({ control }) => {
         flexbox.alignCenter,
         isSearchFieldDisplayed && spacings.plMi,
         {
-          overflow: 'hidden',
+          overflow: 'visible',
           backgroundColor: isSearchFieldDisplayed ? theme.tertiaryBackground : 'transparent',
           borderRadius: 50,
           width: animatedWidth
         }
       ]}
     >
-      <Pressable
-        style={{
-          width: 40,
-          height: 40,
-          backgroundColor: isSearchFieldDisplayed
-            ? theme.tertiaryBackground
-            : theme.primaryBackground,
-          borderRadius: 20,
-          ...flexbox.center
-        }}
-        onPress={() => {
-          setIsSearchFieldDisplayed((prev) => !prev)
-        }}
-      >
-        {({ hovered }: any) => (
-          <SearchIcon
-            width={24}
-            height={24}
-            color={hovered ? theme.primaryText : theme.iconPrimary}
-          />
-        )}
-      </Pressable>
+      <View style={{ width: 40, height: 40 }}>
+        <Pressable
+          style={{
+            position: 'absolute',
+            top: -8,
+            left: -8,
+            width: 56,
+            height: 56,
+            borderRadius: 28,
+            ...flexbox.center
+          }}
+          onPress={() => {
+            setIsSearchFieldDisplayed((prev) => !prev)
+          }}
+        >
+          {({ hovered }: any) => (
+            <View
+              style={{
+                width: 40,
+                height: 40,
+                backgroundColor: isSearchFieldDisplayed
+                  ? theme.tertiaryBackground
+                  : theme.primaryBackground,
+                borderRadius: 20,
+                ...flexbox.center
+              }}
+            >
+              <SearchIcon
+                width={24}
+                height={24}
+                color={hovered ? theme.primaryText : theme.iconPrimary}
+              />
+            </View>
+          )}
+        </Pressable>
+      </View>
       {isSearchFieldDisplayed && (
         <Controller
           control={control}
