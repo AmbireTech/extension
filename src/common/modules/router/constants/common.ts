@@ -68,7 +68,8 @@ const WEB_ROUTES = {
   manageTokens: 'settings/manage-tokens',
   recoveryPhrasesSettings: 'settings/recovery-phrases',
   safeImport: 'safe-import',
-  optOuts: 'settings/opt-outs'
+  optOuts: 'settings/opt-outs',
+  survey: 'survey/:surveyId'
 }
 
 const ROUTES = { ...MOBILE_ROUTES, ...WEB_ROUTES }

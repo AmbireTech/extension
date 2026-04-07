@@ -59,6 +59,7 @@ import TermsSettingsScreen from '@web/modules/settings/screens/TermsSettingsScre
 import TransactionHistorySettingsScreen from '@web/modules/settings/screens/TransactionHistorySettingsScreen'
 import SignAccountOpScreen from '@web/modules/sign-account-op/screens/SignAccountOpScreen'
 import SignMessageScreen from '@web/modules/sign-message/screens/SignMessageScreen'
+import SurveyScreen from '@web/modules/survey/screens/SurveyScreen/SurveyScreen'
 import SwapAndBridgeScreen from '@web/modules/swap-and-bridge/screens/SwapAndBridgeScreen'
 import TokenDetailsScreen from '@web/modules/token-details/screens/TokenDetailsScreen'
 import TransferScreen from '@web/modules/transfer/screens/TransferScreen'
@@ -194,6 +195,7 @@ const MainRoutes = () => {
           <Route path={WEB_ROUTES.apps} element={<DappCatalogScreen />} />
           <Route path={WEB_ROUTES.networks} element={<NetworksScreen />} />
           <Route path={WEB_ROUTES.rewards} element={<ExtensionRewardsScreen />} />
+          <Route path={WEB_ROUTES.survey} element={<SurveyScreen />} />
         </Route>
       </Route>
     </Routes>

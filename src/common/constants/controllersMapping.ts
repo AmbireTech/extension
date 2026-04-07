@@ -22,6 +22,7 @@ import { SelectedAccountController } from '@ambire-common/controllers/selectedAc
 import { SignAccountOpController } from '@ambire-common/controllers/signAccountOp/signAccountOp'
 import { SignMessageController } from '@ambire-common/controllers/signMessage/signMessage'
 import { StorageController } from '@ambire-common/controllers/storage/storage'
+import { SurveyController } from '@ambire-common/controllers/survey/survey'
 import { SwapAndBridgeController } from '@ambire-common/controllers/swapAndBridge/swapAndBridge'
 import { TransferController } from '@ambire-common/controllers/transfer/transfer'
 import { UiController } from '@ambire-common/controllers/ui/ui'
@@ -55,7 +56,8 @@ export const controllersNestedInMainMapping = {
   BannerController,
   UiController,
   AutoLoginController,
-  SafeController
+  SafeController,
+  SurveyController
 
   // Add the rest of the controllers that are part of the main controller:
   // - key is the name of the controller
