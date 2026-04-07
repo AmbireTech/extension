@@ -1,11 +1,14 @@
 import React, { FC, memo } from 'react'
+import { useTranslation } from 'react-i18next'
 import { StyleProp, View, ViewStyle } from 'react-native'
 
 import { IrCall } from '@ambire-common/libs/humanizer/interfaces'
+import EditIcon from '@common/assets/svg/EditIcon'
 import HumanizerAddress from '@common/components/HumanizerAddress'
 import Text from '@common/components/Text'
 import TokenOrNft from '@common/components/TokenOrNft'
 import { isMobile } from '@common/config/env'
+import useHover, { AnimatedPressable } from '@common/hooks/useHover'
 import useTheme from '@common/hooks/useTheme'
 import spacings, { SPACING_SM, SPACING_TY } from '@common/styles/spacings'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
@@ -49,6 +52,11 @@ const HumanizedVisualization: FC<Props> = ({
 }) => {
   const marginRight = SPACING_TY * sizeMultiplierSize
   const { theme } = useTheme()
+  const { t } = useTranslation()
+  const [bindEditApprovals, editApprovalsStyle] = useHover({
+    preset: 'opacityInverted'
+  })
+
   return (
     <View
       testID={testID}
@@ -200,6 +208,22 @@ const HumanizedVisualization: FC<Props> = ({
 
         if (item.type === 'break') {
           return <View key={key} style={{ flexBasis: '100%', height: 0 }} />
+        }
+
+        if (item.type === 'editApproval') {
+          return (
+            <AnimatedPressable
+              key={key}
+              style={[editApprovalsStyle, flexbox.directionRow, flexbox.alignCenter]}
+              {...bindEditApprovals}
+              onPress={() => {
+                console.log('pressed')
+              }}
+            >
+              <EditIcon />
+              <Text>{t('Edit Approval')}</Text>
+            </AnimatedPressable>
+          )
         }
 
         return null
