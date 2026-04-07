@@ -72,6 +72,7 @@ const AddContactFormModal = ({ id, sheetRef, closeBottomSheet }: Props) => {
   const handleRevalidate = useCallback(() => {
     trigger('addressState.fieldValue')
     trigger('addressState.ensAddress')
+    trigger('addressState.namoshiAddress')
   }, [trigger])
 
   const overwriteValidation: Validation | null = useMemo(() => {

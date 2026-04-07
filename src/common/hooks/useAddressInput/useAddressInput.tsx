@@ -80,6 +80,8 @@ const useAddressInput = ({
       debouncedSeverity === 'error' &&
       // There is no ENS address
       !addressState.ensAddress &&
+      // There is no Namoshi address
+      !addressState.namoshiAddress &&
       // The message is not empty
       latestMessage
 
@@ -101,7 +103,8 @@ const useAddressInput = ({
     debouncedValidation,
     debouncedValidation.severity,
     debouncedValidation.message,
-    validation
+    validation,
+    addressState.namoshiAddress
   ])
 
   useEffect(() => {
