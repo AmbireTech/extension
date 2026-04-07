@@ -1,5 +1,5 @@
 import { formatUnits } from 'ethers'
-import React, { memo, useMemo } from 'react'
+import React, { memo, useCallback, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
@@ -7,6 +7,7 @@ import { useModalize } from 'react-native-modalize'
 import { HumanizerVisualization } from '@ambire-common/libs/humanizer/interfaces'
 import { getTokenAmount } from '@ambire-common/libs/portfolio/helpers'
 import EditIcon from '@common/assets/svg/EditIcon'
+import AmountInput from '@common/components/AmountInput'
 import BottomSheet from '@common/components/BottomSheet'
 import Text from '@common/components/Text'
 import { isWeb } from '@common/config/env'
@@ -28,10 +29,34 @@ const EditApproval = ({ item }: { item: HumanizerVisualization }) => {
   const {
     state: { portfolio }
   } = useController('SelectedAccountController')
+  const [amount, setAmount] = useState<string>(item.value?.toString() || '0')
 
   const portfolioToken = useMemo(() => {
     return portfolio.tokens.find((t) => t.address.toLowerCase() === item.address?.toLowerCase())
   }, [portfolio.tokens, item])
+
+  const handleOnChangeTextAndFormat = useCallback((text: string) => {
+    let formatted = text
+
+    // Remove invalid chars (only digits and dots allowed)
+    formatted = formatted.replace(/[^0-9.]/g, '')
+
+    // If input starts with ".", prefix with "0"
+    if (formatted.startsWith('.')) {
+      formatted = `0${formatted}`
+    }
+
+    // Prevent multiple decimals
+    const parts = formatted.split('.')
+    if (parts.length > 2) {
+      formatted = `${parts[0]}.${parts.slice(1).join('')}`
+    }
+
+    formatted = formatted.replace(/^0+(?=\d)/, '')
+    if (formatted === '') formatted = '0'
+
+    setAmount(formatted)
+  }, [])
 
   return (
     <>
@@ -54,6 +79,7 @@ const EditApproval = ({ item }: { item: HumanizerVisualization }) => {
         <View>
           <Text>Just testing for now</Text>
           <Text>Address: {item.address}</Text>
+          <AmountInput type="token" value={amount} onChangeText={handleOnChangeTextAndFormat} />
           {portfolioToken && (
             <MaxAmount
               isLoading={false}
@@ -61,9 +87,7 @@ const EditApproval = ({ item }: { item: HumanizerVisualization }) => {
                 formatUnits(getTokenAmount(portfolioToken), portfolioToken.decimals)
               )}
               selectedTokenSymbol={portfolioToken.symbol}
-              onMaxButtonPress={() => {
-                console.log('max btn hit')
-              }}
+              onMaxButtonPress={() => setAmount(portfolioToken.amount.toString())}
               simulationFailed={false}
             />
           )}
