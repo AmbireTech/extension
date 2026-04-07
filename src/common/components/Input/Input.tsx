@@ -1,8 +1,8 @@
 import React, { ReactNode, useState } from 'react'
 import {
-  NativeSyntheticEvent,
+  BlurEvent,
+  ColorValue,
   TextInput,
-  TextInputFocusEventData,
   TextInputProps,
   TextStyle,
   TouchableOpacityProps,
@@ -12,11 +12,10 @@ import {
 
 import InformationIcon from '@common/assets/svg/InformationIcon'
 import Text, { TextAppearance } from '@common/components/Text'
-import { isWeb } from '@common/config/env'
+import { isMobile, isWeb } from '@common/config/env'
+import useHover, { AnimatedPressable } from '@common/hooks/useHover'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
-import { THEME_TYPES } from '@common/styles/themeConfig'
-import useHover, { AnimatedPressable } from '@web/hooks/useHover'
 
 import getStyles from './styles'
 
@@ -29,7 +28,7 @@ export interface InputProps extends TextInputProps {
   isValid?: boolean
   validLabel?: string
   validLabelAppearance?: TextAppearance
-  button?: string | JSX.Element | null
+  button?: string | ReactNode | null
   buttonProps?: TouchableOpacityProps & {
     withBackground?: boolean
   }
@@ -41,7 +40,6 @@ export interface InputProps extends TextInputProps {
   setInputRef?: (ref: TextInput | null) => void
   inputBorderWrapperRef?: React.RefObject<View>
   nativeInputStyle?: ViewStyle & TextStyle
-  borderWrapperStyle?: ViewStyle
   inputWrapperStyle?: ViewStyle | ViewStyle[]
   bottomLabelStyle?: TextStyle | TextStyle[]
   leftIcon?: () => ReactNode
@@ -50,11 +48,12 @@ export interface InputProps extends TextInputProps {
     id: string
     content: string
   }
-  childrenBeforeButtons?: React.ReactNode
-  childrenBelowInput?: React.ReactNode
+  backgroundColor?: ColorValue
+  childrenBeforeButtons?: ReactNode
+  childrenBelowInput?: ReactNode
   borderless?: boolean
-  customInputContent?: React.ReactNode
-  renderConfirmAddress?: () => React.ReactNode
+  customInputContent?: ReactNode
+  renderConfirmAddress?: () => ReactNode
   preventJumpOnValidationChange?: boolean
 }
 
@@ -76,7 +75,6 @@ const Input = ({
   containerStyle,
   inputStyle,
   nativeInputStyle,
-  borderWrapperStyle,
   inputWrapperStyle,
   bottomLabelStyle,
   leftIcon,
@@ -89,20 +87,22 @@ const Input = ({
   inputBorderWrapperRef,
   customInputContent,
   editable,
+  backgroundColor,
   renderConfirmAddress,
   preventJumpOnValidationChange,
   ...rest
 }: InputProps) => {
-  const [isFocused, setIsFocused] = useState<boolean>(false)
-  const { theme, styles, themeType } = useTheme(getStyles)
+  const { theme, styles } = useTheme(getStyles)
   const [bindAnim, animStyle] = useHover({ preset: 'opacityInverted' })
+  const [isFocused, setIsFocused] = useState(false)
 
-  const handleOnFocus = (e: NativeSyntheticEvent<TextInputFocusEventData>) => {
+  const handleOnFocus = (e: BlurEvent) => {
     if (disabled) return
     setIsFocused(true)
+
     return onFocus(e)
   }
-  const handleOnBlur = (e: NativeSyntheticEvent<TextInputFocusEventData>) => {
+  const handleOnBlur = (e: BlurEvent) => {
     if (disabled) return
     setIsFocused(false)
     return onBlur(e)
@@ -110,31 +110,16 @@ const Input = ({
 
   const hasButton = !!button
 
-  const borderWrapperStyles = [
-    styles.borderWrapper,
-    isFocused && {
-      borderColor:
-        themeType === THEME_TYPES.DARK ? `${theme.linkText as string}35` : theme.infoBackground
-    },
-    isValid && { borderColor: theme.successBackground },
-    !!error && { borderColor: theme.errorBackground },
-    borderless && { borderColor: 'transparent', borderWidth: 0 },
-    borderWrapperStyle
-  ]
-
   const inputWrapperStyles: ViewStyle[] = [
     styles.inputWrapper,
     {
-      backgroundColor:
-        themeType === THEME_TYPES.DARK ? theme.primaryBackground : theme.secondaryBackground,
-      borderColor: theme.secondaryBorder
+      backgroundColor: backgroundColor || theme.primaryBackground,
+      borderColor: 'transparent'
     },
-    isFocused
-      ? {
-          borderColor: themeType === THEME_TYPES.DARK ? theme.linkText : theme.primary
-        }
-      : {},
     isValid ? { borderColor: theme.successDecorative } : {},
+    isFocused
+      ? { backgroundColor: theme.tertiaryBackground, borderColor: theme.primaryBorder }
+      : {},
     error ? { borderColor: theme.errorDecorative } : {},
     info ? { borderColor: theme.warningText } : {},
     disabled ? styles.disabled : {},
@@ -166,56 +151,55 @@ const Input = ({
         </Text>
       )}
       <View style={{ zIndex: 10 }}>
-        <View style={borderWrapperStyles} ref={inputBorderWrapperRef}>
-          <View style={inputWrapperStyles}>
-            {!!leftIcon && <View style={[styles.leftIcon, leftIconStyle]}>{leftIcon()}</View>}
-            {/* TextInput doesn't support border styles so we wrap it in a View */}
-            <View style={[inputStyles, hasButton ? { width: '100%' } : {}]}>
-              {customInputContent}
-              <TextInput
-                placeholderTextColor={theme.secondaryText}
-                autoCapitalize="none"
-                autoCorrect={false}
-                editable={editable ?? !disabled}
-                onBlur={handleOnBlur}
-                onFocus={handleOnFocus}
-                ref={setInputRef}
-                {...rest}
-                style={[
-                  styles.nativeInput,
-                  !!customInputContent && { position: 'absolute', zIndex: -1, opacity: 0 },
-                  nativeInputStyle
-                ]}
-              />
-            </View>
-            {childrenBeforeButtons || null}
-            {!!hasButton && (
-              <AnimatedPressable
-                // The `focusable` prop determines whether a component is user-focusable
-                // and appears in the keyboard tab flow. It's missing in the
-                // TouchableOpacity props, because it's react-native-web specific, see:
-                // {@link https://necolas.github.io/react-native-web/docs/accessibility/#keyboard-focus}
-                // @ts-ignore-next-line
-                focusable={false}
-                onPress={onButtonPress}
-                disabled={disabled}
-                style={[
-                  styles.button,
-                  buttonProps?.withBackground ? styles.buttonWithBackground : {},
-                  buttonStyle,
-                  animStyle
-                ]}
-                {...buttonProps}
-                {...bindAnim}
-              >
-                {typeof button === 'string' || button instanceof String ? (
-                  <Text weight="medium">{button}</Text>
-                ) : (
-                  button
-                )}
-              </AnimatedPressable>
-            )}
+        <View style={inputWrapperStyles} ref={inputBorderWrapperRef}>
+          {!!leftIcon && <View style={[styles.leftIcon, leftIconStyle]}>{leftIcon()}</View>}
+          {/* TextInput doesn't support border styles so we wrap it in a View */}
+          <View style={[inputStyles, hasButton ? { width: '100%' } : {}]}>
+            {customInputContent}
+            <TextInput
+              placeholderTextColor={theme.secondaryText}
+              autoCapitalize="none"
+              autoCorrect={false}
+              autoComplete="off"
+              editable={editable ?? !disabled}
+              onBlur={handleOnBlur}
+              onFocus={handleOnFocus}
+              ref={setInputRef}
+              {...rest}
+              style={[
+                styles.nativeInput,
+                !!customInputContent && { position: 'absolute', zIndex: -1, opacity: 0 },
+                nativeInputStyle
+              ]}
+            />
           </View>
+          {childrenBeforeButtons || null}
+          {!!hasButton && (
+            <AnimatedPressable
+              // The `focusable` prop determines whether a component is user-focusable
+              // and appears in the keyboard tab flow. It's missing in the
+              // TouchableOpacity props, because it's react-native-web specific, see:
+              // {@link https://necolas.github.io/react-native-web/docs/accessibility/#keyboard-focus}
+              // @ts-ignore-next-line
+              focusable={false}
+              onPress={onButtonPress}
+              disabled={disabled}
+              style={[
+                styles.button,
+                buttonProps?.withBackground ? styles.buttonWithBackground : {},
+                buttonStyle,
+                animStyle
+              ]}
+              {...buttonProps}
+              {...bindAnim}
+            >
+              {typeof button === 'string' || button instanceof String ? (
+                <Text weight="medium">{button}</Text>
+              ) : (
+                button
+              )}
+            </AnimatedPressable>
+          )}
         </View>
         {childrenBelowInput}
       </View>
@@ -262,8 +246,9 @@ const Input = ({
             {' '}
           </Text>
         )}
-        {renderConfirmAddress && renderConfirmAddress()}
+        {isWeb && !!renderConfirmAddress && renderConfirmAddress()}
       </View>
+      {isMobile && !!renderConfirmAddress && renderConfirmAddress()}
     </View>
   )
 }

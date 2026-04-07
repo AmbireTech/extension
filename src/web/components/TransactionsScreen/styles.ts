@@ -1,12 +1,10 @@
 import { StyleSheet, ViewStyle } from 'react-native'
 
 import spacings from '@common/styles/spacings'
-import { THEME_TYPES, ThemeProps, ThemeType } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
-import { getUiType } from '@web/utils/uiType'
+import { getUiType } from '@common/utils/uiType'
 
 interface Style {
-  form: ViewStyle
   container: ViewStyle
   nonTabButtons: ViewStyle
   headerSideContainer: ViewStyle
@@ -18,26 +16,15 @@ const { isRequestWindow, isTab } = getUiType()
 // so it stretches as much as the header
 export const TRANSACTION_FORM_WIDTH = isRequestWindow ? 656 : 600
 
-const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
+const getStyles = () =>
   StyleSheet.create<Style>({
-    form: {
-      ...spacings.ph,
-      ...spacings.pv,
-      ...spacings.mbSm,
-      borderRadius: 12,
-      backgroundColor: theme.primaryBackground,
-      shadowColor: theme.primaryBorder,
-      shadowOffset: { width: 0, height: 12 },
-      shadowOpacity: themeType === THEME_TYPES.DARK ? 0 : 0.3,
-      shadowRadius: 24,
-      elevation: 10
-    },
     container: {
       width: '100%',
       maxWidth: TRANSACTION_FORM_WIDTH,
-      flex: 1,
-      alignSelf: 'center',
-      overflow: 'visible'
+      flex: 1
+      // alignSelf: 'center',
+      // overflow: 'visible'
+      // alignItems: 'stretch'
     },
     nonTabButtons: {
       ...flexbox.flex1,

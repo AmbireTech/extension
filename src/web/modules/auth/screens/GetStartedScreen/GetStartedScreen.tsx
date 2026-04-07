@@ -1,29 +1,28 @@
-import React, { useCallback, useEffect } from 'react'
-import { TouchableOpacity, View } from 'react-native'
+import React from 'react'
+import { Pressable, View } from 'react-native'
 
-import AmbireLogo from '@common/assets/svg/AmbireLogo'
-import ViewModeIcon from '@common/assets/svg/ViewModeIcon'
+import AddCircularIcon from '@common/assets/svg/AddCircularIcon'
+import AmbireLogoWithBackgroundAndLogotype from '@common/assets/svg/AmbireLogoWithBackgroundAndLogotype'
+import DownArrowIcon from '@common/assets/svg/DownArrowIcon'
+import ImportAccountIcon from '@common/assets/svg/ImportAccountIcon'
+import SettingsIcon from '@common/assets/svg/SettingsIcon'
+import ViewOnlyIcon from '@common/assets/svg/ViewOnlyIcon'
 import Button from '@common/components/Button'
 import Panel from '@common/components/Panel'
-import ScrollableWrapper from '@common/components/ScrollableWrapper'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
 import useNavigation from '@common/hooks/useNavigation'
 import useTheme from '@common/hooks/useTheme'
-import { AUTH_STATUS } from '@common/modules/auth/constants/authStatus'
-import useAuth from '@common/modules/auth/hooks/useAuth'
-import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
-import Header from '@common/modules/header/components/Header'
-import { ROUTES, WEB_ROUTES } from '@common/modules/router/constants/common'
+import useGetStarted from '@common/modules/auth/hooks/useGetStarted'
+import { ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
+import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
 import {
   TabLayoutContainer,
   TabLayoutWrapperMainContent
 } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
-import useBackgroundService from '@web/hooks/useBackgroundService'
-import useWalletStateController from '@web/hooks/useWalletStateController'
 
 import getStyles from './styles'
 
@@ -33,96 +32,164 @@ const GetStartedScreen = () => {
   const { theme } = useTheme(getStyles)
   const { t } = useTranslation()
   const { navigate } = useNavigation()
-  const { goToNextRoute } = useOnboardingNavigation()
+  const { handleAuthButtonPress } = useGetStarted()
 
-  const { authStatus } = useAuth()
-  const { dispatch } = useBackgroundService()
+  const [isMenuOpen, setIsMenuOpen] = React.useState(false)
 
-  const state = useWalletStateController()
-
-  const resetIsSetupCompleteIfNeeded = useCallback(() => {
-    if (authStatus === AUTH_STATUS.NOT_AUTHENTICATED && !state.isPinned && state.isSetupComplete) {
-      dispatch({ type: 'SET_IS_SETUP_COMPLETE', params: { isSetupComplete: false } })
-    }
-  }, [authStatus, dispatch, state.isPinned, state.isSetupComplete])
-
-  useEffect(() => {
-    if (authStatus === AUTH_STATUS.AUTHENTICATED) {
-      navigate(ROUTES.dashboard)
-      return
-    }
-
-    resetIsSetupCompleteIfNeeded()
-  }, [authStatus, navigate, resetIsSetupCompleteIfNeeded])
-
-  const handleAuthButtonPress = useCallback(
-    async (flow: 'create-new-account' | 'import-existing-account' | 'view-only') => {
-      if (flow === 'create-new-account') {
-        goToNextRoute(WEB_ROUTES.createSeedPhrasePrepare)
-        return
-      }
-      if (flow === 'import-existing-account') {
-        goToNextRoute(WEB_ROUTES.importExistingAccount)
-        return
-      }
-      if (flow === 'view-only') {
-        goToNextRoute(WEB_ROUTES.viewOnlyAccountAdder)
-      }
+  const handleOptionPress = React.useCallback(
+    (route: string) => {
+      setIsMenuOpen(false)
+      navigate(route)
     },
-    [goToNextRoute]
+    [navigate]
   )
 
   return (
-    <TabLayoutContainer
-      backgroundColor={theme.secondaryBackground}
-      header={<Header mode="custom-inner-content" withAmbireLogo />}
-    >
+    <TabLayoutContainer backgroundColor={theme.secondaryBackground}>
       <TabLayoutWrapperMainContent>
-        <Panel spacingsSize="small" type="onboarding">
+        <Panel spacingsSize="small" type="onboarding" innerStyle={spacings.pt3Xl}>
           <View style={[flexbox.justifySpaceBetween, flexbox.flex1]}>
             <View
-              style={[flexbox.justifyCenter, flexbox.alignCenter, flexbox.flex1, spacings.mbSm]}
+              style={[flexbox.justifyCenter, flexbox.alignCenter, flexbox.flex1, spacings.mb3Xl]}
             >
-              <AmbireLogo height={96} withWrapper />
+              <AmbireLogoWithBackgroundAndLogotype />
               <Text style={[spacings.mtLg, text.center]} weight="medium" appearance="secondaryText">
                 {t('The Web3 wallet that makes self-custody easy and secure.')}
               </Text>
             </View>
-            <ScrollableWrapper contentContainerStyle={[flexbox.justifySpaceBetween]}>
-              <Button
-                testID="create-new-account-btn"
-                type="primary"
-                text={t('Create new account')}
-                onPress={() => handleAuthButtonPress('create-new-account')}
+            <Button
+              testID="create-new-account-btn"
+              type="primary"
+              text={t('Create new account')}
+              onPress={() => handleAuthButtonPress('create-new-account')}
+              childrenPosition="left"
+            >
+              <AddCircularIcon width={24} height={24} color="#fff" style={spacings.mrMi} />
+            </Button>
+            <Button
+              testID="import-existing-account-btn"
+              type="tertiary"
+              text={t('Import existing account')}
+              onPress={() => handleAuthButtonPress('import-existing-account')}
+              childrenPosition="left"
+            >
+              <ImportAccountIcon
+                width={24}
+                height={24}
+                color={theme.primaryText}
+                style={spacings.mrMi}
               />
-              <Button
-                testID="import-existing-account-btn"
-                type="secondary"
-                text={t('Import existing account')}
-                onPress={() => handleAuthButtonPress('import-existing-account')}
+            </Button>
+            <Button
+              testID="watch-an-address-button"
+              type="outline"
+              hasBottomSpacing={false}
+              onPress={() => handleAuthButtonPress('view-only')}
+              text={t('Watch an address')}
+              childrenPosition="left"
+            >
+              <ViewOnlyIcon
+                color={theme.primaryText}
+                width={24}
+                height={24}
+                style={spacings.mrMi}
               />
-              <Button
-                testID="watch-an-address-button"
-                type="ghost"
-                hasBottomSpacing={false}
-                onPress={() => handleAuthButtonPress('view-only')}
-                text={t('Watch an address')}
+            </Button>
+            <View style={[flexbox.alignSelfCenter, spacings.mt, { width: '100%' }]}>
+              <Pressable
+                onPress={() => setIsMenuOpen((prev) => !prev)}
+                style={[
+                  flexbox.directionRow,
+                  flexbox.alignCenter,
+                  flexbox.justifyCenter,
+                  flexbox.flex1,
+                  spacings.phSm,
+                  spacings.pvTy
+                ]}
               >
-                <ViewModeIcon color={theme.primary} width={24} style={spacings.mlTy} />
-              </Button>
-            </ScrollableWrapper>
-          </View>
-          <View style={[flexbox.directionRow, flexbox.alignSelfCenter, spacings.mt]}>
-            <TouchableOpacity onPress={() => navigate(ROUTES.networksConfiguration)}>
-              <Text
-                onPress={() => navigate(ROUTES.networksConfiguration)}
-                fontSize={12}
-                color={theme.info2Text}
-                style={{ textDecorationLine: 'underline' }}
-              >
-                {t('Network Configuration')}
-              </Text>
-            </TouchableOpacity>
+                {({ hovered }: any) => (
+                  <>
+                    <SettingsIcon
+                      width={20}
+                      height={20}
+                      color={theme.neutral600}
+                      style={spacings.mrTy}
+                    />
+                    <Text
+                      fontSize={14}
+                      weight="medium"
+                      color={theme.neutral600}
+                      style={spacings.mrTy}
+                    >
+                      {t('Customize')}
+                    </Text>
+                    <View
+                      style={[
+                        flexbox.alignCenter,
+                        flexbox.justifyCenter,
+                        {
+                          borderRadius: 6,
+                          width: 24,
+                          height: 24,
+                          backgroundColor: hovered ? theme.tertiaryBackground : 'transparent'
+                        }
+                      ]}
+                    >
+                      <View style={{ transform: [{ rotate: isMenuOpen ? '180deg' : '0deg' }] }}>
+                        <DownArrowIcon color={theme.neutral600} />
+                      </View>
+                    </View>
+                  </>
+                )}
+              </Pressable>
+              {isMenuOpen && (
+                <View
+                  style={[
+                    {
+                      backgroundColor: theme.primaryBackground,
+                      marginTop: 8
+                    }
+                  ]}
+                >
+                  <Pressable
+                    onPress={() => handleOptionPress(ROUTES.networksConfiguration)}
+                    style={({ hovered }: any) => [
+                      flexbox.directionRow,
+                      flexbox.alignCenter,
+                      flexbox.justifyCenter,
+                      spacings.phSm,
+                      spacings.pvSm,
+                      {
+                        borderRadius: BORDER_RADIUS_PRIMARY,
+                        backgroundColor: hovered ? theme.secondaryBackground : 'transparent'
+                      }
+                    ]}
+                  >
+                    <Text fontSize={14} weight="medium" color={theme.tertiaryText}>
+                      {t('Network and RPC configuration')}
+                    </Text>
+                  </Pressable>
+                  <Pressable
+                    onPress={() => handleOptionPress(ROUTES.privacyOptOutsConfiguration)}
+                    style={({ hovered }: any) => [
+                      flexbox.directionRow,
+                      flexbox.alignCenter,
+                      flexbox.justifyCenter,
+                      spacings.phSm,
+                      spacings.pvSm,
+                      {
+                        borderRadius: BORDER_RADIUS_PRIMARY,
+                        backgroundColor: hovered ? theme.secondaryBackground : 'transparent'
+                      }
+                    ]}
+                  >
+                    <Text fontSize={14} weight="medium" color={theme.tertiaryText}>
+                      {t('Privacy Opt-outs configuration')}
+                    </Text>
+                  </Pressable>
+                </View>
+              )}
+            </View>
           </View>
         </Panel>
       </TabLayoutWrapperMainContent>

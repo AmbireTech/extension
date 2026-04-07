@@ -1,0 +1,81 @@
+import React, { useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
+
+import DarkThemeIcon from '@common/assets/svg/DarkThemeIcon'
+import LightThemeIcon from '@common/assets/svg/LightThemeIcon'
+import SystemThemeIcon from '@common/assets/svg/SystemThemeIcon'
+import ControlOption from '@common/components/ControlOption'
+import Select from '@common/components/Select'
+import { isMobile } from '@common/config/env'
+import useController from '@common/hooks/useController'
+import useTheme from '@common/hooks/useTheme'
+import spacings from '@common/styles/spacings'
+import { THEME_TYPES, ThemeType } from '@common/styles/themeConfig'
+
+const ThemeControlOption = () => {
+  const { t } = useTranslation()
+  const { selectedThemeType } = useTheme()
+  const { dispatch: walletStateDispatch } = useController('WalletStateController')
+
+  const THEME_SELECT_OPTIONS = useMemo(
+    () => [
+      {
+        value: THEME_TYPES.LIGHT,
+        label: t('Light')
+      },
+      {
+        value: THEME_TYPES.DARK,
+        label: t('Dark')
+      },
+      {
+        value: THEME_TYPES.SYSTEM,
+        label: t('System')
+      }
+    ],
+    [t]
+  )
+
+  const selectedOption = useMemo(
+    () =>
+      THEME_SELECT_OPTIONS.find((opt) => opt.value === selectedThemeType) ||
+      THEME_SELECT_OPTIONS[0],
+    [THEME_SELECT_OPTIONS, selectedThemeType]
+  )
+
+  return (
+    <ControlOption
+      title={t('Theme mode')}
+      description={t('Choose between light, dark or system mode.')}
+      style={spacings.mbTy}
+      renderIcon={
+        selectedThemeType === THEME_TYPES.SYSTEM ? (
+          <SystemThemeIcon />
+        ) : selectedThemeType === THEME_TYPES.DARK ? (
+          <DarkThemeIcon />
+        ) : (
+          <LightThemeIcon />
+        )
+      }
+    >
+      <Select
+        setValue={(option) => {
+          walletStateDispatch({
+            type: 'method',
+            params: {
+              method: 'setThemeType',
+              args: [option.value as ThemeType]
+            }
+          })
+        }}
+        withSearch={false}
+        options={THEME_SELECT_OPTIONS}
+        value={selectedOption}
+        selectStyle={isMobile ? { height: 42 } : undefined}
+        containerStyle={{ width: isMobile ? 124 : 132, ...spacings.mb0 }}
+        size="sm"
+      />
+    </ControlOption>
+  )
+}
+
+export default React.memo(ThemeControlOption)

@@ -1,16 +1,16 @@
-import { FC } from 'react'
+import { FC, ReactNode } from 'react'
 import { View } from 'react-native'
 
 import { IS_MOBILE_UP_BENZIN_BREAKPOINT } from '@benzin/screens/BenzinScreen/styles'
 import Spinner from '@common/components/Spinner'
 import Text from '@common/components/Text'
-import spacings from '@common/styles/spacings'
+import spacings, { SPACING_MI, SPACING_TY } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
 export interface StepRowProps {
   label: string
   value?: string
-  renderValue?: () => JSX.Element
+  renderValue?: () => ReactNode
   isValueSmall?: boolean
   error?: boolean
   collapsedByDefault?: boolean
@@ -20,12 +20,27 @@ const StepRow: FC<StepRowProps> = ({ label, value, renderValue, isValueSmall, er
   <View
     style={
       IS_MOBILE_UP_BENZIN_BREAKPOINT
-        ? [flexbox.directionRow, flexbox.alignCenter, flexbox.justifySpaceBetween, spacings.mbTy]
-        : [spacings.mbTy]
+        ? [
+            flexbox.directionRow,
+            flexbox.alignCenter,
+            flexbox.justifySpaceBetween,
+            spacings.mbTy,
+            { rowGap: SPACING_MI }
+          ]
+        : [
+            flexbox.directionRow,
+            flexbox.alignCenter,
+            flexbox.justifySpaceBetween,
+            flexbox.wrap,
+            spacings.mbTy,
+            { columnGap: SPACING_TY, rowGap: 2 }
+          ]
     }
     key={label}
   >
-    <View style={[flexbox.directionRow, flexbox.alignCenter]}>
+    <View
+      style={[flexbox.directionRow, flexbox.alignCenter, flexbox.wrap, { columnGap: SPACING_TY }]}
+    >
       <Text
         appearance={error ? 'errorText' : 'secondaryText'}
         fontSize={IS_MOBILE_UP_BENZIN_BREAKPOINT ? 14 : 12}

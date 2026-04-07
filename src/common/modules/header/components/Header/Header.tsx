@@ -1,59 +1,133 @@
-import React, { ReactNode, useEffect, useMemo, useState } from 'react'
-import { Image, View, ViewStyle } from 'react-native'
+import React, { useEffect, useState } from 'react'
+import { View, ViewStyle } from 'react-native'
+import { TextProps } from 'react-native-svg'
 
-import AmbireLogoHorizontal from '@common/components/AmbireLogoHorizontal'
+import AccountData from '@common/components/AccountData'
+import AccountDataDetailed from '@common/components/AccountDataDetailed'
 import AmbireLogoHorizontalWithOG from '@common/components/AmbireLogoHorizontalWithOG'
 import Text from '@common/components/Text'
+import { isMobile, isWeb } from '@common/config/env'
 import { titleChangeEventStream } from '@common/hooks/useNavigation'
 import useRoute from '@common/hooks/useRoute'
-import useTheme from '@common/hooks/useTheme'
-import useWindowSize from '@common/hooks/useWindowSize'
-import BackButton, { DisplayIn } from '@common/modules/header/components/HeaderBackButton'
 import routesConfig from '@common/modules/router/config/routesConfig'
-import spacings, { SPACING_3XL, SPACING_MD } from '@common/styles/spacings'
+import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { tabLayoutWidths } from '@web/components/TabLayoutWrapper'
-import { getUiType } from '@web/utils/uiType'
 
-import getStyles from './styles'
+import HeaderBackButton, { DisplayIn } from '../HeaderBackButton'
 
-interface Props {
-  mode?: 'title' | 'image-and-title' | 'custom-inner-content' | 'custom'
-  customTitle?: string | ReactNode
-  displayBackButtonIn?: DisplayIn | DisplayIn[]
-  withAmbireLogo?: boolean
-  withOG?: boolean
-  image?: string
-  children?: any
-  backgroundColor?: string
-  forceBack?: boolean
-  onGoBackPress?: () => void
-  width?: 'sm' | 'md' | 'lg' | 'xl' | 'full'
+type Width = 'sm' | 'md' | 'lg' | 'xl' | 'full'
+
+const HEADER_HEIGHT = 60
+
+const Wrapper = ({
+  children,
+  style,
+  containerStyle,
+  width = 'xl'
+}: {
+  children?: React.ReactNode
   style?: ViewStyle
+  containerStyle?: ViewStyle
+  width?: Width
+}) => {
+  return (
+    <View
+      style={[
+        spacings.phSm,
+        isWeb && spacings.pvSm,
+        isWeb && spacings.ptMd,
+        isMobile && spacings.mbLg,
+        {
+          width: '100%'
+        },
+        containerStyle
+      ]}
+    >
+      <View
+        style={[
+          flexbox.directionRow,
+          flexbox.justifySpaceBetween,
+          flexbox.alignCenter,
+          { maxWidth: Number(tabLayoutWidths[width]), width: '100%', marginHorizontal: 'auto' },
+          style
+        ]}
+      >
+        {children}
+      </View>
+    </View>
+  )
 }
 
-const { isTab, isRequestWindow } = getUiType()
+const Title = ({ children, ...rest }: { children: React.ReactNode } & TextProps) => {
+  return (
+    <Text
+      {...rest}
+      fontSize={isMobile ? 18 : 20}
+      weight="medium"
+      style={[
+        {
+          display: 'flex'
+        },
+        flexbox.flex1,
+        flexbox.directionRow,
+        flexbox.alignCenter,
+        flexbox.justifyCenter,
+        {
+          textAlign: 'center'
+        }
+      ]}
+    >
+      {children}
+    </Text>
+  )
+}
 
-const Header = ({
-  mode = 'title',
-  customTitle,
+type CommonHeaderProps = {
+  width?: Width
+  withOG?: boolean
+}
+
+const Header = ({ width, withOG }: CommonHeaderProps) => {
+  return (
+    <Wrapper width={width}>
+      <AccountData />
+      <AmbireLogoHorizontalWithOG withOG={withOG} />
+    </Wrapper>
+  )
+}
+
+const Container = ({
+  side,
+  style,
+  children
+}: {
+  side: 'left' | 'right'
+  style?: ViewStyle
+  children?: React.ReactNode
+}) => {
+  return (
+    <View style={[{ flex: 0.5 }, side === 'left' ? flexbox.alignStart : flexbox.alignEnd, style]}>
+      {children}
+    </View>
+  )
+}
+
+const HeaderWithTitle = ({
+  title: customTitle,
   displayBackButtonIn,
-  withAmbireLogo,
-  withOG,
   children,
-  backgroundColor,
-  forceBack,
-  onGoBackPress,
-  image,
-  width = 'xl',
-  style
-}: Props) => {
-  const { styles } = useTheme(getStyles)
-
-  const { path } = useRoute()
-  const { maxWidthSize } = useWindowSize()
-
+  withOG,
+  withBackButton = true,
+  width
+}: {
+  title?: string
+  displayBackButtonIn?: DisplayIn | DisplayIn[]
+  children?: React.ReactNode
+  withBackButton?: boolean
+} & CommonHeaderProps) => {
   const [title, setTitle] = useState('')
+  const { path } = useRoute()
 
   useEffect(() => {
     if (!path) return
@@ -67,72 +141,36 @@ const Header = ({
     return () => subscription.unsubscribe()
   }, [])
 
-  const paddingHorizontalStyle = useMemo(() => {
-    if (isTab || isRequestWindow) {
-      return {
-        paddingHorizontal: maxWidthSize('xl') ? SPACING_3XL : SPACING_MD
-      }
-    }
-
-    return spacings.ph
-  }, [maxWidthSize])
-
   return (
-    <View
-      style={[
-        styles.container,
-        paddingHorizontalStyle,
-        !!backgroundColor && { backgroundColor },
-        style
-      ]}
-    >
-      {mode !== 'custom' ? (
-        <View style={[styles.widthContainer, { maxWidth: tabLayoutWidths[width] }]}>
-          <View style={styles.sideContainer}>
-            <BackButton
-              displayIn={displayBackButtonIn}
-              onGoBackPress={onGoBackPress}
-              forceBack={forceBack}
-            />
-          </View>
-          {/* Middle content start */}
-          {mode === 'title' && (
-            <View style={styles.containerInner}>
-              <Text
-                weight="regular"
-                fontSize={isTab ? 32 : 24}
-                style={styles.title}
-                numberOfLines={2}
-              >
-                {customTitle || title || ''}
-              </Text>
-            </View>
-          )}
-          {mode === 'image-and-title' && (
-            <View style={styles.imageAndTitleContainer}>
-              {image && <Image source={{ uri: image }} style={styles.image} />}
-              <Text weight="medium" fontSize={20}>
-                {customTitle || title}
-              </Text>
-            </View>
-          )}
-          {mode === 'custom-inner-content' && <View style={styles.containerInner}>{children}</View>}
-          {/* Middle content end */}
-          {!!withAmbireLogo && (
-            <View style={[styles.sideContainer, flexbox.alignEnd]}>
-              {withOG ? (
-                <AmbireLogoHorizontalWithOG width={72} />
-              ) : (
-                <AmbireLogoHorizontal width={72} />
-              )}
-            </View>
-          )}
-        </View>
-      ) : (
-        children
-      )}
-    </View>
+    <Wrapper width={width}>
+      <Container side="left">
+        {withBackButton && <HeaderBackButton displayIn={displayBackButtonIn} />}
+      </Container>
+      <Title>{customTitle || title}</Title>
+      <Container side="right">
+        {children || <AmbireLogoHorizontalWithOG withOG={withOG} />}
+      </Container>
+    </Wrapper>
   )
 }
 
-export default React.memo(Header)
+const HeaderWithLogoOnly = ({ width, withOG }: CommonHeaderProps & { withOG?: boolean }) => {
+  return (
+    <Wrapper style={flexbox.justifyEnd} width={width}>
+      <AmbireLogoHorizontalWithOG withOG={withOG} />
+    </Wrapper>
+  )
+}
+
+// Please don't add 1000 props to the other headers.
+// If you need something custom, compose it using these
+Header.Wrapper = Wrapper
+Header.AccountData = AccountData
+Header.AccountDataDetailed = AccountDataDetailed
+Header.Title = Title
+Header.Container = Container
+Header.BackButton = HeaderBackButton
+Header.Logo = AmbireLogoHorizontalWithOG
+
+export default Header
+export { HeaderWithTitle, HeaderWithLogoOnly, HEADER_HEIGHT }

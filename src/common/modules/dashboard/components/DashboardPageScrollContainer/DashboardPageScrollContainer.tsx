@@ -1,19 +1,21 @@
-import React, { FC, useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { Animated, Dimensions, FlatList, FlatListProps, ViewStyle } from 'react-native'
+import React, { FC, useEffect, useMemo, useRef } from 'react'
+import { Animated, FlatList, FlatListProps, RefreshControl, ViewStyle } from 'react-native'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
-import { isWeb } from '@common/config/env'
-import { OVERVIEW_CONTENT_MAX_HEIGHT } from '@common/modules/dashboard/screens/DashboardScreen'
+import { isMobile, isWeb } from '@common/config/env'
+import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
-import commonWebStyles from '@web/styles/utils/common'
-import { getUiType } from '@web/utils/uiType'
 
 import useBanners from '../../hooks/useBanners'
+import { OVERVIEW_CONTENT_MAX_HEIGHT } from '../DashboardOverview/DashboardOverview'
 import { TabType } from '../TabsAndSearch/Tabs/Tab/Tab'
 
 interface Props extends FlatListProps<any> {
   tab: TabType
   openTab: TabType
   animatedOverviewHeight: Animated.Value
+  refreshing?: boolean
+  onRefresh?: () => void
 }
 
 // We do this instead of unmounting the component to prevent component rerendering when switching tabs.
@@ -25,42 +27,31 @@ const HIDDEN_STYLE: ViewStyle = {
   pointerEvents: 'none'
 }
 
-const SCROLLBAR_TRIGGER_THRESHOLD = 4
-
-const getFlatListStyle = (tab: TabType, openTab: TabType, allBannersLength: number) => [
-  spacings.ph0,
-  commonWebStyles.contentContainer,
-  !allBannersLength && spacings.mtTy,
+const getFlatListStyle = (tab: TabType, openTab: TabType) => [
+  spacings.phSm,
   openTab !== tab ? HIDDEN_STYLE : {}
 ]
-
-const { isPopup } = getUiType()
 
 const DashboardPageScrollContainer: FC<Props> = ({
   tab,
   openTab,
   animatedOverviewHeight,
+  refreshing,
+  onRefresh,
   ...rest
 }) => {
-  const [hasScrollBar, setHasScrollBar] = useState(false)
   const [controllerBanners] = useBanners()
   const flatlistRef = useRef<FlatList | null>(null)
-
-  const style = useMemo(
-    () => getFlatListStyle(tab, openTab, controllerBanners.length),
-    [controllerBanners.length, openTab, tab]
-  )
-
+  const { bottom } = useSafeAreaInsets()
+  const style = useMemo(() => getFlatListStyle(tab, openTab), [openTab, tab])
+  const { theme } = useTheme()
   const contentContainerStyle = useMemo(() => {
-    const popUpPaddingRight = hasScrollBar ? spacings.prTy : spacings.prSm
-
     return [
-      isPopup ? spacings.plSm : {},
-      isPopup ? popUpPaddingRight : { paddingRight: 2 },
-      controllerBanners.length ? spacings.ptTy : spacings.pt0,
-      { flexGrow: 1 }
+      controllerBanners.length && isWeb ? spacings.ptTy : spacings.pt0,
+      { flexGrow: 1 },
+      isMobile && { paddingBottom: bottom }
     ]
-  }, [controllerBanners.length, hasScrollBar])
+  }, [bottom, controllerBanners.length])
 
   // Reset scroll position when switching tabs (new)
   useEffect(() => {
@@ -76,18 +67,10 @@ const DashboardPageScrollContainer: FC<Props> = ({
         bounciness: 0,
         speed: 2.8,
         overshootClamping: true,
-        useNativeDriver: !isWeb
+        useNativeDriver: false
       }).start()
     }
   }, [animatedOverviewHeight, openTab, tab])
-
-  const handleContentSizeChange = useCallback((contentWidth: number) => {
-    const windowWidth = Dimensions.get('window').width
-
-    if (windowWidth - contentWidth > SCROLLBAR_TRIGGER_THRESHOLD) return
-
-    setHasScrollBar(contentWidth < windowWidth)
-  }, [])
 
   return (
     <FlatList
@@ -96,9 +79,19 @@ const DashboardPageScrollContainer: FC<Props> = ({
       contentContainerStyle={contentContainerStyle}
       stickyHeaderIndices={[1]} // Makes the header sticky
       removeClippedSubviews
-      bounces={false}
-      alwaysBounceVertical={false}
-      onContentSizeChange={handleContentSizeChange}
+      bounces
+      alwaysBounceVertical
+      scrollEventThrottle={16}
+      refreshControl={
+        isMobile ? (
+          <RefreshControl
+            refreshing={!!refreshing}
+            onRefresh={onRefresh}
+            tintColor={theme.iconPrimary}
+            progressBackgroundColor={theme.secondaryBackground}
+          />
+        ) : undefined
+      }
       {...rest}
     />
   )

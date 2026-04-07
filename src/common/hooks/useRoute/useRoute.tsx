@@ -1,17 +1,35 @@
-import { navigationRef } from '@common/services/navigation'
+import { useMemo } from 'react'
+import { useLocation } from 'react-router-native'
 
 import { UseRouteReturnType } from './types'
 
-const useRoute = (): UseRouteReturnType => {
-  // Initially getCurrentRoute will return undefined until the current stack doesn't change
-  // when the stack is changed it will be stored in the routes indexes and then the route object will be accessible
-  const route = navigationRef.current.getCurrentRoute()
+function getSearchParamsAsObject(searchString: string) {
+  const paramsObject: any = {}
+  const searchParams = new URLSearchParams(searchString)
 
-  return {
-    ...route,
-    params: route?.params || {},
-    path: route?.name
+  // eslint-disable-next-line no-restricted-syntax
+  for (const [key, value] of searchParams.entries()) {
+    paramsObject[key] = value
   }
+
+  return paramsObject
+}
+
+const useRoute = (): UseRouteReturnType => {
+  const route = useLocation()
+
+  const params = useMemo(() => {
+    return (route.state as any) || getSearchParamsAsObject(route.search) || {}
+  }, [route.state, route.search])
+
+  return useMemo(
+    () => ({
+      ...route,
+      params,
+      path: route.pathname
+    }),
+    [route, params]
+  )
 }
 
 export default useRoute

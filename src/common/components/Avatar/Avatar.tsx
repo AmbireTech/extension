@@ -1,11 +1,12 @@
 import React, { FC, useEffect, useRef, useState } from 'react'
-import { Animated, ViewStyle } from 'react-native'
+import { Animated, View, ViewStyle } from 'react-native'
 
+import SkeletonLoader from '@common/components/SkeletonLoader'
+import { isBenzin, isLegends } from '@common/config/env'
+import { AvatarType } from '@common/controllers/wallet-state'
+import useController from '@common/hooks/useController'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import { AvatarType } from '@web/extension-services/background/controllers/wallet-state'
-import useDomainsControllerState from '@web/hooks/useDomainsController/useDomainsController'
-import useWalletStateController from '@web/hooks/useWalletStateController'
 
 import Blockie from './Blockies/Blockies'
 import EnsAvatar from './EnsAvatar'
@@ -47,7 +48,7 @@ interface Props {
    * The address of the user - used to generate the avatar
    */
   address: string
-  isSmart: boolean
+  smartAccountType?: 'Ambire' | 'Safe'
   size?: number
   style?: ViewStyle
   showTooltip?: boolean
@@ -63,7 +64,7 @@ interface Props {
 const Avatar: FC<Props> = ({
   pfp,
   address,
-  isSmart,
+  smartAccountType,
   size = 40,
   avatarType: propAvatarType,
   style = {},
@@ -72,14 +73,22 @@ const Avatar: FC<Props> = ({
 }) => {
   // the ENS avatar may point to an image that no longer exists or just fails to load
   // In that case we must fallback to the next avatar type
-  const [ensAvatarImageFetchFailed, setEnsAvatarImageFetchFailed] = useState(false)
+  const [ensAvatarImageState, setEnsAvatarImageState] = useState<'loading' | 'loaded' | 'failed'>(
+    'loading'
+  )
+  const ensAvatarImageFetchFailed = ensAvatarImageState === 'failed'
   // ENS Avatar
   const {
     state: { domains, loadingAddresses }
-  } = useDomainsControllerState()
+  } = useController('DomainsController')
   // There is no wallet controller state in benzin/rewards so we need to be careful
-  const walletState = useWalletStateController()
-  const avatarTypeSetting = propAvatarType || walletState?.avatarType || 'jazzicons'
+
+  let avatarTypeSetting: AvatarType | Omit<AvatarType, 'ens'> = propAvatarType || 'jazzicons'
+
+  if (!isLegends && !isBenzin && !propAvatarType) {
+    const walletState = useController('WalletStateController').state
+    avatarTypeSetting = walletState?.avatarType || 'jazzicons'
+  }
 
   const isEnsLoading = address
     ? (domains && !domains[address]) || loadingAddresses?.includes(address)
@@ -92,6 +101,20 @@ const Avatar: FC<Props> = ({
     propAvatarType
   })
   const borderRadius = size / 2
+
+  // The avatar may take too long to load
+  useEffect(() => {
+    if (avatarType === 'ens' && ensAvatar && ensAvatarImageState === 'loading') {
+      const timeout = setTimeout(() => {
+        setEnsAvatarImageState('failed')
+      }, 5000)
+
+      return () => clearTimeout(timeout)
+    }
+
+    // Stop eslint from crying
+    return undefined
+  }, [avatarType, ensAvatar, ensAvatarImageFetchFailed, ensAvatarImageState])
 
   // Pulsating animation
   const pulseAnim = useRef(new Animated.Value(1)).current
@@ -130,6 +153,17 @@ const Avatar: FC<Props> = ({
         { opacity: pulseAnim }
       ]}
     >
+      {/* The skeleton is displayed while the ENS image is loading, while the whole avatar is pulsing when we don't know
+      if the user has an ENS avatar or not. */}
+      {!isEnsLoading && avatarType === 'ens' && ensAvatarImageState === 'loading' && (
+        <SkeletonLoader
+          width={size}
+          height={size}
+          borderRadius={borderRadius}
+          appearance="secondaryBackground"
+          style={{ zIndex: -1, position: 'absolute' }}
+        />
+      )}
       {avatarType === 'jazzicons' && (
         <JazzIcon borderRadius={borderRadius} address={address} size={size} />
       )}
@@ -141,7 +175,7 @@ const Avatar: FC<Props> = ({
           size={size}
           avatar={ensAvatar}
           borderRadius={borderRadius}
-          setImageFetchFailed={setEnsAvatarImageFetchFailed}
+          setEnsAvatarImageState={setEnsAvatarImageState}
         />
       )}
       {avatarType === 'polycons' && (
@@ -149,7 +183,7 @@ const Avatar: FC<Props> = ({
       )}
       {displayTypeBadge && (
         <TypeBadge
-          isSmart={isSmart}
+          smartAccountType={smartAccountType}
           size={size >= 40 ? 'big' : 'small'}
           showTooltip={showTooltip}
         />

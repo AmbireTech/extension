@@ -1,11 +1,11 @@
 import React from 'react'
-import { ColorValue, View } from 'react-native'
+import { ColorValue } from 'react-native'
 import { SvgProps } from 'react-native-svg'
 
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
+import { AnimatedPressable, useCustomHover } from '@common/hooks/useHover'
 import spacings from '@common/styles/spacings'
-import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexboxStyles from '@common/styles/utils/flexbox'
 
 const PendingBadge = ({
@@ -14,7 +14,10 @@ const PendingBadge = ({
   label,
   Icon,
   backgroundColor,
-  textColor
+  textColor,
+  borderColor = 'transparent',
+  hoverBorderColor,
+  onPress
 }: {
   amount: bigint
   amountFormatted: string
@@ -22,29 +25,58 @@ const PendingBadge = ({
   Icon: React.ComponentType<SvgProps>
   backgroundColor: ColorValue
   textColor: ColorValue
+  borderColor?: ColorValue
+  hoverBorderColor?: ColorValue
+  onPress?: () => void
 }) => {
   const { t } = useTranslation()
+  const isInteractive = !!onPress
+
+  const fromBorder = String(borderColor)
+  const toBorder = String(isInteractive ? hoverBorderColor ?? borderColor : borderColor)
+
+  const [bindAnim, animStyle] = useCustomHover({
+    property: 'borderColor',
+    values: { from: fromBorder, to: toBorder }
+  })
 
   return (
-    <View
+    <AnimatedPressable
+      onPress={onPress}
+      disabled={!isInteractive}
       style={[
         spacings.pvMi,
-        spacings.phTy,
+        spacings.plSm,
+        spacings.prTy,
         spacings.mbMi,
         flexboxStyles.alignSelfStart,
         flexboxStyles.alignCenter,
         flexboxStyles.directionRow,
         {
-          borderRadius: BORDER_RADIUS_PRIMARY,
-          backgroundColor
-        }
+          borderRadius: 64,
+          height: 32,
+          backgroundColor,
+          borderColor,
+          borderWidth: 1,
+          // @ts-ignore react-native-web supports `cursor`
+          cursor: isInteractive ? 'pointer' : 'auto'
+        },
+        animStyle
       ]}
+      {...(isInteractive ? bindAnim : {})}
     >
-      <Text selectable color={textColor} fontSize={13} numberOfLines={1} style={[spacings.mrTy]}>
+      <Text
+        selectable
+        color={textColor}
+        weight="medium"
+        fontSize={12}
+        numberOfLines={1}
+        style={spacings.mrMi}
+      >
         {t(`${amount > 0n ? '+' : ''}${amountFormatted} ${label}`)}
       </Text>
-      <Icon color={textColor} width={13} height={13} />
-    </View>
+      <Icon color={textColor} width={20} height={20} />
+    </AnimatedPressable>
   )
 }
 

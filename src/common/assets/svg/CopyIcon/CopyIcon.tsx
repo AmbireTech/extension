@@ -1,23 +1,35 @@
 import React from 'react'
-import Svg, { G, Path } from 'react-native-svg'
+import Svg, { Path, Rect } from 'react-native-svg'
 
 import useTheme from '@common/hooks/useTheme'
 import { LegendsSvgProps } from '@legends/types/svg'
 
-const CopyIcon: React.FC<LegendsSvgProps> = ({ width = 22, height = 22, color, ...rest }) => {
+const CopyIcon: React.FC<LegendsSvgProps> = ({
+  width = 24,
+  height = 24,
+  strokeWidth = '1.5',
+  color,
+  ...rest
+}) => {
   const { theme } = useTheme()
   return (
-    <Svg width={width} height={height} viewBox="0 0 22 22" {...rest}>
-      <G
-        fill="none"
-        stroke={color || theme.iconSecondary}
+    <Svg width={width} height={height} viewBox="0 0 20 20" fill="none" {...rest}>
+      <Path
+        stroke={color || theme.iconPrimary}
         strokeLinecap="round"
         strokeLinejoin="round"
-        strokeWidth="1.5"
-      >
-        <Path d="M15 11.9v4.2c0 3.5-1.4 4.9-4.9 4.9H5.9C2.4 21 1 19.6 1 16.1v-4.2C1 8.4 2.4 7 5.9 7h4.2c3.5 0 4.9 1.4 4.9 4.9Z" />
-        <Path d="M21 5.9v4.2c0 3.5-1.4 4.9-4.9 4.9H15v-3.1C15 8.4 13.6 7 10.1 7H7V5.9C7 2.4 8.4 1 11.9 1h4.2C19.6 1 21 2.4 21 5.9Z" />
-      </G>
+        strokeWidth={strokeWidth}
+        d="M11.667 5.833c0-.464 0-.697-.039-.89a2 2 0 0 0-1.571-1.571c-.193-.039-.426-.039-.89-.039H7.333c-1.885 0-2.828 0-3.414.586s-.586 1.529-.586 3.414v1.834c0 .464 0 .697.039.89a2 2 0 0 0 1.571 1.571c.193.039.426.039.89.039"
+      />
+      <Rect
+        width="8.333"
+        height="8.333"
+        x="8.333"
+        y="8.333"
+        stroke={color || theme.iconPrimary}
+        strokeWidth={strokeWidth}
+        rx="2"
+      />
     </Svg>
   )
 }

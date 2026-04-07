@@ -1,17 +1,34 @@
 {
   "name": "Ambire",
   "slug": "ambire-mobile-wallet",
-  "version": "5.38.2",
+  "version": "6.3.0",
   "assetBundlePatterns": ["**/*"],
   "runtimeVersion": "11",
   "jsEngine": "hermes",
   "updates": {
-    "enabled": true,
+    "enabled": false,
     "fallbackToCacheTimeout": 45000
   },
   "ios": {
     "bundleIdentifier": "com.ambire.app.wallet"
   },
+  "android": {
+    "package": "com.ambire.wallet"
+  },
+  "plugins": [
+    [
+      "expo-splash-screen",
+      {
+        "backgroundColor": "#FFFFFF",
+        "image": "./src/mobile/assets/splash-icon.png",
+        "dark": {
+          "image": "./src/mobile/assets/splash-icon-dark.png",
+          "backgroundColor": "#1B1D20"
+        },
+        "imageWidth": 80
+      }
+    ]
+  ],
   "extra": {
     "eas": {
       "projectId": "e6f855d0-5ac3-40e0-8127-740906e7a593"

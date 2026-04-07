@@ -20,10 +20,13 @@
     "swap:and:bridge": "npx playwright test -g @swapAndBridge",
     "transfer": "npx playwright test -g @transfer",
     "ambire:rewards": "npx playwright test -g @rewards",
+    "auto:login": "npx playwright test -g @autoLogin",
+    "relayer": "npx playwright test -g @relayer",
     "postinstall": "patch-package"
   },
   "author": "Filip",
   "devDependencies": {
+    "@playwright/test": "^1.58.2",
     "@types/node": "^20.16.1",
     "@typescript-eslint/eslint-plugin": "^5.34.0",
     "@typescript-eslint/parser": "^5.34.0",
@@ -38,10 +41,9 @@
     "typescript": "^4.1.5"
   },
   "dependencies": {
-    "@playwright/test": "^1.52.0",
     "@trezor/connect-plugin-ethereum": "9.1.5",
     "@trezor/connect-webextension": "9.7.1",
-    "@trezor/trezor-user-env-link": "^1.0.0",
+    "@trezor/trezor-user-env-link": "1.0.0",
     "dotenv": "^16.4.5",
     "qs": "^6.12.0"
   }

@@ -1,17 +1,24 @@
 /* eslint-disable react/prop-types */
-import React, { FC, useCallback, useEffect, useRef } from 'react'
+import React, { FC, ReactNode, useCallback, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
-import { TextInput, View } from 'react-native'
+import {
+  FlatList,
+  FlatListProps,
+  SectionList,
+  SectionListProps,
+  TextInput,
+  View
+} from 'react-native'
 
+import ModalHeader from '@common/components/BottomSheet/ModalHeader'
 import Search from '@common/components/Search'
-import BottomSheetHeader from '@common/components/Select/components/BottomSheetHeader'
 import Text from '@common/components/Text'
+import { isMobile, isWeb } from '@common/config/env'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
-import flexbox from '@common/styles/utils/flexbox'
 
 import getStyles, { DEFAULT_SELECT_SIZE } from '../styles'
-import { CommonSelectProps } from '../types'
+import { CommonSelectProps, RenderSelectedOptionParams } from '../types'
 import useSelectInternal from '../useSelectInternal'
 import BottomSheetContainer from './BottomSheetContainer'
 import MenuContainer from './MenuContainer'
@@ -19,7 +26,11 @@ import SelectedMenuOption from './SelectedMenuOption'
 
 type Props = CommonSelectProps &
   ReturnType<typeof useSelectInternal> & {
-    children: React.ReactNode
+    children?: React.ReactNode
+    listRef?: React.Ref<any>
+    sectionListProps?: SectionListProps<any, any> & { ref?: React.Ref<any> }
+    flatListProps?: FlatListProps<any> & { ref?: React.Ref<any> }
+    renderHeaderChildren?: ({}: RenderSelectedOptionParams) => ReactNode
   }
 
 const SelectContainer: FC<Props> = ({
@@ -48,10 +59,14 @@ const SelectContainer: FC<Props> = ({
   control,
   children,
   size = DEFAULT_SELECT_SIZE,
-  mode = 'select',
+  mode = isMobile ? 'bottomSheet' : 'select',
   testID,
   renderSelectedOption,
-  setIsMenuOpen
+  setIsMenuOpen,
+  listRef,
+  sectionListProps,
+  flatListProps,
+  renderHeaderChildren
 }) => {
   const { t } = useTranslation()
   const { styles } = useTheme(getStyles)
@@ -66,7 +81,7 @@ const SelectContainer: FC<Props> = ({
   // This is most likely due to the BottomSheet's absolute positioning - when it starts opening,
   // it's positioned outside of the viewport along with the Search input.
   useEffect(() => {
-    if (isMenuOpen && mode === 'bottomSheet') {
+    if (isMenuOpen && mode === 'bottomSheet' && isWeb) {
       setTimeout(() => {
         searchInputRef.current?.focus()
       }, 300)
@@ -117,22 +132,30 @@ const SelectContainer: FC<Props> = ({
                 placeholder={searchPlaceholder || t('Search...')}
                 autoFocus
                 control={control}
-                containerStyle={spacings.mb0}
-                borderWrapperStyle={styles.searchBorderWrapperStyle}
-                inputWrapperStyle={styles.bottomSearchInputWrapperStyle}
-                leftIconStyle={spacings.pl}
+                containerStyle={{
+                  ...spacings.mtTy,
+                  ...spacings.pbTy,
+                  ...spacings.phTy
+                }}
               />
             )}
-            {children}
+            {sectionListProps ? (
+              <SectionList {...sectionListProps} />
+            ) : flatListProps ? (
+              <FlatList {...flatListProps} />
+            ) : (
+              children
+            )}
             {!!withSearch && menuProps.position === 'top' && (
               <Search
                 placeholder={searchPlaceholder || t('Search...')}
                 autoFocus
                 control={control}
-                containerStyle={spacings.mb0}
-                borderWrapperStyle={styles.searchBorderWrapperStyle}
-                inputWrapperStyle={styles.topSearchInputWrapperStyle}
-                leftIconStyle={spacings.pl}
+                containerStyle={{
+                  ...spacings.mtTy,
+                  ...spacings.pbTy,
+                  ...spacings.phTy
+                }}
               />
             )}
           </MenuContainer>
@@ -143,22 +166,26 @@ const SelectContainer: FC<Props> = ({
           isMenuOpen={isMenuOpen}
           setIsMenuOpen={setIsMenuOpen}
           toggleMenu={toggleMenu}
+          contentRef={listRef}
+          sectionListProps={sectionListProps}
+          flatListProps={flatListProps}
+          HeaderComponent={
+            <View>
+              <ModalHeader title={bottomSheetTitle} handleClose={toggleMenu} />
+              {renderHeaderChildren?.({ toggleMenu, setIsMenuOpen, isMenuOpen, selectRef })}
+              {!!withSearch && (
+                <Search
+                  placeholder={searchPlaceholder || t('Search...')}
+                  autoFocus={false}
+                  setInputRef={setInputRef}
+                  control={control}
+                  containerStyle={spacings.mb}
+                />
+              )}
+            </View>
+          }
         >
-          <BottomSheetHeader label={bottomSheetTitle} toggleMenu={toggleMenu} />
-          <View style={[spacings.phMd, spacings.pvMd, flexbox.flex1, { height: 600 }]}>
-            <Search
-              placeholder={searchPlaceholder || t('Search...')}
-              // When autoFocus is enabled, the BottomSheet animation breaks.
-              // See the useEffect above for more details — it manually focuses the Search input.
-              autoFocus={false}
-              setInputRef={setInputRef}
-              control={control}
-              containerStyle={spacings.mb}
-              leftIconStyle={spacings.pl}
-              height={48}
-            />
-            {children}
-          </View>
+          {children}
         </BottomSheetContainer>
       )}
     </View>

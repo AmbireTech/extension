@@ -5,18 +5,14 @@ import { Pressable, View } from 'react-native'
 import Text from '@common/components/Text'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
-import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
-import { openInTab } from '@web/extension-services/background/webapi/tab'
+import { openInTab } from '@common/utils/links'
 
 const Header: FC = () => {
-  const { theme, themeType } = useTheme()
+  const { theme } = useTheme()
   const { t } = useTranslation()
 
-  const openHelpCenter = useCallback(
-    () => openInTab({ url: 'https://help.ambire.com/hc/en-us/requests/new' }),
-    []
-  )
+  const openHelpCenter = useCallback(() => openInTab({ url: 'https://help.ambire.com/en' }), [])
   return (
     <View
       style={[
@@ -26,8 +22,7 @@ const Header: FC = () => {
         spacings.mbSm,
         spacings.pbTy,
         {
-          backgroundColor:
-            themeType === THEME_TYPES.DARK ? theme.secondaryBackground : theme.primaryBackground
+          backgroundColor: theme.primaryBackground
         }
       ]}
     >
@@ -35,16 +30,16 @@ const Header: FC = () => {
         {t('Portfolio errors')}
       </Text>
       <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-        <Text fontSize={14} weight="medium" appearance="secondaryText" style={spacings.mrSm}>
-          {t('Experiencing frequent issues?')}
+        <Text fontSize={12} weight="medium" appearance="secondaryText" style={spacings.mrSm}>
+          {t('Frequent issues?')}
         </Text>
         <Pressable onPress={openHelpCenter}>
           <Text
-            fontSize={14}
+            fontSize={12}
             weight="medium"
-            color={themeType === THEME_TYPES.DARK ? theme.linkText : theme.primary}
+            color={theme.linkText}
             style={{
-              textDecorationColor: themeType === THEME_TYPES.DARK ? theme.linkText : theme.primary,
+              textDecorationColor: theme.linkText,
               textDecorationLine: 'underline'
             }}
           >

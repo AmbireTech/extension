@@ -158,7 +158,9 @@ export async function forwardRpcRequests(url: string, method: any, params: any) 
   return responseJson.result
 }
 
-const provider = new EthereumProvider(forwardRpcRequests, () => foundDappRpcUrls)
+const provider = new EthereumProvider(forwardRpcRequests, () => foundDappRpcUrls, {
+  deferInitialization: isCrossOriginFrame() || isTooDeepFrameInTheFrameHierarchy()
+})
 const ambireProvider = new Proxy(provider, {
   deleteProperty: (target, prop) => {
     if (typeof prop === 'string' && ['on', 'isAmbire', 'isMetaMask'].includes(prop)) {

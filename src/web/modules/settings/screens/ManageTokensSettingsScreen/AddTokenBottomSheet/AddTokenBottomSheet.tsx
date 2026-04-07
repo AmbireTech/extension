@@ -1,5 +1,5 @@
 import { getAddress } from 'ethers'
-import React, { FC, useCallback, useEffect, useMemo, useState } from 'react'
+import React, { FC, ReactNode, useCallback, useEffect, useMemo, useState } from 'react'
 import { Controller, useForm } from 'react-hook-form'
 import { View } from 'react-native'
 
@@ -7,6 +7,7 @@ import { Network } from '@ambire-common/interfaces/network'
 import { isValidAddress } from '@ambire-common/services/address'
 import Alert from '@common/components/Alert/Alert'
 import BottomSheet from '@common/components/BottomSheet'
+import ModalHeader from '@common/components/BottomSheet/ModalHeader'
 import Button from '@common/components/Button'
 import CoingeckoConfirmedBadge from '@common/components/CoingeckoConfirmedBadge'
 import Input from '@common/components/Input'
@@ -17,15 +18,11 @@ import Spinner from '@common/components/Spinner'
 import Text from '@common/components/Text'
 import TokenIcon from '@common/components/TokenIcon'
 import { useTranslation } from '@common/config/localization'
+import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import spacings from '@common/styles/spacings'
-import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
-import useBackgroundService from '@web/hooks/useBackgroundService'
-import useNetworksControllerState from '@web/hooks/useNetworksControllerState'
-import usePortfolioControllerState from '@web/hooks/usePortfolioControllerState/usePortfolioControllerState'
-import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
 import {
   getTokenEligibility,
   getTokenFromPortfolio,
@@ -35,8 +32,8 @@ import {
 
 type NetworkOption = {
   value: string
-  label: JSX.Element
-  icon: JSX.Element
+  label: ReactNode
+  icon: ReactNode
 }
 
 type Props = {
@@ -46,14 +43,18 @@ type Props = {
 
 const AddTokenBottomSheet: FC<Props> = ({ sheetRef, handleClose }) => {
   const { t } = useTranslation()
-  const { dispatch } = useBackgroundService()
-  const { networks, isInitialized } = useNetworksControllerState()
+  const { networks, isInitialized } = useController('NetworksController').state
   const { addToast } = useToast()
-  const { validTokens, customTokens, temporaryTokens } = usePortfolioControllerState()
-  const { portfolio: selectedAccountPortfolio } = useSelectedAccountControllerState()
-  const { themeType } = useTheme()
+  const { theme } = useTheme()
+  const {
+    state: { validTokens, customTokens, temporaryTokens },
+    dispatch: portfolioDispatch
+  } = useController('PortfolioController')
+  const {
+    state: { portfolio: selectedAccountPortfolio, account }
+  } = useController('SelectedAccountController')
   const [network, setNetwork] = useState<Network | undefined>(
-    isInitialized ? networks.find((n) => n.chainId.toString() === '1') ?? networks[0] : undefined
+    isInitialized ? (networks.find((n) => n.chainId.toString() === '1') ?? networks[0]) : undefined
   )
   const [showAlreadyInPortfolioMessage, setShowAlreadyInPortfolioMessage] = useState<boolean>(false)
   const [isLoading, setIsLoading] = useState(false)
@@ -149,15 +150,17 @@ const AddTokenBottomSheet: FC<Props> = ({ sheetRef, handleClose }) => {
       return
     }
 
-    dispatch({
-      type: 'PORTFOLIO_CONTROLLER_ADD_CUSTOM_TOKEN',
+    if (!account) return
+
+    portfolioDispatch({
+      type: 'method',
       params: {
-        token: {
-          address: temporaryToken.address,
-          chainId: network.chainId,
-          standard: 'ERC20'
-        },
-        shouldUpdatePortfolio: true
+        method: 'addCustomToken',
+        args: [
+          { address: temporaryToken.address, standard: 'ERC20', chainId: network.chainId },
+          account.addr,
+          true
+        ]
       }
     })
     addToast(t(`Added token ${address} on ${network.name} to your portfolio`))
@@ -168,10 +171,11 @@ const AddTokenBottomSheet: FC<Props> = ({ sheetRef, handleClose }) => {
     temporaryToken?.address,
     temporaryToken?.symbol,
     temporaryToken?.decimals,
-    dispatch,
+    portfolioDispatch,
     addToast,
     t,
-    handleCloseAndReset
+    handleCloseAndReset,
+    account
   ])
 
   const handleTokenType = useCallback(() => {
@@ -185,14 +189,16 @@ const AddTokenBottomSheet: FC<Props> = ({ sheetRef, handleClose }) => {
       return
     }
 
-    dispatch({
-      type: 'PORTFOLIO_CONTROLLER_CHECK_TOKEN',
+    if (!account) return
+
+    portfolioDispatch({
+      type: 'method',
       params: {
-        token: { address, chainId: network.chainId },
-        allNetworks: true
+        method: 'updateTokenValidationByStandard',
+        args: [{ address, chainId: network.chainId }, account.addr, true]
       }
     })
-  }, [network, dispatch, address, addToast, t])
+  }, [network, address, addToast, t, account, portfolioDispatch])
 
   useEffect(() => {
     const handleEffect = async () => {
@@ -217,9 +223,14 @@ const AddTokenBottomSheet: FC<Props> = ({ sheetRef, handleClose }) => {
       if (!temporaryToken) {
         if (tokenTypeEligibility && !isAdditionalHintRequested) {
           setIsLoading(true)
-          dispatch({
-            type: 'PORTFOLIO_CONTROLLER_GET_TEMPORARY_TOKENS',
-            params: { chainId: network?.chainId, additionalHint: getAddress(address) }
+          if (!account) return
+
+          portfolioDispatch({
+            type: 'method',
+            params: {
+              method: 'getTemporaryTokens',
+              args: [account.addr, network?.chainId, getAddress(address)]
+            }
           })
           setAdditionalHintRequested(true)
         } else if (tokenTypeEligibility === undefined) {
@@ -264,16 +275,12 @@ const AddTokenBottomSheet: FC<Props> = ({ sheetRef, handleClose }) => {
   }, [address, network])
 
   return (
-    <BottomSheet
-      id="add-custom-token"
-      sheetRef={sheetRef}
-      closeBottomSheet={handleCloseAndReset}
-      style={{ maxWidth: 720 }}
-      backgroundColor={themeType === THEME_TYPES.DARK ? 'secondaryBackground' : 'primaryBackground'}
-    >
-      <Text testID="add-token-modal-title-text" fontSize={20} style={spacings.mbXl} weight="medium">
-        {t('Add Token')}
-      </Text>
+    <BottomSheet id="add-custom-token" sheetRef={sheetRef} closeBottomSheet={handleCloseAndReset}>
+      <ModalHeader
+        title={t('Add Token')}
+        handleClose={handleCloseAndReset}
+        headerTestID="add-token-modal-title-text"
+      />
       {isInitialized && network ? (
         <View>
           <Select
@@ -282,6 +289,9 @@ const AddTokenBottomSheet: FC<Props> = ({ sheetRef, handleClose }) => {
             value={networksOptions.filter((opt) => opt.value === network.name)[0]}
             label={t('Choose Network')}
             containerStyle={spacings.mbMd}
+            selectStyle={{
+              backgroundColor: theme.secondaryBackground
+            }}
           />
           <Controller
             control={control}
@@ -294,9 +304,9 @@ const AddTokenBottomSheet: FC<Props> = ({ sheetRef, handleClose }) => {
                 label={t('Token Address')}
                 placeholder={t('0x...')}
                 value={value}
-                inputStyle={spacings.mbSm}
                 containerStyle={spacings.mbSm}
                 error={errors.address && errors.address.message}
+                backgroundColor={theme.secondaryBackground}
               />
             )}
           />

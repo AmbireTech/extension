@@ -1,29 +1,23 @@
 import { StyleSheet, ViewStyle } from 'react-native'
 
+import { isMobile } from '@common/config/env'
 import spacings from '@common/styles/spacings'
-import { THEME_TYPES, ThemeProps, ThemeType } from '@common/styles/themeConfig'
-import common from '@common/styles/utils/common'
+import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 
 interface Style {
-  addToAddressBook: ViewStyle
   addressBookButton: ViewStyle
 }
 
-const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
+const getStyles = () =>
   StyleSheet.create<Style>({
-    addToAddressBook: {
-      maxWidth: 240
-    },
     addressBookButton: {
-      backgroundColor:
-        themeType === THEME_TYPES.DARK ? `${theme.primary as string}14` : '#6000FF14',
-      ...common.borderRadiusPrimary,
       ...spacings.phTy,
-      ...common.borderRadiusPrimary,
       ...flexbox.directionRow,
       ...flexbox.alignCenter,
-      height: 28
+      ...(isMobile && flexbox.justifyCenter),
+      height: isMobile ? 40 : 32,
+      borderRadius: isMobile ? BORDER_RADIUS_PRIMARY : 64
     }
   })
 

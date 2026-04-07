@@ -1,6 +1,7 @@
 import { StyleSheet, TextStyle, ViewStyle } from 'react-native'
 
 import { IS_MOBILE_UP_BENZIN_BREAKPOINT } from '@benzin/screens/BenzinScreen/styles'
+import { isMobile, isWeb } from '@common/config/env'
 import spacings from '@common/styles/spacings'
 import { ThemeProps } from '@common/styles/themeConfig'
 import common from '@common/styles/utils/common'
@@ -20,7 +21,7 @@ const iconStyle: ViewStyle = {
   width: 18,
   height: 18,
   position: 'absolute',
-  left: -8,
+  ...(isWeb ? { left: -8 } : { left: -11 }),
   zIndex: 3
 }
 
@@ -40,19 +41,18 @@ const getStyles = (theme: ThemeProps) =>
       borderColor: theme.secondaryBorder
     },
     nextCircle: {
-      borderColor: theme.successDecorative
+      borderColor: theme.success400
     },
     title: {
       ...spacings.mrMi,
       ...(IS_MOBILE_UP_BENZIN_BREAKPOINT ? spacings.mb : spacings.mbSm),
       textTransform: 'capitalize',
-      lineHeight: 18 // must be the same as font-size
+      lineHeight: isMobile ? 23 : 18 // must be the same as font-size
     },
     arrow: {
       ...spacings.pvTy,
       ...spacings.phMi,
-      ...spacings.mlMi,
-      color: theme.linkText
+      ...spacings.mlMi
     },
     arrowHovered: {
       backgroundColor: `${String(theme.linkText)}14`,

@@ -1,11 +1,14 @@
 import React from 'react'
 import { Pressable, View } from 'react-native'
 
+import AddCircularIcon from '@common/assets/svg/AddCircularIcon'
 import AddIcon from '@common/assets/svg/AddIcon'
 import Text from '@common/components/Text'
+import { isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
+import { hexToRgba } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 
 import getStyles from './styles'
@@ -32,33 +35,34 @@ const AddToAddressBook = ({
     !!isRecipientAddressUnknown &&
     !isRecipientAddressSameAsSender &&
     addressValidationMsg !== 'Invalid address.' ? (
-    <View
-      style={[
-        spacings.mb,
-        spacings.mtTy,
-        flexbox.directionRow,
-        flexbox.alignCenter,
-        flexbox.justifySpaceBetween
+    <Pressable
+      style={({ hovered }: any) => [
+        ...(isWeb ? [spacings.mb] : []),
+        ...(isWeb ? [spacings.mtTy] : [spacings.mtSm]),
+        styles.addressBookButton,
+        {
+          backgroundColor: hovered
+            ? hexToRgba(theme.primaryAccent200, 0.16)
+            : theme.primaryAccent100
+        }
       ]}
+      onPress={onAddToAddressBookPress}
     >
-      <Pressable
-        style={({ hovered }: any) => [
-          styles.addressBookButton,
-          hovered && { backgroundColor: theme.primary20 }
-        ]}
-        onPress={onAddToAddressBookPress}
+      <AddCircularIcon
+        width={isWeb ? 16 : 18}
+        height={isWeb ? 16 : 18}
+        style={spacings.mrMi}
+        color={theme.primaryAccent300}
+      />
+      <Text
+        fontSize={12}
+        weight="medium"
+        testID="send-form-add-to-address-book-button"
+        color={theme.primaryAccent300}
       >
-        <AddIcon width={16} height={16} style={spacings.mrMi} color={theme.primary} />
-        <Text
-          fontSize={12}
-          weight="medium"
-          appearance="primary"
-          testID="send-form-add-to-address-book-button"
-        >
-          {t('Add to address book')}
-        </Text>
-      </Pressable>
-    </View>
+        {t('Add to address book')}
+      </Text>
+    </Pressable>
   ) : null
 }
 

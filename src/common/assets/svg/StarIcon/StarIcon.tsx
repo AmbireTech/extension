@@ -3,26 +3,15 @@ import Svg, { Path, SvgProps } from 'react-native-svg'
 
 import useTheme from '@common/hooks/useTheme'
 
-interface Props extends SvgProps {
-  width?: number
-  height?: number
-  isFilled?: boolean
-}
-
-const StarIcon: React.FC<Props> = ({ width = 16, height = 16, isFilled, color, ...rest }) => {
+const StarIcon: React.FC<SvgProps> = ({ width = 24, height = 24, color, ...rest }) => {
   const { theme } = useTheme()
+
   return (
-    <Svg width={width} height={height} viewBox="0 0 16 16" {...rest}>
+    <Svg width={width} height={height} viewBox="0 0 20 20" {...rest} fill="none">
       <Path
-        d="M19.842,9.1l-6.055-.522L11.421,3,9.055,8.583,3,9.1,7.6,13.08,6.217,19l5.2-3.141L16.625,19l-1.373-5.92Zm-8.421,5.187L8.255,16.2l.842-3.6L6.3,10.166l3.688-.32,1.432-3.394,1.44,3.4,3.688.32-2.8,2.425.842,3.6Z"
-        transform="translate(-3 -3)"
-        fill={color || theme.iconPrimary}
-      />
-      <Path
-        d="M11.421,15.859,16.625,19l-1.381-5.92,4.6-3.983-6.055-.514L11.421,3,9.055,8.583,3,9.1,7.6,13.08,6.217,19Z"
-        transform="translate(-3 -3)"
-        fill={theme.warningDecorative2}
-        opacity={isFilled ? '1' : '0'}
+        stroke={color || theme.iconPrimary}
+        strokeWidth="1.5"
+        d="M10 2.417c.022 0 .043.006.06.016.015.01.037.028.058.07l1.934 3.964c.231.474.675.819 1.204.907l4.203.699c.043.007.09.036.114.114a.2.2 0 0 1-.043.203l-3.008 3.15a1.708 1.708 0 0 0-.448 1.432l.663 4.397c.013.09-.023.152-.069.187a.125.125 0 0 1-.06.027.099.099 0 0 1-.059-.015l-3.794-2.018a1.605 1.605 0 0 0-1.51 0L5.45 17.568a.099.099 0 0 1-.06.015.124.124 0 0 1-.06-.027c-.046-.035-.081-.097-.068-.187l.663-4.397a1.708 1.708 0 0 0-.448-1.432L2.47 8.39a.2.2 0 0 1-.043-.203c.025-.078.071-.107.114-.114l4.203-.7c.53-.087.972-.432 1.203-.906L9.88 2.503a.158.158 0 0 1 .058-.07.117.117 0 0 1 .06-.016Z"
       />
     </Svg>
   )

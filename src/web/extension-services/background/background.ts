@@ -4,6 +4,13 @@
 /* eslint-disable no-restricted-syntax */
 /* eslint-disable @typescript-eslint/no-use-before-define */
 /* eslint-disable @typescript-eslint/no-shadow */
+
+// We include `setImmediate` because ethers / viem cryptographic operations
+// (e.g. scrypt keystore unlock) rely on it for fast cooperative scheduling —
+// without it they fall back to slower timers and performance drops significantly.
+//
+// It is imported in background for development builds, and injected via Webpack
+// plugin for production where LavaMoat + SES isolate modules and harden intrinsics.
 import 'setimmediate'
 
 import { nanoid } from 'nanoid'
@@ -24,6 +31,11 @@ import { KeystoreSigner } from '@ambire-common/libs/keystoreSigner/keystoreSigne
 import { parse, stringify } from '@ambire-common/libs/richJson/richJson'
 import wait from '@ambire-common/utils/wait'
 import CONFIG, { APP_VERSION, isAmbireNext, isDev, isProd } from '@common/config/env'
+import { controllersNestedInMainMapping } from '@common/constants/controllersMapping'
+import { WalletStateController } from '@common/controllers/wallet-state'
+import { storage } from '@common/services/storage'
+import { Action, MethodAction } from '@common/types/actions'
+import { LOG_LEVELS, logInfoWithPrefix } from '@common/utils/logger'
 import {
   BROWSER_EXTENSION_LOG_UPDATED_CONTROLLER_STATE_ONLY,
   BROWSER_EXTENSION_MEMORY_INTENSIVE_LOGS,
@@ -34,11 +46,9 @@ import {
 } from '@env'
 import * as Sentry from '@sentry/browser'
 import { browser, platform } from '@web/constants/browserapi'
-import { Action } from '@web/extension-services/background/actions'
 import AutoLockController from '@web/extension-services/background/controllers/auto-lock'
 import { BadgesController } from '@web/extension-services/background/controllers/badges'
 import ExtensionUpdateController from '@web/extension-services/background/controllers/extension-update'
-import { WalletStateController } from '@web/extension-services/background/controllers/wallet-state'
 import { handleActions } from '@web/extension-services/background/handlers/handleActions'
 import { handleCleanUpOnPortDisconnect } from '@web/extension-services/background/handlers/handleCleanUpOnPortDisconnect'
 import { handleKeepAlive } from '@web/extension-services/background/handlers/handleKeepAlive'
@@ -48,9 +58,7 @@ import {
 } from '@web/extension-services/background/handlers/handleScripting'
 import handleProviderRequests from '@web/extension-services/background/provider/handleProviderRequests'
 import { providerRequestTransport } from '@web/extension-services/background/provider/providerRequestTransport'
-import { controllersNestedInMainMapping } from '@web/extension-services/background/types'
 import { notificationManager } from '@web/extension-services/background/webapi/notification'
-import { storage } from '@web/extension-services/background/webapi/storage'
 import windowManager from '@web/extension-services/background/webapi/window'
 import {
   initializeMessenger,
@@ -65,7 +73,6 @@ import LatticeSigner from '@web/modules/hardware-wallet/libs/LatticeSigner'
 import LedgerSigner from '@web/modules/hardware-wallet/libs/LedgerSigner'
 import TrezorSigner from '@web/modules/hardware-wallet/libs/TrezorSigner'
 import { getExtensionInstanceId } from '@web/utils/analytics'
-import { LOG_LEVELS, logInfoWithPrefix } from '@web/utils/logger'
 
 import {
   captureBackgroundException,
@@ -608,7 +615,7 @@ const init = async () => {
      * ensuring that the state update is immediately applied at the application level (React/Extension).
      *
      * For more info, please refer to:
-     * EventEmitter.forceEmitUpdate() or useControllerState().
+     * EventEmitter.forceEmitUpdate()
      */
     if (forceEmit) {
       sendUpdate()
@@ -652,22 +659,13 @@ const init = async () => {
         pm.addConnectListener(
           port.id,
           // @ts-ignore
-          async (messageType, action: Action, meta: MessageMeta = {}) => {
+          async (messageType, action: MethodAction | Action, meta: MessageMeta = {}) => {
             const { type } = action
             const { windowId } = meta
 
             try {
               if (messageType === '> background' && type) {
-                await handleActions(action, {
-                  pm,
-                  port,
-                  eventEmitterRegistry,
-                  mainCtrl,
-                  walletStateCtrl,
-                  autoLockCtrl,
-                  extensionUpdateCtrl,
-                  windowId
-                })
+                await handleActions(action, { pm, port, eventEmitterRegistry, mainCtrl })
               }
             } catch (err: any) {
               console.error(`${type} action failed:`, err)

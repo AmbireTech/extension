@@ -7,26 +7,25 @@ import CopyIcon from '@common/assets/svg/CopyIcon'
 import BottomSheet from '@common/components/BottomSheet'
 import ScrollableWrapper from '@common/components/ScrollableWrapper'
 import { useTranslation } from '@common/config/localization'
-import { ThemeProvider } from '@common/contexts/themeContext'
+import { LeanThemeProvider } from '@common/contexts/themeContext/context'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import GestureHandler from '@common/modules/app-init/screens/AppInit/GestureHandler'
 import spacings from '@common/styles/spacings'
-import { DEFAULT_THEME, THEME_TYPES, ThemeType } from '@common/styles/themeConfig'
-import common from '@common/styles/utils/common'
+import { DEFAULT_THEME } from '@common/styles/theme/types'
+import { THEME_TYPES, ThemeType } from '@common/styles/themeConfig'
+import common, { hexToRgba } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
 import { setStringAsync } from '@common/utils/clipboard'
+import { openInTab } from '@common/utils/links'
+import { getUiType } from '@common/utils/uiType'
 import { PortalHost } from '@gorhom/portal'
 import { isExtension } from '@web/constants/browserapi'
-import { openInTab } from '@web/extension-services/background/webapi/tab'
-import { getUiType } from '@web/utils/uiType'
 
 import AmbireLogoHorizontal from '../AmbireLogoHorizontal'
 import Button from '../Button'
 import Text from '../Text'
-
-const { isPopup } = getUiType()
 
 interface Props {
   error: Error
@@ -63,8 +62,7 @@ const ErrorBoundaryInner = ({ error }: Props) => {
         type="modal"
         shouldBeClosableOnDrag={false}
         style={{
-          overflow: 'hidden',
-          width: isPopup ? 512 : 712
+          overflow: 'hidden'
         }}
         scrollViewProps={{
           contentContainerStyle: { flex: 1 },
@@ -90,13 +88,10 @@ const ErrorBoundaryInner = ({ error }: Props) => {
             Please share it with{' '}
             <TouchableOpacity
               onPress={() =>
-                openInTab({ url: 'https://help.ambire.com/hc', shouldCloseCurrentWindow: true })
+                openInTab({ url: 'https://help.ambire.com/en', shouldCloseCurrentWindow: true })
               }
             >
-              <Text
-                weight="medium"
-                color={themeType === THEME_TYPES.DARK ? theme.linkText : theme.primary}
-              >
+              <Text weight="medium" color={theme.linkText}>
                 our support team
               </Text>
             </TouchableOpacity>{' '}
@@ -160,7 +155,7 @@ const ErrorBoundaryInner = ({ error }: Props) => {
             flexbox.alignCenter,
             common.borderRadiusPrimary,
             {
-              backgroundColor: theme.primaryBackground,
+              backgroundColor: hexToRgba(theme.primaryBackground, 0.6),
               borderColor: theme.secondaryBorder,
               borderWidth: 1
             }
@@ -185,7 +180,7 @@ const ErrorBoundaryInner = ({ error }: Props) => {
               {t('Try reloading the page. If the issue persists, restart your browser or ')}
               <TouchableOpacity
                 onPress={() =>
-                  openInTab({ url: 'https://help.ambire.com/hc', shouldCloseCurrentWindow: true })
+                  openInTab({ url: 'https://help.ambire.com/en', shouldCloseCurrentWindow: true })
                 }
               >
                 <Text
@@ -224,17 +219,18 @@ const ErrorBoundaryInner = ({ error }: Props) => {
 }
 
 const ErrorBoundary = ({ error }: Props) => {
-  const [themeType] = useState(
-    (isExtension && localStorage.getItem('fallbackSelectedThemeType')) || DEFAULT_THEME
+  const [themeType] = useState<ThemeType>(
+    ((isExtension && localStorage.getItem('fallbackSelectedThemeType')) as ThemeType | undefined) ||
+      DEFAULT_THEME
   )
 
   return (
     // The global theme provider is rendered below the ErrorBoundary as it requires state from other contexts.
     // To ensure that the ErrorBoundary has access to the theme and wraps as many components as possible,
     // we render a ThemeProvider with a forced theme type.
-    <ThemeProvider forceThemeType={themeType as ThemeType}>
+    <LeanThemeProvider selectedThemeType={themeType} updateThemeType={() => {}}>
       <ErrorBoundaryInner error={error} />
-    </ThemeProvider>
+    </LeanThemeProvider>
   )
 }
 

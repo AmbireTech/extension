@@ -1,63 +1,63 @@
-import LottieView from 'lottie-react'
-import React from 'react'
-import { View } from 'react-native'
+import React, { useEffect, useRef } from 'react'
+import { Animated, View, ViewStyle } from 'react-native'
 
-import CheckIcon2 from '@common/assets/svg/CheckIcon2'
+import SuccessIcon from '@common/assets/svg/SuccessIcon'
+import Spinner from '@common/components/Spinner'
+import { isWeb } from '@common/config/env'
 import useTheme from '@common/hooks/useTheme'
+import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
-import animation from './animation.json'
-import BackgroundShapes from './BackgroundShapes'
-import getStyles from './styles'
-
 const SuccessAnimation = ({
-  width = 421,
-  height = 343,
-  noBackgroundShapes = false,
-  animationContainerStyle,
-  style,
-  children
+  style = {},
+  size = 72,
+  // isLoading needed to avoid shift of content when switching between loading and success state
+  isLoading
 }: {
-  width?: number
-  height?: number
-  noBorder?: boolean
-  noBackgroundShapes?: boolean
-  animationContainerStyle?: object
-  style?: object
-
-  children?: React.ReactNode | React.ReactNode[]
+  style?: ViewStyle
+  size?: number
+  isLoading?: boolean
 }) => {
-  const { styles } = useTheme(getStyles)
+  const { theme } = useTheme()
+  const scaleAnim = useRef(new Animated.Value(0)).current
+
+  useEffect(() => {
+    if (isLoading) return
+
+    Animated.spring(scaleAnim, {
+      toValue: 1,
+      useNativeDriver: !isWeb,
+      tension: 50,
+      friction: 7
+    }).start()
+  }, [scaleAnim, isLoading])
+
   return (
     <View
-      style={[
-        {
-          width,
-          height,
-          ...style
-        }
-      ]}
+      style={{
+        ...flexbox.center,
+        ...spacings.mbSm,
+        width: size,
+        height: size,
+        ...style
+      }}
     >
-      {!noBackgroundShapes && <BackgroundShapes style={styles.backgroundShapes} />}
-      <View style={[styles.animationContainer, animationContainerStyle]}>
-        <LottieView
-          animationData={animation}
-          style={{
-            ...(styles.lottieView as React.CSSProperties),
-            ...(animationContainerStyle as React.CSSProperties)
-          }}
-          loop
-        />
-        <CheckIcon2
-          style={[
-            styles.checkIcon,
-            {
-              transform: [{ translateX: -0.5 * 64 }, { translateY: -0.5 * 64 }]
-            }
-          ]}
-        />
-      </View>
-      <View style={[flexbox.alignCenter, flexbox.justifyCenter]}>{children}</View>
+      <Animated.View
+        style={{
+          ...flexbox.center,
+          width: size,
+          height: size,
+          borderRadius: size / 2,
+          backgroundColor: isLoading ? 'transparent' : theme.successBackground,
+          transform: [{ scale: isLoading ? 1 : scaleAnim }]
+        }}
+      >
+        {isLoading ? (
+          <Spinner style={{ width: 20, height: 20 }} />
+        ) : (
+          <SuccessIcon width={size * 0.66} height={size * 0.66} color={theme.success400} />
+        )}
+      </Animated.View>
     </View>
   )
 }

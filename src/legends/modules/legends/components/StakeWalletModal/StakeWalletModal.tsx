@@ -9,13 +9,13 @@ import {
   parseUnits,
   WeiPerEther
 } from 'ethers'
-import LottieView from 'lottie-react'
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { createPortal } from 'react-dom'
 
 import { STK_WALLET, WALLET_STAKING_ADDR, WALLET_TOKEN } from '@ambire-common/consts/addresses'
 import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
 import WarningIcon from '@common/assets/svg/WarningIcon'
+import LottieView from '@common/components/LottieView/LottieView.web'
 import { RELAYER_URL } from '@env'
 import HumanReadableError from '@legends/classes/HumanReadableError'
 import background from '@legends/common/assets/images/background.png'
@@ -27,7 +27,7 @@ import { ETHEREUM_CHAIN_ID } from '@legends/constants/networks'
 import useAccountContext from '@legends/hooks/useAccountContext'
 import useErc5792 from '@legends/hooks/useErc5792'
 import useEscModal from '@legends/hooks/useEscModal'
-import usePortfolioControllerState from '@legends/hooks/usePortfolioControllerState/usePortfolioControllerState'
+import usePortfolio from '@legends/hooks/usePortfolio'
 import useProviderContext from '@legends/hooks/useProviderContext'
 import useSwitchNetwork from '@legends/hooks/useSwitchNetwork'
 import useToast from '@legends/hooks/useToast'
@@ -82,7 +82,7 @@ const StakeWalletModal: React.FC<{ isOpen: boolean; handleClose: () => void }> =
   }>(null)
   const { provider, browserProvider } = useProviderContext()
   const { connectedAccount, v1Account } = useAccountContext()
-  const { walletTokenInfo } = usePortfolioControllerState()
+  const { walletTokenInfo } = usePortfolio()
   const { sendCalls, getCallsStatus } = useErc5792()
   const switchNetwork = useSwitchNetwork()
   const { addToast } = useToast()
@@ -486,7 +486,7 @@ const StakeWalletModal: React.FC<{ isOpen: boolean; handleClose: () => void }> =
             Learn more about{' '}
             <a
               target="_blank"
-              href="https://help.ambire.com/hc/en-us/sections/4421155466130-Staking/"
+              href="https://help.ambire.com/en/collections/18211458-wallet-token-governance"
               rel="noreferrer"
             >
               how staking works

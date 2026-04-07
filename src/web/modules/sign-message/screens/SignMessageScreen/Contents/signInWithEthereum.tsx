@@ -5,22 +5,21 @@ import { View } from 'react-native'
 import { AUTO_LOGIN_DURATION_OPTIONS } from '@ambire-common/controllers/autoLogin/autoLogin'
 import { SiweMessageUserRequest } from '@ambire-common/interfaces/userRequest'
 import Alert from '@common/components/Alert'
+import FatToggle from '@common/components/FatToggle'
 import NetworkBadge from '@common/components/NetworkBadge'
 import ScrollableWrapper from '@common/components/ScrollableWrapper'
 import Select from '@common/components/Select'
 import Text from '@common/components/Text'
 import Toggle from '@common/components/Toggle'
 import Tooltip from '@common/components/Tooltip'
+import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
+import HardwareWalletSigningModal from '@common/modules/hardware-wallets/components/HardwareWalletSigningModal'
 import spacings, { SPACING, SPACING_LG, SPACING_MD, SPACING_SM } from '@common/styles/spacings'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import { TabLayoutWrapperMainContent } from '@web/components/TabLayoutWrapper'
-import useBackgroundService from '@web/hooks/useBackgroundService'
-import useNetworksControllerState from '@web/hooks/useNetworksControllerState'
 import useResponsiveActionWindow from '@web/hooks/useResponsiveActionWindow'
-import useSignMessageControllerState from '@web/hooks/useSignMessageControllerState'
-import HardwareWalletSigningModal from '@web/modules/hardware-wallet/components/HardwareWalletSigningModal'
 import LedgerConnectModal from '@web/modules/hardware-wallet/components/LedgerConnectModal'
 import Info from '@web/modules/sign-message/screens/SignMessageScreen/Info'
 import getStyles from '@web/modules/sign-message/screens/SignMessageScreen/styles'
@@ -29,6 +28,7 @@ interface Props {
   shouldDisplayLedgerConnectModal: boolean
   isLedgerConnected: boolean
   handleDismissLedgerConnectModal: () => void
+  isSafeNotDeployed: boolean
 }
 
 const Label = ({
@@ -91,16 +91,17 @@ const Row = ({
 const SignInWithEthereum = ({
   shouldDisplayLedgerConnectModal,
   isLedgerConnected,
-  handleDismissLedgerConnectModal
+  handleDismissLedgerConnectModal,
+  isSafeNotDeployed
 }: Props) => {
   const { t } = useTranslation()
-  const signMessageState = useSignMessageControllerState()
+  const { state: signMessageState, dispatch: signMessageDispatch } =
+    useController('SignMessageController')
   const signStatus = signMessageState.statuses.sign
   const { styles } = useTheme(getStyles)
   const { theme } = useTheme()
-  const { networks } = useNetworksControllerState()
+  const { networks } = useController('NetworksController').state
   const { responsiveSizeMultiplier } = useResponsiveActionWindow()
-  const { dispatch } = useBackgroundService()
 
   const siweMessageToSign = useMemo(() => {
     // It's validated beforehand. This component is never rendered if the
@@ -169,26 +170,28 @@ const SignInWithEthereum = ({
 
   const updateIsAutoLoginEnabled = useCallback(
     (enabled: boolean) => {
-      dispatch({
-        type: 'MAIN_CONTROLLER_SIGN_MESSAGE_UPDATE',
+      signMessageDispatch({
+        type: 'method',
         params: {
-          isAutoLoginEnabledByUser: enabled
+          method: 'update',
+          args: [{ isAutoLoginEnabledByUser: enabled }]
         }
       })
     },
-    [dispatch]
+    [signMessageDispatch]
   )
 
   const updateAutoLoginExpirationTime = useCallback(
     (autoLoginDuration: number) => {
-      dispatch({
-        type: 'MAIN_CONTROLLER_SIGN_MESSAGE_UPDATE',
+      signMessageDispatch({
+        type: 'method',
         params: {
-          autoLoginDuration
+          method: 'update',
+          args: [{ autoLoginDuration }]
         }
       })
     },
-    [dispatch]
+    [signMessageDispatch]
   )
 
   return (
@@ -231,9 +234,7 @@ const SignInWithEthereum = ({
         >
           <ScrollableWrapper
             style={{
-              backgroundColor: theme.primaryBackground,
-              borderWidth: 1,
-              borderColor: theme.secondaryBorder,
+              backgroundColor: theme.secondaryBackground,
               paddingHorizontal: SPACING_SM * responsiveSizeMultiplier,
               paddingVertical: SPACING * responsiveSizeMultiplier,
               marginBottom: SPACING * responsiveSizeMultiplier,
@@ -293,7 +294,12 @@ const SignInWithEthereum = ({
           siweMessageToSign.siweValidityStatus === 'valid' && (
             <View style={[flexbox.directionRow, flexbox.justifyEnd, flexbox.alignCenter]}>
               <View style={[flexbox.directionRow, flexbox.alignCenter, flexbox.justifyEnd]}>
-                <Toggle isOn={isAutoLoginEnabledByUser} onToggle={updateIsAutoLoginEnabled} />
+                <FatToggle
+                  isOn={isAutoLoginEnabledByUser}
+                  onToggle={updateIsAutoLoginEnabled}
+                  width={36}
+                  height={20}
+                />
 
                 <Text
                   fontSize={14 * responsiveSizeMultiplier}
@@ -315,6 +321,7 @@ const SignInWithEthereum = ({
                     // Convert the duration to hours for comparison with the option values
                     Number(option.value) === siweMessageToSign.autoLoginDuration
                 )}
+                selectStyle={{ backgroundColor: theme.secondaryBackground }}
                 withSearch={false}
                 disabled={!isAutoLoginEnabledByUser}
               />
@@ -329,9 +336,15 @@ const SignInWithEthereum = ({
             )}
           />
         )}
-        {signMessageState.signingKeyType && signMessageState.signingKeyType !== 'internal' && (
+        {isSafeNotDeployed && (
+          <Alert
+            type="error"
+            title="Safe account not enabled on this network. Please activate it from Safe Global"
+          />
+        )}
+        {signMessageState.signer && signMessageState.signer.key.type !== 'internal' && (
           <HardwareWalletSigningModal
-            keyType={signMessageState.signingKeyType}
+            keyType={signMessageState.signer.key.type}
             isVisible={signStatus === 'LOADING'}
           />
         )}

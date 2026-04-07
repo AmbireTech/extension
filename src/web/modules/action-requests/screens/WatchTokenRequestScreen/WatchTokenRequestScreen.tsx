@@ -14,19 +14,13 @@ import Spinner from '@common/components/Spinner'
 import Text from '@common/components/Text'
 import TokenIcon from '@common/components/TokenIcon'
 import { useTranslation } from '@common/config/localization'
+import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import getAndFormatTokenDetails from '@common/modules/dashboard/helpers/getTokenDetails'
-import Header from '@common/modules/header/components/Header'
+import { HeaderWithLogoOnly } from '@common/modules/header/components/Header/Header'
 import spacings from '@common/styles/spacings'
-import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
 import { TabLayoutContainer } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
-import useBackgroundService from '@web/hooks/useBackgroundService'
-import useNetworksControllerState from '@web/hooks/useNetworksControllerState'
-import usePortfolioControllerState from '@web/hooks/usePortfolioControllerState/usePortfolioControllerState'
-import useProvidersControllerState from '@web/hooks/useProvidersControllerState'
-import useRequestsControllerState from '@web/hooks/useRequestsControllerState'
-import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
 import ActionFooter from '@web/modules/action-requests/components/ActionFooter'
 import {
   getTokenEligibility,
@@ -49,13 +43,19 @@ export type TokenData = {
 const WatchTokenRequestScreen = () => {
   const { t } = useTranslation()
   const { theme, styles, themeType } = useTheme(getStyles)
-
-  const { dispatch } = useBackgroundService()
-  const { currentUserRequest } = useRequestsControllerState()
-  const { temporaryTokens, validTokens, customTokens } = usePortfolioControllerState()
-  const { portfolio: selectedAccountPortfolio } = useSelectedAccountControllerState()
-  const { networks } = useNetworksControllerState()
-  const { state } = useProvidersControllerState()
+  const {
+    state: { currentUserRequest },
+    dispatch: requestsDispatch
+  } = useController('RequestsController')
+  const {
+    state: { temporaryTokens, validTokens, customTokens },
+    dispatch: portfolioDispatch
+  } = useController('PortfolioController')
+  const {
+    state: { portfolio: selectedAccountPortfolio, account }
+  } = useController('SelectedAccountController')
+  const { networks } = useController('NetworksController').state
+  const { state } = useController('ProvidersController')
 
   const userRequest = useMemo(
     () => (currentUserRequest?.kind === 'walletWatchAsset' ? currentUserRequest : undefined),
@@ -72,11 +72,6 @@ const WatchTokenRequestScreen = () => {
   const [isLoading, setIsLoading] = useState(true)
   const [tokenNetwork, setTokenNetwork] = useState(network)
   const [isTemporaryTokenRequested, setTemporaryTokenRequested] = useState(false)
-
-  const isLoadingTemporaryToken = useMemo(
-    () => tokenNetwork?.chainId && temporaryTokens?.[tokenNetwork?.chainId.toString()]?.isLoading,
-    [tokenNetwork?.chainId, temporaryTokens]
-  )
 
   const networkWithFailedRPC =
     tokenNetwork?.chainId &&
@@ -112,11 +107,14 @@ const WatchTokenRequestScreen = () => {
   const handleCancel = useCallback(() => {
     if (!userRequest) return
 
-    dispatch({
-      type: 'REQUESTS_CONTROLLER_REJECT_USER_REQUEST',
-      params: { err: t('User rejected the request.'), id: userRequest.id }
+    requestsDispatch({
+      type: 'method',
+      params: {
+        method: 'rejectUserRequests',
+        args: [t('User rejected the request.'), [userRequest.id]]
+      }
     })
-  }, [userRequest, t, dispatch])
+  }, [userRequest, t, requestsDispatch])
 
   // Handle the case its already in token preferences
   const isTokenCustom = !!customTokens.find(
@@ -136,9 +134,14 @@ const WatchTokenRequestScreen = () => {
   )
 
   const handleTokenType = (chainId: bigint) => {
-    dispatch({
-      type: 'PORTFOLIO_CONTROLLER_CHECK_TOKEN',
-      params: { token: { address: tokenData?.address, chainId }, allNetworks: false }
+    if (!account) return
+
+    portfolioDispatch({
+      type: 'method',
+      params: {
+        method: 'updateTokenValidationByStandard',
+        args: [{ address: tokenData?.address, chainId }, account.addr, false]
+      }
     })
   }
 
@@ -191,11 +194,13 @@ const WatchTokenRequestScreen = () => {
 
           if (tokenTypeEligibility && !isTokenInHints && !isTemporaryTokenRequested) {
             setTemporaryTokenRequested(true)
-            dispatch({
-              type: 'PORTFOLIO_CONTROLLER_GET_TEMPORARY_TOKENS',
+            if (!account) return
+
+            portfolioDispatch({
+              type: 'method',
               params: {
-                chainId: tokenNetwork?.chainId,
-                additionalHint: getAddress(tokenData?.address)
+                method: 'getTemporaryTokens',
+                args: [account.addr, tokenNetwork?.chainId, getAddress(tokenData?.address)]
               }
             })
           }
@@ -233,29 +238,43 @@ const WatchTokenRequestScreen = () => {
   const handleAddToken = useCallback(async () => {
     if (!userRequest) return
     if (!tokenNetwork?.chainId) return
+    if (!account) return
 
-    dispatch({
-      type: 'PORTFOLIO_CONTROLLER_ADD_CUSTOM_TOKEN',
+    // Only add if temporaryToken exists (like AddTokenBottomSheet does), to avoid adding tokens with
+    // missing/invalid info (e.g. decimals) that would cause issues in the portfolio
+    if (!temporaryToken?.address || !temporaryToken?.symbol || !temporaryToken?.decimals) {
+      return
+    }
+
+    portfolioDispatch({
+      type: 'method',
       params: {
-        token: {
-          address: getAddress(tokenData.address),
-          standard: 'ERC20',
-          chainId: tokenNetwork?.chainId
-        },
-        shouldUpdatePortfolio: true
+        method: 'addCustomToken',
+        args: [
+          {
+            address: temporaryToken.address,
+            standard: 'ERC20',
+            chainId: tokenNetwork?.chainId
+          },
+          account.addr,
+          true
+        ]
       }
     })
 
-    dispatch({
-      type: 'REQUESTS_CONTROLLER_RESOLVE_USER_REQUEST',
-      params: { data: null, id: userRequest.id }
+    requestsDispatch({
+      type: 'method',
+      params: {
+        method: 'resolveUserRequest',
+        args: [null, userRequest.id]
+      }
     })
-  }, [dispatch, userRequest, tokenData, tokenNetwork])
+  }, [requestsDispatch, portfolioDispatch, userRequest, temporaryToken, tokenNetwork, account])
 
   const tokenDetails = useMemo(() => {
     const token = portfolioToken || temporaryToken
 
-    return token && token?.flags && getAndFormatTokenDetails(token as TokenResult, networks)
+    return token && token?.flags && getAndFormatTokenDetails(token, networks)
   }, [temporaryToken, portfolioToken, networks])
 
   if (networkWithFailedRPC && networkWithFailedRPC?.length > 0 && !!temporaryToken) {
@@ -272,15 +291,8 @@ const WatchTokenRequestScreen = () => {
   return (
     <TabLayoutContainer
       width="full"
-      backgroundColor={theme.quinaryBackground}
-      header={
-        <Header
-          mode="custom-inner-content"
-          withAmbireLogo
-          backgroundColor={theme.quinaryBackground as string}
-        />
-      }
-      footer={
+      header={<HeaderWithLogoOnly />}
+      renderDirectChildren={() => (
         <ActionFooter
           onReject={handleCancel}
           onResolve={handleAddToken}
@@ -288,11 +300,14 @@ const WatchTokenRequestScreen = () => {
           resolveDisabled={
             isLoading ||
             showAlreadyInPortfolioMessage ||
-            (!tokenTypeEligibility && !temporaryToken) ||
-            !!tokenValidation?.error?.message
+            (!temporaryToken && !tokenTypeEligibility) ||
+            !!tokenValidation?.error?.message ||
+            !temporaryToken?.address ||
+            !temporaryToken?.symbol ||
+            !temporaryToken?.decimals
           }
         />
-      }
+      )}
     >
       <View style={[styles.container]}>
         <View style={styles.content}>
@@ -308,24 +323,19 @@ const WatchTokenRequestScreen = () => {
                 containerWidth={56}
                 networkSize={20}
                 address={tokenData?.address}
-                width={50}
-                height={50}
-                networkWrapperStyle={{
-                  left: -8,
-                  top: -4
-                }}
+                width={48}
+                height={48}
               />
             </View>
-            <Text weight="semiBold" fontSize={20} numberOfLines={1}>
+            <Text weight="semiBold" fontSize={20} numberOfLines={1} style={spacings.mbTy}>
               {tokenData?.symbol}
             </Text>
             <NetworkBadge
               withOnPrefix
               chainId={tokenNetwork?.chainId}
-              fontSize={14}
-              iconSize={20}
+              fontSize={12}
               style={{
-                backgroundColor: theme.quaternaryBackground,
+                backgroundColor: theme.primaryBackground,
                 ...spacings.mb,
                 ...spacings.pr
               }}
@@ -351,49 +361,26 @@ const WatchTokenRequestScreen = () => {
             <View style={[styles.tokenInfoContainer, spacings.mbTy]}>
               <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mr]}>
                 <View style={styles.tokenInfoIconWrapper}>
-                  <AmountIcon
-                    color={
-                      themeType === THEME_TYPES.DARK ? theme.secondaryText : theme.tertiaryText
-                    }
-                  />
+                  <AmountIcon color={theme.secondaryText} />
                 </View>
-                <Text
-                  fontSize={14}
-                  color={themeType === THEME_TYPES.DARK ? theme.secondaryText : theme.tertiaryText}
-                >
+                <Text fontSize={14} color={theme.secondaryText}>
                   {t('Amount')}
                 </Text>
               </View>
-              <Text
-                weight="medium"
-                fontSize={14}
-                color={themeType === THEME_TYPES.DARK ? theme.secondaryText : theme.tertiaryText}
-                numberOfLines={1}
-              >
+              <Text weight="medium" fontSize={14} color={theme.secondaryText} numberOfLines={1}>
                 {tokenDetails?.balance || '0.00'} {tokenData?.symbol}
               </Text>
             </View>
             <View style={[styles.tokenInfoContainer, spacings.mbTy]}>
               <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mr]}>
                 <View style={styles.tokenInfoIconWrapper}>
-                  <DollarIcon
-                    color={
-                      themeType === THEME_TYPES.DARK ? theme.secondaryText : theme.tertiaryText
-                    }
-                  />
+                  <DollarIcon color={theme.secondaryText} />
                 </View>
-                <Text
-                  fontSize={14}
-                  color={themeType === THEME_TYPES.DARK ? theme.secondaryText : theme.tertiaryText}
-                >
+                <Text fontSize={14} color={theme.secondaryText}>
                   {t('Price')}
                 </Text>
               </View>
-              <Text
-                weight="medium"
-                fontSize={14}
-                color={themeType === THEME_TYPES.DARK ? theme.secondaryText : theme.tertiaryText}
-              >
+              <Text weight="medium" fontSize={14} color={theme.secondaryText}>
                 {isLoading ? (
                   <View style={[flexbox.flex1, flexbox.alignCenter, flexbox.justifyCenter]}>
                     <Spinner style={{ width: 18, height: 18 }} />
@@ -406,24 +393,13 @@ const WatchTokenRequestScreen = () => {
             <View style={[styles.tokenInfoContainer]}>
               <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mr]}>
                 <View style={styles.tokenInfoIconWrapper}>
-                  <ValueIcon
-                    color={
-                      themeType === THEME_TYPES.DARK ? theme.secondaryText : theme.tertiaryText
-                    }
-                  />
+                  <ValueIcon color={theme.secondaryText} />
                 </View>
-                <Text
-                  fontSize={14}
-                  color={themeType === THEME_TYPES.DARK ? theme.secondaryText : theme.tertiaryText}
-                >
+                <Text fontSize={14} color={theme.secondaryText}>
                   {t('Value')}
                 </Text>
               </View>
-              <Text
-                weight="medium"
-                fontSize={14}
-                color={themeType === THEME_TYPES.DARK ? theme.secondaryText : theme.tertiaryText}
-              >
+              <Text weight="medium" fontSize={14} color={theme.secondaryText}>
                 {tokenDetails?.balanceUSDFormatted || '-'}
               </Text>
             </View>
@@ -432,7 +408,7 @@ const WatchTokenRequestScreen = () => {
               <View style={spacings.ptMd}>
                 <Alert
                   size="sm"
-                  type="info2"
+                  type="info"
                   title={
                     isTokenCustom
                       ? t('This token is already added as a custom token.')

@@ -2,20 +2,28 @@ import React, { FC } from 'react'
 import { View } from 'react-native'
 
 import Text from '@common/components/Text'
+import { AnimatedPressable, useCustomHover } from '@common/hooks/useHover'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import { AnimatedPressable, useCustomHover } from '@web/hooks/useHover'
 
 interface Props {
   renderIcon: () => React.ReactNode
   onPress: () => void
   title: string
   text?: string
+  isAddress?: boolean
   renderRightIcon?: () => React.ReactNode
 }
 
-const BaseAddressOption: FC<Props> = ({ renderIcon, title, text, onPress, renderRightIcon }) => {
+const BaseAddressOption: FC<Props> = ({
+  renderIcon,
+  title,
+  text,
+  isAddress,
+  onPress,
+  renderRightIcon
+}) => {
   const { theme } = useTheme()
   const [bindAnim, animStyle] = useCustomHover({
     property: 'backgroundColor',
@@ -55,7 +63,11 @@ const BaseAddressOption: FC<Props> = ({ renderIcon, title, text, onPress, render
             {title}
           </Text>
           {!!text && (
-            <Text appearance="secondaryText" fontSize={10}>
+            <Text
+              appearance="secondaryText"
+              fontSize={10}
+              weight={isAddress ? 'mono_regular' : undefined}
+            >
               {text}
             </Text>
           )}

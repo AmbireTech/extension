@@ -2,8 +2,8 @@
 
 import { ethErrors } from 'eth-rpc-errors'
 
+import { LOG_LEVELS } from '@common/utils/logger'
 import { EthereumProvider } from '@web/extension-services/inpage/EthereumProvider'
-import { LOG_LEVELS } from '@web/utils/logger'
 
 class PushEventHandlers {
   #provider: EthereumProvider

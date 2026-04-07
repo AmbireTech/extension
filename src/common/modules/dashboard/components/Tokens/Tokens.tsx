@@ -1,4 +1,3 @@
-import Fuse from 'fuse.js'
 import React, { useCallback, useEffect, useMemo } from 'react'
 import { useForm } from 'react-hook-form'
 import { Animated, FlatListProps, Pressable, View } from 'react-native'
@@ -6,29 +5,25 @@ import { useModalize } from 'react-native-modalize'
 
 import { PINNED_TOKENS } from '@ambire-common/consts/pinnedTokens'
 import { Network } from '@ambire-common/interfaces/network'
-import { SelectedAccountPortfolioTokenResult } from '@ambire-common/interfaces/selectedAccount'
 import { AssetType } from '@ambire-common/libs/defiPositions/types'
 import { getTokenAmount, getTokenBalanceInUSD } from '@ambire-common/libs/portfolio/helpers'
 import { TokenResult } from '@ambire-common/libs/portfolio/interfaces'
 import RightArrowIcon from '@common/assets/svg/RightArrowIcon'
-import Button from '@common/components/Button'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
+import useController from '@common/hooks/useController'
 import useNavigation from '@common/hooks/useNavigation'
 import useTheme from '@common/hooks/useTheme'
 import { WEB_ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { tokenOrCollectionSearch } from '@common/utils/search'
-import useNetworksControllerState from '@web/hooks/useNetworksControllerState'
-import usePortfolioControllerState from '@web/hooks/usePortfolioControllerState/usePortfolioControllerState'
-import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
-import AddTokenBottomSheet from '@web/modules/settings/screens/ManageTokensSettingsScreen/AddTokenBottomSheet'
-import { getTokenId } from '@web/utils/token'
-import { getUiType } from '@web/utils/uiType'
+import { getTokenId } from '@common/utils/token'
+import { getUiType } from '@common/utils/uiType'
 
 import DashboardBanners from '../DashboardBanners'
 import DashboardPageScrollContainer from '../DashboardPageScrollContainer'
+import SearchAndCurrentApp from '../SearchAndCurrentApp'
 import TabsAndSearch from '../TabsAndSearch'
 import { TabType } from '../TabsAndSearch/Tabs/Tab/Tab'
 import TokenItem from './TokenItem'
@@ -44,6 +39,10 @@ interface Props {
   onScroll: FlatListProps<any>['onScroll']
   dashboardNetworkFilterName: string | null
   animatedOverviewHeight: Animated.Value
+  isSearchHidden: boolean
+  onAddCustomToken?: () => void
+  refreshing?: boolean
+  onRefresh?: () => void
 }
 
 // if any of the post amount (during simulation) or the current state
@@ -69,19 +68,22 @@ const Tokens = ({
   sessionId,
   onScroll,
   animatedOverviewHeight,
-  dashboardNetworkFilterName
+  dashboardNetworkFilterName,
+  isSearchHidden,
+  onAddCustomToken,
+  refreshing,
+  onRefresh
 }: Props) => {
   const { t } = useTranslation()
   const { navigate } = useNavigation()
   const { theme } = useTheme()
-  const { networks } = useNetworksControllerState()
-  const { customTokens } = usePortfolioControllerState()
-  const { portfolio, dashboardNetworkFilter } = useSelectedAccountControllerState()
   const {
-    ref: addTokenBottomSheetRef,
-    open: openAddTokenBottomSheet,
-    close: closeAddTokenBottomSheet
-  } = useModalize()
+    state: { networks }
+  } = useController('NetworksController')
+  const { customTokens } = useController('PortfolioController').state
+  const {
+    state: { portfolio, dashboardNetworkFilter }
+  } = useController('SelectedAccountController')
   const { control, watch, setValue } = useForm({
     mode: 'all',
     defaultValues: {
@@ -118,7 +120,8 @@ const Tokens = ({
       tokens
         .filter((token) => {
           if (isGasTankTokenOnCustomNetwork(token, networks)) return false
-          if (token?.flags.isHidden) return false
+          if (token?.flags.isHidden || token.flags.rewardsType === 'wallet-projected-rewards')
+            return false
 
           const hasTokenAmount = hasAmount(token)
           const isCustom = customTokens.find(
@@ -195,8 +198,8 @@ const Tokens = ({
   )
 
   const navigateToAddCustomToken = useCallback(() => {
-    openAddTokenBottomSheet()
-  }, [openAddTokenBottomSheet])
+    onAddCustomToken?.()
+  }, [onAddCustomToken])
 
   const renderItem = useCallback(
     ({ item, index }: any) => {
@@ -207,25 +210,8 @@ const Tokens = ({
               openTab={openTab}
               setOpenTab={setOpenTab}
               currentTab="tokens"
-              searchControl={control}
               sessionId={sessionId}
             />
-            <View style={[flexbox.directionRow, spacings.mbTy, spacings.phTy]}>
-              <Text appearance="secondaryText" fontSize={14} weight="medium" style={{ flex: 1.5 }}>
-                {t('ASSET/AMOUNT')}
-              </Text>
-              <Text appearance="secondaryText" fontSize={14} weight="medium" style={{ flex: 0.7 }}>
-                {t('PRICE')}
-              </Text>
-              <Text
-                appearance="secondaryText"
-                fontSize={14}
-                weight="medium"
-                style={{ flex: 0.4, textAlign: 'right' }}
-              >
-                {t('USD VALUE')}
-              </Text>
-            </View>
           </View>
         )
       }
@@ -253,7 +239,7 @@ const Tokens = ({
         return (
           <View style={spacings.ptTy}>
             {/* Display more skeleton items if there are no tokens */}
-            <Skeleton amount={3} withHeader={false} />
+            <Skeleton amount={3} />
           </View>
         )
 
@@ -292,11 +278,6 @@ const Tokens = ({
                 <RightArrowIcon height={12} color={theme.secondaryText as string} />
               </Pressable>
             )}
-            <Button
-              type="secondary"
-              text={t('+ Add custom token')}
-              onPress={navigateToAddCustomToken}
-            />
           </View>
         ) : null
       }
@@ -318,7 +299,6 @@ const Tokens = ({
       theme.secondaryText,
       openTab,
       setOpenTab,
-      control,
       sessionId,
       t,
       searchValue,
@@ -327,7 +307,6 @@ const Tokens = ({
       sortedTokens.length,
       hiddenTokensCount,
       dashboardNetworkFilter,
-      navigateToAddCustomToken,
       navigate
     ]
   )
@@ -369,11 +348,18 @@ const Tokens = ({
         initialNumToRender={isPopup ? 10 : 20}
         windowSize={9} // Larger values can cause performance issues.
         onScroll={onScroll}
+        scrollEventThrottle={16}
+        refreshing={refreshing}
+        onRefresh={onRefresh}
       />
-      <AddTokenBottomSheet
-        sheetRef={addTokenBottomSheetRef}
-        handleClose={closeAddTokenBottomSheet}
-      />
+      {openTab === 'tokens' && (
+        <SearchAndCurrentApp
+          control={control}
+          displayCurrentApp
+          displayNetworkFilter
+          isHidden={isSearchHidden}
+        />
+      )}
     </>
   )
 }

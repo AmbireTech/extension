@@ -1,140 +1,79 @@
-import React, { FC, useMemo } from 'react'
-import { View } from 'react-native'
+import React, { FC } from 'react'
+import { View, ViewStyle } from 'react-native'
 
-import { isSmartAccount } from '@ambire-common/libs/account/account'
-import AccountAddress from '@common/components/AccountAddress'
-import AccountBadges from '@common/components/AccountBadges'
-import AmbireLogoHorizontalWithOG from '@common/components/AmbireLogoHorizontalWithOG'
-import Avatar from '@common/components/Avatar'
-import DomainBadge from '@common/components/Avatar/DomainBadge'
-import Text from '@common/components/Text'
-import useReverseLookup from '@common/hooks/useReverseLookup'
+import FooterGlassView from '@common/components/FooterGlassView'
 import useTheme from '@common/hooks/useTheme'
-import useWindowSize from '@common/hooks/useWindowSize'
+import ActionHeader from '@common/modules/action-requests/components/ActionHeader'
 import Header from '@common/modules/header/components/Header'
-import getHeaderStyles from '@common/modules/header/components/Header/styles'
-import spacings from '@common/styles/spacings'
+import spacings, { SPACING } from '@common/styles/spacings'
+import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
-import { TabLayoutContainer, TabLayoutWrapperMainContent } from '@web/components/TabLayoutWrapper'
-import {
-  getTabLayoutPadding,
-  tabLayoutWidths
-} from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
-import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
-import { getUiType } from '@web/utils/uiType'
+import { getUiType } from '@common/utils/uiType'
 
-import getStyles from './styles'
+import LayoutWrapper from '../../../common/components/LayoutWrapper'
 
-const { isTab } = getUiType()
+const { isPopup, isRequestWindow } = getUiType()
 
 type WrapperProps = {
   children: React.ReactNode
-  title: string | React.ReactNode
-  buttons: React.ReactNode
 }
 
 type ContentProps = {
   children: React.ReactNode
   buttons: React.ReactNode
-  scrollViewRef?: React.RefObject<any>
 }
 
-type FormProps = {
+type ItemPanelProps = {
   children: React.ReactNode
+  style?: ViewStyle
 }
 
-const Wrapper: FC<WrapperProps> = ({ children, title, buttons }) => {
-  const { theme, styles } = useTheme(getStyles)
-  const { styles: headerStyles } = useTheme(getHeaderStyles)
-  const { account } = useSelectedAccountControllerState()
-  const { isLoading, ens } = useReverseLookup({ address: account?.addr || '' })
+const ItemPanel: FC<ItemPanelProps> = ({ children, style = {} }) => {
+  const { theme } = useTheme()
 
   return (
-    <TabLayoutContainer
-      backgroundColor={theme.secondaryBackground}
-      header={
-        <Header mode="custom">
-          <View
-            style={[
-              headerStyles.widthContainer,
-              { maxWidth: tabLayoutWidths.xl, ...flexbox.justifySpaceBetween }
-            ]}
-          >
-            <View style={[styles.headerSideContainer, { width: 'auto', flex: 1 }]}>
-              {account && (
-                <View style={[flexbox.directionRow, flexbox.alignCenter, flexbox.flex1]}>
-                  <Avatar
-                    address={account.addr}
-                    pfp={account.preferences.pfp}
-                    isSmart={isSmartAccount(account)}
-                  />
-                  <View style={flexbox.flex1}>
-                    <View style={[flexbox.flex1, flexbox.directionRow]}>
-                      <Text fontSize={16} weight="medium" numberOfLines={1}>
-                        {account.preferences.label}
-                      </Text>
-
-                      <AccountBadges accountData={account} />
-                    </View>
-                    <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-                      <DomainBadge ens={ens} />
-                      <AccountAddress
-                        isLoading={isLoading}
-                        ens={ens}
-                        address={account.addr}
-                        plainAddressMaxLength={20}
-                      />
-                    </View>
-                  </View>
-                </View>
-              )}
-            </View>
-            {!account && (
-              <Text fontSize={isTab ? 24 : 20} weight="medium">
-                {title}
-              </Text>
-            )}
-            <View style={[styles.headerSideContainer, { alignItems: 'flex-end' }]}>
-              <AmbireLogoHorizontalWithOG />
-            </View>
-          </View>
-        </Header>
-      }
-      withHorizontalPadding={false}
-      footer={isTab ? buttons : null}
+    <View
+      style={{
+        ...spacings.phSm,
+        ...spacings.pvSm,
+        backgroundColor: theme.secondaryBackground,
+        borderRadius: BORDER_RADIUS_PRIMARY,
+        ...style
+      }}
     >
       {children}
-    </TabLayoutContainer>
+    </View>
   )
 }
 
-const Content: FC<ContentProps> = ({ children, buttons, scrollViewRef }) => {
-  const { styles } = useTheme(getStyles)
-  const { maxWidthSize, minHeightSize } = useWindowSize()
-  const paddingHorizontalStyle = useMemo(() => getTabLayoutPadding(maxWidthSize), [maxWidthSize])
-
+const Wrapper: FC<WrapperProps> = ({ children }) => {
   return (
-    <TabLayoutWrapperMainContent
-      contentContainerStyle={{
-        ...spacings.pv0,
-        ...paddingHorizontalStyle,
-        ...(isTab ? (minHeightSize('m') ? {} : spacings.pt2Xl) : {}),
-        flexGrow: 1
-      }}
-      wrapperRef={scrollViewRef}
+    <LayoutWrapper
+      style={isRequestWindow ? { borderRadius: 0, height: '100%' } : {}}
+      backgroundStyle={isRequestWindow ? spacings.pt0 : {}}
     >
-      <View style={styles.container}>
-        {children}
-        {!isTab && <View style={styles.nonTabButtons}>{buttons}</View>}
-      </View>
-    </TabLayoutWrapperMainContent>
+      {isPopup ? (
+        <Header.Wrapper containerStyle={spacings.ptSm}>
+          <Header.AccountData />
+          <Header.Logo withOG />
+        </Header.Wrapper>
+      ) : (
+        <ActionHeader />
+      )}
+      {children}
+    </LayoutWrapper>
   )
 }
 
-const Form: FC<FormProps> = ({ children }) => {
-  const { styles } = useTheme(getStyles)
-
-  return <View style={styles.form}>{children}</View>
+const Content: FC<ContentProps> = ({ children, buttons }) => {
+  return (
+    <View style={[flexbox.flex1, spacings.phSm, spacings.pvSm]}>
+      {children}
+      <FooterGlassView size="sm" style={isRequestWindow ? { bottom: SPACING } : {}}>
+        <View style={[flexbox.directionRow, flexbox.alignCenter]}>{buttons}</View>
+      </FooterGlassView>
+    </View>
+  )
 }
 
-export { Wrapper, Content, Form }
+export { Content, ItemPanel, Wrapper }

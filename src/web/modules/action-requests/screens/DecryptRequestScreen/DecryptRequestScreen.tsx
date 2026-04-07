@@ -5,27 +5,28 @@ import Button from '@common/components/Button'
 import ExpandableCard from '@common/components/ExpandableCard'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
+import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
+import ActionHeader from '@common/modules/action-requests/components/ActionHeader'
+import eventBus from '@common/services/event/eventBus'
 import spacings from '@common/styles/spacings'
-import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
-import HeaderAccountAndNetworkInfo from '@web/components/HeaderAccountAndNetworkInfo'
 import RequestingDappInfo from '@web/components/RequestingDappInfo'
 import SmallNotificationWindowWrapper from '@web/components/SmallNotificationWindowWrapper'
 import { TabLayoutContainer, TabLayoutWrapperMainContent } from '@web/components/TabLayoutWrapper'
-import eventBus from '@web/extension-services/event/eventBus'
-import useBackgroundService from '@web/hooks/useBackgroundService'
 import useDappInfo from '@web/hooks/useDappInfo'
-import useRequestsControllerState from '@web/hooks/useRequestsControllerState'
 import ActionFooter from '@web/modules/action-requests/components/ActionFooter'
 import { useEncryptionCapability } from '@web/modules/action-requests/hooks'
 
 const DecryptRequestScreen = () => {
   const { t } = useTranslation()
-  const { dispatch } = useBackgroundService()
-  const { currentUserRequest } = useRequestsControllerState()
-  const { theme, themeType } = useTheme()
+  const { dispatch: keystoreDispatch } = useController('KeystoreController')
+  const {
+    state: { currentUserRequest },
+    dispatch: requestsDispatch
+  } = useController('RequestsController')
+  const { theme } = useTheme()
   const { addToast } = useToast()
   const [decryptedMessage, setDecryptedMessage] = useState<string>('')
   const userRequest = useMemo(
@@ -63,15 +64,20 @@ const DecryptRequestScreen = () => {
       return
     }
 
-    dispatch({
-      type: 'KEYSTORE_CONTROLLER_SEND_DECRYPTED_MESSAGE_TO_UI',
+    keystoreDispatch({
+      type: 'method',
       params: {
-        encryptedMessage: userRequest?.meta?.params[0],
-        keyAddr: internalKey.addr,
-        keyType: internalKey.type
+        method: 'sendDecryptedMessageToUi',
+        args: [
+          {
+            encryptedMessage: userRequest?.meta?.params[0],
+            keyAddr: internalKey.addr,
+            keyType: internalKey.type
+          }
+        ]
       }
     })
-  }, [t, dispatch, internalKey, userRequest, addToast, selectedAccountKeyStoreKeys])
+  }, [t, keystoreDispatch, internalKey, userRequest, addToast, selectedAccountKeyStoreKeys])
 
   useEffect(() => {
     const onReceiveOneTimeData = (data: any) => {
@@ -104,17 +110,20 @@ const DecryptRequestScreen = () => {
       return
     }
 
-    dispatch({
-      type: 'REQUESTS_CONTROLLER_RESOLVE_USER_REQUEST',
+    requestsDispatch({
+      type: 'method',
       params: {
-        data: { encryptedMessage, keyAddr: internalKey.addr, keyType: internalKey.type },
-        id: userRequest.id
+        method: 'resolveUserRequest',
+        args: [
+          { encryptedMessage, keyAddr: internalKey.addr, keyType: internalKey.type },
+          userRequest.id
+        ]
       }
     })
   }, [
     t,
     userRequest,
-    dispatch,
+    requestsDispatch,
     selectedAccountKeyStoreKeys,
     internalKey,
     encryptedMessage,
@@ -124,26 +133,21 @@ const DecryptRequestScreen = () => {
   const handleDeny = useCallback(() => {
     if (!userRequest) return
 
-    dispatch({
-      type: 'REQUESTS_CONTROLLER_REJECT_USER_REQUEST',
-      params: { err: t('User rejected the request.'), id: userRequest.id }
+    requestsDispatch({
+      type: 'method',
+      params: {
+        method: 'rejectUserRequests',
+        args: [t('User rejected the request.'), [userRequest.id]]
+      }
     })
-  }, [userRequest, t, dispatch])
+  }, [userRequest, t, requestsDispatch])
 
   return (
     <SmallNotificationWindowWrapper>
       <TabLayoutContainer
         width="full"
-        header={
-          <HeaderAccountAndNetworkInfo
-            backgroundColor={
-              themeType === THEME_TYPES.DARK
-                ? (theme.secondaryBackground as string)
-                : (theme.primaryBackground as string)
-            }
-          />
-        }
-        footer={
+        header={<ActionHeader />}
+        renderDirectChildren={() => (
           <ActionFooter
             onReject={handleDeny}
             onResolve={handleDecrypt}
@@ -152,8 +156,7 @@ const DecryptRequestScreen = () => {
             resolveButtonTestID="button-decrypt"
             resolveNode={actionFooterResolveNode}
           />
-        }
-        backgroundColor={theme.quinaryBackground}
+        )}
       >
         <TabLayoutWrapperMainContent>
           <RequestingDappInfo
@@ -190,7 +193,7 @@ const DecryptRequestScreen = () => {
                             spacings.mb
                           ]}
                         >
-                          <Text weight="semiBold" appearance="info2Text" style={{ lineHeight: 12 }}>
+                          <Text weight="semiBold" appearance="infoText" style={{ lineHeight: 12 }}>
                             {t('Encrypted message')}
                           </Text>
                           <Button
@@ -198,13 +201,13 @@ const DecryptRequestScreen = () => {
                             onPress={handleDecryptForPreview}
                             type="outline"
                             hasBottomSpacing={false}
-                            accentColor={theme.info3Button}
+                            accentColor={theme.infoDecorative}
                             disabled={isDisabled}
                             size="small"
                           />
                         </View>
 
-                        <Text appearance="info2Text" selectable>
+                        <Text appearance="infoText" selectable>
                           {encryptedMessage}
                         </Text>
                       </>
@@ -212,10 +215,7 @@ const DecryptRequestScreen = () => {
                   </View>
                 }
                 style={{
-                  backgroundColor:
-                    themeType === THEME_TYPES.DARK
-                      ? theme.tertiaryBackground
-                      : theme.primaryBackground
+                  backgroundColor: theme.secondaryBackground
                 }}
               />
             )}

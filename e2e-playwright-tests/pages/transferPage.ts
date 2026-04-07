@@ -24,7 +24,7 @@ export class TransferPage extends BasePage {
     await this.clickOnMenuToken(token)
     // Amount
     await this.page.waitForTimeout(2000) // script misses input due to modal animation sometimes
-    await this.entertext(selectors.amountField, '0.001')
+    await this.entertext(selectors.transaction.amountField, '0.001')
   }
 
   async fillRecipient(address: string) {
@@ -113,10 +113,9 @@ export class TransferPage extends BasePage {
     payWithGasTank?: boolean
     message: string
   }) {
-    let feeSelector
     // Proceed
-    await this.expectButtonEnabled(selectors.proceedBtn)
-    await this.longPressButton(selectors.proceedBtn, 5)
+    await this.expectButtonEnabled(selectors.transaction.proceedBtn)
+    await this.longPressButton(selectors.transaction.proceedBtn, 5)
 
     // approve the high impact modal if appears
     await this.handlePriceWarningModals()
@@ -128,16 +127,13 @@ export class TransferPage extends BasePage {
     // Select fee token; default Gas Tank
     if (!payWithGasTank) {
       await this.selectFeeToken(baParams.envSelectedAccount, feeToken, payWithGasTank)
-      feeSelector = await this.page
-        .locator(selectors.transaction.feeTokenInDollars)
-        .innerText({ timeout: 10000 }) // returns e.g. '<$0.01'
-    } else {
-      feeSelector = await this.page
-        .locator(selectors.transaction.feeGasTankInDollars)
-        .innerText({ timeout: 10000 }) // returns e.g. '<$0.01'
     }
 
-    const feeDollarsAmount = Number(feeSelector.replace(/[<$]/g, ''))
+    const feeSelector = await this.page
+      .getByTestId(selectors.transaction.feeTokensSelectDropdown)
+      .locator(selectors.transaction.feeTokenInDollars)
+      .innerText()
+    const feeDollarsAmount = Number.parseFloat(feeSelector.replace(/[^0-9.]/g, ''))
 
     if (feeDollarsAmount > 0.1) {
       console.warn(

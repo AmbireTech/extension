@@ -1,34 +1,38 @@
 import React, { useMemo } from 'react'
 import { Animated, ColorValue, PressableProps, TextStyle, ViewStyle } from 'react-native'
 
+import InfoIcon from '@common/assets/svg/InfoIcon'
+import { isMobile, isWeb } from '@common/config/env'
+import { AnimatedPressable, useCustomHover, useMultiHover } from '@common/hooks/useHover'
+import { AnimatedText } from '@common/hooks/useHover/useHover'
+import { AnimationValues } from '@common/hooks/useHover/useMultiHover'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
-import { THEME_TYPES } from '@common/styles/themeConfig'
-import common from '@common/styles/utils/common'
+import common, { hexToRgba } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
-import { AnimatedPressable, useCustomHover, useMultiHover } from '@web/hooks/useHover'
-import { AnimatedText } from '@web/hooks/useHover/useHover'
-import { AnimationValues } from '@web/hooks/useHover/useMultiHover'
 import useOnEnterKeyPress from '@web/hooks/useOnEnterKeyPress'
 
+import { createGlobalTooltipDataSet } from '../GlobalTooltip'
 import getStyles from './styles'
 
 type ButtonTypes =
   | 'primary'
   | 'secondary'
+  | 'tertiary'
+  // Use danger if the button is a secondary action and dangerFilled
+  // if it's the primary action on the screen
   | 'danger'
+  | 'dangerFilled'
   | 'outline'
   | 'ghost'
   | 'ghost2'
-  | 'error'
   | 'warning'
   | 'info'
-  | 'info2'
-  | 'info3'
   | 'success'
   | 'gray'
 
-type ButtonSizes = 'regular' | 'small' | 'large' | 'tiny'
+// We should rethink these sizes
+type ButtonSizes = 'regular' | 'smaller' | 'small' | 'large' | 'tiny'
 export interface Props extends PressableProps {
   text?: string
   type?: ButtonTypes
@@ -46,6 +50,7 @@ export interface Props extends PressableProps {
   innerContainerStyle?: (hovered: boolean) => ViewStyle
   testID?: string
   submitOnEnter?: boolean
+  tooltipDataSet?: ReturnType<typeof createGlobalTooltipDataSet>
 }
 
 const OPACITY_ANIMATION = {
@@ -68,40 +73,31 @@ const ButtonInnerContainer = ({
   children?: React.ReactNode
   innerContainerStyle?: (hovered: boolean) => ViewStyle
 } & PressableProps) => {
-  const { themeType, theme } = useTheme()
+  const { theme } = useTheme()
 
   const buttonInnerContainerColors = useMemo(
     () => ({
       primary: [],
       secondary: [],
+      tertiary: [],
       danger: [],
+      dangerFilled: [],
       outline: [],
-      ghost:
-        themeType === THEME_TYPES.DARK
-          ? [
-              {
-                property: 'backgroundColor' as any,
-                from: `${theme.primary as string}00`,
-                to: theme.primary20
-              }
-            ]
-          : [
-              {
-                property: 'backgroundColor' as any,
-                from: `${theme.primary as string}00`,
-                to: theme.primary20
-              }
-            ],
+      ghost: [
+        {
+          property: 'backgroundColor',
+          from: `${String(theme.neutral400)}00`,
+          to: theme.neutral400
+        }
+      ],
       ghost2: [],
-      error: [],
       warning: [],
       info: [],
       info2: [],
       success: [],
-      gray: [],
-      info3: []
+      gray: []
     }),
-    [themeType, theme]
+    [theme]
   )
 
   const [buttonInnerContainerBind, buttonInnerContainerAnimatedStyle, isHovered] = useMultiHover({
@@ -132,12 +128,13 @@ const ButtonInnerContainer = ({
           !!rest.onHoverOut && rest.onHoverOut(e)
           buttonInnerContainerBind.onHoverOut(e)
         }}
-        onPressIn={(e) => {
+        onPressIn={(e: any) => {
           !!rest.onPressIn && rest.onPressIn(e)
           buttonInnerContainerBind.onPressIn(e)
         }}
-        onPressOut={(e) => {
+        onPressOut={(e: any) => {
           !!rest.onPressOut && rest.onPressOut(e)
+          buttonInnerContainerBind.onPressOut(e)
         }}
       >
         {children}
@@ -165,9 +162,10 @@ const Button = ({
   childrenContainerStyle,
   testID,
   submitOnEnter: _submitOnEnter,
+  tooltipDataSet,
   ...rest
 }: Props) => {
-  const { styles, theme, themeType } = useTheme(getStyles)
+  const { styles, theme } = useTheme(getStyles)
   const submitOnEnter = _submitOnEnter ?? type === 'primary'
 
   useOnEnterKeyPress({
@@ -182,79 +180,70 @@ const Button = ({
       primary: [
         {
           property: 'backgroundColor',
-          from: theme.primary,
-          to: theme.primaryLight
-        },
-        ...(themeType === THEME_TYPES.DARK
-          ? [
-              {
-                property: 'borderWidth',
-                from: 0,
-                to: 1
-              },
-              {
-                property: 'borderColor',
-                from: theme.primary,
-                to: theme.primary
-              }
-            ]
-          : [])
+          from: theme.primaryAccent,
+          to: theme.primaryAccentHovered
+        }
       ],
       secondary: [
         {
           property: 'backgroundColor',
-          from:
-            themeType === THEME_TYPES.DARK
-              ? `${String(theme.primary)}00`
-              : `${String(theme.infoBackground)}00`,
-          to: themeType === THEME_TYPES.DARK ? `${String(theme.primary)}20` : theme.infoBackground
+          from: isMobile ? theme.secondaryBackground : theme.primaryBackground,
+          to: theme.tertiaryBackground
+        }
+      ],
+      tertiary: [
+        {
+          property: 'backgroundColor',
+          from: theme.secondaryBackground,
+          to: theme.tertiaryBackground
         }
       ],
       danger: [
         {
           property: 'backgroundColor',
-          from: `${String(theme.errorBackground)}00`,
-          to: theme.errorBackground
+          from: theme.errorBackground,
+          to: theme.error300
         }
       ],
-      outline: [OPACITY_ANIMATION],
-      ghost: [],
-      ghost2: [],
-      error: [OPACITY_ANIMATION],
-      warning: [OPACITY_ANIMATION],
-      info: [OPACITY_ANIMATION],
-      info2: [OPACITY_ANIMATION],
-      info3: [
+      dangerFilled: [
         {
           property: 'backgroundColor',
-          from: `${String(theme.info3Button)}`,
-          to: theme.info3ButtonHover
+          from: theme.error200,
+          to: theme.error300
         }
       ],
+      outline: [
+        {
+          property: 'backgroundColor',
+          from: hexToRgba(theme.tertiaryBackground, 0),
+          to: hexToRgba(theme.tertiaryBackground, 1)
+        },
+        {
+          property: 'borderColor',
+          from: theme.primaryBorder,
+          to: theme.neutral400
+        }
+      ],
+      ghost: [],
+      ghost2: [],
+      warning: [
+        {
+          property: 'backgroundColor',
+          from: theme.warningBackground,
+          to: theme.warning400
+        }
+      ],
+      info: [OPACITY_ANIMATION],
       success: [OPACITY_ANIMATION],
       gray: [
         {
           property: 'backgroundColor',
-          from:
-            themeType === THEME_TYPES.DARK ? theme.tertiaryBackground : theme.quaternaryBackground,
-          to:
-            themeType === THEME_TYPES.DARK
-              ? theme.secondaryBackground
-              : `${String(theme.primaryLight)}10`
-        },
-        {
-          property: 'borderWidth',
-          from: 0,
-          to: 1
-        },
-        {
-          property: 'borderColor',
-          from: theme.quaternaryBackground,
-          to: themeType === THEME_TYPES.DARK ? `${theme.linkText as string}80` : theme.primaryLight
+          from: `${String(theme.neutral400)}00`,
+          to: theme.neutral400
         }
       ]
     }),
-    [themeType, theme]
+    [theme]
   )
 
   const [buttonContainerBind, buttonContainerAnimatedStyle] = useMultiHover({
@@ -265,28 +254,21 @@ const Button = ({
   const containerStyles: { [key in ButtonTypes]: ViewStyle } = {
     primary: styles.buttonContainerPrimary,
     secondary: styles.buttonContainerSecondary,
+    tertiary: styles.buttonContainerSecondary,
     danger: styles.buttonContainerDanger,
     outline: styles.buttonContainerOutline,
     ghost: styles.buttonContainerGhost,
     ghost2: {},
-    error: {
-      backgroundColor: theme.errorText,
+    dangerFilled: {
+      backgroundColor: theme.error200,
       borderWidth: 0
     },
     warning: {
-      backgroundColor: theme.warningText,
-      borderWidth: 0
+      borderColor: theme.warningDecorative,
+      borderWidth: 1
     },
     info: {
       backgroundColor: theme.infoText,
-      borderWidth: 0
-    },
-    info2: {
-      backgroundColor: theme.info2Text,
-      borderWidth: 0
-    },
-    info3: {
-      backgroundColor: theme.info3Button,
       borderWidth: 0
     },
     success: {
@@ -294,7 +276,7 @@ const Button = ({
       borderWidth: 0
     },
     gray: {
-      backgroundColor: theme.quaternaryBackground,
+      backgroundColor: theme.neutral400,
       borderWidth: 0
     }
   }
@@ -302,6 +284,7 @@ const Button = ({
   const containerStylesSizes: { [key in ButtonSizes]: ViewStyle } = {
     large: styles.buttonContainerStylesSizeLarge,
     regular: styles.buttonContainerStylesSizeRegular,
+    smaller: styles.buttonContainerStylesSmaller,
     small: styles.buttonContainerStylesSizeSmall,
     tiny: styles.buttonContainerStylesSizeTiny
   }
@@ -314,74 +297,67 @@ const Button = ({
       primary: [
         {
           property: 'color',
-          from: themeType === THEME_TYPES.DARK ? theme.primaryBackground : '#fff',
+          from: '#fff',
           to: '#fff'
         }
       ],
       secondary: [
         {
           property: 'color',
-          from: theme.primary,
-          to: themeType === THEME_TYPES.DARK ? '#fff' : theme.primary
+          from: theme.primaryText,
+          to: theme.primaryText
+        }
+      ],
+      tertiary: [
+        {
+          property: 'color',
+          from: theme.primaryText,
+          to: theme.primaryText
         }
       ],
       danger: [
         {
           property: 'color',
-          from: themeType === THEME_TYPES.DARK ? theme.errorText : theme.errorDecorative,
-          to: themeType === THEME_TYPES.DARK ? theme.errorText : theme.errorDecorative
+          from: theme.errorText,
+          to: theme.error100
+        }
+      ],
+      dangerFilled: [
+        {
+          property: 'color',
+          from: '#fff',
+          to: '#fff'
         }
       ],
       outline: [
         {
           property: 'color',
-          from: themeType === THEME_TYPES.DARK ? theme.primary : theme.successDecorative,
-          to: themeType === THEME_TYPES.DARK ? '#fff' : theme.successDecorative
+          from: theme.primaryText,
+          to: theme.primaryText
         }
       ],
       ghost: [
         {
           property: 'color',
-          from: theme.primary,
-          to: theme.primary
+          from: theme.primaryText,
+          to: theme.primaryText
         }
       ],
       ghost2: [
         {
           property: 'color',
-          from: theme.iconPrimary,
-          to: theme.primaryBackgroundInverted
-        }
-      ],
-      error: [
-        {
-          property: 'color',
-          from: theme.primaryBackground,
-          to: theme.primaryBackground
+          from: theme.secondaryText,
+          to: theme.primaryText
         }
       ],
       warning: [
         {
           property: 'color',
-          from: theme.primaryBackground,
-          to: theme.primaryBackground
+          from: theme.warningText,
+          to: theme.warning100
         }
       ],
       info: [
-        {
-          property: 'color',
-          from: theme.primaryBackground,
-          to: theme.primaryBackground
-        }
-      ],
-      info2: [
-        {
-          property: 'color',
-          from: theme.primaryBackground,
-          to: theme.primaryBackground
-        }
-      ],
-      info3: [
         {
           property: 'color',
           from: theme.primaryBackground,
@@ -403,7 +379,7 @@ const Button = ({
         }
       ]
     }),
-    [themeType, theme]
+    [theme]
   )
 
   const [buttonTextBind, buttonTextAnimatedStyle, isHovered] = useMultiHover({
@@ -414,6 +390,7 @@ const Button = ({
   const buttonTextStylesSizes: { [key in ButtonSizes]: TextStyle } = {
     large: styles.buttonTextStylesSizeLarge,
     regular: styles.buttonTextStylesSizeRegular,
+    smaller: styles.buttonTextStylesSizeSmaller,
     small: styles.buttonTextStylesSizeSmall,
     tiny: styles.buttonTextStylesSizeTiny
   }
@@ -458,7 +435,7 @@ const Button = ({
           buttonContainerAnimatedStyle,
           disabled && disabledStyle ? disabledStyle : {},
           disabled && !disabledStyle ? styles.disabled : {}
-        ] as ViewStyle
+        ] as ViewStyle[]
       }
       {...rest}
       onHoverIn={(e) => {
@@ -491,6 +468,10 @@ const Button = ({
       onPressOut={(e) => {
         if (buttonTypesWithInnerContainer.includes(type)) return
 
+        buttonContainerBind.onPressOut(e)
+        buttonTextBind.onPressOut(e)
+        childrenScaleBind.onPressOut(e)
+
         rest?.onPressOut && rest.onPressOut(e)
       }}
     >
@@ -521,6 +502,10 @@ const Button = ({
           rest?.onPressIn && rest.onPressIn(e)
         }}
         onPressOut={(e) => {
+          buttonContainerBind.onPressOut(e)
+          buttonTextBind.onPressOut(e)
+          childrenScaleBind.onPressOut(e)
+
           rest?.onPressOut && rest.onPressOut(e)
         }}
       >
@@ -550,6 +535,17 @@ const Button = ({
           >
             {text}
           </AnimatedText>
+        )}
+        {!!tooltipDataSet && isWeb && (
+          <InfoIcon
+            width={16}
+            height={16}
+            style={{
+              ...flexbox.alignSelfStart,
+              ...spacings.mlMi
+            }}
+            dataSet={tooltipDataSet}
+          />
         )}
 
         {childrenPosition === 'right' && (

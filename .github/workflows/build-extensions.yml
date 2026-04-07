@@ -28,10 +28,10 @@ jobs:
       group: ${{ github.workflow }}-${{ github.ref }}-${{ matrix.build_variant }}
     steps:
       - name: Checkout code 🛎️
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Add SSH key to checkout a private repo
-        uses: webfactory/ssh-agent@v0.5.4
+        uses: webfactory/ssh-agent@v0.9.1
         with:
           ssh-private-key: ${{ secrets.DEPLOY_KEY }}
 
@@ -60,10 +60,12 @@ jobs:
           echo "REACT_APP_PIMLICO_API_KEY=\"${{ vars.REACT_APP_PIMLICO_API_KEY }}\"" >> .env
           echo "REACT_APP_ETHERSPOT_API_KEY=\"${{ vars.REACT_APP_ETHERSPOT_API_KEY }}\"" >> .env
           echo "REACT_APP_CANDIDE_API_KEY=\"${{ vars.REACT_APP_CANDIDE_API_KEY }}\"" >> .env
+          echo "REACT_APP_GELATO_API_KEY=\"${{ vars.REACT_APP_GELATO_API_KEY }}\"" >> .env
           echo "NFT_CDN_URL=\"${{ vars.NFT_CDN_URL }}\"" >> .env
           echo "LEGENDS_NFT_ADDRESS=\"${{ vars.LEGENDS_NFT_ADDRESS }}\"" >> .env
           echo "LI_FI_API_KEY=\"${{ vars.LI_FI_API_KEY }}\"" >> .env
           echo "BUNGEE_API_KEY=\"${{ vars.BUNGEE_API_KEY }}\"" >> .env
+          echo "SAFE_API_KEY=\"${{ vars.SAFE_API_KEY }}\"" >> .env
           echo "SENTRY_DSN_BROWSER_EXTENSION=\"${{ vars.SENTRY_DSN_BROWSER_EXTENSION }}\"" >> .env
         shell: bash
 
@@ -80,10 +82,12 @@ jobs:
           REACT_APP_PIMLICO_API_KEY: ${{ vars.REACT_APP_PIMLICO_API_KEY }}
           REACT_APP_ETHERSPOT_API_KEY: ${{ vars.REACT_APP_ETHERSPOT_API_KEY }}
           REACT_APP_CANDIDE_API_KEY: ${{ vars.REACT_APP_CANDIDE_API_KEY }}
+          REACT_APP_GELATO_API_KEY: ${{ vars.REACT_APP_GELATO_API_KEY }}
           NFT_CDN_URL: ${{ vars.NFT_CDN_URL }}
           LEGENDS_NFT_ADDRESS: ${{ vars.LEGENDS_NFT_ADDRESS }}
           LI_FI_API_KEY: ${{ vars.LI_FI_API_KEY }}
           BUNGEE_API_KEY: ${{ vars.BUNGEE_API_KEY }}
+          SAFE_API_KEY: ${{ vars.SAFE_API_KEY }}
           SENTRY_DSN_BROWSER_EXTENSION: ${{ vars.SENTRY_DSN_BROWSER_EXTENSION }}
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN_BROWSER_EXTENSIONS }}
         run: yarn build:extensions:${{ matrix.build_variant }}
@@ -95,13 +99,13 @@ jobs:
       #   shell: bash
 
       # - name: Upload source code 📦
-      #   uses: actions/upload-artifact@v4
+      #   uses: actions/upload-artifact@v6
       #   with:
       #     name: extension-source-code
       #     path: ./extension-source-code.zip
 
       - name: Upload extension builds 📦
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: ambire-extension-v${{ steps.version.outputs.VERSION }}-${{ matrix.artifact_suffix }}-with-sourcemaps
           path: ./build/*.zip

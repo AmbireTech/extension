@@ -1,252 +1,206 @@
-import React, { useCallback, useEffect, useMemo, useRef } from 'react'
-import { Controller, useForm } from 'react-hook-form'
-import { TouchableOpacity, View } from 'react-native'
+import React, { useEffect } from 'react'
+import { Controller } from 'react-hook-form'
+import { Image, TouchableOpacity, View } from 'react-native'
 
 import { isValidPassword } from '@ambire-common/services/validations'
-import AmbireLogoWithTextMonochrome from '@common/assets/svg/AmbireLogoWithTextMonochrome'
+import AmbireLogoWithBackgroundAndLogotype from '@common/assets/svg/AmbireLogoWithBackgroundAndLogotype'
+import InvisibilityIcon from '@common/assets/svg/InvisibilityIcon'
 import LockIcon from '@common/assets/svg/LockIcon'
-import UnlockScreenBackground from '@common/assets/svg/UnlockScreenBackground'
+import VisibilityIcon from '@common/assets/svg/VisibilityIcon'
 import Button from '@common/components/Button'
+import FatToggle from '@common/components/FatToggle'
+import {
+  createGlobalTooltipDataSet,
+  GLOBAL_TOOLTIP_REFRESH_EVENT
+} from '@common/components/GlobalTooltip'
 import InputPassword from '@common/components/InputPassword'
+import LayoutWrapper from '@common/components/LayoutWrapper'
 import Text from '@common/components/Text'
-import { isDev, isTesting, isWeb } from '@common/config/env'
+import { isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
-import useDisableNavigatingBack from '@common/hooks/useDisableNavigatingBack'
-import useElementSize from '@common/hooks/useElementSize'
-import useNavigation from '@common/hooks/useNavigation'
+import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
-import Header from '@common/modules/header/components/Header'
+import useKeyStoreUnlock from '@common/modules/keystore/hooks/useKeyStoreUnlock'
+import backgroundImage from '@common/modules/keystore/images/background.png'
 import { ROUTES } from '@common/modules/router/constants/common'
-import spacings, { SPACING } from '@common/styles/spacings'
+import spacings from '@common/styles/spacings'
+import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
-import { DEFAULT_KEYSTORE_PASSWORD_DEV } from '@env'
-import { TabLayoutContainer, TabLayoutWrapperMainContent } from '@web/components/TabLayoutWrapper'
-import { POPUP_WIDTH } from '@web/constants/spacings'
+import { getUiType } from '@common/utils/uiType'
 import { openInternalPageInTab } from '@web/extension-services/background/webapi/tab'
-import useBackgroundService from '@web/hooks/useBackgroundService'
-import useEmailVaultControllerState from '@web/hooks/useEmailVaultControllerState'
-import useKeystoreControllerState from '@web/hooks/useKeystoreControllerState'
-import useRequestsControllerState from '@web/hooks/useRequestsControllerState'
-import { getUiType } from '@web/utils/uiType'
 
 import getStyles from './styles'
 
 const FOOTER_BUTTON_HIT_SLOP = { top: 10, bottom: 15 }
-const MIN_PANEL_SIZE = 480
-
-const isPopup = getUiType().isPopup
-
-const Container = isPopup ? View : TabLayoutWrapperMainContent
 
 const KeyStoreUnlockScreen = () => {
-  const contentContainerRef = useRef(null)
+  const { control, handleSubmit, errors, passwordFieldError, disableSubmit, handleUnlock } =
+    useKeyStoreUnlock()
   const { t } = useTranslation()
-  const { styles, theme } = useTheme(getStyles)
-  const { navigate } = useNavigation()
-  const { dispatch } = useBackgroundService()
-  const { hasKeystoreRecovery } = useEmailVaultControllerState()
-  const { isUnlocked, statuses, errorMessage } = useKeystoreControllerState()
-  const { requestWindow } = useRequestsControllerState()
-  const { height } = useElementSize(contentContainerRef)
+  const { styles } = useTheme(getStyles)
   const {
-    control,
-    handleSubmit,
-    watch,
-    setError,
-    formState: { errors }
-  } = useForm({
-    mode: 'all',
-    defaultValues: {
-      password: isDev && !isTesting ? (DEFAULT_KEYSTORE_PASSWORD_DEV ?? '') : ''
-    }
-  })
+    state: { isPrivacyModeEnabled },
+    dispatch: walletStateDispatch
+  } = useController('WalletStateController')
+  const { hasKeystoreRecovery } = useController('EmailVaultController').state
+  const {
+    state: { statuses, errorMessage },
+    dispatch: keystoreDispatch
+  } = useController('KeystoreController')
+  const { requestWindow } = useController('RequestsController').state
+  const { theme } = useTheme()
 
-  useDisableNavigatingBack()
-
-  const passwordFieldValue = watch('password')
-
+  // Refresh tooltip content when privacy mode changes while tooltip is active
   useEffect(() => {
-    if (errorMessage) setError('password', { message: errorMessage })
-  }, [errorMessage, setError])
+    if (!isWeb) return
 
-  useEffect(() => {
-    if (isUnlocked) navigate('/')
-  }, [navigate, isUnlocked])
-
-  const disableSubmit = useMemo(
-    () => statuses.unlockWithSecret !== 'INITIAL' || !!errorMessage,
-    [statuses.unlockWithSecret, errorMessage]
-  )
-
-  const passwordFieldError = useMemo(() => {
-    if (!errors.password) return undefined
-
-    if (passwordFieldValue.length < 8) {
-      return t('Please fill in at least 8 characters for password.')
-    }
-
-    return errors.password.message || t('Invalid password')
-  }, [errors.password, passwordFieldValue.length, t])
-
-  const handleUnlock = useCallback(
-    ({ password }: { password: string }) => {
-      if (disableSubmit) return
-
-      dispatch({
-        type: 'KEYSTORE_CONTROLLER_UNLOCK_WITH_SECRET',
-        params: { secretId: 'password', secret: password }
-      })
-    },
-    [disableSubmit, dispatch]
-  )
-
-  const panelSize = useMemo(() => {
-    const MAX_SIZE = POPUP_WIDTH
-    if (isPopup) return POPUP_WIDTH
-    if (height > MAX_SIZE) return POPUP_WIDTH
-
-    const size = height - 2 * SPACING
-    return size < MIN_PANEL_SIZE ? MIN_PANEL_SIZE : size
-  }, [height])
+    const event = new CustomEvent(GLOBAL_TOOLTIP_REFRESH_EVENT)
+    window.dispatchEvent(event)
+  }, [isPrivacyModeEnabled])
 
   return (
-    <TabLayoutContainer
-      withHorizontalPadding={!isPopup}
-      backgroundColor={theme.secondaryBackground}
-      header={
-        !isPopup && (
-          <Header displayBackButtonIn="never" withAmbireLogo mode="custom-inner-content">
-            <View
-              style={[
-                flexbox.flex1,
-                flexbox.directionRow,
-                flexbox.alignCenter,
-                flexbox.justifyCenter
-              ]}
-            >
-              <Text
-                fontSize={20}
-                weight="medium"
-                style={[{ marginLeft: 18 + SPACING }, spacings.mr]}
-              >
-                {t('Welcome Back')}
-              </Text>
-              <LockIcon />
-            </View>
-          </Header>
-        )
-      }
-    >
-      <Container
-        contentContainerStyle={[flexbox.alignCenter, spacings.pv0]}
-        style={flexbox.flex1}
-        wrapperRef={contentContainerRef}
-        withScroll
+    <LayoutWrapper style={styles.panel}>
+      <View
+        style={{
+          height: 324,
+          width: '100%',
+          ...spacings.phSm,
+          marginBottom: 56
+        }}
       >
         <View
-          style={[
-            styles.container,
-            { aspectRatio: 1, minHeight: MIN_PANEL_SIZE, maxHeight: panelSize }
-          ]}
+          style={{
+            width: '100%',
+            height: '100%',
+            borderRadius: BORDER_RADIUS_PRIMARY,
+            overflow: 'hidden',
+            ...flexbox.center
+          }}
         >
-          <View style={styles.backgroundWrapper}>
-            <View style={styles.backgroundSVG}>
-              <UnlockScreenBackground />
-            </View>
-            {!!isPopup && (
-              <View style={styles.panelHeader}>
-                <View
-                  style={[
-                    flexbox.flex1,
-                    flexbox.directionRow,
-                    flexbox.alignCenter,
-                    flexbox.justifyCenter
-                  ]}
-                >
-                  <Text
-                    fontSize={20}
-                    weight="medium"
-                    color="white"
-                    style={[{ marginLeft: 18 + SPACING }, spacings.mr]}
-                  >
-                    {t('Welcome Back')}
-                  </Text>
-                  <LockIcon color="white" />
-                </View>
-              </View>
-            )}
-            <View style={[flexbox.flex1, flexbox.alignCenter, flexbox.justifyCenter]}>
-              <AmbireLogoWithTextMonochrome
-                width={122}
-                height={height < 550 && !isPopup ? 90 : 128}
-              />
-            </View>
-            <View>
-              <Text
-                fontSize={14}
-                weight="medium"
-                color="white"
-                style={[text.center, spacings.mbXl]}
-              >
-                {t('Easy and secure self-custody for the\nEthereum ecosystem')}
-              </Text>
-            </View>
-          </View>
+          <Image
+            source={{ uri: backgroundImage }}
+            style={{
+              width: '100%',
+              height: '100%',
+              position: 'absolute',
+              objectFit: 'fill',
+              top: 0,
+              left: 0,
+              zIndex: -1
+            }}
+          />
           <View
-            style={[flexbox.alignCenter, flexbox.justifyCenter, spacings.pvLg, { minHeight: 240 }]}
+            style={[
+              { width: '100%' },
+              flexbox.directionRow,
+              flexbox.justifySpaceBetween,
+              flexbox.alignCenter,
+              spacings.phSm,
+              spacings.mb3Xl
+            ]}
           >
-            <Controller
-              control={control}
-              render={({ field: { onChange, onBlur, value } }) => (
-                <InputPassword
-                  testID="passphrase-field"
-                  onBlur={onBlur}
-                  placeholder={t('Enter Your Password')}
-                  autoFocus={isWeb}
-                  onChangeText={(val: string) => {
-                    onChange(val)
-                    if (errorMessage) {
-                      dispatch({ type: 'KEYSTORE_CONTROLLER_RESET_ERROR_STATE' })
+            <View
+              dataSet={createGlobalTooltipDataSet({
+                id: `privacy-mode`,
+                content: t(`Balances: ${isPrivacyModeEnabled ? 'Hidden' : 'Visible'}`)
+              })}
+            >
+              <FatToggle
+                isOn={!isPrivacyModeEnabled}
+                onToggle={() =>
+                  walletStateDispatch({
+                    type: 'method',
+                    params: {
+                      method: 'togglePrivacyMode',
+                      args: []
                     }
-                  }}
-                  isValid={!errors.password && isValidPassword(value)}
-                  value={value}
-                  onSubmitEditing={handleSubmit((data) => handleUnlock(data))}
-                  error={passwordFieldError}
-                  containerStyle={{ ...spacings.mbLg, width: 342 }}
-                />
-              )}
-              name="password"
-            />
-            <Button
-              testID="button-unlock"
-              style={{ width: 342, ...spacings.mbLg }}
-              disabled={disableSubmit}
-              text={statuses.unlockWithSecret === 'LOADING' ? t('Unlocking...') : t('Unlock')}
-              onPress={handleSubmit((data) => handleUnlock(data))}
-            />
-
-            {hasKeystoreRecovery && (
-              <TouchableOpacity
-                onPress={() =>
-                  openInternalPageInTab({
-                    route: ROUTES.keyStoreEmailRecovery,
-                    shouldCloseCurrentWindow: !getUiType().isTab,
-                    windowId: requestWindow?.windowProps?.createdFromWindowId
                   })
                 }
-                hitSlop={FOOTER_BUTTON_HIT_SLOP}
+                width={44}
+                height={24}
+                style={spacings.mr0}
               >
-                <Text weight="medium" appearance="secondaryText" fontSize={14} underline>
-                  {t('Forgot extension password?')}
-                </Text>
-              </TouchableOpacity>
-            )}
+                {!isPrivacyModeEnabled ? (
+                  <VisibilityIcon width={18} height={18} />
+                ) : (
+                  <InvisibilityIcon width={18} height={18} />
+                )}
+              </FatToggle>
+            </View>
+            <View style={[flexbox.directionRow, flexbox.alignCenter]}>
+              <Text fontSize={20} weight="semiBold" color="#fff" appearance="primaryText">
+                {t('Welcome Back')}
+              </Text>
+              <LockIcon width={24} height={24} color="#fff" style={spacings.mlTy} />
+            </View>
+            <View style={{ width: 44, height: 24 }} />
           </View>
+          <AmbireLogoWithBackgroundAndLogotype color="#fff" style={spacings.mbXl} />
+          <Text weight="medium" color="#B9BFC9" style={text.center}>
+            {t('Easy and secure self-custody for the\nEthereum ecosystem')}
+          </Text>
         </View>
-      </Container>
-    </TabLayoutContainer>
+      </View>
+      <View style={styles.container}>
+        <Controller
+          control={control}
+          render={({ field: { onChange, onBlur, value } }) => (
+            <InputPassword
+              testID="passphrase-field"
+              onBlur={onBlur}
+              placeholder={t('Enter your password')}
+              autoFocus={isWeb}
+              inputStyle={{ height: 54 }} // 56-2px border
+              inputWrapperStyle={{ backgroundColor: theme.secondaryBackground, height: 56 }}
+              onChangeText={(val: string) => {
+                onChange(val)
+                if (errorMessage) {
+                  keystoreDispatch({
+                    type: 'method',
+                    params: {
+                      method: 'resetErrorState',
+                      args: []
+                    }
+                  })
+                }
+              }}
+              isValid={!errors.password && isValidPassword(value)}
+              value={value}
+              onSubmitEditing={handleSubmit((data) => handleUnlock(data))}
+              error={passwordFieldError}
+              containerStyle={{ ...spacings.mb, width: '100%' }}
+            />
+          )}
+          name="password"
+        />
+        <Button
+          testID="button-unlock"
+          disabled={disableSubmit}
+          style={{ width: '100%', marginBottom: 0 }}
+          text={statuses.unlockWithSecret === 'LOADING' ? t('Unlocking...') : t('Unlock')}
+          onPress={handleSubmit((data) => handleUnlock(data))}
+        />
+
+        {hasKeystoreRecovery && (
+          <TouchableOpacity
+            onPress={() =>
+              openInternalPageInTab({
+                route: ROUTES.keyStoreEmailRecovery,
+                shouldCloseCurrentWindow: !getUiType().isTab,
+                windowId: requestWindow?.windowProps?.createdFromWindowId
+              })
+            }
+            style={spacings.mtXl}
+            hitSlop={FOOTER_BUTTON_HIT_SLOP}
+          >
+            <Text weight="medium" appearance="secondaryText" fontSize={14} underline>
+              {t('Forgot extension password?')}
+            </Text>
+          </TouchableOpacity>
+        )}
+      </View>
+    </LayoutWrapper>
   )
 }
 

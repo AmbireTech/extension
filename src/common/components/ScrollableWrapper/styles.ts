@@ -1,5 +1,6 @@
 import { StyleSheet, ViewStyle } from 'react-native'
 
+import { isWeb } from '@common/config/env'
 import { SPACING_MI } from '@common/styles/spacings'
 
 interface Style {
@@ -15,7 +16,7 @@ const styles = () =>
     },
     contentContainerStyle: {
       flexGrow: 1,
-      paddingRight: SPACING_MI / 2
+      ...(isWeb ? { paddingRight: SPACING_MI / 2 } : {})
     }
   })
 

@@ -2,8 +2,8 @@ import i18n from 'i18next'
 
 import EventEmitter from '@ambire-common/controllers/eventEmitter/eventEmitter'
 import { IEventEmitterRegistryController } from '@ambire-common/interfaces/eventEmitter'
+import { storage } from '@common/services/storage'
 import { browser } from '@web/constants/browserapi'
-import { storage } from '@web/extension-services/background/webapi/storage'
 
 export const ALARMS_AUTO_LOCK = 'ALARMS_AUTO_LOCK'
 
@@ -76,6 +76,10 @@ export class AutoLockController extends EventEmitter {
 
   setLastActiveTime() {
     this.#resetTimer()
+  }
+
+  setAutoLockTime(newValue: AUTO_LOCK_TIMES) {
+    this.autoLockTime = newValue
   }
 
   toJSON() {

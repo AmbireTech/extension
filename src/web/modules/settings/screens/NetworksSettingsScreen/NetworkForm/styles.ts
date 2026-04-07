@@ -1,7 +1,7 @@
 import { StyleSheet, ViewStyle } from 'react-native'
 
 import spacings from '@common/styles/spacings'
-import { THEME_TYPES, ThemeProps, ThemeType } from '@common/styles/themeConfig'
+import { ThemeProps } from '@common/styles/themeConfig'
 import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 
@@ -11,26 +11,27 @@ interface Style {
   selectRpcItem: ViewStyle
   selectRpcItemBorder: ViewStyle
   radio: ViewStyle
-  radioHovered: ViewStyle
-  radioSelected: ViewStyle
   radioSelectedInner: ViewStyle
 }
 
-const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
+const getStyles = (theme: ThemeProps) =>
   StyleSheet.create<Style>({
     modalHeader: {
-      backgroundColor:
-        themeType === THEME_TYPES.DARK ? theme.tertiaryBackground : theme.secondaryBackground,
-      height: 60,
-      width: '100%',
-      ...spacings.phXl,
       ...flexbox.directionRow,
-      ...flexbox.alignCenter
+      ...flexbox.alignCenter,
+      ...spacings.mhMi,
+      ...spacings.mvMi,
+      ...spacings.phXl,
+      borderRadius: 12,
+      height: 60,
+      backgroundColor: theme.secondaryBackground,
+      borderBottomWidth: 1,
+      borderBottomColor: theme.neutral400
     },
     rpcUrlsContainer: {
       backgroundColor: theme.secondaryBackground,
       ...common.borderRadiusPrimary,
-      maxHeight: 104,
+      maxHeight: 110,
       ...spacings.mb
     },
     selectRpcItem: {
@@ -41,28 +42,23 @@ const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
     },
     selectRpcItemBorder: {
       borderBottomWidth: 1,
-      borderBottomColor: theme.tertiaryBackground
+      borderBottomColor: theme.secondaryBackground
     },
     radio: {
       width: 16,
       height: 16,
       borderRadius: 50,
       borderWidth: 2,
-      borderColor: theme.primaryBorder,
       ...flexbox.alignCenter,
       ...flexbox.justifyCenter,
-      ...spacings.mrTy
+      ...spacings.mrTy,
+      borderColor: theme.success400
     },
-    radioHovered: {
-      borderColor: theme.successText
-    },
-    radioSelected: {
-      borderColor: theme.successText
-    },
+
     radioSelectedInner: {
-      backgroundColor: theme.successText,
-      width: 10,
-      height: 10,
+      backgroundColor: theme.success400,
+      width: 8,
+      height: 8,
       borderRadius: 50
     }
   })

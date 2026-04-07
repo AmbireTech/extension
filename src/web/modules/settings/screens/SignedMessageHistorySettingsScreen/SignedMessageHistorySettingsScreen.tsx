@@ -1,5 +1,5 @@
 import { nanoid } from 'nanoid'
-import React, { FC, useState } from 'react'
+import React, { FC, useMemo, useState } from 'react'
 import { Trans } from 'react-i18next'
 import { StyleSheet, View } from 'react-native'
 
@@ -7,20 +7,23 @@ import { SignedMessage } from '@ambire-common/controllers/activity/types'
 import { Account } from '@ambire-common/interfaces/account'
 import shortenAddress from '@ambire-common/utils/shortenAddress'
 import Text from '@common/components/Text'
+import useController from '@common/hooks/useController'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
-import useActivityControllerState from '@web/hooks/useActivityControllerState'
 
-import HistorySettingsPage from '../../components/TransactionHistory/HistorySettingsPage'
-import SignedMessageSummary from '../../components/TransactionHistory/SignedMessageSummary'
+import HistorySettingsPage from '../../../../../common/modules/settings/components/TransactionHistory/HistorySettingsPage'
+import SignedMessageSummary from '../../../../../common/modules/settings/components/TransactionHistory/SignedMessageSummary'
 
 const SignedMessageHistory: FC<{
   page?: number
   account: Account
   sessionId: string
 }> = ({ page, account, sessionId }) => {
-  const activityState = useActivityControllerState()
+  const activityState = useController('ActivityController').state
+  const signedMessages = useMemo(() => {
+    return (activityState.signedMessages?.[sessionId]?.result?.items || [])
+  }, [activityState.signedMessages, sessionId])
 
   if (!activityState?.signedMessages?.[sessionId]?.result.items.length && page) {
     return (
@@ -51,12 +54,12 @@ const SignedMessageHistory: FC<{
 
   return (
     <>
-      {(activityState?.signedMessages?.[sessionId]?.result.items || []).map((item, i) => (
+      {signedMessages.map((item, i) => (
         <SignedMessageSummary
           key={item.timestamp}
           signedMessage={item as SignedMessage}
           style={
-            i !== activityState.signedMessages[sessionId].result.items.length - 1
+            i !== signedMessages.length - 1
               ? spacings.mbSm
               : {}
           }

@@ -5,14 +5,14 @@ import { FlatList } from 'react-native'
 
 import { Account as AccountType } from '@ambire-common/interfaces/account'
 import { isSmartAccount } from '@ambire-common/libs/account/account'
-import useAccountsControllerState from '@web/hooks/useAccountsControllerState'
-import useDomainsControllerState from '@web/hooks/useDomainsController/useDomainsController'
-import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
+import useController from '@common/hooks/useController'
+
+const ITEM_HEIGHT = 65
 
 const useAccountsList = ({
   flatlistRef
 }: {
-  flatlistRef?: React.RefObject<FlatList<AccountType>> | null
+  flatlistRef?: React.RefObject<FlatList<AccountType> | null>
 } = {}) => {
   const { control, watch } = useForm({
     mode: 'all',
@@ -24,9 +24,11 @@ const useAccountsList = ({
   const [shouldDisplayAccounts, setShouldDisplayAccounts] = useState(false)
   const {
     state: { domains }
-  } = useDomainsControllerState()
-  const { accounts } = useAccountsControllerState()
-  const { account: selectedAccount } = useSelectedAccountControllerState()
+  } = useController('DomainsController')
+  const { accounts } = useController('AccountsController').state
+  const {
+    state: { account: selectedAccount }
+  } = useController('SelectedAccountController')
   const timeoutRef = useRef<NodeJS.Timeout | null>(null)
 
   const searchableAccounts = useMemo(
@@ -86,16 +88,14 @@ const useAccountsList = ({
 
   const getItemLayout = useCallback(
     (_: any, index: number) => ({
-      length: 64,
-      offset: 64 * index,
+      length: ITEM_HEIGHT,
+      offset: ITEM_HEIGHT * index,
       index
     }),
-    []
+    [ITEM_HEIGHT]
   )
 
-  // Scrolls to the selected account in the FlatList
-  // It's complexity comes from the fact that the FlatList is not mounted when the component is first rendered
-  // and so are the accounts.
+  // Scrolls to the selected account in the FlatList.
   const scrollToSelectedAccount = useCallback(
     (attempt: number = 0) => {
       const MAX_ATTEMPTS = 3
@@ -103,30 +103,26 @@ const useAccountsList = ({
         clearTimeout(timeoutRef.current)
         timeoutRef.current = null
       }
-      if (attempt > MAX_ATTEMPTS) {
-        // Display the accounts after reaching MAX_ATTEMPTS
+
+      if (attempt > MAX_ATTEMPTS || !accounts.length || selectedAccountIndex === -1) {
         setShouldDisplayAccounts(true)
         return
       }
-      if (
-        accounts.length &&
-        selectedAccountIndex !== -1 &&
-        flatlistRef?.current &&
-        !shouldDisplayAccounts
-      ) {
-        try {
-          flatlistRef.current.scrollToIndex({
-            animated: false,
-            index: selectedAccountIndex
-          })
-          setShouldDisplayAccounts(true)
-        } catch (error) {
-          console.warn(`Failed to scroll to the selected account. Attempt ${attempt}`, error)
-          timeoutRef.current = setTimeout(() => scrollToSelectedAccount(attempt + 1), 100)
-        }
+
+      if (flatlistRef?.current && !shouldDisplayAccounts) {
+        // Uses scrollToOffset (instead of scrollToIndex) so that FlatList does NOT need to
+        // pre-render every item between 0 and selectedAccountIndex
+        flatlistRef.current.scrollToOffset({
+          animated: false,
+          offset: selectedAccountIndex * ITEM_HEIGHT
+        })
+        setShouldDisplayAccounts(true)
+      } else if (!shouldDisplayAccounts) {
+        // Retry
+        timeoutRef.current = setTimeout(() => scrollToSelectedAccount(attempt + 1), 100)
       }
     },
-    [accounts.length, flatlistRef, shouldDisplayAccounts, selectedAccountIndex]
+    [ITEM_HEIGHT, accounts.length, flatlistRef, shouldDisplayAccounts, selectedAccountIndex]
   )
 
   useEffect(() => {

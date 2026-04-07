@@ -96,20 +96,18 @@ export class SwapAndBridgePage extends BasePage {
   }
 
   async selectSendToken(sendToken: Token) {
-    await this.page.waitForTimeout(1000) // waiting for animation
-    await this.clickOnMenuToken(sendToken, selectors.sendTokenSab)
+    await this.page.waitForTimeout(1500) // waiting for animation
+    await this.clickOnMenuToken(sendToken, selectors.swapAndBridge.fromTokenDropdown)
   }
 
   async selectReceiveToken(receiveToken: Token) {
-    await this.page.waitForTimeout(1000) // waiting for animation
-    const loadingSelector = `[data-testid="${selectors.receiveTokenSab}"] >> text=Please select token`
-    await this.page.locator(loadingSelector).waitFor({ state: 'visible' })
+    await this.page.waitForTimeout(1500) // waiting for animation
 
-    await this.clickOnMenuToken(receiveToken, selectors.receiveTokenSab)
+    await this.clickOnMenuToken(receiveToken, selectors.swapAndBridge.receiveTokenDropdown)
   }
 
   async verifyIfSwitchIsActive(reference = true) {
-    await this.page.waitForTimeout(500)
+    await this.page.waitForTimeout(1000)
 
     const switchElement = await this.page.$(SELECTORS.switchTokensTooltipSab)
 
@@ -149,10 +147,7 @@ export class SwapAndBridgePage extends BasePage {
 
     await this.page.waitForTimeout(1000)
 
-    const loadingSelector = `[data-testid="${selectors.receiveTokenSab}"] >> text=Please select token`
-    await this.page.locator(loadingSelector).waitFor({ state: 'visible' })
-
-    await this.click(selectors.receiveTokenSab)
+    await this.click(selectors.swapAndBridge.receiveTokenDropdown)
     await this.page.getByTestId(selectors.searchInput).fill(receiveToken.symbol)
 
     const tokenLocator = this.page
@@ -165,16 +160,13 @@ export class SwapAndBridgePage extends BasePage {
     await this.openSwapAndBridge()
     await this.selectSendToken(sendToken)
 
-    await this.page.waitForTimeout(1000)
+    await this.page.waitForTimeout(2000)
 
-    const loadingSelector = `[data-testid="${selectors.receiveTokenSab}"] >> text=Please select token`
-    await this.page.locator(loadingSelector).waitFor({ state: 'visible' })
-
-    await this.click(selectors.receiveTokenSab)
-    await this.page.getByTestId(selectors.searchInput).fill(receiveToken.symbol, { timeout: 3000 })
+    await this.click(selectors.swapAndBridge.receiveTokenDropdown)
+    await this.page.getByTestId(selectors.searchInput).fill(receiveToken.symbol, { timeout: 5000 })
     await this.page.getByText('Not found. Try with token').isVisible()
 
-    await this.page.locator(SELECTORS.searchInput).fill(receiveToken.address, { timeout: 3000 })
+    await this.page.locator(SELECTORS.searchInput).fill(receiveToken.address, { timeout: 5000 })
 
     const tokenLocator = this.page
       .getByTestId(selectors.bottomSheet)
@@ -227,10 +219,11 @@ export class SwapAndBridgePage extends BasePage {
       await page.getByTestId(selectors.transaction.feeSpeedSelectDropdown).click()
       await page.getByTestId(selectors.transaction.feeSpeedSlow).first().click()
 
-      // check fee
-      const feeSelector = await page.locator(selectors.transaction.feeGasTankInDollars).innerText() // returns e.g. '<$0.01'
-
-      const feeDollarsAmount = Number(feeSelector.replace(/[<$]/g, ''))
+      const feeSelector = await page
+        .getByTestId(selectors.transaction.feeTokensSelectDropdown)
+        .locator(selectors.transaction.feeTokenInDollars)
+        .innerText()
+      const feeDollarsAmount = Number.parseFloat(feeSelector.replace(/[^0-9.]/g, ''))
 
       if (feeDollarsAmount > 0.1) {
         console.warn(
@@ -246,7 +239,7 @@ export class SwapAndBridgePage extends BasePage {
         await page.locator(selectors.closeTransactionProgressPopUpButton).click()
       }
     } catch (error) {
-      console.warn("⚠️ The 'Sign' button is not clickable, but it should be.")
+      console.warn("⚠️ We couldn't sign the transaction.", { error })
     }
   }
 
@@ -267,7 +260,7 @@ export class SwapAndBridgePage extends BasePage {
     const [usdOldAmount, currency] = await this.getUSDTextContent()
     expect(currency).toBe('$')
     const oldAmount = await this.getAmount(selectors.fromAmountInputSab)
-    await this.page.waitForTimeout(500)
+    await this.page.waitForTimeout(1000)
     await this.click(selectors.flipIcon)
 
     const [usdNewAmount, newCurrency] = await this.getUSDTextContent()
@@ -277,7 +270,7 @@ export class SwapAndBridgePage extends BasePage {
     expect(newCurrency).toBe(sendToken.symbol)
 
     // Wait and flip back
-    await this.page.waitForTimeout(500)
+    await this.page.waitForTimeout(1000)
     await this.click(selectors.flipIcon)
 
     const [usdSecondAmount, secondCurrency] = await this.getUSDTextContent()
@@ -290,7 +283,9 @@ export class SwapAndBridgePage extends BasePage {
   }
 
   async getUSDTextContent(): Promise<[number, string]> {
-    const content = await this.page.getByTestId(selectors.switchCurrencySab).innerText()
+    const content = await this.page
+      .getByTestId(selectors.switchCurrencySab)
+      .innerText({ timeout: 5000 })
 
     let currency: string | null = null
     let amount: string | null = null
@@ -318,16 +313,29 @@ export class SwapAndBridgePage extends BasePage {
     expect(didReappear).toBe(true)
   }
 
-  async assertSelectedAggregator(): Promise<void> {
-    await expect(this.page.getByText('SushiSwap').last()).toBeVisible()
+  async assertSelectedAggregator(routeName: string): Promise<void> {
+    await expect(this.page.getByText(routeName).last()).toBeVisible()
     await expect(this.page.getByTestId('selected-route')).toBeVisible()
   }
 
+  // TODO: improve method
   async clickOnSecondRoute(): Promise<void> {
+    const oneInchRoute = this.page.locator(selectors.swapAndBridge.oneInchSwapRoute)
+    const kyberRoute = this.page.locator(selectors.swapAndBridge.kyberSwapRoute)
+
     await this.click(selectors.selectRouteButton)
-    await this.page.locator(selectors.sushiSwapRoute).last().click() // missing ID
-    await this.click(selectors.selectRouteButton)
-    await this.assertSelectedAggregator()
+
+    if ((await oneInchRoute.count()) > 0) {
+      await this.page.locator(selectors.swapAndBridge.oneInchSwapRoute).first().click()
+      await this.click(selectors.selectRouteButton)
+      await this.assertSelectedAggregator('1Inch')
+    } else if ((await kyberRoute.count()) > 0) {
+      await kyberRoute.first().click()
+      await this.click(selectors.selectRouteButton)
+      await this.assertSelectedAggregator('Kyberswap')
+    } else {
+      throw new Error('No available routes found')
+    }
   }
 
   async prepareBridgeTransaction(
@@ -371,7 +379,7 @@ export class SwapAndBridgePage extends BasePage {
   async batchAction(): Promise<void> {
     await expect(this.page.getByTestId(selectors.addToBatchButton)).toBeEnabled()
 
-    await this.page.waitForTimeout(5000) //TODO: misses click without pause, investigate
+    await this.page.waitForTimeout(8000) //TODO: misses click without pause, investigate
     await this.click(selectors.addToBatchButton)
 
     // approve high impact modal
@@ -379,11 +387,12 @@ export class SwapAndBridgePage extends BasePage {
 
     await this.page.getByTestId(selectors.addMoreButton).isVisible()
     await this.click(selectors.addMoreButton)
+    await this.page.waitForTimeout(1000)
   }
 
   async batchActionWithSign(): Promise<void> {
     await expect(this.page.getByTestId(selectors.addToBatchButton)).toBeEnabled()
-    await this.page.waitForTimeout(5000) //TODO: misses click without pause, investigate
+    await this.page.waitForTimeout(8000) //TODO: misses click without pause, investigate
     await this.click(selectors.addToBatchButton)
 
     // approve high impact modal
@@ -404,10 +413,11 @@ export class SwapAndBridgePage extends BasePage {
     await page.getByTestId(selectors.transaction.feeSpeedSelectDropdown).click()
     await page.getByTestId(selectors.transaction.feeSpeedSlow).first().click()
 
-    // check fee
-    const feeSelector = await page.locator(selectors.transaction.feeGasTankInDollars).innerText() // returns e.g. '<$0.01'
-
-    const feeDollarsAmount = Number(feeSelector.replace(/[<$]/g, ''))
+    const feeSelector = await page
+      .getByTestId(selectors.transaction.feeTokensSelectDropdown)
+      .locator(selectors.transaction.feeTokenInDollars)
+      .innerText()
+    const feeDollarsAmount = Number.parseFloat(feeSelector.replace(/[^0-9.]/g, ''))
 
     if (feeDollarsAmount > 0.1) {
       console.warn(

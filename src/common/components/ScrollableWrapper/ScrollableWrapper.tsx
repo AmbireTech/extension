@@ -10,13 +10,9 @@ import {
   View,
   ViewStyle
 } from 'react-native'
-import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
-import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
-import { isWeb } from '@common/config/env'
-import { TAB_BAR_HEIGHT } from '@common/constants/router'
+import { isMobile, isWeb } from '@common/config/env'
 import useTheme from '@common/hooks/useTheme'
-import spacings from '@common/styles/spacings'
 
 import DraggableFlatList from './DraggableFlatList'
 import createStyles from './styles'
@@ -32,7 +28,6 @@ export enum WRAPPER_TYPES {
 
 type BaseProps = {
   type?: WRAPPER_TYPES
-  hasBottomTabNav?: boolean
   wrapperRef?: any
   extraHeight?: number
   style?: StyleProp<ViewStyle>
@@ -66,30 +61,20 @@ const ScrollableWrapper = ({
   type = WRAPPER_TYPES.SCROLL_VIEW,
   keyboardShouldPersistTaps,
   keyboardDismissMode,
-  hasBottomTabNav: _hasBottomTabNav,
   extraHeight,
   wrapperRef,
   onDragEnd,
   renderItem,
   keyExtractor,
   data,
+  showsVerticalScrollIndicator = isWeb,
   ...rest
 }: WrapperProps) => {
   const { styles } = useTheme(createStyles)
-  const insets = useSafeAreaInsets()
-
-  const horizontalSpacing = isWeb ? spacings.ph0 : spacings.ph
-  const hasBottomTabNav = isWeb ? false : _hasBottomTabNav
-
-  const scrollableWrapperStyles = [
-    styles.wrapper,
-    horizontalSpacing,
-    ...(Array.isArray(style) ? style : [style])
-  ]
+  const scrollableWrapperStyles = [styles.wrapper, ...(Array.isArray(style) ? style : [style])]
 
   const scrollableWrapperContentContainerStyles: StyleProp<ViewStyle> = [
     styles.contentContainerStyle,
-    !!hasBottomTabNav && { paddingBottom: TAB_BAR_HEIGHT + insets.bottom },
     ...(Array.isArray(contentContainerStyle) ? contentContainerStyle : [contentContainerStyle]),
     isWeb ? ({ overflowY: 'auto' } as any) : null
   ]
@@ -98,6 +83,7 @@ const ScrollableWrapper = ({
     return (
       <DraggableFlatList
         ref={wrapperRef}
+        bounces={isMobile}
         data={data}
         keyExtractor={
           keyExtractor ? (item: any) => keyExtractor(item, 0) : (item: any) => item.key ?? ''
@@ -106,6 +92,7 @@ const ScrollableWrapper = ({
         renderItem={renderItem ?? (() => null)}
         style={scrollableWrapperStyles}
         contentContainerStyle={scrollableWrapperContentContainerStyles}
+        showsVerticalScrollIndicator={showsVerticalScrollIndicator}
         keyboardShouldPersistTaps={keyboardShouldPersistTaps || 'handled'}
         keyboardDismissMode={keyboardDismissMode || 'none'}
         {...rest}
@@ -117,11 +104,13 @@ const ScrollableWrapper = ({
     return (
       <FlatList
         ref={wrapperRef}
+        bounces={isMobile}
         data={data}
         renderItem={renderItem}
         keyExtractor={keyExtractor || ((item, index) => item.key ?? index.toString())}
         style={scrollableWrapperStyles}
         contentContainerStyle={scrollableWrapperContentContainerStyles}
+        showsVerticalScrollIndicator={showsVerticalScrollIndicator}
         keyboardShouldPersistTaps={keyboardShouldPersistTaps || 'handled'}
         keyboardDismissMode={keyboardDismissMode || 'none'}
         alwaysBounceVertical={false}
@@ -134,40 +123,18 @@ const ScrollableWrapper = ({
     return (
       <SectionList
         ref={wrapperRef}
+        bounces={isMobile}
         sections={data}
         renderItem={renderItem}
         keyExtractor={keyExtractor || ((item, index) => item.key ?? index.toString())}
         style={scrollableWrapperStyles}
         contentContainerStyle={scrollableWrapperContentContainerStyles}
+        showsVerticalScrollIndicator={showsVerticalScrollIndicator}
         keyboardShouldPersistTaps={keyboardShouldPersistTaps || 'handled'}
         keyboardDismissMode={keyboardDismissMode || 'none'}
         alwaysBounceVertical={false}
         {...rest}
       />
-    )
-  }
-
-  if (type === WRAPPER_TYPES.KEYBOARD_AWARE_SCROLL_VIEW) {
-    return (
-      <KeyboardAwareScrollView
-        ref={wrapperRef}
-        style={scrollableWrapperStyles}
-        contentContainerStyle={scrollableWrapperContentContainerStyles}
-        keyboardShouldPersistTaps={keyboardShouldPersistTaps || 'handled'}
-        keyboardDismissMode={keyboardDismissMode || 'none'}
-        alwaysBounceVertical={false}
-        // Glitchy on Android, even without `extraScrollHeight` and
-        // `extraHeight` props set.
-        // TODO: Find a better package, that supports Android better.
-        enableOnAndroid={false}
-        keyboardOpeningTime={100}
-        extraScrollHeight={hasBottomTabNav ? -TAB_BAR_HEIGHT : 0}
-        // Adds extra offset between the keyboard and the focused input
-        extraHeight={extraHeight || 75}
-        {...rest}
-      >
-        {children}
-      </KeyboardAwareScrollView>
     )
   }
 
@@ -178,8 +145,10 @@ const ScrollableWrapper = ({
   return (
     <ScrollView
       ref={wrapperRef}
+      bounces={isMobile}
       style={scrollableWrapperStyles}
       contentContainerStyle={scrollableWrapperContentContainerStyles}
+      showsVerticalScrollIndicator={showsVerticalScrollIndicator}
       keyboardShouldPersistTaps={keyboardShouldPersistTaps || 'handled'}
       keyboardDismissMode={keyboardDismissMode || 'none'}
       alwaysBounceVertical={false}

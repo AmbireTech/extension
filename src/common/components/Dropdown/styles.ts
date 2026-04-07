@@ -1,7 +1,8 @@
 import { StyleSheet, ViewStyle } from 'react-native'
 
+import { isMobile } from '@common/config/env'
 import spacings from '@common/styles/spacings'
-import { THEME_TYPES, ThemeProps, ThemeType } from '@common/styles/themeConfig'
+import { ThemeProps } from '@common/styles/themeConfig'
 import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 
@@ -12,7 +13,7 @@ interface Style {
   item: ViewStyle
 }
 
-const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
+const getStyles = (theme: ThemeProps) =>
   StyleSheet.create<Style>({
     button: {
       width: 24,
@@ -23,11 +24,14 @@ const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
     },
     dropdown: {
       position: 'absolute',
-      backgroundColor:
-        themeType === THEME_TYPES.DARK ? theme.secondaryBackground : theme.primaryBackground,
+      backgroundColor: theme.secondaryBackground,
       minWidth: 160,
       ...common.shadowSecondary,
-      ...common.borderRadiusPrimary
+      ...common.borderRadiusPrimary,
+      ...(isMobile ? { shadowColor: theme.neutral400 } : {}),
+      ...(isMobile ? { shadowOffset: { width: 0, height: 1 } } : {}),
+      ...(isMobile ? { shadowOpacity: 1 } : {}),
+      ...(isMobile ? { shadowRadius: 8 } : {})
     },
     overlay: {
       width: '100%',

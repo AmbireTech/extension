@@ -1,25 +1,20 @@
 import { StyleSheet } from 'react-native'
 
+import { isMobile } from '@common/config/env'
 import spacings from '@common/styles/spacings'
 import { ThemeProps } from '@common/styles/themeConfig'
-import common from '@common/styles/utils/common'
+import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 
 const getStyles = (theme: ThemeProps) =>
   StyleSheet.create({
     outerContainer: {
       borderWidth: 2,
-      borderRadius: 8,
-      borderColor: 'transparent'
+      borderRadius: BORDER_RADIUS_PRIMARY,
+      borderColor: theme.secondaryBackground,
+      overflow: 'hidden'
     },
     outerContainerWarning: {
       borderColor: theme.errorBackground
-    },
-    container: {
-      backgroundColor: theme.secondaryBackground,
-      ...common.borderRadiusPrimary,
-      ...spacings.pvSm,
-      paddingRight: 40,
-      ...spacings.pl
     },
     containerWarning: {
       borderWidth: 1,

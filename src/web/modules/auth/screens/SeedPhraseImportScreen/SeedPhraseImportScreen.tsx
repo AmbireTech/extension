@@ -1,133 +1,46 @@
 import { wordlists } from 'bip39'
-import { Mnemonic } from 'ethers'
-import React, { useCallback, useEffect, useState } from 'react'
-import { Controller, useForm } from 'react-hook-form'
+import React from 'react'
+import { Controller } from 'react-hook-form'
 import { View } from 'react-native'
 
-import { BIP44_STANDARD_DERIVATION_TEMPLATE } from '@ambire-common/consts/derivation'
 import Button from '@common/components/Button'
+import FatToggle from '@common/components/FatToggle'
 import InputPassword from '@common/components/InputPassword'
 import Panel from '@common/components/Panel'
 import ScrollableWrapper from '@common/components/ScrollableWrapper'
 import Text from '@common/components/Text'
 import TextArea from '@common/components/TextArea'
-import Toggle from '@common/components/Toggle'
 import { useTranslation } from '@common/config/localization'
 import useTheme from '@common/hooks/useTheme'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
-import Header from '@common/modules/header/components/Header'
+import useSeedPhraseImport from '@common/modules/auth/hooks/useSeedPhraseImport'
+import getStyles from '@common/modules/auth/styles/seedPhraseImportScreenStyles'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import {
   TabLayoutContainer,
   TabLayoutWrapperMainContent
 } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
-import useAccountPickerControllerState from '@web/hooks/useAccountPickerControllerState'
-import useBackgroundService from '@web/hooks/useBackgroundService'
-
-import getStyles from './styles'
 
 export const CARD_WIDTH = 400
 
 const SeedPhraseImportScreen = () => {
-  const { goToPrevRoute, goToNextRoute } = useOnboardingNavigation()
+  const {
+    control,
+    isValid,
+    enablePassphrase,
+    setEnablePassphrase,
+    seedPhraseStatus,
+    handleFormSubmit,
+    validateSeedPhraseWord
+  } = useSeedPhraseImport()
+  const { goToPrevRoute } = useOnboardingNavigation()
   const { t } = useTranslation()
 
   const { theme, styles } = useTheme(getStyles)
-  const { dispatch } = useBackgroundService()
-  const { initParams, subType } = useAccountPickerControllerState()
-  const {
-    watch,
-    control,
-    handleSubmit,
-    setValue,
-    getValues,
-    formState: { isValid },
-    unregister
-  } = useForm({
-    mode: 'all',
-    defaultValues: { seed: '', passphrase: '' }
-  })
-  const [importButtonPressed, setImportButtonPressed] = useState(false)
-
-  const [enablePassphrase, setEnablePassphrase] = useState(false)
-  const [seedPhraseStatus, setSeedPhraseStatus] = useState<'incomplete' | 'valid' | 'invalid'>(
-    'incomplete'
-  )
-
-  useEffect(() => {
-    const { unsubscribe } = watch((value) => {
-      if (!value.seed) {
-        setSeedPhraseStatus('incomplete')
-        return
-      }
-
-      const formattedSeed = value.seed.trim().split(/\s+/).join(' ')
-
-      if (!Mnemonic.isValidMnemonic(formattedSeed)) {
-        setSeedPhraseStatus('invalid')
-        return
-      }
-
-      setSeedPhraseStatus('valid')
-    })
-    return () => unsubscribe()
-  }, [watch])
-
-  const handleFormSubmit = useCallback(async () => {
-    await handleSubmit(({ seed, passphrase }) => {
-      const formattedSeed = seed.trim().toLowerCase().replace(/\s+/g, ' ')
-      setImportButtonPressed(true)
-      dispatch({
-        type: 'KEYSTORE_CONTROLLER_ADD_TEMP_SEED',
-        params: {
-          seed: formattedSeed,
-          seedPassphrase: passphrase || null,
-          hdPathTemplate: BIP44_STANDARD_DERIVATION_TEMPLATE
-        }
-      })
-      dispatch({
-        type: 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_PRIVATE_KEY_OR_SEED_PHRASE',
-        params: { privKeyOrSeed: formattedSeed, seedPassphrase: passphrase || null }
-      })
-    })()
-  }, [dispatch, handleSubmit])
-
-  useEffect(() => {
-    if (!getValues('seed')) return
-    if (!!importButtonPressed && initParams && subType === 'seed') {
-      setImportButtonPressed(false)
-      goToNextRoute()
-    }
-  }, [goToNextRoute, dispatch, getValues, initParams, subType, importButtonPressed])
-
-  useEffect(() => {
-    if (!enablePassphrase) {
-      setValue('passphrase', '')
-      unregister('passphrase')
-    }
-  }, [enablePassphrase, setValue, unregister])
-
-  const validateSeedPhraseWord = useCallback(
-    (value: string) => {
-      const formattedSeed = value.trim().toLowerCase().replace(/\s+/g, ' ')
-
-      const couldValueBeAPastedSeed = formattedSeed.length > 1
-
-      // If the value contains multiple words, it could be a pasted seed phrase
-      // Don't display errors in this case, otherwise an error flashes when pasting
-      if (!formattedSeed || couldValueBeAPastedSeed) return undefined
-      if (!wordlists.english.includes(value)) return t('invalid-bip39-word')
-      return undefined
-    },
-    [t]
-  )
 
   return (
-    <TabLayoutContainer
-      backgroundColor={theme.secondaryBackground}
-      header={<Header mode="custom-inner-content" withAmbireLogo />}
-    >
+    <TabLayoutContainer backgroundColor={theme.secondaryBackground}>
       <TabLayoutWrapperMainContent>
         <Panel
           type="onboarding"
@@ -155,7 +68,7 @@ const SeedPhraseImportScreen = () => {
                       {words.map((word, index) => {
                         const isWhitespace = /^\s+$/.test(word)
                         const cleanWord = word.trim().toLowerCase()
-                        const isValidWord = isWhitespace || wordlists.english.includes(cleanWord)
+                        const isValidWord = isWhitespace || wordlists.english?.includes(cleanWord)
 
                         if (isWhitespace) {
                           return (
@@ -196,6 +109,7 @@ const SeedPhraseImportScreen = () => {
                         inputWrapperStyle={{
                           position: 'relative',
                           backgroundColor: 'transparent',
+                          borderColor: theme.neutral600,
                           zIndex: 2
                         }}
                         placeholder={t('Write or paste your recovery phrase')}
@@ -213,16 +127,13 @@ const SeedPhraseImportScreen = () => {
                   )
                 }}
               />
-              <Toggle
+              <FatToggle
                 testID="enable-passphrase-toggle"
                 isOn={enablePassphrase}
                 onToggle={() => setEnablePassphrase((prev) => !prev)}
                 label={t('Advanced mode')}
-                labelProps={{
-                  fontSize: 14,
-                  weight: 'regular',
-                  appearance: 'secondaryText'
-                }}
+                width={44}
+                height={24}
                 style={flexbox.alignSelfStart}
               />
               {enablePassphrase ? (
@@ -234,6 +145,7 @@ const SeedPhraseImportScreen = () => {
                       <InputPassword
                         testID="input-passphrase"
                         onBlur={onBlur}
+                        backgroundColor={theme.secondaryBackground}
                         onChangeText={onChange}
                         value={value}
                         placeholder="Recovery phrase passphrase"

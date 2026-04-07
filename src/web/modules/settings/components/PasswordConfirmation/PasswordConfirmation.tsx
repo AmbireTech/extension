@@ -7,14 +7,14 @@ import wait from '@ambire-common/utils/wait'
 import Button from '@common/components/Button'
 import InputPassword from '@common/components/InputPassword'
 import { PanelBackButton, PanelTitle } from '@common/components/Panel/Panel'
+import { isMobile, isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
+import useController from '@common/hooks/useController'
 import useNavigation from '@common/hooks/useNavigation'
 import { WEB_ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import textStyles from '@common/styles/utils/text'
-import useBackgroundService from '@web/hooks/useBackgroundService'
-import useKeystoreControllerState from '@web/hooks/useKeystoreControllerState'
 
 interface Props {
   onPasswordConfirmed: (password: string) => void
@@ -32,8 +32,7 @@ const PasswordConfirmation: React.FC<Props> = ({
   onCustomSubmit
 }) => {
   const { t } = useTranslation()
-  const { dispatch } = useBackgroundService()
-  const keystoreState = useKeystoreControllerState()
+  const { state: keystoreState, dispatch: keystoreDispatch } = useController('KeystoreController')
   const inputRef = useRef<TextInput | null>(null)
   const { navigate } = useNavigation()
 
@@ -85,7 +84,6 @@ const PasswordConfirmation: React.FC<Props> = ({
     keystoreState.errorMessage,
     keystoreState.statuses.unlockWithSecret,
     setError,
-    dispatch,
     onPasswordConfirmed,
     passwordFieldValue
   ])
@@ -97,12 +95,15 @@ const PasswordConfirmation: React.FC<Props> = ({
         return
       }
 
-      dispatch({
-        type: 'KEYSTORE_CONTROLLER_UNLOCK_WITH_SECRET',
-        params: { secretId: 'password', secret: data.password }
+      keystoreDispatch({
+        type: 'method',
+        params: {
+          method: 'unlockWithSecret',
+          args: ['password', data.password]
+        }
       })
     },
-    [dispatch, onCustomSubmit]
+    [keystoreDispatch, onCustomSubmit]
   )
 
   const passwordFieldError: string | undefined = useMemo(() => {
@@ -118,8 +119,8 @@ const PasswordConfirmation: React.FC<Props> = ({
   return (
     <View style={flexbox.flex1}>
       <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mbLg]}>
-        <PanelBackButton onPress={onBackButtonPress} style={spacings.mrSm} />
-        <PanelTitle title={t(title)} style={textStyles.left} />
+        {isWeb && <PanelBackButton onPress={onBackButtonPress} style={spacings.mrSm} />}
+        <PanelTitle title={t(title)} style={isWeb ? textStyles.left : textStyles.center} />
       </View>
       <Controller
         control={control}
@@ -133,7 +134,13 @@ const PasswordConfirmation: React.FC<Props> = ({
             onChangeText={(val: string) => {
               onChange(val)
               if (keystoreState.errorMessage) {
-                dispatch({ type: 'KEYSTORE_CONTROLLER_RESET_ERROR_STATE' })
+                keystoreDispatch({
+                  type: 'method',
+                  params: {
+                    method: 'resetErrorState',
+                    args: []
+                  }
+                })
               }
             }}
             label={text}
@@ -145,7 +152,14 @@ const PasswordConfirmation: React.FC<Props> = ({
         )}
         name="password"
       />
-      <View style={[flexbox.alignCenter, flexbox.flex1, flexbox.justifyEnd]}>
+      <View
+        style={[
+          isMobile && spacings.pt,
+          isWeb && flexbox.alignCenter,
+          flexbox.flex1,
+          flexbox.justifyEnd
+        ]}
+      >
         <Button
           testID="button-submit"
           disabled={keystoreState.statuses.unlockWithSecret !== 'INITIAL' || !isValid}

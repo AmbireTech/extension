@@ -7,34 +7,32 @@ import {
   BannerType as NonMarketingBannerType
 } from '@ambire-common/interfaces/banner'
 import BatchIcon from '@common/assets/svg/BatchIcon'
-import Banner, { BannerButton } from '@common/components/Banner'
+import Banner from '@common/components/Banner'
+import useController from '@common/hooks/useController'
 import useNavigation from '@common/hooks/useNavigation'
 import useToast from '@common/hooks/useToast'
 import DashboardBannerBottomSheet from '@common/modules/dashboard/components/DashboardBanners/DashboardBannerBottomSheet'
 import { ROUTES } from '@common/modules/router/constants/common'
-import useBackgroundService from '@web/hooks/useBackgroundService'
-import useRequestsControllerState from '@web/hooks/useRequestsControllerState'
-import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
-
-const ERROR_ACTIONS = [
-  'reject-accountOp',
-  'reject-bridge',
-  'dismiss-email-vault',
-  'dismiss-7702-banner'
-]
 
 const DashboardBanner = ({
   banner
 }: {
   banner: Omit<BannerType, 'type'> & { type: NonMarketingBannerType }
 }) => {
-  const { type, category, title, text, actions = [] } = banner
-  const { dispatch } = useBackgroundService()
+  const { type, category, title, text, actions = [], dismissAction } = banner
   const { addToast } = useToast()
   const { navigate } = useNavigation()
-  const { statuses, visibleUserRequests } = useRequestsControllerState()
-  const { portfolio } = useSelectedAccountControllerState()
+  const {
+    state: { visibleUserRequests },
+    dispatch: requestsDispatch
+  } = useController('RequestsController')
+  const { dispatch: networksDispatch } = useController('NetworksController')
+  const { dispatch: selectedAccountDispatch } = useController('SelectedAccountController')
+  const { dispatch: mainDispatch } = useController('MainController')
+  const { dispatch: emailVaultDispatch } = useController('EmailVaultController')
+  const { dispatch: extensionUpdateDispatch } = useController('ExtensionUpdateController')
   const { ref: sheetRef, close: closeBottomSheet, open: openBottomSheet } = useModalize()
+  const primaryAction = actions[0]
 
   const Icon = useMemo(() => {
     if (category === 'pending-to-be-signed-acc-op') return BatchIcon
@@ -49,27 +47,36 @@ const DashboardBanner = ({
           if (!visibleUserRequests.length) break
           const dappRequests = visibleUserRequests.filter((r) => r.kind !== 'calls')
           if (!dappRequests.length) break
-          dispatch({
-            type: 'REQUESTS_CONTROLLER_SET_CURRENT_REQUEST_BY_ID',
-            params: { requestId: dappRequests[0]!.id }
+          requestsDispatch({
+            type: 'method',
+            params: {
+              method: 'setCurrentUserRequestById',
+              args: [dappRequests[0]!.id]
+            }
           })
           break
         }
 
         case 'open-accountOp':
-          dispatch({
-            type: 'REQUESTS_CONTROLLER_SET_CURRENT_REQUEST_BY_ID',
-            params: action.meta
+          requestsDispatch({
+            type: 'method',
+            params: {
+              method: 'setCurrentUserRequestById',
+              args: [action.meta.requestId]
+            }
           })
           break
 
         case 'reject-accountOp':
-          dispatch({
-            type: 'REQUESTS_CONTROLLER_REJECT_USER_REQUEST',
+          requestsDispatch({
+            type: 'method',
             params: {
-              err: action.meta.err,
-              id: action.meta.requestId,
-              options: { shouldOpenNextRequest: action.meta.shouldOpenNextAction }
+              method: 'rejectUserRequests',
+              args: [
+                action.meta.err,
+                [action.meta.requestId],
+                { shouldOpenNextRequest: action.meta.shouldOpenNextAction }
+              ]
             }
           })
           break
@@ -87,9 +94,12 @@ const DashboardBanner = ({
 
         case 'sync-keys': {
           if (type !== 'info') break
-          dispatch({
-            type: 'EMAIL_VAULT_CONTROLLER_REQUEST_KEYS_SYNC',
-            params: { email: action.meta.email, keys: action.meta.keys }
+          emailVaultDispatch({
+            type: 'method',
+            params: {
+              method: 'requestKeysSync',
+              args: [action.meta.email, action.meta.keys]
+            }
           })
           break
         }
@@ -110,17 +120,28 @@ const DashboardBanner = ({
         case 'reject-bridge':
         case 'close-bridge':
           action.meta.activeRouteIds.forEach((activeRouteId) => {
-            dispatch({
-              type: 'MAIN_CONTROLLER_REMOVE_ACTIVE_ROUTE',
-              params: { activeRouteId }
+            mainDispatch({
+              type: 'method',
+              params: {
+                method: 'removeActiveRoute',
+                args: [activeRouteId]
+              }
             })
           })
           break
 
         case 'proceed-bridge':
-          dispatch({
-            type: 'REQUESTS_CONTROLLER_SWAP_AND_BRIDGE_ACTIVE_ROUTE_BUILD_NEXT_USER_REQUEST',
-            params: { activeRouteId: action.meta.activeRouteId }
+          requestsDispatch({
+            type: 'method',
+            params: {
+              method: 'build',
+              args: [
+                {
+                  type: 'swapAndBridgeRequest',
+                  params: { openActionWindow: true, activeRouteId: action.meta.activeRouteId }
+                }
+              ]
+            }
           })
           break
 
@@ -133,22 +154,39 @@ const DashboardBanner = ({
             break
           }
 
-          dispatch({
-            type: 'EXTENSION_UPDATE_CONTROLLER_APPLY_UPDATE'
+          extensionUpdateDispatch({
+            type: 'method',
+            params: {
+              method: 'applyUpdate',
+              args: []
+            }
           })
 
           break
         }
 
         case 'reload-selected-account':
-          dispatch({
-            type: 'MAIN_CONTROLLER_RELOAD_SELECTED_ACCOUNT'
+          mainDispatch({
+            type: 'method',
+            params: {
+              method: 'reloadSelectedAccount',
+              args: [
+                {
+                  isManualReload: true
+                }
+              ]
+            }
           })
+
           break
 
         case 'dismiss-email-vault':
-          dispatch({
-            type: 'EMAIL_VAULT_CONTROLLER_DISMISS_BANNER'
+          emailVaultDispatch({
+            type: 'method',
+            params: {
+              method: 'dismissBanner',
+              args: []
+            }
           })
           addToast(
             'Password recovery can be enabled anytime in Settings. We’ll remind you in a week.',
@@ -159,59 +197,39 @@ const DashboardBanner = ({
           break
 
         case 'enable-networks':
-          dispatch({
-            type: 'MAIN_CONTROLLER_UPDATE_NETWORKS',
-            params: { network: { disabled: false }, chainIds: action.meta.networkChainIds }
+          networksDispatch({
+            type: 'method',
+            params: {
+              method: 'updateNetworks',
+              args: [{ disabled: false }, action.meta.networkChainIds]
+            }
           })
           break
 
         case 'dismiss-defi-positions-banner':
-          dispatch({ type: 'DISMISS_DEFI_POSITIONS_BANNER' })
+          selectedAccountDispatch({
+            type: 'method',
+            params: { method: 'dismissDefiPositionsBannerForTheSelectedAccount', args: [] }
+          })
           break
 
         default:
           break
       }
     },
-    [dispatch, navigate, addToast, visibleUserRequests, type, openBottomSheet]
-  )
-
-  const dismissAction = actions.find((action: Action) => action.label === 'Dismiss')
-
-  const renderButtons = useMemo(
-    () =>
-      actions
-        .filter((action: Action) => action.label !== 'Dismiss')
-        .map((action: Action) => {
-          const isReject =
-            ERROR_ACTIONS.includes(action.actionName) ||
-            ('meta' in action && 'isHideStyle' in action.meta && action.meta.isHideStyle)
-          let actionText = action.label
-          let isDisabled = false
-
-          if (action.actionName === 'proceed-bridge') {
-            if (statuses.buildSwapAndBridgeUserRequest !== 'INITIAL') {
-              actionText = 'Preparing...'
-              isDisabled = true
-            }
-          } else if (action.actionName === 'reload-selected-account' && !portfolio.isAllReady) {
-            isDisabled = true
-            actionText = 'Retrying...'
-          }
-
-          return (
-            <BannerButton
-              testID={`banner-button-${actionText.toLowerCase()}`}
-              key={action.actionName}
-              isReject={isReject}
-              text={actionText}
-              disabled={isDisabled}
-              type={type}
-              onPress={() => handleActionPress(action)}
-            />
-          )
-        }),
-    [actions, type, handleActionPress, portfolio.isAllReady, statuses.buildSwapAndBridgeUserRequest]
+    [
+      extensionUpdateDispatch,
+      networksDispatch,
+      emailVaultDispatch,
+      mainDispatch,
+      navigate,
+      addToast,
+      visibleUserRequests,
+      type,
+      openBottomSheet,
+      selectedAccountDispatch,
+      requestsDispatch
+    ]
   )
 
   return (
@@ -221,8 +239,15 @@ const DashboardBanner = ({
         title={title}
         type={type}
         text={text}
-        renderButtons={renderButtons}
-        onClosePress={dismissAction ? () => handleActionPress(dismissAction) : undefined}
+        buttonText={primaryAction?.label}
+        onCloseIconPress={
+          dismissAction && !dismissAction.label ? () => handleActionPress(dismissAction) : undefined
+        }
+        onDismissButtonPress={
+          dismissAction && dismissAction.label ? () => handleActionPress(dismissAction) : undefined
+        }
+        dismissButtonText={dismissAction?.label}
+        onPress={primaryAction ? () => handleActionPress(primaryAction) : undefined}
       />
       <DashboardBannerBottomSheet
         id={String(banner.id)}

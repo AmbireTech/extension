@@ -3,6 +3,8 @@ import { useTranslation } from 'react-i18next'
 
 import CheckIcon from '@common/assets/svg/CheckIcon'
 import Text from '@common/components/Text'
+import useController from '@common/hooks/useController'
+import { AnimatedPressable, useCustomHover } from '@common/hooks/useHover'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import spacings from '@common/styles/spacings'
@@ -12,9 +14,6 @@ import {
   AUTO_LOCK_TIMES,
   getAutoLockLabel
 } from '@web/extension-services/background/controllers/auto-lock'
-import useAutoLockStateController from '@web/hooks/useAutoLockStateController'
-import useBackgroundService from '@web/hooks/useBackgroundService'
-import { AnimatedPressable, useCustomHover } from '@web/hooks/useHover'
 
 type Props = {
   time: AUTO_LOCK_TIMES
@@ -23,8 +22,10 @@ type Props = {
 const AutoLockOption: FC<Props> = ({ time }: Props) => {
   const { t } = useTranslation()
   const { theme } = useTheme()
-  const { dispatch } = useBackgroundService()
-  const { autoLockTime } = useAutoLockStateController()
+  const {
+    state: { autoLockTime },
+    dispatch: autoLockDispatch
+  } = useController('AutoLockController')
   const { addToast } = useToast()
   const isSelected = useMemo(() => autoLockTime === time, [autoLockTime, time])
 
@@ -33,14 +34,19 @@ const AutoLockOption: FC<Props> = ({ time }: Props) => {
     values: {
       from: theme.secondaryBackground,
       to: theme.tertiaryBackground
-    },
-    forceHoveredStyle: isSelected
+    }
   })
 
   return (
     <AnimatedPressable
       onPress={() => {
-        dispatch({ type: 'AUTO_LOCK_CONTROLLER_SET_AUTO_LOCK_TIME', params: time })
+        autoLockDispatch({
+          type: 'method',
+          params: {
+            method: 'setAutoLockTime',
+            args: [time]
+          }
+        })
         addToast(t(`Auto lock time updated to ${getAutoLockLabel(time)}.`))
       }}
       disabled={!!isSelected}
@@ -55,7 +61,10 @@ const AutoLockOption: FC<Props> = ({ time }: Props) => {
           borderWidth: 1,
           borderColor: theme.secondaryBorder
         },
-        animStyle
+        animStyle,
+        isSelected && {
+          backgroundColor: theme.tertiaryBackground
+        }
       ]}
       {...bindAnim}
     >

@@ -2,6 +2,7 @@ import React from 'react'
 import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 
+import StarsIcon from '@common/assets/svg/StarsIcon'
 import Badge from '@common/components/Badge'
 import Text from '@common/components/Text'
 import useTheme from '@common/hooks/useTheme'
@@ -23,35 +24,32 @@ const RpcCard = ({
   const { theme } = useTheme()
   const { t } = useTranslation()
   return (
-    <View
-      style={[
-        flexbox.flex1,
-        common.borderRadiusPrimary,
-        isNew && common.shadowTertiary,
-        { maxHeight: 308 }
-      ]}
-    >
+    <View style={[flexbox.flex1, common.borderRadiusPrimary, { maxHeight: 308 }]}>
       <View
         style={[
           flexbox.directionRow,
           flexbox.justifySpaceBetween,
-          spacings.ph,
-          spacings.pv,
+          spacings.phSm,
+          spacings.pvTy,
           {
             borderTopLeftRadius: BORDER_RADIUS_PRIMARY,
             borderTopRightRadius: BORDER_RADIUS_PRIMARY,
-            backgroundColor: theme.primaryBackground
+            backgroundColor: isNew ? theme.success500 : theme.tertiaryBackground
           }
         ]}
       >
-        <View>
-          <Text fontSize={14} appearance="tertiaryText" weight="medium">
+        <View style={flexbox.flex1}>
+          <Text
+            fontSize={14}
+            color={isNew ? theme.neutral100 : theme.tertiaryText}
+            weight="semiBold"
+          >
             {title}
           </Text>
           <Text
             fontSize={14}
-            weight="medium"
-            appearance={isNew ? 'successText' : 'primaryText'}
+            weight="semiBold"
+            color={isNew ? theme.neutral100 : theme.primaryText}
             style={[spacings.mtTy, { maxWidth: 250 }]}
             numberOfLines={1}
             ellipsizeMode="tail"
@@ -59,15 +57,15 @@ const RpcCard = ({
             {url}
           </Text>
         </View>
-        {isNew && <Badge text={t('new')} type="success" />}
+        {isNew && <Badge type="new" text={t('New')} />}
       </View>
       <View
         style={[
-          spacings.ph,
-          spacings.pv,
+          spacings.phSm,
+          spacings.pvMd,
           flexbox.flex1,
           {
-            backgroundColor: isNew ? theme.featureBackground : theme.secondaryBackground,
+            backgroundColor: isNew ? theme.success100 : theme.secondaryBackground,
             borderBottomLeftRadius: BORDER_RADIUS_PRIMARY,
             borderBottomRightRadius: BORDER_RADIUS_PRIMARY
           }

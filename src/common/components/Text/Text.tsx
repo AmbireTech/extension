@@ -1,7 +1,12 @@
 import React from 'react'
 import { ColorValue, StyleSheet, Text as RNText, TextProps, TextStyle } from 'react-native'
 
-import { FONT_FAMILIES, ROBOTO_FONT_FAMILIES } from '@common/hooks/useFonts'
+import { isAndroid } from '@common/config/env'
+import {
+  FONT_FAMILIES,
+  GEIST_MONO_FONT_FAMILIES,
+  ROBOTO_FONT_FAMILIES
+} from '@common/hooks/useFonts'
 import useTheme from '@common/hooks/useTheme'
 
 import styles, { TEXT_SCALE } from './styles'
@@ -17,6 +22,7 @@ export type TextWeight =
   | 'number_medium'
   | 'number_bold'
   | 'number_black'
+  | 'mono_regular'
 export type TextAppearance =
   | 'primary'
   | 'primaryText'
@@ -26,8 +32,6 @@ export type TextAppearance =
   | 'warningText'
   | 'errorText'
   | 'infoText'
-  | 'info2Text'
-  | 'info3Text'
   | 'linkText'
 
 export interface Props extends TextProps {
@@ -57,7 +61,8 @@ const textWeights: { [key in TextWeight]: string } = {
   number_regular: ROBOTO_FONT_FAMILIES.REGULAR,
   number_medium: ROBOTO_FONT_FAMILIES.MEDIUM,
   number_bold: ROBOTO_FONT_FAMILIES.BOLD,
-  number_black: ROBOTO_FONT_FAMILIES.BLACK
+  number_black: ROBOTO_FONT_FAMILIES.BLACK,
+  mono_regular: GEIST_MONO_FONT_FAMILIES.REGULAR
 }
 
 const Text: React.FC<Props> = ({
@@ -84,8 +89,6 @@ const Text: React.FC<Props> = ({
     warningText: theme.warningText,
     errorText: theme.errorText,
     infoText: theme.infoText,
-    info2Text: theme.info2Text,
-    info3Text: theme.info3Text,
     linkText: theme.linkText
   }
 
@@ -95,7 +98,8 @@ const Text: React.FC<Props> = ({
         { color: theme.primaryText },
         textStyles[type],
         {
-          fontFamily: textWeights[weight]
+          fontFamily: textWeights[weight],
+          ...(isAndroid ? { includeFontPadding: false } : {})
         },
         !!underline && styles.underline,
         !!fontSize && {

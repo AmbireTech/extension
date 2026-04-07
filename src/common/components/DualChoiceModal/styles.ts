@@ -1,7 +1,7 @@
 import { StyleSheet, ViewStyle } from 'react-native'
 
 import spacings from '@common/styles/spacings'
-import { THEME_TYPES, ThemeProps, ThemeType } from '@common/styles/themeConfig'
+import { ThemeProps, ThemeType } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
 
 interface Styles {
@@ -14,26 +14,28 @@ interface Styles {
 const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
   StyleSheet.create<Styles>({
     modalHeader: {
-      ...spacings.pvXl,
-      ...spacings.phXl,
+      ...spacings.phLg,
+      ...spacings.ptLg,
+      ...spacings.pb,
       ...flexbox.alignCenter,
       ...flexbox.justifySpaceBetween,
       ...flexbox.directionRow
     },
     modalInnerContainer: {
-      backgroundColor:
-        themeType === THEME_TYPES.DARK ? theme.tertiaryBackground : theme.primaryBackground,
-      ...spacings.pv2Xl,
+      backgroundColor: theme.primaryBackground,
+      ...flexbox.flex1,
+      ...spacings.pvLg,
       ...flexbox.directionRow,
       ...flexbox.alignCenter,
       ...flexbox.justifyCenter,
-      ...spacings.phXl
+      ...spacings.phLg
     },
     modalButtonsContainer: {
-      ...spacings.pvXl,
+      ...spacings.pbXl,
+      ...spacings.ptLg,
       ...flexbox.directionRow,
       ...flexbox.justifyEnd,
-      ...spacings.phXl
+      ...spacings.phLg
     },
     button: {
       minWidth: 128

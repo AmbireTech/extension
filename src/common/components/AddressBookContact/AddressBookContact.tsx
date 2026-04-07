@@ -3,23 +3,21 @@ import { useTranslation } from 'react-i18next'
 import { View, ViewStyle } from 'react-native'
 import { TooltipRefProps } from 'react-tooltip'
 
-import { isSmartAccount } from '@ambire-common/libs/account/account'
 import AccountAddress from '@common/components/AccountAddress'
 import Avatar from '@common/components/Avatar'
 import DomainBadge from '@common/components/Avatar/DomainBadge'
 import Editable from '@common/components/Editable'
 import Text from '@common/components/Text'
 import { isWeb } from '@common/config/env'
+import useController from '@common/hooks/useController'
+import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
+import { AnimatedPressable, useCustomHover } from '@common/hooks/useHover'
 import useReverseLookup from '@common/hooks/useReverseLookup'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import spacings from '@common/styles/spacings'
 import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
-import useAccountsControllerState from '@web/hooks/useAccountsControllerState'
-import useBackgroundService from '@web/hooks/useBackgroundService'
-import { AnimatedPressable, useCustomHover } from '@web/hooks/useHover'
-import useSelectedAccountControllerState from '@web/hooks/useSelectedAccountControllerState'
 
 import ManageContact from './ManageContact'
 import getStyles from './styles'
@@ -29,6 +27,7 @@ interface Props {
   name?: string
   isManageable?: boolean
   isEditable?: boolean
+  withCopy?: boolean
   onPress?: () => void
   style?: ViewStyle
   testID?: string
@@ -42,6 +41,7 @@ const AddressBookContact: FC<Props> = ({
   name,
   isManageable,
   isEditable,
+  withCopy = true,
   onPress,
   testID,
   style = {},
@@ -54,9 +54,11 @@ const AddressBookContact: FC<Props> = ({
   const { t } = useTranslation()
   const { theme } = useTheme(getStyles)
   const { addToast } = useToast()
-  const { dispatch } = useBackgroundService()
-  const { accounts } = useAccountsControllerState()
-  const { account: selectedAccount } = useSelectedAccountControllerState()
+  const { dispatch } = useControllersMiddleware()
+  const { accounts } = useController('AccountsController').state
+  const {
+    state: { account: selectedAccount }
+  } = useController('SelectedAccountController')
   const { ens, isLoading } = useReverseLookup({ address })
   const [bindAnim, animStyle] = useCustomHover({
     property: 'backgroundColor',
@@ -98,8 +100,10 @@ const AddressBookContact: FC<Props> = ({
     }
   }, [closeTooltip])
 
-  const isSmart = useMemo(() => {
-    return account ? isSmartAccount(account) : false
+  const smartAccountType = useMemo(() => {
+    if (account?.creation) return 'Ambire'
+    if (account?.safeCreation) return 'Safe'
+    return undefined
   }, [account])
 
   const displayTypeBadge = useMemo(() => {
@@ -128,10 +132,10 @@ const AddressBookContact: FC<Props> = ({
           {...(avatarSize && { size: avatarSize })}
           pfp={address}
           address={address}
-          isSmart={isSmart}
+          smartAccountType={smartAccountType}
           displayTypeBadge={displayTypeBadge}
         />
-        <View>
+        <View style={{ flex: 1 }}>
           {isEditable ? (
             <Editable
               fontSize={fontSize}
@@ -155,8 +159,13 @@ const AddressBookContact: FC<Props> = ({
             </View>
           )}
           <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-            <DomainBadge ens={ens} />
-            <AccountAddress isLoading={isLoading} ens={ens} address={address} />
+            <AccountAddress
+              isLoading={isLoading}
+              ens={ens}
+              address={address}
+              containerStyle={{ paddingVertical: 0 }}
+              withCopy={withCopy}
+            />
           </View>
         </View>
       </View>

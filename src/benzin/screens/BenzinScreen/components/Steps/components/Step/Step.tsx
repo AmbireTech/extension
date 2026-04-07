@@ -1,16 +1,18 @@
 import { LinearGradient } from 'expo-linear-gradient'
 import React, { FC, useState } from 'react'
-import { Pressable, TextStyle, View, ViewStyle } from 'react-native'
+import { Animated, TextStyle, View, ViewStyle } from 'react-native'
 
 import { FinalizedStatusType } from '@benzin/screens/BenzinScreen/interfaces/steps'
 import { IS_MOBILE_UP_BENZIN_BREAKPOINT } from '@benzin/screens/BenzinScreen/styles'
 import ConfirmedIcon from '@common/assets/svg/ConfirmedIcon'
-import DownArrowIcon from '@common/assets/svg/DownArrowIcon'
+import DiagonalRightArrowIcon from '@common/assets/svg/DiagonalRightArrowIcon'
 import RejectedIcon from '@common/assets/svg/RejectedIcon'
-import UpArrowIcon from '@common/assets/svg/UpArrowIcon'
 import Text from '@common/components/Text'
+import { isWeb } from '@common/config/env'
+import { AnimatedPressable, useMultiHover } from '@common/hooks/useHover'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
+import { hexToRgba } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 
 import StatusExplanation from './StatusExplanation'
@@ -23,8 +25,8 @@ const STEPS = ['signed', 'in-progress', 'finalized'] as const
 interface StepProps {
   title?: string
   rows?: StepRowInterface[]
-  stepName: typeof STEPS[number]
-  activeStep: typeof STEPS[number]
+  stepName: (typeof STEPS)[number]
+  activeStep: (typeof STEPS)[number]
   finalizedStatus?: FinalizedStatusType
   style?: ViewStyle
   titleStyle?: TextStyle
@@ -46,8 +48,27 @@ const Step: FC<StepProps> = ({
   collapsibleRows = false
 }) => {
   const { theme, styles } = useTheme(getStyles)
-
   const [showAllRows, setShowAllRows] = useState(false)
+
+  const [bindAnim, animStyle] = useMultiHover({
+    values: [
+      {
+        property: 'backgroundColor',
+        from: hexToRgba(theme.primaryAccent100, 0),
+        to: theme.primaryAccent100
+      },
+      {
+        property: 'translateX',
+        from: 0,
+        to: showAllRows ? -2 : 2
+      },
+      {
+        property: 'translateY',
+        from: 0,
+        to: 2
+      }
+    ]
+  })
 
   // Steps have 3 stages:
   // 1. Initial (not yet started and not next step)
@@ -91,7 +112,7 @@ const Step: FC<StepProps> = ({
       <View>
         {isCompleted && !hasFailed && (
           <ConfirmedIcon
-            color={theme.successDecorative}
+            color={theme.success400}
             checkColor={theme.primaryBackground}
             style={styles.icon}
             // If this is the final step, and it's completed successfully,
@@ -112,10 +133,8 @@ const Step: FC<StepProps> = ({
               flex: 1
             }}
             colors={[
-              theme.successDecorative as string,
-              (isRedDisplayedInLineGradient
-                ? theme.errorDecorative
-                : theme.successDecorative) as string
+              theme.success400 as string,
+              (isRedDisplayedInLineGradient ? theme.errorDecorative : theme.success400) as string
             ]}
             locations={[0.5, 1]}
           />
@@ -133,13 +152,17 @@ const Step: FC<StepProps> = ({
         )}
       </View>
       <View
-        style={[
-          spacings.plMd,
-          flexbox.flex1,
-          stepIndex !== STEPS.length - 1
-            ? spacings[IS_MOBILE_UP_BENZIN_BREAKPOINT ? 'pb2Xl' : 'pbLg']
-            : {}
-        ]}
+        style={
+          isWeb
+            ? [
+                spacings.plMd,
+                flexbox.flex1,
+                stepIndex !== STEPS.length - 1
+                  ? spacings[IS_MOBILE_UP_BENZIN_BREAKPOINT ? 'pb2Xl' : 'pbLg']
+                  : {}
+              ]
+            : [spacings.plMd, flexbox.flex1, stepIndex !== STEPS.length - 1 && spacings.pbXl]
+        }
       >
         {!!title && (
           <View style={[flexbox.directionRow, flexbox.alignCenter, flexbox.justifySpaceBetween]}>
@@ -155,19 +178,53 @@ const Step: FC<StepProps> = ({
               {title !== 'fetching' && title !== 'not-found' ? title : ''}
             </Text>
             {collapsibleRows && (
-              <Pressable onPress={() => setShowAllRows((prev) => !prev)}>
-                {({ hovered }: any) => (
-                  <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-                    <Text fontSize={14} color={theme.linkText}>
-                      {showAllRows ? 'show less' : 'show more'}
-                    </Text>
-
-                    <View style={[styles.arrow, hovered && styles.arrowHovered]}>
-                      {showAllRows ? <UpArrowIcon /> : <DownArrowIcon />}
-                    </View>
-                  </View>
-                )}
-              </Pressable>
+              <AnimatedPressable
+                onPress={() => setShowAllRows((prev) => !prev)}
+                testID="show-more-btn"
+                style={[
+                  flexbox.directionRow,
+                  flexbox.alignCenter,
+                  spacings.pvMi,
+                  spacings.prTy,
+                  spacings.plSm,
+                  {
+                    borderRadius: 50,
+                    alignSelf: 'center',
+                    backgroundColor: animStyle.backgroundColor
+                  }
+                ]}
+                {...bindAnim}
+              >
+                <Text
+                  color={theme.primaryAccent}
+                  style={spacings.mrMi}
+                  fontSize={14}
+                  weight="medium"
+                >
+                  {showAllRows ? 'Less' : 'More'}
+                </Text>
+                <Animated.View
+                  style={{
+                    transform: [
+                      {
+                        translateX: animStyle.translateX as any
+                      },
+                      {
+                        translateY: animStyle.translateY as any
+                      }
+                    ]
+                  }}
+                >
+                  <DiagonalRightArrowIcon
+                    color={theme.primaryAccent}
+                    height={20}
+                    width={20}
+                    style={{
+                      transform: [{ rotate: showAllRows ? '90deg' : '0deg' }]
+                    }}
+                  />
+                </Animated.View>
+              </AnimatedPressable>
             )}
             <StatusExplanation status={finalizedStatus?.status} stepName={stepName} />
           </View>

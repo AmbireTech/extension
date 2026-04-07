@@ -135,12 +135,13 @@ const StatItem = ({ id, score, label, explanation, value, isLast, scoreChange }:
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            minWidth: 80,
+            minWidth: 64,
+            // @ts-ignore value missing in the props, but it's available on web
             width: 'fit-content',
             height: 32,
             backgroundColor: '#101114',
             borderRadius: 20,
-            ...spacings.phSm
+            ...spacings.phTy
           }}
         >
           <Text
@@ -173,7 +174,7 @@ const StatItem = ({ id, score, label, explanation, value, isLast, scoreChange }:
           )}
         </View>
       </View>
-      <View style={{ flex: 0.6, ...flexbox.directionRow, ...flexbox.alignCenter }}>
+      <View style={{ flex: 0.65, ...flexbox.directionRow, ...flexbox.alignCenter }}>
         <Icon id={id} />
         <Text color="#fff" fontSize={13} weight="medium" style={{ ...spacings.mhTy }}>
           {label}
@@ -194,7 +195,7 @@ const StatItem = ({ id, score, label, explanation, value, isLast, scoreChange }:
         color="#fff"
         style={{
           textAlign: 'right',
-          flex: 0.2,
+          flex: 0.15,
           alignItems: 'flex-end'
         }}
         fontSize={13}

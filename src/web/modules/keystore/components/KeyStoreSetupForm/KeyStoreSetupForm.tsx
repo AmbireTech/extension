@@ -10,10 +10,10 @@ import ScrollableWrapper from '@common/components/ScrollableWrapper'
 import { isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
+import { TERMS_VERSION } from '@common/modules/terms/components/TermsComponent'
+import { storage } from '@common/services/storage'
 import spacings from '@common/styles/spacings'
-import storage from '@web/extension-services/background/webapi/storage'
 import useKeyStoreSetup from '@web/modules/keystore/components/KeyStoreSetupForm/hooks/useKeyStoreSetup'
-import { TERMS_VERSION } from '@web/modules/terms/components/TermsComponent'
 
 type Props = {
   agreedWithTerms: boolean
@@ -60,7 +60,7 @@ const KeyStoreSetupForm = ({ agreedWithTerms, children }: Props) => {
                 formState.errors.password &&
                 (t('Your password must be unique and at least 8 characters long.') as string)
               }
-              containerStyle={spacings.mbTy}
+              containerStyle={spacings.mbXl}
               onSubmitEditing={handleCreateButtonPress}
             />
           )}

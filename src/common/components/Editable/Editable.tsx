@@ -51,8 +51,6 @@ const Editable: FC<Props> = ({
   const [isEditing, setIsEditing] = useState(false)
   const [textWidth, setTextWidth] = useState(0)
   const actualValue = typeof customValue === 'string' ? customValue : value
-  // TODO: check it
-  const iconSize = fontSize - 2
 
   const handleSave = useCallback(() => {
     setIsEditing(false)
@@ -78,12 +76,18 @@ const Editable: FC<Props> = ({
   )
 
   return (
-    <View style={[flexbox.flex1, flexbox.directionRow, flexbox.alignCenter, { height }]}>
+    <View
+      style={[flexbox.flex1, flexbox.directionRow, flexbox.alignCenter, { height, flexShrink: 1 }]}
+    >
       {isEditing && !disabled ? (
         <Input
           value={actualValue}
           // Prevents the input from being too small
-          containerStyle={{ ...spacings.mb0, width: textWidth < minWidth ? minWidth : textWidth }}
+          containerStyle={{
+            ...spacings.mb0,
+            width: textWidth < minWidth ? minWidth : textWidth,
+            flexShrink: 1
+          }}
           inputWrapperStyle={{
             height,
             backgroundColor: 'transparent'
@@ -113,6 +117,7 @@ const Editable: FC<Props> = ({
           onLayout={(e) => {
             setTextWidth(e.nativeEvent.layout.width)
           }}
+          style={{ flexShrink: 1 }}
           {...textProps}
         >
           {actualValue || fallbackValue}
@@ -135,15 +140,15 @@ const Editable: FC<Props> = ({
             <>
               {!isEditing && (
                 <EditPenIcon
-                  color={hovered ? theme.primaryText : theme.primary}
-                  width={iconSize}
-                  height={iconSize}
+                  color={hovered ? theme.primaryText : theme.iconPrimary}
+                  width={20}
+                  height={20}
                 />
               )}
               {isEditing && (actualValue === initialValue || !actualValue) && (
                 <CloseIcon
-                  width={iconSize}
-                  height={iconSize}
+                  width={12}
+                  height={12}
                   color={hovered ? theme.primaryText : theme.secondaryText}
                 />
               )}
@@ -155,7 +160,7 @@ const Editable: FC<Props> = ({
                     { opacity: hovered ? 0.8 : 1 }
                   ]}
                 >
-                  <CheckIcon width={iconSize} height={iconSize} style={spacings.mrMi} />
+                  <CheckIcon width={14} height={14} style={spacings.mrMi} />
                   <Text fontSize={12} weight="medium" color={theme.successText}>
                     {t('Save')}
                   </Text>

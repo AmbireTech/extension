@@ -1,13 +1,13 @@
 import React from 'react'
 import { View } from 'react-native'
 
-import rewardsBg from '@common/assets/images/rewards-bg.png'
-import BadgeIcon from '@common/assets/svg/BadgeIcon'
 import DAppsIcon from '@common/assets/svg/DAppsIcon'
+import ReceiveIcon from '@common/assets/svg/ReceiveIcon'
 import SendIcon from '@common/assets/svg/SendIcon'
 import SwapAndBridgeIcon from '@common/assets/svg/SwapAndBridgeIcon'
+import { isMobile, isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
-import { WEB_ROUTES } from '@common/modules/router/constants/common'
+import { ROUTES } from '@common/modules/router/constants/common'
 import flexbox from '@common/styles/utils/flexbox'
 
 import RouteItem from './RouteItem'
@@ -21,7 +21,7 @@ const Routes = () => {
       testID: 'dashboard-button-send',
       icon: SendIcon,
       label: t('Send'),
-      route: WEB_ROUTES.transfer,
+      route: ROUTES.transfer,
       scale: 1.08,
       scaleOnHover: 1.18
     },
@@ -29,27 +29,34 @@ const Routes = () => {
       testID: 'dashboard-button-swap-and-bridge',
       icon: SwapAndBridgeIcon,
       label: t('Swap & Bridge'),
-      route: WEB_ROUTES.swapAndBridge,
+      route: ROUTES.swapAndBridge,
       scale: 0.95,
       scaleOnHover: 1
     },
-    {
-      testID: 'dashboard-button-apps',
-      icon: DAppsIcon,
-      label: t('Apps'),
-      route: WEB_ROUTES.apps,
-      scale: 0.95,
-      scaleOnHover: 1.02
-    },
-    {
-      testID: 'dashboard-button-rewards',
-      icon: BadgeIcon,
-      label: t('Rewards'),
-      route: WEB_ROUTES.rewards,
-      scale: 1,
-      scaleOnHover: 1.2,
-      backgroundImage: rewardsBg
-    }
+    ...(isMobile
+      ? [
+          {
+            testID: 'dashboard-button-receive',
+            icon: ReceiveIcon,
+            label: t('Receive'),
+            route: ROUTES.receive,
+            scale: 1.08,
+            scaleOnHover: 1.18
+          }
+        ]
+      : []),
+    ...(isWeb
+      ? [
+          {
+            testID: 'dashboard-button-apps',
+            icon: DAppsIcon,
+            label: t('Apps'),
+            route: ROUTES.apps,
+            scale: 0.95,
+            scaleOnHover: 1.02
+          }
+        ]
+      : [])
   ]
 
   return (

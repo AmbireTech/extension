@@ -5,16 +5,15 @@ import { Pressable, View } from 'react-native'
 import OpenIcon from '@common/assets/svg/OpenIcon'
 import BottomSheet from '@common/components/BottomSheet'
 import Text from '@common/components/Text'
+import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
-import { THEME_TYPES } from '@common/styles/themeConfig'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
+import { openInTab } from '@common/utils/links'
+import { getUiType } from '@common/utils/uiType'
 import ImageIcon from '@web/assets/svg/ImageIcon'
 import ManifestImage from '@web/components/ManifestImage'
-import { createTab } from '@web/extension-services/background/webapi/tab'
-import useNetworksControllerState from '@web/hooks/useNetworksControllerState'
-import { getUiType } from '@web/utils/uiType'
 
 import Row from './Row'
 import getStyles, { COLLECTIBLE_IMAGE_SIZE } from './styles'
@@ -43,9 +42,10 @@ const CollectibleModal = ({
   hideSendNft?: boolean
 }) => {
   const { t } = useTranslation()
-  const { styles, theme, themeType } = useTheme(getStyles)
-  const { networks } = useNetworksControllerState()
-
+  const { styles, theme } = useTheme(getStyles)
+  const {
+    state: { networks }
+  } = useController('NetworksController')
   const ModalInner = useCallback(() => {
     if (!selectedCollectible) return null
 
@@ -78,29 +78,32 @@ const CollectibleModal = ({
           style={[
             flexbox.directionRow,
             flexbox.alignCenter,
-            spacings.mbSm,
-            flexbox.alignSelfStart,
+            spacings.mbMd,
+            flexbox.justifyCenter,
             { width: '100%' }
           ]}
         >
           <Text
-            fontSize={isTab ? 18 : 14}
-            weight="medium"
+            fontSize={isTab ? 18 : 16}
+            weight="semiBold"
             style={[spacings.mrMi]}
             numberOfLines={1}
+            ellipsizeMode="tail"
             selectable
           >
             {name || 'Unknown Name'}
           </Text>
           <Pressable
-            style={spacings.mlTy}
-            onPress={() => createTab(`${networkData?.explorerUrl}/nft/${address}/${String(id)}`)}
+            style={spacings.mlSm}
+            onPress={() =>
+              openInTab({ url: `${networkData?.explorerUrl}/nft/${address}/${String(id)}` })
+            }
           >
             {({ hovered }: any) => (
               <OpenIcon
                 color={hovered ? theme.primaryText : theme.secondaryText}
-                width={isTab ? 16 : 12}
-                height={isTab ? 16 : 12}
+                width={20}
+                height={20}
                 strokeWidth="2"
               />
             )}
@@ -114,10 +117,7 @@ const CollectibleModal = ({
             // !hideSendNft && spacings.mbSm,
             {
               borderRadius: BORDER_RADIUS_PRIMARY,
-              backgroundColor:
-                themeType === THEME_TYPES.DARK
-                  ? theme.primaryBackground
-                  : theme.secondaryBackground,
+              backgroundColor: theme.secondaryBackground,
               width: '100%'
             }
           ]}
@@ -153,8 +153,7 @@ const CollectibleModal = ({
     theme.primaryBackground,
     theme.primaryText,
     theme.secondaryBackground,
-    theme.secondaryText,
-    themeType
+    theme.secondaryText
   ])
 
   return (
@@ -164,7 +163,6 @@ const CollectibleModal = ({
       sheetRef={modalRef}
       closeBottomSheet={handleClose}
       style={styles.modal}
-      backgroundColor={themeType === THEME_TYPES.DARK ? 'secondaryBackground' : 'primaryBackground'}
       autoWidth
     >
       <ModalInner />

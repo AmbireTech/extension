@@ -52,8 +52,10 @@ const tokenOrCollectionSearch = ({
   search: string
   searchType?: 'token' | 'collection'
 }) => {
+  // Don't include network results if searching for tokens
+  // Otherwise searching for "ETH" would show all tokens on Ethereum network
   return searchWithNetworkName({
-    networks,
+    networks: searchType === 'token' ? [] : networks,
     items: assets,
     search,
     keys: searchType === 'token' ? ['symbol', 'address'] : ['name', 'address']

@@ -12,7 +12,7 @@ import Text from '@common/components/Text'
 import useTheme from '@common/hooks/useTheme'
 import spacings, { SPACING, SPACING_LG, SPACING_MI } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import { openInTab } from '@web/extension-services/background/webapi/tab'
+import { openInTab } from '@common/utils/links'
 
 import getStyles from '../styles'
 import DAppPermissions from './DAppPermissions'
@@ -53,11 +53,7 @@ const DAppConnectBody: FC<{
           {securityCheck === 'LOADING' && <Spinner style={{ width: 18, height: 18 }} />}
           {securityCheck === 'VERIFIED' && (
             <Badge type="success" text={t('Passed')} testId="dapp-security-check-passed">
-              <CheckIcon
-                width={12}
-                height={12}
-                style={{ marginRight: -SPACING_MI, marginLeft: SPACING_MI }}
-              />
+              <CheckIcon width={12} height={12} style={{ marginLeft: SPACING_MI }} />
             </Badge>
           )}
           {securityCheck === 'BLACKLISTED' && (
@@ -66,7 +62,7 @@ const DAppConnectBody: FC<{
                 width={12}
                 height={12}
                 color={theme.errorDecorative}
-                style={{ marginRight: -SPACING_MI, marginLeft: SPACING_MI }}
+                style={{ marginLeft: SPACING_MI }}
               />
             </Badge>
           )}
@@ -76,7 +72,7 @@ const DAppConnectBody: FC<{
                 width={12}
                 height={12}
                 color={theme.warningDecorative}
-                style={{ marginRight: -SPACING_MI, marginLeft: SPACING_MI }}
+                style={{ marginLeft: SPACING_MI }}
               />
             </Badge>
           )}
@@ -84,7 +80,7 @@ const DAppConnectBody: FC<{
         {(securityCheck === 'BLACKLISTED' || securityCheck === 'FAILED_TO_GET') && (
           <View style={spacings.ptTy}>
             <Text
-              fontSize={20 * responsiveSizeMultiplier}
+              fontSize={18 * responsiveSizeMultiplier}
               weight="semiBold"
               color={
                 securityCheck === 'BLACKLISTED' ? theme.errorDecorative : theme.warningDecorative
@@ -96,7 +92,7 @@ const DAppConnectBody: FC<{
             {securityCheck === 'BLACKLISTED' && (
               <Trans>
                 <Text
-                  fontSize={14 * responsiveSizeMultiplier}
+                  fontSize={12 * responsiveSizeMultiplier}
                   color={theme.errorDecorative}
                   style={{ lineHeight: 18 * responsiveSizeMultiplier }}
                 >
@@ -104,13 +100,11 @@ const DAppConnectBody: FC<{
                     "This website didn't pass our safety checks. It might trick you into signing malicious transactions or asking you to reveal sensitive information. If you believe we have blocked it in error, please "
                   }
                   <Text
-                    fontSize={14 * responsiveSizeMultiplier}
+                    fontSize={12 * responsiveSizeMultiplier}
                     color={theme.errorDecorative}
                     style={{ lineHeight: 18 * responsiveSizeMultiplier }}
                     underline
-                    onPress={() =>
-                      openInTab({ url: 'https://help.ambire.com/hc/en-us/requests/new' })
-                    }
+                    onPress={() => openInTab({ url: 'https://help.ambire.com/en' })}
                   >
                     let us know.
                   </Text>

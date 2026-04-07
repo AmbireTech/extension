@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react'
-import { Image, ImageStyle, View, ViewStyle } from 'react-native'
+import { Image, ImageStyle, StyleProp, View, ViewStyle } from 'react-native'
 
 import SkeletonLoader from '@common/components/SkeletonLoader'
 import { SkeletonLoaderProps } from '@common/components/SkeletonLoader/types'
@@ -14,7 +14,7 @@ type Props = {
   size: ViewStyle['width']
   isRound?: boolean
   iconScale?: number
-  containerStyle?: ViewStyle
+  containerStyle?: StyleProp<ViewStyle>
   imageStyle?: ImageStyle
   skeletonAppearance?: SkeletonLoaderProps['appearance']
 }
@@ -37,8 +37,8 @@ const ManifestImage = ({
     index: 0,
     uri: uri || uris[0]
   })
-  const scaledSize = typeof size !== 'string' ? size * iconScale : size
-  const roundBorderRadius = typeof scaledSize !== 'string' ? scaledSize / 2 : 50
+  const scaledSize = typeof size === 'number' ? size * iconScale : size
+  const roundBorderRadius = typeof scaledSize === 'number' ? scaledSize / 2 : 50
 
   const onError = useCallback(() => {
     setHasError(true)

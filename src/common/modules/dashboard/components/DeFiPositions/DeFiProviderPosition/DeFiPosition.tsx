@@ -17,10 +17,10 @@ type Props = Omit<PositionsByProvider, 'iconUrl' | 'positions' | 'positionInUSD'
   }
 
 const ASSET_TYPE_TO_LABEL = {
-  [AssetType.Borrow]: 'Borrowed',
-  [AssetType.Collateral]: 'Collateral',
-  [AssetType.Liquidity]: 'Supplied',
-  [AssetType.Reward]: 'Rewards'
+  [AssetType.Borrow]: 'BORROWED',
+  [AssetType.Collateral]: 'COLLATERAL',
+  [AssetType.Liquidity]: 'SUPPLIED',
+  [AssetType.Reward]: 'REWARDS'
 }
 
 const DeFiPosition: FC<Props> = ({

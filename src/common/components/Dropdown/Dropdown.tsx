@@ -1,29 +1,40 @@
-import React, { FC, ReactElement, useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { FlatList, Pressable, TextStyle, View } from 'react-native'
+import React, { FC, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { FlatList, ListRenderItemInfo, Pressable, TextStyle, View } from 'react-native'
+import { SvgProps } from 'react-native-svg'
 
 import KebabMenuIcon from '@common/assets/svg/KebabMenuIcon'
 import Text from '@common/components/Text'
 import { isWeb } from '@common/config/env'
 import useTheme from '@common/hooks/useTheme'
 import useWindowSize from '@common/hooks/useWindowSize'
-import { THEME_TYPES } from '@common/styles/themeConfig'
 import { Portal } from '@gorhom/portal'
 
+import { registerDropdownDismiss, unregisterDropdownDismiss } from './dropdownDismissManager'
 import getStyles from './styles'
 
+const DROPDOWN_ITEM_HEIGHT = 40
+const VIEWPORT_MARGIN = 8
+
 interface Props {
+  kebabIconProps?: SvgProps
   data: Array<{ label: string; value: string; style?: TextStyle }>
   externalPosition?: { x: number; y: number }
   setExternalPosition?: React.Dispatch<React.SetStateAction<{ x: number; y: number }>>
   onSelect: (item: { label: string; value: string }) => void
 }
 
-const Dropdown: FC<Props> = ({ data, externalPosition, setExternalPosition, onSelect }) => {
-  const DropdownButton: any = useRef()
-  const { styles, theme, themeType } = useTheme(getStyles)
-  const dropdownButtonRef = useRef(null)
-  const { width: windowWidth } = useWindowSize()
+const Dropdown: FC<Props> = ({
+  data,
+  externalPosition,
+  kebabIconProps = {},
+  setExternalPosition,
+  onSelect
+}) => {
+  const DropdownButton = useRef(null)
+  const { styles, theme } = useTheme(getStyles)
+  const { width: windowWidth, height: windowHeight } = useWindowSize()
   const modalRef: any = useRef(null)
+  const dropdownBoundsRef = useRef({ x: 0, y: 0, width: 0, height: 0 })
   const [internalPosition, setInternalPosition] = useState({ x: 0, y: 0 })
 
   const position = useMemo(
@@ -41,7 +52,24 @@ const Dropdown: FC<Props> = ({ data, externalPosition, setExternalPosition, onSe
     [setExternalPosition]
   )
 
-  // close menu on click outside
+  const dropdownHeight = useMemo(
+    () =>
+      Math.max(0, Math.min(data.length * DROPDOWN_ITEM_HEIGHT, windowHeight - VIEWPORT_MARGIN * 2)),
+    [data.length, windowHeight]
+  )
+
+  const isOpen = useMemo(() => position.x !== 0 || position.y !== 0, [position.x, position.y])
+
+  const dropdownTop = useMemo(
+    () =>
+      Math.min(
+        Math.max(VIEWPORT_MARGIN, position.y),
+        windowHeight - dropdownHeight - VIEWPORT_MARGIN
+      ),
+    [dropdownHeight, position.y, windowHeight]
+  )
+
+  // close menu on click outside (web)
   useEffect(() => {
     if (!isWeb) return
     function handleClickOutside(event: MouseEvent) {
@@ -57,6 +85,23 @@ const Dropdown: FC<Props> = ({ data, externalPosition, setExternalPosition, onSe
       document.removeEventListener('mousedown', handleClickOutside)
     }
   }, [setPosition, position])
+
+  // close menu on touch outside (mobile)
+  useEffect(() => {
+    if (isWeb || !isOpen) return
+
+    registerDropdownDismiss((touchX, touchY) => {
+      const { x, y, width, height } = dropdownBoundsRef.current
+      const isInsideDropdown =
+        touchX >= x && touchX <= x + width && touchY >= y && touchY <= y + height
+
+      if (!isInsideDropdown) {
+        setPosition({ x: 0, y: 0 })
+      }
+    })
+
+    return () => unregisterDropdownDismiss()
+  }, [isOpen, setPosition])
 
   const toggleDropdown = useCallback((): void => {
     if (position.x === 0 && position.y === 0) {
@@ -77,17 +122,14 @@ const Dropdown: FC<Props> = ({ data, externalPosition, setExternalPosition, onSe
     [onSelect, setPosition]
   )
 
-  const renderItem = ({ item }: any): ReactElement<any, any> => (
+  const renderItem = ({ item }: ListRenderItemInfo<NonNullable<Props['data']>[number]>) => (
     <Pressable onPress={() => onItemPress(item)}>
       {({ hovered }: any) => (
         <View
           style={[
             styles.item,
             hovered && {
-              backgroundColor:
-                themeType === THEME_TYPES.DARK
-                  ? theme.tertiaryBackground
-                  : theme.secondaryBackground
+              backgroundColor: theme.secondaryBackground
             }
           ]}
         >
@@ -101,29 +143,38 @@ const Dropdown: FC<Props> = ({ data, externalPosition, setExternalPosition, onSe
 
   return (
     <>
-      <View ref={dropdownButtonRef}>
+      <View>
         <Pressable onPress={toggleDropdown} ref={DropdownButton}>
           <View style={styles.button}>
-            <KebabMenuIcon />
+            <KebabMenuIcon {...kebabIconProps} />
           </View>
         </Pressable>
       </View>
-      {!!position.x && !!position.y && (
+      {isOpen && (
         <Portal hostName="global">
           <View
             style={[
               styles.dropdown,
               {
                 right: windowWidth - position.x,
-                top: position.y
+                top: dropdownTop,
+                maxHeight: dropdownHeight
               }
             ]}
             ref={modalRef}
+            onLayout={() => {
+              modalRef.current?.measureInWindow(
+                (x: number, y: number, width: number, height: number) => {
+                  dropdownBoundsRef.current = { x, y, width, height }
+                }
+              )
+            }}
           >
             <FlatList
               data={data}
               renderItem={renderItem}
               keyExtractor={(_, index) => index.toString()}
+              style={{ maxHeight: dropdownHeight }}
             />
           </View>
         </Portal>

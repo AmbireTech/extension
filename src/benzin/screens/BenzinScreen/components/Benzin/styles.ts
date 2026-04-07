@@ -1,7 +1,7 @@
 import { ImageStyle, StyleSheet, ViewStyle } from 'react-native'
 
+import { isMobile, isWeb } from '@common/config/env'
 import spacings from '@common/styles/spacings'
-import { THEME_TYPES, ThemeProps, ThemeType } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
 
 interface Style {
@@ -10,17 +10,18 @@ interface Style {
   content: ViewStyle
 }
 
-const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
+const getStyles = () =>
   StyleSheet.create<Style>({
     backgroundImage: {
       ...StyleSheet.absoluteFillObject,
-      opacity: themeType === THEME_TYPES.DARK ? 0.8 : 1
+      objectFit: 'cover'
     },
     container: {
-      ...flexbox.flex1,
       ...flexbox.alignCenter,
-      ...spacings.pv,
-      ...spacings.phLg
+      ...(isWeb ? spacings.pb : {}),
+      ...(isWeb ? spacings.ptXl : {}),
+      ...(isWeb ? spacings.phLg : spacings.phSm),
+      ...(isMobile ? spacings.plMd : {})
     },
     content: {
       maxWidth: 620,
