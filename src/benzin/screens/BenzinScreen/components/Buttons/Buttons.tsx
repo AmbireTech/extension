@@ -31,13 +31,13 @@ const OpenExplorerButton: FC<Pick<Props, 'handleOpenExplorer'>> = ({ handleOpenE
       text="Open explorer"
       childrenPosition="left"
       hasBottomSpacing={isMobile}
-      size={isMobile ? 'regular' : isMobileInStandaloneBenzin ? 'large' : 'smaller'}
+      size={isMobile ? 'regular' : isMobileInStandaloneBenzin ? 'smaller' : 'large'}
       style={
         isWeb
           ? {
               ...spacings.phTy,
               width: isMobileInStandaloneBenzin ? 240 : 170,
-              marginRight: isMobileInStandaloneBenzin ? SPACING_LG : 0
+              marginRight: isMobileInStandaloneBenzin ? 0 : SPACING_LG
             }
           : { height: 46 }
       }
