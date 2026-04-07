@@ -55,6 +55,7 @@ export interface QrProtocolAdapter {
     masterFingerprint: string
     address?: string
     chainId?: bigint
+    type?: number
   }): Promise<QrRequest>
 
   parseSignatureResponse(
