@@ -129,9 +129,13 @@ const useAddressInput = ({
     // Debounce domain resolving
     const timeout = setTimeout(() => {
       resolveDomain({ domain: trimmedAddress })
-        .then((ensAddress) => {
+        .then((result) => {
           if (fieldValueRef.current !== fieldValue) return
-          setAddressState({ ensAddress, isDomainResolving: false })
+          setAddressState({
+            ensAddress: result?.type === 'ens' ? result.address : undefined,
+            namoshiAddress: result?.type === 'namoshi' ? result.address : undefined,
+            isDomainResolving: false
+          })
         })
         .catch(() => {
           if (fieldValueRef.current !== fieldValue) return
