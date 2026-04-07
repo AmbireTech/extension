@@ -34,6 +34,7 @@ const getDuplicateAccountIndexes = (accounts: AddressState[]) => {
 const DEFAULT_ADDRESS_FIELD_VALUE = {
   fieldValue: '',
   ensAddress: '',
+  namoshiAddress: '',
   isDomainResolving: false
 }
 
@@ -103,7 +104,7 @@ export default function useViewOnlyAccountAdder() {
       const { creation, initialPrivileges, associatedKeys } = identityDefaults
 
       const addr = getAddress(address)
-      const domainName = account.ensAddress ? account.fieldValue : null
+      const domainName = account.ensAddress || account.namoshiAddress ? account.fieldValue : null
       return {
         addr,
         associatedKeys,

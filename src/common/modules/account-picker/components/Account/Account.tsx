@@ -58,8 +58,8 @@ const Account = ({
   displayTypePill?: boolean
   shouldBeDisplayedAsNew?: boolean
 }) => {
-  const { isLoading: isDomainResolving, ens } = useReverseLookup({ address: account.addr })
-  const domainName = ens
+  const { isLoading: isDomainResolving, ens, namoshi } = useReverseLookup({ address: account.addr })
+  const domainName = ens || namoshi
   const { t } = useTranslation()
   const { styles, theme, themeType } = useTheme(getStyles)
   const { minWidthSize, maxWidthSize } = useWindowSize()

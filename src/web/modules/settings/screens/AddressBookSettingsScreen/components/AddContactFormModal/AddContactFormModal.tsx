@@ -6,6 +6,7 @@ import { Modalize } from 'react-native-modalize'
 
 import { AddressStateOptional } from '@ambire-common/interfaces/domains'
 import { Validation } from '@ambire-common/services/validations'
+import { getAddressFromAddressState } from '@ambire-common/utils/domains'
 import AddressInput from '@common/components/AddressInput'
 import BottomSheet from '@common/components/BottomSheet'
 import DualChoiceModal from '@common/components/DualChoiceModal'
@@ -45,7 +46,8 @@ const AddContactFormModal = ({ id, sheetRef, closeBottomSheet }: Props) => {
       addressState: {
         fieldValue: '',
         isDomainResolving: false,
-        ensAddress: ''
+        ensAddress: '',
+        namoshiAddress: ''
       }
     }
   })
@@ -73,7 +75,7 @@ const AddContactFormModal = ({ id, sheetRef, closeBottomSheet }: Props) => {
   }, [trigger])
 
   const overwriteValidation: Validation | null = useMemo(() => {
-    const address = addressState.ensAddress || addressState.fieldValue
+    const address = getAddressFromAddressState(addressState)
 
     if (accounts.some((account) => account.addr.toLowerCase() === address.toLowerCase())) {
       return {
@@ -90,7 +92,7 @@ const AddContactFormModal = ({ id, sheetRef, closeBottomSheet }: Props) => {
     }
 
     return null
-  }, [accounts, addressState.ensAddress, addressState.fieldValue, contacts, t])
+  }, [accounts, addressState, contacts, t])
 
   const { validation, RHFValidate } = useAddressInput({
     addressState,
@@ -106,7 +108,7 @@ const AddContactFormModal = ({ id, sheetRef, closeBottomSheet }: Props) => {
       type: 'ADDRESS_BOOK_CONTROLLER_ADD_CONTACT',
       params: {
         name,
-        address: addressState.ensAddress || addressState.fieldValue
+        address: getAddressFromAddressState(addressState)
       }
     })
 
@@ -173,6 +175,7 @@ const AddContactFormModal = ({ id, sheetRef, closeBottomSheet }: Props) => {
                     onBlur={onBlur}
                     validation={validation}
                     ensAddress={addressState.ensAddress}
+                    namoshiAddress={addressState.namoshiAddress}
                     value={addressState.fieldValue}
                     isRecipientDomainResolving={addressState.isDomainResolving}
                     containerStyle={{ ...spacings.mbLg, width: '100%' }}

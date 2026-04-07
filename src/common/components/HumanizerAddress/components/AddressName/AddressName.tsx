@@ -12,7 +12,7 @@ interface Props extends TextProps {
 }
 
 const AddressName: FC<Props> = ({ address, chainId, ...rest }) => {
-  const { ens, isLoading } = useReverseLookup({ address })
+  const { ens, isLoading, namoshi } = useReverseLookup({ address })
   const {
     state: { contractNames },
     dispatch: contractNamesDispatch
@@ -41,8 +41,12 @@ const AddressName: FC<Props> = ({ address, chainId, ...rest }) => {
   if (isLoading) return <Spinner style={{ width: 16, height: 16 }} />
 
   return (
-    <BaseAddress address={address} isDisplayingPlainAddress={!ens && !contractName} {...rest}>
-      {ens || contractName || address}
+    <BaseAddress
+      address={address}
+      isDisplayingPlainAddress={!ens && !namoshi && !contractName}
+      {...rest}
+    >
+      {ens || namoshi || contractName || address}
     </BaseAddress>
   )
 }

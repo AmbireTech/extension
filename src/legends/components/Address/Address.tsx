@@ -13,14 +13,16 @@ type Props = {
 }
 
 const Address: FC<Props> = ({ address, className, skeletonClassName, maxAddressLength }) => {
-  const { isLoading, ens } = useReverseLookup({ address })
+  const { isLoading, ens, namoshi } = useReverseLookup({ address })
   const shortenedAddress = maxAddressLength ? shortenAddress(address, maxAddressLength) : address
 
   if (isLoading) {
     return <div className={`${styles.skeleton} ${className} ${skeletonClassName}`} />
   }
 
-  return <span className={`${styles.address} ${className}`}>{ens || shortenedAddress}</span>
+  return (
+    <span className={`${styles.address} ${className}`}>{ens || namoshi || shortenedAddress}</span>
+  )
 }
 
 export default Address

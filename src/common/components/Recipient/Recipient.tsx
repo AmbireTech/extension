@@ -5,8 +5,10 @@ import { Pressable } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 
 import { Contact } from '@ambire-common/controllers/addressBook/addressBook'
+import { AddressState } from '@ambire-common/interfaces/domains'
 import { TokenResult } from '@ambire-common/libs/portfolio'
 import { validateAddress, Validation } from '@ambire-common/services/validations'
+import { getAddressFromAddressState } from '@ambire-common/utils/domains'
 import AddressBookIcon from '@common/assets/svg/AddressBookIcon'
 import DownArrowIcon from '@common/assets/svg/DownArrowIcon'
 import SettingsIcon from '@common/assets/svg/SettingsIcon'
@@ -42,6 +44,7 @@ interface Props extends InputProps {
   setAddress: (text: string) => void
   address: string
   ensAddress: string
+  namoshiAddress: string
   addressValidationMsg: string
   isRecipientHumanizerKnownTokenOrSmartContract: boolean
   isRecipientAddressUnknown: boolean
@@ -61,6 +64,7 @@ const SelectedMenuOption: React.FC<{
   validation: Validation
   isMenuOpen: boolean
   ensAddress: string
+  namoshiAddress: string
   isRecipientDomainResolving: boolean
   address: string
   setAddress: (text: string) => void
@@ -76,6 +80,7 @@ const SelectedMenuOption: React.FC<{
   validation,
   isMenuOpen,
   ensAddress,
+  namoshiAddress,
   isRecipientDomainResolving,
   address,
   setAddress,
@@ -90,8 +95,11 @@ const SelectedMenuOption: React.FC<{
   const prevFilteredContactsLength = usePrevious(filteredContacts.length)
 
   const isValidAddress = useMemo(
-    () => validateAddress(ensAddress || address).severity === 'success',
-    [ensAddress, address]
+    () =>
+      validateAddress(
+        getAddressFromAddressState({ ensAddress, namoshiAddress, fieldValue: address })
+      ).severity === 'success',
+    [ensAddress, namoshiAddress, address]
   )
   const prevIsValidAddress = usePrevious(isValidAddress)
 
@@ -133,6 +141,7 @@ const SelectedMenuOption: React.FC<{
         autoFocus={autoFocus}
         containerStyle={styles.inputContainer}
         ensAddress={ensAddress}
+        namoshiAddress={namoshiAddress}
         isRecipientDomainResolving={isRecipientDomainResolving}
         value={address}
         withDetails={type === 'selected-menu-option'}
@@ -178,6 +187,7 @@ const SelectedMenuOption: React.FC<{
       isButtonMode,
       isMenuOpen,
       isRecipientDomainResolving,
+      namoshiAddress,
       renderConfirmAddress,
       selectRef,
       setAddress,
@@ -199,6 +209,7 @@ const Recipient: React.FC<Props> = ({
   setAddress,
   address,
   ensAddress,
+  namoshiAddress,
   addressValidationMsg,
   isRecipientHumanizerKnownTokenOrSmartContract,
   isRecipientAddressUnknown,
@@ -209,7 +220,11 @@ const Recipient: React.FC<Props> = ({
   const {
     state: { account }
   } = useController('SelectedAccountController')
-  const actualAddress = ensAddress || address
+  const actualAddress = getAddressFromAddressState({
+    ensAddress,
+    namoshiAddress,
+    fieldValue: address
+  })
   const { navigate } = useNavigation()
   const { t } = useTranslation()
   const { theme } = useTheme()
@@ -392,6 +407,7 @@ const Recipient: React.FC<Props> = ({
           isMenuOpen={isMenuOpen}
           validation={validation}
           ensAddress={ensAddress}
+          namoshiAddress={namoshiAddress}
           isRecipientDomainResolving={isRecipientDomainResolving}
           address={address}
           setAddress={setAddress}
@@ -404,6 +420,7 @@ const Recipient: React.FC<Props> = ({
       filteredContacts,
       validation,
       ensAddress,
+      namoshiAddress,
       isRecipientDomainResolving,
       address,
       setAddress,
@@ -446,6 +463,7 @@ const Recipient: React.FC<Props> = ({
             isMenuOpen={isMenuOpen}
             validation={validation}
             ensAddress={ensAddress}
+            namoshiAddress={namoshiAddress}
             isRecipientDomainResolving={isRecipientDomainResolving}
             address={address}
             setAddress={setAddress}
@@ -457,7 +475,7 @@ const Recipient: React.FC<Props> = ({
 
       <AddContactBottomSheet
         sheetRef={sheetRef}
-        address={ensAddress || address}
+        address={getAddressFromAddressState({ ensAddress, namoshiAddress, fieldValue: address })}
         closeBottomSheet={closeBottomSheet}
       />
     </ItemPanel>

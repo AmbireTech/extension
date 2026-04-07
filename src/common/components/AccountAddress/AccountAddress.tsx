@@ -49,6 +49,7 @@ export const ReceiveButton = memo(
 const AccountAddress: FC<Props> = ({
   isLoading,
   ens,
+  namoshi,
   address,
   plainAddressMaxLength = 42,
   withCopy = true,
@@ -64,7 +65,7 @@ const AccountAddress: FC<Props> = ({
       style={[{ flexShrink: 1, minWidth: 0, maxWidth: '100%' }, containerStyle]}
       testID="address"
     >
-      {ens || isLoading ? (
+      {ens || namoshi || isLoading ? (
         <View
           style={[
             flexbox.directionRow,
@@ -80,7 +81,7 @@ const AccountAddress: FC<Props> = ({
                 { flexShrink: 1, minWidth: 0, maxWidth: '100%' }
               ]}
             >
-              <DomainBadge ens={ens} />
+              <DomainBadge ens={ens} namoshi={namoshi} />
               <Text
                 fontSize={fontSize}
                 weight="semiBold"
@@ -88,7 +89,7 @@ const AccountAddress: FC<Props> = ({
                 numberOfLines={1}
                 style={[spacings.mrMi, { flexShrink: 1, minWidth: 0 }]}
               >
-                {ens}
+                {ens || namoshi}
               </Text>
             </View>
           ) : (

@@ -7,6 +7,7 @@ type AddressInputValidation = {
   address: string
   isRecipientDomainResolving: boolean
   isValidEns: boolean
+  isValidNamoshi: boolean
   hasDomainResolveFailed: boolean
   overwriteValidation?: Validation | null
 }
@@ -25,6 +26,7 @@ const getAddressInputValidation = ({
   isRecipientDomainResolving,
   hasDomainResolveFailed = false,
   isValidEns,
+  isValidNamoshi,
   overwriteValidation
 }: AddressInputValidation): Validation => {
   if (!address) {
@@ -72,6 +74,11 @@ const getAddressInputValidation = ({
   if (isValidEns) {
     successValidation = {
       message: 'Valid ENS domain',
+      severity: 'success'
+    }
+  } else if (isValidNamoshi) {
+    successValidation = {
+      message: 'Valid Namoshi domain',
       severity: 'success'
     }
   } else if (address && !isValidAddress(address)) {

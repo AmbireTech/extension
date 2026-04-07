@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import { AddressState, AddressStateOptional } from '@ambire-common/interfaces/domains'
 import { Validation } from '@ambire-common/services/validations'
+import { getAddressFromAddressState } from '@ambire-common/utils/domains'
 import useController from '@common/hooks/useController'
 
 import useResolveDomain from '../useResolveDomain'
@@ -52,6 +53,7 @@ const useAddressInput = ({
         address: overwriteValidationFieldValue ?? fieldValue,
         isRecipientDomainResolving: addressState.isDomainResolving,
         isValidEns: !!addressState.ensAddress,
+        isValidNamoshi: !!addressState.namoshiAddress,
         hasDomainResolveFailed,
         overwriteValidation
       }),
@@ -60,6 +62,7 @@ const useAddressInput = ({
       fieldValue,
       addressState.isDomainResolving,
       addressState.ensAddress,
+      addressState.namoshiAddress,
       hasDomainResolveFailed,
       overwriteValidation
     ]
@@ -116,6 +119,7 @@ const useAddressInput = ({
     if (!trimmedAddress || !canBeDomain) {
       setAddressState({
         ensAddress: '',
+        namoshiAddress: '',
         isDomainResolving: false
       })
       return
@@ -141,7 +145,7 @@ const useAddressInput = ({
           if (fieldValueRef.current !== fieldValue) return
 
           setHasDomainResolveFailed(true)
-          setAddressState({ ensAddress: '', isDomainResolving: false })
+          setAddressState({ ensAddress: '', namoshiAddress: '', isDomainResolving: false })
         })
     }, 300)
 
@@ -164,6 +168,7 @@ const useAddressInput = ({
     setAddressState({
       fieldValue: '',
       ensAddress: '',
+      namoshiAddress: '',
       isDomainResolving: false
     })
   }, [setAddressState])
@@ -201,7 +206,7 @@ const useAddressInput = ({
     validation: debouncedValidation,
     RHFValidate,
     resetAddressInput: reset,
-    address: addressState.ensAddress || fieldValue
+    address: getAddressFromAddressState(addressState)
   }
 }
 

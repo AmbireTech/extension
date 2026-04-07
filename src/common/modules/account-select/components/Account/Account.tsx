@@ -72,7 +72,7 @@ const Account = ({
     state: { account: selectedAccount }
   } = useController('SelectedAccountController')
   const { dispatch: accountsDispatch } = useController('AccountsController')
-  const { ens, isLoading } = useReverseLookup({ address: addr })
+  const { ens, isLoading, namoshi } = useReverseLookup({ address: addr })
   const { keys } = useController('KeystoreController').state
   const [bindAnim, animStyle] = useCustomHover({
     property: 'backgroundColor',
@@ -238,6 +238,7 @@ const Account = ({
               containerStyle={spacings.pb0}
               isLoading={isLoading}
               ens={ens}
+              namoshi={namoshi}
               address={addr}
               plainAddressMaxLength={maxAccountAddrLength}
               withCopy={isWeb && withCopy}

@@ -59,7 +59,7 @@ const AddressBookContact: FC<Props> = ({
   const {
     state: { account: selectedAccount }
   } = useController('SelectedAccountController')
-  const { ens, isLoading } = useReverseLookup({ address })
+  const { ens, namoshi, isLoading } = useReverseLookup({ address })
   const [bindAnim, animStyle] = useCustomHover({
     property: 'backgroundColor',
     values: {
@@ -162,6 +162,7 @@ const AddressBookContact: FC<Props> = ({
             <AccountAddress
               isLoading={isLoading}
               ens={ens}
+              namoshi={namoshi}
               address={address}
               containerStyle={{ paddingVertical: 0 }}
               withCopy={withCopy}

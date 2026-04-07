@@ -27,7 +27,8 @@ const useReverseLookup = ({ address }: Props) => {
 
   return {
     isLoading: isLoading || !addressInDomains,
-    ens: addressInDomains?.ens
+    ens: addressInDomains?.ens,
+    namoshi: addressInDomains?.namoshi
   }
 }
 
