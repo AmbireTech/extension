@@ -1,3 +1,8 @@
+# LavaMoat compatibility patch
+# Using overrideTaming: 'moderate' instead of 'full' significantly reduces LavaMoat's
+# performance overhead, but requires objects used as property descriptor maps to be
+# created with Object.create(null) rather than plain object literals ({}), so that
+# they don't inherit from Object.prototype and conflict with the taming mechanism.
 diff --git a/node_modules/axios/lib/utils.js b/node_modules/axios/lib/utils.js
 index b464a62..0b8f637 100644
 --- a/node_modules/axios/lib/utils.js
