@@ -16,7 +16,7 @@ const DomainBadge: FC<Props> = ({ ens, namoshi }) => {
   return (
     <View style={{ zIndex: 2, borderRadius: 50, ...spacings.mrMi }}>
       {ens && <EnsCircularIcon />}
-      {namoshi && <NamoshiIcon isActive />}
+      {namoshi && <NamoshiIcon width={16} height={16} isActive />}
     </View>
   )
 }
