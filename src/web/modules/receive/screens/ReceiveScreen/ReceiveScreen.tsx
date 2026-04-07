@@ -32,6 +32,7 @@ const ReceiveScreen: FC = () => {
     pfp,
     isEOA,
     ens,
+    namoshi,
     isDomainResolving,
     qrCodeError,
     setQrCodeError,
@@ -93,6 +94,7 @@ const ReceiveScreen: FC = () => {
               <AccountAddress
                 isLoading={isDomainResolving}
                 ens={ens}
+                namoshi={namoshi}
                 address={account?.addr || ''}
                 plainAddressMaxLength={42}
                 fontSize={14}
