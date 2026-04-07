@@ -27,6 +27,11 @@ import { isExtension } from '@web/constants/browserapi'
 import { IS_MOBILE_UP_BENZIN_BREAKPOINT } from '../../styles'
 import getStyles from './styles'
 
+const Container = ({ children }: { children: React.ReactNode }) => {
+  if (isMobile) return <Fragment>{children}</Fragment>
+  return <View style={flexbox.flex1}>{children}</View>
+}
+
 const Benzin = ({
   state,
   children
@@ -125,11 +130,6 @@ const Benzin = ({
     showCopyBtn,
     showOpenExplorerBtn
   } = state
-
-  const Container = ({ children }: { children: React.ReactNode }) => {
-    if (isMobile) return <Fragment>{children}</Fragment>
-    return <View style={flexbox.flex1}>{children}</View>
-  }
 
   return (
     <Container>
