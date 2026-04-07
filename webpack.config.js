@@ -61,9 +61,7 @@ function processStyleGecko(content) {
 
 module.exports = async function (env, argv) {
   const config = await createExpoWebpackConfigAsync(env, argv)
-  // TODO: Temporarily disable LavaMoat, until we fix the performance issues with the extension.
-  // A PR with the fix is on the way, but it's not completely tested yet.
-  const enableLavaMoat = false && config.mode === 'production' && isWebkit
+  const enableLavaMoat = config.mode === 'production' && isWebkit
 
   function processManifest(content) {
     const manifest = JSON.parse(content.toString())
