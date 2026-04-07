@@ -136,8 +136,8 @@ const useAddressInput = ({
         .then((result) => {
           if (fieldValueRef.current !== fieldValue) return
           setAddressState({
-            ensAddress: result?.type === 'ens' ? result.address : undefined,
-            namoshiAddress: result?.type === 'namoshi' ? result.address : undefined,
+            ensAddress: result?.type === 'ens' ? result.address : '',
+            namoshiAddress: result?.type === 'namoshi' ? result.address : '',
             isDomainResolving: false
           })
         })
