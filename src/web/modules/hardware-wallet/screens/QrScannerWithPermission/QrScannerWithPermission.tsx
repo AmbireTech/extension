@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from 'react'
+import React, { useCallback, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { TouchableOpacity, View } from 'react-native'
 
@@ -16,6 +16,8 @@ type Props = {
   onComplete: (payload: Uint8Array) => void
   onOpenFullScreenScanner?: () => void
   disabled?: boolean
+  externalError?: string | null
+  onExternalRetry?: () => void
 }
 
 const shouldUseFullScreenFallback = (message: string, rawError?: any) => {
@@ -31,7 +33,13 @@ const shouldUseFullScreenFallback = (message: string, rawError?: any) => {
   )
 }
 
-const QrScannerWithPermission = ({ onComplete, onOpenFullScreenScanner, disabled }: Props) => {
+const QrScannerWithPermission = ({
+  onComplete,
+  onOpenFullScreenScanner,
+  disabled,
+  externalError,
+  onExternalRetry
+}: Props) => {
   const { isPopup } = getUiType()
   const { t } = useTranslation()
   const { theme } = useTheme()
@@ -40,11 +48,13 @@ const QrScannerWithPermission = ({ onComplete, onOpenFullScreenScanner, disabled
     message: string
     rawError?: any
   } | null>(null)
+  const hasActiveErrorRef = useRef(false)
 
   const [scannerKey, setScannerKey] = useState(0)
   const [showFullScreenFallback, setShowFullScreenFallback] = useState(false)
 
   const handleRetry = useCallback(() => {
+    hasActiveErrorRef.current = false
     setCameraError(null)
     setShowFullScreenFallback(false)
     setScannerKey((k) => k + 1)
@@ -52,6 +62,7 @@ const QrScannerWithPermission = ({ onComplete, onOpenFullScreenScanner, disabled
 
   const handleComplete = useCallback(
     (payload: Uint8Array) => {
+      hasActiveErrorRef.current = false
       setCameraError(null)
       setShowFullScreenFallback(false)
       onComplete(payload)
@@ -61,6 +72,9 @@ const QrScannerWithPermission = ({ onComplete, onOpenFullScreenScanner, disabled
 
   const handleError = useCallback(
     (message?: string, rawError?: any) => {
+      if (hasActiveErrorRef.current) return
+
+      hasActiveErrorRef.current = true
       const normalizedMessage =
         (typeof message === 'string' && message.trim()) ||
         (typeof rawError?.message === 'string' && rawError.message.trim()) ||
@@ -179,12 +193,12 @@ const QrScannerWithPermission = ({ onComplete, onOpenFullScreenScanner, disabled
     >
       <QrScanner
         key={scannerKey}
-        disabled={disabled}
+        disabled={disabled || !!cameraError || !!externalError || showFullScreenFallback}
         onComplete={handleComplete}
         onError={handleError}
       />
 
-      {cameraError ? (
+      {cameraError || externalError ? (
         <View
           style={[
             flexbox.center,
@@ -208,11 +222,16 @@ const QrScannerWithPermission = ({ onComplete, onOpenFullScreenScanner, disabled
               }
             ]}
           >
-            {message}
+            {cameraError ? message : externalError}
           </Text>
 
           <FooterGlassView size="sm" absolute={false}>
-            <Button size="small" hasBottomSpacing={false} text={t('Retry')} onPress={handleRetry} />
+            <Button
+              size="small"
+              hasBottomSpacing={false}
+              text={t('Retry')}
+              onPress={externalError ? onExternalRetry : handleRetry}
+            />
           </FooterGlassView>
         </View>
       ) : null}

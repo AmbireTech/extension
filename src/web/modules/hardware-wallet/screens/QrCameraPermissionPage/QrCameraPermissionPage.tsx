@@ -76,7 +76,7 @@ const QrCameraPermissionPage = () => {
         return t('Waiting for camera permission...')
       default:
         return t(
-          'Enable forever camera access to enjoy seamless qr hardware wallet support'
+          'Enable camera access forever to enjoy seamless QR hardware wallet support.'
         )
     }
   }, [state, t, error])

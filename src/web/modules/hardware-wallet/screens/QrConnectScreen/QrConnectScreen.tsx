@@ -31,6 +31,7 @@ const QrConnectScreen = () => {
   const { initParams, type } = useController('AccountPickerController').state
   const mainCtrlState = useController('MainController').state
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [scanError, setScanError] = useState<string | null>(null)
   const [scannerKey, setScannerKey] = useState(0)
   const [showMore, setShowMore] = useState(false)
   const wrapperRef = useRef<View | null>(null)
@@ -75,6 +76,7 @@ const QrConnectScreen = () => {
     async (payload: string | Uint8Array) => {
       try {
         setIsSubmitting(true)
+        setScanError(null)
 
         dispatch({
           type: 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_QR_WALLET',
@@ -90,6 +92,7 @@ const QrConnectScreen = () => {
 
   const onResetScannerPress = useCallback(() => {
     setIsSubmitting(false)
+    setScanError(null)
     setScannerKey((prev) => prev + 1)
   }, [])
 
@@ -135,8 +138,9 @@ const QrConnectScreen = () => {
   useEffect(() => {
     if (mainCtrlState.statuses.handleAccountPickerInitQr === 'ERROR') {
       setIsSubmitting(false)
+      setScanError(t('Failed to import QR wallet. Please try scanning again.'))
     }
-  }, [mainCtrlState.statuses.handleAccountPickerInitQr])
+  }, [mainCtrlState.statuses.handleAccountPickerInitQr, t])
 
   const renderWalletRow = useCallback(
     (wallet: (typeof qrWallets)[number]) => (
@@ -186,6 +190,8 @@ const QrConnectScreen = () => {
             key={scannerKey}
             onComplete={onQrComplete}
             disabled={isSubmitting}
+            externalError={scanError}
+            onExternalRetry={onResetScannerPress}
           />
 
           <Text fontSize={14} style={spacings.mt}>
