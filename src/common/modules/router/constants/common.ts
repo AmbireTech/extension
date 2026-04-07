@@ -60,6 +60,7 @@ const WEB_ROUTES = {
   authEmailLogin: 'auth-email-login',
   authEmailRegister: 'auth-email-register',
   networksConfiguration: 'networks-configuration',
+  privacyOptOutsConfiguration: 'privacy-opt-outs-configuration',
   networksSettings: 'settings/networks',
   devicePasswordSet: 'settings/device-password-set',
   devicePasswordChange: 'settings/device-password-change',
