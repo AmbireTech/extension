@@ -7,7 +7,10 @@ import {
   SMART_ACCOUNT_SIGNER_KEY_DERIVATION_OFFSET
 } from '@ambire-common/consts/derivation'
 import { KeyIterator as KeyIteratorInterface } from '@ambire-common/interfaces/keyIterator'
-import { getMessageFromTrezorErrorCode } from '@ambire-common/libs/trezor/trezor'
+import {
+  getMessageFromTrezorErrorCode,
+  getTrezorErrorMessageFromPayload
+} from '@ambire-common/libs/trezor/trezor'
 import { getHdPathFromTemplate, getParentHdPathFromTemplate } from '@ambire-common/utils/hdPath'
 import { TrezorConnect } from '@web/modules/hardware-wallet/controllers/TrezorController'
 
@@ -170,7 +173,10 @@ class TrezorKeyIterator implements KeyIteratorInterface {
 
         if (!res.success)
           throw new ExternalSignerError(
-            getMessageFromTrezorErrorCode(res.payload.code, res.payload.error)
+            getMessageFromTrezorErrorCode(
+              res.payload.code,
+              getTrezorErrorMessageFromPayload(res.payload)
+            )
           )
 
         if (res.payload.length !== ledgerBundleToFetch.length)
@@ -219,7 +225,10 @@ class TrezorKeyIterator implements KeyIteratorInterface {
 
           if (!res.success)
             throw new ExternalSignerError(
-              getMessageFromTrezorErrorCode(res.payload.code, res.payload.error)
+              getMessageFromTrezorErrorCode(
+                res.payload.code,
+                getTrezorErrorMessageFromPayload(res.payload)
+              )
             )
 
           this.#xpubs[hdPathTemplate] = res.payload.xpub
