@@ -88,14 +88,14 @@ const EditApproval = ({ item }: { item: HumanizerVisualization }) => {
         {...bindEditApprovals}
         onPress={() => openEditApprovals()}
       >
-        <Text fontSize={14} color={theme.tertiaryText}>
+        <Text fontSize={14} color={theme.linkText}>
           {'['}
         </Text>
-        <EditPenIcon width={20} height={20} color={theme.tertiaryText} />
-        <Text fontSize={14} color={theme.tertiaryText}>
+        <EditPenIcon width={20} height={20} color={theme.linkText} />
+        <Text fontSize={14} color={theme.linkText}>
           {t('Edit')}
         </Text>
-        <Text fontSize={14} color={theme.tertiaryText}>
+        <Text fontSize={14} color={theme.linkText}>
           {']'}
         </Text>
       </AnimatedPressable>
@@ -118,7 +118,10 @@ const EditApproval = ({ item }: { item: HumanizerVisualization }) => {
                     borderRadius: BORDER_RADIUS_PRIMARY,
                     borderWidth: 1,
                     borderColor: 'transparent',
-                    backgroundColor: themeType === THEME_TYPES.LIGHT ? '#fff' : '#000',
+                    backgroundColor:
+                      themeType === THEME_TYPES.LIGHT
+                        ? theme.tertiaryBackground
+                        : theme.secondaryBackground,
                     paddingLeft: 41,
                     paddingRight: 16
                   }
