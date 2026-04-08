@@ -9,10 +9,10 @@ import { getTokenAmount } from '@ambire-common/libs/portfolio/helpers'
 import EditIcon from '@common/assets/svg/EditIcon'
 import AmountInput from '@common/components/AmountInput'
 import BottomSheet from '@common/components/BottomSheet'
-import ButtonWithLoader from '@common/components/ButtonWithLoader/ButtonWithLoader'
+import Button from '@common/components/Button'
+import FooterGlassView from '@common/components/FooterGlassView'
 import Text from '@common/components/Text'
 import TokenIcon from '@common/components/TokenIcon'
-import { isWeb } from '@common/config/env'
 import useController from '@common/hooks/useController'
 import useHover, { AnimatedPressable } from '@common/hooks/useHover'
 import useTheme from '@common/hooks/useTheme'
@@ -21,7 +21,6 @@ import spacings from '@common/styles/spacings'
 import { THEME_TYPES } from '@common/styles/themeConfig'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
-import { ItemPanel } from '@web/components/TransactionsScreen'
 
 const EditApproval = ({ item }: { item: HumanizerVisualization }) => {
   const { t } = useTranslation()
@@ -79,15 +78,51 @@ const EditApproval = ({ item }: { item: HumanizerVisualization }) => {
       <BottomSheet
         sheetRef={editApprovalsSheetRef}
         id={`edit-approvals-bottom-sheet-${item.id}`}
-        type="bottom-sheet"
+        type="modal"
         closeBottomSheet={closeEditApprovals}
-        scrollViewProps={isWeb ? { contentContainerStyle: { flex: 1 } } : undefined}
-        containerInnerWrapperStyles={{ flex: 1 }}
+        style={{ maxWidth: 460 }}
       >
-        <ItemPanel>
-          <View style={flexbox.alignCenter}>
+        <View style={flexbox.alignCenter}>
+          <Text fontSize={20} weight="medium" style={[spacings.mbXl, spacings.mtTy]}>
+            {t('Grant approval for')}
+          </Text>
+          <View style={{ width: '100%' }}>
+            <View>
+              <View
+                style={[
+                  {
+                    borderRadius: BORDER_RADIUS_PRIMARY,
+                    borderWidth: 1,
+                    borderColor: 'transparent',
+                    backgroundColor: themeType === THEME_TYPES.LIGHT ? '#fff' : '#000',
+                    paddingLeft: 41,
+                    paddingRight: 16
+                  }
+                ]}
+              >
+                <AmountInput
+                  type="token"
+                  value={amount}
+                  onChangeText={handleOnChangeTextAndFormat}
+                  fontSize={16}
+                  inputWrapperStyle={{ height: 40 }}
+                />
+              </View>
+              {portfolioToken && (
+                <TokenIcon
+                  containerStyle={{ position: 'absolute', top: 6, left: 6 }}
+                  address={portfolioToken.address}
+                  chainId={portfolioToken.chainId}
+                  containerHeight={28}
+                  containerWidth={28}
+                  width={28}
+                  height={28}
+                  withNetworkIcon={false}
+                />
+              )}
+            </View>
             {portfolioToken && (
-              <View style={spacings.mbTy}>
+              <View style={spacings.mtSm}>
                 <MaxAmount
                   isLoading={false}
                   maxAmount={Number(
@@ -101,53 +136,28 @@ const EditApproval = ({ item }: { item: HumanizerVisualization }) => {
                 />
               </View>
             )}
-            <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-              <Text style={spacings.mrTy}>{t('Grant approval for')}</Text>
-              <View
-                style={[
-                  {
-                    borderRadius: BORDER_RADIUS_PRIMARY,
-                    borderWidth: 1,
-                    borderColor: 'transparent',
-                    backgroundColor: themeType === THEME_TYPES.LIGHT ? '#fff' : '#000',
-                    maxWidth: 400
-                  },
-                  spacings.ph
-                ]}
-              >
-                <AmountInput
-                  type="token"
-                  value={amount}
-                  onChangeText={handleOnChangeTextAndFormat}
-                />
-              </View>
-              {portfolioToken && (
-                <TokenIcon
-                  containerStyle={spacings.mlTy}
-                  address={portfolioToken.address}
-                  chainId={portfolioToken.chainId}
-                  containerHeight={28}
-                  containerWidth={28}
-                  width={28}
-                  height={28}
-                  withNetworkIcon={false}
-                />
-              )}
-            </View>
-            <View>
-              <ButtonWithLoader
-                type="primary"
-                isLoading={false}
-                text="Save"
-                onPress={() => {
-                  console.log('testing')
-                }}
-                size="small"
-                style={spacings.mtTy}
-              />
-            </View>
           </View>
-        </ItemPanel>
+          <FooterGlassView absolute={false} style={spacings.mt2Xl}>
+            <Button
+              type="secondary"
+              text={t('Cancel')}
+              onPress={() => closeEditApprovals()}
+              hasBottomSpacing={false}
+              size="small"
+              style={[{ width: 100, height: 44 }, spacings.mr]}
+            />
+            <Button
+              type="primary"
+              text={t('Save')}
+              onPress={() => {
+                console.log('testing')
+              }}
+              hasBottomSpacing={false}
+              size="small"
+              style={[{ width: 100, height: 44 }]}
+            />
+          </FooterGlassView>
+        </View>
       </BottomSheet>
     </>
   )
