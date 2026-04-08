@@ -1,11 +1,7 @@
 {
   "name": "Ambire",
   "slug": "ambire-mobile-wallet",
-<<<<<<< HEAD
   "version": "6.3.1",
-=======
-  "version": "6.2.5",
->>>>>>> 899661de11c4a29144be3772a4301bed3e574e17
   "assetBundlePatterns": ["**/*"],
   "runtimeVersion": "11",
   "jsEngine": "hermes",
