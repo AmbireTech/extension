@@ -46,8 +46,8 @@ const AddContactFormModal = ({ id, sheetRef, closeBottomSheet }: Props) => {
       addressState: {
         fieldValue: '',
         isDomainResolving: false,
-        ensAddress: '',
-        namoshiAddress: ''
+        resolvedAddress: '',
+        resolvedAddressType: null
       }
     }
   })
@@ -71,8 +71,8 @@ const AddContactFormModal = ({ id, sheetRef, closeBottomSheet }: Props) => {
 
   const handleRevalidate = useCallback(() => {
     trigger('addressState.fieldValue')
-    trigger('addressState.ensAddress')
-    trigger('addressState.namoshiAddress')
+    trigger('addressState.resolvedAddress')
+    trigger('addressState.resolvedAddressType')
   }, [trigger])
 
   const overwriteValidation: Validation | null = useMemo(() => {
@@ -175,8 +175,8 @@ const AddContactFormModal = ({ id, sheetRef, closeBottomSheet }: Props) => {
                     }}
                     onBlur={onBlur}
                     validation={validation}
-                    ensAddress={addressState.ensAddress}
-                    namoshiAddress={addressState.namoshiAddress}
+                    resolvedAddress={addressState.resolvedAddress}
+                    resolvedAddressType={addressState.resolvedAddressType}
                     value={addressState.fieldValue}
                     isRecipientDomainResolving={addressState.isDomainResolving}
                     containerStyle={{ ...spacings.mbLg, width: '100%' }}

@@ -52,8 +52,8 @@ const useAddressInput = ({
       getAddressInputValidation({
         address: overwriteValidationFieldValue ?? fieldValue,
         isRecipientDomainResolving: addressState.isDomainResolving,
-        isValidEns: !!addressState.ensAddress,
-        isValidNamoshi: !!addressState.namoshiAddress,
+        isValidEns: addressState.resolvedAddressType === 'ens',
+        isValidNamoshi: addressState.resolvedAddressType === 'namoshi',
         hasDomainResolveFailed,
         overwriteValidation
       }),
@@ -61,8 +61,7 @@ const useAddressInput = ({
       overwriteValidationFieldValue,
       fieldValue,
       addressState.isDomainResolving,
-      addressState.ensAddress,
-      addressState.namoshiAddress,
+      addressState.resolvedAddressType,
       hasDomainResolveFailed,
       overwriteValidation
     ]
@@ -78,10 +77,8 @@ const useAddressInput = ({
       // Both validations are errors
       severity === 'error' &&
       debouncedSeverity === 'error' &&
-      // There is no ENS address
-      !addressState.ensAddress &&
-      // There is no Namoshi address
-      !addressState.namoshiAddress &&
+      // There is no resolved address
+      !addressState.resolvedAddress &&
       // The message is not empty
       latestMessage
 
@@ -99,12 +96,11 @@ const useAddressInput = ({
       clearTimeout(timeout)
     }
   }, [
-    addressState.ensAddress,
     debouncedValidation,
     debouncedValidation.severity,
     debouncedValidation.message,
     validation,
-    addressState.namoshiAddress
+    addressState.resolvedAddress
   ])
 
   useEffect(() => {
@@ -121,8 +117,8 @@ const useAddressInput = ({
 
     if (!trimmedAddress || !canBeDomain) {
       setAddressState({
-        ensAddress: '',
-        namoshiAddress: '',
+        resolvedAddress: '',
+        resolvedAddressType: null,
         isDomainResolving: false
       })
       return
@@ -139,8 +135,8 @@ const useAddressInput = ({
         .then((result) => {
           if (fieldValueRef.current !== fieldValue) return
           setAddressState({
-            ensAddress: result?.type === 'ens' ? result.address : '',
-            namoshiAddress: result?.type === 'namoshi' ? result.address : '',
+            resolvedAddress: result?.address || '',
+            resolvedAddressType: result?.type || null,
             isDomainResolving: false
           })
         })
@@ -148,7 +144,11 @@ const useAddressInput = ({
           if (fieldValueRef.current !== fieldValue) return
 
           setHasDomainResolveFailed(true)
-          setAddressState({ ensAddress: '', namoshiAddress: '', isDomainResolving: false })
+          setAddressState({
+            resolvedAddress: '',
+            resolvedAddressType: null,
+            isDomainResolving: false
+          })
         })
     }, 300)
 
@@ -170,8 +170,8 @@ const useAddressInput = ({
   const reset = useCallback(() => {
     setAddressState({
       fieldValue: '',
-      ensAddress: '',
-      namoshiAddress: '',
+      resolvedAddress: '',
+      resolvedAddressType: null,
       isDomainResolving: false
     })
   }, [setAddressState])

@@ -3,6 +3,7 @@ import React, { useCallback, useMemo, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Pressable, TextInput, View } from 'react-native'
 
+import { AddressState } from '@ambire-common/interfaces/domains'
 import { validateAddress, Validation } from '@ambire-common/services/validations'
 import { getAddressFromAddressState } from '@ambire-common/utils/domains'
 import shortenAddress from '@ambire-common/utils/shortenAddress'
@@ -25,8 +26,8 @@ import getStyles from './styles'
 
 interface Props extends InputProps {
   withDetails?: boolean
-  ensAddress: string
-  namoshiAddress: string
+  resolvedAddress: AddressState['resolvedAddress']
+  resolvedAddressType: AddressState['resolvedAddressType']
   isRecipientDomainResolving: boolean
   validation: Validation
   label?: string
@@ -37,8 +38,8 @@ interface Props extends InputProps {
 const AddressInput: React.FC<Props> = ({
   withDetails,
   onChangeText,
-  ensAddress,
-  namoshiAddress,
+  resolvedAddress,
+  resolvedAddressType,
   isRecipientDomainResolving,
   label,
   validation,
@@ -65,21 +66,18 @@ const AddressInput: React.FC<Props> = ({
   }, [])
 
   const handleCopyResolvedAddress = useCallback(async () => {
-    const address = ensAddress || namoshiAddress
-
-    if (address) {
+    if (resolvedAddress) {
       try {
-        await setStringAsync(address)
+        await setStringAsync(resolvedAddress)
         addToast(t('Copied to clipboard!'), { timeout: 2500 })
       } catch {
         addToast(t('Failed to copy address to clipboard'), { type: 'error' })
       }
     }
-  }, [addToast, ensAddress, namoshiAddress, t])
+  }, [addToast, resolvedAddress, t])
 
   const address = getAddressFromAddressState({
-    ensAddress,
-    namoshiAddress,
+    resolvedAddress,
     fieldValue: value || ''
   })
 
@@ -121,7 +119,7 @@ const AddressInput: React.FC<Props> = ({
           childrenBeforeButtons ||
           (!withDetails && (
             <>
-              {(ensAddress || namoshiAddress) && !isRecipientDomainResolving ? (
+              {resolvedAddress && !isRecipientDomainResolving ? (
                 <AnimatedPressable
                   style={[flexbox.alignCenter, flexbox.directionRow, animStyle]}
                   onPress={handleCopyResolvedAddress}
@@ -137,7 +135,7 @@ const AddressInput: React.FC<Props> = ({
                       numberOfLines={1}
                       ellipsizeMode="head"
                     >
-                      ({shortenAddress(ensAddress || namoshiAddress, 18)})
+                      ({shortenAddress(resolvedAddress, 18)})
                     </Text>
                   </Text>
                   <CopyIcon width={16} height={16} style={[spacings.mlMi, { minWidth: 16 }]} />
@@ -146,8 +144,8 @@ const AddressInput: React.FC<Props> = ({
               <View style={[styles.domainIcons, rest.button ? spacings.pr0 : spacings.prSm]}>
                 {childrenBeforeButtons}
                 <View style={[spacings.plTy, flexbox.directionRow, flexbox.alignCenter]}>
-                  <EnsIcon isActive={!!ensAddress} />
-                  <NamoshiIcon isActive={!!namoshiAddress} style={spacings.mlTy} />
+                  <EnsIcon isActive={resolvedAddressType === 'ens'} />
+                  <NamoshiIcon isActive={resolvedAddressType === 'namoshi'} style={spacings.mlTy} />
                 </View>
               </View>
             </>

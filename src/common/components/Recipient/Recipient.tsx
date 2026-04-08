@@ -43,8 +43,8 @@ import styles from './styles'
 interface Props extends InputProps {
   setAddress: (text: string) => void
   address: string
-  ensAddress: string
-  namoshiAddress: string
+  resolvedAddress: AddressState['resolvedAddress']
+  resolvedAddressType: AddressState['resolvedAddressType']
   addressValidationMsg: string
   isRecipientHumanizerKnownTokenOrSmartContract: boolean
   isRecipientAddressUnknown: boolean
@@ -63,8 +63,8 @@ const SelectedMenuOption: React.FC<{
   selectRef?: React.RefObject<any>
   validation: Validation
   isMenuOpen: boolean
-  ensAddress: string
-  namoshiAddress: string
+  resolvedAddress: AddressState['resolvedAddress']
+  resolvedAddressType: AddressState['resolvedAddressType']
   isRecipientDomainResolving: boolean
   address: string
   setAddress: (text: string) => void
@@ -79,8 +79,8 @@ const SelectedMenuOption: React.FC<{
   filteredContacts,
   validation,
   isMenuOpen,
-  ensAddress,
-  namoshiAddress,
+  resolvedAddress,
+  resolvedAddressType,
   isRecipientDomainResolving,
   address,
   setAddress,
@@ -96,10 +96,9 @@ const SelectedMenuOption: React.FC<{
 
   const isValidAddress = useMemo(
     () =>
-      validateAddress(
-        getAddressFromAddressState({ ensAddress, namoshiAddress, fieldValue: address })
-      ).severity === 'success',
-    [ensAddress, namoshiAddress, address]
+      validateAddress(getAddressFromAddressState({ resolvedAddress, fieldValue: address }))
+        .severity === 'success',
+    [resolvedAddress, address]
   )
   const prevIsValidAddress = usePrevious(isValidAddress)
 
@@ -140,8 +139,8 @@ const SelectedMenuOption: React.FC<{
         }
         autoFocus={autoFocus}
         containerStyle={styles.inputContainer}
-        ensAddress={ensAddress}
-        namoshiAddress={namoshiAddress}
+        resolvedAddress={resolvedAddress}
+        resolvedAddressType={resolvedAddressType}
         isRecipientDomainResolving={isRecipientDomainResolving}
         value={address}
         withDetails={type === 'selected-menu-option'}
@@ -182,12 +181,12 @@ const SelectedMenuOption: React.FC<{
       address,
       autoFocus,
       disabled,
-      ensAddress,
+      resolvedAddress,
       filteredContacts.length,
       isButtonMode,
       isMenuOpen,
       isRecipientDomainResolving,
-      namoshiAddress,
+      resolvedAddressType,
       renderConfirmAddress,
       selectRef,
       setAddress,
@@ -208,8 +207,8 @@ const SelectedMenuOption: React.FC<{
 const Recipient: React.FC<Props> = ({
   setAddress,
   address,
-  ensAddress,
-  namoshiAddress,
+  resolvedAddress,
+  resolvedAddressType,
   addressValidationMsg,
   isRecipientHumanizerKnownTokenOrSmartContract,
   isRecipientAddressUnknown,
@@ -221,8 +220,7 @@ const Recipient: React.FC<Props> = ({
     state: { account }
   } = useController('SelectedAccountController')
   const actualAddress = getAddressFromAddressState({
-    ensAddress,
-    namoshiAddress,
+    resolvedAddress,
     fieldValue: address
   })
   const { navigate } = useNavigation()
@@ -406,8 +404,8 @@ const Recipient: React.FC<Props> = ({
           filteredContacts={filteredContacts}
           isMenuOpen={isMenuOpen}
           validation={validation}
-          ensAddress={ensAddress}
-          namoshiAddress={namoshiAddress}
+          resolvedAddress={resolvedAddress}
+          resolvedAddressType={resolvedAddressType}
           isRecipientDomainResolving={isRecipientDomainResolving}
           address={address}
           setAddress={setAddress}
@@ -419,8 +417,8 @@ const Recipient: React.FC<Props> = ({
     [
       filteredContacts,
       validation,
-      ensAddress,
-      namoshiAddress,
+      resolvedAddress,
+      resolvedAddressType,
       isRecipientDomainResolving,
       address,
       setAddress,
@@ -462,8 +460,8 @@ const Recipient: React.FC<Props> = ({
             filteredContacts={filteredContacts}
             isMenuOpen={isMenuOpen}
             validation={validation}
-            ensAddress={ensAddress}
-            namoshiAddress={namoshiAddress}
+            resolvedAddress={resolvedAddress}
+            resolvedAddressType={resolvedAddressType}
             isRecipientDomainResolving={isRecipientDomainResolving}
             address={address}
             setAddress={setAddress}
@@ -475,7 +473,10 @@ const Recipient: React.FC<Props> = ({
 
       <AddContactBottomSheet
         sheetRef={sheetRef}
-        address={getAddressFromAddressState({ ensAddress, namoshiAddress, fieldValue: address })}
+        address={getAddressFromAddressState({
+          resolvedAddress,
+          fieldValue: address
+        })}
         closeBottomSheet={closeBottomSheet}
       />
     </ItemPanel>
