@@ -28,6 +28,7 @@ import TrezorController, {
 } from '@web/modules/hardware-wallet/controllers/TrezorController'
 
 const DELAY_BETWEEN_POPUPS = 1000
+const HYPER_EVM_CHAIN_ID = 999n
 
 /**
  * This is necessary to avoid popup collision between the unlock & sign Trezor popups.
@@ -131,6 +132,19 @@ class TrezorSigner implements KeystoreSignerInterface {
     this.key.meta.hdPathTemplate === BIP44_LEDGER_DERIVATION_TEMPLATE &&
     this.key.meta.index >= SMART_ACCOUNT_SIGNER_KEY_DERIVATION_OFFSET
 
+  #isHyperEvmChain = (chainId?: bigint | number | string | null) => {
+    if (typeof chainId === 'bigint') return chainId === HYPER_EVM_CHAIN_ID
+
+    try {
+      if (typeof chainId === 'number') return BigInt(chainId) === HYPER_EVM_CHAIN_ID
+      if (typeof chainId === 'string') return BigInt(chainId) === HYPER_EVM_CHAIN_ID
+    } catch {
+      return false
+    }
+
+    return false
+  }
+
   async #withNormalizedError<T>(operation: () => Promise<T>): Promise<T> {
     try {
       return await operation()
@@ -194,7 +208,8 @@ class TrezorSigner implements KeystoreSignerInterface {
           res.payload?.code,
           getTrezorErrorMessageFromPayload(res.payload),
           {
-            isLedgerLiveSmartAccountForbiddenPath: this.#isLedgerLiveSmartAccountSigningPath()
+            isLedgerLiveSmartAccountForbiddenPath: this.#isLedgerLiveSmartAccountSigningPath(),
+            isHyperEvmForbiddenPath: this.#isHyperEvmChain(txnRequest.chainId)
           }
         )
       )
@@ -280,7 +295,8 @@ class TrezorSigner implements KeystoreSignerInterface {
           res.payload?.code,
           getTrezorErrorMessageFromPayload(res.payload),
           {
-            isLedgerLiveSmartAccountForbiddenPath: this.#isLedgerLiveSmartAccountSigningPath()
+            isLedgerLiveSmartAccountForbiddenPath: this.#isLedgerLiveSmartAccountSigningPath(),
+            isHyperEvmForbiddenPath: this.#isHyperEvmChain(_domain.chainId)
           }
         )
       )
