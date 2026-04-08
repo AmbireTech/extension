@@ -14,7 +14,7 @@ interface Props extends TextProps {
 }
 
 const BenzinAddressName: FC<Props> = ({ address, chainId, ...rest }) => {
-  const { isLoading: isLoadingEns, ens, namoshi } = useReverseLookup({ address })
+  const { isLoading: isLoadingEns, name } = useReverseLookup({ address })
 
   const {
     state: { contractNames },
@@ -48,7 +48,7 @@ const BenzinAddressName: FC<Props> = ({ address, chainId, ...rest }) => {
 
   return (
     <BaseAddress address={address} {...rest}>
-      {ens || namoshi || foundContractName || address}
+      {name || foundContractName || address}
     </BaseAddress>
   )
 }

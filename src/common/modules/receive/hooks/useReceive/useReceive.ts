@@ -35,8 +35,8 @@ const useReceive = () => {
 
   const {
     isLoading: isDomainResolving,
-    ens,
-    namoshi
+    name,
+    type
   } = useReverseLookup({
     address: account?.addr || ''
   })
@@ -93,8 +93,8 @@ const useReceive = () => {
     isViewOnly,
     label,
     pfp,
-    ens,
-    namoshi,
+    name,
+    type,
     isDomainResolving,
     qrCodeError,
     setQrCodeError,

@@ -7,7 +7,13 @@ interface Props {
   address: string
 }
 
-const useReverseLookup = ({ address }: Props) => {
+export interface ReverseLookupResult {
+  isLoading: boolean
+  name: string | null | undefined
+  type: 'ens' | 'namoshi' | null
+}
+
+const useReverseLookup = ({ address }: Props): ReverseLookupResult => {
   const checksummedAddress = getAddressCaught(address)
 
   const {
@@ -27,8 +33,8 @@ const useReverseLookup = ({ address }: Props) => {
 
   return {
     isLoading: isLoading || !addressInDomains,
-    ens: addressInDomains?.ens,
-    namoshi: addressInDomains?.namoshi
+    name: addressInDomains?.ens || addressInDomains?.namoshi,
+    type: addressInDomains?.ens ? 'ens' : addressInDomains?.namoshi ? 'namoshi' : null
   }
 }
 
