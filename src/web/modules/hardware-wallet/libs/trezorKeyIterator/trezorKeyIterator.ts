@@ -180,8 +180,14 @@ class TrezorKeyIterator implements KeyIteratorInterface {
           )
 
         res.payload.forEach(({ publicKey }, index) => {
-          this.#addressesByPath[ledgerBundleToFetch[index].path] =
-            this.#deriveAddressFromPublicKey(publicKey)
+          const bundleItem = ledgerBundleToFetch[index]
+          if (!bundleItem)
+            throw new ExternalSignerError(
+              `Could not match the returned public key to a derivation path. Technical details: <Missing bundle item for index ${index}>.`,
+              { sendCrashReport: true }
+            )
+
+          this.#addressesByPath[bundleItem.path] = this.#deriveAddressFromPublicKey(publicKey)
         })
       } catch (error: any) {
         if (error instanceof ExternalSignerError) throw error
