@@ -177,12 +177,10 @@ const useTokenDetails = () => {
           icon: SendIcon,
           onPress: ({ chainId, address }: TokenResult) =>
             navigate(`${ROUTES.transfer}?chainId=${chainId}&address=${address}`),
-          isDisabled: isGasTankOrRewardsToken || isAmountZero || network?.isNotSupported,
+          isDisabled: isGasTankOrRewardsToken || isAmountZero,
           tooltipText: isGasTankOrRewardsToken
             ? unavailableBecauseGasTankOrRewardsTokenTooltipText
-            : network?.isNotSupported
-              ? network?.notSupportedReason
-              : '',
+            : '',
           strokeWidth: 1.5,
           testID: 'token-send'
         },
