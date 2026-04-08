@@ -4,6 +4,10 @@ const NodePolyfillPlugin = require('node-polyfill-webpack-plugin')
 const TerserPlugin = require('terser-webpack-plugin')
 const HtmlWebpackPlugin = require('html-webpack-plugin')
 
+// Since Webpack is executed from the project root via package.json scripts,
+// process.cwd() provides the absolute path to the project root directory
+const ROOT_DIR = process.cwd()
+
 const isDev = process.env.NODE_ENV === 'development' || process.argv.includes('serve')
 
 const sharedResolve = {
@@ -14,16 +18,16 @@ const sharedResolve = {
     buffer: require.resolve('buffer')
   },
   alias: {
-    '@ambire-common': path.resolve(__dirname, 'src/ambire-common/src'),
-    '@common': path.resolve(__dirname, 'src/common'),
-    '@mobile': path.resolve(__dirname, 'src/mobile'),
-    '@web': path.resolve(__dirname, 'src/web'),
-    react: path.resolve(__dirname, 'node_modules/react'),
+    '@ambire-common': path.resolve(ROOT_DIR, 'src/ambire-common/src'),
+    '@common': path.resolve(ROOT_DIR, 'src/common'),
+    '@mobile': path.resolve(ROOT_DIR, 'src/mobile'),
+    '@web': path.resolve(ROOT_DIR, 'src/web'),
+    react: path.resolve(ROOT_DIR, 'node_modules/react'),
     'react-native$': 'react-native-web',
     'react-native-quick-crypto': 'crypto-browserify',
     'react-native-quick-base64': 'buffer',
-    'scrypt-js': path.resolve(__dirname, 'src/mobile/shims/scrypt-js.ts'),
-    pbkdf2: path.resolve(__dirname, 'src/mobile/shims/pbkdf2.ts'),
+    'scrypt-js': path.resolve(ROOT_DIR, 'src/mobile/shims/scrypt-js.ts'),
+    pbkdf2: path.resolve(ROOT_DIR, 'src/mobile/shims/pbkdf2.ts'),
     '@react-native-community/netinfo': false,
     'react-native-mmkv': false
   }
@@ -75,12 +79,13 @@ const sharedPlugins = [
 // ── Development config (webpack-dev-server with HMR) ──
 if (isDev) {
   module.exports = {
+    context: ROOT_DIR,
     entry: './src/mobile/services/WebViewWorker/injectedLogic.ts',
     mode: 'development',
     target: 'web',
     devtool: 'eval-source-map',
     output: {
-      path: path.resolve(__dirname, 'dist-webview-dev'),
+      path: path.resolve(ROOT_DIR, 'dist-webview-dev'),
       filename: 'webview-bundle.js',
       publicPath: '/'
     },
@@ -138,38 +143,39 @@ if (isDev) {
   }
 } else {
   class JsonWrapPlugin {
-  apply(compiler) {
-    compiler.hooks.emit.tap('JsonWrapPlugin', (compilation) => {
-      // Only wrap in JSON for production
-      if (compilation.options.mode !== 'production') return;
+    apply(compiler) {
+      compiler.hooks.emit.tap('JsonWrapPlugin', (compilation) => {
+        // Only wrap in JSON for production
+        if (compilation.options.mode !== 'production') return
 
-      const assetName = 'webview-bundle.js';
-      const asset = compilation.assets[assetName];
-      if (asset) {
-        const code = asset.source().toString();
-        const jsonCode = JSON.stringify({ code });
+        const assetName = 'webview-bundle.js'
+        const asset = compilation.assets[assetName]
+        if (asset) {
+          const code = asset.source().toString()
+          const jsonCode = JSON.stringify({ code })
 
-        // Add the JSON asset
-        compilation.assets['webview-bundle.json'] = {
-          source: () => jsonCode,
-          size: () => jsonCode.length
-        };
+          // Add the JSON asset
+          compilation.assets['webview-bundle.json'] = {
+            source: () => jsonCode,
+            size: () => jsonCode.length
+          }
 
-        // Remove the JS and LICENSE files so they don't get written to disk
-        delete compilation.assets[assetName];
-        delete compilation.assets[`${assetName}.LICENSE.txt`];
-      }
-    });
+          // Remove the JS and LICENSE files so they don't get written to disk
+          delete compilation.assets[assetName]
+          delete compilation.assets[`${assetName}.LICENSE.txt`]
+        }
+      })
+    }
   }
-}
 
-// ── Production config (existing bundle build) ──
+  // ── Production config (existing bundle build) ──
   module.exports = {
+    context: ROOT_DIR,
     entry: './src/mobile/services/WebViewWorker/injectedLogic.ts',
     mode: 'production',
     target: 'web',
     output: {
-      path: path.resolve(__dirname, 'src/mobile/services/WebViewWorker'),
+      path: __dirname,
       filename: 'webview-bundle.js',
       libraryTarget: 'window',
       publicPath: ''
