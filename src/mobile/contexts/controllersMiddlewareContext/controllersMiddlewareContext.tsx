@@ -9,60 +9,15 @@ import { ControllerStoreContext } from '@common/contexts/controllerStoreContext'
 import useRoute from '@common/hooks/useRoute'
 import { Action, MethodAction } from '@common/types/actions'
 import { BUNGEE_API_KEY, RELAYER_URL, VELCRO_URL } from '@env'
-import { MobileBaseControllersMappingType } from '@mobile/constants/controllersMapping'
 import useRequestsControllerHelpers from '@mobile/hooks/useRequestsControllerHelpers'
 import { WebViewWorker, WebViewWorkerRef } from '@mobile/services/WebViewWorker/WebViewWorker'
-
-// --- POLYFILL FOR REACT NATIVE HERMES / METRO BIND BUG ---
-const originalBind = Function.prototype.bind
-// @ts-ignore
-Function.prototype.bind = function (context: any, ...boundArgs: any[]) {
-  const targetFunction = this
-  return function (...args: any[]) {
-    try {
-      const result = targetFunction.call(context, ...boundArgs, ...args)
-      if (result && typeof result.then === 'function') {
-        return result.catch((e: any) => {
-          if (e?.message === 'bad method' || e?.message?.includes('bad method')) {
-            return targetFunction.call(
-              context,
-              ...boundArgs,
-              args[0],
-              undefined,
-              args[1],
-              args[2],
-              args[3],
-              args[4]
-            )
-          }
-          throw e
-        })
-      }
-      return result
-    } catch (e: any) {
-      if (e?.message === 'bad method' || e?.message?.includes('bad method')) {
-        return targetFunction.call(
-          context,
-          ...boundArgs,
-          args[0],
-          undefined,
-          args[1],
-          args[2],
-          args[3],
-          args[4]
-        )
-      }
-      throw e
-    }
-  }
-}
 
 export const ControllersMiddlewareProvider: React.FC<{
   children: React.ReactNode
 }> = ({ children }) => {
   const { controllerStore } = useContext(ControllerStoreContext)
-  const route = useRoute()
   const webviewRef = useRef<WebViewWorkerRef>(null)
+  const route = useRoute()
 
   useEffect(() => {
     webviewRef.current

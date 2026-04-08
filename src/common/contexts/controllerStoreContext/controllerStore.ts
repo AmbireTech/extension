@@ -116,6 +116,7 @@ export class ControllerStore {
       return true
     })
 
+    // NOTE: used for debugging the initial loading of controllers
     // console.log(
     //   'not ready controllers',
     //   this.controllersByName.filter((ctrlName) => !this.initializedControllers.has(ctrlName))

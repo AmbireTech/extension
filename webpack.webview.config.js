@@ -64,6 +64,7 @@ const sharedRules = [
 const sharedPlugins = [
   new NodePolyfillPlugin(),
   new webpack.ProvidePlugin({ Buffer: ['buffer', 'Buffer'], process: 'process' }),
+  new webpack.optimize.LimitChunkCountPlugin({ maxChunks: 1 }),
   new webpack.DefinePlugin({
     __DEV__: JSON.stringify(isDev),
     'process.env.WEB_ENGINE': JSON.stringify('webview'),
@@ -136,7 +137,33 @@ if (isDev) {
     }
   }
 } else {
-  // ── Production config (existing bundle build) ──
+  class JsonWrapPlugin {
+  apply(compiler) {
+    compiler.hooks.emit.tap('JsonWrapPlugin', (compilation) => {
+      // Only wrap in JSON for production
+      if (compilation.options.mode !== 'production') return;
+
+      const assetName = 'webview-bundle.js';
+      const asset = compilation.assets[assetName];
+      if (asset) {
+        const code = asset.source().toString();
+        const jsonCode = JSON.stringify({ code });
+
+        // Add the JSON asset
+        compilation.assets['webview-bundle.json'] = {
+          source: () => jsonCode,
+          size: () => jsonCode.length
+        };
+
+        // Remove the JS and LICENSE files so they don't get written to disk
+        delete compilation.assets[assetName];
+        delete compilation.assets[`${assetName}.LICENSE.txt`];
+      }
+    });
+  }
+}
+
+// ── Production config (existing bundle build) ──
   module.exports = {
     entry: './src/mobile/services/WebViewWorker/injectedLogic.ts',
     mode: 'production',
@@ -151,6 +178,7 @@ if (isDev) {
       minimize: true,
       minimizer: [
         new TerserPlugin({
+          extractComments: false,
           terserOptions: {
             mangle: false,
             keep_classnames: true,
@@ -169,7 +197,8 @@ if (isDev) {
         __DEV__: JSON.stringify(false),
         'process.env.WEB_ENGINE': JSON.stringify('webview'),
         'process.env.APP_ENV': JSON.stringify('production')
-      })
+      }),
+      new JsonWrapPlugin()
     ]
   }
 }
