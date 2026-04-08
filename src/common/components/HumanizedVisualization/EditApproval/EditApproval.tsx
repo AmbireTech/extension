@@ -4,6 +4,10 @@ import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 
+import {
+  noStateUpdateStatuses,
+  SigningStatus
+} from '@ambire-common/controllers/signAccountOp/signAccountOp'
 import { HumanizerVisualization } from '@ambire-common/libs/humanizer/interfaces'
 import { getTokenAmount } from '@ambire-common/libs/portfolio/helpers'
 import EditPenIcon from '@common/assets/svg/EditPenIcon'
@@ -73,6 +77,17 @@ const EditApproval = ({ item }: { item: HumanizerVisualization }) => {
 
     setAmount(formatted)
   }, [])
+
+  // hide the edit option if there's no sign account op state
+  // or it has finished / queued state
+  // or the call id for this approval is missing
+  if (
+    !signAccountOpState ||
+    !signAccountOpState.accountOp.calls.find((c) => c.id === item.callId) ||
+    (signAccountOpState.status && noStateUpdateStatuses.includes(signAccountOpState.status.type)) ||
+    signAccountOpState.status?.type === SigningStatus.Queued
+  )
+    return null
 
   return (
     <>
@@ -153,11 +168,13 @@ const EditApproval = ({ item }: { item: HumanizerVisualization }) => {
                 <MaxAmount
                   isLoading={false}
                   maxAmount={Number(
-                    formatUnits(getTokenAmount(portfolioToken), portfolioToken.decimals)
+                    formatUnits(getTokenAmount(portfolioToken, true), portfolioToken.decimals)
                   )}
                   selectedTokenSymbol={portfolioToken.symbol}
                   onMaxButtonPress={() =>
-                    setAmount(formatUnits(getTokenAmount(portfolioToken), portfolioToken.decimals))
+                    setAmount(
+                      formatUnits(getTokenAmount(portfolioToken, true), portfolioToken.decimals)
+                    )
                   }
                   simulationFailed={false}
                 />
@@ -179,37 +196,66 @@ const EditApproval = ({ item }: { item: HumanizerVisualization }) => {
               onPress={() => {
                 if (!signAccountOpState || !item.address || !item.spenderAddr || !portfolioToken)
                   return
-                const approveAbi = [
-                  {
-                    inputs: [
-                      {
-                        internalType: 'address',
-                        name: 'spender',
-                        type: 'address'
-                      },
-                      {
-                        internalType: 'uint256',
-                        name: 'amount',
-                        type: 'uint256'
-                      }
-                    ],
-                    name: 'approve',
-                    outputs: [
-                      {
-                        internalType: 'bool',
-                        name: '',
-                        type: 'bool'
-                      }
-                    ],
-                    stateMutability: 'nonpayable',
-                    type: 'function'
-                  }
-                ]
-                const approveInterface = new Interface(approveAbi)
-                const calldata = approveInterface.encodeFunctionData('approve', [
-                  item.spenderAddr,
-                  parseUnits(amount, portfolioToken.decimals)
-                ])
+
+                let calldata = ''
+                if (item.expiration === undefined) {
+                  // normal approval
+                  const approveAbi = [
+                    {
+                      inputs: [
+                        {
+                          internalType: 'address',
+                          name: 'spender',
+                          type: 'address'
+                        },
+                        {
+                          internalType: 'uint256',
+                          name: 'amount',
+                          type: 'uint256'
+                        }
+                      ],
+                      name: 'approve',
+                      outputs: [
+                        {
+                          internalType: 'bool',
+                          name: '',
+                          type: 'bool'
+                        }
+                      ],
+                      stateMutability: 'nonpayable',
+                      type: 'function'
+                    }
+                  ]
+                  const approveInterface = new Interface(approveAbi)
+                  calldata = approveInterface.encodeFunctionData('approve', [
+                    item.spenderAddr,
+                    parseUnits(amount, portfolioToken.decimals)
+                  ])
+                } else {
+                  // permit approval
+                  const permitAbi = [
+                    {
+                      inputs: [
+                        { internalType: 'address', name: 'token', type: 'address' },
+                        { internalType: 'address', name: 'spender', type: 'address' },
+                        { internalType: 'uint160', name: 'amount', type: 'uint160' },
+                        { internalType: 'uint48', name: 'expiration', type: 'uint48' }
+                      ],
+                      name: 'approve',
+                      outputs: [],
+                      stateMutability: 'nonpayable',
+                      type: 'function'
+                    }
+                  ]
+                  const approveInterface = new Interface(permitAbi)
+                  calldata = approveInterface.encodeFunctionData('approve', [
+                    item.address,
+                    item.spenderAddr,
+                    parseUnits(amount, portfolioToken.decimals),
+                    item.expiration
+                  ])
+                }
+
                 // shallow copy each call just in case so the controller properly
                 // understands that a change to the calls array has been made
                 const calls = signAccountOpState.accountOp.calls.map((call) => ({ ...call }))
