@@ -2,17 +2,18 @@ import { Signature, toBeHex, Transaction } from 'ethers'
 
 import ExternalSignerError from '@ambire-common/classes/ExternalSignerError'
 import {
+  BIP44_LEDGER_DERIVATION_TEMPLATE,
+  SMART_ACCOUNT_SIGNER_KEY_DERIVATION_OFFSET
+} from '@ambire-common/consts/derivation'
+import {
   ExternalKey,
   ExternalSignerController,
   KeystoreSignerInterface
 } from '@ambire-common/interfaces/keystore'
 import { TypedMessageUserRequest } from '@ambire-common/interfaces/userRequest'
 import {
-  BIP44_LEDGER_DERIVATION_TEMPLATE,
-  SMART_ACCOUNT_SIGNER_KEY_DERIVATION_OFFSET
-} from '@ambire-common/consts/derivation'
-import {
   getMessageFromTrezorErrorCode,
+  getTrezorErrorMessageFromPayload,
   normalizeTrezorMessage
 } from '@ambire-common/libs/trezor/trezor'
 import { addHexPrefix } from '@ambire-common/utils/addHexPrefix'
@@ -189,9 +190,13 @@ class TrezorSigner implements KeystoreSignerInterface {
     if (!res.success)
       throw new ExternalSignerError(
         // @TODO: Implement a mechanism that reports the error if it's not humanized
-        getMessageFromTrezorErrorCode(res.payload?.code, res.payload?.error, {
-          isLedgerLiveSmartAccountForbiddenPath: this.#isLedgerLiveSmartAccountSigningPath()
-        })
+        getMessageFromTrezorErrorCode(
+          res.payload?.code,
+          getTrezorErrorMessageFromPayload(res.payload),
+          {
+            isLedgerLiveSmartAccountForbiddenPath: this.#isLedgerLiveSmartAccountSigningPath()
+          }
+        )
       )
 
     try {
@@ -271,9 +276,13 @@ class TrezorSigner implements KeystoreSignerInterface {
     if (!res.success)
       throw new ExternalSignerError(
         // @TODO: Implement a mechanism that reports the error if it's not humanized
-        getMessageFromTrezorErrorCode(res.payload?.code, res.payload?.error, {
-          isLedgerLiveSmartAccountForbiddenPath: this.#isLedgerLiveSmartAccountSigningPath()
-        })
+        getMessageFromTrezorErrorCode(
+          res.payload?.code,
+          getTrezorErrorMessageFromPayload(res.payload),
+          {
+            isLedgerLiveSmartAccountForbiddenPath: this.#isLedgerLiveSmartAccountSigningPath()
+          }
+        )
       )
 
     this.#validateSigningKey(res.payload.address)
@@ -295,9 +304,13 @@ class TrezorSigner implements KeystoreSignerInterface {
 
     if (!res.success)
       throw new ExternalSignerError(
-        getMessageFromTrezorErrorCode(res.payload?.code, res.payload?.error, {
-          isLedgerLiveSmartAccountForbiddenPath: this.#isLedgerLiveSmartAccountSigningPath()
-        }),
+        getMessageFromTrezorErrorCode(
+          res.payload?.code,
+          getTrezorErrorMessageFromPayload(res.payload),
+          {
+            isLedgerLiveSmartAccountForbiddenPath: this.#isLedgerLiveSmartAccountSigningPath()
+          }
+        ),
         {
           sendCrashReport: true
         }
