@@ -1,5 +1,5 @@
-import { formatUnits } from 'ethers'
-import React, { memo, useCallback, useMemo, useState } from 'react'
+import { formatUnits, Interface, parseUnits } from 'ethers'
+import React, { memo, useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
@@ -36,11 +36,20 @@ const EditApproval = ({ item }: { item: HumanizerVisualization }) => {
   const {
     state: { portfolio }
   } = useController('SelectedAccountController')
-  const [amount, setAmount] = useState<string>(item.value?.toString() || '0')
+  const { state: signAccountOpState, dispatch: signAccountOpDispatch } =
+    useController('SignAccountOpController')
+  const [amount, setAmount] = useState<string>('0')
+  const [initialValueSet, setInitialValueSet] = useState<boolean>(false)
 
   const portfolioToken = useMemo(() => {
     return portfolio.tokens.find((t) => t.address.toLowerCase() === item.address?.toLowerCase())
   }, [portfolio.tokens, item])
+
+  useEffect(() => {
+    if (!portfolioToken || !item.value || initialValueSet) return
+    setAmount(formatUnits(item.value.toString(), portfolioToken.decimals))
+    setInitialValueSet(true)
+  }, [portfolioToken, item.value, initialValueSet])
 
   const handleOnChangeTextAndFormat = useCallback((text: string) => {
     let formatted = text
@@ -150,7 +159,55 @@ const EditApproval = ({ item }: { item: HumanizerVisualization }) => {
               type="primary"
               text={t('Save')}
               onPress={() => {
-                console.log('testing')
+                if (!signAccountOpState || !item.address || !item.spenderAddr || !portfolioToken)
+                  return
+                const approveAbi = [
+                  {
+                    inputs: [
+                      {
+                        internalType: 'address',
+                        name: 'spender',
+                        type: 'address'
+                      },
+                      {
+                        internalType: 'uint256',
+                        name: 'amount',
+                        type: 'uint256'
+                      }
+                    ],
+                    name: 'approve',
+                    outputs: [
+                      {
+                        internalType: 'bool',
+                        name: '',
+                        type: 'bool'
+                      }
+                    ],
+                    stateMutability: 'nonpayable',
+                    type: 'function'
+                  }
+                ]
+                const approveInterface = new Interface(approveAbi)
+                const calldata = approveInterface.encodeFunctionData('approve', [
+                  item.spenderAddr,
+                  parseUnits(amount, portfolioToken.decimals)
+                ])
+                // shallow copy each call just in case so the controller properly
+                // understands that a change to the calls array has been made
+                const calls = signAccountOpState.accountOp.calls.map((call) => ({ ...call }))
+                const replacedCall = calls.find((c) => c.id === item.callId)
+                if (!replacedCall) return
+                // replace the data with the new approval
+                replacedCall.data = calldata
+
+                signAccountOpDispatch({
+                  type: 'method',
+                  params: {
+                    method: 'update',
+                    args: [{ accountOpData: { calls } }]
+                  }
+                })
+                closeEditApprovals()
               }}
               hasBottomSpacing={false}
               size="small"
