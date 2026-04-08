@@ -8,6 +8,10 @@ import {
 } from '@ambire-common/interfaces/keystore'
 import { TypedMessageUserRequest } from '@ambire-common/interfaces/userRequest'
 import {
+  BIP44_LEDGER_DERIVATION_TEMPLATE,
+  SMART_ACCOUNT_SIGNER_KEY_DERIVATION_OFFSET
+} from '@ambire-common/consts/derivation'
+import {
   getMessageFromTrezorErrorCode,
   normalizeTrezorMessage
 } from '@ambire-common/libs/trezor/trezor'
@@ -122,6 +126,10 @@ class TrezorSigner implements KeystoreSignerInterface {
     }
   }
 
+  #isLedgerLiveSmartAccountSigningPath = () =>
+    this.key.meta.hdPathTemplate === BIP44_LEDGER_DERIVATION_TEMPLATE &&
+    this.key.meta.index >= SMART_ACCOUNT_SIGNER_KEY_DERIVATION_OFFSET
+
   async #withNormalizedError<T>(operation: () => Promise<T>): Promise<T> {
     try {
       return await operation()
@@ -181,7 +189,9 @@ class TrezorSigner implements KeystoreSignerInterface {
     if (!res.success)
       throw new ExternalSignerError(
         // @TODO: Implement a mechanism that reports the error if it's not humanized
-        getMessageFromTrezorErrorCode(res.payload?.code, res.payload?.error)
+        getMessageFromTrezorErrorCode(res.payload?.code, res.payload?.error, {
+          isLedgerLiveSmartAccountForbiddenPath: this.#isLedgerLiveSmartAccountSigningPath()
+        })
       )
 
     try {
@@ -261,7 +271,9 @@ class TrezorSigner implements KeystoreSignerInterface {
     if (!res.success)
       throw new ExternalSignerError(
         // @TODO: Implement a mechanism that reports the error if it's not humanized
-        getMessageFromTrezorErrorCode(res.payload?.code, res.payload?.error)
+        getMessageFromTrezorErrorCode(res.payload?.code, res.payload?.error, {
+          isLedgerLiveSmartAccountForbiddenPath: this.#isLedgerLiveSmartAccountSigningPath()
+        })
       )
 
     this.#validateSigningKey(res.payload.address)
@@ -283,7 +295,9 @@ class TrezorSigner implements KeystoreSignerInterface {
 
     if (!res.success)
       throw new ExternalSignerError(
-        getMessageFromTrezorErrorCode(res.payload?.code, res.payload?.error),
+        getMessageFromTrezorErrorCode(res.payload?.code, res.payload?.error, {
+          isLedgerLiveSmartAccountForbiddenPath: this.#isLedgerLiveSmartAccountSigningPath()
+        }),
         {
           sendCrashReport: true
         }
