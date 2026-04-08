@@ -31,8 +31,7 @@ class QrKeyIterator implements KeyIteratorInterface {
 
   #parsedAccount?: ParsedQrAccount
   #xpub?: string
-  #importedHdPath?: string
-
+  
   get parsedAccount() {
     return this.#parsedAccount
   }
@@ -43,7 +42,7 @@ class QrKeyIterator implements KeyIteratorInterface {
     this.controller = controller
   }
 
-  async importAccount(payload: string | Uint8Array) {
+  async initFromQrPayload(payload: string | Uint8Array) {
     if (!this.controller) {
       throw new ExternalSignerError('QR controller is not initialized.')
     }
@@ -85,7 +84,6 @@ class QrKeyIterator implements KeyIteratorInterface {
 
     this.#parsedAccount = parsed
     this.#xpub = firstAccount.xpub
-    this.#importedHdPath = firstAccount.hdPath || parsed.hdPath
   }
 
   #deriveAddressFromRelativePath(relativePath: string): string {
