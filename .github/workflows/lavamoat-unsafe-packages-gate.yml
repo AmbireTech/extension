@@ -1,0 +1,44 @@
+name: Ensure packages excluded from LavaMoat are not updated in yarn.lock
+
+on:
+  push:
+    branches:
+      - v2
+      - main
+      - 'release/*'
+  pull_request:
+    types: ['opened', 'ready_for_review', 'synchronize']
+    branches:
+      - v2
+      - main
+      - 'release/*'
+  workflow_dispatch:
+
+jobs:
+  lavamoat-unsafe-packages:
+    if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version-file: .nvmrc
+
+      - name: Install dependencies (frozen lockfile)
+        run: yarn install --frozen-lockfile
+
+      - name: "LavaMoat: ensure unsafe-packages are unchanged in yarn.lock"
+        shell: bash
+        run: |
+          echo "Fetching base branch origin/${{ github.base_ref }} for lockfile diff"
+          git fetch origin "${{ github.base_ref }}" --depth=1
+
+          echo "Checking that unsafe-packages listed in lavamoat/webpack/unsafe-packages.json are unchanged in yarn.lock vs base"
+          node scripts/lavamoat-check-unsafe-packages.js
