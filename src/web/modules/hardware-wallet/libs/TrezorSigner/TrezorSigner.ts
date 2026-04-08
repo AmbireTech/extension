@@ -133,16 +133,11 @@ class TrezorSigner implements KeystoreSignerInterface {
     this.key.meta.index >= SMART_ACCOUNT_SIGNER_KEY_DERIVATION_OFFSET
 
   #isHyperEvmChain = (chainId?: bigint | number | string | null) => {
-    if (typeof chainId === 'bigint') return chainId === HYPER_EVM_CHAIN_ID
-
     try {
-      if (typeof chainId === 'number') return BigInt(chainId) === HYPER_EVM_CHAIN_ID
-      if (typeof chainId === 'string') return BigInt(chainId) === HYPER_EVM_CHAIN_ID
+      return chainId != null && BigInt(chainId) === HYPER_EVM_CHAIN_ID
     } catch {
       return false
     }
-
-    return false
   }
 
   async #withNormalizedError<T>(operation: () => Promise<T>): Promise<T> {
