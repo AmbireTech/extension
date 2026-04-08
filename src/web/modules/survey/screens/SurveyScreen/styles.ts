@@ -2,7 +2,6 @@ import { StyleSheet, ViewStyle } from 'react-native'
 
 import spacings from '@common/styles/spacings'
 import { ThemeProps } from '@common/styles/themeConfig'
-import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 
 interface Style {
@@ -25,20 +24,20 @@ const getStyles = (theme: ThemeProps) =>
       borderBottomColor: theme.secondaryBackground
     },
     radio: {
-      width: 16,
-      height: 16,
+      width: 20,
+      height: 20,
       borderRadius: 50,
       borderWidth: 2,
       ...flexbox.alignCenter,
       ...flexbox.justifyCenter,
       ...spacings.mrTy,
-      borderColor: theme.success400
+      borderColor: '#808EA2'
     },
 
     radioSelectedInner: {
       backgroundColor: theme.success400,
-      width: 8,
-      height: 8,
+      width: 12,
+      height: 12,
       borderRadius: 50
     }
   })

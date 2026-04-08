@@ -62,6 +62,11 @@ input {
   outline: none;
 }
 
+/* <TextArea /> with multiline={true} is compiled tp <textarea /> */
+textarea {
+  outline: none;
+}
+
 ::-webkit-scrollbar {
   width: 4px;
 }

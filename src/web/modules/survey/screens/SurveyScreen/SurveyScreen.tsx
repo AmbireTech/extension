@@ -1,20 +1,22 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { TextInput, View } from 'react-native'
+import React, { useCallback, useEffect, useMemo, useState } from 'react'
+import { View } from 'react-native'
 import { useParams } from 'react-router-dom'
 
 import { Survey } from '@ambire-common/interfaces/survey'
 import ButtonWithLoader from '@common/components/ButtonWithLoader/ButtonWithLoader'
-import Input from '@common/components/Input'
-import { PanelBackButton, PanelTitle } from '@common/components/Panel/Panel'
+import { PanelTitle } from '@common/components/Panel/Panel'
 import ScrollableWrapper from '@common/components/ScrollableWrapper'
 import Text from '@common/components/Text'
+import TextArea from '@common/components/TextArea'
 import { isMobile, isWeb } from '@common/config/env'
 import useController from '@common/hooks/useController'
+import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
-import spacings, { SPACING_LG } from '@common/styles/spacings'
+import spacings, { SPACING_LG, SPACING_MD } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { Content, Wrapper } from '@web/components/TransactionsScreen'
 
+import ProgressBar from './ProgressBar'
 import RadioQuestions from './RadioQuestions'
 
 interface ISurveyUiState {
@@ -24,6 +26,7 @@ interface ISurveyUiState {
 
 const SurveyScreen = () => {
   const { addToast } = useToast()
+  const { theme } = useTheme()
   const {
     dispatch: dispatchToSurvey,
     state: { survey: surveyState }
@@ -116,31 +119,6 @@ const SurveyScreen = () => {
     }
   }, [addToast, currentQuestion, findNextQuestion, inputtedAnswer, recordedAnswers, surveyState])
 
-  const QuestionComponent = useCallback(() => {
-    // TODO: empty return
-    if (!currentQuestion) return
-    if (currentQuestion.responseType === 'singleChoice' && currentQuestion.responseOptions)
-      return (
-        <View style={spacings.mtMd}>
-          <RadioQuestions
-            selectedResponseId={typeof inputtedAnswer === 'string' ? null : inputtedAnswer}
-            setSelectedResponseId={setInputtedAnswer}
-            responses={currentQuestion.responseOptions}
-          />
-        </View>
-      )
-
-    return (
-      <View style={spacings.mtMd}>
-        <Input
-          autoFocus={true}
-          value={inputtedAnswer?.toString()}
-          onChangeText={setInputtedAnswer}
-        />
-      </View>
-    )
-  }, [currentQuestion, inputtedAnswer])
-
   const buttons = useMemo(() => {
     return (
       <View
@@ -155,7 +133,6 @@ const SurveyScreen = () => {
           <ButtonWithLoader
             text={buttonState.text}
             disabled={!buttonState.callback}
-            // TODO
             isLoading={buttonState.loading}
             onPress={buttonState.callback}
             size={isWeb ? 'smaller' : 'regular'}
@@ -166,6 +143,15 @@ const SurveyScreen = () => {
     )
   }, [buttonState.callback, buttonState.loading, buttonState.text])
 
+  const percentageDone = useMemo(() => {
+    if (surveyState.status !== 'success') return 0
+    const maxPositionFromQuestions =
+      Math.max(...surveyState.survey.questions.map((q) => q.questionPosition)) || 1
+    let lastAnsweredQuestionPosition = currentQuestion?.questionPosition || 0
+    if (inputtedAnswer !== null) lastAnsweredQuestionPosition += 1
+    return (lastAnsweredQuestionPosition / (maxPositionFromQuestions + 1)) * 100
+  }, [currentQuestion, surveyState, inputtedAnswer])
+
   return (
     <Wrapper>
       <Content buttons={buttons}>
@@ -174,15 +160,43 @@ const SurveyScreen = () => {
             <View style={[flexbox.alignCenter, spacings.mb]}>
               <PanelTitle title={'Survey'} />
             </View>
-            <View style={[spacings.mhLg]}>
-              {currentQuestion && (
-                <View>
-                  <Text fontSize={SPACING_LG} appearance="primaryText">
-                    {currentQuestion.text}
-                  </Text>
-                  <QuestionComponent />
-                </View>
-              )}
+            <View style={[spacings.mh4Xl, spacings.mtMd]}>
+              <ProgressBar percentageDone={percentageDone} />
+              <View style={[spacings.mtLg]}>
+                {currentQuestion && (
+                  <View>
+                    <Text fontSize={SPACING_MD} weight={'medium'} appearance="primaryText">
+                      {currentQuestion.text}
+                    </Text>
+                    {currentQuestion.responseType === 'singleChoice' &&
+                    currentQuestion.responseOptions ? (
+                      <View style={[spacings.mtMd, spacings.mlLg]}>
+                        <RadioQuestions
+                          selectedResponseId={
+                            typeof inputtedAnswer === 'string' ? null : inputtedAnswer
+                          }
+                          setSelectedResponseId={setInputtedAnswer}
+                          responses={currentQuestion.responseOptions}
+                        />
+                      </View>
+                    ) : (
+                      <TextArea
+                        placeholder="Write down your thoughts..."
+                        value={inputtedAnswer?.toString() || ''}
+                        onChangeText={setInputtedAnswer}
+                        containerStyle={spacings.ptLg}
+                        inputWrapperStyle={{
+                          height: 100,
+                          borderColor: theme.neutral600,
+                          borderWidth: 1,
+                          alignItems: 'baseline'
+                        }}
+                        multiline
+                      />
+                    )}
+                  </View>
+                )}
+              </View>
             </View>
           </ScrollableWrapper>
         </View>
