@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-floating-promises */
-import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
+import React, { useCallback, useContext, useEffect, useMemo, useRef } from 'react'
 import { Platform as RNPlatform } from 'react-native'
 
 import { LIFI_EXPLORER_URL } from '@ambire-common/services/lifi/consts'
@@ -30,12 +30,8 @@ export const ControllersMiddlewareProvider: React.FC<{
         BUNGEE_API_KEY
       })
       .then((ctrlsNames) => {
-        const ctrlsToInit = ctrlsNames.filter(
-          (ctrlName) => ctrlName !== 'ContinuousUpdatesController'
-        )
-        controllerStore.init(ctrlsToInit as any, () => {
-          console.log('dispatching batched init controllers state', ctrlsToInit.length)
-          dispatch({ type: 'INIT_ALL_CONTROLLERS', params: { controllers: ctrlsToInit as any } })
+        controllerStore.init(ctrlsNames as any[], () => {
+          dispatch({ type: 'INIT_ALL_CONTROLLERS', params: { controllers: ctrlsNames as any[] } })
         })
       })
   }, [controllerStore])
