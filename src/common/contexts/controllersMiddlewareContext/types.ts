@@ -1,4 +1,4 @@
-import { AllControllersMappingType } from '@common/constants/controllersMapping'
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 import { ControllerAction } from '@common/hooks/useController/useController'
 import { Action, MethodAction } from '@common/types/actions'
 

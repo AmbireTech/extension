@@ -2,9 +2,9 @@ import { flushSync } from 'react-dom'
 
 import { parse, stringify } from '@ambire-common/libs/richJson/richJson'
 import { isMobile } from '@common/config/env'
-import { AllControllersMappingType } from '@common/constants/controllersMapping'
 import { isExtension } from '@web/constants/browserapi'
 
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 const MAX_LOADING_TIME = 10000
 
 export class ControllerStore {
