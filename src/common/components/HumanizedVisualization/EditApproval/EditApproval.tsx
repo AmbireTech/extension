@@ -6,7 +6,7 @@ import { useModalize } from 'react-native-modalize'
 
 import { HumanizerVisualization } from '@ambire-common/libs/humanizer/interfaces'
 import { getTokenAmount } from '@ambire-common/libs/portfolio/helpers'
-import EditIcon from '@common/assets/svg/EditIcon'
+import EditPenIcon from '@common/assets/svg/EditPenIcon'
 import AmountInput from '@common/components/AmountInput'
 import BottomSheet from '@common/components/BottomSheet'
 import Button from '@common/components/Button'
@@ -24,7 +24,7 @@ import flexbox from '@common/styles/utils/flexbox'
 
 const EditApproval = ({ item }: { item: HumanizerVisualization }) => {
   const { t } = useTranslation()
-  const { themeType } = useTheme()
+  const { theme, themeType } = useTheme()
   const [bindEditApprovals, editApprovalsStyle] = useHover({
     preset: 'opacityInverted'
   })
@@ -77,12 +77,27 @@ const EditApproval = ({ item }: { item: HumanizerVisualization }) => {
   return (
     <>
       <AnimatedPressable
-        style={[editApprovalsStyle, flexbox.directionRow, flexbox.alignCenter]}
+        style={[
+          editApprovalsStyle,
+          flexbox.directionRow,
+          flexbox.alignCenter,
+          spacings.mrTy,
+          // @ts-ignore
+          { marginLeft: '-8px' }
+        ]}
         {...bindEditApprovals}
         onPress={() => openEditApprovals()}
       >
-        <EditIcon />
-        <Text>{t('Edit Approval')}</Text>
+        <Text fontSize={14} color={theme.tertiaryText}>
+          {'['}
+        </Text>
+        <EditPenIcon width={20} height={20} color={theme.tertiaryText} />
+        <Text fontSize={14} color={theme.tertiaryText}>
+          {t('Edit')}
+        </Text>
+        <Text fontSize={14} color={theme.tertiaryText}>
+          {']'}
+        </Text>
       </AnimatedPressable>
       <BottomSheet
         sheetRef={editApprovalsSheetRef}
