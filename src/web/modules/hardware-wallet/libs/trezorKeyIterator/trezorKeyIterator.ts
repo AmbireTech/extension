@@ -29,6 +29,10 @@ class TrezorKeyIterator implements KeyIteratorInterface {
   // For every HD_PATH_TEMPLATE_TYPE the xpub needed (parent) is different.
   #xpubs: Partial<Record<HD_PATH_TEMPLATE_TYPE, string>> = {}
 
+  // Cache derived Ethereum addresses by their full derivation path, regardless
+  // of how they were obtained (local xpub derivation or direct device request).
+  #addressesByPath: Record<string, string> = {}
+
   constructor({ walletSDK }: KeyIteratorProps) {
     if (!walletSDK) throw new Error('trezorKeyIterator: missing walletSDK prop')
 
@@ -74,6 +78,17 @@ class TrezorKeyIterator implements KeyIteratorInterface {
     }
   }
 
+  #getAddressFromCache(path: string): string {
+    const cachedAddress = this.#addressesByPath[path]
+    if (!cachedAddress)
+      throw new ExternalSignerError(
+        `Could not retrieve the cached Ethereum address for path <${path}>.`,
+        { sendCrashReport: true }
+      )
+
+    return cachedAddress
+  }
+
   async retrieve(
     fromToArr: { from: number; to: number }[],
     hdPathTemplate?: HD_PATH_TEMPLATE_TYPE
@@ -92,14 +107,18 @@ class TrezorKeyIterator implements KeyIteratorInterface {
       }
     })
 
+    const uncachedAddrBundle = addrBundleToBeRequested.filter(
+      ({ path }) => !this.#addressesByPath[path]
+    )
+
     // Ledger Live varies the hardened account segment (`<account>'`), so unlike
     // the standard BIP44 path we cannot start from the parent xpub at m/44'/60'
     // and derive children locally. We must request the full public key for each
     // concrete path from the device and then compute the Ethereum address from it.
-    if (hdPathTemplate === BIP44_LEDGER_DERIVATION_TEMPLATE) {
+    if (hdPathTemplate === BIP44_LEDGER_DERIVATION_TEMPLATE && uncachedAddrBundle.length) {
       try {
         const res = await this.#walletSDK.getPublicKey({
-          bundle: addrBundleToBeRequested.map(({ path }) => ({
+          bundle: uncachedAddrBundle.map(({ path }) => ({
             coin: 'ETH',
             path,
             showOnTrezor: false
@@ -111,13 +130,16 @@ class TrezorKeyIterator implements KeyIteratorInterface {
             getMessageFromTrezorErrorCode(res.payload.code, res.payload.error)
           )
 
-        if (res.payload.length !== addrBundleToBeRequested.length)
+        if (res.payload.length !== uncachedAddrBundle.length)
           throw new ExternalSignerError(
-            `Could not receive the expected number of public keys from your Trezor device. Technical details: <Expected ${addrBundleToBeRequested.length}, received ${res.payload.length}>.`,
+            `Could not receive the expected number of public keys from your Trezor device. Technical details: <Expected ${uncachedAddrBundle.length}, received ${res.payload.length}>.`,
             { sendCrashReport: true }
           )
 
-        return res.payload.map(({ publicKey }) => this.#deriveAddressFromPublicKey(publicKey))
+        res.payload.forEach(({ publicKey }, index) => {
+          this.#addressesByPath[uncachedAddrBundle[index].path] =
+            this.#deriveAddressFromPublicKey(publicKey)
+        })
       } catch (error: any) {
         if (error instanceof ExternalSignerError) throw error
 
@@ -128,40 +150,46 @@ class TrezorKeyIterator implements KeyIteratorInterface {
       }
     }
 
-    if (!this.#xpubs[hdPathTemplate]) {
-      const parentPath = getParentHdPathFromTemplate(hdPathTemplate)
-      if (!parentPath)
-        throw new ExternalSignerError(
-          `Could not receive the extended public key from your Trezor device. Technical details: <Parent path not found for ${hdPathTemplate}>.`,
-          { sendCrashReport: true }
-        )
-
-      try {
-        const res = await this.#walletSDK.getPublicKey({
-          coin: 'ETH',
-          path: parentPath,
-          showOnTrezor: false
-        })
-
-        if (!res.success)
+    // All the other hd paths supported are not hardened, so getting the parent
+    // xpub (once) allows us to derive all sequential addresses locally.
+    if (hdPathTemplate !== BIP44_LEDGER_DERIVATION_TEMPLATE && uncachedAddrBundle.length) {
+      if (!this.#xpubs[hdPathTemplate]) {
+        const parentPath = getParentHdPathFromTemplate(hdPathTemplate)
+        if (!parentPath)
           throw new ExternalSignerError(
-            getMessageFromTrezorErrorCode(res.payload.code, res.payload.error)
+            `Could not receive the extended public key from your Trezor device. Technical details: <Parent path not found for ${hdPathTemplate}>.`,
+            { sendCrashReport: true }
           )
 
-        this.#xpubs[hdPathTemplate] = res.payload.xpub
-      } catch (error: any) {
-        if (error instanceof ExternalSignerError) throw error
+        try {
+          const res = await this.#walletSDK.getPublicKey({
+            coin: 'ETH',
+            path: parentPath,
+            showOnTrezor: false
+          })
 
-        throw new ExternalSignerError(
-          `Could not receive the extended public key from your Trezor device. Technical details: <${error?.message}>.`,
-          { sendCrashReport: true }
-        )
+          if (!res.success)
+            throw new ExternalSignerError(
+              getMessageFromTrezorErrorCode(res.payload.code, res.payload.error)
+            )
+
+          this.#xpubs[hdPathTemplate] = res.payload.xpub
+        } catch (error: any) {
+          if (error instanceof ExternalSignerError) throw error
+
+          throw new ExternalSignerError(
+            `Could not receive the extended public key from your Trezor device. Technical details: <${error?.message}>.`,
+            { sendCrashReport: true }
+          )
+        }
       }
+
+      uncachedAddrBundle.forEach(({ path, index }) => {
+        this.#addressesByPath[path] = this.#deriveAddressFromXpub(index, hdPathTemplate)
+      })
     }
 
-    return addrBundleToBeRequested.map(({ index }) =>
-      this.#deriveAddressFromXpub(index, hdPathTemplate)
-    )
+    return addrBundleToBeRequested.map(({ path }) => this.#getAddressFromCache(path))
   }
 }
 
