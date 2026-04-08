@@ -1,7 +1,13 @@
 import React, { useCallback, useMemo } from 'react'
 import { useModalize } from 'react-native-modalize'
 
-import { DERIVATION_OPTIONS, HD_PATH_TEMPLATE_TYPE } from '@ambire-common/consts/derivation'
+import {
+  BIP44_LEDGER_DERIVATION_TEMPLATE,
+  BIP44_STANDARD_TESTNET_DERIVATION_TEMPLATE,
+  DERIVATION_OPTIONS,
+  HD_PATH_TEMPLATE_TYPE
+} from '@ambire-common/consts/derivation'
+import { IAccountPickerController } from '@ambire-common/interfaces/accountPicker'
 import SettingsIcon from '@common/assets/svg/SettingsIcon'
 import Button from '@common/components/Button'
 import { SelectValue } from '@common/components/Select/types'
@@ -16,9 +22,10 @@ import AdvancedModeBottomSheet from './AdvancedModeBottomSheet'
 type Props = {
   setPage: (page: number) => void
   disabled?: boolean
+  type?: IAccountPickerController['type']
 }
 
-const ChangeHdPath: React.FC<Props> = ({ setPage, disabled }) => {
+const ChangeHdPath: React.FC<Props> = ({ setPage, disabled, type }) => {
   const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useModalize()
   const { t } = useTranslation()
   const {
@@ -31,25 +38,29 @@ const ChangeHdPath: React.FC<Props> = ({ setPage, disabled }) => {
     [hdPathTemplate]
   )
 
-  const handleChangeHdPath = useCallback(
-    (s: SelectValue) => {
+  const availableOptions = useMemo(
+    () =>
+      DERIVATION_OPTIONS.filter((d) => {
+        // Popular only for Trezor devices, skip for all others to prevent confusion
+        if (type !== 'trezor' && d.value === BIP44_STANDARD_TESTNET_DERIVATION_TEMPLATE)
+          return false
+
+        return true
+      }),
+    [type]
+  )
+
+  const handleChangeHdPathAndPage = useCallback(
+    (selectedHdPathTemplate: SelectValue, page: number) => {
       accountPickerDispatch({
         type: 'method',
         params: {
-          method: 'setHDPathTemplate',
-          args: [{ hdPathTemplate: s.value as HD_PATH_TEMPLATE_TYPE }]
+          method: 'setHDPathTemplateAndPage',
+          args: [{ hdPathTemplate: selectedHdPathTemplate.value as HD_PATH_TEMPLATE_TYPE, page }]
         }
       })
     },
     [accountPickerDispatch]
-  )
-
-  const handleConfirm = useCallback(
-    (selectedOption: SelectValue, selectedPage: number) => {
-      handleChangeHdPath(selectedOption)
-      setPage(selectedPage)
-    },
-    [handleChangeHdPath, setPage]
   )
 
   if (!value) return null // should never happen
@@ -77,8 +88,8 @@ const ChangeHdPath: React.FC<Props> = ({ setPage, disabled }) => {
         closeBottomSheet={closeBottomSheet}
         page={page}
         value={value}
-        options={DERIVATION_OPTIONS}
-        onConfirm={(selectedOption, selectedPage) => handleConfirm(selectedOption, selectedPage)}
+        options={availableOptions}
+        onConfirm={handleChangeHdPathAndPage}
       />
     </>
   )
