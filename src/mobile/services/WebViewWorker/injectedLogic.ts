@@ -211,33 +211,6 @@ window.addEventListener('message', (event) => {
   }
 })
 
-// Direct bridge for reliable communication
-// @ts-ignore
-window.__POST_MESSAGE__ = (dataStr: string) => {
-  try {
-    const data = richJson.parse(dataStr)
-    if (data.type === 'dispatchAction') {
-      if (!isConfigured) {
-        console.warn('[WebView] __POST_MESSAGE__ rejected: NOT CONFIGURED')
-        return
-      }
-      handleActions(data.action, { eventEmitterRegistry, mainCtrl, sendToReactEvent })
-    } else if (data.type === 'init') {
-      initControllers(data.config)
-    } else if (data.type === 'response') {
-      const { id, result, error } = data
-      if (error) pendingPromises[id]?.reject(new Error(error))
-      else pendingPromises[id]?.resolve(result)
-      delete pendingPromises[id]
-    }
-  } catch (e: any) {
-    sendToReactEvent('ctrl.error', {
-      ctrlName: 'BridgeError',
-      errors: [{ message: e.message, stack: e.stack }]
-    })
-  }
-}
-
 console.log('[WebView] injectedLogic loaded and listening')
 if (window.ReactNativeWebView) {
   window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'system.loaded' }))

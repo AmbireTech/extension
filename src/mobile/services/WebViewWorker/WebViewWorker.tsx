@@ -50,11 +50,7 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, {}>((_, ref) => {
       webviewRef.current?.injectJavaScript(`
           (function() {
             try {
-              if (window.__POST_MESSAGE__) {
-                window.__POST_MESSAGE__(${JSON.stringify(payload)});
-              } else {
-                window.postMessage(${JSON.stringify(payload)}, '*');
-              }
+              window.postMessage(${JSON.stringify(payload)}, '*');
             } catch (e) {
               window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'ctrl.error', payload: { ctrlName: 'BridgeDispatch', errors: [{ message: e.message, stack: e.stack }] } }));
             }
