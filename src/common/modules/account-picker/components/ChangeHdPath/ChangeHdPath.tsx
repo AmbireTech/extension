@@ -50,13 +50,13 @@ const ChangeHdPath: React.FC<Props> = ({ setPage, disabled, type }) => {
     [type]
   )
 
-  const handleChangeHdPath = useCallback(
-    (s: SelectValue) => {
+  const handleChangeHdPathAndPage = useCallback(
+    (selectedValue: SelectValue, page: number) => {
       accountPickerDispatch({
         type: 'method',
         params: {
-          method: 'setHDPathTemplate',
-          args: [{ hdPathTemplate: s.value as HD_PATH_TEMPLATE_TYPE }]
+          method: 'setHDPathTemplateAndPage',
+          args: [{ hdPathTemplate: selectedValue.value as HD_PATH_TEMPLATE_TYPE, page }]
         }
       })
     },
@@ -65,10 +65,9 @@ const ChangeHdPath: React.FC<Props> = ({ setPage, disabled, type }) => {
 
   const handleConfirm = useCallback(
     (selectedOption: SelectValue, selectedPage: number) => {
-      handleChangeHdPath(selectedOption)
-      setPage(selectedPage)
+      handleChangeHdPathAndPage(selectedOption, selectedPage)
     },
-    [handleChangeHdPath, setPage]
+    [handleChangeHdPathAndPage]
   )
 
   if (!value) return null // should never happen
