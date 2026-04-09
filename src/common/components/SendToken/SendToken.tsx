@@ -6,8 +6,8 @@ import { TokenResult } from '@ambire-common/libs/portfolio'
 import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
 import FlipIcon from '@common/assets/svg/FlipIcon'
 import AmountInput from '@common/components/AmountInput'
-import Select from '@common/components/Select'
-import { SelectValue } from '@common/components/Select/types'
+import Select, { SectionedSelect } from '@common/components/Select'
+import { SectionedSelectProps, SelectValue } from '@common/components/Select/types'
 import Text from '@common/components/Text'
 import { isMobile, isWeb } from '@common/config/env'
 import useController from '@common/hooks/useController'
@@ -19,6 +19,8 @@ import flexbox from '@common/styles/utils/flexbox'
 import { ItemPanel } from '@web/components/TransactionsScreen'
 
 import getStyles from './styles'
+
+const SECTION_MENU_HEADER_HEIGHT = 50
 
 type Props = {
   label: string
@@ -40,6 +42,8 @@ type Props = {
   selectTestId?: string
   maxAmountDisabled?: boolean
   simulationFailed?: boolean
+  sections?: SectionedSelectProps['sections']
+  renderSectionHeader?: SectionedSelectProps['renderSectionHeader']
 }
 
 const SendToken: FC<Props> = ({
@@ -61,7 +65,9 @@ const SendToken: FC<Props> = ({
   inputTestId,
   selectTestId,
   maxAmountDisabled,
-  simulationFailed
+  simulationFailed,
+  sections,
+  renderSectionHeader
 }) => {
   const {
     state: { portfolio }
@@ -127,18 +133,36 @@ const SendToken: FC<Props> = ({
             ]}
           >
             <View style={flexbox.flex1}>
-              <Select
-                setValue={handleChangeFromToken}
-                options={fromTokenOptions}
-                value={fromTokenValue}
-                testID={selectTestId}
-                bottomSheetTitle={t('Send token')}
-                searchPlaceholder={t('Token name or address...')}
-                emptyListPlaceholderText={t('No tokens found.')}
-                containerStyle={{ ...flexbox.flex1, ...spacings.mb0 }}
-                selectStyle={{ ...spacings.plTy, ...spacings.prSm }}
-                mode="bottomSheet"
-              />
+              {sections ? (
+                <SectionedSelect
+                  setValue={handleChangeFromToken}
+                  sections={sections}
+                  value={fromTokenValue}
+                  testID={selectTestId}
+                  bottomSheetTitle={t('Send token')}
+                  searchPlaceholder={t('Token name or address...')}
+                  emptyListPlaceholderText={t('No tokens found.')}
+                  containerStyle={{ ...flexbox.flex1, ...spacings.mb0 }}
+                  selectStyle={{ ...spacings.plTy, ...spacings.prSm }}
+                  mode="bottomSheet"
+                  headerHeight={SECTION_MENU_HEADER_HEIGHT}
+                  renderSectionHeader={renderSectionHeader}
+                  stickySectionHeadersEnabled
+                />
+              ) : (
+                <Select
+                  setValue={handleChangeFromToken}
+                  options={fromTokenOptions}
+                  value={fromTokenValue}
+                  testID={selectTestId}
+                  bottomSheetTitle={t('Send token')}
+                  searchPlaceholder={t('Token name or address...')}
+                  emptyListPlaceholderText={t('No tokens found.')}
+                  containerStyle={{ ...flexbox.flex1, ...spacings.mb0 }}
+                  selectStyle={{ ...spacings.plTy, ...spacings.prSm }}
+                  mode="bottomSheet"
+                />
+              )}
             </View>
             <AmountInput
               type={fromAmountFieldMode}
