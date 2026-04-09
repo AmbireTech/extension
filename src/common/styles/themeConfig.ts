@@ -56,6 +56,10 @@ const ThemeColors = {
     [THEME_TYPES.LIGHT]: hexToRgba('#2C2F33', 0.8),
     [THEME_TYPES.DARK]: hexToRgba('#2C2F33', 0.8)
   },
+  shadowPrimary: {
+    [THEME_TYPES.LIGHT]: '#2F343D',
+    [THEME_TYPES.DARK]: '#101114'
+  },
   linkText: ACCENT_PRIMITIVES.primaryAccent300,
   /**
    * @deprecated
