@@ -31,7 +31,7 @@ class QrKeyIterator implements KeyIteratorInterface {
 
   #parsedAccount?: ParsedQrAccount
   #xpub?: string
-  
+
   get parsedAccount() {
     return this.#parsedAccount
   }
@@ -108,22 +108,23 @@ class QrKeyIterator implements KeyIteratorInterface {
     }
   }
 
-  getSigningDerivationPath(index: number) {
-    if (!this.walletConfig) {
-      throw new ExternalSignerError('QR wallet configuration not resolved')
+  #resolveRelativePathTemplate(hdPathTemplate?: HD_PATH_TEMPLATE_TYPE): string {
+    const relativePathTemplate = hdPathTemplate || this.walletConfig?.relativePathTemplate
+
+    if (!relativePathTemplate) {
+      throw new ExternalSignerError('QR relative path template is missing.')
+    }
+    if (!relativePathTemplate.includes('{index}')) {
+      throw new ExternalSignerError(
+        'Invalid QR relative path template. Expected a template containing "{index}".'
+      )
     }
 
-    const relative = this.walletConfig.relativePathTemplate.replace('{index}', String(index))
-
-    return this.walletConfig.hdPathTemplate.replace('<account>', relative)
+    return relativePathTemplate
   }
 
-  #buildRelativePath(index: number): string {
-    if (!this.walletConfig) {
-      throw new ExternalSignerError('QR wallet configuration has not been resolved yet.')
-    }
-
-    return this.walletConfig.relativePathTemplate.replace('{index}', String(index))
+  #buildRelativePath(index: number, relativePathTemplate: string): string {
+    return relativePathTemplate.replace('{index}', String(index))
   }
 
   async retrieve(
@@ -138,6 +139,7 @@ class QrKeyIterator implements KeyIteratorInterface {
       throw new ExternalSignerError('QR accounts have not been imported yet.')
     }
 
+    const relativePathTemplate = this.#resolveRelativePathTemplate(hdPathTemplate)
     const keys: string[] = []
 
     for (const { from, to } of fromToArr) {
@@ -146,7 +148,7 @@ class QrKeyIterator implements KeyIteratorInterface {
       }
 
       for (let i = from; i <= to; i++) {
-        const relativePath = this.#buildRelativePath(i)
+        const relativePath = this.#buildRelativePath(i, relativePathTemplate)
         const derivedAddr = this.#deriveAddressFromRelativePath(relativePath)
         keys.push(derivedAddr)
       }
