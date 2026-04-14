@@ -9,7 +9,7 @@ import {
 import { ParsedQrAccount } from '@ambire-common/interfaces/keystore'
 import QrHardwareController from '@web/modules/hardware-wallet/controllers/QrHardwareController'
 
-import { getRelativePathTemplateFromOrigin } from '../../qr/utils'
+import { getRelativePathTemplateFromOrigin, normalizeOriginHdPath } from '../../qr/utils'
 import { QrWalletRegistry, QrWalletType } from '../../qr/wallets'
 
 interface KeyIteratorProps {
@@ -47,7 +47,7 @@ class QrKeyIterator implements KeyIteratorInterface {
       throw new ExternalSignerError('QR controller is not initialized.')
     }
 
-    const parsed = await this.controller.importAccountQR(payload)
+    const parsed = await this.controller.parseAndSetAccountFromQR(payload)
 
     if (!parsed.accounts.length) {
       throw new ExternalSignerError('No accounts were found in the scanned QR payload.')
@@ -66,11 +66,16 @@ class QrKeyIterator implements KeyIteratorInterface {
       throw new ExternalSignerError(`Unsupported QR wallet type: ${walletType}`)
     }
 
-    const originPath = parsed.accounts[0]?.hdPath || parsed.hdPath
+    const originPath = parsed.hdPath || parsed.accounts[0]?.hdPath
+    const normalizedOriginPath = normalizeOriginHdPath(originPath)
     const relativePathTemplate = getRelativePathTemplateFromOrigin(originPath)
+    const hdPathTemplate = normalizedOriginPath
+      ? `${normalizedOriginPath}/${relativePathTemplate}`
+      : wallet.hdPathTemplate
 
     this.walletConfig = {
       ...wallet,
+      hdPathTemplate,
       relativePathTemplate
     }
 
@@ -109,14 +114,22 @@ class QrKeyIterator implements KeyIteratorInterface {
   }
 
   #resolveRelativePathTemplate(hdPathTemplate?: HD_PATH_TEMPLATE_TYPE): string {
-    const relativePathTemplate = hdPathTemplate || this.walletConfig?.relativePathTemplate
+    let relativePathTemplate = hdPathTemplate || this.walletConfig?.relativePathTemplate
 
     if (!relativePathTemplate) {
       throw new ExternalSignerError('QR relative path template is missing.')
     }
-    if (!relativePathTemplate.includes('{index}')) {
+
+    // Some flows pass a full HD template (e.g. m/44'/60'/0'/0/<account>).
+    // QR xpub derivation expects a relative template, so convert it based on origin.
+    if (relativePathTemplate.startsWith('m/')) {
+      const originPath = this.#parsedAccount?.accounts?.[0]?.hdPath || this.#parsedAccount?.hdPath
+      relativePathTemplate = getRelativePathTemplateFromOrigin(originPath)
+    }
+
+    if (!relativePathTemplate.includes('<account>')) {
       throw new ExternalSignerError(
-        'Invalid QR relative path template. Expected a template containing "{index}".'
+        'Invalid QR relative path template. Expected a template containing "<account>".'
       )
     }
 
@@ -124,7 +137,7 @@ class QrKeyIterator implements KeyIteratorInterface {
   }
 
   #buildRelativePath(index: number, relativePathTemplate: string): string {
-    return relativePathTemplate.replace('{index}', String(index))
+    return relativePathTemplate.replace('<account>', String(index))
   }
 
   async retrieve(

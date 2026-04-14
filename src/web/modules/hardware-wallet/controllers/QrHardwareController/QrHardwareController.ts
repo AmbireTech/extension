@@ -1,10 +1,7 @@
 import ExternalSignerError from '@ambire-common/classes/ExternalSignerError'
 import EventEmitter from '@ambire-common/controllers/eventEmitter/eventEmitter'
 import { IEventEmitterRegistryController } from '@ambire-common/interfaces/eventEmitter'
-import {
-  ExternalSignerController,
-  QrAccountImportController
-} from '@ambire-common/interfaces/keystore'
+import { ExternalSignerController } from '@ambire-common/interfaces/keystore'
 import { TypedMessageUserRequest } from '@ambire-common/interfaces/userRequest'
 
 import { QrProtocolAdapter, QrRequest, QrSignaturePayload, QrSigningStep } from '../../qr/types'
@@ -23,10 +20,7 @@ import { QrProtocolAdapter, QrRequest, QrSignaturePayload, QrSigningStep } from 
  * Unlike Ledger/Trezor-style controllers, communication with the signer is not transport-based
  * (USB/HID/Web SDK), but happens through QR payload exchange coordinated by the UI layer.
  */
-class QrHardwareController
-  extends EventEmitter
-  implements ExternalSignerController, QrAccountImportController
-{
+class QrHardwareController extends EventEmitter implements ExternalSignerController {
   type = 'qr'
   deviceModel = 'unknown'
   deviceId = ''
@@ -200,7 +194,7 @@ class QrHardwareController
     this.signingStep = 'idle'
   }
 
-  async importAccountQR(payload: string | Uint8Array) {
+  async parseAndSetAccountFromQR(payload: string | Uint8Array) {
     if (!this.protocolAdapter.parseAccountPayload) {
       throw new ExternalSignerError('QR protocol adapter does not support account import')
     }

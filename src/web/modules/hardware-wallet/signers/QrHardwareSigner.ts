@@ -53,26 +53,17 @@ class QrHardwareSigner implements KeystoreSignerInterface {
     }
   }
 
+  #getDerivationPath = () => {
+    const { hdPathTemplate, index } = this.key.meta
+
+    return getHdPathFromTemplate(hdPathTemplate, index)
+  }
+
   signMessage: KeystoreSignerInterface['signMessage'] = async (hex) => {
     await this.#prepareForSigning()
 
     try {
-      const { originHdPath, relativePathTemplate, hdPathTemplate, index } = this.key.meta
-
-      const normalizedOriginHdPath =
-        originHdPath && originHdPath.startsWith('m/')
-          ? originHdPath
-          : originHdPath
-            ? `m/${originHdPath}`
-            : ''
-
-      const relative =
-        relativePathTemplate && relativePathTemplate.replace('{index}', String(index))
-
-      const path =
-        normalizedOriginHdPath && relative
-          ? `${normalizedOriginHdPath}/${relative}`
-          : getHdPathFromTemplate(hdPathTemplate, index)
+      const path = this.#getDerivationPath()
 
       const res = await this.controller!.signMessageQR({
         hex,
@@ -119,22 +110,7 @@ class QrHardwareSigner implements KeystoreSignerInterface {
     await this.#prepareForSigning()
 
     try {
-      const { originHdPath, relativePathTemplate, hdPathTemplate, index } = this.key.meta
-
-      const normalizedOriginHdPath =
-        originHdPath && originHdPath.startsWith('m/')
-          ? originHdPath
-          : originHdPath
-            ? `m/${originHdPath}`
-            : ''
-
-      const relative =
-        relativePathTemplate && relativePathTemplate.replace('{index}', String(index))
-
-      const path =
-        normalizedOriginHdPath && relative
-          ? `${normalizedOriginHdPath}/${relative}`
-          : getHdPathFromTemplate(hdPathTemplate, index)
+      const path = this.#getDerivationPath()
 
       const type = typeof txnRequest.maxFeePerGas === 'bigint' ? 2 : 0
       const unsignedTxn: TransactionLike = { ...txnRequest, type }
