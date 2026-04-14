@@ -68,23 +68,6 @@
         "setTimeout": true
       }
     },
-    "@ensdomains/eth-ens-namehash": {
-      "globals": {
-        "Buffer": true,
-        "define": true,
-        "process": true
-      },
-      "packages": {
-        "buffer": true,
-        "process": true,
-        "node-polyfill-webpack-plugin>punycode": true
-      }
-    },
-    "@ensdomains/ethers-patch-v6": {
-      "packages": {
-        "ethers": true
-      }
-    },
     "eth-crypto>@ethereumjs/tx>@ethereumjs/common": {
       "globals": {
         "Buffer.alloc": true,
@@ -2248,6 +2231,7 @@
         "navigator.credentials": true
       },
       "packages": {
+        "ox>@adraffy/ens-normalize": true,
         "viem>@noble/curves": true,
         "@noble/hashes": true,
         "ox>abitype": true
@@ -2472,15 +2456,6 @@
         "react-dropzone>file-selector": true,
         "react-dropzone>prop-types": true,
         "react": true
-      }
-    },
-    "react-fast-compare": {
-      "globals": {
-        "Element": true,
-        "console.warn": true
-      },
-      "packages": {
-        "node-polyfill-webpack-plugin>console-browserify": true
       }
     },
     "react-hook-form": {

@@ -66,6 +66,14 @@ export const handleActions = async (
       })
       break
     }
+    case 'GET_ALL_CONTROLLER_NAMES': {
+      if (!pm || !port) return
+      pm.sendToPort(port, '> ui', {
+        method: 'allControllerNames',
+        params: { names: eventEmitterRegistry.values().map((c) => c.name) }
+      })
+      break
+    }
     case 'INIT_CONTROLLER_STATE': {
       if (!pm) return
 
