@@ -204,55 +204,85 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, {}>((_, ref) => {
 
   const sendResponse = (id: number, result: any = null, error: any = null) => {
     webviewRef.current?.injectJavaScript(`
-        window.postMessage(${JSON.stringify(richJson.stringify({ type: 'response', id, result, error: error?.message || error }))}, '*');
+        window.postMessage(${JSON.stringify(
+          richJson.stringify({ type: 'response', id, result, error: error?.message || error })
+        )}, '*');
         true;
       `)
   }
 
-  // In dev mode, load from webpack-dev-server for HMR.
-  // In production, inline the bundle into HTML.
-  if (__DEV__) {
-    const devUrl = getDevServerUrl()
-    console.log(`[WebViewWorker] DEV mode — loading from ${devUrl}`)
+  const devUrl = getDevServerUrl()
 
-    return (
-      <WebView
-        ref={webviewRef}
-        source={{ uri: devUrl }}
-        onError={(syntheticEvent) => {
-          const { nativeEvent } = syntheticEvent
-          console.warn('[WebViewWorker] WebView Error:', nativeEvent)
-        }}
-        onHttpError={(syntheticEvent) => {
-          const { nativeEvent } = syntheticEvent
-          console.warn('[WebViewWorker] WebView HTTP Error:', nativeEvent)
-        }}
-        onMessage={handleMessage}
-        javaScriptEnabled={true}
-        originWhitelist={['*']}
-        // Allow loading from http:// in dev
-        mixedContentMode="always"
-        style={{ position: 'absolute', width: 0, height: 0, opacity: 0 }}
-        containerStyle={{ position: 'absolute', width: 0, height: 0, opacity: 0 }}
-        pointerEvents="none"
-      />
-    )
-  }
-
-  const htmlContent = `
+  const getHtmlContent = (csp: string, bundleScript: string, additionalHeadScript: string = '') => `
       <!DOCTYPE html>
       <html>
         <head>
           <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <meta http-equiv="Content-Security-Policy" content="${csp}">
           <script>
+            // 1. Monkey-patch fetch to block file:// requests
+            var _originalFetch = window.fetch;
+            window.fetch = function() {
+              var url = arguments[0];
+              if (typeof url === 'string' && url.indexOf('file://') === 0) {
+                return Promise.reject(new Error('fetch to file:// is blocked for security.'));
+              }
+              if (url && typeof url === 'object' && url.url && url.url.indexOf('file://') === 0) {
+                return Promise.reject(new Error('fetch to file:// is blocked for security.'));
+              }
+              return _originalFetch.apply(this, arguments);
+            };
+
+            // 2. Monkey-patch XHR to block file:// requests
+            var _originalOpen = XMLHttpRequest.prototype.open;
+            XMLHttpRequest.prototype.open = function(method, url) {
+              if (typeof url === 'string' && url.indexOf('file://') === 0) {
+                throw new Error('XHR to file:// is blocked for security.');
+              }
+              return _originalOpen.apply(this, arguments);
+            };
+
             window.onerror = function(msg, url, lineNo, columnNo, error) {
               var errMessage = error ? error.stack || error.message : msg;
               window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'ctrl.error', payload: { ctrlName: 'Global', errors: [{ message: errMessage, url, lineNo }] } }));
               return false;
             };
+
+            ${additionalHeadScript}
           </script>
         </head>
         <body>
+          ${bundleScript}
+        </body>
+      </html>
+    `
+
+  const csp = __DEV__
+    ? `default-src 'none'; script-src 'unsafe-inline' 'unsafe-eval' ${devUrl}; connect-src https: ${devUrl} ws: wss:; frame-src 'none'; object-src 'none';`
+    : "default-src 'none'; script-src 'unsafe-inline' 'unsafe-eval'; connect-src https:; frame-src 'none'; object-src 'none';"
+
+  const additionalHeadScript = __DEV__
+    ? `
+            // Fix Webpack Dev Server WebSocket URL when baseUrl is file:///
+            var OriginalWebSocket = window.WebSocket;
+            window.WebSocket = function(url, protocols) {
+              if (url && (url.indexOf('ws:///') === 0 || url.indexOf('wss:///') === 0 || url.indexOf('0.0.0.0') > -1)) {
+                var fixedUrl = '${devUrl}'.replace('http://', 'ws://').replace('https://', 'wss://') + '/ws';
+                return protocols ? new OriginalWebSocket(fixedUrl, protocols) : new OriginalWebSocket(fixedUrl);
+              }
+              return protocols ? new OriginalWebSocket(url, protocols) : new OriginalWebSocket(url);
+            };
+            window.WebSocket.prototype = OriginalWebSocket.prototype;
+            window.WebSocket.CONNECTING = OriginalWebSocket.CONNECTING;
+            window.WebSocket.OPEN = OriginalWebSocket.OPEN;
+            window.WebSocket.CLOSING = OriginalWebSocket.CLOSING;
+            window.WebSocket.CLOSED = OriginalWebSocket.CLOSED;
+          `
+    : ''
+
+  const bundleScript = __DEV__
+    ? `<script src="${devUrl}/webview-bundle.js"></script>`
+    : `
           <script>
             try {
               ${webviewBundle.code}
@@ -260,17 +290,36 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, {}>((_, ref) => {
               window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'ctrl.error', payload: { ctrlName: 'GlobalCrash', errors: [{ message: err.toString(), stack: err.stack }] } }));
             }
           </script>
-        </body>
-      </html>
-    `
+        `
+
+  const htmlContent = getHtmlContent(csp, bundleScript, additionalHeadScript)
 
   return (
     <WebView
       ref={webviewRef}
-      source={{ html: htmlContent, baseUrl: 'ambire://' }}
+      source={{ html: htmlContent, baseUrl: 'file:///' }}
       onMessage={handleMessage}
+      onError={(syntheticEvent) => {
+        if (__DEV__) {
+          const { nativeEvent } = syntheticEvent
+          console.warn('[WebViewWorker] WebView Error:', nativeEvent)
+        }
+      }}
+      onHttpError={(syntheticEvent) => {
+        if (__DEV__) {
+          const { nativeEvent } = syntheticEvent
+          console.warn('[WebViewWorker] WebView HTTP Error:', nativeEvent)
+        }
+      }}
       javaScriptEnabled={true}
-      originWhitelist={['*']}
+      originWhitelist={__DEV__ ? ['file://*', `${devUrl}/*`] : ['file://*']}
+      onShouldStartLoadWithRequest={(request) =>
+        request.url.startsWith('file:///') || (__DEV__ && request.url.startsWith(devUrl))
+      }
+      mixedContentMode="always"
+      allowFileAccessFromFileURLs={true}
+      allowUniversalAccessFromFileURLs={true}
+      domStorageEnabled={true}
       style={{ position: 'absolute', width: 0, height: 0, opacity: 0 }}
       containerStyle={{ position: 'absolute', width: 0, height: 0, opacity: 0 }}
       pointerEvents="none"
