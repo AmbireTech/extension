@@ -1,12 +1,13 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react'
+import React, { FC, useCallback, useEffect, useMemo, useState } from 'react'
 import { View } from 'react-native'
+import { SvgProps } from 'react-native-svg'
 
 import gasTankFeeTokens from '@ambire-common/consts/gasTankFeeTokens'
 import { TokenResult } from '@ambire-common/libs/portfolio'
 import CoinsIcon from '@common/assets/svg/CoinsIcon'
 import GasTankIcon from '@common/assets/svg/GasTankIcon'
 import Recipient from '@common/components/Recipient'
-import { SectionedSelectProps } from '@common/components/Select/types'
+import { SectionedSelectProps, SelectValue } from '@common/components/Select/types'
 import SendToken from '@common/components/SendToken'
 import SkeletonLoader from '@common/components/SkeletonLoader'
 import Text from '@common/components/Text'
@@ -22,6 +23,12 @@ import flexbox from '@common/styles/utils/flexbox'
 import { getTokenId } from '@common/utils/token'
 import { RELAYER_URL } from '@env'
 import useSimulationError from '@web/modules/portfolio/hooks/SimulationError/useSimulationError'
+
+type GasTankSection = {
+  title: { icon: FC<SvgProps>; text: string }
+  data: SelectValue[]
+  key: string
+}
 
 const SendForm = ({
   addressInputState,
@@ -107,12 +114,13 @@ const SendForm = ({
   const disableForm = (!hasGasTank && isTopUp) || !tokens.length
 
   const renderSectionHeader: SectionedSelectProps['renderSectionHeader'] = useCallback(
-    ({ section }: any) => {
-      if (section.data.length === 0 || !section.title) return null
+    ({ section }) => {
+      const { title } = section as unknown as GasTankSection
+      if (!title) return null
       return (
         <TitleAndIcon
-          icon={section.title.icon}
-          title={section.title.text}
+          icon={title.icon}
+          title={title.text}
           style={{ backgroundColor: theme.primaryBackground }}
         />
       )
@@ -120,7 +128,7 @@ const SendForm = ({
     [theme.primaryBackground]
   )
 
-  const tokenSections: SectionedSelectProps['sections'] | undefined = useMemo(() => {
+  const tokenSections: GasTankSection[] | undefined = useMemo(() => {
     if (!isTopUp) return undefined
 
     const enabledNetworkChainIds = new Set(
@@ -219,15 +227,12 @@ const SendForm = ({
         data: otherGasTokens,
         key: 'gas-tank-topup-other-tokens'
       }
-    ]
+    ].filter((section) => section.data.length > 0)
   }, [isTopUp, options, gasTankAssets, networks, t])
 
   const allFromTokenOptions = useMemo(() => {
     if (!tokenSections) return options
-
-    const sectionItems = tokenSections.flatMap((section) => section.data)
-
-    return sectionItems as typeof options
+    return tokenSections.flatMap((section) => section.data) as typeof options
   }, [options, tokenSections])
 
   const handleChangeToken = useCallback(

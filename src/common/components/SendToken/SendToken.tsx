@@ -103,6 +103,8 @@ const SendToken: FC<Props> = ({
     [fromAmountValue, onFromAmountChange]
   )
 
+  const nonEmptySections = sections?.filter((s) => s.data.length > 0)
+
   return (
     <>
       <View
@@ -133,10 +135,10 @@ const SendToken: FC<Props> = ({
             ]}
           >
             <View style={flexbox.flex1}>
-              {sections ? (
+              {nonEmptySections?.length ? (
                 <SectionedSelect
                   setValue={handleChangeFromToken}
-                  sections={sections}
+                  sections={nonEmptySections}
                   value={fromTokenValue}
                   testID={selectTestId}
                   bottomSheetTitle={t('Send token')}
