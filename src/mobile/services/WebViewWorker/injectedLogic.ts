@@ -93,7 +93,6 @@ const storageAPI = {
 }
 
 const eventEmitterRegistry = new EventEmitterRegistryController(() => {
-  console.log('values', eventEmitterRegistry.values())
   eventEmitterRegistry.values().forEach((ctrl: any) => {
     const hasOnUpdateInitialized = ctrl.onUpdateIds.includes('webview')
     if (!hasOnUpdateInitialized) {

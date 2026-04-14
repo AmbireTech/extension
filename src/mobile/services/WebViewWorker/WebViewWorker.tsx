@@ -6,6 +6,7 @@ import { WebView } from 'react-native-webview'
 import * as richJson from '@ambire-common/libs/richJson/richJson'
 import eventBus from '@common/services/event/eventBus'
 import { storage } from '@common/services/storage'
+import { WEBVIEW_DEV_HOST } from '@env'
 
 // In production, the bundle is inlined via the JSON import.
 // In dev, we load from webpack-dev-server so this import is unused.
@@ -13,16 +14,42 @@ import { storage } from '@common/services/storage'
 const webviewBundle = __DEV__ ? null : require('./webview-bundle.json')
 
 // The dev server URL for webpack-dev-server.
-// - iOS Simulator: localhost works directly
-// - Android Emulator: 10.0.2.2 maps to host machine's localhost
-// - Physical device: replace with your machine's LAN IP
+// - iOS: localhost works directly
+// - Android: env WEBVIEW_DEV_HOST or fallback to 10.0.2.2
 const WEBVIEW_DEV_SERVER_PORT = 8082
 const getDevServerUrl = () => {
   if (Platform.OS === 'android') {
-    return `http://10.0.2.2:${WEBVIEW_DEV_SERVER_PORT}`
+    return `http://${WEBVIEW_DEV_HOST || '10.0.2.2'}:${WEBVIEW_DEV_SERVER_PORT}`
   }
   return `http://localhost:${WEBVIEW_DEV_SERVER_PORT}`
 }
+
+// Shared security patches: monkey-patch fetch/XHR to block file:// access
+const securityPatches = `
+  var _originalFetch = window.fetch;
+  window.fetch = function() {
+    var url = arguments[0];
+    if (typeof url === 'string' && url.indexOf('file://') === 0) {
+      return Promise.reject(new Error('fetch to file:// is blocked for security.'));
+    }
+    if (url && typeof url === 'object' && url.url && url.url.indexOf('file://') === 0) {
+      return Promise.reject(new Error('fetch to file:// is blocked for security.'));
+    }
+    return _originalFetch.apply(this, arguments);
+  };
+  var _originalOpen = XMLHttpRequest.prototype.open;
+  XMLHttpRequest.prototype.open = function(method, url) {
+    if (typeof url === 'string' && url.indexOf('file://') === 0) {
+      throw new Error('XHR to file:// is blocked for security.');
+    }
+    return _originalOpen.apply(this, arguments);
+  };
+  window.onerror = function(msg, url, lineNo, columnNo, error) {
+    var errMessage = error ? error.stack || error.message : msg;
+    window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'ctrl.error', payload: { ctrlName: 'Global', errors: [{ message: errMessage, url: url, lineNo: lineNo }] } }));
+    return false;
+  };
+`
 
 export interface WebViewWorkerRef {
   dispatch: (action: any) => void
@@ -38,6 +65,8 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, {}>((_, ref) => {
   const pendingConfig = useRef<any>(null)
   // Stores the last config so we can re-send it when the WebView reloads (dev HMR/live reload)
   const lastConfig = useRef<any>(null)
+  // Incrementing the key forces a full WebView remount (used for Android dev reload)
+  const [webviewKey, setWebviewKey] = useState(0)
 
   useImperativeHandle(ref, () => ({
     dispatch: (action: any) => {
@@ -46,7 +75,6 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, {}>((_, ref) => {
         return
       }
       const payload = richJson.stringify({ type: 'dispatchAction', action })
-      console.log('[Native] dispatch() calling injectJavaScript for:', action.type)
       webviewRef.current?.injectJavaScript(`
           (function() {
             try {
@@ -108,6 +136,19 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, {}>((_, ref) => {
           }
           break
         }
+
+        // Android dev reload: webpack-dev-server triggers location.reload() which we
+        // intercept and redirect here. Incrementing webviewKey forces a full remount,
+        // causing the WebView to re-fetch the latest bundle from the dev server.
+        case 'system.requestReload':
+          console.log('[WebViewWorker] Received reload request from WebView, remounting...')
+          isReadyRef.current = false
+          setIsReady(false)
+          setIsLoaded(false)
+          // Use lastConfig so the re-initialized WebView picks up the same config
+          pendingConfig.current = lastConfig.current
+          setWebviewKey((k) => k + 1)
+          break
 
         case 'system.ready':
           isReadyRef.current = true
@@ -213,91 +254,118 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, {}>((_, ref) => {
 
   const devUrl = getDevServerUrl()
 
-  const getHtmlContent = (csp: string, bundleScript: string, additionalHeadScript: string = '') => `
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          <meta http-equiv="Content-Security-Policy" content="${csp}">
-          <script>
-            // 1. Monkey-patch fetch to block file:// requests
-            var _originalFetch = window.fetch;
-            window.fetch = function() {
-              var url = arguments[0];
-              if (typeof url === 'string' && url.indexOf('file://') === 0) {
-                return Promise.reject(new Error('fetch to file:// is blocked for security.'));
-              }
-              if (url && typeof url === 'object' && url.url && url.url.indexOf('file://') === 0) {
-                return Promise.reject(new Error('fetch to file:// is blocked for security.'));
-              }
-              return _originalFetch.apply(this, arguments);
-            };
+  // --- Build the WebView source per mode ---
+  //
+  // Dev:         Load inline HTML with file:/// base URL.
+  //              Android requires file:// origin + allowUniversalAccessFromFileURLs
+  //              for cross-origin fetch to work. iOS also uses this approach to
+  //              avoid the WebView opening the dev server URL in Safari.
+  //              We override location.reload() to post a message to RN,
+  //              which remounts the WebView (re-fetching the latest bundle).
+  //              The WebSocket URL fix is needed since the base is file:///.
+  //
+  // Production:  Inline HTML with the bundle code baked in.
 
-            // 2. Monkey-patch XHR to block file:// requests
-            var _originalOpen = XMLHttpRequest.prototype.open;
-            XMLHttpRequest.prototype.open = function(method, url) {
-              if (typeof url === 'string' && url.indexOf('file://') === 0) {
-                throw new Error('XHR to file:// is blocked for security.');
-              }
-              return _originalOpen.apply(this, arguments);
-            };
+  const getSource = () => {
+    if (!__DEV__) {
+      const prodCsp =
+        "default-src 'none'; script-src 'unsafe-inline' 'unsafe-eval'; connect-src https:; frame-src 'none'; object-src 'none';"
+      return {
+        html: `
+          <!DOCTYPE html>
+          <html>
+            <head>
+              <meta name="viewport" content="width=device-width, initial-scale=1.0">
+              <meta http-equiv="Content-Security-Policy" content="${prodCsp}">
+              <script>${securityPatches}</script>
+            </head>
+            <body>
+              <script>
+                try {
+                  ${webviewBundle.code}
+                } catch (err) {
+                  window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'ctrl.error', payload: { ctrlName: 'GlobalCrash', errors: [{ message: err.toString(), stack: err.stack }] } }));
+                }
+              </script>
+            </body>
+          </html>
+        `,
+        baseUrl: 'file:///'
+      }
+    }
 
-            window.onerror = function(msg, url, lineNo, columnNo, error) {
-              var errMessage = error ? error.stack || error.message : msg;
-              window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'ctrl.error', payload: { ctrlName: 'Global', errors: [{ message: errMessage, url, lineNo }] } }));
-              return false;
-            };
+    // Dev mode: inline HTML with file:/// base URL + reload override
+    const devCsp = `default-src 'none'; script-src 'unsafe-inline' 'unsafe-eval' ${devUrl}; connect-src https: ${devUrl} ws: wss:; frame-src 'none'; object-src 'none';`
+    return {
+      html: `
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <meta http-equiv="Content-Security-Policy" content="${devCsp}">
+            <script>
+              ${securityPatches}
 
-            ${additionalHeadScript}
-          </script>
-        </head>
-        <body>
-          ${bundleScript}
-        </body>
-      </html>
-    `
+              // Fix Webpack Dev Server WebSocket URL when baseUrl is file:///
+              // and detect recompilation to trigger a RN-side WebView remount
+              // (since location.reload() would navigate to file:/// which fails).
+              var OriginalWebSocket = window.WebSocket;
+              var _wdsLastHash = null;
+              var _wdsPendingReload = false;
+              window.WebSocket = function(url, protocols) {
+                var connectUrl = url;
+                if (url && (url.indexOf('ws:///') === 0 || url.indexOf('wss:///') === 0 || url.indexOf('0.0.0.0') > -1)) {
+                  connectUrl = '${devUrl}'.replace('http://', 'ws://').replace('https://', 'wss://') + '/ws';
+                }
+                var ws = protocols ? new OriginalWebSocket(connectUrl, protocols) : new OriginalWebSocket(connectUrl);
 
-  const csp = __DEV__
-    ? `default-src 'none'; script-src 'unsafe-inline' 'unsafe-eval' ${devUrl}; connect-src https: ${devUrl} ws: wss:; frame-src 'none'; object-src 'none';`
-    : "default-src 'none'; script-src 'unsafe-inline' 'unsafe-eval'; connect-src https:; frame-src 'none'; object-src 'none';"
+                // Listen for webpack-dev-server messages to detect recompilation.
+                // Message flow: {"type":"hash","data":"<newHash>"} then {"type":"ok"}.
+                // On first connect, we store the hash. On subsequent hash changes,
+                // we flag a pending reload and trigger it when "ok" arrives.
+                ws.addEventListener('message', function(event) {
+                  try {
+                    var msg = JSON.parse(event.data);
+                    if (msg.type === 'hash') {
+                      if (_wdsLastHash !== null && _wdsLastHash !== msg.data) {
+                        _wdsPendingReload = true;
+                      }
+                      _wdsLastHash = msg.data;
+                    }
+                    if (msg.type === 'ok' && _wdsPendingReload) {
+                      _wdsPendingReload = false;
+                      if (window.ReactNativeWebView) {
+                        window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'system.requestReload' }));
+                      }
+                    }
+                  } catch (e) {}
+                });
 
-  const additionalHeadScript = __DEV__
-    ? `
-            // Fix Webpack Dev Server WebSocket URL when baseUrl is file:///
-            var OriginalWebSocket = window.WebSocket;
-            window.WebSocket = function(url, protocols) {
-              if (url && (url.indexOf('ws:///') === 0 || url.indexOf('wss:///') === 0 || url.indexOf('0.0.0.0') > -1)) {
-                var fixedUrl = '${devUrl}'.replace('http://', 'ws://').replace('https://', 'wss://') + '/ws';
-                return protocols ? new OriginalWebSocket(fixedUrl, protocols) : new OriginalWebSocket(fixedUrl);
-              }
-              return protocols ? new OriginalWebSocket(url, protocols) : new OriginalWebSocket(url);
-            };
-            window.WebSocket.prototype = OriginalWebSocket.prototype;
-            window.WebSocket.CONNECTING = OriginalWebSocket.CONNECTING;
-            window.WebSocket.OPEN = OriginalWebSocket.OPEN;
-            window.WebSocket.CLOSING = OriginalWebSocket.CLOSING;
-            window.WebSocket.CLOSED = OriginalWebSocket.CLOSED;
-          `
-    : ''
+                return ws;
+              };
+              window.WebSocket.prototype = OriginalWebSocket.prototype;
+              window.WebSocket.CONNECTING = OriginalWebSocket.CONNECTING;
+              window.WebSocket.OPEN = OriginalWebSocket.OPEN;
+              window.WebSocket.CLOSING = OriginalWebSocket.CLOSING;
+              window.WebSocket.CLOSED = OriginalWebSocket.CLOSED;
+            </script>
+          </head>
+          <body>
+            <script src="${devUrl}/webview-bundle.js"></script>
+          </body>
+        </html>
+      `,
+      baseUrl: 'file:///'
+    }
+  }
 
-  const bundleScript = __DEV__
-    ? `<script src="${devUrl}/webview-bundle.js"></script>`
-    : `
-          <script>
-            try {
-              ${webviewBundle.code}
-            } catch (err) {
-              window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'ctrl.error', payload: { ctrlName: 'GlobalCrash', errors: [{ message: err.toString(), stack: err.stack }] } }));
-            }
-          </script>
-        `
-
-  const htmlContent = getHtmlContent(csp, bundleScript, additionalHeadScript)
+  const source = getSource()
 
   return (
     <WebView
+      key={webviewKey}
       ref={webviewRef}
-      source={{ html: htmlContent, baseUrl: 'file:///' }}
+      source={source}
       onMessage={handleMessage}
       onError={(syntheticEvent) => {
         if (__DEV__) {
@@ -320,6 +388,7 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, {}>((_, ref) => {
       allowFileAccessFromFileURLs={true}
       allowUniversalAccessFromFileURLs={true}
       domStorageEnabled={true}
+      webviewDebuggingEnabled={__DEV__}
       style={{ position: 'absolute', width: 0, height: 0, opacity: 0 }}
       containerStyle={{ position: 'absolute', width: 0, height: 0, opacity: 0 }}
       pointerEvents="none"

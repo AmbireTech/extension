@@ -91,11 +91,14 @@ if (isDev) {
     },
     devServer: {
       port: 8082,
-      // Use live reload (full page reload) instead of HMR.
-      // injectedLogic.ts is a stateful entry point (controllers, event listeners)
-      // that cannot be hot-patched in place — a clean reload is required.
+      // Both HMR and live reload are disabled. The WebView loads inline HTML
+      // from a file:/// base URL, so location.reload() navigates to file:///
+      // (a directory) instead of reloading the page.
+      // Reload is handled by the WebSocket monkey-patch in WebViewWorker.tsx:
+      // it detects webpack "hash changed" messages and tells RN to remount
+      // the WebView, which re-fetches the latest bundle from this server.
       hot: false,
-      liveReload: true,
+      liveReload: false,
       // Allow connections from mobile devices/emulators
       host: '0.0.0.0',
       allowedHosts: 'all',
@@ -113,7 +116,9 @@ if (isDev) {
     module: { rules: sharedRules },
     plugins: [
       ...sharedPlugins,
-      // Generate an index.html that loads the bundle via <script> tags
+      // Generate an index.html that loads the bundle via <script> tags.
+      // Includes security patches (fetch/XHR file:// blocking) and the
+      // WebSocket URL fix since the WebView loads this page directly.
       new HtmlWebpackPlugin({
         templateContent: `
 <!DOCTYPE html>
@@ -121,6 +126,28 @@ if (isDev) {
   <head>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script>
+      // 1. Monkey-patch fetch to block file:// requests
+      var _originalFetch = window.fetch;
+      window.fetch = function() {
+        var url = arguments[0];
+        if (typeof url === 'string' && url.indexOf('file://') === 0) {
+          return Promise.reject(new Error('fetch to file:// is blocked for security.'));
+        }
+        if (url && typeof url === 'object' && url.url && url.url.indexOf('file://') === 0) {
+          return Promise.reject(new Error('fetch to file:// is blocked for security.'));
+        }
+        return _originalFetch.apply(this, arguments);
+      };
+
+      // 2. Monkey-patch XHR to block file:// requests
+      var _originalOpen = XMLHttpRequest.prototype.open;
+      XMLHttpRequest.prototype.open = function(method, url) {
+        if (typeof url === 'string' && url.indexOf('file://') === 0) {
+          throw new Error('XHR to file:// is blocked for security.');
+        }
+        return _originalOpen.apply(this, arguments);
+      };
+
       window.onerror = function(msg, url, lineNo, columnNo, error) {
         var errMessage = error ? error.stack || error.message : msg;
         window.ReactNativeWebView.postMessage(JSON.stringify({
