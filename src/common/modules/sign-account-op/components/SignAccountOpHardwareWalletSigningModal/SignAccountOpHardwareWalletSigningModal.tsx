@@ -126,6 +126,8 @@ const SignAccountOpHardwareWalletSigningModal: React.FC<Props> = ({
     accountOp.accountAddr
   ])
 
+
+  // Note: QR signing is handled by the QrSigningModal component. We don't need to show this modal for QR.
   if (!currentlyInvolvedSignOrBroadcastKeyType || currentlyInvolvedSignOrBroadcastKeyType === 'qr')
     return null
 
