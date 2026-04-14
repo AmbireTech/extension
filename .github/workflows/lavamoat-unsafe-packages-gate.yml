@@ -19,6 +19,8 @@ jobs:
     if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
 
     runs-on: ubuntu-latest
+    env:
+      LAVAMOAT_APPROVAL_LABEL: "lavamoat unsafe update approved"
 
     steps:
       - name: Checkout
@@ -35,6 +37,8 @@ jobs:
         run: yarn install --frozen-lockfile
 
       - name: "LavaMoat: ensure unsafe-packages are unchanged in yarn.lock"
+        id: lavamoat_check
+        continue-on-error: ${{ github.event_name == 'pull_request' }}
         shell: bash
         run: |
           echo "Fetching base branch origin/${{ github.base_ref }} for lockfile diff"
@@ -42,3 +46,23 @@ jobs:
 
           echo "Checking that unsafe-packages listed in lavamoat/webpack/unsafe-packages.json are unchanged in yarn.lock vs base"
           node scripts/lavamoat-check-unsafe-packages.js
+
+      - name: "LavaMoat: require manual label approval for PR override"
+        if: github.event_name == 'pull_request' && steps.lavamoat_check.outcome == 'failure'
+        shell: bash
+        run: |
+          PR_LABELS='${{ toJson(github.event.pull_request.labels.*.name) }}'
+          if echo "$PR_LABELS" | grep -Fq "\"${LAVAMOAT_APPROVAL_LABEL}\""; then
+            echo "::warning::Unsafe package update detected. Change is approved via label '${LAVAMOAT_APPROVAL_LABEL}'."
+            echo "### LavaMoat override used" >> "$GITHUB_STEP_SUMMARY"
+            echo "- Unsafe package update detected." >> "$GITHUB_STEP_SUMMARY"
+            echo "- Change is approved via label '${LAVAMOAT_APPROVAL_LABEL}', allowing CI to continue." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+
+          echo "::error::Unsafe package update detected. Add PR label '${LAVAMOAT_APPROVAL_LABEL}' after manual review, then re-run checks/tests."
+          echo "### LavaMoat approval required" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Unsafe package update detected." >> "$GITHUB_STEP_SUMMARY"
+          echo "- Required PR label: '${LAVAMOAT_APPROVAL_LABEL}'." >> "$GITHUB_STEP_SUMMARY"
+          echo "- After adding the label, re-run the failed checks/tests." >> "$GITHUB_STEP_SUMMARY"
+          exit 1
