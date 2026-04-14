@@ -2548,7 +2548,7 @@
   dependencies:
     "@ngraveio/bc-ur" "^1.1.13"
 
-"@keystonehq/animated-qr@^0.10.0":
+"@keystonehq/animated-qr@0.10.0":
   version "0.10.0"
   resolved "https://registry.yarnpkg.com/@keystonehq/animated-qr/-/animated-qr-0.10.0.tgz#57f2f088219d0e156d321c5efe521f592b29c225"
   integrity sha512-zSblr0m790w4niDckc93x5AnYtsvdbuiDKf7hhc+sODmEKY/7/7r5E9HszWzuxtQPq215bfVFY37AtO3IXSTpQ==
@@ -2577,6 +2577,7 @@
     "@ngraveio/bc-ur" "^1.1.5"
     bs58check "^2.1.2"
     tslib "^2.3.0"
+
 "@lavamoat/aa@^4.3.5", "@lavamoat/aa@^4.3.6":
   version "4.3.6"
   resolved "https://registry.yarnpkg.com/@lavamoat/aa/-/aa-4.3.6.tgz#e0b4e0ac4cffafcc716b9da62faf331357221e6f"
@@ -12887,7 +12888,7 @@ qap@^3.1.2:
   resolved "https://registry.npmjs.org/qap/-/qap-3.3.1.tgz"
   integrity sha512-U0MV9LRz4u19xaK4gssnwyc7XWTnFdmDGrgG9hvV6nchKeu3XeITTclugWKT9rLiLK2GvN3utSkKY90+1tEHkw==
 
-qr-scanner@^1.4.2:
+qr-scanner@1.4.2:
   version "1.4.2"
   resolved "https://registry.yarnpkg.com/qr-scanner/-/qr-scanner-1.4.2.tgz#bc4fb88022a8c9be95c49527a1c8fb8724b47dc4"
   integrity sha512-kV1yQUe2FENvn59tMZW6mOVfpq9mGxGf8l6+EGaXUOd4RBOLg7tRC83OrirM5AtDvZRpdjdlXURsHreAOSPOUw==
@@ -13273,7 +13274,7 @@ react-native@0.81.5:
     ws "^6.2.3"
     yargs "^17.6.2"
 
-react-qr-reader@^3.0.0-beta-1:
+react-qr-reader@3.0.0-beta-1:
   version "3.0.0-beta-1"
   resolved "https://registry.yarnpkg.com/react-qr-reader/-/react-qr-reader-3.0.0-beta-1.tgz#e04a20876409313439959d8e0ea6df3ba6e36d68"
   integrity sha512-5HeFH9x/BlziRYQYGK2AeWS9WiKYZtGGMs9DXy3bcySTX3C9UJL9EwcPnWw8vlf7JP4FcrAlr1SnZ5nsWLQGyw==
