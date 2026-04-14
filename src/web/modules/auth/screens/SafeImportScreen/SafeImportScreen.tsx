@@ -17,7 +17,6 @@ import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
-import Header from '@common/modules/header/components/Header'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import {
@@ -151,7 +150,7 @@ const SafeImportScreen = () => {
   }, [isSafeImported, isLoading])
 
   return (
-    <TabLayoutContainer backgroundColor={theme.secondaryBackground} header={<Header />}>
+    <TabLayoutContainer backgroundColor={theme.secondaryBackground}>
       <TabLayoutWrapperMainContent>
         <Panel
           type="onboarding"
