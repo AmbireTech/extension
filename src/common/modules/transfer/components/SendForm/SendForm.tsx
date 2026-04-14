@@ -114,7 +114,7 @@ const SendForm = ({
   const disableForm = (!hasGasTank && isTopUp) || !tokens.length
 
   const renderSectionHeader: SectionedSelectProps['renderSectionHeader'] = useCallback(
-    ({ section }) => {
+    ({ section }: { section: NonNullable<SectionedSelectProps['sections']>[number] }) => {
       const { title } = section as unknown as GasTankSection
       if (!title) return null
       return (
@@ -173,10 +173,9 @@ const SendForm = ({
         const network = networks.find((n) => n.chainId === BigInt(asset.chainId))
 
         const symbol = (
-          feeToken?.symbol ||
-          asset.symbol ||
-          network?.nativeAssetSymbol ||
-          ''
+          feeToken?.symbol?.trim() ||
+          asset.symbol?.trim() ||
+          'No symbol'
         ).toUpperCase()
         const networkName = network?.name ?? ''
 
