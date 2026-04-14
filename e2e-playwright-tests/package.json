@@ -5,8 +5,8 @@
   "main": "index.js",
   "scripts": {
     "lint": "eslint .",
-    "test": "playwright test --grep @ledgerTests --grep-invert @balanceCheck",
     "show:trace": "playwright show-trace",
+    "test:all:non-hw": "npx playwright test --grep-invert \"@balanceCheck|@ledgerTests|@trezorTests\"",
     "balance:test": "npx playwright test -g @balanceCheck --retries 1",
     "ledger:tests": "npx playwright test -g @ledgerTests --retries 0",
     "trezor:test": "npx playwright test -g @trezorTests",

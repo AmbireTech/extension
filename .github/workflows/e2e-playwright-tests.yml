@@ -195,10 +195,14 @@ jobs:
         working-directory: ./e2e-playwright-tests
         run: yarn balance:test
 
+      - name: Run Playwright tests (All non-hardware suites)
+        working-directory: ./e2e-playwright-tests
+        run: yarn test:all:non-hw
+
       # Ledger suite (@ledgerTests). Separate from Trezor to avoid parallel worker contention on emulators.
       - name: Run Playwright tests (Ledger)
         working-directory: ./e2e-playwright-tests
-        run: yarn test
+        run: yarn ledger:tests
 
       - name: Run Trezor tests
         working-directory: ./e2e-playwright-tests
