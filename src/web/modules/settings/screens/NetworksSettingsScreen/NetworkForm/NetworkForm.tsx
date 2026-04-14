@@ -755,7 +755,7 @@ const NetworkForm = ({
                   rpcUrls.map((url, i) => {
                     let removeDisabledReason: string | undefined
 
-                    if (selectedNetwork?.rpcUrls.length === 1) {
+                    if (rpcUrls.length === 1) {
                       removeDisabledReason = 'There must be at least one RPC provider'
                     } else if (url === selectedNetwork?.selectedRpcUrl) {
                       removeDisabledReason = 'Cannot remove the selected RPC URL'

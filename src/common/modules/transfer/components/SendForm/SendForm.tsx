@@ -129,7 +129,8 @@ const SendForm = ({
             address={addressStateFieldValue}
             setAddress={setAddressStateFieldValue}
             validation={validation}
-            ensAddress={addressState.ensAddress}
+            resolvedAddress={addressState.resolvedAddress}
+            resolvedAddressType={addressState.resolvedAddressType}
             addressValidationMsg={validation.message}
             isRecipientHumanizerKnownTokenOrSmartContract={
               isRecipientHumanizerKnownTokenOrSmartContract

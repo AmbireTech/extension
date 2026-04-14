@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import { AddressState, AddressStateOptional } from '@ambire-common/interfaces/domains'
 import { Validation } from '@ambire-common/services/validations'
+import { getAddressFromAddressState } from '@ambire-common/utils/domains'
 import useController from '@common/hooks/useController'
 
 import useResolveDomain from '../useResolveDomain'
@@ -51,7 +52,8 @@ const useAddressInput = ({
       getAddressInputValidation({
         address: overwriteValidationFieldValue ?? fieldValue,
         isRecipientDomainResolving: addressState.isDomainResolving,
-        isValidEns: !!addressState.ensAddress,
+        isValidEns: addressState.resolvedAddressType === 'ens',
+        isValidNamoshi: addressState.resolvedAddressType === 'namoshi',
         hasDomainResolveFailed,
         overwriteValidation
       }),
@@ -59,7 +61,7 @@ const useAddressInput = ({
       overwriteValidationFieldValue,
       fieldValue,
       addressState.isDomainResolving,
-      addressState.ensAddress,
+      addressState.resolvedAddressType,
       hasDomainResolveFailed,
       overwriteValidation
     ]
@@ -75,8 +77,8 @@ const useAddressInput = ({
       // Both validations are errors
       severity === 'error' &&
       debouncedSeverity === 'error' &&
-      // There is no ENS address
-      !addressState.ensAddress &&
+      // There is no resolved address
+      !addressState.resolvedAddress &&
       // The message is not empty
       latestMessage
 
@@ -94,11 +96,11 @@ const useAddressInput = ({
       clearTimeout(timeout)
     }
   }, [
-    addressState.ensAddress,
     debouncedValidation,
     debouncedValidation.severity,
     debouncedValidation.message,
-    validation
+    validation,
+    addressState.resolvedAddress
   ])
 
   useEffect(() => {
@@ -115,7 +117,8 @@ const useAddressInput = ({
 
     if (!trimmedAddress || !canBeDomain) {
       setAddressState({
-        ensAddress: '',
+        resolvedAddress: '',
+        resolvedAddressType: null,
         isDomainResolving: false
       })
       return
@@ -129,15 +132,23 @@ const useAddressInput = ({
     // Debounce domain resolving
     const timeout = setTimeout(() => {
       resolveDomain({ domain: trimmedAddress })
-        .then((ensAddress) => {
+        .then((result) => {
           if (fieldValueRef.current !== fieldValue) return
-          setAddressState({ ensAddress, isDomainResolving: false })
+          setAddressState({
+            resolvedAddress: result?.address || '',
+            resolvedAddressType: result?.type || null,
+            isDomainResolving: false
+          })
         })
         .catch(() => {
           if (fieldValueRef.current !== fieldValue) return
 
           setHasDomainResolveFailed(true)
-          setAddressState({ ensAddress: '', isDomainResolving: false })
+          setAddressState({
+            resolvedAddress: '',
+            resolvedAddressType: null,
+            isDomainResolving: false
+          })
         })
     }, 300)
 
@@ -159,7 +170,8 @@ const useAddressInput = ({
   const reset = useCallback(() => {
     setAddressState({
       fieldValue: '',
-      ensAddress: '',
+      resolvedAddress: '',
+      resolvedAddressType: null,
       isDomainResolving: false
     })
   }, [setAddressState])
@@ -197,7 +209,7 @@ const useAddressInput = ({
     validation: debouncedValidation,
     RHFValidate,
     resetAddressInput: reset,
-    address: addressState.ensAddress || fieldValue
+    address: getAddressFromAddressState(addressState)
   }
 }
 
