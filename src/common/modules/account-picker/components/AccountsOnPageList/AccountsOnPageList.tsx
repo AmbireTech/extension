@@ -9,6 +9,7 @@ import {
   ImportStatus
 } from '@ambire-common/interfaces/account'
 import { IAccountPickerController } from '@ambire-common/interfaces/accountPicker'
+import { isSmartAccount } from '@ambire-common/libs/account/account'
 import WarningIcon from '@common/assets/svg/WarningIcon'
 import Alert from '@common/components/Alert'
 import Badge from '@common/components/Badge'
@@ -220,7 +221,7 @@ const AccountsOnPageList = ({
     !state.pageError
 
   const hasSmartAccounts = useMemo(() => {
-    return !!state.accountsOnPage.find((p) => !!p.account.creation)
+    return state.accountsOnPage.some((p) => isSmartAccount(p.account))
   }, [state.accountsOnPage])
 
   // Prevents the user from temporarily seeing (flashing) empty (error) states

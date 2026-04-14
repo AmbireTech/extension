@@ -140,21 +140,13 @@ class UrQrProtocolAdapter implements QrProtocolAdapter {
       const masterFingerprint = stripHexPrefix(args.masterFingerprint)
 
       const request = EthSignRequest.constructETHRequest(
-        // signData: Buffer,
         txData,
-        // signDataType: DataType,
         args?.type === 0 ? DataType.transaction : DataType.typedTransaction,
-        // hdPath: string,
         args.derivationPath,
-        // xfp: string,
         masterFingerprint,
-        // uuidString?: string
         requestId,
-        // chainId?: number
         args.chainId !== undefined ? Number(args.chainId) : undefined,
-        // address?: string,
         undefined,
-        /// origin?: string
         args.address
       )
 
