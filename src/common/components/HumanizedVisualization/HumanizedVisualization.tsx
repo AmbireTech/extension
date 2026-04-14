@@ -1,4 +1,4 @@
-import React, { FC, memo } from 'react'
+import React, { FC, Fragment, memo } from 'react'
 import { StyleProp, View, ViewStyle } from 'react-native'
 
 import { IrCall } from '@ambire-common/libs/humanizer/interfaces'
@@ -72,9 +72,8 @@ const HumanizedVisualization: FC<Props> = ({
         const key = item.id
         if (item.type === 'token') {
           return (
-            <>
+            <Fragment key={key}>
               <TokenOrNft
-                key={key}
                 sizeMultiplierSize={sizeMultiplierSize}
                 value={item.value}
                 address={item.address!}
@@ -83,7 +82,7 @@ const HumanizedVisualization: FC<Props> = ({
                 hideLinks={hideLinks}
               />
               {item.editApprovalData && <EditApproval item={item} />}
-            </>
+            </Fragment>
           )
         }
 

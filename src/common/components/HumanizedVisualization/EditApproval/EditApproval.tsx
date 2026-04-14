@@ -1,7 +1,7 @@
 import { formatUnits, Interface, parseUnits } from 'ethers'
-import React, { memo, useCallback, useEffect, useMemo, useState } from 'react'
+import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { View } from 'react-native'
+import { ColorValue, View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 
 import {
@@ -11,7 +11,7 @@ import {
 import { Approve, Permit2 } from '@ambire-common/libs/humanizer/const/abis/Approvals'
 import { HumanizerVisualization } from '@ambire-common/libs/humanizer/interfaces'
 import { getTokenAmount } from '@ambire-common/libs/portfolio/helpers'
-import { textToValidDecimal } from '@ambire-common/utils/numbers/formatters'
+import { getSafeAmountFromFieldValue } from '@ambire-common/utils/numbers/formatters'
 import EditPenIcon from '@common/assets/svg/EditPenIcon'
 import AmountInput from '@common/components/AmountInput'
 import BottomSheet from '@common/components/BottomSheet'
@@ -29,9 +29,88 @@ import flexbox from '@common/styles/utils/flexbox'
 const approveInterface = new Interface(Approve)
 const permitInterface = new Interface(Permit2)
 
+type EditApprovalAmountInputProps = {
+  initialAmount: string
+  backgroundColor: ColorValue
+  onSanitizedAmountChange: (value: string) => void
+  leftIcon: () => React.ReactNode
+  decimals?: number
+  selectedTokenSymbol?: string
+  maxAmount?: number
+  getMaxAmountText?: () => string
+}
+
+// This component is needed to keep the caret position
+// on input change.
+const EditApprovalAmountInput = memo(
+  ({
+    initialAmount,
+    backgroundColor,
+    onSanitizedAmountChange,
+    leftIcon,
+    selectedTokenSymbol,
+    maxAmount,
+    getMaxAmountText,
+    decimals
+  }: EditApprovalAmountInputProps) => {
+    const [draftAmount, setDraftAmount] = useState(initialAmount)
+
+    useEffect(() => {
+      setDraftAmount(initialAmount)
+    }, [initialAmount])
+
+    const onChange = useCallback(
+      (text: string) => {
+        setDraftAmount(text)
+        onSanitizedAmountChange(getSafeAmountFromFieldValue(text, decimals))
+      },
+      [decimals, onSanitizedAmountChange]
+    )
+
+    const onBlur = useCallback(() => {
+      const sanitized = getSafeAmountFromFieldValue(draftAmount, decimals)
+      setDraftAmount(sanitized)
+      onSanitizedAmountChange(sanitized)
+    }, [decimals, draftAmount, onSanitizedAmountChange])
+
+    const onMax = useCallback(() => {
+      if (!getMaxAmountText) return
+      const max = getMaxAmountText()
+      setDraftAmount(max)
+      onSanitizedAmountChange(max)
+    }, [getMaxAmountText, onSanitizedAmountChange])
+
+    return (
+      <>
+        <AmountInput
+          type="token"
+          value={draftAmount}
+          onChangeText={onChange}
+          onBlur={onBlur}
+          fontSize={16}
+          backgroundColor={backgroundColor}
+          inputWrapperStyle={{ height: 40, ...spacings.prSm }}
+          leftIconStyle={spacings.mrTy}
+          leftIcon={leftIcon}
+        />
+        {maxAmount !== undefined && !!selectedTokenSymbol && !!getMaxAmountText && (
+          <View style={spacings.mtSm}>
+            <MaxAmount
+              isLoading={false}
+              maxAmount={maxAmount}
+              selectedTokenSymbol={selectedTokenSymbol}
+              onMaxButtonPress={onMax}
+              simulationFailed={false}
+            />
+          </View>
+        )}
+      </>
+    )
+  }
+)
 const EditApproval = ({ item }: { item: HumanizerVisualization }) => {
   const { t } = useTranslation()
-  const { theme, themeType } = useTheme()
+  const { theme } = useTheme()
   const [bindEditApprovals, editApprovalsStyle] = useHover({
     preset: 'opacityInverted'
   })
@@ -45,21 +124,50 @@ const EditApproval = ({ item }: { item: HumanizerVisualization }) => {
   } = useController('SelectedAccountController')
   const { state: signAccountOpState, dispatch: signAccountOpDispatch } =
     useController('SignAccountOpController')
-  const [amount, setAmount] = useState<string>('0')
+  const amountRef = useRef<string>('0')
+  const [initialAmount, setInitialAmount] = useState<string>('0')
   const [initialValueSet, setInitialValueSet] = useState<boolean>(false)
 
   const portfolioToken = useMemo(() => {
     return portfolio.tokens.find((t) => t.address.toLowerCase() === item.address?.toLowerCase())
-  }, [portfolio.tokens, item])
+  }, [portfolio.tokens, item.address])
+
+  const maxAmount = useMemo(() => {
+    if (!portfolioToken) return undefined
+    return Number(formatUnits(getTokenAmount(portfolioToken, true), portfolioToken.decimals))
+  }, [portfolioToken])
+
+  const getMaxAmountText = useCallback(() => {
+    if (!portfolioToken) return '0'
+    return formatUnits(getTokenAmount(portfolioToken, true), portfolioToken.decimals)
+  }, [portfolioToken])
+
+  const leftIcon = useCallback(
+    () =>
+      !!portfolioToken && (
+        <TokenIcon
+          address={portfolioToken.address}
+          chainId={portfolioToken.chainId}
+          containerHeight={28}
+          containerWidth={28}
+          width={28}
+          height={28}
+          withNetworkIcon={false}
+        />
+      ),
+    [portfolioToken]
+  )
 
   useEffect(() => {
     if (!portfolioToken || !item.value || initialValueSet) return
-    setAmount(formatUnits(item.value.toString(), portfolioToken.decimals))
+    const initialApprovalAmount = formatUnits(item.value.toString(), portfolioToken.decimals)
+    amountRef.current = initialApprovalAmount
+    setInitialAmount(initialApprovalAmount)
     setInitialValueSet(true)
   }, [portfolioToken, item.value, initialValueSet])
 
-  const handleOnChangeTextAndFormat = useCallback((text: string) => {
-    setAmount(textToValidDecimal(text))
+  const onSanitizedAmountChange = useCallback((value: string) => {
+    amountRef.current = value
   }, [])
 
   const setApproval = useCallback(() => {
@@ -76,13 +184,13 @@ const EditApproval = ({ item }: { item: HumanizerVisualization }) => {
     if (replacedCall.data.substring(0, 10) === approveInterface.getFunction('approve')!.selector) {
       calldata = approveInterface.encodeFunctionData('approve', [
         editApprovalData.spenderAddr,
-        parseUnits(amount, portfolioToken.decimals)
+        parseUnits(amountRef.current || '0', portfolioToken.decimals)
       ])
     } else {
       calldata = permitInterface.encodeFunctionData('approve', [
         item.address,
         editApprovalData.spenderAddr,
-        parseUnits(amount, portfolioToken.decimals),
+        parseUnits(amountRef.current || '0', portfolioToken.decimals),
         editApprovalData.expiration
       ])
     }
@@ -99,7 +207,6 @@ const EditApproval = ({ item }: { item: HumanizerVisualization }) => {
     })
     closeEditApprovals()
   }, [
-    amount,
     closeEditApprovals,
     item.address,
     item.editApprovalData,
@@ -128,8 +235,7 @@ const EditApproval = ({ item }: { item: HumanizerVisualization }) => {
           flexbox.directionRow,
           flexbox.alignCenter,
           spacings.mrTy,
-          // @ts-ignore
-          { marginLeft: '-8px' }
+          { marginLeft: -8 }
         ]}
         {...bindEditApprovals}
         onPress={() => openEditApprovals()}
@@ -157,45 +263,16 @@ const EditApproval = ({ item }: { item: HumanizerVisualization }) => {
             {t('Grant approval for')}
           </Text>
           <View style={{ width: '100%' }}>
-            <AmountInput
-              type="token"
-              value={amount}
-              onChangeText={handleOnChangeTextAndFormat}
-              fontSize={16}
+            <EditApprovalAmountInput
+              initialAmount={initialAmount}
               backgroundColor={theme.tertiaryBackground}
-              inputWrapperStyle={{ height: 40, ...spacings.prSm }}
-              leftIconStyle={spacings.mrTy}
-              leftIcon={() =>
-                !!portfolioToken && (
-                  <TokenIcon
-                    address={portfolioToken.address}
-                    chainId={portfolioToken.chainId}
-                    containerHeight={28}
-                    containerWidth={28}
-                    width={28}
-                    height={28}
-                    withNetworkIcon={false}
-                  />
-                )
-              }
+              onSanitizedAmountChange={onSanitizedAmountChange}
+              leftIcon={leftIcon}
+              selectedTokenSymbol={portfolioToken?.symbol}
+              maxAmount={maxAmount}
+              decimals={portfolioToken?.decimals}
+              getMaxAmountText={portfolioToken ? getMaxAmountText : undefined}
             />
-            {portfolioToken && (
-              <View style={spacings.mtSm}>
-                <MaxAmount
-                  isLoading={false}
-                  maxAmount={Number(
-                    formatUnits(getTokenAmount(portfolioToken, true), portfolioToken.decimals)
-                  )}
-                  selectedTokenSymbol={portfolioToken.symbol}
-                  onMaxButtonPress={() =>
-                    setAmount(
-                      formatUnits(getTokenAmount(portfolioToken, true), portfolioToken.decimals)
-                    )
-                  }
-                  simulationFailed={false}
-                />
-              </View>
-            )}
           </View>
           <FooterGlassView absolute={false} style={spacings.mt2Xl}>
             <Button
