@@ -8,8 +8,10 @@ import {
   noStateUpdateStatuses,
   SigningStatus
 } from '@ambire-common/controllers/signAccountOp/signAccountOp'
+import { Approve, Permit2 } from '@ambire-common/libs/humanizer/const/abis/Approvals'
 import { HumanizerVisualization } from '@ambire-common/libs/humanizer/interfaces'
 import { getTokenAmount } from '@ambire-common/libs/portfolio/helpers'
+import { textToValidDecimal } from '@ambire-common/utils/numbers/formatters'
 import EditPenIcon from '@common/assets/svg/EditPenIcon'
 import AmountInput from '@common/components/AmountInput'
 import BottomSheet from '@common/components/BottomSheet'
@@ -25,6 +27,9 @@ import spacings from '@common/styles/spacings'
 import { THEME_TYPES } from '@common/styles/themeConfig'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
+
+const approveInterface = new Interface(Approve)
+const permitInterface = new Interface(Permit2)
 
 const EditApproval = ({ item }: { item: HumanizerVisualization }) => {
   const { t } = useTranslation()
@@ -56,34 +61,62 @@ const EditApproval = ({ item }: { item: HumanizerVisualization }) => {
   }, [portfolioToken, item.value, initialValueSet])
 
   const handleOnChangeTextAndFormat = useCallback((text: string) => {
-    let formatted = text
-
-    // Remove invalid chars (only digits and dots allowed)
-    formatted = formatted.replace(/[^0-9.]/g, '')
-
-    // If input starts with ".", prefix with "0"
-    if (formatted.startsWith('.')) {
-      formatted = `0${formatted}`
-    }
-
-    // Prevent multiple decimals
-    const parts = formatted.split('.')
-    if (parts.length > 2) {
-      formatted = `${parts[0]}.${parts.slice(1).join('')}`
-    }
-
-    formatted = formatted.replace(/^0+(?=\d)/, '')
-    if (formatted === '') formatted = '0'
-
-    setAmount(formatted)
+    setAmount(textToValidDecimal(text))
   }, [])
+
+  const setApproval = useCallback(() => {
+    const editApprovalData = item.editApprovalData
+    if (!signAccountOpState || !item.address || !editApprovalData || !portfolioToken) return
+
+    // shallow copy each call just in case so the controller properly
+    // understands that a change to the calls array has been made
+    const calls = signAccountOpState.accountOp.calls.map((call) => ({ ...call }))
+    const replacedCall = calls.find((c) => c.id === editApprovalData.callId)
+    if (!replacedCall) return
+
+    let calldata = ''
+    if (replacedCall.data.substring(0, 10) === approveInterface.getFunction('approve')!.selector) {
+      calldata = approveInterface.encodeFunctionData('approve', [
+        editApprovalData.spenderAddr,
+        parseUnits(amount, portfolioToken.decimals)
+      ])
+    } else {
+      calldata = permitInterface.encodeFunctionData('approve', [
+        item.address,
+        editApprovalData.spenderAddr,
+        parseUnits(amount, portfolioToken.decimals),
+        editApprovalData.expiration
+      ])
+    }
+
+    // replace the data with the new approval
+    replacedCall.data = calldata
+
+    signAccountOpDispatch({
+      type: 'method',
+      params: {
+        method: 'update',
+        args: [{ accountOpData: { calls } }]
+      }
+    })
+    closeEditApprovals()
+  }, [
+    amount,
+    closeEditApprovals,
+    item.address,
+    item.editApprovalData,
+    portfolioToken,
+    signAccountOpDispatch,
+    signAccountOpState
+  ])
 
   // hide the edit option if there's no sign account op state
   // or it has finished / queued state
   // or the call id for this approval is missing
   if (
     !signAccountOpState ||
-    !signAccountOpState.accountOp.calls.find((c) => c.id === item.callId) ||
+    !item.editApprovalData ||
+    !signAccountOpState.accountOp.calls.find((c) => c.id === item.editApprovalData?.callId) ||
     (signAccountOpState.status && noStateUpdateStatuses.includes(signAccountOpState.status.type)) ||
     signAccountOpState.status?.type === SigningStatus.Queued
   )
@@ -193,86 +226,7 @@ const EditApproval = ({ item }: { item: HumanizerVisualization }) => {
             <Button
               type="primary"
               text={t('Save')}
-              onPress={() => {
-                if (!signAccountOpState || !item.address || !item.spenderAddr || !portfolioToken)
-                  return
-
-                let calldata = ''
-                if (item.expiration === undefined) {
-                  // normal approval
-                  const approveAbi = [
-                    {
-                      inputs: [
-                        {
-                          internalType: 'address',
-                          name: 'spender',
-                          type: 'address'
-                        },
-                        {
-                          internalType: 'uint256',
-                          name: 'amount',
-                          type: 'uint256'
-                        }
-                      ],
-                      name: 'approve',
-                      outputs: [
-                        {
-                          internalType: 'bool',
-                          name: '',
-                          type: 'bool'
-                        }
-                      ],
-                      stateMutability: 'nonpayable',
-                      type: 'function'
-                    }
-                  ]
-                  const approveInterface = new Interface(approveAbi)
-                  calldata = approveInterface.encodeFunctionData('approve', [
-                    item.spenderAddr,
-                    parseUnits(amount, portfolioToken.decimals)
-                  ])
-                } else {
-                  // permit approval
-                  const permitAbi = [
-                    {
-                      inputs: [
-                        { internalType: 'address', name: 'token', type: 'address' },
-                        { internalType: 'address', name: 'spender', type: 'address' },
-                        { internalType: 'uint160', name: 'amount', type: 'uint160' },
-                        { internalType: 'uint48', name: 'expiration', type: 'uint48' }
-                      ],
-                      name: 'approve',
-                      outputs: [],
-                      stateMutability: 'nonpayable',
-                      type: 'function'
-                    }
-                  ]
-                  const approveInterface = new Interface(permitAbi)
-                  calldata = approveInterface.encodeFunctionData('approve', [
-                    item.address,
-                    item.spenderAddr,
-                    parseUnits(amount, portfolioToken.decimals),
-                    item.expiration
-                  ])
-                }
-
-                // shallow copy each call just in case so the controller properly
-                // understands that a change to the calls array has been made
-                const calls = signAccountOpState.accountOp.calls.map((call) => ({ ...call }))
-                const replacedCall = calls.find((c) => c.id === item.callId)
-                if (!replacedCall) return
-                // replace the data with the new approval
-                replacedCall.data = calldata
-
-                signAccountOpDispatch({
-                  type: 'method',
-                  params: {
-                    method: 'update',
-                    args: [{ accountOpData: { calls } }]
-                  }
-                })
-                closeEditApprovals()
-              }}
+              onPress={setApproval}
               hasBottomSpacing={false}
               size="small"
               style={[{ width: 100, height: 44 }]}

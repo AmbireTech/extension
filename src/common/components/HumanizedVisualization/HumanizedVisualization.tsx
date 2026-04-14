@@ -72,15 +72,18 @@ const HumanizedVisualization: FC<Props> = ({
         const key = item.id
         if (item.type === 'token') {
           return (
-            <TokenOrNft
-              key={key}
-              sizeMultiplierSize={sizeMultiplierSize}
-              value={item.value}
-              address={item.address!}
-              textSize={textSize}
-              chainId={chainId}
-              hideLinks={hideLinks}
-            />
+            <>
+              <TokenOrNft
+                key={key}
+                sizeMultiplierSize={sizeMultiplierSize}
+                value={item.value}
+                address={item.address!}
+                textSize={textSize}
+                chainId={chainId}
+                hideLinks={hideLinks}
+              />
+              {item.editApprovalData && <EditApproval item={item} />}
+            </>
           )
         }
 
@@ -202,10 +205,6 @@ const HumanizedVisualization: FC<Props> = ({
 
         if (item.type === 'break') {
           return <View key={key} style={{ flexBasis: '100%', height: 0 }} />
-        }
-
-        if (item.type === 'editApproval') {
-          return <EditApproval key={key} item={item} />
         }
 
         return null
