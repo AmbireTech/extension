@@ -7,7 +7,7 @@ on:
       - main
       - 'release/*'
   pull_request:
-    types: ['opened', 'ready_for_review', 'synchronize']
+    types: ['opened', 'ready_for_review', 'synchronize', 'labeled', 'unlabeled']
     branches:
       - v2
       - main
@@ -52,6 +52,7 @@ jobs:
         shell: bash
         run: |
           PR_LABELS='${{ toJson(github.event.pull_request.labels.*.name) }}'
+          echo "PR labels: ${PR_LABELS}"
           if echo "$PR_LABELS" | grep -Fq "\"${LAVAMOAT_APPROVAL_LABEL}\""; then
             echo "::warning::Unsafe package update detected. Change is approved via label '${LAVAMOAT_APPROVAL_LABEL}'."
             echo "### LavaMoat override used" >> "$GITHUB_STEP_SUMMARY"
