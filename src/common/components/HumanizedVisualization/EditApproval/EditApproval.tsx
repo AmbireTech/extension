@@ -24,8 +24,6 @@ import useHover, { AnimatedPressable } from '@common/hooks/useHover'
 import useTheme from '@common/hooks/useTheme'
 import MaxAmount from '@common/modules/swap-and-bridge/components/MaxAmount'
 import spacings from '@common/styles/spacings'
-import { THEME_TYPES } from '@common/styles/themeConfig'
-import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 
 const approveInterface = new Interface(Approve)
@@ -159,43 +157,28 @@ const EditApproval = ({ item }: { item: HumanizerVisualization }) => {
             {t('Grant approval for')}
           </Text>
           <View style={{ width: '100%' }}>
-            <View>
-              <View
-                style={[
-                  {
-                    borderRadius: BORDER_RADIUS_PRIMARY,
-                    borderWidth: 1,
-                    borderColor: 'transparent',
-                    backgroundColor:
-                      themeType === THEME_TYPES.LIGHT
-                        ? theme.tertiaryBackground
-                        : theme.secondaryBackground,
-                    paddingLeft: 41,
-                    paddingRight: 16
-                  }
-                ]}
-              >
-                <AmountInput
-                  type="token"
-                  value={amount}
-                  onChangeText={handleOnChangeTextAndFormat}
-                  fontSize={16}
-                  inputWrapperStyle={{ height: 40 }}
-                />
-              </View>
-              {portfolioToken && (
-                <TokenIcon
-                  containerStyle={{ position: 'absolute', top: 6, left: 6 }}
-                  address={portfolioToken.address}
-                  chainId={portfolioToken.chainId}
-                  containerHeight={28}
-                  containerWidth={28}
-                  width={28}
-                  height={28}
-                  withNetworkIcon={false}
-                />
-              )}
-            </View>
+            <AmountInput
+              type="token"
+              value={amount}
+              onChangeText={handleOnChangeTextAndFormat}
+              fontSize={16}
+              backgroundColor={theme.tertiaryBackground}
+              inputWrapperStyle={{ height: 40, ...spacings.prSm }}
+              leftIconStyle={spacings.mrTy}
+              leftIcon={() =>
+                !!portfolioToken && (
+                  <TokenIcon
+                    address={portfolioToken.address}
+                    chainId={portfolioToken.chainId}
+                    containerHeight={28}
+                    containerWidth={28}
+                    width={28}
+                    height={28}
+                    withNetworkIcon={false}
+                  />
+                )
+              }
+            />
             {portfolioToken && (
               <View style={spacings.mtSm}>
                 <MaxAmount
@@ -220,16 +203,16 @@ const EditApproval = ({ item }: { item: HumanizerVisualization }) => {
               text={t('Cancel')}
               onPress={() => closeEditApprovals()}
               hasBottomSpacing={false}
-              size="small"
-              style={[{ width: 100, height: 44 }, spacings.mr]}
+              size="smaller"
+              style={[{ width: 100 }, spacings.mr]}
             />
             <Button
               type="primary"
               text={t('Save')}
               onPress={setApproval}
               hasBottomSpacing={false}
-              size="small"
-              style={[{ width: 100, height: 44 }]}
+              size="smaller"
+              style={[{ width: 100 }]}
             />
           </FooterGlassView>
         </View>

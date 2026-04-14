@@ -17,7 +17,9 @@ const AmountInput = ({
   disabled,
   inputTestId,
   fontSize = 24,
-  inputWrapperStyle
+  inputWrapperStyle,
+  backgroundColor,
+  ...rest
 }: AmountInputProps) => {
   const { theme } = useTheme()
 
@@ -29,8 +31,8 @@ const AmountInput = ({
       borderless
       inputWrapperStyle={
         inputWrapperStyle
-          ? [{ backgroundColor: 'transparent' }, inputWrapperStyle]
-          : { backgroundColor: 'transparent' }
+          ? [{ backgroundColor: backgroundColor || 'transparent' }, inputWrapperStyle]
+          : { backgroundColor: backgroundColor || 'transparent' }
       }
       nativeInputStyle={{
         fontFamily: FONT_FAMILIES.MEDIUM,
@@ -76,6 +78,7 @@ const AmountInput = ({
           </View>
         )
       }
+      {...rest}
     />
   )
 }
