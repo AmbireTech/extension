@@ -59,16 +59,30 @@ class QrHardwareSigner implements KeystoreSignerInterface {
     return getHdPathFromTemplate(hdPathTemplate, index)
   }
 
+  #getMasterFingerprint = () => {
+    const masterFingerprint = this.key.meta.masterFingerprint || this.controller?.masterFingerprint || ''
+
+    if (!masterFingerprint) {
+      throw new ExternalSignerError(
+        'QR account metadata is missing masterFingerprint. Please re-import the QR account and try again.',
+        { sendCrashReport: true }
+      )
+    }
+
+    return masterFingerprint
+  }
+
   signMessage: KeystoreSignerInterface['signMessage'] = async (hex) => {
     await this.#prepareForSigning()
 
     try {
       const path = this.#getDerivationPath()
+      const masterFingerprint = this.#getMasterFingerprint()
 
       const res = await this.controller!.signMessageQR({
         hex,
         derivationPath: path,
-        masterFingerprint: this.key.meta.masterFingerprint || '',
+        masterFingerprint,
         address: this.key.addr
       })
 
@@ -87,12 +101,12 @@ class QrHardwareSigner implements KeystoreSignerInterface {
 
     try {
       const path = getHdPathFromTemplate(this.key.meta.hdPathTemplate, this.key.meta.index)
+      const masterFingerprint = this.#getMasterFingerprint()
 
       const res = await this.controller!.signTypedDataQR({
         typedData,
         derivationPath: path,
-        // TODO: check if masterFingerprint can be ''
-        masterFingerprint: this.key.meta.masterFingerprint || '',
+        masterFingerprint,
         address: this.key.addr
       })
 
@@ -111,6 +125,7 @@ class QrHardwareSigner implements KeystoreSignerInterface {
 
     try {
       const path = this.#getDerivationPath()
+      const masterFingerprint = this.#getMasterFingerprint()
 
       const type = typeof txnRequest.maxFeePerGas === 'bigint' ? 2 : 0
       const unsignedTxn: TransactionLike = { ...txnRequest, type }
@@ -119,7 +134,7 @@ class QrHardwareSigner implements KeystoreSignerInterface {
       const res = await this.controller!.signTransactionQR({
         txHex: unsignedSerializedTxn,
         derivationPath: path,
-        masterFingerprint: this.key.meta.masterFingerprint || '',
+        masterFingerprint,
         address: this.key.addr,
         chainId: txnRequest.chainId,
         type
