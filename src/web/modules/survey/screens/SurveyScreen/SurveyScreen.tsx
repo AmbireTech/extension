@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { View } from 'react-native'
 
 import { SurveyController } from '@ambire-common/controllers/survey/survey'
@@ -41,6 +41,15 @@ const SurveyScreen = () => {
 
   const { navigate } = useNavigation()
 
+  useEffect(() => {
+    if (status !== 'success-submitted') return
+    if (!sourceBannerId) return
+    bannerDispatch({
+      type: 'method',
+      params: { method: 'dismissBanner', args: [sourceBannerId] }
+    })
+  }, [bannerDispatch, sourceBannerId, status])
+
   const [inputtedAnswer, setInputtedAnswer] = useState<{
     questionPosition: number
     ans: number | string | null
@@ -57,6 +66,7 @@ const SurveyScreen = () => {
 
     return !!SurveyController.getNextQuestionForAnswers(questions || [], answersPlusUncommited)
   }, [answers, currentQuestion, inputtedAnswer, questions])
+
   const buttonState = useMemo((): { text: string; callback?: () => void; loading?: true } => {
     if (
       status === 'success-submitted' ||
@@ -104,12 +114,6 @@ const SurveyScreen = () => {
           }
         })
 
-        if (!hasNextQuestion && sourceBannerId) {
-          bannerDispatch({
-            type: 'method',
-            params: { method: 'dismissBanner', args: [sourceBannerId] }
-          })
-        }
         if (hasNextQuestion)
           setInputtedAnswer({ questionPosition: inputtedAnswer.questionPosition + 1, ans: null })
       }
@@ -117,7 +121,6 @@ const SurveyScreen = () => {
   }, [
     account,
     addToast,
-    bannerDispatch,
     currentQuestion,
     dispatchToSurvey,
     hasNextQuestion,
@@ -125,7 +128,6 @@ const SurveyScreen = () => {
     inputtedAnswer.questionPosition,
     keyStoreUid,
     navigate,
-    sourceBannerId,
     status,
     verifiedCode
   ])
@@ -156,6 +158,7 @@ const SurveyScreen = () => {
 
   const percentageDone = useMemo(() => {
     if (status === 'success-submitted') return 100
+    if (status === 'loading-sending') return 100
     if (status === 'error-submitting') return 0
     if (!questions) return 0
 
@@ -168,7 +171,6 @@ const SurveyScreen = () => {
     )
       lastAnsweredQuestionPosition += 1
 
-    console.log((lastAnsweredQuestionPosition / (maxPositionFromQuestions + 1)) * 100)
     return (lastAnsweredQuestionPosition / (maxPositionFromQuestions + 1)) * 100
   }, [currentQuestion, inputtedAnswer, questions, status])
 
