@@ -33,7 +33,11 @@ const useReceive = () => {
     return stateAccount
   }, [accounts, address, stateAccount])
 
-  const { isLoading: isDomainResolving, ens } = useReverseLookup({
+  const {
+    isLoading: isDomainResolving,
+    name,
+    type
+  } = useReverseLookup({
     address: account?.addr || ''
   })
   const { keys } = useController('KeystoreController').state
@@ -89,7 +93,8 @@ const useReceive = () => {
     isViewOnly,
     label,
     pfp,
-    ens,
+    name,
+    type,
     isDomainResolving,
     qrCodeError,
     setQrCodeError,

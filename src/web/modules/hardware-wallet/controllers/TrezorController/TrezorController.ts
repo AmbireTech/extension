@@ -1,7 +1,10 @@
 import ExternalSignerError from '@ambire-common/classes/ExternalSignerError'
 import { ExternalSignerController } from '@ambire-common/interfaces/keystore'
 import { UiManager } from '@ambire-common/interfaces/ui'
-import { getMessageFromTrezorErrorCode } from '@ambire-common/libs/trezor/trezor'
+import {
+  getMessageFromTrezorErrorCode,
+  getTrezorErrorMessageFromPayload
+} from '@ambire-common/libs/trezor/trezor'
 import { getHdPathFromTemplate } from '@ambire-common/utils/hdPath'
 import trezorConnect, { TrezorConnect } from '@trezor/connect-webextension'
 
@@ -107,7 +110,10 @@ class TrezorController implements ExternalSignerController {
 
     if (!response.success) {
       throw new ExternalSignerError(
-        getMessageFromTrezorErrorCode(response.payload.code, response.payload.error)
+        getMessageFromTrezorErrorCode(
+          response.payload.code,
+          getTrezorErrorMessageFromPayload(response.payload)
+        )
       )
     }
 
