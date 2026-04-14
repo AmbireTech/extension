@@ -70,7 +70,7 @@ const SendForm = ({
   const { networks } = useController('NetworksController').state
 
   const [gasTankAssets, setGasTankAssets] = useState<
-    { chainId?: number; address?: string }[] | null
+    { chainId?: number; address?: string; symbol?: string }[] | null
   >(null)
 
   useEffect(() => {
@@ -80,7 +80,7 @@ const SendForm = ({
       .then((assets) => {
         const safeAssets = Array.isArray(assets)
           ? assets.filter(
-              (asset): asset is { chainId: number; address: string } =>
+              (asset): asset is { chainId: number; address: string; symbol?: string } =>
                 !!asset?.address && asset?.chainId !== undefined && asset?.chainId !== null
             )
           : []
@@ -139,7 +139,7 @@ const SendForm = ({
       new Map(
         (gasTankAssets ?? [])
           .filter(
-            (asset): asset is { chainId: number; address: string } =>
+            (asset): asset is { chainId: number; address: string; symbol?: string } =>
               !!asset.address && asset.chainId !== undefined && asset.chainId !== null
           )
           .map((asset) => [
@@ -164,7 +164,12 @@ const SendForm = ({
         )
         const network = networks.find((n) => n.chainId === BigInt(asset.chainId))
 
-        const symbol = feeToken?.symbol?.toUpperCase() ?? feeToken?.symbol
+        const symbol = (
+          feeToken?.symbol ||
+          asset.symbol ||
+          network?.nativeAssetSymbol ||
+          ''
+        ).toUpperCase()
         const networkName = network?.name ?? ''
 
         return {
