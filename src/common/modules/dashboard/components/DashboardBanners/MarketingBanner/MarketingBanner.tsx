@@ -38,6 +38,7 @@ const typeImageMap: {
 const MarketingBanner: React.FC<Props> = ({ banner }) => {
   const { isPopup } = getUiType()
   const { dispatch: bannerDispatch } = useController('BannerController')
+  const { dispatch: surveyDispatch } = useController('SurveyController')
   const { theme } = useTheme()
   const { text, title, type: bannerType = 'updates', actions } = banner
   const type = (
@@ -76,9 +77,13 @@ const MarketingBanner: React.FC<Props> = ({ banner }) => {
       ]}
       onPress={async () => {
         const action = banner.actions[0]
-        if (action?.actionName === 'survey')
-          navigate(WEB_ROUTES.survey.replace(':surveyId', action.meta.surveyId))
-        else await openInTab({ url, shouldCloseCurrentWindow: isPopup })
+        if (action?.actionName === 'survey') {
+          surveyDispatch({
+            type: 'method',
+            params: { method: 'fetchSurvey', args: [action.meta.surveyId, banner.id] }
+          })
+          navigate(WEB_ROUTES.survey)
+        } else await openInTab({ url, shouldCloseCurrentWindow: isPopup })
       }}
       {...bindAnim}
     >

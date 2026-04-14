@@ -69,7 +69,7 @@ const WEB_ROUTES = {
   recoveryPhrasesSettings: 'settings/recovery-phrases',
   safeImport: 'safe-import',
   optOuts: 'settings/opt-outs',
-  survey: 'survey/:surveyId'
+  survey: 'survey'
 }
 
 const ROUTES = { ...MOBILE_ROUTES, ...WEB_ROUTES }
