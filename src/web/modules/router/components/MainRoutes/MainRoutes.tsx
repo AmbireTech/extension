@@ -37,6 +37,7 @@ import KeyStoreEmailRecoveryScreen from '@web/modules/keystore/screens/KeyStoreE
 import KeyStoreEmailRecoverySetNewPasswordScreen from '@web/modules/keystore/screens/KeyStoreEmailRecoverySetNewPasswordScreen'
 import KeyStoreSetupScreen from '@web/modules/keystore/screens/KeyStoreSetupScreen'
 import NetworksConfiguration from '@web/modules/network-settings/screens'
+import PrivacyOptOutsConfiguration from '@web/modules/network-settings/screens/PrivacyOptOutsConfiguration'
 import NetworksScreen from '@web/modules/networks/screens'
 import ReceiveScreen from '@web/modules/receive/screens/ReceiveScreen'
 import NavMenu from '@web/modules/router/components/NavMenu'
@@ -81,6 +82,10 @@ const MainRoutes = () => {
 
       <Route element={<TabOnlyRoute />}>
         <Route path={WEB_ROUTES.networksConfiguration} element={<NetworksConfiguration />} />
+        <Route
+          path={WEB_ROUTES.privacyOptOutsConfiguration}
+          element={<PrivacyOptOutsConfiguration />}
+        />
         <Route path={WEB_ROUTES.keyStoreSetup} element={<KeyStoreSetupScreen />} />
         <Route path={WEB_ROUTES.keyStoreEmailRecovery} element={<KeyStoreEmailRecoveryScreen />} />
         <Route

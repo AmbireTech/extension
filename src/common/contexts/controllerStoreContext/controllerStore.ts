@@ -1,7 +1,7 @@
 import { flushSync } from 'react-dom'
 
-import { cloneDeep } from '@ambire-common/libs/richJson/richJson'
-import { AllControllersMappingType } from '@common/constants/controllersMapping'
+import { parse, stringify } from '@ambire-common/libs/richJson/richJson'
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 import { isExtension } from '@web/constants/browserapi'
 
 const MAX_LOADING_TIME = 10000
@@ -48,7 +48,7 @@ export class ControllerStore {
   ) {
     if (ctrl === undefined) return
     try {
-      this.#states[id] = isExtension ? { ...ctrl } : cloneDeep(ctrl)
+      this.#states[id] = isExtension ? { ...ctrl } : parse(stringify(ctrl))
     } catch (error) {
       console.error(error)
     }

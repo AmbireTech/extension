@@ -2,14 +2,9 @@ import React, { FC, memo } from 'react'
 import { Image, View } from 'react-native'
 import { SvgUri, SvgXml } from 'react-native-svg'
 
-type Props = {
-  setImageFetchFailed: React.Dispatch<React.SetStateAction<boolean>>
-  avatar: string | undefined
-  size?: number
-  borderRadius?: number
-}
+import { EnsAvatarProps } from '@common/components/Avatar/EnsAvatar/EnsAvatar'
 
-const EnsAvatar: FC<Props> = ({ avatar, setImageFetchFailed, size, borderRadius }) => {
+const EnsAvatar: FC<EnsAvatarProps> = ({ avatar, setEnsAvatarImageState, size, borderRadius }) => {
   if (!avatar) return null
 
   const isSvgDataUrl = avatar.startsWith('data:image/svg+xml')
@@ -28,7 +23,7 @@ const EnsAvatar: FC<Props> = ({ avatar, setImageFetchFailed, size, borderRadius 
         xml = decodeURIComponent(avatar.split('data:image/svg+xml,')[1]!)
       }
     } catch (e) {
-      setImageFetchFailed(true)
+      setEnsAvatarImageState('failed')
       return null
     }
 
@@ -44,7 +39,13 @@ const EnsAvatar: FC<Props> = ({ avatar, setImageFetchFailed, size, borderRadius 
   if (isSvgUrl) {
     return (
       <View style={{ width: size, height: size, borderRadius, overflow: 'hidden' }}>
-        <SvgUri uri={avatar} width={size} height={size} onError={() => setImageFetchFailed(true)} />
+        <SvgUri
+          uri={avatar}
+          width={size}
+          height={size}
+          onError={() => setEnsAvatarImageState('failed')}
+          onLoad={() => setEnsAvatarImageState('loaded')}
+        />
       </View>
     )
   }
@@ -54,7 +55,8 @@ const EnsAvatar: FC<Props> = ({ avatar, setImageFetchFailed, size, borderRadius 
       source={{ uri: avatar }}
       style={{ width: size, height: size, borderRadius }}
       resizeMode="contain"
-      onError={() => setImageFetchFailed(true)}
+      onError={() => setEnsAvatarImageState('failed')}
+      onLoad={() => setEnsAvatarImageState('loaded')}
     />
   )
 }

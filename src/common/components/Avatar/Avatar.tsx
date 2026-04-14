@@ -1,6 +1,7 @@
 import React, { FC, useEffect, useRef, useState } from 'react'
-import { Animated, ViewStyle } from 'react-native'
+import { Animated, View, ViewStyle } from 'react-native'
 
+import SkeletonLoader from '@common/components/SkeletonLoader'
 import { isBenzin, isLegends } from '@common/config/env'
 import { AvatarType } from '@common/controllers/wallet-state'
 import useController from '@common/hooks/useController'
@@ -72,7 +73,10 @@ const Avatar: FC<Props> = ({
 }) => {
   // the ENS avatar may point to an image that no longer exists or just fails to load
   // In that case we must fallback to the next avatar type
-  const [ensAvatarImageFetchFailed, setEnsAvatarImageFetchFailed] = useState(false)
+  const [ensAvatarImageState, setEnsAvatarImageState] = useState<'loading' | 'loaded' | 'failed'>(
+    'loading'
+  )
+  const ensAvatarImageFetchFailed = ensAvatarImageState === 'failed'
   // ENS Avatar
   const {
     state: { domains, loadingAddresses }
@@ -97,6 +101,20 @@ const Avatar: FC<Props> = ({
     propAvatarType
   })
   const borderRadius = size / 2
+
+  // The avatar may take too long to load
+  useEffect(() => {
+    if (avatarType === 'ens' && ensAvatar && ensAvatarImageState === 'loading') {
+      const timeout = setTimeout(() => {
+        setEnsAvatarImageState('failed')
+      }, 5000)
+
+      return () => clearTimeout(timeout)
+    }
+
+    // Stop eslint from crying
+    return undefined
+  }, [avatarType, ensAvatar, ensAvatarImageFetchFailed, ensAvatarImageState])
 
   // Pulsating animation
   const pulseAnim = useRef(new Animated.Value(1)).current
@@ -135,6 +153,17 @@ const Avatar: FC<Props> = ({
         { opacity: pulseAnim }
       ]}
     >
+      {/* The skeleton is displayed while the ENS image is loading, while the whole avatar is pulsing when we don't know
+      if the user has an ENS avatar or not. */}
+      {!isEnsLoading && avatarType === 'ens' && ensAvatarImageState === 'loading' && (
+        <SkeletonLoader
+          width={size}
+          height={size}
+          borderRadius={borderRadius}
+          appearance="secondaryBackground"
+          style={{ zIndex: -1, position: 'absolute' }}
+        />
+      )}
       {avatarType === 'jazzicons' && (
         <JazzIcon borderRadius={borderRadius} address={address} size={size} />
       )}
@@ -146,7 +175,7 @@ const Avatar: FC<Props> = ({
           size={size}
           avatar={ensAvatar}
           borderRadius={borderRadius}
-          setImageFetchFailed={setEnsAvatarImageFetchFailed}
+          setEnsAvatarImageState={setEnsAvatarImageState}
         />
       )}
       {avatarType === 'polycons' && (

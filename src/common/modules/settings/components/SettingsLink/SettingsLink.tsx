@@ -1,11 +1,12 @@
 import React, { FC } from 'react'
 import { useTranslation } from 'react-i18next'
-import { ColorValue, View, ViewStyle } from 'react-native'
+import { View, ViewStyle } from 'react-native'
 import { SvgProps } from 'react-native-svg'
 
 import LeftArrowIcon from '@common/assets/svg/LeftArrowIcon'
 import OpenIcon from '@common/assets/svg/OpenIcon'
 import Text from '@common/components/Text'
+import { isMobile, isWeb } from '@common/config/env'
 import { AnimatedPressable, useCustomHover } from '@common/hooks/useHover'
 import useNavigation from '@common/hooks/useNavigation'
 import useTheme from '@common/hooks/useTheme'
@@ -75,7 +76,8 @@ const SettingsLink: FC<Props> = ({
         flexbox.justifySpaceBetween,
         flexbox.alignCenter,
         spacings.phSm,
-        spacings.pv,
+        isWeb && spacings.pv,
+        isMobile && { height: 54 },
         isSidebarLink ? spacings.prLg : {},
         isSidebarLink ? spacings.mbMi : flexbox.flex1,
         {
@@ -110,7 +112,7 @@ const SettingsLink: FC<Props> = ({
             ...flexbox.center
           }}
         >
-          {isExternal ? (
+          {isExternal && !isMobile ? (
             <OpenIcon
               width={24}
               height={24}

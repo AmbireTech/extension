@@ -9,6 +9,7 @@ import useTheme from '@common/hooks/useTheme'
 import useWindowSize from '@common/hooks/useWindowSize'
 import { Portal } from '@gorhom/portal'
 
+import { registerDropdownDismiss, unregisterDropdownDismiss } from './dropdownDismissManager'
 import getStyles from './styles'
 
 const DROPDOWN_ITEM_HEIGHT = 40
@@ -33,6 +34,7 @@ const Dropdown: FC<Props> = ({
   const { styles, theme } = useTheme(getStyles)
   const { width: windowWidth, height: windowHeight } = useWindowSize()
   const modalRef: any = useRef(null)
+  const dropdownBoundsRef = useRef({ x: 0, y: 0, width: 0, height: 0 })
   const [internalPosition, setInternalPosition] = useState({ x: 0, y: 0 })
 
   const position = useMemo(
@@ -67,7 +69,7 @@ const Dropdown: FC<Props> = ({
     [dropdownHeight, position.y, windowHeight]
   )
 
-  // close menu on click outside
+  // close menu on click outside (web)
   useEffect(() => {
     if (!isWeb) return
     function handleClickOutside(event: MouseEvent) {
@@ -83,6 +85,23 @@ const Dropdown: FC<Props> = ({
       document.removeEventListener('mousedown', handleClickOutside)
     }
   }, [setPosition, position])
+
+  // close menu on touch outside (mobile)
+  useEffect(() => {
+    if (isWeb || !isOpen) return
+
+    registerDropdownDismiss((touchX, touchY) => {
+      const { x, y, width, height } = dropdownBoundsRef.current
+      const isInsideDropdown =
+        touchX >= x && touchX <= x + width && touchY >= y && touchY <= y + height
+
+      if (!isInsideDropdown) {
+        setPosition({ x: 0, y: 0 })
+      }
+    })
+
+    return () => unregisterDropdownDismiss()
+  }, [isOpen, setPosition])
 
   const toggleDropdown = useCallback((): void => {
     if (position.x === 0 && position.y === 0) {
@@ -143,6 +162,13 @@ const Dropdown: FC<Props> = ({
               }
             ]}
             ref={modalRef}
+            onLayout={() => {
+              modalRef.current?.measureInWindow(
+                (x: number, y: number, width: number, height: number) => {
+                  dropdownBoundsRef.current = { x, y, width, height }
+                }
+              )
+            }}
           >
             <FlatList
               data={data}
