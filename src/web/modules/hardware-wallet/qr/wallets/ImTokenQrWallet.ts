@@ -6,6 +6,7 @@ export const ImTokenQrWallet: QrWalletConfig = {
   protocol: 'ur' as const,
   label: 'imToken',
   hdPathTemplate: BIP44_STANDARD_DERIVATION_TEMPLATE,
-  relativePathTemplate: '{index}',
-  tutorialUrl: 'https://token.im' // TODO: replace it with real one
+  relativePathTemplate: '<account>',
+  tutorialUrl:
+    'https://help.ambire.com/en/articles/14483029-how-to-connect-ambire-wallet-with-imtoken'
 }
