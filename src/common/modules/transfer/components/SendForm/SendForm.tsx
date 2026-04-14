@@ -171,6 +171,11 @@ const SendForm = ({
           value: `${asset.address}.${asset.chainId}`,
           address: asset.address,
           chainId: asset.chainId,
+          extraSearchProps: {
+            symbol,
+            address: asset.address,
+            networkName
+          },
           label: (
             <View style={flexbox.flex1}>
               <Text fontSize={16} weight="medium">
@@ -211,6 +216,14 @@ const SendForm = ({
       }
     ]
   }, [isTopUp, options, gasTankAssets, networks, t])
+
+  const allFromTokenOptions = useMemo(() => {
+    if (!tokenSections) return options
+
+    const sectionItems = tokenSections.flatMap((section) => section.data)
+
+    return sectionItems as typeof options
+  }, [options, tokenSections])
 
   const handleChangeToken = useCallback(
     (value: string) => {
@@ -286,7 +299,7 @@ const SendForm = ({
       ) : (
         <SendToken
           label={t('Send token')}
-          fromTokenOptions={options}
+          fromTokenOptions={allFromTokenOptions}
           sections={tokenSections}
           renderSectionHeader={tokenSections ? renderSectionHeader : undefined}
           fromTokenValue={tokenSelectValue}
