@@ -23,7 +23,7 @@ const SurveyScreen = () => {
   const { addToast } = useToast()
   const {
     dispatch: dispatchToSurvey,
-    state: { status, questions, answers, currentQuestion, sourceBannerId }
+    state: { status, questions, answers, currentQuestion, sourceBannerId, errorMessage }
   } = useController('SurveyController')
   const { dispatch: bannerDispatch } = useController('BannerController')
 
@@ -196,6 +196,7 @@ const SurveyScreen = () => {
                   inputtedAnswer={inputtedAnswer.ans}
                   setInputtedAnswer={updateInputtedAns}
                   surveyStatus={status}
+                  errorMessage={errorMessage}
                 />
               </View>
             </View>

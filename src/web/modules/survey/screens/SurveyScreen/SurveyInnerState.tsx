@@ -19,13 +19,15 @@ interface Props {
   inputtedAnswer: number | string | null
   setInputtedAnswer: (ans: number | string) => void
   surveyStatus: SurveyController['status']
+  errorMessage: SurveyController['errorMessage']
 }
 
 const SurveyInnerState = ({
   currentQuestion,
   surveyStatus,
   inputtedAnswer,
-  setInputtedAnswer
+  setInputtedAnswer,
+  errorMessage
 }: Props) => {
   const { theme } = useTheme()
   const { t } = useTranslation()
@@ -87,11 +89,19 @@ const SurveyInnerState = ({
         openExplorerText={''}
       />
     )
-  else
+  else if (surveyStatus === 'error-submitting')
     return (
       <Failed
         title={t('We failed to send you response.')}
-        errorMessage={`Error: survey status ${surveyStatus}`}
+        errorMessage={`Error: ${errorMessage || 'unknown submitting error'}`}
+      />
+    )
+  // if (surveyStatus === 'error-fetching')
+  else
+    return (
+      <Failed
+        title={t('We failed to fetch the survey.')}
+        errorMessage={`Error: ${errorMessage || 'unknown fetching error'}`}
       />
     )
 }
