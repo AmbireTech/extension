@@ -10,7 +10,6 @@ import NetworkBadge from '@common/components/NetworkBadge'
 import ScrollableWrapper from '@common/components/ScrollableWrapper'
 import Select from '@common/components/Select'
 import Text from '@common/components/Text'
-import Toggle from '@common/components/Toggle'
 import Tooltip from '@common/components/Tooltip'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
@@ -356,12 +355,14 @@ const SignInWithEthereum = ({
             title="Safe account not enabled on this network. Please activate it from Safe Global"
           />
         )}
-        {signMessageState.signer && signMessageState.signer.key.type !== 'internal' && (
-          <HardwareWalletSigningModal
-            keyType={signMessageState.signer.key.type}
-            isVisible={signStatus === 'LOADING'}
-          />
-        )}
+        {signMessageState.signer &&
+          signMessageState.signer.key.type !== 'internal' &&
+          signMessageState.signer.key.type !== 'qr' && (
+            <HardwareWalletSigningModal
+              keyType={signMessageState.signer.key.type}
+              isVisible={signStatus === 'LOADING'}
+            />
+          )}
         {shouldDisplayLedgerConnectModal && (
           <LedgerConnectModal
             isVisible={!isLedgerConnected}
@@ -370,17 +371,20 @@ const SignInWithEthereum = ({
             displayOptionToAuthorize={false}
           />
         )}
-        {signMessageState.signer && signMessageState.signer.key.type === 'qr' && (
-          <QrSigningFlowScreen
-            isVisible={true}
-            onContinue={handleOnContinue}
-            currentRequest={currentRequest}
-            signingStep={signingStep}
-            submitSignatureResponse={handleSubmitSignatureResponse}
-            onReject={handleQrSigningFlowOnRejectPressed}
-            handleQrSigningFlowOnBackPressed={handleQrSigningFlowOnBackPressed}
-          />
-        )}
+        {signMessageState.signer &&
+          signMessageState.signer.key.type === 'qr' &&
+          currentRequest &&
+          signingStep !== 'idle' && (
+            <QrSigningFlowScreen
+              isVisible={true}
+              onContinue={handleOnContinue}
+              currentRequest={currentRequest}
+              signingStep={signingStep}
+              submitSignatureResponse={handleSubmitSignatureResponse}
+              onReject={handleQrSigningFlowOnRejectPressed}
+              handleQrSigningFlowOnBackPressed={handleQrSigningFlowOnBackPressed}
+            />
+          )}
       </View>
     </TabLayoutWrapperMainContent>
   )

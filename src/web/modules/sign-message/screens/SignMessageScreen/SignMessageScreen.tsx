@@ -15,7 +15,6 @@ import NoKeysToSignAlert from '@common/components/NoKeysToSignAlert'
 import Spinner from '@common/components/Spinner'
 import useController from '@common/hooks/useController'
 import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
-import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import ActionHeader from '@common/modules/action-requests/components/ActionHeader'
 import KeySelect from '@common/modules/sign-message/components/KeySelect'
@@ -46,7 +45,6 @@ const SignMessageScreen = () => {
   const { isLedgerConnected } = useLedger()
   const [isChooseSignerShown, setIsChooseSignerShown] = useState(false)
   const [shouldDisplayLedgerConnectModal, setShouldDisplayLedgerConnectModal] = useState(false)
-  const { theme } = useTheme()
   const {
     state: { currentUserRequest },
     dispatch: requestsDispatch

@@ -195,7 +195,7 @@ const QrConnectScreen = () => {
           />
 
           <Text fontSize={14} style={spacings.mt}>
-            {t('You can choose from a list of official QR-code supporting partners bellow.')}
+            {t('You can choose from a list of official QR-code supporting partners below.')}
           </Text>
 
           <View style={spacings.mtMd}>
