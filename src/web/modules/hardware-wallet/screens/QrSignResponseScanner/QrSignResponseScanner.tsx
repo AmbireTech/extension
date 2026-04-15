@@ -29,15 +29,15 @@ const QrSignResponseScanner = ({ onSignatureScanned, onBack }: Props) => {
 
   return (
     <View style={flexbox.center}>
-      <Text style={spacings.mbTy}>
+      <Text style={[spacings.mbSm, { textAlign: 'center' }]}>
         {t('Scan the QR code displayed on your QR-based wallet to complete the signature.')}
       </Text>
-      <View style={[flexbox.center, spacings.mtSm, { maxWidth: 300 }]}>
+      <View style={[flexbox.center, { maxWidth: 300 }]}>
         <QrScannerWithPermission
           onComplete={onSignatureScanned}
           onOpenFullScreenScanner={handleOpenOnFullScreenScanner}
         />
-        <FooterGlassView size="sm" absolute={false} style={spacings.pt}>
+        <FooterGlassView size="sm" absolute={false} style={spacings.ptSm}>
           <Button
             size="smaller"
             hasBottomSpacing={false}
