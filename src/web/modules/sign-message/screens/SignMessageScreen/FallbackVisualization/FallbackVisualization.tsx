@@ -151,8 +151,11 @@ const FallbackVisualization: FC<{
             (getMessageAsText(content.message as Hex) || t('(Empty message)'))}
         </Text>
       </ScrollView>
-      {withScrollDownArrow && (
-        <AnimatedDownArrow isVisible={!hasReachedBottom} appearance="primary" />
+      {!!containerHeight && !!contentHeight && withScrollDownArrow && (
+        <AnimatedDownArrow
+          isVisible={contentHeight > containerHeight && !hasReachedBottom}
+          appearance="primary"
+        />
       )}
       {content.kind === 'typedMessage' && (
         <MultistateToggleButton style={styles.toggleButton} states={statesForMultistateButton} />
