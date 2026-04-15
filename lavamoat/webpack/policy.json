@@ -1067,7 +1067,7 @@
       },
       "packages": {
         "node-polyfill-webpack-plugin>console-browserify": true,
-        "react-qr-reader>@zxing/library>ts-custom-error": true
+        "@keystonehq/animated-qr>@zxing/library>ts-custom-error": true
       }
     },
     "aes-js": {

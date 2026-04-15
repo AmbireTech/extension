@@ -59,7 +59,9 @@ class QrKeyIterator implements KeyIteratorInterface {
       )
     }
 
-    const walletType = parsed.walletType || 'keystone' // TODO: fix the default value
+    // Note: temporarily default to Keystone if the wallet type is not provided.
+    // We will remove the restriction in the near future.
+    const walletType = parsed.walletType || 'keystone'
     const wallet = QrWalletRegistry[walletType]
 
     if (!wallet) {
