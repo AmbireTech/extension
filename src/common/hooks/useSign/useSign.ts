@@ -405,7 +405,7 @@ const useSign = ({
 
     if (shouldDisplayLedgerConnectModal) return 'ledger-connect'
 
-    const hasActiveQrFlow = !!currentRequest || !!signingStep
+    const hasActiveQrFlow = !!currentRequest || (!!signingStep && signingStep !== 'idle')
 
     if (shouldDisplayQrSigningModal || hasActiveQrFlow) return 'qr-sign'
 
@@ -488,7 +488,7 @@ const useSign = ({
       signAccountOpState?.accountOp.signingKeyType === 'qr' ||
       signAccountOpState?.accountOp.gasFeePayment?.paidByKeyType === 'qr'
 
-    const hasActiveQrFlow = !!currentRequest || !!signingStep
+    const hasActiveQrFlow = !!currentRequest || (!!signingStep && signingStep !== 'idle')
 
     if (isExternalQr && hasActiveQrFlow) {
       setShouldDisplayQrSigningModal(true)

@@ -11,20 +11,22 @@ import flexbox from '@common/styles/utils/flexbox'
 
 type PermissionState = 'idle' | 'requesting' | 'granted' | 'error'
 
-const getCameraPermissionErrorMessage = (error: any) => {
+const getCameraPermissionErrorMessage = (error: any, t: (text: string) => string) => {
   switch (error?.name) {
     case 'NotAllowedError':
-      return 'Camera access was denied. Please allow camera access for this page in your browser settings and try again.'
+      return t(
+        'Camera access was denied. Please allow camera access for this page in your browser settings and try again.'
+      )
     case 'NotFoundError':
-      return 'No camera device was found.'
+      return t('No camera device was found.')
     case 'NotReadableError':
-      return 'The camera is unavailable or already being used by another app or browser tab.'
+      return t('The camera is unavailable or already being used by another app or browser tab.')
     case 'SecurityError':
-      return 'Camera access is only available on HTTPS or localhost.'
+      return t('Camera access is only available on HTTPS or localhost.')
     case 'AbortError':
-      return 'Camera permission request was interrupted. Please try again.'
+      return t('Camera permission request was interrupted. Please try again.')
     default:
-      return error?.message || 'Failed to request camera access.'
+      return error?.message || t('Failed to request camera access.')
   }
 }
 
@@ -48,10 +50,10 @@ const QrCameraPermissionPage = () => {
 
       setState('granted')
     } catch (e: any) {
-      setError(getCameraPermissionErrorMessage(e))
+      setError(getCameraPermissionErrorMessage(e, t))
       setState('error')
     }
-  }, [])
+  }, [t])
 
   const title = useMemo(() => {
     switch (state) {
@@ -75,9 +77,7 @@ const QrCameraPermissionPage = () => {
       case 'requesting':
         return t('Waiting for camera permission...')
       default:
-        return t(
-          'Enable camera access forever to enjoy seamless QR hardware wallet support.'
-        )
+        return t('Enable camera access forever to enjoy seamless QR hardware wallet support.')
     }
   }, [state, t, error])
 

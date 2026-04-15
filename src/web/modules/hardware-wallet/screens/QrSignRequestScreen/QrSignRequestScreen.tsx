@@ -16,8 +16,6 @@ type Props = {
   urCborHex: any
 }
 
-const FRAME_INTERVAL = 300
-
 const QrSignRequestScreen = ({ onContinue, onReject, urType, urCborHex }: Props) => {
   const { t } = useTranslation()
 
