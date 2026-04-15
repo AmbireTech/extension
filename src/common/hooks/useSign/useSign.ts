@@ -381,7 +381,9 @@ const useSign = ({
 
     if (signAccountOpState?.account.safeCreation) {
       const isBroadcast =
-        (signAccountOpState?.accountOp.signed?.length || 0) >= signAccountOpState?.threshold
+        (signAccountOpState?.accountOp.signed?.length || 0) >= signAccountOpState?.threshold ||
+        (signAccountOpState?.threshold === 1 &&
+          signAccountOpState?.accountKeyStoreKeys.length === 0)
       if (isBroadcast) {
         // the "Safe" term for broadcast is called "Execute"
         return isSignLoading ? 'Executing...' : 'Execute'
@@ -406,7 +408,8 @@ const useSign = ({
     signAccountOpState?.account.safeCreation,
     signAccountOpState?.accountOp.signed?.length,
     signAccountOpState?.threshold,
-    showSafeSigners
+    showSafeSigners,
+    signAccountOpState?.accountKeyStoreKeys.length
   ])
 
   // When being done, there is a corner case if the sign succeeds, but the broadcast fails.
