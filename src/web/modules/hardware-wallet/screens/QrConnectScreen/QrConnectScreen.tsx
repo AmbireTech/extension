@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { Animated, Linking, TouchableOpacity, View } from 'react-native'
+import { Animated, ColorValue, Linking, View } from 'react-native'
 
 import DiagonalRightArrowIcon from '@common/assets/svg/DiagonalRightArrowIcon'
 import OpenIcon from '@common/assets/svg/OpenIcon'
@@ -21,6 +21,61 @@ import QrScannerWithPermission from '@web/modules/hardware-wallet/screens/QrScan
 
 const VISIBLE_WALLETS_COUNT = 2
 const QR_WALLET_ROW_HEIGHT = 56
+
+const TutorialLink = React.memo(
+  ({
+    tutorialUrl,
+    onOpenTutorial,
+    iconColor,
+    hoverBackgroundColor,
+    t
+  }: {
+    tutorialUrl?: string
+    onOpenTutorial: (tutorialUrl?: string) => void
+    iconColor: ColorValue
+    hoverBackgroundColor: string
+    t: (text: string) => string
+  }) => {
+    const [bindTutorialHover, tutorialHoverStyle] = useMultiHover({
+      values: [
+        {
+          property: 'backgroundColor',
+          from: hexToRgba(hoverBackgroundColor, 0),
+          to: hoverBackgroundColor
+        },
+        {
+          property: 'opacity',
+          from: tutorialUrl ? 1 : 0.6,
+          to: 0.75
+        }
+      ]
+    })
+
+    return (
+      <AnimatedPressable
+        disabled={!tutorialUrl}
+        onPress={() => onOpenTutorial(tutorialUrl)}
+        style={[
+          flexbox.directionRow,
+          flexbox.alignCenter,
+          {
+            opacity: tutorialHoverStyle.opacity as any,
+            backgroundColor: tutorialHoverStyle.backgroundColor as any,
+            borderRadius: 8,
+            ...spacings.phTy,
+            ...spacings.pvMi
+          }
+        ]}
+        {...bindTutorialHover}
+      >
+        <Text fontSize={14} weight="medium" appearance="secondaryText" style={spacings.mrTy}>
+          {t('Tutorial')}
+        </Text>
+        <OpenIcon color={iconColor} width={18} height={18} />
+      </AnimatedPressable>
+    )
+  }
+)
 
 const QrConnectScreen = () => {
   const { theme } = useTheme()
@@ -157,17 +212,13 @@ const QrConnectScreen = () => {
           {wallet.label}
         </Text>
 
-        <TouchableOpacity
-          disabled={!wallet.tutorialUrl}
-          onPress={() => handleOpenTutorial(wallet.tutorialUrl)}
-        >
-          <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-            <Text fontSize={14} weight="medium" appearance="secondaryText" style={spacings.mrTy}>
-              {t('Tutorial')}
-            </Text>
-            <OpenIcon color={theme.iconPrimary} width={18} height={18} />
-          </View>
-        </TouchableOpacity>
+        <TutorialLink
+          tutorialUrl={wallet.tutorialUrl}
+          onOpenTutorial={handleOpenTutorial}
+          iconColor={theme.iconPrimary}
+          hoverBackgroundColor={theme.secondaryBackground as string}
+          t={t}
+        />
       </View>
     ),
     [handleOpenTutorial, t, theme.iconPrimary]
