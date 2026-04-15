@@ -1,4 +1,4 @@
-import { FC } from 'react'
+import { FC, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import BottomSheet from '@common/components/BottomSheet'
@@ -48,6 +48,22 @@ const Modals: FC<ModalsProps> = ({
   } = useController('TransferController')
   const { state: currentSignAccountOp, dispatch: signAccountOpDispatch } =
     useController('SignAccountOpController')
+  const transactionProgress = useMemo(() => {
+    const totalTransactions = signAccountOpState?.accountOp?.calls?.length || 0
+    const signedTransactionsCount = signAccountOpState?.signedTransactionsCount
+
+    if (
+      totalTransactions <= 1 ||
+      typeof signedTransactionsCount !== 'number' ||
+      signedTransactionsCount < 0
+    )
+      return null
+
+    return {
+      current: Math.min(signedTransactionsCount, totalTransactions),
+      total: totalTransactions
+    }
+  }, [signAccountOpState?.accountOp?.calls?.length, signAccountOpState?.signedTransactionsCount])
 
   if (renderedButNotNecessarilyVisibleModal === 'warnings') {
     return (
@@ -112,6 +128,7 @@ const Modals: FC<ModalsProps> = ({
         onContinue={handleQrSingingFlowOnContinuePressed}
         currentRequest={currentRequest}
         signingStep={signingStep}
+        transactionProgress={transactionProgress}
         submitSignatureResponse={handleQrSigningFlowSubmitSignatureResponse}
         onReject={handleQrSigningFlowOnRejectPressed}
         handleQrSigningFlowOnBackPressed={handleQrSigningFlowOnBackPressed}

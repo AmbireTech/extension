@@ -14,9 +14,19 @@ type Props = {
   onReject: () => void
   urType: any
   urCborHex: any
+  transactionProgress?: {
+    current: number
+    total: number
+  } | null
 }
 
-const QrSignRequestScreen = ({ onContinue, onReject, urType, urCborHex }: Props) => {
+const QrSignRequestScreen = ({
+  onContinue,
+  onReject,
+  urType,
+  urCborHex,
+  transactionProgress = null
+}: Props) => {
   const { t } = useTranslation()
 
   return (
@@ -24,6 +34,12 @@ const QrSignRequestScreen = ({ onContinue, onReject, urType, urCborHex }: Props)
       <Text>{t('Scan this QR code with your QR-based device to sign.')}</Text>
       <View style={[flexbox.center, spacings.mtSm]}>
         <AnimatedQRCode options={{ size: 300 }} type={urType} cbor={urCborHex} />
+        {transactionProgress ? (
+          <Text fontSize={14} weight="medium" style={spacings.mtLg}>
+            {transactionProgress.current} / {transactionProgress.total}{' '}
+            {transactionProgress.current <= 1 ? t('transaction signed') : t('transactions signed')}
+          </Text>
+        ) : null}
         <FooterGlassView size="sm" absolute={false} style={spacings.pt}>
           <Button
             size="smaller"

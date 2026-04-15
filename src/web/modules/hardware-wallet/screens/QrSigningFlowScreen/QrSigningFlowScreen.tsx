@@ -23,6 +23,10 @@ type Props = {
   handleClose?: () => void
   currentRequest: QrRequest | null
   signingStep: QrSigningStep
+  transactionProgress?: {
+    current: number
+    total: number
+  } | null
   onContinue: () => void
   submitSignatureResponse: (payload: string | Uint8Array) => void
   onReject: () => void
@@ -34,6 +38,7 @@ const QrSigningFlowScreen = ({
   handleClose = () => {},
   currentRequest,
   signingStep,
+  transactionProgress = null,
   onContinue,
   submitSignatureResponse,
   onReject,
@@ -98,6 +103,7 @@ const QrSigningFlowScreen = ({
           urCborHex={request.urCborHex}
           onContinue={onContinue}
           onReject={handleOnRejectPressed}
+          transactionProgress={transactionProgress}
         />
       ) : step === 'scan-response' ? (
         <QrSignResponseScanner
