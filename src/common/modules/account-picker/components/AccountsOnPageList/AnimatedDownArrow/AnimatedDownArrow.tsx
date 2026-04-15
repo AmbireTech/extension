@@ -6,7 +6,10 @@ import useTheme from '@common/hooks/useTheme'
 
 import getStyles from './styles'
 
-const AnimatedDownArrow: FC<{ isVisible: boolean }> = ({ isVisible }) => {
+const AnimatedDownArrow: FC<{ isVisible: boolean; appearance?: 'secondary' | 'primary' }> = ({
+  isVisible,
+  appearance = 'secondary'
+}) => {
   const bottom = useRef(new Animated.Value(0)).current
   const { styles } = useTheme(getStyles)
 
@@ -33,7 +36,9 @@ const AnimatedDownArrow: FC<{ isVisible: boolean }> = ({ isVisible }) => {
 
   return (
     <Animated.View style={[styles.container, { bottom }]}>
-      <View style={styles.iconContainer}>
+      <View
+        style={[styles.iconContainer, appearance === 'primary' ? styles.primary : styles.secondary]}
+      >
         <DownArrowIcon />
       </View>
     </Animated.View>

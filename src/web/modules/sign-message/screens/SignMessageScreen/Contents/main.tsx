@@ -46,7 +46,7 @@ const Main = ({
   const { state: signMessageState, dispatch: signMessageDispatch } =
     useController('SignMessageController')
   const signStatus = signMessageState.statuses.sign
-  const { styles, theme, themeType } = useTheme(getStyles)
+  const { styles, theme } = useTheme(getStyles)
   const { responsiveSizeMultiplier } = useResponsiveActionWindow()
   const { minHeightSize } = useWindowSize()
   const { networks } = useController('NetworksController').state
@@ -184,6 +184,7 @@ const Main = ({
                 hasReachedBottom={!!hasReachedBottom}
                 messageToSign={signMessageState.messageToSign}
                 responsiveSizeMultiplier={responsiveSizeMultiplier}
+                withScrollDownArrow
               />
             }
           >
