@@ -45,6 +45,7 @@ import TabOnlyRoute from '@web/modules/router/components/TabOnlyRoute'
 import { SettingsRoutesProvider } from '@web/modules/settings/contexts/SettingsRoutesContext'
 import AboutSettingsScreen from '@web/modules/settings/screens/AboutSettingsScreen'
 import AccountsSettingsScreen from '@web/modules/settings/screens/AccountsSettingsScreen'
+import ApprovalsSettingsScreen from '@web/modules/settings/screens/ApprovalsSettingsScreen'
 import AddressBookSettingsScreen from '@web/modules/settings/screens/AddressBookSettingsScreen'
 import DevicePasswordChangeSettingsScreen from '@web/modules/settings/screens/DevicePasswordChangeSettingsScreen'
 import DevicePasswordRecoverySettingsScreen from '@web/modules/settings/screens/DevicePasswordRecoverySettingsScreen'
@@ -158,6 +159,7 @@ const MainRoutes = () => {
                 element={<DevicePasswordRecoverySettingsScreen />}
               />
               <Route path={WEB_ROUTES.optOuts} element={<OptOutsScreen />} />
+              <Route path={WEB_ROUTES.approvals} element={<ApprovalsSettingsScreen />} />
               <Route path={WEB_ROUTES.manageTokens} element={<ManageTokensSettingsScreen />} />
               <Route path={WEB_ROUTES.addressBook} element={<AddressBookSettingsScreen />} />
               <Route path={WEB_ROUTES.settingsTerms} element={<TermsSettingsScreen />} />

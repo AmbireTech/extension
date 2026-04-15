@@ -65,6 +65,7 @@ const WEB_ROUTES = {
   devicePasswordChange: 'settings/device-password-change',
   devicePasswordRecovery: 'settings/device-password-recovery',
   addressBook: 'settings/address-book',
+  approvals: 'settings/approvals',
   manageTokens: 'settings/manage-tokens',
   recoveryPhrasesSettings: 'settings/recovery-phrases',
   safeImport: 'safe-import',

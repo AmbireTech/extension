@@ -354,6 +354,11 @@ const routesConfig: RouteConfig = {
     title: Platform.select({ default: i18n.t('Manage Tokens') }),
     name: Platform.select({ default: i18n.t('Manage Tokens') })
   },
+  [ROUTES.approvals]: {
+    route: ROUTES.approvals,
+    title: Platform.select({ default: i18n.t('Approvals') }),
+    name: Platform.select({ default: i18n.t('Approvals') })
+  },
   [ROUTES.addressBook]: {
     route: ROUTES.addressBook,
     title: Platform.select({ default: i18n.t('Address Book') }),

@@ -6,6 +6,7 @@ import AccountsIcon from '@common/assets/svg/AccountsIcon'
 import AddressBookIcon from '@common/assets/svg/AddressBookIcon'
 import AmbireLogoSquare from '@common/assets/svg/AmbireLogoSquare'
 import BugIcon from '@common/assets/svg/BugIcon'
+import CheckedListIcon from '@common/assets/svg/CheckedListIcon'
 import CustomTokensIcon from '@common/assets/svg/CustomTokensIcon'
 import DashboardIcon from '@common/assets/svg/DashboardIcon'
 import HelpIcon from '@common/assets/svg/HelpIcon'
@@ -92,6 +93,12 @@ export const SETTINGS_LINKS = [
     Icon: PrivacyIcon,
     label: 'Privacy opt-outs',
     path: ROUTES.optOuts
+  },
+  {
+    key: 'approvals',
+    Icon: CheckedListIcon,
+    label: 'Approvals',
+    path: ROUTES.approvals
   },
   // Disabled for now - will be added in future releases
   // {
