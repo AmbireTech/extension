@@ -11,6 +11,7 @@ import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import { AnimatedPressable, useMultiHover } from '@common/hooks/useHover'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
+import useWindowSize from '@common/hooks/useWindowSize'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
 import spacings from '@common/styles/spacings'
 import { hexToRgba } from '@common/styles/utils/common'
@@ -21,6 +22,8 @@ import QrScannerWithPermission from '@web/modules/hardware-wallet/screens/QrScan
 
 const VISIBLE_WALLETS_COUNT = 2
 const QR_WALLET_ROW_HEIGHT = 56
+const BASE_SCANNER_SIZE = 290
+const MIN_SCANNER_SIZE = 220
 
 const TutorialLink = React.memo(
   ({
@@ -83,6 +86,7 @@ const QrConnectScreen = () => {
   const { dispatch } = useControllersMiddleware()
   const { addToast } = useToast()
   const { goToNextRoute, goToPrevRoute } = useOnboardingNavigation()
+  const { height } = useWindowSize()
   const { initParams, type } = useController('AccountPickerController').state
   const mainCtrlState = useController('MainController').state
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -97,6 +101,11 @@ const QrConnectScreen = () => {
   const hiddenWallets = useMemo(() => qrWallets.slice(VISIBLE_WALLETS_COUNT), [qrWallets])
 
   const hiddenContentHeight = hiddenWallets.length * QR_WALLET_ROW_HEIGHT
+  const scannerSize = useMemo(
+    () => Math.max(MIN_SCANNER_SIZE, Math.min(BASE_SCANNER_SIZE, height - 470)),
+    [height]
+  )
+  const scannerScale = scannerSize / BASE_SCANNER_SIZE
 
   const animatedContainerHeight = useMemo(
     () =>
@@ -221,7 +230,7 @@ const QrConnectScreen = () => {
         />
       </View>
     ),
-    [handleOpenTutorial, t, theme.iconPrimary]
+    [handleOpenTutorial, t, theme.iconPrimary, theme.secondaryBackground]
   )
 
   return (
@@ -237,13 +246,32 @@ const QrConnectScreen = () => {
           <Text fontSize={14} style={[spacings.mbSm, { textAlign: 'center' }]}>
             {t('Scan the QR code exported by your hardware wallet.')}
           </Text>
-          <QrScannerWithPermission
-            key={scannerKey}
-            onComplete={onQrComplete}
-            disabled={isSubmitting}
-            externalError={scanError}
-            onExternalRetry={onResetScannerPress}
-          />
+          <View
+            style={{
+              width: scannerSize,
+              height: scannerSize,
+              alignSelf: 'center',
+              overflow: 'hidden'
+            }}
+          >
+            <View
+              style={{
+                width: BASE_SCANNER_SIZE,
+                height: BASE_SCANNER_SIZE,
+                transform: [{ scale: scannerScale }],
+                marginTop: -((BASE_SCANNER_SIZE - scannerSize) / 2),
+                marginLeft: -((BASE_SCANNER_SIZE - scannerSize) / 2)
+              }}
+            >
+              <QrScannerWithPermission
+                key={scannerKey}
+                onComplete={onQrComplete}
+                disabled={isSubmitting}
+                externalError={scanError}
+                onExternalRetry={onResetScannerPress}
+              />
+            </View>
+          </View>
 
           <Text fontSize={14} style={spacings.mt}>
             {t('You can choose from a list of official QR-code supporting partners below.')}
