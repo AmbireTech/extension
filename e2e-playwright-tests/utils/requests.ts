@@ -33,6 +33,7 @@ function categorizeRequests(requests: string[]) {
     'base-mainnet.public.blastapi.io',
     'rpc.monad.xyz',
     'api.gelato.cloud',
+    'ledger.com',
     // Token images
     'static.debank.com'
   ]
