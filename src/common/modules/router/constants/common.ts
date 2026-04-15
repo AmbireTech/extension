@@ -29,7 +29,8 @@ const COMMON_ROUTES = {
   generalSettings: 'settings/general',
   accountsSettings: 'settings/accounts',
   settingsAbout: 'settings/about',
-  settingsTerms: 'settings/terms'
+  settingsTerms: 'settings/terms',
+  apps: 'apps'
 }
 
 const MOBILE_ROUTES = {
@@ -46,7 +47,6 @@ const WEB_ROUTES = {
   swap: 'swap',
   noConnection: 'no-connection',
   accounts: 'accounts',
-  apps: 'apps',
   keyStoreEmailRecovery: 'extension-password-email-recovery',
   keyStoreEmailRecoverySetNewPassword: 'set-new-extension-password',
   getEncryptionPublicKeyRequest: 'get-encryption-public-key-request',

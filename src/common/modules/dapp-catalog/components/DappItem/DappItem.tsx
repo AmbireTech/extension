@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 
 import { Dapp } from '@ambire-common/interfaces/dapp'
+import { isMobile } from '@common/config/env'
 import ConnectedIcon from '@common/assets/svg/ConnectedIcon'
 import SettingsWheelIcon from '@common/assets/svg/SettingsWheelIcon'
 import StarIcon from '@common/assets/svg/StarIcon'
@@ -98,13 +99,18 @@ const DappItem = (dapp: Dapp) => {
     [name, getInitials, styles.fallbackWrapper, theme.infoText]
   )
 
+  const Container = isMobile ? View : 'div'
+  const containerProps = isMobile
+    ? { style: flexbox.flex1 }
+    : {
+        style: { display: 'flex', flex: 1 },
+        onMouseEnter: () => setHovered(true),
+        onMouseLeave: () => setHovered(false)
+      }
+
   return (
     <View testID="dapp-wrapper" style={styles.dappItemWrapper}>
-      <div
-        style={{ display: 'flex', flex: 1 }}
-        onMouseEnter={() => setHovered(true)}
-        onMouseLeave={() => setHovered(false)}
-      >
+      <Container {...(containerProps as any)}>
         <AnimatedPressable
           style={[styles.container, animStyle]}
           onPress={() => openInTab({ url })}
@@ -272,7 +278,7 @@ const DappItem = (dapp: Dapp) => {
             {description}
           </Text>
         </AnimatedPressable>
-      </div>
+      </Container>
       <ManageApp
         isOpen={isManageAppOpen}
         setIsOpen={setIsManageAppOpen}

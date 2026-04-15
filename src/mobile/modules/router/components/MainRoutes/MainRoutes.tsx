@@ -16,6 +16,7 @@ import ImportSmartAccountJsonScreen from '@mobile/modules/auth/screens/ImportSma
 import PrivateKeyImportScreen from '@mobile/modules/auth/screens/PrivateKeyImportScreen'
 import SeedPhraseImportScreen from '@mobile/modules/auth/screens/SeedPhraseImportScreen'
 import ViewOnlyAccountAdderScreen from '@mobile/modules/auth/screens/ViewOnlyAccountAdderScreen'
+import DappCatalogScreen from '@mobile/modules/dapp-catalog/screens/DappCatalogScreen'
 import LedgerConnectScreen from '@mobile/modules/hardware-wallet/screens/LedgerConnectScreen'
 import KeyStoreSetupScreen from '@mobile/modules/keystore/screens/KeyStoreSetupScreen'
 import NetworksScreen from '@mobile/modules/networks/screens'
@@ -68,6 +69,7 @@ const MainRoutes = () => {
           <Route path={ROUTES.accountsSettings} element={<AccountsSettingsScreen />} />
           <Route path={ROUTES.settingsAbout} element={<AboutSettingsScreen />} />
           <Route path={ROUTES.settingsTerms} element={<TermsSettingsScreen />} />
+          <Route path={ROUTES.apps} element={<DappCatalogScreen />} />
         </Route>
       </Route>
       {/* Fallback route to suppress "No routes matched location" warnings when multiple Routes blocks are rendered */}
