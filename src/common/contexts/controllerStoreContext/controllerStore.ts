@@ -5,7 +5,7 @@ import { isMobile } from '@common/config/env'
 import { isExtension } from '@web/constants/browserapi'
 
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
-const MAX_LOADING_TIME = 10000
+export const CONTROLLER_STORE_MAX_LOADING_TIME = 10000
 
 export class ControllerStore {
   isReady = false
@@ -27,7 +27,7 @@ export class ControllerStore {
       if (!this.isReady && this.#listeners.has('events')) {
         this.#listeners.get('events')!.forEach((cb) => cb('controllersLoadingTakingTooLong'))
       }
-    }, MAX_LOADING_TIME)
+    }, CONTROLLER_STORE_MAX_LOADING_TIME)
   }
 
   // Track which controllers have received their first update

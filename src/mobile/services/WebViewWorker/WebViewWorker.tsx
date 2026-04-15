@@ -6,6 +6,7 @@ import { WebView } from 'react-native-webview'
 import * as richJson from '@ambire-common/libs/richJson/richJson'
 import eventBus from '@common/services/event/eventBus'
 import { storage } from '@common/services/storage'
+import { CONTROLLER_STORE_MAX_LOADING_TIME } from '@common/contexts/controllerStoreContext/controllerStore'
 import { WEBVIEW_DEV_HOST } from '@env'
 
 // In production, the bundle is inlined via the JSON import.
@@ -62,16 +63,45 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, {}>((_, ref) => {
   const [isReady, setIsReady] = useState(false)
   const isReadyRef = useRef(false)
   const initResolver = useRef<((ctrls: string[]) => void) | null>(null)
+  const initReadyWarningTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const pendingConfig = useRef<any>(null)
   // Stores the last config so we can re-send it when the WebView reloads (dev HMR/live reload)
   const lastConfig = useRef<any>(null)
   // Incrementing the key forces a full WebView remount (used for Android dev reload)
   const [webviewKey, setWebviewKey] = useState(0)
+  const devUrl = getDevServerUrl()
+
+  const clearInitWarningTimeout = () => {
+    if (initReadyWarningTimeoutRef.current) {
+      clearTimeout(initReadyWarningTimeoutRef.current)
+      initReadyWarningTimeoutRef.current = null
+    }
+  }
+
+  const scheduleInitWarningTimeout = () => {
+    if (!__DEV__) return
+    clearInitWarningTimeout()
+    initReadyWarningTimeoutRef.current = setTimeout(() => {
+      if (initResolver.current && !isReadyRef.current) {
+        console.warn(
+          `[WebViewWorker] Controllers are not ready after ${CONTROLLER_STORE_MAX_LOADING_TIME}ms. ` +
+            `Actions may be dropped. Dev host: ${devUrl}. ` +
+            `If you are developing locally, ensure the webview dev server is running.`
+        )
+      }
+    }, CONTROLLER_STORE_MAX_LOADING_TIME)
+  }
 
   useImperativeHandle(ref, () => ({
     dispatch: (action: any) => {
       if (!isReadyRef.current) {
-        console.warn('[Native] WebViewWorker NOT READY. Dropping action:', action.type)
+        const devHint = __DEV__
+          ? ` Dev host: ${devUrl}. Ensure webview dev server is running if controllers did not load.`
+          : ''
+        console.warn(
+          `[Native] WebViewWorker NOT READY. Dropping action: ${action?.type || 'unknown'}.` +
+            ` isLoaded=${isLoaded} isReady=${isReadyRef.current}.${devHint}`
+        )
         return
       }
       const payload = richJson.stringify({ type: 'dispatchAction', action })
@@ -91,6 +121,7 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, {}>((_, ref) => {
       lastConfig.current = config
       return new Promise((resolve) => {
         initResolver.current = resolve
+        scheduleInitWarningTimeout()
         if (isLoaded) {
           console.log('[WebViewWorker] WebView already loaded, sending init immediately')
           webviewRef.current?.injectJavaScript(`
@@ -151,6 +182,7 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, {}>((_, ref) => {
           break
 
         case 'system.ready':
+          clearInitWarningTimeout()
           isReadyRef.current = true
           setIsReady(true)
           if (initResolver.current) {
@@ -251,8 +283,6 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, {}>((_, ref) => {
         true;
       `)
   }
-
-  const devUrl = getDevServerUrl()
 
   // --- Build the WebView source per mode ---
   //
@@ -370,13 +400,20 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, {}>((_, ref) => {
       onError={(syntheticEvent) => {
         if (__DEV__) {
           const { nativeEvent } = syntheticEvent
-          console.warn('[WebViewWorker] WebView Error:', nativeEvent)
+          console.warn(
+            `[WebViewWorker] WebView Error (dev host: ${devUrl}). If the dev webview server is down, start it and reload the app.`,
+            nativeEvent
+          )
         }
       }}
       onHttpError={(syntheticEvent) => {
         if (__DEV__) {
           const { nativeEvent } = syntheticEvent
-          console.warn('[WebViewWorker] WebView HTTP Error:', nativeEvent)
+          console.warn(
+            `[WebViewWorker] WebView HTTP Error (dev host: ${devUrl}). ` +
+              `This usually means the dev webview server is not started.`,
+            nativeEvent
+          )
         }
       }}
       javaScriptEnabled={true}
