@@ -92,7 +92,8 @@ const SurveyInnerState = ({
   else if (surveyStatus === 'error-submitting')
     return (
       <Failed
-        title={t('We failed to send you response.')}
+        alertStyle={{ maxWidth: '100%' }}
+        title={t('We failed to send your response.')}
         errorMessage={`Error: ${errorMessage || 'unknown submitting error'}`}
       />
     )
@@ -100,6 +101,7 @@ const SurveyInnerState = ({
   else
     return (
       <Failed
+        alertStyle={{ maxWidth: '100%' }}
         title={t('We failed to fetch the survey.')}
         errorMessage={`Error: ${errorMessage || 'unknown fetching error'}`}
       />

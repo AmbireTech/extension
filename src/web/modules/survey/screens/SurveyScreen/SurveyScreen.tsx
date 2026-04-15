@@ -188,7 +188,7 @@ const SurveyScreen = () => {
             <View style={[flexbox.alignCenter, spacings.mb]}>
               <PanelTitle title={'Survey'} />
             </View>
-            <View style={[spacings.mh4Xl, spacings.mtMd]}>
+            <View style={[spacings.mh2Xl, spacings.mtMd]}>
               <ProgressBar percentageDone={percentageDone} />
               <View style={[spacings.mtLg]}>
                 <SurveyInnerState
