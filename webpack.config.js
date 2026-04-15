@@ -13,11 +13,11 @@ const expoEnv = require('@expo/webpack-config/env')
 const NodePolyfillPlugin = require('node-polyfill-webpack-plugin')
 const MiniCssExtractPlugin = require('mini-css-extract-plugin')
 const LavaMoatPlugin = require('@lavamoat/webpack')
-const { exclude: lavamoatExclude } = require('@lavamoat/webpack')
 const { validateEnvVariables } = require('./scripts/validateEnv')
 const appJSON = require('./app.json')
 const AssetReplacePlugin = require('./plugins/AssetReplacePlugin')
 const createLavamoatUnsafeLayerPlugin = require('./lavamoat/plugins/lavamoat-unsafe-layer-plugin')
+const createLavamoatUnsafePackagesPlugin = require('./lavamoat/plugins/lavamoat-unsafe-packages-plugin')
 const LavamoatIgnoredModulesVerifyPlugin = require('./lavamoat/plugins/lavamoat-ignored-modules-verify-plugin')
 
 // Entries that run outside LavaMoat protection.
@@ -532,16 +532,8 @@ module.exports = async function (env, argv) {
     // This must stay in sync with runtimeConfigurationPerChunk_experimental above.
     if (enableLavaMoat) {
       config.plugins.push(createLavamoatUnsafeLayerPlugin(LAVAMOAT_UNSAFE_ENTRIES))
-
-      // Exclude `react-fast-compare from LavaMoat Compartment wrapping.
-      // The module is a pure equality-check utility with no access to privileged APIs.
-      // Inside a Compartment the with(scopeProxy){} wrapper prevents V8 from JIT-compiling
-      // its recursive traversal, making every deep-equality check significantly slower.
-      config.module.rules.push({
-        test: /\.(js|cjs|mjs)$/,
-        resource: /node_modules[\\/]react-fast-compare/,
-        use: lavamoatExclude
-      })
+      // Packages in lavamoat/webpack/unsafe-packages.json: no Compartment wrap (see plugin header).
+      config.plugins.push(createLavamoatUnsafePackagesPlugin())
     }
 
     if (isWebkit) {
