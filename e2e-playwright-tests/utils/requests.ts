@@ -34,6 +34,7 @@ function categorizeRequests(requests: string[]) {
     'rpc.monad.xyz',
     'api.gelato.cloud',
     'ledger.com',
+    'citrea.xyz',
     // Token images
     'static.debank.com'
   ]
