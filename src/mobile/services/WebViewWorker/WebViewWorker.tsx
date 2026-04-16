@@ -207,6 +207,14 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, {}>((_, ref) => {
           console.log(data.payload.log)
           break
 
+        case 'action.addToast':
+          eventBus.emit('addToast', data.payload)
+          break
+
+        case 'action.receiveOneTimeData':
+          eventBus.emit('receiveOneTimeData', data.payload)
+          break
+
         // --- PROXY HANDLERS FOR STORAGE ---
         case 'storage.get':
           const getVal = await storage.get(data.payload.key, data.payload.defaultValue)
