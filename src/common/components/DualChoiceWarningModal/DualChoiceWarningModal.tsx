@@ -119,7 +119,7 @@ const DualChoiceWarningModal = ({
         {!!description && <Text text={description} type={type} />}
         {children}
       </ContentWrapper>
-      <ButtonWrapper reverse={false}>
+      <ButtonWrapper reverse={true}>
         <Button
           text={primaryButtonText}
           onPress={onPrimaryButtonPress}
@@ -137,7 +137,7 @@ const DualChoiceWarningModal = ({
             accentColor={theme.secondaryText}
             size={isMobile ? 'regular' : 'smaller'}
             {...secondaryButtonProps}
-            style={[isWeb && spacings.mlLg, secondaryButtonProps?.style as ViewStyle | undefined]}
+            style={[isWeb && spacings.mrLg, secondaryButtonProps?.style as ViewStyle | undefined]}
           />
         )}
       </ButtonWrapper>

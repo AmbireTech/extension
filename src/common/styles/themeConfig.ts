@@ -4,6 +4,15 @@ import { ACCENT_PRIMITIVES, FEEDBACK_PRIMITIVES, NEUTRAL_PRIMITIVES } from './th
 import { THEME_TYPES, ThemeType } from './theme/types'
 import { hexToRgba } from './utils/common'
 
+/**
+ * Theme color configuration for the application.
+ *
+ * To determine the color of an element:
+ * 1. Identify the color in Figma (e.g., "grey/300 bg 1")
+ * 2. Map design color to theme prefix (grey → neutral, purple → primaryAccent, etc.)
+ * 3. Find the semantic token in this object (prefer over primitives) (e.g., primaryBackground)
+ * 4. Fall back to primitives if no semantic token exists
+ */
 const ThemeColors = {
   ...NEUTRAL_PRIMITIVES,
   ...ACCENT_PRIMITIVES,

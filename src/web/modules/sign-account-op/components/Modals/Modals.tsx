@@ -12,7 +12,7 @@ import { getUiType } from '@common/utils/uiType'
 import LedgerConnectModal from '@web/modules/hardware-wallet/components/LedgerConnectModal'
 import QrSigningFlowScreen from '@web/modules/hardware-wallet/screens/QrSigningFlowScreen'
 
-const { isTab } = getUiType()
+const { isTab, isRequestWindow } = getUiType()
 
 const Modals: FC<ModalsProps> = ({
   renderedButNotNecessarilyVisibleModal,
@@ -71,7 +71,7 @@ const Modals: FC<ModalsProps> = ({
         id="warning-modal"
         closeBottomSheet={!slowPaymasterRequest ? dismissWarning : undefined}
         sheetRef={warningModalRef}
-        type={isTab ? 'modal' : 'bottom-sheet'}
+        type={isTab || isRequestWindow ? 'modal' : 'bottom-sheet'}
         withBackdropBlur={false}
         shouldBeClosableOnDrag={false}
         autoOpen={autoOpen === 'warnings'}

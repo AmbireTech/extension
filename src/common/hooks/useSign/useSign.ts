@@ -430,7 +430,8 @@ const useSign = ({
       const isBroadcast =
         (signAccountOpState?.accountOp.signed?.length || 0) >= signAccountOpState?.threshold
       if (isBroadcast) {
-        return isSignLoading ? 'Broadcasting...' : 'Broadcast'
+        // the "Safe" term for broadcast is called "Execute"
+        return isSignLoading ? 'Executing...' : 'Execute'
       }
 
       // always use the default state of Safes
