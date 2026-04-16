@@ -53,12 +53,39 @@ const QrScannerWithPermission = ({
   const [scannerKey, setScannerKey] = useState(0)
   const [showFullScreenFallback, setShowFullScreenFallback] = useState(false)
 
-  const handleRetry = useCallback(() => {
+  const resetScanner = useCallback(() => {
     hasActiveErrorRef.current = false
     setCameraError(null)
     setShowFullScreenFallback(false)
     setScannerKey((k) => k + 1)
   }, [])
+
+  const handleRetry = useCallback(async () => {
+    // Try to re-trigger browser camera permission when possible.
+    // Some browsers won't show it again if permission is blocked.
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: true,
+        audio: false
+      })
+      stream.getTracks().forEach((track) => track.stop())
+    } catch (e: any) {
+      const normalizedMessage =
+        (typeof e?.message === 'string' && e.message.trim()) ||
+        t('Failed to start camera. Please try again.')
+
+      setCameraError({
+        message: normalizedMessage,
+        rawError: e
+      })
+      setShowFullScreenFallback(
+        isPopup && !!onOpenFullScreenScanner && shouldUseFullScreenFallback(normalizedMessage, e)
+      )
+      return
+    }
+
+    resetScanner()
+  }, [isPopup, onOpenFullScreenScanner, resetScanner, t])
 
   const handleComplete = useCallback(
     (payload: Uint8Array) => {
@@ -123,6 +150,11 @@ const QrScannerWithPermission = ({
     return cameraError.message
   }, [cameraError, isPopup, showFullScreenFallback, t])
 
+  const isPermissionBlocked = useMemo(() => {
+    if (!cameraError) return false
+    return shouldUseFullScreenFallback(cameraError.message, cameraError.rawError)
+  }, [cameraError])
+
   if (showFullScreenFallback) {
     return (
       <View
@@ -166,14 +198,16 @@ const QrScannerWithPermission = ({
         >
           {message}
         </Text>
-        <FooterGlassView size="sm" absolute={false} style={spacings.pv}>
-          <Button
-            size="small"
-            hasBottomSpacing={false}
-            text={t('Open full-screen')}
-            onPress={onOpenFullScreenScanner}
-          />
-        </FooterGlassView>
+        {!!onOpenFullScreenScanner && (
+          <FooterGlassView size="sm" absolute={false} style={spacings.pv}>
+            <Button
+              size="small"
+              hasBottomSpacing={false}
+              text={t('Open full-screen')}
+              onPress={onOpenFullScreenScanner}
+            />
+          </FooterGlassView>
+        )}
       </View>
     )
   }
@@ -225,14 +259,26 @@ const QrScannerWithPermission = ({
             {cameraError ? message : externalError}
           </Text>
 
-          <FooterGlassView size="sm" absolute={false}>
-            <Button
-              size="small"
-              hasBottomSpacing={false}
-              text={t('Retry')}
-              onPress={externalError ? onExternalRetry : handleRetry}
-            />
-          </FooterGlassView>
+          {!(cameraError && isPermissionBlocked && !onOpenFullScreenScanner) && (
+            <FooterGlassView size="sm" absolute={false}>
+              <Button
+                size="small"
+                hasBottomSpacing={false}
+                text={
+                  cameraError && isPermissionBlocked && !!onOpenFullScreenScanner
+                    ? t('Open full-screen')
+                    : t('Retry')
+                }
+                onPress={
+                  cameraError && isPermissionBlocked && !!onOpenFullScreenScanner
+                    ? onOpenFullScreenScanner
+                    : externalError
+                      ? onExternalRetry
+                      : handleRetry
+                }
+              />
+            </FooterGlassView>
+          )}
         </View>
       ) : null}
     </View>
