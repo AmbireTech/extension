@@ -157,7 +157,7 @@ const SendForm = ({
       .filter((asset) => {
         if (!asset.chainId || !enabledNetworkChainIds.has(asset.chainId.toString())) return false
         const getKey = (address: string | undefined, chainId: number | undefined) =>
-          `${String(address).toLowerCase()}.${chainId}`
+          `${String(address).toLowerCase()}.${String(chainId)}`
 
         const key = getKey(asset.address, asset.chainId)
         return !currentOptionKeys.has(key)
@@ -196,7 +196,7 @@ const SendForm = ({
           icon: (
             <TokenIcon
               address={asset.address}
-              chainId={BigInt(asset.chainId)}
+              chainId={BigInt(asset.chainId!)}
               withContainer
               containerHeight={32}
               containerWidth={32}
