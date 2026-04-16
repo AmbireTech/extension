@@ -131,9 +131,7 @@ const SendForm = ({
   const tokenSections: GasTankSection[] | undefined = useMemo(() => {
     if (!isTopUp) return undefined
 
-    const enabledNetworkChainIds = new Set(
-      networks.filter((network) => !network.disabled).map((network) => network.chainId.toString())
-    )
+    const enabledNetworkChainIds = new Set(networks.map((network) => network.chainId.toString()))
 
     const currentOptionKeys = new Set(
       options
@@ -145,38 +143,33 @@ const SendForm = ({
 
     const uniqueGasTankAssets = Array.from(
       new Map(
-        (gasTankAssets ?? [])
-          .filter(
-            (asset): asset is { chainId: number; address: string; symbol?: string } =>
-              !!asset.address && asset.chainId !== undefined && asset.chainId !== null
-          )
-          .map((asset) => [
-            `${asset.address.toLowerCase()}.${asset.chainId}`,
-            {
-              ...asset,
-              address: asset.address.toLowerCase()
-            }
-          ])
+        (gasTankAssets ?? []).map((asset) => [
+          `${asset.address?.toLowerCase()}.${asset.chainId}`,
+          {
+            ...asset,
+            address: asset.address?.toLowerCase()
+          }
+        ])
       ).values()
     )
 
     const otherGasTokens = uniqueGasTankAssets
       .filter((asset) => {
-        if (!enabledNetworkChainIds.has(asset.chainId.toString())) return false
-        const key = `${asset.address}.${asset.chainId}`
+        if (!asset.chainId || !enabledNetworkChainIds.has(asset.chainId.toString())) return false
+        const getKey = (address: string | undefined, chainId: number | undefined) =>
+          `${String(address).toLowerCase()}.${chainId}`
+
+        const key = getKey(asset.address, asset.chainId)
         return !currentOptionKeys.has(key)
       })
       .map((asset) => {
         const feeToken = gasTankFeeTokens.find(
-          (ft) => ft.address.toLowerCase() === asset.address && ft.chainId === BigInt(asset.chainId)
+          (ft) =>
+            ft.address.toLowerCase() === asset.address && ft.chainId === BigInt(asset.chainId!)
         )
-        const network = networks.find((n) => n.chainId === BigInt(asset.chainId))
+        const network = networks.find((n) => n.chainId === BigInt(asset.chainId!))
 
-        const symbol = (
-          feeToken?.symbol?.trim() ||
-          asset.symbol?.trim() ||
-          'No symbol'
-        ).toUpperCase()
+        const symbol = (asset.symbol?.trim() || 'No symbol').toUpperCase()
         const networkName = network?.name ?? ''
 
         return {
