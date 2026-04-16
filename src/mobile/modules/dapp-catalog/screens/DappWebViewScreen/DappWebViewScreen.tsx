@@ -20,6 +20,7 @@ import { AnimatedPressable, useCustomHover } from '@common/hooks/useHover'
 import useNavigation from '@common/hooks/useNavigation'
 import useTheme from '@common/hooks/useTheme'
 import DappItem from '@common/modules/dapp-catalog/components/DappItem'
+import { ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
@@ -53,7 +54,7 @@ const DappWebViewScreen = () => {
   const { theme } = useTheme()
   const { t } = useTranslation()
   const location = useLocation()
-  const { goBack } = useNavigation()
+  const { navigate } = useNavigation()
   const { state: dappsState } = useController('DappsController')
 
   // Initial State from Route
@@ -241,7 +242,7 @@ const DappWebViewScreen = () => {
           ]}
         >
           <Pressable
-            onPress={goBack}
+            onPress={() => navigate(ROUTES.apps)}
             style={[
               flexbox.alignCenter,
               flexbox.justifyCenter,
@@ -308,18 +309,15 @@ const DappWebViewScreen = () => {
             />
           </View>
         }
-      >
-        <ScrollableWrapper
-          type={WRAPPER_TYPES.FLAT_LIST}
-          data={listData}
-          renderItem={renderSearchItem}
-          keyExtractor={(item: any, index: number) =>
-            item.type === 'dapp' ? item.dapp.url : `google-${index}`
-          }
-          contentContainerStyle={[spacings.pbLg]}
-          keyboardShouldPersistTaps="handled"
-        />
-      </BottomSheet>
+        flatListProps={{
+          contentContainerStyle: { ...spacings.pbLg },
+          data: listData,
+          renderItem: renderSearchItem,
+          keyExtractor: (item: any, index: number) =>
+            item.type === 'dapp' ? item.dapp.url : `google-${index}`,
+          keyboardShouldPersistTaps: 'handled'
+        }}
+      />
     </MobileLayoutContainer>
   )
 }
