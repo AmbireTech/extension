@@ -194,17 +194,31 @@ const QrConnectScreen = () => {
   }, [showMore, animatedHeight, animatedOpacity])
 
   useEffect(() => {
-    if (initParams && type === 'qr') {
+    if (
+      isSubmitting &&
+      mainCtrlState.statuses.handleAccountPickerInitQr === 'SUCCESS' &&
+      initParams &&
+      type === 'qr'
+    ) {
+      setIsSubmitting(false)
       goToNextRoute()
     }
-  }, [initParams, type, goToNextRoute])
+  }, [
+    isSubmitting,
+    initParams,
+    type,
+    goToNextRoute,
+    mainCtrlState.statuses.handleAccountPickerInitQr
+  ])
 
   useEffect(() => {
+    if (!isSubmitting) return
+
     if (mainCtrlState.statuses.handleAccountPickerInitQr === 'ERROR') {
       setIsSubmitting(false)
       setScanError(t('Failed to import QR wallet. Please try scanning again.'))
     }
-  }, [mainCtrlState.statuses.handleAccountPickerInitQr, t])
+  }, [isSubmitting, mainCtrlState.statuses.handleAccountPickerInitQr, t])
 
   const renderWalletRow = useCallback(
     (wallet: (typeof qrWallets)[number]) => (
