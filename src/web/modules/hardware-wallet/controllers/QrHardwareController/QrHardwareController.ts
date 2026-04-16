@@ -1,10 +1,10 @@
 import ExternalSignerError from '@ambire-common/classes/ExternalSignerError'
 import EventEmitter from '@ambire-common/controllers/eventEmitter/eventEmitter'
 import { IEventEmitterRegistryController } from '@ambire-common/interfaces/eventEmitter'
-import { ExternalSignerController } from '@ambire-common/interfaces/keystore'
+import { ExternalSignerController, QrRequest } from '@ambire-common/interfaces/keystore'
 import { TypedMessageUserRequest } from '@ambire-common/interfaces/userRequest'
 
-import { QrProtocolAdapter, QrRequest, QrSignaturePayload, QrSigningStep } from '../../qr/types'
+import { QrProtocolAdapter, QrSignaturePayload, QrSigningStep } from '../../qr/types'
 
 /**
  * The QrHardwareController is responsible for managing QR-based hardware wallet interactions.

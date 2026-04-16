@@ -12,9 +12,10 @@ import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { getUiType } from '@common/utils/uiType'
 
-import { QrRequest, QrSigningStep } from '../../qr/types'
+import { QrSigningStep } from '../../qr/types'
 import QrSignRequestScreen from '../QrSignRequestScreen/QrSignRequestScreen'
 import QrSignResponseScanner from '../QrSignResponseScanner/QrSignResponseScanner'
+import { QrRequest } from '@ambire-common/interfaces/keystore'
 
 const { isTab } = getUiType()
 

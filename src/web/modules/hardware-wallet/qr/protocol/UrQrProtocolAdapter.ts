@@ -6,9 +6,10 @@ import { TypedMessageUserRequest } from '@ambire-common/interfaces/userRequest'
 import { stripHexPrefix } from '@ambire-common/utils/stripHexPrefix'
 import { CryptoHDKey, DataType, ETHSignature, EthSignRequest } from '@keystonehq/bc-ur-registry-eth'
 
-import { QrProtocolAdapter, QrRequest, QrSignaturePayload } from '../types'
+import { QrProtocolAdapter, QrSignaturePayload } from '../types'
 import { isSignatureParts, normalizeOriginHdPath } from '../utils'
 import { QrWalletType } from '../wallets'
+import { QrRequest } from '@ambire-common/interfaces/keystore'
 
 /**
  * The UrQrProtocolAdapter is responsible for handling QR payloads that follow the UR protocol.

@@ -1,4 +1,4 @@
-import { ParsedQrAccount } from '@ambire-common/interfaces/keystore'
+import { ParsedQrAccount, QrRequest } from '@ambire-common/interfaces/keystore'
 import { TypedMessageUserRequest } from '@ambire-common/interfaces/userRequest'
 
 export type QrSigningStep = 'idle' | 'show-request' | 'scan-response'
@@ -8,19 +8,6 @@ export type ActiveQrSigningSession = {
   request: QrRequest
   step: QrSigningStep
   expectedRequestId?: string
-}
-
-export type QrRequestType =
-  | 'sign-message'
-  | 'sign-typed-data'
-  | 'sign-transaction'
-  | 'import-account'
-
-export type QrRequest = {
-  type: QrRequestType
-  requestId?: string
-  urType?: string
-  urCborHex?: any
 }
 
 export type QrSignaturePayload = { signature: string } | { r: string; s: string; v: number }

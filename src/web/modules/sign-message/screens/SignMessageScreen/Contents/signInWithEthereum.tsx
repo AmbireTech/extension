@@ -20,10 +20,11 @@ import flexbox from '@common/styles/utils/flexbox'
 import { TabLayoutWrapperMainContent } from '@web/components/TabLayoutWrapper'
 import useResponsiveActionWindow from '@web/hooks/useResponsiveActionWindow'
 import LedgerConnectModal from '@web/modules/hardware-wallet/components/LedgerConnectModal'
-import { QrRequest, QrSigningStep } from '@web/modules/hardware-wallet/qr/types'
+import { QrSigningStep } from '@web/modules/hardware-wallet/qr/types'
 import QrSigningFlowScreen from '@web/modules/hardware-wallet/screens/QrSigningFlowScreen'
 import Info from '@web/modules/sign-message/screens/SignMessageScreen/Info'
 import getStyles from '@web/modules/sign-message/screens/SignMessageScreen/styles'
+import { QrRequest } from '@ambire-common/interfaces/keystore'
 
 interface Props {
   shouldDisplayLedgerConnectModal: boolean
