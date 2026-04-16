@@ -56,6 +56,7 @@ const AccountPickerScreen = () => {
               <ChangeHdPath
                 disabled={accountPickerState.accountsLoading || !!isLoading}
                 setPage={setPage}
+                type={accountPickerState.type}
               />
             )}
           </View>

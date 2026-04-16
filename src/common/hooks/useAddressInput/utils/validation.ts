@@ -1,12 +1,14 @@
 import { getAddress } from 'ethers'
 
 import { isValidAddress } from '@ambire-common/services/address'
+import { getIsNamoshiDomain } from '@ambire-common/services/ensDomains'
 import { Validation } from '@ambire-common/services/validations'
 
 type AddressInputValidation = {
   address: string
   isRecipientDomainResolving: boolean
   isValidEns: boolean
+  isValidNamoshi: boolean
   hasDomainResolveFailed: boolean
   overwriteValidation?: Validation | null
 }
@@ -25,6 +27,7 @@ const getAddressInputValidation = ({
   isRecipientDomainResolving,
   hasDomainResolveFailed = false,
   isValidEns,
+  isValidNamoshi,
   overwriteValidation
 }: AddressInputValidation): Validation => {
   if (!address) {
@@ -44,9 +47,10 @@ const getAddressInputValidation = ({
   }
 
   if (hasDomainResolveFailed) {
+    const isNamoshiDomain = getIsNamoshiDomain(address)
+
     return {
-      // Change ENS to domain if we add more resolvers (like Unstoppable Domains)
-      message: 'Failed to resolve ENS. Please try again later or enter a hex address.',
+      message: `Failed to resolve ${isNamoshiDomain ? 'Namoshi' : 'ENS'} domain. Please try again later or enter a hex address.`,
       severity: 'error'
     }
   }
@@ -74,9 +78,14 @@ const getAddressInputValidation = ({
       message: 'Valid ENS domain',
       severity: 'success'
     }
+  } else if (isValidNamoshi) {
+    successValidation = {
+      message: 'Valid Namoshi domain',
+      severity: 'success'
+    }
   } else if (address && !isValidAddress(address)) {
     return {
-      message: 'Please enter a valid address or ENS domain',
+      message: 'Please enter a valid address or ENS/Namoshi domain',
       severity: 'error'
     }
   }
