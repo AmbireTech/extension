@@ -136,7 +136,7 @@ const CustomHDPathBottomSheet: FC<Props> = ({
                   flexbox.center,
                   flexbox.directionRow,
                   common.borderRadiusPrimary,
-                  { width: 168, height: 56 },
+                  { width: options.length > 3 ? 136 : 168, height: 56 },
                   {
                     borderWidth: 1,
                     borderColor: theme.primaryBorder,

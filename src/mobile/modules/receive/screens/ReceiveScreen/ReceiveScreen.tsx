@@ -32,7 +32,8 @@ const ReceiveScreen: FC = () => {
     isViewOnly,
     label,
     pfp,
-    ens,
+    name,
+    type,
     isDomainResolving,
     qrCodeError,
     setQrCodeError,
@@ -87,12 +88,13 @@ const ReceiveScreen: FC = () => {
           <View style={[flexbox.directionRow, flexbox.alignCenter, { flexShrink: 1 }]}>
             <AccountAddress
               isLoading={isDomainResolving}
-              ens={ens}
+              name={name}
+              type={type}
               address={account?.addr || ''}
               plainAddressMaxLength={42}
               fontSize={14}
               containerStyle={spacings.pv0}
-              withWrap={!!ens}
+              withWrap={!!name}
             />
           </View>
         </View>

@@ -58,8 +58,9 @@ const Account = ({
   displayTypePill?: boolean
   shouldBeDisplayedAsNew?: boolean
 }) => {
-  const { isLoading: isDomainResolving, ens } = useReverseLookup({ address: account.addr })
-  const domainName = ens
+  const { isLoading: isDomainResolving, name: reverseLookupName } = useReverseLookup({
+    address: account.addr
+  })
   const { t } = useTranslation()
   const { styles, theme, themeType } = useTheme(getStyles)
   const { minWidthSize, maxWidthSize } = useWindowSize()
@@ -79,7 +80,7 @@ const Account = ({
   }, [isSelected, onSelect, onDeselect, account])
 
   const formattedAddress = useMemo(() => {
-    if (minWidthSize('m') || domainName) {
+    if (minWidthSize('m') || reverseLookupName) {
       return shortenAddress(account.addr, 16)
     }
     if (maxWidthSize('m') && minWidthSize('l')) {
@@ -89,7 +90,7 @@ const Account = ({
       return account.addr
     }
     return shortenAddress(account.addr, 16)
-  }, [account.addr, domainName, maxWidthSize, minWidthSize])
+  }, [account.addr, reverseLookupName, maxWidthSize, minWidthSize])
 
   const handleCopyAddress = useCallback(() => {
     setStringAsync(account.addr)
@@ -169,14 +170,14 @@ const Account = ({
                 </>
               ) : (
                 <>
-                  {domainName ? (
+                  {reverseLookupName ? (
                     <Text
                       fontSize={16}
                       weight="medium"
                       appearance="primaryText"
                       style={spacings.mrTy}
                     >
-                      {domainName}
+                      {reverseLookupName}
                     </Text>
                   ) : null}
                   <Text
@@ -185,14 +186,14 @@ const Account = ({
                     style={spacings.mrMi}
                     weight="mono_regular"
                   >
-                    {domainName ? '(' : ''}
+                    {reverseLookupName ? '(' : ''}
                     {formattedAddress}
-                    {domainName ? ')' : ''}
+                    {reverseLookupName ? ')' : ''}
                   </Text>
                 </>
               )}
 
-              {!isMobile && (maxWidthSize('l') || isAccountImported || domainName) && (
+              {!isMobile && (maxWidthSize('l') || isAccountImported || reverseLookupName) && (
                 <Pressable onPress={handleCopyAddress}>
                   <CopyIcon width={14} height={14} />
                 </Pressable>

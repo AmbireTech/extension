@@ -29,6 +29,9 @@ type Props = {
 
 const { isRequestWindow } = getUiType()
 
+const ButtonWrapper: FC<{ children: React.ReactNode; style?: any }> = ({ children, style }) =>
+  isWeb ? <View style={style}>{children}</View> : <Fragment>{children}</Fragment>
+
 const BatchAdded: FC<Props> = ({
   title,
   callsCount,
@@ -39,9 +42,6 @@ const BatchAdded: FC<Props> = ({
 }) => {
   const { t } = useTranslation()
   const { theme } = useTheme()
-
-  const ButtonWrapper: FC<{ children: React.ReactNode; style?: any }> = ({ children, style }) =>
-    isWeb ? <View style={style}>{children}</View> : <Fragment>{children}</Fragment>
 
   return (
     <LayoutWrapper

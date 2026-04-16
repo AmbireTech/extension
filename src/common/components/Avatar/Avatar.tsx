@@ -73,7 +73,10 @@ const Avatar: FC<Props> = ({
 }) => {
   // the ENS avatar may point to an image that no longer exists or just fails to load
   // In that case we must fallback to the next avatar type
-  const [ensAvatarImageFetchFailed, setEnsAvatarImageFetchFailed] = useState(false)
+  const [ensAvatarImageState, setEnsAvatarImageState] = useState<'loading' | 'loaded' | 'failed'>(
+    'loading'
+  )
+  const ensAvatarImageFetchFailed = ensAvatarImageState === 'failed'
   // ENS Avatar
   const {
     state: { domains, loadingAddresses }
@@ -101,9 +104,9 @@ const Avatar: FC<Props> = ({
 
   // The avatar may take too long to load
   useEffect(() => {
-    if (avatarType === 'ens' && ensAvatar && !ensAvatarImageFetchFailed) {
+    if (avatarType === 'ens' && ensAvatar && ensAvatarImageState === 'loading') {
       const timeout = setTimeout(() => {
-        setEnsAvatarImageFetchFailed(true)
+        setEnsAvatarImageState('failed')
       }, 5000)
 
       return () => clearTimeout(timeout)
@@ -111,7 +114,7 @@ const Avatar: FC<Props> = ({
 
     // Stop eslint from crying
     return undefined
-  }, [avatarType, ensAvatar, ensAvatarImageFetchFailed])
+  }, [avatarType, ensAvatar, ensAvatarImageFetchFailed, ensAvatarImageState])
 
   // Pulsating animation
   const pulseAnim = useRef(new Animated.Value(1)).current
@@ -152,7 +155,7 @@ const Avatar: FC<Props> = ({
     >
       {/* The skeleton is displayed while the ENS image is loading, while the whole avatar is pulsing when we don't know
       if the user has an ENS avatar or not. */}
-      {!isEnsLoading && avatarType === 'ens' && (
+      {!isEnsLoading && avatarType === 'ens' && ensAvatarImageState === 'loading' && (
         <SkeletonLoader
           width={size}
           height={size}
@@ -172,7 +175,7 @@ const Avatar: FC<Props> = ({
           size={size}
           avatar={ensAvatar}
           borderRadius={borderRadius}
-          setImageFetchFailed={setEnsAvatarImageFetchFailed}
+          setEnsAvatarImageState={setEnsAvatarImageState}
         />
       )}
       {avatarType === 'polycons' && (

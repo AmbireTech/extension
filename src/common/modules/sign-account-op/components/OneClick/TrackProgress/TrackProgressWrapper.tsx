@@ -71,7 +71,10 @@ const TrackProgressWrapper: FC<TrackProgressProps> = ({
   )
 
   return (
-    <LayoutWrapper>
+    <LayoutWrapper
+      style={isRequestWindow ? { borderRadius: 0, height: '100%' } : {}}
+      backgroundStyle={isRequestWindow ? spacings.pt0 : {}}
+    >
       <HeaderWithLogoOnly />
       <View style={[spacings.phSm, flexbox.flex1, isWeb && spacings.pbSm]}>
         <View

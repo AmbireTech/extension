@@ -41,6 +41,24 @@
         "visualViewport": true
       }
     },
+    "@dnd-kit/utilities": {
+      "globals": {
+        "window": true,
+        "document": true,
+        "Document": true,
+        "HTMLElement": true,
+        "SVGElement": true
+      }
+    },
+    "@dnd-kit/core": {
+      "globals": {
+        "window": true,
+        "document": true,
+        "Document": true,
+        "HTMLElement": true,
+        "SVGElement": true
+      }
+    },
     "patch-package>json-stable-stringify>object-keys": {
       "meta": {
         "note": "Auto policy could not be generated for this module; access is explicitly disabled here to silence the build warning."
