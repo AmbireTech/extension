@@ -30,7 +30,6 @@ export default function useDappsControllerHelpers(
       const requestId = nanoid()
       const dappId = getDappIdFromUrl(new URL(url).origin)
 
-      console.log('dispatching', dappId)
       dispatch({
         type: 'method',
         params: {
@@ -54,7 +53,6 @@ export default function useDappsControllerHelpers(
 
           settled = true
           cleanup()
-          console.log('data returned', data.res)
           if (!data.ok) return reject(new Error(data.error ?? 'Getting current dapp failed'))
           if (data.res) return resolve(data.res as Dapp)
 

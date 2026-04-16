@@ -316,16 +316,14 @@ const DappWebViewScreen = () => {
                 <>
                   <View
                     style={{
-                      minWidth: 8,
-                      minHeight: 8,
                       borderRadius: 10,
                       backgroundColor:
                         currentDapp.blacklisted === 'BLACKLISTED'
                           ? theme.errorDecorative
                           : theme.successDecorative,
                       position: 'absolute',
-                      top: 0,
-                      right: 0,
+                      top: -2,
+                      right: -2,
                       zIndex: 2,
                       borderWidth: 1,
                       borderColor:
@@ -336,10 +334,8 @@ const DappWebViewScreen = () => {
                   >
                     {!currentDapp.isConnected && (
                       <NotConnected
-                        style={{
-                          minWidth: 8,
-                          minHeight: 8
-                        }}
+                        width={12}
+                        height={12}
                         isBlacklisted={currentDapp.blacklisted === 'BLACKLISTED'}
                       />
                     )}
