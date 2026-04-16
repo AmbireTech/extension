@@ -213,7 +213,12 @@ const useSelectKeyboardControl = ({
           }
         }
 
-        if (e.key === 'Escape') setIsMenuOpen(false)
+        if (e.key === 'Escape') {
+          e.preventDefault()
+          e.stopPropagation()
+          ;(e.target as HTMLElement | null)?.blur?.()
+          setIsMenuOpen(false)
+        }
       } catch (error) {
         console.error(error)
       }

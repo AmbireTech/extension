@@ -150,7 +150,8 @@ const ViewOnlyAccountAdderAddressField: FC<Props> = ({
               autoFocus
               backgroundColor={theme.secondaryBackground}
               disabled={isLoading}
-              ensAddress={value.ensAddress}
+              resolvedAddress={value.resolvedAddress}
+              resolvedAddressType={value.resolvedAddressType}
               isRecipientDomainResolving={value.isDomainResolving}
               onSubmitEditing={disabled ? undefined : handleSubmit}
               button={accounts.length > 1 ? <DeleteIcon width={24} height={24} /> : null}

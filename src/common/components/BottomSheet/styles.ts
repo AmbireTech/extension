@@ -19,14 +19,21 @@ const getStyles = (theme: ThemeProps) =>
     bottomSheet: {
       borderTopStartRadius: BORDER_RADIUS_PRIMARY,
       borderTopEndRadius: BORDER_RADIUS_PRIMARY,
-      ...spacings.pvMd
+      ...spacings.pvMd,
+      borderWidth: 1,
+      borderColor: theme.primaryBorder
     },
     modal: {
       borderBottomEndRadius: BORDER_RADIUS_PRIMARY,
       borderBottomStartRadius: BORDER_RADIUS_PRIMARY,
       maxWidth: 540,
       width: '100%',
-      margin: 'auto'
+      margin: 'auto',
+      shadowColor: theme.shadowPrimary,
+      shadowOffset: { width: 0, height: 12 },
+      shadowOpacity: 1,
+      shadowRadius: 24,
+      elevation: 24
     },
     dragger: {
       width: 60,

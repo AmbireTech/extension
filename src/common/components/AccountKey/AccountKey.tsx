@@ -74,7 +74,7 @@ const AccountKey: React.FC<Props> = ({
   itemHeight = 48
 }) => {
   const { t } = useTranslation()
-  const { theme, themeType } = useTheme()
+  const { theme } = useTheme()
   const { addToast } = useToast()
 
   const [bindKeyDetailsAnim, keyDetailsAnimStyles] = useCustomHover({

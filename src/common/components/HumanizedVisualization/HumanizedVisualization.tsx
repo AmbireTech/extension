@@ -1,7 +1,8 @@
-import React, { FC, memo } from 'react'
+import React, { FC, Fragment, memo } from 'react'
 import { StyleProp, View, ViewStyle } from 'react-native'
 
 import { IrCall } from '@ambire-common/libs/humanizer/interfaces'
+import EditApproval from '@common/components/HumanizedVisualization/EditApproval'
 import HumanizerAddress from '@common/components/HumanizerAddress'
 import Text from '@common/components/Text'
 import TokenOrNft from '@common/components/TokenOrNft'
@@ -49,6 +50,7 @@ const HumanizedVisualization: FC<Props> = ({
 }) => {
   const marginRight = SPACING_TY * sizeMultiplierSize
   const { theme } = useTheme()
+
   return (
     <View
       testID={testID}
@@ -70,15 +72,17 @@ const HumanizedVisualization: FC<Props> = ({
         const key = item.id
         if (item.type === 'token') {
           return (
-            <TokenOrNft
-              key={key}
-              sizeMultiplierSize={sizeMultiplierSize}
-              value={item.value}
-              address={item.address!}
-              textSize={textSize}
-              chainId={chainId}
-              hideLinks={hideLinks}
-            />
+            <Fragment key={key}>
+              <TokenOrNft
+                sizeMultiplierSize={sizeMultiplierSize}
+                value={item.value}
+                address={item.address!}
+                textSize={textSize}
+                chainId={chainId}
+                hideLinks={hideLinks}
+              />
+              {item.editApprovalData && <EditApproval item={item} />}
+            </Fragment>
           )
         }
 
