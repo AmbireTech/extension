@@ -21,6 +21,8 @@ import text from '@common/styles/utils/text'
 import ManifestImage from '@web/components/ManifestImage'
 import { openInTab } from '@web/extension-services/background/webapi/tab'
 import TrustedIcon from '@web/modules/action-requests/screens/DappConnectScreen/components/TrustedIcon'
+import { ROUTES } from '@common/modules/router/constants/common'
+import useNavigation from '@common/hooks/useNavigation'
 
 import ManageApp from '../ManageApp'
 import getStyles from './styles'
@@ -40,7 +42,11 @@ function formatTVL(tvl: number) {
   return `TVL: $${formatted}`
 }
 
-const DappItem = (dapp: Dapp) => {
+type DappItemProps = Dapp & {
+  onPressOverride?: () => void
+}
+
+const DappItem = (dapp: DappItemProps) => {
   const {
     id,
     url,
@@ -52,7 +58,8 @@ const DappItem = (dapp: Dapp) => {
     favorite,
     blacklisted,
     tvl,
-    twitter
+    twitter,
+    onPressOverride
   } = dapp
   const { styles, theme } = useTheme(getStyles)
   const { dispatch: dappsDispatch } = useController('DappsController')
@@ -61,6 +68,7 @@ const DappItem = (dapp: Dapp) => {
   const [isManageAppOpen, setIsManageAppOpen] = useState(false)
   const [isNetworkSelectorOpen, setIsNetworkSelectorOpen] = useState(false)
   const settingsButtonRef = React.useRef<View>(null)
+  const navigation = useNavigation()
 
   const [bindAnim, animStyle] = useCustomHover({
     property: 'backgroundColor',
@@ -113,7 +121,20 @@ const DappItem = (dapp: Dapp) => {
       <Container {...(containerProps as any)}>
         <AnimatedPressable
           style={[styles.container, animStyle]}
-          onPress={() => openInTab({ url })}
+          onPress={() => {
+            if (onPressOverride) {
+              onPressOverride()
+              return
+            }
+            
+            if (isMobile) {
+              navigation.navigate(ROUTES.dappWebView, {
+                state: { url, name }
+              })
+            } else {
+              openInTab({ url })
+            }
+          }}
           {...bindAnim}
         >
           <View style={[flexbox.directionRow, !!description && spacings.mbSm]}>

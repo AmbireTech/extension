@@ -283,7 +283,7 @@ const DappCatalogScreen = () => {
                 setValue={setValue}
                 containerStyle={{ ...spacings.mbSm }}
               />
-              <View style={[flexbox.directionRow, flexbox.alignCenter, flexbox.flex1]}>
+              <View style={[flexbox.directionRow, flexbox.alignCenter]}>
                 <Select
                   setValue={handleSetNetworkValue}
                   containerStyle={{
@@ -312,6 +312,7 @@ const DappCatalogScreen = () => {
                   hoveredSelectStyle={{
                     backgroundColor: theme.tertiaryBackground
                   }}
+                  bottomSheetTitle={t('Select network')}
                 />
                 <Select
                   setValue={handleSetCategoryValue}
@@ -340,6 +341,7 @@ const DappCatalogScreen = () => {
                   hoveredSelectStyle={{
                     backgroundColor: theme.tertiaryBackground
                   }}
+                  bottomSheetTitle={t('Select category')}
                 />
                 <FilterButton
                   onPress={() => handleSelectPredefinedFilter('favorites')}

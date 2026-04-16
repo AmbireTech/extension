@@ -30,7 +30,8 @@ const COMMON_ROUTES = {
   accountsSettings: 'settings/accounts',
   settingsAbout: 'settings/about',
   settingsTerms: 'settings/terms',
-  apps: 'apps'
+  apps: 'apps',
+  dappWebView: 'apps/webview'
 }
 
 const MOBILE_ROUTES = {
