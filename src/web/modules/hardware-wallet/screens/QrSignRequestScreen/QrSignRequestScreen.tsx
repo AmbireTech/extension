@@ -28,19 +28,20 @@ const QrSignRequestScreen = ({
   transactionProgress = null
 }: Props) => {
   const { t } = useTranslation()
+  const qrSize = transactionProgress ? 280 : 300
 
   return (
     <View style={flexbox.center}>
       <Text>{t('Scan this QR code with your QR-based device to sign.')}</Text>
       <View style={[flexbox.center, spacings.mtSm]}>
-        <AnimatedQRCode options={{ size: 300 }} type={urType} cbor={urCborHex} />
+        <AnimatedQRCode options={{ size: qrSize }} type={urType} cbor={urCborHex} />
         {transactionProgress ? (
-          <Text fontSize={14} weight="medium" style={spacings.mtLg}>
+          <Text fontSize={14} weight="medium" style={spacings.mtSm}>
             {transactionProgress.current} / {transactionProgress.total}{' '}
             {transactionProgress.current <= 1 ? t('transaction signed') : t('transactions signed')}
           </Text>
         ) : null}
-        <FooterGlassView size="sm" absolute={false} style={spacings.pt}>
+        <FooterGlassView size="sm" absolute={false} style={spacings.ptSm}>
           <Button
             size="smaller"
             hasBottomSpacing={false}
