@@ -383,7 +383,7 @@ const useSign = ({
       const isBroadcast =
         (signAccountOpState?.accountOp.signed?.length || 0) >= signAccountOpState?.threshold ||
         (signAccountOpState?.threshold === 1 &&
-          signAccountOpState?.accountKeyStoreKeys.length === 0)
+          signAccountOpState?.accountKeyStoreKeys.length === 1)
       if (isBroadcast) {
         // the "Safe" term for broadcast is called "Execute"
         return isSignLoading ? 'Executing...' : 'Execute'
