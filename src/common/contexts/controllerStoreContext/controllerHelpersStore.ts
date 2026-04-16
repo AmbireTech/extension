@@ -7,6 +7,8 @@ interface DappsControllerHelpers {
   isLoadingCurrentDapp: boolean
   currentDapp: Dapp | null
   getCurrentDapp: () => Promise<Dapp | null>
+  dappUrl?: string
+  setDappUrl?: (url: string) => void
 }
 
 type DefinedControllerHelpers = {

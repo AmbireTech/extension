@@ -11,7 +11,9 @@ import { Dapp } from '@ambire-common/interfaces/dapp'
 import GlobeIcon from '@common/assets/svg/GlobeIcon'
 import GoogleIcon from '@common/assets/svg/GoogleIcon'
 import HomeIcon from '@common/assets/svg/HomeIcon'
+import Avatar from '@common/components/Avatar'
 import BottomSheet from '@common/components/BottomSheet'
+import NetworkIcon from '@common/components/NetworkIcon'
 import Search from '@common/components/Search'
 import Text from '@common/components/Text'
 import useController from '@common/hooks/useController'
@@ -19,6 +21,7 @@ import useDebounce from '@common/hooks/useDebounce'
 import { AnimatedPressable, useCustomHover } from '@common/hooks/useHover'
 import useNavigation from '@common/hooks/useNavigation'
 import useTheme from '@common/hooks/useTheme'
+import NotConnected from '@common/modules/dapp-catalog/components/DappIcon/NotConnected'
 import DappItem from '@common/modules/dapp-catalog/components/DappItem'
 import { ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
@@ -55,15 +58,27 @@ const DappWebViewScreen = () => {
   const { t } = useTranslation()
   const location = useLocation()
   const { navigate } = useNavigation()
-  const { state: dappsState } = useController('DappsController')
+  const {
+    state: { dapps },
+    currentDapp,
+    dappUrl,
+    setDappUrl
+  } = useController('DappsController')
+
+  console.log('currentDapp', currentDapp)
 
   // Initial State from Route
   const initialUrl = (location.state as any)?.url || 'https://google.com'
 
   // WebView Refs & State
   const webviewRef = useRef<WebView>(null)
-  const [dappUrl, setDappUrl] = useState<string>(initialUrl)
   const [trustedUrl, setTrustedUrl] = useState<string>(initialUrl)
+
+  useEffect(() => {
+    if (!dappUrl && setDappUrl) setDappUrl(initialUrl)
+  }, [dappUrl, initialUrl, setDappUrl])
+
+  const activeDappUrl = dappUrl || initialUrl
 
   // Bottom Sheet & Search Form State
   const { ref: searchModalRef, open: openSearchModal, close: closeSearchModal } = useModalize()
@@ -77,6 +92,13 @@ const DappWebViewScreen = () => {
   } = useForm({ defaultValues: { search: '' } })
   const bottomSheetSearchQuery = searchWatch('search')
   const debouncedSearch = useDebounce({ value: bottomSheetSearchQuery, delay: 350 })
+  const { account } = useController('SelectedAccountController').state
+
+  const smartAccountType = useMemo(() => {
+    if (account?.creation) return 'Ambire'
+    if (account?.safeCreation) return 'Safe'
+    return undefined
+  }, [account])
 
   const handleOpenSearchModal = useCallback(() => {
     setSearchValue('search', trustedUrl)
@@ -111,13 +133,13 @@ const DappWebViewScreen = () => {
   // Dapp Search Data Filtering
   const searchableDapps = useMemo(
     () =>
-      dappsState.dapps.map((dapp: Dapp) => ({
+      dapps.map((dapp: Dapp) => ({
         dapp,
         name: dapp.name.toLowerCase(),
         url: dapp.url.toLowerCase(),
         description: dapp.description?.toLowerCase() || ''
       })),
-    [dappsState.dapps]
+    [dapps]
   )
 
   const searchResults = useMemo(() => {
@@ -153,22 +175,20 @@ const DappWebViewScreen = () => {
         data.push({ type: 'openPage', query: debouncedSearch })
       }
     } else {
-      const suggestedDapps = dappsState.dapps.filter(
-        (dapp: Dapp) => dapp.favorite || dapp.isConnected
-      )
-      const emptySearchFallback = suggestedDapps.length > 0 ? suggestedDapps : dappsState.dapps
+      const suggestedDapps = dapps.filter((dapp: Dapp) => dapp.favorite || dapp.isConnected)
+      const emptySearchFallback = suggestedDapps.length > 0 ? suggestedDapps : dapps
       data.push(...emptySearchFallback.map((dapp: Dapp) => ({ type: 'dapp', dapp })))
     }
     data.push(...searchResults.map((dapp: Dapp) => ({ type: 'dapp', dapp })))
     return data
-  }, [debouncedSearch, searchResults, dappsState.dapps])
+  }, [debouncedSearch, searchResults, dapps])
 
   const handleNavigateToUrl = useCallback(
     (url: string) => {
-      setDappUrl(url)
+      setDappUrl?.(url)
       closeSearchModal()
     },
-    [closeSearchModal]
+    [closeSearchModal, setDappUrl]
   )
 
   const renderSearchItem = useCallback(
@@ -271,7 +291,7 @@ const DappWebViewScreen = () => {
           <AnimatedPressable
             style={[
               flexbox.flex1,
-              spacings.mlSm,
+              spacings.mhSm,
               { backgroundColor: theme.secondaryBackground, borderRadius: BORDER_RADIUS_PRIMARY },
               animStyle
             ]}
@@ -290,13 +310,72 @@ const DappWebViewScreen = () => {
               />
             </View>
           </AnimatedPressable>
+          {!!account && (
+            <View>
+              {!!currentDapp && (
+                <>
+                  <View
+                    style={{
+                      minWidth: 8,
+                      minHeight: 8,
+                      borderRadius: 10,
+                      backgroundColor:
+                        currentDapp.blacklisted === 'BLACKLISTED'
+                          ? theme.errorDecorative
+                          : theme.successDecorative,
+                      position: 'absolute',
+                      top: 0,
+                      right: 0,
+                      zIndex: 2,
+                      borderWidth: 1,
+                      borderColor:
+                        currentDapp.blacklisted === 'BLACKLISTED'
+                          ? theme.errorBackground
+                          : theme.primaryBackground
+                    }}
+                  >
+                    {!currentDapp.isConnected && (
+                      <NotConnected
+                        style={{
+                          minWidth: 8,
+                          minHeight: 8
+                        }}
+                        isBlacklisted={currentDapp.blacklisted === 'BLACKLISTED'}
+                      />
+                    )}
+                  </View>
+
+                  {currentDapp.isConnected && (
+                    <View
+                      style={{
+                        position: 'absolute',
+                        left: -2,
+                        bottom: -2,
+                        zIndex: 2
+                      }}
+                    >
+                      <NetworkIcon id={currentDapp.chainId.toString()} size={12} scale={0.8} />
+                    </View>
+                  )}
+                </>
+              )}
+
+              <Avatar
+                pfp={account.preferences.pfp}
+                address={account.addr}
+                size={40}
+                style={spacings.pr0}
+                smartAccountType={smartAccountType}
+              />
+            </View>
+          )}
         </View>
       }
     >
       <View style={flexbox.flex1}>
         <WebView
           ref={webviewRef}
-          source={{ uri: dappUrl }}
+          source={{ uri: activeDappUrl }}
           onNavigationStateChange={handleNavigationStateChange}
           injectedJavaScriptBeforeContentLoaded={securityPatches}
           javaScriptEnabled={true}
