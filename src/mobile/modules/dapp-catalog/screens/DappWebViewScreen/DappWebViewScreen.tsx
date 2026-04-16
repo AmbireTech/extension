@@ -8,10 +8,10 @@ import { WebView, WebViewNavigation } from 'react-native-webview'
 import { useLocation } from 'react-router-native'
 
 import { Dapp } from '@ambire-common/interfaces/dapp'
+import GlobeIcon from '@common/assets/svg/GlobeIcon'
+import GoogleIcon from '@common/assets/svg/GoogleIcon'
 import HomeIcon from '@common/assets/svg/HomeIcon'
-import SearchIcon from '@common/assets/svg/SearchIcon'
 import BottomSheet from '@common/components/BottomSheet'
-import ScrollableWrapper, { WRAPPER_TYPES } from '@common/components/ScrollableWrapper'
 import Search from '@common/components/Search'
 import Text from '@common/components/Text'
 import useController from '@common/hooks/useController'
@@ -148,10 +148,10 @@ const DappWebViewScreen = () => {
   const listData = useMemo(() => {
     const data: any[] = []
     if (debouncedSearch) {
+      data.push({ type: 'googleSearch', query: debouncedSearch })
       if (isValidUrl(debouncedSearch)) {
         data.push({ type: 'openPage', query: debouncedSearch })
       }
-      data.push({ type: 'googleSearch', query: debouncedSearch })
     } else {
       const suggestedDapps = dappsState.dapps.filter(
         (dapp: Dapp) => dapp.favorite || dapp.isConnected
@@ -182,13 +182,19 @@ const DappWebViewScreen = () => {
             <View
               style={[
                 spacings.mrSm,
-                { backgroundColor: theme.secondaryBackground, borderRadius: 20, padding: 8 }
+                flexbox.center,
+                {
+                  backgroundColor: theme.secondaryBackground,
+                  borderRadius: 50,
+                  width: 40,
+                  height: 40
+                }
               ]}
             >
-              <SearchIcon color={theme.iconPrimary} width={20} height={20} />
+              <GlobeIcon />
             </View>
             <Text weight="medium" appearance="secondaryText">
-              Open {item.query}
+              Open "{item.query}"
             </Text>
           </AnimatedPressable>
         )
@@ -207,10 +213,16 @@ const DappWebViewScreen = () => {
             <View
               style={[
                 spacings.mrSm,
-                { backgroundColor: theme.secondaryBackground, borderRadius: 20, padding: 8 }
+                flexbox.center,
+                {
+                  backgroundColor: theme.secondaryBackground,
+                  borderRadius: 50,
+                  width: 40,
+                  height: 40
+                }
               ]}
             >
-              <SearchIcon color={theme.iconPrimary} width={20} height={20} />
+              <GoogleIcon />
             </View>
             <Text weight="medium" appearance="secondaryText">
               Search Google for "{item.query}"
@@ -301,16 +313,15 @@ const DappWebViewScreen = () => {
         adjustToContentHeight={false}
         closeBottomSheet={closeSearchModal}
         HeaderComponent={
-          <View style={[spacings.mbLg]}>
-            <Search
-              control={searchControl}
-              placeholder={t('Search or enter URL')}
-              autoFocus={true}
-            />
-          </View>
+          <Search
+            control={searchControl}
+            placeholder={t('Search or enter URL')}
+            autoFocus={true}
+            containerStyle={spacings.mbLg}
+          />
         }
         flatListProps={{
-          contentContainerStyle: { ...spacings.pbLg },
+          contentContainerStyle: spacings.pbLg,
           data: listData,
           renderItem: renderSearchItem,
           keyExtractor: (item: any, index: number) =>
