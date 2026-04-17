@@ -1,14 +1,11 @@
 import React, { FC, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
-import { TouchableOpacity } from 'react-native'
 
 import { SubmittedAccountOp } from '@ambire-common/libs/accountOp/submittedAccountOp'
 import RefreshIcon from '@common/assets/svg/RefreshIcon'
-import Text from '@common/components/Text'
 import useController from '@common/hooks/useController'
-import useTheme from '@common/hooks/useTheme'
-import spacings from '@common/styles/spacings'
-import flexbox from '@common/styles/utils/flexbox'
+
+import FooterActionLink from './FooterActionLink'
 
 type Props = {
   submittedAccountOp: SubmittedAccountOp
@@ -21,7 +18,6 @@ const increaseByFifteenPercent = (value: bigint) => (value * 115n + 99n) / 100n
 
 const SpeedUpTransaction: FC<Props> = ({ text, submittedAccountOp, textSize, iconSize }) => {
   const { t } = useTranslation()
-  const { theme } = useTheme()
   const { dispatch: requestsDispatch } = useController('RequestsController')
 
   const handleSpeedUpTransaction = useCallback(() => {
@@ -87,15 +83,13 @@ const SpeedUpTransaction: FC<Props> = ({ text, submittedAccountOp, textSize, ico
   }, [submittedAccountOp, requestsDispatch])
 
   return (
-    <TouchableOpacity
-      style={[flexbox.directionRow, flexbox.alignCenter]}
+    <FooterActionLink
+      label={text || t('Speed Up Transaction')}
       onPress={handleSpeedUpTransaction}
-    >
-      <Text fontSize={textSize} appearance="secondaryText" weight="medium" style={spacings.mrMi}>
-        {text || t('Speed Up Transaction')}
-      </Text>
-      <RefreshIcon width={iconSize} height={iconSize} color={theme.iconPrimary} strokeWidth={2} />
-    </TouchableOpacity>
+      textSize={textSize}
+      iconSize={iconSize}
+      Icon={RefreshIcon}
+    />
   )
 }
 
