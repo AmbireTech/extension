@@ -386,7 +386,7 @@ export class EthereumProvider extends EventEmitter {
     // Some dapps poll this method very frequently, so we return early
     // to prevent unnecessary messaging requests to the background service that
     // clog up the communication channel and block requests for other methods
-    if (data.method === 'eth_chainId') {
+    if (data.method === 'eth_chainId' && this.chainId) {
       this.logInfo('[request]', data)
       this.logInfo('[request: success]', data.method, this.chainId)
       return this.chainId

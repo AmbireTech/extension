@@ -4,6 +4,7 @@
 import { MainController } from '@ambire-common/controllers/main/main'
 import { IEventEmitterRegistryController } from '@ambire-common/interfaces/eventEmitter'
 import { KeyIterator } from '@ambire-common/libs/keyIterator/keyIterator'
+import handleProviderRequests from '@common/modules/provider/handleProviderRequests'
 import { Action, MethodAction } from '@common/types/actions'
 
 export const handleActions = async (
@@ -86,6 +87,52 @@ export const handleActions = async (
         keyIterator,
         hdPathTemplate: keystoreSavedSeed.hdPathTemplate
       })
+      break
+    }
+
+    case 'HANDLE_PROVIDER_REQUEST': {
+      console.log('[Worker] Handling provider request:', params.request.method, params.requestId)
+      const autoLockCtrl = eventEmitterRegistry
+        .values()
+        .find((c: any) => c.name === 'AutoLockController') as any
+      const walletStateCtrl = eventEmitterRegistry
+        .values()
+        .find((c: any) => c.name === 'WalletStateController') as any
+      const notificationManager = mainCtrl.ui.notification
+
+      try {
+        const session = await mainCtrl.dapps.getOrCreateDappSession({
+          url: params.request.origin,
+          tabId: 1 // Mobile uses a single view for the dApp
+        })
+        console.log('[Worker] Resolved session for:', session.origin, session.sessionId)
+
+        const result = await handleProviderRequests({
+          request: { ...params.request, session },
+          mainCtrl,
+          walletStateCtrl,
+          autoLockCtrl,
+          requestId: params.requestId,
+          providerId: params.providerId,
+          notificationManager
+        })
+        console.log('[Worker] handleProviderRequests result:', result)
+        sendToReactEvent('action.sendToDappWebView', {
+          result,
+          error: null,
+          requestId: params.requestId,
+          providerId: params.providerId,
+          topic: params.topic
+        })
+      } catch (error: any) {
+        sendToReactEvent('action.sendToDappWebView', {
+          result: null,
+          error: error.message || String(error),
+          requestId: params.requestId,
+          providerId: params.providerId,
+          topic: params.topic
+        })
+      }
       break
     }
 

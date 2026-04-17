@@ -22,6 +22,8 @@ import useDebounce from '@common/hooks/useDebounce'
 import { AnimatedPressable, useCustomHover } from '@common/hooks/useHover'
 import useNavigation from '@common/hooks/useNavigation'
 import useTheme from '@common/hooks/useTheme'
+import { ControllersMiddlewareContext } from '@common/contexts/controllersMiddlewareContext'
+import eventBus from '@common/services/event/eventBus'
 import NotConnected from '@common/modules/dapp-catalog/components/DappIcon/NotConnected'
 import DappItem from '@common/modules/dapp-catalog/components/DappItem'
 import { ROUTES } from '@common/modules/router/constants/common'
@@ -149,6 +151,7 @@ const DappWebViewScreen = () => {
   const { t } = useTranslation()
   const location = useLocation()
   const { navigate } = useNavigation()
+  const { dispatch } = React.useContext(ControllersMiddlewareContext)
   const {
     state: { dapps },
     currentDapp,
@@ -228,6 +231,30 @@ const DappWebViewScreen = () => {
 
     return `
       ${securityPatches}
+
+      window.addEventListener('message', function(event) {
+        // Log EVERY message for debugging
+        console.log('[Ambire] [Bridge DEBUG] window message received:', typeof event.data === 'string' ? event.data : JSON.stringify(event.data));
+
+        if (event.data && typeof event.data.topic === 'string' && (event.data.topic.indexOf('ambireProviderRequest') > -1 || event.data.topic.indexOf('ambireNextBuildProviderRequest') > -1)) {
+          if (event.data.topic.indexOf('<') === 0) {
+            // Ignore response messages sent from RN back to the injected provider.
+            return;
+          }
+          console.log('[Ambire] [Bridge] Caught MATCHING message:', event.data.topic, event.data.payload ? event.data.payload.method : 'no-payload');
+          if (window.ReactNativeWebView) {
+            window.ReactNativeWebView.postMessage(JSON.stringify({ 
+              type: 'providerRequest', 
+              payload: event.data.payload,
+              id: event.data.id,
+              topic: event.data.topic
+            }));
+          } else {
+            console.error('[Ambire] [Bridge] window.ReactNativeWebView NOT FOUND');
+          }
+        }
+      });
+
       (function() {
         try {
         console.log('[Ambire] injecting provider code');
@@ -378,14 +405,48 @@ const DappWebViewScreen = () => {
   const handleMessage = useCallback((event: any) => {
     try {
       const data = JSON.parse(event.nativeEvent.data)
+      console.log('[DappWebView] RN received message type:', data.type || (data.method ? 'raw-provider-request' : 'unknown'))
       if (data.type === 'log') {
         const prefix = `[WebView ${data.logType}]`
         // eslint-disable-next-line no-console
         console.log(prefix, ...data.args)
+      } else if (data.type === 'providerRequest' || (data.method && data.id)) {
+        const method = data.type === 'providerRequest' ? data.payload?.method : data.method
+        console.log('[DappWebView] Received providerRequest:', method, data.id)
+
+        const payload = data.type === 'providerRequest' ? data.payload : { method: data.method, params: data.params }
+        const topic = data.topic || '> ambireProviderRequest'
+
+        dispatch({
+          type: 'HANDLE_PROVIDER_REQUEST',
+          params: {
+            request: { ...payload, origin: activeDappUrl },
+            requestId: data.id,
+            providerId: 1,
+            topic
+          }
+        })
       }
     } catch (e) {
       // Ignore non-JSON or other messages
     }
+  }, [dispatch, activeDappUrl, hostname, currentDapp])
+
+  useEffect(() => {
+    const onProviderResponse = (data: any) => {
+       console.log('[DappWebView] Sending response back to WebView:', data.requestId, data.result ? 'SUCCESS' : 'ERROR/NULL')
+       const replyMessage = {
+          topic: data.topic ? data.topic.replace('>', '<') : '< ambireProviderRequest',
+          payload: { response: data.result, error: data.error },
+          id: data.requestId
+       }
+       webviewRef.current?.injectJavaScript(`
+         window.postMessage(${JSON.stringify(replyMessage)}, '*');
+         true;
+       `);
+    }
+    eventBus.addEventListener('action.sendToDappWebView', onProviderResponse)
+    return () => eventBus.removeEventListener('action.sendToDappWebView', onProviderResponse)
   }, [])
 
   return (

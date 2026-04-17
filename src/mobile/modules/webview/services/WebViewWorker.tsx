@@ -214,6 +214,9 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, {}>((_, ref) => {
         case 'action.receiveOneTimeData':
           eventBus.emit('receiveOneTimeData', data.payload)
           break
+        case 'action.sendToDappWebView':
+          eventBus.emit('action.sendToDappWebView', data.payload)
+          break
         case 'action.navigate':
           eventBus.emit('navigate', data.payload)
           break

@@ -5,6 +5,7 @@ import { MainController } from '@ambire-common/controllers/main/main'
 import { KeystoreSigner } from '@ambire-common/libs/keystoreSigner/keystoreSigner'
 import * as richJson from '@ambire-common/libs/richJson/richJson'
 import { controllersNestedInMainMapping } from '@common/constants/controllersMapping'
+import { AutoLockController } from '@common/controllers/auto-lock'
 import { WalletStateController } from '@common/controllers/wallet-state'
 import { handleActions } from '@mobile/handlers/handleActions'
 
@@ -114,6 +115,7 @@ const eventEmitterRegistry = new EventEmitterRegistryController(() => {
 let isConfigured = false
 let mainCtrl: any = null
 let walletStateCtrl: any = null
+let autoLockCtrl: any = null
 
 const initControllers = (config: any) => {
   try {
@@ -173,6 +175,8 @@ const initControllers = (config: any) => {
       eventEmitterRegistry,
       onLogLevelUpdateCallback: () => Promise.resolve()
     })
+
+    autoLockCtrl = new AutoLockController(eventEmitterRegistry, () => mainCtrl.keystore.lock())
 
     // Initialize UI view inside the WebView worker context natively
     mainCtrl.ui.addView({ id: 'default-mobile-app-view', type: 'mobile' })

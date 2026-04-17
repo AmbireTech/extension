@@ -12,19 +12,13 @@ export class EthereumProvider extends CommonEthereumProvider {
     const externalHandlers = {
       sendRequest: (data: any) => {
         return new Promise((resolve, reject) => {
-          if (!(window as any).ReactNativeWebView?.postMessage) {
-            // eslint-disable-next-line no-console
-            console.error('[Ambire Provider] ReactNativeWebView.postMessage not available')
-            return reject(new Error('ReactNativeWebView.postMessage not available'))
-          }
-
           pendingRequests[data.id] = { resolve, reject }
-
-          // eslint-disable-next-line no-param-reassign
-          data.origin = location.origin
-          // eslint-disable-next-line no-param-reassign
-          data.href = location.href
-          ;(window as any).ReactNativeWebView.postMessage(JSON.stringify(data))
+          const message = {
+            topic: '> ambireProviderRequest',
+            payload: data,
+            id: data.id
+          }
+          window.postMessage(message, '*')
         })
       },
       onBackgroundMessage: () => {
@@ -42,6 +36,17 @@ export class EthereumProvider extends CommonEthereumProvider {
     }
 
     super(externalHandlers, forwardRpcRequests, getFoundRpcUrls, options)
+
+    // Listen for responses via window.postMessage (sent back from RN bridge)
+    window.addEventListener('message', (event) => {
+      if (
+        event.data &&
+        event.data.topic === '< ambireProviderRequest' &&
+        event.data.id !== undefined
+      ) {
+        onResponse(event.data.id, event.data.payload.response, event.data.payload.error)
+      }
+    })
   }
 
   // ── Handle push events from wallet ──
