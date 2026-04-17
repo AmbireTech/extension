@@ -1,7 +1,7 @@
 import { formatUnits, parseUnits, toBeHex } from 'ethers'
-import React, { Fragment, useCallback, useEffect, useMemo, useState } from 'react'
+import React, { Fragment, memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { NativeSyntheticEvent, TextInputSelectionChangeEventData, View } from 'react-native'
+import { ColorValue, View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 
 import { EstimationStatus } from '@ambire-common/controllers/estimation/types'
@@ -97,6 +97,62 @@ const FeeSpeedLabel = ({
   )
 }
 
+type CustomGasPriceInputProps = {
+  initialAmount: string
+  backgroundColor: ColorValue
+  onSanitizedAmountChange: (value: string) => void
+  inputError: string | boolean
+  decimals?: number
+  symbol?: string
+}
+
+const CustomGasPriceInput = memo(
+  ({
+    initialAmount,
+    backgroundColor,
+    onSanitizedAmountChange,
+    inputError,
+    decimals,
+    symbol
+  }: CustomGasPriceInputProps) => {
+    const { t } = useTranslation()
+    const [draftAmount, setDraftAmount] = useState(initialAmount)
+
+    useEffect(() => {
+      setDraftAmount(initialAmount)
+    }, [initialAmount])
+
+    const onChange = useCallback(
+      (text: string) => {
+        setDraftAmount(text)
+        onSanitizedAmountChange(text.replace(',', '.'))
+      },
+      [onSanitizedAmountChange]
+    )
+
+    const onBlur = useCallback(() => {
+      const sanitized = draftAmount.trim().replace(',', '.')
+      setDraftAmount(sanitized)
+      onSanitizedAmountChange(sanitized)
+    }, [draftAmount, onSanitizedAmountChange])
+
+    return (
+      <NumberInput
+        label={t('Gas price ({{symbol}})', { symbol })}
+        placeholder={t('Enter gas price')}
+        value={draftAmount}
+        onChangeText={onChange}
+        onBlur={onBlur}
+        precision={decimals || 18}
+        error={inputError}
+        info={t('Set the gas price in the chain native token per gas unit.')}
+        autoFocus
+        backgroundColor={backgroundColor}
+      />
+    )
+  }
+)
+
 const Estimation = ({
   signAccountOpState,
   disabled,
@@ -145,11 +201,9 @@ const Estimation = ({
   }, [hasEstimation, signAccountOpState, state.contacts])
 
   const [selectedFeeOption, setSelectedFeeOption] = useState<SelectValue['value'] | null>(null)
-  const [customGasPriceInput, setCustomGasPriceInput] = useState('')
   const [customGasPriceError, setCustomGasPriceError] = useState<string | boolean>(false)
-  const [customGasPriceSelection, setCustomGasPriceSelection] = useState<
-    { start: number; end: number } | undefined
-  >(undefined)
+  const customGasPriceRef = useRef('')
+  const [initialCustomGasPrice, setInitialCustomGasPrice] = useState('')
 
   const dispatchUpdate = useCallback(
     (update: {
@@ -379,30 +433,24 @@ const Estimation = ({
   const openAdvancedOptions = useCallback(() => {
     if (!canSetCustomGasPrices) return
 
-    setCustomGasPriceInput(currentGasPrice)
+    customGasPriceRef.current = currentGasPrice
+    setInitialCustomGasPrice(currentGasPrice)
     setCustomGasPriceError(false)
-    setCustomGasPriceSelection(
-      currentGasPrice
-        ? {
-            start: currentGasPrice.length,
-            end: currentGasPrice.length
-          }
-        : undefined
-    )
     openCustomGasPriceSheet()
   }, [canSetCustomGasPrices, currentGasPrice, openCustomGasPriceSheet])
 
-  const onCustomGasPriceSelectionChange = useCallback(
-    (event: NativeSyntheticEvent<TextInputSelectionChangeEventData>) => {
-      setCustomGasPriceSelection(event.nativeEvent.selection)
+  const onCustomGasPriceChange = useCallback(
+    (value: string) => {
+      customGasPriceRef.current = value
+      if (customGasPriceError) setCustomGasPriceError(false)
     },
-    []
+    [customGasPriceError]
   )
 
   const saveCustomGasPrice = useCallback(() => {
     if (!signAccountOpState?.selectedOption) return
 
-    const normalizedValue = customGasPriceInput.trim().replace(',', '.')
+    const normalizedValue = customGasPriceRef.current.trim().replace(',', '.')
 
     if (!normalizedValue) {
       setCustomGasPriceError(t('Enter a gas price'))
@@ -445,13 +493,7 @@ const Estimation = ({
     } catch {
       setCustomGasPriceError(t('Enter a valid gas price'))
     }
-  }, [
-    closeCustomGasPriceSheet,
-    customGasPriceInput,
-    dispatchUpdate,
-    signAccountOpState?.selectedOption,
-    t
-  ])
+  }, [closeCustomGasPriceSheet, dispatchUpdate, signAccountOpState?.selectedOption, t])
 
   const renderFeeOptionSectionHeader = useCallback(({ section }: any) => {
     if (section.data.length === 0 || !section.title) return null
@@ -524,22 +566,13 @@ const Estimation = ({
         type="modal"
       >
         <ModalHeader title={t('Advanced options')} handleClose={closeCustomGasPriceSheet} />
-        <NumberInput
-          label={t('Gas price ({{symbol}})', {
-            symbol: signAccountOpState.selectedOption?.token.symbol || network?.nativeAssetSymbol
-          })}
-          placeholder={t('Enter gas price')}
-          value={customGasPriceInput}
-          onChangeText={(value) => {
-            setCustomGasPriceInput(value)
-            if (customGasPriceError) setCustomGasPriceError(false)
-          }}
-          onSelectionChange={onCustomGasPriceSelectionChange}
-          selection={customGasPriceSelection}
-          precision={signAccountOpState.selectedOption?.token.decimals || 18}
-          error={customGasPriceError}
-          info={t('Set the gas price in the chain native token per gas unit.')}
-          autoFocus
+        <CustomGasPriceInput
+          initialAmount={initialCustomGasPrice}
+          backgroundColor={theme.primaryBackground}
+          onSanitizedAmountChange={onCustomGasPriceChange}
+          inputError={customGasPriceError}
+          decimals={signAccountOpState.selectedOption?.token.decimals}
+          symbol={signAccountOpState.selectedOption?.token.symbol || network?.nativeAssetSymbol}
         />
         <FooterGlassView absolute={false} isSimpleBlur={false} size="sm" style={spacings.mtLg}>
           <Button
