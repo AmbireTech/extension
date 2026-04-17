@@ -131,6 +131,9 @@ const SendForm = ({
   const tokenSections: GasTankSection[] | undefined = useMemo(() => {
     if (!isTopUp) return undefined
 
+    const getKey = (address: string | undefined, chainId: string | number | bigint | undefined) =>
+      `${String(address).toLowerCase()}.${String(chainId)}`
+
     const enabledNetworkChainIds = new Set(networks.map((network) => network.chainId.toString()))
 
     const currentOptionKeys = new Set(
@@ -138,34 +141,19 @@ const SendForm = ({
         .filter((o): o is typeof o & { address: string; chainId: string | number | bigint } => {
           return 'address' in o && 'chainId' in o && !!o.address && o.chainId !== undefined
         })
-        .map((o) => `${String(o.address).toLowerCase()}.${String(o.chainId)}`)
+        .map((o) => getKey(o.address, o.chainId))
     )
 
-    const uniqueGasTankAssets = Array.from(
-      new Map(
-        (gasTankAssets ?? []).map((asset) => [
-          `${asset.address?.toLowerCase()}.${asset.chainId}`,
-          {
-            ...asset,
-            address: asset.address?.toLowerCase()
-          }
-        ])
-      ).values()
-    )
-
-    const otherGasTokens = uniqueGasTankAssets
+    const otherGasTokens = (gasTankAssets ?? [])
       .filter((asset) => {
         if (!asset.chainId || !enabledNetworkChainIds.has(asset.chainId.toString())) return false
-        const getKey = (address: string | undefined, chainId: number | undefined) =>
-          `${String(address).toLowerCase()}.${String(chainId)}`
-
-        const key = getKey(asset.address, asset.chainId)
-        return !currentOptionKeys.has(key)
+        return !currentOptionKeys.has(getKey(asset.address, asset.chainId))
       })
       .map((asset) => {
         const feeToken = gasTankFeeTokens.find(
           (ft) =>
-            ft.address.toLowerCase() === asset.address && ft.chainId === BigInt(asset.chainId!)
+            ft.address.toLowerCase() === asset.address?.toLowerCase() &&
+            ft.chainId === BigInt(asset.chainId!)
         )
         const network = networks.find((n) => n.chainId === BigInt(asset.chainId!))
 
