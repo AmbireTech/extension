@@ -13,6 +13,7 @@ import {
   getSuccessStatus,
   getVersion
 } from '@ambire-common/libs/5792/5792'
+import { UiManager } from '@ambire-common/interfaces/ui'
 import { getBaseAccount } from '@ambire-common/libs/account/getBaseAccount'
 import {
   AccountOpIdentifiedBy,
@@ -24,11 +25,9 @@ import { getBenzinUrlParams } from '@ambire-common/utils/benzin'
 import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
 import { APP_VERSION } from '@common/config/env'
 import { SAFE_RPC_METHODS } from '@common/modules/inpage/methods'
+import { metadata } from '@common/modules/provider/metadata'
+import { RequestRes, Web3WalletPermission } from '@common/modules/provider/types'
 import { openInTab } from '@common/utils/links'
-import { notificationManager } from '@web/extension-services/background/webapi/notification'
-
-import { metadata } from './metadata'
-import { RequestRes, Web3WalletPermission } from './types'
 
 type ProviderRequest = DappProviderRequest & { requestRes: RequestRes }
 
@@ -50,9 +49,11 @@ export class ProviderController {
   mainCtrl: MainController
 
   isUnlocked: boolean
+  private notificationManager: UiManager['notification']
 
-  constructor(mainCtrl: MainController) {
+  constructor(mainCtrl: MainController, notificationManager: UiManager['notification']) {
     this.mainCtrl = mainCtrl
+    this.notificationManager = notificationManager
 
     this.isUnlocked = this.mainCtrl.keystore.isReadyToStoreKeys
       ? this.mainCtrl.keystore.isUnlocked
@@ -689,7 +690,7 @@ export class ProviderController {
       this.mainCtrl.dapps.updateDapp(id, { chainId })
       // eslint-disable-next-line @typescript-eslint/no-floating-promises
       ;(async () => {
-        await notificationManager.create({
+        await this.notificationManager.create({
           title: 'Successfully switched network',
           message: `Network switched to ${network.name} for ${name || origin}.`
         })

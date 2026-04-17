@@ -163,7 +163,8 @@ const initControllers = (config: any) => {
           sendToastMessage: (text: string, options: any) =>
             sendToReactEvent('action.addToast', { text, options }),
           sendUiMessage: (params: any) => sendToReactEvent('action.receiveOneTimeData', params),
-          sendNavigateMessage: () => {}
+          sendNavigateMessage: (viewId: string, route: string, params: any) =>
+            sendToReactEvent('action.navigate', { route, params })
         }
       }
     })

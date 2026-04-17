@@ -32,6 +32,7 @@ import { parse, stringify } from '@ambire-common/libs/richJson/richJson'
 import wait from '@ambire-common/utils/wait'
 import CONFIG, { APP_VERSION, isAmbireNext, isDev, isProd } from '@common/config/env'
 import { controllersNestedInMainMapping } from '@common/constants/controllersMapping'
+import AutoLockController from '@common/controllers/auto-lock/auto-lock'
 import { WalletStateController } from '@common/controllers/wallet-state'
 import { storage } from '@common/services/storage'
 import { Action, MethodAction } from '@common/types/actions'
@@ -46,7 +47,6 @@ import {
 } from '@env'
 import * as Sentry from '@sentry/browser'
 import { browser, platform } from '@web/constants/browserapi'
-import AutoLockController from '@web/extension-services/background/controllers/auto-lock'
 import { BadgesController } from '@web/extension-services/background/controllers/badges'
 import ExtensionUpdateController from '@web/extension-services/background/controllers/extension-update'
 import { handleActions } from '@web/extension-services/background/handlers/handleActions'
@@ -56,8 +56,6 @@ import {
   handleKeepBridgeContentScriptAcrossSessions,
   handleRegisterScripts
 } from '@web/extension-services/background/handlers/handleScripting'
-import handleProviderRequests from '@web/extension-services/background/provider/handleProviderRequests'
-import { providerRequestTransport } from '@web/extension-services/background/provider/providerRequestTransport'
 import { notificationManager } from '@web/extension-services/background/webapi/notification'
 import windowManager from '@web/extension-services/background/webapi/window'
 import {
@@ -72,6 +70,8 @@ import TrezorController from '@web/modules/hardware-wallet/controllers/TrezorCon
 import LatticeSigner from '@web/modules/hardware-wallet/libs/LatticeSigner'
 import LedgerSigner from '@web/modules/hardware-wallet/libs/LedgerSigner'
 import TrezorSigner from '@web/modules/hardware-wallet/libs/TrezorSigner'
+import handleProviderRequests from '@web/modules/provider/handleProviderRequests'
+import { providerRequestTransport } from '@web/modules/provider/providerRequestTransport'
 import { getExtensionInstanceId } from '@web/utils/analytics'
 
 import {
@@ -286,14 +286,15 @@ providerRequestTransport.reply(async ({ method, id, providerId, params }, meta) 
   mainCtrl.dapps.setSessionMessenger(session.sessionId, bridgeMessenger, isAmbireNext)
 
   try {
-    const res = await handleProviderRequests(
-      { method, params, session },
+    const res = await handleProviderRequests({
+      request: { method, params, session },
       mainCtrl,
       walletStateCtrl,
       autoLockCtrl,
-      id,
-      providerId
-    )
+      requestId: id,
+      providerId,
+      notificationManager
+    })
 
     return { id, result: res }
   } catch (error: any) {

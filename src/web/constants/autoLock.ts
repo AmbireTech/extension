@@ -1,7 +1,4 @@
-import {
-  AUTO_LOCK_TIMES,
-  getAutoLockLabel
-} from '@web/extension-services/background/controllers/auto-lock'
+import { AUTO_LOCK_TIMES, getAutoLockLabel } from '@common/controllers/auto-lock/auto-lock'
 
 export const AUTO_LOCK_OPTIONS = [
   {

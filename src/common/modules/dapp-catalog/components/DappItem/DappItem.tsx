@@ -3,7 +3,6 @@ import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 
 import { Dapp } from '@ambire-common/interfaces/dapp'
-import { isMobile } from '@common/config/env'
 import ConnectedIcon from '@common/assets/svg/ConnectedIcon'
 import SettingsWheelIcon from '@common/assets/svg/SettingsWheelIcon'
 import StarIcon from '@common/assets/svg/StarIcon'
@@ -11,18 +10,19 @@ import TwitterIcon from '@common/assets/svg/TwitterIcon'
 import Badge from '@common/components/Badge'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import Text from '@common/components/Text'
+import { isMobile } from '@common/config/env'
 import useController from '@common/hooks/useController'
 import { AnimatedPressable, useCustomHover } from '@common/hooks/useHover'
+import useNavigation from '@common/hooks/useNavigation'
 import useTheme from '@common/hooks/useTheme'
+import { ROUTES } from '@common/modules/router/constants/common'
 import spacings, { SPACING_TY } from '@common/styles/spacings'
 import { hexToRgba } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
+import { openInTab } from '@common/utils/links/links'
 import ManifestImage from '@web/components/ManifestImage'
-import { openInTab } from '@web/extension-services/background/webapi/tab'
 import TrustedIcon from '@web/modules/action-requests/screens/DappConnectScreen/components/TrustedIcon'
-import { ROUTES } from '@common/modules/router/constants/common'
-import useNavigation from '@common/hooks/useNavigation'
 
 import ManageApp from '../ManageApp'
 import getStyles from './styles'
@@ -126,7 +126,7 @@ const DappItem = (dapp: DappItemProps) => {
               onPressOverride()
               return
             }
-            
+
             if (isMobile) {
               navigation.navigate(ROUTES.dappWebView, {
                 state: { url, name }

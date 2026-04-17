@@ -27,8 +27,8 @@ import spacings from '@common/styles/spacings'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
+import { openInternalPageInTab } from '@common/utils/links/links'
 import { getUiType } from '@common/utils/uiType'
-import { openInternalPageInTab } from '@web/extension-services/background/webapi/tab'
 
 import getStyles from './styles'
 

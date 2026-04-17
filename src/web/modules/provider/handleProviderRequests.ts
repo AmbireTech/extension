@@ -3,21 +3,31 @@ import { ethErrors } from 'eth-rpc-errors'
 import { Session } from '@ambire-common/classes/session'
 import { MainController } from '@ambire-common/controllers/main/main'
 import { DappProviderRequest } from '@ambire-common/interfaces/dapp'
+import { UiManager } from '@ambire-common/interfaces/ui'
 import { isDev } from '@common/config/env'
+import AutoLockController from '@common/controllers/auto-lock/auto-lock'
 import { WalletStateController } from '@common/controllers/wallet-state'
-import AutoLockController from '@web/extension-services/background/controllers/auto-lock'
-import { ProviderController } from '@web/extension-services/background/provider/ProviderController'
-import rpcFlow from '@web/extension-services/background/provider/rpcFlow'
-import { openInternalPageInTab } from '@web/extension-services/background/webapi/tab'
+import { ProviderController } from '@common/modules/provider/ProviderController'
+import rpcFlow from '@common/modules/provider/rpcFlow'
+import { openInternalPageInTab } from '@common/utils/links/links'
 
-const handleProviderRequests = async (
-  request: DappProviderRequest & { session: Session },
-  mainCtrl: MainController,
-  walletStateCtrl: WalletStateController,
-  autoLockCtrl: AutoLockController,
-  requestId: number,
+const handleProviderRequests = async ({
+  request,
+  mainCtrl,
+  walletStateCtrl,
+  autoLockCtrl,
+  requestId,
+  providerId,
+  notificationManager
+}: {
+  request: DappProviderRequest & { session: Session }
+  mainCtrl: MainController
+  walletStateCtrl: WalletStateController
+  autoLockCtrl: AutoLockController
+  requestId: number
   providerId: number
-): Promise<any> => {
+  notificationManager: UiManager['notification']
+}): Promise<any> => {
   const { method, params, session } = request
 
   if (requestId === 0) {
@@ -31,7 +41,7 @@ const handleProviderRequests = async (
 
   if (method === 'contentScriptReady') {
     await mainCtrl.dapps.broadcastDappSessionEvent('tabCheckin', undefined, session.id, true)
-    const providerController = new ProviderController(mainCtrl)
+    const providerController = new ProviderController(mainCtrl, notificationManager)
     const isUnlocked = mainCtrl.keystore.isUnlocked
     const chainId = await providerController.ethChainId(request)
     let networkVersion = '1'
@@ -90,7 +100,7 @@ const handleProviderRequests = async (
   if (method === 'getProviderState') {
     await walletStateCtrl.initialLoadPromise
 
-    const providerController = new ProviderController(mainCtrl)
+    const providerController = new ProviderController(mainCtrl, notificationManager)
     const isUnlocked = mainCtrl.keystore.isUnlocked
     const chainId = await providerController.ethChainId(request)
     let networkVersion = '1'
@@ -142,7 +152,7 @@ const handleProviderRequests = async (
     return null
   }
 
-  return rpcFlow(request, mainCtrl)
+  return rpcFlow(request, mainCtrl, notificationManager)
 }
 
 export default handleProviderRequests

@@ -1,7 +1,7 @@
 import { EthereumProvider as CommonEthereumProvider } from '@common/modules/inpage/EthereumProvider'
 import { logInfoWithPrefix, logWarnWithPrefix } from '@common/utils/logger'
-import { providerRequestTransport } from '@web/extension-services/background/provider/providerRequestTransport'
 import { initializeMessenger } from '@web/extension-services/messengers/initializeMessenger'
+import { providerRequestTransport } from '@web/modules/provider/providerRequestTransport'
 
 export class EthereumProvider extends CommonEthereumProvider {
   constructor(

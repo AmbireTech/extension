@@ -4,10 +4,10 @@ import { useTranslation } from 'react-i18next'
 import LockWithTimerIcon from '@common/assets/svg/LockWithTimerIcon'
 import ControlOption from '@common/components/ControlOption'
 import Select from '@common/components/Select'
+import { AUTO_LOCK_TIMES } from '@common/controllers/auto-lock/auto-lock'
 import useController from '@common/hooks/useController'
 import spacings from '@common/styles/spacings'
 import { AUTO_LOCK_OPTIONS } from '@web/constants/autoLock'
-import { AUTO_LOCK_TIMES } from '@web/extension-services/background/controllers/auto-lock'
 
 const AutoLockDeviceControlOption = () => {
   const { t } = useTranslation()
