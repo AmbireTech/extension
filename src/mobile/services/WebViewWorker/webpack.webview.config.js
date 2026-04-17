@@ -7,9 +7,11 @@ const HtmlWebpackPlugin = require('html-webpack-plugin')
 // Since Webpack is executed from the project root via package.json scripts,
 // process.cwd() provides the absolute path to the project root directory
 const ROOT_DIR = process.cwd()
-
 const isDev = process.env.NODE_ENV === 'development' || process.argv.includes('serve')
 
+/**
+ * Shared Resolver Configuration
+ */
 const sharedResolve = {
   extensions: ['.web.ts', '.web.tsx', '.ts', '.tsx', '.web.js', '.js', '.jsx'],
   fallback: {
@@ -33,10 +35,12 @@ const sharedResolve = {
   }
 }
 
+/**
+ * Shared Babel Rules
+ */
 const sharedRules = [
   {
     test: /\.(js|jsx|ts|tsx|mjs)$/,
-    // Exclude Node modules EXCEPT for the core libraries that have ESM/TS syntax
     exclude:
       /node_modules\/(?!(.*@metamask.*|.*@noble.*|.*ethers.*|.*@ambire-common.*|.*@babel\/runtime.*|.*siwe.*|.*valibot.*|.*expo.*))/,
     use: [
@@ -65,62 +69,81 @@ const sharedRules = [
   }
 ]
 
+/**
+ * Shared Plugins
+ */
 const sharedPlugins = [
   new NodePolyfillPlugin(),
   new webpack.ProvidePlugin({ Buffer: ['buffer', 'Buffer'], process: 'process' }),
-  new webpack.optimize.LimitChunkCountPlugin({ maxChunks: 1 }),
-  new webpack.DefinePlugin({
-    __DEV__: JSON.stringify(isDev),
-    'process.env.WEB_ENGINE': JSON.stringify('webview'),
-    'process.env.APP_ENV': JSON.stringify(isDev ? 'development' : 'production')
-  })
+  new webpack.optimize.LimitChunkCountPlugin({ maxChunks: 1 })
 ]
 
-// ── Development config (webpack-dev-server with HMR) ──
-if (isDev) {
-  module.exports = {
-    context: ROOT_DIR,
-    entry: './src/mobile/services/WebViewWorker/injectedLogic.ts',
-    mode: 'development',
-    target: 'web',
-    devtool: 'eval-source-map',
-    output: {
-      path: path.resolve(ROOT_DIR, 'dist-webview-dev'),
-      filename: 'webview-bundle.js',
-      publicPath: '/'
-    },
-    devServer: {
-      port: 8082,
-      // Both HMR and live reload are disabled. The WebView loads inline HTML
-      // from a file:/// base URL, so location.reload() navigates to file:///
-      // (a directory) instead of reloading the page.
-      // Reload is handled by the WebSocket monkey-patch in WebViewWorker.tsx:
-      // it detects webpack "hash changed" messages and tells RN to remount
-      // the WebView, which re-fetches the latest bundle from this server.
-      hot: false,
-      liveReload: false,
-      // Allow connections from mobile devices/emulators
-      host: '0.0.0.0',
-      allowedHosts: 'all',
-      headers: {
-        'Access-Control-Allow-Origin': '*'
-      },
-      client: {
-        // Overlay errors inside the WebView for easy debugging
-        overlay: true,
-        // WebSocket connects back to the correct host
-        webSocketURL: 'auto://0.0.0.0:0/ws'
+/**
+ * Webpack Plugin to wrap the generated JS bundle into a JSON file for React Native injection.
+ */
+class JsonWrapPlugin {
+  constructor(options) {
+    this.assetName = options.assetName
+  }
+
+  apply(compiler) {
+    compiler.hooks.emit.tap('JsonWrapPlugin', (compilation) => {
+      const asset = compilation.assets[this.assetName]
+      if (asset) {
+        const code = asset.source().toString()
+        const jsonCode = JSON.stringify({ code })
+        const jsonAssetName = this.assetName.replace('.js', '.json')
+
+        compilation.assets[jsonAssetName] = {
+          source: () => jsonCode,
+          size: () => jsonCode.length
+        }
+
+        // Keep the JS file if in development (for serving), but delete in production
+        if (compilation.options.mode === 'production') {
+          delete compilation.assets[this.assetName]
+          delete compilation.assets[`${this.assetName}.LICENSE.txt`]
+        }
       }
-    },
-    resolve: sharedResolve,
-    module: { rules: sharedRules },
-    plugins: [
-      ...sharedPlugins,
-      // Generate an index.html that loads the bundle via <script> tags.
-      // Includes security patches (fetch/XHR file:// blocking) and the
-      // WebSocket URL fix since the WebView loads this page directly.
-      new HtmlWebpackPlugin({
-        templateContent: `
+    })
+  }
+}
+
+/**
+ * Configuration 1: WebView Worker
+ * Background instance that runs the wallet's controllers.
+ */
+const workerConfig = {
+  name: 'worker',
+  context: ROOT_DIR,
+  entry: './src/mobile/services/WebViewWorker/injectedLogic.ts',
+  mode: isDev ? 'development' : 'production',
+  target: 'web',
+  devtool: isDev ? 'eval-source-map' : false,
+  output: {
+    path: path.resolve(ROOT_DIR, 'src/mobile/services/WebViewWorker'),
+    filename: 'webview-bundle.js',
+    libraryTarget: 'window',
+    publicPath: isDev ? '/' : ''
+  },
+  resolve: sharedResolve,
+  module: { rules: sharedRules },
+  plugins: [
+    ...sharedPlugins,
+    new webpack.DefinePlugin({
+      __DEV__: JSON.stringify(isDev),
+      'process.env.WEB_ENGINE': JSON.stringify('webview'),
+      'process.env.APP_ENV': JSON.stringify(isDev ? 'development' : 'production')
+    }),
+    new JsonWrapPlugin({ assetName: 'webview-bundle.js' })
+  ]
+}
+
+// Dev-only plugins for Worker (HtmlWebpackPlugin)
+if (isDev) {
+  workerConfig.plugins.push(
+    new HtmlWebpackPlugin({
+      templateContent: `
 <!DOCTYPE html>
 <html>
   <head>
@@ -160,78 +183,89 @@ if (isDev) {
   </head>
   <body></body>
 </html>`,
-        inject: 'body'
-      })
-    ],
-    optimization: {
-      splitChunks: false,
-      runtimeChunk: false
+      inject: 'body'
+    })
+  )
+
+  workerConfig.devServer = {
+    port: 8082,
+    // Both HMR and live reload are disabled. The WebView loads inline HTML
+    // from a file:/// base URL, so location.reload() navigates to file:///
+    // (a directory) instead of reloading the page.
+    // Reload is handled by the WebSocket monkey-patch in WebViewWorker.tsx:
+    // it detects webpack "hash changed" messages and tells RN to remount
+    // the WebView, which re-fetches the latest bundle from this server.
+    hot: false,
+    liveReload: false,
+    // Allow connections from mobile devices/emulators
+    host: '0.0.0.0',
+    allowedHosts: 'all',
+    headers: { 'Access-Control-Allow-Origin': '*' },
+    client: {
+      // Overlay errors inside the WebView for easy debugging
+      overlay: true,
+      // WebSocket connects back to the correct host
+      webSocketURL: 'auto://0.0.0.0:0/ws'
     }
   }
 } else {
-  class JsonWrapPlugin {
-    apply(compiler) {
-      compiler.hooks.emit.tap('JsonWrapPlugin', (compilation) => {
-        // Only wrap in JSON for production
-        if (compilation.options.mode !== 'production') return
-
-        const assetName = 'webview-bundle.js'
-        const asset = compilation.assets[assetName]
-        if (asset) {
-          const code = asset.source().toString()
-          const jsonCode = JSON.stringify({ code })
-
-          // Add the JSON asset
-          compilation.assets['webview-bundle.json'] = {
-            source: () => jsonCode,
-            size: () => jsonCode.length
-          }
-
-          // Remove the JS and LICENSE files so they don't get written to disk
-          delete compilation.assets[assetName]
-          delete compilation.assets[`${assetName}.LICENSE.txt`]
-        }
+  workerConfig.optimization = {
+    minimize: true,
+    minimizer: [
+      new TerserPlugin({
+        extractComments: false,
+        terserOptions: { mangle: false, keep_classnames: true, keep_fnames: true }
       })
-    }
-  }
-
-  // ── Production config (existing bundle build) ──
-  module.exports = {
-    context: ROOT_DIR,
-    entry: './src/mobile/services/WebViewWorker/injectedLogic.ts',
-    mode: 'production',
-    target: 'web',
-    output: {
-      path: __dirname,
-      filename: 'webview-bundle.js',
-      libraryTarget: 'window',
-      publicPath: ''
-    },
-    optimization: {
-      minimize: true,
-      minimizer: [
-        new TerserPlugin({
-          extractComments: false,
-          terserOptions: {
-            mangle: false,
-            keep_classnames: true,
-            keep_fnames: true
-          }
-        })
-      ],
-      splitChunks: false,
-      runtimeChunk: false
-    },
-    resolve: sharedResolve,
-    module: { rules: sharedRules },
-    plugins: [
-      ...sharedPlugins,
-      new webpack.DefinePlugin({
-        __DEV__: JSON.stringify(false),
-        'process.env.WEB_ENGINE': JSON.stringify('webview'),
-        'process.env.APP_ENV': JSON.stringify('production')
-      }),
-      new JsonWrapPlugin()
-    ]
+    ],
+    splitChunks: false,
+    runtimeChunk: false
   }
 }
+
+/**
+ * Configuration 2: Inpage Provider
+ * The Ethereum provider injected into dapps.
+ */
+const inpageConfig = {
+  name: 'inpage',
+  context: ROOT_DIR,
+  entry: './src/mobile/modules/inpage/index.ts',
+  mode: isDev ? 'development' : 'production',
+  target: 'web',
+  devtool: isDev ? 'eval-source-map' : false,
+  output: {
+    path: path.resolve(ROOT_DIR, 'src/mobile/services/WebViewWorker'),
+    filename: 'inpage-bundle.js',
+    libraryTarget: 'window',
+    publicPath: isDev ? '/' : ''
+  },
+  resolve: sharedResolve,
+  module: { rules: sharedRules },
+  plugins: [
+    ...sharedPlugins,
+    new webpack.DefinePlugin({
+      __DEV__: JSON.stringify(isDev),
+      'process.env.WEB_ENGINE': JSON.stringify('webview'),
+      'process.env.APP_ENV': JSON.stringify(isDev ? 'development' : 'production'),
+      // AMBIRE_PROVIDER_NONCE is prepended at runtime in RN.
+      AMBIRE_PROVIDER_NONCE: 'AMBIRE_PROVIDER_NONCE'
+    }),
+    new JsonWrapPlugin({ assetName: 'inpage-bundle.js' })
+  ]
+}
+
+if (!isDev) {
+  inpageConfig.optimization = {
+    minimize: true,
+    minimizer: [
+      new TerserPlugin({
+        extractComments: false,
+        terserOptions: { mangle: false, keep_classnames: true, keep_fnames: true }
+      })
+    ],
+    splitChunks: false,
+    runtimeChunk: false
+  }
+}
+
+module.exports = [workerConfig, inpageConfig]

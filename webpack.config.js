@@ -315,8 +315,8 @@ module.exports = async function (env, argv) {
         background: './src/web/extension-services/background/background.ts',
         'content-script':
           './src/web/extension-services/content-script/content-script-messenger-bridge.ts',
-        'ambire-inpage': './src/web/extension-services/inpage/ambire-inpage.ts',
-        'ethereum-inpage': './src/web/extension-services/inpage/ethereum-inpage.ts',
+        'ambire-inpage': './src/web/modules/inpage/ambire-inpage.ts',
+        'ethereum-inpage': './src/web/modules/inpage/ethereum-inpage.ts',
         ...(isGecko && {
           'content-script-ambire-injection':
             './src/web/extension-services/content-script/content-script-ambire-injection.ts',
