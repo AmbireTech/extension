@@ -1,19 +1,27 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react'
+import { formatUnits, parseUnits, toBeHex } from 'ethers'
+import React, { Fragment, useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
+import { useModalize } from 'react-native-modalize'
 
 import { EstimationStatus } from '@ambire-common/controllers/estimation/types'
 import { getFeeSpeedIdentifier } from '@ambire-common/controllers/signAccountOp/helper'
 import { FeeSpeed, SpeedCalc } from '@ambire-common/controllers/signAccountOp/signAccountOp'
+import { Hex } from '@ambire-common/interfaces/hex'
 import { Warning } from '@ambire-common/interfaces/signAccountOp'
 import { FeePaymentOption } from '@ambire-common/libs/estimate/interfaces'
+import { GasSpeeds } from '@ambire-common/services/bundlers/types'
 import { ZERO_ADDRESS } from '@ambire-common/services/socket/constants'
 import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
 import AssetIcon from '@common/assets/svg/AssetIcon'
 import FeeIcon from '@common/assets/svg/FeeIcon'
 import Alert from '@common/components/Alert'
+import BottomSheet from '@common/components/BottomSheet'
+import ModalHeader from '@common/components/BottomSheet/ModalHeader'
+import Button from '@common/components/Button'
+import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
+import NumberInput from '@common/components/NumberInput'
 import Select, { SectionedSelect } from '@common/components/Select'
-import BottomSheetHeader from '@common/components/Select/components/BottomSheetHeader'
 import { SelectValue } from '@common/components/Select/types'
 import Text from '@common/components/Text'
 import TitleAndIcon from '@common/components/TitleAndIcon'
@@ -34,6 +42,7 @@ import getStyles from './styles'
 import { Props } from './types'
 
 const FEE_SECTION_LIST_MENU_HEADER_HEIGHT = 34
+const ADVANCED_OPTIONS_TOOLTIP_ID = 'sign-account-op-advanced-options-tooltip'
 
 export const SPEED_TEST_IDS = {
   slow: 'option-slow',
@@ -103,8 +112,14 @@ const Estimation = ({
   const { dispatch: swapAndBridgeDispatch } = useController('SwapAndBridgeController')
   const { dispatch: transferDispatch } = useController('TransferController')
   const { state } = useController('AddressBookController')
+  const { networks } = useController('NetworksController').state
   const { t } = useTranslation()
   const { theme } = useTheme(getStyles)
+  const {
+    ref: customGasPriceSheetRef,
+    open: openCustomGasPriceSheet,
+    close: closeCustomGasPriceSheet
+  } = useModalize()
 
   const feeTokenPriceUnavailableWarning = useMemo(() => {
     return signAccountOpState?.warnings.find((warning) => warning.id === 'feeTokenPriceUnavailable')
@@ -129,6 +144,26 @@ const Estimation = ({
   }, [hasEstimation, signAccountOpState, state.contacts])
 
   const [selectedFeeOption, setSelectedFeeOption] = useState<SelectValue['value'] | null>(null)
+  const [customGasPriceInput, setCustomGasPriceInput] = useState('')
+  const [customGasPriceError, setCustomGasPriceError] = useState<string | boolean>(false)
+
+  const dispatchUpdate = useCallback(
+    (update: {
+      feeToken?: SelectValue['token']
+      paidBy?: string
+      speed?: FeeSpeed
+      customGasPrices?: GasSpeeds
+    }) => {
+      signAccountOpDispatch({
+        type: 'method',
+        params: {
+          method: 'update',
+          args: [update]
+        }
+      })
+    },
+    [signAccountOpDispatch]
+  )
 
   const payValue = useMemo(() => {
     return (
@@ -143,70 +178,16 @@ const Estimation = ({
       setSelectedFeeOption(localPayValue.value)
 
       if (!skipDispatch) {
-        if (updateType === 'Swap&Bridge') {
-          swapAndBridgeDispatch({
-            type: 'method',
-            params: {
-              method: 'callSignAccountOpMethod',
-              args: [
-                'update',
-                [
-                  {
-                    feeToken: localPayValue.token,
-                    paidBy: localPayValue.paidBy,
-                    speed: localPayValue.speedCoverage.includes(signAccountOpState.selectedFeeSpeed)
-                      ? signAccountOpState.selectedFeeSpeed
-                      : FeeSpeed.Fast
-                  }
-                ]
-              ]
-            }
-          })
-        } else if (updateType === 'Transfer&TopUp') {
-          transferDispatch({
-            type: 'method',
-            params: {
-              method: 'callSignAccountOpMethod',
-              args: [
-                'update',
-                [
-                  {
-                    feeToken: localPayValue.token,
-                    paidBy: localPayValue.paidBy,
-                    speed: localPayValue.speedCoverage.includes(signAccountOpState.selectedFeeSpeed)
-                      ? signAccountOpState.selectedFeeSpeed
-                      : FeeSpeed.Fast
-                  }
-                ]
-              ]
-            }
-          })
-        } else {
-          signAccountOpDispatch({
-            type: 'method',
-            params: {
-              method: 'update',
-              args: [
-                {
-                  feeToken: localPayValue.token,
-                  paidBy: localPayValue.paidBy,
-                  speed: localPayValue.speedCoverage.includes(signAccountOpState.selectedFeeSpeed)
-                    ? signAccountOpState.selectedFeeSpeed
-                    : FeeSpeed.Fast
-                }
-              ]
-            }
-          })
-        }
+        dispatchUpdate({
+          feeToken: localPayValue.token,
+          paidBy: localPayValue.paidBy,
+          speed: localPayValue.speedCoverage.includes(signAccountOpState.selectedFeeSpeed)
+            ? signAccountOpState.selectedFeeSpeed
+            : FeeSpeed.Fast
+        })
       }
     },
-    [
-      signAccountOpDispatch,
-      updateType,
-      signAccountOpState?.selectedFeeSpeed,
-      swapAndBridgeDispatch,
-      transferDispatch
-    ]
+    [dispatchUpdate, signAccountOpState?.selectedFeeSpeed]
   )
 
   useEffect(() => {
@@ -293,51 +274,11 @@ const Estimation = ({
         return
       }
 
-      if (updateType === 'Swap&Bridge') {
-        swapAndBridgeDispatch({
-          type: 'method',
-          params: {
-            method: 'callSignAccountOpMethod',
-            args: [
-              'update',
-              [
-                {
-                  speed: value as FeeSpeed
-                }
-              ]
-            ]
-          }
-        })
-      } else if (updateType === 'Transfer&TopUp') {
-        transferDispatch({
-          type: 'method',
-          params: {
-            method: 'callSignAccountOpMethod',
-            args: [
-              'update',
-              [
-                {
-                  speed: value as FeeSpeed
-                }
-              ]
-            ]
-          }
-        })
-      } else {
-        signAccountOpDispatch({
-          type: 'method',
-          params: {
-            method: 'update',
-            args: [
-              {
-                speed: value as FeeSpeed
-              }
-            ]
-          }
-        })
-      }
+      dispatchUpdate({
+        speed: value as FeeSpeed
+      })
     },
-    [signAccountOpDispatch, swapAndBridgeDispatch, transferDispatch, updateType]
+    [dispatchUpdate]
   )
 
   const feeOptionSelectSections = useMemo(() => {
@@ -396,6 +337,102 @@ const Estimation = ({
   const v1warning = useMemo(() => {
     return signAccountOpState?.warnings.find((w) => w.id === 'v1Acc')
   }, [signAccountOpState?.warnings])
+
+  const network = useMemo(() => {
+    return networks.find((n) => n.chainId === signAccountOpState?.accountOp.chainId)
+  }, [networks, signAccountOpState?.accountOp.chainId])
+
+  const currentGasPrice = useMemo(() => {
+    const selectedFeeSpeed = signAccountOpState?.selectedFeeSpeed || FeeSpeed.Fast
+    const selectedGasPrice = signAccountOpState?.gasPrices?.[selectedFeeSpeed]?.maxFeePerGas
+
+    if (!selectedGasPrice || !signAccountOpState?.selectedOption) return ''
+
+    return formatUnits(
+      BigInt(selectedGasPrice),
+      signAccountOpState.selectedOption.token.decimals || 18
+    )
+  }, [
+    signAccountOpState?.gasPrices,
+    signAccountOpState?.selectedFeeSpeed,
+    signAccountOpState?.selectedOption
+  ])
+
+  const canSetCustomGasPrices = !!signAccountOpState?.canSetCustomGasPrices
+
+  const advancedOptionsTooltip = useMemo(() => {
+    if (canSetCustomGasPrices) return undefined
+
+    return `Advanced options are only applicable for EOA accounts broadcasting in ${
+      network?.nativeAssetSymbol || signAccountOpState?.selectedOption?.token.symbol || ''
+    }`
+  }, [
+    canSetCustomGasPrices,
+    network?.nativeAssetSymbol,
+    signAccountOpState?.selectedOption?.token.symbol
+  ])
+
+  const openAdvancedOptions = useCallback(() => {
+    if (!canSetCustomGasPrices) return
+
+    setCustomGasPriceInput(currentGasPrice)
+    setCustomGasPriceError(false)
+    openCustomGasPriceSheet()
+  }, [canSetCustomGasPrices, currentGasPrice, openCustomGasPriceSheet])
+
+  const saveCustomGasPrice = useCallback(() => {
+    if (!signAccountOpState?.selectedOption) return
+
+    const normalizedValue = customGasPriceInput.trim().replace(',', '.')
+
+    if (!normalizedValue) {
+      setCustomGasPriceError(t('Enter a gas price'))
+      return
+    }
+
+    try {
+      const gasPrice = parseUnits(
+        normalizedValue,
+        signAccountOpState.selectedOption.token.decimals || 18
+      )
+
+      if (gasPrice <= 0n) {
+        setCustomGasPriceError(t('Enter a valid gas price'))
+        return
+      }
+
+      const gasPriceHex = toBeHex(gasPrice) as Hex
+      const customGasPrices: GasSpeeds = {
+        slow: {
+          maxFeePerGas: gasPriceHex,
+          maxPriorityFeePerGas: gasPriceHex
+        },
+        medium: {
+          maxFeePerGas: gasPriceHex,
+          maxPriorityFeePerGas: gasPriceHex
+        },
+        fast: {
+          maxFeePerGas: gasPriceHex,
+          maxPriorityFeePerGas: gasPriceHex
+        },
+        ape: {
+          maxFeePerGas: gasPriceHex,
+          maxPriorityFeePerGas: gasPriceHex
+        }
+      }
+
+      dispatchUpdate({ customGasPrices })
+      closeCustomGasPriceSheet()
+    } catch {
+      setCustomGasPriceError(t('Enter a valid gas price'))
+    }
+  }, [
+    closeCustomGasPriceSheet,
+    customGasPriceInput,
+    dispatchUpdate,
+    signAccountOpState?.selectedOption,
+    t
+  ])
 
   const renderFeeOptionSectionHeader = useCallback(({ section }: any) => {
     if (section.data.length === 0 || !section.title) return null
@@ -460,7 +497,7 @@ const Estimation = ({
   }
 
   return (
-    <>
+    <Fragment>
       <View
         style={[
           flexbox.directionRow,
@@ -470,9 +507,38 @@ const Estimation = ({
           isMobile && spacings.ptSm
         ]}
       >
-        <Text fontSize={20} weight="medium">
-          {t(signAccountOpState.canAccountBroadcastByItself ? 'Pay fee with' : 'Broadcast from')}
-        </Text>
+        <View style={[flexbox.directionRow, flexbox.alignCenter]}>
+          <Text fontSize={20} weight="medium">
+            {t(signAccountOpState.canAccountBroadcastByItself ? 'Pay fee with' : 'Broadcast from')}
+          </Text>
+          <View
+            dataSet={
+              advancedOptionsTooltip
+                ? createGlobalTooltipDataSet({
+                    id: ADVANCED_OPTIONS_TOOLTIP_ID,
+                    content: advancedOptionsTooltip
+                  })
+                : undefined
+            }
+            style={spacings.mlTy}
+          >
+            <Button
+              type="ghost"
+              size="tiny"
+              text={t('Advanced options')}
+              textUnderline
+              disabled={!canSetCustomGasPrices}
+              onPress={openAdvancedOptions}
+              hasBottomSpacing={false}
+              style={{
+                alignSelf: 'flex-start',
+                paddingHorizontal: 0,
+                minHeight: 0
+              }}
+              textStyle={{ color: theme.secondaryText }}
+            />
+          </View>
+        </View>
         {selectedFee && (
           <Select
             value={selectedFee}
@@ -542,7 +608,46 @@ const Estimation = ({
           </Text>
         </View>
       )}
-    </>
+      <BottomSheet
+        id="custom-gas-price-sheet"
+        sheetRef={customGasPriceSheetRef}
+        closeBottomSheet={closeCustomGasPriceSheet}
+        type="modal"
+      >
+        <ModalHeader title={t('Advanced options')} handleClose={closeCustomGasPriceSheet} />
+        <NumberInput
+          label={t('Gas price ({{symbol}})', {
+            symbol: signAccountOpState.selectedOption?.token.symbol || network?.nativeAssetSymbol
+          })}
+          placeholder={t('Enter gas price')}
+          value={customGasPriceInput}
+          onChangeText={(value) => {
+            setCustomGasPriceInput(value)
+            if (customGasPriceError) setCustomGasPriceError(false)
+          }}
+          precision={signAccountOpState.selectedOption?.token.decimals || 18}
+          error={customGasPriceError}
+          info={t('Set the gas price in the chain native token per gas unit.')}
+          autoFocus
+        />
+        <View style={[flexbox.directionRow, flexbox.justifySpaceBetween, spacings.mtLg]}>
+          <Button
+            type="secondary"
+            text={t('Cancel')}
+            onPress={() => closeCustomGasPriceSheet()}
+            hasBottomSpacing={false}
+            style={{ flex: 1, ...(isMobile ? spacings.mrSm : {}) }}
+          />
+          <Button
+            type="primary"
+            text={t('Save')}
+            onPress={saveCustomGasPrice}
+            hasBottomSpacing={false}
+            style={{ flex: 1 }}
+          />
+        </View>
+      </BottomSheet>
+    </Fragment>
   )
 }
 
