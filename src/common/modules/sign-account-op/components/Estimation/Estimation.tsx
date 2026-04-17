@@ -106,6 +106,8 @@ const Estimation = ({
   isOneClick
 }: Props) => {
   const { dispatch: signAccountOpDispatch } = useController('SignAccountOpController')
+  const { dispatch: swapAndBridgeDispatch } = useController('SwapAndBridgeController')
+  const { dispatch: transferDispatch } = useController('TransferController')
   const { state } = useController('AddressBookController')
   const { networks } = useController('NetworksController').state
   const { t } = useTranslation()
@@ -147,15 +149,33 @@ const Estimation = ({
       speed?: FeeSpeed
       customGasPrices?: GasSpeeds
     }) => {
-      signAccountOpDispatch({
-        type: 'method',
-        params: {
-          method: 'update',
-          args: [update]
-        }
-      })
+      if (updateType === 'Swap&Bridge') {
+        swapAndBridgeDispatch({
+          type: 'method',
+          params: {
+            method: 'callSignAccountOpMethod',
+            args: ['update', [update]]
+          }
+        })
+      } else if (updateType === 'Transfer&TopUp') {
+        transferDispatch({
+          type: 'method',
+          params: {
+            method: 'callSignAccountOpMethod',
+            args: ['update', [update]]
+          }
+        })
+      } else {
+        signAccountOpDispatch({
+          type: 'method',
+          params: {
+            method: 'update',
+            args: [update]
+          }
+        })
+      }
     },
-    [signAccountOpDispatch]
+    [swapAndBridgeDispatch, transferDispatch, signAccountOpDispatch, updateType]
   )
 
   const payValue = useMemo(() => {
