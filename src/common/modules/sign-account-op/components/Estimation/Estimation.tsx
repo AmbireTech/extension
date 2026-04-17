@@ -1,13 +1,12 @@
-import { formatUnits, parseUnits, toBeHex } from 'ethers'
-import React, { Fragment, memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { formatUnits } from 'ethers'
+import React, { Fragment, useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { ColorValue, View } from 'react-native'
+import { View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 
 import { EstimationStatus } from '@ambire-common/controllers/estimation/types'
 import { getFeeSpeedIdentifier } from '@ambire-common/controllers/signAccountOp/helper'
 import { FeeSpeed, SpeedCalc } from '@ambire-common/controllers/signAccountOp/signAccountOp'
-import { Hex } from '@ambire-common/interfaces/hex'
 import { Warning } from '@ambire-common/interfaces/signAccountOp'
 import { FeePaymentOption } from '@ambire-common/libs/estimate/interfaces'
 import { GasSpeeds } from '@ambire-common/services/bundlers/types'
@@ -16,12 +15,8 @@ import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
 import AssetIcon from '@common/assets/svg/AssetIcon'
 import FeeIcon from '@common/assets/svg/FeeIcon'
 import Alert from '@common/components/Alert'
-import BottomSheet from '@common/components/BottomSheet'
-import ModalHeader from '@common/components/BottomSheet/ModalHeader'
 import Button from '@common/components/Button'
-import FooterGlassView from '@common/components/FooterGlassView'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
-import NumberInput from '@common/components/NumberInput'
 import Select, { SectionedSelect } from '@common/components/Select'
 import { SelectValue } from '@common/components/Select/types'
 import Text from '@common/components/Text'
@@ -29,6 +24,7 @@ import TitleAndIcon from '@common/components/TitleAndIcon'
 import { isMobile, isWeb } from '@common/config/env'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
+import CustomGasPrice from '@common/modules/sign-account-op/components/Estimation/components/CustomGasPrice'
 import BundlerWarning from '@common/modules/sign-account-op/components/Estimation/components/bundlerWarning'
 import EstimationSkeleton from '@common/modules/sign-account-op/components/Estimation/components/EstimationSkeleton'
 import PayOption from '@common/modules/sign-account-op/components/Estimation/components/PayOption'
@@ -97,62 +93,6 @@ const FeeSpeedLabel = ({
   )
 }
 
-type CustomGasPriceInputProps = {
-  initialAmount: string
-  backgroundColor: ColorValue
-  onSanitizedAmountChange: (value: string) => void
-  inputError: string | boolean
-  decimals?: number
-  symbol?: string
-}
-
-const CustomGasPriceInput = memo(
-  ({
-    initialAmount,
-    backgroundColor,
-    onSanitizedAmountChange,
-    inputError,
-    decimals,
-    symbol
-  }: CustomGasPriceInputProps) => {
-    const { t } = useTranslation()
-    const [draftAmount, setDraftAmount] = useState(initialAmount)
-
-    useEffect(() => {
-      setDraftAmount(initialAmount)
-    }, [initialAmount])
-
-    const onChange = useCallback(
-      (text: string) => {
-        setDraftAmount(text)
-        onSanitizedAmountChange(text.replace(',', '.'))
-      },
-      [onSanitizedAmountChange]
-    )
-
-    const onBlur = useCallback(() => {
-      const sanitized = draftAmount.trim().replace(',', '.')
-      setDraftAmount(sanitized)
-      onSanitizedAmountChange(sanitized)
-    }, [draftAmount, onSanitizedAmountChange])
-
-    return (
-      <NumberInput
-        label={t('Gas price ({{symbol}})', { symbol })}
-        placeholder={t('Enter gas price')}
-        value={draftAmount}
-        onChangeText={onChange}
-        onBlur={onBlur}
-        precision={decimals || 18}
-        error={inputError}
-        info={t('Set the gas price in the chain native token per gas unit.')}
-        autoFocus
-        backgroundColor={backgroundColor}
-      />
-    )
-  }
-)
-
 const Estimation = ({
   signAccountOpState,
   disabled,
@@ -201,9 +141,6 @@ const Estimation = ({
   }, [hasEstimation, signAccountOpState, state.contacts])
 
   const [selectedFeeOption, setSelectedFeeOption] = useState<SelectValue['value'] | null>(null)
-  const [customGasPriceError, setCustomGasPriceError] = useState<string | boolean>(false)
-  const customGasPriceRef = useRef('')
-  const [initialCustomGasPrice, setInitialCustomGasPrice] = useState('')
 
   const dispatchUpdate = useCallback(
     (update: {
@@ -433,67 +370,8 @@ const Estimation = ({
   const openAdvancedOptions = useCallback(() => {
     if (!canSetCustomGasPrices) return
 
-    customGasPriceRef.current = currentGasPrice
-    setInitialCustomGasPrice(currentGasPrice)
-    setCustomGasPriceError(false)
     openCustomGasPriceSheet()
-  }, [canSetCustomGasPrices, currentGasPrice, openCustomGasPriceSheet])
-
-  const onCustomGasPriceChange = useCallback(
-    (value: string) => {
-      customGasPriceRef.current = value
-      if (customGasPriceError) setCustomGasPriceError(false)
-    },
-    [customGasPriceError]
-  )
-
-  const saveCustomGasPrice = useCallback(() => {
-    if (!signAccountOpState?.selectedOption) return
-
-    const normalizedValue = customGasPriceRef.current.trim().replace(',', '.')
-
-    if (!normalizedValue) {
-      setCustomGasPriceError(t('Enter a gas price'))
-      return
-    }
-
-    try {
-      const gasPrice = parseUnits(
-        normalizedValue,
-        signAccountOpState.selectedOption.token.decimals || 18
-      )
-
-      if (gasPrice <= 0n) {
-        setCustomGasPriceError(t('Enter a valid gas price'))
-        return
-      }
-
-      const gasPriceHex = toBeHex(gasPrice) as Hex
-      const customGasPrices: GasSpeeds = {
-        slow: {
-          maxFeePerGas: gasPriceHex,
-          maxPriorityFeePerGas: gasPriceHex
-        },
-        medium: {
-          maxFeePerGas: gasPriceHex,
-          maxPriorityFeePerGas: gasPriceHex
-        },
-        fast: {
-          maxFeePerGas: gasPriceHex,
-          maxPriorityFeePerGas: gasPriceHex
-        },
-        ape: {
-          maxFeePerGas: gasPriceHex,
-          maxPriorityFeePerGas: gasPriceHex
-        }
-      }
-
-      dispatchUpdate({ customGasPrices })
-      closeCustomGasPriceSheet()
-    } catch {
-      setCustomGasPriceError(t('Enter a valid gas price'))
-    }
-  }, [closeCustomGasPriceSheet, dispatchUpdate, signAccountOpState?.selectedOption, t])
+  }, [canSetCustomGasPrices, openCustomGasPriceSheet])
 
   const renderFeeOptionSectionHeader = useCallback(({ section }: any) => {
     if (section.data.length === 0 || !section.title) return null
@@ -559,40 +437,15 @@ const Estimation = ({
 
   return (
     <Fragment>
-      <BottomSheet
-        id="custom-gas-price-sheet"
+      <CustomGasPrice
+        backgroundColor={theme.primaryBackground}
+        closeBottomSheet={() => closeCustomGasPriceSheet()}
+        currentGasPrice={currentGasPrice}
+        onSaveCustomGasPrices={(customGasPrices) => dispatchUpdate({ customGasPrices })}
+        selectedOption={signAccountOpState.selectedOption}
         sheetRef={customGasPriceSheetRef}
-        closeBottomSheet={closeCustomGasPriceSheet}
-        type="modal"
-      >
-        <ModalHeader title={t('Advanced options')} handleClose={closeCustomGasPriceSheet} />
-        <CustomGasPriceInput
-          initialAmount={initialCustomGasPrice}
-          backgroundColor={theme.primaryBackground}
-          onSanitizedAmountChange={onCustomGasPriceChange}
-          inputError={customGasPriceError}
-          decimals={signAccountOpState.selectedOption?.token.decimals}
-          symbol={signAccountOpState.selectedOption?.token.symbol || network?.nativeAssetSymbol}
-        />
-        <FooterGlassView absolute={false} isSimpleBlur={false} size="sm" style={spacings.mtLg}>
-          <Button
-            type="secondary"
-            text={t('Cancel')}
-            onPress={() => closeCustomGasPriceSheet()}
-            hasBottomSpacing={false}
-            style={{ flex: 1, width: 100, ...spacings.mrSm }}
-            size="smaller"
-          />
-          <Button
-            type="primary"
-            text={t('Save')}
-            onPress={saveCustomGasPrice}
-            hasBottomSpacing={false}
-            style={{ flex: 1, width: 100 }}
-            size="smaller"
-          />
-        </FooterGlassView>
-      </BottomSheet>
+        symbol={signAccountOpState.selectedOption?.token.symbol || network?.nativeAssetSymbol}
+      />
       <View
         style={[
           flexbox.directionRow,
