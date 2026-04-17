@@ -115,6 +115,7 @@ const SubmittedTransactionSummaryInner = ({
         size={size}
         network={network}
         rawCalls={submittedAccountOp.calls}
+        submittedAccountOp={submittedAccountOp}
         txnId={submittedAccountOp.txnId}
         identifiedBy={submittedAccountOp.identifiedBy}
         accountAddr={submittedAccountOp.accountAddr}

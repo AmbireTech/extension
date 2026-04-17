@@ -5,6 +5,7 @@ import { TouchableOpacity, View } from 'react-native'
 
 import gasTankFeeTokens from '@ambire-common/consts/gasTankFeeTokens'
 import { Network } from '@ambire-common/interfaces/network'
+import { BROADCAST_OPTIONS } from '@ambire-common/libs/broadcast/broadcast'
 import { SubmittedAccountOp } from '@ambire-common/libs/accountOp/submittedAccountOp'
 import { AccountOpStatus } from '@ambire-common/libs/accountOp/types'
 import { resolveAssetInfo } from '@ambire-common/services/assetInfo'
@@ -23,6 +24,7 @@ import flexbox from '@common/styles/utils/flexbox'
 import { openInTab } from '@common/utils/links'
 
 import RepeatTransaction from './RepeatTransaction'
+import SpeedUpTransaction from './SpeedUpTransaction'
 import getStyles from './styles'
 import SubmittedOn from './SubmittedOn'
 
@@ -30,6 +32,7 @@ type Props = {
   network: Network
   size: 'sm' | 'md' | 'lg'
   rawCalls?: SubmittedAccountOp['calls']
+  submittedAccountOp: SubmittedAccountOp
 } & Pick<
   SubmittedAccountOp,
   'txnId' | 'identifiedBy' | 'accountAddr' | 'gasFeePayment' | 'status' | 'timestamp'
@@ -39,6 +42,7 @@ const Footer: FC<Props> = ({
   network,
   txnId,
   rawCalls,
+  submittedAccountOp,
   identifiedBy,
   accountAddr,
   gasFeePayment,
@@ -65,6 +69,12 @@ const Footer: FC<Props> = ({
   const { chainId } = network
 
   const [feeFormattedValue, setFeeFormattedValue] = useState<string>()
+  const isPendingTransaction =
+    status === AccountOpStatus.Pending || status === AccountOpStatus.BroadcastedButNotConfirmed
+  const shouldShowSpeedUp =
+    isPendingTransaction &&
+    gasFeePayment?.broadcastOption !== BROADCAST_OPTIONS.byRelayer &&
+    gasFeePayment?.broadcastOption !== BROADCAST_OPTIONS.byBundler
 
   const handleViewTransaction = useCallback(async () => {
     if (!chainId) {
@@ -175,13 +185,21 @@ const Footer: FC<Props> = ({
             <LinkIcon width={iconSize} height={iconSize} />
           </TouchableOpacity>
           {rawCalls?.length && selectedAccount?.addr === accountAddr ? (
-            <RepeatTransaction
-              accountAddr={accountAddr}
-              chainId={network.chainId}
-              rawCalls={rawCalls}
-              textSize={textSize}
-              iconSize={iconSize}
-            />
+            shouldShowSpeedUp ? (
+              <SpeedUpTransaction
+                submittedAccountOp={submittedAccountOp}
+                textSize={textSize}
+                iconSize={iconSize}
+              />
+            ) : (
+              <RepeatTransaction
+                accountAddr={accountAddr}
+                chainId={network.chainId}
+                rawCalls={rawCalls}
+                textSize={textSize}
+                iconSize={iconSize}
+              />
+            )
           ) : (
             <View />
           )}
