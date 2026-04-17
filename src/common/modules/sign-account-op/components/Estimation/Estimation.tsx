@@ -341,10 +341,20 @@ const Estimation = ({
 
     if (!selectedGasPrice || !signAccountOpState?.selectedOption) return ''
 
-    return formatUnits(
-      BigInt(selectedGasPrice),
-      signAccountOpState.selectedOption.token.decimals || 18
-    )
+    return formatUnits(BigInt(selectedGasPrice), 'gwei')
+  }, [
+    signAccountOpState?.gasPrices,
+    signAccountOpState?.selectedFeeSpeed,
+    signAccountOpState?.selectedOption
+  ])
+
+  const currentMaxPriorityFeePerGas = useMemo(() => {
+    const selectedFeeSpeed = signAccountOpState?.selectedFeeSpeed || FeeSpeed.Fast
+    const selectedGasPrice = signAccountOpState?.gasPrices?.[selectedFeeSpeed]?.maxPriorityFeePerGas
+
+    if (!selectedGasPrice || !signAccountOpState?.selectedOption) return ''
+
+    return formatUnits(BigInt(selectedGasPrice), 'gwei')
   }, [
     signAccountOpState?.gasPrices,
     signAccountOpState?.selectedFeeSpeed,
@@ -436,13 +446,14 @@ const Estimation = ({
   return (
     <Fragment>
       <CustomGasPrice
-        backgroundColor={theme.primaryBackground}
+        backgroundColor={theme.tertiaryBackground}
         closeBottomSheet={() => closeCustomGasPriceSheet()}
-        currentGasPrice={currentGasPrice}
+        currentMaxFeePerGas={currentGasPrice}
+        currentMaxPriorityFeePerGas={currentMaxPriorityFeePerGas}
+        is1559={network?.feeOptions?.is1559 === true}
         onSaveCustomGasPrices={(customGasPrices) => dispatchUpdate({ customGasPrices })}
         selectedOption={signAccountOpState.selectedOption}
         sheetRef={customGasPriceSheetRef}
-        symbol={signAccountOpState.selectedOption?.token.symbol || network?.nativeAssetSymbol}
       />
       <View
         style={[

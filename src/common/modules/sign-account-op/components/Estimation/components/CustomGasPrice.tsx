@@ -1,7 +1,7 @@
-import { formatUnits, parseUnits, toBeHex } from 'ethers'
+import { parseUnits, toBeHex } from 'ethers'
 import React, { memo, useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { ColorValue } from 'react-native'
+import { ColorValue, View } from 'react-native'
 import { Modalize } from 'react-native-modalize'
 
 import { Hex } from '@ambire-common/interfaces/hex'
@@ -19,8 +19,8 @@ type CustomGasPriceInputProps = {
   backgroundColor: ColorValue
   onSanitizedAmountChange: (value: string) => void
   inputError: string | boolean
-  decimals?: number
-  symbol?: string
+  label: string
+  autoFocus?: boolean
 }
 
 const CustomGasPriceInput = memo(
@@ -29,10 +29,9 @@ const CustomGasPriceInput = memo(
     backgroundColor,
     onSanitizedAmountChange,
     inputError,
-    decimals,
-    symbol
+    label,
+    autoFocus
   }: CustomGasPriceInputProps) => {
-    const { t } = useTranslation()
     const [draftAmount, setDraftAmount] = useState(initialAmount)
 
     useEffect(() => {
@@ -55,15 +54,14 @@ const CustomGasPriceInput = memo(
 
     return (
       <NumberInput
-        label={t('Gas price ({{symbol}})', { symbol })}
-        placeholder={t('Enter gas price')}
+        label={label}
+        placeholder="0"
         value={draftAmount}
         onChangeText={onChange}
         onBlur={onBlur}
-        precision={decimals || 18}
+        precision={9}
         error={inputError}
-        info={t('Set the gas price in the chain native token per gas unit.')}
-        autoFocus
+        autoFocus={autoFocus}
         backgroundColor={backgroundColor}
       />
     )
@@ -73,36 +71,50 @@ const CustomGasPriceInput = memo(
 type Props = {
   backgroundColor: ColorValue
   closeBottomSheet: () => void
-  currentGasPrice: string
+  currentMaxFeePerGas: string
+  currentMaxPriorityFeePerGas: string
+  is1559?: boolean
   onSaveCustomGasPrices: (gasPrices: GasSpeeds) => void
   selectedOption: ISignAccountOpController['selectedOption']
   sheetRef: React.RefObject<Modalize>
-  symbol?: string
 }
 
 const CustomGasPrice = ({
   backgroundColor,
   closeBottomSheet,
-  currentGasPrice,
+  currentMaxFeePerGas,
+  currentMaxPriorityFeePerGas,
+  is1559,
   onSaveCustomGasPrices,
   selectedOption,
-  sheetRef,
-  symbol
+  sheetRef
 }: Props) => {
   const { t } = useTranslation()
   const [customGasPriceError, setCustomGasPriceError] = useState<string | boolean>(false)
-  const customGasPriceRef = useRef('')
-  const [initialCustomGasPrice, setInitialCustomGasPrice] = useState('')
+  const maxFeePerGasRef = useRef('')
+  const maxPriorityFeePerGasRef = useRef('')
+  const [initialMaxFeePerGas, setInitialMaxFeePerGas] = useState('')
+  const [initialMaxPriorityFeePerGas, setInitialMaxPriorityFeePerGas] = useState('')
 
   const resetState = useCallback(() => {
-    customGasPriceRef.current = currentGasPrice
-    setInitialCustomGasPrice(currentGasPrice)
+    maxFeePerGasRef.current = currentMaxFeePerGas
+    maxPriorityFeePerGasRef.current = currentMaxPriorityFeePerGas
+    setInitialMaxFeePerGas(currentMaxFeePerGas)
+    setInitialMaxPriorityFeePerGas(currentMaxPriorityFeePerGas)
     setCustomGasPriceError(false)
-  }, [currentGasPrice])
+  }, [currentMaxFeePerGas, currentMaxPriorityFeePerGas])
 
-  const onCustomGasPriceChange = useCallback(
+  const onMaxFeePerGasChange = useCallback(
     (value: string) => {
-      customGasPriceRef.current = value
+      maxFeePerGasRef.current = value
+      if (customGasPriceError) setCustomGasPriceError(false)
+    },
+    [customGasPriceError]
+  )
+
+  const onMaxPriorityFeePerGasChange = useCallback(
+    (value: string) => {
+      maxPriorityFeePerGasRef.current = value
       if (customGasPriceError) setCustomGasPriceError(false)
     },
     [customGasPriceError]
@@ -111,47 +123,50 @@ const CustomGasPrice = ({
   const saveCustomGasPrice = useCallback(() => {
     if (!selectedOption) return
 
-    const normalizedValue = customGasPriceRef.current.trim().replace(',', '.')
+    const normalizedMaxFeePerGas = maxFeePerGasRef.current.trim().replace(',', '.')
+    const normalizedMaxPriorityFeePerGas = maxPriorityFeePerGasRef.current.trim().replace(',', '.')
 
-    if (!normalizedValue) {
-      setCustomGasPriceError(t('Enter a gas price'))
+    if (!normalizedMaxFeePerGas || (is1559 && !normalizedMaxPriorityFeePerGas)) {
+      setCustomGasPriceError(t('Enter valid gas prices'))
       return
     }
 
     try {
-      const gasPrice = parseUnits(normalizedValue, selectedOption.token.decimals || 18)
+      const maxFeePerGas = parseUnits(normalizedMaxFeePerGas, 'gwei')
+      const maxPriorityFeePerGas = is1559 ? parseUnits(normalizedMaxPriorityFeePerGas, 'gwei') : 0n
 
-      if (gasPrice <= 0n) {
-        setCustomGasPriceError(t('Enter a valid gas price'))
+      if (maxFeePerGas <= 0n || (is1559 && maxPriorityFeePerGas <= 0n)) {
+        setCustomGasPriceError(t('Enter valid gas prices'))
         return
       }
 
-      const gasPriceHex = toBeHex(gasPrice) as Hex
+      const maxFeePerGasHex = toBeHex(maxFeePerGas) as Hex
+      const maxPriorityFeePerGasHex = toBeHex(maxPriorityFeePerGas) as Hex
       const customGasPrices: GasSpeeds = {
         slow: {
-          maxFeePerGas: gasPriceHex,
-          maxPriorityFeePerGas: gasPriceHex
+          maxFeePerGas: maxFeePerGasHex,
+          maxPriorityFeePerGas: maxPriorityFeePerGasHex
         },
         medium: {
-          maxFeePerGas: gasPriceHex,
-          maxPriorityFeePerGas: gasPriceHex
+          maxFeePerGas: maxFeePerGasHex,
+          maxPriorityFeePerGas: maxPriorityFeePerGasHex
         },
         fast: {
-          maxFeePerGas: gasPriceHex,
-          maxPriorityFeePerGas: gasPriceHex
+          maxFeePerGas: maxFeePerGasHex,
+          maxPriorityFeePerGas: maxPriorityFeePerGasHex
         },
         ape: {
-          maxFeePerGas: gasPriceHex,
-          maxPriorityFeePerGas: gasPriceHex
+          maxFeePerGas: maxFeePerGasHex,
+          maxPriorityFeePerGas: maxPriorityFeePerGasHex
         }
       }
 
       onSaveCustomGasPrices(customGasPrices)
       closeBottomSheet()
     } catch {
-      setCustomGasPriceError(t('Enter a valid gas price'))
+      setCustomGasPriceError(t('Enter valid gas prices'))
     }
-  }, [closeBottomSheet, onSaveCustomGasPrices, selectedOption, t])
+  }, [closeBottomSheet, is1559, onSaveCustomGasPrices, selectedOption, t])
 
   return (
     <BottomSheet
@@ -163,14 +178,29 @@ const CustomGasPrice = ({
       onOpen={resetState}
     >
       <ModalHeader title={t('Advanced options')} handleClose={closeBottomSheet} />
-      <CustomGasPriceInput
-        initialAmount={initialCustomGasPrice}
-        backgroundColor={backgroundColor}
-        onSanitizedAmountChange={onCustomGasPriceChange}
-        inputError={customGasPriceError}
-        decimals={selectedOption?.token.decimals}
-        symbol={symbol}
-      />
+      <View style={{ flexDirection: 'row', gap: 12 }}>
+        <View style={{ flex: 1 }}>
+          <CustomGasPriceInput
+            initialAmount={initialMaxFeePerGas}
+            backgroundColor={backgroundColor}
+            onSanitizedAmountChange={onMaxFeePerGasChange}
+            inputError={customGasPriceError}
+            label={t('Max fee per gas (GWEI)')}
+            autoFocus
+          />
+        </View>
+        {!!is1559 && (
+          <View style={{ flex: 1 }}>
+            <CustomGasPriceInput
+              initialAmount={initialMaxPriorityFeePerGas}
+              backgroundColor={backgroundColor}
+              onSanitizedAmountChange={onMaxPriorityFeePerGasChange}
+              inputError={customGasPriceError}
+              label={t('Max priority fee (GWEI)')}
+            />
+          </View>
+        )}
+      </View>
       <FooterGlassView absolute={false} isSimpleBlur={false} size="sm" style={spacings.mtLg}>
         <Button
           type="secondary"
