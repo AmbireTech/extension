@@ -15,7 +15,6 @@ import NoKeysToSignAlert from '@common/components/NoKeysToSignAlert'
 import Spinner from '@common/components/Spinner'
 import useController from '@common/hooks/useController'
 import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
-import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import ActionHeader from '@common/modules/action-requests/components/ActionHeader'
 import KeySelect from '@common/modules/sign-message/components/KeySelect'
@@ -25,6 +24,7 @@ import { TabLayoutContainer } from '@web/components/TabLayoutWrapper/TabLayoutWr
 import useDappInfo from '@web/hooks/useDappInfo/useDappInfo'
 import ActionFooter from '@web/modules/action-requests/components/ActionFooter'
 import useLedger from '@web/modules/hardware-wallet/hooks/useLedger'
+import useQrSigningFlow from '@web/modules/hardware-wallet/hooks/useQrSigningFlow'
 
 import Main from './Contents/main'
 import SignInWithEthereum from './Contents/signInWithEthereum'
@@ -45,11 +45,18 @@ const SignMessageScreen = () => {
   const { isLedgerConnected } = useLedger()
   const [isChooseSignerShown, setIsChooseSignerShown] = useState(false)
   const [shouldDisplayLedgerConnectModal, setShouldDisplayLedgerConnectModal] = useState(false)
-  const { theme } = useTheme()
   const {
     state: { currentUserRequest },
     dispatch: requestsDispatch
   } = useController('RequestsController')
+  const {
+    currentRequest,
+    signingStep,
+    moveToResponseScan,
+    moveBack,
+    submitSignatureResponse,
+    signingCleanup
+  } = useQrSigningFlow()
   const { addToast } = useToast()
 
   const userRequest = useMemo(() => {
@@ -202,6 +209,31 @@ const SignMessageScreen = () => {
     },
     [isLedgerConnected, dispatch, addToast, t, signMessageState.signers]
   )
+
+  const cancelQrSigningFlow = useCallback(() => {
+    signingCleanup()
+
+    signMessageDispatch({
+      type: 'method',
+      params: {
+        method: 'cancelSignReq',
+        args: []
+      }
+    })
+  }, [signingCleanup, signMessageDispatch])
+
+  const handleQrSigningFlowOnBackPressed = useCallback(() => {
+    if (signingStep === 'show-request') {
+      cancelQrSigningFlow()
+      return
+    }
+
+    moveBack()
+  }, [signingStep, cancelQrSigningFlow, moveBack])
+
+  const handleQrSigningFlowOnRejectPressed = useCallback(() => {
+    cancelQrSigningFlow()
+  }, [cancelQrSigningFlow])
 
   const setSigner = useCallback(
     (chosenSigningKeyAddr?: Key['addr'], chosenSigningKeyType?: Key['type']) => {
@@ -359,6 +391,12 @@ const SignMessageScreen = () => {
             setHasReachedBottom={setHasReachedBottom}
             shouldDisplayEIP1271Warning={shouldDisplayEIP1271Warning}
             isSafeNotDeployed={isSafeNotDeployed}
+            currentRequest={currentRequest}
+            signingStep={signingStep}
+            handleOnContinue={moveToResponseScan}
+            handleSubmitSignatureResponse={submitSignatureResponse}
+            handleQrSigningFlowOnRejectPressed={handleQrSigningFlowOnRejectPressed}
+            handleQrSigningFlowOnBackPressed={handleQrSigningFlowOnBackPressed}
           />
         )}
         {view === 'siwe' && (
@@ -367,6 +405,12 @@ const SignMessageScreen = () => {
             isLedgerConnected={isLedgerConnected}
             handleDismissLedgerConnectModal={handleDismissLedgerConnectModal}
             isSafeNotDeployed={isSafeNotDeployed}
+            currentRequest={currentRequest}
+            signingStep={signingStep}
+            handleOnContinue={moveToResponseScan}
+            handleSubmitSignatureResponse={submitSignatureResponse}
+            handleQrSigningFlowOnRejectPressed={handleQrSigningFlowOnRejectPressed}
+            handleQrSigningFlowOnBackPressed={handleQrSigningFlowOnBackPressed}
           />
         )}
       </TabLayoutContainer>
