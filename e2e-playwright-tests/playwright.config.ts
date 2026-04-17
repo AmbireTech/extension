@@ -5,11 +5,7 @@ import { PlaywrightTestConfig } from '@playwright/test'
 const workersFromEnv = process.env.PLAYWRIGHT_WORKERS
   ? Number.parseInt(process.env.PLAYWRIGHT_WORKERS, 10)
   : NaN
-const workers = Number.isFinite(workersFromEnv)
-  ? workersFromEnv
-  : process.env.CI
-    ? 2
-    : 3
+const workers = Number.isFinite(workersFromEnv) ? workersFromEnv : process.env.CI ? 1 : 3
 
 const config: PlaywrightTestConfig = {
   forbidOnly: true,
