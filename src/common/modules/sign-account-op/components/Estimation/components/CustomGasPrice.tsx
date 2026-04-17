@@ -159,6 +159,7 @@ const CustomGasPrice = ({
       sheetRef={sheetRef}
       closeBottomSheet={closeBottomSheet}
       type="modal"
+      animationDuration={0}
       onOpen={resetState}
     >
       <ModalHeader title={t('Advanced options')} handleClose={closeBottomSheet} />

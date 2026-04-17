@@ -24,8 +24,8 @@ import TitleAndIcon from '@common/components/TitleAndIcon'
 import { isMobile, isWeb } from '@common/config/env'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
-import CustomGasPrice from '@common/modules/sign-account-op/components/Estimation/components/CustomGasPrice'
 import BundlerWarning from '@common/modules/sign-account-op/components/Estimation/components/bundlerWarning'
+import CustomGasPrice from '@common/modules/sign-account-op/components/Estimation/components/CustomGasPrice'
 import EstimationSkeleton from '@common/modules/sign-account-op/components/Estimation/components/EstimationSkeleton'
 import PayOption from '@common/modules/sign-account-op/components/Estimation/components/PayOption'
 import ServiceFee from '@common/modules/sign-account-op/components/Estimation/components/ServiceFee'
@@ -106,8 +106,6 @@ const Estimation = ({
   isOneClick
 }: Props) => {
   const { dispatch: signAccountOpDispatch } = useController('SignAccountOpController')
-  const { dispatch: swapAndBridgeDispatch } = useController('SwapAndBridgeController')
-  const { dispatch: transferDispatch } = useController('TransferController')
   const { state } = useController('AddressBookController')
   const { networks } = useController('NetworksController').state
   const { t } = useTranslation()
