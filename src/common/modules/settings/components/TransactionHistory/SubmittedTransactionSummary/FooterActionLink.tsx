@@ -1,8 +1,8 @@
 import React, { FC } from 'react'
-import { Pressable } from 'react-native'
 import { SvgProps } from 'react-native-svg'
 
 import Text from '@common/components/Text'
+import { AnimatedPressable, useCustomHover } from '@common/hooks/useHover'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
@@ -18,21 +18,37 @@ type Props = {
 
 const FooterActionLink: FC<Props> = ({ label, onPress, textSize, iconSize, Icon, testID }) => {
   const { theme } = useTheme()
+  const [bindHover, hoverStyle, isHovered] = useCustomHover({
+    property: 'opacity',
+    values: {
+      from: 1,
+      to: 1
+    }
+  })
 
   return (
-    <Pressable style={[flexbox.directionRow, flexbox.alignCenter]} onPress={onPress}>
+    <AnimatedPressable
+      style={[flexbox.directionRow, flexbox.alignCenter, hoverStyle]}
+      onPress={onPress}
+      {...bindHover}
+    >
       <Text
         testID={testID}
         fontSize={textSize}
-        appearance="secondaryText"
+        color={isHovered ? theme.primaryText : theme.secondaryText}
         weight="medium"
         style={spacings.mrMi}
         underline
       >
         {label}
       </Text>
-      <Icon width={iconSize} height={iconSize} color={theme.iconPrimary} strokeWidth={2} />
-    </Pressable>
+      <Icon
+        width={iconSize}
+        height={iconSize}
+        color={isHovered ? theme.primaryText : theme.iconPrimary}
+        strokeWidth={2}
+      />
+    </AnimatedPressable>
   )
 }
 
