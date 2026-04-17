@@ -5,7 +5,7 @@ import { MainController } from '@ambire-common/controllers/main/main'
 import { DappProviderRequest } from '@ambire-common/interfaces/dapp'
 import { UiManager } from '@ambire-common/interfaces/ui'
 import { isDev } from '@common/config/env'
-import AutoLockController from '@common/controllers/auto-lock/auto-lock'
+import { AutoLockController } from '@common/controllers/auto-lock'
 import { WalletStateController } from '@common/controllers/wallet-state'
 import { ProviderController } from '@common/modules/provider/ProviderController'
 import rpcFlow from '@common/modules/provider/rpcFlow'
@@ -88,7 +88,7 @@ const handleProviderRequests = async ({
   }
 
   // Prevents handling the same request more than once
-  if (session.lastHandledRequestIds[providerId] >= requestId) return
+  if ((session.lastHandledRequestIds[providerId] ?? -1) >= requestId) return
   mainCtrl.dapps.setSessionLastHandledRequestsId(
     session.sessionId,
     providerId,

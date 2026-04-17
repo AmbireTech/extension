@@ -25,7 +25,7 @@ import { StorageController } from '@ambire-common/controllers/storage/storage'
 import { SwapAndBridgeController } from '@ambire-common/controllers/swapAndBridge/swapAndBridge'
 import { TransferController } from '@ambire-common/controllers/transfer/transfer'
 import { UiController } from '@ambire-common/controllers/ui/ui'
-import AutoLockController from '@common/controllers/auto-lock/auto-lock'
+import { AutoLockController } from '@common/controllers/auto-lock'
 import { WalletStateController } from '@common/controllers/wallet-state'
 import { ExtensionUpdateController } from '@web/extension-services/background/controllers/extension-update'
 

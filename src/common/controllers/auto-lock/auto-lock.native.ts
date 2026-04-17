@@ -3,9 +3,8 @@ import i18n from 'i18next'
 import EventEmitter from '@ambire-common/controllers/eventEmitter/eventEmitter'
 import { IEventEmitterRegistryController } from '@ambire-common/interfaces/eventEmitter'
 import { storage } from '@common/services/storage'
-import { browser } from '@web/constants/browserapi'
 
-export const ALARMS_AUTO_LOCK = 'ALARMS_AUTO_LOCK'
+import { AutoLockController as IAutoLockController } from './auto-lock'
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
 export enum AUTO_LOCK_TIMES {
@@ -27,10 +26,10 @@ export const getAutoLockLabel = (time: AUTO_LOCK_TIMES) => {
   return i18n.t('Never')
 }
 
-export class AutoLockController extends EventEmitter {
+export class AutoLockController extends EventEmitter implements IAutoLockController {
   isReady: boolean = false
 
-  #_autoLockTime: AUTO_LOCK_TIMES = 0 // number in minutes
+  #_autoLockTime: AUTO_LOCK_TIMES = AUTO_LOCK_TIMES.never // number in minutes
 
   get autoLockTime() {
     return this.#_autoLockTime
@@ -43,6 +42,8 @@ export class AutoLockController extends EventEmitter {
   }
 
   #onAutoLock: () => void
+
+  #timer: ReturnType<typeof setTimeout> | undefined = undefined
 
   constructor(eventEmitterRegistry: IEventEmitterRegistryController, onAutoLock: () => void) {
     super(eventEmitterRegistry)
@@ -58,20 +59,13 @@ export class AutoLockController extends EventEmitter {
   }
 
   #resetTimer() {
-    browser.alarms.clear(ALARMS_AUTO_LOCK)
+    if (this.#timer) clearTimeout(this.#timer)
 
-    if (!this.autoLockTime) return
+    if (this.autoLockTime === AUTO_LOCK_TIMES.never) return
 
-    browser.alarms.create(ALARMS_AUTO_LOCK, {
-      delayInMinutes: this.autoLockTime,
-      periodInMinutes: this.autoLockTime
-    })
-    browser.alarms.onAlarm.addListener((alarm: chrome.alarms.Alarm) => {
-      if (alarm.name === ALARMS_AUTO_LOCK) {
-        this.#onAutoLock()
-        browser.alarms.clear(ALARMS_AUTO_LOCK)
-      }
-    })
+    this.#timer = setTimeout(() => {
+      this.#onAutoLock()
+    }, this.autoLockTime * 60 * 1000)
   }
 
   setLastActiveTime() {

@@ -15,6 +15,7 @@ import BackButton from '@common/components/BackButton'
 import Button from '@common/components/Button'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import Text from '@common/components/Text'
+import { AUTO_LOCK_OPTIONS } from '@common/constants/autoLock'
 import { DISCORD_URL, TELEGRAM_URL, TWITTER_URL } from '@common/constants/social'
 import useController from '@common/hooks/useController'
 import { AnimatedPressable, useCustomHover } from '@common/hooks/useHover'
@@ -33,7 +34,6 @@ import {
   tabLayoutWidths,
   TabLayoutWrapperMainContent
 } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
-import { AUTO_LOCK_OPTIONS } from '@web/constants/autoLock'
 import commonWebStyles from '@web/styles/utils/common'
 
 import getStyles from './styles'

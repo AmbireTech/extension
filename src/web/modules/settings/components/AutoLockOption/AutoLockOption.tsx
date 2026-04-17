@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next'
 
 import CheckIcon from '@common/assets/svg/CheckIcon'
 import Text from '@common/components/Text'
-import { AUTO_LOCK_TIMES, getAutoLockLabel } from '@common/controllers/auto-lock/auto-lock'
+import { AUTO_LOCK_TIMES, getAutoLockLabel } from '@common/controllers/auto-lock'
 import useController from '@common/hooks/useController'
 import { AnimatedPressable, useCustomHover } from '@common/hooks/useHover'
 import useTheme from '@common/hooks/useTheme'
