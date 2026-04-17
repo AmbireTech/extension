@@ -1,3 +1,4 @@
+// @ts-ignore
 declare const globalIsAmbireNext: boolean
 
 if (/Opera|OPR\//i.test(navigator.userAgent)) {

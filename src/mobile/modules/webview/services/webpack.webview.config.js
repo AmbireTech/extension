@@ -122,12 +122,12 @@ class JsonWrapPlugin {
 const workerConfig = {
   name: 'worker',
   context: ROOT_DIR,
-  entry: './src/mobile/services/WebViewWorker/injectedLogic.ts',
+  entry: './src/mobile/modules/webview/services/injectedLogic.ts',
   mode: isDev ? 'development' : 'production',
   target: 'web',
   devtool: isDev ? 'eval-source-map' : false,
   output: {
-    path: path.resolve(ROOT_DIR, 'src/mobile/services/WebViewWorker'),
+    path: path.resolve(ROOT_DIR, 'src/mobile/modules/webview/services'),
     filename: 'webview-bundle.js',
     libraryTarget: 'window',
     publicPath: isDev ? '/' : ''
@@ -243,7 +243,7 @@ const inpageConfig = {
   target: 'web',
   devtool: isDev ? 'inline-source-map' : false,
   output: {
-    path: path.resolve(ROOT_DIR, 'src/mobile/services/WebViewWorker'),
+    path: path.resolve(ROOT_DIR, 'src/mobile/modules/webview/services'),
     filename: '[name]-bundle.js',
     libraryTarget: 'window',
     publicPath: isDev ? '/' : ''

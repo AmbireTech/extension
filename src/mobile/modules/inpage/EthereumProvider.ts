@@ -114,7 +114,7 @@ export class EthereumProvider extends CommonEthereumProvider {
       this._state.isUnlocked = true
     }
     if (state.accounts?.length) {
-      this.selectedAddress = state.accounts[0]
+      this.selectedAddress = state.accounts[0] ?? null
       this._state.accounts = state.accounts
       this._isConnected = true
       this._state.isConnected = true

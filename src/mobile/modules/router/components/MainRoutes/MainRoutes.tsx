@@ -17,7 +17,6 @@ import PrivateKeyImportScreen from '@mobile/modules/auth/screens/PrivateKeyImpor
 import SeedPhraseImportScreen from '@mobile/modules/auth/screens/SeedPhraseImportScreen'
 import ViewOnlyAccountAdderScreen from '@mobile/modules/auth/screens/ViewOnlyAccountAdderScreen'
 import DappCatalogScreen from '@mobile/modules/dapp-catalog/screens/DappCatalogScreen'
-import DappWebViewScreen from '@mobile/modules/dapp-catalog/screens/DappWebViewScreen'
 import LedgerConnectScreen from '@mobile/modules/hardware-wallet/screens/LedgerConnectScreen'
 import KeyStoreSetupScreen from '@mobile/modules/keystore/screens/KeyStoreSetupScreen'
 import NetworksScreen from '@mobile/modules/networks/screens'
@@ -31,6 +30,7 @@ import SignAccountOpScreen from '@mobile/modules/sign-account-op/screens/SignAcc
 import SwapAndBridgeScreen from '@mobile/modules/swap-and-bridge/screens/SwapAndBridgeScreen'
 import TokenDetailsScreen from '@mobile/modules/token-details/screens/TokenDetailsScreen'
 import TransferScreen from '@mobile/modules/transfer/screens/TransferScreen'
+import DappWebViewScreen from '@mobile/modules/webview/screens/DappWebViewScreen'
 
 const MainRoutes = () => {
   return (
