@@ -91,7 +91,13 @@ class JsonWrapPlugin {
       const asset = compilation.assets[this.assetName]
       if (asset) {
         const code = asset.source().toString()
-        const jsonCode = JSON.stringify({ code })
+        const codeString = typeof code === 'string' ? code : code.toString('utf8');
+        const cleanCode = codeString.replace(
+          /"AMBIRE_PROVIDER_NONCE"/g,
+          'AMBIRE_PROVIDER_NONCE'
+        )
+
+        const jsonCode = JSON.stringify({ code: cleanCode })
         const jsonAssetName = this.assetName.replace('.js', '.json')
 
         compilation.assets[jsonAssetName] = {
@@ -229,13 +235,16 @@ if (isDev) {
 const inpageConfig = {
   name: 'inpage',
   context: ROOT_DIR,
-  entry: './src/mobile/modules/inpage/index.ts',
+  entry: {
+    'ambire-inpage': './src/mobile/modules/inpage/ambire-inpage.ts',
+    'ethereum-inpage': './src/mobile/modules/inpage/ethereum-inpage.ts'
+  },
   mode: isDev ? 'development' : 'production',
   target: 'web',
-  devtool: isDev ? 'eval-source-map' : false,
+  devtool: isDev ? 'inline-source-map' : false,
   output: {
     path: path.resolve(ROOT_DIR, 'src/mobile/services/WebViewWorker'),
-    filename: 'inpage-bundle.js',
+    filename: '[name]-bundle.js',
     libraryTarget: 'window',
     publicPath: isDev ? '/' : ''
   },
@@ -247,12 +256,15 @@ const inpageConfig = {
       __DEV__: JSON.stringify(isDev),
       'process.env.WEB_ENGINE': JSON.stringify('webview'),
       'process.env.APP_ENV': JSON.stringify(isDev ? 'development' : 'production'),
+      globalIsAmbireNext: false,
       // AMBIRE_PROVIDER_NONCE is prepended at runtime in RN.
       AMBIRE_PROVIDER_NONCE: 'AMBIRE_PROVIDER_NONCE'
     }),
-    new JsonWrapPlugin({ assetName: 'inpage-bundle.js' })
+    new JsonWrapPlugin({ assetName: 'ambire-inpage-bundle.js' }),
+    new JsonWrapPlugin({ assetName: 'ethereum-inpage-bundle.js' })
   ]
 }
+
 
 if (!isDev) {
   inpageConfig.optimization = {
