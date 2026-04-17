@@ -17,7 +17,8 @@ const getStyles = (theme: ThemeProps) =>
       ...spacings.pvMi,
       ...spacings.phTy,
       ...flexbox.directionRow,
-      ...flexbox.alignCenter
+      ...flexbox.alignCenter,
+      borderRadius: 6
     },
     selectItemBorder: {
       borderBottomWidth: 1,

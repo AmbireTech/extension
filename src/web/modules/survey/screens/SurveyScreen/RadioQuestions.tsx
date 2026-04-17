@@ -1,7 +1,6 @@
 import React, { useMemo, useState } from 'react'
 import { Pressable, View, ViewStyle } from 'react-native'
 
-import { Survey } from '@ambire-common/interfaces/survey'
 import Text from '@common/components/Text'
 import useTheme from '@common/hooks/useTheme'
 import flexbox from '@common/styles/utils/flexbox'
@@ -14,11 +13,6 @@ type RadioResponsesProps = {
   responses: { text: string; id: number }[]
   forceLargeItems?: boolean
   style?: ViewStyle
-}
-
-interface ISurveyUiState {
-  currentQuestion: Survey['questions'][number] | null
-  answers: Record<number, string | number>
 }
 
 export const RadioQuestions = React.memo(
