@@ -1,7 +1,7 @@
 import { formatUnits, parseUnits, toBeHex } from 'ethers'
 import React, { Fragment, useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { View } from 'react-native'
+import { NativeSyntheticEvent, TextInputSelectionChangeEventData, View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 
 import { EstimationStatus } from '@ambire-common/controllers/estimation/types'
@@ -19,6 +19,7 @@ import Alert from '@common/components/Alert'
 import BottomSheet from '@common/components/BottomSheet'
 import ModalHeader from '@common/components/BottomSheet/ModalHeader'
 import Button from '@common/components/Button'
+import FooterGlassView from '@common/components/FooterGlassView'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import NumberInput from '@common/components/NumberInput'
 import Select, { SectionedSelect } from '@common/components/Select'
@@ -146,6 +147,9 @@ const Estimation = ({
   const [selectedFeeOption, setSelectedFeeOption] = useState<SelectValue['value'] | null>(null)
   const [customGasPriceInput, setCustomGasPriceInput] = useState('')
   const [customGasPriceError, setCustomGasPriceError] = useState<string | boolean>(false)
+  const [customGasPriceSelection, setCustomGasPriceSelection] = useState<
+    { start: number; end: number } | undefined
+  >(undefined)
 
   const dispatchUpdate = useCallback(
     (update: {
@@ -377,8 +381,23 @@ const Estimation = ({
 
     setCustomGasPriceInput(currentGasPrice)
     setCustomGasPriceError(false)
+    setCustomGasPriceSelection(
+      currentGasPrice
+        ? {
+            start: currentGasPrice.length,
+            end: currentGasPrice.length
+          }
+        : undefined
+    )
     openCustomGasPriceSheet()
   }, [canSetCustomGasPrices, currentGasPrice, openCustomGasPriceSheet])
+
+  const onCustomGasPriceSelectionChange = useCallback(
+    (event: NativeSyntheticEvent<TextInputSelectionChangeEventData>) => {
+      setCustomGasPriceSelection(event.nativeEvent.selection)
+    },
+    []
+  )
 
   const saveCustomGasPrice = useCallback(() => {
     if (!signAccountOpState?.selectedOption) return
@@ -498,6 +517,49 @@ const Estimation = ({
 
   return (
     <Fragment>
+      <BottomSheet
+        id="custom-gas-price-sheet"
+        sheetRef={customGasPriceSheetRef}
+        closeBottomSheet={closeCustomGasPriceSheet}
+        type="modal"
+      >
+        <ModalHeader title={t('Advanced options')} handleClose={closeCustomGasPriceSheet} />
+        <NumberInput
+          label={t('Gas price ({{symbol}})', {
+            symbol: signAccountOpState.selectedOption?.token.symbol || network?.nativeAssetSymbol
+          })}
+          placeholder={t('Enter gas price')}
+          value={customGasPriceInput}
+          onChangeText={(value) => {
+            setCustomGasPriceInput(value)
+            if (customGasPriceError) setCustomGasPriceError(false)
+          }}
+          onSelectionChange={onCustomGasPriceSelectionChange}
+          selection={customGasPriceSelection}
+          precision={signAccountOpState.selectedOption?.token.decimals || 18}
+          error={customGasPriceError}
+          info={t('Set the gas price in the chain native token per gas unit.')}
+          autoFocus
+        />
+        <FooterGlassView absolute={false} isSimpleBlur={false} size="sm" style={spacings.mtLg}>
+          <Button
+            type="secondary"
+            text={t('Cancel')}
+            onPress={() => closeCustomGasPriceSheet()}
+            hasBottomSpacing={false}
+            style={{ flex: 1, width: 100, ...spacings.mrSm }}
+            size="smaller"
+          />
+          <Button
+            type="primary"
+            text={t('Save')}
+            onPress={saveCustomGasPrice}
+            hasBottomSpacing={false}
+            style={{ flex: 1, width: 100 }}
+            size="smaller"
+          />
+        </FooterGlassView>
+      </BottomSheet>
       <View
         style={[
           flexbox.directionRow,
@@ -608,45 +670,6 @@ const Estimation = ({
           </Text>
         </View>
       )}
-      <BottomSheet
-        id="custom-gas-price-sheet"
-        sheetRef={customGasPriceSheetRef}
-        closeBottomSheet={closeCustomGasPriceSheet}
-        type="modal"
-      >
-        <ModalHeader title={t('Advanced options')} handleClose={closeCustomGasPriceSheet} />
-        <NumberInput
-          label={t('Gas price ({{symbol}})', {
-            symbol: signAccountOpState.selectedOption?.token.symbol || network?.nativeAssetSymbol
-          })}
-          placeholder={t('Enter gas price')}
-          value={customGasPriceInput}
-          onChangeText={(value) => {
-            setCustomGasPriceInput(value)
-            if (customGasPriceError) setCustomGasPriceError(false)
-          }}
-          precision={signAccountOpState.selectedOption?.token.decimals || 18}
-          error={customGasPriceError}
-          info={t('Set the gas price in the chain native token per gas unit.')}
-          autoFocus
-        />
-        <View style={[flexbox.directionRow, flexbox.justifySpaceBetween, spacings.mtLg]}>
-          <Button
-            type="secondary"
-            text={t('Cancel')}
-            onPress={() => closeCustomGasPriceSheet()}
-            hasBottomSpacing={false}
-            style={{ flex: 1, ...(isMobile ? spacings.mrSm : {}) }}
-          />
-          <Button
-            type="primary"
-            text={t('Save')}
-            onPress={saveCustomGasPrice}
-            hasBottomSpacing={false}
-            style={{ flex: 1 }}
-          />
-        </View>
-      </BottomSheet>
     </Fragment>
   )
 }
