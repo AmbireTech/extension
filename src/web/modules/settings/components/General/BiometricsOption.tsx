@@ -114,7 +114,7 @@ const BiometricsOption = () => {
       title={t('Biometrics unlock')}
       description={t('Use WebAuthn biometrics to unlock your wallet on this device.')}
       style={spacings.mbTy}
-      renderIcon={<FingerprintIcon />}
+      renderIcon={<FingerprintIcon width={24} height={24} />}
     >
       <FatToggle
         isOn={hasBiometricsSecret}

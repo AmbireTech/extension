@@ -52,13 +52,8 @@ const KeyStoreUnlockScreen = () => {
   } = useController('KeystoreController')
   const { requestWindow } = useController('RequestsController').state
   const { theme } = useTheme()
-  const {
-    isLoading: isBiometricsLoading,
-    hasBiometricsHardware,
-    getBiometricsSecret
-  } = useBiometrics()
+  const { hasBiometricsHardware, getBiometricsSecret } = useBiometrics()
   const [unlockMethod, setUnlockMethod] = useState<'biometrics' | 'password' | null>(null)
-  const [initialCheckDone, setInitialCheckDone] = useState(false)
 
   const canUseBiometrics = !!hasBiometricsSecret && !!hasBiometricsHardware
 
@@ -88,24 +83,8 @@ const KeyStoreUnlockScreen = () => {
   useEffect(() => {
     if (unlockMethod) return
 
-    setUnlockMethod(canUseBiometrics ? 'biometrics' : 'password')
+    setUnlockMethod('password')
   }, [canUseBiometrics, unlockMethod])
-
-  useEffect(() => {
-    if (isBiometricsLoading || initialCheckDone) return
-
-    setInitialCheckDone(true)
-
-    if (!canUseBiometrics) {
-      setUnlockMethod('password')
-      return
-    }
-
-    setUnlockMethod('biometrics')
-    void handleBiometricsPrompt().then((success) => {
-      if (!success) setUnlockMethod('password')
-    })
-  }, [canUseBiometrics, handleBiometricsPrompt, initialCheckDone, isBiometricsLoading])
 
   return (
     <LayoutWrapper style={styles.panel}>
