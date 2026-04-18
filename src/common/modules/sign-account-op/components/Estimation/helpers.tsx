@@ -3,6 +3,7 @@ import { getFeeSpeedIdentifier } from '@ambire-common/controllers/signAccountOp/
 import { FeeSpeed } from '@ambire-common/controllers/signAccountOp/signAccountOp'
 import { ISignAccountOpController } from '@ambire-common/interfaces/signAccountOp'
 import { canBecomeSmarter } from '@ambire-common/libs/account/account'
+import { isTransferredTokenFeeOption } from '@ambire-common/libs/account/feeOptions'
 import { FeePaymentOption } from '@ambire-common/libs/estimate/interfaces'
 import { ZERO_ADDRESS } from '@ambire-common/services/socket/constants'
 
@@ -65,9 +66,14 @@ const mapFeeOptions = (
   const gasTankKey = feeOption.token.flags.onGasTank ? 'gasTank' : ''
   const speedCoverage: FeeSpeed[] = []
   const id = getFeeSpeedIdentifier(feeOption, signAccountOpState.accountOp.accountAddr)
+  const isTransferredTokenOption = isTransferredTokenFeeOption(
+    feeOption,
+    signAccountOpState.accountOp
+  )
 
   signAccountOpState.feeSpeeds[id]?.forEach((speed) => {
-    if (feeOption.availableAmount >= speed.amount) speedCoverage.push(speed.type)
+    if (feeOption.availableAmount >= speed.amount || isTransferredTokenOption)
+      speedCoverage.push(speed.type)
   })
 
   const feeSpeed = signAccountOpState.feeSpeeds[id]?.find(
