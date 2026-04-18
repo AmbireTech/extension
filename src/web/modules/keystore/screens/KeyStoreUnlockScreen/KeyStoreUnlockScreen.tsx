@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react'
 import { Controller } from 'react-hook-form'
-import { Image, Pressable, TouchableOpacity, View } from 'react-native'
+import { Image, TouchableOpacity, View } from 'react-native'
 
 import { isValidPassword } from '@ambire-common/services/validations'
 import AmbireLogoWithBackgroundAndLogotype from '@common/assets/svg/AmbireLogoWithBackgroundAndLogotype'
@@ -83,7 +83,7 @@ const KeyStoreUnlockScreen = () => {
   useEffect(() => {
     if (unlockMethod) return
 
-    setUnlockMethod('password')
+    setUnlockMethod(canUseBiometrics ? 'biometrics' : 'password')
   }, [canUseBiometrics, unlockMethod])
 
   return (
@@ -170,6 +170,35 @@ const KeyStoreUnlockScreen = () => {
         </View>
       </View>
       <View style={styles.container}>
+        {unlockMethod === 'biometrics' && canUseBiometrics && (
+          <>
+            <Button
+              type="primary"
+              style={{ width: '100%', marginBottom: 0 }}
+              hasBottomSpacing={false}
+              text={t('Unlock with biometrics')}
+              onPress={() => {
+                handleBiometricsPrompt().catch(() => {})
+              }}
+              childrenPosition="left"
+            >
+              <FingerprintIcon
+                width={20}
+                height={20}
+                color={theme.primaryText}
+                style={spacings.mrSm}
+              />
+            </Button>
+            <Button
+              type="secondary"
+              style={{ width: '100%', marginTop: 12, marginBottom: 0 }}
+              hasBottomSpacing={false}
+              text={t('Switch to password')}
+              onPress={() => setUnlockMethod('password')}
+            />
+          </>
+        )}
+
         {unlockMethod === 'password' && (
           <>
             <Controller
@@ -216,11 +245,8 @@ const KeyStoreUnlockScreen = () => {
                 type="secondary"
                 style={{ width: '100%', marginTop: 12, marginBottom: 0 }}
                 hasBottomSpacing={false}
-                text={t('Unlock with biometrics')}
-                onPress={() => {
-                  setUnlockMethod('biometrics')
-                  handleBiometricsPrompt().catch(() => {})
-                }}
+                text={t('Switch to biometrics')}
+                onPress={() => setUnlockMethod('biometrics')}
                 childrenPosition="left"
               >
                 <FingerprintIcon
@@ -249,43 +275,6 @@ const KeyStoreUnlockScreen = () => {
                 </Text>
               </TouchableOpacity>
             )}
-          </>
-        )}
-
-        {unlockMethod === 'biometrics' && (
-          <>
-            <View
-              style={[
-                flexbox.alignCenter,
-                flexbox.justifyCenter,
-                { width: '100%', minHeight: 184 }
-              ]}
-            >
-              <Pressable
-                style={{
-                  width: 88,
-                  height: 88,
-                  borderRadius: 44,
-                  ...flexbox.center,
-                  backgroundColor: theme.secondaryBackground
-                }}
-                onPress={() => {
-                  handleBiometricsPrompt().catch(() => {})
-                }}
-              >
-                <FingerprintIcon width={72} height={72} color={theme.iconPrimary} />
-              </Pressable>
-              <Text appearance="secondaryText" style={spacings.mt}>
-                {t('Use biometrics to unlock Ambire')}
-              </Text>
-            </View>
-            <Button
-              type="secondary"
-              style={{ width: '100%', marginBottom: 0 }}
-              hasBottomSpacing={false}
-              text={t('Unlock with password')}
-              onPress={() => setUnlockMethod('password')}
-            />
           </>
         )}
       </View>
