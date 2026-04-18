@@ -25,7 +25,8 @@ const BiometricsOption = () => {
   if (!isEnrolled) return null
 
   useEffect(() => {
-    if (statuses.removeSecret === 'SUCCESS') removeBiometricsSecret().catch(() => {})
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises
+    if (statuses.removeSecret === 'SUCCESS') removeBiometricsSecret()
   }, [removeBiometricsSecret, statuses.removeSecret])
 
   const toggleBiometrics = async () => {

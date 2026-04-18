@@ -31,9 +31,8 @@ const BiometricsOption = () => {
     }
 
     if (statuses.addSecret === 'ERROR') {
-      if (shouldCleanUpWebAuthnCredential.current) {
-        removeBiometricsSecret().catch(() => {})
-      }
+      // eslint-disable-next-line @typescript-eslint/no-floating-promises
+      if (shouldCleanUpWebAuthnCredential.current) removeBiometricsSecret()
       shouldCleanUpWebAuthnCredential.current = false
       setIsBusy(false)
     }
@@ -41,7 +40,8 @@ const BiometricsOption = () => {
 
   useEffect(() => {
     if (statuses.removeSecret === 'SUCCESS') {
-      removeBiometricsSecret().catch(() => {})
+      // eslint-disable-next-line @typescript-eslint/no-floating-promises
+      removeBiometricsSecret()
       setIsBusy(false)
       addToast(t('Biometrics unlock is now disabled.'), { type: 'success' })
     }

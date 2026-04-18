@@ -89,7 +89,9 @@ const BiometricsProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             }
           },
           removeBiometricsSecret: async () => {
-            await webauthnBiometrics.removeCredential()
+            await webauthnBiometrics.removeCredential().catch((e) => {
+              console.log('Failed to remove the webauthnBiometrics credential', e)
+            })
             setIsEnrolled(false)
           }
         }),
