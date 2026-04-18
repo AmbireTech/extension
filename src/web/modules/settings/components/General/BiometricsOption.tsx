@@ -12,13 +12,8 @@ import spacings from '@common/styles/spacings'
 const BiometricsOption = () => {
   const { t } = useTranslation()
   const { addToast } = useToast()
-  const {
-    isLoading,
-    hasBiometricsHardware,
-    saveBiometricsSecret,
-    getBiometricsSecret,
-    removeBiometricsSecret
-  } = useBiometrics()
+  const { isLoading, hasBiometricsHardware, saveBiometricsSecret, removeBiometricsSecret } =
+    useBiometrics()
 
   const {
     state: { hasBiometricsSecret, hasPasswordSecret, statuses },
@@ -91,20 +86,12 @@ const BiometricsOption = () => {
       return
     }
 
-    const confirmedSecret = await getBiometricsSecret()
-    if (!confirmedSecret || confirmedSecret !== secret) {
-      await removeBiometricsSecret()
-      setIsBusy(false)
-      addToast(t('We could not confirm biometrics unlock on this device.'), { type: 'error' })
-      return
-    }
-
     shouldCleanUpWebAuthnCredential.current = true
     keystoreDispatch({
       type: 'method',
       params: {
         method: 'addSecret',
-        args: ['biometrics', confirmedSecret, '', true]
+        args: ['biometrics', secret, '', true]
       }
     })
   }

@@ -83,6 +83,11 @@ const getAssertionForCredential = async (storedCredential: StoredBiometricsCrede
   return getHmacSecretOutput(extensionResults)
 }
 
+const getCredentialExtensionResults = (credential: PublicKeyCredential | null) =>
+  credential && typeof (credential as any).getClientExtensionResults === 'function'
+    ? (credential as any).getClientExtensionResults()
+    : {}
+
 export const webauthnBiometrics = {
   async isSupported() {
     if (
@@ -138,7 +143,9 @@ export const webauthnBiometrics = {
         attestation: 'none',
         extensions: {
           prf: {
-            support: 'preferred'
+            eval: {
+              first: salt
+            }
           },
           hmacCreateSecret: true
         }
@@ -153,7 +160,11 @@ export const webauthnBiometrics = {
       salt: toBase64Url(salt)
     }
 
-    const secretBytes = await getAssertionForCredential(storedCredential)
+    let secretBytes = getHmacSecretOutput(getCredentialExtensionResults(credential))
+    if (!secretBytes) {
+      secretBytes = await getAssertionForCredential(storedCredential)
+    }
+
     if (!secretBytes) return null
 
     await storage.set(WEBAUTHN_BIOMETRICS_STORAGE_KEY, storedCredential)
