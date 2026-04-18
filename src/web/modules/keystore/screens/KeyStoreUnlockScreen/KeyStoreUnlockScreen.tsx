@@ -1,9 +1,10 @@
-import React, { useEffect } from 'react'
+import React, { useCallback, useEffect, useState } from 'react'
 import { Controller } from 'react-hook-form'
-import { Image, TouchableOpacity, View } from 'react-native'
+import { Image, Pressable, TouchableOpacity, View } from 'react-native'
 
 import { isValidPassword } from '@ambire-common/services/validations'
 import AmbireLogoWithBackgroundAndLogotype from '@common/assets/svg/AmbireLogoWithBackgroundAndLogotype'
+import FingerprintIcon from '@common/assets/svg/FingerprintIcon'
 import InvisibilityIcon from '@common/assets/svg/InvisibilityIcon'
 import LockIcon from '@common/assets/svg/LockIcon'
 import VisibilityIcon from '@common/assets/svg/VisibilityIcon'
@@ -18,6 +19,7 @@ import LayoutWrapper from '@common/components/LayoutWrapper'
 import Text from '@common/components/Text'
 import { isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
+import useBiometrics from '@common/hooks/useBiometrics'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import useKeyStoreUnlock from '@common/modules/keystore/hooks/useKeyStoreUnlock'
@@ -45,11 +47,35 @@ const KeyStoreUnlockScreen = () => {
   } = useController('WalletStateController')
   const { hasKeystoreRecovery } = useController('EmailVaultController').state
   const {
-    state: { statuses, errorMessage },
+    state: { statuses, errorMessage, hasBiometricsSecret },
     dispatch: keystoreDispatch
   } = useController('KeystoreController')
   const { requestWindow } = useController('RequestsController').state
   const { theme } = useTheme()
+  const {
+    isLoading: isBiometricsLoading,
+    hasBiometricsHardware,
+    getBiometricsSecret
+  } = useBiometrics()
+  const [unlockMethod, setUnlockMethod] = useState<'biometrics' | 'password' | null>(null)
+  const [initialCheckDone, setInitialCheckDone] = useState(false)
+
+  const canUseBiometrics = !!hasBiometricsSecret && !!hasBiometricsHardware
+
+  const handleBiometricsPrompt = useCallback(async () => {
+    const biometricsSecret = await getBiometricsSecret()
+    if (!biometricsSecret) return false
+
+    keystoreDispatch({
+      type: 'method',
+      params: {
+        method: 'unlockWithSecret',
+        args: ['biometrics', biometricsSecret]
+      }
+    })
+
+    return true
+  }, [getBiometricsSecret, keystoreDispatch])
 
   // Refresh tooltip content when privacy mode changes while tooltip is active
   useEffect(() => {
@@ -58,6 +84,28 @@ const KeyStoreUnlockScreen = () => {
     const event = new CustomEvent(GLOBAL_TOOLTIP_REFRESH_EVENT)
     window.dispatchEvent(event)
   }, [isPrivacyModeEnabled])
+
+  useEffect(() => {
+    if (unlockMethod) return
+
+    setUnlockMethod(canUseBiometrics ? 'biometrics' : 'password')
+  }, [canUseBiometrics, unlockMethod])
+
+  useEffect(() => {
+    if (isBiometricsLoading || initialCheckDone) return
+
+    setInitialCheckDone(true)
+
+    if (!canUseBiometrics) {
+      setUnlockMethod('password')
+      return
+    }
+
+    setUnlockMethod('biometrics')
+    void handleBiometricsPrompt().then((success) => {
+      if (!success) setUnlockMethod('password')
+    })
+  }, [canUseBiometrics, handleBiometricsPrompt, initialCheckDone, isBiometricsLoading])
 
   return (
     <LayoutWrapper style={styles.panel}>
@@ -143,61 +191,123 @@ const KeyStoreUnlockScreen = () => {
         </View>
       </View>
       <View style={styles.container}>
-        <Controller
-          control={control}
-          render={({ field: { onChange, onBlur, value } }) => (
-            <InputPassword
-              testID="passphrase-field"
-              onBlur={onBlur}
-              placeholder={t('Enter your password')}
-              autoFocus={isWeb}
-              inputStyle={{ height: 54 }} // 56-2px border
-              inputWrapperStyle={{ backgroundColor: theme.secondaryBackground, height: 56 }}
-              onChangeText={(val: string) => {
-                onChange(val)
-                if (errorMessage) {
-                  keystoreDispatch({
-                    type: 'method',
-                    params: {
-                      method: 'resetErrorState',
-                      args: []
+        {unlockMethod === 'password' && (
+          <>
+            <Controller
+              control={control}
+              render={({ field: { onChange, onBlur, value } }) => (
+                <InputPassword
+                  testID="passphrase-field"
+                  onBlur={onBlur}
+                  placeholder={t('Enter your password')}
+                  autoFocus={isWeb}
+                  inputStyle={{ height: 54 }} // 56-2px border
+                  inputWrapperStyle={{ backgroundColor: theme.secondaryBackground, height: 56 }}
+                  onChangeText={(val: string) => {
+                    onChange(val)
+                    if (errorMessage) {
+                      keystoreDispatch({
+                        type: 'method',
+                        params: {
+                          method: 'resetErrorState',
+                          args: []
+                        }
+                      })
                     }
+                  }}
+                  isValid={!errors.password && isValidPassword(value)}
+                  value={value}
+                  onSubmitEditing={handleSubmit((data) => handleUnlock(data))}
+                  error={passwordFieldError}
+                  containerStyle={{ ...spacings.mb, width: '100%' }}
+                />
+              )}
+              name="password"
+            />
+            <Button
+              testID="button-unlock"
+              disabled={disableSubmit}
+              style={{ width: '100%', marginBottom: 0 }}
+              text={statuses.unlockWithSecret === 'LOADING' ? t('Unlocking...') : t('Unlock')}
+              onPress={handleSubmit((data) => handleUnlock(data))}
+            />
+
+            {canUseBiometrics && (
+              <Button
+                type="secondary"
+                style={{ width: '100%', marginTop: 12, marginBottom: 0 }}
+                hasBottomSpacing={false}
+                text={t('Unlock with biometrics')}
+                onPress={() => {
+                  setUnlockMethod('biometrics')
+                  handleBiometricsPrompt().catch(() => {})
+                }}
+                childrenPosition="left"
+              >
+                <FingerprintIcon
+                  width={20}
+                  height={20}
+                  color={theme.primaryText}
+                  style={spacings.mrSm}
+                />
+              </Button>
+            )}
+
+            {hasKeystoreRecovery && (
+              <TouchableOpacity
+                onPress={() =>
+                  openInternalPageInTab({
+                    route: ROUTES.keyStoreEmailRecovery,
+                    shouldCloseCurrentWindow: !getUiType().isTab,
+                    windowId: requestWindow?.windowProps?.createdFromWindowId
                   })
                 }
-              }}
-              isValid={!errors.password && isValidPassword(value)}
-              value={value}
-              onSubmitEditing={handleSubmit((data) => handleUnlock(data))}
-              error={passwordFieldError}
-              containerStyle={{ ...spacings.mb, width: '100%' }}
-            />
-          )}
-          name="password"
-        />
-        <Button
-          testID="button-unlock"
-          disabled={disableSubmit}
-          style={{ width: '100%', marginBottom: 0 }}
-          text={statuses.unlockWithSecret === 'LOADING' ? t('Unlocking...') : t('Unlock')}
-          onPress={handleSubmit((data) => handleUnlock(data))}
-        />
+                style={spacings.mtXl}
+                hitSlop={FOOTER_BUTTON_HIT_SLOP}
+              >
+                <Text weight="medium" appearance="secondaryText" fontSize={14} underline>
+                  {t('Forgot extension password?')}
+                </Text>
+              </TouchableOpacity>
+            )}
+          </>
+        )}
 
-        {hasKeystoreRecovery && (
-          <TouchableOpacity
-            onPress={() =>
-              openInternalPageInTab({
-                route: ROUTES.keyStoreEmailRecovery,
-                shouldCloseCurrentWindow: !getUiType().isTab,
-                windowId: requestWindow?.windowProps?.createdFromWindowId
-              })
-            }
-            style={spacings.mtXl}
-            hitSlop={FOOTER_BUTTON_HIT_SLOP}
-          >
-            <Text weight="medium" appearance="secondaryText" fontSize={14} underline>
-              {t('Forgot extension password?')}
-            </Text>
-          </TouchableOpacity>
+        {unlockMethod === 'biometrics' && (
+          <>
+            <View
+              style={[
+                flexbox.alignCenter,
+                flexbox.justifyCenter,
+                { width: '100%', minHeight: 184 }
+              ]}
+            >
+              <Pressable
+                style={{
+                  width: 88,
+                  height: 88,
+                  borderRadius: 44,
+                  ...flexbox.center,
+                  backgroundColor: theme.secondaryBackground
+                }}
+                onPress={() => {
+                  handleBiometricsPrompt().catch(() => {})
+                }}
+              >
+                <FingerprintIcon width={72} height={72} color={theme.iconPrimary} />
+              </Pressable>
+              <Text appearance="secondaryText" style={spacings.mt}>
+                {t('Use biometrics to unlock Ambire')}
+              </Text>
+            </View>
+            <Button
+              type="secondary"
+              style={{ width: '100%', marginBottom: 0 }}
+              hasBottomSpacing={false}
+              text={t('Unlock with password')}
+              onPress={() => setUnlockMethod('password')}
+            />
+          </>
         )}
       </View>
     </LayoutWrapper>
