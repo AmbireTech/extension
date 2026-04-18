@@ -68,7 +68,7 @@ const BiometricsProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             try {
               return await webauthnBiometrics.authenticate()
             } catch {
-              addToast(t('Authentication attempt failed.') as string, { type: 'error' })
+              addToast(t('Authentication attempt failed.'), { type: 'error' })
               return false
             }
           },
@@ -77,14 +77,16 @@ const BiometricsProvider: React.FC<{ children: React.ReactNode }> = ({ children 
               const secret = await webauthnBiometrics.createSecret()
               setIsEnrolled(!!secret)
               return secret
-            } catch {
+            } catch (e) {
+              console.log('Failed to save biometrics secret', e)
               return null
             }
           },
           getBiometricsSecret: async () => {
             try {
               return await webauthnBiometrics.getSecret()
-            } catch {
+            } catch (e) {
+              console.log('Failed to get biometrics secret', e)
               return null
             }
           },

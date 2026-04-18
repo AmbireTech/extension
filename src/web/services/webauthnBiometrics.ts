@@ -105,7 +105,11 @@ export const webauthnBiometrics = {
 
     try {
       return await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable()
-    } catch {
+    } catch (e) {
+      console.log(
+        'Function PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable throwed',
+        e
+      )
       return false
     }
   },
