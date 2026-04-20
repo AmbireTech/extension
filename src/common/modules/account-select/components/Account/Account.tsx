@@ -249,9 +249,18 @@ const Account = ({
           </View>
         </View>
       </View>
-      <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-        {balance !== null && (
-          <Text fontSize={14} weight="medium" color={theme.secondaryText} style={[spacings.mrTy]}>
+      <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mlTy]}>
+        {balance !== null && !withSettings && (
+          <Text
+            fontSize={14}
+            weight="semiBold"
+            color={theme.secondaryText}
+            style={[
+              isMobile || renderRightChildren ? spacings.mrTy : {},
+              isMobile || renderRightChildren ? flexbox.alignSelfCenter : flexbox.alignSelfStart,
+              { textAlign: 'right' }
+            ]}
+          >
             {formatDecimals(balance, 'value')}
           </Text>
         )}
