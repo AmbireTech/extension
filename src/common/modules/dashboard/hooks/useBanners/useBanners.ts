@@ -1,9 +1,9 @@
 import { useMemo } from 'react'
 
-import { Banner as BannerInterface } from '@ambire-common/interfaces/banner'
 import { getCurrentAccountBanners } from '@ambire-common/libs/banners/banners'
 import useController from '@common/hooks/useController'
 
+import type { Banner as BannerInterface, IBannerController } from '@ambire-common/interfaces/banner'
 const OFFLINE_BANNER: BannerInterface = {
   id: 'offline-banner',
   type: 'error',
@@ -17,9 +17,9 @@ const OFFLINE_BANNER: BannerInterface = {
   ]
 }
 
-export default function useBanners(): [BannerInterface[], BannerInterface[]] {
+export default function useBanners(): [BannerInterface[], IBannerController['bannersData']] {
   const { isOffline } = useController('MainController').state
-  const { banners: marketingBanners } = useController('BannerController').state
+  const { bannersData: marketingBannersData } = useController('BannerController').state
   const {
     state: { account, portfolio, deprecatedSmartAccountBanner }
   } = useController('SelectedAccountController')
@@ -54,5 +54,5 @@ export default function useBanners(): [BannerInterface[], BannerInterface[]] {
     extensionUpdateBanner
   ])
 
-  return [controllerBanners, marketingBanners]
+  return [controllerBanners, marketingBannersData]
 }
