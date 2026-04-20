@@ -1,3 +1,3 @@
-import TransferScreen from './SurveyScreen'
+import SurveyScreen from './SurveyScreen'
 
-export default TransferScreen
+export default SurveyScreen

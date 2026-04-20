@@ -62,7 +62,7 @@ input {
   outline: none;
 }
 
-/* <TextArea /> with multiline={true} is compiled tp <textarea /> */
+/* <TextArea /> with multiline={true} is compiled to <textarea /> */
 textarea {
   outline: none;
 }

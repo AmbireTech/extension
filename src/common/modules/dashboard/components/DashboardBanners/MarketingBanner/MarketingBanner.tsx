@@ -123,7 +123,7 @@ const MarketingBanner: React.FC<Props> = ({ banner }) => {
           </Pressable>
         </View>
         <Text appearance="secondaryText" fontSize={14} style={spacings.mrLg}>
-          aaa{text}
+          {text}
         </Text>
       </View>
     </AnimatedPressable>
