@@ -33,12 +33,7 @@ const SurveyInnerState = ({
   const { t } = useTranslation()
   if (surveyStatus === 'not-started') return null
   else if (surveyStatus === 'loading-fetching')
-    return (
-      <InProgress title={t('Getting the survey.')}>
-        {/* TODO */}
-        <></>
-      </InProgress>
-    )
+    return <InProgress title={t('Getting the survey...')} />
   else if (surveyStatus === 'success-fetched')
     return (
       currentQuestion && (
