@@ -39,6 +39,7 @@ const getStoredCredential = () =>
   storage.get(WEBAUTHN_BIOMETRICS_STORAGE_KEY, null) as Promise<StoredBiometricsCredential | null>
 
 const getHmacSecretOutput = (results: any) => {
+  // prioritize, because that’s the modern WebAuthn approach
   const prfResult = results?.prf?.results?.first
   if (prfResult) return toUint8Array(prfResult)
 
@@ -60,6 +61,8 @@ const getAssertionForCredential = async (storedCredential: StoredBiometricsCrede
           type: 'public-key'
         }
       ],
+      // prf.results.first is the new WebAuthn PRF extension result
+      // hmacGetSecret.output1 is legacy/fallback result from CTAP hmac-secret
       extensions: {
         prf: {
           eval: {
