@@ -4,9 +4,9 @@ import { pbkdf2Sync, scrypt } from 'react-native-quick-crypto'
 import { WebView } from 'react-native-webview'
 
 import * as richJson from '@ambire-common/libs/richJson/richJson'
+import { CONTROLLER_STORE_MAX_LOADING_TIME } from '@common/contexts/controllerStoreContext/controllerStore'
 import eventBus from '@common/services/event/eventBus'
 import { storage } from '@common/services/storage'
-import { CONTROLLER_STORE_MAX_LOADING_TIME } from '@common/contexts/controllerStoreContext/controllerStore'
 import { WEBVIEW_DEV_HOST } from '@env'
 
 // In production, the bundle is inlined via the JSON import.
@@ -323,7 +323,7 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, {}>((_, ref) => {
       // Network requests are proxied through the RN bridge (network.fetch),
       // so the WebView itself needs no connect-src permissions.
       const prodCsp =
-        "default-src 'none'; script-src 'unsafe-inline'; connect-src 'none'; frame-src 'none'; object-src 'none';"
+        "default-src 'none'; script-src 'none'; connect-src 'none'; frame-src 'none'; object-src 'none';"
       return {
         html: `
           <!DOCTYPE html>
@@ -331,27 +331,17 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, {}>((_, ref) => {
             <head>
               <meta name="viewport" content="width=device-width, initial-scale=1.0">
               <meta http-equiv="Content-Security-Policy" content="${prodCsp}">
-              <script>${globalErrorHandler}</script>
             </head>
-            <body>
-              <script>
-                try {
-                  ${webviewBundle.code}
-                } catch (err) {
-                  window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'ctrl.error', payload: { ctrlName: 'GlobalCrash', errors: [{ message: err.toString(), stack: err.stack }] } }));
-                }
-              </script>
-            </body>
+            <body></body>
           </html>
         `,
         baseUrl: 'file:///'
       }
     }
 
-    // Dev mode: inline HTML with file:/// base URL + reload override.
-    // Network requests are proxied through the RN bridge, so connect-src
-    // only needs the dev server (for bundle loading) and WebSocket.
-    const devCsp = `default-src 'none'; script-src 'unsafe-inline' ${devUrl}; connect-src ${devUrl} ws: wss:; frame-src 'none'; object-src 'none';`
+    // Dev mode: HTML with file:/// base URL + external script linking to Webpack Dev Server.
+    // Network requests proxied via bridge, connect-src allows WebSocket for HMR.
+    const devCsp = `default-src 'none'; script-src ${devUrl}; connect-src ${devUrl} ws: wss:; frame-src 'none'; object-src 'none';`
     return {
       html: `
         <!DOCTYPE html>
@@ -359,52 +349,6 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, {}>((_, ref) => {
           <head>
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
             <meta http-equiv="Content-Security-Policy" content="${devCsp}">
-            <script>
-              ${globalErrorHandler}
-
-              // Fix Webpack Dev Server WebSocket URL when baseUrl is file:///
-              // and detect recompilation to trigger a RN-side WebView remount
-              // (since location.reload() would navigate to file:/// which fails).
-              var OriginalWebSocket = window.WebSocket;
-              var _wdsLastHash = null;
-              var _wdsPendingReload = false;
-              window.WebSocket = function(url, protocols) {
-                var connectUrl = url;
-                if (url && (url.indexOf('ws:///') === 0 || url.indexOf('wss:///') === 0 || url.indexOf('0.0.0.0') > -1)) {
-                  connectUrl = '${devUrl}'.replace('http://', 'ws://').replace('https://', 'wss://') + '/ws';
-                }
-                var ws = protocols ? new OriginalWebSocket(connectUrl, protocols) : new OriginalWebSocket(connectUrl);
-
-                // Listen for webpack-dev-server messages to detect recompilation.
-                // Message flow: {"type":"hash","data":"<newHash>"} then {"type":"ok"}.
-                // On first connect, we store the hash. On subsequent hash changes,
-                // we flag a pending reload and trigger it when "ok" arrives.
-                ws.addEventListener('message', function(event) {
-                  try {
-                    var msg = JSON.parse(event.data);
-                    if (msg.type === 'hash') {
-                      if (_wdsLastHash !== null && _wdsLastHash !== msg.data) {
-                        _wdsPendingReload = true;
-                      }
-                      _wdsLastHash = msg.data;
-                    }
-                    if (msg.type === 'ok' && _wdsPendingReload) {
-                      _wdsPendingReload = false;
-                      if (window.ReactNativeWebView) {
-                        window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'system.requestReload' }));
-                      }
-                    }
-                  } catch (e) {}
-                });
-
-                return ws;
-              };
-              window.WebSocket.prototype = OriginalWebSocket.prototype;
-              window.WebSocket.CONNECTING = OriginalWebSocket.CONNECTING;
-              window.WebSocket.OPEN = OriginalWebSocket.OPEN;
-              window.WebSocket.CLOSING = OriginalWebSocket.CLOSING;
-              window.WebSocket.CLOSED = OriginalWebSocket.CLOSED;
-            </script>
           </head>
           <body>
             <script src="${devUrl}/webview-bundle.js"></script>
@@ -416,6 +360,60 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, {}>((_, ref) => {
   }
 
   const source = getSource()
+
+  const injectedJSBefore = __DEV__
+    ? `
+      ${globalErrorHandler}
+
+      // Fix Webpack Dev Server WebSocket URL when baseUrl is file:///
+      // and detect recompilation to trigger a RN-side WebView remount
+      var OriginalWebSocket = window.WebSocket;
+      var _wdsLastHash = null;
+      var _wdsPendingReload = false;
+      window.WebSocket = function(url, protocols) {
+        var connectUrl = url;
+        if (url && (url.indexOf('ws:///') === 0 || url.indexOf('wss:///') === 0 || url.indexOf('0.0.0.0') > -1)) {
+          connectUrl = '${devUrl}'.replace('http://', 'ws://').replace('https://', 'wss://') + '/ws';
+        }
+        var ws = protocols ? new OriginalWebSocket(connectUrl, protocols) : new OriginalWebSocket(connectUrl);
+
+        ws.addEventListener('message', function(event) {
+          try {
+            var msg = JSON.parse(event.data);
+            if (msg.type === 'hash') {
+              if (_wdsLastHash !== null && _wdsLastHash !== msg.data) {
+                _wdsPendingReload = true;
+              }
+              _wdsLastHash = msg.data;
+            }
+            if (msg.type === 'ok' && _wdsPendingReload) {
+              _wdsPendingReload = false;
+              if (window.ReactNativeWebView) {
+                window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'system.requestReload' }));
+              }
+            }
+          } catch (e) {}
+        });
+
+        return ws;
+      };
+      window.WebSocket.prototype = OriginalWebSocket.prototype;
+      window.WebSocket.CONNECTING = OriginalWebSocket.CONNECTING;
+      window.WebSocket.OPEN = OriginalWebSocket.OPEN;
+      window.WebSocket.CLOSING = OriginalWebSocket.CLOSING;
+      window.WebSocket.CLOSED = OriginalWebSocket.CLOSED;
+
+      true;
+    `
+    : `
+      try {
+        ${globalErrorHandler}
+        ${webviewBundle.code}
+      } catch (err) {
+        window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'ctrl.error', payload: { ctrlName: 'GlobalCrash', errors: [{ message: err.toString(), stack: err.stack }] } }));
+      }
+      true;
+    `
 
   return (
     <WebView
@@ -443,6 +441,7 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, {}>((_, ref) => {
         }
       }}
       javaScriptEnabled={true}
+      injectedJavaScriptBeforeContentLoaded={injectedJSBefore}
       originWhitelist={__DEV__ ? ['file://*', `${devUrl}/*`] : ['file://*']}
       onShouldStartLoadWithRequest={(request) =>
         request.url.startsWith('file:///') || (__DEV__ && request.url.startsWith(devUrl))
