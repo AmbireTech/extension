@@ -501,5 +501,7 @@ run-tests.sh
 # Cursor editor
 /.cursor
 
-# WebView bundle
+# WebView bundles
 webview-bundle.json
+ethereum-inpage-bundle.json
+ambire-inpage-bundle.json

@@ -3,11 +3,43 @@ const webpack = require('webpack')
 const NodePolyfillPlugin = require('node-polyfill-webpack-plugin')
 const TerserPlugin = require('terser-webpack-plugin')
 const HtmlWebpackPlugin = require('html-webpack-plugin')
+const fs = require('fs')
+const { execSync } = require('child_process')
 
 // Since Webpack is executed from the project root via package.json scripts,
 // process.cwd() provides the absolute path to the project root directory
 const ROOT_DIR = process.cwd()
 const isDev = process.env.NODE_ENV === 'development' || process.argv.includes('serve')
+
+// In dev mode, ensure JSON bundle files exist before starting the dev server.
+// If missing, run a production build to generate them.
+if (isDev) {
+  const SERVICES_DIR = path.resolve(ROOT_DIR, 'src/mobile/modules/webview/services')
+  const bundleFiles = [
+    'webview-bundle.json',
+    'ethereum-inpage-bundle.json',
+    'ambire-inpage-bundle.json'
+  ]
+  const allBundlesExist = bundleFiles.every((file) => fs.existsSync(path.join(SERVICES_DIR, file)))
+
+  if (!allBundlesExist) {
+    console.log('[webpack] Bundle files missing. Running production build to generate them...')
+    try {
+      execSync(
+        'npx webpack --config src/mobile/modules/webview/services/webpack.webview.config.js',
+        {
+          cwd: ROOT_DIR,
+          env: { ...process.env, WEB_ENGINE: 'webview', NODE_ENV: 'production' },
+          stdio: 'inherit'
+        }
+      )
+      console.log('[webpack] Production build completed. Starting dev server...')
+    } catch (err) {
+      console.error('[webpack] Failed to generate bundle files:', err.message)
+      process.exit(1)
+    }
+  }
+}
 
 /**
  * Shared Resolver Configuration
