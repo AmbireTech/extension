@@ -83,7 +83,7 @@ if (isDev) {
     entry: './src/mobile/services/WebViewWorker/injectedLogic.ts',
     mode: 'development',
     target: 'web',
-    devtool: 'eval-source-map',
+    devtool: false, // Turned off for maximum build/rebuild speed
     output: {
       path: path.resolve(ROOT_DIR, 'dist-webview-dev'),
       filename: 'webview-bundle.js',

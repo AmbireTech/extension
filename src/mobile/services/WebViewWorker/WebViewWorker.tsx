@@ -323,7 +323,7 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, {}>((_, ref) => {
       // Network requests are proxied through the RN bridge (network.fetch),
       // so the WebView itself needs no connect-src permissions.
       const prodCsp =
-        "default-src 'none'; script-src 'unsafe-inline' 'unsafe-eval'; connect-src 'none'; frame-src 'none'; object-src 'none';"
+        "default-src 'none'; script-src 'unsafe-inline'; connect-src 'none'; frame-src 'none'; object-src 'none';"
       return {
         html: `
           <!DOCTYPE html>
@@ -351,7 +351,7 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, {}>((_, ref) => {
     // Dev mode: inline HTML with file:/// base URL + reload override.
     // Network requests are proxied through the RN bridge, so connect-src
     // only needs the dev server (for bundle loading) and WebSocket.
-    const devCsp = `default-src 'none'; script-src 'unsafe-inline' 'unsafe-eval' ${devUrl}; connect-src ${devUrl} ws: wss:; frame-src 'none'; object-src 'none';`
+    const devCsp = `default-src 'none'; script-src 'unsafe-inline' ${devUrl}; connect-src ${devUrl} ws: wss:; frame-src 'none'; object-src 'none';`
     return {
       html: `
         <!DOCTYPE html>
