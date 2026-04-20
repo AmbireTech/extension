@@ -77,6 +77,8 @@
     "@fortawesome/free-solid-svg-icons": "6.6.0",
     "@fortawesome/react-fontawesome": "0.2.2",
     "@gorhom/portal": "1.0.14",
+    "@keystonehq/animated-qr": "0.10.0",
+    "@keystonehq/bc-ur-registry-eth": "0.22.1",
     "@ledgerhq/context-module": "1.15.0",
     "@ledgerhq/device-management-kit": "1.2.0",
     "@ledgerhq/device-signer-kit-ethereum": "1.12.0",
@@ -85,6 +87,7 @@
     "@lottiefiles/dotlottie-react": "0.18.3",
     "@metamask/eth-sig-util": "8.2.0",
     "@metamask/obs-store": "6.0.2",
+    "@ngraveio/bc-ur": "1.1.13",
     "@noble/hashes": "1.8.0",
     "@raugfer/jazzicon": "1.0.6",
     "@react-native-community/netinfo": "12.0.1",
@@ -165,6 +168,7 @@
     "path-browserify": "0.0.0",
     "process": "0.11.10",
     "purify-ts": "2.1.0",
+    "qr-scanner": "1.4.2",
     "querystring-es3": "0.2.1",
     "react": "19.1.0",
     "react-dom": "19.1.0",
@@ -311,7 +315,8 @@
       "postinstall-postinstall": false,
       "secp256k1": false,
       "@trezor/connect-webextension>@trezor/connect>@trezor/blockchain-link>@stellar/stellar-sdk": false,
-      "@sentry/cli": true
+      "@sentry/cli": true,
+      "@keystonehq/bc-ur-registry-eth>hdkey>secp256k1": false
     }
   }
 }

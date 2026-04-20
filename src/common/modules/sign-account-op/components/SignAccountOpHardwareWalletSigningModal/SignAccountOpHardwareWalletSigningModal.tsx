@@ -126,12 +126,15 @@ const SignAccountOpHardwareWalletSigningModal: React.FC<Props> = ({
     accountOp.accountAddr
   ])
 
-  if (!currentlyInvolvedSignOrBroadcastKeyType) return null
+
+  // Note: QR signing is handled by the QrSigningModal component. We don't need to show this modal for QR.
+  if (!currentlyInvolvedSignOrBroadcastKeyType || currentlyInvolvedSignOrBroadcastKeyType === 'qr')
+    return null
 
   return (
     <HardwareWalletSigningModal
       isVisible={shouldBeVisible}
-      keyType={currentlyInvolvedSignOrBroadcastKeyType as 'trezor' | 'ledger' | 'lattice'}
+      keyType={currentlyInvolvedSignOrBroadcastKeyType as 'trezor' | 'ledger' | 'lattice' | 'qr'}
       cancelReq={cancelReq}
     >
       {typeof signedTransactionsCount === 'number' ? (
