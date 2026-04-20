@@ -140,7 +140,6 @@ export const webauthnBiometrics = {
           { type: 'public-key', alg: -257 }
         ],
         authenticatorSelection: {
-          authenticatorAttachment: 'platform',
           residentKey: 'required',
           userVerification: 'required'
         },
