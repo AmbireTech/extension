@@ -53,7 +53,7 @@ const getAssertionForCredential = async (storedCredential: StoredBiometricsCrede
     publicKey: {
       challenge: getRandomBytes(32),
       timeout: WEBAUTHN_TIMEOUT_MS,
-      userVerification: 'required',
+      userVerification: 'preferred',
       allowCredentials: [
         {
           id: fromBase64Url(storedCredential.credentialId),
@@ -140,7 +140,7 @@ export const webauthnBiometrics = {
         ],
         authenticatorSelection: {
           residentKey: 'required',
-          userVerification: 'required'
+          userVerification: 'preferred'
         },
         timeout: WEBAUTHN_TIMEOUT_MS,
         attestation: 'none',
