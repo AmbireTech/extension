@@ -1,5 +1,6 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useModalize } from 'react-native-modalize'
 
 import FingerprintIcon from '@common/assets/svg/FingerprintIcon'
 import ControlOption from '@common/components/ControlOption'
@@ -9,6 +10,7 @@ import useController from '@common/hooks/useController'
 import useExtraEntropy from '@common/hooks/useExtraEntropy'
 import useToast from '@common/hooks/useToast'
 import spacings from '@common/styles/spacings'
+import BottomSheetPasswordConfirmation from '@web/modules/settings/components/BottomSheetPasswordConfirmation'
 
 const BiometricsOption = () => {
   const { t } = useTranslation()
@@ -21,6 +23,11 @@ const BiometricsOption = () => {
     state: { hasBiometricsSecret, hasPasswordSecret, statuses },
     dispatch: keystoreDispatch
   } = useController('KeystoreController')
+  const {
+    ref: sheetRefConfirmPassword,
+    open: openConfirmPassword,
+    close: closeConfirmPassword
+  } = useModalize()
 
   const [isBusy, setIsBusy] = useState(false)
   const shouldCleanUpWebAuthnCredential = useRef(false)
@@ -64,22 +71,20 @@ const BiometricsOption = () => {
 
   if (!hasPasswordSecret || (!isLoading && !hasBiometricsHardware)) return null
 
-  const toggleBiometrics = async () => {
-    if (disabled) return
+  const closePasswordConfirmation = useCallback(() => {
+    keystoreDispatch({
+      type: 'method',
+      params: {
+        method: 'resetErrorState',
+        args: []
+      }
+    })
+    closeConfirmPassword()
+  }, [closeConfirmPassword, keystoreDispatch])
 
+  const enableBiometrics = useCallback(async () => {
+    closePasswordConfirmation()
     setIsBusy(true)
-
-    if (hasBiometricsSecret) {
-      keystoreDispatch({
-        type: 'method',
-        params: {
-          method: 'removeSecret',
-          args: ['biometrics']
-        }
-      })
-
-      return
-    }
 
     const secret = await saveBiometricsSecret()
     if (!secret) {
@@ -96,22 +101,56 @@ const BiometricsOption = () => {
         args: ['biometrics', secret, getExtraEntropy(), true]
       }
     })
-  }
+  }, [
+    addToast,
+    closePasswordConfirmation,
+    getExtraEntropy,
+    keystoreDispatch,
+    saveBiometricsSecret,
+    t
+  ])
+
+  const toggleBiometrics = useCallback(() => {
+    if (disabled) return
+
+    if (hasBiometricsSecret) {
+      setIsBusy(true)
+      keystoreDispatch({
+        type: 'method',
+        params: {
+          method: 'removeSecret',
+          args: ['biometrics']
+        }
+      })
+
+      return
+    }
+
+    openConfirmPassword()
+  }, [disabled, hasBiometricsSecret, keystoreDispatch, openConfirmPassword])
 
   return (
-    <ControlOption
-      title={t('Biometrics unlock')}
-      description={t('Use WebAuthn biometrics to unlock your wallet on this device.')}
-      style={spacings.mbTy}
-      renderIcon={<FingerprintIcon width={24} height={24} />}
-    >
-      <FatToggle
-        isOn={hasBiometricsSecret}
-        onToggle={toggleBiometrics}
-        style={spacings.mr0}
-        disabled={disabled}
+    <>
+      <ControlOption
+        title={t('Biometrics unlock')}
+        description={t('Use WebAuthn biometrics to unlock your wallet on this device.')}
+        style={spacings.mbTy}
+        renderIcon={<FingerprintIcon width={24} height={24} />}
+      >
+        <FatToggle
+          isOn={hasBiometricsSecret}
+          onToggle={toggleBiometrics}
+          style={spacings.mr0}
+          disabled={disabled}
+        />
+      </ControlOption>
+      <BottomSheetPasswordConfirmation
+        sheetRef={sheetRefConfirmPassword}
+        closeBottomSheet={closePasswordConfirmation}
+        text={t('Please enter your extension password to enable biometrics unlock.')}
+        onPasswordConfirmed={enableBiometrics}
       />
-    </ControlOption>
+    </>
   )
 }
 
