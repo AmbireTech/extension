@@ -446,7 +446,7 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, {}>((_, ref) => {
       onShouldStartLoadWithRequest={(request) =>
         request.url.startsWith('file:///') || (__DEV__ && request.url.startsWith(devUrl))
       }
-      mixedContentMode="always"
+      mixedContentMode="never"
       allowFileAccessFromFileURLs={false}
       allowUniversalAccessFromFileURLs={false}
       domStorageEnabled={true}
