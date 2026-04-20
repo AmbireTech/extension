@@ -16,6 +16,7 @@ const COMMON_ROUTES = {
   onboardingCompleted: 'wallet-setup-completed',
   viewOnlyAccountAdder: 'view-only-account-adder',
   safeImport: 'safe-import',
+  qrConnect: 'qr-connect',
   transfer: 'transfer',
   topUpGasTank: 'top-up-gas-tank',
   tokenDetails: 'token-details',
@@ -68,7 +69,8 @@ const WEB_ROUTES = {
   manageTokens: 'settings/manage-tokens',
   recoveryPhrasesSettings: 'settings/recovery-phrases',
   safeImport: 'safe-import',
-  optOuts: 'settings/opt-outs'
+  optOuts: 'settings/opt-outs',
+  qrPermission: 'qr-permission'
 }
 
 const ROUTES = { ...MOBILE_ROUTES, ...WEB_ROUTES }
@@ -87,7 +89,8 @@ const ONBOARDING_WEB_ROUTES = [
   COMMON_ROUTES.accountPersonalize,
   COMMON_ROUTES.accountPicker,
   COMMON_ROUTES.onboardingCompleted,
-  COMMON_ROUTES.safeImport
+  COMMON_ROUTES.safeImport,
+  COMMON_ROUTES.qrConnect
 ] as const
 
 export { MOBILE_ROUTES, ONBOARDING_WEB_ROUTES, ROUTES, WEB_ROUTES }
