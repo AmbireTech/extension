@@ -1,9 +1,8 @@
 import { hexlify } from 'ethers'
 
 import { storage } from '@common/services/storage'
-import { getExtensionInstanceId } from '@web/utils/analytics'
 
-const WEBAUTHN_BIOMETRICS_STORAGE_KEY = 'biometricsWebAuthnCredential_v1'
+const WEBAUTHN_BIOMETRICS_STORAGE_KEY = 'biometricsWebAuthnCredential'
 const WEBAUTHN_TIMEOUT_MS = 60_000
 
 type StoredBiometricsCredential = {
@@ -119,7 +118,7 @@ export const webauthnBiometrics = {
     return !!(await getStoredCredential())
   },
 
-  async createSecret(keyStoreUid: string | null, verifiedCode: string | null) {
+  async createSecret(userId: Buffer) {
     const isSupported = await this.isSupported()
     if (!isSupported) return null
 
@@ -131,7 +130,7 @@ export const webauthnBiometrics = {
           name: 'ambire.com'
         },
         user: {
-          id: Buffer.from(getExtensionInstanceId(keyStoreUid, verifiedCode)),
+          id: userId,
           name: 'Ambire Web3 Wallet',
           displayName: 'Ambire Web3 Wallet'
         },
