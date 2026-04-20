@@ -259,14 +259,7 @@ const KeyStoreUnlockScreen = () => {
                   console.log('failed to open biometrics prompt', e)
                 })
               }}
-              icon={
-                <FingerprintIcon
-                  width={20}
-                  height={20}
-                  color={theme.primaryText}
-                  style={spacings.mrSm}
-                />
-              }
+              icon={<FingerprintIcon width={20} height={20} color="#fff" style={spacings.mrSm} />}
               childrenPosition="left"
             />
             <Button
