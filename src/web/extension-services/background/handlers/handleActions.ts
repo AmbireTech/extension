@@ -10,6 +10,7 @@ import { browser } from '@web/constants/browserapi'
 import { Port, PortMessenger } from '@web/extension-services/messengers'
 import LatticeKeyIterator from '@web/modules/hardware-wallet/libs/latticeKeyIterator'
 import LedgerKeyIterator from '@web/modules/hardware-wallet/libs/ledgerKeyIterator'
+import QrKeyIterator from '@web/modules/hardware-wallet/libs/qrKeyIterator/qrKeyIterator'
 import TrezorKeyIterator from '@web/modules/hardware-wallet/libs/trezorKeyIterator'
 
 import sessionStorage from '../webapi/sessionStorage'
@@ -65,6 +66,14 @@ export const handleActions = async (
       })
       break
     }
+    case 'GET_ALL_CONTROLLER_NAMES': {
+      if (!pm || !port) return
+      pm.sendToPort(port, '> ui', {
+        method: 'allControllerNames',
+        params: { names: eventEmitterRegistry.values().map((c) => c.name) }
+      })
+      break
+    }
     case 'INIT_CONTROLLER_STATE': {
       if (!pm) return
 
@@ -81,6 +90,9 @@ export const handleActions = async (
     }
     case 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_LATTICE': {
       return await mainCtrl.handleAccountPickerInitLattice(LatticeKeyIterator)
+    }
+    case 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_QR_WALLET': {
+      return await mainCtrl.handleAccountPickerInitQr(QrKeyIterator, params.payload)
     }
     case 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_FROM_SAVED_SEED_PHRASE': {
       const keystoreSavedSeed = await mainCtrl.keystore.getSavedSeed(params.id)

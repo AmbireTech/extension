@@ -20,6 +20,11 @@ import LedgerConnectScreen from '@mobile/modules/hardware-wallet/screens/LedgerC
 import KeyStoreSetupScreen from '@mobile/modules/keystore/screens/KeyStoreSetupScreen'
 import NetworksScreen from '@mobile/modules/networks/screens'
 import ReceiveScreen from '@mobile/modules/receive/screens/ReceiveScreen'
+import NavMenu from '@mobile/modules/router/components/NavMenu'
+import AboutSettingsScreen from '@mobile/modules/settings/screens/AboutSettingsScreen'
+import AccountsSettingsScreen from '@mobile/modules/settings/screens/AccountsSettingsScreen'
+import GeneralSettingsScreen from '@mobile/modules/settings/screens/GeneralSettingsScreen'
+import TermsSettingsScreen from '@mobile/modules/settings/screens/TermsSettingsScreen'
 import SignAccountOpScreen from '@mobile/modules/sign-account-op/screens/SignAccountOpScreen'
 import SwapAndBridgeScreen from '@mobile/modules/swap-and-bridge/screens/SwapAndBridgeScreen'
 import TokenDetailsScreen from '@mobile/modules/token-details/screens/TokenDetailsScreen'
@@ -58,6 +63,11 @@ const MainRoutes = () => {
           <Route path={ROUTES.benzin} element={<BenzinScreen />} />
           <Route path={ROUTES.networks} element={<NetworksScreen />} />
           <Route path={ROUTES.swapAndBridge} element={<SwapAndBridgeScreen />} />
+          <Route path={ROUTES.menu} element={<NavMenu />} />
+          <Route path={ROUTES.generalSettings} element={<GeneralSettingsScreen />} />
+          <Route path={ROUTES.accountsSettings} element={<AccountsSettingsScreen />} />
+          <Route path={ROUTES.settingsAbout} element={<AboutSettingsScreen />} />
+          <Route path={ROUTES.settingsTerms} element={<TermsSettingsScreen />} />
         </Route>
       </Route>
       {/* Fallback route to suppress "No routes matched location" warnings when multiple Routes blocks are rendered */}

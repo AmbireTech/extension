@@ -17,6 +17,7 @@ const { validateEnvVariables } = require('./scripts/validateEnv')
 const appJSON = require('./app.json')
 const AssetReplacePlugin = require('./plugins/AssetReplacePlugin')
 const createLavamoatUnsafeLayerPlugin = require('./lavamoat/plugins/lavamoat-unsafe-layer-plugin')
+const createLavamoatUnsafePackagesPlugin = require('./lavamoat/plugins/lavamoat-unsafe-packages-plugin')
 const LavamoatIgnoredModulesVerifyPlugin = require('./lavamoat/plugins/lavamoat-ignored-modules-verify-plugin')
 
 // Entries that run outside LavaMoat protection.
@@ -386,14 +387,14 @@ module.exports = async function (env, argv) {
               // they are always loaded by the webpack runtime inside background.js or
               // main.js (including background-*.js / main-*.js variants) and execute
               // in the same realm, which is already locked down.
-              inlineLockdown: /^(background|main)(-.*)?\.js$/,
+              inlineLockdown: /^(background)(-.*)?\.js$/,
               lockdown: {
                 errorTaming: 'unsafe-debug',
                 stackFiltering: 'verbose',
                 consoleTaming: 'unsafe',
                 errorTrapping: 'none',
                 unhandledRejectionTrapping: 'none',
-                overrideTaming: 'severe',
+                overrideTaming: 'moderate',
                 localeTaming: 'unsafe'
               },
               // Keep resource IDs readable for easier debugging and policy maintenance.
@@ -442,7 +443,34 @@ module.exports = async function (env, argv) {
             // are either fully tree-shaken or otherwise empty placeholders.
             // The plugin appends a short ✅/❌ status and explanation to the
             // original LavaMoat warning message.
-            new LavamoatIgnoredModulesVerifyPlugin()
+            new LavamoatIgnoredModulesVerifyPlugin(),
+            // LavaMoat's inlineLockdown and HtmlWebpackPluginInterop are mutually exclusive.
+            // When inlineLockdown is enabled, no standalone lockdown file is emitted,
+            // but we need it in our HTML files (tab.html, request-window.html, index.html)
+            // as <script src="./lockdown">, which requires the file to exist.
+            // This plugin bridges the gap by always emitting the SES source as
+            // a standalone lockdown asset alongside the inlined background.js.
+            {
+              apply(compiler) {
+                compiler.hooks.thisCompilation.tap('EmitLockdownFilePlugin', (compilation) => {
+                  compilation.hooks.processAssets.tap(
+                    {
+                      name: 'EmitLockdownFilePlugin',
+                      stage: webpack.Compilation.PROCESS_ASSETS_STAGE_ADDITIONAL
+                    },
+                    () => {
+                      // eslint-disable-next-line global-require
+                      const { readFileSync } = require('fs')
+                      const lockdownSource = readFileSync(require.resolve('ses'), 'utf-8')
+                      compilation.emitAsset(
+                        'lockdown',
+                        new webpack.sources.RawSource(lockdownSource)
+                      )
+                    }
+                  )
+                })
+              }
+            }
           ]
         : []),
       new NodePolyfillPlugin(),
@@ -504,6 +532,8 @@ module.exports = async function (env, argv) {
     // This must stay in sync with runtimeConfigurationPerChunk_experimental above.
     if (enableLavaMoat) {
       config.plugins.push(createLavamoatUnsafeLayerPlugin(LAVAMOAT_UNSAFE_ENTRIES))
+      // Packages in lavamoat/webpack/unsafe-packages.json: no Compartment wrap (see plugin header).
+      config.plugins.push(createLavamoatUnsafePackagesPlugin())
     }
 
     if (isWebkit) {
@@ -543,38 +573,35 @@ module.exports = async function (env, argv) {
       // Disables auto-generated runtime chunks, because they cause ID drift
       config.optimization.runtimeChunk = false
 
-      if (enableLavaMoat) {
-        // No extra chunks for webkit, because it conflicts with LavaMoat plugin,
-        // and currently there's no other benefit to enable it.
-        config.optimization.splitChunks = false
-      } else {
-        config.optimization.splitChunks = {
-          ...config.optimization.splitChunks,
-          // Firefox enforces a 5MB per-file size limit for extensions.
-          // In the v5 extension series we intentionally avoided setting maxSize,
-          // because 1) it could lead to non-reproducible chunk filenames and
-          // 2) it wasn't needed at the time (no bundle was > 5MB).
-          // With v6 extension series + new features/core lib updates exceeded 5MB
-          // for two of the resulting js bundles, so we re-enabled maxSize.
-          // On theory, it should be deterministic with chunkIds/moduleIds set to
-          // 'deterministic' and chunkFilename = '[id].js'.
-          // Note: maxSize uses estimated sizes; keep some headroom so emitted
-          // bundles stay under the linter's real per-file limit.
-          maxSize: isGecko ? 4.5 * 1024 * 1024 : undefined,
-          minSize: 0, // prevents merging small modules together automatically
-          chunks(chunk) {
-            // do not split into chunks the files that should be injected
-            return (
-              chunk.name !== 'ambire-inpage' &&
-              chunk.name !== 'ethereum-inpage' &&
-              chunk.name !== 'content-script'
-            )
-          },
-          // Disable random cache groups (resulting non-deterministic chunk names)
-          cacheGroups: {
-            default: false,
-            vendors: false
-          }
+      config.optimization.splitChunks = {
+        ...config.optimization.splitChunks,
+        // Firefox enforces a 5MB per-file size limit for extensions.
+        // In the v5 extension series we intentionally avoided setting maxSize,
+        // because 1) it could lead to non-reproducible chunk filenames and
+        // 2) it wasn't needed at the time (no bundle was > 5MB).
+        // With v6 extension series + new features/core lib updates exceeded 5MB
+        // for two of the resulting js bundles, so we re-enabled maxSize.
+        // On theory, it should be deterministic with chunkIds/moduleIds set to
+        // 'deterministic' and chunkFilename = '[id].js'.
+        // Note: maxSize uses estimated sizes; keep some headroom so emitted
+        // bundles stay under the linter's real per-file limit.
+        maxSize: isGecko ? 4.5 * 1024 * 1024 : undefined,
+        minSize: 0, // prevents merging small modules together automatically
+        chunks(chunk) {
+          // do not split into chunks the files that should be injected,
+          // and background.ts as well, because on WebKit LavaMoat is injected only once in background.ts,
+          // and cannot be split into chunks (since there's no corresponding html file as for the other entries main, request-window, tab).
+          return (
+            chunk.name !== 'ambire-inpage' &&
+            chunk.name !== 'ethereum-inpage' &&
+            chunk.name !== 'content-script' &&
+            (!enableLavaMoat || chunk.name !== 'background')
+          )
+        },
+        // Disable random cache groups (resulting non-deterministic chunk names)
+        cacheGroups: {
+          default: false,
+          vendors: false
         }
       }
 

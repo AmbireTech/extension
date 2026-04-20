@@ -39,7 +39,8 @@ const Account = ({
     withOptionsButton: false
   },
   containerStyle,
-  withReceive = false
+  withReceive = false,
+  withCopy = true
 }: {
   account: AccountInterface
   onSelect?: (addr: string) => void
@@ -58,6 +59,7 @@ const Account = ({
   }
   containerStyle?: ViewStyle
   withReceive?: boolean
+  withCopy?: boolean
 }) => {
   const { addr, preferences } = account
   const { t } = useTranslation()
@@ -71,7 +73,7 @@ const Account = ({
     state: { account: selectedAccount, balanceByAccounts }
   } = useController('SelectedAccountController')
   const { dispatch: accountsDispatch } = useController('AccountsController')
-  const { ens, isLoading } = useReverseLookup({ address: addr })
+  const { name, type, isLoading } = useReverseLookup({ address: addr })
   const { keys } = useController('KeystoreController').state
   const [bindAnim, animStyle] = useCustomHover({
     property: 'backgroundColor',
@@ -152,7 +154,7 @@ const Account = ({
     ]
     const submenuOptions7702 = [{ label: 'Smart settings', value: 'toSmarter' }]
 
-    return add7702Option ? [...submenuOptions7702, ...submenuOptions] : submenuOptions
+    return add7702Option && isWeb ? [...submenuOptions7702, ...submenuOptions] : submenuOptions
   }, [account, getAccKeys, options.withOptionsButton, theme.errorDecorative])
 
   const handleCopy = async () => {
@@ -237,11 +239,12 @@ const Account = ({
             <AccountAddress
               containerStyle={spacings.pb0}
               isLoading={isLoading}
-              ens={ens}
+              name={name}
+              type={type}
               address={addr}
               plainAddressMaxLength={maxAccountAddrLength}
-              withCopy={isWeb}
-              withReceive={isWeb ? withReceive : false}
+              withCopy={isWeb && withCopy}
+              withReceive={isWeb && withReceive}
             />
           </View>
         </View>
@@ -255,9 +258,11 @@ const Account = ({
         {renderRightChildren && renderRightChildren()}
         {isMobile && (
           <>
-            <AnimatedPressable onPress={handleCopy} style={opacityAnimStyle} {...bindOpacityAnim}>
-              <CopyIcon width={32} height={32} strokeWidth="1" />
-            </AnimatedPressable>
+            {withCopy && (
+              <AnimatedPressable onPress={handleCopy} style={opacityAnimStyle} {...bindOpacityAnim}>
+                <CopyIcon width={32} height={32} strokeWidth="1" />
+              </AnimatedPressable>
+            )}
             {withReceive && <ReceiveButton address={addr} fontSize={24} />}
           </>
         )}

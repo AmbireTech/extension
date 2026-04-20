@@ -264,11 +264,7 @@ const RouteInfo: FC<Props> = ({
                       </View>
                     </Tooltip>
                   </View>
-
-                  <SelectRoute
-                    shouldEnableRoutesSelection={shouldEnableRoutesSelection}
-                    openRoutesModal={openRoutesModal}
-                  />
+                  <RetryButton onPress={updateQuote} />
                 </View>
               )}
           </>

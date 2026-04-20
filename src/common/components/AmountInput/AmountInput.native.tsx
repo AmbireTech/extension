@@ -11,7 +11,14 @@ import flexbox from '@common/styles/utils/flexbox'
 
 import { AmountInputProps } from './AmountInput'
 
-const AmountInput = ({ type, value, onChangeText, disabled, inputTestId }: AmountInputProps) => {
+const AmountInput = ({
+  type,
+  value,
+  onChangeText,
+  disabled,
+  inputTestId,
+  fontSize = 24
+}: AmountInputProps) => {
   const { theme } = useTheme()
   const [isFocused, setIsFocused] = useState(false)
   const inputRef = useRef<TextInput>(null)
@@ -35,7 +42,7 @@ const AmountInput = ({ type, value, onChangeText, disabled, inputTestId }: Amoun
           style={{ transform: [{ translateY: -1 }] }}
           onPress={() => inputRef.current?.focus()}
         >
-          <Text fontSize={24} weight="medium" appearance="secondaryText">
+          <Text fontSize={fontSize} weight="medium" appearance="secondaryText">
             $
           </Text>
         </Pressable>
@@ -51,7 +58,7 @@ const AmountInput = ({ type, value, onChangeText, disabled, inputTestId }: Amoun
         inputWrapperStyle={{ backgroundColor: 'transparent' }}
         nativeInputStyle={{
           fontFamily: FONT_FAMILIES.MEDIUM,
-          fontSize: 24,
+          fontSize: fontSize,
           textAlign: isFocused ? 'right' : 'left',
           color: theme.primaryText
         }}

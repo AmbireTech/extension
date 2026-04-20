@@ -13,7 +13,7 @@ import text from '@common/styles/utils/text'
 
 import getStyles from './styles'
 
-interface Props extends ViewProps {
+export interface PanelProps extends ViewProps {
   type?: 'default' | 'onboarding'
   title?: string | ReactNode
   spacingsSize?: 'small' | 'large'
@@ -78,7 +78,7 @@ const PanelTitle = ({
   )
 }
 
-const Panel: React.FC<Props> = ({
+const Panel: React.FC<PanelProps> = ({
   type = 'default',
   title,
   children,

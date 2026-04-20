@@ -25,10 +25,10 @@ import useNavigation from '@common/hooks/useNavigation'
 import useRoute from '@common/hooks/useRoute'
 import useTheme from '@common/hooks/useTheme'
 import { ROUTES, WEB_ROUTES } from '@common/modules/router/constants/common'
+import SettingsLink from '@common/modules/settings/components/SettingsLink'
 import spacings, { SPACING_TY } from '@common/styles/spacings'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
-import SettingsLink from '@web/modules/settings/components/SettingsLink'
 
 import getStyles from './styles'
 
