@@ -4,6 +4,7 @@ import { Image, TouchableOpacity, View } from 'react-native'
 
 import { isValidPassword } from '@ambire-common/services/validations'
 import AmbireLogoWithBackgroundAndLogotype from '@common/assets/svg/AmbireLogoWithBackgroundAndLogotype'
+import FaceIDIcon from '@common/assets/svg/FaceIDIcon'
 import FingerprintIcon from '@common/assets/svg/FingerprintIcon'
 import InvisibilityIcon from '@common/assets/svg/InvisibilityIcon'
 import LockIcon from '@common/assets/svg/LockIcon'
@@ -19,6 +20,7 @@ import LayoutWrapper from '@common/components/LayoutWrapper'
 import Text from '@common/components/Text'
 import { isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
+import { DEVICE_SUPPORTED_AUTH_TYPES } from '@common/contexts/biometricsContext/constants'
 import useBiometrics from '@common/hooks/useBiometrics'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
@@ -52,10 +54,15 @@ const KeyStoreUnlockScreen = () => {
   } = useController('KeystoreController')
   const { requestWindow } = useController('RequestsController').state
   const { theme } = useTheme()
-  const { hasBiometricsHardware, getBiometricsSecret } = useBiometrics()
+  const { hasBiometricsHardware, getBiometricsSecret, deviceSupportedAuthTypes } = useBiometrics()
   const [unlockMethod, setUnlockMethod] = useState<'biometrics' | 'password' | null>(null)
 
   const canUseBiometrics = !!hasBiometricsSecret && !!hasBiometricsHardware
+
+  const hasFaceId = deviceSupportedAuthTypes.includes(
+    DEVICE_SUPPORTED_AUTH_TYPES.FACIAL_RECOGNITION
+  )
+  const BiometricsIcon = hasFaceId ? FaceIDIcon : FingerprintIcon
 
   const handleBiometricsPrompt = useCallback(async () => {
     const biometricsSecret = await getBiometricsSecret()
@@ -176,13 +183,13 @@ const KeyStoreUnlockScreen = () => {
               type="primary"
               style={{ width: '100%', marginBottom: 0 }}
               hasBottomSpacing={false}
-              text={t('Unlock with biometrics')}
+              text={hasFaceId ? t('Unlock with Face ID') : t('Unlock with fingerprint')}
               onPress={() => {
                 handleBiometricsPrompt().catch(() => {})
               }}
               childrenPosition="left"
             >
-              <FingerprintIcon
+              <BiometricsIcon
                 width={20}
                 height={20}
                 color={theme.primaryText}
@@ -193,7 +200,7 @@ const KeyStoreUnlockScreen = () => {
               type="secondary"
               style={{ width: '100%', marginTop: 12, marginBottom: 0 }}
               hasBottomSpacing={false}
-              text={t('Switch to password')}
+              text={t('Unlock with password')}
               onPress={() => setUnlockMethod('password')}
             />
           </>
@@ -245,7 +252,7 @@ const KeyStoreUnlockScreen = () => {
                 type="secondary"
                 style={{ width: '100%', marginTop: 12, marginBottom: 0 }}
                 hasBottomSpacing={false}
-                text={t('Switch to biometrics')}
+                text={t('Unlock with fingerprint')}
                 onPress={() => setUnlockMethod('biometrics')}
                 childrenPosition="left"
               >
