@@ -6,6 +6,7 @@ import ControlOption from '@common/components/ControlOption'
 import FatToggle from '@common/components/FatToggle'
 import useBiometrics from '@common/hooks/useBiometrics'
 import useController from '@common/hooks/useController'
+import useExtraEntropy from '@common/hooks/useExtraEntropy'
 import useToast from '@common/hooks/useToast'
 import spacings from '@common/styles/spacings'
 
@@ -14,6 +15,7 @@ const BiometricsOption = () => {
   const { addToast } = useToast()
   const { isLoading, hasBiometricsHardware, saveBiometricsSecret, removeBiometricsSecret } =
     useBiometrics()
+  const { getExtraEntropy } = useExtraEntropy()
 
   const {
     state: { hasBiometricsSecret, hasPasswordSecret, statuses },
@@ -91,7 +93,7 @@ const BiometricsOption = () => {
       type: 'method',
       params: {
         method: 'addSecret',
-        args: ['biometrics', secret, '', true]
+        args: ['biometrics', secret, getExtraEntropy(), true]
       }
     })
   }
