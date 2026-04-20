@@ -117,8 +117,8 @@ if (isDev) {
     plugins: [
       ...sharedPlugins,
       // Generate an index.html that loads the bundle via <script> tags.
-      // Includes security patches (fetch/XHR file:// blocking) and the
-      // WebSocket URL fix since the WebView loads this page directly.
+      // Network requests are proxied through the RN bridge (bridgedFetch),
+      // so no fetch/XHR patches are needed. Only global error handler is kept.
       new HtmlWebpackPlugin({
         templateContent: `
 <!DOCTYPE html>
@@ -126,28 +126,6 @@ if (isDev) {
   <head>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script>
-      // 1. Monkey-patch fetch to block file:// requests
-      var _originalFetch = window.fetch;
-      window.fetch = function() {
-        var url = arguments[0];
-        if (typeof url === 'string' && url.indexOf('file://') === 0) {
-          return Promise.reject(new Error('fetch to file:// is blocked for security.'));
-        }
-        if (url && typeof url === 'object' && url.url && url.url.indexOf('file://') === 0) {
-          return Promise.reject(new Error('fetch to file:// is blocked for security.'));
-        }
-        return _originalFetch.apply(this, arguments);
-      };
-
-      // 2. Monkey-patch XHR to block file:// requests
-      var _originalOpen = XMLHttpRequest.prototype.open;
-      XMLHttpRequest.prototype.open = function(method, url) {
-        if (typeof url === 'string' && url.indexOf('file://') === 0) {
-          throw new Error('XHR to file:// is blocked for security.');
-        }
-        return _originalOpen.apply(this, arguments);
-      };
-
       window.onerror = function(msg, url, lineNo, columnNo, error) {
         var errMessage = error ? error.stack || error.message : msg;
         window.ReactNativeWebView.postMessage(JSON.stringify({

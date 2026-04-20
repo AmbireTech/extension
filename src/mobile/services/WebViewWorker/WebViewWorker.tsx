@@ -25,26 +25,8 @@ const getDevServerUrl = () => {
   return `http://localhost:${WEBVIEW_DEV_SERVER_PORT}`
 }
 
-// Shared security patches: monkey-patch fetch/XHR to block file:// access
-const securityPatches = `
-  var _originalFetch = window.fetch;
-  window.fetch = function() {
-    var url = arguments[0];
-    if (typeof url === 'string' && url.indexOf('file://') === 0) {
-      return Promise.reject(new Error('fetch to file:// is blocked for security.'));
-    }
-    if (url && typeof url === 'object' && url.url && url.url.indexOf('file://') === 0) {
-      return Promise.reject(new Error('fetch to file:// is blocked for security.'));
-    }
-    return _originalFetch.apply(this, arguments);
-  };
-  var _originalOpen = XMLHttpRequest.prototype.open;
-  XMLHttpRequest.prototype.open = function(method, url) {
-    if (typeof url === 'string' && url.indexOf('file://') === 0) {
-      throw new Error('XHR to file:// is blocked for security.');
-    }
-    return _originalOpen.apply(this, arguments);
-  };
+// Global error handler injected into the WebView HTML
+const globalErrorHandler = `
   window.onerror = function(msg, url, lineNo, columnNo, error) {
     var errMessage = error ? error.stack || error.message : msg;
     window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'ctrl.error', payload: { ctrlName: 'Global', errors: [{ message: errMessage, url: url, lineNo: lineNo }] } }));
@@ -275,6 +257,38 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, {}>((_, ref) => {
           }
           break
 
+        // --- NETWORK FETCH PROXY ---
+        case 'network.fetch':
+          {
+            const { url, method, headers, body } = data.payload
+            try {
+              const fetchOpts: RequestInit = { method, headers }
+              if (body !== null && body !== undefined) {
+                fetchOpts.body = body
+              }
+              const response = await fetch(url, fetchOpts)
+
+              // Serialize response headers to a plain object
+              const responseHeaders: Record<string, string> = {}
+              response.headers.forEach((value: string, key: string) => {
+                responseHeaders[key] = value
+              })
+
+              const responseBody = await response.text()
+
+              sendResponse(data.id, {
+                status: response.status,
+                statusText: response.statusText,
+                headers: responseHeaders,
+                body: responseBody,
+                url: response.url || url
+              })
+            } catch (fetchErr: any) {
+              sendResponse(data.id, null, fetchErr.message || 'Network request failed')
+            }
+          }
+          break
+
         default:
           console.warn('Unknown message from WebViewWorker:', data.type)
       }
@@ -306,8 +320,10 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, {}>((_, ref) => {
 
   const getSource = () => {
     if (!__DEV__) {
+      // Network requests are proxied through the RN bridge (network.fetch),
+      // so the WebView itself needs no connect-src permissions.
       const prodCsp =
-        "default-src 'none'; script-src 'unsafe-inline' 'unsafe-eval'; connect-src https:; frame-src 'none'; object-src 'none';"
+        "default-src 'none'; script-src 'unsafe-inline' 'unsafe-eval'; connect-src 'none'; frame-src 'none'; object-src 'none';"
       return {
         html: `
           <!DOCTYPE html>
@@ -315,7 +331,7 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, {}>((_, ref) => {
             <head>
               <meta name="viewport" content="width=device-width, initial-scale=1.0">
               <meta http-equiv="Content-Security-Policy" content="${prodCsp}">
-              <script>${securityPatches}</script>
+              <script>${globalErrorHandler}</script>
             </head>
             <body>
               <script>
@@ -332,8 +348,10 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, {}>((_, ref) => {
       }
     }
 
-    // Dev mode: inline HTML with file:/// base URL + reload override
-    const devCsp = `default-src 'none'; script-src 'unsafe-inline' 'unsafe-eval' ${devUrl}; connect-src https: ${devUrl} ws: wss:; frame-src 'none'; object-src 'none';`
+    // Dev mode: inline HTML with file:/// base URL + reload override.
+    // Network requests are proxied through the RN bridge, so connect-src
+    // only needs the dev server (for bundle loading) and WebSocket.
+    const devCsp = `default-src 'none'; script-src 'unsafe-inline' 'unsafe-eval' ${devUrl}; connect-src ${devUrl} ws: wss:; frame-src 'none'; object-src 'none';`
     return {
       html: `
         <!DOCTYPE html>
@@ -342,7 +360,7 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, {}>((_, ref) => {
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
             <meta http-equiv="Content-Security-Policy" content="${devCsp}">
             <script>
-              ${securityPatches}
+              ${globalErrorHandler}
 
               // Fix Webpack Dev Server WebSocket URL when baseUrl is file:///
               // and detect recompilation to trigger a RN-side WebView remount
@@ -430,8 +448,8 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, {}>((_, ref) => {
         request.url.startsWith('file:///') || (__DEV__ && request.url.startsWith(devUrl))
       }
       mixedContentMode="always"
-      allowFileAccessFromFileURLs={true}
-      allowUniversalAccessFromFileURLs={true}
+      allowFileAccessFromFileURLs={false}
+      allowUniversalAccessFromFileURLs={false}
       domStorageEnabled={true}
       webviewDebuggingEnabled={__DEV__}
       style={{ position: 'absolute', width: 0, height: 0, opacity: 0 }}

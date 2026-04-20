@@ -8,6 +8,7 @@ import { controllersNestedInMainMapping } from '@common/constants/controllersMap
 import { WalletStateController } from '@common/controllers/wallet-state'
 import { handleActions } from '@mobile/handlers/handleActions'
 
+import { createBridgedFetch } from './bridgedFetch'
 import { sendToReactEvent } from './webviewLogger'
 
 // Bridge setup
@@ -85,6 +86,15 @@ const sendToRNAsync = (type: string, payload: any): Promise<any> => {
 // @ts-ignore
 window.sendToRNAsync = sendToRNAsync
 
+// Create the bridged fetch and override window.fetch globally.
+// This ensures ALL network requests in the WebView (including ethers.js
+// JSON-RPC providers and any other library using fetch directly) are
+// routed through the RN bridge — not just the explicit fetch param
+// passed to MainController.
+const bridgedFetch = createBridgedFetch(sendToRNAsync)
+// @ts-ignore — override the global fetch with our bridge
+window.fetch = bridgedFetch
+
 // Proxied Storage API
 const storageAPI = {
   get: (key: string, defaultValue?: any) => sendToRNAsync('storage.get', { key, defaultValue }),
@@ -122,7 +132,7 @@ const initControllers = (config: any) => {
       storageAPI,
       appVersion: config.APP_VERSION,
       platform: config.platform,
-      fetch: fetch.bind(window),
+      fetch: bridgedFetch,
       relayerUrl: config.RELAYER_URL,
       velcroUrl: config.VELCRO_URL,
       liFiApiKey: config.LIFI_EXPLORER_URL,
@@ -210,7 +220,6 @@ window.addEventListener('message', (event) => {
   }
 })
 
-console.log('[WebView] injectedLogic loaded and listening')
 if (window.ReactNativeWebView) {
   window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'system.loaded' }))
 }
