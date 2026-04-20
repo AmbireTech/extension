@@ -1,4 +1,4 @@
-import React, { createContext, useEffect, useMemo, useState } from 'react'
+import React, { createContext, useCallback, useEffect, useMemo, useState } from 'react'
 import { View } from 'react-native'
 
 import { useTranslation } from '@common/config/localization/localization'
@@ -50,6 +50,42 @@ const BiometricsProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   }, [])
 
+  const authenticate = useCallback(async () => {
+    try {
+      return await webauthnBiometrics.authenticate()
+    } catch {
+      addToast(t('Authentication attempt failed.'), { type: 'error' })
+      return false
+    }
+  }, [addToast, t])
+
+  const saveBiometricsSecret = useCallback(async () => {
+    try {
+      const secret = await webauthnBiometrics.createSecret()
+      setIsEnrolled(!!secret)
+      return secret
+    } catch (e) {
+      console.log('Failed to save biometrics secret', e)
+      return null
+    }
+  }, [])
+
+  const getBiometricsSecret = useCallback(async () => {
+    try {
+      return await webauthnBiometrics.getSecret()
+    } catch (e) {
+      console.log('Failed to get biometrics secret', e)
+      return null
+    }
+  }, [])
+
+  const removeBiometricsSecret = useCallback(async () => {
+    await webauthnBiometrics.removeCredential().catch((e) => {
+      console.log('Failed to remove the webauthnBiometrics credential', e)
+    })
+    setIsEnrolled(false)
+  }, [])
+
   return (
     <BiometricsContext.Provider
       value={useMemo(
@@ -64,40 +100,21 @@ const BiometricsProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             ? [DEVICE_SUPPORTED_AUTH_TYPES.FINGERPRINT]
             : [],
           deviceSupportedAuthTypesLabel: hasBiometricsHardware ? t('biometrics') : '',
-          authenticate: async () => {
-            try {
-              return await webauthnBiometrics.authenticate()
-            } catch {
-              addToast(t('Authentication attempt failed.'), { type: 'error' })
-              return false
-            }
-          },
-          saveBiometricsSecret: async () => {
-            try {
-              const secret = await webauthnBiometrics.createSecret()
-              setIsEnrolled(!!secret)
-              return secret
-            } catch (e) {
-              console.log('Failed to save biometrics secret', e)
-              return null
-            }
-          },
-          getBiometricsSecret: async () => {
-            try {
-              return await webauthnBiometrics.getSecret()
-            } catch (e) {
-              console.log('Failed to get biometrics secret', e)
-              return null
-            }
-          },
-          removeBiometricsSecret: async () => {
-            await webauthnBiometrics.removeCredential().catch((e) => {
-              console.log('Failed to remove the webauthnBiometrics credential', e)
-            })
-            setIsEnrolled(false)
-          }
+          authenticate,
+          saveBiometricsSecret,
+          getBiometricsSecret,
+          removeBiometricsSecret
         }),
-        [addToast, hasBiometricsHardware, isEnrolled, isLoading, t]
+        [
+          hasBiometricsHardware,
+          isEnrolled,
+          isLoading,
+          t,
+          authenticate,
+          saveBiometricsSecret,
+          getBiometricsSecret,
+          removeBiometricsSecret
+        ]
       )}
     >
       <View style={{ flex: 1 }}>{children}</View>
