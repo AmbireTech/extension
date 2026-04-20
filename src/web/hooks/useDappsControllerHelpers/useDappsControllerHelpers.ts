@@ -101,10 +101,64 @@ export default function useDappsControllerHelpers(
     })
   }, [dispatch, dappSessions])
 
+  const hasUnverifiedDapps = useCallback(
+    async (dapps: string[]) => {
+      if (!dapps.length) return false
+
+      const requestId = nanoid()
+
+      dispatch({
+        type: 'method',
+        params: {
+          ctrlName: 'DappsController',
+          method: 'hasUnverifiedDappsAndSendResToUi',
+          args: [{ requestId, dapps }]
+        }
+      })
+
+      return new Promise<boolean>((resolve, reject) => {
+        let settled = false
+
+        const cleanup = () => {
+          eventBus.removeEventListener('receiveOneTimeData', onResponse)
+          clearTimeout(timeoutId)
+        }
+
+        const onResponse = (data: any) => {
+          if (data?.type !== 'HasUnverifiedDappsRes' || data?.requestId !== requestId) return
+          if (settled) return
+
+          settled = true
+          cleanup()
+
+          if (!data.ok)
+            return reject(
+              new Error(
+                data.error ?? 'App validation failed. DappsController returned a non-OK response.'
+              )
+            )
+
+          return resolve(!!data.res)
+        }
+
+        const timeoutId = setTimeout(() => {
+          if (settled) return
+          settled = true
+
+          cleanup()
+          reject(new Error('App validation failed: timed out after 10 seconds.'))
+        }, 10_000)
+
+        eventBus.addEventListener('receiveOneTimeData', onResponse)
+      })
+    },
+    [dispatch]
+  )
+
   useEffect(() => {
     // Update the store with the method so it can be used by useController('DappsController')
-    updateHelpers({ getCurrentDapp })
-  }, [getCurrentDapp, updateHelpers])
+    updateHelpers({ getCurrentDapp, hasUnverifiedDapps })
+  }, [getCurrentDapp, hasUnverifiedDapps, updateHelpers])
 
   useEffect(() => {
     let isCancelled = false

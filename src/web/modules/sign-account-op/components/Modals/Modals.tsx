@@ -1,4 +1,4 @@
-import { FC } from 'react'
+import { FC, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import BottomSheet from '@common/components/BottomSheet'
@@ -10,8 +10,9 @@ import spacings from '@common/styles/spacings'
 import text from '@common/styles/utils/text'
 import { getUiType } from '@common/utils/uiType'
 import LedgerConnectModal from '@web/modules/hardware-wallet/components/LedgerConnectModal'
+import QrSigningFlowScreen from '@web/modules/hardware-wallet/screens/QrSigningFlowScreen'
 
-const { isTab } = getUiType()
+const { isTab, isRequestWindow } = getUiType()
 
 const Modals: FC<ModalsProps> = ({
   renderedButNotNecessarilyVisibleModal,
@@ -22,6 +23,14 @@ const Modals: FC<ModalsProps> = ({
   slowPaymasterRequest,
   shouldDisplayLedgerConnectModal,
   handleDismissLedgerConnectModal,
+  shouldDisplayQrSigningModal,
+  handleQrSingingFlowOnContinuePressed,
+  handleQrSigningFlowSubmitSignatureResponse,
+  handleQrSigningFlowOnClosePressed,
+  handleQrSigningFlowOnRejectPressed,
+  handleQrSigningFlowOnBackPressed,
+  currentRequest,
+  signingStep,
   warningToPromptBeforeSign,
   acknowledgeWarning,
   dismissWarning,
@@ -39,6 +48,22 @@ const Modals: FC<ModalsProps> = ({
   } = useController('TransferController')
   const { state: currentSignAccountOp, dispatch: signAccountOpDispatch } =
     useController('SignAccountOpController')
+  const transactionProgress = useMemo(() => {
+    const totalTransactions = signAccountOpState?.accountOp?.calls?.length || 0
+    const signedTransactionsCount = signAccountOpState?.signedTransactionsCount
+
+    if (
+      totalTransactions <= 1 ||
+      typeof signedTransactionsCount !== 'number' ||
+      signedTransactionsCount < 0
+    )
+      return null
+
+    return {
+      current: Math.min(signedTransactionsCount, totalTransactions),
+      total: totalTransactions
+    }
+  }, [signAccountOpState?.accountOp?.calls?.length, signAccountOpState?.signedTransactionsCount])
 
   if (renderedButNotNecessarilyVisibleModal === 'warnings') {
     return (
@@ -46,7 +71,7 @@ const Modals: FC<ModalsProps> = ({
         id="warning-modal"
         closeBottomSheet={!slowPaymasterRequest ? dismissWarning : undefined}
         sheetRef={warningModalRef}
-        type={isTab ? 'modal' : 'bottom-sheet'}
+        type={isTab || isRequestWindow ? 'modal' : 'bottom-sheet'}
         withBackdropBlur={false}
         shouldBeClosableOnDrag={false}
         autoOpen={autoOpen === 'warnings'}
@@ -91,6 +116,22 @@ const Modals: FC<ModalsProps> = ({
         isVisible={shouldDisplayLedgerConnectModal}
         handleClose={handleDismissLedgerConnectModal}
         displayOptionToAuthorize={false}
+      />
+    )
+  }
+
+  if (renderedButNotNecessarilyVisibleModal === 'qr-sign' && currentRequest && signingStep) {
+    return (
+      <QrSigningFlowScreen
+        handleClose={handleQrSigningFlowOnClosePressed}
+        isVisible={shouldDisplayQrSigningModal}
+        onContinue={handleQrSingingFlowOnContinuePressed}
+        currentRequest={currentRequest}
+        signingStep={signingStep}
+        transactionProgress={transactionProgress}
+        submitSignatureResponse={handleQrSigningFlowSubmitSignatureResponse}
+        onReject={handleQrSigningFlowOnRejectPressed}
+        handleQrSigningFlowOnBackPressed={handleQrSigningFlowOnBackPressed}
       />
     )
   }

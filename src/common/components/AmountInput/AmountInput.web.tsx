@@ -10,7 +10,17 @@ import flexbox from '@common/styles/utils/flexbox'
 
 import { AmountInputProps } from './AmountInput'
 
-const AmountInput = ({ type, value, onChangeText, disabled, inputTestId }: AmountInputProps) => {
+const AmountInput = ({
+  type,
+  value,
+  onChangeText,
+  disabled,
+  inputTestId,
+  fontSize = 24,
+  inputWrapperStyle,
+  backgroundColor,
+  ...rest
+}: AmountInputProps) => {
   const { theme } = useTheme()
 
   return (
@@ -19,10 +29,14 @@ const AmountInput = ({ type, value, onChangeText, disabled, inputTestId }: Amoun
       onChangeText={onChangeText}
       placeholder="0"
       borderless
-      inputWrapperStyle={{ backgroundColor: 'transparent' }}
+      inputWrapperStyle={
+        inputWrapperStyle
+          ? [{ backgroundColor: backgroundColor || 'transparent' }, inputWrapperStyle]
+          : { backgroundColor: backgroundColor || 'transparent' }
+      }
       nativeInputStyle={{
         fontFamily: FONT_FAMILIES.MEDIUM,
-        fontSize: 24,
+        fontSize: fontSize,
         textAlign: 'right',
         color: theme.primaryText
       }}
@@ -45,15 +59,26 @@ const AmountInput = ({ type, value, onChangeText, disabled, inputTestId }: Amoun
               alignItems: 'center'
             }}
           >
-            <Text fontSize={24} weight="medium" style={{ zIndex: 3 }} appearance="secondaryText">
+            <Text
+              fontSize={fontSize}
+              weight="medium"
+              style={{ zIndex: 3 }}
+              appearance="secondaryText"
+            >
               $
-              <Text fontSize={24} weight="medium" style={{ opacity: 0 }} appearance="secondaryText">
+              <Text
+                fontSize={fontSize}
+                weight="medium"
+                style={{ opacity: 0 }}
+                appearance="secondaryText"
+              >
                 {value || '0'}
               </Text>
             </Text>
           </View>
         )
       }
+      {...rest}
     />
   )
 }

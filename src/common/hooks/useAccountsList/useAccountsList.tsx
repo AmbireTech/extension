@@ -6,9 +6,12 @@ import { FlatList } from 'react-native'
 import { Account as AccountType } from '@ambire-common/interfaces/account'
 import { isSmartAccount } from '@ambire-common/libs/account/account'
 import useController from '@common/hooks/useController'
+import {
+  ACCOUNT_SELECT_ACCOUNT_HEIGHT,
+  ACCOUNT_SELECT_ACCOUNT_MB
+} from '@common/modules/account-select/components/Account/styles'
 
-const ITEM_HEIGHT = 65
-
+const ITEM_HEIGHT = ACCOUNT_SELECT_ACCOUNT_HEIGHT + ACCOUNT_SELECT_ACCOUNT_MB
 const useAccountsList = ({
   flatlistRef
 }: {
@@ -94,7 +97,7 @@ const useAccountsList = ({
       offset: ITEM_HEIGHT * index,
       index
     }),
-    [ITEM_HEIGHT]
+    []
   )
 
   // Scrolls to the selected account in the FlatList.
@@ -124,7 +127,7 @@ const useAccountsList = ({
         timeoutRef.current = setTimeout(() => scrollToSelectedAccount(attempt + 1), 100)
       }
     },
-    [ITEM_HEIGHT, accounts.length, flatlistRef, shouldDisplayAccounts, selectedAccountIndex]
+    [accounts.length, flatlistRef, shouldDisplayAccounts, selectedAccountIndex]
   )
 
   useEffect(() => {

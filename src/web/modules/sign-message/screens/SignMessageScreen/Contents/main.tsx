@@ -19,9 +19,12 @@ import flexbox from '@common/styles/utils/flexbox'
 import { TabLayoutWrapperMainContent } from '@web/components/TabLayoutWrapper'
 import useResponsiveActionWindow from '@web/hooks/useResponsiveActionWindow'
 import LedgerConnectModal from '@web/modules/hardware-wallet/components/LedgerConnectModal'
+import { QrSigningStep } from '@web/modules/hardware-wallet/qr/types'
+import QrSigningFlowScreen from '@web/modules/hardware-wallet/screens/QrSigningFlowScreen'
 import FallbackVisualization from '@web/modules/sign-message/screens/SignMessageScreen/FallbackVisualization'
 import Info from '@web/modules/sign-message/screens/SignMessageScreen/Info'
 import getStyles from '@web/modules/sign-message/screens/SignMessageScreen/styles'
+import { QrRequest } from '@ambire-common/interfaces/keystore'
 
 interface Props {
   shouldDisplayLedgerConnectModal: boolean
@@ -31,6 +34,12 @@ interface Props {
   setHasReachedBottom: Dispatch<SetStateAction<boolean | null>>
   shouldDisplayEIP1271Warning: boolean
   isSafeNotDeployed: boolean
+  currentRequest: QrRequest | null
+  signingStep: QrSigningStep
+  handleOnContinue: () => void
+  handleSubmitSignatureResponse: (payload: string | Uint8Array) => void
+  handleQrSigningFlowOnRejectPressed: () => void
+  handleQrSigningFlowOnBackPressed: () => void
 }
 
 const Main = ({
@@ -40,13 +49,19 @@ const Main = ({
   hasReachedBottom,
   setHasReachedBottom,
   shouldDisplayEIP1271Warning,
-  isSafeNotDeployed
+  isSafeNotDeployed,
+  currentRequest,
+  signingStep,
+  handleOnContinue,
+  handleSubmitSignatureResponse,
+  handleQrSigningFlowOnRejectPressed,
+  handleQrSigningFlowOnBackPressed
 }: Props) => {
   const { t } = useTranslation()
   const { state: signMessageState, dispatch: signMessageDispatch } =
     useController('SignMessageController')
   const signStatus = signMessageState.statuses.sign
-  const { styles, theme, themeType } = useTheme(getStyles)
+  const { styles, theme } = useTheme(getStyles)
   const { responsiveSizeMultiplier } = useResponsiveActionWindow()
   const { minHeightSize } = useWindowSize()
   const { networks } = useController('NetworksController').state
@@ -200,21 +215,23 @@ const Main = ({
             })}
           </ExpandableCard>
         </View>
-        {signMessageState.signer && signMessageState.signer.key.type !== 'internal' && (
-          <HardwareWalletSigningModal
-            keyType={signMessageState.signer.key.type}
-            isVisible={signStatus === 'LOADING'}
-            cancelReq={() => {
-              signMessageDispatch({
-                type: 'method',
-                params: {
-                  method: 'cancelSignReq',
-                  args: []
-                }
-              })
-            }}
-          />
-        )}
+        {signMessageState.signer &&
+          signMessageState.signer.key.type !== 'internal' &&
+          signMessageState.signer.key.type !== 'qr' && (
+            <HardwareWalletSigningModal
+              keyType={signMessageState.signer.key.type}
+              isVisible={signStatus === 'LOADING'}
+              cancelReq={() => {
+                signMessageDispatch({
+                  type: 'method',
+                  params: {
+                    method: 'cancelSignReq',
+                    args: []
+                  }
+                })
+              }}
+            />
+          )}
         {shouldDisplayLedgerConnectModal && (
           <LedgerConnectModal
             isVisible={!isLedgerConnected}
@@ -223,6 +240,20 @@ const Main = ({
             displayOptionToAuthorize={false}
           />
         )}
+        {signMessageState.signer &&
+          signMessageState.signer.key.type === 'qr' &&
+          currentRequest &&
+          signingStep !== 'idle' && (
+            <QrSigningFlowScreen
+              isVisible={true}
+              onContinue={handleOnContinue}
+              currentRequest={currentRequest}
+              signingStep={signingStep}
+              submitSignatureResponse={handleSubmitSignatureResponse}
+              onReject={handleQrSigningFlowOnRejectPressed}
+              handleQrSigningFlowOnBackPressed={handleQrSigningFlowOnBackPressed}
+            />
+          )}
       </View>
     </TabLayoutWrapperMainContent>
   )
