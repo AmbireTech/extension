@@ -128,7 +128,7 @@ export const webauthnBiometrics = {
       publicKey: {
         challenge: getRandomBytes(32),
         rp: {
-          name: 'Ambire Wallet'
+          name: 'ambire.com'
         },
         user: {
           id: Buffer.from(getExtensionInstanceId(keyStoreUid, verifiedCode)),
