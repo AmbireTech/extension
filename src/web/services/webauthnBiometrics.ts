@@ -1,4 +1,4 @@
-import { hexlify } from 'ethers'
+import { getBytes, hexlify } from 'ethers'
 
 import { storage } from '@common/services/storage'
 
@@ -14,19 +14,7 @@ type StoredBiometricsCredential = {
 const toUint8Array = (value: ArrayBuffer | Uint8Array) =>
   value instanceof Uint8Array ? value : new Uint8Array(value)
 
-const toBase64Url = (value: ArrayBuffer | Uint8Array) => {
-  const base64 = btoa(String.fromCharCode(...toUint8Array(value)))
-
-  return base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '')
-}
-
-const fromBase64Url = (value: string) => {
-  const normalized = value.replace(/-/g, '+').replace(/_/g, '/')
-  const padded = normalized.padEnd(Math.ceil(normalized.length / 4) * 4, '=')
-  const decoded = atob(padded)
-
-  return Uint8Array.from(decoded, (char) => char.charCodeAt(0))
-}
+const decodeStoredBytes = (value: string) => getBytes(value)
 
 const getRandomBytes = (length: number) => {
   const bytes = new Uint8Array(length)
@@ -57,7 +45,7 @@ const getAssertionForCredential = async (storedCredential: StoredBiometricsCrede
       userVerification: 'preferred',
       allowCredentials: [
         {
-          id: fromBase64Url(storedCredential.credentialId),
+          id: decodeStoredBytes(storedCredential.credentialId),
           type: 'public-key'
         }
       ],
@@ -66,11 +54,11 @@ const getAssertionForCredential = async (storedCredential: StoredBiometricsCrede
       extensions: {
         prf: {
           eval: {
-            first: fromBase64Url(storedCredential.salt)
+            first: decodeStoredBytes(storedCredential.salt)
           }
         },
         hmacGetSecret: {
-          salt1: fromBase64Url(storedCredential.salt)
+          salt1: decodeStoredBytes(storedCredential.salt)
         }
       }
     }
@@ -162,8 +150,8 @@ export const webauthnBiometrics = {
 
     const storedCredential: StoredBiometricsCredential = {
       version: 1,
-      credentialId: toBase64Url((credential as any).rawId),
-      salt: toBase64Url(salt)
+      credentialId: hexlify(toUint8Array((credential as any).rawId)),
+      salt: hexlify(salt)
     }
 
     let secretBytes = getHmacSecretOutput(getCredentialExtensionResults(credential))
