@@ -589,12 +589,13 @@ module.exports = async function (env, argv) {
         minSize: 0, // prevents merging small modules together automatically
         chunks(chunk) {
           // do not split into chunks the files that should be injected,
-          // and background.ts as well, because on WebKit LavaMoat is injected only once in background.ts and cannot be split into chunks.
+          // and background.ts as well, because on WebKit LavaMoat is injected only once in background.ts,
+          // and cannot be split into chunks (since there's no corresponding html file as for the other entries main, request-window, tab).
           return (
             chunk.name !== 'ambire-inpage' &&
             chunk.name !== 'ethereum-inpage' &&
             chunk.name !== 'content-script' &&
-            chunk.name !== 'background'
+            (!enableLavaMoat || chunk.name !== 'background')
           )
         },
         // Disable random cache groups (resulting non-deterministic chunk names)

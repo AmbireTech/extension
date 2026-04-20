@@ -91,11 +91,8 @@ class JsonWrapPlugin {
       const asset = compilation.assets[this.assetName]
       if (asset) {
         const code = asset.source().toString()
-        const codeString = typeof code === 'string' ? code : code.toString('utf8');
-        const cleanCode = codeString.replace(
-          /"AMBIRE_PROVIDER_NONCE"/g,
-          'AMBIRE_PROVIDER_NONCE'
-        )
+        const codeString = typeof code === 'string' ? code : code.toString('utf8')
+        const cleanCode = codeString.replace(/"AMBIRE_PROVIDER_NONCE"/g, 'AMBIRE_PROVIDER_NONCE')
 
         const jsonCode = JSON.stringify({ code: cleanCode })
         const jsonAssetName = this.assetName.replace('.js', '.json')
@@ -125,7 +122,7 @@ const workerConfig = {
   entry: './src/mobile/modules/webview/services/injectedLogic.ts',
   mode: isDev ? 'development' : 'production',
   target: 'web',
-  devtool: isDev ? 'eval-source-map' : false,
+  devtool: false,
   output: {
     path: path.resolve(ROOT_DIR, 'src/mobile/modules/webview/services'),
     filename: 'webview-bundle.js',
@@ -150,45 +147,23 @@ if (isDev) {
   workerConfig.plugins.push(
     new HtmlWebpackPlugin({
       templateContent: `
-<!DOCTYPE html>
-<html>
-  <head>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <script>
-      // 1. Monkey-patch fetch to block file:// requests
-      var _originalFetch = window.fetch;
-      window.fetch = function() {
-        var url = arguments[0];
-        if (typeof url === 'string' && url.indexOf('file://') === 0) {
-          return Promise.reject(new Error('fetch to file:// is blocked for security.'));
-        }
-        if (url && typeof url === 'object' && url.url && url.url.indexOf('file://') === 0) {
-          return Promise.reject(new Error('fetch to file:// is blocked for security.'));
-        }
-        return _originalFetch.apply(this, arguments);
-      };
-
-      // 2. Monkey-patch XHR to block file:// requests
-      var _originalOpen = XMLHttpRequest.prototype.open;
-      XMLHttpRequest.prototype.open = function(method, url) {
-        if (typeof url === 'string' && url.indexOf('file://') === 0) {
-          throw new Error('XHR to file:// is blocked for security.');
-        }
-        return _originalOpen.apply(this, arguments);
-      };
-
-      window.onerror = function(msg, url, lineNo, columnNo, error) {
-        var errMessage = error ? error.stack || error.message : msg;
-        window.ReactNativeWebView.postMessage(JSON.stringify({
-          type: 'ctrl.error',
-          payload: { ctrlName: 'Global', errors: [{ message: errMessage, url: url, lineNo: lineNo }] }
-        }));
-        return false;
-      };
-    </script>
-  </head>
-  <body></body>
-</html>`,
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <script>
+              window.onerror = function(msg, url, lineNo, columnNo, error) {
+                var errMessage = error ? error.stack || error.message : msg;
+                window.ReactNativeWebView.postMessage(JSON.stringify({
+                  type: 'ctrl.error',
+                  payload: { ctrlName: 'Global', errors: [{ message: errMessage, url: url, lineNo: lineNo }] }
+                }));
+                return false;
+              };
+            </script>
+          </head>
+          <body></body>
+        </html>`,
       inject: 'body'
     })
   )
@@ -264,7 +239,6 @@ const inpageConfig = {
     new JsonWrapPlugin({ assetName: 'ethereum-inpage-bundle.js' })
   ]
 }
-
 
 if (!isDev) {
   inpageConfig.optimization = {

@@ -1,6 +1,7 @@
 import { flushSync } from 'react-dom'
 
 import { Dapp } from '@ambire-common/interfaces/dapp'
+
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 
 interface DappsControllerHelpers {
@@ -9,6 +10,7 @@ interface DappsControllerHelpers {
   getCurrentDapp: () => Promise<Dapp | null>
   dappUrl?: string
   setDappUrl?: (url: string) => void
+  hasUnverifiedDapps: (dapps: string[]) => Promise<boolean>
 }
 
 type DefinedControllerHelpers = {
