@@ -4,7 +4,6 @@ import { Image, TouchableOpacity, View } from 'react-native'
 
 import { isValidPassword } from '@ambire-common/services/validations'
 import AmbireLogoWithBackgroundAndLogotype from '@common/assets/svg/AmbireLogoWithBackgroundAndLogotype'
-import FaceIDIcon from '@common/assets/svg/FaceIDIcon'
 import FingerprintIcon from '@common/assets/svg/FingerprintIcon'
 import InvisibilityIcon from '@common/assets/svg/InvisibilityIcon'
 import LockIcon from '@common/assets/svg/LockIcon'
@@ -21,7 +20,6 @@ import LayoutWrapper from '@common/components/LayoutWrapper'
 import Text from '@common/components/Text'
 import { isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
-import { DEVICE_SUPPORTED_AUTH_TYPES } from '@common/contexts/biometricsContext/constants'
 import useBiometrics from '@common/hooks/useBiometrics'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
@@ -35,6 +33,7 @@ import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
 import { getUiType } from '@common/utils/uiType'
+import { IS_FIREFOX } from '@web/constants/common'
 import { openInternalPageInTab } from '@web/extension-services/background/webapi/tab'
 import { SKIP_AUTO_BIOMETRICS_PROMPT_ONCE } from '@web/modules/keystore/constants'
 
@@ -60,6 +59,7 @@ const KeyStoreUnlockScreen = () => {
   const { requestWindow } = useController('RequestsController').state
   const { theme } = useTheme()
   const { hasBiometricsHardware, getBiometricsSecret, deviceSupportedAuthTypes } = useBiometrics()
+  const { isPopup, isTab } = getUiType()
   const [unlockMethod, setUnlockMethod] = useState<'biometrics' | 'password' | null>(null)
   const [hasAutoPromptedBiometrics, setHasAutoPromptedBiometrics] = useState(false)
   const [isBiometricsPromptPending, setIsBiometricsPromptPending] = useState(false)
@@ -72,17 +72,27 @@ const KeyStoreUnlockScreen = () => {
 
   const canUseBiometrics = !!hasBiometricsSecret && !!hasBiometricsHardware
 
-  const hasFaceId = deviceSupportedAuthTypes.includes(
-    DEVICE_SUPPORTED_AUTH_TYPES.FACIAL_RECOGNITION
-  )
-  const BiometricsIcon = hasFaceId ? FaceIDIcon : FingerprintIcon
+  const shouldUseTabForBiometrics = IS_FIREFOX && isPopup
   const isBiometricsUnlockLoading =
     isBiometricsPromptPending ||
     (unlockMethod === 'biometrics' &&
       didBiometricsUnlockEnterLoading &&
       statuses.unlockWithSecret === 'LOADING')
 
+  const openBiometricsInTab = useCallback(async () => {
+    await openInternalPageInTab({
+      route: ROUTES.keyStoreUnlock,
+      shouldCloseCurrentWindow: !isTab,
+      windowId: requestWindow?.windowProps?.createdFromWindowId
+    })
+  }, [isTab, requestWindow?.windowProps?.createdFromWindowId])
+
   const handleBiometricsPrompt = useCallback(async () => {
+    if (shouldUseTabForBiometrics) {
+      await openBiometricsInTab()
+      return false
+    }
+
     if (isBiometricsPromptPending || statuses.unlockWithSecret === 'LOADING') return false
 
     setIsBiometricsPromptPending(true)
@@ -101,7 +111,14 @@ const KeyStoreUnlockScreen = () => {
     })
 
     return true
-  }, [getBiometricsSecret, isBiometricsPromptPending, keystoreDispatch, statuses.unlockWithSecret])
+  }, [
+    getBiometricsSecret,
+    isBiometricsPromptPending,
+    keystoreDispatch,
+    openBiometricsInTab,
+    shouldUseTabForBiometrics,
+    statuses.unlockWithSecret
+  ])
 
   // Refresh tooltip content when privacy mode changes while tooltip is active
   useEffect(() => {
@@ -128,7 +145,7 @@ const KeyStoreUnlockScreen = () => {
 
     setHasAutoPromptedBiometrics(true)
     handleBiometricsPrompt().catch((e) => {
-      console.log('failed opening biometrics prompt', e)
+      console.log('failed to open biometrics prompt', e)
     })
   }, [
     canUseBiometrics,
@@ -234,16 +251,16 @@ const KeyStoreUnlockScreen = () => {
               type="primary"
               style={{ width: '100%', marginBottom: 0 }}
               isLoading={isBiometricsUnlockLoading}
-              text={hasFaceId ? t('Unlock with Face ID') : t('Unlock with fingerprint')}
+              text="Unlock with biometrics"
               disabled={isBiometricsUnlockLoading}
               onPress={() => {
                 handleBiometricsPrompt().catch((e) => {
-                  addToast(`failed opening ${hasFaceId ? 'face ID' : 'fingerprint'} prompt`)
-                  console.log('failed opening biometrics prompt', e)
+                  addToast(`failed to open biometrics prompt`)
+                  console.log('failed to open biometrics prompt', e)
                 })
               }}
               icon={
-                <BiometricsIcon
+                <FingerprintIcon
                   width={20}
                   height={20}
                   color={theme.primaryText}
@@ -309,11 +326,16 @@ const KeyStoreUnlockScreen = () => {
                 type="secondary"
                 style={{ width: '100%', marginTop: 12, marginBottom: 0 }}
                 hasBottomSpacing={false}
-                text={hasFaceId ? t('Unlock with Face ID') : t('Unlock with fingerprint')}
-                onPress={() => setUnlockMethod('biometrics')}
+                text="Unlock with biometrics"
+                onPress={() => {
+                  handleBiometricsPrompt().catch((e) => {
+                    addToast(`failed to open biometrics prompt`)
+                    console.log('failed to open biometrics prompt', e)
+                  })
+                }}
                 childrenPosition="left"
               >
-                <BiometricsIcon
+                <FingerprintIcon
                   width={20}
                   height={20}
                   color={theme.primaryText}

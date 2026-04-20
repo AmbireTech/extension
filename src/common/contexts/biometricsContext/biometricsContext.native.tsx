@@ -153,9 +153,7 @@ const BiometricsProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   }, [t])
 
   const removeBiometricsSecret = useCallback(async () => {
-    await secureStorage.remove(BIOMETRICS_SECRET_KEY).catch((e) => {
-      console.log('Failed to remove the biometrics secret key from storage', e)
-    })
+    await secureStorage.remove(BIOMETRICS_SECRET_KEY)
   }, [])
 
   const showOverlay = !isAppFocused && isUnlocked && hasBiometricsSecret && !isAuthInProcess
