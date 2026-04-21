@@ -85,7 +85,10 @@ const SurveyScreen = () => {
       text: hasNextQuestion ? 'Next' : 'Submit',
       callback: () => {
         if (!account) {
-          addToast('Connect an account to continue with the survey', { type: 'error' })
+          addToast(
+            'Unexpected error: account not found. Contact support and restart the extension.',
+            { type: 'error' }
+          )
           return
         }
         const instanceId = getExtensionInstanceId(keyStoreUid, verifiedCode)
