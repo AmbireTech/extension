@@ -53,7 +53,7 @@ const KeyStoreUnlockScreen = () => {
   } = useController('WalletStateController')
   const { hasKeystoreRecovery } = useController('EmailVaultController').state
   const {
-    state: { statuses, errorMessage, hasBiometricsSecret },
+    state: { statuses, errorMessage, hasBiometricsSecret, isUnlocked },
     dispatch: keystoreDispatch
   } = useController('KeystoreController')
   const { requestWindow } = useController('RequestsController').state
@@ -63,7 +63,7 @@ const KeyStoreUnlockScreen = () => {
   const [unlockMethod, setUnlockMethod] = useState<'biometrics' | 'password' | null>(null)
   const [hasAutoPromptedBiometrics, setHasAutoPromptedBiometrics] = useState(false)
   const [isBiometricsPromptPending, setIsBiometricsPromptPending] = useState(false)
-  const [didBiometricsUnlockEnterLoading, setDidBiometricsUnlockEnterLoading] = useState(false)
+  const [isBiometricsUnlockInProgress, setIsBiometricsUnlockInProgress] = useState(false)
   const [shouldSkipAutoPrompt] = useState(() => {
     const shouldSkip = syncSessionStorage.get(SKIP_AUTO_BIOMETRICS_PROMPT_ONCE) === 'true'
     if (shouldSkip) syncSessionStorage.remove(SKIP_AUTO_BIOMETRICS_PROMPT_ONCE)
@@ -74,10 +74,7 @@ const KeyStoreUnlockScreen = () => {
 
   const shouldUseTabForBiometrics = IS_FIREFOX && isPopup
   const isBiometricsUnlockLoading =
-    isBiometricsPromptPending ||
-    (unlockMethod === 'biometrics' &&
-      didBiometricsUnlockEnterLoading &&
-      statuses.unlockWithSecret === 'LOADING')
+    isBiometricsPromptPending || (unlockMethod === 'biometrics' && isBiometricsUnlockInProgress)
 
   const openBiometricsInTab = useCallback(async () => {
     await openInternalPageInTab({
@@ -99,9 +96,12 @@ const KeyStoreUnlockScreen = () => {
     const biometricsSecret = await getBiometricsSecret()
     setIsBiometricsPromptPending(false)
 
-    if (!biometricsSecret) return false
+    if (!biometricsSecret) {
+      setIsBiometricsUnlockInProgress(false)
+      return false
+    }
 
-    setDidBiometricsUnlockEnterLoading(true)
+    setIsBiometricsUnlockInProgress(true)
     keystoreDispatch({
       type: 'method',
       params: {
@@ -156,10 +156,13 @@ const KeyStoreUnlockScreen = () => {
   ])
 
   useEffect(() => {
+    if (isUnlocked) return
     if (statuses.unlockWithSecret === 'LOADING') return
 
-    setDidBiometricsUnlockEnterLoading(false)
-  }, [statuses.unlockWithSecret])
+    if (statuses.unlockWithSecret === 'ERROR') {
+      setIsBiometricsUnlockInProgress(false)
+    }
+  }, [isUnlocked, statuses.unlockWithSecret])
 
   return (
     <LayoutWrapper style={styles.panel}>
@@ -340,7 +343,7 @@ const KeyStoreUnlockScreen = () => {
               </Button>
             )}
 
-            {hasKeystoreRecovery && (
+            {hasKeystoreRecovery && !canUseBiometrics && (
               <TouchableOpacity
                 onPress={() =>
                   openInternalPageInTab({
