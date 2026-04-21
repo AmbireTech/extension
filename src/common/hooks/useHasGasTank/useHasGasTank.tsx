@@ -8,6 +8,7 @@ import useController from '@common/hooks/useController'
 const useHasGasTank = ({ account }: { account: Account | null }) => {
   if (!account || !!account.safeCreation) {
     return {
+      canUseGasTank: false,
       hasGasTank: false
     }
   }

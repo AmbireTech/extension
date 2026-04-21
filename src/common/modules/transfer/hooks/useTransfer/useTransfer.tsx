@@ -72,7 +72,7 @@ const useTransfer = (isTopUpScreen: boolean) => {
     close: closeGasTankInfoBottomSheet
   } = useModalize()
   const { accountsOps } = useController('ActivityController').state
-  const { hasGasTank } = useHasGasTank({ account })
+  const { canUseGasTank } = useHasGasTank({ account })
   const recipientMenuClosedAutomatically = useRef(false)
 
   const [showAddedToBatch, setShowAddedToBatch] = useState(false)
@@ -556,7 +556,7 @@ const useTransfer = (isTopUpScreen: boolean) => {
     batchNetworkUserRequestsCount,
     transferState,
     addressInputState,
-    hasGasTank,
+    canUseGasTank,
     amountFieldValue,
     setAmountFieldValue,
     addressStateFieldValue,
