@@ -503,5 +503,4 @@ run-tests.sh
 
 # WebView bundles
 webview-bundle.json
-ethereum-inpage-bundle.json
-ambire-inpage-bundle.json
+*inpage-bundle.json
