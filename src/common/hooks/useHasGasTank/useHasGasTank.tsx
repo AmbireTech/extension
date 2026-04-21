@@ -14,6 +14,11 @@ const useHasGasTank = ({ account }: { account: Account | null }) => {
 
   const { keys } = useController('KeystoreController').state
 
+  const isViewOnly = useMemo(
+    () => getIsViewOnly(keys, account.associatedKeys),
+    [account.associatedKeys, keys]
+  )
+
   const getAccKeys = useCallback(
     (acc: any) => {
       return keys.filter((key) => acc?.associatedKeys.includes(key.addr))
@@ -28,15 +33,16 @@ const useHasGasTank = ({ account }: { account: Account | null }) => {
 
   const canUseGasTank = useMemo(
     () =>
+      (isViewOnly && !account.safeCreation) || // assume all view only accounts CAN use Gas Tank
       isSmartAccount(account) ||
       (canBecomeSmarter(account, getAccKeys(account)) && !account.safeCreation),
-    [account, getAccKeys]
+    [account, getAccKeys, isViewOnly]
   )
 
   return {
     canUseGasTank,
     hasGasTank,
-    isViewOnly: getIsViewOnly(keys, account.associatedKeys)
+    isViewOnly
   }
 }
 
