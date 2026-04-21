@@ -4,6 +4,42 @@
     "ignoreMessages": false
   },
   "errors": {
+    "e45b9c37e0ffbb9ef699a45c996d3033d2632b61": {
+      "file": "src/ambire-common/node_modules/ox/core/AbiParameters.ts",
+      "code": "TS2322",
+      "count": 1,
+      "message": "Type 'string' is not assignable to type '`0x${string}`'."
+    },
+    "05c3fbcd8a8c9f49f50393275070e30faba87342": {
+      "file": "src/ambire-common/node_modules/ox/core/Secp256k1.ts",
+      "code": "TS2345",
+      "count": 1,
+      "message": "Argument of type '{ prefix: number; x: bigint; y: bigint; } | { prefix: number; x: bigint; y?: undefined; } | undefined' is not assignable to parameter of type '{ prefix: number; x: bigint; y: bigint; } | { prefix: number; x: bigint; y?: undefined; }'."
+    },
+    "5b447e41da053206e3cecb0e7b44335e109574f6": {
+      "file": "src/ambire-common/node_modules/ox/tempo/KeyAuthorization.ts",
+      "code": "TS2345",
+      "count": 1,
+      "message": "Argument of type 'BaseTuple | readonly [chainId: `0x${string}`, keyType: `0x${string}`, keyId: string, expiry: `0x${string}`] | readonly [chainId: `0x${string}`, keyType: `0x${string}`, keyId: string, expiry: `0x${string}`, limits: readonly [token: string, limit: `0x${string}`][]] | readonly [chainId: `0x${string}`, keyType: `0x${str...' is not assignable to parameter of type 'RecursiveArray<`0x${string}`>'."
+    },
+    "f4a31b8b5500fb535e223ee99cd18a1046c5901d": {
+      "file": "src/ambire-common/node_modules/ox/tempo/SignatureEnvelope.ts",
+      "code": "TS2345",
+      "count": 1,
+      "message": "Argument of type 'string' is not assignable to parameter of type '`0x${string}`'."
+    },
+    "c9af4d36a3b371bfa6300b4d3db80b9ae797a268": {
+      "file": "src/ambire-common/node_modules/ox/tempo/TokenId.ts",
+      "code": "TS2345",
+      "count": 1,
+      "message": "Argument of type 'string' is not assignable to parameter of type '`0x${string}`'."
+    },
+    "956a3e060f9a769c9d8b9c3102479cb56fa54c0d": {
+      "file": "src/ambire-common/node_modules/ox/tempo/TxEnvelopeTempo.ts",
+      "code": "TS2345",
+      "count": 1,
+      "message": "Argument of type 'readonly [`0x${string}`, `0x${string}`, `0x${string}`, `0x${string}`, string[][], readonly [address: string, storageKeys: readonly `0x${string}`[]][], `0x${string}`, `0x${string}`, `0x${string}`, `0x${string}`, string, string | Tuple, readonly (readonly [chainId: `0x${string}`, address: `0x${string}`, nonce: `0x${st...' is not assignable to parameter of type 'RecursiveArray<`0x${string}`>'."
+    },
     "3386302d29a84f99e07af189cb0d59184d993ae0": {
       "file": "src/ambire-common/src/controllers/accounts/accounts.ts",
       "code": "TS2345",
@@ -34,6 +70,12 @@
       "count": 1,
       "message": "Type '{ associatedKeys: [string | undefined, string][]; creation: { factoryAddr: string; salt: string; baseIdentityAddr: string; }; email?: string | undefined; addr: string; }[]' is not assignable to type 'AmbireSmartAccountIdentityCreateRequest[]'."
     },
+    "92a3ccf697d005d72eb39feed77fa6fe6166b771": {
+      "file": "src/ambire-common/src/controllers/activity/activity.ts",
+      "code": "TS18048",
+      "count": 1,
+      "message": "'allOps' is possibly 'undefined'."
+    },
     "d2cb6b1063d32334b967a945a00b9a6574fbebab": {
       "file": "src/ambire-common/src/controllers/emailVault/emailVault.ts",
       "code": "TS2322",
@@ -51,12 +93,6 @@
       "code": "TS18048",
       "count": 3,
       "message": "'op' is possibly 'undefined'."
-    },
-    "d0a663a26fbf29e43ece30b35f46789944422bf9": {
-      "file": "src/ambire-common/src/controllers/emailVault/emailVault.ts",
-      "code": "TS18048",
-      "count": 1,
-      "message": "'emailVaultData' is possibly 'undefined'."
     },
     "1fdb4511e0538eab2137d16b76019f30eebbb121": {
       "file": "src/ambire-common/src/controllers/signAccountOp/helper.ts",
@@ -142,12 +178,6 @@
       "count": 2,
       "message": "Cannot invoke an object which is possibly 'undefined'."
     },
-    "cc8aaf62aa334a9c243eac0eda97de68e74bdd16": {
-      "file": "src/ambire-common/src/libs/humanizer/modules/FallbackHumanizer/fallBackHumanizer.ts",
-      "code": "TS2532",
-      "count": 4,
-      "message": "Object is possibly 'undefined'."
-    },
     "a1c32a3cca57a1836be472420bfdee9032e431a8": {
       "file": "src/ambire-common/src/libs/humanizer/modules/GasTankModule/gasTankModule.ts",
       "code": "TS2532",
@@ -196,12 +226,6 @@
       "count": 3,
       "message": "'finalOrder' is possibly 'undefined'."
     },
-    "88550261715a283124d5325785785cc90beb1191": {
-      "file": "src/ambire-common/src/libs/humanizer/modules/Pancake/index.ts",
-      "code": "TS2722",
-      "count": 1,
-      "message": "Cannot invoke an object which is possibly 'undefined'."
-    },
     "a346996150ff114c75b8012c55afcefc4f7b8ebd": {
       "file": "src/ambire-common/src/libs/humanizer/modules/Socket/socketModules.ts",
       "code": "TS2345",
@@ -216,12 +240,6 @@
     },
     "69b44f4ff50787641f957ac90a1c142ad6284a47": {
       "file": "src/ambire-common/src/libs/humanizer/modules/Sushiswap/sushiSwapModule.ts",
-      "code": "TS2722",
-      "count": 1,
-      "message": "Cannot invoke an object which is possibly 'undefined'."
-    },
-    "245fdd7a59adc00308ae2c2a85d460344ed68ba3": {
-      "file": "src/ambire-common/src/libs/humanizer/modules/Tokens/tokens.ts",
       "code": "TS2722",
       "count": 1,
       "message": "Cannot invoke an object which is possibly 'undefined'."
@@ -244,12 +262,6 @@
       "count": 8,
       "message": "Argument of type 'string | undefined' is not assignable to parameter of type 'string'."
     },
-    "e70b796db96f43c0e22b04458ec0444ef0b8b200": {
-      "file": "src/ambire-common/src/libs/humanizer/modules/WALLET/index.ts",
-      "code": "TS2722",
-      "count": 3,
-      "message": "Cannot invoke an object which is possibly 'undefined'."
-    },
     "6f5279fabd8a19094ae233278d3c61f6e1fb1d2e": {
       "file": "src/ambire-common/src/libs/humanizer/modules/WALLET/stakingPools.ts",
       "code": "TS2532",
@@ -264,12 +276,6 @@
     },
     "d28d5ab886d3103d4a81a367a1c197185986e822": {
       "file": "src/ambire-common/src/libs/portfolio/gecko.ts",
-      "code": "TS2532",
-      "count": 1,
-      "message": "Object is possibly 'undefined'."
-    },
-    "2a09a076e8caca873e18a11bdc512a0ad35a3235": {
-      "file": "src/ambire-common/src/libs/portfolio/getOnchainBalances.ts",
       "code": "TS2532",
       "count": 1,
       "message": "Object is possibly 'undefined'."
@@ -309,18 +315,6 @@
       "code": "TS2722",
       "count": 1,
       "message": "Cannot invoke an object which is possibly 'undefined'."
-    },
-    "159062a45c0e823b8be15a4de1465c5ae2d62cb6": {
-      "file": "src/common/contexts/biometricsContext/biometricsContext.tsx",
-      "code": "TS2339",
-      "count": 1,
-      "message": "Property 'children' does not exist on type '{}'."
-    },
-    "97a24b84f7f6bc55a6724ea28665f663fb4bb835": {
-      "file": "src/common/contexts/netInfoContext/netInfoContext.web.tsx",
-      "code": "TS2339",
-      "count": 1,
-      "message": "Property 'children' does not exist on type '{}'."
     },
     "0a23f0692386aff9bdaa9fd3a3e2e00bf436cdd1": {
       "file": "src/common/hooks/useLoader/useLoader.ts",
@@ -514,12 +508,6 @@
       "count": 1,
       "message": "Property 'children' is missing in type '{}' but required in type 'TabLayoutWrapperMainContentProps'."
     },
-    "39c31e37bf532befccb847a550760d81ab9c5277": {
-      "file": "src/web/modules/hardware-wallet/controllers/LatticeController/LatticeController.ts",
-      "code": "TS2420",
-      "count": 1,
-      "message": "Class 'LatticeController' incorrectly implements interface 'ExternalSignerController'."
-    },
     "f6f73ef66989bafb4675956efd78d77e13b65f5d": {
       "file": "src/web/modules/hardware-wallet/controllers/LatticeController/LatticeController.ts",
       "code": "TS7006",
@@ -550,12 +538,6 @@
       "count": 1,
       "message": "Object is possibly 'undefined'."
     },
-    "68ef2d1ac2130ad878dc366ce70e1203d987381a": {
-      "file": "src/web/modules/hardware-wallet/libs/trezorKeyIterator/trezorKeyIterator.ts",
-      "code": "TS2769",
-      "count": 1,
-      "message": "No overload matches this call."
-    },
     "023dcf94cdf7b23da92b2ef5c21f74d43a074e07": {
       "file": "src/web/modules/settings/screens/AccountsSettingsScreen/AccountsSettingsScreen.tsx",
       "code": "TS2322",
@@ -567,18 +549,6 @@
       "code": "TS2532",
       "count": 2,
       "message": "Object is possibly 'undefined'."
-    },
-    "ac364911b8c93dfc1ff4e00b0c971aefee70481f": {
-      "file": "src/web/utils/persistStore.ts",
-      "code": "TS2345",
-      "count": 1,
-      "message": "Argument of type 'Promise<null>' is not assignable to parameter of type 'Function'."
-    },
-    "8863cd4cb745358e00f8e6f3faea3dba8097ac34": {
-      "file": "src/web/utils/persistStore.ts",
-      "code": "TS7053",
-      "count": 1,
-      "message": "Element implicitly has an 'any' type because expression of type 'string | symbol' can't be used to index type '{}'."
     },
     "bb52b19b4610e264dbe65f39fd09a5d0994f9780": {
       "file": "node_modules/viem/node_modules/ox/core/AbiParameters.ts",
@@ -596,7 +566,7 @@
       "file": "node_modules/viem/node_modules/ox/tempo/KeyAuthorization.ts",
       "code": "TS2345",
       "count": 1,
-      "message": "Argument of type 'BaseTuple | readonly [chainId: `0x${string}`, keyType: `0x${string}`, keyId: string, expiry: `0x${string}`] | readonly [chainId: `0x${string}`, keyType: `0x${string}`, keyId: string, expiry: `0x${string}`, limits: readonly [token: string, limit: `0x${string}`][]]' is not assignable to parameter of type 'RecursiveArray<`0x${string}`>'."
+      "message": "Argument of type 'BaseTuple | readonly [chainId: `0x${string}`, keyType: `0x${string}`, keyId: string, expiry: `0x${string}`] | readonly [chainId: `0x${string}`, keyType: `0x${string}`, keyId: string, expiry: `0x${string}`, limits: readonly [token: string, limit: `0x${string}`][]] | readonly [chainId: `0x${string}`, keyType: `0x${str...' is not assignable to parameter of type 'RecursiveArray<`0x${string}`>'."
     },
     "21dfb8ac75cf23906e5bd1ddf213965592052e69": {
       "file": "node_modules/viem/node_modules/ox/tempo/SignatureEnvelope.ts",
@@ -614,7 +584,7 @@
       "file": "node_modules/viem/node_modules/ox/tempo/TxEnvelopeTempo.ts",
       "code": "TS2345",
       "count": 1,
-      "message": "Argument of type 'readonly [`0x${string}`, `0x${string}`, `0x${string}`, `0x${string}`, string[][], readonly [address: string, storageKeys: readonly `0x${string}`[]][], `0x${string}`, `0x${string}`, `0x${string}`, `0x${string}`, string, string | Tuple, readonly (readonly [chainId: `0x${string}`, address: `0x${string}`, nonce: `0x${string}`])[]]' is not assignable to parameter of type 'RecursiveArray<`0x${string}`>'."
+      "message": "Argument of type 'readonly [`0x${string}`, `0x${string}`, `0x${string}`, `0x${string}`, string[][], readonly [address: string, storageKeys: readonly `0x${string}`[]][], `0x${string}`, `0x${string}`, `0x${string}`, `0x${string}`, string, string | Tuple, readonly (readonly [chainId: `0x${string}`, address: `0x${string}`, nonce: `0x${st...' is not assignable to parameter of type 'RecursiveArray<`0x${string}`>'."
     }
   }
 }
