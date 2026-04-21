@@ -1,3 +1,5 @@
+import { ZeroAddress } from 'ethers'
+
 import { Contacts } from '@ambire-common/controllers/addressBook/addressBook'
 import { getFeeSpeedIdentifier } from '@ambire-common/controllers/signAccountOp/helper'
 import { FeeSpeed } from '@ambire-common/controllers/signAccountOp/signAccountOp'
@@ -112,6 +114,11 @@ const mapFeeOptions = (
         (contact) => contact.address.toLowerCase() === feeOption.paidBy.toLowerCase()
       )?.name
     : undefined
+
+  if (signAccountOpState.hasCustomGasPrices && feeOption.token.address !== ZeroAddress) {
+    disabledReason = 'Option not available for advanced gas prices'
+    disabledTextAppearance = 'errorText'
+  }
 
   return {
     value:
