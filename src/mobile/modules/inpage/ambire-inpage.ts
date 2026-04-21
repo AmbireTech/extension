@@ -2,6 +2,7 @@
 import { nanoid } from 'nanoid'
 
 import { isProd } from '@common/config/env'
+
 import { EthereumProvider } from './EthereumProvider'
 
 declare const globalIsAmbireNext: boolean
@@ -27,8 +28,6 @@ interface EIP6963AnnounceProviderEvent extends CustomEvent {
 interface EIP6963RequestProviderEvent extends Event {
   type: 'eip6963:requestProvider'
 }
-
-
 
 let forwardRpcRequestId = 0
 const foundDappRpcUrls: string[] = []
@@ -166,6 +165,10 @@ if (globalIsAmbireNext) {
   window.ambireNext = ambireProvider
 } else {
   window.ambire = ambireProvider
+}
+
+window.__ambire_handleEvent = (event: string, data: any) => {
+  provider.handleEvent(event, data)
 }
 
 const announceEip6963Provider = (p: EthereumProvider) => {

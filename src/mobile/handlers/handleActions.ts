@@ -6,6 +6,7 @@ import { IEventEmitterRegistryController } from '@ambire-common/interfaces/event
 import { KeyIterator } from '@ambire-common/libs/keyIterator/keyIterator'
 import handleProviderRequests from '@common/modules/provider/handleProviderRequests'
 import { Action, MethodAction } from '@common/types/actions'
+import { mobileMessenger } from '@mobile/modules/webview/services/mobileMessenger'
 
 export const handleActions = async (
   action: MethodAction | Action,
@@ -113,6 +114,7 @@ export const handleActions = async (
           url: params.request.origin,
           tabId: 1 // Mobile uses a single view for the dApp
         })
+        mainCtrl.dapps.setSessionMessenger(session.sessionId, mobileMessenger, false)
         console.log('[Worker] Resolved session for:', session.origin, session.sessionId)
 
         const result = await handleProviderRequests({

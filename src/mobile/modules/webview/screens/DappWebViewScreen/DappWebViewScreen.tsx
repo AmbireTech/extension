@@ -520,6 +520,22 @@ const DappWebViewScreen = () => {
     return () => eventBus.removeEventListener('action.sendToDappWebView', onProviderResponse)
   }, [currentUrl])
 
+  useEffect(() => {
+    const onBroadcastDappEvent = (data: any) => {
+      const { event, data: eventData } = data
+      webviewRef.current?.injectJavaScript(`
+        (function() {
+          if (window.__ambire_handleEvent) {
+            window.__ambire_handleEvent(${JSON.stringify(event)}, ${JSON.stringify(eventData ?? null)});
+          }
+        })();
+        true;
+      `)
+    }
+    eventBus.addEventListener('action.broadcastDappEvent', onBroadcastDappEvent)
+    return () => eventBus.removeEventListener('action.broadcastDappEvent', onBroadcastDappEvent)
+  }, [])
+
   return (
     <MobileLayoutContainer
       footer={
