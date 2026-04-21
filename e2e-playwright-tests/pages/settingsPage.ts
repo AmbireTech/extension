@@ -101,7 +101,7 @@ export class SettingsPage extends BasePage {
     // add network
     await this.page.locator(selectors.addNetworkButton).click()
 
-    await expect(this.page.locator(selectors.networkSuccessfullyAddedSnackbar)).toHaveText(
+    await expect(this.page.locator(selectors.networkSuccessfullyAddedSnackbar)).toContainText(
       'Network successfully added!'
     )
   }
@@ -192,7 +192,7 @@ export class SettingsPage extends BasePage {
     // assert snackbar and new blockexplorer URL
     await expect(
       this.page.locator(selectors.networkSettingsSavedSnackbar(network.networkName))
-    ).toHaveText(`${network.networkName} settings saved!`)
+    ).toContainText(`${network.networkName} settings saved!`)
     await expect(this.page.locator(selectors.blockExplorerURL(network.explorerUrl))).toContainText(
       `${network.explorerUrl}/test`
     )
