@@ -503,3 +503,4 @@ run-tests.sh
 
 # WebView bundle
 webview-bundle.json
+*inpage-bundle.json
