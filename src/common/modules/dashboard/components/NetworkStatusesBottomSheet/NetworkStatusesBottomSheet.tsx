@@ -6,6 +6,7 @@ import { useModalize } from 'react-native-modalize'
 import { PortfolioNetworkResult } from '@ambire-common/libs/portfolio/interfaces'
 import BottomSheet from '@common/components/BottomSheet'
 import Text from '@common/components/Text'
+import { isMobile } from '@common/config/env'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
@@ -98,12 +99,17 @@ const NetworkStatusesBottomSheet = ({ sheetRef, closeBottomSheet }: Props) => {
         ]}
       >
         <View style={{ flex: 1.75 }}>
-          <Text fontSize={12} weight="semiBold" appearance="secondaryText" style={spacings.plTy}>
+          <Text
+            fontSize={isMobile ? 10 : 12}
+            weight="semiBold"
+            appearance="secondaryText"
+            style={spacings.plTy}
+          >
             {t('Network')}
           </Text>
         </View>
         <Text
-          fontSize={12}
+          fontSize={isMobile ? 10 : 12}
           weight="semiBold"
           appearance="secondaryText"
           style={{ flex: 1.5, textAlign: 'center' }}
@@ -111,7 +117,7 @@ const NetworkStatusesBottomSheet = ({ sheetRef, closeBottomSheet }: Props) => {
           {t('Total Time')}
         </Text>
         <Text
-          fontSize={12}
+          fontSize={isMobile ? 10 : 12}
           weight="semiBold"
           appearance="secondaryText"
           style={{ ...flexbox.flex1, textAlign: 'center' }}
@@ -119,7 +125,7 @@ const NetworkStatusesBottomSheet = ({ sheetRef, closeBottomSheet }: Props) => {
           {t('Discovery')}
         </Text>
         <Text
-          fontSize={12}
+          fontSize={isMobile ? 10 : 12}
           weight="semiBold"
           appearance="secondaryText"
           style={{ ...flexbox.flex1, textAlign: 'center' }}
@@ -127,7 +133,7 @@ const NetworkStatusesBottomSheet = ({ sheetRef, closeBottomSheet }: Props) => {
           {t('Prices')}
         </Text>
         <Text
-          fontSize={12}
+          fontSize={isMobile ? 10 : 12}
           weight="semiBold"
           appearance="secondaryText"
           style={{ ...flexbox.flex1, textAlign: 'center' }}

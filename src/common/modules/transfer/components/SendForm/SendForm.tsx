@@ -1,16 +1,34 @@
-import React, { useCallback } from 'react'
+import React, { FC, useCallback, useEffect, useMemo, useState } from 'react'
 import { View } from 'react-native'
+import { SvgProps } from 'react-native-svg'
 
+import gasTankFeeTokens from '@ambire-common/consts/gasTankFeeTokens'
 import { TokenResult } from '@ambire-common/libs/portfolio'
+import CoinsIcon from '@common/assets/svg/CoinsIcon'
+import GasTankIcon from '@common/assets/svg/GasTankIcon'
 import Recipient from '@common/components/Recipient'
+import { SectionedSelectProps, SelectValue } from '@common/components/Select/types'
 import SendToken from '@common/components/SendToken'
 import SkeletonLoader from '@common/components/SkeletonLoader'
+import Text from '@common/components/Text'
+import TitleAndIcon from '@common/components/TitleAndIcon'
+import TokenIcon from '@common/components/TokenIcon'
 import { useTranslation } from '@common/config/localization'
 import useAddressInput from '@common/hooks/useAddressInput'
 import useController from '@common/hooks/useController'
 import useGetTokenSelectProps from '@common/hooks/useGetTokenSelectProps'
+import useTheme from '@common/hooks/useTheme'
+import spacings from '@common/styles/spacings'
+import flexbox from '@common/styles/utils/flexbox'
 import { getTokenId } from '@common/utils/token'
+import { RELAYER_URL } from '@env'
 import useSimulationError from '@web/modules/portfolio/hooks/SimulationError/useSimulationError'
+
+type GasTankSection = {
+  title: { icon: FC<SvgProps>; text: string }
+  data: SelectValue[]
+  key: string
+}
 
 const SendForm = ({
   addressInputState,
@@ -55,7 +73,29 @@ const SendForm = ({
   } = useController('SelectedAccountController')
 
   const { t } = useTranslation()
+  const { theme } = useTheme()
   const { networks } = useController('NetworksController').state
+
+  const [gasTankAssets, setGasTankAssets] = useState<
+    { chainId?: number; address?: string; symbol?: string }[] | null
+  >(null)
+
+  useEffect(() => {
+    if (!isTopUp) return
+    fetch(`${RELAYER_URL}/gas-tank/assets`)
+      .then((r) => r.json())
+      .then((assets) => {
+        const safeAssets = Array.isArray(assets)
+          ? assets.filter(
+              (asset): asset is { chainId: number; address: string; symbol?: string } =>
+                !!asset?.address && asset?.chainId !== undefined && asset?.chainId !== null
+            )
+          : []
+
+        setGasTankAssets(safeAssets)
+      })
+      .catch(() => setGasTankAssets(null))
+  }, [isTopUp])
   const amountIsError = amountErrorSeverity === 'error' && !!amountErrorMessage
 
   const {
@@ -72,6 +112,108 @@ const SendForm = ({
   const { simulationError } = useSimulationError({ chainId: selectedToken?.chainId })
 
   const disableForm = (!hasGasTank && isTopUp) || !tokens.length
+
+  const renderSectionHeader: SectionedSelectProps['renderSectionHeader'] = useCallback(
+    ({ section }: { section: NonNullable<SectionedSelectProps['sections']>[number] }) => {
+      const { title } = section as unknown as GasTankSection
+      if (!title) return null
+      return (
+        <TitleAndIcon
+          icon={title.icon}
+          title={title.text}
+          style={{ backgroundColor: theme.primaryBackground }}
+        />
+      )
+    },
+    [theme.primaryBackground]
+  )
+
+  const tokenSections: GasTankSection[] | undefined = useMemo(() => {
+    if (!isTopUp) return undefined
+
+    const getKey = (address: string | undefined, chainId: string | number | bigint | undefined) =>
+      `${String(address).toLowerCase()}.${String(chainId)}`
+
+    const enabledNetworkChainIds = new Set(networks.map((network) => network.chainId.toString()))
+
+    const currentOptionKeys = new Set(
+      options
+        .filter((o): o is typeof o & { address: string; chainId: string | number | bigint } => {
+          return 'address' in o && 'chainId' in o && !!o.address && o.chainId !== undefined
+        })
+        .map((o) => getKey(o.address, o.chainId))
+    )
+
+    const otherGasTokens = (gasTankAssets ?? [])
+      .filter((asset) => {
+        if (!asset.chainId || !enabledNetworkChainIds.has(asset.chainId.toString())) return false
+        return !currentOptionKeys.has(getKey(asset.address, asset.chainId))
+      })
+      .map((asset) => {
+        const feeToken = gasTankFeeTokens.find(
+          (ft) =>
+            ft.address.toLowerCase() === asset.address?.toLowerCase() &&
+            ft.chainId === BigInt(asset.chainId!)
+        )
+        const network = networks.find((n) => n.chainId === BigInt(asset.chainId!))
+
+        const symbol = (asset.symbol?.trim() || 'No symbol').toUpperCase()
+        const networkName = network?.name ?? ''
+
+        return {
+          value: `${asset.address}.${asset.chainId}`,
+          address: asset.address,
+          chainId: asset.chainId,
+          extraSearchProps: {
+            symbol,
+            address: asset.address,
+            networkName
+          },
+          label: (
+            <View style={flexbox.flex1}>
+              <Text fontSize={16} weight="medium">
+                {symbol}
+              </Text>
+              {!!networkName && (
+                <Text fontSize={12} appearance="secondaryText" style={spacings.mt0}>
+                  {'on ' + networkName}
+                </Text>
+              )}
+            </View>
+          ),
+          icon: (
+            <TokenIcon
+              address={asset.address}
+              chainId={BigInt(asset.chainId!)}
+              withContainer
+              containerHeight={32}
+              containerWidth={32}
+              width={28}
+              height={28}
+            />
+          ),
+          disabled: true
+        }
+      })
+
+    return [
+      {
+        title: { icon: CoinsIcon, text: t('Tokens in current account') },
+        data: options,
+        key: 'gas-tank-topup-account-tokens'
+      },
+      {
+        title: { icon: GasTankIcon, text: t('Other Gas tokens supported') },
+        data: otherGasTokens,
+        key: 'gas-tank-topup-other-tokens'
+      }
+    ].filter((section) => section.data.length > 0)
+  }, [isTopUp, options, gasTankAssets, networks, t])
+
+  const allFromTokenOptions = useMemo(() => {
+    if (!tokenSections) return options
+    return tokenSections.flatMap((section) => section.data) as typeof options
+  }, [options, tokenSections])
 
   const handleChangeToken = useCallback(
     (value: string) => {
@@ -147,7 +289,9 @@ const SendForm = ({
       ) : (
         <SendToken
           label={t('Send token')}
-          fromTokenOptions={options}
+          fromTokenOptions={allFromTokenOptions}
+          sections={tokenSections}
+          renderSectionHeader={tokenSections ? renderSectionHeader : undefined}
           fromTokenValue={tokenSelectValue}
           fromAmountValue={amountFieldValue}
           fromTokenAmountSelectDisabled={disableForm || amountSelectDisabled}

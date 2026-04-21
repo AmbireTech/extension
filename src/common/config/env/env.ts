@@ -14,9 +14,11 @@ import {
 import appJSON from '../../../../app.json'
 
 export const isTesting = process.env.IS_TESTING === 'true'
-export const isDev = process.env.APP_ENV === 'development'
-export const isProd = process.env.APP_ENV === 'production'
-export const isStaging = process.env.APP_ENV === 'staging'
+const runtimeAppEnv =
+  process.env.APP_ENV || (typeof __DEV__ !== 'undefined' && __DEV__ ? 'development' : 'production')
+export const isDev = runtimeAppEnv === 'development'
+export const isProd = runtimeAppEnv === 'production'
+export const isStaging = runtimeAppEnv === 'staging'
 export const isBenzin = process.env.BENZIN === 'true'
 export const isLegends = process.env.LEGENDS === 'true'
 export const isLedgerEmulator = process.env.IS_LEDGER_EMULATOR === 'true'

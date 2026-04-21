@@ -11,6 +11,7 @@ import ImportJsonIcon from '@common/assets/svg/ImportJsonIcon'
 import LatticeIcon from '@common/assets/svg/LatticeIcon'
 import LedgerLetterIcon from '@common/assets/svg/LedgerLetterIcon'
 import PrivateKeyIcon from '@common/assets/svg/PrivateKeyIcon'
+import ReceiveIcon from '@common/assets/svg/ReceiveIcon'
 import SafeIconGray from '@common/assets/svg/SafeIconGray'
 import SeedPhraseIcon from '@common/assets/svg/SeedPhraseIcon'
 import TrezorLockIcon from '@common/assets/svg/TrezorLockIcon'
@@ -73,7 +74,6 @@ const AddAccount = ({
         },
         testID: 'ledger-option'
       },
-
       {
         key: 'lattice',
         text: t('GridPlus'),
@@ -83,6 +83,15 @@ const AddAccount = ({
           dispatch({ type: 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_LATTICE' })
         },
         testID: 'lattice-option'
+      },
+      {
+        key: 'qr',
+        text: t('QR-based'),
+        icon: ReceiveIcon,
+        onPress: () => {
+          goToNextRoute(WEB_ROUTES.qrConnect)
+        },
+        testID: 'qr-option'
       }
     ]
   }, [dispatch, goToNextRoute, setTriggeredHwWalletFlow, t])
