@@ -6,33 +6,21 @@ import { getIsViewOnly } from '@ambire-common/utils/accounts'
 import useController from '@common/hooks/useController'
 
 const useHasGasTank = ({ account }: { account: Account | null }) => {
-  if (!account || !!account.safeCreation) {
-    return {
-      canUseGasTank: false,
-      hasGasTank: false
-    }
-  }
-
   const { keys } = useController('KeystoreController').state
 
   const isViewOnly = useMemo(
-    () => getIsViewOnly(keys, account.associatedKeys),
-    [account.associatedKeys, keys]
+    () => account && getIsViewOnly(keys, account.associatedKeys),
+    [account, keys]
   )
 
   const getAccKeys = useCallback(
-    (acc: any) => {
-      return keys.filter((key) => acc?.associatedKeys.includes(key.addr))
-    },
+    (acc: any) => keys.filter((key) => acc?.associatedKeys.includes(key.addr)),
     [keys]
   )
-  const isSA = useMemo(() => isSmartAccount(account), [account])
-
-  const hasGasTank = useMemo(() => {
-    return !!account && (isSA || canBecomeSmarter(account, getAccKeys(account)))
-  }, [account, getAccKeys, isSA])
 
   const canUseGasTank = useMemo(() => {
+    if (!account) return false
+
     if (account.safeCreation) return false // not available for Safe accounts
 
     if (isViewOnly) return true // assume view only accounts CAN use Gas Tank, not knowing their key types yet
@@ -40,11 +28,7 @@ const useHasGasTank = ({ account }: { account: Account | null }) => {
     return isSmartAccount(account) || canBecomeSmarter(account, getAccKeys(account))
   }, [account, getAccKeys, isViewOnly])
 
-  return {
-    canUseGasTank,
-    hasGasTank,
-    isViewOnly
-  }
+  return { canUseGasTank, isViewOnly }
 }
 
 export default useHasGasTank
