@@ -9,7 +9,6 @@ import InvisibilityIcon from '@common/assets/svg/InvisibilityIcon'
 import LockIcon from '@common/assets/svg/LockIcon'
 import VisibilityIcon from '@common/assets/svg/VisibilityIcon'
 import Button from '@common/components/Button'
-import ButtonWithLoader from '@common/components/ButtonWithLoader/ButtonWithLoader'
 import FatToggle from '@common/components/FatToggle'
 import {
   createGlobalTooltipDataSet,
@@ -17,6 +16,7 @@ import {
 } from '@common/components/GlobalTooltip'
 import InputPassword from '@common/components/InputPassword'
 import LayoutWrapper from '@common/components/LayoutWrapper'
+import Spinner from '@common/components/Spinner'
 import Text from '@common/components/Text'
 import { isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
@@ -246,12 +246,11 @@ const KeyStoreUnlockScreen = () => {
       </View>
       <View style={styles.container}>
         {unlockMethod === 'biometrics' && canUseBiometrics && (
-          <>
-            <ButtonWithLoader
-              type="primary"
-              style={{ width: '100%', marginBottom: 0 }}
-              isLoading={isBiometricsUnlockLoading}
-              text="Unlock with biometrics"
+          <View style={styles.biometricsContainer}>
+            <TouchableOpacity
+              testID="button-unlock-biometrics-icon"
+              activeOpacity={0.85}
+              style={styles.biometricsIconButton}
               disabled={isBiometricsUnlockLoading}
               onPress={() => {
                 handleBiometricsPrompt().catch((e) => {
@@ -259,18 +258,22 @@ const KeyStoreUnlockScreen = () => {
                   console.log('failed to open biometrics prompt', e)
                 })
               }}
-              icon={<FingerprintIcon width={20} height={20} color="#fff" style={spacings.mrSm} />}
-              childrenPosition="left"
-            />
+            >
+              {isBiometricsUnlockLoading ? (
+                <Spinner variant="black" style={{ width: 64, height: 64 }} />
+              ) : (
+                <FingerprintIcon width={64} height={64} color={theme.iconPrimary} />
+              )}
+            </TouchableOpacity>
             <Button
               type="secondary"
-              style={{ width: '100%', marginTop: 12, marginBottom: 0 }}
+              style={styles.switchButton}
               hasBottomSpacing={false}
               text={t('Unlock with password')}
               disabled={isBiometricsUnlockLoading}
               onPress={() => setUnlockMethod('password')}
             />
-          </>
+          </View>
         )}
 
         {unlockMethod === 'password' && (
@@ -317,9 +320,9 @@ const KeyStoreUnlockScreen = () => {
             {canUseBiometrics && (
               <Button
                 type="secondary"
-                style={{ width: '100%', marginTop: 12, marginBottom: 0 }}
                 hasBottomSpacing={false}
-                text="Unlock with biometrics"
+                style={[styles.switchButton, spacings.mt]}
+                text={t('Unlock with biometrics')}
                 onPress={() => {
                   handleBiometricsPrompt().catch((e) => {
                     addToast(`failed to open biometrics prompt`)
