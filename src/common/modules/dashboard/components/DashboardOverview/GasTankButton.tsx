@@ -53,7 +53,7 @@ const GasTankButton = ({ onPress, portfolio, account }: Props) => {
 
   // Purposely don't disable the button (but block the onPress action) in
   // case of a tooltip, because it should be clickable to show the tooltip.
-  const doesHaveTooltip = buttonState === 'soon' || buttonState === 'error'
+  const doesHaveTooltip = buttonState === 'error'
   const disabled = !hasGasTank && !doesHaveTooltip
   const handleOnPress = useCallback(() => {
     if (doesHaveTooltip) return
@@ -64,24 +64,20 @@ const GasTankButton = ({ onPress, portfolio, account }: Props) => {
   const text = useMemo(() => {
     if (buttonState === 'balance') return `${totalBalanceGasTankDetails.balanceUSDFormatted}`
     if (buttonState === 'topup') return t('Top up')
-    if (buttonState === 'soon') return isViewOnly ? '' : t('soon')
+    if (buttonState === 'soon') return t('Gas Tank')
     if (buttonState === 'error') return t('unavailable')
 
     return ''
-  }, [buttonState, totalBalanceGasTankDetails.balanceUSDFormatted, isViewOnly, t])
+  }, [buttonState, totalBalanceGasTankDetails.balanceUSDFormatted, t])
 
   const tooltipText = useMemo(() => {
-    if (buttonState === 'soon') {
-      if (!!account?.safeCreation) return t('Not available for Safe wallets, yet.')
-      return t('Not available for hardware wallets, yet.')
-    }
-
-    if (buttonState === 'error') {
-      return t('Unable to load Gas Tank data.')
-    }
+    if (buttonState === 'error') return t('Unable to load Gas Tank data.')
 
     return ''
-  }, [buttonState, account?.safeCreation, t])
+  }, [buttonState, t])
+
+  const shouldDisplayOnGasTank = buttonState === 'balance'
+  const shouldDisplayValue = buttonState === 'balance'
 
   if (!portfolio.isReadyToVisualize) {
     return <SkeletonLoader lowOpacity width={80} height={26} borderRadius={12} />
@@ -121,15 +117,17 @@ const GasTankButton = ({ onPress, portfolio, account }: Props) => {
               })
             : {}
         }
-        color="#FFFFFF"
+        color={shouldDisplayValue ? '#FFFFFF' : '#B9BFC9'}
         weight="number_medium"
         fontSize={12}
       >
-        {privateValue(text, isPrivacyModeEnabled, 4)}
+        {shouldDisplayValue ? privateValue(text, isPrivacyModeEnabled, 4) : text}
       </Text>
-      <Text fontSize={12} color="#B9BFC9" style={spacings.mlMi}>
-        {t('on Gas Tank')}
-      </Text>
+      {shouldDisplayOnGasTank && (
+        <Text fontSize={12} color="#B9BFC9" style={spacings.mlMi}>
+          {t('on Gas Tank')}
+        </Text>
+      )}
     </AnimatedPressable>
   )
 }
