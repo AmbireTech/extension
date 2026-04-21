@@ -45,7 +45,7 @@ const SendForm = ({
   addressInputState: ReturnType<typeof useAddressInput>
   hasGasTank: boolean
   amountErrorMessage: string
-  amountErrorSeverity?: 'error' | 'warning' | 'info'
+  amountErrorSeverity?: 'error' | 'warning' | 'info' | 'success'
   isRecipientAddressUnknown: boolean
   isRecipientHumanizerKnownTokenOrSmartContract: boolean
   amountFieldValue: string

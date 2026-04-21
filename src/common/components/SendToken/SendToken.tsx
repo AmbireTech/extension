@@ -38,7 +38,7 @@ type Props = {
   validateFromAmount: {
     message?: string
     success?: boolean
-    severity?: 'error' | 'warning' | 'info'
+    severity?: 'error' | 'warning' | 'info' | 'success'
   }
   onFromAmountChange: (value: string) => void
   handleSwitchFromAmountFieldMode: () => void
