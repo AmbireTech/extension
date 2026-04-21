@@ -1,5 +1,5 @@
 import * as SplashScreen from 'expo-splash-screen'
-import React, { Suspense, useContext, useEffect, useRef } from 'react'
+import React, { useContext, useEffect, useRef } from 'react'
 import { View } from 'react-native'
 import { Navigate, Route, Routes } from 'react-router-native'
 
@@ -65,9 +65,7 @@ const Router = () => {
         {/* Fallback route to suppress "No routes matched location" warnings when multiple Routes blocks are rendered */}
         <Route path="*" element={null} />
       </Routes>
-      <Suspense fallback={null}>
-        <MainRoutes />
-      </Suspense>
+      <MainRoutes />
     </View>
   )
 }
