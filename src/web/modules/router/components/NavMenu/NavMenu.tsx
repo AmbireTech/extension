@@ -19,6 +19,7 @@ import { DISCORD_URL, TELEGRAM_URL, TWITTER_URL } from '@common/constants/social
 import useController from '@common/hooks/useController'
 import { AnimatedPressable, useCustomHover } from '@common/hooks/useHover'
 import useNavigation from '@common/hooks/useNavigation'
+import { syncSessionStorage } from '@common/services/storage'
 import useTheme from '@common/hooks/useTheme'
 import { HeaderWithTitle } from '@common/modules/header/components/Header/Header'
 import { ROUTES, WEB_ROUTES } from '@common/modules/router/constants/common'
@@ -35,6 +36,7 @@ import {
 } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
 import { AUTO_LOCK_OPTIONS } from '@web/constants/autoLock'
 import commonWebStyles from '@web/styles/utils/common'
+import { SKIP_AUTO_BIOMETRICS_PROMPT_ONCE } from '@web/modules/keystore/constants'
 
 import getStyles from './styles'
 
@@ -77,6 +79,7 @@ const NavMenu = () => {
   const { hasPasswordSecret } = useController('KeystoreController').state
 
   const handleLockAmbire = useCallback(() => {
+    syncSessionStorage.set(SKIP_AUTO_BIOMETRICS_PROMPT_ONCE, 'true')
     mainDispatch({ type: 'method', params: { method: 'lock', args: [] } })
   }, [mainDispatch])
 

@@ -1,17 +1,12 @@
 import React, { RefObject, useEffect, useState } from 'react'
-import { ScrollView, useWindowDimensions, View } from 'react-native'
-import {
-  KeyboardController,
-  KeyboardEvents,
-  useReanimatedFocusedInput,
-  useReanimatedKeyboardAnimation
-} from 'react-native-keyboard-controller'
+import { ScrollView, View } from 'react-native'
+import { KeyboardController, KeyboardEvents } from 'react-native-keyboard-controller'
 import { Modalize } from 'react-native-modalize'
-import Animated, { useAnimatedStyle, useSharedValue } from 'react-native-reanimated'
+import Animated from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import useTheme from '@common/hooks/useTheme'
-import spacings, { SPACING, SPACING_LG, SPACING_SM } from '@common/styles/spacings'
+import spacings, { SPACING_LG, SPACING_SM } from '@common/styles/spacings'
 import common, { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import { Portal } from '@gorhom/portal'
 
@@ -50,11 +45,7 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
 
   const { styles, theme } = useTheme(getStyles)
   const { bottom } = useSafeAreaInsets()
-  const { height: keyboardHeight } = useReanimatedKeyboardAnimation()
-  const { input } = useReanimatedFocusedInput()
-  const { height: windowHeight } = useWindowDimensions()
   const [isKeyboardVisible, setIsKeyboardVisible] = useState(false)
-  const currentTranslateY = useSharedValue(0)
   const closeBottomSheet = React.useCallback(_closeBottomSheet, [_closeBottomSheet])
 
   useEffect(() => {
@@ -80,38 +71,6 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
     id
   } = useBottomSheetInternal(props)
 
-  const keyboardOffsetStyle = useAnimatedStyle(() => {
-    const kbHeight = Math.abs(keyboardHeight.value)
-    if (kbHeight === 0) {
-      currentTranslateY.value = 0
-      return { transform: [{ translateY: 0 }] }
-    }
-
-    let shift = kbHeight
-
-    if (input.value) {
-      const restingY = input.value.layout.absoluteY - currentTranslateY.value
-      const inputBottomY = restingY + input.value.layout.height
-      const keyboardTopY = windowHeight - kbHeight
-      const requiredShift = inputBottomY + 24 - keyboardTopY
-      const maxShift = Math.max(0, restingY - modalTopOffset - 24)
-
-      if (requiredShift > 0) {
-        shift = Math.min(kbHeight, requiredShift, maxShift)
-      } else {
-        shift = 0
-      }
-    }
-
-    let shiftValue = shift
-    if (shift !== 0) {
-      shiftValue = shift
-    }
-
-    currentTranslateY.value = -shiftValue
-    return { transform: [{ translateY: -shiftValue }] }
-  })
-
   const scrollViewRef = externalScrollViewRef
 
   return (
@@ -134,12 +93,7 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
       )}
       <Animated.View
         key={`portal-host-${id}`}
-        style={[
-          styles.portalHost,
-          customZIndex ? { zIndex: customZIndex } : {},
-
-          keyboardOffsetStyle
-        ]}
+        style={[styles.portalHost, customZIndex ? { zIndex: customZIndex } : {}]}
         pointerEvents="box-none"
       >
         <Modalize
@@ -184,12 +138,14 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
               : {}
           ]}
           handlePosition="inside"
-          useNativeDriver={false}
+          useNativeDriver={true}
           avoidKeyboardLikeIOS={false}
           modalTopOffset={modalTopOffset}
           threshold={90}
           HeaderComponent={HeaderComponent}
-          adjustToContentHeight={customRenderer ? false : adjustToContentHeight}
+          adjustToContentHeight={
+            customRenderer ? false : isKeyboardVisible ? false : adjustToContentHeight
+          }
           disableScrollIfPossible={false}
           withOverlay={false}
           onBackButtonPress={() => {

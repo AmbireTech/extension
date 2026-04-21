@@ -7,6 +7,7 @@ interface DappsControllerHelpers {
   isLoadingCurrentDapp: boolean
   currentDapp: Dapp | null
   getCurrentDapp: () => Promise<Dapp | null>
+  hasUnverifiedDapps: (dapps: string[]) => Promise<boolean>
 }
 
 type DefinedControllerHelpers = {

@@ -1,10 +1,11 @@
 import { flushSync } from 'react-dom'
 
 import { parse, stringify } from '@ambire-common/libs/richJson/richJson'
-import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+import { isMobile } from '@common/config/env'
 import { isExtension } from '@web/constants/browserapi'
 
-const MAX_LOADING_TIME = 10000
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+export const CONTROLLER_STORE_MAX_LOADING_TIME = 10000
 
 export class ControllerStore {
   isReady = false
@@ -26,7 +27,7 @@ export class ControllerStore {
       if (!this.isReady && this.#listeners.has('events')) {
         this.#listeners.get('events')!.forEach((cb) => cb('controllersLoadingTakingTooLong'))
       }
-    }, MAX_LOADING_TIME)
+    }, CONTROLLER_STORE_MAX_LOADING_TIME)
   }
 
   // Track which controllers have received their first update
@@ -34,10 +35,10 @@ export class ControllerStore {
 
   init(
     allControllersByName: (keyof AllControllersMappingType)[],
-    onInitReady: (allControllersByName: (keyof AllControllersMappingType)[]) => void
+    onInitReady?: (allControllersByName: (keyof AllControllersMappingType)[]) => void
   ) {
     this.controllersByName = allControllersByName
-    onInitReady(allControllersByName)
+    onInitReady?.(allControllersByName)
     this.#checkReadiness()
   }
 
@@ -48,7 +49,7 @@ export class ControllerStore {
   ) {
     if (ctrl === undefined) return
     try {
-      this.#states[id] = isExtension ? { ...ctrl } : parse(stringify(ctrl))
+      this.#states[id] = isExtension || isMobile ? { ...ctrl } : parse(stringify(ctrl))
     } catch (error) {
       console.error(error)
     }
@@ -114,6 +115,12 @@ export class ControllerStore {
 
       return true
     })
+
+    // NOTE: used for debugging the initial loading of controllers
+    // console.log(
+    //   'not ready controllers',
+    //   this.controllersByName.filter((ctrlName) => !this.initializedControllers.has(ctrlName))
+    // )
 
     if (allReady) {
       this.isReady = true
