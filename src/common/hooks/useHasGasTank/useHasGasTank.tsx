@@ -32,13 +32,13 @@ const useHasGasTank = ({ account }: { account: Account | null }) => {
     return !!account && (isSA || canBecomeSmarter(account, getAccKeys(account)))
   }, [account, getAccKeys, isSA])
 
-  const canUseGasTank = useMemo(
-    () =>
-      (isViewOnly && !account.safeCreation) || // assume all view only accounts CAN use Gas Tank
-      isSmartAccount(account) ||
-      (canBecomeSmarter(account, getAccKeys(account)) && !account.safeCreation),
-    [account, getAccKeys, isViewOnly]
-  )
+  const canUseGasTank = useMemo(() => {
+    if (account.safeCreation) return false // not available for Safe accounts
+
+    if (isViewOnly) return true // assume view only accounts CAN use Gas Tank, not knowing their key types yet
+
+    return isSmartAccount(account) || canBecomeSmarter(account, getAccKeys(account))
+  }, [account, getAccKeys, isViewOnly])
 
   return {
     canUseGasTank,
