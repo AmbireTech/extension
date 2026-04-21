@@ -90,7 +90,7 @@ const MarketingBanner: React.FC<Props> = ({ banner }) => {
         if (action?.actionName === 'survey') {
           surveyDispatch({
             type: 'method',
-            params: { method: 'fetchSurvey', args: [action.meta.surveyId, dismissBanner] }
+            params: { method: 'fetchSurvey', args: [action.meta.surveyId, banner.id] }
           })
           navigate(WEB_ROUTES.survey)
         } else await openInTab({ url, shouldCloseCurrentWindow: isPopup })
