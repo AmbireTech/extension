@@ -65,6 +65,16 @@ const MarketingBanner: React.FC<Props> = ({ banner }) => {
     ]
   })
 
+  const dismissBanner = useCallback(() => {
+    bannerDispatch({
+      type: 'method',
+      params: {
+        method: 'dismissBanner',
+        args: [banner.id]
+      }
+    })
+  }, [banner.id, bannerDispatch])
+
   return (
     <AnimatedPressable
       style={[
@@ -80,7 +90,7 @@ const MarketingBanner: React.FC<Props> = ({ banner }) => {
         if (action?.actionName === 'survey') {
           surveyDispatch({
             type: 'method',
-            params: { method: 'fetchSurvey', args: [action.meta.surveyId, banner.id] }
+            params: { method: 'fetchSurvey', args: [action.meta.surveyId, dismissBanner] }
           })
           navigate(WEB_ROUTES.survey)
         } else await openInTab({ url, shouldCloseCurrentWindow: isPopup })
@@ -102,15 +112,7 @@ const MarketingBanner: React.FC<Props> = ({ banner }) => {
         <View style={[flexbox.directionRow, flexbox.justifySpaceBetween]}>
           <Text weight="medium">{title}</Text>
           <Pressable
-            onPress={() => {
-              bannerDispatch({
-                type: 'method',
-                params: {
-                  method: 'dismissBanner',
-                  args: [banner.id]
-                }
-              })
-            }}
+            onPress={dismissBanner}
             hitSlop={8}
             style={{
               width: 24,

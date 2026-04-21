@@ -23,9 +23,8 @@ const SurveyScreen = () => {
   const { addToast } = useToast()
   const {
     dispatch: dispatchToSurvey,
-    state: { status, questions, answers, currentQuestion, sourceBannerId, errorMessage }
+    state: { status, questions, answers, currentQuestion, errorMessage }
   } = useController('SurveyController')
-  const { dispatch: bannerDispatch } = useController('BannerController')
 
   const {
     state: { keyStoreUid }
@@ -40,15 +39,6 @@ const SurveyScreen = () => {
   } = useController('InviteController')
 
   const { navigate } = useNavigation()
-
-  useEffect(() => {
-    if (status !== 'success-submitted') return
-    if (!sourceBannerId) return
-    bannerDispatch({
-      type: 'method',
-      params: { method: 'dismissBanner', args: [sourceBannerId] }
-    })
-  }, [bannerDispatch, sourceBannerId, status])
 
   const [inputtedAnswer, setInputtedAnswer] = useState<{
     questionPosition: number
