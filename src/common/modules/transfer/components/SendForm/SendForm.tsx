@@ -45,7 +45,7 @@ const SendForm = ({
   addressInputState: ReturnType<typeof useAddressInput>
   hasGasTank: boolean
   amountErrorMessage: string
-  amountErrorSeverity?: 'error' | 'warning' | 'info'
+  amountErrorSeverity?: 'error' | 'warning' | 'info' | 'success'
   isRecipientAddressUnknown: boolean
   isRecipientHumanizerKnownTokenOrSmartContract: boolean
   amountFieldValue: string
@@ -301,7 +301,11 @@ const SendForm = ({
           fromAmountInFiat={amountInFiat}
           fromAmountFieldMode={amountFieldMode}
           maxFromAmount={maxAmount}
-          validateFromAmount={{ success: !amountIsError, message: amountErrorMessage }}
+          validateFromAmount={{
+            success: !amountIsError,
+            message: amountErrorMessage,
+            severity: amountErrorSeverity
+          }}
           onFromAmountChange={setAmountFieldValue}
           handleSwitchFromAmountFieldMode={switchAmountFieldMode}
           handleSetMaxFromAmount={setMaxAmount}
