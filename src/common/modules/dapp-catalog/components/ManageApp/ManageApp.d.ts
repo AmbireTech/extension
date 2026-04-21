@@ -1,0 +1,17 @@
+import React from 'react'
+import { Pressable, ViewStyle } from 'react-native'
+
+import { Dapp } from '@ambire-common/interfaces/dapp'
+
+export interface ManageAppProps {
+  dapp: Dapp
+  children: React.ReactNode
+  withCurrentAccount?: boolean
+  isParentHovered?: boolean
+  buttonProps?: Omit<React.ComponentProps<typeof Pressable>, 'onPress' | 'ref'>
+  style?: ViewStyle
+}
+
+declare const ManageApp: React.FC<ManageAppProps>
+
+export default ManageApp

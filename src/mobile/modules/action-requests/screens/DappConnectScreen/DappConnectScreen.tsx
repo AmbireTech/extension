@@ -76,6 +76,7 @@ const DappConnectScreen = () => {
 
   return (
     <MobileLayoutContainer
+      withHorizontalPadding
       renderDirectChildren={() => (
         <ActionFooter
           onReject={handleDenyButtonPress}

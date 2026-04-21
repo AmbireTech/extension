@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react'
+import React, { useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 
@@ -64,13 +64,9 @@ const DappItem = (dapp: DappItemProps) => {
   const { styles, theme } = useTheme(getStyles)
   const { dispatch: dappsDispatch } = useController('DappsController')
   const { t } = useTranslation()
-  const [hovered, setHovered] = useState(false)
-  const [isManageAppOpen, setIsManageAppOpen] = useState(false)
-  const [isNetworkSelectorOpen, setIsNetworkSelectorOpen] = useState(false)
-  const settingsButtonRef = React.useRef<View>(null)
   const navigation = useNavigation()
 
-  const [bindAnim, animStyle] = useCustomHover({
+  const [bindAnim, animStyle, isCardHovered] = useCustomHover({
     property: 'backgroundColor',
     values: {
       from: blacklisted === 'BLACKLISTED' ? theme.errorBackground : theme.secondaryBackground,
@@ -110,11 +106,7 @@ const DappItem = (dapp: DappItemProps) => {
   const Container = isMobile ? View : 'div'
   const containerProps = isMobile
     ? { style: flexbox.flex1 }
-    : {
-        style: { display: 'flex', flex: 1 },
-        onMouseEnter: () => setHovered(true),
-        onMouseLeave: () => setHovered(false)
-      }
+    : { style: { display: 'flex', flex: 1 } }
 
   return (
     <View testID="dapp-wrapper" style={styles.dappItemWrapper}>
@@ -244,21 +236,18 @@ const DappItem = (dapp: DappItemProps) => {
                     <Badge text={t('Blacklisted')} type="error" style={spacings.mrTy} />
                   )}
                 </View>
-                <View testID="manage-dapp-dropdown" style={{ zIndex: 999 }}>
-                  {!!hovered && !!isConnected && (
-                    <AnimatedPressable
-                      {...bindSettingsIconAnimation}
-                      onPress={() => {
-                        setIsManageAppOpen((prev) => !prev)
-                        setIsNetworkSelectorOpen(false)
+                {!!isConnected && (
+                  <View testID="manage-dapp-dropdown" style={{ zIndex: 999 }}>
+                    <ManageApp
+                      dapp={dapp}
+                      isParentHovered={isCardHovered}
+                      buttonProps={{
+                        ...bindSettingsIconAnimation,
+                        style: [
+                          spacings.mlTy,
+                          { transform: [{ scale: settingsIconAnimationStyle.scaleX as number }] }
+                        ]
                       }}
-                      style={[
-                        spacings.mlTy,
-                        {
-                          transform: [{ scale: settingsIconAnimationStyle.scaleX as number }]
-                        }
-                      ]}
-                      ref={settingsButtonRef}
                     >
                       <SettingsWheelIcon
                         width={20}
@@ -266,9 +255,9 @@ const DappItem = (dapp: DappItemProps) => {
                         strokeWidth="1.8"
                         color={theme.iconPrimary}
                       />
-                    </AnimatedPressable>
-                  )}
-                </View>
+                    </ManageApp>
+                  </View>
+                )}
                 {isFeatured && (
                   <Badge
                     text={t('Featured')}
@@ -300,14 +289,6 @@ const DappItem = (dapp: DappItemProps) => {
           </Text>
         </AnimatedPressable>
       </Container>
-      <ManageApp
-        isOpen={isManageAppOpen}
-        setIsOpen={setIsManageAppOpen}
-        dapp={dapp}
-        parentRef={settingsButtonRef}
-        isNetworkSelectorExpanded={isNetworkSelectorOpen}
-        setIsNetworkSelectorExpanded={setIsNetworkSelectorOpen}
-      />
     </View>
   )
 }

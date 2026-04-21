@@ -1,10 +1,13 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react'
-import { Animated, Dimensions, View, ViewStyle } from 'react-native'
+import { Animated, Dimensions, Pressable, View, ViewStyle } from 'react-native'
 
 import { Dapp } from '@ambire-common/interfaces/dapp'
+import shortenAddress from '@ambire-common/utils/shortenAddress'
+import Avatar from '@common/components/Avatar'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import Text from '@common/components/Text'
 import { isWeb } from '@common/config/env'
+import { AnimatedPressable } from '@common/hooks/useHover'
 import usePrevious from '@common/hooks/usePrevious'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
@@ -12,9 +15,19 @@ import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import { Portal } from '@gorhom/portal'
 
+import useManageApp from '../../hooks/useManageApp'
 import DappIcon from '../DappIcon'
 import DisconnectButton from './DisconnectButton'
 import NetworkSelector from './NetworkSelector'
+
+interface ManageAppProps {
+  dapp: Dapp
+  children: React.ReactNode
+  withCurrentAccount?: boolean
+  isParentHovered?: boolean
+  buttonProps?: Omit<React.ComponentProps<typeof Pressable>, 'onPress' | 'ref'>
+  style?: ViewStyle
+}
 
 const MAX_APP_NAME_LENGTH = 20
 
@@ -63,26 +76,19 @@ const AppData = ({ dapp }: { dapp: Dapp }) => {
 
 const ManageApp = ({
   dapp,
-  style = {},
-  isOpen,
-  setIsOpen,
-  parentRef,
-  isNetworkSelectorExpanded,
-  setIsNetworkSelectorExpanded
-}: {
-  dapp: Dapp
-  parentRef: React.RefObject<View | null>
-  style?: ViewStyle
-  isOpen: boolean
-  setIsOpen: React.Dispatch<React.SetStateAction<boolean>>
-  isNetworkSelectorExpanded: boolean
-  setIsNetworkSelectorExpanded: React.Dispatch<React.SetStateAction<boolean>>
-}) => {
+  children,
+  withCurrentAccount = false,
+  isParentHovered,
+  buttonProps,
+  style = {}
+}: ManageAppProps) => {
   const { theme } = useTheme()
-  // menuEl holds the portal node. A callback ref is used instead of useRef
-  // because @gorhom/portal renders into a separate React tree — the node is
-  // attached in a later render cycle, so a state update is needed to re-run
-  // the positioning effect once the element actually exists in the DOM.
+  const { account } = useManageApp(dapp)
+  const [isOpen, setIsOpen] = useState(false)
+  const [isNetworkSelectorExpanded, setIsNetworkSelectorExpanded] = useState(false)
+  const [isSelfHovered, setIsSelfHovered] = useState(false)
+  const parentRef = useRef<View>(null)
+
   const [menuEl, setMenuEl] = useState<View | null>(null)
   const [position, setPosition] = useState<{
     top?: number
@@ -140,14 +146,12 @@ const ManageApp = ({
     []
   )
 
-  // Runs after the portal node is confirmed mounted (menuEl is set).
   useEffect(() => {
     if (!menuEl || !parentRef.current) return
 
     if (isWeb) {
       const parentRect = (parentRef.current as unknown as HTMLElement).getBoundingClientRect()
       const el = menuEl as unknown as HTMLElement
-      // offsetWidth/offsetHeight ignore CSS transforms — correct even at scale(0).
       applyPosition(
         parentRect.left,
         parentRect.top,
@@ -163,9 +167,8 @@ const ManageApp = ({
         })
       })
     }
-  }, [menuEl, parentRef, applyPosition])
+  }, [menuEl, applyPosition])
 
-  // Start open animation only after position is known.
   useEffect(() => {
     if (!isPositioned) return
     Animated.parallel([
@@ -174,7 +177,6 @@ const ManageApp = ({
     ]).start()
   }, [isPositioned, scaleAnim, opacityAnim])
 
-  // Close when clicking outside
   useEffect(() => {
     if (!isWeb) return
     const handleClickOutside = (event: MouseEvent) => {
@@ -190,18 +192,16 @@ const ManageApp = ({
     }
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [menuEl, parentRef, setIsOpen])
+  }, [menuEl])
 
-  // Drive the mount/unmount lifecycle with animated open and close transitions.
   useEffect(() => {
     if (isOpen && !prevIsOpen) {
-      // Reset both animations before mounting so every open plays from scratch.
       scaleAnim.setValue(0)
       opacityAnim.setValue(0)
       setIsPositioned(false)
+      setIsNetworkSelectorExpanded(false)
       setIsVisible(true)
     } else if (!isOpen && prevIsOpen) {
-      // Animate out, then unmount.
       Animated.parallel([
         Animated.timing(scaleAnim, { toValue: 0, duration: 150, useNativeDriver: !isWeb }),
         Animated.timing(opacityAnim, { toValue: 0, duration: 150, useNativeDriver: !isWeb })
@@ -211,54 +211,100 @@ const ManageApp = ({
     }
   }, [isOpen, scaleAnim, opacityAnim, prevIsOpen])
 
-  if (!isVisible) return null
+  const handlePress = useCallback(() => {
+    if (!dapp.isConnected) return
+    setIsOpen((prev) => !prev)
+  }, [dapp.isConnected])
+
+  const showChildren = isParentHovered === undefined || isParentHovered || isSelfHovered
 
   return (
-    <Portal hostName="global">
-      <Animated.View
-        ref={setMenuEl as any}
-        style={{
-          position: 'absolute',
-          top: position.top,
-          bottom: position.bottom,
-          left: position.left,
-          zIndex: 999,
-          transform: [
-            {
-              translateY: scaleAnim.interpolate({
-                inputRange: [0, 1],
-                outputRange: [position.isAbove ? 20 : -20, 0]
-              })
-            },
-            { scale: scaleAnim },
-            {
-              translateX: scaleAnim.interpolate({
-                inputRange: [0, 1],
-                outputRange: [position.isAlignedRight ? 20 : -20, 0]
-              })
-            }
-          ],
-          transformOrigin: `${position.isAbove ? 'bottom' : 'top'} ${position.isAlignedRight ? 'right' : 'left'}`,
-          minWidth: 216,
-          // Hide until positioned to avoid a flash at {left: 0}.
-          opacity: isPositioned ? opacityAnim : 0,
-          ...spacings.phTy,
-          ...spacings.pvTy,
-          backgroundColor: theme.secondaryBackground,
-          borderRadius: BORDER_RADIUS_PRIMARY,
-          ...style
-        }}
+    <View style={{ zIndex: 999 }}>
+      <AnimatedPressable
+        ref={parentRef}
+        {...(buttonProps as any)}
+        onPress={handlePress}
+        // @ts-ignore - web-only hover events
+        onMouseEnter={() => setIsSelfHovered(true)}
+        onMouseLeave={() => setIsSelfHovered(false)}
       >
-        <NetworkSelector
-          dapp={dapp}
-          isAbove={position.isAbove}
-          isExpanded={isNetworkSelectorExpanded}
-          setIsExpanded={setIsNetworkSelectorExpanded}
-        />
-        <DisconnectButton dapp={dapp} setIsOpen={setIsOpen} />
-        <AppData dapp={dapp} />
-      </Animated.View>
-    </Portal>
+        {showChildren ? children : null}
+      </AnimatedPressable>
+
+      {isVisible && (
+        <Portal hostName="global">
+          <Animated.View
+            ref={setMenuEl as any}
+            style={{
+              position: 'absolute',
+              top: position.top,
+              bottom: position.bottom,
+              left: position.left,
+              zIndex: 999,
+              transform: [
+                {
+                  translateY: scaleAnim.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [position.isAbove ? 20 : -20, 0]
+                  })
+                },
+                { scale: scaleAnim },
+                {
+                  translateX: scaleAnim.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [position.isAlignedRight ? 20 : -20, 0]
+                  })
+                }
+              ],
+              transformOrigin: `${position.isAbove ? 'bottom' : 'top'} ${position.isAlignedRight ? 'right' : 'left'}`,
+              minWidth: 216,
+              opacity: isPositioned ? opacityAnim : 0,
+              ...spacings.phTy,
+              ...spacings.pvTy,
+              backgroundColor: theme.secondaryBackground,
+              borderRadius: BORDER_RADIUS_PRIMARY,
+              ...style
+            }}
+          >
+            <NetworkSelector
+              dapp={dapp}
+              isAbove={position.isAbove}
+              isExpanded={isNetworkSelectorExpanded}
+              setIsExpanded={setIsNetworkSelectorExpanded}
+            />
+            {!!withCurrentAccount && !!account && (
+              <View
+                style={[
+                  flexbox.directionRow,
+                  flexbox.alignCenter,
+                  flexbox.justifySpaceBetween,
+                  spacings.phTy,
+                  spacings.pvTy,
+                  { borderRadius: 8 }
+                ]}
+              >
+                <Text fontSize={14} weight="medium" appearance="tertiaryText">
+                  Connect Wallet
+                </Text>
+                <View style={[flexbox.directionRow, flexbox.alignCenter]}>
+                  <Avatar
+                    pfp={account.preferences.pfp}
+                    address={account.addr}
+                    size={20}
+                    style={spacings.mr0}
+                  />
+                  <Text fontSize={12} weight="medium" style={spacings.mlTy}>
+                    {shortenAddress(account.addr, 13)}
+                  </Text>
+                </View>
+              </View>
+            )}
+            {!!dapp.isConnected && <DisconnectButton dapp={dapp} setIsOpen={setIsOpen} />}
+            <AppData dapp={dapp} />
+          </Animated.View>
+        </Portal>
+      )}
+    </View>
   )
 }
 

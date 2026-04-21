@@ -1,6 +1,6 @@
-import React, { useRef, useState } from 'react'
+import React from 'react'
 import { useTranslation } from 'react-i18next'
-import { Pressable, View, ViewStyle } from 'react-native'
+import { View } from 'react-native'
 
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import { isWeb } from '@common/config/env'
@@ -15,37 +15,26 @@ const CurrentApp = () => {
   const { theme } = useTheme()
   const { t } = useTranslation()
   const { currentDapp, isLoadingCurrentDapp } = useController('DappsController')
-  const [isManageAppExpanded, setIsManageAppExpanded] = useState(false)
-  const [isNetworkSelectorExpanded, setIsNetworkSelectorExpanded] = useState(false)
   const isBlacklisted = currentDapp?.blacklisted === 'BLACKLISTED'
-  const pressableRef = useRef<View>(null)
 
   if (!currentDapp) return null
 
   return (
-    // Wrap on purpose so ManageApp is outside the pressable
     // The opacity change is done to prevent layout shifting when disconnecting an app
     <View style={{ opacity: isLoadingCurrentDapp ? 0.4 : 1 }}>
       <ManageApp
         dapp={currentDapp}
-        isOpen={isManageAppExpanded}
-        setIsOpen={setIsManageAppExpanded}
-        parentRef={pressableRef}
-        isNetworkSelectorExpanded={isNetworkSelectorExpanded}
-        setIsNetworkSelectorExpanded={setIsNetworkSelectorExpanded}
-      />
-      <Pressable
-        style={{
-          width: 40,
-          height: 40,
-          backgroundColor: !isBlacklisted ? theme.primaryBackground : theme.errorBackground,
-          borderRadius: 20,
-          ...spacings.ml,
-          ...flexbox.center,
-          ...(isWeb && !currentDapp.isConnected ? ({ cursor: 'default' } as any as ViewStyle) : {})
-        }}
-        dataSet={
-          isBlacklisted
+        buttonProps={{
+          style: {
+            width: 40,
+            height: 40,
+            backgroundColor: !isBlacklisted ? theme.primaryBackground : theme.errorBackground,
+            borderRadius: 20,
+            ...spacings.ml,
+            ...flexbox.center,
+            ...(isWeb && !currentDapp.isConnected ? ({ cursor: 'default' } as any) : {})
+          },
+          dataSet: isBlacklisted
             ? createGlobalTooltipDataSet({
                 id: 'blacklisted-app-tooltip',
                 content: t('Blacklisted app!'),
@@ -59,16 +48,10 @@ const CurrentApp = () => {
                 }
               })
             : {}
-        }
-        ref={pressableRef}
-        disabled={!currentDapp || !currentDapp.isConnected}
-        onPress={() => {
-          setIsManageAppExpanded((prev) => !prev)
-          setIsNetworkSelectorExpanded(false)
         }}
       >
         <DappIcon dapp={currentDapp} isDashboard />
-      </Pressable>
+      </ManageApp>
     </View>
   )
 }

@@ -78,6 +78,14 @@ export const handleActions = async (
       return
     }
 
+    case 'DAPPS_CONTROLLER_DISCONNECT_DAPP': {
+      await mainCtrl.dapps.broadcastDappSessionEvent('disconnect', undefined, params.id)
+      mainCtrl.dapps.updateDapp(params.id, { isConnected: false })
+      await mainCtrl.autoLogin.revokeAllPoliciesForDomain(params.id, params.url)
+
+      break
+    }
+
     case 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_FROM_SAVED_SEED_PHRASE': {
       const keystoreSavedSeed = await mainCtrl.keystore.getSavedSeed(params.id)
       if (!keystoreSavedSeed) return

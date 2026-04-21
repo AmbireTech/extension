@@ -5,7 +5,6 @@ import { View } from 'react-native'
 import Button, { Props as ButtonProps } from '@common/components/Button'
 import ActionsPagination from '@common/modules/action-requests/components/ActionsPagination'
 import spacings from '@common/styles/spacings'
-import flexbox from '@common/styles/utils/flexbox'
 
 type Props = {
   onReject?: () => void
@@ -37,7 +36,7 @@ const ActionFooter = ({
   const showReject = useMemo(() => !!onReject, [onReject])
 
   return (
-    <View style={spacings.ptSm}>
+    <View style={[spacings.ptSm, spacings.phSm]}>
       {resolveNode || (
         <Button
           testID={resolveButtonTestID}
