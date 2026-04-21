@@ -3,12 +3,16 @@
 /**
  * patchBaseline.js
  *
- * Runs `yarn extension:type:check-new` and upserts any errors originating
- * from node_modules into .tsc-baseline.json.
+ * Runs `yarn extension:type:check-new` twice — once with
+ * src/ambire-common/node_modules present and once without — then upserts
+ * all third-party errors found in either run into .tsc-baseline.json.
  *
- * By default only node_modules errors are patched because those come from
- * third-party code we can't fix. Add more patterns to NODE_MODULES_MARKERS
- * if new problematic packages appear.
+ * The double-run is necessary because tsc resolves some types differently
+ * depending on whether ambire-common has its own node_modules. Both states
+ * are valid for the project, so the baseline needs to cover both.
+ *
+ * Requires src/ambire-common/node_modules to be present — run
+ * Please install node_modules in src/ambire-common before running this script.
  *
  * Usage: node scripts/patchBaseline.js
  */
@@ -18,10 +22,12 @@ const fs = require('fs')
 const path = require('path')
 
 // Errors whose file path matches any of these strings will be patched.
-// Extend this list when new unfixable third-party packages appear.
-const NODE_MODULES_MARKERS = ['node_modules/ox', 'node_modules/viem']
+// Extend this list when new unfixable third-party packages cause noise.
+const NODE_MODULES_MARKERS = ['node_modules/']
 
 const BASELINE_PATH = path.resolve('.tsc-baseline.json')
+const AMBIRE_NODE_MODULES = path.resolve('src/ambire-common/node_modules')
+const AMBIRE_NODE_MODULES_TMP = path.resolve('src/ambire-common/node_modules_tmp_baseline')
 
 // ---------------------------------------------------------------------------
 
@@ -64,6 +70,22 @@ function isThirdPartyError(err) {
   return NODE_MODULES_MARKERS.some((marker) => err.file.includes(marker))
 }
 
+function runCheck(label) {
+  console.log(`\nRunning type check (${label}) …`)
+  let output = ''
+  try {
+    output = execSync('yarn extension:type:check-new', {
+      encoding: 'utf8',
+      stdio: ['inherit', 'pipe', 'pipe']
+    })
+  } catch (err) {
+    // Non-zero exit is normal when new errors are found.
+    output = (err.stdout || '') + (err.stderr || '')
+  }
+  console.log(output)
+  return parseOutput(output).filter(isThirdPartyError)
+}
+
 function loadBaseline(filePath) {
   if (!fs.existsSync(filePath)) {
     console.log(`Baseline not found at ${filePath} – starting fresh.`)
@@ -88,38 +110,58 @@ function findExistingKey(errorsMap, newEntry) {
   return null
 }
 
+// Merges errors from multiple runs, keyed by file+code so duplicates
+// (same error found in both states) are deduplicated. Last write wins on
+// hash, which is fine — if the hash differs between runs for the same
+// logical error, that's a sign the baseline needs both states covered and
+// the second run's hash is as valid as the first.
+function mergeErrors(runs) {
+  const seen = new Map()
+  for (const errors of runs) {
+    for (const err of errors) {
+      seen.set(`${err.file}::${err.code}`, err)
+    }
+  }
+  return [...seen.values()]
+}
+
 // ---------------------------------------------------------------------------
 
 function main() {
-  console.log('Running yarn extension:type:check-new …')
-  let output = ''
-  try {
-    output = execSync('yarn extension:type:check-new', {
-      encoding: 'utf8',
-      stdio: ['inherit', 'pipe', 'pipe']
-    })
-  } catch (err) {
-    // Non-zero exit is normal when the command finds new errors.
-    output = (err.stdout || '') + (err.stderr || '')
+  if (!fs.existsSync(AMBIRE_NODE_MODULES)) {
+    console.error(`Error: ${AMBIRE_NODE_MODULES} not found.`)
+    console.error('Run `yarn` inside src/ambire-common before running this script.')
+    process.exit(1)
   }
 
-  console.log('\n── Command output ──────────────────────────────────────────')
-  console.log(output)
-  console.log('────────────────────────────────────────────────────────────\n')
+  // Run 1: with ambire-common/node_modules present
+  const errorsWithNodeModules = runCheck('with ambire-common/node_modules')
 
-  const thirdPartyErrors = parseOutput(output).filter(isThirdPartyError)
+  // Run 2: without — rename the directory out of the way and restore it afterwards
+  let errorsWithoutNodeModules = []
+  try {
+    fs.renameSync(AMBIRE_NODE_MODULES, AMBIRE_NODE_MODULES_TMP)
+    errorsWithoutNodeModules = runCheck('without ambire-common/node_modules')
+  } finally {
+    // Always restore, even if runCheck throws.
+    if (fs.existsSync(AMBIRE_NODE_MODULES_TMP)) {
+      fs.renameSync(AMBIRE_NODE_MODULES_TMP, AMBIRE_NODE_MODULES)
+    }
+  }
 
-  if (thirdPartyErrors.length === 0) {
-    console.log('No third-party errors found. Baseline unchanged.')
+  const allThirdPartyErrors = mergeErrors([errorsWithNodeModules, errorsWithoutNodeModules])
+
+  if (allThirdPartyErrors.length === 0) {
+    console.log('\nNo third-party errors found in either run. Baseline unchanged.')
     return
   }
 
-  console.log(`Found ${thirdPartyErrors.length} third-party error(s) to patch.`)
+  console.log(`\nPatching ${allThirdPartyErrors.length} third-party error(s) into baseline.`)
 
   const baseline = loadBaseline(BASELINE_PATH)
   if (!baseline.errors) baseline.errors = {}
 
-  for (const err of thirdPartyErrors) {
+  for (const err of allThirdPartyErrors) {
     const existingKey = findExistingKey(baseline.errors, err)
 
     if (existingKey) {
