@@ -223,7 +223,7 @@ const QrConnectScreen = () => {
   const renderWalletRow = useCallback(
     (wallet: (typeof qrWallets)[number]) => (
       <View
-        key={wallet.walletType}
+        key={`${wallet.label}-${wallet.protocol}`}
         style={[
           flexbox.directionRow,
           flexbox.alignCenter,
@@ -288,7 +288,9 @@ const QrConnectScreen = () => {
           </View>
 
           <Text fontSize={14} style={spacings.mt}>
-            {t('You can choose from a list of official QR-code supporting partners below.')}
+            {t(
+              'We cannot guarantee stable behavior when importing accounts from QR wallets that are not listed below.'
+            )}
           </Text>
 
           <View style={spacings.mtMd}>
