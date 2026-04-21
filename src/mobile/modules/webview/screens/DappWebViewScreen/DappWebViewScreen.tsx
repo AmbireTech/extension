@@ -17,16 +17,16 @@ import BottomSheet from '@common/components/BottomSheet'
 import NetworkIcon from '@common/components/NetworkIcon'
 import Search from '@common/components/Search'
 import Text from '@common/components/Text'
+import { ControllersMiddlewareContext } from '@common/contexts/controllersMiddlewareContext'
 import useController from '@common/hooks/useController'
 import useDebounce from '@common/hooks/useDebounce'
 import { AnimatedPressable, useCustomHover } from '@common/hooks/useHover'
 import useNavigation from '@common/hooks/useNavigation'
 import useTheme from '@common/hooks/useTheme'
-import { ControllersMiddlewareContext } from '@common/contexts/controllersMiddlewareContext'
-import eventBus from '@common/services/event/eventBus'
 import NotConnected from '@common/modules/dapp-catalog/components/DappIcon/NotConnected'
 import DappItem from '@common/modules/dapp-catalog/components/DappItem'
 import { ROUTES } from '@common/modules/router/constants/common'
+import eventBus from '@common/services/event/eventBus'
 import spacings from '@common/styles/spacings'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
@@ -164,7 +164,7 @@ const DappWebViewScreen = () => {
 
   // WebView Refs & State
   const webviewRef = useRef<WebView>(null)
-  const [trustedUrl, setTrustedUrl] = useState<string>(initialUrl)
+  const [currentUrl, setCurrentUrl] = useState<string>(initialUrl)
 
   useEffect(() => {
     if (!dappUrl && setDappUrl) setDappUrl(initialUrl)
@@ -193,19 +193,19 @@ const DappWebViewScreen = () => {
   }, [account])
 
   const handleOpenSearchModal = useCallback(() => {
-    setSearchValue('search', trustedUrl)
+    setSearchValue('search', currentUrl)
     openSearchModal()
-  }, [openSearchModal, setSearchValue, trustedUrl])
+  }, [openSearchModal, setSearchValue, currentUrl])
 
   const hostname = useMemo(() => {
     try {
-      return new URL(trustedUrl).hostname
+      return new URL(currentUrl).hostname
     } catch {
-      return trustedUrl
+      return currentUrl
     }
-  }, [trustedUrl])
+  }, [currentUrl])
 
-  // Keep the Header placeholder in sync with current trusted URL
+  // Keep the Header placeholder in sync with current URL
   useEffect(() => {
     setHeaderValue('search', hostname)
   }, [hostname, setHeaderValue])
@@ -218,7 +218,19 @@ const DappWebViewScreen = () => {
 
   const handleNavigationStateChange = useCallback((e: WebViewNavigation) => {
     if (!e.loading) {
-      setTrustedUrl(e.url)
+      try {
+        const url = new URL(e.url)
+        // Fix 4: Reject non-HTTPS protocols to prevent MITM attacks
+        if (url.protocol !== 'https:') {
+          console.warn('[DappWebView] Blocked navigation to non-HTTPS URL:', e.url)
+          // For HTTP URLs, we could optionally redirect to HTTPS or show a warning
+          // For now, we just don't update the current URL, keeping the previous safe URL
+          return
+        }
+        setCurrentUrl(e.url)
+      } catch {
+        console.warn('[DappWebView] Invalid URL in navigation:', e.url)
+      }
     }
   }, [])
 
@@ -243,8 +255,8 @@ const DappWebViewScreen = () => {
           }
           console.log('[Ambire] [Bridge] Caught MATCHING message:', event.data.topic, event.data.payload ? event.data.payload.method : 'no-payload');
           if (window.ReactNativeWebView) {
-            window.ReactNativeWebView.postMessage(JSON.stringify({ 
-              type: 'providerRequest', 
+            window.ReactNativeWebView.postMessage(JSON.stringify({
+              type: 'providerRequest',
               payload: event.data.payload,
               id: event.data.id,
               topic: event.data.topic
@@ -402,52 +414,114 @@ const DappWebViewScreen = () => {
     [theme, handleNavigateToUrl]
   )
 
-  const handleMessage = useCallback((event: any) => {
-    try {
-      const data = JSON.parse(event.nativeEvent.data)
-      console.log('[DappWebView] RN received message type:', data.type || (data.method ? 'raw-provider-request' : 'unknown'))
-      if (data.type === 'log') {
-        const prefix = `[WebView ${data.logType}]`
-        // eslint-disable-next-line no-console
-        console.log(prefix, ...data.args)
-      } else if (data.type === 'providerRequest' || (data.method && data.id)) {
-        const method = data.type === 'providerRequest' ? data.payload?.method : data.method
-        console.log('[DappWebView] Received providerRequest:', method, data.id)
+  const handleMessage = useCallback(
+    (event: any) => {
+      try {
+        const data = JSON.parse(event.nativeEvent.data)
+        console.log(
+          '[DappWebView] RN received message type:',
+          data.type || (data.method ? 'raw-provider-request' : 'unknown')
+        )
+        if (data.type === 'log') {
+          const prefix = `[WebView ${data.logType}]`
+          // eslint-disable-next-line no-console
+          console.log(prefix, ...data.args)
+        } else if (data.type === 'providerRequest' || (data.method && data.id)) {
+          const method = data.type === 'providerRequest' ? data.payload?.method : data.method
+          console.log('[DappWebView] Received providerRequest:', method, data.id)
 
-        const payload = data.type === 'providerRequest' ? data.payload : { method: data.method, params: data.params }
-        const topic = data.topic || '> ambireProviderRequest'
+          const payload =
+            data.type === 'providerRequest'
+              ? data.payload
+              : { method: data.method, params: data.params }
+          const topic = data.topic || '> ambireProviderRequest'
 
-        dispatch({
-          type: 'HANDLE_PROVIDER_REQUEST',
-          params: {
-            request: { ...payload, origin: activeDappUrl },
-            requestId: data.id,
-            providerId: 1,
-            topic
+          // Fix 5: Store the expected origin when request is received to detect navigation during async operations
+          const expectedOrigin = (() => {
+            try {
+              return new URL(activeDappUrl).origin
+            } catch {
+              return null
+            }
+          })()
+          if (expectedOrigin && data.id) {
+            requestOriginsRef.current[data.id] = expectedOrigin
           }
-        })
+
+          dispatch({
+            type: 'HANDLE_PROVIDER_REQUEST',
+            params: {
+              request: { ...payload, origin: activeDappUrl },
+              requestId: data.id,
+              providerId: 1,
+              topic
+            }
+          })
+        }
+      } catch (e) {
+        // Ignore non-JSON or other messages
       }
-    } catch (e) {
-      // Ignore non-JSON or other messages
-    }
-  }, [dispatch, activeDappUrl, hostname, currentDapp])
+    },
+    [dispatch, activeDappUrl]
+  )
+
+  // Track the URL at the time of each request to detect navigation during async operations
+  const requestOriginsRef = useRef<Record<string, string>>({})
 
   useEffect(() => {
     const onProviderResponse = (data: any) => {
-       console.log('[DappWebView] Sending response back to WebView:', data.requestId, data.result ? 'SUCCESS' : 'ERROR/NULL')
-       const replyMessage = {
-          topic: data.topic ? data.topic.replace('>', '<') : '< ambireProviderRequest',
-          payload: { response: data.result, error: data.error },
-          id: data.requestId
-       }
-       webviewRef.current?.injectJavaScript(`
-         window.postMessage(${JSON.stringify(replyMessage)}, '*');
+      console.log(
+        '[DappWebView] Sending response back to WebView:',
+        data.requestId,
+        data.result ? 'SUCCESS' : 'ERROR/NULL'
+      )
+
+      // Fix 5: Verify the WebView hasn't navigated to a different origin during the async operation
+      const expectedOrigin = requestOriginsRef.current[data.requestId]
+      if (expectedOrigin) {
+        const currentOrigin = (() => {
+          try {
+            return new URL(currentUrl).origin
+          } catch {
+            return null
+          }
+        })()
+
+        if (currentOrigin !== expectedOrigin) {
+          console.warn(
+            '[DappWebView] Response blocked: WebView navigated during request. Expected:',
+            expectedOrigin,
+            'Current:',
+            currentOrigin
+          )
+          delete requestOriginsRef.current[data.requestId]
+          return
+        }
+        delete requestOriginsRef.current[data.requestId]
+      }
+
+      const replyMessage = {
+        topic: data.topic ? data.topic.replace('>', '<') : '< ambireProviderRequest',
+        payload: { response: data.result, error: data.error },
+        id: data.requestId
+      }
+
+      // Fix 2: Include origin check in injected script to prevent message interception
+      // A malicious page could navigate here between request and response; this check prevents it from receiving the response
+      webviewRef.current?.injectJavaScript(`
+         (function() {
+           if (location.origin !== ${JSON.stringify(expectedOrigin || new URL(currentUrl).origin)}) {
+             console.warn('[Ambire] Response blocked: origin mismatch. Expected:', ${JSON.stringify(expectedOrigin || new URL(currentUrl).origin)}, 'Got:', location.origin);
+             return;
+           }
+           window.postMessage(${JSON.stringify(replyMessage)}, '*');
+         })();
          true;
-       `);
+       `)
     }
     eventBus.addEventListener('action.sendToDappWebView', onProviderResponse)
     return () => eventBus.removeEventListener('action.sendToDappWebView', onProviderResponse)
-  }, [])
+  }, [currentUrl])
 
   return (
     <MobileLayoutContainer
@@ -567,7 +641,7 @@ const DappWebViewScreen = () => {
           domStorageEnabled={true}
           allowFileAccessFromFileURLs={false}
           allowUniversalAccessFromFileURLs={false}
-          originWhitelist={['https://*', 'http://*']}
+          originWhitelist={['https://*']}
         />
       </View>
 
