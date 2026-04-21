@@ -54,7 +54,6 @@ const GasTankButton = ({ onPress, portfolio, account }: Props) => {
   // Purposely don't disable the button (but block the onPress action) in
   // case of a tooltip, because it should be clickable to show the tooltip.
   const doesHaveTooltip = buttonState === 'error'
-  const disabled = !hasGasTank && !doesHaveTooltip
   const handleOnPress = useCallback(() => {
     if (doesHaveTooltip) return
 
@@ -86,7 +85,6 @@ const GasTankButton = ({ onPress, portfolio, account }: Props) => {
   return (
     <AnimatedPressable
       onPress={handleOnPress}
-      disabled={disabled}
       // @ts-ignore
       style={{
         ...flexbox.directionRow,
