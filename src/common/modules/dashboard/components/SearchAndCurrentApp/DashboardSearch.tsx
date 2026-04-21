@@ -30,7 +30,7 @@ const DashboardSearch: FC<Props> = ({ control }) => {
       style={[
         flexbox.directionRow,
         flexbox.alignCenter,
-        isSearchFieldDisplayed && spacings.plMi,
+        isSearchFieldDisplayed && spacings.phMi,
         {
           overflow: 'visible',
           backgroundColor: isSearchFieldDisplayed ? theme.tertiaryBackground : 'transparent',
