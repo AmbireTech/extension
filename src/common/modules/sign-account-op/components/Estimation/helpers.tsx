@@ -3,7 +3,10 @@ import { getFeeSpeedIdentifier } from '@ambire-common/controllers/signAccountOp/
 import { FeeSpeed } from '@ambire-common/controllers/signAccountOp/signAccountOp'
 import { ISignAccountOpController } from '@ambire-common/interfaces/signAccountOp'
 import { canBecomeSmarter } from '@ambire-common/libs/account/account'
-import { isTransferredTokenFeeOption } from '@ambire-common/libs/account/feeOptions'
+import {
+  canFeeOptionCoverAmount,
+  isTransferredTokenFeeOption
+} from '@ambire-common/libs/account/feeOptions'
 import { FeePaymentOption } from '@ambire-common/libs/estimate/interfaces'
 import { ZERO_ADDRESS } from '@ambire-common/services/socket/constants'
 
@@ -32,12 +35,12 @@ const sortFeeOptions = (
   const aId = getFeeSpeedIdentifier(a, signAccountOpState.accountOp.accountAddr)
   const aSlow = signAccountOpState.feeSpeeds[aId]?.find((speed) => speed.type === 'slow')
   if (!aSlow) return 1
-  const aCanCoverFee = a.availableAmount >= aSlow.amount
+  const aCanCoverFee = canFeeOptionCoverAmount(a, signAccountOpState.accountOp, aSlow.amount)
 
   const bId = getFeeSpeedIdentifier(b, signAccountOpState.accountOp.accountAddr)
   const bSlow = signAccountOpState.feeSpeeds[bId]?.find((speed) => speed.type === 'slow')
   if (!bSlow) return -1
-  const bCanCoverFee = b.availableAmount >= bSlow.amount
+  const bCanCoverFee = canFeeOptionCoverAmount(b, signAccountOpState.accountOp, bSlow.amount)
 
   if (aCanCoverFee && !bCanCoverFee) return -1
   if (!aCanCoverFee && bCanCoverFee) return 1
