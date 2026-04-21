@@ -1,3 +1,11 @@
+import {
+  CustomResponse,
+  Fetch,
+  RequestInitWithCustomHeaders
+} from '@ambire-common/interfaces/fetch'
+
+type FetchInput = Parameters<Fetch>[0]
+
 /**
  * Bridged Fetch — proxies all network requests through the React Native bridge.
  *
@@ -18,7 +26,7 @@ class BridgedResponse {
 
   readonly ok: boolean
 
-  readonly headers: Headers
+  readonly headers: any
 
   readonly url: string
 
@@ -26,7 +34,15 @@ class BridgedResponse {
 
   readonly type: ResponseType
 
+  readonly body: any = null
+
+  readonly size: number = 0
+
+  readonly timeout: number = 0
+
   private _bodyText: string
+
+  private _buffer?: Promise<any>
 
   private _bodyUsed: boolean = false
 
@@ -46,12 +62,20 @@ class BridgedResponse {
     this._bodyText = data.body
 
     // Reconstruct Headers object
-    this.headers = new Headers()
+    const h = new Headers() as Headers & { raw(): Record<string, string[]> }
     if (data.headers) {
       Object.entries(data.headers).forEach(([key, value]) => {
-        this.headers.set(key, value)
+        h.set(key, value)
       })
     }
+    h.raw = () => {
+      const result: Record<string, string[]> = {}
+      h.forEach((value, key) => {
+        result[key] = [value]
+      })
+      return result
+    }
+    this.headers = h as any
   }
 
   get bodyUsed(): boolean {
@@ -79,7 +103,7 @@ class BridgedResponse {
     return new Blob([this._bodyText])
   }
 
-  clone(): BridgedResponse {
+  clone(): any {
     return new BridgedResponse({
       status: this.status,
       statusText: this.statusText,
@@ -87,6 +111,20 @@ class BridgedResponse {
       body: this._bodyText,
       url: this.url
     })
+  }
+
+  // node-fetch Response compatibility methods
+  buffer(): Promise<any> {
+    if (!this._buffer) {
+      // Use Uint8Array instead of Buffer for WebView compatibility
+      const encoder = new TextEncoder()
+      this._buffer = Promise.resolve(encoder.encode(this._bodyText))
+    }
+    return this._buffer
+  }
+
+  async textConverted(): Promise<string> {
+    return this.text()
   }
 }
 
@@ -98,8 +136,11 @@ class BridgedResponse {
  */
 export const createBridgedFetch = (
   sendToRNAsync: (type: string, payload: any) => Promise<any>
-) => {
-  return async (input: RequestInfo | URL, init?: RequestInit): Promise<any> => {
+): Fetch => {
+  return async (
+    input: FetchInput,
+    init?: RequestInitWithCustomHeaders
+  ): Promise<CustomResponse> => {
     // Normalize input to extract URL and merge with init
     let url: string
     let method = 'GET'
@@ -131,12 +172,15 @@ export const createBridgedFetch = (
     if (init) {
       if (init.method) method = init.method
       if (init.headers) {
-        if (init.headers instanceof Headers || typeof (init.headers as any).entries === 'function') {
+        if (
+          init.headers instanceof Headers ||
+          typeof (init.headers as any).entries === 'function'
+        ) {
           for (const [key, value] of (init.headers as any).entries()) {
             headers[key] = value
           }
         } else if (Array.isArray(init.headers)) {
-          init.headers.forEach(([key, value]: [string, string]) => {
+          ;(init.headers as [string, string][]).forEach(([key, value]) => {
             headers[key] = value
           })
         } else if (typeof init.headers === 'object') {
