@@ -10,6 +10,7 @@ export interface BottomSheetProps {
   onBackdropPress?: () => void
   onClosed?: () => void
   onOpen?: () => void
+  animationDuration?: number
   children?: React.ReactNode
   // Preferences
   type?: 'modal' | 'bottom-sheet'
