@@ -287,18 +287,8 @@ const QrConnectScreen = () => {
               />
             </View>
           </View>
-
-          <Alert
-            type="warning"
-            text={t(
-              'We cannot guarantee stable behavior when importing accounts from QR wallets that are not listed below.'
-            )}
-            style={spacings.mt}
-          />
-
           <View style={spacings.mtMd}>
             {qrWallets.slice(0, VISIBLE_WALLETS_COUNT).map(renderWalletRow)}
-
             <Animated.View
               style={{
                 height: animatedContainerHeight,
@@ -308,7 +298,6 @@ const QrConnectScreen = () => {
             >
               {hiddenWallets.map(renderWalletRow)}
             </Animated.View>
-
             {qrWallets.length > VISIBLE_WALLETS_COUNT && (
               <AnimatedPressable
                 onPress={() => setShowMore(!showMore)}
@@ -353,6 +342,22 @@ const QrConnectScreen = () => {
                 </Animated.View>
               </AnimatedPressable>
             )}
+            <View
+              style={[
+                {
+                  width: '100%',
+                  height: 1,
+                  borderBottomWidth: 1,
+                  borderColor: theme.primaryBorder
+                },
+                spacings.mvMd
+              ]}
+            />
+            <Alert
+              type="warning"
+              size="sm"
+              text={t('Behavior may vary when importing from unlisted QR wallets."')}
+            />
           </View>
         </Panel>
       </TabLayoutWrapperMainContent>
