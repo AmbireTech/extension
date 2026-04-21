@@ -1,6 +1,6 @@
-import React, { ReactNode, useMemo } from 'react'
+import React, { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Animated, Pressable, View } from 'react-native'
+import { Pressable, View } from 'react-native'
 
 import { Account } from '@ambire-common/interfaces/account'
 import { SelectedAccountPortfolio } from '@ambire-common/interfaces/selectedAccount'
@@ -31,14 +31,6 @@ type Props = {
   portfolio: SelectedAccountPortfolio
   account: Account | null
 }
-
-type Animation = { translateX: Animated.Value; opacity: Animated.Value; scale: Animated.Value }
-
-const createAnimation = (): Animation => ({
-  translateX: new Animated.Value(-50),
-  opacity: new Animated.Value(0),
-  scale: new Animated.Value(0.8)
-})
 
 const GasTankModal = ({ modalRef, handleClose, portfolio, account }: Props) => {
   const { isPopup } = getUiType()
