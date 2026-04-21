@@ -25,7 +25,7 @@ interface Props {
 const GasTankButton = ({ onPress, portfolio, account }: Props) => {
   const { t } = useTranslation()
   const [bindBtnAnim, btnAnimStyle] = useHover({ preset: 'opacityInverted' })
-  const { hasGasTank, isViewOnly } = useHasGasTank({ account })
+  const { canUseGasTank } = useHasGasTank({ account })
   const { isPrivacyModeEnabled } = useController('WalletStateController').state
 
   const {
@@ -39,15 +39,12 @@ const GasTankButton = ({ onPress, portfolio, account }: Props) => {
 
   const buttonState = useMemo(() => {
     if (totalBalanceGasTankDetails.token === null) return 'error'
-    if (!hasGasTank && isViewOnly && totalBalanceGasTankDetails.balanceFormatted) return 'balance'
-    if (hasGasTank && totalBalanceGasTankDetails.balanceFormatted) return 'balance'
-    if (hasGasTank && !totalBalanceGasTankDetails.balanceFormatted) return 'topup'
+    if (canUseGasTank && totalBalanceGasTankDetails.balanceUSDFormatted) return 'balance'
 
-    return 'soon'
+    return 'generic'
   }, [
-    hasGasTank,
-    isViewOnly,
-    totalBalanceGasTankDetails.balanceFormatted,
+    canUseGasTank,
+    totalBalanceGasTankDetails.balanceUSDFormatted,
     totalBalanceGasTankDetails.token
   ])
 
@@ -61,13 +58,18 @@ const GasTankButton = ({ onPress, portfolio, account }: Props) => {
   }, [doesHaveTooltip, onPress])
 
   const text = useMemo(() => {
-    if (buttonState === 'balance') return `${totalBalanceGasTankDetails.balanceUSDFormatted}`
-    if (buttonState === 'topup') return t('Top up')
-    if (buttonState === 'soon') return t('Gas Tank')
+    if (buttonState === 'generic') return t('Gas Tank')
     if (buttonState === 'error') return t('unavailable')
 
-    return ''
-  }, [buttonState, totalBalanceGasTankDetails.balanceUSDFormatted, t])
+    return totalBalanceGasTankDetails.balanceUSD === 0
+      ? '$0'
+      : `${totalBalanceGasTankDetails.balanceUSDFormatted}`
+  }, [
+    buttonState,
+    t,
+    totalBalanceGasTankDetails.balanceUSD,
+    totalBalanceGasTankDetails.balanceUSDFormatted
+  ])
 
   const tooltipText = useMemo(() => {
     if (buttonState === 'error') return t('Unable to load Gas Tank data.')
