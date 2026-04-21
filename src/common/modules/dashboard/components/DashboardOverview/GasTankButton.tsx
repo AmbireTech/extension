@@ -125,7 +125,10 @@ const GasTankButton = ({ onPress, portfolio, account }: Props) => {
         weight="number_medium"
         fontSize={12}
       >
-        {privateValue(text, isPrivacyModeEnabled, 4)}
+        {privateValue(text, isPrivacyModeEnabled, 4)}{' '}
+        <Text fontSize={12} color="#B9BFC9">
+          on GasTank
+        </Text>
       </Text>
     </AnimatedPressable>
   )
