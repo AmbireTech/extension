@@ -171,7 +171,7 @@ const KeyStoreUnlockScreen = () => {
           height: 324,
           width: '100%',
           ...spacings.phSm,
-          marginBottom: 56
+          marginBottom: canUseBiometrics ? 42 : 56
         }}
       >
         <View

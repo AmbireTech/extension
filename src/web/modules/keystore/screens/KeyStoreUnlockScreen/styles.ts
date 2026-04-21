@@ -32,7 +32,7 @@ const getStyles = () =>
       height: 90,
       borderRadius: 52,
       backgroundColor: '#F3F4F7',
-      marginBottom: 30,
+      marginBottom: 50,
       ...flexbox.center
     },
     switchButton: {
