@@ -26,7 +26,15 @@ const useHasGasTank = ({ account }: { account: Account | null }) => {
     return !!account && (isSA || canBecomeSmarter(account, getAccKeys(account)))
   }, [account, getAccKeys, isSA])
 
+  const canUseGasTank = useMemo(
+    () =>
+      isSmartAccount(account) ||
+      (canBecomeSmarter(account, getAccKeys(account)) && !account.safeCreation),
+    [account, getAccKeys]
+  )
+
   return {
+    canUseGasTank,
     hasGasTank,
     isViewOnly: getIsViewOnly(keys, account.associatedKeys)
   }
