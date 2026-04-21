@@ -157,7 +157,11 @@ const SendForm = ({
           fromAmountInFiat={amountInFiat}
           fromAmountFieldMode={amountFieldMode}
           maxFromAmount={maxAmount}
-          validateFromAmount={{ success: !amountIsError, message: amountErrorMessage }}
+          validateFromAmount={{
+            success: !amountIsError,
+            message: amountErrorMessage,
+            severity: amountErrorSeverity
+          }}
           onFromAmountChange={setAmountFieldValue}
           handleSwitchFromAmountFieldMode={switchAmountFieldMode}
           handleSetMaxFromAmount={setMaxAmount}

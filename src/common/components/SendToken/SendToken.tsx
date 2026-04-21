@@ -33,7 +33,11 @@ type Props = {
   fromAmountInFiat?: string
   fromAmountFieldMode: 'token' | 'fiat'
   maxFromAmount: string
-  validateFromAmount: { message?: string; success?: boolean }
+  validateFromAmount: {
+    message?: string
+    success?: boolean
+    severity?: 'error' | 'warning' | 'info'
+  }
   onFromAmountChange: (value: string) => void
   handleSwitchFromAmountFieldMode: () => void
   handleSetMaxFromAmount: () => void
@@ -69,6 +73,8 @@ const SendToken: FC<Props> = ({
   } = useController('SelectedAccountController')
   const { theme, styles } = useTheme(getStyles)
   const { t } = useTranslation()
+  const isError = validateFromAmount?.severity === 'error' && !!validateFromAmount?.message
+  const isWarning = validateFromAmount?.severity === 'warning' && !!validateFromAmount?.message
 
   const handleOnChangeTextAndFormat = useCallback(
     (text: string) => {
@@ -83,12 +89,7 @@ const SendToken: FC<Props> = ({
 
   return (
     <>
-      <View
-        style={[
-          styles.outerContainer,
-          validateFromAmount?.message ? styles.outerContainerWarning : {}
-        ]}
-      >
+      <View style={[styles.outerContainer, isError ? styles.outerContainerError : {}]}>
         <ItemPanel
           style={{
             // magic number to match the curve of the outer container
@@ -96,7 +97,7 @@ const SendToken: FC<Props> = ({
             borderRadius: 13,
             ...spacings.pv,
             ...(isWeb ? spacings.prMd : spacings.prSm),
-            ...(validateFromAmount?.message ? styles.containerWarning : {})
+            ...(isError ? styles.containerError : {})
           }}
         >
           <Text appearance="secondaryText" fontSize={14} weight="medium" style={spacings.mbSm}>
@@ -209,7 +210,11 @@ const SendToken: FC<Props> = ({
         </ItemPanel>
       </View>
       {validateFromAmount?.message && (
-        <Text fontSize={12} style={[spacings.mlMi, spacings.mtMi]} appearance="errorText">
+        <Text
+          fontSize={12}
+          style={[spacings.mlMi, spacings.mtMi]}
+          appearance={isWarning ? 'warningText' : 'errorText'}
+        >
           {validateFromAmount?.message}
         </Text>
       )}
