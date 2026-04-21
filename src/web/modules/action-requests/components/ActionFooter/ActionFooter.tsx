@@ -4,10 +4,9 @@ import { View } from 'react-native'
 
 import Button, { Props as ButtonProps } from '@common/components/Button'
 import GlassView from '@common/components/GlassView'
+import ActionsPagination from '@common/modules/action-requests/components/ActionsPagination'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-
-import ActionsPagination from '../../../../../common/modules/action-requests/components/ActionsPagination'
 
 type Props = {
   onReject?: () => void

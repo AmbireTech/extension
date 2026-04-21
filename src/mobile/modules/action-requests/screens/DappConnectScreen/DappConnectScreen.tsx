@@ -1,0 +1,126 @@
+/* eslint-disable react/jsx-no-useless-fragment */
+import React, { useCallback, useMemo, useState } from 'react'
+import { View } from 'react-native'
+
+import HoldToProceedButton from '@common/components/HoldToProceedButton'
+import { useTranslation } from '@common/config/localization'
+import useController from '@common/hooks/useController'
+import useTheme from '@common/hooks/useTheme'
+import { HeaderWithLogoOnly } from '@common/modules/header/components/Header/Header'
+import spacings from '@common/styles/spacings'
+import { MobileLayoutContainer } from '@mobile/components/MobileLayoutWrapper'
+import ActionFooter from '@mobile/modules/action-requests/components/ActionFooter'
+
+import DAppConnectBody from './components/DAppConnectBody'
+import DAppConnectHeader from './components/DAppConnectHeader'
+import getStyles from './styles'
+
+// Screen for dApps authorization to connect to extension - will be triggered on dApp connect request
+const DappConnectScreen = () => {
+  const { t } = useTranslation()
+  const { styles } = useTheme(getStyles)
+  const {
+    state: { currentUserRequest },
+    dispatch: requestsDispatch
+  } = useController('RequestsController')
+
+  const [isAuthorizing, setIsAuthorizing] = useState(false)
+  const { state: dappsState } = useController('DappsController')
+
+  const dappToConnect = useMemo(() => dappsState.dappToConnect || null, [dappsState.dappToConnect])
+
+  const userRequest = useMemo(
+    () => (currentUserRequest?.kind === 'dappConnect' ? currentUserRequest : undefined),
+    [currentUserRequest]
+  )
+
+  const handleDenyButtonPress = useCallback(() => {
+    if (!userRequest) return
+
+    requestsDispatch({
+      type: 'method',
+      params: {
+        method: 'rejectUserRequests',
+        args: [t('User rejected the request.'), [userRequest.id]]
+      }
+    })
+  }, [userRequest, t, requestsDispatch])
+
+  const handleAuthorizeButtonPress = useCallback(() => {
+    if (!userRequest) return
+
+    setIsAuthorizing(true)
+    requestsDispatch({
+      type: 'method',
+      params: {
+        method: 'resolveUserRequest',
+        args: [dappToConnect, userRequest.id]
+      }
+    })
+  }, [userRequest, dappToConnect, requestsDispatch])
+
+  const shouldHoldToProceed = useMemo(() => {
+    return (
+      !!dappToConnect &&
+      (dappToConnect.blacklisted === 'BLACKLISTED' || dappToConnect.blacklisted === 'FAILED_TO_GET')
+    )
+  }, [dappToConnect])
+
+  const resolveButtonText = useMemo(() => {
+    if (!dappToConnect || dappToConnect.blacklisted === 'LOADING') return t('Loading...')
+    if (isAuthorizing) return t('Connecting...')
+    if (dappToConnect.blacklisted === 'BLACKLISTED') return t('Hold to continue anyway')
+
+    return shouldHoldToProceed ? t('Hold to connect') : t('Connect')
+  }, [dappToConnect, t, isAuthorizing, shouldHoldToProceed])
+
+  return (
+    <MobileLayoutContainer
+      renderDirectChildren={() => (
+        <ActionFooter
+          onReject={handleDenyButtonPress}
+          onResolve={!shouldHoldToProceed ? handleAuthorizeButtonPress : () => {}}
+          resolveNode={
+            shouldHoldToProceed ? (
+              <HoldToProceedButton
+                testID="dapp-connect-button"
+                onHoldComplete={handleAuthorizeButtonPress}
+                holdDuration={1600}
+                style={{ height: 56 }}
+                text={resolveButtonText}
+                buttonType={((): 'dangerFilled' | 'warning' => {
+                  if (!!dappToConnect && dappToConnect.blacklisted === 'BLACKLISTED')
+                    return 'dangerFilled'
+                  return 'warning'
+                })()}
+              />
+            ) : undefined
+          }
+          resolveButtonText={!shouldHoldToProceed ? resolveButtonText : undefined}
+          resolveDisabled={
+            !shouldHoldToProceed
+              ? isAuthorizing || (!!dappToConnect && dappToConnect.blacklisted === 'LOADING')
+              : undefined
+          }
+          resolveType={!shouldHoldToProceed ? 'primary' : undefined}
+          rejectButtonText={t('Deny')}
+          resolveButtonTestID={!shouldHoldToProceed ? 'dapp-connect-button' : undefined}
+        />
+      )}
+    >
+      {!!dappToConnect && (
+        <View style={styles.content}>
+          <DAppConnectHeader
+            name={dappToConnect.name}
+            id={dappToConnect.id}
+            icon={dappToConnect.icon!}
+            securityCheck={dappToConnect.blacklisted}
+          />
+          <DAppConnectBody securityCheck={dappToConnect.blacklisted} />
+        </View>
+      )}
+    </MobileLayoutContainer>
+  )
+}
+
+export default DappConnectScreen

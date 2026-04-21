@@ -6,6 +6,7 @@ import { SigningStatus } from '@ambire-common/controllers/signAccountOp/signAcco
 import { Key } from '@ambire-common/interfaces/keystore'
 import { CallsUserRequest } from '@ambire-common/interfaces/userRequest'
 import Alert from '@common/components/Alert'
+import { useIsInsideBottomSheet } from '@common/components/BottomSheet/BottomSheetContext'
 import NetworkBadge from '@common/components/NetworkBadge'
 import NoKeysToSignAlert from '@common/components/NoKeysToSignAlert'
 import useController from '@common/hooks/useController'
@@ -25,10 +26,7 @@ import Simulation from '@common/modules/sign-account-op/components/Simulation'
 import KeySelect from '@common/modules/sign-message/components/KeySelect'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import {
-  MobileLayoutContainer,
-  MobileLayoutWrapperMainContent
-} from '@mobile/components/MobileLayoutWrapper'
+import { MobileLayoutContainer } from '@mobile/components/MobileLayoutWrapper'
 import Modals from '@mobile/modules/sign-account-op/components/Modals/Modals'
 
 import getStyles from './styles'
@@ -41,16 +39,18 @@ const isCloseToBottom = ({ layoutMeasurement, contentOffset, contentSize }: Nati
 const SignAccountOpScreen = () => {
   const {
     state: { currentUserRequest, visibleUserRequests },
-    dispatch: requestsDispatch
+    dispatch: requestsDispatch,
+    closeRequestModal
   } = useController('RequestsController')
   const { state: signAccountOpState, dispatch: signAccountOpDispatch } =
     useController('SignAccountOpController')
   const { t } = useTranslation()
-  const { theme, styles } = useTheme(getStyles)
+  const { styles } = useTheme(getStyles)
   const [containerHeight, setContainerHeight] = useState(0)
   const [contentHeight, setContentHeight] = useState(0)
   const [hasReachedBottom, setHasReachedBottom] = useState<boolean | null>(null)
   const { navigate } = useNavigation()
+  const isInsideBottomSheet = useIsInsideBottomSheet()
   const handleUpdateStatus = useCallback(
     (status: SigningStatus) => {
       signAccountOpDispatch({
@@ -142,9 +142,13 @@ const SignAccountOpScreen = () => {
   }, [requestsDispatch, accountOpRequest, visibleUserRequests.length])
 
   const handleAddToCart = useCallback(() => {
-    // eslint-disable-next-line @typescript-eslint/no-floating-promises
-    navigate(ROUTES.dashboard)
-  }, [])
+    if (isInsideBottomSheet && closeRequestModal) {
+      closeRequestModal()
+    } else {
+      // eslint-disable-next-line @typescript-eslint/no-floating-promises
+      navigate(ROUTES.dashboard)
+    }
+  }, [isInsideBottomSheet, closeRequestModal, navigate])
 
   useEffect(() => {
     if (isSignDisabled || !containerHeight || !contentHeight) return

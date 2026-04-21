@@ -6,6 +6,7 @@ import {
 } from 'react-native-keyboard-controller'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
+import { useIsInsideBottomSheet } from '@common/components/BottomSheet/BottomSheetContext'
 import { PanelBackButton, PanelTitle } from '@common/components/Panel/Panel'
 import { WrapperProps } from '@common/components/ScrollableWrapper'
 import useNavigation from '@common/hooks/useNavigation'
@@ -33,7 +34,6 @@ export const MobileLayoutContainer = ({
   backgroundColor,
   header,
   footer,
-  footerStyle,
   children,
   renderDirectChildren,
   style,
@@ -43,6 +43,9 @@ export const MobileLayoutContainer = ({
 }: MobileLayoutContainerProps) => {
   const { theme, styles } = useTheme(getStyles)
   const insets = useSafeAreaInsets()
+  const isInsideBottomSheet = useIsInsideBottomSheet()
+
+  const paddingTop = isInsideBottomSheet ? 0 : insets.top + (withTopPadding ? SPACING_SM : 0)
 
   return (
     <View
@@ -50,7 +53,7 @@ export const MobileLayoutContainer = ({
         flexbox.flex1,
         {
           backgroundColor: backgroundColor || theme.primaryBackground,
-          paddingTop: insets.top + (withTopPadding ? SPACING_SM : 0),
+          paddingTop,
           paddingBottom: withBottomInset ? insets.bottom : 0
         }
       ]}
