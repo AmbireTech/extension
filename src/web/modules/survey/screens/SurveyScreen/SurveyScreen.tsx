@@ -1,8 +1,8 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { View } from 'react-native'
 
-import { SurveyController } from '@ambire-common/controllers/survey/survey'
 import { SurveyAnswers } from '@ambire-common/interfaces/survey'
+import { getNextQuestionForAnswers } from '@ambire-common/utils/survey'
 import ButtonWithLoader from '@common/components/ButtonWithLoader/ButtonWithLoader'
 import { PanelTitle } from '@common/components/Panel/Panel'
 import ScrollableWrapper from '@common/components/ScrollableWrapper'
@@ -64,7 +64,7 @@ const SurveyScreen = () => {
         answer: inputtedAnswer.ans
       }
 
-    return !!SurveyController.getNextQuestionForAnswers(questions || [], answersPlusUncommited)
+    return !!getNextQuestionForAnswers(questions || [], answersPlusUncommited)
   }, [answers, currentQuestion, inputtedAnswer, questions])
 
   const buttonState = useMemo((): { text: string; callback?: () => void; loading?: true } => {
