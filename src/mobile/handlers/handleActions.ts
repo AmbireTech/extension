@@ -10,10 +10,12 @@ export const handleActions = async (
   action: MethodAction | Action,
   {
     eventEmitterRegistry,
-    mainCtrl
+    mainCtrl,
+    sendToReactEvent
   }: {
     eventEmitterRegistry: IEventEmitterRegistryController
     mainCtrl: MainController
+    sendToReactEvent: (type: string, payload: any) => void
   }
 ) => {
   // @ts-ignore
@@ -36,11 +38,35 @@ export const handleActions = async (
       break
     }
 
+    case 'INIT_CONTROLLER_STATE': {
+      const ctrl = eventEmitterRegistry.values().find((c) => c.name === params.controller)
+
+      sendToReactEvent('ctrl.update', {
+        ctrlName: params.controller,
+        state: ctrl?.toJSON() || null
+      })
+
+      break
+    }
+
+    case 'INIT_ALL_CONTROLLERS': {
+      params.controllers.forEach((ctrlName: string) => {
+        const ctrl = eventEmitterRegistry.values().find((c) => c.name === ctrlName)
+
+        sendToReactEvent('ctrl.update', { ctrlName, state: ctrl?.toJSON() || null })
+      })
+      break
+    }
+
     case 'UPDATE_UI_VIEW_ROUTE': {
       mainCtrl.ui.updateView(params.id, {
         currentRoute: params.route,
         searchParams: params.searchParams
       })
+      break
+    }
+    case 'WINDOW_REMOVED': {
+      mainCtrl.ui.window.event.emit('windowRemoved', params.id)
       break
     }
 

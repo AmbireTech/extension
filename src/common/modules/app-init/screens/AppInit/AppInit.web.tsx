@@ -7,6 +7,7 @@ import { BrowserRouter, HashRouter } from 'react-router-dom'
 import ErrorComponent from '@common/components/ErrorBoundary'
 import { GlobalTooltip } from '@common/components/GlobalTooltip'
 import { ErrorBoundary } from '@common/config/analytics/CrashAnalytics.web'
+import { BiometricsProvider } from '@common/contexts/biometricsContext'
 import { ControllerStoreProvider } from '@common/contexts/controllerStoreContext'
 import { NetInfoProvider } from '@common/contexts/netInfoContext'
 import { ThemeProvider } from '@common/contexts/themeContext'
@@ -51,9 +52,11 @@ const AppInit = () => {
                       <ControllersStateLoadedProvider>
                         <NetInfoProvider>
                           <AuthProvider>
-                            <OnboardingNavigationProvider>
-                              {appContent}
-                            </OnboardingNavigationProvider>
+                            <BiometricsProvider>
+                              <OnboardingNavigationProvider>
+                                {appContent}
+                              </OnboardingNavigationProvider>
+                            </BiometricsProvider>
                           </AuthProvider>
                         </NetInfoProvider>
                       </ControllersStateLoadedProvider>
