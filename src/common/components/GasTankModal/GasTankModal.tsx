@@ -42,7 +42,6 @@ const GasTankModal = ({ modalRef, handleClose, portfolio, account }: Props) => {
     state: { networks }
   } = useController('NetworksController')
   const { canUseGasTank } = useHasGasTank({ account })
-  const isSafe = !!account?.safeCreation
 
   // Note: total balance Gas Tank details
   const { token, balanceFormatted } = useMemo(
@@ -64,9 +63,14 @@ const GasTankModal = ({ modalRef, handleClose, portfolio, account }: Props) => {
       <View style={[flexbox.alignStart, spacings.mbLg]}>
         <Text fontSize={16} weight="medium" style={[spacings.mbTy]}>
           {t('Use Gas Tank to cover gas fees across most chains.')}
-          {!canUseGasTank && '\n'}
-          {!canUseGasTank && isSafe && t('Not available for Safe wallets, yet.')}
-          {!canUseGasTank && !isSafe && t('Not available for hardware wallets, yet.')}
+          {!canUseGasTank && (
+            <Text appearance="warningText" fontSize={16} weight="medium">
+              {'\n'}
+              {t('Not available for {{type}} wallets, yet.', {
+                type: account?.safeCreation ? 'safe' : 'hardware'
+              })}
+            </Text>
+          )}
         </Text>
         <Pressable
           onPress={async () => {
