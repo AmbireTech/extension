@@ -127,6 +127,9 @@ const GasTankButton = ({ onPress, portfolio, account }: Props) => {
       >
         {privateValue(text, isPrivacyModeEnabled, 4)}
       </Text>
+      <Text fontSize={12} color="#B9BFC9" style={spacings.mlMi}>
+        {t('on Gas Tank')}
+      </Text>
     </AnimatedPressable>
   )
 }
