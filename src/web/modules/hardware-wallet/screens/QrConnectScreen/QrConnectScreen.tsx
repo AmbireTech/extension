@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Animated, ColorValue, Linking, View } from 'react-native'
 
+import Alert from '@common/components/Alert'
 import DiagonalRightArrowIcon from '@common/assets/svg/DiagonalRightArrowIcon'
 import OpenIcon from '@common/assets/svg/OpenIcon'
 import Panel from '@common/components/Panel'
@@ -287,11 +288,13 @@ const QrConnectScreen = () => {
             </View>
           </View>
 
-          <Text fontSize={14} style={spacings.mt}>
-            {t(
+          <Alert
+            type="warning"
+            text={t(
               'We cannot guarantee stable behavior when importing accounts from QR wallets that are not listed below.'
             )}
-          </Text>
+            style={spacings.mt}
+          />
 
           <View style={spacings.mtMd}>
             {qrWallets.slice(0, VISIBLE_WALLETS_COUNT).map(renderWalletRow)}
