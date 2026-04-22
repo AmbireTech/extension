@@ -7,6 +7,7 @@ import { StepsData } from '@benzin/screens/BenzinScreen/hooks/useSteps'
 import { ActiveStepType } from '@benzin/screens/BenzinScreen/interfaces/steps'
 import { IS_MOBILE_UP_BENZIN_BREAKPOINT } from '@benzin/screens/BenzinScreen/styles'
 import StarsIcon from '@common/assets/svg/StarsIcon'
+import Spinner from '@common/components/Spinner'
 import Text from '@common/components/Text'
 import TokenIcon from '@common/components/TokenIcon'
 import { isMobile } from '@common/config/env'
@@ -14,6 +15,7 @@ import useTheme from '@common/hooks/useTheme'
 import ConfettiAnimation from '@common/modules/dashboard/components/ConfettiAnimation'
 import PendingTokenSummary from '@common/modules/sign-account-op/components/PendingTokenSummary'
 import spacings from '@common/styles/spacings'
+import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import DelegationHumanization from '@web/components/DelegationHumanization'
 
@@ -35,9 +37,16 @@ const Steps: FC<Props> = ({ activeStep, txnId, userOpHash, stepsState, summary, 
   const { blockData, finalizedStatus, feePaidWith, from, originatedFrom } = stepsState
   const finalStepRows: any = getFinalizedRows(blockData, finalizedStatus)
   const balanceChanges = stepsState.submittedAccountOp?.balanceChanges || []
+  const hasBalanceChangesLoaded =
+    typeof stepsState.submittedAccountOp?.balanceChanges !== 'undefined'
   const assetsOut = balanceChanges.filter((change) => change.balanceChange < 0n)
   const assetsIn = balanceChanges.filter((change) => change.balanceChange > 0n)
   const orderedBalanceChanges = [...assetsIn, ...assetsOut]
+  const shouldShowBalanceChanges = shouldShowTxnProgress(finalizedStatus)
+  const displayActiveStep =
+    activeStep === 'finalized' && shouldShowBalanceChanges && !hasBalanceChangesLoaded
+      ? 'balance-changes'
+      : activeStep
 
   const stepRows: any = [
     {
@@ -126,7 +135,7 @@ const Steps: FC<Props> = ({ activeStep, txnId, userOpHash, stepsState, summary, 
     })
   }
 
-  const isFinalized = activeStep === 'finalized'
+  const isFinalized = displayActiveStep === 'finalized'
   const showConfetti =
     isFinalized && finalizedStatus !== null && finalizedStatus.status === 'confirmed'
 
@@ -150,7 +159,7 @@ const Steps: FC<Props> = ({ activeStep, txnId, userOpHash, stepsState, summary, 
         <Step
           title="Signed"
           stepName="signed"
-          activeStep={activeStep}
+          activeStep={displayActiveStep}
           finalizedStatus={finalizedStatus}
           rows={stepRows}
           testID="signed-step"
@@ -159,7 +168,7 @@ const Steps: FC<Props> = ({ activeStep, txnId, userOpHash, stepsState, summary, 
           <Step
             title={isFinalized ? 'Transaction details' : 'Your transaction is in progress'}
             stepName="in-progress"
-            activeStep={activeStep}
+            activeStep={displayActiveStep}
             finalizedStatus={finalizedStatus}
             testID="txn-progress-step"
           >
@@ -187,11 +196,11 @@ const Steps: FC<Props> = ({ activeStep, txnId, userOpHash, stepsState, summary, 
             }
           </Step>
         )}
-        {orderedBalanceChanges.length > 0 && (
+        {shouldShowBalanceChanges && (
           <Step
             title="Balance changes"
             stepName="balance-changes"
-            activeStep={activeStep}
+            activeStep={displayActiveStep}
             finalizedStatus={finalizedStatus}
             testID="balance-changes-step"
           >
@@ -201,23 +210,37 @@ const Steps: FC<Props> = ({ activeStep, txnId, userOpHash, stepsState, summary, 
                 spacings.phSm,
                 spacings.pvSm,
                 {
-                  borderWidth: 1,
-                  borderColor: theme.secondaryBorder,
-                  borderRadius: 12
+                  backgroundColor: theme.secondaryBackground,
+                  borderWidth: 0,
+                  ...common.borderRadiusPrimary
                 }
               ]}
             >
-              {orderedBalanceChanges.map((change, index) => (
-                <PendingTokenSummary
-                  key={change.address}
-                  token={{
-                    ...change,
-                    simulationAmount: change.balanceChange
-                  }}
-                  chainId={change.chainId}
-                  hasBottomSpacing={index < orderedBalanceChanges.length - 1}
-                />
-              ))}
+              {!hasBalanceChangesLoaded && (
+                <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.pvMi]}>
+                  <Spinner style={{ width: 18, height: 18 }} />
+                  <Text style={spacings.mlSm} fontSize={14} appearance="secondaryText">
+                    Loading balance changes
+                  </Text>
+                </View>
+              )}
+              {hasBalanceChangesLoaded &&
+                orderedBalanceChanges.map((change, index) => (
+                  <PendingTokenSummary
+                    key={change.address}
+                    token={{
+                      ...change,
+                      simulationAmount: change.balanceChange
+                    }}
+                    chainId={change.chainId}
+                    hasBottomSpacing={index < orderedBalanceChanges.length - 1}
+                  />
+                ))}
+              {hasBalanceChangesLoaded && !orderedBalanceChanges.length && (
+                <Text fontSize={14} appearance="secondaryText">
+                  No balance changes detected
+                </Text>
+              )}
             </View>
           </Step>
         )}
@@ -227,7 +250,7 @@ const Steps: FC<Props> = ({ activeStep, txnId, userOpHash, stepsState, summary, 
           testID="finalized-rows"
           stepName="finalized"
           finalizedStatus={finalizedStatus}
-          activeStep={activeStep}
+          activeStep={displayActiveStep}
           style={spacings.pb0}
           rows={isFinalized ? finalStepRows : []}
           collapsibleRows={isFinalized}
