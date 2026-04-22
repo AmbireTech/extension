@@ -1,5 +1,5 @@
 import { nanoid } from 'nanoid'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 
 import { Dapp } from '@ambire-common/interfaces/dapp'
 import { getDappIdFromUrl } from '@ambire-common/libs/dapps/helpers'
@@ -16,7 +16,7 @@ export default function useDappsControllerHelpers(
 ) {
   const {
     state,
-    helpers: { currentDapp, isLoadingCurrentDapp },
+    helpers: { isLoadingCurrentDapp },
     updateHelpers
   } = useControllerState({
     id: 'DappsController',
@@ -99,11 +99,13 @@ export default function useDappsControllerHelpers(
     [dispatch, dappUrl]
   )
 
+  // Re-fetch current dapp when controller state changes (e.g., connection status)
+  // This effect should NOT depend on currentDapp to avoid circular updates
   useEffect(() => {
-    if (!currentDapp || isLoadingCurrentDapp) return
+    if (!dappUrl || isLoadingCurrentDapp) return
 
     updateHelpers({ isLoadingCurrentDapp: true })
-    getCurrentDapp(currentDapp.url)
+    getCurrentDapp(dappUrl)
       .then((dapp) => {
         updateHelpers({ currentDapp: dapp, isLoadingCurrentDapp: false })
       })
@@ -111,7 +113,7 @@ export default function useDappsControllerHelpers(
         captureException(error)
         updateHelpers({ currentDapp: null, isLoadingCurrentDapp: false })
       })
-  }, [state, currentDapp, isLoadingCurrentDapp, getCurrentDapp, updateHelpers])
+  }, [state, dappUrl, isLoadingCurrentDapp, getCurrentDapp, updateHelpers])
 
   const setDappUrl = useCallback(
     (url: string) => {

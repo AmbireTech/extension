@@ -87,6 +87,19 @@ export const handleActions = async (
       break
     }
 
+    case 'CHANGE_CURRENT_DAPP_NETWORK': {
+      mainCtrl.dapps.updateDapp(params.id, { chainId: params.chainId })
+      await mainCtrl.dapps.broadcastDappSessionEvent(
+        'chainChanged',
+        {
+          chain: `0x${params.chainId.toString(16)}`,
+          networkVersion: `${params.chainId}`
+        },
+        params.id
+      )
+      break
+    }
+
     case 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_FROM_SAVED_SEED_PHRASE': {
       const keystoreSavedSeed = await mainCtrl.keystore.getSavedSeed(params.id)
       if (!keystoreSavedSeed) return
