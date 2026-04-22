@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-floating-promises */
-import { formatUnits } from 'ethers'
+import { formatUnits, ZeroAddress } from 'ethers'
 import React, { useMemo } from 'react'
 import { Pressable, View, ViewStyle } from 'react-native'
 import { useModalize } from 'react-native-modalize'
@@ -27,7 +27,9 @@ import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import PendingTokenSummary from '@common/modules/sign-account-op/components/PendingTokenSummary'
-import TransactionSummary, { sizeMultiplier } from '@common/modules/sign-account-op/components/TransactionSummary'
+import TransactionSummary, {
+  sizeMultiplier
+} from '@common/modules/sign-account-op/components/TransactionSummary'
 import spacings, { SPACING_SM } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import DelegationHumanization from '@web/components/DelegationHumanization'
@@ -121,8 +123,30 @@ const getOrderedBalanceChanges = (submittedAccountOp: SubmittedAccountOp) => {
   const balanceChanges = submittedAccountOp.balanceChanges || []
   const positiveChanges = balanceChanges.filter((change) => change.balanceChange > 0n)
   const negativeChanges = balanceChanges.filter((change) => change.balanceChange < 0n)
+  const nativeNegativeChanges = negativeChanges.filter(
+    (change) => change.address.toLowerCase() === ZeroAddress.toLowerCase()
+  )
+  const nonNativeNegativeChanges = negativeChanges.filter(
+    (change) => change.address.toLowerCase() !== ZeroAddress.toLowerCase()
+  )
 
-  return [...positiveChanges, ...negativeChanges]
+  return [...positiveChanges, ...nonNativeNegativeChanges, ...nativeNegativeChanges]
+}
+
+const getBalanceChangeLabel = (submittedAccountOp: SubmittedAccountOp, change: BalanceChange) => {
+  if (change.balanceChange > 0n) return 'Received'
+
+  const isSelfPaidNativeFee =
+    submittedAccountOp.gasFeePayment?.inToken === ZeroAddress &&
+    submittedAccountOp.gasFeePayment?.paidBy.toLowerCase() ===
+      submittedAccountOp.accountAddr.toLowerCase() &&
+    change.address.toLowerCase() === ZeroAddress.toLowerCase()
+
+  if (!isSelfPaidNativeFee) return 'Sent'
+
+  const hasCallsWithNativeValue = submittedAccountOp.calls.some((call) => call.value > 0n)
+
+  return hasCallsWithNativeValue ? 'Sent + Gas' : 'Gas'
 }
 
 const getHumanizedCalls = (submittedAccountOp: SubmittedAccountOp): IrCall[] =>
@@ -401,7 +425,7 @@ const SubmittedTransactionSummaryInner = ({
                     ]}
                   >
                     <Text fontSize={12} appearance="secondaryText">
-                      {change.balanceChange > 0n ? t('Received') : t('Sent')}{' '}
+                      {t(getBalanceChangeLabel(submittedAccountOp, change))}{' '}
                     </Text>
                     <Text
                       fontSize={12}
