@@ -7,6 +7,7 @@ import ImportJsonIcon from '@common/assets/svg/ImportJsonIcon'
 import LatticeWithBorderIcon from '@common/assets/svg/LatticeWithBorderIcon'
 import LedgerLetterIcon from '@common/assets/svg/LedgerLetterIcon'
 import PrivateKeyIcon from '@common/assets/svg/PrivateKeyIcon'
+import ReceiveIcon from '@common/assets/svg/ReceiveIcon'
 import RightArrowIcon from '@common/assets/svg/RightArrowIcon'
 import SafeIcon from '@common/assets/svg/SafeIcon'
 import SeedPhraseIcon from '@common/assets/svg/SeedPhraseIcon'
@@ -128,6 +129,13 @@ const ImportExistingAccountSelectorScreen = () => {
           goToNextRoute(WEB_ROUTES.safeImport)
         },
         icon: SafeIcon
+      },
+      {
+        title: 'QR-based',
+        onPress: () => {
+          goToNextRoute(WEB_ROUTES.qrConnect)
+        },
+        icon: ReceiveIcon
       },
       {
         title: 'JSON backup file',
@@ -259,7 +267,7 @@ const ImportExistingAccountSelectorScreen = () => {
                     height={20}
                     width={20}
                     style={{
-                      transform: [{ rotate: showMore ? '90deg' : '0deg' }]
+                      transform: [{ rotate: showMore ? '270deg' : '0deg' }]
                     }}
                   />
                 </Animated.View>

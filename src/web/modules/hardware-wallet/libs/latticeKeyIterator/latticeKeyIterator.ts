@@ -72,7 +72,7 @@ class LatticeKeyIterator implements KeyIteratorInterface {
     fromToArr: { from: number; to: number }[],
     hdPathTemplate?: HD_PATH_TEMPLATE_TYPE
   ) {
-    if (!this.controller.walletSDK) {
+    if (!this.controller.walletSDK && this.controller.unlock) {
       await this.controller.unlock(hdPathTemplate || BIP44_STANDARD_DERIVATION_TEMPLATE)
     }
 
