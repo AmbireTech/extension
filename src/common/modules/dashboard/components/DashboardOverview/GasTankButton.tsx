@@ -58,8 +58,7 @@ const GasTankButton = ({ onPress, portfolio, account }: Props) => {
   }, [doesHaveTooltip, onPress])
 
   const text = useMemo(() => {
-    if (buttonState === 'generic') return t('Gas Tank')
-    if (buttonState === 'error') return t('unavailable')
+    if (['generic', 'error'].includes(buttonState)) return t('Gas Tank')
 
     return totalBalanceGasTankDetails.balanceUSD === 0
       ? '$0'
@@ -72,7 +71,7 @@ const GasTankButton = ({ onPress, portfolio, account }: Props) => {
   ])
 
   const tooltipText = useMemo(() => {
-    if (buttonState === 'error') return t('Unable to load Gas Tank data.')
+    if (buttonState === 'error') return t("Couldn't load. Please try again later.")
 
     return ''
   }, [buttonState, t])
@@ -106,13 +105,13 @@ const GasTankButton = ({ onPress, portfolio, account }: Props) => {
         buttonState === 'balance' ? 'dashboard-gas-tank-balance' : 'dashboard-gas-tank-button'
       }
     >
-      <GasTankIcon width={14} height={14} color="#FFFFFF" />
+      <GasTankIcon width={15} height={15} color="#FFFFFF" hasError={buttonState === 'error'} />
       <Text
         style={{ ...spacings.mlMi, ...(isPrivacyModeEnabled ? { lineHeight: 14 } : {}) }}
         dataSet={
           tooltipText
             ? createGlobalTooltipDataSet({
-                id: tooltipText.toLowerCase().replace(/\s/g, '-'),
+                id: 'gas-tank-pill-tooltip',
                 content: tooltipText
               })
             : {}
