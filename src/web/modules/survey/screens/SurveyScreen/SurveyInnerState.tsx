@@ -56,17 +56,20 @@ const SurveyInnerState = ({
               </View>
             ) : (
               <TextArea
+                // the key is added so the component remounts and resets its height when the
+                // question changes
+                key={currentQuestion.id}
                 placeholder="Write down your thoughts..."
                 value={inputtedAnswer?.toString() || ''}
                 onChangeText={setInputtedAnswer}
                 containerStyle={spacings.ptLg}
                 inputWrapperStyle={{
-                  height: 100,
                   borderColor: theme.neutral600,
                   borderWidth: 1,
                   alignItems: 'baseline'
                 }}
                 multiline
+                enableGrowHeightRange={[100, 200]}
               />
             )}
           </View>
