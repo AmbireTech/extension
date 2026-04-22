@@ -119,10 +119,10 @@ const FallbackVisualization: FC<{
                   </View>
                 )
               return (
-                <div
+                <View
                   style={{
                     ...(index < 2 ? { maxWidth: '75%' } : {}),
-                    ...(i.isArrayItem && isHexString(i.value) ? { marginBottom: '0.5rem' } : {})
+                    ...(i.isArrayItem && isHexString(i.value) ? { marginBottom: 8 } : {})
                   }}
                   key={JSON.stringify(i)}
                 >
@@ -135,7 +135,7 @@ const FallbackVisualization: FC<{
                   >
                     {componentToReturn}
                   </Text>
-                </div>
+                </View>
               )
             })}
           {content.kind === 'authorization-7702' && getMessageAsText(content.message as Hex)}

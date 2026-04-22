@@ -140,7 +140,7 @@ export function onResponse(id: number, result: any, error: any): void {
   if (!pending) return
   delete pendingRequests[id]
   if (error) {
-    pending.reject(error)
+    pending.resolve({ id, error })
   } else {
     // Return the full response object that the common consumer expects
     pending.resolve({ id, result })

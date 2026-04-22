@@ -169,9 +169,15 @@ export const handleActions = async (
           topic: params.topic
         })
       } catch (error: any) {
+        let errorRes
+        try {
+          errorRes = error.serialize()
+        } catch (e) {
+          errorRes = error
+        }
         sendToReactEvent('action.sendToDappWebView', {
           result: null,
-          error: error.message || String(error),
+          error: errorRes,
           requestId: params.requestId,
           providerId: params.providerId,
           topic: params.topic
