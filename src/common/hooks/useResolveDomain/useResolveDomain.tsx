@@ -9,13 +9,13 @@ interface Props {
 
 // Define the type for our pending promises tracker
 type Resolver = {
-  resolve: (ensAddress: string | undefined) => void
+  resolve: (result: { address: string | undefined; type: 'ens' | 'namoshi' } | undefined) => void
   reject: (reason?: any) => void
 }
 
 const useResolveDomain = () => {
   const {
-    state: { ensToAddress, resolveDomainsStatus },
+    state: { domainToAddresses, resolveDomainsStatus },
     dispatch
   } = useController('DomainsController')
 
@@ -29,20 +29,23 @@ const useResolveDomain = () => {
       if (!resolver) return
 
       if (status === 'RESOLVED') {
-        resolver.resolve(ensToAddress[domain])
+        resolver.resolve(domainToAddresses[domain])
         delete requests.current[domain]
       } else if (status === 'FAILED') {
         resolver.reject(new Error(`Failed to resolve domain: ${domain}`))
         delete requests.current[domain]
       }
     })
-  }, [ensToAddress, resolveDomainsStatus])
+  }, [domainToAddresses, resolveDomainsStatus])
 
   const handleResolveDomain = useCallback(
-    ({ domain, bip44Item }: Props) => {
+    ({
+      domain,
+      bip44Item
+    }: Props): Promise<{ address: string | undefined; type: 'ens' | 'namoshi' } | undefined> => {
       const status = resolveDomainsStatus[domain]
 
-      if (status === 'RESOLVED') return Promise.resolve(ensToAddress[domain])
+      if (status === 'RESOLVED') return Promise.resolve(domainToAddresses[domain])
 
       if (status === 'FAILED')
         return Promise.reject(new Error(`Failed to resolve domain: ${domain}`))
@@ -50,21 +53,18 @@ const useResolveDomain = () => {
       if (!status)
         dispatch({
           type: 'method',
-          params: { method: 'resolveDomain', args: [{ domain, bip44Item }] }
+          params: { method: 'resolveDomain', args: [{ domain }] }
         })
 
       return new Promise((resolve, reject) => {
         requests.current[domain] = { resolve, reject }
       })
     },
-    [dispatch, ensToAddress, resolveDomainsStatus]
+    [dispatch, domainToAddresses, resolveDomainsStatus]
   )
 
   return {
-    resolveDomain: handleResolveDomain as ({
-      domain,
-      bip44Item
-    }: Props) => Promise<string | undefined>
+    resolveDomain: handleResolveDomain
   }
 }
 

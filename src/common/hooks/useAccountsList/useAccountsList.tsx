@@ -36,7 +36,8 @@ const useAccountsList = ({
       accounts.map((account) => ({
         account,
         label: account.preferences.label.toLowerCase(),
-        domain: domains[account.addr]?.ens?.toLowerCase().trim() || '',
+        ens: domains[account.addr]?.ens?.toLowerCase().trim() || '',
+        namoshi: domains[account.addr]?.namoshi?.toLowerCase().trim() || '',
         address: account.addr.toLowerCase(),
         smart: isSmartAccount(account) ? 'smart' : ''
       })),
@@ -49,7 +50,8 @@ const useAccountsList = ({
     const fuse = new Fuse(searchableAccounts, {
       keys: [
         { name: 'label', weight: 0.5 },
-        { name: 'domain', weight: 0.3 },
+        { name: 'ens', weight: 0.3 },
+        { name: 'namoshi', weight: 0.3 },
         { name: 'address', weight: 0.1 },
         { name: 'smart', weight: 0.1 }
       ],

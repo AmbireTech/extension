@@ -1,35 +1,74 @@
 import { useCallback, useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 
+import { AMBIRE_ACCOUNT_FACTORY } from '@ambire-common/consts/deploy'
+import { HARDWARE_WALLET_DEVICE_NAMES } from '@ambire-common/consts/hardwareWallets'
 import { Account } from '@ambire-common/interfaces/account'
 import { canBecomeSmarter, isSmartAccount } from '@ambire-common/libs/account/account'
 import { getIsViewOnly } from '@ambire-common/utils/accounts'
 import useController from '@common/hooks/useController'
 
 const useHasGasTank = ({ account }: { account: Account | null }) => {
-  if (!account || !!account.safeCreation) {
-    return {
-      hasGasTank: false
-    }
-  }
-
+  const { t } = useTranslation()
   const { keys } = useController('KeystoreController').state
 
+  const isViewOnly = useMemo(
+    () => account && getIsViewOnly(keys, account.associatedKeys),
+    [account, keys]
+  )
+
   const getAccKeys = useCallback(
-    (acc: any) => {
-      return keys.filter((key) => acc?.associatedKeys.includes(key.addr))
-    },
+    (acc: any) => keys.filter((key) => acc?.associatedKeys.includes(key.addr)),
     [keys]
   )
-  const isSA = useMemo(() => isSmartAccount(account), [account])
 
-  const hasGasTank = useMemo(() => {
-    return !!account && (isSA || canBecomeSmarter(account, getAccKeys(account)))
-  }, [account, getAccKeys, isSA])
+  const canUseGasTank = useMemo(() => {
+    if (!account) return false
 
-  return {
-    hasGasTank,
-    isViewOnly: getIsViewOnly(keys, account.associatedKeys)
-  }
+    if (account.safeCreation) return false // not available for Safe accounts
+
+    // not available for v1 accounts
+    // one could argue if checking the factoryAddr is the best approach for this
+    // but the alternative is checking the account state (onchain metric),
+    // causing this simple component to become needlessly more diffucult.
+    // Collateral damage might become old v2 SAs we used for testing that
+    // are already deprecated and chances are the gas tank doesn't work there
+    // so it's better to disable it for them as well
+    if (account.creation && account.creation.factoryAddr !== AMBIRE_ACCOUNT_FACTORY) return false
+
+    if (isViewOnly) return true // assume view only accounts CAN use Gas Tank, not knowing their key types yet
+
+    return isSmartAccount(account) || canBecomeSmarter(account, getAccKeys(account))
+  }, [account, getAccKeys, isViewOnly])
+
+  const disabledReason = useMemo(() => {
+    if (canUseGasTank) return ''
+
+    if (account?.safeCreation) return t('Not available for Safe wallets, yet.')
+
+    if (account?.creation)
+      return t(
+        'This feature is no longer available for Ambire v1 accounts and other legacy Ambire smart accounts.'
+      )
+
+    const accountKeys = getAccKeys(account)
+    const unsupportedKeyTypes = Array.from(accountKeys.map((key) => key.type)).filter(
+      (type): type is keyof typeof HARDWARE_WALLET_DEVICE_NAMES =>
+        type in HARDWARE_WALLET_DEVICE_NAMES
+    )
+    const unsupportedKeyTypeNames = unsupportedKeyTypes.map(
+      (type) => HARDWARE_WALLET_DEVICE_NAMES[type]
+    )
+
+    return t(
+      "Not available for {{typesOfKey}} wallets yet. Requires EIP-7702 (that enables EOAs to gain smart account capabilities) which these devices don't support yet.",
+      {
+        typesOfKey: unsupportedKeyTypeNames.join(` ${t('and')} `)
+      }
+    )
+  }, [account, canUseGasTank, getAccKeys, t])
+
+  return { canUseGasTank, isViewOnly, disabledReason }
 }
 
 export default useHasGasTank
