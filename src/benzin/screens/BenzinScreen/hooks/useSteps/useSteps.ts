@@ -84,6 +84,7 @@ export interface StepsData {
   userOp: UserOperation | null
   delegation?: EIP7702Auth
   extensionAccOp?: SubmittedAccountOp
+  submittedAccountOp?: SubmittedAccountOp | null
 }
 
 // if the transaction hash is found, we make the top url the real txn id
@@ -187,6 +188,21 @@ const useSteps = ({
     dispatch: activityDispatch
   } = useController('ActivityController')
   const { dispatchAndWait } = useController('ProvidersController')
+  const benzinActivityOp = useMemo(() => {
+    if (!extensionAccOp || !('benzin' in accountsOps)) return null
+
+    const op = accountsOps.benzin.result.items[0]
+
+    if (
+      !op ||
+      (op.identifiedBy &&
+        extensionAccOp.identifiedBy &&
+        op.identifiedBy.identifier !== extensionAccOp.identifiedBy.identifier)
+    )
+      return null
+
+    return op
+  }, [accountsOps, extensionAccOp])
 
   const getIdentifiedBy = useCallback((): AccountOpIdentifiedBy => {
     if (relayerId) return { type: 'Relayer', identifier: relayerId }
@@ -243,28 +259,36 @@ const useSteps = ({
 
   // set the found account op from the activity
   useEffect(() => {
-    if (!extensionAccOp || !!activityAccOp || !('benzin' in accountsOps) || !network || !switcher)
-      return
+    if (!!activityAccOp || !benzinActivityOp || !network || !switcher) return
 
-    const items = accountsOps.benzin.result.items
-    if (!items[0]) return
-    const op = items[0]
     if (
-      (op.identifiedBy &&
-        extensionAccOp.identifiedBy &&
-        op.identifiedBy.identifier !== extensionAccOp.identifiedBy.identifier) ||
-      op.status === AccountOpStatus.BroadcastedButNotConfirmed ||
-      op.status === AccountOpStatus.Pending ||
-      !op.txnId
+      benzinActivityOp.status === AccountOpStatus.BroadcastedButNotConfirmed ||
+      benzinActivityOp.status === AccountOpStatus.Pending ||
+      !benzinActivityOp.txnId
     )
       return
 
     setActivityAccOp({
-      ...op
+      ...benzinActivityOp
     })
-    setFoundTxnId(op.txnId)
-    setUrlToTxnId(op.txnId, userOpHash, relayerId, network.chainId, switcher)
-  }, [accountsOps, extensionAccOp, activityAccOp, network, switcher, relayerId, userOpHash])
+    setFoundTxnId(benzinActivityOp.txnId)
+    setUrlToTxnId(benzinActivityOp.txnId, userOpHash, relayerId, network.chainId, switcher)
+  }, [benzinActivityOp, activityAccOp, network, switcher, relayerId, userOpHash])
+
+  // adopt the latest activity account op once the async balance diff enrichment completes
+  useEffect(() => {
+    if (
+      !activityAccOp ||
+      !benzinActivityOp ||
+      typeof benzinActivityOp.balanceChanges === 'undefined' ||
+      typeof activityAccOp.balanceChanges !== 'undefined'
+    )
+      return
+
+    setActivityAccOp({
+      ...benzinActivityOp
+    })
+  }, [activityAccOp, benzinActivityOp])
 
   // use the extension account op for status changes, if passed
   useEffect(() => {
@@ -966,6 +990,8 @@ const useSteps = ({
     }
   }, [network, txnReceipt, txn, userOpHash, userOp, txnId, extensionAccOp])
 
+  const submittedAccountOp = activityAccOp || extensionAccOp || null
+
   return {
     blockData,
     finalizedStatus,
@@ -976,9 +1002,12 @@ const useSteps = ({
     originatedFrom: txnReceipt.originatedFrom,
     userOp,
     extensionAccOp,
+    submittedAccountOp,
     delegation:
-      extensionAccOp && extensionAccOp.meta && extensionAccOp.meta.setDelegation !== undefined
-        ? extensionAccOp.meta.delegation
+      submittedAccountOp &&
+      submittedAccountOp.meta &&
+      submittedAccountOp.meta.setDelegation !== undefined
+        ? submittedAccountOp.meta.delegation
         : undefined
   }
 }

@@ -10,7 +10,9 @@ import StarsIcon from '@common/assets/svg/StarsIcon'
 import Text from '@common/components/Text'
 import TokenIcon from '@common/components/TokenIcon'
 import { isMobile } from '@common/config/env'
+import useTheme from '@common/hooks/useTheme'
 import ConfettiAnimation from '@common/modules/dashboard/components/ConfettiAnimation'
+import PendingTokenSummary from '@common/modules/sign-account-op/components/PendingTokenSummary'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import DelegationHumanization from '@web/components/DelegationHumanization'
@@ -29,8 +31,12 @@ interface Props {
 
 const Steps: FC<Props> = ({ activeStep, txnId, userOpHash, stepsState, summary, delegation }) => {
   const { width: windowWidth, height: windowHeight } = useWindowDimensions()
+  const { theme } = useTheme()
   const { blockData, finalizedStatus, feePaidWith, from, originatedFrom } = stepsState
   const finalStepRows: any = getFinalizedRows(blockData, finalizedStatus)
+  const balanceChanges = stepsState.submittedAccountOp?.balanceChanges || []
+  const assetsOut = balanceChanges.filter((change) => change.balanceChange < 0n)
+  const assetsIn = balanceChanges.filter((change) => change.balanceChange > 0n)
 
   const stepRows: any = [
     {
@@ -178,6 +184,73 @@ const Steps: FC<Props> = ({ activeStep, txnId, userOpHash, stepsState, summary, 
                   </Text>
                 )
             }
+            {(assetsOut.length > 0 || assetsIn.length > 0) && (
+              <View style={[flexbox.directionRow, flexbox.flex1, spacings.mtSm]}>
+                {assetsOut.length > 0 && (
+                  <View
+                    style={[
+                      flexbox.flex1,
+                      spacings.phSm,
+                      spacings.pvSm,
+                      {
+                        borderWidth: 1,
+                        borderColor: theme.secondaryBorder,
+                        borderRadius: 12
+                      },
+                      assetsIn.length > 0 ? spacings.mrTy : null
+                    ]}
+                  >
+                    <Text fontSize={14} weight="semiBold" appearance="secondaryText">
+                      Assets out
+                    </Text>
+                    <View style={spacings.mtSm}>
+                      {assetsOut.map((change, index) => (
+                        <PendingTokenSummary
+                          key={change.address}
+                          token={{
+                            ...change,
+                            simulationAmount: change.balanceChange
+                          }}
+                          chainId={change.chainId}
+                          hasBottomSpacing={index < assetsOut.length - 1}
+                        />
+                      ))}
+                    </View>
+                  </View>
+                )}
+                {assetsIn.length > 0 && (
+                  <View
+                    style={[
+                      flexbox.flex1,
+                      spacings.phSm,
+                      spacings.pvSm,
+                      {
+                        borderWidth: 1,
+                        borderColor: theme.secondaryBorder,
+                        borderRadius: 12
+                      }
+                    ]}
+                  >
+                    <Text fontSize={14} weight="semiBold" appearance="secondaryText">
+                      Assets in
+                    </Text>
+                    <View style={spacings.mtSm}>
+                      {assetsIn.map((change, index) => (
+                        <PendingTokenSummary
+                          key={change.address}
+                          token={{
+                            ...change,
+                            simulationAmount: change.balanceChange
+                          }}
+                          chainId={change.chainId}
+                          hasBottomSpacing={index < assetsIn.length - 1}
+                        />
+                      ))}
+                    </View>
+                  </View>
+                )}
+              </View>
+            )}
           </Step>
         )}
         <Step
