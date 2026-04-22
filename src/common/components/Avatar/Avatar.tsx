@@ -168,7 +168,13 @@ const Avatar: FC<Props> = ({
         <JazzIcon borderRadius={borderRadius} address={address} size={size} />
       )}
       {avatarType === 'blockies' && (
-        <Blockie seed={address} width={size} height={size} borderRadius={borderRadius} />
+        <Blockie
+          // The address MUST be lowercase for blockies as that's what other wallets do and changing it would change the generated avatar
+          seed={address.toLowerCase()}
+          width={size}
+          height={size}
+          borderRadius={borderRadius}
+        />
       )}
       {avatarType === 'ens' && !!ensAvatar && (
         <EnsAvatar
