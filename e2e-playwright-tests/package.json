@@ -8,7 +8,7 @@
     "show:trace": "playwright show-trace",
     "test:all:non-hw": "npx playwright test --grep-invert \"@balanceCheck|@ledgerTests|@trezorTests\"",
     "balance:test": "npx playwright test -g @balanceCheck --retries 1",
-    "ledger:tests": "npx playwright test -g @ledgerTests --retries 0",
+    "ledger:tests": "npx playwright test -g @ledgerTests",
     "trezor:test": "npx playwright test -g @trezorTests",
     "auth": "npx playwright test -g @auth",
     "dashboard": "npx playwright test -g @dashboard",
