@@ -4,7 +4,7 @@ import { View } from 'react-native'
 import { SurveyAnswers } from '@ambire-common/interfaces/survey'
 import { getNextQuestionForAnswers } from '@ambire-common/utils/survey'
 import ButtonWithLoader from '@common/components/ButtonWithLoader/ButtonWithLoader'
-import { PanelTitle } from '@common/components/Panel/Panel'
+import { PanelBackButton, PanelTitle } from '@common/components/Panel/Panel'
 import ScrollableWrapper from '@common/components/ScrollableWrapper'
 import { isMobile, isWeb } from '@common/config/env'
 import useController from '@common/hooks/useController'
@@ -39,6 +39,17 @@ const SurveyScreen = () => {
   } = useController('InviteController')
 
   const { navigate } = useNavigation()
+
+  const handleGoBackPress = useCallback(() => {
+    dispatchToSurvey({
+      type: 'method',
+      params: {
+        method: 'clearSurveyState',
+        args: []
+      }
+    })
+    navigate(ROUTES.dashboard)
+  }, [navigate, dispatchToSurvey])
 
   const [inputtedAnswer, setInputtedAnswer] = useState<{
     questionPosition: number
@@ -178,8 +189,9 @@ const SurveyScreen = () => {
       <Content buttons={buttons}>
         <View>
           <ScrollableWrapper style={flexbox.flex1} contentContainerStyle={[flexbox.flex1]}>
-            <View style={[flexbox.alignCenter, spacings.mb]}>
-              <PanelTitle title={'Survey'} />
+            <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mb]}>
+              <PanelBackButton onPress={handleGoBackPress} style={spacings.mrSm} />
+              <PanelTitle title={'Survey'} style={spacings.pr2Xl} />
             </View>
             <View style={[spacings.mh2Xl, spacings.mtMd]}>
               <ProgressBar percentageDone={percentageDone} />
