@@ -97,7 +97,7 @@ const SurveyInnerState = ({
         <Failed
           alertStyle={{ maxWidth: '100%' }}
           title={t('We failed to send your response.')}
-          errorMessage={`Error: ${errorMessage || 'unknown submitting error'}`}
+          errorMessage={`We couldn't send your survey response right now. Please check your connection and try again.${errorMessage ? ` Details: ${errorMessage}` : ''}`}
         />
       )
 
@@ -106,7 +106,7 @@ const SurveyInnerState = ({
         <Failed
           alertStyle={{ maxWidth: '100%' }}
           title={t('We failed to fetch the survey.')}
-          errorMessage={`Error: ${errorMessage || 'unknown fetching error'}`}
+          errorMessage={`We couldn't load the survey at this time. Please check your internet connection and try again.${errorMessage ? ` Details: ${errorMessage}` : ''}`}
         />
       )
     default:
@@ -114,7 +114,7 @@ const SurveyInnerState = ({
         <Failed
           alertStyle={{ maxWidth: '100%' }}
           title={t('Internal error, contact support and restart the extension.')}
-          errorMessage={`Error: unexpected survey state ${surveyStatus}}`}
+          errorMessage={`Something went wrong with the survey. Please restart the app and try again. If the problem persists, contact support.${errorMessage ? ` Details: ${errorMessage}` : ''}`}
         />
       )
   }
