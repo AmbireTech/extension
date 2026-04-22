@@ -148,6 +148,7 @@ const useTokenDetails = () => {
 
   const topUpDisabledTooltipText = useMemo(() => {
     if (!canUseGasTank) {
+      if (account?.creation) return t('Disabled for v1 wallets.')
       return t('Not available for {{type}} wallets, yet.', {
         type: account?.safeCreation ? 'Safe' : 'hardware'
       })
@@ -164,7 +165,14 @@ const useTokenDetails = () => {
     }
 
     return undefined
-  }, [canUseGasTank, canToToppedUp, gasTankAssetsError, t, account?.safeCreation])
+  }, [
+    canUseGasTank,
+    canToToppedUp,
+    gasTankAssetsError,
+    t,
+    account?.safeCreation,
+    account?.creation
+  ])
 
   const actions = useMemo(
     () =>

@@ -66,9 +66,11 @@ const GasTankModal = ({ modalRef, handleClose, portfolio, account }: Props) => {
           {!canUseGasTank && (
             <Text appearance="warningText" fontSize={16} weight="medium">
               {'\n'}
-              {t('Not available for {{type}} wallets, yet.', {
-                type: account?.safeCreation ? 'Safe' : 'hardware'
-              })}
+              {!account?.creation
+                ? t('Not available for {{type}} wallets, yet.', {
+                    type: account?.safeCreation ? 'Safe' : 'hardware'
+                  })
+                : t('Disabled for v1 wallets.')}
             </Text>
           )}
         </Text>
