@@ -77,7 +77,7 @@ const useTokenDetails = () => {
   const shouldDisableSwapAndBridge =
     network?.isNotSupported || isGasTankOrRewardsToken || isAmountZero
 
-  const { canUseGasTank } = useHasGasTank({ account })
+  const { canUseGasTank, disabledReason } = useHasGasTank({ account })
 
   const unavailableBecauseGasTankOrRewardsTokenTooltipText = t(
     'Unavailable. {{tokenType}} tokens cannot be sent, swapped, or bridged.',
@@ -147,11 +147,7 @@ const useTokenDetails = () => {
   )
 
   const topUpDisabledTooltipText = useMemo(() => {
-    if (!canUseGasTank) {
-      return t('Not available for {{type}} wallets, yet.', {
-        type: account?.safeCreation ? 'Safe' : 'hardware'
-      })
-    }
+    if (!canUseGasTank) return disabledReason
 
     if (!canToToppedUp) {
       return t(
@@ -164,7 +160,7 @@ const useTokenDetails = () => {
     }
 
     return undefined
-  }, [canUseGasTank, canToToppedUp, gasTankAssetsError, t, account?.safeCreation])
+  }, [canUseGasTank, canToToppedUp, disabledReason, gasTankAssetsError, t])
 
   const actions = useMemo(
     () =>

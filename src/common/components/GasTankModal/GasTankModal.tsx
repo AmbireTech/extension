@@ -41,7 +41,7 @@ const GasTankModal = ({ modalRef, handleClose, portfolio, account }: Props) => {
   const {
     state: { networks }
   } = useController('NetworksController')
-  const { canUseGasTank } = useHasGasTank({ account })
+  const { canUseGasTank, disabledReason } = useHasGasTank({ account })
 
   // Note: total balance Gas Tank details
   const { token, balanceFormatted } = useMemo(
@@ -66,9 +66,7 @@ const GasTankModal = ({ modalRef, handleClose, portfolio, account }: Props) => {
           {!canUseGasTank && (
             <Text appearance="warningText" fontSize={16} weight="medium">
               {'\n'}
-              {t('Not available for {{type}} wallets, yet.', {
-                type: account?.safeCreation ? 'Safe' : 'hardware'
-              })}
+              {disabledReason}
             </Text>
           )}
         </Text>
