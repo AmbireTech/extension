@@ -9,12 +9,17 @@ interface Style {
   container: ViewStyle
   header: ViewStyle
   headerMeta: ViewStyle
+  summaryItem: ViewStyle
   footer: ViewStyle
   contentContainer: ViewStyle
   dappInteractionsColumn: ViewStyle
   dappInteractionRow: ViewStyle
   balanceChangesRightColumn: ViewStyle
   balanceChangeRow: ViewStyle
+  modalBalanceChangesSection: ViewStyle
+  modalSimulationContainer: ViewStyle
+  modalSimulationContainerHeader: ViewStyle
+  modalSimulationBody: ViewStyle
 }
 
 const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
@@ -33,6 +38,10 @@ const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
     headerMeta: {
       ...flexbox.directionRow,
       ...flexbox.alignCenter
+    },
+    summaryItem: {
+      backgroundColor: 'transparent',
+      borderWidth: 0
     },
     contentContainer: {
       ...flexbox.directionRow,
@@ -56,6 +65,25 @@ const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
     balanceChangeRow: {
       ...flexbox.directionRow,
       ...flexbox.alignCenter
+    },
+    modalBalanceChangesSection: {
+      backgroundColor: 'transparent'
+    },
+    modalSimulationContainer: {
+      borderWidth: 1,
+      ...common.borderRadiusPrimary,
+      borderColor: theme.primaryBorder,
+      overflow: 'hidden',
+      ...flexbox.flex1
+    },
+    modalSimulationContainerHeader: {
+      backgroundColor: theme.secondaryBackground,
+      ...spacings.phSm,
+      ...spacings.pvTy
+    },
+    modalSimulationBody: {
+      ...spacings.phSm,
+      ...spacings.pvSm
     },
     footer: {
       ...flexbox.directionRow,

@@ -1,7 +1,8 @@
 /* eslint-disable @typescript-eslint/no-floating-promises */
 import { formatUnits } from 'ethers'
 import React, { useMemo } from 'react'
-import { View, ViewStyle } from 'react-native'
+import { Pressable, View, ViewStyle } from 'react-native'
+import { useModalize } from 'react-native-modalize'
 
 import { Dapp } from '@ambire-common/interfaces/dapp'
 import { Network } from '@ambire-common/interfaces/network'
@@ -11,10 +12,13 @@ import {
   SubmittedAccountOp
 } from '@ambire-common/libs/accountOp/submittedAccountOp'
 import { AccountOpStatus } from '@ambire-common/libs/accountOp/types'
+import { humanizeAccountOp } from '@ambire-common/libs/humanizer'
+import { IrCall } from '@ambire-common/libs/humanizer/interfaces'
 import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
 import AmbireLogoSquare from '@common/assets/svg/AmbireLogoSquare'
 import BungeeIcon from '@common/assets/svg/BungeeIcon/BungeeIcon'
 import LiFiIcon from '@common/assets/svg/LiFiIcon/LiFiIcon'
+import BottomSheet from '@common/components/BottomSheet'
 import NetworkIcon from '@common/components/NetworkIcon'
 import SkeletonLoader from '@common/components/SkeletonLoader'
 import Text from '@common/components/Text'
@@ -22,8 +26,11 @@ import TokenIcon from '@common/components/TokenIcon'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
-import { sizeMultiplier } from '@common/modules/sign-account-op/components/TransactionSummary'
+import PendingTokenSummary from '@common/modules/sign-account-op/components/PendingTokenSummary'
+import TransactionSummary, { sizeMultiplier } from '@common/modules/sign-account-op/components/TransactionSummary'
 import spacings, { SPACING_SM } from '@common/styles/spacings'
+import flexbox from '@common/styles/utils/flexbox'
+import DelegationHumanization from '@web/components/DelegationHumanization'
 import ManifestImage from '@web/components/ManifestImage'
 
 import Footer from './Footer'
@@ -34,7 +41,6 @@ interface Props {
   submittedAccountOp: SubmittedAccountOp
   style?: ViewStyle
   size?: 'sm' | 'md' | 'lg'
-  // The primary difference is the ability to expand and view raw transaction details in 'full-info'. All other features are identical.
   defaultType: 'summary' | 'full-info'
 }
 
@@ -111,153 +117,197 @@ const stylesForIcons = {
   }
 } as const
 
-const SubmittedTransactionSummaryInner = ({ submittedAccountOp, size = 'lg', style }: Props) => {
+const getOrderedBalanceChanges = (submittedAccountOp: SubmittedAccountOp) => {
+  const balanceChanges = submittedAccountOp.balanceChanges || []
+  const positiveChanges = balanceChanges.filter((change) => change.balanceChange > 0n)
+  const negativeChanges = balanceChanges.filter((change) => change.balanceChange < 0n)
+
+  return [...positiveChanges, ...negativeChanges]
+}
+
+const getHumanizedCalls = (submittedAccountOp: SubmittedAccountOp): IrCall[] =>
+  humanizeAccountOp(submittedAccountOp).map((call, index) => ({
+    ...call,
+    id: call.id || String(index)
+  }))
+
+const getDappInteractions = (submittedAccountOp: SubmittedAccountOp): DappInteraction[] => {
+  const interactions: DappInteraction[] = []
+  const seen = new Set<string>()
+
+  const addInteraction = (interaction: DappInteraction) => {
+    if (seen.has(interaction.id)) return
+    seen.add(interaction.id)
+    interactions.push(interaction)
+  }
+
+  submittedAccountOp.calls.forEach((call) => {
+    const dapp = call.dapp as Dapp | undefined
+    if (!dapp?.name) return
+
+    addInteraction({
+      id: `dapp:${dapp.id || `${dapp.name}-${dapp.url || ''}`}`,
+      name: dapp.name,
+      iconUrl: dapp.icon
+    })
+  })
+
+  const isSwap = !!submittedAccountOp.meta?.swapTxn
+  if (isSwap) {
+    addInteraction({
+      id: 'fallback:swap',
+      name: 'Swap/Bridge',
+      iconType: 'ambire'
+    })
+  }
+
+  if (!interactions.length) {
+    addInteraction({
+      id: 'fallback:transfer',
+      name: 'Transfer',
+      iconType: 'ambire'
+    })
+  }
+
+  return interactions
+}
+
+const SubmittedTransactionHeader = ({
+  submittedAccountOp,
+  size
+}: {
+  submittedAccountOp: SubmittedAccountOp
+  size: 'sm' | 'md' | 'lg'
+}) => {
   const { styles } = useTheme(getStyles)
-  const { networks } = useController('NetworksController').state
-  const { t } = useTranslation()
   const submittedDate = useMemo(
     () => new Date(submittedAccountOp.timestamp),
     [submittedAccountOp.timestamp]
   )
 
-  const network: Network | undefined = useMemo(
-    () => networks.find((n) => n.chainId === submittedAccountOp.chainId),
-    [networks, submittedAccountOp.chainId]
+  return (
+    <View
+      style={[styles.header, spacings.phSm, { marginBottom: SPACING_SM * sizeMultiplier[size] }]}
+    >
+      <StatusBadge status={submittedAccountOp.status} textSize={14 * sizeMultiplier[size]} />
+      <View style={styles.headerMeta}>
+        {submittedDate.toString() !== 'Invalid Date' && (
+          <Text fontSize={14 * sizeMultiplier[size]} appearance="secondaryText">
+            {`${submittedDate.toLocaleDateString()} (${submittedDate.toLocaleTimeString()})`}
+          </Text>
+        )}
+        <NetworkIcon
+          id={submittedAccountOp.chainId.toString()}
+          size={20 * sizeMultiplier[size]}
+          style={spacings.mlMi}
+        />
+      </View>
+    </View>
   )
-  const balanceChanges = useMemo(
-    () => submittedAccountOp.balanceChanges || [],
-    [submittedAccountOp.balanceChanges]
+}
+
+const SubmittedTransactionSummaryDetails = ({
+  submittedAccountOp,
+  network,
+  size,
+  defaultType
+}: {
+  submittedAccountOp: SubmittedAccountOp
+  network: Network
+  size: 'sm' | 'md' | 'lg'
+  defaultType: Props['defaultType']
+}) => {
+  const { styles } = useTheme(getStyles)
+  const { t } = useTranslation()
+  const humanizedCalls = useMemo(() => getHumanizedCalls(submittedAccountOp), [submittedAccountOp])
+  const orderedBalanceChanges = useMemo(
+    () => getOrderedBalanceChanges(submittedAccountOp),
+    [submittedAccountOp]
   )
-  const shouldShowBalanceChangesSummary =
-    submittedAccountOp.status === AccountOpStatus.Success && balanceChanges.length > 0
-  const orderedBalanceChanges = useMemo(() => {
-    const positiveChanges = balanceChanges.filter((change) => change.balanceChange > 0n)
-    const negativeChanges = balanceChanges.filter((change) => change.balanceChange < 0n)
+  const assetsOut = useMemo(
+    () => orderedBalanceChanges.filter((change) => change.balanceChange < 0n),
+    [orderedBalanceChanges]
+  )
+  const assetsIn = useMemo(
+    () => orderedBalanceChanges.filter((change) => change.balanceChange > 0n),
+    [orderedBalanceChanges]
+  )
+  const isDelegationTxn =
+    submittedAccountOp.meta && submittedAccountOp.meta.setDelegation !== undefined
 
-    return [...positiveChanges, ...negativeChanges]
-  }, [balanceChanges])
-  const dappInteractions = useMemo(() => {
-    const interactions: DappInteraction[] = []
-    const seen = new Set<string>()
-
-    const addInteraction = (interaction: DappInteraction) => {
-      if (seen.has(interaction.id)) return
-      seen.add(interaction.id)
-      interactions.push(interaction)
-    }
-
-    submittedAccountOp.calls.forEach((call) => {
-      const dapp = call.dapp as Dapp | undefined
-      if (!dapp?.name) return
-
-      addInteraction({
-        id: `dapp:${dapp.id || `${dapp.name}-${dapp.url || ''}`}`,
-        name: dapp.name,
-        iconUrl: dapp.icon
-      })
-    })
-
-    const isSwapBridge = !!submittedAccountOp.meta?.swapTxn
-    if (isSwapBridge) {
-      addInteraction({
-        id: 'fallback:swap',
-        name: 'Swap/Bridge',
-        iconType: 'ambire'
-      })
-    }
-
-    if (!interactions.length) {
-      addInteraction({
-        id: 'fallback:transfer',
-        name: 'Transfer',
-        iconType: 'ambire'
-      })
-    }
-
-    return interactions
-  }, [submittedAccountOp.calls, submittedAccountOp.meta?.swapTxn])
-
-  if (!network) return null
+  const renderBalanceChangesCard = (title: string, changes: BalanceChange[]) => (
+    <View
+      style={[
+        styles.modalSimulationContainer,
+        title === 'Assets out' && assetsIn.length ? spacings.mrTy : undefined
+      ]}
+    >
+      <View style={styles.modalSimulationContainerHeader}>
+        <Text fontSize={14} weight="semiBold" appearance="secondaryText">
+          {t(title)}
+        </Text>
+      </View>
+      <View style={styles.modalSimulationBody}>
+        {changes.map((change, index) => (
+          <PendingTokenSummary
+            key={`${change.address}-${change.balanceChange.toString()}`}
+            token={{
+              ...change,
+              simulationAmount: change.balanceChange
+            }}
+            chainId={submittedAccountOp.chainId}
+            hasBottomSpacing={index < changes.length - 1}
+          />
+        ))}
+      </View>
+    </View>
+  )
 
   return (
     <View
       style={[
         styles.container,
-        style,
         {
           paddingTop: SPACING_SM * sizeMultiplier[size]
         }
       ]}
     >
-      <View
-        style={[styles.header, spacings.phSm, { marginBottom: SPACING_SM * sizeMultiplier[size] }]}
-      >
-        <StatusBadge status={submittedAccountOp.status} textSize={14 * sizeMultiplier[size]} />
-        <View style={styles.headerMeta}>
-          {submittedDate.toString() !== 'Invalid Date' && (
-            <Text fontSize={14 * sizeMultiplier[size]} appearance="secondaryText">
-              {`${submittedDate.toLocaleDateString()} (${submittedDate.toLocaleTimeString()})`}
-            </Text>
-          )}
-          <NetworkIcon
-            id={submittedAccountOp.chainId.toString()}
-            size={20 * sizeMultiplier[size]}
-            style={spacings.mlMi}
+      <SubmittedTransactionHeader submittedAccountOp={submittedAccountOp} size={size} />
+      {!isDelegationTxn &&
+        humanizedCalls.map((call: IrCall) => (
+          <TransactionSummary
+            key={call.id}
+            style={{ ...styles.summaryItem, marginBottom: SPACING_SM * sizeMultiplier[size] }}
+            call={call}
+            chainId={submittedAccountOp.chainId}
+            type="history"
+            enableExpand={defaultType === 'full-info'}
+            size={size}
+            hideLinks
+          />
+        ))}
+      {!isDelegationTxn && !humanizedCalls.length && (
+        <View style={spacings.phSm}>
+          <SkeletonLoader width="100%" height={112} />
+        </View>
+      )}
+      {isDelegationTxn && (
+        <View style={[spacings.phSm, spacings.pbSm]}>
+          <DelegationHumanization
+            setDelegation={submittedAccountOp.meta?.setDelegation}
+            delegatedContract={submittedAccountOp.meta?.delegation?.address}
+            isBorderless
           />
         </View>
-      </View>
-      <View style={styles.contentContainer}>
-        <View
-          style={[
-            styles.dappInteractionsColumn,
-            shouldShowBalanceChangesSummary ? spacings.mrSm : undefined
-          ]}
-        >
-          {dappInteractions.length ? (
-            dappInteractions.map((interaction, index) => (
-              <View
-                key={interaction.id}
-                style={[
-                  styles.dappInteractionRow,
-                  index < dappInteractions.length - 1 ? spacings.mbTy : null
-                ]}
-              >
-                <DappInteractionIcon interaction={interaction} />
-                <Text fontSize={12} appearance="secondaryText" style={spacings.mlMi}>
-                  {interaction.name}
-                </Text>
-              </View>
-            ))
-          ) : (
-            <SkeletonLoader width={120} height={18} />
-          )}
-        </View>
-        {shouldShowBalanceChangesSummary && (
-          <View style={styles.balanceChangesRightColumn}>
-            {orderedBalanceChanges.map((change, index) => (
-              <View
-                key={`${change.address}-${change.balanceChange.toString()}`}
-                style={[
-                  styles.balanceChangeRow,
-                  index < orderedBalanceChanges.length - 1 ? spacings.mbTy : null
-                ]}
-              >
-                <Text fontSize={12} appearance="secondaryText">
-                  {change.balanceChange > 0n ? t('Received') : t('Sent')}{' '}
-                </Text>
-                <Text
-                  fontSize={12}
-                  weight="medium"
-                  appearance={change.balanceChange > 0n ? 'successText' : 'errorText'}
-                >
-                  {formatBalanceChangeAmount(change)}
-                </Text>
-                <BalanceChangeToken change={change} />
-              </View>
-            ))}
+      )}
+      {!!(assetsOut.length || assetsIn.length) && (
+        <View style={[styles.modalBalanceChangesSection, spacings.phSm, spacings.pbSm]}>
+          <View style={[flexbox.directionRow, flexbox.flex1]}>
+            {!!assetsOut.length && renderBalanceChangesCard('Assets out', assetsOut)}
+            {!!assetsIn.length && renderBalanceChangesCard('Assets in', assetsIn)}
           </View>
-        )}
-      </View>
+        </View>
+      )}
       <Footer
         size={size}
         network={network}
@@ -273,15 +323,119 @@ const SubmittedTransactionSummaryInner = ({ submittedAccountOp, size = 'lg', sty
   )
 }
 
-const SubmittedTransactionSummary = ({
+const SubmittedTransactionSummaryInner = ({
   submittedAccountOp,
   size = 'lg',
   style,
   defaultType
 }: Props) => {
-  // If the account op consists of multiple EOA transactions,
-  // we need to divide them into separate components.
-  // This will make them appear as if they were broadcasted one by one.
+  const { styles } = useTheme(getStyles)
+  const { t } = useTranslation()
+  const { networks } = useController('NetworksController').state
+  const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useModalize()
+
+  const network: Network | undefined = useMemo(
+    () => networks.find((n) => n.chainId === submittedAccountOp.chainId),
+    [networks, submittedAccountOp.chainId]
+  )
+  const orderedBalanceChanges = useMemo(
+    () => getOrderedBalanceChanges(submittedAccountOp),
+    [submittedAccountOp]
+  )
+  const shouldShowBalanceChangesSummary =
+    submittedAccountOp.status === AccountOpStatus.Success && orderedBalanceChanges.length > 0
+  const dappInteractions = useMemo(
+    () => getDappInteractions(submittedAccountOp),
+    [submittedAccountOp]
+  )
+
+  if (!network) return null
+
+  return (
+    <>
+      <Pressable onPress={openBottomSheet}>
+        <View
+          style={[
+            styles.container,
+            style,
+            {
+              paddingTop: SPACING_SM * sizeMultiplier[size]
+            }
+          ]}
+        >
+          <SubmittedTransactionHeader submittedAccountOp={submittedAccountOp} size={size} />
+          <View style={styles.contentContainer}>
+            <View
+              style={[
+                styles.dappInteractionsColumn,
+                shouldShowBalanceChangesSummary ? spacings.mrSm : undefined
+              ]}
+            >
+              {dappInteractions.length ? (
+                dappInteractions.map((interaction, index) => (
+                  <View
+                    key={interaction.id}
+                    style={[
+                      styles.dappInteractionRow,
+                      index < dappInteractions.length - 1 ? spacings.mbTy : null
+                    ]}
+                  >
+                    <DappInteractionIcon interaction={interaction} />
+                    <Text fontSize={12} appearance="secondaryText" style={spacings.mlMi}>
+                      {interaction.name}
+                    </Text>
+                  </View>
+                ))
+              ) : (
+                <SkeletonLoader width={120} height={18} />
+              )}
+            </View>
+            {shouldShowBalanceChangesSummary && (
+              <View style={styles.balanceChangesRightColumn}>
+                {orderedBalanceChanges.map((change, index) => (
+                  <View
+                    key={`${change.address}-${change.balanceChange.toString()}`}
+                    style={[
+                      styles.balanceChangeRow,
+                      index < orderedBalanceChanges.length - 1 ? spacings.mbTy : null
+                    ]}
+                  >
+                    <Text fontSize={12} appearance="secondaryText">
+                      {change.balanceChange > 0n ? t('Received') : t('Sent')}{' '}
+                    </Text>
+                    <Text
+                      fontSize={12}
+                      weight="medium"
+                      appearance={change.balanceChange > 0n ? 'successText' : 'errorText'}
+                    >
+                      {formatBalanceChangeAmount(change)}
+                    </Text>
+                    <BalanceChangeToken change={change} />
+                  </View>
+                ))}
+              </View>
+            )}
+          </View>
+        </View>
+      </Pressable>
+      <BottomSheet
+        sheetRef={sheetRef}
+        closeBottomSheet={closeBottomSheet}
+        type="modal"
+        style={{ maxWidth: 720, paddingHorizontal: 0, overflow: 'hidden' }}
+      >
+        <SubmittedTransactionSummaryDetails
+          submittedAccountOp={submittedAccountOp}
+          network={network}
+          size={size}
+          defaultType={defaultType}
+        />
+      </BottomSheet>
+    </>
+  )
+}
+
+const SubmittedTransactionSummary = ({ submittedAccountOp, size = 'lg', style }: Props) => {
   const accountOpDividedIntoMultipleIfNeeded = isIdentifiedByMultipleTxn(
     submittedAccountOp.identifiedBy
   )
@@ -291,7 +445,6 @@ const SubmittedTransactionSummary = ({
           txnId: call.txnId,
           status: call.status,
           calls: [call],
-          // if the call has a fee set, use it
           gasFeePayment: submittedAccountOp.gasFeePayment
             ? {
                 ...submittedAccountOp.gasFeePayment,
@@ -315,7 +468,7 @@ const SubmittedTransactionSummary = ({
           submittedAccountOp={op}
           size={size}
           style={style}
-          defaultType={defaultType}
+          defaultType="full-info"
         />
       ))}
     </>
