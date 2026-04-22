@@ -163,7 +163,7 @@ const SurveyScreen = () => {
   const percentageDone = useMemo(() => {
     if (status === 'success-submitted') return 100
     if (status === 'loading-sending') return 100
-    if (status === 'error-submitting') return 0
+    if (status === 'error-submitting') return 100
     if (!questions) return 0
 
     const maxPositionFromQuestions = Math.max(...questions.map((q) => q.questionPosition)) || 1
