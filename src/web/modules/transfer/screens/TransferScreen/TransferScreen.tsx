@@ -92,7 +92,7 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
     close: closeGasTankInfoBottomSheet
   } = useModalize()
   const { accountsOps } = useController('ActivityController').state
-  const { hasGasTank } = useHasGasTank({ account })
+  const { canUseGasTank } = useHasGasTank({ account })
   const recipientMenuClosedAutomatically = useRef(false)
 
   const [showAddedToBatch, setShowAddedToBatch] = useState(false)
@@ -627,7 +627,7 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
               </View>
               <SendForm
                 addressInputState={addressInputState}
-                hasGasTank={hasGasTank}
+                canUseGasTank={canUseGasTank}
                 amountErrorMessage={validationFormMsgs.amount.message || ''}
                 isRecipientAddressUnknown={isRecipientAddressUnknown}
                 isRecipientHumanizerKnownTokenOrSmartContract={
@@ -639,7 +639,7 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
                 setAddressStateFieldValue={setAddressStateFieldValue}
               />
             </ScrollableWrapper>
-            {isTopUp && !hasGasTank && (
+            {isTopUp && !canUseGasTank && (
               <View style={spacings.ptLg}>
                 <Alert
                   type="warning"
@@ -670,7 +670,7 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
                 />
               </View>
             )}
-            {isTopUp && hasGasTank && (
+            {isTopUp && canUseGasTank && (
               <View style={spacings.ptLg}>
                 <Alert
                   type="warning"

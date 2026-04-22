@@ -53,7 +53,7 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
     addressStateFieldValue,
     setAddressStateFieldValue,
     addressInputState,
-    hasGasTank,
+    canUseGasTank,
     gasTankSheetRef,
     closeGasTankInfoBottomSheet,
     estimationModalRef,
@@ -166,7 +166,7 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
           <View>
             <SendForm
               addressInputState={addressInputState}
-              hasGasTank={hasGasTank}
+              canUseGasTank={canUseGasTank}
               amountErrorMessage={validationFormMsgs.amount.message || ''}
               isRecipientAddressUnknown={isRecipientAddressUnknown}
               isRecipientHumanizerKnownTokenOrSmartContract={
@@ -177,7 +177,7 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
               addressStateFieldValue={addressStateFieldValue}
               setAddressStateFieldValue={setAddressStateFieldValue}
             />
-            {isTopUp && !hasGasTank && (
+            {isTopUp && !canUseGasTank && (
               <View style={spacings.pt}>
                 <Alert
                   type="warning"
@@ -208,7 +208,7 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
                 />
               </View>
             )}
-            {isTopUp && hasGasTank && (
+            {isTopUp && canUseGasTank && (
               <View style={spacings.pt}>
                 <Alert
                   type="warning"

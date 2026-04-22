@@ -25,7 +25,7 @@ interface Props {
 const GasTankButton = ({ onPress, portfolio, account }: Props) => {
   const { t } = useTranslation()
   const [bindBtnAnim, btnAnimStyle] = useHover({ preset: 'opacityInverted' })
-  const { hasGasTank, isViewOnly } = useHasGasTank({ account })
+  const { canUseGasTank } = useHasGasTank({ account })
   const { isPrivacyModeEnabled } = useController('WalletStateController').state
 
   const {
@@ -39,22 +39,18 @@ const GasTankButton = ({ onPress, portfolio, account }: Props) => {
 
   const buttonState = useMemo(() => {
     if (totalBalanceGasTankDetails.token === null) return 'error'
-    if (!hasGasTank && isViewOnly && totalBalanceGasTankDetails.balanceFormatted) return 'balance'
-    if (hasGasTank && totalBalanceGasTankDetails.balanceFormatted) return 'balance'
-    if (hasGasTank && !totalBalanceGasTankDetails.balanceFormatted) return 'topup'
+    if (canUseGasTank && totalBalanceGasTankDetails.balanceUSDFormatted) return 'balance'
 
-    return 'soon'
+    return 'generic'
   }, [
-    hasGasTank,
-    isViewOnly,
-    totalBalanceGasTankDetails.balanceFormatted,
+    canUseGasTank,
+    totalBalanceGasTankDetails.balanceUSDFormatted,
     totalBalanceGasTankDetails.token
   ])
 
   // Purposely don't disable the button (but block the onPress action) in
   // case of a tooltip, because it should be clickable to show the tooltip.
-  const doesHaveTooltip = buttonState === 'soon' || buttonState === 'error'
-  const disabled = !hasGasTank && !doesHaveTooltip
+  const doesHaveTooltip = buttonState === 'error'
   const handleOnPress = useCallback(() => {
     if (doesHaveTooltip) return
 
@@ -62,26 +58,26 @@ const GasTankButton = ({ onPress, portfolio, account }: Props) => {
   }, [doesHaveTooltip, onPress])
 
   const text = useMemo(() => {
-    if (buttonState === 'balance') return `${totalBalanceGasTankDetails.balanceUSDFormatted}`
-    if (buttonState === 'topup') return t('Top up')
-    if (buttonState === 'soon') return isViewOnly ? '' : t('soon')
-    if (buttonState === 'error') return t('unavailable')
+    if (['generic', 'error'].includes(buttonState)) return t('Gas Tank')
 
-    return ''
-  }, [buttonState, totalBalanceGasTankDetails.balanceUSDFormatted, isViewOnly, t])
+    return totalBalanceGasTankDetails.balanceUSD === 0
+      ? '$0'
+      : `${totalBalanceGasTankDetails.balanceUSDFormatted}`
+  }, [
+    buttonState,
+    t,
+    totalBalanceGasTankDetails.balanceUSD,
+    totalBalanceGasTankDetails.balanceUSDFormatted
+  ])
 
   const tooltipText = useMemo(() => {
-    if (buttonState === 'soon') {
-      if (!!account?.safeCreation) return t('Not available for Safe wallets, yet.')
-      return t('Not available for hardware wallets, yet.')
-    }
-
-    if (buttonState === 'error') {
-      return t('Unable to load Gas Tank data.')
-    }
+    if (buttonState === 'error') return t("Couldn't load. Please try again later.")
 
     return ''
-  }, [buttonState, account?.safeCreation, t])
+  }, [buttonState, t])
+
+  const shouldDisplayOnGasTank = buttonState === 'balance'
+  const shouldDisplayValue = buttonState === 'balance'
 
   if (!portfolio.isReadyToVisualize) {
     return <SkeletonLoader lowOpacity width={80} height={26} borderRadius={12} />
@@ -90,7 +86,6 @@ const GasTankButton = ({ onPress, portfolio, account }: Props) => {
   return (
     <AnimatedPressable
       onPress={handleOnPress}
-      disabled={disabled}
       // @ts-ignore
       style={{
         ...flexbox.directionRow,
@@ -110,26 +105,28 @@ const GasTankButton = ({ onPress, portfolio, account }: Props) => {
         buttonState === 'balance' ? 'dashboard-gas-tank-balance' : 'dashboard-gas-tank-button'
       }
     >
-      <GasTankIcon width={14} height={14} color="#FFFFFF" />
+      <GasTankIcon width={15} height={15} color="#FFFFFF" hasError={buttonState === 'error'} />
       <Text
         style={{ ...spacings.mlMi, ...(isPrivacyModeEnabled ? { lineHeight: 14 } : {}) }}
         dataSet={
           tooltipText
             ? createGlobalTooltipDataSet({
-                id: tooltipText.toLowerCase().replace(/\s/g, '-'),
+                id: 'gas-tank-pill-tooltip',
                 content: tooltipText
               })
             : {}
         }
-        color="#FFFFFF"
+        color={shouldDisplayValue ? '#FFFFFF' : '#B9BFC9'}
         weight="number_medium"
         fontSize={12}
       >
-        {privateValue(text, isPrivacyModeEnabled, 4)}
+        {shouldDisplayValue ? privateValue(text, isPrivacyModeEnabled, 4) : text}
       </Text>
-      <Text fontSize={12} color="#B9BFC9" style={spacings.mlMi}>
-        {t('on Gas Tank')}
-      </Text>
+      {shouldDisplayOnGasTank && (
+        <Text fontSize={12} color="#B9BFC9" style={spacings.mlMi}>
+          {t('on Gas Tank')}
+        </Text>
+      )}
     </AnimatedPressable>
   )
 }
