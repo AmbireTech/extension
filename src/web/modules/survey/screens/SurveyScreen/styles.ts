@@ -32,7 +32,7 @@ const getStyles = (theme: ThemeProps) =>
       ...flexbox.alignCenter,
       ...flexbox.justifyCenter,
       ...spacings.mrTy,
-      borderColor: '#808EA2'
+      borderColor: theme.neutral600
     },
 
     radioSelectedInner: {
