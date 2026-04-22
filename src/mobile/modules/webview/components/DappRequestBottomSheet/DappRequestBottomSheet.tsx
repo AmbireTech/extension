@@ -78,6 +78,7 @@ const DappRequestBottomSheet: React.FC<Props> = ({ sheetRef, closeBottomSheet, o
       closeBottomSheet={closeBottomSheet}
       onClosed={onClosed}
       adjustToContentHeight={false}
+      shouldBeClosableOnDrag={false}
       isScrollEnabled={false}
       containerInnerWrapperStyles={flexbox.flex1}
       customRenderer={requestContent}

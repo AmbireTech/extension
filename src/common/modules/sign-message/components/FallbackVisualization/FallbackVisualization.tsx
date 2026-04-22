@@ -10,6 +10,7 @@ import WarningFilledIcon from '@common/assets/svg/WarningFilledIcon'
 import HumanizerAddress from '@common/components/HumanizerAddress'
 import MultistateToggleButton from '@common/components/MultistateToggleButton'
 import Text from '@common/components/Text'
+import { isMobile } from '@common/config/env'
 import useTheme from '@common/hooks/useTheme'
 import useWindowSize from '@common/hooks/useWindowSize'
 import spacings from '@common/styles/spacings'
@@ -21,6 +22,64 @@ import getStyles from './styles'
 const isCloseToBottom = ({ layoutMeasurement, contentOffset, contentSize }: NativeScrollEvent) => {
   const paddingToBottom = 40
   return layoutMeasurement.height + contentOffset.y >= contentSize.height - paddingToBottom
+}
+
+type MessageItem = {
+  value: string
+  type: string
+  n: number
+  isArrayItem?: boolean
+}
+
+type ProcessedItem = MessageItem & {
+  componentToReturn: React.ReactNode
+}
+
+const useProcessedMessageItems = (
+  message: any,
+  chainId: bigint,
+  responsiveSizeMultiplier: number,
+  t: (key: string) => string
+): ProcessedItem[] => {
+  return useMemo(() => {
+    return simplifyTypedMessage(message).map((i: MessageItem) => {
+      let componentToReturn: React.ReactNode = i.value
+
+      const isProbablyADateWIthinRange =
+        parseInt(i.value, 10) * 1000 > new Date('01/01/2000').getTime() &&
+        parseInt(i.value, 10) * 1000 < new Date('01/01/2100').getTime()
+      const isInfiniteAmount = parseInt(i.value, 10)?.toString(16) === '1'.padEnd(65, '0')
+
+      if (isValidAddress(i.value))
+        componentToReturn = (
+          <HumanizerAddress
+            chainId={BigInt(chainId)}
+            address={i.value}
+            fontSize={14 * responsiveSizeMultiplier}
+          />
+        )
+      else if (isProbablyADateWIthinRange)
+        componentToReturn = new Date(parseInt(i.value, 10) * 1000).toUTCString()
+      else if (isInfiniteAmount)
+        componentToReturn = (
+          <View style={[flexbox.directionRow, flexbox.alignCenter]}>
+            <Text
+              fontSize={16 * responsiveSizeMultiplier}
+              weight="semiBold"
+              style={[spacings.mrTy]}
+            >
+              {t('Infinite amount')}
+            </Text>
+            <WarningFilledIcon
+              width={16 * responsiveSizeMultiplier}
+              height={16 * responsiveSizeMultiplier}
+            />
+          </View>
+        )
+
+      return { ...i, componentToReturn }
+    })
+  }, [message, chainId, responsiveSizeMultiplier, t])
 }
 
 const FallbackVisualization: FC<{
@@ -58,6 +117,16 @@ const FallbackVisualization: FC<{
 
   const { content } = messageToSign
 
+  const processedItems =
+    content.kind === 'typedMessage'
+      ? useProcessedMessageItems(
+          content.message,
+          messageToSign.chainId,
+          responsiveSizeMultiplier,
+          t
+        )
+      : []
+
   return (
     <View style={[styles.container]}>
       <ScrollView
@@ -72,76 +141,64 @@ const FallbackVisualization: FC<{
         }}
         scrollEventThrottle={16}
       >
-        <Text
-          selectable
-          weight="regular"
-          fontSize={(maxWidthSize('xl') ? 14 : 12) * responsiveSizeMultiplier}
-          appearance="secondaryText"
-          style={spacings.mb}
-        >
-          {content.kind === 'typedMessage' &&
-            showRawTypedMessage &&
-            JSON.stringify(content, null, 4)}
-          {content.kind === 'typedMessage' &&
-            !showRawTypedMessage &&
-            simplifyTypedMessage(content.message).map((i, index: number) => {
-              let componentToReturn = i.value
-
-              const isProbablyADateWIthinRange =
-                parseInt(i.value, 10) * 1000 > new Date('01/01/2000').getTime() &&
-                parseInt(i.value, 10) * 1000 < new Date('01/01/2100').getTime()
-              const isInfiniteAmount = parseInt(i.value, 10)?.toString(16) === '1'.padEnd(65, '0')
-
-              if (isValidAddress(i.value))
-                componentToReturn = (
-                  <HumanizerAddress
-                    chainId={messageToSign.chainId}
-                    address={i.value}
-                    fontSize={14 * responsiveSizeMultiplier}
-                  />
-                )
-              else if (isProbablyADateWIthinRange)
-                componentToReturn = new Date(parseInt(i.value, 10) * 1000).toUTCString()
-              else if (isInfiniteAmount)
-                componentToReturn = (
-                  <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-                    <Text
-                      fontSize={16 * responsiveSizeMultiplier}
-                      weight="semiBold"
-                      style={[spacings.mrTy]}
-                    >
-                      {t('Infinite amount')}
-                    </Text>
-                    <WarningFilledIcon
-                      width={16 * responsiveSizeMultiplier}
-                      height={16 * responsiveSizeMultiplier}
-                    />
-                  </View>
-                )
-              return (
-                <View
-                  style={{
-                    ...(index < 2 ? { maxWidth: '75%' } : {}),
-                    ...(i.isArrayItem && isHexString(i.value) ? { marginBottom: 8 } : {})
-                  }}
-                  key={JSON.stringify(i)}
+        {content.kind === 'typedMessage' && showRawTypedMessage && (
+          <Text
+            selectable
+            weight="regular"
+            fontSize={(maxWidthSize('xl') ? 14 : 12) * responsiveSizeMultiplier}
+            appearance="secondaryText"
+            style={spacings.mb}
+          >
+            {JSON.stringify(content, null, 4)}
+          </Text>
+        )}
+        {content.kind === 'typedMessage' && !showRawTypedMessage && (
+          <>
+            {processedItems.map((i) => (
+              <View
+                key={i.type + i.value}
+                style={{
+                  marginBottom:
+                    i.isArrayItem && isHexString(i.value) ? 8 * responsiveSizeMultiplier : 0,
+                  flexDirection: 'row',
+                  flexWrap: 'wrap'
+                }}
+              >
+                <Text
+                  selectable
+                  weight={i.type === 'key' ? 'semiBold' : 'regular'}
+                  fontSize={16 * responsiveSizeMultiplier}
+                  appearance="secondaryText"
+                  style={{ marginLeft: i.n * 20 * responsiveSizeMultiplier }}
                 >
-                  <Text
-                    style={[
-                      i.type === 'key' && { fontWeight: 'bold' },
-                      { marginLeft: i.n * 20 * responsiveSizeMultiplier }
-                    ]}
-                    fontSize={16 * responsiveSizeMultiplier}
-                  >
-                    {componentToReturn}
-                  </Text>
-                </View>
-              )
-            })}
-          {content.kind === 'authorization-7702' && getMessageAsText(content.message as Hex)}
-          {(content.kind === 'message' || content.kind === 'siwe') &&
-            (getMessageAsText(content.message as Hex) || t('(Empty message)'))}
-        </Text>
+                  {i.componentToReturn}
+                </Text>
+              </View>
+            ))}
+          </>
+        )}
+        {content.kind === 'authorization-7702' && (
+          <Text
+            selectable
+            weight="regular"
+            fontSize={(maxWidthSize('xl') ? 14 : 12) * responsiveSizeMultiplier}
+            appearance="secondaryText"
+            style={spacings.mb}
+          >
+            {getMessageAsText(content.message as Hex)}
+          </Text>
+        )}
+        {(content.kind === 'message' || content.kind === 'siwe') && (
+          <Text
+            selectable
+            weight="regular"
+            fontSize={(maxWidthSize('xl') ? 14 : 12) * responsiveSizeMultiplier}
+            appearance="secondaryText"
+            style={spacings.mb}
+          >
+            {getMessageAsText(content.message as Hex) || t('(Empty message)')}
+          </Text>
+        )}
       </ScrollView>
       {content.kind === 'typedMessage' && (
         <MultistateToggleButton style={styles.toggleButton} states={statesForMultistateButton} />
