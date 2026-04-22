@@ -44,6 +44,7 @@ function formatTVL(tvl: number) {
 
 type DappItemProps = Dapp & {
   onPressOverride?: () => void
+  hideSettingsIcon?: boolean
 }
 
 const DappItem = (dapp: DappItemProps) => {
@@ -59,7 +60,8 @@ const DappItem = (dapp: DappItemProps) => {
     blacklisted,
     tvl,
     twitter,
-    onPressOverride
+    onPressOverride,
+    hideSettingsIcon
   } = dapp
   const { styles, theme } = useTheme(getStyles)
   const { dispatch: dappsDispatch } = useController('DappsController')
@@ -236,7 +238,7 @@ const DappItem = (dapp: DappItemProps) => {
                     <Badge text={t('Blacklisted')} type="error" style={spacings.mrTy} />
                   )}
                 </View>
-                {!!isConnected && (
+                {!!isConnected && !hideSettingsIcon && (
                   <View testID="manage-dapp-dropdown" style={{ zIndex: 999 }}>
                     <ManageApp
                       dapp={dapp}

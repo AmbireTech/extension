@@ -159,6 +159,7 @@ const DappWebViewScreen = () => {
   // WebView Refs & State
   const webviewRef = useRef<WebView>(null)
   const [currentUrl, setCurrentUrl] = useState<string>(initialUrl)
+  const [canGoBack, setCanGoBack] = useState(false)
 
   useEffect(() => {
     if (!dappUrl && setDappUrl) setDappUrl(initialUrl)
@@ -194,6 +195,14 @@ const DappWebViewScreen = () => {
     openSearchModal()
   }, [openSearchModal, setSearchValue, currentUrl])
 
+  const handleGoBack = useCallback(() => {
+    webviewRef.current?.goBack()
+  }, [])
+
+  const handleRefresh = useCallback(() => {
+    webviewRef.current?.reload()
+  }, [])
+
   const hostname = useMemo(() => {
     try {
       return new URL(currentUrl).hostname
@@ -225,6 +234,7 @@ const DappWebViewScreen = () => {
           return
         }
         setCurrentUrl(e.url)
+        setCanGoBack(e.canGoBack)
       } catch {
         console.warn('[DappWebView] Invalid URL in navigation:', e.url)
       }
@@ -541,9 +551,10 @@ const DappWebViewScreen = () => {
       footer={
         <DappWebViewFooter
           headerControl={headerControl}
-          animStyle={animStyle}
-          bindAnim={bindAnim}
           handleOpenSearchModal={handleOpenSearchModal}
+          handleGoBack={handleGoBack}
+          canGoBack={canGoBack}
+          handleRefresh={handleRefresh}
           account={account}
           currentDapp={currentDapp}
           smartAccountType={smartAccountType}

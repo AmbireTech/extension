@@ -32,4 +32,4 @@ const RefreshIcon: FC<SvgProps> = ({
   )
 }
 
-export default RefreshIcon
+export default React.memo(RefreshIcon)

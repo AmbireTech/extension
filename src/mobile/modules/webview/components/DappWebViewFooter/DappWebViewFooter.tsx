@@ -1,14 +1,15 @@
 import React from 'react'
 import { Control } from 'react-hook-form'
-import { Pressable, View, ViewStyle } from 'react-native'
+import { Pressable, View } from 'react-native'
 
 import { Account } from '@ambire-common/interfaces/account'
 import { Dapp } from '@ambire-common/interfaces/dapp'
 import HomeIcon from '@common/assets/svg/HomeIcon'
+import LeftArrowIcon from '@common/assets/svg/LeftArrowIcon'
+import RefreshIcon from '@common/assets/svg/RefreshIcon'
 import Avatar from '@common/components/Avatar'
 import NetworkIcon from '@common/components/NetworkIcon'
 import Search from '@common/components/Search'
-import { AnimatedPressable } from '@common/hooks/useHover'
 import useNavigation from '@common/hooks/useNavigation'
 import useTheme from '@common/hooks/useTheme'
 import NotConnected from '@common/modules/dapp-catalog/components/DappIcon/NotConnected'
@@ -20,14 +21,10 @@ import flexbox from '@common/styles/utils/flexbox'
 
 interface Props {
   headerControl: Control<any>
-  animStyle: ViewStyle
-  bindAnim: {
-    onHoverIn?: (event: any) => void
-    onHoverOut?: (event: any) => void
-    onPressIn?: (event: any) => void
-    onPressOut?: (event: any) => void
-  }
   handleOpenSearchModal: () => void
+  handleGoBack: () => void
+  canGoBack: boolean
+  handleRefresh: () => void
   account: Account | null
   currentDapp: Dapp | null | undefined
   smartAccountType?: 'Ambire' | 'Safe'
@@ -35,9 +32,10 @@ interface Props {
 
 const DappWebViewFooter: React.FC<Props> = ({
   headerControl,
-  animStyle,
-  bindAnim,
   handleOpenSearchModal,
+  handleGoBack,
+  canGoBack,
+  handleRefresh,
   account,
   currentDapp,
   smartAccountType
@@ -70,42 +68,60 @@ const DappWebViewFooter: React.FC<Props> = ({
       >
         <HomeIcon />
       </Pressable>
-      <AnimatedPressable
+      <View
         style={[
           flexbox.flex1,
+          flexbox.directionRow,
+          flexbox.alignCenter,
           spacings.mhSm,
-          { backgroundColor: theme.secondaryBackground, borderRadius: BORDER_RADIUS_PRIMARY },
-          animStyle
+          { backgroundColor: theme.secondaryBackground, borderRadius: BORDER_RADIUS_PRIMARY }
         ]}
-        onPress={handleOpenSearchModal}
-        {...bindAnim}
       >
-        <View pointerEvents="none">
+        <View style={flexbox.flex1}>
           <Search
             control={headerControl as any}
             hasLeftIcon={false}
-            inputWrapperStyle={{
-              backgroundColor: 'transparent'
-            }}
+            inputWrapperStyle={{ backgroundColor: 'transparent' }}
+            nativeInputStyle={{ textAlign: 'center' }}
             withClearButton={false}
-            editable={false}
+            onFocus={handleOpenSearchModal}
+            leftIcon={() => (
+              <View style={{ width: 40 }}>
+                <Pressable onPress={handleGoBack} disabled={!canGoBack}>
+                  <LeftArrowIcon
+                    width={9}
+                    height={16}
+                    color={canGoBack ? theme.iconPrimary : theme.neutral400}
+                  />
+                </Pressable>
+              </View>
+            )}
+            childrenBeforeButtons={
+              <View style={[spacings.mrTy, flexbox.alignEnd, { width: 44 }]}>
+                <Pressable onPress={handleRefresh}>
+                  <RefreshIcon width={30} height={30} color={theme.iconPrimary} />
+                </Pressable>
+              </View>
+            }
           />
         </View>
-      </AnimatedPressable>
+      </View>
       {!!account && (
         <View>
           {!!currentDapp && (
             <>
               <View
                 style={{
-                  borderRadius: 10,
+                  minWidth: 12,
+                  minHeight: 12,
+                  borderRadius: 50,
                   backgroundColor:
                     currentDapp.blacklisted === 'BLACKLISTED'
                       ? theme.errorDecorative
                       : theme.successDecorative,
                   position: 'absolute',
-                  top: -2,
-                  right: -2,
+                  top: -1,
+                  right: -1,
                   zIndex: 2,
                   borderWidth: 1,
                   borderColor:
@@ -132,7 +148,7 @@ const DappWebViewFooter: React.FC<Props> = ({
                     zIndex: 2
                   }}
                 >
-                  <NetworkIcon id={currentDapp.chainId.toString()} size={12} scale={0.8} />
+                  <NetworkIcon id={currentDapp.chainId.toString()} size={16} scale={0.8} />
                 </View>
               )}
             </>

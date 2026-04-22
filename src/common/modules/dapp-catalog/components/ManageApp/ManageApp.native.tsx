@@ -14,11 +14,9 @@ import Text from '@common/components/Text'
 import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import { AnimatedPressable } from '@common/hooks/useHover'
 import useTheme from '@common/hooks/useTheme'
-import DappIcon from '@common/modules/dapp-catalog/components/DappIcon'
+import DappItem from '@common/modules/dapp-catalog/components/DappItem'
 import useManageApp from '@common/modules/dapp-catalog/hooks/useManageApp'
 import spacings from '@common/styles/spacings'
-import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
-import flexbox from '@common/styles/utils/flexbox'
 
 interface ManageAppProps {
   dapp: Dapp
@@ -27,42 +25,6 @@ interface ManageAppProps {
   isParentHovered?: boolean
   buttonProps?: Omit<React.ComponentProps<typeof Pressable>, 'onPress' | 'ref'>
   style?: ViewStyle
-}
-
-const MAX_APP_NAME_LENGTH = 20
-
-const AppData = ({ dapp }: { dapp: Dapp }) => {
-  let hostname = ''
-  try {
-    hostname = new URL(dapp.url).hostname.replace('www.', '')
-  } catch (e) {
-    console.error('Error parsing dapp URL:', e, 'URL:', dapp.url, 'Dapp id:', dapp.id)
-  }
-
-  return (
-    <View
-      style={{
-        ...flexbox.directionRow,
-        ...flexbox.alignCenter,
-        ...spacings.ph,
-        ...spacings.pvSm,
-        backgroundColor: 'transparent',
-        borderRadius: BORDER_RADIUS_PRIMARY
-      }}
-    >
-      <DappIcon dapp={dapp} />
-      <View style={[flexbox.flex1, spacings.mlSm]}>
-        <Text weight="medium" numberOfLines={1} fontSize={14}>
-          {dapp.name.length > MAX_APP_NAME_LENGTH
-            ? `${dapp.name.slice(0, MAX_APP_NAME_LENGTH)}...`
-            : dapp.name}
-        </Text>
-        <Text fontSize={12} appearance="tertiaryText">
-          {hostname}
-        </Text>
-      </View>
-    </View>
-  )
 }
 
 const ManageApp = ({
@@ -116,7 +78,7 @@ const ManageApp = ({
 
   return (
     <>
-      <AnimatedPressable onPress={() => dapp.isConnected && open()} {...(buttonProps as any)}>
+      <AnimatedPressable onPress={open} {...(buttonProps as any)}>
         {children}
       </AnimatedPressable>
 
@@ -131,16 +93,8 @@ const ManageApp = ({
           {t('Current app')}
         </Text>
 
-        <View
-          style={[
-            {
-              backgroundColor: theme.secondaryBackground,
-              borderRadius: BORDER_RADIUS_PRIMARY
-            },
-            spacings.mbSm
-          ]}
-        >
-          <AppData dapp={dapp} />
+        <View style={spacings.mbSm}>
+          <DappItem {...dapp} hideSettingsIcon onPressOverride={() => {}} />
         </View>
 
         <Select

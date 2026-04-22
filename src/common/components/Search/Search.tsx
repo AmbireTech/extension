@@ -30,6 +30,7 @@ const Search = ({
   hasLeftIcon = true,
   onSearchCleared,
   withClearButton = true,
+  leftIcon,
   ...rest
 }: Props) => {
   const { theme } = useTheme()
@@ -43,7 +44,7 @@ const Search = ({
       render={({ field: { onChange, onBlur, value } }) => (
         <Input
           containerStyle={[spacings.mb0 as ViewStyle, containerStyle]}
-          leftIcon={hasLeftIcon ? () => <SearchIcon color={theme.secondaryText} /> : undefined}
+          leftIcon={hasLeftIcon ? () => <SearchIcon color={theme.secondaryText} /> : leftIcon}
           placeholder={placeholder}
           style={style}
           leftIconStyle={spacings.plSm}

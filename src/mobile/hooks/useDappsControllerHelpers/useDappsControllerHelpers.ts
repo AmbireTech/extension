@@ -14,7 +14,11 @@ import { Action, MethodAction } from '@common/types/actions'
 export default function useDappsControllerHelpers(
   dispatch: (action: MethodAction | Action) => void
 ) {
-  const { state, updateHelpers } = useControllerState({
+  const {
+    state,
+    helpers: { currentDapp, isLoadingCurrentDapp },
+    updateHelpers
+  } = useControllerState({
     id: 'DappsController',
     subscriptionEnabled: true
   })
@@ -94,6 +98,20 @@ export default function useDappsControllerHelpers(
     },
     [dispatch, dappUrl]
   )
+
+  useEffect(() => {
+    if (!currentDapp || isLoadingCurrentDapp) return
+
+    updateHelpers({ isLoadingCurrentDapp: true })
+    getCurrentDapp(currentDapp.url)
+      .then((dapp) => {
+        updateHelpers({ currentDapp: dapp, isLoadingCurrentDapp: false })
+      })
+      .catch((error) => {
+        captureException(error)
+        updateHelpers({ currentDapp: null, isLoadingCurrentDapp: false })
+      })
+  }, [state, currentDapp, isLoadingCurrentDapp, getCurrentDapp, updateHelpers])
 
   const setDappUrl = useCallback(
     (url: string) => {
