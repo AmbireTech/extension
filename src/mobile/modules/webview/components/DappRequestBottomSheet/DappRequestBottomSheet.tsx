@@ -1,8 +1,6 @@
 import React, { useMemo } from 'react'
-import { View } from 'react-native'
 import { Modalize } from 'react-native-modalize'
 
-import { UserRequest } from '@ambire-common/interfaces/userRequest'
 import BottomSheet from '@common/components/BottomSheet'
 import useController from '@common/hooks/useController'
 import spacings from '@common/styles/spacings'
@@ -77,24 +75,6 @@ const DappRequestBottomSheet: React.FC<Props> = ({ sheetRef, closeBottomSheet, o
       default:
         return null
     }
-  }, [currentUserRequest])
-
-  // Only show the bottom sheet if we have a supported request type
-  const hasSupportedRequest = useMemo(() => {
-    if (!currentUserRequest) return false
-
-    const supportedKinds: UserRequest['kind'][] = [
-      'dappConnect',
-      'calls',
-      'walletAddEthereumChain',
-      'walletWatchAsset',
-      'ethGetEncryptionPublicKey',
-      'ethDecrypt',
-      'switchAccount',
-      'benzin'
-    ]
-
-    return supportedKinds.includes(currentUserRequest.kind)
   }, [currentUserRequest])
 
   return (

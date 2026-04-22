@@ -1,5 +1,5 @@
 import Fuse from 'fuse.js'
-import React, { ReactNode, useCallback, useEffect, useMemo, useState } from 'react'
+import React, { ReactNode, useCallback, useMemo, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
 import { View, ViewStyle } from 'react-native'
@@ -7,9 +7,10 @@ import { View, ViewStyle } from 'react-native'
 import { Dapp } from '@ambire-common/interfaces/dapp'
 import { Network } from '@ambire-common/interfaces/network'
 import ConnectedIcon from '@common/assets/svg/ConnectedIcon'
+import GlobeIcon from '@common/assets/svg/GlobeIcon'
+import GoogleIcon from '@common/assets/svg/GoogleIcon'
 import NetworksIcon from '@common/assets/svg/NetworksIcon'
 import StarIcon from '@common/assets/svg/StarIcon'
-import Button from '@common/components/Button'
 import NetworkIcon from '@common/components/NetworkIcon'
 import ScrollableWrapper, { WRAPPER_TYPES } from '@common/components/ScrollableWrapper'
 import Search from '@common/components/Search'
@@ -19,12 +20,13 @@ import Text from '@common/components/Text'
 import useController from '@common/hooks/useController'
 import useDebounce from '@common/hooks/useDebounce'
 import { AnimatedPressable, useCustomHover } from '@common/hooks/useHover'
+import useNavigation from '@common/hooks/useNavigation'
 import useTheme from '@common/hooks/useTheme'
 import DappItem from '@common/modules/dapp-catalog/components/DappItem'
 import DappsSkeletonLoader from '@common/modules/dapp-catalog/components/DappsSkeletonLoader'
-import spacings, { SPACING_MI, SPACING_SM } from '@common/styles/spacings'
+import { ROUTES } from '@common/modules/router/constants/common'
+import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import text from '@common/styles/utils/text'
 import { getUiType } from '@common/utils/uiType'
 import {
   MobileLayoutContainer,
@@ -66,9 +68,9 @@ const DappCatalogScreen = () => {
   const { control, watch, setValue } = useForm({ defaultValues: { search: '' } })
   const { t } = useTranslation()
   const { state } = useController('DappsController')
+  const { navigate } = useNavigation()
   const search = watch('search')
   const debouncedSearch = useDebounce({ value: search, delay: 350 })
-  const [initialDAppListState, setInitialDAppListState] = useState<Dapp[]>([])
   const [network, setNetwork] = useState<Network | null>(null)
   const [category, setCategory] = useState<string | null>(null)
   const [favoritesSelected, setFavoritesSelected] = useState(false)
@@ -86,6 +88,14 @@ const DappCatalogScreen = () => {
       })),
     [state.dapps]
   )
+
+  const isValidUrl = useCallback((urlString: string) => {
+    try {
+      return Boolean(new URL(urlString))
+    } catch {
+      return false
+    }
+  }, [])
 
   const filteredDapps = useMemo(() => {
     if (!state?.dapps?.length) return []
@@ -126,6 +136,29 @@ const DappCatalogScreen = () => {
     connectedSelected,
     searchableDapps
   ])
+
+  // Data to render in the list, including search options when searching
+  const listData = useMemo(() => {
+    const data: any[] = []
+    if (debouncedSearch) {
+      // Add Google search option always when searching
+      data.push({ type: 'googleSearch', query: debouncedSearch })
+      // Add open page option if the search is a valid URL
+      if (isValidUrl(debouncedSearch)) {
+        data.push({ type: 'openPage', query: debouncedSearch })
+      }
+    }
+    // Add filtered dapps
+    data.push(...filteredDapps.map((dapp: Dapp) => ({ type: 'dapp', dapp })))
+    return data
+  }, [debouncedSearch, filteredDapps, isValidUrl])
+
+  const handleNavigateToUrl = useCallback(
+    (url: string) => {
+      navigate(ROUTES.dappWebView, { state: { url } })
+    },
+    [navigate]
+  )
 
   const handleSetNetworkValue = useCallback(
     (networkOption: SelectValue) => {
@@ -228,54 +261,92 @@ const DappCatalogScreen = () => {
     [setValue]
   )
 
-  const renderItem = useCallback(({ item }: { item: Dapp }) => <DappItem {...item} />, [])
+  const renderItem = useCallback(
+    ({ item }: { item: any }) => {
+      if (item.type === 'openPage') {
+        return (
+          <AnimatedPressable
+            onPress={() => handleNavigateToUrl(item.query)}
+            style={[flexbox.directionRow, flexbox.alignCenter, spacings.mb]}
+          >
+            <View
+              style={[
+                spacings.mrSm,
+                flexbox.center,
+                {
+                  backgroundColor: theme.secondaryBackground,
+                  borderRadius: 50,
+                  width: 40,
+                  height: 40
+                }
+              ]}
+            >
+              <GlobeIcon />
+            </View>
+            <Text weight="medium" appearance="secondaryText">
+              Open "{item.query}"
+            </Text>
+          </AnimatedPressable>
+        )
+      }
 
-  const handleResetFilters = useCallback(() => {
-    setValue('search', '')
-    setNetwork(null)
-    setCategory(null)
-    setFavoritesSelected(false)
-    setConnectedSelected(false)
-  }, [setValue])
+      if (item.type === 'googleSearch') {
+        return (
+          <AnimatedPressable
+            onPress={() =>
+              handleNavigateToUrl(
+                `https://www.google.com/search?q=${encodeURIComponent(item.query)}`
+              )
+            }
+            style={[flexbox.directionRow, flexbox.alignCenter, spacings.mb]}
+          >
+            <View
+              style={[
+                spacings.mrSm,
+                flexbox.center,
+                {
+                  backgroundColor: theme.secondaryBackground,
+                  borderRadius: 50,
+                  width: 40,
+                  height: 40
+                }
+              ]}
+            >
+              <GoogleIcon />
+            </View>
+            <Text weight="medium" appearance="secondaryText">
+              Search Google for "{item.query}"
+            </Text>
+          </AnimatedPressable>
+        )
+      }
 
-  useEffect(() => {
-    const shouldDoInitialSet = !initialDAppListState.length && state.dapps.length
-    const aDAppWasRemoved = initialDAppListState.length > state.dapps.length
-    if (shouldDoInitialSet || aDAppWasRemoved) {
-      setInitialDAppListState(state.dapps)
-    }
-  }, [initialDAppListState, state.dapps])
+      if (item.type === 'dapp') {
+        return <DappItem {...item.dapp} />
+      }
+      return null
+    },
+    [theme, handleNavigateToUrl]
+  )
 
-  const noAppsFoundText = useMemo(() => {
-    const filters = []
-    if (debouncedSearch) filters.push(`Search - "${debouncedSearch}"`)
-    if (network) filters.push(`Network - "${network.name}"`)
-    if (category && category !== ALL_CATEGORIES_OPTION.value)
-      filters.push(`Category - "${category}"`)
-    if (favoritesSelected) filters.push('"Favorites"')
-    if (connectedSelected) filters.push('"Connected"')
-
-    return {
-      mainText: filters.length ? 'No apps found matching your selected filters.' : 'No apps found',
-      filtersText: filters.length ? `Active filters: ${filters.join(', ')}` : ''
-    }
-  }, [
-    ALL_CATEGORIES_OPTION,
-    category,
-    connectedSelected,
-    debouncedSearch,
-    favoritesSelected,
-    network
-  ])
+  const keyExtractor = useCallback(
+    (item: any, index: number) => (item.type === 'dapp' ? item.dapp.url : `${item.type}-${index}`),
+    []
+  )
 
   return (
     <MobileLayoutContainer>
-      <MobileLayoutWrapperMainContent withBackButton title={t('Apps')} withScroll={false}>
+      <MobileLayoutWrapperMainContent
+        withBackButton
+        title={t('Apps')}
+        onBackButtonPress={() => navigate(ROUTES.dashboard)}
+        withScroll={false}
+      >
         {!state.isReadyToDisplayDapps || !state.dapps.length ? (
           <DappsSkeletonLoader />
         ) : (
           <View style={flexbox.flex1}>
-            <View style={spacings.mbSm}>
+            <View style={spacings.mb}>
               <Search
                 placeholder={t('Search for an app')}
                 control={control}
@@ -365,36 +436,9 @@ const DappCatalogScreen = () => {
             <ScrollableWrapper
               type={WRAPPER_TYPES.FLAT_LIST}
               style={!isPopup ? spacings.pbSm : {}}
-              data={filteredDapps}
+              data={listData}
               renderItem={renderItem}
-              keyExtractor={(item: Dapp) => item.url.toString()}
-              ListEmptyComponent={
-                <View style={[flexbox.flex1, flexbox.alignCenter, flexbox.justifyCenter, spacings]}>
-                  <View style={{ maxWidth: 400 }}>
-                    <Text style={[text.center, !!noAppsFoundText.filtersText && spacings.mbLg]}>
-                      <Text
-                        weight="medium"
-                        style={[text.center, spacings.mbSm, { lineHeight: 30 }]}
-                      >
-                        {noAppsFoundText.mainText}
-                      </Text>
-                      {!!noAppsFoundText.filtersText && '\n'}
-                      <Text fontSize={14} appearance="secondaryText" style={text.center}>
-                        {noAppsFoundText.filtersText}
-                      </Text>
-                    </Text>
-                  </View>
-                  {!!noAppsFoundText.filtersText && (
-                    <Button
-                      text={t('Reset filters')}
-                      onPress={handleResetFilters}
-                      size="small"
-                      style={{ height: 40 }}
-                      hasBottomSpacing={false}
-                    />
-                  )}
-                </View>
-              }
+              keyExtractor={keyExtractor}
             />
           </View>
         )}

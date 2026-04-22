@@ -139,8 +139,11 @@ export default function useDappsControllerHelpers(
 
   // Reset when routing away from dappWebView
   useEffect(() => {
-    if (!!dappUrl && !route.pathname.includes(ROUTES.dappWebView)) setDappUrl('')
-  }, [dappUrl, route.pathname, setDappUrl])
+    if (!!dappUrl && !route.pathname.includes(ROUTES.dappWebView)) {
+      setDappUrl('')
+      updateHelpers({ currentDapp: null, isLoadingCurrentDapp: false })
+    }
+  }, [dappUrl, route.pathname, setDappUrl, updateHelpers])
 
   useEffect(() => {
     updateHelpers({ getCurrentDapp, setDappUrl, dappUrl })
