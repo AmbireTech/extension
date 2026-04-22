@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Animated, ColorValue, Linking, View } from 'react-native'
 
+import Alert from '@common/components/Alert'
 import DiagonalRightArrowIcon from '@common/assets/svg/DiagonalRightArrowIcon'
 import OpenIcon from '@common/assets/svg/OpenIcon'
 import Panel from '@common/components/Panel'
@@ -223,7 +224,7 @@ const QrConnectScreen = () => {
   const renderWalletRow = useCallback(
     (wallet: (typeof qrWallets)[number]) => (
       <View
-        key={wallet.walletType}
+        key={`${wallet.label}-${wallet.protocol}`}
         style={[
           flexbox.directionRow,
           flexbox.alignCenter,
@@ -286,14 +287,8 @@ const QrConnectScreen = () => {
               />
             </View>
           </View>
-
-          <Text fontSize={14} style={spacings.mt}>
-            {t('You can choose from a list of official QR-code supporting partners below.')}
-          </Text>
-
           <View style={spacings.mtMd}>
             {qrWallets.slice(0, VISIBLE_WALLETS_COUNT).map(renderWalletRow)}
-
             <Animated.View
               style={{
                 height: animatedContainerHeight,
@@ -303,7 +298,6 @@ const QrConnectScreen = () => {
             >
               {hiddenWallets.map(renderWalletRow)}
             </Animated.View>
-
             {qrWallets.length > VISIBLE_WALLETS_COUNT && (
               <AnimatedPressable
                 onPress={() => setShowMore(!showMore)}
@@ -348,6 +342,22 @@ const QrConnectScreen = () => {
                 </Animated.View>
               </AnimatedPressable>
             )}
+            <View
+              style={[
+                {
+                  width: '100%',
+                  height: 1,
+                  borderBottomWidth: 1,
+                  borderColor: theme.primaryBorder
+                },
+                spacings.mvMd
+              ]}
+            />
+            <Alert
+              type="warning"
+              size="sm"
+              text={t('Behavior may vary when importing from unlisted QR wallets."')}
+            />
           </View>
         </Panel>
       </TabLayoutWrapperMainContent>
