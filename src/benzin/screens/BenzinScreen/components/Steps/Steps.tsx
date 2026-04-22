@@ -37,6 +37,7 @@ const Steps: FC<Props> = ({ activeStep, txnId, userOpHash, stepsState, summary, 
   const balanceChanges = stepsState.submittedAccountOp?.balanceChanges || []
   const assetsOut = balanceChanges.filter((change) => change.balanceChange < 0n)
   const assetsIn = balanceChanges.filter((change) => change.balanceChange > 0n)
+  const orderedBalanceChanges = [...assetsIn, ...assetsOut]
 
   const stepRows: any = [
     {
@@ -184,73 +185,40 @@ const Steps: FC<Props> = ({ activeStep, txnId, userOpHash, stepsState, summary, 
                   </Text>
                 )
             }
-            {(assetsOut.length > 0 || assetsIn.length > 0) && (
-              <View style={[flexbox.directionRow, flexbox.flex1, spacings.mtSm]}>
-                {assetsOut.length > 0 && (
-                  <View
-                    style={[
-                      flexbox.flex1,
-                      spacings.phSm,
-                      spacings.pvSm,
-                      {
-                        borderWidth: 1,
-                        borderColor: theme.secondaryBorder,
-                        borderRadius: 12
-                      },
-                      assetsIn.length > 0 ? spacings.mrTy : null
-                    ]}
-                  >
-                    <Text fontSize={14} weight="semiBold" appearance="secondaryText">
-                      Assets out
-                    </Text>
-                    <View style={spacings.mtSm}>
-                      {assetsOut.map((change, index) => (
-                        <PendingTokenSummary
-                          key={change.address}
-                          token={{
-                            ...change,
-                            simulationAmount: change.balanceChange
-                          }}
-                          chainId={change.chainId}
-                          hasBottomSpacing={index < assetsOut.length - 1}
-                        />
-                      ))}
-                    </View>
-                  </View>
-                )}
-                {assetsIn.length > 0 && (
-                  <View
-                    style={[
-                      flexbox.flex1,
-                      spacings.phSm,
-                      spacings.pvSm,
-                      {
-                        borderWidth: 1,
-                        borderColor: theme.secondaryBorder,
-                        borderRadius: 12
-                      }
-                    ]}
-                  >
-                    <Text fontSize={14} weight="semiBold" appearance="secondaryText">
-                      Assets in
-                    </Text>
-                    <View style={spacings.mtSm}>
-                      {assetsIn.map((change, index) => (
-                        <PendingTokenSummary
-                          key={change.address}
-                          token={{
-                            ...change,
-                            simulationAmount: change.balanceChange
-                          }}
-                          chainId={change.chainId}
-                          hasBottomSpacing={index < assetsIn.length - 1}
-                        />
-                      ))}
-                    </View>
-                  </View>
-                )}
-              </View>
-            )}
+          </Step>
+        )}
+        {orderedBalanceChanges.length > 0 && (
+          <Step
+            title="Balance changes"
+            stepName="balance-changes"
+            activeStep={activeStep}
+            finalizedStatus={finalizedStatus}
+            testID="balance-changes-step"
+          >
+            <View
+              style={[
+                flexbox.flex1,
+                spacings.phSm,
+                spacings.pvSm,
+                {
+                  borderWidth: 1,
+                  borderColor: theme.secondaryBorder,
+                  borderRadius: 12
+                }
+              ]}
+            >
+              {orderedBalanceChanges.map((change, index) => (
+                <PendingTokenSummary
+                  key={change.address}
+                  token={{
+                    ...change,
+                    simulationAmount: change.balanceChange
+                  }}
+                  chainId={change.chainId}
+                  hasBottomSpacing={index < orderedBalanceChanges.length - 1}
+                />
+              ))}
+            </View>
           </Step>
         )}
         <Step

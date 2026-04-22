@@ -20,7 +20,7 @@ import StepRow from './StepRow'
 import { StepRowProps as StepRowInterface } from './StepRow/StepRow'
 import getStyles from './styles'
 
-const STEPS = ['signed', 'in-progress', 'finalized'] as const
+const STEPS = ['signed', 'in-progress', 'balance-changes', 'finalized'] as const
 
 interface StepProps {
   title?: string
