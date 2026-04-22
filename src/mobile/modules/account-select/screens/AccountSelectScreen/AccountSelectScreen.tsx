@@ -92,6 +92,7 @@ const AccountSelectScreen = () => {
         withSettings={false}
         options={{ markSelected: true }}
         withReceive
+        maxAccountAddrLength={32}
       />
     )
   }

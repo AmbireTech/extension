@@ -29,7 +29,6 @@ const AddOrUpdateNetworkScreen = () => {
     state: { statuses, networkToAddOrUpdate, disabledNetworks, networks },
     dispatch: networksDispatch
   } = useController('NetworksController')
-  const { dispatch: mainDispatch } = useController('MainController')
   const [features, setFeatures] = useState<NetworkFeature[]>(getFeatures(undefined, undefined))
   const [rpcUrlIndex, setRpcUrlIndex] = useState<number>(0)
   const [existingNetwork, setExistingNetwork] = useState<Network | null | undefined>(undefined)
