@@ -12,6 +12,7 @@ import MultistateToggleButton from '@common/components/MultistateToggleButton'
 import Text from '@common/components/Text'
 import useTheme from '@common/hooks/useTheme'
 import useWindowSize from '@common/hooks/useWindowSize'
+import AnimatedDownArrow from '@common/modules/account-picker/components/AccountsOnPageList/AnimatedDownArrow'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { getMessageAsText, simplifyTypedMessage } from '@common/utils/messageToString'
@@ -28,7 +29,14 @@ const FallbackVisualization: FC<{
   setHasReachedBottom: (hasReachedBottom: boolean) => void
   hasReachedBottom: boolean
   responsiveSizeMultiplier?: number
-}> = ({ messageToSign, setHasReachedBottom, hasReachedBottom, responsiveSizeMultiplier = 1 }) => {
+  withScrollDownArrow?: boolean
+}> = ({
+  messageToSign,
+  setHasReachedBottom,
+  hasReachedBottom,
+  responsiveSizeMultiplier = 1,
+  withScrollDownArrow = false
+}) => {
   const { t } = useTranslation()
   const { styles } = useTheme(getStyles)
   const { maxWidthSize } = useWindowSize()
@@ -143,6 +151,12 @@ const FallbackVisualization: FC<{
             (getMessageAsText(content.message as Hex) || t('(Empty message)'))}
         </Text>
       </ScrollView>
+      {!!containerHeight && !!contentHeight && withScrollDownArrow && (
+        <AnimatedDownArrow
+          isVisible={contentHeight > containerHeight && !hasReachedBottom}
+          appearance="primary"
+        />
+      )}
       {content.kind === 'typedMessage' && (
         <MultistateToggleButton style={styles.toggleButton} states={statesForMultistateButton} />
       )}
