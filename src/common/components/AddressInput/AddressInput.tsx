@@ -104,7 +104,7 @@ const AddressInput: React.FC<Props> = ({
         validLabelAppearance={severity ? `${severity}Text` : undefined}
         error={isError ? message : ''}
         isValid={!isError && !isValidationInDomainResolvingState}
-        placeholder={placeholder || t('Address / ENS')}
+        placeholder={placeholder || t('Address / ENS / Namoshi')}
         bottomLabelStyle={styles.bottomLabel}
         info={
           !isError && severity === 'info'
@@ -142,11 +142,12 @@ const AddressInput: React.FC<Props> = ({
                 </AnimatedPressable>
               ) : null}
               <View style={[styles.domainIcons, rest.button ? spacings.pr0 : spacings.prSm]}>
-                {childrenBeforeButtons}
-                <View style={[spacings.plTy, flexbox.directionRow, flexbox.alignCenter]}>
-                  <EnsIcon isActive={resolvedAddressType === 'ens'} />
-                  <NamoshiIcon isActive={resolvedAddressType === 'namoshi'} style={spacings.mlTy} />
-                </View>
+                {!!resolvedAddressType && (
+                  <View style={[flexbox.directionRow, flexbox.alignCenter]}>
+                    {resolvedAddressType === 'ens' && <EnsIcon isActive />}
+                    {resolvedAddressType === 'namoshi' && <NamoshiIcon isActive />}
+                  </View>
+                )}
               </View>
             </>
           ))
