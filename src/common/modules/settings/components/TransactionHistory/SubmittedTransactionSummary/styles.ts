@@ -7,8 +7,14 @@ import flexbox from '@common/styles/utils/flexbox'
 
 interface Style {
   container: ViewStyle
-  summaryItem: ViewStyle
+  header: ViewStyle
+  headerMeta: ViewStyle
   footer: ViewStyle
+  contentContainer: ViewStyle
+  dappInteractionsColumn: ViewStyle
+  dappInteractionRow: ViewStyle
+  balanceChangesRightColumn: ViewStyle
+  balanceChangeRow: ViewStyle
 }
 
 const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
@@ -19,9 +25,37 @@ const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
       borderColor: theme.secondaryBorder,
       backgroundColor: theme.secondaryBackground
     },
-    summaryItem: {
+    header: {
+      ...flexbox.directionRow,
+      ...flexbox.justifySpaceBetween,
+      ...flexbox.alignCenter
+    },
+    headerMeta: {
+      ...flexbox.directionRow,
+      ...flexbox.alignCenter
+    },
+    contentContainer: {
+      ...flexbox.directionRow,
+      ...flexbox.justifySpaceBetween,
+      ...flexbox.alignStart,
       backgroundColor: 'transparent',
-      borderWidth: 0
+      ...spacings.phSm,
+      ...spacings.pbSm
+    },
+    dappInteractionsColumn: {
+      ...flexbox.flex1,
+      ...flexbox.alignStart
+    },
+    dappInteractionRow: {
+      ...flexbox.directionRow,
+      ...flexbox.alignCenter
+    },
+    balanceChangesRightColumn: {
+      ...flexbox.alignEnd
+    },
+    balanceChangeRow: {
+      ...flexbox.directionRow,
+      ...flexbox.alignCenter
     },
     footer: {
       ...flexbox.directionRow,
