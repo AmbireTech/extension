@@ -17,8 +17,7 @@ test.describe.skip('ambire rewards', { tag: '@rewards' }, () => {
     await context.close()
   })
 
-  test.only('Check redirection to Ambire rewards page', async ({ pages }) => {
-    await pages.auth.pause()
+  test('Check redirection to Ambire rewards page', async ({ pages }) => {
     await test.step('assert rewards button is visible', async () => {
       await pages.basePage.isVisible(selectors.dashboard.rewardsButton)
     })
