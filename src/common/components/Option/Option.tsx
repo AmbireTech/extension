@@ -24,6 +24,7 @@ interface Props {
   disabled?: boolean
   status?: 'default' | 'expanded' | 'collapsed' | 'none'
   icons?: { key: string; component: React.FC<any> }[]
+  ref?: React.Ref<any>
 }
 
 const Option = ({
@@ -36,7 +37,8 @@ const Option = ({
   testID,
   disabled,
   status = 'default',
-  icons = []
+  icons = [],
+  ref
 }: Props) => {
   const { theme, styles, themeType } = useTheme(getStyles)
   const [bindAnim, animStyle, isHovered] = useCustomHover({
@@ -63,6 +65,7 @@ const Option = ({
       {...bindAnim}
       testID={testID}
       disabled={disabled}
+      ref={ref}
     >
       <View style={[flexbox.directionRow, flexbox.alignCenter]}>
         <View style={styles.iconWrapper}>
