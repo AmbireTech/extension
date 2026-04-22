@@ -41,8 +41,8 @@ const Steps: FC<Props> = ({ activeStep, txnId, userOpHash, stepsState, summary, 
     typeof stepsState.submittedAccountOp?.balanceChanges !== 'undefined'
   const assetsOut = balanceChanges.filter((change) => change.balanceChange < 0n)
   const assetsIn = balanceChanges.filter((change) => change.balanceChange > 0n)
-  const orderedBalanceChanges = [...assetsIn, ...assetsOut]
   const shouldShowBalanceChanges = shouldShowTxnProgress(finalizedStatus)
+  const shouldRenderBalanceChangesInColumns = windowWidth > 700
   const displayActiveStep =
     activeStep === 'finalized' && shouldShowBalanceChanges && !hasBalanceChangesLoaded
       ? 'balance-changes'
@@ -139,6 +139,56 @@ const Steps: FC<Props> = ({ activeStep, txnId, userOpHash, stepsState, summary, 
   const showConfetti =
     isFinalized && finalizedStatus !== null && finalizedStatus.status === 'confirmed'
 
+  const renderBalanceChangesCard = (title: string, changes: typeof balanceChanges) => (
+    <View
+      style={[
+        flexbox.flex1,
+        {
+          borderWidth: 1,
+          borderColor: theme.primaryBorder,
+          overflow: 'hidden',
+          ...common.borderRadiusPrimary
+        }
+      ]}
+    >
+      <View
+        style={[
+          spacings.phSm,
+          spacings.pvTy,
+          {
+            backgroundColor: theme.secondaryBackground
+          }
+        ]}
+      >
+        <Text fontSize={14} weight="semiBold" appearance="secondaryText">
+          {title}
+        </Text>
+      </View>
+      <View
+        style={[
+          flexbox.flex1,
+          spacings.phSm,
+          spacings.pvSm,
+          {
+            backgroundColor: theme.primaryBackground
+          }
+        ]}
+      >
+        {changes.map((change, index) => (
+          <PendingTokenSummary
+            key={change.address}
+            token={{
+              ...change,
+              simulationAmount: change.balanceChange
+            }}
+            chainId={change.chainId}
+            hasBottomSpacing={index < changes.length - 1}
+          />
+        ))}
+      </View>
+    </View>
+  )
+
   return (
     <>
       {!!showConfetti && (
@@ -204,42 +254,71 @@ const Steps: FC<Props> = ({ activeStep, txnId, userOpHash, stepsState, summary, 
             finalizedStatus={finalizedStatus}
             testID="balance-changes-step"
           >
-            <View
-              style={[
-                flexbox.flex1,
-                spacings.phSm,
-                spacings.pvSm,
-                {
-                  backgroundColor: theme.secondaryBackground,
-                  borderWidth: 0,
-                  ...common.borderRadiusPrimary
-                }
-              ]}
-            >
+            <View style={flexbox.flex1}>
               {!hasBalanceChangesLoaded && (
-                <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.pvMi]}>
+                <View
+                  style={[
+                    flexbox.directionRow,
+                    flexbox.alignCenter,
+                    spacings.phSm,
+                    spacings.pvSm,
+                    {
+                      backgroundColor: theme.secondaryBackground,
+                      borderWidth: 1,
+                      borderColor: theme.secondaryBorder,
+                      ...common.borderRadiusPrimary
+                    }
+                  ]}
+                >
                   <Spinner style={{ width: 18, height: 18 }} />
                   <Text style={spacings.mlSm} fontSize={14} appearance="secondaryText">
                     Loading balance changes
                   </Text>
                 </View>
               )}
-              {hasBalanceChangesLoaded &&
-                orderedBalanceChanges.map((change, index) => (
-                  <PendingTokenSummary
-                    key={change.address}
-                    token={{
-                      ...change,
-                      simulationAmount: change.balanceChange
-                    }}
-                    chainId={change.chainId}
-                    hasBottomSpacing={index < orderedBalanceChanges.length - 1}
-                  />
-                ))}
-              {hasBalanceChangesLoaded && !orderedBalanceChanges.length && (
-                <Text fontSize={14} appearance="secondaryText">
-                  No balance changes detected
-                </Text>
+              {hasBalanceChangesLoaded && !!(assetsOut.length || assetsIn.length) && (
+                <View
+                  style={
+                    shouldRenderBalanceChangesInColumns
+                      ? [flexbox.directionRow, flexbox.flex1]
+                      : undefined
+                  }
+                >
+                  {!!assetsOut.length && (
+                    <View
+                      style={
+                        shouldRenderBalanceChangesInColumns
+                          ? [flexbox.flex1, spacings.mrTy]
+                          : spacings.mbTy
+                      }
+                    >
+                      {renderBalanceChangesCard('Asset out', assetsOut)}
+                    </View>
+                  )}
+                  {!!assetsIn.length && (
+                    <View style={flexbox.flex1}>
+                      {renderBalanceChangesCard('Asset in', assetsIn)}
+                    </View>
+                  )}
+                </View>
+              )}
+              {hasBalanceChangesLoaded && !assetsOut.length && !assetsIn.length && (
+                <View
+                  style={[
+                    spacings.phSm,
+                    spacings.pvSm,
+                    {
+                      backgroundColor: theme.secondaryBackground,
+                      borderWidth: 1,
+                      borderColor: theme.secondaryBorder,
+                      ...common.borderRadiusPrimary
+                    }
+                  ]}
+                >
+                  <Text fontSize={14} appearance="secondaryText">
+                    No balance changes detected
+                  </Text>
+                </View>
               )}
             </View>
           </Step>
