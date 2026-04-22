@@ -159,6 +159,7 @@ const DappWebViewScreen = () => {
   // WebView Refs & State
   const webviewRef = useRef<WebView>(null)
   const [currentUrl, setCurrentUrl] = useState<string>(initialUrl)
+  const currentUrlRef = useRef<string>(initialUrl)
   const [canGoBack, setCanGoBack] = useState(false)
 
   useEffect(() => {
@@ -216,12 +217,6 @@ const DappWebViewScreen = () => {
     setHeaderValue('search', hostname)
   }, [hostname, setHeaderValue])
 
-  // Custom Header Animation
-  const [bindAnim, animStyle] = useCustomHover({
-    property: 'opacity',
-    values: { from: 1, to: 0.7 }
-  })
-
   const handleNavigationStateChange = useCallback((e: WebViewNavigation) => {
     if (!e.loading) {
       try {
@@ -234,6 +229,7 @@ const DappWebViewScreen = () => {
           return
         }
         setCurrentUrl(e.url)
+        currentUrlRef.current = e.url
         setCanGoBack(e.canGoBack)
       } catch {
         console.warn('[DappWebView] Invalid URL in navigation:', e.url)
@@ -444,9 +440,10 @@ const DappWebViewScreen = () => {
           const topic = data.topic || '> ambireProviderRequest'
 
           // Fix 5: Store the expected origin when request is received to detect navigation during async operations
+          // Use currentUrlRef (mirrors actual WebView URL) instead of activeDappUrl (controller state) to avoid stale closures
           const expectedOrigin = (() => {
             try {
-              return new URL(activeDappUrl).origin
+              return new URL(currentUrlRef.current).origin
             } catch {
               return null
             }
@@ -486,24 +483,6 @@ const DappWebViewScreen = () => {
       // Fix 5: Verify the WebView hasn't navigated to a different origin during the async operation
       const expectedOrigin = requestOriginsRef.current[data.requestId]
       if (expectedOrigin) {
-        const currentOrigin = (() => {
-          try {
-            return new URL(currentUrl).origin
-          } catch {
-            return null
-          }
-        })()
-
-        if (currentOrigin !== expectedOrigin) {
-          console.warn(
-            '[DappWebView] Response blocked: WebView navigated during request. Expected:',
-            expectedOrigin,
-            'Current:',
-            currentOrigin
-          )
-          delete requestOriginsRef.current[data.requestId]
-          return
-        }
         delete requestOriginsRef.current[data.requestId]
       }
 
@@ -517,8 +496,8 @@ const DappWebViewScreen = () => {
       // A malicious page could navigate here between request and response; this check prevents it from receiving the response
       webviewRef.current?.injectJavaScript(`
          (function() {
-           if (location.origin !== ${JSON.stringify(expectedOrigin || new URL(currentUrl).origin)}) {
-             console.warn('[Ambire] Response blocked: origin mismatch. Expected:', ${JSON.stringify(expectedOrigin || new URL(currentUrl).origin)}, 'Got:', location.origin);
+           if (${JSON.stringify(expectedOrigin)} && location.origin !== ${JSON.stringify(expectedOrigin)}) {
+             console.warn('[Ambire] Response blocked: origin mismatch. Expected:', ${JSON.stringify(expectedOrigin)}, 'Got:', location.origin);
              return;
            }
            window.postMessage(${JSON.stringify(replyMessage)}, '*');
@@ -528,7 +507,7 @@ const DappWebViewScreen = () => {
     }
     eventBus.addEventListener('action.sendToDappWebView', onProviderResponse)
     return () => eventBus.removeEventListener('action.sendToDappWebView', onProviderResponse)
-  }, [currentUrl])
+  }, [])
 
   useEffect(() => {
     const onBroadcastDappEvent = (data: any) => {
