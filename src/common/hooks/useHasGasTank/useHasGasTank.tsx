@@ -1,4 +1,5 @@
 import { useCallback, useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 
 import { AMBIRE_ACCOUNT_FACTORY } from '@ambire-common/consts/deploy'
 import { Account } from '@ambire-common/interfaces/account'
@@ -7,6 +8,7 @@ import { getIsViewOnly } from '@ambire-common/utils/accounts'
 import useController from '@common/hooks/useController'
 
 const useHasGasTank = ({ account }: { account: Account | null }) => {
+  const { t } = useTranslation()
   const { keys } = useController('KeystoreController').state
 
   const isViewOnly = useMemo(
@@ -38,7 +40,35 @@ const useHasGasTank = ({ account }: { account: Account | null }) => {
     return isSmartAccount(account) || canBecomeSmarter(account, getAccKeys(account))
   }, [account, getAccKeys, isViewOnly])
 
-  return { canUseGasTank, isViewOnly }
+  const disabledReason = useMemo(() => {
+    if (canUseGasTank) return ''
+
+    if (account?.safeCreation) return t('Not available for Safe wallets, yet.')
+
+    if (account?.creation)
+      return t(
+        'This feature is no longer available for Ambire v1 accounts and other legacy Ambire smart accounts.'
+      )
+
+    const hasTrezorKey = getAccKeys(account).some((key) => key.type === 'trezor')
+    const hasLedgerKey = getAccKeys(account).some((key) => key.type === 'ledger')
+    const hasQrBasedKey = getAccKeys(account).some((key) => key.type === 'qr')
+
+    const typesOfKeys = []
+    if (hasTrezorKey) typesOfKeys.push(t('Trezor'))
+    if (hasLedgerKey) typesOfKeys.push(t('Ledger'))
+    if (hasQrBasedKey) typesOfKeys.push(t('QR-based'))
+
+    return t(
+      "Not available for {{typesOfKey}} wallets yet. Requires EIP-7702 (that enables EOAs to gain smart account capabilities) which these devices don't support yet.",
+      {
+        typesOfKey: typesOfKeys.join(` ${t('and')} `),
+        who: typesOfKeys.length > 1 ? t("they don't") : (typesOfKeys[0] ?? t('these'))
+      }
+    )
+  }, [account, canUseGasTank, getAccKeys, t])
+
+  return { canUseGasTank, isViewOnly, disabledReason }
 }
 
 export default useHasGasTank
