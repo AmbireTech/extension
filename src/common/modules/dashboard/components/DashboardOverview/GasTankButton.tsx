@@ -58,8 +58,7 @@ const GasTankButton = ({ onPress, portfolio, account }: Props) => {
   }, [doesHaveTooltip, onPress])
 
   const text = useMemo(() => {
-    if (buttonState === 'generic') return t('Gas Tank')
-    if (buttonState === 'error') return t('Gas Tank')
+    if (['generic', 'error'].includes(buttonState)) return t('Gas Tank')
 
     return totalBalanceGasTankDetails.balanceUSD === 0
       ? '$0'
