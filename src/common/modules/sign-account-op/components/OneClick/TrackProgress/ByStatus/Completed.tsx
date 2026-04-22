@@ -9,6 +9,7 @@ import useToast from '@common/hooks/useToast'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { openInTab } from '@common/utils/links'
+import CopyText from '@common/components/CopyText'
 
 type CompletedProps = {
   isLoading?: boolean
@@ -61,10 +62,6 @@ const Completed: FC<CompletedProps> = ({
             spacings.plSm,
             spacings.prTy,
             spacings.pvTy,
-            {
-              backgroundColor: theme.primaryAccent100,
-              borderRadius: 64
-            },
             isLoading && { opacity: 0 }
           ]}
           disabled={isLoading}
@@ -81,7 +78,7 @@ const Completed: FC<CompletedProps> = ({
           >
             {openExplorerText}
           </Text>
-          <OpenIcon color={theme.primaryAccent} width={20} height={20} style={spacings.mlMi} />
+          {explorerLink && <CopyText text={explorerLink} style={spacings.mlMi} />}
         </Pressable>
       )}
     </View>
