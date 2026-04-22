@@ -183,6 +183,19 @@ const DappWebViewScreen = () => {
   } = useForm({ defaultValues: { search: '' } })
   const bottomSheetSearchQuery = searchWatch('search')
   const debouncedSearch = useDebounce({ value: bottomSheetSearchQuery, delay: 350 })
+
+  const searchHeaderComponent = useMemo(
+    () => (
+      <Search
+        control={searchControl}
+        placeholder={t('Search or enter URL')}
+        autoFocus={true}
+        containerStyle={spacings.mbLg}
+      />
+    ),
+    [searchControl, t]
+  )
+
   const { account } = useController('SelectedAccountController').state
 
   const smartAccountType = useMemo(() => {
@@ -221,7 +234,7 @@ const DappWebViewScreen = () => {
     if (!e.loading) {
       try {
         const url = new URL(e.url)
-        // Fix 4: Reject non-HTTPS protocols to prevent MITM attacks
+        // Reject non-HTTPS protocols to prevent MITM attacks
         if (url.protocol !== 'https:') {
           console.warn('[DappWebView] Blocked navigation to non-HTTPS URL:', e.url)
           // For HTTP URLs, we could optionally redirect to HTTPS or show a warning
@@ -417,6 +430,22 @@ const DappWebViewScreen = () => {
     [theme, handleNavigateToUrl]
   )
 
+  const searchKeyExtractor = useCallback(
+    (item: any, index: number) => (item.type === 'dapp' ? item.dapp.url : `google-${index}`),
+    []
+  )
+
+  const searchFlatListProps = useMemo(
+    () => ({
+      contentContainerStyle: spacings.pbLg,
+      data: listData,
+      renderItem: renderSearchItem,
+      keyExtractor: searchKeyExtractor,
+      keyboardShouldPersistTaps: 'handled' as const
+    }),
+    [listData, renderSearchItem, searchKeyExtractor]
+  )
+
   const handleMessage = useCallback(
     (event: any) => {
       try {
@@ -439,8 +468,7 @@ const DappWebViewScreen = () => {
               : { method: data.method, params: data.params }
           const topic = data.topic || '> ambireProviderRequest'
 
-          // Fix 5: Store the expected origin when request is received to detect navigation during async operations
-          // Use currentUrlRef (mirrors actual WebView URL) instead of activeDappUrl (controller state) to avoid stale closures
+          // Store the expected origin when request is received to detect navigation during async operations
           const expectedOrigin = (() => {
             try {
               return new URL(currentUrlRef.current).origin
@@ -560,22 +588,8 @@ const DappWebViewScreen = () => {
         sheetRef={searchModalRef}
         adjustToContentHeight={false}
         closeBottomSheet={closeSearchModal}
-        HeaderComponent={
-          <Search
-            control={searchControl}
-            placeholder={t('Search or enter URL')}
-            autoFocus={true}
-            containerStyle={spacings.mbLg}
-          />
-        }
-        flatListProps={{
-          contentContainerStyle: spacings.pbLg,
-          data: listData,
-          renderItem: renderSearchItem,
-          keyExtractor: (item: any, index: number) =>
-            item.type === 'dapp' ? item.dapp.url : `google-${index}`,
-          keyboardShouldPersistTaps: 'handled'
-        }}
+        HeaderComponent={searchHeaderComponent}
+        flatListProps={searchFlatListProps}
       />
 
       <DappRequestBottomSheet
