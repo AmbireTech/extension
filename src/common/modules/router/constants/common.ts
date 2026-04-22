@@ -32,7 +32,8 @@ const COMMON_ROUTES = {
   settingsAbout: 'settings/about',
   settingsTerms: 'settings/terms',
   apps: 'apps',
-  dappWebView: 'apps/webview'
+  dappWebView: 'apps/webview',
+  signMessage: 'sign-message'
 }
 
 const MOBILE_ROUTES = {
@@ -45,7 +46,6 @@ const WEB_ROUTES = {
   earn: 'earn',
   transactions: 'transactions',
   signedMessages: 'signed-messages',
-  signMessage: 'sign-message',
   swap: 'swap',
   noConnection: 'no-connection',
   accounts: 'accounts',

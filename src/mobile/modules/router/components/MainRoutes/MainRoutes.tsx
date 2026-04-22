@@ -27,6 +27,7 @@ import AccountsSettingsScreen from '@mobile/modules/settings/screens/AccountsSet
 import GeneralSettingsScreen from '@mobile/modules/settings/screens/GeneralSettingsScreen'
 import TermsSettingsScreen from '@mobile/modules/settings/screens/TermsSettingsScreen'
 import SignAccountOpScreen from '@mobile/modules/sign-account-op/screens/SignAccountOpScreen'
+import SignMessageScreen from '@mobile/modules/sign-message/screens/SignMessageScreen'
 import SwapAndBridgeScreen from '@mobile/modules/swap-and-bridge/screens/SwapAndBridgeScreen'
 import TokenDetailsScreen from '@mobile/modules/token-details/screens/TokenDetailsScreen'
 import TransferScreen from '@mobile/modules/transfer/screens/TransferScreen'
@@ -62,6 +63,7 @@ const MainRoutes = () => {
           <Route path={ROUTES.accountSelect} element={<AccountSelectScreen />} />
           <Route path={ROUTES.tokenDetails} element={<TokenDetailsScreen />} />
           <Route path={ROUTES.signAccountOp} element={<SignAccountOpScreen />} />
+          <Route path={ROUTES.signMessage} element={<SignMessageScreen />} />
           <Route path={ROUTES.benzin} element={<BenzinScreen />} />
           <Route path={ROUTES.networks} element={<NetworksScreen />} />
           <Route path={ROUTES.swapAndBridge} element={<SwapAndBridgeScreen />} />

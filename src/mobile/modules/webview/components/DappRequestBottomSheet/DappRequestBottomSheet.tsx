@@ -8,6 +8,7 @@ import flexbox from '@common/styles/utils/flexbox'
 import BenzinScreen from '@mobile/modules/action-requests/screens/BenzinScreen'
 import DappConnectScreen from '@mobile/modules/action-requests/screens/DappConnectScreen'
 import SignAccountOpScreen from '@mobile/modules/sign-account-op/screens/SignAccountOpScreen'
+import SignMessageScreen from '@mobile/modules/sign-message/screens/SignMessageScreen'
 import AddOrUpdateNetworkScreen from '@web/modules/action-requests/screens/AddOrUpdateNetworkScreen'
 import DecryptRequestScreen from '@web/modules/action-requests/screens/DecryptRequestScreen'
 import GetEncryptionPublicKeyRequestScreen from '@web/modules/action-requests/screens/GetEncryptionPublicKeyRequestScreen'
@@ -60,17 +61,10 @@ const DappRequestBottomSheet: React.FC<Props> = ({ sheetRef, closeBottomSheet, o
       case 'typedMessage':
       case 'siwe':
       case 'authorization-7702':
-        // For now, these will fall through to default since SignMessageScreen
-        // needs a mobile equivalent. We navigate to full screen for these.
-        return null
+        return <SignMessageScreen />
 
       case 'benzin':
         return <BenzinScreen />
-
-      case 'swapAndBridge':
-      case 'transfer':
-        // These are handled by their own modules and navigation
-        return null
 
       default:
         return null

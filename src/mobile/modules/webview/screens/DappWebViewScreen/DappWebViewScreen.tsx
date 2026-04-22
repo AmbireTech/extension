@@ -1,5 +1,4 @@
 import Fuse from 'fuse.js'
-import { nanoid } from 'nanoid'
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
@@ -230,29 +229,41 @@ const DappWebViewScreen = () => {
     setHeaderValue('search', hostname)
   }, [hostname, setHeaderValue])
 
-  const handleNavigationStateChange = useCallback((e: WebViewNavigation) => {
-    if (!e.loading) {
-      try {
-        const url = new URL(e.url)
-        // Reject non-HTTPS protocols to prevent MITM attacks
-        if (url.protocol !== 'https:') {
-          console.warn('[DappWebView] Blocked navigation to non-HTTPS URL:', e.url)
-          // For HTTP URLs, we could optionally redirect to HTTPS or show a warning
-          // For now, we just don't update the current URL, keeping the previous safe URL
-          return
+  const handleNavigationStateChange = useCallback(
+    (e: WebViewNavigation) => {
+      if (!e.loading) {
+        try {
+          const url = new URL(e.url)
+          // Reject non-HTTPS protocols to prevent MITM attacks
+          if (url.protocol !== 'https:') {
+            console.warn('[DappWebView] Blocked navigation to non-HTTPS URL:', e.url)
+            // For HTTP URLs, we could optionally redirect to HTTPS or show a warning
+            // For now, we just don't update the current URL, keeping the previous safe URL
+            return
+          }
+          const previousOrigin = currentUrlRef.current
+          setCurrentUrl(e.url)
+          currentUrlRef.current = e.url
+          setCanGoBack(e.canGoBack)
+          // If the origin changed, delete the stale session so the next provider
+          // request creates a fresh one bound to the new origin
+          try {
+            if (new URL(previousOrigin).origin !== url.origin) {
+              dispatch({ type: 'WEBVIEW_ORIGIN_CHANGED', params: { previousOrigin } })
+            }
+          } catch {
+            // previousOrigin may not be a valid URL yet (e.g. on first load)
+          }
+        } catch {
+          console.warn('[DappWebView] Invalid URL in navigation:', e.url)
         }
-        setCurrentUrl(e.url)
-        currentUrlRef.current = e.url
-        setCanGoBack(e.canGoBack)
-      } catch {
-        console.warn('[DappWebView] Invalid URL in navigation:', e.url)
       }
-    }
-  }, [])
+    },
+    [dispatch]
+  )
 
   // ── Inpage Provider Injection ──
   const injectionScript = useMemo(() => {
-    const nonce = nanoid()
     // Use the dynamically fetched dev code if available, fallback to bundled code
     const baseCodeAmbire = (__DEV__ && devAmbireCode) || ambireInpageBundle.code
     const baseCodeEthereum = (__DEV__ && devEthereumCode) || ethereumInpageBundle.code
@@ -483,7 +494,7 @@ const DappWebViewScreen = () => {
           dispatch({
             type: 'HANDLE_PROVIDER_REQUEST',
             params: {
-              request: { ...payload, origin: activeDappUrl },
+              request: { ...payload, origin: currentUrlRef.current },
               requestId: data.id,
               providerId: 1,
               topic
@@ -494,7 +505,7 @@ const DappWebViewScreen = () => {
         // Ignore non-JSON or other messages
       }
     },
-    [dispatch, activeDappUrl]
+    [dispatch]
   )
 
   // Track the URL at the time of each request to detect navigation during async operations

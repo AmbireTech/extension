@@ -25,9 +25,8 @@ import SignInWithEthereum from '@common/modules/sign-message/components/Contents
 import KeySelect from '@common/modules/sign-message/components/KeySelect'
 import SafeFooter from '@common/modules/sign-message/components/SafeFooter'
 import flexbox from '@common/styles/utils/flexbox'
-import SmallNotificationWindowWrapper from '@web/components/SmallNotificationWindowWrapper'
-import { TabLayoutContainer } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
-import ActionFooter from '@web/modules/action-requests/components/ActionFooter'
+import { MobileLayoutContainer } from '@mobile/components/MobileLayoutWrapper'
+import ActionFooter from '@mobile/modules/action-requests/components/ActionFooter'
 
 const SignMessageScreen = () => {
   const { t } = useTranslation()
@@ -314,106 +313,104 @@ const SignMessageScreen = () => {
   }
 
   return (
-    <SmallNotificationWindowWrapper>
-      <TabLayoutContainer
-        width="full"
-        header={<ActionHeader />}
-        renderDirectChildren={() => {
-          if (account.safeCreation) {
-            return (
-              <SafeFooter
-                account={account}
-                isSignLoading={signStatus === 'LOADING'}
-                onSign={setSigner}
-                chainId={userRequest.meta.chainId.toString()}
-                signed={signMessageState.signed || []}
-                importedKeys={selectedAccountKeyStoreKeys}
-                threshold={threshold}
-                // the first signer from the array is the current one
-                signingKeyAddr={signMessageState.signers?.[0]?.addr || ''}
-                onReject={handleReject}
-              />
-            )
-          }
-
+    <MobileLayoutContainer
+      withHorizontalPadding
+      header={<ActionHeader />}
+      renderDirectChildren={() => {
+        if (account.safeCreation) {
           return (
-            <ActionFooter
+            <SafeFooter
+              account={account}
+              isSignLoading={signStatus === 'LOADING'}
+              onSign={setSigner}
+              chainId={userRequest.meta.chainId.toString()}
+              signed={signMessageState.signed || []}
+              importedKeys={selectedAccountKeyStoreKeys}
+              threshold={threshold}
+              // the first signer from the array is the current one
+              signingKeyAddr={signMessageState.signers?.[0]?.addr || ''}
               onReject={handleReject}
-              onResolve={signWithDefaultSignerIfPossible}
-              resolveButtonText={resolveButtonText}
-              resolveDisabled={
-                signStatus === 'LOADING' ||
-                isScrollToBottomForced ||
-                isViewOnly ||
-                humanizationHasBlockingWarnings ||
-                isSafeNotDeployed
-              }
-              resolveButtonTestID="button-sign"
-              rejectButtonText="Reject"
-              {...(isViewOnly
-                ? {
-                    resolveNode: (
-                      <View style={[{ flex: 3 }, flexbox.directionRow, flexbox.justifyEnd]}>
-                        <NoKeysToSignAlert
-                          type="short"
-                          isTransaction={false}
-                          chainId={signMessageState.network?.chainId}
-                        />
-                      </View>
-                    )
-                  }
-                : {})}
             />
           )
-        }}
-      >
-        <KeySelect
-          isSigning={signStatus === 'LOADING'}
-          handleChooseKey={setSigner}
-          isChooseSignerShown={isChooseSignerShown}
-          isChooseFeePayerKeyShown={false}
-          handleClose={() => setIsChooseSignerShown(false)}
-          selectedAccountKeyStoreKeys={selectedAccountKeyStoreKeys}
-          account={account}
+        }
+
+        return (
+          <ActionFooter
+            onReject={handleReject}
+            onResolve={signWithDefaultSignerIfPossible}
+            resolveButtonText={resolveButtonText}
+            resolveDisabled={
+              signStatus === 'LOADING' ||
+              isScrollToBottomForced ||
+              isViewOnly ||
+              humanizationHasBlockingWarnings ||
+              isSafeNotDeployed
+            }
+            resolveButtonTestID="button-sign"
+            rejectButtonText="Reject"
+            {...(isViewOnly
+              ? {
+                  resolveNode: (
+                    <View style={[{ flex: 3 }, flexbox.directionRow, flexbox.justifyEnd]}>
+                      <NoKeysToSignAlert
+                        type="short"
+                        isTransaction={false}
+                        chainId={signMessageState.network?.chainId}
+                      />
+                    </View>
+                  )
+                }
+              : {})}
+          />
+        )
+      }}
+    >
+      <KeySelect
+        isSigning={signStatus === 'LOADING'}
+        handleChooseKey={setSigner}
+        isChooseSignerShown={isChooseSignerShown}
+        isChooseFeePayerKeyShown={false}
+        handleClose={() => setIsChooseSignerShown(false)}
+        selectedAccountKeyStoreKeys={selectedAccountKeyStoreKeys}
+        account={account}
+      />
+      {view === 'reinitializing' && (
+        <View style={[StyleSheet.absoluteFill, flexbox.center]}>
+          <Spinner />
+        </View>
+      )}
+      {view === 'sign-message' && (
+        <Main
+          shouldDisplayLedgerConnectModal={shouldDisplayLedgerConnectModal}
+          isLedgerConnected={isLedgerConnected}
+          handleDismissLedgerConnectModal={handleDismissLedgerConnectModal}
+          hasReachedBottom={hasReachedBottom}
+          setHasReachedBottom={setHasReachedBottom}
+          shouldDisplayEIP1271Warning={shouldDisplayEIP1271Warning}
+          isSafeNotDeployed={isSafeNotDeployed}
+          currentRequest={currentRequest}
+          signingStep={signingStep}
+          handleOnContinue={moveToResponseScan}
+          handleSubmitSignatureResponse={submitSignatureResponse}
+          handleQrSigningFlowOnRejectPressed={handleQrSigningFlowOnRejectPressed}
+          handleQrSigningFlowOnBackPressed={handleQrSigningFlowOnBackPressed}
         />
-        {view === 'reinitializing' && (
-          <View style={[StyleSheet.absoluteFill, flexbox.center]}>
-            <Spinner />
-          </View>
-        )}
-        {view === 'sign-message' && (
-          <Main
-            shouldDisplayLedgerConnectModal={shouldDisplayLedgerConnectModal}
-            isLedgerConnected={isLedgerConnected}
-            handleDismissLedgerConnectModal={handleDismissLedgerConnectModal}
-            hasReachedBottom={hasReachedBottom}
-            setHasReachedBottom={setHasReachedBottom}
-            shouldDisplayEIP1271Warning={shouldDisplayEIP1271Warning}
-            isSafeNotDeployed={isSafeNotDeployed}
-            currentRequest={currentRequest}
-            signingStep={signingStep}
-            handleOnContinue={moveToResponseScan}
-            handleSubmitSignatureResponse={submitSignatureResponse}
-            handleQrSigningFlowOnRejectPressed={handleQrSigningFlowOnRejectPressed}
-            handleQrSigningFlowOnBackPressed={handleQrSigningFlowOnBackPressed}
-          />
-        )}
-        {view === 'siwe' && (
-          <SignInWithEthereum
-            shouldDisplayLedgerConnectModal={shouldDisplayLedgerConnectModal}
-            isLedgerConnected={isLedgerConnected}
-            handleDismissLedgerConnectModal={handleDismissLedgerConnectModal}
-            isSafeNotDeployed={isSafeNotDeployed}
-            currentRequest={currentRequest}
-            signingStep={signingStep}
-            handleOnContinue={moveToResponseScan}
-            handleSubmitSignatureResponse={submitSignatureResponse}
-            handleQrSigningFlowOnRejectPressed={handleQrSigningFlowOnRejectPressed}
-            handleQrSigningFlowOnBackPressed={handleQrSigningFlowOnBackPressed}
-          />
-        )}
-      </TabLayoutContainer>
-    </SmallNotificationWindowWrapper>
+      )}
+      {view === 'siwe' && (
+        <SignInWithEthereum
+          shouldDisplayLedgerConnectModal={shouldDisplayLedgerConnectModal}
+          isLedgerConnected={isLedgerConnected}
+          handleDismissLedgerConnectModal={handleDismissLedgerConnectModal}
+          isSafeNotDeployed={isSafeNotDeployed}
+          currentRequest={currentRequest}
+          signingStep={signingStep}
+          handleOnContinue={moveToResponseScan}
+          handleSubmitSignatureResponse={submitSignatureResponse}
+          handleQrSigningFlowOnRejectPressed={handleQrSigningFlowOnRejectPressed}
+          handleQrSigningFlowOnBackPressed={handleQrSigningFlowOnBackPressed}
+        />
+      )}
+    </MobileLayoutContainer>
   )
 }
 

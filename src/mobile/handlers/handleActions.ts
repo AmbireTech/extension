@@ -1,8 +1,10 @@
 /* eslint-disable no-await-in-loop */
 /* eslint-disable no-param-reassign */
 /* eslint-disable @typescript-eslint/return-await */
+import { getSessionId } from '@ambire-common/classes/session'
 import { MainController } from '@ambire-common/controllers/main/main'
 import { IEventEmitterRegistryController } from '@ambire-common/interfaces/eventEmitter'
+import { getDappIdFromUrl } from '@ambire-common/libs/dapps/helpers'
 import { KeyIterator } from '@ambire-common/libs/keyIterator/keyIterator'
 import handleProviderRequests from '@common/modules/provider/handleProviderRequests'
 import { Action, MethodAction } from '@common/types/actions'
@@ -72,6 +74,11 @@ export const handleActions = async (
       break
     }
 
+    case 'MAIN_CONTROLLER_HANDLE_SIGN_MESSAGE': {
+      mainCtrl.signMessage.setSigners(params.signers)
+      return await mainCtrl.handleSignMessage()
+    }
+
     case 'ADDRESS_BOOK_CONTROLLER_ADD_CONTACT': {
       await mainCtrl.addressBook.addContact(params.name, params.address)
       await mainCtrl.transfer.checkIsRecipientAddressUnknown()
@@ -109,6 +116,20 @@ export const handleActions = async (
         keyIterator,
         hdPathTemplate: keystoreSavedSeed.hdPathTemplate
       })
+      break
+    }
+
+    case 'WEBVIEW_ORIGIN_CHANGED': {
+      try {
+        const oldDappId = getDappIdFromUrl(new URL(params.previousOrigin).origin)
+        const oldSessionId = getSessionId({ tabId: 1, windowId: undefined, dappId: oldDappId })
+        if (mainCtrl.dapps.dappSessions[oldSessionId]) {
+          mainCtrl.dapps.deleteDappSession(oldSessionId)
+          console.log('[Worker] Deleted stale session for origin change:', oldDappId)
+        }
+      } catch {
+        // Ignore invalid URLs
+      }
       break
     }
 

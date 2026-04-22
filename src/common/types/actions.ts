@@ -126,6 +126,11 @@ type WindowRemovedAction = {
   params: { id: number }
 }
 
+type WebviewOriginChangedAction = {
+  type: 'WEBVIEW_ORIGIN_CHANGED'
+  params: { previousOrigin: string }
+}
+
 type HandleProviderRequestAction = {
   type: 'HANDLE_PROVIDER_REQUEST'
   params: {
@@ -162,3 +167,4 @@ export type Action =
   | GetAllControllerNamesAction
   | InitControllerStateAction
   | HandleProviderRequestAction
+  | WebviewOriginChangedAction

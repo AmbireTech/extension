@@ -18,6 +18,10 @@ export type BottomSheetRequestType =
   | 'ethGetEncryptionPublicKey'
   | 'ethDecrypt'
   | 'switchAccount'
+  | 'message'
+  | 'typedMessage'
+  | 'siwe'
+  | 'authorization-7702'
   | 'benzin'
   | null
 
@@ -64,6 +68,10 @@ export default function useRequestsControllerHelpers(
       'ethGetEncryptionPublicKey',
       'ethDecrypt',
       'switchAccount',
+      'message',
+      'typedMessage',
+      'siwe',
+      'authorization-7702',
       'benzin'
     ]
 
