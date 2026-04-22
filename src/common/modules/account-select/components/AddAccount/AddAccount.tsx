@@ -43,6 +43,7 @@ const AddAccount = ({
   const { goToNextRoute, setTriggeredHwWalletFlow } = useOnboardingNavigation()
   const [height, setHeight] = useState<number>(0)
   const scrollViewRef = useRef<any>(null)
+  const [expandedDropdown, setExpandedDropdown] = useState<'import-acc' | 'connect-hw' | null>(null)
 
   const {
     ref: seedPhraseSheetRef,
@@ -152,14 +153,6 @@ const AddAccount = ({
     >
       <View
         onLayout={(e) => {
-          if (scrollViewRef.current) {
-            const heightChange = Math.abs(e.nativeEvent.layout.height - height)
-            // Scroll down a bit so the user can see the options
-            if (e.nativeEvent.layout.height > height) {
-              scrollViewRef.current.scrollTo({ y: heightChange / 2, animated: true })
-            }
-          }
-
           if (height) return
 
           setHeight(e.nativeEvent.layout.height)
@@ -188,6 +181,9 @@ const AddAccount = ({
           dropdownIcon={ImportAccountIcon}
           dropdownTestID="import-account"
           options={optionsImportAccount}
+          scrollViewRef={scrollViewRef}
+          isExpanded={expandedDropdown === 'import-acc'}
+          setIsExpanded={(isExpanded) => setExpandedDropdown(isExpanded ? 'import-acc' : null)}
         />
         {!!optionsHW.length && (
           <ExpandableOptionSection
@@ -195,6 +191,9 @@ const AddAccount = ({
             dropdownIcon={HWIcon}
             dropdownTestID="connect-hardware-wallet"
             options={optionsHW}
+            scrollViewRef={scrollViewRef}
+            isExpanded={expandedDropdown === 'connect-hw'}
+            setIsExpanded={(isExpanded) => setExpandedDropdown(isExpanded ? 'connect-hw' : null)}
           />
         )}
         {!showImportOnly && (
