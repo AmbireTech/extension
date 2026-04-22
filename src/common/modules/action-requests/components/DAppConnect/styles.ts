@@ -1,7 +1,8 @@
 import { StyleSheet, ViewStyle } from 'react-native'
 
-import spacings, { SPACING_SM } from '@common/styles/spacings'
-import { THEME_TYPES, ThemeProps, ThemeType } from '@common/styles/themeConfig'
+import { isMobile } from '@common/config/env'
+import spacings from '@common/styles/spacings'
+import { ThemeProps, ThemeType } from '@common/styles/themeConfig'
 import common, { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 
@@ -15,21 +16,27 @@ interface Styles {
 
 const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
   StyleSheet.create<Styles>({
-    container: {
-      ...flexbox.alignCenter,
-      marginHorizontal: 'auto',
-      ...flexbox.flex1,
-      maxWidth: 422
-    },
+    container: isMobile
+      ? {
+          ...flexbox.flex1
+        }
+      : {
+          ...flexbox.alignCenter,
+          marginHorizontal: 'auto',
+          ...flexbox.flex1,
+          maxWidth: 422
+        },
     content: {
       ...common.fullWidth,
       borderRadius: BORDER_RADIUS_PRIMARY,
       overflow: 'hidden'
     },
-    contentHeader: {
-      ...flexbox.flex1,
-      ...flexbox.alignCenter
-    },
+    contentHeader: isMobile
+      ? {}
+      : {
+          ...flexbox.flex1,
+          ...flexbox.alignCenter
+        },
     contentBody: {
       backgroundColor: theme.secondaryBackground
     },

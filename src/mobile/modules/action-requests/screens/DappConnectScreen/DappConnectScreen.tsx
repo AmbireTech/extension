@@ -6,14 +6,11 @@ import HoldToProceedButton from '@common/components/HoldToProceedButton'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
-import { HeaderWithLogoOnly } from '@common/modules/header/components/Header/Header'
-import spacings from '@common/styles/spacings'
+import DAppConnectBody from '@common/modules/action-requests/components/DAppConnect/DAppConnectBody'
+import DAppConnectHeader from '@common/modules/action-requests/components/DAppConnect/DAppConnectHeader'
+import getStyles from '@common/modules/action-requests/components/DAppConnect/styles'
 import { MobileLayoutContainer } from '@mobile/components/MobileLayoutWrapper'
 import ActionFooter from '@mobile/modules/action-requests/components/ActionFooter'
-
-import DAppConnectBody from './components/DAppConnectBody'
-import DAppConnectHeader from './components/DAppConnectHeader'
-import getStyles from './styles'
 
 // Screen for dApps authorization to connect to extension - will be triggered on dApp connect request
 const DappConnectScreen = () => {

@@ -14,13 +14,13 @@ import spacings, { SPACING, SPACING_LG, SPACING_MI } from '@common/styles/spacin
 import flexbox from '@common/styles/utils/flexbox'
 import { openInTab } from '@common/utils/links'
 
-import getStyles from '../styles'
 import DAppPermissions from './DAppPermissions'
+import getStyles from './styles'
 
 const DAppConnectBody: FC<{
-  responsiveSizeMultiplier: number
+  responsiveSizeMultiplier?: number
   securityCheck: BlacklistedStatus
-}> = ({ securityCheck, responsiveSizeMultiplier }) => {
+}> = ({ securityCheck, responsiveSizeMultiplier = 1 }) => {
   const { t } = useTranslation()
   const { styles, theme } = useTheme(getStyles)
 

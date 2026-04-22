@@ -15,11 +15,11 @@ import spacings, { SPACING, SPACING_LG, SPACING_MD, SPACING_TY } from '@common/s
 import flexbox from '@common/styles/utils/flexbox'
 import ManifestImage from '@web/components/ManifestImage'
 
-import getStyles from '../styles'
+import getStyles from './styles'
 import TrustedIcon from './TrustedIcon'
 
 type Props = Partial<DappProviderRequest['session']> & {
-  responsiveSizeMultiplier: number
+  responsiveSizeMultiplier?: number
   securityCheck: BlacklistedStatus
 }
 
@@ -27,7 +27,7 @@ const DAppConnectHeader: FC<Props> = ({
   id,
   name = 'Unknown App',
   icon,
-  responsiveSizeMultiplier,
+  responsiveSizeMultiplier = 1,
   securityCheck
 }) => {
   const { t } = useTranslation()
