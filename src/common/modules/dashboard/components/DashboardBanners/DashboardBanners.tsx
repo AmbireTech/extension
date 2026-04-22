@@ -8,7 +8,6 @@ import useBanners from '@common/modules/dashboard/hooks/useBanners'
 
 const DashboardBanners = () => {
   const [controllerBanners, marketingBanners] = useBanners()
-  // this is done solely to prevent the banner being displayed in the first second when acc is switched
 
   return (
     <View>
