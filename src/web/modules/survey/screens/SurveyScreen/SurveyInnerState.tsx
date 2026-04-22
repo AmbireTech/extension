@@ -59,7 +59,7 @@ const SurveyInnerState = ({
                 // the key is added so the component remounts and resets its height when the
                 // question changes
                 key={currentQuestion.id}
-                placeholder="Write down your thoughts..."
+                placeholder={t('Write down your thoughts...')}
                 value={inputtedAnswer?.toString() || ''}
                 onChangeText={setInputtedAnswer}
                 containerStyle={spacings.ptLg}
