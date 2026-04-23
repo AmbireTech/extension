@@ -16,6 +16,7 @@ import { IrCall } from '@ambire-common/libs/humanizer/interfaces'
 import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
 import AmbireLogo from '@common/assets/svg/AmbireLogo'
 import BottomSheet from '@common/components/BottomSheet'
+import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import NetworkIcon from '@common/components/NetworkIcon'
 import SkeletonLoader from '@common/components/SkeletonLoader'
 import Text from '@common/components/Text'
@@ -24,7 +25,9 @@ import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import PendingTokenSummary from '@common/modules/sign-account-op/components/PendingTokenSummary'
-import TransactionSummary, { sizeMultiplier } from '@common/modules/sign-account-op/components/TransactionSummary'
+import TransactionSummary, {
+  sizeMultiplier
+} from '@common/modules/sign-account-op/components/TransactionSummary'
 import spacings, { SPACING_SM } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { checkIfImageExists } from '@common/utils/checkIfImageExists'
@@ -66,6 +69,15 @@ const formatBalanceChangeAmount = (change: BalanceChange) => {
 
   return `${change.balanceChange < 0n ? '-' : '+'}${formattedAmount}`
 }
+
+const getFullBalanceChangeAmount = (change: BalanceChange) =>
+  formatUnits(
+    change.balanceChange < 0n ? -change.balanceChange : change.balanceChange,
+    change.decimals
+  )
+
+const getBalanceChangeTooltipId = (change: BalanceChange) =>
+  `balance-change-${change.chainId}-${change.address}-${change.balanceChange.toString()}`
 
 const BalanceChangeToken = ({ change }: { change: BalanceChange }) => (
   <View style={spacings.mlMi}>
@@ -499,6 +511,12 @@ const SubmittedTransactionSummaryInner = ({
                       fontSize={12}
                       weight="medium"
                       appearance={change.balanceChange > 0n ? 'successText' : 'errorText'}
+                      // @ts-ignore
+                      style={{ cursor: 'pointer' }}
+                      dataSet={createGlobalTooltipDataSet({
+                        id: getBalanceChangeTooltipId(change),
+                        content: getFullBalanceChangeAmount(change)
+                      })}
                     >
                       {formatBalanceChangeAmount(change)}
                     </Text>
