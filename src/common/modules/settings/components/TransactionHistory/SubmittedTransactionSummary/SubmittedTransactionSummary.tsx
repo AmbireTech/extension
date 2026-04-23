@@ -3,6 +3,7 @@ import React, { useMemo } from 'react'
 import { Pressable, View, ViewStyle } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 
+import { Dapp } from '@ambire-common/interfaces/dapp'
 import { Network } from '@ambire-common/interfaces/network'
 import {
   BalanceChange,
@@ -13,6 +14,7 @@ import { AccountOpStatus } from '@ambire-common/libs/accountOp/types'
 import { humanizeAccountOp } from '@ambire-common/libs/humanizer'
 import { IrCall } from '@ambire-common/libs/humanizer/interfaces'
 import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
+import AmbireLogo from '@common/assets/svg/AmbireLogo'
 import BottomSheet from '@common/components/BottomSheet'
 import NetworkIcon from '@common/components/NetworkIcon'
 import SkeletonLoader from '@common/components/SkeletonLoader'
@@ -22,10 +24,13 @@ import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import PendingTokenSummary from '@common/modules/sign-account-op/components/PendingTokenSummary'
-import TransactionSummary, { sizeMultiplier } from '@common/modules/sign-account-op/components/TransactionSummary'
+import TransactionSummary, {
+  sizeMultiplier
+} from '@common/modules/sign-account-op/components/TransactionSummary'
 import spacings, { SPACING_SM } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import DelegationHumanization from '@web/components/DelegationHumanization'
+import ManifestImage from '@web/components/ManifestImage'
 
 import Footer from './Footer'
 import StatusBadge from './StatusBadge'
@@ -41,6 +46,8 @@ interface Props {
 type DappInteraction = {
   id: string
   name: string
+  iconUrl?: string | null
+  iconType?: 'ambire'
 }
 
 const MAX_VISIBLE_DAPP_INTERACTIONS = 2
@@ -74,6 +81,53 @@ const BalanceChangeToken = ({ change }: { change: BalanceChange }) => (
     />
   </View>
 )
+
+const DappInteractionIcon = ({ interaction }: { interaction: DappInteraction }) => {
+  const fallbackInitial = interaction.name.trim().charAt(0).toUpperCase() || '?'
+
+  if (interaction.iconType === 'ambire') {
+    return (
+      <View style={stylesForIcons.ambireIcon}>
+        <AmbireLogo width={12} height={20} />
+      </View>
+    )
+  }
+
+  return (
+    <ManifestImage
+      uri={interaction.iconUrl || ''}
+      size={20}
+      isRound
+      fallback={() => (
+        <View style={stylesForIcons.fallbackIcon}>
+          <Text fontSize={11} weight="medium" appearance="secondaryText">
+            {fallbackInitial}
+          </Text>
+        </View>
+      )}
+      imageStyle={stylesForIcons.manifestImage}
+    />
+  )
+}
+
+const stylesForIcons = {
+  fallbackIcon: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center'
+  },
+  manifestImage: {
+    backgroundColor: 'transparent'
+  },
+  ambireIcon: {
+    width: 20,
+    height: 20,
+    alignItems: 'center',
+    justifyContent: 'center'
+  }
+} as const
 
 const getFormattedSubmittedDate = (timestamp: number) =>
   new Date(timestamp).toLocaleString('en-us', {
@@ -116,12 +170,13 @@ const getDappInteractions = (submittedAccountOp: SubmittedAccountOp): DappIntera
   }
 
   submittedAccountOp.calls.forEach((call) => {
-    const dapp = call.dapp
+    const dapp = call.dapp as Dapp | undefined
     if (!dapp?.name) return
 
     addInteraction({
       id: `dapp:${dapp.id || `${dapp.name}-${dapp.url || ''}`}`,
-      name: dapp.name
+      name: dapp.name,
+      iconUrl: dapp.icon
     })
   })
 
@@ -129,14 +184,16 @@ const getDappInteractions = (submittedAccountOp: SubmittedAccountOp): DappIntera
   if (isSwap) {
     addInteraction({
       id: 'fallback:swap',
-      name: 'Swap/Bridge'
+      name: 'Swap/Bridge',
+      iconType: 'ambire'
     })
   }
 
   if (!interactions.length) {
     addInteraction({
       id: 'fallback:transfer',
-      name: 'Transfer'
+      name: 'Transfer',
+      iconType: 'ambire'
     })
   }
 
@@ -389,23 +446,29 @@ const SubmittedTransactionSummaryInner = ({
               ]}
             >
               {dappInteractions.length ? (
-                <View style={styles.dappInteractionRow}>
-                  {visibleDappInteractions.map((interaction) => (
-                    <Text
+                <>
+                  {visibleDappInteractions.map((interaction, index) => (
+                    <View
                       key={interaction.id}
-                      fontSize={12}
-                      appearance="secondaryText"
-                      style={spacings.mrTy}
+                      style={[
+                        styles.dappInteractionRow,
+                        index < visibleDappInteractions.length - 1 || hiddenDappInteractionsCount
+                          ? spacings.mbTy
+                          : undefined
+                      ]}
                     >
-                      [{interaction.name}]
-                    </Text>
+                      <DappInteractionIcon interaction={interaction} />
+                      <Text fontSize={12} appearance="secondaryText" style={spacings.mlMi}>
+                        {interaction.name}
+                      </Text>
+                    </View>
                   ))}
                   {!!hiddenDappInteractionsCount && (
                     <Text fontSize={12} appearance="secondaryText">
-                      [+{hiddenDappInteractionsCount}]
+                      +{hiddenDappInteractionsCount} more
                     </Text>
                   )}
-                </View>
+                </>
               ) : (
                 <SkeletonLoader width={120} height={18} />
               )}
