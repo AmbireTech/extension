@@ -4,6 +4,7 @@ import { Animated, FlatListProps, View } from 'react-native'
 
 import { BannerType } from '@ambire-common/interfaces/banner'
 import { Network } from '@ambire-common/interfaces/network'
+import { SubmittedAccountOp } from '@ambire-common/libs/accountOp/submittedAccountOp'
 import { getCurrentAccountBanners } from '@ambire-common/libs/banners/banners'
 import InfoIcon from '@common/assets/svg/InfoIcon'
 import Banner from '@common/components/Banner'
@@ -50,6 +51,14 @@ const blockExplorerUrl = (explorerUrl: string | null, address: string) => {
 const blockExplorerName = (explorerUrl: string) => {
   return explorerUrl.replace('https://', '').replace('http://', '').replace('www.', '')
 }
+
+type Item =
+  | SubmittedAccountOp
+  | 'header'
+  | 'empty'
+  | 'keep-this-to-avoid-key-warning'
+  | 'skeleton'
+  | 'load-more'
 
 const ActivityPositions: FC<Props> = ({
   openTab,
@@ -113,7 +122,7 @@ const ActivityPositions: FC<Props> = ({
   }, [openTab, account?.addr, activityDispatch, dashboardNetworkFilter, sessionId])
 
   const renderItem = useCallback(
-    ({ item }: any) => {
+    ({ item }: { item: Item }) => {
       if (item === 'header') {
         return (
           <View style={{ backgroundColor: theme.primaryBackground }}>
@@ -281,7 +290,7 @@ const ActivityPositions: FC<Props> = ({
     ]
   )
 
-  const keyExtractor = useCallback((positionOrElement: any) => {
+  const keyExtractor = useCallback((positionOrElement: Item) => {
     if (typeof positionOrElement === 'string') return positionOrElement
 
     return `${positionOrElement.id}-${positionOrElement.txnId}-${positionOrElement.timestamp}`
