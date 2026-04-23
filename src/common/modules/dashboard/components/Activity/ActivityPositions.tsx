@@ -1,6 +1,6 @@
 import React, { FC, useCallback, useEffect, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Animated, FlatListProps, TouchableOpacity, View } from 'react-native'
+import { Animated, FlatListProps, View } from 'react-native'
 
 import { BannerType } from '@ambire-common/interfaces/banner'
 import { Network } from '@ambire-common/interfaces/network'
@@ -257,7 +257,7 @@ const ActivityPositions: FC<Props> = ({
 
       return (
         <SubmittedTransactionSummary
-          key={item.txnId}
+          key={`${item.id}-${item.txnId}-${item.timestamp}`}
           defaultType="summary"
           submittedAccountOp={item}
           style={spacings.mbSm}
@@ -284,7 +284,7 @@ const ActivityPositions: FC<Props> = ({
   const keyExtractor = useCallback((positionOrElement: any) => {
     if (typeof positionOrElement === 'string') return positionOrElement
 
-    return positionOrElement.txnId
+    return `${positionOrElement.id}-${positionOrElement.txnId}-${positionOrElement.timestamp}`
   }, [])
 
   return (

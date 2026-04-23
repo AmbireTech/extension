@@ -12,9 +12,7 @@ import { IrCall } from '@ambire-common/libs/humanizer/interfaces'
 import SkeletonLoader from '@common/components/SkeletonLoader'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
-import TransactionSummary, {
-  sizeMultiplier
-} from '@common/modules/sign-account-op/components/TransactionSummary'
+import TransactionSummary, { sizeMultiplier } from '@common/modules/sign-account-op/components/TransactionSummary'
 import spacings, { SPACING_SM } from '@common/styles/spacings'
 import DelegationHumanization from '@web/components/DelegationHumanization'
 
@@ -92,9 +90,9 @@ const SubmittedTransactionSummaryInner = ({
         <StatusBadge status={submittedAccountOp.status} textSize={14 * sizeMultiplier[size]} />
       </View>
       {!isDelegationTxn &&
-        calls.map((call: IrCall) => (
+        calls.map((call: IrCall, i) => (
           <TransactionSummary
-            key={call.id}
+            key={`${submittedAccountOp.id}-${i}-${call.txnId}-${call.id}`}
             style={{ ...styles.summaryItem, marginBottom: SPACING_SM * sizeMultiplier[size] }}
             call={call}
             chainId={submittedAccountOp.chainId}
@@ -139,12 +137,13 @@ const SubmittedTransactionSummary = ({
   const accountOpDividedIntoMultipleIfNeeded = isIdentifiedByMultipleTxn(
     submittedAccountOp.identifiedBy
   )
-    ? submittedAccountOp.calls.reverse().map((call) => {
+    ? submittedAccountOp.calls.reverse().map((call, i) => {
         return {
           ...submittedAccountOp,
           txnId: call.txnId,
           status: call.status,
           calls: [call],
+          id: `${submittedAccountOp.id}-${i}-${call.txnId}-${call.id}`,
           // if the call has a fee set, use it
           gasFeePayment: submittedAccountOp.gasFeePayment
             ? {
@@ -165,7 +164,7 @@ const SubmittedTransactionSummary = ({
     <>
       {accountOpDividedIntoMultipleIfNeeded.map((op) => (
         <SubmittedTransactionSummaryInner
-          key={op.txnId}
+          key={op.id || op.txnId}
           submittedAccountOp={op}
           size={size}
           style={style}
