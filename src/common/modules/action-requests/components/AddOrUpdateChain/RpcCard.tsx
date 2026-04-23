@@ -4,6 +4,7 @@ import { View } from 'react-native'
 
 import Badge from '@common/components/Badge'
 import Text from '@common/components/Text'
+import { isWeb } from '@common/config/env'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import common, { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
@@ -23,7 +24,7 @@ const RpcCard = ({
   const { theme } = useTheme()
   const { t } = useTranslation()
   return (
-    <View style={[flexbox.flex1, common.borderRadiusPrimary, { maxHeight: 308 }]}>
+    <View style={[flexbox.flex1, common.borderRadiusPrimary, isWeb && { maxHeight: 308 }]}>
       <View
         style={[
           flexbox.directionRow,
@@ -34,6 +35,10 @@ const RpcCard = ({
             borderTopLeftRadius: BORDER_RADIUS_PRIMARY,
             borderTopRightRadius: BORDER_RADIUS_PRIMARY,
             backgroundColor: isNew ? theme.success500 : theme.tertiaryBackground
+          },
+          !children && {
+            borderBottomLeftRadius: BORDER_RADIUS_PRIMARY,
+            borderBottomRightRadius: BORDER_RADIUS_PRIMARY
           }
         ]}
       >
@@ -49,7 +54,7 @@ const RpcCard = ({
             fontSize={14}
             weight="semiBold"
             color={isNew ? theme.neutral100 : theme.primaryText}
-            style={[spacings.mtTy, { maxWidth: 250 }]}
+            style={[spacings.mtTy, isWeb && { maxWidth: 250 }]}
             numberOfLines={1}
             ellipsizeMode="tail"
           >
@@ -58,20 +63,22 @@ const RpcCard = ({
         </View>
         {isNew && <Badge type="new" text={t('New')} />}
       </View>
-      <View
-        style={[
-          spacings.phSm,
-          spacings.pvMd,
-          flexbox.flex1,
-          {
-            backgroundColor: isNew ? theme.success100 : theme.secondaryBackground,
-            borderBottomLeftRadius: BORDER_RADIUS_PRIMARY,
-            borderBottomRightRadius: BORDER_RADIUS_PRIMARY
-          }
-        ]}
-      >
-        {children}
-      </View>
+      {!!children && (
+        <View
+          style={[
+            spacings.phSm,
+            spacings.pvMd,
+            flexbox.flex1,
+            {
+              backgroundColor: isNew ? theme.success100 : theme.secondaryBackground,
+              borderBottomLeftRadius: BORDER_RADIUS_PRIMARY,
+              borderBottomRightRadius: BORDER_RADIUS_PRIMARY
+            }
+          ]}
+        >
+          {children}
+        </View>
+      )}
     </View>
   )
 }

@@ -337,12 +337,7 @@ const AddOrUpdateNetworkScreen = () => {
           />
         )}
       >
-        <MobileLayoutWrapperMainContent
-          style={{
-            marginBottom: SPACING_LG * responsiveSizeMultiplier
-          }}
-          withScroll={false}
-        >
+        <MobileLayoutWrapperMainContent withScroll>
           <UpdateChain
             handleRetryWithDifferentRpcUrl={handleRetryWithDifferentRpcUrl}
             areParamsValid={areParamsValid}
@@ -375,7 +370,7 @@ const AddOrUpdateNetworkScreen = () => {
           />
         )}
       >
-        <MobileLayoutWrapperMainContent style={spacings.mbLg} withScroll={false}>
+        <MobileLayoutWrapperMainContent>
           <AlreadyAddedChain
             networkAlreadyAdded={networkAlreadyAdded}
             successStateText={successStateText}
@@ -405,16 +400,10 @@ const AddOrUpdateNetworkScreen = () => {
         />
       )}
     >
-      <MobileLayoutWrapperMainContent
-        style={{
-          marginBottom: SPACING_LG * responsiveSizeMultiplier
-        }}
-        withScroll={false}
-      >
+      <MobileLayoutWrapperMainContent withScroll>
         <AddChain
           handleRetryWithDifferentRpcUrl={handleRetryWithDifferentRpcUrl}
           areParamsValid={areParamsValid}
-          statuses={statuses}
           features={features}
           networkDetails={networkDetails}
           actionButtonPressedRef={actionButtonPressedRef}

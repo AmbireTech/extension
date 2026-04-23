@@ -5,6 +5,7 @@ import { View } from 'react-native'
 import { Network } from '@ambire-common/interfaces/network'
 import SuccessAnimation from '@common/components/SuccessAnimation'
 import Text from '@common/components/Text'
+import { isWeb } from '@common/config/env'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import common from '@common/styles/utils/common'
@@ -20,7 +21,7 @@ const AlreadyAddedChain = ({ networkAlreadyAdded, successStateText }: AlreadyAdd
   const { t } = useTranslation()
 
   return (
-    <View style={[flexbox.flex1, flexbox.alignCenter, spacings.mt2Xl]}>
+    <View style={[flexbox.flex1, flexbox.alignCenter, isWeb && spacings.mt2Xl]}>
       <View
         style={[
           common.borderRadiusPrimary,

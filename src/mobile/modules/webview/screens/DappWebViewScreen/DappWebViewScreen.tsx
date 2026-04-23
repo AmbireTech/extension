@@ -245,6 +245,9 @@ const DappWebViewScreen = () => {
           setCurrentUrl(e.url)
           currentUrlRef.current = e.url
           setCanGoBack(e.canGoBack)
+          // Keep dappUrl in sync with the actual page the WebView is on so that
+          // currentDapp (and the ManageApp bottom sheet) always reflect the real URL
+          setDappUrl?.(e.url)
           // If the origin changed, delete the stale session so the next provider
           // request creates a fresh one bound to the new origin
           try {
@@ -259,7 +262,7 @@ const DappWebViewScreen = () => {
         }
       }
     },
-    [dispatch]
+    [dispatch, setDappUrl]
   )
 
   // ── Inpage Provider Injection ──

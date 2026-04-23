@@ -1,5 +1,6 @@
 import { StyleSheet, ViewStyle } from 'react-native'
 
+import { isMobile } from '@common/config/env'
 import { ThemeProps, ThemeType } from '@common/styles/themeConfig'
 import common, { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
@@ -14,7 +15,7 @@ interface Style {
 const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
   StyleSheet.create<Style>({
     dappInfoContainer: {
-      ...flexbox.directionRow,
+      ...(isMobile ? {} : flexbox.directionRow),
       ...flexbox.alignCenter
     },
     dappInfoContent: {

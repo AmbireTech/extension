@@ -1,6 +1,6 @@
 import React from 'react'
 import { Trans, useTranslation } from 'react-i18next'
-import { View } from 'react-native'
+import { View, ViewStyle } from 'react-native'
 
 import { Statuses } from '@ambire-common/interfaces/eventEmitter'
 import { AddNetworkRequestParams, Network, NetworkFeature } from '@ambire-common/interfaces/network'
@@ -10,11 +10,12 @@ import Alert from '@common/components/Alert'
 import NetworkIcon from '@common/components/NetworkIcon'
 import ScrollableWrapper from '@common/components/ScrollableWrapper'
 import Text from '@common/components/Text'
+import { isMobile, isWeb } from '@common/config/env'
 import useDappInfo from '@common/hooks/useDappInfo'
 import useResponsiveActionWindow from '@common/hooks/useResponsiveActionWindow'
 import useTheme from '@common/hooks/useTheme'
 import getStyles from '@common/modules/action-requests/styles/styles'
-import { SPACING, SPACING_LG, SPACING_MD } from '@common/styles/spacings'
+import spacings, { SPACING, SPACING_LG, SPACING_MD } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import ManifestImage from '@web/components/ManifestImage'
 import NetworkAvailableFeatures from '@web/components/NetworkAvailableFeatures'
@@ -23,7 +24,6 @@ import NetworkDetails from '@web/components/NetworkDetails'
 type AddChainProps = {
   handleRetryWithDifferentRpcUrl: () => void
   areParamsValid: boolean | null
-  statuses: Statuses<'addNetwork' | 'updateNetwork'> & Statuses<string>
   features: NetworkFeature[]
   networkDetails?: AddNetworkRequestParams
   actionButtonPressedRef: React.MutableRefObject<boolean>
@@ -33,10 +33,14 @@ type AddChainProps = {
   userRequest: UserRequest | undefined
 }
 
+const Container = ({ children, ...rest }: any) => {
+  if (isMobile) return <>{children}</>
+  return <ScrollableWrapper {...rest}>{children}</ScrollableWrapper>
+}
+
 const AddChain = ({
   handleRetryWithDifferentRpcUrl,
   areParamsValid,
-  statuses,
   features,
   networkDetails,
   actionButtonPressedRef,
@@ -136,14 +140,14 @@ const AddChain = ({
       {!!areParamsValid && !!networkDetails && (
         <View
           style={[
-            flexbox.directionRow,
+            isWeb && flexbox.directionRow,
             flexbox.flex1,
-            {
+            isWeb && {
               marginBottom: SPACING_LG * responsiveSizeMultiplier
             }
           ]}
         >
-          <ScrollableWrapper
+          <Container
             style={[
               styles.boxWrapper,
               { width: '50%', maxHeight: '100%' },
@@ -161,14 +165,15 @@ const AddChain = ({
               nativeAssetName={networkDetails.nativeAssetName}
               explorerUrl={networkDetails.explorerUrl || '-'}
               style={{
-                backgroundColor: theme.secondaryBackground
+                backgroundColor: theme.secondaryBackground,
+                ...(isMobile && spacings.mbSm)
               }}
               responsiveSizeMultiplier={responsiveSizeMultiplier}
               type="vertical"
             />
-          </ScrollableWrapper>
-          <View style={styles.separator} />
-          <ScrollableWrapper style={flexbox.flex1} contentContainerStyle={{ flexGrow: 1 }}>
+          </Container>
+          {isWeb && <View style={styles.separator} />}
+          <Container style={flexbox.flex1} contentContainerStyle={{ flexGrow: 1 }}>
             {!!networkDetails && (
               <NetworkAvailableFeatures
                 features={features}
@@ -178,7 +183,7 @@ const AddChain = ({
                 responsiveSizeMultiplier={responsiveSizeMultiplier}
               />
             )}
-          </ScrollableWrapper>
+          </Container>
         </View>
       )}
       {!areParamsValid && areParamsValid !== null && !actionButtonPressedRef.current && (

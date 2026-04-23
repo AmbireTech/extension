@@ -5,16 +5,19 @@ import { View } from 'react-native'
 import { AddNetworkRequestParams, Network, NetworkFeature } from '@ambire-common/interfaces/network'
 import { UserRequest } from '@ambire-common/interfaces/userRequest'
 import ArrowRightIcon from '@common/assets/svg/ArrowRightIcon'
+import DownArrowIcon from '@common/assets/svg/DownArrowIcon'
 import ManifestFallbackIcon from '@common/assets/svg/ManifestFallbackIcon'
 import Alert from '@common/components/Alert'
 import Banner from '@common/components/Banner'
 import Text from '@common/components/Text'
+import { isMobile, isWeb } from '@common/config/env'
 import useDappInfo from '@common/hooks/useDappInfo'
 import useResponsiveActionWindow from '@common/hooks/useResponsiveActionWindow'
 import useTheme from '@common/hooks/useTheme'
 import getStyles from '@common/modules/action-requests/styles/styles'
-import { SPACING, SPACING_MD, SPACING_SM, SPACING_TY } from '@common/styles/spacings'
+import spacings, { SPACING, SPACING_MD, SPACING_SM, SPACING_TY } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
+import text from '@common/styles/utils/text'
 import ManifestImage from '@web/components/ManifestImage'
 import NetworkAvailableFeatures from '@web/components/NetworkAvailableFeatures'
 
@@ -55,7 +58,8 @@ const UpdateChain = ({
           weight="medium"
           fontSize={20 * responsiveSizeMultiplier}
           style={{
-            marginBottom: SPACING_MD * responsiveSizeMultiplier
+            marginBottom: isMobile ? SPACING : SPACING_MD * responsiveSizeMultiplier,
+            textAlign: isMobile ? 'center' : 'left'
           }}
         >
           {t('Update network')}
@@ -65,7 +69,7 @@ const UpdateChain = ({
           style={[
             styles.dappInfoContainer,
             {
-              marginBottom: SPACING_MD * responsiveSizeMultiplier
+              marginBottom: isMobile ? SPACING : SPACING_MD * responsiveSizeMultiplier
             }
           ]}
         >
@@ -73,13 +77,17 @@ const UpdateChain = ({
             uri={icon}
             size={50 * responsiveSizeMultiplier}
             fallback={() => <ManifestFallbackIcon />}
-            containerStyle={{
-              marginRight: SPACING_MD * responsiveSizeMultiplier
-            }}
+            containerStyle={
+              isMobile
+                ? spacings.mbSm
+                : {
+                    marginRight: SPACING_MD * responsiveSizeMultiplier
+                  }
+            }
           />
 
           <Trans values={{ name: name || 'The App' }}>
-            <Text>
+            <Text style={isMobile ? text.center : {}}>
               <Text fontSize={20 * responsiveSizeMultiplier} appearance="secondaryText">
                 {t('Allow ')}
               </Text>
@@ -97,7 +105,8 @@ const UpdateChain = ({
           weight="medium"
           appearance="secondaryText"
           style={{
-            marginBottom: SPACING * responsiveSizeMultiplier
+            marginBottom: SPACING * responsiveSizeMultiplier,
+            textAlign: isMobile ? 'center' : 'left'
           }}
         >
           {t('This site is requesting to update your default RPC')}
@@ -109,7 +118,7 @@ const UpdateChain = ({
         <>
           <View
             style={[
-              flexbox.directionRow,
+              isWeb && flexbox.directionRow,
               flexbox.flex1,
               flexbox.justifySpaceBetween,
               {
@@ -119,27 +128,45 @@ const UpdateChain = ({
             ]}
           >
             <RpcCard title="Old RPC URL" url={networkAlreadyAdded.selectedRpcUrl}>
-              <NetworkAvailableFeatures
-                hideBackgroundAndBorders
-                titleSize={16 * responsiveSizeMultiplier}
-                features={networkAlreadyAdded.features}
-                chainId={networkAlreadyAdded.chainId}
-                withRetryButton={!!rpcUrls.length && rpcUrlIndex < rpcUrls.length - 1}
-                handleRetryWithDifferentRpcUrl={handleRetryWithDifferentRpcUrl}
-                responsiveSizeMultiplier={responsiveSizeMultiplier}
-                withScroll
-              />
+              {isWeb && (
+                <NetworkAvailableFeatures
+                  hideBackgroundAndBorders
+                  titleSize={16 * responsiveSizeMultiplier}
+                  features={networkAlreadyAdded.features}
+                  chainId={networkAlreadyAdded.chainId}
+                  withRetryButton={!!rpcUrls.length && rpcUrlIndex < rpcUrls.length - 1}
+                  handleRetryWithDifferentRpcUrl={handleRetryWithDifferentRpcUrl}
+                  responsiveSizeMultiplier={responsiveSizeMultiplier}
+                  withScroll
+                />
+              )}
             </RpcCard>
-            <ArrowRightIcon
-              style={{
-                // Align-self center, instead of aligning the parent, to avoid weird behaviour when the
-                // container is scrollable
-                alignSelf: 'center',
-                marginHorizontal: SPACING_TY * responsiveSizeMultiplier
-              }}
-              containerColor={theme.secondaryBackground}
-              color={theme.iconPrimary}
-            />
+            {isMobile ? (
+              <View
+                style={{
+                  width: 32,
+                  height: 32,
+                  ...flexbox.center,
+                  backgroundColor: theme.secondaryBackground,
+                  borderRadius: 50,
+                  ...spacings.mvSm,
+                  ...flexbox.alignSelfCenter
+                }}
+              >
+                <DownArrowIcon color={theme.iconPrimary} />
+              </View>
+            ) : (
+              <ArrowRightIcon
+                style={{
+                  // Align-self center, instead of aligning the parent, to avoid weird behaviour when the
+                  // container is scrollable
+                  alignSelf: 'center',
+                  marginHorizontal: SPACING_TY * responsiveSizeMultiplier
+                }}
+                containerColor={theme.secondaryBackground}
+                color={theme.iconPrimary}
+              />
+            )}
             <RpcCard title="New RPC URL" url={networkDetails.selectedRpcUrl} isNew>
               <NetworkAvailableFeatures
                 hideBackgroundAndBorders
