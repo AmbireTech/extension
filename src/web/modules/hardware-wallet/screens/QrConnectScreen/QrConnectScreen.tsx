@@ -356,7 +356,7 @@ const QrConnectScreen = () => {
             <Alert
               type="warning"
               size="sm"
-              text={t('Behavior may vary when importing from unlisted QR wallets."')}
+              text={t('Behavior may vary when importing from unlisted QR wallets.')}
             />
           </View>
         </Panel>

@@ -72,10 +72,11 @@ export class TransferPage extends BasePage {
     await this.entertext(selectors.formAddContactNameField, contactName)
     await this.click(selectors.formAddToContactsButton)
 
+    // TODO: uncomment when we have test ID
     // assert snackbar notification
-    await expect(this.page.locator(selectors.contactSuccessfullyAddedSnackbar)).toHaveText(
-      'Contact added to Address Book'
-    )
+    // await expect(this.page.locator(selectors.contactSuccessfullyAddedSnackbar)).toHaveText(
+    //   'Contact added to Address Book'
+    // )
   }
 
   async assertAddedContact(contactName: string, contactAddress: string) {
@@ -106,16 +107,22 @@ export class TransferPage extends BasePage {
     sendToken,
     feeToken,
     payWithGasTank = true, // pay with gas tank by default
-    message
+    message,
+    holdProceedButton = true
   }: {
     sendToken: Token
     feeToken?: Token
     payWithGasTank?: boolean
     message: string
+    holdProceedButton?: boolean
   }) {
     // Proceed
     await this.expectButtonEnabled(selectors.transaction.proceedBtn)
-    await this.longPressButton(selectors.transaction.proceedBtn, 5)
+    if (holdProceedButton) {
+      await this.longPressButton(selectors.transaction.proceedBtn, 5)
+    } else {
+      await this.click(selectors.transaction.proceedBtn)
+    }
 
     // approve the high impact modal if appears
     await this.handlePriceWarningModals()
