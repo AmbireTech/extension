@@ -12,6 +12,7 @@ import ScrollableWrapper from '@common/components/ScrollableWrapper'
 import Select from '@common/components/Select'
 import Text from '@common/components/Text'
 import Tooltip from '@common/components/Tooltip'
+import { isMobile, isWeb } from '@common/config/env'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import HardwareWalletSigningModal from '@common/modules/hardware-wallets/components/HardwareWalletSigningModal'
@@ -19,6 +20,7 @@ import Info from '@common/modules/sign-message/components/Info'
 import spacings, { SPACING, SPACING_LG, SPACING_MD, SPACING_SM } from '@common/styles/spacings'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
+import { MobileLayoutWrapperMainContent } from '@mobile/components/MobileLayoutWrapper'
 import { TabLayoutWrapperMainContent } from '@web/components/TabLayoutWrapper'
 import useResponsiveActionWindow from '@web/hooks/useResponsiveActionWindow'
 import LedgerConnectModal from '@web/modules/hardware-wallet/components/LedgerConnectModal'
@@ -65,8 +67,9 @@ const Value = ({
   return (
     <Text
       appearance="secondaryText"
-      fontSize={14 * responsiveSizeMultiplier}
+      fontSize={isMobile ? 12 : 14 * responsiveSizeMultiplier}
       dataSet={{ tooltipId }}
+      numberOfLines={1}
     >
       {children}
     </Text>
@@ -83,9 +86,9 @@ const Row = ({
   return (
     <View
       style={[
-        flexbox.directionRow,
-        flexbox.justifySpaceBetween,
-        flexbox.alignCenter,
+        isWeb && flexbox.directionRow,
+        isWeb && flexbox.justifySpaceBetween,
+        isWeb && flexbox.alignCenter,
         {
           marginBottom: SPACING_SM * responsiveSizeMultiplier
         }
@@ -94,6 +97,16 @@ const Row = ({
       {children}
     </View>
   )
+}
+
+const Container = ({ children }: { children: React.ReactNode }) => {
+  if (isMobile)
+    return (
+      <MobileLayoutWrapperMainContent contentContainerStyle={spacings.ph0}>
+        {children}
+      </MobileLayoutWrapperMainContent>
+    )
+  return <TabLayoutWrapperMainContent style={spacings.mbLg}>{children}</TabLayoutWrapperMainContent>
 }
 
 const SignInWithEthereum = ({
@@ -209,7 +222,7 @@ const SignInWithEthereum = ({
   )
 
   return (
-    <TabLayoutWrapperMainContent>
+    <Container>
       <View
         style={[
           flexbox.directionRow,
@@ -221,7 +234,11 @@ const SignInWithEthereum = ({
         ]}
       >
         <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-          <Text weight="medium" fontSize={24 * responsiveSizeMultiplier} style={spacings.mrSm}>
+          <Text
+            weight="medium"
+            fontSize={isMobile ? 20 : 24 * responsiveSizeMultiplier}
+            style={spacings.mrSm}
+          >
             {t('Sign-in request')}
           </Text>
         </View>
@@ -240,12 +257,7 @@ const SignInWithEthereum = ({
         >
           <Info />
         </View>
-        <View
-          style={{
-            flexGrow: 0,
-            flexShrink: 1
-          }}
-        >
+        <View style={isMobile ? { flex: 1 } : { flexGrow: 0, flexShrink: 1 }}>
           <ScrollableWrapper
             style={{
               backgroundColor: theme.secondaryBackground,
@@ -271,7 +283,7 @@ const SignInWithEthereum = ({
               <Row responsiveSizeMultiplier={responsiveSizeMultiplier} key={row.label}>
                 <Label responsiveSizeMultiplier={responsiveSizeMultiplier}>{t(row.label)}</Label>
                 {row.label === 'Resources' && Array.isArray(row.value) && (
-                  <View style={flexbox.alignEnd}>
+                  <View style={isWeb && flexbox.alignEnd}>
                     {row.value.map((resource: string) => (
                       <Value responsiveSizeMultiplier={responsiveSizeMultiplier} key={resource}>
                         {resource}
@@ -337,6 +349,7 @@ const SignInWithEthereum = ({
                 )}
                 selectStyle={{ backgroundColor: theme.secondaryBackground }}
                 withSearch={false}
+                bottomSheetTitle="Auto-login period"
                 disabled={!isAutoLoginEnabledByUser}
               />
             </View>
@@ -387,7 +400,7 @@ const SignInWithEthereum = ({
             />
           )}
       </View>
-    </TabLayoutWrapperMainContent>
+    </Container>
   )
 }
 
