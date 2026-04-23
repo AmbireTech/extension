@@ -21,14 +21,14 @@ import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
-import spacings from '@common/styles/spacings'
-import flexbox from '@common/styles/utils/flexbox'
 import {
   getTokenEligibility,
   getTokenFromPortfolio,
   getTokenFromTemporaryTokens,
   handleTokenIsInPortfolio
-} from '@web/modules/action-requests/screens/WatchTokenRequestScreen/utils'
+} from '@common/modules/action-requests/utils'
+import spacings from '@common/styles/spacings'
+import flexbox from '@common/styles/utils/flexbox'
 
 type NetworkOption = {
   value: string

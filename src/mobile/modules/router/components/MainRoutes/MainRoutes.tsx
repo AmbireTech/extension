@@ -9,6 +9,7 @@ import AccountPickerScreen from '@mobile/modules/account-picker/screens/AccountP
 import AccountSelectScreen from '@mobile/modules/account-select/screens/AccountSelectScreen'
 import AddOrUpdateNetworkScreen from '@mobile/modules/action-requests/screens/AddOrUpdateNetworkScreen'
 import BenzinScreen from '@mobile/modules/action-requests/screens/BenzinScreen'
+import WatchTokenRequestScreen from '@mobile/modules/action-requests/screens/WatchTokenRequestScreen'
 import CreateSeedPhrasePrepareScreen from '@mobile/modules/auth/screens/CreateSeedPhrasePrepareScreen'
 import CreateSeedPhraseWriteScreen from '@mobile/modules/auth/screens/CreateSeedPhraseWriteScreen'
 import GetStartedScreen from '@mobile/modules/auth/screens/GetStartedScreen'
@@ -76,6 +77,7 @@ const MainRoutes = () => {
           <Route path={ROUTES.apps} element={<DappCatalogScreen />} />
           <Route path={ROUTES.dappWebView} element={<DappWebViewScreen />} />
           <Route path={ROUTES.addChain} element={<AddOrUpdateNetworkScreen />} />
+          <Route path={ROUTES.watchAsset} element={<WatchTokenRequestScreen />} />
         </Route>
       </Route>
       {/* Fallback route to suppress "No routes matched location" warnings when multiple Routes blocks are rendered */}

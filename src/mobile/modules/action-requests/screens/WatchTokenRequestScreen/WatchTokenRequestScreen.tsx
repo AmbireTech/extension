@@ -12,6 +12,7 @@ import NetworkBadge from '@common/components/NetworkBadge'
 import Spinner from '@common/components/Spinner'
 import Text from '@common/components/Text'
 import TokenIcon from '@common/components/TokenIcon'
+import { isMobile } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
@@ -27,7 +28,7 @@ import getAndFormatTokenDetails from '@common/modules/dashboard/helpers/getToken
 import { HeaderWithLogoOnly } from '@common/modules/header/components/Header/Header'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import { TabLayoutContainer } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
+import { MobileLayoutContainer } from '@mobile/components/MobileLayoutWrapper'
 
 import getStyles from './styles'
 
@@ -41,7 +42,7 @@ export type TokenData = {
 
 const WatchTokenRequestScreen = () => {
   const { t } = useTranslation()
-  const { theme, styles, themeType } = useTheme(getStyles)
+  const { theme, styles } = useTheme(getStyles)
   const {
     state: { currentUserRequest },
     dispatch: requestsDispatch
@@ -288,9 +289,8 @@ const WatchTokenRequestScreen = () => {
   }
 
   return (
-    <TabLayoutContainer
-      width="full"
-      header={<HeaderWithLogoOnly />}
+    <MobileLayoutContainer
+      header={isMobile ? undefined : <HeaderWithLogoOnly />}
       renderDirectChildren={() => (
         <ActionFooter
           onReject={handleCancel}
@@ -308,7 +308,7 @@ const WatchTokenRequestScreen = () => {
         />
       )}
     >
-      <View style={[styles.container]}>
+      <View style={styles.container}>
         <View style={styles.content}>
           <View style={styles.contentHeader}>
             <Text weight="medium" fontSize={20} style={spacings.mbLg} numberOfLines={1}>
@@ -341,7 +341,7 @@ const WatchTokenRequestScreen = () => {
               withIcon={false}
             />
             {temporaryToken?.priceIn?.length ? (
-              <View style={[flexbox.alignEnd, { flex: 0.5 }]}>
+              <View style={[flexbox.alignEnd]}>
                 {tokenData && (
                   <CoingeckoConfirmedBadge
                     text={t('Confirmed')}
@@ -434,7 +434,7 @@ const WatchTokenRequestScreen = () => {
           </View>
         </View>
       </View>
-    </TabLayoutContainer>
+    </MobileLayoutContainer>
   )
 }
 
