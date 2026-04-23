@@ -26,7 +26,7 @@ const COLUMNS_WITH_APY = [
 const DeFiPositionAssets: FC<{
   assets: Position['assets']
   label: string
-  chainId: bigint
+  chainId?: bigint
 }> = ({ assets, label, chainId }) => {
   const shouldDisplayAPY = assets.some((a) => !!a?.additionalData?.APY)
 
