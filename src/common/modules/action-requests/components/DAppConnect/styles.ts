@@ -26,11 +26,18 @@ const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
           ...flexbox.flex1,
           maxWidth: 422
         },
-    content: {
-      ...common.fullWidth,
-      borderRadius: BORDER_RADIUS_PRIMARY,
-      overflow: 'hidden'
-    },
+    content: isMobile
+      ? {
+          marginTop: -21,
+          ...common.fullWidth,
+          overflow: 'hidden',
+          ...flexbox.flex1
+        }
+      : {
+          ...common.fullWidth,
+          borderRadius: BORDER_RADIUS_PRIMARY,
+          overflow: 'hidden'
+        },
     contentHeader: isMobile
       ? {}
       : {
@@ -38,7 +45,8 @@ const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
           ...flexbox.alignCenter
         },
     contentBody: {
-      backgroundColor: theme.secondaryBackground
+      backgroundColor: theme.secondaryBackground,
+      ...(isMobile && flexbox.flex1)
     },
     securityChecksContainer: {
       backgroundColor: theme.primaryBackground,

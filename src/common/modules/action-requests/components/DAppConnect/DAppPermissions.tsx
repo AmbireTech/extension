@@ -6,6 +6,7 @@ import LockIcon from '@common/assets/svg/LockIcon'
 import TransactionsIcon from '@common/assets/svg/TransactionsIcon'
 import VisibilityIcon from '@common/assets/svg/VisibilityIcon'
 import Text, { Props as TextProps } from '@common/components/Text'
+import { isMobile } from '@common/config/env'
 import useTheme from '@common/hooks/useTheme'
 import spacings, { SPACING_SM, SPACING_TY } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
@@ -63,11 +64,20 @@ const DAppPermissionIcon = ({
   )
 }
 
-const DAppPermissionText = ({ children, ...rest }: { children: React.ReactNode } & TextProps) => {
+const DAppPermissionText = ({
+  children,
+  style,
+  ...rest
+}: { children: React.ReactNode } & TextProps) => {
   const { responsiveSizeMultiplier } = useContext(dAppPermissionWrapperContext)
 
   return (
-    <Text appearance="secondaryText" fontSize={responsiveSizeMultiplier * 14} {...rest}>
+    <Text
+      appearance="secondaryText"
+      fontSize={responsiveSizeMultiplier * 14}
+      style={[isMobile && { flexShrink: 1 }, style]}
+      {...rest}
+    >
       {children}
     </Text>
   )
@@ -82,7 +92,8 @@ const DAppPermissions: FC<{
   return (
     <View
       style={{
-        marginBottom: SPACING_TY * responsiveSizeMultiplier
+        marginBottom: SPACING_TY * responsiveSizeMultiplier,
+        flexGrow: 1
       }}
     >
       <Text fontSize={16} weight="medium" numberOfLines={1} style={spacings.mbSm}>

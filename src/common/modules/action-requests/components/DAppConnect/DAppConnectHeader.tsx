@@ -9,10 +9,12 @@ import ManifestFallbackIcon from '@common/assets/svg/ManifestFallbackIcon'
 import WarningFilledIcon from '@common/assets/svg/WarningFilledIcon'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import Text from '@common/components/Text'
+import { isMobile, isWeb } from '@common/config/env'
 import useTheme from '@common/hooks/useTheme'
 import useWindowSize from '@common/hooks/useWindowSize'
 import spacings, { SPACING, SPACING_LG, SPACING_MD, SPACING_TY } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
+import text from '@common/styles/utils/text'
 import ManifestImage from '@web/components/ManifestImage'
 
 import getStyles from './styles'
@@ -38,7 +40,7 @@ const DAppConnectHeader: FC<Props> = ({
   const spacingsStyle = useMemo(() => {
     return {
       paddingHorizontal: SPACING_LG * responsiveSizeMultiplier,
-      paddingTop: SPACING_MD * responsiveSizeMultiplier,
+      paddingTop: isMobile ? SPACING_LG : SPACING_MD * responsiveSizeMultiplier,
       paddingBottom: SPACING_LG * responsiveSizeMultiplier
     }
   }, [responsiveSizeMultiplier])
@@ -62,14 +64,17 @@ const DAppConnectHeader: FC<Props> = ({
         weight="medium"
         fontSize={responsiveSizeMultiplier * 20}
         appearance="secondaryText"
-        style={{
-          marginBottom: SPACING * responsiveSizeMultiplier
-        }}
+        style={[
+          {
+            marginBottom: SPACING * responsiveSizeMultiplier
+          },
+          isMobile && text.center
+        ]}
       >
         {t('Connection request from')}
       </Text>
-      <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-        <View style={spacings.mr}>
+      <View style={[isWeb && flexbox.directionRow, flexbox.alignCenter]}>
+        <View style={[isWeb && spacings.mr, isMobile && spacings.mbTy]}>
           <ManifestImage
             key={icon}
             uri={icon}
@@ -128,16 +133,25 @@ const DAppConnectHeader: FC<Props> = ({
             </View>
           )}
         </View>
-        <View style={flexbox.flex1}>
+        <View style={isWeb ? flexbox.flex1 : { flexGrow: 1 }}>
           <Text
-            style={[!minHeightSize('m') && spacings.mbMi, flexbox.flex1, { lineHeight: 23 }]}
+            style={[
+              isWeb && !minHeightSize('m') && spacings.mbMi,
+              isWeb && flexbox.flex1,
+              { lineHeight: 23 },
+              isMobile && text.center
+            ]}
             fontSize={responsiveSizeMultiplier * 20}
             weight="semiBold"
             numberOfLines={2}
           >
             {name}
           </Text>
-          <Text fontSize={14 * responsiveSizeMultiplier} appearance="secondaryText">
+          <Text
+            fontSize={14 * responsiveSizeMultiplier}
+            appearance="secondaryText"
+            style={isMobile && text.center}
+          >
             {id}
           </Text>
         </View>
