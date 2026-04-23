@@ -1,5 +1,5 @@
 import { formatUnits, ZeroAddress } from 'ethers'
-import React, { useMemo } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import { Pressable, View, ViewStyle } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 
@@ -24,11 +24,10 @@ import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import PendingTokenSummary from '@common/modules/sign-account-op/components/PendingTokenSummary'
-import TransactionSummary, {
-  sizeMultiplier
-} from '@common/modules/sign-account-op/components/TransactionSummary'
+import TransactionSummary, { sizeMultiplier } from '@common/modules/sign-account-op/components/TransactionSummary'
 import spacings, { SPACING_SM } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
+import { checkIfImageExists } from '@common/utils/checkIfImageExists'
 import DelegationHumanization from '@web/components/DelegationHumanization'
 import ManifestImage from '@web/components/ManifestImage'
 
@@ -52,6 +51,7 @@ type DappInteraction = {
 
 const MAX_VISIBLE_DAPP_INTERACTIONS = 2
 const MAX_VISIBLE_BALANCE_CHANGES = 3
+const dappIconAvailabilityCache = new Map<string, boolean>()
 
 const formatBalanceChangeAmount = (change: BalanceChange) => {
   const formattedAmount = formatDecimals(
@@ -83,7 +83,36 @@ const BalanceChangeToken = ({ change }: { change: BalanceChange }) => (
 )
 
 const DappInteractionIcon = ({ interaction }: { interaction: DappInteraction }) => {
-  const fallbackInitial = interaction.name.trim().charAt(0).toUpperCase() || '?'
+  const [hasIcon, setHasIcon] = useState<boolean | null>(
+    interaction.iconUrl ? (dappIconAvailabilityCache.get(interaction.iconUrl) ?? null) : false
+  )
+
+  useEffect(() => {
+    if (!interaction.iconUrl) {
+      setHasIcon(false)
+      return
+    }
+
+    const cachedAvailability = dappIconAvailabilityCache.get(interaction.iconUrl)
+    if (cachedAvailability !== undefined) {
+      setHasIcon(cachedAvailability)
+      return
+    }
+
+    let isMounted = true
+
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises
+    ;(async () => {
+      const iconExists = !!interaction.iconUrl && (await checkIfImageExists(interaction.iconUrl))
+      dappIconAvailabilityCache.set(interaction.iconUrl!, iconExists)
+
+      if (isMounted) setHasIcon(iconExists)
+    })()
+
+    return () => {
+      isMounted = false
+    }
+  }, [interaction.iconUrl])
 
   if (interaction.iconType === 'ambire') {
     return (
@@ -93,31 +122,19 @@ const DappInteractionIcon = ({ interaction }: { interaction: DappInteraction }) 
     )
   }
 
+  if (!interaction.iconUrl || !hasIcon) return null
+
   return (
     <ManifestImage
-      uri={interaction.iconUrl || ''}
+      uri={interaction.iconUrl}
       size={20}
       isRound
-      fallback={() => (
-        <View style={stylesForIcons.fallbackIcon}>
-          <Text fontSize={11} weight="medium" appearance="secondaryText">
-            {fallbackInitial}
-          </Text>
-        </View>
-      )}
       imageStyle={stylesForIcons.manifestImage}
     />
   )
 }
 
 const stylesForIcons = {
-  fallbackIcon: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center'
-  },
   manifestImage: {
     backgroundColor: 'transparent'
   },
@@ -295,14 +312,7 @@ const SubmittedTransactionSummaryDetails = ({
   )
 
   return (
-    <View
-      style={[
-        styles.container,
-        {
-          paddingTop: SPACING_SM * sizeMultiplier[size]
-        }
-      ]}
-    >
+    <View style={[styles.container, spacings.ptXl]}>
       <SubmittedTransactionHeader
         submittedAccountOp={submittedAccountOp}
         network={network}
@@ -365,10 +375,10 @@ const SubmittedTransactionSummaryInner = ({
   defaultType
 }: Props) => {
   const { styles } = useTheme(getStyles)
-  const { t } = useTranslation()
   const { dispatch: activityDispatch } = useController('ActivityController')
   const { networks } = useController('NetworksController').state
   const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useModalize()
+  const { theme } = useTheme()
 
   const network: Network | undefined = useMemo(
     () => networks.find((n) => n.chainId === submittedAccountOp.chainId),
@@ -512,7 +522,13 @@ const SubmittedTransactionSummaryInner = ({
         sheetRef={sheetRef}
         closeBottomSheet={closeBottomSheet}
         type="bottom-sheet"
-        style={{ maxWidth: 720, paddingHorizontal: 0, overflow: 'hidden' }}
+        style={{
+          maxWidth: 720,
+          paddingVertical: 0,
+          paddingHorizontal: 0,
+          overflow: 'hidden',
+          backgroundColor: theme.secondaryBackground
+        }}
       >
         <SubmittedTransactionSummaryDetails
           submittedAccountOp={submittedAccountOp}

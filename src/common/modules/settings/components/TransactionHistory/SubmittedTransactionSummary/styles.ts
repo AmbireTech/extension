@@ -1,7 +1,7 @@
 import { StyleSheet, ViewStyle } from 'react-native'
 
 import spacings from '@common/styles/spacings'
-import { THEME_TYPES, ThemeProps, ThemeType } from '@common/styles/themeConfig'
+import { ThemeProps } from '@common/styles/themeConfig'
 import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 
@@ -22,13 +22,12 @@ interface Style {
   modalSimulationBody: ViewStyle
 }
 
-const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
+const getStyles = (theme: ThemeProps) =>
   StyleSheet.create<Style>({
     container: {
       ...common.borderRadiusPrimary,
-      borderWidth: themeType === THEME_TYPES.DARK ? 0 : 1,
-      borderColor: theme.secondaryBorder,
-      backgroundColor: theme.secondaryBackground
+      backgroundColor: theme.secondaryBackground,
+      borderColor: theme.secondaryBackground
     },
     header: {
       ...flexbox.directionRow,
