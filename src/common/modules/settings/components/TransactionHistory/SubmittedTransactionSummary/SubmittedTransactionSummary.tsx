@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-floating-promises */
 import { formatUnits, ZeroAddress } from 'ethers'
 import React, { useMemo } from 'react'
 import { Pressable, View, ViewStyle } from 'react-native'
@@ -27,9 +26,7 @@ import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import PendingTokenSummary from '@common/modules/sign-account-op/components/PendingTokenSummary'
-import TransactionSummary, {
-  sizeMultiplier
-} from '@common/modules/sign-account-op/components/TransactionSummary'
+import TransactionSummary, { sizeMultiplier } from '@common/modules/sign-account-op/components/TransactionSummary'
 import spacings, { SPACING_SM } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import DelegationHumanization from '@web/components/DelegationHumanization'
@@ -355,6 +352,7 @@ const SubmittedTransactionSummaryInner = ({
 }: Props) => {
   const { styles } = useTheme(getStyles)
   const { t } = useTranslation()
+  const { dispatch: activityDispatch } = useController('ActivityController')
   const { networks } = useController('NetworksController').state
   const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useModalize()
 
@@ -373,11 +371,29 @@ const SubmittedTransactionSummaryInner = ({
     [submittedAccountOp]
   )
 
+  const handleOpenDetails = () => {
+    // note: it's really important to check for 'undefined' here
+    // as balanceChanges could just be an empty array - we don't
+    // want to rescan each time if that is the case. We want to
+    // scan only old txn that do not have this data
+    if (typeof submittedAccountOp.balanceChanges === 'undefined') {
+      activityDispatch({
+        type: 'method',
+        params: {
+          method: 'backfillAccountOpBalanceChanges',
+          args: [submittedAccountOp]
+        }
+      })
+    }
+
+    openBottomSheet()
+  }
+
   if (!network) return null
 
   return (
     <>
-      <Pressable onPress={openBottomSheet}>
+      <Pressable onPress={handleOpenDetails}>
         <View
           style={[
             styles.container,
