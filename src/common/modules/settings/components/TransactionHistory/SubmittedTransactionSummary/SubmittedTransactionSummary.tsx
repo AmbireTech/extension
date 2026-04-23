@@ -15,6 +15,7 @@ import { humanizeAccountOp } from '@ambire-common/libs/humanizer'
 import { IrCall } from '@ambire-common/libs/humanizer/interfaces'
 import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
 import AmbireLogo from '@common/assets/svg/AmbireLogo'
+import GasTankIcon from '@common/assets/svg/GasTankIcon'
 import BottomSheet from '@common/components/BottomSheet'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import NetworkIcon from '@common/components/NetworkIcon'
@@ -25,9 +26,7 @@ import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import PendingTokenSummary from '@common/modules/sign-account-op/components/PendingTokenSummary'
-import TransactionSummary, {
-  sizeMultiplier
-} from '@common/modules/sign-account-op/components/TransactionSummary'
+import TransactionSummary, { sizeMultiplier } from '@common/modules/sign-account-op/components/TransactionSummary'
 import spacings, { SPACING_SM } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { checkIfImageExists } from '@common/utils/checkIfImageExists'
@@ -52,11 +51,15 @@ type DappInteraction = {
   iconType?: 'ambire'
 }
 
+type DisplayBalanceChange = BalanceChange & {
+  iconType?: 'gasTank'
+}
+
 const MAX_VISIBLE_DAPP_INTERACTIONS = 2
 const MAX_VISIBLE_BALANCE_CHANGES = 3
 const dappIconAvailabilityCache = new Map<string, boolean>()
 
-const formatBalanceChangeAmount = (change: BalanceChange) => {
+const formatBalanceChangeAmount = (change: DisplayBalanceChange) => {
   const formattedAmount = formatDecimals(
     parseFloat(
       formatUnits(
@@ -70,29 +73,39 @@ const formatBalanceChangeAmount = (change: BalanceChange) => {
   return `${change.balanceChange < 0n ? '-' : '+'}${formattedAmount}`
 }
 
-const getFullBalanceChangeAmount = (change: BalanceChange) =>
+const getFullBalanceChangeAmount = (change: DisplayBalanceChange) =>
   formatUnits(
     change.balanceChange < 0n ? -change.balanceChange : change.balanceChange,
     change.decimals
   )
 
-const getBalanceChangeTooltipId = (change: BalanceChange) =>
+const getBalanceChangeTooltipId = (change: DisplayBalanceChange) =>
   `balance-change-${change.chainId}-${change.address}-${change.balanceChange.toString()}`
 
-const BalanceChangeToken = ({ change }: { change: BalanceChange }) => (
-  <View style={spacings.mlMi}>
-    <TokenIcon
-      width={14}
-      height={14}
-      withContainer
-      containerHeight={16}
-      containerWidth={16}
-      withNetworkIcon={false}
-      address={change.address}
-      chainId={change.chainId}
-    />
-  </View>
-)
+const BalanceChangeToken = ({ change }: { change: DisplayBalanceChange }) => {
+  if (change.iconType === 'gasTank') {
+    return (
+      <View style={spacings.mlTy}>
+        <GasTankIcon width={13} height={13} />
+      </View>
+    )
+  }
+
+  return (
+    <View style={spacings.mlMi}>
+      <TokenIcon
+        width={14}
+        height={14}
+        withContainer
+        containerHeight={16}
+        containerWidth={16}
+        withNetworkIcon={false}
+        address={change.address}
+        chainId={change.chainId}
+      />
+    </View>
+  )
+}
 
 const DappInteractionIcon = ({ interaction }: { interaction: DappInteraction }) => {
   const [hasIcon, setHasIcon] = useState<boolean | null>(
@@ -180,6 +193,61 @@ const getOrderedBalanceChanges = (submittedAccountOp: SubmittedAccountOp) => {
   )
 
   return [...positiveChanges, ...nonNativeNegativeChanges, ...nativeNegativeChanges]
+}
+
+const getSyntheticGasTankBalanceChange = (
+  submittedAccountOp: SubmittedAccountOp
+): DisplayBalanceChange | null => {
+  const gasFeePayment = submittedAccountOp.gasFeePayment
+
+  if (!gasFeePayment?.isGasTank || gasFeePayment.amount <= 0n) return null
+
+  return {
+    symbol: 'USD',
+    name: 'USD',
+    decimals: 6,
+    address: 'gas-tank',
+    chainId: gasFeePayment.feeTokenChainId || submittedAccountOp.chainId,
+    priceIn: [],
+    marketDataIn: [],
+    flags: {
+      onGasTank: true,
+      rewardsType: null,
+      canTopUpGasTank: false,
+      isFeeToken: true
+    },
+    amount: 0n,
+    amountBefore: 0n,
+    amountAfter: 0n,
+    balanceChange: -gasFeePayment.amount,
+    iconType: 'gasTank'
+  }
+}
+
+const getSummaryBalanceChanges = (
+  submittedAccountOp: SubmittedAccountOp
+): DisplayBalanceChange[] => {
+  const balanceChanges = getOrderedBalanceChanges(submittedAccountOp)
+  const syntheticGasTankBalanceChange = getSyntheticGasTankBalanceChange(submittedAccountOp)
+
+  return syntheticGasTankBalanceChange
+    ? [...balanceChanges, syntheticGasTankBalanceChange]
+    : balanceChanges
+}
+
+const getVisibleSummaryBalanceChanges = (balanceChanges: DisplayBalanceChange[]) => {
+  const gasTankBalanceChange = balanceChanges.find((change) => change.iconType === 'gasTank')
+
+  if (!gasTankBalanceChange || balanceChanges.length <= MAX_VISIBLE_BALANCE_CHANGES) {
+    return balanceChanges.slice(0, MAX_VISIBLE_BALANCE_CHANGES)
+  }
+
+  return [
+    ...balanceChanges
+      .filter((change) => change.iconType !== 'gasTank')
+      .slice(0, MAX_VISIBLE_BALANCE_CHANGES - 1),
+    gasTankBalanceChange
+  ]
 }
 
 const getHumanizedCalls = (submittedAccountOp: SubmittedAccountOp): IrCall[] =>
@@ -324,7 +392,7 @@ const SubmittedTransactionSummaryDetails = ({
   )
 
   return (
-    <View style={[styles.container, spacings.ptXl]}>
+    <View style={[spacings.ptXl]}>
       <SubmittedTransactionHeader
         submittedAccountOp={submittedAccountOp}
         network={network}
@@ -397,11 +465,11 @@ const SubmittedTransactionSummaryInner = ({
     [networks, submittedAccountOp.chainId]
   )
   const orderedBalanceChanges = useMemo(
-    () => getOrderedBalanceChanges(submittedAccountOp),
+    () => getSummaryBalanceChanges(submittedAccountOp),
     [submittedAccountOp]
   )
   const visibleBalanceChanges = useMemo(
-    () => orderedBalanceChanges.slice(0, MAX_VISIBLE_BALANCE_CHANGES),
+    () => getVisibleSummaryBalanceChanges(orderedBalanceChanges),
     [orderedBalanceChanges]
   )
   const hiddenBalanceChangesCount = Math.max(
@@ -544,8 +612,7 @@ const SubmittedTransactionSummaryInner = ({
           maxWidth: 720,
           paddingVertical: 0,
           paddingHorizontal: 0,
-          overflow: 'hidden',
-          backgroundColor: theme.secondaryBackground
+          overflow: 'hidden'
         }}
       >
         <SubmittedTransactionSummaryDetails
