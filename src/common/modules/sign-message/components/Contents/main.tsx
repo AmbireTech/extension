@@ -139,8 +139,8 @@ const Main = ({
         {/* @TODO: Replace with Badge; add size prop to badge; add tooltip  */}
       </View>
       {isMobile && (
-        <View style={[flexbox.alignEnd, { height: 24, marginBottom: -24 }]}>
-          <View style={styles.kindOfMessage}>
+        <View style={[flexbox.alignStart, { height: 24, marginBottom: -24 }]}>
+          <View style={[styles.kindOfMessage, { transform: [{ translateY: -18 }] }]}>
             <Text fontSize={12} color={theme.infoText} numberOfLines={1}>
               {signMessageState.messageToSign?.content.kind === 'typedMessage' && t('EIP-712')}
               {signMessageState.messageToSign?.content.kind === 'message' && t('Standard')}
