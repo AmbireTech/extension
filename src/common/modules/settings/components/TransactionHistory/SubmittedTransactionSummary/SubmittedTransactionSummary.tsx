@@ -514,7 +514,6 @@ const SubmittedTransactionSummaryDetails = ({
           </View>
         </Step>
         <Step
-          title="Confirmed"
           stepName="finalized"
           activeStep="finalized"
           testID="activity-confirmed-step"
@@ -523,23 +522,28 @@ const SubmittedTransactionSummaryDetails = ({
           <View
             style={[
               flexbox.directionRow,
-              flexbox.justifyEnd,
+              flexbox.justifySpaceBetween,
               flexbox.alignCenter,
               flexbox.wrap,
               spacings.mbSm
             ]}
           >
-            <Text fontSize={14} appearance="secondaryText">
-              {submittedDate}
+            <Text appearance="successText" fontSize={16} weight="medium">
+              Confirmed
             </Text>
-            <Text fontSize={14} appearance="secondaryText" style={spacings.mlTy}>
-              on {network.name}
-            </Text>
-            <NetworkIcon
-              id={submittedAccountOp.chainId.toString()}
-              size={20}
-              style={spacings.mlMi}
-            />
+            <View style={[flexbox.directionRow, flexbox.alignCenter, flexbox.wrap]}>
+              <Text fontSize={14} appearance="secondaryText">
+                {submittedDate}
+              </Text>
+              <Text fontSize={14} appearance="secondaryText" style={spacings.mlTy}>
+                on {network.name}
+              </Text>
+              <NetworkIcon
+                id={submittedAccountOp.chainId.toString()}
+                size={20}
+                style={spacings.mlMi}
+              />
+            </View>
           </View>
         </Step>
       </View>
