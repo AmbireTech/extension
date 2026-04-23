@@ -7,6 +7,7 @@ import { ROUTES } from '@common/modules/router/constants/common'
 import AccountPersonalizeScreen from '@mobile/modules/account-personalize/screens/AccountPersonalizeScreen'
 import AccountPickerScreen from '@mobile/modules/account-picker/screens/AccountPickerScreen'
 import AccountSelectScreen from '@mobile/modules/account-select/screens/AccountSelectScreen'
+import AddOrUpdateNetworkScreen from '@mobile/modules/action-requests/screens/AddOrUpdateNetworkScreen'
 import BenzinScreen from '@mobile/modules/action-requests/screens/BenzinScreen'
 import CreateSeedPhrasePrepareScreen from '@mobile/modules/auth/screens/CreateSeedPhrasePrepareScreen'
 import CreateSeedPhraseWriteScreen from '@mobile/modules/auth/screens/CreateSeedPhraseWriteScreen'
@@ -74,6 +75,7 @@ const MainRoutes = () => {
           <Route path={ROUTES.settingsTerms} element={<TermsSettingsScreen />} />
           <Route path={ROUTES.apps} element={<DappCatalogScreen />} />
           <Route path={ROUTES.dappWebView} element={<DappWebViewScreen />} />
+          <Route path={ROUTES.addChain} element={<AddOrUpdateNetworkScreen />} />
         </Route>
       </Route>
       {/* Fallback route to suppress "No routes matched location" warnings when multiple Routes blocks are rendered */}
