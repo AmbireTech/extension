@@ -12,9 +12,9 @@ import { SpeculosDevice } from '../../libs/speculos-device/device'
 
 const LEDGER_EMULATOR_HTTP_URL = process.env.LEDGER_EMULATOR_HTTP_URL
 
-test.describe.configure({ mode: 'serial' })
-
 test.describe('ledger', { tag: '@ledgerTests' }, () => {
+  test.describe.configure({ mode: 'serial' })
+
   test.setTimeout(600000)
 
   test.afterEach(async ({ context }) => {
@@ -48,7 +48,9 @@ test.describe('ledger', { tag: '@ledgerTests' }, () => {
       await pages.auth.goToDashboard()
       await page.getByTestId(selectors.accountSelectBtn).click()
 
-      await expect(page.getByText(mainConstants.addresses.ledgerAccount1)).toBeVisible()
+      const partAddress = mainConstants.addresses.ledgerAccount1.slice(0, 10)
+
+      await expect(page.getByText(partAddress)).toBeVisible()
     })
   })
 

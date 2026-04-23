@@ -236,6 +236,7 @@ export class SwapAndBridgePage extends BasePage {
 
         await signButton.click()
 
+        // TODO: check why this is needed
         // First click can occasionally "blink" the Ledger sheet and leave the UI unchanged.
         await page.waitForTimeout(350)
         const shouldRetryClick = await signButton.isVisible().catch(() => false)

@@ -158,8 +158,8 @@ test.describe('trezor', { tag: '@trezorTests' }, () => {
 
       await page.getByTestId(selectors.accountSelectBtn).click()
 
-      const partAddress1 = '0x3f2329C9'
-      const partAddress2 = '0x4f4F1488'
+      const partAddress1 = mainConstants.addresses.trezorAccount1.slice(0, 10)
+      const partAddress2 = mainConstants.addresses.trezorAccount2.slice(0, 10)
 
       await expect(page.getByText(partAddress1)).toBeVisible()
       await expect(page.getByText(partAddress2)).toBeVisible()
