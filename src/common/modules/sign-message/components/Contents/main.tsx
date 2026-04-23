@@ -211,16 +211,19 @@ const Main = ({
                       color={theme.warningText}
                     />
                   </View>
-                  <Text fontSize={14 * responsiveSizeMultiplier} appearance="warningText">
-                    <Text
-                      fontSize={14 * responsiveSizeMultiplier}
-                      appearance="warningText"
-                      weight="semiBold"
-                    >
-                      {t('Warning: ')}
+                  <View style={{ flex: 1 }}>
+                    <Text fontSize={14 * responsiveSizeMultiplier} appearance="warningText">
+                      <Text
+                        fontSize={14 * responsiveSizeMultiplier}
+                        appearance="warningText"
+                        weight="semiBold"
+                        style={{ flex: 1 }}
+                      >
+                        {t('Warning: ')}
+                      </Text>
+                      {t('Please read the whole message as we are unable to translate it!')}
                     </Text>
-                    {t('Please read the whole message as we are unable to translate it!')}
-                  </Text>
+                  </View>
                 </>
               )
             }
