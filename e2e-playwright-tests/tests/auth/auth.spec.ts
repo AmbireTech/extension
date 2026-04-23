@@ -6,7 +6,12 @@ import { test } from 'fixtures/pageObjects' // your extended test with auth
 import { expect } from '@playwright/test'
 
 import { emulatorOptions } from '../../constants/trezor'
-import { getController, initTrezorConnect, setup } from '../../utils/trezorEmulator'
+import {
+  disposeTrezorConnect,
+  getController,
+  initTrezorConnect,
+  setup
+} from '../../utils/trezorEmulator'
 
 test.describe('auth', { tag: '@auth' }, () => {
   test.setTimeout(60000)
@@ -74,38 +79,33 @@ test.describe('auth', { tag: '@auth' }, () => {
   })
 })
 
-test.describe('trezor', () => {
+test.describe('trezor', { tag: '@trezorTests' }, () => {
+  test.describe.configure({ mode: 'serial' })
   const controller = getController()
 
-  test.beforeAll(async () => {
+  test.beforeEach(async ({ pages }) => {
     await setup(controller, emulatorOptions)
     await initTrezorConnect(controller)
-  })
-
-  test.beforeEach(async ({ pages }) => {
     await pages.initWithoutStorage()
   })
 
   test.afterEach(async ({ context }) => {
-    await context.close()
-  })
-
-  test.afterAll(async () => {
     // Cleanup emulator and dispose of resources
     try {
-      // Skip cleanup if WS is disconnected
-      if (!controller.ws || controller.ws.readyState !== WebSocket.OPEN) {
-        console.warn('TrezorUserEnvLink WS already disconnected. Skipping cleanup.')
-        return
+      if (controller.ws && controller.ws.readyState === WebSocket.OPEN) {
+        await controller.api.wipeEmu()
+        await controller.api.stopBridge()
+        await controller.api.stopEmu()
+      } else {
+        console.warn('TrezorUserEnvLink WS already disconnected. Skipping emulator cleanup.')
       }
-
-      await controller.api.wipeEmu()
-      await controller.api.stopBridge()
-      await controller.api.stopEmu()
-      controller.dispose()
     } catch (error) {
       console.error('Error during cleanup:', error)
+    } finally {
+      disposeTrezorConnect()
+      controller.dispose()
     }
+    await context.close()
   })
 
   test('should successfully authenticate using Trezor and import existing accounts', async ({
@@ -156,10 +156,37 @@ test.describe('trezor', () => {
     await test.step('make sure accounts are imported', async () => {
       await pages.auth.goToDashboard()
 
-      await page.getByTestId(selectors.accountSelectBtn).click()
+      // For some reason, the account select button is not visible in some of the runs,
+      // so we add a small wait to give the button a chance to be visible,
+      // and log a diagnostic error if the button is not clickable in order to debug the issue.
+      await page.waitForTimeout(3000)
+      const accountSelectBtn = page.getByTestId(selectors.accountSelectBtn)
 
-      const partAddress1 = '0x3f2329C9'
-      const partAddress2 = '0x4f4F1488'
+      const debugInfo = {
+        testId: selectors.accountSelectBtn,
+        currentUrl: page.url(),
+        count: await accountSelectBtn.count(),
+        isVisible: await accountSelectBtn.isVisible().catch(() => false),
+        isEnabled: await accountSelectBtn.isEnabled().catch(() => false),
+        viewport: page.viewportSize()
+      }
+
+      try {
+        await accountSelectBtn.click()
+      } catch (error) {
+        const htmlOutput = (await page.content()).slice(0, 10000)
+        console.error('Failed to find/click account selector button', {
+          ...debugInfo,
+          postClickVisible: await accountSelectBtn.isVisible().catch(() => false),
+          postClickEnabled: await accountSelectBtn.isEnabled().catch(() => false),
+          htmlOutput
+        })
+
+        throw error
+      }
+
+      const partAddress1 = mainConstants.addresses.trezorAccount1.slice(0, 10)
+      const partAddress2 = mainConstants.addresses.trezorAccount2.slice(0, 10)
 
       await expect(page.getByText(partAddress1)).toBeVisible()
       await expect(page.getByText(partAddress2)).toBeVisible()

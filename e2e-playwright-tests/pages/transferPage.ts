@@ -1,6 +1,7 @@
 import { baParams } from 'constants/env'
 import selectors from 'constants/selectors'
 import Token from 'interfaces/token'
+import { SpeculosDevice } from 'libs/speculos-device/device'
 
 import { expect, Page } from '@playwright/test'
 
@@ -108,12 +109,14 @@ export class TransferPage extends BasePage {
     feeToken,
     payWithGasTank = true, // pay with gas tank by default
     message,
+    ledgerSimulatorControls,
     holdProceedButton = true
   }: {
     sendToken: Token
     feeToken?: Token
     payWithGasTank?: boolean
     message: string
+    ledgerSimulatorControls?: SpeculosDevice
     holdProceedButton?: boolean
   }) {
     // Proceed
@@ -153,6 +156,13 @@ export class TransferPage extends BasePage {
       // Sign & Broadcast
       await this.expectButtonEnabled(selectors.signButton)
       await this.click(selectors.signButton)
+
+      if (ledgerSimulatorControls && !payWithGasTank) {
+        await ledgerSimulatorControls.signTransaction()
+      } else if (ledgerSimulatorControls && payWithGasTank) {
+        await ledgerSimulatorControls.signSmartAccountTransaction()
+      }
+
       await this.isVisible(selectors.transaction.confirmingYourTransactionText)
       // Validate requests
       const { rpc } = this.getCategorizedRequests()

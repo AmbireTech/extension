@@ -418,9 +418,9 @@ const SubmittedTransactionSummaryDetails = ({
           testID="activity-transaction-details-step"
         >
           {!isDelegationTxn &&
-            humanizedCalls.map((call: IrCall) => (
+            humanizedCalls.map((call: IrCall, i) => (
               <TransactionSummary
-                key={call.id}
+                key={`${submittedAccountOp.id}-${i}-${call.txnId}-${call.id}`}
                 style={{ marginBottom: SPACING_SM * sizeMultiplier[size] }}
                 call={call}
                 chainId={submittedAccountOp.chainId}
@@ -753,12 +753,14 @@ const SubmittedTransactionSummary = ({
   const accountOpDividedIntoMultipleIfNeeded = isIdentifiedByMultipleTxn(
     submittedAccountOp.identifiedBy
   )
-    ? submittedAccountOp.calls.reverse().map((call) => {
+    ? submittedAccountOp.calls.reverse().map((call, i) => {
         return {
           ...submittedAccountOp,
           txnId: call.txnId,
           status: call.status,
           calls: [call],
+          id: `${submittedAccountOp.id}-${i}-${call.txnId}-${call.id}`,
+          // if the call has a fee set, use it
           gasFeePayment: submittedAccountOp.gasFeePayment
             ? {
                 ...submittedAccountOp.gasFeePayment,
@@ -778,7 +780,7 @@ const SubmittedTransactionSummary = ({
     <>
       {accountOpDividedIntoMultipleIfNeeded.map((op) => (
         <SubmittedTransactionSummaryInner
-          key={op.txnId}
+          key={op.id || op.txnId}
           submittedAccountOp={op}
           size={size}
           style={style}
