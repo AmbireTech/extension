@@ -13,6 +13,7 @@ export interface BiometricsContextReturnType {
   authenticate: () => Promise<boolean>
   saveBiometricsSecret: () => Promise<string | null>
   getBiometricsSecret: () => Promise<string | null>
+  removeBiometricsSecret: () => Promise<void>
 }
 
 export const biometricsContextDefaults: BiometricsContextReturnType = {
@@ -24,5 +25,6 @@ export const biometricsContextDefaults: BiometricsContextReturnType = {
   isEnrolled: false,
   authenticate: () => Promise.resolve(false),
   saveBiometricsSecret: () => Promise.resolve(null),
-  getBiometricsSecret: () => Promise.resolve(null)
+  getBiometricsSecret: () => Promise.resolve(null),
+  removeBiometricsSecret: () => Promise.resolve()
 }

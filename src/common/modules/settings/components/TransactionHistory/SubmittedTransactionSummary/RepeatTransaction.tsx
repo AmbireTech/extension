@@ -1,14 +1,11 @@
 import React, { FC, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
-import { TouchableOpacity } from 'react-native'
 
 import { SubmittedAccountOp } from '@ambire-common/libs/accountOp/submittedAccountOp'
 import RefreshIcon from '@common/assets/svg/RefreshIcon'
-import Text from '@common/components/Text'
 import useController from '@common/hooks/useController'
-import useTheme from '@common/hooks/useTheme'
-import spacings from '@common/styles/spacings'
-import flexbox from '@common/styles/utils/flexbox'
+
+import FooterActionLink from './FooterActionLink'
 
 type Props = {
   accountAddr: string
@@ -28,7 +25,6 @@ const RepeatTransaction: FC<Props> = ({
   iconSize
 }) => {
   const { t } = useTranslation()
-  const { theme } = useTheme()
   const { dispatch: requestsDispatch } = useController('RequestsController')
 
   const handleRepeatTransaction = useCallback(() => {
@@ -54,15 +50,13 @@ const RepeatTransaction: FC<Props> = ({
   }, [rawCalls, chainId, accountAddr, requestsDispatch])
 
   return (
-    <TouchableOpacity
-      style={[flexbox.directionRow, flexbox.alignCenter]}
+    <FooterActionLink
+      label={text || t('Repeat Transaction')}
       onPress={handleRepeatTransaction}
-    >
-      <Text fontSize={textSize} appearance="secondaryText" weight="medium" style={spacings.mrMi}>
-        {text || t('Repeat Transaction')}
-      </Text>
-      <RefreshIcon width={iconSize} height={iconSize} color={theme.iconPrimary} strokeWidth={2} />
-    </TouchableOpacity>
+      textSize={textSize}
+      iconSize={iconSize}
+      Icon={RefreshIcon}
+    />
   )
 }
 

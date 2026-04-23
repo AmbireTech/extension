@@ -22,15 +22,21 @@ import spacings, { SPACING_XL } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
 import EmailConfirmation from '@web/modules/keystore/components/EmailConfirmation'
+import BottomSheetPasswordConfirmation from '@web/modules/settings/components/BottomSheetPasswordConfirmation'
 import { SettingsRoutesContext } from '@web/modules/settings/contexts/SettingsRoutesContext'
 
 const DevicePasswordRecoverySettingsScreen = () => {
   const { state: ev, dispatch: evDispatch } = useController('EmailVaultController')
-  const keystoreState = useController('KeystoreController').state
+  const { state: keystoreState, dispatch: keystoreDispatch } = useController('KeystoreController')
   const { t } = useTranslation()
   const { setCurrentSettingsPage } = useContext(SettingsRoutesContext)
   const { navigate } = useNavigation()
   const { theme } = useTheme()
+  const {
+    ref: passwordConfirmationModalRef,
+    open: openPasswordConfirmationModal,
+    close: closePasswordConfirmationModal
+  } = useModalize()
   const {
     ref: confirmationModalRef,
     open: openConfirmationModal,
@@ -93,6 +99,29 @@ const DevicePasswordRecoverySettingsScreen = () => {
     })()
   }, [handleSubmit, evDispatch, email])
 
+  const closePasswordConfirmation = useCallback(() => {
+    keystoreDispatch({
+      type: 'method',
+      params: {
+        method: 'resetErrorState',
+        args: []
+      }
+    })
+    closePasswordConfirmationModal()
+  }, [closePasswordConfirmationModal, keystoreDispatch])
+
+  const handleEnablePress = useCallback(() => {
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises
+    handleSubmit(async () => {
+      openPasswordConfirmationModal()
+    })()
+  }, [handleSubmit, openPasswordConfirmationModal])
+
+  const handlePasswordConfirmed = useCallback(() => {
+    closePasswordConfirmation()
+    handleFormSubmit()
+  }, [closePasswordConfirmation, handleFormSubmit])
+
   const handleCancelLoginAttempt = useCallback(() => {
     evDispatch({
       type: 'method',
@@ -150,7 +179,7 @@ const DevicePasswordRecoverySettingsScreen = () => {
               placeholder={t('E-mail')}
               onChangeText={onChange}
               inputWrapperStyle={{ backgroundColor: theme.tertiaryBackground }}
-              onSubmitEditing={handleFormSubmit}
+              onSubmitEditing={handleEnablePress}
               value={value}
               autoFocus={isWeb}
               isValid={isEmail(value)}
@@ -167,7 +196,8 @@ const DevicePasswordRecoverySettingsScreen = () => {
             isSubmitting ||
             !email ||
             ev.hasKeystoreRecovery ||
-            !isValid
+            !isValid ||
+            keystoreState.statuses.unlockWithSecret !== 'INITIAL'
           }
           type="primary"
           text={
@@ -178,7 +208,7 @@ const DevicePasswordRecoverySettingsScreen = () => {
                 ? t('Enabled')
                 : t('Enable')
           }
-          onPress={handleFormSubmit}
+          onPress={handleEnablePress}
         />
         <Alert
           type="info"
@@ -191,6 +221,13 @@ const DevicePasswordRecoverySettingsScreen = () => {
           )}
         />
       </View>
+      <BottomSheetPasswordConfirmation
+        id="device-password-recovery-confirm-password-modal"
+        sheetRef={passwordConfirmationModalRef}
+        closeBottomSheet={closePasswordConfirmation}
+        text={t('Please enter your extension password to enable email recovery.')}
+        onPasswordConfirmed={handlePasswordConfirmed}
+      />
       <BottomSheet id="backup-password-confirmation-modal" sheetRef={confirmationModalRef}>
         <EmailConfirmation email={email} handleCancelLoginAttempt={handleCancelLoginAttempt} />
       </BottomSheet>

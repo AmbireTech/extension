@@ -8,7 +8,6 @@ import { CallsUserRequest } from '@ambire-common/interfaces/userRequest'
 import Alert from '@common/components/Alert'
 import NetworkBadge from '@common/components/NetworkBadge'
 import NoKeysToSignAlert from '@common/components/NoKeysToSignAlert'
-import ScrollableWrapper from '@common/components/ScrollableWrapper'
 import useController from '@common/hooks/useController'
 import useNavigation from '@common/hooks/useNavigation'
 import useSign from '@common/hooks/useSign'
@@ -105,7 +104,15 @@ const SignAccountOpScreen = () => {
     primaryButtonText,
     shouldHoldToProceed,
     disabledReason,
-    showSafeSigners
+    showSafeSigners,
+    shouldDisplayQrSigningModal,
+    handleQrSingingFlowOnContinuePressed,
+    handleQrSigningFlowSubmitSignatureResponse,
+    handleQrSigningFlowOnClosePressed,
+    handleQrSigningFlowOnRejectPressed,
+    handleQrSigningFlowOnBackPressed,
+    currentRequest,
+    signingStep
   } = useSign({
     handleUpdateStatus,
     signAccountOpState,
@@ -171,9 +178,7 @@ const SignAccountOpScreen = () => {
     <View style={flexbox.flex1}>
       <SafetyChecksOverlay
         shouldBeVisible={
-          !signAccountOpState?.isInitialized ||
-          !signAccountOpState?.estimation.estimation ||
-          !!signAccountOpState.safetyChecksLoading
+          !signAccountOpState?.isInitialized || !!signAccountOpState.safetyChecksLoading
         }
       />
       <Modals
@@ -188,6 +193,14 @@ const SignAccountOpScreen = () => {
         warningToPromptBeforeSign={warningToPromptBeforeSign}
         acknowledgeWarning={acknowledgeWarning}
         dismissWarning={dismissWarning}
+        currentRequest={currentRequest}
+        signingStep={signingStep}
+        shouldDisplayQrSigningModal={shouldDisplayQrSigningModal}
+        handleQrSingingFlowOnContinuePressed={handleQrSingingFlowOnContinuePressed}
+        handleQrSigningFlowSubmitSignatureResponse={handleQrSigningFlowSubmitSignatureResponse}
+        handleQrSigningFlowOnClosePressed={handleQrSigningFlowOnClosePressed}
+        handleQrSigningFlowOnRejectPressed={handleQrSigningFlowOnRejectPressed}
+        handleQrSigningFlowOnBackPressed={handleQrSigningFlowOnBackPressed}
       />
       <MobileLayoutContainer
         withHorizontalPadding

@@ -1,4 +1,3 @@
-import { EventEmitter as Emitter } from 'events'
 /* eslint-disable @typescript-eslint/no-floating-promises */
 import React, { createContext, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
@@ -71,9 +70,17 @@ export const ControllerStoreProvider: React.FC<{
   )
 
   useEffect(() => {
-    const onCtrlUpdate = ({ ctrlName, ctrlState }: { ctrlName: string; ctrlState: any }) => {
+    const onCtrlUpdate = ({
+      ctrlName,
+      ctrlState,
+      forceEmit
+    }: {
+      ctrlName: string
+      ctrlState: any
+      forceEmit?: boolean
+    }) => {
       try {
-        controllerStore.update(ctrlName as any, ctrlState)
+        controllerStore.update(ctrlName as any, ctrlState, forceEmit)
       } catch (e) {
         console.error(`controllerStore.update failed for controller "${ctrlName}":`, e)
       }

@@ -4,6 +4,7 @@ import { Animated, ColorValue, View, ViewStyle } from 'react-native'
 import { PortfolioNetworkResult } from '@ambire-common/libs/portfolio/interfaces'
 import NetworkIcon from '@common/components/NetworkIcon'
 import Text from '@common/components/Text'
+import { isMobile } from '@common/config/env'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import common from '@common/styles/utils/common'
@@ -48,14 +49,14 @@ const Cell: FC<{
     <View
       style={{
         backgroundColor: backgroundColor,
-        ...spacings.phTy,
+        ...(isMobile ? spacings.phMi : spacings.phTy),
         ...spacings.pvMi,
         ...common.borderRadiusSecondary,
-        minWidth: 60,
+        minWidth: isMobile ? 52 : 60,
         alignItems: 'center'
       }}
     >
-      <Text fontSize={12} weight="medium" style={{ color: color }}>
+      <Text fontSize={isMobile ? 10 : 12} weight="medium" style={{ color: color }}>
         {time ? formatResultTime(time) : 'Skipped'}
       </Text>
     </View>
@@ -142,7 +143,7 @@ const NetworkStatusRow: FC<{
             backgroundColor="transparent"
             time={totalTime}
             color={theme.secondaryText}
-            style={{ flex: 1.5 }}
+            style={isMobile ? {} : { flex: 1.5 }}
           />
           <Cell
             backgroundColor={discoveryStyle.backgroundColor}

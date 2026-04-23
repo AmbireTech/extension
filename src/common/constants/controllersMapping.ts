@@ -28,6 +28,7 @@ import { UiController } from '@ambire-common/controllers/ui/ui'
 import { WalletStateController } from '@common/controllers/wallet-state'
 import AutoLockController from '@web/extension-services/background/controllers/auto-lock'
 import { ExtensionUpdateController } from '@web/extension-services/background/controllers/extension-update'
+import QrHardwareController from '@web/modules/hardware-wallet/controllers/QrHardwareController'
 
 export const controllersNestedInMainMapping = {
   StorageController,
@@ -55,7 +56,8 @@ export const controllersNestedInMainMapping = {
   BannerController,
   UiController,
   AutoLoginController,
-  SafeController
+  SafeController,
+  QrHardwareController
 
   // Add the rest of the controllers that are part of the main controller:
   // - key is the name of the controller

@@ -10,7 +10,6 @@ import NetworkBadge from '@common/components/NetworkBadge'
 import ScrollableWrapper from '@common/components/ScrollableWrapper'
 import Select from '@common/components/Select'
 import Text from '@common/components/Text'
-import Toggle from '@common/components/Toggle'
 import Tooltip from '@common/components/Tooltip'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
@@ -21,14 +20,23 @@ import flexbox from '@common/styles/utils/flexbox'
 import { TabLayoutWrapperMainContent } from '@web/components/TabLayoutWrapper'
 import useResponsiveActionWindow from '@web/hooks/useResponsiveActionWindow'
 import LedgerConnectModal from '@web/modules/hardware-wallet/components/LedgerConnectModal'
+import { QrSigningStep } from '@web/modules/hardware-wallet/qr/types'
+import QrSigningFlowScreen from '@web/modules/hardware-wallet/screens/QrSigningFlowScreen'
 import Info from '@web/modules/sign-message/screens/SignMessageScreen/Info'
 import getStyles from '@web/modules/sign-message/screens/SignMessageScreen/styles'
+import { QrRequest } from '@ambire-common/interfaces/keystore'
 
 interface Props {
   shouldDisplayLedgerConnectModal: boolean
   isLedgerConnected: boolean
   handleDismissLedgerConnectModal: () => void
   isSafeNotDeployed: boolean
+  currentRequest: QrRequest | null
+  signingStep: QrSigningStep
+  handleOnContinue: () => void
+  handleSubmitSignatureResponse: (payload: string | Uint8Array) => void
+  handleQrSigningFlowOnRejectPressed: () => void
+  handleQrSigningFlowOnBackPressed: () => void
 }
 
 const Label = ({
@@ -92,7 +100,13 @@ const SignInWithEthereum = ({
   shouldDisplayLedgerConnectModal,
   isLedgerConnected,
   handleDismissLedgerConnectModal,
-  isSafeNotDeployed
+  isSafeNotDeployed,
+  currentRequest,
+  signingStep,
+  handleOnContinue,
+  handleSubmitSignatureResponse,
+  handleQrSigningFlowOnRejectPressed,
+  handleQrSigningFlowOnBackPressed
 }: Props) => {
   const { t } = useTranslation()
   const { state: signMessageState, dispatch: signMessageDispatch } =
@@ -342,12 +356,14 @@ const SignInWithEthereum = ({
             title="Safe account not enabled on this network. Please activate it from Safe Global"
           />
         )}
-        {signMessageState.signer && signMessageState.signer.key.type !== 'internal' && (
-          <HardwareWalletSigningModal
-            keyType={signMessageState.signer.key.type}
-            isVisible={signStatus === 'LOADING'}
-          />
-        )}
+        {signMessageState.signer &&
+          signMessageState.signer.key.type !== 'internal' &&
+          signMessageState.signer.key.type !== 'qr' && (
+            <HardwareWalletSigningModal
+              keyType={signMessageState.signer.key.type}
+              isVisible={signStatus === 'LOADING'}
+            />
+          )}
         {shouldDisplayLedgerConnectModal && (
           <LedgerConnectModal
             isVisible={!isLedgerConnected}
@@ -356,6 +372,20 @@ const SignInWithEthereum = ({
             displayOptionToAuthorize={false}
           />
         )}
+        {signMessageState.signer &&
+          signMessageState.signer.key.type === 'qr' &&
+          currentRequest &&
+          signingStep !== 'idle' && (
+            <QrSigningFlowScreen
+              isVisible={true}
+              onContinue={handleOnContinue}
+              currentRequest={currentRequest}
+              signingStep={signingStep}
+              submitSignatureResponse={handleSubmitSignatureResponse}
+              onReject={handleQrSigningFlowOnRejectPressed}
+              handleQrSigningFlowOnBackPressed={handleQrSigningFlowOnBackPressed}
+            />
+          )}
       </View>
     </TabLayoutWrapperMainContent>
   )
