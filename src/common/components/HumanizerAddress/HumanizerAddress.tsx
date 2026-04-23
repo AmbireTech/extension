@@ -6,13 +6,11 @@ import humanizerInfo from '@ambire-common/consts/humanizer/humanizerInfo.json'
 import { BlacklistedStatus } from '@ambire-common/interfaces/phishing'
 import { HumanizerMeta, HumanizerMetaAddress } from '@ambire-common/libs/humanizer/interfaces'
 import { Props as TextProps } from '@common/components/Text'
-import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
 import TokenIcon from '../TokenIcon'
 import HumanizerAddressInner from './components/HumanizerAddressInner'
-import getStyles from './styles'
 
 interface Props extends TextProps {
   address: string
@@ -35,8 +33,6 @@ const HumanizerAddress: FC<Props> = ({
   chainId,
   ...rest
 }) => {
-  const { styles } = useTheme(getStyles)
-
   const addressInfo: HumanizerMetaAddress | undefined = useMemo(() => {
     let checksummedAddress: string | undefined
 
@@ -50,7 +46,6 @@ const HumanizerAddress: FC<Props> = ({
     return HUMANIZER_META.knownAddresses[getAddress(checksummedAddress)] ?? undefined
   }, [address])
 
-  console.log('addressInfo', addressInfo)
   return (
     <View style={[flexbox.directionRow, flexbox.alignCenter, { marginRight }]}>
       {!!addressInfo?.logo && !hideLogo && (
