@@ -5,11 +5,11 @@ import { Image, View } from 'react-native'
 import DAppsIcon from '@common/assets/svg/DAppsIcon'
 import Text from '@common/components/Text'
 import { isMobile, isWeb } from '@common/config/env'
+import useResponsiveActionWindow from '@common/hooks/useResponsiveActionWindow'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
-import useResponsiveActionWindow from '@web/hooks/useResponsiveActionWindow'
 
 import getStyles from './styles'
 

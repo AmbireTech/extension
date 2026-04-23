@@ -2,7 +2,6 @@ import React from 'react'
 import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 
-import StarsIcon from '@common/assets/svg/StarsIcon'
 import Badge from '@common/components/Badge'
 import Text from '@common/components/Text'
 import useTheme from '@common/hooks/useTheme'

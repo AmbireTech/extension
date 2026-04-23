@@ -7,12 +7,16 @@ import { AddNetworkRequestParams, Network, NetworkFeature } from '@ambire-common
 import { getFeatures } from '@ambire-common/libs/networks/networks'
 import Spinner from '@common/components/Spinner'
 import useController from '@common/hooks/useController'
+import useResponsiveActionWindow from '@common/hooks/useResponsiveActionWindow'
+import ActionFooter from '@common/modules/action-requests/components/ActionFooter'
+import ActionHeader from '@common/modules/action-requests/components/ActionHeader'
+import AddChain from '@common/modules/action-requests/components/AddOrUpdateChain/AddChain'
+import AlreadyAddedChain from '@common/modules/action-requests/components/AddOrUpdateChain/AlreadyAddedChain'
+import UpdateChain from '@common/modules/action-requests/components/AddOrUpdateChain/UpdateChain'
+import validateRequestParams from '@common/modules/action-requests/utils/validateRequestParams'
+import spacings, { SPACING_LG } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import validateRequestParams from '@web/modules/action-requests/screens/AddOrUpdateNetworkScreen/validateRequestParams'
-
-import AddChain from './AddChain'
-import AlreadyAddedChain from './AlreadyAddedChain'
-import UpdateChain from './UpdateChain'
+import { TabLayoutContainer, TabLayoutWrapperMainContent } from '@web/components/TabLayoutWrapper'
 
 /**
  * This screen is used to add a new network to the wallet. If the network is already in the wallet
@@ -29,6 +33,8 @@ const AddOrUpdateNetworkScreen = () => {
     state: { statuses, networkToAddOrUpdate, disabledNetworks, networks },
     dispatch: networksDispatch
   } = useController('NetworksController')
+  const { responsiveSizeMultiplier } = useResponsiveActionWindow({ maxBreakpoints: 2 })
+
   const [features, setFeatures] = useState<NetworkFeature[]>(getFeatures(undefined, undefined))
   const [rpcUrlIndex, setRpcUrlIndex] = useState<number>(0)
   const [existingNetwork, setExistingNetwork] = useState<Network | null | undefined>(undefined)
@@ -308,50 +314,117 @@ const AddOrUpdateNetworkScreen = () => {
 
   if (view === 'update' && networkAlreadyAdded) {
     return (
-      <UpdateChain
-        handleDenyButtonPress={handleDenyButtonPress}
-        handleUpdateNetwork={handleUpdateNetwork}
-        handleRetryWithDifferentRpcUrl={handleRetryWithDifferentRpcUrl}
-        areParamsValid={areParamsValid}
-        statuses={statuses}
-        features={features}
-        networkDetails={networkDetails}
-        networkAlreadyAdded={networkAlreadyAdded}
-        userRequest={userRequest}
-        actionButtonPressedRef={actionButtonPressedRef}
-        rpcUrls={rpcUrls}
-        rpcUrlIndex={rpcUrlIndex}
-      />
+      <TabLayoutContainer
+        width="full"
+        header={<ActionHeader />}
+        renderDirectChildren={() => (
+          <ActionFooter
+            onReject={handleDenyButtonPress}
+            onResolve={handleUpdateNetwork}
+            resolveButtonText={t('Update network')}
+            rejectButtonText={t('Reject')}
+            resolveDisabled={
+              !areParamsValid ||
+              statuses.addNetwork === 'LOADING' ||
+              statuses.updateNetwork === 'LOADING' ||
+              (features &&
+                (features.some((f) => f.level === 'loading') ||
+                  !!features.find((f) => f.id === 'flagged'))) ||
+              actionButtonPressedRef.current
+            }
+          />
+        )}
+      >
+        <TabLayoutWrapperMainContent
+          style={{
+            marginBottom: SPACING_LG * responsiveSizeMultiplier
+          }}
+          withScroll={false}
+        >
+          <UpdateChain
+            handleRetryWithDifferentRpcUrl={handleRetryWithDifferentRpcUrl}
+            areParamsValid={areParamsValid}
+            features={features}
+            networkDetails={networkDetails}
+            networkAlreadyAdded={networkAlreadyAdded}
+            userRequest={userRequest}
+            actionButtonPressedRef={actionButtonPressedRef}
+            rpcUrls={rpcUrls}
+            rpcUrlIndex={rpcUrlIndex}
+          />
+        </TabLayoutWrapperMainContent>
+      </TabLayoutContainer>
     )
   }
 
   if (view === 'alreadyAdded' && networkAlreadyAdded) {
     return (
-      <AlreadyAddedChain
-        handleCloseOnAlreadyAdded={handleCloseOnAlreadyAdded}
-        statuses={statuses}
-        networkAlreadyAdded={networkAlreadyAdded}
-        successStateText={successStateText}
-      />
+      <TabLayoutContainer
+        width="full"
+        header={<ActionHeader />}
+        renderDirectChildren={() => (
+          <ActionFooter
+            onReject={undefined}
+            onResolve={handleCloseOnAlreadyAdded}
+            resolveButtonText={t('Close')}
+            rejectButtonText={undefined}
+            resolveDisabled={
+              statuses.addNetwork === 'LOADING' || statuses.updateNetwork === 'LOADING'
+            }
+          />
+        )}
+      >
+        <TabLayoutWrapperMainContent style={spacings.mbLg} withScroll={false}>
+          <AlreadyAddedChain
+            networkAlreadyAdded={networkAlreadyAdded}
+            successStateText={successStateText}
+          />
+        </TabLayoutWrapperMainContent>
+      </TabLayoutContainer>
     )
   }
 
   return (
-    <AddChain
-      handleDenyButtonPress={handleDenyButtonPress}
-      handlePrimaryButtonPress={handlePrimaryButtonPress}
-      handleRetryWithDifferentRpcUrl={handleRetryWithDifferentRpcUrl}
-      areParamsValid={areParamsValid}
-      statuses={statuses}
-      features={features}
-      networkDetails={networkDetails}
-      actionButtonPressedRef={actionButtonPressedRef}
-      rpcUrls={rpcUrls}
-      rpcUrlIndex={rpcUrlIndex}
-      resolveButtonText={resolveButtonText}
-      existingNetwork={existingNetwork}
-      userRequest={userRequest}
-    />
+    <TabLayoutContainer
+      width="full"
+      header={<ActionHeader />}
+      renderDirectChildren={() => (
+        <ActionFooter
+          onReject={handleDenyButtonPress}
+          onResolve={handlePrimaryButtonPress}
+          resolveButtonText={resolveButtonText}
+          resolveDisabled={
+            !areParamsValid ||
+            statuses.addNetwork === 'LOADING' ||
+            statuses.updateNetwork === 'LOADING' ||
+            (features &&
+              (features.some((f) => f.level === 'loading') ||
+                !!features.filter((f) => f.id === 'flagged')[0])) ||
+            actionButtonPressedRef.current
+          }
+        />
+      )}
+    >
+      <TabLayoutWrapperMainContent
+        style={{
+          marginBottom: SPACING_LG * responsiveSizeMultiplier
+        }}
+        withScroll={false}
+      >
+        <AddChain
+          handleRetryWithDifferentRpcUrl={handleRetryWithDifferentRpcUrl}
+          areParamsValid={areParamsValid}
+          statuses={statuses}
+          features={features}
+          networkDetails={networkDetails}
+          actionButtonPressedRef={actionButtonPressedRef}
+          rpcUrls={rpcUrls}
+          rpcUrlIndex={rpcUrlIndex}
+          existingNetwork={existingNetwork}
+          userRequest={userRequest}
+        />
+      </TabLayoutWrapperMainContent>
+    </TabLayoutContainer>
   )
 }
 

@@ -1,5 +1,6 @@
 import { useMemo } from 'react'
 
+import { isMobile } from '@common/config/env'
 import useWindowSize from '@common/hooks/useWindowSize'
 
 type Props = {
@@ -7,6 +8,8 @@ type Props = {
 }
 
 const useResponsiveActionWindow = ({ maxBreakpoints }: Props = {}) => {
+  if (isMobile) return { responsiveSizeMultiplier: 1 }
+
   const { minHeightSize } = useWindowSize()
 
   const breakpoints = useMemo(() => {

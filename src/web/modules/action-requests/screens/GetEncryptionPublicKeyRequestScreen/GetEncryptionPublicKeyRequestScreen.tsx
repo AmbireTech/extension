@@ -6,12 +6,12 @@ import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import useDappInfo from '@common/hooks/useDappInfo'
 import useToast from '@common/hooks/useToast'
+import ActionFooter from '@common/modules/action-requests/components/ActionFooter'
 import ActionHeader from '@common/modules/action-requests/components/ActionHeader'
 import spacings from '@common/styles/spacings'
 import RequestingDappInfo from '@web/components/RequestingDappInfo'
 import SmallNotificationWindowWrapper from '@web/components/SmallNotificationWindowWrapper'
 import { TabLayoutContainer, TabLayoutWrapperMainContent } from '@web/components/TabLayoutWrapper'
-import ActionFooter from '@web/modules/action-requests/components/ActionFooter'
 import { useEncryptionCapability } from '@web/modules/action-requests/hooks'
 
 const GetEncryptionPublicKeyRequestScreen = () => {

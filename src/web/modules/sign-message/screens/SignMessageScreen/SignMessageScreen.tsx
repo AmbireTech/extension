@@ -17,6 +17,7 @@ import useController from '@common/hooks/useController'
 import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useDappInfo from '@common/hooks/useDappInfo/useDappInfo'
 import useToast from '@common/hooks/useToast'
+import ActionFooter from '@common/modules/action-requests/components/ActionFooter'
 import ActionHeader from '@common/modules/action-requests/components/ActionHeader'
 import useLedger from '@common/modules/hardware-wallets/hooks/useLedger'
 import useQrSigningFlow from '@common/modules/hardware-wallets/hooks/useQrSigningFlow'
@@ -27,7 +28,6 @@ import SafeFooter from '@common/modules/sign-message/components/SafeFooter'
 import flexbox from '@common/styles/utils/flexbox'
 import SmallNotificationWindowWrapper from '@web/components/SmallNotificationWindowWrapper'
 import { TabLayoutContainer } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
-import ActionFooter from '@web/modules/action-requests/components/ActionFooter'
 
 const SignMessageScreen = () => {
   const { t } = useTranslation()
