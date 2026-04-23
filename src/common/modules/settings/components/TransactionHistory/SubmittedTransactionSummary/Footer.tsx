@@ -7,6 +7,7 @@ import { BROADCAST_OPTIONS } from '@ambire-common/libs/broadcast/broadcast'
 import { SubmittedAccountOp } from '@ambire-common/libs/accountOp/submittedAccountOp'
 import { AccountOpStatus } from '@ambire-common/libs/accountOp/types'
 import { getBenzinUrlParams } from '@ambire-common/utils/benzin'
+import CopyIcon from '@common/assets/svg/CopyIcon'
 import LinkIcon from '@common/assets/svg/LinkIcon'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
@@ -15,6 +16,7 @@ import useToast from '@common/hooks/useToast'
 import { sizeMultiplier } from '@common/modules/sign-account-op/components/TransactionSummary'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
+import { setStringAsync } from '@common/utils/clipboard'
 import { openInTab } from '@common/utils/links'
 
 import RepeatTransaction from './RepeatTransaction'
@@ -57,32 +59,49 @@ const Footer: FC<Props> = ({
     gasFeePayment?.broadcastOption !== BROADCAST_OPTIONS.byRelayer &&
     gasFeePayment?.broadcastOption !== BROADCAST_OPTIONS.byBundler
 
-  const handleViewTransaction = useCallback(async () => {
+  const benzinLink = `https://explorer.ambire.com/${getBenzinUrlParams({
+    txnId,
+    chainId: Number(chainId),
+    identifiedBy
+  })}`
+
+  const handleCopyTransaction = useCallback(() => {
     if (!chainId) {
       const message = t(
-        "Can't open the transaction details because the network information is missing."
+        "Can't copy the transaction link because the network information is missing."
       )
       addToast(message, { type: 'error' })
 
       return
     }
 
-    const link = `https://explorer.ambire.com/${getBenzinUrlParams({
-      txnId,
-      chainId: Number(chainId),
-      identifiedBy
-    })}`
+    setStringAsync(benzinLink)
+    addToast(t('Copied to clipboard!') as string, { timeout: 2500 })
+  }, [addToast, benzinLink, chainId, t])
+
+  const handleViewTransaction = useCallback(async () => {
+    if (!chainId || !network.explorerUrl || !txnId) {
+      const message = t(
+        "Can't open the transaction details because the transaction or network information is missing."
+      )
+      addToast(message, { type: 'error' })
+
+      return
+    }
+
+    const explorerUrl = network.explorerUrl.replace(/\/$/, '')
+    const link = `${explorerUrl}/tx/${txnId}`
 
     try {
       await openInTab({ url: link })
     } catch (e: any) {
       addToast(e?.message || 'Error opening explorer', { type: 'error' })
     }
-  }, [txnId, identifiedBy, addToast, chainId, t])
+  }, [txnId, addToast, chainId, network.explorerUrl, t])
 
   return (
     <View style={spacings.phSm}>
-      <View style={[styles.footer, flexbox.justifySpaceBetween]}>
+      <View style={[styles.footer, flexbox.justifySpaceBetween, flexbox.alignStart]}>
         <View style={flexbox.alignStart}>
           {rawCalls?.length && selectedAccount?.addr === accountAddr ? (
             shouldShowSpeedUp ? (
@@ -105,6 +124,15 @@ const Footer: FC<Props> = ({
           )}
         </View>
         <View style={flexbox.alignEnd}>
+          <View style={spacings.mbTy}>
+            <FooterActionLink
+              label={t('Copy Transaction')}
+              onPress={handleCopyTransaction}
+              textSize={textSize}
+              iconSize={iconSize}
+              Icon={CopyIcon}
+            />
+          </View>
           <FooterActionLink
             testID="view-transaction-link"
             label={t('View transaction')}

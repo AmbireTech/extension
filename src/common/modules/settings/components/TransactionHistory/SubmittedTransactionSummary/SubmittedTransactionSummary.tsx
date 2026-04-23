@@ -1,10 +1,11 @@
 import { formatUnits, ZeroAddress } from 'ethers'
 import React, { useEffect, useMemo, useState } from 'react'
-import { Pressable, View, ViewStyle } from 'react-native'
+import { Pressable, useWindowDimensions, View, ViewStyle } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 
 import { Dapp } from '@ambire-common/interfaces/dapp'
 import { Network } from '@ambire-common/interfaces/network'
+import Step from '@benzin/screens/BenzinScreen/components/Steps/components/Step'
 import {
   BalanceChange,
   isIdentifiedByMultipleTxn,
@@ -20,14 +21,18 @@ import BottomSheet from '@common/components/BottomSheet'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import NetworkIcon from '@common/components/NetworkIcon'
 import SkeletonLoader from '@common/components/SkeletonLoader'
+import Spinner from '@common/components/Spinner'
 import Text from '@common/components/Text'
 import TokenIcon from '@common/components/TokenIcon'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import PendingTokenSummary from '@common/modules/sign-account-op/components/PendingTokenSummary'
-import TransactionSummary, { sizeMultiplier } from '@common/modules/sign-account-op/components/TransactionSummary'
+import TransactionSummary, {
+  sizeMultiplier
+} from '@common/modules/sign-account-op/components/TransactionSummary'
 import spacings, { SPACING_SM } from '@common/styles/spacings'
+import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import { checkIfImageExists } from '@common/utils/checkIfImageExists'
 import DelegationHumanization from '@web/components/DelegationHumanization'
@@ -345,13 +350,19 @@ const SubmittedTransactionSummaryDetails = ({
   size: 'sm' | 'md' | 'lg'
   defaultType: Props['defaultType']
 }) => {
-  const { styles } = useTheme(getStyles)
+  const { width: windowWidth } = useWindowDimensions()
+  const { styles, theme } = useTheme(getStyles)
   const { t } = useTranslation()
+  const submittedDate = useMemo(
+    () => getFormattedSubmittedDate(submittedAccountOp.timestamp),
+    [submittedAccountOp.timestamp]
+  )
   const humanizedCalls = useMemo(() => getHumanizedCalls(submittedAccountOp), [submittedAccountOp])
   const orderedBalanceChanges = useMemo(
     () => getOrderedBalanceChanges(submittedAccountOp),
     [submittedAccountOp]
   )
+  const hasBalanceChangesLoaded = typeof submittedAccountOp.balanceChanges !== 'undefined'
   const assetsOut = useMemo(
     () => orderedBalanceChanges.filter((change) => change.balanceChange < 0n),
     [orderedBalanceChanges]
@@ -360,8 +371,10 @@ const SubmittedTransactionSummaryDetails = ({
     () => orderedBalanceChanges.filter((change) => change.balanceChange > 0n),
     [orderedBalanceChanges]
   )
+  const shouldRenderBalanceChangesInColumns = windowWidth > 700
   const isDelegationTxn =
     submittedAccountOp.meta && submittedAccountOp.meta.setDelegation !== undefined
+  const modalActiveStep = hasBalanceChangesLoaded ? 'finalized' : 'balance-changes'
 
   const renderBalanceChangesCard = (title: string, changes: BalanceChange[]) => (
     <View
@@ -393,46 +406,143 @@ const SubmittedTransactionSummaryDetails = ({
 
   return (
     <View style={[spacings.ptXl]}>
-      <SubmittedTransactionHeader
-        submittedAccountOp={submittedAccountOp}
-        network={network}
-        size={size}
-      />
-      {!isDelegationTxn &&
-        humanizedCalls.map((call: IrCall) => (
-          <TransactionSummary
-            key={call.id}
-            style={{ ...styles.summaryItem, marginBottom: SPACING_SM * sizeMultiplier[size] }}
-            call={call}
-            chainId={submittedAccountOp.chainId}
-            type="history"
-            enableExpand={defaultType === 'full-info'}
-            size={size}
-            hideLinks
-          />
-        ))}
-      {!isDelegationTxn && !humanizedCalls.length && (
-        <View style={spacings.phSm}>
-          <SkeletonLoader width="100%" height={112} />
-        </View>
-      )}
-      {isDelegationTxn && (
-        <View style={[spacings.phSm, spacings.pbSm]}>
-          <DelegationHumanization
-            setDelegation={submittedAccountOp.meta?.setDelegation}
-            delegatedContract={submittedAccountOp.meta?.delegation?.address}
-            isBorderless
-          />
-        </View>
-      )}
-      {!!(assetsOut.length || assetsIn.length) && (
-        <View style={[styles.modalBalanceChangesSection, spacings.phSm, spacings.pbSm]}>
-          <View style={[flexbox.directionRow, flexbox.flex1]}>
-            {!!assetsOut.length && renderBalanceChangesCard('Assets out', assetsOut)}
-            {!!assetsIn.length && renderBalanceChangesCard('Assets in', assetsIn)}
+      <View style={spacings.phSm}>
+        <Step
+          title="Transaction details"
+          stepName="in-progress"
+          activeStep={modalActiveStep}
+          testID="activity-transaction-details-step"
+        >
+          {!isDelegationTxn &&
+            humanizedCalls.map((call: IrCall) => (
+              <TransactionSummary
+                key={call.id}
+                style={{ marginBottom: SPACING_SM * sizeMultiplier[size] }}
+                call={call}
+                chainId={submittedAccountOp.chainId}
+                type="benzin"
+                enableExpand={defaultType === 'full-info'}
+                size={size}
+                hideLinks
+              />
+            ))}
+          {!isDelegationTxn && !humanizedCalls.length && (
+            <SkeletonLoader width="100%" height={112} />
+          )}
+          {isDelegationTxn && (
+            <View style={spacings.pbSm}>
+              <DelegationHumanization
+                setDelegation={submittedAccountOp.meta?.setDelegation}
+                delegatedContract={submittedAccountOp.meta?.delegation?.address}
+              />
+            </View>
+          )}
+        </Step>
+        <Step
+          title="Balance changes"
+          stepName="balance-changes"
+          activeStep={modalActiveStep}
+          testID="activity-balance-changes-step"
+          style={spacings.pb0}
+        >
+          <View style={flexbox.flex1}>
+            {!hasBalanceChangesLoaded && (
+              <View
+                style={[
+                  flexbox.directionRow,
+                  flexbox.alignCenter,
+                  spacings.phSm,
+                  spacings.pvSm,
+                  {
+                    backgroundColor: theme.secondaryBackground,
+                    borderWidth: 1,
+                    borderColor: theme.secondaryBorder,
+                    ...common.borderRadiusPrimary
+                  }
+                ]}
+              >
+                <Spinner style={{ width: 18, height: 18 }} />
+                <Text style={spacings.mlSm} fontSize={14} appearance="secondaryText">
+                  Loading balance changes
+                </Text>
+              </View>
+            )}
+            {hasBalanceChangesLoaded && !!(assetsOut.length || assetsIn.length) && (
+              <View
+                style={
+                  shouldRenderBalanceChangesInColumns
+                    ? [flexbox.directionRow, flexbox.flex1]
+                    : undefined
+                }
+              >
+                {!!assetsOut.length && (
+                  <View
+                    style={
+                      shouldRenderBalanceChangesInColumns
+                        ? [flexbox.flex1, spacings.mrTy]
+                        : spacings.mbTy
+                    }
+                  >
+                    {renderBalanceChangesCard('Assets out', assetsOut)}
+                  </View>
+                )}
+                {!!assetsIn.length && (
+                  <View style={flexbox.flex1}>
+                    {renderBalanceChangesCard('Assets in', assetsIn)}
+                  </View>
+                )}
+              </View>
+            )}
+            {hasBalanceChangesLoaded && !assetsOut.length && !assetsIn.length && (
+              <View
+                style={[
+                  spacings.phSm,
+                  spacings.pvSm,
+                  {
+                    backgroundColor: theme.secondaryBackground,
+                    borderWidth: 1,
+                    borderColor: theme.secondaryBorder,
+                    ...common.borderRadiusPrimary
+                  }
+                ]}
+              >
+                <Text fontSize={14} appearance="secondaryText">
+                  No balance changes detected
+                </Text>
+              </View>
+            )}
           </View>
-        </View>
-      )}
+        </Step>
+        <Step
+          title="Confirmed"
+          stepName="finalized"
+          activeStep="finalized"
+          testID="activity-confirmed-step"
+          style={spacings.mbSm}
+        >
+          <View
+            style={[
+              flexbox.directionRow,
+              flexbox.justifyEnd,
+              flexbox.alignCenter,
+              flexbox.wrap,
+              spacings.mbSm
+            ]}
+          >
+            <Text fontSize={14} appearance="secondaryText">
+              {submittedDate}
+            </Text>
+            <Text fontSize={14} appearance="secondaryText" style={spacings.mlTy}>
+              on {network.name}
+            </Text>
+            <NetworkIcon
+              id={submittedAccountOp.chainId.toString()}
+              size={20}
+              style={spacings.mlMi}
+            />
+          </View>
+        </Step>
+      </View>
       <Footer
         size={size}
         network={network}

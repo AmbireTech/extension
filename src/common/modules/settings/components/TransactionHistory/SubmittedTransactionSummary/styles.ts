@@ -88,7 +88,7 @@ const getStyles = (theme: ThemeProps) =>
       ...flexbox.directionRow,
       ...flexbox.justifySpaceBetween,
       ...flexbox.flex1,
-      ...flexbox.alignCenter,
+      ...flexbox.alignStart,
       borderTopColor: theme.secondaryBorder,
       borderTopWidth: 1,
       ...spacings.pvSm
