@@ -21,13 +21,6 @@ test.describe('ledger', { tag: '@ledgerTests' }, () => {
     await context.close()
   })
 
-  test.afterAll(async ({ context }) => {
-    // Since the tests are running in serial mode, in case of a failed tests,
-    // all the tests will start from the beginning (retry mechanism), so we need to reset the Ledger emulator to its initial state.
-    const ledgerSimulatorControls = new SpeculosDevice({ baseUrl: LEDGER_EMULATOR_HTTP_URL })
-    await ledgerSimulatorControls.resetEvents()
-  })
-
   // Without storage tests
   test('ledger without storage - import account', async ({ pages }) => {
     await test.step('init without storage', async () => {

@@ -234,7 +234,17 @@ export class SwapAndBridgePage extends BasePage {
         await expect(signButton).toBeVisible({ timeout: 5000 })
         await expect(signButton).toBeEnabled({ timeout: 5000 })
 
-        signButton.click()
+        await signButton.click()
+
+        // First click can occasionally "blink" the Ledger sheet and leave the UI unchanged.
+        await page.waitForTimeout(350)
+        const shouldRetryClick = await signButton.isVisible().catch(() => false)
+        if (shouldRetryClick) {
+          const stillEnabled = await signButton.isEnabled().catch(() => false)
+          if (stillEnabled) {
+            await signButton.click()
+          }
+        }
 
         if (ledgerSimulatorControls) {
           await ledgerSimulatorControls.signSmartAccountTransaction()
