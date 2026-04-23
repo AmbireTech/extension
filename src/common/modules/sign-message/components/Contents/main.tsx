@@ -1,4 +1,4 @@
-import React, { Dispatch, SetStateAction, useMemo } from 'react'
+import React, { Dispatch, SetStateAction, useCallback, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 
@@ -11,6 +11,7 @@ import HumanizedVisualization from '@common/components/HumanizedVisualization'
 import Label from '@common/components/Label'
 import NetworkBadge from '@common/components/NetworkBadge'
 import Text from '@common/components/Text'
+import { isMobile, isWeb } from '@common/config/env'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import useWindowSize from '@common/hooks/useWindowSize'
@@ -19,6 +20,7 @@ import FallbackVisualization from '@common/modules/sign-message/components/Fallb
 import Info from '@common/modules/sign-message/components/Info'
 import spacings, { SPACING_LG, SPACING_MD, SPACING_TY } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
+import { MobileLayoutWrapperMainContent } from '@mobile/components/MobileLayoutWrapper'
 import { TabLayoutWrapperMainContent } from '@web/components/TabLayoutWrapper'
 import useResponsiveActionWindow from '@web/hooks/useResponsiveActionWindow'
 import LedgerConnectModal from '@web/modules/hardware-wallet/components/LedgerConnectModal'
@@ -40,6 +42,16 @@ interface Props {
   handleSubmitSignatureResponse: (payload: string | Uint8Array) => void
   handleQrSigningFlowOnRejectPressed: () => void
   handleQrSigningFlowOnBackPressed: () => void
+}
+
+const Container = ({ children }: { children: React.ReactNode }) => {
+  if (isMobile)
+    return (
+      <MobileLayoutWrapperMainContent contentContainerStyle={spacings.ph0}>
+        {children}
+      </MobileLayoutWrapperMainContent>
+    )
+  return <TabLayoutWrapperMainContent style={spacings.mbLg}>{children}</TabLayoutWrapperMainContent>
 }
 
 const Main = ({
@@ -88,7 +100,7 @@ const Main = ({
   )
 
   return (
-    <TabLayoutWrapperMainContent style={spacings.mbLg}>
+    <Container>
       <View
         style={[
           flexbox.directionRow,
@@ -100,9 +112,34 @@ const Main = ({
         ]}
       >
         <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-          <Text weight="medium" fontSize={24 * responsiveSizeMultiplier} style={[spacings.mrSm]}>
+          <Text
+            weight="medium"
+            fontSize={isMobile ? 20 : 24 * responsiveSizeMultiplier}
+            style={[spacings.mrSm]}
+          >
             {t('Sign message')}
           </Text>
+          {isWeb && (
+            <View style={styles.kindOfMessage}>
+              <Text fontSize={12} color={theme.infoText} numberOfLines={1}>
+                {signMessageState.messageToSign?.content.kind === 'typedMessage' && t('EIP-712')}
+                {signMessageState.messageToSign?.content.kind === 'message' && t('Standard')}
+                {signMessageState.messageToSign?.content.kind === 'authorization-7702' &&
+                  t('EIP-7702')}{' '}
+                {t('Type')}
+              </Text>
+            </View>
+          )}
+        </View>
+        <NetworkBadge
+          chainId={signMessageState.messageToSign?.chainId}
+          responsiveSizeMultiplier={responsiveSizeMultiplier}
+          withOnPrefix
+        />
+        {/* @TODO: Replace with Badge; add size prop to badge; add tooltip  */}
+      </View>
+      {isMobile && (
+        <View style={[flexbox.alignEnd, { height: 24, marginBottom: -24 }]}>
           <View style={styles.kindOfMessage}>
             <Text fontSize={12} color={theme.infoText} numberOfLines={1}>
               {signMessageState.messageToSign?.content.kind === 'typedMessage' && t('EIP-712')}
@@ -113,13 +150,7 @@ const Main = ({
             </Text>
           </View>
         </View>
-        <NetworkBadge
-          chainId={signMessageState.messageToSign?.chainId}
-          responsiveSizeMultiplier={responsiveSizeMultiplier}
-          withOnPrefix
-        />
-        {/* @TODO: Replace with Badge; add size prop to badge; add tooltip  */}
-      </View>
+      )}
       <View style={styles.container}>
         <View
           style={{
@@ -255,7 +286,7 @@ const Main = ({
             />
           )}
       </View>
-    </TabLayoutWrapperMainContent>
+    </Container>
   )
 }
 

@@ -1,5 +1,6 @@
 import { ImageStyle, StyleSheet } from 'react-native'
 
+import { isMobile } from '@common/config/env'
 import { ThemeProps } from '@common/styles/themeConfig'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 
@@ -11,12 +12,12 @@ interface Style {
 const getStyles = (theme: ThemeProps) =>
   StyleSheet.create<Style>({
     image: {
-      alignSelf: 'flex-start',
+      alignSelf: isMobile ? 'center' : 'flex-start',
       borderRadius: BORDER_RADIUS_PRIMARY
     },
     fallbackIcon: {
       backgroundColor: theme.secondaryBackground,
-      alignSelf: 'flex-start',
+      alignSelf: isMobile ? 'center' : 'flex-start',
       borderRadius: BORDER_RADIUS_PRIMARY
     }
   })

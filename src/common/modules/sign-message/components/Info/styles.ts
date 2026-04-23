@@ -14,7 +14,7 @@ const getStyles = (theme: ThemeProps) =>
     verifyingContract: {
       backgroundColor: theme.secondaryBackground,
       borderRadius: BORDER_RADIUS_PRIMARY,
-      ...flexbox.flex1,
+      flexGrow: 1,
       ...flexbox.directionRow,
       ...flexbox.alignCenter,
       ...common.fullWidth

@@ -1,5 +1,6 @@
 import { StyleSheet, TextStyle, ViewStyle } from 'react-native'
 
+import { isMobile } from '@common/config/env'
 import spacings from '@common/styles/spacings'
 import { ThemeProps, ThemeType } from '@common/styles/themeConfig'
 import common from '@common/styles/utils/common'
@@ -24,7 +25,7 @@ const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
       ...flexbox.flex1,
       minHeight: 200,
       ...spacings.pvSm,
-      ...spacings.ph
+      ...(isMobile ? spacings.phSm : spacings.ph)
     },
     header: {
       ...spacings.mb,

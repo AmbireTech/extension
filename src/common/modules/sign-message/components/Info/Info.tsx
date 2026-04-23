@@ -45,7 +45,7 @@ const Info: FC<Props> = () => {
             }}
           >
             <HumanizerAddress
-              fontSize={14 * responsiveSizeMultiplier}
+              fontSize={16 * responsiveSizeMultiplier}
               style={{ maxWidth: '100%' }}
               address={messageToSign.content.domain.verifyingContract}
               chainId={messageToSign.chainId}

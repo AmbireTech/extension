@@ -4,7 +4,8 @@ import { View } from 'react-native'
 
 import Button, { Props as ButtonProps } from '@common/components/Button'
 import ActionsPagination from '@common/modules/action-requests/components/ActionsPagination'
-import spacings from '@common/styles/spacings'
+import spacings, { SPACING_TY } from '@common/styles/spacings'
+import flexbox from '@common/styles/utils/flexbox'
 
 type Props = {
   onReject?: () => void
@@ -36,26 +37,31 @@ const ActionFooter = ({
   const showReject = useMemo(() => !!onReject, [onReject])
 
   return (
-    <View style={[spacings.ptSm, spacings.phSm]}>
-      {resolveNode || (
-        <Button
-          testID={resolveButtonTestID}
-          size="large"
-          type={resolveType}
-          onPress={handleOnResolve}
-          disabled={resolveDisabled}
-          text={resolveButtonText}
-        />
-      )}
+    <View style={[spacings.ptSm, spacings.phSm, flexbox.directionRow, { columnGap: SPACING_TY }]}>
       {showReject && (
-        <Button
-          text={rejectButtonText || t('Reject')}
-          type="danger"
-          hasBottomSpacing={false}
-          size="large"
-          onPress={onReject}
-          testID={rejectButtonTestID}
-        />
+        <View style={flexbox.flex1}>
+          <Button
+            text={rejectButtonText || t('Reject')}
+            type="danger"
+            hasBottomSpacing={false}
+            size="large"
+            onPress={onReject}
+            testID={rejectButtonTestID}
+          />
+        </View>
+      )}
+      {resolveNode || (
+        <View style={flexbox.flex1}>
+          <Button
+            testID={resolveButtonTestID}
+            hasBottomSpacing={false}
+            size="large"
+            type={resolveType}
+            onPress={handleOnResolve}
+            disabled={resolveDisabled}
+            text={resolveButtonText}
+          />
+        </View>
       )}
       <ActionsPagination />
     </View>
