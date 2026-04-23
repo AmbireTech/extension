@@ -3,9 +3,9 @@ import React, { FC, useCallback } from 'react'
 import { View } from 'react-native'
 
 import { Network } from '@ambire-common/interfaces/network'
-import { BROADCAST_OPTIONS } from '@ambire-common/libs/broadcast/broadcast'
 import { SubmittedAccountOp } from '@ambire-common/libs/accountOp/submittedAccountOp'
 import { AccountOpStatus } from '@ambire-common/libs/accountOp/types'
+import { BROADCAST_OPTIONS } from '@ambire-common/libs/broadcast/broadcast'
 import { getBenzinUrlParams } from '@ambire-common/utils/benzin'
 import CopyIcon from '@common/assets/svg/CopyIcon'
 import LinkIcon from '@common/assets/svg/LinkIcon'
@@ -19,9 +19,9 @@ import flexbox from '@common/styles/utils/flexbox'
 import { setStringAsync } from '@common/utils/clipboard'
 import { openInTab } from '@common/utils/links'
 
+import FooterActionLink from './FooterActionLink'
 import RepeatTransaction from './RepeatTransaction'
 import SpeedUpTransaction from './SpeedUpTransaction'
-import FooterActionLink from './FooterActionLink'
 import getStyles from './styles'
 
 type Props = {
@@ -126,7 +126,7 @@ const Footer: FC<Props> = ({
         <View style={flexbox.alignEnd}>
           <View style={spacings.mbTy}>
             <FooterActionLink
-              label={t('Copy Transaction')}
+              label={t('Copy link to transaction')}
               onPress={handleCopyTransaction}
               textSize={textSize}
               iconSize={iconSize}

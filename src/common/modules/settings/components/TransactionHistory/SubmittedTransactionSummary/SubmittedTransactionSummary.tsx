@@ -5,7 +5,6 @@ import { useModalize } from 'react-native-modalize'
 
 import { Dapp } from '@ambire-common/interfaces/dapp'
 import { Network } from '@ambire-common/interfaces/network'
-import Step from '@benzin/screens/BenzinScreen/components/Steps/components/Step'
 import {
   BalanceChange,
   isIdentifiedByMultipleTxn,
@@ -15,6 +14,7 @@ import { AccountOpStatus } from '@ambire-common/libs/accountOp/types'
 import { humanizeAccountOp } from '@ambire-common/libs/humanizer'
 import { IrCall } from '@ambire-common/libs/humanizer/interfaces'
 import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
+import Step from '@benzin/screens/BenzinScreen/components/Steps/components/Step'
 import AmbireLogo from '@common/assets/svg/AmbireLogo'
 import GasTankIcon from '@common/assets/svg/GasTankIcon'
 import BottomSheet from '@common/components/BottomSheet'
@@ -47,6 +47,7 @@ interface Props {
   style?: ViewStyle
   size?: 'sm' | 'md' | 'lg'
   defaultType: 'summary' | 'full-info'
+  modalType?: 'modal' | 'bottom-sheet'
 }
 
 type DappInteraction = {
@@ -84,8 +85,11 @@ const getFullBalanceChangeAmount = (change: DisplayBalanceChange) =>
     change.decimals
   )
 
-const getBalanceChangeTooltipId = (change: DisplayBalanceChange) =>
-  `balance-change-${change.chainId}-${change.address}-${change.balanceChange.toString()}`
+const getBalanceChangeTooltipId = (
+  change: DisplayBalanceChange,
+  submittedAccountOp: SubmittedAccountOp
+) =>
+  `balance-change-${submittedAccountOp.id}-${change.chainId}-${change.address}-${change.balanceChange.toString()}`
 
 const BalanceChangeToken = ({ change }: { change: DisplayBalanceChange }) => {
   if (change.iconType === 'gasTank') {
@@ -405,7 +409,7 @@ const SubmittedTransactionSummaryDetails = ({
   )
 
   return (
-    <View style={[spacings.ptXl]}>
+    <View style={[spacings.ptXl, spacings.phSm]}>
       <View style={spacings.phSm}>
         <Step
           title="Transaction details"
@@ -566,13 +570,13 @@ const SubmittedTransactionSummaryInner = ({
   submittedAccountOp,
   size = 'lg',
   style,
-  defaultType
+  defaultType,
+  modalType
 }: Props) => {
   const { styles } = useTheme(getStyles)
   const { dispatch: activityDispatch } = useController('ActivityController')
   const { networks } = useController('NetworksController').state
   const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useModalize()
-  const { theme } = useTheme()
 
   const network: Network | undefined = useMemo(
     () => networks.find((n) => n.chainId === submittedAccountOp.chainId),
@@ -696,7 +700,7 @@ const SubmittedTransactionSummaryInner = ({
                       // @ts-ignore
                       style={{ cursor: 'pointer' }}
                       dataSet={createGlobalTooltipDataSet({
-                        id: getBalanceChangeTooltipId(change),
+                        id: getBalanceChangeTooltipId(change, submittedAccountOp),
                         content: getFullBalanceChangeAmount(change)
                       })}
                     >
@@ -721,7 +725,7 @@ const SubmittedTransactionSummaryInner = ({
       <BottomSheet
         sheetRef={sheetRef}
         closeBottomSheet={closeBottomSheet}
-        type="bottom-sheet"
+        type={modalType}
         style={{
           maxWidth: 720,
           paddingVertical: 0,
@@ -740,7 +744,12 @@ const SubmittedTransactionSummaryInner = ({
   )
 }
 
-const SubmittedTransactionSummary = ({ submittedAccountOp, size = 'lg', style }: Props) => {
+const SubmittedTransactionSummary = ({
+  submittedAccountOp,
+  size = 'lg',
+  style,
+  modalType = 'bottom-sheet'
+}: Props) => {
   const accountOpDividedIntoMultipleIfNeeded = isIdentifiedByMultipleTxn(
     submittedAccountOp.identifiedBy
   )
@@ -774,6 +783,7 @@ const SubmittedTransactionSummary = ({ submittedAccountOp, size = 'lg', style }:
           size={size}
           style={style}
           defaultType="full-info"
+          modalType={modalType}
         />
       ))}
     </>
