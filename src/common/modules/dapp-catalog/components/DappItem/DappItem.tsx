@@ -44,7 +44,7 @@ function formatTVL(tvl: number) {
 
 type DappItemProps = Dapp & {
   onPressOverride?: () => void
-  hideSettingsIcon?: boolean
+  isInSettings?: boolean
 }
 
 const DappItem = (dapp: DappItemProps) => {
@@ -61,7 +61,7 @@ const DappItem = (dapp: DappItemProps) => {
     tvl,
     twitter,
     onPressOverride,
-    hideSettingsIcon
+    isInSettings
   } = dapp
   const { styles, theme } = useTheme(getStyles)
   const { dispatch: dappsDispatch } = useController('DappsController')
@@ -173,7 +173,7 @@ const DappItem = (dapp: DappItemProps) => {
                     fontSize={14}
                     appearance="primaryText"
                     numberOfLines={1}
-                    style={[text.left, spacings.mrTy, { lineHeight: 20 }]}
+                    style={[text.left, spacings.mrTy, { lineHeight: 20, flexShrink: 1 }]}
                   >
                     {name}
                   </Text>
@@ -238,7 +238,7 @@ const DappItem = (dapp: DappItemProps) => {
                     <Badge text={t('Blacklisted')} type="error" style={spacings.mrTy} />
                   )}
                 </View>
-                {!!isConnected && !hideSettingsIcon && (
+                {!!isConnected && !isInSettings && (
                   <View testID="manage-dapp-dropdown" style={{ zIndex: 999 }}>
                     <ManageApp
                       dapp={dapp}
@@ -260,7 +260,7 @@ const DappItem = (dapp: DappItemProps) => {
                     </ManageApp>
                   </View>
                 )}
-                {isFeatured && (
+                {isFeatured && !isInSettings && (
                   <Badge
                     text={t('Featured')}
                     textStyle={{

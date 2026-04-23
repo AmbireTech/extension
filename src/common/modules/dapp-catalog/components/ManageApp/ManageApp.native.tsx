@@ -94,7 +94,7 @@ const ManageApp = ({
         </Text>
 
         <View style={spacings.mbSm}>
-          <DappItem {...dapp} hideSettingsIcon onPressOverride={() => {}} />
+          <DappItem {...dapp} isInSettings onPressOverride={() => {}} />
         </View>
 
         <Select
