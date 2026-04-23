@@ -133,17 +133,23 @@ const getOrderedBalanceChanges = (submittedAccountOp: SubmittedAccountOp) => {
 const getBalanceChangeLabel = (submittedAccountOp: SubmittedAccountOp, change: BalanceChange) => {
   if (change.balanceChange > 0n) return 'Received'
 
+  const gasFeePayment = submittedAccountOp.gasFeePayment
+  const isSelfPaidFeeTokenOutflow =
+    !!gasFeePayment &&
+    gasFeePayment.paidBy.toLowerCase() === submittedAccountOp.accountAddr.toLowerCase() &&
+    gasFeePayment.inToken.toLowerCase() === change.address.toLowerCase() &&
+    -change.balanceChange === gasFeePayment.amount
+
+  if (isSelfPaidFeeTokenOutflow) return 'Gas'
+
   const isSelfPaidNativeFee =
-    submittedAccountOp.gasFeePayment?.inToken === ZeroAddress &&
-    submittedAccountOp.gasFeePayment?.paidBy.toLowerCase() ===
-      submittedAccountOp.accountAddr.toLowerCase() &&
-    change.address.toLowerCase() === ZeroAddress.toLowerCase()
+    gasFeePayment?.inToken === ZeroAddress && change.address === ZeroAddress
+  if (isSelfPaidNativeFee) {
+    const hasCallsWithNativeValue = submittedAccountOp.calls.some((call) => call.value > 0n)
+    return hasCallsWithNativeValue ? 'Sent/Gas' : 'Gas'
+  }
 
-  if (!isSelfPaidNativeFee) return 'Sent'
-
-  const hasCallsWithNativeValue = submittedAccountOp.calls.some((call) => call.value > 0n)
-
-  return hasCallsWithNativeValue ? 'Sent + Gas' : 'Gas'
+  return 'Sent'
 }
 
 const getHumanizedCalls = (submittedAccountOp: SubmittedAccountOp): IrCall[] =>
@@ -440,9 +446,9 @@ const SubmittedTransactionSummaryInner = ({
                       index < orderedBalanceChanges.length - 1 ? spacings.mbTy : null
                     ]}
                   >
-                    <Text fontSize={12} appearance="secondaryText">
+                    {/* <Text fontSize={12} appearance="secondaryText">
                       {t(getBalanceChangeLabel(submittedAccountOp, change))}{' '}
-                    </Text>
+                    </Text> */}
                     <Text
                       fontSize={12}
                       weight="medium"
