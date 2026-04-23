@@ -3,7 +3,6 @@ import React, { useMemo } from 'react'
 import { Pressable, View, ViewStyle } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 
-import { Dapp } from '@ambire-common/interfaces/dapp'
 import { Network } from '@ambire-common/interfaces/network'
 import {
   BalanceChange,
@@ -14,9 +13,6 @@ import { AccountOpStatus } from '@ambire-common/libs/accountOp/types'
 import { humanizeAccountOp } from '@ambire-common/libs/humanizer'
 import { IrCall } from '@ambire-common/libs/humanizer/interfaces'
 import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
-import AmbireLogoSquare from '@common/assets/svg/AmbireLogoSquare'
-import BungeeIcon from '@common/assets/svg/BungeeIcon/BungeeIcon'
-import LiFiIcon from '@common/assets/svg/LiFiIcon/LiFiIcon'
 import BottomSheet from '@common/components/BottomSheet'
 import NetworkIcon from '@common/components/NetworkIcon'
 import SkeletonLoader from '@common/components/SkeletonLoader'
@@ -30,7 +26,6 @@ import TransactionSummary, { sizeMultiplier } from '@common/modules/sign-account
 import spacings, { SPACING_SM } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import DelegationHumanization from '@web/components/DelegationHumanization'
-import ManifestImage from '@web/components/ManifestImage'
 
 import Footer from './Footer'
 import StatusBadge from './StatusBadge'
@@ -46,9 +41,10 @@ interface Props {
 type DappInteraction = {
   id: string
   name: string
-  iconUrl?: string | null
-  iconType?: 'lifi' | 'socket' | 'ambire'
 }
+
+const MAX_VISIBLE_DAPP_INTERACTIONS = 2
+const MAX_VISIBLE_BALANCE_CHANGES = 3
 
 const formatBalanceChangeAmount = (change: BalanceChange) => {
   const formattedAmount = formatDecimals(
@@ -79,42 +75,15 @@ const BalanceChangeToken = ({ change }: { change: BalanceChange }) => (
   </View>
 )
 
-const DappInteractionIcon = ({ interaction }: { interaction: DappInteraction }) => {
-  if (interaction.iconType === 'lifi') return <LiFiIcon width={18} height={18} />
-  if (interaction.iconType === 'socket') return <BungeeIcon width={18} height={18} />
-  if (interaction.iconType === 'ambire') return <AmbireLogoSquare width={18} height={18} />
-
-  const fallbackInitial = interaction.name.trim().charAt(0).toUpperCase() || '?'
-
-  return (
-    <ManifestImage
-      uri={interaction.iconUrl || ''}
-      size={18}
-      isRound
-      fallback={() => (
-        <View style={stylesForIcons.fallbackIcon}>
-          <Text fontSize={11} weight="medium" appearance="secondaryText">
-            {fallbackInitial}
-          </Text>
-        </View>
-      )}
-      imageStyle={stylesForIcons.manifestImage}
-    />
-  )
-}
-
-const stylesForIcons = {
-  fallbackIcon: {
-    width: 18,
-    height: 18,
-    borderRadius: 9,
-    alignItems: 'center',
-    justifyContent: 'center'
-  },
-  manifestImage: {
-    backgroundColor: 'transparent'
-  }
-} as const
+const getFormattedSubmittedDate = (timestamp: number) =>
+  new Date(timestamp).toLocaleString('en-us', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: 'numeric',
+    hourCycle: 'h12'
+  })
 
 const getOrderedBalanceChanges = (submittedAccountOp: SubmittedAccountOp) => {
   const balanceChanges = submittedAccountOp.balanceChanges || []
@@ -128,28 +97,6 @@ const getOrderedBalanceChanges = (submittedAccountOp: SubmittedAccountOp) => {
   )
 
   return [...positiveChanges, ...nonNativeNegativeChanges, ...nativeNegativeChanges]
-}
-
-const getBalanceChangeLabel = (submittedAccountOp: SubmittedAccountOp, change: BalanceChange) => {
-  if (change.balanceChange > 0n) return 'Received'
-
-  const gasFeePayment = submittedAccountOp.gasFeePayment
-  const isSelfPaidFeeTokenOutflow =
-    !!gasFeePayment &&
-    gasFeePayment.paidBy.toLowerCase() === submittedAccountOp.accountAddr.toLowerCase() &&
-    gasFeePayment.inToken.toLowerCase() === change.address.toLowerCase() &&
-    -change.balanceChange === gasFeePayment.amount
-
-  if (isSelfPaidFeeTokenOutflow) return 'Gas'
-
-  const isSelfPaidNativeFee =
-    gasFeePayment?.inToken === ZeroAddress && change.address === ZeroAddress
-  if (isSelfPaidNativeFee) {
-    const hasCallsWithNativeValue = submittedAccountOp.calls.some((call) => call.value > 0n)
-    return hasCallsWithNativeValue ? 'Sent/Gas' : 'Gas'
-  }
-
-  return 'Sent'
 }
 
 const getHumanizedCalls = (submittedAccountOp: SubmittedAccountOp): IrCall[] =>
@@ -169,13 +116,12 @@ const getDappInteractions = (submittedAccountOp: SubmittedAccountOp): DappIntera
   }
 
   submittedAccountOp.calls.forEach((call) => {
-    const dapp = call.dapp as Dapp | undefined
+    const dapp = call.dapp
     if (!dapp?.name) return
 
     addInteraction({
       id: `dapp:${dapp.id || `${dapp.name}-${dapp.url || ''}`}`,
-      name: dapp.name,
-      iconUrl: dapp.icon
+      name: dapp.name
     })
   })
 
@@ -183,16 +129,14 @@ const getDappInteractions = (submittedAccountOp: SubmittedAccountOp): DappIntera
   if (isSwap) {
     addInteraction({
       id: 'fallback:swap',
-      name: 'Swap/Bridge',
-      iconType: 'ambire'
+      name: 'Swap/Bridge'
     })
   }
 
   if (!interactions.length) {
     addInteraction({
       id: 'fallback:transfer',
-      name: 'Transfer',
-      iconType: 'ambire'
+      name: 'Transfer'
     })
   }
 
@@ -201,14 +145,16 @@ const getDappInteractions = (submittedAccountOp: SubmittedAccountOp): DappIntera
 
 const SubmittedTransactionHeader = ({
   submittedAccountOp,
+  network,
   size
 }: {
   submittedAccountOp: SubmittedAccountOp
+  network: Network
   size: 'sm' | 'md' | 'lg'
 }) => {
   const { styles } = useTheme(getStyles)
   const submittedDate = useMemo(
-    () => new Date(submittedAccountOp.timestamp),
+    () => getFormattedSubmittedDate(submittedAccountOp.timestamp),
     [submittedAccountOp.timestamp]
   )
 
@@ -218,11 +164,12 @@ const SubmittedTransactionHeader = ({
     >
       <StatusBadge status={submittedAccountOp.status} textSize={14 * sizeMultiplier[size]} />
       <View style={styles.headerMeta}>
-        {submittedDate.toString() !== 'Invalid Date' && (
-          <Text fontSize={14 * sizeMultiplier[size]} appearance="secondaryText">
-            {`${submittedDate.toLocaleDateString()} (${submittedDate.toLocaleTimeString()})`}
-          </Text>
-        )}
+        <Text fontSize={14 * sizeMultiplier[size]} appearance="secondaryText">
+          {submittedDate}
+        </Text>
+        <Text fontSize={14 * sizeMultiplier[size]} appearance="secondaryText" style={spacings.mlTy}>
+          on {network.name}
+        </Text>
         <NetworkIcon
           id={submittedAccountOp.chainId.toString()}
           size={20 * sizeMultiplier[size]}
@@ -299,7 +246,11 @@ const SubmittedTransactionSummaryDetails = ({
         }
       ]}
     >
-      <SubmittedTransactionHeader submittedAccountOp={submittedAccountOp} size={size} />
+      <SubmittedTransactionHeader
+        submittedAccountOp={submittedAccountOp}
+        network={network}
+        size={size}
+      />
       {!isDelegationTxn &&
         humanizedCalls.map((call: IrCall) => (
           <TransactionSummary
@@ -370,11 +321,27 @@ const SubmittedTransactionSummaryInner = ({
     () => getOrderedBalanceChanges(submittedAccountOp),
     [submittedAccountOp]
   )
+  const visibleBalanceChanges = useMemo(
+    () => orderedBalanceChanges.slice(0, MAX_VISIBLE_BALANCE_CHANGES),
+    [orderedBalanceChanges]
+  )
+  const hiddenBalanceChangesCount = Math.max(
+    orderedBalanceChanges.length - MAX_VISIBLE_BALANCE_CHANGES,
+    0
+  )
   const shouldShowBalanceChangesSummary =
     submittedAccountOp.status === AccountOpStatus.Success && orderedBalanceChanges.length > 0
   const dappInteractions = useMemo(
     () => getDappInteractions(submittedAccountOp),
     [submittedAccountOp]
+  )
+  const visibleDappInteractions = useMemo(
+    () => dappInteractions.slice(0, MAX_VISIBLE_DAPP_INTERACTIONS),
+    [dappInteractions]
+  )
+  const hiddenDappInteractionsCount = Math.max(
+    dappInteractions.length - MAX_VISIBLE_DAPP_INTERACTIONS,
+    0
   )
 
   const handleOpenDetails = () => {
@@ -409,7 +376,11 @@ const SubmittedTransactionSummaryInner = ({
             }
           ]}
         >
-          <SubmittedTransactionHeader submittedAccountOp={submittedAccountOp} size={size} />
+          <SubmittedTransactionHeader
+            submittedAccountOp={submittedAccountOp}
+            network={network}
+            size={size}
+          />
           <View style={styles.contentContainer}>
             <View
               style={[
@@ -418,37 +389,39 @@ const SubmittedTransactionSummaryInner = ({
               ]}
             >
               {dappInteractions.length ? (
-                dappInteractions.map((interaction, index) => (
-                  <View
-                    key={interaction.id}
-                    style={[
-                      styles.dappInteractionRow,
-                      index < dappInteractions.length - 1 ? spacings.mbTy : null
-                    ]}
-                  >
-                    <DappInteractionIcon interaction={interaction} />
-                    <Text fontSize={12} appearance="secondaryText" style={spacings.mlMi}>
-                      {interaction.name}
+                <View style={styles.dappInteractionRow}>
+                  {visibleDappInteractions.map((interaction) => (
+                    <Text
+                      key={interaction.id}
+                      fontSize={12}
+                      appearance="secondaryText"
+                      style={spacings.mrTy}
+                    >
+                      [{interaction.name}]
                     </Text>
-                  </View>
-                ))
+                  ))}
+                  {!!hiddenDappInteractionsCount && (
+                    <Text fontSize={12} appearance="secondaryText">
+                      [+{hiddenDappInteractionsCount}]
+                    </Text>
+                  )}
+                </View>
               ) : (
                 <SkeletonLoader width={120} height={18} />
               )}
             </View>
             {shouldShowBalanceChangesSummary && (
               <View style={styles.balanceChangesRightColumn}>
-                {orderedBalanceChanges.map((change, index) => (
+                {visibleBalanceChanges.map((change, index) => (
                   <View
                     key={`${change.address}-${change.balanceChange.toString()}`}
                     style={[
                       styles.balanceChangeRow,
-                      index < orderedBalanceChanges.length - 1 ? spacings.mbTy : null
+                      index < visibleBalanceChanges.length - 1 || hiddenBalanceChangesCount
+                        ? spacings.mbTy
+                        : null
                     ]}
                   >
-                    {/* <Text fontSize={12} appearance="secondaryText">
-                      {t(getBalanceChangeLabel(submittedAccountOp, change))}{' '}
-                    </Text> */}
                     <Text
                       fontSize={12}
                       weight="medium"
@@ -456,9 +429,17 @@ const SubmittedTransactionSummaryInner = ({
                     >
                       {formatBalanceChangeAmount(change)}
                     </Text>
+                    <Text fontSize={12} appearance="secondaryText" style={spacings.mlTy}>
+                      {change.symbol}
+                    </Text>
                     <BalanceChangeToken change={change} />
                   </View>
                 ))}
+                {!!hiddenBalanceChangesCount && (
+                  <Text fontSize={12} appearance="secondaryText">
+                    +{hiddenBalanceChangesCount} more
+                  </Text>
+                )}
               </View>
             )}
           </View>
@@ -467,7 +448,7 @@ const SubmittedTransactionSummaryInner = ({
       <BottomSheet
         sheetRef={sheetRef}
         closeBottomSheet={closeBottomSheet}
-        type="modal"
+        type="bottom-sheet"
         style={{ maxWidth: 720, paddingHorizontal: 0, overflow: 'hidden' }}
       >
         <SubmittedTransactionSummaryDetails
