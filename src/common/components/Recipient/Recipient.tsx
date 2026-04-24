@@ -6,6 +6,7 @@ import { useModalize } from 'react-native-modalize'
 
 import { Contact } from '@ambire-common/controllers/addressBook/addressBook'
 import { AddressState } from '@ambire-common/interfaces/domains'
+import { AddressPoisoningMatch } from '@ambire-common/interfaces/transfer'
 import { TokenResult } from '@ambire-common/libs/portfolio'
 import { validateAddress, Validation } from '@ambire-common/services/validations'
 import { getAddressFromAddressState } from '@ambire-common/utils/domains'
@@ -52,6 +53,7 @@ interface Props extends InputProps {
   isRecipientDomainResolving: boolean
   selectedTokenSymbol?: TokenResult['symbol']
   menuPosition?: 'top' | 'bottom'
+  addressPoisoningMatch?: AddressPoisoningMatch | null
 }
 
 const ADDRESS_BOOK_VISIBLE_VALIDATION: Validation = {
@@ -74,6 +76,11 @@ const SelectedMenuOption: React.FC<{
   renderConfirmAddress?: () => React.ReactNode
   type?: 'input' | 'selected-menu-option'
   autoFocus?: boolean
+  addressHighlight?: {
+    prefix: number
+    suffix: number
+    color: 'errorText'
+  }
 }> = ({
   selectRef,
   filteredContacts,
@@ -88,7 +95,8 @@ const SelectedMenuOption: React.FC<{
   setIsMenuOpen,
   renderConfirmAddress,
   type = 'selected-menu-option',
-  autoFocus = false
+  autoFocus = false,
+  addressHighlight
 }) => {
   const [isFocused, setIsFocused] = useState(false)
   const { theme } = useTheme()
@@ -141,6 +149,7 @@ const SelectedMenuOption: React.FC<{
         containerStyle={styles.inputContainer}
         resolvedAddress={resolvedAddress}
         resolvedAddressType={resolvedAddressType}
+        addressHighlight={addressHighlight}
         isRecipientDomainResolving={isRecipientDomainResolving}
         value={address}
         withDetails={type === 'selected-menu-option'}
@@ -192,6 +201,7 @@ const SelectedMenuOption: React.FC<{
       setAddress,
       setIsMenuOpen,
       theme.neutral400,
+      addressHighlight,
       type,
       validation
     ]
@@ -214,7 +224,8 @@ const Recipient: React.FC<Props> = ({
   isRecipientAddressUnknown,
   validation,
   isRecipientDomainResolving,
-  disabled
+  disabled,
+  addressPoisoningMatch
 }) => {
   const {
     state: { account }
@@ -395,6 +406,20 @@ const Recipient: React.FC<Props> = ({
     ]
   )
 
+  const selectedAddressHighlight = useMemo(
+    () =>
+      addressPoisoningMatch
+        ? {
+            // Keep the trusted matching prefix/suffix neutral and highlight the differing middle
+            // segment, while still accounting for the visible 0x prefix in the rendered address.
+            prefix: addressPoisoningMatch.matchedCharsCount + 2,
+            suffix: addressPoisoningMatch.matchedCharsCount,
+            color: 'errorText' as const
+          }
+        : undefined,
+    [addressPoisoningMatch]
+  )
+
   const renderSelectedOption = useCallback(
     ({ setIsMenuOpen, isMenuOpen, selectRef }: RenderSelectedOptionParams) => {
       return (
@@ -411,6 +436,7 @@ const Recipient: React.FC<Props> = ({
           setAddress={setAddress}
           disabled={disabled}
           renderConfirmAddress={renderConfirmAddress}
+          addressHighlight={selectedAddressHighlight}
         />
       )
     },
@@ -423,7 +449,8 @@ const Recipient: React.FC<Props> = ({
       address,
       setAddress,
       disabled,
-      renderConfirmAddress
+      renderConfirmAddress,
+      selectedAddressHighlight
     ]
   )
 

@@ -3,11 +3,12 @@ import { useTranslation } from 'react-i18next'
 import { View, ViewStyle } from 'react-native'
 
 import ReceiveIcon from '@common/assets/svg/ReceiveIcon'
+import HighlightedPlainAddress from '@common/components/AccountAddress/HighlightedPlainAddress'
 import PlainAddress from '@common/components/AccountAddress/PlainAddress'
 import PlainAddressWithCopy from '@common/components/AccountAddress/PlainAddressWithCopy'
 import DomainBadge from '@common/components/Avatar/DomainBadge'
 import Text from '@common/components/Text'
-import { isMobile } from '@common/config/env'
+import { isMobile, isWeb } from '@common/config/env'
 import useHover, { AnimatedPressable } from '@common/hooks/useHover/useHover'
 import useNavigation from '@common/hooks/useNavigation'
 import useReverseLookup from '@common/hooks/useReverseLookup'
@@ -18,6 +19,11 @@ import flexbox from '@common/styles/utils/flexbox'
 interface Props extends ReturnType<typeof useReverseLookup> {
   address: string
   plainAddressMaxLength?: number
+  addressHighlight?: {
+    prefix: number
+    suffix: number
+    color: 'errorText'
+  }
   withCopy?: boolean
   fontSize?: number
   containerStyle?: ViewStyle
@@ -52,6 +58,7 @@ const AccountAddress: FC<Props> = ({
   type,
   address,
   plainAddressMaxLength = 42,
+  addressHighlight,
   withCopy = true,
   fontSize = 12,
   containerStyle = {},
@@ -100,10 +107,25 @@ const AccountAddress: FC<Props> = ({
           {withCopy ? (
             <>
               <PlainAddressWithCopy
-                maxLength={withWrap && isMobile ? 42 : 18}
+                maxLength={addressHighlight || withWrap ? 42 : isMobile ? 42 : 18}
                 address={address}
                 fontSize={fontSize}
                 withWrap={withWrap}
+                renderAddress={
+                  addressHighlight ? (
+                    <HighlightedPlainAddress
+                      address={address}
+                      highlight={addressHighlight}
+                      hideParentheses
+                      fontSize={fontSize}
+                      withWrap={withWrap}
+                      style={{
+                        ...(isWeb ? { flexShrink: 0 } : {}),
+                        ...(withWrap ? { minWidth: isMobile ? 70 : 170 } : {})
+                      }}
+                    />
+                  ) : undefined
+                }
               >
                 {withReceive && <ReceiveButton address={address} fontSize={fontSize} />}
               </PlainAddressWithCopy>
@@ -128,6 +150,22 @@ const AccountAddress: FC<Props> = ({
             hideParentheses
             fontSize={fontSize}
             withWrap={withWrap}
+            renderAddress={
+              addressHighlight ? (
+                <HighlightedPlainAddress
+                  address={address}
+                  highlight={addressHighlight}
+                  hideParentheses
+                  fontSize={fontSize}
+                  withWrap={withWrap}
+                  style={{
+                    ...(plainAddressMaxLength === 42 ? { flexShrink: 1 } : {}),
+                    ...(isWeb ? { flexShrink: 0 } : {}),
+                    ...(withWrap ? { minWidth: isMobile ? 70 : 170 } : {})
+                  }}
+                />
+              ) : undefined
+            }
           >
             {withReceive && <ReceiveButton address={address} fontSize={fontSize} />}
           </PlainAddressWithCopy>

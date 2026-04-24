@@ -20,6 +20,7 @@ interface Props {
   fontSize?: number
   children?: React.ReactNode
   withWrap?: boolean
+  renderAddress?: React.ReactNode
 }
 
 const PlainAddressWithCopy: FC<Props> = ({
@@ -29,7 +30,8 @@ const PlainAddressWithCopy: FC<Props> = ({
   hideParentheses,
   fontSize = 12,
   children,
-  withWrap = false
+  withWrap = false,
+  renderAddress
 }) => {
   const { t } = useTranslation()
   const { addToast } = useToast()
@@ -55,18 +57,20 @@ const PlainAddressWithCopy: FC<Props> = ({
         withWrap ? { flexBasis: 110, flexGrow: 1, flexShrink: 1 } : {}
       ]}
     >
-      <PlainAddress
-        maxLength={maxLength}
-        address={address}
-        hideParentheses={hideParentheses}
-        style={{
-          ...style,
-          ...(maxLength === 42 ? { flexShrink: 1 } : {}),
-          ...(isWeb ? { flexShrink: 0 } : {}),
-          ...(withWrap ? { minWidth: isMobile ? 70 : 170 } : {})
-        }}
-        fontSize={fontSize}
-      />
+      {renderAddress || (
+        <PlainAddress
+          maxLength={maxLength}
+          address={address}
+          hideParentheses={hideParentheses}
+          style={{
+            ...style,
+            ...(maxLength === 42 ? { flexShrink: 1 } : {}),
+            ...(isWeb ? { flexShrink: 0 } : {}),
+            ...(withWrap ? { minWidth: isMobile ? 70 : 170 } : {})
+          }}
+          fontSize={fontSize}
+        />
+      )}
       <AnimatedPressable onPress={handleCopy} style={animStyle} {...bindAnim}>
         <CopyIcon width={fontSize + 8} height={fontSize + 8} color={theme.secondaryText} />
       </AnimatedPressable>
