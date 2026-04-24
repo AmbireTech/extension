@@ -88,6 +88,11 @@ const SelectContainer: FC<Props> = ({
     }
   }, [isMenuOpen, mode])
 
+  // Memoize the BottomSheet header so its JSX reference is stable across
+  // renders when inputs don't change. Without this, every SelectContainer
+  // render passes a new `HeaderComponent` element to `BottomSheetContainer`,
+  // which defeats `React.memo` on the inner `BottomSheet` and feeds the
+  // nested-Portal infinite-update loop.
   const bottomSheetHeader = useMemo(
     () => (
       <View>

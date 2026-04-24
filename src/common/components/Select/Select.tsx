@@ -16,11 +16,6 @@ const Select = ({
   onSearch,
   ...props
 }: SelectProps) => {
-  // To address the structural differences between SectionList and FlatList,
-  // we wrap non-sectioned list data in a default single section.
-  // Memoize so the array reference is stable across renders (as long as `options` is),
-  // which in turn keeps `filteredData`, `renderItem` and `flatListProps` stable and
-  // prevents an infinite FlatList layout loop inside Modalize (react-native-modalize).
   const data = useMemo(
     () => [{ data: options, title: '', key: 'default' }] as SectionedSelectProps['sections'],
     [options]
