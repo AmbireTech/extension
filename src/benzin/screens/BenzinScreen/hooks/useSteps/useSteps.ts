@@ -18,6 +18,7 @@ import { Network } from '@ambire-common/interfaces/network'
 import { AccountOp } from '@ambire-common/libs/accountOp/accountOp'
 import {
   AccountOpIdentifiedBy,
+  BalanceChange,
   fetchFrontRanTxnId,
   fetchTxnId,
   SubmittedAccountOp
@@ -26,6 +27,7 @@ import { AccountOpStatus, Call } from '@ambire-common/libs/accountOp/types'
 import { decodeFeeCall } from '@ambire-common/libs/calls/calls'
 import { humanizeAccountOp } from '@ambire-common/libs/humanizer'
 import { IrCall } from '@ambire-common/libs/humanizer/interfaces'
+import { getTransferLogTokens } from '@ambire-common/libs/logsParser/parseLogs'
 import { parseLogs } from '@ambire-common/libs/userOperation/userOperation'
 import { resolveAssetInfo } from '@ambire-common/services/assetInfo'
 import { Bundler } from '@ambire-common/services/bundlers/bundler'
@@ -77,6 +79,7 @@ export interface StepsData {
   blockData: null | Block
   finalizedStatus: FinalizedStatusType
   feePaidWith: FeePaidWith | null
+  balanceChanges?: BalanceChange[]
   calls: IrCall[] | null
   txnId: string | null
   from: string | null
@@ -147,6 +150,8 @@ const parseHumanizer = (humanizedCalls: IrCall[]): IrCall[] => {
 const filterEntryPointAuthCall = (call: IrCall) =>
   !call.data.endsWith('0000000000000000000000000000000000000000000000000000000000007171')
 
+type ReceiptLogs = Parameters<typeof getTransferLogTokens>[0]
+
 const useSteps = ({
   txnId,
   userOpHash,
@@ -159,6 +164,7 @@ const useSteps = ({
   networks
 }: Props): StepsData => {
   const [txn, setTxn] = useState<null | TransactionResponse>(null)
+  const [receiptLogs, setReceiptLogs] = useState<ReceiptLogs | null>(null)
   const [txnReceipt, setTxnReceipt] = useState<{
     actualGasCost: null | bigint
     originatedFrom: null | string
@@ -180,6 +186,7 @@ const useSteps = ({
   const [from, setFrom] = useState<null | string>(null)
   const [isFrontRan, setIsFrontRan] = useState<boolean>(false)
   const [isFetching, setIsFetching] = useState<boolean>(false)
+  const [balanceChanges, setBalanceChanges] = useState<BalanceChange[] | undefined>(undefined)
   const [activityAccOp, setActivityAccOp] = useState<SubmittedAccountOp | null>(null)
   const [shouldTryBlockFetch, setShouldTryBlockFetch] = useState<boolean>(true)
   const [refetchStatus, setRefetchStatus] = useState<number>(0)
@@ -502,6 +509,7 @@ const useSteps = ({
           actualGasCost: BigInt(receipt.actualGasCost),
           blockNumber: BigInt(receipt.receipt.blockNumber)
         })
+        setReceiptLogs([...receipt.receipt.logs])
 
         const userOpLog = parseLogs(receipt.logs, userOpHash, 1)
         if (userOpLog && !userOpLog.success) {
@@ -576,6 +584,8 @@ const useSteps = ({
           actualGasCost: receipt.gasUsed * receipt.gasPrice,
           blockNumber: BigInt(receipt.blockNumber)
         })
+        // @ts-ignore
+        setReceiptLogs([...receipt.logs])
         setFinalizedStatus(receipt.status ? { status: 'confirmed' } : { status: 'failed' })
         setActiveStep('finalized')
       })
@@ -717,6 +727,37 @@ const useSteps = ({
       if (timeout) clearTimeout(timeout)
     }
   }, [dispatchAndWait, network, txnReceipt, blockData, shouldTryBlockFetch, activityAccOp])
+
+  useEffect(() => {
+    if (!extensionAccOp || receiptLogs || !activityAccOp?.txnId || !network) return
+    if (activityAccOp.status !== AccountOpStatus.Success) return
+
+    dispatchAndWait({
+      type: 'method',
+      params: {
+        method: 'callProviderAndSendResToUi',
+        args: [
+          {
+            chainId: network.chainId,
+            method: 'getTransactionReceipt',
+            args: [activityAccOp.txnId]
+          }
+        ]
+      }
+    })
+      .then((receipt: null | TransactionReceipt) => {
+        if (!receipt) return
+
+        setTxnReceipt((prev) => ({
+          actualGasCost: prev.actualGasCost || receipt.gasUsed * receipt.gasPrice,
+          originatedFrom: prev.originatedFrom || receipt.from,
+          blockNumber: prev.blockNumber || BigInt(receipt.blockNumber)
+        }))
+        // @ts-ignore
+        setReceiptLogs([...receipt.logs])
+      })
+      .catch(() => null)
+  }, [dispatchAndWait, extensionAccOp, activityAccOp, network, receiptLogs])
 
   // if it's an user op,
   // we need to call the entry point to fetch the hashes
@@ -938,6 +979,66 @@ const useSteps = ({
   }, [txnReceipt.actualGasCost, feePaidWith, feeCall, network, userOp, networks, extensionAccOp])
 
   useEffect(() => {
+    if (
+      !from ||
+      !network ||
+      !receiptLogs ||
+      !txnReceipt.blockNumber ||
+      typeof balanceChanges !== 'undefined'
+    )
+      return
+
+    let isMounted = true
+
+    void (async () => {
+      try {
+        const foundTokens = await getTransferLogTokens(receiptLogs, from)
+
+        dispatchAndWait({
+          type: 'method',
+          params: {
+            method: 'getTokenBalancesOnBlockAndSendResToUi',
+            args: [
+              {
+                accountId: from,
+                chainId: network.chainId,
+                tokenAddrs: [...foundTokens, ZeroAddress],
+                blockTag: Number(txnReceipt.blockNumber),
+                accountAddr: from
+              }
+            ]
+          }
+        })
+          .then((res) => setBalanceChanges(res))
+          .catch(() => null)
+
+        if (!isMounted) return
+      } catch (error) {
+        console.log('erorrrrrrr', error)
+        console.log('erorrrrrrr', error)
+        console.log('erorrrrrrr', error)
+
+        if (!isMounted) return
+
+        setBalanceChanges([])
+      }
+    })()
+
+    return () => {
+      isMounted = false
+    }
+  }, [
+    activityAccOp,
+    balanceChanges,
+    extensionAccOp,
+    network,
+    receiptLogs,
+    txnReceipt.blockNumber,
+    from,
+    dispatchAndWait
+  ])
+
+  useEffect(() => {
     if (!network) return
 
     // if we have the extension account op passed, we do not need to
@@ -996,6 +1097,7 @@ const useSteps = ({
     blockData,
     finalizedStatus,
     feePaidWith,
+    balanceChanges,
     calls: calls || null,
     txnId: foundTxnId,
     from: from || null,

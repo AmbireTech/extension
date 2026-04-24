@@ -36,9 +36,11 @@ const Steps: FC<Props> = ({ activeStep, txnId, userOpHash, stepsState, summary, 
   const { theme } = useTheme()
   const { blockData, finalizedStatus, feePaidWith, from, originatedFrom } = stepsState
   const finalStepRows: any = getFinalizedRows(blockData, finalizedStatus)
-  const balanceChanges = stepsState.submittedAccountOp?.balanceChanges || []
+  const balanceChanges =
+    stepsState.submittedAccountOp?.balanceChanges || stepsState.balanceChanges || []
   const hasBalanceChangesLoaded =
-    typeof stepsState.submittedAccountOp?.balanceChanges !== 'undefined'
+    typeof stepsState.submittedAccountOp?.balanceChanges !== 'undefined' ||
+    typeof stepsState.balanceChanges !== 'undefined'
   const assetsOut = balanceChanges.filter((change) => change.balanceChange < 0n)
   const assetsIn = balanceChanges.filter((change) => change.balanceChange > 0n)
   const shouldShowBalanceChanges = shouldShowTxnProgress(finalizedStatus)
