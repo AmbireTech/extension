@@ -36,7 +36,8 @@ const COMMON_ROUTES = {
   signMessage: 'sign-message',
   addChain: 'add-chain',
   watchAsset: 'watch-asset',
-  switchAccount: 'switch-account'
+  switchAccount: 'switch-account',
+  getEncryptionPublicKeyRequest: 'get-encryption-public-key-request'
 }
 
 const MOBILE_ROUTES = {
@@ -54,7 +55,6 @@ const WEB_ROUTES = {
   accounts: 'accounts',
   keyStoreEmailRecovery: 'extension-password-email-recovery',
   keyStoreEmailRecoverySetNewPassword: 'set-new-extension-password',
-  getEncryptionPublicKeyRequest: 'get-encryption-public-key-request',
   decryptRequest: 'decryptRequest',
   dappConnectRequest: 'dapp-connect-request',
   authEmailAccount: 'auth-email-account',

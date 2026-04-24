@@ -1,6 +1,7 @@
 import React, { FC } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Image, View } from 'react-native'
+import { SvgUri } from 'react-native-svg'
 
 import DAppsIcon from '@common/assets/svg/DAppsIcon'
 import Text from '@common/components/Text'
@@ -27,15 +28,23 @@ const RequestingDappInfo: FC<Props> = ({ name, icon, intentText }) => {
   return (
     <View style={[isWeb && flexbox.directionRow, isMobile && flexbox.alignCenter]}>
       {icon ? (
-        <Image
-          source={{ uri: icon }}
-          style={{
-            ...styles.image,
-            width: 48 * responsiveSizeMultiplier,
-            height: 48 * responsiveSizeMultiplier
-          }}
-          resizeMode="contain"
-        />
+        isMobile && icon.toLowerCase().endsWith('.svg') ? (
+          <SvgUri
+            uri={icon}
+            width={48 * responsiveSizeMultiplier}
+            height={48 * responsiveSizeMultiplier}
+          />
+        ) : (
+          <Image
+            source={{ uri: icon }}
+            style={{
+              ...styles.image,
+              width: 48 * responsiveSizeMultiplier,
+              height: 48 * responsiveSizeMultiplier
+            }}
+            resizeMode="contain"
+          />
+        )
       ) : (
         <View
           style={{

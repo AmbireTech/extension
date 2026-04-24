@@ -9,6 +9,7 @@ import AccountPickerScreen from '@mobile/modules/account-picker/screens/AccountP
 import AccountSelectScreen from '@mobile/modules/account-select/screens/AccountSelectScreen'
 import AddOrUpdateNetworkScreen from '@mobile/modules/action-requests/screens/AddOrUpdateNetworkScreen'
 import BenzinScreen from '@mobile/modules/action-requests/screens/BenzinScreen'
+import GetEncryptionPublicKeyRequestScreen from '@mobile/modules/action-requests/screens/GetEncryptionPublicKeyRequestScreen'
 import SwitchAccountScreen from '@mobile/modules/action-requests/screens/SwitchAccountScreen'
 import WatchTokenRequestScreen from '@mobile/modules/action-requests/screens/WatchTokenRequestScreen'
 import CreateSeedPhrasePrepareScreen from '@mobile/modules/auth/screens/CreateSeedPhrasePrepareScreen'
@@ -80,6 +81,10 @@ const MainRoutes = () => {
           <Route path={ROUTES.addChain} element={<AddOrUpdateNetworkScreen />} />
           <Route path={ROUTES.watchAsset} element={<WatchTokenRequestScreen />} />
           <Route path={ROUTES.switchAccount} element={<SwitchAccountScreen />} />
+          <Route
+            path={ROUTES.getEncryptionPublicKeyRequest}
+            element={<GetEncryptionPublicKeyRequestScreen />}
+          />
         </Route>
       </Route>
       {/* Fallback route to suppress "No routes matched location" warnings when multiple Routes blocks are rendered */}

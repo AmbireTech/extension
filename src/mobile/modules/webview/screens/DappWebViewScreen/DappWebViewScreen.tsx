@@ -593,6 +593,19 @@ const DappWebViewScreen = () => {
     return () => eventBus.removeEventListener('action.broadcastDappEvent', onBroadcastDappEvent)
   }, [])
 
+  //   - onLoadStart only resets state on real top-level navigations. On iOS
+  //     every `onLoadStart` is treated as such; on Android only when the
+  //     event is an explicit reload, there is no previously resolved URL,
+  //     or the origin changed. This avoids resetting the bar for the noisy
+  //     same-origin `onLoadStart` events that Android fires for SPA/hash
+  //     routing (which was what made the bar stick / re-appear on heavy
+  //     pages like Next.js apps).
+  //   - onLoadProgress always keeps `isLoading` true and writes the raw
+  //     progress value. Monotonicity is enforced at the render layer inside
+  //     `DappProgressBar`
+  //   - onLoadEnd only finishes when `event.nativeEvent.loading` is false
+  //     (the "really done" signal) and caches the resolved URL.
+  //   - onError dismisses the bar so failed pages don't leave it hanging.
   const handleLoadStart = useCallback(
     (event: { nativeEvent: { url: string; isReload?: boolean } }) => {
       let treatAsReload: boolean
