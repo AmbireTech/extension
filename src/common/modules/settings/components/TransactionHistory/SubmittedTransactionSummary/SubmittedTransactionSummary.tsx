@@ -213,6 +213,25 @@ const getFormattedSubmittedDate = (timestamp: number) =>
     hourCycle: 'h12'
   })
 
+const getModalFinalStatus = (status?: AccountOpStatus) => {
+  switch (status) {
+    case AccountOpStatus.UnknownButPastNonce:
+      return { label: 'Replaced by fee (RBF)', appearance: 'errorText' as const }
+    case AccountOpStatus.BroadcastButStuck:
+      return { label: 'The transaction could not be found', appearance: 'errorText' as const }
+    case AccountOpStatus.Rejected:
+      return { label: 'Failed to send', appearance: 'errorText' as const }
+    case AccountOpStatus.Failure:
+      return { label: 'Failed', appearance: 'errorText' as const }
+    case AccountOpStatus.Success:
+      return { label: 'Confirmed', appearance: 'successText' as const }
+    case AccountOpStatus.BroadcastedButNotConfirmed:
+      return { label: 'The transaction is pending', appearance: 'warningText' as const }
+    default:
+      return null
+  }
+}
+
 const getOrderedBalanceChanges = (submittedAccountOp: SubmittedAccountOp) => {
   const balanceChanges = submittedAccountOp.balanceChanges || []
   const positiveChanges = balanceChanges.filter((change) => change.balanceChange > 0n)
@@ -383,7 +402,12 @@ const SubmittedTransactionSummaryDetails = ({
     () => getOrderedBalanceChanges(submittedAccountOp),
     [submittedAccountOp]
   )
-  const hasBalanceChangesLoaded = typeof submittedAccountOp.balanceChanges !== 'undefined'
+  const isNotFound =
+    submittedAccountOp.status === AccountOpStatus.BroadcastButStuck ||
+    submittedAccountOp.status === AccountOpStatus.UnknownButPastNonce ||
+    submittedAccountOp.status === AccountOpStatus.Rejected
+  const hasBalanceChangesLoaded =
+    typeof submittedAccountOp.balanceChanges !== 'undefined' || isNotFound
   const assetsOut = useMemo(
     () => orderedBalanceChanges.filter((change) => change.balanceChange < 0n),
     [orderedBalanceChanges]
@@ -394,6 +418,10 @@ const SubmittedTransactionSummaryDetails = ({
   )
   const isDelegationTxn =
     submittedAccountOp.meta && submittedAccountOp.meta.setDelegation !== undefined
+  const isPendingConfirmation =
+    submittedAccountOp.status === AccountOpStatus.Pending ||
+    submittedAccountOp.status === AccountOpStatus.BroadcastedButNotConfirmed
+  const modalFinalStatus = getModalFinalStatus(submittedAccountOp.status)
 
   const renderBalanceChangesCard = (title: string, changes: BalanceChange[]) => (
     <View
@@ -427,7 +455,7 @@ const SubmittedTransactionSummaryDetails = ({
     <View style={[spacings.phSm]}>
       <View style={spacings.phSm}>
         <View style={styles.modalSection} testID="activity-transaction-details-step">
-          <Text appearance="successText" fontSize={16} weight="medium" style={spacings.mbSm}>
+          <Text appearance="tertiaryText" fontSize={16} weight="medium" style={spacings.mbSm}>
             Transaction details
           </Text>
           {!isDelegationTxn &&
@@ -456,7 +484,7 @@ const SubmittedTransactionSummaryDetails = ({
           )}
         </View>
         <View style={[styles.modalSection, spacings.pb0]} testID="activity-balance-changes-step">
-          <Text appearance="successText" fontSize={16} weight="medium" style={spacings.mbSm}>
+          <Text appearance="tertiaryText" fontSize={16} weight="medium" style={spacings.mbSm}>
             Balance changes
           </Text>
           <View style={flexbox.flex1}>
@@ -495,51 +523,78 @@ const SubmittedTransactionSummaryDetails = ({
                 )}
               </View>
             )}
-            {hasBalanceChangesLoaded && !assetsOut.length && !assetsIn.length && (
-              <View
-                style={[
-                  spacings.phSm,
-                  spacings.pvSm,
-                  {
-                    backgroundColor: theme.secondaryBackground,
-                    borderWidth: 1,
-                    borderColor: theme.secondaryBorder,
-                    ...common.borderRadiusPrimary
-                  }
-                ]}
-              >
-                <Text fontSize={14} appearance="secondaryText">
-                  No balance changes detected
-                </Text>
-              </View>
-            )}
+            {hasBalanceChangesLoaded &&
+              !assetsOut.length &&
+              !assetsIn.length &&
+              (isPendingConfirmation ? (
+                <View
+                  style={[
+                    flexbox.directionRow,
+                    flexbox.alignCenter,
+                    spacings.phSm,
+                    spacings.pvSm,
+                    {
+                      backgroundColor: theme.secondaryBackground,
+                      borderWidth: 1,
+                      borderColor: theme.secondaryBorder,
+                      ...common.borderRadiusPrimary
+                    }
+                  ]}
+                >
+                  <Spinner style={{ width: 18, height: 18 }} />
+                  <Text style={spacings.mlSm} fontSize={14} appearance="secondaryText">
+                    Loading balance changes
+                  </Text>
+                </View>
+              ) : (
+                <View
+                  style={[
+                    spacings.phSm,
+                    spacings.pvSm,
+                    {
+                      backgroundColor: theme.secondaryBackground,
+                      borderWidth: 1,
+                      borderColor: theme.secondaryBorder,
+                      ...common.borderRadiusPrimary
+                    }
+                  ]}
+                >
+                  <Text fontSize={14} appearance="secondaryText">
+                    No balance changes detected
+                  </Text>
+                </View>
+              ))}
           </View>
         </View>
-        <View style={[styles.modalConfirmedRow, spacings.mbSm]} testID="activity-confirmed-step">
-          <View
-            style={[
-              flexbox.directionRow,
-              flexbox.justifySpaceBetween,
-              flexbox.alignCenter,
-              spacings.mbSm,
-              { width: '100%' }
-            ]}
-          >
-            <Text appearance="successText" fontSize={16} weight="medium">
-              Confirmed
-            </Text>
-            <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-              <Text fontSize={14} appearance="secondaryText">
-                {submittedDate} on {network.name}
+        {!!modalFinalStatus && (
+          <View style={[styles.modalConfirmedRow, spacings.mbSm]} testID="activity-confirmed-step">
+            <View
+              style={[
+                flexbox.directionRow,
+                flexbox.justifySpaceBetween,
+                flexbox.alignCenter,
+                spacings.mbSm,
+                { width: '100%' }
+              ]}
+            >
+              <Text appearance={modalFinalStatus.appearance} fontSize={16} weight="medium">
+                {modalFinalStatus.label}
               </Text>
-              <NetworkIcon
-                id={submittedAccountOp.chainId.toString()}
-                size={20}
-                style={spacings.mlMi}
-              />
+              {submittedAccountOp.status === AccountOpStatus.Success && (
+                <View style={[flexbox.directionRow, flexbox.alignCenter]}>
+                  <Text fontSize={14} appearance="secondaryText">
+                    {submittedDate} on {network.name}
+                  </Text>
+                  <NetworkIcon
+                    id={submittedAccountOp.chainId.toString()}
+                    size={20}
+                    style={spacings.mlMi}
+                  />
+                </View>
+              )}
             </View>
           </View>
-        </View>
+        )}
       </View>
     </View>
   )

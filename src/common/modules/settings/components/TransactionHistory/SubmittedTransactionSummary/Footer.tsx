@@ -16,6 +16,7 @@ import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import spacings from '@common/styles/spacings'
+import flexbox from '@common/styles/utils/flexbox'
 import { setStringAsync } from '@common/utils/clipboard'
 import { openInTab } from '@common/utils/links'
 
@@ -38,10 +39,9 @@ const Footer: FC<Props> = ({
   identifiedBy,
   accountAddr,
   gasFeePayment,
-  status,
-  size
+  status
 }) => {
-  const { styles, theme } = useTheme(getStyles)
+  const { styles } = useTheme(getStyles)
   const { addToast } = useToast()
   const {
     state: { account: selectedAccount }
@@ -52,6 +52,8 @@ const Footer: FC<Props> = ({
   const { chainId } = network
   const isPendingTransaction =
     status === AccountOpStatus.Pending || status === AccountOpStatus.BroadcastedButNotConfirmed
+  const isMinedTransaction =
+    status === AccountOpStatus.Failure || status === AccountOpStatus.Success
   const shouldShowSpeedUp =
     isPendingTransaction &&
     gasFeePayment?.broadcastOption !== BROADCAST_OPTIONS.byRelayer &&
@@ -185,23 +187,11 @@ const Footer: FC<Props> = ({
   return (
     <View style={styles.footer}>
       <View style={styles.footerButtonsRow}>
-        <Button
-          text={t('Open explorer')}
-          onPress={handleOpenExplorer}
-          type="secondary"
-          size="smaller"
-          hasBottomSpacing={false}
-          style={styles.footerButton}
-          childrenPosition="left"
-          testID="view-transaction-link"
-        >
-          <OpenIcon style={spacings.mrTy} width={16} height={16} />
-        </Button>
-        {canRepeatTransaction ? (
+        {canRepeatTransaction && (
           <Button
+            type="outline"
             text={t(shouldShowSpeedUp ? 'Speed up' : 'Repeat')}
             onPress={shouldShowSpeedUp ? handleSpeedUpTransaction : handleRepeatTransaction}
-            type="tertiary"
             size="smaller"
             hasBottomSpacing={false}
             style={styles.footerButton}
@@ -209,20 +199,34 @@ const Footer: FC<Props> = ({
           >
             <RefreshIcon style={spacings.mrTy} width={16} height={16} />
           </Button>
-        ) : (
-          <View style={styles.footerButton} />
         )}
-        <Button
-          text={t('Copy link')}
-          onPress={handleCopyTransaction}
-          type="primary"
-          size="smaller"
-          hasBottomSpacing={false}
-          style={styles.footerButton}
-          childrenPosition="left"
-        >
-          <CopyIcon style={spacings.mrTy} width={16} height={16} />
-        </Button>
+        {isMinedTransaction && (
+          <View style={[flexbox.directionRow, flexbox.alignCenter]}>
+            <Button
+              text={t('Open explorer')}
+              onPress={handleOpenExplorer}
+              type="tertiary"
+              size="smaller"
+              hasBottomSpacing={false}
+              style={[styles.footerButton, spacings.mrTy]}
+              childrenPosition="left"
+              testID="view-transaction-link"
+            >
+              <OpenIcon style={spacings.mrTy} width={16} height={16} />
+            </Button>
+            <Button
+              text={t('Copy link')}
+              onPress={handleCopyTransaction}
+              type="primary"
+              size="smaller"
+              hasBottomSpacing={false}
+              style={styles.footerButton}
+              childrenPosition="left"
+            >
+              <CopyIcon style={spacings.mrTy} width={16} height={16} />
+            </Button>
+          </View>
+        )}
       </View>
     </View>
   )
