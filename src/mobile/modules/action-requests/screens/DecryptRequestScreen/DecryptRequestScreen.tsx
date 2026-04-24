@@ -5,6 +5,7 @@ import Button from '@common/components/Button'
 import ExpandableCard from '@common/components/ExpandableCard'
 import RequestingDappInfo from '@common/components/RequestingDappInfo'
 import Text from '@common/components/Text'
+import { isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import useDappInfo from '@common/hooks/useDappInfo'
@@ -16,8 +17,10 @@ import { useEncryptionCapability } from '@common/modules/action-requests/hooks'
 import eventBus from '@common/services/event/eventBus'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import SmallNotificationWindowWrapper from '@web/components/SmallNotificationWindowWrapper'
-import { TabLayoutContainer, TabLayoutWrapperMainContent } from '@web/components/TabLayoutWrapper'
+import {
+  MobileLayoutContainer,
+  MobileLayoutWrapperMainContent
+} from '@mobile/components/MobileLayoutWrapper'
 
 const DecryptRequestScreen = () => {
   const { t } = useTranslation()
@@ -143,86 +146,87 @@ const DecryptRequestScreen = () => {
   }, [userRequest, t, requestsDispatch])
 
   return (
-    <SmallNotificationWindowWrapper>
-      <TabLayoutContainer
-        width="full"
-        header={<ActionHeader />}
-        renderDirectChildren={() => (
-          <ActionFooter
-            onReject={handleDeny}
-            onResolve={handleDecrypt}
-            resolveButtonText={t('Decrypt')}
-            resolveDisabled={isDisabled}
-            resolveButtonTestID="button-decrypt"
-            resolveNode={actionFooterResolveNode}
-          />
-        )}
-      >
-        <TabLayoutWrapperMainContent>
-          <RequestingDappInfo
-            name={name}
-            icon={icon}
-            intentText={t('wants you to decrypt a message')}
-          />
+    <MobileLayoutContainer
+      header={<ActionHeader />}
+      renderDirectChildren={() => (
+        <ActionFooter
+          onReject={handleDeny}
+          onResolve={handleDecrypt}
+          resolveButtonText={t('Decrypt')}
+          resolveDisabled={isDisabled}
+          resolveButtonTestID="button-decrypt"
+          resolveNode={actionFooterResolveNode}
+        />
+      )}
+    >
+      <MobileLayoutWrapperMainContent>
+        <RequestingDappInfo
+          name={name}
+          icon={icon}
+          intentText={t('wants you to decrypt a message')}
+        />
 
-          <View style={spacings.mtLg}>
-            {errorNode || (
-              <ExpandableCard
-                enableToggleExpand={false}
-                isInitiallyExpanded={true}
-                hasArrow={false}
-                content={
-                  <View style={flexbox.flex1}>
-                    {decryptedMessage ? (
-                      <>
+        <View style={spacings.mtLg}>
+          {errorNode || (
+            <ExpandableCard
+              enableToggleExpand={false}
+              isInitiallyExpanded={true}
+              hasArrow={false}
+              content={
+                <View style={flexbox.flex1}>
+                  {decryptedMessage ? (
+                    <>
+                      <Text
+                        weight="semiBold"
+                        style={[isWeb && { lineHeight: 12 }, spacings.mtTy, spacings.mbLg]}
+                      >
+                        {t('Decrypted message')}
+                      </Text>
+                      <Text selectable>{decryptedMessage}</Text>
+                    </>
+                  ) : (
+                    <>
+                      <View
+                        style={[
+                          flexbox.directionRow,
+                          flexbox.justifySpaceBetween,
+                          flexbox.alignCenter,
+                          spacings.mb
+                        ]}
+                      >
                         <Text
                           weight="semiBold"
-                          style={[{ lineHeight: 12 }, spacings.mtTy, spacings.mbLg]}
+                          appearance="infoText"
+                          style={[isWeb && { lineHeight: 12 }]}
                         >
-                          {t('Decrypted message')}
+                          {t('Encrypted message')}
                         </Text>
-                        <Text selectable>{decryptedMessage}</Text>
-                      </>
-                    ) : (
-                      <>
-                        <View
-                          style={[
-                            flexbox.directionRow,
-                            flexbox.justifySpaceBetween,
-                            flexbox.alignCenter,
-                            spacings.mb
-                          ]}
-                        >
-                          <Text weight="semiBold" appearance="infoText" style={{ lineHeight: 12 }}>
-                            {t('Encrypted message')}
-                          </Text>
-                          <Button
-                            text={t('Preview decrypted message')}
-                            onPress={handleDecryptForPreview}
-                            type="outline"
-                            hasBottomSpacing={false}
-                            accentColor={theme.infoDecorative}
-                            disabled={isDisabled}
-                            size="small"
-                          />
-                        </View>
+                        <Button
+                          text={t('Preview decrypted message')}
+                          onPress={handleDecryptForPreview}
+                          type="outline"
+                          hasBottomSpacing={false}
+                          accentColor={theme.infoDecorative}
+                          disabled={isDisabled}
+                          size="small"
+                        />
+                      </View>
 
-                        <Text appearance="infoText" selectable>
-                          {encryptedMessage}
-                        </Text>
-                      </>
-                    )}
-                  </View>
-                }
-                style={{
-                  backgroundColor: theme.secondaryBackground
-                }}
-              />
-            )}
-          </View>
-        </TabLayoutWrapperMainContent>
-      </TabLayoutContainer>
-    </SmallNotificationWindowWrapper>
+                      <Text appearance="infoText" selectable>
+                        {encryptedMessage}
+                      </Text>
+                    </>
+                  )}
+                </View>
+              }
+              style={{
+                backgroundColor: theme.secondaryBackground
+              }}
+            />
+          )}
+        </View>
+      </MobileLayoutWrapperMainContent>
+    </MobileLayoutContainer>
   )
 }
 

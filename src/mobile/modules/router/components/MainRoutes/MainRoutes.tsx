@@ -9,6 +9,7 @@ import AccountPickerScreen from '@mobile/modules/account-picker/screens/AccountP
 import AccountSelectScreen from '@mobile/modules/account-select/screens/AccountSelectScreen'
 import AddOrUpdateNetworkScreen from '@mobile/modules/action-requests/screens/AddOrUpdateNetworkScreen'
 import BenzinScreen from '@mobile/modules/action-requests/screens/BenzinScreen'
+import DecryptRequestScreen from '@mobile/modules/action-requests/screens/DecryptRequestScreen'
 import GetEncryptionPublicKeyRequestScreen from '@mobile/modules/action-requests/screens/GetEncryptionPublicKeyRequestScreen'
 import SwitchAccountScreen from '@mobile/modules/action-requests/screens/SwitchAccountScreen'
 import WatchTokenRequestScreen from '@mobile/modules/action-requests/screens/WatchTokenRequestScreen'
@@ -85,6 +86,7 @@ const MainRoutes = () => {
             path={ROUTES.getEncryptionPublicKeyRequest}
             element={<GetEncryptionPublicKeyRequestScreen />}
           />
+          <Route path={ROUTES.decryptRequest} element={<DecryptRequestScreen />} />
         </Route>
       </Route>
       {/* Fallback route to suppress "No routes matched location" warnings when multiple Routes blocks are rendered */}

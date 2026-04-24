@@ -8,12 +8,12 @@ import flexbox from '@common/styles/utils/flexbox'
 import AddOrUpdateNetworkScreen from '@mobile/modules/action-requests/screens/AddOrUpdateNetworkScreen'
 import BenzinScreen from '@mobile/modules/action-requests/screens/BenzinScreen'
 import DappConnectScreen from '@mobile/modules/action-requests/screens/DappConnectScreen'
+import DecryptRequestScreen from '@mobile/modules/action-requests/screens/DecryptRequestScreen'
 import GetEncryptionPublicKeyRequestScreen from '@mobile/modules/action-requests/screens/GetEncryptionPublicKeyRequestScreen'
 import SwitchAccountScreen from '@mobile/modules/action-requests/screens/SwitchAccountScreen'
 import WatchTokenRequestScreen from '@mobile/modules/action-requests/screens/WatchTokenRequestScreen'
 import SignAccountOpScreen from '@mobile/modules/sign-account-op/screens/SignAccountOpScreen'
 import SignMessageScreen from '@mobile/modules/sign-message/screens/SignMessageScreen'
-import DecryptRequestScreen from '@web/modules/action-requests/screens/DecryptRequestScreen'
 
 interface Props {
   sheetRef: React.RefObject<Modalize>

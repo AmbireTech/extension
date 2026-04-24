@@ -2,19 +2,19 @@ import React, { useCallback, useMemo } from 'react'
 import { View } from 'react-native'
 
 import Alert from '@common/components/Alert'
+import RequestingDappInfo from '@common/components/RequestingDappInfo'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import useDappInfo from '@common/hooks/useDappInfo'
 import useToast from '@common/hooks/useToast'
 import ActionFooter from '@common/modules/action-requests/components/ActionFooter'
 import ActionHeader from '@common/modules/action-requests/components/ActionHeader'
+import { useEncryptionCapability } from '@common/modules/action-requests/hooks'
 import spacings from '@common/styles/spacings'
 import {
   MobileLayoutContainer,
   MobileLayoutWrapperMainContent
 } from '@mobile/components/MobileLayoutWrapper'
-import RequestingDappInfo from '@web/components/RequestingDappInfo'
-import { useEncryptionCapability } from '@web/modules/action-requests/hooks'
 
 const GetEncryptionPublicKeyRequestScreen = () => {
   const { t } = useTranslation()
