@@ -1,22 +1,19 @@
-import { formatUnits } from 'ethers'
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { View, ViewStyle } from 'react-native'
 
-import humanizerInfo from '@ambire-common/consts/humanizer/humanizerInfo.json'
 import { IrCall } from '@ambire-common/libs/humanizer/interfaces'
 import DeleteIcon from '@common/assets/svg/DeleteIcon'
 import Alert from '@common/components/Alert'
 import ExpandableCard from '@common/components/ExpandableCard'
 import HumanizedVisualization from '@common/components/HumanizedVisualization'
 import Label from '@common/components/Label'
-import Text from '@common/components/Text'
 import { isMobile, isWeb } from '@common/config/env'
-import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import useHover, { AnimatedPressable } from '@common/hooks/useHover'
 import useTheme from '@common/hooks/useTheme'
+import ExpandedContent from '@common/modules/sign-account-op/components/TransactionSummary/ExpandedContent'
 import FallbackVisualization from '@common/modules/sign-account-op/components/TransactionSummary/FallbackVisualization'
-import spacings, { SPACING_SM, SPACING_TY } from '@common/styles/spacings'
+import { SPACING_SM } from '@common/styles/spacings'
 
 import getStyles from './styles'
 
@@ -57,7 +54,6 @@ const TransactionSummary = ({
 }: Props) => {
   const textSize = 16 * sizeMultiplier[size]
   const imageSize = 32 * sizeMultiplier[size]
-  const { t } = useTranslation()
   const { dispatch: requestsDispatch } = useController('RequestsController')
   const { styles } = useTheme(getStyles)
   /**
@@ -65,21 +61,6 @@ const TransactionSummary = ({
    * set this state to true, which hides it immediately.
    */
   const [isCallRemovedOptimistic, setIsCallRemovedOptimistic] = useState(false)
-
-  const foundCallSignature = useMemo(() => {
-    let foundSigHash: string | undefined
-    Object.values(humanizerInfo.abis).some((abi) => {
-      Object.values(abi).some((s) => {
-        if (call.data && s.selector === call.data.slice(0, 10)) {
-          foundSigHash = s.signature
-          return true
-        }
-        return false
-      })
-      return !!foundSigHash
-    })
-    return foundSigHash
-  }, [call.data])
 
   const [bindDeleteIconAnim, deleteIconAnimStyle] = useHover({
     preset: 'opacityInverted'
@@ -194,43 +175,7 @@ const TransactionSummary = ({
         </>
       }
       expandedContent={
-        <View
-          style={{
-            paddingHorizontal: SPACING_SM * sizeMultiplier[size],
-            paddingVertical: SPACING_TY * sizeMultiplier[size]
-          }}
-        >
-          {call.to && (
-            <Text selectable fontSize={12} style={styles.bodyText} weight="mono_regular">
-              <Text fontSize={12} style={styles.bodyText} weight="regular">
-                {t('Interacting with (to): ')}
-              </Text>
-              {call.to}
-            </Text>
-          )}
-          {foundCallSignature && (
-            <Text selectable fontSize={12} style={styles.bodyText}>
-              <Text fontSize={12} style={styles.bodyText} weight="regular">
-                {t('Function to call: ')}
-              </Text>
-              {foundCallSignature}
-            </Text>
-          )}
-          <Text selectable fontSize={12} style={styles.bodyText}>
-            <Text fontSize={12} style={styles.bodyText} weight="regular">
-              {t('Value to be sent (value): ')}
-            </Text>
-            {formatUnits(call.value || '0x0', 18)}
-          </Text>
-          <Text selectable fontSize={12} style={styles.bodyText}>
-            <Text fontSize={12} style={styles.bodyText} weight="regular">
-              {t('Data: ')}
-            </Text>
-            <Text fontSize={12} style={styles.bodyText} weight="mono_regular">
-              {call.data}
-            </Text>
-          </Text>
-        </View>
+        <ExpandedContent call={call} size={size} sizeMultiplier={sizeMultiplier} styles={styles} />
       }
     >
       <View
