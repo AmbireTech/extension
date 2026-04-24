@@ -412,8 +412,8 @@ const Recipient: React.FC<Props> = ({
         ? {
             // Keep the trusted matching prefix/suffix neutral and highlight the differing middle
             // segment, while still accounting for the visible 0x prefix in the rendered address.
-            prefix: addressPoisoningMatch.matchedCharsCount + 2,
-            suffix: addressPoisoningMatch.matchedCharsCount,
+            prefix: addressPoisoningMatch.matchedPrefixCharsCount + 2,
+            suffix: addressPoisoningMatch.matchedSuffixCharsCount,
             color: 'errorText' as const
           }
         : undefined,
