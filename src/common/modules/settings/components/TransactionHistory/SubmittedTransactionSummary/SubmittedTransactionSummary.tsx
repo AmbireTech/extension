@@ -1,6 +1,6 @@
 import { formatUnits, ZeroAddress } from 'ethers'
 import React, { useEffect, useMemo, useState } from 'react'
-import { Pressable, ScrollView, useWindowDimensions, View, ViewStyle } from 'react-native'
+import { Pressable, ScrollView, View, ViewStyle } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 
 import { Dapp } from '@ambire-common/interfaces/dapp'
@@ -14,7 +14,6 @@ import { AccountOpStatus } from '@ambire-common/libs/accountOp/types'
 import { humanizeAccountOp } from '@ambire-common/libs/humanizer'
 import { IrCall } from '@ambire-common/libs/humanizer/interfaces'
 import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
-import Step from '@benzin/screens/BenzinScreen/components/Steps/components/Step'
 import GasTankIcon from '@common/assets/svg/GasTankIcon'
 import LeftArrowIcon from '@common/assets/svg/LeftArrowIcon'
 import SendIcon from '@common/assets/svg/SendIcon'
@@ -373,7 +372,6 @@ const SubmittedTransactionSummaryDetails = ({
   size: 'sm' | 'md' | 'lg'
   defaultType: Props['defaultType']
 }) => {
-  const { width: windowWidth } = useWindowDimensions()
   const { styles, theme } = useTheme(getStyles)
   const { t } = useTranslation()
   const submittedDate = useMemo(
@@ -394,10 +392,8 @@ const SubmittedTransactionSummaryDetails = ({
     () => orderedBalanceChanges.filter((change) => change.balanceChange > 0n),
     [orderedBalanceChanges]
   )
-  const shouldRenderBalanceChangesInColumns = windowWidth > 700
   const isDelegationTxn =
     submittedAccountOp.meta && submittedAccountOp.meta.setDelegation !== undefined
-  const modalActiveStep = hasBalanceChangesLoaded ? 'finalized' : 'balance-changes'
 
   const renderBalanceChangesCard = (title: string, changes: BalanceChange[]) => (
     <View
@@ -430,12 +426,10 @@ const SubmittedTransactionSummaryDetails = ({
   return (
     <View style={[spacings.phSm]}>
       <View style={spacings.phSm}>
-        <Step
-          title="Transaction details"
-          stepName="in-progress"
-          activeStep={modalActiveStep}
-          testID="activity-transaction-details-step"
-        >
+        <View style={styles.modalSection} testID="activity-transaction-details-step">
+          <Text appearance="successText" fontSize={16} weight="medium" style={spacings.mbSm}>
+            Transaction details
+          </Text>
           {!isDelegationTxn &&
             humanizedCalls.map((call: IrCall, i) => (
               <TransactionSummary
@@ -460,14 +454,11 @@ const SubmittedTransactionSummaryDetails = ({
               />
             </View>
           )}
-        </Step>
-        <Step
-          title="Balance changes"
-          stepName="balance-changes"
-          activeStep={modalActiveStep}
-          testID="activity-balance-changes-step"
-          style={spacings.pb0}
-        >
+        </View>
+        <View style={[styles.modalSection, spacings.pb0]} testID="activity-balance-changes-step">
+          <Text appearance="successText" fontSize={16} weight="medium" style={spacings.mbSm}>
+            Balance changes
+          </Text>
           <View style={flexbox.flex1}>
             {!hasBalanceChangesLoaded && (
               <View
@@ -491,21 +482,9 @@ const SubmittedTransactionSummaryDetails = ({
               </View>
             )}
             {hasBalanceChangesLoaded && !!(assetsOut.length || assetsIn.length) && (
-              <View
-                style={
-                  shouldRenderBalanceChangesInColumns
-                    ? [flexbox.directionRow, flexbox.flex1]
-                    : undefined
-                }
-              >
+              <View style={[flexbox.directionRow, flexbox.flex1]}>
                 {!!assetsOut.length && (
-                  <View
-                    style={
-                      shouldRenderBalanceChangesInColumns
-                        ? [flexbox.flex1, spacings.mrTy]
-                        : spacings.mbTy
-                    }
-                  >
+                  <View style={[flexbox.flex1, assetsIn.length ? spacings.mrTy : undefined]}>
                     {renderBalanceChangesCard('Assets out', assetsOut)}
                   </View>
                 )}
@@ -535,31 +514,23 @@ const SubmittedTransactionSummaryDetails = ({
               </View>
             )}
           </View>
-        </Step>
-        <Step
-          stepName="finalized"
-          activeStep="finalized"
-          testID="activity-confirmed-step"
-          style={spacings.mbSm}
-        >
+        </View>
+        <View style={[styles.modalConfirmedRow, spacings.mbSm]} testID="activity-confirmed-step">
           <View
             style={[
               flexbox.directionRow,
               flexbox.justifySpaceBetween,
               flexbox.alignCenter,
-              flexbox.wrap,
-              spacings.mbSm
+              spacings.mbSm,
+              { width: '100%' }
             ]}
           >
             <Text appearance="successText" fontSize={16} weight="medium">
               Confirmed
             </Text>
-            <View style={[flexbox.directionRow, flexbox.alignCenter, flexbox.wrap]}>
+            <View style={[flexbox.directionRow, flexbox.alignCenter]}>
               <Text fontSize={14} appearance="secondaryText">
-                {submittedDate}
-              </Text>
-              <Text fontSize={14} appearance="secondaryText" style={spacings.mlTy}>
-                on {network.name}
+                {submittedDate} on {network.name}
               </Text>
               <NetworkIcon
                 id={submittedAccountOp.chainId.toString()}
@@ -568,7 +539,7 @@ const SubmittedTransactionSummaryDetails = ({
               />
             </View>
           </View>
-        </Step>
+        </View>
       </View>
     </View>
   )

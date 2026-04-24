@@ -14,6 +14,8 @@ interface Style {
   sheetHeaderBackButton: ViewStyle
   sheetHeaderTitle: ViewStyle
   sheetScrollContent: ViewStyle
+  modalSection: ViewStyle
+  modalConfirmedRow: ViewStyle
   summaryItem: ViewStyle
   footer: ViewStyle
   footerButtonsRow: ViewStyle
@@ -60,7 +62,8 @@ const getStyles = (theme: ThemeProps) =>
       width: 24,
       height: 24,
       ...flexbox.alignCenter,
-      ...flexbox.justifyCenter
+      ...flexbox.justifyCenter,
+      ...spacings.mlMi
     },
     sheetHeaderTitle: {
       ...flexbox.flex1,
@@ -70,6 +73,15 @@ const getStyles = (theme: ThemeProps) =>
     },
     sheetScrollContent: {
       ...spacings.pbSm
+    },
+    modalSection: {
+      ...spacings.mbSm
+    },
+    modalConfirmedRow: {
+      ...flexbox.directionRow,
+      ...flexbox.justifySpaceBetween,
+      ...flexbox.alignCenter,
+      ...flexbox.wrap
     },
     summaryItem: {
       backgroundColor: 'transparent',
