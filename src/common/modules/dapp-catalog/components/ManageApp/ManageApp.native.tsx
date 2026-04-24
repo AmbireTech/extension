@@ -11,6 +11,7 @@ import AccountOption from '@common/components/Option/AccountOption'
 import Select from '@common/components/Select'
 import { SelectValue } from '@common/components/Select/types'
 import Text from '@common/components/Text'
+import useController from '@common/hooks/useController'
 import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import { AnimatedPressable } from '@common/hooks/useHover'
 import useTheme from '@common/hooks/useTheme'
@@ -40,6 +41,10 @@ const ManageApp = ({
   const { ref: sheetRef, open, close } = useModalize()
   const { t } = useTranslation()
   const { dispatch } = useControllersMiddleware()
+  const { dispatch: mainDispatch } = useController('MainController')
+  const {
+    state: { account: selectedAccount }
+  } = useController('SelectedAccountController')
 
   const networksOptions: SelectValue[] = useMemo(
     () =>
@@ -74,6 +79,20 @@ const ManageApp = ({
         label: <AccountOption acc={acc} />
       })),
     [accounts]
+  )
+
+  const handleSelectAccount = useCallback(
+    (option: SelectValue) => {
+      const addr = option.value
+
+      if (selectedAccount?.addr !== addr) {
+        mainDispatch({
+          type: 'method',
+          params: { method: 'selectAccount', args: [addr] }
+        })
+      }
+    },
+    [mainDispatch, selectedAccount]
   )
 
   return (
@@ -113,8 +132,8 @@ const ManageApp = ({
               value: account.addr,
               label: <AccountOption acc={account} />
             }}
+            setValue={handleSelectAccount}
             options={accountsOptions}
-            disabled
             label={t('Account')}
             selectStyle={{ backgroundColor: theme.tertiaryBackground }}
           />

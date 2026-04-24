@@ -4,6 +4,7 @@ import { View, ViewStyle } from 'react-native'
 import { Account as AccountType } from '@ambire-common/interfaces/account'
 import Avatar from '@common/components/Avatar'
 import Text from '@common/components/Text'
+import { isWeb } from '@common/config/env'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import common from '@common/styles/utils/common'
@@ -25,9 +26,9 @@ const Account: FC<Props> = ({ addr, creation, preferences, style, safeCreation }
         flexbox.directionRow,
         flexbox.alignCenter,
         common.borderRadiusPrimary,
-        flexbox.flex1,
+        isWeb && flexbox.flex1,
         {
-          width: '100%',
+          width: isWeb ? '100%' : 'auto',
           backgroundColor: theme.secondaryBackground
         },
         style
@@ -39,11 +40,11 @@ const Account: FC<Props> = ({ addr, creation, preferences, style, safeCreation }
         pfp={pfp}
         address={addr}
       />
-      <View>
+      <View style={{ flexShrink: 1 }}>
         <Text fontSize={14} weight="medium">
           {label}
         </Text>
-        <Text fontSize={12} appearance="secondaryText">
+        <Text fontSize={12} appearance="secondaryText" style={{ flexShrink: 1 }}>
           {addr}
         </Text>
       </View>

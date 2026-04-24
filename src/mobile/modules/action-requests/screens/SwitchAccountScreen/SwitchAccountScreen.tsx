@@ -128,25 +128,14 @@ const SwitchAccountScreen = () => {
         />
       )}
     >
-      <View
-        style={[
-          styles.container,
-          {
-            paddingVertical: SPACING_LG * responsiveSizeMultiplier,
-            width: responsiveSizeMultiplier * 530
-          }
-        ]}
-      >
-        <AmbireLogoHorizontal
-          style={{ marginBottom: SPACING_LG * responsiveSizeMultiplier, minHeight: 28 }}
-        />
+      <View style={[styles.container]}>
         {!isAuthorizing ? (
-          <View style={styles.content}>
+          <View style={flexbox.flex1}>
             <View
               style={{
-                height: 60,
                 ...flexbox.center,
-                backgroundColor: theme.tertiaryBackground
+                backgroundColor: theme.tertiaryBackground,
+                ...spacings.pvLg
               }}
             >
               <Text fontSize={20} weight="medium">
@@ -158,8 +147,8 @@ const SwitchAccountScreen = () => {
                 backgroundColor: theme.primaryBackground,
                 ...flexbox.alignCenter,
                 ...spacings.pv,
-                ...spacings.phLg,
-                ...spacings.pbLg
+                ...flexbox.flex1,
+                ...spacings.phSm
               }}
             >
               {!!dAppData && (
@@ -177,7 +166,7 @@ const SwitchAccountScreen = () => {
                     containerStyle={{
                       backgroundColor: theme.secondaryBackground
                     }}
-                    iconScale={0.85}
+                    iconScale={1}
                     imageStyle={{
                       backgroundColor: theme.secondaryBackground
                     }}
