@@ -116,6 +116,7 @@ const BalanceChangeToken = ({ change }: { change: DisplayBalanceChange }) => {
 }
 
 const DappInteractionIcon = ({ interaction }: { interaction: DappInteraction }) => {
+  const { theme } = useTheme()
   const [hasIcon, setHasIcon] = useState<boolean | null>(
     interaction.iconUrl ? (dappIconAvailabilityCache.get(interaction.iconUrl) ?? null) : false
   )
@@ -149,16 +150,16 @@ const DappInteractionIcon = ({ interaction }: { interaction: DappInteraction }) 
 
   if (interaction.iconType === 'send') {
     return (
-      <View style={stylesForIcons.ambireIcon}>
-        <SendIcon width={16} height={18} />
+      <View style={[stylesForIcons.iconWrapper, { backgroundColor: theme.neutral200 }]}>
+        <SendIcon width={14} height={14} />
       </View>
     )
   }
 
   if (interaction.iconType === 'swap') {
     return (
-      <View style={stylesForIcons.ambireIcon}>
-        <SwapIcon width={16} height={18} />
+      <View style={[stylesForIcons.iconWrapper, { backgroundColor: theme.neutral200 }]}>
+        <SwapIcon width={14} height={14} />
       </View>
     )
   }
@@ -166,12 +167,14 @@ const DappInteractionIcon = ({ interaction }: { interaction: DappInteraction }) 
   if (!interaction.iconUrl || !hasIcon) return null
 
   return (
-    <ManifestImage
-      uri={interaction.iconUrl}
-      size={18}
-      isRound
-      imageStyle={stylesForIcons.manifestImage}
-    />
+    <View style={[stylesForIcons.iconWrapper, { backgroundColor: theme.neutral200 }]}>
+      <ManifestImage
+        uri={interaction.iconUrl}
+        size={14}
+        isRound
+        imageStyle={stylesForIcons.manifestImage}
+      />
+    </View>
   )
 }
 
@@ -179,11 +182,12 @@ const stylesForIcons = {
   manifestImage: {
     backgroundColor: 'transparent'
   },
-  ambireIcon: {
+  iconWrapper: {
     width: 20,
     height: 20,
     alignItems: 'center',
-    justifyContent: 'center'
+    justifyContent: 'center',
+    ...common.borderRadiusPrimary
   }
 } as const
 
@@ -673,7 +677,7 @@ const SubmittedTransactionSummaryInner = ({
                       ]}
                     >
                       <DappInteractionIcon interaction={interaction} />
-                      <Text fontSize={12} appearance="secondaryText" style={spacings.mlMi}>
+                      <Text fontSize={12} weight="semiBold" style={spacings.mlMi}>
                         {interaction.name}
                       </Text>
                     </View>
