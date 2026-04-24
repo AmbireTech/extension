@@ -197,7 +197,7 @@ const Footer: FC<Props> = ({
             style={styles.footerButton}
             childrenPosition="left"
           >
-            <RefreshIcon style={spacings.mrTy} width={16} height={16} />
+            <RefreshIcon style={spacings.mrMi} width={16} height={16} />
           </Button>
         )}
         {isMinedTransaction && (
@@ -212,7 +212,7 @@ const Footer: FC<Props> = ({
               childrenPosition="left"
               testID="view-transaction-link"
             >
-              <OpenIcon style={spacings.mrTy} width={16} height={16} />
+              <OpenIcon style={spacings.mrMi} width={16} height={16} />
             </Button>
             <Button
               text={t('Copy link')}
@@ -223,7 +223,7 @@ const Footer: FC<Props> = ({
               style={styles.footerButton}
               childrenPosition="left"
             >
-              <CopyIcon style={spacings.mrTy} width={16} height={16} />
+              <CopyIcon style={spacings.mrMi} width={16} height={16} />
             </Button>
           </View>
         )}

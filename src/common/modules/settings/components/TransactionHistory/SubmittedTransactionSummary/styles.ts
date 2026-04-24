@@ -134,7 +134,7 @@ const getStyles = (theme: ThemeProps) =>
       borderTopWidth: 1,
       backgroundColor: theme.primaryBackground,
       ...spacings.phLg,
-      ...spacings.pvLg
+      ...spacings.pvMd
     },
     footerButtonsRow: {
       ...flexbox.directionRow,
@@ -142,7 +142,9 @@ const getStyles = (theme: ThemeProps) =>
       ...flexbox.alignCenter
     },
     footerButton: {
-      ...spacings.mb0
+      ...spacings.mb0,
+      ...spacings.pl,
+      ...spacings.prLg
     }
   })
 
