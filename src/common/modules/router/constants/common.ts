@@ -35,7 +35,8 @@ const COMMON_ROUTES = {
   dappWebView: 'apps/webview',
   signMessage: 'sign-message',
   addChain: 'add-chain',
-  watchAsset: 'watch-asset'
+  watchAsset: 'watch-asset',
+  switchAccount: 'switch-account'
 }
 
 const MOBILE_ROUTES = {
@@ -56,7 +57,6 @@ const WEB_ROUTES = {
   getEncryptionPublicKeyRequest: 'get-encryption-public-key-request',
   decryptRequest: 'decryptRequest',
   dappConnectRequest: 'dapp-connect-request',
-  switchAccount: 'switch-account',
   authEmailAccount: 'auth-email-account',
   authEmailLogin: 'auth-email-login',
   authEmailRegister: 'auth-email-register',

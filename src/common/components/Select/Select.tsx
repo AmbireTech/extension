@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useMemo } from 'react'
 
 import EmptyListPlaceholder from './components/EmptyListPlaceholder'
 import SelectContainer from './components/SelectContainer'
@@ -16,12 +16,19 @@ const Select = ({
   onSearch,
   ...props
 }: SelectProps) => {
+  // To address the structural differences between SectionList and FlatList,
+  // we wrap non-sectioned list data in a default single section.
+  // Memoize so the array reference is stable across renders (as long as `options` is),
+  // which in turn keeps `filteredData`, `renderItem` and `flatListProps` stable and
+  // prevents an infinite FlatList layout loop inside Modalize (react-native-modalize).
+  const data = useMemo(
+    () => [{ data: options, title: '', key: 'default' }] as SectionedSelectProps['sections'],
+    [options]
+  )
   const selectData = useSelectInternal({
     value,
     setValue,
-    // To address the structural differences between SectionList and FlatList,
-    // we wrap non-sectioned list data in a default single section
-    data: [{ data: options, title: '', key: 'default' }] as SectionedSelectProps['sections'],
+    data,
     menuOptionHeight,
     attemptToFetchMoreOptions,
     mode: props.mode,
@@ -37,6 +44,34 @@ const Select = ({
     handleScroll
   } = selectData
 
+  const flatListProps = useMemo(
+    () => ({
+      ref: listRef,
+      data: filteredData?.[0]?.data || [],
+      renderItem: renderItem as any,
+      keyExtractor,
+      onLayout: handleLayout,
+      initialNumToRender: 15,
+      windowSize: 10,
+      maxToRenderPerBatch: 20,
+      removeClippedSubviews: true,
+      getItemLayout,
+      ListEmptyComponent: <EmptyListPlaceholder placeholderText={emptyListPlaceholderText} />,
+      onScroll: handleScroll,
+      scrollEventThrottle: 16
+    }),
+    [
+      listRef,
+      filteredData,
+      renderItem,
+      keyExtractor,
+      handleLayout,
+      getItemLayout,
+      handleScroll,
+      emptyListPlaceholderText
+    ]
+  )
+
   return (
     <SelectContainer
       value={value}
@@ -46,21 +81,7 @@ const Select = ({
       id={testID}
       testID={testID}
       listRef={listRef}
-      flatListProps={{
-        ref: listRef,
-        data: filteredData?.[0]?.data || [],
-        renderItem: renderItem as any,
-        keyExtractor: keyExtractor,
-        onLayout: handleLayout,
-        initialNumToRender: 15,
-        windowSize: 10,
-        maxToRenderPerBatch: 20,
-        removeClippedSubviews: true,
-        getItemLayout: getItemLayout,
-        ListEmptyComponent: <EmptyListPlaceholder placeholderText={emptyListPlaceholderText} />,
-        onScroll: handleScroll,
-        scrollEventThrottle: 16
-      }}
+      flatListProps={flatListProps}
     />
   )
 }
