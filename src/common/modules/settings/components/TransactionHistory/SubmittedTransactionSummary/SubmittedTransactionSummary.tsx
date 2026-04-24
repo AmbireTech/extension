@@ -15,8 +15,9 @@ import { humanizeAccountOp } from '@ambire-common/libs/humanizer'
 import { IrCall } from '@ambire-common/libs/humanizer/interfaces'
 import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
 import Step from '@benzin/screens/BenzinScreen/components/Steps/components/Step'
-import AmbireLogo from '@common/assets/svg/AmbireLogo'
 import GasTankIcon from '@common/assets/svg/GasTankIcon'
+import SendIcon from '@common/assets/svg/SendIcon'
+import SwapIcon from '@common/assets/svg/SwapIcon'
 import BottomSheet from '@common/components/BottomSheet'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import NetworkIcon from '@common/components/NetworkIcon'
@@ -28,9 +29,7 @@ import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import PendingTokenSummary from '@common/modules/sign-account-op/components/PendingTokenSummary'
-import TransactionSummary, {
-  sizeMultiplier
-} from '@common/modules/sign-account-op/components/TransactionSummary'
+import TransactionSummary, { sizeMultiplier } from '@common/modules/sign-account-op/components/TransactionSummary'
 import spacings, { SPACING_SM } from '@common/styles/spacings'
 import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
@@ -54,7 +53,7 @@ type DappInteraction = {
   id: string
   name: string
   iconUrl?: string | null
-  iconType?: 'ambire'
+  iconType?: 'send' | 'swap'
 }
 
 type DisplayBalanceChange = BalanceChange & {
@@ -148,10 +147,18 @@ const DappInteractionIcon = ({ interaction }: { interaction: DappInteraction }) 
     }
   }, [interaction.iconUrl])
 
-  if (interaction.iconType === 'ambire') {
+  if (interaction.iconType === 'send') {
     return (
       <View style={stylesForIcons.ambireIcon}>
-        <AmbireLogo width={12} height={20} />
+        <SendIcon width={16} height={18} />
+      </View>
+    )
+  }
+
+  if (interaction.iconType === 'swap') {
+    return (
+      <View style={stylesForIcons.ambireIcon}>
+        <SwapIcon width={16} height={18} />
       </View>
     )
   }
@@ -161,7 +168,7 @@ const DappInteractionIcon = ({ interaction }: { interaction: DappInteraction }) 
   return (
     <ManifestImage
       uri={interaction.iconUrl}
-      size={20}
+      size={18}
       isRound
       imageStyle={stylesForIcons.manifestImage}
     />
@@ -212,8 +219,8 @@ const getSyntheticGasTankBalanceChange = (
   if (!gasFeePayment?.isGasTank || gasFeePayment.amount <= 0n) return null
 
   return {
-    symbol: 'USD',
-    name: 'USD',
+    symbol: 'Gas Tank',
+    name: 'Gas Tank',
     decimals: 6,
     address: 'gas-tank',
     chainId: gasFeePayment.feeTokenChainId || submittedAccountOp.chainId,
@@ -291,15 +298,15 @@ const getDappInteractions = (submittedAccountOp: SubmittedAccountOp): DappIntera
     addInteraction({
       id: 'fallback:swap',
       name: 'Swap/Bridge',
-      iconType: 'ambire'
+      iconType: 'swap'
     })
   }
 
   if (!interactions.length) {
     addInteraction({
-      id: 'fallback:transfer',
-      name: 'Transfer',
-      iconType: 'ambire'
+      id: 'fallback:send',
+      name: 'Send',
+      iconType: 'send'
     })
   }
 

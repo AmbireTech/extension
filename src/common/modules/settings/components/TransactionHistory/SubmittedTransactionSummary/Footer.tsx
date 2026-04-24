@@ -79,7 +79,7 @@ const Footer: FC<Props> = ({
     addToast(t('Copied to clipboard!') as string, { timeout: 2500 })
   }, [addToast, benzinLink, chainId, t])
 
-  const handleViewTransaction = useCallback(async () => {
+  const handleOpenExplorer = useCallback(async () => {
     if (!chainId || !network.explorerUrl || !txnId) {
       const message = t(
         "Can't open the transaction details because the transaction or network information is missing."
@@ -135,8 +135,8 @@ const Footer: FC<Props> = ({
           </View>
           <FooterActionLink
             testID="view-transaction-link"
-            label={t('View transaction')}
-            onPress={handleViewTransaction}
+            label={t('Open explorer')}
+            onPress={handleOpenExplorer}
             textSize={textSize}
             iconSize={iconSize}
             Icon={LinkIcon}
