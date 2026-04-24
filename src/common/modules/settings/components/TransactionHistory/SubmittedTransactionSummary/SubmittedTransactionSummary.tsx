@@ -91,19 +91,23 @@ const getBalanceChangeTooltipId = (
   `balance-change-${submittedAccountOp.id}-${change.chainId}-${change.address}-${change.balanceChange.toString()}`
 
 const BalanceChangeToken = ({ change }: { change: DisplayBalanceChange }) => {
+  const { theme } = useTheme()
+
   if (change.iconType === 'gasTank') {
     return (
       <View style={spacings.mlTy}>
-        <GasTankIcon width={13} height={13} />
+        <View style={[stylesForIcons.balanceIconWrapper, { backgroundColor: theme.neutral200 }]}>
+          <GasTankIcon width={10} height={10} color={theme.tertiaryText} />
+        </View>
       </View>
     )
   }
 
   return (
-    <View style={spacings.mlMi}>
+    <View style={spacings.mlTy}>
       <TokenIcon
-        width={14}
-        height={14}
+        width={13}
+        height={13}
         withContainer
         containerHeight={16}
         containerWidth={16}
@@ -150,16 +154,16 @@ const DappInteractionIcon = ({ interaction }: { interaction: DappInteraction }) 
 
   if (interaction.iconType === 'send') {
     return (
-      <View style={[stylesForIcons.iconWrapper, { backgroundColor: theme.neutral200 }]}>
-        <SendIcon width={14} height={14} />
+      <View style={[stylesForIcons.dappIconWrapper, { backgroundColor: theme.neutral200 }]}>
+        <SendIcon width={20} height={20} color={theme.tertiaryText} />
       </View>
     )
   }
 
   if (interaction.iconType === 'swap') {
     return (
-      <View style={[stylesForIcons.iconWrapper, { backgroundColor: theme.neutral200 }]}>
-        <SwapIcon width={14} height={14} />
+      <View style={[stylesForIcons.dappIconWrapper, { backgroundColor: theme.neutral200 }]}>
+        <SwapIcon width={20} height={20} color={theme.tertiaryText} />
       </View>
     )
   }
@@ -167,10 +171,10 @@ const DappInteractionIcon = ({ interaction }: { interaction: DappInteraction }) 
   if (!interaction.iconUrl || !hasIcon) return null
 
   return (
-    <View style={[stylesForIcons.iconWrapper, { backgroundColor: theme.neutral200 }]}>
+    <View style={[stylesForIcons.dappIconWrapper, { backgroundColor: theme.neutral200 }]}>
       <ManifestImage
         uri={interaction.iconUrl}
-        size={14}
+        size={20}
         isRound
         imageStyle={stylesForIcons.manifestImage}
       />
@@ -182,9 +186,16 @@ const stylesForIcons = {
   manifestImage: {
     backgroundColor: 'transparent'
   },
-  iconWrapper: {
-    width: 20,
-    height: 20,
+  dappIconWrapper: {
+    width: 24,
+    height: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+    ...common.borderRadiusPrimary
+  },
+  balanceIconWrapper: {
+    width: 16,
+    height: 16,
     alignItems: 'center',
     justifyContent: 'center',
     ...common.borderRadiusPrimary
@@ -677,7 +688,7 @@ const SubmittedTransactionSummaryInner = ({
                       ]}
                     >
                       <DappInteractionIcon interaction={interaction} />
-                      <Text fontSize={12} weight="semiBold" style={spacings.mlMi}>
+                      <Text fontSize={14} weight="semiBold" style={spacings.mlTy}>
                         {interaction.name}
                       </Text>
                     </View>
@@ -717,7 +728,12 @@ const SubmittedTransactionSummaryInner = ({
                     >
                       {formatBalanceChangeAmount(change)}
                     </Text>
-                    <Text fontSize={12} appearance="secondaryText" style={spacings.mlTy}>
+                    <Text
+                      fontSize={12}
+                      weight="medium"
+                      appearance="secondaryText"
+                      style={spacings.mlTy}
+                    >
                       {change.symbol}
                     </Text>
                     <BalanceChangeToken change={change} />
