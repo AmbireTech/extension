@@ -111,6 +111,11 @@ const securityPatches = `
     console.error('[Ambire window.onerror]', errStr, 'at', url, ':', lineNo, ':', columnNo);
     return false;
   };
+
+  // 4. Hide dev error overlays (react-error-overlay, webpack-dev-server, Next.js dev)
+  var s = document.createElement('style');
+  s.textContent = '#__react-error-overlay__,iframe#webpack-dev-server-client-overlay,nextjs-portal{display:none!important}';
+  (document.head || document.documentElement).appendChild(s);
 `
 
 const WEBVIEW_DEV_SERVER_PORT = 8082
