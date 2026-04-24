@@ -24,6 +24,7 @@ import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { WEBVIEW_DEV_HOST } from '@env'
 import { MobileLayoutContainer } from '@mobile/components/MobileLayoutWrapper'
+import DappProgressBar from '@mobile/modules/webview/components/DappProgressBar'
 import DappRequestBottomSheet from '@mobile/modules/webview/components/DappRequestBottomSheet'
 import DappWebViewFooter from '@mobile/modules/webview/components/DappWebViewFooter'
 
@@ -164,7 +165,22 @@ const DappWebViewScreen = () => {
   const webviewRef = useRef<WebView>(null)
   const [currentUrl, setCurrentUrl] = useState<string>(initialUrl)
   const currentUrlRef = useRef<string>(initialUrl)
+  // Tracks the URL of the last successful `onLoadEnd(!loading)` event. Used
+  // on Android to decide whether a subsequent `onLoadStart` is a fresh
+  // top-level navigation (reset the bar) or a same-origin SPA/hash
+  // navigation that should be ignored. Matches `webviewState.resolvedUrl`
+  // in Rabby's `useWebViewControl` hook.
+  const resolvedUrlRef = useRef<string>('')
+  const [progress, setProgress] = useState(0)
+  const [isLoading, setIsLoading] = useState(true)
   const [canGoBack, setCanGoBack] = useState(false)
+
+  // Atomic setter used by every WebView load callback so `progress` and
+  // `isLoading` always stay in sync. Mirrors Rabby's `updateProgressState`.
+  const updateProgressState = useCallback((next: { progress: number; isLoading: boolean }) => {
+    setProgress(next.progress)
+    setIsLoading(next.isLoading)
+  }, [])
 
   useEffect(() => {
     if (!dappUrl && setDappUrl) setDappUrl(initialUrl)
@@ -236,35 +252,40 @@ const DappWebViewScreen = () => {
 
   const handleNavigationStateChange = useCallback(
     (e: WebViewNavigation) => {
-      if (!e.loading) {
+      // Only react to stable navigation states. The `loading` flag on this
+      // event fires for subresource loads, XHRs and SPA/client-side routing,
+      // which would otherwise make the progress bar flicker and re-appear
+      // mid-load. Progress UI is driven exclusively by onLoadStart /
+      // onLoadProgress / onLoadEnd / onError.
+      if (e.loading) return
+
+      try {
+        const url = new URL(e.url)
+        // Reject non-HTTPS protocols to prevent MITM attacks
+        if (url.protocol !== 'https:') {
+          console.warn('[DappWebView] Blocked navigation to non-HTTPS URL:', e.url)
+          // For HTTP URLs, we could optionally redirect to HTTPS or show a warning
+          // For now, we just don't update the current URL, keeping the previous safe URL
+          return
+        }
+        const previousOrigin = currentUrlRef.current
+        setCurrentUrl(e.url)
+        currentUrlRef.current = e.url
+        setCanGoBack(e.canGoBack)
+        // Keep dappUrl in sync with the actual page the WebView is on so that
+        // currentDapp (and the ManageApp bottom sheet) always reflect the real URL
+        setDappUrl?.(e.url)
+        // If the origin changed, delete the stale session so the next provider
+        // request creates a fresh one bound to the new origin
         try {
-          const url = new URL(e.url)
-          // Reject non-HTTPS protocols to prevent MITM attacks
-          if (url.protocol !== 'https:') {
-            console.warn('[DappWebView] Blocked navigation to non-HTTPS URL:', e.url)
-            // For HTTP URLs, we could optionally redirect to HTTPS or show a warning
-            // For now, we just don't update the current URL, keeping the previous safe URL
-            return
-          }
-          const previousOrigin = currentUrlRef.current
-          setCurrentUrl(e.url)
-          currentUrlRef.current = e.url
-          setCanGoBack(e.canGoBack)
-          // Keep dappUrl in sync with the actual page the WebView is on so that
-          // currentDapp (and the ManageApp bottom sheet) always reflect the real URL
-          setDappUrl?.(e.url)
-          // If the origin changed, delete the stale session so the next provider
-          // request creates a fresh one bound to the new origin
-          try {
-            if (new URL(previousOrigin).origin !== url.origin) {
-              dispatch({ type: 'WEBVIEW_ORIGIN_CHANGED', params: { previousOrigin } })
-            }
-          } catch {
-            // previousOrigin may not be a valid URL yet (e.g. on first load)
+          if (new URL(previousOrigin).origin !== url.origin) {
+            dispatch({ type: 'WEBVIEW_ORIGIN_CHANGED', params: { previousOrigin } })
           }
         } catch {
-          console.warn('[DappWebView] Invalid URL in navigation:', e.url)
+          // previousOrigin may not be a valid URL yet (e.g. on first load)
         }
+      } catch {
+        console.warn('[DappWebView] Invalid URL in navigation:', e.url)
       }
     },
     [dispatch, setDappUrl]
@@ -572,19 +593,70 @@ const DappWebViewScreen = () => {
     return () => eventBus.removeEventListener('action.broadcastDappEvent', onBroadcastDappEvent)
   }, [])
 
+  const handleLoadStart = useCallback(
+    (event: { nativeEvent: { url: string; isReload?: boolean } }) => {
+      let treatAsReload: boolean
+      if (Platform.OS === 'ios') {
+        treatAsReload = true
+      } else if (event.nativeEvent.isReload) {
+        treatAsReload = true
+      } else if (!resolvedUrlRef.current) {
+        treatAsReload = true
+      } else {
+        try {
+          treatAsReload =
+            new URL(event.nativeEvent.url).origin !== new URL(resolvedUrlRef.current).origin
+        } catch {
+          treatAsReload = true
+        }
+      }
+
+      if (treatAsReload) {
+        updateProgressState({ progress: 0, isLoading: true })
+      }
+    },
+    [updateProgressState]
+  )
+
+  const handleLoadProgress = useCallback(
+    (event: { nativeEvent: { progress: number } }) => {
+      updateProgressState({
+        progress: event.nativeEvent.progress,
+        isLoading: true
+      })
+    },
+    [updateProgressState]
+  )
+
+  const handleLoadEnd = useCallback(
+    (event: { nativeEvent: { url: string; loading: boolean } }) => {
+      if (event.nativeEvent.loading) return
+      resolvedUrlRef.current = event.nativeEvent.url
+      updateProgressState({ progress: 1, isLoading: false })
+    },
+    [updateProgressState]
+  )
+
+  const handleLoadError = useCallback(() => {
+    updateProgressState({ progress: 0, isLoading: false })
+  }, [updateProgressState])
+
   return (
     <MobileLayoutContainer
       footer={
-        <DappWebViewFooter
-          headerControl={headerControl}
-          handleOpenSearchModal={handleOpenSearchModal}
-          handleGoBack={handleGoBack}
-          canGoBack={canGoBack}
-          handleRefresh={handleRefresh}
-          account={account}
-          currentDapp={currentDapp}
-          smartAccountType={smartAccountType}
-        />
+        <>
+          {isLoading && <DappProgressBar progress={progress} />}
+          <DappWebViewFooter
+            headerControl={headerControl}
+            handleOpenSearchModal={handleOpenSearchModal}
+            handleGoBack={handleGoBack}
+            canGoBack={canGoBack}
+            handleRefresh={handleRefresh}
+            account={account}
+            currentDapp={currentDapp}
+            smartAccountType={smartAccountType}
+          />
+        </>
       }
     >
       <View style={flexbox.flex1}>
@@ -599,6 +671,10 @@ const DappWebViewScreen = () => {
           allowFileAccessFromFileURLs={false}
           allowUniversalAccessFromFileURLs={false}
           originWhitelist={['https://*']}
+          onLoadStart={handleLoadStart}
+          onLoadEnd={handleLoadEnd}
+          onLoadProgress={handleLoadProgress}
+          onError={handleLoadError}
         />
       </View>
 
