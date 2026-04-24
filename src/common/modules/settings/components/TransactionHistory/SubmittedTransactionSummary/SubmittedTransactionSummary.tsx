@@ -1,6 +1,6 @@
 import { formatUnits, ZeroAddress } from 'ethers'
 import React, { useEffect, useMemo, useState } from 'react'
-import { Pressable, useWindowDimensions, View, ViewStyle } from 'react-native'
+import { Pressable, ScrollView, useWindowDimensions, View, ViewStyle } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 
 import { Dapp } from '@ambire-common/interfaces/dapp'
@@ -16,6 +16,7 @@ import { IrCall } from '@ambire-common/libs/humanizer/interfaces'
 import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
 import Step from '@benzin/screens/BenzinScreen/components/Steps/components/Step'
 import GasTankIcon from '@common/assets/svg/GasTankIcon'
+import LeftArrowIcon from '@common/assets/svg/LeftArrowIcon'
 import SendIcon from '@common/assets/svg/SendIcon'
 import SwapIcon from '@common/assets/svg/SwapIcon'
 import BottomSheet from '@common/components/BottomSheet'
@@ -427,7 +428,7 @@ const SubmittedTransactionSummaryDetails = ({
   )
 
   return (
-    <View style={[spacings.ptXl, spacings.phSm]}>
+    <View style={[spacings.phSm]}>
       <View style={spacings.phSm}>
         <Step
           title="Transaction details"
@@ -569,17 +570,6 @@ const SubmittedTransactionSummaryDetails = ({
           </View>
         </Step>
       </View>
-      <Footer
-        size={size}
-        network={network}
-        rawCalls={submittedAccountOp.calls}
-        submittedAccountOp={submittedAccountOp}
-        txnId={submittedAccountOp.txnId}
-        identifiedBy={submittedAccountOp.identifiedBy}
-        accountAddr={submittedAccountOp.accountAddr}
-        gasFeePayment={submittedAccountOp.gasFeePayment}
-        status={submittedAccountOp.status}
-      />
     </View>
   )
 }
@@ -591,10 +581,9 @@ const SubmittedTransactionSummaryInner = ({
   defaultType,
   modalType
 }: Props) => {
-  const { styles } = useTheme(getStyles)
+  const { styles, theme } = useTheme(getStyles)
   const { dispatch: activityDispatch } = useController('ActivityController')
   const { networks } = useController('NetworksController').state
-  const { theme } = useTheme()
   const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useModalize()
 
   const network: Network | undefined = useMemo(
@@ -760,20 +749,55 @@ const SubmittedTransactionSummaryInner = ({
         sheetRef={sheetRef}
         closeBottomSheet={closeBottomSheet}
         type={modalType}
+        adjustToContentHeight={false}
         style={{
           maxWidth: 720,
           paddingVertical: 0,
           paddingHorizontal: 0,
           overflow: 'hidden'
         }}
-      >
-        <SubmittedTransactionSummaryDetails
-          submittedAccountOp={submittedAccountOp}
-          network={network}
-          size={size}
-          defaultType={defaultType}
-        />
-      </BottomSheet>
+        customRenderer={
+          <View style={styles.sheetContainer}>
+            <View style={styles.sheetHeader}>
+              <Pressable
+                onPress={() => {
+                  closeBottomSheet()
+                }}
+                style={styles.sheetHeaderBackButton}
+              >
+                <LeftArrowIcon color={theme.secondaryText} />
+              </Pressable>
+              <Text fontSize={16} weight="semiBold" style={styles.sheetHeaderTitle}>
+                Activity information
+              </Text>
+              <View style={styles.sheetHeaderBackButton} />
+            </View>
+            <ScrollView
+              bounces={false}
+              showsVerticalScrollIndicator={false}
+              contentContainerStyle={styles.sheetScrollContent}
+            >
+              <SubmittedTransactionSummaryDetails
+                submittedAccountOp={submittedAccountOp}
+                network={network}
+                size={size}
+                defaultType={defaultType}
+              />
+            </ScrollView>
+            <Footer
+              size={size}
+              network={network}
+              rawCalls={submittedAccountOp.calls}
+              submittedAccountOp={submittedAccountOp}
+              txnId={submittedAccountOp.txnId}
+              identifiedBy={submittedAccountOp.identifiedBy}
+              accountAddr={submittedAccountOp.accountAddr}
+              gasFeePayment={submittedAccountOp.gasFeePayment}
+              status={submittedAccountOp.status}
+            />
+          </View>
+        }
+      />
     </>
   )
 }

@@ -8,20 +8,17 @@ import { AccountOpStatus } from '@ambire-common/libs/accountOp/types'
 import { BROADCAST_OPTIONS } from '@ambire-common/libs/broadcast/broadcast'
 import { getBenzinUrlParams } from '@ambire-common/utils/benzin'
 import CopyIcon from '@common/assets/svg/CopyIcon'
-import LinkIcon from '@common/assets/svg/LinkIcon'
+import OpenIcon from '@common/assets/svg/OpenIcon'
+import RefreshIcon from '@common/assets/svg/RefreshIcon'
+import Button from '@common/components/Button'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
-import { sizeMultiplier } from '@common/modules/sign-account-op/components/TransactionSummary'
 import spacings from '@common/styles/spacings'
-import flexbox from '@common/styles/utils/flexbox'
 import { setStringAsync } from '@common/utils/clipboard'
 import { openInTab } from '@common/utils/links'
 
-import FooterActionLink from './FooterActionLink'
-import RepeatTransaction from './RepeatTransaction'
-import SpeedUpTransaction from './SpeedUpTransaction'
 import getStyles from './styles'
 
 type Props = {
@@ -30,6 +27,8 @@ type Props = {
   rawCalls?: SubmittedAccountOp['calls']
   submittedAccountOp: SubmittedAccountOp
 } & Pick<SubmittedAccountOp, 'txnId' | 'identifiedBy' | 'accountAddr' | 'gasFeePayment' | 'status'>
+
+const increaseByFifteenPercent = (value: bigint) => (value * 115n + 99n) / 100n
 
 const Footer: FC<Props> = ({
   network,
@@ -42,14 +41,13 @@ const Footer: FC<Props> = ({
   status,
   size
 }) => {
-  const { styles } = useTheme(getStyles)
+  const { styles, theme } = useTheme(getStyles)
   const { addToast } = useToast()
   const {
     state: { account: selectedAccount }
   } = useController('SelectedAccountController')
+  const { dispatch: requestsDispatch } = useController('RequestsController')
   const { t } = useTranslation()
-  const textSize = 14 * sizeMultiplier[size]
-  const iconSize = 24 * sizeMultiplier[size]
 
   const { chainId } = network
   const isPendingTransaction =
@@ -58,6 +56,7 @@ const Footer: FC<Props> = ({
     isPendingTransaction &&
     gasFeePayment?.broadcastOption !== BROADCAST_OPTIONS.byRelayer &&
     gasFeePayment?.broadcastOption !== BROADCAST_OPTIONS.byBundler
+  const canRepeatTransaction = !!rawCalls?.length && selectedAccount?.addr === accountAddr
 
   const benzinLink = `https://explorer.ambire.com/${getBenzinUrlParams({
     txnId,
@@ -78,6 +77,90 @@ const Footer: FC<Props> = ({
     setStringAsync(benzinLink)
     addToast(t('Copied to clipboard!') as string, { timeout: 2500 })
   }, [addToast, benzinLink, chainId, t])
+
+  const handleRepeatTransaction = useCallback(() => {
+    if (!rawCalls) return
+
+    requestsDispatch({
+      type: 'method',
+      params: {
+        method: 'build',
+        args: [
+          {
+            type: 'calls',
+            params: {
+              userRequestParams: {
+                calls: rawCalls,
+                meta: { chainId: network.chainId, accountAddr }
+              }
+            }
+          }
+        ]
+      }
+    })
+  }, [rawCalls, requestsDispatch, network.chainId, accountAddr])
+
+  const handleSpeedUpTransaction = useCallback(() => {
+    if (!submittedAccountOp.calls || !submittedAccountOp.gasFeePayment) return
+
+    const nextGasFeePayment = {
+      ...submittedAccountOp.gasFeePayment,
+      gasPrice: increaseByFifteenPercent(submittedAccountOp.gasFeePayment.gasPrice),
+      maxPriorityFeePerGas:
+        submittedAccountOp.gasFeePayment.maxPriorityFeePerGas &&
+        submittedAccountOp.gasFeePayment.maxPriorityFeePerGas !== 0n
+          ? increaseByFifteenPercent(submittedAccountOp.gasFeePayment.maxPriorityFeePerGas)
+          : submittedAccountOp.gasFeePayment.maxPriorityFeePerGas
+    }
+
+    requestsDispatch({
+      type: 'method',
+      params: {
+        method: 'build',
+        args: [
+          {
+            type: 'calls',
+            params: {
+              userRequestParams: {
+                calls: submittedAccountOp.calls,
+                meta: {
+                  chainId: submittedAccountOp.chainId,
+                  accountAddr: submittedAccountOp.accountAddr
+                },
+                accountOp: {
+                  id: submittedAccountOp.id,
+                  accountAddr: submittedAccountOp.accountAddr,
+                  chainId: submittedAccountOp.chainId,
+                  signingKeyAddr: submittedAccountOp.signingKeyAddr,
+                  signingKeyType: submittedAccountOp.signingKeyType,
+                  nonce: submittedAccountOp.nonce,
+                  eoaNonce: submittedAccountOp.eoaNonce,
+                  calls: submittedAccountOp.calls,
+                  feeCall: submittedAccountOp.feeCall,
+                  activatorCall: submittedAccountOp.activatorCall,
+                  gasLimit: submittedAccountOp.gasLimit,
+                  signature: submittedAccountOp.signature,
+                  gasFeePayment: nextGasFeePayment,
+                  txnId: submittedAccountOp.txnId,
+                  asUserOperation: submittedAccountOp.asUserOperation,
+                  signers: submittedAccountOp.signers,
+                  signed: submittedAccountOp.signed,
+                  safeTx: submittedAccountOp.safeTx,
+                  flags: submittedAccountOp.flags,
+                  meta: {
+                    ...submittedAccountOp.meta,
+                    speedUp: {
+                      enabled: true
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    })
+  }, [submittedAccountOp, requestsDispatch])
 
   const handleOpenExplorer = useCallback(async () => {
     if (!chainId || !network.explorerUrl || !txnId) {
@@ -100,48 +183,46 @@ const Footer: FC<Props> = ({
   }, [txnId, addToast, chainId, network.explorerUrl, t])
 
   return (
-    <View style={spacings.phSm}>
-      <View style={[styles.footer, flexbox.justifySpaceBetween, flexbox.alignStart]}>
-        <View style={flexbox.alignStart}>
-          {rawCalls?.length && selectedAccount?.addr === accountAddr ? (
-            shouldShowSpeedUp ? (
-              <SpeedUpTransaction
-                submittedAccountOp={submittedAccountOp}
-                textSize={textSize}
-                iconSize={iconSize}
-              />
-            ) : (
-              <RepeatTransaction
-                accountAddr={accountAddr}
-                chainId={network.chainId}
-                rawCalls={rawCalls}
-                textSize={textSize}
-                iconSize={iconSize}
-              />
-            )
-          ) : (
-            <View />
-          )}
-        </View>
-        <View style={flexbox.alignEnd}>
-          <View style={spacings.mbTy}>
-            <FooterActionLink
-              label={t('Copy link to transaction')}
-              onPress={handleCopyTransaction}
-              textSize={textSize}
-              iconSize={iconSize}
-              Icon={CopyIcon}
-            />
-          </View>
-          <FooterActionLink
-            testID="view-transaction-link"
-            label={t('Open explorer')}
-            onPress={handleOpenExplorer}
-            textSize={textSize}
-            iconSize={iconSize}
-            Icon={LinkIcon}
-          />
-        </View>
+    <View style={styles.footer}>
+      <View style={styles.footerButtonsRow}>
+        <Button
+          text={t('Open explorer')}
+          onPress={handleOpenExplorer}
+          type="secondary"
+          size="small"
+          hasBottomSpacing={false}
+          style={styles.footerButton}
+          childrenPosition="left"
+          testID="view-transaction-link"
+        >
+          <OpenIcon style={spacings.mrTy} width={16} height={16} />
+        </Button>
+        {canRepeatTransaction ? (
+          <Button
+            text={t(shouldShowSpeedUp ? 'Speed up' : 'Repeat')}
+            onPress={shouldShowSpeedUp ? handleSpeedUpTransaction : handleRepeatTransaction}
+            type="tertiary"
+            size="small"
+            hasBottomSpacing={false}
+            style={styles.footerButton}
+            childrenPosition="left"
+          >
+            <RefreshIcon style={spacings.mrTy} width={16} height={16} />
+          </Button>
+        ) : (
+          <View style={styles.footerButton} />
+        )}
+        <Button
+          text={t('Copy link')}
+          onPress={handleCopyTransaction}
+          type="primary"
+          size="small"
+          hasBottomSpacing={false}
+          style={styles.footerButton}
+          childrenPosition="left"
+        >
+          <CopyIcon style={spacings.mrTy} width={16} height={16} />
+        </Button>
       </View>
     </View>
   )

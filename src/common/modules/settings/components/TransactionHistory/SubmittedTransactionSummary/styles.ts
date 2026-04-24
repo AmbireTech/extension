@@ -9,8 +9,15 @@ interface Style {
   container: ViewStyle
   header: ViewStyle
   headerMeta: ViewStyle
+  sheetContainer: ViewStyle
+  sheetHeader: ViewStyle
+  sheetHeaderBackButton: ViewStyle
+  sheetHeaderTitle: ViewStyle
+  sheetScrollContent: ViewStyle
   summaryItem: ViewStyle
   footer: ViewStyle
+  footerButtonsRow: ViewStyle
+  footerButton: ViewStyle
   contentContainer: ViewStyle
   dappInteractionsColumn: ViewStyle
   dappInteractionRow: ViewStyle
@@ -37,6 +44,32 @@ const getStyles = (theme: ThemeProps) =>
     headerMeta: {
       ...flexbox.directionRow,
       ...flexbox.alignCenter
+    },
+    sheetContainer: {
+      ...flexbox.flex1
+    },
+    sheetHeader: {
+      ...flexbox.directionRow,
+      ...flexbox.alignCenter,
+      ...flexbox.justifySpaceBetween,
+      ...spacings.phSm,
+      ...spacings.ptSm,
+      ...spacings.pbTy
+    },
+    sheetHeaderBackButton: {
+      width: 24,
+      height: 24,
+      ...flexbox.alignCenter,
+      ...flexbox.justifyCenter
+    },
+    sheetHeaderTitle: {
+      ...flexbox.flex1,
+      textAlign: 'center',
+      ...spacings.mtMd,
+      ...spacings.mbLg
+    },
+    sheetScrollContent: {
+      ...spacings.pbSm
     },
     summaryItem: {
       backgroundColor: 'transparent',
@@ -85,13 +118,19 @@ const getStyles = (theme: ThemeProps) =>
       ...spacings.pvSm
     },
     footer: {
+      borderTopColor: theme.primaryBorder,
+      borderTopWidth: 1,
+      backgroundColor: theme.primaryBackground,
+      ...spacings.phLg,
+      ...spacings.pvLg
+    },
+    footerButtonsRow: {
       ...flexbox.directionRow,
       ...flexbox.justifySpaceBetween,
-      ...flexbox.flex1,
-      ...flexbox.alignStart,
-      borderTopColor: theme.secondaryBorder,
-      borderTopWidth: 1,
-      ...spacings.pvSm
+      ...flexbox.alignCenter
+    },
+    footerButton: {
+      ...spacings.mb0
     }
   })
 
