@@ -191,7 +191,8 @@ const stylesForIcons = {
     height: 24,
     alignItems: 'center',
     justifyContent: 'center',
-    ...common.borderRadiusPrimary
+    ...common.borderRadiusPrimary,
+    ...spacings.mrTy
   },
   balanceIconWrapper: {
     width: 16,
@@ -344,16 +345,11 @@ const SubmittedTransactionHeader = ({
   )
 
   return (
-    <View
-      style={[styles.header, spacings.phSm, { marginBottom: SPACING_SM * sizeMultiplier[size] }]}
-    >
+    <View style={[styles.header, spacings.phSm]}>
       <StatusBadge status={submittedAccountOp.status} textSize={14 * sizeMultiplier[size]} />
       <View style={styles.headerMeta}>
         <Text fontSize={14 * sizeMultiplier[size]} appearance="secondaryText">
-          {submittedDate}
-        </Text>
-        <Text fontSize={14 * sizeMultiplier[size]} appearance="secondaryText" style={spacings.mlTy}>
-          on {network.name}
+          {submittedDate} on {network.name}
         </Text>
         <NetworkIcon
           id={submittedAccountOp.chainId.toString()}
@@ -598,6 +594,7 @@ const SubmittedTransactionSummaryInner = ({
   const { styles } = useTheme(getStyles)
   const { dispatch: activityDispatch } = useController('ActivityController')
   const { networks } = useController('NetworksController').state
+  const { theme } = useTheme()
   const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useModalize()
 
   const network: Network | undefined = useMemo(
@@ -668,6 +665,16 @@ const SubmittedTransactionSummaryInner = ({
             network={network}
             size={size}
           />
+          <View
+            style={[
+              spacings.mvSm,
+              spacings.mhSm,
+              {
+                height: 1,
+                backgroundColor: theme.secondaryBorder
+              }
+            ]}
+          />
           <View style={styles.contentContainer}>
             <View
               style={[
@@ -688,7 +695,7 @@ const SubmittedTransactionSummaryInner = ({
                       ]}
                     >
                       <DappInteractionIcon interaction={interaction} />
-                      <Text fontSize={14} weight="semiBold" style={spacings.mlTy}>
+                      <Text fontSize={14} weight="semiBold">
                         {interaction.name}
                       </Text>
                     </View>
