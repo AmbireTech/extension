@@ -16,6 +16,7 @@ import { AMBIRE_PAYMASTER, ERC_4337_ENTRYPOINT } from '@ambire-common/consts/dep
 import { Fetch } from '@ambire-common/interfaces/fetch'
 import { Network } from '@ambire-common/interfaces/network'
 import { AccountOp } from '@ambire-common/libs/accountOp/accountOp'
+import { getBalanceChangeTokenAddresses } from '@ambire-common/libs/accountOp/balanceChanges'
 import {
   AccountOpIdentifiedBy,
   BalanceChange,
@@ -1002,7 +1003,7 @@ const useSteps = ({
               {
                 accountId: from,
                 chainId: network.chainId,
-                tokenAddrs: [...foundTokens, ZeroAddress],
+                tokenAddrs: getBalanceChangeTokenAddresses(foundTokens),
                 blockTag: Number(txnReceipt.blockNumber),
                 accountAddr: from
               }

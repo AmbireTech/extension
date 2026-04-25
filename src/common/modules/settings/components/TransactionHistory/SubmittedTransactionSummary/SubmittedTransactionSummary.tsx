@@ -29,7 +29,9 @@ import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import PendingTokenSummary from '@common/modules/sign-account-op/components/PendingTokenSummary'
-import TransactionSummary, { sizeMultiplier } from '@common/modules/sign-account-op/components/TransactionSummary'
+import TransactionSummary, {
+  sizeMultiplier
+} from '@common/modules/sign-account-op/components/TransactionSummary'
 import spacings, { SPACING_SM } from '@common/styles/spacings'
 import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
