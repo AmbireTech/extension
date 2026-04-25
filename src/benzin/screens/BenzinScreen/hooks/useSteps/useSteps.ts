@@ -729,37 +729,6 @@ const useSteps = ({
     }
   }, [dispatchAndWait, network, txnReceipt, blockData, shouldTryBlockFetch, activityAccOp])
 
-  useEffect(() => {
-    if (!extensionAccOp || receiptLogs || !activityAccOp?.txnId || !network) return
-    if (activityAccOp.status !== AccountOpStatus.Success) return
-
-    dispatchAndWait({
-      type: 'method',
-      params: {
-        method: 'callProviderAndSendResToUi',
-        args: [
-          {
-            chainId: network.chainId,
-            method: 'getTransactionReceipt',
-            args: [activityAccOp.txnId]
-          }
-        ]
-      }
-    })
-      .then((receipt: null | TransactionReceipt) => {
-        if (!receipt) return
-
-        setTxnReceipt((prev) => ({
-          actualGasCost: prev.actualGasCost || receipt.gasUsed * receipt.gasPrice,
-          originatedFrom: prev.originatedFrom || receipt.from,
-          blockNumber: prev.blockNumber || BigInt(receipt.blockNumber)
-        }))
-        // @ts-ignore
-        setReceiptLogs([...receipt.logs])
-      })
-      .catch(() => null)
-  }, [dispatchAndWait, extensionAccOp, activityAccOp, network, receiptLogs])
-
   // if it's an user op,
   // we need to call the entry point to fetch the hashes
   // and find the matching hash
@@ -980,7 +949,11 @@ const useSteps = ({
   }, [txnReceipt.actualGasCost, feePaidWith, feeCall, network, userOp, networks, extensionAccOp])
 
   useEffect(() => {
+    // call this only if benzina is external and fetch the
+    // balance changes manually
     if (
+      !!extensionAccOp ||
+      !!activityAccOp ||
       !from ||
       !network ||
       !receiptLogs ||
@@ -1015,10 +988,6 @@ const useSteps = ({
 
         if (!isMounted) return
       } catch (error) {
-        console.log('erorrrrrrr', error)
-        console.log('erorrrrrrr', error)
-        console.log('erorrrrrrr', error)
-
         if (!isMounted) return
 
         setBalanceChanges([])
