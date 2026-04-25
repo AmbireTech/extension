@@ -32,6 +32,10 @@ export default function useBanners(): [BannerInterface[], BannerInterface[]] {
 
   const marketingBanners = useMemo(() => {
     return marketingBannersData.banners.filter(
+      // if the banner is not a survey banner there is no need to hide it
+      // but for surveys we have other requirements that are acc specific
+      // the acc comparing is used to hide the fact that banners are not updated at the
+      // selected same time as the acc
       (b) => b.actions[0]?.actionName !== 'survey' || marketingBannersData.account === account?.addr
     )
   }, [account?.addr, marketingBannersData.account, marketingBannersData.banners])
