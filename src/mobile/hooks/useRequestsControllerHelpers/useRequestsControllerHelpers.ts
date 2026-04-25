@@ -7,10 +7,11 @@ import useRoute from '@common/hooks/useRoute'
 import { ROUTES } from '@common/modules/router/constants/common'
 import { getInitialRoute } from '@common/modules/router/helpers'
 import { getUiType } from '@common/utils/uiType'
+import { Action, MethodAction } from '@common/types/actions'
 import { MobileBaseControllersMappingType } from '@mobile/constants/controllersMapping'
 
 export default function useRequestsControllerHelpers(
-  controllers: MobileBaseControllersMappingType
+  dispatch: (action: Action | MethodAction) => void
 ) {
   const { navigate } = useNavigation()
 
@@ -32,11 +33,9 @@ export default function useRequestsControllerHelpers(
       currentPathname === ROUTES.signAccountOp || currentPathname === ROUTES.benzin
 
     if (wasOnActionRequestScreen && !isOnActionRequestScreen) {
-      if (controllers?.MainController?.ui?.window?.event) {
-        controllers.MainController.ui.window.event.emit('windowRemoved', 1)
-      }
+      dispatch({ type: 'WINDOW_REMOVED', params: { id: 1 } })
     }
-  }, [currentPathname, prevPathname, controllers])
+  }, [currentPathname, prevPathname, dispatch])
 
   useEffect(() => {
     if (

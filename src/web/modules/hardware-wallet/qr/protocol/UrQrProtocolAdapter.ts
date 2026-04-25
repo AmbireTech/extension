@@ -8,7 +8,6 @@ import { CryptoHDKey, DataType, ETHSignature, EthSignRequest } from '@keystonehq
 
 import { QrProtocolAdapter, QrSignaturePayload } from '../types'
 import { isSignatureParts, normalizeOriginHdPath } from '../utils'
-import { QrWalletType } from '../wallets'
 import { QrRequest } from '@ambire-common/interfaces/keystore'
 
 /**
@@ -252,12 +251,10 @@ class UrQrProtocolAdapter implements QrProtocolAdapter {
       const masterFingerprint =
         origin?.getSourceFingerprint?.()?.toString('hex') || parentFingerprintHex
 
-      const deviceModel = hdKey.getName?.().split('-')[0]?.toLowerCase() || 'keystone' // Default to 'keystone' if the model cannot be determined
-      const walletType = deviceModel.toLowerCase() as QrWalletType
-      const deviceId = `${walletType}-${masterFingerprint || 'unknown'}`
+      const deviceModel = hdKey.getName?.() || 'QR Hardware'
+      const deviceId = `${masterFingerprint || 'unknown'}`
 
       return {
-        walletType,
         deviceModel,
         deviceId,
         masterFingerprint,

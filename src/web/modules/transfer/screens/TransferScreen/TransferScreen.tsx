@@ -92,7 +92,7 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
     close: closeGasTankInfoBottomSheet
   } = useModalize()
   const { accountsOps } = useController('ActivityController').state
-  const { hasGasTank } = useHasGasTank({ account })
+  const { canUseGasTank } = useHasGasTank({ account })
   const recipientMenuClosedAutomatically = useRef(false)
 
   const [showAddedToBatch, setShowAddedToBatch] = useState(false)
@@ -303,6 +303,19 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
     overwriteValidation: validationFormMsgs.recipientAddress
   })
 
+  const isOneOwnerSafe = useMemo(() => {
+    if (!account?.safeCreation) return false
+
+    return (
+      signAccountOpController?.threshold === 1 &&
+      signAccountOpController?.accountKeyStoreKeys.length === 1
+    )
+  }, [
+    account?.safeCreation,
+    signAccountOpController?.threshold,
+    signAccountOpController?.accountKeyStoreKeys.length
+  ])
+
   /**
    * True if the user has pending user requests and there is no amount set in the form.
    * Used to allow the user to open the SignAccountOp window to sign the requests.
@@ -363,7 +376,7 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
         // Proceed in OneClick txn
         if (executionType === 'open-request-window') {
           // one click mode opens signAccountOp if more than 1 req in batch
-          if (!!account?.safeCreation || networkUserRequests.length > 0) {
+          if ((!!account?.safeCreation && !isOneOwnerSafe) || networkUserRequests.length > 0) {
             requestsDispatch({
               type: 'method',
               params: {
@@ -434,7 +447,8 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
       resetTransferForm,
       networkUserRequests.length,
       openEstimationModalAndDispatch,
-      account?.safeCreation
+      account?.safeCreation,
+      isOneOwnerSafe
     ]
   )
 
@@ -627,8 +641,17 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
               </View>
               <SendForm
                 addressInputState={addressInputState}
-                hasGasTank={hasGasTank}
-                amountErrorMessage={validationFormMsgs.amount.message || ''}
+                canUseGasTank={canUseGasTank}
+                amountErrorMessage={
+                  validationFormMsgs.amount.message ||
+                  transferState.amountAdjustmentWarning?.message ||
+                  ''
+                }
+                amountErrorSeverity={
+                  validationFormMsgs.amount.message
+                    ? validationFormMsgs.amount.severity
+                    : transferState.amountAdjustmentWarning?.severity
+                }
                 isRecipientAddressUnknown={isRecipientAddressUnknown}
                 isRecipientHumanizerKnownTokenOrSmartContract={
                   isRecipientHumanizerKnownTokenOrSmartContract
@@ -639,7 +662,7 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
                 setAddressStateFieldValue={setAddressStateFieldValue}
               />
             </ScrollableWrapper>
-            {isTopUp && !hasGasTank && (
+            {isTopUp && !canUseGasTank && (
               <View style={spacings.ptLg}>
                 <Alert
                   type="warning"
@@ -670,7 +693,7 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
                 />
               </View>
             )}
-            {isTopUp && hasGasTank && (
+            {isTopUp && canUseGasTank && (
               <View style={spacings.ptLg}>
                 <Alert
                   type="warning"

@@ -1,20 +1,18 @@
 import { HDNodeWallet } from 'ethers'
 
 import ExternalSignerError from '@ambire-common/classes/ExternalSignerError'
-import { HD_PATH_TEMPLATE_TYPE } from '@ambire-common/consts/derivation'
 import {
-  KeyIterator as KeyIteratorInterface,
-  QrWalletConfig
-} from '@ambire-common/interfaces/keyIterator'
+  BIP44_STANDARD_DERIVATION_TEMPLATE,
+  HD_PATH_TEMPLATE_TYPE
+} from '@ambire-common/consts/derivation'
+import { KeyIterator as KeyIteratorInterface } from '@ambire-common/interfaces/keyIterator'
 import { ParsedQrAccount } from '@ambire-common/interfaces/keystore'
 import QrHardwareController from '@web/modules/hardware-wallet/controllers/QrHardwareController'
 
 import { getRelativePathTemplateFromOrigin, normalizeOriginHdPath } from '../../qr/utils'
-import { QrWalletRegistry, QrWalletType } from '../../qr/wallets'
 
 interface KeyIteratorProps {
   controller: QrHardwareController
-  walletType: QrWalletType
 }
 
 const MISSING_CONTROLLER_MSG =
@@ -27,13 +25,17 @@ class QrKeyIterator implements KeyIteratorInterface {
   subType = 'hw' as const
 
   controller: QrHardwareController
-  walletConfig: QrWalletConfig | undefined = undefined
 
   #parsedAccount?: ParsedQrAccount
   #xpub?: string
+  #hdPathTemplate: HD_PATH_TEMPLATE_TYPE = BIP44_STANDARD_DERIVATION_TEMPLATE
 
   get parsedAccount() {
     return this.#parsedAccount
+  }
+
+  get hdPathTemplate() {
+    return this.#hdPathTemplate
   }
 
   constructor({ controller }: KeyIteratorProps) {
@@ -59,27 +61,12 @@ class QrKeyIterator implements KeyIteratorInterface {
       )
     }
 
-    // Note: temporarily default to Keystone if the wallet type is not provided.
-    // We will remove the restriction in the near future.
-    const walletType = parsed.walletType || 'keystone'
-    const wallet = QrWalletRegistry[walletType]
-
-    if (!wallet) {
-      throw new ExternalSignerError(`Unsupported QR wallet type: ${walletType}`)
-    }
-
     const originPath = parsed.hdPath || parsed.accounts[0]?.hdPath
     const normalizedOriginPath = normalizeOriginHdPath(originPath)
     const relativePathTemplate = getRelativePathTemplateFromOrigin(originPath)
-    const hdPathTemplate = normalizedOriginPath
-      ? `${normalizedOriginPath}/${relativePathTemplate}`
-      : wallet.hdPathTemplate
-
-    this.walletConfig = {
-      ...wallet,
-      hdPathTemplate,
-      relativePathTemplate
-    }
+    this.#hdPathTemplate = normalizedOriginPath
+      ? (`${normalizedOriginPath}/${relativePathTemplate}` as HD_PATH_TEMPLATE_TYPE)
+      : (BIP44_STANDARD_DERIVATION_TEMPLATE as HD_PATH_TEMPLATE_TYPE)
 
     const firstAccount = parsed.accounts[0]
 
@@ -116,7 +103,12 @@ class QrKeyIterator implements KeyIteratorInterface {
   }
 
   #resolveRelativePathTemplate(hdPathTemplate?: HD_PATH_TEMPLATE_TYPE): string {
-    let relativePathTemplate = hdPathTemplate || this.walletConfig?.relativePathTemplate
+    let relativePathTemplate: string | undefined = hdPathTemplate
+
+    if (!relativePathTemplate) {
+      const originPath = this.#parsedAccount?.accounts?.[0]?.hdPath || this.#parsedAccount?.hdPath
+      relativePathTemplate = getRelativePathTemplateFromOrigin(originPath)
+    }
 
     if (!relativePathTemplate) {
       throw new ExternalSignerError('QR relative path template is missing.')
@@ -146,9 +138,6 @@ class QrKeyIterator implements KeyIteratorInterface {
     fromToArr: { from: number; to: number }[],
     hdPathTemplate?: HD_PATH_TEMPLATE_TYPE
   ): Promise<string[]> {
-    if (!this.walletConfig) {
-      throw new ExternalSignerError('QR wallet configuration has not been resolved yet.')
-    }
     if (!this.controller) throw new Error(MISSING_CONTROLLER_MSG)
     if (!this.#parsedAccount || !this.#xpub) {
       throw new ExternalSignerError('QR accounts have not been imported yet.')
