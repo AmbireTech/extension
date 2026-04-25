@@ -628,8 +628,7 @@ const SubmittedTransactionSummaryInner = ({
     orderedBalanceChanges.length - MAX_VISIBLE_BALANCE_CHANGES,
     0
   )
-  const shouldShowBalanceChangesSummary =
-    submittedAccountOp.status === AccountOpStatus.Success && orderedBalanceChanges.length > 0
+  const shouldShowBalanceChangesSummary = orderedBalanceChanges.length > 0
   const dappInteractions = useMemo(
     () => getDappInteractions(submittedAccountOp),
     [submittedAccountOp]
