@@ -22,7 +22,6 @@ export interface InputProps extends TextInputProps {
   nativeInputStyle?: TextStyle
   leftIcon?: () => ReactNode
   value?: string
-  enableGrowHeightRange?: [number, number]
 }
 
 const TextArea = ({
@@ -41,13 +40,9 @@ const TextArea = ({
   nativeInputStyle,
   leftIcon,
   value,
-  enableGrowHeightRange,
   ...rest
 }: InputProps) => {
   const [isFocused, setIsFocused] = useState<boolean>(false)
-  const [heightIfEnableGrow, setHeightIfEnableGrow] = useState<number>(
-    enableGrowHeightRange ? enableGrowHeightRange[0] : 0
-  )
   const { theme, styles } = useTheme(getStyles)
 
   const handleOnFocus = (e: BlurEvent) => {
@@ -90,21 +85,13 @@ const TextArea = ({
             onBlur={handleOnBlur}
             onFocus={handleOnFocus}
             value={value}
-            onContentSizeChange={(e) => {
-              if (!enableGrowHeightRange) return
-              const [minHeight, maxHeight] = enableGrowHeightRange
-              const heighthFromEvent = e.nativeEvent.contentSize.height
-
-              setHeightIfEnableGrow(Math.min(maxHeight, Math.max(minHeight, heighthFromEvent)))
-            }}
             {...rest}
             style={{
               textAlignVertical: 'top',
               ...styles.nativeInput,
               // @ts-ignore outline: 'none'
               outline: 'none',
-              ...nativeInputStyle,
-              ...(enableGrowHeightRange ? { height: heightIfEnableGrow } : {})
+              ...nativeInputStyle
             }}
           />
         </View>
