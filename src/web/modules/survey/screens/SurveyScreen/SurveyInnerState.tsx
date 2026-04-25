@@ -61,7 +61,7 @@ const SurveyInnerState = ({
                 onChangeText={setInputtedAnswer}
                 containerStyle={spacings.ptLg}
                 inputWrapperStyle={{
-                  height: 100,
+                  height: 200,
                   borderColor: theme.neutral600,
                   borderWidth: 1,
                   alignItems: 'baseline'
