@@ -1,4 +1,4 @@
-import { StyleSheet, ViewStyle } from 'react-native'
+import { StyleSheet, TextStyle, ViewStyle } from 'react-native'
 
 import spacings from '@common/styles/spacings'
 import { ThemeProps } from '@common/styles/themeConfig'
@@ -12,7 +12,7 @@ interface Style {
   sheetContainer: ViewStyle
   sheetHeader: ViewStyle
   sheetHeaderBackButton: ViewStyle
-  sheetHeaderTitle: ViewStyle
+  sheetHeaderTitle: TextStyle
   sheetScrollContent: ViewStyle
   modalSection: ViewStyle
   modalConfirmedRow: ViewStyle
