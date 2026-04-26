@@ -16,6 +16,9 @@ interface Style {
   sheetScrollContent: ViewStyle
   modalSection: ViewStyle
   modalConfirmedRow: ViewStyle
+  modalStepRow: ViewStyle
+  modalStepRowRight: ViewStyle
+  modalHashCopyButton: ViewStyle
   summaryItem: ViewStyle
   footer: ViewStyle
   footerButtonsRow: ViewStyle
@@ -82,6 +85,23 @@ const getStyles = (theme: ThemeProps) =>
       ...flexbox.justifySpaceBetween,
       ...flexbox.alignCenter,
       ...flexbox.wrap
+    },
+    modalStepRow: {
+      ...flexbox.directionRow,
+      ...flexbox.justifySpaceBetween,
+      ...flexbox.alignCenter,
+      width: '100%'
+    },
+    modalStepRowRight: {
+      ...flexbox.directionRow,
+      ...flexbox.alignCenter
+    },
+    modalHashCopyButton: {
+      width: 24,
+      height: 24,
+      ...flexbox.alignCenter,
+      ...flexbox.justifyCenter,
+      ...spacings.mlTy
     },
     summaryItem: {
       backgroundColor: 'transparent',

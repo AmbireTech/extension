@@ -18,6 +18,7 @@ import GasTankIcon from '@common/assets/svg/GasTankIcon'
 import LeftArrowIcon from '@common/assets/svg/LeftArrowIcon'
 import SendIcon from '@common/assets/svg/SendIcon'
 import SwapIcon from '@common/assets/svg/SwapIcon'
+import CopyIcon from '@common/assets/svg/CopyIcon'
 import BottomSheet from '@common/components/BottomSheet'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import NetworkIcon from '@common/components/NetworkIcon'
@@ -28,6 +29,7 @@ import TokenIcon from '@common/components/TokenIcon'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
+import useToast from '@common/hooks/useToast'
 import PendingTokenSummary from '@common/modules/sign-account-op/components/PendingTokenSummary'
 import TransactionSummary, {
   sizeMultiplier
@@ -35,6 +37,7 @@ import TransactionSummary, {
 import spacings, { SPACING_SM } from '@common/styles/spacings'
 import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
+import { setStringAsync } from '@common/utils/clipboard'
 import { checkIfImageExists } from '@common/utils/checkIfImageExists'
 import DelegationHumanization from '@web/components/DelegationHumanization'
 import ManifestImage from '@web/components/ManifestImage'
@@ -214,6 +217,13 @@ const getFormattedSubmittedDate = (timestamp: number) =>
     minute: 'numeric',
     hourCycle: 'h12'
   })
+
+const getTruncatedTxnHash = (txnId?: string) => {
+  if (!txnId) return ''
+  if (txnId.length <= 12) return txnId
+
+  return `${txnId.slice(0, 6)}...${txnId.slice(-4)}`
+}
 
 const getModalFinalStatus = (status?: AccountOpStatus) => {
   switch (status) {
@@ -395,6 +405,7 @@ const SubmittedTransactionSummaryDetails = ({
 }) => {
   const { styles, theme } = useTheme(getStyles)
   const { t } = useTranslation()
+  const { addToast } = useToast()
   const submittedDate = useMemo(
     () => getFormattedSubmittedDate(submittedAccountOp.timestamp),
     [submittedAccountOp.timestamp]
@@ -424,6 +435,10 @@ const SubmittedTransactionSummaryDetails = ({
     submittedAccountOp.status === AccountOpStatus.Pending ||
     submittedAccountOp.status === AccountOpStatus.BroadcastedButNotConfirmed
   const modalFinalStatus = getModalFinalStatus(submittedAccountOp.status)
+  const shouldShowTransactionHashStep =
+    (submittedAccountOp.status === AccountOpStatus.Success ||
+      submittedAccountOp.status === AccountOpStatus.Failure) &&
+    !!submittedAccountOp.txnId
 
   const renderBalanceChangesCard = (title: string, changes: BalanceChange[]) => (
     <View
@@ -568,22 +583,41 @@ const SubmittedTransactionSummaryDetails = ({
               ))}
           </View>
         </View>
+        {shouldShowTransactionHashStep && (
+          <View
+            style={[styles.modalConfirmedRow, spacings.mbSm]}
+            testID="activity-transaction-hash-step"
+          >
+            <View style={styles.modalStepRow}>
+              <Text appearance="tertiaryText" fontSize={16} weight="medium">
+                Transaction hash
+              </Text>
+              <View style={styles.modalStepRowRight}>
+                <Text fontSize={14} appearance="secondaryText">
+                  {getTruncatedTxnHash(submittedAccountOp.txnId)}
+                </Text>
+                <Pressable
+                  onPress={() => {
+                    if (!submittedAccountOp.txnId) return
+                    void setStringAsync(submittedAccountOp.txnId)
+                    addToast(t('Copied to clipboard!') as string, { timeout: 2500 })
+                  }}
+                  style={styles.modalHashCopyButton}
+                >
+                  <CopyIcon width={16} height={16} color={theme.primaryText} />
+                </Pressable>
+              </View>
+            </View>
+          </View>
+        )}
         {!!modalFinalStatus && (
           <View style={[styles.modalConfirmedRow, spacings.mbSm]} testID="activity-confirmed-step">
-            <View
-              style={[
-                flexbox.directionRow,
-                flexbox.justifySpaceBetween,
-                flexbox.alignCenter,
-                spacings.mbSm,
-                { width: '100%' }
-              ]}
-            >
+            <View style={[styles.modalStepRow, spacings.mbSm]}>
               <Text appearance={modalFinalStatus.appearance} fontSize={16} weight="medium">
                 {modalFinalStatus.label}
               </Text>
               {submittedAccountOp.status === AccountOpStatus.Success && (
-                <View style={[flexbox.directionRow, flexbox.alignCenter]}>
+                <View style={styles.modalStepRowRight}>
                   <Text fontSize={14} appearance="secondaryText">
                     {submittedDate} on {network.name}
                   </Text>
