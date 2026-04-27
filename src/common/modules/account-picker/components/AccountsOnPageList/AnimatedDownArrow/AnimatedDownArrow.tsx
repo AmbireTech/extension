@@ -2,11 +2,15 @@ import React, { FC, useEffect, useRef } from 'react'
 import { Animated, View } from 'react-native'
 
 import DownArrowIcon from '@common/assets/svg/DownArrowIcon'
+import { isMobile } from '@common/config/env/env'
 import useTheme from '@common/hooks/useTheme'
 
 import getStyles from './styles'
 
-const AnimatedDownArrow: FC<{ isVisible: boolean }> = ({ isVisible }) => {
+const AnimatedDownArrow: FC<{ isVisible: boolean; appearance?: 'secondary' | 'primary' }> = ({
+  isVisible,
+  appearance = 'secondary'
+}) => {
   const bottom = useRef(new Animated.Value(0)).current
   const { styles } = useTheme(getStyles)
 
@@ -32,8 +36,15 @@ const AnimatedDownArrow: FC<{ isVisible: boolean }> = ({ isVisible }) => {
   if (!isVisible) return null
 
   return (
-    <Animated.View style={[styles.container, { bottom }]}>
-      <View style={styles.iconContainer}>
+    <Animated.View
+      style={[
+        styles.container,
+        isMobile ? { transform: [{ translateY: bottom }], bottom: 10 } : { bottom }
+      ]}
+    >
+      <View
+        style={[styles.iconContainer, appearance === 'primary' ? styles.primary : styles.secondary]}
+      >
         <DownArrowIcon />
       </View>
     </Animated.View>

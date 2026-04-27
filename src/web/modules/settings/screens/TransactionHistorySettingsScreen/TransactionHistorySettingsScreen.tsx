@@ -49,7 +49,7 @@ const AccountOpHistory: FC<{ network?: Network; account: Account; sessionId: str
     <>
       {items.map((item: SubmittedAccountOp, i) => (
         <SubmittedTransactionSummary
-          key={item.txnId}
+          key={`${item.id}-${item.txnId}-${item.timestamp}`}
           size="md"
           defaultType="full-info"
           submittedAccountOp={item}

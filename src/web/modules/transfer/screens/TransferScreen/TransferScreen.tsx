@@ -92,7 +92,7 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
     close: closeGasTankInfoBottomSheet
   } = useModalize()
   const { accountsOps } = useController('ActivityController').state
-  const { hasGasTank } = useHasGasTank({ account })
+  const { canUseGasTank } = useHasGasTank({ account })
   const recipientMenuClosedAutomatically = useRef(false)
 
   const [showAddedToBatch, setShowAddedToBatch] = useState(false)
@@ -641,8 +641,17 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
               </View>
               <SendForm
                 addressInputState={addressInputState}
-                hasGasTank={hasGasTank}
-                amountErrorMessage={validationFormMsgs.amount.message || ''}
+                canUseGasTank={canUseGasTank}
+                amountErrorMessage={
+                  validationFormMsgs.amount.message ||
+                  transferState.amountAdjustmentWarning?.message ||
+                  ''
+                }
+                amountErrorSeverity={
+                  validationFormMsgs.amount.message
+                    ? validationFormMsgs.amount.severity
+                    : transferState.amountAdjustmentWarning?.severity
+                }
                 isRecipientAddressUnknown={isRecipientAddressUnknown}
                 isRecipientHumanizerKnownTokenOrSmartContract={
                   isRecipientHumanizerKnownTokenOrSmartContract
@@ -653,7 +662,7 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
                 setAddressStateFieldValue={setAddressStateFieldValue}
               />
             </ScrollableWrapper>
-            {isTopUp && !hasGasTank && (
+            {isTopUp && !canUseGasTank && (
               <View style={spacings.ptLg}>
                 <Alert
                   type="warning"
@@ -684,7 +693,7 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
                 />
               </View>
             )}
-            {isTopUp && hasGasTank && (
+            {isTopUp && canUseGasTank && (
               <View style={spacings.ptLg}>
                 <Alert
                   type="warning"

@@ -16,7 +16,7 @@ import { BottomSheetContext } from './BottomSheetContext'
 import getStyles from './styles'
 import useBottomSheetInternal from './useBottomSheetInternal'
 
-const ANIMATION_DURATION: number = 250
+const DEFAULT_ANIMATION_DURATION: number = 250
 
 const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
   const {
@@ -35,6 +35,7 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
     flatListProps,
     sectionListProps,
     scrollViewProps,
+    animationDuration = DEFAULT_ANIMATION_DURATION,
     backgroundColor = 'primaryBackground',
     autoWidth = false,
     shouldBeClosableOnDrag = true,
@@ -194,10 +195,10 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
                 }
               : {})}
             openAnimationConfig={{
-              timing: { duration: ANIMATION_DURATION, delay: 0 }
+              timing: { duration: animationDuration, delay: 0 }
             }}
             closeAnimationConfig={{
-              timing: { duration: ANIMATION_DURATION, delay: 0 }
+              timing: { duration: animationDuration, delay: 0 }
             }}
             onOpen={() => {
               KeyboardController.dismiss()

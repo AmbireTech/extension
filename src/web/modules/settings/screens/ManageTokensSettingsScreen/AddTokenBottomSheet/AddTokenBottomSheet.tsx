@@ -26,7 +26,7 @@ import {
   getTokenFromPortfolio,
   getTokenFromTemporaryTokens,
   handleTokenIsInPortfolio
-} from '@common/modules/action-requests/utils'
+} from '@common/modules/action-requests/utils/watchTokenRequest'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 

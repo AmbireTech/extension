@@ -6,12 +6,13 @@ import spacings from '@common/styles/spacings'
 import Button, { Props as CommonButtonProps } from '../Button/Button'
 import Spinner from '../Spinner'
 
-type Props = Omit<CommonButtonProps, 'style' | 'children' | 'childrenPosition'> & {
+type Props = Omit<CommonButtonProps, 'style' | 'children'> & {
   style?: StyleProp<ViewStyle>
   isLoading?: boolean
+  icon?: React.ReactNode
 }
 
-const ButtonWithLoader: FC<Props> = ({ style, isLoading, ...rest }) => {
+const ButtonWithLoader: FC<Props> = ({ style, isLoading, icon, ...rest }) => {
   return (
     <Button
       style={[
@@ -33,6 +34,7 @@ const ButtonWithLoader: FC<Props> = ({ style, isLoading, ...rest }) => {
           }}
         />
       )}
+      {!isLoading && icon}
     </Button>
   )
 }

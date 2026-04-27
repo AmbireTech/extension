@@ -233,6 +233,7 @@ const Main = ({
                 hasReachedBottom={!!hasReachedBottom}
                 messageToSign={signMessageState.messageToSign}
                 responsiveSizeMultiplier={responsiveSizeMultiplier}
+                withScrollDownArrow
               />
             }
           >

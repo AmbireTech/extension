@@ -7,8 +7,8 @@ import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
 import { textToValidDecimal } from '@ambire-common/utils/numbers/formatters'
 import FlipIcon from '@common/assets/svg/FlipIcon'
 import AmountInput from '@common/components/AmountInput'
-import Select from '@common/components/Select'
-import { SelectValue } from '@common/components/Select/types'
+import Select, { SectionedSelect } from '@common/components/Select'
+import { SectionedSelectProps, SelectValue } from '@common/components/Select/types'
 import Text from '@common/components/Text'
 import { isMobile, isWeb } from '@common/config/env'
 import useController from '@common/hooks/useController'
@@ -20,6 +20,8 @@ import flexbox from '@common/styles/utils/flexbox'
 import { ItemPanel } from '@web/components/TransactionsScreen'
 
 import getStyles from './styles'
+
+const SECTION_MENU_HEADER_HEIGHT = 50
 
 type Props = {
   label: string
@@ -33,7 +35,11 @@ type Props = {
   fromAmountInFiat?: string
   fromAmountFieldMode: 'token' | 'fiat'
   maxFromAmount: string
-  validateFromAmount: { message?: string; success?: boolean }
+  validateFromAmount: {
+    message?: string
+    success?: boolean
+    severity?: 'error' | 'warning' | 'info' | 'success'
+  }
   onFromAmountChange: (value: string) => void
   handleSwitchFromAmountFieldMode: () => void
   handleSetMaxFromAmount: () => void
@@ -41,6 +47,8 @@ type Props = {
   selectTestId?: string
   maxAmountDisabled?: boolean
   simulationFailed?: boolean
+  sections?: SectionedSelectProps['sections']
+  renderSectionHeader?: SectionedSelectProps['renderSectionHeader']
 }
 
 const SendToken: FC<Props> = ({
@@ -62,13 +70,17 @@ const SendToken: FC<Props> = ({
   inputTestId,
   selectTestId,
   maxAmountDisabled,
-  simulationFailed
+  simulationFailed,
+  sections,
+  renderSectionHeader
 }) => {
   const {
     state: { portfolio }
   } = useController('SelectedAccountController')
   const { theme, styles } = useTheme(getStyles)
   const { t } = useTranslation()
+  const isError = validateFromAmount?.severity === 'error' && !!validateFromAmount?.message
+  const isWarning = validateFromAmount?.severity === 'warning' && !!validateFromAmount?.message
 
   const handleOnChangeTextAndFormat = useCallback(
     (text: string) => {
@@ -81,14 +93,11 @@ const SendToken: FC<Props> = ({
     [fromAmountValue, onFromAmountChange]
   )
 
+  const nonEmptySections = sections?.filter((s) => s.data.length > 0)
+
   return (
     <>
-      <View
-        style={[
-          styles.outerContainer,
-          validateFromAmount?.message ? styles.outerContainerWarning : {}
-        ]}
-      >
+      <View style={[styles.outerContainer, isError ? styles.outerContainerError : {}]}>
         <ItemPanel
           style={{
             // magic number to match the curve of the outer container
@@ -96,7 +105,7 @@ const SendToken: FC<Props> = ({
             borderRadius: 13,
             ...spacings.pv,
             ...(isWeb ? spacings.prMd : spacings.prSm),
-            ...(validateFromAmount?.message ? styles.containerWarning : {})
+            ...(isError ? styles.containerError : {})
           }}
         >
           <Text appearance="secondaryText" fontSize={14} weight="medium" style={spacings.mbSm}>
@@ -111,18 +120,36 @@ const SendToken: FC<Props> = ({
             ]}
           >
             <View style={flexbox.flex1}>
-              <Select
-                setValue={handleChangeFromToken}
-                options={fromTokenOptions}
-                value={fromTokenValue}
-                testID={selectTestId}
-                bottomSheetTitle={t('Send token')}
-                searchPlaceholder={t('Token name or address...')}
-                emptyListPlaceholderText={t('No tokens found.')}
-                containerStyle={{ ...flexbox.flex1, ...spacings.mb0 }}
-                selectStyle={{ ...spacings.plTy, ...spacings.prSm }}
-                mode="bottomSheet"
-              />
+              {nonEmptySections?.length ? (
+                <SectionedSelect
+                  setValue={handleChangeFromToken}
+                  sections={nonEmptySections}
+                  value={fromTokenValue}
+                  testID={selectTestId}
+                  bottomSheetTitle={t('Send token')}
+                  searchPlaceholder={t('Token name or address...')}
+                  emptyListPlaceholderText={t('No tokens found.')}
+                  containerStyle={{ ...flexbox.flex1, ...spacings.mb0 }}
+                  selectStyle={{ ...spacings.plTy, ...spacings.prSm }}
+                  mode="bottomSheet"
+                  headerHeight={SECTION_MENU_HEADER_HEIGHT}
+                  renderSectionHeader={renderSectionHeader}
+                  stickySectionHeadersEnabled
+                />
+              ) : (
+                <Select
+                  setValue={handleChangeFromToken}
+                  options={fromTokenOptions}
+                  value={fromTokenValue}
+                  testID={selectTestId}
+                  bottomSheetTitle={t('Send token')}
+                  searchPlaceholder={t('Token name or address...')}
+                  emptyListPlaceholderText={t('No tokens found.')}
+                  containerStyle={{ ...flexbox.flex1, ...spacings.mb0 }}
+                  selectStyle={{ ...spacings.plTy, ...spacings.prSm }}
+                  mode="bottomSheet"
+                />
+              )}
             </View>
             <AmountInput
               type={fromAmountFieldMode}
@@ -209,7 +236,11 @@ const SendToken: FC<Props> = ({
         </ItemPanel>
       </View>
       {validateFromAmount?.message && (
-        <Text fontSize={12} style={[spacings.mlMi, spacings.mtMi]} appearance="errorText">
+        <Text
+          fontSize={12}
+          style={[spacings.mlMi, spacings.mtMi]}
+          appearance={isWarning ? 'warningText' : 'errorText'}
+        >
           {validateFromAmount?.message}
         </Text>
       )}

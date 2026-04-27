@@ -6,18 +6,16 @@ import LightThemeIcon from '@common/assets/svg/LightThemeIcon'
 import SystemThemeIcon from '@common/assets/svg/SystemThemeIcon'
 import ControlOption from '@common/components/ControlOption'
 import FatToggle from '@common/components/FatToggle'
-import { BIOMETRICS_SECRET_KEY } from '@common/contexts/biometricsContext'
 import useBiometrics from '@common/hooks/useBiometrics'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
-import { secureStorage } from '@common/services/storage'
 import spacings from '@common/styles/spacings'
 import { THEME_TYPES } from '@common/styles/themeConfig'
 
 const BiometricsOption = () => {
   const { t } = useTranslation()
   const { selectedThemeType } = useTheme()
-  const { isEnrolled, saveBiometricsSecret } = useBiometrics()
+  const { isEnrolled, saveBiometricsSecret, removeBiometricsSecret } = useBiometrics()
 
   const {
     state: { hasBiometricsSecret, statuses },
@@ -27,8 +25,9 @@ const BiometricsOption = () => {
   if (!isEnrolled) return null
 
   useEffect(() => {
-    if (statuses.removeSecret === 'SUCCESS') secureStorage.remove(BIOMETRICS_SECRET_KEY)
-  }, [statuses.removeSecret])
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises
+    if (statuses.removeSecret === 'SUCCESS') removeBiometricsSecret()
+  }, [removeBiometricsSecret, statuses.removeSecret])
 
   const toggleBiometrics = async () => {
     if (hasBiometricsSecret) {

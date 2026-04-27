@@ -248,7 +248,8 @@ const DashboardOverview: FC<Props> = ({
                   portfolio={portfolio}
                   account={account}
                 />
-                <RewardsButton />
+                {/* NOTE: this is commented out instead of deleted because we might wat to return it */}
+                {/* <RewardsButton /> */}
               </View>
             </View>
             <Routes />

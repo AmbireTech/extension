@@ -92,9 +92,9 @@ const SubmittedTransactionSummaryInner = ({
         <StatusBadge status={submittedAccountOp.status} textSize={14 * sizeMultiplier[size]} />
       </View>
       {!isDelegationTxn &&
-        calls.map((call: IrCall) => (
+        calls.map((call: IrCall, i) => (
           <TransactionSummary
-            key={call.id}
+            key={`${submittedAccountOp.id}-${i}-${call.txnId}-${call.id}`}
             style={{ ...styles.summaryItem, marginBottom: SPACING_SM * sizeMultiplier[size] }}
             call={call}
             chainId={submittedAccountOp.chainId}
@@ -115,6 +115,7 @@ const SubmittedTransactionSummaryInner = ({
         size={size}
         network={network}
         rawCalls={submittedAccountOp.calls}
+        submittedAccountOp={submittedAccountOp}
         txnId={submittedAccountOp.txnId}
         identifiedBy={submittedAccountOp.identifiedBy}
         accountAddr={submittedAccountOp.accountAddr}
@@ -138,12 +139,13 @@ const SubmittedTransactionSummary = ({
   const accountOpDividedIntoMultipleIfNeeded = isIdentifiedByMultipleTxn(
     submittedAccountOp.identifiedBy
   )
-    ? submittedAccountOp.calls.reverse().map((call) => {
+    ? submittedAccountOp.calls.reverse().map((call, i) => {
         return {
           ...submittedAccountOp,
           txnId: call.txnId,
           status: call.status,
           calls: [call],
+          id: `${submittedAccountOp.id}-${i}-${call.txnId}-${call.id}`,
           // if the call has a fee set, use it
           gasFeePayment: submittedAccountOp.gasFeePayment
             ? {
@@ -164,7 +166,7 @@ const SubmittedTransactionSummary = ({
     <>
       {accountOpDividedIntoMultipleIfNeeded.map((op) => (
         <SubmittedTransactionSummaryInner
-          key={op.txnId}
+          key={op.id || op.txnId}
           submittedAccountOp={op}
           size={size}
           style={style}
