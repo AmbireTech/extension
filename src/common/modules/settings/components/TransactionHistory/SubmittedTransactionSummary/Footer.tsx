@@ -54,6 +54,7 @@ const Footer: FC<Props> = ({
     status === AccountOpStatus.Pending || status === AccountOpStatus.BroadcastedButNotConfirmed
   const isMinedTransaction =
     status === AccountOpStatus.Failure || status === AccountOpStatus.Success
+  const shouldShowBottomSheetExplorerActions = identifiedBy.type !== 'MultipleTxns'
   const shouldShowSpeedUp =
     isPendingTransaction &&
     gasFeePayment?.broadcastOption !== BROADCAST_OPTIONS.byRelayer &&
@@ -200,7 +201,7 @@ const Footer: FC<Props> = ({
             <RefreshIcon style={spacings.mrMi} width={16} height={16} />
           </Button>
         )}
-        {isMinedTransaction && (
+        {isMinedTransaction && shouldShowBottomSheetExplorerActions && (
           <View style={[flexbox.directionRow, flexbox.alignCenter]}>
             <Button
               text={t('Open explorer')}

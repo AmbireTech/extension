@@ -13,6 +13,7 @@ import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
 import CopyIcon from '@common/assets/svg/CopyIcon'
 import GasTankIcon from '@common/assets/svg/GasTankIcon'
 import LeftArrowIcon from '@common/assets/svg/LeftArrowIcon'
+import OpenIcon from '@common/assets/svg/OpenIcon'
 import SendIcon from '@common/assets/svg/SendIcon'
 import SwapIcon from '@common/assets/svg/SwapIcon'
 import BottomSheet from '@common/components/BottomSheet'
@@ -35,6 +36,7 @@ import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import { checkIfImageExists } from '@common/utils/checkIfImageExists'
 import { setStringAsync } from '@common/utils/clipboard'
+import { openInTab } from '@common/utils/links'
 import DelegationHumanization from '@web/components/DelegationHumanization'
 import ManifestImage from '@web/components/ManifestImage'
 
@@ -431,9 +433,16 @@ const SubmittedTransactionSummaryDetails = ({
     submittedAccountOp.status === AccountOpStatus.BroadcastedButNotConfirmed
   const modalFinalStatus = getModalFinalStatus(submittedAccountOp.status)
   const shouldShowTransactionHashStep =
+    submittedAccountOp.identifiedBy.type !== 'MultipleTxns' &&
     (submittedAccountOp.status === AccountOpStatus.Success ||
       submittedAccountOp.status === AccountOpStatus.Failure) &&
     !!submittedAccountOp.txnId
+  const openCallExplorer = async (callTxnId?: string) => {
+    if (!callTxnId || !network.explorerUrl) return
+
+    const explorerUrl = network.explorerUrl.replace(/\/$/, '')
+    await openInTab({ url: `${explorerUrl}/tx/${callTxnId}` })
+  }
 
   const renderBalanceChangesCard = (title: string, changes: BalanceChange[]) => (
     <View
@@ -481,6 +490,25 @@ const SubmittedTransactionSummaryDetails = ({
                 enableExpand={defaultType === 'full-info'}
                 size={size}
                 hideLinks
+                rightIcon={
+                  submittedAccountOp.calls[i]?.txnId && network.explorerUrl ? (
+                    <View
+                      dataSet={createGlobalTooltipDataSet({
+                        id: `call-open-explorer-${submittedAccountOp.id}-${i}`,
+                        content: 'Open explorer'
+                      })}
+                    >
+                      <OpenIcon width={18} height={18} color={theme.secondaryText} />
+                    </View>
+                  ) : undefined
+                }
+                onRightIconPress={
+                  submittedAccountOp.calls[i]?.txnId && network.explorerUrl
+                    ? () => {
+                        void openCallExplorer(submittedAccountOp.calls[i]?.txnId)
+                      }
+                    : undefined
+                }
               />
             ))}
           {!isDelegationTxn && !humanizedCalls.length && (
