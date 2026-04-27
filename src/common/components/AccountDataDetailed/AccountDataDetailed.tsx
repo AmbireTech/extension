@@ -31,7 +31,7 @@ const AccountDataDetailed = () => {
         smartAccountType={smartAccountType}
       />
       <View style={flexbox.flex1}>
-        <View style={[flexbox.directionRow]}>
+        <View style={[flexbox.directionRow, flexbox.alignCenter]}>
           <Text fontSize={16} weight="semiBold" numberOfLines={1}>
             {account.preferences.label}
           </Text>
