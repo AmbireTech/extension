@@ -1,5 +1,6 @@
 const path = require('path')
 const webpack = require('webpack')
+require('dotenv').config({ path: path.resolve(process.cwd(), '.env') })
 const NodePolyfillPlugin = require('node-polyfill-webpack-plugin')
 const TerserPlugin = require('terser-webpack-plugin')
 const HtmlWebpackPlugin = require('html-webpack-plugin')
@@ -167,8 +168,11 @@ const workerConfig = {
     ...sharedPlugins,
     new webpack.DefinePlugin({
       __DEV__: JSON.stringify(isDev),
-      'process.env.WEB_ENGINE': JSON.stringify('webview'),
-      'process.env.APP_ENV': JSON.stringify(isDev ? 'development' : 'production')
+      'process.env': JSON.stringify({
+        ...process.env,
+        WEB_ENGINE: 'webview',
+        APP_ENV: isDev ? 'development' : 'production'
+      })
     }),
     new JsonWrapPlugin({ assetName: 'webview-bundle.js' })
   ]
