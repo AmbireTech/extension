@@ -2,7 +2,7 @@ import Fuse from 'fuse.js'
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
-import { Platform, View } from 'react-native'
+import { Linking, Platform, View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 import { WebView, WebViewNavigation } from 'react-native-webview'
 import { useLocation } from 'react-router-native'
@@ -16,7 +16,7 @@ import Text from '@common/components/Text'
 import { ControllersMiddlewareContext } from '@common/contexts/controllersMiddlewareContext'
 import useController from '@common/hooks/useController'
 import useDebounce from '@common/hooks/useDebounce'
-import { AnimatedPressable, useCustomHover } from '@common/hooks/useHover'
+import { AnimatedPressable } from '@common/hooks/useHover'
 import useTheme from '@common/hooks/useTheme'
 import DappItem from '@common/modules/dapp-catalog/components/DappItem'
 import eventBus from '@common/services/event/eventBus'
@@ -34,8 +34,9 @@ const ambireInpageBundle = require('../../services/ambire-inpage-bundle.json')
 // @ts-ignore
 const ethereumInpageBundle = require('../../services/ethereum-inpage-bundle.json')
 
-const securityPatches = `
-  // 1. Redirect console to React Native for easy debugging
+// Dev-only WebView helpers
+const devOnlyHelpers = `
+  // Forward console output to React Native for easy debugging
   (function() {
     var originalLog = console.log;
     var originalWarn = console.warn;
@@ -69,51 +70,14 @@ const securityPatches = `
     };
   })();
 
-  // 2. Security: Block file:// access
-  var _originalFetch = window.fetch;
-  window.fetch = function() {
-    var url = arguments[0];
-    if (typeof url === 'string' && url.indexOf('file://') === 0) {
-      return Promise.reject(new Error('fetch to file:// is blocked for security.'));
-    }
-    if (url && typeof url === 'object' && url.url && url.url.indexOf('file://') === 0) {
-      return Promise.reject(new Error('fetch to file:// is blocked for security.'));
-    }
-    return _originalFetch.apply(this, arguments);
-  };
-  var _originalOpen = XMLHttpRequest.prototype.open;
-  XMLHttpRequest.prototype.open = function(method, url) {
-    if (typeof url === 'string' && url.indexOf('file://') === 0) {
-      throw new Error('XHR to file:// is blocked for security.');
-    }
-    return _originalOpen.apply(this, arguments);
-  };
-
-  // 3. Verification: Check for providers
-  window.addEventListener('load', function() {
-    setTimeout(function() {
-      console.log('[Ambire Verification] Checking providers...');
-      var hasEthereum = !!window.ethereum;
-      var hasAmbire = !!window.ambire;
-      console.log('[Ambire Verification] window.ethereum present:', hasEthereum);
-      console.log('[Ambire Verification] window.ambire present:', hasAmbire);
-
-      if (hasEthereum && window.ethereum.request) {
-        console.log('[Ambire Verification] Calling eth_chainId...');
-        window.ethereum.request({ method: 'eth_chainId' })
-          .then(function(id) { console.log('[Ambire Verification] eth_chainId result:', id); })
-          .catch(function(err) { console.error('[Ambire Verification] eth_chainId error:', err); });
-      }
-    }, 2000);
-  });
-
+  // Surface uncaught page errors via the same pipe
   window.onerror = function(msg, url, lineNo, columnNo, error) {
     var errStr = error ? (error.stack || error.message || String(error)) : msg;
     console.error('[Ambire window.onerror]', errStr, 'at', url, ':', lineNo, ':', columnNo);
     return false;
   };
 
-  // 4. Hide dev error overlays (react-error-overlay, webpack-dev-server, Next.js dev)
+  // Hide dev error overlays (react-error-overlay, webpack-dev-server, Next.js dev)
   var s = document.createElement('style');
   s.textContent = '#__react-error-overlay__,iframe#webpack-dev-server-client-overlay,nextjs-portal{display:none!important}';
   (document.head || document.documentElement).appendChild(s);
@@ -250,6 +214,49 @@ const DappWebViewScreen = () => {
     setHeaderValue('search', hostname)
   }, [hostname, setHeaderValue])
 
+  const handleShouldStartLoadWithRequest = useCallback(
+    (event: { url: string; navigationType: string }) => {
+      const { url } = event
+      try {
+        const parsed = new URL(url)
+        const protocol = parsed.protocol.replace(':', '')
+
+        // Allow HTTPS and about: (blank pages, error pages)
+        if (protocol === 'https' || protocol === 'about') {
+          return true
+        }
+
+        // Hand off wallet deep links to the OS
+        if (protocol === 'wc' || protocol === 'metamask' || protocol === 'ethereum') {
+          console.log('[DappWebView] Handing off wallet deep link to OS:', url)
+          Linking.openURL(url).catch((err) => {
+            console.warn('[DappWebView] Failed to open wallet deep link:', err)
+          })
+          return false
+        }
+
+        // Block suspicious protocols that could be used maliciously
+        if (
+          protocol === 'tel' ||
+          protocol === 'mailto' ||
+          protocol === 'javascript' ||
+          protocol === 'data'
+        ) {
+          console.warn('[DappWebView] Blocked suspicious protocol:', protocol, url)
+          return false
+        }
+
+        // For any other unknown protocol, block by default for security
+        console.warn('[DappWebView] Blocked unknown protocol:', protocol, url)
+        return false
+      } catch {
+        // If URL parsing fails, allow it (could be a relative URL or special scheme)
+        return true
+      }
+    },
+    []
+  )
+
   const handleNavigationStateChange = useCallback(
     (e: WebViewNavigation) => {
       // Only react to stable navigation states. The `loading` flag on this
@@ -291,7 +298,6 @@ const DappWebViewScreen = () => {
     [dispatch, setDappUrl]
   )
 
-  // ── JS Bridge Origin Hardening (inspired by Rabby) ──
   // This MUST be the first script injected. It wraps ReactNativeWebView.postMessage
   // in a Proxy that validates message origin, preventing malicious iframes from spoofing.
   const jsBridgeHarden = `
@@ -345,7 +351,7 @@ const DappWebViewScreen = () => {
     return `
       ${jsBridgeHarden}
 
-      ${securityPatches}
+      ${__DEV__ ? devOnlyHelpers : ''}
 
       window.addEventListener('message', function(event) {
         // Log EVERY message for debugging
@@ -555,7 +561,6 @@ const DappWebViewScreen = () => {
               : { method: data.method, params: data.params }
           const topic = data.topic || '> ambireProviderRequest'
 
-          // ── ORIGIN VALIDATION (Fix #3) ──
           // Validate the message origin against the current URL to prevent iframe spoofing
           const currentOrigin = (() => {
             try {
@@ -619,7 +624,7 @@ const DappWebViewScreen = () => {
         data.result ? 'SUCCESS' : 'ERROR/NULL'
       )
 
-      // Fix 5: Verify the WebView hasn't navigated to a different origin during the async operation
+      // Verify the WebView hasn't navigated to a different origin during the async operation
       const expectedOrigin = requestOriginsRef.current[data.requestId]
       if (expectedOrigin) {
         delete requestOriginsRef.current[data.requestId]
@@ -631,7 +636,7 @@ const DappWebViewScreen = () => {
         id: data.requestId
       }
 
-      // Fix 2: Include origin check in injected script to prevent message interception
+      // Include origin check in injected script to prevent message interception
       // A malicious page could navigate here between request and response; this check prevents it from receiving the response
       webviewRef.current?.injectJavaScript(`
          (function() {
@@ -756,6 +761,7 @@ const DappWebViewScreen = () => {
           allowUniversalAccessFromFileURLs={false}
           originWhitelist={['https://*']}
           setSupportMultipleWindows={false}
+          onShouldStartLoadWithRequest={handleShouldStartLoadWithRequest}
           onLoadStart={handleLoadStart}
           onLoadEnd={handleLoadEnd}
           onLoadProgress={handleLoadProgress}
