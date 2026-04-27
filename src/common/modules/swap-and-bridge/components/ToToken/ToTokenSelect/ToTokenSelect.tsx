@@ -1,4 +1,4 @@
-import { isAddress } from 'ethers'
+import { isAddress, ZeroAddress } from 'ethers'
 import React, { useCallback, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
@@ -154,6 +154,16 @@ const ToTokenSelect: React.FC<Props> = ({
       },
       { toTokenOptionsInAccount: [], restToTokenOptions: [] }
     )
+
+    // Note: this is a workaround to ensure the native token is always at the top of the list
+    const nativeTokenIndex = restToTokenOptions.findIndex(
+      (option) => option.address === ZeroAddress
+    )
+
+    if (nativeTokenIndex > 0) {
+      const [popularNativeToken] = restToTokenOptions.splice(nativeTokenIndex, 1)
+      if (popularNativeToken) restToTokenOptions.unshift(popularNativeToken)
+    }
 
     if (toTokenListError) {
       restToTokenOptions.unshift(
