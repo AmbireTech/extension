@@ -14,11 +14,11 @@ import { AccountOpStatus } from '@ambire-common/libs/accountOp/types'
 import { humanizeAccountOp } from '@ambire-common/libs/humanizer'
 import { IrCall } from '@ambire-common/libs/humanizer/interfaces'
 import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
+import CopyIcon from '@common/assets/svg/CopyIcon'
 import GasTankIcon from '@common/assets/svg/GasTankIcon'
 import LeftArrowIcon from '@common/assets/svg/LeftArrowIcon'
 import SendIcon from '@common/assets/svg/SendIcon'
 import SwapIcon from '@common/assets/svg/SwapIcon'
-import CopyIcon from '@common/assets/svg/CopyIcon'
 import BottomSheet from '@common/components/BottomSheet'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import NetworkIcon from '@common/components/NetworkIcon'
@@ -37,8 +37,8 @@ import TransactionSummary, {
 import spacings, { SPACING_SM } from '@common/styles/spacings'
 import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
-import { setStringAsync } from '@common/utils/clipboard'
 import { checkIfImageExists } from '@common/utils/checkIfImageExists'
+import { setStringAsync } from '@common/utils/clipboard'
 import DelegationHumanization from '@web/components/DelegationHumanization'
 import ManifestImage from '@web/components/ManifestImage'
 
@@ -65,7 +65,6 @@ type DisplayBalanceChange = BalanceChange & {
   iconType?: 'gasTank'
 }
 
-const MAX_VISIBLE_DAPP_INTERACTIONS = 2
 const MAX_VISIBLE_BALANCE_CHANGES = 3
 const dappIconAvailabilityCache = new Map<string, boolean>()
 
@@ -669,14 +668,6 @@ const SubmittedTransactionSummaryInner = ({
     () => getDappInteractions(submittedAccountOp),
     [submittedAccountOp]
   )
-  const visibleDappInteractions = useMemo(
-    () => dappInteractions.slice(0, MAX_VISIBLE_DAPP_INTERACTIONS),
-    [dappInteractions]
-  )
-  const hiddenDappInteractionsCount = Math.max(
-    dappInteractions.length - MAX_VISIBLE_DAPP_INTERACTIONS,
-    0
-  )
 
   const handleOpenDetails = () => {
     // note: it's really important to check for 'undefined' here
@@ -734,14 +725,12 @@ const SubmittedTransactionSummaryInner = ({
             >
               {dappInteractions.length ? (
                 <>
-                  {visibleDappInteractions.map((interaction, index) => (
+                  {dappInteractions.map((interaction, index) => (
                     <View
                       key={interaction.id}
                       style={[
                         styles.dappInteractionRow,
-                        index < visibleDappInteractions.length - 1 || hiddenDappInteractionsCount
-                          ? spacings.mbTy
-                          : undefined
+                        index < dappInteractions.length - 1 ? spacings.mbTy : undefined
                       ]}
                     >
                       <DappInteractionIcon interaction={interaction} />
@@ -750,11 +739,6 @@ const SubmittedTransactionSummaryInner = ({
                       </Text>
                     </View>
                   ))}
-                  {!!hiddenDappInteractionsCount && (
-                    <Text fontSize={12} appearance="secondaryText">
-                      +{hiddenDappInteractionsCount} more
-                    </Text>
-                  )}
                 </>
               ) : (
                 <SkeletonLoader width={120} height={18} />
