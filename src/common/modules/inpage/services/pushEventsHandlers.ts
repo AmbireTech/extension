@@ -3,6 +3,7 @@
 import { ethErrors } from 'eth-rpc-errors'
 
 import { EthereumProvider } from '@common/modules/inpage/EthereumProvider'
+import { LOG_LEVELS } from '@common/utils/logger'
 
 class PushEventHandlers {
   #provider: EthereumProvider
@@ -72,7 +73,7 @@ class PushEventHandlers {
     }
   }
 
-  logLevelUpdate = (nextLogLevel: any) => {
+  logLevelUpdate = (nextLogLevel: LOG_LEVELS) => {
     this.#provider.setLogLevel(nextLogLevel)
   }
 }
