@@ -15,14 +15,21 @@ type Props = {
 const DashboardSearch: FC<Props> = ({ control }) => {
   const { theme } = useTheme()
   const [isSearchFieldDisplayed, setIsSearchFieldDisplayed] = useState(false)
+  const [isSearchFullyExpanded, setIsSearchFullyExpanded] = useState(false)
   const animatedWidth = useMemo(() => new Animated.Value(40), [])
 
   useEffect(() => {
+    setIsSearchFullyExpanded(false)
+
     Animated.timing(animatedWidth, {
       toValue: isSearchFieldDisplayed ? 200 : 40,
       duration: 200,
       useNativeDriver: false
-    }).start()
+    }).start(({ finished }) => {
+      if (finished && isSearchFieldDisplayed) {
+        setIsSearchFullyExpanded(true)
+      }
+    })
   }, [isSearchFieldDisplayed, animatedWidth])
 
   return (
@@ -41,6 +48,7 @@ const DashboardSearch: FC<Props> = ({ control }) => {
     >
       <View style={{ width: 40, height: 40 }}>
         <Pressable
+          hitSlop={10}
           style={{
             position: 'absolute',
             top: -8,
@@ -48,6 +56,7 @@ const DashboardSearch: FC<Props> = ({ control }) => {
             width: 56,
             height: 56,
             borderRadius: 28,
+            ...flexbox.alignCenter,
             ...flexbox.center
           }}
           onPress={() => {
@@ -101,19 +110,21 @@ const DashboardSearch: FC<Props> = ({ control }) => {
               buttonStyle={spacings.ph0}
               value={value}
               button={
-                <Pressable
-                  style={{
-                    width: 24,
-                    height: 24,
-                    ...flexbox.center
-                  }}
-                  onPress={() => {
-                    onChange('')
-                    setIsSearchFieldDisplayed(false)
-                  }}
-                >
-                  <CloseIcon width={12} height={12} color={theme.iconPrimary} />
-                </Pressable>
+                isSearchFullyExpanded ? (
+                  <Pressable
+                    style={{
+                      width: 24,
+                      height: 24,
+                      ...flexbox.center
+                    }}
+                    onPress={() => {
+                      onChange('')
+                      setIsSearchFieldDisplayed(false)
+                    }}
+                  >
+                    <CloseIcon width={12} height={12} color={theme.iconPrimary} />
+                  </Pressable>
+                ) : undefined
               }
             />
           )}
