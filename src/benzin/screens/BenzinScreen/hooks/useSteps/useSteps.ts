@@ -153,6 +153,13 @@ const filterEntryPointAuthCall = (call: IrCall) =>
 
 type ReceiptLogs = Parameters<typeof getTransferLogTokens>[0]
 
+const getBalanceChangesSignature = (changes?: BalanceChange[]) =>
+  typeof changes === 'undefined'
+    ? 'undefined'
+    : changes
+        .map((change) => `${change.address}:${change.chainId}:${change.balanceChange.toString()}`)
+        .join('|')
+
 const useSteps = ({
   txnId,
   userOpHash,
@@ -211,6 +218,11 @@ const useSteps = ({
 
     return op
   }, [accountsOps, extensionAccOp])
+  const submittedAccountOp = activityAccOp || extensionAccOp || null
+  const submittedAccountOpBalanceChangesSignature = useMemo(
+    () => getBalanceChangesSignature(submittedAccountOp?.balanceChanges),
+    [submittedAccountOp]
+  )
 
   const getIdentifiedBy = useCallback((): AccountOpIdentifiedBy => {
     if (relayerId) return { type: 'Relayer', identifier: relayerId }
@@ -236,7 +248,10 @@ const useSteps = ({
 
   // fetch the account op from the activity every 2 seconds until found
   useEffect(() => {
-    if (!extensionAccOp || !!activityAccOp || refetchStatus > 1000) return
+    const hasActivityBalanceChanges =
+      !!benzinActivityOp && typeof benzinActivityOp.balanceChanges !== 'undefined'
+
+    if (!extensionAccOp || hasActivityBalanceChanges || refetchStatus > 1000) return
     const timeout = setTimeout(() => {
       setRefetchStatus((prev) => prev + 1)
     }, 2000)
@@ -263,11 +278,11 @@ const useSteps = ({
     return () => {
       if (timeout) clearTimeout(timeout)
     }
-  }, [extensionAccOp, activityAccOp, setRefetchStatus, refetchStatus, activityDispatch])
+  }, [extensionAccOp, benzinActivityOp, setRefetchStatus, refetchStatus, activityDispatch])
 
   // set the found account op from the activity
   useEffect(() => {
-    if (!!activityAccOp || !benzinActivityOp || !network || !switcher) return
+    if (!benzinActivityOp || !network || !switcher) return
 
     if (
       benzinActivityOp.status === AccountOpStatus.BroadcastedButNotConfirmed ||
@@ -276,27 +291,28 @@ const useSteps = ({
     )
       return
 
+    const benzinBalanceChangesSignature = getBalanceChangesSignature(
+      benzinActivityOp.balanceChanges
+    )
+    const activityBalanceChangesSignature = getBalanceChangesSignature(
+      activityAccOp?.balanceChanges
+    )
+
+    if (
+      activityAccOp?.status === benzinActivityOp.status &&
+      activityAccOp?.txnId === benzinActivityOp.txnId &&
+      activityAccOp?.blockNumber === benzinActivityOp.blockNumber &&
+      benzinBalanceChangesSignature === activityBalanceChangesSignature
+    ) {
+      return
+    }
+
     setActivityAccOp({
       ...benzinActivityOp
     })
     setFoundTxnId(benzinActivityOp.txnId)
     setUrlToTxnId(benzinActivityOp.txnId, userOpHash, relayerId, network.chainId, switcher)
   }, [benzinActivityOp, activityAccOp, network, switcher, relayerId, userOpHash])
-
-  // adopt the latest activity account op once the async balance diff enrichment completes
-  useEffect(() => {
-    if (
-      !activityAccOp ||
-      !benzinActivityOp ||
-      typeof benzinActivityOp.balanceChanges === 'undefined' ||
-      typeof activityAccOp.balanceChanges !== 'undefined'
-    )
-      return
-
-    setActivityAccOp({
-      ...benzinActivityOp
-    })
-  }, [activityAccOp, benzinActivityOp])
 
   // use the extension account op for status changes, if passed
   useEffect(() => {
@@ -949,16 +965,13 @@ const useSteps = ({
   }, [txnReceipt.actualGasCost, feePaidWith, feeCall, network, userOp, networks, extensionAccOp])
 
   useEffect(() => {
-    // call this only if benzina is external and fetch the
-    // balance changes manually
     if (
-      !!extensionAccOp ||
-      !!activityAccOp ||
       !from ||
       !network ||
       !receiptLogs ||
       !txnReceipt.blockNumber ||
-      typeof balanceChanges !== 'undefined'
+      typeof balanceChanges !== 'undefined' ||
+      submittedAccountOpBalanceChangesSignature !== 'undefined'
     )
       return
 
@@ -983,7 +996,10 @@ const useSteps = ({
             ]
           }
         })
-          .then((res) => setBalanceChanges(res))
+          .then((res) => {
+            if (!isMounted) return
+            setBalanceChanges(res)
+          })
           .catch(() => null)
 
         if (!isMounted) return
@@ -1005,7 +1021,8 @@ const useSteps = ({
     receiptLogs,
     txnReceipt.blockNumber,
     from,
-    dispatchAndWait
+    dispatchAndWait,
+    submittedAccountOpBalanceChangesSignature
   ])
 
   useEffect(() => {
@@ -1060,8 +1077,6 @@ const useSteps = ({
       }
     }
   }, [network, txnReceipt, txn, userOpHash, userOp, txnId, extensionAccOp])
-
-  const submittedAccountOp = activityAccOp || extensionAccOp || null
 
   return {
     blockData,
