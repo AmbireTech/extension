@@ -23,10 +23,11 @@ export const mobileMessenger: Messenger = {
     options?: { id?: string | number; tabId?: number; [key: string]: any }
   ): Promise<TResponse> => {
     if (topic.includes('broadcast')) {
-      const { event, data } = payload as any
+      const { event, data, origin } = payload as any
       sendToReactEvent('action.broadcastDappEvent', {
         event,
         data,
+        origin,
         tabId: options?.tabId
       })
     }
