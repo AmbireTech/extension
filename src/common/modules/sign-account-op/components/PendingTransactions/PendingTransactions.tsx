@@ -4,6 +4,7 @@ import { View } from 'react-native'
 
 import { Hex } from '@ambire-common/interfaces/hex'
 import { Network } from '@ambire-common/interfaces/network'
+import { isWeb } from '@common/config/env'
 import useController from '@common/hooks/useController'
 import PendingTransactionsSkeleton from '@common/modules/sign-account-op/components/PendingTransactions/PendingTransactionsSkeleton'
 import SafetyChecksBanner from '@common/modules/sign-account-op/components/SafetyChecksBanner'
@@ -28,7 +29,7 @@ const PendingTransactions: FC<Props> = ({
   const { humanization, banners } = useController('SignAccountOpController').state || {}
 
   return (
-    <View style={spacings.mbLg}>
+    <View style={isWeb ? spacings.mbLg : spacings.mb}>
       {!!banners && !!banners.length && (
         <View style={spacings.mbTy}>
           {banners.map((banner) => (
