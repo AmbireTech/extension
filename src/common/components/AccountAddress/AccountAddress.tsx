@@ -66,13 +66,15 @@ const AccountAddress: FC<Props> = ({
   withWrap = false
 }) => {
   const { t } = useTranslation()
+  // If highlight is required, prioritize showing it over the domain resolving loading state.
+  const effectiveIsLoading = isLoading && !addressHighlight
 
   return (
     <View
       style={[{ flexShrink: 1, minWidth: 0, maxWidth: '100%' }, containerStyle]}
       testID="address"
     >
-      {name || isLoading ? (
+      {name || effectiveIsLoading ? (
         <View
           style={[
             flexbox.directionRow,
@@ -80,7 +82,7 @@ const AccountAddress: FC<Props> = ({
             withWrap ? flexbox.wrap : { flexShrink: 1, minWidth: 0, maxWidth: '100%' }
           ]}
         >
-          {!isLoading ? (
+          {!effectiveIsLoading ? (
             <View
               style={[
                 flexbox.directionRow,
