@@ -9,7 +9,7 @@ import text from '@common/styles/utils/text'
 
 type InProgressProps = {
   title: string
-  children: React.ReactNode
+  children?: React.ReactNode
 }
 
 const InProgress: FC<InProgressProps> = ({ title, children }) => (
