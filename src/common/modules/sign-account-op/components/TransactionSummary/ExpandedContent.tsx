@@ -2,14 +2,13 @@ import { formatUnits, isAddress } from 'ethers'
 import React, { useState } from 'react'
 import { View } from 'react-native'
 
-import { DecodedCall } from '@ambire-common/libs/decodeCall'
+import { DecodedCall } from '@ambire-common/interfaces/decodeCall'
 import { IrCall } from '@ambire-common/libs/humanizer/interfaces'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
 import useDecodeTransactionData from '@common/hooks/useDecodeTransactionData/useDecodeTransactionData'
 import useTheme from '@common/hooks/useTheme/useTheme'
 import { SPACING_MI, SPACING_SM, SPACING_TY } from '@common/styles/spacings'
-import Address from '@legends/components/Address'
 
 import getStyles from './styles'
 
