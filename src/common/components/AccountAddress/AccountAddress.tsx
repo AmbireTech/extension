@@ -66,15 +66,16 @@ const AccountAddress: FC<Props> = ({
   withWrap = false
 }) => {
   const { t } = useTranslation()
-  // If highlight is required, prioritize showing it over the domain resolving loading state.
+  // If highlight is required, prioritize showing it over domain resolving/name UI so the highlight stays visible.
   const effectiveIsLoading = isLoading && !addressHighlight
+  const showResolvedName = !!name && !addressHighlight
 
   return (
     <View
       style={[{ flexShrink: 1, minWidth: 0, maxWidth: '100%' }, containerStyle]}
       testID="address"
     >
-      {name || effectiveIsLoading ? (
+      {showResolvedName || effectiveIsLoading ? (
         <View
           style={[
             flexbox.directionRow,
@@ -82,7 +83,7 @@ const AccountAddress: FC<Props> = ({
             withWrap ? flexbox.wrap : { flexShrink: 1, minWidth: 0, maxWidth: '100%' }
           ]}
         >
-          {!effectiveIsLoading ? (
+          {showResolvedName ? (
             <View
               style={[
                 flexbox.directionRow,
@@ -101,11 +102,11 @@ const AccountAddress: FC<Props> = ({
                 {name}
               </Text>
             </View>
-          ) : (
+          ) : effectiveIsLoading ? (
             <Text fontSize={12} appearance="secondaryText">
               {t('Resolving domain...')}
             </Text>
-          )}
+          ) : null}
           {withCopy ? (
             <>
               <PlainAddressWithCopy
