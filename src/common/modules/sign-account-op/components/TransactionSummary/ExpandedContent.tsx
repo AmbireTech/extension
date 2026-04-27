@@ -106,7 +106,7 @@ const ExpandedContent = ({ call, size, sizeMultiplier }: Props) => {
 
       {decodedFunction ? (
         <View style={styles.bodyText}>
-          <Text style={{ color: theme.secondaryText }} fontSize={12}>
+          <Text selectable style={{ color: theme.secondaryText }} fontSize={12}>
             {t('Function to call: ')}
             {decodedFunction.signature}
           </Text>
@@ -122,11 +122,11 @@ const ExpandedContent = ({ call, size, sizeMultiplier }: Props) => {
             {displayRawData ? t('Show Decoded') : t('Show Raw')}
           </Text>
           {displayRawData ? (
-            <Text selectable fontSize={12} style={styles.bodyText}>
+            <Text fontSize={12} style={styles.bodyText}>
               <Text fontSize={12} style={styles.bodyText}>
                 {t('Data: ')}
               </Text>
-              <Text fontSize={12} style={styles.bodyText}>
+              <Text selectable fontSize={12} style={styles.bodyText}>
                 {call.data}
               </Text>
             </Text>
