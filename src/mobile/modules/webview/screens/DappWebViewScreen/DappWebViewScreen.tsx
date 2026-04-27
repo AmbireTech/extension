@@ -291,6 +291,51 @@ const DappWebViewScreen = () => {
     [dispatch, setDappUrl]
   )
 
+  // ── JS Bridge Origin Hardening (inspired by Rabby) ──
+  // This MUST be the first script injected. It wraps ReactNativeWebView.postMessage
+  // in a Proxy that validates message origin, preventing malicious iframes from spoofing.
+  const jsBridgeHarden = `
+    (function() {
+      if (!window.ReactNativeWebView) return;
+      try {
+        var originalPostMessage = window.ReactNativeWebView.postMessage.bind(window.ReactNativeWebView);
+        var pageOrigin = window.location.origin;
+        function safeStartsWith(str, search) {
+          if (typeof str !== 'string' || typeof search !== 'string') return false;
+          for (var i = 0; i < search.length; i++) {
+            if (str[i] !== search[i]) return false;
+          }
+          return true;
+        }
+        function myPostMessage(msg) {
+          try {
+            var json = JSON.parse(msg);
+            // Validate origin matches current page origin
+            if (json && json.payload && json.payload.origin) {
+              var msgOrigin = json.payload.origin;
+              if (!(pageOrigin === msgOrigin ||
+                    pageOrigin === msgOrigin + '/' ||
+                    safeStartsWith(msgOrigin, pageOrigin + '/'))) {
+                console.warn('[Ambire JSBridgeHarden] Origin mismatch: expected ' + pageOrigin + ', got ' + msgOrigin);
+                return;
+              }
+            }
+          } catch (e) {}
+          return originalPostMessage(msg);
+        }
+        window.ReactNativeWebView = new Proxy(window.ReactNativeWebView, {
+          get: function(target, prop) {
+            if (prop === 'postMessage') return myPostMessage;
+            var val = target[prop];
+            return typeof val === 'function' ? val.bind(target) : val;
+          }
+        });
+      } catch (e) {
+        console.error('[Ambire JSBridgeHarden] Failed to harden bridge:', e);
+      }
+    })();
+  `
+
   // ── Inpage Provider Injection ──
   const injectionScript = useMemo(() => {
     // Use the dynamically fetched dev code if available, fallback to bundled code
@@ -298,6 +343,8 @@ const DappWebViewScreen = () => {
     const baseCodeEthereum = (__DEV__ && devEthereumCode) || ethereumInpageBundle.code
 
     return `
+      ${jsBridgeHarden}
+
       ${securityPatches}
 
       window.addEventListener('message', function(event) {
@@ -508,16 +555,40 @@ const DappWebViewScreen = () => {
               : { method: data.method, params: data.params }
           const topic = data.topic || '> ambireProviderRequest'
 
-          // Store the expected origin when request is received to detect navigation during async operations
-          const expectedOrigin = (() => {
+          // ── ORIGIN VALIDATION (Fix #3) ──
+          // Validate the message origin against the current URL to prevent iframe spoofing
+          const currentOrigin = (() => {
             try {
               return new URL(currentUrlRef.current).origin
             } catch {
               return null
             }
           })()
-          if (expectedOrigin && data.id) {
-            requestOriginsRef.current[data.id] = expectedOrigin
+          const msgOrigin = payload?.origin || null
+
+          if (currentOrigin && msgOrigin) {
+            try {
+              const msgOriginHost = new URL(msgOrigin).host
+              const currentOriginHost = new URL(currentOrigin).host
+              if (msgOriginHost !== currentOriginHost) {
+                console.warn(
+                  '[DappWebView] Origin mismatch - rejecting request. Expected:',
+                  currentOriginHost,
+                  'Got:',
+                  msgOriginHost
+                )
+                return // Reject the request
+              }
+            } catch {
+              // If URL parsing fails, reject for safety
+              console.warn('[DappWebView] Invalid origin in request - rejecting:', msgOrigin)
+              return
+            }
+          }
+
+          // Store the expected origin when request is received to detect navigation during async operations
+          if (currentOrigin && data.id) {
+            requestOriginsRef.current[data.id] = currentOrigin
           }
 
           dispatch({
@@ -568,7 +639,7 @@ const DappWebViewScreen = () => {
              console.warn('[Ambire] Response blocked: origin mismatch. Expected:', ${JSON.stringify(expectedOrigin)}, 'Got:', location.origin);
              return;
            }
-           window.postMessage(${JSON.stringify(replyMessage)}, '*');
+           window.postMessage(${JSON.stringify(replyMessage)}, location.origin);
          })();
          true;
        `)
@@ -684,6 +755,7 @@ const DappWebViewScreen = () => {
           allowFileAccessFromFileURLs={false}
           allowUniversalAccessFromFileURLs={false}
           originWhitelist={['https://*']}
+          setSupportMultipleWindows={false}
           onLoadStart={handleLoadStart}
           onLoadEnd={handleLoadEnd}
           onLoadProgress={handleLoadProgress}
