@@ -135,12 +135,23 @@ const AccountAddress: FC<Props> = ({
             </>
           ) : (
             <>
-              <PlainAddress
-                maxLength={isMobile ? 13 : 18}
-                address={address}
-                style={{ ...spacings.mlMi }}
-                fontSize={fontSize}
-              />
+              {addressHighlight ? (
+                <HighlightedPlainAddress
+                  address={address}
+                  highlight={addressHighlight}
+                  hideParentheses
+                  fontSize={fontSize}
+                  withWrap={withWrap}
+                  style={{ ...spacings.mlMi }}
+                />
+              ) : (
+                <PlainAddress
+                  maxLength={isMobile ? 13 : 18}
+                  address={address}
+                  style={{ ...spacings.mlMi }}
+                  fontSize={fontSize}
+                />
+              )}
               {withReceive && <ReceiveButton address={address} fontSize={fontSize} />}
             </>
           )}
@@ -175,12 +186,22 @@ const AccountAddress: FC<Props> = ({
         </>
       ) : (
         <View style={[flexbox.directionRow]}>
-          <PlainAddress
-            maxLength={plainAddressMaxLength}
-            address={address}
-            hideParentheses
-            fontSize={fontSize}
-          />
+          {addressHighlight ? (
+            <HighlightedPlainAddress
+              address={address}
+              highlight={addressHighlight}
+              hideParentheses
+              fontSize={fontSize}
+              withWrap={withWrap}
+            />
+          ) : (
+            <PlainAddress
+              maxLength={plainAddressMaxLength}
+              address={address}
+              hideParentheses
+              fontSize={fontSize}
+            />
+          )}
           {withReceive && <ReceiveButton address={address} fontSize={fontSize} />}
         </View>
       )}

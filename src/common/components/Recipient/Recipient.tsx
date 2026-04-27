@@ -152,7 +152,9 @@ const SelectedMenuOption: React.FC<{
         addressHighlight={addressHighlight}
         isRecipientDomainResolving={isRecipientDomainResolving}
         value={address}
-        withDetails={type === 'selected-menu-option'}
+        // On mobile input mode we still need details view when poisoning highlight exists,
+        // because highlight rendering lives in the detailed address row.
+        withDetails={type === 'selected-menu-option' || (isMobile && !!addressHighlight)}
         onChangeText={setAddress}
         disabled={disabled}
         editable={!isButtonMode}
@@ -489,10 +491,12 @@ const Recipient: React.FC<Props> = ({
             validation={validation}
             resolvedAddress={resolvedAddress}
             resolvedAddressType={resolvedAddressType}
-            isRecipientDomainResolving={isRecipientDomainResolving}
+            // Keep highlight visible on mobile; don't show resolving UI when poisoning highlight exists.
+            isRecipientDomainResolving={isRecipientDomainResolving && !selectedAddressHighlight}
             address={address}
             setAddress={setAddress}
             disabled={disabled}
+            addressHighlight={selectedAddressHighlight}
           />
         )}
         containerStyle={spacings.mb0}
