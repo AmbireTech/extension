@@ -51,6 +51,17 @@ const StatusBadge: FC<Props> = ({ status, textSize }) => {
         </View>
       )
 
+    case AccountOpStatus.PartiallyComplete:
+      return (
+        <Badge
+          size="md"
+          type="warning"
+          weight="medium"
+          text={t('Partially Complete')}
+          withRightSpacing
+        />
+      )
+
     default:
       return null
   }

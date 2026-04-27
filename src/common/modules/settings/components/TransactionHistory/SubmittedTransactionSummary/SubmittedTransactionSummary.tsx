@@ -29,7 +29,9 @@ import { AnimatedPressable, useMultiHover } from '@common/hooks/useHover'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import PendingTokenSummary from '@common/modules/sign-account-op/components/PendingTokenSummary'
-import TransactionSummary, { sizeMultiplier } from '@common/modules/sign-account-op/components/TransactionSummary'
+import TransactionSummary, {
+  sizeMultiplier
+} from '@common/modules/sign-account-op/components/TransactionSummary'
 import spacings, { SPACING_SM } from '@common/styles/spacings'
 import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
@@ -229,6 +231,8 @@ const getModalFinalStatus = (status?: AccountOpStatus) => {
       return { label: 'The transaction could not be found', appearance: 'errorText' as const }
     case AccountOpStatus.Rejected:
       return { label: 'Failed to send', appearance: 'errorText' as const }
+    case AccountOpStatus.PartiallyComplete:
+      return { label: 'Partially completed', appearance: 'warningText' as const }
     case AccountOpStatus.Failure:
       return { label: 'Failed', appearance: 'errorText' as const }
     case AccountOpStatus.Success:
@@ -315,6 +319,19 @@ const getHumanizedCalls = (submittedAccountOp: SubmittedAccountOp): IrCall[] =>
     id: call.id || String(index)
   }))
 
+const getPresentationalStatus = (
+  submittedAccountOp: SubmittedAccountOp
+): SubmittedAccountOp['status'] => {
+  if (
+    submittedAccountOp.identifiedBy.type !== 'MultipleTxns' ||
+    submittedAccountOp.status === AccountOpStatus.BroadcastedButNotConfirmed
+  )
+    return submittedAccountOp.status
+
+  const callWithoutATxId = submittedAccountOp.calls.find((call) => call.txnId === undefined)
+  return !callWithoutATxId ? submittedAccountOp.status : AccountOpStatus.PartiallyComplete
+}
+
 const getDappInteractions = (submittedAccountOp: SubmittedAccountOp): DappInteraction[] => {
   const interactions: DappInteraction[] = []
   const seen = new Set<string>()
@@ -373,7 +390,10 @@ const SubmittedTransactionHeader = ({
 
   return (
     <View style={[styles.header, spacings.phSm]}>
-      <StatusBadge status={submittedAccountOp.status} textSize={14 * sizeMultiplier[size]} />
+      <StatusBadge
+        status={getPresentationalStatus(submittedAccountOp)}
+        textSize={14 * sizeMultiplier[size]}
+      />
       <View style={styles.headerMeta}>
         <Text fontSize={14 * sizeMultiplier[size]} appearance="secondaryText">
           {submittedDate} on {network.name}
@@ -430,7 +450,7 @@ const SubmittedTransactionSummaryDetails = ({
   const isPendingConfirmation =
     submittedAccountOp.status === AccountOpStatus.Pending ||
     submittedAccountOp.status === AccountOpStatus.BroadcastedButNotConfirmed
-  const modalFinalStatus = getModalFinalStatus(submittedAccountOp.status)
+  const modalFinalStatus = getModalFinalStatus(getPresentationalStatus(submittedAccountOp))
   const shouldShowTransactionHashStep =
     submittedAccountOp.identifiedBy.type !== 'MultipleTxns' &&
     (submittedAccountOp.status === AccountOpStatus.Success ||
@@ -872,7 +892,7 @@ const SubmittedTransactionSummaryInner = ({
               identifiedBy={submittedAccountOp.identifiedBy}
               accountAddr={submittedAccountOp.accountAddr}
               gasFeePayment={submittedAccountOp.gasFeePayment}
-              status={submittedAccountOp.status}
+              status={getPresentationalStatus(submittedAccountOp)}
             />
           </View>
         }
