@@ -60,6 +60,10 @@ const DataArgs = ({
                 {arg.val.signature}
               </Text>
             </Text>
+            <Text selectable fontSize={12} style={breakableStyle}>
+              {`Selector: ${arg.val.selector}`}
+            </Text>
+
             <DataArgs decodedArgs={arg.val.args} indent={indent + 1} key={`${key}-${index}`} />
           </View>
         ) : (
