@@ -54,7 +54,8 @@ const Footer: FC<Props> = ({
     status === AccountOpStatus.Pending || status === AccountOpStatus.BroadcastedButNotConfirmed
   const isMinedTransaction =
     status === AccountOpStatus.Failure || status === AccountOpStatus.Success
-  const shouldShowBottomSheetExplorerActions = identifiedBy.type !== 'MultipleTxns'
+  const shouldShowBottomSheetExplorerActions =
+    isMinedTransaction && identifiedBy.type !== 'MultipleTxns'
   const shouldShowSpeedUp =
     isPendingTransaction &&
     gasFeePayment?.broadcastOption !== BROADCAST_OPTIONS.byRelayer &&
@@ -185,6 +186,8 @@ const Footer: FC<Props> = ({
     }
   }, [txnId, addToast, chainId, network.explorerUrl, t])
 
+  if (!canRepeatTransaction && !shouldShowBottomSheetExplorerActions) return null
+
   return (
     <View style={styles.footer}>
       <View style={styles.footerButtonsRow}>
@@ -201,8 +204,15 @@ const Footer: FC<Props> = ({
             <RefreshIcon style={spacings.mrMi} width={16} height={16} />
           </Button>
         )}
-        {isMinedTransaction && shouldShowBottomSheetExplorerActions && (
-          <View style={[flexbox.directionRow, flexbox.alignCenter]}>
+        {shouldShowBottomSheetExplorerActions && (
+          <View
+            style={[
+              flexbox.directionRow,
+              flexbox.alignCenter,
+              !canRepeatTransaction ? flexbox.justifyEnd : undefined,
+              !canRepeatTransaction ? { width: '100%' } : undefined
+            ]}
+          >
             <Button
               text={t('Open explorer')}
               onPress={handleOpenExplorer}

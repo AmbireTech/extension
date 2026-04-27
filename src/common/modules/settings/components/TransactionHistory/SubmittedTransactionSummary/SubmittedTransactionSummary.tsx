@@ -25,12 +25,11 @@ import Text from '@common/components/Text'
 import TokenIcon from '@common/components/TokenIcon'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
+import { AnimatedPressable, useMultiHover } from '@common/hooks/useHover'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import PendingTokenSummary from '@common/modules/sign-account-op/components/PendingTokenSummary'
-import TransactionSummary, {
-  sizeMultiplier
-} from '@common/modules/sign-account-op/components/TransactionSummary'
+import TransactionSummary, { sizeMultiplier } from '@common/modules/sign-account-op/components/TransactionSummary'
 import spacings, { SPACING_SM } from '@common/styles/spacings'
 import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
@@ -711,109 +710,120 @@ const SubmittedTransactionSummaryInner = ({
     openBottomSheet()
   }
 
+  const [bindAnim, animStyle] = useMultiHover({
+    values: [
+      {
+        property: 'backgroundColor',
+        from: theme.secondaryBackground,
+        to: theme.tertiaryBackground
+      }
+    ]
+  })
+
   if (!network) return null
 
   return (
     <>
-      <Pressable onPress={handleOpenDetails}>
+      <AnimatedPressable
+        onPress={handleOpenDetails}
+        style={[
+          styles.container,
+          style,
+          {
+            paddingTop: SPACING_SM * sizeMultiplier[size]
+          },
+          animStyle
+        ]}
+        {...bindAnim}
+      >
+        <SubmittedTransactionHeader
+          submittedAccountOp={submittedAccountOp}
+          network={network}
+          size={size}
+        />
         <View
           style={[
-            styles.container,
-            style,
+            spacings.mvSm,
+            spacings.mhSm,
             {
-              paddingTop: SPACING_SM * sizeMultiplier[size]
+              height: 1,
+              backgroundColor: theme.secondaryBorder
             }
           ]}
-        >
-          <SubmittedTransactionHeader
-            submittedAccountOp={submittedAccountOp}
-            network={network}
-            size={size}
-          />
+        />
+        <View style={styles.contentContainer}>
           <View
             style={[
-              spacings.mvSm,
-              spacings.mhSm,
-              {
-                height: 1,
-                backgroundColor: theme.secondaryBorder
-              }
+              styles.dappInteractionsColumn,
+              shouldShowBalanceChangesSummary ? spacings.mrSm : undefined
             ]}
-          />
-          <View style={styles.contentContainer}>
-            <View
-              style={[
-                styles.dappInteractionsColumn,
-                shouldShowBalanceChangesSummary ? spacings.mrSm : undefined
-              ]}
-            >
-              {dappInteractions.length ? (
-                <>
-                  {dappInteractions.map((interaction, index) => (
-                    <View
-                      key={interaction.id}
-                      style={[
-                        styles.dappInteractionRow,
-                        index < dappInteractions.length - 1 ? spacings.mbTy : undefined
-                      ]}
-                    >
-                      <DappInteractionIcon interaction={interaction} />
-                      <Text fontSize={14} weight="semiBold">
-                        {interaction.name}
-                      </Text>
-                    </View>
-                  ))}
-                </>
-              ) : (
-                <SkeletonLoader width={120} height={18} />
-              )}
-            </View>
-            {shouldShowBalanceChangesSummary && (
-              <View style={styles.balanceChangesRightColumn}>
-                {visibleBalanceChanges.map((change, index) => (
+          >
+            {dappInteractions.length ? (
+              <>
+                {dappInteractions.map((interaction, index) => (
                   <View
-                    key={`${change.address}-${change.balanceChange.toString()}`}
+                    key={interaction.id}
                     style={[
-                      styles.balanceChangeRow,
-                      index < visibleBalanceChanges.length - 1 || hiddenBalanceChangesCount
-                        ? spacings.mbTy
-                        : null
+                      styles.dappInteractionRow,
+                      index < dappInteractions.length - 1 ? spacings.mbTy : undefined
                     ]}
                   >
-                    <Text
-                      fontSize={12}
-                      weight="medium"
-                      appearance={change.balanceChange > 0n ? 'successText' : 'errorText'}
-                      // @ts-ignore
-                      style={{ cursor: 'pointer' }}
-                      dataSet={createGlobalTooltipDataSet({
-                        id: getBalanceChangeTooltipId(change, submittedAccountOp),
-                        content: getFullBalanceChangeAmount(change)
-                      })}
-                    >
-                      {formatBalanceChangeAmount(change)}
+                    <DappInteractionIcon interaction={interaction} />
+                    <Text fontSize={14} weight="semiBold">
+                      {interaction.name}
                     </Text>
-                    <Text
-                      fontSize={12}
-                      weight="medium"
-                      appearance="secondaryText"
-                      style={spacings.mlTy}
-                    >
-                      {change.symbol}
-                    </Text>
-                    <BalanceChangeToken change={change} />
                   </View>
                 ))}
-                {!!hiddenBalanceChangesCount && (
-                  <Text fontSize={12} appearance="secondaryText">
-                    +{hiddenBalanceChangesCount} more
-                  </Text>
-                )}
-              </View>
+              </>
+            ) : (
+              <SkeletonLoader width={120} height={18} />
             )}
           </View>
+          {shouldShowBalanceChangesSummary && (
+            <View style={styles.balanceChangesRightColumn}>
+              {visibleBalanceChanges.map((change, index) => (
+                <View
+                  key={`${change.address}-${change.balanceChange.toString()}`}
+                  style={[
+                    styles.balanceChangeRow,
+                    index < visibleBalanceChanges.length - 1 || hiddenBalanceChangesCount
+                      ? spacings.mbTy
+                      : null
+                  ]}
+                >
+                  <Text
+                    fontSize={12}
+                    weight="medium"
+                    appearance={change.balanceChange > 0n ? 'successText' : 'errorText'}
+                    // @ts-ignore
+                    style={{ cursor: 'pointer' }}
+                    dataSet={createGlobalTooltipDataSet({
+                      id: getBalanceChangeTooltipId(change, submittedAccountOp),
+                      content: getFullBalanceChangeAmount(change)
+                    })}
+                  >
+                    {formatBalanceChangeAmount(change)}
+                  </Text>
+                  <Text
+                    fontSize={12}
+                    weight="medium"
+                    appearance="secondaryText"
+                    style={spacings.mlTy}
+                  >
+                    {change.symbol}
+                  </Text>
+                  <BalanceChangeToken change={change} />
+                </View>
+              ))}
+              {!!hiddenBalanceChangesCount && (
+                <Text fontSize={12} appearance="secondaryText">
+                  +{hiddenBalanceChangesCount} more
+                </Text>
+              )}
+            </View>
+          )}
         </View>
-      </Pressable>
+      </AnimatedPressable>
       <BottomSheet
         sheetRef={sheetRef}
         closeBottomSheet={closeBottomSheet}
