@@ -9,8 +9,10 @@ import VisibilityIcon from '@common/assets/svg/VisibilityIcon'
 import Alert from '@common/components/Alert'
 import Checkbox from '@common/components/Checkbox'
 import Text from '@common/components/Text'
+import { isMobile } from '@common/config/env'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
+import { MobileLayoutWrapperMainContent } from '@mobile/components/MobileLayoutWrapper'
 import { TabLayoutWrapperMainContent } from '@web/components/TabLayoutWrapper'
 import Card from '@web/modules/auth/components/Card'
 
@@ -19,6 +21,20 @@ interface Props {
   doNotAskMeAgain?: boolean
   displayFullInformation?: boolean
   children?: React.ReactNode
+}
+
+const Container = ({ children }: { children: React.ReactNode }) => {
+  if (isMobile)
+    return (
+      <MobileLayoutWrapperMainContent contentContainerStyle={spacings.ph0}>
+        {children}
+      </MobileLayoutWrapperMainContent>
+    )
+  return (
+    <TabLayoutWrapperMainContent contentContainerStyle={spacings.pvMd} showsVerticalScrollIndicator>
+      {children}
+    </TabLayoutWrapperMainContent>
+  )
 }
 
 const Authorization7702 = ({
@@ -49,7 +65,7 @@ const Authorization7702 = ({
   ]
 
   return (
-    <TabLayoutWrapperMainContent contentContainerStyle={spacings.pvMd} showsVerticalScrollIndicator>
+    <Container>
       {!!displayFullInformation && (
         <>
           <View style={[flexbox.directionRow]}>
@@ -143,7 +159,7 @@ const Authorization7702 = ({
         </View>
       )}
       {children}
-    </TabLayoutWrapperMainContent>
+    </Container>
   )
 }
 
