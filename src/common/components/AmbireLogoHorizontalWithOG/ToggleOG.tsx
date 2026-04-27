@@ -21,7 +21,7 @@ const ToggleOG: React.FC<SvgProps> = ({ ...rest }) => {
       inviteDispatch({
         type: 'method',
         params: {
-          method: 'becomeOG',
+          method: 'revokeOG',
           args: []
         }
       })
@@ -29,7 +29,7 @@ const ToggleOG: React.FC<SvgProps> = ({ ...rest }) => {
       inviteDispatch({
         type: 'method',
         params: {
-          method: 'revokeOG',
+          method: 'becomeOG',
           args: []
         }
       })
