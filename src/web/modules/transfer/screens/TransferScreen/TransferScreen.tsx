@@ -67,7 +67,8 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
     amountFieldMode,
     amount: controllerAmount,
     amountInFiat,
-    isRecipientAddressViewOnly
+    isRecipientAddressViewOnly,
+    addressPoisoningMatch
   } = transferState
 
   const amountInFiatBigInt = useMemo(() => {
@@ -481,7 +482,9 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
             !isRecipientAddressUnknownAgreed &&
             !isRecipientHumanizerKnownTokenOrSmartContract &&
             isRecipientAddressFirstTimeSend) ||
-          isRecipientAddressViewOnly
+          isRecipientAddressViewOnly ||
+          // poisoning detected - require hold-to-proceed as an additional safety step
+          !!addressPoisoningMatch
         }
         onRecipientAddressUnknownAgree={onRecipientAddressUnknownAgree}
       />
@@ -498,6 +501,7 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
     isRecipientHumanizerKnownTokenOrSmartContract,
     isRecipientAddressFirstTimeSend,
     isRecipientAddressViewOnly,
+    addressPoisoningMatch,
     onRecipientAddressUnknownAgree,
     addTransaction
   ])
