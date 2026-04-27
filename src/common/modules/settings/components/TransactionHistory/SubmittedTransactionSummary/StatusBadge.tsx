@@ -57,7 +57,7 @@ const StatusBadge: FC<Props> = ({ status, textSize }) => {
           size="md"
           type="warning"
           weight="medium"
-          text={t('Partially Complete')}
+          text={t('Partially Completed')}
           withRightSpacing
         />
       )

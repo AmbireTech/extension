@@ -5,7 +5,6 @@ import { View, ViewStyle } from 'react-native'
 import humanizerInfo from '@ambire-common/consts/humanizer/humanizerInfo.json'
 import { IrCall } from '@ambire-common/libs/humanizer/interfaces'
 import DeleteIcon from '@common/assets/svg/DeleteIcon'
-import Alert from '@common/components/Alert'
 import ExpandableCard from '@common/components/ExpandableCard'
 import HumanizedVisualization from '@common/components/HumanizedVisualization'
 import Label from '@common/components/Label'
@@ -16,7 +15,7 @@ import useController from '@common/hooks/useController'
 import useHover, { AnimatedPressable } from '@common/hooks/useHover'
 import useTheme from '@common/hooks/useTheme'
 import FallbackVisualization from '@common/modules/sign-account-op/components/TransactionSummary/FallbackVisualization'
-import spacings, { SPACING_SM, SPACING_TY } from '@common/styles/spacings'
+import { SPACING_SM, SPACING_TY } from '@common/styles/spacings'
 
 import getStyles from './styles'
 
@@ -169,7 +168,11 @@ const TransactionSummary = ({
               hasPadding={enableExpand}
             />
           )}
-          {hasCallFailed && <Alert type="error" title="Broadcast failed" size="sm" />}
+          {hasCallFailed && (
+            <Text fontSize={12} appearance="errorText" weight="semiBold">
+              {t('Failed')}
+            </Text>
+          )}
           {!!call.id && type === 'default' && !rightIcon && !hideDeleteIcon && (
             <AnimatedPressable
               style={deleteIconAnimStyle}

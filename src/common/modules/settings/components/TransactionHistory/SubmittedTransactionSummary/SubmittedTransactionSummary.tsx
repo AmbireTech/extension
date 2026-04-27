@@ -521,6 +521,11 @@ const SubmittedTransactionSummaryDetails = ({
                     </View>
                   ) : undefined
                 }
+                hasCallFailed={
+                  !isPendingConfirmation &&
+                  submittedAccountOp.identifiedBy.type === 'MultipleTxns' &&
+                  call.txnId === undefined
+                }
                 onRightIconPress={
                   submittedAccountOp.calls[i]?.txnId && network.explorerUrl
                     ? () => {
