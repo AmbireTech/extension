@@ -5,11 +5,7 @@ import { useModalize } from 'react-native-modalize'
 
 import { Dapp } from '@ambire-common/interfaces/dapp'
 import { Network } from '@ambire-common/interfaces/network'
-import {
-  BalanceChange,
-  isIdentifiedByMultipleTxn,
-  SubmittedAccountOp
-} from '@ambire-common/libs/accountOp/submittedAccountOp'
+import { BalanceChange, SubmittedAccountOp } from '@ambire-common/libs/accountOp/submittedAccountOp'
 import { AccountOpStatus } from '@ambire-common/libs/accountOp/types'
 import { humanizeAccountOp } from '@ambire-common/libs/humanizer'
 import { IrCall } from '@ambire-common/libs/humanizer/interfaces'
@@ -853,35 +849,9 @@ const SubmittedTransactionSummary = ({
   style,
   modalType = 'bottom-sheet'
 }: Props) => {
-  const accountOpDividedIntoMultipleIfNeeded = isIdentifiedByMultipleTxn(
-    submittedAccountOp.identifiedBy
-  )
-    ? submittedAccountOp.calls.reverse().map((call, i) => {
-        return {
-          ...submittedAccountOp,
-          txnId: call.txnId,
-          status: call.status,
-          calls: [call],
-          id: `${submittedAccountOp.id}-${i}-${call.txnId}-${call.id}`,
-          // if the call has a fee set, use it
-          gasFeePayment: submittedAccountOp.gasFeePayment
-            ? {
-                ...submittedAccountOp.gasFeePayment,
-                inToken: call.fee?.inToken
-                  ? call.fee?.inToken
-                  : submittedAccountOp.gasFeePayment.inToken,
-                amount: call.fee?.amount
-                  ? call.fee?.amount
-                  : submittedAccountOp.gasFeePayment.amount
-              }
-            : null
-        }
-      })
-    : [submittedAccountOp]
-
   return (
     <>
-      {accountOpDividedIntoMultipleIfNeeded.map((op) => (
+      {[submittedAccountOp].map((op) => (
         <SubmittedTransactionSummaryInner
           key={op.id || op.txnId}
           submittedAccountOp={op}
