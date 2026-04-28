@@ -52,10 +52,13 @@ const RequestingDappInfo: FC<Props> = ({ name, icon, intentText }) => {
             ...spacings.pvMi,
             ...spacings.phMi,
             width: 48 * responsiveSizeMultiplier,
-            height: 48 * responsiveSizeMultiplier
+            height: 48 * responsiveSizeMultiplier,
+            ...flexbox.center
           }}
         >
-          <DAppsIcon style={{ width: '100%', height: '100%' }} />
+          <DAppsIcon
+            style={{ width: 48 * responsiveSizeMultiplier, height: 48 * responsiveSizeMultiplier }}
+          />
         </View>
       )}
       <View style={[isWeb && flexbox.flex1, isWeb && spacings.mlSm, isMobile && spacings.mtTy]}>
