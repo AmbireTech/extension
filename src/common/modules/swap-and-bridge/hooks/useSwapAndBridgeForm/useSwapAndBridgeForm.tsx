@@ -17,6 +17,7 @@ import useGetTokenSelectProps from '@common/hooks/useGetTokenSelectProps'
 import useNavigation from '@common/hooks/useNavigation'
 import useNetworks from '@common/hooks/useNetworks'
 import useSyncedState from '@common/hooks/useSyncedState'
+import useToast from '@common/hooks/useToast'
 import { ROUTES } from '@common/modules/router/constants/common'
 import { getTokenId } from '@common/utils/token'
 import { getUiType } from '@common/utils/uiType'
@@ -50,6 +51,7 @@ const useSwapAndBridgeForm = () => {
   const {
     state: { account, portfolio }
   } = useController('SelectedAccountController')
+  const { clearToasts } = useToast()
   const controllerAmountFieldValue = fromAmountFieldMode === 'token' ? fromAmount : fromAmountInFiat
   const [fromAmountValue, setFromAmountValue] = useSyncedState<string>({
     backgroundState: controllerAmountFieldValue,
@@ -320,6 +322,8 @@ const useSwapAndBridgeForm = () => {
   }, [openEstimationModal, swapAndBridgeDispatch])
 
   const acknowledgeHighPriceImpact = useCallback(() => {
+    clearToasts({ type: 'error' })
+
     closePriceImpactModal()
 
     if (isOneClickModeDuringPriceImpact) {
@@ -362,6 +366,7 @@ const useSwapAndBridgeForm = () => {
       setLatestBatchedNetwork(fromSelectedToken?.chainId)
     }
   }, [
+    clearToasts,
     closePriceImpactModal,
     openEstimationModalAndDispatch,
     requestsDispatch,
@@ -376,6 +381,8 @@ const useSwapAndBridgeForm = () => {
 
   const handleSubmitForm = useCallback(
     (isOneClickMode: boolean) => {
+      clearToasts({ type: 'error' })
+
       setIsOneClickModeDuringPriceImpact(isOneClickMode)
       if (highPriceImpactOrSlippageWarning) {
         openPriceImpactModal()
@@ -426,6 +433,7 @@ const useSwapAndBridgeForm = () => {
       }
     },
     [
+      clearToasts,
       requestsDispatch,
       highPriceImpactOrSlippageWarning,
       openEstimationModalAndDispatch,

@@ -12,6 +12,7 @@ import { Key } from '@ambire-common/interfaces/keystore'
 import { ISignAccountOpController } from '@ambire-common/interfaces/signAccountOp'
 import useController from '@common/hooks/useController'
 import usePrevious from '@common/hooks/usePrevious'
+import useToast from '@common/hooks/useToast'
 import { OneClickEstimationProps } from '@common/modules/sign-account-op/components/OneClick/Estimation/Estimation'
 import useLedger from '@web/modules/hardware-wallet/hooks/useLedger'
 import useQrSigningFlow from '@web/modules/hardware-wallet/hooks/useQrSigningFlow'
@@ -70,6 +71,7 @@ const useSign = ({
   const {
     state: { accountStates }
   } = useController('AccountsController')
+  const { clearToasts } = useToast()
   const [isChooseSignerShown, setIsChooseSignerShown] = useState(false)
   const [showSafeSigners, setShowSafeSigners] = useState(false)
   const [isChooseFeePayerKeyShown, setIsChooseFeePayerKeyShown] = useState(false)
@@ -244,6 +246,8 @@ const useSign = ({
 
   const handleSign = useCallback(
     (_chosenSigningKeyTypes?: Key['type'][], _warningAccepted?: boolean) => {
+      clearToasts({ type: 'error' })
+
       // Prioritize warning(s) modals over all others
       // Warning modals are not displayed in the one-click swap flow
       if (warningToPromptBeforeSign && !_warningAccepted) {
@@ -293,7 +297,8 @@ const useSign = ({
       isLedgerConnected,
       handleBroadcast,
       openWarningModal,
-      handleUpdateStatus
+      handleUpdateStatus,
+      clearToasts
     ]
   )
 
@@ -320,6 +325,8 @@ const useSign = ({
   )
 
   const onSignButtonClick = useCallback(() => {
+    clearToasts({ type: 'error' })
+
     if (!signAccountOpState) return
 
     if (!!signAccountOpState.account.safeCreation && !signAccountOpState.canBroadcast) {
@@ -336,7 +343,7 @@ const useSign = ({
     }
 
     setIsChooseSignerShown(true)
-  }, [signAccountOpState, handleSign])
+  }, [signAccountOpState, handleSign, clearToasts])
 
   const acknowledgeWarning = useCallback(() => {
     if (!warningToPromptBeforeSign) return

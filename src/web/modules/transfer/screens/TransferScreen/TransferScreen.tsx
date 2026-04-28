@@ -47,7 +47,7 @@ import Modals from '@web/modules/sign-account-op/components/Modals'
 const { isRequestWindow, isPopup } = getUiType()
 
 const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
-  const { addToast } = useToast()
+  const { addToast, clearToasts } = useToast()
   const { state: transferState, dispatch: transferDispatch } = useController('TransferController')
   const { dispatch: requestsDispatch } = useController('RequestsController')
   const {
@@ -351,6 +351,8 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
 
   const addTransaction = useCallback(
     (executionType: RequestExecutionType) => {
+      clearToasts({ type: 'error' })
+
       if (isSendingBatch) {
         const request = visibleUserRequests.find((r) => r.kind === 'calls')
 
@@ -441,6 +443,7 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
       visibleUserRequests,
       requestsDispatch,
       addToast,
+      clearToasts,
       t,
       isTopUp,
       addressState,
