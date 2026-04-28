@@ -1,5 +1,5 @@
 import React from 'react'
-import Svg, { Path, SvgProps } from 'react-native-svg'
+import Svg, { Circle, Ellipse, Path, SvgProps } from 'react-native-svg'
 
 import useTheme from '@common/hooks/useTheme'
 
@@ -7,15 +7,21 @@ const NetworksIcon: React.FC<SvgProps> = ({ width = 24, height = 24, color }) =>
   const { theme } = useTheme()
 
   return (
-    <Svg width={width} height={height} viewBox="0 0 24 24" fill="none">
-      <Path
+    <Svg width={width} height={height} viewBox="0 0 21.5 21.5" fill="none">
+      <Circle cx="10.75" cy="10.75" r="10" stroke={color || theme.iconPrimary} strokeWidth="1.5" />
+      <Ellipse
+        cx="10.7498"
+        cy="10.75"
+        rx="3.33333"
+        ry="10"
         stroke={color || theme.iconPrimary}
         strokeWidth="1.5"
-        d="M9 6a3 3 0 1 0 6 0 3 3 0 0 0-6 0ZM4.438 13.902a3 3 0 1 0 3 5.195 3 3 0 0 0-3-5.196ZM19.562 13.902a2.999 2.999 0 1 1-2.998 5.194 2.999 2.999 0 0 1 2.998-5.194Z"
       />
       <Path
-        fill={color || theme.iconPrimary}
-        d="M16.24 18.879c.102.079.21.153.323.219.34.197.717.325 1.108.377.065.008.131.011.197.015a8.753 8.753 0 0 1-9.217 1.594 8.753 8.753 0 0 1-2.52-1.594c.066-.004.132-.007.198-.015.39-.052.767-.18 1.109-.377.112-.066.219-.14.322-.22a7.249 7.249 0 0 0 8.48 0ZM9.228 4.853A3 3 0 0 0 9 6c0 .13.012.26.028.389a7.248 7.248 0 0 0-3.726 3.837 7.252 7.252 0 0 0-.543 2.418L4.75 13c0 .245.012.49.037.732-.12.05-.237.104-.35.17a3.001 3.001 0 0 0-.992.932 8.76 8.76 0 0 1-.184-1.403L3.25 13a8.752 8.752 0 0 1 5.401-8.084c.217-.09.438-.168.66-.24-.028.058-.058.116-.082.177Zm5.459-.177c.222.072.444.15.66.24A8.752 8.752 0 0 1 20.75 13c0 .618-.068 1.232-.197 1.834-.036-.054-.071-.109-.11-.16a3.002 3.002 0 0 0-.88-.773 2.989 2.989 0 0 0-.351-.169 7.25 7.25 0 0 0-4.241-7.344C14.988 6.26 15 6.13 15 6c0-.394-.078-.784-.229-1.147-.025-.06-.055-.119-.084-.177Z"
+        d="M0.75 10.75H20.75"
+        stroke={color || theme.iconPrimary}
+        strokeWidth="1.5"
+        strokeLinecap="round"
       />
     </Svg>
   )
