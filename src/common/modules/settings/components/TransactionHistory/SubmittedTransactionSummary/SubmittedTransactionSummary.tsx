@@ -37,6 +37,7 @@ import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import { checkIfImageExists } from '@common/utils/checkIfImageExists'
 import { setStringAsync } from '@common/utils/clipboard'
+import formatDateTime from '@common/utils/formatDateTime'
 import { openInTab } from '@common/utils/links'
 import DelegationHumanization from '@web/components/DelegationHumanization'
 import ManifestImage from '@web/components/ManifestImage'
@@ -206,15 +207,7 @@ const stylesForIcons = {
   }
 } as const
 
-const getFormattedSubmittedDate = (timestamp: number) =>
-  new Date(timestamp).toLocaleString('en-us', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-    hour: 'numeric',
-    minute: 'numeric',
-    hourCycle: 'h12'
-  })
+const getFormattedSubmittedDate = (timestamp: number) => formatDateTime(timestamp)
 
 const getTruncatedTxnHash = (txnId?: string) => {
   if (!txnId) return ''
