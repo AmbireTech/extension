@@ -36,6 +36,13 @@ type InitControllerStateAction = {
   }
 }
 
+type InitAllControllersAction = {
+  type: 'INIT_ALL_CONTROLLERS'
+  params: {
+    controllers: (keyof AllControllersMappingType)[]
+  }
+}
+
 type HandshakeAction = {
   type: 'HANDSHAKE'
 }
@@ -114,6 +121,11 @@ type OpenExtensionPopupAction = {
   type: 'OPEN_EXTENSION_POPUP'
 }
 
+type WindowRemovedAction = {
+  type: 'WINDOW_REMOVED'
+  params: { id: number }
+}
+
 export type Action =
   | UpdateNavigationUrl
   | UpdateUiViewRoute
@@ -131,5 +143,7 @@ export type Action =
   | ChangeCurrentDappNetworkAction
   | ImportSmartAccountJson
   | OpenExtensionPopupAction
+  | InitAllControllersAction
+  | WindowRemovedAction
   | GetAllControllerNamesAction
   | InitControllerStateAction

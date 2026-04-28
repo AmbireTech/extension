@@ -10,6 +10,7 @@ import ThemeControlOption from '@common/modules/settings/components/General/Them
 // import { isProd } from '@common/config/env'
 import spacings from '@common/styles/spacings'
 import AutoLockDeviceControlOption from '@web/modules/settings/components/General/AutoLockDeviceControlOption'
+import BiometricsOption from '@web/modules/settings/components/General/BiometricsOption'
 // import CrashAnalyticsControlOption from './components/CrashAnalyticsControlOption'
 import LockAmbireControlOption from '@web/modules/settings/components/General/LockAmbireControlOption'
 import SettingsPageHeader from '@web/modules/settings/components/SettingsPageHeader'
@@ -27,6 +28,7 @@ const GeneralSettingsScreen = () => {
       <SettingsPageHeader title="General settings" />
       <View style={spacings.mb2Xl}>
         <LockAmbireControlOption />
+        <BiometricsOption />
         <AutoLockDeviceControlOption />
         <ThemeControlOption />
         <AvatarTypeControlOption />

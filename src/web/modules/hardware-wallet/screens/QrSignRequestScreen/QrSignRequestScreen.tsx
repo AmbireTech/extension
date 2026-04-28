@@ -20,6 +20,8 @@ type Props = {
   } | null
 }
 
+const ANIMATION_INTERVAL = 300
+
 const QrSignRequestScreen = ({
   onContinue,
   onReject,
@@ -34,7 +36,11 @@ const QrSignRequestScreen = ({
     <View style={flexbox.center}>
       <Text>{t('Scan this QR code with your QR-based device to sign.')}</Text>
       <View style={[flexbox.center, spacings.mtSm]}>
-        <AnimatedQRCode options={{ size: qrSize }} type={urType} cbor={urCborHex} />
+        <AnimatedQRCode
+          options={{ size: qrSize, interval: ANIMATION_INTERVAL }}
+          type={urType}
+          cbor={urCborHex}
+        />
         {transactionProgress ? (
           <Text fontSize={14} weight="medium" style={spacings.mtSm}>
             {transactionProgress.current} / {transactionProgress.total}{' '}

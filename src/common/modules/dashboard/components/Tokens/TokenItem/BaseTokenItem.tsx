@@ -154,20 +154,20 @@ const BaseTokenItem = ({
                 flexboxStyles.alignCenter
               ]}
             >
-              <View>
+              <View style={spacings.mbMi}>
                 <Text
                   selectable
                   color={textColor}
-                  fontSize={15}
+                  fontSize={16}
                   weight="semiBold"
                   numberOfLines={1}
-                  style={{ lineHeight: 20 }}
+                  style={{ lineHeight: 22 }}
                 >
                   {symbol}
                 </Text>
                 <Text
                   selectable
-                  fontSize={13}
+                  fontSize={12}
                   weight="number_medium"
                   numberOfLines={1}
                   dataSet={
@@ -191,13 +191,13 @@ const BaseTokenItem = ({
               {extraActions}
             </View>
           </View>
-          <View style={[flexboxStyles.alignEnd, flexboxStyles.justifyCenter]}>
+          <View style={[flexboxStyles.alignEnd, flexboxStyles.justifyCenter, spacings.mbMi]}>
             <Text
               selectable
-              fontSize={15}
+              fontSize={16}
               weight="number_bold"
               color={textColor}
-              style={{ lineHeight: 20 }}
+              style={{ lineHeight: 22 }}
             >
               {privateValue(
                 isPending ? pendingBalanceUSDFormatted : balanceUSDFormatted,
@@ -208,11 +208,8 @@ const BaseTokenItem = ({
             <View style={[flexboxStyles.directionRow, flexboxStyles.alignCenter]}>
               {shouldDisplayChange24h && (
                 <Text
-                  fontSize={13}
-                  style={{
-                    lineHeight: 15,
-                    ...spacings.mlMi
-                  }}
+                  fontSize={12}
+                  style={spacings.mlMi}
                   weight="number_medium"
                   appearance={change24h >= 0 ? 'successText' : 'errorText'}
                 >
