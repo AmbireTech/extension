@@ -223,6 +223,13 @@ const getTruncatedTxnHash = (txnId?: string) => {
   return `${txnId.slice(0, 6)}...${txnId.slice(-4)}`
 }
 
+const getTruncatedNetworkName = (name?: string) => {
+  if (!name) return ''
+  if (name.length <= 15) return name
+
+  return `${name.slice(0, 15)}...`
+}
+
 const getModalFinalStatus = (status?: AccountOpStatus) => {
   switch (status) {
     case AccountOpStatus.UnknownButPastNonce:
@@ -396,7 +403,7 @@ const SubmittedTransactionHeader = ({
       />
       <View style={styles.headerMeta}>
         <Text fontSize={14 * sizeMultiplier[size]} appearance="secondaryText">
-          {submittedDate} on {network.name}
+          {submittedDate} on {getTruncatedNetworkName(network.name)}
         </Text>
         <NetworkIcon
           id={submittedAccountOp.chainId.toString()}
@@ -666,7 +673,7 @@ const SubmittedTransactionSummaryDetails = ({
               {submittedAccountOp.status === AccountOpStatus.Success && (
                 <View style={styles.modalStepRowRight}>
                   <Text fontSize={14} appearance="secondaryText">
-                    {submittedDate} on {network.name}
+                    {submittedDate} on {getTruncatedNetworkName(network.name)}
                   </Text>
                   <NetworkIcon
                     id={submittedAccountOp.chainId.toString()}
