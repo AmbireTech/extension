@@ -129,8 +129,9 @@ const EditApproval = ({ item }: { item: HumanizerVisualization }) => {
   const [initialValueSet, setInitialValueSet] = useState<boolean>(false)
 
   const portfolioToken = useMemo(() => {
+    if (!portfolio) return undefined
     return portfolio.tokens.find((t) => t.address.toLowerCase() === item.address?.toLowerCase())
-  }, [portfolio.tokens, item.address])
+  }, [portfolio, item.address])
 
   const maxAmount = useMemo(() => {
     if (!portfolioToken) return undefined
@@ -223,7 +224,8 @@ const EditApproval = ({ item }: { item: HumanizerVisualization }) => {
     !item.editApprovalData ||
     !signAccountOpState.accountOp.calls.find((c) => c.id === item.editApprovalData?.callId) ||
     (signAccountOpState.status && noStateUpdateStatuses.includes(signAccountOpState.status.type)) ||
-    signAccountOpState.status?.type === SigningStatus.Queued
+    signAccountOpState.status?.type === SigningStatus.Queued ||
+    signAccountOpState.accountOp.signature
   )
     return null
 
