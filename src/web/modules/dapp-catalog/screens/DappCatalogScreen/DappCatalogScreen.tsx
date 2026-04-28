@@ -151,11 +151,11 @@ const DappCatalogScreen = () => {
             width: 24,
             height: 24,
             borderRadius: 12,
-            backgroundColor: theme.neutral200,
+            backgroundColor: theme.neutral300,
             ...flexbox.center
           }}
         >
-          <NetworksIcon width={20} height={20} color={theme.iconPrimary} />
+          <NetworksIcon width={19} height={19} color={theme.iconPrimary} />
         </View>
       )
     }),
