@@ -230,7 +230,8 @@ const EditApproval = ({ item }: { item: HumanizerVisualization }) => {
     !item.editApprovalData ||
     !signAccountOpState.accountOp.calls.find((c) => c.id === item.editApprovalData?.callId) ||
     (signAccountOpState.status && noStateUpdateStatuses.includes(signAccountOpState.status.type)) ||
-    signAccountOpState.status?.type === SigningStatus.Queued
+    signAccountOpState.status?.type === SigningStatus.Queued ||
+    signAccountOpState.accountOp.signature
   )
     return null
 
