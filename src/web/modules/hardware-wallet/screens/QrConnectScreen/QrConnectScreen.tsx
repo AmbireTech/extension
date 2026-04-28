@@ -18,7 +18,7 @@ import spacings from '@common/styles/spacings'
 import { hexToRgba } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import { TabLayoutContainer, TabLayoutWrapperMainContent } from '@web/components/TabLayoutWrapper'
-import { QrWalletRegistry } from '@web/modules/hardware-wallet/qr/wallets'
+import { QrWalletConfigs } from '@web/modules/hardware-wallet/qr/wallets'
 import QrScannerWithPermission from '@web/modules/hardware-wallet/screens/QrScannerWithPermission'
 
 const VISIBLE_WALLETS_COUNT = 2
@@ -98,7 +98,7 @@ const QrConnectScreen = () => {
   const animatedHeight = useRef(new Animated.Value(0)).current
   const animatedOpacity = useRef(new Animated.Value(0)).current
 
-  const qrWallets = useMemo(() => Object.values(QrWalletRegistry), [])
+  const qrWallets = useMemo(() => QrWalletConfigs, [])
   const hiddenWallets = useMemo(() => qrWallets.slice(VISIBLE_WALLETS_COUNT), [qrWallets])
 
   const hiddenContentHeight = hiddenWallets.length * QR_WALLET_ROW_HEIGHT
