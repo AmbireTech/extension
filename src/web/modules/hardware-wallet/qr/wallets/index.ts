@@ -21,7 +21,7 @@ export const QrWalletConfigs = [
     type: 'keycard',
     protocol: 'ur',
     label: 'Keycard',
-    tutorialUrl: 'https://docs.keycard.tech/en/wallets'
+    tutorialUrl: 'https://help.ambire.com/en/articles/14803331'
   },
   {
     type: 'imtoken',
