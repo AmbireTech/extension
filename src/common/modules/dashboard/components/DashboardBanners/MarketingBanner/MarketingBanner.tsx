@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useCallback } from 'react'
 import { Image, Pressable, View } from 'react-native'
 
 import { Banner, MarketingBannerTypes } from '@ambire-common/interfaces/banner'
@@ -6,7 +6,9 @@ import CloseIcon from '@common/assets/svg/CloseIcon'
 import Text from '@common/components/Text'
 import useController from '@common/hooks/useController'
 import { AnimatedPressable, useMultiHover } from '@common/hooks/useHover'
+import useNavigation from '@common/hooks/useNavigation'
 import useTheme from '@common/hooks/useTheme'
+import { WEB_ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
 import { BORDER_RADIUS_PRIMARY, hexToRgba } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
@@ -36,6 +38,7 @@ const typeImageMap: {
 const MarketingBanner: React.FC<Props> = ({ banner }) => {
   const { isPopup } = getUiType()
   const { dispatch: bannerDispatch } = useController('BannerController')
+  const { dispatch: surveyDispatch } = useController('SurveyController')
   const { theme } = useTheme()
   const { text, title, type: bannerType = 'updates', actions } = banner
   const type = (
@@ -45,6 +48,7 @@ const MarketingBanner: React.FC<Props> = ({ banner }) => {
   const url = action?.actionName === 'open-link' ? action.meta.url : ''
   const size = (banner.text?.length || 0) > 50 ? 'large' : 'normal'
   const imageSize = size === 'large' ? 64 : 48
+  const { navigate } = useNavigation()
 
   const [bindAnim, animStyle] = useMultiHover({
     values: [
@@ -61,6 +65,16 @@ const MarketingBanner: React.FC<Props> = ({ banner }) => {
     ]
   })
 
+  const dismissBanner = useCallback(() => {
+    bannerDispatch({
+      type: 'method',
+      params: {
+        method: 'dismissBanner',
+        args: [banner.id]
+      }
+    })
+  }, [banner.id, bannerDispatch])
+
   return (
     <AnimatedPressable
       style={[
@@ -72,7 +86,14 @@ const MarketingBanner: React.FC<Props> = ({ banner }) => {
         animStyle
       ]}
       onPress={async () => {
-        await openInTab({ url, shouldCloseCurrentWindow: isPopup })
+        const action = banner.actions[0]
+        if (action?.actionName === 'survey') {
+          surveyDispatch({
+            type: 'method',
+            params: { method: 'fetchSurvey', args: [action.meta.surveyId, banner.id] }
+          })
+          navigate(WEB_ROUTES.survey)
+        } else await openInTab({ url, shouldCloseCurrentWindow: isPopup })
       }}
       {...bindAnim}
     >
@@ -91,15 +112,7 @@ const MarketingBanner: React.FC<Props> = ({ banner }) => {
         <View style={[flexbox.directionRow, flexbox.justifySpaceBetween]}>
           <Text weight="medium">{title}</Text>
           <Pressable
-            onPress={() => {
-              bannerDispatch({
-                type: 'method',
-                params: {
-                  method: 'dismissBanner',
-                  args: [banner.id]
-                }
-              })
-            }}
+            onPress={dismissBanner}
             hitSlop={8}
             style={{
               width: 24,
