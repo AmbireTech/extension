@@ -155,7 +155,7 @@ const DappCatalogScreen = () => {
             ...flexbox.center
           }}
         >
-          <NetworksIcon width={19} height={19} color={theme.iconPrimary} />
+          <NetworksIcon width={19} height={19} />
         </View>
       )
     }),
