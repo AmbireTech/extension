@@ -12,6 +12,7 @@ import {
 } from '@ambire-common/libs/signMessage/signMessage'
 import NoKeysToSignAlert from '@common/components/NoKeysToSignAlert'
 import Spinner from '@common/components/Spinner'
+import HoldToProceedButton from '@common/components/HoldToProceedButton'
 import useController from '@common/hooks/useController'
 import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useToast from '@common/hooks/useToast'
@@ -138,7 +139,7 @@ const SignMessageScreen = () => {
         method: 'init',
         args: [
           {
-            dapp: { name, icon },
+            dapp: { name, icon, url: userRequest.dappPromises[0]?.session?.origin },
             messageToSign: {
               fromRequestId: userRequest.id,
               content: {
@@ -258,14 +259,28 @@ const SignMessageScreen = () => {
   }, [selectedAccountKeyStoreKeys, setSigner, account?.safeCreation, handleSign])
 
   const resolveButtonText = useMemo(() => {
-    if (signMessageState.status === SignMessageStatus.Partial) return 'Close'
+    if (signMessageState.status === SignMessageStatus.Partial) return t('Close')
     if (isSiwe) return t('Sign in')
     if (isScrollToBottomForced) return t('Read the message')
 
     if (signStatus === 'LOADING') return t('Signing...')
 
     return t('Sign')
-  }, [isSiwe, t, isScrollToBottomForced, signStatus, signMessageState.status])
+  }, [isSiwe, isScrollToBottomForced, signStatus, signMessageState.status, t])
+
+  const holdToProceedButtonText = useMemo(() => {
+    if (isScrollToBottomForced) return t('Read the message')
+    if (isSiwe) return t('Hold to sign in')
+
+    return t('Hold to sign')
+  }, [isSiwe, isScrollToBottomForced, t])
+
+  const holdToProceedCompleteText = useMemo(() => {
+    if (signStatus === 'LOADING') return t('Signing...')
+    if (signMessageState.status === SignMessageStatus.Partial) return t('Close')
+
+    return t('Signing...')
+  }, [signStatus, signMessageState.status, t])
 
   const handleDismissLedgerConnectModal = useCallback(() => {
     setShouldDisplayLedgerConnectModal(false)
@@ -278,6 +293,8 @@ const SignMessageScreen = () => {
 
     return EIP_1271_NOT_SUPPORTED_BY.some((origin) => dappOrigin.includes(origin))
   }, [account, userRequest?.dappPromises])
+
+  const hasSafetyBanners = !!signMessageState.banners?.length
 
   const view = useMemo(() => {
     // Happens when switching between requests
@@ -301,6 +318,12 @@ const SignMessageScreen = () => {
     if (!account?.safeCreation) return false
     return !accountState?.isDeployed
   }, [account?.safeCreation, accountState?.isDeployed])
+
+  const isResolveActionDisabled =
+    signStatus === 'LOADING' ||
+    isScrollToBottomForced ||
+    humanizationHasBlockingWarnings ||
+    isSafeNotDeployed
 
   // In the split second when the request window opens, but the state is not yet
   // initialized, to prevent a flash of the fallback visualization, show a
@@ -341,15 +364,32 @@ const SignMessageScreen = () => {
               onReject={handleReject}
               onResolve={signWithDefaultSignerIfPossible}
               resolveButtonText={resolveButtonText}
-              resolveDisabled={
-                signStatus === 'LOADING' ||
-                isScrollToBottomForced ||
-                isViewOnly ||
-                humanizationHasBlockingWarnings ||
-                isSafeNotDeployed
-              }
+              resolveDisabled={isResolveActionDisabled || isViewOnly}
               resolveButtonTestID="button-sign"
               rejectButtonText="Reject"
+              {...(hasSafetyBanners && !isViewOnly && false
+                ? {
+                    resolveNode: (
+                      <View style={flexbox.flex1}>
+                        <HoldToProceedButton
+                          testID="button-sign"
+                          style={{
+                            ...flexbox.alignSelfEnd,
+                            minWidth: 128
+                          }}
+                          textStyle={{
+                            whiteSpace: 'nowrap'
+                          }}
+                          size="large"
+                          text={holdToProceedButtonText}
+                          completeText={holdToProceedCompleteText}
+                          onHoldComplete={signWithDefaultSignerIfPossible}
+                          disabled={isResolveActionDisabled}
+                        />
+                      </View>
+                    )
+                  }
+                : {})}
               {...(isViewOnly
                 ? {
                     resolveNode: (
