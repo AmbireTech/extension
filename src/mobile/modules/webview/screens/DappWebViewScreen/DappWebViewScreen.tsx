@@ -456,7 +456,7 @@ const DappWebViewScreen = () => {
       })();
       true;
     `
-  }, [devAmbireCode, devEthereumCode])
+  }, [devAmbireCode, devEthereumCode, jsBridgeHarden])
 
   // Dapp Search Data Filtering
   const searchableDapps = useMemo(
