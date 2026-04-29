@@ -267,7 +267,6 @@ const SignInWithEthereum = ({
               borderRadius: BORDER_RADIUS_PRIMARY,
               minHeight: 200
             }}
-            contentContainerStyle={flexbox.flex1}
           >
             <View
               style={{
