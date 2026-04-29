@@ -1,11 +1,5 @@
-# This patch fixes a gesture conflict in react-native-modalize where scrolling up 
-# (especially with elastic bounce) would trigger the modal's close gesture. 
-# This is mainly because the package was originally written for Reanimated v1 
-# but the app is using v2, causing inconsistencies in beginScrollY tracking. 
-# It ensures beginScrollY remains >= 0 to prevent unintended modal closures 
-# during internal content scrolling.
 diff --git a/node_modules/react-native-modalize/lib/index.js b/node_modules/react-native-modalize/lib/index.js
-index 5d5edac..b144d09 100644
+index 5d5edac..05a70f9 100644
 --- a/node_modules/react-native-modalize/lib/index.js
 +++ b/node_modules/react-native-modalize/lib/index.js
 @@ -316,11 +316,11 @@ onOpen, onOpened, onClose, onClosed, onBackButtonPress, onPositionChange, onOver
@@ -76,3 +70,19 @@ index 5d5edac..b144d09 100644
              scrollEventThrottle,
              onLayout: handleContentLayout,
              scrollEnabled,
+@@ -556,6 +560,15 @@ onOpen, onOpened, onClose, onClosed, onBackButtonPress, onPositionChange, onOver
+     const renderChildren = () => {
+         const style = adjustToContentHeight ? styles_1.default.content__adjustHeight : styles_1.default.content__container;
+         const minDist = libraries_1.isRNGH2() ? undefined : ACTIVATED;
++        // Patched: when the pan gesture is disabled (e.g. shouldBeClosableOnDrag={false}),
++        // skip the PanGestureHandler/NativeViewGestureHandler wrappers around the children.
++        // On Android these wrappers intercept native touch events, which prevents nested
++        // ScrollViews/Touchables inside the sheet content (e.g. customRenderer screens) from
++        // receiving them. Bypassing them makes the content behave like it is rendered in a
++        // regular React Native View.
++        if (!panGestureEnabled) {
++            return (React.createElement(react_native_1.Animated.View, { style: [style, childrenStyle] }, renderContent()));
++        }
+         return (React.createElement(react_native_gesture_handler_1.PanGestureHandler, { ref: panGestureChildrenRef, enabled: panGestureEnabled, simultaneousHandlers: [nativeViewChildrenRef, tapGestureModalizeRef], shouldCancelWhenOutside: false, onGestureEvent: handleGestureEvent, minDist: minDist, activeOffsetY: ACTIVATED, activeOffsetX: ACTIVATED, onHandlerStateChange: handleChildren },
+             React.createElement(react_native_1.Animated.View, { style: [style, childrenStyle] },
+                 React.createElement(react_native_gesture_handler_1.NativeViewGestureHandler, { ref: nativeViewChildrenRef, waitFor: tapGestureModalizeRef, simultaneousHandlers: panGestureChildrenRef }, renderContent()))));
