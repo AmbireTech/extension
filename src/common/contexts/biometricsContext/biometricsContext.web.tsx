@@ -9,7 +9,6 @@ import {
 import useController from '@common/hooks/useController'
 import useToast from '@common/hooks/useToast'
 import { webauthnBiometrics } from '@web/services/webauthnBiometrics'
-import { getExtensionInstanceId } from '@web/utils/analytics'
 
 import { DEVICE_SECURITY_LEVEL, DEVICE_SUPPORTED_AUTH_TYPES } from './constants'
 
@@ -18,12 +17,6 @@ const BiometricsContext = createContext<BiometricsContextReturnType>(biometricsC
 const BiometricsProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { t } = useTranslation()
   const { addToast } = useToast()
-  const {
-    state: { keyStoreUid }
-  } = useController('KeystoreController')
-  const {
-    state: { verifiedCode }
-  } = useController('InviteController')
 
   const [isLoading, setIsLoading] = useState<boolean>(true)
   const [hasBiometricsHardware, setHasBiometricsHardware] = useState<null | boolean>(
@@ -69,16 +62,14 @@ const BiometricsProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const saveBiometricsSecret = useCallback(async () => {
     try {
-      const secret = await webauthnBiometrics.createSecret(
-        Buffer.from(getExtensionInstanceId(keyStoreUid, verifiedCode))
-      )
+      const secret = await webauthnBiometrics.createSecret()
       setIsEnrolled(!!secret)
       return secret
     } catch (e) {
       console.log('Failed to save biometrics secret', e)
       return null
     }
-  }, [keyStoreUid, verifiedCode])
+  }, [])
 
   const getBiometricsSecret = useCallback(async () => {
     try {
