@@ -21,7 +21,7 @@ class DedupePromise {
 
       resolve(
         defer().finally(() => {
-          this.#tasks[key]--
+          this.#tasks[key] = (this.#tasks[key] ?? 1) - 1
           if (!this.#tasks[key]) {
             delete this.#tasks[key]
           }

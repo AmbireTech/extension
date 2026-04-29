@@ -90,7 +90,7 @@ const ManageApp = ({
       if (selectedAccount?.addr !== addr) {
         mainDispatch({
           type: 'method',
-          params: { method: 'selectAccount', args: [addr] }
+          params: { method: 'selectAccount', args: [addr as string] }
         })
       }
     },

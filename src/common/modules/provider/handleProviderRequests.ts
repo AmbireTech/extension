@@ -74,7 +74,7 @@ const handleProviderRequests = async ({
       icon: existingDapp?.icon || params.icon
     })
     if (!existingDapp) {
-      mainCtrl.dapps.updateDapp(mainCtrl.dapps.dappSessions[session.sessionId].id, {
+      mainCtrl.dapps.updateDapp(mainCtrl.dapps.dappSessions[session.sessionId]?.id ?? '', {
         name: params.name
       })
     }
