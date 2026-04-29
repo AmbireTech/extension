@@ -244,6 +244,10 @@ const RouteStepsPreview = ({
 
             {providerId === 'socket' ? (
               <BungeeIcon width={56.7} height={11.2} />
+            ) : providerId === 'squid' ? (
+              <Text fontSize={14} weight="semiBold" appearance="primaryText">
+                Squid
+              </Text>
             ) : (
               <LiFiIcon width={39.75} height={14} />
             )}
