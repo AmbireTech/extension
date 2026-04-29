@@ -792,11 +792,15 @@ const DappWebViewScreen = () => {
   //     same-origin `onLoadStart` events that Android fires for SPA/hash
   //     routing (which was what made the bar stick / re-appear on heavy
   //     pages like Next.js apps).
-  //   - onLoadProgress always keeps `isLoading` true and writes the raw
-  //     progress value. Monotonicity is enforced at the render layer inside
-  //     `DappProgressBar`
+  //   - onLoadProgress writes the raw progress value and keeps `isLoading`
+  //     true. On Android it also doubles as the "done" signal: when
+  //     `progress >= 1` it dismisses the bar, because `onLoadEnd(loading:
+  //     false)` is unreliable there for SPAs / pages with persistent
+  //     subresources. Monotonicity is enforced at the render layer inside
+  //     `DappProgressBar`.
   //   - onLoadEnd only finishes when `event.nativeEvent.loading` is false
-  //     (the "really done" signal) and caches the resolved URL.
+  //     (the "really done" signal) and caches the resolved URL. On Android
+  //     this is a backstop in case `onLoadProgress` never reaches 1.
   //   - onError dismisses the bar so failed pages don't leave it hanging.
   const handleLoadStart = useCallback(
     (event: { nativeEvent: { url: string; isReload?: boolean } }) => {
@@ -824,11 +828,14 @@ const DappWebViewScreen = () => {
   )
 
   const handleLoadProgress = useCallback(
-    (event: { nativeEvent: { progress: number } }) => {
-      updateProgressState({
-        progress: event.nativeEvent.progress,
-        isLoading: true
-      })
+    (event: { nativeEvent: { progress: number; url?: string } }) => {
+      const { progress, url } = event.nativeEvent
+      if (Platform.OS === 'android' && progress >= 1) {
+        if (url) resolvedUrlRef.current = url
+        updateProgressState({ progress: 1, isLoading: false })
+        return
+      }
+      updateProgressState({ progress, isLoading: true })
     },
     [updateProgressState]
   )
