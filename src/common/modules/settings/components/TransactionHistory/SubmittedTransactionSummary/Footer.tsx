@@ -10,6 +10,7 @@ import { getBenzinUrlParams } from '@ambire-common/utils/benzin'
 import CopyIcon from '@common/assets/svg/CopyIcon'
 import OpenIcon from '@common/assets/svg/OpenIcon'
 import RefreshIcon from '@common/assets/svg/RefreshIcon'
+import SpeedUpIcon from '@common/assets/svg/SpeedUpIcon'
 import Button from '@common/components/Button'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
@@ -201,7 +202,11 @@ const Footer: FC<Props> = ({
             style={styles.footerButton}
             childrenPosition="left"
           >
-            <RefreshIcon style={spacings.mrMi} width={16} height={16} />
+            {shouldShowSpeedUp ? (
+              <SpeedUpIcon style={spacings.mrMi} width={16} height={16} />
+            ) : (
+              <RefreshIcon style={spacings.mrMi} width={16} height={16} />
+            )}
           </Button>
         )}
         {shouldShowBottomSheetExplorerActions && (
