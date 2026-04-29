@@ -1,5 +1,4 @@
-// @ts-ignore
-declare const globalIsAmbireNext: boolean
+import '@common/modules/inpage/globals'
 
 if (/Opera|OPR\//i.test(navigator.userAgent)) {
   window.ethereum = new Proxy(globalIsAmbireNext ? window.ambireNext : window.ambire, {

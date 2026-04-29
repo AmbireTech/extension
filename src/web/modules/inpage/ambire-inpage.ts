@@ -1,3 +1,5 @@
+import '@common/modules/inpage/globals'
+
 /* eslint-disable no-param-reassign */
 import { nanoid } from 'nanoid'
 
@@ -7,8 +9,6 @@ import {
   isTooDeepFrameInTheFrameHierarchy
 } from '@web/extension-services/utils/frames'
 import { EthereumProvider } from '@web/modules/inpage/EthereumProvider'
-
-declare const globalIsAmbireNext: boolean
 
 const ambireId = nanoid()
 
@@ -30,15 +30,6 @@ interface EIP6963AnnounceProviderEvent extends CustomEvent {
 
 interface EIP6963RequestProviderEvent extends Event {
   type: 'eip6963:requestProvider'
-}
-
-declare global {
-  interface Window {
-    ethereum: EthereumProvider
-    web3: any
-    ambire: EthereumProvider
-    ambireNext: EthereumProvider
-  }
 }
 
 let forwardRpcRequestId = 0
