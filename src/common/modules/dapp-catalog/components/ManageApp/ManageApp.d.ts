@@ -10,6 +10,13 @@ export interface ManageAppProps {
   isParentHovered?: boolean
   buttonProps?: Omit<React.ComponentProps<typeof Pressable>, 'onPress' | 'ref'>
   style?: ViewStyle
+  /**
+   * Fires after the popover/bottom sheet has fully closed. Used by callers that
+   * need to react to the modal closing — e.g. the dapp WebView synthesizing a
+   * `window.focus` event so libraries that rely on focus-based refetching
+   * (React Query's `refetchOnWindowFocus`) re-evaluate stale state.
+   */
+  onClosed?: () => void
 }
 
 declare const ManageApp: React.FC<ManageAppProps>

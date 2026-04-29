@@ -28,6 +28,7 @@ interface Props {
   account: Account | null
   currentDapp: Dapp | null | undefined
   smartAccountType?: 'Ambire' | 'Safe'
+  onManageAppClosed?: () => void
 }
 
 const DappWebViewFooter: React.FC<Props> = ({
@@ -38,7 +39,8 @@ const DappWebViewFooter: React.FC<Props> = ({
   handleRefresh,
   account,
   currentDapp,
-  smartAccountType
+  smartAccountType,
+  onManageAppClosed
 }) => {
   const { theme } = useTheme()
   const { navigate } = useNavigation()
@@ -154,7 +156,7 @@ const DappWebViewFooter: React.FC<Props> = ({
             </>
           )}
           {!!currentDapp && (
-            <ManageApp dapp={currentDapp} withCurrentAccount>
+            <ManageApp dapp={currentDapp} withCurrentAccount onClosed={onManageAppClosed}>
               <Avatar
                 pfp={account.preferences.pfp}
                 address={account.addr}

@@ -26,6 +26,7 @@ interface ManageAppProps {
   isParentHovered?: boolean
   buttonProps?: Omit<React.ComponentProps<typeof Pressable>, 'onPress' | 'ref'>
   style?: ViewStyle
+  onClosed?: () => void
 }
 
 const ManageApp = ({
@@ -34,7 +35,8 @@ const ManageApp = ({
   withCurrentAccount = false,
   isParentHovered: _isParentHovered,
   buttonProps,
-  style = {}
+  style = {},
+  onClosed
 }: ManageAppProps) => {
   const { theme } = useTheme()
   const { account, accounts, networks, onSelectNetwork } = useManageApp(dapp)
@@ -105,6 +107,7 @@ const ManageApp = ({
         id="manage-app"
         sheetRef={sheetRef}
         closeBottomSheet={close}
+        onClosed={onClosed}
         adjustToContentHeight
         style={style}
       >

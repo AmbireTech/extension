@@ -785,6 +785,30 @@ const DappWebViewScreen = () => {
     return () => eventBus.removeEventListener('action.broadcastDappEvent', onBroadcastDappEvent)
   }, [])
 
+  // After any bottom sheet that overlays the dapp WebView closes, synthesize
+  // a `focus` event into the WebView. On the extension a tab loses/regains
+  // OS-level focus around the wallet popup, which fires `window.focus` and
+  // lets libraries like React Query (`refetchOnWindowFocus`) re-evaluate
+  // stale queries — that is how chainlist's `useAccount` ends up calling
+  // `net_version` and flipping the UI to "connected". On mobile the bottom
+  // sheet is rendered inside the same RN screen above the WebView, so the
+  // page never loses/regains focus and those queries never refire.
+  // Dispatching a synthetic focus event after the sheet closes restores
+  // parity with the extension behaviour.
+  const dispatchWebViewFocus = useCallback(() => {
+    webviewRef.current?.injectJavaScript(`
+      (function() {
+        try { window.dispatchEvent(new Event('focus')); } catch (e) {}
+      })();
+      true;
+    `)
+  }, [])
+
+  const onRequestBottomSheetClosed = useCallback(() => {
+    onBottomSheetClosed?.()
+    dispatchWebViewFocus()
+  }, [onBottomSheetClosed, dispatchWebViewFocus])
+
   //   - onLoadStart only resets state on real top-level navigations. On iOS
   //     every `onLoadStart` is treated as such; on Android only when the
   //     event is an explicit reload, there is no previously resolved URL,
@@ -867,6 +891,7 @@ const DappWebViewScreen = () => {
             account={account}
             currentDapp={currentDapp}
             smartAccountType={smartAccountType}
+            onManageAppClosed={dispatchWebViewFocus}
           />
         </>
       }
@@ -897,6 +922,7 @@ const DappWebViewScreen = () => {
         sheetRef={searchModalRef}
         adjustToContentHeight={false}
         closeBottomSheet={closeSearchModal}
+        onClosed={dispatchWebViewFocus}
         HeaderComponent={searchHeaderComponent}
         flatListProps={searchFlatListProps}
       />
@@ -904,7 +930,7 @@ const DappWebViewScreen = () => {
       <DappRequestBottomSheet
         sheetRef={requestModalRef as any}
         closeBottomSheet={closeRequestModal as any}
-        onClosed={onBottomSheetClosed as any}
+        onClosed={onRequestBottomSheetClosed}
       />
     </MobileLayoutContainer>
   )

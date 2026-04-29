@@ -27,6 +27,7 @@ interface ManageAppProps {
   isParentHovered?: boolean
   buttonProps?: Omit<React.ComponentProps<typeof Pressable>, 'onPress' | 'ref'>
   style?: ViewStyle
+  onClosed?: () => void
 }
 
 const MAX_APP_NAME_LENGTH = 20
