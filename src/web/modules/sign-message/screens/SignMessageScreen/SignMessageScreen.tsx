@@ -367,7 +367,7 @@ const SignMessageScreen = () => {
               resolveDisabled={isResolveActionDisabled || isViewOnly}
               resolveButtonTestID="button-sign"
               rejectButtonText="Reject"
-              {...(hasSafetyBanners && !isViewOnly && false
+              {...(hasSafetyBanners && !isViewOnly
                 ? {
                     resolveNode: (
                       <View style={flexbox.flex1}>
