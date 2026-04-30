@@ -32,7 +32,7 @@ type GasTankSection = {
 
 const SendForm = ({
   addressInputState,
-  hasGasTank,
+  canUseGasTank,
   amountErrorMessage,
   amountErrorSeverity,
   isRecipientAddressUnknown,
@@ -43,9 +43,9 @@ const SendForm = ({
   setAddressStateFieldValue
 }: {
   addressInputState: ReturnType<typeof useAddressInput>
-  hasGasTank: boolean
+  canUseGasTank: boolean
   amountErrorMessage: string
-  amountErrorSeverity?: 'error' | 'warning' | 'info'
+  amountErrorSeverity?: 'error' | 'warning' | 'info' | 'success'
   isRecipientAddressUnknown: boolean
   isRecipientHumanizerKnownTokenOrSmartContract: boolean
   amountFieldValue: string
@@ -111,7 +111,7 @@ const SendForm = ({
 
   const { simulationError } = useSimulationError({ chainId: selectedToken?.chainId })
 
-  const disableForm = (!hasGasTank && isTopUp) || !tokens.length
+  const disableForm = (!canUseGasTank && isTopUp) || !tokens.length
 
   const renderSectionHeader: SectionedSelectProps['renderSectionHeader'] = useCallback(
     ({ section }: { section: NonNullable<SectionedSelectProps['sections']>[number] }) => {
@@ -301,7 +301,11 @@ const SendForm = ({
           fromAmountInFiat={amountInFiat}
           fromAmountFieldMode={amountFieldMode}
           maxFromAmount={maxAmount}
-          validateFromAmount={{ success: !amountIsError, message: amountErrorMessage }}
+          validateFromAmount={{
+            success: !amountIsError,
+            message: amountErrorMessage,
+            severity: amountErrorSeverity
+          }}
           onFromAmountChange={setAmountFieldValue}
           handleSwitchFromAmountFieldMode={switchAmountFieldMode}
           handleSetMaxFromAmount={setMaxAmount}

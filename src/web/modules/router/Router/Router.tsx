@@ -34,6 +34,7 @@ const Router = () => {
   const requestsState = useController('RequestsController').state
   const swapAndBridgeState = useController('SwapAndBridgeController').state
   const transferState = useController('TransferController').state
+  const surveyState = useController('SurveyController').state
   const { areControllerStatesLoaded, isStatesLoadingTakingTooLong } = useContext(
     ControllersStateLoadedContext
   )
@@ -63,7 +64,8 @@ const Router = () => {
     authStatus,
     requestsState,
     swapAndBridgeState,
-    transferState
+    transferState,
+    surveyState
   })
 
   if (initialRoute && !pathname) {

@@ -1,6 +1,7 @@
 import { baParams } from 'constants/env'
 import selectors from 'constants/selectors'
 import Token from 'interfaces/token'
+import { SpeculosDevice } from 'libs/speculos-device/device'
 
 import { expect, Page } from '@playwright/test'
 
@@ -72,10 +73,11 @@ export class TransferPage extends BasePage {
     await this.entertext(selectors.formAddContactNameField, contactName)
     await this.click(selectors.formAddToContactsButton)
 
+    // TODO: uncomment when we have test ID
     // assert snackbar notification
-    await expect(this.page.locator(selectors.contactSuccessfullyAddedSnackbar)).toHaveText(
-      'Contact added to Address Book'
-    )
+    // await expect(this.page.locator(selectors.contactSuccessfullyAddedSnackbar)).toHaveText(
+    //   'Contact added to Address Book'
+    // )
   }
 
   async assertAddedContact(contactName: string, contactAddress: string) {
@@ -106,16 +108,24 @@ export class TransferPage extends BasePage {
     sendToken,
     feeToken,
     payWithGasTank = true, // pay with gas tank by default
-    message
+    message,
+    ledgerSimulatorControls,
+    holdProceedButton = true
   }: {
     sendToken: Token
     feeToken?: Token
     payWithGasTank?: boolean
     message: string
+    ledgerSimulatorControls?: SpeculosDevice
+    holdProceedButton?: boolean
   }) {
     // Proceed
     await this.expectButtonEnabled(selectors.transaction.proceedBtn)
-    await this.longPressButton(selectors.transaction.proceedBtn, 5)
+    if (holdProceedButton) {
+      await this.longPressButton(selectors.transaction.proceedBtn, 5)
+    } else {
+      await this.click(selectors.transaction.proceedBtn)
+    }
 
     // approve the high impact modal if appears
     await this.handlePriceWarningModals()
@@ -146,6 +156,13 @@ export class TransferPage extends BasePage {
       // Sign & Broadcast
       await this.expectButtonEnabled(selectors.signButton)
       await this.click(selectors.signButton)
+
+      if (ledgerSimulatorControls && !payWithGasTank) {
+        await ledgerSimulatorControls.signTransaction()
+      } else if (ledgerSimulatorControls && payWithGasTank) {
+        await ledgerSimulatorControls.signSmartAccountTransaction()
+      }
+
       await this.isVisible(selectors.transaction.confirmingYourTransactionText)
       // Validate requests
       const { rpc } = this.getCategorizedRequests()
