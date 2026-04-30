@@ -62,9 +62,6 @@ export const generatePositionUrl = ({
     return `${origin}/positions/v3/${uniswapChainName}/${positionId}`
   }
 
-  // Aave V3 or other protocols can be added here
-  // if (providerName.includes('AAVE')) { ... }
-
   // Default: just return siteUrl if we can't build a specific URL
   return undefined
 }

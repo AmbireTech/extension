@@ -85,9 +85,11 @@ const DeFiPosition: FC<Props> = ({
         ]}
       >
         <View style={[flexbox.directionRow, flexbox.alignCenter, flexbox.flex1]}>
-          <Text fontSize={14} weight="semiBold">
-            {name}
-          </Text>
+          <View>
+            <Text fontSize={14} weight="semiBold">
+              {name}
+            </Text>
+          </View>
           {!!positionIndex && (
             <Pressable
               disabled={!positionUrl}
