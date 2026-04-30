@@ -191,7 +191,8 @@ const RoutesModal = ({
       styles.otherItemLoading,
       quote?.routes?.length,
       handleSelectRoute,
-      theme
+      theme,
+      listHeight
     ]
   )
 
