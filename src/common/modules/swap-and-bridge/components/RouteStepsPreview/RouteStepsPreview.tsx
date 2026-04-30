@@ -228,7 +228,7 @@ const RouteStepsPreview = ({
         </View>
       </View>
 
-      <View style={[flexbox.directionRow, flexbox.justifySpaceBetween]}>
+      <View style={[flexbox.directionRow, flexbox.alignCenter, flexbox.justifySpaceBetween]}>
         {!isDisabled ? (
           <>
             <View>
