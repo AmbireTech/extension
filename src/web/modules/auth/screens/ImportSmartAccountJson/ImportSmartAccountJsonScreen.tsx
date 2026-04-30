@@ -178,6 +178,7 @@ const SmartAccountImportScreen = () => {
     salt: string
     iv: string
   } | null>(null)
+  const [pendingImportAddr, setPendingImportAddr] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const { dispatch } = useControllersMiddleware()
 
@@ -233,6 +234,10 @@ const SmartAccountImportScreen = () => {
   const handleFileUpload = (files: any) => {
     setError('')
     setIsLoading(true)
+    setPendingImportAddr(null)
+    setPrivateKey(null)
+    setEncryptedKey(null)
+    setAccountToImport(null)
 
     const file = files[0]
     if (file.type !== 'application/json') {
@@ -268,6 +273,7 @@ const SmartAccountImportScreen = () => {
           preferences:
             accountData.preferences ?? getDefaultAccountPreferences(accountAddr, accounts, 0)
         })
+        setPendingImportAddr(accountAddr)
 
         if (accountData.privateKey) {
           setPrivateKey(accountData.privateKey)
@@ -292,8 +298,15 @@ const SmartAccountImportScreen = () => {
   }
 
   useEffect(() => {
-    if (newAccounts.length) goToNextRoute()
-  }, [newAccounts.length, goToNextRoute])
+    if (!pendingImportAddr) return
+
+    const hasImportedPendingAccount = newAccounts.some((acc) => acc.addr === pendingImportAddr)
+    if (!hasImportedPendingAccount) return
+
+    setIsLoading(false)
+    setPendingImportAddr(null)
+    goToNextRoute()
+  }, [newAccounts, pendingImportAddr, goToNextRoute])
 
   const { getRootProps, getInputProps, open, isDragActive } = useDropzone({
     onDrop: handleFileUpload
