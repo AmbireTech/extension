@@ -1,36 +1,23 @@
-import React, { ReactNode } from 'react'
-import { ColorValue, View, ViewStyle } from 'react-native'
-import {
-  KeyboardAwareScrollView,
-  KeyboardAwareScrollViewProps
-} from 'react-native-keyboard-controller'
+import React from 'react'
+import { View } from 'react-native'
+import { KeyboardAwareScrollView } from 'react-native-keyboard-controller'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import { useIsInsideBottomSheet } from '@common/components/BottomSheet/BottomSheetContext'
 import { PanelBackButton, PanelTitle } from '@common/components/Panel/Panel'
-import { WrapperProps } from '@common/components/ScrollableWrapper'
 import useNavigation from '@common/hooks/useNavigation'
 import useTheme from '@common/hooks/useTheme'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
 import spacings, { SPACING_SM } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
+import {
+  MobileLayoutContainerProps,
+  MobileLayoutWrapperMainContentProps
+} from './MobileLayoutWrapper'
 import getStyles from './styles'
 
-type MobileLayoutContainerProps = {
-  backgroundColor?: ColorValue
-  header?: ReactNode
-  footer?: ReactNode
-  footerStyle?: ViewStyle
-  children: ReactNode | ReactNode[]
-  renderDirectChildren?: () => ReactNode
-  style?: ViewStyle
-  withHorizontalPadding?: boolean
-  withTopPadding?: boolean
-  withBottomInset?: boolean
-}
-
-export const MobileLayoutContainer = ({
+const MobileLayoutContainer: React.FC<MobileLayoutContainerProps> = ({
   backgroundColor,
   header,
   footer,
@@ -40,7 +27,7 @@ export const MobileLayoutContainer = ({
   withHorizontalPadding = false,
   withTopPadding = true,
   withBottomInset = true
-}: MobileLayoutContainerProps) => {
+}) => {
   const { theme, styles } = useTheme(getStyles)
   const insets = useSafeAreaInsets()
   const isInsideBottomSheet = useIsInsideBottomSheet()
@@ -79,21 +66,7 @@ export const MobileLayoutContainer = ({
   )
 }
 
-interface MobileLayoutWrapperMainContentProps extends WrapperProps {
-  children: ReactNode
-  withScroll?: boolean
-  wrapperRef?: any
-  withBackButton?: boolean
-  keyboardAwareScrollViewProps?: KeyboardAwareScrollViewProps
-  onBackButtonPress?: () => void
-  rightIcon?: ReactNode
-
-  title?: string
-  step?: number
-  totalSteps?: number
-}
-
-export const MobileLayoutWrapperMainContent: React.FC<MobileLayoutWrapperMainContentProps> = ({
+const MobileLayoutWrapperMainContent: React.FC<MobileLayoutWrapperMainContentProps> = ({
   children,
   wrapperRef,
   contentContainerStyle = {},
@@ -106,7 +79,7 @@ export const MobileLayoutWrapperMainContent: React.FC<MobileLayoutWrapperMainCon
   step = 0,
   totalSteps = 2,
   ...rest
-}: MobileLayoutWrapperMainContentProps) => {
+}) => {
   const { styles, theme } = useTheme(getStyles)
   const { isOnboardingRoute } = useOnboardingNavigation()
   const { goBack } = useNavigation()
@@ -185,3 +158,5 @@ export const MobileLayoutWrapperMainContent: React.FC<MobileLayoutWrapperMainCon
     </View>
   )
 }
+
+export { MobileLayoutContainer, MobileLayoutWrapperMainContent }
