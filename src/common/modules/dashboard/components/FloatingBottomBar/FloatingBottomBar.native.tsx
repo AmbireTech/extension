@@ -10,10 +10,17 @@ import SelectNetwork from '@common/modules/dashboard/components/TabsAndSearch/Se
 import spacings, { SPACING } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
-import DashboardSearch from './DashboardSearch'
-import { SearchAndCurrentAppProps } from './SearchAndCurrentApp'
+import { useNavigate } from 'react-router-native'
+import { TouchableOpacity } from 'react-native'
+import ScanIcon from '@common/assets/svg/ScanIcon'
+import { ROUTES } from '@common/modules/router/constants/common'
+import useToast from '@common/hooks/useToast'
+import { useCameraPermissions } from '@mobile/modules/qr-reader/contexts/CameraPermissionsContext'
 
-const SearchAndCurrentApp: React.FC<SearchAndCurrentAppProps> = ({
+import DashboardSearch from './DashboardSearch'
+import { FloatingBottomBarProps } from './FloatingBottomBar'
+
+const FloatingBottomBar: React.FC<FloatingBottomBarProps> = ({
   control,
   displayNetworkFilter = false,
   isHidden
@@ -21,6 +28,22 @@ const SearchAndCurrentApp: React.FC<SearchAndCurrentAppProps> = ({
   const { bottom: safeBottom } = useSafeAreaInsets()
   const { height } = useReanimatedKeyboardAnimation()
   const { theme } = useTheme()
+  const navigate = useNavigate()
+  const { addToast } = useToast()
+  const { hasPermission, requestPermission } = useCameraPermissions()
+
+  const handleQrPress = async () => {
+    if (hasPermission) {
+      navigate(ROUTES.qrReader)
+    } else {
+      const granted = await requestPermission()
+      if (granted) {
+        navigate(ROUTES.qrReader)
+      } else {
+        addToast('Camera permission is required to scan QR codes.', { type: 'error' })
+      }
+    }
+  }
 
   const animatedBottom = useDerivedValue(() => {
     const toValue = isHidden ? -60 - safeBottom : SPACING + safeBottom
@@ -65,6 +88,21 @@ const SearchAndCurrentApp: React.FC<SearchAndCurrentAppProps> = ({
           ]}
         >
           <DashboardSearch control={control} />
+          <TouchableOpacity
+            style={[
+              {
+                width: 44,
+                height: 44,
+                borderRadius: 22,
+                backgroundColor: theme.background400
+              },
+              flexbox.center
+            ]}
+            onPress={handleQrPress}
+            activeOpacity={0.8}
+          >
+            <ScanIcon width={24} height={24} color={theme.text100} />
+          </TouchableOpacity>
           {displayNetworkFilter && <SelectNetwork />}
         </View>
       </GlassView>
@@ -72,4 +110,4 @@ const SearchAndCurrentApp: React.FC<SearchAndCurrentAppProps> = ({
   )
 }
 
-export default React.memo(SearchAndCurrentApp)
+export default React.memo(FloatingBottomBar)

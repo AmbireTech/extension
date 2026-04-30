@@ -26,7 +26,7 @@ import { openInTab } from '@common/utils/links'
 import { searchWithNetworkName } from '@common/utils/search'
 import { getUiType } from '@common/utils/uiType'
 
-import SearchAndCurrentApp from '../SearchAndCurrentApp'
+import FloatingBottomBar from '../FloatingBottomBar'
 import DefiPositionsSkeleton from './DefiPositionsSkeleton'
 import DeFiPosition from './DeFiProviderPosition'
 import styles from './styles'
@@ -315,7 +315,7 @@ const DeFiPositions: FC<Props> = ({
         refreshing={refreshing}
         onRefresh={onRefresh}
       />
-      {openTab === 'defi' && <SearchAndCurrentApp control={control} isHidden={isSearchHidden} />}
+      {openTab === 'defi' && <FloatingBottomBar control={control} isHidden={isSearchHidden} />}
     </>
   )
 }

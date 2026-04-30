@@ -18,7 +18,7 @@ import { TabType } from '@common/modules/dashboard/components/TabsAndSearch/Tabs
 import { tokenOrCollectionSearch } from '@common/utils/search'
 import { getUiType } from '@common/utils/uiType'
 
-import SearchAndCurrentApp from '../SearchAndCurrentApp'
+import FloatingBottomBar from '../FloatingBottomBar'
 import Collection from './Collection'
 import CollectionsSkeleton from './CollectionsSkeleton'
 import styles from './styles'
@@ -217,7 +217,7 @@ const Collections: FC<Props> = ({
         onRefresh={onRefresh}
       />
       {openTab === 'collectibles' && (
-        <SearchAndCurrentApp control={control} isHidden={isSearchHidden} />
+        <FloatingBottomBar control={control} isHidden={isSearchHidden} />
       )}
     </>
   )

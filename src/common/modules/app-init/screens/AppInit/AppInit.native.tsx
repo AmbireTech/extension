@@ -17,6 +17,7 @@ import { OnboardingNavigationProvider } from '@common/modules/auth/contexts/onbo
 import { PortalHost, PortalProvider } from '@gorhom/portal'
 import { ControllersMiddlewareProvider } from '@mobile/contexts/controllersMiddlewareContext'
 import { ControllersStateLoadedProvider } from '@mobile/contexts/controllersStateLoadedContext'
+import { CameraPermissionsProvider } from '@mobile/modules/qr-reader/contexts/CameraPermissionsContext'
 
 const AppInit = () => {
   const { fontsLoaded } = useFonts()
@@ -38,10 +39,12 @@ const AppInit = () => {
                         <NetInfoProvider>
                           <AuthProvider>
                             <BiometricsProvider>
-                              <OnboardingNavigationProvider>
-                                <AppRouter />
-                                <PortalHost name="global" />
-                              </OnboardingNavigationProvider>
+                              <CameraPermissionsProvider>
+                                <OnboardingNavigationProvider>
+                                  <AppRouter />
+                                  <PortalHost name="global" />
+                                </OnboardingNavigationProvider>
+                              </CameraPermissionsProvider>
                             </BiometricsProvider>
                           </AuthProvider>
                         </NetInfoProvider>

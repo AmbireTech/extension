@@ -9,11 +9,11 @@ import flexbox from '@common/styles/utils/flexbox'
 import CurrentApp from './CurrentApp'
 import DashboardSearch from './DashboardSearch'
 
-import { SearchAndCurrentAppProps } from './SearchAndCurrentApp'
+import { FloatingBottomBarProps } from './FloatingBottomBar'
 
 const VISIBLE_BOTTOM_OFFSET = 0
 
-const SearchAndCurrentApp: React.FC<SearchAndCurrentAppProps> = ({
+const FloatingBottomBar: React.FC<FloatingBottomBarProps> = ({
   control,
   displayCurrentApp = false,
   isHidden
@@ -55,4 +55,4 @@ const SearchAndCurrentApp: React.FC<SearchAndCurrentAppProps> = ({
   )
 }
 
-export default React.memo(SearchAndCurrentApp)
+export default React.memo(FloatingBottomBar)

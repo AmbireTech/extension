@@ -37,6 +37,7 @@ import SwapAndBridgeScreen from '@mobile/modules/swap-and-bridge/screens/SwapAnd
 import TokenDetailsScreen from '@mobile/modules/token-details/screens/TokenDetailsScreen'
 import TransferScreen from '@mobile/modules/transfer/screens/TransferScreen'
 import DappWebViewScreen from '@mobile/modules/webview/screens/DappWebViewScreen'
+import QrReaderScreen from '@mobile/modules/qr-reader/screens/QrReaderScreen'
 
 const MainRoutes = () => {
   return (
@@ -87,6 +88,7 @@ const MainRoutes = () => {
             element={<GetEncryptionPublicKeyRequestScreen />}
           />
           <Route path={ROUTES.decryptRequest} element={<DecryptRequestScreen />} />
+          <Route path={ROUTES.qrReader} element={<QrReaderScreen />} />
         </Route>
       </Route>
       {/* Fallback route to suppress "No routes matched location" warnings when multiple Routes blocks are rendered */}
