@@ -32,6 +32,7 @@ import {
 import PasswordConfirmation from '@web/modules/settings/components/PasswordConfirmation'
 
 import getStyles from './styles'
+import useToast from '@common/hooks/useToast'
 
 type ImportedJson = Account & {
   privateKey?: string
@@ -166,6 +167,7 @@ const validateJson = (json: ImportedJson): { error?: string; success: boolean } 
 }
 
 const SmartAccountImportScreen = () => {
+  const { addToast } = useToast()
   const { t } = useTranslation()
   const { theme, styles } = useTheme(getStyles)
   const [error, setError] = useState('')
@@ -249,14 +251,22 @@ const SmartAccountImportScreen = () => {
           return
         }
 
+        const accountAddr = getAddress(accountData.addr)
+        const isAlreadyAdded = accounts.some((acc) => getAddress(acc.addr) === accountAddr)
+        if (isAlreadyAdded) {
+          setIsLoading(false)
+          setError('This account is already in your wallet.')
+          return
+        }
+
         setAccountToImport({
-          addr: accountData.addr,
+          addr: accountAddr,
           associatedKeys: accountData.associatedKeys,
           initialPrivileges: accountData.initialPrivileges,
           creation: accountData.creation,
           newlyAdded: true,
           preferences:
-            accountData.preferences ?? getDefaultAccountPreferences(accountData.addr, accounts, 0)
+            accountData.preferences ?? getDefaultAccountPreferences(accountAddr, accounts, 0)
         })
 
         if (accountData.privateKey) {
@@ -298,8 +308,12 @@ const SmartAccountImportScreen = () => {
   )
 
   const onPasswordSubmitted = (password: string) => {
-    // shouldn't happen
-    if (!encryptedKey || !accountToImport) return
+    if (!encryptedKey || !accountToImport) {
+      addToast(t('Encrypted key or account to import is not set. Should not happen.'), {
+        type: 'error'
+      })
+      return
+    }
 
     keystoreDispatch({
       type: 'method',
