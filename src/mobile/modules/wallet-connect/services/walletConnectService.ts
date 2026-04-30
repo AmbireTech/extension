@@ -1,11 +1,11 @@
 import '@walletconnect/react-native-compat'
-import { Core } from '@walletconnect/core'
-import { WalletKit } from '@reown/walletkit'
-import { getSdkError } from '@walletconnect/utils'
 
 import { MainController } from '@ambire-common/controllers/main/main'
-import { WALLETCONNECT_PROJECT_ID } from '@common/config/env'
+import CONFIG from '@common/config/env'
 import { Action, MethodAction } from '@common/types/actions'
+import { WalletKit } from '@reown/walletkit'
+import { Core } from '@walletconnect/core'
+import { getSdkError } from '@walletconnect/utils'
 
 import { createWcMessenger } from './wcMessenger'
 
@@ -25,9 +25,7 @@ export const initWalletConnect = async (
   mainCtrl = controller
   dispatchAction = dispatch
 
-  const core = new Core({
-    projectId: WALLETCONNECT_PROJECT_ID
-  })
+  const core = new Core({ projectId: CONFIG.WALLETCONNECT_PROJECT_ID })
 
   walletKit = await WalletKit.init({
     core,
@@ -64,7 +62,6 @@ export const initWalletConnect = async (
           topic: `wc_session_proposal_${proposal.id.toString()}`
         }
       })
-
     } catch (e) {
       console.error(e)
     }
@@ -144,8 +141,15 @@ export const approveWalletConnectSession = async (proposalId: number, accounts: 
   const allNamespaces = { ...requiredNamespaces, ...optionalNamespaces }
   if (allNamespaces.eip155) {
     namespaces.eip155 = {
-      accounts: allNamespaces.eip155.chains?.map((c: string) => accounts.map(a => `${c}:${a}`)).flat() || accounts.map((a: string) => `eip155:1:${a}`),
-      methods: allNamespaces.eip155.methods || ['personal_sign', 'eth_sendTransaction', 'eth_signTypedData_v4', 'wallet_switchEthereumChain'],
+      accounts:
+        allNamespaces.eip155.chains?.map((c: string) => accounts.map((a) => `${c}:${a}`)).flat() ||
+        accounts.map((a: string) => `eip155:1:${a}`),
+      methods: allNamespaces.eip155.methods || [
+        'personal_sign',
+        'eth_sendTransaction',
+        'eth_signTypedData_v4',
+        'wallet_switchEthereumChain'
+      ],
       events: allNamespaces.eip155.events || ['accountsChanged', 'chainChanged']
     }
   }
@@ -161,7 +165,11 @@ export const approveWalletConnectSession = async (proposalId: number, accounts: 
     url: proposerUrl,
     tabId: wcTabId
   })
-  mainCtrl!.dapps.setSessionMessenger(dappSession.sessionId, createWcMessenger(walletKit, session.topic, 1), false)
+  mainCtrl!.dapps.setSessionMessenger(
+    dappSession.sessionId,
+    createWcMessenger(walletKit, session.topic, 1),
+    false
+  )
 
   return session
 }

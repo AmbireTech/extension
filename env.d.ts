@@ -17,6 +17,7 @@ declare module '@env' {
     SENTRY_DSN_LEGENDS?: string
     SENTRY_DSN_BROWSER_EXTENSION?: string
     WEBVIEW_DEV_HOST?: string
+    WALLETCONNECT_PROJECT_ID: string
   }
 
   /**
@@ -116,4 +117,9 @@ declare module '@env' {
    * LAN IP of the dev machine for the WebView webpack-dev-server (Android physical device).
    */
   export const WEBVIEW_DEV_HOST: EnvTypes['WEBVIEW_DEV_HOST']
+
+  /**
+   * WalletConnect Project ID for v2 connections.
+   */
+  export const WALLETCONNECT_PROJECT_ID: EnvTypes['WALLETCONNECT_PROJECT_ID']
 }
