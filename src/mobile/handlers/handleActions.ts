@@ -8,7 +8,6 @@ import { getDappIdFromUrl } from '@ambire-common/libs/dapps/helpers'
 import { KeyIterator } from '@ambire-common/libs/keyIterator/keyIterator'
 import handleProviderRequests from '@common/modules/provider/handleProviderRequests'
 import { Action, MethodAction } from '@common/types/actions'
-import { approveWalletConnectSession, rejectWalletConnectSession, respondToWalletConnectRequest } from '@mobile/modules/wallet-connect/services/walletConnectService'
 import { mobileMessenger } from '@mobile/modules/webview/services/mobileMessenger'
 
 export const handleActions = async (
@@ -165,11 +164,18 @@ export const handleActions = async (
 
         // Handle WalletConnect responses natively instead of forwarding to WebView
         if (params.topic && params.topic.toString().includes('wc_session_request')) {
-          await respondToWalletConnectRequest(params.topic.replace('wc_session_request_', ''), { result }, params.requestId)
+          sendToReactEvent('action.respondToWalletConnectRequest', {
+            topic: params.topic.replace('wc_session_request_', ''),
+            response: { result },
+            id: params.requestId
+          })
         } else if (params.topic && params.topic.toString().includes('wc_session_proposal')) {
           // If the request was eth_requestAccounts via a proposal, and it succeeded
           if (result && Array.isArray(result) && result.length > 0) {
-            await approveWalletConnectSession(params.requestId, result)
+            sendToReactEvent('action.approveWalletConnectSession', {
+              proposalId: params.requestId,
+              accounts: result
+            })
           }
         } else {
           sendToReactEvent('action.sendToDappWebView', {
@@ -189,9 +195,15 @@ export const handleActions = async (
         }
 
         if (params.topic && params.topic.toString().includes('wc_session_request')) {
-          await respondToWalletConnectRequest(params.topic.replace('wc_session_request_', ''), { error: errorRes }, params.requestId)
+          sendToReactEvent('action.respondToWalletConnectRequest', {
+            topic: params.topic.replace('wc_session_request_', ''),
+            response: { error: errorRes },
+            id: params.requestId
+          })
         } else if (params.topic && params.topic.toString().includes('wc_session_proposal')) {
-          await rejectWalletConnectSession(params.requestId)
+          sendToReactEvent('action.rejectWalletConnectSession', {
+            proposalId: params.requestId
+          })
         } else {
           sendToReactEvent('action.sendToDappWebView', {
             result: null,

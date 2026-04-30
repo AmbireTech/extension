@@ -8,6 +8,11 @@ import { CONTROLLER_STORE_MAX_LOADING_TIME } from '@common/contexts/controllerSt
 import eventBus from '@common/services/event/eventBus'
 import { storage } from '@common/services/storage'
 import { WEBVIEW_DEV_HOST } from '@env'
+import {
+  approveWalletConnectSession,
+  rejectWalletConnectSession,
+  respondToWalletConnectRequest
+} from '@mobile/modules/wallet-connect/services/walletConnectService'
 
 // In production, the bundle is inlined via the JSON import.
 // In dev, we load from webpack-dev-server so this import is unused.
@@ -204,6 +209,19 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, {}>((_, ref) => {
           break
         case 'action.navigate':
           eventBus.emit('navigate', data.payload)
+          break
+        case 'action.respondToWalletConnectRequest':
+          await respondToWalletConnectRequest(
+            data.payload.topic,
+            data.payload.response,
+            data.payload.id
+          )
+          break
+        case 'action.approveWalletConnectSession':
+          await approveWalletConnectSession(data.payload.proposalId, data.payload.accounts)
+          break
+        case 'action.rejectWalletConnectSession':
+          await rejectWalletConnectSession(data.payload.proposalId)
           break
 
         // --- PROXY HANDLERS FOR STORAGE ---
