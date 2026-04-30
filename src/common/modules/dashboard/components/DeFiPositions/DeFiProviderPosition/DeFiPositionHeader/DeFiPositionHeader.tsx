@@ -23,7 +23,7 @@ type Props = Omit<PositionsByProvider, 'type' | 'positionInUSD' | 'positions' | 
   toggleExpanded: () => void
   isExpanded: boolean
   positionInUSD?: string
-  healthRate?: number
+  healthRate?: number | null
 }
 
 const HEALTH_RATE_LEVELS: {

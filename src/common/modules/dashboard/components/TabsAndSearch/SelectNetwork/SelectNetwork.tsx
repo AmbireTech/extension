@@ -96,7 +96,7 @@ const SelectNetwork = ({ currentTab }: Props) => {
         }}
         onPress={handlePress}
       >
-        <NetworksIcon width={24} height={24} color={theme.iconPrimary} />
+        <NetworksIcon width={24} height={24} />
         {dashboardNetworkFilter && (
           <View
             style={[
