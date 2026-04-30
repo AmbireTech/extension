@@ -242,6 +242,8 @@ const DappWebViewScreen = () => {
         }
 
         // Hand off wallet deep links to the OS
+        // Note: wc protocol is now intercepted by WalletConnectProvider, but we still openURL
+        // to trigger the Linking event within the app.
         if (protocol === 'wc' || protocol === 'metamask' || protocol === 'ethereum') {
           console.log('[DappWebView] Handing off wallet deep link to OS:', url)
           Linking.openURL(url).catch((err) => {

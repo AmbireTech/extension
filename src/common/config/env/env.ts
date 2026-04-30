@@ -52,6 +52,7 @@ export const EXPO_SDK = 'N/A'
 
 export const isMobile = Platform.OS === 'ios' || Platform.OS === 'android'
 export const isiOS = Platform.OS === 'ios'
+export const WALLETCONNECT_PROJECT_ID = 'cdfafb7c97f487d7ae7a8c34d8ebfbe8'
 export const isAndroid = Platform.OS === 'android'
 export const isWeb = Platform.OS === 'web'
 
