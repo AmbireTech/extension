@@ -726,7 +726,7 @@ const SubmittedTransactionSummaryInner = ({
       activityDispatch({
         type: 'method',
         params: {
-          method: 'backfillAccountOpBalanceChanges',
+          method: 'backfillAccountOpBalanceChangesAndPersist',
           args: [submittedAccountOp]
         }
       })
