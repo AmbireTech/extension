@@ -179,7 +179,7 @@ export const getDappInteractions = (submittedAccountOp: SubmittedAccountOp): Dap
 
     addInteraction({
       id: `dapp:${dapp.id || `${dapp.name}-${dapp.url || ''}`}`,
-      name: dapp.name,
+      name: dapp.name.charAt(0).toUpperCase() + dapp.name.slice(1).toLowerCase(), // capitalize
       iconUrl: dapp.icon
     })
   })
