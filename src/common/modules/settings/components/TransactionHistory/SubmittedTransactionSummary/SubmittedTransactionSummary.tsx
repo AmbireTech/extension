@@ -495,8 +495,8 @@ const SubmittedTransactionSummaryDetails = ({
     <View style={[spacings.phSm]}>
       <View style={spacings.phSm}>
         <View style={styles.modalSection} testID="activity-transaction-details-step">
-          <Text appearance="tertiaryText" fontSize={16} weight="medium" style={spacings.mbSm}>
-            Transaction details
+          <Text appearance="tertiaryText" weight="medium" style={spacings.mbSm}>
+            {t('Transaction details')}
           </Text>
           {!isDelegationTxn &&
             humanizedCalls.map((call: IrCall, i) => (
@@ -548,8 +548,8 @@ const SubmittedTransactionSummaryDetails = ({
           )}
         </View>
         <View style={[styles.modalSection, spacings.pb0]} testID="activity-balance-changes-step">
-          <Text appearance="tertiaryText" fontSize={16} weight="medium" style={spacings.mbSm}>
-            Balance changes
+          <Text appearance="tertiaryText" weight="medium" style={spacings.mbSm}>
+            {t('Balance changes')}
           </Text>
           <View style={flexbox.flex1}>
             {!hasBalanceChangesLoaded && (
@@ -569,7 +569,7 @@ const SubmittedTransactionSummaryDetails = ({
               >
                 <Spinner style={{ width: 18, height: 18 }} />
                 <Text style={spacings.mlSm} fontSize={14} appearance="secondaryText">
-                  Loading balance changes
+                  {t('Loading balance changes')}
                 </Text>
               </View>
             )}
@@ -607,7 +607,7 @@ const SubmittedTransactionSummaryDetails = ({
                 >
                   <Spinner style={{ width: 18, height: 18 }} />
                   <Text style={spacings.mlSm} fontSize={14} appearance="secondaryText">
-                    Loading balance changes
+                    {t('Loading balance changes')}
                   </Text>
                 </View>
               ) : (
@@ -624,7 +624,7 @@ const SubmittedTransactionSummaryDetails = ({
                   ]}
                 >
                   <Text fontSize={14} appearance="secondaryText">
-                    No balance changes detected
+                    {t('No balance changes detected')}
                   </Text>
                 </View>
               ))}
@@ -636,8 +636,8 @@ const SubmittedTransactionSummaryDetails = ({
             testID="activity-transaction-hash-step"
           >
             <View style={styles.modalStepRow}>
-              <Text appearance="tertiaryText" fontSize={16} weight="medium">
-                Transaction hash
+              <Text appearance="tertiaryText" weight="medium">
+                {t('Transaction hash')}
               </Text>
               <View style={styles.modalStepRowRight}>
                 <Text fontSize={14} appearance="secondaryText">
@@ -694,6 +694,7 @@ const SubmittedTransactionSummaryInner = ({
   const { dispatch: activityDispatch } = useController('ActivityController')
   const { networks } = useController('NetworksController').state
   const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useModalize()
+  const { t } = useTranslation()
 
   const network: Network | undefined = useMemo(
     () => networks.find((n) => n.chainId === submittedAccountOp.chainId),
@@ -871,8 +872,8 @@ const SubmittedTransactionSummaryInner = ({
               >
                 <LeftArrowIcon color={theme.secondaryText} />
               </Pressable>
-              <Text fontSize={16} weight="semiBold" style={styles.sheetHeaderTitle}>
-                Activity information
+              <Text weight="semiBold" style={styles.sheetHeaderTitle}>
+                {t('Activity information')}
               </Text>
               <View style={styles.sheetHeaderBackButton} />
             </View>

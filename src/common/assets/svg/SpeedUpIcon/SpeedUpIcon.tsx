@@ -1,7 +1,7 @@
-import React, { FC } from 'react'
+import React, { FC, memo } from 'react'
 import { Line, Path, Svg, SvgProps } from 'react-native-svg'
 
-const RefreshIcon: FC<SvgProps> = ({
+const SpeedUpIcon: FC<SvgProps> = ({
   color = '#E3E6EB',
   width = 32,
   height = 32,
@@ -60,4 +60,4 @@ const RefreshIcon: FC<SvgProps> = ({
   )
 }
 
-export default RefreshIcon
+export default memo(SpeedUpIcon)
