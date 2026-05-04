@@ -205,7 +205,7 @@ if (isDev) {
   )
 
   workerConfig.devServer = {
-    port: 8082,
+    port: 8182,
     // Both HMR and live reload are disabled. The WebView loads inline HTML
     // from a file:/// base URL, so location.reload() navigates to file:///
     // (a directory) instead of reloading the page.

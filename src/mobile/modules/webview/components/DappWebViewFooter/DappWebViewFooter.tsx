@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useCallback } from 'react'
 import { Control } from 'react-hook-form'
 import { Pressable, View } from 'react-native'
 
@@ -11,6 +11,7 @@ import Avatar from '@common/components/Avatar'
 import NetworkIcon from '@common/components/NetworkIcon'
 import Search from '@common/components/Search'
 import useNavigation from '@common/hooks/useNavigation'
+import useRoute from '@common/hooks/useRoute'
 import useTheme from '@common/hooks/useTheme'
 import NotConnected from '@common/modules/dapp-catalog/components/DappIcon/NotConnected'
 import ManageApp from '@common/modules/dapp-catalog/components/ManageApp'
@@ -43,7 +44,21 @@ const DappWebViewFooter: React.FC<Props> = ({
   onManageAppClosed
 }) => {
   const { theme } = useTheme()
-  const { navigate } = useNavigation()
+  const { navigate, goBack, canGoBack: canGoBackInHistory } = useNavigation()
+  const route = useRoute()
+
+  const handleNavigateToApps = useCallback(() => {
+    // If we navigated here straight from the apps catalog (the typical flow),
+    // pop the webview off the stack instead of pushing a new apps entry.
+    // Otherwise, replace the webview entry with apps so it never lingers in
+    // history and blocks the back gesture from leaving the apps section.
+    const prevPath = (route.state as any)?.prevRoute?.pathname
+    if (canGoBackInHistory && prevPath === `/${ROUTES.apps}`) {
+      goBack()
+    } else {
+      navigate(ROUTES.apps, { replace: true })
+    }
+  }, [canGoBackInHistory, goBack, navigate, route.state])
 
   return (
     <View
@@ -56,7 +71,7 @@ const DappWebViewFooter: React.FC<Props> = ({
       ]}
     >
       <Pressable
-        onPress={() => navigate(ROUTES.apps)}
+        onPress={handleNavigateToApps}
         style={[
           flexbox.alignCenter,
           flexbox.justifyCenter,
