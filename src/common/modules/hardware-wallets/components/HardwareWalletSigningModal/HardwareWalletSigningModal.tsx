@@ -20,7 +20,7 @@ import Text from '@common/components/Text'
 import Tooltip from '@common/components/Tooltip'
 import { useTranslation } from '@common/config/localization'
 import useTheme from '@common/hooks/useTheme'
-import spacings, { DEVICE_WIDTH } from '@common/styles/spacings'
+import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { getUiType } from '@common/utils/uiType'
 
@@ -152,7 +152,14 @@ const HardwareWalletSigningModal = ({
         </View>
         <AmbireDevice />
       </View>
-      <View style={[flexbox.alignSelfCenter, spacings.mbLg, flexbox.alignCenter]}>
+      <View
+        style={[
+          flexbox.alignSelfCenter,
+          spacings.mbLg,
+          flexbox.alignCenter,
+          { width: '100%', maxWidth: 410 }
+        ]}
+      >
         <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mbTy]}>
           <Text weight="regular" fontSize={20}>
             {t('Sending signing request...')}
@@ -164,8 +171,7 @@ const HardwareWalletSigningModal = ({
             style={[
               spacings.mtLg,
               {
-                width: isTab ? 560 : Math.min(DEVICE_WIDTH - 32, 560),
-                maxWidth: '100%',
+                width: '100%',
                 borderWidth: 1,
                 borderColor: theme.secondaryBorder,
                 borderRadius: 8,
