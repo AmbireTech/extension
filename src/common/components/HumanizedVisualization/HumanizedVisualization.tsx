@@ -34,10 +34,17 @@ interface Props {
   imageSize?: number
   hideLinks?: boolean
   style?: StyleProp<ViewStyle>
+  editApprovalCallInfo?: {
+    setter: (arg: string, closeModal: () => void) => void
+    amount: bigint
+    address: string
+    callId?: string
+  }
 }
 
 const HumanizedVisualization: FC<Props> = ({
   data = [],
+  editApprovalCallInfo,
   sizeMultiplierSize = 1,
   textSize = 16,
   chainId,
@@ -81,7 +88,14 @@ const HumanizedVisualization: FC<Props> = ({
                 chainId={chainId}
                 hideLinks={hideLinks}
               />
-              {item.editApprovalData && <EditApproval item={item} />}
+              {editApprovalCallInfo && (
+                <EditApproval
+                  editCall={editApprovalCallInfo.setter}
+                  address={editApprovalCallInfo.address}
+                  value={editApprovalCallInfo.amount}
+                  id={editApprovalCallInfo.callId}
+                />
+              )}
             </Fragment>
           )
         }
