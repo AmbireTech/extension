@@ -12,6 +12,7 @@ import OpenIcon from '@common/assets/svg/OpenIcon'
 import RefreshIcon from '@common/assets/svg/RefreshIcon'
 import SpeedUpIcon from '@common/assets/svg/SpeedUpIcon'
 import Button from '@common/components/Button'
+import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
@@ -31,6 +32,8 @@ type Props = {
 } & Pick<SubmittedAccountOp, 'txnId' | 'identifiedBy' | 'accountAddr' | 'gasFeePayment' | 'status'>
 
 const increaseByFifteenPercent = (value: bigint) => (value * 115n + 99n) / 100n
+const EXPLORER_LINKS_DISABLED_TOOLTIP =
+  'Explorer links are on the right side of each transaction in transaction details'
 
 const Footer: FC<Props> = ({
   network,
@@ -53,10 +56,18 @@ const Footer: FC<Props> = ({
   const { chainId } = network
   const isPendingTransaction =
     status === AccountOpStatus.Pending || status === AccountOpStatus.BroadcastedButNotConfirmed
+  // the whole account op is a failure / success
+  // or at least one call is a failure / success
+  // means that there's at least one explorer transaction for checking
   const isMinedTransaction =
-    status === AccountOpStatus.Failure || status === AccountOpStatus.Success
-  const shouldShowBottomSheetExplorerActions =
-    isMinedTransaction && identifiedBy.type !== 'MultipleTxns'
+    status === AccountOpStatus.Failure ||
+    status === AccountOpStatus.Success ||
+    (submittedAccountOp.identifiedBy.type === 'MultipleTxns' &&
+      submittedAccountOp.calls.find(
+        (c) => c.status === AccountOpStatus.Failure || c.status === AccountOpStatus.Success
+      ))
+  const areExplorerButtonsDisabled =
+    submittedAccountOp.identifiedBy.type === 'MultipleTxns' && submittedAccountOp.calls.length > 1
   const shouldShowSpeedUp =
     isPendingTransaction &&
     gasFeePayment?.broadcastOption !== BROADCAST_OPTIONS.byRelayer &&
@@ -187,54 +198,72 @@ const Footer: FC<Props> = ({
     }
   }, [txnId, addToast, chainId, network.explorerUrl, t])
 
-  if (!canRepeatTransaction && !shouldShowBottomSheetExplorerActions) return null
+  if (!canRepeatTransaction && !isMinedTransaction) return null
 
   return (
     <View style={styles.footer}>
       <View style={styles.footerButtonsRow}>
-        {canRepeatTransaction && (
+        <View
+          dataSet={createGlobalTooltipDataSet({
+            id: `open-explorer-disabled-${submittedAccountOp.id}`,
+            content: t(EXPLORER_LINKS_DISABLED_TOOLTIP),
+            hidden: !areExplorerButtonsDisabled
+          })}
+        >
           <Button
+            text={t('Open explorer')}
             type="outline"
-            text={t(shouldShowSpeedUp ? 'Speed up' : 'Repeat')}
-            onPress={shouldShowSpeedUp ? handleSpeedUpTransaction : handleRepeatTransaction}
+            onPress={handleOpenExplorer}
             size="smaller"
+            disabled={areExplorerButtonsDisabled}
             hasBottomSpacing={false}
-            style={styles.footerButton}
+            style={[styles.footerButton]}
             childrenPosition="left"
+            testID="view-transaction-link"
           >
-            {shouldShowSpeedUp ? (
-              <SpeedUpIcon style={spacings.mrMi} width={16} height={16} />
-            ) : (
-              <RefreshIcon style={spacings.mrMi} width={16} height={16} />
-            )}
+            <OpenIcon style={spacings.mrMi} width={16} height={16} />
           </Button>
-        )}
-        {shouldShowBottomSheetExplorerActions && (
+        </View>
+
+        <View style={[flexbox.directionRow, flexbox.alignCenter]}>
           <View
-            style={[
-              flexbox.directionRow,
-              flexbox.alignCenter,
-              !canRepeatTransaction ? flexbox.justifyEnd : undefined,
-              !canRepeatTransaction ? { width: '100%' } : undefined
-            ]}
+            dataSet={createGlobalTooltipDataSet({
+              id: `repeat-disabled-${submittedAccountOp.id}`,
+              content: t('Switch to this account to proceed'),
+              hidden: canRepeatTransaction
+            })}
           >
             <Button
-              text={t('Open explorer')}
-              onPress={handleOpenExplorer}
               type="tertiary"
+              text={t(shouldShowSpeedUp ? 'Speed up' : 'Repeat')}
+              onPress={shouldShowSpeedUp ? handleSpeedUpTransaction : handleRepeatTransaction}
               size="smaller"
               hasBottomSpacing={false}
+              disabled={!canRepeatTransaction}
               style={[styles.footerButton, spacings.mrTy]}
               childrenPosition="left"
-              testID="view-transaction-link"
             >
-              <OpenIcon style={spacings.mrMi} width={16} height={16} />
+              {shouldShowSpeedUp ? (
+                <SpeedUpIcon style={spacings.mrMi} width={16} height={16} />
+              ) : (
+                <RefreshIcon style={spacings.mrMi} width={16} height={16} />
+              )}
             </Button>
+          </View>
+
+          <View
+            dataSet={createGlobalTooltipDataSet({
+              id: `copy-explorer-link-disabled-${submittedAccountOp.id}`,
+              content: t(EXPLORER_LINKS_DISABLED_TOOLTIP),
+              hidden: !areExplorerButtonsDisabled
+            })}
+          >
             <Button
               text={t('Copy link')}
               onPress={handleCopyTransaction}
               type="primary"
               size="smaller"
+              disabled={areExplorerButtonsDisabled}
               hasBottomSpacing={false}
               style={styles.footerButton}
               childrenPosition="left"
@@ -242,7 +271,7 @@ const Footer: FC<Props> = ({
               <CopyIcon style={spacings.mrMi} width={16} height={16} />
             </Button>
           </View>
-        )}
+        </View>
       </View>
     </View>
   )

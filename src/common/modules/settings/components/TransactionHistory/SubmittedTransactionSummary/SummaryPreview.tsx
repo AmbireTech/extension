@@ -1,10 +1,12 @@
 import React from 'react'
+import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 
 import { SubmittedAccountOp } from '@ambire-common/libs/accountOp/submittedAccountOp'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import SkeletonLoader from '@common/components/SkeletonLoader'
 import Text from '@common/components/Text'
+import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 
 import {
@@ -12,10 +14,9 @@ import {
   getBalanceChangeTooltipId,
   getFullBalanceChangeAmount
 } from './helpers'
-import { BalanceChangeToken, DappInteractionIcon } from './SummaryIcons'
 import getStyles from './styles'
+import { BalanceChangeToken, DappInteractionIcon } from './SummaryIcons'
 import { DappInteraction, DisplayBalanceChange } from './types'
-import useTheme from '@common/hooks/useTheme'
 
 const SummaryPreview = ({
   submittedAccountOp,
@@ -31,6 +32,7 @@ const SummaryPreview = ({
   shouldShowBalanceChangesSummary: boolean
 }) => {
   const { styles } = useTheme(getStyles)
+  const { t } = useTranslation()
 
   return (
     <View style={styles.contentContainer}>
@@ -94,7 +96,7 @@ const SummaryPreview = ({
           ))}
           {!!hiddenBalanceChangesCount && (
             <Text fontSize={12} appearance="secondaryText">
-              +{hiddenBalanceChangesCount} more
+              {t('+{{count}} more', { count: hiddenBalanceChangesCount })}
             </Text>
           )}
         </View>
