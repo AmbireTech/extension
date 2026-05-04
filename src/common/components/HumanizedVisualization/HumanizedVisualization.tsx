@@ -35,9 +35,9 @@ interface Props {
   hideLinks?: boolean
   style?: StyleProp<ViewStyle>
   editApprovalCallInfo?: {
-    setter: (arg: string, closeModal: () => void) => void
+    setter: (arg: string, token: string, closeModal: () => void) => void
     amount: bigint
-    address: string
+    token: string
     callId?: string
   }
 }
@@ -91,7 +91,7 @@ const HumanizedVisualization: FC<Props> = ({
               {editApprovalCallInfo && (
                 <EditApproval
                   editCall={editApprovalCallInfo.setter}
-                  address={editApprovalCallInfo.address}
+                  token={editApprovalCallInfo.token}
                   value={editApprovalCallInfo.amount}
                   id={editApprovalCallInfo.callId}
                 />

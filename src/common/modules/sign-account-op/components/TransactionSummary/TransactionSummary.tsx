@@ -155,7 +155,7 @@ const TransactionSummary = ({
   }, [type, call.warnings, size])
 
   const innerEditApproval = useCallback(
-    (newAmount: string, closeEditApprovals: () => void) => {
+    (newAmount: string, token: string, closeEditApprovals: () => void) => {
       if (!signAccountOpState) {
         addToast('Internal error: failed to load account state', { type: 'error' })
         return
@@ -165,7 +165,7 @@ const TransactionSummary = ({
         return
       }
       const portfolioToken = portfolio.tokens.find(
-        (t) => t.address.toLowerCase() === call.to?.toLowerCase()
+        (t) => t.address.toLowerCase() === token.toLowerCase()
       )
       if (!portfolioToken) {
         addToast("Internal error: we failed to find the token's data", { type: 'error' })
@@ -269,8 +269,8 @@ const TransactionSummary = ({
   const editApprovalCallInfo = useMemo(():
     | undefined
     | {
-        setter: (amount: string, closeModal: () => void) => void
-        address: string
+        setter: (amount: string, token: string, closeModal: () => void) => void
+        token: string
         amount: bigint
         callId?: string
       } => {
@@ -291,16 +291,12 @@ const TransactionSummary = ({
     )
       return
 
-    const portfolioToken = portfolio.tokens.find(
-      (t) => t.address.toLowerCase() === call.to?.toLowerCase()
-    )
-    if (!portfolioToken) return
-
-    if (!signAccountOpState || !portfolioToken) return
+    if (!signAccountOpState) return
     if (!call.data || call.data.length < 10) return
     const selector = call.data.slice(0, 10)
 
     let amount: bigint | undefined
+    let token: string | undefined
     try {
       switch (selector) {
         case approveInterface.getFunction('approve')!.selector: {
@@ -308,13 +304,15 @@ const TransactionSummary = ({
           if (!tx) return
           const [spender, currentAmount] = tx.args
           amount = currentAmount
+          token = call.to
           break
         }
         case permitInterface.getFunction('approve')!.selector: {
           const tx = permitInterface.parseTransaction(call)
           if (!tx) return
-          const [token, spender, currentAmount, expiration] = tx.args
+          const [_token, spender, currentAmount, expiration] = tx.args
           amount = currentAmount
+          token = _token
           break
         }
         case increaseAllowanceInterface.getFunction('increaseAllowance')!.selector: {
@@ -322,6 +320,7 @@ const TransactionSummary = ({
           if (!tx) return
           const [spender, currentIncrease] = tx.args
           amount = currentIncrease
+          token = call.to
           break
         }
         case decreaseAllowanceInterface.getFunction('decreaseAllowance')!.selector: {
@@ -329,6 +328,7 @@ const TransactionSummary = ({
           if (!tx) return
           const [spender, currentDecrease] = tx.args
           amount = currentDecrease
+          token = call.to
           break
         }
         default:
@@ -340,8 +340,13 @@ const TransactionSummary = ({
       return
     }
     if (amount === undefined) return
+    if (!token) return
+    const portfolioToken = portfolio.tokens.find(
+      (t) => t.address.toLowerCase() === token.toLowerCase()
+    )
+    if (!portfolioToken) return
 
-    return { setter: innerEditApproval, amount, address: call.to, callId: call.id }
+    return { setter: innerEditApproval, amount, token, callId: call.id }
   }, [call, innerEditApproval, portfolio, signAccountOpState])
 
   if (isCallRemovedOptimistic) return null
