@@ -249,7 +249,6 @@ const TransactionSummary = ({
           return
       }
 
-
       // replace the data with the new approval
       replacedCall.data = calldata
 
@@ -302,37 +301,43 @@ const TransactionSummary = ({
     const selector = call.data.slice(0, 10)
 
     let amount: bigint | undefined
-    switch (selector) {
-      case approveInterface.getFunction('approve')!.selector: {
-        const tx = approveInterface.parseTransaction(call)
-        if (!tx) return
-        const [spender, currentAmount] = tx.args
-        amount = currentAmount
-        break
+    try {
+      switch (selector) {
+        case approveInterface.getFunction('approve')!.selector: {
+          const tx = approveInterface.parseTransaction(call)
+          if (!tx) return
+          const [spender, currentAmount] = tx.args
+          amount = currentAmount
+          break
+        }
+        case permitInterface.getFunction('approve')!.selector: {
+          const tx = permitInterface.parseTransaction(call)
+          if (!tx) return
+          const [token, spender, currentAmount, expiration] = tx.args
+          amount = currentAmount
+          break
+        }
+        case increaseAllowanceInterface.getFunction('increaseAllowance')!.selector: {
+          const tx = increaseAllowanceInterface.parseTransaction(call)
+          if (!tx) return
+          const [spender, currentIncrease] = tx.args
+          amount = currentIncrease
+          break
+        }
+        case decreaseAllowanceInterface.getFunction('decreaseAllowance')!.selector: {
+          const tx = decreaseAllowanceInterface.parseTransaction(call)
+          if (!tx) return
+          const [spender, currentDecrease] = tx.args
+          amount = currentDecrease
+          break
+        }
+        default:
+          return
       }
-      case permitInterface.getFunction('approve')!.selector: {
-        const tx = permitInterface.parseTransaction(call)
-        if (!tx) return
-        const [token, spender, currentAmount, expiration] = tx.args
-        amount = currentAmount
-        break
-      }
-      case increaseAllowanceInterface.getFunction('increaseAllowance')!.selector: {
-        const tx = increaseAllowanceInterface.parseTransaction(call)
-        if (!tx) return
-        const [spender, currentIncrease] = tx.args
-        amount = currentIncrease
-        break
-      }
-      case decreaseAllowanceInterface.getFunction('decreaseAllowance')!.selector: {
-        const tx = decreaseAllowanceInterface.parseTransaction(call)
-        if (!tx) return
-        const [spender, currentDecrease] = tx.args
-        amount = currentDecrease
-        break
-      }
-      default:
-        return
+    } catch (e) {
+      // the calldata was probably malformed
+      // at this point in the code there is no need to display a toast
+      return
     }
     if (amount === undefined) return
 
