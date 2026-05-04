@@ -291,7 +291,10 @@ const TransactionSummary = ({
     )
       return
 
-    if (!signAccountOpState) return
+    // used to prevent edit buttons in the history/activity tab
+    const callToReplace = signAccountOpState.accountOp.calls.find((c) => c.id === call.id)
+    if (!callToReplace) return
+
     if (!call.data || call.data.length < 10) return
     const selector = call.data.slice(0, 10)
 
