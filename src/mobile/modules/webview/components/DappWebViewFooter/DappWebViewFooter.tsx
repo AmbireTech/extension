@@ -68,7 +68,7 @@ const DappWebViewFooter: React.FC<Props> = ({
           }
         ]}
       >
-        <HomeIcon />
+        <HomeIcon width={18} height={18} />
       </Pressable>
       <View
         style={[
