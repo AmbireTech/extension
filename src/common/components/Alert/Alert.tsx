@@ -1,12 +1,12 @@
 import React from 'react'
-import { TextProps, View, ViewStyle } from 'react-native'
+import { StyleProp, TextProps, View, ViewStyle } from 'react-native'
 import { SvgProps } from 'react-native-svg'
 
 import ErrorIcon from '@common/assets/svg/ErrorIcon'
 import InfoIcon from '@common/assets/svg/InfoIcon'
 import SuccessIcon from '@common/assets/svg/SuccessIcon'
 import WarningIcon from '@common/assets/svg/WarningIcon'
-import Button, { Props as ButtonProps } from '@common/components/Button'
+import Button, { ButtonTypes, Props as ButtonProps } from '@common/components/Button'
 import { isMobile } from '@common/config/env'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
@@ -31,11 +31,20 @@ interface Props {
   testID?: string
 }
 
+type AlertType = NonNullable<Props['type']>
+
 const ICON_MAP = {
   error: ErrorIcon,
   warning: WarningIcon,
   success: SuccessIcon,
   info: InfoIcon
+}
+
+const ALERT_TYPE_TO_BUTTON: Record<AlertType, ButtonTypes> = {
+  error: 'dangerFilled',
+  warning: 'warning',
+  success: 'success',
+  info: 'info'
 }
 
 const { isPopup } = getUiType()
@@ -54,7 +63,7 @@ const AlertText: React.FC<AlertTextProps> = ({ children, size = 'md', type = 'in
   const fontSize = !isSmall ? DEFAULT_MD_FONT_SIZE : DEFAULT_SM_FONT_SIZE
 
   return (
-    <Text selectable fontSize={fontSize - 2} weight="regular" appearance={`${type}Text`} {...rest}>
+    <Text selectable fontSize={fontSize - 2} weight="regular" appearance="secondaryText" {...rest}>
       {children}
     </Text>
   )
@@ -93,40 +102,47 @@ const Alert = ({
       ]}
       testID={testID}
     >
-      {!!withIcon && (
-        <View style={[!isSmall && spacings.mr, !!isSmall && spacings.mrTy]}>
-          {CustomIcon ? (
-            <CustomIcon />
-          ) : (
-            <Icon width={20} height={20} color={theme[`${type}Text`]} />
-          )}
-        </View>
-      )}
-
       <View style={isMobile ? { flexShrink: 1 } : flexbox.flex1}>
-        {!!title && (
-          <Text style={text ? (!isSmall ? spacings.mbTy : spacings.mbMi) : {}}>
-            {!isTypeLabelHidden && (
+        <View
+          style={[
+            flexbox.directionRow,
+            flexbox.alignCenter,
+            text ? (!isSmall ? spacings.mbTy : spacings.mbMi) : {}
+          ]}
+        >
+          {!!withIcon && (
+            <View style={spacings.mrMi}>
+              {CustomIcon ? (
+                <CustomIcon width={18} height={18} />
+              ) : (
+                <Icon width={18} height={18} color={theme[`${type}Text`]} />
+              )}
+            </View>
+          )}
+          {!!title && (
+            <Text>
+              {!isTypeLabelHidden && (
+                <Text
+                  selectable
+                  appearance="primaryText"
+                  fontSize={fontSize}
+                  weight={titleWeight || 'semiBold'}
+                  style={{ textTransform: 'capitalize' }}
+                >
+                  {type}:{' '}
+                </Text>
+              )}
               <Text
                 selectable
-                appearance={`${type}Text`}
+                appearance="primaryText"
                 fontSize={fontSize}
                 weight={titleWeight || 'semiBold'}
-                style={{ textTransform: 'capitalize' }}
               >
-                {type}:{' '}
+                {title}
               </Text>
-            )}
-            <Text
-              selectable
-              appearance={`${type}Text`}
-              fontSize={fontSize}
-              weight={titleWeight || 'semiBold'}
-            >
-              {title}
             </Text>
-          </Text>
-        )}
+          )}
+        </View>
         {!!text &&
           (typeof text === 'string' ? (
             <AlertText size={size} type={type}>
@@ -135,21 +151,40 @@ const Alert = ({
           ) : (
             text
           ))}
-        {buttonProps && (
-          <Button
-            style={{
-              alignSelf: 'flex-end',
-              ...spacings.mtTy
-            }}
-            textStyle={type === 'error' && { fontSize: 14 }}
-            size="small"
-            type="primary"
-            hasBottomSpacing={false}
-            text={buttonProps.text}
-            onPress={buttonProps.onPress}
-            {...buttonProps}
-          />
-        )}
+        {buttonProps &&
+          (() => {
+            const {
+              style: buttonStyleFromProps,
+              type: buttonTypeOverride,
+              textStyle: buttonTextStyleFromProps,
+              size: buttonSizeOverride,
+              hasBottomSpacing: buttonHasBottomSpacing,
+              text: buttonText,
+              onPress: buttonOnPress,
+              ...restButtonProps
+            } = buttonProps
+
+            return (
+              <Button
+                {...restButtonProps}
+                text={buttonText}
+                onPress={buttonOnPress}
+                size={buttonSizeOverride ?? 'small'}
+                type={buttonTypeOverride ?? ALERT_TYPE_TO_BUTTON[type]}
+                hasBottomSpacing={buttonHasBottomSpacing ?? false}
+                textStyle={buttonTextStyleFromProps}
+                style={
+                  [
+                    {
+                      alignSelf: 'flex-end',
+                      ...spacings.mtTy
+                    },
+                    buttonStyleFromProps
+                  ] as StyleProp<ViewStyle>
+                }
+              />
+            )
+          })()}
         {children}
       </View>
     </View>
