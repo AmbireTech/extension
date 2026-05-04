@@ -1,14 +1,17 @@
-import React, { FC, memo } from 'react'
+import React, { FC, Fragment, memo } from 'react'
 import { StyleProp, View, ViewStyle } from 'react-native'
 
 import { IrCall } from '@ambire-common/libs/humanizer/interfaces'
+import EditApproval from '@common/components/HumanizedVisualization/EditApproval'
 import HumanizerAddress from '@common/components/HumanizerAddress'
 import Text from '@common/components/Text'
 import TokenOrNft from '@common/components/TokenOrNft'
+import { isMobile } from '@common/config/env'
 import useTheme from '@common/hooks/useTheme'
 import spacings, { SPACING_SM, SPACING_TY } from '@common/styles/spacings'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
+import { openInTab } from '@common/utils/links/links'
 import ImageIcon from '@web/assets/svg/ImageIcon'
 import ManifestImage from '@web/components/ManifestImage'
 
@@ -31,10 +34,17 @@ interface Props {
   imageSize?: number
   hideLinks?: boolean
   style?: StyleProp<ViewStyle>
+  editApprovalCallInfo?: {
+    setter: (arg: string, token: string, closeModal: () => void) => void
+    amount: bigint
+    token: string
+    callId?: string
+  }
 }
 
 const HumanizedVisualization: FC<Props> = ({
   data = [],
+  editApprovalCallInfo,
   sizeMultiplierSize = 1,
   textSize = 16,
   chainId,
@@ -47,6 +57,7 @@ const HumanizedVisualization: FC<Props> = ({
 }) => {
   const marginRight = SPACING_TY * sizeMultiplierSize
   const { theme } = useTheme()
+
   return (
     <View
       testID={testID}
@@ -56,7 +67,9 @@ const HumanizedVisualization: FC<Props> = ({
         flexbox.alignCenter,
         flexbox.wrap,
         {
-          marginHorizontal: hasPadding ? SPACING_SM * sizeMultiplierSize : 0
+          marginHorizontal: hasPadding
+            ? (isMobile ? SPACING_TY : SPACING_SM) * sizeMultiplierSize
+            : 0
         },
         style
       ]}
@@ -66,21 +79,30 @@ const HumanizedVisualization: FC<Props> = ({
         const key = item.id
         if (item.type === 'token') {
           return (
-            <TokenOrNft
-              key={key}
-              sizeMultiplierSize={sizeMultiplierSize}
-              value={item.value}
-              address={item.address!}
-              textSize={textSize}
-              chainId={chainId}
-              hideLinks={hideLinks}
-            />
+            <Fragment key={key}>
+              <TokenOrNft
+                sizeMultiplierSize={sizeMultiplierSize}
+                value={item.value}
+                address={item.address!}
+                textSize={textSize}
+                chainId={chainId}
+                hideLinks={hideLinks}
+              />
+              {editApprovalCallInfo && (
+                <EditApproval
+                  editCall={editApprovalCallInfo.setter}
+                  token={editApprovalCallInfo.token}
+                  value={editApprovalCallInfo.amount}
+                  id={editApprovalCallInfo.callId}
+                />
+              )}
+            </Fragment>
           )
         }
 
         if (item.type === 'address' && item.address) {
           return (
-            <View key={key} style={{ marginRight }}>
+            <View key={key} style={{ flexShrink: 1, marginRight }}>
               <HumanizerAddress
                 fontSize={textSize}
                 address={item.address}
@@ -142,6 +164,25 @@ const HumanizedVisualization: FC<Props> = ({
           )
         }
         if (item.type === 'link' && !hideLinks) {
+          const content = (
+            <Text
+              fontSize={textSize}
+              weight="semiBold"
+              appearance="successText"
+              onPress={isMobile ? () => openInTab({ url: item.url! }) : undefined}
+            >
+              {item.content}
+            </Text>
+          )
+
+          if (isMobile) {
+            return (
+              <View key={key} style={{ maxWidth: '100%', marginRight }}>
+                {content}
+              </View>
+            )
+          }
+
           return (
             <a
               onClick={stopPropagation}
@@ -149,9 +190,7 @@ const HumanizedVisualization: FC<Props> = ({
               key={key}
               href={item.url!}
             >
-              <Text fontSize={textSize} weight="semiBold" appearance="successText">
-                {item.content}
-              </Text>
+              {content}
             </a>
           )
         }

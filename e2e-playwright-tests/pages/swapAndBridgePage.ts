@@ -1,6 +1,7 @@
 import { typeText } from 'common-helpers/typeText'
 import locators from 'constants/locators'
 import selectors, { SELECTORS } from 'constants/selectors'
+import { SpeculosDevice } from 'libs/speculos-device/device'
 
 import { expect } from '@playwright/test'
 
@@ -191,7 +192,7 @@ export class SwapAndBridgePage extends BasePage {
     await expect(this.page.getByText('Transaction waiting to be').first()).not.toBeVisible()
   }
 
-  async proceedTransaction(): Promise<void> {
+  async proceedTransaction(ledgerSimulatorControls?: SpeculosDevice): Promise<void> {
     // "Select route" step may take more time to appear, as it depends on the Li.Fi response.
     await this.page.waitForSelector(locators.selectRouteButton, {
       state: 'visible',
@@ -208,21 +209,22 @@ export class SwapAndBridgePage extends BasePage {
     await openTransactionButton.waitFor({ state: 'visible' })
 
     const newPage = await this.handleNewPage(openTransactionButton)
-    await this.signTransactionPage(newPage)
+    await this.signTransactionPage(newPage, ledgerSimulatorControls)
   }
 
-  async signTransactionPage(page): Promise<void> {
-    const signButton = page.getByTestId(selectors.signTransactionButton)
+  async signTransactionPage(page, ledgerSimulatorControls?: SpeculosDevice): Promise<void> {
+    const signButton = await page.getByTestId(selectors.signTransactionButton)
 
     try {
       // Select slow speed
       await page.getByTestId(selectors.transaction.feeSpeedSelectDropdown).click()
       await page.getByTestId(selectors.transaction.feeSpeedSlow).first().click()
 
-      // check fee
-      const feeSelector = await page.locator(selectors.transaction.feeGasTankInDollars).innerText() // returns e.g. '<$0.01'
-
-      const feeDollarsAmount = Number(feeSelector.replace(/[<$]/g, ''))
+      const feeSelector = await page
+        .getByTestId(selectors.transaction.feeTokensSelectDropdown)
+        .locator(selectors.transaction.feeTokenInDollars)
+        .innerText()
+      const feeDollarsAmount = Number.parseFloat(feeSelector.replace(/[^0-9.]/g, ''))
 
       if (feeDollarsAmount > 0.1) {
         console.warn(
@@ -231,14 +233,31 @@ export class SwapAndBridgePage extends BasePage {
       } else {
         await expect(signButton).toBeVisible({ timeout: 5000 })
         await expect(signButton).toBeEnabled({ timeout: 5000 })
-        await page.getByTestId(selectors.signTransactionButton).click()
+
+        await signButton.click()
+
+        // TODO: check why this is needed
+        // First click can occasionally "blink" the Ledger sheet and leave the UI unchanged.
+        await page.waitForTimeout(350)
+        const shouldRetryClick = await signButton.isVisible().catch(() => false)
+        if (shouldRetryClick) {
+          const stillEnabled = await signButton.isEnabled().catch(() => false)
+          if (stillEnabled) {
+            await signButton.click()
+          }
+        }
+
+        if (ledgerSimulatorControls) {
+          await ledgerSimulatorControls.signSmartAccountTransaction()
+        }
+
         await page.waitForTimeout(5000)
 
         // close transaction progress pop up
         await page.locator(selectors.closeTransactionProgressPopUpButton).click()
       }
     } catch (error) {
-      console.warn("⚠️ The 'Sign' button is not clickable, but it should be.")
+      console.warn("⚠️ We couldn't sign the transaction.", { error })
     }
   }
 
@@ -329,7 +348,7 @@ export class SwapAndBridgePage extends BasePage {
       await this.click(selectors.selectRouteButton)
       await this.assertSelectedAggregator('1Inch')
     } else if ((await kyberRoute.count()) > 0) {
-      await this.page.locator(selectors.swapAndBridge.kyberSwapRoute).first().click()
+      await kyberRoute.first().click()
       await this.click(selectors.selectRouteButton)
       await this.assertSelectedAggregator('Kyberswap')
     } else {
@@ -412,10 +431,11 @@ export class SwapAndBridgePage extends BasePage {
     await page.getByTestId(selectors.transaction.feeSpeedSelectDropdown).click()
     await page.getByTestId(selectors.transaction.feeSpeedSlow).first().click()
 
-    // check fee
-    const feeSelector = await page.locator(selectors.transaction.feeGasTankInDollars).innerText() // returns e.g. '<$0.01'
-
-    const feeDollarsAmount = Number(feeSelector.replace(/[<$]/g, ''))
+    const feeSelector = await page
+      .getByTestId(selectors.transaction.feeTokensSelectDropdown)
+      .locator(selectors.transaction.feeTokenInDollars)
+      .innerText()
+    const feeDollarsAmount = Number.parseFloat(feeSelector.replace(/[^0-9.]/g, ''))
 
     if (feeDollarsAmount > 0.1) {
       console.warn(

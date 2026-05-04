@@ -22,12 +22,14 @@ import { SelectedAccountController } from '@ambire-common/controllers/selectedAc
 import { SignAccountOpController } from '@ambire-common/controllers/signAccountOp/signAccountOp'
 import { SignMessageController } from '@ambire-common/controllers/signMessage/signMessage'
 import { StorageController } from '@ambire-common/controllers/storage/storage'
+import { SurveyController } from '@ambire-common/controllers/survey/survey'
 import { SwapAndBridgeController } from '@ambire-common/controllers/swapAndBridge/swapAndBridge'
 import { TransferController } from '@ambire-common/controllers/transfer/transfer'
 import { UiController } from '@ambire-common/controllers/ui/ui'
+import { WalletStateController } from '@common/controllers/wallet-state'
 import AutoLockController from '@web/extension-services/background/controllers/auto-lock'
 import { ExtensionUpdateController } from '@web/extension-services/background/controllers/extension-update'
-import { WalletStateController } from '@web/extension-services/background/controllers/wallet-state'
+import QrHardwareController from '@web/modules/hardware-wallet/controllers/QrHardwareController'
 
 export const controllersNestedInMainMapping = {
   StorageController,
@@ -55,7 +57,9 @@ export const controllersNestedInMainMapping = {
   BannerController,
   UiController,
   AutoLoginController,
-  SafeController
+  SafeController,
+  SurveyController,
+  QrHardwareController
 
   // Add the rest of the controllers that are part of the main controller:
   // - key is the name of the controller

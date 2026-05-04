@@ -34,7 +34,7 @@ const AccountPersonalizeCard = ({
   onSave
 }: Props) => {
   const { addr: address, preferences } = account
-  const { ens, isLoading } = useReverseLookup({ address })
+  const { name, type, isLoading } = useReverseLookup({ address })
   const { styles } = useTheme(getStyles)
 
   return (
@@ -71,7 +71,8 @@ const AccountPersonalizeCard = ({
             </View>
             <View style={[flexbox.flex1, flexbox.directionRow, flexbox.alignCenter]}>
               <AccountAddress
-                ens={ens}
+                name={name}
+                type={type}
                 isLoading={isLoading}
                 address={address}
                 plainAddressMaxLength={18}

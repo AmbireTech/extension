@@ -12,7 +12,7 @@ import NoKeysToSignAlert from '@common/components/NoKeysToSignAlert'
 import useController from '@common/hooks/useController'
 import useSign from '@common/hooks/useSign'
 import useTheme from '@common/hooks/useTheme'
-import useToast from '@common/hooks/useToast'
+import ActionHeader from '@common/modules/action-requests/components/ActionHeader'
 import ErrorInformation from '@common/modules/sign-account-op/components/ErrorInformation'
 import Estimation from '@common/modules/sign-account-op/components/Estimation'
 import Footer from '@common/modules/sign-account-op/components/Footer'
@@ -30,11 +30,10 @@ import {
   TabLayoutWrapperMainContent
 } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
 import { closeCurrentWindow } from '@web/extension-services/background/webapi/window'
-import ActionHeader from '@web/modules/action-requests/components/ActionHeader'
 import Modals from '@web/modules/sign-account-op/components/Modals/Modals'
 
 const isCloseToBottom = ({ layoutMeasurement, contentOffset, contentSize }: NativeScrollEvent) => {
-  const paddingToBottom = 20
+  const paddingToBottom = 40
   return layoutMeasurement.height + contentOffset.y >= contentSize.height - paddingToBottom
 }
 
@@ -103,6 +102,14 @@ const SignAccountOpScreen = () => {
     bundlerNonceDiscrepancy,
     primaryButtonText,
     shouldHoldToProceed,
+    shouldDisplayQrSigningModal,
+    handleQrSingingFlowOnContinuePressed,
+    handleQrSigningFlowSubmitSignatureResponse,
+    handleQrSigningFlowOnClosePressed,
+    handleQrSigningFlowOnRejectPressed,
+    handleQrSigningFlowOnBackPressed,
+    currentRequest,
+    signingStep,
     disabledReason,
     showSafeSigners
   } = useSign({
@@ -170,9 +177,7 @@ const SignAccountOpScreen = () => {
     <SmallNotificationWindowWrapper>
       <SafetyChecksOverlay
         shouldBeVisible={
-          !signAccountOpState?.isInitialized ||
-          !signAccountOpState?.estimation.estimation ||
-          !!signAccountOpState.safetyChecksLoading
+          !signAccountOpState?.isInitialized || !!signAccountOpState.safetyChecksLoading
         }
       />
       <Modals
@@ -187,6 +192,14 @@ const SignAccountOpScreen = () => {
         warningToPromptBeforeSign={warningToPromptBeforeSign}
         acknowledgeWarning={acknowledgeWarning}
         dismissWarning={dismissWarning}
+        currentRequest={currentRequest}
+        signingStep={signingStep}
+        shouldDisplayQrSigningModal={shouldDisplayQrSigningModal}
+        handleQrSingingFlowOnContinuePressed={handleQrSingingFlowOnContinuePressed}
+        handleQrSigningFlowSubmitSignatureResponse={handleQrSigningFlowSubmitSignatureResponse}
+        handleQrSigningFlowOnClosePressed={handleQrSigningFlowOnClosePressed}
+        handleQrSigningFlowOnRejectPressed={handleQrSigningFlowOnRejectPressed}
+        handleQrSigningFlowOnBackPressed={handleQrSigningFlowOnBackPressed}
       />
       <TabLayoutContainer
         width="full"
@@ -222,18 +235,17 @@ const SignAccountOpScreen = () => {
                   !signAccountOpState.canBroadcast &&
                   !!signAccountOpState.account.safeCreation &&
                   showSafeSigners && (
-                    <ScrollView style={[{ maxHeight: 140 }, spacings.mb]}>
-                      <SafeOwners
-                        account={signAccountOpState.account}
-                        onSign={handleChangeSigningKey}
-                        isSignLoading={isSignLoading}
-                        signingKeyAddr={signAccountOpState.accountOp.signingKeyAddr}
-                        chainId={signAccountOpState.accountOp.chainId.toString()}
-                        signed={signAccountOpState.accountOp.signed || []}
-                        importedKeys={signAccountOpState.accountKeyStoreKeys}
-                        threshold={signAccountOpState.threshold}
-                      />
-                    </ScrollView>
+                    <SafeOwners
+                      account={signAccountOpState.account}
+                      onSign={handleChangeSigningKey}
+                      isSignLoading={isSignLoading}
+                      signingKeyAddr={signAccountOpState.accountOp.signingKeyAddr}
+                      chainId={signAccountOpState.accountOp.chainId.toString()}
+                      signed={signAccountOpState.accountOp.signed || []}
+                      importedKeys={signAccountOpState.accountKeyStoreKeys}
+                      threshold={signAccountOpState.threshold}
+                      style={spacings.mb}
+                    />
                   )}
 
                 <Footer
@@ -304,7 +316,7 @@ const SignAccountOpScreen = () => {
             onContentSizeChange={(_, height) => {
               setContentHeight(height)
             }}
-            scrollEventThrottle={400}
+            scrollEventThrottle={16}
             style={contentHeight > containerHeight ? spacings.prMi : {}}
           >
             <PendingTransactions
@@ -328,7 +340,7 @@ const SignAccountOpScreen = () => {
                 size="sm"
                 type="warning"
                 title={t('Safe API failure')}
-                text={t('Transaction was not sent to safe global due to a Safe API failure')}
+                text={t('Transaction was not sent to Safe Global due to a Safe API failure')}
                 style={spacings.mt}
               />
             )}

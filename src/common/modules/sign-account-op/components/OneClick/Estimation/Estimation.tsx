@@ -83,7 +83,15 @@ const OneClickEstimation = ({
     setIsChooseFeePayerKeyShown,
     slowPaymasterRequest,
     primaryButtonText,
-    bundlerNonceDiscrepancy
+    bundlerNonceDiscrepancy,
+    shouldDisplayQrSigningModal,
+    handleQrSingingFlowOnContinuePressed,
+    handleQrSigningFlowSubmitSignatureResponse,
+    handleQrSigningFlowOnClosePressed,
+    handleQrSigningFlowOnRejectPressed,
+    handleQrSigningFlowOnBackPressed,
+    currentRequest,
+    signingStep
   } = useSign({
     signAccountOpState: signAccountOpController,
     handleUpdate: updateController,
@@ -220,6 +228,14 @@ const OneClickEstimation = ({
         slowPaymasterRequest={slowPaymasterRequest}
         shouldDisplayLedgerConnectModal={shouldDisplayLedgerConnectModal}
         handleDismissLedgerConnectModal={handleDismissLedgerConnectModal}
+        currentRequest={currentRequest}
+        signingStep={signingStep}
+        shouldDisplayQrSigningModal={shouldDisplayQrSigningModal}
+        handleQrSingingFlowOnContinuePressed={handleQrSingingFlowOnContinuePressed}
+        handleQrSigningFlowSubmitSignatureResponse={handleQrSigningFlowSubmitSignatureResponse}
+        handleQrSigningFlowOnClosePressed={handleQrSigningFlowOnClosePressed}
+        handleQrSigningFlowOnRejectPressed={handleQrSigningFlowOnRejectPressed}
+        handleQrSigningFlowOnBackPressed={handleQrSigningFlowOnBackPressed}
         warningToPromptBeforeSign={warningToPromptBeforeSign}
         acknowledgeWarning={acknowledgeWarning}
         dismissWarning={dismissWarning}

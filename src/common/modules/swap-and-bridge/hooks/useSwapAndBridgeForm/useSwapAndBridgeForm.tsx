@@ -15,6 +15,7 @@ import { getCallsCount } from '@ambire-common/utils/userRequest'
 import useController from '@common/hooks/useController'
 import useGetTokenSelectProps from '@common/hooks/useGetTokenSelectProps'
 import useNavigation from '@common/hooks/useNavigation'
+import useNetworks from '@common/hooks/useNetworks'
 import useSyncedState from '@common/hooks/useSyncedState'
 import { ROUTES } from '@common/modules/router/constants/common'
 import { getTokenId } from '@common/utils/token'
@@ -41,8 +42,7 @@ const useSwapAndBridgeForm = () => {
     supportedChainIds,
     updateQuoteStatus,
     sessionIds,
-    toSelectedToken,
-    toChainId
+    toSelectedToken
   } = useController('SwapAndBridgeController').state
   const { dispatch: swapAndBridgeDispatch } = useController('SwapAndBridgeController')
   const { dispatch: requestsDispatch, state: requestsState } = useController('RequestsController')
@@ -75,7 +75,13 @@ const useSwapAndBridgeForm = () => {
   const [latestBatchedNetwork, setLatestBatchedNetwork] = useState<bigint | undefined>()
   const [isOneClickModeDuringPriceImpact, setIsOneClickModeDuringPriceImpact] =
     useState<boolean>(false)
-  const { networks } = useController('NetworksController').state
+  const networks = useNetworks({
+    acc: account,
+    additionalCheck: {
+      chainIds: supportedChainIds,
+      reason: 'Network is not supported by our service provider.'
+    }
+  })
   const currentRoute = useLocation()
   const { setSearchParams, navigate } = useNavigation()
   const { ref: routesModalRef, open: openRoutesModal, close: closeRoutesModal } = useModalize()
@@ -255,8 +261,7 @@ const useSwapAndBridgeForm = () => {
     tokens: portfolioTokenList,
     token: fromSelectedToken ? getTokenId(fromSelectedToken) : '',
     isLoading: isTokenListLoading,
-    networks,
-    supportedChainIds
+    networks
   })
 
   const highPriceImpactOrSlippageWarning:
@@ -290,6 +295,19 @@ const useSwapAndBridgeForm = () => {
     updateQuoteStatus
   ])
 
+  const isOneOwnerSafe = useMemo(() => {
+    if (!account?.safeCreation) return false
+
+    return (
+      signAccountOpController?.threshold === 1 &&
+      signAccountOpController?.accountKeyStoreKeys.length === 1
+    )
+  }, [
+    account?.safeCreation,
+    signAccountOpController?.threshold,
+    signAccountOpController?.accountKeyStoreKeys.length
+  ])
+
   const openEstimationModalAndDispatch = useCallback(() => {
     swapAndBridgeDispatch({
       type: 'method',
@@ -305,7 +323,7 @@ const useSwapAndBridgeForm = () => {
     closePriceImpactModal()
 
     if (isOneClickModeDuringPriceImpact) {
-      if (!!account?.safeCreation || networkUserRequests.length > 0) {
+      if ((!!account?.safeCreation && !isOneOwnerSafe) || networkUserRequests.length > 0) {
         requestsDispatch({
           type: 'method',
           params: {
@@ -321,7 +339,7 @@ const useSwapAndBridgeForm = () => {
             ]
           }
         })
-        window.close()
+        if (isPopup) window.close()
       } else {
         openEstimationModalAndDispatch()
       }
@@ -352,7 +370,8 @@ const useSwapAndBridgeForm = () => {
     networkUserRequests,
     fromSelectedToken,
     account?.safeCreation,
-    quote
+    quote,
+    isOneOwnerSafe
   ])
 
   const handleSubmitForm = useCallback(
@@ -367,7 +386,7 @@ const useSwapAndBridgeForm = () => {
       // open the estimation modal on one click method;
       // build/add a swap user request on batch
       if (isOneClickMode) {
-        if (!!account?.safeCreation || networkUserRequests.length > 0) {
+        if ((!!account?.safeCreation && !isOneOwnerSafe) || networkUserRequests.length > 0) {
           requestsDispatch({
             type: 'method',
             params: {
@@ -383,7 +402,7 @@ const useSwapAndBridgeForm = () => {
               ]
             }
           })
-          window.close()
+          if (isPopup) window.close()
         } else {
           openEstimationModalAndDispatch()
         }
@@ -414,7 +433,8 @@ const useSwapAndBridgeForm = () => {
       quote,
       networkUserRequests,
       fromSelectedToken,
-      account?.safeCreation
+      account?.safeCreation,
+      isOneOwnerSafe
     ]
   )
 

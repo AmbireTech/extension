@@ -5,6 +5,6 @@ import { ConnectionStates, netInfoContextDefaults, NetInfoContextReturnType } fr
 const NetInfoContext = createContext<NetInfoContextReturnType>(netInfoContextDefaults)
 
 // This context is needed for the mobile app only. For web, fallback to defaults.
-const NetInfoProvider: React.FC = ({ children }) => children
+const NetInfoProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => children
 
 export { NetInfoContext, NetInfoProvider, ConnectionStates }

@@ -90,7 +90,7 @@ const DAppConnectHeader: FC<Props> = ({
                 top: -5
               }}
               dataSet={createGlobalTooltipDataSet({
-                id,
+                id: `verified-${id}`,
                 content: t('Verified app'),
                 delayShow: 250,
                 border: `1px solid ${theme.successDecorative as string}`,

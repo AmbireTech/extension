@@ -8,7 +8,7 @@ import { isAmbireV1LinkedAccount } from '@ambire-common/libs/account/account'
 import AccountKey, { AccountKeyType } from '@common/components/AccountKey/AccountKey'
 import Alert from '@common/components/Alert'
 import { PanelBackButton, PanelTitle } from '@common/components/Panel/Panel'
-import { isWeb } from '@common/config/env'
+import { isMobile, isWeb } from '@common/config/env'
 import useController from '@common/hooks/useController'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
@@ -69,7 +69,7 @@ const AccountKeys: FC<Props> = ({
   }, [accountState, usedNetworks, account, accountsDispatch])
 
   /**
-   * Get the safe owners by network if the account is a safe
+   * Get the Safe owners by network if the account is a Safe
    * We do not display network icons for the others as it doesn't make sense
    */
   const safeOwnersByNetwork: { [address: string]: bigint[] } = useMemo(() => {
@@ -150,7 +150,7 @@ const AccountKeys: FC<Props> = ({
         />
       </View>
       <ScrollView
-        bounces={false}
+        bounces={isMobile}
         style={[!!withAlert && spacings.mb, isWeb && flexbox.flex1]}
         contentContainerStyle={{ flexGrow: 1 }}
         showsVerticalScrollIndicator={isWeb}

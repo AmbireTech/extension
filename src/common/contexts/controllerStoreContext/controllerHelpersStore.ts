@@ -1,12 +1,13 @@
 import { flushSync } from 'react-dom'
 
 import { Dapp } from '@ambire-common/interfaces/dapp'
-import { AllControllersMappingType } from '@common/constants/controllersMapping'
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 
 interface DappsControllerHelpers {
   isLoadingCurrentDapp: boolean
   currentDapp: Dapp | null
   getCurrentDapp: () => Promise<Dapp | null>
+  hasUnverifiedDapps: (dapps: string[]) => Promise<boolean>
 }
 
 type DefinedControllerHelpers = {

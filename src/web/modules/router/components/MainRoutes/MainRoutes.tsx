@@ -33,10 +33,13 @@ import ViewOnlyAccountAdderScreen from '@web/modules/auth/screens/ViewOnlyAccoun
 import DappCatalogScreen from '@web/modules/dapp-catalog/screens/DappCatalogScreen'
 import ExtensionRewardsScreen from '@web/modules/extension-rewards/screens/ExtensionRewardsScreen'
 import LedgerConnectScreen from '@web/modules/hardware-wallet/screens/LedgerConnectScreen/LedgerConnectScreen'
+import QrCameraPermissionPage from '@web/modules/hardware-wallet/screens/QrCameraPermissionPage'
+import QrConnectScreen from '@web/modules/hardware-wallet/screens/QrConnectScreen/QrConnectScreen'
 import KeyStoreEmailRecoveryScreen from '@web/modules/keystore/screens/KeyStoreEmailRecoveryScreen/KeyStoreEmailRecoveryScreen'
 import KeyStoreEmailRecoverySetNewPasswordScreen from '@web/modules/keystore/screens/KeyStoreEmailRecoverySetNewPasswordScreen'
 import KeyStoreSetupScreen from '@web/modules/keystore/screens/KeyStoreSetupScreen'
 import NetworksConfiguration from '@web/modules/network-settings/screens'
+import PrivacyOptOutsConfiguration from '@web/modules/network-settings/screens/PrivacyOptOutsConfiguration'
 import NetworksScreen from '@web/modules/networks/screens'
 import ReceiveScreen from '@web/modules/receive/screens/ReceiveScreen'
 import NavMenu from '@web/modules/router/components/NavMenu'
@@ -58,6 +61,7 @@ import TermsSettingsScreen from '@web/modules/settings/screens/TermsSettingsScre
 import TransactionHistorySettingsScreen from '@web/modules/settings/screens/TransactionHistorySettingsScreen'
 import SignAccountOpScreen from '@web/modules/sign-account-op/screens/SignAccountOpScreen'
 import SignMessageScreen from '@web/modules/sign-message/screens/SignMessageScreen'
+import SurveyScreen from '@web/modules/survey/screens/SurveyScreen/SurveyScreen'
 import SwapAndBridgeScreen from '@web/modules/swap-and-bridge/screens/SwapAndBridgeScreen'
 import TokenDetailsScreen from '@web/modules/token-details/screens/TokenDetailsScreen'
 import TransferScreen from '@web/modules/transfer/screens/TransferScreen'
@@ -81,6 +85,10 @@ const MainRoutes = () => {
 
       <Route element={<TabOnlyRoute />}>
         <Route path={WEB_ROUTES.networksConfiguration} element={<NetworksConfiguration />} />
+        <Route
+          path={WEB_ROUTES.privacyOptOutsConfiguration}
+          element={<PrivacyOptOutsConfiguration />}
+        />
         <Route path={WEB_ROUTES.keyStoreSetup} element={<KeyStoreSetupScreen />} />
         <Route path={WEB_ROUTES.keyStoreEmailRecovery} element={<KeyStoreEmailRecoveryScreen />} />
         <Route
@@ -100,9 +108,8 @@ const MainRoutes = () => {
             element={<ImportExistingAccountSelectorScreen />}
           />
           <Route path={WEB_ROUTES.ledgerConnect} element={<LedgerConnectScreen />} />
-
           <Route path={WEB_ROUTES.safeImport} element={<SafeImportScreen />} />
-
+          <Route path={WEB_ROUTES.qrConnect} element={<QrConnectScreen />} />
           <Route path={WEB_ROUTES.importPrivateKey} element={<PrivateKeyImportScreen />} />
           <Route path={WEB_ROUTES.importSeedPhrase} element={<SeedPhraseImportScreen />} />
           <Route
@@ -122,6 +129,7 @@ const MainRoutes = () => {
           <Route path={WEB_ROUTES.accountPicker} element={<AccountPickerScreen />} />
           <Route path={WEB_ROUTES.accountPersonalize} element={<AccountPersonalizeScreen />} />
           <Route path={WEB_ROUTES.onboardingCompleted} element={<OnboardingCompletedScreen />} />
+          <Route path={WEB_ROUTES.qrPermission} element={<QrCameraPermissionPage />} />
 
           <Route element={<AuthenticatedRoute />}>
             <Route element={<SettingsRoutesProvider />}>
@@ -189,6 +197,7 @@ const MainRoutes = () => {
           <Route path={WEB_ROUTES.apps} element={<DappCatalogScreen />} />
           <Route path={WEB_ROUTES.networks} element={<NetworksScreen />} />
           <Route path={WEB_ROUTES.rewards} element={<ExtensionRewardsScreen />} />
+          <Route path={WEB_ROUTES.survey} element={<SurveyScreen />} />
         </Route>
       </Route>
     </Routes>

@@ -500,3 +500,7 @@ run-tests.sh
 
 # Cursor editor
 /.cursor
+
+# WebView bundle
+webview-bundle.json
+*inpage-bundle.json

@@ -1,4 +1,4 @@
-import React, { useCallback, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { Animated, NativeScrollEvent, NativeSyntheticEvent, View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 
@@ -8,9 +8,14 @@ import useDebounce from '@common/hooks/useDebounce'
 import useTheme from '@common/hooks/useTheme'
 import DashboardOverview from '@common/modules/dashboard/components/DashboardOverview'
 import { OVERVIEW_CONTENT_MAX_HEIGHT } from '@common/modules/dashboard/components/DashboardOverview/DashboardOverview'
+import DashboardOverviewSkeleton from '@common/modules/dashboard/components/DashboardOverview/Skeleton'
 import DashboardPages from '@common/modules/dashboard/components/DashboardPages'
 import PendingActionWindowModal from '@common/modules/dashboard/components/PendingActionWindowModal'
+import TabsAndSearchSkeleton from '@common/modules/dashboard/components/TabsAndSearch/Skeleton'
+import TokensSkeleton from '@common/modules/dashboard/components/Tokens/TokensSkeleton'
+import useDashboardReload from '@common/modules/dashboard/hooks/useDashboardReload'
 import getStyles from '@common/modules/dashboard/screens/styles' // Keeping styles in common
+import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { MobileLayoutContainer } from '@mobile/components/MobileLayoutWrapper'
 
@@ -31,7 +36,19 @@ const DashboardScreen = () => {
     state: { account, portfolio }
   } = useController('SelectedAccountController')
 
+  const { reloadAccount, isManuallyRefreshing } = useDashboardReload()
+
   const isOverviewExpandedRef = useRef(true)
+
+  // Defer rendering of heavy components to prevent blocking route transition
+  const [isReady, setIsReady] = useState(false)
+
+  useEffect(() => {
+    const rafId = requestAnimationFrame(() => {
+      setTimeout(() => setIsReady(true), 0)
+    })
+    return () => cancelAnimationFrame(rafId)
+  }, [])
 
   const onScroll = useCallback(
     (event: NativeSyntheticEvent<NativeScrollEvent>) => {
@@ -90,17 +107,31 @@ const DashboardScreen = () => {
         />
         <PendingActionWindowModal />
         <View style={styles.container}>
-          <DashboardOverview
-            openGasTankModal={openGasTankModal}
-            animatedOverviewHeight={animatedOverviewHeight}
-            dashboardOverviewSize={debouncedDashboardOverviewSize}
-            setDashboardOverviewSize={setDashboardOverviewSize}
-          />
-          <DashboardPages
-            onScroll={onScroll}
-            animatedOverviewHeight={animatedOverviewHeight}
-            isSearchHidden={isSearchHidden}
-          />
+          {!isReady ? (
+            <View style={flexbox.flex1}>
+              <DashboardOverviewSkeleton />
+              <View style={[spacings.phSm, spacings.ptTy]}>
+                <TabsAndSearchSkeleton />
+                <TokensSkeleton />
+              </View>
+            </View>
+          ) : (
+            <>
+              <DashboardOverview
+                openGasTankModal={openGasTankModal}
+                animatedOverviewHeight={animatedOverviewHeight}
+                dashboardOverviewSize={debouncedDashboardOverviewSize}
+                setDashboardOverviewSize={setDashboardOverviewSize}
+              />
+              <DashboardPages
+                onScroll={onScroll}
+                animatedOverviewHeight={animatedOverviewHeight}
+                isSearchHidden={isSearchHidden}
+                onRefresh={reloadAccount}
+                refreshing={isManuallyRefreshing}
+              />
+            </>
+          )}
         </View>
       </View>
     </MobileLayoutContainer>

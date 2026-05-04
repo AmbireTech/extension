@@ -4,6 +4,13 @@
 /* eslint-disable no-restricted-syntax */
 /* eslint-disable @typescript-eslint/no-use-before-define */
 /* eslint-disable @typescript-eslint/no-shadow */
+
+// We include `setImmediate` because ethers / viem cryptographic operations
+// (e.g. scrypt keystore unlock) rely on it for fast cooperative scheduling —
+// without it they fall back to slower timers and performance drops significantly.
+//
+// It is imported in background for development builds, and injected via Webpack
+// plugin for production where LavaMoat + SES isolate modules and harden intrinsics.
 import 'setimmediate'
 
 import { nanoid } from 'nanoid'
@@ -25,8 +32,10 @@ import { parse, stringify } from '@ambire-common/libs/richJson/richJson'
 import wait from '@ambire-common/utils/wait'
 import CONFIG, { APP_VERSION, isAmbireNext, isDev, isProd } from '@common/config/env'
 import { controllersNestedInMainMapping } from '@common/constants/controllersMapping'
+import { WalletStateController } from '@common/controllers/wallet-state'
 import { storage } from '@common/services/storage'
 import { Action, MethodAction } from '@common/types/actions'
+import { LOG_LEVELS, logInfoWithPrefix } from '@common/utils/logger'
 import {
   BROWSER_EXTENSION_LOG_UPDATED_CONTROLLER_STATE_ONLY,
   BROWSER_EXTENSION_MEMORY_INTENSIVE_LOGS,
@@ -40,7 +49,6 @@ import { browser, platform } from '@web/constants/browserapi'
 import AutoLockController from '@web/extension-services/background/controllers/auto-lock'
 import { BadgesController } from '@web/extension-services/background/controllers/badges'
 import ExtensionUpdateController from '@web/extension-services/background/controllers/extension-update'
-import { WalletStateController } from '@web/extension-services/background/controllers/wallet-state'
 import { handleActions } from '@web/extension-services/background/handlers/handleActions'
 import { handleCleanUpOnPortDisconnect } from '@web/extension-services/background/handlers/handleCleanUpOnPortDisconnect'
 import { handleKeepAlive } from '@web/extension-services/background/handlers/handleKeepAlive'
@@ -60,12 +68,14 @@ import {
 } from '@web/extension-services/messengers'
 import LatticeController from '@web/modules/hardware-wallet/controllers/LatticeController'
 import LedgerController from '@web/modules/hardware-wallet/controllers/LedgerController'
+import QrHardwareController from '@web/modules/hardware-wallet/controllers/QrHardwareController/QrHardwareController'
 import TrezorController from '@web/modules/hardware-wallet/controllers/TrezorController'
 import LatticeSigner from '@web/modules/hardware-wallet/libs/LatticeSigner'
 import LedgerSigner from '@web/modules/hardware-wallet/libs/LedgerSigner'
 import TrezorSigner from '@web/modules/hardware-wallet/libs/TrezorSigner'
+import UrQrProtocolAdapter from '@web/modules/hardware-wallet/qr/protocol/UrQrProtocolAdapter'
+import QrHardwareSigner from '@web/modules/hardware-wallet/signers/QrHardwareSigner'
 import { getExtensionInstanceId } from '@web/utils/analytics'
-import { LOG_LEVELS, logInfoWithPrefix } from '@web/utils/logger'
 
 import {
   captureBackgroundException,
@@ -359,7 +369,13 @@ const init = async () => {
     }
 
     // As of v4.26.0, custom extension-specific headers. TBD for the other apps.
-    const initWithCustomHeaders = init || { headers: { 'x-app-source': '', 'x-app-version': '' } }
+    const initWithCustomHeaders = init || {
+      headers: {
+        'x-app-source': '',
+        'x-app-version': '',
+        'x-app-env': isAmbireNext ? 'next' : isDev ? 'dev' : 'prod'
+      }
+    }
     initWithCustomHeaders.headers = initWithCustomHeaders.headers || {}
 
     // if the fetch method is called while the keystore is constructing the keyStoreUid won't be defined yet
@@ -476,6 +492,8 @@ const init = async () => {
     })
   })
 
+  const qrCtrl = new QrHardwareController(new UrQrProtocolAdapter(), eventEmitterRegistry)
+
   mainCtrl = new MainController({
     eventEmitterRegistry,
     appVersion: APP_VERSION,
@@ -492,12 +510,14 @@ const init = async () => {
       // TODO: there is a mismatch in hw signer types, it's not a big deal
       ledger: LedgerSigner,
       trezor: TrezorSigner,
-      lattice: LatticeSigner
+      lattice: LatticeSigner,
+      qr: QrHardwareSigner
     } as any,
     externalSignerControllers: {
       ledger: ledgerCtrl,
       trezor: trezorCtrl,
-      lattice: latticeCtrl
+      lattice: latticeCtrl,
+      qr: qrCtrl
     } as any,
     uiManager: {
       window: {
@@ -709,6 +729,7 @@ const init = async () => {
             // eslint-disable-next-line @typescript-eslint/no-floating-promises
             ledgerCtrl.cleanUp()
             trezorCtrl.cleanUp()
+            qrCtrl.signingCleanup()
           }
         })
       })

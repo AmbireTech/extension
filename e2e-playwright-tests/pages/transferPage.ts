@@ -1,6 +1,7 @@
 import { baParams } from 'constants/env'
 import selectors from 'constants/selectors'
 import Token from 'interfaces/token'
+import { SpeculosDevice } from 'libs/speculos-device/device'
 
 import { expect, Page } from '@playwright/test'
 
@@ -72,10 +73,11 @@ export class TransferPage extends BasePage {
     await this.entertext(selectors.formAddContactNameField, contactName)
     await this.click(selectors.formAddToContactsButton)
 
+    // TODO: uncomment when we have test ID
     // assert snackbar notification
-    await expect(this.page.locator(selectors.contactSuccessfullyAddedSnackbar)).toHaveText(
-      'Contact added to Address Book'
-    )
+    // await expect(this.page.locator(selectors.contactSuccessfullyAddedSnackbar)).toHaveText(
+    //   'Contact added to Address Book'
+    // )
   }
 
   async assertAddedContact(contactName: string, contactAddress: string) {
@@ -106,17 +108,24 @@ export class TransferPage extends BasePage {
     sendToken,
     feeToken,
     payWithGasTank = true, // pay with gas tank by default
-    message
+    message,
+    ledgerSimulatorControls,
+    holdProceedButton = true
   }: {
     sendToken: Token
     feeToken?: Token
     payWithGasTank?: boolean
     message: string
+    ledgerSimulatorControls?: SpeculosDevice
+    holdProceedButton?: boolean
   }) {
-    let feeSelector
     // Proceed
     await this.expectButtonEnabled(selectors.transaction.proceedBtn)
-    await this.longPressButton(selectors.transaction.proceedBtn, 5)
+    if (holdProceedButton) {
+      await this.longPressButton(selectors.transaction.proceedBtn, 5)
+    } else {
+      await this.click(selectors.transaction.proceedBtn)
+    }
 
     // approve the high impact modal if appears
     await this.handlePriceWarningModals()
@@ -128,16 +137,13 @@ export class TransferPage extends BasePage {
     // Select fee token; default Gas Tank
     if (!payWithGasTank) {
       await this.selectFeeToken(baParams.envSelectedAccount, feeToken, payWithGasTank)
-      feeSelector = await this.page
-        .locator(selectors.transaction.feeTokenInDollars)
-        .innerText({ timeout: 10000 }) // returns e.g. '<$0.01'
-    } else {
-      feeSelector = await this.page
-        .locator(selectors.transaction.feeGasTankInDollars)
-        .innerText({ timeout: 10000 }) // returns e.g. '<$0.01'
     }
 
-    const feeDollarsAmount = Number(feeSelector.replace(/[<$]/g, ''))
+    const feeSelector = await this.page
+      .getByTestId(selectors.transaction.feeTokensSelectDropdown)
+      .locator(selectors.transaction.feeTokenInDollars)
+      .innerText()
+    const feeDollarsAmount = Number.parseFloat(feeSelector.replace(/[^0-9.]/g, ''))
 
     if (feeDollarsAmount > 0.1) {
       console.warn(
@@ -150,6 +156,13 @@ export class TransferPage extends BasePage {
       // Sign & Broadcast
       await this.expectButtonEnabled(selectors.signButton)
       await this.click(selectors.signButton)
+
+      if (ledgerSimulatorControls && !payWithGasTank) {
+        await ledgerSimulatorControls.signTransaction()
+      } else if (ledgerSimulatorControls && payWithGasTank) {
+        await ledgerSimulatorControls.signSmartAccountTransaction()
+      }
+
       await this.isVisible(selectors.transaction.confirmingYourTransactionText)
       // Validate requests
       const { rpc } = this.getCategorizedRequests()

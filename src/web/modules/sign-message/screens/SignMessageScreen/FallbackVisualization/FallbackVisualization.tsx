@@ -12,6 +12,7 @@ import MultistateToggleButton from '@common/components/MultistateToggleButton'
 import Text from '@common/components/Text'
 import useTheme from '@common/hooks/useTheme'
 import useWindowSize from '@common/hooks/useWindowSize'
+import AnimatedDownArrow from '@common/modules/account-picker/components/AccountsOnPageList/AnimatedDownArrow'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { getMessageAsText, simplifyTypedMessage } from '@common/utils/messageToString'
@@ -19,7 +20,7 @@ import { getMessageAsText, simplifyTypedMessage } from '@common/utils/messageToS
 import getStyles from './styles'
 
 const isCloseToBottom = ({ layoutMeasurement, contentOffset, contentSize }: NativeScrollEvent) => {
-  const paddingToBottom = 20
+  const paddingToBottom = 40
   return layoutMeasurement.height + contentOffset.y >= contentSize.height - paddingToBottom
 }
 
@@ -28,7 +29,14 @@ const FallbackVisualization: FC<{
   setHasReachedBottom: (hasReachedBottom: boolean) => void
   hasReachedBottom: boolean
   responsiveSizeMultiplier?: number
-}> = ({ messageToSign, setHasReachedBottom, hasReachedBottom, responsiveSizeMultiplier = 1 }) => {
+  withScrollDownArrow?: boolean
+}> = ({
+  messageToSign,
+  setHasReachedBottom,
+  hasReachedBottom,
+  responsiveSizeMultiplier = 1,
+  withScrollDownArrow = false
+}) => {
   const { t } = useTranslation()
   const { styles } = useTheme(getStyles)
   const { maxWidthSize } = useWindowSize()
@@ -70,7 +78,7 @@ const FallbackVisualization: FC<{
         onContentSizeChange={(_, height) => {
           setContentHeight(height)
         }}
-        scrollEventThrottle={400}
+        scrollEventThrottle={16}
       >
         <Text
           selectable
@@ -143,6 +151,12 @@ const FallbackVisualization: FC<{
             (getMessageAsText(content.message as Hex) || t('(Empty message)'))}
         </Text>
       </ScrollView>
+      {!!containerHeight && !!contentHeight && withScrollDownArrow && (
+        <AnimatedDownArrow
+          isVisible={contentHeight > containerHeight && !hasReachedBottom}
+          appearance="primary"
+        />
+      )}
       {content.kind === 'typedMessage' && (
         <MultistateToggleButton style={styles.toggleButton} states={statesForMultistateButton} />
       )}

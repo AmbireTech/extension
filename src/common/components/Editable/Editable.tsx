@@ -76,12 +76,18 @@ const Editable: FC<Props> = ({
   )
 
   return (
-    <View style={[flexbox.flex1, flexbox.directionRow, flexbox.alignCenter, { height }]}>
+    <View
+      style={[flexbox.flex1, flexbox.directionRow, flexbox.alignCenter, { height, flexShrink: 1 }]}
+    >
       {isEditing && !disabled ? (
         <Input
           value={actualValue}
           // Prevents the input from being too small
-          containerStyle={{ ...spacings.mb0, width: textWidth < minWidth ? minWidth : textWidth }}
+          containerStyle={{
+            ...spacings.mb0,
+            width: textWidth < minWidth ? minWidth : textWidth,
+            flexShrink: 1
+          }}
           inputWrapperStyle={{
             height,
             backgroundColor: 'transparent'
@@ -111,6 +117,7 @@ const Editable: FC<Props> = ({
           onLayout={(e) => {
             setTextWidth(e.nativeEvent.layout.width)
           }}
+          style={{ flexShrink: 1 }}
           {...textProps}
         >
           {actualValue || fallbackValue}

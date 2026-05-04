@@ -16,11 +16,21 @@ const COMMON_ROUTES = {
   onboardingCompleted: 'wallet-setup-completed',
   viewOnlyAccountAdder: 'view-only-account-adder',
   safeImport: 'safe-import',
+  qrConnect: 'qr-connect',
   transfer: 'transfer',
   topUpGasTank: 'top-up-gas-tank',
   tokenDetails: 'token-details',
   accountSelect: 'account-select',
-  receive: 'receive'
+  receive: 'receive',
+  signAccountOp: 'sign-account-op',
+  benzin: 'benzin',
+  networks: 'networks',
+  swapAndBridge: 'swap-and-bridge',
+  menu: 'menu',
+  generalSettings: 'settings/general',
+  accountsSettings: 'settings/accounts',
+  settingsAbout: 'settings/about',
+  settingsTerms: 'settings/terms'
 }
 
 const MOBILE_ROUTES = {
@@ -31,11 +41,9 @@ const WEB_ROUTES = {
   ...COMMON_ROUTES,
   rewards: 'rewards',
   earn: 'earn',
-  signAccountOp: 'sign-account-op',
   transactions: 'transactions',
   signedMessages: 'signed-messages',
   signMessage: 'sign-message',
-  menu: 'menu',
   swap: 'swap',
   noConnection: 'no-connection',
   accounts: 'accounts',
@@ -51,23 +59,19 @@ const WEB_ROUTES = {
   authEmailAccount: 'auth-email-account',
   authEmailLogin: 'auth-email-login',
   authEmailRegister: 'auth-email-register',
-  networks: 'networks',
   networksConfiguration: 'networks-configuration',
-  generalSettings: 'settings/general',
-  settingsTerms: 'settings/terms',
-  settingsAbout: 'settings/about',
+  privacyOptOutsConfiguration: 'privacy-opt-outs-configuration',
   networksSettings: 'settings/networks',
-  accountsSettings: 'settings/accounts',
   devicePasswordSet: 'settings/device-password-set',
   devicePasswordChange: 'settings/device-password-change',
   devicePasswordRecovery: 'settings/device-password-recovery',
   addressBook: 'settings/address-book',
   manageTokens: 'settings/manage-tokens',
-  benzin: 'benzin',
-  swapAndBridge: 'swap-and-bridge',
   recoveryPhrasesSettings: 'settings/recovery-phrases',
   safeImport: 'safe-import',
-  optOuts: 'settings/opt-outs'
+  optOuts: 'settings/opt-outs',
+  survey: 'survey',
+  qrPermission: 'qr-permission'
 }
 
 const ROUTES = { ...MOBILE_ROUTES, ...WEB_ROUTES }
@@ -86,7 +90,8 @@ const ONBOARDING_WEB_ROUTES = [
   COMMON_ROUTES.accountPersonalize,
   COMMON_ROUTES.accountPicker,
   COMMON_ROUTES.onboardingCompleted,
-  COMMON_ROUTES.safeImport
+  COMMON_ROUTES.safeImport,
+  COMMON_ROUTES.qrConnect
 ] as const
 
 export { MOBILE_ROUTES, ONBOARDING_WEB_ROUTES, ROUTES, WEB_ROUTES }

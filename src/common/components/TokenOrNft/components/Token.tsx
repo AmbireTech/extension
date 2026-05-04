@@ -10,6 +10,7 @@ import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import HumanizerAddress from '@common/components/HumanizerAddress'
 import Text from '@common/components/Text'
 import TokenIcon from '@common/components/TokenIcon'
+import { isMobile } from '@common/config/env'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
@@ -79,7 +80,7 @@ const InnerToken: FC<Props> = ({
           fontSize={textSize}
           weight="medium"
           appearance="primaryText"
-          style={{ maxWidth: '100%' }}
+          style={{ maxWidth: '100%', ...(isMobile ? spacings.mrMi : {}) }}
         >
           {shouldDisplayUnlimitedAmount ? (
             <Text style={spacings.mrTy} appearance="warningText">

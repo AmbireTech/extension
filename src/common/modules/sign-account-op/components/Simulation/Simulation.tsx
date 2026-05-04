@@ -7,9 +7,7 @@ import { Network } from '@ambire-common/interfaces/network'
 import { isSmartAccount } from '@ambire-common/libs/account/account'
 import { isPermit2Interaction } from '@ambire-common/libs/simulation/detectPermit2Interaction'
 import SuccessIcon from '@common/assets/svg/SuccessIcon'
-import WarningFilledIcon from '@common/assets/svg/WarningFilledIcon'
 import Alert from '@common/components/Alert'
-import AlertVertical from '@common/components/AlertVertical'
 import ScrollableWrapper from '@common/components/ScrollableWrapper'
 import Text from '@common/components/Text'
 import Nft from '@common/components/TokenOrNft/components/Nft'
@@ -21,6 +19,7 @@ import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
 import SimulationSkeleton from './SimulationSkeleton'
+import DappValidationAlert from './DappValidationAlert'
 import getStyles from './styles'
 
 interface Props {
@@ -42,10 +41,10 @@ const Simulation: FC<Props> = ({ network, isEstimationComplete, isViewOnly }) =>
   } = useController('SelectedAccountController')
   const [initialSimulationLoaded, setInitialSimulationLoaded] = useState(false)
   const [shouldRespectIsLoading, setShouldRespectIsLoading] = useState(true)
+  const [containsDappsNotInCatalog, setContainsDappsNotInCatalog] = useState(false)
+  const [hasDappsVerificationError, setHasDappsVerificationError] = useState(false)
   const { networks } = useController('NetworksController').state
-  const {
-    state: { dapps }
-  } = useController('DappsController')
+  const { hasUnverifiedDapps } = useController('DappsController')
 
   const pendingTokens = useMemo(() => {
     if (signAccountOpState?.accountOp && network) {
@@ -179,16 +178,49 @@ const Simulation: FC<Props> = ({ network, isEstimationComplete, isViewOnly }) =>
     })
   }, [signAccountOpState?.accountOp.calls, network])
 
-  const containsDappsNotInCatalog = useMemo(() => {
-    if (!signAccountOpState?.accountOp?.calls || !network) return false
+  useEffect(() => {
+    if (!signAccountOpState?.accountOp?.calls || !network) {
+      setContainsDappsNotInCatalog(false)
+      setHasDappsVerificationError(false)
+      return
+    }
 
-    const dappUrlsSet = new Set(dapps.map((d) => d.url.toLowerCase()))
+    const dappUrlsToValidate = signAccountOpState.accountOp.calls
+      .map((call) => call.dapp?.url)
+      .filter(Boolean) as string[]
 
-    return signAccountOpState.accountOp.calls.some((call) => {
-      if (!call.dapp || !call.dapp.url) return false
-      return !dappUrlsSet.has(call.dapp.url.toLowerCase())
-    })
-  }, [signAccountOpState?.accountOp.calls, network, dapps])
+    if (!dappUrlsToValidate.length) {
+      setContainsDappsNotInCatalog(false)
+      setHasDappsVerificationError(false)
+      return
+    }
+
+    let isCancelled = false
+    let didFail = false
+
+    const checkForUnverifiedDapps = async () => {
+      const res = await hasUnverifiedDapps(dappUrlsToValidate).catch((error) => {
+        didFail = true
+        if (!isCancelled) {
+          // Keep the messaging generic; the exact error is not relevant here.
+          setHasDappsVerificationError(true)
+        }
+
+        return false
+      })
+      if (!isCancelled) {
+        if (!didFail) setHasDappsVerificationError(false)
+        setContainsDappsNotInCatalog(res)
+      }
+    }
+
+    setHasDappsVerificationError(false)
+    void checkForUnverifiedDapps()
+
+    return () => {
+      isCancelled = true
+    }
+  }, [hasUnverifiedDapps, network, signAccountOpState?.accountOp?.calls])
 
   const simulationView:
     | 'no-changes'
@@ -380,19 +412,22 @@ const Simulation: FC<Props> = ({ network, isEstimationComplete, isViewOnly }) =>
           }
         />
       )}
-      {containsDappsNotInCatalog && containsPermit2 && (
-        <AlertVertical
-          type="warning"
-          style={spacings.mt}
-          customIcon={() => <WarningFilledIcon width={48} height={44} />}
-          text={
-            <Text appearance="warningText" weight="semiBold">
-              {t(
-                'App is not on the default Ambire App Catalog.\nMake sure you trust it before signing requests.'
-              )}
-            </Text>
-          }
-        />
+      {containsPermit2 && containsDappsNotInCatalog && (
+        <View style={spacings.mt}>
+          <DappValidationAlert
+            text={t(
+              'App is not on the default Ambire App Catalog.\nMake sure you trust it before signing requests.'
+            )}
+          />
+        </View>
+      )}
+
+      {containsPermit2 && hasDappsVerificationError && (
+        <View style={spacings.mt}>
+          <DappValidationAlert
+            text={t("We couldn't verify the app.\nMake sure you trust it before signing requests.")}
+          />
+        </View>
       )}
       {shouldShowLoader && <SimulationSkeleton />}
     </View>

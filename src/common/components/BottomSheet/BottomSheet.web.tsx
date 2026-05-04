@@ -15,7 +15,7 @@ import { BottomSheetProps } from './BottomSheet'
 import getStyles from './styles'
 import useBottomSheetInternal from './useBottomSheetInternal'
 
-const ANIMATION_DURATION: number = 250
+const DEFAULT_ANIMATION_DURATION: number = 250
 
 const { isPopup } = getUiType()
 
@@ -25,7 +25,7 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
     type: _type,
     scrollViewRef: externalScrollViewRef,
     children,
-    closeBottomSheet = () => {},
+    closeBottomSheet: _closeBottomSheet = () => {},
     adjustToContentHeight = true,
     style = {},
     containerInnerWrapperStyles = {},
@@ -36,6 +36,7 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
     flatListProps,
     sectionListProps,
     scrollViewProps,
+    animationDuration = DEFAULT_ANIMATION_DURATION,
     backgroundColor = 'primaryBackground',
     autoWidth = false,
     shouldBeClosableOnDrag = true,
@@ -52,6 +53,7 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
     checkIsScrollable,
     scrollViewRef: internalScrollViewRef
   } = useIsScrollable()
+  const closeBottomSheet = useCallback(_closeBottomSheet, [_closeBottomSheet])
   const scrollViewRef = externalScrollViewRef || internalScrollViewRef
 
   const {
@@ -189,7 +191,10 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
           adjustToContentHeight={customRenderer ? false : adjustToContentHeight}
           disableScrollIfPossible={false}
           withOverlay={false}
-          onBackButtonPress={() => true}
+          onBackButtonPress={() => {
+            closeBottomSheet()
+            return true
+          }}
           panGestureEnabled={shouldBeClosableOnDrag}
           {...(!flatListProps && !sectionListProps
             ? {
@@ -206,10 +211,10 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
               }
             : {})}
           openAnimationConfig={{
-            timing: { duration: ANIMATION_DURATION, delay: 0 }
+            timing: { duration: animationDuration, delay: 0 }
           }}
           closeAnimationConfig={{
-            timing: { duration: ANIMATION_DURATION, delay: 0 }
+            timing: { duration: animationDuration, delay: 0 }
           }}
           onLayout={checkIsScrollable}
           onOpen={() => {

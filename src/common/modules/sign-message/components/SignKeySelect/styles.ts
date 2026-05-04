@@ -40,7 +40,7 @@ const getStyles = (theme: ThemeProps) =>
     },
     title: {
       ...spacings.pvTy,
-      ...spacings.pl,
+      ...spacings.ph,
       borderBottomWidth: 1,
       borderBottomColor: theme.secondaryBorder,
       backgroundColor: theme.secondaryBackground,

@@ -1,7 +1,7 @@
 import { StyleSheet, ViewStyle } from 'react-native'
 
 import spacings from '@common/styles/spacings'
-import { THEME_TYPES, ThemeProps, ThemeType } from '@common/styles/themeConfig'
+import { ThemeProps } from '@common/styles/themeConfig'
 import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 
@@ -11,8 +11,6 @@ interface Style {
   selectRpcItem: ViewStyle
   selectRpcItemBorder: ViewStyle
   radio: ViewStyle
-  radioHovered: ViewStyle
-  radioSelected: ViewStyle
   radioSelectedInner: ViewStyle
 }
 
@@ -33,7 +31,7 @@ const getStyles = (theme: ThemeProps) =>
     rpcUrlsContainer: {
       backgroundColor: theme.secondaryBackground,
       ...common.borderRadiusPrimary,
-      maxHeight: 104,
+      maxHeight: 110,
       ...spacings.mb
     },
     selectRpcItem: {
@@ -51,21 +49,16 @@ const getStyles = (theme: ThemeProps) =>
       height: 16,
       borderRadius: 50,
       borderWidth: 2,
-      borderColor: theme.primaryBorder,
       ...flexbox.alignCenter,
       ...flexbox.justifyCenter,
-      ...spacings.mrTy
+      ...spacings.mrTy,
+      borderColor: theme.success400
     },
-    radioHovered: {
-      borderColor: theme.successText
-    },
-    radioSelected: {
-      borderColor: theme.successText
-    },
+
     radioSelectedInner: {
-      backgroundColor: theme.successText,
-      width: 10,
-      height: 10,
+      backgroundColor: theme.success400,
+      width: 8,
+      height: 8,
       borderRadius: 50
     }
   })

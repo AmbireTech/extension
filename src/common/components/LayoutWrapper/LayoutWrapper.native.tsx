@@ -15,7 +15,7 @@ const LayoutWrapper: FC<LayoutWrapperProps> = ({ children, backgroundStyle = {},
       style={[
         flexbox.flex1,
         {
-          paddingTop: insets.top,
+          paddingTop: insets.top + SPACING_SM,
           paddingBottom: insets.bottom + SPACING_SM
         },
         backgroundStyle

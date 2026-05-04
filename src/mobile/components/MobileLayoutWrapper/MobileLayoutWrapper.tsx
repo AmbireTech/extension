@@ -8,6 +8,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import { PanelBackButton, PanelTitle } from '@common/components/Panel/Panel'
 import { WrapperProps } from '@common/components/ScrollableWrapper'
+import useNavigation from '@common/hooks/useNavigation'
 import useTheme from '@common/hooks/useTheme'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
 import spacings, { SPACING_SM } from '@common/styles/spacings'
@@ -54,7 +55,7 @@ export const MobileLayoutContainer = ({
         }
       ]}
     >
-      {!!header && header}
+      {!!header && <View style={[spacings.phSm, spacings.mbSm]}>{header}</View>}
       <View style={[flexbox.flex1, withHorizontalPadding ? spacings.phSm : undefined]}>
         <View
           style={[
@@ -69,11 +70,7 @@ export const MobileLayoutContainer = ({
           {children}
         </View>
       </View>
-      {!!footer && (
-        <View style={styles.footerContainer}>
-          <View style={[styles.footer, footerStyle]}>{footer}</View>
-        </View>
-      )}
+      {footer && footer}
       {renderDirectChildren && renderDirectChildren()}
     </View>
   )
@@ -100,7 +97,7 @@ export const MobileLayoutWrapperMainContent: React.FC<MobileLayoutWrapperMainCon
   withScroll = false,
   keyboardAwareScrollViewProps = {},
   withBackButton = false,
-  onBackButtonPress = () => {},
+  onBackButtonPress,
   rightIcon,
   title,
   step = 0,
@@ -109,6 +106,15 @@ export const MobileLayoutWrapperMainContent: React.FC<MobileLayoutWrapperMainCon
 }: MobileLayoutWrapperMainContentProps) => {
   const { styles, theme } = useTheme(getStyles)
   const { isOnboardingRoute } = useOnboardingNavigation()
+  const { goBack } = useNavigation()
+
+  const handleBackButtonPress = () => {
+    if (onBackButtonPress) {
+      onBackButtonPress()
+    } else {
+      goBack()
+    }
+  }
 
   const renderProgress = () => (
     <View style={[styles.progressContainer]}>
@@ -133,7 +139,7 @@ export const MobileLayoutWrapperMainContent: React.FC<MobileLayoutWrapperMainCon
         {step > 0 ? renderProgress() : <View style={{ height: isOnboardingRoute ? 24 : 0 }} />}
         {(!!title || !!withBackButton) && (
           <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mbLg]}>
-            {!!withBackButton && <PanelBackButton onPress={onBackButtonPress} />}
+            {!!withBackButton && <PanelBackButton onPress={handleBackButtonPress} />}
             {!!title && <PanelTitle title={title} size={18} />}
             {!!withBackButton && (
               <View style={[{ width: 28 }, flexbox.alignCenter]}>{rightIcon}</View>
@@ -147,6 +153,7 @@ export const MobileLayoutWrapperMainContent: React.FC<MobileLayoutWrapperMainCon
           bottomOffset={100}
           keyboardShouldPersistTaps="handled"
           bounces={false}
+          showsVerticalScrollIndicator={false}
           {...keyboardAwareScrollViewProps}
           {...rest}
         >
@@ -164,7 +171,7 @@ export const MobileLayoutWrapperMainContent: React.FC<MobileLayoutWrapperMainCon
       {step > 0 ? renderProgress() : <View style={{ height: isOnboardingRoute ? 24 : 0 }} />}
       {(!!title || !!withBackButton) && (
         <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mbLg]}>
-          {!!withBackButton && <PanelBackButton onPress={onBackButtonPress} />}
+          {!!withBackButton && <PanelBackButton onPress={handleBackButtonPress} />}
           {!!title && <PanelTitle title={title} size={18} />}
           {!!withBackButton && (
             <View style={[{ width: 28, maxHeight: 15 }, flexbox.center]}>{rightIcon}</View>

@@ -61,7 +61,7 @@ const Toggle = ({ isOn, onToggle, label, style, disabled, trackStyle, toggleStyl
         }}
         hitSlop={{ top: 15, bottom: 15, left: 5, right: 5 }}
       />
-      {!!label && <Text style={spacings.mrTy}>{label}</Text>}
+      {!!label && <Text style={spacings.mlSm}>{label}</Text>}
     </View>
   )
 }

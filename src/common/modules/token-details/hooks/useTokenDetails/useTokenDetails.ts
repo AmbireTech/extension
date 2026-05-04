@@ -5,16 +5,15 @@ import { useModalize } from 'react-native-modalize'
 
 import { TokenResult } from '@ambire-common/libs/portfolio'
 import { getTokenAmount } from '@ambire-common/libs/portfolio/helpers'
-import { getIsNetworkSupported } from '@ambire-common/libs/swapAndBridge/swapAndBridge'
 import InvisibilityIcon from '@common/assets/svg/InvisibilityIcon'
 import SendIcon from '@common/assets/svg/SendIcon'
 import SwapAndBridgeIcon from '@common/assets/svg/SwapAndBridgeIcon'
 import TopUpIcon from '@common/assets/svg/TopUpIcon'
 import VisibilityIcon from '@common/assets/svg/VisibilityIcon'
-import { isWeb } from '@common/config/env'
 import useController from '@common/hooks/useController'
 import useHasGasTank from '@common/hooks/useHasGasTank'
 import useNavigation from '@common/hooks/useNavigation'
+import useNetworks from '@common/hooks/useNetworks'
 import useRoute from '@common/hooks/useRoute'
 import useToast from '@common/hooks/useToast'
 import { ROUTES } from '@common/modules/router/constants/common'
@@ -43,7 +42,13 @@ const useTokenDetails = () => {
     dispatch: portfolioDispatch,
     state: { tokenPreferences }
   } = useController('PortfolioController')
-  const { state: networks } = useController('NetworksController', (state) => state.networks)
+  const networks = useNetworks({
+    acc: account,
+    additionalCheck: {
+      chainIds: supportedChainIds,
+      reason: 'Network is not supported by our service provider.'
+    }
+  })
   const [doNotDisplayHideTokenModal, setDoNotDisplayHideTokenModal] = useState(false)
   const [gasTankAssets, setGasTankAssets] = useState<{ chainId: number; address: string }[] | null>(
     null
@@ -69,11 +74,10 @@ const useTokenDetails = () => {
   const isGasTankOrRewardsToken = isGasTankToken || isRewardsToken
   const isAmountZero = token && getTokenAmount(token) === 0n
   const canToToppedUp = token?.flags.canTopUpGasTank
-  const isNetworkNotSupportedForSwapAndBridge = !getIsNetworkSupported(supportedChainIds, network)
   const shouldDisableSwapAndBridge =
-    isNetworkNotSupportedForSwapAndBridge || isGasTankOrRewardsToken || isAmountZero
+    network?.isNotSupported || isGasTankOrRewardsToken || isAmountZero
 
-  const { hasGasTank } = useHasGasTank({ account })
+  const { canUseGasTank, disabledReason } = useHasGasTank({ account })
 
   const unavailableBecauseGasTankOrRewardsTokenTooltipText = t(
     'Unavailable. {{tokenType}} tokens cannot be sent, swapped, or bridged.',
@@ -81,10 +85,6 @@ const useTokenDetails = () => {
       tokenType: isGasTankToken ? t('Gas Tank') : t('Reward')
     }
   )
-  // TODO: Temporarily moved to the "Deposit" place as of v4.49.0, due to aesthetic reasons solely.
-  // const notImplementedYetTooltipText = t('Coming sometime in {{year}}.', {
-  //   year: new Date().getFullYear()
-  // })
 
   useEffect(() => {
     storage
@@ -146,6 +146,22 @@ const useTokenDetails = () => {
     [hideToken, closeHideTokenModal]
   )
 
+  const topUpDisabledTooltipText = useMemo(() => {
+    if (!canUseGasTank) return disabledReason
+
+    if (!canToToppedUp) {
+      return t(
+        'This token is not eligible for filling up the Gas Tank. Please select a supported token instead.'
+      )
+    }
+
+    if (gasTankAssetsError) {
+      return gasTankAssetsError
+    }
+
+    return undefined
+  }, [canUseGasTank, canToToppedUp, disabledReason, gasTankAssetsError, t])
+
   const actions = useMemo(
     () =>
       [
@@ -158,31 +174,30 @@ const useTokenDetails = () => {
           isDisabled: isGasTankOrRewardsToken || isAmountZero,
           tooltipText: isGasTankOrRewardsToken
             ? unavailableBecauseGasTankOrRewardsTokenTooltipText
-            : undefined,
+            : '',
           strokeWidth: 1.5,
           testID: 'token-send'
         },
-        isWeb && {
+        {
           id: 'swap-or-bridge',
           text: t('Swap or Bridge'),
           icon: SwapAndBridgeIcon,
           iconWidth: 86,
-          onPress: ({ chainId, address }: TokenResult) => {
+          onPress: ({ chainId, address }: TokenResult) =>
             navigate(ROUTES.swapAndBridge, {
               state: {
-                preselectedFromToken: { address, chainId }
+                preselectedFromToken: {
+                  address,
+                  chainId
+                }
               }
-            })
-          },
+            }),
           isDisabled: shouldDisableSwapAndBridge,
-          tooltipText: isNetworkNotSupportedForSwapAndBridge
-            ? t(
-                'Unavailable. {{network}} network is not supported by our Swap & Bridge service provider.',
-                { network: network?.name || t('This') }
-              )
-            : isGasTankOrRewardsToken
-              ? unavailableBecauseGasTankOrRewardsTokenTooltipText
-              : undefined,
+          tooltipText: isGasTankOrRewardsToken
+            ? unavailableBecauseGasTankOrRewardsTokenTooltipText
+            : network?.isNotSupported
+              ? network?.notSupportedReason
+              : '',
           strokeWidth: 1.5
         },
         // TODO: Temporarily hidden as of v4.49.0, because displaying it disabled
@@ -221,14 +236,8 @@ const useTokenDetails = () => {
             if (canTopUp) navigate(`${ROUTES.topUpGasTank}?chainId=${chainId}&address=${address}`)
             else addToast('We have disabled top ups with this token.', { type: 'error' })
           },
-          isDisabled: !canToToppedUp || !hasGasTank,
-          tooltipText: !hasGasTank
-            ? t(`Not available for ${account?.safeCreation ? 'safe' : 'hardware'} wallets, yet.`)
-            : !canToToppedUp
-              ? t(
-                  'This token is not eligible for filling up the Gas Tank. Please select a supported token instead.'
-                )
-              : gasTankAssetsError || undefined,
+          isDisabled: !!topUpDisabledTooltipText,
+          tooltipText: topUpDisabledTooltipText,
           strokeWidth: 1,
           testID: 'top-up-button'
         },
@@ -263,17 +272,14 @@ const useTokenDetails = () => {
       isAmountZero,
       unavailableBecauseGasTankOrRewardsTokenTooltipText,
       shouldDisableSwapAndBridge,
-      isNetworkNotSupportedForSwapAndBridge,
-      network?.name,
-      canToToppedUp,
-      hasGasTank,
-      account?.safeCreation,
-      gasTankAssetsError,
+      network?.isNotSupported,
+      network?.notSupportedReason,
+      topUpDisabledTooltipText,
       isHidden,
       handleHideTokenFromButton,
       navigate,
       gasTankAssets,
-      isWeb,
+      gasTankAssetsError,
       addToast
     ]
   )

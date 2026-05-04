@@ -9,6 +9,7 @@ import { IS_MOBILE_UP_BENZIN_BREAKPOINT } from '@benzin/screens/BenzinScreen/sty
 import StarsIcon from '@common/assets/svg/StarsIcon'
 import Text from '@common/components/Text'
 import TokenIcon from '@common/components/TokenIcon'
+import { isMobile } from '@common/config/env'
 import ConfettiAnimation from '@common/modules/dashboard/components/ConfettiAnimation'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
@@ -45,7 +46,6 @@ const Steps: FC<Props> = ({ activeStep, txnId, userOpHash, stepsState, summary, 
             style={[
               flexbox.directionRow,
               flexbox.alignCenter,
-              spacings.mlTy,
               spacings.pvMi,
               spacings.phSm,
               { backgroundColor: '#6000FF14', borderRadius: 20 },
@@ -125,17 +125,21 @@ const Steps: FC<Props> = ({ activeStep, txnId, userOpHash, stepsState, summary, 
 
   return (
     <>
-      {showConfetti && (
-        <ConfettiAnimation
-          type="tertiary"
-          width={windowWidth}
-          height={windowHeight}
-          autoPlay
-          loop={false}
-          style={{ zIndex: 1 }}
-        />
+      {!!showConfetti && (
+        <View
+          style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 1 }}
+          pointerEvents="none"
+        >
+          <ConfettiAnimation
+            type="tertiary"
+            width={windowWidth}
+            height={windowHeight}
+            autoPlay
+            loop={false}
+          />
+        </View>
       )}
-      <View style={IS_MOBILE_UP_BENZIN_BREAKPOINT ? spacings.mb2Xl : spacings.mbXl}>
+      <View style={isMobile ? {} : IS_MOBILE_UP_BENZIN_BREAKPOINT ? spacings.mb2Xl : spacings.mbXl}>
         <Step
           title="Signed"
           stepName="signed"

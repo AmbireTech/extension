@@ -2,7 +2,7 @@ import { StyleSheet, ViewStyle } from 'react-native'
 
 import { DEFAULT_SELECT_SIZE, SELECT_SIZE_TO_HEIGHT } from '@common/components/Select/styles'
 import spacings from '@common/styles/spacings'
-import { THEME_TYPES, ThemeProps, ThemeType } from '@common/styles/themeConfig'
+import { ThemeProps, ThemeType } from '@common/styles/themeConfig'
 import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 
@@ -41,13 +41,10 @@ const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
       ...common.hidden,
       ...flexbox.alignCenter,
       ...flexbox.directionRow,
-      ...spacings.ph,
+      ...spacings.phSm,
       width: '100%',
       height: SELECT_SIZE_TO_HEIGHT[DEFAULT_SELECT_SIZE],
-      backgroundColor:
-        themeType === THEME_TYPES.DARK ? theme.primaryBackground : theme.secondaryBackground,
-      borderWidth: themeType === THEME_TYPES.DARK ? 0 : 1,
-      borderColor: theme.secondaryBorder
+      backgroundColor: theme.secondaryBackground
     }
   })
 

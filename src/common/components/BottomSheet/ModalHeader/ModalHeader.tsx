@@ -8,12 +8,23 @@ import spacings from '@common/styles/spacings'
 interface Props {
   handleClose?: () => void
   title?: React.ReactNode
+  titlePosition?: 'left' | 'center'
   style?: ViewStyle
   hasAmbireLogo?: boolean
+  forceBackButtonOnMobile?: boolean
   children?: React.ReactNode
+  headerTestID?: string
 }
 
-const ModalHeader: FC<Props> = ({ handleClose, title, style, children }) => {
+const ModalHeader: FC<Props> = ({
+  handleClose,
+  title,
+  titlePosition = 'center',
+  style,
+  children,
+  forceBackButtonOnMobile,
+  headerTestID
+}) => {
   const withSideContainers = !!handleClose || !!children
 
   return (
@@ -23,7 +34,7 @@ const ModalHeader: FC<Props> = ({ handleClose, title, style, children }) => {
     >
       {withSideContainers && (
         <Header.Container side="left">
-          {handleClose && !isMobile && (
+          {((handleClose && !isMobile) || forceBackButtonOnMobile) && (
             <Header.BackButton onGoBackPress={handleClose} forceBack displayIn="always" />
           )}
         </Header.Container>
@@ -37,11 +48,11 @@ const ModalHeader: FC<Props> = ({ handleClose, title, style, children }) => {
           left: 0,
           height: '100%',
           justifyContent: 'center',
-          alignItems: 'center',
+          alignItems: titlePosition === 'left' ? 'flex-start' : 'center',
           pointerEvents: 'none'
         }}
       >
-        <Header.Title>{title}</Header.Title>
+        <Header.Title testID={headerTestID}>{title}</Header.Title>
       </View>
       {withSideContainers && <Header.Container side="right">{children}</Header.Container>}
     </Header.Wrapper>

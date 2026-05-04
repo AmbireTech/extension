@@ -2,7 +2,7 @@ import React, { useMemo } from 'react'
 import { Animated, ColorValue, PressableProps, TextStyle, ViewStyle } from 'react-native'
 
 import InfoIcon from '@common/assets/svg/InfoIcon'
-import { isWeb } from '@common/config/env'
+import { isMobile, isWeb } from '@common/config/env'
 import { AnimatedPressable, useCustomHover, useMultiHover } from '@common/hooks/useHover'
 import { AnimatedText } from '@common/hooks/useHover/useHover'
 import { AnimationValues } from '@common/hooks/useHover/useMultiHover'
@@ -128,12 +128,13 @@ const ButtonInnerContainer = ({
           !!rest.onHoverOut && rest.onHoverOut(e)
           buttonInnerContainerBind.onHoverOut(e)
         }}
-        onPressIn={(e) => {
+        onPressIn={(e: any) => {
           !!rest.onPressIn && rest.onPressIn(e)
           buttonInnerContainerBind.onPressIn(e)
         }}
-        onPressOut={(e) => {
+        onPressOut={(e: any) => {
           !!rest.onPressOut && rest.onPressOut(e)
+          buttonInnerContainerBind.onPressOut(e)
         }}
       >
         {children}
@@ -186,7 +187,7 @@ const Button = ({
       secondary: [
         {
           property: 'backgroundColor',
-          from: theme.primaryBackground,
+          from: isMobile ? theme.secondaryBackground : theme.primaryBackground,
           to: theme.tertiaryBackground
         }
       ],
@@ -467,6 +468,10 @@ const Button = ({
       onPressOut={(e) => {
         if (buttonTypesWithInnerContainer.includes(type)) return
 
+        buttonContainerBind.onPressOut(e)
+        buttonTextBind.onPressOut(e)
+        childrenScaleBind.onPressOut(e)
+
         rest?.onPressOut && rest.onPressOut(e)
       }}
     >
@@ -497,6 +502,10 @@ const Button = ({
           rest?.onPressIn && rest.onPressIn(e)
         }}
         onPressOut={(e) => {
+          buttonContainerBind.onPressOut(e)
+          buttonTextBind.onPressOut(e)
+          childrenScaleBind.onPressOut(e)
+
           rest?.onPressOut && rest.onPressOut(e)
         }}
       >

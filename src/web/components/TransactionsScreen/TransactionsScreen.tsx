@@ -3,16 +3,16 @@ import { View, ViewStyle } from 'react-native'
 
 import FooterGlassView from '@common/components/FooterGlassView'
 import useTheme from '@common/hooks/useTheme'
+import ActionHeader from '@common/modules/action-requests/components/ActionHeader'
 import Header from '@common/modules/header/components/Header'
-import spacings from '@common/styles/spacings'
+import spacings, { SPACING } from '@common/styles/spacings'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import { getUiType } from '@common/utils/uiType'
-import ActionHeader from '@web/modules/action-requests/components/ActionHeader'
 
 import LayoutWrapper from '../../../common/components/LayoutWrapper'
 
-const { isPopup } = getUiType()
+const { isPopup, isRequestWindow } = getUiType()
 
 type WrapperProps = {
   children: React.ReactNode
@@ -48,8 +48,18 @@ const ItemPanel: FC<ItemPanelProps> = ({ children, style = {} }) => {
 
 const Wrapper: FC<WrapperProps> = ({ children }) => {
   return (
-    <LayoutWrapper>
-      {isPopup ? <Header /> : <ActionHeader />}
+    <LayoutWrapper
+      style={isRequestWindow ? { borderRadius: 0, height: '100%' } : {}}
+      backgroundStyle={isRequestWindow ? spacings.pt0 : {}}
+    >
+      {isPopup ? (
+        <Header.Wrapper containerStyle={spacings.ptSm}>
+          <Header.AccountData />
+          <Header.Logo withOG />
+        </Header.Wrapper>
+      ) : (
+        <ActionHeader />
+      )}
       {children}
     </LayoutWrapper>
   )
@@ -59,7 +69,7 @@ const Content: FC<ContentProps> = ({ children, buttons }) => {
   return (
     <View style={[flexbox.flex1, spacings.phSm, spacings.pvSm]}>
       {children}
-      <FooterGlassView size="sm">
+      <FooterGlassView size="sm" style={isRequestWindow ? { bottom: SPACING } : {}}>
         <View style={[flexbox.directionRow, flexbox.alignCenter]}>{buttons}</View>
       </FooterGlassView>
     </View>

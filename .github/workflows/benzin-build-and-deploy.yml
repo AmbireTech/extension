@@ -5,7 +5,7 @@ env:
 on:
   push:
     branches:
-      - benzin-prod
+      - main
 permissions:
   contents: write
 jobs:

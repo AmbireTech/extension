@@ -59,13 +59,12 @@ const BalanceAffectingErrors: FC<Props> = ({
     return (
       <WarningIcon
         color={theme.warningDecorative2}
-        style={spacings.mrTy}
         dataSet={createGlobalTooltipDataSet({
           id: 'balance-affecting-error',
           content: warningMessage
         })}
-        width={21}
-        height={21}
+        width={20}
+        height={20}
       />
     )
   }, [theme.warningDecorative2, warningMessage])

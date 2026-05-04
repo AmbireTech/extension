@@ -1,7 +1,7 @@
 import { uniqBy } from 'lodash'
 import groupBy from 'lodash/groupBy'
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
-import { NativeScrollEvent, Platform, View } from 'react-native'
+import { NativeScrollEvent, View } from 'react-native'
 
 import {
   Account as AccountInterface,
@@ -9,6 +9,7 @@ import {
   ImportStatus
 } from '@ambire-common/interfaces/account'
 import { IAccountPickerController } from '@ambire-common/interfaces/accountPicker'
+import { isSmartAccount } from '@ambire-common/libs/account/account'
 import WarningIcon from '@common/assets/svg/WarningIcon'
 import Alert from '@common/components/Alert'
 import Badge from '@common/components/Badge'
@@ -31,7 +32,7 @@ import text from '@common/styles/utils/text'
 import getStyles from './styles'
 
 const isCloseToBottom = ({ layoutMeasurement, contentOffset, contentSize }: NativeScrollEvent) => {
-  const paddingToBottom = 20
+  const paddingToBottom = 40
   return layoutMeasurement.height + contentOffset.y >= contentSize.height - paddingToBottom
 }
 
@@ -219,6 +220,10 @@ const AccountsOnPageList = ({
     !isAccountPickerEmpty &&
     !state.pageError
 
+  const hasSmartAccounts = useMemo(() => {
+    return state.accountsOnPage.some((p) => isSmartAccount(p.account))
+  }, [state.accountsOnPage])
+
   // Prevents the user from temporarily seeing (flashing) empty (error) states
   // while being navigated back (resetting the Account Picker state).
   if (!state.isInitialized) return null
@@ -236,12 +241,7 @@ const AccountsOnPageList = ({
           />
         )}
         <ScrollableWrapper
-          style={[
-            isMobile ? spacings.mbMd : spacings.mbLg,
-            {
-              maxHeight: isMobile ? undefined : 480
-            }
-          ]}
+          style={[isMobile ? spacings.mbMd : spacings.mbLg]}
           contentContainerStyle={{ flexGrow: 1 }}
           onScroll={(e) => {
             if (isCloseToBottom(e.nativeEvent) && setHasReachedBottom) setHasReachedBottom(true)
@@ -252,7 +252,7 @@ const AccountsOnPageList = ({
           onContentSizeChange={(_, height) => {
             setContentHeight(height)
           }}
-          scrollEventThrottle={400}
+          scrollEventThrottle={16}
         >
           {!isLoading && (isAccountPickerEmpty || !!accountPickerState.pageError) && (
             <AccountsRetrieveError
@@ -281,7 +281,7 @@ const AccountsOnPageList = ({
                   )
                 })}
               </View>
-              {!!Object.keys(slots).length && (
+              {hasSmartAccounts && (
                 <View style={[styles.smartAccountWrapper, isMobile && spacings.ptSm]}>
                   <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mbSm]}>
                     <Text fontSize={16} weight="medium" style={[text.center, spacings.mrTy]}>

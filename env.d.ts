@@ -16,6 +16,7 @@ declare module '@env' {
     LEGENDS_NFT_ADDRESS: string
     SENTRY_DSN_LEGENDS?: string
     SENTRY_DSN_BROWSER_EXTENSION?: string
+    WEBVIEW_DEV_HOST?: string
   }
 
   /**
@@ -110,4 +111,9 @@ declare module '@env' {
    * Sentry is application monitoring and error tracking app
    */
   export const SENTRY_DSN_BROWSER_EXTENSION: EnvTypes['SENTRY_DSN_BROWSER_EXTENSION']
+
+  /**
+   * LAN IP of the dev machine for the WebView webpack-dev-server (Android physical device).
+   */
+  export const WEBVIEW_DEV_HOST: EnvTypes['WEBVIEW_DEV_HOST']
 }

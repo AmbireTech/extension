@@ -77,4 +77,19 @@ const syncSessionStorage = {
   }
 }
 
-export { asyncStorage as storage, syncStorage, syncSessionStorage }
+const secureStorage = {
+  get: (key: string) => {
+    console.warn(`Secure storage is not supported on web. Attempted to get key: ${key}`)
+    return Promise.resolve(null)
+  },
+  set: (key: string) => {
+    console.warn(`Secure storage is not supported on web. Attempted to set key: ${key}`)
+    return Promise.resolve()
+  },
+  remove: (key: string) => {
+    console.warn(`Secure storage is not supported on web. Attempted to remove key: ${key}`)
+    return Promise.resolve()
+  }
+}
+
+export { asyncStorage as storage, syncStorage, syncSessionStorage, secureStorage }

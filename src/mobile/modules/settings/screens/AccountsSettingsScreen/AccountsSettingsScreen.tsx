@@ -1,0 +1,302 @@
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import isEqual from 'react-fast-compare'
+import { useTranslation } from 'react-i18next'
+import { Pressable, View } from 'react-native'
+import { useModalize } from 'react-native-modalize'
+
+import { Account as AccountInterface } from '@ambire-common/interfaces/account'
+import AddCircularIcon from '@common/assets/svg/AddCircularIcon'
+import DragIndicatorIcon from '@common/assets/svg/DragIndicatorIcon'
+import AccountKeysBottomSheet from '@common/components/AccountKeysBottomSheet'
+import BottomSheet from '@common/components/BottomSheet'
+import Button from '@common/components/Button'
+import { PanelBackButton, PanelTitle } from '@common/components/Panel/Panel'
+import ScrollableWrapper, { WRAPPER_TYPES } from '@common/components/ScrollableWrapper'
+import Search from '@common/components/Search'
+import Text from '@common/components/Text'
+import { isMobile, isWeb } from '@common/config/env'
+import useAccountsList from '@common/hooks/useAccountsList'
+import useController from '@common/hooks/useController'
+import useElementSize from '@common/hooks/useElementSize'
+import useTheme from '@common/hooks/useTheme'
+import Account from '@common/modules/account-select/components/Account'
+import AddAccount from '@common/modules/account-select/components/AddAccount'
+import spacings from '@common/styles/spacings'
+import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
+import flexbox from '@common/styles/utils/flexbox'
+import text from '@common/styles/utils/text'
+import {
+  MobileLayoutContainer,
+  MobileLayoutWrapperMainContent
+} from '@mobile/components/MobileLayoutWrapper'
+import AccountSmartSettingsBottomSheet from '@web/modules/settings/components/Accounts/AccountSmartSettingsBottomSheet'
+
+const AccountsSettingsScreen = () => {
+  const { t } = useTranslation()
+  const { accounts, control, keyExtractor, getItemLayout } = useAccountsList()
+  const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useModalize()
+  const accountsContainerRef = useRef(null)
+  const { minElementWidthSize, maxElementWidthSize } = useElementSize(accountsContainerRef)
+  const { dispatch: accountsDispatch } = useController('AccountsController')
+  const { dispatch: mainDispatch } = useController('MainController')
+  const { theme } = useTheme()
+  const {
+    ref: sheetRefExportImportKey,
+    open: openExportImportKey,
+    close: closeExportImportKey
+  } = useModalize()
+  const {
+    ref: sheetRefRemoveAccount,
+    open: openRemoveAccount,
+    close: closeRemoveAccount
+  } = useModalize()
+  const {
+    ref: sheetRefAccountSmartSettings,
+    open: openAccountSmartSettings,
+    close: closeAccountSmartSettings
+  } = useModalize()
+
+  const [exportImportAccount, setExportImportAccount] = useState<AccountInterface | null>(null)
+  const [accountToRemove, setAccountToRemove] = useState<AccountInterface | null>(null)
+  const [smartSettingsAccount, setSmartSettingsAccount] = useState<AccountInterface | null>(null)
+  const [localAccounts, setLocalAccounts] = useState<AccountInterface[]>([...accounts])
+
+  useEffect(() => {
+    setLocalAccounts((prev) => {
+      if (!isEqual(prev, accounts)) {
+        return accounts
+      }
+      return prev
+    })
+  }, [accounts])
+
+  const handleAccDragEnd = useCallback(
+    (fromIndex: number, toIndex: number) => {
+      if (fromIndex === toIndex) return
+      setLocalAccounts((prev) => {
+        const updated = [...prev]
+        const [moved] = updated.splice(fromIndex, 1)
+        updated.splice(toIndex, 0, moved!)
+        accountsDispatch({
+          type: 'method',
+          params: {
+            method: 'reorderAccounts',
+            args: [{ fromIndex, toIndex }]
+          }
+        })
+        return updated
+      })
+    },
+    [accountsDispatch]
+  )
+
+  useEffect(() => {
+    if (exportImportAccount) openExportImportKey()
+  }, [openExportImportKey, exportImportAccount])
+
+  useEffect(() => {
+    if (accountToRemove) openRemoveAccount()
+  }, [openRemoveAccount, accountToRemove])
+
+  useEffect(() => {
+    if (smartSettingsAccount) openAccountSmartSettings()
+  }, [openAccountSmartSettings, smartSettingsAccount])
+
+  const shortenAccountAddr = useCallback(() => {
+    if (maxElementWidthSize(800)) return undefined
+    if (maxElementWidthSize(700) && minElementWidthSize(800)) return 32
+    if (maxElementWidthSize(600) && minElementWidthSize(700)) return 24
+    if (maxElementWidthSize(500) && minElementWidthSize(600)) return 16
+    return 10
+  }, [maxElementWidthSize, minElementWidthSize])
+
+  const accountOptions = useMemo(
+    () => ({
+      withOptionsButton: true,
+      setAccountToImportOrExport: setExportImportAccount,
+      setSmartSettingsAccount,
+      setAccountToRemove
+    }),
+    [setExportImportAccount, setSmartSettingsAccount, setAccountToRemove]
+  )
+
+  const removeAccount = useCallback(() => {
+    if (!accountToRemove) return
+
+    mainDispatch({
+      type: 'method',
+      params: {
+        method: 'removeAccount',
+        args: [accountToRemove.addr]
+      }
+    })
+    closeRemoveAccount()
+  }, [accountToRemove, mainDispatch, closeRemoveAccount])
+
+  const renderItem = useCallback(
+    (
+      item: AccountInterface,
+      index: number,
+      isDragging: boolean,
+      listeners: any,
+      attributes: any
+    ) => {
+      return (
+        <View
+          style={[
+            flexbox.flex1,
+            flexbox.directionRow,
+            flexbox.alignCenter,
+            spacings.mbTy,
+            {
+              backgroundColor: theme.secondaryBackground,
+              borderRadius: BORDER_RADIUS_PRIMARY
+            }
+          ]}
+        >
+          <View {...listeners} {...attributes}>
+            <Pressable
+              style={[
+                flexbox.alignCenter,
+                flexbox.justifyCenter,
+                spacings.pvMi,
+                isWeb && spacings.phSm,
+                isMobile && spacings.plSm,
+                isMobile && spacings.prMi,
+                isWeb && spacings.mbMi,
+                //@ts-ignore
+                { cursor: 'grab', touchAction: 'manipulation' }
+              ]}
+            >
+              <DragIndicatorIcon
+                color={isDragging ? theme.primary : theme.iconPrimary}
+                width={isMobile ? 10 : 12.5}
+              />
+            </Pressable>
+          </View>
+          <View style={flexbox.flex1}>
+            <Account
+              account={item}
+              maxAccountAddrLength={shortenAccountAddr()}
+              options={accountOptions}
+              inverseInteractionColors
+              isSelectable={false}
+              containerStyle={{ ...spacings.mb0, ...spacings.pvSm }}
+              withReceive={!isMobile}
+              withCopy={!isMobile}
+            />
+          </View>
+        </View>
+      )
+    },
+    [
+      theme.secondaryBackground,
+      theme.primary,
+      theme.iconPrimary,
+      shortenAccountAddr,
+      accountOptions
+    ]
+  )
+
+  return (
+    <MobileLayoutContainer>
+      <MobileLayoutWrapperMainContent withBackButton title="Accounts">
+        <Search control={control} containerStyle={spacings.mbLg} />
+        <View style={[flexbox.flex1]} ref={accountsContainerRef}>
+          <ScrollableWrapper
+            type={WRAPPER_TYPES.DRAGGABLE_FLAT_LIST}
+            data={localAccounts}
+            keyExtractor={keyExtractor}
+            onDragEnd={handleAccDragEnd}
+            renderItem={renderItem as any}
+            getItemLayout={getItemLayout}
+            ListEmptyComponent={<Text>{t('No accounts found')}</Text>}
+          />
+        </View>
+
+        <Button
+          testID="button-add-account"
+          text={t('Add account')}
+          size="regular"
+          onPress={openBottomSheet as any}
+          childrenPosition="left"
+          hasBottomSpacing={false}
+          style={{ ...flexbox.alignSelfCenter, width: '100%' }}
+        >
+          <AddCircularIcon width={24} height={24} color="#fff" style={spacings.mrTy} />
+        </Button>
+
+        <AccountSmartSettingsBottomSheet
+          sheetRef={sheetRefAccountSmartSettings}
+          closeBottomSheet={() => {
+            setSmartSettingsAccount(null)
+            closeAccountSmartSettings()
+          }}
+          account={smartSettingsAccount}
+        />
+        <AccountKeysBottomSheet
+          sheetRef={sheetRefExportImportKey}
+          account={exportImportAccount}
+          closeBottomSheet={() => {
+            setExportImportAccount(null)
+            closeExportImportKey()
+          }}
+          openAddAccountBottomSheet={openBottomSheet}
+          showExportImport
+        />
+        <BottomSheet
+          id="remove-account-seed-sheet"
+          type={isWeb ? 'modal' : 'bottom-sheet'}
+          sheetRef={sheetRefRemoveAccount}
+          closeBottomSheet={() => {
+            setAccountToRemove(null)
+            closeRemoveAccount()
+          }}
+          onBackdropPress={() => {
+            setAccountToRemove(null)
+            closeRemoveAccount()
+          }}
+          scrollViewProps={isWeb ? { contentContainerStyle: { flex: 1 } } : undefined}
+          containerInnerWrapperStyles={{ flex: 1 }}
+          style={isWeb ? { maxWidth: 432, minHeight: 432, ...spacings.pvLg } : undefined}
+        >
+          <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mbLg]}>
+            {!isMobile && (
+              <PanelBackButton
+                onPress={() => {
+                  setAccountToRemove(null)
+                  closeRemoveAccount()
+                }}
+                style={spacings.mrSm}
+              />
+            )}
+            <PanelTitle
+              title={t('Remove {{ label }}', {
+                label: accountToRemove?.preferences?.label || 'account'
+              })}
+              style={isMobile ? text.center : text.left}
+            />
+          </View>
+          <View style={[flexbox.flex1, flexbox.alignCenter, flexbox.justifyCenter]}>
+            <Text fontSize={16} weight="medium" style={{ ...spacings.mb, textAlign: 'center' }}>
+              {t('Are you sure you want to remove this account?')}
+            </Text>
+          </View>
+          <View style={isWeb ? flexbox.alignCenter : {}}>
+            <Button
+              testID="confirm-remove-account-button"
+              type="danger"
+              style={spacings.mtTy}
+              hasBottomSpacing={false}
+              text={t('Remove account')}
+              onPress={removeAccount}
+            />
+          </View>
+        </BottomSheet>
+        <AddAccount sheetRef={sheetRef} closeBottomSheet={closeBottomSheet} />
+      </MobileLayoutWrapperMainContent>
+    </MobileLayoutContainer>
+  )
+}
+
+export default React.memo(AccountsSettingsScreen)

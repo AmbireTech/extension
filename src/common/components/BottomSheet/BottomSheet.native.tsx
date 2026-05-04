@@ -1,17 +1,12 @@
 import React, { RefObject, useEffect, useState } from 'react'
-import { ScrollView, useWindowDimensions, View } from 'react-native'
-import {
-  KeyboardController,
-  KeyboardEvents,
-  useReanimatedFocusedInput,
-  useReanimatedKeyboardAnimation
-} from 'react-native-keyboard-controller'
+import { ScrollView, View } from 'react-native'
+import { KeyboardController, KeyboardEvents } from 'react-native-keyboard-controller'
 import { Modalize } from 'react-native-modalize'
-import Animated, { useAnimatedStyle, useSharedValue } from 'react-native-reanimated'
+import Animated from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import useTheme from '@common/hooks/useTheme'
-import spacings, { SPACING, SPACING_SM } from '@common/styles/spacings'
+import spacings, { SPACING_LG, SPACING_SM } from '@common/styles/spacings'
 import common, { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import { Portal } from '@gorhom/portal'
 
@@ -20,7 +15,7 @@ import { BottomSheetProps } from './BottomSheet'
 import getStyles from './styles'
 import useBottomSheetInternal from './useBottomSheetInternal'
 
-const ANIMATION_DURATION: number = 250
+const DEFAULT_ANIMATION_DURATION: number = 250
 
 const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
   const {
@@ -28,7 +23,7 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
     type: _type,
     scrollViewRef: externalScrollViewRef,
     children,
-    closeBottomSheet = () => {},
+    closeBottomSheet: _closeBottomSheet = () => {},
     adjustToContentHeight = true,
     style = {},
     containerInnerWrapperStyles = {},
@@ -39,6 +34,7 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
     flatListProps,
     sectionListProps,
     scrollViewProps,
+    animationDuration = DEFAULT_ANIMATION_DURATION,
     backgroundColor = 'primaryBackground',
     autoWidth = false,
     shouldBeClosableOnDrag = true,
@@ -50,15 +46,14 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
 
   const { styles, theme } = useTheme(getStyles)
   const { bottom } = useSafeAreaInsets()
-  const { height: keyboardHeight } = useReanimatedKeyboardAnimation()
-  const { input } = useReanimatedFocusedInput()
-  const { height: windowHeight } = useWindowDimensions()
   const [isKeyboardVisible, setIsKeyboardVisible] = useState(false)
-  const currentTranslateY = useSharedValue(0)
+  const closeBottomSheet = React.useCallback(_closeBottomSheet, [_closeBottomSheet])
 
   useEffect(() => {
     const showSub = KeyboardEvents.addListener('keyboardWillShow', () => setIsKeyboardVisible(true))
-    const hideSub = KeyboardEvents.addListener('keyboardWillHide', () => setIsKeyboardVisible(false))
+    const hideSub = KeyboardEvents.addListener('keyboardWillHide', () =>
+      setIsKeyboardVisible(false)
+    )
 
     return () => {
       showSub.remove()
@@ -76,38 +71,6 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
     setIsBackdropVisible,
     id
   } = useBottomSheetInternal(props)
-
-  const keyboardOffsetStyle = useAnimatedStyle(() => {
-    const kbHeight = Math.abs(keyboardHeight.value)
-    if (kbHeight === 0) {
-      currentTranslateY.value = 0
-      return { transform: [{ translateY: 0 }] }
-    }
-
-    let shift = kbHeight
-
-    if (input.value) {
-      const restingY = input.value.layout.absoluteY - currentTranslateY.value
-      const inputBottomY = restingY + input.value.layout.height
-      const keyboardTopY = windowHeight - kbHeight
-      const requiredShift = inputBottomY + 24 - keyboardTopY
-      const maxShift = Math.max(0, restingY - modalTopOffset - 24)
-
-      if (requiredShift > 0) {
-        shift = Math.min(kbHeight, requiredShift, maxShift)
-      } else {
-        shift = 0
-      }
-    }
-
-    let shiftValue = shift
-    if (shift !== 0) {
-      shiftValue = shift
-    }
-
-    currentTranslateY.value = -shiftValue
-    return { transform: [{ translateY: -shiftValue }] }
-  })
 
   const scrollViewRef = externalScrollViewRef
 
@@ -131,12 +94,7 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
       )}
       <Animated.View
         key={`portal-host-${id}`}
-        style={[
-          styles.portalHost,
-          customZIndex ? { zIndex: customZIndex } : {},
-
-          keyboardOffsetStyle
-        ]}
+        style={[styles.portalHost, customZIndex ? { zIndex: customZIndex } : {}]}
         pointerEvents="box-none"
       >
         <Modalize
@@ -151,14 +109,22 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
             styles.bottomSheet,
             {
               borderBottomEndRadius: isKeyboardVisible ? BORDER_RADIUS_PRIMARY : 0,
-              borderBottomStartRadius: isKeyboardVisible ? BORDER_RADIUS_PRIMARY : 0
+              borderBottomStartRadius: isKeyboardVisible ? BORDER_RADIUS_PRIMARY : 0,
+              paddingHorizontal: SPACING_SM
             },
             isModal
-              ? { ...styles.modal, ...(autoWidth ? { maxWidth: null, width: 'auto' } : {}) }
+              ? {
+                  ...styles.modal,
+                  ...(autoWidth ? { maxWidth: null, width: 'auto' } : {}),
+                  borderBottomEndRadius: 30,
+                  borderTopLeftRadius: 30,
+                  borderBottomStartRadius: 30,
+                  borderTopRightRadius: 30,
+                  paddingHorizontal: SPACING_LG
+                }
               : {},
 
             {
-              paddingHorizontal: SPACING_SM,
               backgroundColor: theme[backgroundColor]
             },
             style
@@ -173,27 +139,33 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
               : {}
           ]}
           handlePosition="inside"
-          useNativeDriver={false}
+          useNativeDriver={true}
           avoidKeyboardLikeIOS={false}
           modalTopOffset={modalTopOffset}
           threshold={90}
           HeaderComponent={HeaderComponent}
-          adjustToContentHeight={customRenderer ? false : adjustToContentHeight}
+          adjustToContentHeight={
+            customRenderer ? false : isKeyboardVisible ? false : adjustToContentHeight
+          }
           disableScrollIfPossible={false}
           withOverlay={false}
-          onBackButtonPress={() => true}
+          onBackButtonPress={() => {
+            closeBottomSheet()
+            return true
+          }}
           panGestureEnabled={shouldBeClosableOnDrag}
           {...(!flatListProps && !sectionListProps
             ? {
                 scrollViewProps: {
                   bounces: false,
                   keyboardShouldPersistTaps: 'handled',
+                  showsVerticalScrollIndicator: false,
                   ...(!isScrollEnabled && {
                     scrollEnabled: false,
                     nestedScrollEnabled: true,
                     contentContainerStyle: { flexGrow: 1 }
                   }),
-                  style: { marginBottom: bottom + SPACING_SM },
+                  style: { marginBottom: isModal ? SPACING_LG : bottom + SPACING_SM },
                   ...(scrollViewProps || {})
                 }
               }
@@ -203,7 +175,8 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
                 flatListProps: {
                   bounces: false,
                   keyboardShouldPersistTaps: 'handled',
-                  style: { marginBottom: bottom + SPACING_SM },
+                  showsVerticalScrollIndicator: false,
+                  style: { marginBottom: isModal ? SPACING_LG : bottom + SPACING_SM },
                   ...(flatListProps || {})
                 }
               }
@@ -213,16 +186,17 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
                 sectionListProps: {
                   bounces: false,
                   keyboardShouldPersistTaps: 'handled',
-                  style: { marginBottom: bottom + SPACING_SM },
+                  showsVerticalScrollIndicator: false,
+                  style: { marginBottom: isModal ? SPACING_LG : bottom + SPACING_SM },
                   ...(sectionListProps || {})
                 }
               }
             : {})}
           openAnimationConfig={{
-            timing: { duration: ANIMATION_DURATION, delay: 0 }
+            timing: { duration: animationDuration, delay: 0 }
           }}
           closeAnimationConfig={{
-            timing: { duration: ANIMATION_DURATION, delay: 0 }
+            timing: { duration: animationDuration, delay: 0 }
           }}
           onOpen={() => {
             KeyboardController.dismiss()

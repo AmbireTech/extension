@@ -11,7 +11,6 @@ import ButtonWithLoader from '@common/components/ButtonWithLoader/ButtonWithLoad
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import HoldToProceedButton from '@common/components/HoldToProceedButton'
 import { isMobile, isWeb } from '@common/config/env'
-import alert from '@common/services/alert'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { getUiType } from '@common/utils/uiType'
@@ -100,6 +99,7 @@ const Buttons: FC<Props> = ({
       style={[
         isWeb ? flexbox.directionRow : { flexDirection: 'column-reverse' },
         isWeb && flexbox.alignCenter,
+        isMobile && spacings.ptSm,
         flexbox.justifyEnd
       ]}
     >
@@ -130,10 +130,6 @@ const Buttons: FC<Props> = ({
             childrenPosition="left"
             style={isWeb ? { minWidth: 160, ...spacings.phMd } : {}}
             onPress={() => {
-              if (isMobile) {
-                alert('Coming soon!')
-                return
-              }
               if (isLocalStateOutOfSync) return
               handleSubmitForm(false)
             }}

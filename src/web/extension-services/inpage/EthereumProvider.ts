@@ -3,6 +3,7 @@ import { ethErrors, serializeError } from 'eth-rpc-errors'
 import { EventEmitter } from 'events'
 
 import { Messenger } from '@ambire-common/interfaces/messenger'
+import logger, { LOG_LEVELS, logInfoWithPrefix, logWarnWithPrefix } from '@common/utils/logger'
 import { delayPromise } from '@common/utils/promises'
 import { ETH_RPC_METHODS_AMBIRE_MUST_HANDLE } from '@web/constants/common'
 import { providerRequestTransport } from '@web/extension-services/background/provider/providerRequestTransport'
@@ -10,7 +11,6 @@ import DedupePromise from '@web/extension-services/inpage/services/dedupePromise
 import PushEventHandlers from '@web/extension-services/inpage/services/pushEventsHandlers'
 import ReadyPromise from '@web/extension-services/inpage/services/readyPromise'
 import { initializeMessenger } from '@web/extension-services/messengers/initializeMessenger'
-import logger, { LOG_LEVELS, logInfoWithPrefix, logWarnWithPrefix } from '@web/utils/logger'
 
 export interface StateProvider {
   accounts: string[] | null

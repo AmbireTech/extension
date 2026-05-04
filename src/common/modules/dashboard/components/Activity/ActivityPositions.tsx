@@ -1,9 +1,10 @@
 import React, { FC, useCallback, useEffect, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Animated, FlatListProps, TouchableOpacity, View } from 'react-native'
+import { Animated, FlatListProps, View } from 'react-native'
 
 import { BannerType } from '@ambire-common/interfaces/banner'
 import { Network } from '@ambire-common/interfaces/network'
+import { SubmittedAccountOp } from '@ambire-common/libs/accountOp/submittedAccountOp'
 import { getCurrentAccountBanners } from '@ambire-common/libs/banners/banners'
 import InfoIcon from '@common/assets/svg/InfoIcon'
 import Banner from '@common/components/Banner'
@@ -35,6 +36,8 @@ interface Props {
   onScroll: FlatListProps<any>['onScroll']
   animatedOverviewHeight: Animated.Value
   network: Network | null
+  refreshing?: boolean
+  onRefresh?: () => void
 }
 
 const { isPopup, isRequestWindow } = getUiType()
@@ -49,6 +52,14 @@ const blockExplorerName = (explorerUrl: string) => {
   return explorerUrl.replace('https://', '').replace('http://', '').replace('www.', '')
 }
 
+type Item =
+  | SubmittedAccountOp
+  | 'header'
+  | 'empty'
+  | 'keep-this-to-avoid-key-warning'
+  | 'skeleton'
+  | 'load-more'
+
 const ActivityPositions: FC<Props> = ({
   openTab,
   sessionId,
@@ -56,7 +67,9 @@ const ActivityPositions: FC<Props> = ({
   initTab,
   onScroll,
   animatedOverviewHeight,
-  network
+  network,
+  refreshing,
+  onRefresh
 }) => {
   const { t } = useTranslation()
   const { theme } = useTheme()
@@ -109,7 +122,7 @@ const ActivityPositions: FC<Props> = ({
   }, [openTab, account?.addr, activityDispatch, dashboardNetworkFilter, sessionId])
 
   const renderItem = useCallback(
-    ({ item }: any) => {
+    ({ item }: { item: Item }) => {
       if (item === 'header') {
         return (
           <View style={{ backgroundColor: theme.primaryBackground }}>
@@ -178,7 +191,11 @@ const ActivityPositions: FC<Props> = ({
               {t(
                 `Ambire doesn't retrieve transactions made${isWeb ? '\n' : ''} before installing the extension, but you can ${isWeb ? '\n' : ''}check your address on `
               )}
-              <TouchableOpacity
+              <Text
+                weight="medium"
+                color={theme.linkText}
+                fontSize={16}
+                style={{ textDecorationLine: 'none' }}
                 onPress={() =>
                   openInTab({
                     url: blockExplorerUrl(
@@ -189,10 +206,8 @@ const ActivityPositions: FC<Props> = ({
                   })
                 }
               >
-                <Text weight="medium" color={theme.linkText} style={{ textDecorationLine: 'none' }}>
-                  {blockExplorerName(network?.explorerUrl || 'https://etherscan.io')}
-                </Text>
-              </TouchableOpacity>
+                {blockExplorerName(network?.explorerUrl || 'https://etherscan.io')}
+              </Text>
               .
             </Text>
           </View>
@@ -235,8 +250,9 @@ const ActivityPositions: FC<Props> = ({
                         })
                       },
                       {
-                        itemsPerPage: ITEMS_PER_PAGE,
-                        fromPage: result.currentPage + 1
+                        itemsPerPage:
+                          (accountsOps[sessionId]?.pagination.itemsPerPage || 0) + ITEMS_PER_PAGE,
+                        fromPage: 0
                       }
                     ]
                   }
@@ -250,7 +266,7 @@ const ActivityPositions: FC<Props> = ({
 
       return (
         <SubmittedTransactionSummary
-          key={item.txnId}
+          key={`${item.id}-${item.txnId}-${item.timestamp}`}
           defaultType="summary"
           submittedAccountOp={item}
           style={spacings.mbSm}
@@ -274,10 +290,10 @@ const ActivityPositions: FC<Props> = ({
     ]
   )
 
-  const keyExtractor = useCallback((positionOrElement: any) => {
+  const keyExtractor = useCallback((positionOrElement: Item) => {
     if (typeof positionOrElement === 'string') return positionOrElement
 
-    return positionOrElement.txnId
+    return `${positionOrElement.id}-${positionOrElement.txnId}-${positionOrElement.timestamp}`
   }, [])
 
   return (
@@ -301,6 +317,8 @@ const ActivityPositions: FC<Props> = ({
       windowSize={9} // Larger values can cause performance issues.
       onScroll={onScroll}
       scrollEventThrottle={16}
+      refreshing={refreshing}
+      onRefresh={onRefresh}
       animatedOverviewHeight={animatedOverviewHeight}
     />
   )
