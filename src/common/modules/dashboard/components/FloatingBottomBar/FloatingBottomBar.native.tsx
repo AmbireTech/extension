@@ -1,20 +1,18 @@
 import React from 'react'
-import { View } from 'react-native'
+import { TouchableOpacity, View } from 'react-native'
 import { useReanimatedKeyboardAnimation } from 'react-native-keyboard-controller'
 import Animated, { useAnimatedStyle, useDerivedValue, withSpring } from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { useNavigate } from 'react-router-native'
 
 import GlassView from '@common/components/GlassView'
 import useTheme from '@common/hooks/useTheme'
+import useToast from '@common/hooks/useToast'
 import SelectNetwork from '@common/modules/dashboard/components/TabsAndSearch/SelectNetwork'
+// import ScanIcon from '@common/assets/svg/ScanIcon'
+import { ROUTES } from '@common/modules/router/constants/common'
 import spacings, { SPACING } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-
-import { useNavigate } from 'react-router-native'
-import { TouchableOpacity } from 'react-native'
-import ScanIcon from '@common/assets/svg/ScanIcon'
-import { ROUTES } from '@common/modules/router/constants/common'
-import useToast from '@common/hooks/useToast'
 import { useCameraPermissions } from '@mobile/modules/qr-reader/contexts/CameraPermissionsContext'
 
 import DashboardSearch from './DashboardSearch'
@@ -93,15 +91,15 @@ const FloatingBottomBar: React.FC<FloatingBottomBarProps> = ({
               {
                 width: 44,
                 height: 44,
-                borderRadius: 22,
-                backgroundColor: theme.background400
+                borderRadius: 22
+                // backgroundColor: theme.background400
               },
               flexbox.center
             ]}
             onPress={handleQrPress}
             activeOpacity={0.8}
           >
-            <ScanIcon width={24} height={24} color={theme.text100} />
+            {/* <ScanIcon width={24} height={24} color={theme.text100} /> */}
           </TouchableOpacity>
           {displayNetworkFilter && <SelectNetwork />}
         </View>
