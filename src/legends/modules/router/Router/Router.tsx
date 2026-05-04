@@ -36,10 +36,7 @@ const PrivateArea: FC<{ children: ReactNode }> = ({ children }) => {
     <LeaderboardContextProvider>
       <LegendsContextProvider>
         <PortfolioProvider>
-          <DataPollingContextProvider>
-            <Season2Modal />
-            {children}
-          </DataPollingContextProvider>
+          <DataPollingContextProvider>{children}</DataPollingContextProvider>
         </PortfolioProvider>
       </LegendsContextProvider>
     </LeaderboardContextProvider>
