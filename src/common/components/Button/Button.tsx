@@ -15,7 +15,7 @@ import useOnEnterKeyPress from '@web/hooks/useOnEnterKeyPress'
 import { createGlobalTooltipDataSet } from '../GlobalTooltip'
 import getStyles from './styles'
 
-export type ButtonTypes =
+type ButtonTypes =
   | 'primary'
   | 'secondary'
   | 'tertiary'

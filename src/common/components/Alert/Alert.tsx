@@ -1,12 +1,12 @@
 import React from 'react'
-import { StyleProp, TextProps, View, ViewStyle } from 'react-native'
+import { StyleProp, TextProps, TextStyle, View, ViewStyle } from 'react-native'
 import { SvgProps } from 'react-native-svg'
 
 import ErrorIcon from '@common/assets/svg/ErrorIcon'
 import InfoIcon from '@common/assets/svg/InfoIcon'
 import SuccessIcon from '@common/assets/svg/SuccessIcon'
 import WarningIcon from '@common/assets/svg/WarningIcon'
-import Button, { ButtonTypes, Props as ButtonProps } from '@common/components/Button'
+import Button, { Props as ButtonProps } from '@common/components/Button'
 import { isMobile } from '@common/config/env'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
@@ -31,8 +31,6 @@ interface Props {
   testID?: string
 }
 
-type AlertType = NonNullable<Props['type']>
-
 const ICON_MAP = {
   error: ErrorIcon,
   warning: WarningIcon,
@@ -40,12 +38,38 @@ const ICON_MAP = {
   info: InfoIcon
 }
 
-const ALERT_TYPE_TO_BUTTON: Record<AlertType, ButtonTypes> = {
-  error: 'dangerFilled',
-  warning: 'warning',
-  success: 'success',
-  info: 'info'
+type AlertSeverity = 'error' | 'warning' | 'success' | 'info'
+
+const SEVERITY_FILL_THEME_KEY: Record<
+  AlertSeverity,
+  'error300' | 'warning300' | 'success300' | 'info300'
+> = {
+  error: 'error300',
+  warning: 'warning300',
+  success: 'success300',
+  info: 'info300'
 }
+
+type AlertPrimaryButtonProps = Omit<ButtonProps, 'type'> & {
+  severity: AlertSeverity
+}
+
+const AlertPrimaryButton = React.memo(
+  ({ severity, style, textStyle, ...rest }: AlertPrimaryButtonProps) => {
+    const { theme } = useTheme()
+    const backgroundColor = theme[SEVERITY_FILL_THEME_KEY[severity]] as string
+    const textColor = theme[`${severity}Text`] as string
+
+    return (
+      <Button
+        {...rest}
+        type="info"
+        style={[{ backgroundColor, borderWidth: 0 }, style] as StyleProp<ViewStyle>}
+        textStyle={[{ color: textColor }, textStyle] as StyleProp<TextStyle>}
+      />
+    )
+  }
+)
 
 const { isPopup } = getUiType()
 
@@ -155,7 +179,7 @@ const Alert = ({
           (() => {
             const {
               style: buttonStyleFromProps,
-              type: buttonTypeOverride,
+              type: _buttonTypeFromProps,
               textStyle: buttonTextStyleFromProps,
               size: buttonSizeOverride,
               hasBottomSpacing: buttonHasBottomSpacing,
@@ -165,12 +189,12 @@ const Alert = ({
             } = buttonProps
 
             return (
-              <Button
+              <AlertPrimaryButton
                 {...restButtonProps}
+                severity={type}
                 text={buttonText}
                 onPress={buttonOnPress}
                 size={buttonSizeOverride ?? 'small'}
-                type={buttonTypeOverride ?? ALERT_TYPE_TO_BUTTON[type]}
                 hasBottomSpacing={buttonHasBottomSpacing ?? false}
                 textStyle={buttonTextStyleFromProps}
                 style={
