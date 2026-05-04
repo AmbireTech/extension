@@ -157,7 +157,7 @@ const HardwareWalletSigningModal = ({
           flexbox.alignSelfCenter,
           spacings.mbLg,
           flexbox.alignCenter,
-          { width: '100%', maxWidth: 410 }
+          { width: '100%', maxWidth: 420 }
         ]}
       >
         <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mbTy]}>
