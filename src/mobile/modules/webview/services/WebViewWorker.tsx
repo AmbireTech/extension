@@ -370,6 +370,16 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, {}>((_, ref) => {
 
   const source = getSource()
 
+  const handleRenderProcessGone = (syntheticEvent: any) => {
+    const { nativeEvent } = syntheticEvent || {}
+    console.warn('[WebViewWorker] WebView process terminated, remounting worker...', nativeEvent)
+    isReadyRef.current = false
+    setIsReady(false)
+    setIsLoaded(false)
+    pendingConfig.current = lastConfig.current
+    setWebviewKey((k) => k + 1)
+  }
+
   const injectedJSBefore = __DEV__
     ? `
       ${globalErrorHandler}
@@ -449,6 +459,8 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, {}>((_, ref) => {
           )
         }
       }}
+      onRenderProcessGone={handleRenderProcessGone}
+      onContentProcessDidTerminate={handleRenderProcessGone}
       javaScriptEnabled={true}
       injectedJavaScriptBeforeContentLoaded={injectedJSBefore}
       originWhitelist={__DEV__ ? ['file://*', `${devUrl}/*`] : ['file://*']}

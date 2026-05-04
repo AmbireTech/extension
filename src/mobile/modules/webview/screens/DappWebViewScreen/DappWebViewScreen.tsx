@@ -272,13 +272,37 @@ const DappWebViewScreen = () => {
     []
   )
 
+  const updateCurrentOriginRef = useCallback(
+    (nextUrl: string) => {
+      if (!nextUrl || nextUrl === currentUrlRef.current) return
+      // Only track HTTPS URLs. `onShouldStartLoadWithRequest` already blocks
+      // non-HTTPS navigations, so this is defense-in-depth: never let the ref
+      // drift to an unsafe scheme (about:blank intermediate states, etc.).
+      try {
+        if (new URL(nextUrl).protocol !== 'https:') return
+      } catch {
+        return
+      }
+      const previousUrl = currentUrlRef.current
+      currentUrlRef.current = nextUrl
+      try {
+        if (new URL(previousUrl).origin !== new URL(nextUrl).origin) {
+          dispatch({ type: 'WEBVIEW_ORIGIN_CHANGED', params: { previousOrigin: previousUrl } })
+        }
+      } catch {
+        // previousUrl may not be a valid URL yet (e.g. on first load)
+      }
+    },
+    [dispatch]
+  )
+
   const handleNavigationStateChange = useCallback(
     (e: WebViewNavigation) => {
-      // Only react to stable navigation states. The `loading` flag on this
-      // event fires for subresource loads, XHRs and SPA/client-side routing,
-      // which would otherwise make the progress bar flicker and re-appear
-      // mid-load. Progress UI is driven exclusively by onLoadStart /
-      // onLoadProgress / onLoadEnd / onError.
+      // SECURITY: update the origin ref EAGERLY (before the loading guard
+      // below) so that early provider requests fired by the new page are
+      // attributed to the correct origin.
+      updateCurrentOriginRef(e.url)
+
       if (e.loading) return
 
       try {
@@ -290,27 +314,16 @@ const DappWebViewScreen = () => {
           // For now, we just don't update the current URL, keeping the previous safe URL
           return
         }
-        const previousOrigin = currentUrlRef.current
         setCurrentUrl(e.url)
-        currentUrlRef.current = e.url
         setCanGoBack(e.canGoBack)
         // Keep dappUrl in sync with the actual page the WebView is on so that
         // currentDapp (and the ManageApp bottom sheet) always reflect the real URL
         setDappUrl?.(e.url)
-        // If the origin changed, delete the stale session so the next provider
-        // request creates a fresh one bound to the new origin
-        try {
-          if (new URL(previousOrigin).origin !== url.origin) {
-            dispatch({ type: 'WEBVIEW_ORIGIN_CHANGED', params: { previousOrigin } })
-          }
-        } catch {
-          // previousOrigin may not be a valid URL yet (e.g. on first load)
-        }
       } catch {
         console.warn('[DappWebView] Invalid URL in navigation:', e.url)
       }
     },
-    [dispatch, setDappUrl]
+    [updateCurrentOriginRef, setDappUrl]
   )
 
   // This MUST be the first script injected. It hardens the RN <-> WebView bridge by:
@@ -828,6 +841,13 @@ const DappWebViewScreen = () => {
   //   - onError dismisses the bar so failed pages don't leave it hanging.
   const handleLoadStart = useCallback(
     (event: { nativeEvent: { url: string; isReload?: boolean } }) => {
+      // SECURITY: Defense-in-depth for the `currentUrlRef` eager-update.
+      // `onLoadStart` fires before `onNavigationStateChange` on some
+      // platforms, so refreshing here guarantees the ref is never behind
+      // the page's actual origin when the injected provider's `initialize()`
+      // starts firing `tabCheckin` / `getProviderState` requests.
+      updateCurrentOriginRef(event.nativeEvent.url)
+
       let treatAsReload: boolean
       if (Platform.OS === 'ios') {
         treatAsReload = true
@@ -848,7 +868,7 @@ const DappWebViewScreen = () => {
         updateProgressState({ progress: 0, isLoading: true })
       }
     },
-    [updateProgressState]
+    [updateProgressState, updateCurrentOriginRef]
   )
 
   const handleLoadProgress = useCallback(
@@ -876,6 +896,20 @@ const DappWebViewScreen = () => {
   const handleLoadError = useCallback(() => {
     updateProgressState({ progress: 0, isLoading: false })
   }, [updateProgressState])
+
+  const handleRenderProcessGone = useCallback(
+    // Typed as `any` because Android's `onRenderProcessGone` yields a
+    // `WebViewRenderProcessGoneEvent` while iOS's `onContentProcessDidTerminate`
+    // yields a `WebViewTerminatedEvent`, and we wire the same callback to both.
+    (syntheticEvent: any) => {
+      const nativeEvent = syntheticEvent?.nativeEvent
+      console.warn('[DappWebView] WebView process terminated, reloading dapp...', nativeEvent)
+      updateProgressState({ progress: 0, isLoading: false })
+      requestOriginsRef.current = {}
+      webviewRef.current?.reload()
+    },
+    [updateProgressState]
+  )
 
   return (
     <MobileLayoutContainer
@@ -914,6 +948,8 @@ const DappWebViewScreen = () => {
           onLoadEnd={handleLoadEnd}
           onLoadProgress={handleLoadProgress}
           onError={handleLoadError}
+          onRenderProcessGone={handleRenderProcessGone}
+          onContentProcessDidTerminate={handleRenderProcessGone}
         />
       </View>
 
