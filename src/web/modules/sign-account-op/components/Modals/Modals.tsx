@@ -128,6 +128,7 @@ const Modals: FC<ModalsProps> = ({
         onContinue={handleQrSingingFlowOnContinuePressed}
         currentRequest={currentRequest}
         signingStep={signingStep}
+        signingRequest={signAccountOpState?.hardwareWalletSigningRequest}
         transactionProgress={transactionProgress}
         submitSignatureResponse={handleQrSigningFlowSubmitSignatureResponse}
         onReject={handleQrSigningFlowOnRejectPressed}
