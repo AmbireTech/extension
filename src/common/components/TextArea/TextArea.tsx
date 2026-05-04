@@ -21,6 +21,7 @@ export interface InputProps extends TextInputProps {
   bottomLabelStyle?: TextStyle | TextStyle[]
   nativeInputStyle?: TextStyle
   leftIcon?: () => ReactNode
+  value?: string
 }
 
 const TextArea = ({
@@ -38,6 +39,7 @@ const TextArea = ({
   bottomLabelStyle,
   nativeInputStyle,
   leftIcon,
+  value,
   ...rest
 }: InputProps) => {
   const [isFocused, setIsFocused] = useState<boolean>(false)
@@ -64,8 +66,6 @@ const TextArea = ({
     inputWrapperStyle
   ]
 
-  const inputStyles = [styles.input, inputStyle]
-
   return (
     <View style={[styles.inputContainer, containerStyle]}>
       {!!label && (
@@ -76,7 +76,7 @@ const TextArea = ({
       <View style={inputWrapperStyles}>
         {!!leftIcon && <View style={styles.leftIcon}>{leftIcon()}</View>}
         {/* TextInput doesn't support border styles so we wrap it in a View */}
-        <View style={inputStyles}>
+        <View style={[styles.input, { height: '100%' }, inputStyle]}>
           <TextInput
             placeholderTextColor={theme.secondaryText}
             autoCapitalize="none"
@@ -84,6 +84,7 @@ const TextArea = ({
             editable={!disabled}
             onBlur={handleOnBlur}
             onFocus={handleOnFocus}
+            value={value}
             {...rest}
             style={{
               textAlignVertical: 'top',
