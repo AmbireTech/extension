@@ -70,7 +70,8 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
     setIsOpen,
     isBackdropVisible,
     setIsBackdropVisible,
-    id
+    id,
+    computedZIndex
   } = useBottomSheetInternal(props)
 
   const scrollViewRef = externalScrollViewRef
@@ -86,7 +87,7 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
           <Backdrop
             isVisible={isBackdropVisible}
             isBottomSheetVisible={isOpen}
-            customZIndex={customZIndex ? customZIndex - 1 : undefined}
+            customZIndex={computedZIndex ? computedZIndex - 1 : undefined}
             onPress={() => {
               closeBottomSheet()
               !!onBackdropPress && onBackdropPress()
@@ -96,7 +97,7 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
         )}
         <Animated.View
           key={`portal-host-${id}`}
-          style={[styles.portalHost, customZIndex ? { zIndex: customZIndex } : {}]}
+          style={[styles.portalHost, { zIndex: computedZIndex }]}
           pointerEvents="box-none"
         >
           <Modalize

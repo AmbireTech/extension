@@ -65,7 +65,8 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
     setIsOpen,
     isBackdropVisible,
     setIsBackdropVisible,
-    id
+    id,
+    computedZIndex
   } = useBottomSheetInternal(props)
 
   const renderContent = useCallback(() => {
@@ -139,15 +140,12 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
         {/* from losing track of its subtree during React reconciliation and re-renders. */}
         {/* Without this, the backdrop stays, but Modalize could disappear */}
         {/* without even triggering `onClose` or (this) component unmount */}
-        <View
-          key={`portal-host-${id}`}
-          style={[styles.portalHost, customZIndex ? { zIndex: customZIndex } : {}]}
-        >
+        <View key={`portal-host-${id}`} style={[styles.portalHost, { zIndex: computedZIndex }]}>
           {!!isBackdropVisible && (
             <Backdrop
               isVisible={isBackdropVisible}
               isBottomSheetVisible={isOpen}
-              customZIndex={customZIndex ? customZIndex - 1 : undefined}
+              customZIndex={computedZIndex ? computedZIndex - 1 : undefined}
               onPress={() => {
                 closeBottomSheet()
                 !!onBackdropPress && onBackdropPress()
