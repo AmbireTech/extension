@@ -991,7 +991,12 @@ const useSteps = ({
                 chainId: network.chainId,
                 tokenAddrs: getBalanceChangeTokenAddresses(foundTokens),
                 blockTag: Number(txnReceipt.blockNumber),
-                accountAddr: from
+                accountAddr: from,
+                logs: receiptLogs.map((log) => ({
+                  address: log.address,
+                  topics: [...log.topics],
+                  data: log.data
+                }))
               }
             ]
           }
