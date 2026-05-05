@@ -35,8 +35,7 @@ function categorizeRequests(requests: string[]) {
     'api.gelato.cloud',
     'ledger.com',
     'rpc.mainnet.citrea.xyz',
-    'crypto-assets-service.api.ledger.com',
-    'nft.api.live.ledger.com',
+    'ledger.com',
     // Token images
     'static.debank.com'
   ]
