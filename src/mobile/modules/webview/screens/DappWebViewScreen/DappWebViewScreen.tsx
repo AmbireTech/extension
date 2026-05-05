@@ -303,8 +303,9 @@ const DappWebViewScreen = () => {
       // attributed to the correct origin.
       updateCurrentOriginRef(e.url)
 
-      if (e.loading) return
-
+      // Always update canGoBack and the URL bar eagerly on every nav state
+      // change (including while loading=true) so the footer stays in sync
+      // with the page the WebView is already painting.
       try {
         const url = new URL(e.url)
         // Reject non-HTTPS protocols to prevent MITM attacks
@@ -317,7 +318,9 @@ const DappWebViewScreen = () => {
         setCurrentUrl(e.url)
         setCanGoBack(e.canGoBack)
         // Keep dappUrl in sync with the actual page the WebView is on so that
-        // currentDapp (and the ManageApp bottom sheet) always reflect the real URL
+        // currentDapp (and the ManageApp bottom sheet) always reflect the real URL.
+        // setDappUrl is called eagerly here AND in handleLoadStart; the helper
+        // deduplicates same-URL calls so there is no double-fetch.
         setDappUrl?.(e.url)
       } catch {
         console.warn('[DappWebView] Invalid URL in navigation:', e.url)
@@ -848,6 +851,19 @@ const DappWebViewScreen = () => {
       // starts firing `tabCheckin` / `getProviderState` requests.
       updateCurrentOriginRef(event.nativeEvent.url)
 
+      // Eagerly update the URL bar and currentDapp as soon as navigation
+      // starts so the footer reflects the new page immediately, even on
+      // slow devices where load completion can lag by several seconds.
+      const navUrl = event.nativeEvent.url
+      try {
+        if (new URL(navUrl).protocol === 'https:') {
+          setCurrentUrl(navUrl)
+          setDappUrl?.(navUrl)
+        }
+      } catch {
+        // ignore unparseable URLs
+      }
+
       let treatAsReload: boolean
       if (Platform.OS === 'ios') {
         treatAsReload = true
@@ -868,7 +884,7 @@ const DappWebViewScreen = () => {
         updateProgressState({ progress: 0, isLoading: true })
       }
     },
-    [updateProgressState, updateCurrentOriginRef]
+    [updateProgressState, updateCurrentOriginRef, setDappUrl]
   )
 
   const handleLoadProgress = useCallback(
