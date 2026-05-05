@@ -28,12 +28,15 @@ const HighlightedPlainAddress: FC<Props> = ({
   const { prefix, suffix, color } = highlight
 
   const { prefixText, middleText, suffixText } = useMemo(() => {
-    const safePrefix = Math.max(0, Math.min(prefix, address.length))
-    const safeSuffix = Math.max(0, Math.min(suffix, address.length - safePrefix))
+    // Match counts are based on address body (without 0x), rendered string includes 0x.
+    const prefixOffset = address.startsWith('0x') ? 2 : 0
+    const normalizedPrefix = prefix + prefixOffset
+    const safePrefixNormalized = Math.max(0, Math.min(normalizedPrefix, address.length))
+    const safeSuffix = Math.max(0, Math.min(suffix, address.length - safePrefixNormalized))
 
     return {
-      prefixText: address.slice(0, safePrefix),
-      middleText: address.slice(safePrefix, address.length - safeSuffix),
+      prefixText: address.slice(0, safePrefixNormalized),
+      middleText: address.slice(safePrefixNormalized, address.length - safeSuffix),
       suffixText: address.slice(address.length - safeSuffix)
     }
   }, [address, prefix, suffix])
