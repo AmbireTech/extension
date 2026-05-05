@@ -155,7 +155,8 @@ test.describe('transfer', { tag: '@transfer' }, () => {
       await pages.transfer.signSlowSpeedTransaction({
         feeToken,
         sendToken,
-        message
+        message,
+        holdProceedButton: false
       })
     })
 

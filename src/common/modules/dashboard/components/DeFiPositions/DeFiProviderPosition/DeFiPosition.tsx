@@ -30,7 +30,7 @@ const DeFiPosition: FC<Props> = ({
   additionalData,
   assets
 }) => {
-  const { inRange, name, positionIndex } = additionalData
+  const { inRange, name, positionIndex, description } = additionalData
   const suppliedAssets = assets.filter(
     (asset) => asset.type === AssetType.Liquidity || asset.type === AssetType.Collateral
   )
@@ -40,14 +40,16 @@ const DeFiPosition: FC<Props> = ({
 
   const { theme } = useTheme()
 
-  const description = useMemo(() => {
+  const descriptionWithFallback = useMemo(() => {
     try {
+      if (description) return description
+
       if (Number(positionIndex)) return `#${positionIndex}`
       return positionIndex
     } catch (error) {
       return positionIndex
     }
-  }, [positionIndex])
+  }, [description, positionIndex])
 
   return (
     <View
@@ -80,7 +82,7 @@ const DeFiPosition: FC<Props> = ({
               selectable
               numberOfLines={1}
             >
-              {description}
+              {descriptionWithFallback}
             </Text>
           )}
           {typeof inRange === 'boolean' && (

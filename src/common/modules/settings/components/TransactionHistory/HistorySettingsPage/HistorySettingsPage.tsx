@@ -44,16 +44,6 @@ interface Props {
   sessionId: string
 }
 
-const ALL_NETWORKS_OPTION = {
-  value: 'all',
-  label: <Text weight="medium">All Networks</Text>,
-  icon: (
-    <View style={spacings.phMi}>
-      <NetworksIcon width={24} height={24} />
-    </View>
-  )
-}
-
 const HistorySettingsPage: FC<Props> = ({ HistoryComponent, historyType, sessionId }) => {
   const { networks } = useController('NetworksController').state
   const { state: activityState, dispatch: activityDispatch } = useController('ActivityController')
@@ -67,6 +57,25 @@ const HistorySettingsPage: FC<Props> = ({ HistoryComponent, historyType, session
   const { setCurrentSettingsPage } = useContext(SettingsRoutesContext)
   const [, setSearchParams] = useSearchParams()
   const { theme, themeType } = useTheme()
+
+  const ALL_NETWORKS_OPTION = useMemo(
+    () => ({
+      value: 'all',
+      label: <Text weight="medium">All Networks</Text>,
+      icon: (
+        <View
+          style={[
+            spacings.phMi,
+            spacings.pvMi,
+            { backgroundColor: theme.neutral300, borderRadius: '100%' }
+          ]}
+        >
+          <NetworksIcon width={24} height={24} />
+        </View>
+      )
+    }),
+    [theme.neutral300]
+  )
 
   useEffect(() => {
     setCurrentSettingsPage(historyType)

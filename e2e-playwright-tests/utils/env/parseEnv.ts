@@ -1,6 +1,10 @@
-const parseEnv = (envVariables, prefix: 'SA' | 'BA') => {
-  if (prefix !== 'SA' && prefix !== 'BA') {
-    throw new Error(`Invalid ${prefix}. Expected 'SA' or 'BA'`)
+type Prefix = 'SA' | 'BA' | 'LEDGER_BA' | 'LEDGER_SA'
+
+const PREFIXES: Prefix[] = ['SA', 'BA', 'LEDGER_BA', 'LEDGER_SA']
+
+const parseEnv = (envVariables: Record<string, string>, prefix: Prefix) => {
+  if (!PREFIXES.includes(prefix)) {
+    throw new Error(`Invalid ${prefix}. Expected 'SA', 'BA', 'LEDGER_BA' or 'LEDGER_SA'`)
   }
 
   return {
@@ -8,7 +12,7 @@ const parseEnv = (envVariables, prefix: 'SA' | 'BA') => {
     parsedKeystoreUID: envVariables[`${prefix}_KEYSTORE_UID`],
     parsedKeystoreKeys: JSON.parse(envVariables[`${prefix}_KEYS`]),
     parsedKeystoreSecrets: JSON.parse(envVariables[`${prefix}_SECRETS`]),
-    parsedKeystoreSeeds: JSON.parse(envVariables[`${prefix}_SEEDS`]),
+    parsedKeystoreSeeds: JSON.parse(envVariables[`${prefix}_SEEDS`] || '[]'), // TODO: remove || '[]' when all env variables are updated to include SEEDS (even if empty)
     parsedLearnedAssets: JSON.parse(envVariables[`${prefix}_LEARNED_ASSETS`]),
     envSelectedAccount: envVariables[`${prefix}_SELECTED_ACCOUNT`]
   }

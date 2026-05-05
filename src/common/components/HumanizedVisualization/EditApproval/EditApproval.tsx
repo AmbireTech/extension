@@ -129,6 +129,9 @@ const EditApproval = ({ item }: { item: HumanizerVisualization }) => {
   const [initialValueSet, setInitialValueSet] = useState<boolean>(false)
 
   const portfolioToken = useMemo(() => {
+    // the humanization is also used in benzina (AmbireExplorer)
+    // where we don't have access to controllers.
+    // Therefore, we need to check whether the portfolio controller exists
     if (!portfolio) return undefined
     return portfolio.tokens.find((t) => t.address.toLowerCase() === item.address?.toLowerCase())
   }, [portfolio, item.address])
@@ -219,6 +222,9 @@ const EditApproval = ({ item }: { item: HumanizerVisualization }) => {
   // hide the edit option if there's no sign account op state
   // or it has finished / queued state
   // or the call id for this approval is missing
+  //
+  // the signAccountOpState could be missing if we're in benzina
+  // or another part of the extension (activity)
   if (
     !signAccountOpState ||
     !item.editApprovalData ||
