@@ -3,13 +3,11 @@ import { Pressable, View } from 'react-native'
 import { useReanimatedKeyboardAnimation } from 'react-native-keyboard-controller'
 import Animated, { useAnimatedStyle, useDerivedValue, withSpring } from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { useCameraPermission } from 'react-native-vision-camera'
 
 import ScanIcon from '@common/assets/svg/ScanIcon'
 import GlassView from '@common/components/GlassView'
 import useNavigation from '@common/hooks/useNavigation'
 import useTheme from '@common/hooks/useTheme'
-import useToast from '@common/hooks/useToast'
 import SelectNetwork from '@common/modules/dashboard/components/TabsAndSearch/SelectNetwork'
 import { ROUTES } from '@common/modules/router/constants/common'
 import spacings, { SPACING } from '@common/styles/spacings'
@@ -27,22 +25,9 @@ const FloatingBottomBar: React.FC<FloatingBottomBarProps> = ({
   const { height } = useReanimatedKeyboardAnimation()
   const { theme } = useTheme()
   const { navigate } = useNavigation()
-  const { addToast } = useToast()
-  const { hasPermission, requestPermission, canRequestPermission } = useCameraPermission()
 
-  const handleQrPress = async () => {
-    if (hasPermission) {
-      navigate(ROUTES.qrReader)
-    } else {
-      console.log('canRequestPermission', canRequestPermission)
-      const granted = canRequestPermission && (await requestPermission())
-      console.log('granted', granted)
-      if (granted) {
-        navigate(ROUTES.qrReader)
-      } else {
-        addToast('Camera permission is required to scan QR codes.', { type: 'error' })
-      }
-    }
+  const handleQrPress = () => {
+    navigate(ROUTES.qrReader)
   }
 
   const animatedBottom = useDerivedValue(() => {
