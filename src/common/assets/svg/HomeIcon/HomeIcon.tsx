@@ -3,7 +3,7 @@ import Svg, { Path, SvgProps } from 'react-native-svg'
 
 import useTheme from '@common/hooks/useTheme'
 
-const HomeIcon: React.FC<SvgProps> = ({ width = 18, height = 18, color, ...rest }) => {
+const HomeIcon: React.FC<SvgProps> = ({ width = 24, height = 24, color, ...rest }) => {
   const { theme } = useTheme()
   return (
     <Svg width={width} height={height} viewBox="0 0 24 24" {...rest}>

@@ -22,7 +22,7 @@ const webviewBundle = __DEV__ ? null : require('./webview-bundle.json')
 // The dev server URL for webpack-dev-server.
 // - iOS: localhost works directly
 // - Android: env WEBVIEW_DEV_HOST or fallback to 10.0.2.2
-const WEBVIEW_DEV_SERVER_PORT = 8082
+const WEBVIEW_DEV_SERVER_PORT = 8182
 const getDevServerUrl = () => {
   if (Platform.OS === 'android') {
     return `http://${WEBVIEW_DEV_HOST || '10.0.2.2'}:${WEBVIEW_DEV_SERVER_PORT}`
@@ -388,6 +388,16 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, {}>((_, ref) => {
 
   const source = getSource()
 
+  const handleRenderProcessGone = (syntheticEvent: any) => {
+    const { nativeEvent } = syntheticEvent || {}
+    console.warn('[WebViewWorker] WebView process terminated, remounting worker...', nativeEvent)
+    isReadyRef.current = false
+    setIsReady(false)
+    setIsLoaded(false)
+    pendingConfig.current = lastConfig.current
+    setWebviewKey((k) => k + 1)
+  }
+
   const injectedJSBefore = __DEV__
     ? `
       ${globalErrorHandler}
@@ -467,6 +477,8 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, {}>((_, ref) => {
           )
         }
       }}
+      onRenderProcessGone={handleRenderProcessGone}
+      onContentProcessDidTerminate={handleRenderProcessGone}
       javaScriptEnabled={true}
       injectedJavaScriptBeforeContentLoaded={injectedJSBefore}
       originWhitelist={__DEV__ ? ['file://*', `${devUrl}/*`] : ['file://*']}

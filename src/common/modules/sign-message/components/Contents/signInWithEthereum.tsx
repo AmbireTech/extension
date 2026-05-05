@@ -317,8 +317,21 @@ const SignInWithEthereum = ({
 
         {siweMessageToSign.autoLoginStatus !== 'unsupported' &&
           siweMessageToSign.siweValidityStatus === 'valid' && (
-            <View style={[flexbox.directionRow, flexbox.justifyEnd, flexbox.alignCenter]}>
-              <View style={[flexbox.directionRow, flexbox.alignCenter, flexbox.justifyEnd]}>
+            <View
+              style={[
+                isWeb && flexbox.directionRow,
+                isWeb && flexbox.justifyEnd,
+                isWeb && flexbox.alignCenter
+              ]}
+            >
+              <View
+                style={[
+                  flexbox.directionRow,
+                  flexbox.alignCenter,
+                  isWeb && flexbox.justifyEnd,
+                  isMobile && spacings.mbSm
+                ]}
+              >
                 <FatToggle
                   isOn={isAutoLoginEnabledByUser}
                   onToggle={updateIsAutoLoginEnabled}
@@ -339,8 +352,10 @@ const SignInWithEthereum = ({
                 setValue={({ value }) => {
                   updateAutoLoginExpirationTime(Number(value))
                 }}
-                containerStyle={{ width: 120, marginBottom: 0 }}
-                size="sm"
+                containerStyle={
+                  isMobile ? { width: '100%', marginBottom: 0 } : { width: 120, marginBottom: 0 }
+                }
+                size={isMobile ? 'md' : 'sm'}
                 value={AUTO_LOGIN_DURATION_OPTIONS.find(
                   (option) =>
                     // Convert the duration to hours for comparison with the option values

@@ -32,7 +32,6 @@ const COMMON_ROUTES = {
   settingsAbout: 'settings/about',
   settingsTerms: 'settings/terms',
   apps: 'apps',
-  dappWebView: 'apps/webview',
   signMessage: 'sign-message',
   addChain: 'add-chain',
   watchAsset: 'watch-asset',
@@ -42,7 +41,8 @@ const COMMON_ROUTES = {
 }
 
 const MOBILE_ROUTES = {
-  ...COMMON_ROUTES
+  ...COMMON_ROUTES,
+  dappWebView: 'apps/webview'
 }
 
 const WEB_ROUTES = {
