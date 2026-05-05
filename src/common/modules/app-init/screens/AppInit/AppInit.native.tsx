@@ -34,21 +34,21 @@ const AppInit = () => {
                 <WalletConnectProvider>
                   <ThemeProvider>
                     <GestureHandler>
-                    <ControllersStateLoadedProvider>
-                      <GlobalTooltip />
-                      <KeyboardProvider>
-                        <NetInfoProvider>
-                          <AuthProvider>
-                            <BiometricsProvider>
-                              <OnboardingNavigationProvider>
-                                <AppRouter />
-                                <PortalHost name="global" />
-                              </OnboardingNavigationProvider>
-                            </BiometricsProvider>
-                          </AuthProvider>
-                        </NetInfoProvider>
-                      </KeyboardProvider>
-                    </ControllersStateLoadedProvider>
+                      <ControllersStateLoadedProvider>
+                        <GlobalTooltip />
+                        <KeyboardProvider>
+                          <NetInfoProvider>
+                            <AuthProvider>
+                              <BiometricsProvider>
+                                <OnboardingNavigationProvider>
+                                  <AppRouter />
+                                  <PortalHost name="global" />
+                                </OnboardingNavigationProvider>
+                              </BiometricsProvider>
+                            </AuthProvider>
+                          </NetInfoProvider>
+                        </KeyboardProvider>
+                      </ControllersStateLoadedProvider>
                     </GestureHandler>
                   </ThemeProvider>
                 </WalletConnectProvider>

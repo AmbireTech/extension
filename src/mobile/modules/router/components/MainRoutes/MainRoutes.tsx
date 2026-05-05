@@ -25,6 +25,7 @@ import DappCatalogScreen from '@mobile/modules/dapp-catalog/screens/DappCatalogS
 import LedgerConnectScreen from '@mobile/modules/hardware-wallet/screens/LedgerConnectScreen'
 import KeyStoreSetupScreen from '@mobile/modules/keystore/screens/KeyStoreSetupScreen'
 import NetworksScreen from '@mobile/modules/networks/screens'
+import QrReaderScreen from '@mobile/modules/qr-reader/screens/QrReaderScreen'
 import ReceiveScreen from '@mobile/modules/receive/screens/ReceiveScreen'
 import NavMenu from '@mobile/modules/router/components/NavMenu'
 import AboutSettingsScreen from '@mobile/modules/settings/screens/AboutSettingsScreen'
@@ -87,6 +88,7 @@ const MainRoutes = () => {
             element={<GetEncryptionPublicKeyRequestScreen />}
           />
           <Route path={ROUTES.decryptRequest} element={<DecryptRequestScreen />} />
+          <Route path={ROUTES.qrReader} element={<QrReaderScreen />} />
         </Route>
       </Route>
       {/* Fallback route to suppress "No routes matched location" warnings when multiple Routes blocks are rendered */}

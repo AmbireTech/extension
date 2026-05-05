@@ -33,7 +33,10 @@ const getCameraErrorMessage = (error: any, t: (message: string) => string) => {
       if (normalizedMessage.includes('camera not found')) {
         return t('Camera permissions blocked. Please enable them from browser settings')
       }
-      if (normalizedMessage.includes('notallowederror') || normalizedMessage.includes('permission')) {
+      if (
+        normalizedMessage.includes('notallowederror') ||
+        normalizedMessage.includes('permission')
+      ) {
         return t('Camera access was denied.')
       }
       if (normalizedMessage.includes('notreadableerror')) {
