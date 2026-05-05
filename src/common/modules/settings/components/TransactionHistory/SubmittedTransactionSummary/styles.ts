@@ -1,5 +1,6 @@
 import { StyleSheet, TextStyle, ViewStyle } from 'react-native'
 
+import { isMobile } from '@common/config/env'
 import spacings from '@common/styles/spacings'
 import { ThemeProps } from '@common/styles/themeConfig'
 import common from '@common/styles/utils/common'
@@ -13,6 +14,7 @@ interface Style {
   sheetHeader: ViewStyle
   sheetHeaderBackButton: ViewStyle
   sheetHeaderTitle: TextStyle
+  sheetScroll: ViewStyle
   sheetScrollContent: ViewStyle
   modalSection: ViewStyle
   modalConfirmedRow: ViewStyle
@@ -22,6 +24,7 @@ interface Style {
   summaryItem: ViewStyle
   footer: ViewStyle
   footerButtonsRow: ViewStyle
+  footerRightButtonsGroup: ViewStyle
   footerButton: ViewStyle
   contentContainer: ViewStyle
   dappInteractionsColumn: ViewStyle
@@ -73,6 +76,9 @@ const getStyles = (theme: ThemeProps) =>
       textAlign: 'center',
       ...spacings.mtMd,
       ...spacings.mbLg
+    },
+    sheetScroll: {
+      ...flexbox.flex1
     },
     sheetScrollContent: {
       ...spacings.pbSm
@@ -153,18 +159,25 @@ const getStyles = (theme: ThemeProps) =>
       borderTopColor: theme.primaryBorder,
       borderTopWidth: 1,
       backgroundColor: theme.primaryBackground,
-      ...spacings.phLg,
+      ...(isMobile ? spacings.phSm : spacings.phLg),
       ...spacings.pvMd
     },
     footerButtonsRow: {
       ...flexbox.directionRow,
       ...flexbox.justifySpaceBetween,
-      ...flexbox.alignCenter
+      ...flexbox.alignCenter,
+      ...(isMobile ? flexbox.wrap : {})
+    },
+    footerRightButtonsGroup: {
+      ...flexbox.directionRow,
+      ...flexbox.alignCenter,
+      ...(isMobile ? { flexShrink: 1 } : {})
     },
     footerButton: {
       ...spacings.mb0,
-      ...spacings.pl,
-      ...spacings.prLg
+      ...(isMobile ? spacings.plTy : spacings.pl),
+      ...(isMobile ? spacings.prTy : spacings.prLg),
+      ...(isMobile ? { flexShrink: 1 } : {})
     }
   })
 

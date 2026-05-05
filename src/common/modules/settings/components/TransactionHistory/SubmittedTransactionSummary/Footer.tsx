@@ -18,7 +18,6 @@ import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import spacings from '@common/styles/spacings'
-import flexbox from '@common/styles/utils/flexbox'
 import { setStringAsync } from '@common/utils/clipboard'
 import { openInTab } from '@common/utils/links'
 
@@ -225,7 +224,7 @@ const Footer: FC<Props> = ({
           </Button>
         </View>
 
-        <View style={[flexbox.directionRow, flexbox.alignCenter]}>
+        <View style={styles.footerRightButtonsGroup}>
           <View
             dataSet={createGlobalTooltipDataSet({
               id: `repeat-disabled-${submittedAccountOp.id}`,

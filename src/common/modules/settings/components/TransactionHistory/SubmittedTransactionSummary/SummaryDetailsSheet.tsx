@@ -45,6 +45,7 @@ const SummaryDetailsSheet = ({
       closeBottomSheet={closeBottomSheet}
       type={modalType}
       adjustToContentHeight={modalType === 'modal'}
+      containerInnerWrapperStyles={styles.sheetContainer}
       style={{
         maxWidth: 720,
         paddingVertical: 0,
@@ -70,6 +71,7 @@ const SummaryDetailsSheet = ({
           <ScrollView
             bounces={false}
             showsVerticalScrollIndicator={false}
+            style={styles.sheetScroll}
             contentContainerStyle={styles.sheetScrollContent}
           >
             <SummaryDetails
