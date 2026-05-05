@@ -3,4 +3,4 @@ export type FinalizedStatusType = {
   reason?: string
 } | null
 
-export type ActiveStepType = 'signed' | 'in-progress' | 'finalized'
+export type ActiveStepType = 'signed' | 'in-progress' | 'balance-changes' | 'finalized'

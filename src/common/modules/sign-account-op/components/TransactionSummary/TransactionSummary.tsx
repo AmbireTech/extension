@@ -9,7 +9,6 @@ import {
 } from '@ambire-common/controllers/signAccountOp/signAccountOp'
 import { IrCall } from '@ambire-common/libs/humanizer/interfaces'
 import DeleteIcon from '@common/assets/svg/DeleteIcon'
-import Alert from '@common/components/Alert'
 import ExpandableCard from '@common/components/ExpandableCard'
 import HumanizedVisualization from '@common/components/HumanizedVisualization'
 import Label from '@common/components/Label'
@@ -394,7 +393,11 @@ const TransactionSummary = ({
               hasPadding={enableExpand}
             />
           )}
-          {hasCallFailed && <Alert type="error" title="Broadcast failed" size="sm" />}
+          {hasCallFailed && (
+            <Text fontSize={12} appearance="errorText" weight="semiBold">
+              {t('Failed')}
+            </Text>
+          )}
           {!!call.id && type === 'default' && !rightIcon && !hideDeleteIcon && (
             <AnimatedPressable
               style={deleteIconAnimStyle}
