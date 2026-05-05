@@ -36,6 +36,7 @@ function categorizeRequests(requests: string[]) {
     'ledger.com',
     'rpc.mainnet.citrea.xyz',
     'crypto-assets-service.api.ledger.com',
+    'nft.api.live.ledger.com',
     // Token images
     'static.debank.com'
   ]
