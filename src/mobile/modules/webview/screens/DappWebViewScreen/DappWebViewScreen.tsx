@@ -294,25 +294,18 @@ const DappWebViewScreen = () => {
 
   const handleNavigationStateChange = useCallback(
     (e: WebViewNavigation) => {
-      // SECURITY: update the origin ref EAGERLY (before the loading guard
-      // below) so that early provider requests fired by the new page are
-      // attributed to the correct origin.
-      updateCurrentOriginRef(e.url)
+      setCanGoBack(e.canGoBack)
 
-      // Always update canGoBack and the URL bar eagerly on every nav state
-      // change (including while loading=true) so the footer stays in sync
-      // with the page the WebView is already painting.
+      if (e.loading) return
+
       try {
         const url = new URL(e.url)
-        // Reject non-HTTPS protocols to prevent MITM attacks
         if (url.protocol !== 'https:') {
           console.warn('[DappWebView] Blocked navigation to non-HTTPS URL:', e.url)
-          // For HTTP URLs, we could optionally redirect to HTTPS or show a warning
-          // For now, we just don't update the current URL, keeping the previous safe URL
           return
         }
+        updateCurrentOriginRef(e.url)
         setCurrentUrl(e.url)
-        setCanGoBack(e.canGoBack)
         // Keep dappUrl in sync with the actual page the WebView is on so that
         // currentDapp (and the ManageApp bottom sheet) always reflect the real URL.
         // setDappUrl is called eagerly here AND in handleLoadStart; the helper
@@ -810,36 +803,27 @@ const DappWebViewScreen = () => {
   //     routing (which was what made the bar stick / re-appear on heavy
   //     pages like Next.js apps).
   //   - onLoadProgress writes the raw progress value and keeps `isLoading`
-  //     true. On Android it also doubles as the "done" signal: when
-  //     `progress >= 1` it dismisses the bar, because `onLoadEnd(loading:
-  //     false)` is unreliable there for SPAs / pages with persistent
-  //     subresources. Monotonicity is enforced at the render layer inside
-  //     `DappProgressBar`.
+  //     true while the page is still loading. It also doubles as the "done"
+  //     signal on BOTH platforms: when `progress >= 1` it dismisses the bar.
+  //     On Android `onLoadEnd(loading=false)` is unreliable for SPAs with
+  //     persistent subresources; on iOS `onLoadEnd` and `onLoadProgress(1)`
+  //     fire in non-deterministic order during BFCache (back/forward) restore
+  //     so neither alone is sufficient. Monotonicity is enforced at the
+  //     render layer inside `DappProgressBar`.
   //   - onLoadEnd only finishes when `event.nativeEvent.loading` is false
-  //     (the "really done" signal) and caches the resolved URL. On Android
-  //     this is a backstop in case `onLoadProgress` never reaches 1.
+  //     (the "really done" signal) and caches the resolved URL. It serves as
+  //     a backstop in case `onLoadProgress` never reaches 1.
   //   - onError dismisses the bar so failed pages don't leave it hanging.
   const handleLoadStart = useCallback(
     (event: { nativeEvent: { url: string; isReload?: boolean } }) => {
-      // SECURITY: Defense-in-depth for the `currentUrlRef` eager-update.
-      // `onLoadStart` fires before `onNavigationStateChange` on some
-      // platforms, so refreshing here guarantees the ref is never behind
-      // the page's actual origin when the injected provider's `initialize()`
-      // starts firing `tabCheckin` / `getProviderState` requests.
-      updateCurrentOriginRef(event.nativeEvent.url)
-
-      // Eagerly update the URL bar and currentDapp as soon as navigation
-      // starts so the footer reflects the new page immediately, even on
-      // slow devices where load completion can lag by several seconds.
-      const navUrl = event.nativeEvent.url
-      try {
-        if (new URL(navUrl).protocol === 'https:') {
-          setCurrentUrl(navUrl)
-          setDappUrl?.(navUrl)
-        }
-      } catch {
-        // ignore unparseable URLs
-      }
+      // SECURITY: do NOT touch `currentUrlRef` here. `onLoadStart` fires at
+      // navigation START (pre-commit). A page that calls `window.stop()`
+      // after triggering a cross-origin navigation would otherwise leave
+      // the trusted origin ref pointing at the destination URL while the
+      // WebView is still rendering the old (phishing) page. The trusted
+      // ref is only mutated post-commit - see `handleLoadProgress` (fast
+      // path, first non-zero progress) and `handleNavigationStateChange`
+      // (backstop, `loading=false`).
 
       let treatAsReload: boolean
       if (Platform.OS === 'ios') {
@@ -861,20 +845,51 @@ const DappWebViewScreen = () => {
         updateProgressState({ progress: 0, isLoading: true })
       }
     },
-    [updateProgressState, updateCurrentOriginRef, setDappUrl]
+    [updateProgressState]
   )
 
   const handleLoadProgress = useCallback(
     (event: { nativeEvent: { progress: number; url?: string } }) => {
       const { progress, url } = event.nativeEvent
-      if (Platform.OS === 'android' && progress >= 1) {
+
+      // SECURITY + UX: post-commit fast path. WKWebView's `estimatedProgress`
+      // and Android's `WebChromeClient.onProgressChanged` only emit non-zero
+      // values once the response has been received and the new document is
+      // being parsed - i.e. AFTER `didCommitNavigation:` / `onPageStarted`
+      // commits. By that point a `window.stop()` from JS can no longer
+      // revert the URL: commit IS the security boundary, the same one real
+      // browsers use for their address bar. Updating here gives a URL-bar
+      // refresh ~1-2s earlier than the `loading=false` backstop in
+      // `handleNavigationStateChange`, while preserving the spoof guarantee.
+      if (progress > 0 && url) {
+        try {
+          if (new URL(url).protocol === 'https:') {
+            updateCurrentOriginRef(url)
+            setCurrentUrl(url)
+            setDappUrl?.(url)
+          }
+        } catch {
+          // ignore unparseable URLs
+        }
+      }
+
+      // Treat `progress >= 1` as the dismissal signal on BOTH platforms.
+      // - Android: `onLoadEnd(loading=false)` is unreliable for SPAs with
+      //   persistent subresources, so progress is the primary "done" signal.
+      // - iOS: WKWebView's BFCache (back/forward navigation) fires
+      //   `onLoadStart`, `onLoadEnd` and the final `onLoadProgress(1)` in
+      //   microseconds, with NO guaranteed ordering. If end fires first,
+      //   then progress, the iOS-only `isLoading: true` write below would
+      //   re-show the bar at 100% and never hide it. Setting
+      //   `isLoading: false` here is idempotent with `handleLoadEnd`.
+      if (progress >= 1) {
         if (url) resolvedUrlRef.current = url
         updateProgressState({ progress: 1, isLoading: false })
         return
       }
       updateProgressState({ progress, isLoading: true })
     },
-    [updateProgressState]
+    [updateProgressState, updateCurrentOriginRef, setDappUrl]
   )
 
   const handleLoadEnd = useCallback(
