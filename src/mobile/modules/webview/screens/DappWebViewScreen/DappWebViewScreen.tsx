@@ -44,6 +44,27 @@ const ambireInpageBundle = require('../../services/ambire-inpage-bundle.json')
 // @ts-ignore
 const ethereumInpageBundle = require('../../services/ethereum-inpage-bundle.json')
 
+// SECURITY: Stash native references before any page JS can overwrite them.
+// injectJavaScript (used for responses/broadcasts) runs AFTER page JS, so
+// downstream injections must reach these pre-captured refs rather than the
+// (potentially overwritten) globals like window.postMessage or window.dispatchEvent.
+// Stored on a non-enumerable, non-configurable, frozen descriptor so the
+// page cannot delete or reassign the stash itself.
+const jsNativeStash = `
+  (function() {
+    var stash = Object.freeze({
+      postMessage: window.postMessage.bind(window),
+      dispatchEvent: window.dispatchEvent.bind(window)
+    });
+    Object.defineProperty(window, '__ambireNative', {
+      value: stash,
+      writable: false,
+      configurable: false,
+      enumerable: false
+    });
+  })();
+`
+
 // Dev-only WebView helpers
 const devOnlyHelpers = `
   // Forward console output to React Native for easy debugging
@@ -420,6 +441,8 @@ const DappWebViewScreen = () => {
     const baseCodeEthereum = (__DEV__ && devEthereumCode) || ethereumInpageBundle.code
 
     return `
+      ${jsNativeStash}
+
       ${jsBridgeHarden}
 
       ${__DEV__ ? devOnlyHelpers : ''}
@@ -723,14 +746,17 @@ const DappWebViewScreen = () => {
       // and cannot be spoofed by the page. If the WebView navigated away during the
       // async user-confirmation, the response is silently dropped (not delivered to
       // the new origin).
+      // SECURITY: Use __ambireNative.postMessage (captured before page JS ran)
+      // instead of window.postMessage which a malicious site could have overwritten
+      // to intercept response data.
       webviewRef.current?.injectJavaScript(`
          (function() {
            var expected = ${JSON.stringify(expectedOrigin)};
            if (!expected || location.origin !== expected) {
-             console.warn('[Ambire] Response blocked: origin mismatch. Expected:', expected, 'Got:', location.origin);
              return;
            }
-           window.postMessage(${JSON.stringify(replyMessage)}, location.origin);
+           var postMessage = (window.__ambireNative && window.__ambireNative.postMessage) || window.postMessage.bind(window);
+           postMessage(${JSON.stringify(replyMessage)}, location.origin);
          })();
          true;
        `)
@@ -759,14 +785,16 @@ const DappWebViewScreen = () => {
         }
       }
 
+      // SECURITY: __ambire_handleEvent is a custom global but console.warn is
+      // overwritable; removed it from the injection path. The handler itself is
+      // defined by our injected provider, so it is trustworthy if present.
       webviewRef.current?.injectJavaScript(`
         (function() {
           var expected = ${JSON.stringify(expectedOrigin)};
           if (!expected || location.origin !== expected) {
-            console.warn('[Ambire] Broadcast blocked: origin mismatch. Expected:', expected, 'Got:', location.origin);
             return;
           }
-          if (window.__ambire_handleEvent) {
+          if (typeof window.__ambire_handleEvent === 'function') {
             window.__ambire_handleEvent(${JSON.stringify(event)}, ${JSON.stringify(eventData ?? null)});
           }
         })();
@@ -788,9 +816,14 @@ const DappWebViewScreen = () => {
   // Dispatching a synthetic focus event after the sheet closes restores
   // parity with the extension behaviour.
   const dispatchWebViewFocus = useCallback(() => {
+    // SECURITY: Use __ambireNative.dispatchEvent (captured before page JS ran)
+    // so an overwritten window.dispatchEvent cannot intercept the focus event.
     webviewRef.current?.injectJavaScript(`
       (function() {
-        try { window.dispatchEvent(new Event('focus')); } catch (e) {}
+        try {
+          var dispatch = (window.__ambireNative && window.__ambireNative.dispatchEvent) || window.dispatchEvent.bind(window);
+          dispatch(new Event('focus'));
+        } catch (e) {}
       })();
       true;
     `)
