@@ -22,6 +22,7 @@ import flexbox from '@common/styles/utils/flexbox'
 import SmallNotificationWindowWrapper from '@web/components/SmallNotificationWindowWrapper'
 import { TabLayoutContainer } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
 import useDappInfo from '@web/hooks/useDappInfo/useDappInfo'
+import useDappVerificationHoldButtonType from '@web/hooks/useDappVerificationHoldButtonType'
 import ActionFooter from '@web/modules/action-requests/components/ActionFooter'
 import useLedger from '@web/modules/hardware-wallet/hooks/useLedger'
 import useQrSigningFlow from '@web/modules/hardware-wallet/hooks/useQrSigningFlow'
@@ -295,6 +296,7 @@ const SignMessageScreen = () => {
   }, [account, userRequest?.dappPromises])
 
   const hasSafetyBanners = !!signMessageState.banners?.length
+  const holdToProceedButtonType = useDappVerificationHoldButtonType(signMessageState.banners)
 
   const view = useMemo(() => {
     // Happens when switching between requests
@@ -384,6 +386,7 @@ const SignMessageScreen = () => {
                           size="large"
                           text={holdToProceedButtonText}
                           completeText={holdToProceedCompleteText}
+                          buttonType={holdToProceedButtonType}
                           onHoldComplete={signWithDefaultSignerIfPossible}
                           disabled={isResolveActionDisabled}
                         />

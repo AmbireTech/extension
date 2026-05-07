@@ -25,6 +25,7 @@ import KeySelect from '@common/modules/sign-message/components/KeySelect'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import SmallNotificationWindowWrapper from '@web/components/SmallNotificationWindowWrapper'
+import useDappVerificationHoldButtonType from '@web/hooks/useDappVerificationHoldButtonType'
 import {
   TabLayoutContainer,
   TabLayoutWrapperMainContent
@@ -172,6 +173,7 @@ const SignAccountOpScreen = () => {
   ])
 
   const estimationFailed = signAccountOpState?.status?.type === SigningStatus.EstimationError
+  const holdToProceedButtonType = useDappVerificationHoldButtonType(signAccountOpState?.banners)
 
   return (
     <SmallNotificationWindowWrapper>
@@ -266,6 +268,7 @@ const SignAccountOpScreen = () => {
                   inProgressButtonText={primaryButtonText}
                   buttonText={primaryButtonText}
                   shouldHoldToProceed={shouldHoldToProceed}
+                  holdToProceedButtonType={holdToProceedButtonType}
                 />
               </View>
             </GlassView>
