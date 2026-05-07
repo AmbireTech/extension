@@ -25,7 +25,6 @@ import flexbox from '@common/styles/utils/flexbox'
 import { WEBVIEW_DEV_HOST } from '@env'
 import { MobileLayoutContainer } from '@mobile/components/MobileLayoutWrapper'
 import DappProgressBar from '@mobile/modules/webview/components/DappProgressBar'
-import DappRequestBottomSheet from '@mobile/modules/webview/components/DappRequestBottomSheet'
 import DappWebViewFooter from '@mobile/modules/webview/components/DappWebViewFooter'
 
 // SECURITY: Generate a 256-bit random token used to gate the RN <-> WebView bridge.
@@ -169,9 +168,6 @@ const DappWebViewScreen = () => {
 
   // Bottom Sheet & Search Form State
   const { ref: searchModalRef, open: openSearchModal, close: closeSearchModal } = useModalize()
-  // Dapp Request Bottom Sheet State - from RequestsController helpers
-  const { requestModalRef, closeRequestModal, onBottomSheetClosed } =
-    useController('RequestsController')
   const { control: headerControl, setValue: setHeaderValue } = useForm({
     defaultValues: { search: initialUrl }
   })
@@ -820,10 +816,11 @@ const DappWebViewScreen = () => {
     `)
   }, [])
 
-  const onRequestBottomSheetClosed = useCallback(() => {
-    onBottomSheetClosed?.()
-    dispatchWebViewFocus()
-  }, [onBottomSheetClosed, dispatchWebViewFocus])
+  // Listen for global bottom sheet close event to dispatch focus
+  useEffect(() => {
+    eventBus.addEventListener('requestsBottomSheet.closed', dispatchWebViewFocus)
+    return () => eventBus.removeEventListener('requestsBottomSheet.closed', dispatchWebViewFocus)
+  }, [dispatchWebViewFocus])
 
   //   - onLoadStart only resets state on real top-level navigations. On iOS
   //     every `onLoadStart` is treated as such; on Android only when the
@@ -977,12 +974,6 @@ const DappWebViewScreen = () => {
         onClosed={dispatchWebViewFocus}
         HeaderComponent={searchHeaderComponent}
         flatListProps={searchFlatListProps}
-      />
-
-      <DappRequestBottomSheet
-        sheetRef={requestModalRef as any}
-        closeBottomSheet={closeRequestModal as any}
-        onClosed={onRequestBottomSheetClosed}
       />
     </MobileLayoutContainer>
   )
