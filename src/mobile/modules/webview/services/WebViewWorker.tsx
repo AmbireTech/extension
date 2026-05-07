@@ -205,6 +205,9 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, {}>((_, ref) => {
         case 'action.navigate':
           eventBus.emit('navigate', data.payload)
           break
+        case 'ui.window.action':
+          eventBus.emit('ui.window.action', data.payload)
+          break
 
         // --- PROXY HANDLERS FOR STORAGE ---
         case 'storage.get':
