@@ -37,32 +37,34 @@ const ActionFooter = ({
   const showReject = useMemo(() => !!onReject, [onReject])
 
   return (
-    <View style={[spacings.ptSm, spacings.phSm, flexbox.directionRow, { columnGap: SPACING_TY }]}>
-      {showReject && (
-        <View style={flexbox.flex1}>
-          <Button
-            text={rejectButtonText || t('Reject')}
-            type="danger"
-            hasBottomSpacing={false}
-            size="large"
-            onPress={onReject}
-            testID={rejectButtonTestID}
-          />
-        </View>
-      )}
-      {resolveNode || (
-        <View style={flexbox.flex1}>
-          <Button
-            testID={resolveButtonTestID}
-            hasBottomSpacing={false}
-            size="large"
-            type={resolveType}
-            onPress={handleOnResolve}
-            disabled={resolveDisabled}
-            text={resolveButtonText}
-          />
-        </View>
-      )}
+    <View style={[spacings.ptSm, spacings.phSm]}>
+      <View style={[flexbox.directionRow, { columnGap: SPACING_TY }]}>
+        {showReject && (
+          <View style={flexbox.flex1}>
+            <Button
+              text={rejectButtonText || t('Reject')}
+              type="danger"
+              hasBottomSpacing={false}
+              size="large"
+              onPress={onReject}
+              testID={rejectButtonTestID}
+            />
+          </View>
+        )}
+        {resolveNode || (
+          <View style={flexbox.flex1}>
+            <Button
+              testID={resolveButtonTestID}
+              hasBottomSpacing={false}
+              size="large"
+              type={resolveType}
+              onPress={handleOnResolve}
+              disabled={resolveDisabled}
+              text={resolveButtonText}
+            />
+          </View>
+        )}
+      </View>
       <ActionsPagination />
     </View>
   )
