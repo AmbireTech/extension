@@ -92,18 +92,18 @@ export class TransferPage extends BasePage {
   async checkSendTransactionOnActivityTab() {
     await this.click(selectors.dashboard.activityTabButton)
 
+    // open transaction modal
+    const firstSendTransaction = this.page.locator(selectors.dashboard.transactionSendText).first()
+    await firstSendTransaction.click()
+
     // When tests are ran in isolation, there would be only 1 txn in the activity tab.
     // But when they are ran in a shared state, we check only the latest one txn, i.e. the first one in the list.
-    const firstSendTransaction = this.page.locator(selectors.dashboard.transactionSendText).first()
     const firstConfirmedPill = this.page
       .locator(selectors.dashboard.confirmedTransactionPill)
       .first()
 
     await expect(firstSendTransaction).toContainText('Send')
     await expect(firstConfirmedPill).toContainText('Confirmed')
-
-    // open transaction modal
-    await firstSendTransaction.click()
 
     // TODO: add more assertions
     // assert transaction
