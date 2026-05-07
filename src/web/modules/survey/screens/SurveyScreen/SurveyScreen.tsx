@@ -70,6 +70,7 @@ const SurveyScreen = () => {
 
   const buttonState = useMemo((): { text: string; callback?: () => void; loading?: true } => {
     const instanceId = getExtensionInstanceId(keyStoreUid, verifiedCode)
+    if (status === 'loading-fetching' || status === 'loading-sending') return { text: 'Loading' }
 
     if (status === 'error-submitting') {
       return {
@@ -127,7 +128,6 @@ const SurveyScreen = () => {
 
     const currentAns = inputtedAnswer.ans
     if (currentAns === null) return { text: 'Next' }
-    if (status === 'loading-fetching' || status === 'loading-sending') return { text: 'Loading' }
     if (!currentQuestion) return { text: 'Error' }
 
     return {
