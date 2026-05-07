@@ -3,12 +3,11 @@ import { useTranslation } from 'react-i18next'
 import { View, ViewStyle } from 'react-native'
 
 import ReceiveIcon from '@common/assets/svg/ReceiveIcon'
-import HighlightedPlainAddress from '@common/components/AccountAddress/HighlightedPlainAddress'
 import PlainAddress from '@common/components/AccountAddress/PlainAddress'
 import PlainAddressWithCopy from '@common/components/AccountAddress/PlainAddressWithCopy'
 import DomainBadge from '@common/components/Avatar/DomainBadge'
 import Text from '@common/components/Text'
-import { isMobile, isWeb } from '@common/config/env'
+import { isMobile } from '@common/config/env'
 import useHover, { AnimatedPressable } from '@common/hooks/useHover/useHover'
 import useNavigation from '@common/hooks/useNavigation'
 import useReverseLookup from '@common/hooks/useReverseLookup'
@@ -114,44 +113,21 @@ const AccountAddress: FC<Props> = ({
                 address={address}
                 fontSize={fontSize}
                 withWrap={withWrap}
-                renderAddress={
-                  addressHighlight ? (
-                    <HighlightedPlainAddress
-                      address={address}
-                      highlight={addressHighlight}
-                      hideParentheses
-                      fontSize={fontSize}
-                      withWrap={withWrap}
-                      style={{
-                        ...(isWeb ? { flexShrink: 0 } : {}),
-                        ...(withWrap ? { minWidth: isMobile ? 70 : 170 } : {})
-                      }}
-                    />
-                  ) : undefined
-                }
+                highlight={addressHighlight}
               >
                 {withReceive && <ReceiveButton address={address} fontSize={fontSize} />}
               </PlainAddressWithCopy>
             </>
           ) : (
             <>
-              {addressHighlight ? (
-                <HighlightedPlainAddress
-                  address={address}
-                  highlight={addressHighlight}
-                  hideParentheses
-                  fontSize={fontSize}
-                  withWrap={withWrap}
-                  style={{ ...spacings.mlMi }}
-                />
-              ) : (
-                <PlainAddress
-                  maxLength={isMobile ? 13 : 18}
-                  address={address}
-                  style={{ ...spacings.mlMi }}
-                  fontSize={fontSize}
-                />
-              )}
+              <PlainAddress
+                maxLength={isMobile ? 13 : 18}
+                address={address}
+                style={{ ...spacings.mlMi }}
+                fontSize={fontSize}
+                withWrap={withWrap}
+                highlight={addressHighlight}
+              />
               {withReceive && <ReceiveButton address={address} fontSize={fontSize} />}
             </>
           )}
@@ -164,44 +140,21 @@ const AccountAddress: FC<Props> = ({
             hideParentheses
             fontSize={fontSize}
             withWrap={withWrap}
-            renderAddress={
-              addressHighlight ? (
-                <HighlightedPlainAddress
-                  address={address}
-                  highlight={addressHighlight}
-                  hideParentheses
-                  fontSize={fontSize}
-                  withWrap={withWrap}
-                  style={{
-                    ...(plainAddressMaxLength === 42 ? { flexShrink: 1 } : {}),
-                    ...(isWeb ? { flexShrink: 0 } : {}),
-                    ...(withWrap ? { minWidth: isMobile ? 70 : 170 } : {})
-                  }}
-                />
-              ) : undefined
-            }
+            highlight={addressHighlight}
           >
             {withReceive && <ReceiveButton address={address} fontSize={fontSize} />}
           </PlainAddressWithCopy>
         </>
       ) : (
         <View style={[flexbox.directionRow]}>
-          {addressHighlight ? (
-            <HighlightedPlainAddress
-              address={address}
-              highlight={addressHighlight}
-              hideParentheses
-              fontSize={fontSize}
-              withWrap={withWrap}
-            />
-          ) : (
-            <PlainAddress
-              maxLength={plainAddressMaxLength}
-              address={address}
-              hideParentheses
-              fontSize={fontSize}
-            />
-          )}
+          <PlainAddress
+            maxLength={plainAddressMaxLength}
+            address={address}
+            hideParentheses
+            fontSize={fontSize}
+            withWrap={withWrap}
+            highlight={addressHighlight}
+          />
           {withReceive && <ReceiveButton address={address} fontSize={fontSize} />}
         </View>
       )}
