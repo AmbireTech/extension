@@ -323,7 +323,8 @@ const SignMessageScreen = () => {
     signStatus === 'LOADING' ||
     isScrollToBottomForced ||
     humanizationHasBlockingWarnings ||
-    isSafeNotDeployed
+    isSafeNotDeployed ||
+    isViewOnly
 
   // In the split second when the request window opens, but the state is not yet
   // initialized, to prevent a flash of the fallback visualization, show a
@@ -364,7 +365,7 @@ const SignMessageScreen = () => {
               onReject={handleReject}
               onResolve={signWithDefaultSignerIfPossible}
               resolveButtonText={resolveButtonText}
-              resolveDisabled={isResolveActionDisabled || isViewOnly}
+              resolveDisabled={isResolveActionDisabled}
               resolveButtonTestID="button-sign"
               rejectButtonText="Reject"
               {...(hasSafetyBanners && !isViewOnly
