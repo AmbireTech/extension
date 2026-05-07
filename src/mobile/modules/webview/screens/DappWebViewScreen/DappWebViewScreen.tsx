@@ -653,6 +653,9 @@ const DappWebViewScreen = () => {
           const topic = data.topic || '> ambireProviderRequest'
 
           // Derive current origin from the trusted source (WebView's URL).
+          // payload.origin is self-reported by the page and is NOT trusted -
+          // it gets overridden below with currentUrlRef.current before dispatch.
+          // Iframe spoofing is prevented by the bridge token check above.
           const currentOrigin = (() => {
             try {
               return new URL(currentUrlRef.current).origin
@@ -660,33 +663,10 @@ const DappWebViewScreen = () => {
               return null
             }
           })()
-          const msgOrigin = payload?.origin || null
-
-          // Defense-in-depth: legacy origin host check on payload.origin (if provided).
-          if (currentOrigin && msgOrigin) {
-            try {
-              const msgOriginHost = new URL(msgOrigin).host
-              const currentOriginHost = new URL(currentOrigin).host
-              if (msgOriginHost !== currentOriginHost) {
-                console.warn(
-                  '[DappWebView] Origin mismatch - rejecting request. Expected:',
-                  currentOriginHost,
-                  'Got:',
-                  msgOriginHost
-                )
-                return // Reject the request
-              }
-            } catch {
-              // If URL parsing fails, reject for safety
-              console.warn('[DappWebView] Invalid origin in request - rejecting:', msgOrigin)
-              return
-            }
-          }
 
           // SECURITY: Always store the expected origin for EVERY request id.
-          // Previously this only ran when currentOrigin was truthy AND data.id existed -
-          // requests without payload.origin would later bypass the response origin check.
-          // Storing for all requests with an id makes the response gate effective universally.
+          // The response gate compares this against currentUrlRef.current at
+          // response time to detect navigation during async operations.
           if (data.id) {
             requestOriginsRef.current[data.id] = currentOrigin || ''
           }
