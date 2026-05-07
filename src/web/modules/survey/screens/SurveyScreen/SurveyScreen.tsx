@@ -34,10 +34,6 @@ const SurveyScreen = () => {
     state: { account }
   } = useController('SelectedAccountController')
 
-  const {
-    state: { verifiedCode }
-  } = useController('InviteController')
-
   const { navigate } = useNavigation()
 
   const handleGoBackPress = useCallback(() => {
@@ -102,7 +98,9 @@ const SurveyScreen = () => {
           )
           return
         }
-        const instanceId = getExtensionInstanceId(keyStoreUid, verifiedCode)
+
+        // we do not care about the invite code
+        const instanceId = getExtensionInstanceId(keyStoreUid, null)
 
         dispatchToSurvey({
           type: 'method',
@@ -132,8 +130,7 @@ const SurveyScreen = () => {
     inputtedAnswer.questionPosition,
     keyStoreUid,
     navigate,
-    status,
-    verifiedCode
+    status
   ])
 
   const buttons = useMemo(() => {
