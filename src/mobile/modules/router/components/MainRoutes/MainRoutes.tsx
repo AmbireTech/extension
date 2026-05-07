@@ -7,12 +7,6 @@ import { ROUTES } from '@common/modules/router/constants/common'
 import AccountPersonalizeScreen from '@mobile/modules/account-personalize/screens/AccountPersonalizeScreen'
 import AccountPickerScreen from '@mobile/modules/account-picker/screens/AccountPickerScreen'
 import AccountSelectScreen from '@mobile/modules/account-select/screens/AccountSelectScreen'
-import AddOrUpdateNetworkScreen from '@mobile/modules/action-requests/screens/AddOrUpdateNetworkScreen'
-import BenzinScreen from '@mobile/modules/action-requests/screens/BenzinScreen'
-import DecryptRequestScreen from '@mobile/modules/action-requests/screens/DecryptRequestScreen'
-import GetEncryptionPublicKeyRequestScreen from '@mobile/modules/action-requests/screens/GetEncryptionPublicKeyRequestScreen'
-import SwitchAccountScreen from '@mobile/modules/action-requests/screens/SwitchAccountScreen'
-import WatchTokenRequestScreen from '@mobile/modules/action-requests/screens/WatchTokenRequestScreen'
 import CreateSeedPhrasePrepareScreen from '@mobile/modules/auth/screens/CreateSeedPhrasePrepareScreen'
 import CreateSeedPhraseWriteScreen from '@mobile/modules/auth/screens/CreateSeedPhraseWriteScreen'
 import GetStartedScreen from '@mobile/modules/auth/screens/GetStartedScreen'
@@ -32,8 +26,6 @@ import AboutSettingsScreen from '@mobile/modules/settings/screens/AboutSettingsS
 import AccountsSettingsScreen from '@mobile/modules/settings/screens/AccountsSettingsScreen'
 import GeneralSettingsScreen from '@mobile/modules/settings/screens/GeneralSettingsScreen'
 import TermsSettingsScreen from '@mobile/modules/settings/screens/TermsSettingsScreen'
-import SignAccountOpScreen from '@mobile/modules/sign-account-op/screens/SignAccountOpScreen'
-import SignMessageScreen from '@mobile/modules/sign-message/screens/SignMessageScreen'
 import SwapAndBridgeScreen from '@mobile/modules/swap-and-bridge/screens/SwapAndBridgeScreen'
 import TokenDetailsScreen from '@mobile/modules/token-details/screens/TokenDetailsScreen'
 import TransferScreen from '@mobile/modules/transfer/screens/TransferScreen'
@@ -68,9 +60,6 @@ const MainRoutes = () => {
           <Route path={ROUTES.topUpGasTank} element={<TransferScreen isTopUpScreen />} />
           <Route path={ROUTES.accountSelect} element={<AccountSelectScreen />} />
           <Route path={ROUTES.tokenDetails} element={<TokenDetailsScreen />} />
-          <Route path={ROUTES.signAccountOp} element={<SignAccountOpScreen />} />
-          <Route path={ROUTES.signMessage} element={<SignMessageScreen />} />
-          <Route path={ROUTES.benzin} element={<BenzinScreen />} />
           <Route path={ROUTES.networks} element={<NetworksScreen />} />
           <Route path={ROUTES.swapAndBridge} element={<SwapAndBridgeScreen />} />
           <Route path={ROUTES.menu} element={<NavMenu />} />
@@ -80,14 +69,6 @@ const MainRoutes = () => {
           <Route path={ROUTES.settingsTerms} element={<TermsSettingsScreen />} />
           <Route path={ROUTES.apps} element={<DappCatalogScreen />} />
           <Route path={ROUTES.dappWebView} element={<DappWebViewScreen />} />
-          <Route path={ROUTES.addChain} element={<AddOrUpdateNetworkScreen />} />
-          <Route path={ROUTES.watchAsset} element={<WatchTokenRequestScreen />} />
-          <Route path={ROUTES.switchAccount} element={<SwitchAccountScreen />} />
-          <Route
-            path={ROUTES.getEncryptionPublicKeyRequest}
-            element={<GetEncryptionPublicKeyRequestScreen />}
-          />
-          <Route path={ROUTES.decryptRequest} element={<DecryptRequestScreen />} />
           <Route path={ROUTES.qrReader} element={<QrReaderScreen />} />
         </Route>
       </Route>

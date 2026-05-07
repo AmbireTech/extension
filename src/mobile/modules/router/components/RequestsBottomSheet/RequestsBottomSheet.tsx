@@ -25,7 +25,7 @@ interface Props {
  * Renders the appropriate action request screen based on the currentUserRequest kind.
  * Each screen is wrapped in a container that adapts it for bottom sheet display.
  */
-const DappRequestBottomSheet: React.FC<Props> = ({ sheetRef, closeBottomSheet, onClosed }) => {
+const RequestsBottomSheet: React.FC<Props> = ({ sheetRef, closeBottomSheet, onClosed }) => {
   const {
     state: { currentUserRequest }
   } = useController('RequestsController')
@@ -73,7 +73,7 @@ const DappRequestBottomSheet: React.FC<Props> = ({ sheetRef, closeBottomSheet, o
 
   return (
     <BottomSheet
-      id="dapp-request-bottom-sheet"
+      id="requests-bottom-sheet"
       sheetRef={sheetRef}
       closeBottomSheet={closeBottomSheet}
       onClosed={onClosed}
@@ -87,4 +87,4 @@ const DappRequestBottomSheet: React.FC<Props> = ({ sheetRef, closeBottomSheet, o
   )
 }
 
-export default React.memo(DappRequestBottomSheet)
+export default React.memo(RequestsBottomSheet)

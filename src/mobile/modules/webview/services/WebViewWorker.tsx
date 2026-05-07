@@ -223,6 +223,9 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, {}>((_, ref) => {
         case 'action.rejectWalletConnectSession':
           await rejectWalletConnectSession(data.payload.proposalId)
           break
+        case 'ui.window.action':
+          eventBus.emit('ui.window.action', data.payload)
+          break
 
         // --- PROXY HANDLERS FOR STORAGE ---
         case 'storage.get':

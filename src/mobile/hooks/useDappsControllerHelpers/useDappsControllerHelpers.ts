@@ -1,5 +1,5 @@
 import { nanoid } from 'nanoid'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 
 import { Dapp } from '@ambire-common/interfaces/dapp'
 import { getDappIdFromUrl } from '@ambire-common/libs/dapps/helpers'
@@ -24,6 +24,7 @@ export default function useDappsControllerHelpers(
   })
 
   const [dappUrl, setDappUrlState] = useState<string>('')
+  const lastFetchedOriginRef = useRef<string>('')
   const route = useRoute()
 
   const getCurrentDapp = useCallback(
@@ -120,9 +121,22 @@ export default function useDappsControllerHelpers(
       setDappUrlState(url)
 
       if (!url) {
+        lastFetchedOriginRef.current = ''
         updateHelpers({ currentDapp: null, isLoadingCurrentDapp: false })
         return
       }
+
+      // Skip redundant fetches for same-origin navigations (SPA route changes,
+      // hash changes, etc.) — the currentDapp metadata doesn't change within an
+      // origin, so avoid the async controller round-trip on every page click.
+      let newOrigin: string
+      try {
+        newOrigin = new URL(url).origin
+      } catch {
+        return
+      }
+      if (newOrigin === lastFetchedOriginRef.current) return
+      lastFetchedOriginRef.current = newOrigin
 
       updateHelpers({ isLoadingCurrentDapp: true })
       getCurrentDapp(url)

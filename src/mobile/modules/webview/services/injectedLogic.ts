@@ -146,26 +146,34 @@ const initControllers = (config: any) => {
       externalSignerControllers: {},
       uiManager: {
         window: {
-          open: async () => ({
-            id: 1,
-            width: 0,
-            height: 0,
-            left: 0,
-            top: 0,
-            focused: true,
-            createdFromWindowId: 0
-          }),
-          focus: async () => ({
-            id: 1,
-            width: 0,
-            height: 0,
-            left: 0,
-            top: 0,
-            focused: true,
-            createdFromWindowId: 0
-          }),
+          open: async () => {
+            sendToReactEvent('ui.window.action', { type: 'open', winId: 1 })
+            return {
+              id: 1,
+              width: 0,
+              height: 0,
+              left: 0,
+              top: 0,
+              focused: true,
+              createdFromWindowId: 0
+            }
+          },
+          focus: async () => {
+            sendToReactEvent('ui.window.action', { type: 'focus', winId: 1 })
+            return {
+              id: 1,
+              width: 0,
+              height: 0,
+              left: 0,
+              top: 0,
+              focused: true,
+              createdFromWindowId: 0
+            }
+          },
           closePopupWithUrl: async () => {},
-          remove: async () => {},
+          remove: async () => {
+            sendToReactEvent('ui.window.action', { type: 'remove', winId: 1 })
+          },
           event: new Emitter()
         },
         notification: {

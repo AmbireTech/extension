@@ -62,6 +62,9 @@ const flowContext = flow
                 }
               })
             })
+            lockedOrigins[origin].catch(() => {
+              delete lockedOrigins[origin]
+            })
           } else if (mainCtrl.requests.currentUserRequest) {
             await mainCtrl.requests.focusRequestWindow()
           }
@@ -92,6 +95,9 @@ const flowContext = flow
                   dappPromise: { id: uuidv4(), resolve, reject, session: request.session }
                 }
               })
+            })
+            connectOrigins[url].catch(() => {
+              delete connectOrigins[url]
             })
           } else if (mainCtrl.requests.currentUserRequest) {
             await mainCtrl.requests.focusRequestWindow()

@@ -25,7 +25,6 @@ import flexbox from '@common/styles/utils/flexbox'
 import { WEBVIEW_DEV_HOST } from '@env'
 import { MobileLayoutContainer } from '@mobile/components/MobileLayoutWrapper'
 import DappProgressBar from '@mobile/modules/webview/components/DappProgressBar'
-import DappRequestBottomSheet from '@mobile/modules/webview/components/DappRequestBottomSheet'
 import DappWebViewFooter from '@mobile/modules/webview/components/DappWebViewFooter'
 
 // SECURITY: Generate a 256-bit random token used to gate the RN <-> WebView bridge.
@@ -44,6 +43,27 @@ const generateBridgeToken = () => {
 const ambireInpageBundle = require('../../services/ambire-inpage-bundle.json')
 // @ts-ignore
 const ethereumInpageBundle = require('../../services/ethereum-inpage-bundle.json')
+
+// SECURITY: Stash native references before any page JS can overwrite them.
+// injectJavaScript (used for responses/broadcasts) runs AFTER page JS, so
+// downstream injections must reach these pre-captured refs rather than the
+// (potentially overwritten) globals like window.postMessage or window.dispatchEvent.
+// Stored on a non-enumerable, non-configurable, frozen descriptor so the
+// page cannot delete or reassign the stash itself.
+const jsNativeStash = `
+  (function() {
+    var stash = Object.freeze({
+      postMessage: window.postMessage.bind(window),
+      dispatchEvent: window.dispatchEvent.bind(window)
+    });
+    Object.defineProperty(window, '__ambireNative', {
+      value: stash,
+      writable: false,
+      configurable: false,
+      enumerable: false
+    });
+  })();
+`
 
 // Dev-only WebView helpers
 const devOnlyHelpers = `
@@ -169,9 +189,6 @@ const DappWebViewScreen = () => {
 
   // Bottom Sheet & Search Form State
   const { ref: searchModalRef, open: openSearchModal, close: closeSearchModal } = useModalize()
-  // Dapp Request Bottom Sheet State - from RequestsController helpers
-  const { requestModalRef, closeRequestModal, onBottomSheetClosed } =
-    useController('RequestsController')
   const { control: headerControl, setValue: setHeaderValue } = useForm({
     defaultValues: { search: initialUrl }
   })
@@ -300,26 +317,22 @@ const DappWebViewScreen = () => {
 
   const handleNavigationStateChange = useCallback(
     (e: WebViewNavigation) => {
-      // SECURITY: update the origin ref EAGERLY (before the loading guard
-      // below) so that early provider requests fired by the new page are
-      // attributed to the correct origin.
-      updateCurrentOriginRef(e.url)
+      setCanGoBack(e.canGoBack)
 
       if (e.loading) return
 
       try {
         const url = new URL(e.url)
-        // Reject non-HTTPS protocols to prevent MITM attacks
         if (url.protocol !== 'https:') {
           console.warn('[DappWebView] Blocked navigation to non-HTTPS URL:', e.url)
-          // For HTTP URLs, we could optionally redirect to HTTPS or show a warning
-          // For now, we just don't update the current URL, keeping the previous safe URL
           return
         }
+        updateCurrentOriginRef(e.url)
         setCurrentUrl(e.url)
-        setCanGoBack(e.canGoBack)
         // Keep dappUrl in sync with the actual page the WebView is on so that
-        // currentDapp (and the ManageApp bottom sheet) always reflect the real URL
+        // currentDapp (and the ManageApp bottom sheet) always reflect the real URL.
+        // setDappUrl is called eagerly here AND in handleLoadStart; the helper
+        // deduplicates same-URL calls so there is no double-fetch.
         setDappUrl?.(e.url)
       } catch {
         console.warn('[DappWebView] Invalid URL in navigation:', e.url)
@@ -430,11 +443,20 @@ const DappWebViewScreen = () => {
     const baseCodeEthereum = (__DEV__ && devEthereumCode) || ethereumInpageBundle.code
 
     return `
+      ${jsNativeStash}
+
       ${jsBridgeHarden}
 
       ${__DEV__ ? devOnlyHelpers : ''}
 
       window.addEventListener('message', function(event) {
+        // SECURITY: Only forward messages originating from the main frame itself.
+        // A cross-origin iframe can call window.parent.postMessage({ topic: 'ambireProviderRequest', ... }, '*')
+        // which would otherwise be relayed to the RN bridge and stamped with a valid token by the
+        // main-frame-wrapped window.ReactNativeWebView proxy, bypassing the hardening.
+        // Mirrors the check in the extension's windowMessenger (web/extension-services/messengers/internal/window.ts).
+        if (event.source !== window) return;
+
         // Log EVERY message for debugging
         console.log('[Ambire] [Bridge DEBUG] window message received:', typeof event.data === 'string' ? event.data : JSON.stringify(event.data));
 
@@ -656,6 +678,9 @@ const DappWebViewScreen = () => {
           const topic = data.topic || '> ambireProviderRequest'
 
           // Derive current origin from the trusted source (WebView's URL).
+          // payload.origin is self-reported by the page and is NOT trusted -
+          // it gets overridden below with currentUrlRef.current before dispatch.
+          // Iframe spoofing is prevented by the bridge token check above.
           const currentOrigin = (() => {
             try {
               return new URL(currentUrlRef.current).origin
@@ -663,33 +688,10 @@ const DappWebViewScreen = () => {
               return null
             }
           })()
-          const msgOrigin = payload?.origin || null
-
-          // Defense-in-depth: legacy origin host check on payload.origin (if provided).
-          if (currentOrigin && msgOrigin) {
-            try {
-              const msgOriginHost = new URL(msgOrigin).host
-              const currentOriginHost = new URL(currentOrigin).host
-              if (msgOriginHost !== currentOriginHost) {
-                console.warn(
-                  '[DappWebView] Origin mismatch - rejecting request. Expected:',
-                  currentOriginHost,
-                  'Got:',
-                  msgOriginHost
-                )
-                return // Reject the request
-              }
-            } catch {
-              // If URL parsing fails, reject for safety
-              console.warn('[DappWebView] Invalid origin in request - rejecting:', msgOrigin)
-              return
-            }
-          }
 
           // SECURITY: Always store the expected origin for EVERY request id.
-          // Previously this only ran when currentOrigin was truthy AND data.id existed -
-          // requests without payload.origin would later bypass the response origin check.
-          // Storing for all requests with an id makes the response gate effective universally.
+          // The response gate compares this against currentUrlRef.current at
+          // response time to detect navigation during async operations.
           if (data.id) {
             requestOriginsRef.current[data.id] = currentOrigin || ''
           }
@@ -746,14 +748,17 @@ const DappWebViewScreen = () => {
       // and cannot be spoofed by the page. If the WebView navigated away during the
       // async user-confirmation, the response is silently dropped (not delivered to
       // the new origin).
+      // SECURITY: Use __ambireNative.postMessage (captured before page JS ran)
+      // instead of window.postMessage which a malicious site could have overwritten
+      // to intercept response data.
       webviewRef.current?.injectJavaScript(`
          (function() {
            var expected = ${JSON.stringify(expectedOrigin)};
            if (!expected || location.origin !== expected) {
-             console.warn('[Ambire] Response blocked: origin mismatch. Expected:', expected, 'Got:', location.origin);
              return;
            }
-           window.postMessage(${JSON.stringify(replyMessage)}, location.origin);
+           var postMessage = (window.__ambireNative && window.__ambireNative.postMessage) || window.postMessage.bind(window);
+           postMessage(${JSON.stringify(replyMessage)}, location.origin);
          })();
          true;
        `)
@@ -782,14 +787,16 @@ const DappWebViewScreen = () => {
         }
       }
 
+      // SECURITY: __ambire_handleEvent is a custom global but console.warn is
+      // overwritable; removed it from the injection path. The handler itself is
+      // defined by our injected provider, so it is trustworthy if present.
       webviewRef.current?.injectJavaScript(`
         (function() {
           var expected = ${JSON.stringify(expectedOrigin)};
           if (!expected || location.origin !== expected) {
-            console.warn('[Ambire] Broadcast blocked: origin mismatch. Expected:', expected, 'Got:', location.origin);
             return;
           }
-          if (window.__ambire_handleEvent) {
+          if (typeof window.__ambire_handleEvent === 'function') {
             window.__ambire_handleEvent(${JSON.stringify(event)}, ${JSON.stringify(eventData ?? null)});
           }
         })();
@@ -811,18 +818,24 @@ const DappWebViewScreen = () => {
   // Dispatching a synthetic focus event after the sheet closes restores
   // parity with the extension behaviour.
   const dispatchWebViewFocus = useCallback(() => {
+    // SECURITY: Use __ambireNative.dispatchEvent (captured before page JS ran)
+    // so an overwritten window.dispatchEvent cannot intercept the focus event.
     webviewRef.current?.injectJavaScript(`
       (function() {
-        try { window.dispatchEvent(new Event('focus')); } catch (e) {}
+        try {
+          var dispatch = (window.__ambireNative && window.__ambireNative.dispatchEvent) || window.dispatchEvent.bind(window);
+          dispatch(new Event('focus'));
+        } catch (e) {}
       })();
       true;
     `)
   }, [])
 
-  const onRequestBottomSheetClosed = useCallback(() => {
-    onBottomSheetClosed?.()
-    dispatchWebViewFocus()
-  }, [onBottomSheetClosed, dispatchWebViewFocus])
+  // Listen for global bottom sheet close event to dispatch focus
+  useEffect(() => {
+    eventBus.addEventListener('requestsBottomSheet.closed', dispatchWebViewFocus)
+    return () => eventBus.removeEventListener('requestsBottomSheet.closed', dispatchWebViewFocus)
+  }, [dispatchWebViewFocus])
 
   //   - onLoadStart only resets state on real top-level navigations. On iOS
   //     every `onLoadStart` is treated as such; on Android only when the
@@ -832,23 +845,27 @@ const DappWebViewScreen = () => {
   //     routing (which was what made the bar stick / re-appear on heavy
   //     pages like Next.js apps).
   //   - onLoadProgress writes the raw progress value and keeps `isLoading`
-  //     true. On Android it also doubles as the "done" signal: when
-  //     `progress >= 1` it dismisses the bar, because `onLoadEnd(loading:
-  //     false)` is unreliable there for SPAs / pages with persistent
-  //     subresources. Monotonicity is enforced at the render layer inside
-  //     `DappProgressBar`.
+  //     true while the page is still loading. It also doubles as the "done"
+  //     signal on BOTH platforms: when `progress >= 1` it dismisses the bar.
+  //     On Android `onLoadEnd(loading=false)` is unreliable for SPAs with
+  //     persistent subresources; on iOS `onLoadEnd` and `onLoadProgress(1)`
+  //     fire in non-deterministic order during BFCache (back/forward) restore
+  //     so neither alone is sufficient. Monotonicity is enforced at the
+  //     render layer inside `DappProgressBar`.
   //   - onLoadEnd only finishes when `event.nativeEvent.loading` is false
-  //     (the "really done" signal) and caches the resolved URL. On Android
-  //     this is a backstop in case `onLoadProgress` never reaches 1.
+  //     (the "really done" signal) and caches the resolved URL. It serves as
+  //     a backstop in case `onLoadProgress` never reaches 1.
   //   - onError dismisses the bar so failed pages don't leave it hanging.
   const handleLoadStart = useCallback(
     (event: { nativeEvent: { url: string; isReload?: boolean } }) => {
-      // SECURITY: Defense-in-depth for the `currentUrlRef` eager-update.
-      // `onLoadStart` fires before `onNavigationStateChange` on some
-      // platforms, so refreshing here guarantees the ref is never behind
-      // the page's actual origin when the injected provider's `initialize()`
-      // starts firing `tabCheckin` / `getProviderState` requests.
-      updateCurrentOriginRef(event.nativeEvent.url)
+      // SECURITY: do NOT touch `currentUrlRef` here. `onLoadStart` fires at
+      // navigation START (pre-commit). A page that calls `window.stop()`
+      // after triggering a cross-origin navigation would otherwise leave
+      // the trusted origin ref pointing at the destination URL while the
+      // WebView is still rendering the old (phishing) page. The trusted
+      // ref is only mutated post-commit - see `handleLoadProgress` (fast
+      // path, first non-zero progress) and `handleNavigationStateChange`
+      // (backstop, `loading=false`).
 
       let treatAsReload: boolean
       if (Platform.OS === 'ios') {
@@ -870,20 +887,42 @@ const DappWebViewScreen = () => {
         updateProgressState({ progress: 0, isLoading: true })
       }
     },
-    [updateProgressState, updateCurrentOriginRef]
+    [updateProgressState]
   )
 
   const handleLoadProgress = useCallback(
     (event: { nativeEvent: { progress: number; url?: string } }) => {
       const { progress, url } = event.nativeEvent
-      if (Platform.OS === 'android' && progress >= 1) {
+
+      // SECURITY + UX: post-commit fast path. WKWebView's `estimatedProgress`
+      // and Android's `WebChromeClient.onProgressChanged` only emit non-zero
+      // values once the response has been received and the new document is
+      // being parsed - i.e. AFTER `didCommitNavigation:` / `onPageStarted`
+      // commits. By that point a `window.stop()` from JS can no longer
+      // revert the URL: commit IS the security boundary, the same one real
+      // browsers use for their address bar. Updating here gives a URL-bar
+      // refresh ~1-2s earlier than the `loading=false` backstop in
+      // `handleNavigationStateChange`, while preserving the spoof guarantee.
+      if (progress > 0 && url) {
+        try {
+          if (new URL(url).protocol === 'https:') {
+            updateCurrentOriginRef(url)
+            setCurrentUrl(url)
+            setDappUrl?.(url)
+          }
+        } catch {
+          // ignore unparseable URLs
+        }
+      }
+
+      if (progress >= 1) {
         if (url) resolvedUrlRef.current = url
         updateProgressState({ progress: 1, isLoading: false })
         return
       }
       updateProgressState({ progress, isLoading: true })
     },
-    [updateProgressState]
+    [updateProgressState, updateCurrentOriginRef, setDappUrl]
   )
 
   const handleLoadEnd = useCallback(
@@ -963,12 +1002,6 @@ const DappWebViewScreen = () => {
         onClosed={dispatchWebViewFocus}
         HeaderComponent={searchHeaderComponent}
         flatListProps={searchFlatListProps}
-      />
-
-      <DappRequestBottomSheet
-        sheetRef={requestModalRef as any}
-        closeBottomSheet={closeRequestModal as any}
-        onClosed={onRequestBottomSheetClosed}
       />
     </MobileLayoutContainer>
   )

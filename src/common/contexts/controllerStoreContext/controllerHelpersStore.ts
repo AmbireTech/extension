@@ -1,7 +1,6 @@
 import { flushSync } from 'react-dom'
 
 import { Dapp } from '@ambire-common/interfaces/dapp'
-import { BottomSheetRequestType } from '@mobile/hooks/useRequestsControllerHelpers'
 
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 
@@ -18,8 +17,6 @@ interface RequestsControllerHelpers {
   requestModalRef: React.RefObject<any> | null
   openRequestModal: (() => void) | null
   closeRequestModal: (() => void) | null
-  bottomSheetRequestType: BottomSheetRequestType
-  shouldOpenBottomSheet: boolean
   onBottomSheetClosed: (() => void) | null
 }
 
