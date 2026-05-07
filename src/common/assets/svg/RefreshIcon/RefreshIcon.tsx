@@ -1,4 +1,4 @@
-import React, { FC } from 'react'
+import React, { FC, memo } from 'react'
 import { Path, Svg, SvgProps } from 'react-native-svg'
 
 const RefreshIcon: FC<SvgProps> = ({
@@ -32,4 +32,4 @@ const RefreshIcon: FC<SvgProps> = ({
   )
 }
 
-export default React.memo(RefreshIcon)
+export default memo(RefreshIcon)
