@@ -58,7 +58,7 @@ const AlertPrimaryButton = React.memo(
   ({ severity, style, textStyle, ...rest }: AlertPrimaryButtonProps) => {
     const { theme } = useTheme()
     const backgroundColor = theme[SEVERITY_FILL_THEME_KEY[severity]] as string
-    const textColor = theme[`${severity}Text`] as string
+    const textColor = theme[`${severity}100`] as string
 
     return (
       <Button
