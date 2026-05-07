@@ -1,13 +1,11 @@
-import React, { useCallback, useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Alert, Linking, Pressable, StyleSheet, View } from 'react-native'
+import { Camera, useCameraDevice, useCameraPermission } from 'react-native-vision-camera'
 import {
-  Camera,
-  isScannedCode,
-  useCameraDevice,
-  useCameraPermission,
-  useObjectOutput
-} from 'react-native-vision-camera'
+  TargetBarcodeFormat,
+  useBarcodeScannerOutput
+} from 'react-native-vision-camera-barcode-scanner'
 
 import EditPenIcon from '@common/assets/svg/EditPenIcon'
 import GalleryIcon from '@common/assets/svg/GalleryIcon'
@@ -15,14 +13,18 @@ import Button from '@common/components/Button'
 import Text from '@common/components/Text'
 import useNavigation from '@common/hooks/useNavigation'
 import useTheme from '@common/hooks/useTheme'
+import useToast from '@common/hooks/useToast'
 import spacings, { SPACING_SM } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import {
   MobileLayoutContainer,
   MobileLayoutWrapperMainContent
 } from '@mobile/components/MobileLayoutWrapper'
+import { useWalletConnect } from '@mobile/modules/wallet-connect/hooks/useWalletConnect'
 
 import getStyles from './styles'
+
+const BARCODE_FORMATS: TargetBarcodeFormat[] = ['qr-code']
 
 const QrReaderScreen = () => {
   const { theme } = useTheme()
@@ -32,6 +34,10 @@ const QrReaderScreen = () => {
   const { hasPermission, requestPermission } = useCameraPermission()
   const [permissionGranted, setPermissionGranted] = useState(hasPermission)
   const { t } = useTranslation()
+  const { addToast } = useToast()
+  const { pair, isInitialized: isWcInitialized } = useWalletConnect()
+  const isProcessingRef = useRef(false)
+  const [isScanningActive, setIsScanningActive] = useState(true)
 
   useEffect(() => {
     if (hasPermission) {
@@ -61,16 +67,48 @@ const QrReaderScreen = () => {
     }
   }, [device, goBack, t])
 
-  const objectOutput = useObjectOutput({
-    types: ['qr', 'ean-13'],
-    onObjectsScanned: (objects) => {
-      if (!objects.length) return
-      const obj = objects[0]
-      if (obj && isScannedCode(obj)) {
-        console.log('Scanned code value:', obj.value)
-      } else {
-        console.log('Scanned object:', obj)
+  const handleScannedValue = useCallback(
+    async (rawValue: string) => {
+      const value = rawValue.trim()
+
+      if (value.toLowerCase().startsWith('wc:')) {
+        if (!isWcInitialized) {
+          addToast(t('WalletConnect is still initializing. Please try again in a moment.'), {
+            type: 'info'
+          })
+          isProcessingRef.current = false
+          setIsScanningActive(true)
+          return
+        }
+
+        addToast(t('Connecting via WalletConnect…'), { type: 'info' })
+        void pair(value)
+        goBack()
+        return
       }
+
+      addToast(t('Unsupported QR code. Expected a WalletConnect URI (wc:…).'), {
+        type: 'info'
+      })
+      isProcessingRef.current = false
+      setIsScanningActive(true)
+    },
+    [pair, isWcInitialized, addToast, t, goBack]
+  )
+
+  const scannerOutput = useBarcodeScannerOutput({
+    barcodeFormats: BARCODE_FORMATS,
+    onBarcodeScanned: (barcodes) => {
+      if (isProcessingRef.current) return
+      if (!barcodes.length) return
+      const value = barcodes[0]?.rawValue ?? barcodes[0]?.displayValue
+      if (!value) return
+      isProcessingRef.current = true
+      setIsScanningActive(false)
+      void handleScannedValue(value)
+    },
+    onError: (error) => {
+      console.error('Barcode scanner error:', error)
     }
   })
 
@@ -121,12 +159,18 @@ const QrReaderScreen = () => {
         style={spacings.ph0}
       >
         {permissionGranted ? (
-          <View style={[flexbox.flex1, { marginHorizontal: -SPACING_SM }]}>
-            <View
-              style={[StyleSheet.absoluteFill, flexbox.flex1, styles.dimMask]}
-              pointerEvents="none"
-            />
-            <View style={[flexbox.flex1, flexbox.center]}>
+          <View
+            style={[
+              flexbox.flex1,
+              {
+                marginHorizontal: -SPACING_SM,
+                position: 'relative',
+                overflow: 'hidden',
+                backgroundColor: 'transparent'
+              }
+            ]}
+          >
+            <View style={[StyleSheet.absoluteFill, flexbox.flex1, flexbox.center, { zIndex: 100 }]}>
               <View style={styles.scanFrame} pointerEvents="none">
                 <View style={[styles.corner, styles.cornerTopLeft]} />
                 <View style={[styles.corner, styles.cornerTopRight]} />
@@ -137,10 +181,10 @@ const QrReaderScreen = () => {
 
             {!!device && (
               <Camera
-                style={StyleSheet.absoluteFill}
+                style={[StyleSheet.absoluteFill]}
                 device={device}
-                isActive
-                outputs={[objectOutput]}
+                isActive={isScanningActive}
+                outputs={[scannerOutput]}
               />
             )}
           </View>
