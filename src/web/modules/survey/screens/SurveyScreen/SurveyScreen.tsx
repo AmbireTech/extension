@@ -23,7 +23,7 @@ const SurveyScreen = () => {
   const { addToast } = useToast()
   const {
     dispatch: dispatchToSurvey,
-    state: { status, questions, answers, currentQuestion, errorMessage }
+    state: { status, questions, answers, currentQuestion, errorMessage, surveyId, bannerId }
   } = useController('SurveyController')
 
   const {
@@ -69,11 +69,49 @@ const SurveyScreen = () => {
   }, [answers, currentQuestion, inputtedAnswer, questions])
 
   const buttonState = useMemo((): { text: string; callback?: () => void; loading?: true } => {
-    if (
-      status === 'success-submitted' ||
-      status === 'error-submitting' ||
-      status === 'error-fetching'
-    )
+    const instanceId = getExtensionInstanceId(keyStoreUid, verifiedCode)
+    if (status === 'loading-fetching' || status === 'loading-sending') return { text: 'Loading' }
+
+    if (status === 'error-submitting') {
+      return {
+        text: 'Retry',
+        callback: () => {
+          if (!account) {
+            addToast(
+              'Unexpected error: account not found. Contact support and restart the extension.',
+              { type: 'error' }
+            )
+            return
+          }
+          dispatchToSurvey({
+            type: 'method',
+            params: {
+              method: 'sendResponse',
+              args: [instanceId, account.addr]
+            }
+          })
+        }
+      }
+    } else if (status === 'error-fetching') {
+      return {
+        text: 'Retry',
+        callback: () => {
+          if (!surveyId) {
+            addToast('Unexpected error: we could not find the survey. Please contact support.', {
+              type: 'error'
+            })
+            return
+          }
+          dispatchToSurvey({
+            type: 'method',
+            params: {
+              method: 'fetchSurvey',
+              args: [surveyId, bannerId]
+            }
+          })
+        }
+      }
+    } else if (status === 'success-submitted')
       return {
         text: 'Close',
         callback: () => {
@@ -102,7 +140,6 @@ const SurveyScreen = () => {
           )
           return
         }
-        const instanceId = getExtensionInstanceId(keyStoreUid, verifiedCode)
 
         dispatchToSurvey({
           type: 'method',
@@ -125,6 +162,7 @@ const SurveyScreen = () => {
   }, [
     account,
     addToast,
+    bannerId,
     currentQuestion,
     dispatchToSurvey,
     hasNextQuestion,
@@ -133,6 +171,7 @@ const SurveyScreen = () => {
     keyStoreUid,
     navigate,
     status,
+    surveyId,
     verifiedCode
   ])
 
