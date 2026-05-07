@@ -252,7 +252,6 @@ const DeFiPositions: FC<Props> = ({
       initTab?.defi,
       theme.primaryBackground,
       theme.linkText,
-      theme.primary,
       theme.infoText,
       openTab,
       setOpenTab,
@@ -261,7 +260,6 @@ const DeFiPositions: FC<Props> = ({
       searchValue,
       dashboardNetworkFilterName,
       t,
-      themeType,
       navigate
     ]
   )
