@@ -6,7 +6,6 @@ import flexbox from '@common/styles/utils/flexbox'
 
 interface Style {
   selectItem: ViewStyle
-  selectItemBorder: ViewStyle
   radio: ViewStyle
   radioSelectedInner: ViewStyle
 }
@@ -19,10 +18,6 @@ const getStyles = (theme: ThemeProps) =>
       ...flexbox.directionRow,
       ...flexbox.alignCenter,
       borderRadius: 6
-    },
-    selectItemBorder: {
-      borderBottomWidth: 1,
-      borderBottomColor: theme.secondaryBackground
     },
     radio: {
       width: 20,
