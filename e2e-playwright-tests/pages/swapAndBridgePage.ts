@@ -508,6 +508,10 @@ export class SwapAndBridgePage extends BasePage {
   async checkSendTransactionOnActivityTab() {
     await this.click(selectors.dashboard.activityTabButton)
 
+    // open transaction modal
+    const firstTransaction = this.page.locator(selectors.dashboard.swapAndBridgeTransactionText)
+    await firstTransaction.click()
+
     // When tests are ran in isolation, there would be only 1 txn in the activity tab.
     // But when they are ran in a shared state, we check only the latest one txn, i.e. the first one in the list.
     const firstApprovalTransaction = this.page

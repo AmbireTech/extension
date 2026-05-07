@@ -101,6 +101,13 @@ export class TransferPage extends BasePage {
 
     await expect(firstSendTransaction).toContainText('Send')
     await expect(firstConfirmedPill).toContainText('Confirmed')
+
+    // open transaction modal
+    await firstSendTransaction.click()
+
+    // TODO: add more assertions
+    // assert transaction
+    await this.compareText(selectors.dashboard.activityTransactionConfirmed, 'Confirmed')
   }
 
   // changing fee speed and checking fee amount, if above 0.1$ transaction won't be signed
