@@ -1,14 +1,14 @@
 import { formatUnits, ZeroAddress } from 'ethers'
 
 import { Dapp } from '@ambire-common/interfaces/dapp'
-import { SubmittedAccountOp } from '@ambire-common/libs/accountOp/submittedAccountOp'
+import { AccountOp } from '@ambire-common/libs/accountOp/accountOp'
 import { AccountOpStatus } from '@ambire-common/libs/accountOp/types'
 import { humanizeAccountOp } from '@ambire-common/libs/humanizer'
 import { IrCall } from '@ambire-common/libs/humanizer/interfaces'
 import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
 import formatDateTime from '@common/utils/formatDateTime'
 
-import { DappInteraction, DisplayBalanceChange } from './types'
+import { DappInteraction, DisplayBalanceChange, SubmittedAccountOpLike } from './types'
 
 export const MAX_VISIBLE_BALANCE_CHANGES = 3
 
@@ -34,7 +34,7 @@ export const getFullBalanceChangeAmount = (change: DisplayBalanceChange) =>
 
 export const getBalanceChangeTooltipId = (
   change: DisplayBalanceChange,
-  submittedAccountOp: SubmittedAccountOp
+  submittedAccountOp: SubmittedAccountOpLike
 ) =>
   `balance-change-${submittedAccountOp.id}-${change.chainId}-${change.address}-${change.balanceChange.toString()}`
 
@@ -75,7 +75,7 @@ export const getModalFinalStatus = (status?: AccountOpStatus) => {
   }
 }
 
-export const getOrderedBalanceChanges = (submittedAccountOp: SubmittedAccountOp) => {
+export const getOrderedBalanceChanges = (submittedAccountOp: SubmittedAccountOpLike) => {
   const balanceChanges = submittedAccountOp.balanceChanges || []
   const positiveChanges = balanceChanges.filter((change) => change.balanceChange > 0n)
   const negativeChanges = balanceChanges.filter((change) => change.balanceChange < 0n)
@@ -90,7 +90,7 @@ export const getOrderedBalanceChanges = (submittedAccountOp: SubmittedAccountOp)
 }
 
 export const getSyntheticGasTankBalanceChange = (
-  submittedAccountOp: SubmittedAccountOp
+  submittedAccountOp: SubmittedAccountOpLike
 ): DisplayBalanceChange | null => {
   const gasFeePayment = submittedAccountOp.gasFeePayment
 
@@ -119,7 +119,7 @@ export const getSyntheticGasTankBalanceChange = (
 }
 
 export const getSummaryBalanceChanges = (
-  submittedAccountOp: SubmittedAccountOp
+  submittedAccountOp: SubmittedAccountOpLike
 ): DisplayBalanceChange[] => {
   const balanceChanges = getOrderedBalanceChanges(submittedAccountOp)
   const syntheticGasTankBalanceChange = getSyntheticGasTankBalanceChange(submittedAccountOp)
@@ -144,15 +144,40 @@ export const getVisibleSummaryBalanceChanges = (balanceChanges: DisplayBalanceCh
   ]
 }
 
-export const getHumanizedCalls = (submittedAccountOp: SubmittedAccountOp): IrCall[] =>
-  humanizeAccountOp(submittedAccountOp).map((call, index) => ({
+export const getHumanizedCalls = (submittedAccountOp: SubmittedAccountOpLike): IrCall[] => {
+  const accountOp: AccountOp = {
+    id: submittedAccountOp.id,
+    accountAddr: submittedAccountOp.accountAddr,
+    chainId: submittedAccountOp.chainId,
+    signingKeyAddr: submittedAccountOp.signingKeyAddr ?? null,
+    signingKeyType: submittedAccountOp.signingKeyType ?? null,
+    nonce: submittedAccountOp.nonce ?? null,
+    eoaNonce: submittedAccountOp.eoaNonce,
+    calls: submittedAccountOp.calls,
+    feeCall: submittedAccountOp.feeCall,
+    activatorCall: submittedAccountOp.activatorCall,
+    gasLimit: submittedAccountOp.gasLimit ?? null,
+    signature: submittedAccountOp.signature ?? null,
+    gasFeePayment: submittedAccountOp.gasFeePayment,
+    txnId: submittedAccountOp.txnId,
+    status: submittedAccountOp.status,
+    asUserOperation: submittedAccountOp.asUserOperation,
+    signers: submittedAccountOp.signers,
+    signed: submittedAccountOp.signed,
+    safeTx: submittedAccountOp.safeTx,
+    meta: submittedAccountOp.meta,
+    flags: submittedAccountOp.flags
+  }
+
+  return humanizeAccountOp(accountOp).map((call, index) => ({
     ...call,
     id: call.id || String(index)
   }))
+}
 
 export const getPresentationalStatus = (
-  submittedAccountOp: SubmittedAccountOp
-): SubmittedAccountOp['status'] => {
+  submittedAccountOp: SubmittedAccountOpLike
+): SubmittedAccountOpLike['status'] => {
   if (
     submittedAccountOp.identifiedBy.type !== 'MultipleTxns' ||
     submittedAccountOp.status === AccountOpStatus.BroadcastedButNotConfirmed
@@ -163,7 +188,9 @@ export const getPresentationalStatus = (
   return !callWithoutATxId ? submittedAccountOp.status : AccountOpStatus.PartiallyComplete
 }
 
-export const getDappInteractions = (submittedAccountOp: SubmittedAccountOp): DappInteraction[] => {
+export const getDappInteractions = (
+  submittedAccountOp: SubmittedAccountOpLike
+): DappInteraction[] => {
   const interactions: DappInteraction[] = []
   const seen = new Set<string>()
 
