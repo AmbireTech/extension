@@ -99,7 +99,10 @@ const SurveyScreen = () => {
           return
         }
 
-        // we do not care about the invite code
+        // this instance id is passed only inside the survey response object
+        // we do not care about the invite code part of the  instanceId IN THIS CASE
+        // because not having it will make it easier to export all responses
+        // + it is not part of our other analytics
         const instanceId = getExtensionInstanceId(keyStoreUid, null)
 
         dispatchToSurvey({
