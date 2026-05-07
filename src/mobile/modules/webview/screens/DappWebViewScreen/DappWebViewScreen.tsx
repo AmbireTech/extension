@@ -425,6 +425,13 @@ const DappWebViewScreen = () => {
       ${__DEV__ ? devOnlyHelpers : ''}
 
       window.addEventListener('message', function(event) {
+        // SECURITY: Only forward messages originating from the main frame itself.
+        // A cross-origin iframe can call window.parent.postMessage({ topic: 'ambireProviderRequest', ... }, '*')
+        // which would otherwise be relayed to the RN bridge and stamped with a valid token by the
+        // main-frame-wrapped window.ReactNativeWebView proxy, bypassing the hardening.
+        // Mirrors the check in the extension's windowMessenger (web/extension-services/messengers/internal/window.ts).
+        if (event.source !== window) return;
+
         // Log EVERY message for debugging
         console.log('[Ambire] [Bridge DEBUG] window message received:', typeof event.data === 'string' ? event.data : JSON.stringify(event.data));
 
@@ -873,15 +880,6 @@ const DappWebViewScreen = () => {
         }
       }
 
-      // Treat `progress >= 1` as the dismissal signal on BOTH platforms.
-      // - Android: `onLoadEnd(loading=false)` is unreliable for SPAs with
-      //   persistent subresources, so progress is the primary "done" signal.
-      // - iOS: WKWebView's BFCache (back/forward navigation) fires
-      //   `onLoadStart`, `onLoadEnd` and the final `onLoadProgress(1)` in
-      //   microseconds, with NO guaranteed ordering. If end fires first,
-      //   then progress, the iOS-only `isLoading: true` write below would
-      //   re-show the bar at 100% and never hide it. Setting
-      //   `isLoading: false` here is idempotent with `handleLoadEnd`.
       if (progress >= 1) {
         if (url) resolvedUrlRef.current = url
         updateProgressState({ progress: 1, isLoading: false })
