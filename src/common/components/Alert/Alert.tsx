@@ -137,9 +137,9 @@ const Alert = ({
           {!!withIcon && (
             <View style={spacings.mrMi}>
               {CustomIcon ? (
-                <CustomIcon width={18} height={18} />
+                <CustomIcon width={24} height={24} />
               ) : (
-                <Icon width={18} height={18} color={theme[`${type}Text`]} />
+                <Icon width={24} height={24} color={theme[`${type}Text`]} />
               )}
             </View>
           )}
