@@ -10,6 +10,7 @@ import { storage } from '@common/services/storage'
 import { WEBVIEW_DEV_HOST } from '@env'
 import {
   approveWalletConnectSession,
+  handleWcSessionBroadcast,
   rejectWalletConnectSession,
   respondToWalletConnectRequest
 } from '@mobile/modules/wallet-connect/services/walletConnectService'
@@ -222,6 +223,9 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, {}>((_, ref) => {
           break
         case 'action.rejectWalletConnectSession':
           await rejectWalletConnectSession(data.payload.proposalId)
+          break
+        case 'action.wcSessionBroadcast':
+          await handleWcSessionBroadcast(data.payload)
           break
         case 'ui.window.action':
           eventBus.emit('ui.window.action', data.payload)

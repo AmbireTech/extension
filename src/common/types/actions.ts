@@ -145,6 +145,16 @@ type HandleProviderRequestAction = {
   }
 }
 
+type SetupWcSessionMessengerAction = {
+  type: 'SETUP_WC_SESSION_MESSENGER'
+  params: {
+    url: string
+    tabId: number
+    wcSessionTopic: string
+    chainId: number
+  }
+}
+
 export type Action =
   | UpdateNavigationUrl
   | UpdateUiViewRoute
@@ -168,3 +178,4 @@ export type Action =
   | InitControllerStateAction
   | HandleProviderRequestAction
   | WebviewOriginChangedAction
+  | SetupWcSessionMessengerAction

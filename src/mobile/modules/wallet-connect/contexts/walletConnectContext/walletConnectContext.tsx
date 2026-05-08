@@ -2,10 +2,10 @@ import React, { createContext, useCallback, useContext, useEffect, useState } fr
 import { Linking } from 'react-native'
 
 import { ControllersMiddlewareContext } from '@common/contexts/controllersMiddlewareContext'
-import { ControllerStoreContext } from '@common/contexts/controllerStoreContext'
 import {
   getWalletKit,
-  initWalletConnect
+  initWalletConnect,
+  isWalletConnectInitialized
 } from '@mobile/modules/wallet-connect/services/walletConnectService'
 
 type WalletConnectContextValue = {
@@ -19,21 +19,34 @@ export const WalletConnectContext = createContext<WalletConnectContextValue>({
 })
 
 export const WalletConnectProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [isInitialized, setIsInitialized] = useState(false)
-  const { controllerStore } = useContext(ControllerStoreContext)
+  // Seed from the module-level flag so remounts (e.g. hot reload) don't
+  // incorrectly start as false when WalletKit is already initialized.
+  const [isInitialized, setIsInitialized] = useState(isWalletConnectInitialized)
   const { dispatch } = useContext(ControllersMiddlewareContext)
 
   useEffect(() => {
+    console.log('[WalletConnectProvider] Initialization effect triggered.')
+
+    // Already initialized (module-level flag) — nothing to do.
+    if (isWalletConnectInitialized()) {
+      console.log('[WalletConnectProvider] Module already initialized, updating state.')
+      setIsInitialized(true)
+      return
+    }
+
     const initWc = async () => {
-      // Make sure the controller store has mainCtrl ready
-      if ((controllerStore as any).mainCtrl) {
-        await initWalletConnect((controllerStore as any).mainCtrl, dispatch)
+      try {
+        console.log('[WalletConnectProvider] Starting initialization via initWalletConnect...')
+        await initWalletConnect(dispatch)
+        console.log('[WalletConnectProvider] Initialization successful, updating state.')
         setIsInitialized(true)
+      } catch (e) {
+        console.error('[WalletConnectProvider] Initialization failed:', e)
       }
     }
 
     initWc()
-  }, [controllerStore, dispatch])
+  }, [dispatch])
 
   const pair = useCallback(
     async (uri: string) => {

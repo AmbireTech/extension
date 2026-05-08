@@ -9,6 +9,7 @@ import { KeyIterator } from '@ambire-common/libs/keyIterator/keyIterator'
 import handleProviderRequests from '@common/modules/provider/handleProviderRequests'
 import { Action, MethodAction } from '@common/types/actions'
 import { mobileMessenger } from '@mobile/modules/webview/services/mobileMessenger'
+import { createWcBridgeMessenger } from '@mobile/modules/webview/services/wcBridgeMessenger'
 
 export const handleActions = async (
   action: MethodAction | Action,
@@ -214,6 +215,22 @@ export const handleActions = async (
           })
         }
       }
+      break
+    }
+
+    case 'SETUP_WC_SESSION_MESSENGER': {
+      const session = await mainCtrl.dapps.getOrCreateDappSession({
+        url: params.url,
+        tabId: params.tabId
+      })
+      const messenger = createWcBridgeMessenger(params.wcSessionTopic, params.chainId)
+      mainCtrl.dapps.setSessionMessenger(session.sessionId, messenger, false)
+      console.log(
+        '[Worker] WC session messenger set for:',
+        session.sessionId,
+        'topic:',
+        params.wcSessionTopic
+      )
       break
     }
 
