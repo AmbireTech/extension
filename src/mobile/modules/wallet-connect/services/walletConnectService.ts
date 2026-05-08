@@ -63,64 +63,64 @@ export const initWalletConnect = async (dispatch: (action: MethodAction | Action
       console.log('[WalletConnect] WalletKit initialized successfully.')
 
       walletKit.on('session_proposal', async (proposal: any) => {
-    try {
-      const { id, params } = proposal
-      const proposerUrl = params.proposer.metadata.url
+        try {
+          const { id, params } = proposal
+          const proposerUrl = params.proposer.metadata.url
 
-      // Delegate to the webview via dispatch — the webview will create the
-      // dapp session and process the eth_requestAccounts request via handleActions.
-      dispatchAction!({
-        type: 'HANDLE_PROVIDER_REQUEST',
-        params: {
-          request: { method: 'eth_requestAccounts', origin: proposerUrl },
-          requestId: id,
-          providerId: 1, // Single provider id for WC for now
-          topic: `wc_session_proposal_${proposal.id.toString()}`
+          // Delegate to the webview via dispatch — the webview will create the
+          // dapp session and process the eth_requestAccounts request via handleActions.
+          dispatchAction!({
+            type: 'HANDLE_PROVIDER_REQUEST',
+            params: {
+              request: { method: 'eth_requestAccounts', origin: proposerUrl },
+              requestId: id,
+              providerId: 1, // Single provider id for WC for now
+              topic: `wc_session_proposal_${proposal.id.toString()}`
+            }
+          })
+        } catch (e) {
+          console.error(e)
         }
       })
-    } catch (e) {
-      console.error(e)
-    }
-  })
 
-  walletKit.on('session_request', async (requestEvent: any) => {
-    try {
-      const { topic, params, id } = requestEvent
-      const { request } = params
+      walletKit.on('session_request', async (requestEvent: any) => {
+        try {
+          const { topic, params, id } = requestEvent
+          const { request } = params
 
-      // We get the session to find the origin URL
-      const activeSession = walletKit.engine.signClient.session.get(topic)
-      const proposerUrl = activeSession?.peer?.metadata?.url
+          // We get the session to find the origin URL
+          const activeSession = walletKit.engine.signClient.session.get(topic)
+          const proposerUrl = activeSession?.peer?.metadata?.url
 
-      // Delegate to the webview — handleActions will route the result
-      // back to RN via sendToReactEvent('action.respondToWalletConnectRequest').
-      dispatchAction!({
-        type: 'HANDLE_PROVIDER_REQUEST',
-        params: {
-          request: { ...request, origin: proposerUrl || 'https://walletconnect.com' },
-          requestId: id,
-          providerId: 1,
-          topic: `wc_session_request_${topic}`
+          // Delegate to the webview — handleActions will route the result
+          // back to RN via sendToReactEvent('action.respondToWalletConnectRequest').
+          dispatchAction!({
+            type: 'HANDLE_PROVIDER_REQUEST',
+            params: {
+              request: { ...request, origin: proposerUrl || 'https://walletconnect.com' },
+              requestId: id,
+              providerId: 1,
+              topic: `wc_session_request_${topic}`
+            }
+          })
+        } catch (e) {
+          console.error(e)
         }
       })
+
+      walletKit.on('session_delete', (event: any) => {
+        // We could clean up the dapp session here
+      })
+
+      initialized = true
+      initPromise = null
+      return walletKit
     } catch (e) {
-      console.error(e)
+      console.error('[WalletConnect] Initialization failed:', e)
+      initPromise = null
+      throw e
     }
-  })
-
-  walletKit.on('session_delete', (event: any) => {
-    // We could clean up the dapp session here
-  })
-
-    initialized = true
-    initPromise = null
-    return walletKit
-  } catch (e) {
-    console.error('[WalletConnect] Initialization failed:', e)
-    initPromise = null
-    throw e
-  }
-})()
+  })()
 
   return initPromise
 }
@@ -128,7 +128,11 @@ export const initWalletConnect = async (dispatch: (action: MethodAction | Action
 export const respondToWalletConnectRequest = async (topic: string, response: any, id: number) => {
   if (!walletKit) return
 
-  if (response.error) {
+  const hasResult = 'result' in response
+  const hasError = 'error' in response
+
+  if (hasResult && hasError) {
+    console.error('[WalletConnect] Invalid response: contains both result and error fields')
     await walletKit.respondSessionRequest({
       topic,
       response: {
@@ -136,17 +140,71 @@ export const respondToWalletConnectRequest = async (topic: string, response: any
         jsonrpc: '2.0',
         error: {
           code: 5000,
-          message: response.error?.message || 'User rejected request'
+          message: 'Invalid response format'
         }
       }
     })
-  } else {
+    return
+  }
+
+  if (hasError) {
+    const error = response.error
+    let errorObj: { code: number; message: string; data?: any }
+
+
+    if (
+      error &&
+      typeof error === 'object' &&
+      'serialize' in error &&
+      typeof error.serialize === 'function'
+    ) {
+      errorObj = error.serialize()
+    } else if (error && typeof error === 'object' && 'code' in error && 'message' in error) {
+      errorObj = {
+        code: error.code,
+        message: error.message,
+        ...(error.data !== undefined && { data: error.data })
+      }
+    } else {
+      errorObj = {
+        code:
+          error && typeof error === 'object' && 'code' in error && typeof error.code === 'number'
+            ? error.code
+            : 5000,
+        message:
+          error &&
+          typeof error === 'object' &&
+          'message' in error &&
+          typeof error.message === 'string'
+            ? error.message
+            : error && typeof error.toString === 'function'
+              ? error.toString()
+              : 'Unknown error',
+        ...(error &&
+          typeof error === 'object' &&
+          'data' in error &&
+          error.data !== undefined && { data: error.data })
+      }
+    }
+
+    // Send formatted error response to WalletConnect SDK
     await walletKit.respondSessionRequest({
       topic,
       response: {
         id,
         jsonrpc: '2.0',
-        result: response.result
+        error: errorObj
+      }
+    })
+  } else {
+    const result = response.result === undefined ? null : response.result
+
+    await walletKit.respondSessionRequest({
+      topic,
+      response: {
+        id,
+        jsonrpc: '2.0',
+        result
       }
     })
   }

@@ -34,11 +34,10 @@ if (typeof location === 'undefined') {
   }
 }
 
-if (typeof document === 'undefined') {
-  global.document = {
-    location: global.location
-  }
-}
+// NOTE: Do NOT create a global `document` object here. WalletConnect's
+// environment detection (isReactNative) checks `!getDocument()` — if document
+// exists, WC treats the app as a browser, breaking connectivity checks and
+// DOM operations. No app source code references document.* so this is safe.
 
 if (typeof MutationObserver === 'undefined') {
   global.MutationObserver = class {
@@ -65,11 +64,17 @@ if (typeof CustomeEvent === 'undefined') {
   global.CustomeEvent = global.CustomEvent
 }
 
-// Event listener shims for mobile app compatibility for cetain common files between web and mobile
+// Event listener shims for mobile app compatibility for certain common files between web and mobile
 window.addEventListener = window.addEventListener || (() => {})
 window.removeEventListener = window.removeEventListener || (() => {})
 window.close = window.close || (() => {})
-document.addEventListener = document.addEventListener || (() => {})
-document.removeEventListener = document.removeEventListener || (() => {})
-document.querySelector = document.querySelector || (() => null)
-document.querySelectorAll = document.querySelectorAll || (() => [])
+
+// Guard document stubs — document is intentionally NOT created in RN
+if (typeof document !== 'undefined') {
+  document.addEventListener = document.addEventListener || (() => {})
+  document.removeEventListener = document.removeEventListener || (() => {})
+  document.querySelector = document.querySelector || (() => null)
+  document.querySelectorAll = document.querySelectorAll || (() => [])
+  document.getElementsByTagName = document.getElementsByTagName || (() => [])
+  document.createElement = document.createElement || (() => ({ setAttribute: () => {}, appendChild: () => {}, style: {} }))
+}

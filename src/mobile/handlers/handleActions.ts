@@ -134,6 +134,12 @@ export const handleActions = async (
       break
     }
 
+    /**
+     * HANDLE_PROVIDER_REQUEST - Unified handler for both webview and WalletConnect requests
+     *
+     * This handler processes provider requests (eth_accounts, wallet_getCapabilities, etc.) from
+     * both in-app webview dapps and WalletConnect dapps using the SAME communication logic.
+     */
     case 'HANDLE_PROVIDER_REQUEST': {
       console.log('[Worker] Handling provider request:', params.request.method, params.requestId)
       const autoLockCtrl = eventEmitterRegistry
@@ -145,6 +151,9 @@ export const handleActions = async (
       const notificationManager = mainCtrl.ui.notification
 
       try {
+        // Create or retrieve dapp session using origin from request
+        // For WalletConnect, origin is the proposer URL from session metadata
+        // For webview, origin is the current page URL
         const session = await mainCtrl.dapps.getOrCreateDappSession({
           url: params.request.origin,
           tabId: 1 // Mobile uses a single view for the dApp
@@ -163,15 +172,14 @@ export const handleActions = async (
         })
         console.log('[Worker] handleProviderRequests result:', result)
 
-        // Handle WalletConnect responses natively instead of forwarding to WebView
         if (params.topic && params.topic.toString().includes('wc_session_request')) {
           sendToReactEvent('action.respondToWalletConnectRequest', {
             topic: params.topic.replace('wc_session_request_', ''),
-            response: { result },
+            response: { result }, // Raw result - will be formatted into JSON-RPC by walletConnectService
             id: params.requestId
           })
         } else if (params.topic && params.topic.toString().includes('wc_session_proposal')) {
-          // If the request was eth_requestAccounts via a proposal, and it succeeded
+          // WalletConnect session proposals - approve if eth_requestAccounts succeeded
           if (result && Array.isArray(result) && result.length > 0) {
             sendToReactEvent('action.approveWalletConnectSession', {
               proposalId: params.requestId,
@@ -179,6 +187,7 @@ export const handleActions = async (
             })
           }
         } else {
+          // In-app webview requests - send to webview bridge (existing flow)
           sendToReactEvent('action.sendToDappWebView', {
             result,
             error: null,
@@ -188,6 +197,7 @@ export const handleActions = async (
           })
         }
       } catch (error: any) {
+        // Error handling - serialize error if possible, otherwise use raw error
         let errorRes
         try {
           errorRes = error.serialize()
@@ -195,10 +205,11 @@ export const handleActions = async (
           errorRes = error
         }
 
+        // Route error response based on request source (same logic as success case)
         if (params.topic && params.topic.toString().includes('wc_session_request')) {
           sendToReactEvent('action.respondToWalletConnectRequest', {
             topic: params.topic.replace('wc_session_request_', ''),
-            response: { error: errorRes },
+            response: { error: errorRes }, // Raw error - will be formatted into JSON-RPC by walletConnectService
             id: params.requestId
           })
         } else if (params.topic && params.topic.toString().includes('wc_session_proposal')) {
