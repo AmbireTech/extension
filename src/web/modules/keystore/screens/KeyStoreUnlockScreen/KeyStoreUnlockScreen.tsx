@@ -352,11 +352,14 @@ const KeyStoreUnlockScreen = () => {
                     windowId: requestWindow?.windowProps?.createdFromWindowId
                   })
                 }
-                style={spacings.mtXl}
+                style={spacings.mtLg}
                 hitSlop={FOOTER_BUTTON_HIT_SLOP}
               >
                 <Text weight="medium" appearance="secondaryText" fontSize={14} underline>
                   {t('Forgot extension password?')}
+                </Text>
+                <Text appearance="warningText" fontSize={11} style={spacings.mtMi}>
+                  {t('This feature will soon be deprecated')}
                 </Text>
               </TouchableOpacity>
             )}

@@ -140,6 +140,13 @@ const EmailForm = () => {
           hasBottomSpacing={false}
           text={t('Send confirmation email')}
         />
+        <Text
+          appearance="warningText"
+          fontSize={12}
+          style={[spacings.mtMi, { textAlign: 'center' }]}
+        >
+          {t('This feature will soon be deprecated.')}
+        </Text>
       </View>
       <BottomSheet
         id="keystore-reset-confirmation-modal"
