@@ -5,12 +5,14 @@ import { View } from 'react-native'
 
 import { TokenResult } from '@ambire-common/libs/portfolio/interfaces'
 import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
+import GasTankIcon from '@common/assets/svg/GasTankIcon'
 import WarningIcon from '@common/assets/svg/WarningIcon'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import Text from '@common/components/Text'
 import TokenIcon from '@common/components/TokenIcon'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
+import common from '@common/styles/utils/common'
 import { BigIntMath } from '@common/utils/bigint'
 import { getTokenId } from '@common/utils/token'
 
@@ -81,16 +83,33 @@ const PendingTokenSummary = ({ token, chainId, hasBottomSpacing = true }: Props)
   return (
     <View style={[styles.container, !hasBottomSpacing && spacings.mb0]}>
       <View style={spacings.mrTy}>
-        <TokenIcon
-          width={20}
-          height={20}
-          withContainer
-          containerHeight={24}
-          containerWidth={24}
-          chainId={chainId}
-          address={token.address}
-          withNetworkIcon={false}
-        />
+        {token.flags.onGasTank ? (
+          <View
+            style={[
+              {
+                width: 24,
+                height: 24,
+                alignItems: 'center',
+                justifyContent: 'center',
+                backgroundColor: theme.neutral200
+              },
+              common.borderRadiusPrimary
+            ]}
+          >
+            <GasTankIcon width={14} height={14} color={theme.tertiaryText} />
+          </View>
+        ) : (
+          <TokenIcon
+            width={20}
+            height={20}
+            withContainer
+            containerHeight={24}
+            containerWidth={24}
+            chainId={chainId}
+            address={token.address}
+            withNetworkIcon={false}
+          />
+        )}
       </View>
       <Text
         selectable
