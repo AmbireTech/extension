@@ -28,6 +28,11 @@ interface Props extends InputProps {
   withDetails?: boolean
   resolvedAddress: AddressState['resolvedAddress']
   resolvedAddressType: AddressState['resolvedAddressType']
+  addressHighlight?: {
+    prefix: number
+    suffix: number
+    color: 'errorText'
+  }
   isRecipientDomainResolving: boolean
   validation: Validation
   label?: string
@@ -40,6 +45,7 @@ const AddressInput: React.FC<Props> = ({
   onChangeText,
   resolvedAddress,
   resolvedAddressType,
+  addressHighlight,
   isRecipientDomainResolving,
   label,
   validation,
@@ -164,6 +170,7 @@ const AddressInput: React.FC<Props> = ({
                   ...spacings.pv0
                 }}
                 address={address}
+                addressHighlight={addressHighlight}
                 name={contacts.find((c) => c.address.toLowerCase() === address.toLowerCase())?.name}
                 withCopy={isWeb}
               />
