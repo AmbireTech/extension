@@ -136,6 +136,7 @@ const OTHER_LINKS = [
 const Sidebar = ({ activeLink }: { activeLink?: string }) => {
   const { theme, styles } = useTheme(getStyles)
   const keystoreState = useController('KeystoreController').state
+  const { hasKeystoreRecovery } = useController('EmailVaultController').state
   const { state } = useRoute()
   const { navigate } = useNavigation()
   const [validBackRoute, setValidBackRoute] = useState<'dashboard' | 'transfer' | null>(null)
@@ -196,6 +197,7 @@ const Sidebar = ({ activeLink }: { activeLink?: string }) => {
         </View>
         <ScrollableWrapper>
           {SETTINGS_LINKS.map((_link, i) => {
+            if (!hasKeystoreRecovery && _link.key === 'device-password-recovery') return null
             // If the KeyStore device password is not configured yet, redirect to DevicePassword->Set route under the hood,
             // instead of loading DevicePassword->Change route.
             const link =
