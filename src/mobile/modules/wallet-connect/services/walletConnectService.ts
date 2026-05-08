@@ -155,13 +155,18 @@ export const respondToWalletConnectRequest = async (topic: string, response: any
 export const approveWalletConnectSession = async (proposalId: number, accounts: string[]) => {
   if (!walletKit) return
 
-  // Need the original proposal to approve
-  const proposals = walletKit.engine.signClient.proposal.values
+  // Use the SDK's public API to retrieve pending proposals.
+  // In the proposal store, fields like requiredNamespaces, optionalNamespaces,
+  // and proposer are top-level (NOT nested under a .params property like in
+  // the session_proposal event payload).
+  const proposals = walletKit.getPendingSessionProposals()
   const proposal = proposals.find((p: any) => p.id === proposalId)
-  if (!proposal) return
+  if (!proposal) {
+    console.error('[WalletConnect] Proposal not found for id:', proposalId)
+    return
+  }
 
-  const { id, params } = proposal
-  const { requiredNamespaces, optionalNamespaces } = params
+  const { id, requiredNamespaces, optionalNamespaces } = proposal
 
   const namespaces: any = {}
 
@@ -187,7 +192,7 @@ export const approveWalletConnectSession = async (proposalId: number, accounts: 
   })
 
   const wcTabId = id.toString()
-  const proposerUrl = params.proposer.metadata.url
+  const proposerUrl = proposal.proposer?.metadata?.url
 
   // Delegate session messenger setup to the webview — it will create the
   // dapp session and attach a wcBridgeMessenger that routes broadcast
