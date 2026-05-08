@@ -64,7 +64,8 @@ const SendForm = ({
       isTopUp,
       addressState,
       amount: controllerAmount,
-      areDefaultsSet
+      areDefaultsSet,
+      addressPoisoningMatch
     },
     dispatch: transferDispatch
   } = useController('TransferController')
@@ -280,6 +281,7 @@ const SendForm = ({
             isRecipientAddressUnknown={isRecipientAddressUnknown}
             isRecipientDomainResolving={addressState.isDomainResolving}
             selectedTokenSymbol={selectedToken?.symbol}
+            addressPoisoningMatch={addressPoisoningMatch}
           />
         )}
       </View>

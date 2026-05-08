@@ -2,7 +2,7 @@ import React, { useMemo } from 'react'
 import { Pressable, View } from 'react-native'
 
 import { Network } from '@ambire-common/interfaces/network'
-import { BalanceChange, SubmittedAccountOp } from '@ambire-common/libs/accountOp/submittedAccountOp'
+import { SubmittedAccountOp } from '@ambire-common/libs/accountOp/submittedAccountOp'
 import { AccountOpStatus } from '@ambire-common/libs/accountOp/types'
 import { IrCall } from '@ambire-common/libs/humanizer/interfaces'
 import CopyIcon from '@common/assets/svg/CopyIcon'
@@ -30,13 +30,13 @@ import {
   getFormattedSubmittedDate,
   getHumanizedCalls,
   getModalFinalStatus,
-  getOrderedBalanceChanges,
+  getSummaryBalanceChanges,
   getPresentationalStatus,
   getTruncatedNetworkName,
   getTruncatedTxnHash
 } from './helpers'
 import getStyles from './styles'
-import { Props } from './types'
+import { DisplayBalanceChange, Props } from './types'
 
 const SummaryDetails = ({
   submittedAccountOp,
@@ -57,8 +57,8 @@ const SummaryDetails = ({
     [submittedAccountOp.timestamp]
   )
   const humanizedCalls = useMemo(() => getHumanizedCalls(submittedAccountOp), [submittedAccountOp])
-  const orderedBalanceChanges = useMemo(
-    () => getOrderedBalanceChanges(submittedAccountOp),
+  const summaryBalanceChanges = useMemo(
+    () => getSummaryBalanceChanges(submittedAccountOp),
     [submittedAccountOp]
   )
   const isNotFound =
@@ -68,13 +68,14 @@ const SummaryDetails = ({
   const hasBalanceChangesLoaded =
     typeof submittedAccountOp.balanceChanges !== 'undefined' || isNotFound
   const assetsOut = useMemo(
-    () => orderedBalanceChanges.filter((change) => change.balanceChange < 0n),
-    [orderedBalanceChanges]
+    () => summaryBalanceChanges.filter((change) => change.balanceChange < 0n),
+    [summaryBalanceChanges]
   )
   const assetsIn = useMemo(
-    () => orderedBalanceChanges.filter((change) => change.balanceChange > 0n),
-    [orderedBalanceChanges]
+    () => summaryBalanceChanges.filter((change) => change.balanceChange > 0n),
+    [summaryBalanceChanges]
   )
+  const hasAssetBalanceChanges = !!(assetsOut.length || assetsIn.length)
   const isDelegationTxn =
     submittedAccountOp.meta && submittedAccountOp.meta.setDelegation !== undefined
   const isPendingConfirmation =
@@ -93,7 +94,7 @@ const SummaryDetails = ({
     await openInTab({ url: `${explorerUrl}/tx/${callTxnId}` })
   }
 
-  const renderBalanceChangesCard = (title: string, changes: BalanceChange[]) => (
+  const renderBalanceChangesCard = (title: string, changes: DisplayBalanceChange[]) => (
     <View
       style={[
         styles.modalSimulationContainer,
@@ -113,7 +114,7 @@ const SummaryDetails = ({
               ...change,
               simulationAmount: change.balanceChange
             }}
-            chainId={submittedAccountOp.chainId}
+            chainId={change.chainId}
             hasBottomSpacing={index < changes.length - 1}
           />
         ))}
@@ -204,8 +205,7 @@ const SummaryDetails = ({
             {t('Balance changes')}
           </Text>
           <View style={flexbox.flex1}>
-            {!hasBalanceChangesLoaded && loadingBalanceChanges}
-            {hasBalanceChangesLoaded && !!(assetsOut.length || assetsIn.length) && (
+            {hasAssetBalanceChanges && (
               <View style={[flexbox.directionRow, flexbox.flex1]}>
                 {!!assetsOut.length && (
                   <View style={[flexbox.flex1, assetsIn.length ? spacings.mrTy : undefined]}>
@@ -219,9 +219,13 @@ const SummaryDetails = ({
                 )}
               </View>
             )}
+            {!hasBalanceChangesLoaded && (
+              <View style={hasAssetBalanceChanges ? spacings.mtSm : undefined}>
+                {loadingBalanceChanges}
+              </View>
+            )}
             {hasBalanceChangesLoaded &&
-              !assetsOut.length &&
-              !assetsIn.length &&
+              !hasAssetBalanceChanges &&
               (isPendingConfirmation ? (
                 loadingBalanceChanges
               ) : (
