@@ -1,5 +1,5 @@
 import React, { FC, useMemo } from 'react'
-import { Linking, Pressable, View } from 'react-native'
+import { Pressable, View } from 'react-native'
 
 import { AssetType, Position, PositionsByProvider } from '@ambire-common/libs/defiPositions/types'
 import Text from '@common/components/Text'
@@ -7,6 +7,7 @@ import useTheme from '@common/hooks/useTheme'
 import spacings, { SPACING_MI } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { generatePositionUrl } from '@common/utils/generatePositionUrl'
+import { openInTab } from '@common/utils/links'
 
 import DeFiPositionAssets from './DeFiPositionAssets'
 import Badge from './DeFiPositionHeader/Badge'
@@ -93,7 +94,7 @@ const DeFiPosition: FC<Props> = ({
           {!!positionIndex && (
             <Pressable
               disabled={!positionUrl}
-              onPress={positionUrl ? () => Linking.openURL(positionUrl) : undefined}
+              onPress={positionUrl ? () => openInTab({ url: positionUrl }) : undefined}
               style={[spacings.mlMi, spacings.mrTy]}
             >
               <Text
