@@ -997,6 +997,7 @@ const DappWebViewScreen = () => {
           onError={handleLoadError}
           onRenderProcessGone={handleRenderProcessGone}
           onContentProcessDidTerminate={handleRenderProcessGone}
+          nestedScrollEnabled={true}
         />
       </View>
 
