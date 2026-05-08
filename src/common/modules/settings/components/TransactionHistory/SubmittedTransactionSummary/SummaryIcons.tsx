@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { View } from 'react-native'
 
 import GasTankIcon from '@common/assets/svg/GasTankIcon'
+import ReceiveIcon from '@common/assets/svg/ReceiveIcon'
 import SendIcon from '@common/assets/svg/SendIcon'
 import SwapIcon from '@common/assets/svg/SwapIcon'
 import TokenIcon from '@common/components/TokenIcon'
@@ -110,6 +111,14 @@ export const DappInteractionIcon = ({ interaction }: { interaction: DappInteract
     return (
       <View style={[stylesForIcons.dappIconWrapper, { backgroundColor: theme.neutral200 }]}>
         <SwapIcon width={20} height={20} color={theme.tertiaryText} />
+      </View>
+    )
+  }
+
+  if (interaction.iconType === 'receive') {
+    return (
+      <View style={[stylesForIcons.dappIconWrapper, { backgroundColor: theme.neutral200 }]}>
+        <ReceiveIcon width={20} height={20} color={theme.tertiaryText} />
       </View>
     )
   }

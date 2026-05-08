@@ -221,11 +221,19 @@ export const getDappInteractions = (
   }
 
   if (!interactions.length) {
-    addInteraction({
-      id: 'fallback:send',
-      name: 'Send',
-      iconType: 'send'
-    })
+    if (submittedAccountOp.activitySource === 'external') {
+      addInteraction({
+        id: 'fallback:receive',
+        name: 'Receive',
+        iconType: 'receive'
+      })
+    } else {
+      addInteraction({
+        id: 'fallback:send',
+        name: 'Send',
+        iconType: 'send'
+      })
+    }
   }
 
   return interactions
