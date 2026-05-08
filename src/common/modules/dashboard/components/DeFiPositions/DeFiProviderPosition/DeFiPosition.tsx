@@ -53,11 +53,16 @@ const DeFiPosition: FC<Props> = ({
 
   return (
     <View
-      style={{
-        borderTopWidth: withTopBorder ? 1 : 0,
-        borderTopColor: theme.secondaryBorder,
-        paddingBottom: !withTopBorder ? SPACING_MI : 0
-      }}
+      style={[
+        spacings.mhTy,
+        spacings.mvMi,
+        {
+          borderRadius: 8,
+          borderWidth: 1,
+          borderColor: theme.neutral400,
+          backgroundColor: theme.primaryBackground
+        }
+      ]}
     >
       <View
         style={[
