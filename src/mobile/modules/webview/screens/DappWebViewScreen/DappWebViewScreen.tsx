@@ -109,9 +109,13 @@ const devOnlyHelpers = `
   };
 
   // Hide dev error overlays (react-error-overlay, webpack-dev-server, Next.js dev)
-  var s = document.createElement('style');
-  s.textContent = '#__react-error-overlay__,iframe#webpack-dev-server-client-overlay,nextjs-portal{display:none!important}';
-  (document.head || document.documentElement).appendChild(s);
+  // The document may not be fully loaded
+
+  document.addEventListener('DOMContentLoaded', function() {
+    var s = document.createElement('style');
+    s.textContent = '#__react-error-overlay__,iframe#webpack-dev-server-client-overlay,nextjs-portal{display:none!important}';
+    (document.head || document.documentElement).appendChild(s);
+  });
 `
 
 const WEBVIEW_DEV_SERVER_PORT = 8182
@@ -441,6 +445,7 @@ const DappWebViewScreen = () => {
     const baseCodeEthereum = (__DEV__ && devEthereumCode) || ethereumInpageBundle.code
 
     return `
+    try {
       ${jsNativeStash}
 
       ${jsBridgeHarden}
@@ -490,6 +495,9 @@ const DappWebViewScreen = () => {
         console.log('[Ambire] window.ethereum:', !!window.ethereum, 'window.ambire:', !!window.ambire);
       })();
       true;
+    } catch (e) {
+      console.error('[Ambire] Failed to inject provider code:', e && e.stack ? e.stack : (e && e.message ? e.message : String(e)));
+    }
     `
   }, [devAmbireCode, devEthereumCode, jsBridgeHarden])
 
