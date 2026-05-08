@@ -8458,6 +8458,13 @@ expo-blur@15.0.8:
   resolved "https://registry.yarnpkg.com/expo-blur/-/expo-blur-15.0.8.tgz#846cea275a6644639c5c338987b4cca54cf93eca"
   integrity sha512-rWyE1NBRZEu9WD+X+5l7gyPRszw7n12cW3IRNAb5i6KFzaBp8cxqT5oeaphJapqURvcqhkOZn2k5EtBSbsuU7w==
 
+expo-camera@17.0.10:
+  version "17.0.10"
+  resolved "https://registry.yarnpkg.com/expo-camera/-/expo-camera-17.0.10.tgz#b3a217f0eb811a6e3522c2aff9f42be578aa6456"
+  integrity sha512-w1RBw83mAGVk4BPPwNrCZyFop0VLiVSRE3c2V9onWbdFwonpRhzmB4drygG8YOUTl1H3wQvALJHyMPTbgsK1Jg==
+  dependencies:
+    invariant "^2.2.4"
+
 expo-clipboard@8.0.8:
   version "8.0.8"
   resolved "https://registry.yarnpkg.com/expo-clipboard/-/expo-clipboard-8.0.8.tgz#5e52054a4bbaebef090ec6fe5eaa200072ff94f7"
@@ -13502,25 +13509,20 @@ react-native-linear-gradient@2.6.2:
   resolved "https://registry.yarnpkg.com/react-native-linear-gradient/-/react-native-linear-gradient-2.6.2.tgz#56598a76832724b2afa7889747635b5c80948f38"
   integrity sha512-Z8Xxvupsex+9BBFoSYS87bilNPWcRfRsGC0cpJk72Nxb5p2nEkGSBv73xZbEHnW2mUFvP+huYxrVvjZkr/gRjQ==
 
-react-native-mmkv@4.3.1:
-  version "4.3.1"
-  resolved "https://registry.yarnpkg.com/react-native-mmkv/-/react-native-mmkv-4.3.1.tgz#a8512f1fbbaedfff31f14c8ef036e90adcb0c1e1"
-  integrity sha512-APyGGaaHtayVgT18dBM8QGGZKr9pGfSTiBwbbPNzhGGfJQSU7awLGRGq879OqYl31HmVks9hOBLCs+qfgacRZg==
+react-native-mmkv@4.1.2:
+  version "4.1.2"
+  resolved "https://registry.yarnpkg.com/react-native-mmkv/-/react-native-mmkv-4.1.2.tgz#fb337930ec50d509392832c649b578a00c0d008e"
+  integrity sha512-6LHb2DQBXuo96Aues13EugmlWw/HAYuh3KoJoQNrC4JsBwn3J3KiRYAg2mCm5Je0VYq2YsmbgZG7XJwX/WFYZA==
 
 react-native-modalize@2.1.1:
   version "2.1.1"
   resolved "https://registry.yarnpkg.com/react-native-modalize/-/react-native-modalize-2.1.1.tgz#dcb67d208f4c5bdc76f45075e727be43fd008561"
   integrity sha512-4/7EZWsrUqAAkkAVEnOsSdpAPQaEBewX7TvwFuzgvGDzxKpq3O58I9SnSeU8QtG/r91XYHJNaU5dAuDrcLjUaQ==
 
-react-native-nitro-image@0.14.0:
-  version "0.14.0"
-  resolved "https://registry.yarnpkg.com/react-native-nitro-image/-/react-native-nitro-image-0.14.0.tgz#a3102c038e192e71e03370d69d1f57839abcbce4"
-  integrity sha512-yLBm+SC/bdssO5XJhYOxVf6UeFfcUoRLwR1YXPJpNZyv65aHPijDg/nklJ/spAonWEl4yfPpATGSqo8mvVEjlQ==
-
-react-native-nitro-modules@0.35.6:
-  version "0.35.6"
-  resolved "https://registry.yarnpkg.com/react-native-nitro-modules/-/react-native-nitro-modules-0.35.6.tgz#717a890fa033083f91765a586d433dd60492ac8b"
-  integrity sha512-3Cb7s+O5tpZ6RdIiPOB/wi3IMfBxD6tl6VDF8gJ5zvM/BEGTWxwMMLjzmWmsYPKekdbYBznF6qp2d2SxixPy8g==
+react-native-nitro-modules@0.33.9:
+  version "0.33.9"
+  resolved "https://registry.yarnpkg.com/react-native-nitro-modules/-/react-native-nitro-modules-0.33.9.tgz#77983bd170b81b87e05c2989c82d91475649569d"
+  integrity sha512-BM9C5mCGYYjrc8CDWZZ0anLWU/knH2xaEuFzvzogKTOW6fzgS6mmsCdM3ty+AhImJNSYwK19DLrHaqwnrrwEzw==
 
 react-native-performance@2.1.0:
   version "2.1.0"
@@ -13586,16 +13588,6 @@ react-native-url-polyfill@2.0.0:
   integrity sha512-My330Do7/DvKnEvwQc0WdcBnFPploYKp9CYlefDXzIdEaA+PAhDYllkvGeEroEzvc4Kzzj2O4yVdz8v6fjRvhA==
   dependencies:
     whatwg-url-without-unicode "8.0.0-3"
-
-react-native-vision-camera-barcode-scanner@5.0.9:
-  version "5.0.9"
-  resolved "https://registry.yarnpkg.com/react-native-vision-camera-barcode-scanner/-/react-native-vision-camera-barcode-scanner-5.0.9.tgz#e86443c59da77a10f40a8cbd3b27e64d567325fb"
-  integrity sha512-jkH5HEMNTxGJ5+adSckjoINgHgJ1iCZFxZ/gIbKyrFt+rd0eV+1lA3TbyIjvt3iTUCByrfFcwP3Y56LSDjmApw==
-
-react-native-vision-camera@^5.0.8:
-  version "5.0.8"
-  resolved "https://registry.yarnpkg.com/react-native-vision-camera/-/react-native-vision-camera-5.0.8.tgz#688cd4c53c2a5bacc55083bafd8c9a5ff31d790a"
-  integrity sha512-2dbUCZ5H29KZIoAiWDdTu4FwxrOt0GQL5Y1DYHMpupkvcWE2w69bLRRT8jUT3lhK1tXwa5cwlM9GL119JKyzaw==
 
 react-native-web@0.21.2:
   version "0.21.2"

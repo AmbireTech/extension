@@ -1,11 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Alert, Linking, Pressable, StyleSheet, View } from 'react-native'
-import { Camera, useCameraDevice, useCameraPermission } from 'react-native-vision-camera'
-import {
-  TargetBarcodeFormat,
-  useBarcodeScannerOutput
-} from 'react-native-vision-camera-barcode-scanner'
+import { Linking, Pressable, StyleSheet, View } from 'react-native'
+import { CameraView, useCameraPermissions } from 'expo-camera'
 
 import EditPenIcon from '@common/assets/svg/EditPenIcon'
 import GalleryIcon from '@common/assets/svg/GalleryIcon'
@@ -24,15 +20,12 @@ import { useWalletConnect } from '@mobile/modules/wallet-connect/hooks/useWallet
 
 import getStyles from './styles'
 
-const BARCODE_FORMATS: TargetBarcodeFormat[] = ['qr-code']
-
 const QrReaderScreen = () => {
   const { theme } = useTheme()
   const styles = getStyles(theme)
   const { goBack } = useNavigation()
-  const device = useCameraDevice('back')
-  const { hasPermission, requestPermission } = useCameraPermission()
-  const [permissionGranted, setPermissionGranted] = useState(hasPermission)
+  const [permission, requestPermission] = useCameraPermissions()
+  const permissionGranted = !!permission?.granted
   const { t } = useTranslation()
   const { addToast } = useToast()
   const { pair, isInitialized: isWcInitialized } = useWalletConnect()
@@ -40,32 +33,18 @@ const QrReaderScreen = () => {
   const [isScanningActive, setIsScanningActive] = useState(true)
 
   useEffect(() => {
-    if (hasPermission) {
-      setPermissionGranted(true)
-      return
+    if (permission && !permission.granted && permission.canAskAgain) {
+      void requestPermission()
     }
-
-    void requestPermission().then((granted) => {
-      setPermissionGranted(granted)
-    })
-  }, [hasPermission, requestPermission])
+  }, [permission, requestPermission])
 
   const handleGrantPermission = useCallback(async () => {
-    const granted = await requestPermission()
-    setPermissionGranted(granted)
+    await requestPermission()
   }, [requestPermission])
 
   const handleOpenSettings = useCallback(() => {
     void Linking.openSettings()
   }, [])
-
-  useEffect(() => {
-    if (!device) {
-      Alert.alert(t('Camera unavailable'), t("We couldn't access your camera."), [
-        { text: t('Go Back'), onPress: goBack }
-      ])
-    }
-  }, [device, goBack, t])
 
   const handleScannedValue = useCallback(
     async (rawValue: string) => {
@@ -96,21 +75,14 @@ const QrReaderScreen = () => {
     [pair, isWcInitialized, addToast, t, goBack]
   )
 
-  const scannerOutput = useBarcodeScannerOutput({
-    barcodeFormats: BARCODE_FORMATS,
-    onBarcodeScanned: (barcodes) => {
-      if (isProcessingRef.current) return
-      if (!barcodes.length) return
-      const value = barcodes[0]?.rawValue ?? barcodes[0]?.displayValue
-      if (!value) return
-      isProcessingRef.current = true
-      setIsScanningActive(false)
-      void handleScannedValue(value)
-    },
-    onError: (error) => {
-      console.error('Barcode scanner error:', error)
-    }
-  })
+  const handleBarcodeScanned = useCallback((event: { data: string }) => {
+    if (isProcessingRef.current) return
+    const value = event.data
+    if (!value) return
+    isProcessingRef.current = true
+    setIsScanningActive(false)
+    void handleScannedValue(value)
+  }, [handleScannedValue])
 
   const handleEnterManually = () => {
     console.log('Enter code manually pressed')
@@ -179,14 +151,14 @@ const QrReaderScreen = () => {
               </View>
             </View>
 
-            {!!device && (
-              <Camera
-                style={[StyleSheet.absoluteFill]}
-                device={device}
-                isActive={isScanningActive}
-                outputs={[scannerOutput]}
-              />
-            )}
+            <CameraView
+              style={[StyleSheet.absoluteFill]}
+              facing="back"
+              barcodeScannerSettings={{
+                barcodeTypes: ['qr'],
+              }}
+              onBarcodeScanned={isScanningActive ? handleBarcodeScanned : undefined}
+            />
           </View>
         ) : (
           <View style={[flexbox.flex1, flexbox.center, spacings.phLg]}>
@@ -206,3 +178,4 @@ const QrReaderScreen = () => {
 }
 
 export default QrReaderScreen
+
