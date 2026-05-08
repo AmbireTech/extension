@@ -231,7 +231,7 @@ const DevicePasswordRecoverySettingsScreen = () => {
         <EmailConfirmation email={email} handleCancelLoginAttempt={handleCancelLoginAttempt} />
       </BottomSheet>
       <BottomSheet id="backup-password-success-modal" sheetRef={successModalRef}>
-        <PanelTitle title={t('Extension password recovery')} style={spacings.mbXl} />
+        <PanelTitle title={t('Disabled password recovery')} style={spacings.mbXl} />
         <DisabledPasswordRecovery style={[flexbox.alignSelfCenter, spacings.mbXl]} />
         <Text fontSize={16} style={[spacings.mbXl, text.center]} appearance="secondaryText">
           {t('Your extension password recovery was successfully disabled!')}
