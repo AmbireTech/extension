@@ -5,7 +5,7 @@ import { useModalize } from 'react-native-modalize'
 
 import { EmailVaultState } from '@ambire-common/controllers/emailVault/emailVault'
 import { isEmail } from '@ambire-common/services/validations'
-import KeyStoreIcon from '@common/assets/svg/KeyStoreIcon'
+import DisabledPasswordRecovery from '@common/assets/svg/DisabledPasswordRecovery'
 import Alert from '@common/components/Alert'
 import BottomSheet from '@common/components/BottomSheet'
 import Button from '@common/components/Button'
@@ -232,7 +232,7 @@ const DevicePasswordRecoverySettingsScreen = () => {
       </BottomSheet>
       <BottomSheet id="backup-password-success-modal" sheetRef={successModalRef}>
         <PanelTitle title={t('Extension password recovery')} style={spacings.mbXl} />
-        <KeyStoreIcon style={[flexbox.alignSelfCenter, spacings.mbXl]} />
+        <DisabledPasswordRecovery style={[flexbox.alignSelfCenter, spacings.mbXl]} />
         <Text fontSize={16} style={[spacings.mbXl, text.center]} appearance="secondaryText">
           {t('Your extension password recovery was successfully disabled!')}
         </Text>
