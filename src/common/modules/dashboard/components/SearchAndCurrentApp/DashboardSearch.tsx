@@ -15,6 +15,7 @@ type Props = {
 const DashboardSearch: FC<Props> = ({ control }) => {
   const { theme } = useTheme()
   const [isSearchFieldDisplayed, setIsSearchFieldDisplayed] = useState(false)
+  // Keep clear button hidden until expansion finishes so it doesn't appear inside a narrow field.
   const [isSearchFullyExpanded, setIsSearchFullyExpanded] = useState(false)
   const animatedWidth = useMemo(() => new Animated.Value(40), [])
 
@@ -48,6 +49,7 @@ const DashboardSearch: FC<Props> = ({ control }) => {
     >
       <View style={{ width: 40, height: 40 }}>
         <Pressable
+          // Use a larger invisible touch target around the icon for easier tapping.
           hitSlop={10}
           style={{
             position: 'absolute',

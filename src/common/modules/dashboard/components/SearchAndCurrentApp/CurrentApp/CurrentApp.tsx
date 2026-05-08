@@ -36,6 +36,7 @@ const CurrentApp = () => {
       />
       <View style={{ ...spacings.ml, width: 40, height: 40 }} ref={pressableRef}>
         <Pressable
+          // Keep a larger invisible touch target around the 40x40 icon for easier tapping.
           style={{
             position: 'absolute',
             top: -8,
