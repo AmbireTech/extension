@@ -17,7 +17,7 @@ import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import useNavigation from '@common/hooks/useNavigation'
 import useTheme from '@common/hooks/useTheme'
-import { ROUTES } from '@common/modules/router/constants/common'
+import { ROUTES, WEB_ROUTES } from '@common/modules/router/constants/common'
 import spacings, { SPACING_XL } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
@@ -70,7 +70,7 @@ const DevicePasswordRecoverySettingsScreen = () => {
     if (
       confirmationModalRef.current &&
       (ev.currentState === EmailVaultState.WaitingEmailConfirmation ||
-        ev.currentState === EmailVaultState.UploadingSecret)
+        ev.currentState === EmailVaultState.RemovingSecret)
     ) {
       openConfirmationModal()
       return
@@ -81,10 +81,10 @@ const DevicePasswordRecoverySettingsScreen = () => {
   }, [closeConfirmationModal, ev.currentState, openConfirmationModal])
 
   useEffect(() => {
-    if (ev.statuses.uploadKeyStoreSecret === 'SUCCESS') {
+    if (ev.statuses.removeKeyStoreSecret === 'SUCCESS') {
       openSuccessModal()
     }
-  }, [ev.statuses.uploadKeyStoreSecret, openSuccessModal])
+  }, [ev.statuses.removeKeyStoreSecret, openSuccessModal])
 
   const handleFormSubmit = useCallback(() => {
     // eslint-disable-next-line @typescript-eslint/no-floating-promises
@@ -92,7 +92,7 @@ const DevicePasswordRecoverySettingsScreen = () => {
       evDispatch({
         type: 'method',
         params: {
-          method: 'uploadKeyStoreSecret',
+          method: 'removeKeyStoreSecret',
           args: [email]
         }
       })
@@ -110,7 +110,7 @@ const DevicePasswordRecoverySettingsScreen = () => {
     closePasswordConfirmationModal()
   }, [closePasswordConfirmationModal, keystoreDispatch])
 
-  const handleEnablePress = useCallback(() => {
+  const handleDisablePress = useCallback(() => {
     // eslint-disable-next-line @typescript-eslint/no-floating-promises
     handleSubmit(async () => {
       openPasswordConfirmationModal()
@@ -160,15 +160,6 @@ const DevicePasswordRecoverySettingsScreen = () => {
           />
         )}
 
-        {ev.hasKeystoreRecovery && (
-          <Alert
-            type="success"
-            title={t('Email recovery enabled!')}
-            size="sm"
-            style={{ ...spacings.mbTy }}
-            isTypeLabelHidden
-          />
-        )}
         <Controller
           control={control}
           // @ts-ignore minot type mismatch, (value) => isEmail(value) has no warns
@@ -179,7 +170,7 @@ const DevicePasswordRecoverySettingsScreen = () => {
               placeholder={t('E-mail')}
               onChangeText={onChange}
               inputWrapperStyle={{ backgroundColor: theme.tertiaryBackground }}
-              onSubmitEditing={handleEnablePress}
+              onSubmitEditing={handleDisablePress}
               value={value}
               autoFocus={isWeb}
               isValid={isEmail(value)}
@@ -195,7 +186,7 @@ const DevicePasswordRecoverySettingsScreen = () => {
             ev.currentState === EmailVaultState.Loading ||
             isSubmitting ||
             !email ||
-            ev.hasKeystoreRecovery ||
+            !ev.hasKeystoreRecovery ||
             !isValid ||
             keystoreState.statuses.unlockWithSecret !== 'INITIAL'
           }
@@ -204,11 +195,19 @@ const DevicePasswordRecoverySettingsScreen = () => {
             // eslint-disable-next-line no-nested-ternary
             isSubmitting || ev.currentState === EmailVaultState.Loading
               ? t('Loading...')
-              : ev.hasKeystoreRecovery
-                ? t('Enabled')
-                : t('Enable')
+              : t('Disable')
           }
-          onPress={handleEnablePress}
+          onPress={handleDisablePress}
+        />
+        <Alert
+          type="success"
+          isTypeLabelHidden
+          style={spacings.mtXl}
+          title={t('You can disable the email recovery!')}
+          titleWeight="semiBold"
+          text={t(
+            'Disable email-based password recovery for this device. \nYou can still setup and use biometric unlock as a more self-sovereign and private alternative that does not rely on Ambire infrastructure.'
+          )}
         />
         <Alert
           type="info"
@@ -225,7 +224,7 @@ const DevicePasswordRecoverySettingsScreen = () => {
         id="device-password-recovery-confirm-password-modal"
         sheetRef={passwordConfirmationModalRef}
         closeBottomSheet={closePasswordConfirmation}
-        text={t('Please enter your extension password to enable email recovery.')}
+        text={t('Please enter your extension password to disable email recovery.')}
         onPasswordConfirmed={handlePasswordConfirmed}
       />
       <BottomSheet id="backup-password-confirmation-modal" sheetRef={confirmationModalRef}>
@@ -235,9 +234,16 @@ const DevicePasswordRecoverySettingsScreen = () => {
         <PanelTitle title={t('Extension password recovery')} style={spacings.mbXl} />
         <KeyStoreIcon style={[flexbox.alignSelfCenter, spacings.mbXl]} />
         <Text fontSize={16} style={[spacings.mbXl, text.center]} appearance="secondaryText">
-          {t('Your extension password recovery was successfully enabled!')}
+          {t('Your extension password recovery was successfully disabled!')}
         </Text>
-        <Button text={t('Got it')} hasBottomSpacing={false} onPress={closeSuccessModal as any} />
+        <Button
+          text={t('Got it')}
+          hasBottomSpacing={false}
+          onPress={() => {
+            closeSuccessModal()
+            navigate(WEB_ROUTES.generalSettings)
+          }}
+        />
       </BottomSheet>
     </>
   )
