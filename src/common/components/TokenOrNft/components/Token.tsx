@@ -73,6 +73,8 @@ const InnerToken: FC<Props> = ({
     }
   }, [amount, tokenInfo?.decimals])
 
+  const shouldDisplayALotOf = useMemo(() => fullAmount >= 10_000_000_000, [fullAmount])
+
   return (
     <>
       {BigInt(amount) > BigInt(0) ? (
@@ -82,34 +84,35 @@ const InnerToken: FC<Props> = ({
           appearance="primaryText"
           style={{ maxWidth: '100%', ...(isMobile ? spacings.mrMi : {}) }}
         >
-          {shouldDisplayUnlimitedAmount ? (
-            <Text style={spacings.mrTy} appearance="warningText">
-              {t('unlimited')}
+          <Text
+            weight={shouldDisplayUnlimitedAmount ? undefined : 'medium'}
+            appearance={
+              shouldDisplayUnlimitedAmount || shouldDisplayALotOf ? 'warningText' : 'primaryText'
+            }
+            dataSet={createGlobalTooltipDataSet({
+              id: shouldDisplayUnlimitedAmount
+                ? `${address}-unlimited-amount`
+                : `${address}-${fullAmount}-balance`,
+              content: String(fullAmount)
+            })}
+            style={shouldDisplayUnlimitedAmount ? spacings.mrTy : spacings.mrMi}
+          >
+            {/* eslint-disable-next-line no-nested-ternary */}
+            {shouldDisplayUnlimitedAmount
+              ? t('unlimited')
+              : shouldDisplayALotOf
+                ? t('a lot of')
+                : formattedAmount}
+          </Text>
+          {!shouldDisplayUnlimitedAmount && !shouldDisplayALotOf && !tokenInfo?.decimals && (
+            <Text
+              fontSize={textSize}
+              weight="medium"
+              appearance="primaryText"
+              style={{ maxWidth: '100%', ...spacings.mrTy }}
+            >
+              {t('units of')}
             </Text>
-          ) : (
-            <>
-              <Text
-                weight="medium"
-                appearance="primaryText"
-                dataSet={createGlobalTooltipDataSet({
-                  id: `${address}-${fullAmount}-balance`,
-                  content: String(fullAmount)
-                })}
-                style={spacings.mrMi}
-              >
-                {formattedAmount}
-              </Text>
-              {!tokenInfo?.decimals && (
-                <Text
-                  fontSize={textSize}
-                  weight="medium"
-                  appearance="primaryText"
-                  style={{ maxWidth: '100%', ...spacings.mrTy }}
-                >
-                  {t('units of')}
-                </Text>
-              )}
-            </>
           )}
         </Text>
       ) : null}
