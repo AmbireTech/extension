@@ -1,11 +1,13 @@
 import { useContext } from 'react'
 
-import { WalletConnectContext } from '../components/WalletConnectProvider'
+import { WalletConnectContext } from '@mobile/modules/wallet-connect/contexts/walletConnectContext'
 
-export const useWalletConnect = () => {
+const useWalletConnect = () => {
   const context = useContext(WalletConnectContext)
   if (!context) {
     throw new Error('useWalletConnect must be used within WalletConnectProvider')
   }
   return context
 }
+
+export default useWalletConnect

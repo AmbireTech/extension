@@ -1,7 +1,7 @@
+import { CameraView, useCameraPermissions } from 'expo-camera'
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Linking, Pressable, StyleSheet, View } from 'react-native'
-import { CameraView, useCameraPermissions } from 'expo-camera'
 
 import EditPenIcon from '@common/assets/svg/EditPenIcon'
 import GalleryIcon from '@common/assets/svg/GalleryIcon'
@@ -16,7 +16,7 @@ import {
   MobileLayoutContainer,
   MobileLayoutWrapperMainContent
 } from '@mobile/components/MobileLayoutWrapper'
-import { useWalletConnect } from '@mobile/modules/wallet-connect/hooks/useWalletConnect'
+import useWalletConnect from '@mobile/modules/wallet-connect/hooks/useWalletConnect'
 
 import getStyles from './styles'
 
@@ -30,7 +30,6 @@ const QrReaderScreen = () => {
   const { addToast } = useToast()
   const { pair, isInitialized: isWcInitialized } = useWalletConnect()
   const isProcessingRef = useRef(false)
-  const [isScanningActive, setIsScanningActive] = useState(true)
 
   useEffect(() => {
     if (permission && !permission.granted && permission.canAskAgain) {
@@ -53,36 +52,36 @@ const QrReaderScreen = () => {
       if (value.toLowerCase().startsWith('wc:')) {
         if (!isWcInitialized) {
           addToast(t('WalletConnect is still initializing. Please try again in a moment.'), {
-            type: 'info'
+            type: 'warning'
           })
           isProcessingRef.current = false
-          setIsScanningActive(true)
           return
         }
 
-        addToast(t('Connecting via WalletConnect…'), { type: 'info' })
+        addToast(t('Connecting via WalletConnect…'))
         void pair(value)
         goBack()
         return
       }
 
       addToast(t('Unsupported QR code. Expected a WalletConnect URI (wc:…).'), {
-        type: 'info'
+        type: 'error'
       })
       isProcessingRef.current = false
-      setIsScanningActive(true)
     },
     [pair, isWcInitialized, addToast, t, goBack]
   )
 
-  const handleBarcodeScanned = useCallback((event: { data: string }) => {
-    if (isProcessingRef.current) return
-    const value = event.data
-    if (!value) return
-    isProcessingRef.current = true
-    setIsScanningActive(false)
-    void handleScannedValue(value)
-  }, [handleScannedValue])
+  const handleBarcodeScanned = useCallback(
+    (event: { data: string }) => {
+      if (isProcessingRef.current) return
+      const value = event.data
+      if (!value) return
+      isProcessingRef.current = true
+      void handleScannedValue(value)
+    },
+    [handleScannedValue]
+  )
 
   const handleEnterManually = () => {
     console.log('Enter code manually pressed')
@@ -155,9 +154,9 @@ const QrReaderScreen = () => {
               style={[StyleSheet.absoluteFill]}
               facing="back"
               barcodeScannerSettings={{
-                barcodeTypes: ['qr'],
+                barcodeTypes: ['qr']
               }}
-              onBarcodeScanned={isScanningActive ? handleBarcodeScanned : undefined}
+              onBarcodeScanned={handleBarcodeScanned}
             />
           </View>
         ) : (
@@ -178,4 +177,3 @@ const QrReaderScreen = () => {
 }
 
 export default QrReaderScreen
-

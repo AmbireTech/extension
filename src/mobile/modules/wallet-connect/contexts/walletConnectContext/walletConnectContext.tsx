@@ -1,14 +1,14 @@
 import React, { createContext, useCallback, useContext, useEffect, useState } from 'react'
 import { Linking } from 'react-native'
 
-import { ControllerStoreContext } from '@common/contexts/controllerStoreContext'
 import { ControllersMiddlewareContext } from '@common/contexts/controllersMiddlewareContext'
+import { ControllerStoreContext } from '@common/contexts/controllerStoreContext'
 import {
-  initWalletConnect,
-  getWalletKit
-} from '../services/walletConnectService'
+  getWalletKit,
+  initWalletConnect
+} from '@mobile/modules/wallet-connect/services/walletConnectService'
 
-interface WalletConnectContextValue {
+type WalletConnectContextValue = {
   pair: (uri: string) => Promise<void>
   isInitialized: boolean
 }
@@ -35,16 +35,19 @@ export const WalletConnectProvider: React.FC<{ children: React.ReactNode }> = ({
     initWc()
   }, [controllerStore, dispatch])
 
-  const pair = useCallback(async (uri: string) => {
-    const walletKit = getWalletKit()
-    if (!walletKit || !isInitialized) return
+  const pair = useCallback(
+    async (uri: string) => {
+      const walletKit = getWalletKit()
+      if (!walletKit || !isInitialized) return
 
-    try {
-      await walletKit.pair({ uri })
-    } catch (e) {
-      console.error('WalletConnect pair failed:', e)
-    }
-  }, [isInitialized])
+      try {
+        await walletKit.pair({ uri })
+      } catch (e) {
+        console.error('WalletConnect pair failed:', e)
+      }
+    },
+    [isInitialized]
+  )
 
   useEffect(() => {
     if (!isInitialized) return

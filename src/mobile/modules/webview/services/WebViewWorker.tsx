@@ -24,9 +24,9 @@ const webviewBundle = __DEV__ ? null : require('./webview-bundle.json')
 // - Android: env WEBVIEW_DEV_HOST or fallback to 10.0.2.2
 const WEBVIEW_DEV_SERVER_PORT = 8182
 const getDevServerUrl = () => {
-  if (Platform.OS === 'android') {
-    return `http://${WEBVIEW_DEV_HOST || '10.0.2.2'}:${WEBVIEW_DEV_SERVER_PORT}`
-  }
+  // if (Platform.OS === 'android') {
+  return `http://${WEBVIEW_DEV_HOST || '10.0.2.2'}:${WEBVIEW_DEV_SERVER_PORT}`
+  // }
   return `http://localhost:${WEBVIEW_DEV_SERVER_PORT}`
 }
 
