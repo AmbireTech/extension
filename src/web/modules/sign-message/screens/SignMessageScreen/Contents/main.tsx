@@ -14,6 +14,7 @@ import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import useWindowSize from '@common/hooks/useWindowSize'
 import HardwareWalletSigningModal from '@common/modules/hardware-wallets/components/HardwareWalletSigningModal'
+import SafetyChecksBanner from '@common/modules/sign-account-op/components/SafetyChecksBanner'
 import spacings, { SPACING_LG, SPACING_MD, SPACING_TY } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { TabLayoutWrapperMainContent } from '@web/components/TabLayoutWrapper'
@@ -120,6 +121,18 @@ const Main = ({
         />
         {/* @TODO: Replace with Badge; add size prop to badge; add tooltip  */}
       </View>
+      {!!signMessageState.banners?.length && (
+        <View style={spacings.mbLg}>
+          {signMessageState.banners.map((banner) => (
+            <SafetyChecksBanner
+              key={banner.id}
+              type={banner.type}
+              text={banner.text}
+              style={spacings.mbTy}
+            />
+          ))}
+        </View>
+      )}
       <View style={styles.container}>
         <View
           style={{
