@@ -89,7 +89,9 @@ const Footer: FC<Props> = ({
     gasFeePayment?.broadcastOption !== BROADCAST_OPTIONS.byRelayer &&
     gasFeePayment?.broadcastOption !== BROADCAST_OPTIONS.byBundler &&
     canBuildSpeedUpAccountOp(submittedAccountOp)
-  const canRepeatTransaction = !!rawCalls?.length && selectedAccount?.addr === accountAddr
+  const isExternal = submittedAccountOp.activitySource === 'external'
+  const canRepeatTransaction =
+    !!rawCalls?.length && selectedAccount?.addr === accountAddr && !isExternal
 
   const benzinLink = `https://explorer.ambire.com/${getBenzinUrlParams({
     txnId,
@@ -246,7 +248,9 @@ const Footer: FC<Props> = ({
           <View
             dataSet={createGlobalTooltipDataSet({
               id: `repeat-disabled-${submittedAccountOp.id}`,
-              content: t('Switch to this account to proceed'),
+              content: isExternal
+                ? t('Transaction is from another account')
+                : t('Switch to this account to proceed'),
               hidden: canRepeatTransaction
             })}
           >
