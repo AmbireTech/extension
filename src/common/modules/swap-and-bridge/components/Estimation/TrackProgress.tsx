@@ -232,10 +232,9 @@ const TrackProgress: FC<Props> = ({ activeRoute, handleClose }) => {
                     style={text.center}
                   >
                     {t('Time: {{time}}', {
-                      time:
-                        lastCompletedRoute.route.fromChainId !== lastCompletedRoute.route.toChainId
-                          ? `~ ${formatTime(lastCompletedRoute.route?.serviceTime)}`
-                          : 'instant'
+                      time: getIsBridgeRoute(lastCompletedRoute.route)
+                        ? `~ ${formatTime(lastCompletedRoute.route?.serviceTime)}`
+                        : 'instant'
                     })}
                   </Text>
                 )}
