@@ -20,6 +20,11 @@ interface Props {
   fontSize?: number
   children?: React.ReactNode
   withWrap?: boolean
+  highlight?: {
+    prefix: number
+    suffix: number
+    color: 'errorText'
+  }
 }
 
 const PlainAddressWithCopy: FC<Props> = ({
@@ -29,7 +34,8 @@ const PlainAddressWithCopy: FC<Props> = ({
   hideParentheses,
   fontSize = 12,
   children,
-  withWrap = false
+  withWrap = false,
+  highlight
 }) => {
   const { t } = useTranslation()
   const { addToast } = useToast()
@@ -66,6 +72,8 @@ const PlainAddressWithCopy: FC<Props> = ({
           ...(withWrap ? { minWidth: isMobile ? 70 : 170 } : {})
         }}
         fontSize={fontSize}
+        withWrap={withWrap}
+        highlight={highlight}
       />
       <AnimatedPressable onPress={handleCopy} style={animStyle} {...bindAnim}>
         <CopyIcon width={fontSize + 8} height={fontSize + 8} color={theme.secondaryText} />

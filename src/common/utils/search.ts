@@ -26,10 +26,23 @@ const searchWithNetworkName = <T extends object>({
   })
 
   const fuse = new Fuse(
-    items.map((item) => ({
-      ...item,
-      networkName: networkChainIdToNameMap[(item as any).chainId.toString()] || ''
-    })),
+    items.map((item) => {
+      let networkName = ''
+
+      if (
+        'chainId' in item &&
+        (typeof item.chainId === 'bigint' ||
+          typeof item.chainId === 'string' ||
+          typeof item.chainId === 'number')
+      ) {
+        networkName = networkChainIdToNameMap[item.chainId.toString()] || ''
+      }
+
+      return {
+        ...item,
+        networkName
+      }
+    }),
     {
       keys: [...keys, 'networkName'],
       threshold: 0.3

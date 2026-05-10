@@ -21,6 +21,9 @@ type CustomGasPriceInputProps = {
   inputError: string | boolean
   label: string
   autoFocus?: boolean
+  disabled?: boolean
+  disabledReason?: string
+  precision?: number
 }
 
 const CustomGasPriceInput = memo(
@@ -30,7 +33,10 @@ const CustomGasPriceInput = memo(
     onSanitizedAmountChange,
     inputError,
     label,
-    autoFocus
+    autoFocus,
+    disabled,
+    disabledReason,
+    precision = 9
   }: CustomGasPriceInputProps) => {
     const [draftAmount, setDraftAmount] = useState(initialAmount)
 
@@ -59,10 +65,12 @@ const CustomGasPriceInput = memo(
         value={draftAmount}
         onChangeText={onChange}
         onBlur={onBlur}
-        precision={9}
-        error={inputError}
+        precision={precision}
+        error={!disabled && inputError}
+        info={disabled ? disabledReason : undefined}
         autoFocus={autoFocus}
         backgroundColor={backgroundColor}
+        disabled={disabled}
       />
     )
   }
@@ -71,10 +79,12 @@ const CustomGasPriceInput = memo(
 type Props = {
   backgroundColor: ColorValue
   closeBottomSheet: () => void
+  canSetCustomGas: boolean
+  currentGas: string
   currentMaxFeePerGas: string
   currentMaxPriorityFeePerGas: string
   is1559?: boolean
-  onSaveCustomGasPrices: (gasPrices: GasSpeeds) => void
+  onSaveCustomGasPrices: (gasPrices: GasSpeeds, customGasLimit?: bigint) => void
   selectedOption: ISignAccountOpController['selectedOption']
   sheetRef: React.RefObject<Modalize>
 }
@@ -82,6 +92,8 @@ type Props = {
 const CustomGasPrice = ({
   backgroundColor,
   closeBottomSheet,
+  canSetCustomGas,
+  currentGas,
   currentMaxFeePerGas,
   currentMaxPriorityFeePerGas,
   is1559,
@@ -91,18 +103,30 @@ const CustomGasPrice = ({
 }: Props) => {
   const { t } = useTranslation()
   const [customGasPriceError, setCustomGasPriceError] = useState<string | boolean>(false)
+  const gasRef = useRef('')
   const maxFeePerGasRef = useRef('')
   const maxPriorityFeePerGasRef = useRef('')
+  const [initialGas, setInitialGas] = useState('')
   const [initialMaxFeePerGas, setInitialMaxFeePerGas] = useState('')
   const [initialMaxPriorityFeePerGas, setInitialMaxPriorityFeePerGas] = useState('')
 
   const resetState = useCallback(() => {
+    gasRef.current = currentGas
     maxFeePerGasRef.current = currentMaxFeePerGas
     maxPriorityFeePerGasRef.current = currentMaxPriorityFeePerGas
+    setInitialGas(currentGas)
     setInitialMaxFeePerGas(currentMaxFeePerGas)
     setInitialMaxPriorityFeePerGas(currentMaxPriorityFeePerGas)
     setCustomGasPriceError(false)
-  }, [currentMaxFeePerGas, currentMaxPriorityFeePerGas])
+  }, [currentGas, currentMaxFeePerGas, currentMaxPriorityFeePerGas])
+
+  const onGasChange = useCallback(
+    (value: string) => {
+      gasRef.current = value
+      if (customGasPriceError) setCustomGasPriceError(false)
+    },
+    [customGasPriceError]
+  )
 
   const onMaxFeePerGasChange = useCallback(
     (value: string) => {
@@ -125,8 +149,13 @@ const CustomGasPrice = ({
 
     const normalizedMaxFeePerGas = maxFeePerGasRef.current.trim().replace(',', '.')
     const normalizedMaxPriorityFeePerGas = maxPriorityFeePerGasRef.current.trim().replace(',', '.')
+    const normalizedGas = gasRef.current.trim().replace(',', '.')
 
-    if (!normalizedMaxFeePerGas || (is1559 && !normalizedMaxPriorityFeePerGas)) {
+    if (
+      !normalizedMaxFeePerGas ||
+      (is1559 && !normalizedMaxPriorityFeePerGas) ||
+      (canSetCustomGas && !normalizedGas)
+    ) {
       setCustomGasPriceError(t('Enter valid gas prices'))
       return
     }
@@ -134,8 +163,13 @@ const CustomGasPrice = ({
     try {
       const maxFeePerGas = parseUnits(normalizedMaxFeePerGas, 'gwei')
       const maxPriorityFeePerGas = is1559 ? parseUnits(normalizedMaxPriorityFeePerGas, 'gwei') : 0n
+      const gas = canSetCustomGas ? BigInt(normalizedGas) : undefined
 
-      if (maxFeePerGas <= 0n || (is1559 && maxPriorityFeePerGas <= 0n)) {
+      if (
+        maxFeePerGas <= 0n ||
+        (is1559 && maxPriorityFeePerGas <= 0n) ||
+        (typeof gas !== 'undefined' && gas <= 0n)
+      ) {
         setCustomGasPriceError(t('Enter valid gas prices'))
         return
       }
@@ -161,12 +195,23 @@ const CustomGasPrice = ({
         }
       }
 
-      onSaveCustomGasPrices(customGasPrices)
+      onSaveCustomGasPrices(
+        customGasPrices,
+        canSetCustomGas && normalizedGas !== currentGas ? gas : undefined
+      )
       closeBottomSheet()
     } catch {
       setCustomGasPriceError(t('Enter valid gas prices'))
     }
-  }, [closeBottomSheet, is1559, onSaveCustomGasPrices, selectedOption, t])
+  }, [
+    canSetCustomGas,
+    closeBottomSheet,
+    currentGas,
+    is1559,
+    onSaveCustomGasPrices,
+    selectedOption,
+    t
+  ])
 
   return (
     <BottomSheet
@@ -200,6 +245,18 @@ const CustomGasPrice = ({
             />
           </View>
         )}
+      </View>
+      <View>
+        <CustomGasPriceInput
+          initialAmount={initialGas}
+          backgroundColor={backgroundColor}
+          onSanitizedAmountChange={onGasChange}
+          inputError={customGasPriceError}
+          label={t('Gas')}
+          precision={0}
+          disabled={!canSetCustomGas}
+          disabledReason={t('Custom gas cannot be set for an EOA batch')}
+        />
       </View>
       <FooterGlassView absolute={false} isSimpleBlur={false} size="sm" style={spacings.mtLg}>
         <Button

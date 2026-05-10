@@ -9,6 +9,7 @@ declare module '@env' {
     VELCRO_URL: string
     BUNGEE_API_KEY: string
     LI_FI_API_KEY: string
+    SQUID_INTEGRATOR_ID: string
     SENTRY_DSN?: string
     ENVIRONMENT: string
     DEFAULT_KEYSTORE_PASSWORD_DEV: string
@@ -96,6 +97,11 @@ declare module '@env' {
    * across multiple blockchains. Access is restricted and requires an API key.
    */
   export const LI_FI_API_KEY: EnvTypes['LI_FI_API_KEY']
+
+  /**
+   * Squid integrator ID. Required by the Squid API.
+   */
+  export const SQUID_INTEGRATOR_ID: EnvTypes['SQUID_INTEGRATOR_ID']
 
   /**
    * The address of the Legends NFT contract (same on PROD and STAGING)

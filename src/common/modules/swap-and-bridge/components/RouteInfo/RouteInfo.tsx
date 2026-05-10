@@ -4,6 +4,7 @@ import { Pressable, View } from 'react-native'
 
 import { EstimationStatus } from '@ambire-common/controllers/estimation/types'
 import { SwapAndBridgeFormStatus } from '@ambire-common/controllers/swapAndBridge/swapAndBridge'
+import { getIsBridgeRoute } from '@ambire-common/libs/swapAndBridge/swapAndBridge'
 import { FEE_PERCENT } from '@ambire-common/services/socket/constants'
 import InfoIcon from '@common/assets/svg/InfoIcon'
 import WarningIcon from '@common/assets/svg/WarningIcon'
@@ -163,7 +164,7 @@ const RouteInfo: FC<Props> = ({
                       >
                         {t('Time: {{time}}', {
                           time:
-                            quote?.selectedRoute.fromChainId !== quote?.selectedRoute.toChainId
+                            quote?.selectedRoute && getIsBridgeRoute(quote.selectedRoute)
                               ? `~ ${formatTime(quote?.selectedRoute?.serviceTime)}`
                               : 'instant'
                         })}
