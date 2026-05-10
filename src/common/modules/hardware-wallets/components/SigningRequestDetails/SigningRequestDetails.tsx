@@ -13,7 +13,6 @@ import flexbox from '@common/styles/utils/flexbox'
 type Props = {
   signingRequest: HardwareWalletSigningRequest
   style?: StyleProp<ViewStyle>
-  maxContentHeight?: number
 }
 
 const requestLabelByType: Record<HardwareWalletSigningRequest['type'], string> = {
@@ -37,7 +36,7 @@ const stringifySigningRequest = (data: unknown) => {
   }
 }
 
-const SigningRequestDetails = ({ signingRequest, style, maxContentHeight = 220 }: Props) => {
+const SigningRequestDetails = ({ signingRequest, style }: Props) => {
   const { t } = useTranslation()
   const { theme } = useTheme()
   const [isExpanded, setIsExpanded] = useState(false)
@@ -81,12 +80,12 @@ const SigningRequestDetails = ({ signingRequest, style, maxContentHeight = 220 }
         <Text weight="medium" fontSize={14}>
           {isExpanded
             ? t('Hide {{label}}', { label: signingRequestLabel })
-            : t('View {{label}}', { label: signingRequestLabel })}
+            : t('Show {{label}}', { label: signingRequestLabel })}
         </Text>
         {isExpanded ? <UpArrowIcon /> : <DownArrowIcon />}
       </Pressable>
       {isExpanded && (
-        <ScrollView style={[spacings.ph, spacings.pb, { maxHeight: maxContentHeight }]}>
+        <ScrollView style={[spacings.ph, spacings.pb]}>
           <Text
             selectable
             weight="mono_regular"
