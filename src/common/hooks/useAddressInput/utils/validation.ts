@@ -73,6 +73,19 @@ const getAddressInputValidation = ({
     }
   }
 
+  // ENS/Namoshi that looks like an address
+  if (
+    (isValidNamoshi || isValidEns) &&
+    address.indexOf('.') !== -1 &&
+    isValidAddress(address.split('.')[0] || '')
+  ) {
+    const domain = address.split('.').slice(1).join('.')
+    return {
+      message: `You've entered a domain <address>.${domain} that may point to a different address. This is often used by scammers to trick users.`,
+      severity: 'warning'
+    }
+  }
+
   if (isValidEns) {
     successValidation = {
       message: 'Valid ENS domain',
