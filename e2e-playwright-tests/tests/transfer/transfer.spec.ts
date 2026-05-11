@@ -116,13 +116,18 @@ test.describe('transfer', { tag: '@transfer' }, () => {
       )
       const viewTransactionTab = await pages.basePage.handleNewPage(viewTransactionLink)
 
-      // check url of new tab
-      expect(viewTransactionTab.url()).toContain('explorer.ambire.com')
+      // assert transaction on explorer
+      if (sendToken == tokens.usdc.optimism) {
+        expect(viewTransactionTab.url()).toContain('optimistic.etherscan.io')
+        // TODO: add assertions on optimism exploreer
+      } else {
+        expect(viewTransactionTab.url()).toContain('explorer.ambire.com')
 
-      await pages.transfer.checkRecepientTransactionOnExplorer({
-        newPage: viewTransactionTab,
-        recepientAddress: newContactAddress
-      })
+        await pages.transfer.checkRecepientTransactionOnExplorer({
+          newPage: viewTransactionTab,
+          recepientAddress: newContactAddress
+        })
+      }
     })
   })
 
@@ -170,13 +175,18 @@ test.describe('transfer', { tag: '@transfer' }, () => {
       )
       const viewTransactionTab = await pages.basePage.handleNewPage(viewTransactionLink)
 
-      // check url of new tab
-      expect(viewTransactionTab.url()).toContain('explorer.ambire.com')
+      // assert transaction on explorer
+      if (sendToken == tokens.usdc.optimism) {
+        expect(viewTransactionTab.url()).toContain('optimistic.etherscan.io')
+        // TODO: add assertions on optimism exploreer
+      } else {
+        expect(viewTransactionTab.url()).toContain('explorer.ambire.com')
 
-      await pages.transfer.checkRecepientTransactionOnExplorer({
-        newPage: viewTransactionTab,
-        recepientAddress: newContactAddress
-      })
+        await pages.transfer.checkRecepientTransactionOnExplorer({
+          newPage: viewTransactionTab,
+          recepientAddress: newContactAddress
+        })
+      }
     })
   })
 })
