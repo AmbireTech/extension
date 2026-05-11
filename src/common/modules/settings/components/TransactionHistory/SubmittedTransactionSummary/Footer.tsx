@@ -249,7 +249,7 @@ const Footer: FC<Props> = ({
             dataSet={createGlobalTooltipDataSet({
               id: `repeat-disabled-${submittedAccountOp.id}`,
               content: isExternal
-                ? t('Transaction is from another account')
+                ? t('Incoming transactions cannot be repeated')
                 : t('Switch to this account to proceed'),
               hidden: canRepeatTransaction
             })}
