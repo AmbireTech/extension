@@ -1,3 +1,4 @@
+import { PermissionResponse, useCameraPermissions } from 'expo-camera'
 import React, { createContext, useCallback, useContext, useEffect, useState } from 'react'
 import { Linking } from 'react-native'
 
@@ -11,11 +12,15 @@ import {
 type WalletConnectContextValue = {
   pair: (uri: string) => Promise<void>
   isInitialized: boolean
+  cameraPermission: PermissionResponse | null
+  requestCameraPermission: () => Promise<PermissionResponse>
 }
 
 export const WalletConnectContext = createContext<WalletConnectContextValue>({
   pair: async () => {},
-  isInitialized: false
+  isInitialized: false,
+  cameraPermission: null,
+  requestCameraPermission: async () => ({}) as PermissionResponse
 })
 
 export const WalletConnectProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -23,6 +28,7 @@ export const WalletConnectProvider: React.FC<{ children: React.ReactNode }> = ({
   // incorrectly start as false when WalletKit is already initialized.
   const [isInitialized, setIsInitialized] = useState(isWalletConnectInitialized)
   const { dispatch } = useContext(ControllersMiddlewareContext)
+  const [cameraPermission, requestCameraPermission] = useCameraPermissions()
 
   useEffect(() => {
     console.log('[WalletConnectProvider] Initialization effect triggered.')
@@ -91,7 +97,9 @@ export const WalletConnectProvider: React.FC<{ children: React.ReactNode }> = ({
   }, [isInitialized, pair])
 
   return (
-    <WalletConnectContext.Provider value={{ pair, isInitialized }}>
+    <WalletConnectContext.Provider
+      value={{ pair, isInitialized, cameraPermission, requestCameraPermission }}
+    >
       {children}
     </WalletConnectContext.Provider>
   )

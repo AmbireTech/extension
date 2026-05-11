@@ -1,5 +1,5 @@
-import { CameraView, useCameraPermissions } from 'expo-camera'
-import React, { useCallback, useEffect, useRef, useState } from 'react'
+import { CameraView } from 'expo-camera'
+import React, { useCallback, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Linking, Pressable, StyleSheet, View } from 'react-native'
 
@@ -24,11 +24,15 @@ const QrReaderScreen = () => {
   const { theme } = useTheme()
   const styles = getStyles(theme)
   const { goBack } = useNavigation()
-  const [permission, requestPermission] = useCameraPermissions()
-  const permissionGranted = !!permission?.granted
   const { t } = useTranslation()
   const { addToast } = useToast()
-  const { pair, isInitialized: isWcInitialized } = useWalletConnect()
+  const {
+    pair,
+    isInitialized: isWcInitialized,
+    cameraPermission: permission,
+    requestCameraPermission: requestPermission
+  } = useWalletConnect()
+  const permissionGranted = !!permission?.granted
   const isProcessingRef = useRef(false)
 
   useEffect(() => {
