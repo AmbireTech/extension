@@ -5,7 +5,6 @@ import { TooltipRefProps } from 'react-tooltip'
 
 import AccountAddress from '@common/components/AccountAddress'
 import Avatar from '@common/components/Avatar'
-import DomainBadge from '@common/components/Avatar/DomainBadge'
 import Editable from '@common/components/Editable'
 import Text from '@common/components/Text'
 import { isWeb } from '@common/config/env'
@@ -25,6 +24,11 @@ import getStyles from './styles'
 interface Props {
   address: string
   name?: string
+  addressHighlight?: {
+    prefix: number
+    suffix: number
+    color: 'errorText'
+  }
   isManageable?: boolean
   isEditable?: boolean
   withCopy?: boolean
@@ -39,6 +43,7 @@ interface Props {
 const AddressBookContact: FC<Props> = ({
   address,
   name,
+  addressHighlight,
   isManageable,
   isEditable,
   withCopy = true,
@@ -168,6 +173,7 @@ const AddressBookContact: FC<Props> = ({
               name={reverseLookupName}
               type={reverseLookupType}
               address={address}
+              addressHighlight={addressHighlight}
               containerStyle={{ paddingVertical: 0 }}
               withCopy={withCopy}
             />
