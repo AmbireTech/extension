@@ -1,7 +1,10 @@
+import MaskedView from '@react-native-masked-view/masked-view'
+import { BlurView } from 'expo-blur'
 import { CameraView } from 'expo-camera'
-import React, { useCallback, useEffect, useRef } from 'react'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Linking, Pressable, StyleSheet, View } from 'react-native'
+import { LayoutChangeEvent, Linking, Pressable, StyleSheet, View } from 'react-native'
+import Svg, { Defs, Mask, Rect } from 'react-native-svg'
 
 import EditPenIcon from '@common/assets/svg/EditPenIcon'
 import GalleryIcon from '@common/assets/svg/GalleryIcon'
@@ -20,6 +23,9 @@ import useWalletConnect from '@mobile/modules/wallet-connect/hooks/useWalletConn
 
 import getStyles from './styles'
 
+const SCAN_FRAME_SIZE = 280
+const SCAN_FRAME_RADIUS = 32
+
 const QrReaderScreen = () => {
   const { theme } = useTheme()
   const styles = getStyles(theme)
@@ -34,6 +40,15 @@ const QrReaderScreen = () => {
   } = useWalletConnect()
   const permissionGranted = !!permission?.granted
   const isProcessingRef = useRef(false)
+  const [containerSize, setContainerSize] = useState<{ width: number; height: number } | null>(null)
+
+  const frameTop = containerSize ? (containerSize.height - SCAN_FRAME_SIZE) / 2 : 0
+  const frameLeft = containerSize ? (containerSize.width - SCAN_FRAME_SIZE) / 2 : 0
+
+  const handleLayout = useCallback((event: LayoutChangeEvent) => {
+    const { width, height } = event.nativeEvent.layout
+    setContainerSize({ width, height })
+  }, [])
 
   useEffect(() => {
     if (permission && !permission.granted && permission.canAskAgain) {
@@ -105,7 +120,7 @@ const QrReaderScreen = () => {
     <Pressable
       onPress={handleEnterManually}
       hitSlop={8}
-      style={[flexbox.directionRow, flexbox.center, spacings.pvLg]}
+      style={[flexbox.directionRow, flexbox.center, spacings.pvMd]}
     >
       <EditPenIcon color={theme.successDecorative} width={20} height={20} />
       <Text fontSize={16} weight="medium" style={spacings.mlSm}>
@@ -135,6 +150,7 @@ const QrReaderScreen = () => {
       >
         {permissionGranted ? (
           <View
+            onLayout={handleLayout}
             style={[
               flexbox.flex1,
               {
@@ -145,7 +161,8 @@ const QrReaderScreen = () => {
               }
             ]}
           >
-            <View style={[StyleSheet.absoluteFill, flexbox.flex1, flexbox.center, { zIndex: 100 }]}>
+            {/* Corner markers */}
+            <View style={[StyleSheet.absoluteFill, flexbox.flex1, flexbox.center, { zIndex: 200 }]}>
               <View style={styles.scanFrame} pointerEvents="none">
                 <View style={[styles.corner, styles.cornerTopLeft]} />
                 <View style={[styles.corner, styles.cornerTopRight]} />
@@ -153,6 +170,53 @@ const QrReaderScreen = () => {
                 <View style={[styles.corner, styles.cornerBottomRight]} />
               </View>
             </View>
+
+            {/* Blur overlay with rounded hole using MaskedView */}
+            {containerSize && (
+              <MaskedView
+                style={[StyleSheet.absoluteFill, { zIndex: 100 }]}
+                maskElement={
+                  <Svg
+                    width={containerSize.width}
+                    height={containerSize.height}
+                    viewBox={`0 0 ${containerSize.width} ${containerSize.height}`}
+                  >
+                    <Defs>
+                      <Mask id="hole">
+                        {/* White = visible (blur shows) */}
+                        <Rect
+                          x="0"
+                          y="0"
+                          width={containerSize.width}
+                          height={containerSize.height}
+                          fill="white"
+                        />
+                        {/* Black = hidden (hole where camera shows through) */}
+                        <Rect
+                          x={frameLeft}
+                          y={frameTop}
+                          width={SCAN_FRAME_SIZE}
+                          height={SCAN_FRAME_SIZE}
+                          rx={SCAN_FRAME_RADIUS}
+                          ry={SCAN_FRAME_RADIUS}
+                          fill="black"
+                        />
+                      </Mask>
+                    </Defs>
+                    <Rect
+                      x="0"
+                      y="0"
+                      width={containerSize.width}
+                      height={containerSize.height}
+                      fill="white"
+                      mask="url(#hole)"
+                    />
+                  </Svg>
+                }
+              >
+                <BlurView intensity={60} tint="dark" style={StyleSheet.absoluteFill} />
+              </MaskedView>
+            )}
 
             <CameraView
               style={[StyleSheet.absoluteFill]}

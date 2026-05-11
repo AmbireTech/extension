@@ -3,7 +3,7 @@ import { StyleSheet, ViewStyle } from 'react-native'
 import { ThemeProps } from '@common/styles/themeConfig'
 
 const SCAN_FRAME_SIZE = 280
-const CORNER_LENGTH = 56
+const CORNER_LENGTH = 64
 const CORNER_RADIUS = 32
 const CORNER_THICKNESS = 6
 const HEADER_ICON_HIT = 32
