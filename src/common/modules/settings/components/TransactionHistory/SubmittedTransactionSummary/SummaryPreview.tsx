@@ -2,7 +2,6 @@ import React from 'react'
 import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 
-import { SubmittedAccountOp } from '@ambire-common/libs/accountOp/submittedAccountOp'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import SkeletonLoader from '@common/components/SkeletonLoader'
 import Text from '@common/components/Text'
@@ -16,7 +15,7 @@ import {
 } from './helpers'
 import getStyles from './styles'
 import { BalanceChangeToken, DappInteractionIcon } from './SummaryIcons'
-import { DappInteraction, DisplayBalanceChange } from './types'
+import { DappInteraction, DisplayBalanceChange, SubmittedAccountOpLike } from './types'
 
 const SummaryPreview = ({
   submittedAccountOp,
@@ -25,7 +24,7 @@ const SummaryPreview = ({
   hiddenBalanceChangesCount,
   shouldShowBalanceChangesSummary
 }: {
-  submittedAccountOp: SubmittedAccountOp
+  submittedAccountOp: SubmittedAccountOpLike
   dappInteractions: DappInteraction[]
   visibleBalanceChanges: DisplayBalanceChange[]
   hiddenBalanceChangesCount: number
