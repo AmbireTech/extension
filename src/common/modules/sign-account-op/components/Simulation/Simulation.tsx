@@ -5,7 +5,6 @@ import { View } from 'react-native'
 import { SigningStatus } from '@ambire-common/controllers/signAccountOp/signAccountOp'
 import { Network } from '@ambire-common/interfaces/network'
 import { isSmartAccount } from '@ambire-common/libs/account/account'
-import { isPermit2Interaction } from '@ambire-common/libs/simulation/detectPermit2Interaction'
 import SuccessIcon from '@common/assets/svg/SuccessIcon'
 import Alert from '@common/components/Alert'
 import ScrollableWrapper from '@common/components/ScrollableWrapper'
@@ -19,7 +18,6 @@ import PendingTokenSummary from '@common/modules/sign-account-op/components/Pend
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
-import DappValidationAlert from './DappValidationAlert'
 import SimulationSkeleton from './SimulationSkeleton'
 import getStyles from './styles'
 
@@ -42,10 +40,7 @@ const Simulation: FC<Props> = ({ network, isEstimationComplete, isViewOnly }) =>
   } = useController('SelectedAccountController')
   const [initialSimulationLoaded, setInitialSimulationLoaded] = useState(false)
   const [shouldRespectIsLoading, setShouldRespectIsLoading] = useState(true)
-  const [containsDappsNotInCatalog, setContainsDappsNotInCatalog] = useState(false)
-  const [hasDappsVerificationError, setHasDappsVerificationError] = useState(false)
   const { networks } = useController('NetworksController').state
-  const { hasUnverifiedDapps } = useController('DappsController')
 
   const pendingTokens = useMemo(() => {
     if (signAccountOpState?.accountOp && network) {
@@ -169,59 +164,6 @@ const Simulation: FC<Props> = ({ network, isEstimationComplete, isViewOnly }) =>
       signAccountOpState?.isInitialized
     ]
   )
-
-  const containsPermit2 = useMemo(() => {
-    if (!signAccountOpState?.accountOp?.calls || !network) return false
-
-    return signAccountOpState.accountOp.calls.some((call) => {
-      if (!call.to || !call.data) return false
-      return isPermit2Interaction({ to: call.to, data: call.data })
-    })
-  }, [signAccountOpState?.accountOp.calls, network])
-
-  useEffect(() => {
-    if (!signAccountOpState?.accountOp?.calls || !network) {
-      setContainsDappsNotInCatalog(false)
-      setHasDappsVerificationError(false)
-      return
-    }
-
-    const dappUrlsToValidate = signAccountOpState.accountOp.calls
-      .map((call) => call.dapp?.url)
-      .filter(Boolean) as string[]
-
-    if (!dappUrlsToValidate.length) {
-      setContainsDappsNotInCatalog(false)
-      setHasDappsVerificationError(false)
-      return
-    }
-
-    let isCancelled = false
-    let didFail = false
-
-    const checkForUnverifiedDapps = async () => {
-      const res = await hasUnverifiedDapps(dappUrlsToValidate).catch((error) => {
-        didFail = true
-        if (!isCancelled) {
-          // Keep the messaging generic; the exact error is not relevant here.
-          setHasDappsVerificationError(true)
-        }
-
-        return false
-      })
-      if (!isCancelled) {
-        if (!didFail) setHasDappsVerificationError(false)
-        setContainsDappsNotInCatalog(res)
-      }
-    }
-
-    setHasDappsVerificationError(false)
-    void checkForUnverifiedDapps()
-
-    return () => {
-      isCancelled = true
-    }
-  }, [hasUnverifiedDapps, network, signAccountOpState?.accountOp?.calls])
 
   const simulationView:
     | 'no-changes'
@@ -416,23 +358,6 @@ const Simulation: FC<Props> = ({ network, isEstimationComplete, isViewOnly }) =>
             </Trans>
           }
         />
-      )}
-      {containsPermit2 && containsDappsNotInCatalog && (
-        <View style={spacings.mt}>
-          <DappValidationAlert
-            text={t(
-              'App is not on the default Ambire App Catalog.\nMake sure you trust it before signing requests.'
-            )}
-          />
-        </View>
-      )}
-
-      {containsPermit2 && hasDappsVerificationError && (
-        <View style={spacings.mt}>
-          <DappValidationAlert
-            text={t("We couldn't verify the app.\nMake sure you trust it before signing requests.")}
-          />
-        </View>
       )}
       {shouldShowLoader && <SimulationSkeleton />}
     </View>

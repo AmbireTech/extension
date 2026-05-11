@@ -34,10 +34,6 @@ const SurveyScreen = () => {
     state: { account }
   } = useController('SelectedAccountController')
 
-  const {
-    state: { verifiedCode }
-  } = useController('InviteController')
-
   const { navigate } = useNavigation()
 
   const handleGoBackPress = useCallback(() => {
@@ -69,7 +65,12 @@ const SurveyScreen = () => {
   }, [answers, currentQuestion, inputtedAnswer, questions])
 
   const buttonState = useMemo((): { text: string; callback?: () => void; loading?: true } => {
-    const instanceId = getExtensionInstanceId(keyStoreUid, verifiedCode)
+    // this instance id is passed only inside the survey response object
+    // we do not care about the invite code part of the  instanceId IN THIS CASE
+    // because not having it will make it easier to export all responses
+    // + it is not part of our other analytics
+    const instanceId = getExtensionInstanceId(keyStoreUid, null)
+
     if (status === 'loading-fetching' || status === 'loading-sending') return { text: 'Loading' }
 
     if (status === 'error-submitting') {
@@ -160,19 +161,18 @@ const SurveyScreen = () => {
       }
     }
   }, [
-    account,
-    addToast,
-    bannerId,
-    currentQuestion,
-    dispatchToSurvey,
-    hasNextQuestion,
+    keyStoreUid,
+    status,
     inputtedAnswer.ans,
     inputtedAnswer.questionPosition,
-    keyStoreUid,
-    navigate,
-    status,
+    currentQuestion,
+    hasNextQuestion,
+    account,
+    dispatchToSurvey,
+    addToast,
     surveyId,
-    verifiedCode
+    bannerId,
+    navigate
   ])
 
   const buttons = useMemo(() => {

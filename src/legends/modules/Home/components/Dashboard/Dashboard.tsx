@@ -63,7 +63,7 @@ const Dashboard = () => {
             </div>
             <div className={styles.info}>
               <span className={styles.label}>End</span>
-              <span className={styles.value}>Mar 15</span>
+              <span className={styles.value}>Apr 15</span>
             </div>
           </div>
         </div>

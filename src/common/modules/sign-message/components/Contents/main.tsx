@@ -1,4 +1,4 @@
-import React, { Dispatch, SetStateAction, useCallback, useMemo } from 'react'
+import React, { Dispatch, SetStateAction, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 
@@ -19,6 +19,7 @@ import useWindowSize from '@common/hooks/useWindowSize'
 import HardwareWalletSigningModal from '@common/modules/hardware-wallets/components/HardwareWalletSigningModal'
 import FallbackVisualization from '@common/modules/sign-message/components/FallbackVisualization'
 import Info from '@common/modules/sign-message/components/Info'
+import SafetyChecksBanner from '@common/modules/sign-account-op/components/SafetyChecksBanner'
 import spacings, { SPACING_LG, SPACING_MD, SPACING_TY } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { MobileLayoutWrapperMainContent } from '@mobile/components/MobileLayoutWrapper'
@@ -149,6 +150,18 @@ const Main = ({
               {t('Type')}
             </Text>
           </View>
+        </View>
+      )}
+      {!!signMessageState.banners?.length && (
+        <View style={spacings.mbLg}>
+          {signMessageState.banners.map((banner) => (
+            <SafetyChecksBanner
+              key={banner.id}
+              type={banner.type}
+              text={banner.text}
+              style={spacings.mbTy}
+            />
+          ))}
         </View>
       )}
       <View style={styles.container}>

@@ -13,6 +13,7 @@ import useSignMessage from '@common/modules/sign-message/hooks/useSignMessage'
 import flexbox from '@common/styles/utils/flexbox'
 import SmallNotificationWindowWrapper from '@web/components/SmallNotificationWindowWrapper'
 import { TabLayoutContainer } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
+import HoldToProceedButton from '@common/components/HoldToProceedButton'
 
 const SignMessageScreen = () => {
   const {
@@ -23,8 +24,6 @@ const SignMessageScreen = () => {
     account,
     selectedAccountKeyStoreKeys,
     isViewOnly,
-    humanizationHasBlockingWarnings,
-    isScrollToBottomForced,
     userRequest,
     isLedgerConnected,
     isChooseSignerShown,
@@ -45,7 +44,12 @@ const SignMessageScreen = () => {
     view,
     threshold,
     isSafeNotDeployed,
-    isLoading
+    isLoading,
+    holdToProceedButtonText,
+    holdToProceedCompleteText,
+    hasSafetyBanners,
+    holdToProceedButtonType,
+    isResolveActionDisabled
   } = useSignMessage()
 
   if (isLoading || !account || !userRequest) {
@@ -84,15 +88,33 @@ const SignMessageScreen = () => {
               onReject={handleReject}
               onResolve={signWithDefaultSignerIfPossible}
               resolveButtonText={resolveButtonText}
-              resolveDisabled={
-                signStatus === 'LOADING' ||
-                isScrollToBottomForced ||
-                isViewOnly ||
-                humanizationHasBlockingWarnings ||
-                isSafeNotDeployed
-              }
+              resolveDisabled={isResolveActionDisabled}
               resolveButtonTestID="button-sign"
               rejectButtonText="Reject"
+              {...(hasSafetyBanners && !isViewOnly
+                ? {
+                    resolveNode: (
+                      <View style={flexbox.flex1}>
+                        <HoldToProceedButton
+                          testID="button-sign"
+                          style={{
+                            ...flexbox.alignSelfEnd,
+                            minWidth: 128
+                          }}
+                          textStyle={{
+                            whiteSpace: 'nowrap'
+                          }}
+                          size="large"
+                          text={holdToProceedButtonText}
+                          completeText={holdToProceedCompleteText}
+                          buttonType={holdToProceedButtonType}
+                          onHoldComplete={signWithDefaultSignerIfPossible}
+                          disabled={isResolveActionDisabled}
+                        />
+                      </View>
+                    )
+                  }
+                : {})}
               {...(isViewOnly
                 ? {
                     resolveNode: (
