@@ -30,8 +30,7 @@ module.exports = [
     languageOptions: {
       parserOptions: {
         projectService: {
-          defaultProject: './tsconfig.json',
-          allowDefaultProject: ['eslint.config.js']
+          defaultProject: './tsconfig.json'
         }
       },
       globals: {
