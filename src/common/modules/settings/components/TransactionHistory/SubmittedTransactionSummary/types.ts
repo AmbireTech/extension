@@ -19,7 +19,7 @@ export type DappInteraction = {
   id: string
   name: string
   iconUrl?: string | null
-  iconType?: 'send' | 'swap' | 'receive'
+  iconType?: 'send' | 'swap' | 'receive' | 'ambire'
 }
 
 export type DisplayBalanceChange = BalanceChange & {

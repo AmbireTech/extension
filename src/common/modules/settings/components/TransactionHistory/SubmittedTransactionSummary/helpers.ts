@@ -220,6 +220,22 @@ export const getDappInteractions = (
     })
   }
 
+  if (submittedAccountOp.meta && 'setDelegation' in submittedAccountOp.meta) {
+    if (submittedAccountOp.meta.setDelegation === false) {
+      addInteraction({
+        id: 'fallback:revoke',
+        name: 'Revoke delegation',
+        iconType: 'ambire'
+      })
+    } else {
+      addInteraction({
+        id: 'fallback:delegation',
+        name: 'Enable smart settings',
+        iconType: 'ambire'
+      })
+    }
+  }
+
   if (!interactions.length) {
     if (submittedAccountOp.activitySource === 'external') {
       addInteraction({
