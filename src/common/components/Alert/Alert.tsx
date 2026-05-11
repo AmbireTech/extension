@@ -1,5 +1,5 @@
 import React from 'react'
-import { TextProps, View, ViewStyle } from 'react-native'
+import { StyleProp, TextProps, TextStyle, View, ViewStyle } from 'react-native'
 import { SvgProps } from 'react-native-svg'
 
 import ErrorIcon from '@common/assets/svg/ErrorIcon'
@@ -38,6 +38,39 @@ const ICON_MAP = {
   info: InfoIcon
 }
 
+type AlertSeverity = 'error' | 'warning' | 'success' | 'info'
+
+const SEVERITY_FILL_THEME_KEY: Record<
+  AlertSeverity,
+  'error300' | 'warning300' | 'success300' | 'info300'
+> = {
+  error: 'error300',
+  warning: 'warning300',
+  success: 'success300',
+  info: 'info300'
+}
+
+type AlertPrimaryButtonProps = Omit<ButtonProps, 'type'> & {
+  severity: AlertSeverity
+}
+
+const AlertPrimaryButton = React.memo(
+  ({ severity, style, textStyle, ...rest }: AlertPrimaryButtonProps) => {
+    const { theme } = useTheme()
+    const backgroundColor = theme[SEVERITY_FILL_THEME_KEY[severity]] as string
+    const textColor = theme[`${severity}100`] as string
+
+    return (
+      <Button
+        {...rest}
+        type="info"
+        style={[{ backgroundColor, borderWidth: 0 }, style] as StyleProp<ViewStyle>}
+        textStyle={[{ color: textColor }, textStyle] as StyleProp<TextStyle>}
+      />
+    )
+  }
+)
+
 const { isPopup } = getUiType()
 
 const DEFAULT_SM_FONT_SIZE = 14
@@ -54,7 +87,7 @@ const AlertText: React.FC<AlertTextProps> = ({ children, size = 'md', type = 'in
   const fontSize = !isSmall ? DEFAULT_MD_FONT_SIZE : DEFAULT_SM_FONT_SIZE
 
   return (
-    <Text selectable fontSize={fontSize - 2} weight="regular" appearance={`${type}Text`} {...rest}>
+    <Text selectable fontSize={fontSize - 2} weight="regular" appearance="secondaryText" {...rest}>
       {children}
     </Text>
   )
@@ -93,40 +126,47 @@ const Alert = ({
       ]}
       testID={testID}
     >
-      {!!withIcon && (
-        <View style={[!isSmall && spacings.mr, !!isSmall && spacings.mrTy]}>
-          {CustomIcon ? (
-            <CustomIcon />
-          ) : (
-            <Icon width={20} height={20} color={theme[`${type}Text`]} />
-          )}
-        </View>
-      )}
-
       <View style={isMobile ? { flexShrink: 1 } : flexbox.flex1}>
-        {!!title && (
-          <Text style={text ? (!isSmall ? spacings.mbTy : spacings.mbMi) : {}}>
-            {!isTypeLabelHidden && (
+        <View
+          style={[
+            flexbox.directionRow,
+            flexbox.alignCenter,
+            text ? (!isSmall ? spacings.mbTy : spacings.mbMi) : {}
+          ]}
+        >
+          {!!withIcon && (
+            <View style={spacings.mrMi}>
+              {CustomIcon ? (
+                <CustomIcon width={24} height={24} />
+              ) : (
+                <Icon width={24} height={24} color={theme[`${type}Text`]} />
+              )}
+            </View>
+          )}
+          {!!title && (
+            <Text>
+              {!isTypeLabelHidden && (
+                <Text
+                  selectable
+                  appearance="primaryText"
+                  fontSize={fontSize}
+                  weight={titleWeight || 'semiBold'}
+                  style={{ textTransform: 'capitalize' }}
+                >
+                  {type}:{' '}
+                </Text>
+              )}
               <Text
                 selectable
-                appearance={`${type}Text`}
+                appearance="primaryText"
                 fontSize={fontSize}
                 weight={titleWeight || 'semiBold'}
-                style={{ textTransform: 'capitalize' }}
               >
-                {type}:{' '}
+                {title}
               </Text>
-            )}
-            <Text
-              selectable
-              appearance={`${type}Text`}
-              fontSize={fontSize}
-              weight={titleWeight || 'semiBold'}
-            >
-              {title}
             </Text>
-          </Text>
-        )}
+          )}
+        </View>
         {!!text &&
           (typeof text === 'string' ? (
             <AlertText size={size} type={type}>
@@ -135,21 +175,40 @@ const Alert = ({
           ) : (
             text
           ))}
-        {buttonProps && (
-          <Button
-            style={{
-              alignSelf: 'flex-end',
-              ...spacings.mtTy
-            }}
-            textStyle={type === 'error' && { fontSize: 14 }}
-            size="small"
-            type="primary"
-            hasBottomSpacing={false}
-            text={buttonProps.text}
-            onPress={buttonProps.onPress}
-            {...buttonProps}
-          />
-        )}
+        {buttonProps &&
+          (() => {
+            const {
+              style: buttonStyleFromProps,
+              type: _buttonTypeFromProps,
+              textStyle: buttonTextStyleFromProps,
+              size: buttonSizeOverride,
+              hasBottomSpacing: buttonHasBottomSpacing,
+              text: buttonText,
+              onPress: buttonOnPress,
+              ...restButtonProps
+            } = buttonProps
+
+            return (
+              <AlertPrimaryButton
+                {...restButtonProps}
+                severity={type}
+                text={buttonText}
+                onPress={buttonOnPress}
+                size={buttonSizeOverride ?? 'small'}
+                hasBottomSpacing={buttonHasBottomSpacing ?? false}
+                textStyle={buttonTextStyleFromProps}
+                style={
+                  [
+                    {
+                      alignSelf: 'flex-end',
+                      ...spacings.mtTy
+                    },
+                    buttonStyleFromProps
+                  ] as StyleProp<ViewStyle>
+                }
+              />
+            )
+          })()}
         {children}
       </View>
     </View>

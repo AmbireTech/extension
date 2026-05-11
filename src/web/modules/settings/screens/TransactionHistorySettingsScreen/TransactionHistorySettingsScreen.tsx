@@ -54,6 +54,7 @@ const AccountOpHistory: FC<{ network?: Network; account: Account; sessionId: str
           defaultType="full-info"
           submittedAccountOp={item}
           style={i !== items.length - 1 ? spacings.mbLg : {}}
+          modalType="modal"
         />
       ))}
     </>
