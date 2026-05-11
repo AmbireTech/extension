@@ -7,7 +7,10 @@ module.exports = [
     files: ['**/*.js', '**/*.jsx', '**/*.ts', '**/*.tsx'],
     languageOptions: {
       parserOptions: {
-        projectService: { defaultProject: './tsconfig.json' }
+        projectService: {
+          defaultProject: './tsconfig.json',
+          allowDefaultProject: ['eslint.config.js']
+        }
       },
       globals: {
         browser: 'readonly',
