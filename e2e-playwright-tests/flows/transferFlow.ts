@@ -1,4 +1,5 @@
 import selectors from 'constants/selectors'
+import tokens from 'constants/tokens'
 import { SpeculosDevice } from 'libs/speculos-device/device'
 
 import { expect, Page, test } from '@playwright/test'
@@ -63,12 +64,17 @@ export async function runSimpleTransferFlow({
 
     const viewTransactionTab = await pages.basePage.handleNewPage(viewTransactionLink)
 
-    expect(viewTransactionTab.url()).toContain('explorer.ambire.com')
+    if (sendToken == tokens.usdc.optimism) {
+      expect(viewTransactionTab.url()).toContain('optimistic.etherscan.io')
+// TODO: add assertions on optimism exploreer
+    } else {
+      expect(viewTransactionTab.url()).toContain('explorer.ambire.com')
 
-    await pages.transfer.checkRecepientTransactionOnExplorer({
-      newPage: viewTransactionTab,
-      recepientAddress: recipientAddress
-    })
+      await pages.transfer.checkRecepientTransactionOnExplorer({
+        newPage: viewTransactionTab,
+        recepientAddress: recipientAddress
+      })
+    }
   })
 }
 

@@ -32,6 +32,7 @@ test.describe('gasTank - Smart Account', { tag: '@gasTank' }, () => {
     })
 
     await test.step('assert new transaction on Activity tab', async () => {
+      // TODO: fix
       await pages.gasTank.checkSendTransactionOnActivityTab()
     })
   })

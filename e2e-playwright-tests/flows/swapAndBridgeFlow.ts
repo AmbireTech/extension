@@ -41,6 +41,7 @@ export async function runSwapFlow({
   })
 
   await test.step('assert new transaction on Activity tab', async () => {
+    // TODO: fix
     await pages.swapAndBridge.checkSendTransactionOnActivityTab()
   })
 }
@@ -108,6 +109,7 @@ export async function runSwapProceedFlow({
   })
 
   await test.step('assert new transaction on Activity tab', async () => {
+    // TODO: fix
     await pages.swapAndBridge.checkSendTransactionOnActivityTab()
   })
 }
