@@ -138,6 +138,7 @@ const initControllers = (config: any) => {
       liFiApiKey: config.LIFI_EXPLORER_URL,
       bungeeApiKey: config.BUNGEE_API_KEY,
       squidIntegratorId: config.SQUID_INTEGRATOR_ID,
+      uniswapApiKey: config.UNISWAP_API_KEY,
       featureFlags: {},
       keystoreSigners: {
         internal: KeystoreSigner
