@@ -21,10 +21,8 @@ import {
 } from '@mobile/components/MobileLayoutWrapper'
 import useWalletConnect from '@mobile/modules/wallet-connect/hooks/useWalletConnect'
 
-import getStyles from './styles'
+import getStyles, { SCAN_FRAME_SIZE, CORNER_RADIUS } from './styles'
 
-const SCAN_FRAME_SIZE = 280
-const SCAN_FRAME_RADIUS = 32
 
 const QrReaderScreen = () => {
   const { theme } = useTheme()
@@ -197,8 +195,8 @@ const QrReaderScreen = () => {
                           y={frameTop}
                           width={SCAN_FRAME_SIZE}
                           height={SCAN_FRAME_SIZE}
-                          rx={SCAN_FRAME_RADIUS}
-                          ry={SCAN_FRAME_RADIUS}
+                          rx={CORNER_RADIUS}
+                          ry={CORNER_RADIUS}
                           fill="black"
                         />
                       </Mask>
