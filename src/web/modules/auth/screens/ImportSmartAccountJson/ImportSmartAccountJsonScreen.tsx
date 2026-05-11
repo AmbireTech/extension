@@ -172,7 +172,6 @@ const SmartAccountImportScreen = () => {
   const { theme, styles } = useTheme(getStyles)
   const [error, setError] = useState('')
   const [accountToImport, setAccountToImport] = useState<Account | null>(null)
-  const [privateKey, setPrivateKey] = useState<string | null>(null)
   const [encryptedKey, setEncryptedKey] = useState<{
     key: string
     salt: string
@@ -195,47 +194,42 @@ const SmartAccountImportScreen = () => {
     close: closeConfirmKeyPassword
   } = useModalize()
 
+  const importSmartAccountJson = useCallback(
+    (readyToAddAccount: Account, privateKey: string) => {
+      const keys: ReadyToAddKeys['internal'] = [
+        {
+          addr: computeAddress(privateKey),
+          label: '',
+          type: 'internal',
+          privateKey,
+          dedicatedToOneSA: true,
+          meta: { createdAt: Date.now() }
+        }
+      ]
+
+      dispatch({
+        type: 'IMPORT_SMART_ACCOUNT_JSON',
+        params: { readyToAddAccount, keys }
+      })
+    },
+    [dispatch]
+  )
+
   useEffect(() => {
     const onReceiveOneTimeData = (data: any) => {
-      if (!data.privateKey) return
-
-      setPrivateKey(data.privateKey)
+      if (!data.privateKey || !accountToImport) return
+      importSmartAccountJson(accountToImport, data.privateKey)
     }
 
     eventBus.addEventListener('receiveOneTimeData', onReceiveOneTimeData)
 
     return () => eventBus.removeEventListener('receiveOneTimeData', onReceiveOneTimeData)
-  }, [])
-
-  // import the account when all the data is collected successfully
-  useEffect(() => {
-    if (!privateKey || !accountToImport) return
-
-    const keys: ReadyToAddKeys['internal'] = [
-      {
-        addr: computeAddress(privateKey),
-        label: '',
-        type: 'internal',
-        privateKey,
-        dedicatedToOneSA: true,
-        meta: { createdAt: Date.now() }
-      }
-    ]
-
-    dispatch({
-      type: 'IMPORT_SMART_ACCOUNT_JSON',
-      params: { readyToAddAccount: accountToImport, keys }
-    })
-
-    setPrivateKey(null)
-    setAccountToImport(null)
-  }, [privateKey, accountToImport, dispatch])
+  }, [accountToImport, importSmartAccountJson])
 
   const handleFileUpload = (files: any) => {
     setError('')
     setIsLoading(true)
     setPendingImportAddr(null)
-    setPrivateKey(null)
     setEncryptedKey(null)
     setAccountToImport(null)
 
@@ -264,7 +258,7 @@ const SmartAccountImportScreen = () => {
           return
         }
 
-        setAccountToImport({
+        const readyToAddAccount: Account = {
           addr: accountAddr,
           associatedKeys: accountData.associatedKeys,
           initialPrivileges: accountData.initialPrivileges,
@@ -272,13 +266,15 @@ const SmartAccountImportScreen = () => {
           newlyAdded: true,
           preferences:
             accountData.preferences ?? getDefaultAccountPreferences(accountAddr, accounts, 0)
-        })
+        }
         setPendingImportAddr(accountAddr)
 
         if (accountData.privateKey) {
-          setPrivateKey(accountData.privateKey)
+          importSmartAccountJson(readyToAddAccount, accountData.privateKey)
           return
         }
+
+        setAccountToImport(readyToAddAccount)
 
         // encrypted key handle from now on
         // all the below data has been validated to exist at this point
