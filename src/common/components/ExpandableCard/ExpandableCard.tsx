@@ -49,7 +49,7 @@ const ExpandableCard = ({
           ...flexbox.center
         }}
       >
-        {isExpanded ? <UpArrowIcon /> : <DownArrowIcon />}
+        {enableToggleExpand && (isExpanded ? <UpArrowIcon /> : <DownArrowIcon />)}
       </View>
     ),
     [enableToggleExpand, isExpanded]
