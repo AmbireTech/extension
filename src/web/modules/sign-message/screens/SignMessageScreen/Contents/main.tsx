@@ -159,7 +159,7 @@ const Main = ({
         </View>
         <View style={flexbox.flex1}>
           <ExpandableCard
-            enableToggleExpand={!!visualizeHumanized}
+            enableToggleExpand={!!visualizeHumanized && !humanizedMessage?.canHideDropdownArrow}
             isInitiallyExpanded={!visualizeHumanized}
             hasArrow={!!visualizeHumanized}
             style={{
