@@ -3198,7 +3198,7 @@
   resolved "https://registry.yarnpkg.com/@remix-run/router/-/router-1.23.2.tgz#156c4b481c0bee22a19f7924728a67120de06971"
   integrity sha512-Ic6m2U/rMjTkhERIa/0ZtXJP17QUi2CbWE7cqx4J58M8aA3QTfW+2UlQ4psvTX9IO1RfNVhK3pcpdjej7L+t2w==
 
-"@reown/walletkit@^1.5.5":
+"@reown/walletkit@1.5.5":
   version "1.5.5"
   resolved "https://registry.yarnpkg.com/@reown/walletkit/-/walletkit-1.5.5.tgz#a62d0eeaa284dbd2a804e9bc47a7593911c1a921"
   integrity sha512-Od8XpSCuGIkckTF5Qy7qUm0vcay98D0Vqz94wEUDz581nSipWfJIsKbm0dL2Da/wme/KcyIipLtfJN5w/GtnRw==
@@ -4822,7 +4822,7 @@
     "@urql/core" "^5.1.2"
     wonka "^6.3.2"
 
-"@walletconnect/core@2.23.9", "@walletconnect/core@^2.23.9":
+"@walletconnect/core@2.23.9":
   version "2.23.9"
   resolved "https://registry.yarnpkg.com/@walletconnect/core/-/core-2.23.9.tgz#fb587703e6edd186f1b705f9e27dfea393c9924f"
   integrity sha512-ws4WG8LeagUo2ERRo02HryXRcpwIRmCQ3pHLW5gWbVReLXXIpgk6ZAfID3fEGHevIwwnHSGww+nNhNpdXyiq0g==
@@ -4932,7 +4932,7 @@
     "@walletconnect/utils" "2.23.9"
     brotli "^1.3.3"
 
-"@walletconnect/react-native-compat@^2.23.9":
+"@walletconnect/react-native-compat@2.23.9":
   version "2.23.9"
   resolved "https://registry.yarnpkg.com/@walletconnect/react-native-compat/-/react-native-compat-2.23.9.tgz#afa7825de4b901ff9a9ae735b8172e277775c5c3"
   integrity sha512-lR5CCtI8zEQNAFQVjURifN2uA3ujx3+80wzF5r/CldJ/c064Edbkyim3YeskDNVdUjUm2/ModeP5n/LYkfGAVQ==
@@ -5000,7 +5000,7 @@
     "@walletconnect/logger" "3.0.2"
     events "3.3.0"
 
-"@walletconnect/utils@2.23.9", "@walletconnect/utils@^2.23.9":
+"@walletconnect/utils@2.23.9":
   version "2.23.9"
   resolved "https://registry.yarnpkg.com/@walletconnect/utils/-/utils-2.23.9.tgz#c128a98692859d2944653fcee5e51d03f6683360"
   integrity sha512-C5TltCs8UPypNiteYnKSv8+ZDK2EjVDyXCxN6kA9bkA+j6KGsNIV7l9MUA8WBAvE5Gi5EcBdhD3R9Hpo/1HHqQ==

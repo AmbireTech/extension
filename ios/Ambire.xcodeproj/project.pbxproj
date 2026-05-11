@@ -359,7 +359,7 @@
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				CODE_SIGN_STYLE = Manual;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = "DHQDP6BTU9";
+				DEVELOPMENT_TEAM = DHQDP6BTU9;
 				"DEVELOPMENT_TEAM[sdk=iphoneos*]" = DHQDP6BTU9;
 				ENABLE_BITCODE = NO;
 				"EXCLUDED_ARCHS[sdk=iphonesimulator*]" = "";
@@ -404,7 +404,7 @@
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Distribution";
 				CODE_SIGN_STYLE = Manual;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = "DHQDP6BTU9";
+				DEVELOPMENT_TEAM = DHQDP6BTU9;
 				"DEVELOPMENT_TEAM[sdk=iphoneos*]" = DHQDP6BTU9;
 				"EXCLUDED_ARCHS[sdk=iphonesimulator*]" = "";
 				INFOPLIST_FILE = Ambire/Info.plist;
