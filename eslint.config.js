@@ -7,7 +7,7 @@ module.exports = [
     files: ['**/*.js', '**/*.jsx', '**/*.ts', '**/*.tsx'],
     languageOptions: {
       parserOptions: {
-        project: './tsconfig.json'
+        projectService: { defaultProject: './tsconfig.json' }
       },
       globals: {
         browser: 'readonly',
