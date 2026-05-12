@@ -29,9 +29,11 @@ const OptOutsScreen = () => {
         />
         <OptOutControlOption
           title={t('Transaction arguments decoding')}
-          description={t(`Use Sourcify's API to decode more transactions' arguments`)}
+          description={t(
+            `Use Ambire's API to decode transaction arguments and show action names when signing calls`
+          )}
           icon={<SearchIcon width={24} height={24} />}
-          flag="sourcifyApiForDecodingTxns"
+          flag="apiForFunctionSelectors"
         />
       </View>
     </>
