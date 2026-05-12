@@ -27,6 +27,7 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
     children,
     closeBottomSheet: _closeBottomSheet = () => {},
     adjustToContentHeight = true,
+    modalHeight,
     style = {},
     containerInnerWrapperStyles = {},
     onClosed,
@@ -186,6 +187,7 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
           useNativeDriver={false}
           avoidKeyboardLikeIOS
           modalTopOffset={modalTopOffset}
+          modalHeight={modalHeight}
           threshold={90}
           HeaderComponent={HeaderComponent}
           adjustToContentHeight={customRenderer ? false : adjustToContentHeight}

@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react'
 import { View } from 'react-native'
 
+import AmbireLogo from '@common/assets/svg/AmbireLogo'
+import ArrowRightIcon from '@common/assets/svg/ArrowRightIcon'
 import GasTankIcon from '@common/assets/svg/GasTankIcon'
 import SendIcon from '@common/assets/svg/SendIcon'
 import SwapIcon from '@common/assets/svg/SwapIcon'
@@ -33,6 +35,9 @@ export const stylesForIcons = {
     alignItems: 'center',
     justifyContent: 'center',
     ...common.borderRadiusPrimary
+  },
+  arrowDownIcon: {
+    transform: [{ rotate: '90deg' }]
   }
 } as const
 
@@ -106,10 +111,32 @@ export const DappInteractionIcon = ({ interaction }: { interaction: DappInteract
     )
   }
 
+  if (interaction.iconType === 'ambire') {
+    return (
+      <View style={[stylesForIcons.dappIconWrapper, { backgroundColor: theme.neutral200 }]}>
+        <AmbireLogo width={16} height={16} color={theme.tertiaryText} />
+      </View>
+    )
+  }
+
   if (interaction.iconType === 'swap') {
     return (
       <View style={[stylesForIcons.dappIconWrapper, { backgroundColor: theme.neutral200 }]}>
         <SwapIcon width={20} height={20} color={theme.tertiaryText} />
+      </View>
+    )
+  }
+
+  if (interaction.iconType === 'receive') {
+    return (
+      <View style={[stylesForIcons.dappIconWrapper, { backgroundColor: theme.neutral200 }]}>
+        <ArrowRightIcon
+          width={20}
+          height={20}
+          color={theme.tertiaryText}
+          containerColor={'transparent'}
+          style={stylesForIcons.arrowDownIcon}
+        />
       </View>
     )
   }
