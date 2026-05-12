@@ -495,12 +495,6 @@ const Estimation = ({
             signAccountOpState={signAccountOpState}
             size="md"
           />
-          {/* <Simulation
-            network={network}
-            isViewOnly={isViewOnly}
-            isEstimationComplete={!!signAccountOpState?.isInitialized && !!network}
-            signAccountOpState={signAccountOpState}
-          /> */}
         </View>
       )}
       <View
