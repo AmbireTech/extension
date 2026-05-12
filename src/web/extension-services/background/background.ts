@@ -369,7 +369,13 @@ const init = async () => {
     }
 
     // As of v4.26.0, custom extension-specific headers. TBD for the other apps.
-    const initWithCustomHeaders = init || { headers: { 'x-app-source': '', 'x-app-version': '' } }
+    const initWithCustomHeaders = init || {
+      headers: {
+        'x-app-source': '',
+        'x-app-version': '',
+        'x-app-env': isAmbireNext ? 'next' : isDev ? 'dev' : 'prod'
+      }
+    }
     initWithCustomHeaders.headers = initWithCustomHeaders.headers || {}
 
     // if the fetch method is called while the keystore is constructing the keyStoreUid won't be defined yet

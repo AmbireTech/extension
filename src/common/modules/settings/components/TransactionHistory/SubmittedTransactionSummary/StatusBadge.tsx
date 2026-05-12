@@ -1,4 +1,4 @@
-import React, { FC, useMemo } from 'react'
+import React, { FC } from 'react'
 import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 
@@ -49,6 +49,17 @@ const StatusBadge: FC<Props> = ({ status, textSize }) => {
             {t('Failed to send')}
           </Text>
         </View>
+      )
+
+    case AccountOpStatus.PartiallyComplete:
+      return (
+        <Badge
+          size="md"
+          type="warning"
+          weight="medium"
+          text={t('Partially Completed')}
+          withRightSpacing
+        />
       )
 
     default:

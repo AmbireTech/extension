@@ -148,6 +148,7 @@ const Estimation = ({
       paidBy?: string
       speed?: FeeSpeed
       customGasPrices?: GasSpeeds
+      customGasLimit?: bigint
     }) => {
       if (updateType === 'Swap&Bridge') {
         swapAndBridgeDispatch({
@@ -403,7 +404,9 @@ const Estimation = ({
     signAccountOpState?.selectedOption
   ])
 
+  const currentGas = signAccountOpState?.accountOp.gasFeePayment?.simulatedGasLimit.toString() || ''
   const canSetCustomGasPrices = !!signAccountOpState?.canSetCustomGasPrices
+  const canSetCustomGas = !!signAccountOpState?.canSetCustomGas
 
   const advancedOptionsTooltip = useMemo(() => {
     if (canSetCustomGasPrices) return undefined
@@ -490,10 +493,14 @@ const Estimation = ({
       <CustomGasPrice
         backgroundColor={theme.tertiaryBackground}
         closeBottomSheet={() => closeCustomGasPriceSheet()}
+        canSetCustomGas={canSetCustomGas}
+        currentGas={currentGas}
         currentMaxFeePerGas={currentGasPrice}
         currentMaxPriorityFeePerGas={currentMaxPriorityFeePerGas}
         is1559={network?.feeOptions?.is1559 === true}
-        onSaveCustomGasPrices={(customGasPrices) => dispatchUpdate({ customGasPrices })}
+        onSaveCustomGasPrices={(customGasPrices, customGasLimit) =>
+          dispatchUpdate({ customGasPrices, customGasLimit })
+        }
         selectedOption={signAccountOpState.selectedOption}
         sheetRef={customGasPriceSheetRef}
       />
