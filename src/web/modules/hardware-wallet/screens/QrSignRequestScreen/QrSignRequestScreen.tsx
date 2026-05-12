@@ -51,6 +51,18 @@ const QrSignRequestScreen = ({
             {transactionProgress.current <= 1 ? t('transaction signed') : t('transactions signed')}
           </Text>
         ) : null}
+        {!!signingRequest && (
+          <SigningRequestDetails
+            signingRequest={signingRequest}
+            style={[
+              spacings.mt,
+              {
+                width: '100%',
+                maxWidth: 420
+              }
+            ]}
+          />
+        )}
         <FooterGlassView size="sm" absolute={false} style={spacings.ptSm}>
           <Button
             size="smaller"
@@ -67,18 +79,6 @@ const QrSignRequestScreen = ({
             onPress={onContinue}
           />
         </FooterGlassView>
-        {!!signingRequest && (
-          <SigningRequestDetails
-            signingRequest={signingRequest}
-            style={[
-              spacings.mt,
-              {
-                width: '100%',
-                maxWidth: 420
-              }
-            ]}
-          />
-        )}
       </View>
     </View>
   )
