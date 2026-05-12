@@ -200,7 +200,7 @@ jobs:
         if: ${{ steps.balance_check.outcome == 'success' }}
         working-directory: ./e2e-playwright-tests
         run: yarn test:all:non-hw
-        continue-on-error: true
+
       - name: Save non-hw blob report
         if: always()
         run: mv ./e2e-playwright-tests/blob-report ./e2e-playwright-tests/blob-report-non-hw || true
@@ -212,7 +212,7 @@ jobs:
         if: ${{ always() && steps.balance_check.outcome == 'success' }}
         working-directory: ./e2e-playwright-tests
         run: yarn ledger:tests
-        continue-on-error: true
+
       - name: Save ledger blob report
         if: always()
         run: mv ./e2e-playwright-tests/blob-report ./e2e-playwright-tests/blob-report-ledger || true
@@ -221,7 +221,7 @@ jobs:
         if: ${{ always() && steps.balance_check.outcome == 'success' }}
         working-directory: ./e2e-playwright-tests
         run: yarn trezor:test
-        continue-on-error: true
+
       - name: Save trezor blob report
         if: always()
         run: mv ./e2e-playwright-tests/blob-report ./e2e-playwright-tests/blob-report-trezor || true
@@ -234,15 +234,13 @@ jobs:
           cp -r blob-report-non-hw/. all-blob-reports/ 2>/dev/null || true
           cp -r blob-report-ledger/. all-blob-reports/ 2>/dev/null || true
           cp -r blob-report-trezor/. all-blob-reports/ 2>/dev/null || true
-          yarn playwright merge-reports --reporter html ./all-blob-reports
-        continue-on-error: true
+          yarn playwright merge-reports --reporter html --output html-report ./all-blob-reports
 
       - name: Zip HTML report
         if: always()
         working-directory: ./e2e-playwright-tests
         run: |
           zip -r playwright-report.zip html-report/
-        continue-on-error: true
 
       - name: Save test report as artifact
         if: always()
