@@ -17,16 +17,6 @@ react, react-native, typescript, expo (bare workflow), ethers, viem and more (ch
   - Have the file in the environment folder (e.g., `mobile/`, `web/`) and import it from there
   - Use the `.native.tsx` or `.web.tsx` suffix and import from `common/`, which automatically resolves to the correct file based on the environment
 
-## Path aliases
-Use these tsconfig aliases for imports:
-- `@ambire-common/*` → `src/ambire-common/src/*`
-- `@contracts/*` → `src/ambire-common/contracts/*`
-- `@common/*` → `src/common/*`
-- `@web/*` → `src/web/*`
-- `@mobile/*` → `src/mobile/*`
-- `@benzin/*` → `src/benzin/*`
-- `@legends/*` → `src/legends/*`
-
 ## Rules
 
 ### Project specific:
@@ -46,7 +36,16 @@ Use these tsconfig aliases for imports:
 - ALWAYS memoize functions and components
 - ALWAYS ensure that subscriptions, event listeners, timers and other side effects are properly cleaned up
 - NEVER delete existing comments when updating a code block. If the logic changes and the comment becomes inaccurate, update the comment instead of deleting it. Delete a comment ONLY if the logic it describes is completely removed or the new logic is entirely self-explanatory without the comment
-- NEVER swallow errors, log them and handle them appropriately
+- NEVER swallow errors, log them and handle them appropriately. If the error is unexpected also track it in Sentry with `captureException`
 - NEVER modify git config or run destructive git operations
 - NEVER commit unless explicitly requested by user
 - NEVER stage changes unless explicitly requested by user
+
+## Controller state update lifecycle
+1. The UI calls `dispatch` from `useController` to invoke a controller method. This is **fire-and-forget** — `dispatch` does NOT return a response or the new state
+2. The action travels to the background (via `PortMessenger` in the extension, `WebViewWorker` in mobile) where `handleActions` finds the controller and calls the requested method
+3. The controller method updates its internal state and calls `this.emitUpdate()`
+4. The `background` has an `onUpdate` listener for every registered controller that serializes the controller state and sends it back to the UI
+5. The UI receives the update, writes it to the `controllerStore`, and `useControllerState` (via `useSyncExternalStore`) triggers a React re-render with the new state
+6. Because of this asynchronous cycle, state changes are NOT immediate after `dispatch`. If an action fails silently or the controller doesn't call `emitUpdate`, the UI will never re-render
+- On standalone websites (`benzin`, `legends`) controllers run in the main thread directly and `dispatch` invokes methods synchronously, but the `emitUpdate` → store → re-render cycle still applies
