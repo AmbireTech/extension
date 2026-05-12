@@ -26,6 +26,9 @@ react, react-native, typescript, expo (bare workflow), ethers, viem and more (ch
 - ALWAYS use `theme` from `useTheme()` for colors
 - ALWAYS use `spacings` from `@common/styles/spacings` for margins and paddings (unless the spacing is missing in the utility)
 - ALWAYS use `flexbox` from `@common/styles/utils/flexbox` for flex styling (unless the style is missing in the utility)
+- ALWAYS use `isDev`, `isWeb`, `isMobile`, `isAndroid`, `isiOS`, etc. from `@common/config/env` for environment and platform checks; NEVER use `__DEV__` outside `.native.tsx` files because it does not exist in web/extension builds
+- ALWAYS use `useNavigation` and `useRoute` from `@common/hooks` for routing; NEVER import `react-router-dom` or `react-router-native` directly
+- ALWAYS use `useToast` from `@common/hooks/useToast` for toasts; NEVER use `window.alert`, `Alert.alert`, or `console.log` for user-facing messages
 
 ### Security:
 - This is a security-critical Web3 wallet. Private keys and seed phrases must never be logged or exposed
