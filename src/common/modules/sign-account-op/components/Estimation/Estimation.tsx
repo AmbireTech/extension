@@ -201,6 +201,8 @@ const Estimation = ({
       payOptionsPaidByUsOrGasTank.find(({ value }) => value === selectedFeeOption) ||
       payOptionsPaidByEOA.find(({ value }) => value === selectedFeeOption)
 
+    // If result becomes undefined because of a recalculation to availableFeeOptions,
+    // we reset it the first available option from whatever is available.
     if (result === undefined && selectedFeeOption) {
       const firstOption = payOptionsPaidByUsOrGasTank[0] || payOptionsPaidByEOA[0]
       if (!firstOption) return undefined
