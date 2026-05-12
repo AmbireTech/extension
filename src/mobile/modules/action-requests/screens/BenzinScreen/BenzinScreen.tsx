@@ -59,7 +59,7 @@ const BenzinScreen = () => {
     [userRequest]
   )
 
-  const state = useBenzin({ onOpenExplorer: resolveAction, extensionAccOp, params: benzinParams })
+  const state = useBenzin({ onOpenExplorer: () => {}, extensionAccOp, params: benzinParams })
 
   const pendingRequests = useMemo(() => {
     if (!visibleUserRequests.length) return []

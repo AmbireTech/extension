@@ -34,6 +34,7 @@ import {
 } from '@mobile/components/MobileLayoutWrapper'
 
 import getStyles from './styles'
+import { isValidURL, isValidHostname } from '@ambire-common/services/validations'
 
 const { isPopup } = getUiType()
 
@@ -89,14 +90,6 @@ const DappCatalogScreen = () => {
     [state.dapps]
   )
 
-  const isValidUrl = useCallback((urlString: string) => {
-    try {
-      return Boolean(new URL(urlString))
-    } catch {
-      return false
-    }
-  }, [])
-
   const filteredDapps = useMemo(() => {
     if (!state?.dapps?.length) return []
 
@@ -143,15 +136,15 @@ const DappCatalogScreen = () => {
     if (debouncedSearch) {
       // Add Google search option always when searching
       data.push({ type: 'googleSearch', query: debouncedSearch })
-      // Add open page option if the search is a valid URL
-      if (isValidUrl(debouncedSearch)) {
+      // Add open page option if the search is a valid URL or hostname
+      if (isValidURL(debouncedSearch) || isValidHostname(debouncedSearch)) {
         data.push({ type: 'openPage', query: debouncedSearch })
       }
     }
     // Add filtered dapps
     data.push(...filteredDapps.map((dapp: Dapp) => ({ type: 'dapp', dapp })))
     return data
-  }, [debouncedSearch, filteredDapps, isValidUrl])
+  }, [debouncedSearch, filteredDapps])
 
   const handleNavigateToUrl = useCallback(
     (url: string) => {
@@ -264,9 +257,10 @@ const DappCatalogScreen = () => {
   const renderItem = useCallback(
     ({ item }: { item: any }) => {
       if (item.type === 'openPage') {
+        const url = isValidURL(item.query) ? item.query : `https://${item.query}`
         return (
           <AnimatedPressable
-            onPress={() => handleNavigateToUrl(item.query)}
+            onPress={() => handleNavigateToUrl(url)}
             style={[flexbox.directionRow, flexbox.alignCenter, spacings.mb]}
           >
             <View

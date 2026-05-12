@@ -22,7 +22,8 @@ import {
   BalanceChange,
   fetchFrontRanTxnId,
   fetchTxnId,
-  SubmittedAccountOp
+  SubmittedAccountOp,
+  SubmittedAccountOpLike
 } from '@ambire-common/libs/accountOp/submittedAccountOp'
 import { AccountOpStatus, Call } from '@ambire-common/libs/accountOp/types'
 import { decodeFeeCall } from '@ambire-common/libs/calls/calls'
@@ -88,7 +89,7 @@ export interface StepsData {
   userOp: UserOperation | null
   delegation?: EIP7702Auth
   extensionAccOp?: SubmittedAccountOp
-  submittedAccountOp?: SubmittedAccountOp | null
+  submittedAccountOp?: SubmittedAccountOpLike | null
 }
 
 // if the transaction hash is found, we make the top url the real txn id
@@ -177,7 +178,15 @@ const useSteps = ({
     actualGasCost: null | bigint
     originatedFrom: null | string
     blockNumber: null | bigint
-  }>({ actualGasCost: null, originatedFrom: null, blockNumber: null })
+    transactionHash: null | string
+    transactionFrom: null | string
+  }>({
+    actualGasCost: null,
+    originatedFrom: null,
+    blockNumber: null,
+    transactionHash: null,
+    transactionFrom: null
+  })
   const [blockData, setBlockData] = useState<null | Block>(null)
   const [finalizedStatus, setFinalizedStatus] = useState<FinalizedStatusType>({
     status: 'fetching'
@@ -195,7 +204,7 @@ const useSteps = ({
   const [isFrontRan, setIsFrontRan] = useState<boolean>(false)
   const [isFetching, setIsFetching] = useState<boolean>(false)
   const [balanceChanges, setBalanceChanges] = useState<BalanceChange[] | undefined>(undefined)
-  const [activityAccOp, setActivityAccOp] = useState<SubmittedAccountOp | null>(null)
+  const [activityAccOp, setActivityAccOp] = useState<SubmittedAccountOpLike | null>(null)
   const [shouldTryBlockFetch, setShouldTryBlockFetch] = useState<boolean>(true)
   const [refetchStatus, setRefetchStatus] = useState<number>(0)
   const {
@@ -524,7 +533,9 @@ const useSteps = ({
         setTxnReceipt({
           originatedFrom: receipt.sender,
           actualGasCost: BigInt(receipt.actualGasCost),
-          blockNumber: BigInt(receipt.receipt.blockNumber)
+          blockNumber: BigInt(receipt.receipt.blockNumber),
+          transactionHash: receipt.receipt.transactionHash,
+          transactionFrom: null
         })
         setReceiptLogs([...receipt.receipt.logs])
 
@@ -599,7 +610,9 @@ const useSteps = ({
         setTxnReceipt({
           originatedFrom: receipt.from,
           actualGasCost: receipt.gasUsed * receipt.gasPrice,
-          blockNumber: BigInt(receipt.blockNumber)
+          blockNumber: BigInt(receipt.blockNumber),
+          transactionHash: receipt.hash,
+          transactionFrom: receipt.from
         })
         // @ts-ignore
         setReceiptLogs([...receipt.logs])
@@ -991,7 +1004,19 @@ const useSteps = ({
                 chainId: network.chainId,
                 tokenAddrs: getBalanceChangeTokenAddresses(foundTokens),
                 blockTag: Number(txnReceipt.blockNumber),
-                accountAddr: from
+                accountAddr: from,
+                receipts: [
+                  {
+                    hash: txnReceipt.transactionHash || undefined,
+                    from: txnReceipt.transactionFrom || undefined,
+                    fee: txnReceipt.actualGasCost || undefined,
+                    logs: receiptLogs.map((log) => ({
+                      address: log.address,
+                      topics: [...log.topics],
+                      data: log.data
+                    }))
+                  }
+                ]
               }
             ]
           }
@@ -1019,7 +1044,10 @@ const useSteps = ({
     extensionAccOp,
     network,
     receiptLogs,
+    txnReceipt.actualGasCost,
     txnReceipt.blockNumber,
+    txnReceipt.transactionFrom,
+    txnReceipt.transactionHash,
     from,
     dispatchAndWait,
     submittedAccountOpBalanceChangesSignature

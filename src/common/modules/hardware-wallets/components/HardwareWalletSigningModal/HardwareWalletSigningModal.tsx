@@ -4,6 +4,7 @@ import { useModalize } from 'react-native-modalize'
 
 import { HARDWARE_WALLET_DEVICE_NAMES } from '@ambire-common/consts/hardwareWallets'
 import { ExternalKey } from '@ambire-common/interfaces/keystore'
+import { HardwareWalletSigningRequest } from '@ambire-common/interfaces/signAccountOp'
 import AmbireDevice from '@common/assets/svg/AmbireDevice'
 import CloseIcon from '@common/assets/svg/CloseIcon'
 import DriveIcon from '@common/assets/svg/DriveIcon'
@@ -17,6 +18,7 @@ import Text from '@common/components/Text'
 import Tooltip from '@common/components/Tooltip'
 import { useTranslation } from '@common/config/localization'
 import useTheme from '@common/hooks/useTheme'
+import SigningRequestDetails from '@common/modules/hardware-wallets/components/SigningRequestDetails'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { getUiType } from '@common/utils/uiType'
@@ -26,6 +28,7 @@ type Props = {
   isVisible: boolean
   children?: React.ReactNode
   cancelReq?: () => void
+  signingRequest?: HardwareWalletSigningRequest | null
 }
 
 const iconByKeyType = {
@@ -36,10 +39,17 @@ const iconByKeyType = {
 
 const { isTab } = getUiType()
 
-const HardwareWalletSigningModal = ({ keyType, isVisible, children, cancelReq }: Props) => {
+const HardwareWalletSigningModal = ({
+  keyType,
+  isVisible,
+  children,
+  cancelReq,
+  signingRequest
+}: Props) => {
   const { t } = useTranslation()
   const { ref, open, close } = useModalize()
   const { theme } = useTheme()
+
   useEffect(() => {
     if (isVisible) open()
     else close()
@@ -109,13 +119,23 @@ const HardwareWalletSigningModal = ({ keyType, isVisible, children, cancelReq }:
         </View>
         <AmbireDevice />
       </View>
-      <View style={[flexbox.alignSelfCenter, spacings.mbLg, flexbox.alignCenter]}>
+      <View
+        style={[
+          flexbox.alignSelfCenter,
+          spacings.mbLg,
+          flexbox.alignCenter,
+          { width: '100%', maxWidth: 420 }
+        ]}
+      >
         <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mbTy]}>
           <Text weight="regular" fontSize={20}>
             {t('Sending signing request...')}
           </Text>
         </View>
         {children}
+        {!!signingRequest && (
+          <SigningRequestDetails signingRequest={signingRequest} style={spacings.mtLg} />
+        )}
       </View>
     </BottomSheet>
   )

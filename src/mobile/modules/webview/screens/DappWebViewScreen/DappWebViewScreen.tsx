@@ -26,6 +26,7 @@ import { WEBVIEW_DEV_HOST } from '@env'
 import { MobileLayoutContainer } from '@mobile/components/MobileLayoutWrapper'
 import DappProgressBar from '@mobile/modules/webview/components/DappProgressBar'
 import DappWebViewFooter from '@mobile/modules/webview/components/DappWebViewFooter'
+import { isValidHostname, isValidURL } from '@ambire-common/services/validations'
 
 // SECURITY: Generate a 256-bit random token used to gate the RN <-> WebView bridge.
 // Cross-origin iframes cannot read main-frame globals (Same-Origin Policy), so they
@@ -109,9 +110,13 @@ const devOnlyHelpers = `
   };
 
   // Hide dev error overlays (react-error-overlay, webpack-dev-server, Next.js dev)
-  var s = document.createElement('style');
-  s.textContent = '#__react-error-overlay__,iframe#webpack-dev-server-client-overlay,nextjs-portal{display:none!important}';
-  (document.head || document.documentElement).appendChild(s);
+  // The document may not be fully loaded
+
+  document.addEventListener('DOMContentLoaded', function() {
+    var s = document.createElement('style');
+    s.textContent = '#__react-error-overlay__,iframe#webpack-dev-server-client-overlay,nextjs-portal{display:none!important}';
+    (document.head || document.documentElement).appendChild(s);
+  });
 `
 
 const WEBVIEW_DEV_SERVER_PORT = 8182
@@ -443,6 +448,7 @@ const DappWebViewScreen = () => {
     const baseCodeEthereum = (__DEV__ && devEthereumCode) || ethereumInpageBundle.code
 
     return `
+    try {
       ${jsNativeStash}
 
       ${jsBridgeHarden}
@@ -492,6 +498,9 @@ const DappWebViewScreen = () => {
         console.log('[Ambire] window.ethereum:', !!window.ethereum, 'window.ambire:', !!window.ambire);
       })();
       true;
+    } catch (e) {
+      console.error('[Ambire] Failed to inject provider code:', e && e.stack ? e.stack : (e && e.message ? e.message : String(e)));
+    }
     `
   }, [devAmbireCode, devEthereumCode, jsBridgeHarden])
 
@@ -523,20 +532,12 @@ const DappWebViewScreen = () => {
     return results.map((result) => result.item.dapp)
   }, [debouncedSearch, searchableDapps])
 
-  const isValidUrl = (urlString: string) => {
-    try {
-      return Boolean(new URL(urlString))
-    } catch {
-      return false
-    }
-  }
-
   // Data to render in bottom sheet list
   const listData = useMemo(() => {
     const data: any[] = []
     if (debouncedSearch) {
       data.push({ type: 'googleSearch', query: debouncedSearch })
-      if (isValidUrl(debouncedSearch)) {
+      if (isValidURL(debouncedSearch) || isValidHostname(debouncedSearch)) {
         data.push({ type: 'openPage', query: debouncedSearch })
       }
     } else {
@@ -559,9 +560,10 @@ const DappWebViewScreen = () => {
   const renderSearchItem = useCallback(
     ({ item }: { item: any }) => {
       if (item.type === 'openPage') {
+        const url = isValidURL(item.query) ? item.query : `https://${item.query}`
         return (
           <AnimatedPressable
-            onPress={() => handleNavigateToUrl(item.query)}
+            onPress={() => handleNavigateToUrl(url)}
             style={[flexbox.directionRow, flexbox.alignCenter, spacings.mb]}
           >
             <View
@@ -991,6 +993,7 @@ const DappWebViewScreen = () => {
           onError={handleLoadError}
           onRenderProcessGone={handleRenderProcessGone}
           onContentProcessDidTerminate={handleRenderProcessGone}
+          nestedScrollEnabled={true}
         />
       </View>
 

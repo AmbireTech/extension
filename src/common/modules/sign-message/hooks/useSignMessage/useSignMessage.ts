@@ -15,6 +15,7 @@ import useDappInfo from '@common/hooks/useDappInfo/useDappInfo'
 import useToast from '@common/hooks/useToast'
 import useLedger from '@common/modules/hardware-wallets/hooks/useLedger'
 import useQrSigningFlow from '@common/modules/hardware-wallets/hooks/useQrSigningFlow'
+import useDappVerificationHoldButtonType from '@web/hooks/useDappVerificationHoldButtonType'
 
 const useSignMessage = () => {
   const { t } = useTranslation()
@@ -125,7 +126,7 @@ const useSignMessage = () => {
         method: 'init',
         args: [
           {
-            dapp: { name, icon },
+            dapp: { name, icon, url: userRequest.dappPromises[0]?.session?.origin },
             messageToSign: {
               fromRequestId: userRequest.id,
               content: {
@@ -245,14 +246,28 @@ const useSignMessage = () => {
   }, [selectedAccountKeyStoreKeys, setSigner, account?.safeCreation, handleSign])
 
   const resolveButtonText = useMemo(() => {
-    if (signMessageState.status === SignMessageStatus.Partial) return 'Close'
+    if (signMessageState.status === SignMessageStatus.Partial) return t('Close')
     if (isSiwe) return t('Sign in')
     if (isScrollToBottomForced) return t('Read the message')
 
     if (signStatus === 'LOADING') return t('Signing...')
 
     return t('Sign')
-  }, [isSiwe, t, isScrollToBottomForced, signStatus, signMessageState.status])
+  }, [isSiwe, isScrollToBottomForced, signStatus, signMessageState.status, t])
+
+  const holdToProceedButtonText = useMemo(() => {
+    if (isScrollToBottomForced) return t('Read the message')
+    if (isSiwe) return t('Hold to sign in')
+
+    return t('Hold to sign')
+  }, [isSiwe, isScrollToBottomForced, t])
+
+  const holdToProceedCompleteText = useMemo(() => {
+    if (signStatus === 'LOADING') return t('Signing...')
+    if (signMessageState.status === SignMessageStatus.Partial) return t('Close')
+
+    return t('Signing...')
+  }, [signStatus, signMessageState.status, t])
 
   const handleDismissLedgerConnectModal = useCallback(() => {
     setShouldDisplayLedgerConnectModal(false)
@@ -265,6 +280,9 @@ const useSignMessage = () => {
 
     return EIP_1271_NOT_SUPPORTED_BY.some((origin) => dappOrigin.includes(origin))
   }, [account, userRequest?.dappPromises])
+
+  const hasSafetyBanners = !!signMessageState.banners?.length
+  const holdToProceedButtonType = useDappVerificationHoldButtonType(signMessageState.banners)
 
   const view = useMemo(() => {
     // Happens when switching between requests
@@ -288,6 +306,13 @@ const useSignMessage = () => {
     if (!account?.safeCreation) return false
     return !accountState?.isDeployed
   }, [account?.safeCreation, accountState?.isDeployed])
+
+  const isResolveActionDisabled =
+    signStatus === 'LOADING' ||
+    isScrollToBottomForced ||
+    humanizationHasBlockingWarnings ||
+    isSafeNotDeployed ||
+    isViewOnly
 
   const isLoading = !signMessageState.isInitialized || !account || !userRequest
 
@@ -334,7 +359,12 @@ const useSignMessage = () => {
     view,
     threshold,
     isSafeNotDeployed,
-    isLoading
+    isLoading,
+    holdToProceedButtonText,
+    holdToProceedCompleteText,
+    hasSafetyBanners,
+    holdToProceedButtonType,
+    isResolveActionDisabled
   }
 }
 

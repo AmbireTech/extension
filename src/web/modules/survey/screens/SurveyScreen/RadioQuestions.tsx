@@ -19,16 +19,13 @@ export const RadioQuestions = React.memo(
   ({ responses, style, setSelectedResponseId, selectedResponseId }: RadioResponsesProps) => {
     const { styles, theme } = useTheme(getStyles)
     const [hovered, setHovered] = useState<number | null>(null)
-    const responsesLength = useMemo(() => responses.length, [responses.length])
     return (
       <View style={[style, { gap: 16, flexDirection: 'column' }]}>
-        {responses.map(({ text, id }, index) => (
+        {responses.map(({ text, id }) => (
           <Pressable
             key={id}
             style={[
               styles.selectItem,
-              index !== responsesLength - 1 && styles.selectItemBorder,
-
               hovered === id && { backgroundColor: theme.secondaryBackground }
             ]}
             onPress={() => {
