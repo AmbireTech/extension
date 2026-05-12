@@ -234,7 +234,15 @@ jobs:
           cp -r blob-report-non-hw/. all-blob-reports/ 2>/dev/null || true
           cp -r blob-report-ledger/. all-blob-reports/ 2>/dev/null || true
           cp -r blob-report-trezor/. all-blob-reports/ 2>/dev/null || true
-          yarn playwright merge-reports --reporter html --output html-report ./all-blob-reports
+          yarn playwright merge-reports --reporter html ./all-blob-reports
+        continue-on-error: true
+
+      - name: Zip HTML report
+        if: always()
+        working-directory: ./e2e-playwright-tests
+        run: |
+          zip -r playwright-report.zip playwright-report/
+        continue-on-error: true
 
       - name: Zip HTML report
         if: always()
