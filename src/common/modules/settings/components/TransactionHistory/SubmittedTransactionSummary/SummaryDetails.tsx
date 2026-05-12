@@ -2,7 +2,6 @@ import React, { useMemo } from 'react'
 import { Pressable, View } from 'react-native'
 
 import { Network } from '@ambire-common/interfaces/network'
-import { SubmittedAccountOp } from '@ambire-common/libs/accountOp/submittedAccountOp'
 import { AccountOpStatus } from '@ambire-common/libs/accountOp/types'
 import { IrCall } from '@ambire-common/libs/humanizer/interfaces'
 import CopyIcon from '@common/assets/svg/CopyIcon'
@@ -36,7 +35,7 @@ import {
   getTruncatedTxnHash
 } from './helpers'
 import getStyles from './styles'
-import { DisplayBalanceChange, Props } from './types'
+import { DisplayBalanceChange, Props, SubmittedAccountOpLike } from './types'
 
 const SummaryDetails = ({
   submittedAccountOp,
@@ -44,7 +43,7 @@ const SummaryDetails = ({
   size,
   defaultType
 }: {
-  submittedAccountOp: SubmittedAccountOp
+  submittedAccountOp: SubmittedAccountOpLike
   network: Network
   size: 'sm' | 'md' | 'lg'
   defaultType: Props['defaultType']
