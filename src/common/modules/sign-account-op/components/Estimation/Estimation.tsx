@@ -486,13 +486,14 @@ const Estimation = ({
         sheetRef={customGasPriceSheetRef}
       />
       {!!isOneClick && shouldShowTxnDetails && (
-        <View style={spacings.mb}>
+        <View style={spacings.mv}>
           <PendingTransactions
             network={network}
             setDelegation={signAccountOpState?.accountOp.meta?.setDelegation}
             delegatedContract={signAccountOpState?.delegatedContract}
             hideDeleteIcon
             signAccountOpState={signAccountOpState}
+            size="md"
           />
           {/* <Simulation
             network={network}

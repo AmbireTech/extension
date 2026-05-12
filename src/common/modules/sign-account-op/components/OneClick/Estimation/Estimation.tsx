@@ -116,7 +116,7 @@ const OneClickEstimation = ({
         style={spacings.pb}
         closeBottomSheet={isWeb ? undefined : closeEstimationModal}
         autoOpen={hasProceeded || (isRequestWindow && !!signAccountOpController)}
-        isScrollEnabled={isMobile}
+        isScrollEnabled={isMobile || shouldShowTxnDetails}
         shouldBeClosableOnDrag={isMobile}
       >
         {!!banners && !!banners.length && (

@@ -18,6 +18,7 @@ interface Props {
   delegatedContract?: Hex | null
   hideDeleteIcon?: boolean
   signAccountOpState?: ISignAccountOpController | null
+  size?: 'sm' | 'md' | 'lg'
 }
 
 const PendingTransactions: FC<Props> = ({
@@ -25,7 +26,8 @@ const PendingTransactions: FC<Props> = ({
   setDelegation,
   delegatedContract,
   hideDeleteIcon,
-  signAccountOpState
+  signAccountOpState,
+  size = 'lg'
 }) => {
   const { t } = useTranslation()
   const controllerSignAccountOpState = useController('SignAccountOpController').state
@@ -59,6 +61,7 @@ const PendingTransactions: FC<Props> = ({
             chainId={network.chainId}
             index={i}
             hideDeleteIcon={hideDeleteIcon}
+            size={size}
           />
         ))
       ) : (
