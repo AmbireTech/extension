@@ -104,12 +104,23 @@ const RouteStepsPreview = ({
     return toAmount
   }, [steps])
 
+  const resolvedCurrentStep = currentStep ?? 0
+
   const getLastStepType = (step: SwapAndBridgeStep) => {
-    if (step.userTxIndex && step.userTxIndex < currentStep) {
-      return routeStatus && routeStatus === 'refunded' ? 'warning' : 'success'
+    if (routeStatus === 'completed') return 'success'
+
+    const userTxIndex = step.userTxIndex ?? 0
+
+    if (userTxIndex < resolvedCurrentStep) {
+      return routeStatus === 'refunded' ? 'warning' : 'success'
     }
 
     return 'default'
+  }
+
+  const getIntermediateStepType = (userTxIndex: number) => {
+    if (routeStatus === 'completed') return 'success'
+    return userTxIndex < resolvedCurrentStep ? 'success' : 'default'
   }
 
   const renderStepBadge = (step: SwapAndBridgeStep) => (
@@ -178,7 +189,7 @@ const RouteStepsPreview = ({
                 />
                 <RouteStepsArrow
                   containerStyle={flexbox.flex1}
-                  type={userTxIndex < currentStep ? 'success' : 'default'}
+                  type={getIntermediateStepType(userTxIndex)}
                   badge={renderStepBadge(step)}
                   isLoading={loadingEnabled && userTxIndex === currentStep}
                   badgePosition="top"
