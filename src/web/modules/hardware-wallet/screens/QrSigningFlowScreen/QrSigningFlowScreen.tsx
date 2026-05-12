@@ -78,6 +78,10 @@ const QrSigningFlowScreen = ({
       type={!isTab ? 'bottom-sheet' : 'modal'}
       withBackdropBlur={false}
       shouldBeClosableOnDrag={false}
+      containerInnerWrapperStyles={flexbox.flex1}
+      scrollViewProps={{
+        contentContainerStyle: flexbox.flex1
+      }}
     >
       <ModalHeader title={title} />
 

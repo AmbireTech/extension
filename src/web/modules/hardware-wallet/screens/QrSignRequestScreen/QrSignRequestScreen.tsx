@@ -37,9 +37,9 @@ const QrSignRequestScreen = ({
   const qrSize = transactionProgress ? 280 : 300
 
   return (
-    <View style={[flexbox.center, { width: '100%' }]}>
+    <View style={[flexbox.center, { width: '100%', flexGrow: 1, flexShrink: 0 }]}>
       <Text>{t('Scan this QR code with your QR-based device to sign.')}</Text>
-      <View style={[flexbox.center, spacings.mtSm, { width: '100%' }]}>
+      <View style={[flexbox.center, flexbox.flex1, spacings.mtSm, { width: '100%' }]}>
         <AnimatedQRCode
           options={{ size: qrSize, interval: ANIMATION_INTERVAL }}
           type={urType}
@@ -57,13 +57,12 @@ const QrSignRequestScreen = ({
             style={[
               spacings.mt,
               {
-                width: '100%',
-                maxWidth: 420
+                width: 420
               }
             ]}
           />
         )}
-        <FooterGlassView size="sm" absolute={false} style={spacings.ptSm}>
+        <FooterGlassView size="sm" absolute={false} style={{ ...spacings.ptSm, marginTop: 'auto' }}>
           <Button
             size="smaller"
             hasBottomSpacing={false}
