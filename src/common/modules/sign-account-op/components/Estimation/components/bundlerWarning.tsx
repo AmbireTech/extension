@@ -15,6 +15,7 @@ const BundlerWarning = ({
   bundlerNonceDiscrepancy?: {
     id: string
     title: string
+    text?: string
   }
 }) => {
   const { dispatch: signAccountOpDispatch } = useController('SignAccountOpController')
@@ -28,7 +29,8 @@ const BundlerWarning = ({
     <Alert
       type="warning"
       title={bundlerNonceDiscrepancy.title}
-      style={spacings.mt}
+      style={spacings.mbSm}
+      text={bundlerNonceDiscrepancy.text || ''}
       buttonProps={{
         type: 'warning',
         text: t('Retry'),
