@@ -2,7 +2,6 @@ import React, { FC, ReactNode, useEffect } from 'react'
 import { Navigate, Route, Routes } from 'react-router-dom'
 
 import PrivateRoute from '@legends/components/PrivateRoute'
-import Season2Modal from '@legends/components/Season2Modal'
 import { DataPollingContextProvider } from '@legends/contexts/dataPollingContext'
 import { LeaderboardContextProvider } from '@legends/contexts/leaderboardContext'
 import { LegendsContextProvider } from '@legends/contexts/legendsContext'
@@ -36,10 +35,7 @@ const PrivateArea: FC<{ children: ReactNode }> = ({ children }) => {
     <LeaderboardContextProvider>
       <LegendsContextProvider>
         <PortfolioProvider>
-          <DataPollingContextProvider>
-            <Season2Modal />
-            {children}
-          </DataPollingContextProvider>
+          <DataPollingContextProvider>{children}</DataPollingContextProvider>
         </PortfolioProvider>
       </LegendsContextProvider>
     </LeaderboardContextProvider>

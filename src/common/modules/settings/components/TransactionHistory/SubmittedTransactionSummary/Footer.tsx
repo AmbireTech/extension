@@ -1,43 +1,55 @@
 /* eslint-disable @typescript-eslint/no-floating-promises */
-import { formatUnits, ZeroAddress } from 'ethers'
-import React, { FC, useCallback, useEffect, useState } from 'react'
+import React, { FC, useCallback } from 'react'
 import { View } from 'react-native'
 
-import gasTankFeeTokens from '@ambire-common/consts/gasTankFeeTokens'
 import { Network } from '@ambire-common/interfaces/network'
-import { BROADCAST_OPTIONS } from '@ambire-common/libs/broadcast/broadcast'
-import { SubmittedAccountOp } from '@ambire-common/libs/accountOp/submittedAccountOp'
 import { AccountOpStatus } from '@ambire-common/libs/accountOp/types'
-import { resolveAssetInfo } from '@ambire-common/services/assetInfo'
+import { BROADCAST_OPTIONS } from '@ambire-common/libs/broadcast/broadcast'
 import { getBenzinUrlParams } from '@ambire-common/utils/benzin'
-import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
-import LinkIcon from '@common/assets/svg/LinkIcon'
-import SkeletonLoader from '@common/components/SkeletonLoader'
-import Text from '@common/components/Text'
+import CopyIcon from '@common/assets/svg/CopyIcon'
+import OpenIcon from '@common/assets/svg/OpenIcon'
+import RefreshIcon from '@common/assets/svg/RefreshIcon'
+import SpeedUpIcon from '@common/assets/svg/SpeedUpIcon'
+import Button from '@common/components/Button'
+import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
-import { sizeMultiplier } from '@common/modules/sign-account-op/components/TransactionSummary'
 import spacings from '@common/styles/spacings'
-import flexbox from '@common/styles/utils/flexbox'
+import { setStringAsync } from '@common/utils/clipboard'
 import { openInTab } from '@common/utils/links'
 
-import RepeatTransaction from './RepeatTransaction'
-import SpeedUpTransaction from './SpeedUpTransaction'
-import FooterActionLink from './FooterActionLink'
 import getStyles from './styles'
-import SubmittedOn from './SubmittedOn'
+import { SubmittedAccountOpLike } from './types'
 
 type Props = {
   network: Network
   size: 'sm' | 'md' | 'lg'
-  rawCalls?: SubmittedAccountOp['calls']
-  submittedAccountOp: SubmittedAccountOp
+  rawCalls?: SubmittedAccountOpLike['calls']
+  submittedAccountOp: SubmittedAccountOpLike
 } & Pick<
-  SubmittedAccountOp,
-  'txnId' | 'identifiedBy' | 'accountAddr' | 'gasFeePayment' | 'status' | 'timestamp'
+  SubmittedAccountOpLike,
+  'txnId' | 'identifiedBy' | 'accountAddr' | 'gasFeePayment' | 'status'
 >
+
+const increaseByFifteenPercent = (value: bigint) => (value * 115n + 99n) / 100n
+const EXPLORER_LINKS_DISABLED_TOOLTIP =
+  'Explorer links are on the right side of each transaction in transaction details'
+const canBuildSpeedUpAccountOp = (
+  submittedAccountOp: SubmittedAccountOpLike
+): submittedAccountOp is SubmittedAccountOpLike &
+  Required<
+    Pick<
+      SubmittedAccountOpLike,
+      'signingKeyAddr' | 'signingKeyType' | 'nonce' | 'gasLimit' | 'signature'
+    >
+  > =>
+  submittedAccountOp.signingKeyAddr !== undefined &&
+  submittedAccountOp.signingKeyType !== undefined &&
+  submittedAccountOp.nonce !== undefined &&
+  submittedAccountOp.gasLimit !== undefined &&
+  submittedAccountOp.signature !== undefined
 
 const Footer: FC<Props> = ({
   network,
@@ -47,155 +59,239 @@ const Footer: FC<Props> = ({
   identifiedBy,
   accountAddr,
   gasFeePayment,
-  status,
-  size,
-  timestamp
+  status
 }) => {
   const { styles } = useTheme(getStyles)
   const { addToast } = useToast()
-  const { networks } = useController('NetworksController').state
   const {
     state: { account: selectedAccount }
   } = useController('SelectedAccountController')
+  const { dispatch: requestsDispatch } = useController('RequestsController')
   const { t } = useTranslation()
-  const textSize = 14 * sizeMultiplier[size]
-  const iconSize = 24 * sizeMultiplier[size]
-
-  const canViewFee =
-    status !== AccountOpStatus.Rejected &&
-    status !== AccountOpStatus.BroadcastButStuck &&
-    status !== AccountOpStatus.UnknownButPastNonce &&
-    status !== AccountOpStatus.BroadcastedButNotConfirmed
 
   const { chainId } = network
-
-  const [feeFormattedValue, setFeeFormattedValue] = useState<string>()
   const isPendingTransaction =
     status === AccountOpStatus.Pending || status === AccountOpStatus.BroadcastedButNotConfirmed
+  // the whole account op is a failure / success
+  // or at least one call is a failure / success
+  // means that there's at least one explorer transaction for checking
+  const isMinedTransaction =
+    status === AccountOpStatus.Failure ||
+    status === AccountOpStatus.Success ||
+    (submittedAccountOp.identifiedBy.type === 'MultipleTxns' &&
+      submittedAccountOp.calls.find(
+        (c) => c.status === AccountOpStatus.Failure || c.status === AccountOpStatus.Success
+      ))
+  const areExplorerButtonsDisabled =
+    submittedAccountOp.identifiedBy.type === 'MultipleTxns' && submittedAccountOp.calls.length > 1
   const shouldShowSpeedUp =
     isPendingTransaction &&
     gasFeePayment?.broadcastOption !== BROADCAST_OPTIONS.byRelayer &&
-    gasFeePayment?.broadcastOption !== BROADCAST_OPTIONS.byBundler
+    gasFeePayment?.broadcastOption !== BROADCAST_OPTIONS.byBundler &&
+    canBuildSpeedUpAccountOp(submittedAccountOp)
+  const isExternal = submittedAccountOp.activitySource === 'external'
+  const canRepeatTransaction =
+    !!rawCalls?.length && selectedAccount?.addr === accountAddr && !isExternal
 
-  const handleViewTransaction = useCallback(async () => {
+  const benzinLink = `https://explorer.ambire.com/${getBenzinUrlParams({
+    txnId,
+    chainId: Number(chainId),
+    identifiedBy
+  })}`
+
+  const handleCopyTransaction = useCallback(() => {
     if (!chainId) {
       const message = t(
-        "Can't open the transaction details because the network information is missing."
+        "Can't copy the transaction link because the network information is missing."
       )
       addToast(message, { type: 'error' })
 
       return
     }
 
-    const link = `https://explorer.ambire.com/${getBenzinUrlParams({
-      txnId,
-      chainId: Number(chainId),
-      identifiedBy
-    })}`
+    setStringAsync(benzinLink)
+    addToast(t('Copied to clipboard!') as string, { timeout: 2500 })
+  }, [addToast, benzinLink, chainId, t])
+
+  const handleRepeatTransaction = useCallback(() => {
+    if (!rawCalls) return
+
+    requestsDispatch({
+      type: 'method',
+      params: {
+        method: 'build',
+        args: [
+          {
+            type: 'calls',
+            params: {
+              userRequestParams: {
+                calls: rawCalls,
+                meta: { chainId: network.chainId, accountAddr }
+              }
+            }
+          }
+        ]
+      }
+    })
+  }, [rawCalls, requestsDispatch, network.chainId, accountAddr])
+
+  const handleSpeedUpTransaction = useCallback(() => {
+    if (!submittedAccountOp.gasFeePayment || !canBuildSpeedUpAccountOp(submittedAccountOp)) return
+
+    const nextGasFeePayment = {
+      ...submittedAccountOp.gasFeePayment,
+      gasPrice: increaseByFifteenPercent(submittedAccountOp.gasFeePayment.gasPrice),
+      maxPriorityFeePerGas:
+        submittedAccountOp.gasFeePayment.maxPriorityFeePerGas &&
+        submittedAccountOp.gasFeePayment.maxPriorityFeePerGas !== 0n
+          ? increaseByFifteenPercent(submittedAccountOp.gasFeePayment.maxPriorityFeePerGas)
+          : submittedAccountOp.gasFeePayment.maxPriorityFeePerGas
+    }
+
+    requestsDispatch({
+      type: 'method',
+      params: {
+        method: 'build',
+        args: [
+          {
+            type: 'calls',
+            params: {
+              userRequestParams: {
+                calls: submittedAccountOp.calls,
+                meta: {
+                  chainId: submittedAccountOp.chainId,
+                  accountAddr: submittedAccountOp.accountAddr
+                },
+                accountOp: {
+                  id: submittedAccountOp.id,
+                  accountAddr: submittedAccountOp.accountAddr,
+                  chainId: submittedAccountOp.chainId,
+                  signingKeyAddr: submittedAccountOp.signingKeyAddr,
+                  signingKeyType: submittedAccountOp.signingKeyType,
+                  nonce: submittedAccountOp.nonce,
+                  eoaNonce: submittedAccountOp.eoaNonce,
+                  calls: submittedAccountOp.calls,
+                  feeCall: submittedAccountOp.feeCall,
+                  activatorCall: submittedAccountOp.activatorCall,
+                  gasLimit: submittedAccountOp.gasLimit,
+                  signature: submittedAccountOp.signature,
+                  gasFeePayment: nextGasFeePayment,
+                  txnId: submittedAccountOp.txnId,
+                  asUserOperation: submittedAccountOp.asUserOperation,
+                  signers: submittedAccountOp.signers,
+                  signed: submittedAccountOp.signed,
+                  safeTx: submittedAccountOp.safeTx,
+                  flags: submittedAccountOp.flags,
+                  meta: {
+                    ...submittedAccountOp.meta,
+                    speedUp: {
+                      enabled: true
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    })
+  }, [submittedAccountOp, requestsDispatch])
+
+  const handleOpenExplorer = useCallback(async () => {
+    if (!chainId || !network.explorerUrl || !txnId) {
+      const message = t(
+        "Can't open the transaction details because the transaction or network information is missing."
+      )
+      addToast(message, { type: 'error' })
+
+      return
+    }
+
+    const explorerUrl = network.explorerUrl.replace(/\/$/, '')
+    const link = `${explorerUrl}/tx/${txnId}`
 
     try {
       await openInTab({ url: link })
     } catch (e: any) {
       addToast(e?.message || 'Error opening explorer', { type: 'error' })
     }
-  }, [txnId, identifiedBy, addToast, chainId, t])
+  }, [txnId, addToast, chainId, network.explorerUrl, t])
 
-  useEffect((): void => {
-    const feeTokenAddress = gasFeePayment?.inToken
-    const nChainId =
-      gasFeePayment?.feeTokenChainId ||
-      // the rest is support for legacy data (no chainId recorded for the fee)
-      (feeTokenAddress === ZeroAddress && chainId) ||
-      gasTankFeeTokens.find((constFeeToken: any) => constFeeToken.address === feeTokenAddress)
-        ?.chainId ||
-      chainId
-
-    // did is used to avoid tokenNetwork being Network | undefined
-    // the assumption is that we cant pay the fee with token on network that is not present
-    const tokenNetwork = networks.filter((n: Network) => n.chainId === nChainId)[0]
-
-    const feeTokenAmount = gasFeePayment?.amount
-    if (!feeTokenAddress || !tokenNetwork || !feeTokenAmount) return
-
-    resolveAssetInfo(feeTokenAddress, tokenNetwork, ({ tokenInfo }) => {
-      if (!tokenInfo || !gasFeePayment?.amount) return
-
-      const fee = parseFloat(formatUnits(feeTokenAmount, tokenInfo.decimals))
-
-      setFeeFormattedValue(`${formatDecimals(fee)} ${tokenInfo.symbol}`)
-    }).catch((e) => {
-      console.error(e)
-      setFeeFormattedValue('Unknown. Please check the explorer.')
-    })
-  }, [
-    networks,
-    chainId,
-    gasFeePayment?.feeTokenChainId,
-    gasFeePayment?.amount,
-    gasFeePayment?.inToken,
-    addToast
-  ])
+  if (!canRepeatTransaction && !isMinedTransaction) return null
 
   return (
-    <View style={spacings.phSm}>
-      <View style={styles.footer}>
-        {canViewFee && (
-          <View style={[flexbox.flex1, spacings.mrSm]}>
-            <Text
-              fontSize={textSize}
-              appearance="secondaryText"
-              weight="semiBold"
-              style={{ ...spacings.mbMi }}
-            >
-              {t('Fee')}
-            </Text>
-
-            {gasFeePayment?.isSponsored ? (
-              <Text fontSize={12} appearance="successText" weight="semiBold">
-                {t('Sponsored')}
-              </Text>
-            ) : (
-              <Text fontSize={textSize} appearance="secondaryText">
-                {feeFormattedValue || <SkeletonLoader width={80} height={21} />}
-              </Text>
-            )}
-          </View>
-        )}
-        <SubmittedOn
-          fontSize={textSize}
-          iconSize={iconSize}
-          chainId={network.chainId}
-          timestamp={timestamp}
-          numberOfLines={2}
-        />
-        <View style={[flexbox.alignEnd]}>
-          <FooterActionLink
+    <View style={styles.footer}>
+      <View style={styles.footerButtonsRow}>
+        <View
+          dataSet={createGlobalTooltipDataSet({
+            id: `open-explorer-disabled-${submittedAccountOp.id}`,
+            content: t(EXPLORER_LINKS_DISABLED_TOOLTIP),
+            hidden: !areExplorerButtonsDisabled
+          })}
+        >
+          <Button
+            text={t('Open explorer')}
+            type="outline"
+            onPress={handleOpenExplorer}
+            size="smaller"
+            disabled={areExplorerButtonsDisabled}
+            hasBottomSpacing={false}
+            style={[styles.footerButton]}
+            childrenPosition="left"
             testID="view-transaction-link"
-            label={t('View transaction')}
-            onPress={handleViewTransaction}
-            textSize={textSize}
-            iconSize={iconSize}
-            Icon={LinkIcon}
-          />
-          {rawCalls?.length && selectedAccount?.addr === accountAddr ? (
-            shouldShowSpeedUp ? (
-              <SpeedUpTransaction
-                submittedAccountOp={submittedAccountOp}
-                textSize={textSize}
-                iconSize={iconSize}
-              />
-            ) : (
-              <RepeatTransaction
-                accountAddr={accountAddr}
-                chainId={network.chainId}
-                rawCalls={rawCalls}
-                textSize={textSize}
-                iconSize={iconSize}
-              />
-            )
-          ) : (
-            <View />
-          )}
+          >
+            <OpenIcon style={spacings.mrMi} width={16} height={16} />
+          </Button>
+        </View>
+
+        <View style={styles.footerRightButtonsGroup}>
+          <View
+            dataSet={createGlobalTooltipDataSet({
+              id: `repeat-disabled-${submittedAccountOp.id}`,
+              content: isExternal
+                ? t('Incoming transactions cannot be repeated')
+                : t('Switch to this account to proceed'),
+              hidden: canRepeatTransaction
+            })}
+          >
+            <Button
+              type="tertiary"
+              text={t(shouldShowSpeedUp ? 'Speed up' : 'Repeat')}
+              onPress={shouldShowSpeedUp ? handleSpeedUpTransaction : handleRepeatTransaction}
+              size="smaller"
+              hasBottomSpacing={false}
+              disabled={!canRepeatTransaction}
+              style={[styles.footerButton, spacings.mrTy]}
+              childrenPosition="left"
+            >
+              {shouldShowSpeedUp ? (
+                <SpeedUpIcon style={spacings.mrMi} width={16} height={16} />
+              ) : (
+                <RefreshIcon style={spacings.mrMi} width={16} height={16} />
+              )}
+            </Button>
+          </View>
+
+          <View
+            dataSet={createGlobalTooltipDataSet({
+              id: `copy-explorer-link-disabled-${submittedAccountOp.id}`,
+              content: t(EXPLORER_LINKS_DISABLED_TOOLTIP),
+              hidden: !areExplorerButtonsDisabled
+            })}
+          >
+            <Button
+              text={t('Copy link')}
+              onPress={handleCopyTransaction}
+              type="primary"
+              size="smaller"
+              disabled={areExplorerButtonsDisabled}
+              hasBottomSpacing={false}
+              style={styles.footerButton}
+              childrenPosition="left"
+            >
+              <CopyIcon style={spacings.mrMi} width={16} height={16} />
+            </Button>
+          </View>
         </View>
       </View>
     </View>

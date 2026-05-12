@@ -85,12 +85,11 @@ const Banner = React.memo(
             }
           ]}
         >
-          <View style={[flexbox.directionRow, flexbox.flex1]}>
+          <View style={[flexbox.directionRow, flexbox.alignCenter, flexbox.flex1]}>
             <Icon
               width={isMobile ? 22 : 24}
               height={isMobile ? 22 : 24}
               color={theme[`${type}Text`]}
-              style={{ marginTop: 1 }}
             />
             <Text
               fontSize={titleFontSize || (isMobile ? 14 : 16)}

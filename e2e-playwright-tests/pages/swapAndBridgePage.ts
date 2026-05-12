@@ -1,6 +1,7 @@
 import { typeText } from 'common-helpers/typeText'
 import locators from 'constants/locators'
 import selectors, { SELECTORS } from 'constants/selectors'
+import { SpeculosDevice } from 'libs/speculos-device/device'
 
 import { expect } from '@playwright/test'
 
@@ -191,7 +192,7 @@ export class SwapAndBridgePage extends BasePage {
     await expect(this.page.getByText('Transaction waiting to be').first()).not.toBeVisible()
   }
 
-  async proceedTransaction(): Promise<void> {
+  async proceedTransaction(ledgerSimulatorControls?: SpeculosDevice): Promise<void> {
     // "Select route" step may take more time to appear, as it depends on the Li.Fi response.
     await this.page.waitForSelector(locators.selectRouteButton, {
       state: 'visible',
@@ -208,11 +209,11 @@ export class SwapAndBridgePage extends BasePage {
     await openTransactionButton.waitFor({ state: 'visible' })
 
     const newPage = await this.handleNewPage(openTransactionButton)
-    await this.signTransactionPage(newPage)
+    await this.signTransactionPage(newPage, ledgerSimulatorControls)
   }
 
-  async signTransactionPage(page): Promise<void> {
-    const signButton = page.getByTestId(selectors.signTransactionButton)
+  async signTransactionPage(page, ledgerSimulatorControls?: SpeculosDevice): Promise<void> {
+    const signButton = await page.getByTestId(selectors.signTransactionButton)
 
     try {
       // Select slow speed
@@ -232,7 +233,24 @@ export class SwapAndBridgePage extends BasePage {
       } else {
         await expect(signButton).toBeVisible({ timeout: 5000 })
         await expect(signButton).toBeEnabled({ timeout: 5000 })
-        await page.getByTestId(selectors.signTransactionButton).click()
+
+        await signButton.click()
+
+        // TODO: check why this is needed
+        // First click can occasionally "blink" the Ledger sheet and leave the UI unchanged.
+        await page.waitForTimeout(350)
+        const shouldRetryClick = await signButton.isVisible().catch(() => false)
+        if (shouldRetryClick) {
+          const stillEnabled = await signButton.isEnabled().catch(() => false)
+          if (stillEnabled) {
+            await signButton.click()
+          }
+        }
+
+        if (ledgerSimulatorControls) {
+          await ledgerSimulatorControls.signSmartAccountTransaction()
+        }
+
         await page.waitForTimeout(5000)
 
         // close transaction progress pop up
@@ -489,6 +507,11 @@ export class SwapAndBridgePage extends BasePage {
   // TODO: use this method to check activity tab after POM refactor
   async checkSendTransactionOnActivityTab() {
     await this.click(selectors.dashboard.activityTabButton)
+
+    // open transaction modal
+    const firstTransaction = this.page.locator(selectors.dashboard.activityTabConfirmedPill)
+    await firstTransaction.first().waitFor({ state: 'visible' })
+    await firstTransaction.first().click()
 
     // When tests are ran in isolation, there would be only 1 txn in the activity tab.
     // But when they are ran in a shared state, we check only the latest one txn, i.e. the first one in the list.

@@ -63,7 +63,10 @@ const selectors = {
     portfolioErrorAlert: 'portfolio-error-alert',
     noTransactionOnActivityTab: 'no-transaction-history-text',
     transactionSendText: '(//div[contains(text(),"Send")])[2]', // TODO: change once we have id on FE
-    confirmedTransactionPill: '//div[contains(text(),"Confirmed")]', // TODO: chage once we have id on FE
+    swapAndBridgeTransactionText: '//div[contains(text(),"Swap/Bridge")]', // TODO: change once we have id on FE
+    activityTabConfirmedPill: '//div[contains(text(),"Confirmed")]',
+    confirmedTransactionPill: '(//div[contains(text(),"Confirmed")])[2]', // TODO: chage once we have id on FE
+    activityTransactionConfirmed: 'activity-confirmed-step',
     fuelGasTankTransactionPill: '//div[contains(text(),"Fuel gas tank with")]', // TODO: chage once we have id on FE,
     grantApprovalText: '//div[contains(text(),"Grant approval")]', // TODO: change once we have id on FE,
     magnifyingGlassIcon: 'search-glass-icon',
@@ -353,7 +356,8 @@ const selectors = {
   networkSuccessfullyAddedSnackbar:
     '(//div[contains(normalize-space(), "Network successfully added!")])[4]', // TODO: snackbar selector finding 8 elements; change once we have ID on FE
   contactSuccessfullyAddedSnackbar:
-    '(//div[contains(normalize-space(), "Contact added to Address Book")])[4]' // TODO: snackbar selector finding 8 elements; change once we have ID on FE
+    '(//div[contains(normalize-space(), "Contact added to Address Book")])[4]', // TODO: snackbar selector finding 8 elements; change once we have ID on FE
+  importMethodLedger: 'import-method-ledger'
 }
 
 type SelectorKey = keyof typeof selectors
