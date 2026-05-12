@@ -67,6 +67,12 @@ export class GasTankPage extends BasePage {
   // TODO: move to dashboard page once POM is refactored
   async checkSendTransactionOnActivityTab() {
     await this.click(selectors.dashboard.activityTabButton)
+
+    // open transaction modal
+    const firstTransaction = this.page.locator(selectors.dashboard.transactionSendText).first()
+    await firstTransaction.click()
+
+    // assert
     await expect(this.page.locator(selectors.dashboard.fuelGasTankTransactionPill)).toContainText(
       'Fuel gas tank with'
     )
