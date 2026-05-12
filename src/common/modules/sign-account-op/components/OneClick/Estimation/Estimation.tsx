@@ -36,6 +36,7 @@ export type OneClickEstimationProps = {
   hasProceeded: boolean
   updateType: 'Swap&Bridge' | 'Transfer&TopUp'
   serviceFee?: SwapAndBridgeRoute['serviceFee']
+  shouldShowTxnDetails?: boolean
   Modals: React.ComponentType<ModalsProps>
 }
 
@@ -51,6 +52,7 @@ const OneClickEstimation = ({
   errors,
   updateType,
   serviceFee,
+  shouldShowTxnDetails = false,
   Modals
 }: OneClickEstimationProps) => {
   const { t } = useTranslation()
@@ -163,6 +165,7 @@ const OneClickEstimation = ({
                 sponsor={signAccountOpController ? signAccountOpController.sponsor : undefined}
                 serviceFee={serviceFee}
                 isOneClick
+                shouldShowTxnDetails={shouldShowTxnDetails}
               />
             )}
             {isViewOnly && (
