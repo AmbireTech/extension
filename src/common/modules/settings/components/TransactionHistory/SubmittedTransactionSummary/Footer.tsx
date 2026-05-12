@@ -3,7 +3,6 @@ import React, { FC, useCallback } from 'react'
 import { View } from 'react-native'
 
 import { Network } from '@ambire-common/interfaces/network'
-import { SubmittedAccountOp } from '@ambire-common/libs/accountOp/submittedAccountOp'
 import { AccountOpStatus } from '@ambire-common/libs/accountOp/types'
 import { BROADCAST_OPTIONS } from '@ambire-common/libs/broadcast/broadcast'
 import { getBenzinUrlParams } from '@ambire-common/utils/benzin'
@@ -22,17 +21,35 @@ import { setStringAsync } from '@common/utils/clipboard'
 import { openInTab } from '@common/utils/links'
 
 import getStyles from './styles'
+import { SubmittedAccountOpLike } from './types'
 
 type Props = {
   network: Network
   size: 'sm' | 'md' | 'lg'
-  rawCalls?: SubmittedAccountOp['calls']
-  submittedAccountOp: SubmittedAccountOp
-} & Pick<SubmittedAccountOp, 'txnId' | 'identifiedBy' | 'accountAddr' | 'gasFeePayment' | 'status'>
+  rawCalls?: SubmittedAccountOpLike['calls']
+  submittedAccountOp: SubmittedAccountOpLike
+} & Pick<
+  SubmittedAccountOpLike,
+  'txnId' | 'identifiedBy' | 'accountAddr' | 'gasFeePayment' | 'status'
+>
 
 const increaseByFifteenPercent = (value: bigint) => (value * 115n + 99n) / 100n
 const EXPLORER_LINKS_DISABLED_TOOLTIP =
   'Explorer links are on the right side of each transaction in transaction details'
+const canBuildSpeedUpAccountOp = (
+  submittedAccountOp: SubmittedAccountOpLike
+): submittedAccountOp is SubmittedAccountOpLike &
+  Required<
+    Pick<
+      SubmittedAccountOpLike,
+      'signingKeyAddr' | 'signingKeyType' | 'nonce' | 'gasLimit' | 'signature'
+    >
+  > =>
+  submittedAccountOp.signingKeyAddr !== undefined &&
+  submittedAccountOp.signingKeyType !== undefined &&
+  submittedAccountOp.nonce !== undefined &&
+  submittedAccountOp.gasLimit !== undefined &&
+  submittedAccountOp.signature !== undefined
 
 const Footer: FC<Props> = ({
   network,
@@ -70,8 +87,11 @@ const Footer: FC<Props> = ({
   const shouldShowSpeedUp =
     isPendingTransaction &&
     gasFeePayment?.broadcastOption !== BROADCAST_OPTIONS.byRelayer &&
-    gasFeePayment?.broadcastOption !== BROADCAST_OPTIONS.byBundler
-  const canRepeatTransaction = !!rawCalls?.length && selectedAccount?.addr === accountAddr
+    gasFeePayment?.broadcastOption !== BROADCAST_OPTIONS.byBundler &&
+    canBuildSpeedUpAccountOp(submittedAccountOp)
+  const isExternal = submittedAccountOp.activitySource === 'external'
+  const canRepeatTransaction =
+    !!rawCalls?.length && selectedAccount?.addr === accountAddr && !isExternal
 
   const benzinLink = `https://explorer.ambire.com/${getBenzinUrlParams({
     txnId,
@@ -116,7 +136,7 @@ const Footer: FC<Props> = ({
   }, [rawCalls, requestsDispatch, network.chainId, accountAddr])
 
   const handleSpeedUpTransaction = useCallback(() => {
-    if (!submittedAccountOp.calls || !submittedAccountOp.gasFeePayment) return
+    if (!submittedAccountOp.gasFeePayment || !canBuildSpeedUpAccountOp(submittedAccountOp)) return
 
     const nextGasFeePayment = {
       ...submittedAccountOp.gasFeePayment,
@@ -228,7 +248,9 @@ const Footer: FC<Props> = ({
           <View
             dataSet={createGlobalTooltipDataSet({
               id: `repeat-disabled-${submittedAccountOp.id}`,
-              content: t('Switch to this account to proceed'),
+              content: isExternal
+                ? t('Incoming transactions cannot be repeated')
+                : t('Switch to this account to proceed'),
               hidden: canRepeatTransaction
             })}
           >

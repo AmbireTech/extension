@@ -1,9 +1,14 @@
 import { ViewStyle } from 'react-native'
 
-import { BalanceChange, SubmittedAccountOp } from '@ambire-common/libs/accountOp/submittedAccountOp'
+import {
+  BalanceChange,
+  SubmittedAccountOpLike
+} from '@ambire-common/libs/accountOp/submittedAccountOp'
+
+export type { SubmittedAccountOpLike }
 
 export interface Props {
-  submittedAccountOp: SubmittedAccountOp
+  submittedAccountOp: SubmittedAccountOpLike
   style?: ViewStyle
   size?: 'sm' | 'md' | 'lg'
   defaultType: 'summary' | 'full-info'
@@ -14,7 +19,7 @@ export type DappInteraction = {
   id: string
   name: string
   iconUrl?: string | null
-  iconType?: 'send' | 'swap'
+  iconType?: 'send' | 'swap' | 'receive' | 'ambire'
 }
 
 export type DisplayBalanceChange = BalanceChange & {
