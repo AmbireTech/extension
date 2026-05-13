@@ -65,6 +65,7 @@ jobs:
           echo "LEGENDS_NFT_ADDRESS=\"${{ vars.LEGENDS_NFT_ADDRESS }}\"" >> .env
           echo "LI_FI_API_KEY=\"${{ vars.LI_FI_API_KEY }}\"" >> .env
           echo "BUNGEE_API_KEY=\"${{ vars.BUNGEE_API_KEY }}\"" >> .env
+          echo "SQUID_INTEGRATOR_ID=\"${{ vars.SQUID_INTEGRATOR_ID }}\"" >> .env
           echo "SAFE_API_KEY=\"${{ vars.SAFE_API_KEY }}\"" >> .env
           echo "SENTRY_DSN_BROWSER_EXTENSION=\"${{ vars.SENTRY_DSN_BROWSER_EXTENSION }}\"" >> .env
         shell: bash
@@ -87,6 +88,7 @@ jobs:
           LEGENDS_NFT_ADDRESS: ${{ vars.LEGENDS_NFT_ADDRESS }}
           LI_FI_API_KEY: ${{ vars.LI_FI_API_KEY }}
           BUNGEE_API_KEY: ${{ vars.BUNGEE_API_KEY }}
+          SQUID_INTEGRATOR_ID: ${{ vars.SQUID_INTEGRATOR_ID }}
           SAFE_API_KEY: ${{ vars.SAFE_API_KEY }}
           SENTRY_DSN_BROWSER_EXTENSION: ${{ vars.SENTRY_DSN_BROWSER_EXTENSION }}
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN_BROWSER_EXTENSIONS }}
