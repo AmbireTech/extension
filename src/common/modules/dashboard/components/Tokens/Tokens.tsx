@@ -1,13 +1,13 @@
-import React, { useCallback, useEffect, useMemo } from 'react'
+import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { Animated, FlatListProps, Pressable, View } from 'react-native'
-import { useModalize } from 'react-native-modalize'
 
 import { PINNED_TOKENS } from '@ambire-common/consts/pinnedTokens'
 import { Network } from '@ambire-common/interfaces/network'
 import { AssetType } from '@ambire-common/libs/defiPositions/types'
 import { getTokenAmount, getTokenBalanceInUSD } from '@ambire-common/libs/portfolio/helpers'
 import { TokenResult } from '@ambire-common/libs/portfolio/interfaces'
+import { PORTFOLIO_LIB_ERROR_NAMES } from '@ambire-common/libs/portfolio/portfolio'
 import RightArrowIcon from '@common/assets/svg/RightArrowIcon'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
@@ -26,6 +26,7 @@ import DashboardPageScrollContainer from '../DashboardPageScrollContainer'
 import SearchAndCurrentApp from '../SearchAndCurrentApp'
 import TabsAndSearch from '../TabsAndSearch'
 import { TabType } from '../TabsAndSearch/Tabs/Tab/Tab'
+import DustTokensSummary from './DustTokensSummary'
 import TokenItem from './TokenItem'
 import Skeleton from './TokensSkeleton'
 
@@ -59,6 +60,21 @@ const isGasTankTokenOnCustomNetwork = (token: TokenResult, networks: Network[]) 
   return token.flags.onGasTank && !networks.find((n) => n.chainId === token.chainId && n.hasRelayer)
 }
 
+const isDustToken = (token: TokenResult): boolean => {
+  // Rewards and vesting tokens should never be hidden as dust
+  if (
+    token.flags.rewardsType === 'wallet-rewards' ||
+    token.flags.rewardsType === 'wallet-vesting'
+  ) {
+    return false
+  }
+
+  const balanceUSD = getTokenBalanceInUSD(token)
+  const hasUSDPrice = token.priceIn.some((p) => p.baseCurrency === 'usd')
+
+  return balanceUSD < 0.01 || !hasUSDPrice
+}
+
 const { isPopup } = getUiType()
 
 const Tokens = ({
@@ -82,7 +98,7 @@ const Tokens = ({
   } = useController('NetworksController')
   const { customTokens } = useController('PortfolioController').state
   const {
-    state: { portfolio, dashboardNetworkFilter }
+    state: { portfolio, balanceAffectingErrors, dashboardNetworkFilter }
   } = useController('SelectedAccountController')
   const { control, watch, setValue } = useForm({
     mode: 'all',
@@ -91,7 +107,25 @@ const Tokens = ({
     }
   })
 
+  const [isDustExpanded, setIsDustExpanded] = useState(false)
   const searchValue = watch('search')
+
+  const networkIdsWithPriceError = useMemo(() => {
+    const networkIds = new Set<string>()
+
+    const priceError = balanceAffectingErrors.find(
+      (error) => error.id === PORTFOLIO_LIB_ERROR_NAMES.PriceFetchError
+    )
+
+    priceError?.networkNames.forEach((networkName) => {
+      const network = networks.find((n) => n.name === networkName)
+
+      if (network) {
+        networkIds.add(network.chainId.toString())
+      }
+    })
+    return networkIds
+  }, [balanceAffectingErrors, networks])
 
   const tokens = useMemo(() => {
     const tokenList = (portfolio?.tokens || []).filter((token) => {
@@ -192,14 +226,49 @@ const Tokens = ({
     [tokens, networks, customTokens, userHasNoBalance, portfolio?.isAllReady]
   )
 
+  const { visibleTokens, dustTokens } = useMemo(() => {
+    return sortedTokens.reduce(
+      (acc, token) => {
+        // If there is a price fetch error for a network every token will be considered dust, so
+        // we need to show all tokens in that case, regardless of their balance
+        if (isDustToken(token) && !networkIdsWithPriceError.has(token.chainId.toString())) {
+          acc.dustTokens.push(token)
+        } else {
+          acc.visibleTokens.push(token)
+        }
+        return acc
+      },
+      { visibleTokens: [] as TokenResult[], dustTokens: [] as TokenResult[] }
+    )
+  }, [networkIdsWithPriceError, sortedTokens])
+
+  const dustTotalUSD = useMemo(
+    () => dustTokens.reduce((sum, token) => sum + getTokenBalanceInUSD(token), 0),
+    [dustTokens]
+  )
+
   const hiddenTokensCount = useMemo(
     () => tokens.filter((token) => token.flags.isHidden).length,
     [tokens]
   )
 
-  const navigateToAddCustomToken = useCallback(() => {
-    onAddCustomToken?.()
-  }, [onAddCustomToken])
+  const showTokens = initTab?.tokens
+  const hasAnyTokens = visibleTokens.length > 0 || dustTokens.length > 0
+
+  const listData = useMemo(
+    () => [
+      'header',
+      !hasAnyTokens && !portfolio?.isAllReady ? 'skeleton' : 'keep-this-to-avoid-key-warning',
+      ...(showTokens ? visibleTokens : []),
+      showTokens && dustTokens.length > 0 && !isDustExpanded ? 'dust-summary' : '',
+      ...(showTokens && isDustExpanded ? dustTokens : []),
+      showTokens && isDustExpanded ? 'dust-collapse' : '',
+      hasAnyTokens && !portfolio?.isAllReady ? 'skeleton' : 'keep-this-to-avoid-key-warning-2',
+      !hasAnyTokens && portfolio?.isAllReady ? 'empty' : '',
+      'footer'
+    ],
+    [hasAnyTokens, portfolio?.isAllReady, showTokens, visibleTokens, dustTokens, isDustExpanded]
+  )
 
   const renderItem = useCallback(
     ({ item, index }: any) => {
@@ -247,7 +316,7 @@ const Tokens = ({
         return portfolio?.isAllReady &&
           // A trick to render the button once all tokens have been rendered. Otherwise
           // there will be layout shifts
-          index === sortedTokens.length + 4 ? (
+          index === listData.length - 1 ? (
           <View style={hiddenTokensCount ? spacings.ptTy : spacings.ptSm}>
             {!!hiddenTokensCount && (
               <Pressable
@@ -282,6 +351,27 @@ const Tokens = ({
         ) : null
       }
 
+      if (item === 'dust-summary') {
+        return (
+          <DustTokensSummary
+            variant="summary"
+            count={dustTokens.length}
+            totalUSD={dustTotalUSD}
+            onPress={() => setIsDustExpanded(true)}
+          />
+        )
+      }
+
+      if (item === 'dust-collapse') {
+        return (
+          <DustTokensSummary
+            variant="collapse"
+            count={dustTokens.length}
+            onPress={() => setIsDustExpanded(false)}
+          />
+        )
+      }
+
       if (
         !initTab?.tokens ||
         !item ||
@@ -300,14 +390,16 @@ const Tokens = ({
       openTab,
       setOpenTab,
       sessionId,
-      t,
       searchValue,
       dashboardNetworkFilterName,
-      portfolio?.isAllReady,
-      sortedTokens.length,
+      t,
+      listData.length,
       hiddenTokensCount,
+      portfolio?.isAllReady,
       dashboardNetworkFilter,
-      navigate
+      navigate,
+      dustTokens.length,
+      dustTotalUSD
     ]
   )
 
@@ -330,18 +422,7 @@ const Tokens = ({
         openTab={openTab}
         ListHeaderComponent={<DashboardBanners />}
         animatedOverviewHeight={animatedOverviewHeight}
-        data={[
-          'header',
-          !sortedTokens.length && !portfolio?.isAllReady
-            ? 'skeleton'
-            : 'keep-this-to-avoid-key-warning',
-          ...(initTab?.tokens ? sortedTokens : []),
-          sortedTokens.length && !portfolio?.isAllReady
-            ? 'skeleton'
-            : 'keep-this-to-avoid-key-warning-2',
-          !sortedTokens.length && portfolio?.isAllReady ? 'empty' : '',
-          'footer'
-        ]}
+        data={listData}
         renderItem={renderItem}
         keyExtractor={keyExtractor}
         onEndReachedThreshold={isPopup ? 5 : 2.5}
