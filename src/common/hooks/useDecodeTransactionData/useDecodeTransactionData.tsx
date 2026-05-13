@@ -35,11 +35,10 @@ function decodeFunction(
   if (!hex || hex.length < 10) return null
   const selector = hex.slice(0, 10)
   const foundSelectors: Selectors[string] | undefined = selectors[selector]
-  if (!foundSelectors) {
-    fetchSelector(selector)
-    return null
-  }
-  if (foundSelectors?.status !== 'success' || !foundSelectors?.data?.length) return null
+
+  // all caching logic is in the controller
+  fetchSelector(selector)
+  if (!foundSelectors || !('data' in foundSelectors) || !foundSelectors.data.length) return null
 
   const decoded: DecodedCall | null = decodeCall(hex, foundSelectors.data)
   if (!decoded) return null
