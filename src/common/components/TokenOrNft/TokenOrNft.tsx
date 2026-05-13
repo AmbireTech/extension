@@ -20,6 +20,7 @@ interface Props {
   textSize?: number
   chainId: bigint
   hideLinks?: boolean
+  tokenMarginRight?: number
 }
 
 const TokenOrNft: FC<Props> = ({
@@ -28,9 +29,11 @@ const TokenOrNft: FC<Props> = ({
   textSize = 16,
   chainId,
   sizeMultiplierSize = 1,
-  hideLinks = false
+  hideLinks = false,
+  tokenMarginRight
 }) => {
-  const marginRight = SPACING_TY * sizeMultiplierSize
+  const marginRight =
+    tokenMarginRight !== undefined ? tokenMarginRight : SPACING_TY * sizeMultiplierSize
   const { addToast } = useToast()
   const [assetInfo, setAssetInfo] = useState<{
     tokenInfo?: TokenResult

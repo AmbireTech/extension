@@ -19,15 +19,15 @@ import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
-import spacings, { SPACING, SPACING_MI, SPACING_SM, SPACING_TY } from '@common/styles/spacings'
+import spacings, { SPACING_MI, SPACING_SM, SPACING_TY } from '@common/styles/spacings'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import { setStringAsync } from '@common/utils/clipboard'
 import { openInTab } from '@common/utils/links'
 import { getUiType } from '@common/utils/uiType'
-import { isExtension } from '@web/constants/browserapi'
 import ImageIcon from '@web/assets/svg/ImageIcon'
 import ManifestImage from '@web/components/ManifestImage'
+import { isExtension } from '@web/constants/browserapi'
 
 import { COLLECTIBLE_SIZE } from '../Collectible/styles'
 import ChainVisualization from './ChainVisualization/ChainVisualization'
@@ -193,6 +193,7 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
           textSize={textSize}
           chainId={valueItem.chainId || chainId}
           hideLinks={hideLinks}
+          tokenMarginRight={0}
         />
       )
     }
@@ -263,20 +264,22 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
       {!!item.title && (
         <>
           <Text
-            fontSize={textSize + 4}
+            fontSize={textSize + 2}
             weight="semiBold"
             appearance="primaryText"
-            style={spacings.mbSm}
+            style={spacings.mbTy}
           >
             {item.title}
           </Text>
           <View
-            style={{
-              height: 1,
-              width: '100%',
-              backgroundColor: theme.secondaryBorder,
-              marginBottom: SPACING
-            }}
+            style={[
+              spacings.mbTy,
+              {
+                height: 1,
+                width: '100%',
+                backgroundColor: theme.secondaryBorder
+              }
+            ]}
           />
         </>
       )}
