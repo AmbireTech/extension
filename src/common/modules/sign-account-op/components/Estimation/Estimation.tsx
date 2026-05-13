@@ -148,6 +148,7 @@ const Estimation = ({
       paidBy?: string
       speed?: FeeSpeed
       customGasPrices?: GasSpeeds
+      customGasLimit?: bigint
     }) => {
       if (updateType === 'Swap&Bridge') {
         swapAndBridgeDispatch({
@@ -178,13 +179,6 @@ const Estimation = ({
     [swapAndBridgeDispatch, transferDispatch, signAccountOpDispatch, updateType]
   )
 
-  const payValue = useMemo(() => {
-    return (
-      payOptionsPaidByUsOrGasTank.find(({ value }) => value === selectedFeeOption) ||
-      payOptionsPaidByEOA.find(({ value }) => value === selectedFeeOption)
-    )
-  }, [payOptionsPaidByUsOrGasTank, payOptionsPaidByEOA, selectedFeeOption])
-
   const setFeeOption = useCallback(
     (localPayValue: any, skipDispatch?: boolean) => {
       if (!signAccountOpState?.selectedFeeSpeed) return
@@ -202,6 +196,35 @@ const Estimation = ({
     },
     [dispatchUpdate, signAccountOpState?.selectedFeeSpeed]
   )
+
+  const payValue = useMemo(() => {
+    const result =
+      payOptionsPaidByUsOrGasTank.find(({ value }) => value === selectedFeeOption) ||
+      payOptionsPaidByEOA.find(({ value }) => value === selectedFeeOption)
+
+    // If result becomes undefined because of a recalculation to availableFeeOptions,
+    // we reset it the first available option from whatever is available.
+    if (result === undefined && selectedFeeOption) {
+      const firstOption = payOptionsPaidByUsOrGasTank[0] || payOptionsPaidByEOA[0]
+      if (!firstOption) return undefined
+
+      setFeeOption(
+        {
+          value: firstOption.value,
+          label: firstOption.label,
+          extraSearchProps: firstOption.extraSearchProps,
+          paidByAccountLabel: firstOption.paidByAccountLabel,
+          paidBy: firstOption.paidBy,
+          token: firstOption.token,
+          disabled: firstOption.disabled,
+          speedCoverage: firstOption.speedCoverage
+        },
+        false
+      )
+    }
+
+    return result
+  }, [payOptionsPaidByUsOrGasTank, payOptionsPaidByEOA, selectedFeeOption, setFeeOption])
 
   useEffect(() => {
     if (!hasEstimation || !signAccountOpState) return
@@ -381,7 +404,9 @@ const Estimation = ({
     signAccountOpState?.selectedOption
   ])
 
+  const currentGas = signAccountOpState?.accountOp.gasFeePayment?.simulatedGasLimit.toString() || ''
   const canSetCustomGasPrices = !!signAccountOpState?.canSetCustomGasPrices
+  const canSetCustomGas = !!signAccountOpState?.canSetCustomGas
 
   const advancedOptionsTooltip = useMemo(() => {
     if (canSetCustomGasPrices) return undefined
@@ -468,13 +493,23 @@ const Estimation = ({
       <CustomGasPrice
         backgroundColor={theme.tertiaryBackground}
         closeBottomSheet={() => closeCustomGasPriceSheet()}
+        canSetCustomGas={canSetCustomGas}
+        currentGas={currentGas}
         currentMaxFeePerGas={currentGasPrice}
         currentMaxPriorityFeePerGas={currentMaxPriorityFeePerGas}
         is1559={network?.feeOptions?.is1559 === true}
-        onSaveCustomGasPrices={(customGasPrices) => dispatchUpdate({ customGasPrices })}
+        onSaveCustomGasPrices={(customGasPrices, customGasLimit) =>
+          dispatchUpdate({ customGasPrices, customGasLimit })
+        }
         selectedOption={signAccountOpState.selectedOption}
         sheetRef={customGasPriceSheetRef}
       />
+      <View>
+        <BundlerWarning
+          signAccountOpState={signAccountOpState}
+          bundlerNonceDiscrepancy={bundlerNonceDiscrepancy}
+        />
+      </View>
       <View
         style={[
           flexbox.directionRow,
@@ -566,10 +601,6 @@ const Estimation = ({
         serviceFee={serviceFee}
         paidByNativeValue={paidByNativeValue}
         nativeFeeOption={nativeFeeOption}
-      />
-      <BundlerWarning
-        signAccountOpState={signAccountOpState}
-        bundlerNonceDiscrepancy={bundlerNonceDiscrepancy}
       />
       {v1warning && !signAccountOpState.errors.length && (
         <View
