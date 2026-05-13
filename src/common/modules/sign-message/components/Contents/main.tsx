@@ -190,9 +190,9 @@ const Main = ({
         </View>
         <View style={flexbox.flex1}>
           <ExpandableCard
-            enableToggleExpand={!!visualizeHumanized}
+            enableToggleExpand={!!visualizeHumanized && !!visualizeHumanized}
+            hasArrow={!humanizedMessage?.canHideDropdownArrow && !!visualizeHumanized}
             isInitiallyExpanded={!visualizeHumanized}
-            hasArrow={!!visualizeHumanized}
             style={{
               marginBottom: SPACING_TY * responsiveSizeMultiplier,
               // Setting maxHeight on larger screens introduced internal content scroll
