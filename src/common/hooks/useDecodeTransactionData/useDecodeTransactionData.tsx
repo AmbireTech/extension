@@ -9,6 +9,7 @@ import useController from '@common/hooks/useController'
 import type { IrCall } from '@ambire-common/libs/humanizer/interfaces'
 interface UseDecodeTransactionDataReturn {
   decodedFunction: DecodedCall | null
+  isLoading: boolean
 }
 
 function checkIfCanDecodeFurther(
@@ -64,8 +65,15 @@ const useDecodeTransactionData = (call: IrCall): UseDecodeTransactionDataReturn 
     })
   }, [call.data, dispatch, selectors])
 
+  const isLoading = useMemo(() => {
+    if (!call.data || !isHex(call.data) || call.data.length < 10) return false
+    const selector = call.data.slice(0, 10)
+    return !selectors[selector] || selectors[selector]?.status === 'loading'
+  }, [call.data, selectors])
+
   return {
-    decodedFunction
+    decodedFunction,
+    isLoading
   }
 }
 

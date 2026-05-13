@@ -1,9 +1,10 @@
-import { formatUnits, isAddress } from 'ethers'
+import { formatUnits } from 'ethers'
 import React, { useState } from 'react'
 import { View } from 'react-native'
 
 import { DecodedCall } from '@ambire-common/interfaces/decodeCall'
 import { IrCall } from '@ambire-common/libs/humanizer/interfaces'
+import Spinner from '@common/components/Spinner'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
 import useDecodeTransactionData from '@common/hooks/useDecodeTransactionData/useDecodeTransactionData'
@@ -77,7 +78,7 @@ const DataArgs = ({
 }
 const ExpandedContent = ({ call, size, sizeMultiplier }: Props) => {
   const { t } = useTranslation()
-  const { decodedFunction } = useDecodeTransactionData(call)
+  const { decodedFunction, isLoading } = useDecodeTransactionData(call)
   const { styles, theme } = useTheme(getStyles)
   const [displayRawData, setDisplayRawData] = useState(false)
 
@@ -103,7 +104,11 @@ const ExpandedContent = ({ call, size, sizeMultiplier }: Props) => {
         {formatUnits(call.value || '0x0', 18)}
       </Text>
 
-      {decodedFunction ? (
+      {isLoading ? (
+        <View style={[styles.bodyText, { flexDirection: 'row', alignItems: 'center' }]}>
+          <Spinner style={{ width: 16, height: 16 }} />
+        </View>
+      ) : decodedFunction ? (
         <View style={styles.bodyText}>
           <Text selectable style={{ color: theme.secondaryText }} fontSize={12}>
             {t('Function to call: ')}
