@@ -29,6 +29,7 @@ export interface BottomSheetProps {
   shouldBeClosableOnDrag?: boolean
   customZIndex?: number
   isScrollEnabled?: boolean
+  reserveScrollPadding?: boolean
   withBackdropBlur?: boolean
 }
 

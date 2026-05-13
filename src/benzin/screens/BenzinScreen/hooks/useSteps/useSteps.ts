@@ -1002,7 +1002,7 @@ const useSteps = ({
               {
                 accountId: from,
                 chainId: network.chainId,
-                tokenAddrs: getBalanceChangeTokenAddresses(foundTokens),
+                tokenAddrs: getBalanceChangeTokenAddresses(foundTokens, network.chainId),
                 blockTag: Number(txnReceipt.blockNumber),
                 accountAddr: from,
                 receipts: [
