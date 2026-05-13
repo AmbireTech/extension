@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react'
 import { View } from 'react-native'
 
+import ActivityReceiveIcon from '@common/assets/svg/ActivityReceiveIcon'
 import AmbireLogo from '@common/assets/svg/AmbireLogo'
-import ArrowRightIcon from '@common/assets/svg/ArrowRightIcon'
 import GasTankIcon from '@common/assets/svg/GasTankIcon'
 import SendIcon from '@common/assets/svg/SendIcon'
 import SwapIcon from '@common/assets/svg/SwapIcon'
@@ -130,13 +130,7 @@ export const DappInteractionIcon = ({ interaction }: { interaction: DappInteract
   if (interaction.iconType === 'receive') {
     return (
       <View style={[stylesForIcons.dappIconWrapper, { backgroundColor: theme.neutral200 }]}>
-        <ArrowRightIcon
-          width={20}
-          height={20}
-          color={theme.tertiaryText}
-          containerColor={'transparent'}
-          style={stylesForIcons.arrowDownIcon}
-        />
+        <ActivityReceiveIcon width={20} height={20} />
       </View>
     )
   }
