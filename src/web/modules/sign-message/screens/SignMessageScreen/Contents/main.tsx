@@ -2,13 +2,15 @@ import React, { Dispatch, SetStateAction, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 
-import { humanizeMessage } from '@ambire-common/libs/humanizer'
+import { QrRequest } from '@ambire-common/interfaces/keystore'
+import { IrMessage } from '@ambire-common/libs/humanizer/interfaces'
 import WarningIcon from '@common/assets/svg/WarningIcon'
 import Alert from '@common/components/Alert'
 import ExpandableCard from '@common/components/ExpandableCard'
 import HumanizedVisualization from '@common/components/HumanizedVisualization'
 import Label from '@common/components/Label'
 import NetworkBadge from '@common/components/NetworkBadge'
+import Spinner from '@common/components/Spinner'
 import Text from '@common/components/Text'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
@@ -25,7 +27,6 @@ import QrSigningFlowScreen from '@web/modules/hardware-wallet/screens/QrSigningF
 import FallbackVisualization from '@web/modules/sign-message/screens/SignMessageScreen/FallbackVisualization'
 import Info from '@web/modules/sign-message/screens/SignMessageScreen/Info'
 import getStyles from '@web/modules/sign-message/screens/SignMessageScreen/styles'
-import { QrRequest } from '@ambire-common/interfaces/keystore'
 
 interface Props {
   shouldDisplayLedgerConnectModal: boolean
@@ -41,6 +42,8 @@ interface Props {
   handleSubmitSignatureResponse: (payload: string | Uint8Array) => void
   handleQrSigningFlowOnRejectPressed: () => void
   handleQrSigningFlowOnBackPressed: () => void
+  humanizedMessage?: IrMessage
+  isHumanizing: boolean
 }
 
 const Main = ({
@@ -56,7 +59,9 @@ const Main = ({
   handleOnContinue,
   handleSubmitSignatureResponse,
   handleQrSigningFlowOnRejectPressed,
-  handleQrSigningFlowOnBackPressed
+  handleQrSigningFlowOnBackPressed,
+  humanizedMessage,
+  isHumanizing
 }: Props) => {
   const { t } = useTranslation()
   const { state: signMessageState, dispatch: signMessageDispatch } =
@@ -76,10 +81,6 @@ const Main = ({
       }),
     [networks, signMessageState.messageToSign]
   )
-  const humanizedMessage = useMemo(() => {
-    if (!signMessageState?.messageToSign) return
-    return humanizeMessage(signMessageState.messageToSign)
-  }, [signMessageState])
   const visualizeHumanized = useMemo(
     () =>
       humanizedMessage?.fullVisualization &&
@@ -161,7 +162,7 @@ const Main = ({
           <ExpandableCard
             enableToggleExpand={!!visualizeHumanized && !!visualizeHumanized}
             hasArrow={!humanizedMessage?.canHideDropdownArrow && !!visualizeHumanized}
-            isInitiallyExpanded={!visualizeHumanized}
+            isInitiallyExpanded={!visualizeHumanized && !isHumanizing}
             style={{
               marginBottom: SPACING_TY * responsiveSizeMultiplier,
               // Setting maxHeight on larger screens introduced internal content scroll
@@ -171,10 +172,14 @@ const Main = ({
               ...(humanizedMessage?.warnings?.length ? styles.warningContainer : {})
             }}
             content={
-              visualizeHumanized &&
-              // @TODO: Duplicate check. For some reason ts throws an error if we don't do this
-              humanizedMessage?.fullVisualization &&
-              signMessageState.messageToSign?.content.kind ? (
+              isHumanizing ? (
+                <View style={flexbox.flex1}>
+                  <Spinner />
+                </View>
+              ) : visualizeHumanized &&
+                // @TODO: Duplicate check. For some reason ts throws an error if we don't do this
+                humanizedMessage?.fullVisualization &&
+                signMessageState.messageToSign?.content.kind ? (
                 <HumanizedVisualization
                   data={humanizedMessage.fullVisualization}
                   chainId={network?.chainId || 1n}

@@ -5,7 +5,6 @@ import { StyleSheet, View } from 'react-native'
 import { Key } from '@ambire-common/interfaces/keystore'
 import { SignMessageStatus } from '@ambire-common/interfaces/signMessage'
 import { isSmartAccount } from '@ambire-common/libs/account/account'
-import { humanizeMessage } from '@ambire-common/libs/humanizer'
 import {
   EIP_1271_NOT_SUPPORTED_BY,
   toPersonalSignHex
@@ -26,6 +25,7 @@ import useDappVerificationHoldButtonType from '@web/hooks/useDappVerificationHol
 import ActionFooter from '@web/modules/action-requests/components/ActionFooter'
 import useLedger from '@web/modules/hardware-wallet/hooks/useLedger'
 import useQrSigningFlow from '@web/modules/hardware-wallet/hooks/useQrSigningFlow'
+import useHumanizedMessage from '@web/modules/sign-message/hooks/useHumanizedMessage'
 
 import Main from './Contents/main'
 import SignInWithEthereum from './Contents/signInWithEthereum'
@@ -101,10 +101,7 @@ const SignMessageScreen = () => {
     () => !account?.safeCreation && selectedAccountKeyStoreKeys.length === 0,
     [account?.safeCreation, selectedAccountKeyStoreKeys.length]
   )
-  const humanizedMessage = useMemo(() => {
-    if (!signMessageState?.messageToSign) return
-    return humanizeMessage(signMessageState.messageToSign)
-  }, [signMessageState])
+  const { humanizedMessage, isHumanizing } = useHumanizedMessage(signMessageState.messageToSign)
 
   const humanizationHasBlockingWarnings = useMemo(
     () => !!humanizedMessage?.warnings?.some((w) => w.blocking),
@@ -120,8 +117,12 @@ const SignMessageScreen = () => {
   )
 
   const isScrollToBottomForced = useMemo(
-    () => typeof hasReachedBottom === 'boolean' && !hasReachedBottom && !visualizeHumanized,
-    [hasReachedBottom, visualizeHumanized]
+    () =>
+      typeof hasReachedBottom === 'boolean' &&
+      !hasReachedBottom &&
+      !visualizeHumanized &&
+      !isHumanizing,
+    [hasReachedBottom, isHumanizing, visualizeHumanized]
   )
 
   useEffect(() => {
@@ -262,19 +263,21 @@ const SignMessageScreen = () => {
   const resolveButtonText = useMemo(() => {
     if (signMessageState.status === SignMessageStatus.Partial) return t('Close')
     if (isSiwe) return t('Sign in')
+    if (isHumanizing) return t('Preparing...')
     if (isScrollToBottomForced) return t('Read the message')
 
     if (signStatus === 'LOADING') return t('Signing...')
 
     return t('Sign')
-  }, [isSiwe, isScrollToBottomForced, signStatus, signMessageState.status, t])
+  }, [isHumanizing, isSiwe, isScrollToBottomForced, signStatus, signMessageState.status, t])
 
   const holdToProceedButtonText = useMemo(() => {
+    if (isHumanizing) return t('Preparing...')
     if (isScrollToBottomForced) return t('Read the message')
     if (isSiwe) return t('Hold to sign in')
 
     return t('Hold to sign')
-  }, [isSiwe, isScrollToBottomForced, t])
+  }, [isHumanizing, isSiwe, isScrollToBottomForced, t])
 
   const holdToProceedCompleteText = useMemo(() => {
     if (signStatus === 'LOADING') return t('Signing...')
@@ -324,6 +327,7 @@ const SignMessageScreen = () => {
   const isResolveActionDisabled =
     signStatus === 'LOADING' ||
     isScrollToBottomForced ||
+    isHumanizing ||
     humanizationHasBlockingWarnings ||
     isSafeNotDeployed ||
     isViewOnly
@@ -440,6 +444,8 @@ const SignMessageScreen = () => {
             handleSubmitSignatureResponse={submitSignatureResponse}
             handleQrSigningFlowOnRejectPressed={handleQrSigningFlowOnRejectPressed}
             handleQrSigningFlowOnBackPressed={handleQrSigningFlowOnBackPressed}
+            humanizedMessage={humanizedMessage}
+            isHumanizing={isHumanizing}
           />
         )}
         {view === 'siwe' && (
