@@ -45,7 +45,8 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
     withBackdropBlur,
     customRenderer,
     customZIndex,
-    isScrollEnabled = true
+    isScrollEnabled = true,
+    reserveScrollPadding = false
   } = props
 
   const { styles, theme } = useTheme(getStyles)
@@ -69,6 +70,7 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
     id,
     computedZIndex
   } = useBottomSheetInternal(props)
+  const shouldUseScrollPadding = isScrollEnabled && (isScrollable || reserveScrollPadding)
 
   const renderContent = useCallback(() => {
     if (customRenderer) return null
@@ -78,7 +80,7 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
         <View
           testID={isOpen ? 'bottom-sheet' : undefined}
           style={[
-            isScrollEnabled && isScrollable ? spacings.prTy : {},
+            shouldUseScrollPadding ? spacings.prTy : {},
             common.fullWidth,
             containerInnerWrapperStyles
           ]}
@@ -97,7 +99,7 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
         <View
           testID={isOpen ? 'bottom-sheet' : undefined}
           style={[
-            isScrollEnabled && isScrollable ? spacings.prTy : {},
+            shouldUseScrollPadding ? spacings.prTy : {},
             common.fullWidth,
             containerInnerWrapperStyles
           ]}
@@ -115,7 +117,7 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
       <View
         testID={isOpen ? 'bottom-sheet' : undefined}
         style={[
-          isScrollEnabled && isScrollable ? spacings.prTy : {},
+          shouldUseScrollPadding ? spacings.prTy : {},
           common.fullWidth,
           containerInnerWrapperStyles
         ]}
@@ -129,9 +131,8 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
     customRenderer,
     flatListProps,
     isOpen,
-    isScrollEnabled,
-    isScrollable,
-    sectionListProps
+    sectionListProps,
+    shouldUseScrollPadding
   ])
 
   return (
@@ -231,7 +232,7 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
                 <View
                   testID={isOpen ? 'bottom-sheet' : undefined}
                   style={[
-                    isScrollEnabled && isScrollable ? spacings.prTy : {},
+                    shouldUseScrollPadding ? spacings.prTy : {},
                     common.fullWidth,
                     { flex: 1 },
                     containerInnerWrapperStyles

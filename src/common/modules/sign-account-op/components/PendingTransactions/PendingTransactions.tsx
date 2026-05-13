@@ -4,6 +4,7 @@ import { View } from 'react-native'
 
 import { Hex } from '@ambire-common/interfaces/hex'
 import { Network } from '@ambire-common/interfaces/network'
+import { ISignAccountOpController } from '@ambire-common/interfaces/signAccountOp'
 import { isWeb } from '@common/config/env'
 import useController from '@common/hooks/useController'
 import PendingTransactionsSkeleton from '@common/modules/sign-account-op/components/PendingTransactions/PendingTransactionsSkeleton'
@@ -17,16 +18,21 @@ interface Props {
   setDelegation?: boolean
   delegatedContract?: Hex | null
   hideDeleteIcon?: boolean
+  signAccountOpState?: ISignAccountOpController | null
+  size?: 'sm' | 'md' | 'lg'
 }
 
 const PendingTransactions: FC<Props> = ({
   network,
   setDelegation,
   delegatedContract,
-  hideDeleteIcon
+  hideDeleteIcon,
+  signAccountOpState,
+  size = 'lg'
 }) => {
   const { t } = useTranslation()
-  const { humanization, banners } = useController('SignAccountOpController').state || {}
+  const controllerSignAccountOpState = useController('SignAccountOpController').state
+  const { humanization, banners } = signAccountOpState || controllerSignAccountOpState || {}
 
   return (
     <View style={isWeb ? spacings.mbLg : spacings.mb}>
@@ -56,6 +62,7 @@ const PendingTransactions: FC<Props> = ({
             chainId={network.chainId}
             index={i}
             hideDeleteIcon={hideDeleteIcon}
+            size={size}
           />
         ))
       ) : (
