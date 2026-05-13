@@ -16,8 +16,10 @@ import { AMBIRE_PAYMASTER, ERC_4337_ENTRYPOINT } from '@ambire-common/consts/dep
 import { Fetch } from '@ambire-common/interfaces/fetch'
 import { Network } from '@ambire-common/interfaces/network'
 import { AccountOp } from '@ambire-common/libs/accountOp/accountOp'
+import { getBalanceChangeTokenAddresses } from '@ambire-common/libs/accountOp/balanceChanges'
 import {
   AccountOpIdentifiedBy,
+  BalanceChange,
   fetchFrontRanTxnId,
   fetchTxnId,
   SubmittedAccountOp
@@ -26,6 +28,7 @@ import { AccountOpStatus, Call } from '@ambire-common/libs/accountOp/types'
 import { decodeFeeCall } from '@ambire-common/libs/calls/calls'
 import { humanizeAccountOp } from '@ambire-common/libs/humanizer'
 import { IrCall } from '@ambire-common/libs/humanizer/interfaces'
+import { getTransferLogTokens } from '@ambire-common/libs/logsParser/parseLogs'
 import { parseLogs } from '@ambire-common/libs/userOperation/userOperation'
 import { resolveAssetInfo } from '@ambire-common/services/assetInfo'
 import { Bundler } from '@ambire-common/services/bundlers/bundler'
@@ -77,6 +80,7 @@ export interface StepsData {
   blockData: null | Block
   finalizedStatus: FinalizedStatusType
   feePaidWith: FeePaidWith | null
+  balanceChanges?: BalanceChange[]
   calls: IrCall[] | null
   txnId: string | null
   from: string | null
@@ -84,6 +88,7 @@ export interface StepsData {
   userOp: UserOperation | null
   delegation?: EIP7702Auth
   extensionAccOp?: SubmittedAccountOp
+  submittedAccountOp?: SubmittedAccountOp | null
 }
 
 // if the transaction hash is found, we make the top url the real txn id
@@ -146,6 +151,15 @@ const parseHumanizer = (humanizedCalls: IrCall[]): IrCall[] => {
 const filterEntryPointAuthCall = (call: IrCall) =>
   !call.data.endsWith('0000000000000000000000000000000000000000000000000000000000007171')
 
+type ReceiptLogs = Parameters<typeof getTransferLogTokens>[0]
+
+const getBalanceChangesSignature = (changes?: BalanceChange[]) =>
+  typeof changes === 'undefined'
+    ? 'undefined'
+    : changes
+        .map((change) => `${change.address}:${change.chainId}:${change.balanceChange.toString()}`)
+        .join('|')
+
 const useSteps = ({
   txnId,
   userOpHash,
@@ -158,11 +172,20 @@ const useSteps = ({
   networks
 }: Props): StepsData => {
   const [txn, setTxn] = useState<null | TransactionResponse>(null)
+  const [receiptLogs, setReceiptLogs] = useState<ReceiptLogs | null>(null)
   const [txnReceipt, setTxnReceipt] = useState<{
     actualGasCost: null | bigint
     originatedFrom: null | string
     blockNumber: null | bigint
-  }>({ actualGasCost: null, originatedFrom: null, blockNumber: null })
+    transactionHash: null | string
+    transactionFrom: null | string
+  }>({
+    actualGasCost: null,
+    originatedFrom: null,
+    blockNumber: null,
+    transactionHash: null,
+    transactionFrom: null
+  })
   const [blockData, setBlockData] = useState<null | Block>(null)
   const [finalizedStatus, setFinalizedStatus] = useState<FinalizedStatusType>({
     status: 'fetching'
@@ -179,6 +202,7 @@ const useSteps = ({
   const [from, setFrom] = useState<null | string>(null)
   const [isFrontRan, setIsFrontRan] = useState<boolean>(false)
   const [isFetching, setIsFetching] = useState<boolean>(false)
+  const [balanceChanges, setBalanceChanges] = useState<BalanceChange[] | undefined>(undefined)
   const [activityAccOp, setActivityAccOp] = useState<SubmittedAccountOp | null>(null)
   const [shouldTryBlockFetch, setShouldTryBlockFetch] = useState<boolean>(true)
   const [refetchStatus, setRefetchStatus] = useState<number>(0)
@@ -187,6 +211,26 @@ const useSteps = ({
     dispatch: activityDispatch
   } = useController('ActivityController')
   const { dispatchAndWait } = useController('ProvidersController')
+  const benzinActivityOp = useMemo(() => {
+    if (!extensionAccOp || !('benzin' in accountsOps)) return null
+
+    const op = accountsOps.benzin.result.items[0]
+
+    if (
+      !op ||
+      (op.identifiedBy &&
+        extensionAccOp.identifiedBy &&
+        op.identifiedBy.identifier !== extensionAccOp.identifiedBy.identifier)
+    )
+      return null
+
+    return op
+  }, [accountsOps, extensionAccOp])
+  const submittedAccountOp = activityAccOp || extensionAccOp || null
+  const submittedAccountOpBalanceChangesSignature = useMemo(
+    () => getBalanceChangesSignature(submittedAccountOp?.balanceChanges),
+    [submittedAccountOp]
+  )
 
   const getIdentifiedBy = useCallback((): AccountOpIdentifiedBy => {
     if (relayerId) return { type: 'Relayer', identifier: relayerId }
@@ -212,7 +256,10 @@ const useSteps = ({
 
   // fetch the account op from the activity every 2 seconds until found
   useEffect(() => {
-    if (!extensionAccOp || !!activityAccOp || refetchStatus > 1000) return
+    const hasActivityBalanceChanges =
+      !!benzinActivityOp && typeof benzinActivityOp.balanceChanges !== 'undefined'
+
+    if (!extensionAccOp || hasActivityBalanceChanges || refetchStatus > 1000) return
     const timeout = setTimeout(() => {
       setRefetchStatus((prev) => prev + 1)
     }, 2000)
@@ -239,32 +286,41 @@ const useSteps = ({
     return () => {
       if (timeout) clearTimeout(timeout)
     }
-  }, [extensionAccOp, activityAccOp, setRefetchStatus, refetchStatus, activityDispatch])
+  }, [extensionAccOp, benzinActivityOp, setRefetchStatus, refetchStatus, activityDispatch])
 
   // set the found account op from the activity
   useEffect(() => {
-    if (!extensionAccOp || !!activityAccOp || !('benzin' in accountsOps) || !network || !switcher)
-      return
+    if (!benzinActivityOp || !network || !switcher) return
 
-    const items = accountsOps.benzin.result.items
-    if (!items[0]) return
-    const op = items[0]
     if (
-      (op.identifiedBy &&
-        extensionAccOp.identifiedBy &&
-        op.identifiedBy.identifier !== extensionAccOp.identifiedBy.identifier) ||
-      op.status === AccountOpStatus.BroadcastedButNotConfirmed ||
-      op.status === AccountOpStatus.Pending ||
-      !op.txnId
+      benzinActivityOp.status === AccountOpStatus.BroadcastedButNotConfirmed ||
+      benzinActivityOp.status === AccountOpStatus.Pending ||
+      !benzinActivityOp.txnId
     )
       return
 
+    const benzinBalanceChangesSignature = getBalanceChangesSignature(
+      benzinActivityOp.balanceChanges
+    )
+    const activityBalanceChangesSignature = getBalanceChangesSignature(
+      activityAccOp?.balanceChanges
+    )
+
+    if (
+      activityAccOp?.status === benzinActivityOp.status &&
+      activityAccOp?.txnId === benzinActivityOp.txnId &&
+      activityAccOp?.blockNumber === benzinActivityOp.blockNumber &&
+      benzinBalanceChangesSignature === activityBalanceChangesSignature
+    ) {
+      return
+    }
+
     setActivityAccOp({
-      ...op
+      ...benzinActivityOp
     })
-    setFoundTxnId(op.txnId)
-    setUrlToTxnId(op.txnId, userOpHash, relayerId, network.chainId, switcher)
-  }, [accountsOps, extensionAccOp, activityAccOp, network, switcher, relayerId, userOpHash])
+    setFoundTxnId(benzinActivityOp.txnId)
+    setUrlToTxnId(benzinActivityOp.txnId, userOpHash, relayerId, network.chainId, switcher)
+  }, [benzinActivityOp, activityAccOp, network, switcher, relayerId, userOpHash])
 
   // use the extension account op for status changes, if passed
   useEffect(() => {
@@ -476,8 +532,11 @@ const useSteps = ({
         setTxnReceipt({
           originatedFrom: receipt.sender,
           actualGasCost: BigInt(receipt.actualGasCost),
-          blockNumber: BigInt(receipt.receipt.blockNumber)
+          blockNumber: BigInt(receipt.receipt.blockNumber),
+          transactionHash: receipt.receipt.transactionHash,
+          transactionFrom: null
         })
+        setReceiptLogs([...receipt.receipt.logs])
 
         const userOpLog = parseLogs(receipt.logs, userOpHash, 1)
         if (userOpLog && !userOpLog.success) {
@@ -550,8 +609,12 @@ const useSteps = ({
         setTxnReceipt({
           originatedFrom: receipt.from,
           actualGasCost: receipt.gasUsed * receipt.gasPrice,
-          blockNumber: BigInt(receipt.blockNumber)
+          blockNumber: BigInt(receipt.blockNumber),
+          transactionHash: receipt.hash,
+          transactionFrom: receipt.from
         })
+        // @ts-ignore
+        setReceiptLogs([...receipt.logs])
         setFinalizedStatus(receipt.status ? { status: 'confirmed' } : { status: 'failed' })
         setActiveStep('finalized')
       })
@@ -914,6 +977,82 @@ const useSteps = ({
   }, [txnReceipt.actualGasCost, feePaidWith, feeCall, network, userOp, networks, extensionAccOp])
 
   useEffect(() => {
+    if (
+      !from ||
+      !network ||
+      !receiptLogs ||
+      !txnReceipt.blockNumber ||
+      typeof balanceChanges !== 'undefined' ||
+      submittedAccountOpBalanceChangesSignature !== 'undefined'
+    )
+      return
+
+    let isMounted = true
+
+    void (async () => {
+      try {
+        const foundTokens = await getTransferLogTokens(receiptLogs, from)
+
+        dispatchAndWait({
+          type: 'method',
+          params: {
+            method: 'getTokenBalancesOnBlockAndSendResToUi',
+            args: [
+              {
+                accountId: from,
+                chainId: network.chainId,
+                tokenAddrs: getBalanceChangeTokenAddresses(foundTokens),
+                blockTag: Number(txnReceipt.blockNumber),
+                accountAddr: from,
+                receipts: [
+                  {
+                    hash: txnReceipt.transactionHash || undefined,
+                    from: txnReceipt.transactionFrom || undefined,
+                    fee: txnReceipt.actualGasCost || undefined,
+                    logs: receiptLogs.map((log) => ({
+                      address: log.address,
+                      topics: [...log.topics],
+                      data: log.data
+                    }))
+                  }
+                ]
+              }
+            ]
+          }
+        })
+          .then((res) => {
+            if (!isMounted) return
+            setBalanceChanges(res)
+          })
+          .catch(() => null)
+
+        if (!isMounted) return
+      } catch (error) {
+        if (!isMounted) return
+
+        setBalanceChanges([])
+      }
+    })()
+
+    return () => {
+      isMounted = false
+    }
+  }, [
+    activityAccOp,
+    balanceChanges,
+    extensionAccOp,
+    network,
+    receiptLogs,
+    txnReceipt.actualGasCost,
+    txnReceipt.blockNumber,
+    txnReceipt.transactionFrom,
+    txnReceipt.transactionHash,
+    from,
+    dispatchAndWait,
+    submittedAccountOpBalanceChangesSignature
+  ])
+
+  useEffect(() => {
     if (!network) return
 
     // if we have the extension account op passed, we do not need to
@@ -970,15 +1109,19 @@ const useSteps = ({
     blockData,
     finalizedStatus,
     feePaidWith,
+    balanceChanges,
     calls: calls || null,
     txnId: foundTxnId,
     from: from || null,
     originatedFrom: txnReceipt.originatedFrom,
     userOp,
     extensionAccOp,
+    submittedAccountOp,
     delegation:
-      extensionAccOp && extensionAccOp.meta && extensionAccOp.meta.setDelegation !== undefined
-        ? extensionAccOp.meta.delegation
+      submittedAccountOp &&
+      submittedAccountOp.meta &&
+      submittedAccountOp.meta.setDelegation !== undefined
+        ? submittedAccountOp.meta.delegation
         : undefined
   }
 }
