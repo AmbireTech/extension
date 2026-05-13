@@ -224,7 +224,7 @@ jobs:
 
       - name: Save trezor blob report
         if: always()
-        run: mv ./e2e-playwright-tests/blob-report ./e2e-playwright-tests/blob-repo rt-trezor || true
+        run: mv ./e2e-playwright-tests/blob-report ./e2e-playwright-tests/blob-report-trezor || true
 
       - name: Merge all blob reports into one HTML report
         if: always()
