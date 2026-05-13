@@ -29,6 +29,7 @@ import { AccountOpStatus, Call } from '@ambire-common/libs/accountOp/types'
 import { decodeFeeCall } from '@ambire-common/libs/calls/calls'
 import { humanizeAccountOp } from '@ambire-common/libs/humanizer'
 import { IrCall } from '@ambire-common/libs/humanizer/interfaces'
+import { getPersistedHumanization } from '@ambire-common/libs/humanizer/utils'
 import { getTransferLogTokens } from '@ambire-common/libs/logsParser/parseLogs'
 import { parseLogs } from '@ambire-common/libs/userOperation/userOperation'
 import { resolveAssetInfo } from '@ambire-common/services/assetInfo'
@@ -1056,13 +1057,22 @@ const useSteps = ({
   useEffect(() => {
     if (!network) return
 
+    const persistedHumanization = getPersistedHumanization(submittedAccountOp?.meta)
+    if (submittedAccountOp && persistedHumanization) {
+      const humanizedCalls = persistedHumanization.filter(filterEntryPointAuthCall)
+      setCalls(parseHumanizer(humanizedCalls))
+      setFrom(submittedAccountOp.accountAddr)
+      setFeeCall(submittedAccountOp.feeCall || null)
+      return
+    }
+
     // if we have the extension account op passed, we do not need to
     // wait to show the calls
     if (extensionAccOp) {
       const humanizedCalls = humanizeAccountOp(extensionAccOp).filter(filterEntryPointAuthCall)
       setCalls(parseHumanizer(humanizedCalls))
       setFrom(extensionAccOp.accountAddr)
-      if (extensionAccOp.feeCall) setFeeCall(extensionAccOp.feeCall)
+      setFeeCall(extensionAccOp.feeCall || null)
       return
     }
 
@@ -1104,7 +1114,7 @@ const useSteps = ({
         setFeeCall(decodedFeeCall)
       }
     }
-  }, [network, txnReceipt, txn, userOpHash, userOp, txnId, extensionAccOp])
+  }, [network, txnReceipt, txn, userOpHash, userOp, txnId, extensionAccOp, submittedAccountOp])
 
   return {
     blockData,

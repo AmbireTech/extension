@@ -24,7 +24,6 @@ import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import { setStringAsync } from '@common/utils/clipboard'
 import { openInTab } from '@common/utils/links'
-import { getUiType } from '@common/utils/uiType'
 import ImageIcon from '@web/assets/svg/ImageIcon'
 import ManifestImage from '@web/components/ManifestImage'
 import { isExtension } from '@web/constants/browserapi'
@@ -36,8 +35,6 @@ import DeadlineItem from './DeadlineItem'
 function stopPropagation(e: React.MouseEvent) {
   e.stopPropagation()
 }
-
-const { isRequestWindow } = getUiType()
 
 interface Props {
   data: IrCall['fullVisualization']
@@ -58,17 +55,15 @@ interface Props {
   }
 }
 
-interface Erc7730StructuredAddressProps {
+interface Erc7730StructuredAddressActionsProps {
   address: string
   chainId: bigint
-  textSize: number
   hideLinks?: boolean
 }
 
-const Erc7730StructuredAddress: FC<Erc7730StructuredAddressProps> = ({
+const Erc7730StructuredAddressActions: FC<Erc7730StructuredAddressActionsProps> = ({
   address,
   chainId,
-  textSize,
   hideLinks = false
 }) => {
   const { t } = useTranslation()
@@ -107,7 +102,7 @@ const Erc7730StructuredAddress: FC<Erc7730StructuredAddressProps> = ({
         return
       }
 
-      await openInTab({ url: targetUrl, shouldCloseCurrentWindow: isRequestWindow })
+      await openInTab({ url: targetUrl })
     } catch {
       addToast(t('Failed to open explorer'), {
         type: 'error'
@@ -116,19 +111,7 @@ const Erc7730StructuredAddress: FC<Erc7730StructuredAddressProps> = ({
   }, [addToast, address, network?.explorerUrl, t])
 
   return (
-    <View style={[flexbox.directionRow, flexbox.alignCenter, { maxWidth: '100%' }]}>
-      <Text
-        fontSize={textSize}
-        weight="medium"
-        appearance="linkText"
-        selectable
-        style={{
-          flexShrink: 1,
-          ...(isWeb ? { wordBreak: 'break-all' } : {})
-        }}
-      >
-        {shortenAddress(address, 18, 4)}
-      </Text>
+    <>
       <Pressable
         accessibilityRole="button"
         accessibilityLabel={t('Copy Address')}
@@ -159,6 +142,38 @@ const Erc7730StructuredAddress: FC<Erc7730StructuredAddressProps> = ({
           )}
         </Pressable>
       )}
+    </>
+  )
+}
+
+interface Erc7730StructuredAddressProps {
+  address: string
+  chainId: bigint
+  textSize: number
+  hideLinks?: boolean
+}
+
+const Erc7730StructuredAddress: FC<Erc7730StructuredAddressProps> = ({
+  address,
+  chainId,
+  textSize,
+  hideLinks = false
+}) => {
+  return (
+    <View style={[flexbox.directionRow, flexbox.alignCenter, { maxWidth: '100%' }]}>
+      <Text
+        fontSize={textSize}
+        weight="medium"
+        appearance="linkText"
+        selectable
+        style={{
+          flexShrink: 1,
+          ...(isWeb ? { wordBreak: 'break-all' } : {})
+        }}
+      >
+        {shortenAddress(address, 18, 4)}
+      </Text>
+      <Erc7730StructuredAddressActions address={address} chainId={chainId} hideLinks={hideLinks} />
     </View>
   )
 }
@@ -184,17 +199,28 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
     if (!valueItem || valueItem.isHidden) return null
 
     if (valueItem.type === 'token') {
+      const tokenChainId = valueItem.chainId || chainId
+
       return (
-        <TokenOrNft
+        <View
           key={valueItem.id}
-          sizeMultiplierSize={sizeMultiplierSize}
-          value={valueItem.value}
-          address={valueItem.address}
-          textSize={textSize}
-          chainId={valueItem.chainId || chainId}
-          hideLinks={hideLinks}
-          tokenMarginRight={0}
-        />
+          style={[flexbox.directionRow, flexbox.alignCenter, flexbox.justifyEnd, flexbox.wrap]}
+        >
+          <TokenOrNft
+            sizeMultiplierSize={sizeMultiplierSize}
+            value={valueItem.value}
+            address={valueItem.address}
+            textSize={textSize}
+            chainId={tokenChainId}
+            hideLinks
+            tokenMarginRight={0}
+          />
+          <Erc7730StructuredAddressActions
+            address={valueItem.address}
+            chainId={tokenChainId}
+            hideLinks={hideLinks}
+          />
+        </View>
       )
     }
 
@@ -263,14 +289,53 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
     <View style={{ width: '100%' }}>
       {!!item.title && (
         <>
-          <Text
-            fontSize={textSize + 2}
-            weight="semiBold"
-            appearance="primaryText"
-            style={spacings.mbTy}
+          <View
+            style={[
+              flexbox.directionRow,
+              flexbox.alignCenter,
+              flexbox.justifySpaceBetween,
+              spacings.mbTy,
+              { gap: SPACING_SM, width: '100%' }
+            ]}
           >
-            {item.title}
-          </Text>
+            <Text
+              fontSize={textSize + 2}
+              weight="semiBold"
+              appearance="primaryText"
+              style={{ flex: 1, minWidth: 0 }}
+            >
+              {item.title}
+            </Text>
+            {!!item.dapp?.name && (
+              <View
+                style={[
+                  flexbox.directionRow,
+                  flexbox.alignCenter,
+                  flexbox.justifyEnd,
+                  { maxWidth: '45%', minWidth: 0 }
+                ]}
+              >
+                {!!item.dapp.icon && (
+                  <ManifestImage
+                    uri={item.dapp.icon}
+                    containerStyle={spacings.mrTy}
+                    size={18}
+                    skeletonAppearance="secondaryBackground"
+                    imageStyle={{ borderRadius: 4, backgroundColor: 'transparent' }}
+                  />
+                )}
+                <Text
+                  fontSize={Math.max(textSize - 2, 12)}
+                  weight="medium"
+                  appearance="secondaryText"
+                  numberOfLines={1}
+                  style={{ flexShrink: 1 }}
+                >
+                  {`via ${item.dapp.name}`}
+                </Text>
+              </View>
+            )}
+          </View>
           <View
             style={[
               spacings.mbTy,

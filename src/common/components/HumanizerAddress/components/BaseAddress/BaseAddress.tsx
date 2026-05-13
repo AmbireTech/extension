@@ -22,7 +22,6 @@ import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { setStringAsync } from '@common/utils/clipboard'
 import { openInTab } from '@common/utils/links'
-import { getUiType } from '@common/utils/uiType'
 import { isExtension } from '@web/constants/browserapi'
 
 import Option from './BaseAddressOption'
@@ -34,8 +33,6 @@ interface Props extends TextProps {
   verification?: BlacklistedStatus
   isDisplayingPlainAddress?: boolean
 }
-
-const { isRequestWindow } = getUiType()
 
 const BaseAddress: FC<Props> = ({
   children,
@@ -84,9 +81,7 @@ const BaseAddress: FC<Props> = ({
         await Linking.openURL(targetUrl)
         return
       }
-      // Close the request-window if this address is opened in one, otherwise
-      // the user will have to minimize it to see the explorer.
-      await openInTab({ url: targetUrl, shouldCloseCurrentWindow: isRequestWindow })
+      await openInTab({ url: targetUrl })
     } catch {
       addToast(t('Failed to open explorer'), {
         type: 'error'

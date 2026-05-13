@@ -44,6 +44,17 @@ const Benzin = ({
   const { isStoreReady } = useControllerStore()
   const insets = useSafeAreaInsets()
 
+  const sizeStr = useMemo(() => {
+    if (isMobile) return 'lg'
+    if (IS_MOBILE_UP_BENZIN_BREAKPOINT) return 'md'
+    return 'sm'
+  }, [])
+
+  const size = useMemo(() => {
+    if (isMobile || IS_MOBILE_UP_BENZIN_BREAKPOINT) return 20
+    return 14
+  }, [])
+
   const summary = useMemo(() => {
     const calls = state?.stepsState?.calls
     if (!calls || !state.network?.chainId) return []
@@ -54,14 +65,9 @@ const Benzin = ({
         style={i !== calls.length! - 1 ? (spacings.mbSm as ViewStyle) : {}}
         call={call}
         chainId={state.network!.chainId}
-        rightIcon={
-          <OpenIcon
-            width={IS_MOBILE_UP_BENZIN_BREAKPOINT || isMobile ? 20 : 14}
-            height={IS_MOBILE_UP_BENZIN_BREAKPOINT || isMobile ? 20 : 14}
-          />
-        }
+        rightIcon={<OpenIcon width={size} height={size} />}
         onRightIconPress={state?.handleOpenExplorer}
-        size={IS_MOBILE_UP_BENZIN_BREAKPOINT || isMobile ? 'lg' : 'sm'}
+        size={sizeStr}
         type="benzin"
         hasCallFailed={call.status === AccountOpStatus.Rejected}
       />
