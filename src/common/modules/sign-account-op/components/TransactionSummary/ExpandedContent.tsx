@@ -7,7 +7,6 @@ import { IrCall } from '@ambire-common/libs/humanizer/interfaces'
 import Spinner from '@common/components/Spinner'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
-import useDecodeTransactionData from '@common/hooks/useDecodeTransactionData/useDecodeTransactionData'
 import useTheme from '@common/hooks/useTheme/useTheme'
 import { SPACING_MI, SPACING_SM, SPACING_TY } from '@common/styles/spacings'
 
@@ -18,6 +17,8 @@ interface Props {
   size: 'sm' | 'md' | 'lg'
   sizeMultiplier: Record<'sm' | 'md' | 'lg', number>
   styles: Record<string, any>
+  decodedFunction: DecodedCall | null
+  isDecodedFunctionLoading: boolean
 }
 
 const DataArgs = ({
@@ -76,9 +77,14 @@ const DataArgs = ({
     )
   })
 }
-const ExpandedContent = ({ call, size, sizeMultiplier }: Props) => {
+const ExpandedContent = ({
+  call,
+  size,
+  sizeMultiplier,
+  decodedFunction,
+  isDecodedFunctionLoading
+}: Props) => {
   const { t } = useTranslation()
-  const { decodedFunction, isLoading } = useDecodeTransactionData(call)
   const { styles, theme } = useTheme(getStyles)
   const [displayRawData, setDisplayRawData] = useState(false)
 
@@ -104,7 +110,7 @@ const ExpandedContent = ({ call, size, sizeMultiplier }: Props) => {
         {formatUnits(call.value || '0x0', 18)}
       </Text>
 
-      {isLoading ? (
+      {isDecodedFunctionLoading ? (
         <View style={[styles.bodyText, { flexDirection: 'row', alignItems: 'center' }]}>
           <Spinner style={{ width: 16, height: 16 }} />
         </View>

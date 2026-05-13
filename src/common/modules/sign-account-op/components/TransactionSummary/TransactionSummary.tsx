@@ -13,6 +13,7 @@ import HumanizedVisualization from '@common/components/HumanizedVisualization'
 import Label from '@common/components/Label'
 import { isMobile, isWeb } from '@common/config/env'
 import useController from '@common/hooks/useController'
+import useDecodeTransactionData from '@common/hooks/useDecodeTransactionData'
 import useHover, { AnimatedPressable } from '@common/hooks/useHover'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
@@ -82,6 +83,8 @@ const TransactionSummary = ({
   } = useController('SelectedAccountController')
   const { styles } = useTheme(getStyles)
   const { addToast } = useToast()
+  const { decodedFunction, isLoading: isDecodedFunctionLoading } = useDecodeTransactionData(call)
+
   /**
    * It takes some time to remove the call from the controller state, so we optimistically
    * set this state to true, which hides it immediately.
@@ -404,7 +407,14 @@ const TransactionSummary = ({
         </>
       }
       expandedContent={
-        <ExpandedContent call={call} size={size} sizeMultiplier={sizeMultiplier} styles={styles} />
+        <ExpandedContent
+          call={call}
+          size={size}
+          sizeMultiplier={sizeMultiplier}
+          styles={styles}
+          decodedFunction={decodedFunction}
+          isDecodedFunctionLoading={isDecodedFunctionLoading}
+        />
       }
     >
       <View
