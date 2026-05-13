@@ -27,7 +27,6 @@ function checkIfCanDecodeFurther(
   return arg
 }
 
-// TODO: add the hardcoded humanizer
 function decodeFunction(
   hex: string,
   selectors: Selectors,
