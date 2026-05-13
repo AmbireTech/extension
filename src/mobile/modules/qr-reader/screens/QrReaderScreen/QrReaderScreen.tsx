@@ -1,4 +1,3 @@
-import MaskedView from '@react-native-masked-view/masked-view'
 import { BlurView } from 'expo-blur'
 import { CameraView } from 'expo-camera'
 import React, { useCallback, useEffect, useRef, useState } from 'react'
@@ -20,9 +19,9 @@ import {
   MobileLayoutWrapperMainContent
 } from '@mobile/components/MobileLayoutWrapper'
 import useWalletConnect from '@mobile/modules/wallet-connect/hooks/useWalletConnect'
+import MaskedView from '@react-native-masked-view/masked-view'
 
-import getStyles, { SCAN_FRAME_SIZE, CORNER_RADIUS } from './styles'
-
+import getStyles, { CORNER_RADIUS, SCAN_FRAME_SIZE } from './styles'
 
 const QrReaderScreen = () => {
   const { theme } = useTheme()
@@ -75,7 +74,6 @@ const QrReaderScreen = () => {
           return
         }
 
-        addToast(t('Connecting via WalletConnect…'))
         void pair(value)
         goBack()
         return

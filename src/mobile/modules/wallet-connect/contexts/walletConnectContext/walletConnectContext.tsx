@@ -3,7 +3,9 @@ import React, { createContext, useCallback, useContext, useEffect, useState } fr
 import { Linking } from 'react-native'
 
 import { ControllersMiddlewareContext } from '@common/contexts/controllersMiddlewareContext'
+import { ControllerStoreContext } from '@common/contexts/controllerStoreContext'
 import {
+  getPendingRestoreSessions,
   getWalletKit,
   initWalletConnect,
   isWalletConnectInitialized
@@ -28,23 +30,20 @@ export const WalletConnectProvider: React.FC<{ children: React.ReactNode }> = ({
   // incorrectly start as false when WalletKit is already initialized.
   const [isInitialized, setIsInitialized] = useState(isWalletConnectInitialized)
   const { dispatch } = useContext(ControllersMiddlewareContext)
+  const { isStoreReady } = useContext(ControllerStoreContext)
   const [cameraPermission, requestCameraPermission] = useCameraPermissions()
 
+  // Initialize WalletKit when dispatch is available
   useEffect(() => {
-    console.log('[WalletConnectProvider] Initialization effect triggered.')
-
     // Already initialized (module-level flag) — nothing to do.
     if (isWalletConnectInitialized()) {
-      console.log('[WalletConnectProvider] Module already initialized, updating state.')
       setIsInitialized(true)
       return
     }
 
     const initWc = async () => {
       try {
-        console.log('[WalletConnectProvider] Starting initialization via initWalletConnect...')
         await initWalletConnect(dispatch)
-        console.log('[WalletConnectProvider] Initialization successful, updating state.')
         setIsInitialized(true)
       } catch (e) {
         console.error('[WalletConnectProvider] Initialization failed:', e)
@@ -53,6 +52,19 @@ export const WalletConnectProvider: React.FC<{ children: React.ReactNode }> = ({
 
     initWc()
   }, [dispatch])
+
+  // Restore WC sessions once store is ready
+  useEffect(() => {
+    if (!isStoreReady || !isInitialized) return
+
+    const sessionsToRestore = getPendingRestoreSessions()
+    if (sessionsToRestore && sessionsToRestore.length > 0) {
+      dispatch({
+        type: 'RESTORE_WC_SESSIONS',
+        params: { sessions: sessionsToRestore }
+      })
+    }
+  }, [isStoreReady, isInitialized, dispatch])
 
   const pair = useCallback(
     async (uri: string) => {

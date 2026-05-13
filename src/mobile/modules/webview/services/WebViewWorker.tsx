@@ -10,6 +10,7 @@ import { storage } from '@common/services/storage'
 import { WEBVIEW_DEV_HOST } from '@env'
 import {
   approveWalletConnectSession,
+  disconnectSession,
   handleWcSessionBroadcast,
   rejectWalletConnectSession,
   respondToWalletConnectRequest
@@ -55,6 +56,8 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, {}>((_, ref) => {
   const pendingConfig = useRef<any>(null)
   // Stores the last config so we can re-send it when the WebView reloads (dev HMR/live reload)
   const lastConfig = useRef<any>(null)
+  // Queue for actions dispatched before WebView is ready
+  const actionQueue = useRef<any[]>([])
   // Incrementing the key forces a full WebView remount (used for Android dev reload)
   const [webviewKey, setWebviewKey] = useState(0)
   const devUrl = getDevServerUrl()
@@ -80,44 +83,51 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, {}>((_, ref) => {
     }, CONTROLLER_STORE_MAX_LOADING_TIME)
   }
 
+  // Flush queued actions once WebView is ready
+  const flushActionQueue = () => {
+    if (actionQueue.current.length === 0) return
+    const queue = [...actionQueue.current]
+    actionQueue.current = []
+    queue.forEach((action) => {
+      dispatchToWebView(action)
+    })
+  }
+
+  const dispatchToWebView = (action: any) => {
+    const payload = richJson.stringify({ type: 'dispatchAction', action })
+    webviewRef.current?.injectJavaScript(`
+        (function() {
+          try {
+            window.postMessage(${payload}, '*');
+          } catch (e) {
+            window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'ctrl.error', payload: { ctrlName: 'BridgeDispatch', errors: [{ message: e.message, stack: e.stack }] } }));
+          }
+        })();
+        true;
+      `)
+  }
+
   useImperativeHandle(ref, () => ({
     dispatch: (action: any) => {
       if (!isReadyRef.current) {
-        const devHint = __DEV__
-          ? ` Dev host: ${devUrl}. Ensure webview dev server is running if controllers did not load.`
-          : ''
-        console.warn(
-          `[Native] WebViewWorker NOT READY. Dropping action: ${action?.type || 'unknown'}.` +
-            ` isLoaded=${isLoaded} isReady=${isReadyRef.current}.${devHint}`
-        )
+        // Queue action for when WebView is ready
+        actionQueue.current.push(action)
         return
       }
-      const payload = richJson.stringify({ type: 'dispatchAction', action })
-      webviewRef.current?.injectJavaScript(`
-          (function() {
-            try {
-              window.postMessage(${JSON.stringify(payload)}, '*');
-            } catch (e) {
-              window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'ctrl.error', payload: { ctrlName: 'BridgeDispatch', errors: [{ message: e.message, stack: e.stack }] } }));
-            }
-          })();
-          true;
-        `)
+      dispatchToWebView(action)
     },
     init: (config: any) => {
-      console.log('[WebViewWorker] init called, setting resolver')
       lastConfig.current = config
       return new Promise((resolve) => {
         initResolver.current = resolve
         scheduleInitWarningTimeout()
         if (isLoaded) {
-          console.log('[WebViewWorker] WebView already loaded, sending init immediately')
+          const initPayload = richJson.stringify({ type: 'init', config })
           webviewRef.current?.injectJavaScript(`
-              window.postMessage(${JSON.stringify(richJson.stringify({ type: 'init', config }))}, '*');
+              window.postMessage(${initPayload}, '*');
               true;
             `)
         } else {
-          console.log('[WebViewWorker] WebView not loaded yet, buffering config')
           pendingConfig.current = config
         }
       })
@@ -131,9 +141,8 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, {}>((_, ref) => {
       switch (data.type) {
         case 'system.loaded': {
           const isReload = isReadyRef.current
-          console.log(
-            `[WebViewWorker] WebView internal script loaded${isReload ? ' (RELOAD detected)' : ''}`
-          )
+          const isReloadStr = isReload ? ' (RELOAD detected)' : ''
+          console.log(`[WebViewWorker] WebView internal script loaded${isReloadStr}`)
 
           // Reset ready state — the WebView has a fresh JS context
           isReadyRef.current = false
@@ -146,9 +155,9 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, {}>((_, ref) => {
           const configToSend = pendingConfig.current || (isReload ? lastConfig.current : null)
 
           if (configToSend) {
-            console.log('[WebViewWorker] Sending config to WebView')
+            const initPayload = richJson.stringify({ type: 'init', config: configToSend })
             webviewRef.current?.injectJavaScript(`
-                window.postMessage(${JSON.stringify(richJson.stringify({ type: 'init', config: configToSend }))}, '*');
+                window.postMessage(${initPayload}, '*');
                 true;
               `)
             pendingConfig.current = null
@@ -160,7 +169,6 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, {}>((_, ref) => {
         // intercept and redirect here. Incrementing webviewKey forces a full remount,
         // causing the WebView to re-fetch the latest bundle from the dev server.
         case 'system.requestReload':
-          console.log('[WebViewWorker] Received reload request from WebView, remounting...')
           isReadyRef.current = false
           setIsReady(false)
           setIsLoaded(false)
@@ -177,6 +185,8 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, {}>((_, ref) => {
             initResolver.current(data.payload.controllers)
             initResolver.current = null
           }
+          // Flush any queued actions
+          flushActionQueue()
           break
 
         case 'ctrl.update':
@@ -226,6 +236,9 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, {}>((_, ref) => {
           break
         case 'action.wcSessionBroadcast':
           await handleWcSessionBroadcast(data.payload)
+          break
+        case 'action.disconnectWcSession':
+          await disconnectSession(data.payload.topic)
           break
         case 'ui.window.action':
           eventBus.emit('ui.window.action', data.payload)

@@ -6,9 +6,11 @@ import { WalletKit } from '@reown/walletkit'
 import { Core } from '@walletconnect/core'
 import { getSdkError } from '@walletconnect/utils'
 
-let walletKit: any = null
+import type { WalletKit as WalletKitType } from '@reown/walletkit'
+let walletKit: WalletKitType | null = null
 let initialized = false
-let initPromise: Promise<any> | null = null
+let initPromise: Promise<WalletKitType> | null = null
+let pendingRestoreSessions: { topic: string; url: string; chainId: number }[] | null = null
 let dispatchAction: ((action: MethodAction | Action) => void) | null = null
 
 export const getWalletKit = () => walletKit
@@ -109,8 +111,41 @@ export const initWalletConnect = async (dispatch: (action: MethodAction | Action
       })
 
       walletKit.on('session_delete', (event: any) => {
-        // We could clean up the dapp session here
+        // Clean up the dapp session when WalletConnect session is deleted
+        // The handler will look up the session by wcTopic to get the dappId and URL
+        const { topic } = event
+        console.log('[WalletConnect] session_delete event received, topic:', topic)
+        if (topic) {
+          console.log(
+            '[WalletConnect] Dispatching DAPPS_CONTROLLER_DISCONNECT_DAPP for topic:',
+            topic
+          )
+          dispatchAction!({
+            type: 'DAPPS_CONTROLLER_DISCONNECT_DAPP',
+            params: { id: topic, url: '' }
+          })
+        }
       })
+
+      // Store persisted sessions for later restoration once store is ready
+      try {
+        const activeSessions = walletKit.getActiveSessions()
+        const sessionsToRestore = Object.values(activeSessions).map((session: any) => {
+          const eip155Namespace = session.namespaces?.eip155
+          const chainId = eip155Namespace?.chains?.[0]?.split(':')[1] || '1'
+          const url = session.peer?.metadata?.url || 'https://walletconnect.com'
+          return {
+            topic: session.topic,
+            url,
+            chainId: parseInt(chainId, 10)
+          }
+        })
+        if (sessionsToRestore.length > 0) {
+          pendingRestoreSessions = sessionsToRestore
+        }
+      } catch (e) {
+        console.error('[WalletConnect] Failed to get persisted sessions:', e)
+      }
 
       initialized = true
       initPromise = null
@@ -150,7 +185,6 @@ export const respondToWalletConnectRequest = async (topic: string, response: any
   if (hasError) {
     const error = response.error
     let errorObj: { code: number; message: string; data?: any }
-
 
     if (
       error &&
@@ -293,10 +327,19 @@ export const handleWcSessionBroadcast = async (payload: {
   if (!walletKit) return
 
   if (payload.event === 'disconnect') {
-    await walletKit.disconnectSession({
-      topic: payload.wcSessionTopic,
-      reason: getSdkError('USER_DISCONNECTED')
-    })
+    try {
+      await walletKit.disconnectSession({
+        topic: payload.wcSessionTopic,
+        reason: getSdkError('USER_DISCONNECTED')
+      })
+    } catch (e: any) {
+      // Session might already be deleted, that's ok
+      if (e?.message?.includes('Record was recently deleted')) {
+        // Session already deleted, ignore
+      } else {
+        throw e
+      }
+    }
     return
   }
 
@@ -305,4 +348,35 @@ export const handleWcSessionBroadcast = async (payload: {
     event: { name: payload.event, data: payload.data },
     chainId: `eip155:${payload.chainId}`
   })
+}
+
+export const disconnectSession = async (topic: string) => {
+  if (!walletKit) {
+    return
+  }
+  // Check if session exists in WalletKit
+  const activeSessions = walletKit.getActiveSessions()
+  const sessionExists = activeSessions[topic]
+  if (!sessionExists) {
+    return
+  }
+  try {
+    await walletKit.disconnectSession({
+      topic,
+      reason: getSdkError('USER_DISCONNECTED')
+    })
+  } catch (e: any) {
+    console.error('[WalletConnect] Failed to disconnect session:', topic, e?.message || e)
+    throw e
+  }
+}
+
+/**
+ * Gets any pending sessions that need to be restored.
+ * Call this once the store is ready, then dispatch RESTORE_WC_SESSIONS.
+ */
+export const getPendingRestoreSessions = () => {
+  const sessions = pendingRestoreSessions
+  pendingRestoreSessions = null
+  return sessions
 }

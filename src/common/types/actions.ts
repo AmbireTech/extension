@@ -155,6 +155,20 @@ type SetupWcSessionMessengerAction = {
   }
 }
 
+type RestoreWcSessionsAction = {
+  type: 'RESTORE_WC_SESSIONS'
+  params: {
+    sessions: { topic: string; url: string; chainId: number }[]
+  }
+}
+
+type DisconnectWcSessionAction = {
+  type: 'DISCONNECT_WC_SESSION'
+  params: {
+    topic: string
+  }
+}
+
 export type Action =
   | UpdateNavigationUrl
   | UpdateUiViewRoute
@@ -179,3 +193,5 @@ export type Action =
   | HandleProviderRequestAction
   | WebviewOriginChangedAction
   | SetupWcSessionMessengerAction
+  | RestoreWcSessionsAction
+  | DisconnectWcSessionAction

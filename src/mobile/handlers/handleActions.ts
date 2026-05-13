@@ -88,9 +88,39 @@ export const handleActions = async (
     }
 
     case 'DAPPS_CONTROLLER_DISCONNECT_DAPP': {
-      await mainCtrl.dapps.broadcastDappSessionEvent('disconnect', undefined, params.id)
-      mainCtrl.dapps.updateDapp(params.id, { isConnected: false })
-      await mainCtrl.autoLogin.revokeAllPoliciesForDomain(params.id, params.url)
+      // If params.id looks like a WC topic (contains colon), find session by topic
+      const isWcTopic = params.id.includes(':')
+      let dappId = params.id
+      let url = params.url
+
+      if (isWcTopic) {
+        const session = mainCtrl.dapps.getDappSessionByWcTopic(params.id)
+        if (session) {
+          dappId = session.id
+          url = session.origin
+        }
+      } else {
+        // Given a dapp ID - also check for any WC sessions with this dapp and disconnect them
+        const wcSessions = Object.values(mainCtrl.dapps.dappSessions).filter(
+          (s) => s.id === params.id && s.wcTopic
+        )
+        for (const session of wcSessions) {
+          if (session.wcTopic) {
+            // Send action back to RN to disconnect WC session
+            sendToReactEvent('action.disconnectWcSession', {
+              topic: session.wcTopic
+            })
+            // Delete the dapp session for this WC session
+            mainCtrl.dapps.deleteDappSession(session.sessionId)
+          }
+        }
+      }
+      await mainCtrl.dapps.broadcastDappSessionEvent('disconnect', undefined, dappId)
+      mainCtrl.dapps.updateDapp(dappId, { isConnected: false })
+      if (isWcTopic) {
+        mainCtrl.dapps.deleteDappSessionByWcTopic(params.id)
+      }
+      await mainCtrl.autoLogin.revokeAllPoliciesForDomain(dappId, url)
 
       break
     }
@@ -232,16 +262,36 @@ export const handleActions = async (
     case 'SETUP_WC_SESSION_MESSENGER': {
       const session = await mainCtrl.dapps.getOrCreateDappSession({
         url: params.url,
-        tabId: params.tabId
+        tabId: params.tabId,
+        wcTopic: params.wcSessionTopic
       })
       const messenger = createWcBridgeMessenger(params.wcSessionTopic, params.chainId)
       mainCtrl.dapps.setSessionMessenger(session.sessionId, messenger, false)
-      console.log(
-        '[Worker] WC session messenger set for:',
-        session.sessionId,
-        'topic:',
-        params.wcSessionTopic
-      )
+      break
+    }
+
+    case 'RESTORE_WC_SESSIONS': {
+      // Track which dapp IDs we've already restored to avoid duplicates
+      const restoredDappIds = new Set<string>()
+      // Restore dapp sessions and messengers for persisted WalletConnect sessions
+      for (const wcSession of params.sessions) {
+        try {
+          const dappId = getDappIdFromUrl(new URL(wcSession.url).origin)
+          if (restoredDappIds.has(dappId)) {
+            continue
+          }
+          restoredDappIds.add(dappId)
+          const session = await mainCtrl.dapps.getOrCreateDappSession({
+            url: wcSession.url,
+            tabId: 1,
+            wcTopic: wcSession.topic
+          })
+          const messenger = createWcBridgeMessenger(wcSession.topic, wcSession.chainId)
+          mainCtrl.dapps.setSessionMessenger(session.sessionId, messenger, false)
+        } catch (e) {
+          console.error('[Worker] Failed to restore WC session for topic:', wcSession.topic, e)
+        }
+      }
       break
     }
 
