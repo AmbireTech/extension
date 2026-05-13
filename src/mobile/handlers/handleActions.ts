@@ -281,9 +281,14 @@ export const handleActions = async (
             continue
           }
           restoredDappIds.add(dappId)
+          // Use a unique tabId for WalletConnect sessions to avoid conflict with in-app dapp sessions
+          // The in-app WebView uses tabId: 1, so we use a hash of the topic to ensure uniqueness
+          const wcTabId =
+            1000000 +
+            (wcSession.topic.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) % 900000)
           const session = await mainCtrl.dapps.getOrCreateDappSession({
             url: wcSession.url,
-            tabId: 1,
+            tabId: wcTabId,
             wcTopic: wcSession.topic
           })
           const messenger = createWcBridgeMessenger(wcSession.topic, wcSession.chainId)

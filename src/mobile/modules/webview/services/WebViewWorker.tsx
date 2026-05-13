@@ -42,7 +42,7 @@ const globalErrorHandler = `
 `
 
 export interface WebViewWorkerRef {
-  dispatch: (action: any) => void
+  dispatch: (action: any, raw?: boolean) => void
   init: (config: any) => Promise<string[]>
 }
 
@@ -56,8 +56,6 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, {}>((_, ref) => {
   const pendingConfig = useRef<any>(null)
   // Stores the last config so we can re-send it when the WebView reloads (dev HMR/live reload)
   const lastConfig = useRef<any>(null)
-  // Queue for actions dispatched before WebView is ready
-  const actionQueue = useRef<any[]>([])
   // Incrementing the key forces a full WebView remount (used for Android dev reload)
   const [webviewKey, setWebviewKey] = useState(0)
   const devUrl = getDevServerUrl()
@@ -83,22 +81,12 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, {}>((_, ref) => {
     }, CONTROLLER_STORE_MAX_LOADING_TIME)
   }
 
-  // Flush queued actions once WebView is ready
-  const flushActionQueue = () => {
-    if (actionQueue.current.length === 0) return
-    const queue = [...actionQueue.current]
-    actionQueue.current = []
-    queue.forEach((action) => {
-      dispatchToWebView(action)
-    })
-  }
-
-  const dispatchToWebView = (action: any) => {
+  const dispatchToWebView = (action: any, raw?: boolean) => {
     const payload = richJson.stringify({ type: 'dispatchAction', action })
     webviewRef.current?.injectJavaScript(`
         (function() {
           try {
-            window.postMessage(${payload}, '*');
+            window.postMessage(${raw ? payload : JSON.stringify(payload)}, '*');
           } catch (e) {
             window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'ctrl.error', payload: { ctrlName: 'BridgeDispatch', errors: [{ message: e.message, stack: e.stack }] } }));
           }
@@ -108,13 +96,9 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, {}>((_, ref) => {
   }
 
   useImperativeHandle(ref, () => ({
-    dispatch: (action: any) => {
-      if (!isReadyRef.current) {
-        // Queue action for when WebView is ready
-        actionQueue.current.push(action)
-        return
-      }
-      dispatchToWebView(action)
+    dispatch: (action: any, raw?: boolean) => {
+      if (!isReadyRef.current) return
+      dispatchToWebView(action, raw)
     },
     init: (config: any) => {
       lastConfig.current = config
@@ -124,7 +108,7 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, {}>((_, ref) => {
         if (isLoaded) {
           const initPayload = richJson.stringify({ type: 'init', config })
           webviewRef.current?.injectJavaScript(`
-              window.postMessage(${initPayload}, '*');
+              window.postMessage(${JSON.stringify(initPayload)}, '*');
               true;
             `)
         } else {
@@ -157,7 +141,7 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, {}>((_, ref) => {
           if (configToSend) {
             const initPayload = richJson.stringify({ type: 'init', config: configToSend })
             webviewRef.current?.injectJavaScript(`
-                window.postMessage(${initPayload}, '*');
+                window.postMessage(${JSON.stringify(initPayload)}, '*');
                 true;
               `)
             pendingConfig.current = null
@@ -185,8 +169,6 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, {}>((_, ref) => {
             initResolver.current(data.payload.controllers)
             initResolver.current = null
           }
-          // Flush any queued actions
-          flushActionQueue()
           break
 
         case 'ctrl.update':

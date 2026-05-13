@@ -6,17 +6,17 @@ import { WalletKit } from '@reown/walletkit'
 import { Core } from '@walletconnect/core'
 import { getSdkError } from '@walletconnect/utils'
 
-import type { WalletKit as WalletKitType } from '@reown/walletkit'
+type WalletKitType = InstanceType<typeof WalletKit>
 let walletKit: WalletKitType | null = null
 let initialized = false
 let initPromise: Promise<WalletKitType> | null = null
 let pendingRestoreSessions: { topic: string; url: string; chainId: number }[] | null = null
-let dispatchAction: ((action: MethodAction | Action) => void) | null = null
+let dispatchAction: ((action: MethodAction | Action, windowId?: number, raw?: boolean) => void) | null = null
 
 export const getWalletKit = () => walletKit
 export const isWalletConnectInitialized = () => initialized
 
-export const initWalletConnect = async (dispatch: (action: MethodAction | Action) => void) => {
+export const initWalletConnect = async (dispatch: (action: MethodAction | Action, windowId?: number, raw?: boolean) => void) => {
   dispatchAction = dispatch
 
   if (initialized) {
@@ -56,7 +56,7 @@ export const initWalletConnect = async (dispatch: (action: MethodAction | Action
             }
           }
         }),
-        new Promise((_, reject) =>
+        new Promise<WalletKitType>((_, reject) =>
           setTimeout(() => reject(new Error('WalletKit initialization timed out (15s)')), 15000)
         )
       ])
@@ -71,15 +71,19 @@ export const initWalletConnect = async (dispatch: (action: MethodAction | Action
 
           // Delegate to the webview via dispatch — the webview will create the
           // dapp session and process the eth_requestAccounts request via handleActions.
-          dispatchAction!({
-            type: 'HANDLE_PROVIDER_REQUEST',
-            params: {
-              request: { method: 'eth_requestAccounts', origin: proposerUrl },
-              requestId: id,
-              providerId: 1, // Single provider id for WC for now
-              topic: `wc_session_proposal_${proposal.id.toString()}`
-            }
-          })
+          dispatchAction!(
+            {
+              type: 'HANDLE_PROVIDER_REQUEST',
+              params: {
+                request: { method: 'eth_requestAccounts', origin: proposerUrl },
+                requestId: id,
+                providerId: 1, // Single provider id for WC for now
+                topic: `wc_session_proposal_${proposal.id.toString()}`
+              }
+            },
+            undefined,
+            true
+          )
         } catch (e) {
           console.error(e)
         }
@@ -91,20 +95,24 @@ export const initWalletConnect = async (dispatch: (action: MethodAction | Action
           const { request } = params
 
           // We get the session to find the origin URL
-          const activeSession = walletKit.engine.signClient.session.get(topic)
+          const activeSession = walletKit?.engine.signClient.session.get(topic)
           const proposerUrl = activeSession?.peer?.metadata?.url
 
           // Delegate to the webview — handleActions will route the result
           // back to RN via sendToReactEvent('action.respondToWalletConnectRequest').
-          dispatchAction!({
-            type: 'HANDLE_PROVIDER_REQUEST',
-            params: {
-              request: { ...request, origin: proposerUrl || 'https://walletconnect.com' },
-              requestId: id,
-              providerId: 1,
-              topic: `wc_session_request_${topic}`
-            }
-          })
+          dispatchAction!(
+            {
+              type: 'HANDLE_PROVIDER_REQUEST',
+              params: {
+                request: { ...request, origin: proposerUrl || 'https://walletconnect.com' },
+                requestId: id,
+                providerId: 1,
+                topic: `wc_session_request_${topic}`
+              }
+            },
+            undefined,
+            true
+          )
         } catch (e) {
           console.error(e)
         }
@@ -120,10 +128,14 @@ export const initWalletConnect = async (dispatch: (action: MethodAction | Action
             '[WalletConnect] Dispatching DAPPS_CONTROLLER_DISCONNECT_DAPP for topic:',
             topic
           )
-          dispatchAction!({
-            type: 'DAPPS_CONTROLLER_DISCONNECT_DAPP',
-            params: { id: topic, url: '' }
-          })
+          dispatchAction!(
+            {
+              type: 'DAPPS_CONTROLLER_DISCONNECT_DAPP',
+              params: { id: topic, url: '' }
+            },
+            undefined,
+            true
+          )
         }
       })
 
@@ -252,7 +264,7 @@ export const approveWalletConnectSession = async (proposalId: number, accounts: 
   // and proposer are top-level (NOT nested under a .params property like in
   // the session_proposal event payload).
   const proposals = walletKit.getPendingSessionProposals()
-  const proposal = proposals.find((p: any) => p.id === proposalId)
+  const proposal = Object.values(proposals).find((p: any) => p.id === proposalId)
   if (!proposal) {
     console.error('[WalletConnect] Proposal not found for id:', proposalId)
     return
@@ -289,15 +301,19 @@ export const approveWalletConnectSession = async (proposalId: number, accounts: 
   // Delegate session messenger setup to the webview — it will create the
   // dapp session and attach a wcBridgeMessenger that routes broadcast
   // events (disconnect, chainChanged, etc.) back to RN.
-  dispatchAction!({
-    type: 'SETUP_WC_SESSION_MESSENGER',
-    params: {
-      url: proposerUrl,
-      tabId: wcTabId,
-      wcSessionTopic: session.topic,
-      chainId: 1
-    }
-  })
+  dispatchAction!(
+    {
+      type: 'SETUP_WC_SESSION_MESSENGER',
+      params: {
+        url: proposerUrl,
+        tabId: wcTabId,
+        wcSessionTopic: session.topic,
+        chainId: 1
+      }
+    },
+    undefined,
+    true
+  )
 
   return session
 }

@@ -33,8 +33,10 @@ export const WalletConnectProvider: React.FC<{ children: React.ReactNode }> = ({
   const { isStoreReady } = useContext(ControllerStoreContext)
   const [cameraPermission, requestCameraPermission] = useCameraPermissions()
 
-  // Initialize WalletKit when dispatch is available
+  // Initialize WalletKit when store and dispatch are ready
   useEffect(() => {
+    if (!isStoreReady) return
+
     // Already initialized (module-level flag) — nothing to do.
     if (isWalletConnectInitialized()) {
       setIsInitialized(true)
@@ -51,7 +53,7 @@ export const WalletConnectProvider: React.FC<{ children: React.ReactNode }> = ({
     }
 
     initWc()
-  }, [dispatch])
+  }, [dispatch, isStoreReady])
 
   // Restore WC sessions once store is ready
   useEffect(() => {
@@ -59,10 +61,14 @@ export const WalletConnectProvider: React.FC<{ children: React.ReactNode }> = ({
 
     const sessionsToRestore = getPendingRestoreSessions()
     if (sessionsToRestore && sessionsToRestore.length > 0) {
-      dispatch({
-        type: 'RESTORE_WC_SESSIONS',
-        params: { sessions: sessionsToRestore }
-      })
+      dispatch(
+        {
+          type: 'RESTORE_WC_SESSIONS',
+          params: { sessions: sessionsToRestore }
+        },
+        undefined,
+        true
+      )
     }
   }, [isStoreReady, isInitialized, dispatch])
 
