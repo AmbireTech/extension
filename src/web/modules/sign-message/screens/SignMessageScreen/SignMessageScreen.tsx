@@ -56,7 +56,7 @@ const SignMessageScreen = () => {
     submitSignatureResponse,
     signingCleanup
   } = useQrSigningFlow()
-  const { addToast, clearToasts } = useToast()
+  const { addToast } = useToast()
 
   const userRequest = useMemo(() => {
     if (
@@ -178,8 +178,6 @@ const SignMessageScreen = () => {
 
   const handleSign = useCallback(
     (signers?: { addr: Key['addr']; type: Key['type'] }[]) => {
-      clearToasts({ type: 'error' })
-
       // Has more than one key, should first choose the key to sign with
       const hasChosenSigningKey = signers && signers.length
       if (!hasChosenSigningKey) {
@@ -208,7 +206,7 @@ const SignMessageScreen = () => {
         params: { signers: chosenSigners }
       })
     },
-    [clearToasts, isLedgerConnected, dispatch, addToast, t, signMessageState.signers]
+    [isLedgerConnected, dispatch, addToast, t, signMessageState.signers]
   )
 
   const cancelQrSigningFlow = useCallback(() => {
