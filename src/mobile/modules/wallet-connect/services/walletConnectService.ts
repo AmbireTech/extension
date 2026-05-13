@@ -11,12 +11,99 @@ let walletKit: WalletKitType | null = null
 let initialized = false
 let initPromise: Promise<WalletKitType> | null = null
 let pendingRestoreSessions: { topic: string; url: string; chainId: number }[] | null = null
-let dispatchAction: ((action: MethodAction | Action, windowId?: number, raw?: boolean) => void) | null = null
+let dispatchAction:
+  | ((action: MethodAction | Action, windowId?: number, raw?: boolean) => void)
+  | null = null
 
 export const getWalletKit = () => walletKit
 export const isWalletConnectInitialized = () => initialized
 
-export const initWalletConnect = async (dispatch: (action: MethodAction | Action, windowId?: number, raw?: boolean) => void) => {
+function guessDappName(rawName: string, url: string) {
+  try {
+    const host = new URL(url).hostname.replace(/^www\./, '')
+    const parts = host.split('.')
+    const domainCore = parts.slice(0, -1).join('.')
+
+    const domainWords = domainCore.split('.').map((w) => w.toLowerCase())
+
+    const matches: any[] = []
+    for (const word of domainWords) {
+      const regex = new RegExp(`\\b${word}\\b`, 'i')
+      const match = rawName.match(regex)
+      if (match) {
+        matches.push({ word: match[0], index: match.index })
+      }
+    }
+
+    if (matches.length > 0) {
+      matches.sort((a, b) => a.index - b.index)
+      return matches
+        .map((m) => m.word)
+        .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+        .join(' ')
+    }
+  } catch (e) {
+    // ignore
+  }
+  return rawName.trim()
+}
+
+const fetchDappName = async (url: string): Promise<string | null> => {
+  try {
+    const res = await Promise.race([
+      fetch(url, {
+        headers: {
+          Accept: 'text/html',
+          'User-Agent':
+            'Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.0 Mobile/15E148 Safari/604.1'
+        }
+      }),
+      new Promise<Response>((_, reject) => setTimeout(() => reject(new Error('timeout')), 3000))
+    ])
+    if (!res.ok) return null
+    const html = await res.text()
+
+    const manifestMatch =
+      html.match(/<link[^>]*rel=["']manifest["'][^>]*href=["']([^"']+)["']/i) ||
+      html.match(/<link[^>]*href=["']([^"']+)["'][^>]*rel=["']manifest["']/i)
+    if (manifestMatch && manifestMatch[1]) {
+      try {
+        const manifestUrl = new URL(manifestMatch[1], url).href
+        const manifestRes = await fetch(manifestUrl)
+        if (manifestRes.ok) {
+          const json = await manifestRes.json()
+          if (json.name) return String(json.name).trim()
+          if (json.short_name) return String(json.short_name).trim()
+        }
+      } catch (e) {
+        // ignore manifest errors
+      }
+    }
+
+    const ogMatch =
+      html.match(/<meta[^>]*property=["']og:site_name["'][^>]*content=["']([^"']+)["']/i) ||
+      html.match(/<meta[^>]*content=["']([^"']+)["'][^>]*property=["']og:site_name["']/i) ||
+      html.match(/<meta[^>]*property=["']og:title["'][^>]*content=["']([^"']+)["']/i) ||
+      html.match(/<meta[^>]*content=["']([^"']+)["'][^>]*property=["']og:title["']/i) ||
+      html.match(/<meta[^>]*name=["']application-name["'][^>]*content=["']([^"']+)["']/i) ||
+      html.match(/<meta[^>]*content=["']([^"']+)["'][^>]*name=["']application-name["']/i)
+    if (ogMatch && ogMatch[1]) {
+      return ogMatch[1].trim()
+    }
+
+    const titleMatch = html.match(/<title[^>]*>([^<]+)<\/title>/i)
+    if (titleMatch && titleMatch[1]) {
+      return guessDappName(titleMatch[1].trim(), url)
+    }
+  } catch (e) {
+    console.warn('[WalletConnect] Failed to fetch DApp name from HTML:', e)
+  }
+  return null
+}
+
+export const initWalletConnect = async (
+  dispatch: (action: MethodAction | Action, windowId?: number, raw?: boolean) => void
+) => {
   dispatchAction = dispatch
 
   if (initialized) {
@@ -69,6 +156,48 @@ export const initWalletConnect = async (dispatch: (action: MethodAction | Action
           const { id, params } = proposal
           const proposerUrl = params.proposer.metadata.url
 
+          let proposerName = params.proposer.metadata.name
+          let proposerIcon = params.proposer.metadata.icons[0]
+
+          const fetchedName = await fetchDappName(proposerUrl)
+          if (fetchedName) {
+            proposerName = fetchedName
+          } else if (!proposerName || proposerName === 'Signature Validator') {
+            try {
+              proposerName = new URL(proposerUrl).hostname
+            } catch (e) {
+              // ignore
+            }
+          }
+
+          if (proposerIcon) {
+            try {
+              proposerIcon = new URL(proposerIcon, proposerUrl).href
+            } catch (e) {
+              // ignore invalid url
+            }
+          }
+
+          console.log(proposerName, proposerIcon)
+
+          dispatchAction!(
+            {
+              type: 'HANDLE_PROVIDER_REQUEST',
+              params: {
+                request: {
+                  method: 'tabCheckin',
+                  origin: proposerUrl,
+                  params: { name: proposerName, icon: proposerIcon }
+                },
+                requestId: 0,
+                providerId: 1,
+                topic: `wc_session_checkin_${proposal.id.toString()}`
+              }
+            },
+            undefined,
+            true
+          )
+
           // Delegate to the webview via dispatch — the webview will create the
           // dapp session and process the eth_requestAccounts request via handleActions.
           dispatchAction!(
@@ -97,6 +226,28 @@ export const initWalletConnect = async (dispatch: (action: MethodAction | Action
           // We get the session to find the origin URL
           const activeSession = walletKit?.engine.signClient.session.get(topic)
           const proposerUrl = activeSession?.peer?.metadata?.url
+
+          let proposerName = activeSession?.peer?.metadata?.name
+          let proposerIcon = activeSession?.peer?.metadata?.icons?.[0]
+
+          const fetchedName = await fetchDappName(proposerUrl || '')
+          if (fetchedName) {
+            proposerName = fetchedName
+          } else if (!proposerName || proposerName === 'Signature Validator') {
+            try {
+              proposerName = new URL(proposerUrl || '').hostname
+            } catch (e) {
+              // ignore
+            }
+          }
+
+          if (proposerIcon && proposerUrl) {
+            try {
+              proposerIcon = new URL(proposerIcon, proposerUrl).href
+            } catch (e) {
+              // ignore invalid url
+            }
+          }
 
           // Delegate to the webview — handleActions will route the result
           // back to RN via sendToReactEvent('action.respondToWalletConnectRequest').
