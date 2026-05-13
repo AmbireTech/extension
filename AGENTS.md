@@ -29,6 +29,7 @@ react, react-native, typescript, expo (bare workflow), ethers, viem and more (ch
 - ALWAYS use `isDev`, `isWeb`, `isMobile`, `isAndroid`, `isiOS`, etc. from `@common/config/env` for environment and platform checks; NEVER use `__DEV__` outside `.native.tsx` files because it does not exist in web/extension builds
 - ALWAYS use `useNavigation` and `useRoute` from `@common/hooks` for routing; NEVER import `react-router-dom` or `react-router-native` directly
 - ALWAYS use `useToast` from `@common/hooks/useToast` for toasts; NEVER use `window.alert`, `Alert.alert`, or `console.log` for user-facing messages
+- ALWAYS wrap text in `t()` from `useTranslation()` (`imported from '@common/config/localization'`)
 
 ### Security:
 - This is a security-critical Web3 wallet. Private keys and seed phrases must never be logged or exposed
