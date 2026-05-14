@@ -14,7 +14,7 @@ type Props = {
   isExternal?: boolean
 }
 
-const isExternalHref = (url: string) => /^https?:\/\//i.test(url)
+const isExternalHref = (url: string) => url.startsWith('https://')
 
 const Link: FC<Props> = ({ to, text, icon, isActive, newTab, isExternal }) => {
   const className = `${styles.wrapper} ${isActive ? styles.active : ''} ${!to ? styles.disabled : ''}`

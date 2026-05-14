@@ -6,6 +6,7 @@ import Address from '@legends/components/Address'
 import useAccountContext from '@legends/hooks/useAccountContext'
 import styles from '@legends/modules/leaderboard/screens/Leaderboard/Leaderboard.module.scss'
 import { LeaderboardEntry } from '@legends/modules/leaderboard/types'
+import { formatIntegerWithSpaceThousands } from '@legends/modules/leaderboard/utils/formatIntegerWithSpaceThousands'
 
 type Props = Omit<
   NonNullable<LeaderboardEntry['currentUser']>,
@@ -40,18 +41,11 @@ const getBadge = (rank: number) => {
   }
 }
 
-const formatScore = (value: number) => {
-  return Math.floor(value)
-    .toString()
-    .replace(/\B(?=(\d{3})+(?!\d))/g, ' ')
-}
-
 const Row: FC<Props> = ({
   account,
   rank,
   xp,
   points,
-  weight,
   image_avatar,
   stickyPosition,
   currentUserRef
@@ -72,11 +66,10 @@ const Row: FC<Props> = ({
     return () => window.removeEventListener('resize', handleResize)
   }, [])
 
-  const displayScore = typeof points === 'number' ? formatScore(points) : formatScore(xp || 0)
-  const weightDisplay = (weight ?? 0).toLocaleString(undefined, {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2
-  })
+  const displayScore =
+    typeof points === 'number'
+      ? formatIntegerWithSpaceThousands(points)
+      : formatIntegerWithSpaceThousands(xp || 0)
 
   return (
     <div
@@ -110,7 +103,6 @@ const Row: FC<Props> = ({
           />
         )}
       </div>
-      <h5 className={`${styles.cell} ${styles.weightCell}`}>{weightDisplay}</h5>
       <h5 className={`${styles.cell} ${styles.scoreValue}`}>{displayScore}</h5>
     </div>
   )

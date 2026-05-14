@@ -1,7 +1,5 @@
 import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 
-import InfoIcon from '@common/assets/svg/InfoIcon'
-import Tooltip from '@common/components/Tooltip'
 import background from '@legends/common/assets/images/background.png'
 import Alert from '@legends/components/Alert'
 import Page from '@legends/components/Page'
@@ -170,31 +168,6 @@ const LeaderboardContainer: React.FC = () => {
                 <div className={styles.cell}>
                   <h5>#</h5>
                   <h5 className={styles.playerCell}>Account/User</h5>
-                </div>
-                <div className={`${styles.cell} ${styles.weightHeader}`}>
-                  <h5 className={styles.weightText}>Weight</h5>
-                  <InfoIcon
-                    width={10}
-                    height={10}
-                    color="currentColor"
-                    className={styles.infoIcon}
-                    data-tooltip-id="leaderboard-weight-info"
-                  />
-                  <Tooltip
-                    style={{
-                      backgroundColor: '#101114',
-                      color: '#F4F4F7',
-                      fontFamily: 'FunnelDisplay',
-                      fontSize: 11,
-                      lineHeight: '16px',
-                      fontWeight: 300,
-                      maxWidth: 244,
-                      boxShadow: '0px 0px 12.1px 0px #191B20'
-                    }}
-                    place="bottom"
-                    id="leaderboard-weight-info"
-                    content="Your relative weight in the seasonal scoring formula for this leaderboard."
-                  />
                 </div>
                 <h5 className={`${styles.cell} ${styles.scoreCell}`}>Score</h5>
               </div>

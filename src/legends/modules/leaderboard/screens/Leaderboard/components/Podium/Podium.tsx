@@ -5,6 +5,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import Address from '@legends/components/Address'
 import useAccountContext from '@legends/hooks/useAccountContext'
 import { LeaderboardEntry } from '@legends/modules/leaderboard/types'
+import { formatIntegerWithSpaceThousands } from '@legends/modules/leaderboard/utils/formatIntegerWithSpaceThousands'
 
 import styles from './Podium.module.scss'
 
@@ -14,16 +15,6 @@ interface PodiumProps {
 
 const Podium: React.FC<PodiumProps> = ({ data }) => {
   const { connectedAccount } = useAccountContext()
-
-  const formatXp = (xp: number) => {
-    return xp.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ')
-  }
-
-  const formatScore = (value: number) => {
-    return Math.floor(value)
-      .toString()
-      .replace(/\B(?=(\d{3})+(?!\d))/g, ' ')
-  }
 
   return (
     <div className={styles.podium}>
@@ -46,7 +37,9 @@ const Podium: React.FC<PodiumProps> = ({ data }) => {
               <Address address={item.account} className={styles.name} maxAddressLength={11} />
             )}
             <h4 className={styles.xp}>
-              {typeof item.xp === 'number' ? formatXp(item.xp) : formatScore(item.points || 0)}
+              {typeof item.xp === 'number'
+                ? formatIntegerWithSpaceThousands(item.xp)
+                : formatIntegerWithSpaceThousands(item.points || 0)}
             </h4>
           </div>
         </div>
