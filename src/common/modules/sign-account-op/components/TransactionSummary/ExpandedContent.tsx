@@ -31,13 +31,18 @@ const DataArgs = ({
   key: string
 }) => {
   const { theme } = useTheme(getStyles)
+  const breakableStyle = {
+    color: theme.secondaryText,
+    wordBreak: 'break-all'
+  } as any
+  if (!decodedArgs.length)
+    return (
+      <Text selectable fontSize={12} style={breakableStyle}>
+        {'Empty list'}
+      </Text>
+    )
 
   return decodedArgs.map((arg, index) => {
-    const breakableStyle = {
-      color: theme.secondaryText,
-      wordBreak: 'break-all'
-    } as any
-
     return (
       <View
         key={`${key}-${index}`}
