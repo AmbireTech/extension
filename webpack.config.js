@@ -357,6 +357,28 @@ module.exports = async function (env, argv) {
       {
         from: './node_modules/webextension-polyfill/dist/browser-polyfill.min.js',
         to: 'browser-polyfill.min.js'
+      },
+      // qr-scanner ships its decoder worker inlined inside a `new Worker(URL.createObjectURL(new Blob([...])))`
+      // call. Firefox MV3 extension pages reject blob: workers under the default `script-src 'self'` CSP,
+      // so we extract the worker source once at build time and serve it as a real same-origin file.
+      // The QrScanner component then loads the worker from this URL, bypassing the blob fallback.
+      {
+        from: './node_modules/qr-scanner/qr-scanner-worker.min.js',
+        to: 'qr-scanner-worker.js',
+        transform(content) {
+          const source = content.toString()
+          const match = source.match(/new Blob\(\[`([\s\S]+?)`\]/)
+
+          if (!match) {
+            throw new Error(
+              'Failed to extract worker source from qr-scanner-worker.min.js. The qr-scanner package layout may have changed.'
+            )
+          }
+
+          // The captured text is the raw body of a template literal, so backticks and `${`
+          // are still escaped. Unescape them so the emitted file is valid JavaScript.
+          return match[1].replace(/\\`/g, '`').replace(/\\\$/g, '$')
+        }
       }
     ]
 

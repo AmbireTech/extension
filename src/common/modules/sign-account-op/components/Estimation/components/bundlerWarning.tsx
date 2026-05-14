@@ -9,7 +9,8 @@ import spacings from '@common/styles/spacings'
 
 const BundlerWarning = ({
   signAccountOpState,
-  bundlerNonceDiscrepancy
+  bundlerNonceDiscrepancy,
+  hasMarginTop
 }: {
   signAccountOpState: ISignAccountOpController | null
   bundlerNonceDiscrepancy?: {
@@ -17,6 +18,7 @@ const BundlerWarning = ({
     title: string
     text?: string
   }
+  hasMarginTop?: boolean
 }) => {
   const { dispatch: signAccountOpDispatch } = useController('SignAccountOpController')
   const { dispatch: swapAndBridgeDispatch } = useController('SwapAndBridgeController')
@@ -29,7 +31,7 @@ const BundlerWarning = ({
     <Alert
       type="warning"
       title={bundlerNonceDiscrepancy.title}
-      style={spacings.mbSm}
+      style={{ ...spacings.mbSm, ...(hasMarginTop ? spacings.mtSm : {}) }}
       text={bundlerNonceDiscrepancy.text || ''}
       buttonProps={{
         type: 'warning',

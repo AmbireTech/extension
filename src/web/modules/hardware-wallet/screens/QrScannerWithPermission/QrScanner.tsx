@@ -3,7 +3,18 @@ import React, { useEffect, useRef } from 'react'
 import { View } from 'react-native'
 
 import { useTranslation } from '@common/config/localization'
+import { browser, engine, isExtension } from '@web/constants/browserapi'
 import { UrFragmentDecoder } from '@web/modules/hardware-wallet/qr/utils/UrFragmentDecoder'
+
+// Firefox does not implement `BarcodeDetector`, so `qr-scanner` falls back to a Web Worker that it
+// spawns from a `blob:` URL (see `qr-scanner-worker.min.js`). Firefox MV3 extension pages reject
+// those workers under the default `script-src 'self'` CSP, which leaves the camera streaming but
+// no frames ever get decoded. We ship the same worker as a real same-origin file at build time
+// (see `webpack.config.js`) and point `qr-scanner` at it here, only for Gecko where it's needed.
+if (engine === 'gecko' && isExtension && browser?.runtime?.getURL) {
+  const workerUrl = browser.runtime.getURL('qr-scanner-worker.js')
+  ;(QrScannerLib as any).createQrEngine = async () => new Worker(workerUrl)
+}
 
 type Props = {
   onComplete: (payload: Uint8Array) => void
