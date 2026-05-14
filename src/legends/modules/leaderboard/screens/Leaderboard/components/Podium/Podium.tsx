@@ -19,6 +19,12 @@ const Podium: React.FC<PodiumProps> = ({ data }) => {
     return xp.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ')
   }
 
+  const formatScore = (value: number) => {
+    return Math.floor(value)
+      .toString()
+      .replace(/\B(?=(\d{3})+(?!\d))/g, ' ')
+  }
+
   return (
     <div className={styles.podium}>
       {data.map((item, index) => (
@@ -40,7 +46,7 @@ const Podium: React.FC<PodiumProps> = ({ data }) => {
               <Address address={item.account} className={styles.name} maxAddressLength={11} />
             )}
             <h4 className={styles.xp}>
-              {item.xp ? formatXp(item.xp) : Math.floor(item.points || 0)}
+              {typeof item.xp === 'number' ? formatXp(item.xp) : formatScore(item.points || 0)}
             </h4>
           </div>
         </div>

@@ -15,7 +15,6 @@ import { LeaderboardEntry } from '../../types'
 import Podium from './components/Podium'
 import Row from './components/Row'
 import styles from './Leaderboard.module.scss'
-import Ribbon from './Ribbon'
 
 enum ActiveTab {
   Season0 = 'Season0',
@@ -75,28 +74,21 @@ const LeaderboardContainer: React.FC = () => {
 
       const userRect = currentUserRef.current.getBoundingClientRect()
       const windowHeight = window.innerHeight
-      // Check if the current user's row is above the viewport (scrolling down)
       if (userRect.top < 0) {
-        // If the user is above the viewport, pin to the top
         setStickyPosition('top')
       } else if (userRect.bottom > windowHeight) {
-        // If the user is below the viewport, pin to the bottom
         setStickyPosition('bottom')
       }
     }
 
     const pageElement = pageRef.current
     if (pageElement) {
-      // Attach the scroll event listener
       pageElement.addEventListener('scroll', handleScroll, { passive: true })
-
-      // Trigger the handleScroll function immediately after component mount
       handleScroll()
     }
 
     return () => {
       if (pageElement) {
-        // Clean up the event listener on component unmount
         pageElement.removeEventListener('scroll', handleScroll)
       }
     }
@@ -105,8 +97,8 @@ const LeaderboardContainer: React.FC = () => {
   useEffect(() => {
     if (loading) return
 
-    updateLeaderboard()
-  }, [updateLeaderboard])
+    void updateLeaderboard()
+  }, [loading, updateLeaderboard])
 
   return (
     <Page
@@ -121,11 +113,28 @@ const LeaderboardContainer: React.FC = () => {
     >
       <div className={styles.wrapper}>
         <div className={styles.heading}>
-          <h1 className={styles.title}>Leaderboard</h1>
-          <p className={styles.subtitle}>
-            Find your current position on the Ambire Rewards Leaderboard or check the archives of
-            the previous seasons
-          </p>
+          <h1 className={styles.title}>Historical Leaderboard</h1>
+          <div className={styles.intro}>
+            <p className={styles.introParagraph}>
+              <span className={styles.introLead}>
+                Ambire Rewards is a currently paused incentive program{' '}
+              </span>
+              <span className={styles.introMuted}>
+                designed to reward real usage of the Ambire Wallet with its native token, $WALLET.
+              </span>
+            </p>
+            <p className={styles.introParagraph}>
+              <span className={styles.introEmphasis}>
+                At its core, the idea has always been simple:
+              </span>
+              <span className={styles.introMuted}>
+                {' '}
+                the more value a user brings into the wallet - by holding assets, using features
+                like swaps and bridges, or engaging with the ecosystem - the more rewards they can
+                earn.
+              </span>
+            </p>
+          </div>
         </div>
         {error && <Alert className={styles.leaderboardError} type="error" title={error} />}
         {loading && <Spinner />}
@@ -149,128 +158,50 @@ const LeaderboardContainer: React.FC = () => {
               </button>
               <button
                 type="button"
-                className={`${styles.tab} ${styles.current} ${
-                  activeTab === ActiveTab.Season2 ? styles.active : ''
-                }`}
+                className={`${styles.tab} ${activeTab === ActiveTab.Season2 ? styles.active : ''}`}
                 onClick={() => setActiveTab(ActiveTab.Season2)}
               >
-                <div className={styles.ribbonWrapper}>
-                  <Ribbon className={styles.icon} />
-                  <span className={styles.label}>Current</span>
-                </div>
                 Season 2
               </button>
             </div>
             <Podium data={leaderboardData.slice(0, 3)} />
-            <div ref={tableRef} className={`${styles.table} ${styles[`season${activeTab}`]}`}>
+            <div ref={tableRef} className={styles.table}>
               <div className={styles.header}>
                 <div className={styles.cell}>
                   <h5>#</h5>
-                  <h5 className={styles.playerCell}>
-                    {activeTab !== ActiveTab.Season2 ? 'Player' : 'Account'}
-                  </h5>
+                  <h5 className={styles.playerCell}>Account/User</h5>
                 </div>
-                {leaderboardData.some((i) => i.level) && <h5 className={styles.cell}>Level</h5>}
-                {leaderboardData.some((i) => i.reward) && (
-                  <div className={styles.cell}>
-                    <h5 className={styles.weightText}>Reward</h5>
-                    <InfoIcon
-                      width={10}
-                      height={10}
-                      color="currentColor"
-                      className={styles.infoIcon}
-                      data-tooltip-id="reward-info"
-                    />
-                    <Tooltip
-                      style={{
-                        backgroundColor: '#101114',
-                        color: '#F4F4F7',
-                        fontFamily: 'FunnelDisplay',
-                        fontSize: 11,
-                        lineHeight: '16px',
-                        fontWeight: 300,
-                        maxWidth: 244,
-                        boxShadow: '0px 0px 12.1px 0px #191B20'
-                      }}
-                      place="bottom"
-                      id="reward-info"
-                      content="$WALLET rewards for the season"
-                    />
-                  </div>
-                )}
-                {leaderboardData.some((i) => i.reward) && (
-                  <div className={styles.cell}>
-                    <h5 className={styles.weightText}>$Reward</h5>
-                    <InfoIcon
-                      width={10}
-                      height={10}
-                      color="currentColor"
-                      className={styles.infoIcon}
-                      data-tooltip-id="dollar-reward-info"
-                    />
-                    <Tooltip
-                      style={{
-                        backgroundColor: '#101114',
-                        color: '#F4F4F7',
-                        fontFamily: 'FunnelDisplay',
-                        fontSize: 11,
-                        lineHeight: '16px',
-                        fontWeight: 300,
-                        maxWidth: 244,
-                        boxShadow: '0px 0px 12.1px 0px #191B20'
-                      }}
-                      place="bottom"
-                      id="dollar-reward-info"
-                      content="The $ value of $WALLET rewards for the season"
-                    />
-                  </div>
-                )}
-                {leaderboardData.some((i) => i.projectedRewards || i.projectedRewardsInUsd) && (
-                  <div className={styles.cell}>
-                    <h5 className={styles.weightText}>Rewards</h5>
-                    <InfoIcon
-                      width={10}
-                      height={10}
-                      color="currentColor"
-                      className={styles.infoIcon}
-                      data-tooltip-id="weight-info"
-                    />
-                    <Tooltip
-                      style={{
-                        backgroundColor: '#101114',
-                        color: '#F4F4F7',
-                        fontFamily: 'FunnelDisplay',
-                        fontSize: 11,
-                        lineHeight: '16px',
-                        fontWeight: 300,
-                        maxWidth: 244,
-                        boxShadow: '0px 0px 12.1px 0px #191B20'
-                      }}
-                      place="bottom"
-                      id="weight-info"
-                      content="Your projected $stkWALLET rewards at the end of the season. This number is only an estimate — it will fluctuate as the season progresses, new users join, and balances shift"
-                    />
-                  </div>
-                )}
-
-                <h5 className={`${styles.cell} ${styles.scoreCell}`}>
-                  {activeTab === ActiveTab.Season2 ? 'Score' : 'XP'}
-                </h5>
+                <div className={`${styles.cell} ${styles.weightHeader}`}>
+                  <h5 className={styles.weightText}>Weight</h5>
+                  <InfoIcon
+                    width={10}
+                    height={10}
+                    color="currentColor"
+                    className={styles.infoIcon}
+                    data-tooltip-id="leaderboard-weight-info"
+                  />
+                  <Tooltip
+                    style={{
+                      backgroundColor: '#101114',
+                      color: '#F4F4F7',
+                      fontFamily: 'FunnelDisplay',
+                      fontSize: 11,
+                      lineHeight: '16px',
+                      fontWeight: 300,
+                      maxWidth: 244,
+                      boxShadow: '0px 0px 12.1px 0px #191B20'
+                    }}
+                    place="bottom"
+                    id="leaderboard-weight-info"
+                    content="Your relative weight in the seasonal scoring formula for this leaderboard."
+                  />
+                </div>
+                <h5 className={`${styles.cell} ${styles.scoreCell}`}>Score</h5>
               </div>
               {leaderboardData.map((item) => (
-                // maybe we can split this components into multiple, one for each season
                 <Row
                   key={item.account}
                   {...item}
-                  projectedRewardsSeason1={
-                    activeTab === ActiveTab.Season1
-                      ? item.projectedRewards || 'Loading...'
-                      : undefined
-                  }
-                  projectedRewardsSeason2Usd={
-                    activeTab === ActiveTab.Season2 ? item.projectedRewardsInUsd : undefined
-                  }
-                  points={activeTab === ActiveTab.Season2 ? item.points : undefined}
                   stickyPosition={stickyPosition}
                   currentUserRef={currentUserRef}
                 />
@@ -282,19 +213,6 @@ const LeaderboardContainer: React.FC = () => {
                   <Row
                     key={userLeaderboardData.account}
                     {...userLeaderboardData}
-                    projectedRewardsSeason1={
-                      activeTab === ActiveTab.Season1
-                        ? userLeaderboardData.projectedRewards
-                        : undefined
-                    }
-                    projectedRewardsSeason2Usd={
-                      activeTab === ActiveTab.Season2
-                        ? userLeaderboardData.projectedRewardsInUsd
-                        : undefined
-                    }
-                    points={
-                      activeTab === ActiveTab.Season2 ? userLeaderboardData.points : undefined
-                    }
                     stickyPosition={stickyPosition}
                     currentUserRef={currentUserRef}
                   />

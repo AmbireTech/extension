@@ -1,12 +1,9 @@
 import React, { FC } from 'react'
 
-import { STK_WALLET } from '@ambire-common/consts/addresses'
-import { getTokenBalanceInUSD } from '@ambire-common/libs/portfolio/helpers'
 import { faTrophy } from '@fortawesome/free-solid-svg-icons/faTrophy'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import Address from '@legends/components/Address'
 import useAccountContext from '@legends/hooks/useAccountContext'
-import usePortfolio from '@legends/hooks/usePortfolio'
 import styles from '@legends/modules/leaderboard/screens/Leaderboard/Leaderboard.module.scss'
 import { LeaderboardEntry } from '@legends/modules/leaderboard/types'
 
@@ -15,12 +12,10 @@ type Props = Omit<
   'projectedRewards' | 'projectedRewardsUsd'
 > & {
   stickyPosition: string | null
-  projectedRewardsSeason1?: number | string
-  projectedRewardsSeason2Usd?: number
   currentUserRef: React.RefObject<HTMLDivElement>
-  reward?: number | ''
   image_avatar?: string
 }
+
 const calculateRowStyle = (isConnectedAccountRow: boolean, stickyPosition: string | null) => {
   return {
     position: (isConnectedAccountRow && stickyPosition ? 'sticky' : 'relative') as
@@ -45,32 +40,23 @@ const getBadge = (rank: number) => {
   }
 }
 
-function prettifyProjectedRewards(amount: number) {
-  if (amount > 1_000_000_000) return `${(amount / 1_000_000_000).toFixed(2)}B`
-  if (amount > 1_000_000) return `${(amount / 1_000_000).toFixed(2)}M`
-  if (amount > 1_000) return `${(amount / 1_000).toFixed(2)}K`
-  return Math.floor(amount)
-}
-
-const formatXp = (xp: number) => {
-  return xp.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ')
+const formatScore = (value: number) => {
+  return Math.floor(value)
+    .toString()
+    .replace(/\B(?=(\d{3})+(?!\d))/g, ' ')
 }
 
 const Row: FC<Props> = ({
   account,
   rank,
   xp,
-  level,
   points,
+  weight,
   image_avatar,
-  projectedRewardsSeason1,
-  projectedRewardsSeason2Usd,
   stickyPosition,
-  currentUserRef,
-  reward
+  currentUserRef
 }) => {
   const { connectedAccount } = useAccountContext()
-  const { walletTokenPrice } = usePortfolio()
   const isConnectedAccountRow = account === connectedAccount
 
   const [maxAddressLength, setMaxAddressLength] = React.useState(23)
@@ -81,34 +67,15 @@ const Row: FC<Props> = ({
       setMaxAddressLength(isMobile ? 8 : 23)
     }
 
-    // Set initial value
     handleResize()
-
-    // Add event listener
     window.addEventListener('resize', handleResize)
-
-    // Clean up
     return () => window.removeEventListener('resize', handleResize)
   }, [])
-  const formattedXp = formatXp(xp || 0)
 
-  const amountFormatted = reward ? Math.round(reward * 1e18) : 0
-  const tokenBalanceInUSD = getTokenBalanceInUSD({
-    chainId: BigInt(1),
-    amount: BigInt(amountFormatted || 1),
-    latestAmount: BigInt(amountFormatted || 1),
-    pendingAmount: BigInt(amountFormatted || 1),
-    address: STK_WALLET,
-    symbol: 'stkWALLET',
-    name: 'Staked $WALLET',
-    decimals: 18,
-    priceIn: [{ baseCurrency: 'usd', price: walletTokenPrice || 0 }],
-    flags: {
-      onGasTank: false,
-      rewardsType: 'wallet-projected-rewards' as const,
-      canTopUpGasTank: false,
-      isFeeToken: false
-    }
+  const displayScore = typeof points === 'number' ? formatScore(points) : formatScore(xp || 0)
+  const weightDisplay = (weight ?? 0).toLocaleString(undefined, {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
   })
 
   return (
@@ -116,7 +83,7 @@ const Row: FC<Props> = ({
       key={account}
       className={`${styles.row} ${isConnectedAccountRow ? styles.currentUserRow : ''} ${
         rank <= 3 ? styles[`rankedRow${rank}`] : ''
-      } ${reward ? styles.withReward : ''}`}
+      }`}
       ref={isConnectedAccountRow ? currentUserRef : null}
       style={calculateRowStyle(isConnectedAccountRow, stickyPosition)}
     >
@@ -143,40 +110,8 @@ const Row: FC<Props> = ({
           />
         )}
       </div>
-      {typeof level === 'number' && (
-        <h5 className={`${styles.cell} ${styles.levelCell}`}>{level}</h5>
-      )}
-      {typeof projectedRewardsSeason1 !== 'undefined' && (
-        <h5 className={`${styles.cell} ${styles.weight}`}>
-          {typeof projectedRewardsSeason1 === 'number'
-            ? prettifyProjectedRewards(projectedRewardsSeason1)
-            : projectedRewardsSeason1}
-        </h5>
-      )}
-      {typeof reward !== 'undefined' && (
-        <>
-          <h5 className={`${styles.cell} ${styles.reward}`}>
-            {typeof reward === 'number' ? prettifyProjectedRewards(reward) : reward}
-          </h5>
-          <h5 className={`${styles.cell} ${styles.dollarReward}`}>
-            $
-            {Number(tokenBalanceInUSD).toLocaleString(undefined, {
-              maximumFractionDigits: 0
-            })}
-          </h5>
-        </>
-      )}
-      {typeof projectedRewardsSeason2Usd !== 'undefined' && (
-        <h5 className={`${styles.cell} ${styles.dollarReward}`}>
-          {walletTokenPrice
-            ? Number(projectedRewardsSeason2Usd / walletTokenPrice).toLocaleString(undefined, {
-                maximumFractionDigits: 0
-              })
-            : 'Loading...'}
-        </h5>
-      )}
-
-      <h5 className={styles.cell}>{points ? Math.floor(points) : formattedXp}</h5>
+      <h5 className={`${styles.cell} ${styles.weightCell}`}>{weightDisplay}</h5>
+      <h5 className={`${styles.cell} ${styles.scoreValue}`}>{displayScore}</h5>
     </div>
   )
 }

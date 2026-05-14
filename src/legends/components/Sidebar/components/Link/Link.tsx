@@ -11,19 +11,38 @@ type Props = {
   icon: any
   isActive: boolean
   newTab?: boolean
+  isExternal?: boolean
 }
 
-const Link: FC<Props> = ({ to, text, icon, isActive, newTab }) => {
-  return (
-    <RouterLink
-      to={to}
-      className={`${styles.wrapper} ${isActive ? styles.active : ''} ${!to ? styles.disabled : ''}`}
-      target={newTab ? '_blank' : undefined}
-    >
+const isExternalHref = (url: string) => /^https?:\/\//i.test(url)
+
+const Link: FC<Props> = ({ to, text, icon, isActive, newTab, isExternal }) => {
+  const className = `${styles.wrapper} ${isActive ? styles.active : ''} ${!to ? styles.disabled : ''}`
+  const contents = (
+    <>
       <div className={styles.iconWrapper}>
         <FontAwesomeIcon size="lg" icon={icon} />
       </div>
       <span>{text}</span>
+    </>
+  )
+
+  if (isExternal !== undefined ? isExternal : isExternalHref(to)) {
+    return (
+      <a
+        href={to}
+        className={className}
+        target={newTab ? '_blank' : undefined}
+        rel={newTab ? 'noopener noreferrer' : undefined}
+      >
+        {contents}
+      </a>
+    )
+  }
+
+  return (
+    <RouterLink to={to} className={className} target={newTab ? '_blank' : undefined}>
+      {contents}
     </RouterLink>
   )
 }
