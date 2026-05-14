@@ -2,8 +2,9 @@ import '@walletconnect/react-native-compat'
 
 import CONFIG from '@common/config/env'
 import { Action, MethodAction } from '@common/types/actions'
-import { WalletKit } from '@reown/walletkit'
+import { WalletKit, WalletKitTypes } from '@reown/walletkit'
 import { Core } from '@walletconnect/core'
+import { ProposalTypes, SessionTypes } from '@walletconnect/types'
 import { getSdkError } from '@walletconnect/utils'
 
 type WalletKitType = InstanceType<typeof WalletKit>
@@ -153,7 +154,7 @@ export const initWalletConnect = async (
       walletKit = initResult
       console.log('[WalletConnect] WalletKit initialized successfully.')
 
-      walletKit.on('session_proposal', async (proposal: any) => {
+      walletKit.on('session_proposal', async (proposal: WalletKitTypes.SessionProposal) => {
         try {
           const { id, params } = proposal
           const proposerUrl = params.proposer.metadata.url
@@ -222,7 +223,7 @@ export const initWalletConnect = async (
         }
       })
 
-      walletKit.on('session_request', async (requestEvent: any) => {
+      walletKit.on('session_request', async (requestEvent: WalletKitTypes.SessionRequest) => {
         try {
           const { topic, params, id } = requestEvent
           const { request } = params
@@ -304,7 +305,7 @@ export const initWalletConnect = async (
       try {
         const activeSessions = walletKit.getActiveSessions()
         const sessionsToRestore = await Promise.all(
-          Object.values(activeSessions).map(async (session: any) => {
+          Object.values(activeSessions).map(async (session: SessionTypes.Struct) => {
             const eip155Namespace = session.namespaces?.eip155
             const chainId = eip155Namespace?.chains?.[0]?.split(':')[1] || '1'
             const url = session.peer?.metadata?.url
@@ -448,7 +449,7 @@ export const approveWalletConnectSession = async (proposalId: number, accounts: 
   // and proposer are top-level (NOT nested under a .params property like in
   // the session_proposal event payload).
   const proposals = walletKit.getPendingSessionProposals()
-  const proposal = Object.values(proposals).find((p: any) => p.id === proposalId)
+  const proposal = Object.values(proposals).find((p: ProposalTypes.Struct) => p.id === proposalId)
   if (!proposal) {
     console.error('[WalletConnect] Proposal not found for id:', proposalId)
     return
