@@ -4,6 +4,7 @@
  */
 const CHAIN_ID_TO_UNISWAP_CHAIN: { [key: string]: string } = {
   '1': 'ethereum',
+  '130': 'unichain',
   '137': 'polygon',
   '196': 'xlayer',
   '143': 'monad',
