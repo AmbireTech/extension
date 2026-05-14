@@ -5,10 +5,17 @@
 const CHAIN_ID_TO_UNISWAP_CHAIN: { [key: string]: string } = {
   '1': 'ethereum',
   '137': 'polygon',
+  '196': 'xlayer',
+  '143': 'monad',
   '42161': 'arbitrum',
   '10': 'optimism',
   '8453': 'base',
   '324': 'zksync',
+  '480': 'worldchain',
+  '1868': 'soneium',
+  '7777777': 'zora',
+  '42220': 'celo',
+  '81457': 'blast',
   '43114': 'avalanche',
   '56': 'bnb',
   '59144': 'linea'
@@ -57,12 +64,6 @@ export const generatePositionUrl = ({
     if (!chainId) return undefined
 
     const chainIdStr = chainId.toString()
-    console.log(
-      `Generating Uniswap ${uniswapVersion.toUpperCase()} position URL with chainId:`,
-      chainIdStr,
-      'positionId:',
-      positionId
-    )
     const uniswapChainName = CHAIN_ID_TO_UNISWAP_CHAIN[chainIdStr]
 
     if (!uniswapChainName) {
