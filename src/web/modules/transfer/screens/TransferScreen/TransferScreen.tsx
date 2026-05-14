@@ -441,7 +441,6 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
       visibleUserRequests,
       requestsDispatch,
       addToast,
-      clearToasts,
       t,
       isTopUp,
       addressState,
