@@ -1,6 +1,6 @@
 import { formatUnits, Interface, parseUnits } from 'ethers'
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
-import { View, ViewStyle } from 'react-native'
+import { Pressable, View, ViewStyle } from 'react-native'
 
 import humanizerInfo from '@ambire-common/consts/humanizer/humanizerInfo.json'
 import {
@@ -12,7 +12,6 @@ import DeleteIcon from '@common/assets/svg/DeleteIcon'
 import ExpandableCard from '@common/components/ExpandableCard'
 import HumanizedVisualization from '@common/components/HumanizedVisualization'
 import Label from '@common/components/Label'
-import MultistateToggleButton from '@common/components/MultistateToggleButton'
 import Text from '@common/components/Text'
 import { isMobile, isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
@@ -84,7 +83,7 @@ const TransactionSummary = ({
   const {
     state: { portfolio }
   } = useController('SelectedAccountController')
-  const { styles } = useTheme(getStyles)
+  const { styles, theme } = useTheme(getStyles)
   const { addToast } = useToast()
   /**
    * It takes some time to remove the call from the controller state, so we optimistically
@@ -113,14 +112,6 @@ const TransactionSummary = ({
         4
       ),
     [call.data, call.to, call.value]
-  )
-
-  const erc7730ExpandedTabStates = useMemo(
-    () => [
-      { text: 'Description', callback: () => setErc7730ExpandedTab('description') },
-      { text: 'Raw data', callback: () => setErc7730ExpandedTab('raw') }
-    ],
-    []
   )
 
   const foundCallSignature = useMemo(() => {
@@ -461,10 +452,49 @@ const TransactionSummary = ({
               paddingBottom: SPACING_SM * sizeMultiplier[size]
             }}
           >
-            <MultistateToggleButton
-              style={{ alignSelf: 'flex-start', marginBottom: SPACING_TY * sizeMultiplier[size] }}
-              states={erc7730ExpandedTabStates}
-            />
+            <View
+              style={{
+                alignSelf: 'stretch',
+                flexDirection: 'row',
+                borderBottomWidth: 1,
+                borderBottomColor: theme.secondaryBorder,
+                marginBottom: SPACING_SM * sizeMultiplier[size]
+              }}
+            >
+              {(
+                [
+                  ['description', t('Description')],
+                  ['raw', t('Raw data')]
+                ] as const
+              ).map(([tab, label]) => {
+                const isActive = erc7730ExpandedTab === tab
+
+                return (
+                  <Pressable
+                    key={tab}
+                    onPress={(e: any) => {
+                      e?.stopPropagation?.()
+                      setErc7730ExpandedTab(tab)
+                    }}
+                    style={{
+                      minWidth: 148 * sizeMultiplier[size],
+                      paddingVertical: SPACING_TY * sizeMultiplier[size],
+                      marginRight: SPACING_SM * sizeMultiplier[size],
+                      borderBottomWidth: 2,
+                      borderBottomColor: isActive ? theme.secondaryAccent400 : 'transparent'
+                    }}
+                  >
+                    <Text
+                      fontSize={14 * sizeMultiplier[size]}
+                      weight={isActive ? 'semiBold' : 'medium'}
+                      color={isActive ? theme.secondaryAccent400 : theme.secondaryText}
+                    >
+                      {label}
+                    </Text>
+                  </Pressable>
+                )
+              })}
+            </View>
             {erc7730ExpandedTab === 'description' ? (
               <HumanizedVisualization
                 data={call.fullVisualization}

@@ -1,7 +1,7 @@
 import { formatUnits } from 'ethers'
 import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { ColorValue, View } from 'react-native'
+import { ColorValue, StyleProp, View, ViewStyle } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 
 import { getTokenAmount } from '@ambire-common/libs/portfolio/helpers'
@@ -103,12 +103,14 @@ const EditApproval = ({
   editCall,
   token,
   value,
-  id
+  id,
+  style
 }: {
   editCall: (amount: string, token: string, closeEditApprovals: () => void) => void
   token: string
   value: bigint
   id?: string
+  style?: StyleProp<ViewStyle>
 }) => {
   const { t } = useTranslation()
   const { theme } = useTheme()
@@ -181,7 +183,8 @@ const EditApproval = ({
           flexbox.directionRow,
           flexbox.alignCenter,
           spacings.mrTy,
-          { marginLeft: -8 }
+          { marginLeft: -8 },
+          !!style ? style : {}
         ]}
         {...bindEditApprovals}
         onPress={(e: any) => {
