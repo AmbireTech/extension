@@ -5,6 +5,7 @@ import { TouchableOpacity, View } from 'react-native'
 import LeftArrowIcon from '@common/assets/svg/LeftArrowIcon'
 import RightArrowIcon from '@common/assets/svg/RightArrowIcon'
 import Text from '@common/components/Text'
+import { isMobile, isWeb } from '@common/config/env'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
@@ -84,9 +85,11 @@ const ActionsPagination = () => {
       style={[
         flexbox.directionRow,
         flexbox.alignCenter,
-        flexbox.flex1,
+        isWeb && flexbox.flex1,
         spacings.phSm,
-        flexbox.justifyCenter
+        flexbox.justifyCenter,
+        isMobile && { columnGap: 16 },
+        isMobile && spacings.ptLg
       ]}
     >
       <TouchableOpacity

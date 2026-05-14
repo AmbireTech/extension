@@ -13,10 +13,8 @@ interface Styles {
 const getStyles = (theme: ThemeProps) =>
   StyleSheet.create<Styles>({
     container: {
-      ...flexbox.alignCenter,
-      position: 'absolute',
-      left: 0,
-      width: '100%'
+      ...flexbox.alignSelfCenter,
+      position: 'absolute'
     },
     iconContainer: {
       ...flexbox.center,
