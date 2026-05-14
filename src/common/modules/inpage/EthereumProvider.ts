@@ -260,7 +260,11 @@ export class EthereumProvider extends EventEmitter {
     this.#connectionInitialized = true
 
     this.#pushEventHandlers = new PushEventHandlers(this)
-    this.initialize()
+
+    void this.initialize()
+    // re-check visibility when the tab becomes visible again otherwise,
+    // if we're changing tabs while awaiting a dapp req, communication breaks
+    document.addEventListener('visibilitychange', this.#requestPromiseCheckVisibility)
     this.#externalHandlers.onBackgroundMessage(this.#handleBackgroundMessage)
   }
 
