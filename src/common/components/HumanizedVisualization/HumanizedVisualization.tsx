@@ -52,6 +52,7 @@ interface Props {
   hideLinks?: boolean
   style?: StyleProp<ViewStyle>
   erc7730Mode?: 'summary' | 'description'
+  dapp?: IrCall['dapp']
   editApprovalCallInfo?: {
     setter: (arg: string, token: string, closeModal: () => void) => void
     amount: bigint
@@ -203,7 +204,11 @@ interface Erc7730StructuredVisualizationProps {
 
 type Erc7730Row = HumanizerErc7730Visualization['rows'][number]
 
-const isSpenderRow = (row: Erc7730Row) => /spender/.test(row.label.toLowerCase())
+const isSpenderRow = (row: Erc7730Row) => {
+  const label = row.label.trim().toLowerCase()
+
+  return /spender/.test(label) || ['to', 'recipient', 'receiver', 'operator'].includes(label)
+}
 
 const isExpirationRow = (row: Erc7730Row) =>
   /expires|expiration|deadline|valid|until/.test(row.label.toLowerCase())
@@ -578,10 +583,13 @@ const HumanizedVisualization: FC<Props> = ({
   imageSize = 36,
   hideLinks = false,
   style,
-  erc7730Mode = 'summary'
+  erc7730Mode = 'summary',
+  dapp
 }) => {
   const marginRight = SPACING_TY * sizeMultiplierSize
   const { theme } = useTheme()
+  const dappIcon = dapp?.icon || undefined
+  const shouldShowDappIcon = !!dappIcon && !data.some((item) => item?.type === 'erc7730')
 
   return (
     <View
@@ -599,6 +607,15 @@ const HumanizedVisualization: FC<Props> = ({
         style
       ]}
     >
+      {shouldShowDappIcon && (
+        <ManifestImage
+          uri={dappIcon}
+          containerStyle={spacings.mrSm}
+          size={24 * sizeMultiplierSize}
+          skeletonAppearance="secondaryBackground"
+          imageStyle={{ borderRadius: 12 * sizeMultiplierSize, backgroundColor: 'transparent' }}
+        />
+      )}
       {data.map((item) => {
         if (!item || item.isHidden) return null
         const key = item.id

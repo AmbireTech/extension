@@ -100,20 +100,6 @@ const TransactionSummary = ({
     [call.fullVisualization]
   )
 
-  const rawCallJson = useMemo(
-    () =>
-      JSON.stringify(
-        {
-          to: call.to || null,
-          value: (call.value ?? 0n).toString(),
-          data: call.data || '0x'
-        },
-        null,
-        4
-      ),
-    [call.data, call.to, call.value]
-  )
-
   const foundCallSignature = useMemo(() => {
     let foundSigHash: string | undefined
     Object.values(humanizerInfo.abis).some((abi) => {
@@ -374,6 +360,41 @@ const TransactionSummary = ({
     return { setter: innerEditApproval, amount, token, callId: call.id }
   }, [call, innerEditApproval, portfolio, signAccountOpState])
 
+  const rawCallDetails = (
+    <View>
+      {call.to && (
+        <Text selectable fontSize={12} style={styles.bodyText} weight="mono_regular">
+          <Text fontSize={12} style={styles.bodyText} weight="regular">
+            {t('Interacting with (to): ')}
+          </Text>
+          {call.to}
+        </Text>
+      )}
+      {foundCallSignature && (
+        <Text selectable fontSize={12} style={styles.bodyText}>
+          <Text fontSize={12} style={styles.bodyText} weight="regular">
+            {t('Function to call: ')}
+          </Text>
+          {foundCallSignature}
+        </Text>
+      )}
+      <Text selectable fontSize={12} style={styles.bodyText}>
+        <Text fontSize={12} style={styles.bodyText} weight="regular">
+          {t('Value to be sent (value): ')}
+        </Text>
+        {formatUnits(call.value || '0x0', 18)}
+      </Text>
+      <Text selectable fontSize={12} style={styles.bodyText}>
+        <Text fontSize={12} style={styles.bodyText} weight="regular">
+          {t('Data: ')}
+        </Text>
+        <Text fontSize={12} style={styles.bodyText} weight="mono_regular">
+          {call.data}
+        </Text>
+      </Text>
+    </View>
+  )
+
   if (isCallRemovedOptimistic) return null
 
   return (
@@ -407,6 +428,7 @@ const TransactionSummary = ({
               hasPadding={enableExpand}
               hideLinks={hideLinks}
               editApprovalCallInfo={editApprovalCallInfo}
+              dapp={call.dapp}
             />
           ) : (
             <FallbackVisualization
@@ -477,9 +499,8 @@ const TransactionSummary = ({
                       setErc7730ExpandedTab(tab)
                     }}
                     style={{
-                      minWidth: 148 * sizeMultiplier[size],
                       paddingVertical: SPACING_TY * sizeMultiplier[size],
-                      marginRight: SPACING_SM * sizeMultiplier[size],
+                      marginRight: SPACING_TY,
                       borderBottomWidth: 2,
                       borderBottomColor: isActive ? theme.secondaryAccent400 : 'transparent'
                     }}
@@ -508,19 +529,7 @@ const TransactionSummary = ({
                 erc7730Mode="description"
               />
             ) : (
-              <Text
-                selectable
-                fontSize={12}
-                style={[
-                  styles.bodyText,
-                  {
-                    ...(isWeb ? ({ wordBreak: 'break-all' } as any) : {})
-                  }
-                ]}
-                weight="mono_regular"
-              >
-                {rawCallJson}
-              </Text>
+              rawCallDetails
             )}
           </View>
         ) : (
@@ -530,36 +539,7 @@ const TransactionSummary = ({
               paddingVertical: SPACING_TY * sizeMultiplier[size]
             }}
           >
-            {call.to && (
-              <Text selectable fontSize={12} style={styles.bodyText} weight="mono_regular">
-                <Text fontSize={12} style={styles.bodyText} weight="regular">
-                  {t('Interacting with (to): ')}
-                </Text>
-                {call.to}
-              </Text>
-            )}
-            {foundCallSignature && (
-              <Text selectable fontSize={12} style={styles.bodyText}>
-                <Text fontSize={12} style={styles.bodyText} weight="regular">
-                  {t('Function to call: ')}
-                </Text>
-                {foundCallSignature}
-              </Text>
-            )}
-            <Text selectable fontSize={12} style={styles.bodyText}>
-              <Text fontSize={12} style={styles.bodyText} weight="regular">
-                {t('Value to be sent (value): ')}
-              </Text>
-              {formatUnits(call.value || '0x0', 18)}
-            </Text>
-            <Text selectable fontSize={12} style={styles.bodyText}>
-              <Text fontSize={12} style={styles.bodyText} weight="regular">
-                {t('Data: ')}
-              </Text>
-              <Text fontSize={12} style={styles.bodyText} weight="mono_regular">
-                {call.data}
-              </Text>
-            </Text>
+            {rawCallDetails}
           </View>
         )
       }
