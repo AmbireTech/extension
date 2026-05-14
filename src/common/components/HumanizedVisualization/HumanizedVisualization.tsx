@@ -207,7 +207,7 @@ type Erc7730Row = HumanizerErc7730Visualization['rows'][number]
 const isSpenderRow = (row: Erc7730Row) => {
   const label = row.label.trim().toLowerCase()
 
-  return /spender/.test(label) || ['to', 'recipient', 'receiver', 'operator'].includes(label)
+  return /spender|recipient|receiver|operator/.test(label) || ['to'].includes(label)
 }
 
 const isExpirationRow = (row: Erc7730Row) =>
