@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { Pressable } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 
-import { Contact } from '@ambire-common/controllers/addressBook/addressBook'
+import { Contact } from '@ambire-common/interfaces/addressBook'
 import { AddressState } from '@ambire-common/interfaces/domains'
 import { AddressPoisoningMatch } from '@ambire-common/interfaces/transfer'
 import { TokenResult } from '@ambire-common/libs/portfolio'
