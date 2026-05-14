@@ -72,6 +72,12 @@ const isDustToken = (token: TokenResult): boolean => {
   const balanceUSD = getTokenBalanceInUSD(token)
   const hasUSDPrice = token.priceIn.some((p) => p.baseCurrency === 'usd')
 
+  // Custom tokens that don't have a price shouldn't be hidden as dust
+  // because the user may be tracking it for other reasons
+  if (token.flags.isCustom && !hasUSDPrice) {
+    return false
+  }
+
   return balanceUSD < 0.01 || !hasUSDPrice
 }
 
