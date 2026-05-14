@@ -184,7 +184,10 @@ const EditApproval = ({
           { marginLeft: -8 }
         ]}
         {...bindEditApprovals}
-        onPress={() => openEditApprovals()}
+        onPress={(e: any) => {
+          e?.stopPropagation?.()
+          openEditApprovals()
+        }}
       >
         <Text fontSize={14} color={theme.linkText}>
           {'['}

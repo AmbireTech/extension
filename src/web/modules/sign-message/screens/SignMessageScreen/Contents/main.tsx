@@ -184,6 +184,7 @@ const Main = ({
                   data={humanizedMessage.fullVisualization}
                   chainId={network?.chainId || 1n}
                   sizeMultiplierSize={responsiveSizeMultiplier}
+                  textSize={14}
                 />
               ) : (
                 <>

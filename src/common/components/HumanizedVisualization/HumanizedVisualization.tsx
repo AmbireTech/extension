@@ -19,7 +19,7 @@ import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
-import spacings, { SPACING_MI, SPACING_SM, SPACING_TY } from '@common/styles/spacings'
+import spacings, { SPACING_SM, SPACING_TY } from '@common/styles/spacings'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import { setStringAsync } from '@common/utils/clipboard'
@@ -36,6 +36,10 @@ function stopPropagation(e: React.MouseEvent) {
   e.stopPropagation()
 }
 
+function stopPressPropagation(e?: { stopPropagation?: () => void }) {
+  e?.stopPropagation?.()
+}
+
 interface Props {
   data: IrCall['fullVisualization']
   sizeMultiplierSize?: number
@@ -47,6 +51,7 @@ interface Props {
   imageSize?: number
   hideLinks?: boolean
   style?: StyleProp<ViewStyle>
+  erc7730Mode?: 'summary' | 'description'
   editApprovalCallInfo?: {
     setter: (arg: string, token: string, closeModal: () => void) => void
     amount: bigint
@@ -54,6 +59,8 @@ interface Props {
     callId?: string
   }
 }
+
+type EditApprovalCallInfo = NonNullable<Props['editApprovalCallInfo']>
 
 interface Erc7730StructuredAddressActionsProps {
   address: string
@@ -115,7 +122,10 @@ const Erc7730StructuredAddressActions: FC<Erc7730StructuredAddressActionsProps> 
       <Pressable
         accessibilityRole="button"
         accessibilityLabel={t('Copy Address')}
-        onPress={handleCopyAddress}
+        onPress={(e) => {
+          stopPressPropagation(e)
+          void handleCopyAddress()
+        }}
         style={[spacings.mlTy, flexbox.center]}
       >
         {({ hovered }: any) => (
@@ -130,7 +140,10 @@ const Erc7730StructuredAddressActions: FC<Erc7730StructuredAddressActionsProps> 
         <Pressable
           accessibilityRole="link"
           accessibilityLabel={t('View in Explorer')}
-          onPress={handleOpenExplorer}
+          onPress={(e) => {
+            stopPressPropagation(e)
+            void handleOpenExplorer()
+          }}
           style={[spacings.mlTy, flexbox.center]}
         >
           {({ hovered }: any) => (
@@ -184,6 +197,22 @@ interface Erc7730StructuredVisualizationProps {
   sizeMultiplierSize: number
   textSize: number
   hideLinks?: boolean
+  mode?: 'summary' | 'description'
+  editApprovalCallInfo?: EditApprovalCallInfo
+}
+
+const getErc7730SummaryRows = (item: HumanizerErc7730Visualization) => {
+  const selectedRows = [
+    item.rows.find((row) => /spender|operator|recipient|receiver|to/.test(row.label.toLowerCase())),
+    item.rows.find((row) => row.value.some((value) => value.type === 'token')),
+    item.rows.find((row) => /expires|expiration|deadline|valid|until/.test(row.label.toLowerCase()))
+  ].filter((row): row is HumanizerErc7730Visualization['rows'][number] => !!row)
+
+  const uniqueRows = selectedRows.filter(
+    (row, index) => selectedRows.findIndex((selectedRow) => selectedRow === row) === index
+  )
+
+  return uniqueRows.length ? uniqueRows : item.rows.slice(0, 3)
 }
 
 const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = ({
@@ -191,7 +220,9 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
   chainId,
   sizeMultiplierSize,
   textSize,
-  hideLinks = false
+  hideLinks = false,
+  mode = 'summary',
+  editApprovalCallInfo
 }) => {
   const { theme } = useTheme()
 
@@ -204,22 +235,42 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
       return (
         <View
           key={valueItem.id}
-          style={[flexbox.directionRow, flexbox.alignCenter, flexbox.justifyEnd, flexbox.wrap]}
+          style={[
+            flexbox.alignEnd,
+            {
+              minWidth: 0,
+              maxWidth: '100%'
+            }
+          ]}
         >
-          <TokenOrNft
-            sizeMultiplierSize={sizeMultiplierSize}
-            value={valueItem.value}
-            address={valueItem.address}
-            textSize={textSize}
-            chainId={tokenChainId}
-            hideLinks
-            tokenMarginRight={0}
-          />
-          <Erc7730StructuredAddressActions
-            address={valueItem.address}
-            chainId={tokenChainId}
-            hideLinks={hideLinks}
-          />
+          <View
+            style={[flexbox.directionRow, flexbox.alignCenter, flexbox.justifyEnd, flexbox.wrap]}
+          >
+            <TokenOrNft
+              sizeMultiplierSize={sizeMultiplierSize}
+              value={valueItem.value}
+              address={valueItem.address}
+              textSize={textSize}
+              chainId={tokenChainId}
+              hideLinks
+              tokenMarginRight={0}
+            />
+            <Erc7730StructuredAddressActions
+              address={valueItem.address}
+              chainId={tokenChainId}
+              hideLinks={hideLinks}
+            />
+          </View>
+          {mode === 'summary' && editApprovalCallInfo && (
+            <View style={[flexbox.directionRow, flexbox.justifyEnd, spacings.mtMi]}>
+              <EditApproval
+                editCall={editApprovalCallInfo.setter}
+                token={editApprovalCallInfo.token}
+                value={editApprovalCallInfo.amount}
+                id={editApprovalCallInfo.callId}
+              />
+            </View>
+          )}
         </View>
       )
     }
@@ -256,6 +307,7 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
           sizeMultiplierSize={sizeMultiplierSize}
           textSize={textSize}
           hideLinks={hideLinks}
+          mode="description"
         />
       )
     }
@@ -285,69 +337,118 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
     return null
   }
 
-  return (
-    <View style={{ width: '100%' }}>
-      {!!item.title && (
-        <>
-          <View
-            style={[
-              flexbox.directionRow,
-              flexbox.alignCenter,
-              flexbox.justifySpaceBetween,
-              spacings.mbTy,
-              { gap: SPACING_SM, width: '100%' }
-            ]}
-          >
-            <Text
-              fontSize={textSize + 2}
-              weight="semiBold"
-              appearance="primaryText"
-              style={{ flex: 1, minWidth: 0 }}
-            >
-              {item.title}
-            </Text>
+  if (mode === 'summary') {
+    const summaryRows = getErc7730SummaryRows(item)
+
+    return (
+      <View
+        style={[
+          flexbox.directionRow,
+          flexbox.alignCenter,
+          flexbox.justifySpaceBetween,
+          flexbox.wrap,
+          {
+            width: '100%',
+            gap: SPACING_SM
+          }
+        ]}
+      >
+        <View
+          style={[
+            flexbox.directionRow,
+            flexbox.alignCenter,
+            {
+              minWidth: 160,
+              flexShrink: 1,
+              gap: SPACING_TY
+            }
+          ]}
+        >
+          {!!item.dapp?.icon && (
+            <ManifestImage
+              uri={item.dapp.icon}
+              size={24 * sizeMultiplierSize}
+              skeletonAppearance="secondaryBackground"
+              imageStyle={{ borderRadius: 12 * sizeMultiplierSize, backgroundColor: 'transparent' }}
+            />
+          )}
+          <View style={{ minWidth: 0, flexShrink: 1 }}>
+            {!!item.title && (
+              <Text
+                fontSize={textSize + 2}
+                weight="semiBold"
+                color={theme.secondaryAccent400}
+                numberOfLines={1}
+              >
+                {item.title}
+              </Text>
+            )}
             {!!item.dapp?.name && (
+              <Text
+                fontSize={Math.max(textSize - 3, 11)}
+                weight="medium"
+                appearance="secondaryText"
+                numberOfLines={1}
+              >
+                {`via ${item.dapp.name}`}
+              </Text>
+            )}
+          </View>
+        </View>
+        <View
+          style={[
+            flexbox.directionRow,
+            flexbox.alignCenter,
+            flexbox.justifyEnd,
+            flexbox.wrap,
+            {
+              flex: 1,
+              minWidth: 260,
+              gap: SPACING_SM
+            }
+          ]}
+        >
+          {summaryRows.map((row, index) => (
+            <View
+              key={`${item.id}-summary-${row.label}-${index}`}
+              style={[
+                flexbox.alignEnd,
+                {
+                  minWidth: index === 0 ? 128 : 96,
+                  maxWidth: index === 0 ? 190 : 260
+                }
+              ]}
+            >
+              <Text
+                fontSize={Math.max(textSize - 4, 10)}
+                weight="semiBold"
+                appearance="secondaryText"
+                numberOfLines={1}
+              >
+                {row.label}
+              </Text>
               <View
                 style={[
                   flexbox.directionRow,
                   flexbox.alignCenter,
                   flexbox.justifyEnd,
-                  { maxWidth: '45%', minWidth: 0 }
+                  flexbox.wrap,
+                  {
+                    maxWidth: '100%'
+                  }
                 ]}
               >
-                {!!item.dapp.icon && (
-                  <ManifestImage
-                    uri={item.dapp.icon}
-                    containerStyle={spacings.mrTy}
-                    size={18}
-                    skeletonAppearance="secondaryBackground"
-                    imageStyle={{ borderRadius: 4, backgroundColor: 'transparent' }}
-                  />
-                )}
-                <Text
-                  fontSize={Math.max(textSize - 2, 12)}
-                  weight="medium"
-                  appearance="secondaryText"
-                  numberOfLines={1}
-                  style={{ flexShrink: 1 }}
-                >
-                  {`via ${item.dapp.name}`}
-                </Text>
+                {row.value.map(renderValue)}
               </View>
-            )}
-          </View>
-          <View
-            style={[
-              spacings.mbTy,
-              {
-                height: 1,
-                width: '100%',
-                backgroundColor: theme.secondaryBorder
-              }
-            ]}
-          />
-        </>
-      )}
+            </View>
+          ))}
+        </View>
+      </View>
+    )
+  }
+
+  return (
+    <View style={{ width: '100%' }}>
       {item.rows.map((row, index) => (
         <View
           key={`${item.id}-${row.label}-${index}`}
@@ -358,7 +459,7 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
             {
               width: '100%',
               gap: SPACING_SM,
-              paddingVertical: SPACING_MI,
+              paddingVertical: SPACING_TY,
               flexWrap: 'wrap'
             }
           ]}
@@ -402,7 +503,8 @@ const HumanizedVisualization: FC<Props> = ({
   hasPadding = true,
   imageSize = 36,
   hideLinks = false,
-  style
+  style,
+  erc7730Mode = 'summary'
 }) => {
   const marginRight = SPACING_TY * sizeMultiplierSize
   const { theme } = useTheme()
@@ -435,6 +537,8 @@ const HumanizedVisualization: FC<Props> = ({
               sizeMultiplierSize={sizeMultiplierSize}
               textSize={textSize}
               hideLinks={hideLinks}
+              mode={erc7730Mode}
+              editApprovalCallInfo={editApprovalCallInfo}
             />
           )
         }

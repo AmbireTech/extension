@@ -7,11 +7,12 @@ import {
   noStateUpdateStatuses,
   SigningStatus
 } from '@ambire-common/controllers/signAccountOp/signAccountOp'
-import { IrCall } from '@ambire-common/libs/humanizer/interfaces'
+import { HumanizerErc7730Visualization, IrCall } from '@ambire-common/libs/humanizer/interfaces'
 import DeleteIcon from '@common/assets/svg/DeleteIcon'
 import ExpandableCard from '@common/components/ExpandableCard'
 import HumanizedVisualization from '@common/components/HumanizedVisualization'
 import Label from '@common/components/Label'
+import MultistateToggleButton from '@common/components/MultistateToggleButton'
 import Text from '@common/components/Text'
 import { isMobile, isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
@@ -90,6 +91,37 @@ const TransactionSummary = ({
    * set this state to true, which hides it immediately.
    */
   const [isCallRemovedOptimistic, setIsCallRemovedOptimistic] = useState(false)
+  const [erc7730ExpandedTab, setErc7730ExpandedTab] = useState<'description' | 'raw'>('description')
+
+  const erc7730Visualization = useMemo(
+    () =>
+      call.fullVisualization?.find(
+        (item): item is HumanizerErc7730Visualization & { id: number } => item.type === 'erc7730'
+      ),
+    [call.fullVisualization]
+  )
+
+  const rawCallJson = useMemo(
+    () =>
+      JSON.stringify(
+        {
+          to: call.to || null,
+          value: (call.value ?? 0n).toString(),
+          data: call.data || '0x'
+        },
+        null,
+        4
+      ),
+    [call.data, call.to, call.value]
+  )
+
+  const erc7730ExpandedTabStates = useMemo(
+    () => [
+      { text: 'Description', callback: () => setErc7730ExpandedTab('description') },
+      { text: 'Raw data', callback: () => setErc7730ExpandedTab('raw') }
+    ],
+    []
+  )
 
   const foundCallSignature = useMemo(() => {
     let foundSigHash: string | undefined
@@ -422,43 +454,84 @@ const TransactionSummary = ({
         </>
       }
       expandedContent={
-        <View
-          style={{
-            paddingHorizontal: SPACING_SM * sizeMultiplier[size],
-            paddingVertical: SPACING_TY * sizeMultiplier[size]
-          }}
-        >
-          {call.to && (
-            <Text selectable fontSize={12} style={styles.bodyText} weight="mono_regular">
-              <Text fontSize={12} style={styles.bodyText} weight="regular">
-                {t('Interacting with (to): ')}
+        erc7730Visualization ? (
+          <View
+            style={{
+              paddingHorizontal: SPACING_SM * sizeMultiplier[size],
+              paddingBottom: SPACING_SM * sizeMultiplier[size]
+            }}
+          >
+            <MultistateToggleButton
+              style={{ alignSelf: 'flex-start', marginBottom: SPACING_TY * sizeMultiplier[size] }}
+              states={erc7730ExpandedTabStates}
+            />
+            {erc7730ExpandedTab === 'description' ? (
+              <HumanizedVisualization
+                data={call.fullVisualization}
+                sizeMultiplierSize={sizeMultiplier[size]}
+                textSize={Math.max(textSize - 1, 12)}
+                imageSize={imageSize}
+                chainId={chainId}
+                type={type}
+                hasPadding={false}
+                hideLinks={hideLinks}
+                erc7730Mode="description"
+              />
+            ) : (
+              <Text
+                selectable
+                fontSize={12}
+                style={[
+                  styles.bodyText,
+                  {
+                    ...(isWeb ? ({ wordBreak: 'break-all' } as any) : {})
+                  }
+                ]}
+                weight="mono_regular"
+              >
+                {rawCallJson}
               </Text>
-              {call.to}
-            </Text>
-          )}
-          {foundCallSignature && (
+            )}
+          </View>
+        ) : (
+          <View
+            style={{
+              paddingHorizontal: SPACING_SM * sizeMultiplier[size],
+              paddingVertical: SPACING_TY * sizeMultiplier[size]
+            }}
+          >
+            {call.to && (
+              <Text selectable fontSize={12} style={styles.bodyText} weight="mono_regular">
+                <Text fontSize={12} style={styles.bodyText} weight="regular">
+                  {t('Interacting with (to): ')}
+                </Text>
+                {call.to}
+              </Text>
+            )}
+            {foundCallSignature && (
+              <Text selectable fontSize={12} style={styles.bodyText}>
+                <Text fontSize={12} style={styles.bodyText} weight="regular">
+                  {t('Function to call: ')}
+                </Text>
+                {foundCallSignature}
+              </Text>
+            )}
             <Text selectable fontSize={12} style={styles.bodyText}>
               <Text fontSize={12} style={styles.bodyText} weight="regular">
-                {t('Function to call: ')}
+                {t('Value to be sent (value): ')}
               </Text>
-              {foundCallSignature}
+              {formatUnits(call.value || '0x0', 18)}
             </Text>
-          )}
-          <Text selectable fontSize={12} style={styles.bodyText}>
-            <Text fontSize={12} style={styles.bodyText} weight="regular">
-              {t('Value to be sent (value): ')}
+            <Text selectable fontSize={12} style={styles.bodyText}>
+              <Text fontSize={12} style={styles.bodyText} weight="regular">
+                {t('Data: ')}
+              </Text>
+              <Text fontSize={12} style={styles.bodyText} weight="mono_regular">
+                {call.data}
+              </Text>
             </Text>
-            {formatUnits(call.value || '0x0', 18)}
-          </Text>
-          <Text selectable fontSize={12} style={styles.bodyText}>
-            <Text fontSize={12} style={styles.bodyText} weight="regular">
-              {t('Data: ')}
-            </Text>
-            <Text fontSize={12} style={styles.bodyText} weight="mono_regular">
-              {call.data}
-            </Text>
-          </Text>
-        </View>
+          </View>
+        )
       }
     >
       <View
