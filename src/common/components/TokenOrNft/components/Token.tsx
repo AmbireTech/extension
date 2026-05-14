@@ -1,4 +1,5 @@
 import { formatUnits, MaxUint256, ZeroAddress } from 'ethers'
+import { nanoid } from 'nanoid'
 import React, { FC, memo, useCallback, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Linking, Pressable, View } from 'react-native'
@@ -74,6 +75,13 @@ const InnerToken: FC<Props> = ({
   }, [amount, tokenInfo?.decimals])
 
   const shouldDisplayALotOf = useMemo(() => fullAmount >= 10_000_000_000, [fullAmount])
+  const amountTooltipId = useMemo(
+    () =>
+      shouldDisplayUnlimitedAmount
+        ? `${address}-unlimited-amount-${nanoid(6)}`
+        : `${address}-${fullAmount}-balance-${nanoid(6)}`,
+    [address, fullAmount, shouldDisplayUnlimitedAmount]
+  )
 
   return (
     <>
@@ -90,12 +98,10 @@ const InnerToken: FC<Props> = ({
               shouldDisplayUnlimitedAmount || shouldDisplayALotOf ? 'warningText' : 'primaryText'
             }
             dataSet={createGlobalTooltipDataSet({
-              id: shouldDisplayUnlimitedAmount
-                ? `${address}-unlimited-amount`
-                : `${address}-${fullAmount}-balance`,
+              id: amountTooltipId,
               content: String(fullAmount)
             })}
-            style={shouldDisplayUnlimitedAmount ? spacings.mrTy : spacings.mrMi}
+            style={spacings.mrMi}
           >
             {/* eslint-disable-next-line no-nested-ternary */}
             {shouldDisplayUnlimitedAmount

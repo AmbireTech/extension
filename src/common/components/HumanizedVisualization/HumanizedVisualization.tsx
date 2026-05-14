@@ -249,15 +249,6 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
               }
             ]}
           >
-            {editApprovalCallInfo && (
-              <EditApproval
-                editCall={editApprovalCallInfo.setter}
-                token={editApprovalCallInfo.token}
-                value={editApprovalCallInfo.amount}
-                id={editApprovalCallInfo.callId}
-                style={[spacings.ml0, spacings.mrMi]}
-              />
-            )}
             <TokenOrNft
               sizeMultiplierSize={sizeMultiplierSize}
               value={valueItem.value}
@@ -267,6 +258,15 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
               hideLinks
               tokenMarginRight={0}
             />
+            {editApprovalCallInfo && (
+              <EditApproval
+                editCall={editApprovalCallInfo.setter}
+                token={editApprovalCallInfo.token}
+                value={editApprovalCallInfo.amount}
+                id={editApprovalCallInfo.callId}
+                style={[spacings.mlTy, spacings.mr0]}
+              />
+            )}
             <Erc7730StructuredAddressActions
               address={valueItem.address}
               chainId={tokenChainId}
