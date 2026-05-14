@@ -1,4 +1,4 @@
-import React, { FC, Fragment, memo, useCallback, useMemo } from 'react'
+import React, { FC, Fragment, memo, useCallback, useEffect, useMemo, useState } from 'react'
 import { Linking, Pressable, StyleProp, View, ViewStyle } from 'react-native'
 
 import {
@@ -6,10 +6,13 @@ import {
   HumanizerVisualization,
   IrCall
 } from '@ambire-common/libs/humanizer/interfaces'
+import { getAddressCaught } from '@ambire-common/utils/getAddressCaught'
 import shortenAddress from '@ambire-common/utils/shortenAddress'
 import useBenzinNetworksContext from '@benzin/hooks/useBenzinNetworksContext'
+import EnsAvatar from '@common/components/Avatar/EnsAvatar'
 import CopyIcon from '@common/assets/svg/CopyIcon'
 import OpenIcon from '@common/assets/svg/OpenIcon'
+import DomainBadge from '@common/components/Avatar/DomainBadge'
 import EditApproval from '@common/components/HumanizedVisualization/EditApproval'
 import HumanizerAddress from '@common/components/HumanizerAddress'
 import Text from '@common/components/Text'
@@ -17,6 +20,7 @@ import TokenOrNft from '@common/components/TokenOrNft'
 import { isMobile, isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
+import useReverseLookup from '@common/hooks/useReverseLookup'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import spacings, { SPACING_SM, SPACING_TY } from '@common/styles/spacings'
@@ -165,28 +169,77 @@ interface Erc7730StructuredAddressProps {
   chainId: bigint
   textSize: number
   hideLinks?: boolean
+  preferEnsName?: boolean
 }
 
 const Erc7730StructuredAddress: FC<Erc7730StructuredAddressProps> = ({
   address,
   chainId,
   textSize,
-  hideLinks = false
+  hideLinks = false,
+  preferEnsName = false
 }) => {
+  const { name, type } = useReverseLookup({ address })
+  const [ensAvatarImageState, setEnsAvatarImageState] = useState<'loading' | 'loaded' | 'failed'>(
+    'loading'
+  )
+  const checksummedAddress = useMemo(() => getAddressCaught(address), [address])
+  const {
+    state: { domains }
+  } = useController('DomainsController')
+  const ensAvatar = checksummedAddress ? domains?.[checksummedAddress]?.ensAvatar : undefined
+  const shouldShowDomainName = preferEnsName && !!name
+  const shouldShowEnsAvatar =
+    shouldShowDomainName && type === 'ens' && !!ensAvatar && ensAvatarImageState !== 'failed'
+
+  useEffect(() => {
+    setEnsAvatarImageState('loading')
+  }, [ensAvatar])
+
   return (
     <View style={[flexbox.directionRow, flexbox.alignCenter, { maxWidth: '100%' }]}>
-      <Text
-        fontSize={textSize}
-        weight="medium"
-        appearance="linkText"
-        selectable
-        style={{
-          flexShrink: 1,
-          ...(isWeb ? { wordBreak: 'break-all' } : {})
-        }}
-      >
-        {shortenAddress(address, 18, 4)}
-      </Text>
+      {shouldShowDomainName ? (
+        <>
+          {shouldShowEnsAvatar ? (
+            <View style={spacings.mrMi}>
+              <EnsAvatar
+                avatar={ensAvatar}
+                size={16}
+                borderRadius={8}
+                setEnsAvatarImageState={setEnsAvatarImageState}
+              />
+            </View>
+          ) : (
+            <DomainBadge name={name} type={type} />
+          )}
+          <Text
+            fontSize={textSize}
+            weight="semiBold"
+            appearance="primary"
+            selectable
+            numberOfLines={1}
+            style={{
+              flexShrink: 1,
+              ...(isWeb ? { wordBreak: 'break-all' } : {})
+            }}
+          >
+            {name}
+          </Text>
+        </>
+      ) : (
+        <Text
+          fontSize={textSize}
+          weight="medium"
+          appearance="linkText"
+          selectable
+          style={{
+            flexShrink: 1,
+            ...(isWeb ? { wordBreak: 'break-all' } : {})
+          }}
+        >
+          {shortenAddress(address, 18, 4)}
+        </Text>
+      )}
       <Erc7730StructuredAddressActions address={address} chainId={chainId} hideLinks={hideLinks} />
     </View>
   )
@@ -242,7 +295,11 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
 }) => {
   const { theme } = useTheme()
 
-  const renderValue = (valueItem: HumanizerVisualization, overrideTextSize = textSize) => {
+  const renderValue = (
+    valueItem: HumanizerVisualization,
+    overrideTextSize = textSize,
+    options: { preferEnsName?: boolean } = {}
+  ) => {
     if (!valueItem || valueItem.isHidden) return null
 
     if (valueItem.type === 'token') {
@@ -330,6 +387,7 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
           chainId={valueItem.chainId || chainId}
           textSize={overrideTextSize}
           hideLinks={hideLinks}
+          preferEnsName={options.preferEnsName}
         />
       )
     }
@@ -472,7 +530,9 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
                     }
                   ]}
                 >
-                  {spenderRow.value.map((value) => renderValue(value, subtitleTextSize))}
+                  {spenderRow.value.map((value) =>
+                    renderValue(value, subtitleTextSize, { preferEnsName: true })
+                  )}
                 </View>
               </View>
             )}
