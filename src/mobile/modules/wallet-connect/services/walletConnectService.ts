@@ -446,7 +446,6 @@ export const approveWalletConnectSession = async (proposalId: number, accounts: 
     namespaces
   })
 
-  const wcTabId = id.toString()
   const proposerUrl = proposal.proposer?.metadata?.url
 
   // Delegate session messenger setup to the webview — it will create the
@@ -457,7 +456,7 @@ export const approveWalletConnectSession = async (proposalId: number, accounts: 
       type: 'SETUP_WC_SESSION_MESSENGER',
       params: {
         url: proposerUrl,
-        tabId: wcTabId,
+        tabId: id,
         wcSessionTopic: session.topic,
         chainId: 1
       }
@@ -510,11 +509,79 @@ export const handleWcSessionBroadcast = async (payload: {
     return
   }
 
-  await walletKit.emitSessionEvent({
-    topic: payload.wcSessionTopic,
-    event: { name: payload.event, data: payload.data },
-    chainId: `eip155:${payload.chainId}`
-  })
+  if (payload.event === 'accountsChanged' || payload.event === 'chainChanged') {
+    try {
+      const activeSession = walletKit.engine.signClient.session.get(payload.wcSessionTopic)
+      if (activeSession) {
+        const namespaces = activeSession.namespaces
+        if (namespaces.eip155) {
+          let newAccounts = namespaces.eip155.accounts
+
+          if (payload.event === 'accountsChanged') {
+            const chains = namespaces.eip155.chains || [`eip155:${payload.chainId}`]
+            newAccounts = chains
+              .map((c: string) => payload.data.map((a: string) => `${c}:${a}`))
+              .flat()
+          } else if (payload.event === 'chainChanged') {
+            // For chainChanged, we should ideally ensure the new chain is in the chains list
+            // but the essential part is making sure the current account is mapped to the new chain
+            const newChain =
+              typeof payload.data === 'object' && payload.data.chain
+                ? parseInt(payload.data.chain, 16).toString()
+                : parseInt(payload.data, 16).toString()
+
+            const currentAddresses = newAccounts
+              .map((acc: string) => acc.split(':')[2])
+              .filter((addr: string | undefined): addr is string => !!addr)
+            const uniqueAddresses = [...new Set(currentAddresses)]
+
+            const chains = namespaces.eip155.chains || []
+            if (!chains.includes(`eip155:${newChain}`)) {
+              chains.push(`eip155:${newChain}`)
+            }
+
+            newAccounts = chains
+              .map((c: string) => uniqueAddresses.map((a: string) => `${c}:${a}`))
+              .flat()
+            namespaces.eip155.chains = chains
+          }
+
+          const newNamespaces = {
+            ...namespaces,
+            eip155: {
+              ...namespaces.eip155,
+              accounts: newAccounts
+            }
+          }
+
+          await walletKit.updateSession({
+            topic: payload.wcSessionTopic,
+            namespaces: newNamespaces
+          })
+          console.log('[WalletConnect] Successfully updated session namespaces for', payload.event)
+        }
+      }
+    } catch (e: any) {
+      console.warn('[WalletConnect] Failed to update session namespaces:', e)
+    }
+  }
+
+  try {
+    await walletKit.emitSessionEvent({
+      topic: payload.wcSessionTopic,
+      event: { name: payload.event, data: payload.data },
+      chainId: `eip155:${payload.chainId}`
+    })
+  } catch (e: any) {
+    if (e?.message?.includes('Record was recently deleted')) {
+      console.log(
+        '[WalletConnect] Ignored emitSessionEvent on deleted session:',
+        payload.wcSessionTopic
+      )
+    } else {
+      throw e
+    }
+  }
 }
 
 export const disconnectSession = async (topic: string) => {
