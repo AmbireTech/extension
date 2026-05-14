@@ -188,7 +188,9 @@ export const handleActions = async (
           url: params.request.origin,
           tabId: params.tabId || 1 // Mobile uses tabId: 1 for in-app webview, WC passes explicit tabId
         })
-        mainCtrl.dapps.setSessionMessenger(session.sessionId, mobileMessenger, false)
+        if (!params.topic?.toString().includes('wc_session')) {
+          mainCtrl.dapps.setSessionMessenger(session.sessionId, mobileMessenger, false)
+        }
         console.log('[Worker] Resolved session for:', session.origin, session.sessionId)
 
         const result = await handleProviderRequests({

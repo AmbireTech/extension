@@ -32,6 +32,7 @@ export default function useRequestsControllerHelpers(
   // Track if bottom sheet is currently open
   const isBottomSheetOpenRef = useRef(false)
 
+  const activeWindowIdRef = useRef(1)
   const currentUserRequestRef = useRef(requestsState?.currentUserRequest)
   currentUserRequestRef.current = requestsState?.currentUserRequest
 
@@ -47,7 +48,7 @@ export default function useRequestsControllerHelpers(
       if (currentUserRequestRef.current?.kind === 'unlock') {
         return
       }
-      dispatch({ type: 'WINDOW_REMOVED', params: { id: 1 } })
+      dispatch({ type: 'WINDOW_REMOVED', params: { id: activeWindowIdRef.current } })
     },
     [dispatch]
   )
@@ -55,6 +56,9 @@ export default function useRequestsControllerHelpers(
   useEffect(() => {
     const handleWindowAction = (payload: { type: string; winId: number }) => {
       if (payload.type === 'open' || payload.type === 'focus') {
+        if (payload.winId !== undefined && payload.winId !== null) {
+          activeWindowIdRef.current = payload.winId
+        }
         if (currentUserRequestRef.current?.kind === 'unlock') {
           if (isBottomSheetOpenRef.current) {
             closeRequestModal()
@@ -75,7 +79,9 @@ export default function useRequestsControllerHelpers(
           isBottomSheetOpenRef.current = true
         }
       } else if (payload.type === 'remove') {
-        if (isBottomSheetOpenRef.current) closeRequestModal()
+        if (isBottomSheetOpenRef.current) {
+          closeRequestModal()
+        }
       }
     }
 
@@ -104,7 +110,12 @@ export default function useRequestsControllerHelpers(
         isBottomSheetOpenRef.current = true
       }
     }
-  }, [requestsState?.currentUserRequest, keystoreState?.isUnlocked, closeRequestModal, openRequestModal])
+  }, [
+    requestsState?.currentUserRequest,
+    keystoreState?.isUnlocked,
+    closeRequestModal,
+    openRequestModal
+  ])
 
   useEffect(() => {
     if (keystoreState?.isUnlocked && requestsState?.currentUserRequest?.kind === 'unlock') {
