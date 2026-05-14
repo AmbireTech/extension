@@ -345,6 +345,7 @@ const TransactionSummary = ({
     return { setter: innerEditApproval, amount, token, callId: call.id }
   }, [call, innerEditApproval, portfolio, signAccountOpState])
 
+  // TODO: should this be reused in history/benzin/other places
   const callVisualization = useMemo(() => {
     if (!call.isFallback) return call.fullVisualization
     if (!call.to) return call.fullVisualization
