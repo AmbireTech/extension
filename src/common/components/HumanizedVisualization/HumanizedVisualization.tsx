@@ -203,8 +203,7 @@ interface Erc7730StructuredVisualizationProps {
 
 type Erc7730Row = HumanizerErc7730Visualization['rows'][number]
 
-const isSpenderRow = (row: Erc7730Row) =>
-  /spender|operator|recipient|receiver|to/.test(row.label.toLowerCase())
+const isSpenderRow = (row: Erc7730Row) => /spender/.test(row.label.toLowerCase())
 
 const isExpirationRow = (row: Erc7730Row) =>
   /expires|expiration|deadline|valid|until/.test(row.label.toLowerCase())
@@ -429,7 +428,7 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
                 {item.title}
               </Text>
             )}
-            {spenderRow ? (
+            {spenderRow && (
               <View
                 style={[
                   flexbox.directionRow,
@@ -463,17 +462,6 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
                   {spenderRow.value.map((value) => renderValue(value, subtitleTextSize))}
                 </View>
               </View>
-            ) : (
-              !!item.dapp?.name && (
-                <Text
-                  fontSize={subtitleTextSize}
-                  weight="medium"
-                  appearance="secondaryText"
-                  numberOfLines={1}
-                >
-                  {`via ${item.dapp.name}`}
-                </Text>
-              )
             )}
           </View>
         </View>
