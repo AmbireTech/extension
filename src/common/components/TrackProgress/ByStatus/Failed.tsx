@@ -1,6 +1,6 @@
 import React, { FC } from 'react'
 import { useTranslation } from 'react-i18next'
-import { View } from 'react-native'
+import { View, ViewStyle } from 'react-native'
 
 import { Hex } from '@ambire-common/interfaces/hex'
 import RetryIcon from '@common/assets/svg/RetryIcon'
@@ -22,9 +22,17 @@ type FailedProps = {
   }
   amount?: string
   handleClose?: () => void
+  alertStyle?: ViewStyle
 }
 
-const Failed: FC<FailedProps> = ({ title, errorMessage, handleClose, toToken, amount }) => {
+const Failed: FC<FailedProps> = ({
+  title,
+  errorMessage,
+  handleClose,
+  toToken,
+  amount,
+  alertStyle
+}) => {
   const { t } = useTranslation()
   const { theme } = useTheme()
   const { dispatch: swapAndBridgeDispatch } = useController('SwapAndBridgeController')
@@ -41,7 +49,7 @@ const Failed: FC<FailedProps> = ({ title, errorMessage, handleClose, toToken, am
       <View
         style={[flexbox.directionRow, flexbox.alignCenter, flexbox.justifyCenter, spacings.mbLg]}
       >
-        <AlertVertical size="md" title={title} text={errorMessage}>
+        <AlertVertical size="md" title={title} text={errorMessage} style={alertStyle}>
           {!!toToken && (
             <AnimatedPressable
               style={{

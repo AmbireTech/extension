@@ -5,6 +5,7 @@ import Alert from '@common/components/Alert'
 import DiagonalRightArrowIcon from '@common/assets/svg/DiagonalRightArrowIcon'
 import OpenIcon from '@common/assets/svg/OpenIcon'
 import Panel from '@common/components/Panel'
+import ScrollableWrapper from '@common/components/ScrollableWrapper'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
@@ -18,7 +19,7 @@ import spacings from '@common/styles/spacings'
 import { hexToRgba } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import { TabLayoutContainer, TabLayoutWrapperMainContent } from '@web/components/TabLayoutWrapper'
-import { QrWalletRegistry } from '@web/modules/hardware-wallet/qr/wallets'
+import { QrWalletConfigs } from '@web/modules/hardware-wallet/qr/wallets'
 import QrScannerWithPermission from '@web/modules/hardware-wallet/screens/QrScannerWithPermission'
 
 const VISIBLE_WALLETS_COUNT = 2
@@ -98,7 +99,7 @@ const QrConnectScreen = () => {
   const animatedHeight = useRef(new Animated.Value(0)).current
   const animatedOpacity = useRef(new Animated.Value(0)).current
 
-  const qrWallets = useMemo(() => Object.values(QrWalletRegistry), [])
+  const qrWallets = useMemo(() => QrWalletConfigs, [])
   const hiddenWallets = useMemo(() => qrWallets.slice(VISIBLE_WALLETS_COUNT), [qrWallets])
 
   const hiddenContentHeight = hiddenWallets.length * QR_WALLET_ROW_HEIGHT
@@ -258,107 +259,118 @@ const QrConnectScreen = () => {
           onBackButtonPress={handleBackButtonPressed}
           title={t('Connect QR wallet')}
         >
-          <Text fontSize={14} style={[spacings.mbSm, { textAlign: 'center' }]}>
-            {t('Scan the QR code exported by your hardware wallet.')}
-          </Text>
-          <View
-            style={{
-              width: scannerSize,
-              height: scannerSize,
-              alignSelf: 'center',
-              overflow: 'hidden'
-            }}
+          <ScrollableWrapper
+            style={flexbox.flex1}
+            contentContainerStyle={{ paddingRight: 0 }}
+            showsVerticalScrollIndicator
           >
+            <Text fontSize={14} style={[spacings.mbSm, { textAlign: 'center' }]}>
+              {t('Scan the QR code exported by your hardware wallet.')}
+            </Text>
             <View
               style={{
-                width: BASE_SCANNER_SIZE,
-                height: BASE_SCANNER_SIZE,
-                transform: [{ scale: scannerScale }],
-                marginTop: -((BASE_SCANNER_SIZE - scannerSize) / 2),
-                marginLeft: -((BASE_SCANNER_SIZE - scannerSize) / 2)
-              }}
-            >
-              <QrScannerWithPermission
-                key={scannerKey}
-                onComplete={onQrComplete}
-                disabled={isSubmitting}
-                externalError={scanError}
-                onExternalRetry={onResetScannerPress}
-              />
-            </View>
-          </View>
-          <View style={spacings.mtMd}>
-            {qrWallets.slice(0, VISIBLE_WALLETS_COUNT).map(renderWalletRow)}
-            <Animated.View
-              style={{
-                height: animatedContainerHeight,
-                opacity: animatedOpacity,
+                width: scannerSize,
+                height: scannerSize,
+                alignSelf: 'center',
                 overflow: 'hidden'
               }}
             >
-              {hiddenWallets.map(renderWalletRow)}
-            </Animated.View>
-            {qrWallets.length > VISIBLE_WALLETS_COUNT && (
-              <AnimatedPressable
-                onPress={() => setShowMore(!showMore)}
-                testID="show-more-btn"
-                style={[
-                  flexbox.directionRow,
-                  flexbox.alignCenter,
-                  spacings.pvMi,
-                  spacings.prTy,
-                  spacings.plSm,
-                  {
-                    borderRadius: 50,
-                    alignSelf: 'center',
-                    backgroundColor: animStyle.backgroundColor
-                  }
-                ]}
-                {...bindAnim}
+              <View
+                style={{
+                  width: BASE_SCANNER_SIZE,
+                  height: BASE_SCANNER_SIZE,
+                  transform: [{ scale: scannerScale }],
+                  marginTop: -((BASE_SCANNER_SIZE - scannerSize) / 2),
+                  marginLeft: -((BASE_SCANNER_SIZE - scannerSize) / 2)
+                }}
               >
-                <Text appearance="tertiaryText" style={spacings.mrMi} fontSize={14} weight="medium">
-                  {t(showMore ? 'Less' : 'More')}
-                </Text>
-                <Animated.View
-                  style={{
-                    transform: [
-                      {
-                        translateX: animStyle.translateX as any
-                      },
-                      {
-                        translateY: animStyle.translateY as any
-                      }
-                    ]
-                  }}
+                <QrScannerWithPermission
+                  key={scannerKey}
+                  onComplete={onQrComplete}
+                  disabled={isSubmitting}
+                  externalError={scanError}
+                  onExternalRetry={onResetScannerPress}
+                />
+              </View>
+            </View>
+            <View style={spacings.mtMd}>
+              {qrWallets.slice(0, VISIBLE_WALLETS_COUNT).map(renderWalletRow)}
+              <Animated.View
+                style={{
+                  height: animatedContainerHeight,
+                  opacity: animatedOpacity,
+                  overflow: 'hidden'
+                }}
+              >
+                {hiddenWallets.map(renderWalletRow)}
+              </Animated.View>
+              {qrWallets.length > VISIBLE_WALLETS_COUNT && (
+                <AnimatedPressable
+                  onPress={() => setShowMore(!showMore)}
+                  testID="show-more-btn"
+                  style={[
+                    flexbox.directionRow,
+                    flexbox.alignCenter,
+                    spacings.pvMi,
+                    spacings.prTy,
+                    spacings.plSm,
+                    {
+                      borderRadius: 50,
+                      alignSelf: 'center',
+                      backgroundColor: animStyle.backgroundColor
+                    }
+                  ]}
+                  {...bindAnim}
                 >
-                  <DiagonalRightArrowIcon
-                    color={theme.iconPrimary}
-                    height={20}
-                    width={20}
+                  <Text
+                    appearance="tertiaryText"
+                    style={spacings.mrMi}
+                    fontSize={14}
+                    weight="medium"
+                  >
+                    {t(showMore ? 'Less' : 'More')}
+                  </Text>
+                  <Animated.View
                     style={{
-                      transform: [{ rotate: showMore ? '270deg' : '0deg' }]
+                      transform: [
+                        {
+                          translateX: animStyle.translateX as any
+                        },
+                        {
+                          translateY: animStyle.translateY as any
+                        }
+                      ]
                     }}
-                  />
-                </Animated.View>
-              </AnimatedPressable>
-            )}
-            <View
-              style={[
-                {
-                  width: '100%',
-                  height: 1,
-                  borderBottomWidth: 1,
-                  borderColor: theme.primaryBorder
-                },
-                spacings.mvMd
-              ]}
-            />
-            <Alert
-              type="warning"
-              size="sm"
-              text={t('Behavior may vary when importing from unlisted QR wallets.')}
-            />
-          </View>
+                  >
+                    <DiagonalRightArrowIcon
+                      color={theme.iconPrimary}
+                      height={20}
+                      width={20}
+                      style={{
+                        transform: [{ rotate: showMore ? '270deg' : '0deg' }]
+                      }}
+                    />
+                  </Animated.View>
+                </AnimatedPressable>
+              )}
+              <View
+                style={[
+                  {
+                    width: '100%',
+                    height: 1,
+                    borderBottomWidth: 1,
+                    borderColor: theme.primaryBorder
+                  },
+                  spacings.mvMd
+                ]}
+              />
+              <Alert
+                type="warning"
+                size="sm"
+                text={t('Behavior may vary when importing from unlisted QR wallets.')}
+              />
+            </View>
+          </ScrollableWrapper>
         </Panel>
       </TabLayoutWrapperMainContent>
     </TabLayoutContainer>

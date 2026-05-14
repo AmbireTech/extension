@@ -1,9 +1,10 @@
-import React, { FC, useCallback, useMemo } from 'react'
+import React, { FC, useCallback, useEffect, useMemo, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Pressable, View } from 'react-native'
 
 import { EstimationStatus } from '@ambire-common/controllers/estimation/types'
 import { SwapAndBridgeFormStatus } from '@ambire-common/controllers/swapAndBridge/swapAndBridge'
+import { getIsBridgeRoute } from '@ambire-common/libs/swapAndBridge/swapAndBridge'
 import { FEE_PERCENT } from '@ambire-common/services/socket/constants'
 import InfoIcon from '@common/assets/svg/InfoIcon'
 import WarningIcon from '@common/assets/svg/WarningIcon'
@@ -36,11 +37,51 @@ const RouteInfo: FC<Props> = ({
   } = useController('SwapAndBridgeController')
   const { theme } = useTheme()
   const { t } = useTranslation()
+  const proceededRouteIdRef = useRef<string | null>(null)
+  const selectedRouteId = quote?.selectedRoute?.routeId
+
+  useEffect(() => {
+    if (formStatus === SwapAndBridgeFormStatus.Proceeded && selectedRouteId != null) {
+      proceededRouteIdRef.current = String(selectedRouteId)
+    }
+
+    if (!quote || formStatus === SwapAndBridgeFormStatus.Empty) {
+      proceededRouteIdRef.current = null
+    }
+  }, [formStatus, quote, selectedRouteId])
 
   const allRoutesFailed = useMemo(() => {
     if (!quote || !quote.routes.length) return false
     return !quote.routes.find((r) => !r.disabled)
   }, [quote])
+
+  const isAutoRouteSelection = !!quote?.selectedRoute && !quote.selectedRoute.isSelectedManually
+  const hasProceededWithSelectedRoute =
+    selectedRouteId != null && proceededRouteIdRef.current === String(selectedRouteId)
+
+  const hasAvailableAutoRoute =
+    !!quote?.selectedRoute?.disabled &&
+    isAutoRouteSelection &&
+    !!quote.routes.find((r) => !r.disabled)
+
+  const hasEstimationError =
+    !hasAvailableAutoRoute &&
+    (!isAutoRouteSelection || hasProceededWithSelectedRoute || allRoutesFailed) &&
+    (signAccountOpController?.estimation.status === EstimationStatus.Error ||
+      formStatus === SwapAndBridgeFormStatus.InvalidRouteSelected)
+
+  const shouldShowRouteInfo =
+    swapSignErrors.length === 0 &&
+    [
+      SwapAndBridgeFormStatus.InvalidRouteSelected,
+      SwapAndBridgeFormStatus.ReadyToEstimate,
+      SwapAndBridgeFormStatus.ReadyToSubmit,
+      SwapAndBridgeFormStatus.Proceeded
+    ].includes(formStatus) &&
+    (signAccountOpController?.estimation.status === EstimationStatus.Success ||
+      hasEstimationError ||
+      allRoutesFailed) &&
+    !isEstimatingRoute
 
   const updateQuote = useCallback(() => {
     swapAndBridgeDispatch({
@@ -99,176 +140,158 @@ const RouteInfo: FC<Props> = ({
           <RetryButton onPress={updateQuote} />
         </View>
       )}
-      {swapSignErrors.length === 0 &&
-        [
-          SwapAndBridgeFormStatus.InvalidRouteSelected,
-          SwapAndBridgeFormStatus.ReadyToEstimate,
-          SwapAndBridgeFormStatus.ReadyToSubmit,
-          SwapAndBridgeFormStatus.Proceeded
-        ].includes(formStatus) &&
-        (signAccountOpController?.estimation.status === EstimationStatus.Success ||
-          ((signAccountOpController?.estimation.status === EstimationStatus.Error ||
-            formStatus === SwapAndBridgeFormStatus.InvalidRouteSelected) &&
-            (allRoutesFailed || quote?.selectedRoute?.isSelectedManually))) &&
-        !isEstimatingRoute && (
-          <>
-            {signAccountOpController?.estimation.status === EstimationStatus.Success &&
-              formStatus !== SwapAndBridgeFormStatus.InvalidRouteSelected && (
-                <View
-                  style={[
-                    flexbox.directionRow,
-                    flexbox.alignCenter,
-                    flexbox.justifySpaceBetween,
-                    { width: '100%' }
-                  ]}
-                >
-                  <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-                    <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-                      <Text
-                        appearance={
-                          quote?.selectedRoute?.withConvenienceFee ? 'tertiaryText' : 'primary'
-                        }
-                        fontSize={12}
-                        weight="medium"
-                      >
-                        {t('Ambire fee: {{fee}}', {
-                          fee: `${quote?.selectedRoute?.withConvenienceFee ? FEE_PERCENT : 0}%`
-                        })}
-                      </Text>
-                      {!quote?.selectedRoute?.withConvenienceFee && (
-                        <>
-                          <InfoIcon
-                            width={14}
-                            height={14}
-                            data-tooltip-id="no-convenience-fee"
-                            style={spacings.mlTy}
-                            color={theme.primary}
-                          />
-
-                          <Tooltip
-                            content={t(
-                              'All collected fees are allocated to $WALLET buybacks. This transaction is exempt from that fee.'
-                            )}
-                            id="no-convenience-fee"
-                          />
-                        </>
-                      )}
-                    </View>
-                    {quote?.selectedRoute?.serviceTime ? (
-                      <Text
-                        appearance="tertiaryText"
-                        fontSize={12}
-                        weight="medium"
-                        style={spacings.mlLg}
-                      >
-                        {t('Time: {{time}}', {
-                          time:
-                            quote?.selectedRoute.fromChainId !== quote?.selectedRoute.toChainId
-                              ? `~ ${formatTime(quote?.selectedRoute?.serviceTime)}`
-                              : 'instant'
-                        })}
-                      </Text>
-                    ) : null}
-                  </View>
-
-                  <SelectRoute
-                    shouldEnableRoutesSelection={shouldEnableRoutesSelection}
-                    openRoutesModal={openRoutesModal}
-                  />
-                </View>
-              )}
-            {allRoutesFailed && (
+      {shouldShowRouteInfo && (
+        <>
+          {signAccountOpController?.estimation.status === EstimationStatus.Success &&
+            formStatus !== SwapAndBridgeFormStatus.InvalidRouteSelected && (
               <View
                 style={[
                   flexbox.directionRow,
+                  flexbox.alignCenter,
                   flexbox.justifySpaceBetween,
-                  { width: '100%' },
-                  flexbox.flex1
+                  { width: '100%' }
                 ]}
               >
-                <View style={[flexbox.directionRow, { flexShrink: 1 }, spacings.mrTy]}>
-                  {isWeb && (
-                    <WarningIcon strokeWidth={2} width={20} height={20} color={theme.warningText} />
-                  )}
+                <View style={[flexbox.directionRow, flexbox.alignCenter]}>
+                  <View style={[flexbox.directionRow, flexbox.alignCenter]}>
+                    <Text
+                      appearance={
+                        quote?.selectedRoute?.withConvenienceFee ? 'tertiaryText' : 'primary'
+                      }
+                      fontSize={12}
+                      weight="medium"
+                    >
+                      {t('Ambire fee: {{fee}}', {
+                        fee: `${quote?.selectedRoute?.withConvenienceFee ? FEE_PERCENT : 0}%`
+                      })}
+                    </Text>
+                    {!quote?.selectedRoute?.withConvenienceFee && (
+                      <>
+                        <InfoIcon
+                          width={14}
+                          height={14}
+                          data-tooltip-id="no-convenience-fee"
+                          style={spacings.mlTy}
+                          color={theme.primary}
+                        />
+
+                        <Tooltip
+                          content={t(
+                            'All collected fees are allocated to $WALLET buybacks. This transaction is exempt from that fee.'
+                          )}
+                          id="no-convenience-fee"
+                        />
+                      </>
+                    )}
+                  </View>
+                  {quote?.selectedRoute?.serviceTime ? (
+                    <Text
+                      appearance="tertiaryText"
+                      fontSize={12}
+                      weight="medium"
+                      style={spacings.mlLg}
+                    >
+                      {t('Time: {{time}}', {
+                        time:
+                          quote?.selectedRoute && getIsBridgeRoute(quote.selectedRoute)
+                            ? `~ ${formatTime(quote?.selectedRoute?.serviceTime)}`
+                            : 'instant'
+                      })}
+                    </Text>
+                  ) : null}
+                </View>
+
+                <SelectRoute
+                  shouldEnableRoutesSelection={shouldEnableRoutesSelection}
+                  openRoutesModal={openRoutesModal}
+                />
+              </View>
+            )}
+          {allRoutesFailed && (
+            <View
+              style={[
+                flexbox.directionRow,
+                flexbox.justifySpaceBetween,
+                { width: '100%' },
+                flexbox.flex1
+              ]}
+            >
+              <View style={[flexbox.directionRow, { flexShrink: 1 }, spacings.mrTy]}>
+                {isWeb && (
+                  <WarningIcon strokeWidth={2} width={20} height={20} color={theme.warningText} />
+                )}
+                <Text
+                  fontSize={isMobile ? 14 : 12}
+                  weight="medium"
+                  appearance="warningText"
+                  style={[isMobile ? {} : spacings.mlMi, { flexShrink: 1 }]}
+                >
+                  {quote?.routes.length === 1
+                    ? t("1 route found, but it'd fail onchain.")
+                    : t("{{count}} routes found, but they'd all fail onchain.", {
+                        count: quote?.routes.length
+                      })}{' '}
                   <Text
                     fontSize={isMobile ? 14 : 12}
                     weight="medium"
-                    appearance="warningText"
-                    style={[isMobile ? {} : spacings.mlMi, { flexShrink: 1 }]}
+                    color={theme.warningText}
+                    onPress={openRoutesModal as any}
+                    style={{
+                      ...spacings.mr,
+                      textDecorationColor: theme.warningText,
+                      textDecorationLine: 'underline'
+                    }}
                   >
-                    {quote?.routes.length === 1
-                      ? t("1 route found, but it'd fail onchain.")
-                      : t("{{count}} routes found, but they'd all fail onchain.", {
-                          count: quote?.routes.length
-                        })}{' '}
-                    <Text
-                      fontSize={isMobile ? 14 : 12}
-                      weight="medium"
-                      color={theme.warningText}
-                      onPress={openRoutesModal as any}
-                      style={{
-                        ...spacings.mr,
-                        textDecorationColor: theme.warningText,
-                        textDecorationLine: 'underline'
-                      }}
-                    >
-                      {t('See\u00A0details')}
-                    </Text>
+                    {t('See\u00A0details')}
                   </Text>
-                </View>
-                <RetryButton onPress={updateQuote} />
+                </Text>
               </View>
-            )}
+              <RetryButton onPress={updateQuote} />
+            </View>
+          )}
 
-            {(signAccountOpController?.estimation.status === EstimationStatus.Error ||
-              formStatus === SwapAndBridgeFormStatus.InvalidRouteSelected) &&
-              !allRoutesFailed && (
-                <View
-                  style={[
-                    flexbox.directionRow,
-                    flexbox.alignCenter,
-                    flexbox.justifySpaceBetween,
-                    { width: '100%' }
-                  ]}
+          {hasEstimationError && !allRoutesFailed && (
+            <View
+              style={[
+                flexbox.directionRow,
+                flexbox.alignCenter,
+                flexbox.justifySpaceBetween,
+                { width: '100%' }
+              ]}
+            >
+              <View style={[flexbox.directionRow, flexbox.alignCenter]}>
+                {isWeb && (
+                  <WarningIcon strokeWidth={2} width={20} height={20} color={theme.warningText} />
+                )}
+                <Text
+                  fontSize={isMobile ? 14 : 12}
+                  weight="medium"
+                  appearance="warningText"
+                  style={{ ...(isMobile ? {} : spacings.mlMi), flexShrink: 1 }}
                 >
-                  <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-                    {isWeb && (
-                      <WarningIcon
-                        strokeWidth={2}
-                        width={20}
-                        height={20}
-                        color={theme.warningText}
-                      />
-                    )}
-                    <Text
-                      fontSize={isMobile ? 14 : 12}
-                      weight="medium"
-                      appearance="warningText"
-                      style={{ ...(isMobile ? {} : spacings.mlMi), flexShrink: 1 }}
-                    >
-                      {t('An error occurred. More details:')}
+                  {t('An error occurred. More details:')}
+                </Text>
+                <InfoIcon
+                  width={14}
+                  height={14}
+                  data-tooltip-id="error-info-icon"
+                  style={spacings.mlTy}
+                />
+                <Tooltip id="error-info-icon" clickable>
+                  <View>
+                    <Text fontSize={12} appearance="secondaryText" style={spacings.mbMi}>
+                      {quote && quote.selectedRoute && quote.selectedRoute.disabled
+                        ? quote.selectedRoute.disabledReason
+                        : signAccountOpController?.estimation.error?.message}
                     </Text>
-                    <InfoIcon
-                      width={14}
-                      height={14}
-                      data-tooltip-id="error-info-icon"
-                      style={spacings.mlTy}
-                    />
-                    <Tooltip id="error-info-icon" clickable>
-                      <View>
-                        <Text fontSize={12} appearance="secondaryText" style={spacings.mbMi}>
-                          {quote && quote.selectedRoute && quote.selectedRoute.disabled
-                            ? quote.selectedRoute.disabledReason
-                            : signAccountOpController?.estimation.error?.message}
-                        </Text>
-                      </View>
-                    </Tooltip>
                   </View>
-                  <RetryButton onPress={updateQuote} />
-                </View>
-              )}
-          </>
-        )}
+                </Tooltip>
+              </View>
+              <RetryButton onPress={updateQuote} />
+            </View>
+          )}
+        </>
+      )}
     </View>
   )
 }

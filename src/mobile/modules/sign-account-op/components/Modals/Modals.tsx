@@ -99,6 +99,7 @@ const Modals: FC<ModalsProps> = ({
         signAccountOpStatusType={signAccountOpState.status?.type}
         shouldSignAuth={signAccountOpState.shouldSignAuth}
         signedTransactionsCount={signAccountOpState.signedTransactionsCount}
+        hardwareWalletSigningRequest={signAccountOpState.hardwareWalletSigningRequest}
         accountOp={signAccountOpState.accountOp}
         actionType={actionType}
       />

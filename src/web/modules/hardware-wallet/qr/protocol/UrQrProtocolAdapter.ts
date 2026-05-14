@@ -10,6 +10,45 @@ import { QrProtocolAdapter, QrSignaturePayload } from '../types'
 import { isSignatureParts, normalizeOriginHdPath } from '../utils'
 import { QrRequest } from '@ambire-common/interfaces/keystore'
 
+function normalizeTypedDataForQr(
+  typedData: TypedMessageUserRequest['meta']['params']
+): TypedMessageUserRequest['meta']['params'] {
+  const normalizedTypes: Record<string, Array<{ name: string; type: string }>> = {}
+
+  for (const [typeName, fields] of Object.entries((typedData as any)?.types || {})) {
+    if (!Array.isArray(fields)) continue
+    normalizedTypes[typeName] = fields
+      .map((field: any) => ({
+        name: String(field?.name ?? ''),
+        type: String(field?.type ?? '')
+      }))
+      .filter((field) => field.name.length > 0 && field.type.length > 0)
+  }
+
+  // Keycard Shell is strict about EIP-712 typed data format. In practice we’ve seen issues
+  // when `domain.chainId` is not a plain JSON number (e.g. bigint/hex string).
+  const domain: any = { ...(typedData.domain || {}) }
+  const rawChainId = domain.chainId
+
+  if (typeof rawChainId === 'bigint') {
+    domain.chainId = Number(rawChainId)
+  } else if (typeof rawChainId === 'string') {
+    // accept both decimal and hex (0x...)
+    const parsed = rawChainId.startsWith('0x')
+      ? Number.parseInt(rawChainId, 16)
+      : Number(rawChainId)
+    if (Number.isFinite(parsed)) domain.chainId = parsed
+  }
+
+  // Keycard parser expects exactly these top-level keys for EIP-712 payloads.
+  return {
+    types: normalizedTypes,
+    primaryType: String((typedData as any).primaryType),
+    domain,
+    message: { ...((typedData as any).message || {}) }
+  }
+}
+
 /**
  * The UrQrProtocolAdapter is responsible for handling QR payloads that follow the UR protocol.
  * It converts Ambire signing and account import requests into UR-compatible payloads and parses
@@ -60,8 +99,8 @@ class UrQrProtocolAdapter implements QrProtocolAdapter {
         masterFingerprint,
         requestId,
         args.chainId !== undefined ? Number(args.chainId) : undefined,
-        undefined,
-        args.address
+        args.address,
+        'ambire'
       )
 
       const ur = request.toUR()
@@ -86,7 +125,8 @@ class UrQrProtocolAdapter implements QrProtocolAdapter {
     address?: string
   }): Promise<QrRequest> {
     try {
-      const typedDataJson = JSON.stringify(args.typedData)
+      const normalizedTypedData = normalizeTypedDataForQr(args.typedData)
+      const typedDataJson = JSON.stringify(normalizedTypedData)
 
       if (!typedDataJson) {
         throw new ExternalSignerError('Cannot create QR sign request for empty typed data.')
@@ -95,6 +135,9 @@ class UrQrProtocolAdapter implements QrProtocolAdapter {
       const signData = Buffer.from(typedDataJson, 'utf-8')
       const requestId = uuidv4()
       const masterFingerprint = stripHexPrefix(args.masterFingerprint)
+      const rawChainId: any = (normalizedTypedData as any)?.domain?.chainId
+      const chainId =
+        typeof rawChainId === 'number' && Number.isFinite(rawChainId) ? rawChainId : undefined
 
       const request = EthSignRequest.constructETHRequest(
         signData,
@@ -102,8 +145,9 @@ class UrQrProtocolAdapter implements QrProtocolAdapter {
         args.derivationPath,
         masterFingerprint,
         requestId,
-        undefined, // chainId
-        args.address
+        chainId,
+        args.address,
+        'ambire'
       )
 
       const ur = request.toUR()
@@ -147,8 +191,8 @@ class UrQrProtocolAdapter implements QrProtocolAdapter {
         masterFingerprint,
         requestId,
         args.chainId !== undefined ? Number(args.chainId) : undefined,
-        undefined,
-        args.address
+        args.address,
+        'ambire'
       )
 
       const ur = request.toUR()

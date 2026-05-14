@@ -1,15 +1,9 @@
-import { formatUnits, Interface, parseUnits } from 'ethers'
+import { formatUnits } from 'ethers'
 import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ColorValue, View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 
-import {
-  noStateUpdateStatuses,
-  SigningStatus
-} from '@ambire-common/controllers/signAccountOp/signAccountOp'
-import { Approve, Permit2 } from '@ambire-common/libs/humanizer/const/abis/Approvals'
-import { HumanizerVisualization } from '@ambire-common/libs/humanizer/interfaces'
 import { getTokenAmount } from '@ambire-common/libs/portfolio/helpers'
 import { getSafeAmountFromFieldValue } from '@ambire-common/utils/numbers/formatters'
 import EditPenIcon from '@common/assets/svg/EditPenIcon'
@@ -25,9 +19,6 @@ import useTheme from '@common/hooks/useTheme'
 import MaxAmount from '@common/modules/swap-and-bridge/components/MaxAmount'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-
-const approveInterface = new Interface(Approve)
-const permitInterface = new Interface(Permit2)
 
 type EditApprovalAmountInputProps = {
   initialAmount: string
@@ -108,7 +99,17 @@ const EditApprovalAmountInput = memo(
     )
   }
 )
-const EditApproval = ({ item }: { item: HumanizerVisualization }) => {
+const EditApproval = ({
+  editCall,
+  token,
+  value,
+  id
+}: {
+  editCall: (amount: string, token: string, closeEditApprovals: () => void) => void
+  token: string
+  value: bigint
+  id?: string
+}) => {
   const { t } = useTranslation()
   const { theme } = useTheme()
   const [bindEditApprovals, editApprovalsStyle] = useHover({
@@ -122,8 +123,6 @@ const EditApproval = ({ item }: { item: HumanizerVisualization }) => {
   const {
     state: { portfolio }
   } = useController('SelectedAccountController')
-  const { state: signAccountOpState, dispatch: signAccountOpDispatch } =
-    useController('SignAccountOpController')
   const amountRef = useRef<string>('0')
   const [initialAmount, setInitialAmount] = useState<string>('0')
   const [initialValueSet, setInitialValueSet] = useState<boolean>(false)
@@ -133,8 +132,8 @@ const EditApproval = ({ item }: { item: HumanizerVisualization }) => {
     // where we don't have access to controllers.
     // Therefore, we need to check whether the portfolio controller exists
     if (!portfolio) return undefined
-    return portfolio.tokens.find((t) => t.address.toLowerCase() === item.address?.toLowerCase())
-  }, [portfolio, item.address])
+    return portfolio.tokens.find((t) => t.address.toLowerCase() === token.toLowerCase())
+  }, [portfolio, token])
 
   const maxAmount = useMemo(() => {
     if (!portfolioToken) return undefined
@@ -163,76 +162,16 @@ const EditApproval = ({ item }: { item: HumanizerVisualization }) => {
   )
 
   useEffect(() => {
-    if (!portfolioToken || !item.value || initialValueSet) return
-    const initialApprovalAmount = formatUnits(item.value.toString(), portfolioToken.decimals)
+    if (!portfolioToken || initialValueSet) return
+    const initialApprovalAmount = formatUnits(value.toString(), portfolioToken.decimals)
     amountRef.current = initialApprovalAmount
     setInitialAmount(initialApprovalAmount)
     setInitialValueSet(true)
-  }, [portfolioToken, item.value, initialValueSet])
+  }, [portfolioToken, value, initialValueSet])
 
   const onSanitizedAmountChange = useCallback((value: string) => {
     amountRef.current = value
   }, [])
-
-  const setApproval = useCallback(() => {
-    const editApprovalData = item.editApprovalData
-    if (!signAccountOpState || !item.address || !editApprovalData || !portfolioToken) return
-
-    // shallow copy each call just in case so the controller properly
-    // understands that a change to the calls array has been made
-    const calls = signAccountOpState.accountOp.calls.map((call) => ({ ...call }))
-    const replacedCall = calls.find((c) => c.id === editApprovalData.callId)
-    if (!replacedCall) return
-
-    let calldata = ''
-    if (replacedCall.data.substring(0, 10) === approveInterface.getFunction('approve')!.selector) {
-      calldata = approveInterface.encodeFunctionData('approve', [
-        editApprovalData.spenderAddr,
-        parseUnits(amountRef.current || '0', portfolioToken.decimals)
-      ])
-    } else {
-      calldata = permitInterface.encodeFunctionData('approve', [
-        item.address,
-        editApprovalData.spenderAddr,
-        parseUnits(amountRef.current || '0', portfolioToken.decimals),
-        editApprovalData.expiration
-      ])
-    }
-
-    // replace the data with the new approval
-    replacedCall.data = calldata
-
-    signAccountOpDispatch({
-      type: 'method',
-      params: {
-        method: 'update',
-        args: [{ accountOpData: { calls } }]
-      }
-    })
-    closeEditApprovals()
-  }, [
-    closeEditApprovals,
-    item.address,
-    item.editApprovalData,
-    portfolioToken,
-    signAccountOpDispatch,
-    signAccountOpState
-  ])
-
-  // hide the edit option if there's no sign account op state
-  // or it has finished / queued state
-  // or the call id for this approval is missing
-  //
-  // the signAccountOpState could be missing if we're in benzina
-  // or another part of the extension (activity)
-  if (
-    !signAccountOpState ||
-    !item.editApprovalData ||
-    !signAccountOpState.accountOp.calls.find((c) => c.id === item.editApprovalData?.callId) ||
-    (signAccountOpState.status && noStateUpdateStatuses.includes(signAccountOpState.status.type)) ||
-    signAccountOpState.status?.type === SigningStatus.Queued
-  )
-    return null
 
   return (
     <>
@@ -260,7 +199,7 @@ const EditApproval = ({ item }: { item: HumanizerVisualization }) => {
       </AnimatedPressable>
       <BottomSheet
         sheetRef={editApprovalsSheetRef}
-        id={`edit-approvals-bottom-sheet-${item.id}`}
+        id={`edit-approvals-bottom-sheet-${id}`}
         type="modal"
         closeBottomSheet={closeEditApprovals}
         style={{ maxWidth: 460 }}
@@ -293,7 +232,7 @@ const EditApproval = ({ item }: { item: HumanizerVisualization }) => {
             <Button
               type="primary"
               text={t('Save')}
-              onPress={setApproval}
+              onPress={() => editCall(amountRef.current, token, closeEditApprovals)}
               hasBottomSpacing={false}
               size="smaller"
               style={[{ width: 100 }]}

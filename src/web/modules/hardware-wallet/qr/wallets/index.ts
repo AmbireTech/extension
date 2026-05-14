@@ -1,20 +1,45 @@
-import { ImTokenQrWallet } from './ImTokenQrWallet'
-import { KeystoneQrWallet } from './KeystoneQrWallet'
+import { QrWalletConfig } from '@ambire-common/interfaces/keyIterator'
+import { QrWalletType } from '@ambire-common/interfaces/keystore'
 
 /**
  * Registry of supported QR-based hardware wallets.
  *
  *
  * To add a new wallet:
- * 1. Create a wallet config (e.g. `NewWalletQrWallet.ts`) with:
- *    - protocol
- *    - label
- *    - tutorialUrl
- * 2. Register it here.
+ * Add a new entry to `QrWalletConfigs`.
  */
-export const QrWalletRegistry = {
-  keystone: KeystoneQrWallet,
-  imtoken: ImTokenQrWallet
-}
+export type QrWalletConfigEntry = QrWalletConfig & { type: QrWalletType }
 
-export type QrWalletType = keyof typeof QrWalletRegistry
+export const QrWalletConfigs = [
+  {
+    type: 'keystone',
+    protocol: 'ur',
+    label: 'Keystone',
+    tutorialUrl: 'https://help.ambire.com/en/articles/14612715'
+  },
+  {
+    type: 'keycard',
+    protocol: 'ur',
+    label: 'Keycard',
+    tutorialUrl: 'https://help.ambire.com/en/articles/14803331'
+  },
+  {
+    type: 'imtoken',
+    protocol: 'ur',
+    label: 'ImToken',
+    tutorialUrl:
+      'https://help.ambire.com/en/articles/14483029-how-to-connect-ambire-wallet-with-imtoken'
+  }
+] as const satisfies readonly QrWalletConfigEntry[]
+
+/**
+ * Backwards-compatible map (useful for quick lookups).
+ * Prefer iterating over `QrWalletConfigs` in UI.
+ */
+export const QrWalletRegistry = QrWalletConfigs.reduce(
+  (acc, w) => {
+    acc[w.type] = w
+    return acc
+  },
+  {} as Record<QrWalletType, (typeof QrWalletConfigs)[number]>
+)

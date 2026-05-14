@@ -1,129 +1,122 @@
-/* eslint-disable @typescript-eslint/no-floating-promises */
 import React, { useMemo } from 'react'
-import { View, ViewStyle } from 'react-native'
+import { View } from 'react-native'
+import { useModalize } from 'react-native-modalize'
 
 import { Network } from '@ambire-common/interfaces/network'
-import {
-  isIdentifiedByMultipleTxn,
-  SubmittedAccountOp
-} from '@ambire-common/libs/accountOp/submittedAccountOp'
-import { humanizeAccountOp } from '@ambire-common/libs/humanizer'
-import { IrCall } from '@ambire-common/libs/humanizer/interfaces'
-import SkeletonLoader from '@common/components/SkeletonLoader'
 import useController from '@common/hooks/useController'
+import { AnimatedPressable, useMultiHover } from '@common/hooks/useHover'
 import useTheme from '@common/hooks/useTheme'
-import TransactionSummary, {
-  sizeMultiplier
-} from '@common/modules/sign-account-op/components/TransactionSummary'
+import { sizeMultiplier } from '@common/modules/sign-account-op/components/TransactionSummary'
 import spacings, { SPACING_SM } from '@common/styles/spacings'
-import DelegationHumanization from '@web/components/DelegationHumanization'
+import { getUiType } from '@common/utils/uiType'
 
-import Footer from './Footer'
-import StatusBadge from './StatusBadge'
+import {
+  getDappInteractions,
+  getSummaryBalanceChanges,
+  getVisibleSummaryBalanceChanges,
+  MAX_VISIBLE_BALANCE_CHANGES
+} from './helpers'
 import getStyles from './styles'
+import SummaryDetailsSheet from './SummaryDetailsSheet'
+import SummaryHeader from './SummaryHeader'
+import SummaryPreview from './SummaryPreview'
+import { Props } from './types'
 
-interface Props {
-  submittedAccountOp: SubmittedAccountOp
-  style?: ViewStyle
-  size?: 'sm' | 'md' | 'lg'
-  // The primary difference is the ability to expand and view raw transaction details in 'full-info'. All other features are identical.
-  defaultType: 'summary' | 'full-info'
-}
+const { isTab } = getUiType()
 
 const SubmittedTransactionSummaryInner = ({
   submittedAccountOp,
   size = 'lg',
   style,
-  defaultType
+  defaultType,
+  modalType
 }: Props) => {
-  const { styles } = useTheme(getStyles)
+  const { styles, theme } = useTheme(getStyles)
+  const { dispatch: activityDispatch } = useController('ActivityController')
   const { networks } = useController('NetworksController').state
+  const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useModalize()
 
   const network: Network | undefined = useMemo(
     () => networks.find((n) => n.chainId === submittedAccountOp.chainId),
     [networks, submittedAccountOp.chainId]
   )
-
-  const calls = useMemo(
-    () =>
-      humanizeAccountOp(submittedAccountOp).map((call, index) => ({
-        ...call,
-        // It's okay to use index as:
-        // 1. The calls aren't reordered
-        // 2. We are building the calls only once
-        id: call.id || String(index)
-      })),
-    // Humanize the calls only once. Because submittedAccountOp is an object
-    // it causes rerenders on every activity update.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [submittedAccountOp.txnId, submittedAccountOp.calls.length, network]
+  const orderedBalanceChanges = useMemo(
+    () => getSummaryBalanceChanges(submittedAccountOp),
+    [submittedAccountOp]
   )
+  const visibleBalanceChanges = useMemo(
+    () => getVisibleSummaryBalanceChanges(orderedBalanceChanges),
+    [orderedBalanceChanges]
+  )
+  const hiddenBalanceChangesCount = Math.max(
+    orderedBalanceChanges.length - MAX_VISIBLE_BALANCE_CHANGES,
+    0
+  )
+  const shouldShowBalanceChangesSummary = orderedBalanceChanges.length > 0
+  const dappInteractions = useMemo(
+    () => getDappInteractions(submittedAccountOp),
+    [submittedAccountOp]
+  )
+
+  const handleOpenDetails = () => {
+    openBottomSheet()
+  }
+
+  const [bindAnim, animStyle] = useMultiHover({
+    values: [
+      {
+        property: 'backgroundColor',
+        from: theme.secondaryBackground,
+        to: theme.tertiaryBackground
+      }
+    ]
+  })
 
   if (!network) return null
 
-  if (!calls.length) {
-    return (
-      <View style={style}>
-        <SkeletonLoader width="100%" height={112} />
-      </View>
-    )
-  }
-
-  const isDelegationTxn =
-    submittedAccountOp.meta && submittedAccountOp.meta.setDelegation !== undefined
-
   return (
-    <View
-      style={[
-        styles.container,
-        style,
-        {
-          paddingTop: SPACING_SM * sizeMultiplier[size]
-        }
-      ]}
-    >
-      <View
-        style={{
-          ...spacings.phSm,
-          marginBottom: SPACING_SM * sizeMultiplier[size],
-          alignItems: 'flex-start'
-        }}
+    <>
+      <AnimatedPressable
+        onPress={handleOpenDetails}
+        style={[
+          styles.container,
+          style,
+          {
+            paddingTop: SPACING_SM * sizeMultiplier[size]
+          },
+          animStyle
+        ]}
+        {...bindAnim}
       >
-        <StatusBadge status={submittedAccountOp.status} textSize={14 * sizeMultiplier[size]} />
-      </View>
-      {!isDelegationTxn &&
-        calls.map((call: IrCall, i) => (
-          <TransactionSummary
-            key={`${submittedAccountOp.id}-${i}-${call.txnId}-${call.id}`}
-            style={{ ...styles.summaryItem, marginBottom: SPACING_SM * sizeMultiplier[size] }}
-            call={call}
-            chainId={submittedAccountOp.chainId}
-            type="history"
-            enableExpand={defaultType === 'full-info'}
-            size={size}
-            hideLinks
-          />
-        ))}
-      {isDelegationTxn && (
-        <DelegationHumanization
-          setDelegation={submittedAccountOp.meta?.setDelegation}
-          delegatedContract={submittedAccountOp.meta?.delegation?.address}
-          isBorderless
+        <SummaryHeader submittedAccountOp={submittedAccountOp} network={network} size={size} />
+        <View
+          style={[
+            spacings.mvSm,
+            spacings.mhSm,
+            {
+              height: 1,
+              backgroundColor: theme.secondaryBorder
+            }
+          ]}
         />
-      )}
-      <Footer
-        size={size}
-        network={network}
-        rawCalls={submittedAccountOp.calls}
+        <SummaryPreview
+          submittedAccountOp={submittedAccountOp}
+          dappInteractions={dappInteractions}
+          visibleBalanceChanges={visibleBalanceChanges}
+          hiddenBalanceChangesCount={hiddenBalanceChangesCount}
+          shouldShowBalanceChangesSummary={shouldShowBalanceChangesSummary}
+        />
+      </AnimatedPressable>
+      <SummaryDetailsSheet
+        sheetRef={sheetRef}
+        closeBottomSheet={closeBottomSheet}
+        modalType={isTab ? 'modal' : modalType}
         submittedAccountOp={submittedAccountOp}
-        txnId={submittedAccountOp.txnId}
-        identifiedBy={submittedAccountOp.identifiedBy}
-        accountAddr={submittedAccountOp.accountAddr}
-        gasFeePayment={submittedAccountOp.gasFeePayment}
-        status={submittedAccountOp.status}
-        timestamp={submittedAccountOp.timestamp}
+        network={network}
+        size={size}
+        defaultType={defaultType}
       />
-    </View>
+    </>
   )
 }
 
@@ -131,49 +124,18 @@ const SubmittedTransactionSummary = ({
   submittedAccountOp,
   size = 'lg',
   style,
-  defaultType
+  defaultType,
+  modalType = 'bottom-sheet'
 }: Props) => {
-  // If the account op consists of multiple EOA transactions,
-  // we need to divide them into separate components.
-  // This will make them appear as if they were broadcasted one by one.
-  const accountOpDividedIntoMultipleIfNeeded = isIdentifiedByMultipleTxn(
-    submittedAccountOp.identifiedBy
-  )
-    ? submittedAccountOp.calls.reverse().map((call, i) => {
-        return {
-          ...submittedAccountOp,
-          txnId: call.txnId,
-          status: call.status,
-          calls: [call],
-          id: `${submittedAccountOp.id}-${i}-${call.txnId}-${call.id}`,
-          // if the call has a fee set, use it
-          gasFeePayment: submittedAccountOp.gasFeePayment
-            ? {
-                ...submittedAccountOp.gasFeePayment,
-                inToken: call.fee?.inToken
-                  ? call.fee?.inToken
-                  : submittedAccountOp.gasFeePayment.inToken,
-                amount: call.fee?.amount
-                  ? call.fee?.amount
-                  : submittedAccountOp.gasFeePayment.amount
-              }
-            : null
-        }
-      })
-    : [submittedAccountOp]
-
   return (
-    <>
-      {accountOpDividedIntoMultipleIfNeeded.map((op) => (
-        <SubmittedTransactionSummaryInner
-          key={op.id || op.txnId}
-          submittedAccountOp={op}
-          size={size}
-          style={style}
-          defaultType={defaultType}
-        />
-      ))}
-    </>
+    <SubmittedTransactionSummaryInner
+      key={submittedAccountOp.id || submittedAccountOp.txnId}
+      submittedAccountOp={submittedAccountOp}
+      size={size}
+      style={style}
+      defaultType={defaultType}
+      modalType={modalType}
+    />
   )
 }
 

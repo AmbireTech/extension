@@ -13,6 +13,8 @@ import spacings from '@common/styles/spacings'
 import { hexToRgba } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 
+const BORDER_WIDTH = 2
+
 const AllNetworksOption = ({ onPress }: { onPress: (chainId: bigint | null) => void }) => {
   const { t } = useTranslation()
   const { theme, styles } = useTheme(getStyles)
@@ -44,7 +46,7 @@ const AllNetworksOption = ({ onPress }: { onPress: (chainId: bigint | null) => v
       onPress={handleOnPress}
       style={[
         styles.network,
-        { borderWidth: 2 },
+        { borderWidth: BORDER_WIDTH },
         styles.noKebabNetwork,
         animStyle,
         !dashboardNetworkFilter && {
@@ -61,10 +63,11 @@ const AllNetworksOption = ({ onPress }: { onPress: (chainId: bigint | null) => v
             width: 28,
             height: 28,
             borderRadius: 14,
-            backgroundColor: theme.neutral200
+            backgroundColor: theme.neutral300,
+            marginLeft: -BORDER_WIDTH /* fits better on the left with the other icons */
           }}
         >
-          <NetworksIcon color={theme.iconPrimary} width={24} height={24} />
+          <NetworksIcon width={22} height={22} />
         </View>
         <Text style={spacings.mlTy} weight="medium" fontSize={16}>
           {t('All Networks')}

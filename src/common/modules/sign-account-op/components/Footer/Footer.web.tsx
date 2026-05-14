@@ -31,7 +31,8 @@ const Footer = ({
   isAddToCartDisabled,
   inProgressButtonText,
   buttonText,
-  shouldHoldToProceed
+  shouldHoldToProceed,
+  holdToProceedButtonType = 'primary'
 }: Props) => {
   const { t } = useTranslation()
   const { styles, themeType } = useTheme(getStyles)
@@ -130,6 +131,7 @@ const Footer = ({
           {shouldHoldToProceed && (
             <HoldToProceedButton
               text={t('Hold to sign')}
+              buttonType={holdToProceedButtonType}
               disabled={isSignDisabled}
               onHoldComplete={onSign}
               testID="proceed-btn"

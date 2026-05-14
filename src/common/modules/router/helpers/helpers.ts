@@ -1,5 +1,6 @@
 import { IKeystoreController } from '@ambire-common/interfaces/keystore'
 import { IRequestsController } from '@ambire-common/interfaces/requests'
+import { ISurveyController } from '@ambire-common/interfaces/survey'
 import { ISwapAndBridgeController } from '@ambire-common/interfaces/swapAndBridge'
 import { ITransferController } from '@ambire-common/interfaces/transfer'
 import { getBenzinUrlParams } from '@ambire-common/utils/benzin'
@@ -14,13 +15,15 @@ const getInitialRoute = ({
   authStatus,
   requestsState,
   swapAndBridgeState,
-  transferState
+  transferState,
+  surveyState
 }: {
   keystoreState: IKeystoreController
   authStatus?: AUTH_STATUS
   requestsState: IRequestsController
   swapAndBridgeState: ISwapAndBridgeController
   transferState: ITransferController
+  surveyState?: ISurveyController
 }) => {
   if (keystoreState.isReadyToStoreKeys && !keystoreState.isUnlocked) {
     return ROUTES.keyStoreUnlock
@@ -92,6 +95,7 @@ const getInitialRoute = ({
       }
       return ROUTES.transfer
     }
+    if (surveyState && surveyState.hasPersistentState) return ROUTES.survey
     return ROUTES.dashboard
   }
 

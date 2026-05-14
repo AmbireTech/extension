@@ -8,7 +8,7 @@ import { ControllersMiddlewareContext } from '@common/contexts/controllersMiddle
 import { ControllerStoreContext } from '@common/contexts/controllerStoreContext'
 import useRoute from '@common/hooks/useRoute'
 import { Action, MethodAction } from '@common/types/actions'
-import { BUNGEE_API_KEY, RELAYER_URL, VELCRO_URL } from '@env'
+import { BUNGEE_API_KEY, RELAYER_URL, SQUID_INTEGRATOR_ID, VELCRO_URL } from '@env'
 import useRequestsControllerHelpers from '@mobile/hooks/useRequestsControllerHelpers'
 import { WebViewWorker, WebViewWorkerRef } from '@mobile/services/WebViewWorker/WebViewWorker'
 
@@ -27,7 +27,8 @@ export const ControllersMiddlewareProvider: React.FC<{
         RELAYER_URL,
         VELCRO_URL,
         LIFI_EXPLORER_URL,
-        BUNGEE_API_KEY
+        BUNGEE_API_KEY,
+        SQUID_INTEGRATOR_ID
       })
       .then((ctrlsNames) => {
         controllerStore.init(ctrlsNames as any[], () => {

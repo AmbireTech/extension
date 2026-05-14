@@ -3,6 +3,7 @@ import { View } from 'react-native'
 
 import { SigningStatus } from '@ambire-common/controllers/signAccountOp/signAccountOp'
 import { Key } from '@ambire-common/interfaces/keystore'
+import { HardwareWalletSigningRequest } from '@ambire-common/interfaces/signAccountOp'
 import { AccountOp } from '@ambire-common/libs/accountOp/accountOp'
 import Text from '@common/components/Text'
 import useController from '@common/hooks/useController'
@@ -28,6 +29,7 @@ interface Props {
   accountOp: AccountOp
   actionType?: 'swapAndBridge' | 'transfer'
   cancelReq?: () => void
+  hardwareWalletSigningRequest?: HardwareWalletSigningRequest | null
 }
 
 const SignAccountOpHardwareWalletSigningModal: React.FC<Props> = ({
@@ -39,7 +41,8 @@ const SignAccountOpHardwareWalletSigningModal: React.FC<Props> = ({
   signedTransactionsCount,
   accountOp,
   actionType,
-  cancelReq
+  cancelReq,
+  hardwareWalletSigningRequest
 }: Props) => {
   const { dispatch: requestsCtrlDispatch } = useController('RequestsController')
   const { addToast } = useToast()
@@ -126,7 +129,6 @@ const SignAccountOpHardwareWalletSigningModal: React.FC<Props> = ({
     accountOp.accountAddr
   ])
 
-
   // Note: QR signing is handled by the QrSigningModal component. We don't need to show this modal for QR.
   if (!currentlyInvolvedSignOrBroadcastKeyType || currentlyInvolvedSignOrBroadcastKeyType === 'qr')
     return null
@@ -136,6 +138,7 @@ const SignAccountOpHardwareWalletSigningModal: React.FC<Props> = ({
       isVisible={shouldBeVisible}
       keyType={currentlyInvolvedSignOrBroadcastKeyType as 'trezor' | 'ledger' | 'lattice' | 'qr'}
       cancelReq={cancelReq}
+      signingRequest={hardwareWalletSigningRequest}
     >
       {typeof signedTransactionsCount === 'number' ? (
         <View style={[flexbox.alignCenter, flexbox.justifyCenter, spacings.ptLg]}>

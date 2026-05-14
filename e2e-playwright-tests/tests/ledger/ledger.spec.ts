@@ -110,7 +110,7 @@ test.describe('ledger', { tag: '@ledgerTests' }, () => {
   })
 
   // Smart Account with storage tests
-  test('ledger SA - top up Gas Tank with 0.01$ on Base', async ({ pages }) => {
+  test('ledger SA - top up Gas Tank with 0.1$ on Base', async ({ pages }) => {
     await test.step('init SA storage', async () => {
       await pages.initWithStorage(ledgerSaParams)
     })
@@ -126,7 +126,7 @@ test.describe('ledger', { tag: '@ledgerTests' }, () => {
 
       const sendToken = tokens.usdc.base
       const message = 'Top up ready!'
-      const topUpAmount = '0.01'
+      const topUpAmount = '0.1'
 
       await pages.gasTank.topUpGasTank(sendToken, topUpAmount)
 

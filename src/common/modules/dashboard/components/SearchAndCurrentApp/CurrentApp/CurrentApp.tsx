@@ -34,41 +34,56 @@ const CurrentApp = () => {
         isNetworkSelectorExpanded={isNetworkSelectorExpanded}
         setIsNetworkSelectorExpanded={setIsNetworkSelectorExpanded}
       />
-      <Pressable
-        style={{
-          width: 40,
-          height: 40,
-          backgroundColor: !isBlacklisted ? theme.primaryBackground : theme.errorBackground,
-          borderRadius: 20,
-          ...spacings.ml,
-          ...flexbox.center,
-          ...(isWeb && !currentDapp.isConnected ? ({ cursor: 'default' } as any as ViewStyle) : {})
-        }}
-        dataSet={
-          isBlacklisted
-            ? createGlobalTooltipDataSet({
-                id: 'blacklisted-app-tooltip',
-                content: t('Blacklisted app!'),
-                delayShow: 200,
-                border: `1px solid ${theme.errorDecorative as string}`,
-                style: {
-                  fontSize: 12,
-                  backgroundColor: theme.errorBackground as string,
-                  padding: SPACING_TY,
-                  color: theme.errorDecorative as string
-                }
-              })
-            : {}
-        }
-        ref={pressableRef}
-        disabled={!currentDapp || !currentDapp.isConnected}
-        onPress={() => {
-          setIsManageAppExpanded((prev) => !prev)
-          setIsNetworkSelectorExpanded(false)
-        }}
-      >
-        <DappIcon dapp={currentDapp} isDashboard />
-      </Pressable>
+      <View style={{ ...spacings.ml, width: 40, height: 40 }} ref={pressableRef}>
+        <Pressable
+          // Keep a larger invisible touch target around the 40x40 icon for easier tapping.
+          style={{
+            position: 'absolute',
+            top: -8,
+            left: -8,
+            width: 56,
+            height: 56,
+            borderRadius: 28,
+            ...flexbox.center,
+            ...(isWeb && !currentDapp.isConnected
+              ? ({ cursor: 'default' } as any as ViewStyle)
+              : {})
+          }}
+          dataSet={
+            isBlacklisted
+              ? createGlobalTooltipDataSet({
+                  id: 'blacklisted-app-tooltip',
+                  content: t('Blacklisted app!'),
+                  delayShow: 200,
+                  border: `1px solid ${theme.errorDecorative as string}`,
+                  style: {
+                    fontSize: 12,
+                    backgroundColor: theme.errorBackground as string,
+                    padding: SPACING_TY,
+                    color: theme.errorDecorative as string
+                  }
+                })
+              : {}
+          }
+          disabled={!currentDapp || !currentDapp.isConnected}
+          onPress={() => {
+            setIsManageAppExpanded((prev) => !prev)
+            setIsNetworkSelectorExpanded(false)
+          }}
+        >
+          <View
+            style={{
+              width: 40,
+              height: 40,
+              backgroundColor: !isBlacklisted ? theme.primaryBackground : theme.errorBackground,
+              borderRadius: 20,
+              ...flexbox.center
+            }}
+          >
+            <DappIcon dapp={currentDapp} isDashboard />
+          </View>
+        </Pressable>
+      </View>
     </View>
   )
 }
