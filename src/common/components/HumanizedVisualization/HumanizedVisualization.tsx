@@ -223,6 +223,14 @@ const getErc7730SummaryRows = (item: HumanizerErc7730Visualization) => {
   return item.rows.filter((row) => !isSpenderRow(row) && !isExpirationRow(row)).slice(0, 2)
 }
 
+export const getErc7730DescriptionRows = (item: HumanizerErc7730Visualization) => {
+  const visibleSummaryRows = [getErc7730SpenderRow(item), ...getErc7730SummaryRows(item)].filter(
+    (row): row is Erc7730Row => !!row
+  )
+
+  return item.rows.filter((row) => !visibleSummaryRows.includes(row))
+}
+
 const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = ({
   item,
   chainId,

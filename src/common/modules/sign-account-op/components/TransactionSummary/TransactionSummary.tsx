@@ -10,7 +10,9 @@ import {
 import { HumanizerErc7730Visualization, IrCall } from '@ambire-common/libs/humanizer/interfaces'
 import DeleteIcon from '@common/assets/svg/DeleteIcon'
 import ExpandableCard from '@common/components/ExpandableCard'
-import HumanizedVisualization from '@common/components/HumanizedVisualization'
+import HumanizedVisualization, {
+  getErc7730DescriptionRows
+} from '@common/components/HumanizedVisualization'
 import Label from '@common/components/Label'
 import Text from '@common/components/Text'
 import { isMobile, isWeb } from '@common/config/env'
@@ -100,6 +102,18 @@ const TransactionSummary = ({
     [call.fullVisualization]
   )
 
+  const erc7730DescriptionVisualization = useMemo(() => {
+    if (!erc7730Visualization) return null
+
+    const descriptionRows = getErc7730DescriptionRows(erc7730Visualization)
+    if (!descriptionRows.length) return null
+
+    return {
+      ...erc7730Visualization,
+      rows: descriptionRows
+    }
+  }, [erc7730Visualization])
+
   const foundCallSignature = useMemo(() => {
     let foundSigHash: string | undefined
     Object.values(humanizerInfo.abis).some((abi) => {
@@ -154,6 +168,10 @@ const TransactionSummary = ({
       isMounted = false
     }
   }, [isCallRemovedOptimistic])
+
+  useEffect(() => {
+    if (erc7730DescriptionVisualization) setErc7730ExpandedTab('description')
+  }, [erc7730DescriptionVisualization])
 
   const humanizerWarningLabels = useMemo(() => {
     if (type !== 'default') return null
@@ -474,51 +492,53 @@ const TransactionSummary = ({
               paddingBottom: SPACING_SM * sizeMultiplier[size]
             }}
           >
-            <View
-              style={{
-                alignSelf: 'stretch',
-                flexDirection: 'row',
-                borderBottomWidth: 1,
-                borderBottomColor: theme.secondaryBorder,
-                marginBottom: SPACING_SM * sizeMultiplier[size]
-              }}
-            >
-              {(
-                [
-                  ['description', t('Description')],
-                  ['raw', t('Raw data')]
-                ] as const
-              ).map(([tab, label]) => {
-                const isActive = erc7730ExpandedTab === tab
+            {!!erc7730DescriptionVisualization && (
+              <View
+                style={{
+                  alignSelf: 'stretch',
+                  flexDirection: 'row',
+                  borderBottomWidth: 1,
+                  borderBottomColor: theme.secondaryBorder,
+                  marginBottom: SPACING_SM * sizeMultiplier[size]
+                }}
+              >
+                {(
+                  [
+                    ['description', t('Additional description')],
+                    ['raw', t('Raw data')]
+                  ] as const
+                ).map(([tab, label]) => {
+                  const isActive = erc7730ExpandedTab === tab
 
-                return (
-                  <Pressable
-                    key={tab}
-                    onPress={(e: any) => {
-                      e?.stopPropagation?.()
-                      setErc7730ExpandedTab(tab)
-                    }}
-                    style={{
-                      paddingVertical: SPACING_TY * sizeMultiplier[size],
-                      marginRight: SPACING_TY,
-                      borderBottomWidth: 2,
-                      borderBottomColor: isActive ? theme.secondaryAccent400 : 'transparent'
-                    }}
-                  >
-                    <Text
-                      fontSize={14 * sizeMultiplier[size]}
-                      weight={isActive ? 'semiBold' : 'medium'}
-                      color={isActive ? theme.secondaryAccent400 : theme.secondaryText}
+                  return (
+                    <Pressable
+                      key={tab}
+                      onPress={(e: any) => {
+                        e?.stopPropagation?.()
+                        setErc7730ExpandedTab(tab)
+                      }}
+                      style={{
+                        paddingVertical: SPACING_TY * sizeMultiplier[size],
+                        marginRight: SPACING_TY,
+                        borderBottomWidth: 2,
+                        borderBottomColor: isActive ? theme.secondaryAccent400 : 'transparent'
+                      }}
                     >
-                      {label}
-                    </Text>
-                  </Pressable>
-                )
-              })}
-            </View>
-            {erc7730ExpandedTab === 'description' ? (
+                      <Text
+                        fontSize={14 * sizeMultiplier[size]}
+                        weight={isActive ? 'semiBold' : 'medium'}
+                        color={isActive ? theme.secondaryAccent400 : theme.secondaryText}
+                      >
+                        {label}
+                      </Text>
+                    </Pressable>
+                  )
+                })}
+              </View>
+            )}
+            {!!erc7730DescriptionVisualization && erc7730ExpandedTab === 'description' ? (
               <HumanizedVisualization
-                data={call.fullVisualization}
+                data={[erc7730DescriptionVisualization]}
                 sizeMultiplierSize={sizeMultiplier[size]}
                 textSize={Math.max(textSize - 1, 12)}
                 imageSize={imageSize}
