@@ -186,7 +186,7 @@ export const handleActions = async (
         // For webview, origin is the current page URL
         const session = await mainCtrl.dapps.getOrCreateDappSession({
           url: params.request.origin,
-          tabId: 1 // Mobile uses a single view for the dApp
+          tabId: params.tabId || 1 // Mobile uses tabId: 1 for in-app webview, WC passes explicit tabId
         })
         mainCtrl.dapps.setSessionMessenger(session.sessionId, mobileMessenger, false)
         console.log('[Worker] Resolved session for:', session.origin, session.sessionId)
@@ -267,6 +267,12 @@ export const handleActions = async (
       })
       const messenger = createWcBridgeMessenger(params.wcSessionTopic, params.chainId)
       mainCtrl.dapps.setSessionMessenger(session.sessionId, messenger, false)
+      if (params.name || params.icon) {
+        mainCtrl.dapps.setSessionProp(session.sessionId, {
+          name: params.name,
+          icon: params.icon
+        })
+      }
       break
     }
 
@@ -293,6 +299,13 @@ export const handleActions = async (
           })
           const messenger = createWcBridgeMessenger(wcSession.topic, wcSession.chainId)
           mainCtrl.dapps.setSessionMessenger(session.sessionId, messenger, false)
+
+          if (wcSession.name || wcSession.icon) {
+            mainCtrl.dapps.setSessionProp(session.sessionId, {
+              name: wcSession.name,
+              icon: wcSession.icon
+            })
+          }
         } catch (e) {
           console.error('[Worker] Failed to restore WC session for topic:', wcSession.topic, e)
         }

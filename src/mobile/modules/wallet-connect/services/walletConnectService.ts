@@ -10,7 +10,9 @@ type WalletKitType = InstanceType<typeof WalletKit>
 let walletKit: WalletKitType | null = null
 let initialized = false
 let initPromise: Promise<WalletKitType> | null = null
-let pendingRestoreSessions: { topic: string; url: string; chainId: number }[] | null = null
+let pendingRestoreSessions:
+  | { topic: string; url: string; chainId: number; name?: string; icon?: string }[]
+  | null = null
 let dispatchAction:
   | ((action: MethodAction | Action, windowId?: number, raw?: boolean) => void)
   | null = null
@@ -191,7 +193,8 @@ export const initWalletConnect = async (
                 },
                 requestId: 0,
                 providerId: 1,
-                topic: `wc_session_checkin_${proposal.id.toString()}`
+                topic: `wc_session_checkin_${proposal.id.toString()}`,
+                tabId: proposal.id
               }
             },
             undefined,
@@ -207,7 +210,8 @@ export const initWalletConnect = async (
                 request: { method: 'eth_requestAccounts', origin: proposerUrl },
                 requestId: id,
                 providerId: 1, // Single provider id for WC for now
-                topic: `wc_session_proposal_${proposal.id.toString()}`
+                topic: `wc_session_proposal_${proposal.id.toString()}`,
+                tabId: proposal.id
               }
             },
             undefined,
@@ -251,6 +255,11 @@ export const initWalletConnect = async (
 
           // Delegate to the webview — handleActions will route the result
           // back to RN via sendToReactEvent('action.respondToWalletConnectRequest').
+          const wcTabId =
+            1000000 +
+            (topic.split('').reduce((acc: number, char: string) => acc + char.charCodeAt(0), 0) %
+              900000)
+
           dispatchAction!(
             {
               type: 'HANDLE_PROVIDER_REQUEST',
@@ -258,7 +267,8 @@ export const initWalletConnect = async (
                 request: { ...request, origin: proposerUrl || 'https://walletconnect.com' },
                 requestId: id,
                 providerId: 1,
-                topic: `wc_session_request_${topic}`
+                topic: `wc_session_request_${topic}`,
+                tabId: wcTabId
               }
             },
             undefined,
@@ -293,16 +303,39 @@ export const initWalletConnect = async (
       // Store persisted sessions for later restoration once store is ready
       try {
         const activeSessions = walletKit.getActiveSessions()
-        const sessionsToRestore = Object.values(activeSessions).map((session: any) => {
-          const eip155Namespace = session.namespaces?.eip155
-          const chainId = eip155Namespace?.chains?.[0]?.split(':')[1] || '1'
-          const url = session.peer?.metadata?.url || 'https://walletconnect.com'
-          return {
-            topic: session.topic,
-            url,
-            chainId: parseInt(chainId, 10)
-          }
-        })
+        const sessionsToRestore = await Promise.all(
+          Object.values(activeSessions).map(async (session: any) => {
+            const eip155Namespace = session.namespaces?.eip155
+            const chainId = eip155Namespace?.chains?.[0]?.split(':')[1] || '1'
+            const url = session.peer?.metadata?.url
+            let name = session.peer?.metadata?.name || ''
+            const fetchedName = url ? await fetchDappName(url) : ''
+            if (fetchedName) {
+              name = fetchedName
+            } else if (!name || name === 'Signature Validator') {
+              try {
+                name = new URL(url).hostname
+              } catch (e) {
+                // ignore
+              }
+            }
+            let icon = session.peer?.metadata?.icons?.[0] || ''
+            if (icon && url) {
+              try {
+                icon = new URL(icon, url).href
+              } catch (e) {
+                // ignore
+              }
+            }
+            return {
+              topic: session.topic,
+              url,
+              chainId: parseInt(chainId, 10),
+              name,
+              icon
+            }
+          })
+        )
         if (sessionsToRestore.length > 0) {
           pendingRestoreSessions = sessionsToRestore
         }
@@ -447,6 +480,13 @@ export const approveWalletConnectSession = async (proposalId: number, accounts: 
   })
 
   const proposerUrl = proposal.proposer?.metadata?.url
+  const proposerName = proposal.proposer?.metadata?.name
+  const proposerIcon = proposal.proposer?.metadata?.icons?.[0]
+
+  const wcTabId =
+    1000000 +
+    (session.topic.split('').reduce((acc: number, char: string) => acc + char.charCodeAt(0), 0) %
+      900000)
 
   // Delegate session messenger setup to the webview — it will create the
   // dapp session and attach a wcBridgeMessenger that routes broadcast
@@ -456,9 +496,11 @@ export const approveWalletConnectSession = async (proposalId: number, accounts: 
       type: 'SETUP_WC_SESSION_MESSENGER',
       params: {
         url: proposerUrl,
-        tabId: id,
+        tabId: wcTabId,
         wcSessionTopic: session.topic,
-        chainId: 1
+        chainId: 1,
+        name: proposerName,
+        icon: proposerIcon
       }
     },
     undefined,

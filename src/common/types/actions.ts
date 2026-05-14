@@ -142,6 +142,7 @@ type HandleProviderRequestAction = {
     requestId: number
     providerId: number
     topic: string
+    tabId?: number
   }
 }
 
@@ -152,13 +153,15 @@ type SetupWcSessionMessengerAction = {
     tabId: number
     wcSessionTopic: string
     chainId: number
+    name?: string
+    icon?: string
   }
 }
 
 type RestoreWcSessionsAction = {
   type: 'RESTORE_WC_SESSIONS'
   params: {
-    sessions: { topic: string; url: string; chainId: number }[]
+    sessions: { topic: string; url: string; chainId: number; name?: string; icon?: string }[]
   }
 }
 
