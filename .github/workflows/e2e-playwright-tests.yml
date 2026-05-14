@@ -30,6 +30,7 @@ jobs:
       VELCRO_URL: ${{ vars.VELCRO_URL }}
       LI_FI_API_KEY: ${{ vars.LI_FI_API_KEY }}
       BUNGEE_API_KEY: ${{ vars.BUNGEE_API_KEY }}
+      SQUID_INTEGRATOR_ID: ${{ vars.SQUID_INTEGRATOR_ID }}
       SAFE_API_KEY: ${{ vars.SAFE_API_KEY }}
       REACT_APP_PIMLICO_API_KEY: ${{ vars.REACT_APP_PIMLICO_API_KEY }}
       REACT_APP_ETHERSPOT_API_KEY: ${{ vars.REACT_APP_ETHERSPOT_API_KEY }}
@@ -77,7 +78,6 @@ jobs:
       LEDGER_SA_LEARNED_ASSETS: ${{ vars.LEDGER_SA_LEARNED_ASSETS }}
       LEDGER_EMULATOR_HTTP_URL: ${{ vars.LEDGER_EMULATOR_HTTP_URL }}
       LEDGER_EMULATOR_SEED: ${{ secrets.LEDGER_EMULATOR_SEED }}
-
 
     steps:
       - name: Checkout full Git history
