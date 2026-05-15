@@ -95,11 +95,19 @@ const Main = ({
   )
   const visualizeHumanized = useMemo(
     () =>
-      humanizedMessage?.fullVisualization &&
-      network &&
-      signMessageState.messageToSign?.content.kind,
+      !!(
+        humanizedMessage?.fullVisualization?.length &&
+        network &&
+        signMessageState.messageToSign?.content.kind
+      ),
     [network, humanizedMessage, signMessageState.messageToSign?.content?.kind]
   )
+  const messageVisualizationMode = isHumanizing
+    ? 'humanizing'
+    : visualizeHumanized
+      ? 'humanized'
+      : 'fallback'
+  const messageVisualizationKey = `${signMessageState.messageToSign?.fromRequestId}-${messageVisualizationMode}`
 
   return (
     <Container>
@@ -191,8 +199,9 @@ const Main = ({
         </View>
         <View style={flexbox.flex1}>
           <ExpandableCard
-            enableToggleExpand={!!visualizeHumanized && !!visualizeHumanized}
-            hasArrow={!humanizedMessage?.canHideDropdownArrow && !!visualizeHumanized}
+            key={messageVisualizationKey}
+            enableToggleExpand={visualizeHumanized}
+            hasArrow={!humanizedMessage?.canHideDropdownArrow && visualizeHumanized}
             isInitiallyExpanded={!visualizeHumanized && !isHumanizing}
             style={{
               marginBottom: SPACING_TY * responsiveSizeMultiplier,
