@@ -1,8 +1,8 @@
 import { ZeroAddress } from 'ethers'
 
-import { Contacts } from '@ambire-common/controllers/addressBook/addressBook'
 import { getFeeSpeedIdentifier } from '@ambire-common/controllers/signAccountOp/helper'
 import { FeeSpeed } from '@ambire-common/controllers/signAccountOp/signAccountOp'
+import { Contacts } from '@ambire-common/interfaces/addressBook'
 import { ISignAccountOpController } from '@ambire-common/interfaces/signAccountOp'
 import { canBecomeSmarter } from '@ambire-common/libs/account/account'
 import {

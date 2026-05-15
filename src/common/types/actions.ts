@@ -1,6 +1,10 @@
-import { Contact } from '@ambire-common/controllers/addressBook/addressBook'
 import { Account } from '@ambire-common/interfaces/account'
+<<<<<<< HEAD
 import { Dapp, DappProviderRequest } from '@ambire-common/interfaces/dapp'
+=======
+import { Contact } from '@ambire-common/interfaces/addressBook'
+import { Dapp } from '@ambire-common/interfaces/dapp'
+>>>>>>> e21238732863c8305253e1cd1b55ab0d264f74f1
 import { Key, ReadyToAddKeys } from '@ambire-common/interfaces/keystore'
 
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
