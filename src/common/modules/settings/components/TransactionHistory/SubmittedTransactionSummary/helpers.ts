@@ -202,6 +202,18 @@ export const getDappInteractions = (
 ): DappInteraction[] => {
   const interactions: DappInteraction[] = []
   const seen = new Set<string>()
+  const humanizedCalls = getHumanizedCalls(submittedAccountOp)
+  const sendAddresses = Array.from(
+    new Set(
+      humanizedCalls.flatMap((call) => {
+        if (call.fullVisualization?.[0]?.content !== 'Send') return []
+
+        return call.fullVisualization.flatMap((item) =>
+          item.type === 'address' && item.address ? [item.address] : []
+        )
+      })
+    )
+  )
 
   const addInteraction = (interaction: DappInteraction) => {
     if (seen.has(interaction.id)) return
@@ -226,6 +238,17 @@ export const getDappInteractions = (
       id: 'fallback:swap',
       name: 'Swap/Bridge',
       iconType: 'swap'
+    })
+  }
+
+  const fuelsGasTank = humanizedCalls.some(
+    (call) => call.fullVisualization?.[0]?.content === 'Fuel gas tank with'
+  )
+  if (fuelsGasTank) {
+    addInteraction({
+      id: 'fallback:gasTank',
+      name: 'Fuel gas tank',
+      iconType: 'ambire'
     })
   }
 
@@ -256,7 +279,9 @@ export const getDappInteractions = (
       addInteraction({
         id: 'fallback:send',
         name: 'Send',
-        iconType: 'send'
+        iconType: 'send',
+        address: sendAddresses.length === 1 ? sendAddresses[0] : undefined,
+        description: sendAddresses.length > 1 ? 'multiple addresses' : undefined
       })
     }
   }
