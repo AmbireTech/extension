@@ -28,7 +28,7 @@ import { LEGENDS_LEGACY_ROUTES } from '../constants/routes'
 //              -> child Route.
 const PrivateArea: FC<{ children: ReactNode }> = ({ children }) => {
   useEffect(() => {
-    document.title = 'Ambire Rewards'
+    document.title = 'Ambire Rewards | Stake $WALLET & Earn Rewards'
   }, [])
 
   return (
