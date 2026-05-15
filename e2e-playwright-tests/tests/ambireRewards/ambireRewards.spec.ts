@@ -163,7 +163,8 @@ test.describe.skip('ambire rewards', { tag: '@rewards' }, () => {
       await walletPage.click()
 
       // check url (default $Wallet is / or legacy /wallet)
-      expect(rewardsTab.url()).toMatch(/#\/(wallet)?$/)
+      const walletUrl = rewardsTab.url()
+      expect(walletUrl.endsWith('#/') || walletUrl.endsWith('#/wallet')).toBe(true)
 
       // check page content
       // TODO:
