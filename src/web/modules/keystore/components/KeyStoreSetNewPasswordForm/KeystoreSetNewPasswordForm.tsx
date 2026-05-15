@@ -127,13 +127,6 @@ const KeystoreSetNewPasswordForm = () => {
           onPress={handleSetNewPassword}
           hasBottomSpacing={false}
         />
-        <Text
-          appearance="warningText"
-          fontSize={12}
-          style={[spacings.mtMi, { textAlign: 'center' }]}
-        >
-          {t('This feature will soon be deprecated.')}
-        </Text>
       </View>
     </>
   )
