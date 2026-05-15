@@ -14,7 +14,7 @@ import DialogButton from '@common/components/Dialog/DialogButton'
 import DialogFooter from '@common/components/Dialog/DialogFooter'
 import NetworkIcon from '@common/components/NetworkIcon'
 import Text from '@common/components/Text'
-import { isAmbireNext, isDev } from '@common/config/env'
+import { isAmbireNext, isDev, isMobile, isWeb } from '@common/config/env'
 import useController from '@common/hooks/useController'
 import useRoute from '@common/hooks/useRoute'
 import useTheme from '@common/hooks/useTheme'
@@ -282,8 +282,8 @@ const NetworkDetails = ({
         style={[
           styles.container,
           {
-            paddingHorizontal: SPACING_MD * responsiveSizeMultiplier,
-            paddingVertical: SPACING_MD * responsiveSizeMultiplier
+            paddingHorizontal: isMobile ? SPACING : SPACING_MD * responsiveSizeMultiplier,
+            paddingVertical: isMobile ? SPACING : SPACING_MD * responsiveSizeMultiplier
           },
           shouldDisplayEditButton ? { paddingTop: SPACING_SM * responsiveSizeMultiplier } : {},
           style
@@ -347,7 +347,7 @@ const NetworkDetails = ({
           )}
           {}
         </View>
-        <View style={flexbox.flex1}>
+        <View style={isWeb ? { flex: 1 } : {}}>
           {renderInfoItem(t('Network Name'), name)}
           {renderRpcUrlsItem()}
           {(isAmbireNext || isDev) &&

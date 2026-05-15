@@ -1,8 +1,11 @@
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useState } from 'react'
 
 import OverachieverBanner from '@legends/components/OverachieverBanner'
 import V1AccountBanner from '@legends/components/V1AccountBanner'
+import useAccountContext from '@legends/hooks/useAccountContext'
 import usePortfolio from '@legends/hooks/usePortfolio'
+import useProviderContext from '@legends/hooks/useProviderContext'
+import ambireLogoSmall from '@legends/modules/Home/components/LandingSection/ambire-logo-small.png'
 
 import walletCoin from './assets/wallet-coin.png'
 import styles from './Home.module.scss'
@@ -21,7 +24,21 @@ function formatMarketCap(value: number): string {
   return value.toLocaleString('en-US')
 }
 
+const AMBIRE_EXTENSION_URL =
+  'https://chromewebstore.google.com/detail/ambire-wallet/ehgjhhccekdedpbkifaojjaefeohnoea'
+
 const Home = () => {
+  const { connectProvider, hasAnyAmbireExtensionInstalled } = useProviderContext()
+  const { connectedAccount } = useAccountContext()
+
+  const handleConnectWallet = useCallback(async () => {
+    if (hasAnyAmbireExtensionInstalled) {
+      await connectProvider()
+    } else {
+      window.open(AMBIRE_EXTENSION_URL, '_blank', 'noopener,noreferrer')
+    }
+  }, [connectProvider, hasAnyAmbireExtensionInstalled])
+
   const [isWidgetReady, setIsWidgetReady] = useState(false)
   // Use a callback ref for more reliable access to the custom element
   const [widgetEl, setWidgetEl] = useState<HTMLElement | null>(null)
@@ -116,6 +133,18 @@ const Home = () => {
       </div>
       <section className={`${styles.wrapper}`}>
         <div className={styles.walletInfo}>
+          {!connectedAccount && (
+            <div className={styles.connectWallet}>
+              <button
+                type="button"
+                className={styles.connectButton}
+                onClick={() => void handleConnectWallet()}
+              >
+                <img src={ambireLogoSmall} alt="" className={styles.connectButtonLogo} />
+                {hasAnyAmbireExtensionInstalled ? 'Connect wallet' : 'Get the Extension'}
+              </button>
+            </div>
+          )}
           <div className={styles.chartWrapper}>
             {isWidgetReady ? (
               <div

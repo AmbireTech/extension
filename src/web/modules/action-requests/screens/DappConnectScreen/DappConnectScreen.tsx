@@ -1,80 +1,32 @@
 /* eslint-disable react/jsx-no-useless-fragment */
-import React, { useCallback, useMemo, useState } from 'react'
+import React from 'react'
 import { View } from 'react-native'
 
 import HoldToProceedButton from '@common/components/HoldToProceedButton'
-import { useTranslation } from '@common/config/localization'
-import useController from '@common/hooks/useController'
+import useResponsiveActionWindow from '@common/hooks/useResponsiveActionWindow'
 import useTheme from '@common/hooks/useTheme'
+import ActionFooter from '@common/modules/action-requests/components/ActionFooter'
+import DAppConnectBody from '@common/modules/action-requests/components/DAppConnect/DAppConnectBody'
+import DAppConnectHeader from '@common/modules/action-requests/components/DAppConnect/DAppConnectHeader'
+import getStyles from '@common/modules/action-requests/components/DAppConnect/styles'
+import useDappConnect from '@common/modules/action-requests/hooks/useDappConnect'
 import { HeaderWithLogoOnly } from '@common/modules/header/components/Header/Header'
 import spacings from '@common/styles/spacings'
 import { TabLayoutContainer } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
-import useResponsiveActionWindow from '@web/hooks/useResponsiveActionWindow'
-import ActionFooter from '@web/modules/action-requests/components/ActionFooter'
-
-import DAppConnectBody from './components/DAppConnectBody'
-import DAppConnectHeader from './components/DAppConnectHeader'
-import getStyles from './styles'
 
 // Screen for dApps authorization to connect to extension - will be triggered on dApp connect request
 const DappConnectScreen = () => {
-  const { t } = useTranslation()
-  const { styles } = useTheme(getStyles)
   const {
-    state: { currentUserRequest },
-    dispatch: requestsDispatch
-  } = useController('RequestsController')
-
-  const [isAuthorizing, setIsAuthorizing] = useState(false)
+    t,
+    dappToConnect,
+    isAuthorizing,
+    handleDenyButtonPress,
+    handleAuthorizeButtonPress,
+    shouldHoldToProceed,
+    resolveButtonText
+  } = useDappConnect()
+  const { styles } = useTheme(getStyles)
   const { responsiveSizeMultiplier } = useResponsiveActionWindow()
-  const { state: dappsState } = useController('DappsController')
-
-  const dappToConnect = useMemo(() => dappsState.dappToConnect || null, [dappsState.dappToConnect])
-
-  const userRequest = useMemo(
-    () => (currentUserRequest?.kind === 'dappConnect' ? currentUserRequest : undefined),
-    [currentUserRequest]
-  )
-
-  const handleDenyButtonPress = useCallback(() => {
-    if (!userRequest) return
-
-    requestsDispatch({
-      type: 'method',
-      params: {
-        method: 'rejectUserRequests',
-        args: [t('User rejected the request.'), [userRequest.id]]
-      }
-    })
-  }, [userRequest, t, requestsDispatch])
-
-  const handleAuthorizeButtonPress = useCallback(() => {
-    if (!userRequest) return
-
-    setIsAuthorizing(true)
-    requestsDispatch({
-      type: 'method',
-      params: {
-        method: 'resolveUserRequest',
-        args: [dappToConnect, userRequest.id]
-      }
-    })
-  }, [userRequest, dappToConnect, requestsDispatch])
-
-  const shouldHoldToProceed = useMemo(() => {
-    return (
-      !!dappToConnect &&
-      (dappToConnect.blacklisted === 'BLACKLISTED' || dappToConnect.blacklisted === 'FAILED_TO_GET')
-    )
-  }, [dappToConnect])
-
-  const resolveButtonText = useMemo(() => {
-    if (!dappToConnect || dappToConnect.blacklisted === 'LOADING') return t('Loading...')
-    if (isAuthorizing) return t('Connecting...')
-    if (dappToConnect.blacklisted === 'BLACKLISTED') return t('Hold to continue anyway')
-
-    return shouldHoldToProceed ? t('Hold to connect') : t('Connect')
-  }, [dappToConnect, t, isAuthorizing, shouldHoldToProceed])
 
   return (
     <TabLayoutContainer

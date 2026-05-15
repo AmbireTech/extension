@@ -55,7 +55,10 @@ const Router = () => {
         <Route path={LEGENDS_ROUTES.leaderboard} element={<Leaderboard />} />
         <Route path={LEGENDS_ROUTES.home} element={<Home />} />
         <Route path={LEGENDS_ROUTES.wallet} element={<Wallet />} />
-        <Route path={LEGENDS_ROUTES['/']} element={<Home />} />
+        <Route
+          path={LEGENDS_ROUTES['/']}
+          element={<Navigate to={LEGENDS_ROUTES.wallet} replace />}
+        />
         <Route path={LEGENDS_ROUTES.rewardsPool} element={<RewardsPool />} />
         <Route path={LEGENDS_ROUTES.legacyQuests} element={<Navigate to={LEGENDS_ROUTES.home} />} />
         <Route

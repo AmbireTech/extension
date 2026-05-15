@@ -12,8 +12,19 @@
       <category android:name="android.intent.category.BROWSABLE"/>
       <data android:scheme="https"/>
     </intent>
+    <package android:name="vip.mytokenpocket" />
+    <package android:name="im.token.app" />
+    <package android:name="me.rainbow" />
+    <package android:name="com.bitkeep.wallet" />
+    <package android:name="io.metamask" />
+    <package android:name="im.argent.contractwalletclient" />
+    <package android:name="com.wallet.crypto.trustapp" />
+    <package android:name="com.mathwallet.android" />
+    <package android:name="io.zerion.android" />
+    <package android:name="org.toshi" />
+    <package android:name="com.debank.rabbymobile" />
   </queries>
-  <application android:name=".MainApplication" android:label="@string/app_name" android:icon="@mipmap/ic_launcher" android:roundIcon="@mipmap/ic_launcher_round" android:allowBackup="true" android:theme="@style/AppTheme" android:supportsRtl="true" android:enableOnBackInvokedCallback="false">
+  <application android:name=".MainApplication" android:label="@string/app_name" android:icon="@mipmap/ic_launcher" android:roundIcon="@mipmap/ic_launcher_round" android:allowBackup="true" android:theme="@style/AppTheme" android:supportsRtl="true" android:enableOnBackInvokedCallback="false" android:largeHeap="true">
     <meta-data android:name="expo.modules.updates.ENABLED" android:value="false"/>
     <meta-data android:name="expo.modules.updates.EXPO_RUNTIME_VERSION" android:value="@string/expo_runtime_version"/>
     <meta-data android:name="expo.modules.updates.EXPO_UPDATES_CHECK_ON_LAUNCH" android:value="NEVER"/>

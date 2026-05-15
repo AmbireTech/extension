@@ -36,6 +36,22 @@
     <string>62</string>
     <key>LSMinimumSystemVersion</key>
     <string>12.0</string>
+    <key>LSApplicationQueriesSchemes</key>
+    <array>
+      <string>imtokenv2</string>
+      <string>tpoutside</string>
+      <string>rainbow</string>
+      <string>bitkeep</string>
+      <string>trust</string>
+      <string>argent</string>
+      <string>metamask</string>
+      <string>mathwallet</string>
+      <string>zerion</string>
+      <string>cbwallet</string>
+      <string>blob</string>
+      <string>rabby</string>
+      <string>rabbymobile</string>
+    </array>
     <key>LSRequiresIPhoneOS</key>
     <true/>
     <key>NSAppTransportSecurity</key>

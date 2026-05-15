@@ -12,13 +12,13 @@ import useRoute from '@common/hooks/useRoute'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
+import useLedger from '@common/modules/hardware-wallets/hooks/useLedger'
 import spacings from '@common/styles/spacings'
 import {
   TabLayoutContainer,
   TabLayoutWrapperMainContent
 } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
 import { closeCurrentWindow } from '@web/extension-services/background/webapi/window'
-import useLedger from '@web/modules/hardware-wallet/hooks/useLedger'
 
 export const CARD_WIDTH = 400
 
