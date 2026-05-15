@@ -31,14 +31,15 @@ export interface Toast extends ToastOptions {
 const ToastContext = React.createContext<{
   addToast: (text: string, options?: ToastOptions) => number
   removeToast: (id: number) => void
+  clearToasts: (options?: { type?: ToastOptions['type'] }) => void
 }>({
   addToast: () => -1,
-  removeToast: () => {}
+  removeToast: () => {},
+  clearToasts: () => {}
 })
 
 const defaultOptions = {
   timeout: 8000,
-  error: false,
   sticky: false
 }
 
@@ -50,6 +51,14 @@ const ToastProvider = ({ children }: Props) => {
 
   const removeToast = useCallback((tId: number) => {
     setToasts((_toasts) => _toasts.filter((_t) => _t.id !== tId))
+  }, [])
+
+  const clearToasts = useCallback((options?: { type?: ToastOptions['type'] }) => {
+    setToasts((prevToasts) => {
+      if (!options?.type) return []
+
+      return prevToasts.filter((toast) => toast.type !== options.type)
+    })
   }, [])
 
   const addToast = useCallback(
@@ -84,9 +93,10 @@ const ToastProvider = ({ children }: Props) => {
       value={useMemo(
         () => ({
           addToast,
-          removeToast
+          removeToast,
+          clearToasts
         }),
-        [addToast, removeToast]
+        [addToast, removeToast, clearToasts]
       )}
     >
       <Portal hostName="global">
