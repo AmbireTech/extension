@@ -8,6 +8,7 @@ import useReverseLookup from '@common/hooks/useReverseLookup'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
+// TODO: Refactor to use the <AccountAddress /> component instead
 const InteractionAddress = ({ address }: { address: string }) => {
   const reverseLookup = useReverseLookup({ address })
   const { contacts = [] } = useController('AddressBookController').state
