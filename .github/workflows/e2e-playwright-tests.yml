@@ -30,6 +30,7 @@ jobs:
       VELCRO_URL: ${{ vars.VELCRO_URL }}
       LI_FI_API_KEY: ${{ vars.LI_FI_API_KEY }}
       BUNGEE_API_KEY: ${{ vars.BUNGEE_API_KEY }}
+      SQUID_INTEGRATOR_ID: ${{ vars.SQUID_INTEGRATOR_ID }}
       SAFE_API_KEY: ${{ vars.SAFE_API_KEY }}
       REACT_APP_PIMLICO_API_KEY: ${{ vars.REACT_APP_PIMLICO_API_KEY }}
       REACT_APP_ETHERSPOT_API_KEY: ${{ vars.REACT_APP_ETHERSPOT_API_KEY }}
@@ -77,7 +78,6 @@ jobs:
       LEDGER_SA_LEARNED_ASSETS: ${{ vars.LEDGER_SA_LEARNED_ASSETS }}
       LEDGER_EMULATOR_HTTP_URL: ${{ vars.LEDGER_EMULATOR_HTTP_URL }}
       LEDGER_EMULATOR_SEED: ${{ secrets.LEDGER_EMULATOR_SEED }}
-
 
     steps:
       - name: Checkout full Git history
@@ -201,29 +201,44 @@ jobs:
         working-directory: ./e2e-playwright-tests
         run: yarn test:all:non-hw
 
+      - name: Save non-hw blob report
+        if: always()
+        run: mv ./e2e-playwright-tests/blob-report ./e2e-playwright-tests/blob-report-non-hw || true
+
       # Always run Ledger and Trezor suites even if "Run Playwright tests (All non-hardware suites)" fails.
       # This gives a full picture of failing suites in a single workflow run.
       # Ledger suite (@ledgerTests). Separate from Trezor to avoid parallel worker contention on emulators.
-      # - name: Run Playwright tests (Ledger)
-      #   if: ${{ always() && steps.balance_check.outcome == 'success' }}
-      #   working-directory: ./e2e-playwright-tests
-      #   run: yarn ledger:tests
+      - name: Run Playwright tests (Ledger)
+        if: ${{ always() && steps.balance_check.outcome == 'success' }}
+        working-directory: ./e2e-playwright-tests
+        run: yarn ledger:tests
 
-      # - name: Run Trezor tests
-      #   if: ${{ always() && steps.balance_check.outcome == 'success' }}
-      #   working-directory: ./e2e-playwright-tests
-      #   run: yarn trezor:test
+      - name: Save ledger blob report
+        if: always()
+        run: mv ./e2e-playwright-tests/blob-report ./e2e-playwright-tests/blob-report-ledger || true
 
-      - name: Zip HTML report
+      - name: Run Trezor tests
+        if: ${{ always() && steps.balance_check.outcome == 'success' }}
+        working-directory: ./e2e-playwright-tests
+        run: yarn trezor:test
+
+      - name: Save trezor blob report
+        if: always()
+        run: mv ./e2e-playwright-tests/blob-report ./e2e-playwright-tests/blob-report-trezor || true
+
+      - name: Merge all blob reports into one HTML report
         if: always()
         working-directory: ./e2e-playwright-tests
         run: |
-          zip -r playwright-report.zip html-report/
-        continue-on-error: true
+          mkdir -p all-blob-reports
+          cp -r blob-report-non-hw/. all-blob-reports/ 2>/dev/null || true
+          cp -r blob-report-ledger/. all-blob-reports/ 2>/dev/null || true
+          cp -r blob-report-trezor/. all-blob-reports/ 2>/dev/null || true
+          yarn playwright merge-reports --reporter html ./all-blob-reports
 
       - name: Save test report as artifact
         if: always()
         uses: actions/upload-artifact@v6
         with:
           name: playwright-report
-          path: ./e2e-playwright-tests/playwright-report.zip
+          path: ./e2e-playwright-tests/playwright-report/

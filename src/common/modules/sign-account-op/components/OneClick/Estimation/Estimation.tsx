@@ -181,6 +181,7 @@ const OneClickEstimation = ({
             <BundlerWarning
               signAccountOpState={signAccountOpController}
               bundlerNonceDiscrepancy={bundlerNonceDiscrepancy}
+              hasMarginTop
             />
             <ButtonsWrapper
               size="sm"

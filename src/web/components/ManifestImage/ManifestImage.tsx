@@ -57,8 +57,14 @@ const ManifestImage = ({
     if (!uris.length && !uri) {
       setIsLoading(false)
       setHasError(true)
+      return
     }
-  }, [uri, uris.length])
+
+    setCurrentUri({ index: 0, uri: uri || uris[0] })
+    setHasError(false)
+    setIsLoading(true)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [uri, uris?.length])
 
   return (
     <View
