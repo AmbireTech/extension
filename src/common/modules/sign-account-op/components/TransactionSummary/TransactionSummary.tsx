@@ -1,5 +1,6 @@
 import { Interface, parseUnits } from 'ethers'
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { View, ViewStyle } from 'react-native'
 
 import {
@@ -11,6 +12,7 @@ import DeleteIcon from '@common/assets/svg/DeleteIcon'
 import ExpandableCard from '@common/components/ExpandableCard'
 import HumanizedVisualization from '@common/components/HumanizedVisualization'
 import Label from '@common/components/Label'
+import Text from '@common/components/Text'
 import { isMobile, isWeb } from '@common/config/env'
 import useController from '@common/hooks/useController'
 import useDecodeTransactionData from '@common/hooks/useDecodeTransactionData'
@@ -83,6 +85,7 @@ const TransactionSummary = ({
   } = useController('SelectedAccountController')
   const { styles } = useTheme(getStyles)
   const { addToast } = useToast()
+  const { t } = useTranslation()
   const { decodedFunction, isLoading: isDecodedFunctionLoading } = useDecodeTransactionData(call)
 
   /**
