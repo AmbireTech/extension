@@ -3,10 +3,12 @@ import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
+import HumanizerAddress from '@common/components/HumanizerAddress'
 import SkeletonLoader from '@common/components/SkeletonLoader'
 import Text from '@common/components/Text'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
+import flexbox from '@common/styles/utils/flexbox'
 
 import {
   formatBalanceChangeAmount,
@@ -52,9 +54,30 @@ const SummaryPreview = ({
                 ]}
               >
                 <DappInteractionIcon interaction={interaction} />
-                <Text fontSize={14} weight="semiBold">
-                  {interaction.name}
-                </Text>
+                <View>
+                  <Text fontSize={14} weight="semiBold">
+                    {interaction.name}
+                  </Text>
+                  {(!!interaction.address || !!interaction.description) && (
+                    <View style={[flexbox.alignCenter, flexbox.directionRow]}>
+                      <Text fontSize={12}>{t('to ')}</Text>
+                      {!!interaction.address && (
+                        <HumanizerAddress
+                          address={interaction.address}
+                          chainId={submittedAccountOp.chainId}
+                          fontSize={12}
+                          appearance="secondaryText"
+                          hideLinks
+                        />
+                      )}
+                      {!!interaction.description && (
+                        <Text fontSize={12} appearance="secondaryText">
+                          {interaction.description}
+                        </Text>
+                      )}
+                    </View>
+                  )}
+                </View>
               </View>
             ))}
           </>
