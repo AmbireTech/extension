@@ -2,10 +2,12 @@ import React from 'react'
 import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 
+import AccountAddress from '@common/components/AccountAddress'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
-import HumanizerAddress from '@common/components/HumanizerAddress'
 import SkeletonLoader from '@common/components/SkeletonLoader'
 import Text from '@common/components/Text'
+import useController from '@common/hooks/useController'
+import useReverseLookup from '@common/hooks/useReverseLookup'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
@@ -18,6 +20,30 @@ import {
 import getStyles from './styles'
 import { BalanceChangeToken, DappInteractionIcon } from './SummaryIcons'
 import { DappInteraction, DisplayBalanceChange, SubmittedAccountOpLike } from './types'
+
+const InteractionAddress = ({ address }: { address: string }) => {
+  const reverseLookup = useReverseLookup({ address })
+  const { contacts = [] } = useController('AddressBookController').state
+  const { accounts = [] } = useController('AccountsController').state
+  const addressBookContact = contacts.find(
+    (contact) => contact.address.toLowerCase() === address.toLowerCase()
+  )
+  const localAccount = accounts.find(
+    (account) => account.addr.toLowerCase() === address.toLowerCase()
+  )
+  const localLabel = addressBookContact?.name || localAccount?.preferences?.label
+
+  return (
+    <AccountAddress
+      {...reverseLookup}
+      address={address}
+      name={localLabel || reverseLookup.name}
+      type={localLabel ? null : reverseLookup.type}
+      withCopy
+      plainAddressMaxLength={12}
+    />
+  )
+}
 
 const SummaryPreview = ({
   submittedAccountOp,
@@ -60,15 +86,11 @@ const SummaryPreview = ({
                   </Text>
                   {(!!interaction.address || !!interaction.description) && (
                     <View style={[flexbox.alignCenter, flexbox.directionRow]}>
-                      <Text fontSize={12}>{t('to ')}</Text>
+                      <Text fontSize={12} appearance="secondaryText">
+                        {t('to ')}
+                      </Text>
                       {!!interaction.address && (
-                        <HumanizerAddress
-                          address={interaction.address}
-                          chainId={submittedAccountOp.chainId}
-                          fontSize={12}
-                          appearance="secondaryText"
-                          hideLinks
-                        />
+                        <InteractionAddress address={interaction.address} />
                       )}
                       {!!interaction.description && (
                         <Text fontSize={12} appearance="secondaryText">
