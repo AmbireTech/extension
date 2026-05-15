@@ -250,6 +250,10 @@
 
   @include breakpoint-down-from(tablet) {
     .walletInfo {
+      .connectWallet {
+        display: none;
+      }
+
       .walletLevelInfoWrapper {
         display: grid;
         grid-template-columns: 1fr;
