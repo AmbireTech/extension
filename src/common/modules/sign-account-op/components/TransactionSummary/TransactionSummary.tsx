@@ -8,6 +8,12 @@ import {
   SigningStatus
 } from '@ambire-common/controllers/signAccountOp/signAccountOp'
 import { IrCall } from '@ambire-common/libs/humanizer/interfaces'
+import {
+  getAction,
+  getAddressVisualization,
+  getLabel,
+  getToken
+} from '@ambire-common/libs/humanizer/utils'
 import DeleteIcon from '@common/assets/svg/DeleteIcon'
 import ExpandableCard from '@common/components/ExpandableCard'
 import HumanizedVisualization from '@common/components/HumanizedVisualization'
@@ -21,7 +27,7 @@ import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import ExpandedContent from '@common/modules/sign-account-op/components/TransactionSummary/ExpandedContent'
 import FallbackVisualization from '@common/modules/sign-account-op/components/TransactionSummary/FallbackVisualization'
-import { SPACING_SM, SPACING_TY } from '@common/styles/spacings'
+import { SPACING_SM } from '@common/styles/spacings'
 
 import getStyles from './styles'
 
@@ -339,6 +345,37 @@ const TransactionSummary = ({
     return { setter: innerEditApproval, amount, token, callId: call.id }
   }, [call, innerEditApproval, portfolio, signAccountOpState])
 
+  // TODO: should this be reused in history/benzin/other places
+  const callVisualization = useMemo(() => {
+    if (!call.isFallback) return call.fullVisualization
+    if (!call.to) return call.fullVisualization
+    if (!call.data || call.data === '0x' || call.data.length < 10) return call.fullVisualization
+    if (isDecodedFunctionLoading) return [getLabel('Loading...')]
+    if (!decodedFunction) return call.fullVisualization
+    const functionName = decodedFunction.signature.split('(')[0]
+    if (!functionName) return call.fullVisualization
+
+    if (call.value) {
+      return [
+        getAction('Send'),
+        getToken('0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee', call.value),
+        getLabel('and'),
+        getAction(`Call ${functionName}`),
+        getLabel('from'),
+        getAddressVisualization(call.to)
+      ]
+    } else {
+      return [getAction(functionName), getLabel('from'), getAddressVisualization(call.to)]
+    }
+  }, [
+    call.data,
+    call.fullVisualization,
+    call.isFallback,
+    call.to,
+    call.value,
+    decodedFunction,
+    isDecodedFunctionLoading
+  ])
   if (isCallRemovedOptimistic) return null
 
   return (
@@ -360,9 +397,9 @@ const TransactionSummary = ({
       }
       content={
         <>
-          {call.fullVisualization ? (
+          {callVisualization ? (
             <HumanizedVisualization
-              data={call.fullVisualization}
+              data={callVisualization}
               sizeMultiplierSize={sizeMultiplier[size]}
               textSize={textSize}
               imageSize={imageSize}
