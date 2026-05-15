@@ -1,4 +1,4 @@
-import { Interface, parseUnits } from 'ethers'
+import { Interface, parseUnits, ZeroAddress } from 'ethers'
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { View, ViewStyle } from 'react-native'
@@ -358,7 +358,7 @@ const TransactionSummary = ({
     if (call.value) {
       return [
         getAction('Send'),
-        getToken('0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee', call.value),
+        getToken(ZeroAddress, call.value),
         getLabel('and'),
         getAction(`Call ${functionName}`),
         getLabel('from'),
