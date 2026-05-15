@@ -175,7 +175,7 @@ const DevicePasswordRecoverySettingsScreen = () => {
               autoFocus={isWeb}
               isValid={isEmail(value)}
               error={!!errors.email && (t('Please fill in a valid email.') as string)}
-              disabled={ev.hasKeystoreRecovery || !keystoreState.hasPasswordSecret}
+              disabled
             />
           )}
           name="email"
@@ -200,13 +200,13 @@ const DevicePasswordRecoverySettingsScreen = () => {
           onPress={handleDisablePress}
         />
         <Alert
-          type="success"
+          type="warning"
           isTypeLabelHidden
           style={spacings.mtXl}
-          title={t('You can disable the email recovery!')}
+          title={t('Email recovery will be deprecated soon')}
           titleWeight="semiBold"
           text={t(
-            'Disable email-based password recovery for this device. \nYou can still setup and use biometric unlock as a more self-sovereign and private alternative that does not rely on Ambire infrastructure.'
+            "Email-based password recovery for this device is being phased out. To avoid losing access, we recommend disabling it now and switching to biometric unlock - a more private, self-sovereign alternative that doesn't rely on Ambire infrastructure.\n\nDisable email recovery before it's removed."
           )}
         />
         <Alert
@@ -241,7 +241,6 @@ const DevicePasswordRecoverySettingsScreen = () => {
           hasBottomSpacing={false}
           onPress={() => {
             closeSuccessModal()
-            navigate(WEB_ROUTES.generalSettings)
           }}
         />
       </BottomSheet>
