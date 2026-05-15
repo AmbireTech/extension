@@ -142,6 +142,7 @@ type HandleProviderRequestAction = {
     requestId: number
     providerId: number
     topic: string
+    isWalletConnect?: boolean
     tabId?: number
   }
 }
@@ -151,10 +152,11 @@ type SetupWcSessionMessengerAction = {
   params: {
     url: string
     tabId: number
-    wcSessionTopic: string
+    topic: string
     chainId: number
     name?: string
     icon?: string
+    tempSessionTopic?: string
   }
 }
 

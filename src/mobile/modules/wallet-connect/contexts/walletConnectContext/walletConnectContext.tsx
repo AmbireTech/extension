@@ -4,6 +4,7 @@ import { Linking } from 'react-native'
 
 import { ControllersMiddlewareContext } from '@common/contexts/controllersMiddlewareContext'
 import { ControllerStoreContext } from '@common/contexts/controllerStoreContext'
+import useToast from '@common/hooks/useToast'
 import {
   getPendingRestoreSessions,
   getWalletKit,
@@ -32,6 +33,7 @@ export const WalletConnectProvider: React.FC<{ children: React.ReactNode }> = ({
   const { dispatch } = useContext(ControllersMiddlewareContext)
   const { isStoreReady } = useContext(ControllerStoreContext)
   const [cameraPermission, requestCameraPermission] = useCameraPermissions()
+  const { addToast } = useToast()
 
   // Initialize WalletKit when store and dispatch are ready
   useEffect(() => {
@@ -45,7 +47,7 @@ export const WalletConnectProvider: React.FC<{ children: React.ReactNode }> = ({
 
     const initWc = async () => {
       try {
-        await initWalletConnect(dispatch)
+        await initWalletConnect(dispatch, addToast)
         setIsInitialized(true)
       } catch (e) {
         console.error('[WalletConnectProvider] Initialization failed:', e)

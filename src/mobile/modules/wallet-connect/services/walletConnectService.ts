@@ -2,6 +2,7 @@ import '@walletconnect/react-native-compat'
 
 import CONFIG from '@common/config/env'
 import { Action, MethodAction } from '@common/types/actions'
+import { getWcTabIdFromTopic } from '@mobile/modules/wallet-connect/utils'
 import { WalletKit, WalletKitTypes } from '@reown/walletkit'
 import { Core } from '@walletconnect/core'
 import { ProposalTypes, SessionTypes } from '@walletconnect/types'
@@ -13,9 +14,6 @@ let initialized = false
 let initPromise: Promise<WalletKitType> | null = null
 let pendingRestoreSessions:
   | { topic: string; url: string; chainId: number; name?: string; icon?: string }[]
-  | null = null
-let dispatchAction:
-  | ((action: MethodAction | Action, windowId?: number, raw?: boolean) => void)
   | null = null
 
 export const getWalletKit = () => walletKit
@@ -104,11 +102,36 @@ const fetchDappName = async (url: string): Promise<string | null> => {
   return null
 }
 
-export const initWalletConnect = async (
-  dispatch: (action: MethodAction | Action, windowId?: number, raw?: boolean) => void
-) => {
-  dispatchAction = dispatch
+const getDappMetadata = async (url: string, name?: string, icon?: string) => {
+  let finalName = name || ''
+  let finalIcon = icon || ''
 
+  const fetchedName = await fetchDappName(url)
+  if (fetchedName) {
+    finalName = fetchedName
+  } else if (!finalName || finalName === 'Signature Validator') {
+    try {
+      finalName = new URL(url).hostname
+    } catch (e) {
+      // ignore
+    }
+  }
+
+  if (finalIcon) {
+    try {
+      finalIcon = new URL(finalIcon, url).href
+    } catch (e) {
+      // ignore invalid url
+    }
+  }
+
+  return { name: finalName, icon: finalIcon }
+}
+
+export const initWalletConnect = async (
+  dispatch: (action: MethodAction | Action, windowId?: number, raw?: boolean) => void,
+  addToast: (text: string, options?: any) => void
+) => {
   if (initialized) {
     console.log('[WalletConnect] Already initialized, returning existing walletKit.')
     return walletKit
@@ -137,7 +160,7 @@ export const initWalletConnect = async (
           core,
           metadata: {
             name: 'Ambire Wallet',
-            description: 'The ultimate smart contract wallet',
+            description: 'Your Web3 Wallet that just works.',
             url: 'https://ambire.com/',
             icons: ['https://ambire.com/wallet-logo.png'],
             redirect: {
@@ -159,60 +182,42 @@ export const initWalletConnect = async (
           const { id, params } = proposal
           const proposerUrl = params.proposer.metadata.url
 
-          let proposerName = params.proposer.metadata.name
-          let proposerIcon = params.proposer.metadata.icons[0]
+          const { name, icon } = await getDappMetadata(
+            proposerUrl,
+            params.proposer.metadata.name,
+            params.proposer.metadata.icons[0]
+          )
 
-          const fetchedName = await fetchDappName(proposerUrl)
-          if (fetchedName) {
-            proposerName = fetchedName
-          } else if (!proposerName || proposerName === 'Signature Validator') {
-            try {
-              proposerName = new URL(proposerUrl).hostname
-            } catch (e) {
-              // ignore
-            }
-          }
-
-          if (proposerIcon) {
-            try {
-              proposerIcon = new URL(proposerIcon, proposerUrl).href
-            } catch (e) {
-              // ignore invalid url
-            }
-          }
-
-          console.log(proposerName, proposerIcon)
-
-          dispatchAction!(
+          dispatch(
             {
               type: 'HANDLE_PROVIDER_REQUEST',
               params: {
                 request: {
                   method: 'tabCheckin',
                   origin: proposerUrl,
-                  params: { name: proposerName, icon: proposerIcon }
+                  params: { name, icon }
                 },
                 requestId: 0,
                 providerId: 1,
-                topic: `wc_session_checkin_${proposal.id.toString()}`,
-                tabId: proposal.id
+                topic: `temp_wallet_connect_session_${proposal.id}`,
+                tabId: proposal.id,
+                isWalletConnect: true
               }
             },
             undefined,
             true
           )
 
-          // Delegate to the webview via dispatch — the webview will create the
-          // dapp session and process the eth_requestAccounts request via handleActions.
-          dispatchAction!(
+          dispatch(
             {
               type: 'HANDLE_PROVIDER_REQUEST',
               params: {
                 request: { method: 'eth_requestAccounts', origin: proposerUrl },
                 requestId: id,
                 providerId: 1, // Single provider id for WC for now
-                topic: `wc_session_proposal_${proposal.id.toString()}`,
-                tabId: proposal.id
+                topic: `temp_wallet_connect_session_${proposal.id}`,
+                tabId: proposal.id,
+                isWalletConnect: true
               }
             },
             undefined,
@@ -230,46 +235,24 @@ export const initWalletConnect = async (
 
           // We get the session to find the origin URL
           const activeSession = walletKit?.engine.signClient.session.get(topic)
-          const proposerUrl = activeSession?.peer?.metadata?.url
-
-          let proposerName = activeSession?.peer?.metadata?.name
-          let proposerIcon = activeSession?.peer?.metadata?.icons?.[0]
-
-          const fetchedName = await fetchDappName(proposerUrl || '')
-          if (fetchedName) {
-            proposerName = fetchedName
-          } else if (!proposerName || proposerName === 'Signature Validator') {
-            try {
-              proposerName = new URL(proposerUrl || '').hostname
-            } catch (e) {
-              // ignore
-            }
+          if (!activeSession || !activeSession.peer?.metadata?.url) {
+            addToast('WalletConnect session not found. Please reconnect the app.', {
+              type: 'error'
+            })
+            return
           }
+          const proposerUrl = activeSession.peer.metadata.url
 
-          if (proposerIcon && proposerUrl) {
-            try {
-              proposerIcon = new URL(proposerIcon, proposerUrl).href
-            } catch (e) {
-              // ignore invalid url
-            }
-          }
-
-          // Delegate to the webview — handleActions will route the result
-          // back to RN via sendToReactEvent('action.respondToWalletConnectRequest').
-          const wcTabId =
-            1000000 +
-            (topic.split('').reduce((acc: number, char: string) => acc + char.charCodeAt(0), 0) %
-              900000)
-
-          dispatchAction!(
+          dispatch(
             {
               type: 'HANDLE_PROVIDER_REQUEST',
               params: {
-                request: { ...request, origin: proposerUrl || 'https://walletconnect.com' },
+                request: { ...request, origin: proposerUrl },
                 requestId: id,
                 providerId: 1,
-                topic: `wc_session_request_${topic}`,
-                tabId: wcTabId
+                topic,
+                tabId: getWcTabIdFromTopic(topic),
+                isWalletConnect: true
               }
             },
             undefined,
@@ -280,25 +263,15 @@ export const initWalletConnect = async (
         }
       })
 
-      walletKit.on('session_delete', (event: any) => {
-        // Clean up the dapp session when WalletConnect session is deleted
-        // The handler will look up the session by wcTopic to get the dappId and URL
-        const { topic } = event
-        console.log('[WalletConnect] session_delete event received, topic:', topic)
-        if (topic) {
-          console.log(
-            '[WalletConnect] Dispatching DAPPS_CONTROLLER_DISCONNECT_DAPP for topic:',
-            topic
-          )
-          dispatchAction!(
-            {
-              type: 'DAPPS_CONTROLLER_DISCONNECT_DAPP',
-              params: { id: topic, url: '' }
-            },
-            undefined,
-            true
-          )
-        }
+      walletKit.on('session_delete', (event: WalletKitTypes.SessionDelete) => {
+        dispatch({
+          type: 'method',
+          params: {
+            method: 'deleteDappSessionByWcTopic',
+            ctrlName: 'DappsController',
+            args: [event.topic]
+          }
+        })
       })
 
       // Store persisted sessions for later restoration once store is ready
@@ -308,26 +281,12 @@ export const initWalletConnect = async (
           Object.values(activeSessions).map(async (session: SessionTypes.Struct) => {
             const eip155Namespace = session.namespaces?.eip155
             const chainId = eip155Namespace?.chains?.[0]?.split(':')[1] || '1'
-            const url = session.peer?.metadata?.url
-            let name = session.peer?.metadata?.name || ''
-            const fetchedName = url ? await fetchDappName(url) : ''
-            if (fetchedName) {
-              name = fetchedName
-            } else if (!name || name === 'Signature Validator') {
-              try {
-                name = new URL(url).hostname
-              } catch (e) {
-                // ignore
-              }
-            }
-            let icon = session.peer?.metadata?.icons?.[0] || ''
-            if (icon && url) {
-              try {
-                icon = new URL(icon, url).href
-              } catch (e) {
-                // ignore
-              }
-            }
+            const url = session.peer.metadata.url
+            const { name, icon } = await getDappMetadata(
+              url,
+              session.peer.metadata.name,
+              session.peer.metadata.icons[0]
+            )
             return {
               topic: session.topic,
               url,
@@ -337,9 +296,7 @@ export const initWalletConnect = async (
             }
           })
         )
-        if (sessionsToRestore.length > 0) {
-          pendingRestoreSessions = sessionsToRestore
-        }
+        if (sessionsToRestore.length > 0) pendingRestoreSessions = sessionsToRestore
       } catch (e) {
         console.error('[WalletConnect] Failed to get persisted sessions:', e)
       }
@@ -441,7 +398,11 @@ export const respondToWalletConnectRequest = async (topic: string, response: any
   }
 }
 
-export const approveWalletConnectSession = async (proposalId: number, accounts: string[]) => {
+export const approveWalletConnectSession = async (
+  proposalId: number,
+  accounts: string[],
+  dispatch: (action: MethodAction | Action, raw?: boolean) => void
+) => {
   if (!walletKit) return
 
   // Use the SDK's public API to retrieve pending proposals.
@@ -475,36 +436,28 @@ export const approveWalletConnectSession = async (proposalId: number, accounts: 
     }
   }
 
-  const session = await walletKit.approveSession({
-    id,
-    namespaces
-  })
+  const session = await walletKit.approveSession({ id, namespaces })
 
-  const proposerUrl = proposal.proposer?.metadata?.url
-  const proposerName = proposal.proposer?.metadata?.name
-  const proposerIcon = proposal.proposer?.metadata?.icons?.[0]
+  const proposerUrl = proposal.proposer?.metadata?.url || ''
+  const { name, icon } = await getDappMetadata(
+    proposerUrl,
+    proposal.proposer?.metadata?.name,
+    proposal.proposer?.metadata?.icons?.[0]
+  )
 
-  const wcTabId =
-    1000000 +
-    (session.topic.split('').reduce((acc: number, char: string) => acc + char.charCodeAt(0), 0) %
-      900000)
-
-  // Delegate session messenger setup to the webview — it will create the
-  // dapp session and attach a wcBridgeMessenger that routes broadcast
-  // events (disconnect, chainChanged, etc.) back to RN.
-  dispatchAction!(
+  dispatch(
     {
       type: 'SETUP_WC_SESSION_MESSENGER',
       params: {
         url: proposerUrl,
-        tabId: wcTabId,
-        wcSessionTopic: session.topic,
+        tabId: getWcTabIdFromTopic(session.topic),
+        topic: session.topic,
         chainId: 1,
-        name: proposerName,
-        icon: proposerIcon
+        name,
+        icon,
+        tempSessionTopic: `temp_wallet_connect_session_${proposal.id}`
       }
     },
-    undefined,
     true
   )
 
@@ -514,10 +467,7 @@ export const approveWalletConnectSession = async (proposalId: number, accounts: 
 export const rejectWalletConnectSession = async (proposalId: number) => {
   if (!walletKit) return
 
-  await walletKit.rejectSession({
-    id: proposalId,
-    reason: getSdkError('USER_REJECTED')
-  })
+  await walletKit.rejectSession({ id: proposalId, reason: getSdkError('USER_REJECTED') })
 }
 
 /**
@@ -624,27 +574,6 @@ export const handleWcSessionBroadcast = async (payload: {
     } else {
       throw e
     }
-  }
-}
-
-export const disconnectSession = async (topic: string) => {
-  if (!walletKit) {
-    return
-  }
-  // Check if session exists in WalletKit
-  const activeSessions = walletKit.getActiveSessions()
-  const sessionExists = activeSessions[topic]
-  if (!sessionExists) {
-    return
-  }
-  try {
-    await walletKit.disconnectSession({
-      topic,
-      reason: getSdkError('USER_DISCONNECTED')
-    })
-  } catch (e: any) {
-    console.error('[WalletConnect] Failed to disconnect session:', topic, e?.message || e)
-    throw e
   }
 }
 

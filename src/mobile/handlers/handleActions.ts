@@ -8,6 +8,7 @@ import { getDappIdFromUrl } from '@ambire-common/libs/dapps/helpers'
 import { KeyIterator } from '@ambire-common/libs/keyIterator/keyIterator'
 import handleProviderRequests from '@common/modules/provider/handleProviderRequests'
 import { Action, MethodAction } from '@common/types/actions'
+import { getWcTabIdFromTopic } from '@mobile/modules/wallet-connect/utils'
 import { mobileMessenger } from '@mobile/modules/webview/services/mobileMessenger'
 import { createWcBridgeMessenger } from '@mobile/modules/webview/services/wcBridgeMessenger'
 
@@ -88,39 +89,9 @@ export const handleActions = async (
     }
 
     case 'DAPPS_CONTROLLER_DISCONNECT_DAPP': {
-      // If params.id looks like a WC topic (contains colon), find session by topic
-      const isWcTopic = params.id.includes(':')
-      let dappId = params.id
-      let url = params.url
-
-      if (isWcTopic) {
-        const session = mainCtrl.dapps.getDappSessionByWcTopic(params.id)
-        if (session) {
-          dappId = session.id
-          url = session.origin
-        }
-      } else {
-        // Given a dapp ID - also check for any WC sessions with this dapp and disconnect them
-        const wcSessions = Object.values(mainCtrl.dapps.dappSessions).filter(
-          (s) => s.id === params.id && s.wcTopic
-        )
-        for (const session of wcSessions) {
-          if (session.wcTopic) {
-            // Send action back to RN to disconnect WC session
-            sendToReactEvent('action.disconnectWcSession', {
-              topic: session.wcTopic
-            })
-            // Delete the dapp session for this WC session
-            mainCtrl.dapps.deleteDappSession(session.sessionId)
-          }
-        }
-      }
-      await mainCtrl.dapps.broadcastDappSessionEvent('disconnect', undefined, dappId)
-      mainCtrl.dapps.updateDapp(dappId, { isConnected: false })
-      if (isWcTopic) {
-        mainCtrl.dapps.deleteDappSessionByWcTopic(params.id)
-      }
-      await mainCtrl.autoLogin.revokeAllPoliciesForDomain(dappId, url)
+      await mainCtrl.dapps.broadcastDappSessionEvent('disconnect', undefined, params.id)
+      mainCtrl.dapps.updateDapp(params.id, { isConnected: false })
+      await mainCtrl.autoLogin.revokeAllPoliciesForDomain(params.id, params.url)
 
       break
     }
@@ -179,19 +150,19 @@ export const handleActions = async (
         .values()
         .find((c: any) => c.name === 'WalletStateController') as any
       const notificationManager = mainCtrl.ui.notification
+      const { tabId, isWalletConnect, request, topic } = params
+      const isTempSession = topic === `temp_wallet_connect_session_${tabId}`
 
       try {
-        // Create or retrieve dapp session using origin from request
-        // For WalletConnect, origin is the proposer URL from session metadata
-        // For webview, origin is the current page URL
         const session = await mainCtrl.dapps.getOrCreateDappSession({
-          url: params.request.origin,
-          tabId: params.tabId || 1 // Mobile uses tabId: 1 for in-app webview, WC passes explicit tabId
+          url: request.origin,
+          tabId,
+          wcTopic: isWalletConnect ? topic : undefined
         })
-        if (!params.topic?.toString().includes('wc_session')) {
+
+        if (!isWalletConnect) {
           mainCtrl.dapps.setSessionMessenger(session.sessionId, mobileMessenger, false)
         }
-        console.log('[Worker] Resolved session for:', session.origin, session.sessionId)
 
         const result = await handleProviderRequests({
           request: { ...params.request, session },
@@ -204,18 +175,19 @@ export const handleActions = async (
         })
         console.log('[Worker] handleProviderRequests result:', result)
 
-        if (params.topic && params.topic.toString().includes('wc_session_request')) {
-          sendToReactEvent('action.respondToWalletConnectRequest', {
-            topic: params.topic.replace('wc_session_request_', ''),
-            response: { result }, // Raw result - will be formatted into JSON-RPC by walletConnectService
-            id: params.requestId
-          })
-        } else if (params.topic && params.topic.toString().includes('wc_session_proposal')) {
-          // WalletConnect session proposals - approve if eth_requestAccounts succeeded
-          if (result && Array.isArray(result) && result.length > 0) {
-            sendToReactEvent('action.approveWalletConnectSession', {
-              proposalId: params.requestId,
-              accounts: result
+        if (isWalletConnect) {
+          if (isTempSession) {
+            if (!!result) {
+              sendToReactEvent('action.approveWalletConnectSession', {
+                proposalId: params.requestId,
+                accounts: result
+              })
+            }
+          } else {
+            sendToReactEvent('action.respondToWalletConnectRequest', {
+              topic: params.topic,
+              response: { result },
+              id: params.requestId
             })
           }
         } else {
@@ -237,17 +209,18 @@ export const handleActions = async (
           errorRes = error
         }
 
-        // Route error response based on request source (same logic as success case)
-        if (params.topic && params.topic.toString().includes('wc_session_request')) {
-          sendToReactEvent('action.respondToWalletConnectRequest', {
-            topic: params.topic.replace('wc_session_request_', ''),
-            response: { error: errorRes }, // Raw error - will be formatted into JSON-RPC by walletConnectService
-            id: params.requestId
-          })
-        } else if (params.topic && params.topic.toString().includes('wc_session_proposal')) {
-          sendToReactEvent('action.rejectWalletConnectSession', {
-            proposalId: params.requestId
-          })
+        if (isWalletConnect) {
+          if (isTempSession) {
+            sendToReactEvent('action.rejectWalletConnectSession', {
+              proposalId: params.requestId
+            })
+          } else {
+            sendToReactEvent('action.respondToWalletConnectRequest', {
+              topic: params.topic,
+              response: { error: errorRes }, // Raw error - will be formatted into JSON-RPC by walletConnectService
+              id: params.requestId
+            })
+          }
         } else {
           sendToReactEvent('action.sendToDappWebView', {
             result: null,
@@ -262,54 +235,38 @@ export const handleActions = async (
     }
 
     case 'SETUP_WC_SESSION_MESSENGER': {
+      // Remove temp session if it exists (the one that was created during handshake)
+      if (params.tempSessionTopic) {
+        mainCtrl.dapps.deleteDappSessionByWcTopic(params.tempSessionTopic)
+      }
+      // Create actual session
       const session = await mainCtrl.dapps.getOrCreateDappSession({
         url: params.url,
         tabId: params.tabId,
-        wcTopic: params.wcSessionTopic
+        wcTopic: params.topic
       })
-      const messenger = createWcBridgeMessenger(params.wcSessionTopic, params.chainId)
+      const messenger = createWcBridgeMessenger(params.topic, params.chainId)
       mainCtrl.dapps.setSessionMessenger(session.sessionId, messenger, false)
-      if (params.name || params.icon) {
-        mainCtrl.dapps.setSessionProp(session.sessionId, {
-          name: params.name,
-          icon: params.icon
-        })
-      }
+      mainCtrl.dapps.setSessionProp(session.sessionId, { name: params.name, icon: params.icon })
+
       break
     }
 
     case 'RESTORE_WC_SESSIONS': {
-      // Track which dapp IDs we've already restored to avoid duplicates
-      const restoredDappIds = new Set<string>()
-      // Restore dapp sessions and messengers for persisted WalletConnect sessions
       for (const wcSession of params.sessions) {
+        const { topic, name, icon, url, chainId } = wcSession
         try {
-          const dappId = getDappIdFromUrl(new URL(wcSession.url).origin)
-          if (restoredDappIds.has(dappId)) {
-            continue
-          }
-          restoredDappIds.add(dappId)
-          // Use a unique tabId for WalletConnect sessions to avoid conflict with in-app dapp sessions
-          // The in-app WebView uses tabId: 1, so we use a hash of the topic to ensure uniqueness
-          const wcTabId =
-            1000000 +
-            (wcSession.topic.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) % 900000)
+          const wcTabId = getWcTabIdFromTopic(topic)
           const session = await mainCtrl.dapps.getOrCreateDappSession({
-            url: wcSession.url,
+            url,
             tabId: wcTabId,
-            wcTopic: wcSession.topic
+            wcTopic: topic
           })
-          const messenger = createWcBridgeMessenger(wcSession.topic, wcSession.chainId)
+          const messenger = createWcBridgeMessenger(topic, chainId)
           mainCtrl.dapps.setSessionMessenger(session.sessionId, messenger, false)
-
-          if (wcSession.name || wcSession.icon) {
-            mainCtrl.dapps.setSessionProp(session.sessionId, {
-              name: wcSession.name,
-              icon: wcSession.icon
-            })
-          }
+          mainCtrl.dapps.setSessionProp(session.sessionId, { name, icon })
         } catch (e) {
-          console.error('[Worker] Failed to restore WC session for topic:', wcSession.topic, e)
+          console.error('[Worker] Failed to restore WC session for topic:', topic, e)
         }
       }
       break
