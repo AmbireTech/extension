@@ -2,6 +2,22 @@
 /* eslint-disable no-restricted-syntax */
 import { browser, engine, getFirefoxVersion } from '@web/constants/browserapi'
 
+const CONTENT_SCRIPT_EXCLUDE_MATCHES = [
+  '*://doInWebPack.lan/*',
+  // Keep the exact Connect host for the legacy Trezor popup and the wildcard for other
+  // Trezor-owned Suite/Connect pages. Ambire provider scripts are not needed there.
+  'https://connect.trezor.io/*',
+  'https://*.trezor.io/*'
+]
+
+const CONTENT_SCRIPT_IDS = [
+  'content-script-messenger-bridge',
+  'ambire-inpage',
+  'ethereum-inpage',
+  'content-script-ambire-injection',
+  'content-script-ethereum-injection'
+]
+
 const handleRegisterScripts = async () => {
   const scripts: {
     id: string
@@ -16,9 +32,23 @@ const handleRegisterScripts = async () => {
   }[] = []
 
   const registeredScripts = await browser.scripting.getRegisteredContentScripts()
+  const scriptsMissingTrezorExcludes = registeredScripts
+    .filter(
+      (s: any) =>
+        CONTENT_SCRIPT_IDS.includes(s.id) &&
+        !CONTENT_SCRIPT_EXCLUDE_MATCHES.every((match) => s.excludeMatches?.includes(match))
+    )
+    .map((s: any) => s.id)
+
+  if (scriptsMissingTrezorExcludes.length) {
+    await browser.scripting.unregisterContentScripts({ ids: scriptsMissingTrezorExcludes })
+  }
+
+  const isRegistered = (id: string) =>
+    registeredScripts.some((s: any) => s.id === id && !scriptsMissingTrezorExcludes.includes(id))
 
   const registeredContentScriptMessengerBridge = registeredScripts.find(
-    (s: any) => s.id === 'content-script-messenger-bridge'
+    (s: any) => s.id === 'content-script-messenger-bridge' && isRegistered(s.id)
   )
 
   if (!registeredContentScriptMessengerBridge) {
@@ -26,7 +56,7 @@ const handleRegisterScripts = async () => {
       id: 'content-script-messenger-bridge',
       allFrames: true,
       matches: ['http://*/*', 'https://*/*', 'file://*/*'],
-      excludeMatches: ['*://doInWebPack.lan/*'],
+      excludeMatches: CONTENT_SCRIPT_EXCLUDE_MATCHES,
       js: ['browser-polyfill.min.js', 'content-script.js'],
       runAt: 'document_start'
     })
@@ -41,12 +71,17 @@ const handleRegisterScripts = async () => {
   const shouldUseWorldMain = engine === 'webkit' || (firefoxVersion && firefoxVersion >= 128)
 
   if (shouldUseWorldMain) {
-    const registeredAmbireInpage = registeredScripts.find((s: any) => s.id === 'ambire-inpage')
-    const registeredEthereumInpage = registeredScripts.find((s: any) => s.id === 'ethereum-inpage')
+    const registeredAmbireInpage = registeredScripts.find(
+      (s: any) => s.id === 'ambire-inpage' && isRegistered(s.id)
+    )
+    const registeredEthereumInpage = registeredScripts.find(
+      (s: any) => s.id === 'ethereum-inpage' && isRegistered(s.id)
+    )
     if (!registeredAmbireInpage) {
       scripts.push({
         id: 'ambire-inpage',
         matches: ['http://*/*', 'https://*/*', 'file://*/*'],
+        excludeMatches: CONTENT_SCRIPT_EXCLUDE_MATCHES,
         js: ['ambire-inpage.js'],
         runAt: 'document_start',
         world: 'MAIN',
@@ -57,6 +92,7 @@ const handleRegisterScripts = async () => {
       scripts.push({
         id: 'ethereum-inpage',
         matches: ['http://*/*', 'https://*/*', 'file://*/*'],
+        excludeMatches: CONTENT_SCRIPT_EXCLUDE_MATCHES,
         js: ['ethereum-inpage.js'],
         runAt: 'document_start',
         world: 'MAIN',
@@ -65,17 +101,17 @@ const handleRegisterScripts = async () => {
     }
   } else {
     const registeredContentScriptAmbireInjection = registeredScripts.find(
-      (s: any) => s.id === 'content-script-ambire-injection'
+      (s: any) => s.id === 'content-script-ambire-injection' && isRegistered(s.id)
     )
     const registeredContentScriptEthereumInjection = registeredScripts.find(
-      (s: any) => s.id === 'content-script-ethereum-injection'
+      (s: any) => s.id === 'content-script-ethereum-injection' && isRegistered(s.id)
     )
     if (!registeredContentScriptAmbireInjection) {
       scripts.push({
         id: 'content-script-ambire-injection',
         allFrames: true,
         matches: ['http://*/*', 'https://*/*', 'file://*/*'],
-        excludeMatches: ['*://doInWebPack.lan/*'],
+        excludeMatches: CONTENT_SCRIPT_EXCLUDE_MATCHES,
         js: ['content-script-ambire-injection.js'],
         runAt: 'document_start'
       })
@@ -85,7 +121,7 @@ const handleRegisterScripts = async () => {
         id: 'content-script-ethereum-injection',
         allFrames: true,
         matches: ['http://*/*', 'https://*/*', 'file://*/*'],
-        excludeMatches: ['*://doInWebPack.lan/*'],
+        excludeMatches: CONTENT_SCRIPT_EXCLUDE_MATCHES,
         js: ['content-script-ethereum-injection.js'],
         persistAcrossSessions: false,
         runAt: 'document_start'

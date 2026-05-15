@@ -56,7 +56,7 @@ const ExpandableCard = ({
   )
 
   return (
-    <View style={[styles.container, style]}>
+    <View style={[styles.container, isMobile && isExpanded && { flexGrow: 1 }, style]}>
       <Element onPress={() => !!enableToggleExpand && setIsExpanded((prevState) => !prevState)}>
         <View
           style={[
