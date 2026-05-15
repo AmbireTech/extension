@@ -98,7 +98,7 @@ const DappIcon: FC<Props> = ({ dapp, isDashboard }) => {
         )}
       </View>
 
-      {dapp.isConnected && isDashboard && (
+      {dapp.isConnected && dapp.chainId && isDashboard && (
         <View
           style={{
             position: 'absolute',
