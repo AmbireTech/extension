@@ -17,7 +17,7 @@ import ChevronDownIcon from '@legends/common/assets/svg/ChevronDownIcon'
 interface AccountPreferencesProps {
   dapp: Dapp
   onManageAccountsPress: () => void
-  closeMenu: () => void
+  closeMenu?: () => void
 }
 
 const AccountPreferences = ({
@@ -119,7 +119,7 @@ const AccountPreferences = ({
 
             addToast(t('Current address connected'))
 
-            closeMenu()
+            if (closeMenu) closeMenu()
           }}
         >
           <CheckIcon width={20} height={20} color={theme.iconPrimary} />

@@ -40,6 +40,53 @@ const DAppAccountList: FC<Props> = ({ accounts, allowedAccounts, onToggleAccount
     [account?.addr, allowedAccounts, enforce]
   )
 
+  const renderItem = useCallback(
+    ({ item }: { item: Account }) => (
+      <HoverablePressable
+        style={[
+          flexbox.directionRow,
+          flexbox.alignCenter,
+          spacings.pvSm,
+          spacings.phSm,
+          spacings.mbTy,
+          {
+            backgroundColor: theme.secondaryBackground,
+            borderRadius: BORDER_RADIUS_PRIMARY
+          }
+        ]}
+        disabled={getIsDisabled(item.addr)}
+        onPress={() => onToggleAccount(item.addr)}
+        dataSet={
+          getIsDisabled(item.addr)
+            ? createGlobalTooltipDataSet({
+                id: `account-${item.addr}`,
+                content:
+                  enforce === 'selected'
+                    ? t('Selected account cannot be removed from the list.')
+                    : t('Cannot remove all accounts. At least one account must be allowed.')
+              })
+            : undefined
+        }
+      >
+        <FatToggle
+          width={44}
+          height={24}
+          style={spacings.mrMd}
+          isOn={allowedAccounts.includes(item.addr)}
+          onToggle={() => onToggleAccount(item.addr)}
+          disabled={getIsDisabled(item.addr)}
+        />
+        <Text weight="medium" style={spacings.mrTy}>
+          {item.preferences.label}
+        </Text>
+        <Text fontSize={14} appearance="secondaryText" weight="mono_regular">
+          {shortenAddress(item.addr)}
+        </Text>
+      </HoverablePressable>
+    ),
+    [theme.secondaryBackground, getIsDisabled, enforce, t, allowedAccounts, onToggleAccount]
+  )
+
   return (
     <ScrollableWrapper
       type={WRAPPER_TYPES.FLAT_LIST}
@@ -47,49 +94,7 @@ const DAppAccountList: FC<Props> = ({ accounts, allowedAccounts, onToggleAccount
       style={flexbox.flex1}
       contentContainerStyle={spacings.mb4Xl}
       keyExtractor={(item: Account) => item.addr}
-      renderItem={({ item }: { item: Account }) => (
-        <HoverablePressable
-          style={[
-            flexbox.directionRow,
-            flexbox.alignCenter,
-            spacings.pvSm,
-            spacings.phSm,
-            spacings.mbTy,
-            {
-              backgroundColor: theme.secondaryBackground,
-              borderRadius: BORDER_RADIUS_PRIMARY
-            }
-          ]}
-          disabled={getIsDisabled(item.addr)}
-          onPress={() => onToggleAccount(item.addr)}
-          dataSet={
-            getIsDisabled(item.addr)
-              ? createGlobalTooltipDataSet({
-                  id: `account-${item.addr}`,
-                  content:
-                    enforce === 'selected'
-                      ? t('Selected account cannot be removed from the list.')
-                      : t('Cannot remove all accounts. At least one account must be allowed.')
-                })
-              : undefined
-          }
-        >
-          <FatToggle
-            width={44}
-            height={24}
-            style={spacings.mrMd}
-            isOn={allowedAccounts.includes(item.addr)}
-            onToggle={() => onToggleAccount(item.addr)}
-            disabled={getIsDisabled(item.addr)}
-          />
-          <Text weight="medium" style={spacings.mrTy}>
-            {item.preferences.label}
-          </Text>
-          <Text fontSize={14} appearance="secondaryText" weight="mono_regular">
-            {shortenAddress(item.addr)}
-          </Text>
-        </HoverablePressable>
-      )}
+      renderItem={renderItem}
     />
   )
 }
