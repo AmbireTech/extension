@@ -1,5 +1,6 @@
 import { BlurView } from 'expo-blur'
-import { CameraView } from 'expo-camera'
+import { CameraView, scanFromURLAsync } from 'expo-camera'
+import * as ImagePicker from 'expo-image-picker'
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { LayoutChangeEvent, Linking, Pressable, StyleSheet, View } from 'react-native'
@@ -47,6 +48,7 @@ const QrReaderScreen = () => {
     close: closeManualEntrySheet
   } = useModalize()
   const [manualValue, setManualValue] = useState('')
+  const [galleryPermission, requestGalleryPermission] = ImagePicker.useMediaLibraryPermissions()
 
   const frameTop = containerSize ? (containerSize.height - SCAN_FRAME_SIZE) / 2 : 0
   const frameLeft = containerSize ? (containerSize.width - SCAN_FRAME_SIZE) / 2 : 0
@@ -124,9 +126,37 @@ const QrReaderScreen = () => {
     setManualValue('')
   }, [closeManualEntrySheet])
 
-  const handleGalleryPress = () => {
-    console.log('Open gallery pressed')
-  }
+  const handleGalleryPress = useCallback(async () => {
+    if (!galleryPermission?.granted) {
+      if (!galleryPermission || galleryPermission.canAskAgain) {
+        const result = await requestGalleryPermission()
+        if (!result.granted) return
+      } else {
+        void Linking.openSettings()
+        return
+      }
+    }
+
+    const pickerResult = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      allowsEditing: false,
+      quality: 1
+    })
+
+    if (pickerResult.canceled || !pickerResult.assets?.[0]?.uri) return
+
+    const uri = pickerResult.assets[0].uri
+    try {
+      const scanResults = await scanFromURLAsync(uri)
+      if (!scanResults.length) {
+        addToast(t('The image does not contain a valid QR code for connection.'), { type: 'error' })
+        return
+      }
+      void handleScannedValue(scanResults![0]!.data)
+    } catch {
+      addToast(t('The image does not contain a valid QR code for connection.'), { type: 'error' })
+    }
+  }, [galleryPermission, requestGalleryPermission, addToast, t, handleScannedValue])
 
   const rightIcon = permissionGranted ? (
     <Pressable onPress={handleGalleryPress} hitSlop={12}>
