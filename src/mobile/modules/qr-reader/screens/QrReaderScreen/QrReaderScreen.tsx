@@ -113,19 +113,21 @@ const QrReaderScreen = () => {
   ) : undefined
 
   const footer = permissionGranted ? (
-    <Pressable
-      onPress={handleEnterManually}
-      hitSlop={8}
-      style={[flexbox.directionRow, flexbox.center, spacings.pvMd]}
-    >
-      <EditPenIcon color={theme.successDecorative} width={20} height={20} />
-      <Text fontSize={16} weight="medium" style={spacings.mlSm}>
-        {t('Enter code manually')}
-      </Text>
-    </Pressable>
+    <View style={[spacings.phSm, flexbox.alignCenter]}>
+      <Button
+        type="secondary"
+        text={t('Enter code manually')}
+        onPress={handleEnterManually}
+        childrenPosition="left"
+        hasBottomSpacing={false}
+        containerStyle={{ height: 44 }}
+        style={{ height: 44 }}
+      >
+        <EditPenIcon width={24} height={24} style={spacings.mrMi} />
+      </Button>
+    </View>
   ) : (
     <View style={spacings.phSm}>
-      <Button type="primary" text={t('Grant camera permission')} onPress={handleGrantPermission} />
       <Button
         type="secondary"
         text={t('Open settings')}
