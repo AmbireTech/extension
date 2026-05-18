@@ -3,11 +3,14 @@ import { CameraView } from 'expo-camera'
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { LayoutChangeEvent, Linking, Pressable, StyleSheet, View } from 'react-native'
+import { useModalize } from 'react-native-modalize'
 import Svg, { Defs, Mask, Rect } from 'react-native-svg'
 
 import EditPenIcon from '@common/assets/svg/EditPenIcon'
 import GalleryIcon from '@common/assets/svg/GalleryIcon'
+import BottomSheet from '@common/components/BottomSheet'
 import Button from '@common/components/Button'
+import Input from '@common/components/Input'
 import Text from '@common/components/Text'
 import useNavigation from '@common/hooks/useNavigation'
 import useTheme from '@common/hooks/useTheme'
@@ -38,6 +41,12 @@ const QrReaderScreen = () => {
   const permissionGranted = !!permission?.granted
   const isProcessingRef = useRef(false)
   const [containerSize, setContainerSize] = useState<{ width: number; height: number } | null>(null)
+  const {
+    ref: manualEntrySheetRef,
+    open: openManualEntrySheet,
+    close: closeManualEntrySheet
+  } = useModalize()
+  const [manualValue, setManualValue] = useState('')
 
   const frameTop = containerSize ? (containerSize.height - SCAN_FRAME_SIZE) / 2 : 0
   const frameLeft = containerSize ? (containerSize.width - SCAN_FRAME_SIZE) / 2 : 0
@@ -99,8 +108,21 @@ const QrReaderScreen = () => {
   )
 
   const handleEnterManually = () => {
-    console.log('Enter code manually pressed')
+    openManualEntrySheet()
   }
+
+  const handleManualSubmit = useCallback(() => {
+    const value = manualValue.trim()
+    if (!value) return
+    closeManualEntrySheet()
+    setManualValue('')
+    void handleScannedValue(value)
+  }, [manualValue, closeManualEntrySheet, handleScannedValue])
+
+  const handleManualCancel = useCallback(() => {
+    closeManualEntrySheet()
+    setManualValue('')
+  }, [closeManualEntrySheet])
 
   const handleGalleryPress = () => {
     console.log('Open gallery pressed')
@@ -238,6 +260,47 @@ const QrReaderScreen = () => {
           </View>
         )}
       </MobileLayoutWrapperMainContent>
+      <BottomSheet
+        id="qr-manual-entry"
+        type="modal"
+        sheetRef={manualEntrySheetRef}
+        closeBottomSheet={handleManualCancel}
+        shouldBeClosableOnDrag={false}
+        backgroundColor="secondaryBackground"
+      >
+        <Text fontSize={18} weight="semiBold" style={spacings.mbLg}>
+          {t('Enter QR code data')}
+        </Text>
+        <Input
+          value={manualValue}
+          onChangeText={setManualValue}
+          autoFocus
+          borderless
+          onSubmitEditing={handleManualSubmit}
+          returnKeyType="done"
+          placeholder="wc: ..."
+          containerStyle={spacings.mbLg}
+        />
+        <View style={[flexbox.directionRow, flexbox.justifyEnd, flexbox.alignCenter]}>
+          <Button
+            type="ghost"
+            text={t('Cancel')}
+            size="large"
+            onPress={handleManualCancel}
+            hasBottomSpacing={false}
+            style={{ height: 44, ...spacings.phLg }}
+          />
+          <Button
+            type="primary"
+            size="large"
+            text={t('Done')}
+            onPress={handleManualSubmit}
+            disabled={!manualValue.trim()}
+            hasBottomSpacing={false}
+            style={{ borderRadius: 50, height: 44, ...spacings.phLg }}
+          />
+        </View>
+      </BottomSheet>
     </MobileLayoutContainer>
   )
 }
