@@ -10,6 +10,7 @@ import Alert from '@common/components/Alert'
 import ScrollableWrapper from '@common/components/ScrollableWrapper'
 import Text from '@common/components/Text'
 import Nft from '@common/components/TokenOrNft/components/Nft'
+import { isMobile, isWeb } from '@common/config/env'
 import { Trans, useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
@@ -214,10 +215,14 @@ const Simulation: FC<Props> = ({ network, isEstimationComplete, isViewOnly }) =>
   return (
     <View style={styles.simulationSection}>
       {simulationView === 'changes' && (
-        <View style={[flexbox.directionRow, flexbox.flex1]}>
+        <View style={[isWeb && flexbox.directionRow, flexbox.flex1]}>
           {(!!pendingSendTokens.length || !!pendingSendCollection.length) && (
             <View
-              style={[styles.simulationContainer, !!pendingReceiveTokens.length && spacings.mrTy]}
+              style={[
+                styles.simulationContainer,
+                isWeb && !!pendingReceiveTokens.length && spacings.mrTy,
+                isMobile && spacings.mbTy
+              ]}
             >
               <View style={styles.simulationContainerHeader}>
                 <Text fontSize={14} weight="semiBold" appearance="secondaryText" numberOfLines={1}>

@@ -2,6 +2,8 @@ import React, { useCallback, useEffect, useMemo } from 'react'
 import { View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 
+import { QrRequest } from '@ambire-common/interfaces/keystore'
+import { HardwareWalletSigningRequest } from '@ambire-common/interfaces/signAccountOp'
 import BottomSheet from '@common/components/BottomSheet'
 import ModalHeader from '@common/components/BottomSheet/ModalHeader'
 import Button from '@common/components/Button'
@@ -15,7 +17,6 @@ import { getUiType } from '@common/utils/uiType'
 import { QrSigningStep } from '../../qr/types'
 import QrSignRequestScreen from '../QrSignRequestScreen/QrSignRequestScreen'
 import QrSignResponseScanner from '../QrSignResponseScanner/QrSignResponseScanner'
-import { QrRequest } from '@ambire-common/interfaces/keystore'
 
 const { isTab } = getUiType()
 
@@ -24,6 +25,7 @@ type Props = {
   handleClose?: () => void
   currentRequest: QrRequest | null
   signingStep: QrSigningStep
+  signingRequest?: HardwareWalletSigningRequest | null
   transactionProgress?: {
     current: number
     total: number
@@ -39,6 +41,7 @@ const QrSigningFlowScreen = ({
   handleClose = () => {},
   currentRequest,
   signingStep,
+  signingRequest = null,
   transactionProgress = null,
   onContinue,
   submitSignatureResponse,
@@ -68,12 +71,17 @@ const QrSigningFlowScreen = ({
       id="qr-signing-flow-screen"
       sheetRef={ref}
       autoWidth={false}
+      adjustToContentHeight={false}
+      modalHeight={585}
       onClosed={handleClose}
       autoOpen={isVisible}
       type={!isTab ? 'bottom-sheet' : 'modal'}
-      containerInnerWrapperStyles={isTab ? { ...spacings.pv2Xl, ...spacings.ph2Xl } : {}}
       withBackdropBlur={false}
       shouldBeClosableOnDrag={false}
+      containerInnerWrapperStyles={flexbox.flex1}
+      scrollViewProps={{
+        contentContainerStyle: flexbox.flex1
+      }}
     >
       <ModalHeader title={title} />
 
@@ -105,6 +113,7 @@ const QrSigningFlowScreen = ({
           onContinue={onContinue}
           onReject={handleOnRejectPressed}
           transactionProgress={transactionProgress}
+          signingRequest={signingRequest}
         />
       ) : step === 'scan-response' ? (
         <QrSignResponseScanner

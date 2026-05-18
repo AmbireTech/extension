@@ -1,7 +1,7 @@
 import * as SecureStore from 'expo-secure-store'
 import { createMMKV, MMKV } from 'react-native-mmkv'
 
-import { Storage } from '@ambire-common/interfaces/storage'
+import { Storage, StorageProps } from '@ambire-common/interfaces/storage'
 import { parse, stringify } from '@ambire-common/libs/richJson/richJson'
 
 const asyncStorageInstance: MMKV = createMMKV({ id: 'asyncStorage' })
@@ -22,11 +22,25 @@ const clearAllStorages = () => {
 
 // clearAllStorages()
 
+function get<K extends keyof StorageProps>(key: K): Promise<StorageProps[K] | undefined>
+function get<K extends keyof StorageProps>(
+  key: K,
+  defaultValue: StorageProps[K]
+): Promise<StorageProps[K]>
+function get<K extends keyof StorageProps>(
+  key: K,
+  defaultValue: null
+): Promise<StorageProps[K] | null>
+function get<K extends keyof StorageProps>(
+  key: K,
+  defaultValue?: StorageProps[K] | null
+): Promise<StorageProps[K] | null | undefined> {
+  const serialized = asyncStorageInstance.getString(String(key))
+  return Promise.resolve(serialized ? parse(serialized) : defaultValue)
+}
+
 const storage: Storage = {
-  get: (key: string, defaultValue: any): any => {
-    const serialized = asyncStorageInstance.getString(key)
-    return Promise.resolve(serialized ? parse(serialized) : defaultValue)
-  },
+  get,
   set: (key: string, value: any) => {
     asyncStorageInstance.set(key, stringify(value))
     return Promise.resolve(null)

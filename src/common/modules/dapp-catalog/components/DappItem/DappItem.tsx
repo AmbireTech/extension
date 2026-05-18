@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react'
+import React, { useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 
@@ -10,16 +10,19 @@ import TwitterIcon from '@common/assets/svg/TwitterIcon'
 import Badge from '@common/components/Badge'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import Text from '@common/components/Text'
+import { isMobile } from '@common/config/env'
 import useController from '@common/hooks/useController'
 import { AnimatedPressable, useCustomHover } from '@common/hooks/useHover'
+import useNavigation from '@common/hooks/useNavigation'
 import useTheme from '@common/hooks/useTheme'
+import TrustedIcon from '@common/modules/action-requests/components/DAppConnect/TrustedIcon'
+import { ROUTES } from '@common/modules/router/constants/common'
 import spacings, { SPACING_TY } from '@common/styles/spacings'
 import { hexToRgba } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
+import { openInTab } from '@common/utils/links/links'
 import ManifestImage from '@web/components/ManifestImage'
-import { openInTab } from '@web/extension-services/background/webapi/tab'
-import TrustedIcon from '@web/modules/action-requests/screens/DappConnectScreen/components/TrustedIcon'
 
 import ManageApp from '../ManageApp'
 import getStyles from './styles'
@@ -39,7 +42,12 @@ function formatTVL(tvl: number) {
   return `TVL: $${formatted}`
 }
 
-const DappItem = (dapp: Dapp) => {
+type DappItemProps = Dapp & {
+  onPressOverride?: () => void
+  isInSettings?: boolean
+}
+
+const DappItem = (dapp: DappItemProps) => {
   const {
     id,
     url,
@@ -51,17 +59,16 @@ const DappItem = (dapp: Dapp) => {
     favorite,
     blacklisted,
     tvl,
-    twitter
+    twitter,
+    onPressOverride,
+    isInSettings
   } = dapp
   const { styles, theme } = useTheme(getStyles)
   const { dispatch: dappsDispatch } = useController('DappsController')
   const { t } = useTranslation()
-  const [hovered, setHovered] = useState(false)
-  const [isManageAppOpen, setIsManageAppOpen] = useState(false)
-  const [isNetworkSelectorOpen, setIsNetworkSelectorOpen] = useState(false)
-  const settingsButtonRef = React.useRef<View>(null)
+  const navigation = useNavigation()
 
-  const [bindAnim, animStyle] = useCustomHover({
+  const [bindAnim, animStyle, isCardHovered] = useCustomHover({
     property: 'backgroundColor',
     values: {
       from: blacklisted === 'BLACKLISTED' ? theme.errorBackground : theme.secondaryBackground,
@@ -98,16 +105,30 @@ const DappItem = (dapp: Dapp) => {
     [name, getInitials, styles.fallbackWrapper, theme.infoText]
   )
 
+  const Container = isMobile ? View : 'div'
+  const containerProps = isMobile
+    ? { style: flexbox.flex1 }
+    : { style: { display: 'flex', flex: 1 } }
+
   return (
     <View testID="dapp-wrapper" style={styles.dappItemWrapper}>
-      <div
-        style={{ display: 'flex', flex: 1 }}
-        onMouseEnter={() => setHovered(true)}
-        onMouseLeave={() => setHovered(false)}
-      >
+      <Container {...(containerProps as any)}>
         <AnimatedPressable
           style={[styles.container, animStyle]}
-          onPress={() => openInTab({ url })}
+          onPress={() => {
+            if (onPressOverride) {
+              onPressOverride()
+              return
+            }
+
+            if (isMobile) {
+              navigation.navigate(ROUTES.dappWebView, {
+                state: { url, name }
+              })
+            } else {
+              openInTab({ url })
+            }
+          }}
           {...bindAnim}
         >
           <View style={[flexbox.directionRow, !!description && spacings.mbSm]}>
@@ -152,7 +173,7 @@ const DappItem = (dapp: Dapp) => {
                     fontSize={14}
                     appearance="primaryText"
                     numberOfLines={1}
-                    style={[text.left, spacings.mrTy, { lineHeight: 20 }]}
+                    style={[text.left, spacings.mrTy, { lineHeight: 20, flexShrink: 1 }]}
                   >
                     {name}
                   </Text>
@@ -217,21 +238,18 @@ const DappItem = (dapp: Dapp) => {
                     <Badge text={t('Blacklisted')} type="error" style={spacings.mrTy} />
                   )}
                 </View>
-                <View testID="manage-dapp-dropdown" style={{ zIndex: 999 }}>
-                  {!!hovered && !!isConnected && (
-                    <AnimatedPressable
-                      {...bindSettingsIconAnimation}
-                      onPress={() => {
-                        setIsManageAppOpen((prev) => !prev)
-                        setIsNetworkSelectorOpen(false)
+                {!!isConnected && !isInSettings && (
+                  <View testID="manage-dapp-dropdown" style={{ zIndex: 999 }}>
+                    <ManageApp
+                      dapp={dapp}
+                      isParentHovered={isCardHovered}
+                      buttonProps={{
+                        ...bindSettingsIconAnimation,
+                        style: [
+                          spacings.mlTy,
+                          { transform: [{ scale: settingsIconAnimationStyle.scaleX as number }] }
+                        ]
                       }}
-                      style={[
-                        spacings.mlTy,
-                        {
-                          transform: [{ scale: settingsIconAnimationStyle.scaleX as number }]
-                        }
-                      ]}
-                      ref={settingsButtonRef}
                     >
                       <SettingsWheelIcon
                         width={20}
@@ -239,10 +257,10 @@ const DappItem = (dapp: Dapp) => {
                         strokeWidth="1.8"
                         color={theme.iconPrimary}
                       />
-                    </AnimatedPressable>
-                  )}
-                </View>
-                {isFeatured && (
+                    </ManageApp>
+                  </View>
+                )}
+                {isFeatured && !isInSettings && (
                   <Badge
                     text={t('Featured')}
                     textStyle={{
@@ -272,15 +290,7 @@ const DappItem = (dapp: Dapp) => {
             {description}
           </Text>
         </AnimatedPressable>
-      </div>
-      <ManageApp
-        isOpen={isManageAppOpen}
-        setIsOpen={setIsManageAppOpen}
-        dapp={dapp}
-        parentRef={settingsButtonRef}
-        isNetworkSelectorExpanded={isNetworkSelectorOpen}
-        setIsNetworkSelectorExpanded={setIsNetworkSelectorOpen}
-      />
+      </Container>
     </View>
   )
 }

@@ -501,6 +501,9 @@ run-tests.sh
 # Cursor editor
 /.cursor
 
-# WebView bundle
+# Kiro editor
+/.kiro
+
+# WebView bundles
 webview-bundle.json
 *inpage-bundle.json
