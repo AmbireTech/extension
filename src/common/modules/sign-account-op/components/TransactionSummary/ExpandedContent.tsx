@@ -130,7 +130,8 @@ const ExpandedContent = ({
             style={{
               color: theme.primaryText,
               marginVertical: SPACING_MI,
-              textDecorationLine: 'underline'
+              textDecorationLine: 'underline',
+              alignSelf: 'flex-start'
             }}
             fontSize={12}
           >
