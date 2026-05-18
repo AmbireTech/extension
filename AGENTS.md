@@ -1,7 +1,7 @@
 You are an AI Agent working in a security-critical Web3 monorepo that encompasses a mobile app wallet, browser extension wallet and standalone websites (`src/benzin` and `src/legends`).
 
 ## Tech stack
-react, react-native, typescript, expo (bare workflow), ethers, viem and more (check the root `package.json` if another package is needed)
+react, react-native, react-native-web, typescript, expo (bare workflow), ethers, viem and more (check the root `package.json` if another package is needed)
 
 ## Project overview
 - The extension is using manifest version 3 on Chrome, but also works on Firefox using a background script
@@ -17,9 +17,16 @@ react, react-native, typescript, expo (bare workflow), ethers, viem and more (ch
   - Have the file in the environment folder (e.g., `mobile/`, `web/`) and import it from there
   - Use the `.native.tsx` or `.web.tsx` suffix and import from `common/`, which automatically resolves to the correct file based on the environment
 
+## Useful commands (not exhaustive):
+- Check for typescript errors - `yarn extension:type:check-new`
+- Lint and auto-fix source files: `yarn lint:fix`
+
 ## Rules
 
 ### Project specific:
+- Prefer naming variable ways in a self-explanatory way instead of adding comments
+- Prefer short circuits to nested if statements for better readability
+- Aim for low cyclomatic complexity unless it's not for parts that are handling large sets of data and performance is critical
 - Use `yarn` in the root directory and `npm` in `src/ambire-common` (if present)
 - NEVER run `yarn install` directly, use `yarn setup` instead
 - Use `useHover` and `HoverablePressable` for interactive elements
@@ -30,6 +37,10 @@ react, react-native, typescript, expo (bare workflow), ethers, viem and more (ch
 - ALWAYS use `useNavigation` and `useRoute` from `@common/hooks` for routing; NEVER import `react-router-dom` or `react-router-native` directly
 - ALWAYS use `useToast` from `@common/hooks/useToast` for toasts; NEVER use `window.alert`, `Alert.alert`, or `console.log` for user-facing messages
 - ALWAYS wrap text in `t()` from `useTranslation()` (`imported from '@common/config/localization'`)
+- ALWAYS use `react-native-modalize` with `BottomSheet` for modals and bottom sheets
+- Tooltips are added using the pattern: `dataSet={createGlobalTooltipDataSet(...)}` which creates a global dataset that is picked up by a `GlobalTooltip` component at the root of the app.
+- All icons are in src/common/assets/svg/...; ALWAYS use icons from there and report if you can't find a suitable one by adding a comment instead of the icon and asking the human to add it
+- NEVER use `gap` for spacings as it is not supported in React Native; use `margin` instead
 
 ### Security:
 - This is a security-critical Web3 wallet. Private keys and seed phrases must never be logged or exposed
@@ -37,7 +48,7 @@ react, react-native, typescript, expo (bare workflow), ethers, viem and more (ch
 
 ### Code quality:
 - Ensure that list keys are unique and stable (NEVER use the array index)
-- ALWAYS memoize functions and components
+- ALWAYS memoize functions, components and complex values with `useMemo`, `useCallback` and `React.memo`.
 - ALWAYS ensure that subscriptions, event listeners, timers and other side effects are properly cleaned up
 - NEVER delete existing comments when updating a code block. If the logic changes and the comment becomes inaccurate, update the comment instead of deleting it. Delete a comment ONLY if the logic it describes is completely removed or the new logic is entirely self-explanatory without the comment
 - NEVER swallow errors, log them and handle them appropriately. If the error is unexpected also track it in Sentry with `captureException`
