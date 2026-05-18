@@ -22,7 +22,7 @@ import TrustedIcon from './TrustedIcon'
 
 type Props = Partial<DappProviderRequest['session']> & {
   responsiveSizeMultiplier?: number
-  securityCheck: BlacklistedStatus
+  securityCheck?: BlacklistedStatus
 }
 
 const DAppConnectHeader: FC<Props> = ({
