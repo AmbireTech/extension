@@ -353,19 +353,20 @@ const TransactionSummary = ({
     if (isDecodedFunctionLoading) return [getLabel('Loading...')]
     if (!decodedFunction) return call.fullVisualization
     const functionName = decodedFunction.signature.split('(')[0]
-    if (!functionName) return call.fullVisualization
+    if (!functionName || !functionName[0]) return call.fullVisualization
 
+    const capitalizedFunction = functionName[0].toUpperCase() + functionName.slice(1)
     if (call.value) {
       return [
         getAction('Send'),
         getToken(ZeroAddress, call.value),
         getLabel('and'),
-        getAction(`Call ${functionName}`),
+        getAction(`Call ${capitalizedFunction}`),
         getLabel('from'),
         getAddressVisualization(call.to)
       ]
     } else {
-      return [getAction(functionName), getLabel('from'), getAddressVisualization(call.to)]
+      return [getAction(capitalizedFunction), getLabel('from'), getAddressVisualization(call.to)]
     }
   }, [
     call.data,
