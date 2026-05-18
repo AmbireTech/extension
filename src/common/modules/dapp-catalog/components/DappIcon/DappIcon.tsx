@@ -18,10 +18,11 @@ type Props = {
   isDashboard?: boolean
 }
 
-const DappIcon: FC<Props> = ({ dapp, isDashboard }) => {
+const DappIcon: FC<Props> = ({ dapp, isDashboard = false }) => {
   const { t } = useTranslation()
   const { theme } = useTheme()
   const isBlacklisted = dapp.blacklisted === 'BLACKLISTED'
+  const isConnected = !!dapp.isConnected
 
   const dappInitials = useMemo(() => {
     const fullName = dapp?.name || ''
@@ -61,7 +62,7 @@ const DappIcon: FC<Props> = ({ dapp, isDashboard }) => {
       })
     }
 
-    if (!dapp.isConnected) {
+    if (!isConnected) {
       return createGlobalTooltipDataSet({
         id: `dapp-${dapp.id}-not-connected-tooltip`,
         content: t('Not connected')
@@ -69,7 +70,7 @@ const DappIcon: FC<Props> = ({ dapp, isDashboard }) => {
     }
 
     return {}
-  }, [dapp.id, dapp.isConnected, isBlacklisted, isDashboard, t])
+  }, [dapp.id, isConnected, isBlacklisted, isDashboard, t])
 
   return (
     <View dataSet={tooltipDataset}>
@@ -87,7 +88,7 @@ const DappIcon: FC<Props> = ({ dapp, isDashboard }) => {
           borderColor: !isBlacklisted ? theme.primaryBackground : theme.errorBackground
         }}
       >
-        {!dapp.isConnected && (
+        {!isConnected && (
           <NotConnected
             style={{
               minWidth: 8,
@@ -98,7 +99,7 @@ const DappIcon: FC<Props> = ({ dapp, isDashboard }) => {
         )}
       </View>
 
-      {dapp.isConnected && isDashboard && dapp.chainId && (
+      {isConnected && isDashboard && !!dapp.chainId && (
         <View
           style={{
             position: 'absolute',
