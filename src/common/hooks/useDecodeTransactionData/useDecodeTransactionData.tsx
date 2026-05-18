@@ -39,7 +39,13 @@ function decodeFunction(
 
   // all caching logic is in the controller
   fetchSelector(selector)
-  if (!foundSelectors || !('data' in foundSelectors) || !foundSelectors.data.length) return null
+  if (
+    !foundSelectors ||
+    !('data' in foundSelectors) ||
+    !foundSelectors.data ||
+    !foundSelectors.data.length
+  )
+    return null
 
   const decoded: DecodedCall | null = decodeCall(hex, foundSelectors.data)
   if (!decoded) return null
@@ -69,7 +75,11 @@ const useDecodeTransactionData = (call: IrCall): UseDecodeTransactionDataReturn 
   const isLoading = useMemo(() => {
     if (!call.data || !isHex(call.data) || call.data.length < 10) return false
     const selector = call.data.slice(0, 10)
-    return !selectors[selector] || selectors[selector]?.status === 'loading'
+    return (
+      !selectors[selector] ||
+      (selectors[selector]?.status === 'loading' &&
+        !('data' in selectors[selector] && selectors[selector].data))
+    )
   }, [call.data, selectors])
 
   return {
