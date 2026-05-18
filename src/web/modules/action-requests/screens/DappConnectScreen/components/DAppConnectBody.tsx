@@ -19,7 +19,7 @@ import DAppPermissions from './DAppPermissions'
 
 const DAppConnectBody: FC<{
   responsiveSizeMultiplier: number
-  securityCheck: BlacklistedStatus
+  securityCheck?: BlacklistedStatus
 }> = ({ securityCheck, responsiveSizeMultiplier }) => {
   const { t } = useTranslation()
   const { styles, theme } = useTheme(getStyles)
