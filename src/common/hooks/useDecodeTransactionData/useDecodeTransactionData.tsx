@@ -71,7 +71,6 @@ const useDecodeTransactionData = (call: IrCall): UseDecodeTransactionDataReturn 
     })
   }, [call.data, dispatch, selectors])
 
-  // TODO: check how this behaves when the option is disabled
   const isLoading = useMemo(() => {
     if (!call.data || !isHex(call.data) || call.data.length < 10) return false
     const selector = call.data.slice(0, 10)
