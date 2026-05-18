@@ -1,15 +1,19 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { Animated, Dimensions, Pressable, View, ViewStyle } from 'react-native'
+import { useModalize } from 'react-native-modalize'
 
 import { Dapp } from '@ambire-common/interfaces/dapp'
 import shortenAddress from '@ambire-common/utils/shortenAddress'
 import Avatar from '@common/components/Avatar'
+import { BOTTOM_SHEET_Z_INDEX } from '@common/components/BottomSheet/styles'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import Text from '@common/components/Text'
 import { isWeb } from '@common/config/env'
 import { AnimatedPressable } from '@common/hooks/useHover'
 import usePrevious from '@common/hooks/usePrevious'
 import useTheme from '@common/hooks/useTheme'
+import AccountPreferences from '@common/modules/dapp-catalog/components/ManageApp/AccountPreferences'
+import AccountPreferencesBottomSheet from '@common/modules/dapp-catalog/components/ManageApp/AccountPreferencesBottomSheet'
 import spacings from '@common/styles/spacings'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
@@ -89,6 +93,11 @@ const ManageApp = ({
   const [isNetworkSelectorExpanded, setIsNetworkSelectorExpanded] = useState(false)
   const [isSelfHovered, setIsSelfHovered] = useState(false)
   const parentRef = useRef<View>(null)
+  const {
+    ref: accountPreferencesRef,
+    open: openAccountPreferences,
+    close: closeAccountPreferences
+  } = useModalize()
 
   const [menuEl, setMenuEl] = useState<View | null>(null)
   const [position, setPosition] = useState<{
@@ -220,7 +229,7 @@ const ManageApp = ({
   const showChildren = isParentHovered === undefined || isParentHovered || isSelfHovered
 
   return (
-    <View style={{ zIndex: 999 }}>
+    <View style={{ zIndex: BOTTOM_SHEET_Z_INDEX - 1 }}>
       <AnimatedPressable
         ref={parentRef}
         {...(buttonProps as any)}
@@ -232,6 +241,12 @@ const ManageApp = ({
         {showChildren ? children : null}
       </AnimatedPressable>
 
+      <AccountPreferencesBottomSheet
+        dapp={dapp}
+        sheetRef={accountPreferencesRef}
+        closeBottomSheet={closeAccountPreferences}
+      />
+
       {isVisible && (
         <Portal hostName="global">
           <Animated.View
@@ -241,7 +256,7 @@ const ManageApp = ({
               top: position.top,
               bottom: position.bottom,
               left: position.left,
-              zIndex: 999,
+              zIndex: BOTTOM_SHEET_Z_INDEX - 1,
               transform: [
                 {
                   translateY: scaleAnim.interpolate({
@@ -300,6 +315,11 @@ const ManageApp = ({
                 </View>
               </View>
             )}
+            <AccountPreferences
+              dapp={dapp}
+              onManageAccountsPress={openAccountPreferences}
+              closeMenu={() => setIsOpen(false)}
+            />
             {!!dapp.isConnected && <DisconnectButton dapp={dapp} setIsOpen={setIsOpen} />}
             <AppData dapp={dapp} />
           </Animated.View>

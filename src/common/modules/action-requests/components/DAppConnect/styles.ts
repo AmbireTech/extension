@@ -31,12 +31,14 @@ const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
           marginTop: -21,
           ...common.fullWidth,
           overflow: 'hidden',
-          ...flexbox.flex1
+          ...flexbox.flex1,
+          ...spacings.mbLg
         }
       : {
           ...common.fullWidth,
           borderRadius: BORDER_RADIUS_PRIMARY,
-          overflow: 'hidden'
+          overflow: 'hidden',
+          ...spacings.mbLg
         },
     contentHeader: isMobile
       ? {}

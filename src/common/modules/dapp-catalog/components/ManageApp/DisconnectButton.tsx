@@ -51,8 +51,8 @@ const DisconnectButton = ({
       <View style={{ width: 20, height: 20, ...flexbox.center }}>
         <PlugDisconnectIcon
           color={isHovered ? theme.errorText : theme.iconPrimary}
-          width={16}
-          height={16}
+          width={20}
+          height={20}
         />
       </View>
       <Text

@@ -36,15 +36,18 @@ const Account: FC<Props> = ({ addr, creation, preferences, style, safeCreation }
     >
       <Avatar
         smartAccountType={(creation && 'Ambire') || (safeCreation && 'Safe')}
-        size={32}
+        size={40}
         pfp={pfp}
         address={addr}
       />
       <View style={{ flexShrink: 1 }}>
-        <Text fontSize={14} weight="medium">
-          {label}
-        </Text>
-        <Text fontSize={12} appearance="secondaryText" style={{ flexShrink: 1 }}>
+        <Text weight="semiBold">{label}</Text>
+        <Text
+          fontSize={12}
+          appearance="secondaryText"
+          weight="mono_regular"
+          style={{ flexShrink: 1 }}
+        >
           {addr}
         </Text>
       </View>
