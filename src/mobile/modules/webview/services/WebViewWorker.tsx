@@ -222,9 +222,16 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, {}>((_, ref) => {
         case 'action.wcSessionBroadcast':
           await handleWcSessionBroadcast(data.payload)
           break
-        case 'ui.window.action':
-          eventBus.emit('ui.window.action', data.payload)
+        case 'ui.window.action': {
+          const requestId = data.id
+          // Emit with a resolve callback the RN handler can call when the
+          // animation completes, settling the promise on the controller side.
+          eventBus.emit('ui.window.action', {
+            ...data.payload,
+            resolve: () => sendResponse(requestId, null)
+          })
           break
+        }
 
         // --- PROXY HANDLERS FOR STORAGE ---
         case 'storage.get':

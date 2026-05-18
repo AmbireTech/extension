@@ -31,6 +31,14 @@ export default function useRequestsControllerHelpers(
   const closeTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   // Track if bottom sheet is currently open
   const isBottomSheetOpenRef = useRef(false)
+  // Stores the resolve callbacks from async window action promises so we can
+  // settle them once the corresponding animation actually completes.
+  // This makes ui.window.open/remove behave like the extension's
+  // chrome.windows.create/remove which only resolve after the OS operation.
+  const pendingWindowResolveRef = useRef<{
+    open?: () => void
+    remove?: () => void
+  }>({})
 
   const activeWindowIdRef = useRef(1)
   const currentUserRequestRef = useRef(requestsState?.currentUserRequest)
@@ -42,19 +50,36 @@ export default function useRequestsControllerHelpers(
   const navigateRef = useRef(navigate)
   navigateRef.current = navigate
 
+  // Called by the bottom sheet when the CLOSE animation finishes.
+  // Resolves the pending remove() promise so closeRequestWindow() can continue
+  // (mirrors chrome.windows.remove resolving on the extension).
   const onBottomSheetClosed = useMemo(
     () => () => {
       isBottomSheetOpenRef.current = false
       if (currentUserRequestRef.current?.kind === 'unlock') {
         return
       }
+      // Resolve the pending remove() first so the controller can continue
+      // before WINDOW_REMOVED arrives via the event listener path.
+      pendingWindowResolveRef.current.remove?.()
+      pendingWindowResolveRef.current.remove = undefined
       dispatch({ type: 'WINDOW_REMOVED', params: { id: activeWindowIdRef.current } })
     },
     [dispatch]
   )
 
+  // Called by the bottom sheet when the OPEN animation finishes.
+  // Resolves the pending open() promise (mirrors chrome.windows.create resolving).
+  const onBottomSheetOpened = useMemo(
+    () => () => {
+      pendingWindowResolveRef.current.open?.()
+      pendingWindowResolveRef.current.open = undefined
+    },
+    []
+  )
+
   useEffect(() => {
-    const handleWindowAction = (payload: { type: string; winId: number }) => {
+    const handleWindowAction = (payload: { type: string; winId: number; resolve?: () => void }) => {
       if (payload.type === 'open' || payload.type === 'focus') {
         if (payload.winId !== undefined && payload.winId !== null) {
           activeWindowIdRef.current = payload.winId
@@ -75,12 +100,22 @@ export default function useRequestsControllerHelpers(
           closeTimeoutRef.current = null
         }
         if (!isBottomSheetOpenRef.current) {
+          // Store the resolve so onBottomSheetOpened can settle the open() promise.
+          if (payload.resolve) pendingWindowResolveRef.current.open = payload.resolve
           openRequestModal()
           isBottomSheetOpenRef.current = true
+        } else {
+          // Sheet is already open (focus case) — resolve immediately.
+          payload.resolve?.()
         }
       } else if (payload.type === 'remove') {
+        if (payload.resolve) pendingWindowResolveRef.current.remove = payload.resolve
         if (isBottomSheetOpenRef.current) {
           closeRequestModal()
+        } else {
+          // Sheet already closed — resolve immediately so the controller isn't blocked.
+          payload.resolve?.()
+          pendingWindowResolveRef.current.remove = undefined
         }
       }
     }
@@ -90,6 +125,7 @@ export default function useRequestsControllerHelpers(
       eventBus.removeEventListener('ui.window.action', handleWindowAction)
     }
   }, [openRequestModal, closeRequestModal, requestsState?.currentUserRequest])
+
 
   useEffect(() => {
     if (requestsState?.currentUserRequest?.kind === 'unlock') {
@@ -176,7 +212,8 @@ export default function useRequestsControllerHelpers(
       requestModalRef,
       openRequestModal,
       closeRequestModal,
-      onBottomSheetClosed
+      onBottomSheetClosed,
+      onBottomSheetOpened
     })
-  }, [updateHelpers, requestModalRef, openRequestModal, closeRequestModal, onBottomSheetClosed])
+  }, [updateHelpers, requestModalRef, openRequestModal, closeRequestModal, onBottomSheetClosed, onBottomSheetOpened])
 }

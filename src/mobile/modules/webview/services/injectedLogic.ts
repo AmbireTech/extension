@@ -151,7 +151,8 @@ const initControllers = (config: any) => {
         window: {
           open: async () => {
             currentWindowId = nextWindowId++
-            sendToReactEvent('ui.window.action', { type: 'open', winId: currentWindowId })
+            // Await animation completion before resolving (mirrors chrome.windows.create).
+            await sendToRNAsync('ui.window.action', { type: 'open', winId: currentWindowId })
             return {
               id: currentWindowId,
               width: 0,
@@ -163,7 +164,8 @@ const initControllers = (config: any) => {
             }
           },
           focus: async () => {
-            sendToReactEvent('ui.window.action', { type: 'focus', winId: currentWindowId })
+            // Await confirmation before resolving (mirrors chrome.windows.update).
+            await sendToRNAsync('ui.window.action', { type: 'focus', winId: currentWindowId })
             return {
               id: currentWindowId,
               width: 0,
@@ -180,7 +182,8 @@ const initControllers = (config: any) => {
               return
             }
             const targetWinId = typeof winId === 'number' ? winId : currentWindowId
-            sendToReactEvent('ui.window.action', { type: 'remove', winId: targetWinId })
+            // Await close animation completion before resolving (mirrors chrome.windows.remove).
+            await sendToRNAsync('ui.window.action', { type: 'remove', winId: targetWinId })
           },
           event: new Emitter()
         },

@@ -30,6 +30,7 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
     style = {},
     containerInnerWrapperStyles = {},
     onClosed,
+    onOpened,
     onOpen,
     onBackdropPress,
     HeaderComponent,
@@ -209,6 +210,7 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
               setIsBackdropVisible(true)
               !!onOpen && onOpen()
             }}
+            onOpened={() => !!onOpened && onOpened()}
             onClose={() => setIsOpen(false)}
             onClosed={() => !!onClosed && onClosed()}
             customRenderer={
