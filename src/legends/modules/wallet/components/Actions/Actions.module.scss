@@ -100,9 +100,6 @@
   }
 
   @include breakpoint-down-from(tablet) {
-    padding-left: 0;
-    .slide {
-      width: 100%;
-    }
+    display: none;
   }
 }

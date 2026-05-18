@@ -30,6 +30,7 @@ import EstimationSkeleton from '@common/modules/sign-account-op/components/Estim
 import PayOption from '@common/modules/sign-account-op/components/Estimation/components/PayOption'
 import ServiceFee from '@common/modules/sign-account-op/components/Estimation/components/ServiceFee'
 import Sponsored from '@common/modules/sign-account-op/components/Estimation/components/Sponsored'
+import PendingTransactions from '@common/modules/sign-account-op/components/PendingTransactions'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
@@ -103,7 +104,9 @@ const Estimation = ({
   slowRequest,
   bundlerNonceDiscrepancy,
   serviceFee,
-  isOneClick
+  isOneClick,
+  isViewOnly,
+  shouldShowTxnDetails = false
 }: Props) => {
   const { dispatch: signAccountOpDispatch } = useController('SignAccountOpController')
   const { dispatch: swapAndBridgeDispatch } = useController('SwapAndBridgeController')
@@ -504,6 +507,18 @@ const Estimation = ({
         selectedOption={signAccountOpState.selectedOption}
         sheetRef={customGasPriceSheetRef}
       />
+      {!!isOneClick && shouldShowTxnDetails && (
+        <View style={spacings.mv}>
+          <PendingTransactions
+            network={network}
+            setDelegation={signAccountOpState?.accountOp.meta?.setDelegation}
+            delegatedContract={signAccountOpState?.delegatedContract}
+            hideDeleteIcon
+            signAccountOpState={signAccountOpState}
+            size="md"
+          />
+        </View>
+      )}
       <View>
         <BundlerWarning
           signAccountOpState={signAccountOpState}

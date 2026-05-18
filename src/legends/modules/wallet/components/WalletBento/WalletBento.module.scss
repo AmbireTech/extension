@@ -1,0 +1,113 @@
+@import '@legends/styles/base.scss';
+
+.section {
+  @include container(true);
+}
+
+.row {
+  display: flex;
+  gap: 1.5rem;
+  align-items: stretch;
+  width: 100%;
+  max-width: 63.375rem;
+  margin-left: auto;
+  margin-right: auto;
+  margin-bottom: 3rem;
+}
+
+.card {
+  border-radius: 1rem;
+  min-height: 8.5rem;
+  box-sizing: border-box;
+}
+
+.staking {
+  order: 0;
+  flex: 2 1 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  background-color: #191a1f;
+  padding: 0.875rem 1.5rem;
+  gap: 1rem;
+  border: 1px solid rgba(106, 111, 134, 0.3);
+}
+
+.illustration {
+  flex-shrink: 0;
+  width: 8.75rem;
+  height: 7.375rem;
+  object-fit: contain;
+  object-position: center left;
+}
+
+.stakingText,
+.overviewText {
+  margin: 0;
+}
+
+.stakingText {
+  font-size: 0.8125rem;
+  line-height: 1.25rem;
+  font-weight: 300;
+  color: $mainText;
+  opacity: 0.87;
+}
+
+.overview {
+  order: 1;
+  flex: 0.3 1 18rem;
+  display: flex;
+  align-items: center;
+  padding: 1.5rem;
+  background: linear-gradient(166.52deg, #191b1f 43.03%, #201a47 87.21%);
+}
+
+.overviewText {
+  font-size: 0.8125rem;
+  line-height: 1.25rem;
+  font-weight: 300;
+  color: $mainText;
+  opacity: 0.87;
+}
+
+.lead {
+  font-weight: 600;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  color: $whiteText;
+}
+
+.body {
+  font-weight: 300;
+  font-size: 0.8125rem;
+  line-height: 1.25rem;
+}
+
+@include breakpoint-down-from(tablet) {
+  .row {
+    flex-direction: column;
+    flex-wrap: nowrap;
+    gap: 1rem;
+  }
+
+  .staking,
+  .overview {
+    flex: 1 1 auto;
+    width: 100%;
+    min-width: 0;
+  }
+
+  .staking {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .illustration {
+    width: 100%;
+    max-width: 10rem;
+    height: auto;
+    max-height: 8rem;
+  }
+}
