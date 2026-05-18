@@ -7,12 +7,14 @@ import SkeletonLoader from '@common/components/SkeletonLoader'
 import Text from '@common/components/Text'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
+import flexbox from '@common/styles/utils/flexbox'
 
 import {
   formatBalanceChangeAmount,
   getBalanceChangeTooltipId,
   getFullBalanceChangeAmount
 } from './helpers'
+import InteractionAddress from './InteractionAddress'
 import getStyles from './styles'
 import { BalanceChangeToken, DappInteractionIcon } from './SummaryIcons'
 import { DappInteraction, DisplayBalanceChange, SubmittedAccountOpLike } from './types'
@@ -52,9 +54,26 @@ const SummaryPreview = ({
                 ]}
               >
                 <DappInteractionIcon interaction={interaction} />
-                <Text fontSize={14} weight="semiBold">
-                  {interaction.name}
-                </Text>
+                <View>
+                  <Text fontSize={14} weight="semiBold">
+                    {interaction.name}
+                  </Text>
+                  {(!!interaction.address || !!interaction.description) && (
+                    <View style={[flexbox.alignCenter, flexbox.directionRow]}>
+                      <Text fontSize={12} appearance="secondaryText">
+                        {t('to ')}
+                      </Text>
+                      {!!interaction.address && (
+                        <InteractionAddress address={interaction.address} />
+                      )}
+                      {!!interaction.description && (
+                        <Text fontSize={12} appearance="secondaryText">
+                          {interaction.description}
+                        </Text>
+                      )}
+                    </View>
+                  )}
+                </View>
               </View>
             ))}
           </>

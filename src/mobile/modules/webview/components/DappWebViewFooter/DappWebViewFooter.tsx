@@ -156,7 +156,7 @@ const DappWebViewFooter: React.FC<Props> = ({
                 )}
               </View>
 
-              {currentDapp.isConnected && (
+              {currentDapp.isConnected && currentDapp.chainId && (
                 <View
                   style={{
                     position: 'absolute',

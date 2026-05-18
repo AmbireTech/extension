@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react'
+import React, { useCallback, useMemo } from 'react'
 import { Animated, ColorValue, PressableProps, TextStyle, ViewStyle } from 'react-native'
 
 import InfoIcon from '@common/assets/svg/InfoIcon'
@@ -7,6 +7,7 @@ import { AnimatedPressable, useCustomHover, useMultiHover } from '@common/hooks/
 import { AnimatedText } from '@common/hooks/useHover/useHover'
 import { AnimationValues } from '@common/hooks/useHover/useMultiHover'
 import useTheme from '@common/hooks/useTheme'
+import useToast from '@common/hooks/useToast'
 import spacings from '@common/styles/spacings'
 import common, { hexToRgba } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
@@ -163,13 +164,26 @@ const Button = ({
   testID,
   submitOnEnter: _submitOnEnter,
   tooltipDataSet,
+  onPress,
   ...rest
 }: Props) => {
   const { styles, theme } = useTheme(getStyles)
+  const { clearToasts } = useToast()
   const submitOnEnter = _submitOnEnter ?? type === 'primary'
 
+  const handlePress = useCallback(
+    (e: any) => {
+      if (type === 'primary') {
+        clearToasts({ type: 'error' })
+      }
+
+      onPress?.(e)
+    },
+    [clearToasts, onPress, type]
+  )
+
   useOnEnterKeyPress({
-    action: rest.onPress,
+    action: handlePress,
     disabled: !!disabled || !submitOnEnter
   })
 
@@ -438,6 +452,7 @@ const Button = ({
         ] as ViewStyle[]
       }
       {...rest}
+      onPress={handlePress}
       onHoverIn={(e) => {
         if (buttonTypesWithInnerContainer.includes(type)) return
 
@@ -480,6 +495,7 @@ const Button = ({
         type={type}
         forceHoveredStyle={forceHoveredStyle}
         {...rest}
+        onPress={handlePress}
         onHoverIn={(e) => {
           buttonContainerBind.onHoverIn(e)
           buttonTextBind.onHoverIn(e)

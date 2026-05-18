@@ -170,9 +170,9 @@ const selectors = {
     pageTitle: '//h1',
     pageDescription: '//p',
     homePage: '//span[contains(text(),"Home")]',
-    leaderboardPage: '//span[contains(text(),"Leaderboard")]',
+    leaderboardPage: '//span[contains(text(),"Rewards")]',
     rewardsPoolPage: '//span[contains(text(),"Rewards Pool")]',
-    walletPage: '//span[contains(text(),"WALLET")]',
+    walletPage: '//span[contains(text(),"$Wallet")]',
     faqPage: '//span[contains(text(),"FAQ")]'
   },
   sigtool: {

@@ -19,7 +19,7 @@ import getStyles from './styles'
 
 const DAppConnectBody: FC<{
   responsiveSizeMultiplier?: number
-  securityCheck: BlacklistedStatus
+  securityCheck?: BlacklistedStatus
 }> = ({ securityCheck, responsiveSizeMultiplier = 1 }) => {
   const { t } = useTranslation()
   const { styles, theme } = useTheme(getStyles)
