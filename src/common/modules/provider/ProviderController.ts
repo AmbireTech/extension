@@ -151,6 +151,9 @@ export class ProviderController {
     return accounts
   }
 
+  /**
+   * Internal method used by rewards to get the balance of the selected account. Can be filtered by chainIds.
+   */
   getPortfolioBalance = async ({ params: [chainParams], session: { id } }: DappProviderRequest) => {
     if (!this.mainCtrl.dapps.hasPermission(id) || !this.isUnlocked) {
       throw ethErrors.provider.unauthorized()
@@ -162,7 +165,15 @@ export class ProviderController {
       throw new Error('wallet account not selected')
     }
 
-    // @TODO: Figure out what to do here
+    if (selectedAccount !== this.mainCtrl.selectedAccount.account?.addr) {
+      const amount = this.mainCtrl.selectedAccount.balanceByAccounts[selectedAccount] || 0
+
+      return {
+        amount,
+        amountFormatted: formatDecimals(amount, 'price'),
+        isReady: true
+      }
+    }
 
     let totalBalance: number = 0
 
