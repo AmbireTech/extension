@@ -43,7 +43,7 @@
     }
   }
   :global(.swiper) {
-    margin-left: calc((100% - 75.75rem) / 2);
+    margin-left: calc((100% - #{$container-width}) / 2);
     position: relative;
     display: flex;
     padding-left: 0.25rem; // Otherwise the card effect isn't visible
