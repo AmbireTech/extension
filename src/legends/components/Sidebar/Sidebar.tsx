@@ -17,8 +17,19 @@ type Props = {
   handleClose: () => void
 }
 
-const NAVIGATION_LINKS = [
-  { to: LEGENDS_ROUTES.wallet, text: '$Wallet', icon: faPiggyBank },
+const NAVIGATION_LINKS: Array<{
+  to: string
+  text: string
+  icon: typeof faPiggyBank
+  newTab?: boolean
+  isActive?: (pathname: string) => boolean
+}> = [
+  {
+    to: LEGENDS_ROUTES['/'],
+    text: '$Wallet',
+    icon: faPiggyBank,
+    isActive: (pathname) => pathname === LEGENDS_ROUTES['/'] || pathname === LEGENDS_ROUTES.wallet
+  },
   { to: LEGENDS_ROUTES.leaderboard, text: 'Rewards', icon: faTrophy },
   {
     to: 'https://help.ambire.com/en/collections/18211459-ambire-rewards',
@@ -43,7 +54,7 @@ const Sidebar: FC<Props> = ({ isOpen, handleClose }) => {
         <div className={styles.links}>
           {NAVIGATION_LINKS.map((link) => (
             <Link
-              isActive={pathname === link.to}
+              isActive={link.isActive ? link.isActive(pathname) : pathname === link.to}
               key={link.to}
               to={link.to}
               text={link.text}
