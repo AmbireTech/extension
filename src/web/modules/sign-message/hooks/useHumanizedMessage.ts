@@ -7,8 +7,11 @@ import {
   humanizeMessage
 } from '@ambire-common/libs/humanizer'
 import { IrMessage } from '@ambire-common/libs/humanizer/interfaces'
+import { relayerCall } from '@ambire-common/libs/relayerCall/relayerCall'
+import { RELAYER_URL } from '@env'
 
 const ERC7730_DESCRIPTOR_WAIT_MS = 4000
+const callRelayer = relayerCall.bind({ url: RELAYER_URL, fetch })
 
 type UseHumanizedMessageResult = {
   humanizedMessage?: IrMessage
@@ -35,7 +38,7 @@ const useHumanizedMessage = (message?: Message | null): UseHumanizedMessageResul
       setShouldUseFallback(true)
     }, ERC7730_DESCRIPTOR_WAIT_MS)
 
-    fetchErc7730DescriptorForMessage(message)
+    fetchErc7730DescriptorForMessage(message, { callRelayer })
       .then((descriptor) => {
         if (!isMounted) return
 
