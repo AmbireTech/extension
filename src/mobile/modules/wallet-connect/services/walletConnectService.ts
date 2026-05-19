@@ -300,7 +300,7 @@ export const initWalletConnect = async (
         })
       })
 
-      walletKit.on('session_authenticate', async (event: any) => {
+      walletKit.on('session_authenticate', async (event: WalletKitTypes.SessionAuthenticate) => {
         try {
           const { id, params: authParams } = event
           const { authPayload, requester } = authParams
