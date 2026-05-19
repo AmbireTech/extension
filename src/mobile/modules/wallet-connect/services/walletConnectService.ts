@@ -143,12 +143,10 @@ export const initWalletConnect = async (
   addToast: (text: string, options?: any) => void
 ) => {
   if (initialized) {
-    console.log('[WalletConnect] Already initialized, returning existing walletKit.')
     return walletKit
   }
 
   if (initPromise) {
-    console.log('[WalletConnect] Initialization already in progress, waiting for existing promise.')
     return initPromise
   }
 
@@ -156,13 +154,10 @@ export const initWalletConnect = async (
 
   initPromise = (async () => {
     try {
-      console.log('[WalletConnect] Initialization started...')
-
       if (!CONFIG.WALLETCONNECT_PROJECT_ID) {
         throw new Error('WALLETCONNECT_PROJECT_ID is missing from configuration.')
       }
 
-      console.log('[WalletConnect] Creating Core instance...')
       // getDefaultLoggerOptions() hardcodes level:'info' and ignores the string arg,
       // so passing logger:'silent' to Core does nothing. Pass a real pino instance.
       const core = new Core({
@@ -170,7 +165,6 @@ export const initWalletConnect = async (
         logger: pino({ level: 'silent' })
       })
 
-      console.log('[WalletConnect] Initializing WalletKit...')
       // We add a timeout to prevent indefinite hanging if the relay is unreachable
       const initResult = await Promise.race([
         WalletKit.init({
@@ -192,7 +186,6 @@ export const initWalletConnect = async (
       ])
 
       walletKit = initResult
-      console.log('[WalletConnect] WalletKit initialized successfully.')
 
       // WalletKit calls SignClient.init({core, metadata, signConfig}) WITHOUT passing
       // the logger, so SignClient builds its own pino logger at level 'error', ignoring
@@ -243,7 +236,7 @@ export const initWalletConnect = async (
               params: {
                 request: { method: 'eth_requestAccounts', origin: proposerUrl },
                 requestId: id,
-                providerId: 1, // Single provider id for WC for now
+                providerId: 1,
                 topic: `temp_wallet_connect_session_${proposal.id}`,
                 tabId: proposal.id,
                 isWalletConnect: true
@@ -253,7 +246,7 @@ export const initWalletConnect = async (
             true
           )
         } catch (e) {
-          console.error(e)
+          console.error('[WalletConnect] session_proposal handler error:', e)
         }
       })
 
@@ -288,7 +281,7 @@ export const initWalletConnect = async (
             true
           )
         } catch (e) {
-          console.error(e)
+          console.error('[WalletConnect] session_request handler error:', e)
         }
       })
 
@@ -367,9 +360,8 @@ export const initWalletConnect = async (
         addToast('WalletConnect connection request expired.', { type: 'error' })
       })
 
-      walletKit.on('session_request_expire', ({ id }: WalletKitTypes.SessionRequestExpire) => {
+      walletKit.on('session_request_expire', ({ id: _id }: WalletKitTypes.SessionRequestExpire) => {
         addToast('WalletConnect request expired. Please retry in the dApp.', { type: 'error' })
-        console.warn('[WalletConnect] session_request_expire for request id:', id)
       })
 
       // Store persisted sessions for later restoration once store is ready
@@ -652,7 +644,6 @@ export const handleWcSessionBroadcast = async (payload: {
             topic: payload.wcSessionTopic,
             namespaces: newNamespaces
           })
-          console.log('[WalletConnect] Successfully updated session namespaces for', payload.event)
         }
       }
     } catch (e: any) {
@@ -668,10 +659,7 @@ export const handleWcSessionBroadcast = async (payload: {
     })
   } catch (e: any) {
     if (e?.message?.includes('Record was recently deleted')) {
-      console.log(
-        '[WalletConnect] Ignored emitSessionEvent on deleted session:',
-        payload.wcSessionTopic
-      )
+      // session already gone, nothing to emit
     } else {
       throw e
     }
