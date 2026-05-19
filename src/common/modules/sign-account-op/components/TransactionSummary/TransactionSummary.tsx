@@ -1,26 +1,33 @@
-import { formatUnits, Interface, parseUnits } from 'ethers'
+import { Interface, parseUnits, ZeroAddress } from 'ethers'
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { View, ViewStyle } from 'react-native'
 
-import humanizerInfo from '@ambire-common/consts/humanizer/humanizerInfo.json'
 import {
   noStateUpdateStatuses,
   SigningStatus
 } from '@ambire-common/controllers/signAccountOp/signAccountOp'
 import { IrCall } from '@ambire-common/libs/humanizer/interfaces'
+import {
+  getAction,
+  getAddressVisualization,
+  getLabel,
+  getToken
+} from '@ambire-common/libs/humanizer/utils'
 import DeleteIcon from '@common/assets/svg/DeleteIcon'
 import ExpandableCard from '@common/components/ExpandableCard'
 import HumanizedVisualization from '@common/components/HumanizedVisualization'
 import Label from '@common/components/Label'
 import Text from '@common/components/Text'
 import { isMobile, isWeb } from '@common/config/env'
-import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
+import useDecodeTransactionData from '@common/hooks/useDecodeTransactionData'
 import useHover, { AnimatedPressable } from '@common/hooks/useHover'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
+import ExpandedContent from '@common/modules/sign-account-op/components/TransactionSummary/ExpandedContent'
 import FallbackVisualization from '@common/modules/sign-account-op/components/TransactionSummary/FallbackVisualization'
-import { SPACING_SM, SPACING_TY } from '@common/styles/spacings'
+import { SPACING_SM } from '@common/styles/spacings'
 
 import getStyles from './styles'
 
@@ -37,6 +44,7 @@ interface Props {
   hideLinks?: boolean
   hideDeleteIcon?: boolean
   hasCallFailed?: boolean
+  disableSelectorFetching?: boolean
 }
 
 export const sizeMultiplier = {
@@ -72,11 +80,11 @@ const TransactionSummary = ({
   onRightIconPress,
   hideLinks = false,
   hideDeleteIcon,
-  hasCallFailed
+  hasCallFailed,
+  disableSelectorFetching
 }: Props) => {
   const textSize = 16 * sizeMultiplier[size]
   const imageSize = 32 * sizeMultiplier[size]
-  const { t } = useTranslation()
   const { dispatch: requestsDispatch } = useController('RequestsController')
   const { state: signAccountOpState, dispatch: signAccountOpDispatch } =
     useController('SignAccountOpController')
@@ -85,26 +93,17 @@ const TransactionSummary = ({
   } = useController('SelectedAccountController')
   const { styles } = useTheme(getStyles)
   const { addToast } = useToast()
+  const { t } = useTranslation()
+  const { decodedFunction, isLoading: isDecodedFunctionLoading } = useDecodeTransactionData(
+    call,
+    !!disableSelectorFetching
+  )
+
   /**
    * It takes some time to remove the call from the controller state, so we optimistically
    * set this state to true, which hides it immediately.
    */
   const [isCallRemovedOptimistic, setIsCallRemovedOptimistic] = useState(false)
-
-  const foundCallSignature = useMemo(() => {
-    let foundSigHash: string | undefined
-    Object.values(humanizerInfo.abis).some((abi) => {
-      Object.values(abi).some((s) => {
-        if (call.data && s.selector === call.data.slice(0, 10)) {
-          foundSigHash = s.signature
-          return true
-        }
-        return false
-      })
-      return !!foundSigHash
-    })
-    return foundSigHash
-  }, [call.data])
 
   const [bindDeleteIconAnim, deleteIconAnimStyle] = useHover({
     preset: 'opacityInverted'
@@ -351,6 +350,38 @@ const TransactionSummary = ({
     return { setter: innerEditApproval, amount, token, callId: call.id }
   }, [call, innerEditApproval, portfolio, signAccountOpState])
 
+  // TODO: should this be reused in history/benzin/other places
+  const callVisualization = useMemo(() => {
+    if (!call.isFallback) return call.fullVisualization
+    if (!call.to) return call.fullVisualization
+    if (!call.data || call.data === '0x' || call.data.length < 10) return call.fullVisualization
+    if (isDecodedFunctionLoading) return [getLabel('Loading...')]
+    if (!decodedFunction) return call.fullVisualization
+    const functionName = decodedFunction.signature.split('(')[0]
+    if (!functionName || !functionName[0]) return call.fullVisualization
+
+    const capitalizedFunction = functionName[0].toUpperCase() + functionName.slice(1)
+    if (call.value) {
+      return [
+        getAction('Send'),
+        getToken(ZeroAddress, call.value),
+        getLabel('and'),
+        getAction(`Call ${capitalizedFunction}`),
+        getLabel('from'),
+        getAddressVisualization(call.to)
+      ]
+    } else {
+      return [getAction(capitalizedFunction), getLabel('from'), getAddressVisualization(call.to)]
+    }
+  }, [
+    call.data,
+    call.fullVisualization,
+    call.isFallback,
+    call.to,
+    call.value,
+    decodedFunction,
+    isDecodedFunctionLoading
+  ])
   if (isCallRemovedOptimistic) return null
 
   return (
@@ -372,9 +403,9 @@ const TransactionSummary = ({
       }
       content={
         <>
-          {call.fullVisualization ? (
+          {callVisualization ? (
             <HumanizedVisualization
-              data={call.fullVisualization}
+              data={callVisualization}
               sizeMultiplierSize={sizeMultiplier[size]}
               textSize={textSize}
               imageSize={imageSize}
@@ -422,43 +453,14 @@ const TransactionSummary = ({
         </>
       }
       expandedContent={
-        <View
-          style={{
-            paddingHorizontal: SPACING_SM * sizeMultiplier[size],
-            paddingVertical: SPACING_TY * sizeMultiplier[size]
-          }}
-        >
-          {call.to && (
-            <Text selectable fontSize={12} style={styles.bodyText} weight="mono_regular">
-              <Text fontSize={12} style={styles.bodyText} weight="regular">
-                {t('Interacting with (to): ')}
-              </Text>
-              {call.to}
-            </Text>
-          )}
-          {foundCallSignature && (
-            <Text selectable fontSize={12} style={styles.bodyText}>
-              <Text fontSize={12} style={styles.bodyText} weight="regular">
-                {t('Function to call: ')}
-              </Text>
-              {foundCallSignature}
-            </Text>
-          )}
-          <Text selectable fontSize={12} style={styles.bodyText}>
-            <Text fontSize={12} style={styles.bodyText} weight="regular">
-              {t('Value to be sent (value): ')}
-            </Text>
-            {formatUnits(call.value || '0x0', 18)}
-          </Text>
-          <Text selectable fontSize={12} style={styles.bodyText}>
-            <Text fontSize={12} style={styles.bodyText} weight="regular">
-              {t('Data: ')}
-            </Text>
-            <Text fontSize={12} style={styles.bodyText} weight="mono_regular">
-              {call.data}
-            </Text>
-          </Text>
-        </View>
+        <ExpandedContent
+          call={call}
+          size={size}
+          sizeMultiplier={sizeMultiplier}
+          styles={styles}
+          decodedFunction={decodedFunction}
+          isDecodedFunctionLoading={isDecodedFunctionLoading}
+        />
       }
     >
       <View
