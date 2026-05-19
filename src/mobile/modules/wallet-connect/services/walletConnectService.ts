@@ -15,6 +15,7 @@ type DispatchFn = (action: MethodAction | Action, windowId?: number, raw?: boole
 let walletKit: WalletKitType | null = null
 let initialized = false
 let initPromise: Promise<WalletKitType> | null = null
+let addToastFn: ((text: string, options?: any) => void) | null = null
 let pendingRestoreSessions:
   | { topic: string; url: string; chainId: number; name?: string; icon?: string }[]
   | null = null
@@ -150,6 +151,8 @@ export const initWalletConnect = async (
     console.log('[WalletConnect] Initialization already in progress, waiting for existing promise.')
     return initPromise
   }
+
+  addToastFn = addToast
 
   initPromise = (async () => {
     try {
@@ -557,6 +560,8 @@ export const approveWalletConnectSession = async (
     true
   )
 
+  addToastFn?.('Connected! You can return to the browser.', { type: 'success' })
+
   return session
 }
 
@@ -767,8 +772,7 @@ export const approveWcAuthenticate = async (
 
   const result = await walletKit.approveSessionAuthenticate({
     id,
-    // iss is required in the CACAO payload — it identifies the signing account
-    // as a did:pkh DID and was computed in prepareWcAuthenticate.
+    // iss is the did:pkh DID of the signing account, set in prepareWcAuthenticate.
     auths: [{ h: { t: 'caip122' }, p: { ...authPayload, iss }, s: { t: 'eip191', s: signature } }]
   })
 
