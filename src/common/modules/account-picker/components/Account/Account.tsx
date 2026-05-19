@@ -80,7 +80,7 @@ const Account = ({
   }, [isSelected, onSelect, onDeselect, account])
 
   const formattedAddress = useMemo(() => {
-    if (minWidthSize('m') || reverseLookupName) {
+    if (minWidthSize('m') || reverseLookupName || isDomainResolving) {
       return shortenAddress(account.addr, 16)
     }
     if (maxWidthSize('m') && minWidthSize('l')) {
@@ -90,16 +90,12 @@ const Account = ({
       return account.addr
     }
     return shortenAddress(account.addr, 16)
-  }, [account.addr, reverseLookupName, maxWidthSize, minWidthSize])
+  }, [account.addr, reverseLookupName, isDomainResolving, maxWidthSize, minWidthSize])
 
   const handleCopyAddress = useCallback(() => {
     setStringAsync(account.addr)
     addToast(t('Address copied to clipboard!') as string, { timeout: 2500 })
   }, [account.addr, addToast, t])
-
-  if (isDomainResolving) {
-    return <SkeletonLoader height={48} width="100%" style={spacings.mbTy} />
-  }
 
   if (!account.addr) return null
 
@@ -179,6 +175,10 @@ const Account = ({
                     >
                       {reverseLookupName}
                     </Text>
+                  ) : isDomainResolving ? (
+                    <Text fontSize={12} appearance="secondaryText" style={spacings.mrTy}>
+                      {t('Resolving domain...')}
+                    </Text>
                   ) : null}
                   <Text
                     fontSize={14}
@@ -186,9 +186,9 @@ const Account = ({
                     style={spacings.mrMi}
                     weight="mono_regular"
                   >
-                    {reverseLookupName ? '(' : ''}
+                    {reverseLookupName || isDomainResolving ? '(' : ''}
                     {formattedAddress}
-                    {reverseLookupName ? ')' : ''}
+                    {reverseLookupName || isDomainResolving ? ')' : ''}
                   </Text>
                 </>
               )}
