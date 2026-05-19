@@ -3,7 +3,11 @@ import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 
 import { QrRequest } from '@ambire-common/interfaces/keystore'
-import { IrMessage } from '@ambire-common/libs/humanizer/interfaces'
+import {
+  HumanizerErc7730Visualization,
+  HumanizerVisualization,
+  IrMessage
+} from '@ambire-common/libs/humanizer/interfaces'
 import WarningIcon from '@common/assets/svg/WarningIcon'
 import Alert from '@common/components/Alert'
 import ExpandableCard from '@common/components/ExpandableCard'
@@ -58,6 +62,56 @@ const Container = ({ children }: { children: React.ReactNode }) => {
   return <TabLayoutWrapperMainContent style={spacings.mbLg}>{children}</TabLayoutWrapperMainContent>
 }
 
+const isErc7730Visualization = (
+  item: HumanizerVisualization | undefined
+): item is HumanizerVisualization & HumanizerErc7730Visualization => item?.type === 'erc7730'
+
+const Erc7730TypedMessageContent = React.memo(
+  ({
+    data,
+    chainId,
+    responsiveSizeMultiplier
+  }: {
+    data: (HumanizerVisualization & HumanizerErc7730Visualization)[]
+    chainId: bigint
+    responsiveSizeMultiplier: number
+  }) => {
+    const { t } = useTranslation()
+    const { styles, theme } = useTheme(getStyles)
+    const title = useMemo(() => data.find((item) => !!item.title)?.title, [data])
+
+    return (
+      <View style={styles.erc7730TypedMessageContent}>
+        <Text
+          fontSize={16 * responsiveSizeMultiplier}
+          weight="semiBold"
+          color={theme.secondaryAccent400}
+          style={styles.erc7730TypedMessageTitle}
+        >
+          {title || t('Message details')}
+        </Text>
+        <View
+          style={[
+            styles.erc7730TypedMessageDivider,
+            {
+              marginTop: SPACING_TY * responsiveSizeMultiplier,
+              marginBottom: SPACING_TY * responsiveSizeMultiplier
+            }
+          ]}
+        />
+        <HumanizedVisualization
+          data={data}
+          chainId={chainId}
+          sizeMultiplierSize={responsiveSizeMultiplier}
+          textSize={14}
+          hasPadding={false}
+          erc7730Mode="description"
+        />
+      </View>
+    )
+  }
+)
+
 const Main = ({
   shouldDisplayLedgerConnectModal,
   isLedgerConnected,
@@ -102,6 +156,13 @@ const Main = ({
       ),
     [network, humanizedMessage, signMessageState.messageToSign?.content?.kind]
   )
+  const typedMessageErc7730Visualizations = useMemo(
+    () => humanizedMessage?.fullVisualization?.filter(isErc7730Visualization) || [],
+    [humanizedMessage?.fullVisualization]
+  )
+  const shouldUseErc7730TypedMessageCard =
+    signMessageState.messageToSign?.content.kind === 'typedMessage' &&
+    typedMessageErc7730Visualizations.length > 0
   const messageVisualizationMode = isHumanizing
     ? 'humanizing'
     : visualizeHumanized
@@ -216,6 +277,12 @@ const Main = ({
                 <View style={flexbox.flex1}>
                   <Spinner />
                 </View>
+              ) : shouldUseErc7730TypedMessageCard ? (
+                <Erc7730TypedMessageContent
+                  data={typedMessageErc7730Visualizations}
+                  chainId={network?.chainId || signMessageState.messageToSign?.chainId || 1n}
+                  responsiveSizeMultiplier={responsiveSizeMultiplier}
+                />
               ) : visualizeHumanized &&
                 // @TODO: Duplicate check. For some reason ts throws an error if we don't do this
                 humanizedMessage?.fullVisualization &&
@@ -260,8 +327,10 @@ const Main = ({
                 setHasReachedBottom={setHasReachedBottom}
                 hasReachedBottom={!!hasReachedBottom}
                 messageToSign={signMessageState.messageToSign}
+                humanizedMessage={humanizedMessage}
                 responsiveSizeMultiplier={responsiveSizeMultiplier}
                 withScrollDownArrow
+                rawOnly={shouldUseErc7730TypedMessageCard}
               />
             }
           >
