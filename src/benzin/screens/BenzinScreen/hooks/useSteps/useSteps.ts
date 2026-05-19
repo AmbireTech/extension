@@ -137,7 +137,7 @@ const parseHumanizer = (humanizedCalls: IrCall[]): IrCall[] => {
   const finalParsedCalls = humanizedCalls.map((call) => {
     const localCall: IrCall = { ...call }
     localCall.fullVisualization = call.fullVisualization?.filter(
-      (visual) => visual.type !== 'deadline' && !visual.isHidden
+      (visual) => visual.type !== 'deadline'
     )
     localCall.warnings = call.warnings?.filter((warn) => warn.content !== 'Unknown address')
     return localCall

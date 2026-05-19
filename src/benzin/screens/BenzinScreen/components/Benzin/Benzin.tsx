@@ -70,6 +70,7 @@ const Benzin = ({
         size={sizeStr}
         type="benzin"
         hasCallFailed={call.status === AccountOpStatus.Rejected}
+        disableSelectorFetching
       />
     ))
     // Prevents unnecessary re-renders of the humanizer

@@ -4,6 +4,7 @@ import { ActivityController } from '@ambire-common/controllers/activity/activity
 import { AddressBookController } from '@ambire-common/controllers/addressBook/addressBook'
 import { AutoLoginController } from '@ambire-common/controllers/autoLogin/autoLogin'
 import { BannerController } from '@ambire-common/controllers/banner/banner'
+import { ContractInfoController } from '@ambire-common/controllers/contractInfo/contractInfo'
 import { ContractNamesController } from '@ambire-common/controllers/contractNames/contractNames'
 import { DappsController } from '@ambire-common/controllers/dapps/dapps'
 import { DomainsController } from '@ambire-common/controllers/domains/domains'
@@ -58,8 +59,9 @@ export const controllersNestedInMainMapping = {
   UiController,
   AutoLoginController,
   SafeController,
-  SurveyController,
-  QrHardwareController
+  QrHardwareController,
+  ContractInfoController,
+  SurveyController
 
   // Add the rest of the controllers that are part of the main controller:
   // - key is the name of the controller
