@@ -1,14 +1,17 @@
 You are an AI Agent working in a security-critical Web3 monorepo that encompasses a mobile app wallet, browser extension wallet and standalone websites (`src/benzin` and `src/legends`).
 
 ## Tech stack
+
 react, react-native, react-native-web, typescript, expo (bare workflow), ethers, viem and more (check the root `package.json` if another package is needed)
 
 ## Project overview
+
 - The extension is using manifest version 3 on Chrome, but also works on Firefox using a background script
 - `background` in the wallet refers to:
   - Service worker on Chrome (`src/web/extension-services/background/`)
   - Background script on Firefox (`src/web/extension-services/background/`)
   - Webview worker on mobile (`src/mobile/services/WebViewWorker/`)
+- Unlike typical manifest version 3 extensions where the service worker is allowed to sleep, this extension is designed to stay alive: the UI periodically sends `ambire-extension-ping` messages, the background responds with `ambire-extension-pong` to prevent the service worker from being suspended, and the background's `init()` function (which bootstraps all controllers) is called on every incoming message - a no-op if already initialized, but essential after a service worker suspension because the JS context is destroyed on sleep and `isInitialized` resets
 - The business logic and persistent state is handled primarily using `controllers` (JS classes), which usually run in the `background`
 - The websites run some controllers separately without a `background`
 - `src/ambire-common` is a **git submodule** that contains the business logic of the application. Changes inside it are in a separate repo and require a separate commit flow
@@ -18,12 +21,14 @@ react, react-native, react-native-web, typescript, expo (bare workflow), ethers,
   - Use the `.native.tsx` or `.web.tsx` suffix and import from `common/`, which automatically resolves to the correct file based on the environment
 
 ## Useful commands (not exhaustive):
+
 - Check for typescript errors - `yarn extension:type:check-new`
 - Lint and auto-fix source files: `yarn lint:fix`
 
 ## Rules
 
 ### Project specific:
+
 - Prefer naming variable ways in a self-explanatory way instead of adding comments
 - Prefer short circuits to nested if statements for better readability
 - Aim for low cyclomatic complexity unless it's not for parts that are handling large sets of data and performance is critical
@@ -43,10 +48,12 @@ react, react-native, react-native-web, typescript, expo (bare workflow), ethers,
 - NEVER use `gap` for spacings as it is not supported in React Native; use `margin` instead
 
 ### Security:
+
 - This is a security-critical Web3 wallet. Private keys and seed phrases must never be logged or exposed
 - The extension uses LavaMoat with SES for the background. If you add/remove dependencies or change import patterns, regenerate the policy with `yarn build:extensions:generate-policy` and review the changes
 
 ### Code quality:
+
 - Ensure that list keys are unique and stable (NEVER use the array index)
 - ALWAYS memoize functions, components and complex values with `useMemo`, `useCallback` and `React.memo`.
 - ALWAYS ensure that subscriptions, event listeners, timers and other side effects are properly cleaned up
@@ -57,10 +64,12 @@ react, react-native, react-native-web, typescript, expo (bare workflow), ethers,
 - NEVER stage changes unless explicitly requested by user
 
 ## Controller state update lifecycle
+
 1. The UI calls `dispatch` from `useController` to invoke a controller method. This is **fire-and-forget** — `dispatch` does NOT return a response or the new state
 2. The action travels to the background (via `PortMessenger` in the extension, `WebViewWorker` in mobile) where `handleActions` finds the controller and calls the requested method
 3. The controller method updates its internal state and calls `this.emitUpdate()`
 4. The `background` has an `onUpdate` listener for every registered controller that serializes the controller state and sends it back to the UI
 5. The UI receives the update, writes it to the `controllerStore`, and `useControllerState` (via `useSyncExternalStore`) triggers a React re-render with the new state
 6. Because of this asynchronous cycle, state changes are NOT immediate after `dispatch`. If an action fails silently or the controller doesn't call `emitUpdate`, the UI will never re-render
+
 - On standalone websites (`benzin`, `legends`) controllers run in the main thread directly and `dispatch` invokes methods synchronously, but the `emitUpdate` → store → re-render cycle still applies

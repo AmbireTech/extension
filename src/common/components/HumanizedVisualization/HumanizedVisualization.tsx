@@ -266,11 +266,42 @@ const isSpenderRow = (row: Erc7730Row) => {
 const isExpirationRow = (row: Erc7730Row) =>
   /expires|expiration|deadline|valid|until/.test(row.label.toLowerCase())
 
+const hasTokenValue = (row: Erc7730Row) => row.value.some((value) => value.type === 'token')
+
+const isOutgoingTokenRow = (row: Erc7730Row) =>
+  /send|spend|pay|sell|input|amount in|amount to send/.test(row.label.toLowerCase())
+
+const isIncomingTokenRow = (row: Erc7730Row) =>
+  /receive|get|buy|output|amount out|minimum to receive|receive minimum/.test(
+    row.label.toLowerCase()
+  )
+
+const isSwapLikeTitle = (title?: string) =>
+  /swap|exchange|trade|bridge/.test((title || '').toLowerCase())
+
 const getErc7730SpenderRow = (item: HumanizerErc7730Visualization) =>
   item.rows.find((row) => isSpenderRow(row))
 
+const getErc7730SwapSummaryRows = (item: HumanizerErc7730Visualization) => {
+  const tokenRows = item.rows.filter((row) => hasTokenValue(row))
+  if (tokenRows.length < 2) return null
+
+  const outgoingRow = tokenRows.find((row) => isOutgoingTokenRow(row))
+  const incomingRow = tokenRows.find((row) => isIncomingTokenRow(row))
+  const hasDirectionalPair = !!outgoingRow && !!incomingRow && outgoingRow !== incomingRow
+
+  if (!hasDirectionalPair && !isSwapLikeTitle(item.title)) return null
+
+  if (hasDirectionalPair) return [outgoingRow, incomingRow]
+
+  return tokenRows.slice(0, 2)
+}
+
 const getErc7730SummaryRows = (item: HumanizerErc7730Visualization) => {
-  const amountRow = item.rows.find((row) => row.value.some((value) => value.type === 'token'))
+  const swapRows = getErc7730SwapSummaryRows(item)
+  if (swapRows) return swapRows
+
+  const amountRow = item.rows.find((row) => hasTokenValue(row))
   if (amountRow) return [amountRow]
 
   return item.rows.filter((row) => !isSpenderRow(row) && !isExpirationRow(row)).slice(0, 2)
@@ -300,7 +331,7 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
     overrideTextSize = textSize,
     options: { preferEnsName?: boolean } = {}
   ) => {
-    if (!valueItem || valueItem.isHidden) return null
+    if (!valueItem || ('isHidden' in valueItem && valueItem.isHidden)) return null
 
     if (valueItem.type === 'token') {
       const tokenChainId = valueItem.chainId || chainId
@@ -444,6 +475,7 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
 
   if (mode === 'summary') {
     const summaryRows = getErc7730SummaryRows(item)
+    const shouldStackSummaryRows = summaryRows.length > 1 && summaryRows.every(hasTokenValue)
     const spenderRow = getErc7730SpenderRow(item)
     const subtitleTextSize = Math.max(textSize - 3, 11)
 
@@ -540,36 +572,46 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
         </View>
         <View
           style={[
-            flexbox.directionRow,
-            flexbox.alignCenter,
+            shouldStackSummaryRows ? flexbox.alignEnd : flexbox.directionRow,
+            !shouldStackSummaryRows && flexbox.alignCenter,
             flexbox.justifyEnd,
             {
               minWidth: 0,
               flexShrink: 0,
-              gap: SPACING_SM
+              ...(shouldStackSummaryRows ? { flexDirection: 'column' } : {})
             }
           ]}
         >
           {summaryRows.map((row, index) => (
             <View
-              key={`${item.id}-summary-${row.label}-${index}`}
+              key={`${item.id}-summary-${row.label}-${row.value
+                .map((value) => value.id)
+                .join('-')}`}
               style={[
                 flexbox.directionRow,
                 flexbox.alignCenter,
                 flexbox.justifyEnd,
+                shouldStackSummaryRows && index > 0 && spacings.mtMi,
+                !shouldStackSummaryRows && index > 0 && spacings.mlSm,
                 {
                   minWidth: 0,
-                  maxWidth: index === 0 ? 360 : 260
+                  maxWidth: shouldStackSummaryRows ? 520 : index === 0 ? 360 : 260
                 }
               ]}
             >
-              {!row.value.some((value) => value.type === 'token') && (
+              {(!hasTokenValue(row) || shouldStackSummaryRows) && (
                 <Text
                   fontSize={Math.max(textSize - 4, 10)}
                   weight="semiBold"
                   appearance="secondaryText"
                   numberOfLines={1}
-                  style={spacings.mrTy}
+                  style={[
+                    spacings.mrTy,
+                    shouldStackSummaryRows && {
+                      flexShrink: 1,
+                      maxWidth: 180
+                    }
+                  ]}
                 >
                   {row.label}
                 </Text>
