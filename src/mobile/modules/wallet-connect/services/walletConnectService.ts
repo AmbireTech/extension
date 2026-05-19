@@ -19,10 +19,6 @@ let pendingRestoreSessions:
   | { topic: string; url: string; chainId: number; name?: string; icon?: string }[]
   | null = null
 
-// Captured dispatch reference — set once on init, reused by auth helpers that
-// run outside the initWalletConnect closure (prepareWcAuthenticate, approveWcAuthenticate).
-let wcDispatch: DispatchFn | null = null
-
 // Keyed by the session_authenticate request id.
 const pendingAuthenticates = new Map<
   number,
@@ -193,7 +189,6 @@ export const initWalletConnect = async (
       ])
 
       walletKit = initResult
-      wcDispatch = dispatch
       console.log('[WalletConnect] WalletKit initialized successfully.')
 
       // WalletKit calls SignClient.init({core, metadata, signConfig}) WITHOUT passing
@@ -484,7 +479,7 @@ export const respondToWalletConnectRequest = async (topic: string, response: any
 export const approveWalletConnectSession = async (
   proposalId: number,
   accounts: string[],
-  dispatch: (action: MethodAction | Action, raw?: boolean) => void
+  dispatch: DispatchFn
 ) => {
   if (!walletKit) return
 
@@ -541,6 +536,7 @@ export const approveWalletConnectSession = async (
         tempSessionTopic: `temp_wallet_connect_session_${proposal.id}`
       }
     },
+    undefined,
     true
   )
 
@@ -675,8 +671,8 @@ export const getPendingRestoreSessions = () => {
  * Formats the SIWE message and dispatches it as personal_sign so the existing
  * SIWE detection, UI, and signing path handle it unchanged.
  */
-export const prepareWcAuthenticate = async (id: number, address: string) => {
-  if (!walletKit || !wcDispatch) return
+export const prepareWcAuthenticate = async (id: number, address: string, dispatch: DispatchFn) => {
+  if (!walletKit) return
 
   const pending = pendingAuthenticates.get(id)
   if (!pending) {
@@ -699,12 +695,9 @@ export const prepareWcAuthenticate = async (id: number, address: string) => {
     .map((b) => b.toString(16).padStart(2, '0'))
     .join('')}`
 
-  // Reuse the same temp topic so getOrCreateDappSession finds the already-connected
-  // session from the eth_requestAccounts step — rpcFlow needs the session to have
-  // an account associated or it rejects personal_sign silently.
-  // Use id + 1 as the requestId: handleProviderRequests deduplicates by requestId per
-  // session, and eth_requestAccounts already consumed slot `id` on this session.
-  wcDispatch(
+  // Reuse the temp topic so rpcFlow finds the session with an account already bound.
+  // id + 1 avoids the per-session deduplication guard (eth_requestAccounts consumed slot `id`).
+  dispatch(
     {
       type: 'HANDLE_PROVIDER_REQUEST',
       params: {
@@ -731,8 +724,12 @@ export const prepareWcAuthenticate = async (id: number, address: string) => {
  * If WalletKit creates a persistent session as a result, the session messenger
  * is set up so future session_requests are routed correctly.
  */
-export const approveWcAuthenticate = async (id: number, signature: string) => {
-  if (!walletKit || !wcDispatch) return
+export const approveWcAuthenticate = async (
+  id: number,
+  signature: string,
+  dispatch: DispatchFn
+) => {
+  if (!walletKit) return
 
   const pending = pendingAuthenticates.get(id)
   if (!pending) {
@@ -768,7 +765,7 @@ export const approveWcAuthenticate = async (id: number, signature: string) => {
       session.peer.metadata.name,
       session.peer.metadata.icons[0]
     )
-    wcDispatch(
+    dispatch(
       {
         type: 'SETUP_WC_SESSION_MESSENGER',
         params: {

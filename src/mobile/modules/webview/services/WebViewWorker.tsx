@@ -216,7 +216,7 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, {}>((_, ref) => {
           await approveWalletConnectSession(
             data.payload.proposalId,
             data.payload.accounts,
-            dispatchToWebView
+            (action, _windowId, raw) => dispatchToWebView(action, raw)
           )
           break
         case 'action.rejectWalletConnectSession':
@@ -227,10 +227,18 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, {}>((_, ref) => {
           break
         case 'action.prepareWcAuthenticate':
           // Account selected — format SIWE message and re-dispatch as personal_sign
-          await prepareWcAuthenticate(data.payload.id, data.payload.accounts[0])
+          await prepareWcAuthenticate(
+            data.payload.id,
+            data.payload.accounts[0],
+            (action, _windowId, raw) => dispatchToWebView(action, raw)
+          )
           break
         case 'action.approveWalletConnectAuthenticate':
-          await approveWcAuthenticate(data.payload.id, data.payload.signature)
+          await approveWcAuthenticate(
+            data.payload.id,
+            data.payload.signature,
+            (action, _windowId, raw) => dispatchToWebView(action, raw)
+          )
           break
         case 'action.rejectWalletConnectAuthenticate':
           await rejectWcAuthenticate(data.payload.id)
