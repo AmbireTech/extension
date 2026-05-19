@@ -14,7 +14,7 @@ import usePrevious from '@common/hooks/usePrevious'
 import useTheme from '@common/hooks/useTheme'
 import AccountPreferences from '@common/modules/dapp-catalog/components/ManageApp/AccountPreferences'
 import AccountPreferencesBottomSheet from '@common/modules/dapp-catalog/components/ManageApp/AccountPreferencesBottomSheet'
-import spacings from '@common/styles/spacings'
+import spacings, { SPACING_SM } from '@common/styles/spacings'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import { Portal } from '@gorhom/portal'
@@ -79,6 +79,8 @@ const AppData = ({ dapp }: { dapp: Dapp }) => {
   )
 }
 
+const IS_RIGHT_ALIGNMENT_DISABLED = true
+
 const ManageApp = ({
   dapp,
   children,
@@ -138,9 +140,9 @@ const ManageApp = ({
         ? { bottom: screenHeight - pageY + GAP }
         : { top: pageY + height + GAP }
 
-      let left = pageX
+      let left = pageX - SPACING_SM
       let alignedRight = false
-      if (menuWidth > 0 && left + menuWidth > screenWidth) {
+      if (menuWidth > 0 && left + menuWidth > screenWidth && !IS_RIGHT_ALIGNMENT_DISABLED) {
         left = pageX + width - menuWidth
         alignedRight = true
       }
