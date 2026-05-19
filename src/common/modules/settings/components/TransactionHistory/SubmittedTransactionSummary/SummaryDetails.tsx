@@ -29,8 +29,8 @@ import {
   getFormattedSubmittedDate,
   getHumanizedCalls,
   getModalFinalStatus,
-  getSummaryBalanceChanges,
   getPresentationalStatus,
+  getSummaryBalanceChanges,
   getTruncatedNetworkName,
   getTruncatedTxnHash
 } from './helpers'
@@ -176,7 +176,7 @@ const SummaryDetails = ({
                 hasCallFailed={
                   !isPendingConfirmation &&
                   submittedAccountOp.identifiedBy.type === 'MultipleTxns' &&
-                  call.txnId === undefined
+                  submittedAccountOp.calls[i]?.txnId === undefined
                 }
                 onRightIconPress={
                   submittedAccountOp.calls[i]?.txnId && network.explorerUrl
