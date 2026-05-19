@@ -21,6 +21,7 @@ import {
 import { AccountOpStatus } from '@ambire-common/libs/accountOp/types'
 import { getAccountsForDapp } from '@ambire-common/libs/dapps/helpers'
 import { networkChainIdToHex } from '@ambire-common/libs/networks/networks'
+import { TokenResult } from '@ambire-common/libs/portfolio'
 import { getBenzinUrlParams } from '@ambire-common/utils/benzin'
 import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
 import { APP_VERSION } from '@common/config/env'
@@ -179,6 +180,8 @@ export class ProviderController {
   // ERC-7811 https://github.com/ethereum/ERCs/pull/709/
   // Adding 'custom' in then name as the ERC is still not completed and might update some
   // specifications.
+  // Caveat: If called for an account different than the currently selected account in the extension,
+  // we may return stale data.
   walletCustomGetAssets = async ({
     params: { account, assetFilter: _assetFilter },
     session: { id }
@@ -189,7 +192,6 @@ export class ProviderController {
       throw ethErrors.provider.unauthorized()
     }
 
-    // @TODO: Figure this out
     if (!this.mainCtrl.selectedAccount.account) {
       throw new Error('wallet account not selected')
     }
@@ -198,13 +200,26 @@ export class ProviderController {
 
     const res: { [chainId: string]: any[] } = {}
 
+    const accounts = this._internalGetAccounts(id)
+
+    if (!accounts.some((acc) => acc.toLowerCase() === account.toLowerCase())) {
+      throw ethErrors.provider.unauthorized()
+    }
+
+    // NOTE!: This method is not used at the time of writing this.
+    // If it's ever used, handle the case where the account doesn't have a portfolio or the portfolio is being
+    // updated.
+    const portfolio = this.mainCtrl.portfolio.getAccountPortfolioState()
+
     Object.entries(assetFilter).forEach(([chainId, tokens]: [string, string[]]) => {
       if (!res[chainId]) res[chainId] = []
       const network = this.mainCtrl.networks.networks.find(
         (n) => Number(n.chainId) === Number(chainId)
       )
       if (!network) return
-      const tokensInPortfolio = this.mainCtrl.selectedAccount.portfolio.tokens
+
+      const tokensInPortfolio: TokenResult[] | undefined = portfolio?.[chainId]?.result?.tokens
+
       if (!tokensInPortfolio) return
 
       tokens.forEach((requestedTokenAddress) => {

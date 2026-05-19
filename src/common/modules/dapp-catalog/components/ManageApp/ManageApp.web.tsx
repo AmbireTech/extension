@@ -79,6 +79,8 @@ const AppData = ({ dapp }: { dapp: Dapp }) => {
   )
 }
 
+// Disabled with a feature flag. Right alignment looks weird at the moment. We may want it in the future
+// so I decided to keep the code for it, but disable it for now.
 const IS_RIGHT_ALIGNMENT_DISABLED = true
 
 const ManageApp = ({
