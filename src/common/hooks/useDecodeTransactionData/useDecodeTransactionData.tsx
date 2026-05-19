@@ -55,7 +55,10 @@ function decodeFunction(
   }
 }
 
-const useDecodeTransactionData = (call: IrCall): UseDecodeTransactionDataReturn => {
+const useDecodeTransactionData = (
+  call: IrCall,
+  disableSelectorFetching: boolean
+): UseDecodeTransactionDataReturn => {
   const {
     state: { selectors },
     dispatch
@@ -64,14 +67,16 @@ const useDecodeTransactionData = (call: IrCall): UseDecodeTransactionDataReturn 
   const decodedFunction = useMemo(() => {
     if (!call.data || !isHex(call.data)) return null
     return decodeFunction(call.data, selectors, (selector) => {
-      dispatch({
-        type: 'method',
-        params: { method: 'getSelector', args: [selector] }
-      })
+      if (!disableSelectorFetching)
+        dispatch({
+          type: 'method',
+          params: { method: 'getSelector', args: [selector] }
+        })
     })
-  }, [call.data, dispatch, selectors])
+  }, [call.data, dispatch, selectors, disableSelectorFetching])
 
   const isLoading = useMemo(() => {
+    if (disableSelectorFetching) return false
     if (!call.data || !isHex(call.data) || call.data.length < 10) return false
     const selector = call.data.slice(0, 10)
     return (
@@ -79,7 +84,7 @@ const useDecodeTransactionData = (call: IrCall): UseDecodeTransactionDataReturn 
       (selectors[selector]?.status === 'loading' &&
         !('data' in selectors[selector] && selectors[selector].data))
     )
-  }, [call.data, selectors])
+  }, [call.data, selectors, disableSelectorFetching])
 
   return {
     decodedFunction,

@@ -44,6 +44,7 @@ interface Props {
   hideLinks?: boolean
   hideDeleteIcon?: boolean
   hasCallFailed?: boolean
+  disableSelectorFetching?: boolean
 }
 
 export const sizeMultiplier = {
@@ -79,7 +80,8 @@ const TransactionSummary = ({
   onRightIconPress,
   hideLinks = false,
   hideDeleteIcon,
-  hasCallFailed
+  hasCallFailed,
+  disableSelectorFetching
 }: Props) => {
   const textSize = 16 * sizeMultiplier[size]
   const imageSize = 32 * sizeMultiplier[size]
@@ -92,7 +94,10 @@ const TransactionSummary = ({
   const { styles } = useTheme(getStyles)
   const { addToast } = useToast()
   const { t } = useTranslation()
-  const { decodedFunction, isLoading: isDecodedFunctionLoading } = useDecodeTransactionData(call)
+  const { decodedFunction, isLoading: isDecodedFunctionLoading } = useDecodeTransactionData(
+    call,
+    !!disableSelectorFetching
+  )
 
   /**
    * It takes some time to remove the call from the controller state, so we optimistically
