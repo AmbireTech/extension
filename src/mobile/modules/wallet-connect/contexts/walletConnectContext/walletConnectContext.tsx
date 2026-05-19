@@ -81,7 +81,11 @@ export const WalletConnectProvider: React.FC<{ children: React.ReactNode }> = ({
 
       try {
         await walletKit.pair({ uri })
-      } catch (e) {
+      } catch (e: any) {
+        // "Pairing already exists" is expected on Android when the OS fires the
+        // deep link event twice (once on intent, once on focus restore). WalletKit
+        // checks its internal pairing store and throws — silently ignore it.
+        if (e?.message?.includes('Pairing already exists')) return
         console.error('WalletConnect pair failed:', e)
       }
     },
