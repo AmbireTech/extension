@@ -352,6 +352,23 @@ export const initWalletConnect = async (
         }
       })
 
+      walletKit.on('proposal_expire', ({ id }: WalletKitTypes.ProposalExpire) => {
+        dispatch({
+          type: 'method',
+          params: {
+            method: 'deleteDappSessionByWcTopic',
+            ctrlName: 'DappsController',
+            args: [`temp_wallet_connect_session_${id}`]
+          }
+        })
+        addToast('WalletConnect connection request expired.', { type: 'error' })
+      })
+
+      walletKit.on('session_request_expire', ({ id }: WalletKitTypes.SessionRequestExpire) => {
+        addToast('WalletConnect request expired. Please retry in the dApp.', { type: 'error' })
+        console.warn('[WalletConnect] session_request_expire for request id:', id)
+      })
+
       // Store persisted sessions for later restoration once store is ready
       try {
         const activeSessions = walletKit.getActiveSessions()
@@ -490,7 +507,7 @@ export const approveWalletConnectSession = async (
   const proposals = walletKit.getPendingSessionProposals()
   const proposal = Object.values(proposals).find((p: ProposalTypes.Struct) => p.id === proposalId)
   if (!proposal) {
-    console.error('[WalletConnect] Proposal not found for id:', proposalId)
+    console.error('[WalletConnect] Proposal not found. Please try to reconnect the dApp.')
     return
   }
 
