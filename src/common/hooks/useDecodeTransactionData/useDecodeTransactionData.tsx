@@ -79,11 +79,15 @@ const useDecodeTransactionData = (
     if (disableSelectorFetching) return false
     if (!call.data || !isHex(call.data) || call.data.length < 10) return false
     const selector = call.data.slice(0, 10)
-    return (
-      !selectors[selector] ||
-      (selectors[selector]?.status === 'loading' &&
-        !('data' in selectors[selector] && selectors[selector].data))
+    if (!selectors[selector]) return true
+    // if somehow stuck in loading for more than X seconds, do not show loading
+    if (
+      selectors[selector].status === 'loading' &&
+      selectors[selector].updatedAt + 5000 < Date.now()
     )
+      return false
+    if (selectors[selector].status === 'loading' && !selectors[selector].data) return true
+    return false
   }, [call.data, selectors, disableSelectorFetching])
 
   return {
