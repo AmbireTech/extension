@@ -176,7 +176,7 @@ const Account = ({
                       {reverseLookupName}
                     </Text>
                   ) : isDomainResolving ? (
-                    <Text fontSize={12} appearance="secondaryText" style={spacings.mrTy}>
+                    <Text fontSize={14} appearance="secondaryText" style={spacings.mrTy}>
                       {t('Resolving domain...')}
                     </Text>
                   ) : null}
