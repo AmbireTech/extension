@@ -29,6 +29,8 @@
         <key>CFBundleURLSchemes</key>
         <array>
           <string>ambire</string>
+          <string>wc</string>
+          <string>ethereum</string>
         </array>
       </dict>
     </array>
