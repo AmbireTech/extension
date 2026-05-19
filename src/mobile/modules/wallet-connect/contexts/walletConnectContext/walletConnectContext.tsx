@@ -93,12 +93,17 @@ export const WalletConnectProvider: React.FC<{ children: React.ReactNode }> = ({
 
     const handleDeepLink = (event: { url: string }) => {
       if (event.url.startsWith('wc:')) {
+        // Raw WC pairing URI — e.g. from a mobile browser "Connect Wallet" flow
         pair(event.url)
       } else if (event.url.includes('wc?uri=')) {
+        // Wrapped pairing URI — e.g. ambire://wc?uri=wc%3A… from another app
         const uri = event.url.split('wc?uri=')[1]
         if (uri) {
           pair(decodeURIComponent(uri))
         }
+      } else if (event.url === 'ambire://wc' || event.url.startsWith('ambire://wc?')) {
+        // Redirect-back from dapp — active session exists, dapp hands control back for pending signing request
+        addToast('Opening WalletConnect request…', { timeout: 2500 })
       }
     }
 
@@ -114,7 +119,7 @@ export const WalletConnectProvider: React.FC<{ children: React.ReactNode }> = ({
     return () => {
       subscription.remove()
     }
-  }, [isInitialized, pair])
+  }, [isInitialized, pair, addToast])
 
   return (
     <WalletConnectContext.Provider

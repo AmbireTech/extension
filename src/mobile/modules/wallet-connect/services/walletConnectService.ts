@@ -164,8 +164,8 @@ export const initWalletConnect = async (
             url: 'https://ambire.com/',
             icons: ['https://ambire.com/wallet-logo.png'],
             redirect: {
-              native: 'ambire://',
-              universal: 'https://ambire.com'
+              native: 'ambire://wc',
+              universal: 'https://ambire.com/wc'
             }
           }
         }),
