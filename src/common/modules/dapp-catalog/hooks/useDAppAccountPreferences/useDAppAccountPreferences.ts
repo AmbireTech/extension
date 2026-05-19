@@ -96,19 +96,12 @@ const useDAppAccountPreferences = (
       return
     }
 
-    updateTarget({
-      enabled: !accountPreferences?.enabled,
-      accounts: accountPreferences?.accounts.length
-        ? accountPreferences.accounts
-        : [selectedAccount.addr],
-      selectedAccount: selectedAccount.addr
-    })
     setLocalPreferences((prev) => ({
       enabled: !prev?.enabled,
       accounts: prev?.accounts.length ? prev.accounts : [selectedAccount.addr],
       selectedAccount: prev?.selectedAccount || selectedAccount.addr
     }))
-  }, [accountPreferences?.accounts, accountPreferences?.enabled, selectedAccount, updateTarget])
+  }, [selectedAccount])
 
   const save = useCallback(() => {
     if (!localPreferences) return

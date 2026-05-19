@@ -4,7 +4,6 @@ import { getAddress, isAddress } from 'ethers'
 import cloneDeep from 'lodash/cloneDeep'
 import { nanoid } from 'nanoid'
 
-import { ORIGINS_WHITELISTED_TO_ALL_ACCOUNTS } from '@ambire-common/consts/dappCommunication'
 import { MainController } from '@ambire-common/controllers/main/main'
 import { DappProviderRequest } from '@ambire-common/interfaces/dapp'
 import { UiManager } from '@ambire-common/interfaces/ui'
@@ -20,6 +19,7 @@ import {
   isIdentifiedByMultipleTxn
 } from '@ambire-common/libs/accountOp/submittedAccountOp'
 import { AccountOpStatus } from '@ambire-common/libs/accountOp/types'
+import { getAccountsForDapp } from '@ambire-common/libs/dapps/helpers'
 import { networkChainIdToHex } from '@ambire-common/libs/networks/networks'
 import { getBenzinUrlParams } from '@ambire-common/utils/benzin'
 import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
@@ -73,36 +73,14 @@ export class ProviderController {
     return preferences.selectedAccount
   }
 
-  _internalGetAccounts = (origin: string, id: string) => {
-    if (ORIGINS_WHITELISTED_TO_ALL_ACCOUNTS.includes(origin)) {
-      const allOtherAccountAddresses = this.mainCtrl.accounts.accounts.reduce((prevValue, acc) => {
-        if (acc.addr !== this.mainCtrl.selectedAccount.account?.addr) {
-          prevValue.push(acc.addr)
-        }
+  _internalGetAccounts = (id: string) => {
+    const dapp = this.mainCtrl.dapps.getDapp(id)
+    const accounts = getAccountsForDapp(
+      dapp.accountPreferences,
+      this.mainCtrl.selectedAccount.account?.addr
+    )
 
-        return prevValue
-      }, [] as string[])
-
-      // Selected account goes first in the list
-      return [this.mainCtrl.selectedAccount.account?.addr, ...allOtherAccountAddresses]
-    }
-
-    const preferences = this.mainCtrl.dapps.getDapp(id).accountPreferences
-
-    if (preferences?.enabled) {
-      const selectedAccountAddr = this._getSelectedAccount(id)
-
-      const otherAccounts =
-        this.mainCtrl.dapps
-          .getDapp(id)
-          .accountPreferences?.accounts.filter((acc) => acc !== selectedAccountAddr) || []
-
-      return [selectedAccountAddr, ...otherAccounts]
-    }
-
-    return this.mainCtrl.selectedAccount.account?.addr
-      ? [this.mainCtrl.selectedAccount.account?.addr]
-      : []
+    return accounts
   }
 
   getDappNetwork = (id: string) => {
@@ -139,12 +117,12 @@ export class ProviderController {
     return provider.send(method, params)
   }
 
-  ethRequestAccounts = async ({ session: { id, origin } }: DappProviderRequest) => {
+  ethRequestAccounts = async ({ session: { id } }: DappProviderRequest) => {
     if (!this.mainCtrl.dapps.hasPermission(id) || !this.isUnlocked) {
       throw ethErrors.provider.unauthorized()
     }
 
-    const accounts = this._internalGetAccounts(origin, id)
+    const accounts = this._internalGetAccounts(id)
 
     await this.mainCtrl.dapps.broadcastDappSessionEvent('accountsChanged', accounts)
 
@@ -257,12 +235,12 @@ export class ProviderController {
   }
 
   @metadata('SAFE', true)
-  ethAccounts = async ({ session: { id, origin } }: DappProviderRequest) => {
+  ethAccounts = async ({ session: { id } }: DappProviderRequest) => {
     if (!this.mainCtrl.dapps.hasPermission(id) || !this.isUnlocked) {
       return []
     }
 
-    return this._internalGetAccounts(origin, id)
+    return this._internalGetAccounts(id)
   }
 
   ethCoinbase = async ({ session: { id } }: DappProviderRequest) => {
@@ -885,7 +863,7 @@ export class ProviderController {
       const dapp = this.mainCtrl.dapps.getDapp(session.id)
       const grantedPermissionId = dapp?.grantedPermissionId || nanoid(21)
       const grantedPermissionAt = dapp?.grantedPermissionAt || Date.now()
-      const account = this._internalGetAccounts(session.origin, session.id)
+      const account = this._internalGetAccounts(session.id)
 
       result.push({
         id: grantedPermissionId,
@@ -935,7 +913,7 @@ export class ProviderController {
     const hasGrantedPermission =
       !!grantedPermissionId && !!grantedPermissionAt && this.mainCtrl.dapps.hasPermission(id)
     if (hasGrantedPermission) {
-      const account = this._internalGetAccounts(origin, id)
+      const account = this._internalGetAccounts(id)
 
       result.push({
         id: grantedPermissionId,
