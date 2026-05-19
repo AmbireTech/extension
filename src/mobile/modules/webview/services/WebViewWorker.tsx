@@ -1,5 +1,6 @@
 import React, { forwardRef, useImperativeHandle, useRef, useState } from 'react'
 import { Platform } from 'react-native'
+import { isDevice } from 'expo-device'
 import { pbkdf2Sync, scrypt } from 'react-native-quick-crypto'
 import { WebView } from 'react-native-webview'
 
@@ -24,14 +25,16 @@ import {
 const webviewBundle = __DEV__ ? null : require('./webview-bundle.json')
 
 // The dev server URL for webpack-dev-server.
-// - iOS: localhost works directly
-// - Android: env WEBVIEW_DEV_HOST or fallback to 10.0.2.2
+// - Simulator/emulator: auto-detected via Device.isDevice; uses platform loopback (localhost / 10.0.2.2)
+// - Real device: set WEBVIEW_DEV_HOST to the host machine's LAN IP in .env
 const WEBVIEW_DEV_SERVER_PORT = 8182
 const getDevServerUrl = () => {
-  // if (Platform.OS === 'android') {
-  return `http://${WEBVIEW_DEV_HOST || '10.0.2.2'}:${WEBVIEW_DEV_SERVER_PORT}`
-  // }
-  return `http://localhost:${WEBVIEW_DEV_SERVER_PORT}`
+  if (!isDevice) {
+    return Platform.OS === 'android'
+      ? `http://10.0.2.2:${WEBVIEW_DEV_SERVER_PORT}`
+      : `http://localhost:${WEBVIEW_DEV_SERVER_PORT}`
+  }
+  return `http://${WEBVIEW_DEV_HOST}:${WEBVIEW_DEV_SERVER_PORT}`
 }
 
 // Global error handler injected into the WebView HTML
