@@ -511,4 +511,8 @@ run-tests.sh
 webview-bundle.json
 *inpage-bundle.json
 
+# Claude Code personal settings
+CLAUDE.md
+.claude/settings.local.json
+
 
