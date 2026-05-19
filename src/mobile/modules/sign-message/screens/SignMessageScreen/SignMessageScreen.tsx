@@ -13,12 +13,13 @@ import SafeFooter from '@common/modules/sign-message/components/SafeFooter'
 import useSignMessage from '@common/modules/sign-message/hooks/useSignMessage'
 import flexbox from '@common/styles/utils/flexbox'
 import { MobileLayoutContainer } from '@mobile/components/MobileLayoutWrapper'
-import useHumanizedMessage from '@web/modules/sign-message/hooks/useHumanizedMessage'
 
 const SignMessageScreen = () => {
   const {
     signMessageState,
     signStatus,
+    humanizedMessage,
+    isHumanizing,
     hasReachedBottom,
     setHasReachedBottom,
     account,
@@ -48,9 +49,6 @@ const SignMessageScreen = () => {
     isSafeNotDeployed,
     isLoading
   } = useSignMessage()
-
-  // include erc-7730
-  const { humanizedMessage, isHumanizing } = useHumanizedMessage(signMessageState.messageToSign)
 
   if (isLoading || !account || !userRequest) {
     return (

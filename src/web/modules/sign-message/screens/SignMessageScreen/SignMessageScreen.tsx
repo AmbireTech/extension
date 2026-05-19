@@ -14,12 +14,13 @@ import useSignMessage from '@common/modules/sign-message/hooks/useSignMessage'
 import flexbox from '@common/styles/utils/flexbox'
 import SmallNotificationWindowWrapper from '@web/components/SmallNotificationWindowWrapper'
 import { TabLayoutContainer } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
-import useHumanizedMessage from '@web/modules/sign-message/hooks/useHumanizedMessage'
 
 const SignMessageScreen = () => {
   const {
     signMessageState,
     signStatus,
+    humanizedMessage,
+    isHumanizing,
     hasReachedBottom,
     setHasReachedBottom,
     account,
@@ -51,9 +52,6 @@ const SignMessageScreen = () => {
     holdToProceedButtonType,
     isResolveActionDisabled
   } = useSignMessage()
-
-  // include erc-7730
-  const { humanizedMessage, isHumanizing } = useHumanizedMessage(signMessageState.messageToSign)
 
   // In the split second when the request window opens, but the state is not yet
   // initialized, to prevent a flash of the fallback visualization, show a
