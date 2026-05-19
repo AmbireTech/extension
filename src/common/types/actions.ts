@@ -143,6 +143,7 @@ type HandleProviderRequestAction = {
     providerId: number
     topic: string
     isWalletConnect?: boolean
+    isWcAuthenticate?: boolean
     tabId?: number
   }
 }

@@ -5,16 +5,29 @@ import { Action, MethodAction } from '@common/types/actions'
 import { getWcTabIdFromTopic } from '@mobile/modules/wallet-connect/utils'
 import { WalletKit, WalletKitTypes } from '@reown/walletkit'
 import { Core } from '@walletconnect/core'
+import { pino } from '@walletconnect/logger'
 import { ProposalTypes, SessionTypes } from '@walletconnect/types'
 import { getSdkError } from '@walletconnect/utils'
 
 type WalletKitType = InstanceType<typeof WalletKit>
+type DispatchFn = (action: MethodAction | Action, windowId?: number, raw?: boolean) => void
+
 let walletKit: WalletKitType | null = null
 let initialized = false
 let initPromise: Promise<WalletKitType> | null = null
 let pendingRestoreSessions:
   | { topic: string; url: string; chainId: number; name?: string; icon?: string }[]
   | null = null
+
+// Captured dispatch reference — set once on init, reused by auth helpers that
+// run outside the initWalletConnect closure (prepareWcAuthenticate, approveWcAuthenticate).
+let wcDispatch: DispatchFn | null = null
+
+// Keyed by the session_authenticate request id.
+const pendingAuthenticates = new Map<
+  number,
+  { authPayload: any; requesterUrl: string; iss?: string }
+>()
 
 export const getWalletKit = () => walletKit
 export const isWalletConnectInitialized = () => initialized
@@ -151,7 +164,12 @@ export const initWalletConnect = async (
       }
 
       console.log('[WalletConnect] Creating Core instance...')
-      const core = new Core({ projectId: CONFIG.WALLETCONNECT_PROJECT_ID })
+      // getDefaultLoggerOptions() hardcodes level:'info' and ignores the string arg,
+      // so passing logger:'silent' to Core does nothing. Pass a real pino instance.
+      const core = new Core({
+        projectId: CONFIG.WALLETCONNECT_PROJECT_ID,
+        logger: pino({ level: 'silent' })
+      })
 
       console.log('[WalletConnect] Initializing WalletKit...')
       // We add a timeout to prevent indefinite hanging if the relay is unreachable
@@ -175,7 +193,20 @@ export const initWalletConnect = async (
       ])
 
       walletKit = initResult
+      wcDispatch = dispatch
       console.log('[WalletConnect] WalletKit initialized successfully.')
+
+      // WalletKit calls SignClient.init({core, metadata, signConfig}) WITHOUT passing
+      // the logger, so SignClient builds its own pino logger at level 'error', ignoring
+      // the silent logger we passed to Core. Re-silence each downstream logger directly.
+      try {
+        const sc: any = (walletKit as any).engine?.signClient
+        if (sc?.logger) sc.logger.level = 'silent'
+        if (sc?.core?.relayer?.logger) sc.core.relayer.logger.level = 'silent'
+        if ((walletKit as any).logger) (walletKit as any).logger.level = 'silent'
+      } catch (e) {
+        console.warn('[WalletConnect] Failed to silence downstream loggers:', e)
+      }
 
       walletKit.on('session_proposal', async (proposal: WalletKitTypes.SessionProposal) => {
         try {
@@ -272,6 +303,58 @@ export const initWalletConnect = async (
             args: [event.topic]
           }
         })
+      })
+
+      walletKit.on('session_authenticate', async (event: any) => {
+        try {
+          const { id, params: authParams } = event
+          const { authPayload, requester } = authParams
+          const proposerUrl = requester.metadata.url
+
+          const { name, icon } = await getDappMetadata(
+            proposerUrl,
+            requester.metadata.name,
+            requester.metadata.icons[0]
+          )
+
+          pendingAuthenticates.set(id, { authPayload, requesterUrl: proposerUrl })
+
+          dispatch(
+            {
+              type: 'HANDLE_PROVIDER_REQUEST',
+              params: {
+                request: { method: 'tabCheckin', origin: proposerUrl, params: { name, icon } },
+                requestId: 0,
+                providerId: 1,
+                topic: `temp_wc_auth_${id}`,
+                tabId: id,
+                isWalletConnect: true,
+                isWcAuthenticate: true
+              }
+            },
+            undefined,
+            true
+          )
+
+          dispatch(
+            {
+              type: 'HANDLE_PROVIDER_REQUEST',
+              params: {
+                request: { method: 'eth_requestAccounts', origin: proposerUrl },
+                requestId: id,
+                providerId: 1,
+                topic: `temp_wc_auth_${id}`,
+                tabId: id,
+                isWalletConnect: true,
+                isWcAuthenticate: true
+              }
+            },
+            undefined,
+            true
+          )
+        } catch (e) {
+          console.error('[WalletConnect] session_authenticate handler error:', e)
+        }
       })
 
       // Store persisted sessions for later restoration once store is ready
@@ -585,4 +668,127 @@ export const getPendingRestoreSessions = () => {
   const sessions = pendingRestoreSessions
   pendingRestoreSessions = null
   return sessions
+}
+
+/**
+ * Called after the user selects an account in the session_authenticate flow.
+ * Formats the SIWE message and dispatches it as personal_sign so the existing
+ * SIWE detection, UI, and signing path handle it unchanged.
+ */
+export const prepareWcAuthenticate = async (id: number, address: string) => {
+  if (!walletKit || !wcDispatch) return
+
+  const pending = pendingAuthenticates.get(id)
+  if (!pending) {
+    console.error('[WalletConnect] prepareWcAuthenticate: no pending auth for id', id)
+    return
+  }
+
+  const { authPayload, requesterUrl } = pending
+
+  // Pick the first chain from the auth payload (e.g. 'eip155:1')
+  const chainCaip: string = authPayload.chains?.[0] ?? 'eip155:1'
+  const iss = `did:pkh:${chainCaip}:${address}`
+  const message: string = walletKit.formatAuthMessage({ request: authPayload, iss })
+
+  // Store iss so approveWcAuthenticate can include it in the CACAO payload
+  pendingAuthenticates.set(id, { ...pending, iss })
+
+  // Hex-encode for personal_sign — getParsedSiweMessage handles both hex and plain text
+  const hexMessage = `0x${Array.from(new TextEncoder().encode(message))
+    .map((b) => b.toString(16).padStart(2, '0'))
+    .join('')}`
+
+  // Reuse the same temp topic so getOrCreateDappSession finds the already-connected
+  // session from the eth_requestAccounts step — rpcFlow needs the session to have
+  // an account associated or it rejects personal_sign silently.
+  // Use id + 1 as the requestId: handleProviderRequests deduplicates by requestId per
+  // session, and eth_requestAccounts already consumed slot `id` on this session.
+  wcDispatch(
+    {
+      type: 'HANDLE_PROVIDER_REQUEST',
+      params: {
+        request: {
+          method: 'personal_sign',
+          origin: requesterUrl,
+          params: [hexMessage, address]
+        },
+        requestId: id + 1,
+        providerId: 1,
+        topic: `temp_wc_auth_${id}`,
+        tabId: id,
+        isWalletConnect: true,
+        isWcAuthenticate: true
+      }
+    },
+    undefined,
+    true
+  )
+}
+
+/**
+ * Builds the CACAO and approves the session_authenticate request.
+ * If WalletKit creates a persistent session as a result, the session messenger
+ * is set up so future session_requests are routed correctly.
+ */
+export const approveWcAuthenticate = async (id: number, signature: string) => {
+  if (!walletKit || !wcDispatch) return
+
+  const pending = pendingAuthenticates.get(id)
+  if (!pending) {
+    console.error('[WalletConnect] approveWcAuthenticate: no pending auth for id', id)
+    return
+  }
+
+  const { authPayload, requesterUrl, iss } = pending
+
+  if (!iss) {
+    // iss is set by prepareWcAuthenticate after account selection. If it's missing,
+    // this is a stale entry from a previous failed flow — reject and clean up.
+    console.error('[WalletConnect] approveWcAuthenticate: iss not set, rejecting')
+    await walletKit.rejectSessionAuthenticate({ id, reason: getSdkError('USER_REJECTED') })
+    pendingAuthenticates.delete(id)
+    return
+  }
+
+  const result = await walletKit.approveSessionAuthenticate({
+    id,
+    // iss is required in the CACAO payload — it identifies the signing account
+    // as a did:pkh DID and was computed in prepareWcAuthenticate.
+    auths: [{ h: { t: 'caip122' }, p: { ...authPayload, iss }, s: { t: 'eip191', s: signature } }]
+  })
+
+  pendingAuthenticates.delete(id)
+
+  // If WalletKit established a persistent session, wire up the messenger
+  const session = (result as any)?.session as SessionTypes.Struct | undefined
+  if (session) {
+    const { name, icon } = await getDappMetadata(
+      requesterUrl,
+      session.peer.metadata.name,
+      session.peer.metadata.icons[0]
+    )
+    wcDispatch(
+      {
+        type: 'SETUP_WC_SESSION_MESSENGER',
+        params: {
+          url: requesterUrl,
+          tabId: getWcTabIdFromTopic(session.topic),
+          topic: session.topic,
+          chainId: 1,
+          name,
+          icon,
+          tempSessionTopic: `temp_wc_auth_${id}`
+        }
+      },
+      undefined,
+      true
+    )
+  }
+}
+
+export const rejectWcAuthenticate = async (id: number) => {
+  if (!walletKit) return
+  await walletKit.rejectSessionAuthenticate({ id, reason: getSdkError('USER_REJECTED') })
+  pendingAuthenticates.delete(id)
 }

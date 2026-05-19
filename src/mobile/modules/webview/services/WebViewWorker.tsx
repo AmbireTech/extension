@@ -10,8 +10,11 @@ import { storage } from '@common/services/storage'
 import { WEBVIEW_DEV_HOST } from '@env'
 import {
   approveWalletConnectSession,
+  approveWcAuthenticate,
   handleWcSessionBroadcast,
+  prepareWcAuthenticate,
   rejectWalletConnectSession,
+  rejectWcAuthenticate,
   respondToWalletConnectRequest
 } from '@mobile/modules/wallet-connect/services/walletConnectService'
 
@@ -221,6 +224,16 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, {}>((_, ref) => {
           break
         case 'action.wcSessionBroadcast':
           await handleWcSessionBroadcast(data.payload)
+          break
+        case 'action.prepareWcAuthenticate':
+          // Account selected — format SIWE message and re-dispatch as personal_sign
+          await prepareWcAuthenticate(data.payload.id, data.payload.accounts[0])
+          break
+        case 'action.approveWalletConnectAuthenticate':
+          await approveWcAuthenticate(data.payload.id, data.payload.signature)
+          break
+        case 'action.rejectWalletConnectAuthenticate':
+          await rejectWcAuthenticate(data.payload.id)
           break
         case 'ui.window.action': {
           const requestId = data.id

@@ -150,8 +150,13 @@ export const handleActions = async (
         .values()
         .find((c: any) => c.name === 'WalletStateController') as any
       const notificationManager = mainCtrl.ui.notification
-      const { tabId, isWalletConnect, request, topic } = params
-      const isTempSession = topic === `temp_wallet_connect_session_${tabId}`
+      const { tabId, isWalletConnect, isWcAuthenticate, request, topic } = params
+      // temp_wc_auth_ is reused for both account-selection (eth_requestAccounts) and
+      // the subsequent personal_sign. Only treat it as a temp/handshake session for
+      // the account-selection step — personal_sign must go through the signing path.
+      const isTempSession =
+        topic === `temp_wallet_connect_session_${tabId}` ||
+        (topic === `temp_wc_auth_${tabId}` && request.method === 'eth_requestAccounts')
 
       try {
         const session = await mainCtrl.dapps.getOrCreateDappSession({
@@ -178,11 +183,30 @@ export const handleActions = async (
         if (isWalletConnect) {
           if (isTempSession) {
             if (!!result) {
-              sendToReactEvent('action.approveWalletConnectSession', {
-                proposalId: params.requestId,
-                accounts: result
-              })
+              if (isWcAuthenticate) {
+                // Account selected — format the SIWE message and dispatch personal_sign
+                sendToReactEvent('action.prepareWcAuthenticate', {
+                  id: params.requestId,
+                  accounts: result
+                })
+              } else {
+                sendToReactEvent('action.approveWalletConnectSession', {
+                  proposalId: params.requestId,
+                  accounts: result
+                })
+              }
             }
+          } else if (isWcAuthenticate && request.method === 'personal_sign') {
+            // Signing done — approve the authenticate request.
+            // authId is embedded in the topic because requestId = authId + 1 to bypass the per-session deduplication guard.
+            const authId = parseInt(topic.replace('temp_wc_auth_', ''), 10)
+            sendToReactEvent('action.approveWalletConnectAuthenticate', {
+              id: authId,
+              signature: result
+            })
+          } else if (isWcAuthenticate) {
+            // Other methods in the auth flow (e.g. tabCheckin) only set up metadata —
+            // they don't yield a response we forward to WalletKit.
           } else {
             sendToReactEvent('action.respondToWalletConnectRequest', {
               topic: params.topic,
@@ -211,9 +235,20 @@ export const handleActions = async (
 
         if (isWalletConnect) {
           if (isTempSession) {
-            sendToReactEvent('action.rejectWalletConnectSession', {
-              proposalId: params.requestId
-            })
+            if (isWcAuthenticate) {
+              sendToReactEvent('action.rejectWalletConnectAuthenticate', {
+                id: params.requestId
+              })
+            } else {
+              sendToReactEvent('action.rejectWalletConnectSession', {
+                proposalId: params.requestId
+              })
+            }
+          } else if (isWcAuthenticate && request.method === 'personal_sign') {
+            const authId = parseInt(topic.replace('temp_wc_auth_', ''), 10)
+            sendToReactEvent('action.rejectWalletConnectAuthenticate', { id: authId })
+          } else if (isWcAuthenticate) {
+            // tabCheckin/etc errors during auth handshake — no auth response to send.
           } else {
             sendToReactEvent('action.respondToWalletConnectRequest', {
               topic: params.topic,
