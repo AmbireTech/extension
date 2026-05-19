@@ -18,7 +18,12 @@ function checkIfCanDecodeFurther(
   selectors: Selectors,
   fetchSelector: (selector: string) => void
 ): DecodedCall['args'][number] {
-  if (typeof arg.val === 'string' && isHex(arg.val) && arg.val.length >= 10)
+  if (
+    typeof arg.val === 'string' &&
+    isHex(arg.val) &&
+    arg.val.length >= 10 &&
+    arg.val.length !== 42
+  )
     return { key: arg.key, val: decodeFunction(arg.val, selectors, fetchSelector) || arg.val }
   if (typeof arg.val === 'object' && Array.isArray(arg.val))
     return {
