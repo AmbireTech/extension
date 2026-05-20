@@ -54,7 +54,7 @@ Workflow
 7. Extract all PR numbers from the surviving commits.
 8. **Bulk-fetch all PR metadata in one pass** using the GitHub CLI before writing any entries (see "Bulk PR fetch" below). Do not fetch PRs one-by-one lazily.
 9. Cross-check the fetched PR list against the merge commit list to confirm no PRs were missed.
-10. Apply the exclusion rules (see "Excluded product areas" below) to drop PRs that don't belong in the wallet changelog.
+10. Apply the exclusion rules (see "Excluded product areas" below) to drop Rewards/Legends PRs. Every other PR is included.
 11. Convert each remaining PR into a changelog entry.
 12. Group or order entries by impact, not necessarily by merge order.
 13. Always append a Full Changelog GitHub compare link.
@@ -110,16 +110,18 @@ Merge pull request #1234 from ...
 PR #1234
 ```
 
-**Do not skip a PR merge just because the branch name looks internal** (e.g. `fix/`, `docs/`, `config/`). Let the content and exclusion rules decide whether it appears in the changelog.
+**Do not skip a PR merge just because the branch name looks internal** (e.g. `fix/`, `docs/`, `config/`, `qa/`). The only skip rule is Rewards/Legends (see "Excluded product areas"). Everything else appears in the changelog.
 
 ## Excluded product areas
 
 This changelog covers the **Ambire wallet** (extension + mobile app) and the Benzin transaction viewer. It does NOT cover the standalone Rewards website (`src/legends/`).
 
-Skip a PR if:
+**Only one reason to exclude a PR entirely:**
 
 * its branch name starts with `rewards`, `rewards-hold`, `rewards/`, or `legends/`; **or**
 * its changed files are exclusively inside `src/legends/` (check via `gh pr view <n> --json files`)
+
+**Everything else is included** — CI fixes, QA test selectors, AGENTS.md docs, config changes, TypeScript error fixes, internal refactors. These are still part of the release and belong in the changelog. List them briefly (one line, no 📣) rather than omitting them.
 
 ## Bulk PR fetch
 
@@ -200,7 +202,7 @@ Example:
   * Requires Hold to Proceed when a possible poisoning attempt is detected.
 ```
 
-Do not add 📣 to small refactors, tests, CI-only changes, dependency bumps, copy tweaks, or minor visual fixes unless they clearly matter to users.
+Do not add 📣 to small refactors, tests, CI-only changes, dependency bumps, copy tweaks, internal docs/config, or minor visual fixes.
 
 ## Entry writing rules
 
@@ -212,12 +214,16 @@ Each top-level bullet must:
 * avoid raw commit-message noise
 * avoid overly technical implementation details unless relevant to developers or release reviewers
 
+For internal/technical entries (CI fixes, QA test updates, config, docs, TS errors, etc.) — include them but keep it to a single line. Do not add sub-bullets or details.
+
 Good:
 
 ```markdown
 * 📣 Added: dApp verification banners to signing screens https://github.com/AmbireTech/ambire-app/pull/7052
   * Shows verification status on SignMessage and SignAccountOp screens.
   * Requires Hold to Proceed when risk-related banners are present.
+* Changed: QA workflow — separate HTML reports per test group https://github.com/AmbireTech/ambire-app/pull/7119
+* Fixed: TypeScript errors from dApp interface changes https://github.com/AmbireTech/ambire-app/pull/7163
 ```
 
 Bad:
@@ -261,6 +267,18 @@ Always end with:
 **Full Changelog**: https://github.com/<owner>/<repo>/compare/<previous-tag>...<new-tag>
 ```
 
+## Skipped PRs
+
+After the fenced changelog block, always append a plain-text section listing every PR that was excluded and why:
+
+```
+---
+**Excluded (Rewards/Legends):** #7193, #7173, #7171, #7168, #7162, #7158, #7150, #7144
+**Excluded (branch-sync commits):** Merge branch 'main' of ..., Merge branch 'release/v6.8' of ...
+```
+
+This makes the exclusion decisions transparent and reviewable.
+
 ## Final checklist
 
 Before returning the changelog, verify:
@@ -269,7 +287,8 @@ Before returning the changelog, verify:
 * every top-level entry links to a GitHub PR
 * marketing-worthy entries have 📣
 * public wording is clear
-* noisy internal changes are excluded or minimized
+* Rewards/Legends PRs are excluded; all other PRs are present (including CI, QA, config, docs, TS fixes)
+* skipped PRs and branch-sync commits are listed after the changelog block
 * security/signing claims are accurate
 * Full Changelog compare link is present
 * comparison defaults to main unless the user requested otherwise
