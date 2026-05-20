@@ -43,60 +43,65 @@ const ErrorInformation = () => {
   }, [signAccountOpState, state])
 
   const tenderlyLink = useMemo(() => {
-    if (
-      !signAccountOpState ||
-      !signAccountOpState.accountOp.calls.length ||
-      !state ||
-      estimationUsesStateOverrides
-    )
-      return null
+    try {
+      if (
+        !signAccountOpState ||
+        !signAccountOpState.accountOp.calls.length ||
+        !state ||
+        estimationUsesStateOverrides
+      )
+        return null
 
-    let params
+      let params
 
-    if (signAccountOpState.account.creation || state.isSmarterEoa) {
-      if (signAccountOpState.account.creation && !state.isDeployed) {
-        const ambireFactory = new Interface(AmbireFactory.abi)
-        const executeData = ambireFactory.encodeFunctionData('deployAndExecute', [
-          signAccountOpState.account.creation.bytecode,
-          signAccountOpState.account.creation.salt,
-          getSignableCalls(signAccountOpState.accountOp),
-          getSpoof(signAccountOpState.account)
-        ])
-        params = new URLSearchParams({
-          network: signAccountOpState.accountOp.chainId.toString(),
-          from: DEPLOYLESS_SIMULATION_FROM,
-          contractAddress: signAccountOpState.account.creation.factoryAddr,
-          rawFunctionInput: executeData,
-          value: '0'
-        })
+      if (signAccountOpState.account.creation || state.isSmarterEoa) {
+        if (signAccountOpState.account.creation && !state.isDeployed) {
+          const ambireFactory = new Interface(AmbireFactory.abi)
+          const executeData = ambireFactory.encodeFunctionData('deployAndExecute', [
+            signAccountOpState.account.creation.bytecode,
+            signAccountOpState.account.creation.salt,
+            getSignableCalls(signAccountOpState.accountOp),
+            getSpoof(signAccountOpState.account)
+          ])
+          params = new URLSearchParams({
+            network: signAccountOpState.accountOp.chainId.toString(),
+            from: DEPLOYLESS_SIMULATION_FROM,
+            contractAddress: signAccountOpState.account.creation.factoryAddr,
+            rawFunctionInput: executeData,
+            value: '0'
+          })
+        } else {
+          const ambireAccount = new Interface(AmbireAccount.abi)
+          const executeData = ambireAccount.encodeFunctionData('execute', [
+            getSignableCalls(signAccountOpState.accountOp),
+            getSpoof(signAccountOpState.account)
+          ])
+          params = new URLSearchParams({
+            network: signAccountOpState.accountOp.chainId.toString(),
+            from: DEPLOYLESS_SIMULATION_FROM,
+            contractAddress: signAccountOpState.accountOp.accountAddr,
+            rawFunctionInput: executeData,
+            value: '0'
+          })
+        }
       } else {
-        const ambireAccount = new Interface(AmbireAccount.abi)
-        const executeData = ambireAccount.encodeFunctionData('execute', [
-          getSignableCalls(signAccountOpState.accountOp),
-          getSpoof(signAccountOpState.account)
-        ])
+        // only a single call for EOAs
+        const call = signAccountOpState.accountOp.calls[0]!
         params = new URLSearchParams({
           network: signAccountOpState.accountOp.chainId.toString(),
-          from: DEPLOYLESS_SIMULATION_FROM,
-          contractAddress: signAccountOpState.accountOp.accountAddr,
-          rawFunctionInput: executeData,
-          value: '0'
+          from: signAccountOpState.accountOp.accountAddr,
+          contractAddress: call.to,
+          rawFunctionInput: call.data,
+          value: call.value.toString()
         })
       }
-    } else {
-      // only a single call for EOAs
-      const call = signAccountOpState.accountOp.calls[0]!
-      params = new URLSearchParams({
-        network: signAccountOpState.accountOp.chainId.toString(),
-        from: signAccountOpState.accountOp.accountAddr,
-        contractAddress: call.to,
-        rawFunctionInput: call.data,
-        value: call.value.toString()
-      })
-    }
 
-    const base = 'https://dashboard.tenderly.co/simulator/new'
-    return `${base}?${params.toString()}`
+      const base = 'https://dashboard.tenderly.co/simulator/new'
+      return `${base}?${params.toString()}`
+    } catch (e: any) {
+      console.error('Error generating Tenderly link', e)
+      return null
+    }
   }, [signAccountOpState, estimationUsesStateOverrides, state])
 
   const copySignAccountOpError = useCallback(async () => {
