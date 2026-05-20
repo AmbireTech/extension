@@ -79,9 +79,8 @@ const getAddressInputValidation = ({
     address.indexOf('.') !== -1 &&
     isValidAddress(address.split('.')[0] || '')
   ) {
-    const domain = address.split('.').slice(1).join('.')
     return {
-      message: `You've entered a domain <address>.${domain} that may point to a different address. This is often used by scammers to trick users.`,
+      message: `This {${isValidNamoshi ? 'Namoshi' : 'ENS'}} name may not point to the address you expect. Double-check before sending.`,
       severity: 'warning'
     }
   }
