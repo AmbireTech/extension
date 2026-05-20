@@ -127,10 +127,11 @@ const useAddressInput = ({
     setAddressState({
       isDomainResolving: true
     })
-    resolvingForFieldValue.current = fieldValue
 
     // Debounce domain resolving
     const timeout = setTimeout(() => {
+      // Must be set here, not before the timer — guard on line 107 must only block re-runs while the Promise is in-flight, not during the debounce window.
+      resolvingForFieldValue.current = fieldValue
       resolveDomain({ domain: trimmedAddress })
         .then((result) => {
           if (fieldValueRef.current !== fieldValue) return
