@@ -3,9 +3,9 @@
 <div align="center">
   <a href="https://chromewebstore.google.com/detail/ambire-wallet/ehgjhhccekdedpbkifaojjaefeohnoea" target="_blank">
     <picture>
-      <source media="(prefers-color-scheme: dark)" srcset="./mockups/mockup-dashboard-dark.png">
-      <source media="(prefers-color-scheme: light)" srcset="./mockups/mockup-dashboard-light.png">
-      <img src="./mockups/mockup-dashboard-light.png" alt="Ambire Wallet Dashboard" width="672" height="672" />
+      <source media="(prefers-color-scheme: dark)" srcset="./mockups/mockup-dashboard-dark-v6.png">
+      <source media="(prefers-color-scheme: light)" srcset="./mockups/mockup-dashboard-light-v6.png">
+      <img src="./mockups/mockup-dashboard-light-v6.png" alt="Ambire Wallet Dashboard" width="528" height="648" />
     </picture>
   </a>
 

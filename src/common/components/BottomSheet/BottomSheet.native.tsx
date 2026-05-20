@@ -12,6 +12,7 @@ import { Portal } from '@gorhom/portal'
 
 import Backdrop from './Backdrop'
 import { BottomSheetProps } from './BottomSheet'
+import { BottomSheetContext } from './BottomSheetContext'
 import getStyles from './styles'
 import useBottomSheetInternal from './useBottomSheetInternal'
 
@@ -25,6 +26,7 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
     children,
     closeBottomSheet: _closeBottomSheet = () => {},
     adjustToContentHeight = true,
+    modalHeight,
     style = {},
     containerInnerWrapperStyles = {},
     onClosed,
@@ -69,164 +71,168 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
     setIsOpen,
     isBackdropVisible,
     setIsBackdropVisible,
-    id
+    id,
+    computedZIndex
   } = useBottomSheetInternal(props)
 
   const scrollViewRef = externalScrollViewRef
 
   return (
     <Portal hostName="global">
-      {/* Wrapping the content in a View with a stable `key` prevents Portal */}
-      {/* from losing track of its subtree during React reconciliation and re-renders. */}
-      {/* Without this, the backdrop stays, but Modalize could disappear */}
-      {/* without even triggering `onClose` or (this) component unmount */}
-      {!!isBackdropVisible && (
-        <Backdrop
-          isVisible={isBackdropVisible}
-          isBottomSheetVisible={isOpen}
-          customZIndex={customZIndex ? customZIndex - 1 : undefined}
-          onPress={() => {
-            closeBottomSheet()
-            !!onBackdropPress && onBackdropPress()
-          }}
-          withBlur={withBackdropBlur}
-        />
-      )}
-      <Animated.View
-        key={`portal-host-${id}`}
-        style={[styles.portalHost, customZIndex ? { zIndex: customZIndex } : {}]}
-        pointerEvents="box-none"
-      >
-        <Modalize
-          // The key is used to force the re-render of the component when there is an opened
-          // bottom sheet and the user navigates to a route that also has a bottom sheet. Without
-          // this key or without a unique key, the bottom sheet will not close when navigating
-          key={id}
-          ref={setRef}
-          // React 19 makes refs strictly nullable. Temporary cast until Modalize updates its types.
-          contentRef={scrollViewRef as RefObject<ScrollView>}
-          modalStyle={[
-            styles.bottomSheet,
-            {
-              borderBottomEndRadius: isKeyboardVisible ? BORDER_RADIUS_PRIMARY : 0,
-              borderBottomStartRadius: isKeyboardVisible ? BORDER_RADIUS_PRIMARY : 0,
-              paddingHorizontal: SPACING_SM
-            },
-            isModal
-              ? {
-                  ...styles.modal,
-                  ...(autoWidth ? { maxWidth: null, width: 'auto' } : {}),
-                  borderBottomEndRadius: 30,
-                  borderTopLeftRadius: 30,
-                  borderBottomStartRadius: 30,
-                  borderTopRightRadius: 30,
-                  paddingHorizontal: SPACING_LG
-                }
-              : {},
+      <BottomSheetContext.Provider value={true}>
+        {/* Wrapping the content in a View with a stable `key` prevents Portal */}
+        {/* from losing track of its subtree during React reconciliation and re-renders. */}
+        {/* Without this, the backdrop stays, but Modalize could disappear */}
+        {/* without even triggering `onClose` or (this) component unmount */}
+        {!!isBackdropVisible && (
+          <Backdrop
+            isVisible={isBackdropVisible}
+            isBottomSheetVisible={isOpen}
+            customZIndex={computedZIndex ? computedZIndex - 1 : undefined}
+            onPress={() => {
+              closeBottomSheet()
+              !!onBackdropPress && onBackdropPress()
+            }}
+            withBlur={withBackdropBlur}
+          />
+        )}
+        <Animated.View
+          key={`portal-host-${id}`}
+          style={[styles.portalHost, { zIndex: computedZIndex }]}
+          pointerEvents="box-none"
+        >
+          <Modalize
+            // The key is used to force the re-render of the component when there is an opened
+            // bottom sheet and the user navigates to a route that also has a bottom sheet. Without
+            // this key or without a unique key, the bottom sheet will not close when navigating
+            key={id}
+            ref={setRef}
+            // React 19 makes refs strictly nullable. Temporary cast until Modalize updates its types.
+            contentRef={scrollViewRef as RefObject<ScrollView>}
+            modalStyle={[
+              styles.bottomSheet,
+              {
+                borderBottomEndRadius: isKeyboardVisible ? BORDER_RADIUS_PRIMARY : 0,
+                borderBottomStartRadius: isKeyboardVisible ? BORDER_RADIUS_PRIMARY : 0,
+                paddingHorizontal: SPACING_SM
+              },
+              isModal
+                ? {
+                    ...styles.modal,
+                    ...(autoWidth ? { maxWidth: null, width: 'auto' } : {}),
+                    borderBottomEndRadius: 30,
+                    borderTopLeftRadius: 30,
+                    borderBottomStartRadius: 30,
+                    borderTopRightRadius: 30,
+                    paddingHorizontal: SPACING_LG
+                  }
+                : {},
 
-            {
-              backgroundColor: theme[backgroundColor]
-            },
-            style
-          ]}
-          rootStyle={[isModal && spacings.phSm]}
-          handleStyle={[
-            styles.dragger,
-            isModal
+              {
+                backgroundColor: theme[backgroundColor]
+              },
+              style
+            ]}
+            rootStyle={[isModal && spacings.phSm]}
+            handleStyle={[
+              styles.dragger,
+              isModal
+                ? {
+                    display: 'none'
+                  }
+                : {}
+            ]}
+            handlePosition="inside"
+            useNativeDriver={true}
+            avoidKeyboardLikeIOS={false}
+            modalTopOffset={modalTopOffset}
+            modalHeight={modalHeight}
+            threshold={90}
+            HeaderComponent={HeaderComponent}
+            adjustToContentHeight={
+              customRenderer ? false : isKeyboardVisible ? false : adjustToContentHeight
+            }
+            disableScrollIfPossible={false}
+            withOverlay={false}
+            onBackButtonPress={() => {
+              closeBottomSheet()
+              return true
+            }}
+            panGestureEnabled={shouldBeClosableOnDrag}
+            {...(!flatListProps && !sectionListProps
               ? {
-                  display: 'none'
+                  scrollViewProps: {
+                    bounces: false,
+                    keyboardShouldPersistTaps: 'handled',
+                    showsVerticalScrollIndicator: false,
+                    ...(!isScrollEnabled && {
+                      scrollEnabled: false,
+                      nestedScrollEnabled: true,
+                      contentContainerStyle: { flexGrow: 1 }
+                    }),
+                    style: { marginBottom: isModal ? SPACING_LG : bottom + SPACING_SM },
+                    ...(scrollViewProps || {})
+                  }
                 }
-              : {}
-          ]}
-          handlePosition="inside"
-          useNativeDriver={true}
-          avoidKeyboardLikeIOS={false}
-          modalTopOffset={modalTopOffset}
-          threshold={90}
-          HeaderComponent={HeaderComponent}
-          adjustToContentHeight={
-            customRenderer ? false : isKeyboardVisible ? false : adjustToContentHeight
-          }
-          disableScrollIfPossible={false}
-          withOverlay={false}
-          onBackButtonPress={() => {
-            closeBottomSheet()
-            return true
-          }}
-          panGestureEnabled={shouldBeClosableOnDrag}
-          {...(!flatListProps && !sectionListProps
-            ? {
-                scrollViewProps: {
-                  bounces: false,
-                  keyboardShouldPersistTaps: 'handled',
-                  showsVerticalScrollIndicator: false,
-                  ...(!isScrollEnabled && {
-                    scrollEnabled: false,
-                    nestedScrollEnabled: true,
-                    contentContainerStyle: { flexGrow: 1 }
-                  }),
-                  style: { marginBottom: isModal ? SPACING_LG : bottom + SPACING_SM },
-                  ...(scrollViewProps || {})
+              : {})}
+            {...(flatListProps
+              ? {
+                  flatListProps: {
+                    bounces: false,
+                    keyboardShouldPersistTaps: 'handled',
+                    showsVerticalScrollIndicator: false,
+                    style: { marginBottom: isModal ? SPACING_LG : bottom + SPACING_SM },
+                    ...(flatListProps || {})
+                  }
                 }
-              }
-            : {})}
-          {...(flatListProps
-            ? {
-                flatListProps: {
-                  bounces: false,
-                  keyboardShouldPersistTaps: 'handled',
-                  showsVerticalScrollIndicator: false,
-                  style: { marginBottom: isModal ? SPACING_LG : bottom + SPACING_SM },
-                  ...(flatListProps || {})
+              : {})}
+            {...(sectionListProps
+              ? {
+                  sectionListProps: {
+                    bounces: false,
+                    keyboardShouldPersistTaps: 'handled',
+                    showsVerticalScrollIndicator: false,
+                    style: { marginBottom: isModal ? SPACING_LG : bottom + SPACING_SM },
+                    ...(sectionListProps || {})
+                  }
                 }
-              }
-            : {})}
-          {...(sectionListProps
-            ? {
-                sectionListProps: {
-                  bounces: false,
-                  keyboardShouldPersistTaps: 'handled',
-                  showsVerticalScrollIndicator: false,
-                  style: { marginBottom: isModal ? SPACING_LG : bottom + SPACING_SM },
-                  ...(sectionListProps || {})
-                }
-              }
-            : {})}
-          openAnimationConfig={{
-            timing: { duration: animationDuration, delay: 0 }
-          }}
-          closeAnimationConfig={{
-            timing: { duration: animationDuration, delay: 0 }
-          }}
-          onOpen={() => {
-            KeyboardController.dismiss()
-            setIsOpen(true)
-            setIsBackdropVisible(true)
-            !!onOpen && onOpen()
-          }}
-          onClose={() => setIsOpen(false)}
-          onClosed={() => !!onClosed && onClosed()}
-          customRenderer={
-            customRenderer ? (
+              : {})}
+            openAnimationConfig={{
+              timing: { duration: animationDuration, delay: 0 }
+            }}
+            closeAnimationConfig={{
+              timing: { duration: animationDuration, delay: 0 }
+            }}
+            onOpen={() => {
+              KeyboardController.dismiss()
+              setIsOpen(true)
+              setIsBackdropVisible(true)
+              !!onOpen && onOpen()
+            }}
+            onClose={() => setIsOpen(false)}
+            onClosed={() => !!onClosed && onClosed()}
+            customRenderer={
+              customRenderer ? (
+                <View
+                  testID={isOpen ? 'bottom-sheet' : undefined}
+                  style={[common.fullWidth, containerInnerWrapperStyles]}
+                >
+                  {customRenderer}
+                </View>
+              ) : undefined
+            }
+          >
+            {!flatListProps && !sectionListProps && !customRenderer && (
               <View
                 testID={isOpen ? 'bottom-sheet' : undefined}
                 style={[common.fullWidth, containerInnerWrapperStyles]}
               >
-                {customRenderer}
+                {children}
               </View>
-            ) : undefined
-          }
-        >
-          {!flatListProps && !sectionListProps && !customRenderer && (
-            <View
-              testID={isOpen ? 'bottom-sheet' : undefined}
-              style={[common.fullWidth, containerInnerWrapperStyles]}
-            >
-              {children}
-            </View>
-          )}
-        </Modalize>
-      </Animated.View>
+            )}
+          </Modalize>
+        </Animated.View>
+      </BottomSheetContext.Provider>
     </Portal>
   )
 }

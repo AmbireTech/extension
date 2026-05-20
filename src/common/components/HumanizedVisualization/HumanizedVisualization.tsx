@@ -75,7 +75,7 @@ const HumanizedVisualization: FC<Props> = ({
       ]}
     >
       {data.map((item) => {
-        if (!item || item.isHidden) return null
+        if (!item) return null
         const key = item.id
         if (item.type === 'token') {
           return (

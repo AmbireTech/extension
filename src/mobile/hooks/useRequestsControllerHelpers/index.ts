@@ -1,3 +1,1 @@
-import useRequestsControllerHelpers from './useRequestsControllerHelpers'
-
-export default useRequestsControllerHelpers
+export { default } from './useRequestsControllerHelpers'

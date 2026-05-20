@@ -2,21 +2,22 @@ import React from 'react'
 import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 
-import { SubmittedAccountOp } from '@ambire-common/libs/accountOp/submittedAccountOp'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import SkeletonLoader from '@common/components/SkeletonLoader'
 import Text from '@common/components/Text'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
+import flexbox from '@common/styles/utils/flexbox'
 
 import {
   formatBalanceChangeAmount,
   getBalanceChangeTooltipId,
   getFullBalanceChangeAmount
 } from './helpers'
+import InteractionAddress from './InteractionAddress'
 import getStyles from './styles'
 import { BalanceChangeToken, DappInteractionIcon } from './SummaryIcons'
-import { DappInteraction, DisplayBalanceChange } from './types'
+import { DappInteraction, DisplayBalanceChange, SubmittedAccountOpLike } from './types'
 
 const SummaryPreview = ({
   submittedAccountOp,
@@ -25,7 +26,7 @@ const SummaryPreview = ({
   hiddenBalanceChangesCount,
   shouldShowBalanceChangesSummary
 }: {
-  submittedAccountOp: SubmittedAccountOp
+  submittedAccountOp: SubmittedAccountOpLike
   dappInteractions: DappInteraction[]
   visibleBalanceChanges: DisplayBalanceChange[]
   hiddenBalanceChangesCount: number
@@ -53,9 +54,26 @@ const SummaryPreview = ({
                 ]}
               >
                 <DappInteractionIcon interaction={interaction} />
-                <Text fontSize={14} weight="semiBold">
-                  {interaction.name}
-                </Text>
+                <View>
+                  <Text fontSize={14} weight="semiBold">
+                    {interaction.name}
+                  </Text>
+                  {(!!interaction.address || !!interaction.description) && (
+                    <View style={[flexbox.alignCenter, flexbox.directionRow]}>
+                      <Text fontSize={12} appearance="secondaryText">
+                        {t('to ')}
+                      </Text>
+                      {!!interaction.address && (
+                        <InteractionAddress address={interaction.address} />
+                      )}
+                      {!!interaction.description && (
+                        <Text fontSize={12} appearance="secondaryText">
+                          {interaction.description}
+                        </Text>
+                      )}
+                    </View>
+                  )}
+                </View>
               </View>
             ))}
           </>

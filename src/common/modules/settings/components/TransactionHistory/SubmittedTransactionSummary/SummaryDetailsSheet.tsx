@@ -2,7 +2,6 @@ import React from 'react'
 import { Pressable, ScrollView, View } from 'react-native'
 
 import { Network } from '@ambire-common/interfaces/network'
-import { SubmittedAccountOp } from '@ambire-common/libs/accountOp/submittedAccountOp'
 import LeftArrowIcon from '@common/assets/svg/LeftArrowIcon'
 import BottomSheet from '@common/components/BottomSheet'
 import Text from '@common/components/Text'
@@ -13,7 +12,7 @@ import Footer from './Footer'
 import { getPresentationalStatus } from './helpers'
 import getStyles from './styles'
 import SummaryDetails from './SummaryDetails'
-import { Props } from './types'
+import { Props, SubmittedAccountOpLike } from './types'
 
 import type { Modalize } from 'react-native-modalize'
 
@@ -21,7 +20,7 @@ type SummaryDetailsSheetProps = {
   sheetRef: React.RefObject<Modalize>
   closeBottomSheet: () => void
   modalType: Props['modalType']
-  submittedAccountOp: SubmittedAccountOp
+  submittedAccountOp: SubmittedAccountOpLike
   network: Network
   size: NonNullable<Props['size']>
   defaultType: Props['defaultType']
