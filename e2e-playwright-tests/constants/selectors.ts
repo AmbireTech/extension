@@ -63,6 +63,7 @@ const selectors = {
     portfolioErrorAlert: 'portfolio-error-alert',
     noTransactionOnActivityTab: 'no-transaction-history-text',
     transactionSendText: '(//div[contains(text(),"Send")])[2]', // TODO: change once we have id on FE
+    transactionFuelGasTankText: '(//div[contains(text(),"Fuel gas tank")])',
     swapAndBridgeTransactionText: '//div[contains(text(),"Swap/Bridge")]', // TODO: change once we have id on FE
     activityTabConfirmedPill: '//div[contains(text(),"Confirmed")]',
     confirmedTransactionPill: '(//div[contains(text(),"Confirmed")])[2]', // TODO: chage once we have id on FE
