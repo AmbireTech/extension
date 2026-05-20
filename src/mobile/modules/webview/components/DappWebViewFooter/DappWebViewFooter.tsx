@@ -13,8 +13,8 @@ import Search from '@common/components/Search'
 import useNavigation from '@common/hooks/useNavigation'
 import useRoute from '@common/hooks/useRoute'
 import useTheme from '@common/hooks/useTheme'
-import NotConnected from '@common/modules/dapp-catalog/components/DappIcon/NotConnected'
-import ManageApp from '@common/modules/dapp-catalog/components/ManageApp'
+import NotConnected from '@common/modules/explore/components/DappIcon/NotConnected'
+import ManageApp from '@common/modules/explore/components/ManageApp'
 import { ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
@@ -53,10 +53,10 @@ const DappWebViewFooter: React.FC<Props> = ({
     // Otherwise, replace the webview entry with apps so it never lingers in
     // history and blocks the back gesture from leaving the apps section.
     const prevPath = (route.state as any)?.prevRoute?.pathname
-    if (canGoBackInHistory && prevPath === `/${ROUTES.apps}`) {
+    if (canGoBackInHistory && prevPath === `/${ROUTES.explore}`) {
       goBack()
     } else {
-      navigate(ROUTES.apps, { replace: true })
+      navigate(ROUTES.explore, { replace: true })
     }
   }, [canGoBackInHistory, goBack, navigate, route.state])
 

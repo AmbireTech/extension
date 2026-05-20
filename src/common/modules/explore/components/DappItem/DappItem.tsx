@@ -121,6 +121,11 @@ const DappItem = (dapp: DappItemProps) => {
               return
             }
 
+            dappsDispatch({
+              type: 'method',
+              params: { method: 'addToRecentDapps', args: [id] }
+            })
+
             if (isMobile) {
               navigation.navigate(ROUTES.dappWebView, {
                 state: { url, name }

@@ -15,8 +15,8 @@ import useController from '@common/hooks/useController'
 import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import { AnimatedPressable } from '@common/hooks/useHover'
 import useTheme from '@common/hooks/useTheme'
-import DappItem from '@common/modules/dapp-catalog/components/DappItem'
-import useManageApp from '@common/modules/dapp-catalog/hooks/useManageApp'
+import DappItem from '@common/modules/explore/components/DappItem'
+import useManageApp from '@common/modules/explore/hooks/useManageApp'
 import spacings from '@common/styles/spacings'
 
 interface ManageAppProps {

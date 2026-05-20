@@ -47,10 +47,10 @@ const Routes = () => {
       : []),
 
     {
-      testID: 'dashboard-button-apps',
+      testID: 'dashboard-button-explore',
       icon: DAppsIcon,
-      label: t('Apps'),
-      route: ROUTES.apps,
+      label: t('Explore'),
+      route: ROUTES.explore,
       scale: 0.95,
       scaleOnHover: 1.02
     }
