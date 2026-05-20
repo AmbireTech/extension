@@ -121,6 +121,7 @@ const LeaderboardContainer: React.FC = () => {
                 designed to reward real usage of the Ambire Wallet with its native token, $WALLET.
               </span>
             </p>
+            <br />
             <p className={styles.introParagraph}>
               <span className={styles.introEmphasis}>
                 At its core, the idea has always been simple:
