@@ -49,16 +49,15 @@ Workflow
 2. Identify the release branch or release tag.
 3. Identify the previous release tag.
 4. Compare the release against main by default, unless the user gives another base.
-5. Extract only merge commits.
-6. For each merge commit:
-    * Extract the PR number.
-    * Open the GitHub PR.
-    * Read the PR title.
-    * Read the PR description when needed.
-    * Read linked commits only if the PR metadata is not enough.
-7. Convert each relevant PR into a changelog entry.
-8. Group or order entries by impact, not necessarily by merge order.
-9. Always append a Full Changelog GitHub compare link.
+5. Extract all merge commits from the log.
+6. Filter out branch-sync merge commits (see "Which merge commits to skip" below). Keep every commit that contains a PR number.
+7. Extract all PR numbers from the surviving commits.
+8. **Bulk-fetch all PR metadata in one pass** using the GitHub CLI before writing any entries (see "Bulk PR fetch" below). Do not fetch PRs one-by-one lazily.
+9. Cross-check the fetched PR list against the merge commit list to confirm no PRs were missed.
+10. Apply the exclusion rules (see "Excluded product areas" below) to drop PRs that don't belong in the wallet changelog.
+11. Convert each remaining PR into a changelog entry.
+12. Group or order entries by impact, not necessarily by merge order.
+13. Always append a Full Changelog GitHub compare link.
 
 ## Git commands
 
@@ -91,6 +90,57 @@ PR #1234
 
 If the PR number is missing or unclear, inspect the commit body and GitHub history.
 
+## Which merge commits to skip
+
+Skip a merge commit if its subject line matches any of these patterns — they are branch-sync commits, not PR merges:
+
+```
+Merge branch 'main' into ...
+Merge branch 'main' of ...
+Merge branch 'release/...' into ...
+Merge branch 'release/...' of ...
+Merge branch 'v2' ...        (or any integration/trunk branch name)
+```
+
+Keep every merge commit that contains a PR number in any supported format:
+
+```
+Merge pull request #1234 from ...
+(#1234)
+PR #1234
+```
+
+**Do not skip a PR merge just because the branch name looks internal** (e.g. `fix/`, `docs/`, `config/`). Let the content and exclusion rules decide whether it appears in the changelog.
+
+## Excluded product areas
+
+This changelog covers the **Ambire wallet** (extension + mobile app) and the Benzin transaction viewer. It does NOT cover the standalone Rewards website (`src/legends/`).
+
+Skip a PR if:
+
+* its branch name starts with `rewards`, `rewards-hold`, `rewards/`, or `legends/`; **or**
+* its changed files are exclusively inside `src/legends/` (check via `gh pr view <n> --json files`)
+
+## Bulk PR fetch
+
+After extracting all PR numbers, fetch their metadata in a single parallel pass before writing any entries:
+
+```bash
+# Run for each PR number — parallelize with & or use xargs
+gh pr view <pr-number> --json number,title,body,labels,url,files
+```
+
+Alternatively use a loop:
+
+```bash
+for n in 1234 1235 1236; do
+  gh pr view $n --json number,title,body,labels,url &
+done
+wait
+```
+
+Once all metadata is fetched, cross-check the set of PR numbers against the merge commit list. If a PR appears in the commit log but was not returned by the bulk fetch, investigate before omitting it.
+
 ## GitHub PR lookup
 
 Always link to the merge PR:
@@ -99,23 +149,16 @@ Always link to the merge PR:
 https://github.com/<owner>/<repo>/pull/<pr-number>
 ```
 
-If merge commit metadata is unclear, pull the PR description from GitHub.
-
-Use GitHub CLI when available:
-
-```
-gh pr view <pr-number> --json title,body,labels,mergedAt,author,url,commits,files
-```
-
 If GitHub CLI is not available, use the GitHub web/API access available in the environment.
 
 Do not invent PR details. If the PR cannot be inspected, write a conservative changelog entry based only on known commit metadata.
 
 ## Output format
 
-```markdown
-Changelog:
+Wrap the entire changelog in a fenced `markdown` code block so the UI renders a copy button:
 
+````
+```markdown
 * Added: ...
 * 📣 Added: ...
   * ...
@@ -124,6 +167,7 @@ Changelog:
 
 **Full Changelog**: https://github.com/<owner>/<repo>/compare/<previous-tag>...<new-tag>
 ```
+````
 
 Allowed top-level categories:
 
