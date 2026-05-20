@@ -89,9 +89,9 @@ const ErrorInformation = () => {
       params = new URLSearchParams({
         network: signAccountOpState.accountOp.chainId.toString(),
         from: signAccountOpState.accountOp.accountAddr,
-        contractAddress: call.to,
         rawFunctionInput: call.data,
-        value: call.value.toString()
+        value: call.value.toString(),
+        ...(call.to ? { contractAddress: call.to } : {})
       })
     }
 
