@@ -25,12 +25,6 @@ const useDAppAccountPreferences = (
     accountPreferences
   )
 
-  console.log('Debug: useDAppAccountPreferences', {
-    id,
-    accountPreferences,
-    localPreferences
-  })
-
   // A dedicated method with two blocks is needed because typescript displays an
   // error if we try to use ternary for the method param
   const updateTarget = useCallback(
@@ -96,12 +90,22 @@ const useDAppAccountPreferences = (
       return
     }
 
-    setLocalPreferences((prev) => ({
-      enabled: !prev?.enabled,
-      accounts: prev?.accounts.length ? prev.accounts : [selectedAccount.addr],
-      selectedAccount: prev?.selectedAccount || selectedAccount.addr
-    }))
-  }, [selectedAccount])
+    setLocalPreferences((prev) => {
+      const next = {
+        enabled: !prev?.enabled,
+        accounts: prev?.accounts.length ? prev.accounts : [selectedAccount.addr],
+        selectedAccount: prev?.selectedAccount || selectedAccount.addr
+      }
+
+      // Update before saving because the toggle is outside of the modal, so the user
+      // may enabled it, decide to select accounts, save, and then disable it again without opening the modal
+      if (target === 'dappToConnect') {
+        updateTarget(next)
+      }
+
+      return next
+    })
+  }, [selectedAccount, target, updateTarget])
 
   const save = useCallback(() => {
     if (!localPreferences) return

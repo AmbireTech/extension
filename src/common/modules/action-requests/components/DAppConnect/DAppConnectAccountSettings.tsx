@@ -47,8 +47,8 @@ const DAppConnectAccountSettings: FC<Props> = ({ id, accountPreferences }) => {
   return (
     <>
       <ToggleDAppScopedAccounts
-        enabled={!!accountPreferences?.enabled}
-        selectedCount={accountPreferences?.accounts.length || 0}
+        enabled={!!localPreferences?.enabled}
+        selectedCount={localPreferences?.accounts.length || 0}
         onToggle={toggleOnlyConnectWithSomeAccounts}
         onOpenAccountSelector={handleOpenBottomSheet}
       />
