@@ -279,6 +279,7 @@ const SwapAndBridgeScreen = () => {
         hasProceeded={hasProceeded}
         signAccountOpController={signAccountOpController}
         serviceFee={quote?.selectedRoute?.serviceFee}
+        shouldShowTxnDetails
         Modals={Modals}
       />
       <PriceImpactWarningModal

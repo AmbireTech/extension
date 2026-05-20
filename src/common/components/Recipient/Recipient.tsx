@@ -4,8 +4,9 @@ import { useTranslation } from 'react-i18next'
 import { Pressable } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 
-import { Contact } from '@ambire-common/controllers/addressBook/addressBook'
+import { Contact } from '@ambire-common/interfaces/addressBook'
 import { AddressState } from '@ambire-common/interfaces/domains'
+import { AddressPoisoningMatch } from '@ambire-common/interfaces/transfer'
 import { TokenResult } from '@ambire-common/libs/portfolio'
 import { validateAddress, Validation } from '@ambire-common/services/validations'
 import { getAddressFromAddressState } from '@ambire-common/utils/domains'
@@ -52,6 +53,7 @@ interface Props extends InputProps {
   isRecipientDomainResolving: boolean
   selectedTokenSymbol?: TokenResult['symbol']
   menuPosition?: 'top' | 'bottom'
+  addressPoisoningMatch?: AddressPoisoningMatch | null
 }
 
 const ADDRESS_BOOK_VISIBLE_VALIDATION: Validation = {
@@ -74,6 +76,11 @@ const SelectedMenuOption: React.FC<{
   renderConfirmAddress?: () => React.ReactNode
   type?: 'input' | 'selected-menu-option'
   autoFocus?: boolean
+  addressHighlight?: {
+    prefix: number
+    suffix: number
+    color: 'errorText'
+  }
 }> = ({
   selectRef,
   filteredContacts,
@@ -88,7 +95,8 @@ const SelectedMenuOption: React.FC<{
   setIsMenuOpen,
   renderConfirmAddress,
   type = 'selected-menu-option',
-  autoFocus = false
+  autoFocus = false,
+  addressHighlight
 }) => {
   const [isFocused, setIsFocused] = useState(false)
   const { theme } = useTheme()
@@ -141,9 +149,12 @@ const SelectedMenuOption: React.FC<{
         containerStyle={styles.inputContainer}
         resolvedAddress={resolvedAddress}
         resolvedAddressType={resolvedAddressType}
+        addressHighlight={addressHighlight}
         isRecipientDomainResolving={isRecipientDomainResolving}
         value={address}
-        withDetails={type === 'selected-menu-option'}
+        // On mobile input mode we still need details view when poisoning highlight exists,
+        // because highlight rendering lives in the detailed address row.
+        withDetails={type === 'selected-menu-option' || (isMobile && !!addressHighlight)}
         onChangeText={setAddress}
         disabled={disabled}
         editable={!isButtonMode}
@@ -192,6 +203,7 @@ const SelectedMenuOption: React.FC<{
       setAddress,
       setIsMenuOpen,
       theme.neutral400,
+      addressHighlight,
       type,
       validation
     ]
@@ -214,7 +226,8 @@ const Recipient: React.FC<Props> = ({
   isRecipientAddressUnknown,
   validation,
   isRecipientDomainResolving,
-  disabled
+  disabled,
+  addressPoisoningMatch
 }) => {
   const {
     state: { account }
@@ -395,6 +408,18 @@ const Recipient: React.FC<Props> = ({
     ]
   )
 
+  const selectedAddressHighlight = useMemo(
+    () =>
+      addressPoisoningMatch
+        ? {
+            prefix: addressPoisoningMatch.matchedPrefixCharsCount,
+            suffix: addressPoisoningMatch.matchedSuffixCharsCount,
+            color: 'errorText' as const
+          }
+        : undefined,
+    [addressPoisoningMatch]
+  )
+
   const renderSelectedOption = useCallback(
     ({ setIsMenuOpen, isMenuOpen, selectRef }: RenderSelectedOptionParams) => {
       return (
@@ -411,6 +436,7 @@ const Recipient: React.FC<Props> = ({
           setAddress={setAddress}
           disabled={disabled}
           renderConfirmAddress={renderConfirmAddress}
+          addressHighlight={selectedAddressHighlight}
         />
       )
     },
@@ -423,7 +449,8 @@ const Recipient: React.FC<Props> = ({
       address,
       setAddress,
       disabled,
-      renderConfirmAddress
+      renderConfirmAddress,
+      selectedAddressHighlight
     ]
   )
 
@@ -462,10 +489,12 @@ const Recipient: React.FC<Props> = ({
             validation={validation}
             resolvedAddress={resolvedAddress}
             resolvedAddressType={resolvedAddressType}
-            isRecipientDomainResolving={isRecipientDomainResolving}
+            // Keep highlight visible on mobile; don't show resolving UI when poisoning highlight exists.
+            isRecipientDomainResolving={isRecipientDomainResolving && !selectedAddressHighlight}
             address={address}
             setAddress={setAddress}
             disabled={disabled}
+            addressHighlight={selectedAddressHighlight}
           />
         )}
         containerStyle={spacings.mb0}

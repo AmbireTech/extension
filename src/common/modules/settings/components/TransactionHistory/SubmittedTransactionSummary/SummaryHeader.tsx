@@ -2,7 +2,6 @@ import React, { useMemo } from 'react'
 import { View } from 'react-native'
 
 import { Network } from '@ambire-common/interfaces/network'
-import { SubmittedAccountOp } from '@ambire-common/libs/accountOp/submittedAccountOp'
 import NetworkIcon from '@common/components/NetworkIcon'
 import Text from '@common/components/Text'
 import useTheme from '@common/hooks/useTheme'
@@ -16,13 +15,14 @@ import {
 } from './helpers'
 import StatusBadge from './StatusBadge'
 import getStyles from './styles'
+import { SubmittedAccountOpLike } from './types'
 
 const SummaryHeader = ({
   submittedAccountOp,
   network,
   size
 }: {
-  submittedAccountOp: SubmittedAccountOp
+  submittedAccountOp: SubmittedAccountOpLike
   network: Network
   size: 'sm' | 'md' | 'lg'
 }) => {

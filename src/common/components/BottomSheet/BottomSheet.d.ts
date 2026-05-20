@@ -15,6 +15,7 @@ export interface BottomSheetProps {
   // Preferences
   type?: 'modal' | 'bottom-sheet'
   adjustToContentHeight?: boolean
+  modalHeight?: ModalizeProps['modalHeight']
   style?: ViewStyle
   containerInnerWrapperStyles?: ViewStyle
   flatListProps?: ModalizeProps['flatListProps']
@@ -28,6 +29,7 @@ export interface BottomSheetProps {
   shouldBeClosableOnDrag?: boolean
   customZIndex?: number
   isScrollEnabled?: boolean
+  reserveScrollPadding?: boolean
   withBackdropBlur?: boolean
 }
 

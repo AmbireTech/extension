@@ -1,12 +1,12 @@
 import React, { ReactNode, useMemo } from 'react'
 import { View, ViewStyle } from 'react-native'
 
-import CheckIcon from '@common/assets/svg/CheckIcon'
 import RightArrowIcon from '@common/assets/svg/RightArrowIcon'
 import Spinner from '@common/components/Spinner'
 import useTheme from '@common/hooks/useTheme'
 
 import getStyles from './styles'
+import CheckIcon2 from '@common/assets/svg/CheckIcon2'
 
 const RouteStepsArrow = ({
   containerStyle,
@@ -44,7 +44,9 @@ const RouteStepsArrow = ({
         {!(badgePosition === 'middle' && !!badge) && (
           <View>
             {type === 'success' ? (
-              <CheckIcon width={14} height={14} color={theme.successDecorative} />
+              <View style={[styles.arrowStatus, { borderColor: getArrowColor }]}>
+                <CheckIcon2 width={14} height={14} color={theme.successDecorative} />
+              </View>
             ) : (
               <View style={[styles.arrowStatus, { borderColor: getArrowColor }]}>
                 {isLoading && <Spinner style={{ width: 14 }} />}

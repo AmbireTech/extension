@@ -5,7 +5,6 @@ import { StyleSheet, View } from 'react-native'
 
 import { Account } from '@ambire-common/interfaces/account'
 import { Network } from '@ambire-common/interfaces/network'
-import { SubmittedAccountOp } from '@ambire-common/libs/accountOp/submittedAccountOp'
 import shortenAddress from '@ambire-common/utils/shortenAddress'
 import Text from '@common/components/Text'
 import useController from '@common/hooks/useController'
@@ -47,7 +46,7 @@ const AccountOpHistory: FC<{ network?: Network; account: Account; sessionId: str
 
   return (
     <>
-      {items.map((item: SubmittedAccountOp, i) => (
+      {items.map((item, i) => (
         <SubmittedTransactionSummary
           key={`${item.id}-${item.txnId}-${item.timestamp}`}
           size="md"
