@@ -150,6 +150,11 @@ const useAddressInput = ({
             isDomainResolving: false
           })
         })
+        .finally(() => {
+          if (resolvingForFieldValue.current === fieldValue) {
+            resolvingForFieldValue.current = null
+          }
+        })
     }, 300)
 
     return () => {
