@@ -6,6 +6,7 @@ export interface SearchAndCurrentAppProps {
   displayCurrentApp?: boolean
   displayNetworkFilter?: boolean
   isHidden: boolean
+  searchPlaceholder?: string
 }
 
 declare const SearchAndCurrentApp: React.FC<SearchAndCurrentAppProps>

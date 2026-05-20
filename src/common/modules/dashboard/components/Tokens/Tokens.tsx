@@ -445,6 +445,7 @@ const Tokens = ({
           displayCurrentApp
           displayNetworkFilter
           isHidden={isSearchHidden}
+          searchPlaceholder={t('Search token')}
         />
       )}
     </>

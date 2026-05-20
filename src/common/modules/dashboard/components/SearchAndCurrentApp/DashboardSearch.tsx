@@ -1,20 +1,24 @@
-import React, { FC, useEffect, useMemo, useState } from 'react'
+import React, { FC, useEffect, useMemo, useRef, useState } from 'react'
 import { Control, Controller } from 'react-hook-form'
-import { Animated, Pressable, View } from 'react-native'
+import { Animated, Pressable, TextInput, View } from 'react-native'
 
 import CloseIcon from '@common/assets/svg/CloseIcon'
 import SearchIcon from '@common/assets/svg/SearchIcon'
 import Input from '@common/components/Input'
+import Text from '@common/components/Text'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
 type Props = {
   control: Control<{ search: string }, any>
+  placeholder?: string
 }
-const DashboardSearch: FC<Props> = ({ control }) => {
+const DashboardSearch: FC<Props> = ({ control, placeholder }) => {
   const { theme } = useTheme()
+  const inputRef = useRef<TextInput | null>(null)
   const [isSearchFieldDisplayed, setIsSearchFieldDisplayed] = useState(false)
+  const [isEditing, setIsEditing] = useState(false)
   // Keep clear button hidden until expansion finishes so it doesn't appear inside a narrow field.
   const [isSearchFullyExpanded, setIsSearchFullyExpanded] = useState(false)
   const animatedWidth = useMemo(() => new Animated.Value(40), [])
@@ -32,6 +36,14 @@ const DashboardSearch: FC<Props> = ({ control }) => {
       }
     })
   }, [isSearchFieldDisplayed, animatedWidth])
+
+  useEffect(() => {
+    if (!isEditing || !isSearchFullyExpanded) return
+
+    requestAnimationFrame(() => {
+      inputRef.current?.focus()
+    })
+  }, [isEditing, isSearchFullyExpanded])
 
   return (
     <Animated.View
@@ -62,7 +74,14 @@ const DashboardSearch: FC<Props> = ({ control }) => {
             ...flexbox.center
           }}
           onPress={() => {
-            setIsSearchFieldDisplayed((prev) => !prev)
+            setIsSearchFieldDisplayed((prev) => {
+              if (prev) {
+                setIsEditing(false)
+                inputRef.current?.blur()
+              }
+
+              return !prev
+            })
           }}
         >
           {({ hovered }: any) => (
@@ -90,46 +109,65 @@ const DashboardSearch: FC<Props> = ({ control }) => {
         <Controller
           control={control}
           name="search"
-          render={({ field: { onChange, onBlur, value } }) => (
-            <Input
-              borderless
-              inputWrapperStyle={{
-                height: 40,
-                paddingVertical: 0,
-                width: '100%',
-                backgroundColor: theme.tertiaryBackground
-              }}
-              inputStyle={{ height: '100%', ...spacings.plMi, ...spacings.prTy }}
-              containerStyle={{
-                ...flexbox.flex1,
-                ...spacings.mb0
-              }}
-              autoFocus
-              placeholderTextColor={theme.secondaryText}
-              nativeInputStyle={{ fontSize: 14 }}
-              onChangeText={onChange}
-              onBlur={onBlur}
-              buttonStyle={spacings.ph0}
-              value={value}
-              button={
-                isSearchFullyExpanded ? (
+          render={({ field: { onChange, onBlur, value } }) => {
+            const showInput = isSearchFullyExpanded && (isEditing || !!value)
+
+            const handleClose = () => {
+              onChange('')
+              setIsSearchFieldDisplayed(false)
+              setIsEditing(false)
+              inputRef.current?.blur()
+            }
+
+            return (
+              <View style={[flexbox.flex1, flexbox.directionRow, flexbox.alignCenter]}>
+                {showInput ? (
+                  <Input
+                    borderless
+                    setInputRef={(ref) => {
+                      inputRef.current = ref
+                    }}
+                    inputWrapperStyle={{
+                      height: 40,
+                      paddingVertical: 0,
+                      width: '100%',
+                      backgroundColor: theme.tertiaryBackground
+                    }}
+                    inputStyle={{ height: '100%', ...spacings.plMi, ...spacings.prTy }}
+                    containerStyle={{ ...flexbox.flex1, ...spacings.mb0 }}
+                    nativeInputStyle={{ fontSize: 14 }}
+                    onChangeText={onChange}
+                    onBlur={() => {
+                      onBlur()
+                      if (!value) {
+                        setIsEditing(false)
+                      }
+                    }}
+                    value={value}
+                  />
+                ) : (
                   <Pressable
-                    style={{
-                      width: 24,
-                      height: 24,
-                      ...flexbox.center
-                    }}
-                    onPress={() => {
-                      onChange('')
-                      setIsSearchFieldDisplayed(false)
-                    }}
+                    style={[flexbox.flex1, spacings.plMi, { height: 40 }, flexbox.justifyCenter]}
+                    onPress={() => isSearchFullyExpanded && setIsEditing(true)}
+                  >
+                    {!!placeholder && (
+                      <Text appearance="secondaryText" fontSize={14} numberOfLines={1}>
+                        {placeholder}
+                      </Text>
+                    )}
+                  </Pressable>
+                )}
+                {isSearchFullyExpanded && (
+                  <Pressable
+                    style={{ width: 24, height: 24, ...flexbox.center }}
+                    onPress={handleClose}
                   >
                     <CloseIcon width={12} height={12} color={theme.iconPrimary} />
                   </Pressable>
-                ) : undefined
-              }
-            />
-          )}
+                )}
+              </View>
+            )
+          }}
         />
       )}
     </Animated.View>
