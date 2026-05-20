@@ -2,6 +2,7 @@ import React, { FC } from 'react'
 import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 
+import LeftArrowIcon from '@common/assets/svg/LeftArrowIcon'
 import FatToggle from '@common/components/FatToggle'
 import HoverablePressable from '@common/components/HoverablePressable'
 import Text from '@common/components/Text'
@@ -49,8 +50,8 @@ const ToggleDAppScopedAccounts: FC<Props> = ({
       <FatToggle
         width={40}
         height={20}
-        labelProps={{ style: { fontSize: isRequestWindow ? 12 : 14 } }}
-        label={label || t('Only connect with some accounts')}
+        labelProps={{ style: { fontSize: 16 } }}
+        label={label || t('Only connect some accounts')}
         isOn={enabled}
         onToggle={onToggle}
         trackStyle={spacings.mrTy}
@@ -61,7 +62,8 @@ const ToggleDAppScopedAccounts: FC<Props> = ({
             ...flexbox.directionRow,
             ...flexbox.alignCenter,
             ...spacings.pvMi,
-            ...spacings.phSm,
+            ...spacings.plSm,
+            ...spacings.prTy,
             backgroundColor: theme.primaryAccent100,
             borderRadius: 50
           }}
@@ -75,6 +77,12 @@ const ToggleDAppScopedAccounts: FC<Props> = ({
               s: selectedCount === 1 ? '' : 's'
             })}
           </Text>
+          <LeftArrowIcon
+            color={theme.primaryAccent}
+            width={6}
+            height={13}
+            style={{ ...spacings.mlMi, transform: [{ rotate: '180deg' }] }}
+          />
         </PillContainer>
       ) : (
         <View />

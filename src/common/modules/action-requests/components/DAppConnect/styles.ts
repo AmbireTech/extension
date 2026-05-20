@@ -24,7 +24,7 @@ const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
           ...flexbox.alignCenter,
           marginHorizontal: 'auto',
           ...flexbox.flex1,
-          maxWidth: 422
+          maxWidth: 480
         },
     content: isMobile
       ? {
