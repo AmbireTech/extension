@@ -233,6 +233,10 @@ const Tokens = ({
   )
 
   const { visibleTokens, dustTokens } = useMemo(() => {
+    if (userHasNoBalance || searchValue.length > 0) {
+      return { visibleTokens: sortedTokens, dustTokens: [] }
+    }
+
     return sortedTokens.reduce(
       (acc, token) => {
         // If there is a price fetch error for a network every token will be considered dust, so
@@ -246,7 +250,7 @@ const Tokens = ({
       },
       { visibleTokens: [] as TokenResult[], dustTokens: [] as TokenResult[] }
     )
-  }, [networkIdsWithPriceError, sortedTokens])
+  }, [networkIdsWithPriceError, sortedTokens, userHasNoBalance, searchValue])
 
   const dustTotalUSD = useMemo(
     () => dustTokens.reduce((sum, token) => sum + getTokenBalanceInUSD(token), 0),
@@ -261,20 +265,42 @@ const Tokens = ({
   const showTokens = initTab?.tokens
   const hasAnyTokens = visibleTokens.length > 0 || dustTokens.length > 0
 
-  const listData = useMemo(
-    () => [
-      'header',
-      !hasAnyTokens && !portfolio?.isAllReady ? 'skeleton' : 'keep-this-to-avoid-key-warning',
-      ...(showTokens ? visibleTokens : []),
-      showTokens && dustTokens.length > 0 && !isDustExpanded ? 'dust-summary' : '',
-      ...(showTokens && isDustExpanded ? dustTokens : []),
-      showTokens && isDustExpanded ? 'dust-collapse' : '',
-      hasAnyTokens && !portfolio?.isAllReady ? 'skeleton' : 'keep-this-to-avoid-key-warning-2',
-      !hasAnyTokens && portfolio?.isAllReady ? 'empty' : '',
-      'footer'
-    ],
-    [hasAnyTokens, portfolio?.isAllReady, showTokens, visibleTokens, dustTokens, isDustExpanded]
-  )
+  const listData = useMemo(() => {
+    const data: any[] = ['header']
+
+    // Skeleton 1, order matters
+    if (!hasAnyTokens && !portfolio?.isAllReady) {
+      data.push('skeleton')
+    }
+
+    if (showTokens) {
+      data.push(...visibleTokens)
+
+      if (dustTokens.length > 0) {
+        if (!isDustExpanded) {
+          data.push('dust-summary')
+        } else {
+          data.push(...dustTokens, 'dust-collapse')
+        }
+      }
+    }
+
+    // Skeleton 2, order matters, needs to be after the tokens to show the user partial results
+    // but also indicate that we are still loading
+    if (hasAnyTokens && !portfolio?.isAllReady) {
+      data.push('skeleton')
+    }
+
+    if (portfolio?.isAllReady && !hasAnyTokens) {
+      data.push('empty')
+    }
+
+    if (portfolio?.isAllReady) {
+      data.push('footer')
+    }
+
+    return data
+  }, [hasAnyTokens, portfolio?.isAllReady, showTokens, visibleTokens, dustTokens, isDustExpanded])
 
   const renderItem = useCallback(
     ({ item, index }: any) => {
@@ -378,13 +404,7 @@ const Tokens = ({
         )
       }
 
-      if (
-        !initTab?.tokens ||
-        !item ||
-        item === 'keep-this-to-avoid-key-warning' ||
-        item === 'keep-this-to-avoid-key-warning-2'
-      )
-        return null
+      if (!initTab?.tokens || !item) return null
 
       return <TokenItem token={item} />
     },

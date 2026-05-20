@@ -22,14 +22,15 @@
   }
 
   .title {
-    font-size: 2.5rem;
-    font-weight: 400;
+    font-style: Medium;
+    font-size: 2.66rem;
+    font-weight: 500;
     line-height: 2.6375rem;
-    padding-bottom: 1rem;
+    padding-bottom: 3.2rem;
   }
 
   .intro {
-    max-width: 31.625rem;
+    max-width: 33.733rem;
     display: flex;
     flex-direction: column;
     gap: 0.625rem;
@@ -38,24 +39,29 @@
   .introParagraph {
     margin: 0;
     font-size: 0.875rem;
-    line-height: 1.25rem;
+    line-height: 1.33rem;
+
     color: $mainText;
   }
 
   .introLead {
-    font-size: 1rem;
-    font-weight: 600;
+    font-size: 1.06rem;
+    font-weight: 700;
+    font-style: bold;
     color: #fff;
   }
 
   .introMuted {
     font-weight: 300;
+    font-style: light;
+    font-size: 0.933rem;
     color: $mainText;
   }
 
   .introEmphasis {
-    font-size: 1rem;
-    font-weight: 600;
+    font-size: 1.06rem;
+    font-style: medium;
+    font-weight: 500;
     color: #fff;
   }
 
@@ -93,6 +99,7 @@
       }
     }
   }
+
   .table {
     display: flex;
     flex-direction: column;
@@ -142,8 +149,10 @@
       font-weight: 400;
     }
   }
+
   .header {
     padding-bottom: 0;
+
     .cell {
       text-transform: uppercase;
       font-size: 0.875rem;
@@ -184,6 +193,7 @@
     justify-content: center;
     margin-right: 1rem;
   }
+
   .rank {
     height: 1.25rem;
     width: 1.25rem;
@@ -192,6 +202,7 @@
 
   .rankedRow1 {
     background-color: rgba($neutral-600, 0.051);
+
     .cell:last-child,
     .trophy {
       color: $goldDecorative;
@@ -220,6 +231,7 @@
 
   .rankedRow2 {
     background-color: rgba($neutral-600, 0.051);
+
     .cell:last-child,
     .trophy {
       color: $silverDecorative;
@@ -228,6 +240,7 @@
 
   .rankedRow3 {
     background-color: rgba($neutral-600, 0.051);
+
     .cell:last-child,
     .trophy {
       color: $bronzeDecorative;
