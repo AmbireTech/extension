@@ -8,7 +8,7 @@ import useController from '@common/hooks/useController'
 import useReverseLookup from '@common/hooks/useReverseLookup'
 import flexbox from '@common/styles/utils/flexbox'
 
-import EnsProfilePicture from './EnsProfilePicture'
+import InlineAddressAvatar from './InlineAddressAvatar'
 
 interface Props extends TextProps {
   address: string
@@ -26,7 +26,7 @@ const AddressName: FC<Props> = ({
   hideLinks,
   ...rest
 }) => {
-  const { name, isLoading, type } = useReverseLookup({ address })
+  const { name, isLoading } = useReverseLookup({ address })
   const {
     state: { contractNames },
     dispatch: contractNamesDispatch
@@ -54,11 +54,11 @@ const AddressName: FC<Props> = ({
 
   if (isLoading && !fallbackLabel) return <Spinner style={{ width: 16, height: 16 }} />
 
-  const shouldShowEnsProfilePicture = actionsMode === 'inline' && type === 'ens' && !!name
+  const shouldShowInlineAvatar = actionsMode === 'inline'
 
   return (
     <View style={[flexbox.directionRow, flexbox.alignCenter, { maxWidth: '100%' }]}>
-      <EnsProfilePicture address={address} shouldShow={shouldShowEnsProfilePicture} />
+      <InlineAddressAvatar address={address} shouldShow={shouldShowInlineAvatar} />
       <BaseAddress
         address={address}
         hideLinks={hideLinks}
