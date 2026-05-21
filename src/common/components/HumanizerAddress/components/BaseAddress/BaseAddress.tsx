@@ -12,7 +12,6 @@ import useBenzinNetworksContext from '@benzin/hooks/useBenzinNetworksContext'
 import CopyIcon from '@common/assets/svg/CopyIcon'
 import InfoIcon from '@common/assets/svg/InfoIcon'
 import OpenIcon from '@common/assets/svg/OpenIcon'
-import HoverablePressable from '@common/components/HoverablePressable'
 import Text, { Props as TextProps } from '@common/components/Text'
 import Tooltip from '@common/components/Tooltip'
 import { isWeb } from '@common/config/env'
@@ -138,7 +137,7 @@ const BaseAddress: FC<Props> = ({
       {showInlineActions ? (
         <>
           {!!network?.explorerUrl && !hideLinks && (
-            <HoverablePressable
+            <Pressable
               accessibilityRole="link"
               accessibilityLabel={t('View in Explorer')}
               onPress={(e: any) => {
@@ -147,8 +146,14 @@ const BaseAddress: FC<Props> = ({
               }}
               style={[spacings.mlTy, flexbox.center]}
             >
-              <OpenIcon color={theme.secondaryText} width={16} height={16} />
-            </HoverablePressable>
+              {({ hovered }: any) => (
+                <OpenIcon
+                  color={hovered ? theme.primaryText : theme.secondaryText}
+                  width={16}
+                  height={16}
+                />
+              )}
+            </Pressable>
           )}
         </>
       ) : (
