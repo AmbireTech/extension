@@ -29,7 +29,7 @@ const DAppAccountList: FC<Props> = ({ accounts, allowedAccounts, onToggleAccount
   const getIsDisabled = useCallback(
     (addr: string) => {
       if (enforce === 'selected') {
-        return addr === account?.addr
+        return addr === account?.addr && allowedAccounts.includes(addr)
       }
 
       const isSelected = allowedAccounts.includes(addr)
