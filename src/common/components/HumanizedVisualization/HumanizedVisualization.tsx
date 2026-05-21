@@ -188,6 +188,9 @@ const isIncomingTokenRow = (row: Erc7730Row) =>
 const isSwapLikeTitle = (title?: string) =>
   /swap|exchange|trade|bridge/.test((title || '').toLowerCase())
 
+const isComplexActionRow = (row: Erc7730Row) =>
+  /action|call|operation|method/.test(row.label.toLowerCase())
+
 const getErc7730SpenderRow = (item: HumanizerErc7730Visualization) =>
   item.rows.find((row) => isSpenderRow(row))
 
@@ -222,6 +225,16 @@ export const getErc7730DescriptionRows = (item: HumanizerErc7730Visualization) =
   )
 
   return item.rows.filter((row) => !visibleSummaryRows.includes(row))
+}
+
+export const shouldUseErc7730DetailedLayout = (item: HumanizerErc7730Visualization) => {
+  const summaryRows = getErc7730SummaryRows(item)
+  if (summaryRows.some(hasTokenValue)) return false
+  if (/multicall|batch|bundle/.test((item.title || '').toLowerCase())) return true
+
+  const complexActionRows = summaryRows.filter(isComplexActionRow)
+
+  return summaryRows.length > 1 && complexActionRows.length > 1
 }
 
 const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = ({
@@ -679,6 +692,7 @@ const HumanizedVisualization: FC<Props> = ({
                 address={item.address}
                 chainId={chainId}
                 verification={item.verification}
+                actionsMode="inline"
               />
             </View>
           )

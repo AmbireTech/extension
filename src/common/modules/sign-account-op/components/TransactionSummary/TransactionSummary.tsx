@@ -17,7 +17,8 @@ import {
 import DeleteIcon from '@common/assets/svg/DeleteIcon'
 import ExpandableCard from '@common/components/ExpandableCard'
 import HumanizedVisualization, {
-  getErc7730DescriptionRows
+  getErc7730DescriptionRows,
+  shouldUseErc7730DetailedLayout
 } from '@common/components/HumanizedVisualization'
 import Label from '@common/components/Label'
 import Text from '@common/components/Text'
@@ -127,6 +128,17 @@ const TransactionSummary = ({
       rows: descriptionRows
     }
   }, [erc7730Visualization])
+
+  const shouldUseDetailedErc7730Layout = useMemo(
+    () => !!erc7730Visualization && shouldUseErc7730DetailedLayout(erc7730Visualization),
+    [erc7730Visualization]
+  )
+
+  const erc7730DetailedTitle = useMemo(() => {
+    if (!erc7730Visualization) return ''
+
+    return erc7730Visualization.title || call.dapp?.name || t('Transaction details')
+  }, [call.dapp?.name, erc7730Visualization, t])
 
   const [bindDeleteIconAnim, deleteIconAnimStyle] = useHover({
     preset: 'opacityInverted'
@@ -431,19 +443,52 @@ const TransactionSummary = ({
       content={
         <>
           {callVisualization ? (
-            <HumanizedVisualization
-              data={callVisualization}
-              sizeMultiplierSize={sizeMultiplier[size]}
-              textSize={textSize}
-              imageSize={imageSize}
-              chainId={chainId}
-              type={type}
-              testID={`recipient-address-${index}`}
-              hasPadding={enableExpand}
-              hideLinks={hideLinks}
-              editApprovalCallInfo={editApprovalCallInfo}
-              dapp={call.dapp}
-            />
+            shouldUseDetailedErc7730Layout && erc7730Visualization ? (
+              <View style={{ flex: 1, minWidth: 0 }}>
+                <Text
+                  fontSize={textSize + 2}
+                  weight="semiBold"
+                  color={theme.secondaryAccent400}
+                  style={{ marginBottom: SPACING_TY * sizeMultiplier[size] }}
+                >
+                  {erc7730DetailedTitle}
+                </Text>
+                <View
+                  style={{
+                    height: 1,
+                    width: '100%',
+                    backgroundColor: theme.secondaryBorder,
+                    marginBottom: SPACING_TY * sizeMultiplier[size]
+                  }}
+                />
+                <HumanizedVisualization
+                  data={[erc7730Visualization]}
+                  sizeMultiplierSize={sizeMultiplier[size]}
+                  textSize={Math.max(textSize - 1, 12)}
+                  imageSize={imageSize}
+                  chainId={chainId}
+                  type={type}
+                  testID={`recipient-address-${index}`}
+                  hasPadding={false}
+                  hideLinks={hideLinks}
+                  erc7730Mode="description"
+                />
+              </View>
+            ) : (
+              <HumanizedVisualization
+                data={callVisualization}
+                sizeMultiplierSize={sizeMultiplier[size]}
+                textSize={textSize}
+                imageSize={imageSize}
+                chainId={chainId}
+                type={type}
+                testID={`recipient-address-${index}`}
+                hasPadding={enableExpand}
+                hideLinks={hideLinks}
+                editApprovalCallInfo={editApprovalCallInfo}
+                dapp={call.dapp}
+              />
+            )
           ) : (
             <FallbackVisualization
               call={call}
@@ -481,7 +526,7 @@ const TransactionSummary = ({
         </>
       }
       expandedContent={
-        erc7730Visualization ? (
+        erc7730Visualization && !shouldUseDetailedErc7730Layout ? (
           <View
             style={{
               paddingHorizontal: SPACING_SM * sizeMultiplier[size],
