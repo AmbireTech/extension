@@ -61,6 +61,7 @@ const DashboardSearch: FC<Props> = ({ control, placeholder }) => {
     >
       <View style={{ width: 40, height: 40 }}>
         <Pressable
+          testID="search-glass-icon"
           // Use a larger invisible touch target around the icon for easier tapping.
           hitSlop={10}
           style={{
@@ -123,6 +124,7 @@ const DashboardSearch: FC<Props> = ({ control, placeholder }) => {
               <View style={[flexbox.flex1, flexbox.directionRow, flexbox.alignCenter]}>
                 {showInput ? (
                   <Input
+                    testID="search-input"
                     borderless
                     setInputRef={(ref) => {
                       inputRef.current = ref
@@ -148,7 +150,8 @@ const DashboardSearch: FC<Props> = ({ control, placeholder }) => {
                 ) : (
                   <Pressable
                     style={[flexbox.flex1, spacings.plMi, { height: 40 }, flexbox.justifyCenter]}
-                    onPress={() => isSearchFullyExpanded && setIsEditing(true)}
+                    onPress={() => setIsEditing(true)}
+                    testID="search-input-placeholder"
                   >
                     {!!placeholder && (
                       <Text appearance="secondaryText" fontSize={14} numberOfLines={1}>
