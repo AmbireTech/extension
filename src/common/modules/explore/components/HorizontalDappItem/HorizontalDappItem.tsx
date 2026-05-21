@@ -16,14 +16,15 @@ import { openInTab } from '@common/utils/links/links'
 import ManifestImage from '@web/components/ManifestImage'
 
 export const HORIZONTAL_ITEM_ICON_SIZE = 56
-export const HORIZONTAL_ITEM_WIDTH = 72
-export const HORIZONTAL_ITEM_GUTTER = 12
+export const HORIZONTAL_ITEM_WIDTH = 56
+export const HORIZONTAL_ITEM_GUTTER = 24
 
 type Props = {
   dapp: Dapp
+  gutter?: number
 }
 
-const HorizontalDappItem = ({ dapp }: Props) => {
+const HorizontalDappItem = ({ dapp, gutter = HORIZONTAL_ITEM_GUTTER }: Props) => {
   const { theme } = useTheme()
   const navigation = useNavigation()
   const { dispatch: dappsDispatch } = useController('DappsController')
@@ -76,7 +77,7 @@ const HorizontalDappItem = ({ dapp }: Props) => {
       style={[
         animStyle,
         flexbox.alignCenter,
-        { width: HORIZONTAL_ITEM_WIDTH, marginRight: HORIZONTAL_ITEM_GUTTER }
+        { width: HORIZONTAL_ITEM_WIDTH, marginRight: gutter }
       ]}
     >
       <ManifestImage

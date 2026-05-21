@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 
 import { Dapp } from '@ambire-common/interfaces/dapp'
 import ConnectedIcon from '@common/assets/svg/ConnectedIcon'
@@ -6,7 +7,6 @@ import NetworksIcon from '@common/assets/svg/NetworksIcon'
 import RecentIcon from '@common/assets/svg/RecentIcon'
 import StarIcon from '@common/assets/svg/StarIcon'
 import useController from '@common/hooks/useController'
-import { useTranslation } from 'react-i18next'
 
 export type ExploreSectionType = 'recent' | 'connected' | 'favorites' | 'apps'
 
@@ -48,28 +48,28 @@ const useExploreSections = (): ExploreSection[] => {
       {
         type: 'recent',
         title: t('Recent'),
-        icon: <RecentIcon width={ICON_SIZE} height={ICON_SIZE} />,
+        icon: <RecentIcon width={ICON_SIZE + 2} height={ICON_SIZE} />,
         data: recent,
         showTrash: true
       },
       {
         type: 'connected',
         title: t('Connected'),
-        icon: <ConnectedIcon width={ICON_SIZE} height={ICON_SIZE} />,
+        icon: <ConnectedIcon width={ICON_SIZE + 2} height={ICON_SIZE} />,
         data: connected,
         showTrash: false
       },
       {
         type: 'favorites',
         title: t('Favorites'),
-        icon: <StarIcon width={ICON_SIZE} height={ICON_SIZE} />,
+        icon: <StarIcon width={ICON_SIZE + 2} height={ICON_SIZE} />,
         data: favorites,
         showTrash: false
       },
       {
         type: 'apps',
         title: t('Explore apps'),
-        icon: <NetworksIcon width={ICON_SIZE} height={ICON_SIZE} />,
+        icon: <NetworksIcon width={ICON_SIZE + 2} height={ICON_SIZE + 2} />,
         data: featured,
         showTrash: false
       }

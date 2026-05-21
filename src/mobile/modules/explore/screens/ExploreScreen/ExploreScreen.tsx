@@ -30,13 +30,10 @@ import useExploreSections, {
 import { ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import { getUiType } from '@common/utils/uiType'
 import {
   MobileLayoutContainer,
   MobileLayoutWrapperMainContent
 } from '@mobile/components/MobileLayoutWrapper'
-
-const { isPopup } = getUiType()
 
 type SearchItem =
   | { type: 'googleSearch'; query: string }
@@ -68,7 +65,7 @@ const ExploreScreen = () => {
     [navigate]
   )
 
-  const handleClearRecentsPress = useCallback(() => {
+  const handleClearRecentPress = useCallback(() => {
     clearRecentsRef.current?.open()
   }, [])
 
@@ -210,11 +207,11 @@ const ExploreScreen = () => {
           title={matching.title}
           onPress={() => handleOpenSection(matching)}
           showTrash={matching.showTrash}
-          onTrashPress={matching.showTrash ? handleClearRecentsPress : undefined}
+          onTrashPress={matching.showTrash ? handleClearRecentPress : undefined}
         />
       )
     },
-    [sections, handleOpenSection, handleClearRecentsPress]
+    [sections, handleOpenSection, handleClearRecentPress]
   )
 
   const sectionKeyExtractor = useCallback(
