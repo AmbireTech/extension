@@ -66,7 +66,32 @@ const HumanizerAddressInner: FC<Props> = ({
     accountsState?.accounts
   ])
 
-  // highestPriorityAlias and account labels are of higher priority than domains
+  if (actionsMode === 'inline') {
+    if (!isExtension)
+      return (
+        <BenzinAddressName
+          address={checksummedAddress}
+          chainId={chainId}
+          actionsMode={actionsMode}
+          fallbackLabel={localAddressLabel || undefined}
+          hideLinks={hideLinks}
+          {...rest}
+        />
+      )
+
+    return (
+      <AddressName
+        address={checksummedAddress}
+        chainId={chainId}
+        actionsMode={actionsMode}
+        fallbackLabel={localAddressLabel || undefined}
+        hideLinks={hideLinks}
+        {...rest}
+      />
+    )
+  }
+
+  // highestPriorityAlias and account labels are of higher priority than domains outside inline mode.
   if (localAddressLabel)
     return (
       <BaseAddress
