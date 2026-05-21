@@ -74,6 +74,7 @@ const useParsedMessageRows = (
               chainId={BigInt(chainId)}
               address={valueAsString}
               fontSize={14 * responsiveSizeMultiplier}
+              actionsMode="inline"
             />
           )
         else if (isProbablyADateWIthinRange)

@@ -12,6 +12,7 @@ import useBenzinNetworksContext from '@benzin/hooks/useBenzinNetworksContext'
 import CopyIcon from '@common/assets/svg/CopyIcon'
 import InfoIcon from '@common/assets/svg/InfoIcon'
 import OpenIcon from '@common/assets/svg/OpenIcon'
+import HoverablePressable from '@common/components/HoverablePressable'
 import Text, { Props as TextProps } from '@common/components/Text'
 import Tooltip from '@common/components/Tooltip'
 import { isWeb } from '@common/config/env'
@@ -30,6 +31,7 @@ interface Props extends TextProps {
   address: string
   chainId?: bigint
   hideLinks?: boolean
+  actionsMode?: 'tooltip' | 'inline'
   verification?: BlacklistedStatus
   isDisplayingPlainAddress?: boolean
 }
@@ -39,6 +41,7 @@ const BaseAddress: FC<Props> = ({
   address,
   chainId,
   hideLinks = false,
+  actionsMode = 'tooltip',
   verification,
   isDisplayingPlainAddress,
   ...rest
@@ -93,9 +96,18 @@ const BaseAddress: FC<Props> = ({
   // will be show at the same time. We cannot use a shared tooltip as the content
   // is JSX and not a string.
   const tooltipId = useMemo(() => `address-${address}-${nanoid(6)}`, [address])
+  const showInlineActions = actionsMode === 'inline'
 
   return (
-    <View style={[flexbox.alignCenter, flexbox.directionRow, flexbox.wrap, isWeb && flexbox.flex1]}>
+    <View
+      style={[
+        flexbox.alignCenter,
+        flexbox.directionRow,
+        flexbox.wrap,
+        isWeb && !showInlineActions && flexbox.flex1,
+        showInlineActions && { maxWidth: '100%' }
+      ]}
+    >
       <Text
         weight={isDisplayingPlainAddress ? 'mono_regular' : 'medium'}
         fontSize={14}
@@ -108,7 +120,7 @@ const BaseAddress: FC<Props> = ({
         {...rest}
       >
         {children}
-        {isWeb && (
+        {isWeb && !showInlineActions && (
           <Pressable style={spacings.mlMi}>
             {({ hovered }: any) => (
               <InfoIcon
@@ -121,34 +133,63 @@ const BaseAddress: FC<Props> = ({
           </Pressable>
         )}
       </Text>
-      <Tooltip
-        id={tooltipId}
-        style={{ padding: 0, overflow: 'hidden' }}
-        clickable
-        noArrow
-        place="bottom-end"
-      >
-        {network?.explorerUrl && !hideLinks && (
+      {showInlineActions ? (
+        <>
+          <HoverablePressable
+            accessibilityRole="button"
+            accessibilityLabel={t('Copy Address')}
+            onPress={(e: any) => {
+              e?.stopPropagation?.()
+              void handleCopyAddress()
+            }}
+            style={[spacings.mlTy, flexbox.center]}
+          >
+            <CopyIcon color={theme.secondaryText} width={16} height={16} />
+          </HoverablePressable>
+          {!!network?.explorerUrl && !hideLinks && (
+            <HoverablePressable
+              accessibilityRole="link"
+              accessibilityLabel={t('View in Explorer')}
+              onPress={(e: any) => {
+                e?.stopPropagation?.()
+                void handleOpenExplorer()
+              }}
+              style={[spacings.mlTy, flexbox.center]}
+            >
+              <OpenIcon color={theme.secondaryText} width={16} height={16} />
+            </HoverablePressable>
+          )}
+        </>
+      ) : (
+        <Tooltip
+          id={tooltipId}
+          style={{ padding: 0, overflow: 'hidden' }}
+          clickable
+          noArrow
+          place="bottom-end"
+        >
+          {network?.explorerUrl && !hideLinks && (
+            <Option
+              title={t('View in Explorer')}
+              renderIcon={() => <OpenIcon color={theme.secondaryText} width={14} height={14} />}
+              onPress={handleOpenExplorer}
+            />
+          )}
+          {/* @TODO: Uncomment when we have the feature
           <Option
-            title={t('View in Explorer')}
-            renderIcon={() => <OpenIcon color={theme.secondaryText} width={14} height={14} />}
-            onPress={handleOpenExplorer}
+            title={t('Add to Address Book')}
+            renderIcon={() => <AddressBookIcon color={theme.secondaryText} width={18} height={18} />}
+            onPress={() => {}}
+          /> */}
+          <Option
+            title={t('Copy Address')}
+            isAddress
+            text={shortenAddress(address, 15)}
+            renderIcon={() => <CopyIcon color={theme.secondaryText} width={16} height={16} />}
+            onPress={handleCopyAddress}
           />
-        )}
-        {/* @TODO: Uncomment when we have the feature
-        <Option
-          title={t('Add to Address Book')}
-          renderIcon={() => <AddressBookIcon color={theme.secondaryText} width={18} height={18} />}
-          onPress={() => {}}
-        /> */}
-        <Option
-          title={t('Copy Address')}
-          isAddress
-          text={shortenAddress(address, 15)}
-          renderIcon={() => <CopyIcon color={theme.secondaryText} width={16} height={16} />}
-          onPress={handleCopyAddress}
-        />
-      </Tooltip>
+        </Tooltip>
+      )}
     </View>
   )
 }

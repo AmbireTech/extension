@@ -11,9 +11,10 @@ import BaseAddress from '../BaseAddress'
 interface Props extends TextProps {
   address: string
   chainId: bigint
+  actionsMode?: 'tooltip' | 'inline'
 }
 
-const BenzinAddressName: FC<Props> = ({ address, chainId, ...rest }) => {
+const BenzinAddressName: FC<Props> = ({ address, chainId, actionsMode = 'tooltip', ...rest }) => {
   const { isLoading: isLoadingEns, name } = useReverseLookup({ address })
 
   const {
@@ -47,7 +48,7 @@ const BenzinAddressName: FC<Props> = ({ address, chainId, ...rest }) => {
     )
 
   return (
-    <BaseAddress address={address} {...rest}>
+    <BaseAddress address={address} chainId={chainId} actionsMode={actionsMode} {...rest}>
       {name || foundContractName || address}
     </BaseAddress>
   )

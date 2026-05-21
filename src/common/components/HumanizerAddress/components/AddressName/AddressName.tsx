@@ -9,9 +9,10 @@ import useReverseLookup from '@common/hooks/useReverseLookup'
 interface Props extends TextProps {
   address: string
   chainId: bigint
+  actionsMode?: 'tooltip' | 'inline'
 }
 
-const AddressName: FC<Props> = ({ address, chainId, ...rest }) => {
+const AddressName: FC<Props> = ({ address, chainId, actionsMode = 'tooltip', ...rest }) => {
   const { name, isLoading } = useReverseLookup({ address })
   const {
     state: { contractNames },
@@ -41,7 +42,13 @@ const AddressName: FC<Props> = ({ address, chainId, ...rest }) => {
   if (isLoading) return <Spinner style={{ width: 16, height: 16 }} />
 
   return (
-    <BaseAddress address={address} isDisplayingPlainAddress={!name && !contractName} {...rest}>
+    <BaseAddress
+      address={address}
+      isDisplayingPlainAddress={!name && !contractName}
+      actionsMode={actionsMode}
+      chainId={chainId}
+      {...rest}
+    >
       {name || contractName || address}
     </BaseAddress>
   )

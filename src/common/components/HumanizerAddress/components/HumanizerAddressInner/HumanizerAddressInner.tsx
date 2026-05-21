@@ -17,6 +17,7 @@ interface Props extends TextProps {
   highestPriorityAlias?: string
   humanizerInfo?: HumanizerMetaAddress
   hideLinks?: boolean
+  actionsMode?: 'tooltip' | 'inline'
   chainId: bigint
   verification?: BlacklistedStatus
 }
@@ -26,6 +27,7 @@ const HumanizerAddressInner: FC<Props> = ({
   address,
   highestPriorityAlias,
   hideLinks = false,
+  actionsMode = 'tooltip',
   chainId,
   ...rest
 }) => {
@@ -67,15 +69,35 @@ const HumanizerAddressInner: FC<Props> = ({
   // highestPriorityAlias and account labels are of higher priority than domains
   if (localAddressLabel)
     return (
-      <BaseAddress address={checksummedAddress} hideLinks={hideLinks} chainId={chainId} {...rest}>
+      <BaseAddress
+        address={checksummedAddress}
+        hideLinks={hideLinks}
+        actionsMode={actionsMode}
+        chainId={chainId}
+        {...rest}
+      >
         {localAddressLabel}
       </BaseAddress>
     )
 
   if (!isExtension)
-    return <BenzinAddressName address={checksummedAddress} chainId={chainId} {...rest} />
+    return (
+      <BenzinAddressName
+        address={checksummedAddress}
+        chainId={chainId}
+        actionsMode={actionsMode}
+        {...rest}
+      />
+    )
 
-  return <AddressName address={checksummedAddress} chainId={chainId} {...rest} />
+  return (
+    <AddressName
+      address={checksummedAddress}
+      chainId={chainId}
+      actionsMode={actionsMode}
+      {...rest}
+    />
+  )
 }
 
 export default React.memo(HumanizerAddressInner)

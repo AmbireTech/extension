@@ -19,6 +19,7 @@ interface Props extends TextProps {
   marginRight?: number
   hideLinks?: boolean
   hideLogo?: boolean
+  actionsMode?: 'tooltip' | 'inline'
   chainId: bigint
   verification?: BlacklistedStatus
 }
@@ -30,6 +31,7 @@ const HumanizerAddress: FC<Props> = ({
   marginRight,
   hideLinks = false,
   hideLogo = false,
+  actionsMode = 'tooltip',
   chainId,
   ...rest
 }) => {
@@ -65,6 +67,7 @@ const HumanizerAddress: FC<Props> = ({
         humanizerInfo={addressInfo}
         highestPriorityAlias={highestPriorityAlias}
         hideLinks={hideLinks}
+        actionsMode={actionsMode}
         chainId={chainId}
         {...rest}
       />
