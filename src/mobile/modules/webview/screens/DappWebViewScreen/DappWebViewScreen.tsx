@@ -8,6 +8,7 @@ import { WebView, WebViewNavigation } from 'react-native-webview'
 import { useLocation } from 'react-router-native'
 
 import { Dapp } from '@ambire-common/interfaces/dapp'
+import { getDappIdFromUrl } from '@ambire-common/libs/dapps/helpers'
 import { isValidHostname, isValidURL } from '@ambire-common/services/validations'
 import GlobeIcon from '@common/assets/svg/GlobeIcon'
 import GoogleIcon from '@common/assets/svg/GoogleIcon'
@@ -220,7 +221,7 @@ const DappWebViewScreen = () => {
     // Record the visited dapp into Recents. addToRecentDapps no-ops when the URL
     // doesn't resolve to a catalog dapp, so direct-URL / Google searches are safe.
     try {
-      const id = new URL(initialUrl).hostname.replace(/^www\./, '')
+      const id = getDappIdFromUrl(initialUrl)
       dappsDispatch({
         type: 'method',
         params: { method: 'addToRecentDapps', args: [id] }

@@ -1,5 +1,5 @@
 import Fuse from 'fuse.js'
-import React, { useCallback, useMemo, useRef } from 'react'
+import React, { useCallback, useMemo } from 'react'
 import { useForm } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
 import { Pressable, View } from 'react-native'
@@ -17,9 +17,6 @@ import useDebounce from '@common/hooks/useDebounce'
 import { AnimatedPressable } from '@common/hooks/useHover'
 import useNavigation from '@common/hooks/useNavigation'
 import useTheme from '@common/hooks/useTheme'
-import ClearRecentsBottomSheet, {
-  ClearRecentsBottomSheetHandle
-} from '@common/modules/explore/components/ClearRecentsBottomSheet'
 import DappItem from '@common/modules/explore/components/DappItem'
 import DappsSkeletonLoader from '@common/modules/explore/components/DappsSkeletonLoader'
 import HorizontalDappsRow from '@common/modules/explore/components/HorizontalDappsRow'
@@ -48,7 +45,6 @@ const ExploreScreen = () => {
   const { theme } = useTheme()
   const search = watch('search')
   const debouncedSearch = useDebounce({ value: search, delay: 350 })
-  const clearRecentsRef = useRef<ClearRecentsBottomSheetHandle>(null)
 
   const sections = useExploreSections()
 
@@ -64,10 +60,6 @@ const ExploreScreen = () => {
       navigate(ROUTES.exploreSection, { state: { type: section.type, title: section.title } }),
     [navigate]
   )
-
-  const handleClearRecentPress = useCallback(() => {
-    clearRecentsRef.current?.open()
-  }, [])
 
   // Search mode: collapse sections into the flat list with Google/open-URL suggestions,
   // matching the prior screen's behavior.
@@ -196,7 +188,6 @@ const ExploreScreen = () => {
         type: ExploreSection['type']
         title: string
         icon: React.ReactNode
-        showTrash: boolean
       }
     }) => {
       const matching = sections.find((s) => s.type === section.type)
@@ -206,12 +197,10 @@ const ExploreScreen = () => {
           icon={matching.icon}
           title={matching.title}
           onPress={() => handleOpenSection(matching)}
-          showTrash={matching.showTrash}
-          onTrashPress={matching.showTrash ? handleClearRecentPress : undefined}
         />
       )
     },
-    [sections, handleOpenSection, handleClearRecentPress]
+    [sections, handleOpenSection]
   )
 
   const sectionKeyExtractor = useCallback(
@@ -267,7 +256,6 @@ const ExploreScreen = () => {
           </View>
         )}
       </MobileLayoutWrapperMainContent>
-      <ClearRecentsBottomSheet ref={clearRecentsRef} />
     </MobileLayoutContainer>
   )
 }

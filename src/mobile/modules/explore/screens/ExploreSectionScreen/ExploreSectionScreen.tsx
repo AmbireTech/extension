@@ -1,10 +1,11 @@
-import React, { useCallback, useMemo, useState } from 'react'
+import React, { useCallback, useMemo, useRef, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
-import { View } from 'react-native'
+import { Pressable, View } from 'react-native'
 
 import { Dapp } from '@ambire-common/interfaces/dapp'
 import { Network } from '@ambire-common/interfaces/network'
+import DeleteIcon from '@common/assets/svg/DeleteIcon'
 import NetworksIcon from '@common/assets/svg/NetworksIcon'
 import NetworkIcon from '@common/components/NetworkIcon'
 import ScrollableWrapper, { WRAPPER_TYPES } from '@common/components/ScrollableWrapper'
@@ -17,6 +18,9 @@ import useDebounce from '@common/hooks/useDebounce'
 import useNavigation from '@common/hooks/useNavigation'
 import useRoute from '@common/hooks/useRoute'
 import useTheme from '@common/hooks/useTheme'
+import ClearRecentsBottomSheet, {
+  ClearRecentsBottomSheetHandle
+} from '@common/modules/explore/components/ClearRecentsBottomSheet'
 import DappItem from '@common/modules/explore/components/DappItem'
 import useExploreFilteredDapps from '@common/modules/explore/hooks/useExploreFilteredDapps'
 import { ExploreSectionType } from '@common/modules/explore/hooks/useExploreSections'
@@ -46,6 +50,8 @@ const ExploreSectionScreen = () => {
   const { control, watch, setValue } = useForm({ defaultValues: { search: '' } })
   const [network, setNetwork] = useState<Network | null>(null)
   const [category, setCategory] = useState<string | null>(null)
+
+  const clearRecentsRef = useRef<ClearRecentsBottomSheetHandle>(null)
 
   const sectionType: ExploreSectionType = (params?.type as ExploreSectionType) || 'apps'
   const title = (params?.title as string) || t(TYPE_TITLES[sectionType])
@@ -143,6 +149,10 @@ const ExploreSectionScreen = () => {
     setCategory(option.value as string)
   }, [])
 
+  const handleClearRecentPress = useCallback(() => {
+    clearRecentsRef.current?.open()
+  }, [])
+
   const renderItem = useCallback(({ item }: { item: Dapp }) => <DappItem {...item} />, [])
 
   return (
@@ -152,6 +162,13 @@ const ExploreSectionScreen = () => {
         title={title}
         onBackButtonPress={() => navigate(ROUTES.explore)}
         withScroll={false}
+        rightIcon={
+          sectionType === 'recent' ? (
+            <Pressable onPress={handleClearRecentPress} hitSlop={8}>
+              <DeleteIcon width={24} height={24} strokeWidth="1.75" />
+            </Pressable>
+          ) : undefined
+        }
       >
         <View style={flexbox.flex1}>
           <View style={[spacings.mbSm]}>
@@ -235,6 +252,7 @@ const ExploreSectionScreen = () => {
           />
         </View>
       </MobileLayoutWrapperMainContent>
+      <ClearRecentsBottomSheet ref={clearRecentsRef} />
     </MobileLayoutContainer>
   )
 }

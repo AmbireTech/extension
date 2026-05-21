@@ -3,8 +3,7 @@ import { FlatList, ListRenderItemInfo } from 'react-native'
 
 import { Dapp } from '@ambire-common/interfaces/dapp'
 import useWindowSize from '@common/hooks/useWindowSize'
-import { SPACING_SM } from '@common/styles/spacings'
-import spacings from '@common/styles/spacings'
+import spacings, { SPACING_SM } from '@common/styles/spacings'
 
 import HorizontalDappItem, {
   HORIZONTAL_ITEM_GUTTER,
@@ -94,7 +93,7 @@ const HorizontalDappsRow = ({ data }: Props) => {
       keyExtractor={keyExtractor}
       snapToOffsets={snapToOffsets}
       decelerationRate="fast"
-      style={spacings.mbSm}
+      style={spacings.mb}
     />
   )
 }

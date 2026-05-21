@@ -31,7 +31,7 @@ const SectionHeader = ({ icon, title, onPress, showTrash, onTrashPress }: Props)
         flexbox.directionRow,
         flexbox.alignCenter,
         flexbox.justifySpaceBetween,
-        spacings.pvTy
+        spacings.pvSm
       ]}
     >
       <AnimatedPressable

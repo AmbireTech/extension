@@ -93,7 +93,7 @@ const HorizontalDappItem = ({ dapp, gutter = HORIZONTAL_ITEM_GUTTER }: Props) =>
       />
       <Text
         numberOfLines={1}
-        fontSize={12}
+        fontSize={10}
         weight="medium"
         appearance="primaryText"
         style={[text.center, spacings.mtTy, { maxWidth: HORIZONTAL_ITEM_WIDTH }]}
