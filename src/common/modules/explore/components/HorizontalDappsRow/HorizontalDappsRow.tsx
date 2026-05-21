@@ -2,6 +2,7 @@ import React, { useCallback, useMemo } from 'react'
 import { FlatList, ListRenderItemInfo } from 'react-native'
 
 import { Dapp } from '@ambire-common/interfaces/dapp'
+import { isWeb } from '@common/config/env'
 import useWindowSize from '@common/hooks/useWindowSize'
 import spacings, { SPACING_SM } from '@common/styles/spacings'
 
@@ -95,11 +96,62 @@ const HorizontalDappsRow = ({ data }: Props) => {
     return offsets
   }, [data.length, gutter, snapInterval, middlePeek, scrollableWidth])
 
+  // react-native-web ignores snapToOffsets/snapToInterval/decelerationRate. The only built-in web
+  // snap support is `pagingEnabled` which emits scroll-snap CSS. Apply CSS scroll-snap manually
+  // so web matches native middle-snap visuals as closely as possible (item k aligned-start with
+  // a scroll-padding-left that places it at viewport_x = ITEM_WIDTH - middlePeek + gutter, the
+  // same as native snap[k] for k >= 1; scroll positions 0 and maxScroll clamp naturally).
+  const webSnapStyle = useMemo(
+    () =>
+      isWeb
+        ? ({
+            scrollSnapType: 'x mandatory',
+            scrollPaddingLeft: gutter + middlePeek
+          } as any)
+        : undefined,
+    [gutter, middlePeek]
+  )
+
+  const webItemSnapStyle = useMemo(
+    () => (isWeb ? ({ scrollSnapAlign: 'start', scrollSnapStop: 'always' } as any) : undefined),
+    []
+  )
+
+  // First item: shift its snap-area origin so the snap position lands at scroll=0 (item 0 flush
+  // left) instead of at -(gutter+middlePeek), which would be clamped by the browser without
+  // becoming a true snap target.
+  const webFirstItemSnapStyle = useMemo(
+    () =>
+      isWeb
+        ? ({
+            scrollSnapAlign: 'start',
+            scrollSnapStop: 'always',
+            scrollMarginLeft: -(gutter + middlePeek)
+          } as any)
+        : undefined,
+    [gutter, middlePeek]
+  )
+
+  // Last item snaps right-aligned so maxScroll is reachable as a snap target. Without this the
+  // last `start`-aligned snap is far past the actual maxScroll and the browser only snaps to
+  // an earlier position.
+  const webLastItemSnapStyle = useMemo(
+    () => (isWeb ? ({ scrollSnapAlign: 'end', scrollSnapStop: 'always' } as any) : undefined),
+    []
+  )
+
   const renderItem = useCallback(
-    ({ item, index }: ListRenderItemInfo<Dapp>) => (
-      <HorizontalDappItem dapp={item} gutter={index === data.length - 1 ? 0 : gutter} />
-    ),
-    [data.length, gutter]
+    ({ item, index }: ListRenderItemInfo<Dapp>) => {
+      const isFirst = index === 0
+      const isLast = index === data.length - 1
+      let snapStyle = webItemSnapStyle
+      if (isFirst) snapStyle = webFirstItemSnapStyle
+      else if (isLast) snapStyle = webLastItemSnapStyle
+      return (
+        <HorizontalDappItem dapp={item} gutter={isLast ? 0 : gutter} webSnapStyle={snapStyle} />
+      )
+    },
+    [data.length, gutter, webItemSnapStyle, webFirstItemSnapStyle, webLastItemSnapStyle]
   )
 
   const keyExtractor = useCallback((item: Dapp) => item.id, [])
@@ -113,7 +165,7 @@ const HorizontalDappsRow = ({ data }: Props) => {
       keyExtractor={keyExtractor}
       snapToOffsets={snapToOffsets}
       decelerationRate="fast"
-      style={spacings.mb}
+      style={[spacings.mb, webSnapStyle]}
     />
   )
 }

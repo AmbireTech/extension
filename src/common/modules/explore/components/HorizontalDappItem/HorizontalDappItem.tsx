@@ -22,9 +22,10 @@ export const HORIZONTAL_ITEM_GUTTER = 24
 type Props = {
   dapp: Dapp
   gutter?: number
+  webSnapStyle?: object
 }
 
-const HorizontalDappItem = ({ dapp, gutter = HORIZONTAL_ITEM_GUTTER }: Props) => {
+const HorizontalDappItem = ({ dapp, gutter = HORIZONTAL_ITEM_GUTTER, webSnapStyle }: Props) => {
   const { theme } = useTheme()
   const navigation = useNavigation()
   const { dispatch: dappsDispatch } = useController('DappsController')
@@ -77,7 +78,8 @@ const HorizontalDappItem = ({ dapp, gutter = HORIZONTAL_ITEM_GUTTER }: Props) =>
       style={[
         animStyle,
         flexbox.alignCenter,
-        { width: HORIZONTAL_ITEM_WIDTH, marginRight: gutter }
+        { width: HORIZONTAL_ITEM_WIDTH, marginRight: gutter, flexShrink: 0 },
+        webSnapStyle
       ]}
     >
       <ManifestImage
