@@ -4,6 +4,7 @@ import { View } from 'react-native'
 
 import { Dapp } from '@ambire-common/interfaces/dapp'
 import ConnectedIcon from '@common/assets/svg/ConnectedIcon'
+import SettingsIcon from '@common/assets/svg/SettingsIcon'
 import SettingsWheelIcon from '@common/assets/svg/SettingsWheelIcon'
 import StarIcon from '@common/assets/svg/StarIcon'
 import TwitterIcon from '@common/assets/svg/TwitterIcon'
@@ -182,32 +183,36 @@ const DappItem = (dapp: DappItemProps) => {
                   >
                     {name}
                   </Text>
-                  <AnimatedPressable
-                    {...bindStarIconAnimation}
-                    style={[
-                      spacings.mrTy,
-                      {
-                        transform: [{ scale: starIconAnimationStyle.scaleX as number }]
-                      }
-                    ]}
-                    onPress={() => {
-                      dappsDispatch({
-                        type: 'method',
-                        params: {
-                          method: 'updateDapp',
-                          args: [id, { favorite: !favorite }]
+                  {!!isInSettings && (
+                    <AnimatedPressable
+                      {...bindStarIconAnimation}
+                      style={[
+                        spacings.mrTy,
+                        {
+                          transform: [{ scale: starIconAnimationStyle.scaleX as number }]
                         }
-                      })
-                    }}
-                  >
-                    <StarIcon
-                      width={20}
-                      height={20}
-                      color={favorite ? theme.warning400 : theme.iconPrimary}
-                    />
-                  </AnimatedPressable>
-                  {!!isConnected && <ConnectedIcon style={spacings.mrTy} width={20} height={20} />}
-                  {!!tvl && (
+                      ]}
+                      onPress={() => {
+                        dappsDispatch({
+                          type: 'method',
+                          params: {
+                            method: 'updateDapp',
+                            args: [id, { favorite: !favorite }]
+                          }
+                        })
+                      }}
+                    >
+                      <StarIcon
+                        width={20}
+                        height={20}
+                        color={favorite ? theme.warning400 : theme.iconPrimary}
+                      />
+                    </AnimatedPressable>
+                  )}
+                  {!!isConnected && !!isInSettings && (
+                    <ConnectedIcon style={spacings.mrTy} width={20} height={20} />
+                  )}
+                  {!!tvl && !!isInSettings && (
                     <View
                       style={[
                         spacings.phTy,
@@ -226,7 +231,7 @@ const DappItem = (dapp: DappItemProps) => {
                       </Text>
                     </View>
                   )}
-                  {!!twitter && (
+                  {!!twitter && !!isInSettings && (
                     <AnimatedPressable
                       style={[
                         {
@@ -242,30 +247,23 @@ const DappItem = (dapp: DappItemProps) => {
                   {blacklisted === 'BLACKLISTED' && (
                     <Badge text={t('Blacklisted')} type="error" style={spacings.mrTy} />
                   )}
+                  {!isInSettings && (
+                    <View testID="manage-dapp-dropdown" style={{ zIndex: 999 }}>
+                      <ManageApp
+                        dapp={dapp}
+                        isParentHovered={isCardHovered}
+                        buttonProps={{
+                          ...bindSettingsIconAnimation,
+                          style: [
+                            { transform: [{ scale: settingsIconAnimationStyle.scaleX as number }] }
+                          ]
+                        }}
+                      >
+                        <SettingsIcon width={21} height={21} color={theme.iconPrimary} />
+                      </ManageApp>
+                    </View>
+                  )}
                 </View>
-                {!!isConnected && !isInSettings && (
-                  <View testID="manage-dapp-dropdown" style={{ zIndex: 999 }}>
-                    <ManageApp
-                      dapp={dapp}
-                      isParentHovered={isCardHovered}
-                      withCurrentAccount={isConnected}
-                      buttonProps={{
-                        ...bindSettingsIconAnimation,
-                        style: [
-                          spacings.mlTy,
-                          { transform: [{ scale: settingsIconAnimationStyle.scaleX as number }] }
-                        ]
-                      }}
-                    >
-                      <SettingsWheelIcon
-                        width={20}
-                        height={20}
-                        strokeWidth="1.8"
-                        color={theme.iconPrimary}
-                      />
-                    </ManageApp>
-                  </View>
-                )}
                 {isFeatured && !isInSettings && (
                   <Badge
                     text={t('Featured')}
@@ -292,7 +290,11 @@ const DappItem = (dapp: DappItemProps) => {
             </View>
           </View>
 
-          <Text fontSize={12} appearance="secondaryText" numberOfLines={isConnected ? 2 : 3}>
+          <Text
+            fontSize={12}
+            appearance="secondaryText"
+            numberOfLines={isInSettings ? undefined : 1}
+          >
             {description}
           </Text>
         </AnimatedPressable>

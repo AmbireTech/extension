@@ -15,8 +15,8 @@ import text from '@common/styles/utils/text'
 import { openInTab } from '@common/utils/links/links'
 import ManifestImage from '@web/components/ManifestImage'
 
-export const HORIZONTAL_ITEM_ICON_SIZE = 56
-export const HORIZONTAL_ITEM_WIDTH = 56
+export const HORIZONTAL_ITEM_ICON_SIZE = 50
+export const HORIZONTAL_ITEM_WIDTH = 50
 export const HORIZONTAL_ITEM_GUTTER = 24
 
 type Props = {

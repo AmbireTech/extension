@@ -177,7 +177,7 @@ const ExploreSectionScreen = () => {
               control={control}
               // @ts-ignore
               setValue={setValue}
-              containerStyle={spacings.mbSm}
+              containerStyle={sectionType === 'apps' ? spacings.mbTy : spacings.mb0}
             />
             {sectionType === 'apps' && (
               <View style={[flexbox.directionRow, flexbox.alignCenter]}>

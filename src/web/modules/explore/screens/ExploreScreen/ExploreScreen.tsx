@@ -75,14 +75,7 @@ const ExploreScreen = () => {
     return fuse.search(debouncedSearch).map((r) => r.item.dapp)
   }, [debouncedSearch, searchableDapps])
 
-  const renderSearchItem = useCallback(
-    ({ item }: { item: Dapp }) => (
-      <View style={spacings.ph}>
-        <DappItem {...item} />
-      </View>
-    ),
-    []
-  )
+  const renderSearchItem = useCallback(({ item }: { item: Dapp }) => <DappItem {...item} />, [])
 
   const sectionListData = useMemo(
     () =>
@@ -98,11 +91,7 @@ const ExploreScreen = () => {
 
   const renderSectionItem = useCallback(({ item }: { item: SectionItem }) => {
     if (item.kind === 'row') return <HorizontalDappsRow data={item.dapps} />
-    return (
-      <View style={spacings.ph}>
-        <DappItem {...item.dapp} />
-      </View>
-    )
+    return <DappItem {...item.dapp} />
   }, [])
 
   const renderSectionHeader = useCallback(
@@ -133,14 +122,15 @@ const ExploreScreen = () => {
       {!state.isReadyToDisplayDapps || !state.dapps?.length ? (
         <DappsSkeletonLoader />
       ) : (
-        <View style={flexbox.flex1}>
-          <View style={[spacings.phSm, spacings.pvSm]}>
+        <View style={[flexbox.flex1]}>
+          <View style={spacings.phSm}>
             <Search
               placeholder={t('Search for an app')}
               control={control}
               // @ts-ignore
               setValue={setValue}
               autoFocus
+              containerStyle={spacings.mbTy}
             />
           </View>
           {debouncedSearch ? (
@@ -149,6 +139,8 @@ const ExploreScreen = () => {
               data={searchResults}
               renderItem={renderSearchItem as any}
               keyExtractor={(item: Dapp) => item.id}
+              style={spacings.phSm}
+              contentContainerStyle={spacings.pr0}
             />
           ) : (
             <ScrollableWrapper
@@ -158,6 +150,8 @@ const ExploreScreen = () => {
               renderSectionHeader={renderSectionHeader as any}
               keyExtractor={sectionKeyExtractor as any}
               stickySectionHeadersEnabled={false}
+              style={spacings.phSm}
+              contentContainerStyle={spacings.pr0}
             />
           )}
         </View>

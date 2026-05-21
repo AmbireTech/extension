@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { Pressable, View } from 'react-native'
 
 import ArrowRightIcon from '@common/assets/svg/ArrowRightIcon'
@@ -20,6 +20,7 @@ type Props = {
 
 const SectionHeader = ({ icon, title, onPress, showTrash, onTrashPress }: Props) => {
   const { theme } = useTheme()
+  const [isHovered, setIsHovered] = useState(false)
   const [bindAnim, animStyle] = useCustomHover({
     property: 'opacity',
     values: { from: 1, to: 0.7 }
@@ -33,6 +34,10 @@ const SectionHeader = ({ icon, title, onPress, showTrash, onTrashPress }: Props)
         flexbox.justifySpaceBetween,
         spacings.pvSm
       ]}
+      {...({
+        onMouseEnter: () => setIsHovered(true),
+        onMouseLeave: () => setIsHovered(false)
+      } as any)}
     >
       <AnimatedPressable
         {...bindAnim}
@@ -51,7 +56,7 @@ const SectionHeader = ({ icon, title, onPress, showTrash, onTrashPress }: Props)
 
         <RightArrowIcon style={spacings.mlSm} />
       </AnimatedPressable>
-      {showTrash && onTrashPress && (
+      {showTrash && onTrashPress && isHovered && (
         <Pressable onPress={onTrashPress} hitSlop={8}>
           <DeleteIcon width={24} height={24} strokeWidth="1.75" />
         </Pressable>

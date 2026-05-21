@@ -1,3 +1,5 @@
-import ManageApp from './ManageApp'
+import ManageCurrentlyConnectedApp from './ManageCurrentlyConnectedApp.web'
 
-export default ManageApp
+export { ManageCurrentlyConnectedApp }
+
+export { default } from './ManageApp'

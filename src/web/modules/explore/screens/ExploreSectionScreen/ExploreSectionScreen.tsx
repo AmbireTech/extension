@@ -21,7 +21,7 @@ import DappItem from '@common/modules/explore/components/DappItem'
 import useExploreFilteredDapps from '@common/modules/explore/hooks/useExploreFilteredDapps'
 import { ExploreSectionType } from '@common/modules/explore/hooks/useExploreSections'
 import { HeaderWithTitle } from '@common/modules/header/components/Header/Header'
-import spacings from '@common/styles/spacings'
+import spacings, { SPACING_SM } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
 
@@ -138,84 +138,70 @@ const ExploreSectionScreen = () => {
     setCategory(option.value as string)
   }, [])
 
-  const renderItem = useCallback(
-    ({ item }: { item: Dapp }) => (
-      <View style={spacings.ph}>
-        <DappItem {...item} />
-      </View>
-    ),
-    []
-  )
+  const renderItem = useCallback(({ item }: { item: Dapp }) => <DappItem {...item} />, [])
 
   return (
     <LayoutWrapper>
-      <HeaderWithTitle />
-      <View style={flexbox.flex1}>
-        <View style={[spacings.phSm, spacings.pvSm]}>
-          {!!title && (
-            <Text weight="semiBold" fontSize={20} style={spacings.mbSm}>
-              {title}
-            </Text>
-          )}
+      <HeaderWithTitle title={title} />
+      <View style={[flexbox.flex1]}>
+        <View style={[spacings.pbTy, spacings.phSm]}>
           <Search
             placeholder={t('Search')}
             control={control}
             // @ts-ignore
             setValue={setValue}
-            containerStyle={spacings.mbSm}
+            containerStyle={sectionType === 'apps' ? spacings.mbTy : spacings.mb0}
           />
           {sectionType === 'apps' && (
-            <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-              <Select
-                setValue={handleSetNetworkValue}
-                containerStyle={{
-                  width: 164,
-                  marginBottom: 0,
-                  ...spacings.mrTy
-                }}
-                menuOptionHeight={32}
-                options={networksOptions}
-                menuProps={{ width: 200 }}
-                value={
-                  networksOptions.find((opt) => opt.value === network?.name) ?? ALL_NETWORKS_OPTION
-                }
-                clearValue={() => setNetwork(null)}
-                withClearButton={!!network}
-                size="sm"
-                selectBorderWrapperStyle={{ borderRadius: 50 }}
-                selectStyle={{
-                  borderRadius: 50,
-                  height: 32,
-                  ...spacings.prSm,
-                  ...spacings.plMi,
-                  backgroundColor: theme.secondaryBackground
-                }}
-                hoveredSelectStyle={{ backgroundColor: theme.tertiaryBackground }}
-              />
-              <Select
-                setValue={handleSetCategoryValue}
-                containerStyle={{
-                  width: 164,
-                  marginBottom: 0
-                }}
-                options={categoryOptions}
-                value={
-                  categoryOptions.find((opt) => opt.value === category) ?? ALL_CATEGORIES_OPTION
-                }
-                menuOptionHeight={32}
-                clearValue={() => setCategory(null)}
-                withClearButton={!!category}
-                size="sm"
-                menuProps={{ width: 230 }}
-                selectBorderWrapperStyle={{ borderRadius: 50 }}
-                selectStyle={{
-                  borderRadius: 50,
-                  height: 32,
-                  ...spacings.phSm,
-                  backgroundColor: theme.secondaryBackground
-                }}
-                hoveredSelectStyle={{ backgroundColor: theme.tertiaryBackground }}
-              />
+            <View style={[flexbox.directionRow, flexbox.alignCenter, { columnGap: SPACING_SM }]}>
+              <View>
+                <Select
+                  setValue={handleSetNetworkValue}
+                  containerStyle={{ marginBottom: 0 }}
+                  menuOptionHeight={32}
+                  options={networksOptions}
+                  menuProps={{ width: 200 }}
+                  value={
+                    networksOptions.find((opt) => opt.value === network?.name) ??
+                    ALL_NETWORKS_OPTION
+                  }
+                  clearValue={() => setNetwork(null)}
+                  withClearButton={!!network}
+                  size="sm"
+                  selectBorderWrapperStyle={{ borderRadius: 50 }}
+                  selectStyle={{
+                    borderRadius: 50,
+                    height: 32,
+                    ...spacings.prSm,
+                    ...spacings.plMi,
+                    backgroundColor: theme.secondaryBackground
+                  }}
+                  hoveredSelectStyle={{ backgroundColor: theme.tertiaryBackground }}
+                />
+              </View>
+              <View>
+                <Select
+                  setValue={handleSetCategoryValue}
+                  containerStyle={{ marginBottom: 0 }}
+                  options={categoryOptions}
+                  value={
+                    categoryOptions.find((opt) => opt.value === category) ?? ALL_CATEGORIES_OPTION
+                  }
+                  menuOptionHeight={32}
+                  clearValue={() => setCategory(null)}
+                  withClearButton={!!category}
+                  size="sm"
+                  menuProps={{ width: 230 }}
+                  selectBorderWrapperStyle={{ borderRadius: 50 }}
+                  selectStyle={{
+                    borderRadius: 50,
+                    height: 32,
+                    ...spacings.phSm,
+                    backgroundColor: theme.secondaryBackground
+                  }}
+                  hoveredSelectStyle={{ backgroundColor: theme.tertiaryBackground }}
+                />
+              </View>
             </View>
           )}
         </View>
@@ -224,6 +210,8 @@ const ExploreSectionScreen = () => {
           data={dapps}
           renderItem={renderItem}
           keyExtractor={(item: Dapp) => item.id}
+          style={spacings.phSm}
+          contentContainerStyle={spacings.pr0}
           ListEmptyComponent={
             <View style={[flexbox.center, spacings.pv]}>
               <Text appearance="secondaryText" style={text.center}>

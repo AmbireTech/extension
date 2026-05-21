@@ -22,7 +22,6 @@ import spacings from '@common/styles/spacings'
 interface ManageAppProps {
   dapp: Dapp
   children: React.ReactNode
-  withCurrentAccount?: boolean
   isParentHovered?: boolean
   buttonProps?: Omit<React.ComponentProps<typeof Pressable>, 'onPress' | 'ref'>
   style?: ViewStyle
@@ -32,7 +31,6 @@ interface ManageAppProps {
 const ManageApp = ({
   dapp,
   children,
-  withCurrentAccount = false,
   isParentHovered: _isParentHovered,
   buttonProps,
   style = {},
@@ -99,7 +97,11 @@ const ManageApp = ({
 
   return (
     <>
-      <AnimatedPressable onPress={open} {...(buttonProps as any)}>
+      <AnimatedPressable
+        onPress={open}
+        hitSlop={{ top: 8, bottom: 8, left: 10, right: 10 }}
+        {...(buttonProps as any)}
+      >
         {children}
       </AnimatedPressable>
 
@@ -112,7 +114,7 @@ const ManageApp = ({
         style={style}
       >
         <Text weight="semiBold" fontSize={18} style={[spacings.mb, { textAlign: 'center' }]}>
-          {t('Current app')}
+          {t('Manage app')}
         </Text>
 
         <View style={spacings.mbSm}>
@@ -129,7 +131,7 @@ const ManageApp = ({
           selectStyle={{ backgroundColor: theme.tertiaryBackground }}
         />
 
-        {!!withCurrentAccount && !!account && (
+        {!!account && (
           <Select
             value={{
               value: account.addr,
