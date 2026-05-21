@@ -99,6 +99,7 @@ const InnerToken: FC<Props> = ({
           style={{ maxWidth: '100%', ...(isMobile ? spacings.mrMi : {}) }}
         >
           <Text
+            fontSize={textSize}
             weight={shouldDisplayUnlimitedAmount ? undefined : 'medium'}
             appearance={
               shouldDisplayUnlimitedAmount || shouldDisplayALotOf ? 'warningText' : 'primaryText'
