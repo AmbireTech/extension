@@ -266,9 +266,6 @@ const Main = ({
             isInitiallyExpanded={!visualizeHumanized && !isHumanizing}
             style={{
               marginBottom: SPACING_TY * responsiveSizeMultiplier,
-              // Setting maxHeight on larger screens introduced internal content scroll
-              // (which aligns the content better - with internal scrollbar).
-              ...(minHeightSize(660) ? {} : { maxHeight: '100%' }),
               backgroundColor: theme.secondaryBackground,
               ...(humanizedMessage?.warnings?.length ? styles.warningContainer : {})
             }}
