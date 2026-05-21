@@ -137,17 +137,6 @@ const BaseAddress: FC<Props> = ({
       </Text>
       {showInlineActions ? (
         <>
-          <HoverablePressable
-            accessibilityRole="button"
-            accessibilityLabel={t('Copy Address')}
-            onPress={(e: any) => {
-              e?.stopPropagation?.()
-              void handleCopyAddress()
-            }}
-            style={[spacings.mlTy, flexbox.center]}
-          >
-            <CopyIcon color={theme.secondaryText} width={16} height={16} />
-          </HoverablePressable>
           {!!network?.explorerUrl && !hideLinks && (
             <HoverablePressable
               accessibilityRole="link"

@@ -7,13 +7,12 @@ import {
   IrCall
 } from '@ambire-common/libs/humanizer/interfaces'
 import useBenzinNetworksContext from '@benzin/hooks/useBenzinNetworksContext'
-import CopyIcon from '@common/assets/svg/CopyIcon'
 import OpenIcon from '@common/assets/svg/OpenIcon'
 import EditApproval from '@common/components/HumanizedVisualization/EditApproval'
 import HumanizerAddress from '@common/components/HumanizerAddress'
 import Text from '@common/components/Text'
 import TokenOrNft from '@common/components/TokenOrNft'
-import { isMobile, isWeb } from '@common/config/env'
+import { isMobile } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
@@ -21,7 +20,6 @@ import useToast from '@common/hooks/useToast'
 import spacings, { SPACING_SM, SPACING_TY } from '@common/styles/spacings'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
-import { setStringAsync } from '@common/utils/clipboard'
 import { openInTab } from '@common/utils/links'
 import ImageIcon from '@web/assets/svg/ImageIcon'
 import ManifestImage from '@web/components/ManifestImage'
@@ -87,17 +85,6 @@ const Erc7730StructuredAddressActions: FC<Erc7730StructuredAddressActionsProps> 
     [actualNetworks, chainId]
   )
 
-  const handleCopyAddress = useCallback(async () => {
-    try {
-      await setStringAsync(address)
-      addToast(t('Address copied to clipboard'))
-    } catch {
-      addToast(t('Failed to copy address'), {
-        type: 'error'
-      })
-    }
-  }, [addToast, address, t])
-
   const handleOpenExplorer = useCallback(async () => {
     if (!network?.explorerUrl) return
 
@@ -119,23 +106,6 @@ const Erc7730StructuredAddressActions: FC<Erc7730StructuredAddressActionsProps> 
 
   return (
     <>
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel={t('Copy Address')}
-        onPress={(e) => {
-          stopPressPropagation(e)
-          void handleCopyAddress()
-        }}
-        style={[spacings.mlTy, flexbox.center]}
-      >
-        {({ hovered }: any) => (
-          <CopyIcon
-            color={hovered ? theme.primaryText : theme.secondaryText}
-            width={16}
-            height={16}
-          />
-        )}
-      </Pressable>
       {!!network?.explorerUrl && !hideLinks && (
         <Pressable
           accessibilityRole="link"
