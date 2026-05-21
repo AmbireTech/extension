@@ -67,6 +67,7 @@ const BenzinAddressName: FC<Props> = ({
       <BaseAddress
         address={address}
         hideLinks={hideLinks}
+        isDisplayingPlainAddress={!name && !fallbackLabel && !foundContractName}
         chainId={chainId}
         actionsMode={actionsMode}
         {...rest}

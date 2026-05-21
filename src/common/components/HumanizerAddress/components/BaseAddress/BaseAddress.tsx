@@ -97,6 +97,8 @@ const BaseAddress: FC<Props> = ({
   // is JSX and not a string.
   const tooltipId = useMemo(() => `address-${address}-${nanoid(6)}`, [address])
   const showInlineActions = actionsMode === 'inline'
+  const displayValue =
+    showInlineActions && isDisplayingPlainAddress ? shortenAddress(address, 18, 4) : children
 
   return (
     <View
@@ -119,7 +121,7 @@ const BaseAddress: FC<Props> = ({
         }}
         {...rest}
       >
-        {children}
+        {displayValue}
         {isWeb && !showInlineActions && (
           <Pressable style={spacings.mlMi}>
             {({ hovered }: any) => (

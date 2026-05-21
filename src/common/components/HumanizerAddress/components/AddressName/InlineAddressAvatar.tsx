@@ -1,10 +1,8 @@
 import React, { FC, useMemo } from 'react'
-import { View } from 'react-native'
 
 import { getAddressCaught } from '@ambire-common/utils/getAddressCaught'
 import Avatar from '@common/components/Avatar'
 import useController from '@common/hooks/useController'
-import spacings from '@common/styles/spacings'
 
 interface Props {
   address: string
@@ -27,14 +25,12 @@ const InlineAddressAvatar: FC<Props> = ({ address, shouldShow }) => {
   if (!shouldShow || (!isEnsAddress && !account)) return null
 
   return (
-    <View style={spacings.mrMi}>
-      <Avatar
-        address={checksummedAddress}
-        pfp={account?.preferences.pfp || ''}
-        size={16}
-        displayTypeBadge={false}
-      />
-    </View>
+    <Avatar
+      address={checksummedAddress}
+      pfp={account?.preferences.pfp || ''}
+      size={16}
+      displayTypeBadge={false}
+    />
   )
 }
 
