@@ -21,6 +21,7 @@ interface Props {
   chainId: bigint
   hideLinks?: boolean
   tokenMarginRight?: number
+  tokenIconContainerSize?: number
 }
 
 const TokenOrNft: FC<Props> = ({
@@ -30,7 +31,8 @@ const TokenOrNft: FC<Props> = ({
   chainId,
   sizeMultiplierSize = 1,
   hideLinks = false,
-  tokenMarginRight
+  tokenMarginRight,
+  tokenIconContainerSize
 }) => {
   const marginRight =
     tokenMarginRight !== undefined ? tokenMarginRight : SPACING_TY * sizeMultiplierSize
@@ -148,6 +150,7 @@ const TokenOrNft: FC<Props> = ({
           marginRight={marginRight}
           hideLinks={hideLinks}
           chainId={chainId}
+          tokenIconContainerSize={tokenIconContainerSize}
         />
       )
 
@@ -173,6 +176,7 @@ const TokenOrNft: FC<Props> = ({
       marginRight={marginRight}
       hideLinks={hideLinks}
       chainId={chainId}
+      tokenIconContainerSize={tokenIconContainerSize}
     />
   )
 }

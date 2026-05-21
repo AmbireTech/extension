@@ -28,6 +28,7 @@ interface Props {
   marginRight: number
   hideLinks?: boolean
   chainId: bigint
+  tokenIconContainerSize?: number
 }
 
 const InnerToken: FC<Props> = ({
@@ -39,9 +40,14 @@ const InnerToken: FC<Props> = ({
   sizeMultiplierSize = 1,
   marginRight,
   hideLinks = false,
-  chainId
+  chainId,
+  tokenIconContainerSize
 }) => {
   const { t } = useTranslation()
+  const tokenIconSize = tokenIconContainerSize
+    ? Math.max(tokenIconContainerSize - 4, 0)
+    : 24 * sizeMultiplierSize
+
   const openExplorer = useCallback(async () => {
     const targetUrl =
       address === ZeroAddress && network?.nativeAssetId
@@ -125,8 +131,11 @@ const InnerToken: FC<Props> = ({
       {hideLinks ? (
         <View style={{ ...flexbox.directionRow, ...flexbox.alignCenter, marginRight }}>
           <TokenIcon
-            width={24 * sizeMultiplierSize}
-            height={24 * sizeMultiplierSize}
+            width={tokenIconSize}
+            height={tokenIconSize}
+            withContainer={!!tokenIconContainerSize}
+            containerWidth={tokenIconContainerSize}
+            containerHeight={tokenIconContainerSize}
             chainId={network?.chainId}
             address={address}
             withNetworkIcon={false}
@@ -148,8 +157,11 @@ const InnerToken: FC<Props> = ({
           onPress={openExplorer}
         >
           <TokenIcon
-            width={24 * sizeMultiplierSize}
-            height={24 * sizeMultiplierSize}
+            width={tokenIconSize}
+            height={tokenIconSize}
+            withContainer={!!tokenIconContainerSize}
+            containerWidth={tokenIconContainerSize}
+            containerHeight={tokenIconContainerSize}
             chainId={network?.chainId}
             address={address}
             withNetworkIcon={false}

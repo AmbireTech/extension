@@ -263,6 +263,7 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
               chainId={tokenChainId}
               hideLinks
               tokenMarginRight={0}
+              tokenIconContainerSize={20}
             />
             {editApprovalCallInfo && (
               <EditApproval
@@ -304,6 +305,7 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
               chainId={tokenChainId}
               hideLinks
               tokenMarginRight={0}
+              tokenIconContainerSize={20}
             />
             <Erc7730StructuredAddressActions
               address={valueItem.address}
