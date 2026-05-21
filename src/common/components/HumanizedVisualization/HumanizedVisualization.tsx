@@ -191,8 +191,60 @@ const isSwapLikeTitle = (title?: string) =>
 const isComplexActionRow = (row: Erc7730Row) =>
   /action|call|operation|method/.test(row.label.toLowerCase())
 
+const isActionValue = (value: HumanizerVisualization) => value.type === 'action' && !!value.content
+
+const isToLabelValue = (value: HumanizerVisualization) =>
+  value.type === 'label' && value.content?.trim().toLowerCase() === 'to'
+
+const getDetailedActionParts = (row: Erc7730Row) => {
+  const action = row.value.find(isActionValue)
+  if (!action) return null
+
+  const recipientLabelIndex = row.value.findIndex(
+    (value, valueIndex, values) =>
+      isToLabelValue(value) && values[valueIndex + 1]?.type === 'address'
+  )
+  const recipientValues =
+    recipientLabelIndex >= 0 ? row.value.slice(recipientLabelIndex, recipientLabelIndex + 2) : []
+  const rightValues = row.value.filter(
+    (value, valueIndex) =>
+      value.id !== action.id &&
+      valueIndex !== recipientLabelIndex &&
+      valueIndex !== recipientLabelIndex + 1
+  )
+
+  return {
+    action,
+    recipientValues,
+    rightValues
+  }
+}
+
+const getDetailedValueLines = (row: Erc7730Row) =>
+  row.value.reduce<HumanizerVisualization[][]>(
+    (lines, value, valueIndex, values) => {
+      const lastLine = lines[lines.length - 1]
+      if (!lastLine) return [[value]]
+
+      const shouldStartRecipientLine =
+        isToLabelValue(value) && values[valueIndex + 1]?.type === 'address' && lastLine.length > 0
+
+      if (shouldStartRecipientLine) {
+        lines.push([value])
+        return lines
+      }
+
+      lastLine.push(value)
+      return lines
+    },
+    [[]]
+  )
+
 const getErc7730SpenderRow = (item: HumanizerErc7730Visualization) =>
   item.rows.find((row) => isSpenderRow(row))
+
+const shouldShowErc7730SpenderRowInSummary = (item: HumanizerErc7730Visualization) =>
+  !isSwapLikeTitle(item.title)
 
 const getErc7730SwapSummaryRows = (item: HumanizerErc7730Visualization) => {
   const tokenRows = item.rows.filter((row) => hasTokenValue(row))
@@ -220,17 +272,19 @@ const getErc7730SummaryRows = (item: HumanizerErc7730Visualization) => {
 }
 
 export const getErc7730DescriptionRows = (item: HumanizerErc7730Visualization) => {
-  const visibleSummaryRows = [getErc7730SpenderRow(item), ...getErc7730SummaryRows(item)].filter(
-    (row): row is Erc7730Row => !!row
-  )
+  const visibleSummaryRows = [
+    shouldShowErc7730SpenderRowInSummary(item) ? getErc7730SpenderRow(item) : undefined,
+    ...getErc7730SummaryRows(item)
+  ].filter((row): row is Erc7730Row => !!row)
 
   return item.rows.filter((row) => !visibleSummaryRows.includes(row))
 }
 
 export const shouldUseErc7730DetailedLayout = (item: HumanizerErc7730Visualization) => {
+  if (/multicall|batch|bundle/.test((item.title || '').toLowerCase())) return true
+
   const summaryRows = getErc7730SummaryRows(item)
   if (summaryRows.some(hasTokenValue)) return false
-  if (/multicall|batch|bundle/.test((item.title || '').toLowerCase())) return true
 
   const complexActionRows = summaryRows.filter(isComplexActionRow)
 
@@ -392,10 +446,44 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
     return null
   }
 
+  const renderDetailedValueLine = (
+    values: HumanizerVisualization[],
+    alignment: 'start' | 'end' = 'end'
+  ) => (
+    <View
+      key={values.map((value) => value.id).join('-')}
+      style={[
+        flexbox.directionRow,
+        flexbox.alignCenter,
+        alignment === 'start' ? flexbox.justifyStart : flexbox.justifyEnd,
+        flexbox.wrap,
+        {
+          minWidth: 0,
+          maxWidth: '100%'
+        }
+      ]}
+    >
+      {values.map((value) => {
+        const renderedValue = renderValue(value)
+        if (!renderedValue) return null
+
+        const isLastElement = value.id === values[values.length - 1]?.id
+
+        return (
+          <View key={value.id} style={!isLastElement && spacings.mrTy}>
+            {renderedValue}
+          </View>
+        )
+      })}
+    </View>
+  )
+
   if (mode === 'summary') {
     const summaryRows = getErc7730SummaryRows(item)
     const shouldStackSummaryRows = summaryRows.length > 1 && summaryRows.every(hasTokenValue)
-    const spenderRow = getErc7730SpenderRow(item)
+    const spenderRow = shouldShowErc7730SpenderRowInSummary(item)
+      ? getErc7730SpenderRow(item)
+      : undefined
     const subtitleTextSize = Math.max(textSize - 3, 11)
 
     return (
@@ -555,45 +643,97 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
 
   return (
     <View style={{ width: '100%' }}>
-      {item.rows.map((row, index) => (
-        <View
-          key={`${item.id}-${row.label}-${index}`}
-          style={[
-            flexbox.directionRow,
-            flexbox.justifySpaceBetween,
-            flexbox.alignStart,
-            {
-              width: '100%',
-              gap: SPACING_SM,
-              paddingVertical: SPACING_TY,
-              flexWrap: 'wrap'
-            }
-          ]}
-        >
-          <Text
-            fontSize={textSize}
-            weight="semiBold"
-            appearance="secondaryText"
-            style={{ flex: 1, minWidth: 120 }}
-          >
-            {row.label}
-          </Text>
+      {item.rows.map((row) => {
+        const actionParts = getDetailedActionParts(row)
+        const rowKey = `${item.id}-${row.label}-${row.value.map((value) => value.id).join('-')}`
+
+        if (actionParts) {
+          return (
+            <View
+              key={rowKey}
+              style={[
+                flexbox.directionRow,
+                flexbox.justifySpaceBetween,
+                flexbox.alignStart,
+                {
+                  width: '100%',
+                  gap: SPACING_SM,
+                  paddingVertical: SPACING_TY,
+                  flexWrap: 'wrap'
+                }
+              ]}
+            >
+              <View style={{ flex: 1, minWidth: 160 }}>
+                <Text
+                  fontSize={textSize}
+                  weight="semiBold"
+                  color={theme.secondaryAccent400}
+                  style={{ flexShrink: 1 }}
+                >
+                  {actionParts.action.content}
+                </Text>
+                {!!actionParts.recipientValues.length && (
+                  <View style={spacings.mtMi}>
+                    {renderDetailedValueLine(actionParts.recipientValues, 'start')}
+                  </View>
+                )}
+              </View>
+              <View
+                style={[
+                  flexbox.justifyEnd,
+                  flexbox.alignEnd,
+                  {
+                    flex: 1.6,
+                    minWidth: 160
+                  }
+                ]}
+              >
+                {getDetailedValueLines({ ...row, value: actionParts.rightValues }).map((line) =>
+                  renderDetailedValueLine(line)
+                )}
+              </View>
+            </View>
+          )
+        }
+
+        return (
           <View
+            key={rowKey}
             style={[
               flexbox.directionRow,
-              flexbox.alignCenter,
-              flexbox.justifyEnd,
-              flexbox.wrap,
+              flexbox.justifySpaceBetween,
+              flexbox.alignStart,
               {
-                flex: 1.6,
-                minWidth: 160
+                width: '100%',
+                gap: SPACING_SM,
+                paddingVertical: SPACING_TY,
+                flexWrap: 'wrap'
               }
             ]}
           >
-            {row.value.map((value) => renderValue(value))}
+            <Text
+              fontSize={textSize}
+              weight="semiBold"
+              appearance="secondaryText"
+              style={{ flex: 1, minWidth: 120 }}
+            >
+              {row.label}
+            </Text>
+            <View
+              style={[
+                flexbox.justifyEnd,
+                flexbox.alignEnd,
+                {
+                  flex: 1.6,
+                  minWidth: 160
+                }
+              ]}
+            >
+              {getDetailedValueLines(row).map((line) => renderDetailedValueLine(line))}
+            </View>
           </View>
-        </View>
-      ))}
+        )
+      })}
     </View>
   )
 }
