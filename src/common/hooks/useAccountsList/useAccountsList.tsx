@@ -29,6 +29,7 @@ const useAccountsList = ({
     state: { domains }
   } = useController('DomainsController')
   const { accounts } = useController('AccountsController').state
+  const { keys } = useController('KeystoreController').state
   const {
     state: { account: selectedAccount }
   } = useController('SelectedAccountController')
@@ -39,12 +40,16 @@ const useAccountsList = ({
       accounts.map((account) => ({
         account,
         label: account.preferences.label.toLowerCase(),
+        keyLabels: keys
+          .filter((key) => account.associatedKeys.includes(key.addr))
+          .map((key) => `${key.label} ${key.type}`.toLowerCase())
+          .join(' '),
         ens: domains[account.addr]?.ens?.toLowerCase().trim() || '',
         namoshi: domains[account.addr]?.namoshi?.toLowerCase().trim() || '',
         address: account.addr.toLowerCase(),
         smart: isSmartAccount(account) ? 'smart' : ''
       })),
-    [accounts, domains]
+    [accounts, domains, keys]
   )
 
   const filteredAccounts = useMemo(() => {
@@ -56,6 +61,7 @@ const useAccountsList = ({
         { name: 'ens', weight: 0.3 },
         { name: 'namoshi', weight: 0.3 },
         { name: 'address', weight: 0.1 },
+        { name: 'keyLabels', weight: 0.2 },
         { name: 'smart', weight: 0.1 }
       ],
       threshold: 0.3,

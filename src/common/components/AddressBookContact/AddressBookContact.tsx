@@ -125,6 +125,7 @@ const AddressBookContact: FC<Props> = ({
       style={[
         flexbox.directionRow,
         flexbox.alignCenter,
+        flexbox.flex1,
         flexbox.justifySpaceBetween,
         spacings.phTy,
         spacings.pvTy,
@@ -136,7 +137,7 @@ const AddressBookContact: FC<Props> = ({
       {...(onPress ? bindAnim : {})}
       testID={testID}
     >
-      <View style={[flexbox.directionRow, flexbox.alignCenter]}>
+      <View style={[flexbox.directionRow, flexbox.alignCenter, flexbox.flex1]}>
         <Avatar
           {...(avatarSize && { size: avatarSize })}
           pfp={address}

@@ -12,7 +12,10 @@ import getStyles from '@common/modules/action-requests/components/DAppConnect/st
 import useDappConnect from '@common/modules/action-requests/hooks/useDappConnect'
 import { HeaderWithLogoOnly } from '@common/modules/header/components/Header/Header'
 import spacings from '@common/styles/spacings'
-import { TabLayoutContainer } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
+import {
+  TabLayoutContainer,
+  TabLayoutWrapperMainContent
+} from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
 
 // Screen for dApps authorization to connect to extension - will be triggered on dApp connect request
 const DappConnectScreen = () => {
@@ -66,21 +69,23 @@ const DappConnectScreen = () => {
       style={spacings.ptXl}
     >
       {!!dappToConnect && (
-        <View style={[styles.container]}>
-          <View style={styles.content}>
-            <DAppConnectHeader
-              name={dappToConnect.name}
-              id={dappToConnect.id}
-              icon={dappToConnect.icon!}
-              securityCheck={dappToConnect.blacklisted}
-              responsiveSizeMultiplier={responsiveSizeMultiplier}
-            />
-            <DAppConnectBody
-              securityCheck={dappToConnect.blacklisted}
-              responsiveSizeMultiplier={responsiveSizeMultiplier}
-            />
+        <TabLayoutWrapperMainContent contentContainerStyle={spacings.pb4Xl}>
+          <View style={[styles.container]}>
+            <View style={styles.content}>
+              <DAppConnectHeader
+                name={dappToConnect.name}
+                id={dappToConnect.id}
+                icon={dappToConnect.icon!}
+                securityCheck={dappToConnect.blacklisted}
+                responsiveSizeMultiplier={responsiveSizeMultiplier}
+              />
+              <DAppConnectBody
+                securityCheck={dappToConnect.blacklisted}
+                responsiveSizeMultiplier={responsiveSizeMultiplier}
+              />
+            </View>
           </View>
-        </View>
+        </TabLayoutWrapperMainContent>
       )}
     </TabLayoutContainer>
   )

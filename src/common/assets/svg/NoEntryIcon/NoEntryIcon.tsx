@@ -10,10 +10,10 @@ const NoEntryIcon: React.FC<SvgProps> = ({ width = 18, height = 18, ...props }) 
         r="9"
         transform="matrix(-1 0 0 1 21 3)"
         stroke="#96A1B1"
-        stroke-width="1.5"
-        stroke-linecap="round"
+        strokeWidth="1.5"
+        strokeLinecap="round"
       />
-      <Path d="M6 18L18.7279 5.27208" stroke="#96A1B1" stroke-width="1.5" />
+      <Path d="M6 18L18.7279 5.27208" stroke="#96A1B1" strokeWidth="1.5" />
     </Svg>
   )
 }
