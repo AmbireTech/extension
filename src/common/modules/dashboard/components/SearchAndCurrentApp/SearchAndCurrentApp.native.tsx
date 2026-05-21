@@ -16,7 +16,8 @@ import { SearchAndCurrentAppProps } from './SearchAndCurrentApp'
 const SearchAndCurrentApp: React.FC<SearchAndCurrentAppProps> = ({
   control,
   displayNetworkFilter = false,
-  isHidden
+  isHidden,
+  searchPlaceholder
 }) => {
   const { bottom: safeBottom } = useSafeAreaInsets()
   const { height } = useReanimatedKeyboardAnimation()
@@ -64,7 +65,7 @@ const SearchAndCurrentApp: React.FC<SearchAndCurrentAppProps> = ({
             { columnGap: SPACING }
           ]}
         >
-          <DashboardSearch control={control} />
+          <DashboardSearch control={control} placeholder={searchPlaceholder} />
           {displayNetworkFilter && <SelectNetwork />}
         </View>
       </GlassView>

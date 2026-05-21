@@ -217,7 +217,11 @@ const Collections: FC<Props> = ({
         onRefresh={onRefresh}
       />
       {openTab === 'collectibles' && (
-        <SearchAndCurrentApp control={control} isHidden={isSearchHidden} />
+        <SearchAndCurrentApp
+          control={control}
+          isHidden={isSearchHidden}
+          searchPlaceholder={t('Search NFT')}
+        />
       )}
     </>
   )

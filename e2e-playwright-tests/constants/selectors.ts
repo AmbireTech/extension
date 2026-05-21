@@ -86,7 +86,8 @@ const selectors = {
     rewardsButton: 'dashboard-button-rewards',
     rewardsForClaimingButton: 'marketing-banner-button',
     rewardsLink: '//div[contains(text(),"Ambire Rewards")]',
-    projectedRewardsClaimButton: 'projected-rewards-claim-button'
+    projectedRewardsClaimButton: 'projected-rewards-claim-button',
+    searchInputPlaceholder: 'search-input-placeholder'
   },
   settings: {
     createNewRecoveryPhraseButton: 'create-new-recovery-phrase',
