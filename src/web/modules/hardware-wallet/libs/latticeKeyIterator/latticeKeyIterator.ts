@@ -17,9 +17,9 @@ type KeyIteratorProps = {
  * Serves for retrieving a range of addresses/keys from a Lattice hardware wallet
  */
 class LatticeKeyIterator implements KeyIteratorInterface {
-  type = 'lattice' as 'lattice'
+  type = 'lattice' as const
 
-  subType = 'hw' as 'hw'
+  subType = 'hw' as const
 
   controller: ExternalSignerController
 
