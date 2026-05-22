@@ -19,7 +19,8 @@ import { FloatingBottomBarProps } from './FloatingBottomBar'
 const FloatingBottomBar: React.FC<FloatingBottomBarProps> = ({
   control,
   displayNetworkFilter = false,
-  isHidden
+  isHidden,
+  searchPlaceholder
 }) => {
   const { bottom: safeBottom } = useSafeAreaInsets()
   const { height } = useReanimatedKeyboardAnimation()
@@ -72,7 +73,7 @@ const FloatingBottomBar: React.FC<FloatingBottomBarProps> = ({
             { columnGap: SPACING }
           ]}
         >
-          <DashboardSearch control={control} />
+          <DashboardSearch control={control} placeholder={searchPlaceholder} />
           <Pressable
             style={{
               width: 40,

@@ -73,6 +73,18 @@ const getAddressInputValidation = ({
     }
   }
 
+  // ENS/Namoshi that looks like an address
+  if (
+    (isValidNamoshi || isValidEns) &&
+    address.indexOf('.') !== -1 &&
+    isValidAddress(address.split('.')[0] || '')
+  ) {
+    return {
+      message: `This {${isValidNamoshi ? 'Namoshi' : 'ENS'}} name may not point to the address you expect. Double-check before sending.`,
+      severity: 'warning'
+    }
+  }
+
   if (isValidEns) {
     successValidation = {
       message: 'Valid ENS domain',

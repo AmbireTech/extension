@@ -16,7 +16,8 @@ const VISIBLE_BOTTOM_OFFSET = 0
 const FloatingBottomBar: React.FC<FloatingBottomBarProps> = ({
   control,
   displayCurrentApp = false,
-  isHidden
+  isHidden,
+  searchPlaceholder
 }) => {
   const { bottom: safeBottom } = useSafeAreaInsets()
 
@@ -47,7 +48,7 @@ const FloatingBottomBar: React.FC<FloatingBottomBarProps> = ({
     >
       <GlassView borderRadius={28} cssStyle={{ pointerEvents: 'all' }} isSimpleBlur={false}>
         <View style={[spacings.phTy, spacings.pvTy, flexbox.directionRow, flexbox.alignCenter]}>
-          <DashboardSearch control={control} />
+          <DashboardSearch control={control} placeholder={searchPlaceholder} />
           {displayCurrentApp && <CurrentApp />}
         </View>
       </GlassView>
