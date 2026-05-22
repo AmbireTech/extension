@@ -80,9 +80,9 @@ const DappCatalogScreen = () => {
   const { networks: allNetworks } = useController('NetworksController').state
   const { theme } = useTheme()
 
-  const handleQrPress = () => {
+  const handleQrPress = useCallback(() => {
     navigate(ROUTES.qrReader)
-  }
+  }, [navigate])
 
   const searchableDapps = useMemo(
     () =>

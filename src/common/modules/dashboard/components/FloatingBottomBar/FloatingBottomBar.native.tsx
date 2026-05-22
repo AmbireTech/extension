@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useCallback } from 'react'
 import { Pressable, View } from 'react-native'
 import { useReanimatedKeyboardAnimation } from 'react-native-keyboard-controller'
 import Animated, { useAnimatedStyle, useDerivedValue, withSpring } from 'react-native-reanimated'
@@ -26,9 +26,9 @@ const FloatingBottomBar: React.FC<FloatingBottomBarProps> = ({
   const { theme } = useTheme()
   const { navigate } = useNavigation()
 
-  const handleQrPress = () => {
+  const handleQrPress = useCallback(() => {
     navigate(ROUTES.qrReader)
-  }
+  }, [navigate])
 
   const animatedBottom = useDerivedValue(() => {
     const toValue = isHidden ? -60 - safeBottom : SPACING + safeBottom
