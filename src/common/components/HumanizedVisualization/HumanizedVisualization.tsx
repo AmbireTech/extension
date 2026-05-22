@@ -113,7 +113,7 @@ const HumanizedVisualization: FC<Props> = ({
           )
         }
 
-        if (item.type === 'deadline' && item.value && type !== 'default')
+        if (item.type === 'deadline' && item.value && type === 'default')
           return (
             <DeadlineItem
               key={key}
