@@ -25,10 +25,9 @@ const MobileLayoutContainer: React.FC<MobileLayoutContainerProps> = ({
   renderDirectChildren,
   style,
   withHorizontalPadding = false,
-  withTopPadding = true,
-  withBottomInset = true
+  withTopPadding = true
 }) => {
-  const { theme, styles } = useTheme(getStyles)
+  const { theme } = useTheme(getStyles)
   const insets = useSafeAreaInsets()
   const isInsideBottomSheet = useIsInsideBottomSheet()
 
@@ -40,8 +39,7 @@ const MobileLayoutContainer: React.FC<MobileLayoutContainerProps> = ({
         flexbox.flex1,
         {
           backgroundColor: backgroundColor || theme.primaryBackground,
-          paddingTop,
-          paddingBottom: withBottomInset ? insets.bottom : 0
+          paddingTop
         }
       ]}
     >
@@ -60,8 +58,12 @@ const MobileLayoutContainer: React.FC<MobileLayoutContainerProps> = ({
           {children}
         </View>
       </View>
-      {footer && footer}
-      {renderDirectChildren && renderDirectChildren()}
+      {!!footer && (
+        <View style={[{ paddingBottom: insets.bottom }, spacings.ptSm, spacings.phSm]}>
+          {footer}
+        </View>
+      )}
+      {!!renderDirectChildren && renderDirectChildren()}
     </View>
   )
 }
@@ -83,6 +85,7 @@ const MobileLayoutWrapperMainContent: React.FC<MobileLayoutWrapperMainContentPro
   const { styles, theme } = useTheme(getStyles)
   const { isOnboardingRoute } = useOnboardingNavigation()
   const { goBack } = useNavigation()
+  const insets = useSafeAreaInsets()
 
   const handleBackButtonPress = () => {
     if (onBackButtonPress) {
@@ -125,7 +128,10 @@ const MobileLayoutWrapperMainContent: React.FC<MobileLayoutWrapperMainContentPro
         <KeyboardAwareScrollView
           ref={wrapperRef}
           style={flexbox.flex1}
-          contentContainerStyle={[{ flexGrow: 1 }, spacings.pbSm, contentContainerStyle]}
+          contentContainerStyle={[
+            { flexGrow: 1, paddingBottom: insets.bottom },
+            contentContainerStyle
+          ]}
           bottomOffset={100}
           keyboardShouldPersistTaps="handled"
           bounces={false}
@@ -140,10 +146,7 @@ const MobileLayoutWrapperMainContent: React.FC<MobileLayoutWrapperMainContentPro
   }
 
   return (
-    <View
-      ref={wrapperRef}
-      style={[flexbox.flex1, spacings.phSm, spacings.pbSm, contentContainerStyle]}
-    >
+    <View ref={wrapperRef} style={[flexbox.flex1, spacings.phSm, contentContainerStyle]}>
       {step > 0 ? renderProgress() : <View style={{ height: isOnboardingRoute ? 24 : 0 }} />}
       {(!!title || !!withBackButton) && (
         <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mbLg]}>

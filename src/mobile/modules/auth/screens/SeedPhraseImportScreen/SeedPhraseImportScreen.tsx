@@ -37,7 +37,18 @@ const SeedPhraseImportScreen = () => {
   const { theme, styles } = useTheme(getStyles)
 
   return (
-    <MobileLayoutContainer>
+    <MobileLayoutContainer
+      footer={
+        <Button
+          testID="import-button"
+          size="large"
+          text={t('Confirm')}
+          hasBottomSpacing={false}
+          onPress={handleFormSubmit}
+          disabled={!isValid || seedPhraseStatus === 'invalid'}
+        />
+      }
+    >
       <MobileLayoutWrapperMainContent
         withBackButton
         onBackButtonPress={goToPrevRoute}
@@ -160,15 +171,7 @@ const SeedPhraseImportScreen = () => {
             />
           </View>
         ) : null}
-        <View style={[flexbox.flex1, spacings.mb]} />
-        <Button
-          testID="import-button"
-          size="large"
-          text={t('Confirm')}
-          hasBottomSpacing={false}
-          onPress={handleFormSubmit}
-          disabled={!isValid || seedPhraseStatus === 'invalid'}
-        />
+        <View style={flexbox.flex1} />
       </MobileLayoutWrapperMainContent>
     </MobileLayoutContainer>
   )

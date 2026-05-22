@@ -25,7 +25,18 @@ const CreateSeedPhraseWriteScreen = () => {
   const { theme } = useTheme()
 
   return (
-    <MobileLayoutContainer>
+    <MobileLayoutContainer
+      footer={
+        <Button
+          testID="create-seed-phrase-write-continue-btn"
+          accessibilityRole="button"
+          text={t("I've saved the phrase")}
+          size="large"
+          hasBottomSpacing={false}
+          onPress={handleSubmit}
+        />
+      }
+    >
       <MobileLayoutWrapperMainContent
         withBackButton
         onBackButtonPress={goToPrevRoute}
@@ -106,14 +117,6 @@ const CreateSeedPhraseWriteScreen = () => {
                 </Button>
               </View>
             </View>
-            <Button
-              testID="create-seed-phrase-write-continue-btn"
-              accessibilityRole="button"
-              text={t("I've saved the phrase")}
-              size="large"
-              hasBottomSpacing={false}
-              onPress={handleSubmit}
-            />
           </>
         )}
         {!seedArray.length && (

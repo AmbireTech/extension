@@ -38,7 +38,18 @@ const ViewOnlyAccountAdderScreen = () => {
   } = useViewOnlyAccountAdder()
   const { goToPrevRoute } = useOnboardingNavigation()
   return (
-    <MobileLayoutContainer>
+    <MobileLayoutContainer
+      footer={
+        <Button
+          testID="view-only-button-import"
+          size="large"
+          disabled={disabled}
+          hasBottomSpacing={false}
+          text={buttonText}
+          onPress={handleSubmit(handleFormSubmit)}
+        />
+      }
+    >
       <MobileLayoutWrapperMainContent
         withBackButton
         onBackButtonPress={goToPrevRoute}
@@ -84,14 +95,6 @@ const ViewOnlyAccountAdderScreen = () => {
               />
             </Button>
           </View>
-          <Button
-            testID="view-only-button-import"
-            size="large"
-            disabled={disabled}
-            hasBottomSpacing={false}
-            text={buttonText}
-            onPress={handleSubmit(handleFormSubmit)}
-          />
         </View>
       </MobileLayoutWrapperMainContent>
     </MobileLayoutContainer>

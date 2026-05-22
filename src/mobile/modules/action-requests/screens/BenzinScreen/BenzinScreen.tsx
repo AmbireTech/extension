@@ -68,7 +68,7 @@ const BenzinScreen = () => {
   }, [visibleUserRequests])
 
   return (
-    <MobileLayoutContainer withBottomInset={false}>
+    <MobileLayoutContainer>
       <Benzin state={state}>
         <View
           style={[
