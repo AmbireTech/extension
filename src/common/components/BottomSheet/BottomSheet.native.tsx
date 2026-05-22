@@ -180,11 +180,11 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
                     bounces: false,
                     keyboardShouldPersistTaps: 'handled',
                     showsVerticalScrollIndicator: false,
-                    contentContainerStyle: { paddingBottom: bottom },
+                    contentContainerStyle: { paddingBottom: bottom || SPACING_SM },
                     ...(!isScrollEnabled && {
                       scrollEnabled: false,
                       nestedScrollEnabled: true,
-                      contentContainerStyle: { flexGrow: 1, paddingBottom: bottom }
+                      contentContainerStyle: { flexGrow: 1, paddingBottom: bottom || SPACING_SM }
                     }),
                     style: { marginBottom: isModal ? SPACING_LG : 0 },
                     ...(scrollViewProps || {})
@@ -197,7 +197,7 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
                     bounces: false,
                     keyboardShouldPersistTaps: 'handled',
                     showsVerticalScrollIndicator: false,
-                    contentContainerStyle: { paddingBottom: bottom },
+                    contentContainerStyle: { paddingBottom: bottom || SPACING_SM },
                     style: { marginBottom: isModal ? SPACING_LG : 0 },
                     ...(flatListProps || {})
                   }
@@ -209,7 +209,7 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
                     bounces: false,
                     keyboardShouldPersistTaps: 'handled',
                     showsVerticalScrollIndicator: false,
-                    contentContainerStyle: { paddingBottom: bottom },
+                    contentContainerStyle: { paddingBottom: bottom || SPACING_SM },
                     style: { marginBottom: isModal ? SPACING_LG : 0 },
                     ...(sectionListProps || {})
                   }

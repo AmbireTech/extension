@@ -60,7 +60,14 @@ const MobileLayoutContainer: React.FC<MobileLayoutContainerProps> = ({
         </View>
       </View>
       {!!footer && (
-        <View style={[{ paddingBottom: insets.bottom }, spacings.ptSm, spacings.phSm, footerStyle]}>
+        <View
+          style={[
+            { paddingBottom: insets.bottom || SPACING_SM },
+            spacings.ptSm,
+            spacings.phSm,
+            footerStyle
+          ]}
+        >
           {footer}
         </View>
       )}
@@ -130,7 +137,7 @@ const MobileLayoutWrapperMainContent: React.FC<MobileLayoutWrapperMainContentPro
           ref={wrapperRef}
           style={flexbox.flex1}
           contentContainerStyle={[
-            { flexGrow: 1, paddingBottom: insets.bottom },
+            { flexGrow: 1, paddingBottom: insets.bottom || SPACING_SM },
             contentContainerStyle
           ]}
           bottomOffset={100}

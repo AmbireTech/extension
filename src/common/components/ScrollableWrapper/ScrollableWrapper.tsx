@@ -16,6 +16,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import { isMobile, isWeb } from '@common/config/env'
 import useTheme from '@common/hooks/useTheme'
+import { SPACING_SM } from '@common/styles/spacings'
 
 import DraggableFlatList from './DraggableFlatList'
 import createStyles from './styles'
@@ -131,6 +132,7 @@ const ScrollableWrapper = ({
   )
 
   const shouldApplyBottomInset = isMobile && isAtScreenBottom
+  const bottomInsetValue = insets.bottom === 0 ? SPACING_SM : insets.bottom
   // eslint-disable-next-line no-console
   console.log('[ScrollableWrapper] render', {
     type,
@@ -138,14 +140,11 @@ const ScrollableWrapper = ({
     isAtScreenBottom,
     shouldApplyBottomInset,
     insetsBottom: insets.bottom,
-    appliedPaddingBottom: shouldApplyBottomInset ? insets.bottom : 0
+    appliedPaddingBottom: shouldApplyBottomInset ? bottomInsetValue : 0
   })
-  const scrollableWrapperStyles = [
-    styles.wrapper,
-    ...(Array.isArray(style) ? style : [style])
-  ]
+  const scrollableWrapperStyles = [styles.wrapper, ...(Array.isArray(style) ? style : [style])]
   const scrollableWrapperContentContainerStyles: StyleProp<ViewStyle> = [
-    { paddingBottom: shouldApplyBottomInset ? insets.bottom : 0 },
+    { paddingBottom: shouldApplyBottomInset ? bottomInsetValue : 0 },
     styles.contentContainerStyle,
     ...(Array.isArray(contentContainerStyle) ? contentContainerStyle : [contentContainerStyle]),
     isWeb ? ({ overflowY: 'auto' } as any) : null
