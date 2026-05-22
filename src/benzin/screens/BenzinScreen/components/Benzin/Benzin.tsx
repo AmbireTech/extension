@@ -64,6 +64,7 @@ const Benzin = ({
         size={IS_MOBILE_UP_BENZIN_BREAKPOINT || isMobile ? 'lg' : 'sm'}
         type="benzin"
         hasCallFailed={call.status === AccountOpStatus.Rejected}
+        disableSelectorFetching
       />
     ))
     // Prevents unnecessary re-renders of the humanizer
