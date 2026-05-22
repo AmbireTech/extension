@@ -28,8 +28,7 @@ import MaskedView from '@react-native-masked-view/masked-view'
 import getStyles, { CORNER_RADIUS, SCAN_FRAME_SIZE } from './styles'
 
 const QrReaderScreen = () => {
-  const { theme } = useTheme()
-  const styles = getStyles(theme)
+  const { theme, styles } = useTheme(getStyles)
   const { goBack } = useNavigation()
   const { t } = useTranslation()
   const { addToast } = useToast()
