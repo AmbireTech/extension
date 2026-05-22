@@ -52,5 +52,7 @@ module.exports = [
       'no-underscore-dangle': 'off',
       'react/jsx-key': 'error'
     }
-  }
+  },
+  // After ambire-common spread so root rule overrides stay; disables formatting rules vs Prettier.
+  require('eslint-config-prettier')
 ]
