@@ -313,7 +313,7 @@ const Main = ({
                       >
                         {t('Warning: ')}
                       </Text>
-                      {t('Please read the whole message as we are unable to translate it!')}
+                      {t('No "clear sign" translation for this message. Please read it carefully!')}
                     </Text>
                   </View>
                 </>
