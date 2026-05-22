@@ -85,11 +85,11 @@ const DappConnectScreen = () => {
                 responsiveSizeMultiplier={responsiveSizeMultiplier}
               />
             </View>
+            <DAppConnectAccountSettings
+              id={dappToConnect.id}
+              accountPreferences={dappToConnect.accountPreferences}
+            />
           </View>
-          <DAppConnectAccountSettings
-            id={dappToConnect.id}
-            accountPreferences={dappToConnect.accountPreferences}
-          />
         </TabLayoutWrapperMainContent>
       )}
     </TabLayoutContainer>

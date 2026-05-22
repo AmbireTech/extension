@@ -33,13 +33,19 @@ const DAppConnectAccountSettings: FC<Props> = ({ id, accountPreferences }) => {
   const handleOpenBottomSheet = useCallback(() => {
     open()
     updateLocalPreferences(accountPreferences)
-  }, [open, accountPreferences, updateLocalPreferences])
-
-  const handleCloseBottomSheet = useCallback(() => {
-    close()
-    // Update the order on close
+    // Update the order
     updateOrderedAccountList()
-  }, [close, updateOrderedAccountList])
+  }, [open, updateLocalPreferences, accountPreferences, updateOrderedAccountList])
+
+  const handleCloseBottomSheet = useCallback(
+    (saved: boolean) => {
+      close()
+
+      // Reset to original preferences if the user didn't save
+      if (!saved) updateLocalPreferences(accountPreferences)
+    },
+    [accountPreferences, close, updateLocalPreferences]
+  )
 
   // No need to display this if there is only 1 account available, as there is no choice to be made.
   if (accounts.length <= 1 || !selectedAccount) return null
@@ -47,8 +53,8 @@ const DAppConnectAccountSettings: FC<Props> = ({ id, accountPreferences }) => {
   return (
     <>
       <ToggleDAppScopedAccounts
-        enabled={!!localPreferences?.enabled}
-        selectedCount={localPreferences?.accounts.length || 0}
+        enabled={!!accountPreferences?.enabled}
+        selectedCount={accountPreferences?.accounts.length || 0}
         onToggle={toggleOnlyConnectWithSomeAccounts}
         onOpenAccountSelector={handleOpenBottomSheet}
       />
@@ -57,7 +63,7 @@ const DAppConnectAccountSettings: FC<Props> = ({ id, accountPreferences }) => {
         sheetRef={ref}
         style={{ maxWidth: 624, ...spacings.pb0 }}
         containerInnerWrapperStyles={flexbox.flex1}
-        closeBottomSheet={handleCloseBottomSheet}
+        closeBottomSheet={() => handleCloseBottomSheet(false)}
         isScrollEnabled={false}
       >
         <ModalHeader title={t('Select which accounts you want to connect with the app')} />
@@ -71,14 +77,14 @@ const DAppConnectAccountSettings: FC<Props> = ({ id, accountPreferences }) => {
           <Button
             type="secondary"
             text={t('Cancel')}
-            onPress={handleCloseBottomSheet}
+            onPress={() => handleCloseBottomSheet(false)}
             hasBottomSpacing={false}
             style={{ ...spacings.mrLg, width: 120 }}
           />
           <Button
             onPress={() => {
               save()
-              handleCloseBottomSheet()
+              handleCloseBottomSheet(true)
             }}
             style={{ width: 160 }}
             text={t('Continue')}

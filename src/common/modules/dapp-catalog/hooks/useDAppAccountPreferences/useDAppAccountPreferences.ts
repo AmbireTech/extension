@@ -121,8 +121,8 @@ const useDAppAccountPreferences = (
       const otherAccounts = accounts
         .filter((acc) => acc.addr !== selectedAccount.addr)
         .sort((a, b) => {
-          const aInPreferences = localPreferences?.accounts.includes(a.addr)
-          const bInPreferences = localPreferences?.accounts.includes(b.addr)
+          const aInPreferences = accountPreferences?.accounts.includes(a.addr)
+          const bInPreferences = accountPreferences?.accounts.includes(b.addr)
 
           if (aInPreferences && !bInPreferences) return -1
           if (!aInPreferences && bInPreferences) return 1
@@ -131,7 +131,7 @@ const useDAppAccountPreferences = (
 
       return selectedAccountFirst ? [selectedAccountFirst, ...otherAccounts] : otherAccounts
     })
-  }, [accounts, localPreferences?.accounts, selectedAccount])
+  }, [accounts, accountPreferences?.accounts, selectedAccount])
 
   useEffect(() => {
     updateOrderedAccountList()
