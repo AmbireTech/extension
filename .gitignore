@@ -512,6 +512,6 @@ webview-bundle.json
 *inpage-bundle.json
 
 # Claude Code personal settings
-.claude/settings.local.json
+.claude/*.local.*
 
 
