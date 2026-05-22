@@ -79,10 +79,6 @@ const AppData = ({ dapp }: { dapp: Dapp }) => {
   )
 }
 
-// Disabled with a feature flag. Right alignment looks weird at the moment. We may want it in the future
-// so I decided to keep the code for it, but disable it for now.
-const IS_RIGHT_ALIGNMENT_DISABLED = true
-
 const ManageApp = ({
   dapp,
   children,
@@ -144,7 +140,7 @@ const ManageApp = ({
 
       let left = pageX - SPACING_SM
       let alignedRight = false
-      if (menuWidth > 0 && left + menuWidth > screenWidth && !IS_RIGHT_ALIGNMENT_DISABLED) {
+      if (menuWidth > 0 && left + menuWidth > screenWidth) {
         left = pageX + width - menuWidth
         alignedRight = true
       }
