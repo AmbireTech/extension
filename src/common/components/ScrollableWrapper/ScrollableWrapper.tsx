@@ -76,7 +76,7 @@ const ScrollableWrapper = ({
   const { styles } = useTheme(createStyles)
   const insets = useSafeAreaInsets()
   const internalRef = useRef<any>(null)
-  const [isAtScreenBottom, setIsAtScreenBottom] = useState<boolean | null>(isMobile ? null : false)
+  const [isAtScreenBottom, setIsAtScreenBottom] = useState<boolean>(isMobile)
 
   const setRefs = useCallback(
     (node: any) => {
@@ -87,35 +87,62 @@ const ScrollableWrapper = ({
     [wrapperRef]
   )
 
-  const handleLayout = useCallback((event: LayoutChangeEvent) => {
-    if (!isMobile) return
-    const node = internalRef.current
-    const measureTarget =
-      node && typeof node.measureInWindow === 'function'
-        ? node
-        : node && typeof node.getScrollableNode === 'function'
-          ? node.getScrollableNode()
-          : null
+  const handleLayout = useCallback(
+    (_event: LayoutChangeEvent) => {
+      if (!isMobile) return
+      const node = internalRef.current
+      const measurable =
+        node && typeof node.measureInWindow === 'function'
+          ? node
+          : node && typeof node.getNativeScrollRef === 'function'
+            ? node.getNativeScrollRef()
+            : node && typeof node.getScrollResponder === 'function'
+              ? node.getScrollResponder()
+              : null
 
-    if (measureTarget && typeof measureTarget.measureInWindow === 'function') {
-      measureTarget.measureInWindow((_x: number, y: number, _w: number, height: number) => {
-        const windowHeight = Dimensions.get('window').height
-        setIsAtScreenBottom(y + height >= windowHeight - 1)
+      // eslint-disable-next-line no-console
+      console.log('[ScrollableWrapper] handleLayout', {
+        type,
+        hasNode: !!node,
+        hasMeasurable: !!(measurable && typeof measurable.measureInWindow === 'function')
       })
-      return
-    }
 
-    const { y, height } = event.nativeEvent.layout
-    const windowHeight = Dimensions.get('window').height
-    setIsAtScreenBottom(y + height >= windowHeight - 1)
-  }, [])
+      if (!measurable || typeof measurable.measureInWindow !== 'function') return
 
-  const shouldApplyBottomInset = isMobile && isAtScreenBottom === true
-  const isAwaitingMeasurement = isMobile && isAtScreenBottom === null
+      measurable.measureInWindow((_x: number, y: number, _w: number, height: number) => {
+        const windowHeight = Dimensions.get('window').height
+        const atBottom = y + height >= windowHeight - insets.bottom - 1
+        // eslint-disable-next-line no-console
+        console.log('[ScrollableWrapper] measureInWindow result', {
+          type,
+          y,
+          height,
+          bottomY: y + height,
+          windowHeight,
+          insetsBottom: insets.bottom,
+          diffFromWindow: windowHeight - (y + height),
+          diffFromWindowMinusInset: windowHeight - insets.bottom - (y + height),
+          atBottom
+        })
+        setIsAtScreenBottom(atBottom)
+      })
+    },
+    [type, insets.bottom]
+  )
+
+  const shouldApplyBottomInset = isMobile && isAtScreenBottom
+  // eslint-disable-next-line no-console
+  console.log('[ScrollableWrapper] render', {
+    type,
+    isMobile,
+    isAtScreenBottom,
+    shouldApplyBottomInset,
+    insetsBottom: insets.bottom,
+    appliedPaddingBottom: shouldApplyBottomInset ? insets.bottom : 0
+  })
   const scrollableWrapperStyles = [
     styles.wrapper,
-    ...(Array.isArray(style) ? style : [style]),
-    isAwaitingMeasurement ? { opacity: 0 } : null
+    ...(Array.isArray(style) ? style : [style])
   ]
   const scrollableWrapperContentContainerStyles: StyleProp<ViewStyle> = [
     { paddingBottom: shouldApplyBottomInset ? insets.bottom : 0 },

@@ -36,7 +36,8 @@ const DecryptRequestScreen = () => {
   return (
     <MobileLayoutContainer
       header={<ActionHeader />}
-      renderDirectChildren={() => (
+      footerStyle={{ ...spacings.ph0, ...spacings.pt0 }}
+      footer={
         <ActionFooter
           onReject={handleDeny}
           onResolve={handleDecrypt}
@@ -45,7 +46,7 @@ const DecryptRequestScreen = () => {
           resolveButtonTestID="button-decrypt"
           resolveNode={actionFooterResolveNode}
         />
-      )}
+      }
     >
       <MobileLayoutWrapperMainContent>
         <RequestingDappInfo

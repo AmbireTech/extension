@@ -21,6 +21,7 @@ const MobileLayoutContainer: React.FC<MobileLayoutContainerProps> = ({
   backgroundColor,
   header,
   footer,
+  footerStyle,
   children,
   renderDirectChildren,
   style,
@@ -59,7 +60,7 @@ const MobileLayoutContainer: React.FC<MobileLayoutContainerProps> = ({
         </View>
       </View>
       {!!footer && (
-        <View style={[{ paddingBottom: insets.bottom }, spacings.ptSm, spacings.phSm]}>
+        <View style={[{ paddingBottom: insets.bottom }, spacings.ptSm, spacings.phSm, footerStyle]}>
           {footer}
         </View>
       )}
