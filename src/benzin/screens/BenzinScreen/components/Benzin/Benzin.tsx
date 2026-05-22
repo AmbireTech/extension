@@ -1,6 +1,6 @@
 import { randomBytes } from 'ethers'
-import React, { Fragment, memo, useMemo } from 'react'
-import { Image, ScrollView, StyleSheet, View, ViewStyle } from 'react-native'
+import React, { Fragment, memo, useCallback, useMemo } from 'react'
+import { Image, Linking, ScrollView, StyleSheet, View, ViewStyle } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import { AccountOpStatus } from '@ambire-common/libs/accountOp/types'
@@ -55,27 +55,54 @@ const Benzin = ({
     return 14
   }, [])
 
+  const identifiedByType =
+    state?.stepsState?.submittedAccountOp?.identifiedBy.type ||
+    state?.stepsState?.extensionAccOp?.identifiedBy.type
+
+  const handleOpenCallExplorer = useCallback(
+    async (callTxnId?: string) => {
+      if (!callTxnId || !state?.network?.explorerUrl) return
+
+      const explorerUrl = state.network.explorerUrl.replace(/\/$/, '')
+      await Linking.openURL(`${explorerUrl}/tx/${callTxnId}`)
+    },
+    [state?.network?.explorerUrl]
+  )
+
   const summary = useMemo(() => {
     const calls = state?.stepsState?.calls
     if (!calls || !state.network?.chainId) return []
 
-    return calls.map((call, i) => (
-      <TransactionSummary
-        key={call.data + randomBytes(6)}
-        style={i !== calls.length! - 1 ? (spacings.mbSm as ViewStyle) : {}}
-        call={call}
-        chainId={state.network!.chainId}
-        rightIcon={<OpenIcon width={size} height={size} />}
-        onRightIconPress={state?.handleOpenExplorer}
-        size={sizeStr}
-        type="benzin"
-        hasCallFailed={call.status === AccountOpStatus.Rejected}
-        disableSelectorFetching
-      />
-    ))
+    return calls.map((call, i) => {
+      const shouldShowCallExplorerIcon =
+        identifiedByType === 'MultipleTxns' && !!call.txnId && !!state.network?.explorerUrl
+
+      return (
+        <TransactionSummary
+          key={call.data + randomBytes(6)}
+          style={i !== calls.length! - 1 ? (spacings.mbSm as ViewStyle) : {}}
+          call={call}
+          chainId={state.network!.chainId}
+          rightIcon={shouldShowCallExplorerIcon ? <OpenIcon width={size} height={size} /> : null}
+          onRightIconPress={
+            shouldShowCallExplorerIcon ? () => handleOpenCallExplorer(call.txnId) : undefined
+          }
+          size={sizeStr}
+          type="benzin"
+          hasCallFailed={call.status === AccountOpStatus.Rejected}
+          disableSelectorFetching
+        />
+      )
+    })
     // Prevents unnecessary re-renders of the humanizer
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state?.handleOpenExplorer, state?.network?.chainId, state?.stepsState?.calls?.length])
+  }, [
+    handleOpenCallExplorer,
+    identifiedByType,
+    state?.network?.chainId,
+    state?.network?.explorerUrl,
+    state?.stepsState?.calls?.length
+  ])
 
   const backgroundSource = useMemo(() => {
     if (maxWidthSize(1920)) return gradient2560

@@ -1,4 +1,4 @@
-import React, { FC, memo } from 'react'
+import React, { FC, memo, useMemo } from 'react'
 import { View } from 'react-native'
 
 import {
@@ -46,6 +46,22 @@ const isComplexActionRow = (row: Erc7730Row) =>
   /action|call|operation|method/.test(row.label.toLowerCase())
 
 const isActionValue = (value: HumanizerVisualization) => value.type === 'action' && !!value.content
+
+const getActionContent = (row: Erc7730Row) => row.value.find(isActionValue)?.content
+
+const isMorphoBundlerMulticall = (item: HumanizerErc7730Visualization) =>
+  (item.title || '').trim().toLowerCase() === 'bundler3 multicall'
+
+const isTransferActionRow = (row: Erc7730Row) =>
+  getActionContent(row)?.trim().toLowerCase() === 'transfer'
+
+const getDetailedRows = (item: HumanizerErc7730Visualization) => {
+  if (!isMorphoBundlerMulticall(item)) return item.rows
+
+  const nonTransferRows = item.rows.filter((row) => !isTransferActionRow(row))
+
+  return nonTransferRows.length ? nonTransferRows : item.rows
+}
 
 const isToLabelValue = (value: HumanizerVisualization) =>
   value.type === 'label' && value.content?.trim().toLowerCase() === 'to'
@@ -155,6 +171,7 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
   editApprovalCallInfo
 }) => {
   const { theme } = useTheme()
+  const detailedRows = useMemo(() => getDetailedRows(item), [item])
 
   const renderValue = (valueItem: HumanizerVisualization, overrideTextSize = textSize) => {
     if (!valueItem || ('isHidden' in valueItem && valueItem.isHidden)) return null
@@ -499,7 +516,7 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
 
   return (
     <View style={{ width: '100%' }}>
-      {item.rows.map((row) => {
+      {detailedRows.map((row) => {
         const actionParts = getDetailedActionParts(row)
         const rowKey = `${item.id}-${row.label}-${row.value.map((value) => value.id).join('-')}`
 

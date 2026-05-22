@@ -31,6 +31,8 @@ import useToast from '@common/hooks/useToast'
 import ExpandedContent from '@common/modules/sign-account-op/components/TransactionSummary/ExpandedContent'
 import FallbackVisualization from '@common/modules/sign-account-op/components/TransactionSummary/FallbackVisualization'
 import { SPACING_SM, SPACING_TY } from '@common/styles/spacings'
+import flexbox from '@common/styles/utils/flexbox'
+import ManifestImage from '@web/components/ManifestImage'
 
 import getStyles from './styles'
 
@@ -139,6 +141,7 @@ const TransactionSummary = ({
 
     return erc7730Visualization.title || call.dapp?.name || t('Transaction details')
   }, [call.dapp?.name, erc7730Visualization, t])
+  const erc7730DetailedIcon = erc7730Visualization?.dapp?.icon || call.dapp?.icon
 
   const [bindDeleteIconAnim, deleteIconAnimStyle] = useHover({
     preset: 'opacityInverted'
@@ -445,14 +448,35 @@ const TransactionSummary = ({
           {callVisualization ? (
             shouldUseDetailedErc7730Layout && erc7730Visualization ? (
               <View style={{ flex: 1, minWidth: 0 }}>
-                <Text
-                  fontSize={textSize + 2}
-                  weight="semiBold"
-                  color={theme.secondaryAccent400}
-                  style={{ marginBottom: SPACING_TY * sizeMultiplier[size] }}
+                <View
+                  style={[
+                    flexbox.directionRow,
+                    flexbox.alignCenter,
+                    { marginBottom: SPACING_TY * sizeMultiplier[size], minWidth: 0 }
+                  ]}
                 >
-                  {erc7730DetailedTitle}
-                </Text>
+                  {!!erc7730DetailedIcon && (
+                    <ManifestImage
+                      uri={erc7730DetailedIcon}
+                      containerStyle={{ marginRight: SPACING_TY * sizeMultiplier[size] }}
+                      size={24 * sizeMultiplier[size]}
+                      skeletonAppearance="secondaryBackground"
+                      imageStyle={{
+                        borderRadius: 12 * sizeMultiplier[size],
+                        backgroundColor: 'transparent'
+                      }}
+                    />
+                  )}
+                  <Text
+                    fontSize={textSize + 2}
+                    weight="semiBold"
+                    color={theme.secondaryAccent400}
+                    numberOfLines={1}
+                    style={{ flexShrink: 1 }}
+                  >
+                    {erc7730DetailedTitle}
+                  </Text>
+                </View>
                 <View
                   style={{
                     height: 1,
