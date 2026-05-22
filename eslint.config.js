@@ -4,13 +4,19 @@ const ambireCommonConfig = require('./src/ambire-common/eslint.config.js')
 module.exports = [
   {
     ignores: [
+      // ambire-common ignores in its eslint.config.js are relative to that folder; when
+      // spread here they resolve from repo root, so this makes sure all is ignored across both repos
+      '**/dist/**',
+      '**/babel_cache/**',
+      '**/artifacts/**',
+      '**/contracts/**',
+      '**/coverage/**',
       '**/node_modules/**',
       'ios/**',
       'android/**',
       'safari-extension/**',
       'build/**',
       'recorder/**',
-      'coverage/**',
       '.expo/**',
       '.eslintrc.js',
       '.yarnclean',
