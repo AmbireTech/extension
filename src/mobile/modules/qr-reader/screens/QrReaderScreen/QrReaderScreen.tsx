@@ -3,7 +3,7 @@ import { CameraView, scanFromURLAsync } from 'expo-camera'
 import * as ImagePicker from 'expo-image-picker'
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { LayoutChangeEvent, Linking, Pressable, StyleSheet, View } from 'react-native'
+import { AppState, LayoutChangeEvent, Linking, Pressable, StyleSheet, View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 import Svg, { Defs, Mask, Rect } from 'react-native-svg'
 
@@ -48,6 +48,7 @@ const QrReaderScreen = () => {
   } = useModalize()
   const [manualValue, setManualValue] = useState('')
   const [galleryPermission, requestGalleryPermission] = ImagePicker.useMediaLibraryPermissions()
+  const galleryRequestedRef = useRef(false)
 
   const frameTop = containerSize ? (containerSize.height - SCAN_FRAME_SIZE) / 2 : 0
   const frameLeft = containerSize ? (containerSize.width - SCAN_FRAME_SIZE) / 2 : 0
@@ -63,9 +64,18 @@ const QrReaderScreen = () => {
     }
   }, [permission, requestPermission])
 
-  const handleGrantPermission = useCallback(async () => {
-    await requestPermission()
-  }, [requestPermission])
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', (nextState) => {
+      if (nextState !== 'active') return
+      if (permission && !permission.granted) {
+        void requestPermission()
+      }
+      if (galleryRequestedRef.current && galleryPermission && !galleryPermission.granted) {
+        void requestGalleryPermission()
+      }
+    })
+    return () => subscription.remove()
+  }, [permission, requestPermission, galleryPermission, requestGalleryPermission])
 
   const handleOpenSettings = useCallback(() => {
     void Linking.openSettings()
@@ -126,6 +136,7 @@ const QrReaderScreen = () => {
   }, [closeManualEntrySheet])
 
   const handleGalleryPress = useCallback(async () => {
+    galleryRequestedRef.current = true
     if (!galleryPermission?.granted) {
       if (!galleryPermission || galleryPermission.canAskAgain) {
         const result = await requestGalleryPermission()
