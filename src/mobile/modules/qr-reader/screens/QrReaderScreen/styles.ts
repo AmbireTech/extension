@@ -6,12 +6,8 @@ export const SCAN_FRAME_SIZE = 280
 const CORNER_LENGTH = 74
 export const CORNER_RADIUS = 20
 const CORNER_THICKNESS = 2
-const HEADER_ICON_HIT = 32
 
 interface Style {
-  root: ViewStyle
-  dimMask: ViewStyle
-  headerSideSlot: ViewStyle
   scanFrame: ViewStyle
   corner: ViewStyle
   cornerTopLeft: ViewStyle
@@ -22,18 +18,6 @@ interface Style {
 
 const getStyles = (_theme: ThemeProps) =>
   StyleSheet.create<Style>({
-    root: {
-      flex: 1,
-      backgroundColor: '#000'
-    },
-    dimMask: {
-      backgroundColor: 'rgba(0, 0, 0, 0.25)'
-    },
-    headerSideSlot: {
-      width: HEADER_ICON_HIT,
-      height: HEADER_ICON_HIT,
-      justifyContent: 'center'
-    },
     scanFrame: {
       width: SCAN_FRAME_SIZE,
       height: SCAN_FRAME_SIZE

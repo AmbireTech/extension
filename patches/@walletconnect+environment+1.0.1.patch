@@ -1,11 +1,20 @@
 diff --git a/node_modules/@walletconnect/environment/dist/cjs/env.js b/node_modules/@walletconnect/environment/dist/cjs/env.js
-index 2234269..81934a4 100644
+index 2234269..ae0dc1e 100644
 --- a/node_modules/@walletconnect/environment/dist/cjs/env.js
 +++ b/node_modules/@walletconnect/environment/dist/cjs/env.js
-@@ -2,6 +2,12 @@
+@@ -2,6 +2,21 @@
  Object.defineProperty(exports, "__esModule", { value: true });
  exports.isBrowser = exports.isNode = exports.isReactNative = void 0;
  function isReactNative() {
++    // AMBIRE PATCH: harden React Native detection.
++    // The default check requires `typeof document === "undefined"`, but our
++    // mobile build shares code with the web/extension build and pulls in shims
++    // (e.g. `react-native-webview`, DOM polyfills, `@walletconnect/react-native-compat`)
++    // that define `document` in the RN JS context. With the original check, the
++    // lib then falls through to the browser branch and conflicts with those
++    // shims (wrong storage, wrong WebSocket, etc.). We accept the env as RN as
++    // soon as either `navigator.product === "ReactNative"` or Hermes is present,
++    // regardless of whether `document` exists.
 +    if (typeof navigator !== "undefined" && navigator.product === "ReactNative") {
 +        return true;
 +    }
@@ -16,11 +25,20 @@ index 2234269..81934a4 100644
          typeof navigator !== "undefined" &&
          navigator.product === "ReactNative");
 diff --git a/node_modules/@walletconnect/environment/dist/esm/env.js b/node_modules/@walletconnect/environment/dist/esm/env.js
-index a6dd83e..3a43905 100644
+index a6dd83e..d675c55 100644
 --- a/node_modules/@walletconnect/environment/dist/esm/env.js
 +++ b/node_modules/@walletconnect/environment/dist/esm/env.js
-@@ -1,4 +1,10 @@
+@@ -1,4 +1,19 @@
  export function isReactNative() {
++    // AMBIRE PATCH: harden React Native detection.
++    // The default check requires `typeof document === "undefined"`, but our
++    // mobile build shares code with the web/extension build and pulls in shims
++    // (e.g. `react-native-webview`, DOM polyfills, `@walletconnect/react-native-compat`)
++    // that define `document` in the RN JS context. With the original check, the
++    // lib then falls through to the browser branch and conflicts with those
++    // shims (wrong storage, wrong WebSocket, etc.). We accept the env as RN as
++    // soon as either `navigator.product === "ReactNative"` or Hermes is present,
++    // regardless of whether `document` exists.
 +    if (typeof navigator !== "undefined" && navigator.product === "ReactNative") {
 +        return true;
 +    }

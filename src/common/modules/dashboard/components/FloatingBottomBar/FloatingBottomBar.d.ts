@@ -6,6 +6,7 @@ export interface FloatingBottomBarProps {
   displayCurrentApp?: boolean
   displayNetworkFilter?: boolean
   isHidden: boolean
+  searchPlaceholder?: string
 }
 
 declare const FloatingBottomBar: React.FC<FloatingBottomBarProps>
