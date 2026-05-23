@@ -12,7 +12,9 @@ import WarningIcon from '@common/assets/svg/WarningIcon'
 import Alert from '@common/components/Alert'
 import ExpandableCard from '@common/components/ExpandableCard'
 import HumanizedVisualization from '@common/components/HumanizedVisualization'
-import Erc7730StructuredVisualization, { getNestedErc7730Visualizations } from '@common/components/HumanizedVisualization/Erc7730/Erc7730StructuredVisualization'
+import Erc7730StructuredVisualization, {
+  getNestedErc7730Visualizations
+} from '@common/components/HumanizedVisualization/Erc7730/Erc7730StructuredVisualization'
 import Label from '@common/components/Label'
 import NetworkBadge from '@common/components/NetworkBadge'
 import Spinner from '@common/components/Spinner'
