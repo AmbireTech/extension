@@ -21,6 +21,7 @@ interface Props {
   hideLinks?: boolean
   style?: StyleProp<ViewStyle>
   erc7730Mode?: 'summary' | 'description'
+  hideNestedErc7730Rows?: boolean
   dapp?: IrCall['dapp']
   editApprovalCallInfo?: {
     setter: (arg: string, token: string, closeModal: () => void) => void
@@ -43,6 +44,7 @@ const HumanizedVisualization: FC<Props> = ({
   hideLinks = false,
   style,
   erc7730Mode = 'summary',
+  hideNestedErc7730Rows = false,
   dapp
 }) => {
   const marginRight = SPACING_TY * sizeMultiplierSize
@@ -87,6 +89,7 @@ const HumanizedVisualization: FC<Props> = ({
             imageSize={imageSize}
             hideLinks={hideLinks}
             erc7730Mode={erc7730Mode}
+            hideNestedErc7730Rows={hideNestedErc7730Rows}
             marginRight={marginRight}
           />
         ) : null

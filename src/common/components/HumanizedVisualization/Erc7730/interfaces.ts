@@ -28,6 +28,8 @@ export interface Erc7730StructuredVisualizationProps {
   hideLinks?: boolean
   mode?: 'summary' | 'description'
   editApprovalCallInfo?: EditApprovalCallInfo
+  hasRightArrow?: boolean
+  hideNestedRows?: boolean
 }
 
 export type Erc7730Row = HumanizerErc7730Visualization['rows'][number]

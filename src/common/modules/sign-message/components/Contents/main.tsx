@@ -12,6 +12,7 @@ import WarningIcon from '@common/assets/svg/WarningIcon'
 import Alert from '@common/components/Alert'
 import ExpandableCard from '@common/components/ExpandableCard'
 import HumanizedVisualization from '@common/components/HumanizedVisualization'
+import Erc7730StructuredVisualization, { getNestedErc7730Visualizations } from '@common/components/HumanizedVisualization/Erc7730/Erc7730StructuredVisualization'
 import Label from '@common/components/Label'
 import NetworkBadge from '@common/components/NetworkBadge'
 import Spinner from '@common/components/Spinner'
@@ -79,17 +80,44 @@ const Erc7730TypedMessageContent = React.memo(
     const { t } = useTranslation()
     const { styles, theme } = useTheme(getStyles)
     const title = useMemo(() => data.find((item) => !!item.title)?.title, [data])
+    const nestedVisualizations = useMemo(
+      () => data.flatMap((item) => getNestedErc7730Visualizations(item)),
+      [data]
+    )
+    const hasNestedVisualizations = nestedVisualizations.length > 0
 
     return (
-      <View style={styles.erc7730TypedMessageContent}>
-        <Text
-          fontSize={16 * responsiveSizeMultiplier}
-          weight="semiBold"
-          color={theme.secondaryAccent400}
-          style={styles.erc7730TypedMessageTitle}
-        >
-          {title || t('Message details')}
-        </Text>
+      <View style={[{ width: '100%' }]}>
+        {hasNestedVisualizations ? (
+          nestedVisualizations.map((nestedVisualization, nestedIndex) => (
+            <View
+              key={nestedVisualization.id}
+              style={[
+                nestedIndex > 0 && { marginTop: SPACING_TY * responsiveSizeMultiplier },
+                spacings.pbMi
+              ]}
+            >
+              <Erc7730StructuredVisualization
+                item={nestedVisualization}
+                chainId={chainId}
+                sizeMultiplierSize={responsiveSizeMultiplier}
+                textSize={14}
+                hideLinks={false}
+                mode="summary"
+                hasRightArrow
+              />
+            </View>
+          ))
+        ) : (
+          <Text
+            fontSize={16 * responsiveSizeMultiplier}
+            weight="semiBold"
+            color={theme.secondaryAccent400}
+            style={styles.erc7730TypedMessageTitle}
+          >
+            {title || t('Message details')}
+          </Text>
+        )}
         <View
           style={[
             styles.erc7730TypedMessageDivider,
@@ -106,6 +134,7 @@ const Erc7730TypedMessageContent = React.memo(
           textSize={14}
           hasPadding={false}
           erc7730Mode="description"
+          hideNestedErc7730Rows={hasNestedVisualizations}
         />
       </View>
     )

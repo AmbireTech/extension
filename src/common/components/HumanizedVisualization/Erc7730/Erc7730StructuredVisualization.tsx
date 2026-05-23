@@ -49,6 +49,18 @@ const isActionValue = (value: HumanizerVisualization) => value.type === 'action'
 
 const getActionContent = (row: Erc7730Row) => row.value.find(isActionValue)?.content
 
+const isNestedErc7730Value = (
+  value: HumanizerVisualization
+): value is HumanizerVisualization & HumanizerErc7730Visualization => value.type === 'erc7730'
+
+const isNestedErc7730Row = (row: Erc7730Row) =>
+  row.value.length > 0 && row.value.every(isNestedErc7730Value)
+
+export const getNestedErc7730Visualizations = (item: HumanizerErc7730Visualization) =>
+  getDetailedRows(item).flatMap((row) =>
+    isNestedErc7730Row(row) ? row.value.filter(isNestedErc7730Value) : []
+  )
+
 const isMorphoBundlerMulticall = (item: HumanizerErc7730Visualization) =>
   (item.title || '').trim().toLowerCase() === 'bundler3 multicall'
 
@@ -168,10 +180,14 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
   textSize,
   hideLinks = false,
   mode = 'summary',
-  editApprovalCallInfo
+  editApprovalCallInfo,
+  hideNestedRows = false
 }) => {
   const { theme } = useTheme()
-  const detailedRows = useMemo(() => getDetailedRows(item), [item])
+  const detailedRows = useMemo(
+    () => getDetailedRows(item).filter((row) => !hideNestedRows || !isNestedErc7730Row(row)),
+    [hideNestedRows, item]
+  )
 
   const renderValue = (valueItem: HumanizerVisualization, overrideTextSize = textSize) => {
     if (!valueItem || ('isHidden' in valueItem && valueItem.isHidden)) return null
@@ -519,6 +535,53 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
       {detailedRows.map((row) => {
         const actionParts = getDetailedActionParts(row)
         const rowKey = `${item.id}-${row.label}-${row.value.map((value) => value.id).join('-')}`
+
+        if (isNestedErc7730Row(row)) {
+          const nestedVisualizations = row.value.filter(isNestedErc7730Value)
+
+          return (
+            <View key={rowKey} style={{ width: '100%', paddingVertical: SPACING_TY }}>
+              <Text
+                fontSize={textSize}
+                weight="semiBold"
+                appearance="secondaryText"
+                style={spacings.mbTy}
+              >
+                {row.label}
+              </Text>
+              <View
+                style={[
+                  {
+                    width: '100%'
+                  }
+                ]}
+              >
+                {nestedVisualizations.map((nestedVisualization, nestedIndex) => (
+                  <View
+                    key={nestedVisualization.id}
+                    style={[
+                      flexbox.directionRow,
+                      flexbox.alignCenter,
+                      nestedIndex > 0 && {
+                        marginTop: SPACING_TY,
+                        paddingTop: SPACING_TY
+                      }
+                    ]}
+                  >
+                    <Erc7730StructuredVisualization
+                      item={nestedVisualization}
+                      chainId={chainId}
+                      sizeMultiplierSize={sizeMultiplierSize}
+                      textSize={textSize}
+                      hideLinks={hideLinks}
+                      mode="summary"
+                    />
+                  </View>
+                ))}
+              </View>
+            </View>
+          )
+        }
 
         if (actionParts) {
           return (
