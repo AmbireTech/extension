@@ -164,6 +164,7 @@ export const getErc7730DescriptionRows = (item: HumanizerErc7730Visualization) =
 
 export const shouldUseErc7730DetailedLayout = (item: HumanizerErc7730Visualization) => {
   if (/multicall|batch|bundle/.test((item.title || '').toLowerCase())) return true
+  if (item.rows.some(isNestedErc7730Row)) return true
 
   const summaryRows = getErc7730SummaryRows(item)
   if (summaryRows.some(hasTokenValue)) return false
@@ -541,14 +542,16 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
 
           return (
             <View key={rowKey} style={{ width: '100%', paddingVertical: SPACING_TY }}>
-              <Text
-                fontSize={textSize}
-                weight="semiBold"
-                appearance="secondaryText"
-                style={spacings.mbTy}
-              >
-                {row.label}
-              </Text>
+              {!!row.label.trim() && (
+                <Text
+                  fontSize={textSize}
+                  weight="semiBold"
+                  appearance="secondaryText"
+                  style={spacings.mbTy}
+                >
+                  {row.label}
+                </Text>
+              )}
               <View
                 style={[
                   {
