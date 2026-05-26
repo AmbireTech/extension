@@ -102,46 +102,19 @@ const ScrollableWrapper = ({
               : null
 
       // eslint-disable-next-line no-console
-      console.log('[ScrollableWrapper] handleLayout', {
-        type,
-        hasNode: !!node,
-        hasMeasurable: !!(measurable && typeof measurable.measureInWindow === 'function')
-      })
-
       if (!measurable || typeof measurable.measureInWindow !== 'function') return
 
       measurable.measureInWindow((_x: number, y: number, _w: number, height: number) => {
         const windowHeight = Dimensions.get('window').height
         const atBottom = y + height >= windowHeight - insets.bottom - 1
-        // eslint-disable-next-line no-console
-        console.log('[ScrollableWrapper] measureInWindow result', {
-          type,
-          y,
-          height,
-          bottomY: y + height,
-          windowHeight,
-          insetsBottom: insets.bottom,
-          diffFromWindow: windowHeight - (y + height),
-          diffFromWindowMinusInset: windowHeight - insets.bottom - (y + height),
-          atBottom
-        })
         setIsAtScreenBottom(atBottom)
       })
     },
-    [type, insets.bottom]
+    [insets.bottom]
   )
 
   const shouldApplyBottomInset = isMobile && isAtScreenBottom
   const bottomInsetValue = insets.bottom === 0 ? SPACING_SM : insets.bottom
-  // eslint-disable-next-line no-console
-  console.log('[ScrollableWrapper] render', {
-    type,
-    isMobile,
-    isAtScreenBottom,
-    shouldApplyBottomInset,
-    insetsBottom: insets.bottom,
-    appliedPaddingBottom: shouldApplyBottomInset ? bottomInsetValue : 0
-  })
   const scrollableWrapperStyles = [styles.wrapper, ...(Array.isArray(style) ? style : [style])]
   const scrollableWrapperContentContainerStyles: StyleProp<ViewStyle> = [
     { paddingBottom: shouldApplyBottomInset ? bottomInsetValue : 0 },
