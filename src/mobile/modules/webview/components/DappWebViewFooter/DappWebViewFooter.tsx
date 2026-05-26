@@ -102,8 +102,9 @@ const DappWebViewFooter: React.FC<Props> = ({
             nativeInputStyle={{ textAlign: 'center' }}
             withClearButton={false}
             onFocus={handleOpenSearchModal}
+            inputStyle={spacings.phMi}
             leftIcon={() => (
-              <View style={{ width: 40 }}>
+              <View style={{ width: 24 }}>
                 <Pressable onPress={handleGoBack} disabled={!canGoBack}>
                   <LeftArrowIcon
                     width={9}
@@ -114,9 +115,9 @@ const DappWebViewFooter: React.FC<Props> = ({
               </View>
             )}
             childrenBeforeButtons={
-              <View style={[spacings.mrTy, flexbox.alignEnd, { width: 44 }]}>
+              <View style={[spacings.mrTy, flexbox.alignEnd, { width: 28 }]}>
                 <Pressable onPress={handleRefresh}>
-                  <RefreshIcon width={30} height={30} color={theme.iconPrimary} />
+                  <RefreshIcon width={28} height={28} color={theme.iconPrimary} />
                 </Pressable>
               </View>
             }

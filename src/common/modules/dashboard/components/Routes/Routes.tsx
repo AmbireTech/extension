@@ -1,11 +1,11 @@
 import React from 'react'
 import { View } from 'react-native'
 
-import DAppsIcon from '@common/assets/svg/DAppsIcon'
+import ExploreIcon from '@common/assets/svg/ExploreIcon'
 import ReceiveIcon from '@common/assets/svg/ReceiveIcon'
 import SendIcon from '@common/assets/svg/SendIcon'
 import SwapAndBridgeIcon from '@common/assets/svg/SwapAndBridgeIcon'
-import { isMobile, isWeb } from '@common/config/env'
+import { isMobile } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import { ROUTES } from '@common/modules/router/constants/common'
 import flexbox from '@common/styles/utils/flexbox'
@@ -48,7 +48,7 @@ const Routes = () => {
 
     {
       testID: 'dashboard-button-explore',
-      icon: DAppsIcon,
+      icon: ExploreIcon,
       label: t('Explore'),
       route: ROUTES.explore,
       scale: 0.95,

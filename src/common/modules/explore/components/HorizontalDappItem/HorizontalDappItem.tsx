@@ -3,7 +3,7 @@ import { View } from 'react-native'
 
 import { Dapp } from '@ambire-common/interfaces/dapp'
 import Text from '@common/components/Text'
-import { isMobile } from '@common/config/env'
+import { isMobile, isWeb } from '@common/config/env'
 import useController from '@common/hooks/useController'
 import { AnimatedPressable, useCustomHover } from '@common/hooks/useHover'
 import useNavigation from '@common/hooks/useNavigation'
@@ -23,9 +23,17 @@ type Props = {
   dapp: Dapp
   gutter?: number
   webSnapStyle?: object
+  isFirst?: boolean
+  isLast?: boolean
 }
 
-const HorizontalDappItem = ({ dapp, gutter = HORIZONTAL_ITEM_GUTTER, webSnapStyle }: Props) => {
+const HorizontalDappItem = ({
+  dapp,
+  gutter = HORIZONTAL_ITEM_GUTTER,
+  webSnapStyle,
+  isFirst,
+  isLast
+}: Props) => {
   const { theme } = useTheme()
   const navigation = useNavigation()
   const { dispatch: dappsDispatch } = useController('DappsController')
@@ -93,15 +101,26 @@ const HorizontalDappItem = ({ dapp, gutter = HORIZONTAL_ITEM_GUTTER, webSnapStyl
         }}
         iconScale={1}
       />
-      <Text
-        numberOfLines={1}
-        fontSize={10}
-        weight="medium"
-        appearance="primaryText"
-        style={[text.center, spacings.mtTy, { maxWidth: HORIZONTAL_ITEM_WIDTH }]}
-      >
-        {dapp.name}
-      </Text>
+      <View style={[spacings.mtMi, { width: '100%', height: 16 }]}>
+        <View
+          style={[
+            { position: 'absolute', alignSelf: 'center' },
+            isFirst || isLast
+              ? { width: '100%' }
+              : { width: HORIZONTAL_ITEM_WIDTH + (isWeb ? 24 : 22) }
+          ]}
+        >
+          <Text
+            numberOfLines={1}
+            fontSize={10}
+            weight="medium"
+            appearance="primaryText"
+            style={[text.center]}
+          >
+            {dapp.name}
+          </Text>
+        </View>
+      </View>
     </AnimatedPressable>
   )
 }

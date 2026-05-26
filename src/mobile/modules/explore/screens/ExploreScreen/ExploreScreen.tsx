@@ -21,9 +21,7 @@ import DappItem from '@common/modules/explore/components/DappItem'
 import DappsSkeletonLoader from '@common/modules/explore/components/DappsSkeletonLoader'
 import HorizontalDappsRow from '@common/modules/explore/components/HorizontalDappsRow'
 import SectionHeader from '@common/modules/explore/components/SectionHeader'
-import useExploreSections, {
-  ExploreSection
-} from '@common/modules/explore/hooks/useExploreSections'
+import useExploreSections, { ExploreSection } from '@common/modules/explore/hooks/useExploreSections'
 import { ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
@@ -227,7 +225,7 @@ const ExploreScreen = () => {
           <View style={flexbox.flex1}>
             <View style={[spacings.mbSm]}>
               <Search
-                placeholder={t('Search for an app')}
+                placeholder={t('Search apps or URLs')}
                 control={control}
                 // @ts-ignore
                 setValue={setValue}

@@ -148,7 +148,13 @@ const HorizontalDappsRow = ({ data }: Props) => {
       if (isFirst) snapStyle = webFirstItemSnapStyle
       else if (isLast) snapStyle = webLastItemSnapStyle
       return (
-        <HorizontalDappItem dapp={item} gutter={isLast ? 0 : gutter} webSnapStyle={snapStyle} />
+        <HorizontalDappItem
+          dapp={item}
+          gutter={isLast ? 0 : gutter}
+          webSnapStyle={snapStyle}
+          isFirst={isFirst}
+          isLast={isLast}
+        />
       )
     },
     [data.length, gutter, webItemSnapStyle, webFirstItemSnapStyle, webLastItemSnapStyle]

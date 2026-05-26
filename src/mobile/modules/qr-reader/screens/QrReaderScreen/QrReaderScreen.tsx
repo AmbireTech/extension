@@ -170,7 +170,7 @@ const QrReaderScreen = () => {
 
   const rightIcon = permissionGranted ? (
     <Pressable onPress={handleGalleryPress} hitSlop={12}>
-      <GalleryIcon />
+      <GalleryIcon width={22} height={22} />
     </Pressable>
   ) : undefined
 
