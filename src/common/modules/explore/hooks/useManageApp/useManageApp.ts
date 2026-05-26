@@ -1,6 +1,6 @@
 import { useCallback } from 'react'
 
-import { Dapp } from '@ambire-common/interfaces/dapp'
+import { ConnectionSource, Dapp } from '@ambire-common/interfaces/dapp'
 import useController from '@common/hooks/useController'
 import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 
@@ -10,12 +10,15 @@ const useManageApp = (dapp: Dapp) => {
   const { networks } = useController('NetworksController').state
   const { accounts } = useController('AccountsController').state
 
-  const onDisconnect = useCallback(() => {
-    dispatch({
-      type: 'DAPPS_CONTROLLER_DISCONNECT_DAPP',
-      params: { id: dapp.id, url: dapp.url }
-    })
-  }, [dispatch, dapp.id, dapp.url])
+  const onDisconnect = useCallback(
+    (source?: ConnectionSource) => {
+      dispatch({
+        type: 'DAPPS_CONTROLLER_DISCONNECT_DAPP',
+        params: { id: dapp.id, url: dapp.url, source }
+      })
+    },
+    [dispatch, dapp.id, dapp.url]
+  )
 
   const onSelectNetwork = useCallback(
     (chainId: bigint) => {

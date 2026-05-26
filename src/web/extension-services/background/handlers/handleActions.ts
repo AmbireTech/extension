@@ -168,9 +168,20 @@ export const handleActions = async (
     }
 
     case 'DAPPS_CONTROLLER_DISCONNECT_DAPP': {
-      await mainCtrl.dapps.broadcastDappSessionEvent('disconnect', undefined, params.id)
-      mainCtrl.dapps.updateDapp(params.id, { isConnected: false })
-      await mainCtrl.autoLogin.revokeAllPoliciesForDomain(params.id, params.url)
+      if (params.source) {
+        await mainCtrl.dapps.disconnectDappSource(params.id, params.source)
+      } else {
+        await mainCtrl.dapps.broadcastDappSessionEvent('disconnect', undefined, params.id)
+        mainCtrl.dapps.updateDapp(params.id, {
+          connectedSources: [],
+          isConnected: false
+        })
+      }
+
+      const stillConnected = mainCtrl.dapps.hasPermission(params.id)
+      if (!stillConnected) {
+        await mainCtrl.autoLogin.revokeAllPoliciesForDomain(params.id, params.url)
+      }
 
       break
     }

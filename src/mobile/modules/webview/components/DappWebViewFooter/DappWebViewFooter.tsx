@@ -1,5 +1,5 @@
 import React, { useCallback } from 'react'
-import { Control } from 'react-hook-form'
+import { Control, useWatch } from 'react-hook-form'
 import { Pressable, View } from 'react-native'
 
 import { Account } from '@ambire-common/interfaces/account'
@@ -9,7 +9,7 @@ import LeftArrowIcon from '@common/assets/svg/LeftArrowIcon'
 import RefreshIcon from '@common/assets/svg/RefreshIcon'
 import Avatar from '@common/components/Avatar'
 import NetworkIcon from '@common/components/NetworkIcon'
-import Search from '@common/components/Search'
+import Text from '@common/components/Text'
 import useNavigation from '@common/hooks/useNavigation'
 import useRoute from '@common/hooks/useRoute'
 import useTheme from '@common/hooks/useTheme'
@@ -46,6 +46,8 @@ const DappWebViewFooter: React.FC<Props> = ({
   const { theme } = useTheme()
   const { navigate, goBack, canGoBack: canGoBackInHistory } = useNavigation()
   const route = useRoute()
+
+  const url = useWatch({ control: headerControl, name: 'search' })
 
   const handleNavigateToApps = useCallback(() => {
     // If we navigated here straight from the apps catalog (the typical flow),
@@ -91,38 +93,37 @@ const DappWebViewFooter: React.FC<Props> = ({
           flexbox.directionRow,
           flexbox.alignCenter,
           spacings.mhSm,
-          { backgroundColor: theme.secondaryBackground, borderRadius: BORDER_RADIUS_PRIMARY }
+          spacings.phTy,
+          {
+            backgroundColor: theme.secondaryBackground,
+            borderRadius: BORDER_RADIUS_PRIMARY,
+            height: 40
+          }
         ]}
       >
-        <View style={flexbox.flex1}>
-          <Search
-            control={headerControl as any}
-            hasLeftIcon={false}
-            inputWrapperStyle={{ backgroundColor: 'transparent' }}
-            nativeInputStyle={{ textAlign: 'center' }}
-            withClearButton={false}
-            onFocus={handleOpenSearchModal}
-            inputStyle={spacings.phMi}
-            leftIcon={() => (
-              <View style={{ width: 24 }}>
-                <Pressable onPress={handleGoBack} disabled={!canGoBack}>
-                  <LeftArrowIcon
-                    width={9}
-                    height={16}
-                    color={canGoBack ? theme.iconPrimary : theme.neutral400}
-                  />
-                </Pressable>
-              </View>
-            )}
-            childrenBeforeButtons={
-              <View style={[spacings.mrTy, flexbox.alignEnd, { width: 28 }]}>
-                <Pressable onPress={handleRefresh}>
-                  <RefreshIcon width={28} height={28} color={theme.iconPrimary} />
-                </Pressable>
-              </View>
-            }
+        <Pressable
+          onPress={handleGoBack}
+          disabled={!canGoBack}
+          style={[{ width: 28 }, flexbox.center]}
+        >
+          <LeftArrowIcon
+            width={9}
+            height={16}
+            color={canGoBack ? theme.iconPrimary : theme.neutral400}
           />
-        </View>
+        </Pressable>
+        <Pressable
+          onPress={handleOpenSearchModal}
+          style={[flexbox.flex1, flexbox.alignCenter, flexbox.justifyCenter, spacings.phMi]}
+          hitSlop={{ top: 10, bottom: 10 }}
+        >
+          <Text fontSize={14} numberOfLines={1} appearance="secondaryText">
+            {url}
+          </Text>
+        </Pressable>
+        <Pressable onPress={handleRefresh} style={{ width: 28 }}>
+          <RefreshIcon width={28} height={28} color={theme.iconPrimary} />
+        </Pressable>
       </View>
       {!!account && (
         <View>
@@ -172,7 +173,7 @@ const DappWebViewFooter: React.FC<Props> = ({
             </>
           )}
           {!!currentDapp && (
-            <ManageApp dapp={currentDapp} withCurrentAccount onClosed={onManageAppClosed}>
+            <ManageApp dapp={currentDapp} onClosed={onManageAppClosed}>
               <Avatar
                 pfp={account.preferences.pfp}
                 address={account.addr}
