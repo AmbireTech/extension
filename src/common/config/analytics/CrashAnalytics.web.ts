@@ -1,3 +1,4 @@
+import { scrubSentryEventSecrets } from '@common/config/analytics/sentryDataScrubbing'
 import CONFIG, { APP_VERSION, isDev } from '@common/config/env'
 import * as Sentry from '@sentry/react'
 import { IS_FIREFOX } from '@web/constants/common'
@@ -8,7 +9,10 @@ export const CRASH_ANALYTICS_WEB_CONFIG = {
   release: `extension-${process.env.WEB_ENGINE}@${APP_VERSION}`,
   // Disables sending personally identifiable information
   sendDefaultPii: false,
-  integrations: []
+  integrations: [],
+  beforeSend(event: Sentry.Event) {
+    return scrubSentryEventSecrets(event)
+  }
 }
 
 export const captureException = Sentry.captureException
