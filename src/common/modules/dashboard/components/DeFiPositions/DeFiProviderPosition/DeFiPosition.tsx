@@ -73,31 +73,39 @@ const DeFiPosition: FC<Props> = ({
           flexbox.justifySpaceBetween
         ]}
       >
-        <View style={[flexbox.directionRow, flexbox.alignCenter, flexbox.flex1]}>
-          <View>
-            <Text fontSize={14} weight="semiBold">
-              {name}
-            </Text>
-          </View>
+        <View
+          style={[
+            flexbox.directionRow,
+            flexbox.alignCenter,
+            flexbox.flex1,
+            { minWidth: 0, flexShrink: 1 }
+          ]}
+        >
+          <Text fontSize={14} weight="semiBold" style={{ flexShrink: 0 }}>
+            {name}
+          </Text>
           {!!positionIndex && (
-            <Text
-              fontSize={12}
-              appearance="secondaryText"
-              style={[spacings.mlMi, spacings.mrTy]}
-              selectable
-              numberOfLines={1}
-            >
-              {descriptionWithFallback}
-            </Text>
+            <View style={[{ flex: 1, minWidth: 0, flexShrink: 1 }, spacings.mlMi, spacings.mrTy]}>
+              <Text
+                fontSize={12}
+                appearance="secondaryText"
+                selectable
+                numberOfLines={1}
+                ellipsizeMode="tail"
+              >
+                {descriptionWithFallback}
+              </Text>
+            </View>
           )}
           {typeof inRange === 'boolean' && (
             <Badge
               text={inRange ? 'In Range' : 'Out of Range'}
               type={inRange ? 'success' : 'error'}
+              style={{ flexShrink: 0 }}
             />
           )}
         </View>
-        <Text fontSize={14} weight="semiBold" style={spacings.ml}>
+        <Text fontSize={14} weight="semiBold" style={[spacings.ml, { flexShrink: 0 }]}>
           {positionInUSD || '$-'}
         </Text>
       </View>
