@@ -180,22 +180,6 @@ const DashboardBanner = ({
 
           break
 
-        case 'dismiss-email-vault':
-          emailVaultDispatch({
-            type: 'method',
-            params: {
-              method: 'dismissBanner',
-              args: []
-            }
-          })
-          addToast(
-            'Password recovery can be enabled anytime in Settings. We’ll remind you in a week.',
-            {
-              type: 'info'
-            }
-          )
-          break
-
         case 'enable-networks':
           networksDispatch({
             type: 'method',

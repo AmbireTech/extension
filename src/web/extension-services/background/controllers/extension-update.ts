@@ -85,7 +85,7 @@ export class ExtensionUpdateController extends EventEmitter {
           type: 'info',
           title: 'Update Available',
           text: isAmbireNext
-            ? 'A new version is ready! It will be applied automatically the next time your browser or extension reloads. Reload now to update immediately.'
+            ? 'A new version is ready! It will be applied automatically on next reload. Reload now to update immediately.'
             : 'Please restart your browser, or toggle the extension off and on to update.',
           // The "Reload" button was removed since v5.16.1, because `browser.runtime.reload()`
           // was causing some funky Chrome glitches, see the deprecation notes in
