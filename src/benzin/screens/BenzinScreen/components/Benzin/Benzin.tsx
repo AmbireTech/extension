@@ -56,8 +56,11 @@ const Benzin = ({
   }, [])
 
   const identifiedByType =
-    state?.stepsState?.submittedAccountOp?.identifiedBy.type ||
-    state?.stepsState?.extensionAccOp?.identifiedBy.type
+    state?.stepsState?.submittedAccountOp?.identifiedBy?.type ||
+    state?.stepsState?.extensionAccOp?.identifiedBy?.type
+  const accountOp = state?.stepsState?.submittedAccountOp || state?.stepsState?.extensionAccOp
+  const rawCalls = accountOp?.calls
+  const disableOpenExplorerBtn = state?.disableOpenExplorerBtn
 
   const handleOpenCallExplorer = useCallback(
     async (callTxnId?: string) => {
@@ -74,8 +77,9 @@ const Benzin = ({
     if (!calls || !state.network?.chainId) return []
 
     return calls.map((call, i) => {
+      const callTxnId = call.txnId || rawCalls?.[i]?.txnId
       const shouldShowCallExplorerIcon =
-        identifiedByType === 'MultipleTxns' && !!call.txnId && !!state.network?.explorerUrl
+        identifiedByType === 'MultipleTxns' && !!callTxnId && !!state.network?.explorerUrl
 
       return (
         <TransactionSummary
@@ -85,7 +89,7 @@ const Benzin = ({
           chainId={state.network!.chainId}
           rightIcon={shouldShowCallExplorerIcon ? <OpenIcon width={size} height={size} /> : null}
           onRightIconPress={
-            shouldShowCallExplorerIcon ? () => handleOpenCallExplorer(call.txnId) : undefined
+            shouldShowCallExplorerIcon ? () => handleOpenCallExplorer(callTxnId) : undefined
           }
           size={sizeStr}
           type="benzin"
@@ -99,9 +103,10 @@ const Benzin = ({
   }, [
     handleOpenCallExplorer,
     identifiedByType,
+    rawCalls,
     state?.network?.chainId,
     state?.network?.explorerUrl,
-    state?.stepsState?.calls?.length
+    state?.stepsState?.calls
   ])
 
   const backgroundSource = useMemo(() => {
@@ -204,6 +209,7 @@ const Benzin = ({
             <Buttons
               handleCopyText={handleCopyText}
               handleOpenExplorer={handleOpenExplorer}
+              disableOpenExplorerBtn={disableOpenExplorerBtn}
               showCopyBtn={showCopyBtn}
               showOpenExplorerBtn={showOpenExplorerBtn}
             />
