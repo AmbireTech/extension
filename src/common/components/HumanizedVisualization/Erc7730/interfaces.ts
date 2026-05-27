@@ -7,11 +7,6 @@ export type EditApprovalCallInfo = {
   callId?: string
 }
 
-export interface Erc7730StructuredAddressActionsProps {
-  address: string
-  chainId: bigint
-}
-
 export interface Erc7730StructuredAddressProps {
   address: string
   chainId: bigint

@@ -7,7 +7,6 @@ import {
 } from '@ambire-common/libs/humanizer/interfaces'
 import ChainVisualization from '@common/components/HumanizedVisualization/ChainVisualization'
 import EditApproval from '@common/components/HumanizedVisualization/EditApproval'
-import Erc7730StructuredAddressActions from '@common/components/HumanizedVisualization/Erc7730/Erc7730StructuredAddressActions'
 import {
   Erc7730Row,
   Erc7730StructuredVisualizationProps
@@ -227,7 +226,6 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
                 style={[spacings.mlTy, spacings.mr0]}
               />
             )}
-            <Erc7730StructuredAddressActions address={valueItem.address} chainId={tokenChainId} />
           </View>
         )
       }
@@ -255,7 +253,6 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
               tokenMarginRight={0}
               tokenIconContainerSize={20}
             />
-            <Erc7730StructuredAddressActions address={valueItem.address} chainId={tokenChainId} />
           </View>
         </View>
       )

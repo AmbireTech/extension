@@ -30,7 +30,7 @@ import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import ExpandedContent from '@common/modules/sign-account-op/components/TransactionSummary/ExpandedContent'
 import FallbackVisualization from '@common/modules/sign-account-op/components/TransactionSummary/FallbackVisualization'
-import { SPACING_SM, SPACING_TY } from '@common/styles/spacings'
+import spacings, { SPACING_SM, SPACING_TY } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import ManifestImage from '@web/components/ManifestImage'
 
@@ -445,7 +445,7 @@ const TransactionSummary = ({
         <>
           {callVisualization ? (
             shouldUseDetailedErc7730Layout && erc7730Visualization ? (
-              <View style={{ flex: 1, minWidth: 0 }}>
+              <View style={[{ flex: 1, minWidth: 0 }, spacings.phSm]}>
                 <View
                   style={[
                     flexbox.directionRow,
@@ -535,7 +535,7 @@ const TransactionSummary = ({
           )}
           {rightIcon && onRightIconPress && !hasCallFailed && (
             <AnimatedPressable
-              style={deleteIconAnimStyle}
+              style={[{ ...deleteIconAnimStyle }, spacings.mlTy]}
               onPress={onRightIconPress}
               {...bindDeleteIconAnim}
               testID={`right-icon-${index}`}

@@ -96,6 +96,12 @@ const BaseAddress: FC<Props> = ({
   const showInlineActions = actionsMode === 'inline'
   const displayValue =
     showInlineActions && isDisplayingPlainAddress ? shortenAddress(address, 18, 4) : children
+  const textStyle = {
+    flexShrink: 1,
+    ...(isWeb ? { wordBreak: 'break-all' } : {})
+  }
+  const textWeight = isDisplayingPlainAddress ? 'mono_regular' : 'medium'
+  const textAppearance = verification === 'BLACKLISTED' ? 'errorText' : 'primaryText'
 
   return (
     <View
@@ -107,54 +113,64 @@ const BaseAddress: FC<Props> = ({
         showInlineActions && { maxWidth: '100%' }
       ]}
     >
-      <Text
-        weight={isDisplayingPlainAddress ? 'mono_regular' : 'medium'}
-        fontSize={14}
-        appearance={verification === 'BLACKLISTED' ? 'errorText' : 'primaryText'}
-        selectable
-        style={{
-          flexShrink: 1,
-          ...(isWeb ? { wordBreak: 'break-all' } : {})
-        }}
-        {...rest}
-      >
-        {displayValue}
-        {isWeb && !showInlineActions && (
-          <Pressable style={spacings.mlMi}>
-            {({ hovered }: any) => (
-              <InfoIcon
-                data-tooltip-id={tooltipId}
-                color={hovered ? theme.primaryText : theme.secondaryText}
-                width={14}
-                height={14}
-              />
-            )}
-          </Pressable>
-        )}
-      </Text>
-      {showInlineActions ? (
-        <>
-          {!!network?.explorerUrl && (
-            <Pressable
-              accessibilityRole="link"
-              accessibilityLabel={t('View in Explorer')}
-              onPress={(e: any) => {
-                e?.stopPropagation?.()
-                void handleOpenExplorer()
-              }}
-              style={[spacings.mlTy, flexbox.center]}
-            >
-              {({ hovered }: any) => (
+      {showInlineActions && !!network?.explorerUrl ? (
+        <Pressable
+          accessibilityRole="link"
+          accessibilityLabel={t('View in Explorer')}
+          onPress={(e: any) => {
+            e?.stopPropagation?.()
+            void handleOpenExplorer()
+          }}
+          style={[flexbox.directionRow, flexbox.alignCenter, flexbox.wrap, { maxWidth: '100%' }]}
+        >
+          {({ hovered }: any) => (
+            <>
+              <Text
+                weight={textWeight}
+                fontSize={14}
+                appearance={textAppearance}
+                underline={hovered}
+                selectable
+                style={textStyle}
+                {...rest}
+              >
+                {displayValue}
+              </Text>
+              <View style={[{ marginLeft: 2, marginTop: -8 }, flexbox.center]}>
                 <OpenIcon
                   color={hovered ? theme.primaryText : theme.secondaryText}
-                  width={16}
-                  height={16}
+                  width={10}
+                  height={10}
+                />
+              </View>
+            </>
+          )}
+        </Pressable>
+      ) : (
+        <Text
+          weight={textWeight}
+          fontSize={14}
+          appearance={textAppearance}
+          selectable
+          style={textStyle}
+          {...rest}
+        >
+          {displayValue}
+          {isWeb && !showInlineActions && (
+            <Pressable style={spacings.mlMi}>
+              {({ hovered }: any) => (
+                <InfoIcon
+                  data-tooltip-id={tooltipId}
+                  color={hovered ? theme.primaryText : theme.secondaryText}
+                  width={14}
+                  height={14}
                 />
               )}
             </Pressable>
           )}
-        </>
-      ) : (
+        </Text>
+      )}
+      {!showInlineActions && (
         <Tooltip
           id={tooltipId}
           style={{ padding: 0, overflow: 'hidden' }}
