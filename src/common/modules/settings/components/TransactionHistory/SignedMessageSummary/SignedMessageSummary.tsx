@@ -11,10 +11,10 @@ import HumanizedVisualization from '@common/components/HumanizedVisualization/Hu
 import Text from '@common/components/Text'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
+import FallbackVisualization from '@common/modules/sign-message/components/FallbackVisualization'
 import spacings, { SPACING } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import ManifestImage from '@web/components/ManifestImage'
-import FallbackVisualization from '@web/modules/sign-message/screens/SignMessageScreen/FallbackVisualization'
 
 import getStyles from './styles'
 
@@ -105,7 +105,7 @@ const SignedMessageSummary = ({ signedMessage, style }: Props) => {
               {signedMessage.content.kind === 'message' && 'Message'}
               {signedMessage.content.kind === 'typedMessage' && 'Typed Data'}
               {signedMessage.content.kind === 'authorization-7702' && 'EIP-7702'}
-              {signedMessage.content.kind === 'siwe' && "SIWE message"}
+              {signedMessage.content.kind === 'siwe' && 'SIWE message'}
             </Text>
           </View>
         </View>

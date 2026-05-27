@@ -1,0 +1,157 @@
+/* eslint-disable @typescript-eslint/no-floating-promises */
+import { ethErrors } from 'eth-rpc-errors'
+import { v4 as uuidv4 } from 'uuid'
+
+import { MainController } from '@ambire-common/controllers/main/main'
+import { DappProviderRequest } from '@ambire-common/interfaces/dapp'
+import { UiManager } from '@ambire-common/interfaces/ui'
+import { getMetadata } from '@common/modules/provider/metadata'
+import { ProviderController } from '@common/modules/provider/ProviderController'
+import { RequestRes } from '@common/modules/provider/types'
+import PromiseFlow from '@common/utils/promiseFlow'
+import underline2Camelcase from '@common/utils/underline2Camelcase'
+
+const lockedOrigins: { [key: string]: Promise<any> } = {}
+const connectOrigins: { [key: string]: Promise<any> } = {}
+
+const flow = new PromiseFlow<{
+  request: DappProviderRequest
+  mainCtrl: MainController
+  notificationManager: UiManager['notification']
+  mapMethod: string
+  requestRes?: RequestRes
+}>()
+
+const flowContext = flow
+  // validate the provided method
+  .use(async ({ request, mainCtrl, notificationManager, mapMethod }, next) => {
+    const { method, params } = request
+    const providerCtrl = new ProviderController(mainCtrl, notificationManager)
+    if (!(providerCtrl as any)[mapMethod]) {
+      if (method.startsWith('eth_') || method === 'net_version') {
+        return providerCtrl.ethRpc(request)
+      }
+
+      throw ethErrors.rpc.methodNotFound({
+        message: `method [${method}] doesn't has corresponding handler`,
+        data: { method, params }
+      })
+    }
+
+    return next()
+  })
+  // unlock the wallet before proceeding with the request
+  .use(async ({ request, mainCtrl, notificationManager, mapMethod }, next) => {
+    const {
+      session: { origin, id }
+    } = request
+    const providerCtrl = new ProviderController(mainCtrl, notificationManager)
+
+    if (!getMetadata('SAFE', providerCtrl, mapMethod)) {
+      const isUnlocked = mainCtrl.keystore.isReadyToStoreKeys ? mainCtrl.keystore.isUnlocked : true
+
+      if (!isUnlocked && mainCtrl.dapps.hasPermission(id)) {
+        try {
+          if (lockedOrigins[origin] === undefined) {
+            lockedOrigins[origin] = new Promise((resolve: (value: any) => void, reject) => {
+              mainCtrl.requests.build({
+                type: 'dappRequest',
+                params: {
+                  request: { ...request, method: 'unlock', params: {} },
+                  dappPromise: { id: uuidv4(), resolve, reject, session: request.session }
+                }
+              })
+            })
+            lockedOrigins[origin].catch(() => {
+              delete lockedOrigins[origin]
+            })
+          } else if (mainCtrl.requests.currentUserRequest) {
+            await mainCtrl.requests.focusRequestWindow()
+          }
+          await lockedOrigins[origin]
+        } finally {
+          delete lockedOrigins[origin]
+        }
+      }
+    }
+
+    return next()
+  })
+  // if dApp not connected - prompt connect request window
+  .use(async ({ request, mainCtrl, notificationManager, mapMethod }, next) => {
+    const {
+      session: { id, origin: url }
+    } = request
+    const providerCtrl = new ProviderController(mainCtrl, notificationManager)
+    if (!getMetadata('SAFE', providerCtrl, mapMethod)) {
+      if (!mainCtrl.dapps.hasPermission(id)) {
+        try {
+          if (connectOrigins[url] === undefined) {
+            connectOrigins[url] = new Promise((resolve: (value: any) => void, reject) => {
+              mainCtrl.requests.build({
+                type: 'dappRequest',
+                params: {
+                  request: { ...request, method: 'dapp_connect', params: {} },
+                  dappPromise: { id: uuidv4(), resolve, reject, session: request.session }
+                }
+              })
+            })
+            connectOrigins[url].catch(() => {
+              delete connectOrigins[url]
+            })
+          } else if (mainCtrl.requests.currentUserRequest) {
+            await mainCtrl.requests.focusRequestWindow()
+          }
+          const dappToAdd = await connectOrigins[url]
+          await mainCtrl.dapps.addDapp({ ...dappToAdd, isConnected: true })
+        } finally {
+          delete connectOrigins[url]
+        }
+      }
+    }
+
+    return next()
+  })
+  // add the dapp request as a userRequest
+  .use(async (props, next) => {
+    const { request, mainCtrl, notificationManager, mapMethod } = props
+    const providerCtrl = new ProviderController(mainCtrl, notificationManager)
+
+    const [requestType, condition] = (getMetadata('ACTION_REQUEST', providerCtrl, mapMethod) ||
+      []) as [string?, ((...args: any[]) => any)?]
+    if (requestType && (!condition || !condition(props))) {
+      // eslint-disable-next-line no-param-reassign
+      props.requestRes = await new Promise((resolve, reject) => {
+        mainCtrl.requests
+          .build({
+            type: 'dappRequest',
+            params: {
+              request,
+              dappPromise: { id: uuidv4(), resolve, reject, session: request.session }
+            }
+          })
+          .catch((error: any) => reject(error))
+      })
+    }
+
+    return next()
+  })
+  .use(async ({ request, mainCtrl, notificationManager, mapMethod, requestRes }) => {
+    const providerCtrl = new ProviderController(mainCtrl, notificationManager)
+
+    return Promise.resolve((providerCtrl as any)[mapMethod]({ ...request, requestRes }))
+  })
+  .callback()
+
+export default (
+  request: DappProviderRequest,
+  mainCtrl: MainController,
+  notificationManager: UiManager['notification']
+) => {
+  return flowContext({
+    request,
+    mainCtrl,
+    notificationManager,
+    mapMethod: underline2Camelcase(request.method)
+  })
+}

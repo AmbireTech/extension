@@ -28,7 +28,7 @@ import { LEGENDS_LEGACY_ROUTES } from '../constants/routes'
 //              -> child Route.
 const PrivateArea: FC<{ children: ReactNode }> = ({ children }) => {
   useEffect(() => {
-    document.title = 'Ambire Rewards'
+    document.title = 'Ambire Rewards | Stake $WALLET & Earn Rewards'
   }, [])
 
   return (
@@ -55,7 +55,7 @@ const Router = () => {
         <Route path={LEGENDS_ROUTES.leaderboard} element={<Leaderboard />} />
         <Route path={LEGENDS_ROUTES.home} element={<Home />} />
         <Route path={LEGENDS_ROUTES.wallet} element={<Wallet />} />
-        <Route path={LEGENDS_ROUTES['/']} element={<Home />} />
+        <Route path={LEGENDS_ROUTES['/']} element={<Wallet />} />
         <Route path={LEGENDS_ROUTES.rewardsPool} element={<RewardsPool />} />
         <Route path={LEGENDS_ROUTES.legacyQuests} element={<Navigate to={LEGENDS_ROUTES.home} />} />
         <Route

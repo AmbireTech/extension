@@ -12,13 +12,11 @@ import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import HoldToProceedButton from '@common/components/HoldToProceedButton'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
-import useTheme from '@common/hooks/useTheme'
 import ActionsPagination from '@common/modules/action-requests/components/ActionsPagination'
-import spacings, { SPACING, SPACING_SM } from '@common/styles/spacings'
+import spacings, { SPACING_SM } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
 import { Props } from './Footer'
-import getStyles from './styles'
 
 const Footer = ({
   onReject,
@@ -34,7 +32,6 @@ const Footer = ({
   shouldHoldToProceed
 }: Props) => {
   const { t } = useTranslation()
-  const { styles, themeType } = useTheme(getStyles)
   const { userRequests } = useController('RequestsController').state
   const {
     state: { account }
@@ -167,6 +164,8 @@ const Footer = ({
           </View>
         )}
       </View>
+
+      <ActionsPagination />
     </View>
   )
 }
