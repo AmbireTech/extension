@@ -90,17 +90,22 @@ const DeFiPosition: FC<Props> = ({
           flexbox.justifySpaceBetween
         ]}
       >
-        <View style={[flexbox.directionRow, flexbox.alignCenter, flexbox.flex1]}>
-          <View>
-            <Text fontSize={14} weight="semiBold">
-              {name}
-            </Text>
-          </View>
+        <View
+          style={[
+            flexbox.directionRow,
+            flexbox.alignCenter,
+            flexbox.flex1,
+            { minWidth: 0, flexShrink: 1 }
+          ]}
+        >
+          <Text fontSize={14} weight="semiBold" style={{ flexShrink: 0 }}>
+            {name}
+          </Text>
           {!!positionIndex && (
             <Pressable
               disabled={!positionUrl}
               onPress={positionUrl ? () => openInTab({ url: positionUrl }) : undefined}
-              style={[spacings.mlMi, spacings.mrTy]}
+              style={[{ flex: 1, minWidth: 0, flexShrink: 1 }, spacings.mlMi, spacings.mrTy]}
             >
               <Text
                 fontSize={12}
@@ -108,6 +113,7 @@ const DeFiPosition: FC<Props> = ({
                 selectable
                 numberOfLines={1}
                 style={positionUrl ? { textDecorationLine: 'underline' } : undefined}
+                ellipsizeMode="tail"
               >
                 {descriptionWithFallback}
               </Text>
@@ -117,10 +123,11 @@ const DeFiPosition: FC<Props> = ({
             <Badge
               text={inRange ? 'In Range' : 'Out of Range'}
               type={inRange ? 'success' : 'error'}
+              style={{ flexShrink: 0 }}
             />
           )}
         </View>
-        <Text fontSize={14} weight="semiBold" style={spacings.ml}>
+        <Text fontSize={14} weight="semiBold" style={[spacings.ml, { flexShrink: 0 }]}>
           {positionInUSD || '$-'}
         </Text>
       </View>
