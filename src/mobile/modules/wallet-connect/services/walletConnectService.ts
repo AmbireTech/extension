@@ -17,7 +17,14 @@ let initialized = false
 let initPromise: Promise<WalletKitType> | null = null
 let addToastFn: ((text: string, options?: any) => void) | null = null
 let pendingRestoreSessions:
-  | { topic: string; url: string; chainId: number; name?: string; icon?: string }[]
+  | {
+      topic: string
+      url: string
+      chainId: number
+      candidateChainIds?: number[]
+      name?: string
+      icon?: string
+    }[]
   | null = null
 
 // Keyed by the session_authenticate request id.
@@ -28,6 +35,16 @@ const pendingAuthenticates = new Map<
 
 export const getWalletKit = () => walletKit
 export const isWalletConnectInitialized = () => initialized
+
+/**
+ * Parses a WalletConnect eip155 namespace `chains` array (CAIP-2 ids like 'eip155:5115')
+ * into numeric chainIds, dropping any malformed entries while preserving order.
+ */
+function parseEip155ChainIds(chains?: string[]): number[] {
+  return (chains ?? [])
+    .map((c) => parseInt(c.split(':')[1] ?? '', 10))
+    .filter((chainId) => Number.isFinite(chainId))
+}
 
 function guessDappName(rawName: string, url: string) {
   try {
@@ -370,7 +387,8 @@ export const initWalletConnect = async (
         const sessionsToRestore = await Promise.all(
           Object.values(activeSessions).map(async (session: SessionTypes.Struct) => {
             const eip155Namespace = session.namespaces?.eip155
-            const chainId = eip155Namespace?.chains?.[0]?.split(':')[1] || '1'
+            const candidateChainIds = parseEip155ChainIds(eip155Namespace?.chains)
+            const chainId = candidateChainIds[0] ?? 1
             const url = session.peer.metadata.url
             const { name, icon } = await getDappMetadata(
               url,
@@ -380,7 +398,8 @@ export const initWalletConnect = async (
             return {
               topic: session.topic,
               url,
-              chainId: parseInt(chainId, 10),
+              chainId,
+              candidateChainIds,
               name,
               icon
             }
@@ -535,6 +554,8 @@ export const approveWalletConnectSession = async (
     proposal.proposer?.metadata?.icons?.[0]
   )
 
+  const candidateChainIds = parseEip155ChainIds(session.namespaces?.eip155?.chains)
+
   dispatch(
     {
       type: 'SETUP_WC_SESSION_MESSENGER',
@@ -542,7 +563,8 @@ export const approveWalletConnectSession = async (
         url: proposerUrl,
         tabId: getWcTabIdFromTopic(session.topic),
         topic: session.topic,
-        chainId: 1,
+        chainId: candidateChainIds[0] ?? 1,
+        candidateChainIds,
         name,
         icon,
         tempSessionTopic: `temp_wallet_connect_session_${proposal.id}`
@@ -774,6 +796,7 @@ export const approveWcAuthenticate = async (
       session.peer.metadata.name,
       session.peer.metadata.icons[0]
     )
+    const candidateChainIds = parseEip155ChainIds(session.namespaces?.eip155?.chains)
     dispatch(
       {
         type: 'SETUP_WC_SESSION_MESSENGER',
@@ -781,7 +804,8 @@ export const approveWcAuthenticate = async (
           url: requesterUrl,
           tabId: getWcTabIdFromTopic(session.topic),
           topic: session.topic,
-          chainId: 1,
+          chainId: candidateChainIds[0] ?? 1,
+          candidateChainIds,
           name,
           icon,
           tempSessionTopic: `temp_wc_auth_${id}`

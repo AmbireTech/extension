@@ -159,6 +159,7 @@ type SetupWcSessionMessengerAction = {
     tabId: number
     topic: string
     chainId: number
+    candidateChainIds?: number[]
     name?: string
     icon?: string
     tempSessionTopic?: string
@@ -168,7 +169,14 @@ type SetupWcSessionMessengerAction = {
 type RestoreWcSessionsAction = {
   type: 'RESTORE_WC_SESSIONS'
   params: {
-    sessions: { topic: string; url: string; chainId: number; name?: string; icon?: string }[]
+    sessions: {
+      topic: string
+      url: string
+      chainId: number
+      candidateChainIds?: number[]
+      name?: string
+      icon?: string
+    }[]
   }
 }
 

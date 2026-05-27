@@ -309,7 +309,9 @@ export const handleActions = async (
         tabId: params.tabId,
         wcTopic: params.topic
       })
-      const messenger = createWcBridgeMessenger(params.topic, params.chainId)
+      const resolvedChainId =
+        mainCtrl.dapps.pickWalletConnectChainId(params.candidateChainIds) ?? params.chainId
+      const messenger = createWcBridgeMessenger(params.topic, resolvedChainId)
       mainCtrl.dapps.setSessionMessenger(session.sessionId, messenger, false)
       mainCtrl.dapps.setSessionProp(session.sessionId, { name: params.name, icon: params.icon })
 
@@ -320,7 +322,8 @@ export const handleActions = async (
           name: params.name ?? new URL(params.url).hostname,
           url: params.url,
           icon: params.icon ?? null,
-          chainId: params.chainId
+          chainId: params.chainId,
+          candidateChainIds: params.candidateChainIds
         },
         'wc'
       )
@@ -330,7 +333,7 @@ export const handleActions = async (
 
     case 'RESTORE_WC_SESSIONS': {
       for (const wcSession of params.sessions) {
-        const { topic, name, icon, url, chainId } = wcSession
+        const { topic, name, icon, url, chainId, candidateChainIds } = wcSession
         try {
           const wcTabId = getWcTabIdFromTopic(topic)
           const session = await mainCtrl.dapps.getOrCreateDappSession({
@@ -338,7 +341,9 @@ export const handleActions = async (
             tabId: wcTabId,
             wcTopic: topic
           })
-          const messenger = createWcBridgeMessenger(topic, chainId)
+          const resolvedChainId =
+            mainCtrl.dapps.pickWalletConnectChainId(candidateChainIds) ?? chainId
+          const messenger = createWcBridgeMessenger(topic, resolvedChainId)
           mainCtrl.dapps.setSessionMessenger(session.sessionId, messenger, false)
           mainCtrl.dapps.setSessionProp(session.sessionId, { name, icon })
 
@@ -349,7 +354,8 @@ export const handleActions = async (
               name: name ?? new URL(url).hostname,
               url,
               icon: icon ?? null,
-              chainId
+              chainId,
+              candidateChainIds
             },
             'wc'
           )
