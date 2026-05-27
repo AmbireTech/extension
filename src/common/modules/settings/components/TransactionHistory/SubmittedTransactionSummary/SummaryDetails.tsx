@@ -185,6 +185,7 @@ const SummaryDetails = ({
                       }
                     : undefined
                 }
+                disableSelectorFetching
               />
             ))}
           {!isDelegationTxn && !humanizedCalls.length && (

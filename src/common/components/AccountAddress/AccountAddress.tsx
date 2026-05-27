@@ -6,6 +6,7 @@ import ReceiveIcon from '@common/assets/svg/ReceiveIcon'
 import PlainAddress from '@common/components/AccountAddress/PlainAddress'
 import PlainAddressWithCopy from '@common/components/AccountAddress/PlainAddressWithCopy'
 import DomainBadge from '@common/components/Avatar/DomainBadge'
+import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import Text from '@common/components/Text'
 import { isMobile } from '@common/config/env'
 import useHover, { AnimatedPressable } from '@common/hooks/useHover/useHover'
@@ -97,6 +98,10 @@ const AccountAddress: FC<Props> = ({
                 appearance="primary"
                 numberOfLines={1}
                 style={[spacings.mrMi, { flexShrink: 1, minWidth: 0 }]}
+                dataSet={createGlobalTooltipDataSet({
+                  id: `account-address-resolved-name-${address}`,
+                  content: name
+                })}
               >
                 {name}
               </Text>

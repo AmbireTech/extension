@@ -5,21 +5,19 @@ import Animated, { useAnimatedStyle, useDerivedValue, withSpring } from 'react-n
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import GlassView from '@common/components/GlassView'
+import useTheme from '@common/hooks/useTheme'
 import SelectNetwork from '@common/modules/dashboard/components/TabsAndSearch/SelectNetwork'
 import spacings, { SPACING } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import useTheme from '@common/hooks/useTheme'
 
-import CurrentApp from './CurrentApp'
 import DashboardSearch from './DashboardSearch'
-
 import { SearchAndCurrentAppProps } from './SearchAndCurrentApp'
 
 const SearchAndCurrentApp: React.FC<SearchAndCurrentAppProps> = ({
   control,
-  displayCurrentApp = false,
   displayNetworkFilter = false,
-  isHidden
+  isHidden,
+  searchPlaceholder
 }) => {
   const { bottom: safeBottom } = useSafeAreaInsets()
   const { height } = useReanimatedKeyboardAnimation()
@@ -67,8 +65,7 @@ const SearchAndCurrentApp: React.FC<SearchAndCurrentAppProps> = ({
             { columnGap: SPACING }
           ]}
         >
-          <DashboardSearch control={control} />
-          {displayCurrentApp && <CurrentApp />}
+          <DashboardSearch control={control} placeholder={searchPlaceholder} />
           {displayNetworkFilter && <SelectNetwork />}
         </View>
       </GlassView>

@@ -126,6 +126,25 @@ type WindowRemovedAction = {
   params: { id: number }
 }
 
+type WebviewOriginChangedAction = {
+  type: 'WEBVIEW_ORIGIN_CHANGED'
+  params: { previousOrigin: string }
+}
+
+type HandleProviderRequestAction = {
+  type: 'HANDLE_PROVIDER_REQUEST'
+  params: {
+    request: {
+      method: string
+      params?: any
+      origin: string
+    }
+    requestId: number
+    providerId: number
+    topic: string
+  }
+}
+
 export type Action =
   | UpdateNavigationUrl
   | UpdateUiViewRoute
@@ -147,3 +166,5 @@ export type Action =
   | WindowRemovedAction
   | GetAllControllerNamesAction
   | InitControllerStateAction
+  | HandleProviderRequestAction
+  | WebviewOriginChangedAction

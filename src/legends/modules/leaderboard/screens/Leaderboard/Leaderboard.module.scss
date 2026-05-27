@@ -22,23 +22,53 @@
   }
 
   .title {
-    font-size: 2.5rem;
-    font-weight: 400;
+    font-style: Medium;
+    font-size: 2.66rem;
+    font-weight: 500;
     line-height: 2.6375rem;
-    padding-bottom: 1rem;
+    padding-bottom: 3.2rem;
   }
 
-  .subtitle {
+  .intro {
+    max-width: 33.733rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.625rem;
+  }
+
+  .introParagraph {
+    margin: 0;
+    font-size: 0.875rem;
+    line-height: 1.33rem;
+
     color: $mainText;
-    font-size: 1.125rem;
+  }
+
+  .introLead {
+    font-size: 1.06rem;
+    font-weight: 700;
+    font-style: bold;
+    color: #fff;
+  }
+
+  .introMuted {
     font-weight: 300;
-    line-height: 1.3931rem;
-    max-width: 44.5rem;
+    font-style: light;
+    font-size: 0.933rem;
+    color: $mainText;
+  }
+
+  .introEmphasis {
+    font-size: 1.06rem;
+    font-style: medium;
+    font-weight: 500;
+    color: #fff;
   }
 
   .tabs {
     display: flex;
-    justify-content: space-between;
+    justify-content: center;
+    flex-wrap: wrap;
     gap: 0.75rem;
     margin: 0 auto 2.75rem auto;
     color: $mainText;
@@ -49,14 +79,13 @@
       border: none;
 
       position: relative;
-      flex: 1;
       width: 7.5rem;
       height: 2.5rem;
 
       cursor: pointer;
-      font-weight: 300;
+      font-weight: 400;
       transition: all 0.2s ease;
-      font-size: 0.875rem;
+      font-size: 0.8125rem;
       background-color: rgba($mainText, 0.1);
       backdrop-filter: blur(0.25rem);
       opacity: 0.5;
@@ -65,34 +94,12 @@
 
       &.active {
         opacity: 1;
-      }
-
-      &.current {
-        font-weight: 500;
-
-        .ribbonWrapper {
-          position: absolute;
-          top: -0.1875rem;
-          left: 50%;
-          transform: translateX(-50%);
-          display: flex;
-          align-items: flex-end;
-          gap: 0.25rem;
-
-          .icon {
-            width: 0.625rem;
-            height: auto;
-          }
-          .label {
-            font-size: 0.5rem;
-            font-weight: 600;
-            letter-spacing: 5%;
-            color: $green-500;
-          }
-        }
+        font-weight: 600;
+        background-color: rgba($mainText, 0.5);
       }
     }
   }
+
   .table {
     display: flex;
     flex-direction: column;
@@ -102,17 +109,6 @@
     background-color: $neutral-700;
     padding: 1rem;
     border-radius: 1rem;
-
-    &.season0 {
-      .header,
-      .row {
-        .cell {
-          &:nth-child(2) {
-            flex: 0.75;
-          }
-        }
-      }
-    }
   }
 
   .header,
@@ -144,14 +140,19 @@
       &.scoreCell {
         text-transform: capitalize;
       }
-      .weightText {
-        margin-right: 0.25rem;
-        color: rgba($neutral-600, 0.639);
-      }
+    }
+
+    .scoreValue {
+      flex: 1;
+      justify-content: flex-end;
+      text-align: right;
+      font-weight: 400;
     }
   }
+
   .header {
     padding-bottom: 0;
+
     .cell {
       text-transform: uppercase;
       font-size: 0.875rem;
@@ -192,6 +193,7 @@
     justify-content: center;
     margin-right: 1rem;
   }
+
   .rank {
     height: 1.25rem;
     width: 1.25rem;
@@ -200,6 +202,7 @@
 
   .rankedRow1 {
     background-color: rgba($neutral-600, 0.051);
+
     .cell:last-child,
     .trophy {
       color: $goldDecorative;
@@ -220,10 +223,15 @@
     .addressSkeleton {
       background-color: $secondaryBackground;
     }
+
+    .scoreValue {
+      color: $goldDecorative;
+    }
   }
 
   .rankedRow2 {
     background-color: rgba($neutral-600, 0.051);
+
     .cell:last-child,
     .trophy {
       color: $silverDecorative;
@@ -232,6 +240,7 @@
 
   .rankedRow3 {
     background-color: rgba($neutral-600, 0.051);
+
     .cell:last-child,
     .trophy {
       color: $bronzeDecorative;

@@ -313,7 +313,13 @@ const DeFiPositions: FC<Props> = ({
         refreshing={refreshing}
         onRefresh={onRefresh}
       />
-      {openTab === 'defi' && <SearchAndCurrentApp control={control} isHidden={isSearchHidden} />}
+      {openTab === 'defi' && (
+        <SearchAndCurrentApp
+          control={control}
+          isHidden={isSearchHidden}
+          searchPlaceholder={t('Search DeFi')}
+        />
+      )}
     </>
   )
 }

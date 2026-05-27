@@ -1,0 +1,3 @@
+import GetEncryptionPublicKeyRequestScreen from './GetEncryptionPublicKeyRequestScreen'
+
+export default GetEncryptionPublicKeyRequestScreen
