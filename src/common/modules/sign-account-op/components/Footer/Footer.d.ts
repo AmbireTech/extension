@@ -11,6 +11,7 @@ export type Props = {
   buttonTooltipText?: string
   shouldHoldToProceed: boolean
   holdToProceedButtonType?: 'dangerFilled' | 'warning' | 'primary'
+  signButtonType?: 'dangerFilled' | 'primary'
 }
 
 declare const Footer: React.FC<Props>

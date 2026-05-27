@@ -84,7 +84,8 @@ const OneClickEstimation = ({
     isChooseFeePayerKeyShown,
     setIsChooseFeePayerKeyShown,
     slowPaymasterRequest,
-    primaryButtonText,
+    signButtonText,
+    extremeGasFeeSignButtonType,
     bundlerNonceDiscrepancy,
     shouldDisplayQrSigningModal,
     handleQrSingingFlowOnContinuePressed,
@@ -206,6 +207,9 @@ const OneClickEstimation = ({
                 <HoldToProceedButton
                   testID="sign-proceed-btn"
                   text={t('Hold to sign')}
+                  buttonType={
+                    extremeGasFeeSignButtonType === 'dangerFilled' ? 'dangerFilled' : 'primary'
+                  }
                   disabled={isSignDisabled || signingErrors.length > 0}
                   onHoldComplete={onSignButtonClick}
                   size={isMobile ? 'regular' : 'smaller'}
@@ -213,7 +217,8 @@ const OneClickEstimation = ({
               ) : (
                 <ButtonWithLoader
                   testID="sign-button"
-                  text={primaryButtonText}
+                  text={signButtonText}
+                  type={extremeGasFeeSignButtonType}
                   isLoading={isSignLoading}
                   disabled={isSignDisabled || signingErrors.length > 0}
                   onPress={onSignButtonClick}

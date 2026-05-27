@@ -10,6 +10,7 @@ import {
   isTransferredTokenFeeOption
 } from '@ambire-common/libs/account/feeOptions'
 import { FeePaymentOption } from '@ambire-common/libs/estimate/interfaces'
+import { getExtremeGasFeeWarningState } from '@ambire-common/libs/safeguards/extremeGasFee'
 import { ZERO_ADDRESS } from '@ambire-common/services/socket/constants'
 
 import PayOption from './components/PayOption'
@@ -129,6 +130,19 @@ const mapFeeOptions = (
     disabledTextAppearance = 'errorText'
   }
 
+  const isSelectedFeeOption =
+    !!signAccountOpState.selectedOption &&
+    id ===
+      getFeeSpeedIdentifier(
+        signAccountOpState.selectedOption,
+        signAccountOpState.accountOp.accountAddr
+      )
+
+  const shouldHighlightExtremeGasFee =
+    isSelectedFeeOption &&
+    !disabledReason &&
+    !!getExtremeGasFeeWarningState(signAccountOpState, signAccountOpState.accountOp.chainId)
+
   return {
     value:
       feeOption.paidBy +
@@ -143,6 +157,7 @@ const mapFeeOptions = (
         disabledReason={disabledReason}
         disabledTextAppearance={disabledTextAppearance}
         paidByAccountLabel={paidByAccountLabel}
+        shouldHighlightExtremeGasFee={shouldHighlightExtremeGasFee}
       />
     ),
     extraSearchProps: {
