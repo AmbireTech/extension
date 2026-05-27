@@ -2,7 +2,7 @@ import { formatUnits, MaxUint256, ZeroAddress } from 'ethers'
 import { nanoid } from 'nanoid'
 import React, { FC, memo, useCallback, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Linking, Pressable, View } from 'react-native'
+import { Linking, Pressable } from 'react-native'
 
 import { getCoinGeckoTokenUrl } from '@ambire-common/consts/coingecko'
 import { Network } from '@ambire-common/interfaces/network'
@@ -26,7 +26,6 @@ interface Props {
   address: string
   sizeMultiplierSize?: number
   marginRight: number
-  hideLinks?: boolean
   chainId: bigint
   tokenIconContainerSize?: number
 }
@@ -39,7 +38,6 @@ const InnerToken: FC<Props> = ({
   network,
   sizeMultiplierSize = 1,
   marginRight,
-  hideLinks = false,
   chainId,
   tokenIconContainerSize
 }) => {
@@ -129,57 +127,26 @@ const InnerToken: FC<Props> = ({
           )}
         </Text>
       ) : null}
-      {hideLinks ? (
-        <View style={{ ...flexbox.directionRow, ...flexbox.alignCenter, marginRight }}>
-          <TokenIcon
-            width={tokenIconSize}
-            height={tokenIconSize}
-            withContainer={!!tokenIconContainerSize}
-            containerWidth={tokenIconContainerSize}
-            containerHeight={tokenIconContainerSize}
-            chainId={network?.chainId}
-            address={address}
-            withNetworkIcon={false}
-          />
-          <Text fontSize={textSize} weight="medium" appearance="primaryText" style={spacings.mlMi}>
-            {tokenInfo?.symbol || (
-              <HumanizerAddress
-                chainId={chainId}
-                fontSize={textSize}
-                address={address}
-                hideLinks={hideLinks}
-              />
-            )}
-          </Text>
-        </View>
-      ) : (
-        <Pressable
-          style={{ ...flexbox.directionRow, ...flexbox.alignCenter, marginRight }}
-          onPress={openExplorer}
-        >
-          <TokenIcon
-            width={tokenIconSize}
-            height={tokenIconSize}
-            withContainer={!!tokenIconContainerSize}
-            containerWidth={tokenIconContainerSize}
-            containerHeight={tokenIconContainerSize}
-            chainId={network?.chainId}
-            address={address}
-            withNetworkIcon={false}
-          />
-          <Text fontSize={textSize} weight="medium" appearance="primaryText" style={spacings.mhMi}>
-            {tokenInfo?.symbol || (
-              <HumanizerAddress
-                chainId={chainId}
-                fontSize={textSize}
-                address={address}
-                hideLinks={hideLinks}
-                hideLogo
-              />
-            )}
-          </Text>
-        </Pressable>
-      )}
+      <Pressable
+        style={{ ...flexbox.directionRow, ...flexbox.alignCenter, marginRight }}
+        onPress={openExplorer}
+      >
+        <TokenIcon
+          width={tokenIconSize}
+          height={tokenIconSize}
+          withContainer={!!tokenIconContainerSize}
+          containerWidth={tokenIconContainerSize}
+          containerHeight={tokenIconContainerSize}
+          chainId={network?.chainId}
+          address={address}
+          withNetworkIcon={false}
+        />
+        <Text fontSize={textSize} weight="medium" appearance="primaryText" style={spacings.mhMi}>
+          {tokenInfo?.symbol || (
+            <HumanizerAddress chainId={chainId} fontSize={textSize} address={address} hideLogo />
+          )}
+        </Text>
+      </Pressable>
     </>
   )
 }

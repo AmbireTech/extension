@@ -39,7 +39,6 @@ interface Props {
   chainId: bigint
   type: 'history' | 'benzin' | 'default'
   imageSize: number
-  hideLinks: boolean
   erc7730Mode: 'summary' | 'description'
   hideNestedErc7730Rows: boolean
   marginRight: number
@@ -53,7 +52,6 @@ const HumanizedVisualizationItem: FC<Props> = ({
   chainId,
   type,
   imageSize,
-  hideLinks,
   erc7730Mode,
   hideNestedErc7730Rows,
   marginRight
@@ -67,7 +65,6 @@ const HumanizedVisualizationItem: FC<Props> = ({
         chainId={chainId}
         sizeMultiplierSize={sizeMultiplierSize}
         textSize={textSize}
-        hideLinks={hideLinks}
         mode={erc7730Mode}
         editApprovalCallInfo={editApprovalCallInfo}
         hideNestedRows={hideNestedErc7730Rows}
@@ -84,7 +81,6 @@ const HumanizedVisualizationItem: FC<Props> = ({
           address={item.address!}
           textSize={textSize}
           chainId={chainId}
-          hideLinks={hideLinks}
         />
         {editApprovalCallInfo && (
           <EditApproval
@@ -117,9 +113,7 @@ const HumanizedVisualizationItem: FC<Props> = ({
   }
 
   if (item.type === 'chain' && item.chainId) {
-    return (
-      <ChainVisualization chainId={item.chainId} marginRight={marginRight} hideLinks={hideLinks} />
-    )
+    return <ChainVisualization chainId={item.chainId} marginRight={marginRight} />
   }
 
   if (item.type === 'image' && item.content) {
@@ -153,7 +147,7 @@ const HumanizedVisualizationItem: FC<Props> = ({
     )
   }
 
-  if (item.type === 'link' && !hideLinks) {
+  if (item.type === 'link') {
     const content = (
       <Text
         fontSize={textSize}

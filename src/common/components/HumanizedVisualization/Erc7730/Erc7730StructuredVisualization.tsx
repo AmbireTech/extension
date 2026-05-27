@@ -179,7 +179,6 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
   chainId,
   sizeMultiplierSize,
   textSize,
-  hideLinks = false,
   mode = 'summary',
   editApprovalCallInfo,
   hideNestedRows = false
@@ -216,7 +215,6 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
               address={valueItem.address}
               textSize={overrideTextSize}
               chainId={tokenChainId}
-              hideLinks
               tokenMarginRight={0}
               tokenIconContainerSize={20}
             />
@@ -229,11 +227,7 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
                 style={[spacings.mlTy, spacings.mr0]}
               />
             )}
-            <Erc7730StructuredAddressActions
-              address={valueItem.address}
-              chainId={tokenChainId}
-              hideLinks={hideLinks}
-            />
+            <Erc7730StructuredAddressActions address={valueItem.address} chainId={tokenChainId} />
           </View>
         )
       }
@@ -258,15 +252,10 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
               address={valueItem.address}
               textSize={overrideTextSize}
               chainId={tokenChainId}
-              hideLinks
               tokenMarginRight={0}
               tokenIconContainerSize={20}
             />
-            <Erc7730StructuredAddressActions
-              address={valueItem.address}
-              chainId={tokenChainId}
-              hideLinks={hideLinks}
-            />
+            <Erc7730StructuredAddressActions address={valueItem.address} chainId={tokenChainId} />
           </View>
         </View>
       )
@@ -280,21 +269,13 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
           chainId={valueItem.chainId || chainId}
           fontSize={overrideTextSize}
           actionsMode="inline"
-          hideLinks={hideLinks}
           hideLogo
         />
       )
     }
 
     if (valueItem.type === 'chain' && valueItem.chainId) {
-      return (
-        <ChainVisualization
-          chainId={valueItem.chainId}
-          key={valueItem.id}
-          marginRight={0}
-          hideLinks={hideLinks}
-        />
-      )
+      return <ChainVisualization chainId={valueItem.chainId} key={valueItem.id} marginRight={0} />
     }
 
     if (valueItem.type === 'erc7730') {
@@ -305,7 +286,6 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
           chainId={chainId}
           sizeMultiplierSize={sizeMultiplierSize}
           textSize={overrideTextSize}
-          hideLinks={hideLinks}
           mode="description"
         />
       )
@@ -576,7 +556,6 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
                       chainId={chainId}
                       sizeMultiplierSize={sizeMultiplierSize}
                       textSize={textSize}
-                      hideLinks={hideLinks}
                       mode="summary"
                     />
                   </View>

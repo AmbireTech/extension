@@ -18,7 +18,6 @@ interface Props {
   testID?: string
   hasPadding?: boolean
   imageSize?: number
-  hideLinks?: boolean
   style?: StyleProp<ViewStyle>
   erc7730Mode?: 'summary' | 'description'
   hideNestedErc7730Rows?: boolean
@@ -41,7 +40,6 @@ const HumanizedVisualization: FC<Props> = ({
   testID,
   hasPadding = true,
   imageSize = 36,
-  hideLinks = false,
   style,
   erc7730Mode = 'summary',
   hideNestedErc7730Rows = false,
@@ -87,7 +85,6 @@ const HumanizedVisualization: FC<Props> = ({
             chainId={chainId}
             type={type}
             imageSize={imageSize}
-            hideLinks={hideLinks}
             erc7730Mode={erc7730Mode}
             hideNestedErc7730Rows={hideNestedErc7730Rows}
             marginRight={marginRight}

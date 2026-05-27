@@ -29,7 +29,6 @@ import Option from './BaseAddressOption'
 interface Props extends TextProps {
   address: string
   chainId?: bigint
-  hideLinks?: boolean
   actionsMode?: 'tooltip' | 'inline'
   verification?: BlacklistedStatus
   isDisplayingPlainAddress?: boolean
@@ -39,7 +38,6 @@ const BaseAddress: FC<Props> = ({
   children,
   address,
   chainId,
-  hideLinks = false,
   actionsMode = 'tooltip',
   verification,
   isDisplayingPlainAddress,
@@ -136,7 +134,7 @@ const BaseAddress: FC<Props> = ({
       </Text>
       {showInlineActions ? (
         <>
-          {!!network?.explorerUrl && !hideLinks && (
+          {!!network?.explorerUrl && (
             <Pressable
               accessibilityRole="link"
               accessibilityLabel={t('View in Explorer')}
@@ -164,7 +162,7 @@ const BaseAddress: FC<Props> = ({
           noArrow
           place="bottom-end"
         >
-          {network?.explorerUrl && !hideLinks && (
+          {network?.explorerUrl && (
             <Option
               title={t('View in Explorer')}
               renderIcon={() => <OpenIcon color={theme.secondaryText} width={14} height={14} />}

@@ -19,8 +19,7 @@ function stopPressPropagation(e?: { stopPropagation?: () => void }) {
 
 const Erc7730StructuredAddressActions: FC<Erc7730StructuredAddressActionsProps> = ({
   address,
-  chainId,
-  hideLinks = false
+  chainId
 }) => {
   const { t } = useTranslation()
   const { theme } = useTheme()
@@ -57,7 +56,7 @@ const Erc7730StructuredAddressActions: FC<Erc7730StructuredAddressActionsProps> 
 
   return (
     <>
-      {!!network?.explorerUrl && !hideLinks && (
+      {!!network?.explorerUrl && (
         <Pressable
           accessibilityRole="link"
           accessibilityLabel={t('View in Explorer')}

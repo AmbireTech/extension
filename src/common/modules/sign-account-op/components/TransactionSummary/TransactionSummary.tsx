@@ -46,7 +46,6 @@ interface Props {
   enableExpand?: boolean
   rightIcon?: React.ReactNode
   onRightIconPress?: () => void
-  hideLinks?: boolean
   hideDeleteIcon?: boolean
   hasCallFailed?: boolean
   disableSelectorFetching?: boolean
@@ -83,7 +82,6 @@ const TransactionSummary = ({
   enableExpand = true,
   rightIcon,
   onRightIconPress,
-  hideLinks = false,
   hideDeleteIcon,
   hasCallFailed,
   disableSelectorFetching
@@ -494,7 +492,6 @@ const TransactionSummary = ({
                   type={type}
                   testID={`recipient-address-${index}`}
                   hasPadding={false}
-                  hideLinks={hideLinks}
                   erc7730Mode="description"
                 />
               </View>
@@ -508,7 +505,6 @@ const TransactionSummary = ({
                 type={type}
                 testID={`recipient-address-${index}`}
                 hasPadding={enableExpand}
-                hideLinks={hideLinks}
                 editApprovalCallInfo={editApprovalCallInfo}
                 dapp={call.dapp}
               />
@@ -610,7 +606,6 @@ const TransactionSummary = ({
                 chainId={chainId}
                 type={type}
                 hasPadding={false}
-                hideLinks={hideLinks}
                 erc7730Mode="description"
               />
             ) : (

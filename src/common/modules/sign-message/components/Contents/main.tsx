@@ -104,7 +104,6 @@ const Erc7730TypedMessageContent = React.memo(
                 chainId={chainId}
                 sizeMultiplierSize={responsiveSizeMultiplier}
                 textSize={14}
-                hideLinks={false}
                 mode="summary"
                 hasRightArrow
               />

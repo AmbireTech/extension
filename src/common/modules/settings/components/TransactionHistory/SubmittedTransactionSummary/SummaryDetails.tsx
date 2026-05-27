@@ -160,7 +160,6 @@ const SummaryDetails = ({
                 type="benzin"
                 enableExpand={defaultType === 'full-info'}
                 size={size}
-                hideLinks
                 rightIcon={
                   submittedAccountOp.calls[i]?.txnId && network.explorerUrl ? (
                     <View

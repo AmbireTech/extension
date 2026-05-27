@@ -15,7 +15,6 @@ interface Props extends TextProps {
   chainId: bigint
   actionsMode?: 'tooltip' | 'inline'
   fallbackLabel?: string
-  hideLinks?: boolean
 }
 
 const AddressName: FC<Props> = ({
@@ -23,7 +22,6 @@ const AddressName: FC<Props> = ({
   chainId,
   actionsMode = 'tooltip',
   fallbackLabel,
-  hideLinks,
   ...rest
 }) => {
   const { name, isLoading } = useReverseLookup({ address })
@@ -61,7 +59,6 @@ const AddressName: FC<Props> = ({
       <InlineAddressAvatar address={address} shouldShow={shouldShowInlineAvatar} />
       <BaseAddress
         address={address}
-        hideLinks={hideLinks}
         isDisplayingPlainAddress={!name && !fallbackLabel && !contractName}
         actionsMode={actionsMode}
         chainId={chainId}

@@ -10,14 +10,12 @@ export type EditApprovalCallInfo = {
 export interface Erc7730StructuredAddressActionsProps {
   address: string
   chainId: bigint
-  hideLinks?: boolean
 }
 
 export interface Erc7730StructuredAddressProps {
   address: string
   chainId: bigint
   textSize: number
-  hideLinks?: boolean
 }
 
 export interface Erc7730StructuredVisualizationProps {
@@ -25,7 +23,6 @@ export interface Erc7730StructuredVisualizationProps {
   chainId: bigint
   sizeMultiplierSize: number
   textSize: number
-  hideLinks?: boolean
   mode?: 'summary' | 'description'
   editApprovalCallInfo?: EditApprovalCallInfo
   hasRightArrow?: boolean
