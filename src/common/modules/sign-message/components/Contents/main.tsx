@@ -6,6 +6,7 @@ import { QrRequest } from '@ambire-common/interfaces/keystore'
 import {
   HumanizerErc7730Visualization,
   HumanizerVisualization,
+  HumanizerWarning,
   IrMessage
 } from '@ambire-common/libs/humanizer/interfaces'
 import WarningIcon from '@common/assets/svg/WarningIcon'
@@ -73,11 +74,13 @@ const Erc7730TypedMessageContent = React.memo(
   ({
     data,
     chainId,
-    responsiveSizeMultiplier
+    responsiveSizeMultiplier,
+    warnings
   }: {
     data: (HumanizerVisualization & HumanizerErc7730Visualization)[]
     chainId: bigint
     responsiveSizeMultiplier: number
+    warnings?: HumanizerWarning[]
   }) => {
     const { t } = useTranslation()
     const { styles, theme } = useTheme(getStyles)
@@ -118,6 +121,23 @@ const Erc7730TypedMessageContent = React.memo(
           >
             {title || t('Message details')}
           </Text>
+        )}
+        {!!warnings?.length && (
+          <View
+            style={{
+              marginTop: SPACING_TY * responsiveSizeMultiplier
+            }}
+          >
+            {warnings.map((warning) => (
+              <Label
+                size="lg"
+                key={warning.content}
+                text={warning.content}
+                type="warning"
+                hasBottomSpacing={false}
+              />
+            ))}
+          </View>
         )}
         <View
           style={[
@@ -309,6 +329,7 @@ const Main = ({
                   data={typedMessageErc7730Visualizations}
                   chainId={network?.chainId || signMessageState.messageToSign?.chainId || 1n}
                   responsiveSizeMultiplier={responsiveSizeMultiplier}
+                  warnings={humanizedMessage?.warnings}
                 />
               ) : visualizeHumanized &&
                 // @TODO: Duplicate check. For some reason ts throws an error if we don't do this
@@ -361,17 +382,18 @@ const Main = ({
               />
             }
           >
-            {humanizedMessage?.warnings?.map((warning) => {
-              return (
-                <Label
-                  size="lg"
-                  key={warning.content}
-                  text={warning.content}
-                  type="warning"
-                  style={spacings.mlMd}
-                />
-              )
-            })}
+            {!shouldUseErc7730TypedMessageCard &&
+              humanizedMessage?.warnings?.map((warning) => {
+                return (
+                  <Label
+                    size="lg"
+                    key={warning.content}
+                    text={warning.content}
+                    type="warning"
+                    style={spacings.mlMd}
+                  />
+                )
+              })}
           </ExpandableCard>
         </View>
         {signMessageState.signer &&
