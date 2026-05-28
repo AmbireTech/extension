@@ -3,6 +3,7 @@ import React, { useCallback, useContext, useEffect, useRef } from 'react'
 import { View } from 'react-native'
 import { Navigate, Route, Routes } from 'react-router-native'
 
+import { ControllersMiddlewareContext } from '@common/contexts/controllersMiddlewareContext'
 import { ControllersStateLoadedContext } from '@common/contexts/controllersStateLoadedContext'
 import useController from '@common/hooks/useController'
 import useRoute from '@common/hooks/useRoute'
@@ -34,6 +35,7 @@ const Router = () => {
   const swapAndBridgeState = useController('SwapAndBridgeController').state
   const transferState = useController('TransferController').state
   const { areControllerStatesLoaded } = useContext(ControllersStateLoadedContext)
+  const { dispatch } = useContext(ControllersMiddlewareContext)
 
   // Wrap onBottomSheetClosed to emit event for DappWebViewScreen focus
   // Must be at top level before any early returns
@@ -52,8 +54,13 @@ const Router = () => {
       splashHidden.current = true
       SplashScreen.setOptions({ duration: 200, fade: true })
       SplashScreen.hideAsync().catch(() => {})
+      // Now that the splash is hidden, let the webview worker stream the
+      // heavy controller states (portfolio, dapps, activity, ...) that were
+      // held back during the critical boot phase. Done after the splash hide
+      // call so any cost of draining the queue does not delay the first paint.
+      dispatch({ type: 'SET_BOOT_PHASE', params: { phase: 'full' } })
     }
-  }, [isReady])
+  }, [isReady, dispatch])
 
   // Keep the native splash screen visible until controllers and auth are ready
   if (!isReady) {

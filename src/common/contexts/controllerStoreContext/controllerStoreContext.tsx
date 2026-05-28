@@ -25,12 +25,16 @@ export const ControllerStoreProvider: React.FC<{
   const { navigate } = useNavigation()
   const ctrlOnUpdateIsDirtyFlags = useRef<Record<string, boolean>>({})
   const [isStoreReady, setIsStoreReady] = useState(false)
+  const [isReadyToLoadRoutes, setIsReadyToLoadRoutes] = useState(false)
 
   const [controllerStore] = useState(
     () =>
       new ControllerStore({
         onReady: () => {
           setIsStoreReady(true)
+        },
+        onReadyToLoadRoutes: () => {
+          setIsReadyToLoadRoutes(true)
         }
       })
   )
@@ -138,6 +142,7 @@ export const ControllerStoreProvider: React.FC<{
           stateSubscriptionManager,
           helpersSubscriptionManager,
           isStoreReady,
+          isReadyToLoadRoutes,
           debounceControllerUpdates
         }),
         [
@@ -146,6 +151,7 @@ export const ControllerStoreProvider: React.FC<{
           stateSubscriptionManager,
           helpersSubscriptionManager,
           isStoreReady,
+          isReadyToLoadRoutes,
           debounceControllerUpdates
         ]
       )}

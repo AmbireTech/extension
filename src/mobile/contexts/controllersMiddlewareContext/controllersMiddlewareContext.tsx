@@ -8,8 +8,9 @@ import { ControllersMiddlewareContext } from '@common/contexts/controllersMiddle
 import { ControllerStoreContext } from '@common/contexts/controllerStoreContext'
 import useRoute from '@common/hooks/useRoute'
 import { Action, MethodAction } from '@common/types/actions'
-import useDappsControllerHelpers from '@mobile/hooks/useDappsControllerHelpers'
 import { BUNGEE_API_KEY, RELAYER_URL, SQUID_INTEGRATOR_ID, VELCRO_URL } from '@env'
+import { MOBILE_CRITICAL_CONTROLLERS } from '@mobile/constants/criticalControllers'
+import useDappsControllerHelpers from '@mobile/hooks/useDappsControllerHelpers'
 import useRequestsControllerHelpers from '@mobile/hooks/useRequestsControllerHelpers'
 import { WebViewWorker, WebViewWorkerRef } from '@mobile/modules/webview/services/WebViewWorker'
 
@@ -20,6 +21,13 @@ export const ControllersMiddlewareProvider: React.FC<{
   const webviewRef = useRef<WebViewWorkerRef>(null)
   const route = useRoute()
 
+  const dispatch = useCallback(
+    (action: MethodAction | Action, windowId?: number, raw?: boolean) => {
+      webviewRef.current?.dispatch(action, raw)
+    },
+    []
+  )
+
   useEffect(() => {
     webviewRef.current
       ?.init({
@@ -29,18 +37,15 @@ export const ControllersMiddlewareProvider: React.FC<{
         VELCRO_URL,
         LIFI_EXPLORER_URL,
         BUNGEE_API_KEY,
-        SQUID_INTEGRATOR_ID
+        SQUID_INTEGRATOR_ID,
+        criticalControllers: MOBILE_CRITICAL_CONTROLLERS
       })
       .then((ctrlsNames) => {
-        controllerStore.init(ctrlsNames as any[], () => {
+        controllerStore.init(ctrlsNames as any[], MOBILE_CRITICAL_CONTROLLERS, () => {
           dispatch({ type: 'INIT_ALL_CONTROLLERS', params: { controllers: ctrlsNames as any[] } })
         })
       })
-  }, [controllerStore])
-
-  const dispatch = useCallback((action: MethodAction | Action, windowId?: number, raw?: boolean) => {
-    webviewRef.current?.dispatch(action, raw)
-  }, [])
+  }, [controllerStore, dispatch])
 
   useEffect(() => {
     const { pathname = '/', search = '' } = route

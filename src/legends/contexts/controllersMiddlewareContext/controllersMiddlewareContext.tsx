@@ -23,6 +23,7 @@ export const ControllersMiddlewareProvider: React.FC<{
   useEffect(() => {
     controllerStore.init(
       Object.keys(controllers.current) as (keyof RewardsBaseControllersMappingType)[],
+      [],
       (allCtrls: (keyof AllControllersMappingType)[]) => {
         allCtrls.forEach((ctrlName) => {
           controllerStore.update(ctrlName, (controllers.current as any)[ctrlName])

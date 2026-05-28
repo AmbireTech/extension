@@ -187,6 +187,11 @@ type DisconnectWcSessionAction = {
   }
 }
 
+type SetBootPhaseAction = {
+  type: 'SET_BOOT_PHASE'
+  params: { phase: 'critical' | 'full' }
+}
+
 export type Action =
   | UpdateNavigationUrl
   | UpdateUiViewRoute
@@ -213,3 +218,4 @@ export type Action =
   | SetupWcSessionMessengerAction
   | RestoreWcSessionsAction
   | DisconnectWcSessionAction
+  | SetBootPhaseAction
