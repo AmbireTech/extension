@@ -56,8 +56,9 @@ Workflow
 9. Cross-check the fetched PR list against the merge commit list to confirm no PRs were missed.
 10. Apply the exclusion rules (see "Excluded product areas" below) to drop Rewards/Legends PRs. Every other PR is included.
 11. Convert each remaining PR into a changelog entry.
-12. Group or order entries by impact, not necessarily by merge order.
-13. Always append a Full Changelog GitHub compare link.
+12. Categorize each remaining PR as Added, Changed, or Fixed.
+13. Preserve the original merge-commit timeline within each category.
+14. Always append a Full Changelog GitHub compare link.
 
 ## Git commands
 
