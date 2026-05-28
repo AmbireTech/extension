@@ -162,6 +162,8 @@ Wrap the entire changelog in a fenced `markdown` code block so the UI renders a 
 
 ````
 ```markdown
+Changelog:
+
 * Added: ...
 * 📣 Added: ...
   * ...
@@ -172,11 +174,9 @@ Wrap the entire changelog in a fenced `markdown` code block so the UI renders a 
 ```
 ````
 
-Allowed top-level categories:
+Start the changelog with exactly: "Changelog:"
 
-* Added
-* Changed
-* Fixed
+Keep all entries in one flat bullet list.
 
 ## Marketing-worthy changes
 
