@@ -156,7 +156,6 @@ export const handleActions = async (
         const oldSessionId = getSessionId({ tabId: 1, windowId: undefined, dappId: oldDappId })
         if (mainCtrl.dapps.dappSessions[oldSessionId]) {
           mainCtrl.dapps.deleteDappSession(oldSessionId)
-          console.log('[Worker] Deleted stale session for origin change:', oldDappId)
         }
       } catch {
         // Ignore invalid URLs
@@ -171,7 +170,6 @@ export const handleActions = async (
      * both in-app webview dapps and WalletConnect dapps using the SAME communication logic.
      */
     case 'HANDLE_PROVIDER_REQUEST': {
-      console.log('[Worker] Handling provider request:', params.request.method, params.requestId)
       const autoLockCtrl = eventEmitterRegistry
         .values()
         .find((c: any) => c.name === 'AutoLockController') as any
@@ -207,7 +205,6 @@ export const handleActions = async (
           providerId: params.providerId,
           notificationManager
         })
-        console.log('[Worker] handleProviderRequests result:', result)
 
         if (isWalletConnect) {
           if (isTempSession) {

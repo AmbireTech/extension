@@ -217,8 +217,8 @@ export const initWalletConnect = async (
       }
 
       walletKit.on('session_proposal', async (proposal: WalletKitTypes.SessionProposal) => {
+        const { id, params } = proposal
         try {
-          const { id, params } = proposal
           const proposerUrl = params.proposer.metadata.url
 
           const { name, icon } = await getDappMetadata(
@@ -264,20 +264,40 @@ export const initWalletConnect = async (
           )
         } catch (e) {
           console.error('[WalletConnect] session_proposal handler error:', e)
+          try {
+            await walletKit?.rejectSession({ id, reason: getSdkError('USER_REJECTED') })
+          } catch (rejectErr) {
+            console.error('[WalletConnect] Failed to reject session proposal:', rejectErr)
+          }
         }
       })
 
       walletKit.on('session_request', async (requestEvent: WalletKitTypes.SessionRequest) => {
-        try {
-          const { topic, params, id } = requestEvent
-          const { request } = params
+        const { topic, params, id } = requestEvent
+        const { request } = params
 
+        try {
           // We get the session to find the origin URL
           const activeSession = walletKit?.engine.signClient.session.get(topic)
           if (!activeSession || !activeSession.peer?.metadata?.url) {
             addToast('WalletConnect session not found. Please reconnect the app.', {
               type: 'error'
             })
+            try {
+              await walletKit?.respondSessionRequest({
+                topic,
+                response: {
+                  id,
+                  jsonrpc: '2.0',
+                  error: getSdkError('UNAUTHORIZED_EVENT')
+                }
+              })
+            } catch (respondErr) {
+              console.error(
+                '[WalletConnect] Failed to send unauthorized error response:',
+                respondErr
+              )
+            }
             return
           }
           const proposerUrl = activeSession.peer.metadata.url
@@ -299,6 +319,18 @@ export const initWalletConnect = async (
           )
         } catch (e) {
           console.error('[WalletConnect] session_request handler error:', e)
+          try {
+            await walletKit?.respondSessionRequest({
+              topic,
+              response: {
+                id,
+                jsonrpc: '2.0',
+                error: { code: 5000, message: 'Internal wallet error' }
+              }
+            })
+          } catch (respondErr) {
+            console.error('[WalletConnect] Failed to send error response:', respondErr)
+          }
         }
       })
 
@@ -314,8 +346,8 @@ export const initWalletConnect = async (
       })
 
       walletKit.on('session_authenticate', async (event: WalletKitTypes.SessionAuthenticate) => {
+        const { id, params: authParams } = event
         try {
-          const { id, params: authParams } = event
           const { authPayload, requester } = authParams
           const proposerUrl = requester.metadata.url
 
@@ -362,6 +394,15 @@ export const initWalletConnect = async (
           )
         } catch (e) {
           console.error('[WalletConnect] session_authenticate handler error:', e)
+          try {
+            await walletKit?.rejectSessionAuthenticate({
+              id,
+              reason: getSdkError('USER_REJECTED')
+            })
+            pendingAuthenticates.delete(id)
+          } catch (rejectErr) {
+            console.error('[WalletConnect] Failed to reject session authenticate:', rejectErr)
+          }
         }
       })
 
