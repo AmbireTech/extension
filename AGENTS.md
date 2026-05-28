@@ -62,6 +62,7 @@ react, react-native, react-native-web, typescript, expo (bare workflow), ethers,
 - NEVER modify git config or run destructive git operations
 - NEVER commit unless explicitly requested by user
 - NEVER stage changes unless explicitly requested by user
+- NEVER use regex
 
 ## Controller state update lifecycle
 
