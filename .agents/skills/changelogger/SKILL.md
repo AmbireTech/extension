@@ -176,7 +176,11 @@ Changelog:
 
 Start the changelog with exactly: "Changelog:"
 
-Keep all entries in one flat bullet list.
+Keep all entries in one flat bullet list. Group entries in this order: Added, Changed, Fixed.
+
+Within each category group, preserve the original merge-commit order.
+
+Do not add category headings or visual separators between groups.
 
 ## Marketing-worthy changes
 
@@ -232,6 +236,14 @@ Bad:
 ```markdown
 * Added hasUnverifiedDappsAndSendResToUi refactor
 ```
+
+Category rules:
+
+* `Added` - new user-facing features, new supported flows, new integrations, new protections, new screens, new settings, or newly exposed capabilities.
+* `Changed` - behavior changes, UX improvements, copy changes, refactors, dependency/config/tooling changes, QA/CI/docs updates, and changes to existing functionality.
+* `Fixed` - bug fixes, regressions, broken flows, crashes, incorrect behavior, TypeScript/build errors, test failures, and reliability fixes.
+
+If unclear, use `Changed`.
 
 ## Sub-bullets
 
