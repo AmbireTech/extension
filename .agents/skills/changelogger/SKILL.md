@@ -209,6 +209,17 @@ Example:
 
 Do not add 📣 to small refactors, tests, CI-only changes, dependency bumps, copy tweaks, internal docs/config, or minor visual fixes.
 
+## Product name normalization
+
+Always use the current public product names in changelog entries, regardless of what appears in branch names, commit messages, or PR titles:
+
+| Legacy name (used internally) | Public name to use in changelog |
+|-------------------------------|----------------------------------|
+| Benzin                        | Ambire Explorer                  |
+| Legends                       | Ambire Rewards                   |
+
+Apply this silently — do not mention the rename in the entry.
+
 ## Entry writing rules
 
 Each top-level bullet must:
