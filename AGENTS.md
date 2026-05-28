@@ -63,6 +63,7 @@ react, react-native, react-native-web, typescript, expo (bare workflow), ethers,
 - NEVER commit unless explicitly requested by user
 - NEVER stage changes unless explicitly requested by user
 - NEVER use regex
+- avoid casting when possible, instead use if statements and typescript type guard functions
 
 ## Controller state update lifecycle
 
