@@ -108,7 +108,7 @@ const HumanizedVisualizationItem: FC<Props> = ({
     )
   }
 
-  if (item.type === 'deadline' && item.value && type !== 'default') {
+  if (item.type === 'deadline' && item.value && type !== 'benzin' && type !== 'history') {
     return <DeadlineItem deadline={item.value} textSize={textSize} marginRight={marginRight} />
   }
 

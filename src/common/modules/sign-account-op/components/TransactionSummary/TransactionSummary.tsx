@@ -1,5 +1,13 @@
-import { Interface, parseUnits, ZeroAddress } from 'ethers'
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
+import {
+  decodeFunctionData,
+  encodeFunctionData,
+  isHex,
+  parseAbi,
+  parseUnits,
+  toFunctionSelector,
+  zeroAddress
+} from 'viem'
 import { useTranslation } from 'react-i18next'
 import { Pressable, View, ViewStyle } from 'react-native'
 
@@ -57,18 +65,14 @@ export const sizeMultiplier = {
   lg: 1
 }
 
-const approveInterface = new Interface([
-  'function approve(address spender, uint256 amount) returns (bool)'
-])
-const permitInterface = new Interface([
+const approveAbi = parseAbi(['function approve(address spender, uint256 amount) returns (bool)'])
+const permitAbi = parseAbi([
   'function approve(address token, address spender, uint160 amount, uint48 expiration)'
 ])
-
-const increaseAllowanceInterface = new Interface([
+const increaseAllowanceAbi = parseAbi([
   'function increaseAllowance(address spender, uint256 amount)'
 ])
-
-const decreaseAllowanceInterface = new Interface([
+const decreaseAllowanceAbi = parseAbi([
   'function decreaseAllowance(address spender, uint256 amount)'
 ])
 
@@ -218,7 +222,7 @@ const TransactionSummary = ({
         return
       }
       const selector = replacedCall.data.slice(0, 10)
-      if (!replacedCall.data || replacedCall.data.length < 10) {
+      if (!replacedCall.data || replacedCall.data.length < 10 || !isHex(replacedCall.data)) {
         addToast('Internal error: the found transaction is not a token interaction', {
           type: 'error'
         })
@@ -227,64 +231,72 @@ const TransactionSummary = ({
 
       let calldata = ''
 
-      switch (selector) {
-        case approveInterface.getFunction('approve')!.selector: {
-          const tx = approveInterface.parseTransaction(call)
-          if (!tx) {
-            addToast('Internal error: failed to set the approval amount', { type: 'error' })
-            return
+      try {
+        switch (selector) {
+          case toFunctionSelector(approveAbi[0]): {
+            const { args } = decodeFunctionData({
+              abi: approveAbi,
+              data: replacedCall.data
+            })
+            const [spender] = args
+            calldata = encodeFunctionData({
+              abi: approveAbi,
+              functionName: 'approve',
+              args: [spender, parseUnits(newAmount || '0', portfolioToken.decimals)]
+            })
+            break
           }
-          const [spender, currentAmount] = tx.args
-          calldata = approveInterface.encodeFunctionData('approve', [
-            spender,
-            parseUnits(newAmount || '0', portfolioToken.decimals)
-          ])
-          break
-        }
-        case permitInterface.getFunction('approve')!.selector: {
-          const tx = permitInterface.parseTransaction(call)
-          if (!tx) {
-            addToast('Internal error: failed to set the approval amount', { type: 'error' })
-            return
+          case toFunctionSelector(permitAbi[0]): {
+            const { args } = decodeFunctionData({
+              abi: permitAbi,
+              data: replacedCall.data
+            })
+            const [token, spender, , expiration] = args
+            calldata = encodeFunctionData({
+              abi: permitAbi,
+              functionName: 'approve',
+              args: [
+                token,
+                spender,
+                parseUnits(newAmount || '0', portfolioToken.decimals),
+                expiration
+              ]
+            })
+            break
           }
-          const [token, spender, currentAmount, expiration] = tx.args
-          calldata = permitInterface.encodeFunctionData('approve', [
-            token,
-            spender,
-            parseUnits(newAmount || '0', portfolioToken.decimals),
-            expiration
-          ])
-          break
-        }
-        case increaseAllowanceInterface.getFunction('increaseAllowance')!.selector: {
-          const tx = increaseAllowanceInterface.parseTransaction(call)
-          if (!tx) {
-            addToast('Internal error: failed to set the approval amount', { type: 'error' })
-            return
+          case toFunctionSelector(increaseAllowanceAbi[0]): {
+            const { args } = decodeFunctionData({
+              abi: increaseAllowanceAbi,
+              data: replacedCall.data
+            })
+            const [spender] = args
+            calldata = encodeFunctionData({
+              abi: increaseAllowanceAbi,
+              functionName: 'increaseAllowance',
+              args: [spender, parseUnits(newAmount || '0', portfolioToken.decimals)]
+            })
+            break
           }
-          const [spender, amount] = tx.args
-          calldata = increaseAllowanceInterface.encodeFunctionData('increaseAllowance', [
-            spender,
-            parseUnits(newAmount || '0', portfolioToken.decimals)
-          ])
-          break
-        }
-        case decreaseAllowanceInterface.getFunction('decreaseAllowance')!.selector: {
-          const tx = decreaseAllowanceInterface.parseTransaction(call)
-          if (!tx) {
-            addToast('Internal error: failed to set the approval amount', { type: 'error' })
-            return
+          case toFunctionSelector(decreaseAllowanceAbi[0]): {
+            const { args } = decodeFunctionData({
+              abi: decreaseAllowanceAbi,
+              data: replacedCall.data
+            })
+            const [spender] = args
+            calldata = encodeFunctionData({
+              abi: decreaseAllowanceAbi,
+              functionName: 'decreaseAllowance',
+              args: [spender, parseUnits(newAmount || '0', portfolioToken.decimals)]
+            })
+            break
           }
-          const [spender, amount] = tx.args
-          calldata = decreaseAllowanceInterface.encodeFunctionData('decreaseAllowance', [
-            spender,
-            parseUnits(newAmount || '0', portfolioToken.decimals)
-          ])
-          break
+          default:
+            addToast('Internal error: failed to edit the approval', { type: 'error' })
+            return
         }
-        default:
-          addToast('Internal error: failed to edit the approval', { type: 'error' })
-          return
+      } catch (e) {
+        addToast('Internal error: failed to set the approval amount', { type: 'error' })
+        return
       }
 
       // replace the data with the new approval
@@ -333,41 +345,43 @@ const TransactionSummary = ({
     const callToReplace = signAccountOpState.accountOp.calls.find((c) => c.id === call.id)
     if (!callToReplace) return
 
-    if (!call.data || call.data.length < 10) return
+    if (!call.data || call.data.length < 10 || !isHex(call.data)) return
     const selector = call.data.slice(0, 10)
 
     let amount: bigint | undefined
     let token: string | undefined
     try {
       switch (selector) {
-        case approveInterface.getFunction('approve')!.selector: {
-          const tx = approveInterface.parseTransaction(call)
-          if (!tx) return
-          const [spender, currentAmount] = tx.args
+        case toFunctionSelector(approveAbi[0]): {
+          const { args } = decodeFunctionData({ abi: approveAbi, data: call.data })
+          const [, currentAmount] = args
           amount = currentAmount
           token = call.to
           break
         }
-        case permitInterface.getFunction('approve')!.selector: {
-          const tx = permitInterface.parseTransaction(call)
-          if (!tx) return
-          const [_token, spender, currentAmount, expiration] = tx.args
+        case toFunctionSelector(permitAbi[0]): {
+          const { args } = decodeFunctionData({ abi: permitAbi, data: call.data })
+          const [_token, , currentAmount] = args
           amount = currentAmount
           token = _token
           break
         }
-        case increaseAllowanceInterface.getFunction('increaseAllowance')!.selector: {
-          const tx = increaseAllowanceInterface.parseTransaction(call)
-          if (!tx) return
-          const [spender, currentIncrease] = tx.args
+        case toFunctionSelector(increaseAllowanceAbi[0]): {
+          const { args } = decodeFunctionData({
+            abi: increaseAllowanceAbi,
+            data: call.data
+          })
+          const [, currentIncrease] = args
           amount = currentIncrease
           token = call.to
           break
         }
-        case decreaseAllowanceInterface.getFunction('decreaseAllowance')!.selector: {
-          const tx = decreaseAllowanceInterface.parseTransaction(call)
-          if (!tx) return
-          const [spender, currentDecrease] = tx.args
+        case toFunctionSelector(decreaseAllowanceAbi[0]): {
+          const { args } = decodeFunctionData({
+            abi: decreaseAllowanceAbi,
+            data: call.data
+          })
+          const [, currentDecrease] = args
           amount = currentDecrease
           token = call.to
           break
@@ -404,7 +418,7 @@ const TransactionSummary = ({
     if (call.value) {
       return [
         getAction('Send'),
-        getToken(ZeroAddress, call.value),
+        getToken(zeroAddress, call.value),
         getLabel('and'),
         getAction(`Call ${capitalizedFunction}`),
         getLabel('from'),
