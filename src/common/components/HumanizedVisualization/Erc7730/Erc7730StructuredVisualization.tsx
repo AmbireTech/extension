@@ -303,7 +303,7 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
                   ? theme.secondaryAccent400
                   : theme.primaryText
           }
-          style={{ textAlign: 'right', flexShrink: 1 }}
+          style={[{ textAlign: 'right', flexShrink: 1 }, valueItem.mlMi && spacings.mlMi]}
         >
           {valueItem.content}
         </Text>
