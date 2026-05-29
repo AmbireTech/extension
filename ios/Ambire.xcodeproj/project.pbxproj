@@ -10,6 +10,7 @@
 		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
 		37C488E9F3E114504C19AC53 /* libPods-Ambire.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 6178A36205D787BA8F8E4117 /* libPods-Ambire.a */; };
 		3E461D99554A48A4959DE609 /* SplashScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */; };
+		AABBCCDD000000000000WEB2 /* webview in Resources */ = {isa = PBXBuildFile; fileRef = AABBCCDD000000000000WEB1 /* webview */; };
 		A328211D115CC5FB81C5AC91 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 9FA7FE7BC544FD203004EEA1 /* PrivacyInfo.xcprivacy */; };
 		ACEAEBB64D3BA750E29FEC67 /* ExpoModulesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1C222C73D9BF16DB83931A1 /* ExpoModulesProvider.swift */; };
 		BB2F792D24A3F905000567C9 /* Expo.plist in Resources */ = {isa = PBXBuildFile; fileRef = BB2F792C24A3F905000567C9 /* Expo.plist */; };
@@ -19,6 +20,7 @@
 /* Begin PBXFileReference section */
 		13B07F961A680F5B00A75B9A /* Ambire.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Ambire.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		13B07FB51A68108700A75B9A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = Ambire/Images.xcassets; sourceTree = "<group>"; };
+		AABBCCDD000000000000WEB1 /* webview */ = {isa = PBXFileReference; lastKnownFileType = folder; name = webview; path = Ambire/Resources/webview; sourceTree = "<group>"; };
 		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = Ambire/Info.plist; sourceTree = "<group>"; };
 		39F0935ECABA6CC9A5002677 /* Pods-Ambire.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Ambire.release.xcconfig"; path = "Target Support Files/Pods-Ambire/Pods-Ambire.release.xcconfig"; sourceTree = "<group>"; };
 		6178A36205D787BA8F8E4117 /* libPods-Ambire.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-Ambire.a"; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -54,6 +56,7 @@
 				13B07FB61A68108700A75B9A /* Info.plist */,
 				AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */,
 				9FA7FE7BC544FD203004EEA1 /* PrivacyInfo.xcprivacy */,
+				AABBCCDD000000000000WEB1 /* webview */,
 			);
 			name = Ambire;
 			sourceTree = "<group>";
@@ -196,6 +199,7 @@
 				13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */,
 				3E461D99554A48A4959DE609 /* SplashScreen.storyboard in Resources */,
 				A328211D115CC5FB81C5AC91 /* PrivacyInfo.xcprivacy in Resources */,
+				AABBCCDD000000000000WEB2 /* webview in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

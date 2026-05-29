@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline' 'unsafe-eval'; connect-src 'self'; frame-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
+  </head>
+  <body>
+    <script>
+      (function() {
+        try {
+          var xhr = new XMLHttpRequest();
+          xhr.open('GET', 'webview-bundle.js', false);
+          xhr.send();
+          if (xhr.status !== 200 && xhr.status !== 0) {
+            throw new Error('Bundle XHR failed: status=' + xhr.status);
+          }
+          // eslint-disable-next-line no-eval
+          (0, eval)(xhr.responseText);
+        } catch (err) {
+          var msg = err && (err.stack || err.message) || String(err);
+          try {
+            window.ReactNativeWebView.postMessage(JSON.stringify({
+              type: 'ctrl.error',
+              payload: {
+                ctrlName: 'BundleLoad',
+                errors: [{ message: msg }]
+              }
+            }));
+          } catch (_) {}
+        }
+      })();
+    </script>
+  </body>
+</html>

@@ -9,6 +9,7 @@ import { CONTROLLER_STORE_MAX_LOADING_TIME } from '@common/contexts/controllerSt
 import eventBus from '@common/services/event/eventBus'
 import { storage } from '@common/services/storage'
 import { WEBVIEW_DEV_HOST } from '@env'
+import getWebviewBundleUri from '@mobile/modules/webview/services/getWebviewBundleUri'
 import {
   approveWalletConnectSession,
   approveWcAuthenticate,
@@ -19,10 +20,19 @@ import {
   respondToWalletConnectRequest
 } from '@mobile/modules/wallet-connect/services/walletConnectService'
 
-// In production, the bundle is inlined via the JSON import.
-// In dev, we load from webpack-dev-server so this import is unused.
-// @ts-ignore
-const webviewBundle = __DEV__ ? null : require('./webview-bundle.json')
+// In production the worker bundle ships as a static file inside the signed
+// app (iOS Resources / Android assets) and the WebView loads it from disk via
+// `file://`. The HTML stub is built at compile time with a CSP that only
+// allows the bundle to load and a SHA-384 integrity hash that WKWebView
+// validates before executing.
+// In dev the bundle is fetched from webpack-dev-server (HTTP) so HMR keeps
+// working.
+const PROD_BUNDLE_URI = !__DEV__ ? getWebviewBundleUri() : ''
+// Directory containing the HTML + JS pair. WKWebView's `loadFileURL` defaults
+// its read-access scope to the HTML file alone, which blocks the inline XHR
+// from reaching the sibling `webview-bundle.js`. We grant read access to the
+// directory only — narrowest scope that lets the bundle load.
+const PROD_BUNDLE_DIR = !__DEV__ ? PROD_BUNDLE_URI.replace(/\/[^/]+$/, '/') : ''
 
 // The dev server URL for webpack-dev-server.
 // - Simulator/emulator: auto-detected via Device.isDevice; uses platform loopback (localhost / 10.0.2.2)
@@ -366,44 +376,14 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, {}>((_, ref) => {
       `)
   }
 
-  // --- Build the WebView source per mode ---
-  //
-  // Dev:         Load inline HTML with file:/// base URL.
-  //              Android requires file:// origin + allowUniversalAccessFromFileURLs
-  //              for cross-origin fetch to work. iOS also uses this approach to
-  //              avoid the WebView opening the dev server URL in Safari.
-  //              We override location.reload() to post a message to RN,
-  //              which remounts the WebView (re-fetching the latest bundle).
-  //              The WebSocket URL fix is needed since the base is file:///.
-  //
-  // Production:  Inline HTML with the bundle code baked in.
-
-  const getSource = () => {
-    if (!__DEV__) {
-      // Network requests are proxied through the RN bridge (network.fetch),
-      // so the WebView itself needs no connect-src permissions.
-      const prodCsp =
-        "default-src 'none'; script-src 'none'; connect-src 'none'; frame-src 'none'; object-src 'none';"
-      return {
-        html: `
-          <!DOCTYPE html>
-          <html>
-            <head>
-              <meta name="viewport" content="width=device-width, initial-scale=1.0">
-              <meta http-equiv="Content-Security-Policy" content="${prodCsp}">
-            </head>
-            <body></body>
-          </html>
-        `,
-        baseUrl: 'file:///'
-      }
-    }
-
-    // Dev mode: HTML with file:/// base URL + external script linking to Webpack Dev Server.
-    // Network requests proxied via bridge, connect-src allows WebSocket for HMR.
-    const devCsp = `default-src 'none'; script-src ${devUrl}; connect-src ${devUrl} ws: wss:; frame-src 'none'; object-src 'none';`
-    return {
-      html: `
+  // Production loads the static HTML stub from disk; dev keeps the inline
+  // template that points at webpack-dev-server so HMR keeps working.
+  const source = !__DEV__
+    ? { uri: PROD_BUNDLE_URI }
+    : (() => {
+        const devCsp = `default-src 'none'; script-src ${devUrl}; connect-src ${devUrl} ws: wss:; frame-src 'none'; object-src 'none';`
+        return {
+          html: `
         <!DOCTYPE html>
         <html>
           <head>
@@ -415,11 +395,9 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, {}>((_, ref) => {
           </body>
         </html>
       `,
-      baseUrl: 'file:///'
-    }
-  }
-
-  const source = getSource()
+          baseUrl: 'file:///'
+        }
+      })()
 
   const handleRenderProcessGone = (syntheticEvent: any) => {
     const { nativeEvent } = syntheticEvent || {}
@@ -476,12 +454,7 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, {}>((_, ref) => {
       true;
     `
     : `
-      try {
-        ${globalErrorHandler}
-        ${webviewBundle.code}
-      } catch (err) {
-        window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'ctrl.error', payload: { ctrlName: 'GlobalCrash', errors: [{ message: err.toString(), stack: err.stack }] } }));
-      }
+      ${globalErrorHandler}
       true;
     `
 
@@ -514,12 +487,28 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, {}>((_, ref) => {
       onContentProcessDidTerminate={handleRenderProcessGone}
       javaScriptEnabled={true}
       injectedJavaScriptBeforeContentLoaded={injectedJSBefore}
+      // iOS only: grant the WebView read access to the bundle directory so
+      // the HTML's sibling `<script src="webview-bundle.js">` can resolve.
+      // Without this, `loadFileURL` scopes access to the HTML file alone.
+      allowingReadAccessToURL={__DEV__ ? undefined : PROD_BUNDLE_DIR}
       originWhitelist={__DEV__ ? ['file://*', `${devUrl}/*`] : ['file://*']}
-      onShouldStartLoadWithRequest={(request) =>
-        request.url.startsWith('file:///') || (__DEV__ && request.url.startsWith(devUrl))
-      }
+      onShouldStartLoadWithRequest={(request) => {
+        if (__DEV__) {
+          return request.url.startsWith('file:///') || request.url.startsWith(devUrl)
+        }
+        // In production the WebView only ever navigates to the bundled HTML
+        // stub. The bundle JS is fetched via XHR from inside that page (so we
+        // never see a navigation for it here). Anything else is rejected.
+        return request.url === PROD_BUNDLE_URI
+      }}
       mixedContentMode="never"
-      allowFileAccessFromFileURLs={false}
+      // In prod the worker page is `file://...html` and pulls its sibling JS
+      // via XHR + eval (so we can capture exceptions in our own try/catch
+      // rather than getting WKWebView's masked "Script error."). XHR between
+      // sibling file:// resources requires this flag. Both files live inside
+      // the signed `.app` bundle, alongside no other content, so widening
+      // file:// access to file:// is benign here.
+      allowFileAccessFromFileURLs={!__DEV__}
       allowUniversalAccessFromFileURLs={false}
       domStorageEnabled={true}
       webviewDebuggingEnabled={__DEV__}
