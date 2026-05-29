@@ -21,8 +21,6 @@ import useToast from '@common/hooks/useToast'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { setStringAsync } from '@common/utils/clipboard'
-import { openInTab } from '@common/utils/links'
-import { isExtension } from '@web/constants/browserapi'
 
 import Option from './BaseAddressOption'
 
@@ -76,12 +74,10 @@ const BaseAddress: FC<Props> = ({
             getCoinGeckoTokenUrl(network.nativeAssetId)
           : `${network.explorerUrl}/address/${address}`
 
-      // openInTab doesn't work in Standalone Benzin
-      if (!isExtension) {
-        await Linking.openURL(targetUrl)
-        return
-      }
-      await openInTab({ url: targetUrl })
+      // use Linking instead of openInTab as openInTab may trigger
+      // a close of the action window. We don't want to close it, we
+      // want to minimize it on the side
+      await Linking.openURL(targetUrl)
     } catch {
       addToast(t('Failed to open explorer'), {
         type: 'error'
