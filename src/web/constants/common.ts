@@ -23,4 +23,3 @@ export const INTERNAL_REQUEST_SESSION = {
   origin: INTERNAL_REQUEST_ORIGIN,
   icon: '../assets/images/xicon@128.png'
 }
-

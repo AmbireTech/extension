@@ -16,9 +16,9 @@ const AmbireLogoHorizontalMonochrome: FC<
       <Svg width={Number(width) + 2} height={height} viewBox="0 0 74 24" fill="none">
         <path
           fill={String(theme.neutral900)}
-          fill-rule="evenodd"
+          fillRule="evenodd"
           d="M31.048 15.728h-1.593l-.861-1.664H24.7l-.861 1.664h-1.924l3.932-7.439h1.638c1.315 2.48 2.63 4.96 3.943 7.44h-.38Zm-4.402-5.419-1.169 2.245h2.33l-1.162-2.245h.001Zm7.242 5.42h-1.479v-7.44h1.77l3.121 4.45 3.093-4.45h1.76v7.44h-1.705v-4.781l-2.463 3.595h-1.397l-2.474-3.554v4.74h-.226Zm15.633 0h-5.206v-7.44h5.059c.752 0 1.366.183 1.797.521a1.823 1.823 0 0 1 .689 1.485c.006.31-.065.615-.208.888a1.8 1.8 0 0 1-.606.672c.257.12.488.292.676.507.294.343.45.786.44 1.24 0 .672-.248 1.21-.72 1.582-.45.352-1.099.543-1.922.543v.001Zm.348-5.778c-.16-.128-.409-.194-.74-.194h-3.05v1.471h3.06c.256.016.509-.06.717-.211a.675.675 0 0 0 .23-.544.638.638 0 0 0-.216-.522h-.001Zm.213 2.975c-.183-.145-.465-.218-.826-.218H46.08v1.551h3.206c.372 0 .641-.07.811-.203a.653.653 0 0 0 .233-.553.701.701 0 0 0-.248-.577Zm5.3 2.802h-1.566V8.29h1.794v7.44h-.227Zm3.955 0H57.77V8.29h4.736c.855 0 1.524.223 1.987.63.482.424.733 1.036.733 1.794 0 .687-.225 1.255-.65 1.667a2.53 2.53 0 0 1-1.311.639l2.469 2.71h-2.29l-2.318-2.561h-1.562v2.56h-.228Zm3.83-5.68c-.189-.16-.485-.24-.885-.24h-2.717v1.84h2.717c.393 0 .69-.083.882-.242.177-.147.27-.373.27-.673 0-.307-.09-.538-.266-.686Zm10.561 5.68h-6.76v-7.44h6.919v1.52h-5.155v1.372h4.607v1.508h-4.607v1.521h5.223v1.52h-.227v-.001Z"
-          clip-rule="evenodd"
+          clipRule="evenodd"
         />
         <path
           fill={String(theme.neutral800)}
@@ -72,8 +72,8 @@ const AmbireLogoHorizontalMonochrome: FC<
             y2="15.264"
             gradientUnits="userSpaceOnUse"
           >
-            <stop stop-color="#141833" />
-            <stop offset="1" stop-color="#9AA2D8" />
+            <stop stopColor="#141833" />
+            <stop offset="1" stopColor="#9AA2D8" />
           </linearGradient>
           <linearGradient
             id="b"
@@ -83,8 +83,8 @@ const AmbireLogoHorizontalMonochrome: FC<
             y2="15.314"
             gradientUnits="userSpaceOnUse"
           >
-            <stop stop-color="#141833" />
-            <stop offset="1" stop-color="#9AA2D8" />
+            <stop stopColor="#141833" />
+            <stop offset="1" stopColor="#9AA2D8" />
           </linearGradient>
         </defs>
       </Svg>
