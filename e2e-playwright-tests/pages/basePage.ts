@@ -17,6 +17,8 @@ export class BasePage {
 
   collectedRequests: string[] = []
 
+  collectedRequestBodies: Map<string, string | null> = new Map()
+
   constructor({ page, context }: BootstrapContext) {
     this.page = page
     this.context = context
@@ -132,7 +134,9 @@ export class BasePage {
   }
 
   async expectButtonEnabled(selector: string) {
-    await expect(this.page.getByTestId(selector)).toBeEnabled({ timeout: 10000 })
+    const locator = this.page.getByTestId(selector)
+    await expect(locator).not.toHaveAttribute('aria-disabled', 'true', { timeout: 10000 })
+    await expect(locator).toBeEnabled({ timeout: 10000 })
   }
 
   async compareText(
@@ -162,9 +166,12 @@ export class BasePage {
     this._reqListener = (request: PWRequest) => {
       const url = request.url()
       if (!url.startsWith('http')) return
-      if (request.resourceType() !== 'fetch' || request.method() === 'OPTIONS') return
+      const resourceType = request.resourceType()
+      if (resourceType !== 'fetch' && resourceType !== 'xhr') return
+      if (request.method() === 'OPTIONS') return
 
       this.collectedRequests.push(url)
+      this.collectedRequestBodies.set(url, request.postData())
     }
     this.context.on('request', this._reqListener)
     this._monitorInstalled = true
@@ -177,6 +184,14 @@ export class BasePage {
     }
 
     this.collectedRequests = []
+    this.collectedRequestBodies = new Map()
+  }
+
+  getRequestsWithBodies(): Array<{ url: string; postData: string | null }> {
+    return this.collectedRequests.map((url) => ({
+      url,
+      postData: this.collectedRequestBodies.get(url) ?? null
+    }))
   }
 
   getCategorizedRequests() {

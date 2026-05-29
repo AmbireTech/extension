@@ -39,6 +39,7 @@ export class AuthPage extends BasePage {
       selectors.getStarted.confirmationMessageForViewOnly,
       'Added successfully'
     )
+    await this.expectButtonEnabled(selectors.getStarted.saveAndContinueBtn)
     await this.click(selectors.getStarted.saveAndContinueBtn)
     await this.compareText(
       selectors.getStarted.confirmationMessageAmbireWallet,
@@ -86,6 +87,7 @@ export class AuthPage extends BasePage {
       'Added successfully'
     )
     await this.compareText(selectors.getStarted.addMoreAccountsButton, 'Add more accounts')
+    await this.expectButtonEnabled(selectors.getStarted.saveAndContinueBtn)
     await this.click(selectors.getStarted.saveAndContinueBtn)
     await this.compareText(
       selectors.getStarted.confirmationMessageAmbireWallet,
@@ -107,6 +109,7 @@ export class AuthPage extends BasePage {
       selectors.getStarted.confirmationMessageForViewOnly,
       'Added successfully'
     )
+    await this.expectButtonEnabled(selectors.getStarted.saveAndContinueBtn)
     await this.click(selectors.getStarted.saveAndContinueBtn)
     await this.compareText(
       selectors.getStarted.confirmationMessageAmbireWallet,
@@ -131,6 +134,8 @@ export class AuthPage extends BasePage {
     await this.personalizeAccountName('Name 1')
     // assertion on Dashboard after login
     await this.compareText(selectors.getStarted.addMoreAccountsButton, 'Add more accounts')
+
+    await this.expectButtonEnabled(selectors.getStarted.saveAndContinueBtn)
     await this.click(selectors.getStarted.saveAndContinueBtn)
     await this.compareText(
       selectors.getStarted.confirmationMessageAmbireWallet,
@@ -164,6 +169,7 @@ export class AuthPage extends BasePage {
       'Added successfully'
     )
     await this.personalizeAccountName('Name 1')
+    await this.expectButtonEnabled(selectors.getStarted.saveAndContinueBtn)
     await this.click(selectors.getStarted.saveAndContinueBtn)
     await this.compareText(
       selectors.getStarted.confirmationMessageAmbireWallet,
@@ -190,6 +196,7 @@ export class AuthPage extends BasePage {
     )
     await this.personalizeAccountName('Name 1')
     await this.isVisible(selectors.getStarted.addMoreAccountsButton)
+    await this.expectButtonEnabled(selectors.getStarted.saveAndContinueBtn)
     await this.click(selectors.getStarted.saveAndContinueBtn)
     await this.compareText(
       selectors.getStarted.confirmationMessageAmbireWallet,
@@ -240,6 +247,7 @@ export class AuthPage extends BasePage {
       'Added successfully'
     )
     await this.isVisible(selectors.getStarted.addMoreAccountsButton)
+    await this.expectButtonEnabled(selectors.getStarted.saveAndContinueBtn)
     await this.click(selectors.getStarted.saveAndContinueBtn)
     await this.compareText(
       selectors.getStarted.confirmationMessageAmbireWallet,
@@ -265,6 +273,7 @@ export class AuthPage extends BasePage {
     await this.decryptBackup()
     await this.setExtensionPassword()
     // assertion on Dashboard after login
+    await this.expectButtonEnabled(selectors.getStarted.saveAndContinueBtn)
     await this.click(selectors.getStarted.saveAndContinueBtn)
     await this.compareText(
       selectors.getStarted.confirmationMessageAmbireWallet,
