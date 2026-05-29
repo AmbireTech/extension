@@ -100,9 +100,12 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
   // Pad the scrollable content by the keyboard height so the content hidden
   // behind the keyboard becomes reachable by scrolling while it's open. Only
   // applies to the ScrollView/FlatList/SectionList paths; a `customRenderer`
-  // controls its own layout, so it keeps the plain bottom inset.
-  const contentBottomPadding =
-    (bottom || SPACING_SM) + (!customRenderer && isKeyboardVisible ? visibleKeyboardHeight : 0)
+  // controls its own layout, so it keeps the plain bottom inset. Modals are
+  // vertically centered and lifted via `modalKeyboardOffsetStyle`, so they skip
+  // this padding entirely.
+  const contentBottomPadding = isModal
+    ? 0
+    : (bottom || SPACING_SM) + (!customRenderer && isKeyboardVisible ? visibleKeyboardHeight : 0)
 
   return (
     <Portal hostName="global">

@@ -63,15 +63,7 @@ const DappWebViewFooter: React.FC<Props> = ({
   }, [canGoBackInHistory, goBack, navigate, route.state])
 
   return (
-    <View
-      style={[
-        flexbox.directionRow,
-        flexbox.alignCenter,
-        spacings.phSm,
-        spacings.ptSm,
-        spacings.pbTy
-      ]}
-    >
+    <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.phSm, spacings.ptSm]}>
       <Pressable
         onPress={handleNavigateToApps}
         style={[

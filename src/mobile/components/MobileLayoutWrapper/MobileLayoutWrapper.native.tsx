@@ -1,9 +1,14 @@
-import React, { createContext, useContext } from 'react'
+import React, { createContext, useContext, useEffect, useRef, useState } from 'react'
 import { View } from 'react-native'
-import { KeyboardAvoidingView, KeyboardAwareScrollView } from 'react-native-keyboard-controller'
+import {
+  KeyboardAvoidingView,
+  KeyboardAwareScrollView,
+  KeyboardEvents
+} from 'react-native-keyboard-controller'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import { useIsInsideBottomSheet } from '@common/components/BottomSheet/BottomSheetContext'
+import { useOpenBottomSheetsCount } from '@common/components/BottomSheet/bottomSheetEventStream'
 import { PanelBackButton, PanelTitle } from '@common/components/Panel/Panel'
 import useNavigation from '@common/hooks/useNavigation'
 import useTheme from '@common/hooks/useTheme'
@@ -17,10 +22,6 @@ import {
 } from './MobileLayoutWrapper'
 import getStyles from './styles'
 
-// Signals that an ancestor MobileLayoutContainer already shrinks the whole layout
-// for the keyboard (via KeyboardAvoidingView). When true, a descendant
-// MobileLayoutWrapperMainContent must not also reserve the full keyboard height as
-// scroll padding, otherwise the two double-count and the scroll view over-scrolls.
 const KeyboardAwareContainerContext = createContext(false)
 
 const MobileLayoutContainer: React.FC<MobileLayoutContainerProps> = ({
@@ -38,8 +39,33 @@ const MobileLayoutContainer: React.FC<MobileLayoutContainerProps> = ({
   const { theme } = useTheme(getStyles)
   const insets = useSafeAreaInsets()
   const isInsideBottomSheet = useIsInsideBottomSheet()
+  const openBottomSheetsCount = useOpenBottomSheetsCount()
+  const isSheetOpen = openBottomSheetsCount > 0
+
+  const [keepSuppressedUntilKeyboardHidden, setKeepSuppressedUntilKeyboardHidden] = useState(false)
+  const isSheetOpenRef = useRef(isSheetOpen)
+  isSheetOpenRef.current = isSheetOpen
+
+  useEffect(() => {
+    const willShowSub = KeyboardEvents.addListener('keyboardWillShow', () => {
+      // If the keyboard comes up while a sheet is open, remember that we must
+      // keep avoidance suppressed through the keyboard's hide animation later.
+      if (isSheetOpenRef.current) setKeepSuppressedUntilKeyboardHidden(true)
+    })
+    const didHideSub = KeyboardEvents.addListener('keyboardDidHide', () => {
+      setKeepSuppressedUntilKeyboardHidden(false)
+    })
+
+    return () => {
+      willShowSub.remove()
+      didHideSub.remove()
+    }
+  }, [])
 
   const paddingTop = isInsideBottomSheet ? 0 : insets.top + (withTopPadding ? SPACING_SM : 0)
+
+  const isKeyboardAvoidingEnabled =
+    keyboardAwareFooter && !isSheetOpen && !keepSuppressedUntilKeyboardHidden
 
   return (
     // `behavior="height"` shrinks the whole container by the keyboard's overlap,
@@ -48,7 +74,7 @@ const MobileLayoutContainer: React.FC<MobileLayoutContainerProps> = ({
     // view's on-screen frame, so the bottom safe-area inset is accounted for.
     <KeyboardAvoidingView
       behavior="height"
-      enabled={keyboardAwareFooter}
+      enabled={isKeyboardAvoidingEnabled}
       style={[
         flexbox.flex1,
         {
