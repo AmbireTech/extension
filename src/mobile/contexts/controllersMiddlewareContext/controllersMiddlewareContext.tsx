@@ -8,9 +8,10 @@ import { ControllersMiddlewareContext } from '@common/contexts/controllersMiddle
 import { ControllerStoreContext } from '@common/contexts/controllerStoreContext'
 import useRoute from '@common/hooks/useRoute'
 import { Action, MethodAction } from '@common/types/actions'
+import useDappsControllerHelpers from '@mobile/hooks/useDappsControllerHelpers'
 import { BUNGEE_API_KEY, RELAYER_URL, SQUID_INTEGRATOR_ID, VELCRO_URL } from '@env'
 import useRequestsControllerHelpers from '@mobile/hooks/useRequestsControllerHelpers'
-import { WebViewWorker, WebViewWorkerRef } from '@mobile/services/WebViewWorker/WebViewWorker'
+import { WebViewWorker, WebViewWorkerRef } from '@mobile/modules/webview/services/WebViewWorker'
 
 export const ControllersMiddlewareProvider: React.FC<{
   children: React.ReactNode
@@ -37,9 +38,12 @@ export const ControllersMiddlewareProvider: React.FC<{
       })
   }, [controllerStore])
 
-  const dispatch = useCallback((action: MethodAction | Action) => {
-    webviewRef.current?.dispatch(action)
-  }, [])
+  const dispatch = useCallback(
+    (action: MethodAction | Action, windowId?: number, raw?: boolean) => {
+      webviewRef.current?.dispatch(action, raw)
+    },
+    []
+  )
 
   useEffect(() => {
     const { pathname = '/', search = '' } = route
@@ -57,6 +61,7 @@ export const ControllersMiddlewareProvider: React.FC<{
   }, [route.pathname, route.search, dispatch])
 
   useRequestsControllerHelpers(dispatch)
+  useDappsControllerHelpers(dispatch)
 
   return (
     <ControllersMiddlewareContext.Provider value={useMemo(() => ({ dispatch }), [dispatch])}>

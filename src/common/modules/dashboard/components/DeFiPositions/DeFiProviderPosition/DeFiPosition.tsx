@@ -1,17 +1,20 @@
 import React, { FC, useMemo } from 'react'
-import { View } from 'react-native'
+import { Pressable, View } from 'react-native'
 
 import { AssetType, Position, PositionsByProvider } from '@ambire-common/libs/defiPositions/types'
 import Text from '@common/components/Text'
 import useTheme from '@common/hooks/useTheme'
 import spacings, { SPACING_MI } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
+import { generatePositionUrl } from '@common/utils/generatePositionUrl'
+import { openInTab } from '@common/utils/links'
 
 import DeFiPositionAssets from './DeFiPositionAssets'
 import Badge from './DeFiPositionHeader/Badge'
 
 type Props = Omit<PositionsByProvider, 'iconUrl' | 'positions' | 'positionInUSD' | 'source'> &
   Position & {
+    providerName: string
     positionInUSD?: string
     withTopBorder?: boolean
   }
@@ -28,9 +31,12 @@ const DeFiPosition: FC<Props> = ({
   chainId,
   positionInUSD,
   additionalData,
-  assets
+  assets,
+  providerName,
+  siteUrl
 }) => {
   const { inRange, name, positionIndex, description } = additionalData
+
   const suppliedAssets = assets.filter(
     (asset) => asset.type === AssetType.Liquidity || asset.type === AssetType.Collateral
   )
@@ -50,6 +56,17 @@ const DeFiPosition: FC<Props> = ({
       return positionIndex
     }
   }, [description, positionIndex])
+
+  const positionUrl = useMemo(
+    () =>
+      generatePositionUrl({
+        providerName,
+        positionId: positionIndex,
+        chainId,
+        siteUrl
+      }),
+    [providerName, positionIndex, chainId, siteUrl]
+  )
 
   return (
     <View
@@ -73,31 +90,44 @@ const DeFiPosition: FC<Props> = ({
           flexbox.justifySpaceBetween
         ]}
       >
-        <View style={[flexbox.directionRow, flexbox.alignCenter, flexbox.flex1]}>
-          <View>
-            <Text fontSize={14} weight="semiBold">
-              {name}
-            </Text>
-          </View>
+        <View
+          style={[
+            flexbox.directionRow,
+            flexbox.alignCenter,
+            flexbox.flex1,
+            { minWidth: 0, flexShrink: 1 }
+          ]}
+        >
+          <Text fontSize={14} weight="semiBold" style={{ flexShrink: 0 }}>
+            {name}
+          </Text>
           {!!positionIndex && (
-            <Text
-              fontSize={12}
-              appearance="secondaryText"
-              style={[spacings.mlMi, spacings.mrTy]}
-              selectable
-              numberOfLines={1}
+            <Pressable
+              disabled={!positionUrl}
+              onPress={positionUrl ? () => openInTab({ url: positionUrl }) : undefined}
+              style={[{ flex: 1, minWidth: 0, flexShrink: 1 }, spacings.mlMi, spacings.mrTy]}
             >
-              {descriptionWithFallback}
-            </Text>
+              <Text
+                fontSize={12}
+                appearance="secondaryText"
+                selectable
+                numberOfLines={1}
+                style={positionUrl ? { textDecorationLine: 'underline' } : undefined}
+                ellipsizeMode="tail"
+              >
+                {descriptionWithFallback}
+              </Text>
+            </Pressable>
           )}
           {typeof inRange === 'boolean' && (
             <Badge
               text={inRange ? 'In Range' : 'Out of Range'}
               type={inRange ? 'success' : 'error'}
+              style={{ flexShrink: 0 }}
             />
           )}
         </View>
-        <Text fontSize={14} weight="semiBold" style={spacings.ml}>
+        <Text fontSize={14} weight="semiBold" style={[spacings.ml, { flexShrink: 0 }]}>
           {positionInUSD || '$-'}
         </Text>
       </View>

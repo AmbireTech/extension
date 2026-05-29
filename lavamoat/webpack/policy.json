@@ -713,7 +713,7 @@
       "packages": {
         "@metamask/eth-sig-util>@metamask/utils>@metamask/superstruct": true,
         "@noble/hashes": true,
-        "ox>@scure/bip32>@scure/base": true,
+        "@walletconnect/utils>@scure/base": true,
         "buffer": true,
         "eslint>debug": true,
         "@metamask/eth-sig-util>@metamask/utils>pony-cause": true,
@@ -871,7 +871,7 @@
         "TextEncoder": true
       }
     },
-    "ox>@scure/bip32>@scure/base": {
+    "@walletconnect/utils>@scure/base": {
       "globals": {
         "TextDecoder": true,
         "TextEncoder": true
@@ -1993,7 +1993,7 @@
         "react-native-web>inline-style-prefixer>css-in-js-utils": true
       }
     },
-    "expo-linking>invariant": {
+    "expo-camera>invariant": {
       "globals": {
         "process.env.NODE_ENV": true
       }
@@ -2539,7 +2539,7 @@
         "react-native-gesture-handler>@egjs/hammerjs": true,
         "node-polyfill-webpack-plugin>console-browserify": true,
         "react-native-gesture-handler>hoist-non-react-statics": true,
-        "expo-linking>invariant": true,
+        "expo-camera>invariant": true,
         "react": true,
         "react-native-reanimated": true,
         "react-native-web": true

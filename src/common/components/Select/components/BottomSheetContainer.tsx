@@ -1,5 +1,5 @@
 /* eslint-disable react/prop-types */
-import React, { FC, useEffect } from 'react'
+import React, { FC, useCallback, useEffect, useMemo } from 'react'
 import { FlatListProps, ScrollView, SectionListProps } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 
@@ -11,6 +11,13 @@ import { getUiType } from '@common/utils/uiType'
 import { RenderSelectedOptionParams } from '../types'
 
 const { isPopup } = getUiType()
+
+// Hoisted stable references so that re-renders of this component don't
+// create new inline object/function props every time, which would defeat
+// the `React.memo` wrapper on `BottomSheet` and cause the nested-Portal
+// infinite-update loop inside `react-native-modalize` / `@gorhom/portal`.
+const CONTAINER_INNER_WRAPPER_STYLES = { flex: 1 } as const
+const BOTTOM_SHEET_WIDTH = isPopup || isMobile ? ('100%' as const) : 450
 
 type Props = Pick<RenderSelectedOptionParams, 'isMenuOpen' | 'toggleMenu'> & {
   id?: string
@@ -44,6 +51,21 @@ const BottomSheetContainer: FC<Props> = ({
     }
   }, [isMenuOpen, openSheet, closeSheet])
 
+  // Always set isMenuOpen to false when the BottomSheet is closed.
+  // Fixes the issue where the state is not updated when the BottomSheet is
+  // closed by dragging it down.
+  const handleClosed = useCallback(() => {
+    setIsMenuOpen(false)
+  }, [setIsMenuOpen])
+
+  const bottomSheetStyle = useMemo(
+    () => ({
+      backgroundColor: theme.primaryBackground,
+      width: BOTTOM_SHEET_WIDTH
+    }),
+    [theme.primaryBackground]
+  )
+
   return (
     <BottomSheet
       id={id}
@@ -53,17 +75,9 @@ const BottomSheetContainer: FC<Props> = ({
       flatListProps={flatListProps}
       HeaderComponent={HeaderComponent}
       closeBottomSheet={toggleMenu as () => void}
-      onClosed={() => {
-        // Always set isMenuOpen to false when the BottomSheet is closed
-        // Fixes the issue where the state is not updated when the BottomSheet is closed
-        // by dragging it down
-        setIsMenuOpen(false)
-      }}
-      containerInnerWrapperStyles={{ flex: 1 }}
-      style={{
-        backgroundColor: theme.primaryBackground,
-        width: isPopup || isMobile ? '100%' : 450
-      }}
+      onClosed={handleClosed}
+      containerInnerWrapperStyles={CONTAINER_INNER_WRAPPER_STYLES}
+      style={bottomSheetStyle}
       isScrollEnabled={false}
       customRenderer={children}
     />

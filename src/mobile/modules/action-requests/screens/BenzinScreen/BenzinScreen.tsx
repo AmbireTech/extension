@@ -45,7 +45,21 @@ const BenzinScreen = () => {
 
   const extensionAccOp = userRequest?.meta?.submittedAccountOp
 
-  const state = useBenzin({ onOpenExplorer: resolveAction, extensionAccOp })
+  const benzinParams = useMemo(
+    () =>
+      userRequest
+        ? {
+            chainId: userRequest.meta.chainId?.toString() ?? null,
+            txnId: userRequest.meta.txnId ?? null,
+            userOpHash: userRequest.meta.userOpHash ?? null,
+            relayerId: null,
+            bundler: null
+          }
+        : undefined,
+    [userRequest]
+  )
+
+  const state = useBenzin({ onOpenExplorer: () => {}, extensionAccOp, params: benzinParams })
 
   const pendingRequests = useMemo(() => {
     if (!visibleUserRequests.length) return []

@@ -167,7 +167,8 @@ const AddressInput: React.FC<Props> = ({
                 style={{
                   borderRadius: 0,
                   ...spacings.ph0,
-                  ...spacings.pv0
+                  ...spacings.pv0,
+                  ...flexbox.flex1
                 }}
                 address={address}
                 addressHighlight={addressHighlight}

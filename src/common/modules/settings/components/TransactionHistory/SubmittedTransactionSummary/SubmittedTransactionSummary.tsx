@@ -16,10 +16,10 @@ import {
   getVisibleSummaryBalanceChanges,
   MAX_VISIBLE_BALANCE_CHANGES
 } from './helpers'
+import getStyles from './styles'
 import SummaryDetailsSheet from './SummaryDetailsSheet'
 import SummaryHeader from './SummaryHeader'
 import SummaryPreview from './SummaryPreview'
-import getStyles from './styles'
 import { Props } from './types'
 
 const { isTab } = getUiType()
@@ -59,20 +59,6 @@ const SubmittedTransactionSummaryInner = ({
   )
 
   const handleOpenDetails = () => {
-    // note: it's really important to check for 'undefined' here
-    // as balanceChanges could just be an empty array - we don't
-    // want to rescan each time if that is the case. We want to
-    // scan only old txn that do not have this data
-    if (typeof submittedAccountOp.balanceChanges === 'undefined') {
-      activityDispatch({
-        type: 'method',
-        params: {
-          method: 'backfillAccountOpBalanceChanges',
-          args: [submittedAccountOp]
-        }
-      })
-    }
-
     openBottomSheet()
   }
 

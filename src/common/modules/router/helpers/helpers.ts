@@ -8,7 +8,7 @@ import { AUTH_STATUS } from '@common/modules/auth/constants/authStatus'
 import { ROUTES } from '@common/modules/router/constants/common'
 import { getUiType } from '@common/utils/uiType'
 
-const { isRequestWindow, isMobileApp } = getUiType()
+const { isRequestWindow } = getUiType()
 
 const getInitialRoute = ({
   keystoreState,
@@ -33,7 +33,7 @@ const getInitialRoute = ({
     return ROUTES.getStarted
   }
 
-  if ((isRequestWindow || isMobileApp) && requestsState.currentUserRequest) {
+  if (isRequestWindow && requestsState.currentUserRequest) {
     const { currentUserRequest } = requestsState
     if (currentUserRequest.kind === 'dappConnect') return ROUTES.dappConnectRequest
 

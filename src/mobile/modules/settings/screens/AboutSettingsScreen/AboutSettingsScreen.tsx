@@ -6,7 +6,7 @@ import NewsletterIcon from '@common/assets/svg/NewsletterIcon'
 import OpenIcon from '@common/assets/svg/OpenIcon'
 import TosIcon from '@common/assets/svg/TosIcon'
 import ControlOption from '@common/components/ControlOption'
-import { APP_VERSION } from '@common/config/env'
+import { APP_VERSION, isDev } from '@common/config/env'
 import useNavigation from '@common/hooks/useNavigation'
 import useTheme from '@common/hooks/useTheme'
 import { ROUTES } from '@common/modules/router/constants/common'
@@ -35,9 +35,9 @@ const AboutSettingsScreen = () => {
       <MobileLayoutWrapperMainContent withScroll withBackButton title="About">
         <ControlOption
           style={spacings.mbTy}
-          title={`v${APP_VERSION}`}
+          title={`v${APP_VERSION}${isDev ? '-dev' : ''}`}
           description={''}
-          renderIcon={<></>}
+          renderIcon={null}
         />
         <ControlOption
           style={spacings.mbTy}

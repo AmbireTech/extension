@@ -30,11 +30,20 @@ const COMMON_ROUTES = {
   generalSettings: 'settings/general',
   accountsSettings: 'settings/accounts',
   settingsAbout: 'settings/about',
-  settingsTerms: 'settings/terms'
+  settingsTerms: 'settings/terms',
+  apps: 'apps',
+  signMessage: 'sign-message',
+  addChain: 'add-chain',
+  watchAsset: 'watch-asset',
+  switchAccount: 'switch-account',
+  getEncryptionPublicKeyRequest: 'get-encryption-public-key-request',
+  decryptRequest: 'decryptRequest'
 }
 
 const MOBILE_ROUTES = {
-  ...COMMON_ROUTES
+  ...COMMON_ROUTES,
+  dappWebView: 'apps/webview',
+  qrReader: 'qr-reader'
 }
 
 const WEB_ROUTES = {
@@ -43,19 +52,12 @@ const WEB_ROUTES = {
   earn: 'earn',
   transactions: 'transactions',
   signedMessages: 'signed-messages',
-  signMessage: 'sign-message',
   swap: 'swap',
   noConnection: 'no-connection',
   accounts: 'accounts',
-  apps: 'apps',
   keyStoreEmailRecovery: 'extension-password-email-recovery',
   keyStoreEmailRecoverySetNewPassword: 'set-new-extension-password',
-  getEncryptionPublicKeyRequest: 'get-encryption-public-key-request',
-  decryptRequest: 'decryptRequest',
   dappConnectRequest: 'dapp-connect-request',
-  watchAsset: 'watch-asset',
-  addChain: 'add-chain',
-  switchAccount: 'switch-account',
   authEmailAccount: 'auth-email-account',
   authEmailLogin: 'auth-email-login',
   authEmailRegister: 'auth-email-register',

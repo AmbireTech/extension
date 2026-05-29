@@ -63,7 +63,11 @@ const selectors = {
     portfolioErrorAlert: 'portfolio-error-alert',
     noTransactionOnActivityTab: 'no-transaction-history-text',
     transactionSendText: '(//div[contains(text(),"Send")])[2]', // TODO: change once we have id on FE
-    confirmedTransactionPill: '//div[contains(text(),"Confirmed")]', // TODO: chage once we have id on FE
+    transactionFuelGasTankText: '(//div[contains(text(),"Fuel gas tank")])',
+    swapAndBridgeTransactionText: '//div[contains(text(),"Swap/Bridge")]', // TODO: change once we have id on FE
+    activityTabConfirmedPill: '//div[contains(text(),"Confirmed")]',
+    confirmedTransactionPill: '(//div[contains(text(),"Confirmed")])[2]', // TODO: chage once we have id on FE
+    activityTransactionConfirmed: 'activity-confirmed-step',
     fuelGasTankTransactionPill: '//div[contains(text(),"Fuel gas tank with")]', // TODO: chage once we have id on FE,
     grantApprovalText: '//div[contains(text(),"Grant approval")]', // TODO: change once we have id on FE,
     magnifyingGlassIcon: 'search-glass-icon',
@@ -82,7 +86,8 @@ const selectors = {
     rewardsButton: 'dashboard-button-rewards',
     rewardsForClaimingButton: 'marketing-banner-button',
     rewardsLink: '//div[contains(text(),"Ambire Rewards")]',
-    projectedRewardsClaimButton: 'projected-rewards-claim-button'
+    projectedRewardsClaimButton: 'projected-rewards-claim-button',
+    searchInputPlaceholder: 'search-input-placeholder'
   },
   settings: {
     createNewRecoveryPhraseButton: 'create-new-recovery-phrase',
@@ -167,9 +172,9 @@ const selectors = {
     pageTitle: '//h1',
     pageDescription: '//p',
     homePage: '//span[contains(text(),"Home")]',
-    leaderboardPage: '//span[contains(text(),"Leaderboard")]',
+    leaderboardPage: '//span[contains(text(),"Rewards")]',
     rewardsPoolPage: '//span[contains(text(),"Rewards Pool")]',
-    walletPage: '//span[contains(text(),"WALLET")]',
+    walletPage: '//span[contains(text(),"$Wallet")]',
     faqPage: '//span[contains(text(),"FAQ")]'
   },
   sigtool: {

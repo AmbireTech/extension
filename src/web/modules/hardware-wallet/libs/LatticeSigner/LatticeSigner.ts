@@ -8,7 +8,9 @@ import { getHDPathIndices } from '@ambire-common/utils/hdPath'
 import shortenAddress from '@ambire-common/utils/shortenAddress'
 import { stripHexPrefix } from '@ambire-common/utils/stripHexPrefix'
 import wait from '@ambire-common/utils/wait'
-import LatticeController, { GridPlusSDKConstants } from '@web/modules/hardware-wallet/controllers/LatticeController'
+import LatticeController, {
+  GridPlusSDKConstants
+} from '@web/modules/hardware-wallet/controllers/LatticeController'
 
 class LatticeSigner implements KeystoreSignerInterface {
   key: ExternalKey & { isExternallyStored: boolean }

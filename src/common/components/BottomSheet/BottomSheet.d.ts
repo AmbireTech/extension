@@ -9,12 +9,14 @@ export interface BottomSheetProps {
   closeBottomSheet?: (dest?: 'alwaysOpen' | 'default' | undefined) => void
   onBackdropPress?: () => void
   onClosed?: () => void
+  onOpened?: () => void
   onOpen?: () => void
   animationDuration?: number
   children?: React.ReactNode
   // Preferences
   type?: 'modal' | 'bottom-sheet'
   adjustToContentHeight?: boolean
+  modalHeight?: ModalizeProps['modalHeight']
   style?: ViewStyle
   containerInnerWrapperStyles?: ViewStyle
   flatListProps?: ModalizeProps['flatListProps']
@@ -28,6 +30,7 @@ export interface BottomSheetProps {
   shouldBeClosableOnDrag?: boolean
   customZIndex?: number
   isScrollEnabled?: boolean
+  reserveScrollPadding?: boolean
   withBackdropBlur?: boolean
 }
 

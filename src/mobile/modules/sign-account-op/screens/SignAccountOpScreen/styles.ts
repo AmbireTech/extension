@@ -28,8 +28,7 @@ const getStyles = (theme: ThemeProps) =>
         marginHorizontal: -2
       }),
       backgroundColor: theme.primaryBackground,
-      ...spacings.phSm,
-      ...spacings.pbSm
+      ...spacings.phSm
     }
   })
 

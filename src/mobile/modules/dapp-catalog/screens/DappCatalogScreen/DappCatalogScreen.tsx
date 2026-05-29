@@ -1,0 +1,454 @@
+import Fuse from 'fuse.js'
+import React, { ReactNode, useCallback, useMemo, useState } from 'react'
+import { useForm } from 'react-hook-form'
+import { useTranslation } from 'react-i18next'
+import { Pressable, View, ViewStyle } from 'react-native'
+
+import { Dapp } from '@ambire-common/interfaces/dapp'
+import { Network } from '@ambire-common/interfaces/network'
+import { isValidHostname, isValidURL } from '@ambire-common/services/validations'
+import ConnectedIcon from '@common/assets/svg/ConnectedIcon'
+import GlobeIcon from '@common/assets/svg/GlobeIcon'
+import GoogleIcon from '@common/assets/svg/GoogleIcon'
+import NetworksIcon from '@common/assets/svg/NetworksIcon'
+import ScanIcon from '@common/assets/svg/ScanIcon'
+import StarIcon from '@common/assets/svg/StarIcon'
+import NetworkIcon from '@common/components/NetworkIcon'
+import ScrollableWrapper, { WRAPPER_TYPES } from '@common/components/ScrollableWrapper'
+import Search from '@common/components/Search'
+import Select from '@common/components/Select'
+import { SelectValue } from '@common/components/Select/types'
+import Text from '@common/components/Text'
+import useController from '@common/hooks/useController'
+import useDebounce from '@common/hooks/useDebounce'
+import { AnimatedPressable, useCustomHover } from '@common/hooks/useHover'
+import useNavigation from '@common/hooks/useNavigation'
+import useTheme from '@common/hooks/useTheme'
+import DappItem from '@common/modules/dapp-catalog/components/DappItem'
+import DappsSkeletonLoader from '@common/modules/dapp-catalog/components/DappsSkeletonLoader'
+import { ROUTES } from '@common/modules/router/constants/common'
+import spacings from '@common/styles/spacings'
+import flexbox from '@common/styles/utils/flexbox'
+import { getUiType } from '@common/utils/uiType'
+import {
+  MobileLayoutContainer,
+  MobileLayoutWrapperMainContent
+} from '@mobile/components/MobileLayoutWrapper'
+
+import getStyles from './styles'
+
+const { isPopup } = getUiType()
+
+type FilterButtonType = {
+  onPress: () => void
+  children: ReactNode
+  style?: ViewStyle
+}
+
+const FilterButton = React.memo(({ children, style, onPress }: FilterButtonType) => {
+  const { styles, theme } = useTheme(getStyles)
+  const [bindAnim, animStyle] = useCustomHover({
+    property: 'backgroundColor',
+    values: {
+      from: theme.secondaryBackground,
+      to: theme.tertiaryBackground
+    }
+  })
+
+  return (
+    <AnimatedPressable
+      {...bindAnim}
+      style={[styles.filterButton, animStyle, style]}
+      onPress={onPress}
+    >
+      {children}
+    </AnimatedPressable>
+  )
+})
+
+const DappCatalogScreen = () => {
+  const { control, watch, setValue } = useForm({ defaultValues: { search: '' } })
+  const { t } = useTranslation()
+  const { state } = useController('DappsController')
+  const { navigate } = useNavigation()
+  const search = watch('search')
+  const debouncedSearch = useDebounce({ value: search, delay: 350 })
+  const [network, setNetwork] = useState<Network | null>(null)
+  const [category, setCategory] = useState<string | null>(null)
+  const [favoritesSelected, setFavoritesSelected] = useState(false)
+  const [connectedSelected, setConnectedSelected] = useState(false)
+  const { networks: allNetworks } = useController('NetworksController').state
+  const { theme } = useTheme()
+
+  const handleQrPress = useCallback(() => {
+    navigate(ROUTES.qrReader)
+  }, [navigate])
+
+  const searchableDapps = useMemo(
+    () =>
+      state.dapps.map((dapp) => ({
+        dapp,
+        name: dapp.name.toLowerCase(),
+        url: dapp.url.toLowerCase(),
+        description: dapp.description?.toLowerCase() || ''
+      })),
+    [state.dapps]
+  )
+
+  const filteredDapps = useMemo(() => {
+    if (!state?.dapps?.length) return []
+
+    // Apply search filter with fuse.js if there's a search query
+    let searchFilteredDapps = state.dapps
+    if (debouncedSearch) {
+      const fuse = new Fuse(searchableDapps, {
+        keys: [
+          { name: 'name', weight: 0.7 },
+          { name: 'url', weight: 0.2 },
+          { name: 'description', weight: 0.1 }
+        ],
+        shouldSort: false,
+        threshold: 0.2, // more strict, better less results than too random
+        minMatchCharLength: 1
+      })
+
+      const results = fuse.search(debouncedSearch)
+      searchFilteredDapps = results.map((result) => result.item.dapp)
+    }
+
+    // Apply other filters (network, category, favorites, connected)
+    return searchFilteredDapps.filter((dapp) => {
+      const networkMatch = !network || dapp.chainIds?.includes(Number(network.chainId))
+      const categoryMatch = !category || dapp.category?.toLowerCase() === category.toLowerCase()
+      const favoritesMatch = !favoritesSelected || dapp.favorite
+      const connectedMatch = !connectedSelected || dapp.isConnected
+
+      return networkMatch && categoryMatch && favoritesMatch && connectedMatch
+    })
+  }, [
+    state.dapps,
+    debouncedSearch,
+    network,
+    category,
+    favoritesSelected,
+    connectedSelected,
+    searchableDapps
+  ])
+
+  // Data to render in the list, including search options when searching
+  const listData = useMemo(() => {
+    const data: any[] = []
+    if (debouncedSearch) {
+      // Add Google search option always when searching
+      data.push({ type: 'googleSearch', query: debouncedSearch })
+      // Add open page option if the search is a valid URL or hostname
+      if (isValidURL(debouncedSearch) || isValidHostname(debouncedSearch)) {
+        data.push({ type: 'openPage', query: debouncedSearch })
+      }
+    }
+    // Add filtered dapps
+    data.push(...filteredDapps.map((dapp: Dapp) => ({ type: 'dapp', dapp })))
+    return data
+  }, [debouncedSearch, filteredDapps])
+
+  const handleNavigateToUrl = useCallback(
+    (url: string) => {
+      navigate(ROUTES.dappWebView, { state: { url } })
+    },
+    [navigate]
+  )
+
+  const handleSetNetworkValue = useCallback(
+    (networkOption: SelectValue) => {
+      if (networkOption.value === 'all') {
+        setNetwork(null)
+        return
+      }
+      setNetwork(allNetworks.filter((n) => n.name === networkOption.value)[0] ?? null)
+      setValue('search', '')
+    },
+    [allNetworks, setValue]
+  )
+
+  const ALL_NETWORKS_OPTION = useMemo(
+    () => ({
+      value: 'all',
+      label: (
+        <Text weight="medium" fontSize={12} numberOfLines={1} appearance="secondaryText">
+          {t('All networks')}
+        </Text>
+      ),
+      icon: (
+        <View
+          style={{
+            width: 24,
+            height: 24,
+            borderRadius: 12,
+            backgroundColor: theme.neutral200,
+            ...flexbox.center
+          }}
+        >
+          <NetworksIcon width={20} height={20} color={theme.iconPrimary} />
+        </View>
+      )
+    }),
+    [theme, t]
+  )
+
+  const networksOptions: SelectValue[] = useMemo(
+    () => [
+      ALL_NETWORKS_OPTION,
+      ...allNetworks.map((n) => ({
+        value: n.name,
+        label: (
+          <Text weight="medium" fontSize={12} numberOfLines={1}>
+            {n.name}
+          </Text>
+        ),
+        icon: <NetworkIcon size={24} key={n.chainId.toString()} id={n.chainId.toString()} />
+      }))
+    ],
+    [allNetworks, ALL_NETWORKS_OPTION]
+  )
+
+  const handleSetCategoryValue = useCallback(
+    (categoryOption: SelectValue) => {
+      if (categoryOption.value === 'all') {
+        setCategory(null)
+        return
+      }
+      setCategory(categoryOption.value as string)
+      setValue('search', '')
+    },
+    [setValue]
+  )
+
+  const ALL_CATEGORIES_OPTION = useMemo(
+    () => ({
+      value: 'all',
+      label: (
+        <Text weight="medium" fontSize={12} numberOfLines={1} appearance="secondaryText">
+          {t('All categories')}
+        </Text>
+      )
+    }),
+    [t]
+  )
+
+  const categoryOptions: SelectValue[] = useMemo(
+    () => [
+      ALL_CATEGORIES_OPTION,
+      ...state.categories.map((c) => ({
+        value: c,
+        label: (
+          <Text weight="medium" fontSize={12} numberOfLines={1}>
+            {c}
+          </Text>
+        )
+      }))
+    ],
+    [state.categories, ALL_CATEGORIES_OPTION]
+  )
+
+  const handleSelectPredefinedFilter = useCallback(
+    (type: 'favorites' | 'connected') => {
+      if (type === 'favorites') setFavoritesSelected((p) => !p)
+      if (type === 'connected') setConnectedSelected((p) => !p)
+      setValue('search', '')
+    },
+    [setValue]
+  )
+
+  const renderItem = useCallback(
+    ({ item }: { item: any }) => {
+      if (item.type === 'openPage') {
+        const url = isValidURL(item.query) ? item.query : `https://${item.query}`
+        return (
+          <AnimatedPressable
+            onPress={() => handleNavigateToUrl(url)}
+            style={[flexbox.directionRow, flexbox.alignCenter, spacings.mb]}
+          >
+            <View
+              style={[
+                spacings.mrSm,
+                flexbox.center,
+                {
+                  backgroundColor: theme.secondaryBackground,
+                  borderRadius: 50,
+                  width: 40,
+                  height: 40
+                }
+              ]}
+            >
+              <GlobeIcon />
+            </View>
+            <Text weight="medium" appearance="secondaryText">
+              Open "{item.query}"
+            </Text>
+          </AnimatedPressable>
+        )
+      }
+
+      if (item.type === 'googleSearch') {
+        return (
+          <AnimatedPressable
+            onPress={() =>
+              handleNavigateToUrl(
+                `https://www.google.com/search?q=${encodeURIComponent(item.query)}`
+              )
+            }
+            style={[flexbox.directionRow, flexbox.alignCenter, spacings.mb]}
+          >
+            <View
+              style={[
+                spacings.mrSm,
+                flexbox.center,
+                {
+                  backgroundColor: theme.secondaryBackground,
+                  borderRadius: 50,
+                  width: 40,
+                  height: 40
+                }
+              ]}
+            >
+              <GoogleIcon />
+            </View>
+            <Text weight="medium" appearance="secondaryText">
+              Search Google for "{item.query}"
+            </Text>
+          </AnimatedPressable>
+        )
+      }
+
+      if (item.type === 'dapp') {
+        return <DappItem {...item.dapp} />
+      }
+      return null
+    },
+    [theme, handleNavigateToUrl]
+  )
+
+  const keyExtractor = useCallback(
+    (item: any, index: number) => (item.type === 'dapp' ? item.dapp.url : `${item.type}-${index}`),
+    []
+  )
+
+  return (
+    <MobileLayoutContainer>
+      <MobileLayoutWrapperMainContent
+        withBackButton
+        title={t('Apps')}
+        onBackButtonPress={() => navigate(ROUTES.dashboard)}
+        rightIcon={
+          <Pressable onPress={handleQrPress}>
+            <ScanIcon width={24} height={24} />
+          </Pressable>
+        }
+        withScroll={false}
+      >
+        {!state.isReadyToDisplayDapps || !state.dapps.length ? (
+          <DappsSkeletonLoader />
+        ) : (
+          <View style={flexbox.flex1}>
+            <View style={spacings.mb}>
+              <Search
+                placeholder={t('Search for an app')}
+                control={control}
+                // @ts-ignore
+                setValue={setValue}
+                containerStyle={{ ...spacings.mbSm }}
+              />
+              <View style={[flexbox.directionRow, flexbox.alignCenter]}>
+                <Select
+                  setValue={handleSetNetworkValue}
+                  containerStyle={{
+                    flexShrink: 1,
+                    marginBottom: 0,
+                    ...spacings.mrTy
+                  }}
+                  menuOptionHeight={38}
+                  options={networksOptions}
+                  menuProps={{ width: 200 }}
+                  value={
+                    networksOptions.filter((opt) => opt.value === network?.name)[0] ??
+                    ALL_NETWORKS_OPTION
+                  }
+                  clearValue={() => setNetwork(null)}
+                  withClearButton={!!network && network?.name !== ALL_NETWORKS_OPTION.value}
+                  size="sm"
+                  selectBorderWrapperStyle={{ borderRadius: 50 }}
+                  selectStyle={{
+                    borderRadius: 50,
+                    height: 32,
+                    ...spacings.prSm,
+                    ...spacings.plMi,
+                    backgroundColor: theme.secondaryBackground
+                  }}
+                  hoveredSelectStyle={{
+                    backgroundColor: theme.tertiaryBackground
+                  }}
+                  bottomSheetTitle={t('Select network')}
+                />
+                <Select
+                  setValue={handleSetCategoryValue}
+                  containerStyle={{
+                    flexShrink: 1,
+                    marginBottom: 0,
+                    ...spacings.mrTy
+                  }}
+                  options={categoryOptions}
+                  value={
+                    categoryOptions.filter((opt) => opt.value === category)[0] ??
+                    ALL_CATEGORIES_OPTION
+                  }
+                  menuOptionHeight={38}
+                  clearValue={() => setCategory(null)}
+                  withClearButton={!!category && category !== ALL_CATEGORIES_OPTION.value}
+                  size="sm"
+                  menuProps={{ width: 230 }}
+                  selectBorderWrapperStyle={{ borderRadius: 50 }}
+                  selectStyle={{
+                    borderRadius: 50,
+                    height: 32,
+                    ...spacings.phSm,
+                    backgroundColor: theme.secondaryBackground
+                  }}
+                  hoveredSelectStyle={{
+                    backgroundColor: theme.tertiaryBackground
+                  }}
+                  bottomSheetTitle={t('Select category')}
+                />
+                <FilterButton
+                  onPress={() => handleSelectPredefinedFilter('favorites')}
+                  style={spacings.mrTy}
+                >
+                  <StarIcon
+                    width={20}
+                    height={20}
+                    color={favoritesSelected ? theme.warning400 : theme.iconPrimary}
+                  />
+                </FilterButton>
+                <FilterButton onPress={() => handleSelectPredefinedFilter('connected')}>
+                  <ConnectedIcon
+                    width={20}
+                    height={20}
+                    color={connectedSelected ? theme.success400 : theme.iconPrimary}
+                  />
+                </FilterButton>
+              </View>
+            </View>
+            <ScrollableWrapper
+              type={WRAPPER_TYPES.FLAT_LIST}
+              style={!isPopup ? spacings.pbSm : {}}
+              data={listData}
+              renderItem={renderItem}
+              keyExtractor={keyExtractor}
+            />
+          </View>
+        )}
+      </MobileLayoutWrapperMainContent>
+    </MobileLayoutContainer>
+  )
+}
+
+export default React.memo(DappCatalogScreen)
