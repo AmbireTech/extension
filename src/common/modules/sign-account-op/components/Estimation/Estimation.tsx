@@ -309,7 +309,6 @@ const Estimation = ({
   const onFeeSelect = useCallback(
     ({ value }: { value: string }) => {
       if (!Object.values(FeeSpeed).includes(value as FeeSpeed)) {
-        // eslint-disable-next-line no-console
         console.error('Invalid fee speed')
         return
       }

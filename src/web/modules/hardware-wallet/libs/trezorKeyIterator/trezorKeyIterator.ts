@@ -24,9 +24,9 @@ const ADDRESSES_PER_PAGE = 5
  * Serves for retrieving a range of addresses/keys from a Trezor hardware wallet
  */
 class TrezorKeyIterator implements KeyIteratorInterface {
-  type = 'trezor' as 'trezor'
+  type = 'trezor' as const
 
-  subType = 'hw' as 'hw'
+  subType = 'hw' as const
 
   #walletSDK: KeyIteratorProps['walletSDK']
 

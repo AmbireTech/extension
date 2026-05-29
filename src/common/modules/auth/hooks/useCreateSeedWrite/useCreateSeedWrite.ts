@@ -76,7 +76,6 @@ export default function useCreateSeedWrite() {
       await setStringAsync(tempSeed.seed)
       addToast(t('Recovery phrase copied to clipboard'))
     } catch (error) {
-      // eslint-disable-next-line no-console
       console.error(error)
       addToast(t('Failed to copy recovery phrase'))
     }

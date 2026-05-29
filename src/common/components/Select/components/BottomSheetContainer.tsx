@@ -1,4 +1,3 @@
-/* eslint-disable react/prop-types */
 import React, { FC, useCallback, useEffect, useMemo } from 'react'
 import { FlatListProps, ScrollView, SectionListProps } from 'react-native'
 import { useModalize } from 'react-native-modalize'

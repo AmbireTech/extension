@@ -1,4 +1,3 @@
-/* eslint-disable react/jsx-no-useless-fragment */
 import React, { ReactNode, useMemo, useState } from 'react'
 import { Pressable, View, ViewStyle } from 'react-native'
 

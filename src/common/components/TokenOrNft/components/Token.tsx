@@ -97,7 +97,7 @@ const InnerToken: FC<Props> = ({
             })}
             style={shouldDisplayUnlimitedAmount ? spacings.mrTy : spacings.mrMi}
           >
-            {/* eslint-disable-next-line no-nested-ternary */}
+            {}
             {shouldDisplayUnlimitedAmount
               ? t('unlimited')
               : shouldDisplayALotOf

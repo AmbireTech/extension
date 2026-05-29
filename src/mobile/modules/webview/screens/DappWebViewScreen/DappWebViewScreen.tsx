@@ -726,7 +726,7 @@ const DappWebViewScreen = () => {
         )
         if (data.type === 'log') {
           const prefix = `[WebView ${data.logType}]`
-          // eslint-disable-next-line no-console
+
           console.log(prefix, ...data.args)
         } else if (data.type === 'providerRequest' || (data.method && data.id)) {
           const method = data.type === 'providerRequest' ? data.payload?.method : data.method
