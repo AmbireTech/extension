@@ -1,4 +1,3 @@
-/* eslint-disable no-param-reassign */
 import { Network } from '@ambire-common/interfaces/network'
 
 export const DISABLED_BUNDLER_DEFAULT = 'Using Pimlico'

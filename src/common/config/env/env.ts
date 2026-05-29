@@ -57,7 +57,6 @@ export const isiOS = Platform.OS === 'ios'
 export const isAndroid = Platform.OS === 'android'
 export const isWeb = Platform.OS === 'web'
 
-// eslint-disable-next-line @typescript-eslint/naming-convention
 enum APP_ENV {
   PROD = 'production',
   STAGING = 'staging',

@@ -103,7 +103,6 @@ const BiometricsProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     })().catch(() => {})
     // Run once on mount — hardware capabilities and enrollment don't change
     // during a session and don't need to re-query on auth status changes.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const authenticate = useCallback(async () => {

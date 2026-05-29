@@ -1,4 +1,3 @@
-/* eslint-disable no-restricted-globals */
 import { ethErrors, serializeError } from 'eth-rpc-errors'
 import { EventEmitter } from 'events'
 
@@ -44,7 +43,6 @@ function getIconWithRetry(delay = 1000): Promise<string> {
       try {
         return new URL(linkIcon.href, document.baseURI).href
       } catch (error: any) {
-        // eslint-disable-next-line no-console
         console.error(error)
       }
     }
@@ -54,7 +52,6 @@ function getIconWithRetry(delay = 1000): Promise<string> {
       try {
         return new URL(metaImage.content, document.baseURI).href
       } catch (error: any) {
-        // eslint-disable-next-line no-console
         console.error(error)
       }
     }
@@ -64,7 +61,7 @@ function getIconWithRetry(delay = 1000): Promise<string> {
 
   return new Promise((resolve) => {
     const icon = tryFind()
-    // eslint-disable-next-line no-promise-executor-return
+
     if (icon) return resolve(icon)
 
     setTimeout(() => {
@@ -86,7 +83,7 @@ function guessDappName(rawName: string) {
   const domainWords = domainCore.split('.').map((w) => w.toLowerCase())
 
   const matches = []
-  // eslint-disable-next-line no-restricted-syntax
+
   for (const word of domainWords) {
     const regex = new RegExp(`\\b${word}\\b`, 'i')
     const match = rawName.match(regex)
@@ -124,7 +121,6 @@ async function getDappName() {
         if (json.short_name) return String(json.short_name).trim()
       }
     } catch (e) {
-      // eslint-disable-next-line no-console
       console.warn('Failed to get dApp name from manifest. Falling back to guessing it.', e)
     }
   }
@@ -138,7 +134,6 @@ async function getDappName() {
   try {
     return guessDappName(rawName)
   } catch (e) {
-    // eslint-disable-next-line no-console
     console.warn('Failed to extract dApp name. Falling back to raw page title.', e)
   }
 
@@ -359,7 +354,6 @@ export class EthereumProvider extends EventEmitter {
         this.#pushEventHandlers?.chainChanged({ chain: chainId, networkVersion })
         this.#pushEventHandlers?.accountsChanged(accounts)
       } catch (error: any) {
-        // eslint-disable-next-line no-console
         console.error(error)
       }
     }
@@ -401,7 +395,6 @@ export class EthereumProvider extends EventEmitter {
     ;(async () => {
       if (!this.#forwardRpcRequests || !this.#getFoundRpcUrls) return
 
-      // eslint-disable-next-line no-restricted-syntax
       for (const url of this.#getFoundRpcUrls().filter((u) => !u.startsWith('wss'))) {
         if (
           !Object.values(this.#dappProviderUrls).find((u) => u === url) &&
@@ -409,11 +402,10 @@ export class EthereumProvider extends EventEmitter {
         ) {
           try {
             // Here we validate whether the provided URL is a valid RPC by getting the chainId of the provider
-            // eslint-disable-next-line no-await-in-loop
+
             const chainId = await this.#forwardRpcRequests(url, 'eth_chainId', [])
             if (chainId) this.#dappProviderUrls[Number(chainId).toString()] = url
           } catch (error) {
-            // eslint-disable-next-line no-console
             console.error(error)
           }
           this.#configuredDappRpcUrls.push(url)
@@ -553,7 +545,6 @@ export class EthereumProvider extends EventEmitter {
       ['net_version', 'net_version']
     ]
 
-    // eslint-disable-next-line @typescript-eslint/naming-convention, no-restricted-syntax
     for (const [_method, method] of legacyMethods) {
       // @ts-ignore
       ;(this as any)[_method] = () => this.request({ method })
