@@ -243,6 +243,7 @@ const DappItem = (dapp: DappItemProps) => {
                     <ManageApp
                       dapp={dapp}
                       isParentHovered={isCardHovered}
+                      withCurrentAccount={isConnected}
                       buttonProps={{
                         ...bindSettingsIconAnimation,
                         style: [

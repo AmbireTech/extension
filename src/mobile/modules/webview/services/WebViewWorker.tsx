@@ -1,5 +1,6 @@
 import React, { forwardRef, useImperativeHandle, useRef, useState } from 'react'
 import { Platform } from 'react-native'
+import { isDevice } from 'expo-device'
 import { pbkdf2Sync, scrypt } from 'react-native-quick-crypto'
 import { WebView } from 'react-native-webview'
 
@@ -8,6 +9,15 @@ import { CONTROLLER_STORE_MAX_LOADING_TIME } from '@common/contexts/controllerSt
 import eventBus from '@common/services/event/eventBus'
 import { storage } from '@common/services/storage'
 import { WEBVIEW_DEV_HOST } from '@env'
+import {
+  approveWalletConnectSession,
+  approveWcAuthenticate,
+  handleWcSessionBroadcast,
+  prepareWcAuthenticate,
+  rejectWalletConnectSession,
+  rejectWcAuthenticate,
+  respondToWalletConnectRequest
+} from '@mobile/modules/wallet-connect/services/walletConnectService'
 
 // In production, the bundle is inlined via the JSON import.
 // In dev, we load from webpack-dev-server so this import is unused.
@@ -15,14 +25,16 @@ import { WEBVIEW_DEV_HOST } from '@env'
 const webviewBundle = __DEV__ ? null : require('./webview-bundle.json')
 
 // The dev server URL for webpack-dev-server.
-// - iOS: localhost works directly
-// - Android: env WEBVIEW_DEV_HOST or fallback to 10.0.2.2
+// - Simulator/emulator: auto-detected via Device.isDevice; uses platform loopback (localhost / 10.0.2.2)
+// - Real device: set WEBVIEW_DEV_HOST to the host machine's LAN IP in .env
 const WEBVIEW_DEV_SERVER_PORT = 8182
 const getDevServerUrl = () => {
-  if (Platform.OS === 'android') {
-    return `http://${WEBVIEW_DEV_HOST || '10.0.2.2'}:${WEBVIEW_DEV_SERVER_PORT}`
+  if (!isDevice) {
+    return Platform.OS === 'android'
+      ? `http://10.0.2.2:${WEBVIEW_DEV_SERVER_PORT}`
+      : `http://localhost:${WEBVIEW_DEV_SERVER_PORT}`
   }
-  return `http://localhost:${WEBVIEW_DEV_SERVER_PORT}`
+  return `http://${WEBVIEW_DEV_HOST}:${WEBVIEW_DEV_SERVER_PORT}`
 }
 
 // Global error handler injected into the WebView HTML
@@ -35,7 +47,7 @@ const globalErrorHandler = `
 `
 
 export interface WebViewWorkerRef {
-  dispatch: (action: any) => void
+  dispatch: (action: any, raw?: boolean) => void
   init: (config: any) => Promise<string[]>
 }
 
@@ -74,44 +86,37 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, {}>((_, ref) => {
     }, CONTROLLER_STORE_MAX_LOADING_TIME)
   }
 
+  const dispatchToWebView = (action: any, raw?: boolean) => {
+    const payload = richJson.stringify({ type: 'dispatchAction', action })
+    webviewRef.current?.injectJavaScript(`
+        (function() {
+          try {
+            window.postMessage(${raw ? payload : JSON.stringify(payload)}, '*');
+          } catch (e) {
+            window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'ctrl.error', payload: { ctrlName: 'BridgeDispatch', errors: [{ message: e.message, stack: e.stack }] } }));
+          }
+        })();
+        true;
+      `)
+  }
+
   useImperativeHandle(ref, () => ({
-    dispatch: (action: any) => {
-      if (!isReadyRef.current) {
-        const devHint = __DEV__
-          ? ` Dev host: ${devUrl}. Ensure webview dev server is running if controllers did not load.`
-          : ''
-        console.warn(
-          `[Native] WebViewWorker NOT READY. Dropping action: ${action?.type || 'unknown'}.` +
-            ` isLoaded=${isLoaded} isReady=${isReadyRef.current}.${devHint}`
-        )
-        return
-      }
-      const payload = richJson.stringify({ type: 'dispatchAction', action })
-      webviewRef.current?.injectJavaScript(`
-          (function() {
-            try {
-              window.postMessage(${JSON.stringify(payload)}, '*');
-            } catch (e) {
-              window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'ctrl.error', payload: { ctrlName: 'BridgeDispatch', errors: [{ message: e.message, stack: e.stack }] } }));
-            }
-          })();
-          true;
-        `)
+    dispatch: (action: any, raw?: boolean) => {
+      if (!isReadyRef.current) return
+      dispatchToWebView(action, raw)
     },
     init: (config: any) => {
-      console.log('[WebViewWorker] init called, setting resolver')
       lastConfig.current = config
       return new Promise((resolve) => {
         initResolver.current = resolve
         scheduleInitWarningTimeout()
         if (isLoaded) {
-          console.log('[WebViewWorker] WebView already loaded, sending init immediately')
+          const initPayload = richJson.stringify({ type: 'init', config })
           webviewRef.current?.injectJavaScript(`
-              window.postMessage(${JSON.stringify(richJson.stringify({ type: 'init', config }))}, '*');
+              window.postMessage(${JSON.stringify(initPayload)}, '*');
               true;
             `)
         } else {
-          console.log('[WebViewWorker] WebView not loaded yet, buffering config')
           pendingConfig.current = config
         }
       })
@@ -125,9 +130,8 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, {}>((_, ref) => {
       switch (data.type) {
         case 'system.loaded': {
           const isReload = isReadyRef.current
-          console.log(
-            `[WebViewWorker] WebView internal script loaded${isReload ? ' (RELOAD detected)' : ''}`
-          )
+          const isReloadStr = isReload ? ' (RELOAD detected)' : ''
+          console.log(`[WebViewWorker] WebView internal script loaded${isReloadStr}`)
 
           // Reset ready state — the WebView has a fresh JS context
           isReadyRef.current = false
@@ -140,9 +144,9 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, {}>((_, ref) => {
           const configToSend = pendingConfig.current || (isReload ? lastConfig.current : null)
 
           if (configToSend) {
-            console.log('[WebViewWorker] Sending config to WebView')
+            const initPayload = richJson.stringify({ type: 'init', config: configToSend })
             webviewRef.current?.injectJavaScript(`
-                window.postMessage(${JSON.stringify(richJson.stringify({ type: 'init', config: configToSend }))}, '*');
+                window.postMessage(${JSON.stringify(initPayload)}, '*');
                 true;
               `)
             pendingConfig.current = null
@@ -154,7 +158,6 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, {}>((_, ref) => {
         // intercept and redirect here. Incrementing webviewKey forces a full remount,
         // causing the WebView to re-fetch the latest bundle from the dev server.
         case 'system.requestReload':
-          console.log('[WebViewWorker] Received reload request from WebView, remounting...')
           isReadyRef.current = false
           setIsReady(false)
           setIsLoaded(false)
@@ -205,9 +208,54 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, {}>((_, ref) => {
         case 'action.navigate':
           eventBus.emit('navigate', data.payload)
           break
-        case 'ui.window.action':
-          eventBus.emit('ui.window.action', data.payload)
+        case 'action.respondToWalletConnectRequest':
+          await respondToWalletConnectRequest(
+            data.payload.topic,
+            data.payload.response,
+            data.payload.id
+          )
           break
+        case 'action.approveWalletConnectSession':
+          await approveWalletConnectSession(
+            data.payload.proposalId,
+            data.payload.accounts,
+            (action, _windowId, raw) => dispatchToWebView(action, raw)
+          )
+          break
+        case 'action.rejectWalletConnectSession':
+          await rejectWalletConnectSession(data.payload.proposalId)
+          break
+        case 'action.wcSessionBroadcast':
+          await handleWcSessionBroadcast(data.payload)
+          break
+        case 'action.prepareWcAuthenticate':
+          // Account selected — format SIWE message and re-dispatch as personal_sign
+          await prepareWcAuthenticate(
+            data.payload.id,
+            data.payload.accounts[0],
+            (action, _windowId, raw) => dispatchToWebView(action, raw)
+          )
+          break
+        case 'action.approveWalletConnectAuthenticate':
+          await approveWcAuthenticate(
+            data.payload.id,
+            data.payload.signature,
+            (action, _windowId, raw) => dispatchToWebView(action, raw)
+          )
+          break
+        case 'action.rejectWalletConnectAuthenticate':
+          await rejectWcAuthenticate(data.payload.id)
+          break
+        case 'ui.window.action': {
+          const requestId = data.id
+          // Emit with a resolve callback the RN handler can call when the
+          // animation completes, settling the promise on the controller side.
+          eventBus.emit('ui.window.action', {
+            ...data.payload,
+            resolve: () => sendResponse(requestId, null)
+          })
+          break
+        }
 
         // --- PROXY HANDLERS FOR STORAGE ---
         case 'storage.get':

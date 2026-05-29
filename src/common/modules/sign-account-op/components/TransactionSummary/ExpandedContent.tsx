@@ -6,6 +6,7 @@ import { DecodedCall } from '@ambire-common/interfaces/decodeCall'
 import { IrCall } from '@ambire-common/libs/humanizer/interfaces'
 import Spinner from '@common/components/Spinner'
 import Text from '@common/components/Text'
+import { isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import useTheme from '@common/hooks/useTheme/useTheme'
 import { SPACING_MI, SPACING_SM, SPACING_TY } from '@common/styles/spacings'
@@ -77,7 +78,7 @@ const DataArgs = ({
             {arg.key}: {arg.val.toString()}
           </Text>
         )}
-        <br />
+        {isWeb ? <br /> : <View style={{ marginBottom: SPACING_MI }} />}
       </View>
     )
   })
