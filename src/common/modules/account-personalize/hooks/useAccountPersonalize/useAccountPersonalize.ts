@@ -1,4 +1,3 @@
-/* eslint-disable prettier/prettier */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useFieldArray, useForm } from 'react-hook-form'
 
@@ -174,7 +173,6 @@ export default function useAccountPersonalize() {
       const start = Date.now()
 
       while (Date.now() - start < timeoutMs && !resolved) {
-        // eslint-disable-next-line no-await-in-loop
         await wait(intervalMs)
         if (resolved) return
         if (getShouldStopLoadingBasedOnLatestState()) {

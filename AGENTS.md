@@ -45,8 +45,6 @@ react, react-native, react-native-web, typescript, expo (bare workflow), ethers,
 - ALWAYS use `react-native-modalize` with `BottomSheet` for modals and bottom sheets
 - Tooltips are added using the pattern: `dataSet={createGlobalTooltipDataSet(...)}` which creates a global dataset that is picked up by a `GlobalTooltip` component at the root of the app.
 - All icons are in src/common/assets/svg/...; ALWAYS use icons from there and report if you can't find a suitable one by adding a comment instead of the icon and asking the human to add it
-- NEVER use `gap` for spacings as it is not supported in React Native; use `margin` instead
-
 ### Security:
 
 - This is a security-critical Web3 wallet. Private keys and seed phrases must never be logged or exposed
@@ -62,6 +60,7 @@ react, react-native, react-native-web, typescript, expo (bare workflow), ethers,
 - NEVER modify git config or run destructive git operations
 - NEVER commit unless explicitly requested by user
 - NEVER stage changes unless explicitly requested by user
+- Avoid regex for parsing strings or business logic. Prefer explicit parsing, small helper functions, existing parsers or available library functions.
 
 ## Controller state update lifecycle
 

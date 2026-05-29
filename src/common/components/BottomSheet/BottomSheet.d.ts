@@ -9,6 +9,7 @@ export interface BottomSheetProps {
   closeBottomSheet?: (dest?: 'alwaysOpen' | 'default' | undefined) => void
   onBackdropPress?: () => void
   onClosed?: () => void
+  onOpened?: () => void
   onOpen?: () => void
   animationDuration?: number
   children?: React.ReactNode

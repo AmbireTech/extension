@@ -1,6 +1,5 @@
 import * as LocalAuthentication from 'expo-local-authentication'
 
-// eslint-disable-next-line @typescript-eslint/naming-convention
 export enum DEVICE_SECURITY_LEVEL {
   // Indicates no enrolled authentication
   NONE = LocalAuthentication.SecurityLevel.NONE,
@@ -12,7 +11,6 @@ export enum DEVICE_SECURITY_LEVEL {
   BIOMETRIC_STRONG = LocalAuthentication.SecurityLevel.BIOMETRIC_STRONG
 }
 
-// eslint-disable-next-line @typescript-eslint/naming-convention
 export enum DEVICE_SUPPORTED_AUTH_TYPES {
   FINGERPRINT = LocalAuthentication.AuthenticationType.FINGERPRINT,
   FACIAL_RECOGNITION = LocalAuthentication.AuthenticationType.FACIAL_RECOGNITION,

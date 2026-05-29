@@ -29,6 +29,8 @@
         <key>CFBundleURLSchemes</key>
         <array>
           <string>ambire</string>
+          <string>wc</string>
+          <string>ethereum</string>
         </array>
       </dict>
     </array>
@@ -61,6 +63,10 @@
       <key>NSAllowsLocalNetworking</key>
       <true/>
     </dict>
+    <key>NSCameraUsageDescription</key>
+    <string>$(PRODUCT_NAME) needs access to your Camera to scan QR codes.</string>
+    <key>NSPhotoLibraryUsageDescription</key>
+    <string>$(PRODUCT_NAME) needs access to your Photo Library to import and read QR codes from images.</string>
     <key>NSFaceIDUsageDescription</key>
     <string>Allow $(PRODUCT_NAME) to use Face ID</string>
     <key>ITSAppUsesNonExemptEncryption</key>

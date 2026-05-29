@@ -1,4 +1,3 @@
-/* eslint-disable no-console */
 import React, { FC, useEffect, useMemo } from 'react'
 import { View } from 'react-native'
 

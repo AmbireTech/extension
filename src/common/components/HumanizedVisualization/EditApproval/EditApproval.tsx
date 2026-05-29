@@ -13,11 +13,12 @@ import Button from '@common/components/Button'
 import FooterGlassView from '@common/components/FooterGlassView'
 import Text from '@common/components/Text'
 import TokenIcon from '@common/components/TokenIcon'
+import { isMobile, isWeb } from '@common/config/env'
 import useController from '@common/hooks/useController'
 import useHover, { AnimatedPressable } from '@common/hooks/useHover'
 import useTheme from '@common/hooks/useTheme'
 import MaxAmount from '@common/modules/swap-and-bridge/components/MaxAmount'
-import spacings from '@common/styles/spacings'
+import spacings, { SPACING } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
 type EditApprovalAmountInputProps = {
@@ -80,7 +81,8 @@ const EditApprovalAmountInput = memo(
           onBlur={onBlur}
           fontSize={16}
           backgroundColor={backgroundColor}
-          inputWrapperStyle={{ height: 40, ...spacings.prSm }}
+          textAlign="right"
+          inputWrapperStyle={{ height: isMobile ? 52 : 40, ...spacings.prSm }}
           leftIconStyle={spacings.mrTy}
           leftIcon={leftIcon}
         />
@@ -231,14 +233,22 @@ const EditApproval = ({
               getMaxAmountText={portfolioToken ? getMaxAmountText : undefined}
             />
           </View>
-          <FooterGlassView absolute={false} style={spacings.mt2Xl}>
+          <FooterGlassView
+            absolute={false}
+            style={{ ...spacings.mt2Xl, columnGap: SPACING }}
+            mobileStyle={{
+              ...flexbox.directionRow,
+              ...spacings.mtLg,
+              columnGap: SPACING
+            }}
+          >
             <Button
               type="secondary"
               text={t('Cancel')}
               onPress={() => closeEditApprovals()}
               hasBottomSpacing={false}
               size="smaller"
-              style={[{ width: 100 }, spacings.mr]}
+              style={[isWeb && { width: 100 }, isMobile && flexbox.flex1]}
             />
             <Button
               type="primary"
@@ -246,7 +256,7 @@ const EditApproval = ({
               onPress={() => editCall(amountRef.current, token, closeEditApprovals)}
               hasBottomSpacing={false}
               size="smaller"
-              style={[{ width: 100 }]}
+              style={[isWeb && { width: 100 }, isMobile && flexbox.flex1]}
             />
           </FooterGlassView>
         </View>

@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-floating-promises */
 import React, { createContext, useMemo } from 'react'
 
 import useController from '@common/hooks/useController'

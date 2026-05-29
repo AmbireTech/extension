@@ -115,7 +115,7 @@ const InnerToken: FC<Props> = ({
             })}
             style={spacings.mrMi}
           >
-            {/* eslint-disable-next-line no-nested-ternary */}
+            {}
             {shouldDisplayUnlimitedAmount
               ? t('unlimited')
               : shouldDisplayALotOf

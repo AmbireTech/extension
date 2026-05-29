@@ -2,14 +2,16 @@ import Fuse from 'fuse.js'
 import React, { ReactNode, useCallback, useMemo, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
-import { View, ViewStyle } from 'react-native'
+import { Pressable, View, ViewStyle } from 'react-native'
 
 import { Dapp } from '@ambire-common/interfaces/dapp'
 import { Network } from '@ambire-common/interfaces/network'
+import { isValidHostname, isValidURL } from '@ambire-common/services/validations'
 import ConnectedIcon from '@common/assets/svg/ConnectedIcon'
 import GlobeIcon from '@common/assets/svg/GlobeIcon'
 import GoogleIcon from '@common/assets/svg/GoogleIcon'
 import NetworksIcon from '@common/assets/svg/NetworksIcon'
+import ScanIcon from '@common/assets/svg/ScanIcon'
 import StarIcon from '@common/assets/svg/StarIcon'
 import NetworkIcon from '@common/components/NetworkIcon'
 import ScrollableWrapper, { WRAPPER_TYPES } from '@common/components/ScrollableWrapper'
@@ -34,7 +36,6 @@ import {
 } from '@mobile/components/MobileLayoutWrapper'
 
 import getStyles from './styles'
-import { isValidURL, isValidHostname } from '@ambire-common/services/validations'
 
 const { isPopup } = getUiType()
 
@@ -78,6 +79,10 @@ const DappCatalogScreen = () => {
   const [connectedSelected, setConnectedSelected] = useState(false)
   const { networks: allNetworks } = useController('NetworksController').state
   const { theme } = useTheme()
+
+  const handleQrPress = useCallback(() => {
+    navigate(ROUTES.qrReader)
+  }, [navigate])
 
   const searchableDapps = useMemo(
     () =>
@@ -334,6 +339,11 @@ const DappCatalogScreen = () => {
         withBackButton
         title={t('Apps')}
         onBackButtonPress={() => navigate(ROUTES.dashboard)}
+        rightIcon={
+          <Pressable onPress={handleQrPress}>
+            <ScanIcon width={24} height={24} />
+          </Pressable>
+        }
         withScroll={false}
       >
         {!state.isReadyToDisplayDapps || !state.dapps.length ? (

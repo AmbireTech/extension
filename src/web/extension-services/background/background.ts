@@ -1,10 +1,3 @@
-/* eslint-disable no-param-reassign */
-/* eslint-disable no-console */
-/* eslint-disable no-await-in-loop */
-/* eslint-disable no-restricted-syntax */
-/* eslint-disable @typescript-eslint/no-use-before-define */
-/* eslint-disable @typescript-eslint/no-shadow */
-
 // We include `setImmediate` because ethers / viem cryptographic operations
 // (e.g. scrypt keystore unlock) rely on it for fast cooperative scheduling —
 // without it they fall back to slower timers and performance drops significantly.
@@ -363,7 +356,6 @@ const init = async () => {
         return fetch(url, init)
       }
     } catch (error) {
-      // eslint-disable-next-line no-console
       console.error(error)
       // If URL parsing fails, skip analytics for safety
       // @ts-ignore
@@ -426,7 +418,6 @@ const init = async () => {
 
       urlObj.searchParams.append('panVal', JSON.stringify({ a: currentAccount.addr, b: balance }))
 
-      // eslint-disable-next-line no-param-reassign
       url = decodeURIComponent(urlObj.toString())
     }
 
@@ -665,9 +656,8 @@ const init = async () => {
   browser.runtime.onConnect.addListener(async (port: Port) => {
     const [name, id] = port.name.split(':') as [Port['name'], Port['id']]
     if (['popup', 'tab', 'request-window'].includes(name)) {
-      // eslint-disable-next-line no-param-reassign
       port.id = id || nanoid()
-      // eslint-disable-next-line no-param-reassign
+
       port.name = name
       pm.addOrUpdatePort(port, () => {
         mainCtrl.ui.addView({ id: port.id, type: port.name })
@@ -810,7 +800,7 @@ try {
     while (!mainCtrl) await wait(200)
 
     const sessionKeys = Object.keys(mainCtrl.dapps.dappSessions || {})
-    // eslint-disable-next-line no-restricted-syntax
+
     for (const key of sessionKeys.filter((k) => k.startsWith(`${tabId}-`))) {
       mainCtrl.dapps.deleteDappSession(key)
     }

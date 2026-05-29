@@ -18,6 +18,7 @@ interface RequestsControllerHelpers {
   openRequestModal: (() => void) | null
   closeRequestModal: (() => void) | null
   onBottomSheetClosed: (() => void) | null
+  onBottomSheetOpened: (() => void) | null
 }
 
 type DefinedControllerHelpers = {
