@@ -93,6 +93,19 @@ const Erc7730TypedMessageContent = React.memo(
 
     return (
       <View style={{ width: '100%' }}>
+        {!!warnings?.length && (
+          <View style={[spacings.mbLg, flexbox.alignCenter]}>
+            {warnings.map((warning) => (
+              <Label
+                size="lg"
+                key={warning.content}
+                text={warning.content}
+                type="warning"
+                hasBottomSpacing={false}
+              />
+            ))}
+          </View>
+        )}
         {hasNestedVisualizations ? (
           nestedVisualizations.map((nestedVisualization, nestedIndex) => (
             <View
@@ -108,7 +121,6 @@ const Erc7730TypedMessageContent = React.memo(
                 sizeMultiplierSize={responsiveSizeMultiplier}
                 textSize={14}
                 mode="summary"
-                hasRightArrow
               />
             </View>
           ))
@@ -121,23 +133,6 @@ const Erc7730TypedMessageContent = React.memo(
           >
             {title || t('Message details')}
           </Text>
-        )}
-        {!!warnings?.length && (
-          <View
-            style={{
-              marginTop: SPACING_TY * responsiveSizeMultiplier
-            }}
-          >
-            {warnings.map((warning) => (
-              <Label
-                size="lg"
-                key={warning.content}
-                text={warning.content}
-                type="warning"
-                hasBottomSpacing={false}
-              />
-            ))}
-          </View>
         )}
         <View
           style={[

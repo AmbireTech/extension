@@ -5,7 +5,6 @@ import {
   HumanizerErc7730Visualization,
   HumanizerVisualization
 } from '@ambire-common/libs/humanizer/interfaces'
-import RightArrowIcon from '@common/assets/svg/RightArrowIcon'
 import ChainVisualization from '@common/components/HumanizedVisualization/ChainVisualization'
 import EditApproval from '@common/components/HumanizedVisualization/EditApproval'
 import {
@@ -196,7 +195,6 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
   textSize,
   mode = 'summary',
   editApprovalCallInfo,
-  hasRightArrow = false,
   hideNestedRows = false
 }) => {
   const { theme } = useTheme()
@@ -534,11 +532,6 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
             </View>
           ))}
         </View>
-        {hasRightArrow && (
-          <View style={{ marginLeft: SPACING_SM }}>
-            <RightArrowIcon color={theme.secondaryText} width={8} height={14} />
-          </View>
-        )}
       </View>
     )
   }

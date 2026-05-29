@@ -29,7 +29,7 @@ import { AccountOpStatus, Call } from '@ambire-common/libs/accountOp/types'
 import { decodeFeeCall } from '@ambire-common/libs/calls/calls'
 import { humanizeAccountOp } from '@ambire-common/libs/humanizer'
 import { IrCall } from '@ambire-common/libs/humanizer/interfaces'
-import { getPersistedHumanization } from '@ambire-common/libs/humanizer/utils'
+import { hasErc7730Humanization } from '@ambire-common/libs/humanizer/utils'
 import { getTransferLogTokens } from '@ambire-common/libs/logsParser/parseLogs'
 import { parseLogs } from '@ambire-common/libs/userOperation/userOperation'
 import { resolveAssetInfo } from '@ambire-common/services/assetInfo'
@@ -1057,7 +1057,8 @@ const useSteps = ({
   useEffect(() => {
     if (!network) return
 
-    const persistedHumanization = getPersistedHumanization(submittedAccountOp?.meta)
+    const clearSign = submittedAccountOp?.meta?.clearSigningHumanization
+    const persistedHumanization = hasErc7730Humanization(clearSign) ? clearSign : null
     if (submittedAccountOp && persistedHumanization) {
       const humanizedCalls = persistedHumanization.filter(filterEntryPointAuthCall)
       setCalls(parseHumanizer(humanizedCalls))

@@ -5,7 +5,7 @@ import { AccountOp } from '@ambire-common/libs/accountOp/accountOp'
 import { AccountOpStatus } from '@ambire-common/libs/accountOp/types'
 import { humanizeAccountOp } from '@ambire-common/libs/humanizer'
 import { IrCall } from '@ambire-common/libs/humanizer/interfaces'
-import { getPersistedHumanization } from '@ambire-common/libs/humanizer/utils'
+import { hasErc7730Humanization } from '@ambire-common/libs/humanizer/utils'
 import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
 import formatDateTime from '@common/utils/formatDateTime'
 
@@ -146,9 +146,10 @@ export const getVisibleSummaryBalanceChanges = (balanceChanges: DisplayBalanceCh
 }
 
 export const getHumanizedCalls = (submittedAccountOp: SubmittedAccountOpLike): IrCall[] => {
-  const persistedHumanization = getPersistedHumanization(submittedAccountOp.meta)
-  if (persistedHumanization) {
-    return persistedHumanization.map((call, index) => ({
+  const clearSigningHum = submittedAccountOp.meta?.clearSigningHumanization
+  const clearSign = hasErc7730Humanization(clearSigningHum) ? clearSigningHum : null
+  if (clearSign) {
+    return clearSign.map((call, index) => ({
       ...call,
       id: call.id || String(index)
     }))

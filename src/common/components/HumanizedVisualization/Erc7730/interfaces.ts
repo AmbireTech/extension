@@ -20,7 +20,6 @@ export interface Erc7730StructuredVisualizationProps {
   textSize: number
   mode?: 'summary' | 'description'
   editApprovalCallInfo?: EditApprovalCallInfo
-  hasRightArrow?: boolean
   hideNestedRows?: boolean
 }
 
