@@ -80,8 +80,6 @@ const DashboardSearch: FC<Props> = ({ control, placeholder }) => {
                 setIsEditing(false)
                 inputRef.current?.blur()
               } else {
-                // Enter editing mode right away so the input renders and auto-focuses
-                // once the expand animation finishes (see the focus effect below).
                 setIsEditing(true)
               }
 
