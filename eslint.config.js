@@ -1,6 +1,6 @@
 const ambireCommonConfig = require('./src/ambire-common/eslint.config.js')
 
-/** @type {import('eslint').Linter.FlatConfig[]} */
+/** @type {import('eslint').Linter.Config[]} */
 module.exports = [
   {
     ignores: [
