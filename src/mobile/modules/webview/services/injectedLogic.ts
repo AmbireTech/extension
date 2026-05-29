@@ -4,11 +4,17 @@ import { EventEmitterRegistryController } from '@ambire-common/controllers/event
 import { MainController } from '@ambire-common/controllers/main/main'
 import { KeystoreSigner } from '@ambire-common/libs/keystoreSigner/keystoreSigner'
 import * as richJson from '@ambire-common/libs/richJson/richJson'
-import { controllersNestedInMainMapping } from '@common/constants/controllersMapping'
 import { AutoLockController } from '@common/controllers/auto-lock'
 import { WalletStateController } from '@common/controllers/wallet-state'
 import { handleActions } from '@mobile/handlers/handleActions'
 
+import {
+  buildStateForFE,
+  getBootPhase,
+  isCriticalController,
+  queueDeferredCtrlPayload,
+  setCriticalControllers
+} from './bootPhase'
 import { createBridgedFetch } from './bridgedFetch'
 import { sendToReactEvent } from './webviewLogger'
 
@@ -25,27 +31,30 @@ function debounceFrontEndEventUpdatesOnSameTick(
   forceEmit?: boolean
 ): 'DEBOUNCED' | 'EMITTED' {
   const sendUpdate = () => {
-    // Controller updates
-    const stateToSendToFE = ctrl.toJSON()
-
-    if (ctrlName === 'MainController') {
-      // We are removing the state of the nested controllers in main to avoid the CPU-intensive task of parsing + stringifying.
-      // We should access the state of the nested controllers directly from their context instead of accessing them through the main ctrl state on the FE.
-      Object.keys(controllersNestedInMainMapping).forEach((nestedCtrlName) => {
-        delete (stateToSendToFE as any)[nestedCtrlName]
-      })
-    }
-
-    sendToReactEvent('ctrl.update', { ctrlName, state: stateToSendToFE, forceEmit })
+    sendToReactEvent('ctrl.update', {
+      ctrlName,
+      state: buildStateForFE(ctrlName, ctrl),
+      forceEmit
+    })
   }
 
   /**
    * Bypasses both background and React batching,
    * ensuring that the state update is immediately applied at the application level (React/Extension).
+   * forceEmit also bypasses the boot-phase deferral — it is reserved for cases where
+   * the UI is actively waiting on the update (status flags driven by user actions).
    */
   if (forceEmit) {
     sendUpdate()
     return 'EMITTED'
+  }
+
+  // During the critical boot phase, hold back updates for non-critical
+  // controllers. We keep only the latest state so the eventual drain emits
+  // one update per deferred controller, not the full history.
+  if (getBootPhase() === 'critical' && !isCriticalController(ctrlName)) {
+    queueDeferredCtrlPayload(ctrlName, ctrl, forceEmit)
+    return 'DEBOUNCED'
   }
 
   if (ctrlOnUpdateIsDirtyFlags[ctrlName]) return 'DEBOUNCED'
@@ -131,6 +140,10 @@ let currentWindowId = 1
 
 const initControllers = (config: any) => {
   try {
+    if (Array.isArray(config.criticalControllers)) {
+      setCriticalControllers(config.criticalControllers)
+    }
+
     mainCtrl = new MainController({
       eventEmitterRegistry,
       storageAPI,
