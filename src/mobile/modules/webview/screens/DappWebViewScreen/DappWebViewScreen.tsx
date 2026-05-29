@@ -1030,6 +1030,7 @@ const DappWebViewScreen = () => {
   return (
     <MobileLayoutContainer
       keyboardAwareFooter={false}
+      footerStyle={{ ...spacings.ph0, ...spacings.pt0 }}
       footer={
         <>
           {isLoading && <DappProgressBar progress={progress} />}

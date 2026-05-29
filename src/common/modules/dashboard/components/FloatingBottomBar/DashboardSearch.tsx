@@ -79,6 +79,8 @@ const DashboardSearch: FC<Props> = ({ control, placeholder }) => {
               if (prev) {
                 setIsEditing(false)
                 inputRef.current?.blur()
+              } else {
+                setIsEditing(true)
               }
 
               return !prev
