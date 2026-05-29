@@ -107,7 +107,7 @@ export const handleActions = async (
       }
 
       for (const topic of wcTopicsToTerminate) {
-        sendToReactEvent('action.handleWcSessionBroadcast', {
+        sendToReactEvent('action.wcSessionBroadcast', {
           wcSessionTopic: topic,
           chainId: 1,
           event: 'disconnect',
