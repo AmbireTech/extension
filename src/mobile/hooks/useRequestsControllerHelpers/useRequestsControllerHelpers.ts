@@ -126,7 +126,6 @@ export default function useRequestsControllerHelpers(
     }
   }, [openRequestModal, closeRequestModal, requestsState?.currentUserRequest])
 
-
   useEffect(() => {
     if (requestsState?.currentUserRequest?.kind === 'unlock') {
       if (isBottomSheetOpenRef.current) {
@@ -215,5 +214,12 @@ export default function useRequestsControllerHelpers(
       onBottomSheetClosed,
       onBottomSheetOpened
     })
-  }, [updateHelpers, requestModalRef, openRequestModal, closeRequestModal, onBottomSheetClosed, onBottomSheetOpened])
+  }, [
+    updateHelpers,
+    requestModalRef,
+    openRequestModal,
+    closeRequestModal,
+    onBottomSheetClosed,
+    onBottomSheetOpened
+  ])
 }
