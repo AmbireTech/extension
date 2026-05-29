@@ -1,7 +1,7 @@
 import React from 'react'
 import { Control } from 'react-hook-form'
 
-export interface SearchAndCurrentAppProps {
+export interface FloatingBottomBarProps {
   control: Control<{ search: string }, any>
   displayCurrentApp?: boolean
   displayNetworkFilter?: boolean
@@ -9,5 +9,5 @@ export interface SearchAndCurrentAppProps {
   searchPlaceholder?: string
 }
 
-declare const SearchAndCurrentApp: React.FC<SearchAndCurrentAppProps>
-export default SearchAndCurrentApp
+declare const FloatingBottomBar: React.FC<FloatingBottomBarProps>
+export default FloatingBottomBar

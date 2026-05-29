@@ -501,9 +501,17 @@ run-tests.sh
 # Cursor editor
 /.cursor
 
+# Windsurf editor
+/.windsurf
+
 # Kiro editor
 /.kiro
 
 # WebView bundles
 webview-bundle.json
 *inpage-bundle.json
+
+# Claude Code personal settings
+.claude/*.local.*
+
+

@@ -7,7 +7,6 @@ import { ROUTES } from '@common/modules/router/constants/common'
 import AccountPersonalizeScreen from '@mobile/modules/account-personalize/screens/AccountPersonalizeScreen'
 import AccountPickerScreen from '@mobile/modules/account-picker/screens/AccountPickerScreen'
 import AccountSelectScreen from '@mobile/modules/account-select/screens/AccountSelectScreen'
-import BenzinScreen from '@mobile/modules/action-requests/screens/BenzinScreen'
 import CreateSeedPhrasePrepareScreen from '@mobile/modules/auth/screens/CreateSeedPhrasePrepareScreen'
 import CreateSeedPhraseWriteScreen from '@mobile/modules/auth/screens/CreateSeedPhraseWriteScreen'
 import GetStartedScreen from '@mobile/modules/auth/screens/GetStartedScreen'
@@ -20,14 +19,13 @@ import DappCatalogScreen from '@mobile/modules/dapp-catalog/screens/DappCatalogS
 import LedgerConnectScreen from '@mobile/modules/hardware-wallet/screens/LedgerConnectScreen'
 import KeyStoreSetupScreen from '@mobile/modules/keystore/screens/KeyStoreSetupScreen'
 import NetworksScreen from '@mobile/modules/networks/screens'
+import QrReaderScreen from '@mobile/modules/qr-reader/screens/QrReaderScreen'
 import ReceiveScreen from '@mobile/modules/receive/screens/ReceiveScreen'
 import NavMenu from '@mobile/modules/router/components/NavMenu'
 import AboutSettingsScreen from '@mobile/modules/settings/screens/AboutSettingsScreen'
 import AccountsSettingsScreen from '@mobile/modules/settings/screens/AccountsSettingsScreen'
 import GeneralSettingsScreen from '@mobile/modules/settings/screens/GeneralSettingsScreen'
 import TermsSettingsScreen from '@mobile/modules/settings/screens/TermsSettingsScreen'
-import SignAccountOpScreen from '@mobile/modules/sign-account-op/screens/SignAccountOpScreen'
-import SignMessageScreen from '@mobile/modules/sign-message/screens/SignMessageScreen'
 import SwapAndBridgeScreen from '@mobile/modules/swap-and-bridge/screens/SwapAndBridgeScreen'
 import TokenDetailsScreen from '@mobile/modules/token-details/screens/TokenDetailsScreen'
 import TransferScreen from '@mobile/modules/transfer/screens/TransferScreen'
@@ -71,6 +69,7 @@ const MainRoutes = () => {
           <Route path={ROUTES.settingsTerms} element={<TermsSettingsScreen />} />
           <Route path={ROUTES.apps} element={<DappCatalogScreen />} />
           <Route path={ROUTES.dappWebView} element={<DappWebViewScreen />} />
+          <Route path={ROUTES.qrReader} element={<QrReaderScreen />} />
         </Route>
       </Route>
       {/* Fallback route to suppress "No routes matched location" warnings when multiple Routes blocks are rendered */}

@@ -142,6 +142,36 @@ type HandleProviderRequestAction = {
     requestId: number
     providerId: number
     topic: string
+    isWalletConnect?: boolean
+    isWcAuthenticate?: boolean
+    tabId?: number
+  }
+}
+
+type SetupWcSessionMessengerAction = {
+  type: 'SETUP_WC_SESSION_MESSENGER'
+  params: {
+    url: string
+    tabId: number
+    topic: string
+    chainId: number
+    name?: string
+    icon?: string
+    tempSessionTopic?: string
+  }
+}
+
+type RestoreWcSessionsAction = {
+  type: 'RESTORE_WC_SESSIONS'
+  params: {
+    sessions: { topic: string; url: string; chainId: number; name?: string; icon?: string }[]
+  }
+}
+
+type DisconnectWcSessionAction = {
+  type: 'DISCONNECT_WC_SESSION'
+  params: {
+    topic: string
   }
 }
 
@@ -168,3 +198,6 @@ export type Action =
   | InitControllerStateAction
   | HandleProviderRequestAction
   | WebviewOriginChangedAction
+  | SetupWcSessionMessengerAction
+  | RestoreWcSessionsAction
+  | DisconnectWcSessionAction

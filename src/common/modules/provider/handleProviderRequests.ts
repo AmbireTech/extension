@@ -29,7 +29,6 @@ const handleProviderRequests = async ({
   notificationManager: UiManager['notification']
 }): Promise<any> => {
   const { method, params, session } = request
-  console.log('[handleProviderRequests] Processing request:', method, requestId, session.id)
 
   if (requestId === 0) {
     mainCtrl.dapps.resetSessionLastHandledRequestsId(session.sessionId, providerId)

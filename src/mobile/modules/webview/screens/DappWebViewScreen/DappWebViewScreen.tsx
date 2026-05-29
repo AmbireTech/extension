@@ -8,6 +8,7 @@ import { WebView, WebViewNavigation } from 'react-native-webview'
 import { useLocation } from 'react-router-native'
 
 import { Dapp } from '@ambire-common/interfaces/dapp'
+import { isValidHostname, isValidURL } from '@ambire-common/services/validations'
 import GlobeIcon from '@common/assets/svg/GlobeIcon'
 import GoogleIcon from '@common/assets/svg/GoogleIcon'
 import BottomSheet from '@common/components/BottomSheet'
@@ -26,7 +27,6 @@ import { WEBVIEW_DEV_HOST } from '@env'
 import { MobileLayoutContainer } from '@mobile/components/MobileLayoutWrapper'
 import DappProgressBar from '@mobile/modules/webview/components/DappProgressBar'
 import DappWebViewFooter from '@mobile/modules/webview/components/DappWebViewFooter'
-import { isValidHostname, isValidURL } from '@ambire-common/services/validations'
 
 // SECURITY: Generate a 256-bit random token used to gate the RN <-> WebView bridge.
 // Cross-origin iframes cannot read main-frame globals (Same-Origin Policy), so they
@@ -264,6 +264,8 @@ const DappWebViewScreen = () => {
         }
 
         // Hand off wallet deep links to the OS
+        // Note: wc protocol is now intercepted by WalletConnectProvider, but we still openURL
+        // to trigger the Linking event within the app.
         if (protocol === 'wc' || protocol === 'metamask' || protocol === 'ethereum') {
           console.log('[DappWebView] Handing off wallet deep link to OS:', url)
           Linking.openURL(url).catch((err) => {
@@ -702,7 +704,8 @@ const DappWebViewScreen = () => {
               request: { ...payload, origin: currentUrlRef.current },
               requestId: data.id,
               providerId: 1,
-              topic
+              topic,
+              tabId: 1
             }
           })
         }

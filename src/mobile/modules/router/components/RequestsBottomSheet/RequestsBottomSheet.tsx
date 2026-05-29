@@ -19,13 +19,14 @@ interface Props {
   sheetRef: React.RefObject<Modalize>
   closeBottomSheet: () => void
   onClosed?: () => void
+  onOpened?: () => void
 }
 
 /**
  * Renders the appropriate action request screen based on the currentUserRequest kind.
  * Each screen is wrapped in a container that adapts it for bottom sheet display.
  */
-const RequestsBottomSheet: React.FC<Props> = ({ sheetRef, closeBottomSheet, onClosed }) => {
+const RequestsBottomSheet: React.FC<Props> = ({ sheetRef, closeBottomSheet, onClosed, onOpened }) => {
   const {
     state: { currentUserRequest }
   } = useController('RequestsController')
@@ -77,6 +78,7 @@ const RequestsBottomSheet: React.FC<Props> = ({ sheetRef, closeBottomSheet, onCl
       sheetRef={sheetRef}
       closeBottomSheet={closeBottomSheet}
       onClosed={onClosed}
+      onOpened={onOpened}
       adjustToContentHeight={false}
       shouldBeClosableOnDrag={false}
       isScrollEnabled={false}
