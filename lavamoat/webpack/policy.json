@@ -2022,7 +2022,7 @@
         "patch-package>json-stable-stringify>call-bound": true,
         "eslint-plugin-react>array-includes>es-abstract>get-proto": true,
         "eslint-plugin-react>array-includes>is-string>has-tostringtag": true,
-        "eslint-plugin-jsx-a11y>safe-regex-test": true
+        "eslint-plugin-react>array-includes>es-abstract>safe-regex-test": true
       }
     },
     "@ngraveio/bc-ur>assert>is-nan": {
@@ -2031,7 +2031,7 @@
         "eslint-plugin-react>object.values>define-properties": true
       }
     },
-    "eslint-plugin-jsx-a11y>safe-regex-test>is-regex": {
+    "@ambire/signature-validator>tape>is-regex": {
       "packages": {
         "patch-package>json-stable-stringify>call-bound": true,
         "eslint-plugin-react>es-iterator-helpers>gopd": true,
@@ -2971,11 +2971,11 @@
         "buffer": true
       }
     },
-    "eslint-plugin-jsx-a11y>safe-regex-test": {
+    "eslint-plugin-react>array-includes>es-abstract>safe-regex-test": {
       "packages": {
         "patch-package>json-stable-stringify>call-bound": true,
         "eslint-plugin-react>es-iterator-helpers>es-errors": true,
-        "eslint-plugin-jsx-a11y>safe-regex-test>is-regex": true
+        "@ambire/signature-validator>tape>is-regex": true
       }
     },
     "react-dom>scheduler": {
