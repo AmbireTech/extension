@@ -19,6 +19,7 @@ module.exports = [
       'recorder/**',
       '.expo/**',
       '.eslintrc.js',
+      'eslint.config.js',
       '.yarnclean',
       '.tmp/**',
       '.vscode/**',
@@ -41,15 +42,15 @@ module.exports = [
       },
       globals: {
         browser: 'readonly',
-        node: true,
-        jest: true,
+        node: 'readonly',
+        jest: 'readonly',
         process: 'readonly',
         chrome: 'readonly',
         injectWeb3: 'readonly',
         __dirname: 'readonly',
         chromeTargetConfig: 'writable',
         firefoxTargetConfig: 'writable',
-        Web3: true
+        Web3: 'readonly'
       }
     },
     rules: {
