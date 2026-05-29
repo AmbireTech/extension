@@ -27,7 +27,8 @@ const GetEncryptionPublicKeyRequestScreen = () => {
   return (
     <MobileLayoutContainer
       header={<ActionHeader />}
-      renderDirectChildren={() => (
+      footerStyle={{ ...spacings.ph0, ...spacings.pt0 }}
+      footer={
         <ActionFooter
           onReject={handleDeny}
           onResolve={handleAccept}
@@ -36,7 +37,7 @@ const GetEncryptionPublicKeyRequestScreen = () => {
           resolveButtonTestID="button-provide"
           resolveNode={actionFooterResolveNode}
         />
-      )}
+      }
     >
       <MobileLayoutWrapperMainContent>
         <RequestingDappInfo

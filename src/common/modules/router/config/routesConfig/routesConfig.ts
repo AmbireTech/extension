@@ -188,15 +188,26 @@ const routesConfig: RouteConfig = {
       default: i18n.t('App Wants to Connect')
     })
   },
-  [ROUTES.apps]: {
-    route: ROUTES.apps,
+  [ROUTES.explore]: {
+    route: ROUTES.explore,
     title: Platform.select({
-      web: i18n.t('Apps'),
-      default: i18n.t('Apps')
+      web: i18n.t('Explore'),
+      default: i18n.t('Explore')
     }),
     name: Platform.select({
-      web: i18n.t('Apps'),
-      default: i18n.t('Apps')
+      web: i18n.t('Explore'),
+      default: i18n.t('Explore')
+    })
+  },
+  [ROUTES.exploreSection]: {
+    route: ROUTES.exploreSection,
+    title: Platform.select({
+      web: i18n.t('Explore'),
+      default: i18n.t('Explore')
+    }),
+    name: Platform.select({
+      web: i18n.t('Explore'),
+      default: i18n.t('Explore')
     })
   },
   [ROUTES.watchAsset]: {

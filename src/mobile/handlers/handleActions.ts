@@ -1,4 +1,4 @@
-import { getSessionId } from '@ambire-common/classes/session'
+import { getSessionId, Session } from '@ambire-common/classes/session'
 import { MainController } from '@ambire-common/controllers/main/main'
 import { IEventEmitterRegistryController } from '@ambire-common/interfaces/eventEmitter'
 import { getDappIdFromUrl } from '@ambire-common/libs/dapps/helpers'
@@ -86,9 +86,38 @@ export const handleActions = async (
     }
 
     case 'DAPPS_CONTROLLER_DISCONNECT_DAPP': {
-      await mainCtrl.dapps.broadcastDappSessionEvent('disconnect', undefined, params.id)
-      mainCtrl.dapps.updateDapp(params.id, { isConnected: false })
-      await mainCtrl.autoLogin.revokeAllPoliciesForDomain(params.id, params.url)
+      const wcTopicsToTerminate =
+        params.source === 'injected'
+          ? []
+          : (Object.values(mainCtrl.dapps.dappSessions) as Session[])
+              .filter((s) => s.id === params.id && !!s.wcTopic)
+              .map((s) => s.wcTopic as string)
+
+      if (params.source) {
+        await mainCtrl.dapps.disconnectDappSource(params.id, params.source)
+      } else {
+        await mainCtrl.dapps.broadcastDappSessionEvent('disconnect', undefined, params.id)
+        mainCtrl.dapps.updateDapp(params.id, {
+          connectedSources: [],
+          isConnected: false
+        })
+      }
+
+      for (const topic of wcTopicsToTerminate) {
+        sendToReactEvent('action.wcSessionBroadcast', {
+          wcSessionTopic: topic,
+          chainId: 1,
+          event: 'disconnect',
+          data: {}
+        })
+      }
+
+      // Auto-login policies are domain-wide (not per-source), so only revoke when
+      // every source is gone — otherwise the surviving channel loses its SIWE state.
+      const stillConnected = mainCtrl.dapps.hasPermission(params.id)
+      if (!stillConnected) {
+        await mainCtrl.autoLogin.revokeAllPoliciesForDomain(params.id, params.url)
+      }
 
       break
     }
@@ -124,7 +153,6 @@ export const handleActions = async (
         const oldSessionId = getSessionId({ tabId: 1, windowId: undefined, dappId: oldDappId })
         if (mainCtrl.dapps.dappSessions[oldSessionId]) {
           mainCtrl.dapps.deleteDappSession(oldSessionId)
-          console.log('[Worker] Deleted stale session for origin change:', oldDappId)
         }
       } catch {
         // Ignore invalid URLs
@@ -139,7 +167,6 @@ export const handleActions = async (
      * both in-app webview dapps and WalletConnect dapps using the SAME communication logic.
      */
     case 'HANDLE_PROVIDER_REQUEST': {
-      console.log('[Worker] Handling provider request:', params.request.method, params.requestId)
       const autoLockCtrl = eventEmitterRegistry
         .values()
         .find((c: any) => c.name === 'AutoLockController') as any
@@ -175,7 +202,6 @@ export const handleActions = async (
           providerId: params.providerId,
           notificationManager
         })
-        console.log('[Worker] handleProviderRequests result:', result)
 
         if (isWalletConnect) {
           if (isTempSession) {
@@ -277,16 +303,31 @@ export const handleActions = async (
         tabId: params.tabId,
         wcTopic: params.topic
       })
-      const messenger = createWcBridgeMessenger(params.topic, params.chainId)
+      const resolvedChainId =
+        mainCtrl.dapps.pickWalletConnectChainId(params.candidateChainIds) ?? params.chainId
+      const messenger = createWcBridgeMessenger(params.topic, resolvedChainId)
       mainCtrl.dapps.setSessionMessenger(session.sessionId, messenger, false)
       mainCtrl.dapps.setSessionProp(session.sessionId, { name: params.name, icon: params.icon })
+
+      const dappId = getDappIdFromUrl(new URL(params.url).origin)
+      await mainCtrl.dapps.addDappFromIdentity(
+        {
+          id: dappId,
+          name: params.name ?? new URL(params.url).hostname,
+          url: params.url,
+          icon: params.icon ?? null,
+          chainId: params.chainId,
+          candidateChainIds: params.candidateChainIds
+        },
+        'wc'
+      )
 
       break
     }
 
     case 'RESTORE_WC_SESSIONS': {
       for (const wcSession of params.sessions) {
-        const { topic, name, icon, url, chainId } = wcSession
+        const { topic, name, icon, url, chainId, candidateChainIds } = wcSession
         try {
           const wcTabId = getWcTabIdFromTopic(topic)
           const session = await mainCtrl.dapps.getOrCreateDappSession({
@@ -294,9 +335,24 @@ export const handleActions = async (
             tabId: wcTabId,
             wcTopic: topic
           })
-          const messenger = createWcBridgeMessenger(topic, chainId)
+          const resolvedChainId =
+            mainCtrl.dapps.pickWalletConnectChainId(candidateChainIds) ?? chainId
+          const messenger = createWcBridgeMessenger(topic, resolvedChainId)
           mainCtrl.dapps.setSessionMessenger(session.sessionId, messenger, false)
           mainCtrl.dapps.setSessionProp(session.sessionId, { name, icon })
+
+          const dappId = getDappIdFromUrl(new URL(url).origin)
+          await mainCtrl.dapps.addDappFromIdentity(
+            {
+              id: dappId,
+              name: name ?? new URL(url).hostname,
+              url,
+              icon: icon ?? null,
+              chainId,
+              candidateChainIds
+            },
+            'wc'
+          )
         } catch (e) {
           console.error('[Worker] Failed to restore WC session for topic:', topic, e)
         }

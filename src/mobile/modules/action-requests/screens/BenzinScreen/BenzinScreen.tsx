@@ -68,7 +68,7 @@ const BenzinScreen = () => {
   }, [visibleUserRequests])
 
   return (
-    <MobileLayoutContainer withBottomInset={false}>
+    <MobileLayoutContainer>
       <Benzin state={state}>
         <View
           style={[
@@ -78,7 +78,7 @@ const BenzinScreen = () => {
               borderTopWidth: 1,
               borderTopColor: theme.primaryBorder,
               backgroundColor: hexToRgba(theme.primaryBackground, 0.75),
-              paddingBottom: bottom
+              paddingBottom: bottom || SPACING_SM
             }
           ]}
         >

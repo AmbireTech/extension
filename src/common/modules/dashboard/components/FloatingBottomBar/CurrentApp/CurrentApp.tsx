@@ -6,8 +6,8 @@ import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import { isWeb } from '@common/config/env'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
-import DappIcon from '@common/modules/dapp-catalog/components/DappIcon'
-import ManageApp from '@common/modules/dapp-catalog/components/ManageApp'
+import DappIcon from '@common/modules/explore/components/DappIcon'
+import { ManageCurrentlyConnectedApp } from '@common/modules/explore/components/ManageApp'
 import spacings, { SPACING_TY } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
@@ -22,7 +22,7 @@ const CurrentApp = () => {
   return (
     // The opacity change is done to prevent layout shifting when disconnecting an app
     <View style={{ opacity: isLoadingCurrentDapp ? 0.4 : 1 }}>
-      <ManageApp
+      <ManageCurrentlyConnectedApp
         dapp={currentDapp}
         buttonProps={{
           style: {
@@ -51,7 +51,7 @@ const CurrentApp = () => {
         }}
       >
         <DappIcon dapp={currentDapp} isDashboard />
-      </ManageApp>
+      </ManageCurrentlyConnectedApp>
     </View>
   )
 }
