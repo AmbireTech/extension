@@ -38,6 +38,21 @@ jobs:
       group: ${{ github.workflow }}-${{ github.ref }}
 
     steps:
+      # Android AAB builds for two architectures (armeabi-v7a + arm64-v8a) combined with
+      # node_modules and the Gradle cache exhaust the ~14 GB available on ubuntu-latest runners,
+      # causing "No space left on device" during packageReleaseBundle. Freeing pre-installed
+      # tools we don't need (~20 GB) resolves this without switching to a larger runner.
+      - name: Free disk space 🧹
+        uses: jlumbroso/free-disk-space@v1.3.0
+        with:
+          tool-cache: false  # Keep cached tools (Node.js, Java) — needed for the build
+          android: false     # Keep Android SDK — needed for the build
+          dotnet: true
+          haskell: true
+          large-packages: true
+          docker-images: true
+          swap-storage: true
+
       - name: Checkout code 🛎️
         uses: actions/checkout@v6
 
