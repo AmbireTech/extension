@@ -38,8 +38,8 @@ export const ControllersMiddlewareProvider: React.FC<{
       })
   }, [controllerStore])
 
-  const dispatch = useCallback((action: MethodAction | Action) => {
-    webviewRef.current?.dispatch(action)
+  const dispatch = useCallback((action: MethodAction | Action, windowId?: number, raw?: boolean) => {
+    webviewRef.current?.dispatch(action, raw)
   }, [])
 
   useEffect(() => {
