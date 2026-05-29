@@ -1,6 +1,6 @@
 const ambireCommonConfig = require('./src/ambire-common/eslint.config.js')
 
-/** @type {import('eslint').Linter.FlatConfig[]} */
+/** @type {import('eslint').Linter.Config[]} */
 module.exports = [
   {
     ignores: [
@@ -19,6 +19,7 @@ module.exports = [
       'recorder/**',
       '.expo/**',
       '.eslintrc.js',
+      'eslint.config.js',
       '.yarnclean',
       '.tmp/**',
       '.vscode/**',
@@ -35,19 +36,21 @@ module.exports = [
     files: ['**/*.js', '**/*.jsx', '**/*.ts', '**/*.tsx'],
     languageOptions: {
       parserOptions: {
-        project: './tsconfig.json'
+        projectService: {
+          defaultProject: './tsconfig.json'
+        }
       },
       globals: {
         browser: 'readonly',
-        node: true,
-        jest: true,
+        node: 'readonly',
+        jest: 'readonly',
         process: 'readonly',
         chrome: 'readonly',
         injectWeb3: 'readonly',
         __dirname: 'readonly',
         chromeTargetConfig: 'writable',
         firefoxTargetConfig: 'writable',
-        Web3: true
+        Web3: 'readonly'
       }
     },
     rules: {
