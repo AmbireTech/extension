@@ -57,7 +57,6 @@ const ViewOnlyAccountAdderScreen = () => {
         totalSteps={2}
         title={t('Import a view-only address')}
         withScroll
-        keyboardAwareScrollViewProps={{ bottomOffset: 200 }}
       >
         <View style={[flexbox.justifySpaceBetween, flexbox.flex1]}>
           <View>

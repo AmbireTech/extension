@@ -1,6 +1,6 @@
-import React from 'react'
+import React, { createContext, useContext } from 'react'
 import { View } from 'react-native'
-import { KeyboardAwareScrollView } from 'react-native-keyboard-controller'
+import { KeyboardAvoidingView, KeyboardAwareScrollView } from 'react-native-keyboard-controller'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import { useIsInsideBottomSheet } from '@common/components/BottomSheet/BottomSheetContext'
@@ -17,6 +17,12 @@ import {
 } from './MobileLayoutWrapper'
 import getStyles from './styles'
 
+// Signals that an ancestor MobileLayoutContainer already shrinks the whole layout
+// for the keyboard (via KeyboardAvoidingView). When true, a descendant
+// MobileLayoutWrapperMainContent must not also reserve the full keyboard height as
+// scroll padding, otherwise the two double-count and the scroll view over-scrolls.
+const KeyboardAwareContainerContext = createContext(false)
+
 const MobileLayoutContainer: React.FC<MobileLayoutContainerProps> = ({
   backgroundColor,
   header,
@@ -26,7 +32,8 @@ const MobileLayoutContainer: React.FC<MobileLayoutContainerProps> = ({
   renderDirectChildren,
   style,
   withHorizontalPadding = false,
-  withTopPadding = true
+  withTopPadding = true,
+  keyboardAwareFooter = true
 }) => {
   const { theme } = useTheme(getStyles)
   const insets = useSafeAreaInsets()
@@ -35,7 +42,13 @@ const MobileLayoutContainer: React.FC<MobileLayoutContainerProps> = ({
   const paddingTop = isInsideBottomSheet ? 0 : insets.top + (withTopPadding ? SPACING_SM : 0)
 
   return (
-    <View
+    // `behavior="height"` shrinks the whole container by the keyboard's overlap,
+    // so the flex:1 content area compresses and the footer is pushed up above the
+    // keyboard instead of being covered by it. The overlap is measured from the
+    // view's on-screen frame, so the bottom safe-area inset is accounted for.
+    <KeyboardAvoidingView
+      behavior="height"
+      enabled={keyboardAwareFooter}
       style={[
         flexbox.flex1,
         {
@@ -56,7 +69,9 @@ const MobileLayoutContainer: React.FC<MobileLayoutContainerProps> = ({
             style
           ]}
         >
-          {children}
+          <KeyboardAwareContainerContext.Provider value={keyboardAwareFooter}>
+            {children}
+          </KeyboardAwareContainerContext.Provider>
         </View>
       </View>
       {!!footer && (
@@ -72,7 +87,7 @@ const MobileLayoutContainer: React.FC<MobileLayoutContainerProps> = ({
         </View>
       )}
       {!!renderDirectChildren && renderDirectChildren()}
-    </View>
+    </KeyboardAvoidingView>
   )
 }
 
@@ -94,6 +109,7 @@ const MobileLayoutWrapperMainContent: React.FC<MobileLayoutWrapperMainContentPro
   const { isOnboardingRoute } = useOnboardingNavigation()
   const { goBack } = useNavigation()
   const insets = useSafeAreaInsets()
+  const isInsideKeyboardAwareContainer = useContext(KeyboardAwareContainerContext)
 
   const handleBackButtonPress = () => {
     if (onBackButtonPress) {
@@ -140,7 +156,8 @@ const MobileLayoutWrapperMainContent: React.FC<MobileLayoutWrapperMainContentPro
             { flexGrow: 1, paddingBottom: insets.bottom || SPACING_SM },
             contentContainerStyle
           ]}
-          bottomOffset={100}
+          bottomOffset={200}
+          extraKeyboardSpace={isInsideKeyboardAwareContainer ? -1000 : 0}
           keyboardShouldPersistTaps="handled"
           bounces={false}
           showsVerticalScrollIndicator={false}
