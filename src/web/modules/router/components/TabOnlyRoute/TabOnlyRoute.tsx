@@ -34,7 +34,6 @@ const TabOnlyRoute = () => {
   }
 
   if (!isTab && isExtension) {
-    /* eslint-disable react/jsx-no-useless-fragment */
     return <></>
   }
 

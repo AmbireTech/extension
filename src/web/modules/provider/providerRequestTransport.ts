@@ -44,7 +44,7 @@ export type RequestResponse =
   | {
       id: number
       error?: never
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
       result: any
     }
   | undefined

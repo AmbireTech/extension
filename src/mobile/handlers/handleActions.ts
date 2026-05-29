@@ -1,6 +1,3 @@
-/* eslint-disable no-await-in-loop */
-/* eslint-disable no-param-reassign */
-/* eslint-disable @typescript-eslint/return-await */
 import { getSessionId } from '@ambire-common/classes/session'
 import { MainController } from '@ambire-common/controllers/main/main'
 import { IEventEmitterRegistryController } from '@ambire-common/interfaces/eventEmitter'
@@ -308,7 +305,6 @@ export const handleActions = async (
     }
 
     default:
-      // eslint-disable-next-line no-console
       return console.error(
         `Dispatched ${type} action, but handler in the extension background process not found!`
       )

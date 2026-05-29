@@ -1,6 +1,3 @@
-/* eslint-disable no-await-in-loop */
-/* eslint-disable no-param-reassign */
-/* eslint-disable @typescript-eslint/return-await */
 import { MainController } from '@ambire-common/controllers/main/main'
 import { IEventEmitterRegistryController } from '@ambire-common/interfaces/eventEmitter'
 import { KeyIterator } from '@ambire-common/libs/keyIterator/keyIterator'
@@ -109,10 +106,9 @@ export const handleActions = async (
     case 'RESET_ACCOUNT_ADDING_ON_PAGE_ERROR': {
       await mainCtrl.accountPicker.reset()
       const accounts = [...mainCtrl.accounts.accounts]
-      // eslint-disable-next-line no-restricted-syntax
+
       for (const account of accounts) {
         if (account.newlyAdded) {
-          // eslint-disable-next-line no-await-in-loop
           await mainCtrl.removeAccount(account.addr)
         }
       }
@@ -190,7 +186,6 @@ export const handleActions = async (
     case 'OPEN_EXTENSION_POPUP': {
       if (!pm) return
 
-      // eslint-disable-next-line no-inner-declarations
       async function waitForPopupOpen(timeout = 10000, interval = 100) {
         const startTime = Date.now()
         while (!pm!.ports.some((p) => p.name === 'popup')) {
@@ -220,7 +215,6 @@ export const handleActions = async (
     }
 
     default:
-      // eslint-disable-next-line no-console
       return console.error(
         `Dispatched ${type} action, but handler in the extension background process not found!`
       )
