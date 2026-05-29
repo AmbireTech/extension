@@ -17,7 +17,14 @@ let initialized = false
 let initPromise: Promise<WalletKitType> | null = null
 let addToastFn: ((text: string, options?: any) => void) | null = null
 let pendingRestoreSessions:
-  | { topic: string; url: string; chainId: number; name?: string; icon?: string }[]
+  | {
+      topic: string
+      url: string
+      chainId: number
+      candidateChainIds?: number[]
+      name?: string
+      icon?: string
+    }[]
   | null = null
 
 // Keyed by the session_authenticate request id.
@@ -28,6 +35,16 @@ const pendingAuthenticates = new Map<
 
 export const getWalletKit = () => walletKit
 export const isWalletConnectInitialized = () => initialized
+
+/**
+ * Parses a WalletConnect eip155 namespace `chains` array (CAIP-2 ids like 'eip155:5115')
+ * into numeric chainIds, dropping any malformed entries while preserving order.
+ */
+function parseEip155ChainIds(chains?: string[]): number[] {
+  return (chains ?? [])
+    .map((c) => parseInt(c.split(':')[1] ?? '', 10))
+    .filter((chainId) => Number.isFinite(chainId))
+}
 
 function guessDappName(rawName: string, url: string) {
   try {
@@ -200,8 +217,8 @@ export const initWalletConnect = async (
       }
 
       walletKit.on('session_proposal', async (proposal: WalletKitTypes.SessionProposal) => {
+        const { id, params } = proposal
         try {
-          const { id, params } = proposal
           const proposerUrl = params.proposer.metadata.url
 
           const { name, icon } = await getDappMetadata(
@@ -247,20 +264,40 @@ export const initWalletConnect = async (
           )
         } catch (e) {
           console.error('[WalletConnect] session_proposal handler error:', e)
+          try {
+            await walletKit?.rejectSession({ id, reason: getSdkError('USER_REJECTED') })
+          } catch (rejectErr) {
+            console.error('[WalletConnect] Failed to reject session proposal:', rejectErr)
+          }
         }
       })
 
       walletKit.on('session_request', async (requestEvent: WalletKitTypes.SessionRequest) => {
-        try {
-          const { topic, params, id } = requestEvent
-          const { request } = params
+        const { topic, params, id } = requestEvent
+        const { request } = params
 
+        try {
           // We get the session to find the origin URL
           const activeSession = walletKit?.engine.signClient.session.get(topic)
           if (!activeSession || !activeSession.peer?.metadata?.url) {
             addToast('WalletConnect session not found. Please reconnect the app.', {
               type: 'error'
             })
+            try {
+              await walletKit?.respondSessionRequest({
+                topic,
+                response: {
+                  id,
+                  jsonrpc: '2.0',
+                  error: getSdkError('UNAUTHORIZED_EVENT')
+                }
+              })
+            } catch (respondErr) {
+              console.error(
+                '[WalletConnect] Failed to send unauthorized error response:',
+                respondErr
+              )
+            }
             return
           }
           const proposerUrl = activeSession.peer.metadata.url
@@ -282,6 +319,18 @@ export const initWalletConnect = async (
           )
         } catch (e) {
           console.error('[WalletConnect] session_request handler error:', e)
+          try {
+            await walletKit?.respondSessionRequest({
+              topic,
+              response: {
+                id,
+                jsonrpc: '2.0',
+                error: { code: 5000, message: 'Internal wallet error' }
+              }
+            })
+          } catch (respondErr) {
+            console.error('[WalletConnect] Failed to send error response:', respondErr)
+          }
         }
       })
 
@@ -297,8 +346,8 @@ export const initWalletConnect = async (
       })
 
       walletKit.on('session_authenticate', async (event: WalletKitTypes.SessionAuthenticate) => {
+        const { id, params: authParams } = event
         try {
-          const { id, params: authParams } = event
           const { authPayload, requester } = authParams
           const proposerUrl = requester.metadata.url
 
@@ -345,6 +394,15 @@ export const initWalletConnect = async (
           )
         } catch (e) {
           console.error('[WalletConnect] session_authenticate handler error:', e)
+          try {
+            await walletKit?.rejectSessionAuthenticate({
+              id,
+              reason: getSdkError('USER_REJECTED')
+            })
+            pendingAuthenticates.delete(id)
+          } catch (rejectErr) {
+            console.error('[WalletConnect] Failed to reject session authenticate:', rejectErr)
+          }
         }
       })
 
@@ -370,7 +428,8 @@ export const initWalletConnect = async (
         const sessionsToRestore = await Promise.all(
           Object.values(activeSessions).map(async (session: SessionTypes.Struct) => {
             const eip155Namespace = session.namespaces?.eip155
-            const chainId = eip155Namespace?.chains?.[0]?.split(':')[1] || '1'
+            const candidateChainIds = parseEip155ChainIds(eip155Namespace?.chains)
+            const chainId = candidateChainIds[0] ?? 1
             const url = session.peer.metadata.url
             const { name, icon } = await getDappMetadata(
               url,
@@ -380,7 +439,8 @@ export const initWalletConnect = async (
             return {
               topic: session.topic,
               url,
-              chainId: parseInt(chainId, 10),
+              chainId,
+              candidateChainIds,
               name,
               icon
             }
@@ -535,6 +595,8 @@ export const approveWalletConnectSession = async (
     proposal.proposer?.metadata?.icons?.[0]
   )
 
+  const candidateChainIds = parseEip155ChainIds(session.namespaces?.eip155?.chains)
+
   dispatch(
     {
       type: 'SETUP_WC_SESSION_MESSENGER',
@@ -542,7 +604,8 @@ export const approveWalletConnectSession = async (
         url: proposerUrl,
         tabId: getWcTabIdFromTopic(session.topic),
         topic: session.topic,
-        chainId: 1,
+        chainId: candidateChainIds[0] ?? 1,
+        candidateChainIds,
         name,
         icon,
         tempSessionTopic: `temp_wallet_connect_session_${proposal.id}`
@@ -774,6 +837,7 @@ export const approveWcAuthenticate = async (
       session.peer.metadata.name,
       session.peer.metadata.icons[0]
     )
+    const candidateChainIds = parseEip155ChainIds(session.namespaces?.eip155?.chains)
     dispatch(
       {
         type: 'SETUP_WC_SESSION_MESSENGER',
@@ -781,7 +845,8 @@ export const approveWcAuthenticate = async (
           url: requesterUrl,
           tabId: getWcTabIdFromTopic(session.topic),
           topic: session.topic,
-          chainId: 1,
+          chainId: candidateChainIds[0] ?? 1,
+          candidateChainIds,
           name,
           icon,
           tempSessionTopic: `temp_wc_auth_${id}`

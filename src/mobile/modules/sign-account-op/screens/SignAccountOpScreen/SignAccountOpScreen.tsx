@@ -208,6 +208,7 @@ const SignAccountOpScreen = () => {
       <MobileLayoutContainer
         withHorizontalPadding
         header={<ActionHeader />}
+        footerStyle={{ ...spacings.ph0, ...spacings.pt0 }}
         footer={
           <View style={styles.footerContainer}>
             <View style={spacings.mbSm}>

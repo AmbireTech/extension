@@ -170,12 +170,12 @@ const QrReaderScreen = () => {
 
   const rightIcon = permissionGranted ? (
     <Pressable onPress={handleGalleryPress} hitSlop={12}>
-      <GalleryIcon />
+      <GalleryIcon width={22} height={22} />
     </Pressable>
   ) : undefined
 
   const footer = permissionGranted ? (
-    <View style={[spacings.phSm, flexbox.alignCenter]}>
+    <View style={flexbox.alignCenter}>
       <Button
         type="secondary"
         text={t('Enter code manually')}
@@ -189,14 +189,12 @@ const QrReaderScreen = () => {
       </Button>
     </View>
   ) : (
-    <View style={spacings.phSm}>
-      <Button
-        type="secondary"
-        text={t('Open settings')}
-        onPress={handleOpenSettings}
-        hasBottomSpacing={false}
-      />
-    </View>
+    <Button
+      type="secondary"
+      text={t('Open settings')}
+      onPress={handleOpenSettings}
+      hasBottomSpacing={false}
+    />
   )
 
   return (

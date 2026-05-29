@@ -7,13 +7,13 @@ import { nanoid } from 'nanoid'
 import { ORIGINS_WHITELISTED_TO_ALL_ACCOUNTS } from '@ambire-common/consts/dappCommunication'
 import { MainController } from '@ambire-common/controllers/main/main'
 import { DappProviderRequest } from '@ambire-common/interfaces/dapp'
+import { UiManager } from '@ambire-common/interfaces/ui'
 import {
   getFailureStatus,
   getPendingStatus,
   getSuccessStatus,
   getVersion
 } from '@ambire-common/libs/5792/5792'
-import { UiManager } from '@ambire-common/interfaces/ui'
 import { getBaseAccount } from '@ambire-common/libs/account/getBaseAccount'
 import {
   AccountOpIdentifiedBy,
@@ -873,9 +873,12 @@ export class ProviderController {
    */
   @metadata('SAFE', true)
   walletRevokePermissions = async ({ session: { id } }: DappProviderRequest) => {
-    await this.mainCtrl.dapps.broadcastDappSessionEvent('disconnect', undefined, id)
+    // The request can only originate from the injected channel (WC dapps don't use
+    // MIP-2 revocation), so scope the disconnect to that source. If WC is also
+    // connected for this dapp, it stays connected — the user has to explicitly
+    // disconnect WC from Manage App.
+    await this.mainCtrl.dapps.disconnectDappSource(id, 'injected')
     this.mainCtrl.dapps.updateDapp(id, {
-      isConnected: false,
       grantedPermissionId: undefined,
       grantedPermissionAt: undefined
     })

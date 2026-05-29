@@ -154,7 +154,7 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
   }
 
   return (
-    <MobileLayoutContainer>
+    <MobileLayoutContainer footer={buttons}>
       <MobileLayoutWrapperMainContent
         withBackButton
         onBackButtonPress={handleGoBackPress}
@@ -226,8 +226,6 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
             style={{ marginLeft: 'auto', marginRight: 'auto' }}
           />
         )}
-        <View style={flexbox.flex1} />
-        {buttons}
         <GasTankInfoModal
           id="gas-tank-info"
           sheetRef={gasTankSheetRef}

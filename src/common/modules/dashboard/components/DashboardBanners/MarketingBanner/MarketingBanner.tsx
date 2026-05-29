@@ -4,6 +4,7 @@ import { Image, Pressable, View } from 'react-native'
 import { Banner, MarketingBannerTypes } from '@ambire-common/interfaces/banner'
 import CloseIcon from '@common/assets/svg/CloseIcon'
 import Text from '@common/components/Text'
+import { isMobile } from '@common/config/env'
 import useController from '@common/hooks/useController'
 import { AnimatedPressable, useMultiHover } from '@common/hooks/useHover'
 import useNavigation from '@common/hooks/useNavigation'
@@ -101,24 +102,22 @@ const MarketingBanner: React.FC<Props> = ({ banner }) => {
         source={
           typeof typeImageMap[type] === 'number' ? typeImageMap[type] : { uri: typeImageMap[type] }
         }
-        width={imageSize}
-        height={imageSize}
+        width={isMobile ? 44 : imageSize}
+        height={isMobile ? 44 : imageSize}
         style={{
-          width: imageSize,
-          height: imageSize
+          width: isMobile ? 44 : imageSize,
+          height: isMobile ? 44 : imageSize
         }}
       />
       <View style={[spacings.ml, flexbox.flex1]}>
         <View style={[flexbox.directionRow, flexbox.justifySpaceBetween]}>
-          <Text weight="medium">{title}</Text>
+          <Text weight="medium" style={{ flexShrink: 1 }}>
+            {title}
+          </Text>
           <Pressable
             onPress={dismissBanner}
             hitSlop={8}
-            style={{
-              width: 24,
-              height: 24,
-              ...flexbox.center
-            }}
+            style={{ width: 24, height: 24, ...flexbox.center }}
             testID="banner-button-reject"
           >
             <CloseIcon color={theme.iconPrimary} strokeWidth="2" width={12} height={12} />
