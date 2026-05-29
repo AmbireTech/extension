@@ -12,10 +12,10 @@ import {
 import WarningIcon from '@common/assets/svg/WarningIcon'
 import Alert from '@common/components/Alert'
 import ExpandableCard from '@common/components/ExpandableCard'
-import HumanizedVisualization from '@common/components/HumanizedVisualization'
-import Erc7730StructuredVisualization, {
+import HumanizedVisualization, {
+  Erc7730StructuredVisualization,
   getNestedErc7730Visualizations
-} from '@common/components/HumanizedVisualization/Erc7730/Erc7730StructuredVisualization'
+} from '@common/components/HumanizedVisualization'
 import Label from '@common/components/Label'
 import NetworkBadge from '@common/components/NetworkBadge'
 import Spinner from '@common/components/Spinner'
@@ -92,7 +92,7 @@ const Erc7730TypedMessageContent = React.memo(
     const hasNestedVisualizations = nestedVisualizations.length > 0
 
     return (
-      <View style={[{ width: '100%' }]}>
+      <View style={{ width: '100%' }}>
         {hasNestedVisualizations ? (
           nestedVisualizations.map((nestedVisualization, nestedIndex) => (
             <View

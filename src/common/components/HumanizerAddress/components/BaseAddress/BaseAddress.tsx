@@ -2,7 +2,7 @@ import { ZeroAddress } from 'ethers'
 import { nanoid } from 'nanoid'
 import React, { FC, useCallback, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Linking, Pressable, View } from 'react-native'
+import { GestureResponderEvent, Linking, Pressable, View } from 'react-native'
 
 import { getCoinGeckoTokenUrl } from '@ambire-common/consts/coingecko'
 import { BlacklistedStatus } from '@ambire-common/interfaces/phishing'
@@ -102,6 +102,13 @@ const BaseAddress: FC<Props> = ({
   }
   const textWeight = isDisplayingPlainAddress ? 'mono_regular' : 'medium'
   const textAppearance = verification === 'BLACKLISTED' ? 'errorText' : 'primaryText'
+  const handleInlineExplorerPress = useCallback(
+    (event: GestureResponderEvent) => {
+      event.stopPropagation()
+      void handleOpenExplorer()
+    },
+    [handleOpenExplorer]
+  )
 
   return (
     <View
@@ -117,10 +124,7 @@ const BaseAddress: FC<Props> = ({
         <Pressable
           accessibilityRole="link"
           accessibilityLabel={t('View in Explorer')}
-          onPress={(e: any) => {
-            e?.stopPropagation?.()
-            void handleOpenExplorer()
-          }}
+          onPress={handleInlineExplorerPress}
           style={[flexbox.directionRow, flexbox.alignCenter, flexbox.wrap, { maxWidth: '100%' }]}
         >
           {({ hovered }: any) => (

@@ -1,7 +1,7 @@
 import { formatUnits } from 'ethers'
 import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { ColorValue, StyleProp, View, ViewStyle } from 'react-native'
+import { ColorValue, GestureResponderEvent, StyleProp, View, ViewStyle } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 
 import { getTokenAmount } from '@ambire-common/libs/portfolio/helpers'
@@ -175,6 +175,14 @@ const EditApproval = ({
     amountRef.current = value
   }, [])
 
+  const handleOpenEditApprovals = useCallback(
+    (event: GestureResponderEvent) => {
+      event.stopPropagation()
+      openEditApprovals()
+    },
+    [openEditApprovals]
+  )
+
   return (
     <>
       <AnimatedPressable
@@ -184,13 +192,10 @@ const EditApproval = ({
           flexbox.alignCenter,
           spacings.mrTy,
           { marginLeft: -8 },
-          !!style ? style : {}
+          style
         ]}
         {...bindEditApprovals}
-        onPress={(e: any) => {
-          e?.stopPropagation?.()
-          openEditApprovals()
-        }}
+        onPress={handleOpenEditApprovals}
       >
         <Text fontSize={14} color={theme.linkText}>
           {'['}

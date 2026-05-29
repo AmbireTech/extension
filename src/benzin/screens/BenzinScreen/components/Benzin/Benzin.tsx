@@ -1,4 +1,3 @@
-import { randomBytes } from 'ethers'
 import React, { Fragment, memo, useCallback, useMemo } from 'react'
 import { Image, Linking, ScrollView, StyleSheet, View, ViewStyle } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -83,7 +82,11 @@ const Benzin = ({
 
       return (
         <TransactionSummary
-          key={call.data + randomBytes(6)}
+          key={
+            call.id ||
+            call.txnId ||
+            `${call.to || 'deploy'}-${call.value.toString()}-${call.data}-${i}`
+          }
           style={i !== calls.length! - 1 ? (spacings.mbSm as ViewStyle) : {}}
           call={call}
           chainId={state.network!.chainId}

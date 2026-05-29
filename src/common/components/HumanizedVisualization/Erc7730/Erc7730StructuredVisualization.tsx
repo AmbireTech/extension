@@ -1,10 +1,11 @@
-import React, { FC, memo, useMemo } from 'react'
+import React, { FC, memo, useCallback, useMemo } from 'react'
 import { View } from 'react-native'
 
 import {
   HumanizerErc7730Visualization,
   HumanizerVisualization
 } from '@ambire-common/libs/humanizer/interfaces'
+import RightArrowIcon from '@common/assets/svg/RightArrowIcon'
 import ChainVisualization from '@common/components/HumanizedVisualization/ChainVisualization'
 import EditApproval from '@common/components/HumanizedVisualization/EditApproval'
 import {
@@ -19,30 +20,45 @@ import spacings, { SPACING_SM, SPACING_TY } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import ManifestImage from '@web/components/ManifestImage'
 
+const labelIncludes = (label: string, needles: string[]) => {
+  const normalizedLabel = label.trim().toLowerCase()
+
+  return needles.some((needle) => normalizedLabel.includes(needle))
+}
+
 const isSpenderRow = (row: Erc7730Row) => {
   const label = row.label.trim().toLowerCase()
 
-  return /spender|recipient|receiver|operator/.test(label) || ['to'].includes(label)
+  return (
+    ['spender', 'recipient', 'receiver', 'operator'].some((needle) => label.includes(needle)) ||
+    label === 'to'
+  )
 }
 
 const isExpirationRow = (row: Erc7730Row) =>
-  /expires|expiration|deadline|valid|until/.test(row.label.toLowerCase())
+  labelIncludes(row.label, ['expires', 'expiration', 'deadline', 'valid', 'until'])
 
 const hasTokenValue = (row: Erc7730Row) => row.value.some((value) => value.type === 'token')
 
 const isOutgoingTokenRow = (row: Erc7730Row) =>
-  /send|spend|pay|sell|input|amount in|amount to send/.test(row.label.toLowerCase())
+  labelIncludes(row.label, ['send', 'spend', 'pay', 'sell', 'input', 'amount in', 'amount to send'])
 
 const isIncomingTokenRow = (row: Erc7730Row) =>
-  /receive|get|buy|output|amount out|minimum to receive|receive minimum/.test(
-    row.label.toLowerCase()
-  )
+  labelIncludes(row.label, [
+    'receive',
+    'get',
+    'buy',
+    'output',
+    'amount out',
+    'minimum to receive',
+    'receive minimum'
+  ])
 
 const isSwapLikeTitle = (title?: string) =>
-  /swap|exchange|trade|bridge/.test((title || '').toLowerCase())
+  labelIncludes(title || '', ['swap', 'exchange', 'trade', 'bridge'])
 
 const isComplexActionRow = (row: Erc7730Row) =>
-  /action|call|operation|method/.test(row.label.toLowerCase())
+  labelIncludes(row.label, ['action', 'call', 'operation', 'method'])
 
 const isActionValue = (value: HumanizerVisualization) => value.type === 'action' && !!value.content
 
@@ -162,7 +178,7 @@ export const getErc7730DescriptionRows = (item: HumanizerErc7730Visualization) =
 }
 
 export const shouldUseErc7730DetailedLayout = (item: HumanizerErc7730Visualization) => {
-  if (/multicall|batch|bundle/.test((item.title || '').toLowerCase())) return true
+  if (labelIncludes(item.title || '', ['multicall', 'batch', 'bundle'])) return true
   if (item.rows.some(isNestedErc7730Row)) return true
 
   const summaryRows = getErc7730SummaryRows(item)
@@ -180,6 +196,7 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
   textSize,
   mode = 'summary',
   editApprovalCallInfo,
+  hasRightArrow = false,
   hideNestedRows = false
 }) => {
   const { theme } = useTheme()
@@ -188,161 +205,173 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
     [hideNestedRows, item]
   )
 
-  const renderValue = (valueItem: HumanizerVisualization, overrideTextSize = textSize) => {
-    if (!valueItem || ('isHidden' in valueItem && valueItem.isHidden)) return null
+  const renderValue = useCallback(
+    (valueItem: HumanizerVisualization, overrideTextSize = textSize): React.ReactNode => {
+      if (!valueItem || ('isHidden' in valueItem && valueItem.isHidden)) return null
 
-    if (valueItem.type === 'token') {
-      const tokenChainId = valueItem.chainId || chainId
+      if (valueItem.type === 'token') {
+        const tokenChainId = valueItem.chainId || chainId
 
-      if (mode === 'summary') {
+        if (mode === 'summary') {
+          return (
+            <View
+              key={valueItem.id}
+              style={[
+                flexbox.directionRow,
+                flexbox.alignCenter,
+                flexbox.justifyEnd,
+                {
+                  minWidth: 0,
+                  maxWidth: '100%'
+                }
+              ]}
+            >
+              <TokenOrNft
+                sizeMultiplierSize={sizeMultiplierSize}
+                value={valueItem.value}
+                address={valueItem.address}
+                textSize={overrideTextSize}
+                chainId={tokenChainId}
+                tokenMarginRight={0}
+                tokenIconContainerSize={20}
+              />
+              {editApprovalCallInfo && (
+                <EditApproval
+                  editCall={editApprovalCallInfo.setter}
+                  token={editApprovalCallInfo.token}
+                  value={editApprovalCallInfo.amount}
+                  id={editApprovalCallInfo.callId}
+                  style={[spacings.mlTy, spacings.mr0]}
+                />
+              )}
+            </View>
+          )
+        }
+
         return (
           <View
             key={valueItem.id}
             style={[
-              flexbox.directionRow,
-              flexbox.alignCenter,
-              flexbox.justifyEnd,
+              flexbox.alignEnd,
               {
                 minWidth: 0,
                 maxWidth: '100%'
               }
             ]}
           >
-            <TokenOrNft
-              sizeMultiplierSize={sizeMultiplierSize}
-              value={valueItem.value}
-              address={valueItem.address}
-              textSize={overrideTextSize}
-              chainId={tokenChainId}
-              tokenMarginRight={0}
-              tokenIconContainerSize={20}
-            />
-            {editApprovalCallInfo && (
-              <EditApproval
-                editCall={editApprovalCallInfo.setter}
-                token={editApprovalCallInfo.token}
-                value={editApprovalCallInfo.amount}
-                id={editApprovalCallInfo.callId}
-                style={[spacings.mlTy, spacings.mr0]}
+            <View
+              style={[flexbox.directionRow, flexbox.alignCenter, flexbox.justifyEnd, flexbox.wrap]}
+            >
+              <TokenOrNft
+                sizeMultiplierSize={sizeMultiplierSize}
+                value={valueItem.value}
+                address={valueItem.address}
+                textSize={overrideTextSize}
+                chainId={tokenChainId}
+                tokenMarginRight={0}
+                tokenIconContainerSize={20}
               />
-            )}
+              {editApprovalCallInfo && (
+                <EditApproval
+                  editCall={editApprovalCallInfo.setter}
+                  token={editApprovalCallInfo.token}
+                  value={editApprovalCallInfo.amount}
+                  id={editApprovalCallInfo.callId}
+                  style={[spacings.mlTy, spacings.mr0]}
+                />
+              )}
+            </View>
           </View>
         )
       }
 
-      return (
-        <View
-          key={valueItem.id}
-          style={[
-            flexbox.alignEnd,
-            {
-              minWidth: 0,
-              maxWidth: '100%'
-            }
-          ]}
-        >
-          <View
-            style={[flexbox.directionRow, flexbox.alignCenter, flexbox.justifyEnd, flexbox.wrap]}
-          >
-            <TokenOrNft
-              sizeMultiplierSize={sizeMultiplierSize}
-              value={valueItem.value}
-              address={valueItem.address}
-              textSize={overrideTextSize}
-              chainId={tokenChainId}
-              tokenMarginRight={0}
-              tokenIconContainerSize={20}
-            />
-          </View>
-        </View>
-      )
-    }
-
-    if (valueItem.type === 'address' && valueItem.address) {
-      return (
-        <HumanizerAddress
-          key={valueItem.id}
-          address={valueItem.address}
-          chainId={valueItem.chainId || chainId}
-          fontSize={overrideTextSize}
-          actionsMode="inline"
-          hideLogo
-        />
-      )
-    }
-
-    if (valueItem.type === 'chain' && valueItem.chainId) {
-      return <ChainVisualization chainId={valueItem.chainId} key={valueItem.id} marginRight={0} />
-    }
-
-    if (valueItem.type === 'erc7730') {
-      return (
-        <Erc7730StructuredVisualization
-          key={valueItem.id}
-          item={valueItem}
-          chainId={chainId}
-          sizeMultiplierSize={sizeMultiplierSize}
-          textSize={overrideTextSize}
-          mode="description"
-        />
-      )
-    }
-
-    if (valueItem.content) {
-      return (
-        <Text
-          key={valueItem.id}
-          fontSize={overrideTextSize}
-          weight={valueItem.isBold || valueItem.type === 'action' ? 'semiBold' : 'medium'}
-          color={
-            valueItem.warning
-              ? theme.warningText
-              : valueItem.type === 'label'
-                ? theme.secondaryText
-                : valueItem.type === 'action'
-                  ? theme.secondaryAccent400
-                  : theme.primaryText
-          }
-          style={[{ textAlign: 'right', flexShrink: 1 }, valueItem.mlMi && spacings.mlMi]}
-        >
-          {valueItem.content}
-        </Text>
-      )
-    }
-
-    return null
-  }
-
-  const renderDetailedValueLine = (
-    values: HumanizerVisualization[],
-    alignment: 'start' | 'end' = 'end'
-  ) => (
-    <View
-      key={values.map((value) => value.id).join('-')}
-      style={[
-        flexbox.directionRow,
-        flexbox.alignCenter,
-        alignment === 'start' ? flexbox.justifyStart : flexbox.justifyEnd,
-        flexbox.wrap,
-        {
-          minWidth: 0,
-          maxWidth: '100%'
-        }
-      ]}
-    >
-      {values.map((value) => {
-        const renderedValue = renderValue(value)
-        if (!renderedValue) return null
-
-        const isLastElement = value.id === values[values.length - 1]?.id
-
+      if (valueItem.type === 'address' && valueItem.address) {
         return (
-          <View key={value.id} style={!isLastElement && spacings.mrTy}>
-            {renderedValue}
-          </View>
+          <HumanizerAddress
+            key={valueItem.id}
+            address={valueItem.address}
+            chainId={valueItem.chainId || chainId}
+            fontSize={overrideTextSize}
+            actionsMode="inline"
+            hideLogo
+          />
         )
-      })}
-    </View>
+      }
+
+      if (valueItem.type === 'chain' && valueItem.chainId) {
+        return <ChainVisualization chainId={valueItem.chainId} key={valueItem.id} marginRight={0} />
+      }
+
+      if (valueItem.type === 'erc7730') {
+        return (
+          <Erc7730StructuredVisualization
+            key={valueItem.id}
+            item={valueItem}
+            chainId={chainId}
+            sizeMultiplierSize={sizeMultiplierSize}
+            textSize={overrideTextSize}
+            mode="description"
+          />
+        )
+      }
+
+      if (valueItem.content) {
+        return (
+          <Text
+            key={valueItem.id}
+            fontSize={overrideTextSize}
+            weight={valueItem.isBold || valueItem.type === 'action' ? 'semiBold' : 'medium'}
+            color={
+              valueItem.warning
+                ? theme.warningText
+                : valueItem.type === 'label'
+                  ? theme.secondaryText
+                  : valueItem.type === 'action'
+                    ? theme.secondaryAccent400
+                    : theme.primaryText
+            }
+            style={[{ textAlign: 'right', flexShrink: 1 }, valueItem.mlMi && spacings.mlMi]}
+          >
+            {valueItem.content}
+          </Text>
+        )
+      }
+
+      return null
+    },
+    [chainId, editApprovalCallInfo, mode, sizeMultiplierSize, textSize, theme]
+  )
+
+  const renderDetailedValueLine = useCallback(
+    (values: HumanizerVisualization[], alignment: 'start' | 'end' = 'end') => (
+      <View
+        key={values.map((value) => value.id).join('-')}
+        style={[
+          flexbox.directionRow,
+          flexbox.alignCenter,
+          alignment === 'start' ? flexbox.justifyStart : flexbox.justifyEnd,
+          flexbox.wrap,
+          {
+            minWidth: 0,
+            maxWidth: '100%'
+          }
+        ]}
+      >
+        {values.map((value) => {
+          const renderedValue = renderValue(value)
+          if (!renderedValue) return null
+
+          const isLastElement = value.id === values[values.length - 1]?.id
+
+          return (
+            <View key={value.id} style={!isLastElement && spacings.mrTy}>
+              {renderedValue}
+            </View>
+          )
+        })}
+      </View>
+    ),
+    [renderValue]
   )
 
   if (mode === 'summary') {
@@ -362,7 +391,7 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
           {
             width: '100%',
             minWidth: 0,
-            gap: SPACING_SM
+            alignItems: 'center'
           }
         ]}
       >
@@ -374,13 +403,14 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
               minWidth: 0,
               flex: 1,
               flexShrink: 1,
-              gap: SPACING_TY
+              marginRight: SPACING_SM
             }
           ]}
         >
           {!!item.dapp?.icon && (
             <ManifestImage
               uri={item.dapp.icon}
+              containerStyle={{ marginRight: SPACING_TY }}
               size={24 * sizeMultiplierSize}
               skeletonAppearance="secondaryBackground"
               imageStyle={{ borderRadius: 12 * sizeMultiplierSize, backgroundColor: 'transparent' }}
@@ -504,6 +534,11 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
             </View>
           ))}
         </View>
+        {hasRightArrow && (
+          <View style={{ marginLeft: SPACING_SM }}>
+            <RightArrowIcon color={theme.secondaryText} width={8} height={14} />
+          </View>
+        )}
       </View>
     )
   }
@@ -529,13 +564,7 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
                   {row.label}
                 </Text>
               )}
-              <View
-                style={[
-                  {
-                    width: '100%'
-                  }
-                ]}
-              >
+              <View style={{ width: '100%' }}>
                 {nestedVisualizations.map((nestedVisualization, nestedIndex) => (
                   <View
                     key={nestedVisualization.id}
@@ -572,13 +601,12 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
                 flexbox.alignStart,
                 {
                   width: '100%',
-                  gap: SPACING_SM,
                   paddingVertical: SPACING_TY,
                   flexWrap: 'wrap'
                 }
               ]}
             >
-              <View style={{ flex: 1, minWidth: 160 }}>
+              <View style={{ flex: 1, minWidth: 160, marginRight: SPACING_SM }}>
                 <Text
                   fontSize={textSize}
                   weight="semiBold"
@@ -620,7 +648,6 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
               flexbox.alignStart,
               {
                 width: '100%',
-                gap: SPACING_SM,
                 paddingVertical: SPACING_TY,
                 flexWrap: 'wrap'
               }
@@ -630,7 +657,7 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
               fontSize={textSize}
               weight="semiBold"
               appearance="secondaryText"
-              style={{ flex: 1, minWidth: 120 }}
+              style={{ flex: 1, minWidth: 120, marginRight: SPACING_SM }}
             >
               {row.label}
             </Text>

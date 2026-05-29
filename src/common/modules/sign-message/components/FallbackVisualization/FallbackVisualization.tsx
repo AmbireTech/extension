@@ -1,7 +1,7 @@
 import { isHexString } from 'ethers'
 import { FC, memo, useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { NativeScrollEvent, Pressable, ScrollView, View } from 'react-native'
+import { GestureResponderEvent, NativeScrollEvent, Pressable, ScrollView, View } from 'react-native'
 
 import { Hex } from '@ambire-common/interfaces/hex'
 import { ISignMessageController } from '@ambire-common/interfaces/signMessage'
@@ -158,6 +158,13 @@ const FallbackVisualization: FC<{
   const handleTabPress = useCallback((tab: ActiveTab) => {
     setActiveTab(tab)
   }, [])
+  const handlePressTab = useCallback(
+    (event: GestureResponderEvent, tab: ActiveTab) => {
+      event.stopPropagation()
+      handleTabPress(tab)
+    },
+    [handleTabPress]
+  )
 
   useEffect(() => {
     if (!messageToSign || !containerHeight || !contentHeight) return
@@ -184,10 +191,7 @@ const FallbackVisualization: FC<{
             return (
               <Pressable
                 key={tab}
-                onPress={(e: any) => {
-                  e?.stopPropagation?.()
-                  handleTabPress(tab)
-                }}
+                onPress={(event) => handlePressTab(event, tab)}
                 style={[
                   styles.tabButton,
                   {

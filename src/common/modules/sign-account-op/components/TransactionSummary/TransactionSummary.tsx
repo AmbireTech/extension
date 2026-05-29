@@ -1,4 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
+import { GestureResponderEvent, Pressable, View, ViewStyle } from 'react-native'
 import {
   decodeFunctionData,
   encodeFunctionData,
@@ -8,8 +10,6 @@ import {
   toFunctionSelector,
   zeroAddress
 } from 'viem'
-import { useTranslation } from 'react-i18next'
-import { Pressable, View, ViewStyle } from 'react-native'
 
 import {
   noStateUpdateStatuses,
@@ -144,6 +144,8 @@ const TransactionSummary = ({
     return erc7730Visualization.title || call.dapp?.name || t('Transaction details')
   }, [call.dapp?.name, erc7730Visualization, t])
   const erc7730DetailedIcon = erc7730Visualization?.dapp?.icon || call.dapp?.icon
+  const erc7730VisualizationKey = `${call.id || ''}-${call.to || ''}-${call.data}-${call.value.toString()}-${index || ''}`
+  const hasErc7730DescriptionVisualization = !!erc7730DescriptionVisualization
 
   const [bindDeleteIconAnim, deleteIconAnimStyle] = useHover({
     preset: 'opacityInverted'
@@ -186,8 +188,16 @@ const TransactionSummary = ({
   }, [isCallRemovedOptimistic])
 
   useEffect(() => {
-    if (erc7730DescriptionVisualization) setErc7730ExpandedTab('description')
-  }, [erc7730DescriptionVisualization])
+    if (hasErc7730DescriptionVisualization) setErc7730ExpandedTab('description')
+  }, [erc7730VisualizationKey, hasErc7730DescriptionVisualization])
+
+  const handleErc7730ExpandedTabPress = useCallback(
+    (event: GestureResponderEvent, tab: 'description' | 'raw') => {
+      event.stopPropagation()
+      setErc7730ExpandedTab(tab)
+    },
+    []
+  )
 
   const humanizerWarningLabels = useMemo(() => {
     if (type !== 'default') return null
@@ -507,6 +517,7 @@ const TransactionSummary = ({
                   testID={`recipient-address-${index}`}
                   hasPadding={false}
                   erc7730Mode="description"
+                  editApprovalCallInfo={editApprovalCallInfo}
                 />
               </View>
             ) : (
@@ -562,6 +573,7 @@ const TransactionSummary = ({
       expandedContent={
         erc7730Visualization && !shouldUseDetailedErc7730Layout ? (
           <View
+            key={erc7730VisualizationKey}
             style={{
               paddingHorizontal: SPACING_SM * sizeMultiplier[size],
               paddingBottom: SPACING_SM * sizeMultiplier[size]
@@ -588,10 +600,7 @@ const TransactionSummary = ({
                   return (
                     <Pressable
                       key={tab}
-                      onPress={(e: any) => {
-                        e?.stopPropagation?.()
-                        setErc7730ExpandedTab(tab)
-                      }}
+                      onPress={(event) => handleErc7730ExpandedTabPress(event, tab)}
                       style={{
                         paddingVertical: SPACING_TY * sizeMultiplier[size],
                         marginRight: SPACING_TY,
@@ -621,6 +630,7 @@ const TransactionSummary = ({
                 type={type}
                 hasPadding={false}
                 erc7730Mode="description"
+                editApprovalCallInfo={editApprovalCallInfo}
               />
             ) : (
               <ExpandedContent
