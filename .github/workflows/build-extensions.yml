@@ -67,6 +67,7 @@ jobs:
           echo "BUNGEE_API_KEY=\"${{ vars.BUNGEE_API_KEY }}\"" >> .env
           echo "SQUID_INTEGRATOR_ID=\"${{ vars.SQUID_INTEGRATOR_ID }}\"" >> .env
           echo "SAFE_API_KEY=\"${{ vars.SAFE_API_KEY }}\"" >> .env
+          echo "WALLETCONNECT_PROJECT_ID=\"${{ vars.WALLETCONNECT_PROJECT_ID }}\"" >> .env
           echo "SENTRY_DSN_BROWSER_EXTENSION=\"${{ vars.SENTRY_DSN_BROWSER_EXTENSION }}\"" >> .env
         shell: bash
 
@@ -90,6 +91,7 @@ jobs:
           BUNGEE_API_KEY: ${{ vars.BUNGEE_API_KEY }}
           SQUID_INTEGRATOR_ID: ${{ vars.SQUID_INTEGRATOR_ID }}
           SAFE_API_KEY: ${{ vars.SAFE_API_KEY }}
+          WALLETCONNECT_PROJECT_ID: ${{ vars.WALLETCONNECT_PROJECT_ID }}
           SENTRY_DSN_BROWSER_EXTENSION: ${{ vars.SENTRY_DSN_BROWSER_EXTENSION }}
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN_BROWSER_EXTENSIONS }}
         run: yarn build:extensions:${{ matrix.build_variant }}
