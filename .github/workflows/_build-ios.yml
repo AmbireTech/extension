@@ -151,6 +151,7 @@ jobs:
           BUNGEE_API_KEY: ${{ vars.BUNGEE_API_KEY }}
           SQUID_INTEGRATOR_ID: ${{ vars.SQUID_INTEGRATOR_ID }}
           SAFE_API: ${{ vars.SAFE_API }}
+          WALLETCONNECT_PROJECT_ID: ${{ vars.WALLETCONNECT_PROJECT_ID }}
         run: ${{ inputs.build_command }}
         shell: bash
 
