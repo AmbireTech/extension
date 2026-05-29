@@ -63,6 +63,10 @@ jobs:
         run: yarn setup:ci
         shell: bash
 
+      - name: Build webview
+        run: yarn build:webview
+        shell: bash
+
       - name: Get version from app.json
         id: version
         run: echo "VERSION=$(grep '"version"' ./app.json | head -n1 | cut -d':' -f2 | tr -d ' ",')" >> $GITHUB_OUTPUT
