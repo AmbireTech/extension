@@ -3,19 +3,11 @@ import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 
 import { QrRequest } from '@ambire-common/interfaces/keystore'
-import {
-  HumanizerErc7730Visualization,
-  HumanizerVisualization,
-  HumanizerWarning,
-  IrMessage
-} from '@ambire-common/libs/humanizer/interfaces'
+import { IrMessage } from '@ambire-common/libs/humanizer/interfaces'
 import WarningIcon from '@common/assets/svg/WarningIcon'
 import Alert from '@common/components/Alert'
 import ExpandableCard from '@common/components/ExpandableCard'
-import HumanizedVisualization, {
-  Erc7730StructuredVisualization,
-  getNestedErc7730Visualizations
-} from '@common/components/HumanizedVisualization'
+import HumanizedVisualization from '@common/components/HumanizedVisualization'
 import Label from '@common/components/Label'
 import NetworkBadge from '@common/components/NetworkBadge'
 import Spinner from '@common/components/Spinner'
@@ -27,8 +19,10 @@ import useTheme from '@common/hooks/useTheme'
 import useWindowSize from '@common/hooks/useWindowSize'
 import HardwareWalletSigningModal from '@common/modules/hardware-wallets/components/HardwareWalletSigningModal'
 import SafetyChecksBanner from '@common/modules/sign-account-op/components/SafetyChecksBanner'
+import Erc7730TypedMessageContent from '@common/modules/sign-message/components/Contents/Erc7730TypedMessageContent'
 import FallbackVisualization from '@common/modules/sign-message/components/FallbackVisualization'
 import Info from '@common/modules/sign-message/components/Info'
+import isErc7730Visualization from '@common/modules/sign-message/utils/isErc7730Visualization'
 import spacings, { SPACING_LG, SPACING_MD, SPACING_TY } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { MobileLayoutWrapperMainContent } from '@mobile/components/MobileLayoutWrapper'
@@ -65,97 +59,6 @@ const Container = ({ children }: { children: React.ReactNode }) => {
     )
   return <TabLayoutWrapperMainContent style={spacings.mbLg}>{children}</TabLayoutWrapperMainContent>
 }
-
-const isErc7730Visualization = (
-  item: HumanizerVisualization | undefined
-): item is HumanizerVisualization & HumanizerErc7730Visualization => item?.type === 'erc7730'
-
-const Erc7730TypedMessageContent = React.memo(
-  ({
-    data,
-    chainId,
-    responsiveSizeMultiplier,
-    warnings
-  }: {
-    data: (HumanizerVisualization & HumanizerErc7730Visualization)[]
-    chainId: bigint
-    responsiveSizeMultiplier: number
-    warnings?: HumanizerWarning[]
-  }) => {
-    const { t } = useTranslation()
-    const { styles, theme } = useTheme(getStyles)
-    const title = useMemo(() => data.find((item) => !!item.title)?.title, [data])
-    const nestedVisualizations = useMemo(
-      () => data.flatMap((item) => getNestedErc7730Visualizations(item)),
-      [data]
-    )
-    const hasNestedVisualizations = nestedVisualizations.length > 0
-
-    return (
-      <View style={{ width: '100%' }}>
-        {!!warnings?.length && (
-          <View style={[spacings.mbLg, flexbox.alignCenter]}>
-            {warnings.map((warning) => (
-              <Label
-                size="lg"
-                key={warning.content}
-                text={warning.content}
-                type="warning"
-                hasBottomSpacing={false}
-              />
-            ))}
-          </View>
-        )}
-        {hasNestedVisualizations ? (
-          nestedVisualizations.map((nestedVisualization, nestedIndex) => (
-            <View
-              key={nestedVisualization.id}
-              style={[
-                nestedIndex > 0 && { marginTop: SPACING_TY * responsiveSizeMultiplier },
-                spacings.pbMi
-              ]}
-            >
-              <Erc7730StructuredVisualization
-                item={nestedVisualization}
-                chainId={chainId}
-                sizeMultiplierSize={responsiveSizeMultiplier}
-                textSize={14}
-                mode="summary"
-              />
-            </View>
-          ))
-        ) : (
-          <Text
-            fontSize={16 * responsiveSizeMultiplier}
-            weight="semiBold"
-            color={theme.secondaryAccent400}
-            style={styles.erc7730TypedMessageTitle}
-          >
-            {title || t('Message details')}
-          </Text>
-        )}
-        <View
-          style={[
-            styles.erc7730TypedMessageDivider,
-            {
-              marginTop: SPACING_TY * responsiveSizeMultiplier,
-              marginBottom: SPACING_TY * responsiveSizeMultiplier
-            }
-          ]}
-        />
-        <HumanizedVisualization
-          data={data}
-          chainId={chainId}
-          sizeMultiplierSize={responsiveSizeMultiplier}
-          textSize={14}
-          hasPadding={false}
-          erc7730Mode="description"
-          hideNestedErc7730Rows={hasNestedVisualizations}
-        />
-      </View>
-    )
-  }
-)
 
 const Main = ({
   shouldDisplayLedgerConnectModal,

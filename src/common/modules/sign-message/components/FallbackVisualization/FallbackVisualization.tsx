@@ -5,11 +5,7 @@ import { GestureResponderEvent, NativeScrollEvent, Pressable, ScrollView, View }
 
 import { Hex } from '@ambire-common/interfaces/hex'
 import { ISignMessageController } from '@ambire-common/interfaces/signMessage'
-import {
-  HumanizerErc7730Visualization,
-  HumanizerVisualization,
-  IrMessage
-} from '@ambire-common/libs/humanizer/interfaces'
+import { IrMessage } from '@ambire-common/libs/humanizer/interfaces'
 import { isValidAddress } from '@ambire-common/services/address'
 import WarningFilledIcon from '@common/assets/svg/WarningFilledIcon'
 import HumanizerAddress from '@common/components/HumanizerAddress'
@@ -18,6 +14,7 @@ import Text from '@common/components/Text'
 import useTheme from '@common/hooks/useTheme'
 import useWindowSize from '@common/hooks/useWindowSize'
 import AnimatedDownArrow from '@common/modules/account-picker/components/AccountsOnPageList/AnimatedDownArrow'
+import isErc7730Visualization from '@common/modules/sign-message/utils/isErc7730Visualization'
 import spacings, { SPACING_SM, SPACING_TY } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { getMessageAsText, simplifyTypedMessage } from '@common/utils/messageToString'
@@ -106,10 +103,6 @@ const useParsedMessageRows = (
 }
 
 type ActiveTab = 'parsed' | 'raw'
-
-const isErc7730Visualization = (
-  item: HumanizerVisualization | undefined
-): item is HumanizerVisualization & HumanizerErc7730Visualization => item?.type === 'erc7730'
 
 const FallbackVisualization: FC<{
   messageToSign: ISignMessageController['messageToSign']
