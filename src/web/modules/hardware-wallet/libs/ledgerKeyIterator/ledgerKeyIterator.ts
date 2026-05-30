@@ -16,9 +16,9 @@ const INVALID_PARAMS_MSG =
  * Serves for retrieving a range of addresses/keys from a Ledger hardware wallet
  */
 class LedgerKeyIterator implements KeyIteratorInterface {
-  type = 'ledger' as 'ledger'
+  type = 'ledger' as const
 
-  subType = 'hw' as 'hw'
+  subType = 'hw' as const
 
   controller: LedgerController
 
@@ -35,7 +35,7 @@ class LedgerKeyIterator implements KeyIteratorInterface {
     if (!this.controller) throw new Error(MISSING_CONTROLLER_MSG)
 
     const pathsOfAddressesToRetrieve: string[] = []
-    // eslint-disable-next-line no-restricted-syntax
+
     for (const { from, to } of fromToArr) {
       if ((!from && from !== 0) || (!to && to !== 0) || !hdPathTemplate)
         throw new Error(INVALID_PARAMS_MSG)

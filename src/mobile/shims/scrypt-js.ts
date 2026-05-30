@@ -5,7 +5,7 @@
  * C++ (JSI) implementation, avoiding the deeply recursive JS chunking
  * that overflows Hermes's native call stack.
  */
-// Use require instead of ES import to prevent Webpack warnings about missing 
+// Use require instead of ES import to prevent Webpack warnings about missing
 // named exports when react-native-quick-crypto is aliased to crypto-browserify
 const quickCrypto = require('react-native-quick-crypto')
 
@@ -28,14 +28,16 @@ export async function scrypt(
   _progressCallback?: (progress: number) => void
 ): Promise<Uint8Array> {
   if (isWebView) {
-    return (window as any).sendToRNAsync('crypto.scrypt', {
-      password,
-      salt,
-      N,
-      r,
-      p,
-      dkLen
-    }).then((res: any) => new Uint8Array(res))
+    return (window as any)
+      .sendToRNAsync('crypto.scrypt', {
+        password,
+        salt,
+        N,
+        r,
+        p,
+        dkLen
+      })
+      .then((res: any) => new Uint8Array(res))
   }
 
   return new Promise((resolve, reject) => {
@@ -67,7 +69,12 @@ export function syncScrypt(
   p: number,
   dkLen: number
 ): Uint8Array {
-  const result = quickCrypto.scryptSync(password as any, salt as any, dkLen, { N, r, p, maxmem: MAX_MEM })
+  const result = quickCrypto.scryptSync(password as any, salt as any, dkLen, {
+    N,
+    r,
+    p,
+    maxmem: MAX_MEM
+  })
   return new Uint8Array(result)
 }
 

@@ -20,7 +20,7 @@
     <string>$(PRODUCT_BUNDLE_PACKAGE_TYPE)</string>
     <!-- This is planned to be in sync with app.json 's "version" two components, e.g. 5.39 -->
     <key>CFBundleShortVersionString</key>
-    <string>6.2</string>
+    <string>6.11</string>
     <key>CFBundleSignature</key>
     <string>????</string>
     <key>CFBundleURLTypes</key>
@@ -29,13 +29,31 @@
         <key>CFBundleURLSchemes</key>
         <array>
           <string>ambire</string>
+          <string>wc</string>
+          <string>ethereum</string>
         </array>
       </dict>
     </array>
     <key>CFBundleVersion</key>
-    <string>62</string>
+    <string>64</string>
     <key>LSMinimumSystemVersion</key>
     <string>12.0</string>
+    <key>LSApplicationQueriesSchemes</key>
+    <array>
+      <string>imtokenv2</string>
+      <string>tpoutside</string>
+      <string>rainbow</string>
+      <string>bitkeep</string>
+      <string>trust</string>
+      <string>argent</string>
+      <string>metamask</string>
+      <string>mathwallet</string>
+      <string>zerion</string>
+      <string>cbwallet</string>
+      <string>blob</string>
+      <string>rabby</string>
+      <string>rabbymobile</string>
+    </array>
     <key>LSRequiresIPhoneOS</key>
     <true/>
     <key>NSAppTransportSecurity</key>
@@ -45,6 +63,10 @@
       <key>NSAllowsLocalNetworking</key>
       <true/>
     </dict>
+    <key>NSCameraUsageDescription</key>
+    <string>$(PRODUCT_NAME) needs access to your Camera to scan QR codes.</string>
+    <key>NSPhotoLibraryUsageDescription</key>
+    <string>$(PRODUCT_NAME) needs access to your Photo Library to import and read QR codes from images.</string>
     <key>NSFaceIDUsageDescription</key>
     <string>Allow $(PRODUCT_NAME) to use Face ID</string>
     <key>ITSAppUsesNonExemptEncryption</key>

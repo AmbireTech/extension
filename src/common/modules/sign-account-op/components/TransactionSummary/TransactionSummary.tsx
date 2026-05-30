@@ -1,26 +1,41 @@
-import { formatUnits, Interface, parseUnits } from 'ethers'
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
+import {
+  decodeFunctionData,
+  encodeFunctionData,
+  isHex,
+  parseAbi,
+  parseUnits,
+  toFunctionSelector,
+  zeroAddress
+} from 'viem'
+import { useTranslation } from 'react-i18next'
 import { View, ViewStyle } from 'react-native'
 
-import humanizerInfo from '@ambire-common/consts/humanizer/humanizerInfo.json'
 import {
   noStateUpdateStatuses,
   SigningStatus
 } from '@ambire-common/controllers/signAccountOp/signAccountOp'
 import { IrCall } from '@ambire-common/libs/humanizer/interfaces'
+import {
+  getAction,
+  getAddressVisualization,
+  getLabel,
+  getToken
+} from '@ambire-common/libs/humanizer/utils'
 import DeleteIcon from '@common/assets/svg/DeleteIcon'
 import ExpandableCard from '@common/components/ExpandableCard'
 import HumanizedVisualization from '@common/components/HumanizedVisualization'
 import Label from '@common/components/Label'
 import Text from '@common/components/Text'
 import { isMobile, isWeb } from '@common/config/env'
-import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
+import useDecodeTransactionData from '@common/hooks/useDecodeTransactionData'
 import useHover, { AnimatedPressable } from '@common/hooks/useHover'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
+import ExpandedContent from '@common/modules/sign-account-op/components/TransactionSummary/ExpandedContent'
 import FallbackVisualization from '@common/modules/sign-account-op/components/TransactionSummary/FallbackVisualization'
-import { SPACING_SM, SPACING_TY } from '@common/styles/spacings'
+import { SPACING_SM } from '@common/styles/spacings'
 
 import getStyles from './styles'
 
@@ -37,6 +52,7 @@ interface Props {
   hideLinks?: boolean
   hideDeleteIcon?: boolean
   hasCallFailed?: boolean
+  disableSelectorFetching?: boolean
 }
 
 export const sizeMultiplier = {
@@ -45,18 +61,14 @@ export const sizeMultiplier = {
   lg: 1
 }
 
-const approveInterface = new Interface([
-  'function approve(address spender, uint256 amount) returns (bool)'
-])
-const permitInterface = new Interface([
+const approveAbi = parseAbi(['function approve(address spender, uint256 amount) returns (bool)'])
+const permitAbi = parseAbi([
   'function approve(address token, address spender, uint160 amount, uint48 expiration)'
 ])
-
-const increaseAllowanceInterface = new Interface([
+const increaseAllowanceAbi = parseAbi([
   'function increaseAllowance(address spender, uint256 amount)'
 ])
-
-const decreaseAllowanceInterface = new Interface([
+const decreaseAllowanceAbi = parseAbi([
   'function decreaseAllowance(address spender, uint256 amount)'
 ])
 
@@ -72,11 +84,11 @@ const TransactionSummary = ({
   onRightIconPress,
   hideLinks = false,
   hideDeleteIcon,
-  hasCallFailed
+  hasCallFailed,
+  disableSelectorFetching
 }: Props) => {
   const textSize = 16 * sizeMultiplier[size]
   const imageSize = 32 * sizeMultiplier[size]
-  const { t } = useTranslation()
   const { dispatch: requestsDispatch } = useController('RequestsController')
   const { state: signAccountOpState, dispatch: signAccountOpDispatch } =
     useController('SignAccountOpController')
@@ -85,26 +97,17 @@ const TransactionSummary = ({
   } = useController('SelectedAccountController')
   const { styles } = useTheme(getStyles)
   const { addToast } = useToast()
+  const { t } = useTranslation()
+  const { decodedFunction, isLoading: isDecodedFunctionLoading } = useDecodeTransactionData(
+    call,
+    !!disableSelectorFetching
+  )
+
   /**
    * It takes some time to remove the call from the controller state, so we optimistically
    * set this state to true, which hides it immediately.
    */
   const [isCallRemovedOptimistic, setIsCallRemovedOptimistic] = useState(false)
-
-  const foundCallSignature = useMemo(() => {
-    let foundSigHash: string | undefined
-    Object.values(humanizerInfo.abis).some((abi) => {
-      Object.values(abi).some((s) => {
-        if (call.data && s.selector === call.data.slice(0, 10)) {
-          foundSigHash = s.signature
-          return true
-        }
-        return false
-      })
-      return !!foundSigHash
-    })
-    return foundSigHash
-  }, [call.data])
 
   const [bindDeleteIconAnim, deleteIconAnimStyle] = useHover({
     preset: 'opacityInverted'
@@ -179,7 +182,7 @@ const TransactionSummary = ({
         return
       }
       const selector = replacedCall.data.slice(0, 10)
-      if (!replacedCall.data || replacedCall.data.length < 10) {
+      if (!replacedCall.data || replacedCall.data.length < 10 || !isHex(replacedCall.data)) {
         addToast('Internal error: the found transaction is not a token interaction', {
           type: 'error'
         })
@@ -188,64 +191,72 @@ const TransactionSummary = ({
 
       let calldata = ''
 
-      switch (selector) {
-        case approveInterface.getFunction('approve')!.selector: {
-          const tx = approveInterface.parseTransaction(call)
-          if (!tx) {
-            addToast('Internal error: failed to set the approval amount', { type: 'error' })
-            return
+      try {
+        switch (selector) {
+          case toFunctionSelector(approveAbi[0]): {
+            const { args } = decodeFunctionData({
+              abi: approveAbi,
+              data: replacedCall.data
+            })
+            const [spender] = args
+            calldata = encodeFunctionData({
+              abi: approveAbi,
+              functionName: 'approve',
+              args: [spender, parseUnits(newAmount || '0', portfolioToken.decimals)]
+            })
+            break
           }
-          const [spender, currentAmount] = tx.args
-          calldata = approveInterface.encodeFunctionData('approve', [
-            spender,
-            parseUnits(newAmount || '0', portfolioToken.decimals)
-          ])
-          break
-        }
-        case permitInterface.getFunction('approve')!.selector: {
-          const tx = permitInterface.parseTransaction(call)
-          if (!tx) {
-            addToast('Internal error: failed to set the approval amount', { type: 'error' })
-            return
+          case toFunctionSelector(permitAbi[0]): {
+            const { args } = decodeFunctionData({
+              abi: permitAbi,
+              data: replacedCall.data
+            })
+            const [token, spender, , expiration] = args
+            calldata = encodeFunctionData({
+              abi: permitAbi,
+              functionName: 'approve',
+              args: [
+                token,
+                spender,
+                parseUnits(newAmount || '0', portfolioToken.decimals),
+                expiration
+              ]
+            })
+            break
           }
-          const [token, spender, currentAmount, expiration] = tx.args
-          calldata = permitInterface.encodeFunctionData('approve', [
-            token,
-            spender,
-            parseUnits(newAmount || '0', portfolioToken.decimals),
-            expiration
-          ])
-          break
-        }
-        case increaseAllowanceInterface.getFunction('increaseAllowance')!.selector: {
-          const tx = increaseAllowanceInterface.parseTransaction(call)
-          if (!tx) {
-            addToast('Internal error: failed to set the approval amount', { type: 'error' })
-            return
+          case toFunctionSelector(increaseAllowanceAbi[0]): {
+            const { args } = decodeFunctionData({
+              abi: increaseAllowanceAbi,
+              data: replacedCall.data
+            })
+            const [spender] = args
+            calldata = encodeFunctionData({
+              abi: increaseAllowanceAbi,
+              functionName: 'increaseAllowance',
+              args: [spender, parseUnits(newAmount || '0', portfolioToken.decimals)]
+            })
+            break
           }
-          const [spender, amount] = tx.args
-          calldata = increaseAllowanceInterface.encodeFunctionData('increaseAllowance', [
-            spender,
-            parseUnits(newAmount || '0', portfolioToken.decimals)
-          ])
-          break
-        }
-        case decreaseAllowanceInterface.getFunction('decreaseAllowance')!.selector: {
-          const tx = decreaseAllowanceInterface.parseTransaction(call)
-          if (!tx) {
-            addToast('Internal error: failed to set the approval amount', { type: 'error' })
-            return
+          case toFunctionSelector(decreaseAllowanceAbi[0]): {
+            const { args } = decodeFunctionData({
+              abi: decreaseAllowanceAbi,
+              data: replacedCall.data
+            })
+            const [spender] = args
+            calldata = encodeFunctionData({
+              abi: decreaseAllowanceAbi,
+              functionName: 'decreaseAllowance',
+              args: [spender, parseUnits(newAmount || '0', portfolioToken.decimals)]
+            })
+            break
           }
-          const [spender, amount] = tx.args
-          calldata = decreaseAllowanceInterface.encodeFunctionData('decreaseAllowance', [
-            spender,
-            parseUnits(newAmount || '0', portfolioToken.decimals)
-          ])
-          break
+          default:
+            addToast('Internal error: failed to edit the approval', { type: 'error' })
+            return
         }
-        default:
-          addToast('Internal error: failed to edit the approval', { type: 'error' })
-          return
+      } catch (e) {
+        addToast('Internal error: failed to set the approval amount', { type: 'error' })
+        return
       }
 
       // replace the data with the new approval
@@ -294,41 +305,43 @@ const TransactionSummary = ({
     const callToReplace = signAccountOpState.accountOp.calls.find((c) => c.id === call.id)
     if (!callToReplace) return
 
-    if (!call.data || call.data.length < 10) return
+    if (!call.data || call.data.length < 10 || !isHex(call.data)) return
     const selector = call.data.slice(0, 10)
 
     let amount: bigint | undefined
     let token: string | undefined
     try {
       switch (selector) {
-        case approveInterface.getFunction('approve')!.selector: {
-          const tx = approveInterface.parseTransaction(call)
-          if (!tx) return
-          const [spender, currentAmount] = tx.args
+        case toFunctionSelector(approveAbi[0]): {
+          const { args } = decodeFunctionData({ abi: approveAbi, data: call.data })
+          const [, currentAmount] = args
           amount = currentAmount
           token = call.to
           break
         }
-        case permitInterface.getFunction('approve')!.selector: {
-          const tx = permitInterface.parseTransaction(call)
-          if (!tx) return
-          const [_token, spender, currentAmount, expiration] = tx.args
+        case toFunctionSelector(permitAbi[0]): {
+          const { args } = decodeFunctionData({ abi: permitAbi, data: call.data })
+          const [_token, , currentAmount] = args
           amount = currentAmount
           token = _token
           break
         }
-        case increaseAllowanceInterface.getFunction('increaseAllowance')!.selector: {
-          const tx = increaseAllowanceInterface.parseTransaction(call)
-          if (!tx) return
-          const [spender, currentIncrease] = tx.args
+        case toFunctionSelector(increaseAllowanceAbi[0]): {
+          const { args } = decodeFunctionData({
+            abi: increaseAllowanceAbi,
+            data: call.data
+          })
+          const [, currentIncrease] = args
           amount = currentIncrease
           token = call.to
           break
         }
-        case decreaseAllowanceInterface.getFunction('decreaseAllowance')!.selector: {
-          const tx = decreaseAllowanceInterface.parseTransaction(call)
-          if (!tx) return
-          const [spender, currentDecrease] = tx.args
+        case toFunctionSelector(decreaseAllowanceAbi[0]): {
+          const { args } = decodeFunctionData({
+            abi: decreaseAllowanceAbi,
+            data: call.data
+          })
+          const [, currentDecrease] = args
           amount = currentDecrease
           token = call.to
           break
@@ -351,6 +364,38 @@ const TransactionSummary = ({
     return { setter: innerEditApproval, amount, token, callId: call.id }
   }, [call, innerEditApproval, portfolio, signAccountOpState])
 
+  // TODO: should this be reused in history/benzin/other places
+  const callVisualization = useMemo(() => {
+    if (!call.isFallback) return call.fullVisualization
+    if (!call.to) return call.fullVisualization
+    if (!call.data || call.data === '0x' || call.data.length < 10) return call.fullVisualization
+    if (isDecodedFunctionLoading) return [getLabel('Loading...')]
+    if (!decodedFunction) return call.fullVisualization
+    const functionName = decodedFunction.signature.split('(')[0]
+    if (!functionName || !functionName[0]) return call.fullVisualization
+
+    const capitalizedFunction = functionName[0].toUpperCase() + functionName.slice(1)
+    if (call.value) {
+      return [
+        getAction('Send'),
+        getToken(zeroAddress, call.value),
+        getLabel('and'),
+        getAction(`Call ${capitalizedFunction}`),
+        getLabel('from'),
+        getAddressVisualization(call.to)
+      ]
+    } else {
+      return [getAction(capitalizedFunction), getLabel('from'), getAddressVisualization(call.to)]
+    }
+  }, [
+    call.data,
+    call.fullVisualization,
+    call.isFallback,
+    call.to,
+    call.value,
+    decodedFunction,
+    isDecodedFunctionLoading
+  ])
   if (isCallRemovedOptimistic) return null
 
   return (
@@ -372,9 +417,9 @@ const TransactionSummary = ({
       }
       content={
         <>
-          {call.fullVisualization ? (
+          {callVisualization ? (
             <HumanizedVisualization
-              data={call.fullVisualization}
+              data={callVisualization}
               sizeMultiplierSize={sizeMultiplier[size]}
               textSize={textSize}
               imageSize={imageSize}
@@ -422,43 +467,14 @@ const TransactionSummary = ({
         </>
       }
       expandedContent={
-        <View
-          style={{
-            paddingHorizontal: SPACING_SM * sizeMultiplier[size],
-            paddingVertical: SPACING_TY * sizeMultiplier[size]
-          }}
-        >
-          {call.to && (
-            <Text selectable fontSize={12} style={styles.bodyText} weight="mono_regular">
-              <Text fontSize={12} style={styles.bodyText} weight="regular">
-                {t('Interacting with (to): ')}
-              </Text>
-              {call.to}
-            </Text>
-          )}
-          {foundCallSignature && (
-            <Text selectable fontSize={12} style={styles.bodyText}>
-              <Text fontSize={12} style={styles.bodyText} weight="regular">
-                {t('Function to call: ')}
-              </Text>
-              {foundCallSignature}
-            </Text>
-          )}
-          <Text selectable fontSize={12} style={styles.bodyText}>
-            <Text fontSize={12} style={styles.bodyText} weight="regular">
-              {t('Value to be sent (value): ')}
-            </Text>
-            {formatUnits(call.value || '0x0', 18)}
-          </Text>
-          <Text selectable fontSize={12} style={styles.bodyText}>
-            <Text fontSize={12} style={styles.bodyText} weight="regular">
-              {t('Data: ')}
-            </Text>
-            <Text fontSize={12} style={styles.bodyText} weight="mono_regular">
-              {call.data}
-            </Text>
-          </Text>
-        </View>
+        <ExpandedContent
+          call={call}
+          size={size}
+          sizeMultiplier={sizeMultiplier}
+          styles={styles}
+          decodedFunction={decodedFunction}
+          isDecodedFunctionLoading={isDecodedFunctionLoading}
+        />
       }
     >
       <View

@@ -29,7 +29,7 @@ export const windowMessenger = createMessenger({
     return new Promise((resolve, reject) => {
       const listener = (event: MessageEvent) => {
         if (!isValidReply({ id, message: event.data, topic })) return
-        // eslint-disable-next-line eqeqeq
+
         if (event.source != window) return
 
         window.removeEventListener('message', listener)
@@ -46,7 +46,7 @@ export const windowMessenger = createMessenger({
       if (!isValidSend({ message: event.data, topic })) return
 
       const sender = event.source
-      // eslint-disable-next-line eqeqeq
+
       if (sender != window) return
 
       if (topic.includes(globalIsAmbireNext ? 'broadcast-next' : 'broadcast')) {

@@ -13,7 +13,8 @@ import TokenData from '@common/modules/token-details/components/TokenData'
 import TokenPriceDisplay from '@common/modules/token-details/components/TokenPriceDisplay'
 import TokenDetailsTransactionHistory from '@common/modules/token-details/components/TransactionHistory'
 import useTokenDetails from '@common/modules/token-details/hooks/useTokenDetails'
-import spacings from '@common/styles/spacings'
+import spacings, { SPACING_MI } from '@common/styles/spacings'
+import flexbox from '@common/styles/utils/flexbox'
 import { MobileLayoutContainer } from '@mobile/components/MobileLayoutWrapper'
 
 import getStyles from './styles'
@@ -50,7 +51,21 @@ const TokenDetailsScreen = () => {
   } = getAndFormatTokenDetails(token, networks)
 
   return (
-    <MobileLayoutContainer>
+    <MobileLayoutContainer
+      footer={
+        <View style={[flexbox.directionRow, flexbox.alignStart, { columnGap: SPACING_MI }]}>
+          {actions.map((action) => (
+            <TokenDetailsButton
+              key={action.id}
+              {...action}
+              isDisabled={!!action.isDisabled}
+              token={token}
+              iconWidth={action.iconWidth}
+            />
+          ))}
+        </View>
+      }
+    >
       <Header.Wrapper>
         <Header.BackButton />
         <Header.Logo />
@@ -87,17 +102,6 @@ const TokenDetailsScreen = () => {
         <Exchanges exchanges={token.meta?.exchanges || []} />
         <TokenDetailsTransactionHistory />
       </ScrollableWrapper>
-      <View style={styles.actionsContainer}>
-        {actions.map((action) => (
-          <TokenDetailsButton
-            key={action.id}
-            {...action}
-            isDisabled={!!action.isDisabled}
-            token={token}
-            iconWidth={action.iconWidth}
-          />
-        ))}
-      </View>
     </MobileLayoutContainer>
   )
 }

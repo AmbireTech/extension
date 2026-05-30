@@ -70,7 +70,9 @@ jobs:
           echo "LEGENDS_NFT_ADDRESS=\"${{ vars.LEGENDS_NFT_ADDRESS }}\"" >> .env
           echo "LI_FI_API_KEY=\"${{ vars.LI_FI_API_KEY }}\"" >> .env
           echo "BUNGEE_API_KEY=\"${{ vars.BUNGEE_API_KEY }}\"" >> .env
+          echo "SQUID_INTEGRATOR_ID=\"${{ vars.SQUID_INTEGRATOR_ID }}\"" >> .env
           echo "SAFE_API_KEY=\"${{ vars.SAFE_API_KEY }}\"" >> .env
+          echo "WALLETCONNECT_PROJECT_ID=\"${{ vars.WALLETCONNECT_PROJECT_ID }}\"" >> .env
           echo "SENTRY_DSN_BROWSER_EXTENSION=\"${{ vars.SENTRY_DSN_BROWSER_EXTENSION }}\"" >> .env
 
           # Pull the ARM64 image first to ensure QEMU is properly initialized
@@ -91,7 +93,9 @@ jobs:
             -e LEGENDS_NFT_ADDRESS="${{ vars.LEGENDS_NFT_ADDRESS }}" \
             -e LI_FI_API_KEY="${{ vars.LI_FI_API_KEY }}" \
             -e BUNGEE_API_KEY="${{ vars.BUNGEE_API_KEY }}" \
+            -e SQUID_INTEGRATOR_ID="${{ vars.SQUID_INTEGRATOR_ID }}" \
             -e SAFE_API_KEY="${{ vars.SAFE_API_KEY }}" \
+            -e WALLETCONNECT_PROJECT_ID="${{ vars.WALLETCONNECT_PROJECT_ID }}" \
             -e SENTRY_DSN_BROWSER_EXTENSION="${{ vars.SENTRY_DSN_BROWSER_EXTENSION }}" \
             -e SENTRY_AUTH_TOKEN="${{ secrets.SENTRY_AUTH_TOKEN_BROWSER_EXTENSIONS }}" \
             --entrypoint /bin/sh \

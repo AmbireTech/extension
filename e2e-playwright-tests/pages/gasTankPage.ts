@@ -69,7 +69,9 @@ export class GasTankPage extends BasePage {
     await this.click(selectors.dashboard.activityTabButton)
 
     // open transaction modal
-    const firstTransaction = this.page.locator(selectors.dashboard.transactionSendText).first()
+    const firstTransaction = this.page
+      .locator(selectors.dashboard.transactionFuelGasTankText)
+      .first()
     await firstTransaction.click()
 
     // assert

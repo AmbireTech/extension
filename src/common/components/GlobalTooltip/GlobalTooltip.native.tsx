@@ -6,6 +6,7 @@ import { useModalize } from 'react-native-modalize'
 import InfoIcon from '@common/assets/svg/InfoIcon'
 import BottomSheet from '@common/components/BottomSheet'
 import ModalHeader from '@common/components/BottomSheet/ModalHeader'
+import { BOTTOM_SHEET_Z_INDEX } from '@common/components/BottomSheet/styles'
 import Text from '@common/components/Text'
 import { tooltipManager } from '@common/components/Tooltip/TooltipManager'
 import useTheme from '@common/hooks/useTheme'
@@ -40,6 +41,7 @@ export function GlobalTooltip() {
       id="global-tooltip-sheet"
       sheetRef={sheetRef}
       type="modal"
+      customZIndex={BOTTOM_SHEET_Z_INDEX + 10}
       onClosed={() => {
         // Guard: only call hide() once per close to prevent infinite loop
         if (isClosingRef.current) return

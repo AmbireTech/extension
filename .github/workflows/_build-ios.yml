@@ -62,6 +62,10 @@ jobs:
         run: yarn setup:ci
         shell: bash
 
+      - name: Build webview
+        run: yarn build:webview
+        shell: bash
+
       - name: Get version from app.json
         id: version
         run: echo "VERSION=$(grep '"version"' ./app.json | head -n1 | cut -d':' -f2 | tr -d ' ",')" >> $GITHUB_OUTPUT
@@ -149,7 +153,9 @@ jobs:
           LEGENDS_NFT_ADDRESS: ${{ vars.LEGENDS_NFT_ADDRESS }}
           LI_FI_API_KEY: ${{ vars.LI_FI_API_KEY }}
           BUNGEE_API_KEY: ${{ vars.BUNGEE_API_KEY }}
+          SQUID_INTEGRATOR_ID: ${{ vars.SQUID_INTEGRATOR_ID }}
           SAFE_API: ${{ vars.SAFE_API }}
+          WALLETCONNECT_PROJECT_ID: ${{ vars.WALLETCONNECT_PROJECT_ID }}
         run: ${{ inputs.build_command }}
         shell: bash
 

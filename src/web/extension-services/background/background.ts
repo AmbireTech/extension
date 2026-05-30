@@ -1,10 +1,3 @@
-/* eslint-disable no-param-reassign */
-/* eslint-disable no-console */
-/* eslint-disable no-await-in-loop */
-/* eslint-disable no-restricted-syntax */
-/* eslint-disable @typescript-eslint/no-use-before-define */
-/* eslint-disable @typescript-eslint/no-shadow */
-
 // We include `setImmediate` because ethers / viem cryptographic operations
 // (e.g. scrypt keystore unlock) rely on it for fast cooperative scheduling —
 // without it they fall back to slower timers and performance drops significantly.
@@ -32,7 +25,9 @@ import { parse, stringify } from '@ambire-common/libs/richJson/richJson'
 import wait from '@ambire-common/utils/wait'
 import CONFIG, { APP_VERSION, isAmbireNext, isDev, isProd } from '@common/config/env'
 import { controllersNestedInMainMapping } from '@common/constants/controllersMapping'
+import { AutoLockController } from '@common/controllers/auto-lock'
 import { WalletStateController } from '@common/controllers/wallet-state'
+import handleProviderRequests from '@common/modules/provider/handleProviderRequests'
 import { storage } from '@common/services/storage'
 import { Action, MethodAction } from '@common/types/actions'
 import { LOG_LEVELS, logInfoWithPrefix } from '@common/utils/logger'
@@ -48,7 +43,6 @@ import {
 } from '@env'
 import * as Sentry from '@sentry/browser'
 import { browser, platform } from '@web/constants/browserapi'
-import AutoLockController from '@web/extension-services/background/controllers/auto-lock'
 import { BadgesController } from '@web/extension-services/background/controllers/badges'
 import ExtensionUpdateController from '@web/extension-services/background/controllers/extension-update'
 import { handleActions } from '@web/extension-services/background/handlers/handleActions'
@@ -58,8 +52,6 @@ import {
   handleKeepBridgeContentScriptAcrossSessions,
   handleRegisterScripts
 } from '@web/extension-services/background/handlers/handleScripting'
-import handleProviderRequests from '@web/extension-services/background/provider/handleProviderRequests'
-import { providerRequestTransport } from '@web/extension-services/background/provider/providerRequestTransport'
 import { notificationManager } from '@web/extension-services/background/webapi/notification'
 import windowManager from '@web/extension-services/background/webapi/window'
 import {
@@ -77,6 +69,7 @@ import LedgerSigner from '@web/modules/hardware-wallet/libs/LedgerSigner'
 import TrezorSigner from '@web/modules/hardware-wallet/libs/TrezorSigner'
 import UrQrProtocolAdapter from '@web/modules/hardware-wallet/qr/protocol/UrQrProtocolAdapter'
 import QrHardwareSigner from '@web/modules/hardware-wallet/signers/QrHardwareSigner'
+import { providerRequestTransport } from '@web/modules/provider/providerRequestTransport'
 import { getExtensionInstanceId } from '@web/utils/analytics'
 
 import {
@@ -291,14 +284,15 @@ providerRequestTransport.reply(async ({ method, id, providerId, params }, meta) 
   mainCtrl.dapps.setSessionMessenger(session.sessionId, bridgeMessenger, isAmbireNext)
 
   try {
-    const res = await handleProviderRequests(
-      { method, params, session },
+    const res = await handleProviderRequests({
+      request: { method, params, session },
       mainCtrl,
       walletStateCtrl,
       autoLockCtrl,
-      id,
-      providerId
-    )
+      requestId: id,
+      providerId,
+      notificationManager
+    })
 
     return { id, result: res }
   } catch (error: any) {
@@ -363,7 +357,6 @@ const init = async () => {
         return fetch(url, init)
       }
     } catch (error) {
-      // eslint-disable-next-line no-console
       console.error(error)
       // If URL parsing fails, skip analytics for safety
       // @ts-ignore
@@ -426,7 +419,6 @@ const init = async () => {
 
       urlObj.searchParams.append('panVal', JSON.stringify({ a: currentAccount.addr, b: balance }))
 
-      // eslint-disable-next-line no-param-reassign
       url = decodeURIComponent(urlObj.toString())
     }
 
@@ -666,9 +658,8 @@ const init = async () => {
   browser.runtime.onConnect.addListener(async (port: Port) => {
     const [name, id] = port.name.split(':') as [Port['name'], Port['id']]
     if (['popup', 'tab', 'request-window'].includes(name)) {
-      // eslint-disable-next-line no-param-reassign
       port.id = id || nanoid()
-      // eslint-disable-next-line no-param-reassign
+
       port.name = name
       pm.addOrUpdatePort(port, () => {
         mainCtrl.ui.addView({ id: port.id, type: port.name })
@@ -811,7 +802,7 @@ try {
     while (!mainCtrl) await wait(200)
 
     const sessionKeys = Object.keys(mainCtrl.dapps.dappSessions || {})
-    // eslint-disable-next-line no-restricted-syntax
+
     for (const key of sessionKeys.filter((k) => k.startsWith(`${tabId}-`))) {
       mainCtrl.dapps.deleteDappSession(key)
     }

@@ -1,4 +1,3 @@
-/* eslint-disable no-param-reassign */
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { Controller, useForm } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
@@ -340,7 +339,6 @@ const NetworkForm = ({
         setValidatingRPC(false)
         clearErrors('rpcUrl')
       } catch (error) {
-        // eslint-disable-next-line no-console
         console.error(error)
         setValidatingRPC(false)
         setError('rpcUrl', { type: 'custom-error', message: 'Invalid RPC URL' })
@@ -469,7 +467,7 @@ const NetworkForm = ({
   }, [addToast, onSaved, selectedNetwork?.name, statuses.updateNetwork])
 
   const handleSubmitButtonPress = () => {
-    // eslint-disable-next-line prettier/prettier, @typescript-eslint/no-floating-promises
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises
     handleSubmit(async (formFields: any) => {
       let emptyFields: string[] = []
 
@@ -547,7 +545,7 @@ const NetworkForm = ({
     (url: string) => {
       if (selectedRpcUrl !== url) {
         setSelectedRpcUrl(url)
-        // eslint-disable-next-line @typescript-eslint/no-floating-promises
+
         const chainId = watch('chainId')
         if (chainId) {
           networksDispatch({

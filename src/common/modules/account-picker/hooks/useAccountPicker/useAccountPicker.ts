@@ -77,6 +77,9 @@ const useAccountPicker = () => {
 
   useEffect(() => {
     if (isInitialized) return
+    // Don't dispatch init if params were cleared by a reset (e.g. tab reload).
+    if (!initParams) return
+
     accountPickerDispatch({
       type: 'method',
       params: {
@@ -84,6 +87,11 @@ const useAccountPicker = () => {
         args: []
       }
     })
+    // initParams is intentionally excluded from the deps array — it's read as
+    // a gate only, not a trigger. Including it causes double-init because every
+    // state update through the extension messaging layer creates a new object
+    // reference, making React see a "change" and re-firing the effect.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [accountPickerDispatch, isInitialized])
 
   useEffect(() => {

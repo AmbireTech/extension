@@ -1,5 +1,4 @@
-/* eslint-disable react/prop-types */
-import React, { FC, ReactNode, useCallback, useEffect, useRef } from 'react'
+import React, { FC, ReactNode, useCallback, useEffect, useMemo, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
   FlatList,
@@ -88,6 +87,42 @@ const SelectContainer: FC<Props> = ({
     }
   }, [isMenuOpen, mode])
 
+  // Memoize the BottomSheet header so its JSX reference is stable across
+  // renders when inputs don't change. Without this, every SelectContainer
+  // render passes a new `HeaderComponent` element to `BottomSheetContainer`,
+  // which defeats `React.memo` on the inner `BottomSheet` and feeds the
+  // nested-Portal infinite-update loop.
+  const bottomSheetHeader = useMemo(
+    () => (
+      <View>
+        <ModalHeader title={bottomSheetTitle} handleClose={toggleMenu} />
+        {renderHeaderChildren?.({ toggleMenu, setIsMenuOpen, isMenuOpen, selectRef })}
+        {!!withSearch && (
+          <Search
+            placeholder={searchPlaceholder || t('Search...')}
+            autoFocus={false}
+            setInputRef={setInputRef}
+            control={control}
+            containerStyle={spacings.mb}
+          />
+        )}
+      </View>
+    ),
+    [
+      bottomSheetTitle,
+      toggleMenu,
+      renderHeaderChildren,
+      setIsMenuOpen,
+      isMenuOpen,
+      selectRef,
+      withSearch,
+      searchPlaceholder,
+      t,
+      setInputRef,
+      control
+    ]
+  )
+
   return (
     <View style={[styles.selectContainer, containerStyle]} testID={testID}>
       {!!label && (
@@ -169,21 +204,7 @@ const SelectContainer: FC<Props> = ({
           contentRef={listRef}
           sectionListProps={sectionListProps}
           flatListProps={flatListProps}
-          HeaderComponent={
-            <View>
-              <ModalHeader title={bottomSheetTitle} handleClose={toggleMenu} />
-              {renderHeaderChildren?.({ toggleMenu, setIsMenuOpen, isMenuOpen, selectRef })}
-              {!!withSearch && (
-                <Search
-                  placeholder={searchPlaceholder || t('Search...')}
-                  autoFocus={false}
-                  setInputRef={setInputRef}
-                  control={control}
-                  containerStyle={spacings.mb}
-                />
-              )}
-            </View>
-          }
+          HeaderComponent={bottomSheetHeader}
         >
           {children}
         </BottomSheetContainer>

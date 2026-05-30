@@ -213,7 +213,7 @@ const remove = async (winId: number, pm: PortMessenger) => {
       if (firstTab?.id)
         await chrome.tabs.update(firstTab.id, { url: 'about:blank' }).catch((e) => console.error(e))
       event.emit('windowRemoved', winId)
-      // eslint-disable-next-line @typescript-eslint/no-floating-promises
+
       return
     }
   }
@@ -265,7 +265,6 @@ const focus = async (
     let timeoutId: NodeJS.Timeout
 
     const cleanup = () => {
-      // eslint-disable-next-line @typescript-eslint/no-use-before-define
       chrome.windows.onFocusChanged.removeListener(focusListener)
       if (timeoutId) clearTimeout(timeoutId)
     }
@@ -330,7 +329,6 @@ const closeCurrentWindow = async () => {
       const win = await chrome.windows.getCurrent()
       await chrome.windows.remove(win.id!)
     } catch (e) {
-      // eslint-disable-next-line no-console
       console.error(e)
     }
   } else {

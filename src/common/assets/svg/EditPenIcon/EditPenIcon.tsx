@@ -3,11 +3,11 @@ import Svg, { Path, SvgProps } from 'react-native-svg'
 
 import useTheme from '@common/hooks/useTheme'
 
-const EditPenIcon: React.FC<SvgProps> = ({ width = 24, height = 24, color }) => {
+const EditPenIcon: React.FC<SvgProps> = ({ width = 24, height = 24, color, ...rest }) => {
   const { theme } = useTheme()
 
   return (
-    <Svg width={width} height={height} viewBox="0 0 20 20" fill="none">
+    <Svg width={width} height={height} viewBox="0 0 20 20" fill="none" {...rest}>
       <Path
         stroke={color || theme.iconPrimary}
         strokeWidth="1.5"

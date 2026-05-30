@@ -1,7 +1,7 @@
 import { formatUnits } from 'ethers'
 import React, { Fragment, useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { View } from 'react-native'
+import { Pressable, View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 
 import { EstimationStatus } from '@ambire-common/controllers/estimation/types'
@@ -14,6 +14,7 @@ import { ZERO_ADDRESS } from '@ambire-common/services/socket/constants'
 import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
 import AssetIcon from '@common/assets/svg/AssetIcon'
 import FeeIcon from '@common/assets/svg/FeeIcon'
+import SettingsIcon from '@common/assets/svg/SettingsIcon'
 import Alert from '@common/components/Alert'
 import Button from '@common/components/Button'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
@@ -30,6 +31,7 @@ import EstimationSkeleton from '@common/modules/sign-account-op/components/Estim
 import PayOption from '@common/modules/sign-account-op/components/Estimation/components/PayOption'
 import ServiceFee from '@common/modules/sign-account-op/components/Estimation/components/ServiceFee'
 import Sponsored from '@common/modules/sign-account-op/components/Estimation/components/Sponsored'
+import PendingTransactions from '@common/modules/sign-account-op/components/PendingTransactions'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
@@ -103,7 +105,9 @@ const Estimation = ({
   slowRequest,
   bundlerNonceDiscrepancy,
   serviceFee,
-  isOneClick
+  isOneClick,
+  isViewOnly,
+  shouldShowTxnDetails = false
 }: Props) => {
   const { dispatch: signAccountOpDispatch } = useController('SignAccountOpController')
   const { dispatch: swapAndBridgeDispatch } = useController('SwapAndBridgeController')
@@ -179,13 +183,6 @@ const Estimation = ({
     [swapAndBridgeDispatch, transferDispatch, signAccountOpDispatch, updateType]
   )
 
-  const payValue = useMemo(() => {
-    return (
-      payOptionsPaidByUsOrGasTank.find(({ value }) => value === selectedFeeOption) ||
-      payOptionsPaidByEOA.find(({ value }) => value === selectedFeeOption)
-    )
-  }, [payOptionsPaidByUsOrGasTank, payOptionsPaidByEOA, selectedFeeOption])
-
   const setFeeOption = useCallback(
     (localPayValue: any, skipDispatch?: boolean) => {
       if (!signAccountOpState?.selectedFeeSpeed) return
@@ -203,6 +200,35 @@ const Estimation = ({
     },
     [dispatchUpdate, signAccountOpState?.selectedFeeSpeed]
   )
+
+  const payValue = useMemo(() => {
+    const result =
+      payOptionsPaidByUsOrGasTank.find(({ value }) => value === selectedFeeOption) ||
+      payOptionsPaidByEOA.find(({ value }) => value === selectedFeeOption)
+
+    // If result becomes undefined because of a recalculation to availableFeeOptions,
+    // we reset it the first available option from whatever is available.
+    if (result === undefined && selectedFeeOption) {
+      const firstOption = payOptionsPaidByUsOrGasTank[0] || payOptionsPaidByEOA[0]
+      if (!firstOption) return undefined
+
+      setFeeOption(
+        {
+          value: firstOption.value,
+          label: firstOption.label,
+          extraSearchProps: firstOption.extraSearchProps,
+          paidByAccountLabel: firstOption.paidByAccountLabel,
+          paidBy: firstOption.paidBy,
+          token: firstOption.token,
+          disabled: firstOption.disabled,
+          speedCoverage: firstOption.speedCoverage
+        },
+        false
+      )
+    }
+
+    return result
+  }, [payOptionsPaidByUsOrGasTank, payOptionsPaidByEOA, selectedFeeOption, setFeeOption])
 
   useEffect(() => {
     if (!hasEstimation || !signAccountOpState) return
@@ -283,7 +309,6 @@ const Estimation = ({
   const onFeeSelect = useCallback(
     ({ value }: { value: string }) => {
       if (!Object.values(FeeSpeed).includes(value as FeeSpeed)) {
-        // eslint-disable-next-line no-console
         console.error('Invalid fee speed')
         return
       }
@@ -482,6 +507,24 @@ const Estimation = ({
         selectedOption={signAccountOpState.selectedOption}
         sheetRef={customGasPriceSheetRef}
       />
+      {!!isOneClick && shouldShowTxnDetails && (
+        <View style={spacings.mv}>
+          <PendingTransactions
+            network={network}
+            setDelegation={signAccountOpState?.accountOp.meta?.setDelegation}
+            delegatedContract={signAccountOpState?.delegatedContract}
+            hideDeleteIcon
+            signAccountOpState={signAccountOpState}
+            size="md"
+          />
+        </View>
+      )}
+      <View>
+        <BundlerWarning
+          signAccountOpState={signAccountOpState}
+          bundlerNonceDiscrepancy={bundlerNonceDiscrepancy}
+        />
+      </View>
       <View
         style={[
           flexbox.directionRow,
@@ -506,21 +549,31 @@ const Estimation = ({
             }
             style={spacings.mlTy}
           >
-            <Button
-              type="ghost"
-              size="tiny"
-              text={t('Advanced options')}
-              textUnderline
-              disabled={!canSetCustomGasPrices}
-              onPress={openAdvancedOptions}
-              hasBottomSpacing={false}
-              style={{
-                alignSelf: 'flex-start',
-                paddingHorizontal: 0,
-                minHeight: 0
-              }}
-              textStyle={{ color: theme.secondaryText }}
-            />
+            {isMobile ? (
+              <Pressable
+                disabled={!canSetCustomGasPrices}
+                onPress={openAdvancedOptions}
+                style={!canSetCustomGasPrices && { opacity: 0.3 }}
+              >
+                <SettingsIcon />
+              </Pressable>
+            ) : (
+              <Button
+                type="ghost"
+                size="tiny"
+                text={t('Advanced options')}
+                textUnderline
+                disabled={!canSetCustomGasPrices}
+                onPress={openAdvancedOptions}
+                hasBottomSpacing={false}
+                style={{
+                  alignSelf: 'flex-start',
+                  paddingHorizontal: 0,
+                  minHeight: 0
+                }}
+                textStyle={{ color: theme.secondaryText }}
+              />
+            )}
           </View>
         </View>
         {selectedFee && (
@@ -573,10 +626,6 @@ const Estimation = ({
         serviceFee={serviceFee}
         paidByNativeValue={paidByNativeValue}
         nativeFeeOption={nativeFeeOption}
-      />
-      <BundlerWarning
-        signAccountOpState={signAccountOpState}
-        bundlerNonceDiscrepancy={bundlerNonceDiscrepancy}
       />
       {v1warning && !signAccountOpState.errors.length && (
         <View

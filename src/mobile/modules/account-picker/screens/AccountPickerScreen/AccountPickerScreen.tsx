@@ -9,7 +9,6 @@ import ChangeHdPath from '@common/modules/account-picker/components/ChangeHdPath
 import useAccountPicker from '@common/modules/account-picker/hooks/useAccountPicker/useAccountPicker'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
 import spacings from '@common/styles/spacings'
-import flexbox from '@common/styles/utils/flexbox'
 import {
   MobileLayoutContainer,
   MobileLayoutWrapperMainContent
@@ -30,7 +29,29 @@ const AccountPickerScreen = () => {
   const { goToPrevRoute } = useOnboardingNavigation()
 
   return (
-    <MobileLayoutContainer>
+    <MobileLayoutContainer
+      footer={
+        <Button
+          testID="button-import-account"
+          hasBottomSpacing={false}
+          onPress={onImportReady}
+          size="large"
+          disabled={isImportDisabled}
+          text={
+            isLoading
+              ? t('Importing...')
+              : !accountPickerState.selectedAccounts.length
+                ? t('Continue')
+                : t('Import accounts')
+          }
+          childrenPosition="left"
+        >
+          {!!accountPickerState.selectedAccounts.length && (
+            <ImportAccountIcon width={24} height={24} color="#fff" style={spacings.mrMi} />
+          )}
+        </Button>
+      }
+    >
       <MobileLayoutWrapperMainContent
         withBackButton
         onBackButtonPress={goToPrevRoute}
@@ -50,27 +71,7 @@ const AccountPickerScreen = () => {
           subType={accountPickerState.subType}
           isLoading={isLoading}
           lookingForLinkedAccounts={accountPickerState.linkedAccountsLoading}
-        >
-          <Button
-            testID="button-import-account"
-            hasBottomSpacing={false}
-            onPress={onImportReady}
-            size="large"
-            disabled={isImportDisabled}
-            text={
-              isLoading
-                ? t('Importing...')
-                : !accountPickerState.selectedAccounts.length
-                  ? t('Continue')
-                  : t('Import accounts')
-            }
-            childrenPosition="left"
-          >
-            {!!accountPickerState.selectedAccounts.length && (
-              <ImportAccountIcon width={24} height={24} color="#fff" style={spacings.mrMi} />
-            )}
-          </Button>
-        </AccountsOnPageList>
+        />
       </MobileLayoutWrapperMainContent>
     </MobileLayoutContainer>
   )

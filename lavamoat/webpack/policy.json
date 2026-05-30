@@ -713,7 +713,7 @@
       "packages": {
         "@metamask/eth-sig-util>@metamask/utils>@metamask/superstruct": true,
         "@noble/hashes": true,
-        "ox>@scure/bip32>@scure/base": true,
+        "@walletconnect/utils>@scure/base": true,
         "buffer": true,
         "eslint>debug": true,
         "@metamask/eth-sig-util>@metamask/utils>pony-cause": true,
@@ -871,7 +871,7 @@
         "TextEncoder": true
       }
     },
-    "ox>@scure/bip32>@scure/base": {
+    "@walletconnect/utils>@scure/base": {
       "globals": {
         "TextDecoder": true,
         "TextEncoder": true
@@ -1993,7 +1993,7 @@
         "react-native-web>inline-style-prefixer>css-in-js-utils": true
       }
     },
-    "expo-linking>invariant": {
+    "expo-camera>invariant": {
       "globals": {
         "process.env.NODE_ENV": true
       }
@@ -2022,7 +2022,7 @@
         "patch-package>json-stable-stringify>call-bound": true,
         "eslint-plugin-react>array-includes>es-abstract>get-proto": true,
         "eslint-plugin-react>array-includes>is-string>has-tostringtag": true,
-        "eslint-plugin-jsx-a11y>safe-regex-test": true
+        "eslint-plugin-react>array-includes>es-abstract>safe-regex-test": true
       }
     },
     "@ngraveio/bc-ur>assert>is-nan": {
@@ -2031,7 +2031,7 @@
         "eslint-plugin-react>object.values>define-properties": true
       }
     },
-    "eslint-plugin-jsx-a11y>safe-regex-test>is-regex": {
+    "@ambire/signature-validator>tape>is-regex": {
       "packages": {
         "patch-package>json-stable-stringify>call-bound": true,
         "eslint-plugin-react>es-iterator-helpers>gopd": true,
@@ -2539,7 +2539,7 @@
         "react-native-gesture-handler>@egjs/hammerjs": true,
         "node-polyfill-webpack-plugin>console-browserify": true,
         "react-native-gesture-handler>hoist-non-react-statics": true,
-        "expo-linking>invariant": true,
+        "expo-camera>invariant": true,
         "react": true,
         "react-native-reanimated": true,
         "react-native-web": true
@@ -2971,11 +2971,11 @@
         "buffer": true
       }
     },
-    "eslint-plugin-jsx-a11y>safe-regex-test": {
+    "eslint-plugin-react>array-includes>es-abstract>safe-regex-test": {
       "packages": {
         "patch-package>json-stable-stringify>call-bound": true,
         "eslint-plugin-react>es-iterator-helpers>es-errors": true,
-        "eslint-plugin-jsx-a11y>safe-regex-test>is-regex": true
+        "@ambire/signature-validator>tape>is-regex": true
       }
     },
     "react-dom>scheduler": {
@@ -3351,22 +3351,12 @@
     "gridplus-sdk>zod": {
       "globals": {
         "File": true,
-        "JSONSchema": true,
         "URL": true,
+        "__zod_globalConfig": true,
         "__zod_globalRegistry": true,
         "atob": true,
         "btoa": true,
-        "coerce": true,
-        "console.warn": true,
-        "core": true,
-        "iso": true,
-        "locales": true,
-        "navigator": true,
-        "regexes": true,
-        "util": true
-      },
-      "packages": {
-        "node-polyfill-webpack-plugin>console-browserify": true
+        "navigator": true
       }
     }
   }

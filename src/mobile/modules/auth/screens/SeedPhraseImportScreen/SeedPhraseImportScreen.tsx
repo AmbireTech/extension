@@ -14,7 +14,6 @@ import useTheme from '@common/hooks/useTheme'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
 import useSeedPhraseImport from '@common/modules/auth/hooks/useSeedPhraseImport'
 import getStyles from '@common/modules/auth/styles/seedPhraseImportScreenStyles'
-import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import {
   MobileLayoutContainer,
@@ -37,7 +36,18 @@ const SeedPhraseImportScreen = () => {
   const { theme, styles } = useTheme(getStyles)
 
   return (
-    <MobileLayoutContainer>
+    <MobileLayoutContainer
+      footer={
+        <Button
+          testID="import-button"
+          size="large"
+          text={t('Confirm')}
+          hasBottomSpacing={false}
+          onPress={handleFormSubmit}
+          disabled={!isValid || seedPhraseStatus === 'invalid'}
+        />
+      }
+    >
       <MobileLayoutWrapperMainContent
         withBackButton
         onBackButtonPress={goToPrevRoute}
@@ -45,7 +55,6 @@ const SeedPhraseImportScreen = () => {
         step={1}
         totalSteps={2}
         withScroll
-        keyboardAwareScrollViewProps={{ bottomOffset: 140 }}
       >
         <Controller
           control={control}
@@ -160,15 +169,7 @@ const SeedPhraseImportScreen = () => {
             />
           </View>
         ) : null}
-        <View style={[flexbox.flex1, spacings.mb]} />
-        <Button
-          testID="import-button"
-          size="large"
-          text={t('Confirm')}
-          hasBottomSpacing={false}
-          onPress={handleFormSubmit}
-          disabled={!isValid || seedPhraseStatus === 'invalid'}
-        />
+        <View style={flexbox.flex1} />
       </MobileLayoutWrapperMainContent>
     </MobileLayoutContainer>
   )

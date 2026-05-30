@@ -22,7 +22,8 @@ import {
   BalanceChange,
   fetchFrontRanTxnId,
   fetchTxnId,
-  SubmittedAccountOp
+  SubmittedAccountOp,
+  SubmittedAccountOpLike
 } from '@ambire-common/libs/accountOp/submittedAccountOp'
 import { AccountOpStatus, Call } from '@ambire-common/libs/accountOp/types'
 import { decodeFeeCall } from '@ambire-common/libs/calls/calls'
@@ -88,7 +89,7 @@ export interface StepsData {
   userOp: UserOperation | null
   delegation?: EIP7702Auth
   extensionAccOp?: SubmittedAccountOp
-  submittedAccountOp?: SubmittedAccountOp | null
+  submittedAccountOp?: SubmittedAccountOpLike | null
 }
 
 // if the transaction hash is found, we make the top url the real txn id
@@ -135,7 +136,7 @@ const parseHumanizer = (humanizedCalls: IrCall[]): IrCall[] => {
   const finalParsedCalls = humanizedCalls.map((call) => {
     const localCall: IrCall = { ...call }
     localCall.fullVisualization = call.fullVisualization?.filter(
-      (visual) => visual.type !== 'deadline' && !visual.isHidden
+      (visual) => visual.type !== 'deadline'
     )
     localCall.warnings = call.warnings?.filter((warn) => warn.content !== 'Unknown address')
     return localCall
@@ -203,7 +204,7 @@ const useSteps = ({
   const [isFrontRan, setIsFrontRan] = useState<boolean>(false)
   const [isFetching, setIsFetching] = useState<boolean>(false)
   const [balanceChanges, setBalanceChanges] = useState<BalanceChange[] | undefined>(undefined)
-  const [activityAccOp, setActivityAccOp] = useState<SubmittedAccountOp | null>(null)
+  const [activityAccOp, setActivityAccOp] = useState<SubmittedAccountOpLike | null>(null)
   const [shouldTryBlockFetch, setShouldTryBlockFetch] = useState<boolean>(true)
   const [refetchStatus, setRefetchStatus] = useState<number>(0)
   const {
@@ -775,7 +776,6 @@ const useSteps = ({
         ? handleOps060.decodeFunctionData('handleOps', txn.data)
         : handleOps070.decodeFunctionData('handleOps', txn.data)
     } catch (e) {
-      // eslint-disable-next-line no-console
       console.log('this txn is an userOp but does not call handleOps')
       setUserOp({
         sender: '',
@@ -916,7 +916,6 @@ const useSteps = ({
         isGasTank = isTokenGasTank
         tokenChainId = chainId
       } catch (e) {
-        // eslint-disable-next-line no-console
         console.error('Error decoding fee call', e)
       }
     }
@@ -936,7 +935,6 @@ const useSteps = ({
       (!!userOp && !!userOp.paymaster && userOp.paymaster !== AMBIRE_PAYMASTER)
     if (!address || (!amount && !isSponsored)) return
 
-    // eslint-disable-next-line @typescript-eslint/no-floating-promises
     resolveAssetInfo(
       address,
       networks.find((net: Network) => net.chainId === tokenChainId)!,
@@ -1001,7 +999,7 @@ const useSteps = ({
               {
                 accountId: from,
                 chainId: network.chainId,
-                tokenAddrs: getBalanceChangeTokenAddresses(foundTokens),
+                tokenAddrs: getBalanceChangeTokenAddresses(foundTokens, network.chainId),
                 blockTag: Number(txnReceipt.blockNumber),
                 accountAddr: from,
                 receipts: [
