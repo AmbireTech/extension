@@ -6,6 +6,7 @@ import { Navigate, Route, Routes } from 'react-router-native'
 import { ControllersMiddlewareContext } from '@common/contexts/controllersMiddlewareContext'
 import { ControllersStateLoadedContext } from '@common/contexts/controllersStateLoadedContext'
 import useController from '@common/hooks/useController'
+import useFonts from '@common/hooks/useFonts'
 import useRoute from '@common/hooks/useRoute'
 import { AUTH_STATUS } from '@common/modules/auth/constants/authStatus'
 import useAuth from '@common/modules/auth/hooks/useAuth'
@@ -36,6 +37,10 @@ const Router = () => {
   const transferState = useController('TransferController').state
   const { areControllerStatesLoaded } = useContext(ControllersStateLoadedContext)
   const { dispatch } = useContext(ControllersMiddlewareContext)
+  // Fonts load in parallel with controller boot (the tree mounts before fonts
+  // are ready — see AppInit). Gate the splash hide on fonts too so the first
+  // painted frame already has the custom fonts applied.
+  const { fontsLoaded } = useFonts()
 
   // Wrap onBottomSheetClosed to emit event for DappWebViewScreen focus
   // Must be at top level before any early returns
@@ -47,7 +52,7 @@ const Router = () => {
 
   const splashHidden = useRef(false)
 
-  const isReady = authStatus !== AUTH_STATUS.LOADING && areControllerStatesLoaded
+  const isReady = authStatus !== AUTH_STATUS.LOADING && areControllerStatesLoaded && fontsLoaded
 
   useEffect(() => {
     if (isReady && !splashHidden.current) {
@@ -62,7 +67,7 @@ const Router = () => {
     }
   }, [isReady, dispatch])
 
-  // Keep the native splash screen visible until controllers and auth are ready
+  // Keep the native splash screen visible until controllers, auth and fonts are ready
   if (!isReady) {
     return null
   }

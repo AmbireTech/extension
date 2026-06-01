@@ -140,8 +140,10 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, {}>((_, ref) => {
       switch (data.type) {
         case 'system.loaded': {
           const isReload = isReadyRef.current
-          const isReloadStr = isReload ? ' (RELOAD detected)' : ''
-          console.log(`[WebViewWorker] WebView internal script loaded${isReloadStr}`)
+          if (__DEV__) {
+            const isReloadStr = isReload ? ' (RELOAD detected)' : ''
+            console.log(`[WebViewWorker] WebView internal script loaded${isReloadStr}`)
+          }
 
           // Reset ready state — the WebView has a fresh JS context
           isReadyRef.current = false
@@ -360,7 +362,7 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, {}>((_, ref) => {
           break
 
         default:
-          console.warn('Unknown message from WebViewWorker:', data.type)
+          if (__DEV__) console.warn('Unknown message from WebViewWorker:', data.type)
       }
     } catch (e) {
       console.error('Failed to handle message from WebView worker', e)
