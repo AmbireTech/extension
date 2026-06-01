@@ -192,6 +192,14 @@ type SetBootPhaseAction = {
   params: { phase: 'critical' | 'full' }
 }
 
+// Mobile-only. The UI reports which controllers currently have at least one
+// active `useController` subscriber so the WebView worker can skip serializing
+// and bridging the state of controllers no screen is displaying.
+type SetSubscribedControllersAction = {
+  type: 'SET_SUBSCRIBED_CONTROLLERS'
+  params: { controllers: string[] }
+}
+
 export type Action =
   | UpdateNavigationUrl
   | UpdateUiViewRoute
@@ -219,3 +227,4 @@ export type Action =
   | RestoreWcSessionsAction
   | DisconnectWcSessionAction
   | SetBootPhaseAction
+  | SetSubscribedControllersAction

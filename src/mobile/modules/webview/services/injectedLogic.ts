@@ -11,8 +11,11 @@ import { handleActions } from '@mobile/handlers/handleActions'
 import {
   buildStateForFE,
   getBootPhase,
+  isControllerSubscribed,
   isCriticalController,
+  isSubscriptionGateActive,
   queueDeferredCtrlPayload,
+  queueSuppressedCtrlPayload,
   setCriticalControllers
 } from './bootPhase'
 import { createBridgedFetch } from './bridgedFetch'
@@ -54,6 +57,20 @@ function debounceFrontEndEventUpdatesOnSameTick(
   // one update per deferred controller, not the full history.
   if (getBootPhase() === 'critical' && !isCriticalController(ctrlName)) {
     queueDeferredCtrlPayload(ctrlName, ctrl, forceEmit)
+    return 'DEBOUNCED'
+  }
+
+  // Suppress non-critical controllers that no screen is currently displaying.
+  // The expensive toJSON + stringify + bridge + parse round trip only happens
+  // for state the UI actually consumes. We keep the latest reference so the
+  // moment a screen subscribes, the queued state is flushed (see
+  // setSubscribedControllers) and the UI never renders stale data.
+  if (
+    isSubscriptionGateActive() &&
+    !isCriticalController(ctrlName) &&
+    !isControllerSubscribed(ctrlName)
+  ) {
+    queueSuppressedCtrlPayload(ctrlName, ctrl, forceEmit)
     return 'DEBOUNCED'
   }
 

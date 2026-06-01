@@ -6,7 +6,7 @@ import { KeyIterator } from '@ambire-common/libs/keyIterator/keyIterator'
 import handleProviderRequests from '@common/modules/provider/handleProviderRequests'
 import { Action, MethodAction } from '@common/types/actions'
 import { getWcTabIdFromTopic } from '@mobile/modules/wallet-connect/utils'
-import { setBootPhase } from '@mobile/modules/webview/services/bootPhase'
+import { setBootPhase, setSubscribedControllers } from '@mobile/modules/webview/services/bootPhase'
 import { mobileMessenger } from '@mobile/modules/webview/services/mobileMessenger'
 import { createWcBridgeMessenger } from '@mobile/modules/webview/services/wcBridgeMessenger'
 
@@ -72,6 +72,11 @@ export const handleActions = async (
 
     case 'SET_BOOT_PHASE': {
       setBootPhase(params.phase)
+      break
+    }
+
+    case 'SET_SUBSCRIBED_CONTROLLERS': {
+      setSubscribedControllers(params.controllers)
       break
     }
 

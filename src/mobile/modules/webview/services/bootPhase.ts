@@ -17,6 +17,17 @@ let criticalControllerSet: Set<string> = new Set()
 // already does for non-deferred controllers.
 const deferredCtrlPayloads: Map<string, { ctrl: any; forceEmit?: boolean }> = new Map()
 
+// Set of controllers the UI currently has an active subscriber for. Until the
+// UI sends its first SET_SUBSCRIBED_CONTROLLERS, this gate stays inactive and
+// every controller streams as before (no suppression during the boot window
+// before the middleware has wired up the subscription reporting).
+let hasReceivedSubscriptionSet = false
+let subscribedControllerSet: Set<string> = new Set()
+// Latest queued state per suppressed (unsubscribed, non-critical) controller —
+// same collapse-to-latest semantics as the deferred queue. Drained the moment
+// a controller gains a subscriber so the UI never renders stale state.
+const suppressedCtrlPayloads: Map<string, { ctrl: any; forceEmit?: boolean }> = new Map()
+
 export function setCriticalControllers(controllers: string[]) {
   criticalControllerSet = new Set<string>(controllers)
 }
@@ -33,6 +44,20 @@ export function queueDeferredCtrlPayload(ctrlName: string, ctrl: any, forceEmit?
   deferredCtrlPayloads.set(ctrlName, { ctrl, forceEmit })
 }
 
+// `true` once the UI has reported its subscription set at least once. While
+// `false`, the subscription gate is inactive and nothing is suppressed.
+export function isSubscriptionGateActive() {
+  return hasReceivedSubscriptionSet
+}
+
+export function isControllerSubscribed(ctrlName: string) {
+  return subscribedControllerSet.has(ctrlName)
+}
+
+export function queueSuppressedCtrlPayload(ctrlName: string, ctrl: any, forceEmit?: boolean) {
+  suppressedCtrlPayloads.set(ctrlName, { ctrl, forceEmit })
+}
+
 function buildStateForFE(ctrlName: string, ctrl: any) {
   const stateToSendToFE = ctrl.toJSON()
 
@@ -47,6 +72,29 @@ function buildStateForFE(ctrlName: string, ctrl: any) {
   return stateToSendToFE
 }
 
+// Drains queued controller payloads to the RN side across microtasks (one per
+// `setTimeout` tick) so the bridge isn't flooded by a single synchronous burst.
+function drainCtrlPayloads(entries: [string, { ctrl: any; forceEmit?: boolean }][]) {
+  entries.forEach(([ctrlName, { ctrl, forceEmit }], index) => {
+    setTimeout(() => {
+      try {
+        sendToReactEvent('ctrl.update', {
+          ctrlName,
+          state: buildStateForFE(ctrlName, ctrl),
+          forceEmit
+        })
+      } catch (err) {
+        ;(err as any).controllerName = ctrlName
+        console.error('Debug: Failed to drain queued update for ctrl', ctrlName, err)
+        sendToReactEvent('ctrl.error', {
+          ctrlName,
+          errors: [{ message: (err as any).message, stack: (err as any).stack }]
+        })
+      }
+    }, index)
+  })
+}
+
 // Called by the SET_BOOT_PHASE action once the RN side has hidden the splash
 // and is ready to absorb the heavy controller payloads. Drains the deferred
 // queue across microtasks so the bridge isn't flooded by a single sync burst.
@@ -58,25 +106,31 @@ export function setBootPhase(phase: 'critical' | 'full') {
 
   const entries = Array.from(deferredCtrlPayloads.entries())
   deferredCtrlPayloads.clear()
+  drainCtrlPayloads(entries)
+}
 
-  entries.forEach(([ctrlName, { ctrl, forceEmit }], index) => {
-    setTimeout(() => {
-      try {
-        sendToReactEvent('ctrl.update', {
-          ctrlName,
-          state: buildStateForFE(ctrlName, ctrl),
-          forceEmit
-        })
-      } catch (err) {
-        ;(err as any).controllerName = ctrlName
-        console.error('Debug: Failed to drain deferred update for ctrl', ctrlName, err)
-        sendToReactEvent('ctrl.error', {
-          ctrlName,
-          errors: [{ message: (err as any).message, stack: (err as any).stack }]
-        })
-      }
-    }, index)
+// Called by the SET_SUBSCRIBED_CONTROLLERS action whenever the set of
+// controllers the UI is displaying changes. Activates the gate on first call,
+// then flushes the latest queued state of every controller that just gained a
+// subscriber so the UI never renders stale state for a freshly opened screen.
+export function setSubscribedControllers(controllers: string[]) {
+  const nextSet = new Set(controllers)
+
+  const newlySubscribed = controllers.filter(
+    (ctrlName) => !subscribedControllerSet.has(ctrlName) && suppressedCtrlPayloads.has(ctrlName)
+  )
+
+  subscribedControllerSet = nextSet
+  hasReceivedSubscriptionSet = true
+
+  if (newlySubscribed.length === 0) return
+
+  const entries = newlySubscribed.map((ctrlName) => {
+    const payload = suppressedCtrlPayloads.get(ctrlName)!
+    suppressedCtrlPayloads.delete(ctrlName)
+    return [ctrlName, payload] as [string, { ctrl: any; forceEmit?: boolean }]
   })
+  drainCtrlPayloads(entries)
 }
 
 export { buildStateForFE }
