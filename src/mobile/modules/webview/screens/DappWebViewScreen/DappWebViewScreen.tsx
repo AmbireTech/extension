@@ -330,8 +330,11 @@ const DappWebViewScreen = () => {
         const parsed = new URL(url)
         const protocol = parsed.protocol.replace(':', '')
 
-        // Allow HTTPS and about: (blank pages, error pages)
-        if (protocol === 'https' || protocol === 'about') {
+        // Allow HTTPS and about: (blank pages, error pages).
+        // Also allow blob: — chart/visualization libraries (and the web workers
+        // they spawn) commonly render via blob: URLs, so blocking it leaves the
+        // chart area blank even though the rest of the page loads fine.
+        if (protocol === 'https' || protocol === 'about' || protocol === 'blob') {
           return true
         }
 
@@ -1077,7 +1080,7 @@ const DappWebViewScreen = () => {
           domStorageEnabled={true}
           allowFileAccessFromFileURLs={false}
           allowUniversalAccessFromFileURLs={false}
-          originWhitelist={['https://*']}
+          originWhitelist={['https://*', 'blob:*']}
           setSupportMultipleWindows={false}
           onShouldStartLoadWithRequest={handleShouldStartLoadWithRequest}
           onLoadStart={handleLoadStart}
@@ -1086,6 +1089,7 @@ const DappWebViewScreen = () => {
           onError={handleLoadError}
           onRenderProcessGone={handleRenderProcessGone}
           onContentProcessDidTerminate={handleRenderProcessGone}
+          webviewDebuggingEnabled={__DEV__}
           nestedScrollEnabled={true}
         />
       </View>
