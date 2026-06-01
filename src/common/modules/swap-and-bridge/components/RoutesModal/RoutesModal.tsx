@@ -127,7 +127,6 @@ const RoutesModal = ({
   ])
 
   const renderItem = useCallback(
-    // eslint-disable-next-line react/no-unused-prop-types
     ({ item, index }: { item: SwapAndBridgeRoute; index: number }) => {
       if ((item as any).isSkeleton) {
         return <SkeletonLoader width="100%" height={listHeight} appearance="secondaryBackground" />

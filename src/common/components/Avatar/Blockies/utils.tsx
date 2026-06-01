@@ -1,6 +1,5 @@
 import { Rect } from 'react-native-svg'
 
-/* eslint-disable no-bitwise */
 import { AvatarColors } from '@common/utils/avatars'
 
 function hslToHex(_h: number, _s: number, _l: number) {
@@ -11,7 +10,6 @@ function hslToHex(_h: number, _s: number, _l: number) {
   let g
   let b
   if (s === 0) {
-    // eslint-disable-next-line no-multi-assign
     r = g = b = l // achromatic
   } else {
     const hue2rgb = (p: number, q: number, _t: number) => {

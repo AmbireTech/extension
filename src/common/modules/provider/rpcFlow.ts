@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-floating-promises */
 import { ethErrors } from 'eth-rpc-errors'
 import { v4 as uuidv4 } from 'uuid'
 
@@ -127,7 +126,6 @@ const flowContext = flow
     const [requestType, condition] = (getMetadata('ACTION_REQUEST', providerCtrl, mapMethod) ||
       []) as [string?, ((...args: any[]) => any)?]
     if (requestType && (!condition || !condition(props))) {
-      // eslint-disable-next-line no-param-reassign
       props.requestRes = await new Promise((resolve, reject) => {
         mainCtrl.requests
           .build({

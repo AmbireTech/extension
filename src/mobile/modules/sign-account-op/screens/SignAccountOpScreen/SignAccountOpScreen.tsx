@@ -145,7 +145,6 @@ const SignAccountOpScreen = () => {
     if (isInsideBottomSheet && closeRequestModal) {
       closeRequestModal()
     } else {
-      // eslint-disable-next-line @typescript-eslint/no-floating-promises
       navigate(ROUTES.dashboard)
     }
   }, [isInsideBottomSheet, closeRequestModal, navigate])

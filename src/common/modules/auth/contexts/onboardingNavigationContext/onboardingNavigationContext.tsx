@@ -1,4 +1,3 @@
-/* eslint-disable no-restricted-syntax */
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import { NavigateOptions } from 'react-router-dom'
 

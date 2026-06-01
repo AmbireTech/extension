@@ -1,6 +1,5 @@
 import '@common/modules/inpage/globals'
 
-/* eslint-disable no-param-reassign */
 import { nanoid } from 'nanoid'
 
 import { isProd } from '@common/config/env'

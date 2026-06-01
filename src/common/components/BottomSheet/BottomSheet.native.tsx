@@ -54,13 +54,18 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
   const { styles, theme } = useTheme(getStyles)
   const { bottom } = useSafeAreaInsets()
   const [isKeyboardVisible, setIsKeyboardVisible] = useState(false)
+  const [visibleKeyboardHeight, setVisibleKeyboardHeight] = useState(0)
   const closeBottomSheet = React.useCallback(_closeBottomSheet, [_closeBottomSheet])
 
   useEffect(() => {
-    const showSub = KeyboardEvents.addListener('keyboardWillShow', () => setIsKeyboardVisible(true))
-    const hideSub = KeyboardEvents.addListener('keyboardWillHide', () =>
+    const showSub = KeyboardEvents.addListener('keyboardWillShow', (e) => {
+      setIsKeyboardVisible(true)
+      setVisibleKeyboardHeight(e.height)
+    })
+    const hideSub = KeyboardEvents.addListener('keyboardWillHide', () => {
       setIsKeyboardVisible(false)
-    )
+      setVisibleKeyboardHeight(0)
+    })
 
     return () => {
       showSub.remove()
@@ -91,6 +96,16 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
   }, [isModal])
 
   const scrollViewRef = externalScrollViewRef
+
+  // Pad the scrollable content by the keyboard height so the content hidden
+  // behind the keyboard becomes reachable by scrolling while it's open. Only
+  // applies to the ScrollView/FlatList/SectionList paths; a `customRenderer`
+  // controls its own layout, so it keeps the plain bottom inset. Modals are
+  // vertically centered and lifted via `modalKeyboardOffsetStyle`, so they skip
+  // this padding entirely.
+  const contentBottomPadding = isModal
+    ? 0
+    : (bottom || SPACING_SM) + (!customRenderer && isKeyboardVisible ? visibleKeyboardHeight : 0)
 
   return (
     <Portal hostName="global">
@@ -180,11 +195,11 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
                     bounces: false,
                     keyboardShouldPersistTaps: 'handled',
                     showsVerticalScrollIndicator: false,
-                    contentContainerStyle: { paddingBottom: bottom || SPACING_SM },
+                    contentContainerStyle: { paddingBottom: contentBottomPadding },
                     ...(!isScrollEnabled && {
                       scrollEnabled: false,
                       nestedScrollEnabled: true,
-                      contentContainerStyle: { flexGrow: 1, paddingBottom: bottom || SPACING_SM }
+                      contentContainerStyle: { flexGrow: 1, paddingBottom: contentBottomPadding }
                     }),
                     style: { marginBottom: isModal ? SPACING_LG : 0 },
                     ...(scrollViewProps || {})
@@ -197,7 +212,7 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
                     bounces: false,
                     keyboardShouldPersistTaps: 'handled',
                     showsVerticalScrollIndicator: false,
-                    contentContainerStyle: { paddingBottom: bottom || SPACING_SM },
+                    contentContainerStyle: { paddingBottom: contentBottomPadding },
                     style: { marginBottom: isModal ? SPACING_LG : 0 },
                     ...(flatListProps || {})
                   }
@@ -209,7 +224,7 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
                     bounces: false,
                     keyboardShouldPersistTaps: 'handled',
                     showsVerticalScrollIndicator: false,
-                    contentContainerStyle: { paddingBottom: bottom || SPACING_SM },
+                    contentContainerStyle: { paddingBottom: contentBottomPadding },
                     style: { marginBottom: isModal ? SPACING_LG : 0 },
                     ...(sectionListProps || {})
                   }

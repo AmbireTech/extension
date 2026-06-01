@@ -40,7 +40,11 @@ const useNetworks = ({
   }, [acc, accountStates, accountsDispatch])
 
   const supportedNetworks = useMemo(() => {
-    return getSupportedNetworks(networks, accountStates, acc, additionalCheck)
+    const additionalCheckWithKnownChainIds = additionalCheck?.chainIds.length
+      ? additionalCheck
+      : undefined
+
+    return getSupportedNetworks(networks, accountStates, acc, additionalCheckWithKnownChainIds)
   }, [networks, accountStates, acc, additionalCheck])
 
   return supportedNetworks

@@ -93,7 +93,11 @@ const DashboardScreen = () => {
   if (!account) return null
 
   return (
-    <MobileLayoutContainer withHorizontalPadding={false} withTopPadding={false}>
+    <MobileLayoutContainer
+      withHorizontalPadding={false}
+      withTopPadding={false}
+      keyboardAwareFooter={false}
+    >
       <View style={flexbox.flex1}>
         <GasTankModal
           modalRef={gasTankModalRef}

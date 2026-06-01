@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-floating-promises */
 import React, { createContext, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import EventEmitter from '@ambire-common/controllers/eventEmitter/eventEmitter'

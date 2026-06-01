@@ -14,7 +14,6 @@ import useTheme from '@common/hooks/useTheme'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
 import useSeedPhraseImport from '@common/modules/auth/hooks/useSeedPhraseImport'
 import getStyles from '@common/modules/auth/styles/seedPhraseImportScreenStyles'
-import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import {
   MobileLayoutContainer,
@@ -56,7 +55,6 @@ const SeedPhraseImportScreen = () => {
         step={1}
         totalSteps={2}
         withScroll
-        keyboardAwareScrollViewProps={{ bottomOffset: 140 }}
       >
         <Controller
           control={control}
