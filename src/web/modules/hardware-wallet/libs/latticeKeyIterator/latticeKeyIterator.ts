@@ -8,7 +8,6 @@ import { KeyIterator as KeyIteratorInterface } from '@ambire-common/interfaces/k
 import { ExternalSignerController } from '@ambire-common/interfaces/keystore'
 import { getHDPathIndices } from '@ambire-common/utils/hdPath'
 
-// eslint-disable-next-line @typescript-eslint/naming-convention
 type KeyIteratorProps = {
   controller: ExternalSignerController
 }
@@ -80,7 +79,6 @@ class LatticeKeyIterator implements KeyIteratorInterface {
 
     const keys: string[] = []
 
-    // eslint-disable-next-line no-restricted-syntax
     for (const { from, to } of fromToArr) {
       if ((!from && from !== 0) || (!to && to !== 0) || !hdPathTemplate)
         throw new Error('latticeKeyIterator: invalid or missing arguments')
@@ -89,7 +87,6 @@ class LatticeKeyIterator implements KeyIteratorInterface {
 
       const shouldFetchRecursively = this.#hdPathHasInternalVarIdx(hdPathTemplate)
       if (shouldFetchRecursively) {
-        // eslint-disable-next-line no-await-in-loop
         const res = await this.#fetchAddressesRecursively(n, from, [], hdPathTemplate)
         keys.push(...res.map((addr) => getAddress(addr)))
       } else {
@@ -98,7 +95,7 @@ class LatticeKeyIterator implements KeyIteratorInterface {
         const keyData = { startPath, n }
 
         // @ts-ignore TODO: figure out the corner cases when this returns Buffer[]
-        // eslint-disable-next-line no-await-in-loop
+
         let res: string[] = await this.controller.walletSDK.getAddresses(keyData)
         // For some reason, the addresses incoming from the device are not
         // checksumed, that's why manually checksum them here.

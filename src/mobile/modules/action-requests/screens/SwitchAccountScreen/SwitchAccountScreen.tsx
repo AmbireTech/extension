@@ -36,7 +36,8 @@ const SwitchAccountScreen = () => {
 
   return (
     <MobileLayoutContainer
-      renderDirectChildren={() => (
+      footerStyle={{ ...spacings.ph0, ...spacings.pt0 }}
+      footer={
         <ActionFooter
           onReject={handleDenyButtonPress}
           onResolve={handleAuthorizeButtonPress}
@@ -45,7 +46,7 @@ const SwitchAccountScreen = () => {
           rejectButtonText={t('Deny')}
           resolveButtonTestID="switch-account-button"
         />
-      )}
+      }
     >
       <View style={[styles.container]}>
         {!isAuthorizing ? (

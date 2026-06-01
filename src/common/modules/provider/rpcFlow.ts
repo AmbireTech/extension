@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-floating-promises */
 import { ethErrors } from 'eth-rpc-errors'
 import { v4 as uuidv4 } from 'uuid'
 
@@ -80,14 +79,21 @@ const flowContext = flow
   // if dApp not connected - prompt connect request window
   .use(async ({ request, mainCtrl, notificationManager, mapMethod }, next) => {
     const {
-      session: { id, origin: url }
+      session: { id, origin: url, wcTopic }
     } = request
+    // Source is derived from the session: WC sessions carry a wcTopic, injected ones don't.
+    // Each source has its own permission entry, so a request from one channel must re-prompt
+    // even if the other channel is already connected.
+    const source: 'wc' | 'injected' = wcTopic ? 'wc' : 'injected'
+    // WC and injected can race for the same dapp; key the in-flight lock by source so one
+    // doesn't piggy-back on the other's pending prompt.
+    const connectKey = `${source}:${url}`
     const providerCtrl = new ProviderController(mainCtrl, notificationManager)
     if (!getMetadata('SAFE', providerCtrl, mapMethod)) {
-      if (!mainCtrl.dapps.hasPermission(id)) {
+      if (!mainCtrl.dapps.hasPermission(id, source)) {
         try {
-          if (connectOrigins[url] === undefined) {
-            connectOrigins[url] = new Promise((resolve: (value: any) => void, reject) => {
+          if (connectOrigins[connectKey] === undefined) {
+            connectOrigins[connectKey] = new Promise((resolve: (value: any) => void, reject) => {
               mainCtrl.requests.build({
                 type: 'dappRequest',
                 params: {
@@ -96,16 +102,16 @@ const flowContext = flow
                 }
               })
             })
-            connectOrigins[url].catch(() => {
-              delete connectOrigins[url]
+            connectOrigins[connectKey].catch(() => {
+              delete connectOrigins[connectKey]
             })
           } else if (mainCtrl.requests.currentUserRequest) {
             await mainCtrl.requests.focusRequestWindow()
           }
-          const dappToAdd = await connectOrigins[url]
-          await mainCtrl.dapps.addDapp({ ...dappToAdd, isConnected: true })
+          const dappToAdd = await connectOrigins[connectKey]
+          await mainCtrl.dapps.addDapp({ ...dappToAdd, isConnected: true }, source)
         } finally {
-          delete connectOrigins[url]
+          delete connectOrigins[connectKey]
         }
       }
     }
@@ -120,7 +126,6 @@ const flowContext = flow
     const [requestType, condition] = (getMetadata('ACTION_REQUEST', providerCtrl, mapMethod) ||
       []) as [string?, ((...args: any[]) => any)?]
     if (requestType && (!condition || !condition(props))) {
-      // eslint-disable-next-line no-param-reassign
       props.requestRes = await new Promise((resolve, reject) => {
         mainCtrl.requests
           .build({

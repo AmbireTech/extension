@@ -15,7 +15,6 @@ export const EVENTS = {
   SIGN_FINISHED: 'SIGN_FINISHED'
 }
 
-// eslint-disable-next-line no-restricted-globals
 export const INTERNAL_REQUEST_ORIGIN = isWeb ? location.origin : null
 
 export const INTERNAL_REQUEST_SESSION = {

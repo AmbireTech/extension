@@ -66,7 +66,8 @@ const WatchTokenRequestScreen = () => {
   return (
     <MobileLayoutContainer
       header={isMobile ? undefined : <HeaderWithLogoOnly />}
-      renderDirectChildren={() => (
+      footerStyle={{ ...spacings.ph0, ...spacings.pt0 }}
+      footer={
         <ActionFooter
           onReject={handleCancel}
           onResolve={handleAddToken}
@@ -81,7 +82,7 @@ const WatchTokenRequestScreen = () => {
             !temporaryToken?.decimals
           }
         />
-      )}
+      }
     >
       <View style={styles.container}>
         <View style={styles.content}>

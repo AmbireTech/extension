@@ -192,7 +192,6 @@ const DevicePasswordRecoverySettingsScreen = () => {
           }
           type="primary"
           text={
-            // eslint-disable-next-line no-nested-ternary
             isSubmitting || ev.currentState === EmailVaultState.Loading
               ? t('Loading...')
               : t('Disable')

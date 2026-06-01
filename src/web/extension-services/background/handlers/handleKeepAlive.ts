@@ -16,7 +16,6 @@ export const handleKeepAlive = () => {
     let timer = 4 * SECONDS
     let wakeup: any
 
-    // eslint-disable-next-line no-inner-declarations
     async function Highlander() {
       if (alivePort == null) {
         alivePort = chrome.runtime.connect({ name: INTERNAL_STAYALIVE_PORT })

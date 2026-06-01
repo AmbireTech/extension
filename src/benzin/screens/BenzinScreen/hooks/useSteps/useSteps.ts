@@ -776,7 +776,6 @@ const useSteps = ({
         ? handleOps060.decodeFunctionData('handleOps', txn.data)
         : handleOps070.decodeFunctionData('handleOps', txn.data)
     } catch (e) {
-      // eslint-disable-next-line no-console
       console.log('this txn is an userOp but does not call handleOps')
       setUserOp({
         sender: '',
@@ -917,7 +916,6 @@ const useSteps = ({
         isGasTank = isTokenGasTank
         tokenChainId = chainId
       } catch (e) {
-        // eslint-disable-next-line no-console
         console.error('Error decoding fee call', e)
       }
     }
@@ -937,7 +935,6 @@ const useSteps = ({
       (!!userOp && !!userOp.paymaster && userOp.paymaster !== AMBIRE_PAYMASTER)
     if (!address || (!amount && !isSponsored)) return
 
-    // eslint-disable-next-line @typescript-eslint/no-floating-promises
     resolveAssetInfo(
       address,
       networks.find((net: Network) => net.chainId === tokenChainId)!,

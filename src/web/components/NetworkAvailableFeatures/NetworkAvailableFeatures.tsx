@@ -1,5 +1,5 @@
 import { Interface } from 'ethers'
-/* eslint-disable react/jsx-no-useless-fragment */
+
 import React, { useCallback, useEffect, useId, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { TextStyle, View } from 'react-native'
@@ -116,7 +116,6 @@ const NetworkAvailableFeatures = ({
         }
       })
       .catch((error) => {
-        // eslint-disable-next-line no-console
         console.error(error)
       })
   }, [networksDispatch, selectedNetwork, checkedDeployFor, dispatchAndWait])

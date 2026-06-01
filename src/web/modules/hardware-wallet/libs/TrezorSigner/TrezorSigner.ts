@@ -270,7 +270,7 @@ class TrezorSigner implements KeystoreSignerInterface {
       { domain, types, message, primaryType },
       true // Only v4 of typed data signing is supported by `transformTypedData`
     )
-    // eslint-disable-next-line @typescript-eslint/naming-convention
+
     const { domain_separator_hash, message_hash } = dataWithHashes
     const res = await this.#withNormalizedError(() =>
       this.controller!.walletSDK.ethereumSignTypedData({

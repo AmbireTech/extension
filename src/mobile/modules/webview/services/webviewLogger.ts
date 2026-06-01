@@ -15,7 +15,7 @@ const sendToReactEvent = (type: string, payload: any) => {
     }
   } catch (e) {
     // Fallback to original console if bridge fails
-    // eslint-disable-next-line no-console
+
     console.warn('[WebView] Bridge error:', e)
   }
 }

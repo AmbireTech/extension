@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-floating-promises */
 import React, { useCallback, useContext, useEffect, useMemo, useRef } from 'react'
 
 import { networks } from '@ambire-common/consts/networks'
