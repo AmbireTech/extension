@@ -1,6 +1,28 @@
 export const EIP712_DATA_PREVIEW_MAX_LENGTH = 42
 
-export const getParsedMessageValue = (label: string, value: string | number) => {
+export const getEip712IntegerFieldNames = (
+  types: Record<string, { name: string; type: string }[]>,
+  primaryType: string
+) =>
+  new Set(
+    (types[primaryType] || [])
+      .filter(({ type }) => type.startsWith('uint') || type.startsWith('int'))
+      .map(({ name }) => name)
+  )
+
+export const getParsedMessageValue = (
+  label: string,
+  value: string | number,
+  integerFieldNames = new Set<string>()
+) => {
+  if (integerFieldNames.has(label)) {
+    try {
+      return BigInt(value).toString()
+    } catch {
+      return value
+    }
+  }
+
   if (label !== 'data' || typeof value !== 'string' || value.length <= EIP712_DATA_PREVIEW_MAX_LENGTH)
     return value
 

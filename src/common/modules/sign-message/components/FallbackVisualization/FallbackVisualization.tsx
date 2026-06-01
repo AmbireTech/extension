@@ -20,7 +20,7 @@ import spacings, { SPACING_SM, SPACING_TY } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { getMessageAsText, simplifyTypedMessage } from '@common/utils/messageToString'
 
-import { getParsedMessageValue } from './helpers'
+import { getEip712IntegerFieldNames, getParsedMessageValue } from './helpers'
 import getStyles from './styles'
 
 const isCloseToBottom = ({ layoutMeasurement, contentOffset, contentSize }: NativeScrollEvent) => {
@@ -116,6 +116,7 @@ const FallbackVisualization: FC<{
   rawOnly?: boolean
   scrollEnabled?: boolean
   withCompactDataRow?: boolean
+  withDecimalIntegerRows?: boolean
 }> = ({
   messageToSign,
   humanizedMessage,
@@ -125,7 +126,8 @@ const FallbackVisualization: FC<{
   withScrollDownArrow = false,
   rawOnly = false,
   scrollEnabled = true,
-  withCompactDataRow = false
+  withCompactDataRow = false,
+  withDecimalIntegerRows = false
 }) => {
   const { t } = useTranslation()
   const { styles, theme } = useTheme(getStyles)
@@ -145,6 +147,13 @@ const FallbackVisualization: FC<{
     chainId,
     responsiveSizeMultiplier,
     t
+  )
+  const integerFieldNames = useMemo(
+    () =>
+      content?.kind === 'typedMessage' && withDecimalIntegerRows
+        ? getEip712IntegerFieldNames(content.types, content.primaryType)
+        : new Set<string>(),
+    [content, withDecimalIntegerRows]
   )
   const tabs = useMemo(
     () =>
@@ -284,8 +293,12 @@ const FallbackVisualization: FC<{
                           appearance="primaryText"
                           style={styles.parsedValueText}
                         >
-                          {withCompactDataRow
-                            ? getParsedMessageValue(i.label, i.componentToReturn)
+                          {withCompactDataRow || withDecimalIntegerRows
+                            ? getParsedMessageValue(
+                                i.label,
+                                i.componentToReturn,
+                                integerFieldNames
+                              )
                             : i.componentToReturn}
                         </Text>
                         {withCompactDataRow &&

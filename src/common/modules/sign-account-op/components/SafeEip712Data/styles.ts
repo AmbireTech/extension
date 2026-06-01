@@ -24,7 +24,8 @@ const getStyles = (theme: ThemeProps) =>
       ...spacings.phSm
     },
     rows: {
-      ...flexbox.flex1
+      ...flexbox.flex1,
+      ...spacings.plSm
     },
     row: {
       ...flexbox.directionRow,

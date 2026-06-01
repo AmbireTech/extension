@@ -4,6 +4,7 @@ import { View } from 'react-native'
 
 import { ISignMessageController } from '@ambire-common/interfaces/signMessage'
 import { Message } from '@ambire-common/interfaces/userRequest'
+import CopyText from '@common/components/CopyText'
 import ExpandableCard from '@common/components/ExpandableCard'
 import Text from '@common/components/Text'
 import { isWeb } from '@common/config/env'
@@ -22,7 +23,7 @@ interface Props {
 
 const SafeEip712Data: FC<Props> = ({ accountAddr, chainId, safeEip712Data }) => {
   const { t } = useTranslation()
-  const { styles } = useTheme(getStyles)
+  const { theme, styles } = useTheme(getStyles)
   const data = useMemo(() => getSafeEip712DataValue(safeEip712Data), [safeEip712Data])
   const messageToSign = useMemo<ISignMessageController['messageToSign']>(() => {
     if (!data || !accountAddr || !chainId) return null
@@ -62,7 +63,12 @@ const SafeEip712Data: FC<Props> = ({ accountAddr, chainId, safeEip712Data }) => 
           <View style={styles.rows}>
             {rows.map(([label, value]) => (
               <View key={label} style={styles.row}>
-                <Text fontSize={14} weight="semiBold" appearance="secondaryText">
+                <Text
+                  fontSize={14}
+                  weight="semiBold"
+                  appearance="successText"
+                  color={theme.secondaryAccent400}
+                >
                   {t(label)}
                   {t(': ')}
                 </Text>
@@ -75,6 +81,13 @@ const SafeEip712Data: FC<Props> = ({ accountAddr, chainId, safeEip712Data }) => 
                 >
                   {value}
                 </Text>
+                <CopyText
+                  text={value}
+                  iconColor={theme.secondaryText}
+                  iconSize={16}
+                  shouldStopPropagation
+                  style={spacings.mlMi}
+                />
               </View>
             ))}
           </View>
@@ -87,6 +100,7 @@ const SafeEip712Data: FC<Props> = ({ accountAddr, chainId, safeEip712Data }) => 
               hasReachedBottom
               scrollEnabled={false}
               withCompactDataRow
+              withDecimalIntegerRows
             />
           </View>
         }
