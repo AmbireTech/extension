@@ -9,6 +9,8 @@ import { BasePage } from './basePage'
 export class AuthPage extends BasePage {
   extensionURL: string
 
+  generatedSeed: string = ''
+
   constructor(opts: BootstrapContext) {
     super(opts)
     this.extensionURL = opts.extensionURL
@@ -61,11 +63,13 @@ export class AuthPage extends BasePage {
       await locator.click()
     }
     await this.isVisible(selectors.getStarted.recoveryPhraseHeader)
+    await this.context.grantPermissions(['clipboard-read'])
     await this.click(selectors.getStarted.copyRecoveryPhraseButton)
     await this.compareText(
       selectors.getStarted.recoveryPhraseCopiedSnackbar,
       'Recovery phrase copied to clipboard'
     )
+    this.generatedSeed = await this.page.evaluate(() => navigator.clipboard.readText())
     await this.page
       .getByTestId(selectors.getStarted.recoveryPhraseCopiedSnackbar)
       .waitFor({ state: 'hidden' })

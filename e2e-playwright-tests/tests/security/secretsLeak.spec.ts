@@ -79,4 +79,42 @@ test.describe('security: private key leak prevention', { tag: '@security' }, () 
       ).toHaveLength(0)
     })
   })
+
+  test('generated seed phrase should not appear in any network request', async ({ pages }) => {
+    await test.step('start monitoring requests', async () => {
+      await pages.auth.monitorRequests()
+    })
+
+    await test.step('create new account', async () => {
+      await pages.auth.createNewAccount()
+    })
+
+    await test.step('validate captured seed phrase', async () => {
+      const wordCount = pages.auth.generatedSeed.trim().split(/\s+/).length
+      expect(pages.auth.generatedSeed, 'Seed phrase should not be empty').toBeTruthy()
+      expect(wordCount, `Expected 12 words, got ${wordCount}`).toBe(12)
+    })
+
+    await test.step('wait for post-creation network activity to settle', async () => {
+      await pages.auth.page.waitForTimeout(5000)
+    })
+
+    await test.step('assert no requests were made to unknown domains', async () => {
+      const { uncategorized } = pages.auth.getCategorizedRequests()
+      expect(
+        uncategorized,
+        `Requests to unknown domains detected:\n${uncategorized.join('\n')}`
+      ).toHaveLength(0)
+    })
+
+    await test.step('assert generated seed phrase did not appear in any request', async () => {
+      const requests = pages.auth.getRequestsWithBodies()
+      const leakingRequests = findSecretInRequests(requests, pages.auth.generatedSeed)
+
+      expect(
+        leakingRequests,
+        `Generated seed phrase detected in the following requests:\n${leakingRequests.join('\n')}`
+      ).toHaveLength(0)
+    })
+  })
 })
