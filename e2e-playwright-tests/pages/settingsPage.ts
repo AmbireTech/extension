@@ -157,7 +157,7 @@ export class SettingsPage extends BasePage {
   }
 
   async verifyNetworkAdded(networkSymbol: string) {
-    await this.entertext(selectors.searchInput, networkSymbol)
+    await this.entertext(selectors.dashboard.searchInputField, networkSymbol)
 
     // select FLOW option
     await this.page.locator('//div[contains(text(),"Flow EVM Mainnet")]').first().click()

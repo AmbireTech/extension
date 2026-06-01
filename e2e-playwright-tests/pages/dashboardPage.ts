@@ -248,7 +248,7 @@ export class DashboardPage extends BasePage {
     await this.click(networkDropdownByTab[tabName])
 
     // enter search phrase
-    await this.entertext(selectors.searchInput, searchInput)
+    await this.entertext(selectors.dashboard.searchInputField, searchInput)
 
     // click on searched network
     const networkSelector = this.page.locator(`//div[text()="${searchInput}"]`)
@@ -257,11 +257,6 @@ export class DashboardPage extends BasePage {
 
   async searchByMagnifyingGlassIcon(searchInput: string) {
     await this.click(selectors.dashboard.magnifyingGlassIcon)
-
-    const searchPlaceholder = this.page.getByTestId(selectors.dashboard.searchInputPlaceholder)
-    // await expect(searchPlaceholder).toBeVisible({ timeout: 5000 })
-    // await searchPlaceholder.click()
-
     await this.entertext(selectors.dashboard.searchInputField, searchInput)
   }
 

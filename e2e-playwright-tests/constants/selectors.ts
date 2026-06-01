@@ -204,6 +204,7 @@ const selectors = {
     kyberSwapRoute: '//div[contains(text(), "Kyberswap")]',
     sushiSwapRoute: 'div:has-text("SushiSwap Aggregator")' // no route
   },
+  searchInput: 'search-input',
   backArrowButton: 'back-arrow-button',
   account: 'account',
   importMethodTrezor: 'import-method-trezor',
@@ -299,7 +300,6 @@ const selectors = {
   USDC: 'option-0x0b2c639c533813f4aa9d7837caf62653d097ff85.usdc',
   signTransactionButton: 'transaction-button-sign',
   maxAvailableAmount: 'max-available-amount',
-  searchInput: 'search-input',
   // Swap & Bridge selectors
   selectRouteButton: 'select-route',
   routeLoadingTextSab: 'route-loading-text-sab',
