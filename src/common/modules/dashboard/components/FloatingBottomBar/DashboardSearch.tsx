@@ -156,7 +156,12 @@ const DashboardSearch: FC<Props> = ({ control, placeholder }) => {
                     testID="search-input-placeholder"
                   >
                     {!!placeholder && (
-                      <Text appearance="secondaryText" fontSize={14} numberOfLines={1}>
+                      <Text
+                        testID="search-input-field"
+                        appearance="secondaryText"
+                        fontSize={14}
+                        numberOfLines={1}
+                      >
                         {placeholder}
                       </Text>
                     )}

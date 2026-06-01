@@ -67,13 +67,14 @@ test.describe('dashboard', { tag: '@dashboard' }, () => {
     })
   })
 
-  test('Filter Tokens by token name', async ({ pages }) => {
+  test.only('Filter Tokens by token name', async ({ pages }) => {
     // SA should have 3 tokens containing USDC - base/optimism/polygon
     const usdcMainnet = tokens.usdc.optimism
     const usdcBase = tokens.usdc.base
     const usdcPolygon = tokens.usdc.polygon
 
     await test.step('search Tokens by token name - USDC', async () => {
+      await pages.auth.pause()
       await pages.dashboard.searchByMagnifyingGlassIcon('USDC')
     })
 

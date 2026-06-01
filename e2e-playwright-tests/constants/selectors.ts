@@ -44,7 +44,7 @@ const selectors = {
   },
   dashboard: {
     dashboardGasTankBalance: 'dashboard-gas-tank-balance',
-    appsButton: 'dashboard-button-apps',
+    appsButton: 'dashboard-button-explore',
     tokensTabButton: 'tokens-defi',
     noTokensText: 'no-tokens-text',
     tokenTitleText: '[data-testid^="token-balance-"]',
@@ -87,7 +87,8 @@ const selectors = {
     rewardsForClaimingButton: 'marketing-banner-button',
     rewardsLink: '//div[contains(text(),"Ambire Rewards")]',
     projectedRewardsClaimButton: 'projected-rewards-claim-button',
-    searchInputPlaceholder: 'search-input-placeholder'
+    searchInputPlaceholder: 'search-input-placeholder',
+    searchInputField: 'search-input-field'
   },
   settings: {
     createNewRecoveryPhraseButton: 'create-new-recovery-phrase',
