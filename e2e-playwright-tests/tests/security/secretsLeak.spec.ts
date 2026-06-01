@@ -81,17 +81,19 @@ test.describe('security: private key leak prevention', { tag: '@security' }, () 
   })
 
   test('generated seed phrase should not appear in any network request', async ({ pages }) => {
+    let generatedSeed = ''
+
     await test.step('start monitoring requests', async () => {
       await pages.auth.monitorRequests()
     })
 
     await test.step('create new account', async () => {
-      await pages.auth.createNewAccount()
+      generatedSeed = await pages.auth.createNewAccount()
     })
 
     await test.step('validate captured seed phrase', async () => {
-      const wordCount = pages.auth.generatedSeed.trim().split(/\s+/).length
-      expect(pages.auth.generatedSeed, 'Seed phrase should not be empty').toBeTruthy()
+      const wordCount = generatedSeed.trim().split(/\s+/).length
+      expect(generatedSeed, 'Seed phrase should not be empty').toBeTruthy()
       expect(wordCount, `Expected 12 words, got ${wordCount}`).toBe(12)
     })
 
@@ -109,7 +111,7 @@ test.describe('security: private key leak prevention', { tag: '@security' }, () 
 
     await test.step('assert generated seed phrase did not appear in any request', async () => {
       const requests = pages.auth.getRequestsWithBodies()
-      const leakingRequests = findSecretInRequests(requests, pages.auth.generatedSeed)
+      const leakingRequests = findSecretInRequests(requests, generatedSeed)
 
       expect(
         leakingRequests,

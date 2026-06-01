@@ -51,7 +51,9 @@ export class AuthPage extends BasePage {
     // assertion on Dashboard after login
   }
 
-  async verifyRecoveryPhraseScreen(): Promise<void> {
+  async verifyRecoveryPhraseScreen(): Promise<string> {
+    this.generatedSeed = ''
+
     const locator = this.page.getByTestId('info-0').locator('div').nth(3)
     if (
       await this.page
@@ -74,10 +76,14 @@ export class AuthPage extends BasePage {
       .getByTestId(selectors.getStarted.recoveryPhraseCopiedSnackbar)
       .waitFor({ state: 'hidden' })
     await this.click(selectors.getStarted.savedPhraseButton)
+
+    return this.generatedSeed
   }
 
   // TODO: imporove method assertions
-  async createNewAccount(): Promise<void> {
+  async createNewAccount(): Promise<string> {
+    this.generatedSeed = ''
+
     await this.click(selectors.getStarted.createNewAccountButton)
     for (let index = 0; index < 3; index++) {
       await this.click(selectors.getStarted.checkbox, index)
@@ -98,6 +104,8 @@ export class AuthPage extends BasePage {
       'Ambire Wallet is ready to use'
     )
     await this.click(selectors.getStarted.openDashboardButton)
+
+    return this.generatedSeed
   }
 
   // TODO: imporove method assertions
