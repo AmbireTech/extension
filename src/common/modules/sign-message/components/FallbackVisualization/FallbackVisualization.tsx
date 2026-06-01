@@ -8,6 +8,7 @@ import { ISignMessageController } from '@ambire-common/interfaces/signMessage'
 import { IrMessage } from '@ambire-common/libs/humanizer/interfaces'
 import { isValidAddress } from '@ambire-common/services/address'
 import WarningFilledIcon from '@common/assets/svg/WarningFilledIcon'
+import CopyText from '@common/components/CopyText'
 import HumanizerAddress from '@common/components/HumanizerAddress'
 import HumanizedVisualization from '@common/components/HumanizedVisualization'
 import Text from '@common/components/Text'
@@ -19,6 +20,7 @@ import spacings, { SPACING_SM, SPACING_TY } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { getMessageAsText, simplifyTypedMessage } from '@common/utils/messageToString'
 
+import { getParsedMessageValue } from './helpers'
 import getStyles from './styles'
 
 const isCloseToBottom = ({ layoutMeasurement, contentOffset, contentSize }: NativeScrollEvent) => {
@@ -112,6 +114,8 @@ const FallbackVisualization: FC<{
   responsiveSizeMultiplier?: number
   withScrollDownArrow?: boolean
   rawOnly?: boolean
+  scrollEnabled?: boolean
+  withCompactDataRow?: boolean
 }> = ({
   messageToSign,
   humanizedMessage,
@@ -119,7 +123,9 @@ const FallbackVisualization: FC<{
   hasReachedBottom,
   responsiveSizeMultiplier = 1,
   withScrollDownArrow = false,
-  rawOnly = false
+  rawOnly = false,
+  scrollEnabled = true,
+  withCompactDataRow = false
 }) => {
   const { t } = useTranslation()
   const { styles, theme } = useTheme(getStyles)
@@ -205,6 +211,7 @@ const FallbackVisualization: FC<{
         </View>
       )}
       <ScrollView
+        scrollEnabled={scrollEnabled}
         onScroll={(e) => {
           if (isCloseToBottom(e.nativeEvent) && setHasReachedBottom) setHasReachedBottom(true)
         }}
@@ -269,15 +276,29 @@ const FallbackVisualization: FC<{
                   <View style={styles.parsedValue}>
                     {typeof i.componentToReturn === 'string' ||
                     typeof i.componentToReturn === 'number' ? (
-                      <Text
-                        selectable
-                        weight="medium"
-                        fontSize={14 * responsiveSizeMultiplier}
-                        appearance="primaryText"
-                        style={styles.parsedValueText}
-                      >
-                        {i.componentToReturn}
-                      </Text>
+                      <>
+                        <Text
+                          selectable
+                          weight="medium"
+                          fontSize={14 * responsiveSizeMultiplier}
+                          appearance="primaryText"
+                          style={styles.parsedValueText}
+                        >
+                          {withCompactDataRow
+                            ? getParsedMessageValue(i.label, i.componentToReturn)
+                            : i.componentToReturn}
+                        </Text>
+                        {withCompactDataRow &&
+                          i.label === 'data' &&
+                          typeof i.componentToReturn === 'string' && (
+                            <CopyText
+                              text={i.componentToReturn}
+                              iconColor={theme.secondaryText}
+                              iconSize={16 * responsiveSizeMultiplier}
+                              style={spacings.mlMi}
+                            />
+                          )}
+                      </>
                     ) : (
                       i.componentToReturn
                     )}
