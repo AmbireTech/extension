@@ -17,7 +17,7 @@ export class BasePage {
 
   collectedRequests: string[] = []
 
-  collectedRequestBodies: Map<string, string | null> = new Map()
+  private collectedRequestEntries: Array<{ url: string; postData: string | null }> = []
 
   constructor({ page, context }: BootstrapContext) {
     this.page = page
@@ -170,8 +170,9 @@ export class BasePage {
       if (resourceType !== 'fetch' && resourceType !== 'xhr') return
       if (request.method() === 'OPTIONS') return
 
+      const postData = request.postData()
       this.collectedRequests.push(url)
-      this.collectedRequestBodies.set(url, request.postData())
+      this.collectedRequestEntries.push({ url, postData })
     }
     this.context.on('request', this._reqListener)
     this._monitorInstalled = true
@@ -184,14 +185,11 @@ export class BasePage {
     }
 
     this.collectedRequests = []
-    this.collectedRequestBodies = new Map()
+    this.collectedRequestEntries = []
   }
 
   getRequestsWithBodies(): Array<{ url: string; postData: string | null }> {
-    return this.collectedRequests.map((url) => ({
-      url,
-      postData: this.collectedRequestBodies.get(url) ?? null
-    }))
+    return [...this.collectedRequestEntries]
   }
 
   getCategorizedRequests() {
