@@ -28,7 +28,7 @@ export class WalletStateController extends EventEmitter implements IWalletStateC
 
   avatarType: AvatarType = 'jazzicons'
 
-  logLevel: LOG_LEVELS = LOG_LEVELS.DEV
+  logLevel: LOG_LEVELS = DEFAULT_LOG_LEVEL
 
   crashAnalyticsEnabled: boolean = CRASH_ANALYTICS_ENABLED_DEFAULT
 

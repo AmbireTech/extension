@@ -535,15 +535,25 @@ const DappWebViewScreen = () => {
         // Mirrors the check in the extension's windowMessenger (web/extension-services/messengers/internal/window.ts).
         if (event.source !== window) return;
 
-        // Log EVERY message for debugging
-        console.log('[Ambire] [Bridge DEBUG] window message received:', typeof event.data === 'string' ? event.data : JSON.stringify(event.data));
+        ${
+          // Debug-only: dapps poll the provider continuously, so logging (and
+          // especially JSON.stringify-ing) every window message floods the RN
+          // bridge and heats the device. Keep it out of production builds.
+          __DEV__
+            ? "console.log('[Ambire] [Bridge DEBUG] window message received:', typeof event.data === 'string' ? event.data : JSON.stringify(event.data));"
+            : ''
+        }
 
         if (event.data && typeof event.data.topic === 'string' && (event.data.topic.indexOf('ambireProviderRequest') > -1 || event.data.topic.indexOf('ambireNextBuildProviderRequest') > -1)) {
           if (event.data.topic.indexOf('<') === 0) {
             // Ignore response messages sent from RN back to the injected provider.
             return;
           }
-          console.log('[Ambire] [Bridge] Caught MATCHING message:', event.data.topic, event.data.payload ? event.data.payload.method : 'no-payload');
+          ${
+            __DEV__
+              ? "console.log('[Ambire] [Bridge] Caught MATCHING message:', event.data.topic, event.data.payload ? event.data.payload.method : 'no-payload');"
+              : ''
+          }
           if (window.ReactNativeWebView) {
             window.ReactNativeWebView.postMessage(JSON.stringify({
               type: 'providerRequest',
@@ -559,15 +569,19 @@ const DappWebViewScreen = () => {
 
       (function() {
         try {
-        console.log('[Ambire] injecting provider code');
+        ${__DEV__ ? "console.log('[Ambire] injecting provider code');" : ''}
           ${baseCodeAmbire}
           ${baseCodeEthereum}
-          console.log('[Ambire] Provider code executed successfully');
+          ${__DEV__ ? "console.log('[Ambire] Provider code executed successfully');" : ''}
         } catch(e) {
           console.error('[Ambire] Provider code CRASHED:', e && e.stack ? e.stack : (e && e.message ? e.message : String(e)));
         }
 
-        console.log('[Ambire] window.ethereum:', !!window.ethereum, 'window.ambire:', !!window.ambire);
+        ${
+          __DEV__
+            ? "console.log('[Ambire] window.ethereum:', !!window.ethereum, 'window.ambire:', !!window.ambire);"
+            : ''
+        }
       })();
       true;
     } catch (e) {
@@ -720,17 +734,19 @@ const DappWebViewScreen = () => {
     (event: any) => {
       try {
         const data = JSON.parse(event.nativeEvent.data)
-        console.log(
-          '[DappWebView] RN received message type:',
-          data.type || (data.method ? 'raw-provider-request' : 'unknown')
-        )
+        if (__DEV__) {
+          console.log(
+            '[DappWebView] RN received message type:',
+            data.type || (data.method ? 'raw-provider-request' : 'unknown')
+          )
+        }
         if (data.type === 'log') {
           const prefix = `[WebView ${data.logType}]`
 
           console.log(prefix, ...data.args)
         } else if (data.type === 'providerRequest' || (data.method && data.id)) {
           const method = data.type === 'providerRequest' ? data.payload?.method : data.method
-          console.log('[DappWebView] Received providerRequest:', method, data.id)
+          if (__DEV__) console.log('[DappWebView] Received providerRequest:', method, data.id)
 
           // SECURITY: Verify the bridge token. The token is injected only into the
           // main frame, so cross-origin iframes cannot forge messages with it.
@@ -793,11 +809,13 @@ const DappWebViewScreen = () => {
 
   useEffect(() => {
     const onProviderResponse = (data: any) => {
-      console.log(
-        '[DappWebView] Sending response back to WebView:',
-        data.requestId,
-        data.result ? 'SUCCESS' : 'ERROR/NULL'
-      )
+      if (__DEV__) {
+        console.log(
+          '[DappWebView] Sending response back to WebView:',
+          data.requestId,
+          data.result ? 'SUCCESS' : 'ERROR/NULL'
+        )
+      }
 
       // SECURITY: Look up the expected origin recorded when the request was received.
       const expectedOrigin = requestOriginsRef.current[data.requestId]
