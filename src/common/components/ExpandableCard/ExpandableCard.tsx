@@ -22,6 +22,7 @@ type Props = {
   contentStyle?: ViewStyle
   mobileHeaderContent?: ReactNode
   mobileHeaderTitle?: ReactNode
+  mobileHeaderStyle?: ViewStyle
 }
 
 const ExpandableCard = ({
@@ -35,7 +36,8 @@ const ExpandableCard = ({
   children,
   contentStyle,
   mobileHeaderContent,
-  mobileHeaderTitle
+  mobileHeaderTitle,
+  mobileHeaderStyle
 }: Props) => {
   const { styles } = useTheme(getStyles)
   const [isExpanded, setIsExpanded] = useState(!!isInitiallyExpanded)
@@ -69,7 +71,8 @@ const ExpandableCard = ({
               flexbox.alignCenter,
               flexbox.justifySpaceBetween,
               spacings.phSm,
-              spacings.ptTy
+              spacings.ptTy,
+              mobileHeaderStyle
             ]}
           >
             {!!hasArrow && arrowPosition === 'left' && icon}

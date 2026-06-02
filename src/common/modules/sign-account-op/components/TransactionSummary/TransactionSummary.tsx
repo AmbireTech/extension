@@ -542,6 +542,7 @@ const TransactionSummary = ({
       hasArrow={enableExpand}
       mobileHeaderContent={isMobile ? rightControl : undefined}
       mobileHeaderTitle={isMobile ? mobileErc7730Title : undefined}
+      mobileHeaderStyle={isMobile && shouldUseDetailedErc7730Layout ? spacings.pt : undefined}
       style={{
         ...(call.warnings?.length && type === 'default'
           ? { ...styles.warningContainer, ...style }

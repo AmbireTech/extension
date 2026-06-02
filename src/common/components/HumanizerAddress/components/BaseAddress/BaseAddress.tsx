@@ -14,7 +14,7 @@ import InfoIcon from '@common/assets/svg/InfoIcon'
 import OpenIcon from '@common/assets/svg/OpenIcon'
 import Text, { Props as TextProps } from '@common/components/Text'
 import Tooltip from '@common/components/Tooltip'
-import { isWeb } from '@common/config/env'
+import { isMobile, isWeb } from '@common/config/env'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
@@ -143,11 +143,11 @@ const BaseAddress: FC<Props> = ({
               >
                 {displayValue}
               </Text>
-              <View style={[{ marginLeft: 2, marginTop: -8 }, flexbox.center]}>
+              <View style={[!isMobile ? { marginLeft: 2, marginTop: -8 } : {}, flexbox.center]}>
                 <OpenIcon
                   color={hovered ? theme.primaryText : theme.secondaryText}
-                  width={10}
-                  height={10}
+                  width={isMobile ? 16 : 10}
+                  height={isMobile ? 16 : 10}
                 />
               </View>
             </>
