@@ -461,9 +461,10 @@ const TransactionSummary = ({
         isWeb
           ? {
               paddingHorizontal: SPACING_SM,
-              paddingVertical: type !== 'history' ? SPACING_SM * sizeMultiplier[size] : 0
+              paddingVertical: type !== 'history' ? SPACING_SM * sizeMultiplier[size] : 0,
+              ...flexbox.alignStart
             }
-          : {}
+          : flexbox.alignStart
       }
       content={
         <>
@@ -549,7 +550,7 @@ const TransactionSummary = ({
           )}
           {!!call.id && type === 'default' && !rightIcon && !hideDeleteIcon && (
             <AnimatedPressable
-              style={deleteIconAnimStyle}
+              style={[deleteIconAnimStyle, flexbox.alignSelfStart]}
               onPress={handleRemoveCall}
               disabled={isCallRemovedOptimistic}
               {...bindDeleteIconAnim}
