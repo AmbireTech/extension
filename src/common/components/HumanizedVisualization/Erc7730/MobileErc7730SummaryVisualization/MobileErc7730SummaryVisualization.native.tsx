@@ -1,11 +1,12 @@
-import React, { memo, useCallback } from 'react'
-import { View } from 'react-native'
+import React, { memo, useCallback, useMemo } from 'react'
+import { Image, View } from 'react-native'
+import { SvgUri } from 'react-native-svg'
 
 import Text from '@common/components/Text'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
+import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
-import ManifestImage from '@web/components/ManifestImage'
 
 import { Props } from './MobileErc7730SummaryVisualization'
 
@@ -20,6 +21,22 @@ const MobileErc7730SummaryVisualization = ({
 }: Props) => {
   const { theme } = useTheme()
   const subtitleTextSize = Math.max(textSize - 3, 11)
+  const dappIconUri = item.dapp?.icon
+  const dappIconSize = 24 * sizeMultiplierSize
+  const dappIconStyle = useMemo(
+    () => ({
+      width: dappIconSize,
+      height: dappIconSize,
+      borderRadius: dappIconSize / 2
+    }),
+    [dappIconSize]
+  )
+  const dappIconSource = useMemo(() => ({ uri: dappIconUri || '' }), [dappIconUri])
+  const isDappIconSvg = useMemo(() => {
+    const icon = dappIconUri?.toLowerCase()
+
+    return icon?.endsWith('.svg') || icon?.includes('.svg?')
+  }, [dappIconUri])
   const renderValues = useCallback(
     (values: Props['summaryRows'][number]['value'], overrideTextSize?: number) => (
       <View
@@ -45,14 +62,14 @@ const MobileErc7730SummaryVisualization = ({
     <View style={{ width: '100%', minWidth: 0 }}>
       {!hideTitle && (
         <View style={[flexbox.directionRow, flexbox.alignStart, { width: '100%', minWidth: 0 }]}>
-          {!!item.dapp?.icon && (
-            <ManifestImage
-              uri={item.dapp.icon}
-              containerStyle={spacings.mrTy}
-              size={24 * sizeMultiplierSize}
-              skeletonAppearance="secondaryBackground"
-              imageStyle={{ borderRadius: 12 * sizeMultiplierSize, backgroundColor: 'transparent' }}
-            />
+          {!!dappIconUri && (
+            <View style={[spacings.mrTy, dappIconStyle, common.hidden]}>
+              {isDappIconSvg ? (
+                <SvgUri uri={dappIconUri} width={dappIconSize} height={dappIconSize} />
+              ) : (
+                <Image source={dappIconSource} style={dappIconStyle} resizeMode="contain" />
+              )}
+            </View>
           )}
           <View style={{ flex: 1, minWidth: 0 }}>
             {!!item.title && (
