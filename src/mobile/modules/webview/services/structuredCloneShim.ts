@@ -1,7 +1,7 @@
 /**
  * BigInt-safe `structuredClone` polyfill for the WebView worker.
  *
- * WebKit bug #265975 (rdar://118868470), present in iOS < 17.4: a BigInt in the
+ * WebKit bug present in iOS < 17.4: a BigInt in the
  * payload corrupts the structured-clone object-reference pool, so a repeated
  * object reference deserializes to the wrong slot. In the portfolio state
  * (tokens carry BigInt amounts and many shared/repeated price structures) this
