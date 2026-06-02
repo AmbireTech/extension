@@ -105,7 +105,7 @@ const GasTankButton = ({ onPress, portfolio, account }: Props) => {
         buttonState === 'balance' ? 'dashboard-gas-tank-balance' : 'dashboard-gas-tank-button'
       }
     >
-      <GasTankIcon width={15.74} height={15} color="#FFFFFF" hasError={buttonState === 'error'} />
+      <GasTankIcon width={18} height={18} color="#FFFFFF" hasError={buttonState === 'error'} />
       <Text
         style={{ ...spacings.mlMi, ...(isPrivacyModeEnabled ? { lineHeight: 14 } : {}) }}
         dataSet={
