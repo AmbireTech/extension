@@ -1,6 +1,5 @@
-import { randomBytes } from 'ethers'
-import React, { Fragment, memo, useMemo } from 'react'
-import { Image, ScrollView, StyleSheet, View, ViewStyle } from 'react-native'
+import React, { Fragment, memo, useCallback, useMemo } from 'react'
+import { Image, Linking, ScrollView, StyleSheet, View, ViewStyle } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import { AccountOpStatus } from '@ambire-common/libs/accountOp/types'
@@ -44,32 +43,74 @@ const Benzin = ({
   const { isStoreReady } = useControllerStore()
   const insets = useSafeAreaInsets()
 
+  const sizeStr = useMemo(() => {
+    if (isMobile) return 'lg'
+    if (IS_MOBILE_UP_BENZIN_BREAKPOINT) return 'md'
+    return 'sm'
+  }, [])
+
+  const size = useMemo(() => {
+    if (isMobile || IS_MOBILE_UP_BENZIN_BREAKPOINT) return 20
+    return 14
+  }, [])
+
+  const identifiedByType =
+    state?.stepsState?.submittedAccountOp?.identifiedBy?.type ||
+    state?.stepsState?.extensionAccOp?.identifiedBy?.type
+  const accountOp = state?.stepsState?.submittedAccountOp || state?.stepsState?.extensionAccOp
+  const rawCalls = useMemo(() => accountOp?.calls, [accountOp?.calls])
+  const disableOpenExplorerBtn = state?.disableOpenExplorerBtn
+
+  const handleOpenCallExplorer = useCallback(
+    async (callTxnId?: string) => {
+      if (!callTxnId || !state?.network?.explorerUrl) return
+
+      const explorerUrl = state.network.explorerUrl.replace(/\/$/, '')
+      await Linking.openURL(`${explorerUrl}/tx/${callTxnId}`)
+    },
+    [state?.network?.explorerUrl]
+  )
+
   const summary = useMemo(() => {
     const calls = state?.stepsState?.calls
     if (!calls || !state.network?.chainId) return []
 
-    return calls.map((call, i) => (
-      <TransactionSummary
-        key={call.data + randomBytes(6)}
-        style={i !== calls.length! - 1 ? (spacings.mbSm as ViewStyle) : {}}
-        call={call}
-        chainId={state.network!.chainId}
-        rightIcon={
-          <OpenIcon
-            width={IS_MOBILE_UP_BENZIN_BREAKPOINT || isMobile ? 20 : 14}
-            height={IS_MOBILE_UP_BENZIN_BREAKPOINT || isMobile ? 20 : 14}
-          />
-        }
-        onRightIconPress={state?.handleOpenExplorer}
-        size={IS_MOBILE_UP_BENZIN_BREAKPOINT || isMobile ? 'lg' : 'sm'}
-        type="benzin"
-        hasCallFailed={call.status === AccountOpStatus.Rejected}
-        disableSelectorFetching
-      />
-    ))
+    return calls.map((call, i) => {
+      const callTxnId = call.txnId || rawCalls?.[i]?.txnId
+      const shouldShowCallExplorerIcon =
+        identifiedByType === 'MultipleTxns' && !!callTxnId && !!state.network?.explorerUrl
+
+      return (
+        <TransactionSummary
+          key={
+            call.id ||
+            call.txnId ||
+            `${call.to || 'deploy'}-${call.value.toString()}-${call.data}-${i}`
+          }
+          style={i !== calls.length! - 1 ? (spacings.mbSm as ViewStyle) : {}}
+          call={call}
+          chainId={state.network!.chainId}
+          rightIcon={shouldShowCallExplorerIcon ? <OpenIcon width={size} height={size} /> : null}
+          onRightIconPress={
+            shouldShowCallExplorerIcon ? () => handleOpenCallExplorer(callTxnId) : undefined
+          }
+          size={sizeStr}
+          type="benzin"
+          hasCallFailed={call.status === AccountOpStatus.Rejected}
+          disableSelectorFetching
+        />
+      )
+    })
     // Prevents unnecessary re-renders of the humanizer
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state?.handleOpenExplorer, state?.network?.chainId, state?.stepsState?.calls?.length])
+  }, [
+    handleOpenCallExplorer,
+    identifiedByType,
+    rawCalls,
+    state?.network?.chainId,
+    state?.network?.explorerUrl,
+    state?.stepsState?.calls
+  ])
 
   const backgroundSource = useMemo(() => {
     if (maxWidthSize(1920)) return gradient2560
@@ -171,6 +212,7 @@ const Benzin = ({
             <Buttons
               handleCopyText={handleCopyText}
               handleOpenExplorer={handleOpenExplorer}
+              disableOpenExplorerBtn={disableOpenExplorerBtn}
               showCopyBtn={showCopyBtn}
               showOpenExplorerBtn={showOpenExplorerBtn}
             />

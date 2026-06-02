@@ -1,5 +1,5 @@
 import React, { FC, useEffect, useRef, useState } from 'react'
-import { Animated, View, ViewStyle } from 'react-native'
+import { Animated, ViewStyle } from 'react-native'
 
 import SkeletonLoader from '@common/components/SkeletonLoader'
 import { isBenzin, isLegends } from '@common/config/env'

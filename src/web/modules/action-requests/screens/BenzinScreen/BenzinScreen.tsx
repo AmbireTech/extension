@@ -55,7 +55,10 @@ const BenzinScreen = () => {
     <Benzin state={state}>
       <FooterGlassView>
         {!!state?.handleOpenExplorer && (
-          <OpenExplorerButton handleOpenExplorer={state.handleOpenExplorer} />
+          <OpenExplorerButton
+            handleOpenExplorer={state.handleOpenExplorer}
+            disableOpenExplorerBtn={state.disableOpenExplorerBtn}
+          />
         )}
         <View style={[flexbox.directionRow, flexbox.alignCenter]}>
           {!!state?.showCopyBtn && !!state?.handleCopyText && (

@@ -1,4 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
+import { GestureResponderEvent, Pressable, View, ViewStyle } from 'react-native'
 import {
   decodeFunctionData,
   encodeFunctionData,
@@ -8,14 +10,12 @@ import {
   toFunctionSelector,
   zeroAddress
 } from 'viem'
-import { useTranslation } from 'react-i18next'
-import { View, ViewStyle } from 'react-native'
 
 import {
   noStateUpdateStatuses,
   SigningStatus
 } from '@ambire-common/controllers/signAccountOp/signAccountOp'
-import { IrCall } from '@ambire-common/libs/humanizer/interfaces'
+import { HumanizerErc7730Visualization, IrCall } from '@ambire-common/libs/humanizer/interfaces'
 import {
   getAction,
   getAddressVisualization,
@@ -24,7 +24,10 @@ import {
 } from '@ambire-common/libs/humanizer/utils'
 import DeleteIcon from '@common/assets/svg/DeleteIcon'
 import ExpandableCard from '@common/components/ExpandableCard'
-import HumanizedVisualization from '@common/components/HumanizedVisualization'
+import HumanizedVisualization, {
+  getErc7730DescriptionRows,
+  shouldUseErc7730DetailedLayout
+} from '@common/components/HumanizedVisualization'
 import Label from '@common/components/Label'
 import Text from '@common/components/Text'
 import { isMobile, isWeb } from '@common/config/env'
@@ -35,7 +38,9 @@ import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import ExpandedContent from '@common/modules/sign-account-op/components/TransactionSummary/ExpandedContent'
 import FallbackVisualization from '@common/modules/sign-account-op/components/TransactionSummary/FallbackVisualization'
-import { SPACING_SM } from '@common/styles/spacings'
+import spacings, { SPACING_SM, SPACING_TY } from '@common/styles/spacings'
+import flexbox from '@common/styles/utils/flexbox'
+import ManifestImage from '@web/components/ManifestImage'
 
 import getStyles from './styles'
 
@@ -49,7 +54,6 @@ interface Props {
   enableExpand?: boolean
   rightIcon?: React.ReactNode
   onRightIconPress?: () => void
-  hideLinks?: boolean
   hideDeleteIcon?: boolean
   hasCallFailed?: boolean
   disableSelectorFetching?: boolean
@@ -82,7 +86,6 @@ const TransactionSummary = ({
   enableExpand = true,
   rightIcon,
   onRightIconPress,
-  hideLinks = false,
   hideDeleteIcon,
   hasCallFailed,
   disableSelectorFetching
@@ -95,7 +98,7 @@ const TransactionSummary = ({
   const {
     state: { portfolio }
   } = useController('SelectedAccountController')
-  const { styles } = useTheme(getStyles)
+  const { styles, theme } = useTheme(getStyles)
   const { addToast } = useToast()
   const { t } = useTranslation()
   const { decodedFunction, isLoading: isDecodedFunctionLoading } = useDecodeTransactionData(
@@ -108,6 +111,41 @@ const TransactionSummary = ({
    * set this state to true, which hides it immediately.
    */
   const [isCallRemovedOptimistic, setIsCallRemovedOptimistic] = useState(false)
+  const [erc7730ExpandedTab, setErc7730ExpandedTab] = useState<'description' | 'raw'>('description')
+
+  const erc7730Visualization = useMemo(
+    () =>
+      call.fullVisualization?.find(
+        (item): item is HumanizerErc7730Visualization & { id: number } => item.type === 'erc7730'
+      ),
+    [call.fullVisualization]
+  )
+
+  const erc7730DescriptionVisualization = useMemo(() => {
+    if (!erc7730Visualization) return null
+
+    const descriptionRows = getErc7730DescriptionRows(erc7730Visualization)
+    if (!descriptionRows.length) return null
+
+    return {
+      ...erc7730Visualization,
+      rows: descriptionRows
+    }
+  }, [erc7730Visualization])
+
+  const shouldUseDetailedErc7730Layout = useMemo(
+    () => !!erc7730Visualization && shouldUseErc7730DetailedLayout(erc7730Visualization),
+    [erc7730Visualization]
+  )
+
+  const erc7730DetailedTitle = useMemo(() => {
+    if (!erc7730Visualization) return ''
+
+    return erc7730Visualization.title || call.dapp?.name || t('Transaction details')
+  }, [call.dapp?.name, erc7730Visualization, t])
+  const erc7730DetailedIcon = erc7730Visualization?.dapp?.icon || call.dapp?.icon
+  const erc7730VisualizationKey = `${call.id || ''}-${call.to || ''}-${call.data}-${call.value.toString()}-${index || ''}`
+  const hasErc7730DescriptionVisualization = !!erc7730DescriptionVisualization
 
   const [bindDeleteIconAnim, deleteIconAnimStyle] = useHover({
     preset: 'opacityInverted'
@@ -148,6 +186,18 @@ const TransactionSummary = ({
       isMounted = false
     }
   }, [isCallRemovedOptimistic])
+
+  useEffect(() => {
+    if (hasErc7730DescriptionVisualization) setErc7730ExpandedTab('description')
+  }, [erc7730VisualizationKey, hasErc7730DescriptionVisualization])
+
+  const handleErc7730ExpandedTabPress = useCallback(
+    (event: GestureResponderEvent, tab: 'description' | 'raw') => {
+      event.stopPropagation()
+      setErc7730ExpandedTab(tab)
+    },
+    []
+  )
 
   const humanizerWarningLabels = useMemo(() => {
     if (type !== 'default') return null
@@ -396,12 +446,146 @@ const TransactionSummary = ({
     decodedFunction,
     isDecodedFunctionLoading
   ])
+  const shouldShowDeleteControl = !!call.id && type === 'default' && !rightIcon && !hideDeleteIcon
+  const shouldShowRightControl = !!rightIcon && !!onRightIconPress && !hasCallFailed
+  const rightControl = useMemo(() => {
+    if (!shouldShowDeleteControl && !shouldShowRightControl) return null
+
+    return (
+      <>
+        {shouldShowDeleteControl && (
+          <AnimatedPressable
+            style={[deleteIconAnimStyle, flexbox.alignSelfStart]}
+            onPress={handleRemoveCall}
+            disabled={isCallRemovedOptimistic}
+            {...bindDeleteIconAnim}
+            testID={`delete-txn-call-${index}`}
+          >
+            <DeleteIcon width={isMobile ? 26 : 28} height={isMobile ? 26 : 28} />
+          </AnimatedPressable>
+        )}
+        {shouldShowRightControl && (
+          <AnimatedPressable
+            style={[{ ...deleteIconAnimStyle }, spacings.mlTy]}
+            onPress={onRightIconPress}
+            {...bindDeleteIconAnim}
+            testID={`right-icon-${index}`}
+          >
+            {rightIcon}
+          </AnimatedPressable>
+        )}
+      </>
+    )
+  }, [
+    bindDeleteIconAnim,
+    deleteIconAnimStyle,
+    handleRemoveCall,
+    index,
+    isCallRemovedOptimistic,
+    onRightIconPress,
+    rightIcon,
+    shouldShowDeleteControl,
+    shouldShowRightControl
+  ])
+  const mobileErc7730Title = useMemo(() => {
+    if (!erc7730Visualization) return null
+
+    const icon = shouldUseDetailedErc7730Layout
+      ? erc7730DetailedIcon
+      : erc7730Visualization.dapp?.icon
+    const title = shouldUseDetailedErc7730Layout ? erc7730DetailedTitle : erc7730Visualization.title
+
+    if (!icon && !title) return null
+
+    return (
+      <View style={[flexbox.directionRow, flexbox.alignCenter, { minWidth: 0 }]}>
+        {!!icon && (
+          <ManifestImage
+            uri={icon}
+            containerStyle={spacings.mrTy}
+            size={24 * sizeMultiplier[size]}
+            skeletonAppearance="secondaryBackground"
+            imageStyle={{
+              borderRadius: 12 * sizeMultiplier[size],
+              backgroundColor: 'transparent'
+            }}
+          />
+        )}
+        {!!title && (
+          <Text
+            fontSize={textSize + 2}
+            weight="semiBold"
+            color={theme.secondaryAccent400}
+            numberOfLines={1}
+            style={{ flexShrink: 1 }}
+          >
+            {title}
+          </Text>
+        )}
+      </View>
+    )
+  }, [
+    erc7730DetailedIcon,
+    erc7730DetailedTitle,
+    erc7730Visualization,
+    shouldUseDetailedErc7730Layout,
+    size,
+    textSize,
+    theme
+  ])
+  const mobileFlatVisualization = useMemo(() => {
+    if (!isMobile || !callVisualization || erc7730Visualization) return null
+
+    const firstContentIndex = callVisualization.findIndex((item) => item && item.type !== 'break')
+    const visualizationData =
+      firstContentIndex > 0 ? callVisualization.slice(firstContentIndex) : callVisualization
+
+    return (
+      <HumanizedVisualization
+        data={visualizationData}
+        sizeMultiplierSize={sizeMultiplier[size]}
+        textSize={textSize}
+        imageSize={imageSize}
+        chainId={chainId}
+        type={type}
+        testID={`recipient-address-${index}`}
+        hasPadding={false}
+        style={{ width: '100%', alignContent: 'flex-start' }}
+        disableFlex
+        editApprovalCallInfo={editApprovalCallInfo}
+        dapp={call.dapp}
+      />
+    )
+  }, [
+    call.dapp,
+    callVisualization,
+    chainId,
+    editApprovalCallInfo,
+    erc7730Visualization,
+    imageSize,
+    index,
+    size,
+    textSize,
+    type
+  ])
+
   if (isCallRemovedOptimistic) return null
 
   return (
     <ExpandableCard
       enableToggleExpand={enableExpand}
       hasArrow={enableExpand}
+      mobileHeaderContent={isMobile ? rightControl : undefined}
+      mobileHeaderTitle={isMobile ? mobileErc7730Title || mobileFlatVisualization : undefined}
+      mobileHeaderStyle={
+        isMobile && mobileFlatVisualization
+          ? spacings.pvTy
+          : isMobile && shouldUseDetailedErc7730Layout
+            ? spacings.pt
+            : undefined
+      }
+      hideMobileContent={!!mobileFlatVisualization}
+      overlayMobileHeaderControls={!!mobileFlatVisualization}
       style={{
         ...(call.warnings?.length && type === 'default'
           ? { ...styles.warningContainer, ...style }
@@ -411,25 +595,87 @@ const TransactionSummary = ({
         isWeb
           ? {
               paddingHorizontal: SPACING_SM,
-              paddingVertical: type !== 'history' ? SPACING_SM * sizeMultiplier[size] : 0
+              paddingVertical: type !== 'history' ? SPACING_SM * sizeMultiplier[size] : 0,
+              ...(type === 'default' ? flexbox.alignStart : {})
             }
-          : {}
+          : type === 'default'
+            ? flexbox.alignStart
+            : undefined
       }
       content={
         <>
           {callVisualization ? (
-            <HumanizedVisualization
-              data={callVisualization}
-              sizeMultiplierSize={sizeMultiplier[size]}
-              textSize={textSize}
-              imageSize={imageSize}
-              chainId={chainId}
-              type={type}
-              testID={`recipient-address-${index}`}
-              hasPadding={enableExpand}
-              hideLinks={hideLinks}
-              editApprovalCallInfo={editApprovalCallInfo}
-            />
+            shouldUseDetailedErc7730Layout && erc7730Visualization ? (
+              <View style={[{ flex: 1, minWidth: 0 }, spacings.phSm]}>
+                {!isMobile && (
+                  <>
+                    <View
+                      style={[
+                        flexbox.directionRow,
+                        flexbox.alignCenter,
+                        { marginBottom: SPACING_TY * sizeMultiplier[size], minWidth: 0 }
+                      ]}
+                    >
+                      {!!erc7730DetailedIcon && (
+                        <ManifestImage
+                          uri={erc7730DetailedIcon}
+                          containerStyle={{ marginRight: SPACING_TY * sizeMultiplier[size] }}
+                          size={24 * sizeMultiplier[size]}
+                          skeletonAppearance="secondaryBackground"
+                          imageStyle={{
+                            borderRadius: 12 * sizeMultiplier[size],
+                            backgroundColor: 'transparent'
+                          }}
+                        />
+                      )}
+                      <Text
+                        fontSize={textSize + 2}
+                        weight="semiBold"
+                        color={theme.secondaryAccent400}
+                        numberOfLines={1}
+                        style={{ flexShrink: 1 }}
+                      >
+                        {erc7730DetailedTitle}
+                      </Text>
+                    </View>
+                    <View
+                      style={{
+                        height: 1,
+                        width: '100%',
+                        backgroundColor: theme.secondaryBorder,
+                        marginBottom: SPACING_TY * sizeMultiplier[size]
+                      }}
+                    />
+                  </>
+                )}
+                <HumanizedVisualization
+                  data={[erc7730Visualization]}
+                  sizeMultiplierSize={sizeMultiplier[size]}
+                  textSize={Math.max(textSize - 1, 12)}
+                  imageSize={imageSize}
+                  chainId={chainId}
+                  type={type}
+                  testID={`recipient-address-${index}`}
+                  hasPadding={false}
+                  erc7730Mode="description"
+                  editApprovalCallInfo={editApprovalCallInfo}
+                />
+              </View>
+            ) : (
+              <HumanizedVisualization
+                data={callVisualization}
+                sizeMultiplierSize={sizeMultiplier[size]}
+                textSize={textSize}
+                imageSize={imageSize}
+                chainId={chainId}
+                type={type}
+                testID={`recipient-address-${index}`}
+                hasPadding={enableExpand}
+                editApprovalCallInfo={editApprovalCallInfo}
+                hideMobileErc7730Title={!!mobileErc7730Title}
+                dapp={call.dapp}
+              />
+            )
           ) : (
             <FallbackVisualization
               call={call}
@@ -443,38 +689,92 @@ const TransactionSummary = ({
               {t('Failed')}
             </Text>
           )}
-          {!!call.id && type === 'default' && !rightIcon && !hideDeleteIcon && (
-            <AnimatedPressable
-              style={deleteIconAnimStyle}
-              onPress={handleRemoveCall}
-              disabled={isCallRemovedOptimistic}
-              {...bindDeleteIconAnim}
-              testID={`delete-txn-call-${index}`}
-            >
-              <DeleteIcon width={isMobile ? 26 : 28} height={isMobile ? 26 : 28} />
-            </AnimatedPressable>
-          )}
-          {rightIcon && onRightIconPress && !hasCallFailed && (
-            <AnimatedPressable
-              style={deleteIconAnimStyle}
-              onPress={onRightIconPress}
-              {...bindDeleteIconAnim}
-              testID={`right-icon-${index}`}
-            >
-              {rightIcon}
-            </AnimatedPressable>
-          )}
+          {!isMobile && rightControl}
         </>
       }
       expandedContent={
-        <ExpandedContent
-          call={call}
-          size={size}
-          sizeMultiplier={sizeMultiplier}
-          styles={styles}
-          decodedFunction={decodedFunction}
-          isDecodedFunctionLoading={isDecodedFunctionLoading}
-        />
+        erc7730Visualization && !shouldUseDetailedErc7730Layout ? (
+          <View
+            key={erc7730VisualizationKey}
+            style={{
+              paddingHorizontal: SPACING_SM * sizeMultiplier[size],
+              paddingBottom: SPACING_SM * sizeMultiplier[size]
+            }}
+          >
+            {!!erc7730DescriptionVisualization && (
+              <View
+                style={{
+                  alignSelf: 'stretch',
+                  flexDirection: 'row',
+                  borderBottomWidth: 1,
+                  borderBottomColor: theme.secondaryBorder,
+                  marginBottom: SPACING_SM * sizeMultiplier[size]
+                }}
+              >
+                {(
+                  [
+                    ['description', t('Additional description')],
+                    ['raw', t('Raw data')]
+                  ] as const
+                ).map(([tab, label]) => {
+                  const isActive = erc7730ExpandedTab === tab
+
+                  return (
+                    <Pressable
+                      key={tab}
+                      onPress={(event) => handleErc7730ExpandedTabPress(event, tab)}
+                      style={{
+                        paddingVertical: SPACING_TY * sizeMultiplier[size],
+                        marginRight: SPACING_TY,
+                        borderBottomWidth: 2,
+                        borderBottomColor: isActive ? theme.secondaryAccent400 : 'transparent'
+                      }}
+                    >
+                      <Text
+                        fontSize={14 * sizeMultiplier[size]}
+                        weight={isActive ? 'semiBold' : 'medium'}
+                        color={isActive ? theme.secondaryAccent400 : theme.secondaryText}
+                      >
+                        {label}
+                      </Text>
+                    </Pressable>
+                  )
+                })}
+              </View>
+            )}
+            {!!erc7730DescriptionVisualization && erc7730ExpandedTab === 'description' ? (
+              <HumanizedVisualization
+                data={[erc7730DescriptionVisualization]}
+                sizeMultiplierSize={sizeMultiplier[size]}
+                textSize={Math.max(textSize - 1, 12)}
+                imageSize={imageSize}
+                chainId={chainId}
+                type={type}
+                hasPadding={false}
+                erc7730Mode="description"
+                editApprovalCallInfo={editApprovalCallInfo}
+              />
+            ) : (
+              <ExpandedContent
+                call={call}
+                size={size}
+                sizeMultiplier={sizeMultiplier}
+                styles={styles}
+                decodedFunction={decodedFunction}
+                isDecodedFunctionLoading={isDecodedFunctionLoading}
+              />
+            )}
+          </View>
+        ) : (
+          <ExpandedContent
+            call={call}
+            size={size}
+            sizeMultiplier={sizeMultiplier}
+            styles={styles}
+            decodedFunction={decodedFunction}
+            isDecodedFunctionLoading={isDecodedFunctionLoading}
+          />
+        )
       }
     >
       <View

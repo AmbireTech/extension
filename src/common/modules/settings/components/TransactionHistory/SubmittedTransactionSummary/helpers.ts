@@ -5,6 +5,10 @@ import { AccountOp } from '@ambire-common/libs/accountOp/accountOp'
 import { AccountOpStatus } from '@ambire-common/libs/accountOp/types'
 import { humanizeAccountOp } from '@ambire-common/libs/humanizer'
 import { IrCall } from '@ambire-common/libs/humanizer/interfaces'
+import {
+  flattenHumanizerVisualizations,
+  hasErc7730Humanization
+} from '@ambire-common/libs/humanizer/utils'
 import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
 import formatDateTime from '@common/utils/formatDateTime'
 
@@ -145,6 +149,15 @@ export const getVisibleSummaryBalanceChanges = (balanceChanges: DisplayBalanceCh
 }
 
 export const getHumanizedCalls = (submittedAccountOp: SubmittedAccountOpLike): IrCall[] => {
+  const clearSigningHum = submittedAccountOp.meta?.clearSigningHumanization
+  const clearSign = hasErc7730Humanization(clearSigningHum) ? clearSigningHum : null
+  if (clearSign) {
+    return clearSign.map((call, index) => ({
+      ...call,
+      id: call.id || String(index)
+    }))
+  }
+
   const accountOp: AccountOp = {
     id: submittedAccountOp.id,
     accountAddr: submittedAccountOp.accountAddr,
@@ -197,9 +210,14 @@ export const getDappInteractions = (
   const sendAddresses = Array.from(
     new Set(
       humanizedCalls.flatMap((call) => {
-        if (call.fullVisualization?.[0]?.content !== 'Send') return []
+        const firstVisualization = call.fullVisualization?.[0]
+        const isSend =
+          firstVisualization?.type === 'erc7730'
+            ? firstVisualization.title === 'Send'
+            : firstVisualization?.content === 'Send'
+        if (!isSend) return []
 
-        return call.fullVisualization.flatMap((item) =>
+        return flattenHumanizerVisualizations(call.fullVisualization).flatMap((item) =>
           item.type === 'address' && item.address ? [item.address] : []
         )
       })
