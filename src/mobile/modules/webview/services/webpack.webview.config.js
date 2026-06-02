@@ -17,10 +17,7 @@ const isDev = process.env.NODE_ENV === 'development' || process.argv.includes('s
 // iOS: folder-referenced from Xcode into the signed `.app`. Android: packaged
 // by Gradle, reachable via `file:///android_asset/`.
 const IOS_WEBVIEW_DIR = path.resolve(ROOT_DIR, 'ios/Ambire/Resources/webview')
-const ANDROID_WEBVIEW_DIR = path.resolve(
-  ROOT_DIR,
-  'android/app/src/main/assets/webview'
-)
+const ANDROID_WEBVIEW_DIR = path.resolve(ROOT_DIR, 'android/app/src/main/assets/webview')
 
 // In dev, ensure inpage bundle JSON files exist (injected into dapp WebViews
 // as strings, no file-based fallback). The worker bundle is served from
@@ -173,18 +170,19 @@ class WorkerHtmlPlugin {
 
           const jsBytes = jsAsset.source()
           const jsBuffer = Buffer.isBuffer(jsBytes) ? jsBytes : Buffer.from(jsBytes)
-          const sriHash = `sha384-${crypto
-            .createHash('sha384')
-            .update(jsBuffer)
-            .digest('base64')}`
+          const sriHash = `sha384-${crypto.createHash('sha384').update(jsBuffer).digest('base64')}`
 
-          // Reports a bundle load failure (SRI mismatch, missing file) to RN.
-          // Allowed by a CSP hash, so the policy avoids `'unsafe-inline'`.
+          // Reports a failure to LOAD the bundle <script> (missing/blocked
+          // file) to RN. Scoped to the bundle script element so benign resource
+          // errors elsewhere are not reported. Allowed by a CSP hash, so the
+          // policy avoids `'unsafe-inline'`.
           const onErrorScript = `window.addEventListener('error', function (e) {
+  var t = e && e.target;
+  if (!t || t.tagName !== 'SCRIPT' || (t.src || '').indexOf('webview-bundle.js') === -1) return;
   try {
     window.ReactNativeWebView.postMessage(JSON.stringify({
       type: 'ctrl.error',
-      payload: { ctrlName: 'BundleLoad', errors: [{ message: (e && (e.message || String(e.error))) || 'Bundle load failed', url: e && e.filename }] }
+      payload: { ctrlName: 'BundleLoad', errors: [{ message: 'Failed to load webview-bundle.js', url: t.src }] }
     }));
   } catch (_) {}
 }, true);`
@@ -193,9 +191,14 @@ class WorkerHtmlPlugin {
             .update(Buffer.from(onErrorScript, 'utf8'))
             .digest('base64')}`
 
+          // `script-src` uses the `file:` scheme (not `'self'`, which an opaque
+          // `file://` origin does not match) for the sibling bundle, plus a hash
+          // for the inline error handler. Not a wide grant — navigation is
+          // locked to the single bundle URI (see onShouldStartLoadWithRequest),
+          // so the only `file:` script reachable is our own bundle.
           const csp = [
             "default-src 'none'",
-            `script-src 'self' '${onErrorHash}'`,
+            `script-src file: '${onErrorHash}'`,
             "connect-src 'none'",
             "frame-src 'none'",
             "object-src 'none'",
@@ -206,6 +209,7 @@ class WorkerHtmlPlugin {
           const html = `<!DOCTYPE html>
 <html>
   <head>
+    <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="Content-Security-Policy" content="${csp}">
     <script>${onErrorScript}</script>
@@ -216,10 +220,7 @@ class WorkerHtmlPlugin {
 </html>
 `
 
-          compilation.emitAsset(
-            'webview-bundle.html',
-            new webpack.sources.RawSource(html)
-          )
+          compilation.emitAsset('webview-bundle.html', new webpack.sources.RawSource(html))
         }
       )
     })
@@ -246,9 +247,7 @@ class MirrorToAndroidAssetsPlugin {
           fs.copyFileSync(src, path.join(this.targetDir, name))
         }
       } catch (err) {
-        compilation.errors.push(
-          new Error(`MirrorToAndroidAssetsPlugin failed: ${err.message}`)
-        )
+        compilation.errors.push(new Error(`MirrorToAndroidAssetsPlugin failed: ${err.message}`))
       }
     })
   }
@@ -270,9 +269,7 @@ const workerConfig = {
   target: 'web',
   devtool: false,
   output: {
-    path: isDev
-      ? path.resolve(ROOT_DIR, 'src/mobile/modules/webview/services')
-      : IOS_WEBVIEW_DIR,
+    path: isDev ? path.resolve(ROOT_DIR, 'src/mobile/modules/webview/services') : IOS_WEBVIEW_DIR,
     filename: 'webview-bundle.js',
     libraryTarget: 'window',
     publicPath: isDev ? '/' : ''

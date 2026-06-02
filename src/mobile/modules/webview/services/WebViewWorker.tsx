@@ -23,7 +23,7 @@ import getWebviewBundleUri from '@mobile/modules/webview/services/getWebviewBund
 // In production the worker bundle ships as a static file inside the signed
 // app (iOS Resources / Android assets) and the WebView loads it from disk via
 // `file://`. The HTML stub is built at compile time with a strict CSP
-// (`script-src 'self'`) and loads the bundle through a `<script src>` tag
+// (`script-src file:`) and loads the bundle through a `<script src>` tag
 // pinned with a SHA-384 Subresource Integrity hash, which the engine
 // recomputes and validates before executing the script.
 // In dev the bundle is fetched from webpack-dev-server (HTTP) so HMR keeps
@@ -511,12 +511,11 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, {}>((_, ref) => {
         return request.url === PROD_BUNDLE_URI
       }}
       mixedContentMode="never"
-      // Kept `false` on both platforms. The worker page (`file://...html`)
-      // loads its sibling JS via a `<script src>` tag, which the engine fetches
-      // without needing file:// → file:// XHR access. Leaving this `false`
-      // means even an (unexpected) XSS inside the worker cannot read other
-      // local files via `file://` XHR.
-      allowFileAccessFromFileURLs={false}
+      // Required on Android for the sibling `<script src>` to load over
+      // `file://`. Safe: navigation is locked to the single bundle URI and
+      // `allowUniversalAccessFromFileURLs` stays `false`, so the page cannot
+      // reach http(s) or cross-origin resources.
+      allowFileAccessFromFileURLs={!__DEV__}
       allowUniversalAccessFromFileURLs={false}
       domStorageEnabled={true}
       webviewDebuggingEnabled={__DEV__}
