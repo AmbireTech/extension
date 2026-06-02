@@ -1,3 +1,8 @@
+// MUST be first: installs a BigInt-safe structuredClone before any controller
+// code runs. iOS 16's native structuredClone corrupts BigInt-containing
+// portfolio state (see structuredCloneShim.ts), crashing the dashboard.
+import { getStructuredCloneShimStatus } from './structuredCloneShim'
+
 import { EventEmitter as Emitter } from 'events'
 
 import { EventEmitterRegistryController } from '@ambire-common/controllers/eventEmitterRegistry/eventEmitterRegistry'
@@ -198,6 +203,10 @@ let currentWindowId = 1
 
 const initControllers = (config: any) => {
   try {
+    // Logged here (not in structuredCloneShim) because that module loads before
+    // console forwarding is wired up, so its logs never reach Metro.
+    console.log(getStructuredCloneShimStatus())
+
     // PERF: seed the storage cache BEFORE constructing controllers, so their
     // initial-load storage reads hit the in-memory cache instead of the bridge.
     seedStorageCache(config.__storageSnapshot)
