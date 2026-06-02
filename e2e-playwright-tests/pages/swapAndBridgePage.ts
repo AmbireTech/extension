@@ -166,7 +166,7 @@ export class SwapAndBridgePage extends BasePage {
       await this.click(selectors.recieveNetworkBase)
     }
 
-    await this.page.waitForTimeout(1500)
+    await this.page.waitForTimeout(2000)
 
     await this.click(selectors.swapAndBridge.receiveTokenDropdown)
     await this.page.getByTestId(selectors.searchInput).fill(receiveToken.symbol)
