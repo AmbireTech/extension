@@ -203,9 +203,11 @@ const EditApproval = ({
           {'['}
         </Text>
         <EditPenIcon width={20} height={20} color={theme.linkText} />
-        <Text fontSize={14} color={theme.linkText}>
-          {t('Edit')}
-        </Text>
+        {!isMobile && (
+          <Text fontSize={14} color={theme.linkText}>
+            {t('Edit')}
+          </Text>
+        )}
         <Text fontSize={14} color={theme.linkText}>
           {']'}
         </Text>

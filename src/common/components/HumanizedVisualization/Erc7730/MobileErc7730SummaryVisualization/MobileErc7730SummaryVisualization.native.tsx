@@ -1,4 +1,4 @@
-import React, { memo } from 'react'
+import React, { memo, useCallback } from 'react'
 import { View } from 'react-native'
 
 import Text from '@common/components/Text'
@@ -19,6 +19,26 @@ const MobileErc7730SummaryVisualization = ({
 }: Props) => {
   const { theme } = useTheme()
   const subtitleTextSize = Math.max(textSize - 3, 11)
+  const renderValues = useCallback(
+    (values: Props['summaryRows'][number]['value'], overrideTextSize?: number) => (
+      <View
+        style={[
+          flexbox.directionRow,
+          flexbox.alignCenter,
+          flexbox.justifyEnd,
+          flexbox.wrap,
+          { minWidth: 0, flexShrink: 1 }
+        ]}
+      >
+        {values.map((value, index) => (
+          <View key={value.id} style={index > 0 && spacings.mlTy}>
+            {renderValue(value, overrideTextSize)}
+          </View>
+        ))}
+      </View>
+    ),
+    [renderValue]
+  )
 
   return (
     <View style={{ width: '100%', minWidth: 0 }}>
@@ -41,60 +61,54 @@ const MobileErc7730SummaryVisualization = ({
         </View>
       </View>
       {spenderRow && (
-        <View style={[flexbox.directionRow, flexbox.alignCenter, flexbox.wrap, spacings.mtMi]}>
-          <Text
-            fontSize={subtitleTextSize}
-            weight="semiBold"
-            appearance="secondaryText"
-            style={spacings.mrTy}
-          >
-            {spenderRow.label}
-          </Text>
-          {spenderRow.value.map((value) => (
-            <View key={value.id} style={spacings.mrTy}>
-              {renderValue(value, subtitleTextSize)}
-            </View>
-          ))}
+        <View
+          style={[
+            flexbox.directionRow,
+            flexbox.alignCenter,
+            flexbox.justifySpaceBetween,
+            spacings.mtMi,
+            { width: '100%', minWidth: 0 }
+          ]}
+        >
+          <View style={[flexbox.directionRow, flexbox.alignCenter, { minWidth: 0, flexShrink: 1 }]}>
+            <Text
+              fontSize={subtitleTextSize}
+              weight="semiBold"
+              appearance="secondaryText"
+              style={spacings.mrTy}
+            >
+              {spenderRow.label}
+            </Text>
+          </View>
+          {renderValues(spenderRow.value, subtitleTextSize)}
         </View>
       )}
-      {summaryRows.map((row) => {
-        const shouldShowLabel =
-          summaryRows.length > 1 || !row.value.some((value) => value.type === 'token')
-
-        return (
-          <View
-            key={`${item.id}-mobile-summary-${row.label}-${row.value
-              .map((value) => value.id)
-              .join('-')}`}
-            style={[{ width: '100%', minWidth: 0 }, spacings.mtTy]}
-          >
-            {shouldShowLabel && (
-              <Text
-                fontSize={Math.max(textSize - 4, 10)}
-                weight="semiBold"
-                appearance="secondaryText"
-                style={spacings.mbMi}
-              >
-                {row.label}
-              </Text>
-            )}
-            <View
-              style={[
-                flexbox.directionRow,
-                flexbox.alignCenter,
-                flexbox.justifyStart,
-                flexbox.wrap
-              ]}
+      {summaryRows.map((row) => (
+        <View
+          key={`${item.id}-mobile-summary-${row.label}-${row.value
+            .map((value) => value.id)
+            .join('-')}`}
+          style={[
+            flexbox.directionRow,
+            flexbox.alignCenter,
+            flexbox.justifySpaceBetween,
+            { width: '100%', minWidth: 0 },
+            spacings.mtTy
+          ]}
+        >
+          {!!row.label.trim() && (
+            <Text
+              fontSize={Math.max(textSize - 4, 10)}
+              weight="semiBold"
+              appearance="secondaryText"
+              style={spacings.mrTy}
             >
-              {row.value.map((value) => (
-                <View key={value.id} style={spacings.mrTy}>
-                  {renderValue(value)}
-                </View>
-              ))}
-            </View>
-          </View>
-        )
-      })}
+              {row.label}
+            </Text>
+          )}
+          {renderValues(row.value)}
+        </View>
+      ))}
     </View>
   )
 }
