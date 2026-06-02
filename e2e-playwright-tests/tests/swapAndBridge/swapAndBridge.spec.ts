@@ -60,7 +60,7 @@ test.describe('swapAndBridge Smart Account', { tag: '@swapAndBridge' }, () => {
     await pages.swapAndBridge.verifySendMaxTokenAmount(usdc)
   })
 
-  test.only('should find token that already exists within the "Receive" list during Swap & Bridge with a Smart Account', async ({
+  test('should find token that already exists within the "Receive" list during Swap & Bridge with a Smart Account', async ({
     pages
   }) => {
     const usdc = tokens.usdc.base
