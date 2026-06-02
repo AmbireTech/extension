@@ -4,8 +4,15 @@ import { EventEmitterRegistryController } from '@ambire-common/controllers/event
 import { MainController } from '@ambire-common/controllers/main/main'
 import { KeystoreSigner } from '@ambire-common/libs/keystoreSigner/keystoreSigner'
 import * as richJson from '@ambire-common/libs/richJson/richJson'
-import { AutoLockController } from '@common/controllers/auto-lock'
-import { WalletStateController } from '@common/controllers/wallet-state'
+// Import the `.native` implementations explicitly. The worker bundle is built
+// by webpack with `.web.ts` resolved first, so the barrel imports would pull in
+// the `.web.ts` versions — which depend on the Chrome extension `browser` API
+// (`browser.alarms` for auto-lock, `browser.action` for the toolbar-pinned
+// check). In the mobile worker `browser` is null, so auto-lock never arms and
+// the pinned-check loops uselessly. The `.native` versions use a plain
+// setTimeout and drop the browser-only logic, which is correct for mobile.
+import { AutoLockController } from '@common/controllers/auto-lock/auto-lock.native'
+import { WalletStateController } from '@common/controllers/wallet-state/wallet-state.native'
 import { handleActions } from '@mobile/handlers/handleActions'
 
 import {
@@ -122,11 +129,45 @@ const bridgedFetch = createBridgedFetch(sendToRNAsync)
 // @ts-ignore — override the global fetch with our bridge
 window.fetch = bridgedFetch
 
+// PERF: in-memory mirror of async storage, seeded once from the init snapshot
+// (RN dumps the whole MMKV instance at init). Holds the same RAW serialized
+// strings RN's storage layer stores, so reads parse with richJson exactly as a
+// bridged storage.get would have. Lets the ~79 controller-boot reads resolve
+// locally instead of each making a separate injectJavaScript round-trip.
+const storageCache: Record<string, string> = {}
+let storageCacheSeeded = false
+
+const seedStorageCache = (snapshot: Record<string, string> | undefined) => {
+  if (!snapshot) return
+  Object.entries(snapshot).forEach(([key, serialized]) => {
+    storageCache[key] = serialized
+  })
+  storageCacheSeeded = true
+}
+
 // Proxied Storage API
 const storageAPI = {
-  get: (key: string, defaultValue?: any) => sendToRNAsync('storage.get', { key, defaultValue }),
-  set: (key: string, value: any) => sendToRNAsync('storage.set', { key, value }),
-  remove: (key: string) => sendToRNAsync('storage.remove', { key })
+  get: (key: string, defaultValue?: any) => {
+    // Serve from the seeded cache to avoid a bridge round-trip. A missing key in
+    // a seeded cache means it genuinely isn't in storage → return defaultValue,
+    // matching RN's storage.get semantics (no bridge hop needed).
+    if (storageCacheSeeded) {
+      const serialized = storageCache[key]
+      const value = serialized !== undefined ? richJson.parse(serialized) : defaultValue
+      return Promise.resolve(value)
+    }
+    // Cache not seeded yet (no snapshot for some reason) → fall back to bridge.
+    return sendToRNAsync('storage.get', { key, defaultValue })
+  },
+  set: (key: string, value: any) => {
+    // Keep the cache coherent with the write, then persist through the bridge.
+    storageCache[key] = richJson.stringify(value)
+    return sendToRNAsync('storage.set', { key, value })
+  },
+  remove: (key: string) => {
+    delete storageCache[key]
+    return sendToRNAsync('storage.remove', { key })
+  }
 }
 
 const eventEmitterRegistry = new EventEmitterRegistryController(() => {
@@ -157,6 +198,9 @@ let currentWindowId = 1
 
 const initControllers = (config: any) => {
   try {
+    // PERF: seed the storage cache BEFORE constructing controllers, so their
+    // initial-load storage reads hit the in-memory cache instead of the bridge.
+    seedStorageCache(config.__storageSnapshot)
     if (Array.isArray(config.criticalControllers)) {
       setCriticalControllers(config.criticalControllers)
     }
@@ -232,10 +276,15 @@ const initControllers = (config: any) => {
 
     walletStateCtrl = new WalletStateController({
       eventEmitterRegistry,
-      onLogLevelUpdateCallback: () => Promise.resolve()
+      onLogLevelUpdateCallback: () => Promise.resolve(),
+      storage: storageAPI
     })
 
-    autoLockCtrl = new AutoLockController(eventEmitterRegistry, () => mainCtrl.keystore.lock())
+    autoLockCtrl = new AutoLockController(
+      eventEmitterRegistry,
+      () => mainCtrl.keystore.lock(),
+      storageAPI
+    )
 
     // Initialize UI view inside the WebView worker context natively
     mainCtrl.ui.addView({ id: 'default-mobile-app-view', type: 'mobile' })

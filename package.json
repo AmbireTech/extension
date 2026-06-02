@@ -24,6 +24,8 @@
     "build:ios:production": "yarn build:ios:archive && yarn build:ios:export",
     "build:ios:production-for-testing": "yarn build:ios:archive && yarn build:ios:export-for-testing",
     "build:android:production:apk": "yarn build:webview && cd android && APP_ENV=production ./gradlew assembleRelease",
+    "build:android:test:apk": "yarn build:webview && (test -f credentials.json && mv credentials.json credentials.json.bak || true) && (cd android && APP_ENV=production ./gradlew assembleRelease); ret=$?; test -f credentials.json.bak && mv credentials.json.bak credentials.json; exit $ret",
+    "build:android:test:apk:install": "yarn build:android:test:apk && adb shell am force-stop com.ambire.wallet && adb install -r android/app/build/outputs/apk/release/app-release.apk",
     "build:android:production:aab": "yarn build:webview && cd android && APP_ENV=production ./gradlew bundleRelease",
     "build:web:webkit": "rm -rf ./build/webkit-prod && APP_ENV=production WEB_ENGINE=webkit WEBPACK_BUILD_OUTPUT_PATH=webkit-prod expo export:web",
     "build:web:webkit:generate-policy": "LAVAMOAT_GENERATE_POLICY=true yarn build:web:webkit",

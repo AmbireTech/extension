@@ -559,24 +559,29 @@ const init = async () => {
     eventEmitterRegistry,
     onLogLevelUpdateCallback: async (nextLogLevel: LOG_LEVELS) => {
       await mainCtrl.dapps.broadcastDappSessionEvent('logLevelUpdate', nextLogLevel)
-    }
+    },
+    storage
   })
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const badgesCtrl = new BadgesController(mainCtrl, walletStateCtrl)
-  autoLockCtrl = new AutoLockController(eventEmitterRegistry, () => {
-    // Prevents sending multiple notifications if the event is triggered multiple times
-    if (mainCtrl.keystore.isUnlocked) {
-      notificationManager
-        .create({
-          title: 'Ambire locked',
-          message: 'Your wallet has been locked due to inactivity.'
-        })
-        .catch((err) => {
-          console.error('Failed to create notification', err)
-        })
-    }
-    mainCtrl.lock()
-  })
+  autoLockCtrl = new AutoLockController(
+    eventEmitterRegistry,
+    () => {
+      // Prevents sending multiple notifications if the event is triggered multiple times
+      if (mainCtrl.keystore.isUnlocked) {
+        notificationManager
+          .create({
+            title: 'Ambire locked',
+            message: 'Your wallet has been locked due to inactivity.'
+          })
+          .catch((err) => {
+            console.error('Failed to create notification', err)
+          })
+      }
+      mainCtrl.lock()
+    },
+    storage
+  )
   const extensionUpdateCtrl = new ExtensionUpdateController(eventEmitterRegistry)
 
   function debounceFrontEndEventUpdatesOnSameTick(

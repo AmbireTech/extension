@@ -7,7 +7,7 @@ import { WebView } from 'react-native-webview'
 import * as richJson from '@ambire-common/libs/richJson/richJson'
 import { CONTROLLER_STORE_MAX_LOADING_TIME } from '@common/contexts/controllerStoreContext/controllerStore'
 import eventBus from '@common/services/event/eventBus'
-import { storage } from '@common/services/storage'
+import { getAllSerialized, storage } from '@common/services/storage'
 import { WEBVIEW_DEV_HOST } from '@env'
 import getWebviewBundleUri from '@mobile/modules/webview/services/getWebviewBundleUri'
 import {
@@ -116,18 +116,23 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, {}>((_, ref) => {
       dispatchToWebView(action, raw)
     },
     init: (config: any) => {
-      lastConfig.current = config
+      // PERF: ship a one-shot snapshot of all async storage so the worker can
+      // seed an in-memory cache and serve controller-boot reads locally instead
+      // of making ~79 separate bridged storage.get round-trips (each delivered
+      // via its own injectJavaScript), which saturated the bridge for seconds.
+      const configWithStorage = { ...config, __storageSnapshot: getAllSerialized() }
+      lastConfig.current = configWithStorage
       return new Promise((resolve) => {
         initResolver.current = resolve
         scheduleInitWarningTimeout()
         if (isLoaded) {
-          const initPayload = richJson.stringify({ type: 'init', config })
+          const initPayload = richJson.stringify({ type: 'init', config: configWithStorage })
           webviewRef.current?.injectJavaScript(`
               window.postMessage(${JSON.stringify(initPayload)}, '*');
               true;
             `)
         } else {
-          pendingConfig.current = config
+          pendingConfig.current = configWithStorage
         }
       })
     }
