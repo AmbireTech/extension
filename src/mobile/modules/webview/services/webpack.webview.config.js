@@ -5,6 +5,7 @@ const NodePolyfillPlugin = require('node-polyfill-webpack-plugin')
 const TerserPlugin = require('terser-webpack-plugin')
 const HtmlWebpackPlugin = require('html-webpack-plugin')
 const fs = require('fs')
+const crypto = require('crypto')
 const { execSync } = require('child_process')
 
 // Since Webpack is executed from the project root via package.json scripts,
@@ -12,25 +13,18 @@ const { execSync } = require('child_process')
 const ROOT_DIR = process.cwd()
 const isDev = process.env.NODE_ENV === 'development' || process.argv.includes('serve')
 
-// Where the production worker bundle is shipped so the WebView can load it
-// directly from disk via a `file://` URL on each platform.
-//   iOS: anything under `ios/Ambire/Resources/` is folder-referenced from the
-//        Xcode project (see project.pbxproj) and copied verbatim into the
-//        signed `.app` bundle. The WebView reads it at runtime via
-//        `${expo-file-system.bundleDirectory}/webview/webview-bundle.html`.
-//   Android: anything under `android/app/src/main/assets/` is packaged by
-//        Gradle without further configuration. The WebView reads it via
-//        `file:///android_asset/webview/webview-bundle.html`.
+// Production worker bundle output dirs, loaded by the WebView via `file://`.
+// iOS: folder-referenced from Xcode into the signed `.app`. Android: packaged
+// by Gradle, reachable via `file:///android_asset/`.
 const IOS_WEBVIEW_DIR = path.resolve(ROOT_DIR, 'ios/Ambire/Resources/webview')
 const ANDROID_WEBVIEW_DIR = path.resolve(
   ROOT_DIR,
   'android/app/src/main/assets/webview'
 )
 
-// In dev mode, ensure inpage bundle JSON files exist before starting the dev
-// server. They are injected into dapp WebViews as strings and have no file-
-// based fallback. The worker bundle is always served from webpack-dev-server
-// in dev so it does not need the on-disk fallback.
+// In dev, ensure inpage bundle JSON files exist (injected into dapp WebViews
+// as strings, no file-based fallback). The worker bundle is served from
+// webpack-dev-server in dev.
 if (isDev) {
   const SERVICES_DIR = path.resolve(ROOT_DIR, 'src/mobile/modules/webview/services')
   const bundleFiles = ['ethereum-inpage-bundle.json', 'ambire-inpage-bundle.json']
@@ -159,46 +153,50 @@ class JsonWrapPlugin {
 }
 
 /**
- * Emits `webview-bundle.html` next to `webview-bundle.js` with a CSP-locked
- * `<script>` tag that loads the bundle from the same directory and pins it via
- * a SHA-384 Subresource Integrity hash. The WKWebView refuses to execute the
- * script if the on-disk bundle has been tampered with.
- *
- * CSP rationale: `script-src 'self'` permits the bundle's `<script src=...>`
- * but still blocks inline scripts, `eval`, remote URLs, and any DOM-injected
- * `<script>` tags. `connect-src 'none'` blocks every network egress from the
- * WebView itself (all I/O is proxied through the RN bridge).
+ * Emits `webview-bundle.html` next to `webview-bundle.js`. The bundle loads via
+ * a `<script src>` tag pinned with a build-time SHA-384 SRI hash under a strict
+ * CSP (`script-src 'self'`, `connect-src 'none'`).
  */
 class WorkerHtmlPlugin {
   apply(compiler) {
     compiler.hooks.thisCompilation.tap('WorkerHtmlPlugin', (compilation) => {
+      // REPORT stage runs after TerserPlugin minifies, so the SRI hash matches
+      // the shipped bytes.
       compilation.hooks.processAssets.tap(
         {
           name: 'WorkerHtmlPlugin',
-          stage: webpack.Compilation.PROCESS_ASSETS_STAGE_ADDITIONAL
+          stage: webpack.Compilation.PROCESS_ASSETS_STAGE_REPORT
         },
         (assets) => {
           const jsAsset = assets['webview-bundle.js']
           if (!jsAsset) return
 
-          // Load the bundle via XHR + eval so we can wrap execution in a
-          // try/catch on our side. WKWebView masks any uncaught error from a
-          // cross-origin `<script src>` as "Script error." with no file/line,
-          // which makes diagnosing prod failures impossible. Loading the
-          // bundle as text and `eval`-ing it keeps the same execution scope
-          // so real stacks reach `window.onerror`.
-          //
-          // CSP rationale: the inline loader and `eval` require
-          // `'unsafe-inline'` + `'unsafe-eval'` for `script-src`, but every
-          // other directive is locked down. The bundle bytes are signed into
-          // the app binary, so widening the script-src does not change what
-          // code can actually run. `connect-src 'self'` is what permits the
-          // XHR to the sibling `webview-bundle.js`; the actual file:// access
-          // is also gated on `allowFileAccessFromFileURLs` on the RN side.
+          const jsBytes = jsAsset.source()
+          const jsBuffer = Buffer.isBuffer(jsBytes) ? jsBytes : Buffer.from(jsBytes)
+          const sriHash = `sha384-${crypto
+            .createHash('sha384')
+            .update(jsBuffer)
+            .digest('base64')}`
+
+          // Reports a bundle load failure (SRI mismatch, missing file) to RN.
+          // Allowed by a CSP hash, so the policy avoids `'unsafe-inline'`.
+          const onErrorScript = `window.addEventListener('error', function (e) {
+  try {
+    window.ReactNativeWebView.postMessage(JSON.stringify({
+      type: 'ctrl.error',
+      payload: { ctrlName: 'BundleLoad', errors: [{ message: (e && (e.message || String(e.error))) || 'Bundle load failed', url: e && e.filename }] }
+    }));
+  } catch (_) {}
+}, true);`
+          const onErrorHash = `sha384-${crypto
+            .createHash('sha384')
+            .update(Buffer.from(onErrorScript, 'utf8'))
+            .digest('base64')}`
+
           const csp = [
             "default-src 'none'",
-            "script-src 'unsafe-inline' 'unsafe-eval'",
-            "connect-src 'self'",
+            `script-src 'self' '${onErrorHash}'`,
+            "connect-src 'none'",
             "frame-src 'none'",
             "object-src 'none'",
             "base-uri 'none'",
@@ -210,33 +208,10 @@ class WorkerHtmlPlugin {
   <head>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="Content-Security-Policy" content="${csp}">
+    <script>${onErrorScript}</script>
   </head>
   <body>
-    <script>
-      (function() {
-        try {
-          var xhr = new XMLHttpRequest();
-          xhr.open('GET', 'webview-bundle.js', false);
-          xhr.send();
-          if (xhr.status !== 200 && xhr.status !== 0) {
-            throw new Error('Bundle XHR failed: status=' + xhr.status);
-          }
-          // eslint-disable-next-line no-eval
-          (0, eval)(xhr.responseText);
-        } catch (err) {
-          var msg = err && (err.stack || err.message) || String(err);
-          try {
-            window.ReactNativeWebView.postMessage(JSON.stringify({
-              type: 'ctrl.error',
-              payload: {
-                ctrlName: 'BundleLoad',
-                errors: [{ message: msg }]
-              }
-            }));
-          } catch (_) {}
-        }
-      })();
-    </script>
+    <script src="webview-bundle.js" integrity="${sriHash}" crossorigin="anonymous"></script>
   </body>
 </html>
 `
@@ -252,9 +227,8 @@ class WorkerHtmlPlugin {
 }
 
 /**
- * After webpack writes the worker bundle to disk, mirror it to the Android
- * assets directory so the same files are packaged into the APK. The iOS path
- * is the webpack output path itself (folder-referenced from Xcode).
+ * Mirrors the worker bundle to the Android assets dir so it ships in the APK.
+ * iOS uses the webpack output path directly (folder-referenced from Xcode).
  */
 class MirrorToAndroidAssetsPlugin {
   constructor({ sourceDir, targetDir }) {
@@ -284,14 +258,9 @@ class MirrorToAndroidAssetsPlugin {
  * Configuration 1: WebView Worker
  * Background instance that runs the wallet's controllers.
  *
- * In production the worker bundle is written directly under
- * `ios/Ambire/Resources/webview/` and mirrored to
- * `android/app/src/main/assets/webview/`. The WebView loads it from disk via
- * `file://` so WKWebView can stream-parse it and cache its bytecode between
- * launches — far cheaper than the previous JSON-wrapped string injection.
- * In dev the bundle is served from webpack-dev-server (HTTP) so HMR keeps
- * working unchanged; the on-disk copies are produced only by the production
- * build.
+ * Prod: bundle written to `ios/Ambire/Resources/webview/`, mirrored to Android
+ * assets, loaded from disk via `file://` (WKWebView stream-parses and caches
+ * bytecode). Dev: served from webpack-dev-server (HTTP) for HMR.
  */
 const workerConfig = {
   name: 'worker',
@@ -306,8 +275,7 @@ const workerConfig = {
       : IOS_WEBVIEW_DIR,
     filename: 'webview-bundle.js',
     libraryTarget: 'window',
-    publicPath: isDev ? '/' : '',
-    crossOriginLoading: 'anonymous'
+    publicPath: isDev ? '/' : ''
   },
   resolve: sharedResolve,
   module: { rules: sharedRules },

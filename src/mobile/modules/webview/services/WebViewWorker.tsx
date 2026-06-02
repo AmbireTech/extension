@@ -1,6 +1,6 @@
+import { isDevice } from 'expo-device'
 import React, { forwardRef, useImperativeHandle, useRef, useState } from 'react'
 import { Platform } from 'react-native'
-import { isDevice } from 'expo-device'
 import { pbkdf2Sync, scrypt } from 'react-native-quick-crypto'
 import { WebView } from 'react-native-webview'
 
@@ -9,7 +9,6 @@ import { CONTROLLER_STORE_MAX_LOADING_TIME } from '@common/contexts/controllerSt
 import eventBus from '@common/services/event/eventBus'
 import { getAllSerialized, storage } from '@common/services/storage'
 import { WEBVIEW_DEV_HOST } from '@env'
-import getWebviewBundleUri from '@mobile/modules/webview/services/getWebviewBundleUri'
 import {
   approveWalletConnectSession,
   approveWcAuthenticate,
@@ -19,19 +18,21 @@ import {
   rejectWcAuthenticate,
   respondToWalletConnectRequest
 } from '@mobile/modules/wallet-connect/services/walletConnectService'
+import getWebviewBundleUri from '@mobile/modules/webview/services/getWebviewBundleUri'
 
 // In production the worker bundle ships as a static file inside the signed
 // app (iOS Resources / Android assets) and the WebView loads it from disk via
-// `file://`. The HTML stub is built at compile time with a CSP that only
-// allows the bundle to load and a SHA-384 integrity hash that WKWebView
-// validates before executing.
+// `file://`. The HTML stub is built at compile time with a strict CSP
+// (`script-src 'self'`) and loads the bundle through a `<script src>` tag
+// pinned with a SHA-384 Subresource Integrity hash, which the engine
+// recomputes and validates before executing the script.
 // In dev the bundle is fetched from webpack-dev-server (HTTP) so HMR keeps
 // working.
 const PROD_BUNDLE_URI = !__DEV__ ? getWebviewBundleUri() : ''
 // Directory containing the HTML + JS pair. WKWebView's `loadFileURL` defaults
-// its read-access scope to the HTML file alone, which blocks the inline XHR
-// from reaching the sibling `webview-bundle.js`. We grant read access to the
-// directory only — narrowest scope that lets the bundle load.
+// its read-access scope to the HTML file alone, which blocks the sibling
+// `<script src="webview-bundle.js">` from resolving. We grant read access to
+// the directory only — narrowest scope that lets the bundle load.
 const PROD_BUNDLE_DIR = !__DEV__ ? PROD_BUNDLE_URI.replace(/\/[^/]+$/, '/') : ''
 
 // The dev server URL for webpack-dev-server.
@@ -118,7 +119,7 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, {}>((_, ref) => {
     init: (config: any) => {
       // PERF: ship a one-shot snapshot of all async storage so the worker can
       // seed an in-memory cache and serve controller-boot reads locally instead
-      // of making ~79 separate bridged storage.get round-trips (each delivered
+      // of making 80+ separate bridged storage.get round-trips (each delivered
       // via its own injectJavaScript), which saturated the bridge for seconds.
       const configWithStorage = { ...config, __storageSnapshot: getAllSerialized() }
       lastConfig.current = configWithStorage
@@ -504,18 +505,18 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, {}>((_, ref) => {
           return request.url.startsWith('file:///') || request.url.startsWith(devUrl)
         }
         // In production the WebView only ever navigates to the bundled HTML
-        // stub. The bundle JS is fetched via XHR from inside that page (so we
-        // never see a navigation for it here). Anything else is rejected.
+        // stub. The bundle JS is loaded as a sibling `<script src>` from inside
+        // that page (so we never see a navigation for it here). Anything else
+        // is rejected.
         return request.url === PROD_BUNDLE_URI
       }}
       mixedContentMode="never"
-      // In prod the worker page is `file://...html` and pulls its sibling JS
-      // via XHR + eval (so we can capture exceptions in our own try/catch
-      // rather than getting WKWebView's masked "Script error."). XHR between
-      // sibling file:// resources requires this flag. Both files live inside
-      // the signed `.app` bundle, alongside no other content, so widening
-      // file:// access to file:// is benign here.
-      allowFileAccessFromFileURLs={!__DEV__}
+      // Kept `false` on both platforms. The worker page (`file://...html`)
+      // loads its sibling JS via a `<script src>` tag, which the engine fetches
+      // without needing file:// → file:// XHR access. Leaving this `false`
+      // means even an (unexpected) XSS inside the worker cannot read other
+      // local files via `file://` XHR.
+      allowFileAccessFromFileURLs={false}
       allowUniversalAccessFromFileURLs={false}
       domStorageEnabled={true}
       webviewDebuggingEnabled={__DEV__}
