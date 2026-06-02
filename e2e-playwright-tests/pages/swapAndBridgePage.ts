@@ -548,7 +548,7 @@ export class SwapAndBridgePage extends BasePage {
       .locator(selectors.dashboard.confirmedTransactionPill)
       .first()
 
-    await expect(firstApprovalTransaction).toContainText('Grant approval')
+    await expect(firstApprovalTransaction).toContainText('Approve')
     await expect(firstConfirmedPill).toContainText('Confirmed')
   }
 }
