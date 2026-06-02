@@ -261,6 +261,7 @@ const selectors = {
   lockExtensionButton: 'lock-extension-button',
   passphraseField: 'passphrase-field',
   buttonUnlock: 'button-unlock',
+  buttonUnlockBiometricsIcon: 'button-unlock-biometrics-icon',
   fullBalance: 'full-balance',
   tabNft: 'tab-nft',
   collectionItem: 'collection-item',
