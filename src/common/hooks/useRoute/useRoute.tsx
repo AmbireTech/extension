@@ -7,7 +7,6 @@ function getSearchParamsAsObject(searchString: string) {
   const paramsObject: any = {}
   const searchParams = new URLSearchParams(searchString)
 
-  // eslint-disable-next-line no-restricted-syntax
   for (const [key, value] of searchParams.entries()) {
     paramsObject[key] = value
   }

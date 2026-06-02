@@ -96,7 +96,7 @@ const DashboardScreen = () => {
     <MobileLayoutContainer
       withHorizontalPadding={false}
       withTopPadding={false}
-      withBottomInset={false}
+      keyboardAwareFooter={false}
     >
       <View style={flexbox.flex1}>
         <GasTankModal

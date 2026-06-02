@@ -1,4 +1,3 @@
-/* eslint-disable react/no-unused-prop-types */
 import React, { ReactNode } from 'react'
 import { View, ViewStyle } from 'react-native'
 import ToggleSwitch from 'toggle-switch-react-native'

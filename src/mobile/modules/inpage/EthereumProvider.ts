@@ -1,4 +1,3 @@
-/* eslint-disable no-restricted-globals */
 import { EthereumProvider as CommonEthereumProvider } from '@common/modules/inpage/EthereumProvider'
 
 const pendingRequests: Record<number, { resolve: (v: any) => void; reject: (e: any) => void }> = {}
@@ -26,11 +25,9 @@ export class EthereumProvider extends CommonEthereumProvider {
         // Instead, it receives one-way events via the global window.__ambire_<nonce>._onEvent.
       },
       logInfo: (prefix: string, ...args: any[]) => {
-        // eslint-disable-next-line no-console
         console.log(`[Ambire] ${prefix}`, ...args)
       },
       logWarn: (prefix: string, ...args: any[]) => {
-        // eslint-disable-next-line no-console
         console.warn(`[Ambire] ${prefix}`, ...args)
       }
     }

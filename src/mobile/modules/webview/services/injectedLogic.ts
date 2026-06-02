@@ -126,6 +126,8 @@ let isConfigured = false
 let mainCtrl: any = null
 let walletStateCtrl: any = null
 let autoLockCtrl: any = null
+let nextWindowId = 1
+let currentWindowId = 1
 
 const initControllers = (config: any) => {
   try {
@@ -148,9 +150,11 @@ const initControllers = (config: any) => {
       uiManager: {
         window: {
           open: async () => {
-            sendToReactEvent('ui.window.action', { type: 'open', winId: 1 })
+            currentWindowId = nextWindowId++
+            // Await animation completion before resolving (mirrors chrome.windows.create).
+            await sendToRNAsync('ui.window.action', { type: 'open', winId: currentWindowId })
             return {
-              id: 1,
+              id: currentWindowId,
               width: 0,
               height: 0,
               left: 0,
@@ -160,9 +164,10 @@ const initControllers = (config: any) => {
             }
           },
           focus: async () => {
-            sendToReactEvent('ui.window.action', { type: 'focus', winId: 1 })
+            // Await confirmation before resolving (mirrors chrome.windows.update).
+            await sendToRNAsync('ui.window.action', { type: 'focus', winId: currentWindowId })
             return {
-              id: 1,
+              id: currentWindowId,
               width: 0,
               height: 0,
               left: 0,
@@ -172,8 +177,13 @@ const initControllers = (config: any) => {
             }
           },
           closePopupWithUrl: async () => {},
-          remove: async () => {
-            sendToReactEvent('ui.window.action', { type: 'remove', winId: 1 })
+          remove: async (winId: any) => {
+            if (winId === 'popup') {
+              return
+            }
+            const targetWinId = typeof winId === 'number' ? winId : currentWindowId
+            // Await close animation completion before resolving (mirrors chrome.windows.remove).
+            await sendToRNAsync('ui.window.action', { type: 'remove', winId: targetWinId })
           },
           event: new Emitter()
         },

@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-floating-promises */
 import React from 'react'
 import { StyleSheet, View } from 'react-native'
 
@@ -11,6 +10,7 @@ import SignInWithEthereum from '@common/modules/sign-message/components/Contents
 import KeySelect from '@common/modules/sign-message/components/KeySelect'
 import SafeFooter from '@common/modules/sign-message/components/SafeFooter'
 import useSignMessage from '@common/modules/sign-message/hooks/useSignMessage'
+import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { MobileLayoutContainer } from '@mobile/components/MobileLayoutWrapper'
 
@@ -60,9 +60,10 @@ const SignMessageScreen = () => {
     <MobileLayoutContainer
       withHorizontalPadding
       header={<ActionHeader />}
-      renderDirectChildren={() => {
-        if (account.safeCreation) {
-          return (
+      footerStyle={{ ...spacings.ph0, ...spacings.pt0 }}
+      footer={
+        <>
+          {!!account.safeCreation ? (
             <SafeFooter
               account={account}
               isSignLoading={signStatus === 'LOADING'}
@@ -75,39 +76,37 @@ const SignMessageScreen = () => {
               signingKeyAddr={signMessageState.signers?.[0]?.addr || ''}
               onReject={handleReject}
             />
-          )
-        }
-
-        return (
-          <ActionFooter
-            onReject={handleReject}
-            onResolve={signWithDefaultSignerIfPossible}
-            resolveButtonText={resolveButtonText}
-            resolveDisabled={
-              signStatus === 'LOADING' ||
-              isScrollToBottomForced ||
-              isViewOnly ||
-              humanizationHasBlockingWarnings ||
-              isSafeNotDeployed
-            }
-            resolveButtonTestID="button-sign"
-            rejectButtonText="Reject"
-            {...(isViewOnly
-              ? {
-                  resolveNode: (
-                    <View style={[{ flex: 3 }, flexbox.directionRow, flexbox.justifyEnd]}>
-                      <NoKeysToSignAlert
-                        type="short"
-                        isTransaction={false}
-                        chainId={signMessageState.network?.chainId}
-                      />
-                    </View>
-                  )
-                }
-              : {})}
-          />
-        )
-      }}
+          ) : (
+            <ActionFooter
+              onReject={handleReject}
+              onResolve={signWithDefaultSignerIfPossible}
+              resolveButtonText={resolveButtonText}
+              resolveDisabled={
+                signStatus === 'LOADING' ||
+                isScrollToBottomForced ||
+                isViewOnly ||
+                humanizationHasBlockingWarnings ||
+                isSafeNotDeployed
+              }
+              resolveButtonTestID="button-sign"
+              rejectButtonText="Reject"
+              {...(isViewOnly
+                ? {
+                    resolveNode: (
+                      <View style={[{ flex: 3 }, flexbox.directionRow, flexbox.justifyEnd]}>
+                        <NoKeysToSignAlert
+                          type="short"
+                          isTransaction={false}
+                          chainId={signMessageState.network?.chainId}
+                        />
+                      </View>
+                    )
+                  }
+                : {})}
+            />
+          )}
+        </>
+      }
     >
       <KeySelect
         isSigning={signStatus === 'LOADING'}

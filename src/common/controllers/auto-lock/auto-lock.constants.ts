@@ -1,6 +1,5 @@
 import i18n from 'i18next'
 
-// eslint-disable-next-line @typescript-eslint/naming-convention
 export enum AUTO_LOCK_TIMES {
   never = 0, // never
   _7days = 10080, // 7 days in minutes

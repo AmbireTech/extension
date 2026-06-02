@@ -918,9 +918,12 @@ export class ProviderController {
    */
   @metadata('SAFE', true)
   walletRevokePermissions = async ({ session: { id } }: DappProviderRequest) => {
-    await this.mainCtrl.dapps.broadcastDappSessionEvent('disconnect', undefined, id)
+    // The request can only originate from the injected channel (WC dapps don't use
+    // MIP-2 revocation), so scope the disconnect to that source. If WC is also
+    // connected for this dapp, it stays connected — the user has to explicitly
+    // disconnect WC from Manage App.
+    await this.mainCtrl.dapps.disconnectDappSource(id, 'injected')
     this.mainCtrl.dapps.updateDapp(id, {
-      isConnected: false,
       grantedPermissionId: undefined,
       grantedPermissionAt: undefined
     })

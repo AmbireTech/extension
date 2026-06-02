@@ -7,6 +7,7 @@ export interface AmountInputProps extends InputProps {
   inputTestId?: string
   fontSize?: number
   inputWrapperStyle?: ViewStyle
+  textAlign?: 'left' | 'right' | 'center'
 }
 
 declare const AmountInput: React.FC<AmountInputProps>

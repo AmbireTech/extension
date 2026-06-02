@@ -36,7 +36,7 @@ const useBottomSheetInternal = (props: BottomSheetProps) => {
   const setRef = useCallback(
     (node: HTMLElement | null) => {
       // @ts-ignore
-      // eslint-disable-next-line no-param-reassign
+
       sheetRef.current = node
       // check if component is mounted and if should autoOpen
       if (autoOpen && sheetRef.current && !autoOpened.current) {
@@ -74,7 +74,6 @@ const useBottomSheetInternal = (props: BottomSheetProps) => {
         openBottomSheetsCount.next(Math.max(0, openBottomSheetsCount.value - 1))
       }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id])
 
   // Hook up the back button (or action) to close the bottom sheet

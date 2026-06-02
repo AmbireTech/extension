@@ -1,4 +1,3 @@
-/* eslint-disable react/jsx-no-useless-fragment */
 import React from 'react'
 import { View } from 'react-native'
 
@@ -58,7 +57,8 @@ const AddOrUpdateNetworkScreen = () => {
     return (
       <MobileLayoutContainer
         header={<ActionHeader />}
-        renderDirectChildren={() => (
+        footerStyle={{ ...spacings.ph0, ...spacings.pt0 }}
+        footer={
           <ActionFooter
             onReject={handleDenyButtonPress}
             onResolve={handleUpdateNetwork}
@@ -74,7 +74,7 @@ const AddOrUpdateNetworkScreen = () => {
               actionButtonPressedRef.current
             }
           />
-        )}
+        }
       >
         <MobileLayoutWrapperMainContent withScroll>
           <UpdateChain
@@ -97,7 +97,8 @@ const AddOrUpdateNetworkScreen = () => {
     return (
       <MobileLayoutContainer
         header={<ActionHeader />}
-        renderDirectChildren={() => (
+        footerStyle={{ ...spacings.ph0, ...spacings.pt0 }}
+        footer={
           <ActionFooter
             onReject={undefined}
             onResolve={handleCloseOnAlreadyAdded}
@@ -107,7 +108,7 @@ const AddOrUpdateNetworkScreen = () => {
               statuses.addNetwork === 'LOADING' || statuses.updateNetwork === 'LOADING'
             }
           />
-        )}
+        }
       >
         <MobileLayoutWrapperMainContent>
           <AlreadyAddedChain
@@ -122,7 +123,8 @@ const AddOrUpdateNetworkScreen = () => {
   return (
     <MobileLayoutContainer
       header={<ActionHeader />}
-      renderDirectChildren={() => (
+      footerStyle={{ ...spacings.ph0, ...spacings.pt0 }}
+      footer={
         <ActionFooter
           onReject={handleDenyButtonPress}
           onResolve={handlePrimaryButtonPress}
@@ -137,7 +139,7 @@ const AddOrUpdateNetworkScreen = () => {
             actionButtonPressedRef.current
           }
         />
-      )}
+      }
     >
       <MobileLayoutWrapperMainContent withScroll>
         <AddChain

@@ -4,7 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import { isMobile, isWeb } from '@common/config/env'
 import useTheme from '@common/hooks/useTheme'
-import spacings from '@common/styles/spacings'
+import spacings, { SPACING_SM } from '@common/styles/spacings'
 
 import useBanners from '../../hooks/useBanners'
 import { OVERVIEW_CONTENT_MAX_HEIGHT } from '../DashboardOverview/DashboardOverview'
@@ -49,7 +49,7 @@ const DashboardPageScrollContainer: FC<Props> = ({
     return [
       controllerBanners.length && isWeb ? spacings.ptTy : spacings.pt0,
       { flexGrow: 1 },
-      isMobile && { paddingBottom: bottom }
+      isMobile && { paddingBottom: bottom || SPACING_SM }
     ]
   }, [bottom, controllerBanners.length])
 

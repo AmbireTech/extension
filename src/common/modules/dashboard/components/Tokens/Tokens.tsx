@@ -23,7 +23,7 @@ import { getUiType } from '@common/utils/uiType'
 
 import DashboardBanners from '../DashboardBanners'
 import DashboardPageScrollContainer from '../DashboardPageScrollContainer'
-import SearchAndCurrentApp from '../SearchAndCurrentApp'
+import FloatingBottomBar from '../FloatingBottomBar'
 import TabsAndSearch from '../TabsAndSearch'
 import { TabType } from '../TabsAndSearch/Tabs/Tab/Tab'
 import DustTokensSummary from './DustTokensSummary'
@@ -460,7 +460,7 @@ const Tokens = ({
         onRefresh={onRefresh}
       />
       {openTab === 'tokens' && (
-        <SearchAndCurrentApp
+        <FloatingBottomBar
           control={control}
           displayCurrentApp
           displayNetworkFilter

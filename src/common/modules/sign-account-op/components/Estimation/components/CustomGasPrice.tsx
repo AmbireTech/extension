@@ -13,6 +13,7 @@ import Button from '@common/components/Button'
 import FooterGlassView from '@common/components/FooterGlassView'
 import NumberInput from '@common/components/NumberInput'
 import spacings from '@common/styles/spacings'
+import flexbox from '@common/styles/utils/flexbox'
 
 type CustomGasPriceInputProps = {
   initialAmount: string
@@ -258,7 +259,13 @@ const CustomGasPrice = ({
           disabledReason={t('Custom gas cannot be set for an EOA batch')}
         />
       </View>
-      <FooterGlassView absolute={false} isSimpleBlur={false} size="sm" style={spacings.mtLg}>
+      <FooterGlassView
+        absolute={false}
+        isSimpleBlur={false}
+        size="sm"
+        style={spacings.mtLg}
+        mobileStyle={{ ...flexbox.directionRow, ...spacings.mtLg }}
+      >
         <Button
           type="secondary"
           text={t('Cancel')}

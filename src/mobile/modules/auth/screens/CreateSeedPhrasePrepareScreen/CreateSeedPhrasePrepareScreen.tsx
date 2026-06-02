@@ -25,7 +25,19 @@ const CreateSeedPhrasePrepareScreen = () => {
   const { theme } = useTheme()
 
   return (
-    <MobileLayoutContainer>
+    <MobileLayoutContainer
+      footer={
+        <Button
+          testID="review-seed-phrase-btn"
+          disabled={!allCheckboxesChecked}
+          accessibilityRole="button"
+          size="large"
+          text={t('Create recovery phrase')}
+          hasBottomSpacing={false}
+          onPress={handleSubmit}
+        />
+      }
+    >
       <MobileLayoutWrapperMainContent
         withBackButton
         onBackButtonPress={goToPrevRoute}
@@ -72,17 +84,6 @@ const CreateSeedPhrasePrepareScreen = () => {
               </Checkbox>
             </View>
           ))}
-        </View>
-        <View style={spacings.pt}>
-          <Button
-            testID="review-seed-phrase-btn"
-            disabled={!allCheckboxesChecked}
-            accessibilityRole="button"
-            size="large"
-            text={t('Create recovery phrase')}
-            hasBottomSpacing={false}
-            onPress={handleSubmit}
-          />
         </View>
       </MobileLayoutWrapperMainContent>
     </MobileLayoutContainer>
