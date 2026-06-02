@@ -38,11 +38,12 @@ import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import ExpandedContent from '@common/modules/sign-account-op/components/TransactionSummary/ExpandedContent'
 import FallbackVisualization from '@common/modules/sign-account-op/components/TransactionSummary/FallbackVisualization'
-import spacings, { SPACING_SM, SPACING_TY } from '@common/styles/spacings'
+import spacings, { SPACING_MI, SPACING_SM, SPACING_TY } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import ManifestImage from '@web/components/ManifestImage'
 
 import getStyles from './styles'
+import { DecodedCall } from '@ambire-common/interfaces/decodeCall'
 
 interface Props {
   style: ViewStyle
@@ -65,6 +66,8 @@ export const sizeMultiplier = {
   lg: 1
 }
 
+type Tab = 'description' | 'raw' | 'parsed'
+
 const approveAbi = parseAbi(['function approve(address spender, uint256 amount) returns (bool)'])
 const permitAbi = parseAbi([
   'function approve(address token, address spender, uint160 amount, uint48 expiration)'
@@ -75,6 +78,68 @@ const increaseAllowanceAbi = parseAbi([
 const decreaseAllowanceAbi = parseAbi([
   'function decreaseAllowance(address spender, uint256 amount)'
 ])
+
+const DataArgs = ({
+  decodedArgs,
+  indent = 0,
+  key
+}: {
+  decodedArgs: DecodedCall['args']
+  indent?: number
+  key: string
+}) => {
+  const { theme } = useTheme(getStyles)
+  const breakableStyle = {
+    color: theme.secondaryText,
+    wordBreak: 'break-all'
+  } as any
+  if (!decodedArgs.length)
+    return (
+      <Text selectable fontSize={12} style={breakableStyle}>
+        {'Empty list'}
+      </Text>
+    )
+
+  return decodedArgs.map((arg, index) => {
+    return (
+      <View
+        key={`${key}-${index}`}
+        style={{ marginLeft: SPACING_MI * indent, flexDirection: 'column' }}
+      >
+        {Array.isArray(arg.val) ? (
+          <View>
+            <Text selectable fontSize={12} style={breakableStyle}>
+              {`${arg.key}: [`}
+            </Text>
+            <DataArgs decodedArgs={arg.val} indent={indent + 1} key={`${key}-${index}`} />
+            <Text selectable fontSize={12} style={breakableStyle}>
+              {`]`}
+            </Text>
+          </View>
+        ) : typeof arg.val === 'object' ? (
+          <View>
+            <Text selectable fontSize={12} style={breakableStyle}>
+              {`${arg.key}: function call `}
+              <Text selectable fontSize={12} style={[breakableStyle, { fontWeight: '900' }]}>
+                {arg.val.signature}
+              </Text>
+            </Text>
+            <Text selectable fontSize={12} style={breakableStyle}>
+              {`Selector: ${arg.val.selector}`}
+            </Text>
+
+            <DataArgs decodedArgs={arg.val.args} indent={indent + 1} key={`${key}-${index}`} />
+          </View>
+        ) : (
+          <Text selectable fontSize={12} style={breakableStyle}>
+            {arg.key}: {arg.val.toString()}
+          </Text>
+        )}
+        {isWeb ? <br /> : <View style={{ marginBottom: SPACING_MI }} />}
+      </View>
+    )
+  })
+}
 
 const TransactionSummary = ({
   style,
@@ -111,7 +176,6 @@ const TransactionSummary = ({
    * set this state to true, which hides it immediately.
    */
   const [isCallRemovedOptimistic, setIsCallRemovedOptimistic] = useState(false)
-  const [erc7730ExpandedTab, setErc7730ExpandedTab] = useState<'description' | 'raw'>('description')
 
   const erc7730Visualization = useMemo(
     () =>
@@ -133,6 +197,10 @@ const TransactionSummary = ({
     }
   }, [erc7730Visualization])
 
+  const [currentTxDataTab, setCurrentTxDataTab] = useState<Tab>(
+    !!erc7730DescriptionVisualization ? 'description' : 'raw'
+  )
+
   const shouldUseDetailedErc7730Layout = useMemo(
     () => !!erc7730Visualization && shouldUseErc7730DetailedLayout(erc7730Visualization),
     [erc7730Visualization]
@@ -144,8 +212,10 @@ const TransactionSummary = ({
     return erc7730Visualization.title || call.dapp?.name || t('Transaction details')
   }, [call.dapp?.name, erc7730Visualization, t])
   const erc7730DetailedIcon = erc7730Visualization?.dapp?.icon || call.dapp?.icon
-  const erc7730VisualizationKey = `${call.id || ''}-${call.to || ''}-${call.data}-${call.value.toString()}-${index || ''}`
-  const hasErc7730DescriptionVisualization = !!erc7730DescriptionVisualization
+  const erc7730VisualizationKey = useMemo(
+    () => `${call.id || ''}-${call.to || ''}-${call.data}-${call.value.toString()}-${index || ''}`,
+    [call.id, call.to, call.data, call.value, index]
+  )
 
   const [bindDeleteIconAnim, deleteIconAnimStyle] = useHover({
     preset: 'opacityInverted'
@@ -187,17 +257,10 @@ const TransactionSummary = ({
     }
   }, [isCallRemovedOptimistic])
 
-  useEffect(() => {
-    if (hasErc7730DescriptionVisualization) setErc7730ExpandedTab('description')
-  }, [erc7730VisualizationKey, hasErc7730DescriptionVisualization])
-
-  const handleErc7730ExpandedTabPress = useCallback(
-    (event: GestureResponderEvent, tab: 'description' | 'raw') => {
-      event.stopPropagation()
-      setErc7730ExpandedTab(tab)
-    },
-    []
-  )
+  const handleErc7730ExpandedTabPress = useCallback((event: GestureResponderEvent, tab: Tab) => {
+    event.stopPropagation()
+    setCurrentTxDataTab(tab)
+  }, [])
 
   const humanizerWarningLabels = useMemo(() => {
     if (type !== 'default') return null
@@ -304,7 +367,7 @@ const TransactionSummary = ({
             addToast('Internal error: failed to edit the approval', { type: 'error' })
             return
         }
-      } catch (e) {
+      } catch {
         addToast('Internal error: failed to set the approval amount', { type: 'error' })
         return
       }
@@ -399,7 +462,7 @@ const TransactionSummary = ({
         default:
           return
       }
-    } catch (e) {
+    } catch {
       // the calldata was probably malformed
       // at this point in the code there is no need to display a toast
       return
@@ -569,6 +632,16 @@ const TransactionSummary = ({
     type
   ])
 
+  const tabOptions = useMemo(() => {
+    let tabs: ([Tab, string] | null)[] = [
+      !!erc7730DescriptionVisualization ? ['description', t('Additional description')] : null,
+      ['raw', t('Raw data')],
+      decodedFunction ? ['parsed', t('Parsed data')] : null
+    ]
+
+    return tabs.filter((x) => !!x)
+  }, [erc7730DescriptionVisualization, decodedFunction, t])
+
   if (isCallRemovedOptimistic) return null
 
   return (
@@ -693,88 +766,81 @@ const TransactionSummary = ({
         </>
       }
       expandedContent={
-        erc7730Visualization && !shouldUseDetailedErc7730Layout ? (
-          <View
-            key={erc7730VisualizationKey}
-            style={{
-              paddingHorizontal: SPACING_SM * sizeMultiplier[size],
-              paddingBottom: SPACING_SM * sizeMultiplier[size]
-            }}
-          >
-            {!!erc7730DescriptionVisualization && (
-              <View
-                style={{
-                  alignSelf: 'stretch',
-                  flexDirection: 'row',
-                  borderBottomWidth: 1,
-                  borderBottomColor: theme.secondaryBorder,
-                  marginBottom: SPACING_SM * sizeMultiplier[size]
-                }}
-              >
-                {(
-                  [
-                    ['description', t('Additional description')],
-                    ['raw', t('Raw data')]
-                  ] as const
-                ).map(([tab, label]) => {
-                  const isActive = erc7730ExpandedTab === tab
+        <View
+          key={erc7730VisualizationKey}
+          style={{
+            paddingHorizontal: SPACING_SM * sizeMultiplier[size],
+            paddingBottom: SPACING_SM * sizeMultiplier[size]
+          }}
+        >
+          {tabOptions.length > 1 && (
+            <View
+              style={{
+                alignSelf: 'stretch',
+                flexDirection: 'row',
+                borderBottomWidth: 1,
+                borderBottomColor: theme.secondaryBorder,
+                marginBottom: SPACING_SM * sizeMultiplier[size]
+              }}
+            >
+              {tabOptions.map(([tab, label]) => {
+                const isActive = currentTxDataTab === tab
 
-                  return (
-                    <Pressable
-                      key={tab}
-                      onPress={(event) => handleErc7730ExpandedTabPress(event, tab)}
-                      style={{
-                        paddingVertical: SPACING_TY * sizeMultiplier[size],
-                        marginRight: SPACING_TY,
-                        borderBottomWidth: 2,
-                        borderBottomColor: isActive ? theme.secondaryAccent400 : 'transparent'
-                      }}
+                return (
+                  <Pressable
+                    key={tab}
+                    onPress={(event) => handleErc7730ExpandedTabPress(event, tab)}
+                    style={{
+                      paddingVertical: SPACING_TY * sizeMultiplier[size],
+                      marginRight: SPACING_TY,
+                      borderBottomWidth: 2,
+                      borderBottomColor: isActive ? theme.secondaryAccent400 : 'transparent'
+                    }}
+                  >
+                    <Text
+                      fontSize={14 * sizeMultiplier[size]}
+                      weight={isActive ? 'semiBold' : 'medium'}
+                      color={isActive ? theme.secondaryAccent400 : theme.secondaryText}
                     >
-                      <Text
-                        fontSize={14 * sizeMultiplier[size]}
-                        weight={isActive ? 'semiBold' : 'medium'}
-                        color={isActive ? theme.secondaryAccent400 : theme.secondaryText}
-                      >
-                        {label}
-                      </Text>
-                    </Pressable>
-                  )
-                })}
-              </View>
-            )}
-            {!!erc7730DescriptionVisualization && erc7730ExpandedTab === 'description' ? (
-              <HumanizedVisualization
-                data={[erc7730DescriptionVisualization]}
-                sizeMultiplierSize={sizeMultiplier[size]}
-                textSize={Math.max(textSize - 1, 12)}
-                imageSize={imageSize}
-                chainId={chainId}
-                type={type}
-                hasPadding={false}
-                erc7730Mode="description"
-                editApprovalCallInfo={editApprovalCallInfo}
-              />
-            ) : (
-              <ExpandedContent
-                call={call}
-                size={size}
-                sizeMultiplier={sizeMultiplier}
-                styles={styles}
-                decodedFunction={decodedFunction}
-                isDecodedFunctionLoading={isDecodedFunctionLoading}
-              />
-            )}
-          </View>
-        ) : (
-          <ExpandedContent
-            call={call}
-            size={size}
-            sizeMultiplier={sizeMultiplier}
-            styles={styles}
-            decodedFunction={decodedFunction}
-            isDecodedFunctionLoading={isDecodedFunctionLoading}
-          />
-        )
+                      {label}
+                    </Text>
+                  </Pressable>
+                )
+              })}
+            </View>
+          )}
+          {!!erc7730DescriptionVisualization && currentTxDataTab === 'description' ? (
+            <HumanizedVisualization
+              data={[erc7730DescriptionVisualization]}
+              sizeMultiplierSize={sizeMultiplier[size]}
+              textSize={Math.max(textSize - 1, 12)}
+              imageSize={imageSize}
+              chainId={chainId}
+              type={type}
+              hasPadding={false}
+              erc7730Mode="description"
+              editApprovalCallInfo={editApprovalCallInfo}
+            />
+          ) : currentTxDataTab === 'raw' ? (
+            <ExpandedContent
+              call={call}
+              size={size}
+              sizeMultiplier={sizeMultiplier}
+              styles={styles}
+            />
+          ) : decodedFunction ? (
+            <View style={styles.bodyText}>
+              <Text selectable style={{ color: theme.secondaryText }} fontSize={12}>
+                {t('Function to call: ')}
+                {decodedFunction.signature}
+              </Text>
+              <Text style={{ color: theme.secondaryText }} fontSize={12}>
+                {t('Decoded function arguments:')}
+              </Text>
+              <DataArgs decodedArgs={decodedFunction.args} key="" />
+            </View>
+          ) : null}
+        </View>
       }
     >
       <View
