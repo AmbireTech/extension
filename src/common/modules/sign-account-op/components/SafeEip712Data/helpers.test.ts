@@ -1,4 +1,4 @@
-import { getSafeEip712DataValue } from './helpers'
+import { getSafeEip712DataValue, getSafeEip712HashRows } from './helpers'
 
 const safeEip712Data = {
   domain: {
@@ -27,5 +27,32 @@ describe('getSafeEip712DataValue', () => {
 
     expect(messageHash).toBeTruthy()
     expect(getSafeEip712DataValue(incompleteSafeEip712Data)).toBeNull()
+  })
+
+  test('returns a Safe message EIP-712 preview', () => {
+    const { safeTxHash, ...safeMessageEip712Data } = {
+      ...safeEip712Data,
+      safeMessageHash: '0x04'
+    }
+
+    expect(safeTxHash).toBeTruthy()
+    expect(getSafeEip712DataValue(safeMessageEip712Data)).toEqual(safeMessageEip712Data)
+  })
+})
+
+describe('getSafeEip712HashRows', () => {
+  test('returns Safe message hashes in display order', () => {
+    const { safeTxHash, ...safeMessageEip712Data } = {
+      ...safeEip712Data,
+      safeMessageHash: '0x04'
+    }
+    const data = getSafeEip712DataValue(safeMessageEip712Data)
+
+    expect(safeTxHash).toBeTruthy()
+    expect(data && getSafeEip712HashRows(data)).toEqual([
+      ['safeMessageHash', '0x04'],
+      ['domainHash', '0x02'],
+      ['messageHash', '0x03']
+    ])
   })
 })

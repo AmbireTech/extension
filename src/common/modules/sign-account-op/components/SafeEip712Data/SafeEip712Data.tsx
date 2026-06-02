@@ -12,7 +12,7 @@ import useTheme from '@common/hooks/useTheme'
 import FallbackVisualization from '@common/modules/sign-message/components/FallbackVisualization'
 import spacings from '@common/styles/spacings'
 
-import { getSafeEip712DataValue } from './helpers'
+import { getSafeEip712DataValue, getSafeEip712HashRows } from './helpers'
 import getStyles from './styles'
 
 interface Props {
@@ -40,17 +40,7 @@ const SafeEip712Data: FC<Props> = ({ accountAddr, chainId, safeEip712Data }) => 
     } as Message
   }, [accountAddr, chainId, data])
   const setHasReachedBottom = useCallback(() => {}, [])
-  const rows = useMemo<[string, string][]>(
-    () =>
-      data
-        ? [
-            ['safeTxHash', data.safeTxHash],
-            ['domainHash', data.domainHash],
-            ['messageHash', data.messageHash]
-          ]
-        : [],
-    [data]
-  )
+  const rows = useMemo<[string, string][]>(() => (data ? getSafeEip712HashRows(data) : []), [data])
 
   if (!messageToSign) return null
 

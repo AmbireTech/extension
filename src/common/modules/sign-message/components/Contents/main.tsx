@@ -18,6 +18,7 @@ import useResponsiveActionWindow from '@common/hooks/useResponsiveActionWindow'
 import useTheme from '@common/hooks/useTheme'
 import useWindowSize from '@common/hooks/useWindowSize'
 import HardwareWalletSigningModal from '@common/modules/hardware-wallets/components/HardwareWalletSigningModal'
+import SafeEip712Data from '@common/modules/sign-account-op/components/SafeEip712Data'
 import SafetyChecksBanner from '@common/modules/sign-account-op/components/SafetyChecksBanner'
 import Erc7730TypedMessageContent from '@common/modules/sign-message/components/Contents/Erc7730TypedMessageContent'
 import FallbackVisualization from '@common/modules/sign-message/components/FallbackVisualization'
@@ -293,6 +294,11 @@ const Main = ({
                 )
               })}
           </ExpandableCard>
+          <SafeEip712Data
+            accountAddr={signMessageState.messageToSign?.accountAddr}
+            chainId={signMessageState.messageToSign?.chainId}
+            safeEip712Data={signMessageState.safeEip712Data}
+          />
         </View>
         {signMessageState.signer &&
           signMessageState.signer.key.type !== 'internal' &&
