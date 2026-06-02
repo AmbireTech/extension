@@ -1,5 +1,5 @@
 import { isHexString } from 'ethers'
-import { FC, memo, useEffect, useMemo, useState } from 'react'
+import { FC, memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { NativeScrollEvent, ScrollView, View } from 'react-native'
 
@@ -98,6 +98,8 @@ const FallbackVisualization: FC<{
   const { t } = useTranslation()
   const { styles } = useTheme(getStyles)
   const { maxWidthSize } = useWindowSize()
+  const scrollViewRef = useRef<ScrollView>(null)
+  const scrollOffsetRef = useRef(0)
   const [containerHeight, setContainerHeight] = useState(0)
   const [contentHeight, setContentHeight] = useState(0)
   const [showRawTypedMessage, setShowRawTypedMessage] = useState(false)
@@ -120,6 +122,14 @@ const FallbackVisualization: FC<{
     showRawTypedMessage,
     hasReachedBottom
   ])
+
+  const handleScrollDown = useCallback(() => {
+    if (!containerHeight) return
+    // Scroll down close to a full page on each press, keeping a small overlap for context
+    const nextOffset = scrollOffsetRef.current + containerHeight * 0.9
+    scrollViewRef.current?.scrollTo({ y: nextOffset, animated: true })
+  }, [containerHeight])
+
   if (!messageToSign) return null
 
   const { content } = messageToSign
@@ -137,7 +147,9 @@ const FallbackVisualization: FC<{
   return (
     <View style={[styles.container]}>
       <ScrollView
+        ref={scrollViewRef}
         onScroll={(e) => {
+          scrollOffsetRef.current = e.nativeEvent.contentOffset.y
           if (isCloseToBottom(e.nativeEvent) && setHasReachedBottom) setHasReachedBottom(true)
         }}
         onLayout={(e) => {
@@ -211,6 +223,7 @@ const FallbackVisualization: FC<{
         <AnimatedDownArrow
           isVisible={contentHeight > containerHeight && !hasReachedBottom}
           appearance="primary"
+          onPress={handleScrollDown}
         />
       )}
       {content.kind === 'typedMessage' && (
