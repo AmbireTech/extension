@@ -596,9 +596,11 @@ const TransactionSummary = ({
           ? {
               paddingHorizontal: SPACING_SM,
               paddingVertical: type !== 'history' ? SPACING_SM * sizeMultiplier[size] : 0,
-              ...flexbox.alignStart
+              ...(type === 'default' ? flexbox.alignStart : {})
             }
-          : flexbox.alignStart
+          : type === 'default'
+            ? flexbox.alignStart
+            : undefined
       }
       content={
         <>
