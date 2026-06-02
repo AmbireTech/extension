@@ -315,6 +315,7 @@ const Main = ({
                   }
                 })
               }}
+              signingRequest={signMessageState.hardwareWalletSigningRequest}
             />
           )}
         {shouldDisplayLedgerConnectModal && (
@@ -334,6 +335,7 @@ const Main = ({
               onContinue={handleOnContinue}
               currentRequest={currentRequest}
               signingStep={signingStep}
+              signingRequest={signMessageState.hardwareWalletSigningRequest}
               submitSignatureResponse={handleSubmitSignatureResponse}
               onReject={handleQrSigningFlowOnRejectPressed}
               handleQrSigningFlowOnBackPressed={handleQrSigningFlowOnBackPressed}
