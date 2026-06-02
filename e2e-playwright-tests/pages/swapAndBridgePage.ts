@@ -381,17 +381,23 @@ export class SwapAndBridgePage extends BasePage {
     sendToken: Token,
     receiveToken: Token
   ): Promise<string | null> {
-    try {
-      await this.openSwapAndBridge()
-      await this.page.waitForTimeout(2000)
-      await this.selectSendToken(sendToken)
+    await this.openSwapAndBridge()
+    await this.page.waitForTimeout(2000)
+    await this.selectSendToken(sendToken)
 
-      // Select target receive network
-      await this.click(`option-${sendToken.chainId}`)
-      await this.click(`option-${receiveToken.chainId}`)
+    try {
+      // switch network
+      const tokenNetwork = receiveToken.chainName
+      await this.click(selectors.receiveNetworkEth)
+
+      if (tokenNetwork == 'optimism') {
+        await this.click(selectors.recieveNetworkOptimism)
+      } else {
+        await this.click(selectors.recieveNetworkBase)
+      }
 
       // Select receive token by address
-      await this.page.waitForTimeout(1000)
+      await this.page.waitForTimeout(2000)
       await this.selectReceiveToken(receiveToken)
 
       // Validate sendAmount
