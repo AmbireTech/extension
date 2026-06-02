@@ -19,6 +19,7 @@ interface Props extends TextProps {
   marginRight?: number
   hideLogo?: boolean
   actionsMode?: 'tooltip' | 'inline'
+  shouldWrapInlineActions?: boolean
   chainId: bigint
   verification?: BlacklistedStatus
 }

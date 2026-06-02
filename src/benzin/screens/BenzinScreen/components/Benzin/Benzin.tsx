@@ -58,7 +58,7 @@ const Benzin = ({
     state?.stepsState?.submittedAccountOp?.identifiedBy?.type ||
     state?.stepsState?.extensionAccOp?.identifiedBy?.type
   const accountOp = state?.stepsState?.submittedAccountOp || state?.stepsState?.extensionAccOp
-  const rawCalls = accountOp?.calls
+  const rawCalls = useMemo(() => accountOp?.calls, [accountOp?.calls])
   const disableOpenExplorerBtn = state?.disableOpenExplorerBtn
 
   const handleOpenCallExplorer = useCallback(

@@ -14,7 +14,7 @@ import InfoIcon from '@common/assets/svg/InfoIcon'
 import OpenIcon from '@common/assets/svg/OpenIcon'
 import Text, { Props as TextProps } from '@common/components/Text'
 import Tooltip from '@common/components/Tooltip'
-import { isWeb } from '@common/config/env'
+import { isMobile, isWeb } from '@common/config/env'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
@@ -28,6 +28,7 @@ interface Props extends TextProps {
   address: string
   chainId?: bigint
   actionsMode?: 'tooltip' | 'inline'
+  shouldWrapInlineActions?: boolean
   verification?: BlacklistedStatus
   isDisplayingPlainAddress?: boolean
 }
@@ -37,6 +38,7 @@ const BaseAddress: FC<Props> = ({
   address,
   chainId,
   actionsMode = 'tooltip',
+  shouldWrapInlineActions = true,
   verification,
   isDisplayingPlainAddress,
   ...rest
@@ -121,7 +123,12 @@ const BaseAddress: FC<Props> = ({
           accessibilityRole="link"
           accessibilityLabel={t('View in Explorer')}
           onPress={handleInlineExplorerPress}
-          style={[flexbox.directionRow, flexbox.alignCenter, flexbox.wrap, { maxWidth: '100%' }]}
+          style={[
+            flexbox.directionRow,
+            flexbox.alignCenter,
+            shouldWrapInlineActions && flexbox.wrap,
+            { maxWidth: '100%' }
+          ]}
         >
           {({ hovered }: any) => (
             <>
@@ -136,11 +143,11 @@ const BaseAddress: FC<Props> = ({
               >
                 {displayValue}
               </Text>
-              <View style={[{ marginLeft: 2, marginTop: -8 }, flexbox.center]}>
+              <View style={[!isMobile ? { marginLeft: 2, marginTop: -8 } : {}, flexbox.center]}>
                 <OpenIcon
                   color={hovered ? theme.primaryText : theme.secondaryText}
-                  width={10}
-                  height={10}
+                  width={isMobile ? 14 : 10}
+                  height={isMobile ? 14 : 10}
                 />
               </View>
             </>

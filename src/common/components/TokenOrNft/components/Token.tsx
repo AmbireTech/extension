@@ -168,11 +168,11 @@ const InnerToken: FC<Props> = ({
               )}
             </Text>
             {canOpenExplorer && (
-              <View style={[{ marginLeft: 2, marginTop: -8 }, flexbox.center]}>
+              <View style={[!isMobile ? { marginLeft: 2, marginTop: -8 } : {}, flexbox.center]}>
                 <OpenIcon
                   color={hovered ? theme.primaryText : theme.secondaryText}
-                  width={11}
-                  height={11}
+                  width={isMobile ? 14 : 11}
+                  height={isMobile ? 14 : 11}
                 />
               </View>
             )}

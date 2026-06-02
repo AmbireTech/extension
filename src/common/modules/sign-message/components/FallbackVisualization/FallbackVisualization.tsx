@@ -9,8 +9,8 @@ import { IrMessage } from '@ambire-common/libs/humanizer/interfaces'
 import { isValidAddress } from '@ambire-common/services/address'
 import WarningFilledIcon from '@common/assets/svg/WarningFilledIcon'
 import CopyText from '@common/components/CopyText'
-import HumanizerAddress from '@common/components/HumanizerAddress'
 import HumanizedVisualization from '@common/components/HumanizedVisualization'
+import HumanizerAddress from '@common/components/HumanizerAddress'
 import Text from '@common/components/Text'
 import useTheme from '@common/hooks/useTheme'
 import useWindowSize from '@common/hooks/useWindowSize'
@@ -117,6 +117,7 @@ const FallbackVisualization: FC<{
   scrollEnabled?: boolean
   withCompactDataRow?: boolean
   withDecimalIntegerRows?: boolean
+  disableScroll?: boolean
 }> = ({
   messageToSign,
   humanizedMessage,
@@ -127,7 +128,8 @@ const FallbackVisualization: FC<{
   rawOnly = false,
   scrollEnabled = true,
   withCompactDataRow = false,
-  withDecimalIntegerRows = false
+  withDecimalIntegerRows = false,
+  disableScroll = false
 }) => {
   const { t } = useTranslation()
   const { styles, theme } = useTheme(getStyles)
@@ -173,12 +175,18 @@ const FallbackVisualization: FC<{
     },
     [handleTabPress]
   )
+  const ContentWrapper = disableScroll ? View : ScrollView
 
   useEffect(() => {
+    if (disableScroll) {
+      if (!hasReachedBottom) setHasReachedBottom(true)
+      return
+    }
     if (!messageToSign || !containerHeight || !contentHeight) return
     const isScrollNotVisible = contentHeight <= containerHeight
     if (setHasReachedBottom && !hasReachedBottom) setHasReachedBottom(isScrollNotVisible)
   }, [
+    disableScroll,
     contentHeight,
     containerHeight,
     setHasReachedBottom,
@@ -219,18 +227,22 @@ const FallbackVisualization: FC<{
           })}
         </View>
       )}
-      <ScrollView
-        scrollEnabled={scrollEnabled}
-        onScroll={(e) => {
-          if (isCloseToBottom(e.nativeEvent) && setHasReachedBottom) setHasReachedBottom(true)
-        }}
-        onLayout={(e) => {
-          setContainerHeight(e.nativeEvent.layout.height)
-        }}
-        onContentSizeChange={(_, height) => {
-          setContentHeight(height)
-        }}
-        scrollEventThrottle={16}
+      <ContentWrapper
+        {...(!disableScroll
+          ? {
+              scrollEnabled,
+              onScroll: (e: { nativeEvent: NativeScrollEvent }) => {
+                if (isCloseToBottom(e.nativeEvent) && setHasReachedBottom) setHasReachedBottom(true)
+              },
+              onLayout: (e: { nativeEvent: { layout: { height: number } } }) => {
+                setContainerHeight(e.nativeEvent.layout.height)
+              },
+              onContentSizeChange: (_: number, height: number) => {
+                setContentHeight(height)
+              },
+              scrollEventThrottle: 16
+            }
+          : {})}
       >
         {isTypedMessage && (rawOnly || activeTab === 'raw') && (
           <Text
@@ -294,11 +306,7 @@ const FallbackVisualization: FC<{
                           style={styles.parsedValueText}
                         >
                           {withCompactDataRow || withDecimalIntegerRows
-                            ? getParsedMessageValue(
-                                i.label,
-                                i.componentToReturn,
-                                integerFieldNames
-                              )
+                            ? getParsedMessageValue(i.label, i.componentToReturn, integerFieldNames)
                             : i.componentToReturn}
                         </Text>
                         {withCompactDataRow &&
@@ -342,8 +350,8 @@ const FallbackVisualization: FC<{
             {getMessageAsText(content.message as Hex) || t('(Empty message)')}
           </Text>
         )}
-      </ScrollView>
-      {!!containerHeight && !!contentHeight && withScrollDownArrow && (
+      </ContentWrapper>
+      {!disableScroll && !!containerHeight && !!contentHeight && withScrollDownArrow && (
         <AnimatedDownArrow
           isVisible={contentHeight > containerHeight && !hasReachedBottom}
           appearance="primary"

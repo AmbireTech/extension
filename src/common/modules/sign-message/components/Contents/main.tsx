@@ -51,10 +51,16 @@ interface Props {
   isHumanizing: boolean
 }
 
-const Container = ({ children }: { children: React.ReactNode }) => {
+const Container = ({
+  children,
+  withScroll
+}: {
+  children: React.ReactNode
+  withScroll?: boolean
+}) => {
   if (isMobile)
     return (
-      <MobileLayoutWrapperMainContent contentContainerStyle={spacings.ph0}>
+      <MobileLayoutWrapperMainContent contentContainerStyle={spacings.ph0} withScroll={withScroll}>
         {children}
       </MobileLayoutWrapperMainContent>
     )
@@ -120,7 +126,7 @@ const Main = ({
   const messageVisualizationKey = `${signMessageState.messageToSign?.fromRequestId}-${messageVisualizationMode}`
 
   return (
-    <Container>
+    <Container withScroll={shouldUseErc7730TypedMessageCard}>
       <View
         style={[
           flexbox.directionRow,
@@ -278,6 +284,7 @@ const Main = ({
                 responsiveSizeMultiplier={responsiveSizeMultiplier}
                 withScrollDownArrow
                 rawOnly={shouldUseErc7730TypedMessageCard}
+                disableScroll={isMobile && shouldUseErc7730TypedMessageCard}
               />
             }
           >

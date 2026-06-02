@@ -18,7 +18,7 @@ import useController from '@common/hooks/useController'
 import useHover, { AnimatedPressable } from '@common/hooks/useHover'
 import useTheme from '@common/hooks/useTheme'
 import MaxAmount from '@common/modules/swap-and-bridge/components/MaxAmount'
-import spacings, { SPACING } from '@common/styles/spacings'
+import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
 type EditApprovalAmountInputProps = {
@@ -203,9 +203,11 @@ const EditApproval = ({
           {'['}
         </Text>
         <EditPenIcon width={20} height={20} color={theme.linkText} />
-        <Text fontSize={14} color={theme.linkText}>
-          {t('Edit')}
-        </Text>
+        {!isMobile && (
+          <Text fontSize={14} color={theme.linkText}>
+            {t('Edit')}
+          </Text>
+        )}
         <Text fontSize={14} color={theme.linkText}>
           {']'}
         </Text>
@@ -235,11 +237,10 @@ const EditApproval = ({
           </View>
           <FooterGlassView
             absolute={false}
-            style={{ ...spacings.mt2Xl, columnGap: SPACING }}
+            style={{ ...spacings.mt2Xl }}
             mobileStyle={{
               ...flexbox.directionRow,
-              ...spacings.mtLg,
-              columnGap: SPACING
+              ...spacings.mtLg
             }}
           >
             <Button
@@ -248,7 +249,7 @@ const EditApproval = ({
               onPress={() => closeEditApprovals()}
               hasBottomSpacing={false}
               size="smaller"
-              style={[isWeb && { width: 100 }, isMobile && flexbox.flex1]}
+              style={[spacings.mrTy, isWeb && { width: 100 }, isMobile && flexbox.flex1]}
             />
             <Button
               type="primary"

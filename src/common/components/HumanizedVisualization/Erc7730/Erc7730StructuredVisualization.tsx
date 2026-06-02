@@ -11,9 +11,11 @@ import {
   Erc7730Row,
   Erc7730StructuredVisualizationProps
 } from '@common/components/HumanizedVisualization/Erc7730/interfaces'
+import MobileErc7730SummaryVisualization from '@common/components/HumanizedVisualization/Erc7730/MobileErc7730SummaryVisualization'
 import HumanizerAddress from '@common/components/HumanizerAddress'
 import Text from '@common/components/Text'
 import TokenOrNft from '@common/components/TokenOrNft'
+import { isMobile } from '@common/config/env'
 import useTheme from '@common/hooks/useTheme'
 import spacings, { SPACING_SM, SPACING_TY } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
@@ -195,7 +197,8 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
   textSize,
   mode = 'summary',
   editApprovalCallInfo,
-  hideNestedRows = false
+  hideNestedRows = false,
+  hideMobileSummaryTitle = false
 }) => {
   const { theme } = useTheme()
   const detailedRows = useMemo(
@@ -291,6 +294,7 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
             chainId={valueItem.chainId || chainId}
             fontSize={overrideTextSize}
             actionsMode="inline"
+            shouldWrapInlineActions={false}
             hideLogo
           />
         )
@@ -379,6 +383,20 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
       ? getErc7730SpenderRow(item)
       : undefined
     const subtitleTextSize = Math.max(textSize - 3, 11)
+
+    if (isMobile) {
+      return (
+        <MobileErc7730SummaryVisualization
+          item={item}
+          summaryRows={summaryRows}
+          spenderRow={spenderRow}
+          sizeMultiplierSize={sizeMultiplierSize}
+          textSize={textSize}
+          renderValue={renderValue}
+          hideTitle={hideMobileSummaryTitle}
+        />
+      )
+    }
 
     return (
       <View
@@ -532,6 +550,95 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
             </View>
           ))}
         </View>
+      </View>
+    )
+  }
+
+  if (isMobile) {
+    return (
+      <View style={{ width: '100%' }}>
+        {detailedRows.map((row) => {
+          const actionParts = getDetailedActionParts(row)
+          const rowKey = `${item.id}-${row.label}-${row.value.map((value) => value.id).join('-')}`
+
+          if (isNestedErc7730Row(row)) {
+            const nestedVisualizations = row.value.filter(isNestedErc7730Value)
+
+            return (
+              <View key={rowKey} style={{ width: '100%', paddingVertical: SPACING_TY }}>
+                {!!row.label.trim() && (
+                  <Text
+                    fontSize={textSize}
+                    weight="semiBold"
+                    appearance="secondaryText"
+                    style={spacings.mbTy}
+                  >
+                    {row.label}
+                  </Text>
+                )}
+                <View style={{ width: '100%' }}>
+                  {nestedVisualizations.map((nestedVisualization, nestedIndex) => (
+                    <View
+                      key={nestedVisualization.id}
+                      style={[
+                        nestedIndex > 0 && {
+                          marginTop: SPACING_TY,
+                          paddingTop: SPACING_TY
+                        }
+                      ]}
+                    >
+                      <Erc7730StructuredVisualization
+                        item={nestedVisualization}
+                        chainId={chainId}
+                        sizeMultiplierSize={sizeMultiplierSize}
+                        textSize={textSize}
+                        mode="summary"
+                      />
+                    </View>
+                  ))}
+                </View>
+              </View>
+            )
+          }
+
+          if (actionParts) {
+            return (
+              <View key={rowKey} style={{ width: '100%', paddingVertical: SPACING_TY }}>
+                <Text fontSize={textSize} weight="semiBold" color={theme.secondaryAccent400}>
+                  {actionParts.action.content}
+                </Text>
+                {!!actionParts.recipientValues.length && (
+                  <View style={spacings.mtMi}>
+                    {renderDetailedValueLine(actionParts.recipientValues, 'start')}
+                  </View>
+                )}
+                {getDetailedValueLines({ ...row, value: actionParts.rightValues })
+                  .filter((line) => line.length)
+                  .map((line) => (
+                    <View key={line.map((value) => value.id).join('-')} style={spacings.mtMi}>
+                      {renderDetailedValueLine(line, 'start')}
+                    </View>
+                  ))}
+              </View>
+            )
+          }
+
+          return (
+            <View key={rowKey} style={{ width: '100%', paddingVertical: SPACING_TY }}>
+              {!!row.label.trim() && (
+                <Text
+                  fontSize={textSize}
+                  weight="semiBold"
+                  appearance="secondaryText"
+                  style={spacings.mbMi}
+                >
+                  {row.label}
+                </Text>
+              )}
+              {getDetailedValueLines(row).map((line) => renderDetailedValueLine(line, 'start'))}
+            </View>
+          )
+        })}
       </View>
     )
   }
