@@ -207,6 +207,7 @@ const AccountKey: React.FC<Props> = ({
                     })}
                   >
                     <Button
+                      testID={`export-key-button-${addr}`}
                       style={{ height: 32 }}
                       hasBottomSpacing={false}
                       onPress={openExportKey as any}
