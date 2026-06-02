@@ -10,7 +10,8 @@ export class SignMessagePage extends BasePage {
   async signMessage(
     message: string,
     type: 'plain' | 'hex' | 'typed',
-    ledgerSimulatorControls: SpeculosDevice = undefined
+    ledgerSimulatorControls: SpeculosDevice = undefined,
+    expectedSignerAddress?: string
   ) {
     await this.page.goto('https://sigtool.ambire.com/')
 
@@ -35,6 +36,10 @@ export class SignMessagePage extends BasePage {
     const signSubTab = dappSelectors[type].sign
     const verifySubTab = dappSelectors[type].verify
     const messageTextarea = dappSelectors[type].messageTextarea
+
+    // Wait for the extension's ethereum provider to be injected before sigtool's wallet
+    // detection runs, otherwise the MetaMask option may not appear in the connect modal.
+    await this.page.waitForFunction(() => Boolean((window as any).ethereum), { timeout: 10000 })
 
     const connect = this.page.getByRole('button', { name: 'connect wallet' })
     await connect.click()
@@ -84,7 +89,7 @@ export class SignMessagePage extends BasePage {
     if (ledgerSimulatorControls) {
       await signerAddress.fill(LEDGER_ADDRESS)
     } else {
-      await signerAddress.fill(BA_ADDRESS)
+      await signerAddress.fill(expectedSignerAddress ?? BA_ADDRESS)
     }
 
     await verifySubTab.click()

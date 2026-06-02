@@ -59,6 +59,7 @@ const RecoveryPhraseSettingsScreen = () => {
     const associatedAccounts = getAccountsForSeed(item.id)
     return (
       <Panel
+        testID={`recovery-phrase-row-${item.id}`}
         spacingsSize="small"
         style={{
           marginBottom: index < seeds.length - 1 ? SPACING_TY : 0,
@@ -76,6 +77,7 @@ const RecoveryPhraseSettingsScreen = () => {
             {item.label}
           </Text>
           <Button
+            testID={`manage-recovery-phrase-${item.id}`}
             size="small"
             type="ghost"
             childrenPosition="left"

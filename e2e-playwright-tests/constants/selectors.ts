@@ -90,6 +90,8 @@ const selectors = {
     searchInputPlaceholder: 'search-input-placeholder'
   },
   settings: {
+    navAccounts: 'settings-nav-accounts',
+    navRecoveryPhrases: 'settings-nav-recovery-phrases',
     createNewRecoveryPhraseButton: 'create-new-recovery-phrase',
     importAccountButton: 'import-account',
     connectHardwareWallet: 'connect-hardware-wallet',
@@ -259,6 +261,7 @@ const selectors = {
   lockExtensionButton: 'lock-extension-button',
   passphraseField: 'passphrase-field',
   buttonUnlock: 'button-unlock',
+  buttonUnlockBiometricsIcon: 'button-unlock-biometrics-icon',
   fullBalance: 'full-balance',
   tabNft: 'tab-nft',
   collectionItem: 'collection-item',
@@ -359,7 +362,19 @@ const selectors = {
     '(//div[contains(normalize-space(), "Network successfully added!")])[4]', // TODO: snackbar selector finding 8 elements; change once we have ID on FE
   contactSuccessfullyAddedSnackbar:
     '(//div[contains(normalize-space(), "Contact added to Address Book")])[4]', // TODO: snackbar selector finding 8 elements; change once we have ID on FE
-  importMethodLedger: 'import-method-ledger'
+  importMethodLedger: 'import-method-ledger',
+  keystoreMigration: {
+    recoveryPhraseRow: (id: string) => `recovery-phrase-row-${id}`,
+    manageRecoveryPhrase: (id: string) => `manage-recovery-phrase-${id}`,
+    recoveryPhraseValue: 'recovery-phrase-value',
+    recoveryPhrasePassphraseValue: 'recovery-phrase-passphrase-value',
+    revealRecoveryPhraseButton: 'reveal-recovery-phrase-button',
+    copyRecoveryPhraseButton: 'copy-recovery-phrase-button',
+    exportKeyButton: (addr: string) => `export-key-button-${addr}`,
+    privateKeyValue: 'private-key-value',
+    revealPrivateKeyButton: 'reveal-private-key-button',
+    copyPrivateKeyButton: 'copy-private-key-button'
+  }
 }
 
 type SelectorKey = keyof typeof selectors
