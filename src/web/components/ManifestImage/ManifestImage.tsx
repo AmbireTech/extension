@@ -1,8 +1,9 @@
-import React, { useCallback, useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { Image, ImageStyle, StyleProp, View, ViewStyle } from 'react-native'
 
 import SkeletonLoader from '@common/components/SkeletonLoader'
 import { SkeletonLoaderProps } from '@common/components/SkeletonLoader/types'
+import { isWeb } from '@common/config/env'
 import useTheme from '@common/hooks/useTheme'
 import commonStyles from '@common/styles/utils/common'
 import flexboxStyles from '@common/styles/utils/flexbox'
@@ -19,6 +20,22 @@ type Props = {
   skeletonAppearance?: SkeletonLoaderProps['appearance']
 }
 
+const getImageProxyUri = (imageUri: string) => {
+  if (!isWeb) return null
+
+  try {
+    const parsedUri = new URL(imageUri)
+    const isHttp = parsedUri.protocol === 'http:' || parsedUri.protocol === 'https:'
+
+    if (!isHttp) return null
+
+    // Web fallback: retry through an image proxy to work around browser-only loading issues (CORS/hotlinking)
+    return `https://images.weserv.nl/?url=${encodeURIComponent(imageUri)}`
+  } catch {
+    return null
+  }
+}
+
 const ManifestImage = ({
   uri,
   uris = [],
@@ -31,40 +48,70 @@ const ManifestImage = ({
   skeletonAppearance
 }: Props) => {
   const { theme } = useTheme()
+  const uriSignature = useMemo(() => JSON.stringify([uri, ...uris]), [uri, uris])
+
+  const imageUris = useMemo(() => {
+    const rawUris = [uri, ...uris].filter((item): item is string => !!item)
+    const dedupedUris = new Set<string>()
+    const allUris: string[] = []
+
+    rawUris.forEach((item) => {
+      if (!dedupedUris.has(item)) {
+        dedupedUris.add(item)
+        allUris.push(item)
+      }
+
+      const proxiedItem = getImageProxyUri(item)
+
+      if (proxiedItem && !dedupedUris.has(proxiedItem)) {
+        dedupedUris.add(proxiedItem)
+        allUris.push(proxiedItem)
+      }
+    })
+
+    return allUris
+  }, [uri, uris])
+
   const [isLoading, setIsLoading] = useState(true)
   const [hasError, setHasError] = useState(false)
-  const [currentUri, setCurrentUri] = useState({
-    index: 0,
-    uri: uri || uris[0]
-  })
+  const [currentUriIndex, setCurrentUriIndex] = useState(0)
+  const currentUri = imageUris[currentUriIndex]
   const scaledSize = typeof size === 'number' ? size * iconScale : size
   const roundBorderRadius = typeof scaledSize === 'number' ? scaledSize / 2 : 50
 
   const onError = useCallback(() => {
-    setHasError(true)
+    setCurrentUriIndex((prevIndex) => {
+      if (prevIndex < imageUris.length - 1) {
+        setHasError(false)
+        setIsLoading(true)
+        return prevIndex + 1
+      }
 
-    if (uris.length && uris.length > 1 && currentUri.index < uris.length - 1) {
-      setCurrentUri({
-        index: currentUri.index + 1,
-        uri: uris[currentUri.index + 1]
-      })
-    }
-  }, [currentUri.index, uris])
+      setHasError(true)
+      setIsLoading(false)
+      return prevIndex
+    })
+  }, [imageUris.length])
 
-  const onLoadEnd = useCallback(() => setIsLoading(false), [])
+  const onLoad = useCallback(() => {
+    setHasError(false)
+  }, [])
+
+  const onLoadEnd = useCallback(() => {
+    setIsLoading(false)
+  }, [])
 
   useEffect(() => {
-    if (!uris.length && !uri) {
+    if (!imageUris.length) {
       setIsLoading(false)
       setHasError(true)
       return
     }
 
-    setCurrentUri({ index: 0, uri: uri || uris[0] })
+    setCurrentUriIndex(0)
     setHasError(false)
     setIsLoading(true)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [uri, uris?.length])
+  }, [uriSignature, imageUris.length])
 
   return (
     <View
@@ -90,10 +137,11 @@ const ManifestImage = ({
         />
       )}
       {!isLoading && hasError && !!fallback && fallback()}
-      {!!currentUri.uri && !hasError && (
+      {!!currentUri && !hasError && (
         <Image
-          source={{ uri: currentUri.uri }}
+          source={{ uri: currentUri }}
           onError={onError}
+          onLoad={onLoad}
           onLoadEnd={onLoadEnd}
           resizeMode="contain"
           style={[
