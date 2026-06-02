@@ -44,7 +44,7 @@ const selectors = {
   },
   dashboard: {
     dashboardGasTankBalance: 'dashboard-gas-tank-balance',
-    appsButton: 'dashboard-button-apps',
+    appsButton: 'dashboard-button-explore',
     tokensTabButton: 'tokens-defi',
     noTokensText: 'no-tokens-text',
     tokenTitleText: '[data-testid^="token-balance-"]',
@@ -87,7 +87,8 @@ const selectors = {
     rewardsForClaimingButton: 'marketing-banner-button',
     rewardsLink: '//div[contains(text(),"Ambire Rewards")]',
     projectedRewardsClaimButton: 'projected-rewards-claim-button',
-    searchInputPlaceholder: 'search-input-placeholder'
+    searchInputPlaceholder: 'search-input-placeholder',
+    searchInputField: 'search-input-field'
   },
   settings: {
     navAccounts: 'settings-nav-accounts',
@@ -205,6 +206,7 @@ const selectors = {
     kyberSwapRoute: '//div[contains(text(), "Kyberswap")]',
     sushiSwapRoute: 'div:has-text("SushiSwap Aggregator")' // no route
   },
+  searchInput: 'search-input',
   backArrowButton: 'back-arrow-button',
   account: 'account',
   importMethodTrezor: 'import-method-trezor',
@@ -297,11 +299,11 @@ const selectors = {
   createSmartAccountGasTankModalButton: 'create-smart-account-gas-tank-modal-button',
   recieveNetworkBase: 'option-8453',
   recieveNetworkOptimism: 'option-10',
+  receiveNetworkEth: 'option-1',
   confirmFollowUpTxn: 'confirm-follow-up-txns-checkbox',
   USDC: 'option-0x0b2c639c533813f4aa9d7837caf62653d097ff85.usdc',
   signTransactionButton: 'transaction-button-sign',
   maxAvailableAmount: 'max-available-amount',
-  searchInput: 'search-input',
   // Swap & Bridge selectors
   selectRouteButton: 'select-route',
   routeLoadingTextSab: 'route-loading-text-sab',
