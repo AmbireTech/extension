@@ -107,12 +107,12 @@ export class SwapAndBridgePage extends BasePage {
   }
 
   async selectSendToken(sendToken: Token) {
-    await this.page.waitForTimeout(1500) // waiting for animation
+    await this.page.waitForTimeout(2000) // waiting for animation
     await this.clickOnMenuToken(sendToken, selectors.swapAndBridge.fromTokenDropdown)
   }
 
   async selectReceiveToken(receiveToken: Token) {
-    await this.page.waitForTimeout(1500) // waiting for animation
+    await this.page.waitForTimeout(2000) // waiting for animation
 
     await this.clickOnMenuToken(receiveToken, selectors.swapAndBridge.receiveTokenDropdown)
   }
@@ -156,7 +156,17 @@ export class SwapAndBridgePage extends BasePage {
     await this.openSwapAndBridge()
     await this.selectSendToken(sendToken)
 
-    await this.page.waitForTimeout(1000)
+    // switch network
+    const tokenNetwork = receiveToken.chainName
+    await this.click(selectors.receiveNetworkEth)
+
+    if (tokenNetwork == 'optimism') {
+      await this.click(selectors.recieveNetworkOptimism)
+    } else {
+      await this.click(selectors.recieveNetworkBase)
+    }
+
+    await this.page.waitForTimeout(1500)
 
     await this.click(selectors.swapAndBridge.receiveTokenDropdown)
     await this.page.getByTestId(selectors.searchInput).fill(receiveToken.symbol)
@@ -373,7 +383,7 @@ export class SwapAndBridgePage extends BasePage {
   ): Promise<string | null> {
     try {
       await this.openSwapAndBridge()
-      await this.page.waitForTimeout(1000)
+      await this.page.waitForTimeout(2000)
       await this.selectSendToken(sendToken)
 
       // Select target receive network
