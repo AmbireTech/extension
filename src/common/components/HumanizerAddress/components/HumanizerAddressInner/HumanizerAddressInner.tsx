@@ -17,6 +17,7 @@ interface Props extends TextProps {
   highestPriorityAlias?: string
   humanizerInfo?: HumanizerMetaAddress
   actionsMode?: 'tooltip' | 'inline'
+  shouldWrapInlineActions?: boolean
   chainId: bigint
   verification?: BlacklistedStatus
 }

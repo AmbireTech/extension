@@ -28,6 +28,7 @@ interface Props extends TextProps {
   address: string
   chainId?: bigint
   actionsMode?: 'tooltip' | 'inline'
+  shouldWrapInlineActions?: boolean
   verification?: BlacklistedStatus
   isDisplayingPlainAddress?: boolean
 }
@@ -37,6 +38,7 @@ const BaseAddress: FC<Props> = ({
   address,
   chainId,
   actionsMode = 'tooltip',
+  shouldWrapInlineActions = true,
   verification,
   isDisplayingPlainAddress,
   ...rest
@@ -121,7 +123,12 @@ const BaseAddress: FC<Props> = ({
           accessibilityRole="link"
           accessibilityLabel={t('View in Explorer')}
           onPress={handleInlineExplorerPress}
-          style={[flexbox.directionRow, flexbox.alignCenter, flexbox.wrap, { maxWidth: '100%' }]}
+          style={[
+            flexbox.directionRow,
+            flexbox.alignCenter,
+            shouldWrapInlineActions && flexbox.wrap,
+            { maxWidth: '100%' }
+          ]}
         >
           {({ hovered }: any) => (
             <>

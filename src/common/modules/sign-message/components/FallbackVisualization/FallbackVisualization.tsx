@@ -112,6 +112,7 @@ const FallbackVisualization: FC<{
   responsiveSizeMultiplier?: number
   withScrollDownArrow?: boolean
   rawOnly?: boolean
+  disableScroll?: boolean
 }> = ({
   messageToSign,
   humanizedMessage,
@@ -119,7 +120,8 @@ const FallbackVisualization: FC<{
   hasReachedBottom,
   responsiveSizeMultiplier = 1,
   withScrollDownArrow = false,
-  rawOnly = false
+  rawOnly = false,
+  disableScroll = false
 }) => {
   const { t } = useTranslation()
   const { styles, theme } = useTheme(getStyles)
@@ -158,6 +160,7 @@ const FallbackVisualization: FC<{
     },
     [handleTabPress]
   )
+  const ContentWrapper = disableScroll ? View : ScrollView
 
   useEffect(() => {
     if (!messageToSign || !containerHeight || !contentHeight) return
@@ -204,17 +207,21 @@ const FallbackVisualization: FC<{
           })}
         </View>
       )}
-      <ScrollView
-        onScroll={(e) => {
-          if (isCloseToBottom(e.nativeEvent) && setHasReachedBottom) setHasReachedBottom(true)
-        }}
-        onLayout={(e) => {
-          setContainerHeight(e.nativeEvent.layout.height)
-        }}
-        onContentSizeChange={(_, height) => {
-          setContentHeight(height)
-        }}
-        scrollEventThrottle={16}
+      <ContentWrapper
+        {...(!disableScroll
+          ? {
+              onScroll: (e: { nativeEvent: NativeScrollEvent }) => {
+                if (isCloseToBottom(e.nativeEvent) && setHasReachedBottom) setHasReachedBottom(true)
+              },
+              onLayout: (e: { nativeEvent: { layout: { height: number } } }) => {
+                setContainerHeight(e.nativeEvent.layout.height)
+              },
+              onContentSizeChange: (_: number, height: number) => {
+                setContentHeight(height)
+              },
+              scrollEventThrottle: 16
+            }
+          : {})}
       >
         {isTypedMessage && (rawOnly || activeTab === 'raw') && (
           <Text
@@ -308,8 +315,8 @@ const FallbackVisualization: FC<{
             {getMessageAsText(content.message as Hex) || t('(Empty message)')}
           </Text>
         )}
-      </ScrollView>
-      {!!containerHeight && !!contentHeight && withScrollDownArrow && (
+      </ContentWrapper>
+      {!disableScroll && !!containerHeight && !!contentHeight && withScrollDownArrow && (
         <AnimatedDownArrow
           isVisible={contentHeight > containerHeight && !hasReachedBottom}
           appearance="primary"

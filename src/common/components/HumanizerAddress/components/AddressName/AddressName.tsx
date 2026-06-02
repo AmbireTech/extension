@@ -14,6 +14,7 @@ interface Props extends TextProps {
   address: string
   chainId: bigint
   actionsMode?: 'tooltip' | 'inline'
+  shouldWrapInlineActions?: boolean
   fallbackLabel?: string
 }
 

@@ -9,6 +9,7 @@ import HumanizedVisualization, {
 } from '@common/components/HumanizedVisualization'
 import Label from '@common/components/Label'
 import Text from '@common/components/Text'
+import { isMobile } from '@common/config/env'
 import useTheme from '@common/hooks/useTheme'
 import { Erc7730Visualization } from '@common/modules/sign-message/utils/isErc7730Visualization'
 import spacings, { SPACING_TY } from '@common/styles/spacings'
@@ -40,7 +41,7 @@ const Erc7730TypedMessageContent = ({
   return (
     <View style={{ width: '100%' }}>
       {!!warnings?.length && (
-        <View style={[spacings.mbLg, flexbox.alignCenter]}>
+        <View style={[spacings.mbLg, flexbox.alignCenter, isMobile && flexbox.justifyCenter]}>
           {warnings.map((warning) => (
             <Label
               size="lg"
@@ -48,6 +49,9 @@ const Erc7730TypedMessageContent = ({
               text={warning.content}
               type="warning"
               hasBottomSpacing={false}
+              hasRightSpacing={!isMobile}
+              isCentered={isMobile}
+              style={isMobile ? { maxWidth: '100%' } : undefined}
             />
           ))}
         </View>
