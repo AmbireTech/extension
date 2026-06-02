@@ -83,7 +83,7 @@ const HumanizedVisualizationItem: FC<Props> = ({
           value={item.value}
           address={item.address!}
           textSize={textSize}
-          chainId={chainId}
+          chainId={item.chainId || chainId}
         />
         {editApprovalCallInfo && (
           <EditApproval
