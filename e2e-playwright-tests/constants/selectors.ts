@@ -296,6 +296,7 @@ const selectors = {
   createSmartAccountGasTankModalButton: 'create-smart-account-gas-tank-modal-button',
   recieveNetworkBase: 'option-8453',
   recieveNetworkOptimism: 'option-10',
+  receiveNetworkEth: 'option-1',
   confirmFollowUpTxn: 'confirm-follow-up-txns-checkbox',
   USDC: 'option-0x0b2c639c533813f4aa9d7837caf62653d097ff85.usdc',
   signTransactionButton: 'transaction-button-sign',

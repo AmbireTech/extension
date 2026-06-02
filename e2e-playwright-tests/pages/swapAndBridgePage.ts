@@ -71,6 +71,16 @@ export class SwapAndBridgePage extends BasePage {
   async prepareSwapAndBridge(send_amount: number, fromToken: Token, toToken: Token) {
     await this.openSwapAndBridge()
     try {
+      // switch network
+      const tokenNetwork = toToken.chainName
+      await this.click(selectors.receiveNetworkEth)
+
+      if (tokenNetwork == 'optimism') {
+        await this.click(selectors.recieveNetworkOptimism)
+      } else {
+        await this.click(selectors.recieveNetworkBase)
+      }
+
       await this.selectSendToken(fromToken)
       // Select Receive Token on the same Network, which is automatically selected
       await this.selectReceiveToken(toToken)

@@ -37,7 +37,7 @@ export class BasePage {
     await this.click(menuSelector)
 
     // If the token is outside the viewport, we ensure it becomes visible by searching for its symbol
-    await this.entertext(selectors.dashboard.searchInputField, token.symbol)
+    await this.entertext(selectors.searchInput, token.symbol)
 
     // Ensure we click the token inside the BottomSheet,
     // not the one rendered as the default in the Select menu.
@@ -51,7 +51,7 @@ export class BasePage {
     await this.click(selectors.transaction.feeTokensSelectDropdown)
 
     // If the token is outside the viewport, we ensure it becomes visible by searching for its symbol
-    await this.entertext(selectors.dashboard.searchInputField, token.symbol)
+    await this.entertext(selectors.searchInput, token.symbol)
 
     const paidBy = paidByAddress
     const tokenAddress = token.address

@@ -248,7 +248,7 @@ export class DashboardPage extends BasePage {
     await this.click(networkDropdownByTab[tabName])
 
     // enter search phrase
-    await this.entertext(selectors.dashboard.searchInputField, searchInput)
+    await this.entertext(selectors.searchInput, searchInput)
 
     // click on searched network
     const networkSelector = this.page.locator(`//div[text()="${searchInput}"]`)
