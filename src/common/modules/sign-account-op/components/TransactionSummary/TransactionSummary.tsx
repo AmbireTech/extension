@@ -533,20 +533,16 @@ const TransactionSummary = ({
     textSize,
     theme
   ])
-  const mobileFallbackVisualization = useMemo(() => {
-    if (
-      !isMobile ||
-      !call.isFallback ||
-      !decodedFunction ||
-      isDecodedFunctionLoading ||
-      !callVisualization ||
-      erc7730Visualization
-    )
-      return null
+  const mobileFlatVisualization = useMemo(() => {
+    if (!isMobile || !callVisualization || erc7730Visualization) return null
+
+    const firstContentIndex = callVisualization.findIndex((item) => item && item.type !== 'break')
+    const visualizationData =
+      firstContentIndex > 0 ? callVisualization.slice(firstContentIndex) : callVisualization
 
     return (
       <HumanizedVisualization
-        data={callVisualization}
+        data={visualizationData}
         sizeMultiplierSize={sizeMultiplier[size]}
         textSize={textSize}
         imageSize={imageSize}
@@ -554,21 +550,20 @@ const TransactionSummary = ({
         type={type}
         testID={`recipient-address-${index}`}
         hasPadding={false}
+        style={{ width: '100%', alignContent: 'flex-start' }}
+        disableFlex
         editApprovalCallInfo={editApprovalCallInfo}
         dapp={call.dapp}
       />
     )
   }, [
     call.dapp,
-    call.isFallback,
     callVisualization,
     chainId,
-    decodedFunction,
     editApprovalCallInfo,
     erc7730Visualization,
     imageSize,
     index,
-    isDecodedFunctionLoading,
     size,
     textSize,
     type
@@ -581,15 +576,16 @@ const TransactionSummary = ({
       enableToggleExpand={enableExpand}
       hasArrow={enableExpand}
       mobileHeaderContent={isMobile ? rightControl : undefined}
-      mobileHeaderTitle={isMobile ? mobileErc7730Title || mobileFallbackVisualization : undefined}
+      mobileHeaderTitle={isMobile ? mobileErc7730Title || mobileFlatVisualization : undefined}
       mobileHeaderStyle={
-        isMobile && mobileFallbackVisualization
+        isMobile && mobileFlatVisualization
           ? spacings.pvTy
           : isMobile && shouldUseDetailedErc7730Layout
             ? spacings.pt
             : undefined
       }
-      hideMobileContent={!!mobileFallbackVisualization}
+      hideMobileContent={!!mobileFlatVisualization}
+      overlayMobileHeaderControls={!!mobileFlatVisualization}
       style={{
         ...(call.warnings?.length && type === 'default'
           ? { ...styles.warningContainer, ...style }

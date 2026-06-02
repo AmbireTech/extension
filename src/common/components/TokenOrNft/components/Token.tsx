@@ -171,8 +171,8 @@ const InnerToken: FC<Props> = ({
               <View style={[!isMobile ? { marginLeft: 2, marginTop: -8 } : {}, flexbox.center]}>
                 <OpenIcon
                   color={hovered ? theme.primaryText : theme.secondaryText}
-                  width={isMobile ? 16 : 11}
-                  height={isMobile ? 16 : 11}
+                  width={isMobile ? 14 : 11}
+                  height={isMobile ? 14 : 11}
                 />
               </View>
             )}

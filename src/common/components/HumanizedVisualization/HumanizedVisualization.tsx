@@ -22,6 +22,7 @@ interface Props {
   erc7730Mode?: 'summary' | 'description'
   hideNestedErc7730Rows?: boolean
   hideMobileErc7730Title?: boolean
+  disableFlex?: boolean
   dapp?: IrCall['dapp']
   editApprovalCallInfo?: {
     setter: (arg: string, token: string, closeModal: () => void) => void
@@ -45,6 +46,7 @@ const HumanizedVisualization: FC<Props> = ({
   erc7730Mode = 'summary',
   hideNestedErc7730Rows = false,
   hideMobileErc7730Title = false,
+  disableFlex = false,
   dapp
 }) => {
   const marginRight = SPACING_TY * sizeMultiplierSize
@@ -55,7 +57,7 @@ const HumanizedVisualization: FC<Props> = ({
     <View
       testID={testID}
       style={[
-        flexbox.flex1,
+        !disableFlex && flexbox.flex1,
         flexbox.directionRow,
         flexbox.alignCenter,
         flexbox.wrap,

@@ -5,7 +5,7 @@ import DownArrowIcon from '@common/assets/svg/DownArrowIcon'
 import UpArrowIcon from '@common/assets/svg/UpArrowIcon'
 import { isMobile, isWeb } from '@common/config/env'
 import useTheme from '@common/hooks/useTheme'
-import spacings from '@common/styles/spacings'
+import spacings, { SPACING_SM, SPACING_TY } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
 import getStyles from './styles'
@@ -24,6 +24,7 @@ type Props = {
   mobileHeaderTitle?: ReactNode
   mobileHeaderStyle?: ViewStyle
   hideMobileContent?: boolean
+  overlayMobileHeaderControls?: boolean
 }
 
 const ExpandableCard = ({
@@ -39,7 +40,8 @@ const ExpandableCard = ({
   mobileHeaderContent,
   mobileHeaderTitle,
   mobileHeaderStyle,
-  hideMobileContent = false
+  hideMobileContent = false,
+  overlayMobileHeaderControls = false
 }: Props) => {
   const { styles } = useTheme(getStyles)
   const [isExpanded, setIsExpanded] = useState(!!isInitiallyExpanded)
@@ -66,7 +68,35 @@ const ExpandableCard = ({
   return (
     <View style={[styles.container, isMobile && isExpanded && { flexGrow: 1 }, style]}>
       <Element onPress={() => !!enableToggleExpand && setIsExpanded((prevState) => !prevState)}>
-        {hasMobileHeader && (
+        {hasMobileHeader && overlayMobileHeaderControls && (
+          <View style={[spacings.phSm, spacings.ptTy, mobileHeaderStyle]}>
+            {!!hasArrow && arrowPosition === 'left' && (
+              <View style={{ position: 'absolute', top: SPACING_TY, left: SPACING_SM }}>{icon}</View>
+            )}
+            <View
+              style={{
+                paddingLeft: hasArrow && arrowPosition === 'left' ? 28 + SPACING_TY : 0,
+                paddingRight:
+                  mobileHeaderContent || (hasArrow && arrowPosition === 'right')
+                    ? 28 + SPACING_TY
+                    : 0
+              }}
+            >
+              {mobileHeaderTitle}
+            </View>
+            {!!mobileHeaderContent && (
+              <View style={{ position: 'absolute', top: SPACING_TY, right: SPACING_SM }}>
+                {mobileHeaderContent}
+              </View>
+            )}
+            {!!hasArrow && arrowPosition === 'right' && (
+              <View style={{ position: 'absolute', top: SPACING_TY, right: SPACING_SM }}>
+                {icon}
+              </View>
+            )}
+          </View>
+        )}
+        {hasMobileHeader && !overlayMobileHeaderControls && (
           <View
             style={[
               flexbox.directionRow,
