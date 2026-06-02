@@ -12,6 +12,7 @@ export interface Props {
   spenderRow?: Erc7730Row
   sizeMultiplierSize: number
   textSize: number
+  hideTitle?: boolean
   renderValue: (valueItem: HumanizerVisualization, overrideTextSize?: number) => React.ReactNode
 }
 

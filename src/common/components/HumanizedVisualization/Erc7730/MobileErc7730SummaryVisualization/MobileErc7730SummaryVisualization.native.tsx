@@ -15,7 +15,8 @@ const MobileErc7730SummaryVisualization = ({
   spenderRow,
   sizeMultiplierSize,
   textSize,
-  renderValue
+  renderValue,
+  hideTitle
 }: Props) => {
   const { theme } = useTheme()
   const subtitleTextSize = Math.max(textSize - 3, 11)
@@ -42,24 +43,26 @@ const MobileErc7730SummaryVisualization = ({
 
   return (
     <View style={{ width: '100%', minWidth: 0 }}>
-      <View style={[flexbox.directionRow, flexbox.alignStart, { width: '100%', minWidth: 0 }]}>
-        {!!item.dapp?.icon && (
-          <ManifestImage
-            uri={item.dapp.icon}
-            containerStyle={spacings.mrTy}
-            size={24 * sizeMultiplierSize}
-            skeletonAppearance="secondaryBackground"
-            imageStyle={{ borderRadius: 12 * sizeMultiplierSize, backgroundColor: 'transparent' }}
-          />
-        )}
-        <View style={{ flex: 1, minWidth: 0 }}>
-          {!!item.title && (
-            <Text fontSize={textSize + 2} weight="semiBold" color={theme.secondaryAccent400}>
-              {item.title}
-            </Text>
+      {!hideTitle && (
+        <View style={[flexbox.directionRow, flexbox.alignStart, { width: '100%', minWidth: 0 }]}>
+          {!!item.dapp?.icon && (
+            <ManifestImage
+              uri={item.dapp.icon}
+              containerStyle={spacings.mrTy}
+              size={24 * sizeMultiplierSize}
+              skeletonAppearance="secondaryBackground"
+              imageStyle={{ borderRadius: 12 * sizeMultiplierSize, backgroundColor: 'transparent' }}
+            />
           )}
+          <View style={{ flex: 1, minWidth: 0 }}>
+            {!!item.title && (
+              <Text fontSize={textSize + 2} weight="semiBold" color={theme.secondaryAccent400}>
+                {item.title}
+              </Text>
+            )}
+          </View>
         </View>
-      </View>
+      )}
       {spenderRow && (
         <View
           style={[

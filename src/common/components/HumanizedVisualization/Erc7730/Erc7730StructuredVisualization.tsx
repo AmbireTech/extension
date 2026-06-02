@@ -197,7 +197,8 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
   textSize,
   mode = 'summary',
   editApprovalCallInfo,
-  hideNestedRows = false
+  hideNestedRows = false,
+  hideMobileSummaryTitle = false
 }) => {
   const { theme } = useTheme()
   const detailedRows = useMemo(
@@ -392,6 +393,7 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
           sizeMultiplierSize={sizeMultiplierSize}
           textSize={textSize}
           renderValue={renderValue}
+          hideTitle={hideMobileSummaryTitle}
         />
       )
     }

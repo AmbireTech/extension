@@ -41,6 +41,7 @@ interface Props {
   imageSize: number
   erc7730Mode: 'summary' | 'description'
   hideNestedErc7730Rows: boolean
+  hideMobileErc7730Title: boolean
   marginRight: number
 }
 
@@ -54,6 +55,7 @@ const HumanizedVisualizationItem: FC<Props> = ({
   imageSize,
   erc7730Mode,
   hideNestedErc7730Rows,
+  hideMobileErc7730Title,
   marginRight
 }) => {
   const { theme } = useTheme()
@@ -68,6 +70,7 @@ const HumanizedVisualizationItem: FC<Props> = ({
         mode={erc7730Mode}
         editApprovalCallInfo={editApprovalCallInfo}
         hideNestedRows={hideNestedErc7730Rows}
+        hideMobileSummaryTitle={hideMobileErc7730Title}
       />
     )
   }

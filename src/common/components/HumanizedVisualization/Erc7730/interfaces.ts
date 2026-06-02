@@ -21,6 +21,7 @@ export interface Erc7730StructuredVisualizationProps {
   mode?: 'summary' | 'description'
   editApprovalCallInfo?: EditApprovalCallInfo
   hideNestedRows?: boolean
+  hideMobileSummaryTitle?: boolean
 }
 
 export type Erc7730Row = HumanizerErc7730Visualization['rows'][number]
