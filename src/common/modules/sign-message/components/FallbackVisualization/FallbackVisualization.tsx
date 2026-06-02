@@ -163,10 +163,15 @@ const FallbackVisualization: FC<{
   const ContentWrapper = disableScroll ? View : ScrollView
 
   useEffect(() => {
+    if (disableScroll) {
+      if (!hasReachedBottom) setHasReachedBottom(true)
+      return
+    }
     if (!messageToSign || !containerHeight || !contentHeight) return
     const isScrollNotVisible = contentHeight <= containerHeight
     if (setHasReachedBottom && !hasReachedBottom) setHasReachedBottom(isScrollNotVisible)
   }, [
+    disableScroll,
     contentHeight,
     containerHeight,
     setHasReachedBottom,
