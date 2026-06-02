@@ -533,6 +533,46 @@ const TransactionSummary = ({
     textSize,
     theme
   ])
+  const mobileFallbackVisualization = useMemo(() => {
+    if (
+      !isMobile ||
+      !call.isFallback ||
+      !decodedFunction ||
+      isDecodedFunctionLoading ||
+      !callVisualization ||
+      erc7730Visualization
+    )
+      return null
+
+    return (
+      <HumanizedVisualization
+        data={callVisualization}
+        sizeMultiplierSize={sizeMultiplier[size]}
+        textSize={textSize}
+        imageSize={imageSize}
+        chainId={chainId}
+        type={type}
+        testID={`recipient-address-${index}`}
+        hasPadding={false}
+        editApprovalCallInfo={editApprovalCallInfo}
+        dapp={call.dapp}
+      />
+    )
+  }, [
+    call.dapp,
+    call.isFallback,
+    callVisualization,
+    chainId,
+    decodedFunction,
+    editApprovalCallInfo,
+    erc7730Visualization,
+    imageSize,
+    index,
+    isDecodedFunctionLoading,
+    size,
+    textSize,
+    type
+  ])
 
   if (isCallRemovedOptimistic) return null
 
@@ -541,8 +581,15 @@ const TransactionSummary = ({
       enableToggleExpand={enableExpand}
       hasArrow={enableExpand}
       mobileHeaderContent={isMobile ? rightControl : undefined}
-      mobileHeaderTitle={isMobile ? mobileErc7730Title : undefined}
-      mobileHeaderStyle={isMobile && shouldUseDetailedErc7730Layout ? spacings.pt : undefined}
+      mobileHeaderTitle={isMobile ? mobileErc7730Title || mobileFallbackVisualization : undefined}
+      mobileHeaderStyle={
+        isMobile && mobileFallbackVisualization
+          ? spacings.pvTy
+          : isMobile && shouldUseDetailedErc7730Layout
+            ? spacings.pt
+            : undefined
+      }
+      hideMobileContent={!!mobileFallbackVisualization}
       style={{
         ...(call.warnings?.length && type === 'default'
           ? { ...styles.warningContainer, ...style }

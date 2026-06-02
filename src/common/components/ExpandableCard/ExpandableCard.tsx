@@ -23,6 +23,7 @@ type Props = {
   mobileHeaderContent?: ReactNode
   mobileHeaderTitle?: ReactNode
   mobileHeaderStyle?: ViewStyle
+  hideMobileContent?: boolean
 }
 
 const ExpandableCard = ({
@@ -37,7 +38,8 @@ const ExpandableCard = ({
   contentStyle,
   mobileHeaderContent,
   mobileHeaderTitle,
-  mobileHeaderStyle
+  mobileHeaderStyle,
+  hideMobileContent = false
 }: Props) => {
   const { styles } = useTheme(getStyles)
   const [isExpanded, setIsExpanded] = useState(!!isInitiallyExpanded)
@@ -81,22 +83,24 @@ const ExpandableCard = ({
             {!!hasArrow && arrowPosition === 'right' && icon}
           </View>
         )}
-        <View
-          style={[
-            flexbox.directionRow,
-            flexbox.alignCenter,
-            spacings.phSm,
-            isWeb && spacings.pvSm,
-            isMobile && spacings.pvTy,
-            contentStyle
-          ]}
-        >
-          {!hasMobileHeader && !!hasArrow && arrowPosition === 'left' && icon}
-          <View style={[flexbox.directionRow, flexbox.alignCenter, flexbox.flex1]}>
-            {!!content && content}
+        {(!isMobile || !hideMobileContent) && (
+          <View
+            style={[
+              flexbox.directionRow,
+              flexbox.alignCenter,
+              spacings.phSm,
+              isWeb && spacings.pvSm,
+              isMobile && spacings.pvTy,
+              contentStyle
+            ]}
+          >
+            {!hasMobileHeader && !!hasArrow && arrowPosition === 'left' && icon}
+            <View style={[flexbox.directionRow, flexbox.alignCenter, flexbox.flex1]}>
+              {!!content && content}
+            </View>
+            {!hasMobileHeader && !!hasArrow && arrowPosition === 'right' && icon}
           </View>
-          {!hasMobileHeader && !!hasArrow && arrowPosition === 'right' && icon}
-        </View>
+        )}
         {children}
       </Element>
       {!!isExpanded && !!expandedContent && expandedContent}
