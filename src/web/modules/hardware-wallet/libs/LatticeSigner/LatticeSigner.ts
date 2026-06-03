@@ -139,7 +139,7 @@ class LatticeSigner implements KeystoreSignerInterface {
       const { def } = await withTimeout(
         () =>
           GridPlusSDKUtils.fetchCalldataDecoder(txData, txTo, Number(txChainId), supportsRecursion),
-        { timeoutMs: 5000 }
+        { timeoutMs: 10000 }
       )
       return def ?? undefined
     } catch {
