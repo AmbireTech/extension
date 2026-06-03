@@ -82,6 +82,12 @@ If there is an exact tag, **always insert this as the very first entry** in the 
 
 Assume a release tag exists for that version even if it has not been published yet — just substitute the numbers. Do not add 📣 to this entry.
 
+If the submodule points to a commit with no exact tag, skip this entry entirely and note it at the end of your response after the skipped PRs section:
+
+```
+**Note:** src/ambire-common submodule was updated but points to an untagged commit (<sha>) — no version entry added.
+```
+
 ## Git commands
 
 Prefer merge commits only:
