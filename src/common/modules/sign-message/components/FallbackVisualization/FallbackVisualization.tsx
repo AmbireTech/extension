@@ -22,6 +22,7 @@ import { getMessageAsText, simplifyTypedMessage } from '@common/utils/messageToS
 
 import { getEip712IntegerFieldNames, getParsedMessageValue } from './helpers'
 import getStyles from './styles'
+import { stringify } from '@ambire-common/libs/richJson/richJson'
 
 const isCloseToBottom = ({ layoutMeasurement, contentOffset, contentSize }: NativeScrollEvent) => {
   const paddingToBottom = 40
@@ -252,7 +253,7 @@ const FallbackVisualization: FC<{
             appearance="secondaryText"
             style={styles.rawText}
           >
-            {JSON.stringify(content, null, 4)}
+            {stringify(content, { pretty: true })}
           </Text>
         )}
         {isTypedMessage &&
