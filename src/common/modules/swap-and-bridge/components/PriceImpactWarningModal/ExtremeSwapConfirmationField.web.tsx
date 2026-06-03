@@ -2,7 +2,7 @@ import React, { FC, useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { StyleSheet, View } from 'react-native'
 
-import { normalizeConfirmationPhraseInput } from '@ambire-common/consts/safeguards/extremeSwapLoss'
+import { normalizeConfirmationPhraseInput } from '@ambire-common/libs/safeguards/extremeSwapLoss'
 import getInputStyles, { INPUT_HEIGHT } from '@common/components/Input/styles'
 import Text from '@common/components/Text'
 import useTheme from '@common/hooks/useTheme'

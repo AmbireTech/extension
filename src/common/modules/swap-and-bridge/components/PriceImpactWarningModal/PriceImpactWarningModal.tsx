@@ -2,7 +2,7 @@ import type { TFunction } from 'i18next'
 import React, { FC, useCallback, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
-import { getExtremeSwapConfirmationPhrase } from '@ambire-common/consts/safeguards/extremeSwapLoss'
+import { getExtremeSwapConfirmationPhrase } from '@ambire-common/libs/safeguards/extremeSwapLoss'
 import { SwapAmountWarning } from '@ambire-common/consts/safeguards/swapAmountWarnings'
 import BottomSheet from '@common/components/BottomSheet'
 import Checkbox from '@common/components/Checkbox'

@@ -2,7 +2,7 @@ import React, { FC, useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 
-import { normalizeConfirmationPhraseInput } from '@ambire-common/consts/safeguards/extremeSwapLoss'
+import { normalizeConfirmationPhraseInput } from '@ambire-common/libs/safeguards/extremeSwapLoss'
 import Input from '@common/components/Input'
 import Text from '@common/components/Text'
 import useTheme from '@common/hooks/useTheme'
