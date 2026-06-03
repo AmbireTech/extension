@@ -352,7 +352,14 @@ if (isDev) {
     minimizer: [
       new TerserPlugin({
         extractComments: false,
-        terserOptions: { mangle: false, keep_classnames: true, keep_fnames: true }
+        // Mangle local variable + function names to shrink the worker bundle
+        // (cuts both the disk-fetch and the JS parse/eval cost on cold start —
+        // the dominant boot bottleneck on low-end devices). `keep_classnames`
+        // MUST stay: the controller pipeline derives every controller's identity
+        // from `this.constructor.name` (eventEmitter.ts `get name()`), and code
+        // like criticalControllers, buildStateForFE and transactionManager keys
+        // off those exact class-name strings — mangling them breaks the app.
+        terserOptions: { mangle: { keep_classnames: true }, keep_classnames: true }
       })
     ],
     splitChunks: false,
