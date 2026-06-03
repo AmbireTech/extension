@@ -226,7 +226,13 @@ export class TransferPage extends BasePage {
     await expect(transactionDetails).toHaveText(/Send/)
     await expect(transactionDetails).toHaveText(/0\.001/)
     await expect(transactionDetails).toHaveText(/USDC/)
-    await expect(transactionDetails).toHaveText(new RegExp(recepientAddress))
+
+    // commenting out this for now as this could be different values from now on:
+    // 1. an ens, if one exists
+    // 2. a name in the extension for the address, if one is added
+    // 3. a shortened address like 0x1234...abab
+    // await expect(transactionDetails).toHaveText(new RegExp(recepientAddress))
+
     // assert confirmed block
     await expect(
       newPage.getByTestId(selectors.transaction.explorer.txnConfirmedStep)
