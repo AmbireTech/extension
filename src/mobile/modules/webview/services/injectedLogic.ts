@@ -46,9 +46,15 @@ function debounceFrontEndEventUpdatesOnSameTick(
   forceEmit?: boolean
 ): 'DEBOUNCED' | 'EMITTED' {
   const sendUpdate = () => {
+    // Paused dynamic controllers may finish async work after being replaced.
+    // Re-resolve the live controller from the registry instead of using the
+    // captured `ctrl` so a stale/removed instance never streams to the FE.
+    const registeredCtrl = eventEmitterRegistry.values().find((c) => c.name === ctrlName)
+    if (!registeredCtrl) return
+
     sendToReactEvent('ctrl.update', {
       ctrlName,
-      state: buildStateForFE(ctrlName, ctrl),
+      state: buildStateForFE(ctrlName, registeredCtrl),
       forceEmit
     })
   }
@@ -187,6 +193,8 @@ const eventEmitterRegistry = new EventEmitterRegistryController(() => {
     const hasOnErrorInitialized = ctrl.onErrorIds.includes('webview')
     if (!hasOnErrorInitialized) {
       ctrl.onError(() => {
+        if (!ctrl.isInRegistry()) return
+
         sendToReactEvent('ctrl.error', { ctrlName: ctrl.name, errors: ctrl.emittedErrors })
       }, 'webview')
     }

@@ -18,6 +18,8 @@ const SignMessageScreen = () => {
   const {
     signMessageState,
     signStatus,
+    humanizedMessage,
+    isHumanizing,
     hasReachedBottom,
     setHasReachedBottom,
     account,
@@ -137,6 +139,8 @@ const SignMessageScreen = () => {
           handleSubmitSignatureResponse={submitSignatureResponse}
           handleQrSigningFlowOnRejectPressed={handleQrSigningFlowOnRejectPressed}
           handleQrSigningFlowOnBackPressed={handleQrSigningFlowOnBackPressed}
+          humanizedMessage={humanizedMessage}
+          isHumanizing={isHumanizing}
         />
       )}
       {view === 'siwe' && (
