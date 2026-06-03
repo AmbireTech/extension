@@ -9,7 +9,8 @@ import shortenAddress from '@ambire-common/utils/shortenAddress'
 import { stripHexPrefix } from '@ambire-common/utils/stripHexPrefix'
 import wait from '@ambire-common/utils/wait'
 import LatticeController, {
-  GridPlusSDKConstants
+  GridPlusSDKConstants,
+  GridPlusSDKUtils
 } from '@web/modules/hardware-wallet/controllers/LatticeController'
 
 class LatticeSigner implements KeystoreSignerInterface {
@@ -144,6 +145,30 @@ class LatticeSigner implements KeystoreSignerInterface {
 
       const unsignedSerializedTxn = Transaction.from(unsignedTxn).unsignedSerialized as Hex
 
+      // Fetch ABI decoder so the Lattice1 firmware can decode and display
+      // calldata (function name + params) on the device screen. Falls back
+      // gracefully — if the ABI can't be resolved the signing still proceeds.
+      // NOTE: When migrating to the GridPlus functional API (sign()), remove
+      // this — that API calls fetchCalldataDecoder internally and passes the
+      // decoder automatically when given a structured transaction object.
+      let decoder: Buffer | undefined
+      const { data: txData, to: txTo, chainId: txChainId } = txnRequest
+      if (txTo && txData && txData.length > 2) {
+        try {
+          const fwVersion = this.controller!.walletSDK!.getFwVersion()
+          const supportsRecursion = fwVersion.major > 0 || fwVersion.minor >= 16
+          const { def } = await GridPlusSDKUtils.fetchCalldataDecoder(
+            txData,
+            txTo,
+            Number(txChainId),
+            supportsRecursion
+          )
+          if (def) decoder = def
+        } catch {
+          // Non-fatal — proceed without calldata decoding
+        }
+      }
+
       const res = await this.controller!.walletSDK!.sign({
         // Prior to general signing, request data was sent to the device in
         // preformatted ways and was used to build the transaction in firmware.
@@ -155,7 +180,8 @@ class LatticeSigner implements KeystoreSignerInterface {
           payload: unsignedSerializedTxn,
           curveType: GridPlusSDKConstants.SIGNING.CURVES.SECP256K1,
           hashType: GridPlusSDKConstants.SIGNING.HASHES.KECCAK256,
-          encodingType: GridPlusSDKConstants.SIGNING.ENCODINGS.EVM
+          encodingType: GridPlusSDKConstants.SIGNING.ENCODINGS.EVM,
+          decoder
         }
       })
 
