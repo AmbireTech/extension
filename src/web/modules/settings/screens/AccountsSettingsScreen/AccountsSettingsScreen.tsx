@@ -179,7 +179,7 @@ const AccountsSettingsScreen = () => {
               options={accountOptions}
               inverseInteractionColors
               isSelectable={false}
-              containerStyle={{ ...spacings.mb0, ...spacings.pvSm }}
+              containerStyle={{ ...spacings.mb0, ...spacings.pvTy }}
               withReceive
             />
           </View>
