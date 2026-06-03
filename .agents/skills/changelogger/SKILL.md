@@ -251,7 +251,7 @@ Each top-level bullet must:
 * describe user impact when possible
 * avoid raw commit-message noise
 * avoid overly technical implementation details unless relevant to developers or release reviewers
-* never use em dashes (--); use a colon, comma, or rephrase instead
+* never use em dashes (—) or en dashes (–); use a hyphens, colon, comma, or rephrase instead
 
 For internal/technical entries (CI fixes, QA test updates, config, docs, TS errors, etc.) — include them but keep it to a single line. Do not add sub-bullets or details.
 
@@ -334,7 +334,7 @@ Before returning the changelog, verify:
 * every top-level entry links to a GitHub PR
 * marketing-worthy entries have 📣
 * public wording is clear
-* no em dashes in any entry
+* no em dashes or en dashes in any entry
 * Rewards/Legends PRs are excluded; all other PRs are present (including CI, QA, config, docs, TS fixes)
 * skipped PRs and branch-sync commits are listed after the changelog block
 * security/signing claims are accurate
