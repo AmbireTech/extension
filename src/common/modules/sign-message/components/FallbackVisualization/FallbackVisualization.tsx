@@ -20,6 +20,7 @@ import flexbox from '@common/styles/utils/flexbox'
 import { getMessageAsText, simplifyTypedMessage } from '@common/utils/messageToString'
 
 import getStyles from './styles'
+import { stringify } from '@ambire-common/libs/richJson/richJson'
 
 const isCloseToBottom = ({ layoutMeasurement, contentOffset, contentSize }: NativeScrollEvent) => {
   const paddingToBottom = 40
@@ -236,7 +237,7 @@ const FallbackVisualization: FC<{
             appearance="secondaryText"
             style={styles.rawText}
           >
-            {JSON.stringify(content, null, 4)}
+            {stringify(content, { pretty: true })}
           </Text>
         )}
         {isTypedMessage &&
