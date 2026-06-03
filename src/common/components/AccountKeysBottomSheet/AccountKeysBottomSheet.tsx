@@ -34,6 +34,7 @@ const AccountKeysBottomSheet: FC<Props> = ({
     <BottomSheet
       id="account-keys-bottom-sheet"
       sheetRef={sheetRef}
+      animationDuration={isWeb ? 0 : undefined}
       closeBottomSheet={closeBottomSheet}
       scrollViewProps={isWeb ? { contentContainerStyle: { flex: 1 } } : undefined}
       isScrollEnabled={false}
