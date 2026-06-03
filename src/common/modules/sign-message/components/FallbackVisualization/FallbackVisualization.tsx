@@ -8,8 +8,9 @@ import { ISignMessageController } from '@ambire-common/interfaces/signMessage'
 import { IrMessage } from '@ambire-common/libs/humanizer/interfaces'
 import { isValidAddress } from '@ambire-common/services/address'
 import WarningFilledIcon from '@common/assets/svg/WarningFilledIcon'
-import HumanizerAddress from '@common/components/HumanizerAddress'
+import CopyText from '@common/components/CopyText'
 import HumanizedVisualization from '@common/components/HumanizedVisualization'
+import HumanizerAddress from '@common/components/HumanizerAddress'
 import Text from '@common/components/Text'
 import useTheme from '@common/hooks/useTheme'
 import useWindowSize from '@common/hooks/useWindowSize'
@@ -19,6 +20,7 @@ import spacings, { SPACING_SM, SPACING_TY } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { getMessageAsText, simplifyTypedMessage } from '@common/utils/messageToString'
 
+import { getEip712IntegerFieldNames, getParsedMessageValue } from './helpers'
 import getStyles from './styles'
 import { stringify } from '@ambire-common/libs/richJson/richJson'
 
@@ -113,6 +115,9 @@ const FallbackVisualization: FC<{
   responsiveSizeMultiplier?: number
   withScrollDownArrow?: boolean
   rawOnly?: boolean
+  scrollEnabled?: boolean
+  withCompactDataRow?: boolean
+  withDecimalIntegerRows?: boolean
   disableScroll?: boolean
 }> = ({
   messageToSign,
@@ -122,6 +127,9 @@ const FallbackVisualization: FC<{
   responsiveSizeMultiplier = 1,
   withScrollDownArrow = false,
   rawOnly = false,
+  scrollEnabled = true,
+  withCompactDataRow = false,
+  withDecimalIntegerRows = false,
   disableScroll = false
 }) => {
   const { t } = useTranslation()
@@ -142,6 +150,13 @@ const FallbackVisualization: FC<{
     chainId,
     responsiveSizeMultiplier,
     t
+  )
+  const integerFieldNames = useMemo(
+    () =>
+      content?.kind === 'typedMessage' && withDecimalIntegerRows
+        ? getEip712IntegerFieldNames(content.types, content.primaryType)
+        : new Set<string>(),
+    [content, withDecimalIntegerRows]
   )
   const tabs = useMemo(
     () =>
@@ -216,6 +231,7 @@ const FallbackVisualization: FC<{
       <ContentWrapper
         {...(!disableScroll
           ? {
+              scrollEnabled,
               onScroll: (e: { nativeEvent: NativeScrollEvent }) => {
                 if (isCloseToBottom(e.nativeEvent) && setHasReachedBottom) setHasReachedBottom(true)
               },
@@ -282,15 +298,29 @@ const FallbackVisualization: FC<{
                   <View style={styles.parsedValue}>
                     {typeof i.componentToReturn === 'string' ||
                     typeof i.componentToReturn === 'number' ? (
-                      <Text
-                        selectable
-                        weight="medium"
-                        fontSize={14 * responsiveSizeMultiplier}
-                        appearance="primaryText"
-                        style={styles.parsedValueText}
-                      >
-                        {i.componentToReturn}
-                      </Text>
+                      <>
+                        <Text
+                          selectable
+                          weight="medium"
+                          fontSize={14 * responsiveSizeMultiplier}
+                          appearance="primaryText"
+                          style={styles.parsedValueText}
+                        >
+                          {withCompactDataRow || withDecimalIntegerRows
+                            ? getParsedMessageValue(i.label, i.componentToReturn, integerFieldNames)
+                            : i.componentToReturn}
+                        </Text>
+                        {withCompactDataRow &&
+                          i.label === 'data' &&
+                          typeof i.componentToReturn === 'string' && (
+                            <CopyText
+                              text={i.componentToReturn}
+                              iconColor={theme.secondaryText}
+                              iconSize={16 * responsiveSizeMultiplier}
+                              style={spacings.mlMi}
+                            />
+                          )}
+                      </>
                     ) : (
                       i.componentToReturn
                     )}

@@ -308,19 +308,6 @@ const useTransfer = (isTopUpScreen: boolean) => {
       : isFormValid && addressInputState.validation.severity !== 'error')
   }, [addressInputState.validation.severity, isFormValid, isTopUp])
 
-  const isOneOwnerSafe = useMemo(() => {
-    if (!account?.safeCreation) return false
-
-    return (
-      signAccountOpController?.threshold === 1 &&
-      signAccountOpController?.accountKeyStoreKeys.length === 1
-    )
-  }, [
-    account?.safeCreation,
-    signAccountOpController?.threshold,
-    signAccountOpController?.accountKeyStoreKeys.length
-  ])
-
   const resetTransferForm = useCallback(() => {
     transferDispatch({
       type: 'method',
@@ -356,7 +343,7 @@ const useTransfer = (isTopUpScreen: boolean) => {
         // Proceed in OneClick txn
         if (executionType === 'open-request-window') {
           // one click mode opens signAccountOp if more than 1 req in batch
-          if ((!!account?.safeCreation && !isOneOwnerSafe) || networkUserRequests.length > 0) {
+          if (!!account?.safeCreation || networkUserRequests.length > 0) {
             requestsDispatch({
               type: 'method',
               params: {
@@ -427,8 +414,7 @@ const useTransfer = (isTopUpScreen: boolean) => {
       resetTransferForm,
       networkUserRequests.length,
       openEstimationModalAndDispatch,
-      account?.safeCreation,
-      isOneOwnerSafe
+      account?.safeCreation
     ]
   )
 
