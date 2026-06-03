@@ -3,13 +3,14 @@ import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 
 import { QrRequest } from '@ambire-common/interfaces/keystore'
-import { humanizeMessage } from '@ambire-common/libs/humanizer'
+import { IrMessage } from '@ambire-common/libs/humanizer/interfaces'
 import WarningIcon from '@common/assets/svg/WarningIcon'
 import Alert from '@common/components/Alert'
 import ExpandableCard from '@common/components/ExpandableCard'
 import HumanizedVisualization from '@common/components/HumanizedVisualization'
 import Label from '@common/components/Label'
 import NetworkBadge from '@common/components/NetworkBadge'
+import Spinner from '@common/components/Spinner'
 import Text from '@common/components/Text'
 import { isMobile, isWeb } from '@common/config/env'
 import useController from '@common/hooks/useController'
@@ -17,9 +18,12 @@ import useResponsiveActionWindow from '@common/hooks/useResponsiveActionWindow'
 import useTheme from '@common/hooks/useTheme'
 import useWindowSize from '@common/hooks/useWindowSize'
 import HardwareWalletSigningModal from '@common/modules/hardware-wallets/components/HardwareWalletSigningModal'
+import SafeEip712Data from '@common/modules/sign-account-op/components/SafeEip712Data'
+import SafetyChecksBanner from '@common/modules/sign-account-op/components/SafetyChecksBanner'
+import Erc7730TypedMessageContent from '@common/modules/sign-message/components/Contents/Erc7730TypedMessageContent'
 import FallbackVisualization from '@common/modules/sign-message/components/FallbackVisualization'
 import Info from '@common/modules/sign-message/components/Info'
-import SafetyChecksBanner from '@common/modules/sign-account-op/components/SafetyChecksBanner'
+import isErc7730Visualization from '@common/modules/sign-message/utils/isErc7730Visualization'
 import spacings, { SPACING_LG, SPACING_MD, SPACING_TY } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { MobileLayoutWrapperMainContent } from '@mobile/components/MobileLayoutWrapper'
@@ -43,12 +47,20 @@ interface Props {
   handleSubmitSignatureResponse: (payload: string | Uint8Array) => void
   handleQrSigningFlowOnRejectPressed: () => void
   handleQrSigningFlowOnBackPressed: () => void
+  humanizedMessage?: IrMessage
+  isHumanizing: boolean
 }
 
-const Container = ({ children }: { children: React.ReactNode }) => {
+const Container = ({
+  children,
+  withScroll
+}: {
+  children: React.ReactNode
+  withScroll?: boolean
+}) => {
   if (isMobile)
     return (
-      <MobileLayoutWrapperMainContent contentContainerStyle={spacings.ph0}>
+      <MobileLayoutWrapperMainContent contentContainerStyle={spacings.ph0} withScroll={withScroll}>
         {children}
       </MobileLayoutWrapperMainContent>
     )
@@ -68,7 +80,9 @@ const Main = ({
   handleOnContinue,
   handleSubmitSignatureResponse,
   handleQrSigningFlowOnRejectPressed,
-  handleQrSigningFlowOnBackPressed
+  handleQrSigningFlowOnBackPressed,
+  humanizedMessage,
+  isHumanizing
 }: Props) => {
   const { t } = useTranslation()
   const { state: signMessageState, dispatch: signMessageDispatch } =
@@ -88,20 +102,31 @@ const Main = ({
       }),
     [networks, signMessageState.messageToSign]
   )
-  const humanizedMessage = useMemo(() => {
-    if (!signMessageState?.messageToSign) return
-    return humanizeMessage(signMessageState.messageToSign)
-  }, [signMessageState])
   const visualizeHumanized = useMemo(
     () =>
-      humanizedMessage?.fullVisualization &&
-      network &&
-      signMessageState.messageToSign?.content.kind,
+      !!(
+        humanizedMessage?.fullVisualization?.length &&
+        network &&
+        signMessageState.messageToSign?.content.kind
+      ),
     [network, humanizedMessage, signMessageState.messageToSign?.content?.kind]
   )
+  const typedMessageErc7730Visualizations = useMemo(
+    () => humanizedMessage?.fullVisualization?.filter(isErc7730Visualization) || [],
+    [humanizedMessage?.fullVisualization]
+  )
+  const shouldUseErc7730TypedMessageCard =
+    signMessageState.messageToSign?.content.kind === 'typedMessage' &&
+    typedMessageErc7730Visualizations.length > 0
+  const messageVisualizationMode = isHumanizing
+    ? 'humanizing'
+    : visualizeHumanized
+      ? 'humanized'
+      : 'fallback'
+  const messageVisualizationKey = `${signMessageState.messageToSign?.fromRequestId}-${messageVisualizationMode}`
 
   return (
-    <Container>
+    <Container withScroll={shouldUseErc7730TypedMessageCard}>
       <View
         style={[
           flexbox.directionRow,
@@ -190,26 +215,36 @@ const Main = ({
         </View>
         <View style={flexbox.flex1}>
           <ExpandableCard
-            enableToggleExpand={!!visualizeHumanized && !!visualizeHumanized}
-            hasArrow={!humanizedMessage?.canHideDropdownArrow && !!visualizeHumanized}
-            isInitiallyExpanded={!visualizeHumanized}
+            key={messageVisualizationKey}
+            enableToggleExpand={visualizeHumanized}
+            hasArrow={!humanizedMessage?.canHideDropdownArrow && visualizeHumanized}
+            isInitiallyExpanded={!visualizeHumanized && !isHumanizing}
             style={{
               marginBottom: SPACING_TY * responsiveSizeMultiplier,
-              // Setting maxHeight on larger screens introduced internal content scroll
-              // (which aligns the content better - with internal scrollbar).
-              ...(minHeightSize(660) ? {} : { maxHeight: '100%' }),
               backgroundColor: theme.secondaryBackground,
               ...(humanizedMessage?.warnings?.length ? styles.warningContainer : {})
             }}
             content={
-              visualizeHumanized &&
-              // @TODO: Duplicate check. For some reason ts throws an error if we don't do this
-              humanizedMessage?.fullVisualization &&
-              signMessageState.messageToSign?.content.kind ? (
+              isHumanizing ? (
+                <View style={flexbox.flex1}>
+                  <Spinner />
+                </View>
+              ) : shouldUseErc7730TypedMessageCard ? (
+                <Erc7730TypedMessageContent
+                  data={typedMessageErc7730Visualizations}
+                  chainId={network?.chainId || signMessageState.messageToSign?.chainId || 1n}
+                  responsiveSizeMultiplier={responsiveSizeMultiplier}
+                  warnings={humanizedMessage?.warnings}
+                />
+              ) : visualizeHumanized &&
+                // @TODO: Duplicate check. For some reason ts throws an error if we don't do this
+                humanizedMessage?.fullVisualization &&
+                signMessageState.messageToSign?.content.kind ? (
                 <HumanizedVisualization
                   data={humanizedMessage.fullVisualization}
                   chainId={network?.chainId || 1n}
                   sizeMultiplierSize={responsiveSizeMultiplier}
+                  textSize={14}
                 />
               ) : (
                 <>
@@ -234,7 +269,7 @@ const Main = ({
                       >
                         {t('Warning: ')}
                       </Text>
-                      {t('Please read the whole message as we are unable to translate it!')}
+                      {t('No "clear sign" translation for this message. Please read it carefully!')}
                     </Text>
                   </View>
                 </>
@@ -245,23 +280,32 @@ const Main = ({
                 setHasReachedBottom={setHasReachedBottom}
                 hasReachedBottom={!!hasReachedBottom}
                 messageToSign={signMessageState.messageToSign}
+                humanizedMessage={humanizedMessage}
                 responsiveSizeMultiplier={responsiveSizeMultiplier}
                 withScrollDownArrow
+                rawOnly={shouldUseErc7730TypedMessageCard}
+                disableScroll={isMobile && shouldUseErc7730TypedMessageCard}
               />
             }
           >
-            {humanizedMessage?.warnings?.map((warning) => {
-              return (
-                <Label
-                  size="lg"
-                  key={warning.content}
-                  text={warning.content}
-                  type="warning"
-                  style={spacings.mlMd}
-                />
-              )
-            })}
+            {!shouldUseErc7730TypedMessageCard &&
+              humanizedMessage?.warnings?.map((warning) => {
+                return (
+                  <Label
+                    size="lg"
+                    key={warning.content}
+                    text={warning.content}
+                    type="warning"
+                    style={spacings.mlMd}
+                  />
+                )
+              })}
           </ExpandableCard>
+          <SafeEip712Data
+            accountAddr={signMessageState.messageToSign?.accountAddr}
+            chainId={signMessageState.messageToSign?.chainId}
+            safeEip712Data={signMessageState.safeEip712Data}
+          />
         </View>
         {signMessageState.signer &&
           signMessageState.signer.key.type !== 'internal' &&
@@ -278,6 +322,7 @@ const Main = ({
                   }
                 })
               }}
+              signingRequest={signMessageState.hardwareWalletSigningRequest}
             />
           )}
         {shouldDisplayLedgerConnectModal && (
@@ -297,6 +342,7 @@ const Main = ({
               onContinue={handleOnContinue}
               currentRequest={currentRequest}
               signingStep={signingStep}
+              signingRequest={signMessageState.hardwareWalletSigningRequest}
               submitSignatureResponse={handleSubmitSignatureResponse}
               onReject={handleQrSigningFlowOnRejectPressed}
               handleQrSigningFlowOnBackPressed={handleQrSigningFlowOnBackPressed}

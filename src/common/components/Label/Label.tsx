@@ -20,6 +20,7 @@ type Props = {
   size?: 'sm' | 'md' | 'lg'
   customTextStyle?: TextStyle
   style?: ViewStyle
+  isCentered?: boolean
 }
 
 const sizeMultiplier = {
@@ -36,7 +37,8 @@ const Label = ({
   isTypeLabelHidden = false,
   size = 'lg',
   customTextStyle = {},
-  style = {}
+  style = {},
+  isCentered = false
 }: Props) => {
   const { styles, theme } = useTheme(getStyles)
 
@@ -47,6 +49,68 @@ const Label = ({
     type === 'error' && styles.errorText,
     customTextStyle
   ]
+  const icon = (
+    <>
+      {type === 'warning' && (
+        <WarningIcon
+          color={theme.warningDecorative}
+          width={20 * sizeMultiplier[size]}
+          height={19 * sizeMultiplier[size]}
+        />
+      )}
+      {type === 'error' && (
+        <WarningIcon
+          color={theme.errorDecorative}
+          width={20 * sizeMultiplier[size]}
+          height={19 * sizeMultiplier[size]}
+        />
+      )}
+      {type === 'info' && (
+        <InfoIcon
+          color={theme.infoDecorative}
+          width={20 * sizeMultiplier[size]}
+          height={19 * sizeMultiplier[size]}
+        />
+      )}
+      {type === 'success' && (
+        <SuccessIcon
+          color={theme.successDecorative}
+          width={20 * sizeMultiplier[size]}
+          height={19 * sizeMultiplier[size]}
+        />
+      )}
+    </>
+  )
+
+  if (isCentered) {
+    return (
+      <View
+        style={[
+          styles.container,
+          !!hasBottomSpacing && spacings.mbTy,
+          !!hasRightSpacing && spacings.mrTy,
+          { flexDirection: 'column', alignItems: 'center' },
+          style
+        ]}
+      >
+        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+          <View style={spacings.mrTy}>{icon}</View>
+          {!isTypeLabelHidden && (
+            <Text fontSize={16 * sizeMultiplier[size]} weight="semiBold" style={textStyle}>
+              {`${type}:`}
+            </Text>
+          )}
+        </View>
+        <Text
+          fontSize={16 * sizeMultiplier[size]}
+          weight="regular"
+          style={[textStyle, { textAlign: 'center' }]}
+        >
+          {text}
+        </Text>
+      </View>
+    )
+  }
 
   return (
     <View
@@ -57,36 +121,7 @@ const Label = ({
         style
       ]}
     >
-      <View style={spacings.mrTy}>
-        {type === 'warning' && (
-          <WarningIcon
-            color={theme.warningDecorative}
-            width={20 * sizeMultiplier[size]}
-            height={19 * sizeMultiplier[size]}
-          />
-        )}
-        {type === 'error' && (
-          <WarningIcon
-            color={theme.errorDecorative}
-            width={20 * sizeMultiplier[size]}
-            height={19 * sizeMultiplier[size]}
-          />
-        )}
-        {type === 'info' && (
-          <InfoIcon
-            color={theme.infoDecorative}
-            width={20 * sizeMultiplier[size]}
-            height={19 * sizeMultiplier[size]}
-          />
-        )}
-        {type === 'success' && (
-          <SuccessIcon
-            color={theme.successDecorative}
-            width={20 * sizeMultiplier[size]}
-            height={19 * sizeMultiplier[size]}
-          />
-        )}
-      </View>
+      <View style={spacings.mrTy}>{icon}</View>
       <Text>
         {!isTypeLabelHidden && (
           <Text fontSize={16 * sizeMultiplier[size]} weight="semiBold" style={textStyle}>

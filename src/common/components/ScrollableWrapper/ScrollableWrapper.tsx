@@ -101,7 +101,6 @@ const ScrollableWrapper = ({
               ? node.getScrollResponder()
               : null
 
-      // eslint-disable-next-line no-console
       if (!measurable || typeof measurable.measureInWindow !== 'function') return
 
       measurable.measureInWindow((_x: number, y: number, _w: number, height: number) => {

@@ -190,6 +190,7 @@ test.describe('auto-login', { tag: '@autoLogin' }, () => {
     })
 
     await test.step('sing action opens SIWE page', async () => {
+      await pages.basePage.page.waitForTimeout(2000)
       const signMessageWindow = await pages.basePage.handleNewPage(signButton)
       await expect(signMessageWindow.locator(selectors.sigtool.signRequestForEVMText)).toBeVisible({
         timeout: 5000
