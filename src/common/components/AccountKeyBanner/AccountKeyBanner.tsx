@@ -1,10 +1,11 @@
 import React from 'react'
 
-import LedgerLetterIcon from '@common/assets/svg/LedgerLetterIcon'
+import GridPlusIcon from '@common/assets/svg/GridPlusIcon'
+import LedgerBadgeIcon from '@common/assets/svg/LedgerBadgeIcon'
 import ReceiveIcon from '@common/assets/svg/ReceiveIcon'
-import SafeIcon from '@common/assets/svg/SafeIcon'
+import SafeBadgeIcon from '@common/assets/svg/SafeBadgeIcon'
 import SingleKeyIcon from '@common/assets/svg/SingleKeyIcon'
-import TrezorLockIcon from '@common/assets/svg/TrezorLockIcon'
+import TrezorBadgeIcon from '@common/assets/svg/TrezorBadgeIcon'
 import { KeyType } from '@common/components/AccountKeyIcons/AccountKeyIcons'
 import useTheme from '@common/hooks/useTheme'
 
@@ -21,25 +22,29 @@ const AccountKeyBanner = ({ type }: { type: KeyType }) => {
     height: 16
   }
 
-  // An icon is not displayed as GridPlus' icon is not suitable for short badges
-  if (type === 'lattice') return <Wrapper text="GridPlus" children={null} />
+  if (type === 'lattice')
+    return (
+      <Wrapper text="GridPlus">
+        <GridPlusIcon {...props} />
+      </Wrapper>
+    )
   if (type === 'trezor')
     return (
       <Wrapper text="Trezor">
-        <TrezorLockIcon {...props} />
+        <TrezorBadgeIcon {...props} />
       </Wrapper>
     )
   if (type === 'ledger')
     return (
       <Wrapper text="Ledger">
-        <LedgerLetterIcon {...props} />
+        <LedgerBadgeIcon {...props} />
       </Wrapper>
     )
 
   if (type === 'safe')
     return (
       <Wrapper text="Safe">
-        <SafeIcon {...props} />
+        <SafeBadgeIcon {...props} />
       </Wrapper>
     )
 

@@ -4,14 +4,14 @@ import { SvgProps } from 'react-native-svg'
 
 import DiagonalRightArrowIcon from '@common/assets/svg/DiagonalRightArrowIcon'
 import ImportJsonIcon from '@common/assets/svg/ImportJsonIcon'
-import LatticeWithBorderIcon from '@common/assets/svg/LatticeWithBorderIcon'
-import LedgerLetterIcon from '@common/assets/svg/LedgerLetterIcon'
+import GridPlusIcon from '@common/assets/svg/GridPlusIcon'
+import LedgerBadgeIcon from '@common/assets/svg/LedgerBadgeIcon'
 import PrivateKeyIcon from '@common/assets/svg/PrivateKeyIcon'
 import ReceiveIcon from '@common/assets/svg/ReceiveIcon'
 import RightArrowIcon from '@common/assets/svg/RightArrowIcon'
 import SafeIcon from '@common/assets/svg/SafeIcon'
 import SeedPhraseIcon from '@common/assets/svg/SeedPhraseIcon'
-import TrezorLockIcon from '@common/assets/svg/TrezorLockIcon'
+import TrezorBadgeIcon from '@common/assets/svg/TrezorBadgeIcon'
 import Button from '@common/components/Button'
 import Panel from '@common/components/Panel'
 import Text from '@common/components/Text'
@@ -35,7 +35,7 @@ import { isSafari } from '@web/constants/browserapi'
 import getStyles from './styles'
 
 export const CARD_WIDTH = 400
-const VISIBLE_BUTTONS_COUNT = 4
+const VISIBLE_BUTTONS_COUNT = 5
 
 type ButtonType = {
   title: string
@@ -92,6 +92,13 @@ const ImportExistingAccountSelectorScreen = () => {
         icon: SeedPhraseIcon
       },
       {
+        title: 'Safe',
+        onPress: () => {
+          goToNextRoute(WEB_ROUTES.safeImport)
+        },
+        icon: SafeIcon
+      },
+      {
         title: 'Trezor',
         onPress: () => {
           if (isSafari()) {
@@ -106,14 +113,14 @@ const ImportExistingAccountSelectorScreen = () => {
             dispatch({ type: 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_TREZOR' })
           }
         },
-        icon: TrezorLockIcon
+        icon: TrezorBadgeIcon
       },
       {
         title: 'Ledger',
         onPress: () => {
           goToNextRoute(WEB_ROUTES.ledgerConnect)
         },
-        icon: LedgerLetterIcon
+        icon: LedgerBadgeIcon
       },
       {
         title: 'Grid Plus',
@@ -121,14 +128,7 @@ const ImportExistingAccountSelectorScreen = () => {
           setTriggeredHwWalletFlow('lattice')
           dispatch({ type: 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_LATTICE' })
         },
-        icon: LatticeWithBorderIcon
-      },
-      {
-        title: 'Safe',
-        onPress: () => {
-          goToNextRoute(WEB_ROUTES.safeImport)
-        },
-        icon: SafeIcon
+        icon: GridPlusIcon
       },
       {
         title: 'QR-based',
