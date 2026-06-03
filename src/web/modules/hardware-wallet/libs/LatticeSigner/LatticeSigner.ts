@@ -8,6 +8,7 @@ import { getHDPathIndices } from '@ambire-common/utils/hdPath'
 import shortenAddress from '@ambire-common/utils/shortenAddress'
 import { stripHexPrefix } from '@ambire-common/utils/stripHexPrefix'
 import wait from '@ambire-common/utils/wait'
+import { withTimeout } from '@ambire-common/utils/with-timeout'
 import LatticeController, {
   GridPlusSDKConstants,
   GridPlusSDKUtils
@@ -135,11 +136,10 @@ class LatticeSigner implements KeystoreSignerInterface {
     try {
       const fwVersion = this.controller!.walletSDK!.getFwVersion()
       const supportsRecursion = fwVersion.major > 0 || fwVersion.minor >= 16
-      const { def } = await GridPlusSDKUtils.fetchCalldataDecoder(
-        txData,
-        txTo,
-        Number(txChainId),
-        supportsRecursion
+      const { def } = await withTimeout(
+        () =>
+          GridPlusSDKUtils.fetchCalldataDecoder(txData, txTo, Number(txChainId), supportsRecursion),
+        { timeoutMs: 5000 }
       )
       return def ?? undefined
     } catch {
