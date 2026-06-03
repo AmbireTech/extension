@@ -75,10 +75,10 @@ export class SwapAndBridgePage extends BasePage {
       const tokenNetwork = toToken.chainName
       await this.click(selectors.receiveNetworkEth)
 
-      if (tokenNetwork == 'optimism') {
-        await this.click(selectors.recieveNetworkOptimism)
-      } else {
+      if (tokenNetwork != 'optimism') {
         await this.click(selectors.recieveNetworkBase)
+      } else {
+        await this.click(selectors.recieveNetworkOptimism)
       }
 
       await this.selectSendToken(fromToken)
@@ -107,7 +107,9 @@ export class SwapAndBridgePage extends BasePage {
   }
 
   async selectSendToken(sendToken: Token) {
+    await this.page.pause()
     await this.page.waitForTimeout(2000) // waiting for animation
+    console.log(sendToken)
     await this.clickOnMenuToken(sendToken, selectors.swapAndBridge.fromTokenDropdown)
   }
 
@@ -477,9 +479,18 @@ export class SwapAndBridgePage extends BasePage {
 
   // TODO: lots of different cases, refactor
   async verifyBatchTransactionDetails(page): Promise<void> {
+    await page.pause()
+    // searching for exact route name e.g. LI.FI
+    const knownRoutes = ['LI.FI', 'SocketGateway']
+    const extractRoute = (rowText: string) =>
+      rowText
+        .trim()
+        .split(/\s+/)
+        .find((t) => knownRoutes.includes(t)) || ''
+
     // check first row
     const firstRow = await page.getByTestId('recipient-address-0').innerText() // grab entire row on transaction page
-    const firstRouteSelector = firstRow.trim().split(/\s+/).pop() || '' // grab last item from row e.g. LI.FI
+    const firstRouteSelector = extractRoute(firstRow)
 
     // for either LI.FI or Socket transaction name is GrantApproval with amount and token name
     await expect(page.getByTestId('recipient-address-0')).toHaveText(
@@ -500,7 +511,7 @@ export class SwapAndBridgePage extends BasePage {
 
     // check third row
     const thirdRow = await page.getByTestId('recipient-address-2').innerText()
-    const thirdRouteSelector = thirdRow.trim().split(/\s+/).pop() || ''
+    const thirdRouteSelector = extractRoute(thirdRow)
 
     // for either LI.FI or Socket transaction name is GrantApproval with amount and token name
     await expect(page.getByTestId('recipient-address-2')).toHaveText(
