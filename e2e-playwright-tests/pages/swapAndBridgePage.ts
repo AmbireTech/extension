@@ -107,9 +107,7 @@ export class SwapAndBridgePage extends BasePage {
   }
 
   async selectSendToken(sendToken: Token) {
-    await this.page.pause()
     await this.page.waitForTimeout(2000) // waiting for animation
-    console.log(sendToken)
     await this.clickOnMenuToken(sendToken, selectors.swapAndBridge.fromTokenDropdown)
   }
 
@@ -494,7 +492,7 @@ export class SwapAndBridgePage extends BasePage {
 
     // for either LI.FI or Socket transaction name is GrantApproval with amount and token name
     await expect(page.getByTestId('recipient-address-0')).toHaveText(
-      /ApproveSpender.*0\.0\d+.*USDC/
+      /Grant approval.*0\.0\d+.*USDC/
     )
     expect(['LI.FI', 'SocketGateway']).toContain(firstRouteSelector)
 
