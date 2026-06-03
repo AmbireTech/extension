@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next'
 
 import { Dapp } from '@ambire-common/interfaces/dapp'
 import ConnectedIcon from '@common/assets/svg/ConnectedIcon'
-import NetworksIcon from '@common/assets/svg/NetworksIcon'
+import ExploreIcon from '@common/assets/svg/ExploreIcon'
 import RecentIcon from '@common/assets/svg/RecentIcon'
 import StarIcon from '@common/assets/svg/StarIcon'
 import useController from '@common/hooks/useController'
@@ -69,7 +69,7 @@ const useExploreSections = (): ExploreSection[] => {
       {
         type: 'apps',
         title: t('Explore apps'),
-        icon: <NetworksIcon width={ICON_SIZE + 2} height={ICON_SIZE + 2} />,
+        icon: <ExploreIcon width={ICON_SIZE + 2} height={ICON_SIZE + 2} />,
         data: featured,
         showTrash: false
       }
