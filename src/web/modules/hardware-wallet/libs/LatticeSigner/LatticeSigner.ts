@@ -119,6 +119,35 @@ class LatticeSigner implements KeystoreSignerInterface {
     }
   }
 
+  // Fetches the ABI decoder so the Lattice1 firmware can decode and display
+  // calldata (function name + params) on the device screen. Falls back
+  // gracefully — if the ABI can't be resolved the signing still proceeds.
+  // NOTE: When migrating to the GridPlus functional API (sign()), remove this
+  // method — that API calls fetchCalldataDecoder internally and passes the
+  // decoder automatically when given a structured transaction object.
+  #fetchCalldataDecoder = async (
+    txData: string,
+    txTo: string | undefined,
+    txChainId: bigint
+  ): Promise<Buffer | undefined> => {
+    if (!txTo || !txData || txData.length <= 2) return undefined
+
+    try {
+      const fwVersion = this.controller!.walletSDK!.getFwVersion()
+      const supportsRecursion = fwVersion.major > 0 || fwVersion.minor >= 16
+      const { def } = await GridPlusSDKUtils.fetchCalldataDecoder(
+        txData,
+        txTo,
+        Number(txChainId),
+        supportsRecursion
+      )
+      return def ?? undefined
+    } catch {
+      // Non-fatal — proceed without calldata decoding
+      return undefined
+    }
+  }
+
   #validateKeyExistsInTheCurrentWallet = async () => {
     const foundIdx = await this.controller!._keyIdxInCurrentWallet(this.key)
     if (foundIdx === null) {
@@ -144,30 +173,11 @@ class LatticeSigner implements KeystoreSignerInterface {
       const unsignedTxn: TransactionLike = { ...txnRequest, type }
 
       const unsignedSerializedTxn = Transaction.from(unsignedTxn).unsignedSerialized as Hex
-
-      // Fetch ABI decoder so the Lattice1 firmware can decode and display
-      // calldata (function name + params) on the device screen. Falls back
-      // gracefully — if the ABI can't be resolved the signing still proceeds.
-      // NOTE: When migrating to the GridPlus functional API (sign()), remove
-      // this — that API calls fetchCalldataDecoder internally and passes the
-      // decoder automatically when given a structured transaction object.
-      let decoder: Buffer | undefined
-      const { data: txData, to: txTo, chainId: txChainId } = txnRequest
-      if (txTo && txData && txData.length > 2) {
-        try {
-          const fwVersion = this.controller!.walletSDK!.getFwVersion()
-          const supportsRecursion = fwVersion.major > 0 || fwVersion.minor >= 16
-          const { def } = await GridPlusSDKUtils.fetchCalldataDecoder(
-            txData,
-            txTo,
-            Number(txChainId),
-            supportsRecursion
-          )
-          if (def) decoder = def
-        } catch {
-          // Non-fatal — proceed without calldata decoding
-        }
-      }
+      const decoder = await this.#fetchCalldataDecoder(
+        txnRequest.data,
+        txnRequest.to,
+        txnRequest.chainId
+      )
 
       const res = await this.controller!.walletSDK!.sign({
         // Prior to general signing, request data was sent to the device in
@@ -316,6 +326,11 @@ class LatticeSigner implements KeystoreSignerInterface {
       const unsignedTxn: TransactionLike = { ...finalTxnRequest, type: 4 }
       const unsignedSerializedTxn = Transaction.from(unsignedTxn).unsignedSerialized as Hex
       const signerPath = getHDPathIndices(this.key.meta.hdPathTemplate, this.key.meta.index)
+      const decoder = await this.#fetchCalldataDecoder(
+        txnRequest.data,
+        txnRequest.to,
+        txnRequest.chainId
+      )
 
       const res = await this.controller!.walletSDK!.sign({
         data: {
@@ -323,7 +338,8 @@ class LatticeSigner implements KeystoreSignerInterface {
           payload: unsignedSerializedTxn,
           curveType: GridPlusSDKConstants.SIGNING.CURVES.SECP256K1,
           hashType: GridPlusSDKConstants.SIGNING.HASHES.KECCAK256,
-          encodingType: GridPlusSDKConstants.SIGNING.ENCODINGS.EIP7702_AUTH_LIST
+          encodingType: GridPlusSDKConstants.SIGNING.ENCODINGS.EIP7702_AUTH_LIST,
+          decoder
         }
       })
 
