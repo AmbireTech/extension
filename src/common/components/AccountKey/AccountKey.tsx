@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useCallback, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Animated, View, ViewStyle } from 'react-native'
 import { useModalize } from 'react-native-modalize'
@@ -50,6 +50,7 @@ type Props = AccountKeyType & {
   containerStyle?: ViewStyle
   tooltipContent?: string
   itemHeight?: number
+  onExportKeyPress?: ({ addr, label }: { addr: string; label?: string }) => void
 }
 
 const { isPopup } = getUiType()
@@ -71,7 +72,8 @@ const AccountKey: React.FC<Props> = ({
   showExportImport = false,
   onChains,
   tooltipContent,
-  itemHeight = 48
+  itemHeight = 48,
+  onExportKeyPress
 }) => {
   const { t } = useTranslation()
   const { theme } = useTheme()
@@ -90,23 +92,36 @@ const AccountKey: React.FC<Props> = ({
   const canExportOrImportKey = showExportImport && !isKeyAmbireV1
   const [isShowingDetails, setIsShowingDetails] = useState<boolean>(false)
 
-  const handleCopy = async () => {
+  const handleCopy = useCallback(async () => {
     try {
       await setStringAsync(addr)
       addToast(t('Key address copied to clipboard'), { type: 'success' })
     } catch {
       addToast(t('Could not copy the key address to the clipboard'), { type: 'error' })
     }
-  }
+  }, [addr, addToast, t])
 
   const shortAddr = shortenAddress(addr, 13)
 
   const isInternal = !type || type === 'internal'
   const canExportKey = isImported && isInternal
 
-  const reimportAccount = () => {
+  const reimportAccount = useCallback(() => {
     if (openAddAccountBottomSheet) openAddAccountBottomSheet()
-  }
+  }, [openAddAccountBottomSheet])
+
+  const handleExportKeyPress = useCallback(() => {
+    if (onExportKeyPress) {
+      onExportKeyPress({ addr, label })
+      return
+    }
+
+    openExportKey()
+  }, [addr, label, onExportKeyPress, openExportKey])
+
+  const handleToggleDetails = useCallback(() => {
+    setIsShowingDetails((p) => !p)
+  }, [])
 
   return (
     <View
@@ -210,7 +225,7 @@ const AccountKey: React.FC<Props> = ({
                       testID={`export-key-button-${addr}`}
                       style={{ height: 32 }}
                       hasBottomSpacing={false}
-                      onPress={openExportKey as any}
+                      onPress={handleExportKeyPress}
                       size="small"
                       disabled={!canExportKey}
                       type="secondary"
@@ -226,9 +241,7 @@ const AccountKey: React.FC<Props> = ({
                   </View>
                 </View>
                 <AnimatedPressable
-                  onPress={() => {
-                    setIsShowingDetails((p) => !p)
-                  }}
+                  onPress={handleToggleDetails}
                   style={[flexbox.directionRow, flexbox.alignCenter, spacings.mlSm]}
                   {...bindKeyDetailsAnim}
                 >
@@ -278,22 +291,24 @@ const AccountKey: React.FC<Props> = ({
       {!!isShowingDetails && (
         <AccountKeyDetails details={{ type, addr, label, isImported, meta, dedicatedToOneSA }} />
       )}
-      <BottomSheet
-        sheetRef={sheetRefExportKey}
-        id="confirm-password-bottom-sheet"
-        type={isWeb ? 'modal' : 'bottom-sheet'}
-        closeBottomSheet={closeExportKey}
-        scrollViewProps={isWeb ? { contentContainerStyle: { flex: 1 } } : undefined}
-        containerInnerWrapperStyles={{ flex: 1 }}
-        style={isWeb ? { maxWidth: 432, minHeight: 432, ...spacings.pvLg } : undefined}
-      >
-        <ExportKey
-          account={account}
-          keyAddr={addr}
-          keyLabel={label}
-          onBackButtonPress={closeExportKey}
-        />
-      </BottomSheet>
+      {!onExportKeyPress && (
+        <BottomSheet
+          sheetRef={sheetRefExportKey}
+          id="confirm-password-bottom-sheet"
+          type={isWeb ? 'modal' : 'bottom-sheet'}
+          closeBottomSheet={closeExportKey}
+          scrollViewProps={isWeb ? { contentContainerStyle: { flex: 1 } } : undefined}
+          containerInnerWrapperStyles={{ flex: 1 }}
+          style={isWeb ? { maxWidth: 432, minHeight: 432, ...spacings.pvLg } : undefined}
+        >
+          <ExportKey
+            account={account}
+            keyAddr={addr}
+            keyLabel={label}
+            onBackButtonPress={closeExportKey}
+          />
+        </BottomSheet>
+      )}
     </View>
   )
 }
