@@ -492,7 +492,7 @@ export class SwapAndBridgePage extends BasePage {
 
     // for either LI.FI or Socket transaction name is GrantApproval with amount and token name
     await expect(page.getByTestId('recipient-address-0')).toHaveText(
-      /Grant approval.*0\.0\d+.*USDC/
+      /(?:Grant approval|ApproveSpender).*0\.0\d+.*USDC/
     )
     expect(['LI.FI', 'SocketGateway']).toContain(firstRouteSelector)
 
@@ -513,7 +513,7 @@ export class SwapAndBridgePage extends BasePage {
 
     // for either LI.FI or Socket transaction name is GrantApproval with amount and token name
     await expect(page.getByTestId('recipient-address-2')).toHaveText(
-      /Grant approval.*0\.0\d+.*USDC/
+      /(?:Grant approval|ApproveSpender).*0\.0\d+.*USDC/
     )
     expect(['LI.FI', 'SocketGateway']).toContain(thirdRouteSelector)
 
