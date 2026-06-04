@@ -20,13 +20,16 @@ const ctrlOnUpdateIsDirtyFlags: Record<string, boolean> = {}
 
 function debounceFrontEndEventUpdatesOnSameTick(
   ctrlName: string,
-  ctrl: any,
   mainCtrl: any,
   forceEmit?: boolean
 ): 'DEBOUNCED' | 'EMITTED' {
   const sendUpdate = () => {
+    // Paused dynamic controllers may finish async work after being replaced.
+    const registeredCtrl = eventEmitterRegistry.values().find((ctrl) => ctrl.name === ctrlName)
+    if (!registeredCtrl) return
+
     // Controller updates
-    const stateToSendToFE = ctrl.toJSON()
+    const stateToSendToFE = registeredCtrl.toJSON()
 
     if (ctrlName === 'MainController') {
       // We are removing the state of the nested controllers in main to avoid the CPU-intensive task of parsing + stringifying.
@@ -108,13 +111,15 @@ const eventEmitterRegistry = new EventEmitterRegistryController(() => {
     const hasOnUpdateInitialized = ctrl.onUpdateIds.includes('webview')
     if (!hasOnUpdateInitialized) {
       ctrl.onUpdate((forceEmit: boolean) => {
-        debounceFrontEndEventUpdatesOnSameTick(ctrl.name, ctrl, mainCtrl, forceEmit)
+        debounceFrontEndEventUpdatesOnSameTick(ctrl.name, mainCtrl, forceEmit)
       }, 'webview')
     }
 
     const hasOnErrorInitialized = ctrl.onErrorIds.includes('webview')
     if (!hasOnErrorInitialized) {
       ctrl.onError(() => {
+        if (!ctrl.isInRegistry()) return
+
         sendToReactEvent('ctrl.error', { ctrlName: ctrl.name, errors: ctrl.emittedErrors })
       }, 'webview')
     }
@@ -126,6 +131,8 @@ let isConfigured = false
 let mainCtrl: any = null
 let walletStateCtrl: any = null
 let autoLockCtrl: any = null
+let nextWindowId = 1
+let currentWindowId = 1
 
 const initControllers = (config: any) => {
   try {
@@ -148,9 +155,11 @@ const initControllers = (config: any) => {
       uiManager: {
         window: {
           open: async () => {
-            sendToReactEvent('ui.window.action', { type: 'open', winId: 1 })
+            currentWindowId = nextWindowId++
+            // Await animation completion before resolving (mirrors chrome.windows.create).
+            await sendToRNAsync('ui.window.action', { type: 'open', winId: currentWindowId })
             return {
-              id: 1,
+              id: currentWindowId,
               width: 0,
               height: 0,
               left: 0,
@@ -160,9 +169,10 @@ const initControllers = (config: any) => {
             }
           },
           focus: async () => {
-            sendToReactEvent('ui.window.action', { type: 'focus', winId: 1 })
+            // Await confirmation before resolving (mirrors chrome.windows.update).
+            await sendToRNAsync('ui.window.action', { type: 'focus', winId: currentWindowId })
             return {
-              id: 1,
+              id: currentWindowId,
               width: 0,
               height: 0,
               left: 0,
@@ -172,8 +182,13 @@ const initControllers = (config: any) => {
             }
           },
           closePopupWithUrl: async () => {},
-          remove: async () => {
-            sendToReactEvent('ui.window.action', { type: 'remove', winId: 1 })
+          remove: async (winId: any) => {
+            if (winId === 'popup') {
+              return
+            }
+            const targetWinId = typeof winId === 'number' ? winId : currentWindowId
+            // Await close animation completion before resolving (mirrors chrome.windows.remove).
+            await sendToRNAsync('ui.window.action', { type: 'remove', winId: targetWinId })
           },
           event: new Emitter()
         },

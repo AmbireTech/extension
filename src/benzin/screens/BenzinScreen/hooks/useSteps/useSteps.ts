@@ -29,6 +29,7 @@ import { AccountOpStatus, Call } from '@ambire-common/libs/accountOp/types'
 import { decodeFeeCall } from '@ambire-common/libs/calls/calls'
 import { humanizeAccountOp } from '@ambire-common/libs/humanizer'
 import { IrCall } from '@ambire-common/libs/humanizer/interfaces'
+import { hasErc7730Humanization } from '@ambire-common/libs/humanizer/utils'
 import { getTransferLogTokens } from '@ambire-common/libs/logsParser/parseLogs'
 import { parseLogs } from '@ambire-common/libs/userOperation/userOperation'
 import { resolveAssetInfo } from '@ambire-common/services/assetInfo'
@@ -776,7 +777,6 @@ const useSteps = ({
         ? handleOps060.decodeFunctionData('handleOps', txn.data)
         : handleOps070.decodeFunctionData('handleOps', txn.data)
     } catch (e) {
-      // eslint-disable-next-line no-console
       console.log('this txn is an userOp but does not call handleOps')
       setUserOp({
         sender: '',
@@ -917,7 +917,6 @@ const useSteps = ({
         isGasTank = isTokenGasTank
         tokenChainId = chainId
       } catch (e) {
-        // eslint-disable-next-line no-console
         console.error('Error decoding fee call', e)
       }
     }
@@ -937,7 +936,6 @@ const useSteps = ({
       (!!userOp && !!userOp.paymaster && userOp.paymaster !== AMBIRE_PAYMASTER)
     if (!address || (!amount && !isSponsored)) return
 
-    // eslint-disable-next-line @typescript-eslint/no-floating-promises
     resolveAssetInfo(
       address,
       networks.find((net: Network) => net.chainId === tokenChainId)!,
@@ -1056,13 +1054,23 @@ const useSteps = ({
   useEffect(() => {
     if (!network) return
 
+    const clearSign = submittedAccountOp?.meta?.clearSigningHumanization
+    const persistedHumanization = hasErc7730Humanization(clearSign) ? clearSign : null
+    if (submittedAccountOp && persistedHumanization) {
+      const humanizedCalls = persistedHumanization.filter(filterEntryPointAuthCall)
+      setCalls(parseHumanizer(humanizedCalls))
+      setFrom(submittedAccountOp.accountAddr)
+      setFeeCall(submittedAccountOp.feeCall || null)
+      return
+    }
+
     // if we have the extension account op passed, we do not need to
     // wait to show the calls
     if (extensionAccOp) {
       const humanizedCalls = humanizeAccountOp(extensionAccOp).filter(filterEntryPointAuthCall)
       setCalls(parseHumanizer(humanizedCalls))
       setFrom(extensionAccOp.accountAddr)
-      if (extensionAccOp.feeCall) setFeeCall(extensionAccOp.feeCall)
+      setFeeCall(extensionAccOp.feeCall || null)
       return
     }
 
@@ -1104,7 +1112,7 @@ const useSteps = ({
         setFeeCall(decodedFeeCall)
       }
     }
-  }, [network, txnReceipt, txn, userOpHash, userOp, txnId, extensionAccOp])
+  }, [network, txnReceipt, txn, userOpHash, userOp, txnId, extensionAccOp, submittedAccountOp])
 
   return {
     blockData,

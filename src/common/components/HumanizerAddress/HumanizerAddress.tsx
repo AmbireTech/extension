@@ -17,8 +17,9 @@ interface Props extends TextProps {
   // example of highestPriorityAlias: a name coming from the humanizer's metadata
   highestPriorityAlias?: string
   marginRight?: number
-  hideLinks?: boolean
   hideLogo?: boolean
+  actionsMode?: 'tooltip' | 'inline'
+  shouldWrapInlineActions?: boolean
   chainId: bigint
   verification?: BlacklistedStatus
 }
@@ -28,8 +29,8 @@ const HumanizerAddress: FC<Props> = ({
   address,
   highestPriorityAlias,
   marginRight,
-  hideLinks = false,
   hideLogo = false,
+  actionsMode = 'tooltip',
   chainId,
   ...rest
 }) => {
@@ -64,7 +65,7 @@ const HumanizerAddress: FC<Props> = ({
         address={address}
         humanizerInfo={addressInfo}
         highestPriorityAlias={highestPriorityAlias}
-        hideLinks={hideLinks}
+        actionsMode={actionsMode}
         chainId={chainId}
         {...rest}
       />

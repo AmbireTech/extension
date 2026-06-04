@@ -1,3 +1,3 @@
 import BadgeIcon from './BadgeIcon'
 
-export default BadgeIcon;
+export default BadgeIcon

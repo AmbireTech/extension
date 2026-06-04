@@ -154,6 +154,7 @@ const CustomHDPathBottomSheet: FC<Props> = ({
           style={{ width: 200 }}
           text={t('Confirm')}
           onPress={handleSubmit(onSubmit)}
+          hasBottomSpacing={false}
         />
       </View>
     </BottomSheet>

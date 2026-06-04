@@ -33,7 +33,7 @@ const PendingBadge = ({
   const isInteractive = !!onPress
 
   const fromBorder = String(borderColor)
-  const toBorder = String(isInteractive ? hoverBorderColor ?? borderColor : borderColor)
+  const toBorder = String(isInteractive ? (hoverBorderColor ?? borderColor) : borderColor)
 
   const [bindAnim, animStyle] = useCustomHover({
     property: 'borderColor',

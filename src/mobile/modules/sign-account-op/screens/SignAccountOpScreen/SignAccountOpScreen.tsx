@@ -19,6 +19,7 @@ import ErrorInformation from '@common/modules/sign-account-op/components/ErrorIn
 import Estimation from '@common/modules/sign-account-op/components/Estimation'
 import Footer from '@common/modules/sign-account-op/components/Footer'
 import PendingTransactions from '@common/modules/sign-account-op/components/PendingTransactions'
+import SafeEip712Data from '@common/modules/sign-account-op/components/SafeEip712Data'
 import SafeOwners from '@common/modules/sign-account-op/components/SafeOwners'
 import SafetyChecksOverlay from '@common/modules/sign-account-op/components/SafetyChecksOverlay'
 import SectionHeading from '@common/modules/sign-account-op/components/SectionHeading'
@@ -147,7 +148,6 @@ const SignAccountOpScreen = () => {
     if (isInsideBottomSheet && closeRequestModal) {
       closeRequestModal()
     } else {
-      // eslint-disable-next-line @typescript-eslint/no-floating-promises
       navigate(ROUTES.dashboard)
     }
   }, [isInsideBottomSheet, closeRequestModal, navigate])
@@ -211,6 +211,7 @@ const SignAccountOpScreen = () => {
       <MobileLayoutContainer
         withHorizontalPadding
         header={<ActionHeader />}
+        footerStyle={{ ...spacings.ph0, ...spacings.pt0 }}
         footer={
           <View style={styles.footerContainer}>
             <View style={spacings.mbSm}>
@@ -326,6 +327,11 @@ const SignAccountOpScreen = () => {
             setDelegation={signAccountOpState?.accountOp.meta?.setDelegation}
             delegatedContract={signAccountOpState?.delegatedContract}
             hideDeleteIcon={!!signAccountOpState?.accountOp.signed?.length}
+          />
+          <SafeEip712Data
+            accountAddr={signAccountOpState?.accountOp.accountAddr}
+            chainId={signAccountOpState?.accountOp.chainId}
+            safeEip712Data={signAccountOpState?.safeEip712Data}
           />
           {/* Display errors only if the user is not in view-only mode */}
           {signAccountOpState?.errors?.length && !isViewOnly ? (

@@ -4,10 +4,10 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useModalize } from 'react-native-modalize'
 import { useLocation } from 'react-router-dom'
 
+import { SwapAmountWarning } from '@ambire-common/consts/safeguards/swapAmountWarnings'
 import { SwapAndBridgeFormStatus } from '@ambire-common/controllers/swapAndBridge/swapAndBridge'
 import { SwapAndBridgeActiveRoute } from '@ambire-common/interfaces/swapAndBridge'
 import { CallsUserRequest } from '@ambire-common/interfaces/userRequest'
-import { SwapAmountWarning } from '@ambire-common/consts/safeguards/swapAmountWarnings'
 import {
   calculateAmountWarnings,
   getIsTokenEligibleForSwapAndBridge
@@ -295,19 +295,6 @@ const useSwapAndBridgeForm = () => {
     updateQuoteStatus
   ])
 
-  const isOneOwnerSafe = useMemo(() => {
-    if (!account?.safeCreation) return false
-
-    return (
-      signAccountOpController?.threshold === 1 &&
-      signAccountOpController?.accountKeyStoreKeys.length === 1
-    )
-  }, [
-    account?.safeCreation,
-    signAccountOpController?.threshold,
-    signAccountOpController?.accountKeyStoreKeys.length
-  ])
-
   const openEstimationModalAndDispatch = useCallback(() => {
     swapAndBridgeDispatch({
       type: 'method',
@@ -323,7 +310,7 @@ const useSwapAndBridgeForm = () => {
     closePriceImpactModalWrapped()
 
     if (isOneClickModeDuringPriceImpact) {
-      if ((!!account?.safeCreation && !isOneOwnerSafe) || networkUserRequests.length > 0) {
+      if (!!account?.safeCreation || networkUserRequests.length > 0) {
         requestsDispatch({
           type: 'method',
           params: {
@@ -366,13 +353,10 @@ const useSwapAndBridgeForm = () => {
     closePriceImpactModalWrapped,
     fromSelectedToken?.chainId,
     isOneClickModeDuringPriceImpact,
-    isOneOwnerSafe,
     networkUserRequests.length,
     openEstimationModalAndDispatch,
     quote,
-    requestsDispatch,
-    setLatestBatchedNetwork,
-    setShowAddedToBatch
+    requestsDispatch
   ])
 
   const handleSubmitForm = useCallback(
@@ -390,7 +374,7 @@ const useSwapAndBridgeForm = () => {
       // open the estimation modal on one click method;
       // build/add a swap user request on batch
       if (isOneClickMode) {
-        if ((!!account?.safeCreation && !isOneOwnerSafe) || networkUserRequests.length > 0) {
+        if (!!account?.safeCreation || networkUserRequests.length > 0) {
           requestsDispatch({
             type: 'method',
             params: {
@@ -433,14 +417,11 @@ const useSwapAndBridgeForm = () => {
       account?.safeCreation,
       fromSelectedToken?.chainId,
       highPriceImpactOrSlippageWarning,
-      isOneOwnerSafe,
       networkUserRequests.length,
       openEstimationModalAndDispatch,
       openPriceImpactModal,
       quote,
-      requestsDispatch,
-      setLatestBatchedNetwork,
-      setShowAddedToBatch
+      requestsDispatch
     ]
   )
 

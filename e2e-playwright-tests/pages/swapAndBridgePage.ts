@@ -71,6 +71,16 @@ export class SwapAndBridgePage extends BasePage {
   async prepareSwapAndBridge(send_amount: number, fromToken: Token, toToken: Token) {
     await this.openSwapAndBridge()
     try {
+      // switch network
+      const tokenNetwork = toToken.chainName
+      await this.click(selectors.receiveNetworkEth)
+
+      if (tokenNetwork == 'optimism') {
+        await this.click(selectors.recieveNetworkOptimism)
+      } else {
+        await this.click(selectors.recieveNetworkBase)
+      }
+
       await this.selectSendToken(fromToken)
       // Select Receive Token on the same Network, which is automatically selected
       await this.selectReceiveToken(toToken)
@@ -97,12 +107,12 @@ export class SwapAndBridgePage extends BasePage {
   }
 
   async selectSendToken(sendToken: Token) {
-    await this.page.waitForTimeout(1500) // waiting for animation
+    await this.page.waitForTimeout(2000) // waiting for animation
     await this.clickOnMenuToken(sendToken, selectors.swapAndBridge.fromTokenDropdown)
   }
 
   async selectReceiveToken(receiveToken: Token) {
-    await this.page.waitForTimeout(1500) // waiting for animation
+    await this.page.waitForTimeout(2000) // waiting for animation
 
     await this.clickOnMenuToken(receiveToken, selectors.swapAndBridge.receiveTokenDropdown)
   }
@@ -146,7 +156,17 @@ export class SwapAndBridgePage extends BasePage {
     await this.openSwapAndBridge()
     await this.selectSendToken(sendToken)
 
-    await this.page.waitForTimeout(1000)
+    // switch network
+    const tokenNetwork = receiveToken.chainName
+    await this.click(selectors.receiveNetworkEth)
+
+    if (tokenNetwork == 'optimism') {
+      await this.click(selectors.recieveNetworkOptimism)
+    } else {
+      await this.click(selectors.recieveNetworkBase)
+    }
+
+    await this.page.waitForTimeout(2000)
 
     await this.click(selectors.swapAndBridge.receiveTokenDropdown)
     await this.page.getByTestId(selectors.searchInput).fill(receiveToken.symbol)
@@ -361,17 +381,23 @@ export class SwapAndBridgePage extends BasePage {
     sendToken: Token,
     receiveToken: Token
   ): Promise<string | null> {
-    try {
-      await this.openSwapAndBridge()
-      await this.page.waitForTimeout(1000)
-      await this.selectSendToken(sendToken)
+    await this.openSwapAndBridge()
+    await this.page.waitForTimeout(2000)
+    await this.selectSendToken(sendToken)
 
-      // Select target receive network
-      await this.click(`option-${sendToken.chainId}`)
-      await this.click(`option-${receiveToken.chainId}`)
+    try {
+      // switch network
+      const tokenNetwork = receiveToken.chainName
+      await this.click(selectors.receiveNetworkEth)
+
+      if (tokenNetwork == 'optimism') {
+        await this.click(selectors.recieveNetworkOptimism)
+      } else {
+        await this.click(selectors.recieveNetworkBase)
+      }
 
       // Select receive token by address
-      await this.page.waitForTimeout(1000)
+      await this.page.waitForTimeout(2000)
       await this.selectReceiveToken(receiveToken)
 
       // Validate sendAmount
@@ -457,7 +483,7 @@ export class SwapAndBridgePage extends BasePage {
 
     // for either LI.FI or Socket transaction name is GrantApproval with amount and token name
     await expect(page.getByTestId('recipient-address-0')).toHaveText(
-      /Grant approval.*0\.0\d+.*USDC/
+      /ApproveSpender.*0\.0\d+.*USDC/
     )
     expect(['LI.FI', 'SocketGateway']).toContain(firstRouteSelector)
 
@@ -522,7 +548,7 @@ export class SwapAndBridgePage extends BasePage {
       .locator(selectors.dashboard.confirmedTransactionPill)
       .first()
 
-    await expect(firstApprovalTransaction).toContainText('Grant approval')
+    await expect(firstApprovalTransaction).toContainText('Approve')
     await expect(firstConfirmedPill).toContainText('Confirmed')
   }
 }

@@ -476,6 +476,7 @@ const useSign = ({
     return (
       isViewOnly ||
       isSignLoading ||
+      signAccountOpState?.isHumanizing ||
       notReadyToSignButAlsoNotDone ||
       !signAccountOpState?.readyToSign ||
       (signAccountOpState && signAccountOpState.estimation.status === EstimationStatus.Loading) ||

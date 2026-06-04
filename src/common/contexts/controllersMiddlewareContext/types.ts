@@ -10,7 +10,7 @@ export type ControllersMiddlewareContextReturnType = {
    * Does not return the result of the action.
    * It will only work when called from a focused window!
    */
-  dispatch: (action: MethodAction | Action, windowId?: number) => void
+  dispatch: (action: MethodAction | Action, windowId?: number, raw?: boolean) => void
 }
 
 export const controllersMiddlewareContextDefaults: ControllersMiddlewareContextReturnType = {

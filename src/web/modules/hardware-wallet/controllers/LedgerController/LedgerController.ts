@@ -112,7 +112,7 @@ class LedgerController implements ExternalSignerController {
     return new Promise((resolve, reject) => {
       // Start discovering - this will scan for any connected devices
       let subscription: Subscription | undefined // so it is always defined inside the subscribe callback
-      // eslint-disable-next-line prefer-const
+
       subscription = dmk.startDiscovering({}).subscribe({
         next: async (device) => {
           subscription?.unsubscribe()
@@ -314,7 +314,6 @@ class LedgerController implements ExternalSignerController {
       let subscription: Subscription | undefined // so it is always defined inside the subscribe callback
       let isCancelled = false
 
-      // eslint-disable-next-line prefer-const
       subscription = observable.subscribe({
         next: (response: any) => {
           if (isCancelled) return
@@ -417,7 +416,7 @@ class LedgerController implements ExternalSignerController {
         // Purposely await in loop to avoid sending multiple requests at once.
         // Send them 1 by 1, the Ledger device can't handle them in parallel,
         // it throws a "device busy" error.
-        // eslint-disable-next-line no-await-in-loop
+
         const key = await this.#handleLedgerSubscription(
           this.signerEth!.getAddress(getHdPathWithoutRoot(path), {
             checkOnDevice: false,

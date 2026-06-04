@@ -1,5 +1,3 @@
-/* eslint-disable no-await-in-loop */
-/* eslint-disable no-restricted-syntax */
 import { browser, engine, getFirefoxVersion } from '@web/constants/browserapi'
 
 const CONTENT_SCRIPT_EXCLUDE_MATCHES = [

@@ -38,7 +38,7 @@ function decodeFunction(
   selectors: Selectors,
   fetchSelector: (selector: string) => void
 ): DecodedCall | null {
-  if (!hex || hex.length < 10) return null
+  if (!selectors || !hex || hex.length < 10) return null
   const selector = hex.slice(0, 10)
   const foundSelectors: Selectors[string] | undefined = selectors[selector]
 
@@ -84,7 +84,7 @@ const useDecodeTransactionData = (
     if (disableSelectorFetching) return false
     if (!call.data || !isHex(call.data) || call.data.length < 10) return false
     const selector = call.data.slice(0, 10)
-    if (!selectors[selector]) return true
+    if (!selectors || !selectors[selector]) return true
     // if somehow stuck in loading for more than X seconds, do not show loading
     if (
       selectors[selector].status === 'loading' &&

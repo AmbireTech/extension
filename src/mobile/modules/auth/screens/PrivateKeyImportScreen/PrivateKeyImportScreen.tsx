@@ -34,7 +34,18 @@ const PrivateKeyImportScreen = () => {
   const { theme } = useTheme()
 
   return (
-    <MobileLayoutContainer>
+    <MobileLayoutContainer
+      footer={
+        <Button
+          testID="import-button"
+          size="large"
+          text={t('Confirm')}
+          hasBottomSpacing={false}
+          onPress={handleFormSubmit}
+          disabled={!isValid || !agreedToBackupWarning}
+        />
+      }
+    >
       <MobileLayoutWrapperMainContent
         withBackButton
         onBackButtonPress={goToPrevRoute}
@@ -80,15 +91,6 @@ const PrivateKeyImportScreen = () => {
               }
             />
           </View>
-
-          <Button
-            testID="import-button"
-            size="large"
-            text={t('Confirm')}
-            hasBottomSpacing={false}
-            onPress={handleFormSubmit}
-            disabled={!isValid || !agreedToBackupWarning}
-          />
         </View>
       </MobileLayoutWrapperMainContent>
     </MobileLayoutContainer>

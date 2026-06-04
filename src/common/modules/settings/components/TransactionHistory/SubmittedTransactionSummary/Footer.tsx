@@ -21,6 +21,7 @@ import { setStringAsync } from '@common/utils/clipboard'
 import { openInTab } from '@common/utils/links'
 
 import getStyles from './styles'
+import { EXPLORER_LINKS_DISABLED_TOOLTIP } from './constants'
 import { SubmittedAccountOpLike } from './types'
 
 type Props = {
@@ -34,8 +35,6 @@ type Props = {
 >
 
 const increaseByFifteenPercent = (value: bigint) => (value * 115n + 99n) / 100n
-const EXPLORER_LINKS_DISABLED_TOOLTIP =
-  'Explorer links are on the right side of each transaction in transaction details'
 const canBuildSpeedUpAccountOp = (
   submittedAccountOp: SubmittedAccountOpLike
 ): submittedAccountOp is SubmittedAccountOpLike &

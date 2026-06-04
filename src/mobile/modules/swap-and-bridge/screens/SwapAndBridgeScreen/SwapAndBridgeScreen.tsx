@@ -222,7 +222,7 @@ const SwapAndBridgeScreen = () => {
   }
 
   return (
-    <MobileLayoutContainer>
+    <MobileLayoutContainer footer={buttons}>
       <MobileLayoutWrapperMainContent
         withBackButton
         onBackButtonPress={onBackButtonPress}
@@ -259,9 +259,6 @@ const SwapAndBridgeScreen = () => {
           openRoutesModal={openRoutesModal}
           shouldEnableRoutesSelection={shouldEnableRoutesSelection}
         />
-
-        <View style={flexbox.flex1} />
-        {buttons}
 
         <RoutesModal sheetRef={routesModalRef} closeBottomSheet={closeRoutesModal} />
         <Estimation
