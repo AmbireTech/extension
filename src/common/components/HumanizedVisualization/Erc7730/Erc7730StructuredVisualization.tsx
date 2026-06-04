@@ -241,6 +241,7 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
                   editCall={editApprovalCallInfo.setter}
                   token={editApprovalCallInfo.token}
                   value={editApprovalCallInfo.amount}
+                  chainId={tokenChainId}
                   id={editApprovalCallInfo.callId}
                   style={[spacings.mlTy, spacings.mr0]}
                 />
@@ -277,6 +278,7 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
                   editCall={editApprovalCallInfo.setter}
                   token={editApprovalCallInfo.token}
                   value={editApprovalCallInfo.amount}
+                  chainId={tokenChainId}
                   id={editApprovalCallInfo.callId}
                   style={[spacings.mlTy, spacings.mr0]}
                 />
