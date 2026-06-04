@@ -5,9 +5,11 @@ import { View } from 'react-native'
 
 import AmbireAccount from '@ambire-common/../contracts/compiled/AmbireAccount.json'
 import AmbireFactory from '@ambire-common/../contracts/compiled/AmbireFactory.json'
+import { execTransactionAbi } from '@ambire-common/consts/safe'
 import { DEPLOYLESS_SIMULATION_FROM } from '@ambire-common/consts/deploy'
 import { getSpoof } from '@ambire-common/libs/account/account'
 import { getSignableCalls } from '@ambire-common/libs/accountOp/accountOp'
+import { getSafeTxn } from '@ambire-common/libs/safe/safe'
 import { getErrorCodeStringFromReason } from '@ambire-common/libs/errorDecoder/helpers'
 import CopyIcon from '@common/assets/svg/CopyIcon'
 import AlertVertical from '@common/components/AlertVertical'
@@ -84,6 +86,50 @@ const ErrorInformation = () => {
             value: '0'
           })
         }
+      } else if (signAccountOpState.account.safeCreation && state.isDeployed) {
+        const firstSigner = state.associatedKeys[0]
+        if (!firstSigner) throw new Error('No Safe owners found')
+
+        const safeTxn = getSafeTxn(signAccountOpState.accountOp, state)
+        const exec = new Interface(execTransactionAbi)
+        const preValidatedSig = `0x000000000000000000000000${firstSigner.slice(2).toLowerCase()}000000000000000000000000000000000000000000000000000000000000000001`
+        const execData = exec.encodeFunctionData('execTransaction', [
+          safeTxn.to,
+          safeTxn.value,
+          safeTxn.data,
+          safeTxn.operation,
+          safeTxn.safeTxGas,
+          safeTxn.baseGas,
+          safeTxn.gasPrice,
+          safeTxn.gasToken,
+          safeTxn.refundReceiver,
+          preValidatedSig
+        ])
+
+        const urlParams: Record<string, string> = {
+          network: signAccountOpState.accountOp.chainId.toString(),
+          from: firstSigner,
+          contractAddress: signAccountOpState.accountOp.accountAddr,
+          rawFunctionInput: execData,
+          value: '0'
+        }
+
+        if (state.threshold > 1) {
+          const stateOverrides = JSON.stringify([
+            {
+              contractAddress: signAccountOpState.accountOp.accountAddr,
+              storage: [
+                {
+                  key: '0x0000000000000000000000000000000000000000000000000000000000000004',
+                  value: '0x0000000000000000000000000000000000000000000000000000000000000001'
+                }
+              ]
+            }
+          ])
+          urlParams.stateOverrides = stateOverrides
+        }
+
+        params = new URLSearchParams(urlParams)
       } else {
         // only a single call for EOAs
         const call = signAccountOpState.accountOp.calls[0]!
