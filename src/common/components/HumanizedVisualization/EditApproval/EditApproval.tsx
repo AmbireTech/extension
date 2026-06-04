@@ -218,6 +218,7 @@ const EditApproval = ({
         type="modal"
         closeBottomSheet={closeEditApprovals}
         style={{ maxWidth: 460 }}
+        shouldBeClosableOnDrag={false}
       >
         <View style={flexbox.alignCenter}>
           <Text fontSize={20} weight="medium" style={[spacings.mbXl, spacings.mtTy]}>
