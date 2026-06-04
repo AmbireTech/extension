@@ -1,4 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
+import { View, ViewStyle } from 'react-native'
 import {
   decodeFunctionData,
   encodeFunctionData,
@@ -8,8 +10,6 @@ import {
   toFunctionSelector,
   zeroAddress
 } from 'viem'
-import { useTranslation } from 'react-i18next'
-import { View, ViewStyle } from 'react-native'
 
 import {
   noStateUpdateStatuses,
@@ -157,7 +157,7 @@ const TransactionSummary = ({
   }, [type, call.warnings, size])
 
   const innerEditApproval = useCallback(
-    (newAmount: string, token: string, closeEditApprovals: () => void) => {
+    (newAmount: string, token: string, tokenChainId: bigint, closeEditApprovals: () => void) => {
       if (!signAccountOpState) {
         addToast('Internal error: failed to load account state', { type: 'error' })
         return
@@ -167,7 +167,7 @@ const TransactionSummary = ({
         return
       }
       const portfolioToken = portfolio.tokens.find(
-        (t) => t.address.toLowerCase() === token.toLowerCase()
+        (t) => t.address.toLowerCase() === token.toLowerCase() && t.chainId === tokenChainId
       )
       if (!portfolioToken) {
         addToast("Internal error: we failed to find the token's data", { type: 'error' })
@@ -279,7 +279,12 @@ const TransactionSummary = ({
   const editApprovalCallInfo = useMemo(():
     | undefined
     | {
-        setter: (amount: string, token: string, closeModal: () => void) => void
+        setter: (
+          amount: string,
+          token: string,
+          tokenChainId: bigint,
+          closeModal: () => void
+        ) => void
         token: string
         amount: bigint
         callId?: string
@@ -357,12 +362,12 @@ const TransactionSummary = ({
     if (amount === undefined) return
     if (!token) return
     const portfolioToken = portfolio.tokens.find(
-      (t) => t.address.toLowerCase() === token.toLowerCase()
+      (t) => t.address.toLowerCase() === token.toLowerCase() && t.chainId === chainId
     )
     if (!portfolioToken) return
 
     return { setter: innerEditApproval, amount, token, callId: call.id }
-  }, [call, innerEditApproval, portfolio, signAccountOpState])
+  }, [call, chainId, innerEditApproval, portfolio, signAccountOpState])
 
   // TODO: should this be reused in history/benzin/other places
   const callVisualization = useMemo(() => {
