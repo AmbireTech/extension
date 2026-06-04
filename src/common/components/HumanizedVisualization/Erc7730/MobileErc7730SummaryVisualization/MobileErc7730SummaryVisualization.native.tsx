@@ -3,6 +3,7 @@ import { Image, View } from 'react-native'
 import { SvgUri } from 'react-native-svg'
 
 import Text from '@common/components/Text'
+import { shouldShowErc7730SummaryRowLabel } from '@common/components/HumanizedVisualization/Erc7730/helpers'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import common from '@common/styles/utils/common'
@@ -116,7 +117,7 @@ const MobileErc7730SummaryVisualization = ({
             spacings.mtTy
           ]}
         >
-          {!!row.label.trim() && (
+          {shouldShowErc7730SummaryRowLabel(item, row) && (
             <Text
               fontSize={Math.max(textSize - 4, 10)}
               weight="semiBold"

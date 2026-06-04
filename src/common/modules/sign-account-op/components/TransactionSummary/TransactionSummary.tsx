@@ -577,6 +577,7 @@ const TransactionSummary = ({
               borderRadius: 12 * sizeMultiplier[size],
               backgroundColor: 'transparent'
             }}
+            hideOnError
           />
         )}
         {!!title && (
@@ -646,6 +647,19 @@ const TransactionSummary = ({
 
     return tabs.filter((x) => !!x)
   }, [erc7730DescriptionVisualization, decodedFunction, t])
+  const shouldAlignContentStart = useMemo(() => {
+    if (type !== 'default') return false
+    if (!callVisualization || hasCallFailed) return true
+    if (shouldUseDetailedErc7730Layout && erc7730Visualization) return true
+
+    return callVisualization.some((item) => item?.type === 'break')
+  }, [
+    callVisualization,
+    erc7730Visualization,
+    hasCallFailed,
+    shouldUseDetailedErc7730Layout,
+    type
+  ])
 
   if (isCallRemovedOptimistic) return null
 
@@ -674,9 +688,9 @@ const TransactionSummary = ({
           ? {
               paddingHorizontal: SPACING_SM,
               paddingVertical: type !== 'history' ? SPACING_SM * sizeMultiplier[size] : 0,
-              ...(type === 'default' ? flexbox.alignStart : {})
+              ...(shouldAlignContentStart ? flexbox.alignStart : {})
             }
-          : type === 'default'
+          : shouldAlignContentStart
             ? flexbox.alignStart
             : undefined
       }
@@ -704,6 +718,7 @@ const TransactionSummary = ({
                             borderRadius: 12 * sizeMultiplier[size],
                             backgroundColor: 'transparent'
                           }}
+                          hideOnError
                         />
                       )}
                       <Text
