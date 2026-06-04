@@ -75,20 +75,14 @@ const ExtremeSwapConfirmationField: FC<Props> = ({
   return (
     <View style={spacings.mtLg}>
       <Text fontSize={14} weight="medium" appearance="errorText" style={spacings.mbTy}>
-        {t('Type this phrase to continue:')}
-      </Text>
-      <Text fontSize={14} appearance="errorText" style={spacings.mbSm}>
-        {expectedConfirmationPhrase}
-      </Text>
-      <Text appearance="secondaryText" fontSize={14} weight="regular" style={spacings.mbTy}>
-        {t('Confirmation phrase')}
+        {t('Type "{{phrase}}" to proceed:', { phrase: expectedConfirmationPhrase })}
       </Text>
       <input
         type="text"
         value={confirmationPhraseInput}
         onChange={handleChange}
-        placeholder={t('Type the phrase above')}
-        autoCapitalize="off"
+        placeholder={t('Type "{{phrase}}" to proceed', { phrase: expectedConfirmationPhrase })}
+        autoCapitalize="characters"
         autoCorrect="off"
         spellCheck={false}
         autoComplete="off"

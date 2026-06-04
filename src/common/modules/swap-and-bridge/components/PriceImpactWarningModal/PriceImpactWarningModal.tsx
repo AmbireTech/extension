@@ -2,8 +2,9 @@ import type { TFunction } from 'i18next'
 import React, { FC, useCallback, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
-import { getExtremeSwapConfirmationPhrase } from '@ambire-common/libs/safeguards/extremeSwapLoss'
+import { EXTREME_SWAP_CONFIRMATION_PHRASE } from '@ambire-common/consts/safeguards/extremeSwapLoss'
 import { SwapAmountWarning } from '@ambire-common/consts/safeguards/swapAmountWarnings'
+import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
 import BottomSheet from '@common/components/BottomSheet'
 import Checkbox from '@common/components/Checkbox'
 import DualChoiceWarningModal from '@common/components/DualChoiceWarningModal'
@@ -34,12 +35,9 @@ const getWarningCopy = (warning: SwapAmountWarning, isExtreme: boolean, t: TFunc
             percentageDiff: warning.percentageDiff.toFixed(2)
           }),
       description: isExtreme
-        ? t(
-            'This trade is expected to lose about {{estimatedLossUsd}} USD compared to what you send. Type the confirmation phrase below to continue.',
-            {
-              estimatedLossUsd: Math.floor(warning.estimatedLossUsd).toLocaleString()
-            }
-          )
+        ? t('You could lose ~{{estimatedLossUsd}} on this trade.', {
+            estimatedLossUsd: formatDecimals(warning.estimatedLossUsd, 'value')
+          })
         : t(
             'This route will significantly affect the market price of this pool and will reduce your expected return.'
           )
@@ -56,12 +54,12 @@ const getWarningCopy = (warning: SwapAmountWarning, isExtreme: boolean, t: TFunc
         }),
     description: isExtreme
       ? t(
-          'If slippage occurs, you could lose about {{estimatedLossUsd}} USD and receive as little as {{minInToken}} {{symbol}} ({{minInUsd}}$). Type the confirmation phrase below to continue.',
+          'You could lose ~{{estimatedLossUsd}} and receive as little as {{minInToken}} {{symbol}} ({{minInUsd}}).',
           {
-            estimatedLossUsd: Math.floor(warning.estimatedLossUsd).toLocaleString(),
-            minInToken: warning.minInToken,
+            estimatedLossUsd: formatDecimals(warning.estimatedLossUsd, 'value'),
+            minInToken: formatDecimals(Number(warning.minInToken), 'amount'),
             symbol: warning.symbol,
-            minInUsd: warning.minInUsd.toFixed(2)
+            minInUsd: formatDecimals(warning.minInUsd, 'value')
           }
         )
       : t('If slippage occurs, you might receive {{minInToken}} {{symbol}} ({{minInUsd}}$)', {
@@ -86,11 +84,7 @@ const PriceImpactWarningModal: FC<Props> = ({
   const warning = highPriceImpactOrSlippageWarning
   const isExtreme = warning?.severity === 'extreme'
 
-  const expectedConfirmationPhrase = useMemo(() => {
-    if (!isExtreme || !warning) return ''
-
-    return getExtremeSwapConfirmationPhrase(warning.estimatedLossUsd)
-  }, [isExtreme, warning])
+  const expectedConfirmationPhrase = isExtreme ? EXTREME_SWAP_CONFIRMATION_PHRASE : ''
 
   const { title, description } = useMemo(() => {
     if (!warning) return { title: '', description: '' }
