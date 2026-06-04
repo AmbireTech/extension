@@ -104,12 +104,19 @@ const EditApprovalAmountInput = memo(
 const EditApproval = ({
   editCall,
   token,
+  chainId,
   value,
   id,
   style
 }: {
-  editCall: (amount: string, token: string, closeEditApprovals: () => void) => void
+  editCall: (
+    amount: string,
+    token: string,
+    tokenChainId: bigint,
+    closeEditApprovals: () => void
+  ) => void
   token: string
+  chainId: bigint
   value: bigint
   id?: string
   style?: StyleProp<ViewStyle>
@@ -136,8 +143,10 @@ const EditApproval = ({
     // where we don't have access to controllers.
     // Therefore, we need to check whether the portfolio controller exists
     if (!portfolio) return undefined
-    return portfolio.tokens.find((t) => t.address.toLowerCase() === token.toLowerCase())
-  }, [portfolio, token])
+    return portfolio.tokens.find(
+      (t) => t.address.toLowerCase() === token.toLowerCase() && t.chainId === chainId
+    )
+  }, [chainId, portfolio, token])
 
   const maxAmount = useMemo(() => {
     if (!portfolioToken) return undefined
@@ -255,7 +264,7 @@ const EditApproval = ({
             <Button
               type="primary"
               text={t('Save')}
-              onPress={() => editCall(amountRef.current, token, closeEditApprovals)}
+              onPress={() => editCall(amountRef.current, token, chainId, closeEditApprovals)}
               hasBottomSpacing={false}
               size="smaller"
               style={[isWeb && { width: 100 }, isMobile && flexbox.flex1]}
