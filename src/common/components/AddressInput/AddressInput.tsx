@@ -172,7 +172,10 @@ const AddressInput: React.FC<Props> = ({
                 }}
                 address={address}
                 addressHighlight={addressHighlight}
-                name={contacts.find((c) => c.address.toLowerCase() === address.toLowerCase())?.name}
+                name={
+                  contacts.find((c) => c.address.toLowerCase() === address.toLowerCase())?.name ||
+                  (resolvedAddressType ? value : undefined)
+                }
                 withCopy={isWeb}
               />
             </View>
