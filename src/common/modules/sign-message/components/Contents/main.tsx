@@ -16,7 +16,6 @@ import { isMobile, isWeb } from '@common/config/env'
 import useController from '@common/hooks/useController'
 import useResponsiveActionWindow from '@common/hooks/useResponsiveActionWindow'
 import useTheme from '@common/hooks/useTheme'
-import useWindowSize from '@common/hooks/useWindowSize'
 import HardwareWalletSigningModal from '@common/modules/hardware-wallets/components/HardwareWalletSigningModal'
 import SafeEip712Data from '@common/modules/sign-account-op/components/SafeEip712Data'
 import SafetyChecksBanner from '@common/modules/sign-account-op/components/SafetyChecksBanner'
@@ -90,7 +89,7 @@ const Main = ({
   const signStatus = signMessageState.statuses.sign
   const { styles, theme } = useTheme(getStyles)
   const { responsiveSizeMultiplier } = useResponsiveActionWindow()
-  const { minHeightSize } = useWindowSize()
+
   const { networks } = useController('NetworksController').state
   const network = useMemo(
     () =>
