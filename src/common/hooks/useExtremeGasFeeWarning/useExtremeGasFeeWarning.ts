@@ -35,7 +35,7 @@ const useExtremeGasFeeWarning = (
     }, 1000)
 
     return () => clearInterval(intervalId)
-  }, [warningState?.feeUsd, warningState?.thresholdUsd, warningState])
+  }, [warningState])
 
   const isProceedDelayed = !!warningState && remainingSeconds > 0
 

@@ -19,18 +19,29 @@ const ExtremeGasFeeWarning = ({
 
   if (!warningState) return null
 
+  const text =
+    warningState.type === 'gwei'
+      ? t(
+          'The network gas price is about {{gasPriceGwei}} gwei, which is higher than the usual {{thresholdGwei}} gwei limit for Ethereum. Please review before continuing.',
+          {
+            gasPriceGwei: warningState.gasPriceGwei.toFixed(2),
+            thresholdGwei: warningState.thresholdGwei
+          }
+        )
+      : t(
+          'This transaction fee is about {{feeUsd}} USD, which is higher than the usual {{thresholdUsd}} USD limit for this network. Please review before continuing.',
+          {
+            feeUsd: warningState.feeUsd.toFixed(2),
+            thresholdUsd: warningState.thresholdUsd
+          }
+        )
+
   return (
     <Alert
       type="error"
       size="md"
       title={t('Unusually high network fee')}
-      text={t(
-        'This transaction fee is about {{feeUsd}} USD, which is higher than the usual {{thresholdUsd}} USD limit for this network. Please review before continuing.',
-        {
-          feeUsd: warningState.feeUsd.toFixed(2),
-          thresholdUsd: warningState.thresholdUsd
-        }
-      )}
+      text={text}
       style={spacings.mbSm}
       testID="extreme-gas-fee-warning"
     />
