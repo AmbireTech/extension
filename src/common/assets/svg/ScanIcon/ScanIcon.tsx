@@ -4,7 +4,7 @@ import { Path, Svg } from 'react-native-svg'
 import useTheme from '@common/hooks/useTheme'
 import { LegendsSvgProps } from '@legends/types/svg'
 
-const ScanIcon: FC<LegendsSvgProps> = ({ width = 24, height = 24, color = '#54597A', ...rest }) => {
+const ScanIcon: FC<LegendsSvgProps> = ({ width = 24, height = 24, color, ...rest }) => {
   const { theme } = useTheme()
   return (
     <Svg width={width} height={height} viewBox="0 0 24 24" fill="none" {...rest}>

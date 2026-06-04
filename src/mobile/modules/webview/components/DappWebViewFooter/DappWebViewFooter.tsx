@@ -96,13 +96,9 @@ const DappWebViewFooter: React.FC<Props> = ({
         <Pressable
           onPress={handleGoBack}
           disabled={!canGoBack}
-          style={[{ width: 28 }, flexbox.center]}
+          style={[{ width: 28, opacity: canGoBack ? 1 : 0.4 }, flexbox.center]}
         >
-          <LeftArrowIcon
-            width={9}
-            height={16}
-            color={canGoBack ? theme.iconPrimary : theme.neutral400}
-          />
+          <LeftArrowIcon width={9} height={16} />
         </Pressable>
         <Pressable
           onPress={handleOpenSearchModal}
