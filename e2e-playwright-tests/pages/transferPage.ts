@@ -187,7 +187,7 @@ export class TransferPage extends BasePage {
       ).toEqual(true)
 
       // validate success message
-      const timeout = 180000
+      const timeout = 200000
       await this.compareText(selectors.txnStatus, message, { timeout })
 
       // Close page

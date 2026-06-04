@@ -160,7 +160,7 @@ test.describe('trezor', { tag: '@trezorTests' }, () => {
       // For some reason, the account select button is not visible in some of the runs,
       // so we add a small wait to give the button a chance to be visible,
       // and log a diagnostic error if the button is not clickable in order to debug the issue.
-      await page.waitForTimeout(3000)
+      await page.waitForTimeout(5000)
       const accountSelectBtn = page.getByTestId(selectors.accountSelectBtn)
 
       const debugInfo = {
