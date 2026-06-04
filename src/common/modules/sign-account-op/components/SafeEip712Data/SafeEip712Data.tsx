@@ -50,36 +50,47 @@ const SafeEip712Data: FC<Props> = ({ accountAddr, chainId, safeEip712Data }) => 
         style={styles.container}
         contentStyle={styles.content}
         content={
-          <View style={styles.rows}>
-            {rows.map(([label, value]) => (
-              <View key={label} style={styles.row}>
-                <Text
-                  fontSize={14}
-                  weight="semiBold"
-                  appearance="successText"
-                  color={theme.secondaryAccent400}
-                >
-                  {t(label)}
-                  {t(': ')}
-                </Text>
-                <Text
-                  selectable
-                  fontSize={14}
-                  weight="medium"
-                  appearance="primaryText"
-                  style={styles.value}
-                >
-                  {value}
-                </Text>
-                <CopyText
-                  text={value}
-                  iconColor={theme.secondaryText}
-                  iconSize={16}
-                  shouldStopPropagation
-                  style={spacings.mlMi}
-                />
-              </View>
-            ))}
+          <View style={styles.contentBody}>
+            <View style={styles.headerTile}>
+              <Text fontSize={14} weight="semiBold" appearance="secondaryText">
+                {t('Safe hashes and JSON')}
+              </Text>
+            </View>
+            <View style={styles.rows}>
+              {rows.map(([label, value]) => (
+                <View key={label} style={styles.row}>
+                  <Text
+                    fontSize={12}
+                    weight="semiBold"
+                    appearance="secondaryText"
+                    numberOfLines={1}
+                    style={styles.label}
+                  >
+                    {t(label)}
+                  </Text>
+                  <View style={styles.rowRight}>
+                    <Text
+                      selectable
+                      fontSize={12}
+                      weight="mono_regular"
+                      appearance="primaryText"
+                      numberOfLines={1}
+                      ellipsizeMode="middle"
+                      style={styles.value}
+                    >
+                      {value}
+                    </Text>
+                    <CopyText
+                      text={value}
+                      iconColor={theme.secondaryText}
+                      iconSize={14}
+                      shouldStopPropagation
+                      style={styles.copyIcon}
+                    />
+                  </View>
+                </View>
+              ))}
+            </View>
           </View>
         }
         expandedContent={
