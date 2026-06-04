@@ -30,7 +30,9 @@ const getWarningCopy = (warning: SwapAmountWarning, isExtreme: boolean, t: TFunc
         ? t('Critical loss warning (-{{percentageDiff}}%)', {
             percentageDiff: warning.percentageDiff.toFixed(2)
           })
-        : t(`Ouch! Very high price impact (-${warning.percentageDiff.toFixed(2)}%)`),
+        : t('Ouch! Very high price impact (-{{percentageDiff}}%)', {
+            percentageDiff: warning.percentageDiff.toFixed(2)
+          }),
       description: isExtreme
         ? t(
             'This trade is expected to lose about {{estimatedLossUsd}} USD compared to what you send. Type the confirmation phrase below to continue.',
@@ -49,9 +51,9 @@ const getWarningCopy = (warning: SwapAmountWarning, isExtreme: boolean, t: TFunc
       ? t('Critical slippage warning ({{possibleSlippage}}%)', {
           possibleSlippage: warning.possibleSlippage.toFixed(2)
         })
-      : t(
-          `Warning! This route has a higher slippage than usual (${warning.possibleSlippage.toFixed(2)}%)`
-        ),
+      : t('Warning! This route has a higher slippage than usual ({{possibleSlippage}}%)', {
+          possibleSlippage: warning.possibleSlippage.toFixed(2)
+        }),
     description: isExtreme
       ? t(
           'If slippage occurs, you could lose about {{estimatedLossUsd}} USD and receive as little as {{minInToken}} {{symbol}} ({{minInUsd}}$). Type the confirmation phrase below to continue.',
@@ -62,9 +64,11 @@ const getWarningCopy = (warning: SwapAmountWarning, isExtreme: boolean, t: TFunc
             minInUsd: warning.minInUsd.toFixed(2)
           }
         )
-      : t(
-          `If slippage occurs, you might receive ${warning.minInToken} ${warning.symbol} (${warning.minInUsd.toFixed(2)}$)`
-        )
+      : t('If slippage occurs, you might receive {{minInToken}} {{symbol}} ({{minInUsd}}$)', {
+          minInToken: warning.minInToken,
+          symbol: warning.symbol,
+          minInUsd: warning.minInUsd.toFixed(2)
+        })
   }
 }
 
