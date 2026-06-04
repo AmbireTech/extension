@@ -3,10 +3,15 @@ import {
   getAction,
   getAddressVisualization,
   getLabel,
+  getText,
   getToken
 } from '../../../../ambire-common/src/libs/humanizer/utils'
 
-import { getErc7730DescriptionRows, shouldShowErc7730SummaryRowLabel } from './helpers'
+import {
+  getErc7730DescriptionRows,
+  getErc7730SummaryRows,
+  shouldShowErc7730SummaryRowLabel
+} from './helpers'
 
 describe('getErc7730DescriptionRows', () => {
   test('shows hidden transfer rows for Morpho Bundler3 Multicall additional description', () => {
@@ -57,6 +62,35 @@ describe('getErc7730DescriptionRows', () => {
         expect.objectContaining({ address: baseCbBtc, value: 1n })
       ]
     )
+  })
+
+  test('keeps swap token rows in summary and extra rows in additional description', () => {
+    const baseWeth = '0x4200000000000000000000000000000000000006'
+    const baseCbBtc = '0xcbb7c0000ab88b473b1f5afd9ef808440eed33bf'
+    const visualization: HumanizerErc7730Visualization = {
+      type: 'erc7730',
+      title: 'Fill order',
+      rows: [
+        {
+          label: 'Amount to Send',
+          value: [getToken(baseCbBtc, 3235n)]
+        },
+        {
+          label: 'Minimum to Receive',
+          value: [getToken(baseWeth, 1161246143601818n)]
+        },
+        {
+          label: 'Additional action',
+          value: [getText('Unwrap')]
+        }
+      ]
+    }
+
+    const summaryRows = getErc7730SummaryRows(visualization)
+    const descriptionRows = getErc7730DescriptionRows(visualization)
+
+    expect(summaryRows.map((row) => row.label)).toEqual(['Amount to Send', 'Minimum to Receive'])
+    expect(descriptionRows.map((row) => row.label)).toEqual(['Additional action'])
   })
 })
 
