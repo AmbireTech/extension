@@ -147,6 +147,7 @@ test.describe('trezor', { tag: '@trezorTests' }, () => {
     })
 
     await test.step('import first 2 accounts', async () => {
+      await page.waitForTimeout(5000)
       await page.getByTestId(`add-account-${mainConstants.addresses.trezorAccount1}`).click()
       await page.getByTestId(`add-account-${mainConstants.addresses.trezorAccount2}`).click()
       await page.getByTestId(selectors.getStarted.importAccountButton).click()
