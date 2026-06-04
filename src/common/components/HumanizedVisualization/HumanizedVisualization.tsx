@@ -25,7 +25,7 @@ interface Props {
   disableFlex?: boolean
   dapp?: IrCall['dapp']
   editApprovalCallInfo?: {
-    setter: (arg: string, token: string, closeModal: () => void) => void
+    setter: (arg: string, token: string, tokenChainId: bigint, closeModal: () => void) => void
     amount: bigint
     token: string
     callId?: string
