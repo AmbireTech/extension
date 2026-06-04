@@ -1,0 +1,61 @@
+import type { HumanizerErc7730Visualization } from '@ambire-common/libs/humanizer/interfaces'
+import {
+  getAction,
+  getAddressVisualization,
+  getLabel,
+  getToken
+} from '../../../../ambire-common/src/libs/humanizer/utils'
+
+import { getErc7730DescriptionRows } from './helpers'
+
+describe('getErc7730DescriptionRows', () => {
+  test('shows hidden transfer rows for Morpho Bundler3 Multicall additional description', () => {
+    const baseUsdc = '0x833589fcd6edb6e08f4c7c32d4f71b54bda02913'
+    const baseCbBtc = '0xcbb7c0000ab88b473b1f5afd9ef808440eed33bf'
+    const owner = '0xd8293ad21678c6f09da139b4b62d38e514a03b78'
+    const visualization: HumanizerErc7730Visualization = {
+      type: 'erc7730',
+      title: 'Bundler3 Multicall',
+      rows: [
+        {
+          label: 'Action',
+          value: [
+            getAction('Transfer'),
+            getToken(baseUsdc, 2n),
+            getLabel('To'),
+            getAddressVisualization(owner)
+          ]
+        },
+        {
+          label: 'Action',
+          value: [getAction('Supply'), getToken(baseCbBtc, 3200n)]
+        },
+        {
+          label: 'Action',
+          value: [getAction('Borrow'), getToken(baseUsdc, 100000n)]
+        },
+        {
+          label: 'Action',
+          value: [
+            getAction('Transfer'),
+            getToken(baseCbBtc, 1n),
+            getLabel('To'),
+            getAddressVisualization(owner)
+          ]
+        }
+      ]
+    }
+
+    const descriptionRows = getErc7730DescriptionRows(visualization)
+
+    expect(
+      descriptionRows.map((row) => row.value.find((value) => value.type === 'action')?.content)
+    ).toEqual(['Transfer', 'Transfer'])
+    expect(descriptionRows.map((row) => row.value.find((value) => value.type === 'token'))).toEqual(
+      [
+        expect.objectContaining({ address: baseUsdc, value: 2n }),
+        expect.objectContaining({ address: baseCbBtc, value: 1n })
+      ]
+    )
+  })
+})
