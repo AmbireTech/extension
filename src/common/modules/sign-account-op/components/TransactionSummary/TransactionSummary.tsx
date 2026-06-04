@@ -572,6 +572,7 @@ const TransactionSummary = ({
               borderRadius: 12 * sizeMultiplier[size],
               backgroundColor: 'transparent'
             }}
+            hideOnError
           />
         )}
         {!!title && (
@@ -699,6 +700,7 @@ const TransactionSummary = ({
                             borderRadius: 12 * sizeMultiplier[size],
                             backgroundColor: 'transparent'
                           }}
+                          hideOnError
                         />
                       )}
                       <Text

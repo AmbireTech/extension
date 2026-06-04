@@ -270,6 +270,7 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
               size={24 * sizeMultiplierSize}
               skeletonAppearance="secondaryBackground"
               imageStyle={{ borderRadius: 12 * sizeMultiplierSize, backgroundColor: 'transparent' }}
+              hideOnError
             />
           )}
           <View

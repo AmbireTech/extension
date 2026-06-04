@@ -76,6 +76,7 @@ const HumanizedVisualization: FC<Props> = ({
           size={24 * sizeMultiplierSize}
           skeletonAppearance="secondaryBackground"
           imageStyle={{ borderRadius: 12 * sizeMultiplierSize, backgroundColor: 'transparent' }}
+          hideOnError
         />
       )}
       {data.map((item) =>
