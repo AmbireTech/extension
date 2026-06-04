@@ -149,6 +149,16 @@ export const getErc7730SummaryRows = (item: HumanizerErc7730Visualization) => {
   return item.rows.filter((row) => !isSpenderRow(row) && !isExpirationRow(row)).slice(0, 2)
 }
 
+export const shouldShowErc7730SummaryRowLabel = (
+  item: HumanizerErc7730Visualization,
+  row: Erc7730Row
+) => {
+  const rowLabel = row.label.trim()
+  if (!rowLabel) return false
+
+  return rowLabel !== item.title?.trim()
+}
+
 export const getErc7730DescriptionRows = (item: HumanizerErc7730Visualization) => {
   if (isMorphoBundlerMulticall(item)) {
     const transferRows = item.rows.filter(isTransferActionRow)

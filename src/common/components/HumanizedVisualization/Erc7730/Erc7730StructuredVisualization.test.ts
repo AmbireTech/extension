@@ -6,7 +6,7 @@ import {
   getToken
 } from '../../../../ambire-common/src/libs/humanizer/utils'
 
-import { getErc7730DescriptionRows } from './helpers'
+import { getErc7730DescriptionRows, shouldShowErc7730SummaryRowLabel } from './helpers'
 
 describe('getErc7730DescriptionRows', () => {
   test('shows hidden transfer rows for Morpho Bundler3 Multicall additional description', () => {
@@ -57,5 +57,28 @@ describe('getErc7730DescriptionRows', () => {
         expect.objectContaining({ address: baseCbBtc, value: 1n })
       ]
     )
+  })
+})
+
+describe('shouldShowErc7730SummaryRowLabel', () => {
+  test('hides a summary row label when it matches the title', () => {
+    const safe = '0x714fd3db837e72bd49b8eda02b8f4d53dfdde5ce'
+    const visualization: HumanizerErc7730Visualization = {
+      type: 'erc7730',
+      title: 'Reject currently queued transaction',
+      rows: [
+        {
+          label: 'Reject currently queued transaction',
+          value: [getAddressVisualization(safe)]
+        },
+        {
+          label: 'Gas token',
+          value: [getAddressVisualization(safe)]
+        }
+      ]
+    }
+
+    expect(shouldShowErc7730SummaryRowLabel(visualization, visualization.rows[0]!)).toBe(false)
+    expect(shouldShowErc7730SummaryRowLabel(visualization, visualization.rows[1]!)).toBe(true)
   })
 })

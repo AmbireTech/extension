@@ -26,7 +26,8 @@ import {
   hasTokenValue,
   isNestedErc7730Row,
   isNestedErc7730Value,
-  shouldShowErc7730SpenderRowInSummary
+  shouldShowErc7730SpenderRowInSummary,
+  shouldShowErc7730SummaryRowLabel
 } from './helpers'
 
 const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = ({
@@ -356,23 +357,24 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
                 }
               ]}
             >
-              {(!hasTokenValue(row) || shouldStackSummaryRows) && (
-                <Text
-                  fontSize={Math.max(textSize - 4, 10)}
-                  weight="semiBold"
-                  appearance="secondaryText"
-                  numberOfLines={1}
-                  style={[
-                    spacings.mrTy,
-                    shouldStackSummaryRows && {
-                      flexShrink: 1,
-                      maxWidth: 180
-                    }
-                  ]}
-                >
-                  {row.label}
-                </Text>
-              )}
+              {shouldShowErc7730SummaryRowLabel(item, row) &&
+                (!hasTokenValue(row) || shouldStackSummaryRows) && (
+                  <Text
+                    fontSize={Math.max(textSize - 4, 10)}
+                    weight="semiBold"
+                    appearance="secondaryText"
+                    numberOfLines={1}
+                    style={[
+                      spacings.mrTy,
+                      shouldStackSummaryRows && {
+                        flexShrink: 1,
+                        maxWidth: 180
+                      }
+                    ]}
+                  >
+                    {row.label}
+                  </Text>
+                )}
               <View
                 style={[
                   flexbox.directionRow,
