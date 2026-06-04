@@ -1,9 +1,8 @@
-import React, { useMemo } from 'react'
-import { View } from 'react-native'
+import React, { useCallback, useMemo, useState } from 'react'
+import { LayoutChangeEvent, View } from 'react-native'
 
 import { Dapp } from '@ambire-common/interfaces/dapp'
-import useWindowSize from '@common/hooks/useWindowSize'
-import spacings, { SPACING_SM } from '@common/styles/spacings'
+import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
 import HorizontalDappItem, {
@@ -24,9 +23,11 @@ const MIN_ITEMS = 4
 // each section has. The remaining items are reachable by pressing the section header, which opens
 // the full section in a dedicated screen.
 const HorizontalDappsRow = ({ data }: Props) => {
-  const { width } = useWindowSize()
-  // The row sits inside a container with SPACING_SM padding on each side
-  const rowWidth = width - 2 * SPACING_SM
+  const [rowWidth, setRowWidth] = useState(0)
+
+  const handleLayout = useCallback((event: LayoutChangeEvent) => {
+    setRowWidth(event.nativeEvent.layout.width)
+  }, [])
 
   // Largest N with N items and (N-1) gutters of at least HORIZONTAL_ITEM_GUTTER fitting in rowWidth:
   //   N*ITEM_WIDTH + (N-1)*MIN_GUTTER <= rowWidth
@@ -52,7 +53,7 @@ const HorizontalDappsRow = ({ data }: Props) => {
   const visibleItems = useMemo(() => data.slice(0, Math.min(maxFit, data.length)), [data, maxFit])
 
   return (
-    <View style={[flexbox.directionRow, spacings.mb]}>
+    <View style={[flexbox.directionRow, spacings.mb]} onLayout={handleLayout}>
       {visibleItems.map((dapp, index) => {
         const isLast = index === visibleItems.length - 1
         return (
