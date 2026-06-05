@@ -17,6 +17,7 @@ import FeeIcon from '@common/assets/svg/FeeIcon'
 import SettingsIcon from '@common/assets/svg/SettingsIcon'
 import Alert from '@common/components/Alert'
 import Button from '@common/components/Button'
+import Checkbox from '@common/components/Checkbox'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import Select, { SectionedSelect } from '@common/components/Select'
 import { SelectValue } from '@common/components/Select/types'
@@ -320,6 +321,85 @@ const Estimation = ({
     [dispatchUpdate]
   )
 
+  const network = useMemo(() => {
+    return networks.find((n) => n.chainId === signAccountOpState?.accountOp.chainId)
+  }, [networks, signAccountOpState?.accountOp.chainId])
+
+  const feeTokenPreferenceChainId = signAccountOpState?.accountOp.chainId.toString()
+  const selectedFeeTokenPreference =
+    feeTokenPreferenceChainId && signAccountOpState?.feeTokenPreference
+      ? signAccountOpState.feeTokenPreference.erc20ByChainId[feeTokenPreferenceChainId]
+      : undefined
+
+  const shouldShowDefaultFeeOptionCheckbox = useMemo(() => {
+    if (!payValue || payValue.disabled || !signAccountOpState) return false
+    if (payValue.paidBy !== signAccountOpState.accountOp.accountAddr) return false
+
+    return payValue.token.flags.onGasTank || payValue.token.address !== ZERO_ADDRESS
+  }, [payValue, signAccountOpState])
+
+  const isDefaultFeeOptionSelected = useMemo(() => {
+    if (!payValue || !signAccountOpState) return false
+
+    if (payValue.token.flags.onGasTank) {
+      return !!signAccountOpState.feeTokenPreference?.preferGasTank && !selectedFeeTokenPreference
+    }
+
+    return (
+      !!selectedFeeTokenPreference &&
+      payValue.token.address.toLowerCase() === selectedFeeTokenPreference.address.toLowerCase() &&
+      payValue.token.symbol.toLowerCase() === selectedFeeTokenPreference.symbol.toLowerCase()
+    )
+  }, [payValue, selectedFeeTokenPreference, signAccountOpState])
+
+  const defaultFeeOptionCheckboxLabel = useMemo(() => {
+    if (!payValue?.token.flags.onGasTank) {
+      return t('Do you want to set this as a default option for {{network}}?', {
+        network: network?.name || t('this network')
+      })
+    }
+
+    return t('Do you want to set this as a default option?')
+  }, [network?.name, payValue?.token.flags.onGasTank, t])
+
+  const onSetDefaultFeeOption = useCallback(
+    () => {
+      if (!payValue?.token) return
+
+      const args: ['setFeeTokenPreference', [typeof payValue.token]] = [
+        'setFeeTokenPreference',
+        [payValue.token]
+      ]
+
+      if (updateType === 'Swap&Bridge') {
+        swapAndBridgeDispatch({
+          type: 'method',
+          params: {
+            method: 'callSignAccountOpMethod',
+            args
+          }
+        })
+      } else if (updateType === 'Transfer&TopUp') {
+        transferDispatch({
+          type: 'method',
+          params: {
+            method: 'callSignAccountOpMethod',
+            args
+          }
+        })
+      } else {
+        signAccountOpDispatch({
+          type: 'method',
+          params: {
+            method: 'setFeeTokenPreference',
+            args: [payValue.token]
+          }
+        })
+      }
+    },
+    [payValue?.token, signAccountOpDispatch, swapAndBridgeDispatch, transferDispatch, updateType]
+  )
+
   const feeOptionSelectSections = useMemo(() => {
     if (!payOptionsPaidByUsOrGasTank.length && !payOptionsPaidByEOA.length)
       return [
@@ -376,10 +456,6 @@ const Estimation = ({
   const v1warning = useMemo(() => {
     return signAccountOpState?.warnings.find((w) => w.id === 'v1Acc')
   }, [signAccountOpState?.warnings])
-
-  const network = useMemo(() => {
-    return networks.find((n) => n.chainId === signAccountOpState?.accountOp.chainId)
-  }, [networks, signAccountOpState?.accountOp.chainId])
 
   const currentGasPrice = useMemo(() => {
     const selectedFeeSpeed = signAccountOpState?.selectedFeeSpeed || FeeSpeed.Fast
@@ -622,6 +698,16 @@ const Estimation = ({
         stickySectionHeadersEnabled
         bottomSheetTitle={t('Gas token')}
       />
+      {shouldShowDefaultFeeOptionCheckbox && (
+        <Checkbox
+          value={isDefaultFeeOptionSelected}
+          style={[spacings.mtTy, spacings.mb0]}
+          onValueChange={onSetDefaultFeeOption}
+          label={defaultFeeOptionCheckboxLabel}
+          labelProps={{ fontSize: 14 }}
+          testID="default-fee-option-checkbox"
+        />
+      )}
       <ServiceFee
         serviceFee={serviceFee}
         paidByNativeValue={paidByNativeValue}
