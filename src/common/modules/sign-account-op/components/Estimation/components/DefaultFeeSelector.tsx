@@ -1,7 +1,6 @@
 import React, { useCallback, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 
-import { SignAccountOpFeeTokenPreference } from '@ambire-common/controllers/signAccountOp/signAccountOp'
 import { ISignAccountOpController } from '@ambire-common/interfaces/signAccountOp'
 import { ZERO_ADDRESS } from '@ambire-common/services/socket/constants'
 import Checkbox from '@common/components/Checkbox'
@@ -33,75 +32,47 @@ const DefaultFeeSelector = ({
 
   const feeTokenPreferenceChainId = signAccountOpState?.accountOp.chainId.toString()
   const selectedFeeTokenPreference =
-    feeTokenPreferenceChainId && signAccountOpState?.feeTokenPreference
-      ? signAccountOpState.feeTokenPreference.erc20ByChainId[feeTokenPreferenceChainId]
-      : undefined
+    feeTokenPreferenceChainId && signAccountOpState?.feeTokenPreference[feeTokenPreferenceChainId]
+      ? signAccountOpState.feeTokenPreference[feeTokenPreferenceChainId]
+      : ZERO_ADDRESS // default is native
 
   const pendingFeeTokenPreference =
     feeTokenPreferenceChainId && signAccountOpState?.pendingFeeTokenPreference
-      ? signAccountOpState.pendingFeeTokenPreference.erc20ByChainId[feeTokenPreferenceChainId]
+      ? signAccountOpState.pendingFeeTokenPreference[feeTokenPreferenceChainId]
       : undefined
 
   const doesFeeTokenPreferenceMatchPayValue = useCallback(
-    (
-      preference: SignAccountOpFeeTokenPreference | undefined | null,
-      erc20Preference: typeof selectedFeeTokenPreference
-    ) => {
-      if (!payValue || !preference) return false
+    (tokenPreference: string | undefined) => {
+      if (!payValue || !tokenPreference) return false
 
-      if (payValue.token.flags.onGasTank) {
-        return !!preference.preferGasTank && !erc20Preference
-      }
+      const isGasTank = payValue.token.flags.onGasTank && tokenPreference === 'gasTank'
+      const isSelectedToken = payValue.token.address.toLowerCase() === tokenPreference.toLowerCase()
 
-      if (payValue.token.address === ZERO_ADDRESS) {
-        return !preference.preferGasTank && !erc20Preference
-      }
-
-      return (
-        !!erc20Preference &&
-        payValue.token.address.toLowerCase() === erc20Preference.address.toLowerCase() &&
-        payValue.token.symbol.toLowerCase() === erc20Preference.symbol.toLowerCase()
-      )
+      return isGasTank || isSelectedToken
     },
     [payValue]
   )
 
   const isPersistedDefaultFeeOptionSelected = useMemo(() => {
-    return doesFeeTokenPreferenceMatchPayValue(
-      signAccountOpState?.feeTokenPreference,
-      selectedFeeTokenPreference
-    )
-  }, [
-    doesFeeTokenPreferenceMatchPayValue,
-    selectedFeeTokenPreference,
-    signAccountOpState?.feeTokenPreference
-  ])
+    return doesFeeTokenPreferenceMatchPayValue(selectedFeeTokenPreference)
+  }, [doesFeeTokenPreferenceMatchPayValue, selectedFeeTokenPreference])
 
   const shouldShowDefaultFeeOptionCheckbox = useMemo(() => {
-    if (!payValue || payValue.disabled || !signAccountOpState) return false
-    if (payValue.paidBy !== signAccountOpState.accountOp.accountAddr) return false
-    if (!hasManyPayOptionsByUsOrGasTank) return false
+    if (!payValue || !hasManyPayOptionsByUsOrGasTank) return false
     return !isPersistedDefaultFeeOptionSelected
-  }, [isPersistedDefaultFeeOptionSelected, payValue, signAccountOpState])
+  }, [isPersistedDefaultFeeOptionSelected, hasManyPayOptionsByUsOrGasTank, payValue])
 
   const isDefaultFeeOptionSelected = useMemo(() => {
     if (!payValue || !signAccountOpState) return false
 
-    return doesFeeTokenPreferenceMatchPayValue(
-      signAccountOpState.pendingFeeTokenPreference,
-      pendingFeeTokenPreference
-    )
+    return doesFeeTokenPreferenceMatchPayValue(pendingFeeTokenPreference)
   }, [doesFeeTokenPreferenceMatchPayValue, payValue, pendingFeeTokenPreference, signAccountOpState])
 
   const defaultFeeOptionCheckboxLabel = useMemo(() => {
-    if (!payValue?.token.flags.onGasTank && payValue?.token.address !== ZERO_ADDRESS) {
-      return t('Do you want to set this as a default option for {{network}}?', {
-        network: networkName || t('this network')
-      })
-    }
-
-    return t('Do you want to set this as a default option?')
-  }, [networkName, payValue?.token.address, payValue?.token.flags.onGasTank, t])
+    return t('Do you want to set this as a default option for {{network}}?', {
+      network: networkName || t('this network')
+    })
+  }, [networkName, t])
 
   const onSetDefaultFeeOption = useCallback(
     (enabled: boolean) => {
