@@ -24,19 +24,21 @@ const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
           ...flexbox.alignCenter,
           marginHorizontal: 'auto',
           ...flexbox.flex1,
-          maxWidth: 422
+          maxWidth: 480
         },
     content: isMobile
       ? {
           marginTop: -21,
           ...common.fullWidth,
           overflow: 'hidden',
-          ...flexbox.flex1
+          ...flexbox.flex1,
+          ...spacings.mbLg
         }
       : {
           ...common.fullWidth,
           borderRadius: BORDER_RADIUS_PRIMARY,
-          overflow: 'hidden'
+          overflow: 'hidden',
+          ...spacings.mbLg
         },
     contentHeader: isMobile
       ? {}

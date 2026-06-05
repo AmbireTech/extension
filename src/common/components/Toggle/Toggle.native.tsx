@@ -48,6 +48,7 @@ const Toggle = ({ isOn, onToggle, label, style, disabled, trackStyle, toggleStyl
           width: 28,
           height: 12,
           padding: 0,
+          ...spacings.mrSm,
           backgroundColor: hexToRgba(String(theme.success400)),
           ...trackStyle
         }}
@@ -56,11 +57,12 @@ const Toggle = ({ isOn, onToggle, label, style, disabled, trackStyle, toggleStyl
           height: 12,
           padding: 0,
           backgroundColor: hexToRgba(String(theme.neutral600)),
+          ...spacings.mrSm,
           ...trackStyle
         }}
         hitSlop={{ top: 15, bottom: 15, left: 5, right: 5 }}
       />
-      {!!label && <Text style={spacings.mlSm}>{label}</Text>}
+      {!!label && <Text>{label}</Text>}
     </View>
   )
 }
