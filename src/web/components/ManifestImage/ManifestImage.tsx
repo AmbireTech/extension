@@ -17,6 +17,7 @@ type Props = {
   containerStyle?: StyleProp<ViewStyle>
   imageStyle?: ImageStyle
   skeletonAppearance?: SkeletonLoaderProps['appearance']
+  hideOnError?: boolean
 }
 
 const ManifestImage = ({
@@ -29,6 +30,7 @@ const ManifestImage = ({
   containerStyle = {},
   imageStyle = {},
   skeletonAppearance,
+  hideOnError = false
 }: Props) => {
   const { theme } = useTheme()
 
@@ -69,6 +71,7 @@ const ManifestImage = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [uri, uris?.length])
 
+    if (hideOnError && !isLoading && hasError && !fallback) return null
 
   return (
     <View
