@@ -8,10 +8,10 @@ import { HardwareWalletSigningRequest } from '@ambire-common/interfaces/signAcco
 import AmbireDevice from '@common/assets/svg/AmbireDevice'
 import CloseIcon from '@common/assets/svg/CloseIcon'
 import DriveIcon from '@common/assets/svg/DriveIcon'
-import LatticeIcon from '@common/assets/svg/LatticeIcon'
-import LedgerLetterIcon from '@common/assets/svg/LedgerLetterIcon'
+import GridPlusIcon from '@common/assets/svg/GridPlusIcon'
+import LedgerBadgeIcon from '@common/assets/svg/LedgerBadgeIcon'
 import LeftPointerArrowIcon from '@common/assets/svg/LeftPointerArrowIcon'
-import TrezorLockIcon from '@common/assets/svg/TrezorLockIcon'
+import TrezorBadgeIcon from '@common/assets/svg/TrezorBadgeIcon'
 import BottomSheet from '@common/components/BottomSheet'
 import ModalHeader from '@common/components/BottomSheet/ModalHeader'
 import Text from '@common/components/Text'
@@ -32,9 +32,9 @@ type Props = {
 }
 
 const iconByKeyType = {
-  trezor: TrezorLockIcon,
-  ledger: LedgerLetterIcon,
-  lattice: LatticeIcon
+  trezor: TrezorBadgeIcon,
+  ledger: LedgerBadgeIcon,
+  lattice: GridPlusIcon
 }
 
 const { isTab } = getUiType()

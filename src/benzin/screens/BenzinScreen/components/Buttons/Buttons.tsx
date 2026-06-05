@@ -1,13 +1,15 @@
-import React, { FC } from 'react'
-import { ViewStyle } from 'react-native'
+import { FC } from 'react'
+import { View, ViewStyle } from 'react-native'
 
 import CopyIcon from '@common/assets/svg/CopyIcon'
 import OpenIcon from '@common/assets/svg/OpenIcon'
 import Button from '@common/components/Button'
 import FooterGlassView from '@common/components/FooterGlassView'
+import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import { isBenzin, isMobile, isWeb } from '@common/config/env'
 import useTheme from '@common/hooks/useTheme'
 import useWindowSize from '@common/hooks/useWindowSize'
+import { EXPLORER_LINKS_DISABLED_TOOLTIP } from '@common/modules/settings/components/TransactionHistory/SubmittedTransactionSummary/constants'
 import spacings, { SPACING_LG, SPACING_TY } from '@common/styles/spacings'
 import { isExtension } from '@web/constants/browserapi'
 
@@ -17,14 +19,18 @@ interface Props {
   style?: ViewStyle
   showCopyBtn: boolean
   showOpenExplorerBtn: boolean
+  disableOpenExplorerBtn?: boolean
 }
 
-const OpenExplorerButton: FC<Pick<Props, 'handleOpenExplorer'>> = ({ handleOpenExplorer }) => {
+const OpenExplorerButton: FC<Pick<Props, 'handleOpenExplorer' | 'disableOpenExplorerBtn'>> = ({
+  handleOpenExplorer,
+  disableOpenExplorerBtn
+}) => {
   const { theme } = useTheme()
   const { maxWidthSize } = useWindowSize()
   const isMobileInStandaloneBenzin = !maxWidthSize('s') && isBenzin
 
-  return (
+  const button = (
     <Button
       type={isExtension ? 'outline' : 'secondary'}
       onPress={handleOpenExplorer}
@@ -32,6 +38,7 @@ const OpenExplorerButton: FC<Pick<Props, 'handleOpenExplorer'>> = ({ handleOpenE
       childrenPosition="left"
       hasBottomSpacing={isMobile}
       size={isMobile ? 'regular' : isMobileInStandaloneBenzin ? 'smaller' : 'large'}
+      disabled={disableOpenExplorerBtn}
       style={
         isWeb
           ? {
@@ -45,6 +52,19 @@ const OpenExplorerButton: FC<Pick<Props, 'handleOpenExplorer'>> = ({ handleOpenE
     >
       <OpenIcon width={24} height={24} color={theme.primaryText} style={spacings.mrMi} />
     </Button>
+  )
+
+  if (!disableOpenExplorerBtn || !isWeb) return button
+
+  return (
+    <View
+      dataSet={createGlobalTooltipDataSet({
+        id: 'benzin-open-explorer-disabled',
+        content: EXPLORER_LINKS_DISABLED_TOOLTIP
+      })}
+    >
+      {button}
+    </View>
   )
 }
 
@@ -78,6 +98,7 @@ const CopyButton: FC<Pick<Props, 'handleCopyText'>> = ({ handleCopyText }) => {
 const Buttons: FC<Props> = ({
   handleCopyText,
   handleOpenExplorer,
+  disableOpenExplorerBtn,
   showCopyBtn,
   showOpenExplorerBtn
 }) => {
@@ -92,7 +113,12 @@ const Buttons: FC<Props> = ({
         flexDirection: isMobileInStandaloneBenzin ? 'column' : 'row'
       }}
     >
-      {showOpenExplorerBtn && <OpenExplorerButton handleOpenExplorer={handleOpenExplorer} />}
+      {showOpenExplorerBtn && (
+        <OpenExplorerButton
+          handleOpenExplorer={handleOpenExplorer}
+          disableOpenExplorerBtn={disableOpenExplorerBtn}
+        />
+      )}
       {showCopyBtn && <CopyButton handleCopyText={handleCopyText} />}
     </FooterGlassView>
   )

@@ -5,7 +5,6 @@ import { View } from 'react-native'
 import { Dapp } from '@ambire-common/interfaces/dapp'
 import ConnectedIcon from '@common/assets/svg/ConnectedIcon'
 import SettingsIcon from '@common/assets/svg/SettingsIcon'
-import SettingsWheelIcon from '@common/assets/svg/SettingsWheelIcon'
 import StarIcon from '@common/assets/svg/StarIcon'
 import TwitterIcon from '@common/assets/svg/TwitterIcon'
 import Badge from '@common/components/Badge'
@@ -247,7 +246,7 @@ const DappItem = (dapp: DappItemProps) => {
                   {blacklisted === 'BLACKLISTED' && (
                     <Badge text={t('Blacklisted')} type="error" style={spacings.mrTy} />
                   )}
-                  {!isInSettings && (
+                  {!isInSettings && isConnected && (
                     <View testID="manage-dapp-dropdown" style={{ zIndex: 999 }}>
                       <ManageApp
                         dapp={dapp}

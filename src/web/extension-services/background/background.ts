@@ -433,7 +433,7 @@ const init = async () => {
       const hasOnUpdateInitialized = ctrl.onUpdateIds.includes('background')
       if (!hasOnUpdateInitialized) {
         ctrl.onUpdate(async (forceEmit) => {
-          const res = debounceFrontEndEventUpdatesOnSameTick(ctrl.name, ctrl, mainCtrl, forceEmit)
+          const res = debounceFrontEndEventUpdatesOnSameTick(ctrl.name, mainCtrl, forceEmit)
           if (res === 'DEBOUNCED') return
 
           if (ctrl.name === 'KeystoreController') {
@@ -474,6 +474,8 @@ const init = async () => {
 
       if (!hasOnErrorInitialized) {
         ctrl.onError((error) => {
+          if (!ctrl.isInRegistry()) return
+
           stateDebug(walletStateCtrl.logLevel, ctrl, ctrl.name, 'error')
           pm.send('> ui-error', {
             method: ctrl.name,
@@ -581,13 +583,16 @@ const init = async () => {
 
   function debounceFrontEndEventUpdatesOnSameTick(
     ctrlName: string,
-    ctrl: EventEmitter,
-    mainCtrl: EventEmitter | undefined,
+    mainCtrl: MainController | EventEmitter | undefined,
     forceEmit?: boolean
   ): 'DEBOUNCED' | 'EMITTED' {
     const sendUpdate = () => {
+      // Paused dynamic controllers may finish async work after being replaced.
+      const registeredCtrl = eventEmitterRegistry.values().find((ctrl) => ctrl.name === ctrlName)
+      if (!registeredCtrl) return
+
       // Controller updates
-      const stateToSendToFE = ctrl.toJSON()
+      const stateToSendToFE = registeredCtrl.toJSON()
 
       if (ctrlName === 'MainController') {
         // We are removing the state of the nested controllers in main to avoid the CPU-intensive task of parsing + stringifying.

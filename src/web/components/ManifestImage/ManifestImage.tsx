@@ -18,6 +18,7 @@ type Props = {
   containerStyle?: StyleProp<ViewStyle>
   imageStyle?: ImageStyle
   skeletonAppearance?: SkeletonLoaderProps['appearance']
+  hideOnError?: boolean
 }
 
 const getImageProxyUri = (imageUri: string) => {
@@ -45,7 +46,8 @@ const ManifestImage = ({
   iconScale = 1,
   containerStyle = {},
   imageStyle = {},
-  skeletonAppearance
+  skeletonAppearance,
+  hideOnError = false
 }: Props) => {
   const { theme } = useTheme()
   const uriSignature = useMemo(() => JSON.stringify([uri, ...uris]), [uri, uris])
@@ -112,6 +114,8 @@ const ManifestImage = ({
     setHasError(false)
     setIsLoading(true)
   }, [uriSignature, imageUris.length])
+
+  if (hideOnError && !isLoading && hasError && !fallback) return null
 
   return (
     <View

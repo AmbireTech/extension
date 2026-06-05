@@ -13,10 +13,9 @@ import flexbox from '@common/styles/utils/flexbox'
 interface Props {
   chainId: bigint
   marginRight?: number
-  hideLinks?: boolean
 }
 
-const ChainVisualization: FC<Props> = ({ chainId, marginRight, hideLinks = false }) => {
+const ChainVisualization: FC<Props> = ({ chainId, marginRight }) => {
   const { benzinNetworks, loadingBenzinNetworks = [] } = useNetworksContext()
   const {
     state: { networks }
@@ -38,11 +37,7 @@ const ChainVisualization: FC<Props> = ({ chainId, marginRight, hideLinks = false
             id={destinationNetwork.chainId.toString()}
             benzinNetwork={destinationNetwork}
           />
-          <Text
-            {...(!hideLinks && { onPress: handleLink })}
-            weight="semiBold"
-            style={spacings.mlMi}
-          >
+          <Text onPress={handleLink} weight="semiBold" style={spacings.mlMi}>
             {destinationNetwork.name}
           </Text>
         </>
@@ -53,11 +48,9 @@ const ChainVisualization: FC<Props> = ({ chainId, marginRight, hideLinks = false
         </Text>
       )}
       {isNetworkLoading && <SkeletonLoader width={140} height={20} />}
-      {!hideLinks && (
-        <Pressable style={spacings.mlMi} onPress={handleLink}>
-          <InfoIcon width={14} height={14} />
-        </Pressable>
-      )}
+      <Pressable style={spacings.mlMi} onPress={handleLink}>
+        <InfoIcon width={14} height={14} />
+      </Pressable>
     </View>
   )
 }

@@ -11,12 +11,16 @@ import Search from '@common/components/Search'
 import useController from '@common/hooks/useController'
 import useDebounce from '@common/hooks/useDebounce'
 import useNavigation from '@common/hooks/useNavigation'
-import ClearRecentsBottomSheet, { ClearRecentsBottomSheetHandle } from '@common/modules/explore/components/ClearRecentsBottomSheet'
+import ClearRecentsBottomSheet, {
+  ClearRecentsBottomSheetHandle
+} from '@common/modules/explore/components/ClearRecentsBottomSheet'
 import DappItem from '@common/modules/explore/components/DappItem'
 import DappsSkeletonLoader from '@common/modules/explore/components/DappsSkeletonLoader'
 import HorizontalDappsRow from '@common/modules/explore/components/HorizontalDappsRow'
 import SectionHeader from '@common/modules/explore/components/SectionHeader'
-import useExploreSections, { ExploreSection } from '@common/modules/explore/hooks/useExploreSections'
+import useExploreSections, {
+  ExploreSection
+} from '@common/modules/explore/hooks/useExploreSections'
 import { HeaderWithTitle } from '@common/modules/header/components/Header/Header'
 import { ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
