@@ -45,12 +45,7 @@ const AddressInput: FC<Props> = ({
           disabled={disabled}
         />
         <div className={styles.domainsIcons}>
-          <EnsIcon
-            color="currentColor"
-            width={22}
-            isActive={!!ensAddress}
-            className={styles.ensIcon}
-          />
+          <EnsIcon width={22} isActive={!!ensAddress} className={styles.ensIcon} />
         </div>
       </div>
       <Input.ValidationAndInfo validation={validation} infoLabel={infoLabel} />
