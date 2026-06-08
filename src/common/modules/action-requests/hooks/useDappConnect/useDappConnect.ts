@@ -48,14 +48,20 @@ const useDappConnect = () => {
   const shouldHoldToProceed = useMemo(() => {
     return (
       !!dappToConnect &&
-      (dappToConnect.blacklisted === 'BLACKLISTED' || dappToConnect.blacklisted === 'FAILED_TO_GET')
+      (dappToConnect.blacklisted === 'BLACKLISTED' ||
+        dappToConnect.blacklisted === 'SUSPICIOUS_HOSTING' ||
+        dappToConnect.blacklisted === 'FAILED_TO_GET')
     )
   }, [dappToConnect])
 
   const resolveButtonText = useMemo(() => {
     if (!dappToConnect || dappToConnect.blacklisted === 'LOADING') return t('Loading...')
     if (isAuthorizing) return t('Connecting...')
-    if (dappToConnect.blacklisted === 'BLACKLISTED') return t('Hold to continue anyway')
+    if (
+      dappToConnect.blacklisted === 'BLACKLISTED' ||
+      dappToConnect.blacklisted === 'SUSPICIOUS_HOSTING'
+    )
+      return t('Hold to continue anyway')
 
     return shouldHoldToProceed ? t('Hold to connect') : t('Connect')
   }, [dappToConnect, t, isAuthorizing, shouldHoldToProceed])

@@ -126,7 +126,12 @@ const useSignMessage = () => {
         method: 'init',
         args: [
           {
-            dapp: { name, icon, url: userRequest.dappPromises[0]?.session?.origin },
+            dapp: {
+              name,
+              icon,
+              url: userRequest.dappPromises[0]?.session?.origin,
+              sessionId: userRequest.dappPromises[0]?.session?.sessionId
+            },
             messageToSign: {
               fromRequestId: userRequest.id,
               content: {

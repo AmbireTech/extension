@@ -53,7 +53,7 @@ const DAppConnectHeader: FC<Props> = ({
           backgroundColor:
             securityCheck === 'BLACKLISTED'
               ? theme.errorBackground
-              : securityCheck === 'FAILED_TO_GET'
+              : securityCheck === 'SUSPICIOUS_HOSTING' || securityCheck === 'FAILED_TO_GET'
                 ? theme.warningBackground
                 : theme.tertiaryBackground
         },
@@ -121,7 +121,7 @@ const DAppConnectHeader: FC<Props> = ({
               <ErrorFilledIcon width={18} height={18} />
             </View>
           )}
-          {securityCheck === 'FAILED_TO_GET' && (
+          {(securityCheck === 'SUSPICIOUS_HOSTING' || securityCheck === 'FAILED_TO_GET') && (
             <View
               style={{
                 position: 'absolute',
