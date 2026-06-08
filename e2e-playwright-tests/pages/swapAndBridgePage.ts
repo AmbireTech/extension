@@ -494,7 +494,8 @@ export class SwapAndBridgePage extends BasePage {
     await expect(page.getByTestId('recipient-address-0')).toHaveText(
       /(?:Grant approval|ApproveSpender).*0\.0\d+.*USDC/
     )
-    expect(['LI.FI', 'SocketGateway']).toContain(firstRouteSelector)
+    // Execute because of uniswap
+    expect(['LI.FI', 'SocketGateway', 'Execute']).toContain(firstRouteSelector)
 
     // check second row
     const secondRow = await page.getByTestId('recipient-address-1').innerText()
@@ -516,7 +517,8 @@ export class SwapAndBridgePage extends BasePage {
     await expect(page.getByTestId('recipient-address-2')).toHaveText(
       /(?:Grant approval|ApproveSpender).*0\.0\d+.*USDC/
     )
-    expect(['LI.FI', 'SocketGateway']).toContain(thirdRouteSelector)
+    // Execute because of uniswap
+    expect(['LI.FI', 'SocketGateway', 'Execute']).toContain(thirdRouteSelector)
 
     // check fourth row
     const fourthRow = await page.getByTestId('recipient-address-3').innerText()

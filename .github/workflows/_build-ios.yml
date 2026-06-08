@@ -154,6 +154,7 @@ jobs:
           LI_FI_API_KEY: ${{ vars.LI_FI_API_KEY }}
           BUNGEE_API_KEY: ${{ vars.BUNGEE_API_KEY }}
           SQUID_INTEGRATOR_ID: ${{ vars.SQUID_INTEGRATOR_ID }}
+          UNISWAP_API_KEY: ${{ vars.UNISWAP_API_KEY }}
           SAFE_API: ${{ vars.SAFE_API }}
           WALLETCONNECT_PROJECT_ID: ${{ vars.WALLETCONNECT_PROJECT_ID }}
         run: ${{ inputs.build_command }}
