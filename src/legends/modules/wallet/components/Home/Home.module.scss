@@ -10,8 +10,11 @@
 
 .wrapper {
   @include container(true);
-  width: $container-width;
-  max-width: $container-width;
+
+  & {
+    width: $container-width;
+    max-width: $container-width;
+  }
 
   & {
     display: flex;
@@ -131,20 +134,9 @@
         .icon {
           margin-right: 1.5625rem;
         }
+
         .iconCoin {
           align-self: center;
-        }
-
-        &:nth-child(1) {
-          flex: 0.3;
-        }
-
-        &:nth-child(2) {
-          flex: 0.3;
-        }
-
-        &:nth-child(3) {
-          flex: 0.45;
         }
       }
 
@@ -273,9 +265,11 @@
       .chartWrapper {
         min-width: auto;
       }
+
       .title {
         margin-bottom: 2rem;
       }
+
       .walletLevelInfoWrapper {
         flex-wrap: wrap;
       }
