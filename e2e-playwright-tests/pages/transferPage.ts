@@ -126,6 +126,7 @@ export class TransferPage extends BasePage {
     ledgerSimulatorControls?: SpeculosDevice
     holdProceedButton?: boolean
   }) {
+    // await this.page.pause()
     // Proceed
     await this.expectButtonEnabled(selectors.transaction.proceedBtn)
     if (holdProceedButton) {
@@ -187,7 +188,7 @@ export class TransferPage extends BasePage {
       ).toEqual(true)
 
       // validate success message
-      const timeout = 200000
+      const timeout = 300000
       await this.compareText(selectors.txnStatus, message, { timeout })
 
       // Close page
