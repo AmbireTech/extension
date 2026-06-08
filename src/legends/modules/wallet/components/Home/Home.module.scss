@@ -10,8 +10,11 @@
 
 .wrapper {
   @include container(true);
-  width: $container-width;
-  max-width: $container-width;
+
+  & {
+    width: $container-width;
+    max-width: $container-width;
+  }
 
   & {
     display: flex;
