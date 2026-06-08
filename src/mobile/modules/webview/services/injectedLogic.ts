@@ -20,13 +20,16 @@ const ctrlOnUpdateIsDirtyFlags: Record<string, boolean> = {}
 
 function debounceFrontEndEventUpdatesOnSameTick(
   ctrlName: string,
-  ctrl: any,
   mainCtrl: any,
   forceEmit?: boolean
 ): 'DEBOUNCED' | 'EMITTED' {
   const sendUpdate = () => {
+    // Paused dynamic controllers may finish async work after being replaced.
+    const registeredCtrl = eventEmitterRegistry.values().find((ctrl) => ctrl.name === ctrlName)
+    if (!registeredCtrl) return
+
     // Controller updates
-    const stateToSendToFE = ctrl.toJSON()
+    const stateToSendToFE = registeredCtrl.toJSON()
 
     if (ctrlName === 'MainController') {
       // We are removing the state of the nested controllers in main to avoid the CPU-intensive task of parsing + stringifying.
@@ -108,13 +111,15 @@ const eventEmitterRegistry = new EventEmitterRegistryController(() => {
     const hasOnUpdateInitialized = ctrl.onUpdateIds.includes('webview')
     if (!hasOnUpdateInitialized) {
       ctrl.onUpdate((forceEmit: boolean) => {
-        debounceFrontEndEventUpdatesOnSameTick(ctrl.name, ctrl, mainCtrl, forceEmit)
+        debounceFrontEndEventUpdatesOnSameTick(ctrl.name, mainCtrl, forceEmit)
       }, 'webview')
     }
 
     const hasOnErrorInitialized = ctrl.onErrorIds.includes('webview')
     if (!hasOnErrorInitialized) {
       ctrl.onError(() => {
+        if (!ctrl.isInRegistry()) return
+
         sendToReactEvent('ctrl.error', { ctrlName: ctrl.name, errors: ctrl.emittedErrors })
       }, 'webview')
     }

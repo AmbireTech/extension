@@ -1,7 +1,7 @@
 import { formatUnits } from 'ethers'
 import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { ColorValue, View } from 'react-native'
+import { ColorValue, GestureResponderEvent, StyleProp, View, ViewStyle } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 
 import { getTokenAmount } from '@ambire-common/libs/portfolio/helpers'
@@ -18,7 +18,7 @@ import useController from '@common/hooks/useController'
 import useHover, { AnimatedPressable } from '@common/hooks/useHover'
 import useTheme from '@common/hooks/useTheme'
 import MaxAmount from '@common/modules/swap-and-bridge/components/MaxAmount'
-import spacings, { SPACING } from '@common/styles/spacings'
+import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
 type EditApprovalAmountInputProps = {
@@ -104,13 +104,22 @@ const EditApprovalAmountInput = memo(
 const EditApproval = ({
   editCall,
   token,
+  chainId,
   value,
-  id
+  id,
+  style
 }: {
-  editCall: (amount: string, token: string, closeEditApprovals: () => void) => void
+  editCall: (
+    amount: string,
+    token: string,
+    tokenChainId: bigint,
+    closeEditApprovals: () => void
+  ) => void
   token: string
+  chainId: bigint
   value: bigint
   id?: string
+  style?: StyleProp<ViewStyle>
 }) => {
   const { t } = useTranslation()
   const { theme } = useTheme()
@@ -134,8 +143,10 @@ const EditApproval = ({
     // where we don't have access to controllers.
     // Therefore, we need to check whether the portfolio controller exists
     if (!portfolio) return undefined
-    return portfolio.tokens.find((t) => t.address.toLowerCase() === token.toLowerCase())
-  }, [portfolio, token])
+    return portfolio.tokens.find(
+      (t) => t.address.toLowerCase() === token.toLowerCase() && t.chainId === chainId
+    )
+  }, [chainId, portfolio, token])
 
   const maxAmount = useMemo(() => {
     if (!portfolioToken) return undefined
@@ -175,6 +186,14 @@ const EditApproval = ({
     amountRef.current = value
   }, [])
 
+  const handleOpenEditApprovals = useCallback(
+    (event: GestureResponderEvent) => {
+      event.stopPropagation()
+      openEditApprovals()
+    },
+    [openEditApprovals]
+  )
+
   return (
     <>
       <AnimatedPressable
@@ -183,18 +202,21 @@ const EditApproval = ({
           flexbox.directionRow,
           flexbox.alignCenter,
           spacings.mrTy,
-          { marginLeft: -8 }
+          { marginLeft: -8 },
+          style
         ]}
         {...bindEditApprovals}
-        onPress={() => openEditApprovals()}
+        onPress={handleOpenEditApprovals}
       >
         <Text fontSize={14} color={theme.linkText}>
           {'['}
         </Text>
         <EditPenIcon width={20} height={20} color={theme.linkText} />
-        <Text fontSize={14} color={theme.linkText}>
-          {t('Edit')}
-        </Text>
+        {!isMobile && (
+          <Text fontSize={14} color={theme.linkText}>
+            {t('Edit')}
+          </Text>
+        )}
         <Text fontSize={14} color={theme.linkText}>
           {']'}
         </Text>
@@ -205,6 +227,7 @@ const EditApproval = ({
         type="modal"
         closeBottomSheet={closeEditApprovals}
         style={{ maxWidth: 460 }}
+        shouldBeClosableOnDrag={false}
       >
         <View style={flexbox.alignCenter}>
           <Text fontSize={20} weight="medium" style={[spacings.mbXl, spacings.mtTy]}>
@@ -224,11 +247,10 @@ const EditApproval = ({
           </View>
           <FooterGlassView
             absolute={false}
-            style={{ ...spacings.mt2Xl, columnGap: SPACING }}
+            style={{ ...spacings.mt2Xl }}
             mobileStyle={{
               ...flexbox.directionRow,
-              ...spacings.mtLg,
-              columnGap: SPACING
+              ...spacings.mtLg
             }}
           >
             <Button
@@ -237,12 +259,12 @@ const EditApproval = ({
               onPress={() => closeEditApprovals()}
               hasBottomSpacing={false}
               size="smaller"
-              style={[isWeb && { width: 100 }, isMobile && flexbox.flex1]}
+              style={[spacings.mrTy, isWeb && { width: 100 }, isMobile && flexbox.flex1]}
             />
             <Button
               type="primary"
               text={t('Save')}
-              onPress={() => editCall(amountRef.current, token, closeEditApprovals)}
+              onPress={() => editCall(amountRef.current, token, chainId, closeEditApprovals)}
               hasBottomSpacing={false}
               size="smaller"
               style={[isWeb && { width: 100 }, isMobile && flexbox.flex1]}

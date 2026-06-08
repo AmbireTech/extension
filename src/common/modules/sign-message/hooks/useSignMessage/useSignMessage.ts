@@ -88,9 +88,15 @@ const useSignMessage = () => {
     [account?.safeCreation, selectedAccountKeyStoreKeys.length]
   )
   const humanizedMessage = useMemo(() => {
+    if (signMessageState.humanizedMessage) return signMessageState.humanizedMessage
+    if (signMessageState.isHumanizing) return
     if (!signMessageState?.messageToSign) return
     return humanizeMessage(signMessageState.messageToSign)
-  }, [signMessageState])
+  }, [
+    signMessageState.humanizedMessage,
+    signMessageState.isHumanizing,
+    signMessageState?.messageToSign
+  ])
 
   const humanizationHasBlockingWarnings = useMemo(
     () => !!humanizedMessage?.warnings?.some((w) => w.blocking),
@@ -247,20 +253,29 @@ const useSignMessage = () => {
 
   const resolveButtonText = useMemo(() => {
     if (signMessageState.status === SignMessageStatus.Partial) return t('Close')
+    if (signMessageState.isHumanizing) return t('Preparing...')
     if (isSiwe) return t('Sign in')
     if (isScrollToBottomForced) return t('Read the message')
 
     if (signStatus === 'LOADING') return t('Signing...')
 
     return t('Sign')
-  }, [isSiwe, isScrollToBottomForced, signStatus, signMessageState.status, t])
+  }, [
+    isSiwe,
+    isScrollToBottomForced,
+    signStatus,
+    signMessageState.status,
+    signMessageState.isHumanizing,
+    t
+  ])
 
   const holdToProceedButtonText = useMemo(() => {
+    if (signMessageState.isHumanizing) return t('Preparing...')
     if (isScrollToBottomForced) return t('Read the message')
     if (isSiwe) return t('Hold to sign in')
 
     return t('Hold to sign')
-  }, [isSiwe, isScrollToBottomForced, t])
+  }, [isSiwe, isScrollToBottomForced, signMessageState.isHumanizing, t])
 
   const holdToProceedCompleteText = useMemo(() => {
     if (signStatus === 'LOADING') return t('Signing...')
@@ -309,6 +324,7 @@ const useSignMessage = () => {
 
   const isResolveActionDisabled =
     signStatus === 'LOADING' ||
+    signMessageState.isHumanizing ||
     isScrollToBottomForced ||
     humanizationHasBlockingWarnings ||
     isSafeNotDeployed ||
@@ -326,6 +342,7 @@ const useSignMessage = () => {
     selectedAccountKeyStoreKeys,
     isViewOnly,
     humanizedMessage,
+    isHumanizing: signMessageState.isHumanizing,
     humanizationHasBlockingWarnings,
     visualizeHumanized,
     isScrollToBottomForced,
