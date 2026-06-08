@@ -1,23 +1,28 @@
 import { isHexString } from 'ethers'
 import { FC, memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { NativeScrollEvent, ScrollView, View } from 'react-native'
+import { GestureResponderEvent, NativeScrollEvent, Pressable, ScrollView, View } from 'react-native'
 
 import { Hex } from '@ambire-common/interfaces/hex'
 import { ISignMessageController } from '@ambire-common/interfaces/signMessage'
+import { IrMessage } from '@ambire-common/libs/humanizer/interfaces'
 import { isValidAddress } from '@ambire-common/services/address'
 import WarningFilledIcon from '@common/assets/svg/WarningFilledIcon'
+import CopyText from '@common/components/CopyText'
+import HumanizedVisualization from '@common/components/HumanizedVisualization'
 import HumanizerAddress from '@common/components/HumanizerAddress'
-import MultistateToggleButton from '@common/components/MultistateToggleButton'
 import Text from '@common/components/Text'
 import useTheme from '@common/hooks/useTheme'
 import useWindowSize from '@common/hooks/useWindowSize'
 import AnimatedDownArrow from '@common/modules/account-picker/components/AccountsOnPageList/AnimatedDownArrow'
-import spacings from '@common/styles/spacings'
+import isErc7730Visualization from '@common/modules/sign-message/utils/isErc7730Visualization'
+import spacings, { SPACING_SM, SPACING_TY } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { getMessageAsText, simplifyTypedMessage } from '@common/utils/messageToString'
 
+import { getEip712IntegerFieldNames, getParsedMessageValue } from './helpers'
 import getStyles from './styles'
+import { stringify } from '@ambire-common/libs/richJson/richJson'
 
 const isCloseToBottom = ({ layoutMeasurement, contentOffset, contentSize }: NativeScrollEvent) => {
   const paddingToBottom = 40
@@ -28,98 +33,169 @@ type MessageItem = {
   value: string
   type: string
   n: number
+  path: string
   isArrayItem?: boolean
 }
 
-type ProcessedItem = MessageItem & {
+type ParsedMessageRow = MessageItem & {
+  label: string
   componentToReturn: React.ReactNode
 }
 
-const useProcessedMessageItems = (
-  message: any,
+const getRowLabel = (path: string, fallback: string) => {
+  const lastPathPart = path.split('.').filter(Boolean).pop()
+
+  return lastPathPart || fallback
+}
+
+const useParsedMessageRows = (
+  message: unknown,
   chainId: bigint,
   responsiveSizeMultiplier: number,
   t: (key: string) => string
-): ProcessedItem[] => {
+): ParsedMessageRow[] => {
   return useMemo(() => {
-    return simplifyTypedMessage(message).map((i: MessageItem) => {
-      let componentToReturn: React.ReactNode = i.value
+    if (!message) return []
 
-      const isProbablyADateWIthinRange =
-        parseInt(i.value, 10) * 1000 > new Date('01/01/2000').getTime() &&
-        parseInt(i.value, 10) * 1000 < new Date('01/01/2100').getTime()
-      const isInfiniteAmount = parseInt(i.value, 10)?.toString(16) === '1'.padEnd(65, '0')
+    return simplifyTypedMessage(message)
+      .filter((i: MessageItem) => i.type === 'value')
+      .map((i: MessageItem) => {
+        let componentToReturn: React.ReactNode = i.value
+        const valueAsString = String(i.value)
 
-      if (isValidAddress(i.value))
-        componentToReturn = (
-          <HumanizerAddress
-            chainId={BigInt(chainId)}
-            address={i.value}
-            fontSize={14 * responsiveSizeMultiplier}
-          />
-        )
-      else if (isProbablyADateWIthinRange)
-        componentToReturn = new Date(parseInt(i.value, 10) * 1000).toUTCString()
-      else if (isInfiniteAmount)
-        componentToReturn = (
-          <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-            <Text
-              fontSize={16 * responsiveSizeMultiplier}
-              weight="semiBold"
-              style={[spacings.mrTy]}
-            >
-              {t('Infinite amount')}
-            </Text>
-            <WarningFilledIcon
-              width={16 * responsiveSizeMultiplier}
-              height={16 * responsiveSizeMultiplier}
+        const isProbablyADateWIthinRange =
+          parseInt(valueAsString, 10) * 1000 > new Date('01/01/2000').getTime() &&
+          parseInt(valueAsString, 10) * 1000 < new Date('01/01/2100').getTime()
+        const isInfiniteAmount = parseInt(valueAsString, 10)?.toString(16) === '1'.padEnd(65, '0')
+
+        if (isValidAddress(valueAsString))
+          componentToReturn = (
+            <HumanizerAddress
+              chainId={BigInt(chainId)}
+              address={valueAsString}
+              fontSize={14 * responsiveSizeMultiplier}
+              actionsMode="inline"
             />
-          </View>
-        )
+          )
+        else if (isProbablyADateWIthinRange)
+          componentToReturn = new Date(parseInt(valueAsString, 10) * 1000).toUTCString()
+        else if (isInfiniteAmount)
+          componentToReturn = (
+            <View style={[flexbox.directionRow, flexbox.alignCenter]}>
+              <Text
+                fontSize={16 * responsiveSizeMultiplier}
+                weight="semiBold"
+                style={[spacings.mrTy]}
+              >
+                {t('Infinite amount')}
+              </Text>
+              <WarningFilledIcon
+                width={16 * responsiveSizeMultiplier}
+                height={16 * responsiveSizeMultiplier}
+              />
+            </View>
+          )
 
-      return { ...i, componentToReturn }
-    })
+        return {
+          ...i,
+          label: getRowLabel(i.path, valueAsString),
+          componentToReturn
+        }
+      })
   }, [message, chainId, responsiveSizeMultiplier, t])
 }
 
+type ActiveTab = 'parsed' | 'raw'
+
 const FallbackVisualization: FC<{
   messageToSign: ISignMessageController['messageToSign']
+  humanizedMessage?: IrMessage
   setHasReachedBottom: (hasReachedBottom: boolean) => void
   hasReachedBottom: boolean
   responsiveSizeMultiplier?: number
   withScrollDownArrow?: boolean
+  rawOnly?: boolean
+  scrollEnabled?: boolean
+  withCompactDataRow?: boolean
+  withDecimalIntegerRows?: boolean
+  disableScroll?: boolean
 }> = ({
   messageToSign,
+  humanizedMessage,
   setHasReachedBottom,
   hasReachedBottom,
   responsiveSizeMultiplier = 1,
-  withScrollDownArrow = false
+  withScrollDownArrow = false,
+  rawOnly = false,
+  scrollEnabled = true,
+  withCompactDataRow = false,
+  withDecimalIntegerRows = false,
+  disableScroll = false
 }) => {
   const { t } = useTranslation()
-  const { styles } = useTheme(getStyles)
+  const { styles, theme } = useTheme(getStyles)
   const { maxWidthSize } = useWindowSize()
   const scrollViewRef = useRef<ScrollView>(null)
   const scrollOffsetRef = useRef(0)
   const [containerHeight, setContainerHeight] = useState(0)
   const [contentHeight, setContentHeight] = useState(0)
-  const [showRawTypedMessage, setShowRawTypedMessage] = useState(false)
-  const statesForMultistateButton = useMemo(
-    () => [
-      { text: 'Parsed', callback: () => setShowRawTypedMessage(false) },
-      { text: 'Raw', callback: () => setShowRawTypedMessage(true) }
-    ],
-    []
+  const [activeTab, setActiveTab] = useState<ActiveTab>('parsed')
+  const content = messageToSign?.content
+  const chainId = messageToSign?.chainId || 1n
+  const isTypedMessage = content?.kind === 'typedMessage'
+  const erc7730Visualizations = useMemo(
+    () => humanizedMessage?.fullVisualization?.filter(isErc7730Visualization) || [],
+    [humanizedMessage?.fullVisualization]
   )
+  const parsedRows = useParsedMessageRows(
+    content?.kind === 'typedMessage' ? content.message : null,
+    chainId,
+    responsiveSizeMultiplier,
+    t
+  )
+  const integerFieldNames = useMemo(
+    () =>
+      content?.kind === 'typedMessage' && withDecimalIntegerRows
+        ? getEip712IntegerFieldNames(content.types, content.primaryType)
+        : new Set<string>(),
+    [content, withDecimalIntegerRows]
+  )
+  const tabs = useMemo(
+    () =>
+      [
+        ['parsed', t('Parsed')],
+        ['raw', t('Raw')]
+      ] as const,
+    [t]
+  )
+  const handleTabPress = useCallback((tab: ActiveTab) => {
+    setActiveTab(tab)
+  }, [])
+  const handlePressTab = useCallback(
+    (event: GestureResponderEvent, tab: ActiveTab) => {
+      event.stopPropagation()
+      handleTabPress(tab)
+    },
+    [handleTabPress]
+  )
+  const ContentWrapper = disableScroll ? View : ScrollView
+
   useEffect(() => {
+    if (disableScroll) {
+      if (!hasReachedBottom) setHasReachedBottom(true)
+      return
+    }
     if (!messageToSign || !containerHeight || !contentHeight) return
     const isScrollNotVisible = contentHeight <= containerHeight
     if (setHasReachedBottom && !hasReachedBottom) setHasReachedBottom(isScrollNotVisible)
   }, [
+    disableScroll,
     contentHeight,
     containerHeight,
     setHasReachedBottom,
     messageToSign,
-    showRawTypedMessage,
+    activeTab,
+    rawOnly,
     hasReachedBottom
   ])
 
@@ -130,72 +206,141 @@ const FallbackVisualization: FC<{
     scrollViewRef.current?.scrollTo({ y: nextOffset, animated: true })
   }, [containerHeight])
 
-  if (!messageToSign) return null
-
-  const { content } = messageToSign
-
-  const processedItems =
-    content.kind === 'typedMessage'
-      ? useProcessedMessageItems(
-          content.message,
-          messageToSign.chainId,
-          responsiveSizeMultiplier,
-          t
-        )
-      : []
+  if (!messageToSign || !content) return null
 
   return (
     <View style={[styles.container]}>
-      <ScrollView
-        ref={scrollViewRef}
-        onScroll={(e) => {
-          scrollOffsetRef.current = e.nativeEvent.contentOffset.y
-          if (isCloseToBottom(e.nativeEvent) && setHasReachedBottom) setHasReachedBottom(true)
-        }}
-        onLayout={(e) => {
-          setContainerHeight(e.nativeEvent.layout.height)
-        }}
-        onContentSizeChange={(_, height) => {
-          setContentHeight(height)
-        }}
-        scrollEventThrottle={16}
+      {isTypedMessage && !rawOnly && (
+        <View style={styles.tabHeader}>
+          {tabs.map(([tab, label]) => {
+            const isActive = activeTab === tab
+
+            return (
+              <Pressable
+                key={tab}
+                onPress={(event) => handlePressTab(event, tab)}
+                style={[
+                  styles.tabButton,
+                  {
+                    borderBottomColor: isActive ? theme.secondaryAccent400 : 'transparent'
+                  }
+                ]}
+              >
+                <Text
+                  fontSize={14 * responsiveSizeMultiplier}
+                  weight={isActive ? 'semiBold' : 'medium'}
+                  color={isActive ? theme.secondaryAccent400 : theme.secondaryText}
+                >
+                  {label}
+                </Text>
+              </Pressable>
+            )
+          })}
+        </View>
+      )}
+      <ContentWrapper
+        {...(!disableScroll
+          ? {
+              ref: scrollViewRef,
+              scrollEnabled,
+              onScroll: (e: { nativeEvent: NativeScrollEvent }) => {
+                scrollOffsetRef.current = e.nativeEvent.contentOffset.y
+                if (isCloseToBottom(e.nativeEvent) && setHasReachedBottom) setHasReachedBottom(true)
+              },
+              onLayout: (e: { nativeEvent: { layout: { height: number } } }) => {
+                setContainerHeight(e.nativeEvent.layout.height)
+              },
+              onContentSizeChange: (_: number, height: number) => {
+                setContentHeight(height)
+              },
+              scrollEventThrottle: 16
+            }
+          : {})}
       >
-        {content.kind === 'typedMessage' && showRawTypedMessage && (
+        {isTypedMessage && (rawOnly || activeTab === 'raw') && (
           <Text
             selectable
             weight="regular"
             fontSize={(maxWidthSize('xl') ? 14 : 12) * responsiveSizeMultiplier}
             appearance="secondaryText"
-            style={spacings.mb}
+            style={styles.rawText}
           >
-            {JSON.stringify(content, null, 4)}
+            {stringify(content, { pretty: true })}
           </Text>
         )}
-        {content.kind === 'typedMessage' && !showRawTypedMessage && (
-          <>
-            {processedItems.map((i) => (
-              <View
-                key={i.type + i.value}
-                style={{
-                  marginBottom:
-                    i.isArrayItem && isHexString(i.value) ? 8 * responsiveSizeMultiplier : 0,
-                  flexDirection: 'row',
-                  flexWrap: 'wrap'
-                }}
-              >
-                <Text
-                  selectable
-                  weight={i.type === 'key' ? 'semiBold' : 'regular'}
-                  fontSize={16 * responsiveSizeMultiplier}
-                  appearance="secondaryText"
-                  style={{ marginLeft: i.n * 20 * responsiveSizeMultiplier }}
+        {isTypedMessage &&
+          !rawOnly &&
+          activeTab === 'parsed' &&
+          (erc7730Visualizations.length ? (
+            <HumanizedVisualization
+              data={erc7730Visualizations}
+              chainId={chainId}
+              sizeMultiplierSize={responsiveSizeMultiplier}
+              textSize={14}
+              hasPadding={false}
+              erc7730Mode="description"
+            />
+          ) : (
+            <View>
+              {parsedRows.map((i) => (
+                <View
+                  key={`${i.path}-${i.value}`}
+                  style={[
+                    styles.parsedRow,
+                    {
+                      marginBottom:
+                        i.isArrayItem && isHexString(String(i.value))
+                          ? SPACING_TY * responsiveSizeMultiplier
+                          : 0
+                    }
+                  ]}
                 >
-                  {i.componentToReturn}
-                </Text>
-              </View>
-            ))}
-          </>
-        )}
+                  <Text
+                    selectable
+                    weight="semiBold"
+                    fontSize={14 * responsiveSizeMultiplier}
+                    appearance="secondaryText"
+                    style={[
+                      styles.parsedLabel,
+                      { marginLeft: Math.max(i.n - 1, 0) * SPACING_SM * responsiveSizeMultiplier }
+                    ]}
+                  >
+                    {i.label}
+                  </Text>
+                  <View style={styles.parsedValue}>
+                    {typeof i.componentToReturn === 'string' ||
+                    typeof i.componentToReturn === 'number' ? (
+                      <>
+                        <Text
+                          selectable
+                          weight="medium"
+                          fontSize={14 * responsiveSizeMultiplier}
+                          appearance="primaryText"
+                          style={styles.parsedValueText}
+                        >
+                          {withCompactDataRow || withDecimalIntegerRows
+                            ? getParsedMessageValue(i.label, i.componentToReturn, integerFieldNames)
+                            : i.componentToReturn}
+                        </Text>
+                        {withCompactDataRow &&
+                          i.label === 'data' &&
+                          typeof i.componentToReturn === 'string' && (
+                            <CopyText
+                              text={i.componentToReturn}
+                              iconColor={theme.secondaryText}
+                              iconSize={16 * responsiveSizeMultiplier}
+                              style={spacings.mlMi}
+                            />
+                          )}
+                      </>
+                    ) : (
+                      i.componentToReturn
+                    )}
+                  </View>
+                </View>
+              ))}
+            </View>
+          ))}
         {content.kind === 'authorization-7702' && (
           <Text
             selectable
@@ -218,16 +363,13 @@ const FallbackVisualization: FC<{
             {getMessageAsText(content.message as Hex) || t('(Empty message)')}
           </Text>
         )}
-      </ScrollView>
-      {!!containerHeight && !!contentHeight && withScrollDownArrow && (
+      </ContentWrapper>
+      {!disableScroll && !!containerHeight && !!contentHeight && withScrollDownArrow && (
         <AnimatedDownArrow
           isVisible={contentHeight > containerHeight && !hasReachedBottom}
           appearance="primary"
           onPress={handleScrollDown}
         />
-      )}
-      {content.kind === 'typedMessage' && (
-        <MultistateToggleButton style={styles.toggleButton} states={statesForMultistateButton} />
       )}
     </View>
   )

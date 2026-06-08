@@ -8,13 +8,13 @@ import AddFromCurrentRecoveryPhraseIcon from '@common/assets/svg/AddFromCurrentR
 import HWIcon from '@common/assets/svg/HWIcon'
 import ImportAccountIcon from '@common/assets/svg/ImportAccountIcon'
 import ImportJsonIcon from '@common/assets/svg/ImportJsonIcon'
-import LatticeIcon from '@common/assets/svg/LatticeIcon'
-import LedgerLetterIcon from '@common/assets/svg/LedgerLetterIcon'
+import GridPlusIcon from '@common/assets/svg/GridPlusIcon'
+import LedgerBadgeIcon from '@common/assets/svg/LedgerBadgeIcon'
 import PrivateKeyIcon from '@common/assets/svg/PrivateKeyIcon'
 import ReceiveIcon from '@common/assets/svg/ReceiveIcon'
-import SafeIconGray from '@common/assets/svg/SafeIconGray'
+import SafeBadgeIcon from '@common/assets/svg/SafeBadgeIcon'
 import SeedPhraseIcon from '@common/assets/svg/SeedPhraseIcon'
-import TrezorLockIcon from '@common/assets/svg/TrezorLockIcon'
+import TrezorBadgeIcon from '@common/assets/svg/TrezorBadgeIcon'
 import ViewOnlyIcon from '@common/assets/svg/ViewOnlyIcon'
 import BottomSheet from '@common/components/BottomSheet'
 import ModalHeader from '@common/components/BottomSheet/ModalHeader'
@@ -59,7 +59,7 @@ const AddAccount = ({
       {
         key: 'trezor',
         text: t('Trezor'),
-        icon: TrezorLockIcon,
+        icon: TrezorBadgeIcon,
         onPress: () => {
           setTriggeredHwWalletFlow('trezor')
           dispatch({ type: 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_TREZOR' })
@@ -69,7 +69,7 @@ const AddAccount = ({
       {
         key: 'ledger',
         text: t('Ledger'),
-        icon: LedgerLetterIcon,
+        icon: LedgerBadgeIcon,
         onPress: () => {
           goToNextRoute(WEB_ROUTES.ledgerConnect)
         },
@@ -78,7 +78,7 @@ const AddAccount = ({
       {
         key: 'lattice',
         text: t('GridPlus'),
-        icon: LatticeIcon,
+        icon: GridPlusIcon,
         onPress: () => {
           setTriggeredHwWalletFlow('lattice')
           dispatch({ type: 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_LATTICE' })
@@ -118,7 +118,7 @@ const AddAccount = ({
             {
               key: 'import-safe',
               text: t('Safe account'),
-              icon: SafeIconGray,
+              icon: SafeBadgeIcon,
               onPress: () => goToNextRoute(ROUTES.safeImport),
               testID: 'import-safe'
             },

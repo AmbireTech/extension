@@ -304,19 +304,6 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
     overwriteValidation: validationFormMsgs.recipientAddress
   })
 
-  const isOneOwnerSafe = useMemo(() => {
-    if (!account?.safeCreation) return false
-
-    return (
-      signAccountOpController?.threshold === 1 &&
-      signAccountOpController?.accountKeyStoreKeys.length === 1
-    )
-  }, [
-    account?.safeCreation,
-    signAccountOpController?.threshold,
-    signAccountOpController?.accountKeyStoreKeys.length
-  ])
-
   /**
    * True if the user has pending user requests and there is no amount set in the form.
    * Used to allow the user to open the SignAccountOp window to sign the requests.
@@ -377,7 +364,7 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
         // Proceed in OneClick txn
         if (executionType === 'open-request-window') {
           // one click mode opens signAccountOp if more than 1 req in batch
-          if ((!!account?.safeCreation && !isOneOwnerSafe) || networkUserRequests.length > 0) {
+          if (!!account?.safeCreation || networkUserRequests.length > 0) {
             requestsDispatch({
               type: 'method',
               params: {
@@ -448,8 +435,7 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
       resetTransferForm,
       networkUserRequests.length,
       openEstimationModalAndDispatch,
-      account?.safeCreation,
-      isOneOwnerSafe
+      account?.safeCreation
     ]
   )
 

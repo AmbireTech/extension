@@ -49,6 +49,7 @@ const Info: FC<Props> = () => {
               style={{ maxWidth: '100%' }}
               address={messageToSign.content.domain.verifyingContract}
               chainId={messageToSign.chainId}
+              actionsMode="inline"
             />
             <Text
               fontSize={14 * responsiveSizeMultiplier}

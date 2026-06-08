@@ -10,7 +10,7 @@ import useTheme from '@common/hooks/useTheme'
 import ActionFooter from '@common/modules/action-requests/components/ActionFooter'
 import Account from '@common/modules/action-requests/components/SwitchAccount/Account'
 import useSwitchAccount from '@common/modules/action-requests/hooks/useSwitchAccount'
-import spacings, { SPACING_LG, SPACING_SM } from '@common/styles/spacings'
+import spacings, { SPACING_LG, SPACING_MD, SPACING_SM } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
 import ManifestImage from '@web/components/ManifestImage'
@@ -64,73 +64,84 @@ const SwitchAccountScreen = () => {
           <View style={styles.content}>
             <View
               style={{
-                height: 60,
                 ...flexbox.center,
-                backgroundColor: theme.tertiaryBackground
+                ...spacings.pvLg,
+                ...spacings.phLg,
+                backgroundColor: theme.secondaryBackground
               }}
             >
-              <Text fontSize={20} weight="medium">
+              <Text
+                fontSize={20}
+                weight="medium"
+                style={{
+                  marginBottom: SPACING_MD * responsiveSizeMultiplier
+                }}
+              >
                 {t('Switch Account Request')}
               </Text>
-            </View>
-            <View
-              style={{
-                backgroundColor: theme.primaryBackground,
-                ...flexbox.alignCenter,
-                ...spacings.pv,
-                ...spacings.phLg,
-                ...spacings.pbLg
-              }}
-            >
               {!!dAppData && (
                 <View
                   style={[
                     flexbox.center,
                     {
-                      marginBottom: SPACING_SM * responsiveSizeMultiplier
+                      marginBottom: SPACING_MD * responsiveSizeMultiplier
                     }
                   ]}
                 >
                   <ManifestImage
                     uri={dAppData.icon}
-                    size={responsiveSizeMultiplier * 56}
+                    size={responsiveSizeMultiplier * 48}
                     containerStyle={{
                       backgroundColor: theme.secondaryBackground
                     }}
-                    iconScale={0.85}
+                    iconScale={1}
                     imageStyle={{
                       backgroundColor: theme.secondaryBackground
                     }}
                     fallback={() => (
                       <ManifestFallbackIcon
-                        width={responsiveSizeMultiplier * 56}
-                        height={responsiveSizeMultiplier * 56}
+                        width={responsiveSizeMultiplier * 48}
+                        height={responsiveSizeMultiplier * 48}
                       />
                     )}
                   />
                 </View>
               )}
               {!!dAppData && (
-                <Text appearance="secondaryText" style={[spacings.mbSm, text.center]} fontSize={16}>
-                  <Text appearance="primaryText" fontSize={16} weight="medium">
+                <Text appearance="secondaryText" style={text.center}>
+                  <Text appearance="secondaryText" weight="semiBold">
                     {dAppData.name}
                   </Text>{' '}
-                  {t(`requires a ${nextRequestLabel} from `)}
-                  <Text appearance="primaryText" fontSize={16} weight="medium">
+                  {t(`requires a ${nextRequestLabel} from:\n`)}
+                  <Text appearance="secondaryText" weight="semiBold">
                     {nextAccountData?.preferences.label ||
                       nextAccountData?.addr ||
                       'Unknown Account'}
                   </Text>
                 </Text>
               )}
-
-              {account && <Account style={spacings.mbSm} {...account} />}
-              <DownArrowLongIcon
-                style={[spacings.mbSm]}
-                color={theme.secondaryText}
-                width={16}
-                height={16}
-              />
+            </View>
+            <View
+              style={{
+                backgroundColor: theme.primaryBackground,
+                ...flexbox.alignCenter,
+                ...spacings.pvLg,
+                ...spacings.phLg
+              }}
+            >
+              {account && <Account {...account} />}
+              <View
+                style={{
+                  ...flexbox.center,
+                  ...spacings.mvTy,
+                  width: 32 * responsiveSizeMultiplier,
+                  height: 32 * responsiveSizeMultiplier,
+                  borderRadius: 16,
+                  backgroundColor: theme.secondaryBackground
+                }}
+              >
+                <DownArrowLongIcon color={theme.iconPrimary} width={12} height={12} />
+              </View>
               {nextAccountData ? (
                 <Account
                   addr={nextAccountData?.addr || ''}
@@ -144,11 +155,11 @@ const SwitchAccountScreen = () => {
                   style={spacings.mbLg}
                 />
               ) : (
-                <Text appearance="errorText" style={spacings.mbLg} fontSize={16}>
+                <Text appearance="errorText" style={spacings.mbLg}>
                   {t('Invalid account data')}
                 </Text>
               )}
-              <Text style={text.center} appearance="secondaryText" fontSize={16}>
+              <Text style={text.center} weight="medium">
                 {t(
                   'Would you like to switch to this account now to continue with the signing process?'
                 )}

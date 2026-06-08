@@ -126,7 +126,7 @@ const DashboardSearch: FC<Props> = ({ control, placeholder }) => {
               <View style={[flexbox.flex1, flexbox.directionRow, flexbox.alignCenter]}>
                 {showInput ? (
                   <Input
-                    testID="search-input"
+                    testID="search-input-field"
                     borderless
                     setInputRef={(ref) => {
                       inputRef.current = ref

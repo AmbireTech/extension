@@ -1,4 +1,4 @@
-import { StyleSheet, ViewStyle } from 'react-native'
+import { StyleSheet, TextStyle, ViewStyle } from 'react-native'
 
 import spacings, { SPACING_MD } from '@common/styles/spacings'
 import { ThemeProps } from '@common/styles/themeConfig'
@@ -10,6 +10,8 @@ interface Style {
   noKeysToSignAlert: ViewStyle
   kindOfMessage: ViewStyle
   warningContainer: ViewStyle
+  erc7730TypedMessageTitle: TextStyle
+  erc7730TypedMessageDivider: ViewStyle
 }
 
 const getStyles = (theme: ThemeProps) =>
@@ -40,6 +42,15 @@ const getStyles = (theme: ThemeProps) =>
       borderWidth: 1,
       backgroundColor: theme.warningBackground,
       borderColor: theme.warningDecorative
+    },
+    erc7730TypedMessageTitle: {
+      ...spacings.mrSm,
+      ...spacings.pbMi
+    },
+    erc7730TypedMessageDivider: {
+      height: 1,
+      width: '100%',
+      backgroundColor: theme.secondaryBorder
     }
   })
 
