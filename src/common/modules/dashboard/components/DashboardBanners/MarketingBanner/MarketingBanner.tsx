@@ -37,12 +37,11 @@ const MarketingBanner: React.FC<Props> = ({ banner }) => {
   const { dispatch: surveyDispatch } = useController('SurveyController')
   const { theme } = useTheme()
   const { text, title, type: bannerType = 'updates', actions, emoji: backendEmoji } = banner
-  console.log(backendEmoji)
   const emoji = backendEmoji || TYPE_EMOJI_MAP[bannerType as MarketingBannerTypes] || FALLBACK_EMOJI
   const action = actions?.[0]
   const url = action?.actionName === 'open-link' ? action.meta.url : ''
   const size = (banner.text?.length || 0) > 50 ? 'large' : 'normal'
-  const emojiSize = isMobile ? 44 : size === 'large' ? 64 : 48
+  const emojiSize = isMobile ? 48 : size === 'large' ? 64 : 48
   const { navigate } = useNavigation()
 
   const [bindAnim, animStyle] = useMultiHover({
@@ -105,7 +104,8 @@ const MarketingBanner: React.FC<Props> = ({ banner }) => {
       >
         <Text
           style={{
-            fontSize: emojiSize * 0.7
+            fontSize: emojiSize * 0.7,
+            lineHeight: emojiSize
           }}
         >
           {emoji}
