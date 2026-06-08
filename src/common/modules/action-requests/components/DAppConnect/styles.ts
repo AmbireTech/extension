@@ -2,7 +2,7 @@ import { StyleSheet, ViewStyle } from 'react-native'
 
 import { isMobile } from '@common/config/env'
 import spacings from '@common/styles/spacings'
-import { ThemeProps, ThemeType } from '@common/styles/themeConfig'
+import { ThemeProps } from '@common/styles/themeConfig'
 import common, { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 
@@ -14,7 +14,7 @@ interface Styles {
   securityChecksContainer: ViewStyle
 }
 
-const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
+const getStyles = (theme: ThemeProps) =>
   StyleSheet.create<Styles>({
     container: isMobile
       ? {
@@ -24,7 +24,8 @@ const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
           ...flexbox.alignCenter,
           marginHorizontal: 'auto',
           ...flexbox.flex1,
-          maxWidth: 480
+          maxWidth: 480,
+          width: '100%'
         },
     content: isMobile
       ? {
