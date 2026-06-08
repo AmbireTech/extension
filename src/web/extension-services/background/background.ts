@@ -38,6 +38,7 @@ import {
   LI_FI_API_KEY,
   RELAYER_URL,
   SQUID_INTEGRATOR_ID,
+  UNISWAP_API_KEY,
   VELCRO_URL
 } from '@env'
 import * as Sentry from '@sentry/browser'
@@ -500,6 +501,7 @@ const init = async () => {
     liFiApiKey: LI_FI_API_KEY,
     bungeeApiKey: BUNGEE_API_KEY,
     squidIntegratorId: SQUID_INTEGRATOR_ID,
+    uniswapApiKey: UNISWAP_API_KEY,
     featureFlags: {},
     keystoreSigners: {
       internal: KeystoreSigner,
