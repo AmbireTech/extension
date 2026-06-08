@@ -205,6 +205,11 @@ const Home = () => {
               </span>
               <div className={styles.walletInfoWrapper}>Market Cap</div>
             </div>
+
+            <div className={styles.walletItemWrapper}>
+              <span className={styles.item}>2%</span>
+              <div className={styles.walletInfoWrapper}>APY</div>
+            </div>
           </div>
         </div>
         <div
