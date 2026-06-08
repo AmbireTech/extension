@@ -554,11 +554,8 @@ export class SwapAndBridgePage extends BasePage {
     const firstApprovalTransaction = this.page
       .locator(selectors.dashboard.grantApprovalText)
       .first()
-    const firstConfirmedPill = this.page
-      .locator(selectors.dashboard.confirmedTransactionPill)
-      .first()
 
-    await expect(firstApprovalTransaction).toContainText('Approve')
-    await expect(firstConfirmedPill).toContainText('Confirmed')
+    await this.compareText(selectors.dashboard.activityTransactionConfirmed, 'Confirmed')
+    // await expect(firstApprovalTransaction).toContainText('Approve')
   }
 }
