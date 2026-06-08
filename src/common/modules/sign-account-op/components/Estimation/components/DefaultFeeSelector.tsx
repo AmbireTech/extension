@@ -46,7 +46,9 @@ const DefaultFeeSelector = ({
       if (!payValue || !tokenPreference) return false
 
       const isGasTank = payValue.token.flags.onGasTank && tokenPreference === 'gasTank'
-      const isSelectedToken = payValue.token.address.toLowerCase() === tokenPreference.toLowerCase()
+      const isSelectedToken =
+        !payValue.token.flags.onGasTank &&
+        payValue.token.address.toLowerCase() === tokenPreference.toLowerCase()
 
       return isGasTank || isSelectedToken
     },
@@ -69,7 +71,7 @@ const DefaultFeeSelector = ({
   }, [doesFeeTokenPreferenceMatchPayValue, payValue, pendingFeeTokenPreference, signAccountOpState])
 
   const defaultFeeOptionCheckboxLabel = useMemo(() => {
-    return t('Do you want to set this as a default option for {{network}}?', {
+    return t('Set this as a default option for {{network}}?', {
       network: networkName || t('this network')
     })
   }, [networkName, t])
