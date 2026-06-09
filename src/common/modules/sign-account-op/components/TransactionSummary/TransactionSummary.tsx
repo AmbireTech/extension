@@ -523,7 +523,7 @@ const TransactionSummary = ({
       <>
         {shouldShowDeleteControl && (
           <AnimatedPressable
-            style={[deleteIconAnimStyle, flexbox.alignSelfStart]}
+            style={[deleteIconAnimStyle, flexbox.alignSelfCenter]}
             onPress={handleRemoveCall}
             disabled={isCallRemovedOptimistic}
             {...bindDeleteIconAnim}
@@ -534,7 +534,7 @@ const TransactionSummary = ({
         )}
         {shouldShowRightControl && (
           <AnimatedPressable
-            style={[{ ...deleteIconAnimStyle }, spacings.mlTy]}
+            style={[deleteIconAnimStyle, flexbox.alignSelfCenter, spacings.mlTy]}
             onPress={onRightIconPress}
             {...bindDeleteIconAnim}
             testID={`right-icon-${index}`}
