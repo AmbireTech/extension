@@ -63,7 +63,7 @@ export class SignMessagePage extends BasePage {
     const signActionWindowPagePromise = this.handleNewPage(sign)
 
     const signActionWindowPage = await signActionWindowPagePromise
-    await this.page.waitForTimeout(2000)
+    await this.page.waitForTimeout(3000)
     const signMessageButton = signActionWindowPage.getByTestId(selectors.signMessageButton)
     await signMessageButton.click()
 
