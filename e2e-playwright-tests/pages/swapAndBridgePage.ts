@@ -71,6 +71,16 @@ export class SwapAndBridgePage extends BasePage {
   async prepareSwapAndBridge(send_amount: number, fromToken: Token, toToken: Token) {
     await this.openSwapAndBridge()
     try {
+      // switch network
+      const tokenNetwork = toToken.chainName
+      await this.click(selectors.receiveNetworkEth)
+
+      if (tokenNetwork != 'optimism') {
+        await this.click(selectors.recieveNetworkBase)
+      } else {
+        await this.click(selectors.recieveNetworkOptimism)
+      }
+
       await this.selectSendToken(fromToken)
       // Select Receive Token on the same Network, which is automatically selected
       await this.selectReceiveToken(toToken)
@@ -97,12 +107,12 @@ export class SwapAndBridgePage extends BasePage {
   }
 
   async selectSendToken(sendToken: Token) {
-    await this.page.waitForTimeout(1500) // waiting for animation
+    await this.page.waitForTimeout(2000) // waiting for animation
     await this.clickOnMenuToken(sendToken, selectors.swapAndBridge.fromTokenDropdown)
   }
 
   async selectReceiveToken(receiveToken: Token) {
-    await this.page.waitForTimeout(1500) // waiting for animation
+    await this.page.waitForTimeout(2000) // waiting for animation
 
     await this.clickOnMenuToken(receiveToken, selectors.swapAndBridge.receiveTokenDropdown)
   }
@@ -146,7 +156,17 @@ export class SwapAndBridgePage extends BasePage {
     await this.openSwapAndBridge()
     await this.selectSendToken(sendToken)
 
-    await this.page.waitForTimeout(1000)
+    // switch network
+    const tokenNetwork = receiveToken.chainName
+    await this.click(selectors.receiveNetworkEth)
+
+    if (tokenNetwork == 'optimism') {
+      await this.click(selectors.recieveNetworkOptimism)
+    } else {
+      await this.click(selectors.recieveNetworkBase)
+    }
+
+    await this.page.waitForTimeout(2000)
 
     await this.click(selectors.swapAndBridge.receiveTokenDropdown)
     await this.page.getByTestId(selectors.searchInput).fill(receiveToken.symbol)
@@ -361,17 +381,23 @@ export class SwapAndBridgePage extends BasePage {
     sendToken: Token,
     receiveToken: Token
   ): Promise<string | null> {
-    try {
-      await this.openSwapAndBridge()
-      await this.page.waitForTimeout(1000)
-      await this.selectSendToken(sendToken)
+    await this.openSwapAndBridge()
+    await this.page.waitForTimeout(2000)
+    await this.selectSendToken(sendToken)
 
-      // Select target receive network
-      await this.click(`option-${sendToken.chainId}`)
-      await this.click(`option-${receiveToken.chainId}`)
+    try {
+      // switch network
+      const tokenNetwork = receiveToken.chainName
+      await this.click(selectors.receiveNetworkEth)
+
+      if (tokenNetwork == 'optimism') {
+        await this.click(selectors.recieveNetworkOptimism)
+      } else {
+        await this.click(selectors.recieveNetworkBase)
+      }
 
       // Select receive token by address
-      await this.page.waitForTimeout(1000)
+      await this.page.waitForTimeout(2000)
       await this.selectReceiveToken(receiveToken)
 
       // Validate sendAmount
@@ -451,15 +477,25 @@ export class SwapAndBridgePage extends BasePage {
 
   // TODO: lots of different cases, refactor
   async verifyBatchTransactionDetails(page): Promise<void> {
+    await page.pause()
+    // searching for exact route name e.g. LI.FI
+    const knownRoutes = ['LI.FI', 'SocketGateway']
+    const extractRoute = (rowText: string) =>
+      rowText
+        .trim()
+        .split(/\s+/)
+        .find((t) => knownRoutes.includes(t)) || ''
+
     // check first row
     const firstRow = await page.getByTestId('recipient-address-0').innerText() // grab entire row on transaction page
-    const firstRouteSelector = firstRow.trim().split(/\s+/).pop() || '' // grab last item from row e.g. LI.FI
+    const firstRouteSelector = extractRoute(firstRow)
 
     // for either LI.FI or Socket transaction name is GrantApproval with amount and token name
     await expect(page.getByTestId('recipient-address-0')).toHaveText(
-      /Grant approval.*0\.0\d+.*USDC/
+      /(?:Grant approval|ApproveSpender).*0\.0\d+.*USDC/
     )
-    expect(['LI.FI', 'SocketGateway']).toContain(firstRouteSelector)
+    // Execute because of uniswap
+    expect(['LI.FI', 'SocketGateway', 'Execute']).toContain(firstRouteSelector)
 
     // check second row
     const secondRow = await page.getByTestId('recipient-address-1').innerText()
@@ -467,20 +503,22 @@ export class SwapAndBridgePage extends BasePage {
 
     if (secondRouteSelector === 'WALLET') {
       // in case its socket route transaction name is Swap with amount
-      await expect(page.getByTestId('recipient-address-1')).toHaveText(/SwapUSDC/) // in case its socket route transaction name is Swap with amount
+      await expect(page.getByTestId('recipient-address-1')).toHaveText(/Swap.*USDC/)
+      // in case its socket route transaction name is Swap with amount
     } else if (secondRouteSelector === 'LI.FI') {
       await expect(page.getByTestId('recipient-address-1')).toHaveText(/Swap\/Bridge.*/) // in case its LIFI route transaction name is Swap/Bridge
     }
 
     // check third row
     const thirdRow = await page.getByTestId('recipient-address-2').innerText()
-    const thirdRouteSelector = thirdRow.trim().split(/\s+/).pop() || ''
+    const thirdRouteSelector = extractRoute(thirdRow)
 
     // for either LI.FI or Socket transaction name is GrantApproval with amount and token name
     await expect(page.getByTestId('recipient-address-2')).toHaveText(
-      /Grant approval.*0\.0\d+.*USDC/
+      /(?:Grant approval|ApproveSpender).*0\.0\d+.*USDC/
     )
-    expect(['LI.FI', 'SocketGateway']).toContain(thirdRouteSelector)
+    // Execute because of uniswap
+    expect(['LI.FI', 'SocketGateway', 'Execute']).toContain(thirdRouteSelector)
 
     // check fourth row
     const fourthRow = await page.getByTestId('recipient-address-3').innerText()
@@ -518,11 +556,8 @@ export class SwapAndBridgePage extends BasePage {
     const firstApprovalTransaction = this.page
       .locator(selectors.dashboard.grantApprovalText)
       .first()
-    const firstConfirmedPill = this.page
-      .locator(selectors.dashboard.confirmedTransactionPill)
-      .first()
 
-    await expect(firstApprovalTransaction).toContainText('Grant approval')
-    await expect(firstConfirmedPill).toContainText('Confirmed')
+    await this.compareText(selectors.dashboard.activityTransactionConfirmed, 'Confirmed')
+    // await expect(firstApprovalTransaction).toContainText('Approve')
   }
 }

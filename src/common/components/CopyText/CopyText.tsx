@@ -1,6 +1,6 @@
 import React from 'react'
 import { useTranslation } from 'react-i18next'
-import { ColorValue, ViewStyle } from 'react-native'
+import { ColorValue, GestureResponderEvent, ViewStyle } from 'react-native'
 
 import CopyIcon from '@common/assets/svg/CopyIcon'
 import useHover, { AnimatedPressable } from '@common/hooks/useHover'
@@ -12,16 +12,25 @@ interface Props {
   style?: ViewStyle
   iconColor?: ColorValue
   iconSize?: number
+  shouldStopPropagation?: boolean
 }
 
-const CopyText: React.FC<Props> = ({ text, style, iconColor, iconSize = 20 }) => {
+const CopyText: React.FC<Props> = ({
+  text,
+  style,
+  iconColor,
+  iconSize = 20,
+  shouldStopPropagation = false
+}) => {
   const { t } = useTranslation()
   const { addToast } = useToast()
   const [bindAnim, animStyle] = useHover({
     preset: 'opacityInverted'
   })
 
-  const handleCopyText = () => {
+  const handleCopyText = (event: GestureResponderEvent) => {
+    if (shouldStopPropagation) event.stopPropagation()
+
     setStringAsync(text)
     addToast(t('Copied to clipboard!') as string, { timeout: 2500 })
   }

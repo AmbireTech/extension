@@ -167,14 +167,19 @@ const ManageRecoveryPhrase = ({
             }
           ]}
         >
-          <Text fontSize={14} color={theme.secondaryText}>
+          <Text testID="recovery-phrase-value" fontSize={14} color={theme.secondaryText}>
             {seed}
           </Text>
           {!!seedPassphrase && (
             <View style={spacings.ptSm}>
               <Text fontSize={14} color={theme.secondaryText}>
                 {t('Passphrase: ')}
-                <Text fontSize={14} color={theme.secondaryText} weight="medium">
+                <Text
+                  testID="recovery-phrase-passphrase-value"
+                  fontSize={14}
+                  color={theme.secondaryText}
+                  weight="medium"
+                >
                   {seedPassphrase}
                 </Text>
               </Text>
@@ -196,6 +201,7 @@ const ManageRecoveryPhrase = ({
             }}
           >
             <Button
+              testID="copy-recovery-phrase-button"
               onPress={handleCopySeed}
               hasBottomSpacing={false}
               type="ghost"
@@ -208,6 +214,7 @@ const ManageRecoveryPhrase = ({
             </Button>
           </View>
           <Button
+            testID="reveal-recovery-phrase-button"
             onPress={toggleKeyVisibility}
             hasBottomSpacing={false}
             type="ghost"

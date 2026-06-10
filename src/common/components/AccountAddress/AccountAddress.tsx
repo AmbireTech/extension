@@ -114,7 +114,7 @@ const AccountAddress: FC<Props> = ({
           {withCopy ? (
             <>
               <PlainAddressWithCopy
-                maxLength={addressHighlight || withWrap ? 42 : isMobile ? 42 : 18}
+                maxLength={addressHighlight || withWrap ? 42 : isMobile ? 42 : 16}
                 address={address}
                 fontSize={fontSize}
                 withWrap={withWrap}
@@ -126,7 +126,7 @@ const AccountAddress: FC<Props> = ({
           ) : (
             <>
               <PlainAddress
-                maxLength={isMobile ? 13 : 18}
+                maxLength={isMobile ? 13 : 16}
                 address={address}
                 style={{ ...spacings.mlMi }}
                 fontSize={fontSize}

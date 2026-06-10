@@ -1,9 +1,8 @@
 import React from 'react'
-import { ScrollView, View } from 'react-native'
+import { View } from 'react-native'
 
 import AddCircularIcon from '@common/assets/svg/AddCircularIcon'
 import Button from '@common/components/Button'
-import Panel from '@common/components/Panel'
 import { useTranslation } from '@common/config/localization'
 import useTheme from '@common/hooks/useTheme'
 import ViewOnlyAccountAdderAddressField from '@common/modules/auth/components/ViewOnlyAccountAdderAddressField'

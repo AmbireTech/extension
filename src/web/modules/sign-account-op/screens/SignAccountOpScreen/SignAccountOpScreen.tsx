@@ -17,6 +17,7 @@ import ErrorInformation from '@common/modules/sign-account-op/components/ErrorIn
 import Estimation from '@common/modules/sign-account-op/components/Estimation'
 import Footer from '@common/modules/sign-account-op/components/Footer'
 import PendingTransactions from '@common/modules/sign-account-op/components/PendingTransactions'
+import SafeEip712Data from '@common/modules/sign-account-op/components/SafeEip712Data'
 import SafeOwners from '@common/modules/sign-account-op/components/SafeOwners'
 import SafetyChecksOverlay from '@common/modules/sign-account-op/components/SafetyChecksOverlay'
 import SectionHeading from '@common/modules/sign-account-op/components/SectionHeading'
@@ -25,12 +26,12 @@ import KeySelect from '@common/modules/sign-message/components/KeySelect'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import SmallNotificationWindowWrapper from '@web/components/SmallNotificationWindowWrapper'
-import useDappVerificationHoldButtonType from '@web/hooks/useDappVerificationHoldButtonType'
 import {
   TabLayoutContainer,
   TabLayoutWrapperMainContent
 } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
 import { closeCurrentWindow } from '@web/extension-services/background/webapi/window'
+import useDappVerificationHoldButtonType from '@web/hooks/useDappVerificationHoldButtonType'
 import Modals from '@web/modules/sign-account-op/components/Modals/Modals'
 
 const isCloseToBottom = ({ layoutMeasurement, contentOffset, contentSize }: NativeScrollEvent) => {
@@ -216,7 +217,7 @@ const SignAccountOpScreen = () => {
                 {!estimationFailed &&
                 signAccountOpState?.canBroadcast &&
                 signAccountOpState?.status?.type !== SigningStatus.Queued ? (
-                  <View style={spacings.mbXl}>
+                  <View style={spacings.mb}>
                     <Estimation
                       signAccountOpState={signAccountOpState}
                       disabled={isSignLoading}
@@ -327,16 +328,25 @@ const SignAccountOpScreen = () => {
               setDelegation={signAccountOpState?.accountOp.meta?.setDelegation}
               delegatedContract={signAccountOpState?.delegatedContract}
               hideDeleteIcon={!!signAccountOpState?.accountOp.signed?.length}
+              size="md"
             />
+
             {/* Display errors only if the user is not in view-only mode */}
             {signAccountOpState?.errors?.length && !isViewOnly ? (
               <ErrorInformation />
             ) : (
-              <Simulation
-                network={network}
-                isViewOnly={isViewOnly}
-                isEstimationComplete={!!signAccountOpState?.isInitialized && !!network}
-              />
+              <>
+                <Simulation
+                  network={network}
+                  isViewOnly={isViewOnly}
+                  isEstimationComplete={!!signAccountOpState?.isInitialized && !!network}
+                />
+                <SafeEip712Data
+                  accountAddr={signAccountOpState?.accountOp.accountAddr}
+                  chainId={signAccountOpState?.accountOp.chainId}
+                  safeEip712Data={signAccountOpState?.safeEip712Data}
+                />
+              </>
             )}
             {signAccountOpState?.hasSafeApiFailed && (
               <Alert

@@ -15,6 +15,7 @@ function categorizeRequests(requests: string[]) {
     // Swap & Bridge quotes
     'li.quest',
     'dedicated-backend.bungee.exchange',
+    'trade-api.gateway.uniswap.org',
     // RPCs
     '480.rpc.thirdweb.com',
     'unichain-rpc.publicnode.com',
@@ -37,6 +38,7 @@ function categorizeRequests(requests: string[]) {
     'rpc.mainnet.citrea.xyz',
     'crypto-assets-service.api.ledger.com',
     'nft.api.live.ledger.com',
+    'challenges.cloudflare.com',
     // Token images
     'static.debank.com'
   ]
@@ -85,7 +87,6 @@ function categorizeRequests(requests: string[]) {
   )
 
   if (reqs.uncategorized.length) {
-    // eslint-disable-next-line no-console
     console.log(
       "⚠️ We've detected some uncategorized requests. Please review them carefully!" +
         ' If any are known and expected, make sure to include them in the appropriate categories above.',
