@@ -15,6 +15,7 @@ import {
   noStateUpdateStatuses,
   SigningStatus
 } from '@ambire-common/controllers/signAccountOp/signAccountOp'
+import { DecodedCall } from '@ambire-common/interfaces/decodeCall'
 import { HumanizerErc7730Visualization, IrCall } from '@ambire-common/libs/humanizer/interfaces'
 import {
   getAction,
@@ -43,7 +44,6 @@ import flexbox from '@common/styles/utils/flexbox'
 import ManifestImage from '@web/components/ManifestImage'
 
 import getStyles from './styles'
-import { DecodedCall } from '@ambire-common/interfaces/decodeCall'
 
 interface Props {
   style: ViewStyle
@@ -270,7 +270,7 @@ const TransactionSummary = ({
   }, [type, call.warnings, size])
 
   const innerEditApproval = useCallback(
-    (newAmount: string, token: string, closeEditApprovals: () => void) => {
+    (newAmount: string, token: string, tokenChainId: bigint, closeEditApprovals: () => void) => {
       if (!signAccountOpState) {
         addToast('Internal error: failed to load account state', { type: 'error' })
         return
@@ -280,7 +280,7 @@ const TransactionSummary = ({
         return
       }
       const portfolioToken = portfolio.tokens.find(
-        (t) => t.address.toLowerCase() === token.toLowerCase()
+        (t) => t.address.toLowerCase() === token.toLowerCase() && t.chainId === tokenChainId
       )
       if (!portfolioToken) {
         addToast("Internal error: we failed to find the token's data", { type: 'error' })
@@ -392,7 +392,12 @@ const TransactionSummary = ({
   const editApprovalCallInfo = useMemo(():
     | undefined
     | {
-        setter: (amount: string, token: string, closeModal: () => void) => void
+        setter: (
+          amount: string,
+          token: string,
+          tokenChainId: bigint,
+          closeModal: () => void
+        ) => void
         token: string
         amount: bigint
         callId?: string
@@ -470,12 +475,12 @@ const TransactionSummary = ({
     if (amount === undefined) return
     if (!token) return
     const portfolioToken = portfolio.tokens.find(
-      (t) => t.address.toLowerCase() === token.toLowerCase()
+      (t) => t.address.toLowerCase() === token.toLowerCase() && t.chainId === chainId
     )
     if (!portfolioToken) return
 
     return { setter: innerEditApproval, amount, token, callId: call.id }
-  }, [call, innerEditApproval, portfolio, signAccountOpState])
+  }, [call, chainId, innerEditApproval, portfolio, signAccountOpState])
 
   // TODO: should this be reused in history/benzin/other places
   const callVisualization = useMemo(() => {
@@ -518,7 +523,7 @@ const TransactionSummary = ({
       <>
         {shouldShowDeleteControl && (
           <AnimatedPressable
-            style={[deleteIconAnimStyle, flexbox.alignSelfStart]}
+            style={[deleteIconAnimStyle, flexbox.alignSelfCenter]}
             onPress={handleRemoveCall}
             disabled={isCallRemovedOptimistic}
             {...bindDeleteIconAnim}
@@ -529,7 +534,7 @@ const TransactionSummary = ({
         )}
         {shouldShowRightControl && (
           <AnimatedPressable
-            style={[{ ...deleteIconAnimStyle }, spacings.mlTy]}
+            style={[deleteIconAnimStyle, flexbox.alignSelfCenter, spacings.mlTy]}
             onPress={onRightIconPress}
             {...bindDeleteIconAnim}
             testID={`right-icon-${index}`}
@@ -572,6 +577,7 @@ const TransactionSummary = ({
               borderRadius: 12 * sizeMultiplier[size],
               backgroundColor: 'transparent'
             }}
+            hideOnError
           />
         )}
         {!!title && (
@@ -641,6 +647,19 @@ const TransactionSummary = ({
 
     return tabs.filter((x) => !!x)
   }, [erc7730DescriptionVisualization, decodedFunction, t])
+  const shouldAlignContentStart = useMemo(() => {
+    if (type !== 'default') return false
+    if (!callVisualization || hasCallFailed) return true
+    if (shouldUseDetailedErc7730Layout && erc7730Visualization) return true
+
+    return callVisualization.some((item) => item?.type === 'break')
+  }, [
+    callVisualization,
+    erc7730Visualization,
+    hasCallFailed,
+    shouldUseDetailedErc7730Layout,
+    type
+  ])
 
   if (isCallRemovedOptimistic) return null
 
@@ -669,9 +688,9 @@ const TransactionSummary = ({
           ? {
               paddingHorizontal: SPACING_SM,
               paddingVertical: type !== 'history' ? SPACING_SM * sizeMultiplier[size] : 0,
-              ...(type === 'default' ? flexbox.alignStart : {})
+              ...(shouldAlignContentStart ? flexbox.alignStart : {})
             }
-          : type === 'default'
+          : shouldAlignContentStart
             ? flexbox.alignStart
             : undefined
       }
@@ -699,6 +718,7 @@ const TransactionSummary = ({
                             borderRadius: 12 * sizeMultiplier[size],
                             backgroundColor: 'transparent'
                           }}
+                          hideOnError
                         />
                       )}
                       <Text

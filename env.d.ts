@@ -10,6 +10,7 @@ declare module '@env' {
     BUNGEE_API_KEY: string
     LI_FI_API_KEY: string
     SQUID_INTEGRATOR_ID: string
+    UNISWAP_API_KEY: string
     SENTRY_DSN?: string
     ENVIRONMENT: string
     DEFAULT_KEYSTORE_PASSWORD_DEV: string
@@ -103,6 +104,11 @@ declare module '@env' {
    * Squid integrator ID. Required by the Squid API.
    */
   export const SQUID_INTEGRATOR_ID: EnvTypes['SQUID_INTEGRATOR_ID']
+
+  /**
+   * Uniswap Trading API key. Required by the Uniswap router.
+   */
+  export const UNISWAP_API_KEY: EnvTypes['UNISWAP_API_KEY']
 
   /**
    * The address of the Legends NFT contract (same on PROD and STAGING)

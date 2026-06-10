@@ -76,7 +76,6 @@ const getStyles = (theme: ThemeProps) =>
       ...spacings.mrTy,
       ...spacings.mvTy,
       ...spacings.pvMi,
-      ...spacings.phSm,
       ...common.borderRadiusPrimary
     },
     buttonWithBackground: {
