@@ -67,6 +67,9 @@ const useSign = ({
     state: { networks }
   } = useController('NetworksController')
   const { dispatch: mainControllerDispatch } = useController('MainController')
+  const { dispatch: signAccountOpDispatch } = useController('SignAccountOpController')
+  const { dispatch: swapAndBridgeDispatch } = useController('SwapAndBridgeController')
+  const { dispatch: transferDispatch } = useController('TransferController')
   const {
     state: { accountStates }
   } = useController('AccountsController')
@@ -90,6 +93,11 @@ const useSign = ({
   const [slowPaymasterRequest, setSlowPaymasterRequest] = useState<boolean>(true)
   const [acknowledgedWarnings, setAcknowledgedWarnings] = useState<string[]>([])
   const { ref: warningModalRef, open: openWarningModal, close: closeWarningModal } = useModalize()
+  const {
+    ref: gasFeeUpdatedModalRef,
+    open: openGasFeeUpdatedModal,
+    close: closeGasFeeUpdatedModal
+  } = useModalize()
 
   const hasEstimation = useMemo(
     () =>
@@ -242,6 +250,48 @@ const useSign = ({
     })
   }, [mainControllerDispatch, signAccountOpState, updateType])
 
+  const dismissGasFeeChangedConfirmation = useCallback(() => {
+    if (updateType === 'Swap&Bridge') {
+      swapAndBridgeDispatch({
+        type: 'method',
+        params: {
+          method: 'callSignAccountOpMethod',
+          args: ['dismissGasFeeChangedConfirmation', []]
+        }
+      })
+      return
+    }
+
+    if (updateType === 'Transfer&TopUp') {
+      transferDispatch({
+        type: 'method',
+        params: {
+          method: 'callSignAccountOpMethod',
+          args: ['dismissGasFeeChangedConfirmation', []]
+        }
+      })
+      return
+    }
+
+    signAccountOpDispatch({
+      type: 'method',
+      params: {
+        method: 'dismissGasFeeChangedConfirmation',
+        args: []
+      }
+    })
+  }, [signAccountOpDispatch, swapAndBridgeDispatch, transferDispatch, updateType])
+
+  const handleDismissGasFeeUpdate = useCallback(() => {
+    dismissGasFeeChangedConfirmation()
+    closeGasFeeUpdatedModal()
+  }, [dismissGasFeeChangedConfirmation, closeGasFeeUpdatedModal])
+
+  const handleAcceptGasFeeUpdate = useCallback(() => {
+    closeGasFeeUpdatedModal()
+    handleBroadcast()
+  }, [closeGasFeeUpdatedModal, handleBroadcast])
+
   const handleSign = useCallback(
     (_chosenSigningKeyTypes?: Key['type'][], _warningAccepted?: boolean) => {
       // Prioritize warning(s) modals over all others
@@ -389,6 +439,7 @@ const useSign = ({
 
   const renderedButNotNecessarilyVisibleModal:
     | 'warnings'
+    | 'gas-fee-updated'
     | 'ledger-connect'
     | 'hw-sign'
     | 'qr-sign'
@@ -402,6 +453,8 @@ const useSign = ({
       signAccountOpState?.status?.type === SigningStatus.WaitingForPaymaster
     )
       return 'warnings'
+
+    if (signAccountOpState?.gasFeeChangedConfirmationRequired) return 'gas-fee-updated'
 
     if (shouldDisplayLedgerConnectModal) return 'ledger-connect'
 
@@ -417,6 +470,7 @@ const useSign = ({
     isAtLeastOneOfTheKeysInvolvedExternal,
     shouldDisplayLedgerConnectModal,
     shouldDisplayQrSigningModal,
+    signAccountOpState?.gasFeeChangedConfirmationRequired,
     signAccountOpState?.status?.type,
     signingStep,
     warningToPromptBeforeSign
@@ -505,6 +559,12 @@ const useSign = ({
     signAccountOpState?.accountOp.gasFeePayment?.paidByKeyType
   ])
 
+  useEffect(() => {
+    if (signAccountOpState?.gasFeeChangedConfirmationRequired) {
+      openGasFeeUpdatedModal()
+    }
+  }, [signAccountOpState?.gasFeeChangedConfirmationRequired, openGasFeeUpdatedModal])
+
   return {
     renderedButNotNecessarilyVisibleModal,
     isViewOnly,
@@ -521,6 +581,9 @@ const useSign = ({
     isSignLoading,
     hasEstimation,
     warningModalRef,
+    gasFeeUpdatedModalRef,
+    handleAcceptGasFeeUpdate,
+    handleDismissGasFeeUpdate,
     signingKeyType,
     feePayerKeyType,
     handleChangeFeePayerKeyType,

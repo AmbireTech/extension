@@ -5,6 +5,9 @@ export type ModalsProps = Pick<
   ReturnType<typeof useSign>,
   | 'renderedButNotNecessarilyVisibleModal'
   | 'warningModalRef'
+  | 'gasFeeUpdatedModalRef'
+  | 'handleAcceptGasFeeUpdate'
+  | 'handleDismissGasFeeUpdate'
   | 'feePayerKeyType'
   | 'signingKeyType'
   | 'slowPaymasterRequest'
@@ -23,6 +26,6 @@ export type ModalsProps = Pick<
   | 'dismissWarning'
 > & {
   signAccountOpState: ISignAccountOpController | null
-  autoOpen?: 'warnings'
+  autoOpen?: 'warnings' | 'gas-fee-updated'
   actionType?: 'swapAndBridge' | 'transfer'
 }
