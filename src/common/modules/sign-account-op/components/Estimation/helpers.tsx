@@ -64,7 +64,8 @@ const sortFeeOptions = (
 const mapFeeOptions = (
   feeOption: FeePaymentOption,
   signAccountOpState: ISignAccountOpController,
-  addressBookContacts: Contacts
+  addressBookContacts: Contacts,
+  isViewOnly: boolean
 ) => {
   let disabledReason: string | undefined
   let disabledTextAppearance: 'errorText' | 'infoText' | undefined
@@ -138,7 +139,10 @@ const mapFeeOptions = (
         signAccountOpState.accountOp.accountAddr
       )
 
+  // For view-only accounts we hide the extreme gas fee warning to reduce
+  // clutter (the account can't sign anyway), so don't highlight the fee either.
   const shouldHighlightExtremeGasFee =
+    !isViewOnly &&
     isSelectedFeeOption &&
     !disabledReason &&
     !!getExtremeGasFeeWarningState(signAccountOpState, signAccountOpState.accountOp.chainId)
