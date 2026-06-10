@@ -565,7 +565,7 @@ const Estimation = ({
               <Button
                 type="ghost"
                 size="tiny"
-                text={t('Options')}
+                text={t('Advanced')}
                 textUnderline
                 disabled={!canSetCustomGasPrices}
                 onPress={openAdvancedOptions}
