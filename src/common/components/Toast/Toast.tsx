@@ -3,6 +3,7 @@ import { TouchableOpacity, View } from 'react-native'
 
 import CloseIcon from '@common/assets/svg/CloseIcon'
 import Text from '@common/components/Text'
+import { isMobile } from '@common/config/env'
 import { Toast as ToastType } from '@common/contexts/toastContext'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
@@ -49,8 +50,7 @@ const Toast = ({
           }
         ]}
       >
-        <Icon width={20} height={20} color={theme[`${type}Decorative`]} />
-
+        {!isMobile && <Icon width={20} height={20} color={theme[`${type}Decorative`]} />}
         <View style={[flexbox.flex1, spacings.mlTy]}>
           <Text style={spacings.mrXl}>
             {!isTypeLabelHidden && (

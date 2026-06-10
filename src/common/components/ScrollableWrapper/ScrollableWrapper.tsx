@@ -1,7 +1,9 @@
-import React from 'react'
+import React, { useCallback, useRef, useState } from 'react'
 import {
+  Dimensions,
   FlatList,
   FlatListProps,
+  LayoutChangeEvent,
   ScrollView,
   ScrollViewProps,
   SectionList,
@@ -10,9 +12,11 @@ import {
   View,
   ViewStyle
 } from 'react-native'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import { isMobile, isWeb } from '@common/config/env'
 import useTheme from '@common/hooks/useTheme'
+import { SPACING_SM } from '@common/styles/spacings'
 
 import DraggableFlatList from './DraggableFlatList'
 import createStyles from './styles'
@@ -71,18 +75,63 @@ const ScrollableWrapper = ({
   ...rest
 }: WrapperProps) => {
   const { styles } = useTheme(createStyles)
-  const scrollableWrapperStyles = [styles.wrapper, ...(Array.isArray(style) ? style : [style])]
+  const insets = useSafeAreaInsets()
+  const internalRef = useRef<any>(null)
+  const [isAtScreenBottom, setIsAtScreenBottom] = useState<boolean>(isMobile)
 
+  const setRefs = useCallback(
+    (node: any) => {
+      internalRef.current = node
+      if (typeof wrapperRef === 'function') wrapperRef(node)
+      else if (wrapperRef && 'current' in wrapperRef) wrapperRef.current = node
+    },
+    [wrapperRef]
+  )
+
+  const handleLayout = useCallback(
+    (_event: LayoutChangeEvent) => {
+      if (!isMobile) return
+      const node = internalRef.current
+      const measurable =
+        node && typeof node.measureInWindow === 'function'
+          ? node
+          : node && typeof node.getNativeScrollRef === 'function'
+            ? node.getNativeScrollRef()
+            : node && typeof node.getScrollResponder === 'function'
+              ? node.getScrollResponder()
+              : null
+
+      if (!measurable || typeof measurable.measureInWindow !== 'function') return
+
+      measurable.measureInWindow((_x: number, y: number, _w: number, height: number) => {
+        const windowHeight = Dimensions.get('window').height
+        const atBottom = y + height >= windowHeight - insets.bottom - 1
+        setIsAtScreenBottom(atBottom)
+      })
+    },
+    [insets.bottom]
+  )
+
+  const shouldApplyBottomInset = isMobile && isAtScreenBottom
+  const bottomInsetValue = insets.bottom === 0 ? SPACING_SM : insets.bottom
+  const scrollableWrapperStyles = [styles.wrapper, ...(Array.isArray(style) ? style : [style])]
   const scrollableWrapperContentContainerStyles: StyleProp<ViewStyle> = [
+    { paddingBottom: shouldApplyBottomInset ? bottomInsetValue : 0 },
     styles.contentContainerStyle,
     ...(Array.isArray(contentContainerStyle) ? contentContainerStyle : [contentContainerStyle]),
     isWeb ? ({ overflowY: 'auto' } as any) : null
   ]
 
+  const { onLayout: consumerOnLayout, ...restWithoutOnLayout } = rest as any
+  const composedOnLayout = (event: LayoutChangeEvent) => {
+    handleLayout(event)
+    if (consumerOnLayout) consumerOnLayout(event)
+  }
+
   if (type === WRAPPER_TYPES.DRAGGABLE_FLAT_LIST) {
     return (
       <DraggableFlatList
-        ref={wrapperRef}
+        ref={setRefs}
         bounces={isMobile}
         data={data}
         keyExtractor={
@@ -95,7 +144,8 @@ const ScrollableWrapper = ({
         showsVerticalScrollIndicator={showsVerticalScrollIndicator}
         keyboardShouldPersistTaps={keyboardShouldPersistTaps || 'handled'}
         keyboardDismissMode={keyboardDismissMode || 'none'}
-        {...rest}
+        onLayout={composedOnLayout}
+        {...restWithoutOnLayout}
       />
     )
   }
@@ -103,7 +153,7 @@ const ScrollableWrapper = ({
   if (type === WRAPPER_TYPES.FLAT_LIST) {
     return (
       <FlatList
-        ref={wrapperRef}
+        ref={setRefs}
         bounces={isMobile}
         data={data}
         renderItem={renderItem}
@@ -114,7 +164,8 @@ const ScrollableWrapper = ({
         keyboardShouldPersistTaps={keyboardShouldPersistTaps || 'handled'}
         keyboardDismissMode={keyboardDismissMode || 'none'}
         alwaysBounceVertical={false}
-        {...rest}
+        onLayout={composedOnLayout}
+        {...restWithoutOnLayout}
       />
     )
   }
@@ -122,7 +173,7 @@ const ScrollableWrapper = ({
   if (type === WRAPPER_TYPES.SECTION_LIST) {
     return (
       <SectionList
-        ref={wrapperRef}
+        ref={setRefs}
         bounces={isMobile}
         sections={data}
         renderItem={renderItem}
@@ -133,7 +184,8 @@ const ScrollableWrapper = ({
         keyboardShouldPersistTaps={keyboardShouldPersistTaps || 'handled'}
         keyboardDismissMode={keyboardDismissMode || 'none'}
         alwaysBounceVertical={false}
-        {...rest}
+        onLayout={composedOnLayout}
+        {...restWithoutOnLayout}
       />
     )
   }
@@ -144,7 +196,7 @@ const ScrollableWrapper = ({
 
   return (
     <ScrollView
-      ref={wrapperRef}
+      ref={setRefs}
       bounces={isMobile}
       style={scrollableWrapperStyles}
       contentContainerStyle={scrollableWrapperContentContainerStyles}
@@ -152,7 +204,8 @@ const ScrollableWrapper = ({
       keyboardShouldPersistTaps={keyboardShouldPersistTaps || 'handled'}
       keyboardDismissMode={keyboardDismissMode || 'none'}
       alwaysBounceVertical={false}
-      {...rest}
+      onLayout={composedOnLayout}
+      {...restWithoutOnLayout}
     >
       {children}
     </ScrollView>

@@ -22,7 +22,7 @@ const SignedMessageHistory: FC<{
 }> = ({ page, account, sessionId }) => {
   const activityState = useController('ActivityController').state
   const signedMessages = useMemo(() => {
-    return (activityState.signedMessages?.[sessionId]?.result?.items || [])
+    return activityState.signedMessages?.[sessionId]?.result?.items || []
   }, [activityState.signedMessages, sessionId])
 
   if (!activityState?.signedMessages?.[sessionId]?.result.items.length && page) {
@@ -58,11 +58,7 @@ const SignedMessageHistory: FC<{
         <SignedMessageSummary
           key={item.timestamp}
           signedMessage={item as SignedMessage}
-          style={
-            i !== signedMessages.length - 1
-              ? spacings.mbSm
-              : {}
-          }
+          style={i !== signedMessages.length - 1 ? spacings.mbSm : {}}
         />
       ))}
     </>

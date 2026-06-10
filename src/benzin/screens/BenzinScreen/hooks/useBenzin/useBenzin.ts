@@ -192,6 +192,12 @@ const useBenzin = ({ onOpenExplorer, extensionAccOp, params: directParams }: Pro
     return !isRejected
   }, [network, stepsState.finalizedStatus?.status, stepsState.txnId])
 
+  const disableOpenExplorerBtn = useMemo(() => {
+    const accountOp = stepsState.submittedAccountOp || extensionAccOp
+
+    return accountOp?.identifiedBy?.type === 'MultipleTxns' && accountOp.calls.length > 1
+  }, [extensionAccOp, stepsState.submittedAccountOp])
+
   if (!chainId || (!txnId && !userOpHash && !relayerId)) return null
 
   return {
@@ -205,6 +211,7 @@ const useBenzin = ({ onOpenExplorer, extensionAccOp, params: directParams }: Pro
     bigintChainId,
     showCopyBtn,
     showOpenExplorerBtn,
+    disableOpenExplorerBtn,
     isInitialized,
     isNetworkNotFound: notFoundNetworks.includes(bigintChainId)
   }

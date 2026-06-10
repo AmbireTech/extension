@@ -14,6 +14,10 @@ export type MobileLayoutContainerProps = {
   withHorizontalPadding?: boolean
   withTopPadding?: boolean
   withBottomInset?: boolean
+  // When true (default), the container shrinks by the keyboard's overlap so the
+  // content compresses and the footer is pushed up above the keyboard instead of
+  // being covered by it. Set to false to keep the layout fixed.
+  keyboardAwareFooter?: boolean
 }
 
 export interface MobileLayoutWrapperMainContentProps extends WrapperProps {

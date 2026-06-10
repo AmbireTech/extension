@@ -145,7 +145,7 @@ const StakeWalletModal: React.FC<{ isOpen: boolean; handleClose: () => void }> =
         if (!success) addToast(`Getting unstake logs: ${message}`, { type: 'error' })
         else setLeaveLogs(data?.logs)
       })
-      // eslint-disable-next-line no-console
+
       .catch((err) => console.error(err))
   }, [isConnected, isOpen, connectedAccount, addToast])
 

@@ -28,7 +28,8 @@ const Router = () => {
     state: requestsState,
     requestModalRef,
     closeRequestModal,
-    onBottomSheetClosed
+    onBottomSheetClosed,
+    onBottomSheetOpened
   } = useController('RequestsController')
   const swapAndBridgeState = useController('SwapAndBridgeController').state
   const transferState = useController('TransferController').state
@@ -87,6 +88,7 @@ const Router = () => {
         sheetRef={requestModalRef as any}
         closeBottomSheet={closeRequestModal as any}
         onClosed={handleBottomSheetClosed}
+        onOpened={onBottomSheetOpened as any}
       />
     </View>
   )

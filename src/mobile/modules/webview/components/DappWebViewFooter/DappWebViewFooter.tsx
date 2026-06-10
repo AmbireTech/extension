@@ -1,5 +1,5 @@
 import React, { useCallback } from 'react'
-import { Control } from 'react-hook-form'
+import { Control, useWatch } from 'react-hook-form'
 import { Pressable, View } from 'react-native'
 
 import { Account } from '@ambire-common/interfaces/account'
@@ -9,12 +9,12 @@ import LeftArrowIcon from '@common/assets/svg/LeftArrowIcon'
 import RefreshIcon from '@common/assets/svg/RefreshIcon'
 import Avatar from '@common/components/Avatar'
 import NetworkIcon from '@common/components/NetworkIcon'
-import Search from '@common/components/Search'
+import Text from '@common/components/Text'
 import useNavigation from '@common/hooks/useNavigation'
 import useRoute from '@common/hooks/useRoute'
 import useTheme from '@common/hooks/useTheme'
-import NotConnected from '@common/modules/dapp-catalog/components/DappIcon/NotConnected'
-import ManageApp from '@common/modules/dapp-catalog/components/ManageApp'
+import NotConnected from '@common/modules/explore/components/DappIcon/NotConnected'
+import ManageApp from '@common/modules/explore/components/ManageApp'
 import { ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
@@ -47,29 +47,23 @@ const DappWebViewFooter: React.FC<Props> = ({
   const { navigate, goBack, canGoBack: canGoBackInHistory } = useNavigation()
   const route = useRoute()
 
+  const url = useWatch({ control: headerControl, name: 'search' })
+
   const handleNavigateToApps = useCallback(() => {
     // If we navigated here straight from the apps catalog (the typical flow),
     // pop the webview off the stack instead of pushing a new apps entry.
     // Otherwise, replace the webview entry with apps so it never lingers in
     // history and blocks the back gesture from leaving the apps section.
     const prevPath = (route.state as any)?.prevRoute?.pathname
-    if (canGoBackInHistory && prevPath === `/${ROUTES.apps}`) {
+    if (canGoBackInHistory && prevPath === `/${ROUTES.explore}`) {
       goBack()
     } else {
-      navigate(ROUTES.apps, { replace: true })
+      navigate(ROUTES.explore, { replace: true })
     }
   }, [canGoBackInHistory, goBack, navigate, route.state])
 
   return (
-    <View
-      style={[
-        flexbox.directionRow,
-        flexbox.alignCenter,
-        spacings.phSm,
-        spacings.ptSm,
-        spacings.pbTy
-      ]}
-    >
+    <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.phSm, spacings.ptSm]}>
       <Pressable
         onPress={handleNavigateToApps}
         style={[
@@ -91,37 +85,37 @@ const DappWebViewFooter: React.FC<Props> = ({
           flexbox.directionRow,
           flexbox.alignCenter,
           spacings.mhSm,
-          { backgroundColor: theme.secondaryBackground, borderRadius: BORDER_RADIUS_PRIMARY }
+          spacings.phTy,
+          {
+            backgroundColor: theme.secondaryBackground,
+            borderRadius: BORDER_RADIUS_PRIMARY,
+            height: 40
+          }
         ]}
       >
-        <View style={flexbox.flex1}>
-          <Search
-            control={headerControl as any}
-            hasLeftIcon={false}
-            inputWrapperStyle={{ backgroundColor: 'transparent' }}
-            nativeInputStyle={{ textAlign: 'center' }}
-            withClearButton={false}
-            onFocus={handleOpenSearchModal}
-            leftIcon={() => (
-              <View style={{ width: 40 }}>
-                <Pressable onPress={handleGoBack} disabled={!canGoBack}>
-                  <LeftArrowIcon
-                    width={9}
-                    height={16}
-                    color={canGoBack ? theme.iconPrimary : theme.neutral400}
-                  />
-                </Pressable>
-              </View>
-            )}
-            childrenBeforeButtons={
-              <View style={[spacings.mrTy, flexbox.alignEnd, { width: 44 }]}>
-                <Pressable onPress={handleRefresh}>
-                  <RefreshIcon width={30} height={30} color={theme.iconPrimary} />
-                </Pressable>
-              </View>
-            }
+        <Pressable
+          onPress={handleGoBack}
+          disabled={!canGoBack}
+          style={[{ width: 28 }, flexbox.center]}
+        >
+          <LeftArrowIcon
+            width={9}
+            height={16}
+            color={canGoBack ? theme.iconPrimary : theme.neutral400}
           />
-        </View>
+        </Pressable>
+        <Pressable
+          onPress={handleOpenSearchModal}
+          style={[flexbox.flex1, flexbox.alignCenter, flexbox.justifyCenter, spacings.phMi]}
+          hitSlop={{ top: 10, bottom: 10 }}
+        >
+          <Text fontSize={14} numberOfLines={1} appearance="secondaryText">
+            {url}
+          </Text>
+        </Pressable>
+        <Pressable onPress={handleRefresh} style={{ width: 28 }}>
+          <RefreshIcon width={28} height={28} color={theme.iconPrimary} />
+        </Pressable>
       </View>
       {!!account && (
         <View>
@@ -171,7 +165,7 @@ const DappWebViewFooter: React.FC<Props> = ({
             </>
           )}
           {!!currentDapp && (
-            <ManageApp dapp={currentDapp} withCurrentAccount onClosed={onManageAppClosed}>
+            <ManageApp dapp={currentDapp} onClosed={onManageAppClosed}>
               <Avatar
                 pfp={account.preferences.pfp}
                 address={account.addr}

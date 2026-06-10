@@ -1,4 +1,3 @@
-/* eslint-disable react/jsx-no-useless-fragment */
 import React from 'react'
 import { View } from 'react-native'
 
@@ -9,6 +8,7 @@ import DAppConnectBody from '@common/modules/action-requests/components/DAppConn
 import DAppConnectHeader from '@common/modules/action-requests/components/DAppConnect/DAppConnectHeader'
 import getStyles from '@common/modules/action-requests/components/DAppConnect/styles'
 import useDappConnect from '@common/modules/action-requests/hooks/useDappConnect'
+import spacings from '@common/styles/spacings'
 import { MobileLayoutContainer } from '@mobile/components/MobileLayoutWrapper'
 
 // Screen for dApps authorization to connect to extension - will be triggered on dApp connect request
@@ -26,7 +26,8 @@ const DappConnectScreen = () => {
 
   return (
     <MobileLayoutContainer
-      renderDirectChildren={() => (
+      footerStyle={{ ...spacings.ph0, ...spacings.pt0 }}
+      footer={
         <ActionFooter
           onReject={handleDenyButtonPress}
           onResolve={!shouldHoldToProceed ? handleAuthorizeButtonPress : () => {}}
@@ -56,7 +57,7 @@ const DappConnectScreen = () => {
           rejectButtonText={t('Deny')}
           resolveButtonTestID={!shouldHoldToProceed ? 'dapp-connect-button' : undefined}
         />
-      )}
+      }
     >
       {!!dappToConnect && (
         <View style={styles.content}>

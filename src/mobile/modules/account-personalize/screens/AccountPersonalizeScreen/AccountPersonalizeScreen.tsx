@@ -43,71 +43,11 @@ const AccountPersonalizeScreen = () => {
   } = useAccountPersonalize()
 
   return (
-    <MobileLayoutContainer>
-      <MobileLayoutWrapperMainContent
-        withBackButton
-        onBackButtonPress={goToPrevRoute}
-        title={
-          accountPickerState.pageError
-            ? t('Accounts')
-            : !isLoading
-              ? accountsToPersonalize.length
-                ? t('Added successfully')
-                : t('No new accounts added')
-              : undefined
-        }
-        withScroll
-        keyboardAwareScrollViewProps={{ bottomOffset: 200 }}
-      >
-        {isLoading && !accountPickerState.pageError ? (
-          <View style={[flexbox.alignCenter]}>
-            <View style={spacings.mbLg}>
-              <AccountsLoadingAnimation />
-            </View>
-            <Text fontSize={20} weight="semiBold" style={[text.center, spacings.mbSm]}>
-              {t('Loading accounts')}
-            </Text>
-            <DotsLoadingAnimation />
-          </View>
-        ) : accountPickerState.pageError ? (
-          <View style={flexbox.alignCenter}>
-            <Alert
-              type="warning"
-              title={accountPickerState.pageError}
-              text={
-                <Trans>
-                  <Alert.Text type="warning">
-                    Please go back and start the account-adding process again. If the problem
-                    persists, please{' '}
-                    <Text
-                      appearance="primary"
-                      style={text.underline}
-                      onPress={handleContactSupport}
-                    >
-                      contact our support team
-                    </Text>
-                    .
-                  </Alert.Text>
-                </Trans>
-              }
-            />
-          </View>
-        ) : (
+    <MobileLayoutContainer
+      footer={
+        !isLoading &&
+        !accountPickerState.pageError && (
           <>
-            <SuccessAnimation style={{ ...spacings.mbXl, ...flexbox.alignSelfCenter }} />
-            <View style={[spacings.mbLg, flexbox.flex1]}>
-              {accountsToPersonalize.map((acc, index) => (
-                <AccountPersonalizeCard
-                  key={acc.addr}
-                  control={control}
-                  index={index}
-                  account={acc}
-                  hasBottomSpacing={index !== fields.length - 1}
-                  onSave={handleSave as any}
-                />
-              ))}
-            </View>
-
             <Button
               testID="button-save-and-continue"
               size="large"
@@ -146,6 +86,71 @@ const AccountPersonalizeScreen = () => {
                 />
               </Button>
             )}
+          </>
+        )
+      }
+    >
+      <MobileLayoutWrapperMainContent
+        withBackButton
+        onBackButtonPress={goToPrevRoute}
+        title={
+          accountPickerState.pageError
+            ? t('Accounts')
+            : !isLoading
+              ? accountsToPersonalize.length
+                ? t('Added successfully')
+                : t('No new accounts added')
+              : undefined
+        }
+        withScroll
+      >
+        {isLoading && !accountPickerState.pageError ? (
+          <View style={[flexbox.alignCenter]}>
+            <View style={spacings.mbLg}>
+              <AccountsLoadingAnimation />
+            </View>
+            <Text fontSize={20} weight="semiBold" style={[text.center, spacings.mbSm]}>
+              {t('Loading accounts')}
+            </Text>
+            <DotsLoadingAnimation />
+          </View>
+        ) : accountPickerState.pageError ? (
+          <View style={flexbox.alignCenter}>
+            <Alert
+              type="warning"
+              title={accountPickerState.pageError}
+              text={
+                <Trans>
+                  <Alert.Text type="warning">
+                    Please go back and start the account-adding process again. If the problem
+                    persists, please{' '}
+                    <Text
+                      appearance="primary"
+                      style={text.underline}
+                      onPress={handleContactSupport}
+                    >
+                      contact our support team
+                    </Text>
+                    .
+                  </Alert.Text>
+                </Trans>
+              }
+            />
+          </View>
+        ) : (
+          <>
+            <SuccessAnimation style={{ ...spacings.mbXl, ...flexbox.alignSelfCenter }} />
+
+            {accountsToPersonalize.map((acc, index) => (
+              <AccountPersonalizeCard
+                key={acc.addr}
+                control={control}
+                index={index}
+                account={acc}
+                hasBottomSpacing={index !== fields.length - 1}
+                onSave={handleSave as any}
+              />
+            ))}
           </>
         )}
       </MobileLayoutWrapperMainContent>

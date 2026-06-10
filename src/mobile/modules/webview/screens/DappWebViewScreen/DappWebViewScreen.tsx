@@ -8,6 +8,8 @@ import { WebView, WebViewNavigation } from 'react-native-webview'
 import { useLocation } from 'react-router-native'
 
 import { Dapp } from '@ambire-common/interfaces/dapp'
+import { getDappIdFromUrl } from '@ambire-common/libs/dapps/helpers'
+import { isValidHostname, isValidURL } from '@ambire-common/services/validations'
 import GlobeIcon from '@common/assets/svg/GlobeIcon'
 import GoogleIcon from '@common/assets/svg/GoogleIcon'
 import BottomSheet from '@common/components/BottomSheet'
@@ -18,7 +20,7 @@ import useController from '@common/hooks/useController'
 import useDebounce from '@common/hooks/useDebounce'
 import { AnimatedPressable } from '@common/hooks/useHover'
 import useTheme from '@common/hooks/useTheme'
-import DappItem from '@common/modules/dapp-catalog/components/DappItem'
+import DappItem from '@common/modules/explore/components/DappItem'
 import eventBus from '@common/services/event/eventBus'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
@@ -26,7 +28,6 @@ import { WEBVIEW_DEV_HOST } from '@env'
 import { MobileLayoutContainer } from '@mobile/components/MobileLayoutWrapper'
 import DappProgressBar from '@mobile/modules/webview/components/DappProgressBar'
 import DappWebViewFooter from '@mobile/modules/webview/components/DappWebViewFooter'
-import { isValidHostname, isValidURL } from '@ambire-common/services/validations'
 
 // SECURITY: Generate a 256-bit random token used to gate the RN <-> WebView bridge.
 // Cross-origin iframes cannot read main-frame globals (Same-Origin Policy), so they
@@ -74,17 +75,61 @@ const devOnlyHelpers = `
     var originalWarn = console.warn;
     var originalError = console.error;
 
+    // Expand objects that JSON.stringify can't see: Events (esp. CloseEvent / WebSocket
+    // error events) and Errors. Without this, the webpack-dev-server HMR client surfaces
+    // ws errors as the useless "{\\"isTrusted\\":true}" because Event props are getters,
+    // not own enumerable keys.
+    function describeArg(arg) {
+      if (arg === null) return 'null';
+      if (arg === undefined) return 'undefined';
+      if (typeof arg !== 'object') return String(arg);
+
+      if (arg instanceof Error) {
+        return JSON.stringify({
+          __type: arg.name || 'Error',
+          message: arg.message,
+          stack: arg.stack
+        });
+      }
+
+      // CloseEvent (extends Event) — what the WebSocket fires on disconnect.
+      if (typeof CloseEvent !== 'undefined' && arg instanceof CloseEvent) {
+        var t = arg.target || {};
+        return JSON.stringify({
+          __type: 'CloseEvent',
+          type: arg.type,
+          code: arg.code,
+          reason: arg.reason,
+          wasClean: arg.wasClean,
+          targetUrl: t.url,
+          targetReadyState: t.readyState
+        });
+      }
+
+      // Generic Event (e.g. WebSocket 'error' event — code/reason not available).
+      if (typeof Event !== 'undefined' && arg instanceof Event) {
+        var et = arg.target || {};
+        return JSON.stringify({
+          __type: arg.constructor && arg.constructor.name || 'Event',
+          type: arg.type,
+          targetUrl: et.url,
+          targetReadyState: et.readyState,
+          isTrusted: arg.isTrusted
+        });
+      }
+
+      try {
+        return JSON.stringify(arg);
+      } catch(e) {
+        return String(arg);
+      }
+    }
+
     function sendToRN(type, args) {
       window.ReactNativeWebView.postMessage(JSON.stringify({
         type: 'log',
         logType: type,
-        args: Array.from(args).map(arg => {
-          try {
-            return typeof arg === 'object' ? JSON.stringify(arg) : String(arg);
-          } catch(e) {
-            return String(arg);
-          }
-        })
+        args: Array.from(args).map(describeArg)
       }));
     }
 
@@ -108,6 +153,16 @@ const devOnlyHelpers = `
     console.error('[Ambire window.onerror]', errStr, 'at', url, ':', lineNo, ':', columnNo);
     return false;
   };
+
+  // Surface unhandled promise rejections — webpack-dev-server fetch failures often
+  // land here instead of window.onerror.
+  window.addEventListener('unhandledrejection', function(ev) {
+    var reason = ev && ev.reason;
+    var detail = reason instanceof Error
+      ? (reason.stack || reason.message || String(reason))
+      : (function() { try { return JSON.stringify(reason); } catch(e) { return String(reason); } })();
+    console.error('[Ambire unhandledrejection]', detail);
+  });
 
   // Hide dev error overlays (react-error-overlay, webpack-dev-server, Next.js dev)
   // The document may not be fully loaded
@@ -155,11 +210,28 @@ const DappWebViewScreen = () => {
     state: { dapps },
     currentDapp,
     dappUrl,
-    setDappUrl
+    setDappUrl,
+    dispatch: dappsDispatch
   } = useController('DappsController')
 
   // Initial State from Route
   const initialUrl = (location.state as any)?.url || 'https://google.com'
+
+  useEffect(() => {
+    // Record the visited dapp into Recents. addToRecentDapps no-ops when the URL
+    // doesn't resolve to a catalog dapp, so direct-URL / Google searches are safe.
+    try {
+      const id = getDappIdFromUrl(initialUrl)
+      dappsDispatch({
+        type: 'method',
+        params: { method: 'addToRecentDapps', args: [id] }
+      })
+    } catch {
+      // ignore malformed URLs
+    }
+    // Only run on mount with the initial URL.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   // WebView Refs & State
   const webviewRef = useRef<WebView>(null)
@@ -264,6 +336,8 @@ const DappWebViewScreen = () => {
         }
 
         // Hand off wallet deep links to the OS
+        // Note: wc protocol is now intercepted by WalletConnectProvider, but we still openURL
+        // to trigger the Linking event within the app.
         if (protocol === 'wc' || protocol === 'metamask' || protocol === 'ethereum') {
           console.log('[DappWebView] Handing off wallet deep link to OS:', url)
           Linking.openURL(url).catch((err) => {
@@ -523,7 +597,7 @@ const DappWebViewScreen = () => {
         { name: 'description', weight: 0.1 }
       ],
       shouldSort: false,
-      threshold: 0.2, // matching DappCatalogScreen logic
+      threshold: 0.2, // matching ExploreScreen logic
       minMatchCharLength: 1
     })
     const results = fuse.search(debouncedSearch)
@@ -652,7 +726,7 @@ const DappWebViewScreen = () => {
         )
         if (data.type === 'log') {
           const prefix = `[WebView ${data.logType}]`
-          // eslint-disable-next-line no-console
+
           console.log(prefix, ...data.args)
         } else if (data.type === 'providerRequest' || (data.method && data.id)) {
           const method = data.type === 'providerRequest' ? data.payload?.method : data.method
@@ -702,7 +776,8 @@ const DappWebViewScreen = () => {
               request: { ...payload, origin: currentUrlRef.current },
               requestId: data.id,
               providerId: 1,
-              topic
+              topic,
+              tabId: 1
             }
           })
         }
@@ -954,6 +1029,8 @@ const DappWebViewScreen = () => {
 
   return (
     <MobileLayoutContainer
+      keyboardAwareFooter={false}
+      footerStyle={{ ...spacings.ph0, ...spacings.pt0 }}
       footer={
         <>
           {isLoading && <DappProgressBar progress={progress} />}

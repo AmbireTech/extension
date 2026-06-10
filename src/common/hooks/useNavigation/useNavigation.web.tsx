@@ -10,7 +10,7 @@ export const titleChangeEventStream: TitleChangeEventStreamType = new Subject<st
 const useNavigation = (): UseNavigationReturnType => {
   const nav = useNavigate()
   const currentRoute = useLocation()
-  // eslint-disable-next-line @typescript-eslint/naming-convention
+
   const [searchParams, _setSearchParams] = useSearchParams()
 
   const navigate = useCallback<UseNavigationReturnType['navigate']>(

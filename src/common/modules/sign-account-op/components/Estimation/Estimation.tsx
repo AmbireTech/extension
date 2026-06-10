@@ -1,7 +1,7 @@
 import { formatUnits } from 'ethers'
 import React, { Fragment, useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { View } from 'react-native'
+import { Pressable, View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 
 import { EstimationStatus } from '@ambire-common/controllers/estimation/types'
@@ -14,6 +14,7 @@ import { ZERO_ADDRESS } from '@ambire-common/services/socket/constants'
 import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
 import AssetIcon from '@common/assets/svg/AssetIcon'
 import FeeIcon from '@common/assets/svg/FeeIcon'
+import SettingsIcon from '@common/assets/svg/SettingsIcon'
 import Alert from '@common/components/Alert'
 import Button from '@common/components/Button'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
@@ -308,7 +309,6 @@ const Estimation = ({
   const onFeeSelect = useCallback(
     ({ value }: { value: string }) => {
       if (!Object.values(FeeSpeed).includes(value as FeeSpeed)) {
-        // eslint-disable-next-line no-console
         console.error('Invalid fee speed')
         return
       }
@@ -549,21 +549,31 @@ const Estimation = ({
             }
             style={spacings.mlTy}
           >
-            <Button
-              type="ghost"
-              size="tiny"
-              text={t('Advanced options')}
-              textUnderline
-              disabled={!canSetCustomGasPrices}
-              onPress={openAdvancedOptions}
-              hasBottomSpacing={false}
-              style={{
-                alignSelf: 'flex-start',
-                paddingHorizontal: 0,
-                minHeight: 0
-              }}
-              textStyle={{ color: theme.secondaryText }}
-            />
+            {isMobile ? (
+              <Pressable
+                disabled={!canSetCustomGasPrices}
+                onPress={openAdvancedOptions}
+                style={!canSetCustomGasPrices && { opacity: 0.3 }}
+              >
+                <SettingsIcon />
+              </Pressable>
+            ) : (
+              <Button
+                type="ghost"
+                size="tiny"
+                text={t('Advanced options')}
+                textUnderline
+                disabled={!canSetCustomGasPrices}
+                onPress={openAdvancedOptions}
+                hasBottomSpacing={false}
+                style={{
+                  alignSelf: 'flex-start',
+                  paddingHorizontal: 0,
+                  minHeight: 0
+                }}
+                textStyle={{ color: theme.secondaryText }}
+              />
+            )}
           </View>
         </View>
         {selectedFee && (

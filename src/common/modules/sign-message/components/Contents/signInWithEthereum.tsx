@@ -389,6 +389,7 @@ const SignInWithEthereum = ({
             <HardwareWalletSigningModal
               keyType={signMessageState.signer.key.type}
               isVisible={signStatus === 'LOADING'}
+              signingRequest={signMessageState.hardwareWalletSigningRequest}
             />
           )}
         {shouldDisplayLedgerConnectModal && (
@@ -408,6 +409,7 @@ const SignInWithEthereum = ({
               onContinue={handleOnContinue}
               currentRequest={currentRequest}
               signingStep={signingStep}
+              signingRequest={signMessageState.hardwareWalletSigningRequest}
               submitSignatureResponse={handleSubmitSignatureResponse}
               onReject={handleQrSigningFlowOnRejectPressed}
               handleQrSigningFlowOnBackPressed={handleQrSigningFlowOnBackPressed}

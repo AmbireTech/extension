@@ -1,6 +1,7 @@
 import React from 'react'
 import { StyleSheet, View } from 'react-native'
 
+import HoldToProceedButton from '@common/components/HoldToProceedButton'
 import NoKeysToSignAlert from '@common/components/NoKeysToSignAlert'
 import Spinner from '@common/components/Spinner'
 import ActionFooter from '@common/modules/action-requests/components/ActionFooter'
@@ -13,12 +14,13 @@ import useSignMessage from '@common/modules/sign-message/hooks/useSignMessage'
 import flexbox from '@common/styles/utils/flexbox'
 import SmallNotificationWindowWrapper from '@web/components/SmallNotificationWindowWrapper'
 import { TabLayoutContainer } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
-import HoldToProceedButton from '@common/components/HoldToProceedButton'
 
 const SignMessageScreen = () => {
   const {
     signMessageState,
     signStatus,
+    humanizedMessage,
+    isHumanizing,
     hasReachedBottom,
     setHasReachedBottom,
     account,
@@ -44,7 +46,6 @@ const SignMessageScreen = () => {
     view,
     threshold,
     isSafeNotDeployed,
-    isLoading,
     holdToProceedButtonText,
     holdToProceedCompleteText,
     hasSafetyBanners,
@@ -52,7 +53,10 @@ const SignMessageScreen = () => {
     isResolveActionDisabled
   } = useSignMessage()
 
-  if (isLoading || !account || !userRequest) {
+  // In the split second when the request window opens, but the state is not yet
+  // initialized, to prevent a flash of the fallback visualization, show a
+  // loading spinner instead (would better be a skeleton, but whatever).
+  if (!signMessageState.isInitialized || !account || !userRequest) {
     return (
       <View style={[StyleSheet.absoluteFill, flexbox.center]}>
         <Spinner />
@@ -161,6 +165,8 @@ const SignMessageScreen = () => {
             handleSubmitSignatureResponse={submitSignatureResponse}
             handleQrSigningFlowOnRejectPressed={handleQrSigningFlowOnRejectPressed}
             handleQrSigningFlowOnBackPressed={handleQrSigningFlowOnBackPressed}
+            humanizedMessage={humanizedMessage}
+            isHumanizing={isHumanizing}
           />
         )}
         {view === 'siwe' && (

@@ -26,6 +26,7 @@ interface Props {
   onPress?: () => void | Promise<void>
   style?: ViewStyle
   isSidebarLink?: boolean
+  testID?: string
 }
 
 const SettingsLink: FC<Props> = ({
@@ -36,7 +37,8 @@ const SettingsLink: FC<Props> = ({
   isExternal,
   onPress,
   style,
-  isSidebarLink
+  isSidebarLink,
+  testID
 }) => {
   const { navigate } = useNavigation()
   const { t } = useTranslation()
@@ -53,6 +55,7 @@ const SettingsLink: FC<Props> = ({
 
   return (
     <AnimatedPressable
+      testID={testID}
       onPress={async () => {
         if (onPress) {
           await onPress()

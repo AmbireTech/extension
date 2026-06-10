@@ -1,7 +1,7 @@
 import { formatUnits } from 'ethers'
 import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { ColorValue, View } from 'react-native'
+import { ColorValue, GestureResponderEvent, StyleProp, View, ViewStyle } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 
 import { getTokenAmount } from '@ambire-common/libs/portfolio/helpers'
@@ -13,6 +13,7 @@ import Button from '@common/components/Button'
 import FooterGlassView from '@common/components/FooterGlassView'
 import Text from '@common/components/Text'
 import TokenIcon from '@common/components/TokenIcon'
+import { isMobile, isWeb } from '@common/config/env'
 import useController from '@common/hooks/useController'
 import useHover, { AnimatedPressable } from '@common/hooks/useHover'
 import useTheme from '@common/hooks/useTheme'
@@ -80,7 +81,8 @@ const EditApprovalAmountInput = memo(
           onBlur={onBlur}
           fontSize={16}
           backgroundColor={backgroundColor}
-          inputWrapperStyle={{ height: 40, ...spacings.prSm }}
+          textAlign="right"
+          inputWrapperStyle={{ height: isMobile ? 52 : 40, ...spacings.prSm }}
           leftIconStyle={spacings.mrTy}
           leftIcon={leftIcon}
         />
@@ -104,7 +106,8 @@ const EditApproval = ({
   token,
   chainId,
   value,
-  id
+  id,
+  style
 }: {
   editCall: (
     amount: string,
@@ -116,6 +119,7 @@ const EditApproval = ({
   chainId: bigint
   value: bigint
   id?: string
+  style?: StyleProp<ViewStyle>
 }) => {
   const { t } = useTranslation()
   const { theme } = useTheme()
@@ -182,6 +186,14 @@ const EditApproval = ({
     amountRef.current = value
   }, [])
 
+  const handleOpenEditApprovals = useCallback(
+    (event: GestureResponderEvent) => {
+      event.stopPropagation()
+      openEditApprovals()
+    },
+    [openEditApprovals]
+  )
+
   return (
     <>
       <AnimatedPressable
@@ -190,18 +202,21 @@ const EditApproval = ({
           flexbox.directionRow,
           flexbox.alignCenter,
           spacings.mrTy,
-          { marginLeft: -8 }
+          { marginLeft: -8 },
+          style
         ]}
         {...bindEditApprovals}
-        onPress={() => openEditApprovals()}
+        onPress={handleOpenEditApprovals}
       >
         <Text fontSize={14} color={theme.linkText}>
           {'['}
         </Text>
         <EditPenIcon width={20} height={20} color={theme.linkText} />
-        <Text fontSize={14} color={theme.linkText}>
-          {t('Edit')}
-        </Text>
+        {!isMobile && (
+          <Text fontSize={14} color={theme.linkText}>
+            {t('Edit')}
+          </Text>
+        )}
         <Text fontSize={14} color={theme.linkText}>
           {']'}
         </Text>
@@ -212,6 +227,7 @@ const EditApproval = ({
         type="modal"
         closeBottomSheet={closeEditApprovals}
         style={{ maxWidth: 460 }}
+        shouldBeClosableOnDrag={false}
       >
         <View style={flexbox.alignCenter}>
           <Text fontSize={20} weight="medium" style={[spacings.mbXl, spacings.mtTy]}>
@@ -229,14 +245,21 @@ const EditApproval = ({
               getMaxAmountText={portfolioToken ? getMaxAmountText : undefined}
             />
           </View>
-          <FooterGlassView absolute={false} style={spacings.mt2Xl}>
+          <FooterGlassView
+            absolute={false}
+            style={{ ...spacings.mt2Xl }}
+            mobileStyle={{
+              ...flexbox.directionRow,
+              ...spacings.mtLg
+            }}
+          >
             <Button
               type="secondary"
               text={t('Cancel')}
               onPress={() => closeEditApprovals()}
               hasBottomSpacing={false}
               size="smaller"
-              style={[{ width: 100 }, spacings.mr]}
+              style={[spacings.mrTy, isWeb && { width: 100 }, isMobile && flexbox.flex1]}
             />
             <Button
               type="primary"
@@ -244,7 +267,7 @@ const EditApproval = ({
               onPress={() => editCall(amountRef.current, token, chainId, closeEditApprovals)}
               hasBottomSpacing={false}
               size="smaller"
-              style={[{ width: 100 }]}
+              style={[isWeb && { width: 100 }, isMobile && flexbox.flex1]}
             />
           </FooterGlassView>
         </View>

@@ -9,7 +9,7 @@ import { isAmbireNext, isProd } from '@common/config/env'
  * log.setLevel("warn") call log.warn("something") or log.error("something")
  * will output messages, but log.info("something") will not.
  */
-// eslint-disable-next-line @typescript-eslint/naming-convention
+
 export enum LOG_LEVELS {
   PROD = 'warn',
   DEV = 'trace'

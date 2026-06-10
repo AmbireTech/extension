@@ -76,7 +76,7 @@ const SafeFooter = ({
             />
           </View>
         )}
-        {isSingle ? (
+        {threshold > 0 && isSingle ? (
           <View style={[flexbox.directionRow, flexbox.justifyCenter, spacings.pv, spacings.ph]}>
             <View style={[flexbox.directionRow]}>
               <Button
@@ -98,7 +98,7 @@ const SafeFooter = ({
               />
             </View>
           </View>
-        ) : (
+        ) : threshold > 0 ? (
           <View style={[flexbox.directionRow, flexbox.justifyCenter, spacings.pv, spacings.ph]}>
             {threshold > signed.length ? (
               <View style={[flexbox.directionRow, flexbox.justifySpaceBetween, { width: '100%' }]}>
@@ -142,7 +142,7 @@ const SafeFooter = ({
               />
             )}
           </View>
-        )}
+        ) : null}
       </GlassView>
     </View>
   )
