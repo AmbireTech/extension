@@ -38,7 +38,7 @@ const ExtremeGasFeeWarning = ({
 
   return (
     <Alert
-      type="error"
+      type="warning"
       size="md"
       title={t('Unusually high network fee')}
       text={text}

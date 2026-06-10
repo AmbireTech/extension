@@ -86,7 +86,13 @@ const Footer = ({
         {shouldHoldToProceed && (
           <HoldToProceedButton
             text={t('Hold to sign')}
-            buttonType={signButtonType === 'dangerFilled' ? 'dangerFilled' : 'primary'}
+            buttonType={
+              signButtonType === 'dangerFilled'
+                ? 'dangerFilled'
+                : signButtonType === 'warning'
+                  ? 'warning'
+                  : 'primary'
+            }
             disabled={isSignDisabled}
             onHoldComplete={onSign}
             testID="proceed-btn"

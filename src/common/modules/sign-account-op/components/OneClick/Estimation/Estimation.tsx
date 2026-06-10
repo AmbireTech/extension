@@ -207,9 +207,7 @@ const OneClickEstimation = ({
                 <HoldToProceedButton
                   testID="sign-proceed-btn"
                   text={t('Hold to sign')}
-                  buttonType={
-                    extremeGasFeeSignButtonType === 'dangerFilled' ? 'dangerFilled' : 'primary'
-                  }
+                  buttonType={extremeGasFeeSignButtonType === 'warning' ? 'warning' : 'primary'}
                   disabled={isSignDisabled || signingErrors.length > 0}
                   onHoldComplete={onSignButtonClick}
                   size={isMobile ? 'regular' : 'smaller'}

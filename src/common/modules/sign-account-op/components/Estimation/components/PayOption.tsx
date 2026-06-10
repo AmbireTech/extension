@@ -117,7 +117,7 @@ const PayOption = ({
               weight="semiBold"
               fontSize={13}
               numberOfLines={1}
-              appearance={shouldHighlightExtremeGasFee ? 'errorText' : 'primaryText'}
+              appearance={shouldHighlightExtremeGasFee ? 'warningText' : 'primaryText'}
             >
               {formattedAmount} {feeOption.token.symbol}{' '}
             </Text>
@@ -141,7 +141,7 @@ const PayOption = ({
             </Text>
           ) : (
             <Text
-              appearance={shouldHighlightExtremeGasFee ? 'errorText' : 'secondaryText'}
+              appearance={shouldHighlightExtremeGasFee ? 'warningText' : 'secondaryText'}
               weight="medium"
               fontSize={12}
             >

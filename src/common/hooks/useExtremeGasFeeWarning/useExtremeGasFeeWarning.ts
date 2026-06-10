@@ -54,7 +54,7 @@ const useExtremeGasFeeWarning = (
     isActive: isWarningActive,
     isProceedDelayed,
     remainingSeconds,
-    signButtonType: isWarningActive ? ('dangerFilled' as const) : ('primary' as const)
+    signButtonType: isWarningActive ? ('warning' as const) : ('primary' as const)
   }
 }
 
