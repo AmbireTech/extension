@@ -1,11 +1,21 @@
 import { isHexString } from 'ethers'
 import { FC, memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { GestureResponderEvent, NativeScrollEvent, Pressable, ScrollView, View } from 'react-native'
+import {
+  ColorValue,
+  GestureResponderEvent,
+  NativeScrollEvent,
+  Pressable,
+  ScrollView,
+  StyleProp,
+  View,
+  ViewStyle
+} from 'react-native'
 
 import { Hex } from '@ambire-common/interfaces/hex'
 import { ISignMessageController } from '@ambire-common/interfaces/signMessage'
 import { IrMessage } from '@ambire-common/libs/humanizer/interfaces'
+import { stringify } from '@ambire-common/libs/richJson/richJson'
 import { isValidAddress } from '@ambire-common/services/address'
 import WarningFilledIcon from '@common/assets/svg/WarningFilledIcon'
 import CopyText from '@common/components/CopyText'
@@ -22,7 +32,6 @@ import { getMessageAsText, simplifyTypedMessage } from '@common/utils/messageToS
 
 import { getEip712IntegerFieldNames, getParsedMessageValue } from './helpers'
 import getStyles from './styles'
-import { stringify } from '@ambire-common/libs/richJson/richJson'
 
 const isCloseToBottom = ({ layoutMeasurement, contentOffset, contentSize }: NativeScrollEvent) => {
   const paddingToBottom = 40
@@ -119,6 +128,8 @@ const FallbackVisualization: FC<{
   withCompactDataRow?: boolean
   withDecimalIntegerRows?: boolean
   disableScroll?: boolean
+  containerStyle?: StyleProp<ViewStyle>
+  separatorColor?: ColorValue
 }> = ({
   messageToSign,
   humanizedMessage,
@@ -130,7 +141,9 @@ const FallbackVisualization: FC<{
   scrollEnabled = true,
   withCompactDataRow = false,
   withDecimalIntegerRows = false,
-  disableScroll = false
+  disableScroll = false,
+  containerStyle,
+  separatorColor
 }) => {
   const { t } = useTranslation()
   const { styles, theme } = useTheme(getStyles)
@@ -209,9 +222,9 @@ const FallbackVisualization: FC<{
   if (!messageToSign || !content) return null
 
   return (
-    <View style={[styles.container]}>
+    <View style={[styles.container, containerStyle]}>
       {isTypedMessage && !rawOnly && (
-        <View style={styles.tabHeader}>
+        <View style={[styles.tabHeader, !!separatorColor && { borderBottomColor: separatorColor }]}>
           {tabs.map(([tab, label]) => {
             const isActive = activeTab === tab
 
