@@ -13,15 +13,25 @@ const useExtremeGasFeeWarning = (
     [networkChainId, signAccountOpState]
   )
 
+  const isWarningActive = !!warningState
+
   const [remainingSeconds, setRemainingSeconds] = useState(0)
+  const [wasWarningActive, setWasWarningActive] = useState(false)
+
+  // Reset the countdown when the warning toggles, during render (React's
+  // recommended way to adjust state on a changing input) instead of in an
+  // effect, which would call setState synchronously and cause cascading
+  // renders. `warningState` is recomputed into a new object on every controller
+  // update (every few seconds, and whenever the user changes the fee
+  // speed/price), so keying on the boolean keeps the delay a one-off until the
+  // warning clears and reappears.
+  if (isWarningActive !== wasWarningActive) {
+    setWasWarningActive(isWarningActive)
+    setRemainingSeconds(isWarningActive ? EXTREME_GAS_FEE_PROCEED_DELAY_SECONDS : 0)
+  }
 
   useEffect(() => {
-    if (!warningState) {
-      setRemainingSeconds(0)
-      return
-    }
-
-    setRemainingSeconds(EXTREME_GAS_FEE_PROCEED_DELAY_SECONDS)
+    if (!isWarningActive) return
 
     const intervalId = setInterval(() => {
       setRemainingSeconds((prev) => {
@@ -35,16 +45,16 @@ const useExtremeGasFeeWarning = (
     }, 1000)
 
     return () => clearInterval(intervalId)
-  }, [warningState])
+  }, [isWarningActive])
 
-  const isProceedDelayed = !!warningState && remainingSeconds > 0
+  const isProceedDelayed = isWarningActive && remainingSeconds > 0
 
   return {
     warningState,
-    isActive: !!warningState,
+    isActive: isWarningActive,
     isProceedDelayed,
     remainingSeconds,
-    signButtonType: warningState ? ('dangerFilled' as const) : ('primary' as const)
+    signButtonType: isWarningActive ? ('dangerFilled' as const) : ('primary' as const)
   }
 }
 
