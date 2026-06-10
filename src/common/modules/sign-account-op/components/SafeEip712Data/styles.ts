@@ -5,13 +5,10 @@ import { ThemeProps } from '@common/styles/themeConfig'
 import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 
-const EXPANDABLE_CARD_ARROW_WIDTH = 28
-
 interface Style {
   container: ViewStyle
-  content: ViewStyle
-  contentBody: ViewStyle
-  headerTile: ViewStyle
+  header: ViewStyle
+  title: TextStyle
   rows: ViewStyle
   row: ViewStyle
   rowRight: ViewStyle
@@ -19,30 +16,29 @@ interface Style {
   value: TextStyle
   copyIcon: ViewStyle
   expandedContent: ViewStyle
+  fallbackVisualization: ViewStyle
 }
 
 const getStyles = (theme: ThemeProps) =>
   StyleSheet.create<Style>({
     container: {
       borderWidth: 1,
-      borderColor: theme.secondaryBorder
+      ...common.borderRadiusPrimary,
+      borderColor: theme.primaryBorder,
+      backgroundColor: 'transparent',
+      overflow: 'hidden'
     },
-    content: {
-      ...flexbox.alignStart,
-      alignItems: 'baseline',
-      ...spacings.phSm
+    header: {
+      backgroundColor: theme.secondaryBackground,
+      ...spacings.phSm,
+      ...spacings.pvTy
     },
-    contentBody: {
-      ...flexbox.flex1
-    },
-    headerTile: {
-      alignSelf: 'flex-start',
-      ...spacings.plMi
+    title: {
+      ...spacings.mlMi
     },
     rows: {
-      ...flexbox.flex1,
-      marginLeft: -EXPANDABLE_CARD_ARROW_WIDTH,
-      ...spacings.ptTy
+      ...spacings.phSm,
+      ...spacings.pvSm
     },
     row: {
       ...flexbox.directionRow,
@@ -74,9 +70,13 @@ const getStyles = (theme: ThemeProps) =>
     },
     expandedContent: {
       borderTopWidth: 1,
-      borderTopColor: theme.secondaryBorder,
-      ...spacings.pSm,
-      ...common.borderRadiusPrimary
+      borderTopColor: theme.secondaryBackground,
+      backgroundColor: 'transparent'
+    },
+    fallbackVisualization: {
+      backgroundColor: 'transparent',
+      ...spacings.phSm,
+      ...spacings.pv0
     }
   })
 
