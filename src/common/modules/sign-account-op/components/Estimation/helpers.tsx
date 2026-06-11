@@ -10,6 +10,7 @@ import {
   isTransferredTokenFeeOption
 } from '@ambire-common/libs/account/feeOptions'
 import { FeePaymentOption } from '@ambire-common/libs/estimate/interfaces'
+import { getExtremeGasFeeWarningState } from '@ambire-common/libs/safeguards/extremeGasFee'
 import { ZERO_ADDRESS } from '@ambire-common/services/socket/constants'
 
 import PayOption from './components/PayOption'
@@ -63,7 +64,8 @@ const sortFeeOptions = (
 const mapFeeOptions = (
   feeOption: FeePaymentOption,
   signAccountOpState: ISignAccountOpController,
-  addressBookContacts: Contacts
+  addressBookContacts: Contacts,
+  isViewOnly: boolean
 ) => {
   let disabledReason: string | undefined
   let disabledTextAppearance: 'errorText' | 'infoText' | undefined
@@ -129,6 +131,22 @@ const mapFeeOptions = (
     disabledTextAppearance = 'errorText'
   }
 
+  const isSelectedFeeOption =
+    !!signAccountOpState.selectedOption &&
+    id ===
+      getFeeSpeedIdentifier(
+        signAccountOpState.selectedOption,
+        signAccountOpState.accountOp.accountAddr
+      )
+
+  // For view-only accounts we hide the extreme gas fee warning to reduce
+  // clutter (the account can't sign anyway), so don't highlight the fee either.
+  const shouldHighlightExtremeGasFee =
+    !isViewOnly &&
+    isSelectedFeeOption &&
+    !disabledReason &&
+    !!getExtremeGasFeeWarningState(signAccountOpState, signAccountOpState.accountOp.chainId)
+
   return {
     value:
       feeOption.paidBy +
@@ -143,6 +161,7 @@ const mapFeeOptions = (
         disabledReason={disabledReason}
         disabledTextAppearance={disabledTextAppearance}
         paidByAccountLabel={paidByAccountLabel}
+        shouldHighlightExtremeGasFee={shouldHighlightExtremeGasFee}
       />
     ),
     extraSearchProps: {

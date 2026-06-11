@@ -106,6 +106,8 @@ const SignAccountOpScreen = () => {
     isSignDisabled,
     bundlerNonceDiscrepancy,
     primaryButtonText,
+    signButtonText,
+    extremeGasFeeSignButtonType,
     shouldHoldToProceed,
     disabledReason,
     showSafeSigners,
@@ -276,8 +278,9 @@ const SignAccountOpScreen = () => {
               isAddToCartDisabled={isAddToCartDisabled}
               onSign={onSignButtonClick}
               inProgressButtonText={primaryButtonText}
-              buttonText={primaryButtonText}
+              buttonText={signButtonText}
               shouldHoldToProceed={shouldHoldToProceed}
+              signButtonType={extremeGasFeeSignButtonType}
             />
           </View>
         }
