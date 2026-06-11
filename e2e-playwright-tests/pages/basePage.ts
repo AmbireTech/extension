@@ -170,14 +170,35 @@ export class BasePage {
     this._reqListener = (request: PWRequest) => {
       const url = request.url()
       if (!url.startsWith('http')) return
-      const resourceType = request.resourceType()
-      if (resourceType !== 'fetch' && resourceType !== 'xhr') return
+      // OPTIONS preflights never carry a payload and only duplicate the real
+      // request, so they are irrelevant to both surfaces below.
       if (request.method() === 'OPTIONS') return
 
+      const resourceType = request.resourceType()
+
+      // Two intentionally different capture surfaces:
+      //
+      // 1. Content scan (collectedRequestEntries) — captures EVERY http(s)
+      //    request regardless of resourceType. A secret can leak through more
+      //    than just fetch/xhr: navigator.sendBeacon (resourceType "ping"), a
+      //    tracking pixel ("image"), or EventSource/SSE ("eventsource") would
+      //    otherwise bypass the content check entirely. The leak detector is an
+      //    exact-match search for the secret, so widening this surface adds zero
+      //    false positives — only more coverage, which is exactly what we want.
+      //    (WebSocket frames are NOT delivered through the "request" event and
+      //    would need a separate page.on("websocket") listener — out of scope here.)
+      //
+      // 2. Domain check (collectedRequests) — stays narrow to fetch/xhr on
+      //    purpose. categorizeRequests() flags requests to unknown domains, and
+      //    legitimate images/fonts/CDN assets routinely hit "unknown" domains;
+      //    feeding those in would make the uncategorized-domain assertion flaky.
       const postData = request.postData()
       const headers = request.headers()
-      this.collectedRequests.push(url)
       this.collectedRequestEntries.push({ url, postData, headers })
+
+      if (resourceType === 'fetch' || resourceType === 'xhr') {
+        this.collectedRequests.push(url)
+      }
     }
     this.context.on('request', this._reqListener)
     this._monitorInstalled = true
