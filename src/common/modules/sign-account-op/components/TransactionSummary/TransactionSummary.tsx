@@ -883,7 +883,10 @@ const TransactionSummary = ({
     >
       <View
         style={{
-          paddingHorizontal: 42 * sizeMultiplier[size] // magic number
+          paddingHorizontal:
+            shouldUseErc7730TransactionSummaryLayout && isWeb
+              ? SPACING_SM
+              : 42 * sizeMultiplier[size] // magic number
         }}
       >
         {!call.validationError ? (
