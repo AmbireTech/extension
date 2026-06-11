@@ -57,8 +57,36 @@ Workflow
 10. Apply the exclusion rules (see "Excluded product areas" below) to drop Rewards/Legends PRs. Every other PR is included.
 11. Convert each remaining PR into a changelog entry.
 12. Categorize each remaining PR as Added, Changed, or Fixed.
-13. Preserve the original merge-commit timeline within each category.
+13. Order entries within each category oldest-merge first (chronological). Note that `git log` lists newest merges first, so reverse that order.
 14. Always append a Full Changelog GitHub compare link.
+
+## ambire-common submodule bump (root repo changelogs only)
+
+When generating a changelog for the root `ambire-app` repository, check whether the `src/ambire-common` submodule was updated in this release:
+
+```bash
+git diff main...<release-branch> -- src/ambire-common
+```
+
+If the submodule pointer changed, find the tag it now points to:
+
+```bash
+cd src/ambire-common && git describe --tags --exact-match HEAD
+```
+
+If there is an exact tag, **always insert this as the very first entry** in the changelog (before all other Added entries), substituting the real version number:
+
+```markdown
+* Added: Migrate to **ambire-common [v2.100.0](https://github.com/AmbireTech/ambire-common/releases/tag/v2.100.0), see changelog in there too**.
+```
+
+Assume a release tag exists for that version even if it has not been published yet — just substitute the numbers. Do not add 📣 to this entry.
+
+If the submodule points to a commit with no exact tag, skip this entry entirely and note it at the end of your response after the skipped PRs section:
+
+```
+**Note:** src/ambire-common submodule was updated but points to an untagged commit (<sha>) — no version entry added.
+```
 
 ## Git commands
 
@@ -178,7 +206,7 @@ Start the changelog with exactly: "Changelog:"
 
 Keep all entries in one flat bullet list. Group entries in this order: Added, Changed, Fixed.
 
-Within each category group, preserve the original merge-commit order.
+Within each category group, order entries oldest-merge first (chronological). Since `git log` outputs newest merges first, reverse that order so the earliest-merged PR appears at the top of each group.
 
 Do not add category headings or visual separators between groups.
 
@@ -229,6 +257,7 @@ Each top-level bullet must:
 * describe user impact when possible
 * avoid raw commit-message noise
 * avoid overly technical implementation details unless relevant to developers or release reviewers
+* never use em dashes (—) or en dashes (–); use a hyphens, colon, comma, or rephrase instead
 
 For internal/technical entries (CI fixes, QA test updates, config, docs, TS errors, etc.) — include them but keep it to a single line. Do not add sub-bullets or details.
 
@@ -311,6 +340,7 @@ Before returning the changelog, verify:
 * every top-level entry links to a GitHub PR
 * marketing-worthy entries have 📣
 * public wording is clear
+* no em dashes or en dashes in any entry
 * Rewards/Legends PRs are excluded; all other PRs are present (including CI, QA, config, docs, TS fixes)
 * skipped PRs and branch-sync commits are listed after the changelog block
 * security/signing claims are accurate

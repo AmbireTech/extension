@@ -1,5 +1,5 @@
 import React, { FC } from 'react'
-import { View, ViewStyle } from 'react-native'
+import { TextStyle, View, ViewStyle } from 'react-native'
 
 import ErrorIcon from '@common/assets/svg/ErrorIcon'
 import WarningIcon from '@common/assets/svg/WarningIcon'
@@ -101,6 +101,8 @@ const DualChoiceWarningModal = ({
   secondaryButtonText,
   primaryButtonProps,
   secondaryButtonProps,
+  contentStyle,
+  descriptionStyle,
   type = DEFAULT_TYPE
 }: Omit<DualChoiceModalProps, 'description' | 'primaryButtonTestID' | 'secondaryButtonTestID'> & {
   title: string
@@ -108,15 +110,17 @@ const DualChoiceWarningModal = ({
   children?: React.ReactNode | React.ReactNode[]
   primaryButtonProps?: ButtonProps
   secondaryButtonProps?: ButtonProps
+  contentStyle?: ViewStyle
+  descriptionStyle?: TextStyle
   type?: Type
 }) => {
   const { theme } = useTheme()
 
   return (
     <Wrapper>
-      <ContentWrapper>
+      <ContentWrapper style={contentStyle}>
         <TitleAndIcon type={type} title={title} style={{ backgroundColor: 'transparent' }} />
-        {!!description && <Text text={description} type={type} />}
+        {!!description && <Text text={description} type={type} style={descriptionStyle} />}
         {children}
       </ContentWrapper>
       <ButtonWrapper reverse={true}>

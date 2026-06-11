@@ -78,13 +78,17 @@ const OneClickEstimation = ({
     isSignDisabled,
     warningToPromptBeforeSign,
     warningModalRef,
+    gasFeeUpdatedModalRef,
+    handleAcceptGasFeeUpdate,
+    handleDismissGasFeeUpdate,
     dismissWarning,
     acknowledgeWarning,
     handleChangeFeePayerKeyType,
     isChooseFeePayerKeyShown,
     setIsChooseFeePayerKeyShown,
     slowPaymasterRequest,
-    primaryButtonText,
+    signButtonText,
+    extremeGasFeeSignButtonType,
     bundlerNonceDiscrepancy,
     shouldDisplayQrSigningModal,
     handleQrSingingFlowOnContinuePressed,
@@ -206,6 +210,7 @@ const OneClickEstimation = ({
                 <HoldToProceedButton
                   testID="sign-proceed-btn"
                   text={t('Hold to sign')}
+                  buttonType={extremeGasFeeSignButtonType === 'warning' ? 'warning' : 'primary'}
                   disabled={isSignDisabled || signingErrors.length > 0}
                   onHoldComplete={onSignButtonClick}
                   size={isMobile ? 'regular' : 'smaller'}
@@ -213,7 +218,8 @@ const OneClickEstimation = ({
               ) : (
                 <ButtonWithLoader
                   testID="sign-button"
-                  text={primaryButtonText}
+                  text={signButtonText}
+                  type={extremeGasFeeSignButtonType}
                   isLoading={isSignLoading}
                   disabled={isSignDisabled || signingErrors.length > 0}
                   onPress={onSignButtonClick}
@@ -228,6 +234,9 @@ const OneClickEstimation = ({
         renderedButNotNecessarilyVisibleModal={renderedButNotNecessarilyVisibleModal}
         signAccountOpState={signAccountOpController}
         warningModalRef={warningModalRef}
+        gasFeeUpdatedModalRef={gasFeeUpdatedModalRef}
+        handleAcceptGasFeeUpdate={handleAcceptGasFeeUpdate}
+        handleDismissGasFeeUpdate={handleDismissGasFeeUpdate}
         feePayerKeyType={feePayerKeyType}
         signingKeyType={signingKeyType}
         slowPaymasterRequest={slowPaymasterRequest}
@@ -251,7 +260,9 @@ const OneClickEstimation = ({
           renderedButNotNecessarilyVisibleModal === 'warnings' &&
           isSignLoading
             ? 'warnings'
-            : undefined
+            : renderedButNotNecessarilyVisibleModal === 'gas-fee-updated'
+              ? 'gas-fee-updated'
+              : undefined
         }
         actionType={updateType === 'Swap&Bridge' ? 'swapAndBridge' : 'transfer'}
       />

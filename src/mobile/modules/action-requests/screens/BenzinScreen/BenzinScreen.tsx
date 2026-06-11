@@ -90,7 +90,10 @@ const BenzinScreen = () => {
             </View>
             <View style={flexbox.flex1}>
               {!!state?.handleOpenExplorer && (
-                <OpenExplorerButton handleOpenExplorer={state.handleOpenExplorer} />
+                <OpenExplorerButton
+                  handleOpenExplorer={state.handleOpenExplorer}
+                  disableOpenExplorerBtn={state.disableOpenExplorerBtn}
+                />
               )}
             </View>
           </View>
