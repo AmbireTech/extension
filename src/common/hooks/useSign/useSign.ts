@@ -472,6 +472,14 @@ const useSign = ({
     signButtonType: extremeGasFeeSignButtonType
   } = useExtremeGasFeeWarning(signAccountOpState, signAccountOpState?.accountOp.chainId)
 
+  // View-only accounts can't sign, so skip the warning-styled button and delay UX.
+  const signButtonType = useMemo(
+    () => (isViewOnly ? ('primary' as const) : extremeGasFeeSignButtonType),
+    [isViewOnly, extremeGasFeeSignButtonType]
+  )
+
+  const isExtremeGasFeeProceedDelayedForSign = isExtremeGasFeeProceedDelayed && !isViewOnly
+
   const isSignDisabled = useMemo(() => {
     return (
       isViewOnly ||
@@ -480,18 +488,18 @@ const useSign = ({
       notReadyToSignButAlsoNotDone ||
       !signAccountOpState?.readyToSign ||
       (signAccountOpState && signAccountOpState.estimation.status === EstimationStatus.Loading) ||
-      isExtremeGasFeeProceedDelayed
+      isExtremeGasFeeProceedDelayedForSign
     )
   }, [
     isViewOnly,
     isSignLoading,
-    isExtremeGasFeeProceedDelayed,
+    isExtremeGasFeeProceedDelayedForSign,
     notReadyToSignButAlsoNotDone,
     signAccountOpState
   ])
 
   const disabledReason = useMemo(() => {
-    if (isExtremeGasFeeProceedDelayed) {
+    if (isExtremeGasFeeProceedDelayedForSign) {
       return t('Please wait {{seconds}}s to review the high network fee.', {
         seconds: extremeGasFeeProceedDelaySeconds
       })
@@ -500,15 +508,15 @@ const useSign = ({
     return typeof hasReachedBottom === 'boolean' && !hasReachedBottom
       ? t('Scroll to the bottom of the transaction overview to sign.')
       : undefined
-  }, [extremeGasFeeProceedDelaySeconds, hasReachedBottom, isExtremeGasFeeProceedDelayed, t])
+  }, [extremeGasFeeProceedDelaySeconds, hasReachedBottom, isExtremeGasFeeProceedDelayedForSign, t])
 
   const signButtonText = useMemo(() => {
-    if (isExtremeGasFeeProceedDelayed) {
+    if (isExtremeGasFeeProceedDelayedForSign) {
       return t('Wait {{seconds}}s', { seconds: extremeGasFeeProceedDelaySeconds })
     }
 
     return primaryButtonText
-  }, [extremeGasFeeProceedDelaySeconds, isExtremeGasFeeProceedDelayed, primaryButtonText, t])
+  }, [extremeGasFeeProceedDelaySeconds, isExtremeGasFeeProceedDelayedForSign, primaryButtonText, t])
 
   const bundlerNonceDiscrepancy = useMemo(
     () =>
@@ -560,7 +568,7 @@ const useSign = ({
     primaryButtonText,
     signButtonText,
     isExtremeGasFeeActive,
-    extremeGasFeeSignButtonType,
+    extremeGasFeeSignButtonType: signButtonType,
     bundlerNonceDiscrepancy,
     isChooseFeePayerKeyShown,
     setIsChooseFeePayerKeyShown,
