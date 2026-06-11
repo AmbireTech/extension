@@ -2,6 +2,7 @@ import React, { FC, memo, useCallback, useMemo } from 'react'
 import { View } from 'react-native'
 
 import { HumanizerVisualization } from '@ambire-common/libs/humanizer/interfaces'
+import useNetworksContext from '@benzin/hooks/useBenzinNetworksContext'
 import ChainVisualization from '@common/components/HumanizedVisualization/ChainVisualization'
 import EditApproval from '@common/components/HumanizedVisualization/EditApproval'
 import { Erc7730StructuredVisualizationProps } from '@common/components/HumanizedVisualization/Erc7730/interfaces'
@@ -10,6 +11,8 @@ import HumanizerAddress from '@common/components/HumanizerAddress'
 import Text from '@common/components/Text'
 import TokenOrNft from '@common/components/TokenOrNft'
 import { isMobile } from '@common/config/env'
+import { useTranslation } from '@common/config/localization'
+import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import spacings, { SPACING_SM, SPACING_TY } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
@@ -21,6 +24,7 @@ import {
   getDetailedValueLines,
   getErc7730SpenderRow,
   getErc7730SummaryRows,
+  hasErc7730NativeValueRow,
   hasTokenValue,
   isNestedErc7730Row,
   isNestedErc7730Value,
@@ -40,7 +44,32 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
   isTransactionSummaryLayout = false
 }) => {
   const { theme } = useTheme()
+  const { t } = useTranslation()
+  const {
+    state: { networks: controllerNetworks }
+  } = useController('NetworksController')
+  const { benzinNetworks } = useNetworksContext()
+  const networks = controllerNetworks ?? benzinNetworks
   const shouldHideTransactionSummaryTitle = isMobile && hideMobileSummaryTitle
+  const nativeAssetSymbol = useMemo(
+    () => networks.find((network) => network.chainId === chainId)?.nativeAssetSymbol,
+    [chainId, networks]
+  )
+  const hasNativeValueRow = useMemo(() => hasErc7730NativeValueRow(item), [item])
+  const getTransactionSummaryRowLabel = useCallback(
+    (label: string) => {
+      if (!hasNativeValueRow) return label
+
+      // better presentation labels for approvals with native
+      if (label === 'Amount') return t('Token Amount')
+      if (label === 'Send' && nativeAssetSymbol) {
+        return t('{{nativeAssetSymbol}} Amount', { nativeAssetSymbol })
+      }
+
+      return label
+    },
+    [hasNativeValueRow, nativeAssetSymbol, t]
+  )
   const detailedRows = useMemo(
     () => getDetailedRows(item).filter((row) => !hideNestedRows || !isNestedErc7730Row(row)),
     [hideNestedRows, item]
@@ -288,7 +317,7 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
                     appearance="secondaryText"
                     style={[spacings.mrSm, { flexShrink: 1 }]}
                   >
-                    {row.label}
+                    {getTransactionSummaryRowLabel(row.label)}
                   </Text>
                 )}
                 <View
