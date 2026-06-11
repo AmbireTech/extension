@@ -40,7 +40,9 @@ function categorizeRequests(requests: string[]) {
     'nft.api.live.ledger.com',
     'challenges.cloudflare.com',
     // Token images
-    'static.debank.com'
+    'static.debank.com',
+    'tokenlist.superfluid.org',
+    'strapi.jumper.exchange'
   ]
 
   const reqs = requests.reduce(
