@@ -41,7 +41,9 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
   editApprovalCallInfo,
   hideNestedRows = false,
   hideMobileSummaryTitle = false,
-  isTransactionSummaryLayout = false
+  isTransactionSummaryLayout = false,
+  hasTransactionSummaryHeaderLeftControl = false,
+  hasTransactionSummaryHeaderRightControl = false
 }) => {
   const { theme } = useTheme()
   const { t } = useTranslation()
@@ -262,7 +264,17 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
       return (
         <View style={{ width: '100%', minWidth: 0 }}>
           {!shouldHideTransactionSummaryTitle && (
-            <View style={[flexbox.directionRow, flexbox.alignCenter, { minWidth: 0 }]}>
+            <View
+              style={[
+                flexbox.directionRow,
+                flexbox.alignCenter,
+                {
+                  minWidth: 0,
+                  paddingLeft: hasTransactionSummaryHeaderLeftControl ? 28 + SPACING_TY : 0,
+                  paddingRight: hasTransactionSummaryHeaderRightControl ? 28 + SPACING_TY : 0
+                }
+              ]}
+            >
               {!!item.dapp?.icon && (
                 <ManifestImage
                   uri={item.dapp.icon}
@@ -291,10 +303,10 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
           )}
           <View
             style={[
-              !isMobile && { marginLeft: -28, marginRight: -28 },
               !shouldHideTransactionSummaryTitle && {
                 marginTop: SPACING_TY * sizeMultiplierSize
-              }
+              },
+              { width: '100%', minWidth: 0 }
             ]}
           >
             {item.rows.map((row, rowIndex) => (

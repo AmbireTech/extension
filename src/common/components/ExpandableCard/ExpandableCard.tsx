@@ -25,6 +25,7 @@ type Props = {
   mobileHeaderStyle?: ViewStyle
   hideMobileContent?: boolean
   overlayMobileHeaderControls?: boolean
+  overlayArrow?: boolean
 }
 
 const ExpandableCard = ({
@@ -41,7 +42,8 @@ const ExpandableCard = ({
   mobileHeaderTitle,
   mobileHeaderStyle,
   hideMobileContent = false,
-  overlayMobileHeaderControls = false
+  overlayMobileHeaderControls = false,
+  overlayArrow = false
 }: Props) => {
   const { styles } = useTheme(getStyles)
   const [isExpanded, setIsExpanded] = useState(!!isInitiallyExpanded)
@@ -71,7 +73,9 @@ const ExpandableCard = ({
         {hasMobileHeader && overlayMobileHeaderControls && (
           <View style={[spacings.phSm, spacings.ptTy, mobileHeaderStyle]}>
             {!!hasArrow && arrowPosition === 'left' && (
-              <View style={{ position: 'absolute', top: SPACING_TY, left: SPACING_SM }}>{icon}</View>
+              <View style={{ position: 'absolute', top: SPACING_TY, left: SPACING_SM }}>
+                {icon}
+              </View>
             )}
             <View
               style={{
@@ -124,11 +128,21 @@ const ExpandableCard = ({
               contentStyle
             ]}
           >
-            {!hasMobileHeader && !!hasArrow && arrowPosition === 'left' && icon}
+            {!hasMobileHeader && !!hasArrow && arrowPosition === 'left' && overlayArrow && (
+              <View style={{ position: 'absolute', top: SPACING_SM, left: SPACING_SM }}>
+                {icon}
+              </View>
+            )}
+            {!hasMobileHeader && !!hasArrow && arrowPosition === 'left' && !overlayArrow && icon}
             <View style={[flexbox.directionRow, flexbox.alignCenter, flexbox.flex1]}>
               {!!content && content}
             </View>
-            {!hasMobileHeader && !!hasArrow && arrowPosition === 'right' && icon}
+            {!hasMobileHeader && !!hasArrow && arrowPosition === 'right' && overlayArrow && (
+              <View style={{ position: 'absolute', top: SPACING_SM, right: SPACING_SM }}>
+                {icon}
+              </View>
+            )}
+            {!hasMobileHeader && !!hasArrow && arrowPosition === 'right' && !overlayArrow && icon}
           </View>
         )}
         {children}

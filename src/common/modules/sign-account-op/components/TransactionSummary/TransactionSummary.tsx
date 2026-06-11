@@ -519,6 +519,8 @@ const TransactionSummary = ({
   ])
   const shouldShowDeleteControl = !!call.id && type === 'default' && !rightIcon && !hideDeleteIcon
   const shouldShowRightControl = !!rightIcon && !!onRightIconPress && !hasCallFailed
+  const shouldOverlayErc7730TransactionSummaryControls =
+    !isMobile && shouldUseErc7730TransactionSummaryLayout
   const rightControl = useMemo(() => {
     if (!shouldShowDeleteControl && !shouldShowRightControl) return null
 
@@ -684,6 +686,7 @@ const TransactionSummary = ({
     <ExpandableCard
       enableToggleExpand={enableExpand}
       hasArrow={enableExpand}
+      overlayArrow={shouldOverlayErc7730TransactionSummaryControls}
       mobileHeaderContent={isMobile ? rightControl : undefined}
       mobileHeaderTitle={isMobile ? mobileErc7730Title || mobileFlatVisualization : undefined}
       mobileHeaderStyle={
@@ -784,6 +787,18 @@ const TransactionSummary = ({
                 editApprovalCallInfo={editApprovalCallInfo}
                 hideMobileErc7730Title={!!mobileErc7730Title}
                 isErc7730TransactionSummaryLayout={shouldUseErc7730TransactionSummaryLayout}
+                hasErc7730TransactionSummaryHeaderLeftControl={
+                  shouldOverlayErc7730TransactionSummaryControls && enableExpand
+                }
+                hasErc7730TransactionSummaryHeaderRightControl={
+                  shouldOverlayErc7730TransactionSummaryControls &&
+                  (shouldShowDeleteControl || shouldShowRightControl)
+                }
+                style={
+                  shouldUseErc7730TransactionSummaryLayout
+                    ? { width: '100%', minWidth: 0 }
+                    : undefined
+                }
                 dapp={call.dapp}
               />
             )
@@ -800,7 +815,12 @@ const TransactionSummary = ({
               {t('Failed')}
             </Text>
           )}
-          {!isMobile && rightControl}
+          {!isMobile &&
+            (shouldOverlayErc7730TransactionSummaryControls && rightControl ? (
+              <View style={{ position: 'absolute', top: 0, right: 0 }}>{rightControl}</View>
+            ) : (
+              rightControl
+            ))}
         </>
       }
       expandedContent={
