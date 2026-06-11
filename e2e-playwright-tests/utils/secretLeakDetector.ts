@@ -43,21 +43,55 @@ function computeEncodings(secret: string): string[] {
 }
 
 /**
+ * Normalizes request text so the consecutive-words search is agnostic to how the
+ * phrase words were separated. Mnemonics may leak in many serializations - a JSON
+ * array (["abandon","ability"]), comma-separated, form-encoded (abandon+ability),
+ * newline-separated, or percent-encoded (abandon%20ability / abandon%2Cability).
+ *
+ * Steps:
+ *   1. URL-decode so percent-encoded separators (%20, %2C, ...) become real chars
+ *      (falls back to the raw text if the input is not valid percent-encoding)
+ *   2. Replace every run of non-alphanumeric characters with a single space, so all
+ *      of the separators above collapse to the same single-space form used by the
+ *      space-joined window chunks below
+ *
+ * This normalization is intentionally NOT applied to the encodings search, whose
+ * base64/percent-encoded forms rely on those very characters (+, /, =, %).
+ */
+function normalizeForWordSearch(text: string): string {
+  let decoded = text
+  try {
+    decoded = decodeURIComponent(text)
+  } catch {
+    // Malformed percent-encoding — keep the raw text rather than throwing.
+  }
+
+  return decoded
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim()
+}
+
+/**
  * Detects partial seed phrase leaks by sliding a window of `windowSize` consecutive
  * words over the phrase and checking if any window appears in the haystack.
  *
  * Catching 3 consecutive words is enough to confirm a leak while avoiding false
  * positives from common English words that might appear individually in request data.
  *
+ * The haystack is normalized first (see normalizeForWordSearch) so the match holds
+ * regardless of how the phrase words were separated in the request.
+ *
  * Falls back to a full-phrase match for phrases shorter than windowSize words.
  */
 function containsConsecutiveSeedWords(haystack: string, phrase: string, windowSize = 3): boolean {
+  const normalizedHaystack = normalizeForWordSearch(haystack)
   const words = phrase.trim().toLowerCase().split(/\s+/)
-  if (words.length < windowSize) return haystack.includes(phrase.toLowerCase())
+  if (words.length < windowSize) return normalizedHaystack.includes(normalizeForWordSearch(phrase))
 
   for (let i = 0; i <= words.length - windowSize; i++) {
     const chunk = words.slice(i, i + windowSize).join(' ')
-    if (haystack.includes(chunk)) return true
+    if (normalizedHaystack.includes(chunk)) return true
   }
   return false
 }
