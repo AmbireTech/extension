@@ -245,6 +245,7 @@ Always use the current public product names in changelog entries, regardless of 
 |-------------------------------|----------------------------------|
 | Benzin                        | Ambire Explorer                  |
 | Legends                       | Ambire Rewards                   |
+| Sign Account Op screen        | Ambire Transaction Builder       |
 
 Apply this silently — do not mention the rename in the entry.
 
