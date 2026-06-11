@@ -42,8 +42,7 @@ glob = [
     "**/package-lock.json",
     "**/yarn.lock",
     # Build artifacts & deps
-    "artifacts/**",
-    "cache/**",
+    "build/**",
     "coverage/**",
     "node_modules/**",
     "dist/**",
@@ -58,6 +57,7 @@ glob = [
     "**/*.spec.ts",
     "**/*.test.js",
     "**/*.spec.js",
+    "e2e-playwright-tests/",
 ]
 
 # ─────────────────────────────────────────────
