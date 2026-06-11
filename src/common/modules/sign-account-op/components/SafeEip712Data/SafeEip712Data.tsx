@@ -48,50 +48,17 @@ const SafeEip712Data: FC<Props> = ({ accountAddr, chainId, safeEip712Data }) => 
     <View style={isWeb ? spacings.mbLg : spacings.mb}>
       <ExpandableCard
         style={styles.container}
-        contentStyle={styles.content}
+        contentStyle={styles.header}
         content={
-          <View style={styles.contentBody}>
-            <View style={styles.headerTile}>
-              <Text fontSize={14} weight="semiBold" appearance="secondaryText">
-                {t('Safe hashes and JSON')}
-              </Text>
-            </View>
-            <View style={styles.rows}>
-              {rows.map(([label, value]) => (
-                <View key={label} style={styles.row}>
-                  <Text
-                    fontSize={12}
-                    weight="semiBold"
-                    appearance="secondaryText"
-                    numberOfLines={1}
-                    style={styles.label}
-                  >
-                    {t(label)}
-                  </Text>
-                  <View style={styles.rowRight}>
-                    <Text
-                      selectable
-                      fontSize={12}
-                      weight="mono_regular"
-                      appearance="primaryText"
-                      numberOfLines={1}
-                      ellipsizeMode="middle"
-                      style={styles.value}
-                    >
-                      {value}
-                    </Text>
-                    <CopyText
-                      text={value}
-                      iconColor={theme.secondaryText}
-                      iconSize={14}
-                      shouldStopPropagation
-                      style={styles.copyIcon}
-                    />
-                  </View>
-                </View>
-              ))}
-            </View>
-          </View>
+          <Text
+            fontSize={14}
+            weight="semiBold"
+            appearance="secondaryText"
+            numberOfLines={1}
+            style={styles.title}
+          >
+            {t('Safe hashes and JSON')}
+          </Text>
         }
         expandedContent={
           <View style={styles.expandedContent}>
@@ -102,10 +69,48 @@ const SafeEip712Data: FC<Props> = ({ accountAddr, chainId, safeEip712Data }) => 
               scrollEnabled={false}
               withCompactDataRow
               withDecimalIntegerRows
+              containerStyle={styles.fallbackVisualization}
+              separatorColor={theme.secondaryBackground}
             />
           </View>
         }
-      />
+      >
+        <View style={styles.rows}>
+          {rows.map(([label, value]) => (
+            <View key={label} style={styles.row}>
+              <Text
+                fontSize={12}
+                weight="semiBold"
+                appearance="secondaryText"
+                numberOfLines={1}
+                style={styles.label}
+              >
+                {t(label)}
+              </Text>
+              <View style={styles.rowRight}>
+                <Text
+                  selectable
+                  fontSize={12}
+                  weight="mono_regular"
+                  appearance="primaryText"
+                  numberOfLines={1}
+                  ellipsizeMode="middle"
+                  style={styles.value}
+                >
+                  {value}
+                </Text>
+                <CopyText
+                  text={value}
+                  iconColor={theme.secondaryText}
+                  iconSize={14}
+                  shouldStopPropagation
+                  style={styles.copyIcon}
+                />
+              </View>
+            </View>
+          ))}
+        </View>
+      </ExpandableCard>
     </View>
   )
 }

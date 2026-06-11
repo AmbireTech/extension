@@ -93,6 +93,9 @@ const SignAccountOpScreen = () => {
     isSignLoading,
     hasEstimation,
     warningModalRef,
+    gasFeeUpdatedModalRef,
+    handleAcceptGasFeeUpdate,
+    handleDismissGasFeeUpdate,
     handleChangeFeePayerKeyType,
     isChooseFeePayerKeyShown,
     setIsChooseFeePayerKeyShown,
@@ -103,6 +106,8 @@ const SignAccountOpScreen = () => {
     isSignDisabled,
     bundlerNonceDiscrepancy,
     primaryButtonText,
+    signButtonText,
+    extremeGasFeeSignButtonType,
     shouldHoldToProceed,
     shouldDisplayQrSigningModal,
     handleQrSingingFlowOnContinuePressed,
@@ -187,6 +192,9 @@ const SignAccountOpScreen = () => {
         renderedButNotNecessarilyVisibleModal={renderedButNotNecessarilyVisibleModal}
         signAccountOpState={signAccountOpState}
         warningModalRef={warningModalRef}
+        gasFeeUpdatedModalRef={gasFeeUpdatedModalRef}
+        handleAcceptGasFeeUpdate={handleAcceptGasFeeUpdate}
+        handleDismissGasFeeUpdate={handleDismissGasFeeUpdate}
         feePayerKeyType={feePayerKeyType}
         signingKeyType={signingKeyType}
         slowPaymasterRequest={slowPaymasterRequest}
@@ -203,6 +211,11 @@ const SignAccountOpScreen = () => {
         handleQrSigningFlowOnClosePressed={handleQrSigningFlowOnClosePressed}
         handleQrSigningFlowOnRejectPressed={handleQrSigningFlowOnRejectPressed}
         handleQrSigningFlowOnBackPressed={handleQrSigningFlowOnBackPressed}
+        autoOpen={
+          renderedButNotNecessarilyVisibleModal === 'gas-fee-updated'
+            ? 'gas-fee-updated'
+            : undefined
+        }
       />
       <TabLayoutContainer
         width="full"
@@ -267,9 +280,10 @@ const SignAccountOpScreen = () => {
                   isAddToCartDisabled={isAddToCartDisabled}
                   onSign={onSignButtonClick}
                   inProgressButtonText={primaryButtonText}
-                  buttonText={primaryButtonText}
+                  buttonText={signButtonText}
                   shouldHoldToProceed={shouldHoldToProceed}
                   holdToProceedButtonType={holdToProceedButtonType}
+                  signButtonType={extremeGasFeeSignButtonType}
                 />
               </View>
             </GlassView>

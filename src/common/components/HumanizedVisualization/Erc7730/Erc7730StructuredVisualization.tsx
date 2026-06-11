@@ -45,6 +45,13 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
     () => getDetailedRows(item).filter((row) => !hideNestedRows || !isNestedErc7730Row(row)),
     [hideNestedRows, item]
   )
+  const getNestedVisualizationMode = useCallback(
+    (nestedVisualization: HumanizerVisualization) =>
+      nestedVisualization.type === 'erc7730' && nestedVisualization.title === 'Account setup'
+        ? 'description'
+        : 'summary',
+    []
+  )
 
   const renderValue = useCallback(
     (valueItem: HumanizerVisualization, overrideTextSize = textSize): React.ReactNode => {
@@ -436,7 +443,7 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
                         chainId={chainId}
                         sizeMultiplierSize={sizeMultiplierSize}
                         textSize={textSize}
-                        mode="summary"
+                        mode={getNestedVisualizationMode(nestedVisualization)}
                       />
                     </View>
                   ))}
@@ -526,7 +533,7 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
                       chainId={chainId}
                       sizeMultiplierSize={sizeMultiplierSize}
                       textSize={textSize}
-                      mode="summary"
+                      mode={getNestedVisualizationMode(nestedVisualization)}
                     />
                   </View>
                 ))}

@@ -42,6 +42,7 @@ const SwapAndBridgeScreen = () => {
     fromTokenValue,
     fromTokenAmountSelectDisabled,
     handleSubmitForm,
+    frozenPriceImpactWarning,
     highPriceImpactOrSlippageWarning,
     priceImpactModalRef,
     closePriceImpactModal,
@@ -286,7 +287,9 @@ const SwapAndBridgeScreen = () => {
         sheetRef={priceImpactModalRef}
         closeBottomSheet={closePriceImpactModal}
         acknowledgeHighPriceImpact={acknowledgeHighPriceImpact}
-        highPriceImpactOrSlippageWarning={highPriceImpactOrSlippageWarning}
+        highPriceImpactOrSlippageWarning={
+          frozenPriceImpactWarning ?? highPriceImpactOrSlippageWarning
+        }
       />
     </Wrapper>
   )

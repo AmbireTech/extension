@@ -44,6 +44,7 @@ const ViewOnlyAccountAdderScreen = () => {
           onBackButtonPress={goToPrevRoute}
           title={t('Import a view-only address')}
           step={1}
+          panelWidth={480}
           totalSteps={2}
         >
           <View style={[flexbox.justifySpaceBetween, flexbox.flex1]}>
