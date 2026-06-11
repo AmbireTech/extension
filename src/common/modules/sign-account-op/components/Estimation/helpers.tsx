@@ -27,7 +27,8 @@ const sortBasedOnUSDValue = (a: FeePaymentOption, b: FeePaymentOption) => {
 
 /**
  * Sorts fee options by the following criteria:
- * - Gas tank options first
+ * - Native token options first
+ * - Gas tank options second
  * - USD value
  */
 const sortFeeOptions = (
@@ -49,13 +50,16 @@ const sortFeeOptions = (
   if (!aCanCoverFee && bCanCoverFee) return 1
   if (!signAccountOpState) sortBasedOnUSDValue(a, b)
 
-  // gas tank first
+  const isNativeA = a.token.address === ZERO_ADDRESS && !a.token.flags.onGasTank
+  const isNativeB = b.token.address === ZERO_ADDRESS && !b.token.flags.onGasTank
+
+  // native first
+  if (isNativeA && !isNativeB) return -1
+  if (!isNativeA && isNativeB) return 1
+
+  // gas tank second
   if (a.token.flags.onGasTank && !b.token.flags.onGasTank) return -1
   if (!a.token.flags.onGasTank && b.token.flags.onGasTank) return 1
-
-  // native second
-  if (a.token.address === ZERO_ADDRESS && b.token.address !== ZERO_ADDRESS) return -1
-  if (a.token.address !== ZERO_ADDRESS && b.token.address === ZERO_ADDRESS) return 1
 
   // based on value after
   return sortBasedOnUSDValue(a, b)

@@ -28,6 +28,7 @@ import useTheme from '@common/hooks/useTheme'
 import BundlerWarning from '@common/modules/sign-account-op/components/Estimation/components/bundlerWarning'
 import ExtremeGasFeeWarning from '@common/modules/sign-account-op/components/Estimation/components/ExtremeGasFeeWarning'
 import CustomGasPrice from '@common/modules/sign-account-op/components/Estimation/components/CustomGasPrice'
+import DefaultFeeSelector from '@common/modules/sign-account-op/components/Estimation/components/DefaultFeeSelector'
 import EstimationSkeleton from '@common/modules/sign-account-op/components/Estimation/components/EstimationSkeleton'
 import PayOption from '@common/modules/sign-account-op/components/Estimation/components/PayOption'
 import ServiceFee from '@common/modules/sign-account-op/components/Estimation/components/ServiceFee'
@@ -330,6 +331,10 @@ const Estimation = ({
     [dispatchUpdate]
   )
 
+  const network = useMemo(() => {
+    return networks.find((n) => n.chainId === signAccountOpState?.accountOp.chainId)
+  }, [networks, signAccountOpState?.accountOp.chainId])
+
   const feeOptionSelectSections = useMemo(() => {
     if (!payOptionsPaidByUsOrGasTank.length && !payOptionsPaidByEOA.length)
       return [
@@ -391,10 +396,6 @@ const Estimation = ({
   const v1warning = useMemo(() => {
     return signAccountOpState?.warnings.find((w) => w.id === 'v1Acc')
   }, [signAccountOpState?.warnings])
-
-  const network = useMemo(() => {
-    return networks.find((n) => n.chainId === signAccountOpState?.accountOp.chainId)
-  }, [networks, signAccountOpState?.accountOp.chainId])
 
   const currentGasPrice = useMemo(() => {
     const selectedFeeSpeed = signAccountOpState?.selectedFeeSpeed || FeeSpeed.Fast
@@ -646,6 +647,13 @@ const Estimation = ({
         withSearch={!!payOptionsPaidByUsOrGasTank.length || !!payOptionsPaidByEOA.length}
         stickySectionHeadersEnabled
         bottomSheetTitle={t('Gas token')}
+      />
+      <DefaultFeeSelector
+        networkName={network?.name}
+        payValue={payValue}
+        signAccountOpState={signAccountOpState}
+        updateType={updateType}
+        hasManyPayOptionsByUsOrGasTank={payOptionsPaidByUsOrGasTank.length > 1}
       />
       <ServiceFee
         serviceFee={serviceFee}
