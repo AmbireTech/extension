@@ -22,6 +22,7 @@ interface Props {
   erc7730Mode?: 'summary' | 'description'
   hideNestedErc7730Rows?: boolean
   hideMobileErc7730Title?: boolean
+  isErc7730TransactionSummaryLayout?: boolean
   disableFlex?: boolean
   dapp?: IrCall['dapp']
   editApprovalCallInfo?: {
@@ -46,6 +47,7 @@ const HumanizedVisualization: FC<Props> = ({
   erc7730Mode = 'summary',
   hideNestedErc7730Rows = false,
   hideMobileErc7730Title = false,
+  isErc7730TransactionSummaryLayout = false,
   disableFlex = false,
   dapp
 }) => {
@@ -93,6 +95,7 @@ const HumanizedVisualization: FC<Props> = ({
             erc7730Mode={erc7730Mode}
             hideNestedErc7730Rows={hideNestedErc7730Rows}
             hideMobileErc7730Title={hideMobileErc7730Title}
+            isErc7730TransactionSummaryLayout={isErc7730TransactionSummaryLayout}
             marginRight={marginRight}
           />
         ) : null

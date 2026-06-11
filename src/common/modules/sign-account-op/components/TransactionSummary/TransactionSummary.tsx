@@ -187,6 +187,7 @@ const TransactionSummary = ({
 
   const erc7730DescriptionVisualization = useMemo(() => {
     if (!erc7730Visualization) return null
+    if (!shouldUseErc7730DetailedLayout(erc7730Visualization)) return null
 
     const descriptionRows = getErc7730DescriptionRows(erc7730Visualization)
     if (!descriptionRows.length) return null
@@ -205,6 +206,8 @@ const TransactionSummary = ({
     () => !!erc7730Visualization && shouldUseErc7730DetailedLayout(erc7730Visualization),
     [erc7730Visualization]
   )
+  const shouldUseErc7730TransactionSummaryLayout =
+    !!erc7730Visualization && !shouldUseDetailedErc7730Layout
 
   const erc7730DetailedTitle = useMemo(() => {
     if (!erc7730Visualization) return ''
@@ -523,7 +526,12 @@ const TransactionSummary = ({
       <>
         {shouldShowDeleteControl && (
           <AnimatedPressable
-            style={[deleteIconAnimStyle, flexbox.alignSelfCenter]}
+            style={[
+              deleteIconAnimStyle,
+              shouldUseErc7730TransactionSummaryLayout
+                ? flexbox.alignSelfStart
+                : flexbox.alignSelfCenter
+            ]}
             onPress={handleRemoveCall}
             disabled={isCallRemovedOptimistic}
             {...bindDeleteIconAnim}
@@ -534,7 +542,13 @@ const TransactionSummary = ({
         )}
         {shouldShowRightControl && (
           <AnimatedPressable
-            style={[deleteIconAnimStyle, flexbox.alignSelfCenter, spacings.mlTy]}
+            style={[
+              deleteIconAnimStyle,
+              shouldUseErc7730TransactionSummaryLayout
+                ? flexbox.alignSelfStart
+                : flexbox.alignSelfCenter,
+              spacings.mlTy
+            ]}
             onPress={onRightIconPress}
             {...bindDeleteIconAnim}
             testID={`right-icon-${index}`}
@@ -553,7 +567,8 @@ const TransactionSummary = ({
     onRightIconPress,
     rightIcon,
     shouldShowDeleteControl,
-    shouldShowRightControl
+    shouldShowRightControl,
+    shouldUseErc7730TransactionSummaryLayout
   ])
   const mobileErc7730Title = useMemo(() => {
     if (!erc7730Visualization) return null
@@ -648,6 +663,7 @@ const TransactionSummary = ({
     return tabs.filter((x) => !!x)
   }, [erc7730DescriptionVisualization, decodedFunction, t])
   const shouldAlignContentStart = useMemo(() => {
+    if (shouldUseErc7730TransactionSummaryLayout) return true
     if (type !== 'default') return false
     if (!callVisualization || hasCallFailed) return true
     if (shouldUseDetailedErc7730Layout && erc7730Visualization) return true
@@ -658,6 +674,7 @@ const TransactionSummary = ({
     erc7730Visualization,
     hasCallFailed,
     shouldUseDetailedErc7730Layout,
+    shouldUseErc7730TransactionSummaryLayout,
     type
   ])
 
@@ -763,9 +780,10 @@ const TransactionSummary = ({
                 chainId={chainId}
                 type={type}
                 testID={`recipient-address-${index}`}
-                hasPadding={enableExpand}
+                hasPadding={enableExpand && !shouldUseErc7730TransactionSummaryLayout}
                 editApprovalCallInfo={editApprovalCallInfo}
                 hideMobileErc7730Title={!!mobileErc7730Title}
+                isErc7730TransactionSummaryLayout={shouldUseErc7730TransactionSummaryLayout}
                 dapp={call.dapp}
               />
             )

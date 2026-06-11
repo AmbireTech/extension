@@ -42,6 +42,7 @@ interface Props {
   erc7730Mode: 'summary' | 'description'
   hideNestedErc7730Rows: boolean
   hideMobileErc7730Title: boolean
+  isErc7730TransactionSummaryLayout: boolean
   marginRight: number
 }
 
@@ -56,6 +57,7 @@ const HumanizedVisualizationItem: FC<Props> = ({
   erc7730Mode,
   hideNestedErc7730Rows,
   hideMobileErc7730Title,
+  isErc7730TransactionSummaryLayout,
   marginRight
 }) => {
   const { theme } = useTheme()
@@ -71,6 +73,7 @@ const HumanizedVisualizationItem: FC<Props> = ({
         editApprovalCallInfo={editApprovalCallInfo}
         hideNestedRows={hideNestedErc7730Rows}
         hideMobileSummaryTitle={hideMobileErc7730Title}
+        isTransactionSummaryLayout={isErc7730TransactionSummaryLayout}
       />
     )
   }
