@@ -557,7 +557,11 @@ const Estimation = ({
       >
         <View style={[flexbox.directionRow, flexbox.alignCenter]}>
           <Text fontSize={20} weight="medium">
-            {t(signAccountOpState.canAccountBroadcastByItself ? 'Pay fee with' : 'Broadcast from')}
+            {t(
+              signAccountOpState.canAccountBroadcastByItself
+                ? 'Pay network fee with'
+                : 'Broadcast from'
+            )}
           </Text>
           <View
             dataSet={
@@ -582,7 +586,7 @@ const Estimation = ({
               <Button
                 type="ghost"
                 size="tiny"
-                text={t('Advanced options')}
+                text={t('Advanced')}
                 textUnderline
                 disabled={!canSetCustomGasPrices}
                 onPress={openAdvancedOptions}
