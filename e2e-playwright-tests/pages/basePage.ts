@@ -17,7 +17,11 @@ export class BasePage {
 
   collectedRequests: string[] = []
 
-  private collectedRequestEntries: Array<{ url: string; postData: string | null }> = []
+  private collectedRequestEntries: Array<{
+    url: string
+    postData: string | null
+    headers: Record<string, string>
+  }> = []
 
   constructor({ page, context }: BootstrapContext) {
     this.page = page
@@ -171,8 +175,9 @@ export class BasePage {
       if (request.method() === 'OPTIONS') return
 
       const postData = request.postData()
+      const headers = request.headers()
       this.collectedRequests.push(url)
-      this.collectedRequestEntries.push({ url, postData })
+      this.collectedRequestEntries.push({ url, postData, headers })
     }
     this.context.on('request', this._reqListener)
     this._monitorInstalled = true
@@ -188,7 +193,11 @@ export class BasePage {
     this.collectedRequestEntries = []
   }
 
-  getRequestsWithBodies(): Array<{ url: string; postData: string | null }> {
+  getRequestsWithBodies(): Array<{
+    url: string
+    postData: string | null
+    headers: Record<string, string>
+  }> {
     return [...this.collectedRequestEntries]
   }
 

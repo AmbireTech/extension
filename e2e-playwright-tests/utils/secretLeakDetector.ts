@@ -1,6 +1,7 @@
 interface RequestData {
   url: string
   postData: string | null
+  headers?: Record<string, string>
 }
 
 /**
@@ -99,13 +100,19 @@ function containsConsecutiveSeedWords(haystack: string, phrase: string, windowSi
 /**
  * Returns true if a single request contains any encoding of the secret.
  *
- * Both the URL and the POST body are searched (haystack = url + body).
+ * The URL, POST body and request headers are all searched (haystack = url + body
+ * + serialized headers), so a secret hidden in an Authorization or custom header
+ * is caught too. Header names are included alongside their values to also catch a
+ * secret placed as a header name.
  * For seed phrases the consecutive-words check runs first; all secrets also
  * go through the full encodings list so that base64 or percent-encoded leaks
  * are caught regardless of whether the secret is a key or a phrase.
  */
 function requestContainsSecret(req: RequestData, encodings: string[], rawSecret: string): boolean {
-  const haystack = `${req.url} ${req.postData ?? ''}`.toLowerCase()
+  const headerText = Object.entries(req.headers ?? {})
+    .map(([name, value]) => `${name} ${value}`)
+    .join(' ')
+  const haystack = `${req.url} ${req.postData ?? ''} ${headerText}`.toLowerCase()
   const isSeedPhrase = rawSecret.trim().includes(' ')
 
   if (isSeedPhrase && containsConsecutiveSeedWords(haystack, rawSecret)) return true
