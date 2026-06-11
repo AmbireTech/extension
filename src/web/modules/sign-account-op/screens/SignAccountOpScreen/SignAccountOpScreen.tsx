@@ -106,6 +106,8 @@ const SignAccountOpScreen = () => {
     isSignDisabled,
     bundlerNonceDiscrepancy,
     primaryButtonText,
+    signButtonText,
+    extremeGasFeeSignButtonType,
     shouldHoldToProceed,
     shouldDisplayQrSigningModal,
     handleQrSingingFlowOnContinuePressed,
@@ -278,9 +280,10 @@ const SignAccountOpScreen = () => {
                   isAddToCartDisabled={isAddToCartDisabled}
                   onSign={onSignButtonClick}
                   inProgressButtonText={primaryButtonText}
-                  buttonText={primaryButtonText}
+                  buttonText={signButtonText}
                   shouldHoldToProceed={shouldHoldToProceed}
                   holdToProceedButtonType={holdToProceedButtonType}
+                  signButtonType={extremeGasFeeSignButtonType}
                 />
               </View>
             </GlassView>

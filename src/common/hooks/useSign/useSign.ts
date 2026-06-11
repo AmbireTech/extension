@@ -11,6 +11,7 @@ import {
 import { Key } from '@ambire-common/interfaces/keystore'
 import { ISignAccountOpController } from '@ambire-common/interfaces/signAccountOp'
 import useController from '@common/hooks/useController'
+import useExtremeGasFeeWarning from '@common/hooks/useExtremeGasFeeWarning'
 import usePrevious from '@common/hooks/usePrevious'
 import useLedger from '@common/modules/hardware-wallets/hooks/useLedger'
 import useQrSigningFlow from '@common/modules/hardware-wallets/hooks/useQrSigningFlow'
@@ -518,6 +519,21 @@ const useSign = ({
   const notReadyToSignButAlsoNotDone =
     !signAccountOpState?.readyToSign && signAccountOpState?.status?.type !== SigningStatus.Done
 
+  const {
+    isActive: isExtremeGasFeeActive,
+    isProceedDelayed: isExtremeGasFeeProceedDelayed,
+    remainingSeconds: extremeGasFeeProceedDelaySeconds,
+    signButtonType: extremeGasFeeSignButtonType
+  } = useExtremeGasFeeWarning(signAccountOpState, signAccountOpState?.accountOp.chainId)
+
+  // View-only accounts can't sign, so skip the warning-styled button and delay UX.
+  const signButtonType = useMemo(
+    () => (isViewOnly ? ('primary' as const) : extremeGasFeeSignButtonType),
+    [isViewOnly, extremeGasFeeSignButtonType]
+  )
+
+  const isExtremeGasFeeProceedDelayedForSign = isExtremeGasFeeProceedDelayed && !isViewOnly
+
   const isSignDisabled = useMemo(() => {
     return (
       isViewOnly ||
@@ -525,15 +541,36 @@ const useSign = ({
       signAccountOpState?.isHumanizing ||
       notReadyToSignButAlsoNotDone ||
       !signAccountOpState?.readyToSign ||
-      (signAccountOpState && signAccountOpState.estimation.status === EstimationStatus.Loading)
+      (signAccountOpState && signAccountOpState.estimation.status === EstimationStatus.Loading) ||
+      isExtremeGasFeeProceedDelayedForSign
     )
-  }, [isViewOnly, isSignLoading, notReadyToSignButAlsoNotDone, signAccountOpState])
+  }, [
+    isViewOnly,
+    isSignLoading,
+    isExtremeGasFeeProceedDelayedForSign,
+    notReadyToSignButAlsoNotDone,
+    signAccountOpState
+  ])
 
   const disabledReason = useMemo(() => {
+    if (isExtremeGasFeeProceedDelayedForSign) {
+      return t('Please wait {{seconds}}s to review the high network fee.', {
+        seconds: extremeGasFeeProceedDelaySeconds
+      })
+    }
+
     return typeof hasReachedBottom === 'boolean' && !hasReachedBottom
       ? t('Scroll to the bottom of the transaction overview to sign.')
       : undefined
-  }, [hasReachedBottom, t])
+  }, [extremeGasFeeProceedDelaySeconds, hasReachedBottom, isExtremeGasFeeProceedDelayedForSign, t])
+
+  const signButtonText = useMemo(() => {
+    if (isExtremeGasFeeProceedDelayedForSign) {
+      return t('Wait {{seconds}}s', { seconds: extremeGasFeeProceedDelaySeconds })
+    }
+
+    return primaryButtonText
+  }, [extremeGasFeeProceedDelaySeconds, isExtremeGasFeeProceedDelayedForSign, primaryButtonText, t])
 
   const bundlerNonceDiscrepancy = useMemo(
     () =>
@@ -592,6 +629,9 @@ const useSign = ({
     notReadyToSignButAlsoNotDone,
     isSignDisabled,
     primaryButtonText,
+    signButtonText,
+    isExtremeGasFeeActive,
+    extremeGasFeeSignButtonType: signButtonType,
     bundlerNonceDiscrepancy,
     isChooseFeePayerKeyShown,
     setIsChooseFeePayerKeyShown,
