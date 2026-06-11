@@ -324,8 +324,8 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
               >
                 {!!row.label.trim() && (
                   <Text
-                    fontSize={Math.max(textSize - 3, 11)}
-                    weight="semiBold"
+                    fontSize={12}
+                    weight="regular"
                     appearance="secondaryText"
                     style={[spacings.mrSm, { flexShrink: 1 }]}
                   >
