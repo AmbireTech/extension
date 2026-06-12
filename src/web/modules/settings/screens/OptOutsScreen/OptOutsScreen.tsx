@@ -10,7 +10,6 @@ import SettingsPageHeader from '@web/modules/settings/components/SettingsPageHea
 import { SettingsRoutesContext } from '@web/modules/settings/contexts/SettingsRoutesContext'
 
 import OptOutControlOption from './components/OptOutControlOption'
-import { CRASH_ANALYTICS_ENABLED_DEFAULT } from '@common/config/analytics/CrashAnalytics.web'
 
 const OptOutsScreen = () => {
   const { setCurrentSettingsPage } = useContext(SettingsRoutesContext)
