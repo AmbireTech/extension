@@ -4,11 +4,11 @@ import { View } from 'react-native'
 import { PositionsByProvider } from '@ambire-common/libs/defiPositions/types'
 import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
 import useTheme from '@common/hooks/useTheme'
+import spacings from '@common/styles/spacings'
 
 import DeFiPosition from './DeFiPosition'
 import DeFiPositionHeader from './DeFiPositionHeader'
 import getStyles from './styles'
-import spacings, { SPACING_MI } from '@common/styles/spacings'
 
 const DeFiProviderPosition: FC<PositionsByProvider> = ({
   providerName,
@@ -53,10 +53,9 @@ const DeFiProviderPosition: FC<PositionsByProvider> = ({
       />
       {isExpanded && (
         <View style={spacings.mvMi}>
-          {positions.map(({ id, assets, additionalData }, index) => (
+          {positions.map(({ id, assets, additionalData }) => (
             <DeFiPosition
               key={id}
-              withTopBorder={index !== 0 && positions.length > 1}
               id={id}
               type={type}
               assets={assets}
