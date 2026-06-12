@@ -38,8 +38,7 @@ const OptOutsScreen = () => {
           icon={<SearchIcon width={24} height={24} />}
           flag="apiForFunctionSelectors"
         />
-        {/* As of v5.21.2, display this only when crash analytics are disabled by default. */}
-        {!isDev && !CRASH_ANALYTICS_ENABLED_DEFAULT && <CrashAnalyticsControlOption />}
+        {!isDev && <CrashAnalyticsControlOption />}
       </View>
     </>
   )
