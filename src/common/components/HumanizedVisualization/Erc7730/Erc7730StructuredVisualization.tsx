@@ -2,27 +2,29 @@ import React, { FC, memo, useCallback, useMemo } from 'react'
 import { View } from 'react-native'
 
 import { HumanizerVisualization } from '@ambire-common/libs/humanizer/interfaces'
+import useNetworksContext from '@benzin/hooks/useBenzinNetworksContext'
 import ChainVisualization from '@common/components/HumanizedVisualization/ChainVisualization'
 import EditApproval from '@common/components/HumanizedVisualization/EditApproval'
-import {
-  Erc7730Row,
-  Erc7730StructuredVisualizationProps
-} from '@common/components/HumanizedVisualization/Erc7730/interfaces'
+import { Erc7730StructuredVisualizationProps } from '@common/components/HumanizedVisualization/Erc7730/interfaces'
 import MobileErc7730SummaryVisualization from '@common/components/HumanizedVisualization/Erc7730/MobileErc7730SummaryVisualization'
 import HumanizerAddress from '@common/components/HumanizerAddress'
 import Text from '@common/components/Text'
 import TokenOrNft from '@common/components/TokenOrNft'
 import { isMobile } from '@common/config/env'
+import { useTranslation } from '@common/config/localization'
+import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import spacings, { SPACING_SM, SPACING_TY } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import ManifestImage from '@web/components/ManifestImage'
+
 import {
   getDetailedActionParts,
   getDetailedRows,
   getDetailedValueLines,
   getErc7730SpenderRow,
   getErc7730SummaryRows,
+  hasErc7730NativeValueRow,
   hasTokenValue,
   isNestedErc7730Row,
   isNestedErc7730Value,
@@ -38,9 +40,38 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
   mode = 'summary',
   editApprovalCallInfo,
   hideNestedRows = false,
-  hideMobileSummaryTitle = false
+  hideMobileSummaryTitle = false,
+  isTransactionSummaryLayout = false,
+  hasTransactionSummaryHeaderLeftControl = false,
+  hasTransactionSummaryHeaderRightControl = false
 }) => {
   const { theme } = useTheme()
+  const { t } = useTranslation()
+  const {
+    state: { networks: controllerNetworks }
+  } = useController('NetworksController')
+  const { benzinNetworks } = useNetworksContext()
+  const networks = controllerNetworks ?? benzinNetworks
+  const shouldHideTransactionSummaryTitle = isMobile && hideMobileSummaryTitle
+  const nativeAssetSymbol = useMemo(
+    () => networks.find((network) => network.chainId === chainId)?.nativeAssetSymbol,
+    [chainId, networks]
+  )
+  const hasNativeValueRow = useMemo(() => hasErc7730NativeValueRow(item), [item])
+  const getTransactionSummaryRowLabel = useCallback(
+    (label: string) => {
+      if (!hasNativeValueRow) return label
+
+      // better presentation labels for approvals with native
+      if (label === 'Amount') return t('Token Amount')
+      if (label === 'Send' && nativeAssetSymbol) {
+        return t('{{nativeAssetSymbol}} Amount', { nativeAssetSymbol })
+      }
+
+      return label
+    },
+    [hasNativeValueRow, nativeAssetSymbol, t]
+  )
   const detailedRows = useMemo(
     () => getDetailedRows(item).filter((row) => !hideNestedRows || !isNestedErc7730Row(row)),
     [hideNestedRows, item]
@@ -59,6 +90,9 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
 
       if (valueItem.type === 'token') {
         const tokenChainId = valueItem.chainId || chainId
+        const shouldShowEditApproval =
+          !!editApprovalCallInfo &&
+          valueItem.address.toLowerCase() === editApprovalCallInfo.token.toLowerCase()
 
         if (mode === 'summary') {
           return (
@@ -83,7 +117,7 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
                 tokenMarginRight={0}
                 tokenIconContainerSize={20}
               />
-              {editApprovalCallInfo && (
+              {shouldShowEditApproval && (
                 <EditApproval
                   editCall={editApprovalCallInfo.setter}
                   token={editApprovalCallInfo.token}
@@ -120,7 +154,7 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
                 tokenMarginRight={0}
                 tokenIconContainerSize={20}
               />
-              {editApprovalCallInfo && (
+              {shouldShowEditApproval && (
                 <EditApproval
                   editCall={editApprovalCallInfo.setter}
                   token={editApprovalCallInfo.token}
@@ -226,6 +260,100 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
   )
 
   if (mode === 'summary') {
+    if (isTransactionSummaryLayout) {
+      return (
+        <View style={{ width: '100%', minWidth: 0 }}>
+          {!shouldHideTransactionSummaryTitle && (
+            <View
+              style={[
+                flexbox.directionRow,
+                flexbox.alignCenter,
+                {
+                  minWidth: 0,
+                  paddingLeft: hasTransactionSummaryHeaderLeftControl ? 28 + SPACING_TY : 0,
+                  paddingRight: hasTransactionSummaryHeaderRightControl ? 28 + SPACING_TY : 0
+                }
+              ]}
+            >
+              {!!item.dapp?.icon && (
+                <ManifestImage
+                  uri={item.dapp.icon}
+                  containerStyle={spacings.mrTy}
+                  size={24 * sizeMultiplierSize}
+                  skeletonAppearance="secondaryBackground"
+                  imageStyle={{
+                    borderRadius: 12 * sizeMultiplierSize,
+                    backgroundColor: 'transparent'
+                  }}
+                  hideOnError
+                />
+              )}
+              {!!item.title && (
+                <Text
+                  fontSize={textSize + 2}
+                  weight="semiBold"
+                  color={theme.secondaryAccent400}
+                  numberOfLines={1}
+                  style={{ flexShrink: 1 }}
+                >
+                  {item.title}
+                </Text>
+              )}
+            </View>
+          )}
+          <View
+            style={[
+              !shouldHideTransactionSummaryTitle && {
+                marginTop: SPACING_TY * sizeMultiplierSize
+              },
+              { width: '100%', minWidth: 0 }
+            ]}
+          >
+            {item.rows.map((row, rowIndex) => (
+              <View
+                key={`${item.id}-transaction-summary-${row.label}-${row.value
+                  .map((value) => value.id)
+                  .join('-')}`}
+                style={[
+                  flexbox.directionRow,
+                  flexbox.alignCenter,
+                  flexbox.justifySpaceBetween,
+                  { marginTop: SPACING_SM * sizeMultiplierSize },
+                  { width: '100%', minWidth: 0 }
+                ]}
+              >
+                {!!row.label.trim() && (
+                  <Text
+                    fontSize={12}
+                    weight="regular"
+                    appearance="secondaryText"
+                    style={[spacings.mrSm, { flexShrink: 1 }]}
+                  >
+                    {getTransactionSummaryRowLabel(row.label)}
+                  </Text>
+                )}
+                <View
+                  style={[
+                    flexbox.directionRow,
+                    flexbox.alignCenter,
+                    flexbox.justifyEnd,
+                    flexbox.wrap,
+                    { minWidth: 0, flexShrink: 1 }
+                  ]}
+                >
+                  {row.value.map((value, valueIndex) => (
+                    <View key={value.id} style={valueIndex > 0 && spacings.mlTy}>
+                      {renderValue(value)}
+                    </View>
+                  ))}
+                </View>
+              </View>
+            ))}
+          </View>
+        </View>
+      )
+    }
+
     const summaryRows = getErc7730SummaryRows(item)
     const shouldStackSummaryRows = summaryRows.length > 1 && summaryRows.every(hasTokenValue)
     const spenderRow = shouldShowErc7730SpenderRowInSummary(item)
