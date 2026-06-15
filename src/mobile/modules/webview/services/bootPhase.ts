@@ -72,27 +72,38 @@ function buildStateForFE(ctrlName: string, ctrl: any) {
   return stateToSendToFE
 }
 
-// Drains queued controller payloads to the RN side across microtasks (one per
-// `setTimeout` tick) so the bridge isn't flooded by a single synchronous burst.
+// Drains queued controller payloads to the RN side one per macrotask so the
+// bridge isn't flooded by a single synchronous burst. Uses a self-rescheduling
+// chain (one pending timer at a time) rather than scheduling every entry up
+// front, so the queue can't build a backlog of timers regardless of its size.
 function drainCtrlPayloads(entries: [string, { ctrl: any; forceEmit?: boolean }][]) {
-  entries.forEach(([ctrlName, { ctrl, forceEmit }], index) => {
-    setTimeout(() => {
-      try {
-        sendToReactEvent('ctrl.update', {
-          ctrlName,
-          state: buildStateForFE(ctrlName, ctrl),
-          forceEmit
-        })
-      } catch (err) {
-        ;(err as any).controllerName = ctrlName
-        console.error('Debug: Failed to drain queued update for ctrl', ctrlName, err)
-        sendToReactEvent('ctrl.error', {
-          ctrlName,
-          errors: [{ message: (err as any).message, stack: (err as any).stack }]
-        })
-      }
-    }, index)
-  })
+  let index = 0
+
+  const drainNext = () => {
+    const entry = entries[index]
+    index += 1
+    if (!entry) return
+    const [ctrlName, { ctrl, forceEmit }] = entry
+
+    try {
+      sendToReactEvent('ctrl.update', {
+        ctrlName,
+        state: buildStateForFE(ctrlName, ctrl),
+        forceEmit
+      })
+    } catch (err) {
+      ;(err as any).controllerName = ctrlName
+      console.error('Debug: Failed to drain queued update for ctrl', ctrlName, err)
+      sendToReactEvent('ctrl.error', {
+        ctrlName,
+        errors: [{ message: (err as any).message, stack: (err as any).stack }]
+      })
+    }
+
+    if (index < entries.length) setTimeout(drainNext, 0)
+  }
+
+  if (entries.length > 0) setTimeout(drainNext, 0)
 }
 
 // Called by the SET_BOOT_PHASE action once the RN side has hidden the splash
