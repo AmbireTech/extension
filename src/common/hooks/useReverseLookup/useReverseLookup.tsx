@@ -48,7 +48,7 @@ const useReverseLookup = ({
   }, [checksummedAddress, addressInDomains, isLoading, dispatch, privacyUpdateMode])
 
   return {
-    isLoading: isLoading || !addressInDomains,
+    isLoading: isLoading || (!addressInDomains && privacyUpdateMode !== 'never'),
     name: addressInDomains?.ens || addressInDomains?.namoshi,
     type: addressInDomains?.ens ? 'ens' : addressInDomains?.namoshi ? 'namoshi' : null
   }
