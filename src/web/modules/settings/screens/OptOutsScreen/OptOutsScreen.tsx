@@ -2,6 +2,7 @@ import React, { useContext, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 
+import EnsIcon from '@common/assets/svg/EnsIcon'
 import SearchIcon from '@common/assets/svg/SearchIcon'
 import CrashAnalyticsControlOption from '@common/modules/settings/components/General/CrashAnalyticsControlOption'
 import spacings from '@common/styles/spacings'
@@ -35,6 +36,14 @@ const OptOutsScreen = () => {
           )}
           icon={<SearchIcon width={24} height={24} />}
           flag="apiForFunctionSelectors"
+        />
+        <OptOutControlOption
+          title={t('Keep ENS profiles up to date')}
+          description={t(
+            'Automatically update ENS names and avatars in the background. This improves freshness, but may reduce privacy by linking your accounts together.'
+          )}
+          icon={<EnsIcon width={24} height={24} />}
+          flag="keepEnsProfilesUpToDate"
         />
         <CrashAnalyticsControlOption />
       </View>

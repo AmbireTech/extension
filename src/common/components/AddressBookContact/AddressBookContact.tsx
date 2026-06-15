@@ -68,7 +68,7 @@ const AddressBookContact: FC<Props> = ({
     name: reverseLookupName,
     type: reverseLookupType,
     isLoading
-  } = useReverseLookup({ address })
+  } = useReverseLookup({ address, privacyUpdateMode: 'never' })
   const [bindAnim, animStyle] = useCustomHover({
     property: 'backgroundColor',
     values: {
