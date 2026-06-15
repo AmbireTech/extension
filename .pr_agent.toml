@@ -1,0 +1,94 @@
+# NOTE: This configuration is separate from that in ambire-common!
+
+# PR-Agent settings for this repo.
+[config]
+log_level = "DEBUG"
+response_language = "en"
+
+# ─────────────────────────────────────────────
+# Token & Cost Guardrails
+# ─────────────────────────────────────────────
+# Cap context for OpenRouter models (safety net for large PRs).
+# The models support 256k+; we clamp to 256k
+# to prevent runaway costs while leaving room for deep reviews.
+custom_model_max_tokens = 256000
+# Global prompt-token cap applied on top of the model's capability
+# (effective budget = min(max_model_tokens, custom_model_max_tokens)).
+# Default is 32000, which silently clipped large diffs; align it with
+# custom_model_max_tokens so the full context window is usable.
+max_model_tokens = 256000
+
+# Increase timeout from default 120s → 300s (5 min).
+ai_timeout = 300
+# If a diff is too large, clip it rather than skipping entirely.
+large_patch_policy = "clip"
+
+# Show the model more lines around each change so it judges the surrounding code,
+# not just the diff. Costs more tokens and makes clipping on huge PRs a bit likelier,
+# but it's worth it for catching context-dependent bugs.
+# Note: pr-agent caps these first two at 10.
+patch_extra_lines_before = 10
+patch_extra_lines_after = 10
+# The one that actually pulls in the rest of the function is the dynamic setting below (enabled by default).
+max_extra_lines_before_dynamic_context = 24
+
+# ─────────────────────────────────────────────
+# Ignore Patterns
+# ─────────────────────────────────────────────
+[ignore]
+glob = [
+    # Lockfiles
+    "**/*.lock",
+    "**/package-lock.json",
+    "**/yarn.lock",
+    # Build artifacts & deps
+    "build/**",
+    "coverage/**",
+    "node_modules/**",
+    "dist/**",
+    "patches/**",
+    # Minified assets
+    "**/*.min.js",
+    "**/*.min.css",
+    # Logs
+    "*.log",
+    # Tests
+    "**/*.test.ts",
+    "**/*.spec.ts",
+    "**/*.test.js",
+    "**/*.spec.js",
+    "e2e-playwright-tests/",
+]
+
+# ─────────────────────────────────────────────
+# Review Settings shared by /review and /security-review
+# ─────────────────────────────────────────────
+[pr_reviewer]
+# Max findings the reviewer is allowed to report. Default is 3, which silently
+# drops everything past the third issue. We are bumping it to see if we can get
+# closer to Copilot reviews
+num_max_findings = 10
+
+# Post a NEW review comment on every run instead of editing the previous one.
+persistent_comment = false
+final_update_message = true
+
+# Publish even when there are no major findings (avoids silent failures).
+publish_output_no_suggestions = true
+
+# Enable built-in security sub-section even in general reviews.
+require_security_review = true
+require_tests_review = false
+
+# Also scan for missing TODOs, and ticket references.
+require_todo_scan = true
+require_estimate_effort_to_review = true
+
+# The repo has no issues
+require_ticket_analysis_review = false
+extract_issue_from_branch = false
+
+# Keep the review header but suppress noisy help text.
+enable_intro_text = true
+enable_help_text = false
+enable_ai_metadata = true

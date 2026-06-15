@@ -69,6 +69,12 @@ const isDustToken = (token: TokenResult): boolean => {
     return false
   }
 
+  // Simulated tokens should never be hidden as well, because the user may be
+  // sending the entire amount, which will make the post-simulation balance 0
+  if (typeof token.amountPostSimulation === 'bigint') {
+    return false
+  }
+
   const balanceUSD = getTokenBalanceInUSD(token)
   const hasUSDPrice = token.priceIn.some((p) => p.baseCurrency === 'usd')
 

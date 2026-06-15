@@ -23,7 +23,7 @@ export interface Style {
   errorContainer: ViewStyle
 }
 
-const INPUT_HEIGHT = 48
+export const INPUT_HEIGHT = 48
 export const INPUT_WRAPPER_HEIGHT = INPUT_HEIGHT + 2 // 1px border top and bottom
 
 const getStyles = (theme: ThemeProps) =>
@@ -76,7 +76,6 @@ const getStyles = (theme: ThemeProps) =>
       ...spacings.mrTy,
       ...spacings.mvTy,
       ...spacings.pvMi,
-      ...spacings.phSm,
       ...common.borderRadiusPrimary
     },
     buttonWithBackground: {

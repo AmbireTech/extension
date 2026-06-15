@@ -192,7 +192,7 @@ const Home = () => {
                 {isLoadingWalletTokenInfo
                   ? 'Loading...'
                   : stakedWallet === null
-                    ? 0
+                    ? '—'
                     : `${stakedWallet.toFixed(2)}%`}
               </span>
               Staked $WALLET
@@ -201,9 +201,20 @@ const Home = () => {
 
             <div className={styles.walletItemWrapper}>
               <span className={styles.item}>
-                {isLoadingWalletTokenInfo ? 'Loading...' : marketCapFormatted}
+                {isLoadingWalletTokenInfo ? 'Loading...' : marketCapFormatted || '—'}
               </span>
               <div className={styles.walletInfoWrapper}>Market Cap</div>
+            </div>
+
+            <div className={styles.walletItemWrapper}>
+              <span className={styles.item}>
+                {isLoadingWalletTokenInfo
+                  ? 'Loading...'
+                  : walletTokenInfo?.apy !== undefined
+                    ? `${parseFloat(walletTokenInfo.apy.toFixed(2))}%`
+                    : '—'}
+              </span>
+              <div className={styles.walletInfoWrapper}>APY</div>
             </div>
           </div>
         </div>

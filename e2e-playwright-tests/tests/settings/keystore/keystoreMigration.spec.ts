@@ -116,7 +116,7 @@ test.describe('keystore AES-CTR → AES-GCM migration', { tag: '@keystoreMigrati
   test('signs typed-data (EIP-712) message with migrated key', async ({ pages }) => {
     const signerAddr = keystoreMigrationStorage.envSelectedAccount
     const typedData = JSON.stringify({
-      domain: { name: 'Keystore Migration', version: '1', chainId: 137 },
+      domain: { name: 'Keystore Migration', version: '1', chainId: 1 },
       types: { TestData: [{ name: 'content', type: 'string' }] },
       message: { content: 'keystore migration e2e' },
       primaryType: 'TestData'

@@ -26,7 +26,9 @@ import { isMobile, isWeb } from '@common/config/env'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import BundlerWarning from '@common/modules/sign-account-op/components/Estimation/components/bundlerWarning'
+import ExtremeGasFeeWarning from '@common/modules/sign-account-op/components/Estimation/components/ExtremeGasFeeWarning'
 import CustomGasPrice from '@common/modules/sign-account-op/components/Estimation/components/CustomGasPrice'
+import DefaultFeeSelector from '@common/modules/sign-account-op/components/Estimation/components/DefaultFeeSelector'
 import EstimationSkeleton from '@common/modules/sign-account-op/components/Estimation/components/EstimationSkeleton'
 import PayOption from '@common/modules/sign-account-op/components/Estimation/components/PayOption'
 import ServiceFee from '@common/modules/sign-account-op/components/Estimation/components/ServiceFee'
@@ -132,8 +134,10 @@ const Estimation = ({
     return signAccountOpState.estimation.availableFeeOptions
       .filter((feeOption) => feeOption.paidBy === signAccountOpState.accountOp.accountAddr)
       .sort((a: FeePaymentOption, b: FeePaymentOption) => sortFeeOptions(a, b, signAccountOpState))
-      .map((feeOption) => mapFeeOptions(feeOption, signAccountOpState, state.contacts))
-  }, [hasEstimation, signAccountOpState, state.contacts])
+      .map((feeOption) =>
+        mapFeeOptions(feeOption, signAccountOpState, state.contacts, !!isViewOnly)
+      )
+  }, [hasEstimation, signAccountOpState, state.contacts, isViewOnly])
 
   const payOptionsPaidByEOA = useMemo(() => {
     if (!signAccountOpState?.estimation.availableFeeOptions.length || !hasEstimation) return []
@@ -141,8 +145,10 @@ const Estimation = ({
     return signAccountOpState.estimation.availableFeeOptions
       .filter((feeOption) => feeOption.paidBy !== signAccountOpState.accountOp.accountAddr)
       .sort((a: FeePaymentOption, b: FeePaymentOption) => sortFeeOptions(a, b, signAccountOpState))
-      .map((feeOption) => mapFeeOptions(feeOption, signAccountOpState, state.contacts))
-  }, [hasEstimation, signAccountOpState, state.contacts])
+      .map((feeOption) =>
+        mapFeeOptions(feeOption, signAccountOpState, state.contacts, !!isViewOnly)
+      )
+  }, [hasEstimation, signAccountOpState, state.contacts, isViewOnly])
 
   const [selectedFeeOption, setSelectedFeeOption] = useState<SelectValue['value'] | null>(null)
 
@@ -235,11 +241,16 @@ const Estimation = ({
 
     if (!payValue && signAccountOpState.selectedOption) {
       setFeeOption(
-        mapFeeOptions(signAccountOpState.selectedOption, signAccountOpState, state.contacts),
+        mapFeeOptions(
+          signAccountOpState.selectedOption,
+          signAccountOpState,
+          state.contacts,
+          !!isViewOnly
+        ),
         true
       )
     }
-  }, [payValue, setFeeOption, hasEstimation, signAccountOpState, state.contacts])
+  }, [payValue, setFeeOption, hasEstimation, signAccountOpState, state.contacts, isViewOnly])
   const feeSpeeds = useMemo(() => {
     if (!signAccountOpState?.selectedOption) return []
 
@@ -320,6 +331,10 @@ const Estimation = ({
     [dispatchUpdate]
   )
 
+  const network = useMemo(() => {
+    return networks.find((n) => n.chainId === signAccountOpState?.accountOp.chainId)
+  }, [networks, signAccountOpState?.accountOp.chainId])
+
   const feeOptionSelectSections = useMemo(() => {
     if (!payOptionsPaidByUsOrGasTank.length && !payOptionsPaidByEOA.length)
       return [
@@ -361,7 +376,12 @@ const Estimation = ({
 
     if (!nativeFeeOption) return
 
-    const mappedFeeOption = mapFeeOptions(nativeFeeOption, signAccountOpState, state.contacts)
+    const mappedFeeOption = mapFeeOptions(
+      nativeFeeOption,
+      signAccountOpState,
+      state.contacts,
+      !!isViewOnly
+    )
     mappedFeeOption.label = (
       <PayOption
         amount={BigInt(serviceFee.amount)}
@@ -371,15 +391,11 @@ const Estimation = ({
       />
     )
     return mappedFeeOption
-  }, [serviceFee, signAccountOpState, hasEstimation, nativeFeeOption, state.contacts])
+  }, [serviceFee, signAccountOpState, hasEstimation, nativeFeeOption, state.contacts, isViewOnly])
 
   const v1warning = useMemo(() => {
     return signAccountOpState?.warnings.find((w) => w.id === 'v1Acc')
   }, [signAccountOpState?.warnings])
-
-  const network = useMemo(() => {
-    return networks.find((n) => n.chainId === signAccountOpState?.accountOp.chainId)
-  }, [networks, signAccountOpState?.accountOp.chainId])
 
   const currentGasPrice = useMemo(() => {
     const selectedFeeSpeed = signAccountOpState?.selectedFeeSpeed || FeeSpeed.Fast
@@ -520,6 +536,12 @@ const Estimation = ({
         </View>
       )}
       <View>
+        {!isViewOnly && (
+          <ExtremeGasFeeWarning
+            signAccountOpState={signAccountOpState}
+            networkChainId={network?.chainId}
+          />
+        )}
         <BundlerWarning
           signAccountOpState={signAccountOpState}
           bundlerNonceDiscrepancy={bundlerNonceDiscrepancy}
@@ -536,7 +558,11 @@ const Estimation = ({
       >
         <View style={[flexbox.directionRow, flexbox.alignCenter]}>
           <Text fontSize={20} weight="medium">
-            {t(signAccountOpState.canAccountBroadcastByItself ? 'Pay fee with' : 'Broadcast from')}
+            {t(
+              signAccountOpState.canAccountBroadcastByItself
+                ? 'Pay network fee with'
+                : 'Broadcast from'
+            )}
           </Text>
           <View
             dataSet={
@@ -561,7 +587,7 @@ const Estimation = ({
               <Button
                 type="ghost"
                 size="tiny"
-                text={t('Advanced options')}
+                text={t('Advanced')}
                 textUnderline
                 disabled={!canSetCustomGasPrices}
                 onPress={openAdvancedOptions}
@@ -621,6 +647,13 @@ const Estimation = ({
         withSearch={!!payOptionsPaidByUsOrGasTank.length || !!payOptionsPaidByEOA.length}
         stickySectionHeadersEnabled
         bottomSheetTitle={t('Gas token')}
+      />
+      <DefaultFeeSelector
+        networkName={network?.name}
+        payValue={payValue}
+        signAccountOpState={signAccountOpState}
+        updateType={updateType}
+        hasManyPayOptionsByUsOrGasTank={payOptionsPaidByUsOrGasTank.length > 1}
       />
       <ServiceFee
         serviceFee={serviceFee}

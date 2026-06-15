@@ -8,7 +8,7 @@ import { ControllersMiddlewareContext } from '@common/contexts/controllersMiddle
 import { ControllerStoreContext } from '@common/contexts/controllerStoreContext'
 import useRoute from '@common/hooks/useRoute'
 import { Action, MethodAction } from '@common/types/actions'
-import { BUNGEE_API_KEY, RELAYER_URL, SQUID_INTEGRATOR_ID, VELCRO_URL } from '@env'
+import { BUNGEE_API_KEY, RELAYER_URL, SQUID_INTEGRATOR_ID, UNISWAP_API_KEY, VELCRO_URL } from '@env'
 import { MOBILE_CRITICAL_CONTROLLERS } from '@mobile/constants/criticalControllers'
 import useDappsControllerHelpers from '@mobile/hooks/useDappsControllerHelpers'
 import useRequestsControllerHelpers from '@mobile/hooks/useRequestsControllerHelpers'
@@ -69,7 +69,8 @@ export const ControllersMiddlewareProvider: React.FC<{
         LIFI_EXPLORER_URL,
         BUNGEE_API_KEY,
         SQUID_INTEGRATOR_ID,
-        criticalControllers: MOBILE_CRITICAL_CONTROLLERS
+        criticalControllers: MOBILE_CRITICAL_CONTROLLERS,
+        UNISWAP_API_KEY
       })
       .then((ctrlsNames) => {
         controllerStore.init(ctrlsNames as any[], MOBILE_CRITICAL_CONTROLLERS, () => {

@@ -5,7 +5,6 @@ import cloneDeep from 'lodash/cloneDeep'
 import { nanoid } from 'nanoid'
 
 import { Session } from '@ambire-common/classes/session'
-import { ORIGINS_WHITELISTED_TO_ALL_ACCOUNTS } from '@ambire-common/consts/dappCommunication'
 import { MainController } from '@ambire-common/controllers/main/main'
 import { ConnectionSource, DappProviderRequest } from '@ambire-common/interfaces/dapp'
 import { UiManager } from '@ambire-common/interfaces/ui'
@@ -21,7 +20,9 @@ import {
   isIdentifiedByMultipleTxn
 } from '@ambire-common/libs/accountOp/submittedAccountOp'
 import { AccountOpStatus } from '@ambire-common/libs/accountOp/types'
+import { getAccountsForDapp } from '@ambire-common/libs/dapps/helpers'
 import { networkChainIdToHex } from '@ambire-common/libs/networks/networks'
+import { TokenResult } from '@ambire-common/libs/portfolio'
 import { getBenzinUrlParams } from '@ambire-common/utils/benzin'
 import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
 import { APP_VERSION } from '@common/config/env'
@@ -54,6 +55,21 @@ const handleSignMessage = (requestRes: RequestRes) => {
   throw new Error('Internal error: request result not found', requestRes)
 }
 
+function getSelectedAccount(mainCtrl: MainController, id: string): string | undefined {
+  const extensionSelectedAccount = mainCtrl.selectedAccount.account?.addr
+  const preferences = mainCtrl.dapps.getDapp(id)?.accountPreferences
+
+  if (
+    !preferences ||
+    !preferences.enabled ||
+    (extensionSelectedAccount && preferences.accounts.includes(extensionSelectedAccount))
+  ) {
+    return extensionSelectedAccount
+  }
+
+  return preferences.selectedAccount
+}
+
 export class ProviderController {
   mainCtrl: MainController
 
@@ -69,23 +85,22 @@ export class ProviderController {
       : true
   }
 
-  _internalGetAccounts = (origin: string) => {
-    if (ORIGINS_WHITELISTED_TO_ALL_ACCOUNTS.includes(origin)) {
-      const allOtherAccountAddresses = this.mainCtrl.accounts.accounts.reduce((prevValue, acc) => {
-        if (acc.addr !== this.mainCtrl.selectedAccount.account?.addr) {
-          prevValue.push(acc.addr)
-        }
+  _getSelectedAccount(id: string) {
+    // If enabled and the extension's selected account is not a part of the allowed accounts, return
+    // the last selected account from the dapp preferences
+    return getSelectedAccount(this.mainCtrl, id)
+  }
 
-        return prevValue
-      }, [] as string[])
+  _internalGetAccounts = (id: string) => {
+    const dapp = this.mainCtrl.dapps.getDapp(id)
+    if (!dapp) return []
 
-      // Selected account goes first in the list
-      return [this.mainCtrl.selectedAccount.account?.addr, ...allOtherAccountAddresses]
-    }
+    const accounts = getAccountsForDapp(
+      dapp.accountPreferences,
+      this.mainCtrl.selectedAccount.account?.addr
+    )
 
-    return this.mainCtrl.selectedAccount.account?.addr
-      ? [this.mainCtrl.selectedAccount.account?.addr]
-      : []
+    return accounts
   }
 
   getDappNetwork = (id: string) => {
@@ -128,11 +143,11 @@ export class ProviderController {
       throw ethErrors.provider.unauthorized()
     }
 
-    const account = this._internalGetAccounts(origin)
+    const accounts = this._internalGetAccounts(id)
 
-    await this.mainCtrl.dapps.broadcastDappSessionEvent('accountsChanged', account)
+    await this.mainCtrl.dapps.broadcastDappSessionEvent('accountsChanged', accounts)
 
-    return account
+    return accounts
   }
 
   getPortfolioBalance = async ({ params: [chainParams], session }: DappProviderRequest) => {
@@ -143,8 +158,20 @@ export class ProviderController {
       throw ethErrors.provider.unauthorized()
     }
 
-    if (!this.mainCtrl.selectedAccount.account) {
+    const selectedAccount = this._getSelectedAccount(id)
+
+    if (!selectedAccount) {
       throw new Error('wallet account not selected')
+    }
+
+    if (selectedAccount !== this.mainCtrl.selectedAccount.account?.addr) {
+      const amount = this.mainCtrl.selectedAccount.balanceByAccounts[selectedAccount] || 0
+
+      return {
+        amount,
+        amountFormatted: formatDecimals(amount, 'price'),
+        isReady: true
+      }
     }
 
     let totalBalance: number = 0
@@ -173,6 +200,8 @@ export class ProviderController {
   // ERC-7811 https://github.com/ethereum/ERCs/pull/709/
   // Adding 'custom' in then name as the ERC is still not completed and might update some
   // specifications.
+  // Caveat: If called for an account different than the currently selected account in the extension,
+  // we may return stale data.
   walletCustomGetAssets = async ({
     params: { account, assetFilter: _assetFilter },
     session
@@ -194,13 +223,26 @@ export class ProviderController {
 
     const res: { [chainId: string]: any[] } = {}
 
+    const accounts = this._internalGetAccounts(id)
+
+    if (!accounts.some((acc) => acc.toLowerCase() === account.toLowerCase())) {
+      throw ethErrors.provider.unauthorized()
+    }
+
+    // NOTE!: This method is not used at the time of writing this.
+    // If it's ever used, handle the case where the account doesn't have a portfolio or the portfolio is being
+    // updated.
+    const portfolio = this.mainCtrl.portfolio.getAccountPortfolioState(account)
+
     Object.entries(assetFilter).forEach(([chainId, tokens]: [string, string[]]) => {
       if (!res[chainId]) res[chainId] = []
       const network = this.mainCtrl.networks.networks.find(
         (n) => Number(n.chainId) === Number(chainId)
       )
       if (!network) return
-      const tokensInPortfolio = this.mainCtrl.selectedAccount.portfolio.tokens
+
+      const tokensInPortfolio: TokenResult[] | undefined = portfolio?.[chainId]?.result?.tokens
+
       if (!tokensInPortfolio) return
 
       tokens.forEach((requestedTokenAddress) => {
@@ -237,7 +279,7 @@ export class ProviderController {
       return []
     }
 
-    return this._internalGetAccounts(origin)
+    return this._internalGetAccounts(id)
   }
 
   ethCoinbase = async ({ session }: DappProviderRequest) => {
@@ -248,7 +290,7 @@ export class ProviderController {
       return null
     }
 
-    return this.mainCtrl.selectedAccount.account?.addr || null
+    return this._getSelectedAccount(id) || null
   }
 
   @metadata('SAFE', true)
@@ -503,12 +545,10 @@ export class ProviderController {
     )[0]
     if (!network) throw ethErrors.rpc.invalidParams('invalid chain')
 
-    const accOp = this.mainCtrl.selectedAccount.account
-      ? this.mainCtrl.activity.findByIdentifiedBy(
-          identifiedBy,
-          this.mainCtrl.selectedAccount.account.addr,
-          network.chainId
-        )
+    const selectedAccount = this._getSelectedAccount(data.session.id)
+
+    const accOp = selectedAccount
+      ? this.mainCtrl.activity.findByIdentifiedBy(identifiedBy, selectedAccount, network.chainId)
       : undefined
     const version = getVersion(accOp)
 
@@ -609,7 +649,7 @@ export class ProviderController {
       }
 
     const policy = this.mainCtrl.autoLogin.getAccountPolicyForOrigin(
-      this.mainCtrl.selectedAccount.account?.addr || '',
+      this._getSelectedAccount(id) || '',
       origin,
       appCurrentChainId
     )
@@ -792,7 +832,8 @@ export class ProviderController {
         throw ethErrors.rpc.invalidParams(e?.shortMessage || 'invalid address')
       }
 
-      const addressesMismatch = incomingAddress !== mainCtrl.selectedAccount.account?.addr
+      const selectedAccount = getSelectedAccount(mainCtrl, request.session.id)
+      const addressesMismatch = !selectedAccount || incomingAddress !== selectedAccount
       if (addressesMismatch)
         throw ethErrors.rpc.invalidParams(
           'Account mismatch. The encryption public key request does not match the currently selected account.'
@@ -829,7 +870,8 @@ export class ProviderController {
         throw ethErrors.rpc.invalidParams(e?.shortMessage || 'invalid address')
       }
 
-      const addressesMismatch = incomingAddress !== mainCtrl.selectedAccount.account?.addr
+      const selectedAccount = getSelectedAccount(mainCtrl, request.session.id)
+      const addressesMismatch = !selectedAccount || incomingAddress !== selectedAccount
       if (addressesMismatch)
         throw ethErrors.rpc.invalidParams(
           'Account mismatch. The decryption request does not match the currently selected account.'
@@ -864,7 +906,7 @@ export class ProviderController {
       const dapp = this.mainCtrl.dapps.getDapp(session.id)
       const grantedPermissionId = dapp?.grantedPermissionId || nanoid(21)
       const grantedPermissionAt = dapp?.grantedPermissionAt || Date.now()
-      const account = this._internalGetAccounts(session.origin)
+      const account = this._internalGetAccounts(session.id)
 
       result.push({
         id: grantedPermissionId,
@@ -920,7 +962,7 @@ export class ProviderController {
       !!grantedPermissionAt &&
       this.mainCtrl.dapps.hasPermission(id, getRequestSource(session))
     if (hasGrantedPermission) {
-      const account = this._internalGetAccounts(origin)
+      const account = this._internalGetAccounts(id)
 
       result.push({
         id: grantedPermissionId,

@@ -43,6 +43,7 @@ type WalletTokenInfo = {
   percentageStakedWallet: number
   stakedWallets: number
   walletPrice: number
+  apy: number
   season2PoolInfo: {
     poolSize: number
     totalVolumeSwapAndBridge: number
