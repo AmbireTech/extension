@@ -49,6 +49,7 @@ const DAppAccountList: FC<Props> = ({ accounts, allowedAccounts, onToggleAccount
           spacings.pvSm,
           spacings.phSm,
           spacings.mbTy,
+          flexbox.flex1,
           {
             backgroundColor: theme.secondaryBackground,
             borderRadius: BORDER_RADIUS_PRIMARY
@@ -76,15 +77,37 @@ const DAppAccountList: FC<Props> = ({ accounts, allowedAccounts, onToggleAccount
           onToggle={() => onToggleAccount(item.addr)}
           disabled={getIsDisabled(item.addr)}
         />
-        <Text weight="medium" style={spacings.mrTy}>
+        <Text
+          weight="medium"
+          style={{ ...spacings.mrTy, flexShrink: 1, flexGrow: 0 }}
+          numberOfLines={1}
+        >
           {item.preferences.label}
         </Text>
-        <Text fontSize={14} appearance="secondaryText" weight="mono_regular">
-          {shortenAddress(item.addr)}
+        <Text
+          fontSize={14}
+          appearance="secondaryText"
+          weight="mono_regular"
+          numberOfLines={1}
+          style={{
+            flexShrink: 0,
+            flexGrow: 1
+          }}
+        >
+          {shortenAddress(item.addr, 23)}
         </Text>
       </HoverablePressable>
     ),
     [theme.secondaryBackground, getIsDisabled, enforce, t, allowedAccounts, onToggleAccount]
+  )
+
+  const getItemLayout = useCallback(
+    (_: any, index: number) => ({
+      length: 56,
+      offset: 56 * index,
+      index
+    }),
+    []
   )
 
   return (
@@ -95,6 +118,7 @@ const DAppAccountList: FC<Props> = ({ accounts, allowedAccounts, onToggleAccount
       contentContainerStyle={spacings.mb4Xl}
       keyExtractor={(item: Account) => item.addr}
       renderItem={renderItem}
+      getItemLayout={getItemLayout}
     />
   )
 }
