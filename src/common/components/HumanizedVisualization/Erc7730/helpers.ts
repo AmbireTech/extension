@@ -2,6 +2,7 @@ import type {
   HumanizerErc7730Visualization,
   HumanizerVisualization
 } from '@ambire-common/libs/humanizer/interfaces'
+import { zeroAddress } from 'viem'
 
 type Erc7730Row = HumanizerErc7730Visualization['rows'][number]
 
@@ -23,8 +24,17 @@ const isSpenderRow = (row: Erc7730Row) => {
 const isExpirationRow = (row: Erc7730Row) =>
   labelIncludes(row.label, ['expires', 'expiration', 'deadline', 'valid', 'until'])
 
-export const hasTokenValue = (row: Erc7730Row) =>
-  row.value.some((value) => value.type === 'token')
+export const hasTokenValue = (row: Erc7730Row) => row.value.some((value) => value.type === 'token')
+
+export const hasErc7730NativeValueRow = (item: HumanizerErc7730Visualization) =>
+  item.rows.some(
+    (row) =>
+      row.label.trim().toLowerCase() === 'send' &&
+      row.value.some(
+        (value) =>
+          value.type === 'token' && value.address.toLowerCase() === zeroAddress && value.value > 0n
+      )
+  )
 
 const isOutgoingTokenRow = (row: Erc7730Row) =>
   labelIncludes(row.label, ['send', 'spend', 'pay', 'sell', 'input', 'amount in', 'amount to send'])
