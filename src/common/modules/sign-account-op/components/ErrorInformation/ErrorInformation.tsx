@@ -2,6 +2,7 @@ import { Interface } from 'ethers'
 import { setStringAsync } from 'expo-clipboard'
 import React, { useCallback, useMemo } from 'react'
 import { View } from 'react-native'
+import { v4 as uuidv4 } from 'uuid'
 
 import AmbireAccount from '@ambire-common/../contracts/compiled/AmbireAccount.json'
 import AmbireFactory from '@ambire-common/../contracts/compiled/AmbireFactory.json'
@@ -106,30 +107,57 @@ const ErrorInformation = () => {
           preValidatedSig
         ])
 
-        const urlParams: Record<string, string> = {
-          network: signAccountOpState.accountOp.chainId.toString(),
-          from: firstSigner,
-          contractAddress: signAccountOpState.accountOp.accountAddr,
-          rawFunctionInput: execData,
-          value: '0'
+        // Tenderly's new UI uses base64 encoded json to provide simulation
+        // parameters. The new format is required to use state overrides
+        const draftTemplate = {
+          v: 1,
+          network: { id: signAccountOpState.accountOp.chainId.toString() },
+          row: {
+            from: firstSigner,
+            gas: '0',
+            gasPrice: '0',
+            value: 0,
+            block: '',
+            blockIndex: null,
+            endOfBlock: false,
+            usePendingBlock: true,
+            depositTx: false,
+            systemTx: false,
+            mint: '0',
+            l1BlockNumber: '',
+            l1Timestamp: '',
+            l1MessageSender: '0x0000000000000000000000000000000000000000',
+            l1Turing: '',
+            contractAddress: signAccountOpState.accountOp.accountAddr,
+            functionInputs: {},
+            inputDataType: 'raw',
+            rawFunctionInput: execData,
+            contractAbiImport: '',
+            blockHeaderOverrides: {},
+            stateOverrides:
+              state.threshold > 1
+                ? [
+                    {
+                      id: uuidv4(),
+                      contractAddress: signAccountOpState.accountOp.accountAddr,
+                      balance: '',
+                      storage: [
+                        {
+                          key: '0x0000000000000000000000000000000000000000000000000000000000000004', // threshold slot
+                          value:
+                            '0x0000000000000000000000000000000000000000000000000000000000000001'
+                        }
+                      ]
+                    }
+                  ]
+                : [],
+            contractFunction: null
+          }
         }
 
-        if (state.threshold > 1) {
-          const stateOverrides = JSON.stringify([
-            {
-              contractAddress: signAccountOpState.accountOp.accountAddr,
-              storage: [
-                {
-                  key: '0x0000000000000000000000000000000000000000000000000000000000000004',
-                  value: '0x0000000000000000000000000000000000000000000000000000000000000001'
-                }
-              ]
-            }
-          ])
-          urlParams.stateOverrides = stateOverrides
-        }
-
-        params = new URLSearchParams(urlParams)
+        params = new URLSearchParams({
+          draft: btoa(JSON.stringify(draftTemplate)).replace(/=+$/, '') // remove trailing padding, tenderly doesn't use it
+        })
       } else {
         // only a single call for EOAs
         const call = signAccountOpState.accountOp.calls[0]!
