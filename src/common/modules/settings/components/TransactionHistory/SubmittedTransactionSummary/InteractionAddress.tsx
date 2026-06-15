@@ -10,7 +10,7 @@ import flexbox from '@common/styles/utils/flexbox'
 
 // TODO: Refactor to use the <AccountAddress /> component instead
 const InteractionAddress = ({ address }: { address: string }) => {
-  const reverseLookup = useReverseLookup({ address, privacyUpdateMode: 'ifMissing' })
+  const reverseLookup = useReverseLookup({ address })
   const { contacts = [] } = useController('AddressBookController').state
   const { accounts = [] } = useController('AccountsController').state
   const addressBookContact = contacts.find(
