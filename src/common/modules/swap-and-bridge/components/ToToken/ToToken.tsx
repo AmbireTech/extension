@@ -5,6 +5,7 @@ import { View } from 'react-native'
 
 import { EstimationStatus } from '@ambire-common/controllers/estimation/types'
 import { SwapAndBridgeFormStatus } from '@ambire-common/controllers/swapAndBridge/swapAndBridge'
+import { SupportedNetworks } from '@ambire-common/interfaces/network'
 import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
 import WalletIcon from '@common/assets/svg/WalletIcon'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
@@ -28,6 +29,19 @@ import { getTokenId } from '@common/utils/token'
 import { ItemPanel } from '@web/components/TransactionsScreen'
 
 import NotSupportedNetworkTooltip from '../NotSupportedNetworkTooltip'
+
+const findNetworkSelectOption = (
+  chainId: number | bigint | null | undefined,
+  networkList: SupportedNetworks[],
+  options: SelectValue[]
+) => {
+  if (chainId == null) return undefined
+
+  const network = networkList.find((n) => Number(n.chainId) === Number(chainId))
+  if (!network) return undefined
+
+  return options.find((opt) => opt.value === String(network.chainId))
+}
 
 type Props = {
   simulationFailed?: boolean
@@ -76,17 +90,14 @@ const ToToken: FC<Props> = ({ simulationFailed }) => {
 
   const handleSetToNetworkValue = useCallback(
     (networkOption: SelectValue) => {
+      const selectedNetwork = networks.find((n) => String(n.chainId) === networkOption.value)
+      if (!selectedNetwork) return
+
       swapAndBridgeDispatch({
         type: 'method',
         params: {
           method: 'updateForm',
-          args: [
-            {
-              toChainId: networks.filter((n) => String(n.chainId) === networkOption.value)[0]
-                ?.chainId
-            },
-            undefined
-          ]
+          args: [{ toChainId: selectedNetwork.chainId }, undefined]
         }
       })
     },
@@ -182,11 +193,14 @@ const ToToken: FC<Props> = ({ simulationFailed }) => {
   )
 
   const getToNetworkSelectValue = useMemo(() => {
-    const network = networks.find((n) => Number(n.chainId) === toChainId)
-    if (!network) return toNetworksOptions[0]
-
-    return toNetworksOptions.filter((opt) => opt.value === String(network.chainId))[0]
-  }, [networks, toChainId, toNetworksOptions])
+    return (
+      findNetworkSelectOption(toChainId, networks, toNetworksOptions) ??
+      (!toSelectedToken
+        ? findNetworkSelectOption(fromSelectedToken?.chainId, networks, toNetworksOptions)
+        : undefined) ??
+      toNetworksOptions[0]
+    )
+  }, [fromSelectedToken, networks, toChainId, toNetworksOptions, toSelectedToken])
 
   const handleChangeToToken = useCallback(
     ({ address: toSelectedTokenAddr }: SelectValue) => {
