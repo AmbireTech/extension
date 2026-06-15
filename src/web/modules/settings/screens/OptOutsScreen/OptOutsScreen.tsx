@@ -3,7 +3,6 @@ import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 
 import SearchIcon from '@common/assets/svg/SearchIcon'
-import { isDev } from '@common/config/env'
 import CrashAnalyticsControlOption from '@common/modules/settings/components/General/CrashAnalyticsControlOption'
 import spacings from '@common/styles/spacings'
 import SettingsPageHeader from '@web/modules/settings/components/SettingsPageHeader'
@@ -37,7 +36,7 @@ const OptOutsScreen = () => {
           icon={<SearchIcon width={24} height={24} />}
           flag="apiForFunctionSelectors"
         />
-        {!isDev && <CrashAnalyticsControlOption />}
+        <CrashAnalyticsControlOption />
       </View>
     </>
   )
