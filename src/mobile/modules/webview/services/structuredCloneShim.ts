@@ -72,8 +72,9 @@ const deepClone = (value: any, seen: WeakMap<object, any>): any => {
 const bigIntSafeStructuredClone = (value: any) => deepClone(value, new WeakMap())
 
 /**
- * Returns true when the native structuredClone is free of WebKit bug #265975
+ * Returns true when the native structuredClone is free of WebKit bug
  * (rdar://118868470), fixed in iOS/Safari 17.4.
+ * https://www.mail-archive.com/webkit-changes@lists.webkit.org/msg209161.html
  *
  * Root cause of the bug: CloneDeserializer::readBigInt() wrongly pushed entries
  * into the object-reference pool (`m_gcBuffer`). Every BigInt thus shifted the
