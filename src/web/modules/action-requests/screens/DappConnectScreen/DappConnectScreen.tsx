@@ -5,6 +5,7 @@ import HoldToProceedButton from '@common/components/HoldToProceedButton'
 import useResponsiveActionWindow from '@common/hooks/useResponsiveActionWindow'
 import useTheme from '@common/hooks/useTheme'
 import ActionFooter from '@common/modules/action-requests/components/ActionFooter'
+import DAppConnectAccountSettings from '@common/modules/action-requests/components/DAppConnect/DAppConnectAccountSettings'
 import DAppConnectBody from '@common/modules/action-requests/components/DAppConnect/DAppConnectBody'
 import DAppConnectHeader from '@common/modules/action-requests/components/DAppConnect/DAppConnectHeader'
 import getStyles from '@common/modules/action-requests/components/DAppConnect/styles'
@@ -83,6 +84,10 @@ const DappConnectScreen = () => {
                 responsiveSizeMultiplier={responsiveSizeMultiplier}
               />
             </View>
+            <DAppConnectAccountSettings
+              id={dappToConnect.id}
+              accountPreferences={dappToConnect.accountPreferences}
+            />
           </View>
         </TabLayoutWrapperMainContent>
       )}

@@ -1,5 +1,5 @@
 import { isHexString } from 'ethers'
-import { FC, memo, useCallback, useEffect, useMemo, useState } from 'react'
+import { FC, memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
   ColorValue,
@@ -148,6 +148,8 @@ const FallbackVisualization: FC<{
   const { t } = useTranslation()
   const { styles, theme } = useTheme(getStyles)
   const { maxWidthSize } = useWindowSize()
+  const scrollViewRef = useRef<ScrollView>(null)
+  const scrollOffsetRef = useRef(0)
   const [containerHeight, setContainerHeight] = useState(0)
   const [contentHeight, setContentHeight] = useState(0)
   const [activeTab, setActiveTab] = useState<ActiveTab>('parsed')
@@ -209,6 +211,14 @@ const FallbackVisualization: FC<{
     rawOnly,
     hasReachedBottom
   ])
+
+  const handleScrollDown = useCallback(() => {
+    if (!containerHeight) return
+    // Scroll down close to a full page on each press, keeping a small overlap for context
+    const nextOffset = scrollOffsetRef.current + containerHeight * 0.9
+    scrollViewRef.current?.scrollTo({ y: nextOffset, animated: true })
+  }, [containerHeight])
+
   if (!messageToSign || !content) return null
 
   return (
@@ -244,8 +254,10 @@ const FallbackVisualization: FC<{
       <ContentWrapper
         {...(!disableScroll
           ? {
+              ref: scrollViewRef,
               scrollEnabled,
               onScroll: (e: { nativeEvent: NativeScrollEvent }) => {
+                scrollOffsetRef.current = e.nativeEvent.contentOffset.y
                 if (isCloseToBottom(e.nativeEvent) && setHasReachedBottom) setHasReachedBottom(true)
               },
               onLayout: (e: { nativeEvent: { layout: { height: number } } }) => {
@@ -369,6 +381,7 @@ const FallbackVisualization: FC<{
         <AnimatedDownArrow
           isVisible={contentHeight > containerHeight && !hasReachedBottom}
           appearance="primary"
+          onPress={handleScrollDown}
         />
       )}
     </View>
