@@ -158,7 +158,7 @@ export class ProviderController {
       throw ethErrors.provider.unauthorized()
     }
 
-    const selectedAccount = this._getSelectedAccount(id)
+    const selectedAccount = this._getSelectedAccount(session.id)
 
     if (!selectedAccount) {
       throw new Error('wallet account not selected')
@@ -223,7 +223,7 @@ export class ProviderController {
 
     const res: { [chainId: string]: any[] } = {}
 
-    const accounts = this._internalGetAccounts(id)
+    const accounts = this._internalGetAccounts(session.id)
 
     if (!accounts.some((acc) => acc.toLowerCase() === account.toLowerCase())) {
       throw ethErrors.provider.unauthorized()
@@ -274,7 +274,7 @@ export class ProviderController {
 
   @metadata('SAFE', true)
   ethAccounts = async ({ session }: DappProviderRequest) => {
-    const { id, origin } = session
+    const { id } = session
     if (!this.mainCtrl.dapps.hasPermission(id, getRequestSource(session)) || !this.isUnlocked) {
       return []
     }
@@ -290,7 +290,7 @@ export class ProviderController {
       return null
     }
 
-    return this._getSelectedAccount(id) || null
+    return this._getSelectedAccount(session.id) || null
   }
 
   @metadata('SAFE', true)
