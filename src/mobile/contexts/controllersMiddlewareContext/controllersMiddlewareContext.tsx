@@ -37,10 +37,10 @@ export const ControllersMiddlewareProvider: React.FC<{
   // and must never be suppressed.
   useEffect(() => {
     let latestSubscribed: string[] = []
-    let flushTimeout: ReturnType<typeof setTimeout> | null = null
+    let flushHandle: ReturnType<typeof setImmediate> | null = null
 
     const flush = () => {
-      flushTimeout = null
+      flushHandle = null
       const controllers = Array.from(
         new Set<string>([...MOBILE_CRITICAL_CONTROLLERS, ...latestSubscribed])
       )
@@ -49,13 +49,13 @@ export const ControllersMiddlewareProvider: React.FC<{
 
     stateSubscriptionManager.setOnSubscribedControllersChange((ids) => {
       latestSubscribed = ids
-      if (flushTimeout) return
-      flushTimeout = setTimeout(flush, 0)
+      if (flushHandle) return
+      flushHandle = setImmediate(flush)
     })
 
     return () => {
       stateSubscriptionManager.setOnSubscribedControllersChange(undefined)
-      if (flushTimeout) clearTimeout(flushTimeout)
+      if (flushHandle) clearImmediate(flushHandle)
     }
   }, [stateSubscriptionManager, dispatch])
 
