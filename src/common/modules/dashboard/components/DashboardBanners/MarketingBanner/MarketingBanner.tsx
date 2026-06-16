@@ -1,5 +1,5 @@
 import React, { useCallback } from 'react'
-import { Image, Pressable, View } from 'react-native'
+import { Pressable, View } from 'react-native'
 
 import { Banner, MarketingBannerTypes } from '@ambire-common/interfaces/banner'
 import CloseIcon from '@common/assets/svg/CloseIcon'
@@ -16,24 +16,19 @@ import flexbox from '@common/styles/utils/flexbox'
 import { openInTab } from '@common/utils/links'
 import { getUiType } from '@common/utils/uiType'
 
-import temporaryImage from './assets/temporary-image.png'
+const TYPE_EMOJI_MAP: { [key in MarketingBannerTypes]: string } = {
+  updates: '💜',
+  rewards: '💎',
+  new: '📢',
+  vote: '✋',
+  tips: '💡',
+  alert: '🚨'
+}
 
-const RELAYER_BANNER_TYPES = ['updates', 'rewards', 'new', 'vote', 'tips', 'alert'] as const
+const FALLBACK_EMOJI = '🔥'
 
 interface Props {
   banner: Banner
-}
-
-// @TODO: Replace temporary images
-const typeImageMap: {
-  [key in (typeof RELAYER_BANNER_TYPES)[number]]: string
-} = {
-  updates: temporaryImage,
-  rewards: temporaryImage,
-  new: temporaryImage,
-  vote: temporaryImage,
-  tips: temporaryImage,
-  alert: temporaryImage
 }
 
 const MarketingBanner: React.FC<Props> = ({ banner }) => {
@@ -41,14 +36,12 @@ const MarketingBanner: React.FC<Props> = ({ banner }) => {
   const { dispatch: bannerDispatch } = useController('BannerController')
   const { dispatch: surveyDispatch } = useController('SurveyController')
   const { theme } = useTheme()
-  const { text, title, type: bannerType = 'updates', actions } = banner
-  const type = (
-    RELAYER_BANNER_TYPES.includes(bannerType as any) ? bannerType : 'updates'
-  ) as Exclude<MarketingBannerTypes, 'alert'>
+  const { text, title, type: bannerType = 'updates', actions, emoji: backendEmoji } = banner
+  const emoji = backendEmoji || TYPE_EMOJI_MAP[bannerType as MarketingBannerTypes] || FALLBACK_EMOJI
   const action = actions?.[0]
   const url = action?.actionName === 'open-link' ? action.meta.url : ''
   const size = (banner.text?.length || 0) > 50 ? 'large' : 'normal'
-  const imageSize = size === 'large' ? 64 : 48
+  const emojiSize = isMobile ? 48 : size === 'large' ? 64 : 48
   const { navigate } = useNavigation()
 
   const [bindAnim, animStyle] = useMultiHover({
@@ -84,7 +77,8 @@ const MarketingBanner: React.FC<Props> = ({ banner }) => {
         flexbox.directionRow,
         { borderRadius: BORDER_RADIUS_PRIMARY, borderWidth: 1 },
         spacings.mbTy,
-        animStyle
+        animStyle,
+        { alignItems: 'center' }
       ]}
       onPress={async () => {
         const action = banner.actions[0]
@@ -98,17 +92,25 @@ const MarketingBanner: React.FC<Props> = ({ banner }) => {
       }}
       {...bindAnim}
     >
-      <Image
-        source={
-          typeof typeImageMap[type] === 'number' ? typeImageMap[type] : { uri: typeImageMap[type] }
-        }
-        width={isMobile ? 44 : imageSize}
-        height={isMobile ? 44 : imageSize}
-        style={{
-          width: isMobile ? 44 : imageSize,
-          height: isMobile ? 44 : imageSize
-        }}
-      />
+      <View
+        style={[
+          flexbox.center,
+          {
+            width: emojiSize,
+            height: emojiSize
+          },
+          spacings.plTy
+        ]}
+      >
+        <Text
+          style={{
+            fontSize: emojiSize * 0.7,
+            lineHeight: emojiSize
+          }}
+        >
+          {emoji}
+        </Text>
+      </View>
       <View style={[spacings.ml, flexbox.flex1]}>
         <View style={[flexbox.directionRow, flexbox.justifySpaceBetween]}>
           <Text weight="medium" style={{ flexShrink: 1 }}>

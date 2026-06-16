@@ -22,11 +22,8 @@ const getStyles = (theme: ThemeProps) =>
       ...common.fullWidth,
       borderRadius: BORDER_RADIUS_PRIMARY,
       overflow: 'hidden',
-      shadowColor: '#6770B3',
-      shadowOffset: { width: 0, height: SPACING_SM },
-      shadowOpacity: 0.3,
-      shadowRadius: SPACING_SM,
-      elevation: SPACING_SM
+      borderWidth: 1,
+      borderColor: theme.primaryBorder
     },
     contentHeader: {
       ...flexbox.alignCenter,

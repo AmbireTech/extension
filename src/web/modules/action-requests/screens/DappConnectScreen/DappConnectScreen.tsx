@@ -4,13 +4,15 @@ import { View } from 'react-native'
 import HoldToProceedButton from '@common/components/HoldToProceedButton'
 import useResponsiveActionWindow from '@common/hooks/useResponsiveActionWindow'
 import useTheme from '@common/hooks/useTheme'
+import useWindowSize from '@common/hooks/useWindowSize'
 import ActionFooter from '@common/modules/action-requests/components/ActionFooter'
+import DAppConnectAccountSettings from '@common/modules/action-requests/components/DAppConnect/DAppConnectAccountSettings'
 import DAppConnectBody from '@common/modules/action-requests/components/DAppConnect/DAppConnectBody'
 import DAppConnectHeader from '@common/modules/action-requests/components/DAppConnect/DAppConnectHeader'
 import getStyles from '@common/modules/action-requests/components/DAppConnect/styles'
 import useDappConnect from '@common/modules/action-requests/hooks/useDappConnect'
 import { HeaderWithLogoOnly } from '@common/modules/header/components/Header/Header'
-import spacings from '@common/styles/spacings'
+import spacings, { SPACING_LG, SPACING_SM, SPACING_XL } from '@common/styles/spacings'
 import {
   TabLayoutContainer,
   TabLayoutWrapperMainContent
@@ -28,6 +30,7 @@ const DappConnectScreen = () => {
     resolveButtonText
   } = useDappConnect()
   const { styles } = useTheme(getStyles)
+  const { minHeightSize } = useWindowSize()
   const { responsiveSizeMultiplier } = useResponsiveActionWindow()
 
   return (
@@ -65,12 +68,23 @@ const DappConnectScreen = () => {
           resolveButtonTestID={!shouldHoldToProceed ? 'dapp-connect-button' : undefined}
         />
       )}
-      style={spacings.ptXl}
+      style={{ marginTop: minHeightSize(650) ? 0 : SPACING_XL * responsiveSizeMultiplier }}
     >
       {!!dappToConnect && (
-        <TabLayoutWrapperMainContent contentContainerStyle={spacings.pb4Xl}>
+        <TabLayoutWrapperMainContent
+          contentContainerStyle={{ ...spacings.pb4Xl, ...spacings.mtMi }}
+        >
           <View style={[styles.container]}>
-            <View style={styles.content}>
+            <View
+              style={[
+                styles.content,
+                {
+                  marginBottom: minHeightSize(650)
+                    ? SPACING_SM
+                    : SPACING_LG * responsiveSizeMultiplier
+                }
+              ]}
+            >
               <DAppConnectHeader
                 name={dappToConnect.name}
                 id={dappToConnect.id}
@@ -83,6 +97,10 @@ const DappConnectScreen = () => {
                 responsiveSizeMultiplier={responsiveSizeMultiplier}
               />
             </View>
+            <DAppConnectAccountSettings
+              id={dappToConnect.id}
+              accountPreferences={dappToConnect.accountPreferences}
+            />
           </View>
         </TabLayoutWrapperMainContent>
       )}

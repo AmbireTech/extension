@@ -61,7 +61,7 @@ const DeFiPositions: FC<Props> = ({
   const { t } = useTranslation()
   const { flags } = useController('FeatureFlagsController').state
   const { control, watch, setValue } = useForm({ mode: 'all', defaultValues: { search: '' } })
-  const { theme, themeType } = useTheme()
+  const { theme } = useTheme()
   const searchValue = watch('search')
   const {
     state: { networks }
