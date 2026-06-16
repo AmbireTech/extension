@@ -30,6 +30,7 @@ import {
   queueSuppressedCtrlPayload,
   setCriticalControllers
 } from './bootPhase'
+import { decode, encode } from './bridgeCodec'
 import { createBridgedFetch } from './bridgedFetch'
 import { sendToReactEvent } from './webviewLogger'
 
@@ -123,8 +124,10 @@ const sendToRNAsync = (type: string, payload: any): Promise<any> => {
   return new Promise((resolve, reject) => {
     const id = ++messageIdCounter
     pendingPromises[id] = { resolve, reject }
+    // network.fetch payloads are plain strings, so they skip richJson. storage/crypto
+    // keep richJson (storage values may carry BigInt). See bridgeCodec.
     // @ts-ignore
-    window.ReactNativeWebView.postMessage(richJson.stringify({ id, type, payload }))
+    window.ReactNativeWebView.postMessage(encode({ id, type, payload }, type !== 'network.fetch'))
   })
 }
 
@@ -322,7 +325,7 @@ const initControllers = (config: any) => {
 // Proxy Listener
 window.addEventListener('message', (event) => {
   try {
-    const data = typeof event.data === 'string' ? richJson.parse(event.data) : event.data
+    const data = typeof event.data === 'string' ? decode(event.data) : event.data
     if (data.type === 'response') {
       const { id, result, error } = data
       if (error) pendingPromises[id]?.reject(new Error(error))

@@ -260,12 +260,11 @@ export const handleActions = async (
           })
         }
       } catch (error: any) {
-        // Error handling - serialize error if possible, otherwise use raw error
         let errorRes
         try {
           errorRes = error.serialize()
         } catch (e) {
-          errorRes = error
+          errorRes = { code: error?.code, message: error?.message ?? String(error) }
         }
 
         if (isWalletConnect) {

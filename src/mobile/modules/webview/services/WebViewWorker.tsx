@@ -20,6 +20,8 @@ import {
 } from '@mobile/modules/wallet-connect/services/walletConnectService'
 import getWebviewBundleUri from '@mobile/modules/webview/services/getWebviewBundleUri'
 
+import { decode, encode } from './bridgeCodec'
+
 // In production the worker bundle ships as a static file inside the signed
 // app (iOS Resources / Android assets) and the WebView loads it from disk via
 // `file://`. The HTML stub is built at compile time with a strict CSP
@@ -62,7 +64,7 @@ export interface WebViewWorkerRef {
   init: (config: any) => Promise<string[]>
 }
 
-export const WebViewWorker = forwardRef<WebViewWorkerRef, {}>((_, ref) => {
+export const WebViewWorker = forwardRef<WebViewWorkerRef, object>((_, ref) => {
   const webviewRef = useRef<WebView>(null)
   const [isLoaded, setIsLoaded] = useState(false)
   const [isReady, setIsReady] = useState(false)
@@ -98,11 +100,15 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, {}>((_, ref) => {
   }
 
   const dispatchToWebView = (action: any, raw?: boolean) => {
-    const payload = richJson.stringify({ type: 'dispatchAction', action })
+    const embedded = raw
+      ? richJson.stringify({ type: 'dispatchAction', action })
+      : JSON.stringify(
+          encode({ type: 'dispatchAction', action }, action?.type !== 'HANDLE_PROVIDER_REQUEST')
+        )
     webviewRef.current?.injectJavaScript(`
         (function() {
           try {
-            window.postMessage(${raw ? payload : JSON.stringify(payload)}, '*');
+            window.postMessage(${embedded}, '*');
           } catch (e) {
             window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'ctrl.error', payload: { ctrlName: 'BridgeDispatch', errors: [{ message: e.message, stack: e.stack }] } }));
           }
@@ -127,7 +133,7 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, {}>((_, ref) => {
         initResolver.current = resolve
         scheduleInitWarningTimeout()
         if (isLoaded) {
-          const initPayload = richJson.stringify({ type: 'init', config: configWithStorage })
+          const initPayload = encode({ type: 'init', config: configWithStorage }, true)
           webviewRef.current?.injectJavaScript(`
               window.postMessage(${JSON.stringify(initPayload)}, '*');
               true;
@@ -141,7 +147,7 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, {}>((_, ref) => {
 
   const handleMessage = async (event: any) => {
     try {
-      const data = richJson.parse(event.nativeEvent.data)
+      const data = decode(event.nativeEvent.data)
 
       switch (data.type) {
         case 'system.loaded': {
@@ -162,7 +168,7 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, {}>((_, ref) => {
           const configToSend = pendingConfig.current || (isReload ? lastConfig.current : null)
 
           if (configToSend) {
-            const initPayload = richJson.stringify({ type: 'init', config: configToSend })
+            const initPayload = encode({ type: 'init', config: configToSend }, true)
             webviewRef.current?.injectJavaScript(`
                 window.postMessage(${JSON.stringify(initPayload)}, '*');
                 true;
@@ -278,7 +284,7 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, {}>((_, ref) => {
         // --- PROXY HANDLERS FOR STORAGE ---
         case 'storage.get':
           const getVal = await storage.get(data.payload.key, data.payload.defaultValue)
-          sendResponse(data.id, getVal)
+          sendResponse(data.id, getVal, null, true)
           break
         case 'storage.set':
           await storage.set(data.payload.key, data.payload.value)
@@ -375,10 +381,10 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, {}>((_, ref) => {
     }
   }
 
-  const sendResponse = (id: number, result: any = null, error: any = null) => {
+  const sendResponse = (id: number, result: any = null, error: any = null, rich = false) => {
     webviewRef.current?.injectJavaScript(`
         window.postMessage(${JSON.stringify(
-          richJson.stringify({ type: 'response', id, result, error: error?.message || error })
+          encode({ type: 'response', id, result, error: error?.message || error }, rich)
         )}, '*');
         true;
       `)
@@ -525,3 +531,5 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, {}>((_, ref) => {
     />
   )
 })
+
+WebViewWorker.displayName = 'WebViewWorker'
