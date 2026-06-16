@@ -63,11 +63,11 @@ const DustTokensSummary = ({ count, onPress, variant, totalUSD }: Props) => {
         </View>
         <Text appearance="secondaryText" fontSize={14} weight="medium">
           {isSummary
-            ? t('{{count}} dust {{tokensLabel}}', {
+            ? t('{{count}} lower-value {{tokensLabel}}', {
                 count,
                 tokensLabel: count > 1 ? t('tokens') : t('token')
               })
-            : t('Hide {{count}} dust {{tokensLabel}}', {
+            : t('Hide {{count}} lower-value {{tokensLabel}}', {
                 count,
                 tokensLabel: count > 1 ? t('tokens') : t('token')
               })}

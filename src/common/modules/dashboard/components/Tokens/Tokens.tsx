@@ -41,7 +41,6 @@ interface Props {
   dashboardNetworkFilterName: string | null
   animatedOverviewHeight: Animated.Value
   isSearchHidden: boolean
-  onAddCustomToken?: () => void
   refreshing?: boolean
   onRefresh?: () => void
 }
@@ -60,8 +59,15 @@ const isGasTankTokenOnCustomNetwork = (token: TokenResult, networks: Network[]) 
   return token.flags.onGasTank && !networks.find((n) => n.chainId === token.chainId && n.hasRelayer)
 }
 
-const isDustToken = (token: TokenResult): boolean => {
-  // Rewards and vesting tokens should never be hidden as dust
+const HIGH_VALUE_TOKEN_USD = 1
+const HIGH_VALUE_TOKEN_COUNT_THRESHOLD = 100
+const LOWER_VALUE_TOKEN_MAX_USD = 0.99
+
+const hasUSDPrice = (token: TokenResult) =>
+  token.priceIn.some((price) => price.baseCurrency === 'usd')
+
+const isLowerValueToken = (token: TokenResult): boolean => {
+  // Rewards and vesting tokens should never be hidden as lower-value tokens
   if (
     token.flags.rewardsType === 'wallet-rewards' ||
     token.flags.rewardsType === 'wallet-vesting'
@@ -75,16 +81,19 @@ const isDustToken = (token: TokenResult): boolean => {
     return false
   }
 
-  const balanceUSD = getTokenBalanceInUSD(token)
-  const hasUSDPrice = token.priceIn.some((p) => p.baseCurrency === 'usd')
+  const tokenHasUSDPrice = hasUSDPrice(token)
 
-  // Custom tokens that don't have a price shouldn't be hidden as dust
+  // Custom tokens that don't have a price shouldn't be hidden as lower-value tokens
   // because the user may be tracking it for other reasons
-  if (token.flags.isCustom && !hasUSDPrice) {
+  if (token.flags.isCustom && !tokenHasUSDPrice) {
     return false
   }
 
-  return balanceUSD < 0.01 || !hasUSDPrice
+  if (!tokenHasUSDPrice) {
+    return false
+  }
+
+  return getTokenBalanceInUSD(token) <= LOWER_VALUE_TOKEN_MAX_USD
 }
 
 const { isPopup } = getUiType()
@@ -98,7 +107,6 @@ const Tokens = ({
   animatedOverviewHeight,
   dashboardNetworkFilterName,
   isSearchHidden,
-  onAddCustomToken,
   refreshing,
   onRefresh
 }: Props) => {
@@ -243,11 +251,19 @@ const Tokens = ({
       return { visibleTokens: sortedTokens, dustTokens: [] }
     }
 
+    const highValueTokensCount = sortedTokens.filter(
+      (token) => hasUSDPrice(token) && getTokenBalanceInUSD(token) > HIGH_VALUE_TOKEN_USD
+    ).length
+
+    if (highValueTokensCount <= HIGH_VALUE_TOKEN_COUNT_THRESHOLD) {
+      return { visibleTokens: sortedTokens, dustTokens: [] }
+    }
+
     return sortedTokens.reduce(
       (acc, token) => {
-        // If there is a price fetch error for a network every token will be considered dust, so
-        // we need to show all tokens in that case, regardless of their balance
-        if (isDustToken(token) && !networkIdsWithPriceError.has(token.chainId.toString())) {
+        // If there is a price fetch error for a network every token will be considered
+        // lower-value, so we need to show all tokens in that case, regardless of their balance
+        if (isLowerValueToken(token) && !networkIdsWithPriceError.has(token.chainId.toString())) {
           acc.dustTokens.push(token)
         } else {
           acc.visibleTokens.push(token)
