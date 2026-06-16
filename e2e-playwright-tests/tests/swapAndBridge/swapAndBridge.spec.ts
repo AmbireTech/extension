@@ -71,11 +71,11 @@ test.describe('swapAndBridge Smart Account', { tag: '@swapAndBridge' }, () => {
     await pages.swapAndBridge.verifyDefaultReceiveToken(eth, wallet)
   })
 
-  test('should import a token by address that is NOT in the default "Receive" list during Swap & Bridge with a Smart Account', async ({
+  test('import a token by address that is NOT in the default "Receive" list during Swap & Bridge with a Smart Account returns error', async ({
     pages
   }) => {
     const eth = tokens.eth.ethereum
-    const wcres = tokens.wcres.ethereum
+    const wcres = tokens.aave.ethereum
     await pages.swapAndBridge.verifyNonDefaultReceiveToken(eth, wcres)
   })
 
