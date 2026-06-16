@@ -75,7 +75,7 @@ test.describe('swapAndBridge Smart Account', { tag: '@swapAndBridge' }, () => {
     pages
   }) => {
     const eth = tokens.eth.ethereum
-    const wcres = tokens.aave.ethereum
+    const wcres = tokens.wcres.ethereum
     await pages.swapAndBridge.verifyNonDefaultReceiveToken(eth, wcres)
   })
 
