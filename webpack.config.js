@@ -206,6 +206,20 @@ module.exports = async function (env, argv) {
   } else if (config.mode === 'development') {
     // writeToDisk: output dev bundled files (in /webkit-dev or /gecko-dev) to import them as unpacked extension in the browser
     config.devServer.devMiddleware.writeToDisk = true
+
+    // The extension loads two entries (main + rootTheme). Without a shared runtime each one
+    // embeds its own webpack runtime, so the page ends up with two competing HMR runtimes
+    // and hot reloading breaks. Give main + rootTheme a single shared runtime chunk.
+    // Every other entry returns `false` to keep its runtime embedded — they run in separate
+    // contexts (service worker, content script, injected script) and can't load an external
+    // runtime file. Don't return the entry name here: that points `runtime` at the entry's
+    // own chunk and webpack errors out.
+    config.optimization = {
+      ...config.optimization,
+      runtimeChunk: {
+        name: (entrypoint) => (['main', 'rootTheme'].includes(entrypoint.name) ? 'runtime' : false)
+      }
+    }
   }
 
   config.ignoreWarnings = [
@@ -501,19 +515,19 @@ module.exports = async function (env, argv) {
         template: './src/web/public/index.html',
         filename: 'index.html',
         inject: 'body', // to auto inject the main.js bundle in the body
-        chunks: ['rootTheme', 'main'] // include only chunks from the main entry
+        chunks: ['runtime', 'rootTheme', 'main'] // include only chunks from the main entry
       }),
       new HtmlWebpackPlugin({
         template: './src/web/public/request-window.html',
         filename: 'request-window.html',
         inject: 'body', // to auto inject the main.js bundle in the body
-        chunks: ['rootTheme', 'main'] // include only chunks from the main entry
+        chunks: ['runtime', 'rootTheme', 'main'] // include only chunks from the main entry
       }),
       new HtmlWebpackPlugin({
         template: './src/web/public/tab.html',
         filename: 'tab.html',
         inject: 'body', // to auto inject the main.js bundle in the body
-        chunks: ['rootTheme', 'main'] // include only chunks from the main entry
+        chunks: ['runtime', 'rootTheme', 'main'] // include only chunks from the main entry
       }),
       new CopyPlugin({ patterns: extensionCopyPatterns })
     ]
@@ -678,6 +692,58 @@ module.exports = async function (env, argv) {
     config.experiments = {
       asyncWebAssembly: true,
       topLevelAwait: true
+    }
+    if (config.mode === 'development') {
+      // Expo bakes the dev-server host (0.0.0.0) into the HMR WebSocket URL. Chrome connects
+      // to ws://0.0.0.0 fine, but Firefox refuses it, and the extension pages can't fall back
+      // to window.location (they run under chrome-extension:// / moz-extension://), so the
+      // popup's HMR client never connects and the page never reloads on change. Pin it to
+      // loopback, which both browsers accept.
+      if (config.devServer?.client?.webSocketURL) {
+        config.devServer.client.webSocketURL.hostname = '127.0.0.1'
+      }
+
+      // Fixes websocket errors in the background,
+      // the inpage script HMR conflicting with web page websockets
+      // and rootTheme breaking HMR
+      const noHmrChunkNames = new Set([
+        'ambire-inpage',
+        'ethereum-inpage',
+        'content-script',
+        'background',
+        'rootTheme',
+        ...(isGecko ? ['content-script-ambire-injection', 'content-script-ethereum-injection'] : [])
+      ])
+
+      config.plugins.push({
+        apply(compiler) {
+          compiler.hooks.compilation.tap('RemoveHMRFromInpageChunks', (compilation) => {
+            compilation.hooks.afterChunks.tap('RemoveHMRFromInpageChunks', (chunks) => {
+              const { chunkGraph } = compilation
+
+              for (const chunk of chunks) {
+                if (!noHmrChunkNames.has(chunk.name)) continue
+
+                const entriesToRemove = []
+                for (const module of chunkGraph.getChunkEntryModulesIterable(chunk)) {
+                  const id = module.identifier ? module.identifier() : ''
+                  if (id.includes('webpack-dev-server') || id.includes('webpack/hot')) {
+                    entriesToRemove.push(module)
+                  }
+                }
+
+                for (const module of entriesToRemove) {
+                  chunkGraph.disconnectChunkAndEntryModule(chunk, module)
+                  // disconnectChunkAndModule is a safe no-op if the module is not
+                  // in the chunk's regular modules set, which is the expected case
+                  // for global entries added by webpack-dev-server.
+                  chunkGraph.disconnectChunkAndModule(chunk, module)
+                }
+              }
+            })
+          })
+        }
+      })
     }
 
     return config
