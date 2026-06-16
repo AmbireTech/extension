@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 
 import { HumanizerWarning } from '@ambire-common/libs/humanizer/interfaces'
+import HumanizerAddress from '@common/components/HumanizerAddress'
 import HumanizedVisualization, {
   Erc7730StructuredVisualization,
   getNestedErc7730Visualizations
@@ -44,15 +45,28 @@ const Erc7730TypedMessageContent = ({
         <View style={[spacings.mbLg, flexbox.alignCenter, isMobile && flexbox.justifyCenter]}>
           {warnings.map((warning) => (
             <Label
-              size="lg"
-              key={warning.content}
+              size="md"
+              key={`${warning.content}-${warning.address || ''}`}
               text={warning.content}
               type="warning"
               hasBottomSpacing={false}
               hasRightSpacing={!isMobile}
               isCentered={isMobile}
               style={isMobile ? { maxWidth: '100%' } : undefined}
-            />
+            >
+              {!!warning.address && (
+                <View style={spacings.mlMi}>
+                  <HumanizerAddress
+                    address={warning.address}
+                    chainId={chainId}
+                    fontSize={14}
+                    actionsMode="inline"
+                    shouldWrapInlineActions={false}
+                    hideLogo
+                  />
+                </View>
+              )}
+            </Label>
           ))}
         </View>
       )}
