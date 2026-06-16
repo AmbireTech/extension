@@ -44,7 +44,7 @@ const OptOutsScreen = () => {
           description={t(
             'Automatically update ENS names and avatars in the background. This improves freshness, but may reduce privacy by linking your accounts together.'
           )}
-          icon={<EnsIcon isActive width={20} height={20} color={theme.iconPrimary} />}
+          icon={<EnsIcon width={20} height={20} color={theme.iconPrimary} />}
           flag="keepEnsProfilesUpToDate"
         />
         <CrashAnalyticsControlOption />

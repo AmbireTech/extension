@@ -9,7 +9,7 @@ import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
 const AccountOption = ({ acc }: { acc: Account }) => {
-  const { name, type, isLoading } = useReverseLookup({
+  const reverseLookup = useReverseLookup({
     address: acc.addr,
     privacyUpdateMode: 'never'
   })
@@ -29,9 +29,7 @@ const AccountOption = ({ acc }: { acc: Account }) => {
         </Text>
         <View style={[flexbox.directionRow, flexbox.alignCenter]}>
           <AccountAddress
-            isLoading={isLoading}
-            name={name}
-            type={type}
+            {...reverseLookup}
             address={acc.addr}
             plainAddressMaxLength={32}
             withCopy={false}

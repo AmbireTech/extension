@@ -71,7 +71,9 @@ const ExpandableCard = ({
         {hasMobileHeader && overlayMobileHeaderControls && (
           <View style={[spacings.phSm, spacings.ptTy, mobileHeaderStyle]}>
             {!!hasArrow && arrowPosition === 'left' && (
-              <View style={{ position: 'absolute', top: SPACING_TY, left: SPACING_SM }}>{icon}</View>
+              <View style={{ position: 'absolute', top: SPACING_TY, left: SPACING_SM }}>
+                {icon}
+              </View>
             )}
             <View
               style={{

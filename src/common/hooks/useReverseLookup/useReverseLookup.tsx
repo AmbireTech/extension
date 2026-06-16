@@ -20,6 +20,9 @@ export interface ReverseLookupResult {
   isLoading: boolean
   name: string | null | undefined
   type: 'ens' | 'namoshi' | null
+  updatedAt: number | undefined
+  // Whether a reverse lookup has ever been stored for this address (regardless of whether it resolved a name)
+  isFetched: boolean
 }
 
 const useReverseLookup = ({
@@ -50,7 +53,9 @@ const useReverseLookup = ({
   return {
     isLoading: isLoading || (!addressInDomains && privacyUpdateMode !== 'never'),
     name: addressInDomains?.ens || addressInDomains?.namoshi,
-    type: addressInDomains?.ens ? 'ens' : addressInDomains?.namoshi ? 'namoshi' : null
+    type: addressInDomains?.ens ? 'ens' : addressInDomains?.namoshi ? 'namoshi' : null,
+    updatedAt: addressInDomains?.updatedAt,
+    isFetched: !!addressInDomains
   }
 }
 

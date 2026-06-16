@@ -23,8 +23,7 @@ const isSpenderRow = (row: Erc7730Row) => {
 const isExpirationRow = (row: Erc7730Row) =>
   labelIncludes(row.label, ['expires', 'expiration', 'deadline', 'valid', 'until'])
 
-export const hasTokenValue = (row: Erc7730Row) =>
-  row.value.some((value) => value.type === 'token')
+export const hasTokenValue = (row: Erc7730Row) => row.value.some((value) => value.type === 'token')
 
 const isOutgoingTokenRow = (row: Erc7730Row) =>
   labelIncludes(row.label, ['send', 'spend', 'pay', 'sell', 'input', 'amount in', 'amount to send'])

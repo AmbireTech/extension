@@ -13,7 +13,7 @@ const AccountDataDetailed = () => {
   const {
     state: { account }
   } = useController('SelectedAccountController')
-  const { isLoading, name, type } = useReverseLookup({
+  const reverseLookup = useReverseLookup({
     address: account?.addr || ''
   })
 
@@ -40,7 +40,7 @@ const AccountDataDetailed = () => {
           <AccountBadges accountData={account} />
         </View>
         <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-          <AccountAddress isLoading={isLoading} name={name} type={type} address={account.addr} />
+          <AccountAddress {...reverseLookup} address={account.addr} />
         </View>
       </View>
     </View>
