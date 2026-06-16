@@ -65,7 +65,7 @@ const TypeBadge: FC<Props> = ({ smartAccountType, size, showTooltip = false }) =
         position: 'absolute',
         left: size === 'big' ? -2 : -SPACING_MI,
         top: size === 'big' ? -4 : -SPACING_MI,
-        paddingHorizontal: 3,
+        paddingHorizontal: 2,
         paddingVertical: 2,
         backgroundColor: theme.successText,
         zIndex: 2,

@@ -1,4 +1,5 @@
 import type { HumanizerErc7730Visualization } from '@ambire-common/libs/humanizer/interfaces'
+import { zeroAddress } from 'viem'
 import {
   getAction,
   getAddressVisualization,
@@ -10,6 +11,7 @@ import {
 import {
   getErc7730DescriptionRows,
   getErc7730SummaryRows,
+  hasErc7730NativeValueRow,
   shouldShowErc7730SummaryRowLabel
 } from './helpers'
 
@@ -114,5 +116,30 @@ describe('shouldShowErc7730SummaryRowLabel', () => {
 
     expect(shouldShowErc7730SummaryRowLabel(visualization, visualization.rows[0]!)).toBe(false)
     expect(shouldShowErc7730SummaryRowLabel(visualization, visualization.rows[1]!)).toBe(true)
+  })
+})
+
+describe('hasErc7730NativeValueRow', () => {
+  const getApprovalVisualization = (nativeValue: bigint): HumanizerErc7730Visualization => ({
+    type: 'erc7730',
+    title: 'Approve',
+    rows: [
+      {
+        label: 'Amount',
+        value: [getToken('0xdac17f958d2ee523a2206206994597c13d831ec7', 1n)]
+      },
+      {
+        label: 'Send',
+        value: [getToken(zeroAddress, nativeValue)]
+      }
+    ]
+  })
+
+  test('detects a nonzero native Send row', () => {
+    expect(hasErc7730NativeValueRow(getApprovalVisualization(1n))).toBe(true)
+  })
+
+  test('ignores a zero-value native Send row', () => {
+    expect(hasErc7730NativeValueRow(getApprovalVisualization(0n))).toBe(false)
   })
 })
