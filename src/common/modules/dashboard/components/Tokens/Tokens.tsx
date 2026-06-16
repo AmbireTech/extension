@@ -26,7 +26,7 @@ import DashboardPageScrollContainer from '../DashboardPageScrollContainer'
 import FloatingBottomBar from '../FloatingBottomBar'
 import TabsAndSearch from '../TabsAndSearch'
 import { TabType } from '../TabsAndSearch/Tabs/Tab/Tab'
-import DustTokensSummary from './DustTokensSummary'
+import OtherTokensSummary from './OtherTokensSummary'
 import TokenItem from './TokenItem'
 import Skeleton from './TokensSkeleton'
 
@@ -407,7 +407,7 @@ const Tokens = ({
 
       if (item === 'dust-summary') {
         return (
-          <DustTokensSummary
+          <OtherTokensSummary
             variant="summary"
             count={dustTokens.length}
             totalUSD={dustTotalUSD}
@@ -418,7 +418,7 @@ const Tokens = ({
 
       if (item === 'dust-collapse') {
         return (
-          <DustTokensSummary
+          <OtherTokensSummary
             variant="collapse"
             count={dustTokens.length}
             onPress={() => setIsDustExpanded(false)}
