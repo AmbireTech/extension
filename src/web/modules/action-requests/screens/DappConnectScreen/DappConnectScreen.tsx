@@ -49,11 +49,11 @@ const DappConnectScreen = () => {
                 holdDuration={1600}
                 style={{ height: 56 }}
                 text={resolveButtonText}
-                buttonType={((): 'dangerFilled' | 'warning' => {
-                  if (!!dappToConnect && dappToConnect.blacklisted === 'BLACKLISTED')
-                    return 'dangerFilled'
-                  return 'warning'
-                })()}
+                buttonType={
+                  !!dappToConnect && dappToConnect.blacklisted === 'BLACKLISTED'
+                    ? 'dangerFilled'
+                    : 'warning'
+                }
               />
             ) : undefined
           }
