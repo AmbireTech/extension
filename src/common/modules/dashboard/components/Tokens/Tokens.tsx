@@ -61,7 +61,7 @@ const isGasTankTokenOnCustomNetwork = (token: TokenResult, networks: Network[]) 
 
 const HIGH_VALUE_TOKEN_USD = 1
 const HIGH_VALUE_TOKEN_COUNT_THRESHOLD = 100
-const LOWER_VALUE_TOKEN_MAX_USD = 0.99
+const LOWER_VALUE_TOKEN_MAX_USD = 1
 const DUST_TOKEN_MAX_USD = 0.01
 
 const hasUSDPrice = (token: TokenResult) =>
