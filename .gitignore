@@ -511,7 +511,7 @@ run-tests.sh
 webview-bundle.json
 *inpage-bundle.json
 
-# Claude Code personal settings
+# Local, per-developer LLM rules
 .claude/*.local.*
-
-
+.agents/*.local.*
+AGENTS.local.md
