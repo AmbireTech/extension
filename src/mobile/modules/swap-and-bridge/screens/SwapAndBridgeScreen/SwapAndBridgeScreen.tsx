@@ -42,6 +42,7 @@ const SwapAndBridgeScreen = () => {
     fromTokenValue,
     fromTokenAmountSelectDisabled,
     handleSubmitForm,
+    frozenPriceImpactWarning,
     highPriceImpactOrSlippageWarning,
     priceImpactModalRef,
     closePriceImpactModal,
@@ -221,7 +222,7 @@ const SwapAndBridgeScreen = () => {
   }
 
   return (
-    <MobileLayoutContainer>
+    <MobileLayoutContainer footer={buttons}>
       <MobileLayoutWrapperMainContent
         withBackButton
         onBackButtonPress={onBackButtonPress}
@@ -259,9 +260,6 @@ const SwapAndBridgeScreen = () => {
           shouldEnableRoutesSelection={shouldEnableRoutesSelection}
         />
 
-        <View style={flexbox.flex1} />
-        {buttons}
-
         <RoutesModal sheetRef={routesModalRef} closeBottomSheet={closeRoutesModal} />
         <Estimation
           updateType="Swap&Bridge"
@@ -278,7 +276,9 @@ const SwapAndBridgeScreen = () => {
           sheetRef={priceImpactModalRef}
           closeBottomSheet={closePriceImpactModal}
           acknowledgeHighPriceImpact={acknowledgeHighPriceImpact}
-          highPriceImpactOrSlippageWarning={highPriceImpactOrSlippageWarning}
+          highPriceImpactOrSlippageWarning={
+            frozenPriceImpactWarning ?? highPriceImpactOrSlippageWarning
+          }
         />
       </MobileLayoutWrapperMainContent>
     </MobileLayoutContainer>

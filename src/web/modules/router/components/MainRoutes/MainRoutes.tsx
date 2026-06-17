@@ -30,7 +30,8 @@ import PrivateKeyImportScreen from '@web/modules/auth/screens/PrivateKeyImportSc
 import SafeImportScreen from '@web/modules/auth/screens/SafeImportScreen'
 import SeedPhraseImportScreen from '@web/modules/auth/screens/SeedPhraseImportScreen'
 import ViewOnlyAccountAdderScreen from '@web/modules/auth/screens/ViewOnlyAccountAdderScreen'
-import DappCatalogScreen from '@web/modules/dapp-catalog/screens/DappCatalogScreen'
+import ExploreScreen from '@web/modules/explore/screens/ExploreScreen'
+import ExploreSectionScreen from '@web/modules/explore/screens/ExploreSectionScreen'
 import ExtensionRewardsScreen from '@web/modules/extension-rewards/screens/ExtensionRewardsScreen'
 import LedgerConnectScreen from '@web/modules/hardware-wallet/screens/LedgerConnectScreen/LedgerConnectScreen'
 import QrCameraPermissionPage from '@web/modules/hardware-wallet/screens/QrCameraPermissionPage'
@@ -61,6 +62,7 @@ import TermsSettingsScreen from '@web/modules/settings/screens/TermsSettingsScre
 import TransactionHistorySettingsScreen from '@web/modules/settings/screens/TransactionHistorySettingsScreen'
 import SignAccountOpScreen from '@web/modules/sign-account-op/screens/SignAccountOpScreen'
 import SignMessageScreen from '@web/modules/sign-message/screens/SignMessageScreen'
+import SurveyScreen from '@web/modules/survey/screens/SurveyScreen/SurveyScreen'
 import SwapAndBridgeScreen from '@web/modules/swap-and-bridge/screens/SwapAndBridgeScreen'
 import TokenDetailsScreen from '@web/modules/token-details/screens/TokenDetailsScreen'
 import TransferScreen from '@web/modules/transfer/screens/TransferScreen'
@@ -193,9 +195,11 @@ const MainRoutes = () => {
           <Route path={WEB_ROUTES.tokenDetails} element={<TokenDetailsScreen />} />
           <Route path={WEB_ROUTES.accountSelect} element={<AccountSelectScreen />} />
           <Route path={WEB_ROUTES.receive} element={<ReceiveScreen />} />
-          <Route path={WEB_ROUTES.apps} element={<DappCatalogScreen />} />
+          <Route path={WEB_ROUTES.explore} element={<ExploreScreen />} />
+          <Route path={WEB_ROUTES.exploreSection} element={<ExploreSectionScreen />} />
           <Route path={WEB_ROUTES.networks} element={<NetworksScreen />} />
           <Route path={WEB_ROUTES.rewards} element={<ExtensionRewardsScreen />} />
+          <Route path={WEB_ROUTES.survey} element={<SurveyScreen />} />
         </Route>
       </Route>
     </Routes>

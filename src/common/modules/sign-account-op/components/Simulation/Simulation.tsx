@@ -5,12 +5,12 @@ import { View } from 'react-native'
 import { SigningStatus } from '@ambire-common/controllers/signAccountOp/signAccountOp'
 import { Network } from '@ambire-common/interfaces/network'
 import { isSmartAccount } from '@ambire-common/libs/account/account'
-import { isPermit2Interaction } from '@ambire-common/libs/simulation/detectPermit2Interaction'
 import SuccessIcon from '@common/assets/svg/SuccessIcon'
 import Alert from '@common/components/Alert'
 import ScrollableWrapper from '@common/components/ScrollableWrapper'
 import Text from '@common/components/Text'
 import Nft from '@common/components/TokenOrNft/components/Nft'
+import { isMobile, isWeb } from '@common/config/env'
 import { Trans, useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
@@ -19,7 +19,6 @@ import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
 import SimulationSkeleton from './SimulationSkeleton'
-import DappValidationAlert from './DappValidationAlert'
 import getStyles from './styles'
 
 interface Props {
@@ -41,10 +40,7 @@ const Simulation: FC<Props> = ({ network, isEstimationComplete, isViewOnly }) =>
   } = useController('SelectedAccountController')
   const [initialSimulationLoaded, setInitialSimulationLoaded] = useState(false)
   const [shouldRespectIsLoading, setShouldRespectIsLoading] = useState(true)
-  const [containsDappsNotInCatalog, setContainsDappsNotInCatalog] = useState(false)
-  const [hasDappsVerificationError, setHasDappsVerificationError] = useState(false)
   const { networks } = useController('NetworksController').state
-  const { hasUnverifiedDapps } = useController('DappsController')
 
   const pendingTokens = useMemo(() => {
     if (signAccountOpState?.accountOp && network) {
@@ -169,59 +165,6 @@ const Simulation: FC<Props> = ({ network, isEstimationComplete, isViewOnly }) =>
     ]
   )
 
-  const containsPermit2 = useMemo(() => {
-    if (!signAccountOpState?.accountOp?.calls || !network) return false
-
-    return signAccountOpState.accountOp.calls.some((call) => {
-      if (!call.to || !call.data) return false
-      return isPermit2Interaction({ to: call.to, data: call.data })
-    })
-  }, [signAccountOpState?.accountOp.calls, network])
-
-  useEffect(() => {
-    if (!signAccountOpState?.accountOp?.calls || !network) {
-      setContainsDappsNotInCatalog(false)
-      setHasDappsVerificationError(false)
-      return
-    }
-
-    const dappUrlsToValidate = signAccountOpState.accountOp.calls
-      .map((call) => call.dapp?.url)
-      .filter(Boolean) as string[]
-
-    if (!dappUrlsToValidate.length) {
-      setContainsDappsNotInCatalog(false)
-      setHasDappsVerificationError(false)
-      return
-    }
-
-    let isCancelled = false
-    let didFail = false
-
-    const checkForUnverifiedDapps = async () => {
-      const res = await hasUnverifiedDapps(dappUrlsToValidate).catch((error) => {
-        didFail = true
-        if (!isCancelled) {
-          // Keep the messaging generic; the exact error is not relevant here.
-          setHasDappsVerificationError(true)
-        }
-
-        return false
-      })
-      if (!isCancelled) {
-        if (!didFail) setHasDappsVerificationError(false)
-        setContainsDappsNotInCatalog(res)
-      }
-    }
-
-    setHasDappsVerificationError(false)
-    void checkForUnverifiedDapps()
-
-    return () => {
-      isCancelled = true
-    }
-  }, [hasUnverifiedDapps, network, signAccountOpState?.accountOp?.calls])
-
   const simulationView:
     | 'no-changes'
     | 'changes'
@@ -272,10 +215,14 @@ const Simulation: FC<Props> = ({ network, isEstimationComplete, isViewOnly }) =>
   return (
     <View style={styles.simulationSection}>
       {simulationView === 'changes' && (
-        <View style={[flexbox.directionRow, flexbox.flex1]}>
+        <View style={[isWeb && flexbox.directionRow, flexbox.flex1]}>
           {(!!pendingSendTokens.length || !!pendingSendCollection.length) && (
             <View
-              style={[styles.simulationContainer, !!pendingReceiveTokens.length && spacings.mrTy]}
+              style={[
+                styles.simulationContainer,
+                isWeb && !!pendingReceiveTokens.length && spacings.mrTy,
+                isMobile && spacings.mbTy
+              ]}
             >
               <View style={styles.simulationContainerHeader}>
                 <Text fontSize={14} weight="semiBold" appearance="secondaryText" numberOfLines={1}>
@@ -411,23 +358,6 @@ const Simulation: FC<Props> = ({ network, isEstimationComplete, isViewOnly }) =>
             </Trans>
           }
         />
-      )}
-      {containsPermit2 && containsDappsNotInCatalog && (
-        <View style={spacings.mt}>
-          <DappValidationAlert
-            text={t(
-              'App is not on the default Ambire App Catalog.\nMake sure you trust it before signing requests.'
-            )}
-          />
-        </View>
-      )}
-
-      {containsPermit2 && hasDappsVerificationError && (
-        <View style={spacings.mt}>
-          <DappValidationAlert
-            text={t("We couldn't verify the app.\nMake sure you trust it before signing requests.")}
-          />
-        </View>
       )}
       {shouldShowLoader && <SimulationSkeleton />}
     </View>

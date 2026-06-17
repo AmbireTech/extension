@@ -1,17 +1,29 @@
 import { flushSync } from 'react-dom'
 
 import { Dapp } from '@ambire-common/interfaces/dapp'
+
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 
 interface DappsControllerHelpers {
   isLoadingCurrentDapp: boolean
   currentDapp: Dapp | null
   getCurrentDapp: () => Promise<Dapp | null>
+  dappUrl?: string
+  setDappUrl?: (url: string) => void
   hasUnverifiedDapps: (dapps: string[]) => Promise<boolean>
+}
+
+interface RequestsControllerHelpers {
+  requestModalRef: React.RefObject<any> | null
+  openRequestModal: (() => void) | null
+  closeRequestModal: (() => void) | null
+  onBottomSheetClosed: (() => void) | null
+  onBottomSheetOpened: (() => void) | null
 }
 
 type DefinedControllerHelpers = {
   DappsController: DappsControllerHelpers
+  RequestsController: RequestsControllerHelpers
 }
 
 export type ControllerHelpersMapping = {

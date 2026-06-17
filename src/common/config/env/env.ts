@@ -8,7 +8,10 @@ import {
   NFT_CDN_URL,
   RELAYER_URL,
   SENTRY_DSN,
-  VELCRO_URL
+  SQUID_INTEGRATOR_ID,
+  UNISWAP_API_KEY,
+  VELCRO_URL,
+  WALLETCONNECT_PROJECT_ID
 } from '@env'
 
 import appJSON from '../../../../app.json'
@@ -55,7 +58,6 @@ export const isiOS = Platform.OS === 'ios'
 export const isAndroid = Platform.OS === 'android'
 export const isWeb = Platform.OS === 'web'
 
-// eslint-disable-next-line @typescript-eslint/naming-convention
 enum APP_ENV {
   PROD = 'production',
   STAGING = 'staging',
@@ -79,7 +81,10 @@ const CONFIG: Config = {
   SENTRY_DSN_LEGENDS: process.env.SENTRY_DSN_LEGENDS || '',
   SENTRY_DSN_BROWSER_EXTENSION: process.env.SENTRY_DSN_BROWSER_EXTENSION || '',
   BUNGEE_API_KEY,
-  LI_FI_API_KEY
+  LI_FI_API_KEY,
+  SQUID_INTEGRATOR_ID: SQUID_INTEGRATOR_ID || '',
+  UNISWAP_API_KEY: UNISWAP_API_KEY || '',
+  WALLETCONNECT_PROJECT_ID
 }
 
 if (isProd) {

@@ -125,7 +125,7 @@ const TokenData: FC<Props> = ({ token }) => {
       },
       typeof usdMarketData?.totalSupply === 'number' && {
         label: t('Total supply'),
-        value: `${formatDecimals(usdMarketData.totalSupply, 'value')}`
+        value: `${formatDecimals(usdMarketData.totalSupply, 'amount')}`
       },
       typeof usdMarketData?.fullyDilutedValuation === 'number' && {
         label: t('Fully diluted valuation'),

@@ -33,7 +33,7 @@ const CrashAnalyticsControlOption = () => {
       description={t(
         'Help us fix issues faster with anonymous error reports, no personal identifiable info collected.'
       )}
-      renderIcon={<DevIcon color={theme.primaryText} />}
+      renderIcon={<DevIcon color={theme.iconPrimary} />}
     >
       <FatToggle isOn={crashAnalyticsEnabled} onToggle={handleToggleCrashAnalytics} />
     </ControlOption>

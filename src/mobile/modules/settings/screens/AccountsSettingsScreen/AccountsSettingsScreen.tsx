@@ -199,7 +199,21 @@ const AccountsSettingsScreen = () => {
   )
 
   return (
-    <MobileLayoutContainer>
+    <MobileLayoutContainer
+      footer={
+        <Button
+          testID="button-add-account"
+          text={t('Add account')}
+          size="regular"
+          onPress={openBottomSheet as any}
+          childrenPosition="left"
+          hasBottomSpacing={false}
+          style={{ ...flexbox.alignSelfCenter, width: '100%' }}
+        >
+          <AddCircularIcon width={24} height={24} color="#fff" style={spacings.mrTy} />
+        </Button>
+      }
+    >
       <MobileLayoutWrapperMainContent withBackButton title="Accounts">
         <Search control={control} containerStyle={spacings.mbLg} />
         <View style={[flexbox.flex1]} ref={accountsContainerRef}>
@@ -213,18 +227,6 @@ const AccountsSettingsScreen = () => {
             ListEmptyComponent={<Text>{t('No accounts found')}</Text>}
           />
         </View>
-
-        <Button
-          testID="button-add-account"
-          text={t('Add account')}
-          size="regular"
-          onPress={openBottomSheet as any}
-          childrenPosition="left"
-          hasBottomSpacing={false}
-          style={{ ...flexbox.alignSelfCenter, width: '100%' }}
-        >
-          <AddCircularIcon width={24} height={24} color="#fff" style={spacings.mrTy} />
-        </Button>
 
         <AccountSmartSettingsBottomSheet
           sheetRef={sheetRefAccountSmartSettings}

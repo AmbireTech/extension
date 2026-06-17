@@ -52,7 +52,7 @@ const NoKeysToSignAlert: FC<Props> = ({ style, isTransaction = true, type = 'lon
           ]}
         >
           <NoKeysIcon />
-          <Text fontSize={14} appearance="errorText" style={spacings.mhSm}>
+          <Text fontSize={14} appearance="primaryText" style={spacings.mhSm}>
             {!!account.safeCreation
               ? t(`No owners imported to sign this ${isTransaction ? 'transaction' : 'message'}`)
               : t(`No keys available to sign this ${isTransaction ? 'transaction' : 'message'}`)}
@@ -82,8 +82,7 @@ const NoKeysToSignAlert: FC<Props> = ({ style, isTransaction = true, type = 'lon
           customIcon={() => <NoKeysIcon />}
           buttonProps={{
             onPress: () => openBottomSheet(),
-            text: !!account.safeCreation ? t('Import Owner') : t('Import Key'),
-            type: 'dangerFilled'
+            text: !!account.safeCreation ? t('Import Owner') : t('Import Key')
           }}
         />
       )}

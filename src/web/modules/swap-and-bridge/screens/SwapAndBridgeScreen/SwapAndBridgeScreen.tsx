@@ -42,6 +42,7 @@ const SwapAndBridgeScreen = () => {
     fromTokenValue,
     fromTokenAmountSelectDisabled,
     handleSubmitForm,
+    frozenPriceImpactWarning,
     highPriceImpactOrSlippageWarning,
     priceImpactModalRef,
     closePriceImpactModal,
@@ -279,13 +280,16 @@ const SwapAndBridgeScreen = () => {
         hasProceeded={hasProceeded}
         signAccountOpController={signAccountOpController}
         serviceFee={quote?.selectedRoute?.serviceFee}
+        shouldShowTxnDetails
         Modals={Modals}
       />
       <PriceImpactWarningModal
         sheetRef={priceImpactModalRef}
         closeBottomSheet={closePriceImpactModal}
         acknowledgeHighPriceImpact={acknowledgeHighPriceImpact}
-        highPriceImpactOrSlippageWarning={highPriceImpactOrSlippageWarning}
+        highPriceImpactOrSlippageWarning={
+          frozenPriceImpactWarning ?? highPriceImpactOrSlippageWarning
+        }
       />
     </Wrapper>
   )

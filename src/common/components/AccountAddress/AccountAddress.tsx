@@ -6,6 +6,7 @@ import ReceiveIcon from '@common/assets/svg/ReceiveIcon'
 import PlainAddress from '@common/components/AccountAddress/PlainAddress'
 import PlainAddressWithCopy from '@common/components/AccountAddress/PlainAddressWithCopy'
 import DomainBadge from '@common/components/Avatar/DomainBadge'
+import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import Text from '@common/components/Text'
 import { isMobile } from '@common/config/env'
 import useHover, { AnimatedPressable } from '@common/hooks/useHover/useHover'
@@ -18,6 +19,11 @@ import flexbox from '@common/styles/utils/flexbox'
 interface Props extends ReturnType<typeof useReverseLookup> {
   address: string
   plainAddressMaxLength?: number
+  addressHighlight?: {
+    prefix: number
+    suffix: number
+    color: 'errorText'
+  }
   withCopy?: boolean
   fontSize?: number
   containerStyle?: ViewStyle
@@ -52,6 +58,7 @@ const AccountAddress: FC<Props> = ({
   type,
   address,
   plainAddressMaxLength = 42,
+  addressHighlight,
   withCopy = true,
   fontSize = 12,
   containerStyle = {},
@@ -59,13 +66,16 @@ const AccountAddress: FC<Props> = ({
   withWrap = false
 }) => {
   const { t } = useTranslation()
+  // If highlight is required, prioritize showing it over domain resolving/name UI so the highlight stays visible.
+  const effectiveIsLoading = isLoading && !addressHighlight
+  const showResolvedName = !!name && !addressHighlight
 
   return (
     <View
       style={[{ flexShrink: 1, minWidth: 0, maxWidth: '100%' }, containerStyle]}
       testID="address"
     >
-      {name || isLoading ? (
+      {showResolvedName || effectiveIsLoading ? (
         <View
           style={[
             flexbox.directionRow,
@@ -73,7 +83,7 @@ const AccountAddress: FC<Props> = ({
             withWrap ? flexbox.wrap : { flexShrink: 1, minWidth: 0, maxWidth: '100%' }
           ]}
         >
-          {!isLoading ? (
+          {showResolvedName ? (
             <View
               style={[
                 flexbox.directionRow,
@@ -88,22 +98,27 @@ const AccountAddress: FC<Props> = ({
                 appearance="primary"
                 numberOfLines={1}
                 style={[spacings.mrMi, { flexShrink: 1, minWidth: 0 }]}
+                dataSet={createGlobalTooltipDataSet({
+                  id: `account-address-resolved-name-${address}`,
+                  content: name
+                })}
               >
                 {name}
               </Text>
             </View>
-          ) : (
+          ) : effectiveIsLoading ? (
             <Text fontSize={12} appearance="secondaryText">
               {t('Resolving domain...')}
             </Text>
-          )}
+          ) : null}
           {withCopy ? (
             <>
               <PlainAddressWithCopy
-                maxLength={withWrap && isMobile ? 42 : 18}
+                maxLength={addressHighlight || withWrap ? 42 : isMobile ? 42 : 16}
                 address={address}
                 fontSize={fontSize}
                 withWrap={withWrap}
+                highlight={addressHighlight}
               >
                 {withReceive && <ReceiveButton address={address} fontSize={fontSize} />}
               </PlainAddressWithCopy>
@@ -111,10 +126,12 @@ const AccountAddress: FC<Props> = ({
           ) : (
             <>
               <PlainAddress
-                maxLength={isMobile ? 13 : 18}
+                maxLength={isMobile ? 13 : 16}
                 address={address}
                 style={{ ...spacings.mlMi }}
                 fontSize={fontSize}
+                withWrap={withWrap}
+                highlight={addressHighlight}
               />
               {withReceive && <ReceiveButton address={address} fontSize={fontSize} />}
             </>
@@ -128,6 +145,7 @@ const AccountAddress: FC<Props> = ({
             hideParentheses
             fontSize={fontSize}
             withWrap={withWrap}
+            highlight={addressHighlight}
           >
             {withReceive && <ReceiveButton address={address} fontSize={fontSize} />}
           </PlainAddressWithCopy>
@@ -139,6 +157,8 @@ const AccountAddress: FC<Props> = ({
             address={address}
             hideParentheses
             fontSize={fontSize}
+            withWrap={withWrap}
+            highlight={addressHighlight}
           />
           {withReceive && <ReceiveButton address={address} fontSize={fontSize} />}
         </View>

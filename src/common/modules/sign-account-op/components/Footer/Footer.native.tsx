@@ -12,13 +12,11 @@ import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import HoldToProceedButton from '@common/components/HoldToProceedButton'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
-import useTheme from '@common/hooks/useTheme'
 import ActionsPagination from '@common/modules/action-requests/components/ActionsPagination'
-import spacings, { SPACING, SPACING_SM } from '@common/styles/spacings'
+import spacings, { SPACING_SM } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
 import { Props } from './Footer'
-import getStyles from './styles'
 
 const Footer = ({
   onReject,
@@ -31,10 +29,10 @@ const Footer = ({
   isAddToCartDisabled,
   inProgressButtonText,
   buttonText,
-  shouldHoldToProceed
+  shouldHoldToProceed,
+  signButtonType = 'primary'
 }: Props) => {
   const { t } = useTranslation()
-  const { styles, themeType } = useTheme(getStyles)
   const { userRequests } = useController('RequestsController').state
   const {
     state: { account }
@@ -88,6 +86,13 @@ const Footer = ({
         {shouldHoldToProceed && (
           <HoldToProceedButton
             text={t('Hold to sign')}
+            buttonType={
+              signButtonType === 'dangerFilled'
+                ? 'dangerFilled'
+                : signButtonType === 'warning'
+                  ? 'warning'
+                  : 'primary'
+            }
             disabled={isSignDisabled}
             onHoldComplete={onSign}
             testID="proceed-btn"
@@ -97,7 +102,7 @@ const Footer = ({
         {!shouldHoldToProceed && (
           <ButtonWithLoader
             testID="transaction-button-sign"
-            type="primary"
+            type={signButtonType}
             disabled={isSignDisabled}
             isLoading={isSignLoading}
             text={isSignLoading ? inProgressButtonText : buttonText}
@@ -167,6 +172,8 @@ const Footer = ({
           </View>
         )}
       </View>
+
+      <ActionsPagination />
     </View>
   )
 }

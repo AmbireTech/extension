@@ -26,15 +26,9 @@ const GetStartedScreen = () => {
   const { handleAuthButtonPress } = useGetStarted()
 
   return (
-    <MobileLayoutContainer>
-      <MobileLayoutWrapperMainContent>
-        <View style={[flexbox.justifySpaceBetween, flexbox.flex1]}>
-          <View style={[flexbox.justifyCenter, flexbox.alignCenter, flexbox.flex1, spacings.phLg]}>
-            <AmbireLogoWithBackgroundAndLogotype />
-            <Text style={[spacings.mtLg, text.center]} weight="medium" appearance="secondaryText">
-              {t('The Web3 wallet that makes self-custody easy and secure.')}
-            </Text>
-          </View>
+    <MobileLayoutContainer
+      footer={
+        <>
           <Button
             testID="create-new-account-btn"
             type="primary"
@@ -68,6 +62,17 @@ const GetStartedScreen = () => {
           >
             <ViewOnlyIcon color={theme.primaryText} width={24} height={24} style={spacings.mrMi} />
           </Button>
+        </>
+      }
+    >
+      <MobileLayoutWrapperMainContent>
+        <View style={[flexbox.justifySpaceBetween, flexbox.flex1]}>
+          <View style={[flexbox.justifyCenter, flexbox.alignCenter, flexbox.flex1, spacings.phLg]}>
+            <AmbireLogoWithBackgroundAndLogotype />
+            <Text style={[spacings.mtLg, text.center]} weight="medium" appearance="secondaryText">
+              {t('The Web3 wallet that makes self-custody easy and secure.')}
+            </Text>
+          </View>
         </View>
       </MobileLayoutWrapperMainContent>
     </MobileLayoutContainer>

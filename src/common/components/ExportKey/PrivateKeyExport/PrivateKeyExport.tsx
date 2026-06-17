@@ -62,7 +62,7 @@ const PrivateKeyExport: FC<Props> = ({ privateKey, blurred, setBlurred, openConf
             }
           ]}
         >
-          <Text fontSize={14} color={theme.secondaryText}>
+          <Text testID="private-key-value" fontSize={14} color={theme.secondaryText}>
             {privateKey}
           </Text>
         </View>
@@ -78,6 +78,7 @@ const PrivateKeyExport: FC<Props> = ({ privateKey, blurred, setBlurred, openConf
             <>
               <View style={[isMobile && { flex: 1 }, { opacity: privateKey ? 1 : 0 }]}>
                 <Button
+                  testID="copy-private-key-button"
                   onPress={handleCopyText}
                   hasBottomSpacing={false}
                   type={isWeb ? 'ghost' : 'outline'}
@@ -94,6 +95,7 @@ const PrivateKeyExport: FC<Props> = ({ privateKey, blurred, setBlurred, openConf
           )}
           <View style={isMobile && flexbox.flex1}>
             <Button
+              testID="reveal-private-key-button"
               onPress={toggleKeyVisibility}
               hasBottomSpacing={false}
               type={isWeb ? 'ghost' : 'outline'}

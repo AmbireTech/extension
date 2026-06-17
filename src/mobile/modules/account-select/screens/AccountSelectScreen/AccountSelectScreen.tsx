@@ -108,7 +108,21 @@ const AccountSelectScreen = () => {
   }, [account, navigate, pendingToBeSetSelectedAccount])
 
   return !pendingToBeSetSelectedAccount ? (
-    <MobileLayoutContainer>
+    <MobileLayoutContainer
+      footer={
+        <Button
+          testID="button-add-account"
+          text={t('Add account')}
+          size="regular"
+          onPress={openBottomSheet as any}
+          hasBottomSpacing={false}
+          childrenPosition="left"
+          style={{ ...flexbox.alignSelfCenter, width: '100%' }}
+        >
+          <AddCircularIcon width={24} height={24} color="#fff" style={spacings.mrTy} />
+        </Button>
+      }
+    >
       <HeaderWithTitle>
         <Pressable
           onPress={() => {
@@ -144,19 +158,6 @@ const AccountSelectScreen = () => {
             </View>
           }
         />
-
-        <View style={spacings.ptSm}>
-          <Button
-            testID="button-add-account"
-            text={t('Add account')}
-            size="regular"
-            onPress={openBottomSheet as any}
-            childrenPosition="left"
-            style={{ ...flexbox.alignSelfCenter, width: '100%' }}
-          >
-            <AddCircularIcon width={24} height={24} color="#fff" style={spacings.mrTy} />
-          </Button>
-        </View>
       </View>
       <AddAccount sheetRef={sheetRef} closeBottomSheet={closeBottomSheet} />
     </MobileLayoutContainer>

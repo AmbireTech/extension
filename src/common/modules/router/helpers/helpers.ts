@@ -1,5 +1,6 @@
 import { IKeystoreController } from '@ambire-common/interfaces/keystore'
 import { IRequestsController } from '@ambire-common/interfaces/requests'
+import { ISurveyController } from '@ambire-common/interfaces/survey'
 import { ISwapAndBridgeController } from '@ambire-common/interfaces/swapAndBridge'
 import { ITransferController } from '@ambire-common/interfaces/transfer'
 import { getBenzinUrlParams } from '@ambire-common/utils/benzin'
@@ -7,20 +8,22 @@ import { AUTH_STATUS } from '@common/modules/auth/constants/authStatus'
 import { ROUTES } from '@common/modules/router/constants/common'
 import { getUiType } from '@common/utils/uiType'
 
-const { isRequestWindow, isMobileApp } = getUiType()
+const { isRequestWindow } = getUiType()
 
 const getInitialRoute = ({
   keystoreState,
   authStatus,
   requestsState,
   swapAndBridgeState,
-  transferState
+  transferState,
+  surveyState
 }: {
   keystoreState: IKeystoreController
   authStatus?: AUTH_STATUS
   requestsState: IRequestsController
   swapAndBridgeState: ISwapAndBridgeController
   transferState: ITransferController
+  surveyState?: ISurveyController
 }) => {
   if (keystoreState.isReadyToStoreKeys && !keystoreState.isUnlocked) {
     return ROUTES.keyStoreUnlock
@@ -30,7 +33,7 @@ const getInitialRoute = ({
     return ROUTES.getStarted
   }
 
-  if ((isRequestWindow || isMobileApp) && requestsState.currentUserRequest) {
+  if (isRequestWindow && requestsState.currentUserRequest) {
     const { currentUserRequest } = requestsState
     if (currentUserRequest.kind === 'dappConnect') return ROUTES.dappConnectRequest
 
@@ -92,6 +95,7 @@ const getInitialRoute = ({
       }
       return ROUTES.transfer
     }
+    if (surveyState && surveyState.hasPersistentState) return ROUTES.survey
     return ROUTES.dashboard
   }
 

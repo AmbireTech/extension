@@ -1,15 +1,13 @@
 import { ZeroAddress } from 'ethers'
 
-import { Contacts } from '@ambire-common/controllers/addressBook/addressBook'
 import { getFeeSpeedIdentifier } from '@ambire-common/controllers/signAccountOp/helper'
 import { FeeSpeed } from '@ambire-common/controllers/signAccountOp/signAccountOp'
+import { Contacts } from '@ambire-common/interfaces/addressBook'
 import { ISignAccountOpController } from '@ambire-common/interfaces/signAccountOp'
 import { canBecomeSmarter } from '@ambire-common/libs/account/account'
-import {
-  canFeeOptionCoverAmount,
-  isTransferredTokenFeeOption
-} from '@ambire-common/libs/account/feeOptions'
+import { canFeeOptionCoverAmount } from '@ambire-common/libs/account/feeOptions'
 import { FeePaymentOption } from '@ambire-common/libs/estimate/interfaces'
+import { getExtremeGasFeeWarningState } from '@ambire-common/libs/safeguards/extremeGasFee'
 import { ZERO_ADDRESS } from '@ambire-common/services/socket/constants'
 
 import PayOption from './components/PayOption'
@@ -26,7 +24,8 @@ const sortBasedOnUSDValue = (a: FeePaymentOption, b: FeePaymentOption) => {
 
 /**
  * Sorts fee options by the following criteria:
- * - Gas tank options first
+ * - Native token options first
+ * - Gas tank options second
  * - USD value
  */
 const sortFeeOptions = (
@@ -48,13 +47,16 @@ const sortFeeOptions = (
   if (!aCanCoverFee && bCanCoverFee) return 1
   if (!signAccountOpState) sortBasedOnUSDValue(a, b)
 
-  // gas tank first
+  const isNativeA = a.token.address === ZERO_ADDRESS && !a.token.flags.onGasTank
+  const isNativeB = b.token.address === ZERO_ADDRESS && !b.token.flags.onGasTank
+
+  // native first
+  if (isNativeA && !isNativeB) return -1
+  if (!isNativeA && isNativeB) return 1
+
+  // gas tank second
   if (a.token.flags.onGasTank && !b.token.flags.onGasTank) return -1
   if (!a.token.flags.onGasTank && b.token.flags.onGasTank) return 1
-
-  // native second
-  if (a.token.address === ZERO_ADDRESS && b.token.address !== ZERO_ADDRESS) return -1
-  if (a.token.address !== ZERO_ADDRESS && b.token.address === ZERO_ADDRESS) return 1
 
   // based on value after
   return sortBasedOnUSDValue(a, b)
@@ -63,7 +65,8 @@ const sortFeeOptions = (
 const mapFeeOptions = (
   feeOption: FeePaymentOption,
   signAccountOpState: ISignAccountOpController,
-  addressBookContacts: Contacts
+  addressBookContacts: Contacts,
+  isViewOnly: boolean
 ) => {
   let disabledReason: string | undefined
   let disabledTextAppearance: 'errorText' | 'infoText' | undefined
@@ -71,13 +74,9 @@ const mapFeeOptions = (
   const gasTankKey = feeOption.token.flags.onGasTank ? 'gasTank' : ''
   const speedCoverage: FeeSpeed[] = []
   const id = getFeeSpeedIdentifier(feeOption, signAccountOpState.accountOp.accountAddr)
-  const isTransferredTokenOption = isTransferredTokenFeeOption(
-    feeOption,
-    signAccountOpState.accountOp
-  )
 
   signAccountOpState.feeSpeeds[id]?.forEach((speed) => {
-    if (feeOption.availableAmount >= speed.amount || isTransferredTokenOption)
+    if (canFeeOptionCoverAmount(feeOption, signAccountOpState.accountOp, speed.amount))
       speedCoverage.push(speed.type)
   })
 
@@ -129,6 +128,22 @@ const mapFeeOptions = (
     disabledTextAppearance = 'errorText'
   }
 
+  const isSelectedFeeOption =
+    !!signAccountOpState.selectedOption &&
+    id ===
+      getFeeSpeedIdentifier(
+        signAccountOpState.selectedOption,
+        signAccountOpState.accountOp.accountAddr
+      )
+
+  // For view-only accounts we hide the extreme gas fee warning to reduce
+  // clutter (the account can't sign anyway), so don't highlight the fee either.
+  const shouldHighlightExtremeGasFee =
+    !isViewOnly &&
+    isSelectedFeeOption &&
+    !disabledReason &&
+    !!getExtremeGasFeeWarningState(signAccountOpState, signAccountOpState.accountOp.chainId)
+
   return {
     value:
       feeOption.paidBy +
@@ -143,6 +158,7 @@ const mapFeeOptions = (
         disabledReason={disabledReason}
         disabledTextAppearance={disabledTextAppearance}
         paidByAccountLabel={paidByAccountLabel}
+        shouldHighlightExtremeGasFee={shouldHighlightExtremeGasFee}
       />
     ),
     extraSearchProps: {

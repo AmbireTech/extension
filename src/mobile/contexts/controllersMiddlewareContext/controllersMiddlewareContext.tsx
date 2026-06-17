@@ -8,9 +8,10 @@ import { ControllersMiddlewareContext } from '@common/contexts/controllersMiddle
 import { ControllerStoreContext } from '@common/contexts/controllerStoreContext'
 import useRoute from '@common/hooks/useRoute'
 import { Action, MethodAction } from '@common/types/actions'
-import { BUNGEE_API_KEY, RELAYER_URL, VELCRO_URL } from '@env'
+import { BUNGEE_API_KEY, RELAYER_URL, SQUID_INTEGRATOR_ID, UNISWAP_API_KEY, VELCRO_URL } from '@env'
+import useDappsControllerHelpers from '@mobile/hooks/useDappsControllerHelpers'
 import useRequestsControllerHelpers from '@mobile/hooks/useRequestsControllerHelpers'
-import { WebViewWorker, WebViewWorkerRef } from '@mobile/services/WebViewWorker/WebViewWorker'
+import { WebViewWorker, WebViewWorkerRef } from '@mobile/modules/webview/services/WebViewWorker'
 
 export const ControllersMiddlewareProvider: React.FC<{
   children: React.ReactNode
@@ -27,7 +28,9 @@ export const ControllersMiddlewareProvider: React.FC<{
         RELAYER_URL,
         VELCRO_URL,
         LIFI_EXPLORER_URL,
-        BUNGEE_API_KEY
+        BUNGEE_API_KEY,
+        SQUID_INTEGRATOR_ID,
+        UNISWAP_API_KEY
       })
       .then((ctrlsNames) => {
         controllerStore.init(ctrlsNames as any[], () => {
@@ -36,9 +39,12 @@ export const ControllersMiddlewareProvider: React.FC<{
       })
   }, [controllerStore])
 
-  const dispatch = useCallback((action: MethodAction | Action) => {
-    webviewRef.current?.dispatch(action)
-  }, [])
+  const dispatch = useCallback(
+    (action: MethodAction | Action, windowId?: number, raw?: boolean) => {
+      webviewRef.current?.dispatch(action, raw)
+    },
+    []
+  )
 
   useEffect(() => {
     const { pathname = '/', search = '' } = route
@@ -56,6 +62,7 @@ export const ControllersMiddlewareProvider: React.FC<{
   }, [route.pathname, route.search, dispatch])
 
   useRequestsControllerHelpers(dispatch)
+  useDappsControllerHelpers(dispatch)
 
   return (
     <ControllersMiddlewareContext.Provider value={useMemo(() => ({ dispatch }), [dispatch])}>

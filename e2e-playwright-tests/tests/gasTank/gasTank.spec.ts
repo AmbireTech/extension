@@ -24,10 +24,15 @@ test.describe('gasTank - Smart Account', { tag: '@gasTank' }, () => {
 
     await test.step('top up gas tank', async () => {
       await pages.gasTank.topUpGasTank(sendToken, '0.01')
-      await pages.transfer.signSlowSpeedTransaction({ sendToken, message })
+      await pages.transfer.signSlowSpeedTransaction({
+        sendToken,
+        message,
+        holdProceedButton: false
+      })
     })
 
     await test.step('assert new transaction on Activity tab', async () => {
+      // TODO: fix
       await pages.gasTank.checkSendTransactionOnActivityTab()
     })
   })

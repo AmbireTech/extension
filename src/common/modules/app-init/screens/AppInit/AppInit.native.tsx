@@ -17,6 +17,7 @@ import { OnboardingNavigationProvider } from '@common/modules/auth/contexts/onbo
 import { PortalHost, PortalProvider } from '@gorhom/portal'
 import { ControllersMiddlewareProvider } from '@mobile/contexts/controllersMiddlewareContext'
 import { ControllersStateLoadedProvider } from '@mobile/contexts/controllersStateLoadedContext'
+import { WalletConnectProvider } from '@mobile/modules/wallet-connect/contexts/walletConnectContext'
 
 const AppInit = () => {
   const { fontsLoaded } = useFonts()
@@ -30,25 +31,27 @@ const AppInit = () => {
           <ToastProvider>
             <ControllerStoreProvider withErrorToasts>
               <ControllersMiddlewareProvider>
-                <ThemeProvider>
-                  <GestureHandler>
-                    <ControllersStateLoadedProvider>
-                      <GlobalTooltip />
-                      <KeyboardProvider>
-                        <NetInfoProvider>
-                          <AuthProvider>
-                            <BiometricsProvider>
-                              <OnboardingNavigationProvider>
-                                <AppRouter />
-                                <PortalHost name="global" />
-                              </OnboardingNavigationProvider>
-                            </BiometricsProvider>
-                          </AuthProvider>
-                        </NetInfoProvider>
-                      </KeyboardProvider>
-                    </ControllersStateLoadedProvider>
-                  </GestureHandler>
-                </ThemeProvider>
+                <WalletConnectProvider>
+                  <ThemeProvider>
+                    <GestureHandler>
+                      <ControllersStateLoadedProvider>
+                        <GlobalTooltip />
+                        <KeyboardProvider>
+                          <NetInfoProvider>
+                            <AuthProvider>
+                              <BiometricsProvider>
+                                <OnboardingNavigationProvider>
+                                  <AppRouter />
+                                  <PortalHost name="global" />
+                                </OnboardingNavigationProvider>
+                              </BiometricsProvider>
+                            </AuthProvider>
+                          </NetInfoProvider>
+                        </KeyboardProvider>
+                      </ControllersStateLoadedProvider>
+                    </GestureHandler>
+                  </ThemeProvider>
+                </WalletConnectProvider>
               </ControllersMiddlewareProvider>
             </ControllerStoreProvider>
           </ToastProvider>

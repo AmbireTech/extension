@@ -31,7 +31,9 @@ const Footer = ({
   isAddToCartDisabled,
   inProgressButtonText,
   buttonText,
-  shouldHoldToProceed
+  shouldHoldToProceed,
+  holdToProceedButtonType = 'primary',
+  signButtonType = 'primary'
 }: Props) => {
   const { t } = useTranslation()
   const { styles, themeType } = useTheme(getStyles)
@@ -130,6 +132,13 @@ const Footer = ({
           {shouldHoldToProceed && (
             <HoldToProceedButton
               text={t('Hold to sign')}
+              buttonType={
+                signButtonType === 'dangerFilled'
+                  ? 'dangerFilled'
+                  : signButtonType === 'warning'
+                    ? 'warning'
+                    : holdToProceedButtonType
+              }
               disabled={isSignDisabled}
               onHoldComplete={onSign}
               testID="proceed-btn"
@@ -140,7 +149,7 @@ const Footer = ({
           {!shouldHoldToProceed && (
             <ButtonWithLoader
               testID="transaction-button-sign"
-              type="primary"
+              type={signButtonType}
               disabled={isSignDisabled}
               isLoading={isSignLoading}
               text={isSignLoading ? inProgressButtonText : buttonText}

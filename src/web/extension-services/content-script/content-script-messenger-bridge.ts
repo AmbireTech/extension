@@ -9,8 +9,6 @@ import {
 } from '@web/extension-services/utils/frames'
 
 declare const globalIsAmbireNext: boolean
-
-  // eslint-disable-next-line import/newline-after-import
 ;(() => {
   if (isTooDeepFrameInTheFrameHierarchy()) return
   const isCrossOrigin = isCrossOriginFrame()

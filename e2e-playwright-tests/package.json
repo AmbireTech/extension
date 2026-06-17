@@ -5,9 +5,11 @@
   "main": "index.js",
   "scripts": {
     "lint": "eslint .",
-    "test": "playwright test --grep-invert @balanceCheck",
     "show:trace": "playwright show-trace",
+    "test:all:non-hw": "npx playwright test --grep-invert \"@balanceCheck|@ledgerTests|@trezorTests\"",
     "balance:test": "npx playwright test -g @balanceCheck --retries 1",
+    "ledger:tests": "npx playwright test -g @ledgerTests",
+    "trezor:test": "npx playwright test -g @trezorTests",
     "auth": "npx playwright test -g @auth",
     "dashboard": "npx playwright test -g @dashboard",
     "gas:tank": "npx playwright test -g @gasTank",
@@ -22,6 +24,7 @@
     "ambire:rewards": "npx playwright test -g @rewards",
     "auto:login": "npx playwright test -g @autoLogin",
     "relayer": "npx playwright test -g @relayer",
+    "keystore:migration": "npx playwright test -g @keystoreMigration",
     "postinstall": "patch-package"
   },
   "author": "Filip",
@@ -30,6 +33,9 @@
     "@types/node": "^20.16.1",
     "@typescript-eslint/eslint-plugin": "^5.34.0",
     "@typescript-eslint/parser": "^5.34.0",
+    "@ledgerhq/hw-transport-node-speculos": "6.28.0",
+    "@ledgerhq/hw-app-eth": "7.3.2",
+    "ethers": "6.14.1",
     "eslint": "^8.50.0",
     "eslint-config-prettier": "^8.5.0",
     "eslint-plugin-react": "^7.34.1",
@@ -38,6 +44,7 @@
     "patch-package": "^8.0.0",
     "postinstall-postinstall": "^2.1.0",
     "prettier": "^2.7.1",
+    "ts-node": "^10.9.2",
     "typescript": "^4.1.5"
   },
   "dependencies": {

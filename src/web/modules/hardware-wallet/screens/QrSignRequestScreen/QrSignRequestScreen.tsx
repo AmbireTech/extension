@@ -1,10 +1,12 @@
 import React from 'react'
 import { View } from 'react-native'
 
+import { HardwareWalletSigningRequest } from '@ambire-common/interfaces/signAccountOp'
 import Button from '@common/components/Button'
 import FooterGlassView from '@common/components/FooterGlassView'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
+import SigningRequestDetails from '@common/modules/hardware-wallets/components/SigningRequestDetails'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { AnimatedQRCode } from '@keystonehq/animated-qr'
@@ -18,6 +20,7 @@ type Props = {
     current: number
     total: number
   } | null
+  signingRequest?: HardwareWalletSigningRequest | null
 }
 
 const ANIMATION_INTERVAL = 300
@@ -27,15 +30,16 @@ const QrSignRequestScreen = ({
   onReject,
   urType,
   urCborHex,
-  transactionProgress = null
+  transactionProgress = null,
+  signingRequest = null
 }: Props) => {
   const { t } = useTranslation()
   const qrSize = transactionProgress ? 280 : 300
 
   return (
-    <View style={flexbox.center}>
+    <View style={[flexbox.center, { width: '100%', flexGrow: 1, flexShrink: 0 }]}>
       <Text>{t('Scan this QR code with your QR-based device to sign.')}</Text>
-      <View style={[flexbox.center, spacings.mtSm]}>
+      <View style={[flexbox.center, flexbox.flex1, spacings.mtSm, { width: '100%' }]}>
         <AnimatedQRCode
           options={{ size: qrSize, interval: ANIMATION_INTERVAL }}
           type={urType}
@@ -47,7 +51,18 @@ const QrSignRequestScreen = ({
             {transactionProgress.current <= 1 ? t('transaction signed') : t('transactions signed')}
           </Text>
         ) : null}
-        <FooterGlassView size="sm" absolute={false} style={spacings.ptSm}>
+        {!!signingRequest && (
+          <SigningRequestDetails
+            signingRequest={signingRequest}
+            style={[
+              spacings.mt,
+              {
+                width: 420
+              }
+            ]}
+          />
+        )}
+        <FooterGlassView size="sm" absolute={false} style={{ ...spacings.ptSm, marginTop: 'auto' }}>
           <Button
             size="smaller"
             hasBottomSpacing={false}

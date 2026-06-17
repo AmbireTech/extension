@@ -57,6 +57,9 @@ const Banner = React.memo(
     onPress
   }: Props) => {
     const { styles, theme } = useTheme(getStyles)
+    const hasPrimaryAction = !!buttonText && !!onPress
+    const hasDismissAction = !!dismissButtonText && !!onDismissButtonPress
+    const hasActions = hasPrimaryAction || hasDismissAction
 
     const Icon = useMemo(() => {
       if (CustomIcon) return CustomIcon
@@ -85,12 +88,11 @@ const Banner = React.memo(
             }
           ]}
         >
-          <View style={[flexbox.directionRow, flexbox.flex1]}>
+          <View style={[flexbox.directionRow, flexbox.alignCenter, flexbox.flex1]}>
             <Icon
               width={isMobile ? 22 : 24}
               height={isMobile ? 22 : 24}
               color={theme[`${type}Text`]}
-              style={{ marginTop: 1 }}
             />
             <Text
               fontSize={titleFontSize || (isMobile ? 14 : 16)}
@@ -116,38 +118,38 @@ const Banner = React.memo(
           )}
         </View>
 
-        <View style={[isWeb && flexbox.wrap, flexbox.flex1, { width: '100%' }]}>
+        <View style={[isWeb && flexbox.wrap, { width: '100%' }]}>
           {!!text && (
             <Text
               fontSize={isMobile ? 12 : 14}
               weight="regular"
               appearance="secondaryText"
-              style={!!buttonText && !!onPress ? spacings.mbSm : undefined}
+              style={hasActions ? spacings.mbSm : undefined}
             >
               {text}
             </Text>
           )}
           <View
             style={[
-              flexbox.flex1,
               flexbox.directionRow,
               flexbox.alignCenter,
               flexbox.justifyEnd,
+              isWeb && flexbox.wrap,
               { width: '100%' }
             ]}
           >
-            {!!dismissButtonText && !!onDismissButtonPress && (
+            {hasDismissAction && (
               <BannerButton
                 type="secondary"
                 colorType="error"
                 onPress={onDismissButtonPress}
                 testID="banner-button-reject"
-                style={!!buttonText && !!onPress && spacings.mrTy}
+                style={hasPrimaryAction && spacings.mrTy}
               >
                 {dismissButtonText}
               </BannerButton>
             )}
-            {!!buttonText && !!onPress && (
+            {hasPrimaryAction && (
               <BannerButton
                 type="primary"
                 colorType={type}

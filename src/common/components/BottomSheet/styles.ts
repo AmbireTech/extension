@@ -21,7 +21,8 @@ const getStyles = (theme: ThemeProps) =>
       borderTopEndRadius: BORDER_RADIUS_PRIMARY,
       ...spacings.pvMd,
       borderWidth: 1,
-      borderColor: theme.primaryBorder
+      borderColor: theme.primaryBorder,
+      overflow: 'hidden'
     },
     modal: {
       borderBottomEndRadius: BORDER_RADIUS_PRIMARY,

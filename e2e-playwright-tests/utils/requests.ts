@@ -3,7 +3,9 @@ function categorizeRequests(requests: string[]) {
     'https://api.github.com/repos/MetaMask/eth-phishing-detect/contents/src/config.json?ref=main',
     'https://api.github.com/repos/phantom/blocklist/contents/blocklist.yaml?ref=master',
     'https://raw.githubusercontent.com/phantom/blocklist/master/blocklist.yaml',
-    'https://raw.githubusercontent.com/MetaMask/eth-phishing-detect/main/src/config.json'
+    'https://raw.githubusercontent.com/MetaMask/eth-phishing-detect/main/src/config.json',
+    'http://localhost:5000/apdu',
+    'http://localhost:5000/events'
   ]
   const thirdPartyHostsAllowList = [
     // Bundles
@@ -13,6 +15,7 @@ function categorizeRequests(requests: string[]) {
     // Swap & Bridge quotes
     'li.quest',
     'dedicated-backend.bungee.exchange',
+    'trade-api.gateway.uniswap.org',
     // RPCs
     '480.rpc.thirdweb.com',
     'unichain-rpc.publicnode.com',
@@ -31,9 +34,15 @@ function categorizeRequests(requests: string[]) {
     'base-mainnet.public.blastapi.io',
     'rpc.monad.xyz',
     'api.gelato.cloud',
+    'ledger.com',
     'rpc.mainnet.citrea.xyz',
+    'crypto-assets-service.api.ledger.com',
+    'nft.api.live.ledger.com',
+    'challenges.cloudflare.com',
     // Token images
-    'static.debank.com'
+    'static.debank.com',
+    'tokenlist.superfluid.org',
+    'strapi.jumper.exchange'
   ]
 
   const reqs = requests.reduce(
@@ -80,7 +89,6 @@ function categorizeRequests(requests: string[]) {
   )
 
   if (reqs.uncategorized.length) {
-    // eslint-disable-next-line no-console
     console.log(
       "⚠️ We've detected some uncategorized requests. Please review them carefully!" +
         ' If any are known and expected, make sure to include them in the appropriate categories above.',

@@ -7,12 +7,12 @@ import Alert from '@common/components/Alert'
 import SkeletonLoader from '@common/components/SkeletonLoader'
 import Spinner from '@common/components/Spinner'
 import Text from '@common/components/Text'
+import TrackProgress from '@common/components/TrackProgress'
+import Completed from '@common/components/TrackProgress/ByStatus/Completed'
+import Failed from '@common/components/TrackProgress/ByStatus/Failed'
 import useToast from '@common/hooks/useToast'
 import BatchAdded from '@common/modules/sign-account-op/components/OneClick/BatchModal/BatchAdded'
 import Estimation from '@common/modules/sign-account-op/components/OneClick/Estimation'
-import TrackProgress from '@common/modules/sign-account-op/components/OneClick/TrackProgress'
-import Completed from '@common/modules/sign-account-op/components/OneClick/TrackProgress/ByStatus/Completed'
-import Failed from '@common/modules/sign-account-op/components/OneClick/TrackProgress/ByStatus/Failed'
 import GasTankInfoModal from '@common/modules/transfer/components/GasTankInfoModal'
 import SendForm from '@common/modules/transfer/components/SendForm/SendForm'
 import useTransfer from '@common/modules/transfer/hooks/useTransfer'
@@ -154,7 +154,7 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
   }
 
   return (
-    <MobileLayoutContainer>
+    <MobileLayoutContainer footer={buttons}>
       <MobileLayoutWrapperMainContent
         withBackButton
         onBackButtonPress={handleGoBackPress}
@@ -226,8 +226,6 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
             style={{ marginLeft: 'auto', marginRight: 'auto' }}
           />
         )}
-        <View style={flexbox.flex1} />
-        {buttons}
         <GasTankInfoModal
           id="gas-tank-info"
           sheetRef={gasTankSheetRef}

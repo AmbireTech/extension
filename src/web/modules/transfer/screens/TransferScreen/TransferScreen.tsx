@@ -20,6 +20,10 @@ import ScrollableWrapper from '@common/components/ScrollableWrapper'
 import SkeletonLoader from '@common/components/SkeletonLoader'
 import Spinner from '@common/components/Spinner'
 import Text from '@common/components/Text'
+import TrackProgress from '@common/components/TrackProgress'
+import Completed from '@common/components/TrackProgress/ByStatus/Completed'
+import Failed from '@common/components/TrackProgress/ByStatus/Failed'
+import InProgress from '@common/components/TrackProgress/ByStatus/InProgress'
 import useAddressInput from '@common/hooks/useAddressInput'
 import useController from '@common/hooks/useController'
 import useHasGasTank from '@common/hooks/useHasGasTank'
@@ -30,10 +34,6 @@ import { ROUTES, WEB_ROUTES } from '@common/modules/router/constants/common'
 import BatchAdded from '@common/modules/sign-account-op/components/OneClick/BatchModal/BatchAdded'
 import Buttons from '@common/modules/sign-account-op/components/OneClick/Buttons'
 import Estimation from '@common/modules/sign-account-op/components/OneClick/Estimation'
-import TrackProgress from '@common/modules/sign-account-op/components/OneClick/TrackProgress'
-import Completed from '@common/modules/sign-account-op/components/OneClick/TrackProgress/ByStatus/Completed'
-import Failed from '@common/modules/sign-account-op/components/OneClick/TrackProgress/ByStatus/Failed'
-import InProgress from '@common/modules/sign-account-op/components/OneClick/TrackProgress/ByStatus/InProgress'
 import useTrackAccountOp from '@common/modules/sign-account-op/hooks/OneClick/useTrackAccountOp'
 import GasTankInfoModal from '@common/modules/transfer/components/GasTankInfoModal'
 import SendForm from '@common/modules/transfer/components/SendForm/SendForm'
@@ -67,7 +67,8 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
     amountFieldMode,
     amount: controllerAmount,
     amountInFiat,
-    isRecipientAddressViewOnly
+    isRecipientAddressViewOnly,
+    addressPoisoningMatch
   } = transferState
 
   const amountInFiatBigInt = useMemo(() => {
@@ -303,19 +304,6 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
     overwriteValidation: validationFormMsgs.recipientAddress
   })
 
-  const isOneOwnerSafe = useMemo(() => {
-    if (!account?.safeCreation) return false
-
-    return (
-      signAccountOpController?.threshold === 1 &&
-      signAccountOpController?.accountKeyStoreKeys.length === 1
-    )
-  }, [
-    account?.safeCreation,
-    signAccountOpController?.threshold,
-    signAccountOpController?.accountKeyStoreKeys.length
-  ])
-
   /**
    * True if the user has pending user requests and there is no amount set in the form.
    * Used to allow the user to open the SignAccountOp window to sign the requests.
@@ -376,7 +364,7 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
         // Proceed in OneClick txn
         if (executionType === 'open-request-window') {
           // one click mode opens signAccountOp if more than 1 req in batch
-          if ((!!account?.safeCreation && !isOneOwnerSafe) || networkUserRequests.length > 0) {
+          if (!!account?.safeCreation || networkUserRequests.length > 0) {
             requestsDispatch({
               type: 'method',
               params: {
@@ -447,8 +435,7 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
       resetTransferForm,
       networkUserRequests.length,
       openEstimationModalAndDispatch,
-      account?.safeCreation,
-      isOneOwnerSafe
+      account?.safeCreation
     ]
   )
 
@@ -481,7 +468,9 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
             !isRecipientAddressUnknownAgreed &&
             !isRecipientHumanizerKnownTokenOrSmartContract &&
             isRecipientAddressFirstTimeSend) ||
-          isRecipientAddressViewOnly
+          isRecipientAddressViewOnly ||
+          // poisoning detected - require hold-to-proceed as an additional safety step
+          !!addressPoisoningMatch
         }
         onRecipientAddressUnknownAgree={onRecipientAddressUnknownAgree}
       />
@@ -498,6 +487,7 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
     isRecipientHumanizerKnownTokenOrSmartContract,
     isRecipientAddressFirstTimeSend,
     isRecipientAddressViewOnly,
+    addressPoisoningMatch,
     onRecipientAddressUnknownAgree,
     addTransaction
   ])

@@ -1,15 +1,9 @@
-import { formatUnits, Interface, parseUnits } from 'ethers'
+import { formatUnits } from 'ethers'
 import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { ColorValue, View } from 'react-native'
+import { ColorValue, GestureResponderEvent, StyleProp, View, ViewStyle } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 
-import {
-  noStateUpdateStatuses,
-  SigningStatus
-} from '@ambire-common/controllers/signAccountOp/signAccountOp'
-import { Approve, Permit2 } from '@ambire-common/libs/humanizer/const/abis/Approvals'
-import { HumanizerVisualization } from '@ambire-common/libs/humanizer/interfaces'
 import { getTokenAmount } from '@ambire-common/libs/portfolio/helpers'
 import { getSafeAmountFromFieldValue } from '@ambire-common/utils/numbers/formatters'
 import EditPenIcon from '@common/assets/svg/EditPenIcon'
@@ -19,15 +13,13 @@ import Button from '@common/components/Button'
 import FooterGlassView from '@common/components/FooterGlassView'
 import Text from '@common/components/Text'
 import TokenIcon from '@common/components/TokenIcon'
+import { isMobile, isWeb } from '@common/config/env'
 import useController from '@common/hooks/useController'
 import useHover, { AnimatedPressable } from '@common/hooks/useHover'
 import useTheme from '@common/hooks/useTheme'
 import MaxAmount from '@common/modules/swap-and-bridge/components/MaxAmount'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-
-const approveInterface = new Interface(Approve)
-const permitInterface = new Interface(Permit2)
 
 type EditApprovalAmountInputProps = {
   initialAmount: string
@@ -89,7 +81,8 @@ const EditApprovalAmountInput = memo(
           onBlur={onBlur}
           fontSize={16}
           backgroundColor={backgroundColor}
-          inputWrapperStyle={{ height: 40, ...spacings.prSm }}
+          textAlign="right"
+          inputWrapperStyle={{ height: isMobile ? 52 : 40, ...spacings.prSm }}
           leftIconStyle={spacings.mrTy}
           leftIcon={leftIcon}
         />
@@ -108,7 +101,26 @@ const EditApprovalAmountInput = memo(
     )
   }
 )
-const EditApproval = ({ item }: { item: HumanizerVisualization }) => {
+const EditApproval = ({
+  editCall,
+  token,
+  chainId,
+  value,
+  id,
+  style
+}: {
+  editCall: (
+    amount: string,
+    token: string,
+    tokenChainId: bigint,
+    closeEditApprovals: () => void
+  ) => void
+  token: string
+  chainId: bigint
+  value: bigint
+  id?: string
+  style?: StyleProp<ViewStyle>
+}) => {
   const { t } = useTranslation()
   const { theme } = useTheme()
   const [bindEditApprovals, editApprovalsStyle] = useHover({
@@ -122,16 +134,19 @@ const EditApproval = ({ item }: { item: HumanizerVisualization }) => {
   const {
     state: { portfolio }
   } = useController('SelectedAccountController')
-  const { state: signAccountOpState, dispatch: signAccountOpDispatch } =
-    useController('SignAccountOpController')
   const amountRef = useRef<string>('0')
   const [initialAmount, setInitialAmount] = useState<string>('0')
   const [initialValueSet, setInitialValueSet] = useState<boolean>(false)
 
   const portfolioToken = useMemo(() => {
+    // the humanization is also used in benzina (AmbireExplorer)
+    // where we don't have access to controllers.
+    // Therefore, we need to check whether the portfolio controller exists
     if (!portfolio) return undefined
-    return portfolio.tokens.find((t) => t.address.toLowerCase() === item.address?.toLowerCase())
-  }, [portfolio, item.address])
+    return portfolio.tokens.find(
+      (t) => t.address.toLowerCase() === token.toLowerCase() && t.chainId === chainId
+    )
+  }, [chainId, portfolio, token])
 
   const maxAmount = useMemo(() => {
     if (!portfolioToken) return undefined
@@ -160,74 +175,24 @@ const EditApproval = ({ item }: { item: HumanizerVisualization }) => {
   )
 
   useEffect(() => {
-    if (!portfolioToken || !item.value || initialValueSet) return
-    const initialApprovalAmount = formatUnits(item.value.toString(), portfolioToken.decimals)
+    if (!portfolioToken || initialValueSet) return
+    const initialApprovalAmount = formatUnits(value.toString(), portfolioToken.decimals)
     amountRef.current = initialApprovalAmount
     setInitialAmount(initialApprovalAmount)
     setInitialValueSet(true)
-  }, [portfolioToken, item.value, initialValueSet])
+  }, [portfolioToken, value, initialValueSet])
 
   const onSanitizedAmountChange = useCallback((value: string) => {
     amountRef.current = value
   }, [])
 
-  const setApproval = useCallback(() => {
-    const editApprovalData = item.editApprovalData
-    if (!signAccountOpState || !item.address || !editApprovalData || !portfolioToken) return
-
-    // shallow copy each call just in case so the controller properly
-    // understands that a change to the calls array has been made
-    const calls = signAccountOpState.accountOp.calls.map((call) => ({ ...call }))
-    const replacedCall = calls.find((c) => c.id === editApprovalData.callId)
-    if (!replacedCall) return
-
-    let calldata = ''
-    if (replacedCall.data.substring(0, 10) === approveInterface.getFunction('approve')!.selector) {
-      calldata = approveInterface.encodeFunctionData('approve', [
-        editApprovalData.spenderAddr,
-        parseUnits(amountRef.current || '0', portfolioToken.decimals)
-      ])
-    } else {
-      calldata = permitInterface.encodeFunctionData('approve', [
-        item.address,
-        editApprovalData.spenderAddr,
-        parseUnits(amountRef.current || '0', portfolioToken.decimals),
-        editApprovalData.expiration
-      ])
-    }
-
-    // replace the data with the new approval
-    replacedCall.data = calldata
-
-    signAccountOpDispatch({
-      type: 'method',
-      params: {
-        method: 'update',
-        args: [{ accountOpData: { calls } }]
-      }
-    })
-    closeEditApprovals()
-  }, [
-    closeEditApprovals,
-    item.address,
-    item.editApprovalData,
-    portfolioToken,
-    signAccountOpDispatch,
-    signAccountOpState
-  ])
-
-  // hide the edit option if there's no sign account op state
-  // or it has finished / queued state
-  // or the call id for this approval is missing
-  if (
-    !signAccountOpState ||
-    !item.editApprovalData ||
-    !signAccountOpState.accountOp.calls.find((c) => c.id === item.editApprovalData?.callId) ||
-    (signAccountOpState.status && noStateUpdateStatuses.includes(signAccountOpState.status.type)) ||
-    signAccountOpState.status?.type === SigningStatus.Queued ||
-    signAccountOpState.accountOp.signature
+  const handleOpenEditApprovals = useCallback(
+    (event: GestureResponderEvent) => {
+      event.stopPropagation()
+      openEditApprovals()
+    },
+    [openEditApprovals]
   )
-    return null
 
   return (
     <>
@@ -237,28 +202,32 @@ const EditApproval = ({ item }: { item: HumanizerVisualization }) => {
           flexbox.directionRow,
           flexbox.alignCenter,
           spacings.mrTy,
-          { marginLeft: -8 }
+          { marginLeft: -8 },
+          style
         ]}
         {...bindEditApprovals}
-        onPress={() => openEditApprovals()}
+        onPress={handleOpenEditApprovals}
       >
         <Text fontSize={14} color={theme.linkText}>
           {'['}
         </Text>
         <EditPenIcon width={20} height={20} color={theme.linkText} />
-        <Text fontSize={14} color={theme.linkText}>
-          {t('Edit')}
-        </Text>
+        {!isMobile && (
+          <Text fontSize={14} color={theme.linkText}>
+            {t('Edit')}
+          </Text>
+        )}
         <Text fontSize={14} color={theme.linkText}>
           {']'}
         </Text>
       </AnimatedPressable>
       <BottomSheet
         sheetRef={editApprovalsSheetRef}
-        id={`edit-approvals-bottom-sheet-${item.id}`}
+        id={`edit-approvals-bottom-sheet-${id}`}
         type="modal"
         closeBottomSheet={closeEditApprovals}
         style={{ maxWidth: 460 }}
+        shouldBeClosableOnDrag={false}
       >
         <View style={flexbox.alignCenter}>
           <Text fontSize={20} weight="medium" style={[spacings.mbXl, spacings.mtTy]}>
@@ -276,22 +245,29 @@ const EditApproval = ({ item }: { item: HumanizerVisualization }) => {
               getMaxAmountText={portfolioToken ? getMaxAmountText : undefined}
             />
           </View>
-          <FooterGlassView absolute={false} style={spacings.mt2Xl}>
+          <FooterGlassView
+            absolute={false}
+            style={{ ...spacings.mt2Xl }}
+            mobileStyle={{
+              ...flexbox.directionRow,
+              ...spacings.mtLg
+            }}
+          >
             <Button
               type="secondary"
               text={t('Cancel')}
               onPress={() => closeEditApprovals()}
               hasBottomSpacing={false}
               size="smaller"
-              style={[{ width: 100 }, spacings.mr]}
+              style={[spacings.mrTy, isWeb && { width: 100 }, isMobile && flexbox.flex1]}
             />
             <Button
               type="primary"
               text={t('Save')}
-              onPress={setApproval}
+              onPress={() => editCall(amountRef.current, token, chainId, closeEditApprovals)}
               hasBottomSpacing={false}
               size="smaller"
-              style={[{ width: 100 }]}
+              style={[isWeb && { width: 100 }, isMobile && flexbox.flex1]}
             />
           </FooterGlassView>
         </View>

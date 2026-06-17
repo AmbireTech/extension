@@ -9,29 +9,53 @@ export class LedgerSimulatorClient {
     this.timeout = options.timeoutMS ?? 5000
   }
 
-  async post<T = void>(path: string, body?: any): Promise<T> {
-    const controller = new AbortController()
-    const timeoutId = setTimeout(() => controller.abort(), this.timeout)
+  private async request<T>(path: string, options: RequestInit): Promise<T> {
+    const controller = typeof AbortController !== 'undefined' ? new AbortController() : null
+
+    const timeoutId =
+      controller && this.timeout > 0 ? setTimeout(() => controller.abort(), this.timeout) : null
 
     try {
       const res = await fetch(`${this.baseUrl}${path}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: body ? JSON.stringify(body) : undefined,
-        signal: controller.signal
+        ...options,
+        signal: controller?.signal
       })
 
       if (!res.ok) {
-        throw new Error(`Speculos POST ${path} failed: ${res.status}`)
+        throw new Error(`Speculos ${options.method ?? 'GET'} ${path} failed: ${res.status}`)
       }
 
-      if (res.headers.get('content-type')?.includes('application/json')) {
-        return (await res.json()) as T
+      if (res.status === 204) return undefined as T
+
+      const contentType = res.headers.get('content-type') ?? ''
+
+      if (contentType.includes('application/json')) {
+        return await res.json()
       }
 
-      return (await res.json()) as T
+      return undefined as T
     } finally {
-      clearTimeout(timeoutId)
+      if (timeoutId) clearTimeout(timeoutId)
     }
+  }
+
+  async post<T = void>(path: string, body?: unknown): Promise<T> {
+    return this.request<T>(path, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: body ? JSON.stringify(body) : undefined
+    })
+  }
+
+  async getJson<T>(path: string): Promise<T> {
+    return this.request<T>(path, {
+      method: 'GET'
+    })
+  }
+
+  async delete<T = void>(path: string): Promise<T> {
+    return this.request<T>(path, {
+      method: 'DELETE'
+    })
   }
 }

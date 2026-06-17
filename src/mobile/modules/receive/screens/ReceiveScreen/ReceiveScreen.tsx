@@ -182,7 +182,7 @@ const ReceiveScreen: FC = () => {
                 }}
               >
                 <DiagonalRightArrowIcon
-                  color="#808EA2"
+                  color={theme.neutral600}
                   height={20}
                   width={20}
                   style={{

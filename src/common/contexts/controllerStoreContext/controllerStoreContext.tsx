@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-floating-promises */
 import React, { createContext, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import EventEmitter from '@ambire-common/controllers/eventEmitter/eventEmitter'
@@ -121,12 +120,13 @@ export const ControllerStoreProvider: React.FC<{
   }, [addToast])
 
   useEffect(() => {
-    const onNavigate = ({ route: navRoute }: { route: string }) => navigate(navRoute)
+    const onNavigate = ({ route, params }: { route: string; params?: any }) =>
+      navigate(route, params)
 
     eventBus.addEventListener('navigate', onNavigate)
 
     return () => eventBus.removeEventListener('navigate', onNavigate)
-  }, [addToast, navigate])
+  }, [navigate])
 
   return (
     <ControllerStoreContext.Provider

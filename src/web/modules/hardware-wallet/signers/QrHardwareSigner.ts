@@ -60,7 +60,8 @@ class QrHardwareSigner implements KeystoreSignerInterface {
   }
 
   #getMasterFingerprint = () => {
-    const masterFingerprint = this.key.meta.masterFingerprint || this.controller?.masterFingerprint || ''
+    const masterFingerprint =
+      this.key.meta.masterFingerprint || this.controller?.masterFingerprint || ''
 
     if (!masterFingerprint) {
       throw new ExternalSignerError(

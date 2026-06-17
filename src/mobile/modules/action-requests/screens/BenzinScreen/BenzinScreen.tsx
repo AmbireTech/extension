@@ -45,7 +45,21 @@ const BenzinScreen = () => {
 
   const extensionAccOp = userRequest?.meta?.submittedAccountOp
 
-  const state = useBenzin({ onOpenExplorer: resolveAction, extensionAccOp })
+  const benzinParams = useMemo(
+    () =>
+      userRequest
+        ? {
+            chainId: userRequest.meta.chainId?.toString() ?? null,
+            txnId: userRequest.meta.txnId ?? null,
+            userOpHash: userRequest.meta.userOpHash ?? null,
+            relayerId: null,
+            bundler: null
+          }
+        : undefined,
+    [userRequest]
+  )
+
+  const state = useBenzin({ onOpenExplorer: () => {}, extensionAccOp, params: benzinParams })
 
   const pendingRequests = useMemo(() => {
     if (!visibleUserRequests.length) return []
@@ -54,7 +68,7 @@ const BenzinScreen = () => {
   }, [visibleUserRequests])
 
   return (
-    <MobileLayoutContainer withBottomInset={false}>
+    <MobileLayoutContainer>
       <Benzin state={state}>
         <View
           style={[
@@ -64,7 +78,7 @@ const BenzinScreen = () => {
               borderTopWidth: 1,
               borderTopColor: theme.primaryBorder,
               backgroundColor: hexToRgba(theme.primaryBackground, 0.75),
-              paddingBottom: bottom
+              paddingBottom: bottom || SPACING_SM
             }
           ]}
         >
@@ -76,7 +90,10 @@ const BenzinScreen = () => {
             </View>
             <View style={flexbox.flex1}>
               {!!state?.handleOpenExplorer && (
-                <OpenExplorerButton handleOpenExplorer={state.handleOpenExplorer} />
+                <OpenExplorerButton
+                  handleOpenExplorer={state.handleOpenExplorer}
+                  disableOpenExplorerBtn={state.disableOpenExplorerBtn}
+                />
               )}
             </View>
           </View>

@@ -3,6 +3,7 @@ import { FlatList, Pressable, View } from 'react-native'
 
 import { EstimationStatus } from '@ambire-common/controllers/estimation/types'
 import { SwapAndBridgeRoute } from '@ambire-common/interfaces/swapAndBridge'
+import { getIsBridgeRoute } from '@ambire-common/libs/swapAndBridge/swapAndBridge'
 import BottomSheet from '@common/components/BottomSheet'
 import ModalHeader from '@common/components/BottomSheet/ModalHeader'
 import SkeletonLoader from '@common/components/SkeletonLoader'
@@ -126,13 +127,12 @@ const RoutesModal = ({
   ])
 
   const renderItem = useCallback(
-    // eslint-disable-next-line react/no-unused-prop-types
     ({ item, index }: { item: SwapAndBridgeRoute; index: number }) => {
       if ((item as any).isSkeleton) {
         return <SkeletonLoader width="100%" height={listHeight} appearance="secondaryBackground" />
       }
 
-      const { steps, inputValueInUsd, outputValueInUsd, fromChainId, toChainId } = item
+      const { steps, inputValueInUsd, outputValueInUsd } = item
       const isEstimatingRoute = isEstimationLoading && item.routeId === userSelectedRoute?.routeId
       const isSelected = item.routeId === userSelectedRoute?.routeId && !isEstimatingRoute
 
@@ -177,7 +177,7 @@ const RoutesModal = ({
             isDisabled={item.disabled}
             disabledReason={item.disabledReason}
             providerId={item.providerId}
-            isBridge={fromChainId !== toChainId}
+            isBridge={getIsBridgeRoute(item)}
           />
         </Pressable>
       )
@@ -191,7 +191,8 @@ const RoutesModal = ({
       styles.otherItemLoading,
       quote?.routes?.length,
       handleSelectRoute,
-      theme
+      theme,
+      listHeight
     ]
   )
 

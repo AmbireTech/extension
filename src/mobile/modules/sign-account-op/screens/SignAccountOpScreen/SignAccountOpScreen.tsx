@@ -6,6 +6,7 @@ import { SigningStatus } from '@ambire-common/controllers/signAccountOp/signAcco
 import { Key } from '@ambire-common/interfaces/keystore'
 import { CallsUserRequest } from '@ambire-common/interfaces/userRequest'
 import Alert from '@common/components/Alert'
+import { useIsInsideBottomSheet } from '@common/components/BottomSheet/BottomSheetContext'
 import NetworkBadge from '@common/components/NetworkBadge'
 import NoKeysToSignAlert from '@common/components/NoKeysToSignAlert'
 import useController from '@common/hooks/useController'
@@ -18,6 +19,7 @@ import ErrorInformation from '@common/modules/sign-account-op/components/ErrorIn
 import Estimation from '@common/modules/sign-account-op/components/Estimation'
 import Footer from '@common/modules/sign-account-op/components/Footer'
 import PendingTransactions from '@common/modules/sign-account-op/components/PendingTransactions'
+import SafeEip712Data from '@common/modules/sign-account-op/components/SafeEip712Data'
 import SafeOwners from '@common/modules/sign-account-op/components/SafeOwners'
 import SafetyChecksOverlay from '@common/modules/sign-account-op/components/SafetyChecksOverlay'
 import SectionHeading from '@common/modules/sign-account-op/components/SectionHeading'
@@ -25,10 +27,7 @@ import Simulation from '@common/modules/sign-account-op/components/Simulation'
 import KeySelect from '@common/modules/sign-message/components/KeySelect'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import {
-  MobileLayoutContainer,
-  MobileLayoutWrapperMainContent
-} from '@mobile/components/MobileLayoutWrapper'
+import { MobileLayoutContainer } from '@mobile/components/MobileLayoutWrapper'
 import Modals from '@mobile/modules/sign-account-op/components/Modals/Modals'
 
 import getStyles from './styles'
@@ -41,16 +40,18 @@ const isCloseToBottom = ({ layoutMeasurement, contentOffset, contentSize }: Nati
 const SignAccountOpScreen = () => {
   const {
     state: { currentUserRequest, visibleUserRequests },
-    dispatch: requestsDispatch
+    dispatch: requestsDispatch,
+    closeRequestModal
   } = useController('RequestsController')
   const { state: signAccountOpState, dispatch: signAccountOpDispatch } =
     useController('SignAccountOpController')
   const { t } = useTranslation()
-  const { theme, styles } = useTheme(getStyles)
+  const { styles } = useTheme(getStyles)
   const [containerHeight, setContainerHeight] = useState(0)
   const [contentHeight, setContentHeight] = useState(0)
   const [hasReachedBottom, setHasReachedBottom] = useState<boolean | null>(null)
   const { navigate } = useNavigation()
+  const isInsideBottomSheet = useIsInsideBottomSheet()
   const handleUpdateStatus = useCallback(
     (status: SigningStatus) => {
       signAccountOpDispatch({
@@ -92,6 +93,9 @@ const SignAccountOpScreen = () => {
     isSignLoading,
     hasEstimation,
     warningModalRef,
+    gasFeeUpdatedModalRef,
+    handleAcceptGasFeeUpdate,
+    handleDismissGasFeeUpdate,
     handleChangeFeePayerKeyType,
     isChooseFeePayerKeyShown,
     setIsChooseFeePayerKeyShown,
@@ -102,6 +106,8 @@ const SignAccountOpScreen = () => {
     isSignDisabled,
     bundlerNonceDiscrepancy,
     primaryButtonText,
+    signButtonText,
+    extremeGasFeeSignButtonType,
     shouldHoldToProceed,
     disabledReason,
     showSafeSigners,
@@ -142,9 +148,12 @@ const SignAccountOpScreen = () => {
   }, [requestsDispatch, accountOpRequest, visibleUserRequests.length])
 
   const handleAddToCart = useCallback(() => {
-    // eslint-disable-next-line @typescript-eslint/no-floating-promises
-    navigate(ROUTES.dashboard)
-  }, [])
+    if (isInsideBottomSheet && closeRequestModal) {
+      closeRequestModal()
+    } else {
+      navigate(ROUTES.dashboard)
+    }
+  }, [isInsideBottomSheet, closeRequestModal, navigate])
 
   useEffect(() => {
     if (isSignDisabled || !containerHeight || !contentHeight) return
@@ -185,6 +194,9 @@ const SignAccountOpScreen = () => {
         renderedButNotNecessarilyVisibleModal={renderedButNotNecessarilyVisibleModal}
         signAccountOpState={signAccountOpState}
         warningModalRef={warningModalRef}
+        gasFeeUpdatedModalRef={gasFeeUpdatedModalRef}
+        handleAcceptGasFeeUpdate={handleAcceptGasFeeUpdate}
+        handleDismissGasFeeUpdate={handleDismissGasFeeUpdate}
         feePayerKeyType={feePayerKeyType}
         signingKeyType={signingKeyType}
         slowPaymasterRequest={slowPaymasterRequest}
@@ -201,10 +213,16 @@ const SignAccountOpScreen = () => {
         handleQrSigningFlowOnClosePressed={handleQrSigningFlowOnClosePressed}
         handleQrSigningFlowOnRejectPressed={handleQrSigningFlowOnRejectPressed}
         handleQrSigningFlowOnBackPressed={handleQrSigningFlowOnBackPressed}
+        autoOpen={
+          renderedButNotNecessarilyVisibleModal === 'gas-fee-updated'
+            ? 'gas-fee-updated'
+            : undefined
+        }
       />
       <MobileLayoutContainer
         withHorizontalPadding
         header={<ActionHeader />}
+        footerStyle={{ ...spacings.ph0, ...spacings.pt0 }}
         footer={
           <View style={styles.footerContainer}>
             <View style={spacings.mbSm}>
@@ -260,8 +278,9 @@ const SignAccountOpScreen = () => {
               isAddToCartDisabled={isAddToCartDisabled}
               onSign={onSignButtonClick}
               inProgressButtonText={primaryButtonText}
-              buttonText={primaryButtonText}
+              buttonText={signButtonText}
               shouldHoldToProceed={shouldHoldToProceed}
+              signButtonType={extremeGasFeeSignButtonType}
             />
           </View>
         }
@@ -319,6 +338,11 @@ const SignAccountOpScreen = () => {
             setDelegation={signAccountOpState?.accountOp.meta?.setDelegation}
             delegatedContract={signAccountOpState?.delegatedContract}
             hideDeleteIcon={!!signAccountOpState?.accountOp.signed?.length}
+          />
+          <SafeEip712Data
+            accountAddr={signAccountOpState?.accountOp.accountAddr}
+            chainId={signAccountOpState?.accountOp.chainId}
+            safeEip712Data={signAccountOpState?.safeEip712Data}
           />
           {/* Display errors only if the user is not in view-only mode */}
           {signAccountOpState?.errors?.length && !isViewOnly ? (

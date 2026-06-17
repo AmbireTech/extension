@@ -25,9 +25,18 @@ const standardOptions = {
   callRelayer: relayerCall.bind({ url: RELAYER_URL, fetch })
 }
 
+interface BenzinParams {
+  txnId?: string | null
+  userOpHash?: string | null
+  relayerId?: string | null
+  chainId?: string | null
+  bundler?: string | null
+}
+
 interface Props {
   onOpenExplorer?: () => void
   extensionAccOp?: SubmittedAccountOp
+  params?: BenzinParams
 }
 
 const getParams = (search?: string) => {
@@ -42,10 +51,19 @@ const getParams = (search?: string) => {
   }
 }
 
-const useBenzin = ({ onOpenExplorer, extensionAccOp }: Props = {}) => {
+const useBenzin = ({ onOpenExplorer, extensionAccOp, params: directParams }: Props = {}) => {
   const { addToast } = useToast()
   const route = useRoute()
-  const { txnId, userOpHash, relayerId, chainId, bundler } = getParams(route?.search)
+  const routeParams = getParams(route?.search)
+  const { txnId, userOpHash, relayerId, chainId, bundler } = directParams
+    ? {
+        txnId: directParams.txnId ?? null,
+        userOpHash: directParams.userOpHash ?? null,
+        relayerId: directParams.relayerId ?? null,
+        chainId: directParams.chainId ?? null,
+        bundler: directParams.bundler ?? null
+      }
+    : routeParams
 
   const {
     state: { networks }
@@ -174,6 +192,12 @@ const useBenzin = ({ onOpenExplorer, extensionAccOp }: Props = {}) => {
     return !isRejected
   }, [network, stepsState.finalizedStatus?.status, stepsState.txnId])
 
+  const disableOpenExplorerBtn = useMemo(() => {
+    const accountOp = stepsState.submittedAccountOp || extensionAccOp
+
+    return accountOp?.identifiedBy?.type === 'MultipleTxns' && accountOp.calls.length > 1
+  }, [extensionAccOp, stepsState.submittedAccountOp])
+
   if (!chainId || (!txnId && !userOpHash && !relayerId)) return null
 
   return {
@@ -187,6 +211,7 @@ const useBenzin = ({ onOpenExplorer, extensionAccOp }: Props = {}) => {
     bigintChainId,
     showCopyBtn,
     showOpenExplorerBtn,
+    disableOpenExplorerBtn,
     isInitialized,
     isNetworkNotFound: notFoundNetworks.includes(bigintChainId)
   }

@@ -10,6 +10,7 @@ import { getIsTokenEligibleForSwapAndBridge } from '@ambire-common/libs/swapAndB
 import shortenAddress from '@ambire-common/utils/shortenAddress'
 import BatchIcon from '@common/assets/svg/BatchIcon'
 import PendingToBeConfirmedIcon from '@common/assets/svg/PendingToBeConfirmedIcon'
+import CopyText from '@common/components/CopyText'
 import Text from '@common/components/Text'
 import TokenIcon from '@common/components/TokenIcon'
 import Tooltip from '@common/components/Tooltip'
@@ -235,17 +236,31 @@ const useGetTokenSelectProps = ({
               </Text>
             )}
           </Text>
-          <Text
-            numberOfLines={1}
-            fontSize={12}
-            appearance="secondaryText"
-            weight="mono_regular"
-            {...(isMobile ? { ellipsizeMode: 'middle' } : {})}
-          >
-            {isNative && 'Native'}
-            {!isNative && isSelected && shortenAddress(currentToken.address, 13)}
-            {!isNative && !isSelected && currentToken.address}
-          </Text>
+          {isNative ? (
+            <Text numberOfLines={1} fontSize={12} appearance="secondaryText" weight="mono_regular">
+              Native
+            </Text>
+          ) : (
+            <View style={[flexbox.directionRow, flexbox.alignCenter]}>
+              <Text
+                numberOfLines={1}
+                fontSize={12}
+                appearance="secondaryText"
+                weight="mono_regular"
+                {...(isMobile ? { ellipsizeMode: 'middle' } : {})}
+              >
+                {isSelected ? shortenAddress(currentToken.address, 13) : currentToken.address}
+              </Text>
+              {!isSelected && (
+                <CopyText
+                  text={currentToken.address}
+                  iconSize={14}
+                  iconColor={theme.secondaryText}
+                  style={spacings.mlMi}
+                />
+              )}
+            </View>
+          )}
         </View>
 
         {!isSelected && formattedBalancesLabel}
