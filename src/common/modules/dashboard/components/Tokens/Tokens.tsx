@@ -62,11 +62,12 @@ const isGasTankTokenOnCustomNetwork = (token: TokenResult, networks: Network[]) 
 const HIGH_VALUE_TOKEN_USD = 1
 const HIGH_VALUE_TOKEN_COUNT_THRESHOLD = 100
 const LOWER_VALUE_TOKEN_MAX_USD = 0.99
+const DUST_TOKEN_MAX_USD = 0.01
 
 const hasUSDPrice = (token: TokenResult) =>
   token.priceIn.some((price) => price.baseCurrency === 'usd')
 
-const isLowerValueToken = (token: TokenResult): boolean => {
+const isCollapsibleToken = (token: TokenResult, isLargePortfolio: boolean): boolean => {
   // Rewards and vesting tokens should never be hidden as lower-value tokens
   if (
     token.flags.rewardsType === 'wallet-rewards' ||
@@ -90,10 +91,16 @@ const isLowerValueToken = (token: TokenResult): boolean => {
   }
 
   if (!tokenHasUSDPrice) {
-    return false
+    return true
   }
 
-  return getTokenBalanceInUSD(token) <= LOWER_VALUE_TOKEN_MAX_USD
+  const balanceUSD = getTokenBalanceInUSD(token)
+
+  if (isLargePortfolio) {
+    return balanceUSD <= LOWER_VALUE_TOKEN_MAX_USD
+  }
+
+  return balanceUSD < DUST_TOKEN_MAX_USD
 }
 
 const { isPopup } = getUiType()
@@ -255,15 +262,16 @@ const Tokens = ({
       (token) => hasUSDPrice(token) && getTokenBalanceInUSD(token) > HIGH_VALUE_TOKEN_USD
     ).length
 
-    if (highValueTokensCount <= HIGH_VALUE_TOKEN_COUNT_THRESHOLD) {
-      return { visibleTokens: sortedTokens, dustTokens: [] }
-    }
+    const isLargePortfolio = highValueTokensCount > HIGH_VALUE_TOKEN_COUNT_THRESHOLD
 
     return sortedTokens.reduce(
       (acc, token) => {
         // If there is a price fetch error for a network every token will be considered
         // lower-value, so we need to show all tokens in that case, regardless of their balance
-        if (isLowerValueToken(token) && !networkIdsWithPriceError.has(token.chainId.toString())) {
+        if (
+          isCollapsibleToken(token, isLargePortfolio) &&
+          !networkIdsWithPriceError.has(token.chainId.toString())
+        ) {
           acc.dustTokens.push(token)
         } else {
           acc.visibleTokens.push(token)
