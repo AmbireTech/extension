@@ -1,5 +1,7 @@
 import { getBytes, hexlify } from 'ethers'
 
+import { CIPHER, decryptWithKey, encryptWithKey } from '@ambire-common/libs/keystore/keystore'
+import type { AESGCMEncrypted } from '@ambire-common/interfaces/keystore'
 import { storage } from '@common/services/storage'
 
 const WEBAUTHN_BIOMETRICS_STORAGE_KEY = 'biometricsWebAuthnCredential'
@@ -14,9 +16,7 @@ type StoredPrfBiometricsCredential = {
 type StoredEncryptedBiometricsCredential = {
   version: 2
   credentialId: string
-  encryptedSecret: string
-  iv: string
-}
+} & AESGCMEncrypted
 
 type StoredCredential = StoredPrfBiometricsCredential | StoredEncryptedBiometricsCredential
 
@@ -51,60 +51,11 @@ const equalBytes = (left: Uint8Array, right: Uint8Array) => {
   return true
 }
 
-const deriveAesKey = async (secret: Uint8Array) => {
-  if ([16, 24, 32].includes(secret.byteLength)) {
-    return crypto.subtle.importKey('raw', toArrayBuffer(secret), { name: 'AES-GCM' }, false, [
-      'encrypt',
-      'decrypt'
-    ])
-  }
-
-  const hkdfKey = await crypto.subtle.importKey('raw', toArrayBuffer(secret), 'HKDF', false, [
-    'deriveKey'
+const getBiometricsSecretKey = (userHandle: Uint8Array) =>
+  crypto.subtle.importKey('raw', toArrayBuffer(userHandle.slice(0, 32)), { name: CIPHER }, false, [
+    'encrypt',
+    'decrypt'
   ])
-
-  return crypto.subtle.deriveKey(
-    {
-      name: 'HKDF',
-      hash: 'SHA-256',
-      salt: new Uint8Array(0),
-      info: encoder.encode('ambire-biometric-unlock')
-    },
-    hkdfKey,
-    { name: 'AES-GCM', length: 256 },
-    false,
-    ['encrypt', 'decrypt']
-  )
-}
-
-const encryptSecret = async (secret: string, userHandle: Uint8Array) => {
-  const key = await deriveAesKey(userHandle)
-  const iv = getRandomBytes(12)
-  const encrypted = await crypto.subtle.encrypt(
-    { name: 'AES-GCM', iv },
-    key,
-    encoder.encode(secret)
-  )
-
-  return {
-    encryptedSecret: hexlify(toUint8Array(encrypted)),
-    iv: hexlify(iv)
-  }
-}
-
-const decryptSecret = async (
-  storedCredential: StoredEncryptedBiometricsCredential,
-  userHandle: Uint8Array
-) => {
-  const key = await deriveAesKey(userHandle)
-  const decrypted = await crypto.subtle.decrypt(
-    { name: 'AES-GCM', iv: toArrayBuffer(decodeStoredBytes(storedCredential.iv)) },
-    key,
-    toArrayBuffer(decodeStoredBytes(storedCredential.encryptedSecret))
-  )
-
-  return decoder.decode(decrypted)
-}
 
 const getHmacSecretOutput = (results: any) => {
   // prioritize, because that's the modern WebAuthn approach
@@ -281,7 +232,7 @@ export const webauthnBiometrics = {
     // try to store the secret in the latest recomended biometrics
     // way by extracting prf or hmac result
     //
-    // only if it's not possible, continue with version
+    // only if it's not possible, continue with version 2
     const storedPrfCredential: StoredPrfBiometricsCredential = {
       version: 1,
       credentialId: hexlify(toUint8Array((credential as any).rawId)),
@@ -301,12 +252,12 @@ export const webauthnBiometrics = {
     // coming here means prf/hmac are not supported for the chosen
     // passkey generation and we must use a different method
     const secret = hexlify(getRandomBytes(32))
-    const encrypted = await encryptSecret(secret, userHandle)
+    const key = await getBiometricsSecretKey(userHandle)
+    const encrypted = await encryptWithKey(key, encoder.encode(secret))
     const storedCredential: StoredEncryptedBiometricsCredential = {
       version: 2,
       credentialId: hexlify(toUint8Array((credential as any).rawId)),
-      encryptedSecret: encrypted.encryptedSecret,
-      iv: encrypted.iv
+      ...encrypted
     }
 
     await storage.set(WEBAUTHN_BIOMETRICS_STORAGE_KEY, storedCredential)
@@ -318,12 +269,15 @@ export const webauthnBiometrics = {
     const storedCredential = await getStoredCredential()
     if (!storedCredential) return null
 
-    // non prf/hmca handler
+    // non prf/hmac handler
     if (storedCredential.version === 2) {
       const userHandle = await getAssertionUserHandle(storedCredential)
       if (!userHandle) return null
 
-      return decryptSecret(storedCredential, userHandle)
+      const key = await getBiometricsSecretKey(userHandle)
+      const secret = await decryptWithKey(key, storedCredential)
+
+      return decoder.decode(secret)
     }
 
     const secretBytes = await getAssertionForPrfCredential(storedCredential)
