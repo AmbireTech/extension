@@ -61,6 +61,7 @@
   },
   "packageManager": "yarn@1.22.22",
   "dependencies": {
+    "@a16z/helios": "^0.11.1",
     "@ambire/signature-validator": "1.5.0",
     "@dnd-kit/core": "6.3.1",
     "@dnd-kit/modifiers": "9.0.0",
@@ -81,6 +82,7 @@
     "@gorhom/portal": "1.0.14",
     "@keystonehq/animated-qr": "0.10.0",
     "@keystonehq/bc-ur-registry-eth": "0.22.1",
+    "@kohaku-eth/provider": "^0.1.0-alpha.8",
     "@ledgerhq/context-module": "1.15.0",
     "@ledgerhq/device-management-kit": "1.2.0",
     "@ledgerhq/device-signer-kit-ethereum": "1.12.0",
