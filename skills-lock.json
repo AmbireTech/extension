@@ -12,6 +12,12 @@
       "sourceType": "github",
       "skillPath": "skills/karpathy-guidelines/SKILL.md",
       "computedHash": "41e8ca055bbde13d240776a14a076a59614057200340c243130a76ba4e64cac8"
+    },
+    "ponytail": {
+      "source": "dietrichgebert/ponytail",
+      "sourceType": "github",
+      "skillPath": "skills/ponytail/SKILL.md",
+      "computedHash": "15811786f0277b0b4effe6b72cb9f3eaedefd1fe28f43f20aed3d926c10a88b1"
     }
   }
 }
