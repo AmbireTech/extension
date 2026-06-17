@@ -12,6 +12,7 @@ import { getDappIdFromUrl } from '@ambire-common/libs/dapps/helpers'
 import { isValidHostname, isValidURL } from '@ambire-common/services/validations'
 import GlobeIcon from '@common/assets/svg/GlobeIcon'
 import GoogleIcon from '@common/assets/svg/GoogleIcon'
+import Banner from '@common/components/Banner'
 import BottomSheet from '@common/components/BottomSheet'
 import Search from '@common/components/Search'
 import Text from '@common/components/Text'
@@ -213,6 +214,10 @@ const DappWebViewScreen = () => {
     setDappUrl,
     dispatch: dappsDispatch
   } = useController('DappsController')
+
+  const {
+    state: { visibleUserRequests, currentUserRequest }
+  } = useController('RequestsController')
 
   // Initial State from Route
   const initialUrl = (location.state as any)?.url || 'https://google.com'
@@ -933,6 +938,17 @@ const DappWebViewScreen = () => {
     return () => eventBus.removeEventListener('requestsBottomSheet.closed', dispatchWebViewFocus)
   }, [dispatchWebViewFocus])
 
+  const handleOpenPendingRequests = useCallback(() => {
+    dispatch({
+      type: 'method',
+      params: {
+        ctrlName: 'RequestsController',
+        method: 'setCurrentUserRequestByIndex',
+        args: [visibleUserRequests.length - 1]
+      }
+    })
+  }, [dispatch, visibleUserRequests.length])
+
   //   - onLoadStart only resets state on real top-level navigations. On iOS
   //     every `onLoadStart` is treated as such; on Android only when the
   //     event is an explicit reload, there is no previously resolved URL,
@@ -1069,6 +1085,19 @@ const DappWebViewScreen = () => {
         </>
       }
     >
+      {!!visibleUserRequests.length && !currentUserRequest && (
+        <View style={spacings.phSm}>
+          <Banner
+            type="info"
+            singleRow
+            title={`You have ${visibleUserRequests.length} pending ${
+              visibleUserRequests.length === 1 ? 'request' : 'requests'
+            }.`}
+            buttonText="Open"
+            onPress={handleOpenPendingRequests}
+          />
+        </View>
+      )}
       <View style={flexbox.flex1}>
         <WebView
           ref={webviewRef}
