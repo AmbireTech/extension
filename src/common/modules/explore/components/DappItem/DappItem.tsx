@@ -68,11 +68,17 @@ const DappItem = (dapp: DappItemProps) => {
   const { t } = useTranslation()
   const navigation = useNavigation()
 
+  const getCardBackground = (hovered: boolean) => {
+    if (blacklisted === 'BLACKLISTED') return theme.errorBackground
+    if (blacklisted === 'SUSPICIOUS_HOSTING') return theme.warningBackground
+    return hovered ? theme.tertiaryBackground : theme.secondaryBackground
+  }
+
   const [bindAnim, animStyle, isCardHovered] = useCustomHover({
     property: 'backgroundColor',
     values: {
-      from: blacklisted === 'BLACKLISTED' ? theme.errorBackground : theme.secondaryBackground,
-      to: blacklisted === 'BLACKLISTED' ? theme.errorBackground : theme.tertiaryBackground
+      from: getCardBackground(false),
+      to: getCardBackground(true)
     }
   })
 
@@ -245,6 +251,16 @@ const DappItem = (dapp: DappItemProps) => {
                   )}
                   {blacklisted === 'BLACKLISTED' && (
                     <Badge text={t('Blacklisted')} type="error" style={spacings.mrTy} />
+                  )}
+                  {blacklisted === 'SUSPICIOUS_HOSTING' && (
+                    <Badge
+                      text={t('Suspicious hosting')}
+                      type="warning"
+                      tooltipText={t(
+                        'This app is hosted on a shared platform commonly used for phishing. Be careful when interacting with it unless you are certain you trust it.'
+                      )}
+                      style={spacings.mrTy}
+                    />
                   )}
                   {!isInSettings && isConnected && (
                     <View testID="manage-dapp-dropdown" style={{ zIndex: 999 }}>
