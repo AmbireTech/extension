@@ -41,7 +41,9 @@ const DAppConnectBody: FC<{
             marginBottom: SPACING * responsiveSizeMultiplier
           },
           securityCheck === 'BLACKLISTED' && { borderColor: theme.errorDecorative },
-          securityCheck === 'FAILED_TO_GET' && { borderColor: theme.warningDecorative }
+          (securityCheck === 'SUSPICIOUS_HOSTING' || securityCheck === 'FAILED_TO_GET') && {
+            borderColor: theme.warningDecorative
+          }
         ]}
       >
         <View style={[flexbox.directionRow, flexbox.alignCenter, flexbox.justifySpaceBetween]}>
@@ -66,7 +68,7 @@ const DAppConnectBody: FC<{
               />
             </Badge>
           )}
-          {securityCheck === 'FAILED_TO_GET' && (
+          {(securityCheck === 'SUSPICIOUS_HOSTING' || securityCheck === 'FAILED_TO_GET') && (
             <Badge type="warning" text={t('Warning')}>
               <WarningIcon
                 width={12}
@@ -77,7 +79,9 @@ const DAppConnectBody: FC<{
             </Badge>
           )}
         </View>
-        {(securityCheck === 'BLACKLISTED' || securityCheck === 'FAILED_TO_GET') && (
+        {(securityCheck === 'BLACKLISTED' ||
+          securityCheck === 'SUSPICIOUS_HOSTING' ||
+          securityCheck === 'FAILED_TO_GET') && (
           <View style={spacings.ptTy}>
             <Text
               fontSize={18 * responsiveSizeMultiplier}
@@ -111,6 +115,17 @@ const DAppConnectBody: FC<{
                 </Text>
               </Trans>
             )}
+            {securityCheck === 'SUSPICIOUS_HOSTING' && (
+              <Text
+                fontSize={12 * responsiveSizeMultiplier}
+                color={theme.warningDecorative}
+                style={{ lineHeight: 18 * responsiveSizeMultiplier }}
+              >
+                {t(
+                  'This app is hosted on a shared platform commonly used for phishing. Be careful - do not connect unless you are certain you trust it.'
+                )}
+              </Text>
+            )}
             {securityCheck === 'FAILED_TO_GET' && (
               <Text
                 fontSize={14 * responsiveSizeMultiplier}
@@ -124,7 +139,11 @@ const DAppConnectBody: FC<{
         )}
       </View>
       <DAppPermissions responsiveSizeMultiplier={responsiveSizeMultiplier} />
-      {!(securityCheck === 'BLACKLISTED' || securityCheck === 'FAILED_TO_GET') && (
+      {!(
+        securityCheck === 'BLACKLISTED' ||
+        securityCheck === 'SUSPICIOUS_HOSTING' ||
+        securityCheck === 'FAILED_TO_GET'
+      ) && (
         <Text
           style={{
             opacity: 0.64,

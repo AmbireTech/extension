@@ -84,8 +84,7 @@ require_tests_review = false
 require_todo_scan = true
 require_estimate_effort_to_review = true
 
-# The repo has no issues
-require_ticket_analysis_review = false
+require_ticket_analysis_review = true
 extract_issue_from_branch = false
 
 # Keep the review header but suppress noisy help text.
