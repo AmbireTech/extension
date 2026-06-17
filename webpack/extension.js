@@ -240,7 +240,6 @@ module.exports = async function buildExtension(
   { config, defaultExpoConfigPlugins, enableLavaMoat },
   env
 ) {
-  console.log('Building extension with relayer:', process.env.RELAYER_URL)
   if (process.env.IS_TESTING !== 'true') {
     validateEnvVariables(process.env.APP_ENV)
   }
