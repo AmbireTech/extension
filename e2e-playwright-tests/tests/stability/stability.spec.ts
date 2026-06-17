@@ -92,6 +92,7 @@ test.describe('stability', { tag: '@stability' }, () => {
       // Each network typically triggers 2 RPC calls.
       // So the total number of RPC requests scales linearly with the number of networks configured.
       // This is why the threshold here is intentionally higher to account for all supported networks.
+      console.log(`CATEGORIZED REQEUSTS: ${categorized.rpc}`)
       expect(categorized.rpc.length).toBeLessThanOrEqual(30)
       expect(categorized.hints.length).toBeLessThanOrEqual(1)
       expect(categorized.nativePrices.length).toBeLessThanOrEqual(10)
