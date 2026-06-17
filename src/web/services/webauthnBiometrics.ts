@@ -1,9 +1,9 @@
 import { getBytes, hexlify } from 'ethers'
 
 import { CIPHER, decryptWithKey, encryptWithKey } from '@ambire-common/libs/keystore/keystore'
-import type { AESGCMEncrypted } from '@ambire-common/interfaces/keystore'
 import { storage } from '@common/services/storage'
 
+import type { AESGCMEncrypted } from '@ambire-common/interfaces/keystore'
 const WEBAUTHN_BIOMETRICS_STORAGE_KEY = 'biometricsWebAuthnCredential'
 const WEBAUTHN_TIMEOUT_MS = 60_000
 
@@ -124,7 +124,7 @@ const getAssertionUserHandle = async (storedCredential: StoredEncryptedBiometric
     publicKey: {
       challenge: getRandomBytes(32),
       timeout: WEBAUTHN_TIMEOUT_MS,
-      userVerification: 'preferred',
+      userVerification: 'required',
       allowCredentials: [
         {
           id: decodeStoredBytes(storedCredential.credentialId),
