@@ -18,7 +18,7 @@ import { TabType } from '@common/modules/dashboard/components/TabsAndSearch/Tabs
 import { tokenOrCollectionSearch } from '@common/utils/search'
 import { getUiType } from '@common/utils/uiType'
 
-import SearchAndCurrentApp from '../SearchAndCurrentApp'
+import FloatingBottomBar from '../FloatingBottomBar'
 import Collection from './Collection'
 import CollectionsSkeleton from './CollectionsSkeleton'
 import styles from './styles'
@@ -35,6 +35,8 @@ interface Props {
   dashboardNetworkFilterName: string | null
   animatedOverviewHeight: Animated.Value
   isSearchHidden: boolean
+  refreshing?: boolean
+  onRefresh?: () => void
 }
 
 const { isPopup } = getUiType()
@@ -48,7 +50,9 @@ const Collections: FC<Props> = ({
   networks,
   dashboardNetworkFilterName,
   animatedOverviewHeight,
-  isSearchHidden
+  isSearchHidden,
+  refreshing,
+  onRefresh
 }) => {
   const {
     state: { portfolio, dashboardNetworkFilter }
@@ -195,7 +199,6 @@ const Collections: FC<Props> = ({
       <DashboardPageScrollContainer
         tab="collectibles"
         openTab={openTab}
-        onScroll={onScroll}
         ListHeaderComponent={<DashboardBanners />}
         data={[
           'header',
@@ -207,11 +210,18 @@ const Collections: FC<Props> = ({
         keyExtractor={keyExtractor}
         initialNumToRender={isPopup ? 4 : 10}
         windowSize={15}
-        bounces={false}
         animatedOverviewHeight={animatedOverviewHeight}
+        onScroll={onScroll}
+        scrollEventThrottle={16}
+        refreshing={refreshing}
+        onRefresh={onRefresh}
       />
       {openTab === 'collectibles' && (
-        <SearchAndCurrentApp control={control} isHidden={isSearchHidden} />
+        <FloatingBottomBar
+          control={control}
+          isHidden={isSearchHidden}
+          searchPlaceholder={t('Search NFT')}
+        />
       )}
     </>
   )

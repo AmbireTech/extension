@@ -43,6 +43,7 @@ type WalletTokenInfo = {
   percentageStakedWallet: number
   stakedWallets: number
   walletPrice: number
+  apy: number
   season2PoolInfo: {
     poolSize: number
     totalVolumeSwapAndBridge: number
@@ -60,7 +61,7 @@ const PortfolioContext = createContext<{
   userRewardsStats: ProjectedRewardsStats | null
   xWalletClaimableBalance: PortfolioRewardsResult['xWalletClaimableBalance'] | null
 }>({
-  updateAccountPortfolio: () => { },
+  updateAccountPortfolio: () => {},
   isLoadingClaimableRewards: true,
   walletTokenInfo: null,
   walletTokenPrice: null,
@@ -303,7 +304,7 @@ const PortfolioProvider: React.FC<any> = ({ children }) => {
       ethTokenPrice === undefined || uniswapWalletPosition === undefined
         ? undefined
         : uniswapWalletPosition.eth * ethTokenPrice +
-        uniswapWalletPosition.wallet * walletTokenPrice
+          uniswapWalletPosition.wallet * walletTokenPrice
 
     const stkBalanceUSD = stkBalance === undefined ? undefined : stkBalance * walletTokenPrice
 

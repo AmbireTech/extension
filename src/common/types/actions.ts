@@ -1,9 +1,9 @@
-import { HD_PATH_TEMPLATE_TYPE } from '@ambire-common/consts/derivation'
-import { Contact } from '@ambire-common/controllers/addressBook/addressBook'
 import { Account } from '@ambire-common/interfaces/account'
-import { Dapp } from '@ambire-common/interfaces/dapp'
+import { Contact } from '@ambire-common/interfaces/addressBook'
+import { ConnectionSource, Dapp } from '@ambire-common/interfaces/dapp'
 import { Key, ReadyToAddKeys } from '@ambire-common/interfaces/keystore'
-import { AllControllersMappingType } from '@common/constants/controllersMapping'
+
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 
 type MethodKeys<T> = {
   [K in keyof T]-?: T[K] extends (...args: any[]) => any ? K : never
@@ -25,10 +25,21 @@ export type MethodAction = {
   params: MethodActionParams
 }
 
+type GetAllControllerNamesAction = {
+  type: 'GET_ALL_CONTROLLER_NAMES'
+}
+
 type InitControllerStateAction = {
   type: 'INIT_CONTROLLER_STATE'
   params: {
-    controller: keyof AllControllersMappingType
+    controller: string
+  }
+}
+
+type InitAllControllersAction = {
+  type: 'INIT_ALL_CONTROLLERS'
+  params: {
+    controllers: (keyof AllControllersMappingType)[]
   }
 }
 
@@ -55,6 +66,10 @@ type MainControllerAccountPickerInitTrezorAction = {
 type MainControllerAccountPickerInitLatticeAction = {
   type: 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_LATTICE'
 }
+type MainControllerAccountPickerInitQrWalletAction = {
+  type: 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_QR_WALLET'
+  params: { payload: string | Uint8Array }
+}
 type MainControllerAccountPickerInitFromSavedSeedPhraseAction = {
   type: 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_FROM_SAVED_SEED_PHRASE'
   params: { id: string }
@@ -74,6 +89,10 @@ type DappsControllerRemoveConnectedSiteAction = {
   params: {
     id: Dapp['id']
     url: Dapp['url']
+    // Optional: when set, only the matching connection channel is torn down. Omitting
+    // it disconnects every active source (backwards-compatible with web/extension and
+    // with the "Disconnect both" choice on mobile).
+    source?: ConnectionSource
   }
 }
 
@@ -106,10 +125,72 @@ type OpenExtensionPopupAction = {
   type: 'OPEN_EXTENSION_POPUP'
 }
 
+type WindowRemovedAction = {
+  type: 'WINDOW_REMOVED'
+  params: { id: number }
+}
+
+type WebviewOriginChangedAction = {
+  type: 'WEBVIEW_ORIGIN_CHANGED'
+  params: { previousOrigin: string }
+}
+
+type HandleProviderRequestAction = {
+  type: 'HANDLE_PROVIDER_REQUEST'
+  params: {
+    request: {
+      method: string
+      params?: any
+      origin: string
+    }
+    requestId: number
+    providerId: number
+    topic: string
+    isWalletConnect?: boolean
+    isWcAuthenticate?: boolean
+    tabId?: number
+  }
+}
+
+type SetupWcSessionMessengerAction = {
+  type: 'SETUP_WC_SESSION_MESSENGER'
+  params: {
+    url: string
+    tabId: number
+    topic: string
+    chainId: number
+    candidateChainIds?: number[]
+    name?: string
+    icon?: string
+    tempSessionTopic?: string
+  }
+}
+
+type RestoreWcSessionsAction = {
+  type: 'RESTORE_WC_SESSIONS'
+  params: {
+    sessions: {
+      topic: string
+      url: string
+      chainId: number
+      candidateChainIds?: number[]
+      name?: string
+      icon?: string
+    }[]
+  }
+}
+
+type DisconnectWcSessionAction = {
+  type: 'DISCONNECT_WC_SESSION'
+  params: {
+    topic: string
+  }
+}
+
 export type Action =
   | UpdateNavigationUrl
   | UpdateUiViewRoute
-  | InitControllerStateAction
+  | MainControllerAccountPickerInitQrWalletAction
   | MainControllerAccountPickerInitLatticeAction
   | MainControllerAccountPickerInitTrezorAction
   | MainControllerAccountPickerInitLedgerAction
@@ -123,3 +204,12 @@ export type Action =
   | ChangeCurrentDappNetworkAction
   | ImportSmartAccountJson
   | OpenExtensionPopupAction
+  | InitAllControllersAction
+  | WindowRemovedAction
+  | GetAllControllerNamesAction
+  | InitControllerStateAction
+  | HandleProviderRequestAction
+  | WebviewOriginChangedAction
+  | SetupWcSessionMessengerAction
+  | RestoreWcSessionsAction
+  | DisconnectWcSessionAction

@@ -12,21 +12,31 @@ import { getBenzinUrlParams } from '@ambire-common/utils/benzin'
 import useBenzinNetworksContext from '@benzin/hooks/useBenzinNetworksContext'
 import useSteps from '@benzin/screens/BenzinScreen/hooks/useSteps'
 import { ActiveStepType } from '@benzin/screens/BenzinScreen/interfaces/steps'
+import { isWeb } from '@common/config/env'
 import useController from '@common/hooks/useController'
 import useRoute from '@common/hooks/useRoute'
 import useToast from '@common/hooks/useToast'
 import { setStringAsync } from '@common/utils/clipboard'
 import { RELAYER_URL } from '@env'
 
-const fetch = window.fetch.bind(window) as any
+const fetch = (typeof window !== 'undefined' ? window.fetch.bind(window) : global.fetch) as any
 const standardOptions = {
   fetch,
   callRelayer: relayerCall.bind({ url: RELAYER_URL, fetch })
 }
 
+interface BenzinParams {
+  txnId?: string | null
+  userOpHash?: string | null
+  relayerId?: string | null
+  chainId?: string | null
+  bundler?: string | null
+}
+
 interface Props {
   onOpenExplorer?: () => void
   extensionAccOp?: SubmittedAccountOp
+  params?: BenzinParams
 }
 
 const getParams = (search?: string) => {
@@ -41,10 +51,19 @@ const getParams = (search?: string) => {
   }
 }
 
-const useBenzin = ({ onOpenExplorer, extensionAccOp }: Props = {}) => {
+const useBenzin = ({ onOpenExplorer, extensionAccOp, params: directParams }: Props = {}) => {
   const { addToast } = useToast()
   const route = useRoute()
-  const { txnId, userOpHash, relayerId, chainId, bundler } = getParams(route?.search)
+  const routeParams = getParams(route?.search)
+  const { txnId, userOpHash, relayerId, chainId, bundler } = directParams
+    ? {
+        txnId: directParams.txnId ?? null,
+        userOpHash: directParams.userOpHash ?? null,
+        relayerId: directParams.relayerId ?? null,
+        chainId: directParams.chainId ?? null,
+        bundler: directParams.bundler ?? null
+      }
+    : routeParams
 
   const {
     state: { networks }
@@ -124,7 +143,7 @@ const useBenzin = ({ onOpenExplorer, extensionAccOp }: Props = {}) => {
 
   const handleCopyText = useCallback(async () => {
     try {
-      let address = window.location.href
+      let address = isWeb ? window.location.href : ''
 
       if (chainId) {
         address = `https://explorer.ambire.com/${getBenzinUrlParams({
@@ -173,6 +192,12 @@ const useBenzin = ({ onOpenExplorer, extensionAccOp }: Props = {}) => {
     return !isRejected
   }, [network, stepsState.finalizedStatus?.status, stepsState.txnId])
 
+  const disableOpenExplorerBtn = useMemo(() => {
+    const accountOp = stepsState.submittedAccountOp || extensionAccOp
+
+    return accountOp?.identifiedBy?.type === 'MultipleTxns' && accountOp.calls.length > 1
+  }, [extensionAccOp, stepsState.submittedAccountOp])
+
   if (!chainId || (!txnId && !userOpHash && !relayerId)) return null
 
   return {
@@ -186,6 +211,7 @@ const useBenzin = ({ onOpenExplorer, extensionAccOp }: Props = {}) => {
     bigintChainId,
     showCopyBtn,
     showOpenExplorerBtn,
+    disableOpenExplorerBtn,
     isInitialized,
     isNetworkNotFound: notFoundNetworks.includes(bigintChainId)
   }

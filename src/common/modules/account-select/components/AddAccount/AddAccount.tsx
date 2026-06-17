@@ -8,12 +8,13 @@ import AddFromCurrentRecoveryPhraseIcon from '@common/assets/svg/AddFromCurrentR
 import HWIcon from '@common/assets/svg/HWIcon'
 import ImportAccountIcon from '@common/assets/svg/ImportAccountIcon'
 import ImportJsonIcon from '@common/assets/svg/ImportJsonIcon'
-import LatticeIcon from '@common/assets/svg/LatticeIcon'
-import LedgerLetterIcon from '@common/assets/svg/LedgerLetterIcon'
+import GridPlusIcon from '@common/assets/svg/GridPlusIcon'
+import LedgerBadgeIcon from '@common/assets/svg/LedgerBadgeIcon'
 import PrivateKeyIcon from '@common/assets/svg/PrivateKeyIcon'
-import SafeIcon from '@common/assets/svg/SafeIcon'
+import ReceiveIcon from '@common/assets/svg/ReceiveIcon'
+import SafeBadgeIcon from '@common/assets/svg/SafeBadgeIcon'
 import SeedPhraseIcon from '@common/assets/svg/SeedPhraseIcon'
-import TrezorLockIcon from '@common/assets/svg/TrezorLockIcon'
+import TrezorBadgeIcon from '@common/assets/svg/TrezorBadgeIcon'
 import ViewOnlyIcon from '@common/assets/svg/ViewOnlyIcon'
 import BottomSheet from '@common/components/BottomSheet'
 import ModalHeader from '@common/components/BottomSheet/ModalHeader'
@@ -42,6 +43,7 @@ const AddAccount = ({
   const { goToNextRoute, setTriggeredHwWalletFlow } = useOnboardingNavigation()
   const [height, setHeight] = useState<number>(0)
   const scrollViewRef = useRef<any>(null)
+  const [expandedDropdown, setExpandedDropdown] = useState<'import-acc' | 'connect-hw' | null>(null)
 
   const {
     ref: seedPhraseSheetRef,
@@ -57,7 +59,7 @@ const AddAccount = ({
       {
         key: 'trezor',
         text: t('Trezor'),
-        icon: TrezorLockIcon,
+        icon: TrezorBadgeIcon,
         onPress: () => {
           setTriggeredHwWalletFlow('trezor')
           dispatch({ type: 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_TREZOR' })
@@ -67,22 +69,30 @@ const AddAccount = ({
       {
         key: 'ledger',
         text: t('Ledger'),
-        icon: LedgerLetterIcon,
+        icon: LedgerBadgeIcon,
         onPress: () => {
           goToNextRoute(WEB_ROUTES.ledgerConnect)
         },
         testID: 'ledger-option'
       },
-
       {
         key: 'lattice',
         text: t('GridPlus'),
-        icon: LatticeIcon,
+        icon: GridPlusIcon,
         onPress: () => {
           setTriggeredHwWalletFlow('lattice')
           dispatch({ type: 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_LATTICE' })
         },
         testID: 'lattice-option'
+      },
+      {
+        key: 'qr',
+        text: t('QR-based'),
+        icon: ReceiveIcon,
+        onPress: () => {
+          goToNextRoute(WEB_ROUTES.qrConnect)
+        },
+        testID: 'qr-option'
       }
     ]
   }, [dispatch, goToNextRoute, setTriggeredHwWalletFlow, t])
@@ -108,7 +118,7 @@ const AddAccount = ({
             {
               key: 'import-safe',
               text: t('Safe account'),
-              icon: SafeIcon,
+              icon: SafeBadgeIcon,
               onPress: () => goToNextRoute(ROUTES.safeImport),
               testID: 'import-safe'
             },
@@ -143,14 +153,6 @@ const AddAccount = ({
     >
       <View
         onLayout={(e) => {
-          if (scrollViewRef.current) {
-            const heightChange = Math.abs(e.nativeEvent.layout.height - height)
-            // Scroll down a bit so the user can see the options
-            if (e.nativeEvent.layout.height > height) {
-              scrollViewRef.current.scrollTo({ y: heightChange / 2, animated: true })
-            }
-          }
-
           if (height) return
 
           setHeight(e.nativeEvent.layout.height)
@@ -179,6 +181,9 @@ const AddAccount = ({
           dropdownIcon={ImportAccountIcon}
           dropdownTestID="import-account"
           options={optionsImportAccount}
+          scrollViewRef={scrollViewRef}
+          isExpanded={expandedDropdown === 'import-acc'}
+          setIsExpanded={(isExpanded) => setExpandedDropdown(isExpanded ? 'import-acc' : null)}
         />
         {!!optionsHW.length && (
           <ExpandableOptionSection
@@ -186,6 +191,9 @@ const AddAccount = ({
             dropdownIcon={HWIcon}
             dropdownTestID="connect-hardware-wallet"
             options={optionsHW}
+            scrollViewRef={scrollViewRef}
+            isExpanded={expandedDropdown === 'connect-hw'}
+            setIsExpanded={(isExpanded) => setExpandedDropdown(isExpanded ? 'connect-hw' : null)}
           />
         )}
         {!showImportOnly && (

@@ -2,7 +2,6 @@ import React, { FC, ReactNode, useEffect } from 'react'
 import { Navigate, Route, Routes } from 'react-router-dom'
 
 import PrivateRoute from '@legends/components/PrivateRoute'
-import Season2Modal from '@legends/components/Season2Modal'
 import { DataPollingContextProvider } from '@legends/contexts/dataPollingContext'
 import { LeaderboardContextProvider } from '@legends/contexts/leaderboardContext'
 import { LegendsContextProvider } from '@legends/contexts/legendsContext'
@@ -29,17 +28,14 @@ import { LEGENDS_LEGACY_ROUTES } from '../constants/routes'
 //              -> child Route.
 const PrivateArea: FC<{ children: ReactNode }> = ({ children }) => {
   useEffect(() => {
-    document.title = 'Ambire Rewards'
+    document.title = 'Ambire Rewards | Stake $WALLET & Earn Rewards'
   }, [])
 
   return (
     <LeaderboardContextProvider>
       <LegendsContextProvider>
         <PortfolioProvider>
-          <DataPollingContextProvider>
-            <Season2Modal />
-            {children}
-          </DataPollingContextProvider>
+          <DataPollingContextProvider>{children}</DataPollingContextProvider>
         </PortfolioProvider>
       </LegendsContextProvider>
     </LeaderboardContextProvider>
@@ -59,7 +55,7 @@ const Router = () => {
         <Route path={LEGENDS_ROUTES.leaderboard} element={<Leaderboard />} />
         <Route path={LEGENDS_ROUTES.home} element={<Home />} />
         <Route path={LEGENDS_ROUTES.wallet} element={<Wallet />} />
-        <Route path={LEGENDS_ROUTES['/']} element={<Home />} />
+        <Route path={LEGENDS_ROUTES['/']} element={<Wallet />} />
         <Route path={LEGENDS_ROUTES.rewardsPool} element={<RewardsPool />} />
         <Route path={LEGENDS_ROUTES.legacyQuests} element={<Navigate to={LEGENDS_ROUTES.home} />} />
         <Route

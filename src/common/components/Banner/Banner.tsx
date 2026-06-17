@@ -8,6 +8,7 @@ import InfoIcon from '@common/assets/svg/InfoIcon'
 import SuccessIcon from '@common/assets/svg/SuccessIcon'
 import WarningIcon from '@common/assets/svg/WarningIcon'
 import Text from '@common/components/Text'
+import { isMobile, isWeb } from '@common/config/env'
 import useTheme from '@common/hooks/useTheme'
 import BannerButton from '@common/modules/dashboard/components/DashboardBanners/DashboardBanner/BannerButton'
 import spacings from '@common/styles/spacings'
@@ -56,6 +57,9 @@ const Banner = React.memo(
     onPress
   }: Props) => {
     const { styles, theme } = useTheme(getStyles)
+    const hasPrimaryAction = !!buttonText && !!onPress
+    const hasDismissAction = !!dismissButtonText && !!onDismissButtonPress
+    const hasActions = hasPrimaryAction || hasDismissAction
 
     const Icon = useMemo(() => {
       if (CustomIcon) return CustomIcon
@@ -84,9 +88,17 @@ const Banner = React.memo(
             }
           ]}
         >
-          <View style={[flexbox.directionRow, flexbox.flex1]}>
-            <Icon width={24} height={24} color={theme[`${type}Text`]} style={{ marginTop: 1 }} />
-            <Text fontSize={titleFontSize || 16} weight="medium" style={spacings.mlMi}>
+          <View style={[flexbox.directionRow, flexbox.alignCenter, flexbox.flex1]}>
+            <Icon
+              width={isMobile ? 22 : 24}
+              height={isMobile ? 22 : 24}
+              color={theme[`${type}Text`]}
+            />
+            <Text
+              fontSize={titleFontSize || (isMobile ? 14 : 16)}
+              weight="medium"
+              style={[flexbox.flex1, spacings.mlMi, isMobile && { marginTop: 2 }]}
+            >
               {title}
             </Text>
           </View>
@@ -106,38 +118,38 @@ const Banner = React.memo(
           )}
         </View>
 
-        <View style={[flexbox.wrap, flexbox.flex1, { width: '100%' }]}>
+        <View style={[isWeb && flexbox.wrap, { width: '100%' }]}>
           {!!text && (
             <Text
-              fontSize={14}
+              fontSize={isMobile ? 12 : 14}
               weight="regular"
               appearance="secondaryText"
-              style={!!buttonText && !!onPress ? spacings.mbSm : undefined}
+              style={hasActions ? spacings.mbSm : undefined}
             >
               {text}
             </Text>
           )}
           <View
             style={[
-              flexbox.flex1,
               flexbox.directionRow,
               flexbox.alignCenter,
               flexbox.justifyEnd,
+              isWeb && flexbox.wrap,
               { width: '100%' }
             ]}
           >
-            {!!dismissButtonText && !!onDismissButtonPress && (
+            {hasDismissAction && (
               <BannerButton
                 type="secondary"
                 colorType="error"
                 onPress={onDismissButtonPress}
                 testID="banner-button-reject"
-                style={!!buttonText && !!onPress && spacings.mrTy}
+                style={hasPrimaryAction && spacings.mrTy}
               >
                 {dismissButtonText}
               </BannerButton>
             )}
-            {!!buttonText && !!onPress && (
+            {hasPrimaryAction && (
               <BannerButton
                 type="primary"
                 colorType={type}

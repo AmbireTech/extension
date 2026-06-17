@@ -255,10 +255,9 @@ export class DashboardPage extends BasePage {
     await networkSelector.click()
   }
 
-  // TODO: change when we have test ids
   async searchByMagnifyingGlassIcon(searchInput: string) {
-    await this.page.locator('.liquidGlass').last().click()
-    await this.page.locator('input').fill(searchInput)
+    await this.click(selectors.dashboard.magnifyingGlassIcon)
+    await this.entertext(selectors.dashboard.searchInputField, searchInput)
   }
 
   async checkOpenTicketPage() {

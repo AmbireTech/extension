@@ -5,7 +5,7 @@ import { useModalize } from 'react-native-modalize'
 
 import { EmailVaultState } from '@ambire-common/controllers/emailVault/emailVault'
 import { isEmail } from '@ambire-common/services/validations'
-import KeyStoreIcon from '@common/assets/svg/KeyStoreIcon'
+import DisabledPasswordRecovery from '@common/assets/svg/DisabledPasswordRecovery'
 import Alert from '@common/components/Alert'
 import BottomSheet from '@common/components/BottomSheet'
 import Button from '@common/components/Button'
@@ -17,20 +17,26 @@ import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import useNavigation from '@common/hooks/useNavigation'
 import useTheme from '@common/hooks/useTheme'
-import { ROUTES } from '@common/modules/router/constants/common'
+import { ROUTES, WEB_ROUTES } from '@common/modules/router/constants/common'
 import spacings, { SPACING_XL } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
 import EmailConfirmation from '@web/modules/keystore/components/EmailConfirmation'
+import BottomSheetPasswordConfirmation from '@web/modules/settings/components/BottomSheetPasswordConfirmation'
 import { SettingsRoutesContext } from '@web/modules/settings/contexts/SettingsRoutesContext'
 
 const DevicePasswordRecoverySettingsScreen = () => {
   const { state: ev, dispatch: evDispatch } = useController('EmailVaultController')
-  const keystoreState = useController('KeystoreController').state
+  const { state: keystoreState, dispatch: keystoreDispatch } = useController('KeystoreController')
   const { t } = useTranslation()
   const { setCurrentSettingsPage } = useContext(SettingsRoutesContext)
   const { navigate } = useNavigation()
   const { theme } = useTheme()
+  const {
+    ref: passwordConfirmationModalRef,
+    open: openPasswordConfirmationModal,
+    close: closePasswordConfirmationModal
+  } = useModalize()
   const {
     ref: confirmationModalRef,
     open: openConfirmationModal,
@@ -64,7 +70,7 @@ const DevicePasswordRecoverySettingsScreen = () => {
     if (
       confirmationModalRef.current &&
       (ev.currentState === EmailVaultState.WaitingEmailConfirmation ||
-        ev.currentState === EmailVaultState.UploadingSecret)
+        ev.currentState === EmailVaultState.RemovingSecret)
     ) {
       openConfirmationModal()
       return
@@ -75,10 +81,10 @@ const DevicePasswordRecoverySettingsScreen = () => {
   }, [closeConfirmationModal, ev.currentState, openConfirmationModal])
 
   useEffect(() => {
-    if (ev.statuses.uploadKeyStoreSecret === 'SUCCESS') {
+    if (ev.statuses.removeKeyStoreSecret === 'SUCCESS') {
       openSuccessModal()
     }
-  }, [ev.statuses.uploadKeyStoreSecret, openSuccessModal])
+  }, [ev.statuses.removeKeyStoreSecret, openSuccessModal])
 
   const handleFormSubmit = useCallback(() => {
     // eslint-disable-next-line @typescript-eslint/no-floating-promises
@@ -86,12 +92,35 @@ const DevicePasswordRecoverySettingsScreen = () => {
       evDispatch({
         type: 'method',
         params: {
-          method: 'uploadKeyStoreSecret',
+          method: 'removeKeyStoreSecret',
           args: [email]
         }
       })
     })()
   }, [handleSubmit, evDispatch, email])
+
+  const closePasswordConfirmation = useCallback(() => {
+    keystoreDispatch({
+      type: 'method',
+      params: {
+        method: 'resetErrorState',
+        args: []
+      }
+    })
+    closePasswordConfirmationModal()
+  }, [closePasswordConfirmationModal, keystoreDispatch])
+
+  const handleDisablePress = useCallback(() => {
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises
+    handleSubmit(async () => {
+      openPasswordConfirmationModal()
+    })()
+  }, [handleSubmit, openPasswordConfirmationModal])
+
+  const handlePasswordConfirmed = useCallback(() => {
+    closePasswordConfirmation()
+    handleFormSubmit()
+  }, [closePasswordConfirmation, handleFormSubmit])
 
   const handleCancelLoginAttempt = useCallback(() => {
     evDispatch({
@@ -131,15 +160,6 @@ const DevicePasswordRecoverySettingsScreen = () => {
           />
         )}
 
-        {ev.hasKeystoreRecovery && (
-          <Alert
-            type="success"
-            title={t('Email recovery enabled!')}
-            size="sm"
-            style={{ ...spacings.mbTy }}
-            isTypeLabelHidden
-          />
-        )}
         <Controller
           control={control}
           // @ts-ignore minot type mismatch, (value) => isEmail(value) has no warns
@@ -150,12 +170,12 @@ const DevicePasswordRecoverySettingsScreen = () => {
               placeholder={t('E-mail')}
               onChangeText={onChange}
               inputWrapperStyle={{ backgroundColor: theme.tertiaryBackground }}
-              onSubmitEditing={handleFormSubmit}
+              onSubmitEditing={handleDisablePress}
               value={value}
               autoFocus={isWeb}
               isValid={isEmail(value)}
               error={!!errors.email && (t('Please fill in a valid email.') as string)}
-              disabled={ev.hasKeystoreRecovery || !keystoreState.hasPasswordSecret}
+              disabled
             />
           )}
           name="email"
@@ -166,19 +186,27 @@ const DevicePasswordRecoverySettingsScreen = () => {
             ev.currentState === EmailVaultState.Loading ||
             isSubmitting ||
             !email ||
-            ev.hasKeystoreRecovery ||
-            !isValid
+            !ev.hasKeystoreRecovery ||
+            !isValid ||
+            keystoreState.statuses.unlockWithSecret !== 'INITIAL'
           }
           type="primary"
           text={
-            // eslint-disable-next-line no-nested-ternary
             isSubmitting || ev.currentState === EmailVaultState.Loading
               ? t('Loading...')
-              : ev.hasKeystoreRecovery
-                ? t('Enabled')
-                : t('Enable')
+              : t('Disable')
           }
-          onPress={handleFormSubmit}
+          onPress={handleDisablePress}
+        />
+        <Alert
+          type="warning"
+          isTypeLabelHidden
+          style={spacings.mtXl}
+          title={t('Email recovery will be deprecated soon')}
+          titleWeight="semiBold"
+          text={t(
+            "Email-based password recovery for this device is being phased out. To avoid losing access, we recommend disabling it now and switching to biometric unlock - a more private, self-sovereign alternative that doesn't rely on Ambire infrastructure.\n\nDisable email recovery before it's removed."
+          )}
         />
         <Alert
           type="info"
@@ -191,16 +219,29 @@ const DevicePasswordRecoverySettingsScreen = () => {
           )}
         />
       </View>
+      <BottomSheetPasswordConfirmation
+        id="device-password-recovery-confirm-password-modal"
+        sheetRef={passwordConfirmationModalRef}
+        closeBottomSheet={closePasswordConfirmation}
+        text={t('Please enter your extension password to disable email recovery.')}
+        onPasswordConfirmed={handlePasswordConfirmed}
+      />
       <BottomSheet id="backup-password-confirmation-modal" sheetRef={confirmationModalRef}>
         <EmailConfirmation email={email} handleCancelLoginAttempt={handleCancelLoginAttempt} />
       </BottomSheet>
       <BottomSheet id="backup-password-success-modal" sheetRef={successModalRef}>
-        <PanelTitle title={t('Extension password recovery')} style={spacings.mbXl} />
-        <KeyStoreIcon style={[flexbox.alignSelfCenter, spacings.mbXl]} />
+        <PanelTitle title={t('Disabled password recovery')} style={spacings.mbXl} />
+        <DisabledPasswordRecovery style={[flexbox.alignSelfCenter, spacings.mbXl]} />
         <Text fontSize={16} style={[spacings.mbXl, text.center]} appearance="secondaryText">
-          {t('Your extension password recovery was successfully enabled!')}
+          {t('Your extension password recovery was successfully disabled!')}
         </Text>
-        <Button text={t('Got it')} hasBottomSpacing={false} onPress={closeSuccessModal as any} />
+        <Button
+          text={t('Got it')}
+          hasBottomSpacing={false}
+          onPress={() => {
+            closeSuccessModal()
+          }}
+        />
       </BottomSheet>
     </>
   )

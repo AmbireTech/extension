@@ -160,6 +160,7 @@ const Input = ({
               placeholderTextColor={theme.secondaryText}
               autoCapitalize="none"
               autoCorrect={false}
+              autoComplete="off"
               editable={editable ?? !disabled}
               onBlur={handleOnBlur}
               onFocus={handleOnFocus}

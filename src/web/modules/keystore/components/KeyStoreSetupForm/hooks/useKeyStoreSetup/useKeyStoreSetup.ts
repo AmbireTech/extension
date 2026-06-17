@@ -19,16 +19,19 @@ const useKeyStoreSetup = () => {
       confirmPassword: isDev && !isTesting ? (DEFAULT_KEYSTORE_PASSWORD_DEV ?? '') : ''
     }
   })
+
+  const [biometricsEnabled, setBiometricsEnabled] = useState(false)
   const [isKeystoreReady, setKeystoreReady] = useState(false)
   const password = watch('password', '')
+  const confirmPassword = watch('confirmPassword', '')
 
   useEffect(() => {
-    if (!getValues('confirmPassword')) return
+    if (!confirmPassword) return
 
     trigger('confirmPassword').catch(() => {
       addToast(t('Something went wrong, please try again later.'), { type: 'error' })
     })
-  }, [password, trigger, addToast, t, getValues])
+  }, [confirmPassword, trigger, addToast, t, getValues])
 
   useEffect(() => {
     if (state.statuses.addSecret === 'SUCCESS') {
@@ -58,8 +61,11 @@ const useKeyStoreSetup = () => {
     formState,
     control,
     password,
+    confirmPassword,
     handleKeystoreSetup,
-    hasPasswordSecret: state.hasPasswordSecret
+    hasPasswordSecret: state.hasPasswordSecret,
+    setBiometricsEnabled,
+    biometricsEnabled
   }
 }
 

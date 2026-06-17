@@ -12,11 +12,12 @@ import NoKeysToSignAlert from '@common/components/NoKeysToSignAlert'
 import useController from '@common/hooks/useController'
 import useSign from '@common/hooks/useSign'
 import useTheme from '@common/hooks/useTheme'
-import useToast from '@common/hooks/useToast'
+import ActionHeader from '@common/modules/action-requests/components/ActionHeader'
 import ErrorInformation from '@common/modules/sign-account-op/components/ErrorInformation'
 import Estimation from '@common/modules/sign-account-op/components/Estimation'
 import Footer from '@common/modules/sign-account-op/components/Footer'
 import PendingTransactions from '@common/modules/sign-account-op/components/PendingTransactions'
+import SafeEip712Data from '@common/modules/sign-account-op/components/SafeEip712Data'
 import SafeOwners from '@common/modules/sign-account-op/components/SafeOwners'
 import SafetyChecksOverlay from '@common/modules/sign-account-op/components/SafetyChecksOverlay'
 import SectionHeading from '@common/modules/sign-account-op/components/SectionHeading'
@@ -30,11 +31,11 @@ import {
   TabLayoutWrapperMainContent
 } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
 import { closeCurrentWindow } from '@web/extension-services/background/webapi/window'
-import ActionHeader from '@web/modules/action-requests/components/ActionHeader'
+import useDappVerificationHoldButtonType from '@web/hooks/useDappVerificationHoldButtonType'
 import Modals from '@web/modules/sign-account-op/components/Modals/Modals'
 
 const isCloseToBottom = ({ layoutMeasurement, contentOffset, contentSize }: NativeScrollEvent) => {
-  const paddingToBottom = 20
+  const paddingToBottom = 40
   return layoutMeasurement.height + contentOffset.y >= contentSize.height - paddingToBottom
 }
 
@@ -92,6 +93,9 @@ const SignAccountOpScreen = () => {
     isSignLoading,
     hasEstimation,
     warningModalRef,
+    gasFeeUpdatedModalRef,
+    handleAcceptGasFeeUpdate,
+    handleDismissGasFeeUpdate,
     handleChangeFeePayerKeyType,
     isChooseFeePayerKeyShown,
     setIsChooseFeePayerKeyShown,
@@ -102,7 +106,17 @@ const SignAccountOpScreen = () => {
     isSignDisabled,
     bundlerNonceDiscrepancy,
     primaryButtonText,
+    signButtonText,
+    extremeGasFeeSignButtonType,
     shouldHoldToProceed,
+    shouldDisplayQrSigningModal,
+    handleQrSingingFlowOnContinuePressed,
+    handleQrSigningFlowSubmitSignatureResponse,
+    handleQrSigningFlowOnClosePressed,
+    handleQrSigningFlowOnRejectPressed,
+    handleQrSigningFlowOnBackPressed,
+    currentRequest,
+    signingStep,
     disabledReason,
     showSafeSigners
   } = useSign({
@@ -165,20 +179,22 @@ const SignAccountOpScreen = () => {
   ])
 
   const estimationFailed = signAccountOpState?.status?.type === SigningStatus.EstimationError
+  const holdToProceedButtonType = useDappVerificationHoldButtonType(signAccountOpState?.banners)
 
   return (
     <SmallNotificationWindowWrapper>
       <SafetyChecksOverlay
         shouldBeVisible={
-          !signAccountOpState?.isInitialized ||
-          !signAccountOpState?.estimation.estimation ||
-          !!signAccountOpState.safetyChecksLoading
+          !signAccountOpState?.isInitialized || !!signAccountOpState.safetyChecksLoading
         }
       />
       <Modals
         renderedButNotNecessarilyVisibleModal={renderedButNotNecessarilyVisibleModal}
         signAccountOpState={signAccountOpState}
         warningModalRef={warningModalRef}
+        gasFeeUpdatedModalRef={gasFeeUpdatedModalRef}
+        handleAcceptGasFeeUpdate={handleAcceptGasFeeUpdate}
+        handleDismissGasFeeUpdate={handleDismissGasFeeUpdate}
         feePayerKeyType={feePayerKeyType}
         signingKeyType={signingKeyType}
         slowPaymasterRequest={slowPaymasterRequest}
@@ -187,6 +203,19 @@ const SignAccountOpScreen = () => {
         warningToPromptBeforeSign={warningToPromptBeforeSign}
         acknowledgeWarning={acknowledgeWarning}
         dismissWarning={dismissWarning}
+        currentRequest={currentRequest}
+        signingStep={signingStep}
+        shouldDisplayQrSigningModal={shouldDisplayQrSigningModal}
+        handleQrSingingFlowOnContinuePressed={handleQrSingingFlowOnContinuePressed}
+        handleQrSigningFlowSubmitSignatureResponse={handleQrSigningFlowSubmitSignatureResponse}
+        handleQrSigningFlowOnClosePressed={handleQrSigningFlowOnClosePressed}
+        handleQrSigningFlowOnRejectPressed={handleQrSigningFlowOnRejectPressed}
+        handleQrSigningFlowOnBackPressed={handleQrSigningFlowOnBackPressed}
+        autoOpen={
+          renderedButNotNecessarilyVisibleModal === 'gas-fee-updated'
+            ? 'gas-fee-updated'
+            : undefined
+        }
       />
       <TabLayoutContainer
         width="full"
@@ -201,7 +230,7 @@ const SignAccountOpScreen = () => {
                 {!estimationFailed &&
                 signAccountOpState?.canBroadcast &&
                 signAccountOpState?.status?.type !== SigningStatus.Queued ? (
-                  <View style={spacings.mbXl}>
+                  <View style={spacings.mb}>
                     <Estimation
                       signAccountOpState={signAccountOpState}
                       disabled={isSignLoading}
@@ -222,18 +251,17 @@ const SignAccountOpScreen = () => {
                   !signAccountOpState.canBroadcast &&
                   !!signAccountOpState.account.safeCreation &&
                   showSafeSigners && (
-                    <ScrollView style={[{ maxHeight: 140 }, spacings.mb]}>
-                      <SafeOwners
-                        account={signAccountOpState.account}
-                        onSign={handleChangeSigningKey}
-                        isSignLoading={isSignLoading}
-                        signingKeyAddr={signAccountOpState.accountOp.signingKeyAddr}
-                        chainId={signAccountOpState.accountOp.chainId.toString()}
-                        signed={signAccountOpState.accountOp.signed || []}
-                        importedKeys={signAccountOpState.accountKeyStoreKeys}
-                        threshold={signAccountOpState.threshold}
-                      />
-                    </ScrollView>
+                    <SafeOwners
+                      account={signAccountOpState.account}
+                      onSign={handleChangeSigningKey}
+                      isSignLoading={isSignLoading}
+                      signingKeyAddr={signAccountOpState.accountOp.signingKeyAddr}
+                      chainId={signAccountOpState.accountOp.chainId.toString()}
+                      signed={signAccountOpState.accountOp.signed || []}
+                      importedKeys={signAccountOpState.accountKeyStoreKeys}
+                      threshold={signAccountOpState.threshold}
+                      style={spacings.mb}
+                    />
                   )}
 
                 <Footer
@@ -252,8 +280,10 @@ const SignAccountOpScreen = () => {
                   isAddToCartDisabled={isAddToCartDisabled}
                   onSign={onSignButtonClick}
                   inProgressButtonText={primaryButtonText}
-                  buttonText={primaryButtonText}
+                  buttonText={signButtonText}
                   shouldHoldToProceed={shouldHoldToProceed}
+                  holdToProceedButtonType={holdToProceedButtonType}
+                  signButtonType={extremeGasFeeSignButtonType}
                 />
               </View>
             </GlassView>
@@ -304,7 +334,7 @@ const SignAccountOpScreen = () => {
             onContentSizeChange={(_, height) => {
               setContentHeight(height)
             }}
-            scrollEventThrottle={400}
+            scrollEventThrottle={16}
             style={contentHeight > containerHeight ? spacings.prMi : {}}
           >
             <PendingTransactions
@@ -312,23 +342,32 @@ const SignAccountOpScreen = () => {
               setDelegation={signAccountOpState?.accountOp.meta?.setDelegation}
               delegatedContract={signAccountOpState?.delegatedContract}
               hideDeleteIcon={!!signAccountOpState?.accountOp.signed?.length}
+              size="md"
             />
+
             {/* Display errors only if the user is not in view-only mode */}
             {signAccountOpState?.errors?.length && !isViewOnly ? (
               <ErrorInformation />
             ) : (
-              <Simulation
-                network={network}
-                isViewOnly={isViewOnly}
-                isEstimationComplete={!!signAccountOpState?.isInitialized && !!network}
-              />
+              <>
+                <Simulation
+                  network={network}
+                  isViewOnly={isViewOnly}
+                  isEstimationComplete={!!signAccountOpState?.isInitialized && !!network}
+                />
+                <SafeEip712Data
+                  accountAddr={signAccountOpState?.accountOp.accountAddr}
+                  chainId={signAccountOpState?.accountOp.chainId}
+                  safeEip712Data={signAccountOpState?.safeEip712Data}
+                />
+              </>
             )}
             {signAccountOpState?.hasSafeApiFailed && (
               <Alert
                 size="sm"
                 type="warning"
                 title={t('Safe API failure')}
-                text={t('Transaction was not sent to safe global due to a Safe API failure')}
+                text={t('Transaction was not sent to Safe Global due to a Safe API failure')}
                 style={spacings.mt}
               />
             )}

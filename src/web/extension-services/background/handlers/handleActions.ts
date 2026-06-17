@@ -1,6 +1,3 @@
-/* eslint-disable no-await-in-loop */
-/* eslint-disable no-param-reassign */
-/* eslint-disable @typescript-eslint/return-await */
 import { MainController } from '@ambire-common/controllers/main/main'
 import { IEventEmitterRegistryController } from '@ambire-common/interfaces/eventEmitter'
 import { KeyIterator } from '@ambire-common/libs/keyIterator/keyIterator'
@@ -10,6 +7,7 @@ import { browser } from '@web/constants/browserapi'
 import { Port, PortMessenger } from '@web/extension-services/messengers'
 import LatticeKeyIterator from '@web/modules/hardware-wallet/libs/latticeKeyIterator'
 import LedgerKeyIterator from '@web/modules/hardware-wallet/libs/ledgerKeyIterator'
+import QrKeyIterator from '@web/modules/hardware-wallet/libs/qrKeyIterator/qrKeyIterator'
 import TrezorKeyIterator from '@web/modules/hardware-wallet/libs/trezorKeyIterator'
 
 import sessionStorage from '../webapi/sessionStorage'
@@ -43,7 +41,7 @@ export const handleActions = async (
       }
 
       if (ctrl && typeof ctrl[method] === 'function') {
-        ctrl[method](...args)
+        await ctrl[method](...args)
       }
       break
     }
@@ -65,6 +63,14 @@ export const handleActions = async (
       })
       break
     }
+    case 'GET_ALL_CONTROLLER_NAMES': {
+      if (!pm || !port) return
+      pm.sendToPort(port, '> ui', {
+        method: 'allControllerNames',
+        params: { names: eventEmitterRegistry.values().map((c) => c.name) }
+      })
+      break
+    }
     case 'INIT_CONTROLLER_STATE': {
       if (!pm) return
 
@@ -82,6 +88,9 @@ export const handleActions = async (
     case 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_LATTICE': {
       return await mainCtrl.handleAccountPickerInitLattice(LatticeKeyIterator)
     }
+    case 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_QR_WALLET': {
+      return await mainCtrl.handleAccountPickerInitQr(QrKeyIterator, params.payload)
+    }
     case 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_FROM_SAVED_SEED_PHRASE': {
       const keystoreSavedSeed = await mainCtrl.keystore.getSavedSeed(params.id)
       if (!keystoreSavedSeed) return
@@ -97,10 +106,9 @@ export const handleActions = async (
     case 'RESET_ACCOUNT_ADDING_ON_PAGE_ERROR': {
       await mainCtrl.accountPicker.reset()
       const accounts = [...mainCtrl.accounts.accounts]
-      // eslint-disable-next-line no-restricted-syntax
+
       for (const account of accounts) {
         if (account.newlyAdded) {
-          // eslint-disable-next-line no-await-in-loop
           await mainCtrl.removeAccount(account.addr)
         }
       }
@@ -156,9 +164,20 @@ export const handleActions = async (
     }
 
     case 'DAPPS_CONTROLLER_DISCONNECT_DAPP': {
-      await mainCtrl.dapps.broadcastDappSessionEvent('disconnect', undefined, params.id)
-      mainCtrl.dapps.updateDapp(params.id, { isConnected: false })
-      await mainCtrl.autoLogin.revokeAllPoliciesForDomain(params.id, params.url)
+      if (params.source) {
+        await mainCtrl.dapps.disconnectDappSource(params.id, params.source)
+      } else {
+        await mainCtrl.dapps.broadcastDappSessionEvent('disconnect', undefined, params.id)
+        mainCtrl.dapps.updateDapp(params.id, {
+          connectedSources: [],
+          isConnected: false
+        })
+      }
+
+      const stillConnected = mainCtrl.dapps.hasPermission(params.id)
+      if (!stillConnected) {
+        await mainCtrl.autoLogin.revokeAllPoliciesForDomain(params.id, params.url)
+      }
 
       break
     }
@@ -178,7 +197,6 @@ export const handleActions = async (
     case 'OPEN_EXTENSION_POPUP': {
       if (!pm) return
 
-      // eslint-disable-next-line no-inner-declarations
       async function waitForPopupOpen(timeout = 10000, interval = 100) {
         const startTime = Date.now()
         while (!pm!.ports.some((p) => p.name === 'popup')) {
@@ -208,7 +226,6 @@ export const handleActions = async (
     }
 
     default:
-      // eslint-disable-next-line no-console
       return console.error(
         `Dispatched ${type} action, but handler in the extension background process not found!`
       )

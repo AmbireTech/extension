@@ -1,9 +1,9 @@
-/* eslint-disable no-param-reassign */
-/* eslint-disable no-console */
-/* eslint-disable no-await-in-loop */
-/* eslint-disable no-restricted-syntax */
-/* eslint-disable @typescript-eslint/no-use-before-define */
-/* eslint-disable @typescript-eslint/no-shadow */
+// We include `setImmediate` because ethers / viem cryptographic operations
+// (e.g. scrypt keystore unlock) rely on it for fast cooperative scheduling —
+// without it they fall back to slower timers and performance drops significantly.
+//
+// It is imported in background for development builds, and injected via Webpack
+// plugin for production where LavaMoat + SES isolate modules and harden intrinsics.
 import 'setimmediate'
 
 import { nanoid } from 'nanoid'
@@ -25,22 +25,26 @@ import { parse, stringify } from '@ambire-common/libs/richJson/richJson'
 import wait from '@ambire-common/utils/wait'
 import CONFIG, { APP_VERSION, isAmbireNext, isDev, isProd } from '@common/config/env'
 import { controllersNestedInMainMapping } from '@common/constants/controllersMapping'
+import { AutoLockController } from '@common/controllers/auto-lock'
+import { WalletStateController } from '@common/controllers/wallet-state'
+import handleProviderRequests from '@common/modules/provider/handleProviderRequests'
 import { storage } from '@common/services/storage'
 import { Action, MethodAction } from '@common/types/actions'
+import { LOG_LEVELS, logInfoWithPrefix } from '@common/utils/logger'
 import {
   BROWSER_EXTENSION_LOG_UPDATED_CONTROLLER_STATE_ONLY,
   BROWSER_EXTENSION_MEMORY_INTENSIVE_LOGS,
   BUNGEE_API_KEY,
   LI_FI_API_KEY,
   RELAYER_URL,
+  SQUID_INTEGRATOR_ID,
+  UNISWAP_API_KEY,
   VELCRO_URL
 } from '@env'
 import * as Sentry from '@sentry/browser'
 import { browser, platform } from '@web/constants/browserapi'
-import AutoLockController from '@web/extension-services/background/controllers/auto-lock'
 import { BadgesController } from '@web/extension-services/background/controllers/badges'
 import ExtensionUpdateController from '@web/extension-services/background/controllers/extension-update'
-import { WalletStateController } from '@web/extension-services/background/controllers/wallet-state'
 import { handleActions } from '@web/extension-services/background/handlers/handleActions'
 import { handleCleanUpOnPortDisconnect } from '@web/extension-services/background/handlers/handleCleanUpOnPortDisconnect'
 import { handleKeepAlive } from '@web/extension-services/background/handlers/handleKeepAlive'
@@ -48,8 +52,6 @@ import {
   handleKeepBridgeContentScriptAcrossSessions,
   handleRegisterScripts
 } from '@web/extension-services/background/handlers/handleScripting'
-import handleProviderRequests from '@web/extension-services/background/provider/handleProviderRequests'
-import { providerRequestTransport } from '@web/extension-services/background/provider/providerRequestTransport'
 import { notificationManager } from '@web/extension-services/background/webapi/notification'
 import windowManager from '@web/extension-services/background/webapi/window'
 import {
@@ -60,12 +62,15 @@ import {
 } from '@web/extension-services/messengers'
 import LatticeController from '@web/modules/hardware-wallet/controllers/LatticeController'
 import LedgerController from '@web/modules/hardware-wallet/controllers/LedgerController'
+import QrHardwareController from '@web/modules/hardware-wallet/controllers/QrHardwareController/QrHardwareController'
 import TrezorController from '@web/modules/hardware-wallet/controllers/TrezorController'
 import LatticeSigner from '@web/modules/hardware-wallet/libs/LatticeSigner'
 import LedgerSigner from '@web/modules/hardware-wallet/libs/LedgerSigner'
 import TrezorSigner from '@web/modules/hardware-wallet/libs/TrezorSigner'
+import UrQrProtocolAdapter from '@web/modules/hardware-wallet/qr/protocol/UrQrProtocolAdapter'
+import QrHardwareSigner from '@web/modules/hardware-wallet/signers/QrHardwareSigner'
+import { providerRequestTransport } from '@web/modules/provider/providerRequestTransport'
 import { getExtensionInstanceId } from '@web/utils/analytics'
-import { LOG_LEVELS, logInfoWithPrefix } from '@web/utils/logger'
 
 import {
   captureBackgroundException,
@@ -279,14 +284,15 @@ providerRequestTransport.reply(async ({ method, id, providerId, params }, meta) 
   mainCtrl.dapps.setSessionMessenger(session.sessionId, bridgeMessenger, isAmbireNext)
 
   try {
-    const res = await handleProviderRequests(
-      { method, params, session },
+    const res = await handleProviderRequests({
+      request: { method, params, session },
       mainCtrl,
       walletStateCtrl,
       autoLockCtrl,
-      id,
-      providerId
-    )
+      requestId: id,
+      providerId,
+      notificationManager
+    })
 
     return { id, result: res }
   } catch (error: any) {
@@ -351,7 +357,6 @@ const init = async () => {
         return fetch(url, init)
       }
     } catch (error) {
-      // eslint-disable-next-line no-console
       console.error(error)
       // If URL parsing fails, skip analytics for safety
       // @ts-ignore
@@ -359,7 +364,13 @@ const init = async () => {
     }
 
     // As of v4.26.0, custom extension-specific headers. TBD for the other apps.
-    const initWithCustomHeaders = init || { headers: { 'x-app-source': '', 'x-app-version': '' } }
+    const initWithCustomHeaders = init || {
+      headers: {
+        'x-app-source': '',
+        'x-app-version': '',
+        'x-app-env': isAmbireNext ? 'next' : isDev ? 'dev' : 'prod'
+      }
+    }
     initWithCustomHeaders.headers = initWithCustomHeaders.headers || {}
 
     // if the fetch method is called while the keystore is constructing the keyStoreUid won't be defined yet
@@ -408,7 +419,6 @@ const init = async () => {
 
       urlObj.searchParams.append('panVal', JSON.stringify({ a: currentAccount.addr, b: balance }))
 
-      // eslint-disable-next-line no-param-reassign
       url = decodeURIComponent(urlObj.toString())
     }
 
@@ -424,7 +434,7 @@ const init = async () => {
       const hasOnUpdateInitialized = ctrl.onUpdateIds.includes('background')
       if (!hasOnUpdateInitialized) {
         ctrl.onUpdate(async (forceEmit) => {
-          const res = debounceFrontEndEventUpdatesOnSameTick(ctrl.name, ctrl, mainCtrl, forceEmit)
+          const res = debounceFrontEndEventUpdatesOnSameTick(ctrl.name, mainCtrl, forceEmit)
           if (res === 'DEBOUNCED') return
 
           if (ctrl.name === 'KeystoreController') {
@@ -465,6 +475,8 @@ const init = async () => {
 
       if (!hasOnErrorInitialized) {
         ctrl.onError((error) => {
+          if (!ctrl.isInRegistry()) return
+
           stateDebug(walletStateCtrl.logLevel, ctrl, ctrl.name, 'error')
           pm.send('> ui-error', {
             method: ctrl.name,
@@ -476,6 +488,8 @@ const init = async () => {
     })
   })
 
+  const qrCtrl = new QrHardwareController(new UrQrProtocolAdapter(), eventEmitterRegistry)
+
   mainCtrl = new MainController({
     eventEmitterRegistry,
     appVersion: APP_VERSION,
@@ -486,18 +500,22 @@ const init = async () => {
     velcroUrl: VELCRO_URL,
     liFiApiKey: LI_FI_API_KEY,
     bungeeApiKey: BUNGEE_API_KEY,
+    squidIntegratorId: SQUID_INTEGRATOR_ID,
+    uniswapApiKey: UNISWAP_API_KEY,
     featureFlags: {},
     keystoreSigners: {
       internal: KeystoreSigner,
       // TODO: there is a mismatch in hw signer types, it's not a big deal
       ledger: LedgerSigner,
       trezor: TrezorSigner,
-      lattice: LatticeSigner
+      lattice: LatticeSigner,
+      qr: QrHardwareSigner
     } as any,
     externalSignerControllers: {
       ledger: ledgerCtrl,
       trezor: trezorCtrl,
-      lattice: latticeCtrl
+      lattice: latticeCtrl,
+      qr: qrCtrl
     } as any,
     uiManager: {
       window: {
@@ -567,13 +585,16 @@ const init = async () => {
 
   function debounceFrontEndEventUpdatesOnSameTick(
     ctrlName: string,
-    ctrl: EventEmitter,
-    mainCtrl: EventEmitter | undefined,
+    mainCtrl: MainController | EventEmitter | undefined,
     forceEmit?: boolean
   ): 'DEBOUNCED' | 'EMITTED' {
     const sendUpdate = () => {
+      // Paused dynamic controllers may finish async work after being replaced.
+      const registeredCtrl = eventEmitterRegistry.values().find((ctrl) => ctrl.name === ctrlName)
+      if (!registeredCtrl) return
+
       // Controller updates
-      const stateToSendToFE = ctrl.toJSON()
+      const stateToSendToFE = registeredCtrl.toJSON()
 
       if (ctrlName === 'MainController') {
         // We are removing the state of the nested controllers in main to avoid the CPU-intensive task of parsing + stringifying.
@@ -642,9 +663,8 @@ const init = async () => {
   browser.runtime.onConnect.addListener(async (port: Port) => {
     const [name, id] = port.name.split(':') as [Port['name'], Port['id']]
     if (['popup', 'tab', 'request-window'].includes(name)) {
-      // eslint-disable-next-line no-param-reassign
       port.id = id || nanoid()
-      // eslint-disable-next-line no-param-reassign
+
       port.name = name
       pm.addOrUpdatePort(port, () => {
         mainCtrl.ui.addView({ id: port.id, type: port.name })
@@ -709,6 +729,7 @@ const init = async () => {
             // eslint-disable-next-line @typescript-eslint/no-floating-promises
             ledgerCtrl.cleanUp()
             trezorCtrl.cleanUp()
+            qrCtrl.signingCleanup()
           }
         })
       })
@@ -786,7 +807,7 @@ try {
     while (!mainCtrl) await wait(200)
 
     const sessionKeys = Object.keys(mainCtrl.dapps.dappSessions || {})
-    // eslint-disable-next-line no-restricted-syntax
+
     for (const key of sessionKeys.filter((k) => k.startsWith(`${tabId}-`))) {
       mainCtrl.dapps.deleteDappSession(key)
     }
@@ -801,3 +822,22 @@ try {
 // evaluation of worker script. More info: https://developer.chrome.com/docs/extensions/mv3/service_workers/events/
 // Would be tricky to replace this workaround with different logic, but it's doable.
 if ('hid' in navigator) navigator.hid.addEventListener('disconnect', () => {})
+
+// Reset the dashboard network filter when the user's computer wakes up or unlocks.
+// This prevents the confusing situation where the user returns to find only one network's
+// assets displayed because they had filtered before putting the computer to sleep.
+try {
+  browser.idle.onStateChanged.addListener((newState: chrome.idle.IdleState) => {
+    if (newState !== 'active') return
+    if (!mainCtrl || !mainCtrl.selectedAccount.account) {
+      console.error(
+        'Idle state changed to active but mainCtrl or selected account is not initialized',
+        mainCtrl
+      )
+      return
+    }
+    mainCtrl.selectedAccount.setDashboardNetworkFilter(null)
+  })
+} catch (error) {
+  console.error('Failed to register browser.idle.onStateChanged listener', error)
+}

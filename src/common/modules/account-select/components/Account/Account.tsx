@@ -4,6 +4,7 @@ import { View, ViewStyle } from 'react-native'
 
 import { Account as AccountInterface } from '@ambire-common/interfaces/account'
 import { canBecomeSmarter } from '@ambire-common/libs/account/account'
+import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
 import CopyIcon from '@common/assets/svg/CopyIcon'
 import AccountAddress from '@common/components/AccountAddress'
 import { ReceiveButton } from '@common/components/AccountAddress/AccountAddress'
@@ -38,7 +39,8 @@ const Account = ({
     withOptionsButton: false
   },
   containerStyle,
-  withReceive = false
+  withReceive = false,
+  withCopy = true
 }: {
   account: AccountInterface
   onSelect?: (addr: string) => void
@@ -57,6 +59,7 @@ const Account = ({
   }
   containerStyle?: ViewStyle
   withReceive?: boolean
+  withCopy?: boolean
 }) => {
   const { addr, preferences } = account
   const { t } = useTranslation()
@@ -67,19 +70,19 @@ const Account = ({
     dispatch: mainDispatch
   } = useController('MainController')
   const {
-    state: { account: selectedAccount }
+    state: { account: selectedAccount, balanceByAccounts }
   } = useController('SelectedAccountController')
   const { dispatch: accountsDispatch } = useController('AccountsController')
-  const { ens, isLoading } = useReverseLookup({ address: addr })
+  const { name, type, isLoading } = useReverseLookup({ address: addr })
   const { keys } = useController('KeystoreController').state
   const [bindAnim, animStyle] = useCustomHover({
     property: 'backgroundColor',
     values: {
       from: !inverseInteractionColors ? theme.primaryBackground : theme.secondaryBackground,
       to: !inverseInteractionColors ? theme.secondaryBackground : theme.primaryBackground
-    },
-    forceHoveredStyle: options.markSelected && addr === selectedAccount?.addr
+    }
   })
+  const balance = balanceByAccounts[account.addr] ?? null
 
   const [bindOpacityAnim, opacityAnimStyle] = useHover({
     preset: 'opacityInverted'
@@ -151,7 +154,7 @@ const Account = ({
     ]
     const submenuOptions7702 = [{ label: 'Smart settings', value: 'toSmarter' }]
 
-    return add7702Option ? [...submenuOptions7702, ...submenuOptions] : submenuOptions
+    return add7702Option && isWeb ? [...submenuOptions7702, ...submenuOptions] : submenuOptions
   }, [account, getAccKeys, options.withOptionsButton, theme.errorDecorative])
 
   const handleCopy = async () => {
@@ -173,7 +176,14 @@ const Account = ({
         styles.accountContainer,
         containerStyle,
         // @ts-ignore
-        isSelectable ? animStyle : { cursor: 'default' }
+        isSelectable ? animStyle : { cursor: 'default' },
+        isSelectable &&
+          options.markSelected &&
+          addr === selectedAccount?.addr && {
+            backgroundColor: !inverseInteractionColors
+              ? theme.secondaryBackground
+              : theme.primaryBackground
+          }
       ]}
     >
       <View style={[flexbox.flex1, flexbox.directionRow]}>
@@ -184,19 +194,19 @@ const Account = ({
           showTooltip
         />
         <View style={flexbox.flex1}>
-          <View style={[flexbox.flex1, flexbox.directionRow, flexbox.alignCenter]}>
+          <View style={[flexbox.flex1, flexbox.directionRow, flexbox.alignCenter, spacings.mrTy]}>
             {!withSettings ? (
               <>
                 <Text
                   fontSize={withSettings ? 16 : 14}
                   weight="medium"
                   numberOfLines={1}
-                  style={!withSettings ? { maxWidth: 200 } : {}}
+                  style={{ flexShrink: 1 }}
                 >
                   {account.preferences.label}
                 </Text>
                 {!!withKeyType && (
-                  <View style={[spacings.mlMi]}>
+                  <View style={[isWeb && spacings.mlMi]}>
                     <AccountKeyIcons isExtended account={account} />
                   </View>
                 )}
@@ -229,22 +239,39 @@ const Account = ({
             <AccountAddress
               containerStyle={spacings.pb0}
               isLoading={isLoading}
-              ens={ens}
+              name={name}
+              type={type}
               address={addr}
               plainAddressMaxLength={maxAccountAddrLength}
-              withCopy={isWeb}
-              withReceive={isWeb ? withReceive : false}
+              withCopy={isWeb && withCopy}
+              withReceive={isWeb && withReceive}
             />
           </View>
         </View>
       </View>
-      <View style={[flexbox.directionRow, flexbox.alignCenter]}>
+      <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mlTy]}>
+        {balance !== null && !withSettings && (
+          <Text
+            fontSize={14}
+            weight="semiBold"
+            color={theme.secondaryText}
+            style={[
+              isMobile || renderRightChildren ? spacings.mrTy : {},
+              isMobile || renderRightChildren ? flexbox.alignSelfCenter : flexbox.alignSelfStart,
+              { textAlign: 'right' }
+            ]}
+          >
+            {formatDecimals(balance, 'value')}
+          </Text>
+        )}
         {renderRightChildren && renderRightChildren()}
         {isMobile && (
           <>
-            <AnimatedPressable onPress={handleCopy} style={opacityAnimStyle} {...bindOpacityAnim}>
-              <CopyIcon width={32} height={32} strokeWidth="1" />
-            </AnimatedPressable>
+            {withCopy && (
+              <AnimatedPressable onPress={handleCopy} style={opacityAnimStyle} {...bindOpacityAnim}>
+                <CopyIcon width={32} height={32} strokeWidth="1" />
+              </AnimatedPressable>
+            )}
             {withReceive && <ReceiveButton address={addr} fontSize={24} />}
           </>
         )}

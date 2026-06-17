@@ -1,12 +1,13 @@
 import React from 'react'
 import { ColorValue } from 'react-native'
 
-import LatticeIcon from '@common/assets/svg/LatticeIcon'
-import LedgerLetterIcon from '@common/assets/svg/LedgerLetterIcon'
+import GridPlusIcon from '@common/assets/svg/GridPlusIcon'
+import LedgerBadgeIcon from '@common/assets/svg/LedgerBadgeIcon'
 import NoKeysIcon from '@common/assets/svg/NoKeysIcon'
+import ReceiveIcon from '@common/assets/svg/ReceiveIcon'
 import SafeIcon from '@common/assets/svg/SafeIcon'
 import SingleKeyIcon from '@common/assets/svg/SingleKeyIcon'
-import TrezorLockIcon from '@common/assets/svg/TrezorLockIcon'
+import TrezorBadgeIcon from '@common/assets/svg/TrezorBadgeIcon'
 import { KeyType } from '@common/components/AccountKeyIcons/AccountKeyIcons'
 
 const AccountKeyIcon = ({
@@ -24,11 +25,12 @@ const AccountKeyIcon = ({
     height: iconSize
   }
 
-  if (type === 'lattice') return <LatticeIcon {...props} />
-  if (type === 'trezor') return <TrezorLockIcon {...props} />
-  if (type === 'ledger') return <LedgerLetterIcon {...props} />
+  if (type === 'lattice') return <GridPlusIcon {...props} />
+  if (type === 'trezor') return <TrezorBadgeIcon {...props} />
+  if (type === 'ledger') return <LedgerBadgeIcon {...props} />
   if (type === 'none') return <NoKeysIcon {...props} />
-  if (type === 'safe') return <SafeIcon {...props} />
+  if (type === 'safe') return <SafeIcon width={iconSize} height={iconSize} />
+  if (type === 'qr') return <ReceiveIcon {...props} />
 
   return <SingleKeyIcon {...props} />
 }

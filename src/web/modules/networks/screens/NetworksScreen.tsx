@@ -15,17 +15,16 @@ import useController from '@common/hooks/useController'
 import useNavigation from '@common/hooks/useNavigation/useNavigation.web'
 import useToast from '@common/hooks/useToast'
 import { HeaderWithTitle } from '@common/modules/header/components/Header/Header'
+import AddNetworkBottomSheet from '@common/modules/networks/components/AddNetworkBottomSheet'
+import AllNetworksOption from '@common/modules/networks/components/AllNetworksOption/AllNetworksOption'
+import NetworkBottomSheet, {
+  NO_BLOCK_EXPLORER_AVAILABLE_TOOLTIP
+} from '@common/modules/networks/components/NetworkBottomSheet'
+import Networks from '@common/modules/networks/components/Networks'
 import { WEB_ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { openInTab } from '@common/utils/links'
-import Networks from '@web/modules/networks/components/Networks'
-
-import AddNetworkBottomSheet from '../components/AddNetworkBottomSheet'
-import AllNetworksOption from '../components/AllNetworksOption/AllNetworksOption'
-import NetworkBottomSheet, {
-  NO_BLOCK_EXPLORER_AVAILABLE_TOOLTIP
-} from '../components/NetworkBottomSheet'
 
 const NetworksScreen = () => {
   const { t } = useTranslation()

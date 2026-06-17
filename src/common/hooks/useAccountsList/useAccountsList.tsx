@@ -6,9 +6,12 @@ import { FlatList } from 'react-native'
 import { Account as AccountType } from '@ambire-common/interfaces/account'
 import { isSmartAccount } from '@ambire-common/libs/account/account'
 import useController from '@common/hooks/useController'
+import {
+  ACCOUNT_SELECT_ACCOUNT_HEIGHT,
+  ACCOUNT_SELECT_ACCOUNT_MB
+} from '@common/modules/account-select/components/Account/styles'
 
-const ITEM_HEIGHT = 68
-
+const ITEM_HEIGHT = ACCOUNT_SELECT_ACCOUNT_HEIGHT + ACCOUNT_SELECT_ACCOUNT_MB
 const useAccountsList = ({
   flatlistRef
 }: {
@@ -26,6 +29,7 @@ const useAccountsList = ({
     state: { domains }
   } = useController('DomainsController')
   const { accounts } = useController('AccountsController').state
+  const { keys } = useController('KeystoreController').state
   const {
     state: { account: selectedAccount }
   } = useController('SelectedAccountController')
@@ -36,11 +40,16 @@ const useAccountsList = ({
       accounts.map((account) => ({
         account,
         label: account.preferences.label.toLowerCase(),
-        domain: domains[account.addr]?.ens?.toLowerCase().trim() || '',
+        keyLabels: keys
+          .filter((key) => account.associatedKeys.includes(key.addr))
+          .map((key) => `${key.label} ${key.type}`.toLowerCase())
+          .join(' '),
+        ens: domains[account.addr]?.ens?.toLowerCase().trim() || '',
+        namoshi: domains[account.addr]?.namoshi?.toLowerCase().trim() || '',
         address: account.addr.toLowerCase(),
         smart: isSmartAccount(account) ? 'smart' : ''
       })),
-    [accounts, domains]
+    [accounts, domains, keys]
   )
 
   const filteredAccounts = useMemo(() => {
@@ -49,8 +58,10 @@ const useAccountsList = ({
     const fuse = new Fuse(searchableAccounts, {
       keys: [
         { name: 'label', weight: 0.5 },
-        { name: 'domain', weight: 0.3 },
+        { name: 'ens', weight: 0.3 },
+        { name: 'namoshi', weight: 0.3 },
         { name: 'address', weight: 0.1 },
+        { name: 'keyLabels', weight: 0.2 },
         { name: 'smart', weight: 0.1 }
       ],
       threshold: 0.3,
@@ -92,7 +103,7 @@ const useAccountsList = ({
       offset: ITEM_HEIGHT * index,
       index
     }),
-    [ITEM_HEIGHT]
+    []
   )
 
   // Scrolls to the selected account in the FlatList.
@@ -122,7 +133,7 @@ const useAccountsList = ({
         timeoutRef.current = setTimeout(() => scrollToSelectedAccount(attempt + 1), 100)
       }
     },
-    [ITEM_HEIGHT, accounts.length, flatlistRef, shouldDisplayAccounts, selectedAccountIndex]
+    [accounts.length, flatlistRef, shouldDisplayAccounts, selectedAccountIndex]
   )
 
   useEffect(() => {

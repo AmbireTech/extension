@@ -1,27 +1,40 @@
-import { FC } from 'react'
+import { FC, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import BottomSheet from '@common/components/BottomSheet'
 import DualChoiceWarningModal from '@common/components/DualChoiceWarningModal'
 import useController from '@common/hooks/useController'
+import GasFeeUpdatedModal from '@common/modules/sign-account-op/components/GasFeeUpdatedModal/GasFeeUpdatedModal'
 import SignAccountOpHardwareWalletSigningModal from '@common/modules/sign-account-op/components/SignAccountOpHardwareWalletSigningModal'
 import { ModalsProps } from '@common/modules/sign-account-op/types/modals'
 import spacings from '@common/styles/spacings'
 import text from '@common/styles/utils/text'
 import { getUiType } from '@common/utils/uiType'
 import LedgerConnectModal from '@web/modules/hardware-wallet/components/LedgerConnectModal'
+import QrSigningFlowScreen from '@web/modules/hardware-wallet/screens/QrSigningFlowScreen'
 
-const { isTab } = getUiType()
+const { isTab, isRequestWindow } = getUiType()
 
 const Modals: FC<ModalsProps> = ({
   renderedButNotNecessarilyVisibleModal,
   signAccountOpState,
   warningModalRef,
+  gasFeeUpdatedModalRef,
+  handleAcceptGasFeeUpdate,
+  handleDismissGasFeeUpdate,
   feePayerKeyType,
   signingKeyType,
   slowPaymasterRequest,
   shouldDisplayLedgerConnectModal,
   handleDismissLedgerConnectModal,
+  shouldDisplayQrSigningModal,
+  handleQrSingingFlowOnContinuePressed,
+  handleQrSigningFlowSubmitSignatureResponse,
+  handleQrSigningFlowOnClosePressed,
+  handleQrSigningFlowOnRejectPressed,
+  handleQrSigningFlowOnBackPressed,
+  currentRequest,
+  signingStep,
   warningToPromptBeforeSign,
   acknowledgeWarning,
   dismissWarning,
@@ -39,6 +52,22 @@ const Modals: FC<ModalsProps> = ({
   } = useController('TransferController')
   const { state: currentSignAccountOp, dispatch: signAccountOpDispatch } =
     useController('SignAccountOpController')
+  const transactionProgress = useMemo(() => {
+    const totalTransactions = signAccountOpState?.accountOp?.calls?.length || 0
+    const signedTransactionsCount = signAccountOpState?.signedTransactionsCount
+
+    if (
+      totalTransactions <= 1 ||
+      typeof signedTransactionsCount !== 'number' ||
+      signedTransactionsCount < 0
+    )
+      return null
+
+    return {
+      current: Math.min(signedTransactionsCount, totalTransactions),
+      total: totalTransactions
+    }
+  }, [signAccountOpState?.accountOp?.calls?.length, signAccountOpState?.signedTransactionsCount])
 
   if (renderedButNotNecessarilyVisibleModal === 'warnings') {
     return (
@@ -46,7 +75,7 @@ const Modals: FC<ModalsProps> = ({
         id="warning-modal"
         closeBottomSheet={!slowPaymasterRequest ? dismissWarning : undefined}
         sheetRef={warningModalRef}
-        type={isTab ? 'modal' : 'bottom-sheet'}
+        type={isTab || isRequestWindow ? 'modal' : 'bottom-sheet'}
         withBackdropBlur={false}
         shouldBeClosableOnDrag={false}
         autoOpen={autoOpen === 'warnings'}
@@ -85,12 +114,49 @@ const Modals: FC<ModalsProps> = ({
     )
   }
 
+  if (renderedButNotNecessarilyVisibleModal === 'gas-fee-updated' && signAccountOpState) {
+    return (
+      <BottomSheet
+        id="gas-fee-updated-modal"
+        closeBottomSheet={handleDismissGasFeeUpdate}
+        sheetRef={gasFeeUpdatedModalRef}
+        type={isTab || isRequestWindow ? 'modal' : 'bottom-sheet'}
+        withBackdropBlur={false}
+        shouldBeClosableOnDrag={false}
+        autoOpen={autoOpen === 'gas-fee-updated'}
+      >
+        <GasFeeUpdatedModal
+          signAccountOpState={signAccountOpState}
+          onAccept={handleAcceptGasFeeUpdate}
+          onCancel={handleDismissGasFeeUpdate}
+        />
+      </BottomSheet>
+    )
+  }
+
   if (renderedButNotNecessarilyVisibleModal === 'ledger-connect') {
     return (
       <LedgerConnectModal
         isVisible={shouldDisplayLedgerConnectModal}
         handleClose={handleDismissLedgerConnectModal}
         displayOptionToAuthorize={false}
+      />
+    )
+  }
+
+  if (renderedButNotNecessarilyVisibleModal === 'qr-sign' && currentRequest && signingStep) {
+    return (
+      <QrSigningFlowScreen
+        handleClose={handleQrSigningFlowOnClosePressed}
+        isVisible={shouldDisplayQrSigningModal}
+        onContinue={handleQrSingingFlowOnContinuePressed}
+        currentRequest={currentRequest}
+        signingStep={signingStep}
+        signingRequest={signAccountOpState?.hardwareWalletSigningRequest}
+        transactionProgress={transactionProgress}
+        submitSignatureResponse={handleQrSigningFlowSubmitSignatureResponse}
+        onReject={handleQrSigningFlowOnRejectPressed}
+        handleQrSigningFlowOnBackPressed={handleQrSigningFlowOnBackPressed}
       />
     )
   }
@@ -113,6 +179,7 @@ const Modals: FC<ModalsProps> = ({
         signAccountOpStatusType={signAccountOpState.status?.type}
         shouldSignAuth={signAccountOpState.shouldSignAuth}
         signedTransactionsCount={signAccountOpState.signedTransactionsCount}
+        hardwareWalletSigningRequest={signAccountOpState.hardwareWalletSigningRequest}
         accountOp={signAccountOpState.accountOp}
         actionType={actionType}
         cancelReq={() => {

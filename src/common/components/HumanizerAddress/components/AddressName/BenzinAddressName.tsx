@@ -1,20 +1,30 @@
-/* eslint-disable no-console */
 import React, { FC, useEffect, useMemo } from 'react'
+import { View } from 'react-native'
 
 import Spinner from '@common/components/Spinner'
 import { Props as TextProps } from '@common/components/Text'
 import useController from '@common/hooks/useController'
 import useReverseLookup from '@common/hooks/useReverseLookup'
+import flexbox from '@common/styles/utils/flexbox'
 
 import BaseAddress from '../BaseAddress'
+import InlineAddressAvatar from './InlineAddressAvatar'
 
 interface Props extends TextProps {
   address: string
   chainId: bigint
+  actionsMode?: 'tooltip' | 'inline'
+  fallbackLabel?: string
 }
 
-const BenzinAddressName: FC<Props> = ({ address, chainId, ...rest }) => {
-  const { isLoading: isLoadingEns, ens } = useReverseLookup({ address })
+const BenzinAddressName: FC<Props> = ({
+  address,
+  chainId,
+  actionsMode = 'tooltip',
+  fallbackLabel,
+  ...rest
+}) => {
+  const { isLoading: isLoadingEns, name } = useReverseLookup({ address })
 
   const {
     state: { contractNames },
@@ -36,7 +46,7 @@ const BenzinAddressName: FC<Props> = ({ address, chainId, ...rest }) => {
     return name
   }, [contractNames, address])
 
-  if (isLoadingEns)
+  if (isLoadingEns && !fallbackLabel)
     return (
       <Spinner
         style={{
@@ -46,10 +56,21 @@ const BenzinAddressName: FC<Props> = ({ address, chainId, ...rest }) => {
       />
     )
 
+  const shouldShowInlineAvatar = actionsMode === 'inline'
+
   return (
-    <BaseAddress address={address} {...rest}>
-      {ens || foundContractName || address}
-    </BaseAddress>
+    <View style={[flexbox.directionRow, flexbox.alignCenter, { maxWidth: '100%' }]}>
+      <InlineAddressAvatar address={address} shouldShow={shouldShowInlineAvatar} />
+      <BaseAddress
+        address={address}
+        isDisplayingPlainAddress={!name && !fallbackLabel && !foundContractName}
+        chainId={chainId}
+        actionsMode={actionsMode}
+        {...rest}
+      >
+        {name || fallbackLabel || foundContractName || address}
+      </BaseAddress>
+    </View>
   )
 }
 

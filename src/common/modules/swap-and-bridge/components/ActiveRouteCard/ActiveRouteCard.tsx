@@ -4,13 +4,14 @@ import { useTranslation } from 'react-i18next'
 import { Pressable, View } from 'react-native'
 
 import { SwapAndBridgeActiveRoute } from '@ambire-common/interfaces/swapAndBridge'
-import { isTxnBridge } from '@ambire-common/libs/swapAndBridge/swapAndBridge'
+import { getIsBridgeRoute, isTxnBridge } from '@ambire-common/libs/swapAndBridge/swapAndBridge'
 import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
 import CloseIcon from '@common/assets/svg/CloseIcon'
 import Button from '@common/components/Button'
 import Panel from '@common/components/Panel'
 import Spinner from '@common/components/Spinner'
 import Text from '@common/components/Text'
+import { isMobile } from '@common/config/env'
 import useController from '@common/hooks/useController'
 import useNavigation from '@common/hooks/useNavigation'
 import useTheme from '@common/hooks/useTheme'
@@ -45,6 +46,7 @@ const ActiveRouteCard = ({ activeRoute }: { activeRoute: SwapAndBridgeActiveRout
   }, [activeRoute.route?.currentUserTxIndex, activeRoute.route?.userTxs, activeRoute.routeStatus])
 
   const { steps } = activeRoute.route || {}
+  const isBridgeRoute = !!activeRoute.route && getIsBridgeRoute(activeRoute.route)
   const inputValueInUsd = activeRoute.route?.inputValueInUsd
   const outputValueInUsd = activeRoute.route?.outputValueInUsd
 
@@ -117,7 +119,12 @@ const ActiveRouteCard = ({ activeRoute }: { activeRoute: SwapAndBridgeActiveRout
           <CloseIcon />
         </Pressable>
       )}
-      <Text appearance="secondaryText" fontSize={14} weight="medium" style={spacings.mbMi}>
+      <Text
+        appearance="secondaryText"
+        fontSize={14}
+        weight="medium"
+        style={isMobile ? spacings.mbSm : spacings.mbMi}
+      >
         {t(routeText)}
       </Text>
       <View
@@ -141,9 +148,7 @@ const ActiveRouteCard = ({ activeRoute }: { activeRoute: SwapAndBridgeActiveRout
           providerId={
             activeRoute.route ? activeRoute.route.providerId : activeRoute.serviceProviderId
           }
-          isBridge={
-            !!activeRoute.route && activeRoute.route.fromChainId !== activeRoute.route.toChainId
-          }
+          isBridge={isBridgeRoute}
         />
       </View>
 
@@ -151,47 +156,38 @@ const ActiveRouteCard = ({ activeRoute }: { activeRoute: SwapAndBridgeActiveRout
         <View style={[spacings.ptSm, flexbox.directionRow, flexbox.alignCenter]}>
           {!activeRoute.error && (
             <View style={[flexbox.directionRow, flexbox.flex1, flexbox.alignCenter]}>
-              {activeRoute.routeStatus === 'in-progress' &&
-                activeTransaction &&
-                isTxnBridge(activeTransaction) && (
-                  <>
-                    <Text
-                      fontSize={12}
-                      weight="medium"
-                      style={spacings.mrMi}
-                      appearance="secondaryText"
-                    >
-                      {t('Estimated bridge time:')}
-                    </Text>
+              {activeRoute.routeStatus === 'in-progress' && activeTransaction && isBridgeRoute && (
+                <>
+                  <Text
+                    fontSize={12}
+                    weight="medium"
+                    style={spacings.mrMi}
+                    appearance="secondaryText"
+                  >
+                    {t('Estimated bridge time:')}
+                  </Text>
 
-                    <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-                      <Text
-                        fontSize={12}
-                        weight="medium"
-                        appearance="primary"
-                        style={spacings.mrTy}
-                      >
-                        {t('around')} {formatTime(activeTransaction?.serviceTime || 0)}
-                      </Text>
-                      <Spinner style={{ width: 16, height: 16 }} />
-                    </View>
-                  </>
-                )}
-              {activeRoute.routeStatus === 'in-progress' &&
-                activeTransaction &&
-                !isTxnBridge(activeTransaction) && (
-                  <>
-                    <Text
-                      fontSize={12}
-                      weight="medium"
-                      style={spacings.mrTy}
-                      appearance="secondaryText"
-                    >
-                      {t('Swap in progress')}
+                  <View style={[flexbox.directionRow, flexbox.alignCenter]}>
+                    <Text fontSize={12} weight="medium" appearance="primary" style={spacings.mrTy}>
+                      {t('around')} {formatTime(activeTransaction?.serviceTime || 0)}
                     </Text>
                     <Spinner style={{ width: 16, height: 16 }} />
-                  </>
-                )}
+                  </View>
+                </>
+              )}
+              {activeRoute.routeStatus === 'in-progress' && activeTransaction && !isBridgeRoute && (
+                <>
+                  <Text
+                    fontSize={12}
+                    weight="medium"
+                    style={spacings.mrTy}
+                    appearance="secondaryText"
+                  >
+                    {t('Swap in progress')}
+                  </Text>
+                  <Spinner style={{ width: 16, height: 16 }} />
+                </>
+              )}
               {activeRoute.routeStatus === 'waiting-approval-to-resolve' && (
                 <>
                   <Text

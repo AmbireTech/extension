@@ -1,9 +1,8 @@
 import React from 'react'
-import { ScrollView, View } from 'react-native'
+import { View } from 'react-native'
 
 import AddCircularIcon from '@common/assets/svg/AddCircularIcon'
 import Button from '@common/components/Button'
-import Panel from '@common/components/Panel'
 import { useTranslation } from '@common/config/localization'
 import useTheme from '@common/hooks/useTheme'
 import ViewOnlyAccountAdderAddressField from '@common/modules/auth/components/ViewOnlyAccountAdderAddressField'
@@ -38,7 +37,18 @@ const ViewOnlyAccountAdderScreen = () => {
   } = useViewOnlyAccountAdder()
   const { goToPrevRoute } = useOnboardingNavigation()
   return (
-    <MobileLayoutContainer>
+    <MobileLayoutContainer
+      footer={
+        <Button
+          testID="view-only-button-import"
+          size="large"
+          disabled={disabled}
+          hasBottomSpacing={false}
+          text={buttonText}
+          onPress={handleSubmit(handleFormSubmit)}
+        />
+      }
+    >
       <MobileLayoutWrapperMainContent
         withBackButton
         onBackButtonPress={goToPrevRoute}
@@ -46,7 +56,6 @@ const ViewOnlyAccountAdderScreen = () => {
         totalSteps={2}
         title={t('Import a view-only address')}
         withScroll
-        keyboardAwareScrollViewProps={{ bottomOffset: 200 }}
       >
         <View style={[flexbox.justifySpaceBetween, flexbox.flex1]}>
           <View>
@@ -84,14 +93,6 @@ const ViewOnlyAccountAdderScreen = () => {
               />
             </Button>
           </View>
-          <Button
-            testID="view-only-button-import"
-            size="large"
-            disabled={disabled}
-            hasBottomSpacing={false}
-            text={buttonText}
-            onPress={handleSubmit(handleFormSubmit)}
-          />
         </View>
       </MobileLayoutWrapperMainContent>
     </MobileLayoutContainer>

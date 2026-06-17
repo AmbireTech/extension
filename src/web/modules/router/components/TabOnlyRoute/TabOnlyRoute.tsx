@@ -3,9 +3,9 @@ import { Outlet } from 'react-router-dom'
 
 import useController from '@common/hooks/useController'
 import useRoute from '@common/hooks/useRoute'
+import { openInternalPageInTab } from '@common/utils/links/links'
 import { getUiType } from '@common/utils/uiType'
 import { isExtension } from '@web/constants/browserapi'
-import { openInternalPageInTab } from '@web/extension-services/background/webapi/tab'
 
 const { isTab } = getUiType()
 
@@ -34,7 +34,6 @@ const TabOnlyRoute = () => {
   }
 
   if (!isTab && isExtension) {
-    /* eslint-disable react/jsx-no-useless-fragment */
     return <></>
   }
 

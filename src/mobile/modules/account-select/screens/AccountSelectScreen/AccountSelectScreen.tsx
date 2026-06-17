@@ -10,7 +10,7 @@ import Button from '@common/components/Button'
 import ScrollableWrapper, { WRAPPER_TYPES } from '@common/components/ScrollableWrapper'
 import Search from '@common/components/Search'
 import Text from '@common/components/Text'
-import { isMobile, isWeb } from '@common/config/env'
+import { isWeb } from '@common/config/env'
 import useAccountsList from '@common/hooks/useAccountsList'
 import useController from '@common/hooks/useController'
 import useNavigation from '@common/hooks/useNavigation'
@@ -21,7 +21,6 @@ import AddAccount from '@common/modules/account-select/components/AddAccount'
 import DashboardSkeleton from '@common/modules/dashboard/components/Skeleton'
 import { HeaderWithTitle } from '@common/modules/header/components/Header/Header'
 import { ROUTES, WEB_ROUTES } from '@common/modules/router/constants/common'
-import alert from '@common/services/alert'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { MobileLayoutContainer } from '@mobile/components/MobileLayoutWrapper'
@@ -89,11 +88,11 @@ const AccountSelectScreen = () => {
     return (
       <Account
         onSelect={onAccountSelect}
-        key={acc.addr}
         account={acc}
         withSettings={false}
         options={{ markSelected: true }}
         withReceive
+        maxAccountAddrLength={32}
       />
     )
   }
@@ -109,14 +108,24 @@ const AccountSelectScreen = () => {
   }, [account, navigate, pendingToBeSetSelectedAccount])
 
   return !pendingToBeSetSelectedAccount ? (
-    <MobileLayoutContainer>
+    <MobileLayoutContainer
+      footer={
+        <Button
+          testID="button-add-account"
+          text={t('Add account')}
+          size="regular"
+          onPress={openBottomSheet as any}
+          hasBottomSpacing={false}
+          childrenPosition="left"
+          style={{ ...flexbox.alignSelfCenter, width: '100%' }}
+        >
+          <AddCircularIcon width={24} height={24} color="#fff" style={spacings.mrTy} />
+        </Button>
+      }
+    >
       <HeaderWithTitle>
         <Pressable
           onPress={() => {
-            if (isMobile) {
-              alert('Coming soon!')
-              return
-            }
             navigate(WEB_ROUTES.accountsSettings)
           }}
         >
@@ -124,7 +133,12 @@ const AccountSelectScreen = () => {
         </Pressable>
       </HeaderWithTitle>
       <View style={[spacings.phSm, flexbox.flex1]} ref={accountsContainerRef}>
-        <Search autoFocus={isWeb} control={control} style={styles.searchBar} />
+        <Search
+          autoFocus={isWeb}
+          control={control}
+          style={styles.searchBar}
+          containerStyle={spacings.mbTy}
+        />
         <ScrollableWrapper
           type={WRAPPER_TYPES.FLAT_LIST}
           style={[
@@ -144,19 +158,6 @@ const AccountSelectScreen = () => {
             </View>
           }
         />
-
-        <View style={spacings.ptSm}>
-          <Button
-            testID="button-add-account"
-            text={t('Add account')}
-            size="regular"
-            onPress={openBottomSheet as any}
-            childrenPosition="left"
-            style={{ ...flexbox.alignSelfCenter, width: '100%' }}
-          >
-            <AddCircularIcon width={24} height={24} color="#fff" style={spacings.mrTy} />
-          </Button>
-        </View>
       </View>
       <AddAccount sheetRef={sheetRef} closeBottomSheet={closeBottomSheet} />
     </MobileLayoutContainer>

@@ -10,8 +10,10 @@ import shortenAddress from '@ambire-common/utils/shortenAddress'
 import DeleteIcon from '@common/assets/svg/DeleteIcon'
 import AddressInput from '@common/components/AddressInput'
 import Alert from '@common/components/Alert'
+import { INPUT_WRAPPER_HEIGHT } from '@common/components/Input/styles'
 import useAddressInput from '@common/hooks/useAddressInput'
 import useController from '@common/hooks/useController'
+import useHover, { AnimatedPressable } from '@common/hooks/useHover'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
@@ -49,6 +51,7 @@ const ViewOnlyAccountAdderAddressField: FC<Props> = ({
   const value = watch(`accounts.${index}`)
   const { t } = useTranslation()
   const { theme } = useTheme()
+  const [bindRemoveAnim, removeAnimStyle] = useHover({ preset: 'opacityInverted' })
 
   const setAddressState = useCallback(
     (newState: AddressStateOptional) => {
@@ -139,7 +142,7 @@ const ViewOnlyAccountAdderAddressField: FC<Props> = ({
       }}
       render={({ field: { onChange, onBlur } }) => (
         <View>
-          <View style={[spacings.mbTy, flexbox.directionRow, flexbox.alignCenter]}>
+          <View style={[spacings.mbTy, flexbox.directionRow, flexbox.alignStart]}>
             <AddressInput
               testID={`view-only-address-field-${index}`}
               validation={validation}
@@ -148,14 +151,28 @@ const ViewOnlyAccountAdderAddressField: FC<Props> = ({
               onChangeText={onChange}
               value={value.fieldValue}
               autoFocus
+              withDetails
               backgroundColor={theme.secondaryBackground}
               disabled={isLoading}
-              ensAddress={value.ensAddress}
+              resolvedAddress={value.resolvedAddress}
+              resolvedAddressType={value.resolvedAddressType}
               isRecipientDomainResolving={value.isDomainResolving}
               onSubmitEditing={disabled ? undefined : handleSubmit}
-              button={accounts.length > 1 ? <DeleteIcon width={24} height={24} /> : null}
-              onButtonPress={() => remove(index)}
             />
+            {accounts.length > 1 && (
+              <AnimatedPressable
+                style={[
+                  removeAnimStyle,
+                  spacings.mlTy,
+                  flexbox.justifyCenter,
+                  { height: INPUT_WRAPPER_HEIGHT }
+                ]}
+                onPress={() => remove(index)}
+                {...bindRemoveAnim}
+              >
+                <DeleteIcon width={24} height={24} />
+              </AnimatedPressable>
+            )}
           </View>
           {addressesInAssociatedKeys?.length > 0 &&
             addressesInAssociatedKeys.map((_address) => {

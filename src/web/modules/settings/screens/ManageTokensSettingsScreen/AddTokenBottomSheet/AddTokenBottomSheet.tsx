@@ -21,14 +21,14 @@ import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
-import spacings from '@common/styles/spacings'
-import flexbox from '@common/styles/utils/flexbox'
 import {
   getTokenEligibility,
   getTokenFromPortfolio,
   getTokenFromTemporaryTokens,
   handleTokenIsInPortfolio
-} from '@web/modules/action-requests/screens/WatchTokenRequestScreen/utils'
+} from '@common/modules/action-requests/utils/watchTokenRequest'
+import spacings from '@common/styles/spacings'
+import flexbox from '@common/styles/utils/flexbox'
 
 type NetworkOption = {
   value: string
@@ -250,7 +250,6 @@ const AddTokenBottomSheet: FC<Props> = ({ sheetRef, handleClose }) => {
     }
 
     handleEffect().catch((error) => {
-      // eslint-disable-next-line no-console
       console.error(error)
       return setIsLoading(false)
     })
@@ -304,7 +303,6 @@ const AddTokenBottomSheet: FC<Props> = ({ sheetRef, handleClose }) => {
                 label={t('Token Address')}
                 placeholder={t('0x...')}
                 value={value}
-                inputStyle={spacings.mbSm}
                 containerStyle={spacings.mbSm}
                 error={errors.address && errors.address.message}
                 backgroundColor={theme.secondaryBackground}

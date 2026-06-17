@@ -25,7 +25,8 @@ const PayOption = ({
   disabledReason,
   disabledTextAppearance = 'errorText',
   amount,
-  paidByAccountLabel
+  paidByAccountLabel,
+  shouldHighlightExtremeGasFee = false
 }: {
   feeOption: FeePaymentOption
   amountUsd: string
@@ -33,6 +34,7 @@ const PayOption = ({
   paidByAccountLabel: string | undefined
   disabledReason?: string
   disabledTextAppearance?: 'errorText' | 'infoText'
+  shouldHighlightExtremeGasFee?: boolean
 }) => {
   const { t } = useTranslation()
   const { styles, theme } = useTheme(getStyles)
@@ -110,8 +112,15 @@ const PayOption = ({
         )}
 
         <View style={[flexbox.flex1, spacings.mlTy]}>
-          <Text weight="semiBold" fontSize={13} numberOfLines={1}>
-            {formattedAmount} {feeOption.token.symbol}{' '}
+          <View style={[flexbox.directionRow, flexbox.alignCenter]}>
+            <Text
+              weight="semiBold"
+              fontSize={13}
+              numberOfLines={1}
+              appearance={shouldHighlightExtremeGasFee ? 'warningText' : 'primaryText'}
+            >
+              {formattedAmount} {feeOption.token.symbol}{' '}
+            </Text>
             {!!feeOption.token.flags.onGasTank && (
               <View style={styles.gasTankBadge}>
                 <Text fontSize={10} color="white" weight="medium">
@@ -119,7 +128,7 @@ const PayOption = ({
                 </Text>
               </View>
             )}
-          </Text>
+          </View>
 
           {disabledReason ? (
             <Text
@@ -131,7 +140,11 @@ const PayOption = ({
               {disabledReason}
             </Text>
           ) : (
-            <Text appearance="secondaryText" weight="medium" fontSize={12}>
+            <Text
+              appearance={shouldHighlightExtremeGasFee ? 'warningText' : 'secondaryText'}
+              weight="medium"
+              fontSize={12}
+            >
               {formatDecimals(Number(amountUsd), 'value')}
             </Text>
           )}

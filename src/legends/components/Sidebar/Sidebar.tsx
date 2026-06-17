@@ -2,9 +2,7 @@ import React, { FC, useRef } from 'react'
 import { useLocation } from 'react-router-dom'
 
 import { faChevronLeft } from '@fortawesome/free-solid-svg-icons/faChevronLeft'
-import { faCircleUser } from '@fortawesome/free-solid-svg-icons/faCircleUser'
 import { faFileLines } from '@fortawesome/free-solid-svg-icons/faFileLines'
-import { faMedal } from '@fortawesome/free-solid-svg-icons/faMedal'
 import { faPiggyBank } from '@fortawesome/free-solid-svg-icons/faPiggyBank'
 import { faTrophy } from '@fortawesome/free-solid-svg-icons/faTrophy'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
@@ -19,17 +17,25 @@ type Props = {
   handleClose: () => void
 }
 
-const NAVIGATION_LINKS = [
-  { to: LEGENDS_ROUTES.home, text: 'Home', icon: faCircleUser },
-  { to: LEGENDS_ROUTES.leaderboard, text: 'Leaderboard', icon: faTrophy },
-  { to: LEGENDS_ROUTES.rewardsPool, text: 'Rewards Pool', icon: faMedal },
-  { to: LEGENDS_ROUTES.wallet, text: '$WALLET', icon: faPiggyBank },
+const NAVIGATION_LINKS: Array<{
+  to: string
+  text: string
+  icon: typeof faPiggyBank
+  newTab?: boolean
+  isActive?: (pathname: string) => boolean
+}> = [
+  {
+    to: LEGENDS_ROUTES['/'],
+    text: '$Wallet',
+    icon: faPiggyBank,
+    isActive: (pathname) => pathname === LEGENDS_ROUTES['/'] || pathname === LEGENDS_ROUTES.wallet
+  },
+  { to: LEGENDS_ROUTES.leaderboard, text: 'Rewards', icon: faTrophy },
   {
     to: 'https://help.ambire.com/en/collections/18211459-ambire-rewards',
     text: 'FAQ',
     icon: faFileLines,
-    newTab: true,
-    isExternalLink: true
+    newTab: true
   }
 ]
 
@@ -48,9 +54,7 @@ const Sidebar: FC<Props> = ({ isOpen, handleClose }) => {
         <div className={styles.links}>
           {NAVIGATION_LINKS.map((link) => (
             <Link
-              isActive={
-                pathname === link.to || (pathname === '/' && link.to === LEGENDS_ROUTES.home)
-              }
+              isActive={link.isActive ? link.isActive(pathname) : pathname === link.to}
               key={link.to}
               to={link.to}
               text={link.text}

@@ -54,7 +54,7 @@ const Exchanges: FC<Props> = ({ exchanges }) => {
     )
   }, [exchangeData, exchanges])
 
-  if (exchanges.length === 0) return null
+  if (exchangesWithData.length === 0) return null
 
   return (
     <>

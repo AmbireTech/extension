@@ -10,18 +10,19 @@ import { getBenzinUrlParams } from '@ambire-common/utils/benzin'
 import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
 import RightArrowIcon from '@common/assets/svg/RightArrowIcon'
 import Text from '@common/components/Text'
+import TrackProgressWrapper from '@common/components/TrackProgress'
+import Completed from '@common/components/TrackProgress/ByStatus/Completed'
+import Failed from '@common/components/TrackProgress/ByStatus/Failed'
+import InProgress from '@common/components/TrackProgress/ByStatus/InProgress'
+import Refunded from '@common/components/TrackProgress/ByStatus/Refunded'
 import useController from '@common/hooks/useController'
 import useNavigation from '@common/hooks/useNavigation'
 import useTheme from '@common/hooks/useTheme'
 import { WEB_ROUTES } from '@common/modules/router/constants/common'
-import TrackProgressWrapper from '@common/modules/sign-account-op/components/OneClick/TrackProgress'
-import Completed from '@common/modules/sign-account-op/components/OneClick/TrackProgress/ByStatus/Completed'
-import Failed from '@common/modules/sign-account-op/components/OneClick/TrackProgress/ByStatus/Failed'
-import InProgress from '@common/modules/sign-account-op/components/OneClick/TrackProgress/ByStatus/InProgress'
-import Refunded from '@common/modules/sign-account-op/components/OneClick/TrackProgress/ByStatus/Refunded'
 import useTrackAccountOp from '@common/modules/sign-account-op/hooks/OneClick/useTrackAccountOp'
 import spacings from '@common/styles/spacings'
 import { THEME_TYPES } from '@common/styles/theme/types'
+import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
 import formatTime from '@common/utils/formatTime'
@@ -171,6 +172,13 @@ const TrackProgress: FC<Props> = ({ activeRoute, handleClose }) => {
                         )
                       : ''
                   }
+                  wrapperStyle={{
+                    width: 160,
+                    height: 112,
+                    backgroundColor: theme.secondaryBackground,
+                    borderRadius: BORDER_RADIUS_PRIMARY,
+                    ...flexbox.center
+                  }}
                 />
                 <View
                   style={[flexbox.alignCenter, flexbox.justifyCenter, { width: 8, zIndex: 100 }]}
@@ -206,6 +214,13 @@ const TrackProgress: FC<Props> = ({ activeRoute, handleClose }) => {
                         )
                       : ''
                   }
+                  wrapperStyle={{
+                    width: 160,
+                    height: 112,
+                    backgroundColor: theme.secondaryBackground,
+                    borderRadius: BORDER_RADIUS_PRIMARY,
+                    ...flexbox.center
+                  }}
                 />
               </View>
               <View>
@@ -217,10 +232,9 @@ const TrackProgress: FC<Props> = ({ activeRoute, handleClose }) => {
                     style={text.center}
                   >
                     {t('Time: {{time}}', {
-                      time:
-                        lastCompletedRoute.route.fromChainId !== lastCompletedRoute.route.toChainId
-                          ? `~ ${formatTime(lastCompletedRoute.route?.serviceTime)}`
-                          : 'instant'
+                      time: getIsBridgeRoute(lastCompletedRoute.route)
+                        ? `~ ${formatTime(lastCompletedRoute.route?.serviceTime)}`
+                        : 'instant'
                     })}
                   </Text>
                 )}

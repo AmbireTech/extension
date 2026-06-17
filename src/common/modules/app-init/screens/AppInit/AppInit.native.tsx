@@ -5,6 +5,8 @@ import { SafeAreaProvider } from 'react-native-safe-area-context'
 import { restart, useStallionUpdate } from 'react-native-stallion'
 import { NativeRouter } from 'react-router-native'
 
+import { GlobalTooltip } from '@common/components/GlobalTooltip'
+import { BiometricsProvider } from '@common/contexts/biometricsContext'
 import { ControllerStoreProvider } from '@common/contexts/controllerStoreContext'
 import { NetInfoProvider } from '@common/contexts/netInfoContext'
 import { ThemeProvider } from '@common/contexts/themeContext'
@@ -17,6 +19,7 @@ import { OnboardingNavigationProvider } from '@common/modules/auth/contexts/onbo
 import { PortalHost, PortalProvider } from '@gorhom/portal'
 import { ControllersMiddlewareProvider } from '@mobile/contexts/controllersMiddlewareContext'
 import { ControllersStateLoadedProvider } from '@mobile/contexts/controllersStateLoadedContext'
+import { WalletConnectProvider } from '@mobile/modules/wallet-connect/contexts/walletConnectContext'
 
 const AppInit = () => {
   const { fontsLoaded } = useFonts()
@@ -31,72 +34,82 @@ const AppInit = () => {
           <ToastProvider>
             <ControllerStoreProvider withErrorToasts>
               <ControllersMiddlewareProvider>
-                <ThemeProvider>
-                  <GestureHandler>
-                    <ControllersStateLoadedProvider>
-                      <KeyboardProvider>
-                        <NetInfoProvider>
-                          <AuthProvider>
-                            <OnboardingNavigationProvider>
-                              <View
-                                pointerEvents="none"
-                                style={{
-                                  position: 'absolute',
-                                  top: 80,
-                                  right: 8,
-                                  zIndex: 9999,
-                                  paddingHorizontal: 10,
-                                  paddingVertical: 6,
-                                  borderRadius: 10,
-                                  backgroundColor: 'rgba(0,0,0,0.55)'
-                                }}
-                              >
-                                <Text style={{ color: '#fff', fontSize: 12, fontWeight: '600' }}>
-                                  OTA test: v3
-                                </Text>
-                              </View>
-
-                              <View
-                                style={{
-                                  position: 'absolute',
-                                  top: 80,
-                                  left: 8,
-                                  zIndex: 9999,
-                                  paddingHorizontal: 10,
-                                  paddingVertical: 8,
-                                  borderRadius: 10,
-                                  backgroundColor: 'rgba(0,0,0,0.55)',
-                                  maxWidth: 260
-                                }}
-                              >
-                                <Text style={{ color: '#fff', fontSize: 11, fontWeight: '700' }}>
-                                  Stallion debug
-                                </Text>
-                                <Text style={{ color: '#fff', fontSize: 11 }}>
-                                  running: {currentlyRunningBundle?.id ?? 'n/a'}
-                                </Text>
-                                <Text style={{ color: '#fff', fontSize: 11 }}>
-                                  new: {newReleaseBundle?.id ?? 'n/a'}
-                                </Text>
-                                <Text style={{ color: '#fff', fontSize: 11 }}>
-                                  restartRequired: {String(isRestartRequired)}
-                                </Text>
-                                {isRestartRequired ? (
-                                  <View style={{ marginTop: 6 }}>
-                                    <Button title="Restart to apply OTA" onPress={restart} />
+                <WalletConnectProvider>
+                  <ThemeProvider>
+                    <GestureHandler>
+                      <ControllersStateLoadedProvider>
+                        <GlobalTooltip />
+                        <KeyboardProvider>
+                          <NetInfoProvider>
+                            <AuthProvider>
+                              <BiometricsProvider>
+                                <OnboardingNavigationProvider>
+                                  {/* TODO: Temporarily */}
+                                  <View
+                                    pointerEvents="none"
+                                    style={{
+                                      position: 'absolute',
+                                      top: 80,
+                                      right: 8,
+                                      zIndex: 9999,
+                                      paddingHorizontal: 10,
+                                      paddingVertical: 6,
+                                      borderRadius: 10,
+                                      backgroundColor: 'rgba(0,0,0,0.55)'
+                                    }}
+                                  >
+                                    <Text
+                                      style={{ color: '#fff', fontSize: 12, fontWeight: '600' }}
+                                    >
+                                      OTA test: v3
+                                    </Text>
                                   </View>
-                                ) : null}
-                              </View>
 
-                              <AppRouter />
-                              <PortalHost name="global" />
-                            </OnboardingNavigationProvider>
-                          </AuthProvider>
-                        </NetInfoProvider>
-                      </KeyboardProvider>
-                    </ControllersStateLoadedProvider>
-                  </GestureHandler>
-                </ThemeProvider>
+                                  <View
+                                    style={{
+                                      position: 'absolute',
+                                      top: 80,
+                                      left: 8,
+                                      zIndex: 9999,
+                                      paddingHorizontal: 10,
+                                      paddingVertical: 8,
+                                      borderRadius: 10,
+                                      backgroundColor: 'rgba(0,0,0,0.55)',
+                                      maxWidth: 260
+                                    }}
+                                  >
+                                    <Text
+                                      style={{ color: '#fff', fontSize: 11, fontWeight: '700' }}
+                                    >
+                                      Stallion debug
+                                    </Text>
+                                    <Text style={{ color: '#fff', fontSize: 11 }}>
+                                      running: {currentlyRunningBundle?.id ?? 'n/a'}
+                                    </Text>
+                                    <Text style={{ color: '#fff', fontSize: 11 }}>
+                                      new: {newReleaseBundle?.id ?? 'n/a'}
+                                    </Text>
+                                    <Text style={{ color: '#fff', fontSize: 11 }}>
+                                      restartRequired: {String(isRestartRequired)}
+                                    </Text>
+                                    {isRestartRequired ? (
+                                      <View style={{ marginTop: 6 }}>
+                                        <Button title="Restart to apply OTA" onPress={restart} />
+                                      </View>
+                                    ) : null}
+                                  </View>
+
+                                  <AppRouter />
+                                  <PortalHost name="global" />
+                                </OnboardingNavigationProvider>
+                              </BiometricsProvider>
+                            </AuthProvider>
+                          </NetInfoProvider>
+                        </KeyboardProvider>
+                      </ControllersStateLoadedProvider>
+                    </GestureHandler>
+                  </ThemeProvider>
+                </WalletConnectProvider>
               </ControllersMiddlewareProvider>
             </ControllerStoreProvider>
           </ToastProvider>

@@ -8,6 +8,7 @@ import ConfirmedIcon from '@common/assets/svg/ConfirmedIcon'
 import DiagonalRightArrowIcon from '@common/assets/svg/DiagonalRightArrowIcon'
 import RejectedIcon from '@common/assets/svg/RejectedIcon'
 import Text from '@common/components/Text'
+import { isWeb } from '@common/config/env'
 import { AnimatedPressable, useMultiHover } from '@common/hooks/useHover'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
@@ -19,7 +20,7 @@ import StepRow from './StepRow'
 import { StepRowProps as StepRowInterface } from './StepRow/StepRow'
 import getStyles from './styles'
 
-const STEPS = ['signed', 'in-progress', 'finalized'] as const
+const STEPS = ['signed', 'in-progress', 'balance-changes', 'finalized'] as const
 
 interface StepProps {
   title?: string
@@ -80,19 +81,15 @@ const Step: FC<StepProps> = ({
   const isCompleted = stepIndex <= activeStepIndex
 
   // Whether the line gradient should have red in it.
-  const isRedDisplayedInLineGradient =
-    (finalizedStatus?.status === 'failed' && stepIndex === 1) ||
+  const isFailureStatus =
+    finalizedStatus?.status === 'failed' ||
     finalizedStatus?.status === 'dropped' ||
     finalizedStatus?.status === 'rejected' ||
     finalizedStatus?.status === 'not-found'
+  const isRedDisplayedInLineGradient = isFailureStatus && stepIndex === STEPS.length - 2
 
   // True if the transaction has failed and we are on the last step, because only the last step shows the error message.
-  const hasFailed =
-    (finalizedStatus?.status === 'failed' ||
-      finalizedStatus?.status === 'dropped' ||
-      finalizedStatus?.status === 'rejected' ||
-      finalizedStatus?.status === 'not-found') &&
-    stepIndex === STEPS.length - 1
+  const hasFailed = isFailureStatus && stepIndex === STEPS.length - 1
 
   const getTitleAppearance = () => {
     if (hasFailed) {
@@ -151,13 +148,17 @@ const Step: FC<StepProps> = ({
         )}
       </View>
       <View
-        style={[
-          spacings.plMd,
-          flexbox.flex1,
-          stepIndex !== STEPS.length - 1
-            ? spacings[IS_MOBILE_UP_BENZIN_BREAKPOINT ? 'pb2Xl' : 'pbLg']
-            : {}
-        ]}
+        style={
+          isWeb
+            ? [
+                spacings.plMd,
+                flexbox.flex1,
+                stepIndex !== STEPS.length - 1
+                  ? spacings[IS_MOBILE_UP_BENZIN_BREAKPOINT ? 'pb2Xl' : 'pbLg']
+                  : {}
+              ]
+            : [spacings.plMd, flexbox.flex1, stepIndex !== STEPS.length - 1 && spacings.pbXl]
+        }
       >
         {!!title && (
           <View style={[flexbox.directionRow, flexbox.alignCenter, flexbox.justifySpaceBetween]}>

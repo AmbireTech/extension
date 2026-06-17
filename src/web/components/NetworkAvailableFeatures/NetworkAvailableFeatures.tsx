@@ -1,5 +1,5 @@
 import { Interface } from 'ethers'
-/* eslint-disable react/jsx-no-useless-fragment */
+
 import React, { useCallback, useEffect, useId, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { TextStyle, View } from 'react-native'
@@ -17,6 +17,7 @@ import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import ScrollableWrapper from '@common/components/ScrollableWrapper'
 import Spinner from '@common/components/Spinner'
 import Text from '@common/components/Text'
+import { isMobile, isWeb } from '@common/config/env'
 import useController from '@common/hooks/useController'
 import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import usePrevious from '@common/hooks/usePrevious'
@@ -115,7 +116,6 @@ const NetworkAvailableFeatures = ({
         }
       })
       .catch((error) => {
-        // eslint-disable-next-line no-console
         console.error(error)
       })
   }, [networksDispatch, selectedNetwork, checkedDeployFor, dispatchAndWait])
@@ -261,11 +261,14 @@ const NetworkAvailableFeatures = ({
                     {!!feature.msg && (
                       <View
                         style={[
-                          spacings.plMi,
-                          {
+                          isWeb && spacings.plMi,
+                          isWeb && {
                             // @ts-ignore web style
                             verticalAlign: 'middle',
                             paddingBottom: 3
+                          },
+                          isMobile && {
+                            transform: [{ translateY: 4 }]
                           }
                         ]}
                       >

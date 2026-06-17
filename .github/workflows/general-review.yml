@@ -1,0 +1,99 @@
+name: PR Agent - General Review
+
+on:
+  pull_request:
+    types: [labeled]
+  issue_comment:
+    types: [created]
+  workflow_dispatch:
+
+jobs:
+  review:
+    if: >-
+      (github.event.action == 'labeled' && github.event.label.name == 'review') ||
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.sender.type != 'Bot' &&
+      github.event_name == 'issue_comment' &&
+      contains(github.event.comment.body, '/review') &&
+      !contains(github.event.comment.body, '/security-review'))
+    permissions:
+      pull-requests: write
+      # This MUST be read!
+      contents: read
+    uses: AmbireTech/ambire-common/.github/workflows/pr-agent.yml@v2
+    with:
+      # Allow everyone to request a review from Sonnet, without a separate workflow file
+      # and without them typing out the whole model name. Done so we can test with both models
+      model: >-
+        ${{ contains(github.event.comment.body, '--sonnet')
+            && 'openrouter/anthropic/claude-sonnet-4.6'
+            || 'openrouter/moonshotai/kimi-k2.6:nitro' }}
+      fallback_models: >-
+        ${{ contains(github.event.comment.body, '--sonnet')
+            && '["openrouter/moonshotai/kimi-k2.6:nitro"]'
+            || '["openrouter/anthropic/claude-sonnet-4.6"]' }}
+      extra_instructions: |
+        You are reviewing a security-critical, self-custodial Web3 wallet monorepo. The
+        same `src/` tree builds several products that share code:
+        - a browser extension (background service worker / background script, content
+          scripts, inpage, popup UI),
+        - a mobile app (React Native, with a webview worker acting as the background),
+        - and the standalone websites `src/benzin` (transaction explorer) and
+          `src/legends` (the rewards / "Ambire Rewards" site).
+        Shared, cross-environment code lives in `src/common`; the core business logic and
+        state controllers live in the `src/ambire-common` submodule, which is reviewed in
+        its own repo - a PR here that only bumps it shows up as a single `Subproject
+        commit` line you cannot see, so do not review it.
+
+        Severity is the default tier below; adjust to the real impact in context. For each
+        finding: prefix severity (High/Medium/Low), quote the exact code, say what breaks.
+
+        HIGH - funds/secrets exposed, crashes, security bypass, state corruption:
+        - Secrets (private keys, seeds, passwords) leaking into logs, error /
+          Sentry reports, or UI / serialized state.
+        - Untrusted dApp / cross-origin input acted on without validating its source or
+          origin, or origin/URL checks that can be spoofed.
+        - Unhandled throws that can white-screen the app or crash the background -
+          external/network/provider calls and risky serialization need try/catch with a fallback.
+        - Falsy-value bugs in fund/balance/fee math: `0n`/`0`/`''` are falsy - guard with
+          `!= null` / `!!`, not truthiness, or a real value renders as nothing.
+        - Leaks in the long-lived background/UI: timers, intervals, listeners,
+          subscriptions and providers must be cleaned up.
+
+        MEDIUM - correctness/reliability bugs:
+        - Swallowed errors: don't catch-and-ignore. Log with context and
+          `captureException` for anything that "should never happen".
+        - Wrong layer: business logic and data shaping (sort/derive/normalize) belong in
+          ambire-common, not in UI components or the background glue.
+        - Broken hooks: stale/incorrect `useEffect`/`useMemo`/`useCallback` dependency
+          arrays, or new objects/arrays defeating memoization and causing refetch loops.
+        - Missing null/undefined guards on data that can be absent; prefer narrowing over
+          `!` non-null assertions.
+        - Async UX: reset loading state in `finally`, disable controls during async work,
+          don't leave the user on a blank/stuck screen.
+        Cross-environment correctness (`.web` / `.native` / `common`) - important here:
+        - Code is resolved per environment two ways: an env folder (`mobile/`, `web/`) or
+          a `.web.tsx` / `.native.tsx` suffix that `common/` imports without the suffix.
+        - A file/component in `common/` (no suffix) must work in ALL environments. It must
+          not reach for environment-specific APIs.
+          `web/` (and `.web`) must not import from `mobile/`, and `mobile/` (and `.native`)
+          must not import from `web/`.
+        - If a PR changes one side of a `.web`/`.native` pair (or an env-specific file with
+          a known counterpart) but NOT the other, warn that the sibling may need the same
+          change - divergent behavior across environments is a common bug. Note that you
+          likely cannot see the counterpart file in this diff; phrase it as a thing for the
+          author to verify, not a confirmed defect.
+
+        LOW - quality & project conventions:
+        - Use the project primitives: `theme` colors (no hardcoded hex),
+          `spacings` and `flexbox` utilities, `t()` for all user-facing text,
+          `useNavigation`/`useRoute`, `useToast`, `BottomSheet`, `HoverablePressable`/
+          `useHover`. Use `isWeb`/`isMobile`/`isAndroid` from `@common/config/env`, never `__DEV__` outside `.native` files.
+        - Names must be self-explanatory; flag generic/misleading identifiers.
+        - Avoid `any` and casts; prefer narrowing, unions and type guards.
+        - Stable, unique list keys - never the array index or `Math.random()`.
+        - Compare addresses with `toLowerCase()`, not `getAddress()` (which throws).
+
+        Skip what you can't verify from a diff: Be constructive and concise; don't pad.
+    secrets:
+      OPENROUTER_KEY: ${{ secrets.OPENROUTER__KEY }}

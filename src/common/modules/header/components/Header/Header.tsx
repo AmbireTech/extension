@@ -118,11 +118,13 @@ const HeaderWithTitle = ({
   displayBackButtonIn,
   children,
   withOG,
+  withBackButton = true,
   width
 }: {
   title?: string
   displayBackButtonIn?: DisplayIn | DisplayIn[]
   children?: React.ReactNode
+  withBackButton?: boolean
 } & CommonHeaderProps) => {
   const [title, setTitle] = useState('')
   const { path } = useRoute()
@@ -142,7 +144,7 @@ const HeaderWithTitle = ({
   return (
     <Wrapper width={width}>
       <Container side="left">
-        <HeaderBackButton displayIn={displayBackButtonIn} />
+        {withBackButton && <HeaderBackButton displayIn={displayBackButtonIn} />}
       </Container>
       <Title>{customTitle || title}</Title>
       <Container side="right">

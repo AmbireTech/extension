@@ -1,4 +1,3 @@
-/* eslint-disable no-restricted-syntax */
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import { NavigateOptions } from 'react-router-dom'
 
@@ -161,6 +160,7 @@ const OnboardingNavigationProvider = ({ children }: { children: React.ReactNode 
             new RouteNode(WEB_ROUTES.importSeedPhrase, common, false, false),
             new RouteNode(WEB_ROUTES.ledgerConnect, common, false, false),
             new RouteNode(WEB_ROUTES.safeImport, common, false, false),
+            new RouteNode(WEB_ROUTES.qrConnect, common, false, false),
             new RouteNode(WEB_ROUTES.importSmartAccountJson, common, false, false)
           ],
           false,

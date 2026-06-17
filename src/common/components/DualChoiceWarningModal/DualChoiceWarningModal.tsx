@@ -1,11 +1,12 @@
 import React, { FC } from 'react'
-import { View, ViewStyle } from 'react-native'
+import { TextStyle, View, ViewStyle } from 'react-native'
 
 import ErrorIcon from '@common/assets/svg/ErrorIcon'
 import WarningIcon from '@common/assets/svg/WarningIcon'
 import Button, { Props as ButtonProps } from '@common/components/Button'
 import { Props as DualChoiceModalProps } from '@common/components/DualChoiceModal/DualChoiceModal'
 import CommonText, { Props } from '@common/components/Text'
+import { isMobile, isWeb } from '@common/config/env'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
@@ -77,6 +78,10 @@ const ButtonWrapper = ({
 }) => {
   const { styles } = useTheme(getStyles)
 
+  if (isMobile) {
+    return <View style={spacings.ptSm}>{children}</View>
+  }
+
   return (
     <View style={[flexbox.directionRow, flexbox.justifyCenter]}>
       <GlassView borderRadius={28}>
@@ -96,6 +101,8 @@ const DualChoiceWarningModal = ({
   secondaryButtonText,
   primaryButtonProps,
   secondaryButtonProps,
+  contentStyle,
+  descriptionStyle,
   type = DEFAULT_TYPE
 }: Omit<DualChoiceModalProps, 'description' | 'primaryButtonTestID' | 'secondaryButtonTestID'> & {
   title: string
@@ -103,24 +110,26 @@ const DualChoiceWarningModal = ({
   children?: React.ReactNode | React.ReactNode[]
   primaryButtonProps?: ButtonProps
   secondaryButtonProps?: ButtonProps
+  contentStyle?: ViewStyle
+  descriptionStyle?: TextStyle
   type?: Type
 }) => {
   const { theme } = useTheme()
 
   return (
     <Wrapper>
-      <ContentWrapper>
+      <ContentWrapper style={contentStyle}>
         <TitleAndIcon type={type} title={title} style={{ backgroundColor: 'transparent' }} />
-        {!!description && <Text text={description} type={type} />}
+        {!!description && <Text text={description} type={type} style={descriptionStyle} />}
         {children}
       </ContentWrapper>
-      <ButtonWrapper reverse={false}>
+      <ButtonWrapper reverse={true}>
         <Button
           text={primaryButtonText}
           onPress={onPrimaryButtonPress}
           type={type === 'error' ? 'dangerFilled' : type}
-          hasBottomSpacing={false}
-          size="smaller"
+          hasBottomSpacing={isMobile ? true : false}
+          size={isMobile ? 'regular' : 'smaller'}
           {...primaryButtonProps}
         />
         {secondaryButtonText && onSecondaryButtonPress && (
@@ -130,9 +139,9 @@ const DualChoiceWarningModal = ({
             type="secondary"
             hasBottomSpacing={false}
             accentColor={theme.secondaryText}
-            size="smaller"
+            size={isMobile ? 'regular' : 'smaller'}
             {...secondaryButtonProps}
-            style={[spacings.mlLg, secondaryButtonProps?.style as ViewStyle | undefined]}
+            style={[isWeb && spacings.mrLg, secondaryButtonProps?.style as ViewStyle | undefined]}
           />
         )}
       </ButtonWrapper>

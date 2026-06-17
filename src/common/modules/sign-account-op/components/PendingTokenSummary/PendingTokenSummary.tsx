@@ -5,12 +5,16 @@ import { View } from 'react-native'
 
 import { TokenResult } from '@ambire-common/libs/portfolio/interfaces'
 import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
+import GasTankIcon from '@common/assets/svg/GasTankIcon'
 import WarningIcon from '@common/assets/svg/WarningIcon'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import Text from '@common/components/Text'
 import TokenIcon from '@common/components/TokenIcon'
+import { isMobile } from '@common/config/env'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
+import common from '@common/styles/utils/common'
+import flexbox from '@common/styles/utils/flexbox'
 import { BigIntMath } from '@common/utils/bigint'
 import { getTokenId } from '@common/utils/token'
 
@@ -78,9 +82,24 @@ const PendingTokenSummary = ({ token, chainId, hasBottomSpacing = true }: Props)
     return null
   }, [token.flags.suspectedType, t])
 
-  return (
-    <View style={[styles.container, !hasBottomSpacing && spacings.mb0]}>
-      <View style={spacings.mrTy}>
+  const tokenIcon = useMemo(
+    () =>
+      token.flags.onGasTank ? (
+        <View
+          style={[
+            {
+              width: 24,
+              height: 24,
+              alignItems: 'center',
+              justifyContent: 'center',
+              backgroundColor: theme.neutral200
+            },
+            common.borderRadiusPrimary
+          ]}
+        >
+          <GasTankIcon width={14} height={14} color={theme.tertiaryText} />
+        </View>
+      ) : (
         <TokenIcon
           width={20}
           height={20}
@@ -91,7 +110,78 @@ const PendingTokenSummary = ({ token, chainId, hasBottomSpacing = true }: Props)
           address={token.address}
           withNetworkIcon={false}
         />
+      ),
+    [chainId, theme.neutral200, theme.tertiaryText, token.address, token.flags.onGasTank]
+  )
+  const suspiciousTokenWarning = useMemo(
+    () =>
+      token.flags.suspectedType ? (
+        <View
+          // @ts-ignore
+          style={[spacings.mlMi, { cursor: 'pointer' }]}
+          dataSet={createGlobalTooltipDataSet({
+            id: `token-amount-${tokenId}`,
+            content: suspiciousTokenTooltipContent ?? undefined
+          })}
+        >
+          <WarningIcon />
+        </View>
+      ) : null,
+    [suspiciousTokenTooltipContent, token.flags.suspectedType, tokenId]
+  )
+
+  if (isMobile) {
+    return (
+      <View
+        style={[
+          styles.container,
+          flexbox.justifySpaceBetween,
+          { width: '100%' },
+          !hasBottomSpacing && spacings.mb0
+        ]}
+      >
+        <View style={[flexbox.directionRow, flexbox.alignCenter, { minWidth: 0 }]}>
+          <View style={spacings.mrTy}>{tokenIcon}</View>
+          <Text fontSize={16} weight="medium" appearance="secondaryText">
+            {token.symbol}
+          </Text>
+        </View>
+        <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mlTy]}>
+          <Text
+            selectable
+            fontSize={16}
+            weight="medium"
+            dataSet={{
+              tooltipId: `${amountToSendSign}token-summary-${tokenId}`
+            }}
+          >
+            <Text
+              weight="medium"
+              // @ts-ignore
+              style={{ cursor: 'pointer' }}
+              color={amountToSendTextColor}
+              dataSet={createGlobalTooltipDataSet({
+                id: `${amountToSendSign}token-amount-${tokenId}`,
+                content: String(fullAmount)
+              })}
+            >{`${amountToSendSign}${formattedAmount}`}</Text>
+            {!!priceInUsd && (
+              <Text
+                fontSize={16}
+                weight="medium"
+                appearance="secondaryText"
+              >{` ($${priceInUsd}) `}</Text>
+            )}
+          </Text>
+          {suspiciousTokenWarning}
+        </View>
       </View>
+    )
+  }
+
+  return (
+    <View style={[styles.container, !hasBottomSpacing && spacings.mb0]}>
+      <View style={spacings.mrTy}>{tokenIcon}</View>
       <Text
         selectable
         fontSize={16}
@@ -121,18 +211,7 @@ const PendingTokenSummary = ({ token, chainId, hasBottomSpacing = true }: Props)
           >{` ($${priceInUsd}) `}</Text>
         )}
       </Text>
-      {token.flags.suspectedType && (
-        <View
-          // @ts-ignore
-          style={[spacings.mlMi, { cursor: 'pointer' }]}
-          dataSet={createGlobalTooltipDataSet({
-            id: `token-amount-${tokenId}`,
-            content: suspiciousTokenTooltipContent ?? undefined
-          })}
-        >
-          <WarningIcon />
-        </View>
-      )}
+      {suspiciousTokenWarning}
     </View>
   )
 }

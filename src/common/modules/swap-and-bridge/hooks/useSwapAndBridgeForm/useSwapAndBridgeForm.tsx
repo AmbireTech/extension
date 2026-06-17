@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useModalize } from 'react-native-modalize'
 import { useLocation } from 'react-router-dom'
 
+import { SwapAmountWarning } from '@ambire-common/consts/safeguards/swapAmountWarnings'
 import { SwapAndBridgeFormStatus } from '@ambire-common/controllers/swapAndBridge/swapAndBridge'
 import { SwapAndBridgeActiveRoute } from '@ambire-common/interfaces/swapAndBridge'
 import { CallsUserRequest } from '@ambire-common/interfaces/userRequest'
@@ -15,6 +16,7 @@ import { getCallsCount } from '@ambire-common/utils/userRequest'
 import useController from '@common/hooks/useController'
 import useGetTokenSelectProps from '@common/hooks/useGetTokenSelectProps'
 import useNavigation from '@common/hooks/useNavigation'
+import useNetworks from '@common/hooks/useNetworks'
 import useSyncedState from '@common/hooks/useSyncedState'
 import { ROUTES } from '@common/modules/router/constants/common'
 import { getTokenId } from '@common/utils/token'
@@ -41,8 +43,7 @@ const useSwapAndBridgeForm = () => {
     supportedChainIds,
     updateQuoteStatus,
     sessionIds,
-    toSelectedToken,
-    toChainId
+    toSelectedToken
   } = useController('SwapAndBridgeController').state
   const { dispatch: swapAndBridgeDispatch } = useController('SwapAndBridgeController')
   const { dispatch: requestsDispatch, state: requestsState } = useController('RequestsController')
@@ -75,7 +76,15 @@ const useSwapAndBridgeForm = () => {
   const [latestBatchedNetwork, setLatestBatchedNetwork] = useState<bigint | undefined>()
   const [isOneClickModeDuringPriceImpact, setIsOneClickModeDuringPriceImpact] =
     useState<boolean>(false)
-  const { networks } = useController('NetworksController').state
+  const [frozenPriceImpactWarning, setFrozenPriceImpactWarning] =
+    useState<SwapAmountWarning | null>(null)
+  const networks = useNetworks({
+    acc: account,
+    additionalCheck: {
+      chainIds: supportedChainIds,
+      reason: 'Network is not supported by our service provider.'
+    }
+  })
   const currentRoute = useLocation()
   const { setSearchParams, navigate } = useNavigation()
   const { ref: routesModalRef, open: openRoutesModal, close: closeRoutesModal } = useModalize()
@@ -89,6 +98,12 @@ const useSwapAndBridgeForm = () => {
     open: openPriceImpactModal,
     close: closePriceImpactModal
   } = useModalize()
+
+  const closePriceImpactModalWrapped = useCallback(() => {
+    setFrozenPriceImpactWarning(null)
+    closePriceImpactModal()
+  }, [closePriceImpactModal])
+
   const { visibleUserRequests } = useController('RequestsController').state
   const sessionIdsRequestedToBeInit = useRef<SessionId[]>([])
   const sessionId = useMemo(() => {
@@ -255,20 +270,10 @@ const useSwapAndBridgeForm = () => {
     tokens: portfolioTokenList,
     token: fromSelectedToken ? getTokenId(fromSelectedToken) : '',
     isLoading: isTokenListLoading,
-    networks,
-    supportedChainIds
+    networks
   })
 
-  const highPriceImpactOrSlippageWarning:
-    | { type: 'highPriceImpact'; percentageDiff: number }
-    | {
-        type: 'slippageImpact'
-        possibleSlippage: number
-        minInUsd: number
-        minInToken: string
-        symbol: string
-      }
-    | null = useMemo(() => {
+  const highPriceImpactOrSlippageWarning: SwapAmountWarning | null = useMemo(() => {
     if (updateQuoteStatus === 'LOADING') return null
 
     if (formStatus !== SwapAndBridgeFormStatus.ReadyToSubmit) return null
@@ -302,7 +307,7 @@ const useSwapAndBridgeForm = () => {
   }, [openEstimationModal, swapAndBridgeDispatch])
 
   const acknowledgeHighPriceImpact = useCallback(() => {
-    closePriceImpactModal()
+    closePriceImpactModalWrapped()
 
     if (isOneClickModeDuringPriceImpact) {
       if (!!account?.safeCreation || networkUserRequests.length > 0) {
@@ -344,24 +349,26 @@ const useSwapAndBridgeForm = () => {
       setLatestBatchedNetwork(fromSelectedToken?.chainId)
     }
   }, [
-    closePriceImpactModal,
-    openEstimationModalAndDispatch,
-    requestsDispatch,
-    isOneClickModeDuringPriceImpact,
-    setShowAddedToBatch,
-    networkUserRequests,
-    fromSelectedToken,
     account?.safeCreation,
-    quote
+    closePriceImpactModalWrapped,
+    fromSelectedToken?.chainId,
+    isOneClickModeDuringPriceImpact,
+    networkUserRequests.length,
+    openEstimationModalAndDispatch,
+    quote,
+    requestsDispatch
   ])
 
   const handleSubmitForm = useCallback(
     (isOneClickMode: boolean) => {
       setIsOneClickModeDuringPriceImpact(isOneClickMode)
+
       if (highPriceImpactOrSlippageWarning) {
+        setFrozenPriceImpactWarning(highPriceImpactOrSlippageWarning)
         openPriceImpactModal()
         return
       }
+
       if (!quote || !quote.selectedRoute) return
 
       // open the estimation modal on one click method;
@@ -407,14 +414,14 @@ const useSwapAndBridgeForm = () => {
       }
     },
     [
-      requestsDispatch,
+      account?.safeCreation,
+      fromSelectedToken?.chainId,
       highPriceImpactOrSlippageWarning,
+      networkUserRequests.length,
       openEstimationModalAndDispatch,
       openPriceImpactModal,
       quote,
-      networkUserRequests,
-      fromSelectedToken,
-      account?.safeCreation
+      requestsDispatch
     ]
   )
 
@@ -526,8 +533,9 @@ const useSwapAndBridgeForm = () => {
     closeEstimationModalWrapped,
     handleSubmitForm,
     highPriceImpactOrSlippageWarning,
+    frozenPriceImpactWarning,
     priceImpactModalRef,
-    closePriceImpactModal,
+    closePriceImpactModal: closePriceImpactModalWrapped,
     acknowledgeHighPriceImpact,
     settingModalVisible,
     handleToggleSettingsMenu,

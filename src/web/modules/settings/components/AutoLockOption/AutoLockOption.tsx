@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 
 import CheckIcon from '@common/assets/svg/CheckIcon'
 import Text from '@common/components/Text'
+import { AUTO_LOCK_TIMES, getAutoLockLabel } from '@common/controllers/auto-lock'
 import useController from '@common/hooks/useController'
 import { AnimatedPressable, useCustomHover } from '@common/hooks/useHover'
 import useTheme from '@common/hooks/useTheme'
@@ -10,10 +11,6 @@ import useToast from '@common/hooks/useToast'
 import spacings from '@common/styles/spacings'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
-import {
-  AUTO_LOCK_TIMES,
-  getAutoLockLabel
-} from '@web/extension-services/background/controllers/auto-lock'
 
 type Props = {
   time: AUTO_LOCK_TIMES
@@ -34,8 +31,7 @@ const AutoLockOption: FC<Props> = ({ time }: Props) => {
     values: {
       from: theme.secondaryBackground,
       to: theme.tertiaryBackground
-    },
-    forceHoveredStyle: isSelected
+    }
   })
 
   return (
@@ -62,7 +58,10 @@ const AutoLockOption: FC<Props> = ({ time }: Props) => {
           borderWidth: 1,
           borderColor: theme.secondaryBorder
         },
-        animStyle
+        animStyle,
+        isSelected && {
+          backgroundColor: theme.tertiaryBackground
+        }
       ]}
       {...bindAnim}
     >

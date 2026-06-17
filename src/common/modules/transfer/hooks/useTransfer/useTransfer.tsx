@@ -29,7 +29,6 @@ const useTransfer = (isTopUpScreen: boolean) => {
   const { addToast } = useToast()
   const { state: transferState, dispatch: transferDispatch } = useController('TransferController')
   const { dispatch: requestsDispatch } = useController('RequestsController')
-  const { dispatch: mainDispatch } = useController('MainController')
   const {
     isTopUp,
     validationFormMsgs,
@@ -47,7 +46,8 @@ const useTransfer = (isTopUpScreen: boolean) => {
     amountFieldMode,
     amount: controllerAmount,
     amountInFiat,
-    isRecipientAddressViewOnly
+    isRecipientAddressViewOnly,
+    addressPoisoningMatch
   } = transferState
 
   const amountInFiatBigInt = useMemo(() => {
@@ -72,11 +72,10 @@ const useTransfer = (isTopUpScreen: boolean) => {
     close: closeGasTankInfoBottomSheet
   } = useModalize()
   const { accountsOps } = useController('ActivityController').state
-  const { hasGasTank } = useHasGasTank({ account })
+  const { canUseGasTank } = useHasGasTank({ account })
   const recipientMenuClosedAutomatically = useRef(false)
 
   const [showAddedToBatch, setShowAddedToBatch] = useState(false)
-  const [showSafeSigned, setShowSafeSigned] = useState(false)
   const [latestBatchedNetwork, setLatestBatchedNetwork] = useState<bigint | undefined>()
 
   const controllerAmountFieldValue = amountFieldMode === 'token' ? controllerAmount : amountInFiat
@@ -185,37 +184,17 @@ const useTransfer = (isTopUpScreen: boolean) => {
     }
   }, [latestBroadcastedAccountOp?.accountAddr, latestBroadcastedAccountOp?.chainId, sessionHandler])
 
-  useEffect(() => {
-    if (showSafeSigned) return
-    if (
-      signAccountOpController &&
-      signAccountOpController.account.safeCreation &&
-      signAccountOpController.status?.type === SigningStatus.Queued
-    ) {
-      setShowSafeSigned(true)
-      mainDispatch({
-        type: 'method',
-        params: {
-          method: 'fetchSafeTxns',
-          args: [[signAccountOpController.accountOp.chainId]]
-        }
-      })
-    }
-  }, [showSafeSigned, signAccountOpController, mainDispatch])
-
-  const displayedView: 'transfer' | 'batch' | 'track' | 'safe-signed' | 'loading' = useMemo(() => {
+  const displayedView: 'transfer' | 'batch' | 'track' | 'loading' = useMemo(() => {
     // If the screen type doesn't match the controller state, we show a loading state
     // This avoids showing the wrong screen for a brief moment0
     if (!!isTopUpScreen !== !!isTopUp) return 'loading'
-
-    if (showSafeSigned) return 'safe-signed'
 
     if (showAddedToBatch) return 'batch'
 
     if (latestBroadcastedAccountOp) return 'track'
 
     return 'transfer'
-  }, [isTopUp, showSafeSigned, isTopUpScreen, latestBroadcastedAccountOp, showAddedToBatch])
+  }, [isTopUp, isTopUpScreen, latestBroadcastedAccountOp, showAddedToBatch])
 
   const {
     ref: estimationModalRef,
@@ -364,7 +343,7 @@ const useTransfer = (isTopUpScreen: boolean) => {
         // Proceed in OneClick txn
         if (executionType === 'open-request-window') {
           // one click mode opens signAccountOp if more than 1 req in batch
-          if (networkUserRequests.length > 0) {
+          if (!!account?.safeCreation || networkUserRequests.length > 0) {
             requestsDispatch({
               type: 'method',
               params: {
@@ -434,7 +413,8 @@ const useTransfer = (isTopUpScreen: boolean) => {
       addressState,
       resetTransferForm,
       networkUserRequests.length,
-      openEstimationModalAndDispatch
+      openEstimationModalAndDispatch,
+      account?.safeCreation
     ]
   )
 
@@ -467,7 +447,9 @@ const useTransfer = (isTopUpScreen: boolean) => {
             !isRecipientAddressUnknownAgreed &&
             !isRecipientHumanizerKnownTokenOrSmartContract &&
             isRecipientAddressFirstTimeSend) ||
-          isRecipientAddressViewOnly
+          isRecipientAddressViewOnly ||
+          // poisoning detected - require hold-to-proceed as an additional safety step
+          !!addressPoisoningMatch
         }
         onRecipientAddressUnknownAgree={onRecipientAddressUnknownAgree}
       />
@@ -484,6 +466,7 @@ const useTransfer = (isTopUpScreen: boolean) => {
     isRecipientHumanizerKnownTokenOrSmartContract,
     isRecipientAddressFirstTimeSend,
     isRecipientAddressViewOnly,
+    addressPoisoningMatch,
     onRecipientAddressUnknownAgree,
     addTransaction
   ])
@@ -556,7 +539,7 @@ const useTransfer = (isTopUpScreen: boolean) => {
     batchNetworkUserRequestsCount,
     transferState,
     addressInputState,
-    hasGasTank,
+    canUseGasTank,
     amountFieldValue,
     setAmountFieldValue,
     addressStateFieldValue,

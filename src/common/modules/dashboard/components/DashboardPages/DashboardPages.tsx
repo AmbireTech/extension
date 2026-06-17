@@ -20,11 +20,19 @@ interface Props {
   onScroll: (event: NativeSyntheticEvent<NativeScrollEvent>) => void
   animatedOverviewHeight: Animated.Value
   isSearchHidden: boolean
+  refreshing?: boolean
+  onRefresh?: () => void
 }
 
 const { isTab } = getUiType()
 
-const DashboardPages = ({ onScroll, isSearchHidden, animatedOverviewHeight }: Props) => {
+const DashboardPages = ({
+  onScroll,
+  isSearchHidden,
+  animatedOverviewHeight,
+  refreshing,
+  onRefresh
+}: Props) => {
   const { t } = useTranslation()
   const route = useRoute()
   const [sessionId] = useState(`dashboard-${nanoid()}`)
@@ -109,6 +117,8 @@ const DashboardPages = ({ onScroll, isSearchHidden, animatedOverviewHeight }: Pr
         dashboardNetworkFilterName={dashboardNetworkFilterName}
         animatedOverviewHeight={animatedOverviewHeight}
         isSearchHidden={isSearchHidden}
+        onRefresh={onRefresh}
+        refreshing={refreshing}
       />
       <Collections
         openTab={openTab}
@@ -120,6 +130,8 @@ const DashboardPages = ({ onScroll, isSearchHidden, animatedOverviewHeight }: Pr
         dashboardNetworkFilterName={dashboardNetworkFilterName}
         animatedOverviewHeight={animatedOverviewHeight}
         isSearchHidden={isSearchHidden}
+        onRefresh={onRefresh}
+        refreshing={refreshing}
       />
 
       <DeFiPositions
@@ -131,6 +143,8 @@ const DashboardPages = ({ onScroll, isSearchHidden, animatedOverviewHeight }: Pr
         dashboardNetworkFilterName={dashboardNetworkFilterName}
         animatedOverviewHeight={animatedOverviewHeight}
         isSearchHidden={isSearchHidden}
+        onRefresh={onRefresh}
+        refreshing={refreshing}
       />
 
       <Activity
@@ -141,6 +155,8 @@ const DashboardPages = ({ onScroll, isSearchHidden, animatedOverviewHeight }: Pr
         initTab={initTab}
         animatedOverviewHeight={animatedOverviewHeight}
         network={network}
+        onRefresh={onRefresh}
+        refreshing={refreshing}
       />
     </View>
   )

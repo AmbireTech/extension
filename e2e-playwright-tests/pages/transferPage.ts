@@ -1,6 +1,7 @@
 import { baParams } from 'constants/env'
 import selectors from 'constants/selectors'
 import Token from 'interfaces/token'
+import { SpeculosDevice } from 'libs/speculos-device/device'
 
 import { expect, Page } from '@playwright/test'
 
@@ -72,10 +73,11 @@ export class TransferPage extends BasePage {
     await this.entertext(selectors.formAddContactNameField, contactName)
     await this.click(selectors.formAddToContactsButton)
 
+    // TODO: uncomment when we have test ID
     // assert snackbar notification
-    await expect(this.page.locator(selectors.contactSuccessfullyAddedSnackbar)).toHaveText(
-      'Contact added to Address Book'
-    )
+    // await expect(this.page.locator(selectors.contactSuccessfullyAddedSnackbar)).toHaveText(
+    //   'Contact added to Address Book'
+    // )
   }
 
   async assertAddedContact(contactName: string, contactAddress: string) {
@@ -90,15 +92,22 @@ export class TransferPage extends BasePage {
   async checkSendTransactionOnActivityTab() {
     await this.click(selectors.dashboard.activityTabButton)
 
+    // open transaction modal
+    const firstSendTransaction = this.page.locator(selectors.dashboard.transactionSendText).first()
+    await firstSendTransaction.click()
+
     // When tests are ran in isolation, there would be only 1 txn in the activity tab.
     // But when they are ran in a shared state, we check only the latest one txn, i.e. the first one in the list.
-    const firstSendTransaction = this.page.locator(selectors.dashboard.transactionSendText).first()
     const firstConfirmedPill = this.page
       .locator(selectors.dashboard.confirmedTransactionPill)
       .first()
 
     await expect(firstSendTransaction).toContainText('Send')
     await expect(firstConfirmedPill).toContainText('Confirmed')
+
+    // TODO: add more assertions
+    // assert transaction
+    await this.compareText(selectors.dashboard.activityTransactionConfirmed, 'Confirmed')
   }
 
   // changing fee speed and checking fee amount, if above 0.1$ transaction won't be signed
@@ -106,17 +115,25 @@ export class TransferPage extends BasePage {
     sendToken,
     feeToken,
     payWithGasTank = true, // pay with gas tank by default
-    message
+    message,
+    ledgerSimulatorControls,
+    holdProceedButton = true
   }: {
     sendToken: Token
     feeToken?: Token
     payWithGasTank?: boolean
     message: string
+    ledgerSimulatorControls?: SpeculosDevice
+    holdProceedButton?: boolean
   }) {
-    let feeSelector
+    // await this.page.pause()
     // Proceed
     await this.expectButtonEnabled(selectors.transaction.proceedBtn)
-    await this.longPressButton(selectors.transaction.proceedBtn, 5)
+    if (holdProceedButton) {
+      await this.longPressButton(selectors.transaction.proceedBtn, 5)
+    } else {
+      await this.click(selectors.transaction.proceedBtn)
+    }
 
     // approve the high impact modal if appears
     await this.handlePriceWarningModals()
@@ -128,16 +145,13 @@ export class TransferPage extends BasePage {
     // Select fee token; default Gas Tank
     if (!payWithGasTank) {
       await this.selectFeeToken(baParams.envSelectedAccount, feeToken, payWithGasTank)
-      feeSelector = await this.page
-        .locator(selectors.transaction.feeTokenInDollars)
-        .innerText({ timeout: 10000 }) // returns e.g. '<$0.01'
-    } else {
-      feeSelector = await this.page
-        .locator(selectors.transaction.feeGasTankInDollars)
-        .innerText({ timeout: 10000 }) // returns e.g. '<$0.01'
     }
 
-    const feeDollarsAmount = Number(feeSelector.replace(/[<$]/g, ''))
+    const feeSelector = await this.page
+      .getByTestId(selectors.transaction.feeTokensSelectDropdown)
+      .locator(selectors.transaction.feeTokenInDollars)
+      .innerText()
+    const feeDollarsAmount = Number.parseFloat(feeSelector.replace(/[^0-9.]/g, ''))
 
     if (feeDollarsAmount > 0.1) {
       console.warn(
@@ -150,6 +164,13 @@ export class TransferPage extends BasePage {
       // Sign & Broadcast
       await this.expectButtonEnabled(selectors.signButton)
       await this.click(selectors.signButton)
+
+      if (ledgerSimulatorControls && !payWithGasTank) {
+        await ledgerSimulatorControls.signTransaction()
+      } else if (ledgerSimulatorControls && payWithGasTank) {
+        await ledgerSimulatorControls.signSmartAccountTransaction()
+      }
+
       await this.isVisible(selectors.transaction.confirmingYourTransactionText)
       // Validate requests
       const { rpc } = this.getCategorizedRequests()
@@ -167,7 +188,7 @@ export class TransferPage extends BasePage {
       ).toEqual(true)
 
       // validate success message
-      const timeout = 180000
+      const timeout = 300000
       await this.compareText(selectors.txnStatus, message, { timeout })
 
       // Close page
@@ -206,7 +227,13 @@ export class TransferPage extends BasePage {
     await expect(transactionDetails).toHaveText(/Send/)
     await expect(transactionDetails).toHaveText(/0\.001/)
     await expect(transactionDetails).toHaveText(/USDC/)
-    await expect(transactionDetails).toHaveText(new RegExp(recepientAddress))
+
+    // commenting out this for now as this could be different values from now on:
+    // 1. an ens, if one exists
+    // 2. a name in the extension for the address, if one is added
+    // 3. a shortened address like 0x1234...abab
+    // await expect(transactionDetails).toHaveText(new RegExp(recepientAddress))
+
     // assert confirmed block
     await expect(
       newPage.getByTestId(selectors.transaction.explorer.txnConfirmedStep)

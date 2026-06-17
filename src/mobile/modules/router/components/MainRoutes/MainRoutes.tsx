@@ -15,11 +15,22 @@ import ImportSmartAccountJsonScreen from '@mobile/modules/auth/screens/ImportSma
 import PrivateKeyImportScreen from '@mobile/modules/auth/screens/PrivateKeyImportScreen'
 import SeedPhraseImportScreen from '@mobile/modules/auth/screens/SeedPhraseImportScreen'
 import ViewOnlyAccountAdderScreen from '@mobile/modules/auth/screens/ViewOnlyAccountAdderScreen'
+import ExploreScreen from '@mobile/modules/explore/screens/ExploreScreen'
+import ExploreSectionScreen from '@mobile/modules/explore/screens/ExploreSectionScreen'
 import LedgerConnectScreen from '@mobile/modules/hardware-wallet/screens/LedgerConnectScreen'
 import KeyStoreSetupScreen from '@mobile/modules/keystore/screens/KeyStoreSetupScreen'
+import NetworksScreen from '@mobile/modules/networks/screens'
+import QrReaderScreen from '@mobile/modules/qr-reader/screens/QrReaderScreen'
 import ReceiveScreen from '@mobile/modules/receive/screens/ReceiveScreen'
+import NavMenu from '@mobile/modules/router/components/NavMenu'
+import AboutSettingsScreen from '@mobile/modules/settings/screens/AboutSettingsScreen'
+import AccountsSettingsScreen from '@mobile/modules/settings/screens/AccountsSettingsScreen'
+import GeneralSettingsScreen from '@mobile/modules/settings/screens/GeneralSettingsScreen'
+import TermsSettingsScreen from '@mobile/modules/settings/screens/TermsSettingsScreen'
+import SwapAndBridgeScreen from '@mobile/modules/swap-and-bridge/screens/SwapAndBridgeScreen'
 import TokenDetailsScreen from '@mobile/modules/token-details/screens/TokenDetailsScreen'
 import TransferScreen from '@mobile/modules/transfer/screens/TransferScreen'
+import DappWebViewScreen from '@mobile/modules/webview/screens/DappWebViewScreen'
 
 const MainRoutes = () => {
   return (
@@ -50,6 +61,17 @@ const MainRoutes = () => {
           <Route path={ROUTES.topUpGasTank} element={<TransferScreen isTopUpScreen />} />
           <Route path={ROUTES.accountSelect} element={<AccountSelectScreen />} />
           <Route path={ROUTES.tokenDetails} element={<TokenDetailsScreen />} />
+          <Route path={ROUTES.networks} element={<NetworksScreen />} />
+          <Route path={ROUTES.swapAndBridge} element={<SwapAndBridgeScreen />} />
+          <Route path={ROUTES.menu} element={<NavMenu />} />
+          <Route path={ROUTES.generalSettings} element={<GeneralSettingsScreen />} />
+          <Route path={ROUTES.accountsSettings} element={<AccountsSettingsScreen />} />
+          <Route path={ROUTES.settingsAbout} element={<AboutSettingsScreen />} />
+          <Route path={ROUTES.settingsTerms} element={<TermsSettingsScreen />} />
+          <Route path={ROUTES.explore} element={<ExploreScreen />} />
+          <Route path={ROUTES.exploreSection} element={<ExploreSectionScreen />} />
+          <Route path={ROUTES.dappWebView} element={<DappWebViewScreen />} />
+          <Route path={ROUTES.qrReader} element={<QrReaderScreen />} />
         </Route>
       </Route>
       {/* Fallback route to suppress "No routes matched location" warnings when multiple Routes blocks are rendered */}

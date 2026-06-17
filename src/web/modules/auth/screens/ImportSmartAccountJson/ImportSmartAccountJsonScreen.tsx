@@ -32,6 +32,7 @@ import {
 import PasswordConfirmation from '@web/modules/settings/components/PasswordConfirmation'
 
 import getStyles from './styles'
+import useToast from '@common/hooks/useToast'
 
 type ImportedJson = Account & {
   privateKey?: string
@@ -166,11 +167,11 @@ const validateJson = (json: ImportedJson): { error?: string; success: boolean } 
 }
 
 const SmartAccountImportScreen = () => {
+  const { addToast } = useToast()
   const { t } = useTranslation()
   const { theme, styles } = useTheme(getStyles)
   const [error, setError] = useState('')
   const [accountToImport, setAccountToImport] = useState<Account | null>(null)
-  const [privateKey, setPrivateKey] = useState<string | null>(null)
   const [encryptedKey, setEncryptedKey] = useState<{
     key: string
     salt: string
@@ -192,45 +193,43 @@ const SmartAccountImportScreen = () => {
     close: closeConfirmKeyPassword
   } = useModalize()
 
+  const importSmartAccountJson = useCallback(
+    (readyToAddAccount: Account, privateKey: string) => {
+      const keys: ReadyToAddKeys['internal'] = [
+        {
+          addr: computeAddress(privateKey),
+          label: '',
+          type: 'internal',
+          privateKey,
+          dedicatedToOneSA: true,
+          meta: { createdAt: Date.now() }
+        }
+      ]
+
+      dispatch({
+        type: 'IMPORT_SMART_ACCOUNT_JSON',
+        params: { readyToAddAccount, keys }
+      })
+    },
+    [dispatch]
+  )
+
   useEffect(() => {
     const onReceiveOneTimeData = (data: any) => {
-      if (!data.privateKey) return
-
-      setPrivateKey(data.privateKey)
+      if (!data.privateKey || !accountToImport) return
+      importSmartAccountJson(accountToImport, data.privateKey)
     }
 
     eventBus.addEventListener('receiveOneTimeData', onReceiveOneTimeData)
 
     return () => eventBus.removeEventListener('receiveOneTimeData', onReceiveOneTimeData)
-  }, [])
-
-  // import the account when all the data is collected successfully
-  useEffect(() => {
-    if (!privateKey || !accountToImport) return
-
-    const keys: ReadyToAddKeys['internal'] = [
-      {
-        addr: computeAddress(privateKey),
-        label: '',
-        type: 'internal',
-        privateKey,
-        dedicatedToOneSA: true,
-        meta: { createdAt: Date.now() }
-      }
-    ]
-
-    dispatch({
-      type: 'IMPORT_SMART_ACCOUNT_JSON',
-      params: { readyToAddAccount: accountToImport, keys }
-    })
-
-    setPrivateKey(null)
-    setAccountToImport(null)
-  }, [privateKey, accountToImport, dispatch])
+  }, [accountToImport, importSmartAccountJson])
 
   const handleFileUpload = (files: any) => {
     setError('')
     setIsLoading(true)
+    setEncryptedKey(null)
+    setAccountToImport(null)
 
     const file = files[0]
     if (file.type !== 'application/json') {
@@ -249,18 +248,27 @@ const SmartAccountImportScreen = () => {
           return
         }
 
-        setAccountToImport({
-          addr: accountData.addr,
+        const accountAddr = getAddress(accountData.addr)
+        const isAlreadyAdded = accounts.some((acc) => getAddress(acc.addr) === accountAddr)
+        if (isAlreadyAdded) {
+          setIsLoading(false)
+          setError('This account is already in your wallet.')
+          return
+        }
+
+        const readyToAddAccount: Account = {
+          addr: accountAddr,
           associatedKeys: accountData.associatedKeys,
           initialPrivileges: accountData.initialPrivileges,
           creation: accountData.creation,
           newlyAdded: true,
           preferences:
-            accountData.preferences ?? getDefaultAccountPreferences(accountData.addr, accounts, 0)
-        })
+            accountData.preferences ?? getDefaultAccountPreferences(accountAddr, accounts, 0)
+        }
+        setAccountToImport(readyToAddAccount)
 
         if (accountData.privateKey) {
-          setPrivateKey(accountData.privateKey)
+          importSmartAccountJson(readyToAddAccount, accountData.privateKey)
           return
         }
 
@@ -273,7 +281,6 @@ const SmartAccountImportScreen = () => {
         })
         openConfirmKeyPassword()
       } catch (e) {
-        // eslint-disable-next-line no-console
         console.error(e)
         setError('Could not parse file. Please upload a valid json file')
         setIsLoading(false)
@@ -282,8 +289,15 @@ const SmartAccountImportScreen = () => {
   }
 
   useEffect(() => {
-    if (newAccounts.length) goToNextRoute()
-  }, [newAccounts.length, goToNextRoute])
+    if (!accountToImport) return
+
+    const hasImportedAccount = newAccounts.some((acc) => acc.addr === accountToImport.addr)
+    if (!hasImportedAccount) return
+
+    setIsLoading(false)
+    setAccountToImport(null)
+    goToNextRoute()
+  }, [newAccounts, accountToImport, goToNextRoute])
 
   const { getRootProps, getInputProps, open, isDragActive } = useDropzone({
     onDrop: handleFileUpload
@@ -298,8 +312,12 @@ const SmartAccountImportScreen = () => {
   )
 
   const onPasswordSubmitted = (password: string) => {
-    // shouldn't happen
-    if (!encryptedKey || !accountToImport) return
+    if (!encryptedKey || !accountToImport) {
+      addToast(t('Encrypted key or account to import is not set. Should not happen.'), {
+        type: 'error'
+      })
+      return
+    }
 
     keystoreDispatch({
       type: 'method',

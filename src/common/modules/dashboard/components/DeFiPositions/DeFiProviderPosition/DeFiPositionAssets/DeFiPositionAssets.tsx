@@ -2,7 +2,7 @@ import { formatUnits } from 'ethers'
 import React, { FC, useMemo } from 'react'
 import { View } from 'react-native'
 
-import { Position } from '@ambire-common/libs/defiPositions/types'
+import { AssetType, Position } from '@ambire-common/libs/defiPositions/types'
 import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
 import Text from '@common/components/Text'
 import TokenIcon from '@common/components/TokenIcon'
@@ -26,7 +26,7 @@ const COLUMNS_WITH_APY = [
 const DeFiPositionAssets: FC<{
   assets: Position['assets']
   label: string
-  chainId: bigint
+  chainId?: bigint
 }> = ({ assets, label, chainId }) => {
   const shouldDisplayAPY = assets.some((a) => !!a?.additionalData?.APY)
 
@@ -44,42 +44,50 @@ const DeFiPositionAssets: FC<{
     <View>
       <DeFiPositionAssetsHeader columns={columns} />
       <View style={spacings.ptMi}>
-        {assets.map(({ symbol, amount, decimals, address, additionalData, value, iconUrl }) => {
-          return (
-            <View
-              style={[flexbox.directionRow, spacings.phSm, spacings.pvTy, flexbox.alignCenter]}
-              key={address}
-            >
-              <View style={[flexbox.directionRow, flexbox.flex1, flexbox.alignCenter]}>
-                <TokenIcon
-                  width={24}
-                  height={24}
-                  uri={iconUrl}
-                  withContainer={false}
-                  chainId={chainId}
-                  address={address}
-                  withNetworkIcon={false}
-                />
-                <Text fontSize={14} weight="semiBold" style={spacings.mlTy}>
-                  {symbol}
+        {assets.map(
+          ({ symbol, amount, decimals, type, address, additionalData, value, iconUrl }) => {
+            return (
+              <View
+                style={[flexbox.directionRow, spacings.phSm, spacings.pvTy, flexbox.alignCenter]}
+                key={address}
+              >
+                <View style={[flexbox.directionRow, flexbox.flex1, flexbox.alignCenter]}>
+                  {type !== AssetType.Prediction && (
+                    <TokenIcon
+                      width={24}
+                      height={24}
+                      uri={iconUrl}
+                      withContainer={false}
+                      chainId={chainId}
+                      address={address}
+                      withNetworkIcon={false}
+                    />
+                  )}
+                  <Text
+                    fontSize={14}
+                    weight="semiBold"
+                    style={type !== AssetType.Prediction ? spacings.mlTy : undefined}
+                  >
+                    {symbol}
+                  </Text>
+                </View>
+                <Text style={flexbox.flex1} fontSize={14} weight="semiBold">
+                  {formatDecimals(Number(formatUnits(amount, decimals)), 'amount')}
+                </Text>
+                {shouldDisplayAPY && (
+                  <Text style={{ flex: 0.5 }} fontSize={14} weight="semiBold">
+                    {additionalData?.APY
+                      ? `${formatDecimals(additionalData?.APY, 'amount')}%`
+                      : 'N/A'}
+                  </Text>
+                )}
+                <Text style={{ flex: 0.5, ...text.right }} fontSize={14} weight="semiBold">
+                  {formatDecimals(value, 'value')}
                 </Text>
               </View>
-              <Text style={flexbox.flex1} fontSize={14} weight="semiBold">
-                {formatDecimals(Number(formatUnits(amount, decimals)), 'amount')}
-              </Text>
-              {shouldDisplayAPY && (
-                <Text style={{ flex: 0.5 }} fontSize={14} weight="semiBold">
-                  {additionalData?.APY
-                    ? `${formatDecimals(additionalData?.APY, 'amount')}%`
-                    : 'N/A'}
-                </Text>
-              )}
-              <Text style={{ flex: 0.5, ...text.right }} fontSize={14} weight="semiBold">
-                {formatDecimals(value, 'value')}
-              </Text>
-            </View>
-          )
-        })}
+            )
+          }
+        )}
       </View>
     </View>
   )

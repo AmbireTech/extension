@@ -38,7 +38,7 @@ const AccountsSettingsScreen = () => {
   const { setCurrentSettingsPage } = useContext(SettingsRoutesContext)
   const { dispatch: accountsDispatch } = useController('AccountsController')
   const { dispatch: mainDispatch } = useController('MainController')
-  const { themeType, theme } = useTheme()
+  const { theme } = useTheme()
   const {
     ref: sheetRefExportImportKey,
     open: openExportImportKey,
@@ -179,7 +179,7 @@ const AccountsSettingsScreen = () => {
               options={accountOptions}
               inverseInteractionColors
               isSelectable={false}
-              containerStyle={{ ...spacings.mb0, ...spacings.pvSm }}
+              containerStyle={{ ...spacings.mb0, ...spacings.pvTy }}
               withReceive
             />
           </View>

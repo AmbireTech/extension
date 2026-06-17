@@ -9,6 +9,8 @@ declare module '@env' {
     VELCRO_URL: string
     BUNGEE_API_KEY: string
     LI_FI_API_KEY: string
+    SQUID_INTEGRATOR_ID: string
+    UNISWAP_API_KEY: string
     SENTRY_DSN?: string
     ENVIRONMENT: string
     DEFAULT_KEYSTORE_PASSWORD_DEV: string
@@ -16,6 +18,8 @@ declare module '@env' {
     LEGENDS_NFT_ADDRESS: string
     SENTRY_DSN_LEGENDS?: string
     SENTRY_DSN_BROWSER_EXTENSION?: string
+    WEBVIEW_DEV_HOST?: string
+    WALLETCONNECT_PROJECT_ID: string
   }
 
   /**
@@ -97,6 +101,16 @@ declare module '@env' {
   export const LI_FI_API_KEY: EnvTypes['LI_FI_API_KEY']
 
   /**
+   * Squid integrator ID. Required by the Squid API.
+   */
+  export const SQUID_INTEGRATOR_ID: EnvTypes['SQUID_INTEGRATOR_ID']
+
+  /**
+   * Uniswap Trading API key. Required by the Uniswap router.
+   */
+  export const UNISWAP_API_KEY: EnvTypes['UNISWAP_API_KEY']
+
+  /**
    * The address of the Legends NFT contract (same on PROD and STAGING)
    */
   export const LEGENDS_NFT_ADDRESS: EnvTypes['LEGENDS_NFT_ADDRESS']
@@ -110,4 +124,14 @@ declare module '@env' {
    * Sentry is application monitoring and error tracking app
    */
   export const SENTRY_DSN_BROWSER_EXTENSION: EnvTypes['SENTRY_DSN_BROWSER_EXTENSION']
+
+  /**
+   * LAN IP of the dev machine for the WebView webpack-dev-server (Android physical device).
+   */
+  export const WEBVIEW_DEV_HOST: EnvTypes['WEBVIEW_DEV_HOST']
+
+  /**
+   * WalletConnect Project ID for v2 connections.
+   */
+  export const WALLETCONNECT_PROJECT_ID: EnvTypes['WALLETCONNECT_PROJECT_ID']
 }

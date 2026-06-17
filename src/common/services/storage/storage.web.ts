@@ -1,12 +1,26 @@
-import { Storage } from '@ambire-common/interfaces/storage'
+import { Storage, StorageProps } from '@ambire-common/interfaces/storage'
 import { parse, stringify } from '@ambire-common/libs/richJson/richJson'
 import { browser, isExtension } from '@web/constants/browserapi'
 
+function commonGet<K extends keyof StorageProps>(key: K): Promise<StorageProps[K] | undefined>
+function commonGet<K extends keyof StorageProps>(
+  key: K,
+  defaultValue: StorageProps[K]
+): Promise<StorageProps[K]>
+function commonGet<K extends keyof StorageProps>(
+  key: K,
+  defaultValue: null
+): Promise<StorageProps[K] | null>
+function commonGet<K extends keyof StorageProps>(
+  key: K,
+  defaultValue?: StorageProps[K] | null
+): Promise<StorageProps[K] | null | undefined> {
+  const serialized = typeof localStorage !== 'undefined' ? localStorage.getItem(String(key)) : null
+  return Promise.resolve(serialized ? parse(serialized) : defaultValue)
+}
+
 const commonAsyncStorage: Storage = {
-  get: (key: string, defaultValue: any): any => {
-    const serialized = typeof localStorage !== 'undefined' ? localStorage.getItem(key) : null
-    return Promise.resolve(serialized ? parse(serialized) : defaultValue)
-  },
+  get: commonGet,
   set: (key: string, value: any) => {
     if (typeof localStorage !== 'undefined') {
       localStorage.setItem(key, stringify(value))
@@ -29,12 +43,24 @@ const formatValue = (value: any, defaultValue?: any) => {
   }
 }
 
-const get = async (key: string, defaultValue?: any) => {
-  const res = await browser.storage.local.get(key)
+async function get<K extends keyof StorageProps>(key: K): Promise<StorageProps[K] | undefined>
+async function get<K extends keyof StorageProps>(
+  key: K,
+  defaultValue: StorageProps[K]
+): Promise<StorageProps[K]>
+async function get<K extends keyof StorageProps>(
+  key: K,
+  defaultValue: null
+): Promise<StorageProps[K] | null>
+async function get<K extends keyof StorageProps>(
+  key: K,
+  defaultValue?: StorageProps[K] | null
+): Promise<StorageProps[K] | null | undefined> {
+  const res = await browser.storage.local.get(String(key))
 
-  if (!res[key]) return defaultValue
+  if (!res[String(key)]) return defaultValue
 
-  return formatValue(res[key])
+  return formatValue(res[String(key)])
 }
 
 const set = async (key: string, value: any): Promise<null> => {
@@ -77,4 +103,19 @@ const syncSessionStorage = {
   }
 }
 
-export { asyncStorage as storage, syncStorage, syncSessionStorage }
+const secureStorage = {
+  get: (key: string) => {
+    console.warn(`Secure storage is not supported on web. Attempted to get key: ${key}`)
+    return Promise.resolve(null)
+  },
+  set: (key: string) => {
+    console.warn(`Secure storage is not supported on web. Attempted to set key: ${key}`)
+    return Promise.resolve()
+  },
+  remove: (key: string) => {
+    console.warn(`Secure storage is not supported on web. Attempted to remove key: ${key}`)
+    return Promise.resolve()
+  }
+}
+
+export { asyncStorage as storage, syncStorage, syncSessionStorage, secureStorage }

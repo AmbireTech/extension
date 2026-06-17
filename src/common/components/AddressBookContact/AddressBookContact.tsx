@@ -5,7 +5,6 @@ import { TooltipRefProps } from 'react-tooltip'
 
 import AccountAddress from '@common/components/AccountAddress'
 import Avatar from '@common/components/Avatar'
-import DomainBadge from '@common/components/Avatar/DomainBadge'
 import Editable from '@common/components/Editable'
 import Text from '@common/components/Text'
 import { isWeb } from '@common/config/env'
@@ -25,6 +24,11 @@ import getStyles from './styles'
 interface Props {
   address: string
   name?: string
+  addressHighlight?: {
+    prefix: number
+    suffix: number
+    color: 'errorText'
+  }
   isManageable?: boolean
   isEditable?: boolean
   withCopy?: boolean
@@ -39,6 +43,7 @@ interface Props {
 const AddressBookContact: FC<Props> = ({
   address,
   name,
+  addressHighlight,
   isManageable,
   isEditable,
   withCopy = true,
@@ -59,7 +64,11 @@ const AddressBookContact: FC<Props> = ({
   const {
     state: { account: selectedAccount }
   } = useController('SelectedAccountController')
-  const { ens, isLoading } = useReverseLookup({ address })
+  const {
+    name: reverseLookupName,
+    type: reverseLookupType,
+    isLoading
+  } = useReverseLookup({ address })
   const [bindAnim, animStyle] = useCustomHover({
     property: 'backgroundColor',
     values: {
@@ -116,6 +125,7 @@ const AddressBookContact: FC<Props> = ({
       style={[
         flexbox.directionRow,
         flexbox.alignCenter,
+        flexbox.flex1,
         flexbox.justifySpaceBetween,
         spacings.phTy,
         spacings.pvTy,
@@ -127,7 +137,7 @@ const AddressBookContact: FC<Props> = ({
       {...(onPress ? bindAnim : {})}
       testID={testID}
     >
-      <View style={[flexbox.directionRow, flexbox.alignCenter]}>
+      <View style={[flexbox.directionRow, flexbox.alignCenter, flexbox.flex1]}>
         <Avatar
           {...(avatarSize && { size: avatarSize })}
           pfp={address}
@@ -161,8 +171,10 @@ const AddressBookContact: FC<Props> = ({
           <View style={[flexbox.directionRow, flexbox.alignCenter]}>
             <AccountAddress
               isLoading={isLoading}
-              ens={ens}
+              name={reverseLookupName}
+              type={reverseLookupType}
               address={address}
+              addressHighlight={addressHighlight}
               containerStyle={{ paddingVertical: 0 }}
               withCopy={withCopy}
             />

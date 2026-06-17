@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import BottomSheet from '@common/components/BottomSheet'
 import DualChoiceWarningModal from '@common/components/DualChoiceWarningModal'
 import useController from '@common/hooks/useController'
+import GasFeeUpdatedModal from '@common/modules/sign-account-op/components/GasFeeUpdatedModal/GasFeeUpdatedModal'
 import SignAccountOpHardwareWalletSigningModal from '@common/modules/sign-account-op/components/SignAccountOpHardwareWalletSigningModal'
 import { ModalsProps } from '@common/modules/sign-account-op/types/modals'
 import spacings from '@common/styles/spacings'
@@ -13,11 +14,12 @@ const Modals: FC<ModalsProps> = ({
   renderedButNotNecessarilyVisibleModal,
   signAccountOpState,
   warningModalRef,
+  gasFeeUpdatedModalRef,
+  handleAcceptGasFeeUpdate,
+  handleDismissGasFeeUpdate,
   feePayerKeyType,
   signingKeyType,
   slowPaymasterRequest,
-  shouldDisplayLedgerConnectModal,
-  handleDismissLedgerConnectModal,
   warningToPromptBeforeSign,
   acknowledgeWarning,
   dismissWarning,
@@ -76,6 +78,25 @@ const Modals: FC<ModalsProps> = ({
     )
   }
 
+  if (renderedButNotNecessarilyVisibleModal === 'gas-fee-updated' && signAccountOpState) {
+    return (
+      <BottomSheet
+        id="gas-fee-updated-modal"
+        closeBottomSheet={handleDismissGasFeeUpdate}
+        sheetRef={gasFeeUpdatedModalRef}
+        withBackdropBlur={false}
+        shouldBeClosableOnDrag={false}
+        autoOpen={autoOpen === 'gas-fee-updated'}
+      >
+        <GasFeeUpdatedModal
+          signAccountOpState={signAccountOpState}
+          onAccept={handleAcceptGasFeeUpdate}
+          onCancel={handleDismissGasFeeUpdate}
+        />
+      </BottomSheet>
+    )
+  }
+
   if (renderedButNotNecessarilyVisibleModal === 'ledger-connect') {
     // TODO: impl ledger connect modal
     return null
@@ -99,6 +120,7 @@ const Modals: FC<ModalsProps> = ({
         signAccountOpStatusType={signAccountOpState.status?.type}
         shouldSignAuth={signAccountOpState.shouldSignAuth}
         signedTransactionsCount={signAccountOpState.signedTransactionsCount}
+        hardwareWalletSigningRequest={signAccountOpState.hardwareWalletSigningRequest}
         accountOp={signAccountOpState.accountOp}
         actionType={actionType}
       />

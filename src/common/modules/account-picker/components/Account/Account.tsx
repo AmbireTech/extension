@@ -58,8 +58,9 @@ const Account = ({
   displayTypePill?: boolean
   shouldBeDisplayedAsNew?: boolean
 }) => {
-  const { isLoading: isDomainResolving, ens } = useReverseLookup({ address: account.addr })
-  const domainName = ens
+  const { isLoading: isDomainResolving, name: reverseLookupName } = useReverseLookup({
+    address: account.addr
+  })
   const { t } = useTranslation()
   const { styles, theme, themeType } = useTheme(getStyles)
   const { minWidthSize, maxWidthSize } = useWindowSize()
@@ -79,7 +80,7 @@ const Account = ({
   }, [isSelected, onSelect, onDeselect, account])
 
   const formattedAddress = useMemo(() => {
-    if (minWidthSize('m') || domainName) {
+    if (minWidthSize('m') || reverseLookupName || isDomainResolving) {
       return shortenAddress(account.addr, 16)
     }
     if (maxWidthSize('m') && minWidthSize('l')) {
@@ -89,16 +90,12 @@ const Account = ({
       return account.addr
     }
     return shortenAddress(account.addr, 16)
-  }, [account.addr, domainName, maxWidthSize, minWidthSize])
+  }, [account.addr, reverseLookupName, isDomainResolving, maxWidthSize, minWidthSize])
 
   const handleCopyAddress = useCallback(() => {
     setStringAsync(account.addr)
     addToast(t('Address copied to clipboard!') as string, { timeout: 2500 })
   }, [account.addr, addToast, t])
-
-  if (isDomainResolving) {
-    return <SkeletonLoader height={48} width="100%" style={spacings.mbTy} />
-  }
 
   if (!account.addr) return null
 
@@ -169,14 +166,18 @@ const Account = ({
                 </>
               ) : (
                 <>
-                  {domainName ? (
+                  {reverseLookupName ? (
                     <Text
                       fontSize={16}
                       weight="medium"
                       appearance="primaryText"
                       style={spacings.mrTy}
                     >
-                      {domainName}
+                      {reverseLookupName}
+                    </Text>
+                  ) : isDomainResolving ? (
+                    <Text fontSize={14} appearance="secondaryText" style={spacings.mrTy}>
+                      {t('Resolving domain...')}
                     </Text>
                   ) : null}
                   <Text
@@ -185,14 +186,14 @@ const Account = ({
                     style={spacings.mrMi}
                     weight="mono_regular"
                   >
-                    {domainName ? '(' : ''}
+                    {reverseLookupName || isDomainResolving ? '(' : ''}
                     {formattedAddress}
-                    {domainName ? ')' : ''}
+                    {reverseLookupName || isDomainResolving ? ')' : ''}
                   </Text>
                 </>
               )}
 
-              {!isMobile && (maxWidthSize('l') || isAccountImported || domainName) && (
+              {!isMobile && (maxWidthSize('l') || isAccountImported || reverseLookupName) && (
                 <Pressable onPress={handleCopyAddress}>
                   <CopyIcon width={14} height={14} />
                 </Pressable>

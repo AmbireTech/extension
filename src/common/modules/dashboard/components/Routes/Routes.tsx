@@ -1,11 +1,11 @@
 import React from 'react'
 import { View } from 'react-native'
 
-import DAppsIcon from '@common/assets/svg/DAppsIcon'
+import ExploreIcon from '@common/assets/svg/ExploreIcon'
 import ReceiveIcon from '@common/assets/svg/ReceiveIcon'
 import SendIcon from '@common/assets/svg/SendIcon'
 import SwapAndBridgeIcon from '@common/assets/svg/SwapAndBridgeIcon'
-import { isMobile, isWeb } from '@common/config/env'
+import { isMobile } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import { ROUTES } from '@common/modules/router/constants/common'
 import flexbox from '@common/styles/utils/flexbox'
@@ -37,26 +37,22 @@ const Routes = () => {
           }
         ]
       : []),
-    ...(isWeb
-      ? [
-          {
-            testID: 'dashboard-button-swap-and-bridge',
-            icon: SwapAndBridgeIcon,
-            label: t('Swap & Bridge'),
-            route: ROUTES.swapAndBridge,
-            scale: 0.95,
-            scaleOnHover: 1
-          },
-          {
-            testID: 'dashboard-button-apps',
-            icon: DAppsIcon,
-            label: t('Apps'),
-            route: ROUTES.apps,
-            scale: 0.95,
-            scaleOnHover: 1.02
-          }
-        ]
-      : [])
+    {
+      testID: 'dashboard-button-swap-and-bridge',
+      icon: SwapAndBridgeIcon,
+      label: t('Swap & Bridge'),
+      route: ROUTES.swapAndBridge,
+      scale: 0.95,
+      scaleOnHover: 1
+    },
+    {
+      testID: 'dashboard-button-explore',
+      icon: ExploreIcon,
+      label: t('Explore'),
+      route: ROUTES.explore,
+      scale: 0.95,
+      scaleOnHover: 1.02
+    }
   ]
 
   return (

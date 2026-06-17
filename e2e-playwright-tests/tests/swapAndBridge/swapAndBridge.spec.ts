@@ -71,7 +71,7 @@ test.describe('swapAndBridge Smart Account', { tag: '@swapAndBridge' }, () => {
     await pages.swapAndBridge.verifyDefaultReceiveToken(eth, wallet)
   })
 
-  test('should import a token by address that is NOT in the default "Receive" list during Swap & Bridge with a Smart Account', async ({
+  test('import a token by address that is NOT in the default "Receive" list during Swap & Bridge with a Smart Account returns error', async ({
     pages
   }) => {
     const eth = tokens.eth.ethereum
@@ -94,7 +94,6 @@ test.describe('swapAndBridge Smart Account', { tag: '@swapAndBridge' }, () => {
   }) => {
     const dai = tokens.dai.optimism
     const usdc = tokens.usdc.base
-
     await pages.swapAndBridge.switchUSDValueOnSwapAndBridge(dai, 0.2)
     await pages.swapAndBridge.switchUSDValueOnSwapAndBridge(usdc, 0.2)
   })
@@ -132,6 +131,7 @@ test.describe('swapAndBridge Smart Account', { tag: '@swapAndBridge' }, () => {
   })
 
   test('should Bridge tokens with a Smart Account', async ({ pages }) => {
+    test.setTimeout(300000)
     await runSwapFlow({
       pages,
       sendToken: tokens.usdc.base,

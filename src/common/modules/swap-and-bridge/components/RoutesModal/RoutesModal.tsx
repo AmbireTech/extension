@@ -3,13 +3,12 @@ import { FlatList, Pressable, View } from 'react-native'
 
 import { EstimationStatus } from '@ambire-common/controllers/estimation/types'
 import { SwapAndBridgeRoute } from '@ambire-common/interfaces/swapAndBridge'
-import LeftArrowIcon from '@common/assets/svg/LeftArrowIcon'
+import { getIsBridgeRoute } from '@ambire-common/libs/swapAndBridge/swapAndBridge'
 import BottomSheet from '@common/components/BottomSheet'
 import ModalHeader from '@common/components/BottomSheet/ModalHeader'
-import ScrollableWrapper, { WRAPPER_TYPES } from '@common/components/ScrollableWrapper'
 import SkeletonLoader from '@common/components/SkeletonLoader'
 import Spinner from '@common/components/Spinner'
-import Text from '@common/components/Text'
+import { isMobile } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
@@ -47,6 +46,7 @@ const RoutesModal = ({
     undefined
   )
   const [isEstimationLoading, setIsEstimationLoading] = useState<boolean>(false)
+  const [listHeight, setListHeight] = useState<number>(500)
 
   const persistedSelectedRoute = useMemo(() => {
     return quote?.selectedRoute
@@ -127,9 +127,12 @@ const RoutesModal = ({
   ])
 
   const renderItem = useCallback(
-    // eslint-disable-next-line react/no-unused-prop-types
     ({ item, index }: { item: SwapAndBridgeRoute; index: number }) => {
-      const { steps, inputValueInUsd, outputValueInUsd, fromChainId, toChainId } = item
+      if ((item as any).isSkeleton) {
+        return <SkeletonLoader width="100%" height={listHeight} appearance="secondaryBackground" />
+      }
+
+      const { steps, inputValueInUsd, outputValueInUsd } = item
       const isEstimatingRoute = isEstimationLoading && item.routeId === userSelectedRoute?.routeId
       const isSelected = item.routeId === userSelectedRoute?.routeId && !isEstimatingRoute
 
@@ -174,7 +177,7 @@ const RoutesModal = ({
             isDisabled={item.disabled}
             disabledReason={item.disabledReason}
             providerId={item.providerId}
-            isBridge={fromChainId !== toChainId}
+            isBridge={getIsBridgeRoute(item)}
           />
         </Pressable>
       )
@@ -188,7 +191,8 @@ const RoutesModal = ({
       styles.otherItemLoading,
       quote?.routes?.length,
       handleSelectRoute,
-      theme
+      theme,
+      listHeight
     ]
   )
 
@@ -209,10 +213,40 @@ const RoutesModal = ({
       id="select-routes-modal"
       sheetRef={sheetRef}
       closeBottomSheet={closeBottomSheet}
+      HeaderComponent={
+        <ModalHeader
+          title={t('Select route')}
+          handleClose={closeBottomSheet}
+          titlePosition={isMobile ? 'left' : 'center'}
+        >
+          <RetryButton
+            onPress={updateQuote}
+            label={t('Request new quote')}
+            disabled={isQuoteLoading}
+            isLarge
+          />
+        </ModalHeader>
+      }
+      flatListProps={{
+        data: isQuoteLoading || !quote ? ([{ isSkeleton: true }] as any) : quote?.routes,
+        renderItem,
+        keyExtractor: (r: SwapAndBridgeRoute) =>
+          (r as any).isSkeleton ? 'skeleton' : r.routeId.toString(),
+        initialNumToRender: 6,
+        windowSize: 6,
+        maxToRenderPerBatch: 6,
+        removeClippedSubviews: true,
+        onContentSizeChange: (_, contentHeight: number) => {
+          if (contentHeight > 0 && contentHeight !== listHeight) {
+            setListHeight(contentHeight)
+          }
+        }
+      }}
+      customRenderer={undefined}
       style={{
         overflow: 'hidden',
-        width: !isPopup ? TRANSACTION_FORM_WIDTH : '100%',
-        minHeight: height * 0.7
+        width: isMobile ? 'auto' : !isPopup ? TRANSACTION_FORM_WIDTH : '100%',
+        minHeight: isMobile ? undefined : height * 0.7
       }}
       scrollViewProps={{
         contentContainerStyle: { flex: 1 },
@@ -237,31 +271,7 @@ const RoutesModal = ({
         }, 100)
       }}
       containerInnerWrapperStyles={flexbox.flex1}
-    >
-      <ModalHeader title={t('Select route')} handleClose={closeBottomSheet}>
-        <RetryButton
-          onPress={updateQuote}
-          label={t('Request new quote')}
-          disabled={isQuoteLoading}
-          isLarge
-        />
-      </ModalHeader>
-      {isQuoteLoading || !quote ? (
-        <SkeletonLoader width="100%" height={700} appearance="secondaryBackground" />
-      ) : (
-        <ScrollableWrapper
-          type={WRAPPER_TYPES.FLAT_LIST}
-          data={quote.routes}
-          wrapperRef={scrollRef}
-          keyExtractor={(r: SwapAndBridgeRoute) => r.routeId.toString()}
-          renderItem={renderItem}
-          initialNumToRender={6}
-          windowSize={6}
-          maxToRenderPerBatch={6}
-          removeClippedSubviews
-        />
-      )}
-    </BottomSheet>
+    />
   )
 }
 

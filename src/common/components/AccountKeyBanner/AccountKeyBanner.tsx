@@ -1,50 +1,63 @@
 import React from 'react'
 
-import LedgerLetterIcon from '@common/assets/svg/LedgerLetterIcon'
+import GridPlusIcon from '@common/assets/svg/GridPlusIcon'
+import LedgerBadgeIcon from '@common/assets/svg/LedgerBadgeIcon'
+import ReceiveIcon from '@common/assets/svg/ReceiveIcon'
 import SafeIcon from '@common/assets/svg/SafeIcon'
 import SingleKeyIcon from '@common/assets/svg/SingleKeyIcon'
-import TrezorLockIcon from '@common/assets/svg/TrezorLockIcon'
+import TrezorBadgeIcon from '@common/assets/svg/TrezorBadgeIcon'
 import { KeyType } from '@common/components/AccountKeyIcons/AccountKeyIcons'
 import useTheme from '@common/hooks/useTheme'
 
 import Wrapper from './Wrapper'
 
 const AccountKeyBanner = ({ type }: { type: KeyType }) => {
-  if (type === 'none') return null
-
   const { theme } = useTheme()
 
-  const props = {
+  if (type === 'none') return null
+
+  const iconProps = {
     color: theme.secondaryAccent400,
     width: 16,
     height: 16
   }
 
-  // An icon is not displayed as GridPlus' icon is not suitable for short badges
-  if (type === 'lattice') return <Wrapper text="GridPlus" children={null} />
+  if (type === 'lattice')
+    return (
+      <Wrapper text="GridPlus">
+        <GridPlusIcon {...iconProps} />
+      </Wrapper>
+    )
   if (type === 'trezor')
     return (
       <Wrapper text="Trezor">
-        <TrezorLockIcon {...props} />
+        <TrezorBadgeIcon {...iconProps} />
       </Wrapper>
     )
   if (type === 'ledger')
     return (
       <Wrapper text="Ledger">
-        <LedgerLetterIcon {...props} />
+        <LedgerBadgeIcon {...iconProps} />
       </Wrapper>
     )
 
   if (type === 'safe')
     return (
       <Wrapper text="Safe">
-        <SafeIcon {...props} />
+        <SafeIcon width={iconProps.width} height={iconProps.height} />
+      </Wrapper>
+    )
+
+  if (type === 'qr')
+    return (
+      <Wrapper text="Qr-based">
+        <ReceiveIcon {...iconProps} />
       </Wrapper>
     )
 
   return (
     <Wrapper text="internal">
-      <SingleKeyIcon {...props} />
+      <SingleKeyIcon {...iconProps} />
     </Wrapper>
   )
 }

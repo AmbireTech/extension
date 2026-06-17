@@ -8,13 +8,23 @@ import spacings from '@common/styles/spacings'
 interface Props {
   handleClose?: () => void
   title?: React.ReactNode
+  titlePosition?: 'left' | 'center'
   style?: ViewStyle
   hasAmbireLogo?: boolean
+  forceBackButtonOnMobile?: boolean
   children?: React.ReactNode
   headerTestID?: string
 }
 
-const ModalHeader: FC<Props> = ({ handleClose, title, style, children, headerTestID }) => {
+const ModalHeader: FC<Props> = ({
+  handleClose,
+  title,
+  titlePosition = 'center',
+  style,
+  children,
+  forceBackButtonOnMobile,
+  headerTestID
+}) => {
   const withSideContainers = !!handleClose || !!children
 
   return (
@@ -24,7 +34,7 @@ const ModalHeader: FC<Props> = ({ handleClose, title, style, children, headerTes
     >
       {withSideContainers && (
         <Header.Container side="left">
-          {handleClose && !isMobile && (
+          {((handleClose && !isMobile) || forceBackButtonOnMobile) && (
             <Header.BackButton onGoBackPress={handleClose} forceBack displayIn="always" />
           )}
         </Header.Container>
@@ -38,7 +48,7 @@ const ModalHeader: FC<Props> = ({ handleClose, title, style, children, headerTes
           left: 0,
           height: '100%',
           justifyContent: 'center',
-          alignItems: 'center',
+          alignItems: titlePosition === 'left' ? 'flex-start' : 'center',
           pointerEvents: 'none'
         }}
       >

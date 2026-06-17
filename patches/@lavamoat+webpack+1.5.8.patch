@@ -1,0 +1,17 @@
+diff --git a/node_modules/@lavamoat/webpack/src/plugin.js b/node_modules/@lavamoat/webpack/src/plugin.js
+index 54b95bb..4907482 100644
+--- a/node_modules/@lavamoat/webpack/src/plugin.js
++++ b/node_modules/@lavamoat/webpack/src/plugin.js
+@@ -564,7 +564,11 @@ class LavaMoatPlugin {
+           compilation.hooks.processAssets.tap(
+             {
+               name: PLUGIN_NAME,
+-              stage: Compilation.PROCESS_ASSETS_STAGE_OPTIMIZE_INLINE,
++              // Run right before source-map generation:
++              // - after size/minification optimizations
++              // - before PROCESS_ASSETS_STAGE_DEV_TOOLING (source maps)
++              // This keeps stack traces aligned when inlineLockdown prepends SES.
++              stage: Compilation.PROCESS_ASSETS_STAGE_DEV_TOOLING - 1,
+             },
+             sesPrefixFiles({
+               compilation,

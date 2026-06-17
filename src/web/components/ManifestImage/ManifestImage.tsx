@@ -17,6 +17,7 @@ type Props = {
   containerStyle?: StyleProp<ViewStyle>
   imageStyle?: ImageStyle
   skeletonAppearance?: SkeletonLoaderProps['appearance']
+  hideOnError?: boolean
 }
 
 const ManifestImage = ({
@@ -28,9 +29,11 @@ const ManifestImage = ({
   iconScale = 1,
   containerStyle = {},
   imageStyle = {},
-  skeletonAppearance
+  skeletonAppearance,
+  hideOnError = false
 }: Props) => {
   const { theme } = useTheme()
+
   const [isLoading, setIsLoading] = useState(true)
   const [hasError, setHasError] = useState(false)
   const [currentUri, setCurrentUri] = useState({
@@ -51,14 +54,24 @@ const ManifestImage = ({
     }
   }, [currentUri.index, uris])
 
-  const onLoadEnd = useCallback(() => setIsLoading(false), [])
+  const onLoadEnd = useCallback(() => {
+    setIsLoading(false)
+  }, [])
 
   useEffect(() => {
     if (!uris.length && !uri) {
       setIsLoading(false)
       setHasError(true)
+      return
     }
-  }, [uri, uris.length])
+
+    setCurrentUri({ index: 0, uri: uri || uris[0] })
+    setHasError(false)
+    setIsLoading(true)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [uri, uris?.length])
+
+    if (hideOnError && !isLoading && hasError && !fallback) return null
 
   return (
     <View

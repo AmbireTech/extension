@@ -36,6 +36,7 @@ export type OneClickEstimationProps = {
   hasProceeded: boolean
   updateType: 'Swap&Bridge' | 'Transfer&TopUp'
   serviceFee?: SwapAndBridgeRoute['serviceFee']
+  shouldShowTxnDetails?: boolean
   Modals: React.ComponentType<ModalsProps>
 }
 
@@ -51,6 +52,7 @@ const OneClickEstimation = ({
   errors,
   updateType,
   serviceFee,
+  shouldShowTxnDetails = false,
   Modals
 }: OneClickEstimationProps) => {
   const { t } = useTranslation()
@@ -76,14 +78,26 @@ const OneClickEstimation = ({
     isSignDisabled,
     warningToPromptBeforeSign,
     warningModalRef,
+    gasFeeUpdatedModalRef,
+    handleAcceptGasFeeUpdate,
+    handleDismissGasFeeUpdate,
     dismissWarning,
     acknowledgeWarning,
     handleChangeFeePayerKeyType,
     isChooseFeePayerKeyShown,
     setIsChooseFeePayerKeyShown,
     slowPaymasterRequest,
-    primaryButtonText,
-    bundlerNonceDiscrepancy
+    signButtonText,
+    extremeGasFeeSignButtonType,
+    bundlerNonceDiscrepancy,
+    shouldDisplayQrSigningModal,
+    handleQrSingingFlowOnContinuePressed,
+    handleQrSigningFlowSubmitSignatureResponse,
+    handleQrSigningFlowOnClosePressed,
+    handleQrSigningFlowOnRejectPressed,
+    handleQrSigningFlowOnBackPressed,
+    currentRequest,
+    signingStep
   } = useSign({
     signAccountOpState: signAccountOpController,
     handleUpdate: updateController,
@@ -106,7 +120,8 @@ const OneClickEstimation = ({
         style={spacings.pb}
         closeBottomSheet={isWeb ? undefined : closeEstimationModal}
         autoOpen={hasProceeded || (isRequestWindow && !!signAccountOpController)}
-        isScrollEnabled={isMobile}
+        isScrollEnabled={isMobile || shouldShowTxnDetails}
+        reserveScrollPadding={shouldShowTxnDetails}
         shouldBeClosableOnDrag={isMobile}
       >
         {!!banners && !!banners.length && (
@@ -155,6 +170,7 @@ const OneClickEstimation = ({
                 sponsor={signAccountOpController ? signAccountOpController.sponsor : undefined}
                 serviceFee={serviceFee}
                 isOneClick
+                shouldShowTxnDetails={shouldShowTxnDetails}
               />
             )}
             {isViewOnly && (
@@ -169,6 +185,7 @@ const OneClickEstimation = ({
             <BundlerWarning
               signAccountOpState={signAccountOpController}
               bundlerNonceDiscrepancy={bundlerNonceDiscrepancy}
+              hasMarginTop
             />
             <ButtonsWrapper
               size="sm"
@@ -193,6 +210,7 @@ const OneClickEstimation = ({
                 <HoldToProceedButton
                   testID="sign-proceed-btn"
                   text={t('Hold to sign')}
+                  buttonType={extremeGasFeeSignButtonType === 'warning' ? 'warning' : 'primary'}
                   disabled={isSignDisabled || signingErrors.length > 0}
                   onHoldComplete={onSignButtonClick}
                   size={isMobile ? 'regular' : 'smaller'}
@@ -200,7 +218,8 @@ const OneClickEstimation = ({
               ) : (
                 <ButtonWithLoader
                   testID="sign-button"
-                  text={primaryButtonText}
+                  text={signButtonText}
+                  type={extremeGasFeeSignButtonType}
                   isLoading={isSignLoading}
                   disabled={isSignDisabled || signingErrors.length > 0}
                   onPress={onSignButtonClick}
@@ -215,11 +234,22 @@ const OneClickEstimation = ({
         renderedButNotNecessarilyVisibleModal={renderedButNotNecessarilyVisibleModal}
         signAccountOpState={signAccountOpController}
         warningModalRef={warningModalRef}
+        gasFeeUpdatedModalRef={gasFeeUpdatedModalRef}
+        handleAcceptGasFeeUpdate={handleAcceptGasFeeUpdate}
+        handleDismissGasFeeUpdate={handleDismissGasFeeUpdate}
         feePayerKeyType={feePayerKeyType}
         signingKeyType={signingKeyType}
         slowPaymasterRequest={slowPaymasterRequest}
         shouldDisplayLedgerConnectModal={shouldDisplayLedgerConnectModal}
         handleDismissLedgerConnectModal={handleDismissLedgerConnectModal}
+        currentRequest={currentRequest}
+        signingStep={signingStep}
+        shouldDisplayQrSigningModal={shouldDisplayQrSigningModal}
+        handleQrSingingFlowOnContinuePressed={handleQrSingingFlowOnContinuePressed}
+        handleQrSigningFlowSubmitSignatureResponse={handleQrSigningFlowSubmitSignatureResponse}
+        handleQrSigningFlowOnClosePressed={handleQrSigningFlowOnClosePressed}
+        handleQrSigningFlowOnRejectPressed={handleQrSigningFlowOnRejectPressed}
+        handleQrSigningFlowOnBackPressed={handleQrSigningFlowOnBackPressed}
         warningToPromptBeforeSign={warningToPromptBeforeSign}
         acknowledgeWarning={acknowledgeWarning}
         dismissWarning={dismissWarning}
@@ -230,7 +260,9 @@ const OneClickEstimation = ({
           renderedButNotNecessarilyVisibleModal === 'warnings' &&
           isSignLoading
             ? 'warnings'
-            : undefined
+            : renderedButNotNecessarilyVisibleModal === 'gas-fee-updated'
+              ? 'gas-fee-updated'
+              : undefined
         }
         actionType={updateType === 'Swap&Bridge' ? 'swapAndBridge' : 'transfer'}
       />

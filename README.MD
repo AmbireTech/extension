@@ -3,9 +3,9 @@
 <div align="center">
   <a href="https://chromewebstore.google.com/detail/ambire-wallet/ehgjhhccekdedpbkifaojjaefeohnoea" target="_blank">
     <picture>
-      <source media="(prefers-color-scheme: dark)" srcset="./mockups/mockup-dashboard-dark.png">
-      <source media="(prefers-color-scheme: light)" srcset="./mockups/mockup-dashboard-light.png">
-      <img src="./mockups/mockup-dashboard-light.png" alt="Ambire Wallet Dashboard" width="672" height="672" />
+      <source media="(prefers-color-scheme: dark)" srcset="./mockups/mockup-dashboard-dark-v6.png">
+      <source media="(prefers-color-scheme: light)" srcset="./mockups/mockup-dashboard-light-v6.png">
+      <img src="./mockups/mockup-dashboard-light-v6.png" alt="Ambire Wallet Dashboard" width="528" height="648" />
     </picture>
   </a>
 
@@ -140,6 +140,50 @@ Make sure your code editor has plugins that support the following configuration 
   - For both targets (macOS and extension): General - Identity - Version: X.X (should match the version in the app.json file, example: `4.36`) and Build: X (integer, bump up on every next build submitted to the App Store Connect, example: `3`)
   - For the macOS target: General - App Category: "Utilities"
   - For the extension target: General - Identity - Bundle Identifier: `com.ambire.app.wallet.extension`
+
+### LavaMoat Policy Generation
+
+The extension uses [LavaMoat](https://github.com/LavaMoat/LavaMoat) with SES (Secure EcmaScript) to harden the background service worker. LavaMoat uses a policy file (`lavamoat/webpack/policy.json`) to control which packages can import what and access which globals.
+
+#### When to Regenerate Policy
+
+Regenerate the policy when:
+
+- Adding/removing dependencies
+- Updating dependencies that change their import patterns
+- Runtime errors: "Policy does not allow importing X from Y"
+- Runtime errors: "Policy does not allow accessing global X"
+
+Do NOT regenerate for:
+
+- Every build (policy is stable and should be version-controlled)
+- Code changes that don't affect dependencies
+- UI changes (UI chunks are unlocked and don't use policy)
+
+#### Policy Generation Workflow
+
+1. **Generate policy:**
+
+   ```bash
+   yarn build:extensions:generate-policy
+   ```
+
+2. **Review generated policy:**
+
+   - Check `lavamoat/webpack/policy.json` for any unexpected entries
+   - Review package dependencies and global access patterns
+
+3. **Update policy overrides:**
+
+   - Manually edit `lavamoat/webpack/policy-override.json` for custom overrides
+   - Common overrides: primordial mutations, font packages, reflect-metadata globals
+
+4. **Commit policy files:**
+
+   - Both `policy.json` and `policy-override.json` should be version-controlled
+   - This ensures consistent builds across environments
+
+**Note:** The same policy works for both gecko and webkit builds since they share the same dependencies and only differ in entry points (which are mostly unlocked).
 
 ### Extract Source Maps
 

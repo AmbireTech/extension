@@ -21,6 +21,7 @@ import spacings, { SPACING_2XL, SPACING_TY } from '@common/styles/spacings'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexboxStyles from '@common/styles/utils/flexbox'
 import { getTokenId } from '@common/utils/token'
+import { privateValue } from '@common/utils/ui'
 
 import PendingBadge from './PendingBadge'
 import getStyles from './styles'
@@ -51,7 +52,7 @@ const BaseTokenItem = ({
     'SelectedAccountController',
     (state) => state.portfolio
   )
-
+  const { isPrivacyModeEnabled } = useController('WalletStateController').state
   const { state: networks } = useController('NetworksController', (state) => state.networks)
   const { dispatch: requestsDispatch } = useController('RequestsController')
   const { t } = useTranslation()
@@ -96,6 +97,8 @@ const BaseTokenItem = ({
     if (!isPending) return theme.primaryText
     return pendingToBeSigned ? theme.warningText : theme.infoText
   }, [isPending, pendingToBeSigned, theme.primaryText, theme.warningText, theme.infoText])
+
+  const shouldDisplayChange24h = typeof change24h === 'number' && Math.abs(change24h) >= 0.01
 
   return (
     <AnimatedPressable
@@ -151,54 +154,62 @@ const BaseTokenItem = ({
                 flexboxStyles.alignCenter
               ]}
             >
-              <View>
+              <View style={spacings.mbMi}>
                 <Text
                   selectable
                   color={textColor}
-                  fontSize={15}
+                  fontSize={16}
                   weight="semiBold"
                   numberOfLines={1}
-                  style={{ lineHeight: 20 }}
+                  style={{ lineHeight: 22 }}
                 >
                   {symbol}
                 </Text>
                 <Text
                   selectable
-                  fontSize={13}
+                  fontSize={12}
                   weight="number_medium"
                   numberOfLines={1}
-                  dataSet={createGlobalTooltipDataSet({
-                    id: `${tokenId}-balance`,
-                    content: String(isPending ? pendingBalance : balance)
-                  })}
+                  dataSet={
+                    !isPrivacyModeEnabled
+                      ? createGlobalTooltipDataSet({
+                          id: `${tokenId}-balance`,
+                          content: String(isPending ? pendingBalance : balance)
+                        })
+                      : undefined
+                  }
                   appearance="secondaryText"
                   testID={`token-balance-${tokenId}`}
                 >
-                  {isPending ? pendingBalanceFormatted : balanceFormatted}
+                  {privateValue(
+                    isPending ? pendingBalanceFormatted : balanceFormatted,
+                    isPrivacyModeEnabled
+                  )}
                 </Text>
               </View>
               {/* area for optional actions (Claim button etc) */}
               {extraActions}
             </View>
           </View>
-          <View style={[flexboxStyles.alignEnd, flexboxStyles.justifyCenter]}>
+          <View style={[flexboxStyles.alignEnd, flexboxStyles.justifyCenter, spacings.mbMi]}>
             <Text
               selectable
-              fontSize={15}
+              fontSize={16}
               weight="number_bold"
               color={textColor}
-              style={{ lineHeight: 20 }}
+              style={{ lineHeight: 22 }}
             >
-              {isPending ? pendingBalanceUSDFormatted : balanceUSDFormatted}
+              {privateValue(
+                isPending ? pendingBalanceUSDFormatted : balanceUSDFormatted,
+                isPrivacyModeEnabled,
+                8
+              )}
             </Text>
             <View style={[flexboxStyles.directionRow, flexboxStyles.alignCenter]}>
-              {typeof change24h === 'number' && (
+              {shouldDisplayChange24h && (
                 <Text
-                  fontSize={13}
-                  style={{
-                    lineHeight: 15,
-                    ...spacings.mlMi
-                  }}
+                  fontSize={12}
+                  style={spacings.mlMi}
                   weight="number_medium"
                   appearance={change24h >= 0 ? 'successText' : 'errorText'}
                 >

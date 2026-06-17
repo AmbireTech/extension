@@ -26,7 +26,7 @@ import { openInTab } from '@common/utils/links'
 import { searchWithNetworkName } from '@common/utils/search'
 import { getUiType } from '@common/utils/uiType'
 
-import SearchAndCurrentApp from '../SearchAndCurrentApp'
+import FloatingBottomBar from '../FloatingBottomBar'
 import DefiPositionsSkeleton from './DefiPositionsSkeleton'
 import DeFiPosition from './DeFiProviderPosition'
 import styles from './styles'
@@ -40,6 +40,8 @@ interface Props {
   dashboardNetworkFilterName: string | null
   animatedOverviewHeight: Animated.Value
   isSearchHidden: boolean
+  refreshing?: boolean
+  onRefresh?: () => void
 }
 
 const { isPopup } = getUiType()
@@ -52,12 +54,14 @@ const DeFiPositions: FC<Props> = ({
   onScroll,
   dashboardNetworkFilterName,
   animatedOverviewHeight,
-  isSearchHidden
+  isSearchHidden,
+  refreshing,
+  onRefresh
 }) => {
   const { t } = useTranslation()
   const { flags } = useController('FeatureFlagsController').state
   const { control, watch, setValue } = useForm({ mode: 'all', defaultValues: { search: '' } })
-  const { theme, themeType } = useTheme()
+  const { theme } = useTheme()
   const searchValue = watch('search')
   const {
     state: { networks }
@@ -248,7 +252,6 @@ const DeFiPositions: FC<Props> = ({
       initTab?.defi,
       theme.primaryBackground,
       theme.linkText,
-      theme.primary,
       theme.infoText,
       openTab,
       setOpenTab,
@@ -257,7 +260,6 @@ const DeFiPositions: FC<Props> = ({
       searchValue,
       dashboardNetworkFilterName,
       t,
-      themeType,
       navigate
     ]
   )
@@ -308,8 +310,16 @@ const DeFiPositions: FC<Props> = ({
         onScroll={onScroll}
         scrollEventThrottle={16}
         animatedOverviewHeight={animatedOverviewHeight}
+        refreshing={refreshing}
+        onRefresh={onRefresh}
       />
-      {openTab === 'defi' && <SearchAndCurrentApp control={control} isHidden={isSearchHidden} />}
+      {openTab === 'defi' && (
+        <FloatingBottomBar
+          control={control}
+          isHidden={isSearchHidden}
+          searchPlaceholder={t('Search DeFi')}
+        />
+      )}
     </>
   )
 }
