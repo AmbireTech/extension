@@ -25,6 +25,7 @@ import {
 } from '@ambire-common/libs/humanizer/utils'
 import DeleteIcon from '@common/assets/svg/DeleteIcon'
 import ExpandableCard from '@common/components/ExpandableCard'
+import HumanizerAddress from '@common/components/HumanizerAddress'
 import HumanizedVisualization, {
   getErc7730DescriptionRows,
   shouldUseErc7730DetailedLayout
@@ -187,6 +188,7 @@ const TransactionSummary = ({
 
   const erc7730DescriptionVisualization = useMemo(() => {
     if (!erc7730Visualization) return null
+    if (!shouldUseErc7730DetailedLayout(erc7730Visualization)) return null
 
     const descriptionRows = getErc7730DescriptionRows(erc7730Visualization)
     if (!descriptionRows.length) return null
@@ -205,6 +207,8 @@ const TransactionSummary = ({
     () => !!erc7730Visualization && shouldUseErc7730DetailedLayout(erc7730Visualization),
     [erc7730Visualization]
   )
+  const shouldUseErc7730TransactionSummaryLayout =
+    !!erc7730Visualization && !shouldUseDetailedErc7730Layout
 
   const erc7730DetailedTitle = useMemo(() => {
     if (!erc7730Visualization) return ''
@@ -265,9 +269,29 @@ const TransactionSummary = ({
   const humanizerWarningLabels = useMemo(() => {
     if (type !== 'default') return null
     return call.warnings?.map((warning) => {
-      return <Label size={size} key={warning.content} text={warning.content} type="warning" />
+      return (
+        <Label
+          size={size}
+          key={`${warning.content}-${warning.address || ''}`}
+          text={warning.content}
+          type="warning"
+        >
+          {!!warning.address && (
+            <View style={spacings.mlMi}>
+              <HumanizerAddress
+                address={warning.address}
+                chainId={chainId}
+                fontSize={textSize}
+                actionsMode="inline"
+                shouldWrapInlineActions={false}
+                hideLogo
+              />
+            </View>
+          )}
+        </Label>
+      )
     })
-  }, [type, call.warnings, size])
+  }, [type, call.warnings, size, chainId, textSize])
 
   const innerEditApproval = useCallback(
     (newAmount: string, token: string, tokenChainId: bigint, closeEditApprovals: () => void) => {
@@ -516,6 +540,8 @@ const TransactionSummary = ({
   ])
   const shouldShowDeleteControl = !!call.id && type === 'default' && !rightIcon && !hideDeleteIcon
   const shouldShowRightControl = !!rightIcon && !!onRightIconPress && !hasCallFailed
+  const shouldOverlayErc7730TransactionSummaryControls =
+    !isMobile && shouldUseErc7730TransactionSummaryLayout
   const rightControl = useMemo(() => {
     if (!shouldShowDeleteControl && !shouldShowRightControl) return null
 
@@ -523,7 +549,12 @@ const TransactionSummary = ({
       <>
         {shouldShowDeleteControl && (
           <AnimatedPressable
-            style={[deleteIconAnimStyle, flexbox.alignSelfCenter]}
+            style={[
+              deleteIconAnimStyle,
+              shouldUseErc7730TransactionSummaryLayout
+                ? flexbox.alignSelfStart
+                : flexbox.alignSelfCenter
+            ]}
             onPress={handleRemoveCall}
             disabled={isCallRemovedOptimistic}
             {...bindDeleteIconAnim}
@@ -534,7 +565,13 @@ const TransactionSummary = ({
         )}
         {shouldShowRightControl && (
           <AnimatedPressable
-            style={[deleteIconAnimStyle, flexbox.alignSelfCenter, spacings.mlTy]}
+            style={[
+              deleteIconAnimStyle,
+              shouldUseErc7730TransactionSummaryLayout
+                ? flexbox.alignSelfStart
+                : flexbox.alignSelfCenter,
+              spacings.mlTy
+            ]}
             onPress={onRightIconPress}
             {...bindDeleteIconAnim}
             testID={`right-icon-${index}`}
@@ -553,7 +590,8 @@ const TransactionSummary = ({
     onRightIconPress,
     rightIcon,
     shouldShowDeleteControl,
-    shouldShowRightControl
+    shouldShowRightControl,
+    shouldUseErc7730TransactionSummaryLayout
   ])
   const mobileErc7730Title = useMemo(() => {
     if (!erc7730Visualization) return null
@@ -648,6 +686,7 @@ const TransactionSummary = ({
     return tabs.filter((x) => !!x)
   }, [erc7730DescriptionVisualization, decodedFunction, t])
   const shouldAlignContentStart = useMemo(() => {
+    if (shouldUseErc7730TransactionSummaryLayout) return true
     if (type !== 'default') return false
     if (!callVisualization || hasCallFailed) return true
     if (shouldUseDetailedErc7730Layout && erc7730Visualization) return true
@@ -658,6 +697,7 @@ const TransactionSummary = ({
     erc7730Visualization,
     hasCallFailed,
     shouldUseDetailedErc7730Layout,
+    shouldUseErc7730TransactionSummaryLayout,
     type
   ])
 
@@ -667,6 +707,7 @@ const TransactionSummary = ({
     <ExpandableCard
       enableToggleExpand={enableExpand}
       hasArrow={enableExpand}
+      overlayArrow={shouldOverlayErc7730TransactionSummaryControls}
       mobileHeaderContent={isMobile ? rightControl : undefined}
       mobileHeaderTitle={isMobile ? mobileErc7730Title || mobileFlatVisualization : undefined}
       mobileHeaderStyle={
@@ -763,9 +804,22 @@ const TransactionSummary = ({
                 chainId={chainId}
                 type={type}
                 testID={`recipient-address-${index}`}
-                hasPadding={enableExpand}
+                hasPadding={enableExpand && !shouldUseErc7730TransactionSummaryLayout}
                 editApprovalCallInfo={editApprovalCallInfo}
                 hideMobileErc7730Title={!!mobileErc7730Title}
+                isErc7730TransactionSummaryLayout={shouldUseErc7730TransactionSummaryLayout}
+                hasErc7730TransactionSummaryHeaderLeftControl={
+                  shouldOverlayErc7730TransactionSummaryControls && enableExpand
+                }
+                hasErc7730TransactionSummaryHeaderRightControl={
+                  shouldOverlayErc7730TransactionSummaryControls &&
+                  (shouldShowDeleteControl || shouldShowRightControl)
+                }
+                style={
+                  shouldUseErc7730TransactionSummaryLayout
+                    ? { width: '100%', minWidth: 0 }
+                    : undefined
+                }
                 dapp={call.dapp}
               />
             )
@@ -782,7 +836,12 @@ const TransactionSummary = ({
               {t('Failed')}
             </Text>
           )}
-          {!isMobile && rightControl}
+          {!isMobile &&
+            (shouldOverlayErc7730TransactionSummaryControls && rightControl ? (
+              <View style={{ position: 'absolute', top: 0, right: 0 }}>{rightControl}</View>
+            ) : (
+              rightControl
+            ))}
         </>
       }
       expandedContent={
@@ -865,7 +924,10 @@ const TransactionSummary = ({
     >
       <View
         style={{
-          paddingHorizontal: 42 * sizeMultiplier[size] // magic number
+          paddingHorizontal:
+            shouldUseErc7730TransactionSummaryLayout && isWeb
+              ? SPACING_SM
+              : 42 * sizeMultiplier[size] // magic number
         }}
       >
         {!call.validationError ? (

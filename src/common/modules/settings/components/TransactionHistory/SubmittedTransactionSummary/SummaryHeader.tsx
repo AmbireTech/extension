@@ -5,8 +5,8 @@ import { Network } from '@ambire-common/interfaces/network'
 import NetworkIcon from '@common/components/NetworkIcon'
 import Text from '@common/components/Text'
 import useTheme from '@common/hooks/useTheme'
-import spacings from '@common/styles/spacings'
 import { sizeMultiplier } from '@common/modules/sign-account-op/components/TransactionSummary'
+import spacings from '@common/styles/spacings'
 
 import {
   getFormattedSubmittedDate,
@@ -34,12 +34,9 @@ const SummaryHeader = ({
 
   return (
     <View style={[styles.header, spacings.phSm]}>
-      <StatusBadge
-        status={getPresentationalStatus(submittedAccountOp)}
-        textSize={14 * sizeMultiplier[size]}
-      />
+      <StatusBadge status={getPresentationalStatus(submittedAccountOp)} textSize={12} />
       <View style={styles.headerMeta}>
-        <Text fontSize={14 * sizeMultiplier[size]} appearance="secondaryText">
+        <Text fontSize={12} appearance="secondaryText">
           {submittedDate} on {getTruncatedNetworkName(network.name)}
         </Text>
         <NetworkIcon

@@ -1,10 +1,16 @@
 import React, { FC, useMemo } from 'react'
 import { Pressable, View } from 'react-native'
 
-import { AssetType, Position, PositionsByProvider } from '@ambire-common/libs/defiPositions/types'
+import {
+  AssetType,
+  Position,
+  PositionAsset,
+  PositionsByProvider
+} from '@ambire-common/libs/defiPositions/types'
 import Text from '@common/components/Text'
 import useTheme from '@common/hooks/useTheme'
-import spacings, { SPACING_MI } from '@common/styles/spacings'
+import PerpDetails from '@common/modules/dashboard/components/DeFiPositions/DeFiProviderPosition/PerpDetails'
+import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { generatePositionUrl } from '@common/utils/generatePositionUrl'
 import { openInTab } from '@common/utils/links'
@@ -16,18 +22,26 @@ type Props = Omit<PositionsByProvider, 'iconUrl' | 'positions' | 'positionInUSD'
   Position & {
     providerName: string
     positionInUSD?: string
-    withTopBorder?: boolean
   }
 
 const ASSET_TYPE_TO_LABEL = {
   [AssetType.Borrow]: 'BORROWED',
   [AssetType.Collateral]: 'COLLATERAL',
   [AssetType.Liquidity]: 'SUPPLIED',
-  [AssetType.Reward]: 'REWARDS'
+  [AssetType.Reward]: 'REWARDS',
+  [AssetType.Margin]: 'MARGIN',
+  [AssetType.Perpetual]: 'POSITION',
+  [AssetType.Prediction]: 'PREDICTION'
+}
+
+// Both Liquidity and Collateral are considered supplied assets, so we group them together for better display in the UI
+const getMappedType = (type: AssetType) => {
+  if (type === AssetType.Collateral) return AssetType.Liquidity
+
+  return type
 }
 
 const DeFiPosition: FC<Props> = ({
-  withTopBorder,
   chainId,
   positionInUSD,
   additionalData,
@@ -37,12 +51,20 @@ const DeFiPosition: FC<Props> = ({
 }) => {
   const { inRange, name, positionIndex, description } = additionalData
 
-  const suppliedAssets = assets.filter(
-    (asset) => asset.type === AssetType.Liquidity || asset.type === AssetType.Collateral
-  )
-  const borrowedAssets = assets.filter((asset) => asset.type === AssetType.Borrow)
+  const assetsByType = useMemo(() => {
+    return assets.reduce(
+      (acc, asset) => {
+        let type = getMappedType(asset.type)
 
-  const rewardAssets = assets.filter((asset) => asset.type === AssetType.Reward)
+        if (!acc[type]) acc[type] = []
+
+        acc[type].push(asset)
+
+        return acc
+      },
+      {} as Record<AssetType, PositionAsset[]>
+    )
+  }, [assets])
 
   const { theme } = useTheme()
 
@@ -52,7 +74,8 @@ const DeFiPosition: FC<Props> = ({
 
       if (Number(positionIndex)) return `#${positionIndex}`
       return positionIndex
-    } catch (error) {
+    } catch (error: any) {
+      console.error('Error parsing position description', error)
       return positionIndex
     }
   }, [description, positionIndex])
@@ -131,26 +154,17 @@ const DeFiPosition: FC<Props> = ({
           {positionInUSD || '$-'}
         </Text>
       </View>
-      {suppliedAssets.length > 0 && (
-        <DeFiPositionAssets
-          chainId={chainId}
-          assets={suppliedAssets}
-          label={ASSET_TYPE_TO_LABEL[AssetType.Liquidity]}
-        />
-      )}
-      {borrowedAssets.length > 0 && (
-        <DeFiPositionAssets
-          chainId={chainId}
-          assets={borrowedAssets}
-          label={ASSET_TYPE_TO_LABEL[AssetType.Borrow]}
-        />
-      )}
-      {rewardAssets.length > 0 && (
-        <DeFiPositionAssets
-          chainId={chainId}
-          assets={rewardAssets}
-          label={ASSET_TYPE_TO_LABEL[AssetType.Reward]}
-        />
+      <PerpDetails additionalData={additionalData} />
+      {(Object.entries(assetsByType) as unknown as [AssetType, PositionAsset[]][]).map(
+        ([type, assetsOfType]) =>
+          ASSET_TYPE_TO_LABEL[getMappedType(type)] && (
+            <DeFiPositionAssets
+              key={type}
+              chainId={chainId}
+              assets={assetsOfType}
+              label={ASSET_TYPE_TO_LABEL[getMappedType(type)]}
+            />
+          )
       )}
     </View>
   )
