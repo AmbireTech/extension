@@ -7,6 +7,8 @@ import { getFeatures } from '@ambire-common/libs/networks/networks'
 import { getRpcProvider } from '@ambire-common/services/provider'
 import { isValidURL } from '@ambire-common/services/validations'
 import CopyIcon from '@common/assets/svg/CopyIcon'
+import DownArrowIcon from '@common/assets/svg/DownArrowIcon'
+import UpArrowIcon from '@common/assets/svg/UpArrowIcon'
 import WarningIcon from '@common/assets/svg/WarningIcon'
 import Button from '@common/components/Button'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
@@ -162,6 +164,9 @@ export const RpcSelectorItem = React.memo(
 
 RpcSelectorItem.displayName = 'RpcSelector'
 
+// On mobile the RPC URLs list expands/collapses instead of scrolling
+const COLLAPSED_RPC_URLS_COUNT = 4
+
 const NetworkForm = ({
   selectedChainId = 'add-custom-network',
   onCancel,
@@ -220,6 +225,7 @@ const NetworkForm = ({
   })
   const [rpcUrls, setRpcUrls] = useState(selectedNetwork?.rpcUrls || [])
   const [selectedRpcUrl, setSelectedRpcUrl] = useState(selectedNetwork?.selectedRpcUrl)
+  const [showAllRpcUrls, setShowAllRpcUrls] = useState(false)
   const networkFormValues = watch()
   const errorCount = Object.keys(errors).length
 
@@ -608,6 +614,57 @@ const NetworkForm = ({
     [errorCount, features, isValidatingRPC]
   )
 
+  const displayedRpcUrls = useMemo(
+    () => (isMobile && !showAllRpcUrls ? rpcUrls.slice(0, COLLAPSED_RPC_URLS_COUNT) : rpcUrls),
+    [rpcUrls, showAllRpcUrls]
+  )
+
+  const rpcUrlsList = useMemo(
+    () =>
+      rpcUrls.length ? (
+        displayedRpcUrls.map((url, i) => {
+          let removeDisabledReason: string | undefined
+
+          if (rpcUrls.length === 1) {
+            removeDisabledReason = 'There must be at least one RPC provider'
+          } else if (url === selectedNetwork?.selectedRpcUrl) {
+            removeDisabledReason = 'Cannot remove the selected RPC URL'
+          } else if (url.includes('invictus.ambire.com')) {
+            removeDisabledReason = 'Default RPC URL cannot be removed'
+          }
+
+          return (
+            <RpcSelectorItem
+              key={url}
+              index={i}
+              url={url}
+              selectedRpcUrl={selectedRpcUrl}
+              rpcUrlsLength={rpcUrls.length}
+              onPress={handleSelectRpcUrl}
+              shouldShowRemove
+              removeDisabledReason={removeDisabledReason}
+              onRemove={handleRemoveRpcUrl}
+            />
+          )
+        })
+      ) : (
+        <View style={[flexbox.flex1, flexbox.alignCenter, flexbox.justifyCenter, spacings.pvLg]}>
+          <Text fontSize={14} style={text.center} appearance="secondaryText">
+            {t('No RPC URLs added yet')}
+          </Text>
+        </View>
+      ),
+    [
+      rpcUrls.length,
+      displayedRpcUrls,
+      selectedNetwork?.selectedRpcUrl,
+      selectedRpcUrl,
+      handleSelectRpcUrl,
+      handleRemoveRpcUrl,
+      t
+    ]
+  )
+
   return (
     <>
       <View style={styles.modalHeader}>
@@ -750,7 +807,7 @@ const NetworkForm = ({
                       inputWrapperStyle={{ height: 40 }}
                       inputStyle={{ height: 40 }}
                       containerStyle={{ ...spacings.mb, ...spacings.mrTy, flex: 1 }}
-                      label={t('RPC URL')}
+                      label={t('Add RPC URL')}
                       error={handleErrors(errors.rpcUrl)}
                     />
                     <View style={{ paddingTop: 27 }}>
@@ -778,57 +835,64 @@ const NetworkForm = ({
               />
 
               <Text appearance="secondaryText" fontSize={14} weight="regular" style={spacings.mbMi}>
-                {t('Select default RPC URL')}
+                {rpcUrls.length > 1 ? t('Select default RPC URL') : 'Default RPC URL'}
               </Text>
-              <ScrollableWrapper
-                style={[
-                  styles.rpcUrlsContainer,
-                  // @ts-ignore
-                  { flex: 'unset', minHeight: rpcUrls.length > 1 ? 80 : 40 }
-                ]}
-                contentContainerStyle={{ flexGrow: 1, paddingBottom: 0 }}
-              >
-                {!!rpcUrls.length &&
-                  rpcUrls.map((url, i) => {
-                    let removeDisabledReason: string | undefined
-
-                    if (rpcUrls.length === 1) {
-                      removeDisabledReason = 'There must be at least one RPC provider'
-                    } else if (url === selectedNetwork?.selectedRpcUrl) {
-                      removeDisabledReason = 'Cannot remove the selected RPC URL'
-                    } else if (url.includes('invictus.ambire.com')) {
-                      removeDisabledReason = 'Default RPC URL cannot be removed'
-                    }
-
-                    return (
-                      <RpcSelectorItem
-                        key={url}
-                        index={i}
-                        url={url}
-                        selectedRpcUrl={selectedRpcUrl}
-                        rpcUrlsLength={rpcUrls.length}
-                        onPress={handleSelectRpcUrl}
-                        shouldShowRemove
-                        removeDisabledReason={removeDisabledReason}
-                        onRemove={handleRemoveRpcUrl}
-                      />
-                    )
-                  })}
-                {!rpcUrls.length && (
-                  <View
-                    style={[
-                      flexbox.flex1,
-                      flexbox.alignCenter,
-                      flexbox.justifyCenter,
-                      spacings.pvLg
-                    ]}
-                  >
-                    <Text fontSize={14} style={text.center} appearance="secondaryText">
-                      {t('No RPC URLs added yet')}
-                    </Text>
-                  </View>
-                )}
-              </ScrollableWrapper>
+              {isWeb ? (
+                <ScrollableWrapper
+                  style={[
+                    styles.rpcUrlsContainer,
+                    // @ts-ignore
+                    { flex: 'unset', minHeight: rpcUrls.length > 1 ? 80 : 40 }
+                  ]}
+                  contentContainerStyle={{ flexGrow: 1, paddingBottom: 0 }}
+                >
+                  {rpcUrlsList}
+                </ScrollableWrapper>
+              ) : (
+                <View style={[styles.rpcUrlsContainer, { maxHeight: undefined }]}>
+                  {rpcUrlsList}
+                  {rpcUrls.length > COLLAPSED_RPC_URLS_COUNT && (
+                    <Pressable
+                      style={[
+                        spacings.phTy,
+                        flexbox.directionRow,
+                        flexbox.alignCenter,
+                        spacings.pbSm,
+                        spacings.ptMi,
+                        flexbox.alignSelfCenter
+                      ]}
+                      onPress={() => setShowAllRpcUrls((p) => !p)}
+                    >
+                      <Text style={spacings.mrMi} fontSize={12} color={theme.linkText} underline>
+                        {!showAllRpcUrls &&
+                          t('show {{number}} more', {
+                            number: rpcUrls.length - COLLAPSED_RPC_URLS_COUNT
+                          })}
+                        {!!showAllRpcUrls &&
+                          t('hide {{number}} urls', {
+                            number: rpcUrls.length - COLLAPSED_RPC_URLS_COUNT
+                          })}
+                      </Text>
+                      {!!showAllRpcUrls && (
+                        <UpArrowIcon
+                          width={12}
+                          height={6}
+                          color={theme.linkText}
+                          strokeWidth="1.7"
+                        />
+                      )}
+                      {!showAllRpcUrls && (
+                        <DownArrowIcon
+                          width={12}
+                          height={6}
+                          color={theme.linkText}
+                          strokeWidth="1.7"
+                        />
+                      )}
+                    </Pressable>
+                  )}
+                </View>
+              )}
               {isMobile && (
                 <View style={spacings.mbSm}>
                   <NetworkAvailableFeatures
