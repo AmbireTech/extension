@@ -1,4 +1,4 @@
-import * as richJson from '@ambire-common/libs/richJson/richJson'
+import { encode } from './bridgeCodec'
 
 declare global {
   interface Window {
@@ -8,10 +8,14 @@ declare global {
   }
 }
 
+// Dapp JSON-RPC traffic is JSON-safe, so it skips richJson (see bridgeCodec).
+// Everything else (controller state, errors, one-time data, ...) keeps richJson.
+const JSON_SAFE_EVENTS = new Set(['action.sendToDappWebView', 'action.broadcastDappEvent'])
+
 const sendToReactEvent = (type: string, payload: any) => {
   try {
     if (window.ReactNativeWebView) {
-      window.ReactNativeWebView.postMessage(richJson.stringify({ type, payload }))
+      window.ReactNativeWebView.postMessage(encode({ type, payload }, !JSON_SAFE_EVENTS.has(type)))
     }
   } catch (e) {
     // Fallback to original console if bridge fails

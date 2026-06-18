@@ -9,6 +9,7 @@ type Props = {
   resolveButtonTestID?: string
   /** Optional custom node to replace the default resolve button */
   resolveNode?: React.ReactNode
+  children?: React.ReactNode
 }
 
 declare const ActionFooter: React.FC<Props>

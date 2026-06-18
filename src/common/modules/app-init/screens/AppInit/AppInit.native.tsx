@@ -11,7 +11,6 @@ import { ControllerStoreProvider } from '@common/contexts/controllerStoreContext
 import { NetInfoProvider } from '@common/contexts/netInfoContext'
 import { ThemeProvider } from '@common/contexts/themeContext'
 import { ToastProvider } from '@common/contexts/toastContext'
-import useFonts from '@common/hooks/useFonts'
 import AppRouter from '@common/modules/app-init/components/AppRouter'
 import GestureHandler from '@common/modules/app-init/screens/AppInit/GestureHandler'
 import { AuthProvider } from '@common/modules/auth/contexts/authContext'
@@ -22,10 +21,7 @@ import { ControllersStateLoadedProvider } from '@mobile/contexts/controllersStat
 import { WalletConnectProvider } from '@mobile/modules/wallet-connect/contexts/walletConnectContext'
 
 const AppInit = () => {
-  const { fontsLoaded } = useFonts()
   const { isRestartRequired, currentlyRunningBundle, newReleaseBundle } = useStallionUpdate()
-
-  if (!fontsLoaded) return null
 
   return (
     <NativeRouter>

@@ -69,7 +69,7 @@ const useExploreSections = (): ExploreSection[] => {
       {
         type: 'apps',
         title: t('Explore apps'),
-        icon: <ExploreIcon width={ICON_SIZE + 2} height={ICON_SIZE + 2} />,
+        icon: <ExploreIcon width={ICON_SIZE} height={ICON_SIZE} strokeWidth="1.3" />,
         data: featured,
         showTrash: false
       }
