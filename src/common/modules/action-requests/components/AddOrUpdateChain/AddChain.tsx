@@ -1,12 +1,13 @@
 import React from 'react'
 import { Trans, useTranslation } from 'react-i18next'
-import { View, ViewStyle } from 'react-native'
+import { View } from 'react-native'
 
-import { Statuses } from '@ambire-common/interfaces/eventEmitter'
 import { AddNetworkRequestParams, Network, NetworkFeature } from '@ambire-common/interfaces/network'
 import { UserRequest } from '@ambire-common/interfaces/userRequest'
 import ManifestFallbackIcon from '@common/assets/svg/ManifestFallbackIcon'
 import Alert from '@common/components/Alert'
+import NetworkAvailableFeatures from '@common/components/NetworkAvailableFeatures'
+import NetworkDetails from '@common/components/NetworkDetails'
 import NetworkIcon from '@common/components/NetworkIcon'
 import ScrollableWrapper from '@common/components/ScrollableWrapper'
 import Text from '@common/components/Text'
@@ -18,8 +19,6 @@ import getStyles from '@common/modules/action-requests/styles/styles'
 import spacings, { SPACING, SPACING_LG, SPACING_MD } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import ManifestImage from '@web/components/ManifestImage'
-import NetworkAvailableFeatures from '@web/components/NetworkAvailableFeatures'
-import NetworkDetails from '@web/components/NetworkDetails'
 
 type AddChainProps = {
   handleRetryWithDifferentRpcUrl: () => void
@@ -49,7 +48,7 @@ const AddChain = ({
   existingNetwork,
   userRequest
 }: AddChainProps) => {
-  const { styles, theme, themeType } = useTheme(getStyles)
+  const { styles, theme } = useTheme(getStyles)
   const { t } = useTranslation()
   const { name, icon } = useDappInfo(userRequest)
   const { responsiveSizeMultiplier } = useResponsiveActionWindow({ maxBreakpoints: 2 })

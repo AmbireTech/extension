@@ -11,6 +11,7 @@ import WarningIcon from '@common/assets/svg/WarningIcon'
 import Button from '@common/components/Button'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import Input from '@common/components/Input'
+import NetworkAvailableFeatures from '@common/components/NetworkAvailableFeatures'
 import NetworkIcon from '@common/components/NetworkIcon'
 import NumberInput from '@common/components/NumberInput'
 import ScrollableWrapper from '@common/components/ScrollableWrapper'
@@ -20,15 +21,14 @@ import useController from '@common/hooks/useController'
 import useHover, { AnimatedPressable } from '@common/hooks/useHover'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
+import {
+  getAreDefaultsChanged,
+  handleErrors
+} from '@common/modules/settings/components/Networks/NetworkForm/helpers'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
 import { setStringAsync } from '@common/utils/clipboard'
-import NetworkAvailableFeatures from '@web/components/NetworkAvailableFeatures'
-import {
-  getAreDefaultsChanged,
-  handleErrors
-} from '@web/modules/settings/screens/NetworksSettingsScreen/NetworkForm/helpers'
 
 import getStyles from './styles'
 
@@ -156,6 +156,8 @@ export const RpcSelectorItem = React.memo(
     )
   }
 )
+
+RpcSelectorItem.displayName = 'RpcSelector'
 
 const NetworkForm = ({
   selectedChainId = 'add-custom-network',

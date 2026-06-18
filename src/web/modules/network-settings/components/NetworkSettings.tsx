@@ -8,25 +8,22 @@ import AddIcon from '@common/assets/svg/AddIcon'
 import ChainlistIcon from '@common/assets/svg/ChainlistIcon'
 import BottomSheet from '@common/components/BottomSheet'
 import Button from '@common/components/Button'
+import NetworkAvailableFeatures from '@common/components/NetworkAvailableFeatures'
+import NetworkDetails from '@common/components/NetworkDetails'
 import ScrollableWrapper from '@common/components/ScrollableWrapper'
 import Search from '@common/components/Search'
 import Text from '@common/components/Text'
 import { isAmbireNext, isDev } from '@common/config/env'
 import useController from '@common/hooks/useController'
 import useRoute from '@common/hooks/useRoute'
-import useTheme from '@common/hooks/useTheme'
-import useWindowSize from '@common/hooks/useWindowSize'
 import { ROUTES } from '@common/modules/router/constants/common'
+import Network from '@common/modules/settings/components/Networks/Network'
+import NetworkForm from '@common/modules/settings/components/Networks/NetworkForm'
 import spacings from '@common/styles/spacings'
-import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
 import { openInTab } from '@common/utils/links'
-import NetworkAvailableFeatures from '@web/components/NetworkAvailableFeatures'
-import NetworkDetails from '@web/components/NetworkDetails'
 import { SettingsRoutesContext } from '@web/modules/settings/contexts/SettingsRoutesContext'
-import Network from '@web/modules/settings/screens/NetworksSettingsScreen/Network'
-import NetworkForm from '@web/modules/settings/screens/NetworksSettingsScreen/NetworkForm'
 
 import BatchingControlOption from './BatchingControlOption'
 
@@ -35,14 +32,12 @@ const NetworksSettings = () => {
   const { search: searchParams, pathname } = useRoute()
   const { control, watch } = useForm({ defaultValues: { search: '' } })
   const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useModalize()
-  const { maxWidthSize } = useWindowSize()
   const { allNetworks } = useController('NetworksController').state
   const {
     state: { providers }
   } = useController('ProvidersController')
 
   const { setCurrentSettingsPage } = useContext(SettingsRoutesContext)
-  const { theme, themeType } = useTheme()
   const [selectedChainId, setSelectedChainId] = useState(() => {
     const parsedSearchParams = new URLSearchParams(searchParams)
     if (parsedSearchParams.has('chainId'))

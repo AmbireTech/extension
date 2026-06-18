@@ -47,9 +47,7 @@ const BatchingControlOption = () => {
         testID="lock-extension-button"
         size="small"
         hasBottomSpacing={false}
-        style={{
-          width: 80
-        }}
+        style={{ width: 80 }}
         text={buttonText}
         onPress={handleToggleBatching}
         disabled={isLoading}
