@@ -44,6 +44,8 @@
     "publish:development": "yarn build:webview && expo publish --release-channel development",
     "publish:staging": "yarn build:webview && APP_ENV=staging expo publish --release-channel staging",
     "publish:production": "yarn build:webview && APP_ENV=production expo publish --release-channel default",
+    "publish:ota:ios": "sh ./scripts/publish-ota.sh ios",
+    "publish:ota:android": "sh ./scripts/publish-ota.sh android",
     "lint": "eslint ./src",
     "lint:fix": "eslint ./src --fix",
     "expo:doctor": "expo doctor",

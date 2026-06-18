@@ -61,7 +61,7 @@ const AppInit = () => {
                                     <Text
                                       style={{ color: '#fff', fontSize: 12, fontWeight: '600' }}
                                     >
-                                      OTA test: v3
+                                      OTA test: v4
                                     </Text>
                                   </View>
 
