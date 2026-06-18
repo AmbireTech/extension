@@ -217,14 +217,18 @@ const Main = ({
           <ExpandableCard
             key={messageVisualizationKey}
             enableToggleExpand={visualizeHumanized}
-            hasArrow={!humanizedMessage?.canHideDropdownArrow && visualizeHumanized}
+            hasArrow={
+              shouldUseErc7730TypedMessageCard
+                ? false
+                : !humanizedMessage?.canHideDropdownArrow && visualizeHumanized
+            }
             isInitiallyExpanded={!visualizeHumanized && !isHumanizing}
             style={{
               marginBottom: SPACING_TY * responsiveSizeMultiplier,
               backgroundColor: theme.secondaryBackground,
               ...(humanizedMessage?.warnings?.length ? styles.warningContainer : {})
             }}
-            content={
+            content={({ isExpanded }) =>
               isHumanizing ? (
                 <View style={flexbox.flex1}>
                   <Spinner />
@@ -234,6 +238,7 @@ const Main = ({
                   data={typedMessageErc7730Visualizations}
                   chainId={network?.chainId || signMessageState.messageToSign?.chainId || 1n}
                   responsiveSizeMultiplier={responsiveSizeMultiplier}
+                  isExpanded={isExpanded}
                   warnings={humanizedMessage?.warnings}
                 />
               ) : visualizeHumanized &&

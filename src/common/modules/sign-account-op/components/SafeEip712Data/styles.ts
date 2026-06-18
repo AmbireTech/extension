@@ -8,7 +8,8 @@ import flexbox from '@common/styles/utils/flexbox'
 interface Style {
   container: ViewStyle
   header: ViewStyle
-  title: TextStyle
+  headerRow: ViewStyle
+  expandMore: ViewStyle
   rows: ViewStyle
   row: ViewStyle
   rowRight: ViewStyle
@@ -25,16 +26,26 @@ const getStyles = (theme: ThemeProps) =>
       borderWidth: 1,
       ...common.borderRadiusPrimary,
       borderColor: theme.primaryBorder,
-      backgroundColor: 'transparent',
+      backgroundColor: theme.secondaryBackground,
       overflow: 'hidden'
     },
     header: {
-      backgroundColor: theme.secondaryBackground,
+      backgroundColor: 'transparent',
       ...spacings.phSm,
       ...spacings.pvTy
     },
-    title: {
-      ...spacings.mlMi
+    headerRow: {
+      ...flexbox.directionRow,
+      ...flexbox.alignCenter,
+      ...flexbox.justifySpaceBetween,
+      width: '100%',
+      minWidth: 0
+    },
+    expandMore: {
+      ...flexbox.directionRow,
+      ...flexbox.alignCenter,
+      flexShrink: 0,
+      ...spacings.mlSm
     },
     rows: {
       ...spacings.phSm,

@@ -10,7 +10,9 @@ interface Style {
   noKeysToSignAlert: ViewStyle
   kindOfMessage: ViewStyle
   warningContainer: ViewStyle
+  erc7730TypedMessageTitleRow: ViewStyle
   erc7730TypedMessageTitle: TextStyle
+  erc7730TypedMessageExpandMore: ViewStyle
   erc7730TypedMessageDivider: ViewStyle
 }
 
@@ -43,9 +45,21 @@ const getStyles = (theme: ThemeProps) =>
       backgroundColor: theme.warningBackground,
       borderColor: theme.warningDecorative
     },
-    erc7730TypedMessageTitle: {
-      ...spacings.mrSm,
+    erc7730TypedMessageTitleRow: {
+      ...flexbox.directionRow,
+      ...flexbox.alignCenter,
+      ...flexbox.justifySpaceBetween,
+      minWidth: 0,
       ...spacings.pbMi
+    },
+    erc7730TypedMessageTitle: {
+      flexShrink: 1,
+      ...spacings.mrSm
+    },
+    erc7730TypedMessageExpandMore: {
+      ...flexbox.directionRow,
+      ...flexbox.alignCenter,
+      flexShrink: 0
     },
     erc7730TypedMessageDivider: {
       height: 1,

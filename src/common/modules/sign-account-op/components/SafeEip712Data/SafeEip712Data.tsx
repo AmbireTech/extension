@@ -4,6 +4,8 @@ import { View } from 'react-native'
 
 import { ISignMessageController } from '@ambire-common/interfaces/signMessage'
 import { Message } from '@ambire-common/interfaces/userRequest'
+import DownArrowIcon from '@common/assets/svg/DownArrowIcon'
+import UpArrowIcon from '@common/assets/svg/UpArrowIcon'
 import CopyText from '@common/components/CopyText'
 import ExpandableCard from '@common/components/ExpandableCard'
 import Text from '@common/components/Text'
@@ -47,19 +49,28 @@ const SafeEip712Data: FC<Props> = ({ accountAddr, chainId, safeEip712Data }) => 
   return (
     <View style={isWeb ? spacings.mbLg : spacings.mb}>
       <ExpandableCard
+        hasArrow={false}
         style={styles.container}
         contentStyle={styles.header}
-        content={
-          <Text
-            fontSize={14}
-            weight="semiBold"
-            appearance="secondaryText"
-            numberOfLines={1}
-            style={styles.title}
-          >
-            {t('Safe hashes and JSON')}
-          </Text>
-        }
+        content={({ isExpanded }) => (
+          <View style={styles.headerRow}>
+            <Text fontSize={14} weight="semiBold" appearance="secondaryText" numberOfLines={1}>
+              {t('Safe hashes and JSON')}
+            </Text>
+            <View style={styles.expandMore}>
+              <Text fontSize={14} appearance="tertiaryText" numberOfLines={1}>
+                {t('Expand more')}
+              </Text>
+              <View style={spacings.mlTy}>
+                {isExpanded ? (
+                  <UpArrowIcon color={theme.tertiaryText} />
+                ) : (
+                  <DownArrowIcon color={theme.tertiaryText} />
+                )}
+              </View>
+            </View>
+          </View>
+        )}
         expandedContent={
           <View style={styles.expandedContent}>
             <FallbackVisualization
