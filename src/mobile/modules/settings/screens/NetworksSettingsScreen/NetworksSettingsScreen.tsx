@@ -6,6 +6,7 @@ import AddIcon from '@common/assets/svg/AddIcon'
 import ChainlistIcon from '@common/assets/svg/ChainlistIcon'
 import BottomSheet from '@common/components/BottomSheet'
 import Button from '@common/components/Button'
+import { isWeb } from '@common/config/env'
 import useRoute from '@common/hooks/useRoute'
 import NetworkForm from '@common/modules/settings/components/Networks/NetworkForm'
 import spacings from '@common/styles/spacings'
@@ -69,12 +70,18 @@ const NetworksSettingsScreen = () => {
           id="add-new-network"
           sheetRef={sheetRef}
           closeBottomSheet={closeBottomSheet}
-          scrollViewProps={{
-            scrollEnabled: false,
-            contentContainerStyle: { flex: 1 }
-          }}
-          containerInnerWrapperStyles={{ flex: 1 }}
-          style={{ ...spacings.ph0, ...spacings.pv0, overflow: 'hidden', maxWidth: 880 }}
+          scrollViewProps={
+            isWeb
+              ? {
+                  scrollEnabled: false,
+                  contentContainerStyle: { flex: 1 }
+                }
+              : {}
+          }
+          containerInnerWrapperStyles={isWeb ? { flex: 1 } : {}}
+          style={
+            isWeb ? { ...spacings.ph0, ...spacings.pv0, overflow: 'hidden', maxWidth: 880 } : {}
+          }
           autoOpen={shouldOpenBottomSheet}
         >
           <NetworkForm onCancel={closeBottomSheet} onSaved={closeBottomSheet} />
