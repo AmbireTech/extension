@@ -10,6 +10,9 @@ import { useLocation } from 'react-router-native'
 import { Dapp } from '@ambire-common/interfaces/dapp'
 import { getDappIdFromUrl } from '@ambire-common/libs/dapps/helpers'
 import { isValidHostname, isValidURL } from '@ambire-common/services/validations'
+import AmbireBrandLogo from '@common/assets/svg/AmbireBrandLogo'
+import AmbireLogo from '@common/assets/svg/AmbireLogo'
+import AmbireLogoWithBackgroundAndLogotype from '@common/assets/svg/AmbireLogoWithBackgroundAndLogotype'
 import GlobeIcon from '@common/assets/svg/GlobeIcon'
 import GoogleIcon from '@common/assets/svg/GoogleIcon'
 import Banner from '@common/components/Banner'
@@ -1093,6 +1096,14 @@ const DappWebViewScreen = () => {
             title={`You have ${visibleUserRequests.length} pending ${
               visibleUserRequests.length === 1 ? 'request' : 'requests'
             }.`}
+            CustomIcon={() => (
+              <AmbireLogoWithBackgroundAndLogotype
+                withText={false}
+                style={spacings.mrTy}
+                width={30}
+                height={30}
+              />
+            )}
             buttonText="Open"
             onPress={handleOpenPendingRequests}
           />
