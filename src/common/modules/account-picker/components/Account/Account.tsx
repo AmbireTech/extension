@@ -119,7 +119,6 @@ const Account = ({
           style={flexbox.alignSelfStart}
           width={44}
           height={24}
-          trackStyle={isMobile ? spacings.mr0 : {}}
         />
 
         <View style={[flexbox.flex1, flexbox.directionRow, flexbox.alignCenter]}>
