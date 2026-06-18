@@ -92,20 +92,17 @@ const SignMessageScreen = () => {
               }
               resolveButtonTestID="button-sign"
               rejectButtonText="Reject"
-              {...(isViewOnly
-                ? {
-                    resolveNode: (
-                      <View style={[{ flex: 3 }, flexbox.directionRow, flexbox.justifyEnd]}>
-                        <NoKeysToSignAlert
-                          type="short"
-                          isTransaction={false}
-                          chainId={signMessageState.network?.chainId}
-                        />
-                      </View>
-                    )
-                  }
-                : {})}
-            />
+            >
+              {isViewOnly && (
+                <View style={[spacings.mbSm]}>
+                  <NoKeysToSignAlert
+                    type="short"
+                    isTransaction={false}
+                    chainId={signMessageState.network?.chainId}
+                  />
+                </View>
+              )}
+            </ActionFooter>
           )}
         </>
       }

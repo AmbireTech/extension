@@ -1,14 +1,36 @@
+// MUST be first: installs a BigInt-safe structuredClone before any controller
+// code runs. iOS 16's native structuredClone corrupts BigInt-containing
+// portfolio state (see structuredCloneShim.ts), crashing the dashboard.
+import { getStructuredCloneShimStatus } from './structuredCloneShim'
+
 import { EventEmitter as Emitter } from 'events'
 
 import { EventEmitterRegistryController } from '@ambire-common/controllers/eventEmitterRegistry/eventEmitterRegistry'
 import { MainController } from '@ambire-common/controllers/main/main'
 import { KeystoreSigner } from '@ambire-common/libs/keystoreSigner/keystoreSigner'
 import * as richJson from '@ambire-common/libs/richJson/richJson'
-import { controllersNestedInMainMapping } from '@common/constants/controllersMapping'
-import { AutoLockController } from '@common/controllers/auto-lock'
-import { WalletStateController } from '@common/controllers/wallet-state'
+// Import the `.native` implementations explicitly. The worker bundle is built
+// by webpack with `.web.ts` resolved first, so the barrel imports would pull in
+// the `.web.ts` versions — which depend on the Chrome extension `browser` API
+// (`browser.alarms` for auto-lock, `browser.action` for the toolbar-pinned
+// check). In the mobile worker `browser` is null, so auto-lock never arms and
+// the pinned-check loops uselessly. The `.native` versions use a plain
+// setTimeout and drop the browser-only logic, which is correct for mobile.
+import { AutoLockController } from '@common/controllers/auto-lock/auto-lock.native'
+import { WalletStateController } from '@common/controllers/wallet-state/wallet-state.native'
 import { handleActions } from '@mobile/handlers/handleActions'
 
+import {
+  buildStateForFE,
+  getBootPhase,
+  isControllerSubscribed,
+  isCriticalController,
+  isSubscriptionGateActive,
+  queueDeferredCtrlPayload,
+  queueSuppressedCtrlPayload,
+  setCriticalControllers
+} from './bootPhase'
+import { decode, encode } from './bridgeCodec'
 import { createBridgedFetch } from './bridgedFetch'
 import { sendToReactEvent } from './webviewLogger'
 
@@ -20,35 +42,55 @@ const ctrlOnUpdateIsDirtyFlags: Record<string, boolean> = {}
 
 function debounceFrontEndEventUpdatesOnSameTick(
   ctrlName: string,
+  ctrl: any,
   mainCtrl: any,
   forceEmit?: boolean
 ): 'DEBOUNCED' | 'EMITTED' {
   const sendUpdate = () => {
     // Paused dynamic controllers may finish async work after being replaced.
-    const registeredCtrl = eventEmitterRegistry.values().find((ctrl) => ctrl.name === ctrlName)
+    // Re-resolve the live controller from the registry instead of using the
+    // captured `ctrl` so a stale/removed instance never streams to the FE.
+    const registeredCtrl = eventEmitterRegistry.values().find((c) => c.name === ctrlName)
     if (!registeredCtrl) return
 
-    // Controller updates
-    const stateToSendToFE = registeredCtrl.toJSON()
-
-    if (ctrlName === 'MainController') {
-      // We are removing the state of the nested controllers in main to avoid the CPU-intensive task of parsing + stringifying.
-      // We should access the state of the nested controllers directly from their context instead of accessing them through the main ctrl state on the FE.
-      Object.keys(controllersNestedInMainMapping).forEach((nestedCtrlName) => {
-        delete (stateToSendToFE as any)[nestedCtrlName]
-      })
-    }
-
-    sendToReactEvent('ctrl.update', { ctrlName, state: stateToSendToFE, forceEmit })
+    sendToReactEvent('ctrl.update', {
+      ctrlName,
+      state: buildStateForFE(ctrlName, registeredCtrl),
+      forceEmit
+    })
   }
 
   /**
    * Bypasses both background and React batching,
    * ensuring that the state update is immediately applied at the application level (React/Extension).
+   * forceEmit also bypasses the boot-phase deferral — it is reserved for cases where
+   * the UI is actively waiting on the update (status flags driven by user actions).
    */
   if (forceEmit) {
     sendUpdate()
     return 'EMITTED'
+  }
+
+  // During the critical boot phase, hold back updates for non-critical
+  // controllers. We keep only the latest state so the eventual drain emits
+  // one update per deferred controller, not the full history.
+  if (getBootPhase() === 'critical' && !isCriticalController(ctrlName)) {
+    queueDeferredCtrlPayload(ctrlName, ctrl, forceEmit)
+    return 'DEBOUNCED'
+  }
+
+  // Suppress non-critical controllers that no screen is currently displaying.
+  // The expensive toJSON + stringify + bridge + parse round trip only happens
+  // for state the UI actually consumes. We keep the latest reference so the
+  // moment a screen subscribes, the queued state is flushed (see
+  // setSubscribedControllers) and the UI never renders stale data.
+  if (
+    isSubscriptionGateActive() &&
+    !isCriticalController(ctrlName) &&
+    !isControllerSubscribed(ctrlName)
+  ) {
+    queueSuppressedCtrlPayload(ctrlName, ctrl, forceEmit)
+    return 'DEBOUNCED'
   }
 
   if (ctrlOnUpdateIsDirtyFlags[ctrlName]) return 'DEBOUNCED'
@@ -82,8 +124,10 @@ const sendToRNAsync = (type: string, payload: any): Promise<any> => {
   return new Promise((resolve, reject) => {
     const id = ++messageIdCounter
     pendingPromises[id] = { resolve, reject }
+    // network.fetch payloads are plain strings, so they skip richJson. storage/crypto
+    // keep richJson (storage values may carry BigInt). See bridgeCodec.
     // @ts-ignore
-    window.ReactNativeWebView.postMessage(richJson.stringify({ id, type, payload }))
+    window.ReactNativeWebView.postMessage(encode({ id, type, payload }, type !== 'network.fetch'))
   })
 }
 
@@ -99,11 +143,45 @@ const bridgedFetch = createBridgedFetch(sendToRNAsync)
 // @ts-ignore — override the global fetch with our bridge
 window.fetch = bridgedFetch
 
+// PERF: in-memory mirror of async storage, seeded once from the init snapshot
+// (RN dumps the whole MMKV instance at init). Holds the same RAW serialized
+// strings RN's storage layer stores, so reads parse with richJson exactly as a
+// bridged storage.get would have. Lets the ~79 controller-boot reads resolve
+// locally instead of each making a separate injectJavaScript round-trip.
+const storageCache: Record<string, string> = {}
+let storageCacheSeeded = false
+
+const seedStorageCache = (snapshot: Record<string, string> | undefined) => {
+  if (!snapshot) return
+  Object.entries(snapshot).forEach(([key, serialized]) => {
+    storageCache[key] = serialized
+  })
+  storageCacheSeeded = true
+}
+
 // Proxied Storage API
 const storageAPI = {
-  get: (key: string, defaultValue?: any) => sendToRNAsync('storage.get', { key, defaultValue }),
-  set: (key: string, value: any) => sendToRNAsync('storage.set', { key, value }),
-  remove: (key: string) => sendToRNAsync('storage.remove', { key })
+  get: (key: string, defaultValue?: any) => {
+    // Serve from the seeded cache to avoid a bridge round-trip. A missing key in
+    // a seeded cache means it genuinely isn't in storage → return defaultValue,
+    // matching RN's storage.get semantics (no bridge hop needed).
+    if (storageCacheSeeded) {
+      const serialized = storageCache[key]
+      const value = serialized !== undefined ? richJson.parse(serialized) : defaultValue
+      return Promise.resolve(value)
+    }
+    // Cache not seeded yet (no snapshot for some reason) → fall back to bridge.
+    return sendToRNAsync('storage.get', { key, defaultValue })
+  },
+  set: (key: string, value: any) => {
+    // Keep the cache coherent with the write, then persist through the bridge.
+    storageCache[key] = richJson.stringify(value)
+    return sendToRNAsync('storage.set', { key, value })
+  },
+  remove: (key: string) => {
+    delete storageCache[key]
+    return sendToRNAsync('storage.remove', { key })
+  }
 }
 
 const eventEmitterRegistry = new EventEmitterRegistryController(() => {
@@ -111,7 +189,7 @@ const eventEmitterRegistry = new EventEmitterRegistryController(() => {
     const hasOnUpdateInitialized = ctrl.onUpdateIds.includes('webview')
     if (!hasOnUpdateInitialized) {
       ctrl.onUpdate((forceEmit: boolean) => {
-        debounceFrontEndEventUpdatesOnSameTick(ctrl.name, mainCtrl, forceEmit)
+        debounceFrontEndEventUpdatesOnSameTick(ctrl.name, ctrl, mainCtrl, forceEmit)
       }, 'webview')
     }
 
@@ -136,6 +214,17 @@ let currentWindowId = 1
 
 const initControllers = (config: any) => {
   try {
+    // Logged here (not in structuredCloneShim) because that module loads before
+    // console forwarding is wired up, so its logs never reach Metro.
+    console.log(getStructuredCloneShimStatus())
+
+    // PERF: seed the storage cache BEFORE constructing controllers, so their
+    // initial-load storage reads hit the in-memory cache instead of the bridge.
+    seedStorageCache(config.__storageSnapshot)
+    if (Array.isArray(config.criticalControllers)) {
+      setCriticalControllers(config.criticalControllers)
+    }
+
     mainCtrl = new MainController({
       eventEmitterRegistry,
       storageAPI,
@@ -208,10 +297,15 @@ const initControllers = (config: any) => {
 
     walletStateCtrl = new WalletStateController({
       eventEmitterRegistry,
-      onLogLevelUpdateCallback: () => Promise.resolve()
+      onLogLevelUpdateCallback: () => Promise.resolve(),
+      storage: storageAPI
     })
 
-    autoLockCtrl = new AutoLockController(eventEmitterRegistry, () => mainCtrl.keystore.lock())
+    autoLockCtrl = new AutoLockController(
+      eventEmitterRegistry,
+      () => mainCtrl.keystore.lock(),
+      storageAPI
+    )
 
     // Initialize UI view inside the WebView worker context natively
     mainCtrl.ui.addView({ id: 'default-mobile-app-view', type: 'mobile' })
@@ -231,7 +325,7 @@ const initControllers = (config: any) => {
 // Proxy Listener
 window.addEventListener('message', (event) => {
   try {
-    const data = typeof event.data === 'string' ? richJson.parse(event.data) : event.data
+    const data = typeof event.data === 'string' ? decode(event.data) : event.data
     if (data.type === 'response') {
       const { id, result, error } = data
       if (error) pendingPromises[id]?.reject(new Error(error))

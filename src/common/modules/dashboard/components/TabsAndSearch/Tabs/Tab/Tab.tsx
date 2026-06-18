@@ -61,7 +61,7 @@ const Tab = ({
             borderBottomWidth: 2
           }}
         >
-          <View style={[flexbox.directionRow, style]}>
+          <View style={[flexbox.directionRow, flexbox.alignCenter, style]}>
             <Text
               weight="medium"
               color={isActive || hovered ? theme.primaryText : theme.tertiaryText}

@@ -510,6 +510,8 @@ run-tests.sh
 # WebView bundles
 webview-bundle.json
 *inpage-bundle.json
+/ios/Ambire/Resources/webview/
+/android/app/src/main/assets/webview/
 
 # Local, per-developer LLM rules
 .claude/*.local.*
