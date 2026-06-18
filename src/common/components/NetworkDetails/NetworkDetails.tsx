@@ -428,12 +428,16 @@ const NetworkDetails = ({
         id="edit-network-bottom-sheet"
         sheetRef={sheetRef}
         closeBottomSheet={closeBottomSheet}
-        scrollViewProps={{
-          scrollEnabled: false,
-          contentContainerStyle: { flex: 1 }
-        }}
-        containerInnerWrapperStyles={{ flex: 1 }}
-        style={{ ...spacings.ph0, ...spacings.pv0, overflow: 'hidden', maxWidth: 880 }}
+        scrollViewProps={
+          isWeb
+            ? {
+                scrollEnabled: false,
+                contentContainerStyle: { flex: 1 }
+              }
+            : {}
+        }
+        containerInnerWrapperStyles={isWeb ? { flex: 1 } : {}}
+        style={isWeb ? { ...spacings.ph0, ...spacings.pv0, overflow: 'hidden', maxWidth: 880 } : {}}
       >
         <NetworkForm
           selectedChainId={chainId.toString()}

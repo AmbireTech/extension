@@ -17,6 +17,7 @@ import NumberInput from '@common/components/NumberInput'
 import ScrollableWrapper from '@common/components/ScrollableWrapper'
 import Text from '@common/components/Text'
 import Tooltip from '@common/components/Tooltip'
+import { isMobile, isWeb } from '@common/config/env'
 import useController from '@common/hooks/useController'
 import useHover, { AnimatedPressable } from '@common/hooks/useHover'
 import useTheme from '@common/hooks/useTheme'
@@ -25,7 +26,7 @@ import {
   getAreDefaultsChanged,
   handleErrors
 } from '@common/modules/settings/components/Networks/NetworkForm/helpers'
-import spacings from '@common/styles/spacings'
+import spacings, { SPACING_SM } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
 import { setStringAsync } from '@common/utils/clipboard'
@@ -105,18 +106,20 @@ export const RpcSelectorItem = React.memo(
           >
             {url}
           </Text>
-          <AnimatedPressable
-            onPress={handleCopy}
-            style={[spacings.mlMi, copyIconAnimStyle]}
-            {...bindCopyIconAnim}
-            onHoverIn={() => {
-              // Persist hover of the parent to prevent
-              // layout shifting
-              setHovered(true)
-            }}
-          >
-            <CopyIcon width={16} height={16} />
-          </AnimatedPressable>
+          {isWeb && (
+            <AnimatedPressable
+              onPress={handleCopy}
+              style={[spacings.mlMi, copyIconAnimStyle]}
+              {...bindCopyIconAnim}
+              onHoverIn={() => {
+                // Persist hover of the parent to prevent
+                // layout shifting
+                setHovered(true)
+              }}
+            >
+              <CopyIcon width={16} height={16} />
+            </AnimatedPressable>
+          )}
         </View>
         {!!shouldShowRemove && (!!hovered || isRemoveHovered) && (
           <Pressable
@@ -620,28 +623,62 @@ const NetworkForm = ({
         )}
         {selectedChainId !== 'add-custom-network' && !!selectedNetwork && (
           <>
-            <View style={[flexbox.flex1, flexbox.directionRow, flexbox.alignCenter]}>
-              <NetworkIcon
-                id={selectedNetwork.chainId.toString()}
-                style={spacings.mrTy}
-                size={28}
-              />
-              <Text appearance="secondaryText" weight="regular" style={spacings.mrMi} fontSize={16}>
-                {selectedNetwork.name || t('Unknown network')}
-              </Text>
-            </View>
+            {isWeb && (
+              <View style={[flexbox.flex1, flexbox.directionRow, flexbox.alignCenter]}>
+                <NetworkIcon
+                  id={selectedNetwork.chainId.toString()}
+                  style={spacings.mrTy}
+                  size={28}
+                />
+                <Text
+                  appearance="secondaryText"
+                  weight="regular"
+                  style={spacings.mrMi}
+                  fontSize={16}
+                >
+                  {selectedNetwork.name || t('Unknown network')}
+                </Text>
+              </View>
+            )}
             <Text fontSize={20} weight="medium" numberOfLines={1}>
               {t('Edit network')}
             </Text>
-            <View style={flexbox.flex1} />
+            <View style={[flexbox.flex1, flexbox.alignEnd]}>
+              {isMobile && (
+                <View style={[flexbox.flex1, flexbox.directionRow, flexbox.alignCenter]}>
+                  <NetworkIcon
+                    id={selectedNetwork.chainId.toString()}
+                    style={spacings.mrTy}
+                    size={28}
+                  />
+                  <Text
+                    appearance="secondaryText"
+                    weight="regular"
+                    style={spacings.mrMi}
+                    fontSize={16}
+                  >
+                    {selectedNetwork.name || t('Unknown network')}
+                  </Text>
+                </View>
+              )}
+            </View>
           </>
         )}
       </View>
-      <View style={[spacings.phXl, spacings.pvXl, spacings.ptLg, flexbox.flex1]}>
-        <Text fontSize={18} weight="medium" style={spacings.mbMd}>
-          {t('Network details')}
-        </Text>
-        <View style={[flexbox.directionRow, flexbox.flex1]}>
+      <View
+        style={[
+          isWeb && spacings.phXl,
+          isWeb && spacings.pvXl,
+          isWeb && spacings.ptLg,
+          flexbox.flex1
+        ]}
+      >
+        {isWeb && (
+          <Text fontSize={18} weight="medium" style={spacings.mbMd}>
+            {t('Network details')}
+          </Text>
+        )}
+        <View style={[isWeb && flexbox.directionRow, flexbox.flex1]}>
           <View style={flexbox.flex1}>
             <ScrollableWrapper contentContainerStyle={{ flexGrow: 1 }}>
               <Controller
@@ -654,7 +691,7 @@ const NetworkForm = ({
                     value={value}
                     inputWrapperStyle={{ height: 40 }}
                     inputStyle={{ height: 40 }}
-                    containerStyle={{ ...spacings.mb, ...spacings.mrMi, flex: 1 }}
+                    containerStyle={{ ...spacings.mb, ...(isWeb ? spacings.mrMi : {}), flex: 1 }}
                     label={t('Network name')}
                     disabled={selectedChainId !== 'add-custom-network'}
                     error={handleErrors(errors.name)}
@@ -749,7 +786,7 @@ const NetworkForm = ({
                   // @ts-ignore
                   { flex: 'unset', minHeight: rpcUrls.length > 1 ? 80 : 40 }
                 ]}
-                contentContainerStyle={{ flexGrow: 1 }}
+                contentContainerStyle={{ flexGrow: 1, paddingBottom: 0 }}
               >
                 {!!rpcUrls.length &&
                   rpcUrls.map((url, i) => {
@@ -792,6 +829,15 @@ const NetworkForm = ({
                   </View>
                 )}
               </ScrollableWrapper>
+              {isMobile && (
+                <View style={spacings.mbSm}>
+                  <NetworkAvailableFeatures
+                    chainId={selectedNetwork?.chainId}
+                    features={features}
+                    title={t('Default RPC available features')}
+                  />
+                </View>
+              )}
               <View style={[flexbox.directionRow, flexbox.alignStart]}>
                 <Controller
                   control={control}
@@ -803,7 +849,7 @@ const NetworkForm = ({
                       value={value as any}
                       inputWrapperStyle={{ height: 40 }}
                       inputStyle={{ height: 40 }}
-                      containerStyle={{ ...spacings.mrMi, flex: 1 }}
+                      containerStyle={{ ...(isWeb ? spacings.mrMi : {}), flex: 1 }}
                       label={t('Chain ID')}
                       disabled={selectedChainId !== 'add-custom-network'}
                       error={handleErrors(errors.chainId)}
@@ -842,7 +888,7 @@ const NetworkForm = ({
                       placeholder="Coming soon..."
                       inputWrapperStyle={{ height: 40 }}
                       inputStyle={{ height: 40 }}
-                      containerStyle={{ ...spacings.mrMi, flex: 1 }}
+                      containerStyle={{ ...(isWeb ? spacings.mrMi : {}), flex: 1 }}
                       label={t('Coingecko platform ID')}
                       error={handleErrors(errors.coingeckoPlatformId)}
                     />
@@ -862,7 +908,7 @@ const NetworkForm = ({
                       inputWrapperStyle={{ height: 40 }}
                       inputStyle={{ height: 40 }}
                       containerStyle={{ ...spacings.mlMi, flex: 1 }}
-                      label={t('Coingecko native asset ID')}
+                      label={isMobile ? t('Coingecko asset ID') : t('Coingecko native asset ID')}
                       error={handleErrors(errors.coingeckoNativeAssetId)}
                     />
                   )}
@@ -894,7 +940,7 @@ const NetworkForm = ({
                       }}
                       inputWrapperStyle={{ height: 40 }}
                       inputStyle={{ height: 40 }}
-                      containerStyle={{ ...spacings.mb, ...spacings.mrMi, flex: 1 }}
+                      containerStyle={{ ...spacings.mb, ...(isWeb ? spacings.mrMi : {}), flex: 1 }}
                       label={t('Custom bundler url (Experimental)')}
                       error={handleErrors(errors.customBundlerUrl)}
                     />
@@ -904,13 +950,18 @@ const NetworkForm = ({
               </View>
             </ScrollableWrapper>
           </View>
-          <View style={[flexbox.flex1, spacings.pl, spacings.ml]}>
-            <ScrollableWrapper contentContainerStyle={{ flexGrow: 1 }}>
-              <View style={flexbox.flex1}>
-                <NetworkAvailableFeatures chainId={selectedNetwork?.chainId} features={features} />
-              </View>
-            </ScrollableWrapper>
-            <View style={[flexbox.alignEnd, spacings.ptXl]}>
+          <View style={[flexbox.flex1, isWeb && spacings.pl, isWeb && spacings.ml]}>
+            {isWeb && (
+              <ScrollableWrapper contentContainerStyle={{ flexGrow: 1 }}>
+                <View style={flexbox.flex1}>
+                  <NetworkAvailableFeatures
+                    chainId={selectedNetwork?.chainId}
+                    features={features}
+                  />
+                </View>
+              </ScrollableWrapper>
+            )}
+            <View style={[isWeb && flexbox.alignEnd, isMobile ? {} : spacings.ptXl]}>
               {selectedChainId === 'add-custom-network' ? (
                 <Button
                   onPress={handleSubmitButtonPress}
@@ -920,21 +971,25 @@ const NetworkForm = ({
                   size="large"
                 />
               ) : (
-                <View style={[flexbox.directionRow]}>
+                <View style={[flexbox.directionRow, isMobile && { columnGap: SPACING_SM }]}>
                   <Button
                     onPress={onCancel}
                     text={t('Cancel')}
                     type="gray"
                     hasBottomSpacing={false}
-                    style={[flexbox.flex1, spacings.mrSm, { width: 90 }]}
+                    style={[
+                      flexbox.flex1,
+                      isWeb && spacings.mrSm,
+                      isWeb && { width: 90 },
+                      isMobile && { backgroundColor: theme.neutral100 }
+                    ]}
                     size="smaller"
                   />
-
                   <Button
                     onPress={handleSubmitButtonPress}
                     text={isSomethingUpdated ? t('Save') : t('No changes')}
                     disabled={!isSomethingUpdated || isSaveOrAddButtonDisabled}
-                    style={[spacings.mlMi, flexbox.flex1, { minWidth: 124 }]}
+                    style={[isWeb && spacings.mlMi, flexbox.flex1, isWeb && { minWidth: 124 }]}
                     hasBottomSpacing={false}
                     size="smaller"
                   />

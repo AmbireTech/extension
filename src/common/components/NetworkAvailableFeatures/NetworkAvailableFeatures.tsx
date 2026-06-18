@@ -42,6 +42,7 @@ type Props = {
   handleRetryWithDifferentRpcUrl?: () => void
   hideBackgroundAndBorders?: boolean
   titleSize?: number
+  title?: string
   responsiveSizeMultiplier?: number
   withScroll?: boolean
   titleStyle?: TextStyle
@@ -54,6 +55,7 @@ const NetworkAvailableFeatures = ({
   handleRetryWithDifferentRpcUrl,
   hideBackgroundAndBorders = false,
   titleSize,
+  title,
   responsiveSizeMultiplier = 1,
   withScroll = false,
   titleStyle
@@ -191,7 +193,7 @@ const NetworkAvailableFeatures = ({
         appearance="infoText"
         style={[spacings.mbMd, titleStyle]}
       >
-        {t('Available features')}
+        {title || t('Available features')}
       </Text>
       <View>
         {!!features &&
