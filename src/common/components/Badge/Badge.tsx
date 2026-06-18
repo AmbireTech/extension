@@ -104,7 +104,7 @@ const Badge = ({
       {text && (
         <Text
           weight={weight || 'medium'}
-          fontSize={sizeMultiplier * 10}
+          fontSize={12}
           color={color}
           style={[(!!tooltipText || type === 'new') && spacings.mrMi, textStyle]}
         >

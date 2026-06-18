@@ -127,7 +127,7 @@ test.describe('ledger', { tag: '@ledgerTests' }, () => {
 
       const sendToken = tokens.usdc.base
       const message = 'Top up ready!'
-      const topUpAmount = '0.1'
+      const topUpAmount = '0.03'
 
       await pages.gasTank.topUpGasTank(sendToken, topUpAmount)
 

@@ -513,7 +513,7 @@ webview-bundle.json
 /ios/Ambire/Resources/webview/
 /android/app/src/main/assets/webview/
 
-# Claude Code personal settings
+# Local, per-developer LLM rules
 .claude/*.local.*
-
-
+.agents/*.local.*
+AGENTS.local.md

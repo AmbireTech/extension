@@ -25,6 +25,7 @@ import {
 } from '@ambire-common/libs/humanizer/utils'
 import DeleteIcon from '@common/assets/svg/DeleteIcon'
 import ExpandableCard from '@common/components/ExpandableCard'
+import HumanizerAddress from '@common/components/HumanizerAddress'
 import HumanizedVisualization, {
   getErc7730DescriptionRows,
   shouldUseErc7730DetailedLayout
@@ -268,9 +269,29 @@ const TransactionSummary = ({
   const humanizerWarningLabels = useMemo(() => {
     if (type !== 'default') return null
     return call.warnings?.map((warning) => {
-      return <Label size={size} key={warning.content} text={warning.content} type="warning" />
+      return (
+        <Label
+          size={size}
+          key={`${warning.content}-${warning.address || ''}`}
+          text={warning.content}
+          type="warning"
+        >
+          {!!warning.address && (
+            <View style={spacings.mlMi}>
+              <HumanizerAddress
+                address={warning.address}
+                chainId={chainId}
+                fontSize={textSize}
+                actionsMode="inline"
+                shouldWrapInlineActions={false}
+                hideLogo
+              />
+            </View>
+          )}
+        </Label>
+      )
     })
-  }, [type, call.warnings, size])
+  }, [type, call.warnings, size, chainId, textSize])
 
   const innerEditApproval = useCallback(
     (newAmount: string, token: string, tokenChainId: bigint, closeEditApprovals: () => void) => {

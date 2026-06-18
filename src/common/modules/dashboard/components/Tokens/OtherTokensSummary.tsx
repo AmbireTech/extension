@@ -19,7 +19,7 @@ type Props = {
   totalUSD?: number
 }
 
-const DustTokensSummary = ({ count, onPress, variant, totalUSD }: Props) => {
+const OtherTokensSummary = ({ count, onPress, variant, totalUSD }: Props) => {
   const { theme } = useTheme()
   const { t } = useTranslation()
   const { isPrivacyModeEnabled } = useController('WalletStateController').state
@@ -63,11 +63,11 @@ const DustTokensSummary = ({ count, onPress, variant, totalUSD }: Props) => {
         </View>
         <Text appearance="secondaryText" fontSize={14} weight="medium">
           {isSummary
-            ? t('{{count}} dust {{tokensLabel}}', {
+            ? t('{{count}} other {{tokensLabel}}', {
                 count,
                 tokensLabel: count > 1 ? t('tokens') : t('token')
               })
-            : t('Hide {{count}} dust {{tokensLabel}}', {
+            : t('Hide {{count}} other {{tokensLabel}}', {
                 count,
                 tokensLabel: count > 1 ? t('tokens') : t('token')
               })}
@@ -82,4 +82,4 @@ const DustTokensSummary = ({ count, onPress, variant, totalUSD }: Props) => {
   )
 }
 
-export default React.memo(DustTokensSummary)
+export default React.memo(OtherTokensSummary)
