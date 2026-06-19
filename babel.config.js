@@ -18,7 +18,6 @@ module.exports = function (api) {
     presets: ['babel-preset-expo'],
     plugins: [
       ['@babel/plugin-transform-export-namespace-from'],
-      ['@babel/plugin-transform-class-static-block'],
       ['transform-inline-environment-variables'],
       ['@babel/plugin-proposal-decorators', { legacy: true }],
       [
