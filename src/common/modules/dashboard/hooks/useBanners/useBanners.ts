@@ -2,6 +2,7 @@ import { useMemo } from 'react'
 
 import { getCurrentAccountBanners } from '@ambire-common/libs/banners/banners'
 import useController from '@common/hooks/useController'
+import useOtaUpdateBanner from '@common/modules/dashboard/hooks/useOtaUpdateBanner'
 
 import type { Banner as BannerInterface, IBannerController } from '@ambire-common/interfaces/banner'
 const OFFLINE_BANNER: BannerInterface = {
@@ -29,6 +30,7 @@ export default function useBanners(): [BannerInterface[], BannerInterface[]] {
   const { banners: swapAndBridgeBanners = [] } = useController('SwapAndBridgeController').state
   const { extensionUpdateBanner } = useController('ExtensionUpdateController').state
   const { hasFundedHotAccount } = useController('PortfolioController').state
+  const otaUpdateBanner = useOtaUpdateBanner()
 
   const marketingBanners = useMemo(() => {
     return marketingBannersData.banners.filter(
@@ -50,7 +52,8 @@ export default function useBanners(): [BannerInterface[], BannerInterface[]] {
         hasFundedHotAccount ? emailVaultBanners || [] : [],
         account?.addr
       ),
-      ...(extensionUpdateBanner || [])
+      ...(extensionUpdateBanner || []),
+      ...otaUpdateBanner
     ]
   }, [
     deprecatedSmartAccountBanner,
@@ -61,7 +64,8 @@ export default function useBanners(): [BannerInterface[], BannerInterface[]] {
     hasFundedHotAccount,
     emailVaultBanners,
     account?.addr,
-    extensionUpdateBanner
+    extensionUpdateBanner,
+    otaUpdateBanner
   ])
 
   return [controllerBanners, marketingBanners]
