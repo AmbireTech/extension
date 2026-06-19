@@ -24,6 +24,7 @@ import {
   getDetailedValueLines,
   getErc7730SpenderRow,
   getErc7730SummaryRows,
+  getVisibleErc7730Rows,
   hasErc7730NativeValueRow,
   hasTokenValue,
   isNestedErc7730Row,
@@ -76,6 +77,7 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
     () => getDetailedRows(item).filter((row) => !hideNestedRows || !isNestedErc7730Row(row)),
     [hideNestedRows, item]
   )
+  const visibleRows = useMemo(() => getVisibleErc7730Rows(item), [item])
   const getNestedVisualizationMode = useCallback(
     (nestedVisualization: HumanizerVisualization) =>
       nestedVisualization.type === 'erc7730' && nestedVisualization.title === 'Account setup'
@@ -309,7 +311,7 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
               { width: '100%', minWidth: 0 }
             ]}
           >
-            {item.rows.map((row, rowIndex) => (
+            {visibleRows.map((row) => (
               <View
                 key={`${item.id}-transaction-summary-${row.label}-${row.value
                   .map((value) => value.id)
