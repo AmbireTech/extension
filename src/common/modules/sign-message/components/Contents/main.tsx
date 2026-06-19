@@ -216,7 +216,7 @@ const Main = ({
         <View style={flexbox.flex1}>
           <ExpandableCard
             key={messageVisualizationKey}
-            enableToggleExpand={visualizeHumanized}
+            enableToggleExpand={visualizeHumanized && !shouldUseErc7730TypedMessageCard}
             hasArrow={
               shouldUseErc7730TypedMessageCard
                 ? false
@@ -228,7 +228,7 @@ const Main = ({
               backgroundColor: theme.secondaryBackground,
               ...(humanizedMessage?.warnings?.length ? styles.warningContainer : {})
             }}
-            content={({ isExpanded }) =>
+            content={() =>
               isHumanizing ? (
                 <View style={flexbox.flex1}>
                   <Spinner />
@@ -238,7 +238,7 @@ const Main = ({
                   data={typedMessageErc7730Visualizations}
                   chainId={network?.chainId || signMessageState.messageToSign?.chainId || 1n}
                   responsiveSizeMultiplier={responsiveSizeMultiplier}
-                  isExpanded={isExpanded}
+                  messageContent={signMessageState.messageToSign?.content}
                   warnings={humanizedMessage?.warnings}
                 />
               ) : visualizeHumanized &&
@@ -281,16 +281,16 @@ const Main = ({
               )
             }
             expandedContent={
-              <FallbackVisualization
-                setHasReachedBottom={setHasReachedBottom}
-                hasReachedBottom={!!hasReachedBottom}
-                messageToSign={signMessageState.messageToSign}
-                humanizedMessage={humanizedMessage}
-                responsiveSizeMultiplier={responsiveSizeMultiplier}
-                withScrollDownArrow
-                rawOnly={shouldUseErc7730TypedMessageCard}
-                disableScroll={isMobile && shouldUseErc7730TypedMessageCard}
-              />
+              shouldUseErc7730TypedMessageCard ? undefined : (
+                <FallbackVisualization
+                  setHasReachedBottom={setHasReachedBottom}
+                  hasReachedBottom={!!hasReachedBottom}
+                  messageToSign={signMessageState.messageToSign}
+                  humanizedMessage={humanizedMessage}
+                  responsiveSizeMultiplier={responsiveSizeMultiplier}
+                  withScrollDownArrow
+                />
+              )
             }
           >
             {!shouldUseErc7730TypedMessageCard &&

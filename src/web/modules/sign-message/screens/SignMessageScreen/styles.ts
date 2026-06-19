@@ -1,6 +1,6 @@
 import { StyleSheet, TextStyle, ViewStyle } from 'react-native'
 
-import spacings, { SPACING_MD } from '@common/styles/spacings'
+import spacings, { SPACING_MD, SPACING_SM, SPACING_TY } from '@common/styles/spacings'
 import { ThemeProps } from '@common/styles/themeConfig'
 import common, { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
@@ -12,8 +12,8 @@ interface Style {
   warningContainer: ViewStyle
   erc7730TypedMessageTitleRow: ViewStyle
   erc7730TypedMessageTitle: TextStyle
-  erc7730TypedMessageExpandMore: ViewStyle
-  erc7730TypedMessageDivider: ViewStyle
+  erc7730TypedMessageTabHeader: ViewStyle
+  erc7730TypedMessageTabButton: ViewStyle
 }
 
 const getStyles = (theme: ThemeProps) =>
@@ -56,15 +56,17 @@ const getStyles = (theme: ThemeProps) =>
       flexShrink: 1,
       ...spacings.mrSm
     },
-    erc7730TypedMessageExpandMore: {
+    erc7730TypedMessageTabHeader: {
       ...flexbox.directionRow,
-      ...flexbox.alignCenter,
-      flexShrink: 0
+      alignSelf: 'stretch',
+      borderBottomWidth: 1,
+      borderBottomColor: theme.secondaryBorder,
+      marginBottom: SPACING_SM
     },
-    erc7730TypedMessageDivider: {
-      height: 1,
-      width: '100%',
-      backgroundColor: theme.secondaryBorder
+    erc7730TypedMessageTabButton: {
+      paddingVertical: SPACING_TY,
+      marginRight: SPACING_TY,
+      borderBottomWidth: 2
     }
   })
 

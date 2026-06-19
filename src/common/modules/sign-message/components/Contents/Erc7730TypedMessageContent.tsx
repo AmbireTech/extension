@@ -1,26 +1,29 @@
-import React, { memo, useMemo } from 'react'
+import React, { memo, useCallback, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { View } from 'react-native'
+import { GestureResponderEvent, Pressable, View } from 'react-native'
 
-import { HumanizerWarning } from '@ambire-common/libs/humanizer/interfaces'
-import DownArrowIcon from '@common/assets/svg/DownArrowIcon'
-import UpArrowIcon from '@common/assets/svg/UpArrowIcon'
+import type { ISignMessageController } from '@ambire-common/interfaces/signMessage'
+import type { HumanizerWarning } from '@ambire-common/libs/humanizer/interfaces'
+import { stringify } from '@ambire-common/libs/richJson/richJson'
 import HumanizedVisualization from '@common/components/HumanizedVisualization'
 import HumanizerAddress from '@common/components/HumanizerAddress'
 import Label from '@common/components/Label'
 import Text from '@common/components/Text'
 import { isMobile } from '@common/config/env'
 import useTheme from '@common/hooks/useTheme'
+import useWindowSize from '@common/hooks/useWindowSize'
 import { Erc7730Visualization } from '@common/modules/sign-message/utils/isErc7730Visualization'
 import spacings, { SPACING_TY } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import getStyles from '@web/modules/sign-message/screens/SignMessageScreen/styles'
 
+type ActiveTab = 'parsed' | 'raw'
+
 type Props = {
   data: Erc7730Visualization[]
   chainId: bigint
   responsiveSizeMultiplier: number
-  isExpanded?: boolean
+  messageContent?: NonNullable<ISignMessageController['messageToSign']>['content']
   warnings?: HumanizerWarning[]
 }
 
@@ -28,12 +31,32 @@ const Erc7730TypedMessageContent = ({
   data,
   chainId,
   responsiveSizeMultiplier,
-  isExpanded = false,
+  messageContent,
   warnings
 }: Props) => {
   const { t } = useTranslation()
   const { styles, theme } = useTheme(getStyles)
+  const { maxWidthSize } = useWindowSize()
+  const [activeTab, setActiveTab] = useState<ActiveTab>('parsed')
   const title = useMemo(() => data.find((item) => !!item.title)?.title, [data])
+  const tabs = useMemo(
+    () =>
+      [
+        ['parsed', t('Parsed')],
+        ['raw', t('Raw')]
+      ] as const,
+    [t]
+  )
+  const handleTabPress = useCallback((tab: ActiveTab) => {
+    setActiveTab(tab)
+  }, [])
+  const handlePressTab = useCallback(
+    (event: GestureResponderEvent, tab: ActiveTab) => {
+      event.stopPropagation()
+      handleTabPress(tab)
+    },
+    [handleTabPress]
+  )
 
   return (
     <View style={{ width: '100%' }}>
@@ -76,36 +99,53 @@ const Erc7730TypedMessageContent = ({
         >
           {title || t('Message details')}
         </Text>
-        <View style={styles.erc7730TypedMessageExpandMore}>
-          <Text fontSize={14} appearance="tertiaryText" numberOfLines={1}>
-            {t('Expand more')}
-          </Text>
-          <View style={spacings.mlTy}>
-            {isExpanded ? (
-              <UpArrowIcon color={theme.tertiaryText} />
-            ) : (
-              <DownArrowIcon color={theme.tertiaryText} />
-            )}
-          </View>
-        </View>
       </View>
-      <View
-        style={[
-          styles.erc7730TypedMessageDivider,
-          {
-            marginTop: SPACING_TY * responsiveSizeMultiplier,
-            marginBottom: SPACING_TY * responsiveSizeMultiplier
-          }
-        ]}
-      />
-      <HumanizedVisualization
-        data={data}
-        chainId={chainId}
-        sizeMultiplierSize={responsiveSizeMultiplier}
-        textSize={14}
-        hasPadding={false}
-        erc7730Mode="description"
-      />
+      <View style={[styles.erc7730TypedMessageTabHeader, spacings.mtTy]}>
+        {tabs.map(([tab, label]) => {
+          const isActive = activeTab === tab
+
+          return (
+            <Pressable
+              key={tab}
+              onPress={(event) => handlePressTab(event, tab)}
+              style={[
+                styles.erc7730TypedMessageTabButton,
+                {
+                  borderBottomColor: isActive ? theme.secondaryAccent400 : 'transparent'
+                }
+              ]}
+            >
+              <Text
+                fontSize={14 * responsiveSizeMultiplier}
+                weight={isActive ? 'semiBold' : 'medium'}
+                color={isActive ? theme.secondaryAccent400 : theme.secondaryText}
+              >
+                {label}
+              </Text>
+            </Pressable>
+          )
+        })}
+      </View>
+      {activeTab === 'parsed' ? (
+        <HumanizedVisualization
+          data={data}
+          chainId={chainId}
+          sizeMultiplierSize={responsiveSizeMultiplier}
+          textSize={14}
+          hasPadding={false}
+          erc7730Mode="description"
+        />
+      ) : (
+        <Text
+          selectable
+          weight="regular"
+          fontSize={(maxWidthSize('xl') ? 14 : 12) * responsiveSizeMultiplier}
+          appearance="secondaryText"
+          style={{ marginTop: SPACING_TY * responsiveSizeMultiplier }}
+        >
+          {messageContent ? stringify(messageContent, { pretty: true }) : ''}
+        </Text>
+      )}
     </View>
   )
 }
