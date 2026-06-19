@@ -14,6 +14,9 @@ interface Style {
   erc7730TypedMessageTitle: TextStyle
   erc7730TypedMessageTabHeader: ViewStyle
   erc7730TypedMessageTabButton: ViewStyle
+  erc7730TypedMessageRawContainer: ViewStyle
+  erc7730TypedMessageRawActions: ViewStyle
+  erc7730TypedMessageRawText: TextStyle
 }
 
 const getStyles = (theme: ThemeProps) =>
@@ -67,6 +70,19 @@ const getStyles = (theme: ThemeProps) =>
       paddingVertical: SPACING_TY,
       marginRight: SPACING_TY,
       borderBottomWidth: 2
+    },
+    erc7730TypedMessageRawContainer: {
+      position: 'relative',
+      ...spacings.mtTy
+    },
+    erc7730TypedMessageRawActions: {
+      position: 'absolute',
+      top: 0,
+      right: 0,
+      zIndex: 1
+    },
+    erc7730TypedMessageRawText: {
+      ...spacings.prXl
     }
   })
 

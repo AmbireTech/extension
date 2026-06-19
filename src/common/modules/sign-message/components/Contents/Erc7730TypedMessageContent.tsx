@@ -5,6 +5,7 @@ import { GestureResponderEvent, Pressable, View } from 'react-native'
 import type { ISignMessageController } from '@ambire-common/interfaces/signMessage'
 import type { HumanizerWarning } from '@ambire-common/libs/humanizer/interfaces'
 import { stringify } from '@ambire-common/libs/richJson/richJson'
+import CopyText from '@common/components/CopyText'
 import HumanizedVisualization from '@common/components/HumanizedVisualization'
 import HumanizerAddress from '@common/components/HumanizerAddress'
 import Label from '@common/components/Label'
@@ -13,7 +14,7 @@ import { isMobile } from '@common/config/env'
 import useTheme from '@common/hooks/useTheme'
 import useWindowSize from '@common/hooks/useWindowSize'
 import { Erc7730Visualization } from '@common/modules/sign-message/utils/isErc7730Visualization'
-import spacings, { SPACING_TY } from '@common/styles/spacings'
+import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import getStyles from '@web/modules/sign-message/screens/SignMessageScreen/styles'
 
@@ -39,6 +40,10 @@ const Erc7730TypedMessageContent = ({
   const { maxWidthSize } = useWindowSize()
   const [activeTab, setActiveTab] = useState<ActiveTab>('parsed')
   const title = useMemo(() => data.find((item) => !!item.title)?.title, [data])
+  const rawMessageContent = useMemo(
+    () => (messageContent ? stringify(messageContent, { pretty: true }) : ''),
+    [messageContent]
+  )
   const tabs = useMemo(
     () =>
       [
@@ -136,15 +141,25 @@ const Erc7730TypedMessageContent = ({
           erc7730Mode="description"
         />
       ) : (
-        <Text
-          selectable
-          weight="regular"
-          fontSize={(maxWidthSize('xl') ? 14 : 12) * responsiveSizeMultiplier}
-          appearance="secondaryText"
-          style={{ marginTop: SPACING_TY * responsiveSizeMultiplier }}
-        >
-          {messageContent ? stringify(messageContent, { pretty: true }) : ''}
-        </Text>
+        <View style={styles.erc7730TypedMessageRawContainer}>
+          <View style={styles.erc7730TypedMessageRawActions}>
+            <CopyText
+              text={rawMessageContent}
+              iconColor={theme.secondaryText}
+              iconSize={20 * responsiveSizeMultiplier}
+              shouldStopPropagation
+            />
+          </View>
+          <Text
+            selectable
+            weight="regular"
+            fontSize={(maxWidthSize('xl') ? 14 : 12) * responsiveSizeMultiplier}
+            appearance="secondaryText"
+            style={styles.erc7730TypedMessageRawText}
+          >
+            {rawMessageContent}
+          </Text>
+        </View>
       )}
     </View>
   )
