@@ -73,11 +73,9 @@ export class SwapAndBridgePage extends BasePage {
     try {
       // switch network
       const tokenNetwork = toToken.chainName
-      await this.click(selectors.receiveNetworkEth)
 
-      if (tokenNetwork != 'optimism') {
+      if (tokenNetwork == 'optimism') {
         await this.click(selectors.recieveNetworkBase)
-      } else {
         await this.click(selectors.recieveNetworkOptimism)
       }
 
@@ -158,12 +156,11 @@ export class SwapAndBridgePage extends BasePage {
 
     // switch network
     const tokenNetwork = receiveToken.chainName
-    await this.click(selectors.receiveNetworkEth)
 
     if (tokenNetwork == 'optimism') {
+      await this.click(selectors.recieveNetworkBase)
       await this.click(selectors.recieveNetworkOptimism)
     } else {
-      await this.click(selectors.recieveNetworkBase)
     }
 
     await this.page.waitForTimeout(2000)
@@ -184,16 +181,14 @@ export class SwapAndBridgePage extends BasePage {
     await this.page.waitForTimeout(2000)
 
     await this.click(selectors.swapAndBridge.receiveTokenDropdown)
+
     await this.page.getByTestId(selectors.searchInput).fill(receiveToken.symbol, { timeout: 5000 })
     await this.page.getByText('Not found. Try with token').isVisible()
 
-    await this.page.locator(SELECTORS.searchInput).fill(receiveToken.address, { timeout: 5000 })
-
-    const tokenLocator = this.page
-      .getByTestId(selectors.bottomSheet)
-      .getByTestId(`option-${receiveToken.address}.${receiveToken.chainId}`)
-
-    await expect(tokenLocator).toBeVisible()
+    await this.page.getByTestId(selectors.searchInput).fill(receiveToken.address, { timeout: 5000 })
+    await this.page
+      .getByText('Token with this address is not supported by our service provider')
+      .isVisible()
   }
 
   async rejectTransaction(): Promise<void> {
@@ -388,12 +383,10 @@ export class SwapAndBridgePage extends BasePage {
     try {
       // switch network
       const tokenNetwork = receiveToken.chainName
-      await this.click(selectors.receiveNetworkEth)
 
       if (tokenNetwork == 'optimism') {
-        await this.click(selectors.recieveNetworkOptimism)
-      } else {
         await this.click(selectors.recieveNetworkBase)
+        await this.click(selectors.recieveNetworkOptimism)
       }
 
       // Select receive token by address
