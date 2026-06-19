@@ -5,10 +5,7 @@ import { View } from 'react-native'
 import { HumanizerWarning } from '@ambire-common/libs/humanizer/interfaces'
 import DownArrowIcon from '@common/assets/svg/DownArrowIcon'
 import UpArrowIcon from '@common/assets/svg/UpArrowIcon'
-import HumanizedVisualization, {
-  Erc7730StructuredVisualization,
-  getNestedErc7730Visualizations
-} from '@common/components/HumanizedVisualization'
+import HumanizedVisualization from '@common/components/HumanizedVisualization'
 import HumanizerAddress from '@common/components/HumanizerAddress'
 import Label from '@common/components/Label'
 import Text from '@common/components/Text'
@@ -37,11 +34,6 @@ const Erc7730TypedMessageContent = ({
   const { t } = useTranslation()
   const { styles, theme } = useTheme(getStyles)
   const title = useMemo(() => data.find((item) => !!item.title)?.title, [data])
-  const nestedVisualizations = useMemo(
-    () => data.flatMap((item) => getNestedErc7730Visualizations(item)),
-    [data]
-  )
-  const hasNestedVisualizations = nestedVisualizations.length > 0
 
   return (
     <View style={{ width: '100%' }}>
@@ -74,49 +66,29 @@ const Erc7730TypedMessageContent = ({
           ))}
         </View>
       )}
-      {hasNestedVisualizations ? (
-        nestedVisualizations.map((nestedVisualization, nestedIndex) => (
-          <View
-            key={nestedVisualization.id}
-            style={[
-              nestedIndex > 0 && { marginTop: SPACING_TY * responsiveSizeMultiplier },
-              spacings.pbMi
-            ]}
-          >
-            <Erc7730StructuredVisualization
-              item={nestedVisualization}
-              chainId={chainId}
-              sizeMultiplierSize={responsiveSizeMultiplier}
-              textSize={14}
-              mode="summary"
-            />
-          </View>
-        ))
-      ) : (
-        <View style={styles.erc7730TypedMessageTitleRow}>
-          <Text
-            fontSize={16 * responsiveSizeMultiplier}
-            weight="semiBold"
-            color={theme.secondaryAccent400}
-            numberOfLines={1}
-            style={styles.erc7730TypedMessageTitle}
-          >
-            {title || t('Message details')}
+      <View style={styles.erc7730TypedMessageTitleRow}>
+        <Text
+          fontSize={16 * responsiveSizeMultiplier}
+          weight="medium"
+          color={theme.secondaryAccent400}
+          numberOfLines={1}
+          style={styles.erc7730TypedMessageTitle}
+        >
+          {title || t('Message details')}
+        </Text>
+        <View style={styles.erc7730TypedMessageExpandMore}>
+          <Text fontSize={14} appearance="tertiaryText" numberOfLines={1}>
+            {t('Expand more')}
           </Text>
-          <View style={styles.erc7730TypedMessageExpandMore}>
-            <Text fontSize={14} appearance="tertiaryText" numberOfLines={1}>
-              {t('Expand more')}
-            </Text>
-            <View style={spacings.mlTy}>
-              {isExpanded ? (
-                <UpArrowIcon color={theme.tertiaryText} />
-              ) : (
-                <DownArrowIcon color={theme.tertiaryText} />
-              )}
-            </View>
+          <View style={spacings.mlTy}>
+            {isExpanded ? (
+              <UpArrowIcon color={theme.tertiaryText} />
+            ) : (
+              <DownArrowIcon color={theme.tertiaryText} />
+            )}
           </View>
         </View>
-      )}
+      </View>
       <View
         style={[
           styles.erc7730TypedMessageDivider,
@@ -133,7 +105,6 @@ const Erc7730TypedMessageContent = ({
         textSize={14}
         hasPadding={false}
         erc7730Mode="description"
-        hideNestedErc7730Rows={hasNestedVisualizations}
       />
     </View>
   )

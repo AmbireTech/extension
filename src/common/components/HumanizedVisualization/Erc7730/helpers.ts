@@ -207,8 +207,3 @@ export const shouldUseErc7730DetailedLayout = (item: HumanizerErc7730Visualizati
 
   return summaryRows.length > 1 && complexActionRows.length > 1
 }
-
-export const getNestedErc7730Visualizations = (item: HumanizerErc7730Visualization) =>
-  getDetailedRows(item).flatMap((row) =>
-    isNestedErc7730Row(row) ? row.value.filter(isNestedErc7730Value) : []
-  )

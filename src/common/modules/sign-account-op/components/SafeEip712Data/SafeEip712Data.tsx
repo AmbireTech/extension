@@ -54,7 +54,7 @@ const SafeEip712Data: FC<Props> = ({ accountAddr, chainId, safeEip712Data }) => 
         contentStyle={styles.header}
         content={({ isExpanded }) => (
           <View style={styles.headerRow}>
-            <Text fontSize={14} weight="semiBold" appearance="secondaryText" numberOfLines={1}>
+            <Text fontSize={14} weight="medium" appearance="secondaryText" numberOfLines={1}>
               {t('Safe hashes and JSON')}
             </Text>
             <View style={styles.expandMore}>
@@ -89,13 +89,7 @@ const SafeEip712Data: FC<Props> = ({ accountAddr, chainId, safeEip712Data }) => 
         <View style={styles.rows}>
           {rows.map(([label, value]) => (
             <View key={label} style={styles.row}>
-              <Text
-                fontSize={12}
-                weight="semiBold"
-                appearance="secondaryText"
-                numberOfLines={1}
-                style={styles.label}
-              >
+              <Text fontSize={12} appearance="secondaryText" numberOfLines={1} style={styles.label}>
                 {t(label)}
               </Text>
               <View style={styles.rowRight}>

@@ -423,7 +423,6 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
             {!!item.title && (
               <Text
                 fontSize={textSize + 2}
-                weight="semiBold"
                 color={theme.secondaryAccent400}
                 numberOfLines={1}
                 style={spacings.mrSm}
@@ -445,7 +444,6 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
               >
                 <Text
                   fontSize={subtitleTextSize}
-                  weight="semiBold"
                   appearance="secondaryText"
                   numberOfLines={1}
                   style={spacings.mrTy}
@@ -501,7 +499,6 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
                 (!hasTokenValue(row) || shouldStackSummaryRows) && (
                   <Text
                     fontSize={Math.max(textSize - 4, 10)}
-                    weight="semiBold"
                     appearance="secondaryText"
                     numberOfLines={1}
                     style={[
@@ -548,12 +545,7 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
             return (
               <View key={rowKey} style={{ width: '100%', paddingVertical: SPACING_TY }}>
                 {!!row.label.trim() && (
-                  <Text
-                    fontSize={textSize}
-                    weight="semiBold"
-                    appearance="secondaryText"
-                    style={spacings.mbTy}
-                  >
+                  <Text fontSize={textSize} appearance="secondaryText" style={spacings.mbTy}>
                     {row.label}
                   </Text>
                 )}
@@ -585,7 +577,7 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
           if (actionParts) {
             return (
               <View key={rowKey} style={{ width: '100%', paddingVertical: SPACING_TY }}>
-                <Text fontSize={textSize} weight="semiBold" color={theme.secondaryAccent400}>
+                <Text fontSize={textSize} color={theme.secondaryAccent400}>
                   {actionParts.action.content}
                 </Text>
                 {!!actionParts.recipientValues.length && (
@@ -607,12 +599,7 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
           return (
             <View key={rowKey} style={{ width: '100%', paddingVertical: SPACING_TY }}>
               {!!row.label.trim() && (
-                <Text
-                  fontSize={textSize}
-                  weight="semiBold"
-                  appearance="secondaryText"
-                  style={spacings.mbMi}
-                >
+                <Text fontSize={textSize} appearance="secondaryText" style={spacings.mbMi}>
                   {row.label}
                 </Text>
               )}
@@ -636,12 +623,7 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
           return (
             <View key={rowKey} style={{ width: '100%', paddingVertical: SPACING_TY }}>
               {!!row.label.trim() && (
-                <Text
-                  fontSize={textSize}
-                  weight="semiBold"
-                  appearance="secondaryText"
-                  style={spacings.mbTy}
-                >
+                <Text fontSize={textSize} appearance="secondaryText" style={spacings.mbTy}>
                   {row.label}
                 </Text>
               )}
@@ -690,7 +672,6 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
               <View style={{ flex: 1, minWidth: 160, marginRight: SPACING_SM }}>
                 <Text
                   fontSize={textSize}
-                  weight="semiBold"
                   color={theme.secondaryAccent400}
                   style={{ flexShrink: 1 }}
                 >
@@ -736,7 +717,6 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
           >
             <Text
               fontSize={textSize}
-              weight="semiBold"
               appearance="secondaryText"
               style={{ flex: 1, minWidth: 120, marginRight: SPACING_SM }}
             >
