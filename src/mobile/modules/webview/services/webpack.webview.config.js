@@ -18,13 +18,18 @@ const isDev = process.env.NODE_ENV === 'development' || process.argv.includes('s
 // by Gradle, reachable via `file:///android_asset/`.
 const IOS_WEBVIEW_DIR = path.resolve(ROOT_DIR, 'ios/Ambire/Resources/webview')
 const ANDROID_WEBVIEW_DIR = path.resolve(ROOT_DIR, 'android/app/src/main/assets/webview')
+// Services dir holds the require()-d JSON bundles that ride the Metro/OTA bundle.
+const SERVICES_DIR = path.resolve(ROOT_DIR, 'src/mobile/modules/webview/services')
 
 // In dev, ensure inpage bundle JSON files exist (injected into dapp WebViews
 // as strings, no file-based fallback). The worker bundle is served from
 // webpack-dev-server in dev.
 if (isDev) {
-  const SERVICES_DIR = path.resolve(ROOT_DIR, 'src/mobile/modules/webview/services')
-  const bundleFiles = ['ethereum-inpage-bundle.json', 'ambire-inpage-bundle.json']
+  const bundleFiles = [
+    'ethereum-inpage-bundle.json',
+    'ambire-inpage-bundle.json',
+    'webview-bundle-ota.json'
+  ]
   const allBundlesExist = bundleFiles.every((file) => fs.existsSync(path.join(SERVICES_DIR, file)))
 
   if (!allBundlesExist) {
@@ -254,6 +259,33 @@ class MirrorToAndroidAssetsPlugin {
 }
 
 /**
+ * Emits `webview-bundle-ota.json` ({ html, js, integrity }) into the services dir so the
+ * worker bundle rides the Metro/OTA JS bundle - the native asset copy cannot be OTA-updated.
+ * At runtime materializeWorkerBundle writes it to a writable dir and loads it via `file://`.
+ */
+class EmitOtaBundleJsonPlugin {
+  constructor({ sourceDir, targetDir }) {
+    this.sourceDir = sourceDir
+    this.targetDir = targetDir
+  }
+
+  apply(compiler) {
+    compiler.hooks.afterEmit.tap('EmitOtaBundleJsonPlugin', (compilation) => {
+      try {
+        const js = fs.readFileSync(path.join(this.sourceDir, 'webview-bundle.js'))
+        const html = fs.readFileSync(path.join(this.sourceDir, 'webview-bundle.html'), 'utf8')
+        // Same SHA-384 the HTML's SRI uses; doubles as the materialization version marker.
+        const integrity = `sha384-${crypto.createHash('sha384').update(js).digest('base64')}`
+        const json = JSON.stringify({ html, js: js.toString('utf8'), integrity })
+        fs.writeFileSync(path.join(this.targetDir, 'webview-bundle-ota.json'), json)
+      } catch (err) {
+        compilation.errors.push(new Error(`EmitOtaBundleJsonPlugin failed: ${err.message}`))
+      }
+    })
+  }
+}
+
+/**
  * Configuration 1: WebView Worker
  * Background instance that runs the wallet's controllers.
  *
@@ -295,6 +327,11 @@ if (!isDev) {
     new MirrorToAndroidAssetsPlugin({
       sourceDir: IOS_WEBVIEW_DIR,
       targetDir: ANDROID_WEBVIEW_DIR
+    }),
+    // Also ship the worker bundle inside the Metro/OTA bundle so OTA can update it.
+    new EmitOtaBundleJsonPlugin({
+      sourceDir: IOS_WEBVIEW_DIR,
+      targetDir: SERVICES_DIR
     })
   )
 }

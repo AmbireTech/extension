@@ -62,6 +62,12 @@ APP_ENV=production npx expo export:embed \
 #    Auth: locally the CLI uses your `stallion login` session (~/.stallion/token-store.json).
 #    CI has no browser, so a CI token (Stallion dashboard -> project settings) is passed via
 #    the STALLION_CI_TOKEN env var when present.
+#
+# TODO(security): enable Stallion bundle signing. The webview worker bundle (the wallet's
+# core controller logic) now ships via OTA, so OTA integrity must be guaranteed by SIGNED
+# delivery, not only the app-store signature. Run `stallion generate-key-pair`, embed the
+# public key in the native Stallion config, and pass `--private-key=<key>` below.
+# See https://learn.stalliontech.io/docs/bundle-signing
 publish_args=(
   --platform="$PLATFORM"
   --custom-bundle-path="$OUT_DIR"
