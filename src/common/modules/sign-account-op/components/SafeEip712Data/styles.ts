@@ -1,6 +1,6 @@
 import { StyleSheet, TextStyle, ViewStyle } from 'react-native'
 
-import spacings from '@common/styles/spacings'
+import spacings, { SPACING_SM } from '@common/styles/spacings'
 import { ThemeProps } from '@common/styles/themeConfig'
 import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
@@ -8,16 +8,18 @@ import flexbox from '@common/styles/utils/flexbox'
 interface Style {
   container: ViewStyle
   header: ViewStyle
-  headerRow: ViewStyle
-  expandMore: ViewStyle
+  tabHeader: ViewStyle
+  tabButton: ViewStyle
   rows: ViewStyle
   row: ViewStyle
   rowRight: ViewStyle
   label: TextStyle
   value: TextStyle
   copyIcon: ViewStyle
-  expandedContent: ViewStyle
   fallbackVisualization: ViewStyle
+  rawContainer: ViewStyle
+  rawActions: ViewStyle
+  rawFallbackVisualization: ViewStyle
 }
 
 const getStyles = (theme: ThemeProps) =>
@@ -34,18 +36,17 @@ const getStyles = (theme: ThemeProps) =>
       ...spacings.phSm,
       ...spacings.pvTy
     },
-    headerRow: {
+    tabHeader: {
       ...flexbox.directionRow,
-      ...flexbox.alignCenter,
-      ...flexbox.justifySpaceBetween,
-      width: '100%',
-      minWidth: 0
+      alignSelf: 'stretch',
+      borderBottomWidth: 1,
+      borderBottomColor: theme.primaryBorder,
+      ...spacings.mhSm
     },
-    expandMore: {
-      ...flexbox.directionRow,
-      ...flexbox.alignCenter,
-      flexShrink: 0,
-      ...spacings.mlSm
+    tabButton: {
+      ...spacings.pvTy,
+      ...spacings.mrTy,
+      borderBottomWidth: 2
     },
     rows: {
       ...spacings.phSm,
@@ -79,15 +80,22 @@ const getStyles = (theme: ThemeProps) =>
       flexShrink: 0,
       ...spacings.mlMi
     },
-    expandedContent: {
-      borderTopWidth: 1,
-      borderTopColor: theme.secondaryBackground,
-      backgroundColor: 'transparent'
-    },
     fallbackVisualization: {
       backgroundColor: 'transparent',
       ...spacings.phSm,
       ...spacings.pv0
+    },
+    rawContainer: {
+      position: 'relative'
+    },
+    rawActions: {
+      position: 'absolute',
+      top: 0,
+      right: SPACING_SM,
+      zIndex: 1
+    },
+    rawFallbackVisualization: {
+      ...spacings.prXl
     }
   })
 
