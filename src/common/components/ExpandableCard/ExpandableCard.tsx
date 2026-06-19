@@ -1,10 +1,10 @@
 import React, { ReactNode, useMemo, useState } from 'react'
-import { Animated, View, ViewStyle } from 'react-native'
+import { View, ViewStyle } from 'react-native'
 
 import DownArrowIcon from '@common/assets/svg/DownArrowIcon'
 import UpArrowIcon from '@common/assets/svg/UpArrowIcon'
 import { isMobile, isWeb } from '@common/config/env'
-import { AnimatedPressable, useCustomHover } from '@common/hooks/useHover'
+import { AnimatedPressable } from '@common/hooks/useHover'
 import useTheme from '@common/hooks/useTheme'
 import spacings, { SPACING_SM, SPACING_TY } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
@@ -50,16 +50,9 @@ const ExpandableCard = ({
   overlayMobileHeaderControls = false,
   overlayArrow = false
 }: Props) => {
-  const { styles, theme } = useTheme(getStyles)
+  const { styles } = useTheme(getStyles)
   const [isExpanded, setIsExpanded] = useState(!!isInitiallyExpanded)
   const hasMobileHeader = isMobile && (!!mobileHeaderContent || !!mobileHeaderTitle)
-  const shouldShowHover = enableToggleExpand
-
-  const [bindHoverAnim, hoverAnimStyle] = useCustomHover({
-    property: 'opacity',
-    values: { from: 0, to: 1 },
-    duration: 200
-  })
 
   const Element = enableToggleExpand ? AnimatedPressable : View
   const renderedContent = typeof content === 'function' ? content({ isExpanded }) : content
@@ -82,21 +75,7 @@ const ExpandableCard = ({
 
   return (
     <View style={[styles.container, isMobile && isExpanded && { flexGrow: 1 }, style]}>
-      <Element
-        {...(shouldShowHover ? bindHoverAnim : {})}
-        onPress={() => !!enableToggleExpand && setIsExpanded((prevState) => !prevState)}
-        style={shouldShowHover ? styles.pressable : undefined}
-      >
-        {shouldShowHover && (
-          <Animated.View
-            pointerEvents="none"
-            style={[
-              styles.hoverOverlay,
-              { backgroundColor: theme.tertiaryBackground },
-              hoverAnimStyle
-            ]}
-          />
-        )}
+      <Element onPress={() => !!enableToggleExpand && setIsExpanded((prevState) => !prevState)}>
         {hasMobileHeader && overlayMobileHeaderControls && (
           <View style={[spacings.phSm, spacings.ptTy, mobileHeaderStyle]}>
             {!!hasArrow && arrowPosition === 'left' && (
