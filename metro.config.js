@@ -2,10 +2,6 @@
 const { getDefaultConfig } = require('expo/metro-config')
 const path = require('path')
 
-// FIXME: After an OTA the app crashes - splash screen stays forever.
-// This is likely caused by differences in how the metro bundler is handled on
-// our end (via Expo) and when an OTA is prepared by Stallion CLI
-// (via @react-native/metro-config).
 const config = getDefaultConfig(__dirname)
 
 config.transformer.assetPlugins = ['expo-asset/tools/hashAssetFiles']
