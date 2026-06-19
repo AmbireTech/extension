@@ -29,9 +29,6 @@ const LeaderboardContainer: React.FC = () => {
     updateLeaderboard
   } = useLeaderboardContext()
 
-  const { userRewardsStats, isLoadingClaimableRewards } = usePortfolio()
-  const { connectedAccount } = useAccountContext()
-
   const tableRef = useRef<HTMLDivElement>(null)
   const pageRef = useRef<HTMLDivElement>(null)
   const currentUserRef = useRef<HTMLDivElement>(null)
@@ -56,15 +53,11 @@ const LeaderboardContainer: React.FC = () => {
   } = useMemo(() => {
     const fullLeaderboardData = leaderboardSources[activeTab]
     if (!fullLeaderboardData) return { entries: null, currentUser: null }
-    if (activeTab !== ActiveTab.Season2) {
-      return {
-        entries: fullLeaderboardData.entries,
-        currentUser: fullLeaderboardData.currentUser
-      }
+    return {
+      entries: fullLeaderboardData.entries,
+      currentUser: fullLeaderboardData.currentUser
     }
-    if (isLoadingClaimableRewards) return { entries: null, currentUser: null }
-    return reorderLeaderboardWithLiveData(fullLeaderboardData, userRewardsStats, connectedAccount)
-  }, [activeTab, leaderboardSources, userRewardsStats, isLoadingClaimableRewards, connectedAccount])
+  }, [activeTab, leaderboardSources])
 
   useLayoutEffect(() => {
     const handleScroll = () => {
