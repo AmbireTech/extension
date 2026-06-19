@@ -224,6 +224,9 @@ const DappWebViewScreen = () => {
 
   // Initial State from Route
   const initialUrl = (location.state as any)?.url || 'https://google.com'
+  // When opened to view a single URL (e.g. a DeFi position), the footer renders
+  // a back arrow instead of the home icon so the user returns to the previous screen.
+  const showBackButton = !!(location.state as any)?.showBackButton
 
   useEffect(() => {
     // Record the visited dapp into Recents. addToRecentDapps no-ops when the URL
@@ -1084,6 +1087,7 @@ const DappWebViewScreen = () => {
             currentDapp={currentDapp}
             smartAccountType={smartAccountType}
             onManageAppClosed={dispatchWebViewFocus}
+            showBackButton={showBackButton}
           />
         </>
       }
