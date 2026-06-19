@@ -35,7 +35,7 @@ cd "$ROOT_DIR"
 # Stallion bucket. Change here if you push to a different project/bucket.
 UPLOAD_PATH="ambire/mobile/main"
 
-OUT_DIR="$ROOT_DIR/build-ota-$PLATFORM"
+OUT_DIR="$ROOT_DIR/build/ota-$PLATFORM"
 if [ "$PLATFORM" = "ios" ]; then
   BUNDLE_NAME="main.jsbundle"
 else
