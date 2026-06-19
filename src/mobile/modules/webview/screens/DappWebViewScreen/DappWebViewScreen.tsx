@@ -50,6 +50,12 @@ const ambireInpageBundle = require('../../services/ambire-inpage-bundle.json')
 // @ts-ignore
 const ethereumInpageBundle = require('../../services/ethereum-inpage-bundle.json')
 
+// Some dapps (e.g. chainlist) gate their "Connect Wallet" UI on a mobile
+// User-Agent and never call the injected provider, even though window.ethereum
+// is present. Presenting a desktop UA makes them offer the injected wallet path.
+const DESKTOP_USER_AGENT =
+  'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15'
+
 // SECURITY: Stash native references before any page JS can overwrite them.
 // injectJavaScript (used for responses/broadcasts) runs AFTER page JS, so
 // downstream injections must reach these pre-captured refs rather than the
@@ -1117,6 +1123,7 @@ const DappWebViewScreen = () => {
         <WebView
           ref={webviewRef}
           source={{ uri: activeDappUrl }}
+          userAgent={DESKTOP_USER_AGENT}
           onNavigationStateChange={handleNavigationStateChange}
           injectedJavaScriptBeforeContentLoaded={injectionScript}
           onMessage={handleMessage}
