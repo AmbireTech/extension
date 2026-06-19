@@ -1,0 +1,25 @@
+name: Publish OTA update — iOS 📲
+
+on:
+  workflow_dispatch: # Manual trigger, usually from a release branch
+    inputs:
+      release_note:
+        description: Release note for the Stallion console. Optional - defaults to "OTA release for v<version> (<sha>)".
+        required: false
+        type: string
+      bypass_guardrail:
+        description: Skip the native-change guardrail (use only when certain there are no native changes since the live build)
+        required: false
+        default: false
+        type: boolean
+
+jobs:
+  publish-ota-ios:
+    name: Publish iOS OTA bundle to Stallion
+    uses: ./.github/workflows/_publish-ota.yml
+    with:
+      platform: ios
+      runner: macos-15
+      release_note: ${{ inputs.release_note }}
+      bypass_guardrail: ${{ inputs.bypass_guardrail }}
+    secrets: inherit

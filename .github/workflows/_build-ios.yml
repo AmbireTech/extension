@@ -143,6 +143,10 @@ jobs:
         env:
           # Force production React/Metro bundle in CI (avoids dev/prod mismatch with NODE_ENV undefined)
           NODE_ENV: production
+          # Stallion native config — the build command inlines build:inject:mobile-ota-config,
+          # which seds these into Info.plist/strings.xml so the app knows its Stallion project.
+          STALLION_PROJECT_ID: ${{ vars.STALLION_PROJECT_ID }}
+          STALLION_APP_TOKEN: ${{ secrets.STALLION_APP_TOKEN }}
           RELAYER_URL: ${{ vars.RELAYER_URL }}
           VELCRO_URL: ${{ vars.VELCRO_URL }}
           REACT_APP_PIMLICO_API_KEY: ${{ vars.REACT_APP_PIMLICO_API_KEY }}
