@@ -73,31 +73,31 @@ const AddChain = ({
           }
         ]}
       >
-        {!existingNetwork && (
-          <ManifestImage
-            uri={icon}
-            size={50 * responsiveSizeMultiplier}
-            fallback={() => <ManifestFallbackIcon />}
-            containerStyle={{
-              marginRight: SPACING_MD * responsiveSizeMultiplier
-            }}
-          />
-        )}
-
         {!existingNetwork ? (
-          <Trans values={{ name: name || 'The App' }}>
-            <Text>
-              <Text fontSize={20 * responsiveSizeMultiplier} appearance="secondaryText">
-                {t('Allow ')}
+          <View style={[flexbox.flex1, flexbox.directionRow, flexbox.alignCenter]}>
+            <ManifestImage
+              uri={icon}
+              size={50 * responsiveSizeMultiplier}
+              fallback={() => <ManifestFallbackIcon />}
+              containerStyle={{
+                marginRight: SPACING_MD * responsiveSizeMultiplier
+              }}
+            />
+
+            <Trans values={{ name: name || 'The App' }}>
+              <Text style={flexbox.flex1}>
+                <Text fontSize={20 * responsiveSizeMultiplier} appearance="secondaryText">
+                  {t('Allow ')}
+                </Text>
+                <Text fontSize={20 * responsiveSizeMultiplier} weight="semiBold">
+                  {'{{name}} '}
+                </Text>
+                <Text fontSize={20 * responsiveSizeMultiplier} appearance="secondaryText">
+                  {t('to add a network')}
+                </Text>
               </Text>
-              <Text fontSize={20 * responsiveSizeMultiplier} weight="semiBold">
-                {'{{name}} '}
-              </Text>
-              <Text fontSize={20 * responsiveSizeMultiplier} appearance="secondaryText">
-                {t('to add a network')}
-              </Text>
-            </Text>
-          </Trans>
+            </Trans>
+          </View>
         ) : (
           <View style={[flexbox.flex1, flexbox.directionRow, flexbox.alignCenter]}>
             <NetworkIcon
