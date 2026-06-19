@@ -164,7 +164,6 @@ const NetworksSettings = () => {
           placeholder={t('Search for network')}
           control={control}
           containerStyle={spacings.mbSm}
-          autoFocus
         />
         <ScrollableWrapper
           type={WRAPPER_TYPES.SECTION_LIST}
