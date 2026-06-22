@@ -1,3 +1,7 @@
+// TODO: `expo-file-system/legacy` is the deprecated function-based API. It is still fully
+// functional in SDK 54; kept here for consistency with getWebviewBundleUri.ts, which also
+// uses it. When Expo drops the legacy API, migrate BOTH files together to the new
+// File/Directory API (cleaner, sync ops, no nullable documentDirectory dance).
 import {
   documentDirectory,
   getInfoAsync,
