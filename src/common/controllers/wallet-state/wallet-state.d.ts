@@ -1,5 +1,6 @@
 import EventEmitter from '@ambire-common/controllers/eventEmitter/eventEmitter'
 import { IEventEmitterRegistryController } from '@ambire-common/interfaces/eventEmitter'
+import { Storage } from '@ambire-common/interfaces/storage'
 import { ThemeType } from '@common/styles/themeConfig'
 import { LOG_LEVELS } from '@common/utils/logger'
 
@@ -28,10 +29,12 @@ export declare class WalletStateController extends EventEmitter {
 
   constructor({
     eventEmitterRegistry,
-    onLogLevelUpdateCallback
+    onLogLevelUpdateCallback,
+    storage
   }: {
     eventEmitterRegistry: IEventEmitterRegistryController
     onLogLevelUpdateCallback: (logLevel: LOG_LEVELS) => Promise<void>
+    storage: Storage
   })
 
   setIsSetupComplete(isSetupComplete: boolean): void

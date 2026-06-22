@@ -16,7 +16,7 @@ const ControllersStateLoadedProvider = ({ children }: { children: ReactNode }) =
   const [areControllerStatesLoaded, setAreControllerStatesLoaded] = useState(false)
   const [isStatesLoadingTakingTooLong, setIsStatesLoadingTakingTooLong] = useState(false)
 
-  const { isStoreReady, controllerStore } = useControllerStore()
+  const { isReadyToLoadRoutes, controllerStore } = useControllerStore()
 
   useEffect(() => {
     if (areControllerStatesLoaded) return
@@ -62,12 +62,18 @@ const ControllersStateLoadedProvider = ({ children }: { children: ReactNode }) =
     return () => clearTimeout(timeoutId)
   }, [areControllerStatesLoaded])
 
+  // On mobile we gate the splash on the critical-controllers-only flag so the
+  // initial route renders ASAP. The full `isStoreReady` flag still fires later
+  // when every controller has crossed the webview bridge — screens that need
+  // the heavy state (portfolio, dapps, ...) should gate on `isStoreReady`
+  // directly via `useControllerStore`. The `isStatesLoadingTakingTooLong`
+  // telemetry below still observes the full set.
   const contextValue = useMemo<ControllersStateLoadedContextType>(
     () => ({
-      areControllerStatesLoaded: areControllerStatesLoaded && isStoreReady,
+      areControllerStatesLoaded: areControllerStatesLoaded && isReadyToLoadRoutes,
       isStatesLoadingTakingTooLong
     }),
-    [areControllerStatesLoaded, isStoreReady, isStatesLoadingTakingTooLong]
+    [areControllerStatesLoaded, isReadyToLoadRoutes, isStatesLoadingTakingTooLong]
   )
 
   return (

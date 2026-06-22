@@ -51,6 +51,16 @@ const storage: Storage = {
   }
 }
 
+const getAllSerialized = (): Record<string, string> => {
+  const snapshot: Record<string, string> = {}
+  asyncStorageInstance.getAllKeys().forEach((key) => {
+    const serialized = asyncStorageInstance.getString(key)
+    if (serialized !== undefined) snapshot[key] = serialized
+  })
+
+  return snapshot
+}
+
 const syncStorage = {
   get: (key: string, defaultValue?: any): any => {
     return syncStorageInstance.getString(key) ?? defaultValue
@@ -94,4 +104,4 @@ const secureStorage = {
   }
 }
 
-export { storage, syncStorage, syncSessionStorage, secureStorage }
+export { storage, syncStorage, syncSessionStorage, secureStorage, getAllSerialized }

@@ -10,6 +10,7 @@ export type ControllerStoreContextReturnType = {
   stateSubscriptionManager: SubscriptionManager
   helpersSubscriptionManager: SubscriptionManager
   isStoreReady: boolean
+  isReadyToLoadRoutes: boolean
   debounceControllerUpdates: (
     ctrlName: string,
     ctrl: EventEmitter,
@@ -23,5 +24,6 @@ export const controllerStoreContextDefaults: ControllerStoreContextReturnType = 
   stateSubscriptionManager: {} as SubscriptionManager,
   helpersSubscriptionManager: {} as SubscriptionManager,
   isStoreReady: false,
+  isReadyToLoadRoutes: false,
   debounceControllerUpdates: () => 'EMITTED'
 }

@@ -4,10 +4,7 @@ import background from '@legends/common/assets/images/background.png'
 import Alert from '@legends/components/Alert'
 import Page from '@legends/components/Page'
 import Spinner from '@legends/components/Spinner'
-import useAccountContext from '@legends/hooks/useAccountContext'
 import useLeaderboardContext from '@legends/hooks/useLeaderboardContext'
-import usePortfolio from '@legends/hooks/usePortfolio'
-import { reorderLeaderboardWithLiveData } from '@legends/utils/leaderboards'
 
 import { LeaderboardEntry } from '../../types'
 import Podium from './components/Podium'
@@ -28,9 +25,6 @@ const LeaderboardContainer: React.FC = () => {
     error,
     updateLeaderboard
   } = useLeaderboardContext()
-
-  const { userRewardsStats, isLoadingClaimableRewards } = usePortfolio()
-  const { connectedAccount } = useAccountContext()
 
   const tableRef = useRef<HTMLDivElement>(null)
   const pageRef = useRef<HTMLDivElement>(null)
@@ -56,15 +50,11 @@ const LeaderboardContainer: React.FC = () => {
   } = useMemo(() => {
     const fullLeaderboardData = leaderboardSources[activeTab]
     if (!fullLeaderboardData) return { entries: null, currentUser: null }
-    if (activeTab !== ActiveTab.Season2) {
-      return {
-        entries: fullLeaderboardData.entries,
-        currentUser: fullLeaderboardData.currentUser
-      }
+    return {
+      entries: fullLeaderboardData.entries,
+      currentUser: fullLeaderboardData.currentUser
     }
-    if (isLoadingClaimableRewards) return { entries: null, currentUser: null }
-    return reorderLeaderboardWithLiveData(fullLeaderboardData, userRewardsStats, connectedAccount)
-  }, [activeTab, leaderboardSources, userRewardsStats, isLoadingClaimableRewards, connectedAccount])
+  }, [activeTab, leaderboardSources])
 
   useLayoutEffect(() => {
     const handleScroll = () => {

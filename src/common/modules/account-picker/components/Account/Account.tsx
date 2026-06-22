@@ -18,14 +18,14 @@ import Label from '@common/components/Label'
 import NetworkIcon from '@common/components/NetworkIcon'
 import SkeletonLoader from '@common/components/SkeletonLoader'
 import Text from '@common/components/Text'
-import { isMobile } from '@common/config/env'
+import { isMobile, isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import useReverseLookup from '@common/hooks/useReverseLookup'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import useWindowSize from '@common/hooks/useWindowSize'
 import spacings from '@common/styles/spacings'
-import common, { hexToRgba } from '@common/styles/utils/common'
+import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import { setStringAsync } from '@common/utils/clipboard'
 
@@ -62,7 +62,7 @@ const Account = ({
     address: account.addr
   })
   const { t } = useTranslation()
-  const { styles, theme, themeType } = useTheme(getStyles)
+  const { styles, theme } = useTheme(getStyles)
   const { minWidthSize, maxWidthSize } = useWindowSize()
   const { addToast } = useToast()
   const isAccountImported = importStatus !== ImportStatus.NotImported
@@ -119,6 +119,7 @@ const Account = ({
           style={flexbox.alignSelfStart}
           width={44}
           height={24}
+          trackStyle={isMobile ? spacings.mr0 : {}}
         />
 
         <View style={[flexbox.flex1, flexbox.directionRow, flexbox.alignCenter]}>
@@ -175,7 +176,7 @@ const Account = ({
                     >
                       {reverseLookupName}
                     </Text>
-                  ) : isDomainResolving ? (
+                  ) : isWeb && isDomainResolving ? (
                     <Text fontSize={14} appearance="secondaryText" style={spacings.mrTy}>
                       {t('Resolving domain...')}
                     </Text>
@@ -186,9 +187,9 @@ const Account = ({
                     style={spacings.mrMi}
                     weight="mono_regular"
                   >
-                    {reverseLookupName || isDomainResolving ? '(' : ''}
+                    {reverseLookupName || (isWeb && isDomainResolving) ? '(' : ''}
                     {formattedAddress}
-                    {reverseLookupName || isDomainResolving ? ')' : ''}
+                    {reverseLookupName || (isWeb && isDomainResolving) ? ')' : ''}
                   </Text>
                 </>
               )}

@@ -118,4 +118,14 @@ const secureStorage = {
   }
 }
 
-export { asyncStorage as storage, syncStorage, syncSessionStorage, secureStorage }
+// PERF: mobile-only optimization (seeds the WebView worker's storage cache).
+// On web/extension there is no such worker bridge, so this is a no-op.
+const getAllSerialized = (): Record<string, string> => ({})
+
+export {
+  asyncStorage as storage,
+  syncStorage,
+  syncSessionStorage,
+  secureStorage,
+  getAllSerialized
+}
