@@ -38,6 +38,7 @@ interface Props {
   avatarSize?: number
   fontSize?: number
   height?: number
+  isActive?: boolean
 }
 
 const AddressBookContact: FC<Props> = ({
@@ -52,7 +53,8 @@ const AddressBookContact: FC<Props> = ({
   style = {},
   avatarSize,
   fontSize = 14,
-  height = 20
+  height = 20,
+  isActive = false
 }) => {
   const ContainerElement = onPress ? AnimatedPressable : View
 
@@ -64,7 +66,14 @@ const AddressBookContact: FC<Props> = ({
   const {
     state: { account: selectedAccount }
   } = useController('SelectedAccountController')
-  const reverseLookup = useReverseLookup({ address, privacyUpdateMode: 'never' })
+  const reverseLookup = useReverseLookup({
+    address,
+    // This is needed because the component is rendered in AddressInput when a valid address
+    // is entered. If the field contains an address (not an ENS name), then we do a reverse lookup,
+    // instead of forward resolution. In this case, we want to keep the ENS name up to date,
+    // but we must ensure we don't trigger it for every account in the account book list
+    privacyUpdateMode: isActive ? 'whenStale' : 'never'
+  })
   const [bindAnim, animStyle] = useCustomHover({
     property: 'backgroundColor',
     values: {

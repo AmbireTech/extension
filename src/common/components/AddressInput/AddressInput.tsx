@@ -177,6 +177,7 @@ const AddressInput: React.FC<Props> = ({
                   (resolvedAddressType ? value : undefined)
                 }
                 withCopy={isWeb}
+                isActive
               />
             </View>
           ) : null
