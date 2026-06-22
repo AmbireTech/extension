@@ -1,5 +1,4 @@
 import { Interface } from 'ethers'
-
 import React, { useCallback, useEffect, useId, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { TextStyle, View } from 'react-native'
@@ -19,7 +18,6 @@ import Spinner from '@common/components/Spinner'
 import Text from '@common/components/Text'
 import { isMobile, isWeb } from '@common/config/env'
 import useController from '@common/hooks/useController'
-import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import usePrevious from '@common/hooks/usePrevious'
 import useRoute from '@common/hooks/useRoute'
 import useTheme from '@common/hooks/useTheme'
@@ -44,6 +42,7 @@ type Props = {
   handleRetryWithDifferentRpcUrl?: () => void
   hideBackgroundAndBorders?: boolean
   titleSize?: number
+  title?: string
   responsiveSizeMultiplier?: number
   withScroll?: boolean
   titleStyle?: TextStyle
@@ -56,6 +55,7 @@ const NetworkAvailableFeatures = ({
   handleRetryWithDifferentRpcUrl,
   hideBackgroundAndBorders = false,
   titleSize,
+  title,
   responsiveSizeMultiplier = 1,
   withScroll = false,
   titleStyle
@@ -193,7 +193,7 @@ const NetworkAvailableFeatures = ({
         appearance="infoText"
         style={[spacings.mbMd, titleStyle]}
       >
-        {t('Available features')}
+        {title || t('Available features')}
       </Text>
       <View>
         {!!features &&
