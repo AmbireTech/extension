@@ -295,6 +295,7 @@
     "react-native-dotenv": "3.4.7",
     "sass": "1.79.2",
     "sass-loader": "16.0.2",
+    "stallion-cli": "2.5.0",
     "style-loader": "4.0.0",
     "ts-jest": "29.1.2",
     "tsc-baseline": "1.9.0",
