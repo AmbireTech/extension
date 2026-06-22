@@ -12,6 +12,7 @@ import Dialog from '@common/components/Dialog'
 import DialogButton from '@common/components/Dialog/DialogButton'
 import DialogFooter from '@common/components/Dialog/DialogFooter'
 import NetworkIcon from '@common/components/NetworkIcon'
+import Spinner from '@common/components/Spinner'
 import Text from '@common/components/Text'
 import { isAmbireNext, isDev, isMobile, isWeb } from '@common/config/env'
 import useController from '@common/hooks/useController'
@@ -62,6 +63,9 @@ const NetworkDetails = ({
     state: { statuses, allNetworks },
     dispatch: networksDispatch
   } = useController('NetworksController')
+  const {
+    state: { statusesByChainId: verificationStatusesByChainId }
+  } = useController('VerificationController')
   const { ref: dialogRef, open: openDialog, close: closeDialog } = useModalize()
 
   const { pathname } = useRoute()
@@ -275,6 +279,65 @@ const NetworkDetails = ({
     )
   }, [type, responsiveSizeMultiplier, t, sortedRpcUrls, showMoreRpcUrlsButton, showAllRpcUrls])
 
+  const renderHeliosStatusItem = useCallback(() => {
+    if (!networkData?.heliosRpcUrl) return null
+
+    const status = verificationStatusesByChainId?.[chainId.toString()]?.status
+    const isSyncing = status === 'syncing'
+    const label =
+      status === 'ready' ? t('Ready to use') : status === 'failed' ? t('Failed') : t('Starting')
+
+    return (
+      <View
+        style={[
+          type === 'horizontal' && flexbox.directionRow,
+          type === 'horizontal' && flexbox.alignCenter,
+          spacings.mt
+        ]}
+      >
+        <Text
+          fontSize={14 * responsiveSizeMultiplier}
+          appearance="tertiaryText"
+          style={[
+            type === 'horizontal'
+              ? {
+                  marginRight: SPACING * responsiveSizeMultiplier
+                }
+              : {}
+          ]}
+          numberOfLines={1}
+        >
+          {t('Helios')}
+        </Text>
+        <View
+          style={[
+            flexbox.directionRow,
+            flexbox.alignCenter,
+            flexbox.flex1,
+            type === 'horizontal' && flexbox.justifyEnd
+          ]}
+        >
+          <Text
+            fontSize={14 * responsiveSizeMultiplier}
+            appearance={status === 'failed' ? 'errorText' : 'secondaryText'}
+            numberOfLines={1}
+            weight="medium"
+          >
+            {label}
+          </Text>
+          {isSyncing && <Spinner style={{ width: 16, height: 16, ...spacings.mlMi }} />}
+        </View>
+      </View>
+    )
+  }, [
+    chainId,
+    networkData?.heliosRpcUrl,
+    responsiveSizeMultiplier,
+    t,
+    type,
+    verificationStatusesByChainId
+  ])
+
   return (
     <>
       <View
@@ -354,7 +417,8 @@ const NetworkDetails = ({
           {renderInfoItem(t('Chain ID'), chainId.toString())}
           {renderInfoItem(t('Currency Symbol'), nativeAssetSymbol)}
           {renderInfoItem(t('Currency Name'), nativeAssetName)}
-          {renderInfoItem(t('Block Explorer URL'), explorerUrl, false)}
+          {renderInfoItem(t('Block Explorer URL'), explorerUrl, !networkData?.heliosRpcUrl)}
+          {renderHeliosStatusItem()}
         </View>
       </View>
       <Dialog

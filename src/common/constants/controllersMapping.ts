@@ -27,6 +27,7 @@ import { SurveyController } from '@ambire-common/controllers/survey/survey'
 import { SwapAndBridgeController } from '@ambire-common/controllers/swapAndBridge/swapAndBridge'
 import { TransferController } from '@ambire-common/controllers/transfer/transfer'
 import { UiController } from '@ambire-common/controllers/ui/ui'
+import { VerificationController } from '@ambire-common/controllers/verification/verification'
 import { AutoLockController } from '@common/controllers/auto-lock'
 import { WalletStateController } from '@common/controllers/wallet-state'
 import { ExtensionUpdateController } from '@web/extension-services/background/controllers/extension-update'
@@ -61,7 +62,8 @@ export const controllersNestedInMainMapping = {
   SafeController,
   QrHardwareController,
   ContractInfoController,
-  SurveyController
+  SurveyController,
+  VerificationController
 
   // Add the rest of the controllers that are part of the main controller:
   // - key is the name of the controller
