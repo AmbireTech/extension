@@ -128,6 +128,7 @@ const FallbackVisualization: FC<{
   withCompactDataRow?: boolean
   withDecimalIntegerRows?: boolean
   disableScroll?: boolean
+  hideTabs?: boolean
   containerStyle?: StyleProp<ViewStyle>
   separatorColor?: ColorValue
 }> = ({
@@ -142,6 +143,7 @@ const FallbackVisualization: FC<{
   withCompactDataRow = false,
   withDecimalIntegerRows = false,
   disableScroll = false,
+  hideTabs = false,
   containerStyle,
   separatorColor
 }) => {
@@ -223,7 +225,7 @@ const FallbackVisualization: FC<{
 
   return (
     <View style={[styles.container, containerStyle]}>
-      {isTypedMessage && !rawOnly && (
+      {isTypedMessage && !rawOnly && !hideTabs && (
         <View style={[styles.tabHeader, !!separatorColor && { borderBottomColor: separatorColor }]}>
           {tabs.map(([tab, label]) => {
             const isActive = activeTab === tab
