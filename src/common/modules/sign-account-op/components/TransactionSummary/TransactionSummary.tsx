@@ -542,6 +542,7 @@ const TransactionSummary = ({
   const shouldShowRightControl = !!rightIcon && !!onRightIconPress && !hasCallFailed
   const shouldOverlayErc7730TransactionSummaryControls =
     !isMobile && shouldUseErc7730TransactionSummaryLayout
+  const shouldOverlayDetailedErc7730Controls = !isMobile && shouldUseDetailedErc7730Layout
   const rightControl = useMemo(() => {
     if (!shouldShowDeleteControl && !shouldShowRightControl) return null
 
@@ -593,6 +594,8 @@ const TransactionSummary = ({
     shouldShowRightControl,
     shouldUseErc7730TransactionSummaryLayout
   ])
+  const shouldRenderRightControlInDetailedErc7730Header =
+    !isMobile && shouldUseDetailedErc7730Layout && !!rightControl
   const mobileErc7730Title = useMemo(() => {
     if (!erc7730Visualization) return null
 
@@ -707,7 +710,9 @@ const TransactionSummary = ({
     <ExpandableCard
       enableToggleExpand={enableExpand}
       hasArrow={enableExpand}
-      overlayArrow={shouldOverlayErc7730TransactionSummaryControls}
+      overlayArrow={
+        shouldOverlayErc7730TransactionSummaryControls || shouldOverlayDetailedErc7730Controls
+      }
       mobileHeaderContent={isMobile ? rightControl : undefined}
       mobileHeaderTitle={isMobile ? mobileErc7730Title || mobileFlatVisualization : undefined}
       mobileHeaderStyle={
@@ -739,14 +744,19 @@ const TransactionSummary = ({
         <>
           {callVisualization ? (
             shouldUseDetailedErc7730Layout && erc7730Visualization ? (
-              <View style={[{ flex: 1, minWidth: 0 }, spacings.phSm]}>
+              <View style={{ flex: 1, minWidth: 0 }}>
                 {!isMobile && (
                   <>
                     <View
                       style={[
                         flexbox.directionRow,
                         flexbox.alignCenter,
-                        { marginBottom: SPACING_TY * sizeMultiplier[size], minWidth: 0 }
+                        {
+                          marginBottom: SPACING_TY * sizeMultiplier[size],
+                          minWidth: 0,
+                          width: '100%',
+                          paddingLeft: enableExpand ? 28 + SPACING_TY : 0
+                        }
                       ]}
                     >
                       {!!erc7730DetailedIcon && (
@@ -771,6 +781,9 @@ const TransactionSummary = ({
                       >
                         {erc7730DetailedTitle}
                       </Text>
+                      {shouldRenderRightControlInDetailedErc7730Header && (
+                        <View style={{ marginLeft: 'auto' }}>{rightControl}</View>
+                      )}
                     </View>
                     <View
                       style={{
@@ -837,6 +850,7 @@ const TransactionSummary = ({
             </Text>
           )}
           {!isMobile &&
+            !shouldRenderRightControlInDetailedErc7730Header &&
             (shouldOverlayErc7730TransactionSummaryControls && rightControl ? (
               <View style={{ position: 'absolute', top: 0, right: 0 }}>{rightControl}</View>
             ) : (
