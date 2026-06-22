@@ -1,4 +1,4 @@
-import React, { FC, useMemo } from 'react'
+import React, { FC, useCallback, useMemo } from 'react'
 import { Pressable, View } from 'react-native'
 
 import {
@@ -8,8 +8,11 @@ import {
   PositionsByProvider
 } from '@ambire-common/libs/defiPositions/types'
 import Text from '@common/components/Text'
+import { isMobile } from '@common/config/env'
+import useNavigation from '@common/hooks/useNavigation'
 import useTheme from '@common/hooks/useTheme'
 import PerpDetails from '@common/modules/dashboard/components/DeFiPositions/DeFiProviderPosition/PerpDetails'
+import { ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { generatePositionUrl } from '@common/utils/generatePositionUrl'
@@ -67,6 +70,7 @@ const DeFiPosition: FC<Props> = ({
   }, [assets])
 
   const { theme } = useTheme()
+  const { navigate } = useNavigation()
 
   const descriptionWithFallback = useMemo(() => {
     try {
@@ -90,6 +94,19 @@ const DeFiPosition: FC<Props> = ({
       }),
     [providerName, positionIndex, chainId, siteUrl]
   )
+
+  const handleOpenPosition = useCallback(() => {
+    if (!positionUrl) return
+    // On mobile, open the position inside the in-app browser (DappWebView) and
+    // signal the footer to render a back arrow instead of the home icon, so the
+    // user returns to the previous screen instead of the apps catalog.
+    if (isMobile) {
+      navigate(ROUTES.dappWebView, { state: { url: positionUrl, showBackButton: true } })
+      return
+    }
+
+    openInTab({ url: positionUrl })
+  }, [positionUrl, navigate])
 
   return (
     <View
@@ -127,7 +144,7 @@ const DeFiPosition: FC<Props> = ({
           {!!positionIndex && (
             <Pressable
               disabled={!positionUrl}
-              onPress={positionUrl ? () => openInTab({ url: positionUrl }) : undefined}
+              onPress={positionUrl ? handleOpenPosition : undefined}
               style={[{ flex: 1, minWidth: 0, flexShrink: 1 }, spacings.mlMi, spacings.mrTy]}
             >
               <Text
