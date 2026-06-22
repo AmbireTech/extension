@@ -91,7 +91,7 @@ export class SettingsPage extends BasePage {
     await this.typeNetworkField('Network name', network.networkName)
     await this.typeNetworkField('Currency Symbol', network.ccySymbol)
     await this.typeNetworkField('Currency Name', network.ccyName)
-    await this.typeNetworkField('RPC URL', network.rpcUrl)
+    await this.typeNetworkField('Add RPC URL', network.rpcUrl)
 
     // confirm adding rpc url
     await this.page.locator(selectors.addRPCURLButton).click()
