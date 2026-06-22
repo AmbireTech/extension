@@ -9,6 +9,7 @@ import {
 import { checkDropdownDismiss } from '@common/components/Dropdown/dropdownDismissManager'
 import { isAndroid } from '@common/config/env'
 import useNavigation from '@common/hooks/useNavigation'
+import usePrevious from '@common/hooks/usePrevious'
 import useRoute from '@common/hooks/useRoute'
 import useTheme from '@common/hooks/useTheme'
 import { ROUTES } from '@common/modules/router/constants/common'
@@ -19,6 +20,19 @@ const GestureHandler = ({ children }: { children: ReactNode }) => {
   const { width } = Dimensions.get('window')
   const { goBack, canGoBack } = useNavigation()
   const { path } = useRoute()
+  const prevPath = usePrevious(path)
+
+  // Close any open bottom sheets when the route changes, so sheets from the
+  // previous screen don't stay visible on top of the new route in the
+  // background (e.g. picking an import method from the "No keys to sign" flow
+  // navigates away while its bottom sheets remained open)
+  useEffect(() => {
+    if (prevPath === undefined || prevPath === path) return
+
+    if (openBottomSheetsCount.value > 0) {
+      bottomSheetCloseEventStream.next()
+    }
+  }, [path, prevPath])
 
   useEffect(() => {
     if (!isAndroid) return

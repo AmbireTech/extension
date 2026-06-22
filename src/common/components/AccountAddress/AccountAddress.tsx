@@ -38,27 +38,30 @@ interface Props extends Omit<ReturnType<typeof useReverseLookup>, 'updatedAt' | 
   withWrap?: boolean
 }
 
-// eslint-disable-next-line react/display-name
-export const ReceiveButton = memo(
-  ({ address, fontSize }: { address: string; fontSize: number }) => {
-    const [bindAnim, animStyle] = useHover({
-      preset: 'opacityInverted'
-    })
-    const { navigate } = useNavigation()
+export const ReceiveButton = memo(function ReceiveButton({
+  address,
+  fontSize
+}: {
+  address: string
+  fontSize: number
+}) {
+  const [bindAnim, animStyle] = useHover({
+    preset: 'opacityInverted'
+  })
+  const { navigate } = useNavigation()
 
-    const handleReceive = useCallback(async () => {
-      navigate(WEB_ROUTES.receive, { state: { address } })
-    }, [navigate, address])
+  const handleReceive = useCallback(async () => {
+    navigate(WEB_ROUTES.receive, { state: { address } })
+  }, [navigate, address])
 
-    const size = useMemo(() => fontSize + 8, [fontSize])
+  const size = useMemo(() => fontSize + 8, [fontSize])
 
-    return (
-      <AnimatedPressable onPress={handleReceive} style={[spacings.mlTy, animStyle]} {...bindAnim}>
-        <ReceiveIcon width={size} height={size} strokeWidth={size < 24 ? '1.5' : '1.2'} />
-      </AnimatedPressable>
-    )
-  }
-)
+  return (
+    <AnimatedPressable onPress={handleReceive} style={[spacings.mlTy, animStyle]} {...bindAnim}>
+      <ReceiveIcon width={size} height={size} strokeWidth={size < 24 ? '1.5' : '1.2'} />
+    </AnimatedPressable>
+  )
+})
 
 const AccountAddress: FC<Props> = ({
   isLoading,
@@ -108,13 +111,7 @@ const AccountAddress: FC<Props> = ({
           ]}
         >
           {showResolvedName ? (
-            <View
-              style={[
-                flexbox.directionRow,
-                flexbox.alignCenter,
-                { flexShrink: 1, minWidth: 0, maxWidth: '100%' }
-              ]}
-            >
+            <>
               <DomainBadge
                 name={name}
                 type={type}
@@ -133,7 +130,7 @@ const AccountAddress: FC<Props> = ({
               >
                 {name}
               </Text>
-            </View>
+            </>
           ) : effectiveIsLoading ? (
             <Text fontSize={12} appearance="secondaryText">
               {t('Resolving domain...')}

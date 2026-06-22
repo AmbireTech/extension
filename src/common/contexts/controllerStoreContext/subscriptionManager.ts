@@ -28,6 +28,23 @@ export class SubscriptionManager {
     >
   > = new Map()
 
+  // Optional hook fired whenever the set of controller ids with at least one
+  // active subscriber changes (a controller gains its first subscriber or loses
+  // its last). Mobile uses this to tell the WebView worker which controller
+  // states are worth serializing across the bridge. Unset on web/extension,
+  // where it is a no-op and behavior is unchanged.
+  #onSubscribedControllersChange?: (ids: string[]) => void
+
+  setOnSubscribedControllersChange(cb: ((ids: string[]) => void) | undefined) {
+    this.#onSubscribedControllersChange = cb
+  }
+
+  #notifySubscribedControllersChange(store: ControllerStore | ControllerHelpersStore) {
+    if (!this.#onSubscribedControllersChange) return
+    const storeSubs = this.#stores.get(store)
+    this.#onSubscribedControllersChange(storeSubs ? Array.from(storeSubs.keys()) : [])
+  }
+
   subscribe(
     id: string,
     listener: Listener,
@@ -42,6 +59,7 @@ export class SubscriptionManager {
     if (!storeSubs.has(id)) {
       const unsub = store.subscribe(id, () => this.onStoreUpdate(id, store))
       storeSubs.set(id, { listeners: new Set(), unsub })
+      this.#notifySubscribedControllersChange(store)
     }
 
     const subState = storeSubs.get(id)!
@@ -59,6 +77,7 @@ export class SubscriptionManager {
         if (storeSubs.size === 0) {
           this.#stores.delete(store)
         }
+        this.#notifySubscribedControllersChange(store)
       }
     }
   }

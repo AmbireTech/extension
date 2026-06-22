@@ -12,6 +12,7 @@ import Avatar from '@common/components/Avatar'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import Text from '@common/components/Text'
 import TokenIcon from '@common/components/TokenIcon'
+import { isMobile } from '@common/config/env'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
@@ -133,7 +134,7 @@ const PayOption = ({
           {disabledReason ? (
             <Text
               weight="medium"
-              fontSize={12}
+              fontSize={isMobile ? 10 : 12}
               numberOfLines={1}
               appearance={disabledTextAppearance}
             >

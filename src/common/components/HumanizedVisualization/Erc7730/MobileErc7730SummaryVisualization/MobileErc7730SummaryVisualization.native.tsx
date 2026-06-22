@@ -2,8 +2,8 @@ import React, { memo, useCallback, useMemo } from 'react'
 import { Image, View } from 'react-native'
 import { SvgUri } from 'react-native-svg'
 
-import Text from '@common/components/Text'
 import { shouldShowErc7730SummaryRowLabel } from '@common/components/HumanizedVisualization/Erc7730/helpers'
+import Text from '@common/components/Text'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import common from '@common/styles/utils/common'
@@ -74,7 +74,7 @@ const MobileErc7730SummaryVisualization = ({
           )}
           <View style={{ flex: 1, minWidth: 0 }}>
             {!!item.title && (
-              <Text fontSize={textSize + 2} weight="semiBold" color={theme.secondaryAccent400}>
+              <Text fontSize={textSize + 2} color={theme.secondaryAccent400}>
                 {item.title}
               </Text>
             )}
@@ -92,12 +92,7 @@ const MobileErc7730SummaryVisualization = ({
           ]}
         >
           <View style={[flexbox.directionRow, flexbox.alignCenter, { minWidth: 0, flexShrink: 1 }]}>
-            <Text
-              fontSize={subtitleTextSize}
-              weight="semiBold"
-              appearance="secondaryText"
-              style={spacings.mrTy}
-            >
+            <Text fontSize={subtitleTextSize} appearance="secondaryText" style={spacings.mrTy}>
               {spenderRow.label}
             </Text>
           </View>
@@ -120,7 +115,6 @@ const MobileErc7730SummaryVisualization = ({
           {shouldShowErc7730SummaryRowLabel(item, row) && (
             <Text
               fontSize={Math.max(textSize - 4, 10)}
-              weight="semiBold"
               appearance="secondaryText"
               style={spacings.mrTy}
             >

@@ -1,4 +1,5 @@
 import type { HumanizerErc7730Visualization } from '@ambire-common/libs/humanizer/interfaces'
+import { zeroAddress } from 'viem'
 import {
   getAction,
   getAddressVisualization,
@@ -10,6 +11,8 @@ import {
 import {
   getErc7730DescriptionRows,
   getErc7730SummaryRows,
+  getVisibleErc7730Rows,
+  hasErc7730NativeValueRow,
   shouldShowErc7730SummaryRowLabel
 } from './helpers'
 
@@ -94,6 +97,45 @@ describe('getErc7730DescriptionRows', () => {
   })
 })
 
+describe('getVisibleErc7730Rows', () => {
+  test('hides zero-address beneficiary rows', () => {
+    const visualization: HumanizerErc7730Visualization = {
+      type: 'erc7730',
+      title: 'Swap',
+      rows: [
+        {
+          label: 'Amount to Send',
+          value: [getToken('0x833589fcd6edb6e08f4c7c32d4f71b54bda02913', 300000n)]
+        },
+        {
+          label: 'Beneficiary',
+          value: [getAddressVisualization(zeroAddress)]
+        }
+      ]
+    }
+
+    expect(getVisibleErc7730Rows(visualization).map((row) => row.label)).toEqual([
+      'Amount to Send'
+    ])
+  })
+
+  test('keeps nonzero beneficiary rows', () => {
+    const beneficiary = '0xd8293ad21678c6f09da139b4b62d38e514a03b78'
+    const visualization: HumanizerErc7730Visualization = {
+      type: 'erc7730',
+      title: 'Swap',
+      rows: [
+        {
+          label: 'Beneficiary',
+          value: [getAddressVisualization(beneficiary)]
+        }
+      ]
+    }
+
+    expect(getVisibleErc7730Rows(visualization).map((row) => row.label)).toEqual(['Beneficiary'])
+  })
+})
+
 describe('shouldShowErc7730SummaryRowLabel', () => {
   test('hides a summary row label when it matches the title', () => {
     const safe = '0x714fd3db837e72bd49b8eda02b8f4d53dfdde5ce'
@@ -114,5 +156,30 @@ describe('shouldShowErc7730SummaryRowLabel', () => {
 
     expect(shouldShowErc7730SummaryRowLabel(visualization, visualization.rows[0]!)).toBe(false)
     expect(shouldShowErc7730SummaryRowLabel(visualization, visualization.rows[1]!)).toBe(true)
+  })
+})
+
+describe('hasErc7730NativeValueRow', () => {
+  const getApprovalVisualization = (nativeValue: bigint): HumanizerErc7730Visualization => ({
+    type: 'erc7730',
+    title: 'Approve',
+    rows: [
+      {
+        label: 'Amount',
+        value: [getToken('0xdac17f958d2ee523a2206206994597c13d831ec7', 1n)]
+      },
+      {
+        label: 'Send',
+        value: [getToken(zeroAddress, nativeValue)]
+      }
+    ]
+  })
+
+  test('detects a nonzero native Send row', () => {
+    expect(hasErc7730NativeValueRow(getApprovalVisualization(1n))).toBe(true)
+  })
+
+  test('ignores a zero-value native Send row', () => {
+    expect(hasErc7730NativeValueRow(getApprovalVisualization(0n))).toBe(false)
   })
 })

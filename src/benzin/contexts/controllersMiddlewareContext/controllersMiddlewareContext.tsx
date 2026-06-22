@@ -23,6 +23,7 @@ export const ControllersMiddlewareProvider: React.FC<{
   useEffect(() => {
     controllerStore.init(
       Object.keys(controllers.current) as (keyof ExplorerBaseControllersMappingType)[],
+      [],
       (allCtrls: any) => {
         allCtrls.forEach((ctrlName: any) => {
           controllerStore.update(ctrlName, (controllers.current as any)[ctrlName])

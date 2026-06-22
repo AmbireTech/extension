@@ -1,12 +1,12 @@
 /* eslint-disable @typescript-eslint/no-floating-promises */
 import EventEmitter from '@ambire-common/controllers/eventEmitter/eventEmitter'
 import { IEventEmitterRegistryController } from '@ambire-common/interfaces/eventEmitter'
+import { Storage } from '@ambire-common/interfaces/storage'
 import {
   CRASH_ANALYTICS_ENABLED_DEFAULT,
   CRASH_ANALYTICS_ENABLED_STORAGE_KEY
 } from '@common/config/analytics/CrashAnalytics.web'
 import { APP_VERSION } from '@common/config/env'
-import { storage } from '@common/services/storage'
 import { DEFAULT_THEME, THEME_TYPES } from '@common/styles/theme/types'
 import { ThemeType } from '@common/styles/themeConfig'
 import { DEFAULT_LOG_LEVEL, LOG_LEVELS, setLoggerInstanceLogLevel } from '@common/utils/logger'
@@ -28,7 +28,7 @@ export class WalletStateController extends EventEmitter implements IWalletStateC
 
   avatarType: AvatarType = 'jazzicons'
 
-  logLevel: LOG_LEVELS = LOG_LEVELS.DEV
+  logLevel: LOG_LEVELS = DEFAULT_LOG_LEVEL
 
   crashAnalyticsEnabled: boolean = CRASH_ANALYTICS_ENABLED_DEFAULT
 
@@ -36,6 +36,8 @@ export class WalletStateController extends EventEmitter implements IWalletStateC
   initialLoadPromise: Promise<void>
 
   extensionVersion: string = APP_VERSION
+
+  #storage: Storage
 
   #onLogLevelUpdateCallback: (logLevel: LOG_LEVELS) => Promise<void>
 
@@ -45,32 +47,38 @@ export class WalletStateController extends EventEmitter implements IWalletStateC
 
   set isSetupComplete(newValue: boolean) {
     this.#isSetupComplete = newValue
-    storage.set('isSetupComplete', newValue)
+    this.#storage.set('isSetupComplete', newValue)
     this.emitUpdate()
   }
 
   constructor({
     eventEmitterRegistry,
-    onLogLevelUpdateCallback
+    onLogLevelUpdateCallback,
+    storage
   }: {
     eventEmitterRegistry: IEventEmitterRegistryController
     onLogLevelUpdateCallback: (logLevel: LOG_LEVELS) => Promise<void>
+    storage: Storage
   }) {
     super(eventEmitterRegistry)
 
+    this.#storage = storage
     this.#onLogLevelUpdateCallback = onLogLevelUpdateCallback
     this.initialLoadPromise = this.#init()
   }
 
   async #init(): Promise<void> {
-    this.themeType = await storage.get('themeType', DEFAULT_THEME)
-    this.avatarType = await storage.get('avatarType', this.avatarType)
-    this.isPrivacyModeEnabled = await storage.get('isPrivacyModeEnabled', this.isPrivacyModeEnabled)
+    this.themeType = (await this.#storage.get('themeType', DEFAULT_THEME)) as ThemeType
+    this.avatarType = (await this.#storage.get('avatarType', this.avatarType)) as AvatarType
+    this.isPrivacyModeEnabled = await this.#storage.get(
+      'isPrivacyModeEnabled',
+      this.isPrivacyModeEnabled
+    )
 
-    this.logLevel = await storage.get('logLevel', this.logLevel)
+    this.logLevel = (await this.#storage.get('logLevel', this.logLevel)) as LOG_LEVELS
     if (this.logLevel !== DEFAULT_LOG_LEVEL) setLoggerInstanceLogLevel(this.logLevel)
 
-    this.crashAnalyticsEnabled = await storage.get(
+    this.crashAnalyticsEnabled = await this.#storage.get(
       CRASH_ANALYTICS_ENABLED_STORAGE_KEY,
       this.crashAnalyticsEnabled
     )
@@ -85,14 +93,14 @@ export class WalletStateController extends EventEmitter implements IWalletStateC
 
   async setThemeType(type: ThemeType) {
     this.themeType = type
-    await storage.set('themeType', type)
+    await this.#storage.set('themeType', type)
 
     this.emitUpdate()
   }
 
   async setAvatarType(type: AvatarType) {
     this.avatarType = type
-    await storage.set('avatarType', type)
+    await this.#storage.set('avatarType', type)
 
     this.emitUpdate()
   }
@@ -100,7 +108,7 @@ export class WalletStateController extends EventEmitter implements IWalletStateC
   async setLogLevel(nextLogLevel: LOG_LEVELS) {
     this.logLevel = nextLogLevel
     setLoggerInstanceLogLevel(nextLogLevel)
-    await storage.set('logLevel', nextLogLevel)
+    await this.#storage.set('logLevel', nextLogLevel)
     await this.#onLogLevelUpdateCallback(nextLogLevel)
 
     this.emitUpdate()
@@ -110,12 +118,12 @@ export class WalletStateController extends EventEmitter implements IWalletStateC
     this.crashAnalyticsEnabled = enabled
     this.emitUpdate()
 
-    await storage.set(CRASH_ANALYTICS_ENABLED_STORAGE_KEY, enabled)
+    await this.#storage.set(CRASH_ANALYTICS_ENABLED_STORAGE_KEY, enabled)
   }
 
   async togglePrivacyMode() {
     this.isPrivacyModeEnabled = !this.isPrivacyModeEnabled
-    await storage.set('isPrivacyModeEnabled', this.isPrivacyModeEnabled)
+    await this.#storage.set('isPrivacyModeEnabled', this.isPrivacyModeEnabled)
     this.emitUpdate()
   }
 

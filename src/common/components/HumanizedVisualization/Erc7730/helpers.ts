@@ -2,6 +2,7 @@ import type {
   HumanizerErc7730Visualization,
   HumanizerVisualization
 } from '@ambire-common/libs/humanizer/interfaces'
+import { zeroAddress } from 'viem'
 
 type Erc7730Row = HumanizerErc7730Visualization['rows'][number]
 
@@ -23,7 +24,26 @@ const isSpenderRow = (row: Erc7730Row) => {
 const isExpirationRow = (row: Erc7730Row) =>
   labelIncludes(row.label, ['expires', 'expiration', 'deadline', 'valid', 'until'])
 
+const isZeroAddressBeneficiaryRow = (row: Erc7730Row) =>
+  labelIncludes(row.label, ['beneficiary']) &&
+  row.value.some(
+    (value) => value.type === 'address' && value.address?.toLowerCase() === zeroAddress
+  )
+
+export const getVisibleErc7730Rows = (item: HumanizerErc7730Visualization) =>
+  item.rows.filter((row) => !isZeroAddressBeneficiaryRow(row))
+
 export const hasTokenValue = (row: Erc7730Row) => row.value.some((value) => value.type === 'token')
+
+export const hasErc7730NativeValueRow = (item: HumanizerErc7730Visualization) =>
+  getVisibleErc7730Rows(item).some(
+    (row) =>
+      row.label.trim().toLowerCase() === 'send' &&
+      row.value.some(
+        (value) =>
+          value.type === 'token' && value.address.toLowerCase() === zeroAddress && value.value > 0n
+      )
+  )
 
 const isOutgoingTokenRow = (row: Erc7730Row) =>
   labelIncludes(row.label, ['send', 'spend', 'pay', 'sell', 'input', 'amount in', 'amount to send'])
@@ -63,11 +83,13 @@ const isTransferActionRow = (row: Erc7730Row) =>
   getActionContent(row)?.trim().toLowerCase() === 'transfer'
 
 export const getDetailedRows = (item: HumanizerErc7730Visualization) => {
-  if (!isMorphoBundlerMulticall(item)) return item.rows
+  const visibleRows = getVisibleErc7730Rows(item)
 
-  const nonTransferRows = item.rows.filter((row) => !isTransferActionRow(row))
+  if (!isMorphoBundlerMulticall(item)) return visibleRows
 
-  return nonTransferRows.length ? nonTransferRows : item.rows
+  const nonTransferRows = visibleRows.filter((row) => !isTransferActionRow(row))
+
+  return nonTransferRows.length ? nonTransferRows : visibleRows
 }
 
 const isToLabelValue = (value: HumanizerVisualization) =>
@@ -118,13 +140,13 @@ export const getDetailedValueLines = (row: Erc7730Row) =>
   )
 
 export const getErc7730SpenderRow = (item: HumanizerErc7730Visualization) =>
-  item.rows.find((row) => isSpenderRow(row))
+  getVisibleErc7730Rows(item).find((row) => isSpenderRow(row))
 
 export const shouldShowErc7730SpenderRowInSummary = (item: HumanizerErc7730Visualization) =>
   !isSwapLikeTitle(item.title)
 
 const getErc7730SwapSummaryRows = (item: HumanizerErc7730Visualization) => {
-  const tokenRows = item.rows.filter((row) => hasTokenValue(row))
+  const tokenRows = getVisibleErc7730Rows(item).filter((row) => hasTokenValue(row))
   if (tokenRows.length < 2) return null
 
   const outgoingRow = tokenRows.find((row) => isOutgoingTokenRow(row))
@@ -142,10 +164,11 @@ export const getErc7730SummaryRows = (item: HumanizerErc7730Visualization) => {
   const swapRows = getErc7730SwapSummaryRows(item)
   if (swapRows) return swapRows
 
-  const amountRow = item.rows.find((row) => hasTokenValue(row))
+  const visibleRows = getVisibleErc7730Rows(item)
+  const amountRow = visibleRows.find((row) => hasTokenValue(row))
   if (amountRow) return [amountRow]
 
-  return item.rows.filter((row) => !isSpenderRow(row) && !isExpirationRow(row)).slice(0, 2)
+  return visibleRows.filter((row) => !isSpenderRow(row) && !isExpirationRow(row)).slice(0, 2)
 }
 
 export const shouldShowErc7730SummaryRowLabel = (
@@ -170,12 +193,12 @@ export const getErc7730DescriptionRows = (item: HumanizerErc7730Visualization) =
     ...getErc7730SummaryRows(item)
   ].filter((row): row is Erc7730Row => !!row)
 
-  return item.rows.filter((row) => !visibleSummaryRows.includes(row))
+  return getVisibleErc7730Rows(item).filter((row) => !visibleSummaryRows.includes(row))
 }
 
 export const shouldUseErc7730DetailedLayout = (item: HumanizerErc7730Visualization) => {
   if (labelIncludes(item.title || '', ['multicall', 'batch', 'bundle'])) return true
-  if (item.rows.some(isNestedErc7730Row)) return true
+  if (getVisibleErc7730Rows(item).some(isNestedErc7730Row)) return true
 
   const summaryRows = getErc7730SummaryRows(item)
   if (summaryRows.some(hasTokenValue)) return false
@@ -184,8 +207,3 @@ export const shouldUseErc7730DetailedLayout = (item: HumanizerErc7730Visualizati
 
   return summaryRows.length > 1 && complexActionRows.length > 1
 }
-
-export const getNestedErc7730Visualizations = (item: HumanizerErc7730Visualization) =>
-  getDetailedRows(item).flatMap((row) =>
-    isNestedErc7730Row(row) ? row.value.filter(isNestedErc7730Value) : []
-  )

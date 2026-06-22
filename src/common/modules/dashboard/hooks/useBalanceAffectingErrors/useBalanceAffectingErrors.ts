@@ -10,7 +10,14 @@ const useBalanceAffectingErrors = () => {
   const {
     state: { balanceAffectingErrors, portfolio }
   } = useController('SelectedAccountController')
-  const isLoadingTakingTooLong = portfolio.shouldShowPartialResult
+  const { areNetworksFetchingFromRelayer } = useController('NetworksController').state
+  // While the networks config is being refreshed from the relayer, the balance is
+  // held in a loading (skeleton) state and any updated RPC will trigger a portfolio
+  // reload. Suppress balance-affecting warnings during this window so the user
+  // never sees errors from a old/stale RPC that is about to be replaced.
+  const isLoadingTakingTooLong = areNetworksFetchingFromRelayer
+    ? false
+    : portfolio.shouldShowPartialResult
   const { isOffline } = useController('MainController').state
   const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useModalize()
   /** Because errors change frequently due to background updates we have to store a snapshot
@@ -22,14 +29,18 @@ const useBalanceAffectingErrors = () => {
   >([])
 
   const networksWithErrors = useMemo(() => {
+    if (areNetworksFetchingFromRelayer) return []
+
     const allNetworkNames = balanceAffectingErrors.flatMap((banner) => banner.networkNames)
 
     const uniqueNetworkNames = [...new Set(allNetworkNames)]
 
     return uniqueNetworkNames
-  }, [balanceAffectingErrors])
+  }, [areNetworksFetchingFromRelayer, balanceAffectingErrors])
 
   const warningMessage = useMemo(() => {
+    if (areNetworksFetchingFromRelayer) return undefined
+
     if (isLoadingTakingTooLong) {
       const allNetworkNames = balanceAffectingErrors.find(
         ({ id }) => id === 'loading-too-long'
@@ -61,6 +72,7 @@ const useBalanceAffectingErrors = () => {
 
     return undefined
   }, [
+    areNetworksFetchingFromRelayer,
     balanceAffectingErrors,
     isLoadingTakingTooLong,
     isOffline,

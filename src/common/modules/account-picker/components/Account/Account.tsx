@@ -18,7 +18,7 @@ import Label from '@common/components/Label'
 import NetworkIcon from '@common/components/NetworkIcon'
 import SkeletonLoader from '@common/components/SkeletonLoader'
 import Text from '@common/components/Text'
-import { isMobile } from '@common/config/env'
+import { isMobile, isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import useReverseLookup from '@common/hooks/useReverseLookup'
 import useTheme from '@common/hooks/useTheme'
@@ -119,6 +119,7 @@ const Account = ({
           style={flexbox.alignSelfStart}
           width={44}
           height={24}
+          trackStyle={isMobile ? spacings.mr0 : {}}
         />
 
         <View style={[flexbox.flex1, flexbox.directionRow, flexbox.alignCenter]}>
@@ -175,7 +176,7 @@ const Account = ({
                     >
                       {reverseLookupName}
                     </Text>
-                  ) : isDomainResolving ? (
+                  ) : isWeb && isDomainResolving ? (
                     <Text fontSize={14} appearance="secondaryText" style={spacings.mrTy}>
                       {t('Resolving domain...')}
                     </Text>
@@ -186,9 +187,9 @@ const Account = ({
                     style={spacings.mrMi}
                     weight="mono_regular"
                   >
-                    {reverseLookupName || isDomainResolving ? '(' : ''}
+                    {reverseLookupName || (isWeb && isDomainResolving) ? '(' : ''}
                     {formattedAddress}
-                    {reverseLookupName || isDomainResolving ? ')' : ''}
+                    {reverseLookupName || (isWeb && isDomainResolving) ? ')' : ''}
                   </Text>
                 </>
               )}

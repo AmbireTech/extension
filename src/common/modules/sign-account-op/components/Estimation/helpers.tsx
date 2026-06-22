@@ -5,10 +5,7 @@ import { FeeSpeed } from '@ambire-common/controllers/signAccountOp/signAccountOp
 import { Contacts } from '@ambire-common/interfaces/addressBook'
 import { ISignAccountOpController } from '@ambire-common/interfaces/signAccountOp'
 import { canBecomeSmarter } from '@ambire-common/libs/account/account'
-import {
-  canFeeOptionCoverAmount,
-  isTransferredTokenFeeOption
-} from '@ambire-common/libs/account/feeOptions'
+import { canFeeOptionCoverAmount } from '@ambire-common/libs/account/feeOptions'
 import { FeePaymentOption } from '@ambire-common/libs/estimate/interfaces'
 import { getExtremeGasFeeWarningState } from '@ambire-common/libs/safeguards/extremeGasFee'
 import { ZERO_ADDRESS } from '@ambire-common/services/socket/constants'
@@ -77,13 +74,9 @@ const mapFeeOptions = (
   const gasTankKey = feeOption.token.flags.onGasTank ? 'gasTank' : ''
   const speedCoverage: FeeSpeed[] = []
   const id = getFeeSpeedIdentifier(feeOption, signAccountOpState.accountOp.accountAddr)
-  const isTransferredTokenOption = isTransferredTokenFeeOption(
-    feeOption,
-    signAccountOpState.accountOp
-  )
 
   signAccountOpState.feeSpeeds[id]?.forEach((speed) => {
-    if (feeOption.availableAmount >= speed.amount || isTransferredTokenOption)
+    if (canFeeOptionCoverAmount(feeOption, signAccountOpState.accountOp, speed.amount))
       speedCoverage.push(speed.type)
   })
 

@@ -1,13 +1,13 @@
+import { isDevice } from 'expo-device'
 import React, { forwardRef, useImperativeHandle, useRef, useState } from 'react'
 import { Platform } from 'react-native'
-import { isDevice } from 'expo-device'
 import { pbkdf2Sync, scrypt } from 'react-native-quick-crypto'
 import { WebView } from 'react-native-webview'
 
 import * as richJson from '@ambire-common/libs/richJson/richJson'
 import { CONTROLLER_STORE_MAX_LOADING_TIME } from '@common/contexts/controllerStoreContext/controllerStore'
 import eventBus from '@common/services/event/eventBus'
-import { storage } from '@common/services/storage'
+import { getAllSerialized, storage } from '@common/services/storage'
 import { WEBVIEW_DEV_HOST } from '@env'
 import {
   approveWalletConnectSession,
@@ -18,11 +18,24 @@ import {
   rejectWcAuthenticate,
   respondToWalletConnectRequest
 } from '@mobile/modules/wallet-connect/services/walletConnectService'
+import getWebviewBundleUri from '@mobile/modules/webview/services/getWebviewBundleUri'
 
-// In production, the bundle is inlined via the JSON import.
-// In dev, we load from webpack-dev-server so this import is unused.
-// @ts-ignore
-const webviewBundle = __DEV__ ? null : require('./webview-bundle.json')
+import { decode, encode } from './bridgeCodec'
+
+// In production the worker bundle ships as a static file inside the signed
+// app (iOS Resources / Android assets) and the WebView loads it from disk via
+// `file://`. The HTML stub is built at compile time with a strict CSP
+// (`script-src file:`) and loads the bundle through a `<script src>` tag
+// pinned with a SHA-384 Subresource Integrity hash, which the engine
+// recomputes and validates before executing the script.
+// In dev the bundle is fetched from webpack-dev-server (HTTP) so HMR keeps
+// working.
+const PROD_BUNDLE_URI = !__DEV__ ? getWebviewBundleUri() : ''
+// Directory containing the HTML + JS pair. WKWebView's `loadFileURL` defaults
+// its read-access scope to the HTML file alone, which blocks the sibling
+// `<script src="webview-bundle.js">` from resolving. We grant read access to
+// the directory only — narrowest scope that lets the bundle load.
+const PROD_BUNDLE_DIR = !__DEV__ ? PROD_BUNDLE_URI.replace(/\/[^/]+$/, '/') : ''
 
 // The dev server URL for webpack-dev-server.
 // - Simulator/emulator: auto-detected via Device.isDevice; uses platform loopback (localhost / 10.0.2.2)
@@ -51,7 +64,7 @@ export interface WebViewWorkerRef {
   init: (config: any) => Promise<string[]>
 }
 
-export const WebViewWorker = forwardRef<WebViewWorkerRef, {}>((_, ref) => {
+export const WebViewWorker = forwardRef<WebViewWorkerRef, object>((_, ref) => {
   const webviewRef = useRef<WebView>(null)
   const [isLoaded, setIsLoaded] = useState(false)
   const [isReady, setIsReady] = useState(false)
@@ -87,11 +100,15 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, {}>((_, ref) => {
   }
 
   const dispatchToWebView = (action: any, raw?: boolean) => {
-    const payload = richJson.stringify({ type: 'dispatchAction', action })
+    const embedded = raw
+      ? richJson.stringify({ type: 'dispatchAction', action })
+      : JSON.stringify(
+          encode({ type: 'dispatchAction', action }, action?.type !== 'HANDLE_PROVIDER_REQUEST')
+        )
     webviewRef.current?.injectJavaScript(`
         (function() {
           try {
-            window.postMessage(${raw ? payload : JSON.stringify(payload)}, '*');
+            window.postMessage(${embedded}, '*');
           } catch (e) {
             window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'ctrl.error', payload: { ctrlName: 'BridgeDispatch', errors: [{ message: e.message, stack: e.stack }] } }));
           }
@@ -106,18 +123,23 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, {}>((_, ref) => {
       dispatchToWebView(action, raw)
     },
     init: (config: any) => {
-      lastConfig.current = config
+      // PERF: ship a one-shot snapshot of all async storage so the worker can
+      // seed an in-memory cache and serve controller-boot reads locally instead
+      // of making 80+ separate bridged storage.get round-trips (each delivered
+      // via its own injectJavaScript), which saturated the bridge for seconds.
+      const configWithStorage = { ...config, __storageSnapshot: getAllSerialized() }
+      lastConfig.current = configWithStorage
       return new Promise((resolve) => {
         initResolver.current = resolve
         scheduleInitWarningTimeout()
         if (isLoaded) {
-          const initPayload = richJson.stringify({ type: 'init', config })
+          const initPayload = encode({ type: 'init', config: configWithStorage }, true)
           webviewRef.current?.injectJavaScript(`
               window.postMessage(${JSON.stringify(initPayload)}, '*');
               true;
             `)
         } else {
-          pendingConfig.current = config
+          pendingConfig.current = configWithStorage
         }
       })
     }
@@ -125,13 +147,15 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, {}>((_, ref) => {
 
   const handleMessage = async (event: any) => {
     try {
-      const data = richJson.parse(event.nativeEvent.data)
+      const data = decode(event.nativeEvent.data)
 
       switch (data.type) {
         case 'system.loaded': {
           const isReload = isReadyRef.current
-          const isReloadStr = isReload ? ' (RELOAD detected)' : ''
-          console.log(`[WebViewWorker] WebView internal script loaded${isReloadStr}`)
+          if (__DEV__) {
+            const isReloadStr = isReload ? ' (RELOAD detected)' : ''
+            console.log(`[WebViewWorker] WebView internal script loaded${isReloadStr}`)
+          }
 
           // Reset ready state — the WebView has a fresh JS context
           isReadyRef.current = false
@@ -144,7 +168,7 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, {}>((_, ref) => {
           const configToSend = pendingConfig.current || (isReload ? lastConfig.current : null)
 
           if (configToSend) {
-            const initPayload = richJson.stringify({ type: 'init', config: configToSend })
+            const initPayload = encode({ type: 'init', config: configToSend }, true)
             webviewRef.current?.injectJavaScript(`
                 window.postMessage(${JSON.stringify(initPayload)}, '*');
                 true;
@@ -260,7 +284,7 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, {}>((_, ref) => {
         // --- PROXY HANDLERS FOR STORAGE ---
         case 'storage.get':
           const getVal = await storage.get(data.payload.key, data.payload.defaultValue)
-          sendResponse(data.id, getVal)
+          sendResponse(data.id, getVal, null, true)
           break
         case 'storage.set':
           await storage.set(data.payload.key, data.payload.value)
@@ -350,60 +374,30 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, {}>((_, ref) => {
           break
 
         default:
-          console.warn('Unknown message from WebViewWorker:', data.type)
+          if (__DEV__) console.warn('Unknown message from WebViewWorker:', data.type)
       }
     } catch (e) {
       console.error('Failed to handle message from WebView worker', e)
     }
   }
 
-  const sendResponse = (id: number, result: any = null, error: any = null) => {
+  const sendResponse = (id: number, result: any = null, error: any = null, rich = false) => {
     webviewRef.current?.injectJavaScript(`
         window.postMessage(${JSON.stringify(
-          richJson.stringify({ type: 'response', id, result, error: error?.message || error })
+          encode({ type: 'response', id, result, error: error?.message || error }, rich)
         )}, '*');
         true;
       `)
   }
 
-  // --- Build the WebView source per mode ---
-  //
-  // Dev:         Load inline HTML with file:/// base URL.
-  //              Android requires file:// origin + allowUniversalAccessFromFileURLs
-  //              for cross-origin fetch to work. iOS also uses this approach to
-  //              avoid the WebView opening the dev server URL in Safari.
-  //              We override location.reload() to post a message to RN,
-  //              which remounts the WebView (re-fetching the latest bundle).
-  //              The WebSocket URL fix is needed since the base is file:///.
-  //
-  // Production:  Inline HTML with the bundle code baked in.
-
-  const getSource = () => {
-    if (!__DEV__) {
-      // Network requests are proxied through the RN bridge (network.fetch),
-      // so the WebView itself needs no connect-src permissions.
-      const prodCsp =
-        "default-src 'none'; script-src 'none'; connect-src 'none'; frame-src 'none'; object-src 'none';"
-      return {
-        html: `
-          <!DOCTYPE html>
-          <html>
-            <head>
-              <meta name="viewport" content="width=device-width, initial-scale=1.0">
-              <meta http-equiv="Content-Security-Policy" content="${prodCsp}">
-            </head>
-            <body></body>
-          </html>
-        `,
-        baseUrl: 'file:///'
-      }
-    }
-
-    // Dev mode: HTML with file:/// base URL + external script linking to Webpack Dev Server.
-    // Network requests proxied via bridge, connect-src allows WebSocket for HMR.
-    const devCsp = `default-src 'none'; script-src ${devUrl}; connect-src ${devUrl} ws: wss:; frame-src 'none'; object-src 'none';`
-    return {
-      html: `
+  // Production loads the static HTML stub from disk; dev keeps the inline
+  // template that points at webpack-dev-server so HMR keeps working.
+  const source = !__DEV__
+    ? { uri: PROD_BUNDLE_URI }
+    : (() => {
+        const devCsp = `default-src 'none'; script-src ${devUrl}; connect-src ${devUrl} ws: wss:; frame-src 'none'; object-src 'none';`
+        return {
+          html: `
         <!DOCTYPE html>
         <html>
           <head>
@@ -415,11 +409,9 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, {}>((_, ref) => {
           </body>
         </html>
       `,
-      baseUrl: 'file:///'
-    }
-  }
-
-  const source = getSource()
+          baseUrl: 'file:///'
+        }
+      })()
 
   const handleRenderProcessGone = (syntheticEvent: any) => {
     const { nativeEvent } = syntheticEvent || {}
@@ -476,12 +468,7 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, {}>((_, ref) => {
       true;
     `
     : `
-      try {
-        ${globalErrorHandler}
-        ${webviewBundle.code}
-      } catch (err) {
-        window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'ctrl.error', payload: { ctrlName: 'GlobalCrash', errors: [{ message: err.toString(), stack: err.stack }] } }));
-      }
+      ${globalErrorHandler}
       true;
     `
 
@@ -514,12 +501,27 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, {}>((_, ref) => {
       onContentProcessDidTerminate={handleRenderProcessGone}
       javaScriptEnabled={true}
       injectedJavaScriptBeforeContentLoaded={injectedJSBefore}
+      // iOS only: grant the WebView read access to the bundle directory so
+      // the HTML's sibling `<script src="webview-bundle.js">` can resolve.
+      // Without this, `loadFileURL` scopes access to the HTML file alone.
+      allowingReadAccessToURL={__DEV__ ? undefined : PROD_BUNDLE_DIR}
       originWhitelist={__DEV__ ? ['file://*', `${devUrl}/*`] : ['file://*']}
-      onShouldStartLoadWithRequest={(request) =>
-        request.url.startsWith('file:///') || (__DEV__ && request.url.startsWith(devUrl))
-      }
+      onShouldStartLoadWithRequest={(request) => {
+        if (__DEV__) {
+          return request.url.startsWith('file:///') || request.url.startsWith(devUrl)
+        }
+        // In production the WebView only ever navigates to the bundled HTML
+        // stub. The bundle JS is loaded as a sibling `<script src>` from inside
+        // that page (so we never see a navigation for it here). Anything else
+        // is rejected.
+        return request.url === PROD_BUNDLE_URI
+      }}
       mixedContentMode="never"
-      allowFileAccessFromFileURLs={false}
+      // Required on Android for the sibling `<script src>` to load over
+      // `file://`. Safe: navigation is locked to the single bundle URI and
+      // `allowUniversalAccessFromFileURLs` stays `false`, so the page cannot
+      // reach http(s) or cross-origin resources.
+      allowFileAccessFromFileURLs={!__DEV__}
       allowUniversalAccessFromFileURLs={false}
       domStorageEnabled={true}
       webviewDebuggingEnabled={__DEV__}
@@ -529,3 +531,5 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, {}>((_, ref) => {
     />
   )
 })
+
+WebViewWorker.displayName = 'WebViewWorker'

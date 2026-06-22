@@ -22,7 +22,6 @@ import BalanceAffectingErrors from './BalanceAffectingErrors'
 import GasTankButton from './GasTankButton'
 import { OverviewBackground } from './OverviewBackground'
 import RefreshIcon from './RefreshIcon'
-import RewardsButton from './RewardsButton'
 import getStyles from './styles'
 
 const THRESHOLD_AMOUNT_TO_HIDE_BALANCE_DECIMALS = 10000
@@ -50,12 +49,10 @@ const DashboardOverview: FC<Props> = ({
   const { t } = useTranslation()
   const { theme } = useTheme(getStyles)
   const {
-    state: { isOffline },
-    dispatch: mainDispatch
+    state: { isOffline }
   } = useController('MainController')
-  const { account, dashboardNetworkFilter, portfolio } = useController(
-    'SelectedAccountController'
-  ).state
+  const { account, portfolio } = useController('SelectedAccountController').state
+  const { areNetworksFetchingFromRelayer } = useController('NetworksController').state
   const {
     state: { isPrivacyModeEnabled },
     dispatch: walletStateDispatch
@@ -163,7 +160,11 @@ const DashboardOverview: FC<Props> = ({
                   />
                 </View>
                 <View style={[flexbox.alignCenter, spacings.mhTy]}>
-                  {!portfolio?.isReadyToVisualize ? (
+                  {/* Keep the balance in the skeleton state while the networks
+                  config is being refreshed from the relayer — an updated RPC may
+                  trigger a portfolio reload, and we want to show the fresh result
+                  rather than flashing a value computed from the stale RPC. */}
+                  {!portfolio?.isReadyToVisualize || areNetworksFetchingFromRelayer ? (
                     <SkeletonLoader
                       lowOpacity
                       width={180}

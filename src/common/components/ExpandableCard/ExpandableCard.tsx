@@ -1,17 +1,22 @@
 import React, { ReactNode, useMemo, useState } from 'react'
-import { Pressable, View, ViewStyle } from 'react-native'
+import { View, ViewStyle } from 'react-native'
 
 import DownArrowIcon from '@common/assets/svg/DownArrowIcon'
 import UpArrowIcon from '@common/assets/svg/UpArrowIcon'
 import { isMobile, isWeb } from '@common/config/env'
+import { AnimatedPressable } from '@common/hooks/useHover'
 import useTheme from '@common/hooks/useTheme'
 import spacings, { SPACING_SM, SPACING_TY } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
 import getStyles from './styles'
 
+type ContentRenderProps = {
+  isExpanded: boolean
+}
+
 type Props = {
-  content: ReactNode
+  content: ReactNode | ((props: ContentRenderProps) => ReactNode)
   expandedContent?: ReactNode
   style?: ViewStyle
   enableToggleExpand?: boolean
@@ -25,6 +30,7 @@ type Props = {
   mobileHeaderStyle?: ViewStyle
   hideMobileContent?: boolean
   overlayMobileHeaderControls?: boolean
+  overlayArrow?: boolean
 }
 
 const ExpandableCard = ({
@@ -41,13 +47,15 @@ const ExpandableCard = ({
   mobileHeaderTitle,
   mobileHeaderStyle,
   hideMobileContent = false,
-  overlayMobileHeaderControls = false
+  overlayMobileHeaderControls = false,
+  overlayArrow = false
 }: Props) => {
   const { styles } = useTheme(getStyles)
   const [isExpanded, setIsExpanded] = useState(!!isInitiallyExpanded)
   const hasMobileHeader = isMobile && (!!mobileHeaderContent || !!mobileHeaderTitle)
 
-  const Element = enableToggleExpand ? Pressable : View
+  const Element = enableToggleExpand ? AnimatedPressable : View
+  const renderedContent = typeof content === 'function' ? content({ isExpanded }) : content
 
   const icon = useMemo(
     () => (
@@ -55,7 +63,7 @@ const ExpandableCard = ({
         style={{
           opacity: enableToggleExpand ? 1 : 0.5,
           width: 28,
-          height: 28,
+          height: 24,
           ...flexbox.center
         }}
       >
@@ -126,11 +134,23 @@ const ExpandableCard = ({
               contentStyle
             ]}
           >
-            {!hasMobileHeader && !!hasArrow && arrowPosition === 'left' && icon}
-            <View style={[flexbox.directionRow, flexbox.alignCenter, flexbox.flex1]}>
-              {!!content && content}
+            {!hasMobileHeader && !!hasArrow && arrowPosition === 'left' && overlayArrow && (
+              <View style={{ position: 'absolute', top: SPACING_SM, left: SPACING_SM }}>
+                {icon}
+              </View>
+            )}
+            {!hasMobileHeader && !!hasArrow && arrowPosition === 'left' && !overlayArrow && icon}
+            <View
+              style={[flexbox.directionRow, flexbox.alignCenter, flexbox.flex1, { minWidth: 0 }]}
+            >
+              {!!renderedContent && renderedContent}
             </View>
-            {!hasMobileHeader && !!hasArrow && arrowPosition === 'right' && icon}
+            {!hasMobileHeader && !!hasArrow && arrowPosition === 'right' && overlayArrow && (
+              <View style={{ position: 'absolute', top: SPACING_SM, right: SPACING_SM }}>
+                {icon}
+              </View>
+            )}
+            {!hasMobileHeader && !!hasArrow && arrowPosition === 'right' && !overlayArrow && icon}
           </View>
         )}
         {children}

@@ -15,7 +15,9 @@ export default function useDappVerificationHoldButtonType(
 
     if (
       safeBanners.some(
-        (banner) => banner.id === DAPP_VERIFICATION_BANNER_IDS.FAILED_TO_GET_OR_UNKNOWN
+        (banner) =>
+          banner.id === DAPP_VERIFICATION_BANNER_IDS.FAILED_TO_GET_OR_UNKNOWN ||
+          banner.id === DAPP_VERIFICATION_BANNER_IDS.SUSPICIOUS_HOSTING
       )
     )
       return 'warning'

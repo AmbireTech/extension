@@ -143,8 +143,10 @@ const DashboardSearch: FC<Props> = ({ control, placeholder }) => {
                     onChangeText={onChange}
                     onBlur={() => {
                       onBlur()
+
                       if (!value) {
                         setIsEditing(false)
+                        setIsSearchFieldDisplayed(false)
                       }
                     }}
                     value={value}
