@@ -26,8 +26,16 @@ const getAreDefaultsChanged = (values: any, selectedNetwork?: Network) => {
         !values[key].length
       )
     }
-    if (key === 'customBundlerUrl' || key === 'heliosRpcUrl') {
+    if (key === 'customBundlerUrl') {
       return values[key] !== (selectedNetwork[key] || '')
+    }
+    if (key === 'colibriProverUrl') {
+      if (!values.isColibriEnabled && !selectedNetwork.isColibriEnabled) return false
+
+      return values[key] !== (selectedNetwork[key] || '')
+    }
+    if (key === 'isColibriEnabled') {
+      return values[key] !== !!selectedNetwork[key]
     }
 
     return key in selectedNetwork && values[key] !== selectedNetwork[key as keyof Network]

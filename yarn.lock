@@ -7,14 +7,6 @@
   resolved "https://registry.yarnpkg.com/@0no-co/graphql.web/-/graphql.web-1.2.0.tgz#296d00581bfaaabfda1e976849d927824aaea81b"
   integrity sha512-/1iHy9TTr63gE1YcR5idjx8UREz1s0kFhydf3bBLCXyqjhkIc6igAzTOx3zPifCwFR87tsh/4Pa9cNts6d2otw==
 
-"@a16z/helios@^0.11.1":
-  version "0.11.1"
-  resolved "https://registry.yarnpkg.com/@a16z/helios/-/helios-0.11.1.tgz#58aa22c5eb81324dc10bb22774f0783a2a3eb5f8"
-  integrity sha512-rd+RNnhKcDDRJsEOeHQ7I5FcSG2sZ1dKblCA7tI+tFdhQ5Fdox6ZwIQYdyn7s2YKVx+bnyrLociWxNvmAuaK/Q==
-  dependencies:
-    eventemitter3 "^5.0.1"
-    uuid "^11.0.5"
-
 "@adraffy/ens-normalize@1.10.1":
   version "1.10.1"
   resolved "https://registry.yarnpkg.com/@adraffy/ens-normalize/-/ens-normalize-1.10.1.tgz#63430d04bd8c5e74f8d7d049338f1cd9d4f02069"
@@ -1178,6 +1170,11 @@
   version "0.2.3"
   resolved "https://registry.npmjs.org/@bcoe/v8-coverage/-/v8-coverage-0.2.3.tgz"
   integrity sha512-0hYQ8SB4Db5zvZB4axdMHGwEaQjkZzFjQiN9LVYvIFB2nSUHW9tYpxWriPrWDASIxiaXax83REcLxuSdnGPZtw==
+
+"@corpus-core/colibri-stateless@1.1.30":
+  version "1.1.30"
+  resolved "https://registry.yarnpkg.com/@corpus-core/colibri-stateless/-/colibri-stateless-1.1.30.tgz#5ddcad43fba8a73b3939f1e7fc756d4c0e0661f6"
+  integrity sha512-U/oFj14tKfGZUESGxEegJt1d8B0OZYGclXUQl8HIN5ttTUS0QQML//DPvR9k0PsVU9xz7ZWFt3B4pk0Ij6P/Kg==
 
 "@craftzdog/react-native-buffer@6.1.0":
   version "6.1.0"
@@ -15937,11 +15934,6 @@ uuid@9.0.0:
   version "9.0.0"
   resolved "https://registry.npmjs.org/uuid/-/uuid-9.0.0.tgz"
   integrity sha512-MXcSTerfPa4uqyzStbRoTgt5XIe3x5+42+q1sDuy3R5MDk66URdLMOZe5aPX/SQd+kuYAh0FdP/pO28IkQyTeg==
-
-uuid@^11.0.5:
-  version "11.1.1"
-  resolved "https://registry.yarnpkg.com/uuid/-/uuid-11.1.1.tgz#f6d81d2e1c65d00762e5e29b16c5d2d995e208ad"
-  integrity sha512-vIYxrBCC/N/K+Js3qSN88go7kIfNPssr/hHCesKCQNAjmgvYS2oqr69kIufEG+O4+PfezOH4EbIeHCfFov8ZgQ==
 
 uuid@^7.0.3:
   version "7.0.3"

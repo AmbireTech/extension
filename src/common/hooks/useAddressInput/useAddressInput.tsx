@@ -47,6 +47,7 @@ const useAddressInput = ({
   const lastResolvedFieldValueRef = useRef<string | null>(null)
   const fieldValue = addressState.fieldValue
   const [hasDomainResolveFailed, setHasDomainResolveFailed] = useState(false)
+  const [domainResolveError, setDomainResolveError] = useState('')
   const { resolveDomain } = useResolveDomain()
   const [debouncedValidation, setDebouncedValidation] = useState<Validation>({
     severity: 'error',
@@ -61,6 +62,7 @@ const useAddressInput = ({
         isValidEns: addressState.resolvedAddressType === 'ens',
         isValidNamoshi: addressState.resolvedAddressType === 'namoshi',
         hasDomainResolveFailed,
+        domainResolveError,
         overwriteValidation
       }),
     [
@@ -69,6 +71,7 @@ const useAddressInput = ({
       addressState.isDomainResolving,
       addressState.resolvedAddressType,
       hasDomainResolveFailed,
+      domainResolveError,
       overwriteValidation
     ]
   )
@@ -122,6 +125,7 @@ const useAddressInput = ({
       dotIndexInAddress !== trimmedAddress.length - 1
 
     setHasDomainResolveFailed(false)
+    setDomainResolveError('')
 
     if (!trimmedAddress || !canBeDomain) {
       setAddressState({
@@ -149,10 +153,11 @@ const useAddressInput = ({
           })
           lastResolvedFieldValueRef.current = fieldValue
         })
-        .catch(() => {
+        .catch((error) => {
           if (latestFieldValueRef.current !== fieldValue) return
 
           setHasDomainResolveFailed(true)
+          setDomainResolveError(error?.message || '')
           setAddressState({
             resolvedAddress: '',
             resolvedAddressType: null,

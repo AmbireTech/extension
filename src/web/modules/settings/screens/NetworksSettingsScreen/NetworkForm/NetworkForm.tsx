@@ -1,15 +1,21 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { Controller, useForm } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
-import { Pressable, View, ViewStyle } from 'react-native'
+import { Image, ImageSourcePropType, Pressable, View, ViewStyle } from 'react-native'
 
-import { isHeliosProviderAvailable } from '@ambire-common/libs/networks/helios'
+import {
+  getDefaultColibriProverUrl,
+  isColibriProviderAvailable
+} from '@ambire-common/libs/networks/colibri'
 import { getFeatures } from '@ambire-common/libs/networks/networks'
 import { getRpcProvider } from '@ambire-common/services/provider'
+import { getColibriRpcProvider } from '@ambire-common/services/provider/colibri'
 import { isValidURL } from '@ambire-common/services/validations'
+import colibriLogo from '@common/assets/images/colibri-logo.png'
 import CopyIcon from '@common/assets/svg/CopyIcon'
 import WarningIcon from '@common/assets/svg/WarningIcon'
 import Button from '@common/components/Button'
+import Checkbox from '@common/components/Checkbox'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import Input from '@common/components/Input'
 import NetworkIcon from '@common/components/NetworkIcon'
@@ -174,7 +180,7 @@ const NetworkForm = ({
     dispatch: networksDispatch
   } = useController('NetworksController')
   const [isValidatingRPC, setValidatingRPC] = useState<boolean>(false)
-  const [isValidatingHeliosRPC, setValidatingHeliosRPC] = useState<boolean>(false)
+  const [isValidatingVerifierRPC, setValidatingVerifierRPC] = useState<boolean>(false)
   const { styles, theme } = useTheme(getStyles)
 
   const selectedNetwork = useMemo(
@@ -202,7 +208,8 @@ const NetworkForm = ({
       coingeckoPlatformId: '',
       coingeckoNativeAssetId: '',
       customBundlerUrl: '',
-      heliosRpcUrl: ''
+      isColibriEnabled: false,
+      colibriProverUrl: ''
     },
     values: {
       name: selectedNetwork?.name || '',
@@ -214,7 +221,10 @@ const NetworkForm = ({
       coingeckoPlatformId: (selectedNetwork?.platformId as string) || '',
       coingeckoNativeAssetId: (selectedNetwork?.nativeAssetId as string) || '',
       customBundlerUrl: (selectedNetwork?.customBundlerUrl as string) || '',
-      heliosRpcUrl: (selectedNetwork?.heliosRpcUrl as string) || ''
+      isColibriEnabled: !!selectedNetwork?.isColibriEnabled,
+      colibriProverUrl:
+        (selectedNetwork?.colibriProverUrl as string) ||
+        getDefaultColibriProverUrl(selectedNetwork?.chainId || 0n)
     }
   })
   const [rpcUrls, setRpcUrls] = useState(selectedNetwork?.rpcUrls || [])
@@ -236,15 +246,16 @@ const NetworkForm = ({
           : selectedNetwork?.features || getFeatures(undefined, selectedNetwork),
     [errors.chainId, networkToAddOrUpdate?.info, selectedNetwork]
   )
-  const isHeliosAvailable = useMemo(() => {
+  const isColibriAvailable = useMemo(() => {
     try {
       return (
-        !!networkFormValues.chainId && isHeliosProviderAvailable(BigInt(networkFormValues.chainId))
+        !!networkFormValues.chainId && isColibriProviderAvailable(BigInt(networkFormValues.chainId))
       )
     } catch {
       return false
     }
   }, [networkFormValues.chainId])
+  const shouldShowColibriSettings = isColibriAvailable
 
   useEffect(() => {
     networksDispatch({
@@ -379,7 +390,12 @@ const NetworkForm = ({
     // when resetting the form.
     const subscription = watch(async (value, { name }) => {
       if (name && !value[name]) {
-        if (name !== 'rpcUrl' && name !== 'customBundlerUrl' && name !== 'heliosRpcUrl') {
+        if (
+          name !== 'rpcUrl' &&
+          name !== 'customBundlerUrl' &&
+          name !== 'isColibriEnabled' &&
+          name !== 'colibriProverUrl'
+        ) {
           setError(name, { type: 'custom-error', message: 'Field is required' })
           return
         }
@@ -451,8 +467,8 @@ const NetworkForm = ({
         clearErrors('rpcUrl')
       }
 
-      if (name === 'heliosRpcUrl') {
-        clearErrors('heliosRpcUrl')
+      if (name === 'colibriProverUrl') {
+        clearErrors('colibriProverUrl')
       }
     })
 
@@ -469,20 +485,38 @@ const NetworkForm = ({
     watch
   ])
 
-  const validateHeliosRpcUrl = useCallback(
-    async (heliosRpcUrl: string, chainId: bigint, executionRpcUrl: string) => {
-      const trimmedHeliosRpcUrl = heliosRpcUrl.trim()
-      if (!trimmedHeliosRpcUrl) return ''
+  useEffect(() => {
+    if (!networkFormValues.isColibriEnabled || !shouldShowColibriSettings) return
+    if (networkFormValues.colibriProverUrl?.trim()) return
+
+    const chainId = Number(networkFormValues.chainId)
+    if (!Number.isSafeInteger(chainId) || chainId <= 0) return
+
+    setValue('colibriProverUrl', getDefaultColibriProverUrl(BigInt(chainId)))
+  }, [
+    networkFormValues.chainId,
+    networkFormValues.colibriProverUrl,
+    networkFormValues.isColibriEnabled,
+    setValue,
+    shouldShowColibriSettings
+  ])
+
+  const validateColibriProverUrl = useCallback(
+    async (colibriProverUrl: string, chainId: bigint, executionRpcUrl: string) => {
+      const trimmedColibriProverUrl = colibriProverUrl.trim() || getDefaultColibriProverUrl(chainId)
 
       let executionRpc
+      let colibriRpc
 
       try {
-        if (!trimmedHeliosRpcUrl.startsWith('http')) {
-          throw new Error('Helios RPC URL must include the correct HTTP/HTTPS prefix')
+        if (!trimmedColibriProverUrl) throw new Error('Colibri prover URL is required')
+
+        if (!trimmedColibriProverUrl.startsWith('http')) {
+          throw new Error('Colibri prover URL must include the correct HTTP/HTTPS prefix')
         }
 
-        if (!isValidURL(trimmedHeliosRpcUrl)) {
-          throw new Error('Invalid Helios RPC URL')
+        if (!isValidURL(trimmedColibriProverUrl)) {
+          throw new Error('Invalid Colibri prover URL')
         }
 
         executionRpc = getRpcProvider([executionRpcUrl], chainId, executionRpcUrl)
@@ -494,21 +528,30 @@ const NetworkForm = ({
           )
         }
 
-        await executionRpc.getBlockNumber()
+        colibriRpc = getColibriRpcProvider({
+          ...selectedNetwork,
+          rpcUrls: [executionRpcUrl],
+          selectedRpcUrl: executionRpcUrl,
+          chainId,
+          isColibriEnabled: true,
+          colibriProverUrl: trimmedColibriProverUrl
+        } as any)
+        await colibriRpc.send('eth_blockNumber', [])
 
-        return trimmedHeliosRpcUrl
+        return trimmedColibriProverUrl
       } catch (error: any) {
         console.error(error)
         const errorMessage = error?.message || 'Unknown error'
-        addToast(t('Helios RPC provider malfunction: {{message}}', { message: errorMessage }), {
+        addToast(t('Colibri prover malfunction: {{message}}', { message: errorMessage }), {
           type: 'error'
         })
         throw error
       } finally {
         executionRpc?.destroy()
+        colibriRpc?.destroy()
       }
     },
-    [addToast, t]
+    [addToast, selectedNetwork, t]
   )
 
   useEffect(() => {
@@ -539,7 +582,8 @@ const NetworkForm = ({
               'coingeckoPlatformId',
               'coingeckoNativeAssetId',
               'customBundlerUrl',
-              'heliosRpcUrl'
+              'isColibriEnabled',
+              'colibriProverUrl'
             ].includes(key) && !formFields[key].length
         )
       } else {
@@ -560,22 +604,25 @@ const NetworkForm = ({
 
       if (emptyFields.length || !rpcUrls.length || !selectedRpcUrl) return
 
-      setValidatingHeliosRPC(true)
-      let heliosRpcUrl = ''
+      setValidatingVerifierRPC(true)
+      let colibriProverUrl = selectedNetwork?.colibriProverUrl || ''
+      const isColibriEnabled = !!networkFormValues.isColibriEnabled && shouldShowColibriSettings
 
       try {
-        if (isHeliosAvailable) {
-          heliosRpcUrl = await validateHeliosRpcUrl(
-            networkFormValues.heliosRpcUrl,
+        if (isColibriEnabled) {
+          colibriProverUrl = await validateColibriProverUrl(
+            networkFormValues.colibriProverUrl,
             BigInt(networkFormValues.chainId),
             selectedRpcUrl
           )
+        } else {
+          colibriProverUrl = networkFormValues.colibriProverUrl || ''
         }
       } catch {
-        setValidatingHeliosRPC(false)
+        setValidatingVerifierRPC(false)
         return
       }
-      setValidatingHeliosRPC(false)
+      setValidatingVerifierRPC(false)
 
       if (selectedChainId === 'add-custom-network') {
         networksDispatch({
@@ -594,7 +641,8 @@ const NetworkForm = ({
                 chainId: BigInt(networkFormValues.chainId),
                 iconUrls: [],
                 customBundlerUrl: networkFormValues.customBundlerUrl,
-                heliosRpcUrl
+                isColibriEnabled,
+                colibriProverUrl
               }
             ]
           }
@@ -610,7 +658,8 @@ const NetworkForm = ({
                 selectedRpcUrl,
                 explorerUrl: networkFormValues.explorerUrl,
                 customBundlerUrl: networkFormValues.customBundlerUrl,
-                heliosRpcUrl
+                isColibriEnabled,
+                colibriProverUrl
               },
               BigInt(networkFormValues.chainId)
             ]
@@ -675,12 +724,12 @@ const NetworkForm = ({
     () =>
       !!errorCount ||
       isValidatingRPC ||
-      isValidatingHeliosRPC ||
+      isValidatingVerifierRPC ||
       features.some((f) => f.level === 'loading') ||
       !!features.filter((f) => f.id === 'flagged')[0],
     // errorCount must be a dependency in order to re-calculate the value when
     // errors change. Using errors as a dependency doesn't work
-    [errorCount, features, isValidatingHeliosRPC, isValidatingRPC]
+    [errorCount, features, isValidatingVerifierRPC, isValidatingRPC]
   )
 
   return (
@@ -870,7 +919,43 @@ const NetworkForm = ({
                   </View>
                 )}
               </ScrollableWrapper>
-              {isHeliosAvailable && (
+              {shouldShowColibriSettings && (
+                <Controller
+                  control={control}
+                  render={({ field: { onChange, value } }) => (
+                    <Checkbox
+                      value={!!value}
+                      style={flexbox.alignCenter}
+                      onValueChange={(nextValue) => {
+                        onChange(nextValue)
+
+                        if (!nextValue || networkFormValues.colibriProverUrl?.trim()) return
+
+                        const chainId = Number(networkFormValues.chainId)
+                        if (!Number.isSafeInteger(chainId) || chainId <= 0) return
+
+                        setValue('colibriProverUrl', getDefaultColibriProverUrl(BigInt(chainId)))
+                      }}
+                    >
+                      <Pressable
+                        style={[flexbox.directionRow, flexbox.alignCenter]}
+                        onPress={() => onChange(!value)}
+                      >
+                        <Image
+                          source={colibriLogo as ImageSourcePropType}
+                          style={{ width: 22, height: 22, marginRight: 8 }}
+                          resizeMode="contain"
+                        />
+                        <Text appearance="secondaryText" fontSize={12} shouldScale={false}>
+                          {t('Enable Colibri for RPC verification')}
+                        </Text>
+                      </Pressable>
+                    </Checkbox>
+                  )}
+                  name="isColibriEnabled"
+                />
+              )}
+              {shouldShowColibriSettings && networkFormValues.isColibriEnabled && (
                 <Controller
                   control={control}
                   render={({ field: { onChange, onBlur, value } }) => (
@@ -882,22 +967,11 @@ const NetworkForm = ({
                       inputWrapperStyle={{ height: 40 }}
                       inputStyle={{ height: 40 }}
                       containerStyle={{ ...spacings.mb, flex: 1 }}
-                      label={t('Helios sync URL (Experimental)')}
-                      error={handleErrors(errors.heliosRpcUrl)}
-                      leftIcon={() => {
-                        return (
-                          <>
-                            <WarningIcon color={theme.warningDecorative} data-tooltip-id="helios" />
-                            <Tooltip
-                              id="helios"
-                              content="The selected RPC URL is used as the Helios execution RPC. This URL is used for the Helios sync endpoint."
-                            />
-                          </>
-                        )
-                      }}
+                      label={t('Colibri prover URL')}
+                      error={handleErrors(errors.colibriProverUrl)}
                     />
                   )}
-                  name="heliosRpcUrl"
+                  name="colibriProverUrl"
                 />
               )}
               <View style={[flexbox.directionRow, flexbox.alignStart]}>

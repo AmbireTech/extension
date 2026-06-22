@@ -10,6 +10,7 @@ type AddressInputValidation = {
   isValidEns: boolean
   isValidNamoshi: boolean
   hasDomainResolveFailed: boolean
+  domainResolveError?: string
   overwriteValidation?: Validation | null
 }
 
@@ -26,6 +27,7 @@ const getAddressInputValidation = ({
   address,
   isRecipientDomainResolving,
   hasDomainResolveFailed = false,
+  domainResolveError,
   isValidEns,
   isValidNamoshi,
   overwriteValidation
@@ -50,7 +52,9 @@ const getAddressInputValidation = ({
     const isNamoshiDomain = getIsNamoshiDomain(address)
 
     return {
-      message: `Failed to resolve ${isNamoshiDomain ? 'Namoshi' : 'ENS'} domain. Please try again later or enter a hex address.`,
+      message:
+        domainResolveError ||
+        `Failed to resolve ${isNamoshiDomain ? 'Namoshi' : 'ENS'} domain. Please try again later or enter a hex address.`,
       severity: 'error'
     }
   }
