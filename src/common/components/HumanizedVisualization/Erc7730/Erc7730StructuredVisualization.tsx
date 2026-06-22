@@ -262,6 +262,11 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
     (nestedVisualization: HumanizerVisualization, nestedIndex: number) => {
       if (!isNestedErc7730Value(nestedVisualization)) return null
 
+      const nestedTitle = nestedVisualization.title?.trim()
+      const shouldShowNestedConnector = getDetailedRows(nestedVisualization).some(
+        (row) => !nestedTitle || row.label.trim() !== nestedTitle
+      )
+
       return (
         <View
           key={nestedVisualization.id}
@@ -289,16 +294,18 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
               }
             ]}
           >
-            <View
-              style={{
-                position: 'absolute',
-                top: SPACING_TY + textSize + 6,
-                bottom: 0,
-                left: 8.5,
-                width: 1,
-                backgroundColor: theme.secondaryBorder
-              }}
-            />
+            {shouldShowNestedConnector && (
+              <View
+                style={{
+                  position: 'absolute',
+                  top: SPACING_TY + textSize + 6,
+                  bottom: 0,
+                  left: 8.5,
+                  width: 1,
+                  backgroundColor: theme.secondaryBorder
+                }}
+              />
+            )}
             <View style={{ marginTop: SPACING_TY + 3 }}>
               <RightArrowIcon width={7} height={12} color={theme.secondaryText} />
             </View>
