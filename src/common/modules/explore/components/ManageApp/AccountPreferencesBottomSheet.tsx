@@ -38,7 +38,7 @@ const AccountPreferencesBottomSheet = ({
     save
   } = useDAppAccountPreferences(dapp.id, 'existingDapp', dapp.accountPreferences)
 
-  const handleContinue = useCallback(() => {
+  const handleConfirm = useCallback(() => {
     save()
     closeBottomSheet()
   }, [save, closeBottomSheet])
@@ -93,8 +93,8 @@ const AccountPreferencesBottomSheet = ({
         <Button
           type="primary"
           size="smaller"
-          text={t('Continue')}
-          onPress={handleContinue}
+          text={t('Confirm')}
+          onPress={handleConfirm}
           hasBottomSpacing={false}
         />
       </FooterGlassView>
