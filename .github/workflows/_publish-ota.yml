@@ -117,7 +117,7 @@ jobs:
           # Stallion CI auth - there is no interactive `stallion login` in CI.
           STALLION_CI_TOKEN: ${{ secrets.STALLION_CI_TOKEN }}
           # Private signing key (base64 secret) - signs the OTA so signed app builds accept it.
-          STALLION_PRIVATE_SIGNING_KEY: ${{ secrets.STALLION_PRIVATE_SIGNING_KEY }}
+          STALLION_PRIVATE_SIGNING_KEY_BASE_64: ${{ secrets.STALLION_PRIVATE_SIGNING_KEY_BASE_64 }}
           # Passed via env (not interpolated into the command) to avoid shell injection.
           RELEASE_NOTE_INPUT: ${{ inputs.release_note }}
         run: |

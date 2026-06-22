@@ -66,16 +66,16 @@ APP_ENV=production npx expo export:embed \
 # Bundle signing: sign the OTA so app builds with StallionPublicSigningKey embedded accept it
 # (and reject tampered/unsigned bundles). This is the real integrity guarantee for OTA'd code -
 # the worker bundle (core controllers) ships via OTA, so signed delivery matters. CI provides
-# the key base64-encoded via STALLION_PRIVATE_SIGNING_KEY (decoded to a temp file); locally it
-# lives at stallion/secrets/private-key.pem (from `stallion generate-key-pair`).
+# the key base64-encoded via STALLION_PRIVATE_SIGNING_KEY_BASE_64 (decoded to a temp file);
+# locally it lives at stallion/secret-keys/private-key.pem (from `stallion generate-key-pair`).
 PRIVATE_KEY_PATH=""
-if [ -n "${STALLION_PRIVATE_SIGNING_KEY:-}" ]; then
+if [ -n "${STALLION_PRIVATE_SIGNING_KEY_BASE_64:-}" ]; then
   PRIVATE_KEY_PATH="$(mktemp)"
   trap 'rm -f "$PRIVATE_KEY_PATH"' EXIT
-  printf '%s' "$STALLION_PRIVATE_SIGNING_KEY" | base64 --decode > "$PRIVATE_KEY_PATH" 2>/dev/null ||
-    printf '%s' "$STALLION_PRIVATE_SIGNING_KEY" | base64 -D > "$PRIVATE_KEY_PATH"
-elif [ -f "$ROOT_DIR/stallion/secrets/private-key.pem" ]; then
-  PRIVATE_KEY_PATH="$ROOT_DIR/stallion/secrets/private-key.pem"
+  printf '%s' "$STALLION_PRIVATE_SIGNING_KEY_BASE_64" | base64 --decode > "$PRIVATE_KEY_PATH" 2>/dev/null ||
+    printf '%s' "$STALLION_PRIVATE_SIGNING_KEY_BASE_64" | base64 -D > "$PRIVATE_KEY_PATH"
+elif [ -f "$ROOT_DIR/stallion/secret-keys/private-key.pem" ]; then
+  PRIVATE_KEY_PATH="$ROOT_DIR/stallion/secret-keys/private-key.pem"
 fi
 
 publish_args=(
@@ -91,7 +91,7 @@ if [ -n "$PRIVATE_KEY_PATH" ]; then
   publish_args+=(--private-key="$PRIVATE_KEY_PATH")
 else
   echo "WARNING: publishing UNSIGNED - app builds with StallionPublicSigningKey embedded will" >&2
-  echo "         REJECT this OTA. Set STALLION_PRIVATE_SIGNING_KEY (CI) or stallion/secrets/" >&2
+  echo "         REJECT this OTA. Set STALLION_PRIVATE_SIGNING_KEY_BASE_64 (CI) or stallion/secret-keys/" >&2
   echo "         private-key.pem (local) to sign. See https://stalliontech.io/learn/docs/bundle-signing" >&2
 fi
 
