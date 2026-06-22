@@ -147,7 +147,9 @@ const selectors = {
     backButton: 'back-button',
     amountField: 'amount-field',
     proceedBtn: 'proceed-btn',
-    transactionError: '//span[contains(text(),"Error")]' // e.g. snackbar when relayer is down
+    transactionError: '//span[contains(text(),"Error")]', // e.g. snackbar when relayer is down,
+    dualChoiceModalAcceptButton: 'dual-choice-modal-primary-button',
+    dualChoiceModalTitle: 'dual-choice-modal-title-text'
   },
   // TODO: update selectors wiyh testID
   ambireRewards: {

@@ -165,6 +165,14 @@ export class TransferPage extends BasePage {
       await this.expectButtonEnabled(selectors.signButton)
       await this.click(selectors.signButton)
 
+      // Accept dual choice modal if it appears
+      try {
+        await this.compareText(selectors.transaction.dualChoiceModalTitle, 'Gas fee updated')
+        await this.click(selectors.transaction.dualChoiceModalAcceptButton)
+      } catch {
+        console.log('Gas fee updated modal did not appear.')
+      }
+
       if (ledgerSimulatorControls && !payWithGasTank) {
         await ledgerSimulatorControls.signTransaction()
       } else if (ledgerSimulatorControls && payWithGasTank) {
