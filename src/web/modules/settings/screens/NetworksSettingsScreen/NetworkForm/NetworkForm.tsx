@@ -3,6 +3,7 @@ import { Controller, useForm } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
 import { Pressable, View, ViewStyle } from 'react-native'
 
+import { isHeliosProviderAvailable } from '@ambire-common/libs/networks/helios'
 import { getFeatures } from '@ambire-common/libs/networks/networks'
 import { getRpcProvider } from '@ambire-common/services/provider'
 import { isValidURL } from '@ambire-common/services/validations'
@@ -173,6 +174,7 @@ const NetworkForm = ({
     dispatch: networksDispatch
   } = useController('NetworksController')
   const [isValidatingRPC, setValidatingRPC] = useState<boolean>(false)
+  const [isValidatingHeliosRPC, setValidatingHeliosRPC] = useState<boolean>(false)
   const { styles, theme } = useTheme(getStyles)
 
   const selectedNetwork = useMemo(
@@ -199,7 +201,8 @@ const NetworkForm = ({
       explorerUrl: '',
       coingeckoPlatformId: '',
       coingeckoNativeAssetId: '',
-      customBundlerUrl: ''
+      customBundlerUrl: '',
+      heliosRpcUrl: ''
     },
     values: {
       name: selectedNetwork?.name || '',
@@ -210,7 +213,8 @@ const NetworkForm = ({
       explorerUrl: selectedNetwork?.explorerUrl || '',
       coingeckoPlatformId: (selectedNetwork?.platformId as string) || '',
       coingeckoNativeAssetId: (selectedNetwork?.nativeAssetId as string) || '',
-      customBundlerUrl: (selectedNetwork?.customBundlerUrl as string) || ''
+      customBundlerUrl: (selectedNetwork?.customBundlerUrl as string) || '',
+      heliosRpcUrl: (selectedNetwork?.heliosRpcUrl as string) || ''
     }
   })
   const [rpcUrls, setRpcUrls] = useState(selectedNetwork?.rpcUrls || [])
@@ -232,6 +236,15 @@ const NetworkForm = ({
           : selectedNetwork?.features || getFeatures(undefined, selectedNetwork),
     [errors.chainId, networkToAddOrUpdate?.info, selectedNetwork]
   )
+  const isHeliosAvailable = useMemo(() => {
+    try {
+      return (
+        !!networkFormValues.chainId && isHeliosProviderAvailable(BigInt(networkFormValues.chainId))
+      )
+    } catch {
+      return false
+    }
+  }, [networkFormValues.chainId])
 
   useEffect(() => {
     networksDispatch({
@@ -366,7 +379,7 @@ const NetworkForm = ({
     // when resetting the form.
     const subscription = watch(async (value, { name }) => {
       if (name && !value[name]) {
-        if (name !== 'rpcUrl' && name !== 'customBundlerUrl') {
+        if (name !== 'rpcUrl' && name !== 'customBundlerUrl' && name !== 'heliosRpcUrl') {
           setError(name, { type: 'custom-error', message: 'Field is required' })
           return
         }
@@ -437,6 +450,10 @@ const NetworkForm = ({
       if (name === 'rpcUrl') {
         clearErrors('rpcUrl')
       }
+
+      if (name === 'heliosRpcUrl') {
+        clearErrors('heliosRpcUrl')
+      }
     })
 
     return () => {
@@ -451,6 +468,48 @@ const NetworkForm = ({
     setError,
     watch
   ])
+
+  const validateHeliosRpcUrl = useCallback(
+    async (heliosRpcUrl: string, chainId: bigint, executionRpcUrl: string) => {
+      const trimmedHeliosRpcUrl = heliosRpcUrl.trim()
+      if (!trimmedHeliosRpcUrl) return ''
+
+      let executionRpc
+
+      try {
+        if (!trimmedHeliosRpcUrl.startsWith('http')) {
+          throw new Error('Helios RPC URL must include the correct HTTP/HTTPS prefix')
+        }
+
+        if (!isValidURL(trimmedHeliosRpcUrl)) {
+          throw new Error('Invalid Helios RPC URL')
+        }
+
+        executionRpc = getRpcProvider([executionRpcUrl], chainId, executionRpcUrl)
+        const executionNetwork = await executionRpc.getNetwork()
+
+        if (executionNetwork.chainId !== chainId) {
+          throw new Error(
+            `Execution RPC chain id ${executionNetwork.chainId} does not match chain id ${chainId}`
+          )
+        }
+
+        await executionRpc.getBlockNumber()
+
+        return trimmedHeliosRpcUrl
+      } catch (error: any) {
+        console.error(error)
+        const errorMessage = error?.message || 'Unknown error'
+        addToast(t('Helios RPC provider malfunction: {{message}}', { message: errorMessage }), {
+          type: 'error'
+        })
+        throw error
+      } finally {
+        executionRpc?.destroy()
+      }
+    },
+    [addToast, t]
+  )
 
   useEffect(() => {
     if (statuses.addNetwork === 'SUCCESS') {
@@ -479,7 +538,8 @@ const NetworkForm = ({
               'rpcUrls',
               'coingeckoPlatformId',
               'coingeckoNativeAssetId',
-              'customBundlerUrl'
+              'customBundlerUrl',
+              'heliosRpcUrl'
             ].includes(key) && !formFields[key].length
         )
       } else {
@@ -500,6 +560,23 @@ const NetworkForm = ({
 
       if (emptyFields.length || !rpcUrls.length || !selectedRpcUrl) return
 
+      setValidatingHeliosRPC(true)
+      let heliosRpcUrl = ''
+
+      try {
+        if (isHeliosAvailable) {
+          heliosRpcUrl = await validateHeliosRpcUrl(
+            networkFormValues.heliosRpcUrl,
+            BigInt(networkFormValues.chainId),
+            selectedRpcUrl
+          )
+        }
+      } catch {
+        setValidatingHeliosRPC(false)
+        return
+      }
+      setValidatingHeliosRPC(false)
+
       if (selectedChainId === 'add-custom-network') {
         networksDispatch({
           type: 'method',
@@ -516,7 +593,8 @@ const NetworkForm = ({
                 selectedRpcUrl,
                 chainId: BigInt(networkFormValues.chainId),
                 iconUrls: [],
-                customBundlerUrl: networkFormValues.customBundlerUrl
+                customBundlerUrl: networkFormValues.customBundlerUrl,
+                heliosRpcUrl
               }
             ]
           }
@@ -531,7 +609,8 @@ const NetworkForm = ({
                 rpcUrls,
                 selectedRpcUrl,
                 explorerUrl: networkFormValues.explorerUrl,
-                customBundlerUrl: networkFormValues.customBundlerUrl
+                customBundlerUrl: networkFormValues.customBundlerUrl,
+                heliosRpcUrl
               },
               BigInt(networkFormValues.chainId)
             ]
@@ -596,11 +675,12 @@ const NetworkForm = ({
     () =>
       !!errorCount ||
       isValidatingRPC ||
+      isValidatingHeliosRPC ||
       features.some((f) => f.level === 'loading') ||
       !!features.filter((f) => f.id === 'flagged')[0],
     // errorCount must be a dependency in order to re-calculate the value when
     // errors change. Using errors as a dependency doesn't work
-    [errorCount, features, isValidatingRPC]
+    [errorCount, features, isValidatingHeliosRPC, isValidatingRPC]
   )
 
   return (
@@ -790,6 +870,36 @@ const NetworkForm = ({
                   </View>
                 )}
               </ScrollableWrapper>
+              {isHeliosAvailable && (
+                <Controller
+                  control={control}
+                  render={({ field: { onChange, onBlur, value } }) => (
+                    <Input
+                      backgroundColor={theme.secondaryBackground}
+                      onBlur={onBlur}
+                      onChangeText={onChange}
+                      value={value}
+                      inputWrapperStyle={{ height: 40 }}
+                      inputStyle={{ height: 40 }}
+                      containerStyle={{ ...spacings.mb, flex: 1 }}
+                      label={t('Helios sync URL (Experimental)')}
+                      error={handleErrors(errors.heliosRpcUrl)}
+                      leftIcon={() => {
+                        return (
+                          <>
+                            <WarningIcon color={theme.warningDecorative} data-tooltip-id="helios" />
+                            <Tooltip
+                              id="helios"
+                              content="The selected RPC URL is used as the Helios execution RPC. This URL is used for the Helios sync endpoint."
+                            />
+                          </>
+                        )
+                      }}
+                    />
+                  )}
+                  name="heliosRpcUrl"
+                />
+              )}
               <View style={[flexbox.directionRow, flexbox.alignStart]}>
                 <Controller
                   control={control}
@@ -885,7 +995,7 @@ const NetworkForm = ({
                             />
                             <Tooltip
                               id="customBundlerId"
-                              content="The custom bundler is an experimental feature. The extension might not work well with it. Proceed with caution"
+                              content="The custom bundler is an experimental feature. The extension may not work well with it. Proceed with caution"
                             />
                           </>
                         )

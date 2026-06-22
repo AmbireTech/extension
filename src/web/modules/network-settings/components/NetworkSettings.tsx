@@ -26,7 +26,6 @@ import Network from '@web/modules/settings/screens/NetworksSettingsScreen/Networ
 import NetworkForm from '@web/modules/settings/screens/NetworksSettingsScreen/NetworkForm'
 
 import BatchingControlOption from './BatchingControlOption'
-import HeliosControlOption from './HeliosControlOption'
 
 const NetworksSettings = () => {
   const { t } = useTranslation()
@@ -196,11 +195,6 @@ const NetworksSettings = () => {
                 allowRemoveNetwork
               />
             </View>
-            {!!selectedNetwork && (
-              <View style={spacings.mb}>
-                <HeliosControlOption network={selectedNetwork} />
-              </View>
-            )}
             {!!selectedNetwork && !!selectedChainId && (
               <NetworkAvailableFeatures
                 features={selectedNetwork.features}
