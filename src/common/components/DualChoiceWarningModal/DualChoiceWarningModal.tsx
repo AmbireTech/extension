@@ -125,6 +125,7 @@ const DualChoiceWarningModal = ({
       </ContentWrapper>
       <ButtonWrapper reverse={true}>
         <Button
+          testID="dual-choice-modal-primary-button"
           text={primaryButtonText}
           onPress={onPrimaryButtonPress}
           type={type === 'error' ? 'dangerFilled' : type}

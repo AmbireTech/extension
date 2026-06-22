@@ -110,6 +110,7 @@ const GasFeeUpdatedModal = ({ signAccountOpState, onAccept, onCancel }: Props) =
         <View style={flexbox.alignCenter}>
           <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mbTy]}>
             <Text
+              testID="dual-choice-modal-title-text"
               fontSize={16}
               appearance="secondaryText"
               style={[flexbox.flex1, { minWidth: 100 }]}
