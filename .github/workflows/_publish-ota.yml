@@ -116,6 +116,8 @@ jobs:
           WALLETCONNECT_PROJECT_ID: ${{ vars.WALLETCONNECT_PROJECT_ID }}
           # Stallion CI auth - there is no interactive `stallion login` in CI.
           STALLION_CI_TOKEN: ${{ secrets.STALLION_CI_TOKEN }}
+          # Private signing key (base64 secret) - signs the OTA so signed app builds accept it.
+          STALLION_PRIVATE_SIGNING_KEY: ${{ secrets.STALLION_PRIVATE_SIGNING_KEY }}
           # Passed via env (not interpolated into the command) to avoid shell injection.
           RELEASE_NOTE_INPUT: ${{ inputs.release_note }}
         run: |

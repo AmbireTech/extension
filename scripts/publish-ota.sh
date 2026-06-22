@@ -63,11 +63,21 @@ APP_ENV=production npx expo export:embed \
 #    CI has no browser, so a CI token (Stallion dashboard -> project settings) is passed via
 #    the STALLION_CI_TOKEN env var when present.
 #
-# TODO(security): enable Stallion bundle signing. The webview worker bundle (the wallet's
-# core controller logic) now ships via OTA, so OTA integrity must be guaranteed by SIGNED
-# delivery, not only the app-store signature. Run `stallion generate-key-pair`, embed the
-# public key in the native Stallion config, and pass `--private-key=<key>` below.
-# See https://learn.stalliontech.io/docs/bundle-signing
+# Bundle signing: sign the OTA so app builds with StallionPublicSigningKey embedded accept it
+# (and reject tampered/unsigned bundles). This is the real integrity guarantee for OTA'd code -
+# the worker bundle (core controllers) ships via OTA, so signed delivery matters. CI provides
+# the key base64-encoded via STALLION_PRIVATE_SIGNING_KEY (decoded to a temp file); locally it
+# lives at stallion/secrets/private-key.pem (from `stallion generate-key-pair`).
+PRIVATE_KEY_PATH=""
+if [ -n "${STALLION_PRIVATE_SIGNING_KEY:-}" ]; then
+  PRIVATE_KEY_PATH="$(mktemp)"
+  trap 'rm -f "$PRIVATE_KEY_PATH"' EXIT
+  printf '%s' "$STALLION_PRIVATE_SIGNING_KEY" | base64 --decode > "$PRIVATE_KEY_PATH" 2>/dev/null ||
+    printf '%s' "$STALLION_PRIVATE_SIGNING_KEY" | base64 -D > "$PRIVATE_KEY_PATH"
+elif [ -f "$ROOT_DIR/stallion/secrets/private-key.pem" ]; then
+  PRIVATE_KEY_PATH="$ROOT_DIR/stallion/secrets/private-key.pem"
+fi
+
 publish_args=(
   --platform="$PLATFORM"
   --custom-bundle-path="$OUT_DIR"
@@ -76,6 +86,13 @@ publish_args=(
 )
 if [ -n "${STALLION_CI_TOKEN:-}" ]; then
   publish_args+=(--ci-token="$STALLION_CI_TOKEN")
+fi
+if [ -n "$PRIVATE_KEY_PATH" ]; then
+  publish_args+=(--private-key="$PRIVATE_KEY_PATH")
+else
+  echo "WARNING: publishing UNSIGNED - app builds with StallionPublicSigningKey embedded will" >&2
+  echo "         REJECT this OTA. Set STALLION_PRIVATE_SIGNING_KEY (CI) or stallion/secrets/" >&2
+  echo "         private-key.pem (local) to sign. See https://stalliontech.io/learn/docs/bundle-signing" >&2
 fi
 
 npx stallion publish-bundle "${publish_args[@]}"

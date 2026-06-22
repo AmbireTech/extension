@@ -4,4 +4,5 @@
   <!-- Stallion OTA config (values injected at build time by scripts/inject-mobile-ota-config.sh) -->
   <string name="StallionProjectId">__STALLION_PROJECT_ID__</string>
   <string name="StallionAppToken">__STALLION_APP_TOKEN__</string>
+  <string name="StallionPublicSigningKey">__STALLION_PUBLIC_SIGNING_KEY__</string>
 </resources>

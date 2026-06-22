@@ -95,5 +95,7 @@
     <string>__STALLION_PROJECT_ID__</string>
     <key>StallionAppToken</key>
     <string>__STALLION_APP_TOKEN__</string>
+    <key>StallionPublicSigningKey</key>
+    <string>__STALLION_PUBLIC_SIGNING_KEY__</string>
   </dict>
 </plist>

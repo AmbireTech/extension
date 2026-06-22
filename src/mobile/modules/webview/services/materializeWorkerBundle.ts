@@ -23,9 +23,10 @@ import { captureException } from '@common/config/analytics/CrashAnalytics'
 // to the native-asset copy, so the worker always has a working bundle to boot.
 //
 // SECURITY: once the worker ships via OTA, its integrity depends on signed OTA delivery.
-// TODO(security): enable Stallion bundle signing (--private-key) - see scripts/publish-ota.sh.
-// The HTML's SRI only guards HTML<->JS consistency; a compromised OTA controls both, so it
-// is defense-in-depth, not the primary guarantee.
+// This is guarded by Stallion bundle signing (StallionPublicSigningKey embedded in the native
+// config + the bundle signed with --private-key at publish; see scripts/publish-ota.sh), which
+// must be configured for verification to be enforced. The HTML's SRI only guards HTML<->JS
+// consistency; a compromised OTA controls both, so it is defense-in-depth, not the primary guarantee.
 const materializeWorkerBundle = async (): Promise<string | null> => {
   try {
     if (!documentDirectory) return null
