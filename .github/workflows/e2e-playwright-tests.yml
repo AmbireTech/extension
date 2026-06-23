@@ -635,6 +635,11 @@ jobs:
     if: always()
 
     steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
+
       - name: Download all blob reports
         uses: actions/download-artifact@v6
         with:
@@ -646,7 +651,7 @@ jobs:
         working-directory: ./e2e-playwright-tests
         run: |
           mkdir -p all-blob-reports
-          yarn playwright merge-reports --reporter html ./all-blob-reports || true
+          yarn playwright merge-reports --reporter html ../all-blob-reports || true
 
       - name: Upload final Playwright report
         if: always()
