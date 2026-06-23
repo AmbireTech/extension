@@ -115,7 +115,10 @@ function processManifest(content, mode) {
   }
 
   const permissions = [...manifest.permissions, 'scripting', 'alarms']
-  if (isWebkit && !isSafari) permissions.push('system.display')
+  if (isWebkit && !isSafari) {
+    permissions.push('system.display', 'sidePanel')
+    manifest.side_panel = { default_path: 'side-panel.html' }
+  }
   manifest.permissions = permissions
 
   if (isSafari) {
@@ -358,6 +361,16 @@ module.exports = async function buildExtension(
       inject: 'body', // to auto inject the main.js bundle in the body
       chunks: ['runtime', 'rootTheme', 'main'] // include only chunks from the main entry
     }),
+    ...(isWebkit && !isSafari
+      ? [
+          new HtmlWebpackPlugin({
+            template: './src/web/public/side-panel.html',
+            filename: 'side-panel.html',
+            inject: 'body',
+            chunks: ['runtime', 'rootTheme', 'main']
+          })
+        ]
+      : []),
     new CopyPlugin({ patterns: extensionCopyPatterns })
   ]
 

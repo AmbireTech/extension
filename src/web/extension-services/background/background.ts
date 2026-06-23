@@ -71,6 +71,7 @@ import UrQrProtocolAdapter from '@web/modules/hardware-wallet/qr/protocol/UrQrPr
 import QrHardwareSigner from '@web/modules/hardware-wallet/signers/QrHardwareSigner'
 import { providerRequestTransport } from '@web/modules/provider/providerRequestTransport'
 import { getExtensionInstanceId } from '@web/utils/analytics'
+import { isExtensionOverlayPort } from '@web/utils/sidePanel'
 
 import {
   captureBackgroundException,
@@ -523,8 +524,8 @@ const init = async () => {
         remove: async (winId: number | 'popup') => {
           if (winId === 'popup') {
             return new Promise((resolve) => {
-              const popupPort = pm.ports.find((p) => p.name === 'popup')
-              if (!popupPort) {
+              const overlayPort = pm.ports.find((p) => isExtensionOverlayPort(p.name))
+              if (!overlayPort) {
                 resolve()
                 return
               }
@@ -533,7 +534,7 @@ const init = async () => {
                 resolve()
               }, 1500)
 
-              popupPort.onDisconnect.addListener(() => {
+              overlayPort.onDisconnect.addListener(() => {
                 clearTimeout(timeout)
                 resolve()
               })
@@ -667,12 +668,18 @@ const init = async () => {
   // listen for messages from UI
   browser.runtime.onConnect.addListener(async (port: Port) => {
     const [name, id] = port.name.split(':') as [Port['name'], Port['id']]
-    if (['popup', 'tab', 'request-window'].includes(name)) {
+    if (['popup', 'tab', 'request-window', 'side-panel'].includes(name)) {
       port.id = id || nanoid()
 
       port.name = name
       pm.addOrUpdatePort(port, () => {
         mainCtrl.ui.addView({ id: port.id, type: port.name })
+
+        if (isExtensionOverlayPort(port.name)) {
+          mainCtrl.onPopupOpen(port.id).catch((error) => {
+            console.error('Failed to initialize overlay view', error)
+          })
+        }
 
         pm.addConnectListener(
           port.id,
@@ -729,7 +736,7 @@ const init = async () => {
           // state will remain reset until an automatic update is triggered.
           // Example: the user has the dashboard opened in tab, opens the popup
           // and closes it immediately.
-          if (disconnectedPort.name === 'popup') mainCtrl.portfolio.forceEmitUpdate()
+          if (isExtensionOverlayPort(disconnectedPort.name)) mainCtrl.portfolio.forceEmitUpdate()
           if (disconnectedPort.name === 'tab' || disconnectedPort.name === 'request-window') {
             // eslint-disable-next-line @typescript-eslint/no-floating-promises
             ledgerCtrl.cleanUp()
@@ -759,6 +766,13 @@ const setupStorageForTesting = async () => {
 
   await checkE2EStorage()
 }
+
+// Ensures controllers are initialized as soon as the service worker starts,
+// so UI ports (popup, side panel, tab) can connect without waiting for a ping.
+init().catch((err) => {
+  captureBackgroundException(err)
+  console.error(err)
+})
 
 // Ensures controllers are initialized when the browser starts.
 browser.runtime.onStartup.addListener(() => {

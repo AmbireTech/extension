@@ -11,6 +11,7 @@ import {
   TAB_WIDE_CONTENT_WIDTH
 } from '@web/constants/spacings'
 import { PortMessenger } from '@web/extension-services/messengers'
+import { isExtensionOverlayPort } from '@web/utils/sidePanel'
 
 type CustomSize = {
   width: number
@@ -204,7 +205,7 @@ const remove = async (winId: number, pm: PortMessenger) => {
     if (
       windowToRemove &&
       windowToRemove.type === 'popup' && // if a request window is opened
-      pm.ports.some((p) => p.name === 'popup') // if the extension popup is opened
+      pm.ports.some((p) => isExtensionOverlayPort(p.name)) // if the extension popup or side panel is opened
     ) {
       chrome.windows
         .update(winId, { focused: false, top: 0, left: 0, width: 0, height: 0 })

@@ -59,7 +59,7 @@ const KeyStoreUnlockScreen = () => {
   const { requestWindow } = useController('RequestsController').state
   const { theme } = useTheme()
   const { hasBiometricsHardware, getBiometricsSecret, deviceSupportedAuthTypes } = useBiometrics()
-  const { isPopup, isTab } = getUiType()
+  const { isPopup, isTab, isSidePanel } = getUiType()
   const [unlockMethod, setUnlockMethod] = useState<'biometrics' | 'password' | null>(null)
   const [hasAutoPromptedBiometrics, setHasAutoPromptedBiometrics] = useState(false)
   const [isBiometricsPromptPending, setIsBiometricsPromptPending] = useState(false)
@@ -72,20 +72,23 @@ const KeyStoreUnlockScreen = () => {
 
   const canUseBiometrics = !!hasBiometricsSecret && !!hasBiometricsHardware
 
-  const shouldUseTabForBiometrics = IS_FIREFOX && isPopup
+  const shouldUseTabForBiometrics = (IS_FIREFOX && isPopup) || isSidePanel
   const isBiometricsUnlockLoading =
     isBiometricsPromptPending || (unlockMethod === 'biometrics' && isBiometricsUnlockInProgress)
 
   const openBiometricsInTab = useCallback(async () => {
     await openInternalPageInTab({
       route: ROUTES.keyStoreUnlock,
-      shouldCloseCurrentWindow: !isTab,
+      shouldCloseCurrentWindow: !isTab && !isSidePanel,
       windowId: requestWindow?.windowProps?.createdFromWindowId
     })
-  }, [isTab, requestWindow?.windowProps?.createdFromWindowId])
+  }, [isSidePanel, isTab, requestWindow?.windowProps?.createdFromWindowId])
 
   const handleBiometricsPrompt = useCallback(async () => {
     if (shouldUseTabForBiometrics) {
+      setIsBiometricsPromptPending(false)
+      setIsBiometricsUnlockInProgress(false)
+      if (isSidePanel) setUnlockMethod('password')
       await openBiometricsInTab()
       return false
     }
@@ -117,6 +120,7 @@ const KeyStoreUnlockScreen = () => {
     keystoreDispatch,
     openBiometricsInTab,
     shouldUseTabForBiometrics,
+    isSidePanel,
     statuses.unlockWithSecret
   ])
 

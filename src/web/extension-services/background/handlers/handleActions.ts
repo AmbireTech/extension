@@ -3,7 +3,9 @@ import { IEventEmitterRegistryController } from '@ambire-common/interfaces/event
 import { KeyIterator } from '@ambire-common/libs/keyIterator/keyIterator'
 import wait from '@ambire-common/utils/wait'
 import { Action, MethodAction } from '@common/types/actions'
+import { storage } from '@common/services/storage'
 import { browser } from '@web/constants/browserapi'
+import { openSidePanel } from '@web/extension-services/background/webapi/sidePanel'
 import { Port, PortMessenger } from '@web/extension-services/messengers'
 import LatticeKeyIterator from '@web/modules/hardware-wallet/libs/latticeKeyIterator'
 import LedgerKeyIterator from '@web/modules/hardware-wallet/libs/ledgerKeyIterator'
@@ -197,9 +199,12 @@ export const handleActions = async (
     case 'OPEN_EXTENSION_POPUP': {
       if (!pm) return
 
-      async function waitForPopupOpen(timeout = 10000, interval = 100) {
+      const isSidePanelModeEnabled = await storage.get('isSidePanelModeEnabled', false)
+      const overlayPortName = isSidePanelModeEnabled ? 'side-panel' : 'popup'
+
+      async function waitForOverlayOpen(timeout = 10000, interval = 100) {
         const startTime = Date.now()
-        while (!pm!.ports.some((p) => p.name === 'popup')) {
+        while (!pm!.ports.some((p) => p.name === overlayPortName)) {
           if (Date.now() - startTime > timeout) break
           await wait(interval)
         }
@@ -207,16 +212,24 @@ export const handleActions = async (
 
       try {
         const isLoading = await sessionStorage.get('isOpenExtensionPopupLoading', false)
-        const isPopupAlreadyOpened = pm.ports.some((p) => p.name === 'popup')
-        if (isLoading || isPopupAlreadyOpened) return
+        const isOverlayAlreadyOpened = pm.ports.some((p) => p.name === overlayPortName)
+        if (isLoading || isOverlayAlreadyOpened) return
 
         await sessionStorage.set('isOpenExtensionPopupLoading', true)
-        await browser.action.openPopup()
-        await waitForPopupOpen()
+        if (isSidePanelModeEnabled) {
+          await openSidePanel()
+        } else {
+          await browser.action.openPopup()
+        }
+        await waitForOverlayOpen()
       } catch (error) {
         try {
-          await chrome.action.openPopup()
-          await waitForPopupOpen()
+          if (isSidePanelModeEnabled) {
+            await openSidePanel()
+          } else {
+            await chrome.action.openPopup()
+          }
+          await waitForOverlayOpen()
         } catch (e) {
           pm.send('> ui', { method: 'navigate', params: { route: '/' } })
         }

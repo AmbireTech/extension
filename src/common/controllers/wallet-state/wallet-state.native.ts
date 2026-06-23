@@ -24,6 +24,8 @@ export class WalletStateController extends EventEmitter implements IWalletStateC
 
   isPrivacyModeEnabled: boolean = false
 
+  isSidePanelModeEnabled: boolean = false
+
   themeType: ThemeType = THEME_TYPES.SYSTEM
 
   avatarType: AvatarType = 'jazzicons'
@@ -124,6 +126,11 @@ export class WalletStateController extends EventEmitter implements IWalletStateC
   async togglePrivacyMode() {
     this.isPrivacyModeEnabled = !this.isPrivacyModeEnabled
     await this.#storage.set('isPrivacyModeEnabled', this.isPrivacyModeEnabled)
+    this.emitUpdate()
+  }
+
+  async setSidePanelModeEnabled(enabled: boolean) {
+    this.isSidePanelModeEnabled = enabled
     this.emitUpdate()
   }
 

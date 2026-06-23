@@ -10,7 +10,8 @@ import useController from '@common/hooks/useController'
 import useControllerStore from '@common/hooks/useControllerStore'
 import { getUiType } from '@common/utils/uiType'
 
-const { isPopup } = getUiType()
+const { isPopup, isSidePanel } = getUiType()
+const isOverlayView = isPopup || isSidePanel
 const MIN_LOADING_TIME = 300
 
 const ControllersStateLoadedProvider = ({ children }: { children: ReactNode }) => {
@@ -23,9 +24,13 @@ const ControllersStateLoadedProvider = ({ children }: { children: ReactNode }) =
   const { state: uiControllerState } = useController('UiController')
 
   const isViewReady = useMemo(() => {
-    if (!isPopup) return true
+    if (!isOverlayView) return true
 
-    return uiControllerState?.views?.some((v: any) => v.type === 'popup' && v.isReady) ?? false
+    return (
+      uiControllerState?.views?.some(
+        (v: any) => (v.type === 'popup' || v.type === 'side-panel') && v.isReady
+      ) ?? false
+    )
   }, [uiControllerState])
 
   useEffect(() => {
@@ -41,6 +46,8 @@ const ControllersStateLoadedProvider = ({ children }: { children: ReactNode }) =
         const errorData: any = {
           loadingControllers,
           isPopup,
+          isSidePanel,
+          isOverlayView,
           isPopupReady: isViewReady,
           uiVersion: APP_VERSION
         }
