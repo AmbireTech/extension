@@ -6,7 +6,7 @@ import {
 } from './helpers'
 
 describe('getParsedMessageValue', () => {
-  test('shortens long EIP-712 string values to the configured max length', () => {
+  test('shortens long EIP-712 hex string values to the configured max length', () => {
     const value = `0x${'1'.repeat(100)}`
     const displayedValue = getParsedMessageValue('data', value)
 
@@ -15,7 +15,7 @@ describe('getParsedMessageValue', () => {
     expect(isParsedMessageValueShortened('data', value)).toBe(true)
   })
 
-  test('shortens long EIP-712 values from any field', () => {
+  test('shortens long EIP-712 hex string values from any field', () => {
     const value = `0x${'1'.repeat(100)}`
 
     expect(getParsedMessageValue('messageHash', value)).toHaveLength(EIP712_VALUE_PREVIEW_MAX_LENGTH)
@@ -27,6 +27,13 @@ describe('getParsedMessageValue', () => {
 
     expect(getParsedMessageValue('messageHash', value)).toBe(value)
     expect(isParsedMessageValueShortened('messageHash', value)).toBe(false)
+  })
+
+  test('does not shorten long non-hex string values', () => {
+    const value = 'plain text '.repeat(20)
+
+    expect(getParsedMessageValue('message', value)).toBe(value)
+    expect(isParsedMessageValueShortened('message', value)).toBe(false)
   })
 
   test('displays EIP-712 integer values as decimal strings', () => {

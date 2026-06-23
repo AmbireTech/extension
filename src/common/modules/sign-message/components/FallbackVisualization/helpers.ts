@@ -1,3 +1,5 @@
+import { isHexString } from 'ethers'
+
 export const EIP712_VALUE_PREVIEW_MAX_LENGTH = 42
 
 export const getEip712IntegerFieldNames = (
@@ -17,6 +19,7 @@ export const isParsedMessageValueShortened = (
 ): value is string =>
   !integerFieldNames.has(label) &&
   typeof value === 'string' &&
+  isHexString(value) &&
   value.length > EIP712_VALUE_PREVIEW_MAX_LENGTH
 
 export const getParsedMessageValue = (
