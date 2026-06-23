@@ -30,6 +30,7 @@ interface Props {
   currentDapp: Dapp | null | undefined
   smartAccountType?: 'Ambire' | 'Safe'
   onManageAppClosed?: () => void
+  showBackButton?: boolean
 }
 
 const DappWebViewFooter: React.FC<Props> = ({
@@ -41,7 +42,8 @@ const DappWebViewFooter: React.FC<Props> = ({
   account,
   currentDapp,
   smartAccountType,
-  onManageAppClosed
+  onManageAppClosed,
+  showBackButton
 }) => {
   const { theme } = useTheme()
   const { navigate, goBack, canGoBack: canGoBackInHistory } = useNavigation()
@@ -70,7 +72,7 @@ const DappWebViewFooter: React.FC<Props> = ({
   return (
     <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.phSm, spacings.ptSm]}>
       <Pressable
-        onPress={handleNavigateToApps}
+        onPress={showBackButton ? goBack : handleNavigateToApps}
         style={[
           flexbox.alignCenter,
           flexbox.justifyCenter,
@@ -82,7 +84,11 @@ const DappWebViewFooter: React.FC<Props> = ({
           }
         ]}
       >
-        <HomeIcon width={18} height={18} />
+        {showBackButton ? (
+          <LeftArrowIcon width={9} height={16} />
+        ) : (
+          <HomeIcon width={18} height={18} />
+        )}
       </Pressable>
       <View
         style={[

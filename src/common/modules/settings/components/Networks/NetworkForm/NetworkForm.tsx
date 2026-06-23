@@ -13,29 +13,32 @@ import { getColibriRpcProvider } from '@ambire-common/services/provider/colibri'
 import { isValidURL } from '@ambire-common/services/validations'
 import colibriLogo from '@common/assets/images/colibri-logo.png'
 import CopyIcon from '@common/assets/svg/CopyIcon'
+import DownArrowIcon from '@common/assets/svg/DownArrowIcon'
+import UpArrowIcon from '@common/assets/svg/UpArrowIcon'
 import WarningIcon from '@common/assets/svg/WarningIcon'
 import Button from '@common/components/Button'
 import Checkbox from '@common/components/Checkbox'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import Input from '@common/components/Input'
+import NetworkAvailableFeatures from '@common/components/NetworkAvailableFeatures'
 import NetworkIcon from '@common/components/NetworkIcon'
 import NumberInput from '@common/components/NumberInput'
 import ScrollableWrapper from '@common/components/ScrollableWrapper'
 import Text from '@common/components/Text'
 import Tooltip from '@common/components/Tooltip'
+import { isMobile, isWeb } from '@common/config/env'
 import useController from '@common/hooks/useController'
 import useHover, { AnimatedPressable } from '@common/hooks/useHover'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
-import spacings from '@common/styles/spacings'
-import flexbox from '@common/styles/utils/flexbox'
-import text from '@common/styles/utils/text'
-import { setStringAsync } from '@common/utils/clipboard'
-import NetworkAvailableFeatures from '@web/components/NetworkAvailableFeatures'
 import {
   getAreDefaultsChanged,
   handleErrors
-} from '@web/modules/settings/screens/NetworksSettingsScreen/NetworkForm/helpers'
+} from '@common/modules/settings/components/Networks/NetworkForm/helpers'
+import spacings, { SPACING_SM } from '@common/styles/spacings'
+import flexbox from '@common/styles/utils/flexbox'
+import text from '@common/styles/utils/text'
+import { setStringAsync } from '@common/utils/clipboard'
 
 import getStyles from './styles'
 
@@ -112,18 +115,20 @@ export const RpcSelectorItem = React.memo(
           >
             {url}
           </Text>
-          <AnimatedPressable
-            onPress={handleCopy}
-            style={[spacings.mlMi, copyIconAnimStyle]}
-            {...bindCopyIconAnim}
-            onHoverIn={() => {
-              // Persist hover of the parent to prevent
-              // layout shifting
-              setHovered(true)
-            }}
-          >
-            <CopyIcon width={16} height={16} />
-          </AnimatedPressable>
+          {isWeb && (
+            <AnimatedPressable
+              onPress={handleCopy}
+              style={[spacings.mlMi, copyIconAnimStyle]}
+              {...bindCopyIconAnim}
+              onHoverIn={() => {
+                // Persist hover of the parent to prevent
+                // layout shifting
+                setHovered(true)
+              }}
+            >
+              <CopyIcon width={16} height={16} />
+            </AnimatedPressable>
+          )}
         </View>
         {!!shouldShowRemove && (!!hovered || isRemoveHovered) && (
           <Pressable
@@ -163,6 +168,11 @@ export const RpcSelectorItem = React.memo(
     )
   }
 )
+
+RpcSelectorItem.displayName = 'RpcSelector'
+
+// On mobile the RPC URLs list expands/collapses instead of scrolling
+const COLLAPSED_RPC_URLS_COUNT = 4
 
 const NetworkForm = ({
   selectedChainId = 'add-custom-network',
@@ -229,6 +239,7 @@ const NetworkForm = ({
   })
   const [rpcUrls, setRpcUrls] = useState(selectedNetwork?.rpcUrls || [])
   const [selectedRpcUrl, setSelectedRpcUrl] = useState(selectedNetwork?.selectedRpcUrl)
+  const [showAllRpcUrls, setShowAllRpcUrls] = useState(false)
   const networkFormValues = watch()
   const errorCount = Object.keys(errors).length
 
@@ -732,6 +743,57 @@ const NetworkForm = ({
     [errorCount, features, isValidatingVerifierRPC, isValidatingRPC]
   )
 
+  const displayedRpcUrls = useMemo(
+    () => (isMobile && !showAllRpcUrls ? rpcUrls.slice(0, COLLAPSED_RPC_URLS_COUNT) : rpcUrls),
+    [rpcUrls, showAllRpcUrls]
+  )
+
+  const rpcUrlsList = useMemo(
+    () =>
+      rpcUrls.length ? (
+        displayedRpcUrls.map((url, i) => {
+          let removeDisabledReason: string | undefined
+
+          if (rpcUrls.length === 1) {
+            removeDisabledReason = 'There must be at least one RPC provider'
+          } else if (url === selectedNetwork?.selectedRpcUrl) {
+            removeDisabledReason = 'Cannot remove the selected RPC URL'
+          } else if (url.includes('invictus.ambire.com')) {
+            removeDisabledReason = 'Default RPC URL cannot be removed'
+          }
+
+          return (
+            <RpcSelectorItem
+              key={url}
+              index={i}
+              url={url}
+              selectedRpcUrl={selectedRpcUrl}
+              rpcUrlsLength={rpcUrls.length}
+              onPress={handleSelectRpcUrl}
+              shouldShowRemove
+              removeDisabledReason={removeDisabledReason}
+              onRemove={handleRemoveRpcUrl}
+            />
+          )
+        })
+      ) : (
+        <View style={[flexbox.flex1, flexbox.alignCenter, flexbox.justifyCenter, spacings.pvLg]}>
+          <Text fontSize={14} style={text.center} appearance="secondaryText">
+            {t('No RPC URLs added yet')}
+          </Text>
+        </View>
+      ),
+    [
+      rpcUrls.length,
+      displayedRpcUrls,
+      selectedNetwork?.selectedRpcUrl,
+      selectedRpcUrl,
+      handleSelectRpcUrl,
+      handleRemoveRpcUrl,
+      t
+    ]
+  )
+
   return (
     <>
       <View style={styles.modalHeader}>
@@ -747,28 +809,62 @@ const NetworkForm = ({
         )}
         {selectedChainId !== 'add-custom-network' && !!selectedNetwork && (
           <>
-            <View style={[flexbox.flex1, flexbox.directionRow, flexbox.alignCenter]}>
-              <NetworkIcon
-                id={selectedNetwork.chainId.toString()}
-                style={spacings.mrTy}
-                size={28}
-              />
-              <Text appearance="secondaryText" weight="regular" style={spacings.mrMi} fontSize={16}>
-                {selectedNetwork.name || t('Unknown network')}
-              </Text>
-            </View>
+            {isWeb && (
+              <View style={[flexbox.flex1, flexbox.directionRow, flexbox.alignCenter]}>
+                <NetworkIcon
+                  id={selectedNetwork.chainId.toString()}
+                  style={spacings.mrTy}
+                  size={28}
+                />
+                <Text
+                  appearance="secondaryText"
+                  weight="regular"
+                  style={spacings.mrMi}
+                  fontSize={16}
+                >
+                  {selectedNetwork.name || t('Unknown network')}
+                </Text>
+              </View>
+            )}
             <Text fontSize={20} weight="medium" numberOfLines={1}>
               {t('Edit network')}
             </Text>
-            <View style={flexbox.flex1} />
+            <View style={[flexbox.flex1, flexbox.alignEnd]}>
+              {isMobile && (
+                <View style={[flexbox.flex1, flexbox.directionRow, flexbox.alignCenter]}>
+                  <NetworkIcon
+                    id={selectedNetwork.chainId.toString()}
+                    style={spacings.mrTy}
+                    size={28}
+                  />
+                  <Text
+                    appearance="secondaryText"
+                    weight="regular"
+                    style={spacings.mrMi}
+                    fontSize={16}
+                  >
+                    {selectedNetwork.name || t('Unknown network')}
+                  </Text>
+                </View>
+              )}
+            </View>
           </>
         )}
       </View>
-      <View style={[spacings.phXl, spacings.pvXl, spacings.ptLg, flexbox.flex1]}>
-        <Text fontSize={18} weight="medium" style={spacings.mbMd}>
-          {t('Network details')}
-        </Text>
-        <View style={[flexbox.directionRow, flexbox.flex1]}>
+      <View
+        style={[
+          isWeb && spacings.phXl,
+          isWeb && spacings.pvXl,
+          isWeb && spacings.ptLg,
+          flexbox.flex1
+        ]}
+      >
+        {isWeb && (
+          <Text fontSize={18} weight="medium" style={spacings.mbMd}>
+            {t('Network details')}
+          </Text>
+        )}
+        <View style={[isWeb && flexbox.directionRow, flexbox.flex1]}>
           <View style={flexbox.flex1}>
             <ScrollableWrapper contentContainerStyle={{ flexGrow: 1 }}>
               <Controller
@@ -781,7 +877,7 @@ const NetworkForm = ({
                     value={value}
                     inputWrapperStyle={{ height: 40 }}
                     inputStyle={{ height: 40 }}
-                    containerStyle={{ ...spacings.mb, ...spacings.mrMi, flex: 1 }}
+                    containerStyle={{ ...spacings.mb, ...(isWeb ? spacings.mrMi : {}), flex: 1 }}
                     label={t('Network name')}
                     disabled={selectedChainId !== 'add-custom-network'}
                     error={handleErrors(errors.name)}
@@ -840,7 +936,7 @@ const NetworkForm = ({
                       inputWrapperStyle={{ height: 40 }}
                       inputStyle={{ height: 40 }}
                       containerStyle={{ ...spacings.mb, ...spacings.mrTy, flex: 1 }}
-                      label={t('RPC URL')}
+                      label={t('Add RPC URL')}
                       error={handleErrors(errors.rpcUrl)}
                     />
                     <View style={{ paddingTop: 27 }}>
@@ -868,57 +964,73 @@ const NetworkForm = ({
               />
 
               <Text appearance="secondaryText" fontSize={14} weight="regular" style={spacings.mbMi}>
-                {t('Select default RPC URL')}
+                {rpcUrls.length > 1 ? t('Select default RPC URL') : 'Default RPC URL'}
               </Text>
-              <ScrollableWrapper
-                style={[
-                  styles.rpcUrlsContainer,
-                  // @ts-ignore
-                  { flex: 'unset', minHeight: rpcUrls.length > 1 ? 80 : 40 }
-                ]}
-                contentContainerStyle={{ flexGrow: 1 }}
-              >
-                {!!rpcUrls.length &&
-                  rpcUrls.map((url, i) => {
-                    let removeDisabledReason: string | undefined
-
-                    if (rpcUrls.length === 1) {
-                      removeDisabledReason = 'There must be at least one RPC provider'
-                    } else if (url === selectedNetwork?.selectedRpcUrl) {
-                      removeDisabledReason = 'Cannot remove the selected RPC URL'
-                    } else if (url.includes('invictus.ambire.com')) {
-                      removeDisabledReason = 'Default RPC URL cannot be removed'
-                    }
-
-                    return (
-                      <RpcSelectorItem
-                        key={url}
-                        index={i}
-                        url={url}
-                        selectedRpcUrl={selectedRpcUrl}
-                        rpcUrlsLength={rpcUrls.length}
-                        onPress={handleSelectRpcUrl}
-                        shouldShowRemove
-                        removeDisabledReason={removeDisabledReason}
-                        onRemove={handleRemoveRpcUrl}
-                      />
-                    )
-                  })}
-                {!rpcUrls.length && (
-                  <View
-                    style={[
-                      flexbox.flex1,
-                      flexbox.alignCenter,
-                      flexbox.justifyCenter,
-                      spacings.pvLg
-                    ]}
-                  >
-                    <Text fontSize={14} style={text.center} appearance="secondaryText">
-                      {t('No RPC URLs added yet')}
-                    </Text>
-                  </View>
-                )}
-              </ScrollableWrapper>
+              {isWeb ? (
+                <ScrollableWrapper
+                  style={[
+                    styles.rpcUrlsContainer,
+                    // @ts-ignore
+                    { flex: 'unset', minHeight: rpcUrls.length > 1 ? 80 : 40 }
+                  ]}
+                  contentContainerStyle={{ flexGrow: 1, paddingBottom: 0 }}
+                >
+                  {rpcUrlsList}
+                </ScrollableWrapper>
+              ) : (
+                <View style={[styles.rpcUrlsContainer, { maxHeight: undefined }]}>
+                  {rpcUrlsList}
+                  {rpcUrls.length > COLLAPSED_RPC_URLS_COUNT && (
+                    <Pressable
+                      style={[
+                        spacings.phTy,
+                        flexbox.directionRow,
+                        flexbox.alignCenter,
+                        spacings.pbSm,
+                        spacings.ptMi,
+                        flexbox.alignSelfCenter
+                      ]}
+                      onPress={() => setShowAllRpcUrls((p) => !p)}
+                    >
+                      <Text style={spacings.mrMi} fontSize={12} color={theme.linkText} underline>
+                        {!showAllRpcUrls &&
+                          t('show {{number}} more', {
+                            number: rpcUrls.length - COLLAPSED_RPC_URLS_COUNT
+                          })}
+                        {!!showAllRpcUrls &&
+                          t('hide {{number}} urls', {
+                            number: rpcUrls.length - COLLAPSED_RPC_URLS_COUNT
+                          })}
+                      </Text>
+                      {!!showAllRpcUrls && (
+                        <UpArrowIcon
+                          width={12}
+                          height={6}
+                          color={theme.linkText}
+                          strokeWidth="1.7"
+                        />
+                      )}
+                      {!showAllRpcUrls && (
+                        <DownArrowIcon
+                          width={12}
+                          height={6}
+                          color={theme.linkText}
+                          strokeWidth="1.7"
+                        />
+                      )}
+                    </Pressable>
+                  )}
+                </View>
+              )}
+              {isMobile && (
+                <View style={spacings.mbSm}>
+                  <NetworkAvailableFeatures
+                    chainId={selectedNetwork?.chainId}
+                    features={features}
+                    title={t('Default RPC available features')}
+                  />
+                </View>
+              )}
               {shouldShowColibriSettings && (
                 <Controller
                   control={control}
@@ -974,6 +1086,7 @@ const NetworkForm = ({
                   name="colibriProverUrl"
                 />
               )}
+
               <View style={[flexbox.directionRow, flexbox.alignStart]}>
                 <Controller
                   control={control}
@@ -985,7 +1098,7 @@ const NetworkForm = ({
                       value={value as any}
                       inputWrapperStyle={{ height: 40 }}
                       inputStyle={{ height: 40 }}
-                      containerStyle={{ ...spacings.mrMi, flex: 1 }}
+                      containerStyle={{ ...(isWeb ? spacings.mrMi : {}), flex: 1 }}
                       label={t('Chain ID')}
                       disabled={selectedChainId !== 'add-custom-network'}
                       error={handleErrors(errors.chainId)}
@@ -1024,7 +1137,7 @@ const NetworkForm = ({
                       placeholder="Coming soon..."
                       inputWrapperStyle={{ height: 40 }}
                       inputStyle={{ height: 40 }}
-                      containerStyle={{ ...spacings.mrMi, flex: 1 }}
+                      containerStyle={{ ...(isWeb ? spacings.mrMi : {}), flex: 1 }}
                       label={t('Coingecko platform ID')}
                       error={handleErrors(errors.coingeckoPlatformId)}
                     />
@@ -1044,7 +1157,7 @@ const NetworkForm = ({
                       inputWrapperStyle={{ height: 40 }}
                       inputStyle={{ height: 40 }}
                       containerStyle={{ ...spacings.mlMi, flex: 1 }}
-                      label={t('Coingecko native asset ID')}
+                      label={isMobile ? t('Coingecko asset ID') : t('Coingecko native asset ID')}
                       error={handleErrors(errors.coingeckoNativeAssetId)}
                     />
                   )}
@@ -1076,7 +1189,7 @@ const NetworkForm = ({
                       }}
                       inputWrapperStyle={{ height: 40 }}
                       inputStyle={{ height: 40 }}
-                      containerStyle={{ ...spacings.mb, ...spacings.mrMi, flex: 1 }}
+                      containerStyle={{ ...spacings.mb, ...(isWeb ? spacings.mrMi : {}), flex: 1 }}
                       label={t('Custom bundler url (Experimental)')}
                       error={handleErrors(errors.customBundlerUrl)}
                     />
@@ -1086,13 +1199,18 @@ const NetworkForm = ({
               </View>
             </ScrollableWrapper>
           </View>
-          <View style={[flexbox.flex1, spacings.pl, spacings.ml]}>
-            <ScrollableWrapper contentContainerStyle={{ flexGrow: 1 }}>
-              <View style={flexbox.flex1}>
-                <NetworkAvailableFeatures chainId={selectedNetwork?.chainId} features={features} />
-              </View>
-            </ScrollableWrapper>
-            <View style={[flexbox.alignEnd, spacings.ptXl]}>
+          <View style={[flexbox.flex1, isWeb && spacings.pl, isWeb && spacings.ml]}>
+            {isWeb && (
+              <ScrollableWrapper contentContainerStyle={{ flexGrow: 1 }}>
+                <View style={flexbox.flex1}>
+                  <NetworkAvailableFeatures
+                    chainId={selectedNetwork?.chainId}
+                    features={features}
+                  />
+                </View>
+              </ScrollableWrapper>
+            )}
+            <View style={[isWeb && flexbox.alignEnd, isMobile ? {} : spacings.ptXl]}>
               {selectedChainId === 'add-custom-network' ? (
                 <Button
                   onPress={handleSubmitButtonPress}
@@ -1102,21 +1220,25 @@ const NetworkForm = ({
                   size="large"
                 />
               ) : (
-                <View style={[flexbox.directionRow]}>
+                <View style={[flexbox.directionRow, isMobile && { columnGap: SPACING_SM }]}>
                   <Button
                     onPress={onCancel}
                     text={t('Cancel')}
                     type="gray"
                     hasBottomSpacing={false}
-                    style={[flexbox.flex1, spacings.mrSm, { width: 90 }]}
+                    style={[
+                      flexbox.flex1,
+                      isWeb && spacings.mrSm,
+                      isWeb && { width: 90 },
+                      isMobile && { backgroundColor: theme.neutral100 }
+                    ]}
                     size="smaller"
                   />
-
                   <Button
                     onPress={handleSubmitButtonPress}
                     text={isSomethingUpdated ? t('Save') : t('No changes')}
                     disabled={!isSomethingUpdated || isSaveOrAddButtonDisabled}
-                    style={[spacings.mlMi, flexbox.flex1, { minWidth: 124 }]}
+                    style={[isWeb && spacings.mlMi, flexbox.flex1, isWeb && { minWidth: 124 }]}
                     hasBottomSpacing={false}
                     size="smaller"
                   />
