@@ -34,6 +34,7 @@ export interface Props {
   style?: ViewStyle
   contentContainerStyle?: ViewStyle
   titleFontSize?: number
+  singleRow?: boolean
   buttonText?: string
   onPress?: () => void
   onCloseIconPress?: () => void
@@ -49,6 +50,7 @@ const Banner = React.memo(
     children,
     CustomIcon,
     titleFontSize,
+    singleRow,
     buttonText,
     style,
     onCloseIconPress,
@@ -82,7 +84,9 @@ const Banner = React.memo(
           style={[
             flexbox.directionRow,
             flexbox.justifySpaceBetween,
-            !!text ? spacings.mbTy : spacings.mbSm,
+            singleRow ? flexbox.alignCenter : undefined,
+
+            singleRow ? undefined : !!text ? spacings.mbTy : spacings.mbSm,
             {
               width: '100%'
             }
@@ -97,11 +101,22 @@ const Banner = React.memo(
             <Text
               fontSize={titleFontSize || (isMobile ? 14 : 16)}
               weight="medium"
-              style={[flexbox.flex1, spacings.mlMi, isMobile && { marginTop: 2 }]}
+              style={[flexbox.flex1, spacings.mlMi, !singleRow && isMobile && { marginTop: 2 }]}
             >
               {title}
             </Text>
           </View>
+          {singleRow && hasPrimaryAction && (
+            <BannerButton
+              type="primary"
+              colorType={type}
+              onPress={onPress}
+              testID={`dashboard-${type}-banner`}
+              style={spacings.mlTy}
+            >
+              {buttonText}
+            </BannerButton>
+          )}
           {!!onCloseIconPress && (
             <Pressable
               onPress={onCloseIconPress}
@@ -118,53 +133,57 @@ const Banner = React.memo(
           )}
         </View>
 
-        <View style={[isWeb && flexbox.wrap, { width: '100%' }]}>
-          {!!text && (
-            <Text
-              fontSize={isMobile ? 12 : 14}
-              weight="regular"
-              appearance="secondaryText"
-              style={hasActions ? spacings.mbSm : undefined}
+        {!singleRow && (
+          <View style={[isWeb && flexbox.wrap, { width: '100%' }]}>
+            {!!text && (
+              <Text
+                fontSize={isMobile ? 12 : 14}
+                weight="regular"
+                appearance="secondaryText"
+                style={hasActions ? spacings.mbSm : undefined}
+              >
+                {text}
+              </Text>
+            )}
+            <View
+              style={[
+                flexbox.directionRow,
+                flexbox.alignCenter,
+                flexbox.justifyEnd,
+                isWeb && flexbox.wrap,
+                { width: '100%' }
+              ]}
             >
-              {text}
-            </Text>
-          )}
-          <View
-            style={[
-              flexbox.directionRow,
-              flexbox.alignCenter,
-              flexbox.justifyEnd,
-              isWeb && flexbox.wrap,
-              { width: '100%' }
-            ]}
-          >
-            {hasDismissAction && (
-              <BannerButton
-                type="secondary"
-                colorType="error"
-                onPress={onDismissButtonPress}
-                testID="banner-button-reject"
-                style={hasPrimaryAction && spacings.mrTy}
-              >
-                {dismissButtonText}
-              </BannerButton>
-            )}
-            {hasPrimaryAction && (
-              <BannerButton
-                type="primary"
-                colorType={type}
-                onPress={onPress}
-                testID={`dashboard-${type}-banner`}
-              >
-                {buttonText}
-              </BannerButton>
-            )}
+              {hasDismissAction && (
+                <BannerButton
+                  type="secondary"
+                  colorType="error"
+                  onPress={onDismissButtonPress}
+                  testID="banner-button-reject"
+                  style={hasPrimaryAction && spacings.mrTy}
+                >
+                  {dismissButtonText}
+                </BannerButton>
+              )}
+              {hasPrimaryAction && (
+                <BannerButton
+                  type="primary"
+                  colorType={type}
+                  onPress={onPress}
+                  testID={`dashboard-${type}-banner`}
+                >
+                  {buttonText}
+                </BannerButton>
+              )}
+            </View>
           </View>
-        </View>
+        )}
         {children}
       </View>
     )
   }
 )
+
+Banner.displayName = 'Banner'
 
 export default Banner

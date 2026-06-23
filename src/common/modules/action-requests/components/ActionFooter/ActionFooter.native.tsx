@@ -18,6 +18,7 @@ type Props = {
   resolveButtonTestID?: string
   /** Optional custom node to replace the default resolve button */
   resolveNode?: React.ReactNode
+  children?: React.ReactNode
 }
 
 const ActionFooter = ({
@@ -29,7 +30,8 @@ const ActionFooter = ({
   resolveType = 'primary',
   rejectButtonTestID,
   resolveButtonTestID,
-  resolveNode
+  resolveNode,
+  children
 }: Props) => {
   const { t } = useTranslation()
 
@@ -38,6 +40,7 @@ const ActionFooter = ({
 
   return (
     <View style={[spacings.ptSm, spacings.phSm]}>
+      {children}
       <View style={[flexbox.directionRow, { columnGap: SPACING_TY }]}>
         {showReject && (
           <View style={flexbox.flex1}>

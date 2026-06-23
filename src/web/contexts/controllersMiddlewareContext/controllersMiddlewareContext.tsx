@@ -180,6 +180,7 @@ export const ControllersMiddlewareProvider: React.FC<{ children: React.ReactNode
     const onAllControllerNames = (names: string[]) => {
       controllerStore.init(
         names as (keyof AllControllersMappingType)[],
+        [],
         (allCtrls: (keyof AllControllersMappingType)[]) => {
           allCtrls.forEach((ctrlName) => {
             dispatch({ type: 'INIT_CONTROLLER_STATE', params: { controller: ctrlName } })

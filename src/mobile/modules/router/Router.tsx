@@ -3,8 +3,10 @@ import React, { useCallback, useContext, useEffect, useRef } from 'react'
 import { View } from 'react-native'
 import { Navigate, Route, Routes } from 'react-router-native'
 
+import { ControllersMiddlewareContext } from '@common/contexts/controllersMiddlewareContext'
 import { ControllersStateLoadedContext } from '@common/contexts/controllersStateLoadedContext'
 import useController from '@common/hooks/useController'
+import useFonts from '@common/hooks/useFonts'
 import useRoute from '@common/hooks/useRoute'
 import { AUTH_STATUS } from '@common/modules/auth/constants/authStatus'
 import useAuth from '@common/modules/auth/hooks/useAuth'
@@ -34,6 +36,11 @@ const Router = () => {
   const swapAndBridgeState = useController('SwapAndBridgeController').state
   const transferState = useController('TransferController').state
   const { areControllerStatesLoaded } = useContext(ControllersStateLoadedContext)
+  const { dispatch } = useContext(ControllersMiddlewareContext)
+  // Fonts load in parallel with controller boot (the tree mounts before fonts
+  // are ready — see AppInit). Gate the splash hide on fonts too so the first
+  // painted frame already has the custom fonts applied.
+  const { fontsLoaded } = useFonts()
 
   // Wrap onBottomSheetClosed to emit event for DappWebViewScreen focus
   // Must be at top level before any early returns
@@ -45,17 +52,22 @@ const Router = () => {
 
   const splashHidden = useRef(false)
 
-  const isReady = authStatus !== AUTH_STATUS.LOADING && areControllerStatesLoaded
+  const isReady = authStatus !== AUTH_STATUS.LOADING && areControllerStatesLoaded && fontsLoaded
 
   useEffect(() => {
     if (isReady && !splashHidden.current) {
       splashHidden.current = true
       SplashScreen.setOptions({ duration: 200, fade: true })
       SplashScreen.hideAsync().catch(() => {})
+      // Now that the splash is hidden, let the webview worker stream the
+      // heavy controller states (portfolio, dapps, activity, ...) that were
+      // held back during the critical boot phase. Done after the splash hide
+      // call so any cost of draining the queue does not delay the first paint.
+      dispatch({ type: 'SET_BOOT_PHASE', params: { phase: 'full' } })
     }
-  }, [isReady])
+  }, [isReady, dispatch])
 
-  // Keep the native splash screen visible until controllers and auth are ready
+  // Keep the native splash screen visible until controllers, auth and fonts are ready
   if (!isReady) {
     return null
   }

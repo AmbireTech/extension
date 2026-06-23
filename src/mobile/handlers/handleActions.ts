@@ -6,6 +6,7 @@ import { KeyIterator } from '@ambire-common/libs/keyIterator/keyIterator'
 import handleProviderRequests from '@common/modules/provider/handleProviderRequests'
 import { Action, MethodAction } from '@common/types/actions'
 import { getWcTabIdFromTopic } from '@mobile/modules/wallet-connect/utils'
+import { setBootPhase, setSubscribedControllers } from '@mobile/modules/webview/services/bootPhase'
 import { mobileMessenger } from '@mobile/modules/webview/services/mobileMessenger'
 import { createWcBridgeMessenger } from '@mobile/modules/webview/services/wcBridgeMessenger'
 
@@ -68,6 +69,17 @@ export const handleActions = async (
       })
       break
     }
+
+    case 'SET_BOOT_PHASE': {
+      setBootPhase(params.phase)
+      break
+    }
+
+    case 'SET_SUBSCRIBED_CONTROLLERS': {
+      setSubscribedControllers(params.controllers)
+      break
+    }
+
     case 'WINDOW_REMOVED': {
       mainCtrl.ui.window.event.emit('windowRemoved', params.id)
       break
@@ -248,12 +260,11 @@ export const handleActions = async (
           })
         }
       } catch (error: any) {
-        // Error handling - serialize error if possible, otherwise use raw error
         let errorRes
         try {
           errorRes = error.serialize()
         } catch (e) {
-          errorRes = error
+          errorRes = { code: error?.code, message: error?.message ?? String(error) }
         }
 
         if (isWalletConnect) {

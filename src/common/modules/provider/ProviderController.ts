@@ -4,8 +4,9 @@ import { getAddress, isAddress } from 'ethers'
 import cloneDeep from 'lodash/cloneDeep'
 import { nanoid } from 'nanoid'
 
+import { Session } from '@ambire-common/classes/session'
 import { MainController } from '@ambire-common/controllers/main/main'
-import { DappProviderRequest } from '@ambire-common/interfaces/dapp'
+import { ConnectionSource, DappProviderRequest } from '@ambire-common/interfaces/dapp'
 import { UiManager } from '@ambire-common/interfaces/ui'
 import {
   getFailureStatus,
@@ -31,6 +32,14 @@ import { RequestRes, Web3WalletPermission } from '@common/modules/provider/types
 import { openInTab } from '@common/utils/links'
 
 type ProviderRequest = DappProviderRequest & { requestRes: RequestRes }
+
+// Derive the connection source from the session, mirroring rpcFlow.ts: WC sessions carry a
+// wcTopic, injected (in-app browser / extension content script) ones don't. Each source has its
+// own permission entry, so connection checks must be scoped to the channel the request came from -
+// otherwise a dapp connected only via WalletConnect would auto-connect in the in-app browser
+// (eth_accounts/getProviderState would return the account list and the dapp would skip the connect prompt).
+const getRequestSource = (session: Session): ConnectionSource =>
+  session.wcTopic ? 'wc' : 'injected'
 
 const handleSignMessage = (requestRes: RequestRes) => {
   if (requestRes) {
@@ -111,16 +120,16 @@ export class ProviderController {
   }
 
   ethRpc = async (request: DappProviderRequest) => {
-    const {
-      method,
-      params,
-      session: { id }
-    } = request
+    const { method, params, session } = request
+    const { id } = session
 
     const chainId = this.getDappNetwork(id).chainId
     const provider = this.mainCtrl.providers.providers[chainId.toString()]
 
-    if (!this.mainCtrl.dapps.hasPermission(id) && !SAFE_RPC_METHODS.includes(method)) {
+    if (
+      !this.mainCtrl.dapps.hasPermission(id, getRequestSource(session)) &&
+      !SAFE_RPC_METHODS.includes(method)
+    ) {
       throw ethErrors.provider.unauthorized()
     }
     if (!provider) throw ethErrors.rpc.invalidParams('provider not found')
@@ -128,8 +137,9 @@ export class ProviderController {
     return provider.send(method, params)
   }
 
-  ethRequestAccounts = async ({ session: { id } }: DappProviderRequest) => {
-    if (!this.mainCtrl.dapps.hasPermission(id) || !this.isUnlocked) {
+  ethRequestAccounts = async ({ session }: DappProviderRequest) => {
+    const { id, origin } = session
+    if (!this.mainCtrl.dapps.hasPermission(id, getRequestSource(session)) || !this.isUnlocked) {
       throw ethErrors.provider.unauthorized()
     }
 
@@ -140,15 +150,15 @@ export class ProviderController {
     return accounts
   }
 
-  /**
-   * Internal method used by rewards to get the balance of the selected account. Can be filtered by chainIds.
-   */
-  getPortfolioBalance = async ({ params: [chainParams], session: { id } }: DappProviderRequest) => {
-    if (!this.mainCtrl.dapps.hasPermission(id) || !this.isUnlocked) {
+  getPortfolioBalance = async ({ params: [chainParams], session }: DappProviderRequest) => {
+    if (
+      !this.mainCtrl.dapps.hasPermission(session.id, getRequestSource(session)) ||
+      !this.isUnlocked
+    ) {
       throw ethErrors.provider.unauthorized()
     }
 
-    const selectedAccount = this._getSelectedAccount(id)
+    const selectedAccount = this._getSelectedAccount(session.id)
 
     if (!selectedAccount) {
       throw new Error('wallet account not selected')
@@ -194,11 +204,14 @@ export class ProviderController {
   // we may return stale data.
   walletCustomGetAssets = async ({
     params: { account, assetFilter: _assetFilter },
-    session: { id }
+    session
   }: DappProviderRequest) => {
     const assetFilter = _assetFilter as { [a: string]: string[] }
 
-    if (!this.mainCtrl.dapps.hasPermission(id) || !this.isUnlocked) {
+    if (
+      !this.mainCtrl.dapps.hasPermission(session.id, getRequestSource(session)) ||
+      !this.isUnlocked
+    ) {
       throw ethErrors.provider.unauthorized()
     }
 
@@ -210,7 +223,7 @@ export class ProviderController {
 
     const res: { [chainId: string]: any[] } = {}
 
-    const accounts = this._internalGetAccounts(id)
+    const accounts = this._internalGetAccounts(session.id)
 
     if (!accounts.some((acc) => acc.toLowerCase() === account.toLowerCase())) {
       throw ethErrors.provider.unauthorized()
@@ -260,26 +273,30 @@ export class ProviderController {
   }
 
   @metadata('SAFE', true)
-  ethAccounts = async ({ session: { id } }: DappProviderRequest) => {
-    if (!this.mainCtrl.dapps.hasPermission(id) || !this.isUnlocked) {
+  ethAccounts = async ({ session }: DappProviderRequest) => {
+    const { id } = session
+    if (!this.mainCtrl.dapps.hasPermission(id, getRequestSource(session)) || !this.isUnlocked) {
       return []
     }
 
     return this._internalGetAccounts(id)
   }
 
-  ethCoinbase = async ({ session: { id } }: DappProviderRequest) => {
-    if (!this.mainCtrl.dapps.hasPermission(id) || !this.isUnlocked) {
+  ethCoinbase = async ({ session }: DappProviderRequest) => {
+    if (
+      !this.mainCtrl.dapps.hasPermission(session.id, getRequestSource(session)) ||
+      !this.isUnlocked
+    ) {
       return null
     }
 
-    return this._getSelectedAccount(id) || null
+    return this._getSelectedAccount(session.id) || null
   }
 
   @metadata('SAFE', true)
-  ethChainId = async ({ session: { id } }: DappProviderRequest) => {
-    if (this.mainCtrl.dapps.hasPermission(id)) {
-      return networkChainIdToHex(this.mainCtrl.dapps.getDapp(id)?.chainId || 1)
+  ethChainId = async ({ session }: DappProviderRequest) => {
+    if (this.mainCtrl.dapps.hasPermission(session.id, getRequestSource(session))) {
+      return networkChainIdToHex(this.mainCtrl.dapps.getDapp(session.id)?.chainId || 1)
     }
     return networkChainIdToHex(1)
   }
@@ -414,7 +431,10 @@ export class ProviderController {
 
   // explain to the dapp what features the wallet has for the selected account
   walletGetCapabilities = async (data: any) => {
-    if (!this.mainCtrl.dapps.hasPermission(data.session.id) || !this.isUnlocked) {
+    if (
+      !this.mainCtrl.dapps.hasPermission(data.session.id, getRequestSource(data.session)) ||
+      !this.isUnlocked
+    ) {
       throw ethErrors.provider.unauthorized()
     }
 
@@ -931,13 +951,16 @@ export class ProviderController {
   }
 
   @metadata('SAFE', true)
-  walletGetPermissions = ({ session: { id, origin } }: DappProviderRequest) => {
+  walletGetPermissions = ({ session }: DappProviderRequest) => {
+    const { id, origin } = session
     const result: Web3WalletPermission[] = []
     const { grantedPermissionId, grantedPermissionAt } = this.mainCtrl.dapps.getDapp(id) || {}
 
     // Do not check if extension is unlocked, always return the permissions if one are granted
     const hasGrantedPermission =
-      !!grantedPermissionId && !!grantedPermissionAt && this.mainCtrl.dapps.hasPermission(id)
+      !!grantedPermissionId &&
+      !!grantedPermissionAt &&
+      this.mainCtrl.dapps.hasPermission(id, getRequestSource(session))
     if (hasGrantedPermission) {
       const account = this._internalGetAccounts(id)
 

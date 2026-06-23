@@ -8,9 +8,11 @@ import OpenIcon from '@common/assets/svg/OpenIcon'
 import Text from '@common/components/Text'
 import { isMobile, isWeb } from '@common/config/env'
 import useController from '@common/hooks/useController'
-import useHover, { AnimatedPressable, useCustomHover, useMultiHover } from '@common/hooks/useHover'
+import useHover, { AnimatedPressable, useMultiHover } from '@common/hooks/useHover'
+import useNavigation from '@common/hooks/useNavigation'
 import useTheme from '@common/hooks/useTheme'
 import getStyles from '@common/modules/dashboard/components/DeFiPositions/DeFiProviderPosition/styles'
+import { ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
 import { hexToRgba } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
@@ -58,6 +60,8 @@ const DeFiPositionHeader: FC<Props> = ({
     state: { dapps }
   } = useController('DappsController')
   const { styles, theme } = useTheme(getStyles)
+  const { navigate } = useNavigation()
+
   const [bindAnim, animStyle] = useMultiHover({
     values: [
       {
@@ -87,12 +91,21 @@ const DeFiPositionHeader: FC<Props> = ({
 
   const openDAppUrl = useCallback(async () => {
     if (!dappUrl) return
+
+    // On mobile, open the dapp inside the in-app browser (DappWebView) and
+    // signal the footer to render a back arrow instead of the home icon, so the
+    // user returns to the previous screen instead of the apps catalog.
+    if (isMobile) {
+      navigate(ROUTES.dappWebView, { state: { url: dappUrl, showBackButton: true } })
+      return
+    }
+
     try {
       await openInTab({ url: dappUrl })
     } catch (e) {
       console.error(e)
     }
-  }, [dappUrl])
+  }, [dappUrl, navigate])
 
   return (
     <AnimatedPressable
