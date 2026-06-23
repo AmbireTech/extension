@@ -18,6 +18,7 @@ import DappItem from '@common/modules/explore/components/DappItem'
 import DappsSkeletonLoader from '@common/modules/explore/components/DappsSkeletonLoader'
 import HorizontalDappsRow from '@common/modules/explore/components/HorizontalDappsRow'
 import SectionHeader from '@common/modules/explore/components/SectionHeader'
+import TrendingSection from '@common/modules/explore/components/TrendingSection'
 import useExploreSections, {
   ExploreSection
 } from '@common/modules/explore/hooks/useExploreSections'
@@ -149,6 +150,7 @@ const ExploreScreen = () => {
               renderItem={renderSectionItem as any}
               renderSectionHeader={renderSectionHeader as any}
               keyExtractor={sectionKeyExtractor as any}
+              ListHeaderComponent={TrendingSection}
               stickySectionHeadersEnabled={false}
               style={spacings.phSm}
               contentContainerStyle={spacings.pr0}

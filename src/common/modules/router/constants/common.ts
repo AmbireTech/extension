@@ -22,6 +22,8 @@ const COMMON_ROUTES = {
   transfer: 'transfer',
   topUpGasTank: 'top-up-gas-tank',
   tokenDetails: 'token-details',
+  trendingTokens: 'trending-tokens',
+  trendingTokenDetails: 'trending-token-details',
   accountSelect: 'account-select',
   receive: 'receive',
   signAccountOp: 'sign-account-op',
