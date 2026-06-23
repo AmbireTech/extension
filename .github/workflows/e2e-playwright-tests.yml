@@ -24,6 +24,62 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event_name != 'pull_request' || github.event.pull_request.draft == false || github.event_name == 'workflow_dispatch'
 
+    env:
+      IS_TESTING: 'true'
+      E2E_DEBUG: ${{ vars.E2E_DEBUG }}
+      RELAYER_URL: ${{ vars.RELAYER_URL }}
+      VELCRO_URL: ${{ vars.VELCRO_URL }}
+      LI_FI_API_KEY: ${{ vars.LI_FI_API_KEY }}
+      BUNGEE_API_KEY: ${{ vars.BUNGEE_API_KEY }}
+      SQUID_INTEGRATOR_ID: ${{ vars.SQUID_INTEGRATOR_ID }}
+      UNISWAP_API_KEY: ${{ vars.UNISWAP_API_KEY }}
+      SAFE_API_KEY: ${{ vars.SAFE_API_KEY }}
+      WALLETCONNECT_PROJECT_ID: ${{ vars.WALLETCONNECT_PROJECT_ID }}
+      REACT_APP_PIMLICO_API_KEY: ${{ vars.REACT_APP_PIMLICO_API_KEY }}
+      REACT_APP_ETHERSPOT_API_KEY: ${{ vars.REACT_APP_ETHERSPOT_API_KEY }}
+      REACT_APP_CANDIDE_API_KEY: ${{ vars.REACT_APP_CANDIDE_API_KEY }}
+      REACT_APP_GELATO_API_KEY: ${{ vars.REACT_APP_GELATO_API_KEY }}
+      KEYSTORE_PASS: ${{ secrets.KEYSTORE_PASS }}
+      SEED: ${{ secrets.SEED }}
+      SEED_24_WORDS: ${{ secrets.SEED_24_WORDS }}
+      PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
+      BA_ACCOUNTS: ${{ vars.BA_ACCOUNTS }}
+      BA_KEYSTORE_UID: ${{ vars.BA_KEYSTORE_UID }}
+      BA_KEYS: ${{ vars.BA_KEYS }}
+      BA_SECRETS: ${{ secrets.BA_SECRETS }}
+      BA_SEEDS: ${{ vars.BA_SEEDS }}
+      BA_LEARNED_ASSETS: ${{ vars.BA_LEARNED_ASSETS }}
+      BA_SELECTED_ACCOUNT: ${{ vars.BA_SELECTED_ACCOUNT }}
+      SA_ACCOUNTS: ${{ vars.SA_ACCOUNTS }}
+      SA_KEYSTORE_UID: ${{ vars.SA_KEYSTORE_UID }}
+      SA_KEYS: ${{ vars.SA_KEYS }}
+      SA_SECRETS: ${{ secrets.SA_SECRETS }}
+      SA_SEEDS: ${{ vars.SA_SEEDS }}
+      SA_LEARNED_ASSETS: ${{ vars.SA_LEARNED_ASSETS }}
+      SA_SELECTED_ACCOUNT: ${{ vars.SA_SELECTED_ACCOUNT }}
+      SA_ACCOUNT_JSON: ${{ secrets.SA_ACCOUNT_JSON }}
+      DEFAULT_INVITATION_CODE_DEV: ${{ vars.DEFAULT_INVITATION_CODE_DEV }}
+      SHOULD_RUN_TREZOR_TESTS: 'true'
+      PLAYWRIGHT_SKIP_GIT_METADATA: '1'
+      PW_EXPERIMENTAL_SERVICE_WORKER_NETWORK_EVENTS: '1'
+      IS_LEDGER_EMULATOR: ${{ vars.IS_LEDGER_EMULATOR }}
+      LEDGER_BA_SELECTED_ACCOUNT: ${{ vars.LEDGER_BA_SELECTED_ACCOUNT }}
+      LEDGER_BA_ACCOUNTS: ${{ vars.LEDGER_BA_ACCOUNTS }}
+      LEDGER_BA_KEYSTORE_UID: ${{ vars.LEDGER_BA_KEYSTORE_UID }}
+      LEDGER_BA_KEYS: ${{ vars.LEDGER_BA_KEYS }}
+      LEDGER_BA_SECRETS: ${{ secrets.LEDGER_BA_SECRETS }}
+      LEDGER_BA_SEEDS: ${{ vars.LEDGER_BA_SEEDS }}
+      LEDGER_BA_LEARNED_ASSETS: ${{ vars.LEDGER_BA_LEARNED_ASSETS }}
+      LEDGER_SA_SELECTED_ACCOUNT: ${{ vars.LEDGER_SA_SELECTED_ACCOUNT }}
+      LEDGER_SA_ACCOUNTS: ${{ vars.LEDGER_SA_ACCOUNTS }}
+      LEDGER_SA_KEYSTORE_UID: ${{ vars.LEDGER_SA_KEYSTORE_UID }}
+      LEDGER_SA_KEYS: ${{ vars.LEDGER_SA_KEYS }}
+      LEDGER_SA_SECRETS: ${{ secrets.LEDGER_SA_SECRETS }}
+      LEDGER_SA_SEEDS: ${{ vars.LEDGER_SA_SEEDS }}
+      LEDGER_SA_LEARNED_ASSETS: ${{ vars.LEDGER_SA_LEARNED_ASSETS }}
+      LEDGER_EMULATOR_HTTP_URL: ${{ vars.LEDGER_EMULATOR_HTTP_URL }}
+      LEDGER_EMULATOR_SEED: ${{ secrets.LEDGER_EMULATOR_SEED }}
+
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -161,6 +217,9 @@ jobs:
       - name: Install root dependencies
         run: yarn setup:ci
 
+      - name: Build webkit extension and generate LavaMoat policy
+        run: yarn build:web:webkit:generate-policy
+
       - name: Install e2e test dependencies
         working-directory: ./e2e-playwright-tests
         run: yarn install --frozen-lockfile && yarn postinstall
@@ -272,6 +331,9 @@ jobs:
 
       - name: Install root dependencies
         run: yarn setup:ci
+
+      - name: Build webkit extension and generate LavaMoat policy
+        run: yarn build:web:webkit:generate-policy
 
       - name: Install e2e test dependencies
         working-directory: ./e2e-playwright-tests
@@ -392,6 +454,9 @@ jobs:
 
       - name: Install root dependencies
         run: yarn setup:ci
+
+      - name: Build webkit extension and generate LavaMoat policy
+        run: yarn build:web:webkit:generate-policy
 
       - name: Install e2e test dependencies
         working-directory: ./e2e-playwright-tests
@@ -520,6 +585,9 @@ jobs:
 
       - name: Install root dependencies
         run: yarn setup:ci
+
+      - name: Build webkit extension and generate LavaMoat policy
+        run: yarn build:web:webkit:generate-policy
 
       - name: Install e2e test dependencies
         working-directory: ./e2e-playwright-tests
