@@ -222,8 +222,7 @@ const HoldToProceedButton: FC<Props> = ({
         style={[
           {
             minWidth: buttonWidth || 108,
-            position: 'relative',
-            backgroundColor: progressColorMap[buttonType]
+            position: 'relative'
           },
           style
         ]}

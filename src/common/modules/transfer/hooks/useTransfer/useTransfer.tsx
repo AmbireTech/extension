@@ -29,6 +29,7 @@ const useTransfer = (isTopUpScreen: boolean) => {
   const { addToast } = useToast()
   const { state: transferState, dispatch: transferDispatch } = useController('TransferController')
   const { dispatch: requestsDispatch } = useController('RequestsController')
+  const { verifiedDomainsStatus } = useController('DomainsController').state
   const {
     isTopUp,
     validationFormMsgs,
@@ -249,7 +250,7 @@ const useTransfer = (isTopUpScreen: boolean) => {
     [transferDispatch]
   )
 
-  // Used to resolve ENS, not to update the field value
+  // Used to resolve ENS and keep the controller in sync with the resolved field value
   const setAddressState = useCallback(
     (newPartialAddressState: AddressStateOptional) => {
       transferDispatch({
@@ -280,7 +281,8 @@ const useTransfer = (isTopUpScreen: boolean) => {
     },
     overwriteValidationFieldValue: addressState.fieldValue,
     setAddressState,
-    overwriteValidation: validationFormMsgs.recipientAddress
+    overwriteValidation: validationFormMsgs.recipientAddress,
+    isDomainVerifiedByColibri: verifiedDomainsStatus[addressStateFieldValue.trim()] === 'VERIFIED'
   })
 
   /**

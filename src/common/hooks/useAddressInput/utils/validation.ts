@@ -9,6 +9,7 @@ type AddressInputValidation = {
   isRecipientDomainResolving: boolean
   isValidEns: boolean
   isValidNamoshi: boolean
+  isDomainVerifiedByColibri?: boolean
   hasDomainResolveFailed: boolean
   domainResolveError?: string
   overwriteValidation?: Validation | null
@@ -30,6 +31,7 @@ const getAddressInputValidation = ({
   domainResolveError,
   isValidEns,
   isValidNamoshi,
+  isDomainVerifiedByColibri,
   overwriteValidation
 }: AddressInputValidation): Validation => {
   if (!address) {
@@ -91,7 +93,9 @@ const getAddressInputValidation = ({
 
   if (isValidEns) {
     successValidation = {
-      message: 'Valid ENS domain',
+      message: isDomainVerifiedByColibri
+        ? 'Valid ENS domain. Verified by Colibri'
+        : 'Valid ENS domain',
       severity: 'success'
     }
   } else if (isValidNamoshi) {

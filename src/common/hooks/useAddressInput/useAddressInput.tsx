@@ -23,6 +23,7 @@ interface Props {
    * Example: preventing adding an address that is already in the address book.
    */
   overwriteValidation?: Validation | null
+  isDomainVerifiedByColibri?: boolean
   // handleRevalidate is required when the address input is used
   // together with react-hook-form. It is used to trigger the revalidation of the input.
   // !!! Must be memoized with useCallback
@@ -33,6 +34,7 @@ const useAddressInput = ({
   addressState,
   setAddressState,
   overwriteValidation,
+  isDomainVerifiedByColibri,
   overwriteValidationFieldValue,
   handleRevalidate
 }: Props) => {
@@ -61,6 +63,7 @@ const useAddressInput = ({
         isRecipientDomainResolving: addressState.isDomainResolving,
         isValidEns: addressState.resolvedAddressType === 'ens',
         isValidNamoshi: addressState.resolvedAddressType === 'namoshi',
+        isDomainVerifiedByColibri,
         hasDomainResolveFailed,
         domainResolveError,
         overwriteValidation
@@ -70,6 +73,7 @@ const useAddressInput = ({
       fieldValue,
       addressState.isDomainResolving,
       addressState.resolvedAddressType,
+      isDomainVerifiedByColibri,
       hasDomainResolveFailed,
       domainResolveError,
       overwriteValidation
@@ -147,6 +151,7 @@ const useAddressInput = ({
         .then((result) => {
           if (latestFieldValueRef.current !== fieldValue) return
           setAddressState({
+            fieldValue,
             resolvedAddress: result?.address || '',
             resolvedAddressType: result?.type || null,
             isDomainResolving: false
@@ -159,6 +164,7 @@ const useAddressInput = ({
           setHasDomainResolveFailed(true)
           setDomainResolveError(error?.message || '')
           setAddressState({
+            fieldValue,
             resolvedAddress: '',
             resolvedAddressType: null,
             isDomainResolving: false
