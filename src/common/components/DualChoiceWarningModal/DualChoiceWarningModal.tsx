@@ -120,7 +120,14 @@ const DualChoiceWarningModal = ({
     <Wrapper>
       <ContentWrapper style={contentStyle}>
         <TitleAndIcon type={type} title={title} style={{ backgroundColor: 'transparent' }} />
-        {!!description && <Text text={description} type={type} style={descriptionStyle} />}
+        {!!description && (
+          <Text
+            testID="dual-choice-modal-title-text"
+            text={description}
+            type={type}
+            style={descriptionStyle}
+          />
+        )}
         {children}
       </ContentWrapper>
       <ButtonWrapper reverse={true}>

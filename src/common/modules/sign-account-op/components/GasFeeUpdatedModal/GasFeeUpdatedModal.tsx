@@ -110,7 +110,6 @@ const GasFeeUpdatedModal = ({ signAccountOpState, onAccept, onCancel }: Props) =
         <View style={flexbox.alignCenter}>
           <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mbTy]}>
             <Text
-              testID="dual-choice-modal-title-text"
               fontSize={16}
               appearance="secondaryText"
               style={[flexbox.flex1, { minWidth: 100 }]}
@@ -127,13 +126,13 @@ const GasFeeUpdatedModal = ({ signAccountOpState, onAccept, onCancel }: Props) =
             </Text>
           </View>
           <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-            <View style={flexbox.flex1}>
+            <View testID="previous-fee-amount" style={flexbox.flex1}>
               <FeeValue fee={signAccountOpState.previousFee} token={token} />
             </View>
             <View style={[styles.arrowColumn, flexbox.center]}>
               <RightArrowIcon color={theme.secondaryText} width={8} height={15} weight="1.5" />
             </View>
-            <View style={[flexbox.flex1]}>
+            <View testID="updated-fee-amount" style={[flexbox.flex1]}>
               <FeeValue fee={updatedFee} token={token} />
             </View>
           </View>
