@@ -7,6 +7,7 @@ import { BannerController } from '@ambire-common/controllers/banner/banner'
 import { ContractInfoController } from '@ambire-common/controllers/contractInfo/contractInfo'
 import { ContractNamesController } from '@ambire-common/controllers/contractNames/contractNames'
 import { DappsController } from '@ambire-common/controllers/dapps/dapps'
+import { DebugController } from '@ambire-common/controllers/debug/debug'
 import { DomainsController } from '@ambire-common/controllers/domains/domains'
 import { EmailVaultController } from '@ambire-common/controllers/emailVault/emailVault'
 import { FeatureFlagsController } from '@ambire-common/controllers/featureFlags/featureFlags'
@@ -61,7 +62,8 @@ export const controllersNestedInMainMapping = {
   SafeController,
   QrHardwareController,
   ContractInfoController,
-  SurveyController
+  SurveyController,
+  DebugController
 
   // Add the rest of the controllers that are part of the main controller:
   // - key is the name of the controller
