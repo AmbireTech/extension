@@ -4,10 +4,12 @@ import { View } from 'react-native'
 
 import { TrendingToken } from '@ambire-common/interfaces/dapp'
 import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
+import OpenIcon from '@common/assets/svg/OpenIcon'
 import LayoutWrapper from '@common/components/LayoutWrapper'
 import ScrollableWrapper from '@common/components/ScrollableWrapper'
 import Text from '@common/components/Text'
 import useController from '@common/hooks/useController'
+import { AnimatedPressable, useCustomHover } from '@common/hooks/useHover'
 import useRoute from '@common/hooks/useRoute'
 import useTheme from '@common/hooks/useTheme'
 import Header from '@common/modules/header/components/Header/Header'
@@ -15,6 +17,7 @@ import TokenDetailsTitle from '@common/modules/token-details/components/Title'
 import spacings from '@common/styles/spacings'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
+import { openInTab } from '@common/utils/links'
 import ManifestImage from '@web/components/ManifestImage'
 
 const formatChange = (change: number) => `${change >= 0 ? '+' : ''}${change.toFixed(2)}%`
@@ -37,6 +40,10 @@ const TrendingTokenDetailsScreen = () => {
   const { theme } = useTheme()
   const { state } = useRoute()
   const { state: dappsState } = useController('DappsController')
+  const [bindCoingeckoAnim, coingeckoAnimStyle] = useCustomHover({
+    property: 'opacity',
+    values: { from: 1, to: 0.7 }
+  })
 
   const token: TrendingToken | undefined = useMemo(
     () =>
@@ -118,6 +125,29 @@ const TrendingTokenDetailsScreen = () => {
               ))}
             </View>
           )}
+
+          <AnimatedPressable
+            {...bindCoingeckoAnim}
+            onPress={() => openInTab({ url: `https://www.coingecko.com/en/coins/${token.id}` })}
+            style={[
+              flexbox.directionRow,
+              flexbox.alignCenter,
+              flexbox.justifySpaceBetween,
+              spacings.phSm,
+              spacings.mbTy,
+              {
+                height: 56,
+                backgroundColor: theme.secondaryBackground,
+                borderRadius: BORDER_RADIUS_PRIMARY
+              },
+              coingeckoAnimStyle
+            ]}
+          >
+            <Text fontSize={14} weight="medium" appearance="secondaryText">
+              {t('View on CoinGecko')}
+            </Text>
+            <OpenIcon />
+          </AnimatedPressable>
 
           {!!token.description && (
             <>
