@@ -68,6 +68,15 @@ const useBalanceAffectingErrors = () => {
 
     if (isOffline && portfolio.isAllReady) return t('Please check your internet connection.')
 
+    if (
+      portfolio.verification?.provider === 'colibri' &&
+      portfolio.verification.status === 'stale'
+    ) {
+      return t("Stale RPC, {{blockDiff}} blocks behind Colibri's latest block", {
+        blockDiff: portfolio.verification.blockDiff
+      })
+    }
+
     if (balanceAffectingErrors.length) {
       if (balanceAffectingErrors.length === 1 && balanceAffectingErrors[0]) {
         return t(balanceAffectingErrors[0].title)
@@ -96,6 +105,7 @@ const useBalanceAffectingErrors = () => {
     isOffline,
     networksWithErrors,
     portfolio.isAllReady,
+    portfolio.verification,
     t
   ])
 

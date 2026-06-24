@@ -16,7 +16,7 @@ type Props = {
   isVisible: boolean
 }
 
-type ChainStatus = 'loading' | 'success' | 'warning'
+type ChainStatus = 'loading' | 'success' | 'warning' | 'stale'
 
 const ColibriVerificationBadge: FC<Props> = ({ color, isVisible }) => {
   const { t } = useTranslation()
@@ -54,6 +54,9 @@ const ColibriVerificationBadge: FC<Props> = ({ color, isVisible }) => {
     if (configuredChainIds.some((chainId) => getChainStatus(chainId) === 'warning')) {
       return 'warning'
     }
+    if (configuredChainIds.some((chainId) => getChainStatus(chainId) === 'stale')) {
+      return 'stale'
+    }
     if (configuredChainIds.some((chainId) => getChainStatus(chainId) !== 'success')) {
       return 'loading'
     }
@@ -65,6 +68,7 @@ const ColibriVerificationBadge: FC<Props> = ({ color, isVisible }) => {
     const namesByStatus = {
       loading: [] as string[],
       success: [] as string[],
+      stale: [] as string[],
       warning: [] as string[]
     }
 
@@ -91,10 +95,23 @@ const ColibriVerificationBadge: FC<Props> = ({ color, isVisible }) => {
       })
     }
 
+    if (status === 'stale') {
+      return t("Stale RPC, behind Colibri's latest block on {{chains}}", {
+        chains: chainsByStatus.stale.join(', ')
+      })
+    }
+
     return t('Balances are being verified by Colibri on {{chains}}', {
       chains: chainsByStatus.loading.join(', ')
     })
-  }, [chainsByStatus.loading, chainsByStatus.success, chainsByStatus.warning, status, t])
+  }, [
+    chainsByStatus.loading,
+    chainsByStatus.stale,
+    chainsByStatus.success,
+    chainsByStatus.warning,
+    status,
+    t
+  ])
 
   if (!status) return null
 
@@ -118,7 +135,9 @@ const ColibriVerificationBadge: FC<Props> = ({ color, isVisible }) => {
         resizeMode="contain"
       />
       {status === 'loading' && <Spinner variant="white" style={{ width: 12, height: 12 }} />}
-      {status === 'warning' && <ErrorIcon width={14} height={14} color={color} />}
+      {(status === 'warning' || status === 'stale') && (
+        <ErrorIcon width={14} height={14} color={color} />
+      )}
       {status === 'success' && <SuccessIcon width={14} height={14} color={color} />}
     </View>
   )
