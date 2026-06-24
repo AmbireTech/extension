@@ -4,7 +4,7 @@ import { useForm } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 
-import { Dapp } from '@ambire-common/interfaces/dapp'
+import { Dapp, TrendingToken } from '@ambire-common/interfaces/dapp'
 import LayoutWrapper from '@common/components/LayoutWrapper'
 import ScrollableWrapper, { WRAPPER_TYPES } from '@common/components/ScrollableWrapper'
 import Search from '@common/components/Search'
@@ -18,7 +18,9 @@ import DappItem from '@common/modules/explore/components/DappItem'
 import DappsSkeletonLoader from '@common/modules/explore/components/DappsSkeletonLoader'
 import HorizontalDappsRow from '@common/modules/explore/components/HorizontalDappsRow'
 import SectionHeader from '@common/modules/explore/components/SectionHeader'
-import TrendingSection from '@common/modules/explore/components/TrendingSection'
+import TrendingTokenItem from '@common/modules/explore/components/TrendingTokenItem'
+import { MAX_TRENDING_TOKENS_ON_EXPLORE } from '@common/modules/explore/constants/trending'
+import { filterTrendingTokensBySearch } from '@common/modules/explore/helpers/filterTrendingTokens'
 import useExploreSections, {
   ExploreSection
 } from '@common/modules/explore/hooks/useExploreSections'
@@ -27,7 +29,12 @@ import { ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
-type SectionItem = { kind: 'dapp'; dapp: Dapp } | { kind: 'row'; dapps: Dapp[] }
+type SectionItem =
+  | { kind: 'dapp'; dapp: Dapp }
+  | { kind: 'row'; dapps: Dapp[] }
+  | { kind: 'trendingToken'; token: TrendingToken }
+
+type SearchResult = { kind: 'dapp'; dapp: Dapp } | { kind: 'trendingToken'; token: TrendingToken }
 
 const ExploreScreen = () => {
   const { control, watch, setValue } = useForm({ defaultValues: { search: '' } })
@@ -41,8 +48,14 @@ const ExploreScreen = () => {
   const sections = useExploreSections()
 
   const handleOpenSection = useCallback(
-    (section: ExploreSection) =>
-      navigate(ROUTES.exploreSection, { state: { type: section.type, title: section.title } }),
+    (section: ExploreSection) => {
+      // Trending has its own "see all" screen since its items are tokens, not dapps.
+      if (section.type === 'trending') {
+        navigate(ROUTES.trendingTokens)
+        return
+      }
+      navigate(ROUTES.exploreSection, { state: { type: section.type, title: section.title } })
+    },
     [navigate]
   )
 
@@ -61,8 +74,12 @@ const ExploreScreen = () => {
     [state.dapps]
   )
 
-  const searchResults: Dapp[] = useMemo(() => {
+  const searchResults: SearchResult[] = useMemo(() => {
     if (!debouncedSearch) return []
+    const tokenResults: SearchResult[] = filterTrendingTokensBySearch(
+      state.trendingTokens || [],
+      debouncedSearch
+    ).map((token) => ({ kind: 'trendingToken' as const, token }))
     const fuse = new Fuse(searchableDapps, {
       keys: [
         { name: 'name', weight: 0.7 },
@@ -73,25 +90,42 @@ const ExploreScreen = () => {
       threshold: 0.2,
       minMatchCharLength: 1
     })
-    return fuse.search(debouncedSearch).map((r) => r.item.dapp)
-  }, [debouncedSearch, searchableDapps])
+    const dappResults: SearchResult[] = fuse
+      .search(debouncedSearch)
+      .map((r) => ({ kind: 'dapp' as const, dapp: r.item.dapp }))
+    return [...tokenResults, ...dappResults]
+  }, [debouncedSearch, searchableDapps, state.trendingTokens])
 
-  const renderSearchItem = useCallback(({ item }: { item: Dapp }) => <DappItem {...item} />, [])
+  const renderSearchItem = useCallback(({ item }: { item: SearchResult }) => {
+    if (item.kind === 'trendingToken') return <TrendingTokenItem token={item.token} />
+    return <DappItem {...item.dapp} />
+  }, [])
 
   const sectionListData = useMemo(
     () =>
-      sections.map((s) => ({
-        ...s,
-        data:
-          s.type === 'apps'
-            ? s.data.map((d) => ({ kind: 'dapp' as const, dapp: d }))
-            : [{ kind: 'row' as const, dapps: s.data }]
-      })),
+      sections.map((s) => {
+        if (s.type === 'trending') {
+          return {
+            ...s,
+            data: s.trendingTokens
+              .slice(0, MAX_TRENDING_TOKENS_ON_EXPLORE)
+              .map((token) => ({ kind: 'trendingToken' as const, token }))
+          }
+        }
+        return {
+          ...s,
+          data:
+            s.type === 'apps'
+              ? s.data.map((d) => ({ kind: 'dapp' as const, dapp: d }))
+              : [{ kind: 'row' as const, dapps: s.data }]
+        }
+      }),
     [sections]
   )
 
   const renderSectionItem = useCallback(({ item }: { item: SectionItem }) => {
     if (item.kind === 'row') return <HorizontalDappsRow data={item.dapps} />
+    if (item.kind === 'trendingToken') return <TrendingTokenItem token={item.token} />
     return <DappItem {...item.dapp} />
   }, [])
 
@@ -112,10 +146,11 @@ const ExploreScreen = () => {
     [sections, handleOpenSection, handleClearRecentsPress]
   )
 
-  const sectionKeyExtractor = useCallback(
-    (item: SectionItem, index: number) => (item.kind === 'dapp' ? item.dapp.id : `row-${index}`),
-    []
-  )
+  const sectionKeyExtractor = useCallback((item: SectionItem, index: number) => {
+    if (item.kind === 'dapp') return item.dapp.id
+    if (item.kind === 'trendingToken') return `trending-${item.token.id}`
+    return `row-${index}`
+  }, [])
 
   return (
     <LayoutWrapper>
@@ -126,7 +161,7 @@ const ExploreScreen = () => {
         <View style={[flexbox.flex1]}>
           <View style={spacings.phSm}>
             <Search
-              placeholder={t('Search apps or URLs')}
+              placeholder={t('Search apps, tokens or URLs')}
               control={control}
               // @ts-ignore
               setValue={setValue}
@@ -139,7 +174,9 @@ const ExploreScreen = () => {
               type={WRAPPER_TYPES.FLAT_LIST}
               data={searchResults}
               renderItem={renderSearchItem as any}
-              keyExtractor={(item: Dapp) => item.id}
+              keyExtractor={(item: SearchResult) =>
+                item.kind === 'dapp' ? item.dapp.id : `trending-${item.token.id}`
+              }
               style={spacings.phSm}
               contentContainerStyle={spacings.pr0}
             />
@@ -150,7 +187,6 @@ const ExploreScreen = () => {
               renderItem={renderSectionItem as any}
               renderSectionHeader={renderSectionHeader as any}
               keyExtractor={sectionKeyExtractor as any}
-              ListHeaderComponent={TrendingSection}
               stickySectionHeadersEnabled={false}
               style={spacings.phSm}
               contentContainerStyle={spacings.pr0}
