@@ -74,7 +74,9 @@ const WEB_ROUTES = {
   safeImport: 'safe-import',
   optOuts: 'settings/opt-outs',
   survey: 'survey',
-  qrPermission: 'qr-permission'
+  qrPermission: 'qr-permission',
+  // INTERNAL ROUTES
+  internalLogs: 'internal/logs'
 }
 
 const ROUTES = { ...MOBILE_ROUTES, ...WEB_ROUTES }
