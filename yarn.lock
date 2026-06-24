@@ -2630,13 +2630,6 @@
     bs58check "^2.1.2"
     tslib "^2.3.0"
 
-"@kohaku-eth/provider@^0.1.0-alpha.8":
-  version "0.1.0-alpha.8"
-  resolved "https://registry.yarnpkg.com/@kohaku-eth/provider/-/provider-0.1.0-alpha.8.tgz#a2c39e7ec5f01affc190eb586a7e036daab4cb72"
-  integrity sha512-XYzI5J4nwiKLH4jWbDQTSW9inB7pqDtt53vgWyBaBnwKIcRhCyIJZo5iWuxlO2AQlB0mfOreeeYriGuRh03fTQ==
-  dependencies:
-    ox "^0.12.0"
-
 "@lavamoat/aa@^4.3.5", "@lavamoat/aa@^4.3.6":
   version "4.3.6"
   resolved "https://registry.yarnpkg.com/@lavamoat/aa/-/aa-4.3.6.tgz#e0b4e0ac4cffafcc716b9da62faf331357221e6f"
