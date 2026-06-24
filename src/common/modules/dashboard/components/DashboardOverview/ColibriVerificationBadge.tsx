@@ -1,4 +1,4 @@
-import React, { FC, useMemo } from 'react'
+import React, { FC, useCallback, useMemo } from 'react'
 import { ColorValue, Image, ImageSourcePropType, View } from 'react-native'
 
 import colibriLogo from '@common/assets/images/colibri-logo.png'
@@ -16,6 +16,8 @@ type Props = {
   isVisible: boolean
 }
 
+type ChainStatus = 'loading' | 'success' | 'warning'
+
 const ColibriVerificationBadge: FC<Props> = ({ color, isVisible }) => {
   const { t } = useTranslation()
   const { portfolio } = useController('SelectedAccountController').state
@@ -29,25 +31,35 @@ const ColibriVerificationBadge: FC<Props> = ({ color, isVisible }) => {
     [allNetworks]
   )
 
-  const statusByChainId = useMemo(() => {
+  const statusByChainId = useMemo<Record<string, ChainStatus>>(() => {
     return Object.fromEntries(
       Object.entries(portfolio.portfolioState)
         .filter(([, state]) => state?.verification?.provider === 'colibri')
-        .map(([chainId, state]) => [chainId, state!.verification!.status])
+        .map(([chainId, state]) => [chainId, state!.verification!.status as ChainStatus])
     )
   }, [portfolio.portfolioState])
 
+  const getChainStatus = useCallback(
+    (chainId: string): ChainStatus => {
+      return (
+        statusByChainId[chainId] ||
+        (portfolio.portfolioState[chainId]?.isReady ? 'success' : 'loading')
+      )
+    },
+    [portfolio.portfolioState, statusByChainId]
+  )
+
   const status = useMemo(() => {
     if (!configuredChainIds.length) return null
-    if (configuredChainIds.some((chainId) => statusByChainId[chainId] === 'warning')) {
+    if (configuredChainIds.some((chainId) => getChainStatus(chainId) === 'warning')) {
       return 'warning'
     }
-    if (configuredChainIds.some((chainId) => statusByChainId[chainId] !== 'success')) {
+    if (configuredChainIds.some((chainId) => getChainStatus(chainId) !== 'success')) {
       return 'loading'
     }
 
     return 'success'
-  }, [configuredChainIds, statusByChainId])
+  }, [configuredChainIds, getChainStatus])
 
   const chainsByStatus = useMemo(() => {
     const namesByStatus = {
@@ -59,12 +71,12 @@ const ColibriVerificationBadge: FC<Props> = ({ color, isVisible }) => {
     configuredChainIds.forEach((chainId) => {
       const network = allNetworks.find((n) => n.chainId.toString() === chainId)
       const networkName = network?.name || chainId
-      const chainStatus = statusByChainId[chainId] || 'loading'
+      const chainStatus = getChainStatus(chainId)
       namesByStatus[chainStatus].push(networkName)
     })
 
     return namesByStatus
-  }, [allNetworks, configuredChainIds, statusByChainId])
+  }, [allNetworks, configuredChainIds, getChainStatus])
 
   const tooltipContent = useMemo(() => {
     if (status === 'success') {

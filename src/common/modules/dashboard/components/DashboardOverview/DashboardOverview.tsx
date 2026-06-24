@@ -178,10 +178,12 @@ const DashboardOverview: FC<Props> = ({
                     />
                   ) : (
                     <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-                      <ColibriVerificationBadge
-                        color={totalPortfolioAmountColor}
-                        isVisible={shouldShowRefreshButton}
-                      />
+                      {!warningMessage && (
+                        <ColibriVerificationBadge
+                          color={totalPortfolioAmountColor}
+                          isVisible={shouldShowRefreshButton}
+                        />
+                      )}
                       <Pressable
                         testID="full-balance"
                         onPress={togglePrivacyMode}
