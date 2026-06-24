@@ -1932,6 +1932,12 @@
         "@ngraveio/bc-ur>sha.js>to-buffer": true
       }
     },
+    "hash-wasm": {
+      "globals": {
+        "SuppressedError": true,
+        "WebAssembly": true
+      }
+    },
     "gridplus-sdk>hash.js": {
       "packages": {
         "stream-http>inherits": true,
