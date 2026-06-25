@@ -71,7 +71,6 @@ const DAppConnectAccountSettings: FC<Props> = ({ id, accountPreferences }) => {
           accounts={orderedAccountList}
           allowedAccounts={localPreferences?.accounts || []}
           onToggleAccount={toggleSelectAccount}
-          enforce="selected"
         />
         <FooterGlassView>
           <Button

@@ -8,7 +8,6 @@ import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import HoverablePressable from '@common/components/HoverablePressable'
 import ScrollableWrapper, { WRAPPER_TYPES } from '@common/components/ScrollableWrapper'
 import Text from '@common/components/Text'
-import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
@@ -18,26 +17,20 @@ type Props = {
   accounts: Account[]
   allowedAccounts: string[]
   onToggleAccount: (addr: string) => void
-  enforce?: 'selected' | 'atLeastOne'
 }
 
-const DAppAccountList: FC<Props> = ({ accounts, allowedAccounts, onToggleAccount, enforce }) => {
+const DAppAccountList: FC<Props> = ({ accounts, allowedAccounts, onToggleAccount }) => {
   const { t } = useTranslation()
   const { theme } = useTheme()
-  const { account } = useController('SelectedAccountController').state
 
   const getIsDisabled = useCallback(
     (addr: string) => {
-      if (enforce === 'selected') {
-        return addr === account?.addr && allowedAccounts.includes(addr)
-      }
-
       const isSelected = allowedAccounts.includes(addr)
 
       // Don't allow the user to remove the last allowed account, as at least one account must be allowed
       return isSelected && allowedAccounts.length === 1 && allowedAccounts[0] === addr
     },
-    [account?.addr, allowedAccounts, enforce]
+    [allowedAccounts]
   )
 
   const renderItem = useCallback(
@@ -61,10 +54,7 @@ const DAppAccountList: FC<Props> = ({ accounts, allowedAccounts, onToggleAccount
           getIsDisabled(item.addr)
             ? createGlobalTooltipDataSet({
                 id: `account-${item.addr}`,
-                content:
-                  enforce === 'selected'
-                    ? t('Selected account cannot be removed from the list.')
-                    : t('Cannot remove all accounts. At least one account must be allowed.')
+                content: t('Cannot remove all accounts. At least one account must be allowed.')
               })
             : undefined
         }
@@ -98,7 +88,7 @@ const DAppAccountList: FC<Props> = ({ accounts, allowedAccounts, onToggleAccount
         </Text>
       </HoverablePressable>
     ),
-    [theme.secondaryBackground, getIsDisabled, enforce, t, allowedAccounts, onToggleAccount]
+    [theme.secondaryBackground, getIsDisabled, t, allowedAccounts, onToggleAccount]
   )
 
   const getItemLayout = useCallback(

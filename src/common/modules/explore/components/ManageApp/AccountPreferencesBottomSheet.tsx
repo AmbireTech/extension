@@ -74,7 +74,6 @@ const AccountPreferencesBottomSheet = ({
             accounts={orderedAccountList}
             allowedAccounts={localPreferences?.accounts || []}
             onToggleAccount={toggleSelectAccount}
-            enforce="atLeastOne"
           />
         </>
       ) : (
