@@ -135,37 +135,29 @@ export const handleActions = async (
     }
 
     case 'DAPPS_CONTROLLER_DISCONNECT_ALL_DAPPS': {
+      // Capture the WC topics up front — broadcasting `disconnect` tears down the WC sessions,
+      // so they'd be gone by the time `disconnectAllDapps` returns.
+      const wcTopicsToTerminate =
+        params.source === 'injected'
+          ? []
+          : (Object.values(mainCtrl.dapps.dappSessions) as Session[])
+              .filter((s) => !!s.wcTopic)
+              .map((s) => s.wcTopic as string)
+
+      const disconnectedDapps = await mainCtrl.dapps.disconnectAllDapps(params.source)
+
+      for (const topic of wcTopicsToTerminate) {
+        sendToReactEvent('action.wcSessionBroadcast', {
+          wcSessionTopic: topic,
+          chainId: 1,
+          event: 'disconnect',
+          data: {}
+        })
+      }
+
       // Process sequentially: each disconnect may call `revokeAllPoliciesForDomain`, which
       // is guarded by a status lock that throws if a previous call hasn't finished yet.
-      const connectedDapps = mainCtrl.dapps.dapps.filter((dapp) => dapp.isConnected)
-
-      for (const dapp of connectedDapps) {
-        const wcTopicsToTerminate =
-          params.source === 'injected'
-            ? []
-            : (Object.values(mainCtrl.dapps.dappSessions) as Session[])
-                .filter((s) => s.id === dapp.id && !!s.wcTopic)
-                .map((s) => s.wcTopic as string)
-
-        if (params.source) {
-          await mainCtrl.dapps.disconnectDappSource(dapp.id, params.source)
-        } else {
-          await mainCtrl.dapps.broadcastDappSessionEvent('disconnect', undefined, dapp.id)
-          mainCtrl.dapps.updateDapp(dapp.id, {
-            connectedSources: [],
-            isConnected: false
-          })
-        }
-
-        for (const topic of wcTopicsToTerminate) {
-          sendToReactEvent('action.wcSessionBroadcast', {
-            wcSessionTopic: topic,
-            chainId: 1,
-            event: 'disconnect',
-            data: {}
-          })
-        }
-
+      for (const dapp of disconnectedDapps) {
         const stillConnected = mainCtrl.dapps.hasPermission(dapp.id)
         if (!stillConnected) {
           await mainCtrl.autoLogin.revokeAllPoliciesForDomain(dapp.id, dapp.url)
