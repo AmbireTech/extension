@@ -17,9 +17,7 @@ const config: PlaywrightTestConfig = {
   },
   testDir: 'tests',
   testMatch: '**/*.spec.ts',
-  reporter: process.env.CI
-    ? [['list'], ['blob'], ['html', { outputFolder: 'html-report', open: 'never' }]]
-    : [['list'], ['html', { outputFolder: 'html-report', open: 'never' }]],
+  reporter: [['list'], ['html', { outputFolder: 'html-report', open: 'never' }]],
   timeout: 180 * 1000, // 3min
   reportSlowTests: null,
   snapshotPathTemplate: 'data/screenshots/{projectName}/{testFilePath}/{arg}/text',

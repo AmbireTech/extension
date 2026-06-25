@@ -362,13 +362,13 @@ jobs:
         working-directory: ./e2e-playwright-tests
         run: yarn test:all:non-hw
 
-      - name: Upload non-hw blob report
+      - name: Upload non-hw Playwright report
         if: always()
         uses: actions/upload-artifact@v6
         with:
-          name: blob-report-non-hw
-          path: ./e2e-playwright-tests/blob-report/
-          retention-days: 7
+          name: playwright-report-non-hw
+          path: ./e2e-playwright-tests/html-report/
+          retention-days: 14
 
   # ============================================================
   # 4. Ledger tests
@@ -493,13 +493,13 @@ jobs:
         working-directory: ./e2e-playwright-tests
         run: yarn ledger:tests
 
-      - name: Upload ledger blob report
+      - name: Upload ledger Playwright report
         if: always()
         uses: actions/upload-artifact@v6
         with:
-          name: blob-report-ledger
-          path: ./e2e-playwright-tests/blob-report/
-          retention-days: 7
+          name: playwright-report-ledger
+          path: ./e2e-playwright-tests/html-report/
+          retention-days: 14
 
   # ============================================================
   # 5. Trezor tests
@@ -621,45 +621,10 @@ jobs:
         working-directory: ./e2e-playwright-tests
         run: yarn trezor:test
 
-      - name: Upload trezor blob report
+      - name: Upload trezor Playwright report
         if: always()
         uses: actions/upload-artifact@v6
         with:
-          name: blob-report-trezor
-          path: ./e2e-playwright-tests/blob-report/
-          retention-days: 7
-
-  # ============================================================
-  # 6. Merge reports
-  # ============================================================
-  merge-and-report:
-    runs-on: ubuntu-latest
-    needs: [e2e-non-hw, e2e-ledger, e2e-trezor]
-    if: always()
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v6
-        with:
-          fetch-depth: 1
-
-      - name: Download all blob reports
-        uses: actions/download-artifact@v6
-        with:
-          pattern: blob-report-*
-          path: all-blob-reports
-          merge-multiple: true
-
-      - name: Merge reports into HTML
-        working-directory: ./e2e-playwright-tests
-        run: |
-          mkdir -p all-blob-reports
-          yarn playwright merge-reports --reporter html ../all-blob-reports || true
-
-      - name: Upload final Playwright report
-        if: always()
-        uses: actions/upload-artifact@v6
-        with:
-          name: playwright-report
-          path: ./e2e-playwright-tests/playwright-report/
+          name: playwright-report-trezor
+          path: ./e2e-playwright-tests/html-report/
           retention-days: 14
