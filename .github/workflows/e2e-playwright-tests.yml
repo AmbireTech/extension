@@ -145,7 +145,6 @@ jobs:
   balance-check:
     runs-on: ubuntu-latest
     environment: testing
-    needs: [build]
     if: github.event_name != 'pull_request' || github.event.pull_request.draft == false || github.event_name == 'workflow_dispatch'
 
     env:
@@ -223,12 +222,6 @@ jobs:
         with:
           node-version-file: '.nvmrc'
           cache: 'yarn'
-
-      - name: Download webkit build
-        uses: actions/download-artifact@v6
-        with:
-          name: webkit-build
-          path: ./build/webkit-prod/
 
       - name: Install e2e test dependencies
         working-directory: ./e2e-playwright-tests
