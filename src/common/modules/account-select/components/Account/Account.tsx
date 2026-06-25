@@ -243,6 +243,7 @@ const Account = ({
               plainAddressMaxLength={maxAccountAddrLength}
               withCopy={isWeb && withCopy}
               withReceive={isWeb && withReceive}
+              withUpdateEnsInTooltip={isSelectable}
             />
           </View>
         </View>

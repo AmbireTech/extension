@@ -180,6 +180,7 @@ const AddressBookContact: FC<Props> = ({
               addressHighlight={addressHighlight}
               containerStyle={{ paddingVertical: 0 }}
               withCopy={withCopy}
+              withUpdateEnsInTooltip={!isEditable}
             />
           </View>
         </View>

@@ -36,6 +36,7 @@ interface Props extends Omit<ReturnType<typeof useReverseLookup>, 'updatedAt' | 
   containerStyle?: ViewStyle
   withReceive?: boolean
   withWrap?: boolean
+  withUpdateEnsInTooltip?: boolean
 }
 
 export const ReceiveButton = memo(function ReceiveButton({
@@ -76,7 +77,8 @@ const AccountAddress: FC<Props> = ({
   fontSize = 12,
   containerStyle = {},
   withReceive = false,
-  withWrap = false
+  withWrap = false,
+  withUpdateEnsInTooltip = false
 }) => {
   const { t } = useTranslation()
   const { theme } = useTheme()
@@ -140,7 +142,9 @@ const AccountAddress: FC<Props> = ({
               style={{ zIndex: 2, ...spacings.mrMi }}
               dataSet={createGlobalTooltipDataSet({
                 id: `account-address-no-ens-${address}`,
-                content: t('No ENS data. Select the account to update')
+                content: t(
+                  `No ENS data.${withUpdateEnsInTooltip ? ' Select the account to update' : ''}`
+                )
               })}
             >
               <EnsIcon width={16} height={16} color={theme.iconPrimary} state="none" />
