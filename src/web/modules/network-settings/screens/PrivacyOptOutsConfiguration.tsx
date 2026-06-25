@@ -8,11 +8,11 @@ import { PanelBackButton } from '@common/components/Panel/Panel'
 import useNavigation from '@common/hooks/useNavigation'
 import useTheme from '@common/hooks/useTheme'
 import { ROUTES } from '@common/modules/router/constants/common'
+import OptOutControlOption from '@common/modules/settings/components/PrivacyOptOuts/OptOutControlOption'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { TabLayoutContainer } from '@web/components/TabLayoutWrapper'
 import SettingsPageHeader from '@web/modules/settings/components/SettingsPageHeader'
-import OptOutControlOption from '@web/modules/settings/screens/OptOutsScreen/components/OptOutControlOption'
 
 import getStyles from './styles'
 

@@ -9,6 +9,7 @@ import DownArrowIcon from '@common/assets/svg/DownArrowIcon'
 import ManifestFallbackIcon from '@common/assets/svg/ManifestFallbackIcon'
 import Alert from '@common/components/Alert'
 import Banner from '@common/components/Banner'
+import NetworkAvailableFeatures from '@common/components/NetworkAvailableFeatures'
 import Text from '@common/components/Text'
 import { isMobile, isWeb } from '@common/config/env'
 import useDappInfo from '@common/hooks/useDappInfo'
@@ -19,7 +20,6 @@ import spacings, { SPACING, SPACING_MD, SPACING_SM, SPACING_TY } from '@common/s
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
 import ManifestImage from '@web/components/ManifestImage'
-import NetworkAvailableFeatures from '@web/components/NetworkAvailableFeatures'
 
 import RpcCard from './RpcCard'
 

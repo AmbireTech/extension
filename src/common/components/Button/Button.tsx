@@ -443,10 +443,10 @@ const Button = ({
           containerStylesSizes[size],
           styles.buttonContainer,
           containerStyles[type],
-          style,
           !!accentColor && { borderColor: accentColor },
           !hasBottomSpacing && spacings.mb0,
           buttonContainerAnimatedStyle,
+          style,
           disabled && disabledStyle ? disabledStyle : {},
           disabled && !disabledStyle ? styles.disabled : {}
         ] as ViewStyle[]

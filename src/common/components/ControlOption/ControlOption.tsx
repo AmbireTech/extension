@@ -15,6 +15,7 @@ import { openInTab } from '@common/utils/links'
 interface Props {
   title: string
   description: string
+  forceDescriptionOnMobile?: boolean
   readMoreLink?: string
   renderIcon: React.ReactNode
   children?: React.ReactNode
@@ -25,6 +26,7 @@ interface Props {
 const ControlOption: FC<Props> = ({
   title,
   description,
+  forceDescriptionOnMobile,
   readMoreLink,
   children,
   renderIcon,
@@ -52,7 +54,8 @@ const ControlOption: FC<Props> = ({
     <ParentElement
       style={[
         isWeb && spacings.pv,
-        isMobile && { height: 66 },
+        isMobile && !!forceDescriptionOnMobile && spacings.pvSm,
+        isMobile && !forceDescriptionOnMobile && { height: 66 },
         spacings.ph,
         common.borderRadiusPrimary,
         flexbox.directionRow,
@@ -73,13 +76,17 @@ const ControlOption: FC<Props> = ({
           <Text fontSize={16} weight="medium">
             {title}
           </Text>
-          {isWeb && (
-            <Text appearance="secondaryText" fontSize={14}>
+          {(isWeb || !!forceDescriptionOnMobile) && (
+            <Text
+              appearance="secondaryText"
+              fontSize={isMobile ? 12 : 14}
+              style={isMobile && spacings.ptMi}
+            >
               {description}
               {!!readMoreLink && ' '}
               {!!readMoreLink && (
                 <Text
-                  fontSize={14}
+                  fontSize={isMobile ? 12 : 14}
                   color={theme.linkText}
                   style={{ textDecorationLine: 'underline' }}
                   onPress={openReadMoreLink}
