@@ -18,10 +18,11 @@ concurrency:
 
 jobs:
   # ============================================================
-  # 1. LavaMoat policy validation
+  # 1. Build webkit extension (shared) + LavaMoat policy validation
   # ============================================================
-  lavamoat-validate:
+  build:
     runs-on: ubuntu-latest
+    environment: testing
     if: github.event_name != 'pull_request' || github.event.pull_request.draft == false || github.event_name == 'workflow_dispatch'
 
     env:
@@ -130,12 +131,21 @@ jobs:
           fi
           echo "✅ LavaMoat policy validation passed"
 
+      - name: Upload webkit build
+        uses: actions/upload-artifact@v6
+        with:
+          name: webkit-build
+          path: ./build/webkit-prod/
+          include-hidden-files: true
+          retention-days: 1
+
   # ============================================================
   # 2. Balance Check (fast gate)
   # ============================================================
   balance-check:
     runs-on: ubuntu-latest
     environment: testing
+    needs: [build]
     if: github.event_name != 'pull_request' || github.event.pull_request.draft == false || github.event_name == 'workflow_dispatch'
 
     env:
@@ -214,11 +224,11 @@ jobs:
           node-version-file: '.nvmrc'
           cache: 'yarn'
 
-      - name: Install root dependencies
-        run: yarn setup:ci
-
-      - name: Build webkit extension and generate LavaMoat policy
-        run: yarn build:web:webkit:generate-policy
+      - name: Download webkit build
+        uses: actions/download-artifact@v6
+        with:
+          name: webkit-build
+          path: ./build/webkit-prod/
 
       - name: Install e2e test dependencies
         working-directory: ./e2e-playwright-tests
@@ -250,7 +260,7 @@ jobs:
   e2e-non-hw:
     runs-on: ubuntu-latest
     environment: testing
-    needs: [lavamoat-validate, balance-check]
+    needs: [build, balance-check]
     if: github.event_name != 'pull_request' || github.event.pull_request.draft == false || github.event_name == 'workflow_dispatch'
 
     env:
@@ -329,11 +339,11 @@ jobs:
           node-version-file: '.nvmrc'
           cache: 'yarn'
 
-      - name: Install root dependencies
-        run: yarn setup:ci
-
-      - name: Build webkit extension and generate LavaMoat policy
-        run: yarn build:web:webkit:generate-policy
+      - name: Download webkit build
+        uses: actions/download-artifact@v6
+        with:
+          name: webkit-build
+          path: ./build/webkit-prod/
 
       - name: Install e2e test dependencies
         working-directory: ./e2e-playwright-tests
@@ -373,7 +383,7 @@ jobs:
   e2e-ledger:
     runs-on: ubuntu-latest
     environment: testing
-    needs: [lavamoat-validate, balance-check]
+    needs: [build, balance-check]
     if: github.event_name != 'pull_request' || github.event.pull_request.draft == false || github.event_name == 'workflow_dispatch'
 
     env:
@@ -452,11 +462,11 @@ jobs:
           node-version-file: '.nvmrc'
           cache: 'yarn'
 
-      - name: Install root dependencies
-        run: yarn setup:ci
-
-      - name: Build webkit extension and generate LavaMoat policy
-        run: yarn build:web:webkit:generate-policy
+      - name: Download webkit build
+        uses: actions/download-artifact@v6
+        with:
+          name: webkit-build
+          path: ./build/webkit-prod/
 
       - name: Install e2e test dependencies
         working-directory: ./e2e-playwright-tests
@@ -504,7 +514,7 @@ jobs:
   e2e-trezor:
     runs-on: ubuntu-latest
     environment: testing
-    needs: [lavamoat-validate, balance-check]
+    needs: [build, balance-check]
     if: github.event_name != 'pull_request' || github.event.pull_request.draft == false || github.event_name == 'workflow_dispatch'
 
     env:
@@ -583,11 +593,11 @@ jobs:
           node-version-file: '.nvmrc'
           cache: 'yarn'
 
-      - name: Install root dependencies
-        run: yarn setup:ci
-
-      - name: Build webkit extension and generate LavaMoat policy
-        run: yarn build:web:webkit:generate-policy
+      - name: Download webkit build
+        uses: actions/download-artifact@v6
+        with:
+          name: webkit-build
+          path: ./build/webkit-prod/
 
       - name: Install e2e test dependencies
         working-directory: ./e2e-playwright-tests
