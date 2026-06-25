@@ -340,7 +340,7 @@ const selectors = {
   // TODO: change once we have IDs on FE
   disableNetworkButton: 'disable-network-btn',
   disableNetworkConfirmButton: 'disable-network-confirm-btn',
-  addRPCURLButton: '//div[.//div[text()="RPC URL"]]//div[text()="Add"]',
+  addRPCURLButton: '//div[.//div[text()="Add RPC URL"]]//div[text()="Add"]',
   addNetworkButton: '//div[.//div[text()="Network details"]]//div[text()="Add network"]',
   connectWalletButton:
     "//div[.//span[text()='Include Testnets']]//button[normalize-space()='Connect Wallet']",
