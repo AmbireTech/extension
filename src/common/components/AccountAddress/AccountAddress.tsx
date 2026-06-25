@@ -88,7 +88,7 @@ const AccountAddress: FC<Props> = ({
   // It's okay to use Date.now() here because we don't have to sync the time
   // (the user won't stay on this screen for long enough for the time to change significantly)
   // eslint-disable-next-line react-hooks/purity
-  const isEnsOlderThanOneDay = updatedAt ? Date.now() - updatedAt > 18 * 60 * 60 * 1000 : false
+  const isEnsOlderThanOneDay = updatedAt ? Date.now() - updatedAt > 24 * 60 * 60 * 1000 : false
 
   const nameTooltipContent = useMemo(() => {
     if (!name) return ''
