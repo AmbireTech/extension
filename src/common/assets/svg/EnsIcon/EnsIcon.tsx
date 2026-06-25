@@ -3,7 +3,7 @@ import Svg, { Circle, G, Path } from 'react-native-svg'
 
 import { LegendsSvgProps } from '@legends/types/svg'
 
-export type EnsIconState = 'fresh' | 'old' | 'none'
+export type EnsIconState = 'fresh' | 'none'
 
 interface Props extends LegendsSvgProps {
   state?: EnsIconState
