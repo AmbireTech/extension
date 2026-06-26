@@ -202,6 +202,7 @@ const selectors = {
   swapAndBridge: {
     fromTokenDropdown: 'from-token-select',
     receiveTokenDropdown: 'to-token-select',
+    receiveNetworkDropdown: 'to-network-select',
     oneInchSwapRoute: '//div[contains(text(), "1Inch")]',
     kyberSwapRoute: '//div[contains(text(), "Kyberswap")]',
     sushiSwapRoute: 'div:has-text("SushiSwap Aggregator")' // no route
@@ -297,9 +298,6 @@ const selectors = {
   refreshButton: 'refresh-button',
   dashboardGasTankBalance: 'dashboard-gas-tank-balance',
   createSmartAccountGasTankModalButton: 'create-smart-account-gas-tank-modal-button',
-  recieveNetworkBase: 'option-8453',
-  recieveNetworkOptimism: 'option-10',
-  receiveNetworkEth: 'option-1',
   confirmFollowUpTxn: 'confirm-follow-up-txns-checkbox',
   USDC: 'option-0x0b2c639c533813f4aa9d7837caf62653d097ff85.usdc',
   signTransactionButton: 'transaction-button-sign',

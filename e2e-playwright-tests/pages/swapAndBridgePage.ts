@@ -71,16 +71,9 @@ export class SwapAndBridgePage extends BasePage {
   async prepareSwapAndBridge(send_amount: number, fromToken: Token, toToken: Token) {
     await this.openSwapAndBridge()
     try {
-      // switch network
-      const tokenNetwork = toToken.chainName
-
-      if (tokenNetwork == 'optimism') {
-        await this.click(selectors.recieveNetworkBase)
-        await this.click(selectors.recieveNetworkOptimism)
-      }
-
       await this.selectSendToken(fromToken)
-      // Select Receive Token on the same Network, which is automatically selected
+      // The receive network does not follow the send token, so select it explicitly.
+      await this.selectReceiveNetwork(toToken)
       await this.selectReceiveToken(toToken)
 
       // If checking prepareSwapAndBridge functionality without providing send amount
@@ -113,6 +106,18 @@ export class SwapAndBridgePage extends BasePage {
     await this.page.waitForTimeout(2000) // waiting for animation
 
     await this.clickOnMenuToken(receiveToken, selectors.swapAndBridge.receiveTokenDropdown)
+  }
+
+  // The receive ("To") network does NOT automatically follow the send token, and its
+  // options are rendered inside a bottom sheet. So open the network selector and pick the
+  // network matching the receive token's chain before selecting the receive token, otherwise
+  // the receive list stays on whatever network the form happened to default to.
+  async selectReceiveNetwork(receiveToken: Token) {
+    await this.click(selectors.swapAndBridge.receiveNetworkDropdown)
+    await this.page
+      .getByTestId(selectors.bottomSheet)
+      .getByTestId(`option-${receiveToken.chainId}`)
+      .click()
   }
 
   async verifyIfSwitchIsActive(reference = true) {
@@ -154,14 +159,8 @@ export class SwapAndBridgePage extends BasePage {
     await this.openSwapAndBridge()
     await this.selectSendToken(sendToken)
 
-    // switch network
-    const tokenNetwork = receiveToken.chainName
-
-    if (tokenNetwork == 'optimism') {
-      await this.click(selectors.recieveNetworkBase)
-      await this.click(selectors.recieveNetworkOptimism)
-    } else {
-    }
+    // The receive network does not follow the send token, so select it explicitly.
+    await this.selectReceiveNetwork(receiveToken)
 
     await this.page.waitForTimeout(2000)
 
@@ -381,13 +380,8 @@ export class SwapAndBridgePage extends BasePage {
     await this.selectSendToken(sendToken)
 
     try {
-      // switch network
-      const tokenNetwork = receiveToken.chainName
-
-      if (tokenNetwork == 'optimism') {
-        await this.click(selectors.recieveNetworkBase)
-        await this.click(selectors.recieveNetworkOptimism)
-      }
+      // The receive network does not follow the send token, so select it explicitly.
+      await this.selectReceiveNetwork(receiveToken)
 
       // Select receive token by address
       await this.page.waitForTimeout(2000)
@@ -414,22 +408,32 @@ export class SwapAndBridgePage extends BasePage {
   }
 
   async batchAction(): Promise<void> {
+    // Wait for the route/quote to be ready before adding to the batch. The "Select route" step
+    // depends on the Li.Fi response; adding to the batch before it settles triggers an
+    // estimation race in the background and the "Add more" button never renders.
+    await this.page.waitForSelector(locators.selectRouteButton, {
+      state: 'visible',
+      timeout: 15000
+    })
     await expect(this.page.getByTestId(selectors.addToBatchButton)).toBeEnabled()
-
-    await this.page.waitForTimeout(8000) //TODO: misses click without pause, investigate
     await this.click(selectors.addToBatchButton)
 
     // approve high impact modal
     await this.handlePriceWarningModals()
 
-    await this.page.getByTestId(selectors.addMoreButton).isVisible()
+    const addMoreButton = this.page.getByTestId(selectors.addMoreButton)
+    await expect(addMoreButton).toBeVisible({ timeout: 15000 })
     await this.click(selectors.addMoreButton)
-    await this.page.waitForTimeout(1000)
   }
 
   async batchActionWithSign(): Promise<void> {
+    // Same estimation race as in batchAction: wait for the route to be ready before adding to
+    // the batch instead of relying on a fixed pause.
+    await this.page.waitForSelector(locators.selectRouteButton, {
+      state: 'visible',
+      timeout: 15000
+    })
     await expect(this.page.getByTestId(selectors.addToBatchButton)).toBeEnabled()
-    await this.page.waitForTimeout(8000) //TODO: misses click without pause, investigate
     await this.click(selectors.addToBatchButton)
 
     // approve high impact modal
