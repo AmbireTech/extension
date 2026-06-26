@@ -1,4 +1,4 @@
-name: E2E Tests & LavaMoat Policy Validation
+name: E2E Tests
 
 on:
   push:
@@ -72,6 +72,7 @@ jobs:
   # 1. Build webkit extension (shared) + LavaMoat policy validation
   # ============================================================
   build:
+    name: build-and-lavamoat-validation
     runs-on: ubuntu-latest
     environment: testing
     if: github.event_name != 'pull_request' || github.event.pull_request.draft == false || github.event_name == 'workflow_dispatch'
@@ -216,7 +217,7 @@ jobs:
   # 3. Test suites (parallel) — share the reusable _e2e-suite.yml
   #    definition, parameterized per suite. All gated by build + balance-check.
   # ============================================================
-  e2e-non-hw:
+  non-hw:
     needs: [build, balance-check]
     if: github.event_name != 'pull_request' || github.event.pull_request.draft == false || github.event_name == 'workflow_dispatch'
     uses: ./.github/workflows/_e2e-suite.yml
@@ -225,7 +226,7 @@ jobs:
       command: yarn test:all:non-hw
     secrets: inherit
 
-  e2e-ledger:
+  ledger:
     needs: [build, balance-check]
     if: github.event_name != 'pull_request' || github.event.pull_request.draft == false || github.event_name == 'workflow_dispatch'
     uses: ./.github/workflows/_e2e-suite.yml
@@ -235,7 +236,7 @@ jobs:
       emulator: ledger
     secrets: inherit
 
-  e2e-trezor:
+  trezor:
     needs: [build, balance-check]
     if: github.event_name != 'pull_request' || github.event.pull_request.draft == false || github.event_name == 'workflow_dispatch'
     uses: ./.github/workflows/_e2e-suite.yml
