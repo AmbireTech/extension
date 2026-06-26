@@ -81,11 +81,20 @@ export class TransferPage extends BasePage {
   }
 
   async assertAddedContact(contactName: string, contactAddress: string) {
-    const addedContactName = this.page.locator(`//div[contains(text(),"${contactName}")]`)
-    const addedContactAddress = this.page.locator(`//div[contains(text(),"${contactAddress}")]`)
+    const maxLength = 16
+    const slicedAddress = `${contactAddress.slice(0, maxLength / 2 - 1)}...${contactAddress.slice(
+      -maxLength / 2 + 2
+    )}`
+
+    // The address is rendered as three separate text nodes — "(", the sliced
+    // address and ")" — so an XPath `contains(text(), ...)` only ever sees the
+    // first "(" node and never matches. `getByText` matches the element's full
+    // text content, so it resolves correctly across the split text nodes.
+    const addedContactName = this.page.getByText(contactName)
+    const addedContactAddress = this.page.getByText(`(${slicedAddress})`)
 
     await expect(addedContactName).toContainText(contactName)
-    await expect(addedContactAddress).toContainText(contactAddress)
+    await expect(addedContactAddress).toContainText(slicedAddress)
   }
 
   // TODO: move to dashboard page once POM is refactored
