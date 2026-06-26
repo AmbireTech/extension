@@ -47,8 +47,6 @@ const QrReaderScreen = () => {
     close: closeManualEntrySheet
   } = useModalize()
   const [manualValue, setManualValue] = useState('')
-  const [galleryPermission, requestGalleryPermission] = ImagePicker.useMediaLibraryPermissions()
-  const galleryRequestedRef = useRef(false)
 
   const frameTop = containerSize ? (containerSize.height - SCAN_FRAME_SIZE) / 2 : 0
   const frameLeft = containerSize ? (containerSize.width - SCAN_FRAME_SIZE) / 2 : 0
@@ -70,12 +68,9 @@ const QrReaderScreen = () => {
       if (permission && !permission.granted) {
         void requestPermission()
       }
-      if (galleryRequestedRef.current && galleryPermission && !galleryPermission.granted) {
-        void requestGalleryPermission()
-      }
     })
     return () => subscription.remove()
-  }, [permission, requestPermission, galleryPermission, requestGalleryPermission])
+  }, [permission, requestPermission])
 
   const handleOpenSettings = useCallback(() => {
     void Linking.openSettings()
@@ -136,17 +131,8 @@ const QrReaderScreen = () => {
   }, [closeManualEntrySheet])
 
   const handleGalleryPress = useCallback(async () => {
-    galleryRequestedRef.current = true
-    if (!galleryPermission?.granted) {
-      if (!galleryPermission || galleryPermission.canAskAgain) {
-        const result = await requestGalleryPermission()
-        if (!result.granted) return
-      } else {
-        void Linking.openSettings()
-        return
-      }
-    }
-
+    // Uses the Android Photo Picker / iOS picker, which grants one-time access to the selected
+    // image without requiring a persistent media-library permission.
     const pickerResult = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ['images'],
       allowsEditing: false,
@@ -166,7 +152,7 @@ const QrReaderScreen = () => {
     } catch {
       addToast(t('The image does not contain a valid QR code for connection.'), { type: 'error' })
     }
-  }, [galleryPermission, requestGalleryPermission, addToast, t, handleScannedValue])
+  }, [addToast, t, handleScannedValue])
 
   const rightIcon = permissionGranted ? (
     <Pressable onPress={handleGalleryPress} hitSlop={12}>
