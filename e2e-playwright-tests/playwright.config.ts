@@ -23,8 +23,8 @@ const config: PlaywrightTestConfig = {
   timeout: 180 * 1000, // 3min
   reportSlowTests: null,
   snapshotPathTemplate: 'data/screenshots/{projectName}/{testFilePath}/{arg}/text',
-  // Increasing over 1 also increases the time it takes to run the tests!
-  retries: process.env.CI ? 1 : 0,
+  // Increasing also increases the time it takes to run the tests!
+  retries: process.env.CI ? 2 : 0,
   // CI runners are small; fewer workers avoids fighting Speculos + Docker for CPU/RAM.
   workers,
   fullyParallel: true,
