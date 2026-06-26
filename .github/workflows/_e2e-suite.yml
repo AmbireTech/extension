@@ -119,10 +119,6 @@ jobs:
           node-version-file: '.nvmrc'
           cache: 'yarn'
 
-      - name: Install root dependencies
-        run: yarn setup:ci
-        shell: bash
-
       - name: Download built extension
         uses: actions/download-artifact@v6
         with:
