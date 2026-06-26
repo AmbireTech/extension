@@ -181,6 +181,20 @@ export const handleActions = async (
 
       break
     }
+    case 'DAPPS_CONTROLLER_DISCONNECT_ALL_DAPPS': {
+      const disconnectedDapps = await mainCtrl.dapps.disconnectAllDapps(params.source)
+
+      // Process sequentially: each disconnect may call `revokeAllPoliciesForDomain`, which
+      // is guarded by a status lock that throws if a previous call hasn't finished yet.
+      for (const dapp of disconnectedDapps) {
+        const stillConnected = mainCtrl.dapps.hasPermission(dapp.id)
+        if (!stillConnected) {
+          await mainCtrl.autoLogin.revokeAllPoliciesForDomain(dapp.id, dapp.url)
+        }
+      }
+
+      break
+    }
     case 'CHANGE_CURRENT_DAPP_NETWORK': {
       mainCtrl.dapps.updateDapp(params.id, { chainId: params.chainId })
       await mainCtrl.dapps.broadcastDappSessionEvent(
