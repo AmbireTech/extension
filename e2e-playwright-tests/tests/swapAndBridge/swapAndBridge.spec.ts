@@ -131,7 +131,7 @@ test.describe('swapAndBridge Smart Account', { tag: '@swapAndBridge' }, () => {
   })
 
   test('should Bridge tokens with a Smart Account', async ({ pages }) => {
-    test.setTimeout(300000)
+    test.setTimeout(30000)
     await runSwapFlow({
       pages,
       sendToken: tokens.usdc.base,

@@ -39,8 +39,11 @@ test.describe('ledger', { tag: '@ledgerTests' }, () => {
     })
 
     await test.step('import first account', async () => {
-      await page.waitForTimeout(8000) // waiting to load
-      await page.getByTestId(`add-account-${mainConstants.addresses.ledgerAccount1}`).click()
+      const firstLedgerAccount = page.getByTestId(
+        `add-account-${mainConstants.addresses.ledgerAccount1}`
+      )
+      await expect(firstLedgerAccount).toBeVisible({ timeout: 10000 })
+      await firstLedgerAccount.click()
       await page.getByTestId(selectors.getStarted.importAccountButton).click()
       await page.getByTestId(selectors.getStarted.saveAndContinueBtn).click()
     })

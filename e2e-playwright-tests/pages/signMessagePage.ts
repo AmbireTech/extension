@@ -63,8 +63,10 @@ export class SignMessagePage extends BasePage {
     const signActionWindowPagePromise = this.handleNewPage(sign)
 
     const signActionWindowPage = await signActionWindowPagePromise
-    await this.page.waitForTimeout(3000)
+    // Wait for the sign button to render in the freshly opened action window instead of a fixed
+    // sleep, so we proceed as soon as the window is ready.
     const signMessageButton = signActionWindowPage.getByTestId(selectors.signMessageButton)
+    await expect(signMessageButton).toBeVisible({ timeout: 30000 })
     await signMessageButton.click()
 
     if (ledgerSimulatorControls) {
