@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { Controller } from 'react-hook-form'
 import { Image, TouchableOpacity, View } from 'react-native'
 
@@ -58,10 +58,10 @@ const KeyStoreUnlockScreen = () => {
   } = useController('KeystoreController')
   const { requestWindow } = useController('RequestsController').state
   const { theme } = useTheme()
-  const { hasBiometricsHardware, getBiometricsSecret, deviceSupportedAuthTypes } = useBiometrics()
+  const { hasBiometricsHardware, getBiometricsSecret } = useBiometrics()
   const { isPopup, isTab, isSidePanel } = getUiType()
   const [unlockMethod, setUnlockMethod] = useState<'biometrics' | 'password' | null>(null)
-  const [hasAutoPromptedBiometrics, setHasAutoPromptedBiometrics] = useState(false)
+  const hasAutoPromptedBiometricsRef = useRef(false)
   const [isBiometricsPromptPending, setIsBiometricsPromptPending] = useState(false)
   const [isBiometricsUnlockInProgress, setIsBiometricsUnlockInProgress] = useState(false)
   const [shouldSkipAutoPrompt] = useState(() => {
@@ -150,24 +150,17 @@ const KeyStoreUnlockScreen = () => {
     if (
       !canUseBiometrics ||
       unlockMethod !== 'biometrics' ||
-      hasAutoPromptedBiometrics ||
+      hasAutoPromptedBiometricsRef.current ||
       shouldSkipAutoPrompt ||
       isSidePanel
     )
       return
 
-    setHasAutoPromptedBiometrics(true)
+    hasAutoPromptedBiometricsRef.current = true
     handleBiometricsPrompt().catch((e) => {
       console.log('failed to open biometrics prompt', e)
     })
-  }, [
-    canUseBiometrics,
-    handleBiometricsPrompt,
-    hasAutoPromptedBiometrics,
-    shouldSkipAutoPrompt,
-    isSidePanel,
-    unlockMethod
-  ])
+  }, [canUseBiometrics, handleBiometricsPrompt, shouldSkipAutoPrompt, isSidePanel, unlockMethod])
 
   useEffect(() => {
     if (isUnlocked) return
