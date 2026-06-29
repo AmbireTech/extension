@@ -26,6 +26,20 @@ const getRandomBytes = (length: number) => {
 const getStoredCredential = () =>
   storage.get(WEBAUTHN_BIOMETRICS_STORAGE_KEY, null) as Promise<StoredBiometricsCredential | null>
 
+let cachedStoredCredential: StoredBiometricsCredential | null | undefined
+
+const warmStoredCredentialCache = async () => {
+  cachedStoredCredential = await getStoredCredential()
+}
+
+const getCachedStoredCredential = async () => {
+  if (cachedStoredCredential !== undefined) return cachedStoredCredential
+
+  await warmStoredCredentialCache()
+
+  return cachedStoredCredential ?? null
+}
+
 const getHmacSecretOutput = (results: any) => {
   // prioritize, because that’s the modern WebAuthn approach
   const prfResult = results?.prf?.results?.first
@@ -38,40 +52,52 @@ const getHmacSecretOutput = (results: any) => {
 }
 
 const getAssertionForCredential = async (storedCredential: StoredBiometricsCredential) => {
-  const credential = (await navigator.credentials.get({
-    publicKey: {
-      challenge: getRandomBytes(32),
-      timeout: WEBAUTHN_TIMEOUT_MS,
-      userVerification: 'preferred',
-      allowCredentials: [
-        {
-          id: decodeStoredBytes(storedCredential.credentialId),
-          type: 'public-key'
-        }
-      ],
-      // prf.results.first is the new WebAuthn PRF extension result
-      // hmacGetSecret.output1 is legacy/fallback result from CTAP hmac-secret
-      extensions: {
-        prf: {
-          eval: {
-            first: decodeStoredBytes(storedCredential.salt)
+  const abortController = new AbortController()
+  const timeoutId = setTimeout(() => abortController.abort(), WEBAUTHN_TIMEOUT_MS)
+
+  try {
+    const credential = (await navigator.credentials.get({
+      publicKey: {
+        challenge: getRandomBytes(32),
+        timeout: WEBAUTHN_TIMEOUT_MS,
+        userVerification: 'preferred',
+        allowCredentials: [
+          {
+            id: decodeStoredBytes(storedCredential.credentialId),
+            type: 'public-key'
           }
-        },
-        hmacGetSecret: {
-          salt1: decodeStoredBytes(storedCredential.salt)
+        ],
+        // prf.results.first is the new WebAuthn PRF extension result
+        // hmacGetSecret.output1 is legacy/fallback result from CTAP hmac-secret
+        extensions: {
+          prf: {
+            eval: {
+              first: decodeStoredBytes(storedCredential.salt)
+            }
+          },
+          hmacGetSecret: {
+            salt1: decodeStoredBytes(storedCredential.salt)
+          }
         }
-      }
-    }
-  } as CredentialRequestOptions)) as PublicKeyCredential | null
+      },
+      signal: abortController.signal
+    } as CredentialRequestOptions)) as PublicKeyCredential | null
 
-  if (!credential) return null
+    if (!credential) return null
 
-  const extensionResults =
-    typeof (credential as any).getClientExtensionResults === 'function'
-      ? (credential as any).getClientExtensionResults()
-      : {}
+    const extensionResults =
+      typeof (credential as any).getClientExtensionResults === 'function'
+        ? (credential as any).getClientExtensionResults()
+        : {}
 
-  return getHmacSecretOutput(extensionResults)
+    return getHmacSecretOutput(extensionResults)
+  } catch (error) {
+    if (abortController.signal.aborted) return null
+
+    throw error
+  } finally {
+    clearTimeout(timeoutId)
+  }
 }
 
 const getCredentialExtensionResults = (credential: PublicKeyCredential | null) =>
@@ -106,7 +132,11 @@ export const webauthnBiometrics = {
   },
 
   async hasStoredCredential() {
-    return !!(await getStoredCredential())
+    return !!(await getCachedStoredCredential())
+  },
+
+  async warmCredentialCache() {
+    await warmStoredCredentialCache()
   },
 
   async createSecret(userId: Buffer) {
@@ -162,12 +192,22 @@ export const webauthnBiometrics = {
     if (!secretBytes) return null
 
     await storage.set(WEBAUTHN_BIOMETRICS_STORAGE_KEY, storedCredential)
+    cachedStoredCredential = storedCredential
 
     return hexlify(secretBytes)
   },
 
   async getSecret() {
-    const storedCredential = await getStoredCredential()
+    if (cachedStoredCredential !== undefined) {
+      if (!cachedStoredCredential) return null
+
+      const secretBytes = await getAssertionForCredential(cachedStoredCredential)
+      if (!secretBytes) return null
+
+      return hexlify(secretBytes)
+    }
+
+    const storedCredential = await getCachedStoredCredential()
     if (!storedCredential) return null
 
     const secretBytes = await getAssertionForCredential(storedCredential)
@@ -182,5 +222,6 @@ export const webauthnBiometrics = {
 
   async removeCredential() {
     await storage.remove(WEBAUTHN_BIOMETRICS_STORAGE_KEY)
+    cachedStoredCredential = null
   }
 }

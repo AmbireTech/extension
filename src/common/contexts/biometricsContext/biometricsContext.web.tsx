@@ -36,6 +36,10 @@ const BiometricsProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
     ;(async () => {
       const isSupported = await webauthnBiometrics.isSupported()
+      if (isSupported) {
+        await webauthnBiometrics.warmCredentialCache()
+      }
+
       const hasStoredCredential = isSupported
         ? await webauthnBiometrics.hasStoredCredential()
         : false
