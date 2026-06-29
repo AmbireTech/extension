@@ -70,13 +70,18 @@ export class SwapAndBridgePage extends BasePage {
   // TODO: refactor this method
   async prepareSwapAndBridge(send_amount: number, fromToken: Token, toToken: Token) {
     await this.openSwapAndBridge()
+
     try {
       // switch network
       const tokenNetwork = toToken.chainName
 
-      if (tokenNetwork == 'optimism') {
-        await this.click(selectors.recieveNetworkBase)
-        await this.click(selectors.recieveNetworkOptimism)
+      if (tokenNetwork == 'base') {
+        const isBaseSelected = await this.isVisible(selectors.recieveNetworkBase)
+
+        if (!isBaseSelected) {
+          await this.click(selectors.recieveNetworkOptimism)
+          await this.click(selectors.recieveNetworkBase)
+        }
       }
 
       await this.selectSendToken(fromToken)
@@ -157,9 +162,9 @@ export class SwapAndBridgePage extends BasePage {
     // switch network
     const tokenNetwork = receiveToken.chainName
 
-    if (tokenNetwork == 'optimism') {
-      await this.click(selectors.recieveNetworkBase)
+    if (tokenNetwork == 'base') {
       await this.click(selectors.recieveNetworkOptimism)
+      await this.click(selectors.recieveNetworkBase)
     } else {
     }
 
@@ -379,14 +384,13 @@ export class SwapAndBridgePage extends BasePage {
     await this.openSwapAndBridge()
     await this.page.waitForTimeout(2000)
     await this.selectSendToken(sendToken)
-
     try {
       // switch network
       const tokenNetwork = receiveToken.chainName
 
-      if (tokenNetwork == 'optimism') {
-        await this.click(selectors.recieveNetworkBase)
+      if (tokenNetwork == 'base') {
         await this.click(selectors.recieveNetworkOptimism)
+        await this.click(selectors.recieveNetworkBase)
       }
 
       // Select receive token by address

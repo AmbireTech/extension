@@ -126,7 +126,6 @@ export class TransferPage extends BasePage {
     ledgerSimulatorControls?: SpeculosDevice
     holdProceedButton?: boolean
   }) {
-    // await this.page.pause()
     // Proceed
     await this.expectButtonEnabled(selectors.transaction.proceedBtn)
     if (holdProceedButton) {
