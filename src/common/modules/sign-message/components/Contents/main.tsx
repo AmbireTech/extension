@@ -27,10 +27,10 @@ import spacings, { SPACING_LG, SPACING_MD, SPACING_TY } from '@common/styles/spa
 import flexbox from '@common/styles/utils/flexbox'
 import { MobileLayoutWrapperMainContent } from '@mobile/components/MobileLayoutWrapper'
 import { TabLayoutWrapperMainContent } from '@web/components/TabLayoutWrapper'
-import LedgerConnectModal from '@web/modules/hardware-wallet/components/LedgerConnectModal'
-import { QrSigningStep } from '@web/modules/hardware-wallet/qr/types'
-import QrSigningFlowScreen from '@web/modules/hardware-wallet/screens/QrSigningFlowScreen'
-import getStyles from '@web/modules/sign-message/screens/SignMessageScreen/styles'
+import LedgerConnectModal from '@common/modules/hardware-wallets/components/LedgerConnectModal'
+import { QrSigningStep } from '@common/modules/hardware-wallets/qr/types'
+import QrSigningFlowScreen from '@common/modules/hardware-wallets/screens/QrSigningFlowScreen'
+import getStyles from './styles'
 
 interface Props {
   shouldDisplayLedgerConnectModal: boolean

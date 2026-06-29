@@ -1,13 +1,15 @@
 import { StyleSheet, TextStyle, ViewStyle } from 'react-native'
 
-import spacings, { SPACING_MD, SPACING_SM, SPACING_TY } from '@common/styles/spacings'
+import spacings, { SPACING_SM, SPACING_TY } from '@common/styles/spacings'
 import { ThemeProps } from '@common/styles/themeConfig'
-import common, { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 
+// Styles owned by the shared sign-message Content components. Previously these
+// borrowed the web SignMessageScreen's styles (an env-separation violation, and
+// the mobile screen styles lacked the erc7730* keys). Keeping them here, in
+// common, lets both web and mobile render the same content consistently.
 interface Style {
   container: ViewStyle
-  noKeysToSignAlert: ViewStyle
   kindOfMessage: ViewStyle
   warningContainer: ViewStyle
   erc7730TypedMessageTitleRow: ViewStyle
@@ -23,13 +25,6 @@ const getStyles = (theme: ThemeProps) =>
   StyleSheet.create<Style>({
     container: {
       ...flexbox.flex1
-    },
-    noKeysToSignAlert: {
-      ...common.shadowSecondary,
-      position: 'absolute',
-      bottom: SPACING_MD,
-      zIndex: 10,
-      borderRadius: BORDER_RADIUS_PRIMARY
     },
     kindOfMessage: {
       backgroundColor: theme.infoBackground,

@@ -21,6 +21,10 @@ import ledgerBleService, {
 type Props = {
   isVisible: boolean
   handleClose?: () => void
+  handleOnConnect?: () => void
+  // Web-only affordance (HID re-authorize hint); accepted for a shared interface
+  // with the web modal, unused on mobile.
+  displayOptionToAuthorize?: boolean
 }
 
 // Mobile counterpart of the web LedgerConnectModal. Shown during signing when a
@@ -28,7 +32,7 @@ type Props = {
 // Reconnecting flips ledgerBleService.isConnected() → useLedger.isLedgerConnected
 // → useSign auto-dismisses this modal, after which the user signs again (same
 // flow as the extension).
-const LedgerConnectModal = ({ isVisible, handleClose = () => {} }: Props) => {
+const LedgerConnectModal = ({ isVisible, handleClose = () => {}, handleOnConnect }: Props) => {
   const { ref, open, close } = useModalize()
   const { t } = useTranslation()
   const { addToast } = useToast()
@@ -91,15 +95,16 @@ const LedgerConnectModal = ({ isVisible, handleClose = () => {} }: Props) => {
       setIsConnecting(true)
       try {
         await ledgerBleService.connect(deviceId)
-        // Connected — useSign closes this modal once useLedger reports the
+        // Connected — useSign also closes this modal once useLedger reports the
         // device as connected. The user then presses sign again.
+        if (handleOnConnect) handleOnConnect()
       } catch (e: any) {
         addToast(normalizeLedgerMessage(e?.message), { type: 'error' })
       } finally {
         setIsConnecting(false)
       }
     },
-    [stopScan, addToast]
+    [stopScan, addToast, handleOnConnect]
   )
 
   return (

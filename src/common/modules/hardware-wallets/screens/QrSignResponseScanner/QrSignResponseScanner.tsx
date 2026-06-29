@@ -9,7 +9,7 @@ import { WEB_ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { openInTab } from '@common/utils/links'
-import QrScannerWithPermission from '@web/modules/hardware-wallet/screens/QrScannerWithPermission'
+import QrScannerWithPermission from '@common/modules/hardware-wallets/screens/QrScannerWithPermission'
 
 type Props = {
   onSignatureScanned: (payload: Uint8Array) => void
