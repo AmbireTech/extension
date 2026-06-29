@@ -41,6 +41,10 @@ const stripHdPathRoot = (path: string) => (path.startsWith('m/') ? path.slice(2)
 
 const TIMEOUT_FOR_RETRIEVING_FROM_LEDGER = 5000
 
+// Upper bound on the clear-signing descriptor lookup before falling back to blind
+// signing, so a slow/offline Ledger service can't block a transaction signature.
+const CLEAR_SIGN_RESOLUTION_TIMEOUT = 5000
+
 const withTimeoutProtection = <T>(operation: () => Promise<T>): Promise<T> => {
   const timeout = new Promise<never>((_, reject) => {
     setTimeout(() => {
@@ -222,12 +226,25 @@ class LedgerBleService {
   signTransaction = (path: string, rawTxHex: string): Promise<LedgerBleSignature> =>
     this.#enqueue(async () => {
       const eth = await this.#ensureConnected()
-      // Blind signing (no clear-sign resolution). Contract-data transactions
-      // therefore require "Blind signing" to be enabled in the Ledger Ethereum
-      // app; normalizeLedgerMessage surfaces a clear hint (0x6a80) if it isn't.
-      const resolution = await ledgerService
-        .resolveTransaction(rawTxHex, {}, { externalPlugins: false, erc20: false, nft: false })
-        .catch(() => null)
+      // Clear-signing: resolve token / NFT / known-plugin descriptors from
+      // Ledger's services so the device shows human-readable details (amount,
+      // symbol, decoded action) instead of raw hex — the hw-app-eth equivalent
+      // of the extension's DMK ContextModule. If the lookup errors or is slow
+      // (offline / unknown contract), fall back to a null resolution, i.e. blind
+      // signing (which then needs "Blind signing" enabled on the device;
+      // normalizeLedgerMessage surfaces a clear 0x6a80 hint when it isn't).
+      const resolution = await Promise.race([
+        ledgerService
+          .resolveTransaction(
+            rawTxHex,
+            {},
+            { externalPlugins: true, erc20: true, nft: true, uniswapV3: true }
+          )
+          .catch(() => null),
+        new Promise<null>((resolve) => {
+          setTimeout(() => resolve(null), CLEAR_SIGN_RESOLUTION_TIMEOUT)
+        })
+      ])
       const { r, s, v } = await eth.signTransaction(stripHdPathRoot(path), rawTxHex, resolution)
       return { r: `0x${r}`, s: `0x${s}`, v: parseInt(v, 16) }
     })

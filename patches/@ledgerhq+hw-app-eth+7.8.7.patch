@@ -1,0 +1,114 @@
+diff --git a/node_modules/@ledgerhq/hw-app-eth/lib/Eth.js b/node_modules/@ledgerhq/hw-app-eth/lib/Eth.js
+index dee9b01..1a0add5 100644
+--- a/node_modules/@ledgerhq/hw-app-eth/lib/Eth.js
++++ b/node_modules/@ledgerhq/hw-app-eth/lib/Eth.js
+@@ -183,17 +183,41 @@ class Eth {
+                     });
+                 });
+             }
++            // Clear-sign provisioning is best-effort: if pushing a descriptor to
++            // the device fails, log and continue so the device falls back to blind
++            // signing instead of aborting the signature (matches the domains flow
++            // above; see RabbyHub/rabby-mobile's hw-app-eth patch).
+             for (const plugin of resolution.plugin) {
+-                await this.setPlugin(plugin);
++                try {
++                    await this.setPlugin(plugin);
++                }
++                catch (e) {
++                    (0, logs_1.log)("error", "setPlugin failed", { plugin, error: e });
++                }
+             }
+             for (const { payload, signature } of resolution.externalPlugin) {
+-                await this.setExternalPlugin(payload, signature);
++                try {
++                    await this.setExternalPlugin(payload, signature);
++                }
++                catch (e) {
++                    (0, logs_1.log)("error", "setExternalPlugin failed", { error: e });
++                }
+             }
+             for (const nft of resolution.nfts) {
+-                await this.provideNFTInformation(nft);
++                try {
++                    await this.provideNFTInformation(nft);
++                }
++                catch (e) {
++                    (0, logs_1.log)("error", "provideNFTInformation failed", { error: e });
++                }
+             }
+             for (const data of resolution.erc20Tokens) {
+-                await this.provideERC20TokenInformation(data);
++                try {
++                    await this.provideERC20TokenInformation(data);
++                }
++                catch (e) {
++                    (0, logs_1.log)("error", "provideERC20TokenInformation failed", { error: e });
++                }
+             }
+         }
+         const rawTx = Buffer.from(rawTxHex, "hex");
+@@ -216,8 +240,11 @@ class Eth {
+             });
+         }
+         const v = (0, utils_1.getV)(response[0], chainId, parsedTransaction.type);
+-        const r = response.subarray(1, 1 + 32).toString("hex");
+-        const s = response.subarray(1 + 32, 1 + 32 + 32).toString("hex");
++        // Hermes fix: Buffer.subarray() returns a view that loses Buffer methods,
++        // so .toString("hex") yields corrupt r/s signatures. Wrap in Buffer.from.
++        // (From MetaMask's metamask-mobile hw-app-eth Hermes patch.)
++        const r = Buffer.from(response.subarray(1, 1 + 32)).toString("hex");
++        const s = Buffer.from(response.subarray(1 + 32, 1 + 32 + 32)).toString("hex");
+         return { v, r, s };
+     }
+     /**
+diff --git a/node_modules/@ledgerhq/hw-app-eth/lib/modules/EIP712/index.js b/node_modules/@ledgerhq/hw-app-eth/lib/modules/EIP712/index.js
+index f47bc1d..91aab6a 100644
+--- a/node_modules/@ledgerhq/hw-app-eth/lib/modules/EIP712/index.js
++++ b/node_modules/@ledgerhq/hw-app-eth/lib/modules/EIP712/index.js
+@@ -402,8 +402,10 @@ const signEIP712Message = async (transport, path, typedMessage, fullImplem = fal
+         .send(APDU_FIELDS.CLA, APDU_FIELDS.INS, APDU_FIELDS.P1, fullImplem ? APDU_FIELDS.P2_v0 : APDU_FIELDS.P2_full, signatureBuffer)
+         .then(response => {
+         const v = response[0];
+-        const r = response.subarray(1, 1 + 32).toString("hex");
+-        const s = response.subarray(1 + 32, 1 + 32 + 32).toString("hex");
++        // Hermes fix: Buffer.subarray() loses Buffer methods → corrupt r/s.
++        // (From MetaMask's metamask-mobile hw-app-eth Hermes patch.)
++        const r = Buffer.from(response.subarray(1, 1 + 32)).toString("hex");
++        const s = Buffer.from(response.subarray(1 + 32, 1 + 32 + 32)).toString("hex");
+         return {
+             v,
+             r,
+@@ -441,8 +443,10 @@ const signEIP712HashedMessage = (transport, path, domainSeparatorHex, hashStruct
+     hashStruct.copy(buffer, offset);
+     return transport.send(0xe0, 0x0c, 0x00, 0x00, buffer).then(response => {
+         const v = response[0];
+-        const r = response.subarray(1, 1 + 32).toString("hex");
+-        const s = response.subarray(1 + 32, 1 + 32 + 32).toString("hex");
++        // Hermes fix: Buffer.subarray() loses Buffer methods → corrupt r/s.
++        // (From MetaMask's metamask-mobile hw-app-eth Hermes patch.)
++        const r = Buffer.from(response.subarray(1, 1 + 32)).toString("hex");
++        const s = Buffer.from(response.subarray(1 + 32, 1 + 32 + 32)).toString("hex");
+         return {
+             v,
+             r,
+diff --git a/node_modules/@ledgerhq/hw-app-eth/lib/modules/EIP712/utils.js b/node_modules/@ledgerhq/hw-app-eth/lib/modules/EIP712/utils.js
+index a445ed6..131f4a2 100644
+--- a/node_modules/@ledgerhq/hw-app-eth/lib/modules/EIP712/utils.js
++++ b/node_modules/@ledgerhq/hw-app-eth/lib/modules/EIP712/utils.js
+@@ -246,11 +246,13 @@ const getAppAndVersion = async (transport) => {
+     let offset = 1;
+     const nameLength = appAndVersionHex[offset];
+     offset += 1;
+-    const name = appAndVersionHex.subarray(offset, offset + nameLength).toString("ascii");
++    // Hermes fix: Buffer.subarray() loses Buffer methods → corrupt app name/version.
++    // (From MetaMask's metamask-mobile hw-app-eth Hermes patch.)
++    const name = Buffer.from(appAndVersionHex.subarray(offset, offset + nameLength)).toString("ascii");
+     offset += nameLength;
+     const versionLength = appAndVersionHex[offset];
+     offset += 1;
+-    const version = appAndVersionHex.subarray(offset, offset + versionLength).toString("ascii");
++    const version = Buffer.from(appAndVersionHex.subarray(offset, offset + versionLength)).toString("ascii");
+     return {
+         name,
+         version,
