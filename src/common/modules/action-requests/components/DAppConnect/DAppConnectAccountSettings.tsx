@@ -1,5 +1,6 @@
 import React, { FC, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
+import { View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 
 import { Dapp } from '@ambire-common/interfaces/dapp'
@@ -7,6 +8,7 @@ import BottomSheet from '@common/components/BottomSheet'
 import ModalHeader from '@common/components/BottomSheet/ModalHeader'
 import Button from '@common/components/Button'
 import FooterGlassView from '@common/components/FooterGlassView'
+import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import DAppAccountList from '@common/modules/dapp-catalog/components/DAppAccountList'
 import ToggleDAppScopedAccounts from '@common/modules/dapp-catalog/components/ToggleDAppScopedAccounts'
 import useDAppAccountPreferences from '@common/modules/dapp-catalog/hooks/useDAppAccountPreferences'
@@ -29,6 +31,7 @@ const DAppConnectAccountSettings: FC<Props> = ({ id, accountPreferences }) => {
     updateLocalPreferences,
     save
   } = useDAppAccountPreferences(id, 'dappToConnect', accountPreferences)
+  const isContinueDisabled = !!localPreferences?.enabled && !localPreferences.accounts.length
 
   const handleOpenBottomSheet = useCallback(() => {
     open()
@@ -80,15 +83,24 @@ const DAppConnectAccountSettings: FC<Props> = ({ id, accountPreferences }) => {
             hasBottomSpacing={false}
             style={{ ...spacings.mrLg, width: 120 }}
           />
-          <Button
-            onPress={() => {
-              save()
-              handleCloseBottomSheet(true)
-            }}
-            style={{ width: 160 }}
-            text={t('Continue')}
-            hasBottomSpacing={false}
-          />
+          <View
+            dataSet={createGlobalTooltipDataSet({
+              id: 'dapp-connect-account-selector-continue-button-tooltip',
+              hidden: !isContinueDisabled,
+              content: t('Please select an account to connect')
+            })}
+          >
+            <Button
+              onPress={() => {
+                save()
+                handleCloseBottomSheet(true)
+              }}
+              style={{ width: 160 }}
+              text={t('Continue')}
+              hasBottomSpacing={false}
+              disabled={isContinueDisabled}
+            />
+          </View>
         </FooterGlassView>
       </BottomSheet>
     </>
