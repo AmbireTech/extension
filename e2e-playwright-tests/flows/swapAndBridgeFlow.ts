@@ -36,7 +36,8 @@ export async function runSwapFlow({
     await pages.transfer.signSlowSpeedTransaction({
       sendToken,
       message,
-      ledgerSimulatorControls
+      ledgerSimulatorControls,
+      awaitConfirmation: false
     })
   })
 

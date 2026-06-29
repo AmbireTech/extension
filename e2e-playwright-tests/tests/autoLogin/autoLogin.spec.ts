@@ -1,10 +1,24 @@
 import { saParams } from 'constants/env'
 import selectors from 'constants/selectors'
-import tokens from 'constants/tokens'
 import { test } from 'fixtures/pageObjects'
 import { createSiweMessage } from 'viem/siwe'
 
 import { expect, Page } from '@playwright/test'
+
+// Connect the wallet on sigtool. Clicking "Connect wallet" auto-connects when the dapp is already
+// authorized in the extension, so the wallet picker is not shown. The MetaMask pick is therefore
+// optional - only perform it if the picker actually opens (a fresh connect).
+const connectSigtool = async (page: Page) => {
+  await page.locator(selectors.sigtool.connectWalletButton).click()
+
+  const metamask = page.locator(selectors.sigtool.metamaskOption)
+  const pickerOpened = await metamask
+    .waitFor({ state: 'visible', timeout: 5000 })
+    .then(() => true)
+    .catch(() => false)
+
+  if (pickerOpened) await metamask.click()
+}
 
 test.describe('auto-login', { tag: '@autoLogin' }, () => {
   test.setTimeout(60000)
@@ -36,9 +50,7 @@ test.describe('auto-login', { tag: '@autoLogin' }, () => {
       await connectWallet.click()
 
       const ambireAppConnectWindow = await pages.basePage.handleNewPage(metamask)
-
-      // sign to connect
-      ambireAppConnectWindow.getByTestId(selectors.dappConnectButton).click()
+      await ambireAppConnectWindow.getByTestId(selectors.dappConnectButton).click()
       await connectionSuccessfulText.isVisible()
     })
   })
@@ -123,7 +135,7 @@ test.describe('auto-login', { tag: '@autoLogin' }, () => {
     })
   })
 
-  test('Changing the network requires a new signature', async ({ pages, context }) => {
+  test('Changing the network requires a new signature', async ({ pages }) => {
     test.setTimeout(120000)
 
     const page = pages.basePage.page
@@ -140,11 +152,7 @@ test.describe('auto-login', { tag: '@autoLogin' }, () => {
     })
 
     await test.step('connect wallet to metamask again', async () => {
-      const connectWallet = page.locator(selectors.sigtool.connectWalletButton)
-      const metamask = page.locator(selectors.sigtool.metamaskOption)
-
-      await connectWallet.click()
-      await metamask.click()
+      await connectSigtool(page)
     })
 
     await test.step('enter message with chainId set to Base', async () => {
@@ -202,17 +210,11 @@ test.describe('auto-login', { tag: '@autoLogin' }, () => {
     const page = pages.basePage.page
     // selectors
     const textBox = page.getByRole('textbox', { name: 'Message (Hello world)' })
-    const signButton = page.locator(selectors.sigtool.signButton)
 
     await test.step('navigate to sigtool and connect wallet', async () => {
-      const connectWallet = page.locator(selectors.sigtool.connectWalletButton)
-      const metamask = page.locator(selectors.sigtool.metamaskOption)
-
       await pages.basePage.navigateToURL('https://sigtool.ambire.com/')
 
-      // connect wallet
-      await connectWallet.click()
-      await metamask.click()
+      await connectSigtool(page)
     })
 
     await test.step('remove account used for sign from ambire', async () => {
@@ -226,11 +228,7 @@ test.describe('auto-login', { tag: '@autoLogin' }, () => {
     })
 
     await test.step('connect wallet to metamask', async () => {
-      const connectWallet = page.locator(selectors.sigtool.connectWalletButton)
-      const metamask = page.locator(selectors.sigtool.metamaskOption)
-
-      await connectWallet.click()
-      await metamask.click()
+      await connectSigtool(page)
     })
 
     await test.step('enter message', async () => {

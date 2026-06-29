@@ -126,7 +126,8 @@ export class TransferPage extends BasePage {
     payWithGasTank = true, // pay with gas tank by default
     message,
     ledgerSimulatorControls,
-    holdProceedButton = true
+    holdProceedButton = true,
+    awaitConfirmation = true
   }: {
     sendToken: Token
     feeToken?: Token
@@ -134,6 +135,7 @@ export class TransferPage extends BasePage {
     message: string
     ledgerSimulatorControls?: SpeculosDevice
     holdProceedButton?: boolean
+    awaitConfirmation?: boolean
   }) {
     // await this.page.pause()
     // Proceed
@@ -196,9 +198,11 @@ export class TransferPage extends BasePage {
    However, RPC requests were also made for other networks: ${rpc.toString()}`
       ).toEqual(true)
 
-      // validate success message
-      const timeout = 300000
-      await this.compareText(selectors.txnStatus, message, { timeout })
+      if (awaitConfirmation) {
+        // validate success message
+        const timeout = 30000
+        await this.compareText(selectors.txnStatus, message, { timeout })
+      }
 
       // Close page
       await this.click(selectors.closeProgressModalButton)

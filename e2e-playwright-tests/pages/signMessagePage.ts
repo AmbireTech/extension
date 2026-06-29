@@ -63,8 +63,15 @@ export class SignMessagePage extends BasePage {
     const signActionWindowPagePromise = this.handleNewPage(sign)
 
     const signActionWindowPage = await signActionWindowPagePromise
-    await this.page.waitForTimeout(3000)
+
     const signMessageButton = signActionWindowPage.getByTestId(selectors.signMessageButton)
+    await expect(signMessageButton).toBeVisible({ timeout: 30000 })
+
+    // Fixes flakiness caused by the emulator
+    if (ledgerSimulatorControls) {
+      await ledgerSimulatorControls.wait(5000)
+    }
+
     await signMessageButton.click()
 
     if (ledgerSimulatorControls) {

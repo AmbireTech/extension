@@ -8,7 +8,7 @@ const workersFromEnv = process.env.PLAYWRIGHT_WORKERS
 const workers = Number.isFinite(workersFromEnv) ? workersFromEnv : process.env.CI ? 2 : 3
 
 const config: PlaywrightTestConfig = {
-  forbidOnly: true,
+  forbidOnly: !!process.env.CI,
   expect: {
     timeout: 30 * 1000,
     toHaveScreenshot: {
@@ -21,7 +21,8 @@ const config: PlaywrightTestConfig = {
   timeout: 180 * 1000, // 3min
   reportSlowTests: null,
   snapshotPathTemplate: 'data/screenshots/{projectName}/{testFilePath}/{arg}/text',
-  retries: process.env.CI ? 3 : 0,
+  // Increasing also increases the time it takes to run the tests!
+  retries: process.env.CI ? 2 : 0,
   // CI runners are small; fewer workers avoids fighting Speculos + Docker for CPU/RAM.
   workers,
   fullyParallel: true,
