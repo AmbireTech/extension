@@ -19,6 +19,7 @@ import {
   respondToWalletConnectRequest
 } from '@mobile/modules/wallet-connect/services/walletConnectService'
 import getWebviewBundleUri from '@mobile/modules/webview/services/getWebviewBundleUri'
+import ledgerBleService from '@mobile/services/ledger/ledgerBleService'
 
 import { decode, encode } from './bridgeCodec'
 
@@ -370,6 +371,79 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, object>((_, ref) => {
             } catch (fetchErr: any) {
               sendResponse(data.id, null, fetchErr.message || 'Network request failed')
             }
+          }
+          break
+
+        // --- LEDGER DEVICE DELEGATION HANDLERS ---
+        // The worker-side LedgerController forwards device operations here; the
+        // actual BLE/USB transport + Ethereum app run natively in
+        // ledgerBleService. Scanning/connecting is driven separately from the
+        // RN connect screen (via the useLedger hook), not over this bridge.
+        case 'ledger.getAddress':
+          try {
+            const address = await ledgerBleService.getAddress(data.payload.path)
+            sendResponse(data.id, address)
+          } catch (err: any) {
+            sendResponse(data.id, null, err.message)
+          }
+          break
+        case 'ledger.retrieveAddresses':
+          try {
+            const addresses: string[] = []
+            // Serialized one-by-one (the service queue enforces this too); the
+            // Ledger can't handle parallel getAddress calls.
+            for (const path of data.payload.paths) {
+              addresses.push(await ledgerBleService.getAddress(path))
+            }
+            sendResponse(data.id, addresses)
+          } catch (err: any) {
+            sendResponse(data.id, null, err.message)
+          }
+          break
+        case 'ledger.signPersonalMessage':
+          try {
+            const sig = await ledgerBleService.signPersonalMessage(
+              data.payload.path,
+              data.payload.messageHex
+            )
+            sendResponse(data.id, sig)
+          } catch (err: any) {
+            sendResponse(data.id, null, err.message)
+          }
+          break
+        case 'ledger.signTransaction':
+          try {
+            const sig = await ledgerBleService.signTransaction(
+              data.payload.path,
+              data.payload.rawTxHex
+            )
+            sendResponse(data.id, sig)
+          } catch (err: any) {
+            sendResponse(data.id, null, err.message)
+          }
+          break
+        case 'ledger.signTypedData':
+          try {
+            const sig = await ledgerBleService.signTypedData(
+              data.payload.path,
+              data.payload.typedData
+            )
+            sendResponse(data.id, sig)
+          } catch (err: any) {
+            sendResponse(data.id, null, err.message)
+          }
+          break
+        case 'ledger.signingCleanup':
+          // Best-effort: there is no reliable way to cancel an in-flight BLE
+          // APDU exchange; the device prompt still resolves/rejects on-device.
+          sendResponse(data.id, null)
+          break
+        case 'ledger.cleanUp':
+          try {
+            await ledgerBleService.cleanUp()
+            sendResponse(data.id, null)
+          } catch (err: any) {
+            sendResponse(data.id, null, err.message)
           }
           break
 

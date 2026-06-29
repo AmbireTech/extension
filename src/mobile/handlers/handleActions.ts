@@ -5,6 +5,7 @@ import { getDappIdFromUrl } from '@ambire-common/libs/dapps/helpers'
 import { KeyIterator } from '@ambire-common/libs/keyIterator/keyIterator'
 import handleProviderRequests from '@common/modules/provider/handleProviderRequests'
 import { Action, MethodAction } from '@common/types/actions'
+import LedgerKeyIterator from '@mobile/modules/hardware-wallet/libs/ledgerKeyIterator'
 import { getWcTabIdFromTopic } from '@mobile/modules/wallet-connect/utils'
 import { setBootPhase, setSubscribedControllers } from '@mobile/modules/webview/services/bootPhase'
 import { mobileMessenger } from '@mobile/modules/webview/services/mobileMessenger'
@@ -190,6 +191,10 @@ export const handleActions = async (
         hdPathTemplate: keystoreSavedSeed.hdPathTemplate
       })
       break
+    }
+
+    case 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_LEDGER': {
+      return await mainCtrl.handleAccountPickerInitLedger(LedgerKeyIterator)
     }
 
     case 'WEBVIEW_ORIGIN_CHANGED': {

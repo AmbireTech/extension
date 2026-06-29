@@ -3,6 +3,7 @@ import { Animated, ScrollView, TouchableOpacity, View } from 'react-native'
 import { SvgProps } from 'react-native-svg'
 
 import DiagonalRightArrowIcon from '@common/assets/svg/DiagonalRightArrowIcon'
+import LedgerLetterIcon from '@common/assets/svg/LedgerLetterIcon'
 import PrivateKeyIcon from '@common/assets/svg/PrivateKeyIcon'
 import RightArrowIcon from '@common/assets/svg/RightArrowIcon'
 import SeedPhraseIcon from '@common/assets/svg/SeedPhraseIcon'
@@ -56,6 +57,13 @@ const ImportExistingAccountSelectorScreen = () => {
           goToNextRoute(ROUTES.importSeedPhrase)
         },
         icon: SeedPhraseIcon
+      },
+      {
+        title: 'Ledger',
+        onPress: () => {
+          goToNextRoute(ROUTES.ledgerConnect)
+        },
+        icon: LedgerLetterIcon
       }
     ],
     [goToNextRoute]

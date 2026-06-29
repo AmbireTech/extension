@@ -19,6 +19,8 @@ import * as richJson from '@ambire-common/libs/richJson/richJson'
 import { AutoLockController } from '@common/controllers/auto-lock/auto-lock.native'
 import { WalletStateController } from '@common/controllers/wallet-state/wallet-state.native'
 import { handleActions } from '@mobile/handlers/handleActions'
+import LedgerController from '@mobile/modules/hardware-wallet/controllers/LedgerController'
+import LedgerSigner from '@mobile/modules/hardware-wallet/libs/LedgerSigner'
 
 import {
   buildStateForFE,
@@ -225,6 +227,10 @@ const initControllers = (config: any) => {
       setCriticalControllers(config.criticalControllers)
     }
 
+    // Single shared Ledger controller for the worker's lifetime; it forwards
+    // device operations to the native ledgerBleService over the bridge.
+    const ledgerCtrl = new LedgerController()
+
     mainCtrl = new MainController({
       eventEmitterRegistry,
       storageAPI,
@@ -239,9 +245,13 @@ const initControllers = (config: any) => {
       uniswapApiKey: config.UNISWAP_API_KEY,
       featureFlags: {},
       keystoreSigners: {
-        internal: KeystoreSigner
-      },
-      externalSignerControllers: {},
+        internal: KeystoreSigner,
+        // TODO: there is a mismatch in hw signer types, it's not a big deal
+        ledger: LedgerSigner
+      } as any,
+      externalSignerControllers: {
+        ledger: ledgerCtrl
+      } as any,
       uiManager: {
         window: {
           open: async () => {

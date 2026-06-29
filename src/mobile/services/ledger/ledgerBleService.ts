@@ -1,0 +1,242 @@
+import { TypedDataEncoder } from 'ethers'
+import { PermissionsAndroid, Platform } from 'react-native'
+
+import AppEth, { ledgerService } from '@ledgerhq/hw-app-eth'
+import TransportBLE from '@ledgerhq/react-native-hw-transport-ble'
+
+// All Ledger device communication on mobile happens HERE, in the React Native
+// native JS context. The WebView worker (where the controllers live) has no
+// access to Bluetooth/USB or native modules, so the worker-side LedgerController
+// forwards every operation to this singleton over the message bridge
+// (see WebViewWorker.tsx `ledger.*` cases). This mirrors how `crypto.scrypt` and
+// `network.fetch` are bridged.
+
+export interface LedgerBleSignature {
+  r: string // 0x-prefixed
+  s: string // 0x-prefixed
+  v: number
+}
+
+export interface LedgerScannedDevice {
+  id: string
+  name: string
+}
+
+export interface LedgerSubscription {
+  unsubscribe: () => void
+}
+
+// EIP-712 typed data, as it travels across the bridge from the worker.
+interface LedgerTypedData {
+  domain: Record<string, any>
+  types: Record<string, { name: string; type: string }[]>
+  message: Record<string, any>
+  primaryType: string
+}
+
+class LedgerBleService {
+  #transport: TransportBLE | null = null
+
+  #eth: AppEth | null = null
+
+  #connectedDeviceId = ''
+
+  // BLE cannot handle parallel APDU exchanges (the device throws "busy"), so
+  // every device operation is serialized through this single-concurrency chain.
+  #queue: Promise<unknown> = Promise.resolve()
+
+  // Connection-state subscribers (e.g. the useLedger hook), so the UI can react
+  // to connect/disconnect without polling.
+  #connectionListeners = new Set<(connected: boolean) => void>()
+
+  subscribeConnection = (listener: (connected: boolean) => void): LedgerSubscription => {
+    this.#connectionListeners.add(listener)
+    return { unsubscribe: () => this.#connectionListeners.delete(listener) }
+  }
+
+  #emitConnection() {
+    const connected = this.isConnected()
+    this.#connectionListeners.forEach((listener) => listener(connected))
+  }
+
+  #enqueue<T>(task: () => Promise<T>): Promise<T> {
+    const run = this.#queue.then(task, task)
+    // Swallow the result/rejection on the chain itself so one failed op doesn't
+    // break the chain for the next; callers still get the real promise.
+    this.#queue = run.then(
+      () => {},
+      () => {}
+    )
+    return run
+  }
+
+  isConnected = () => !!this.#transport && !!this.#eth
+
+  /**
+   * Subscribes to the Bluetooth adapter state. `onState.available` is true only
+   * when Bluetooth is powered on and usable.
+   */
+  observeBluetoothState = (
+    onState: (state: { available: boolean; type: string }) => void,
+    onError: (error: any) => void = () => {}
+  ): LedgerSubscription => {
+    const sub = TransportBLE.observeState({
+      next: onState,
+      error: onError,
+      complete: () => {}
+    })
+    return { unsubscribe: () => sub.unsubscribe() }
+  }
+
+  /**
+   * Android requires runtime BLE permissions (API 31+: SCAN + CONNECT). iOS
+   * triggers its system prompt automatically on first BLE use via the
+   * NSBluetoothAlwaysUsageDescription Info.plist key, so there's nothing to
+   * request here.
+   */
+  requestAndroidPermissions = async (): Promise<boolean> => {
+    if (Platform.OS !== 'android') return true
+
+    const permissions = [
+      PermissionsAndroid.PERMISSIONS.BLUETOOTH_SCAN,
+      PermissionsAndroid.PERMISSIONS.BLUETOOTH_CONNECT
+    ].filter(Boolean) as string[]
+
+    // Pre-Android 12 has no SCAN/CONNECT permissions; BLE scanning there needs
+    // fine location instead.
+    if (Platform.Version < 31) {
+      permissions.push(PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION)
+    }
+
+    const result = await PermissionsAndroid.requestMultiple(permissions as any)
+    return permissions.every(
+      (permission) => result[permission as keyof typeof result] === 'granted'
+    )
+  }
+
+  /**
+   * Starts a BLE scan. Devices are reported one-by-one via `onAdd` as they are
+   * discovered. Scanning is costly, so the caller MUST unsubscribe once a device
+   * is selected.
+   */
+  startScan = (
+    onAdd: (device: LedgerScannedDevice) => void,
+    onError: (error: any) => void
+  ): LedgerSubscription => {
+    const sub = TransportBLE.listen({
+      next: (event: any) => {
+        if (event.type !== 'add' || !event.descriptor) return
+        onAdd({ id: event.descriptor.id, name: event.descriptor.name || 'Ledger' })
+      },
+      error: onError,
+      complete: () => {}
+    })
+
+    return { unsubscribe: () => sub.unsubscribe() }
+  }
+
+  /**
+   * Opens a transport to the selected device and builds the Ethereum app client.
+   * A fresh transport/app is created on every connect; any previous one is torn
+   * down first.
+   */
+  connect = async (deviceId: string): Promise<void> => {
+    if (this.#connectedDeviceId === deviceId && this.isConnected()) return
+
+    await this.cleanUp()
+
+    this.#transport = await TransportBLE.open(deviceId)
+    this.#connectedDeviceId = deviceId
+    this.#eth = new AppEth(this.#transport)
+
+    // Reset everything if the device drops the link, so the next operation
+    // surfaces a clean "not connected" instead of hanging on a dead transport.
+    this.#transport.on('disconnect', () => {
+      this.#transport = null
+      this.#eth = null
+      this.#connectedDeviceId = ''
+      this.#emitConnection()
+    })
+
+    this.#emitConnection()
+  }
+
+  #assertConnected(): AppEth {
+    if (!this.#eth)
+      throw new Error('Ledger is not connected. Please connect your device and try again.')
+
+    return this.#eth
+  }
+
+  getAddress = (path: string): Promise<string> =>
+    this.#enqueue(async () => {
+      const eth = this.#assertConnected()
+      const { address } = await eth.getAddress(path, false, false)
+      return address
+    })
+
+  signPersonalMessage = (path: string, messageHex: string): Promise<LedgerBleSignature> =>
+    this.#enqueue(async () => {
+      const eth = this.#assertConnected()
+      const { r, s, v } = await eth.signPersonalMessage(path, messageHex)
+      return { r: `0x${r}`, s: `0x${s}`, v }
+    })
+
+  signTransaction = (path: string, rawTxHex: string): Promise<LedgerBleSignature> =>
+    this.#enqueue(async () => {
+      const eth = this.#assertConnected()
+      // Blind signing (no clear-sign resolution). Contract-data transactions
+      // therefore require "Blind signing" to be enabled in the Ledger Ethereum
+      // app; normalizeLedgerMessage surfaces a clear hint (0x6a80) if it isn't.
+      const resolution = await ledgerService
+        .resolveTransaction(rawTxHex, {}, { externalPlugins: false, erc20: false, nft: false })
+        .catch(() => null)
+      const { r, s, v } = await eth.signTransaction(path, rawTxHex, resolution)
+      return { r: `0x${r}`, s: `0x${s}`, v: parseInt(v, 16) }
+    })
+
+  signTypedData = (path: string, typedData: LedgerTypedData): Promise<LedgerBleSignature> =>
+    this.#enqueue(async () => {
+      const eth = this.#assertConnected()
+
+      try {
+        // Full EIP-712 clear-signing. Not supported on the Nano S, hence the
+        // hashed-message fallback below.
+        const { r, s, v } = await eth.signEIP712Message(path, typedData as any)
+        return { r: `0x${r}`, s: `0x${s}`, v }
+      } catch {
+        // Strip the EIP712Domain entry; hashStruct only takes the message types.
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const { EIP712Domain, ...structTypes } = typedData.types
+        const domainSeparator = TypedDataEncoder.hashDomain(typedData.domain)
+        const hashStruct = TypedDataEncoder.hashStruct(
+          typedData.primaryType,
+          structTypes,
+          typedData.message
+        )
+        const { r, s, v } = await eth.signEIP712HashedMessage(
+          path,
+          domainSeparator.slice(2),
+          hashStruct.slice(2)
+        )
+        return { r: `0x${r}`, s: `0x${s}`, v }
+      }
+    })
+
+  cleanUp = async (): Promise<void> => {
+    if (this.#transport) {
+      try {
+        await this.#transport.close()
+      } catch {
+        // The transport may already be gone (device unplugged/out of range);
+        // closing a dead transport is not actionable, just reset our state.
+      }
+    }
+    this.#transport = null
+    this.#eth = null
+    this.#connectedDeviceId = ''
+    this.#emitConnection()
+  }
+}
+
+export default new LedgerBleService()
