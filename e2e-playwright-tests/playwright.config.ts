@@ -8,7 +8,7 @@ const workersFromEnv = process.env.PLAYWRIGHT_WORKERS
 const workers = Number.isFinite(workersFromEnv) ? workersFromEnv : process.env.CI ? 2 : 3
 
 const config: PlaywrightTestConfig = {
-  forbidOnly: true,
+  forbidOnly: !!process.env.CI,
   expect: {
     timeout: 30 * 1000,
     toHaveScreenshot: {
