@@ -39,6 +39,22 @@ interface LedgerTypedData {
 // getHdPathWithoutRoot).
 const stripHdPathRoot = (path: string) => (path.startsWith('m/') ? path.slice(2) : path)
 
+const TIMEOUT_FOR_RETRIEVING_FROM_LEDGER = 5000
+
+const withTimeoutProtection = <T>(operation: () => Promise<T>): Promise<T> => {
+  const timeout = new Promise<never>((_, reject) => {
+    setTimeout(() => {
+      reject(
+        new Error(
+          'Cannot connect to your Ledger device for an extended period. Please make sure it is unlocked, the Ethereum app is open, and it is within Bluetooth range, then try again.'
+        )
+      )
+    }, TIMEOUT_FOR_RETRIEVING_FROM_LEDGER)
+  })
+
+  return Promise.race([operation(), timeout])
+}
+
 class LedgerBleService {
   #transport: TransportBLE | null = null
 
@@ -190,7 +206,9 @@ class LedgerBleService {
   getAddress = (path: string): Promise<string> =>
     this.#enqueue(async () => {
       const eth = await this.#ensureConnected()
-      const { address } = await eth.getAddress(stripHdPathRoot(path), false, false)
+      const { address } = await withTimeoutProtection(() =>
+        eth.getAddress(stripHdPathRoot(path), false, false)
+      )
       return address
     })
 
