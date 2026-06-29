@@ -75,6 +75,11 @@ jobs:
     runs-on: ubuntu-latest
     environment: testing
     env:
+      # Unique blob-report filename per suite/shard. The `report` job downloads every
+      # blob-report-* artifact with merge-multiple (which flattens them into one dir), so two
+      # suites both emitting the default `report.zip` would collide. Keying the name on the
+      # (already per-shard-unique) suite name guarantees distinct filenames.
+      PWTEST_BLOB_REPORT_NAME: ${{ inputs.suite }}
       KEYSTORE_PASS: ${{ secrets.KEYSTORE_PASS }}
       SEED: ${{ secrets.SEED }}
       SEED_24_WORDS: ${{ secrets.SEED_24_WORDS }}
@@ -153,10 +158,10 @@ jobs:
         working-directory: ./e2e-playwright-tests
         run: ${{ inputs.command }}
 
-      - name: Upload ${{ inputs.suite }} Playwright report
+      - name: Upload ${{ inputs.suite }} blob report
         if: always()
         uses: actions/upload-artifact@v6
         with:
-          name: playwright-report-${{ inputs.suite }}
-          path: ./e2e-playwright-tests/html-report/
+          name: blob-report-${{ inputs.suite }}
+          path: ./e2e-playwright-tests/blob-report/
           retention-days: 14

@@ -17,7 +17,11 @@ const config: PlaywrightTestConfig = {
   },
   testDir: 'tests',
   testMatch: '**/*.spec.ts',
-  reporter: [['list'], ['html', { outputFolder: 'html-report', open: 'never' }]],
+  // In CI each suite/shard emits a `blob` report and the `report` job merges them into a
+  // single HTML report. Locally we keep the directly-viewable HTML report.
+  reporter: process.env.CI
+    ? [['list'], ['blob']]
+    : [['list'], ['html', { outputFolder: 'html-report', open: 'never' }]],
   timeout: 180 * 1000, // 3min
   reportSlowTests: null,
   snapshotPathTemplate: 'data/screenshots/{projectName}/{testFilePath}/{arg}/text',
