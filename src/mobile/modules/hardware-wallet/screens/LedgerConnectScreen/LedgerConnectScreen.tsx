@@ -1,6 +1,9 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { View } from 'react-native'
 
+import { BIP44_LEDGER_DERIVATION_TEMPLATE } from '@ambire-common/consts/derivation'
+import { normalizeLedgerMessage } from '@ambire-common/libs/ledger/ledger'
+import { getHdPathFromTemplate } from '@ambire-common/utils/hdPath'
 import LedgerLetterIconFilled from '@common/assets/svg/LedgerLetterIconFilled'
 import Button from '@common/components/Button'
 import Spinner from '@common/components/Spinner'
@@ -8,6 +11,7 @@ import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
+import useToast from '@common/hooks/useToast'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
@@ -24,6 +28,7 @@ type Phase = 'intro' | 'scanning' | 'connecting'
 
 const LedgerConnectScreen = () => {
   const { t } = useTranslation()
+  const { addToast } = useToast()
   const { goToPrevRoute, goToNextRoute } = useOnboardingNavigation()
   const { dispatch } = useControllersMiddleware()
   const mainCtrlState = useController('MainController').state
@@ -32,7 +37,6 @@ const LedgerConnectScreen = () => {
   const [phase, setPhase] = useState<Phase>('intro')
   const [bluetoothOn, setBluetoothOn] = useState(true)
   const [devices, setDevices] = useState<LedgerScannedDevice[]>([])
-  const [error, setError] = useState('')
   // Set once we've connected and asked the worker to init the account picker; the
   // navigation effect below waits for the picker to actually be ready.
   const [importStarted, setImportStarted] = useState(false)
@@ -62,11 +66,12 @@ const LedgerConnectScreen = () => {
     scanSubRef.current = ledgerBleService.startScan(
       (device) =>
         setDevices((prev) => (prev.some((d) => d.id === device.id) ? prev : [...prev, device])),
-      (scanError: any) => setError(scanError?.message || t('Failed to scan for devices.'))
+      (scanError: any) =>
+        addToast(scanError?.message || t('Failed to scan for devices.'), { type: 'error' })
     )
 
     return stopScan
-  }, [phase, stopScan, t])
+  }, [phase, stopScan, t, addToast])
 
   // Release the scan when the screen unmounts.
   useEffect(() => stopScan, [stopScan])
@@ -74,13 +79,14 @@ const LedgerConnectScreen = () => {
   const handleStartScan = useCallback(async () => {
     const granted = await ledgerBleService.requestAndroidPermissions()
     if (!granted) {
-      setError(t('Bluetooth permission is required to connect a Ledger device.'))
+      addToast(t('Bluetooth permission is required to connect a Ledger device.'), {
+        type: 'error'
+      })
       return
     }
     setDevices([])
-    setError('')
     setPhase('scanning')
-  }, [t])
+  }, [t, addToast])
 
   const handleSelectDevice = useCallback(
     async (deviceId: string) => {
@@ -88,20 +94,27 @@ const LedgerConnectScreen = () => {
       setPhase('connecting')
       try {
         await ledgerBleService.connect(deviceId)
-        // Device is connected natively; ask the worker to derive accounts via
-        // the bridge (mirrors the web flow).
+        // Opening the BLE transport succeeds even if the device is locked or not
+        // on the Ethereum app, so probe an address first to surface those errors
+        // here (instead of failing later, async, inside the worker init).
+        await ledgerBleService.getAddress(
+          getHdPathFromTemplate(BIP44_LEDGER_DERIVATION_TEMPLATE, 0)
+        )
+        // Device is ready; ask the worker to derive accounts via the bridge
+        // (mirrors the web flow).
         dispatch({ type: 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_LEDGER' })
         setImportStarted(true)
       } catch (e: any) {
-        setError(e?.message || t('Failed to connect to the Ledger device.'))
-        setDevices([])
+        addToast(normalizeLedgerMessage(e?.message), { type: 'error' })
+        // Keep the device listed so the user can retry after unlocking it /
+        // opening the Ethereum app.
         setPhase('scanning')
       }
     },
-    [dispatch, stopScan, t]
+    [dispatch, stopScan, addToast]
   )
 
-  // Once the account picker is initialised for Ledger, advance to account selection.
+  // Once the account picker is initialized for Ledger, advance to account selection.
   useEffect(() => {
     if (importStarted && initParams && type === 'ledger' && !hasNavigatedRef.current) {
       hasNavigatedRef.current = true
@@ -111,8 +124,28 @@ const LedgerConnectScreen = () => {
 
   const isInitLoading = mainCtrlState.statuses.handleAccountPickerInitLedger === 'LOADING'
 
+  const isScanning = phase === 'scanning'
+
+  // The scan trigger is pinned to the bottom via the layout footer. While
+  // scanning it stays disabled and shows an in-button spinner. Connecting has no
+  // action (the content shows its own status spinner).
+  const footer =
+    phase === 'connecting' ? undefined : (
+      <Button
+        text={isScanning ? t('Scanning…') : t('Scan for devices')}
+        disabled={isScanning || !bluetoothOn}
+        onPress={handleStartScan}
+        hasBottomSpacing={false}
+        childrenPosition="left"
+      >
+        {isScanning && (
+          <Spinner variant="white" style={{ width: 20, height: 20, marginRight: 8 }} />
+        )}
+      </Button>
+    )
+
   return (
-    <MobileLayoutContainer>
+    <MobileLayoutContainer footer={footer}>
       <MobileLayoutWrapperMainContent
         withBackButton
         onBackButtonPress={goToPrevRoute}
@@ -141,35 +174,20 @@ const LedgerConnectScreen = () => {
           </Text>
         )}
 
-        {!!error && (
-          <Text style={spacings.mbXl} fontSize={14} appearance="errorText">
-            {error}
-          </Text>
-        )}
-
-        {phase === 'intro' && (
-          <Button
-            text={t('Scan for devices')}
-            disabled={!bluetoothOn}
-            onPress={handleStartScan}
-            hasBottomSpacing={false}
-          />
-        )}
-
         {phase === 'scanning' && (
           <View>
-            <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mbLg]}>
-              <Spinner style={{ width: 18, height: 18 }} />
-              <Text style={spacings.mlSm} fontSize={14} appearance="secondaryText">
-                {t('Scanning for Ledger devices…')}
-              </Text>
-            </View>
-            {devices.map((device) => (
+            <Text style={spacings.mbLg} fontSize={14} appearance="secondaryText">
+              {devices.length
+                ? t('Select your Ledger device:')
+                : t('Searching for nearby Ledger devices…')}
+            </Text>
+            {devices.map((device, index) => (
               <Button
                 key={device.id}
                 type="secondary"
                 text={device.name}
                 onPress={() => handleSelectDevice(device.id)}
+                hasBottomSpacing={index !== devices.length - 1}
               />
             ))}
           </View>

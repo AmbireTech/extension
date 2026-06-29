@@ -26,6 +26,12 @@ class LedgerController implements ExternalSignerController {
 
   unlockedPathKeyAddr: string = ''
 
+  // Sentinel mirroring the web controller's DMK `walletSDK`: ambire-common's
+  // handleAccountPickerInitLedger uses its truthiness to detect an established
+  // session (and to decide whether to clean up a previous one). The real device
+  // session lives natively in ledgerBleService; here it's just a connected flag.
+  walletSDK: boolean = false
+
   type = 'ledger'
 
   deviceModel = 'unknown'
@@ -55,6 +61,8 @@ class LedgerController implements ExternalSignerController {
 
       this.unlockedPath = path
       this.unlockedPathKeyAddr = address
+      // The native getAddress succeeded, so the device session is established.
+      this.walletSDK = true
 
       return 'JUST_UNLOCKED' as const
     } catch (e: any) {
@@ -116,6 +124,7 @@ class LedgerController implements ExternalSignerController {
   cleanUp = async () => {
     this.unlockedPath = ''
     this.unlockedPathKeyAddr = ''
+    this.walletSDK = false
     await callNative('ledger.cleanUp')
   }
 }

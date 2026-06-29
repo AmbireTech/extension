@@ -34,12 +34,22 @@ interface LedgerTypedData {
   primaryType: string
 }
 
+// Paths arrive from ambire-common as e.g. "m/44'/60'/0'/0/0", but hw-app-eth
+// expects them without the "m/" root (matches the web controller's
+// getHdPathWithoutRoot).
+const stripHdPathRoot = (path: string) => (path.startsWith('m/') ? path.slice(2) : path)
+
 class LedgerBleService {
   #transport: TransportBLE | null = null
 
   #eth: AppEth | null = null
 
   #connectedDeviceId = ''
+
+  // The last device we connected to, kept across cleanUp() so device operations
+  // can transparently reopen the transport (the worker tears the session down
+  // between import attempts, and signing happens after the screen is gone).
+  #lastDeviceId = ''
 
   // BLE cannot handle parallel APDU exchanges (the device throws "busy"), so
   // every device operation is serialized through this single-concurrency chain.
@@ -147,6 +157,7 @@ class LedgerBleService {
 
     this.#transport = await TransportBLE.open(deviceId)
     this.#connectedDeviceId = deviceId
+    this.#lastDeviceId = deviceId
     this.#eth = new AppEth(this.#transport)
 
     // Reset everything if the device drops the link, so the next operation
@@ -161,48 +172,57 @@ class LedgerBleService {
     this.#emitConnection()
   }
 
-  #assertConnected(): AppEth {
-    if (!this.#eth)
+  // Returns a live Ethereum app client, transparently reopening the transport to
+  // the last device if the session was torn down (e.g. by the worker between
+  // import attempts, or after the connect screen unmounted).
+  async #ensureConnected(): Promise<AppEth> {
+    if (this.#eth) return this.#eth
+
+    if (!this.#lastDeviceId)
       throw new Error('Ledger is not connected. Please connect your device and try again.')
+
+    await this.connect(this.#lastDeviceId)
+    if (!this.#eth) throw new Error('Could not reconnect to the Ledger device.')
 
     return this.#eth
   }
 
   getAddress = (path: string): Promise<string> =>
     this.#enqueue(async () => {
-      const eth = this.#assertConnected()
-      const { address } = await eth.getAddress(path, false, false)
+      const eth = await this.#ensureConnected()
+      const { address } = await eth.getAddress(stripHdPathRoot(path), false, false)
       return address
     })
 
   signPersonalMessage = (path: string, messageHex: string): Promise<LedgerBleSignature> =>
     this.#enqueue(async () => {
-      const eth = this.#assertConnected()
-      const { r, s, v } = await eth.signPersonalMessage(path, messageHex)
+      const eth = await this.#ensureConnected()
+      const { r, s, v } = await eth.signPersonalMessage(stripHdPathRoot(path), messageHex)
       return { r: `0x${r}`, s: `0x${s}`, v }
     })
 
   signTransaction = (path: string, rawTxHex: string): Promise<LedgerBleSignature> =>
     this.#enqueue(async () => {
-      const eth = this.#assertConnected()
+      const eth = await this.#ensureConnected()
       // Blind signing (no clear-sign resolution). Contract-data transactions
       // therefore require "Blind signing" to be enabled in the Ledger Ethereum
       // app; normalizeLedgerMessage surfaces a clear hint (0x6a80) if it isn't.
       const resolution = await ledgerService
         .resolveTransaction(rawTxHex, {}, { externalPlugins: false, erc20: false, nft: false })
         .catch(() => null)
-      const { r, s, v } = await eth.signTransaction(path, rawTxHex, resolution)
+      const { r, s, v } = await eth.signTransaction(stripHdPathRoot(path), rawTxHex, resolution)
       return { r: `0x${r}`, s: `0x${s}`, v: parseInt(v, 16) }
     })
 
   signTypedData = (path: string, typedData: LedgerTypedData): Promise<LedgerBleSignature> =>
     this.#enqueue(async () => {
-      const eth = this.#assertConnected()
+      const eth = await this.#ensureConnected()
 
+      const hdPath = stripHdPathRoot(path)
       try {
         // Full EIP-712 clear-signing. Not supported on the Nano S, hence the
         // hashed-message fallback below.
-        const { r, s, v } = await eth.signEIP712Message(path, typedData as any)
+        const { r, s, v } = await eth.signEIP712Message(hdPath, typedData as any)
         return { r: `0x${r}`, s: `0x${s}`, v }
       } catch {
         // Strip the EIP712Domain entry; hashStruct only takes the message types.
@@ -215,7 +235,7 @@ class LedgerBleService {
           typedData.message
         )
         const { r, s, v } = await eth.signEIP712HashedMessage(
-          path,
+          hdPath,
           domainSeparator.slice(2),
           hashStruct.slice(2)
         )
