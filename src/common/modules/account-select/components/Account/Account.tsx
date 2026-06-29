@@ -249,7 +249,7 @@ const Account = ({
         </View>
       </View>
       <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mlTy]}>
-        {balance !== null && !withSettings && (
+        {balance !== null && !withSettings && !isMobile && (
           <Text
             fontSize={14}
             weight="semiBold"
