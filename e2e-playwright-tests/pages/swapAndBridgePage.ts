@@ -108,10 +108,8 @@ export class SwapAndBridgePage extends BasePage {
     await this.clickOnMenuToken(receiveToken, selectors.swapAndBridge.receiveTokenDropdown)
   }
 
-  // The receive ("To") network does NOT automatically follow the send token, and its
-  // options are rendered inside a bottom sheet. So open the network selector and pick the
-  // network matching the receive token's chain before selecting the receive token, otherwise
-  // the receive list stays on whatever network the form happened to default to.
+  // Open the network selector and pick the network matching the receive token's chain before selecting
+  // the receive token, otherwise the receive list stays on whatever network the form happened to default to.
   async selectReceiveNetwork(receiveToken: Token) {
     await this.click(selectors.swapAndBridge.receiveNetworkDropdown)
     await this.page
@@ -409,8 +407,7 @@ export class SwapAndBridgePage extends BasePage {
 
   async batchAction(): Promise<void> {
     // Wait for the route/quote to be ready before adding to the batch. The "Select route" step
-    // depends on the Li.Fi response; adding to the batch before it settles triggers an
-    // estimation race in the background and the "Add more" button never renders.
+    // depends on the provider response.
     await this.page.waitForSelector(locators.selectRouteButton, {
       state: 'visible',
       timeout: 15000

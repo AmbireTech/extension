@@ -43,12 +43,17 @@ test.describe('ledger', { tag: '@ledgerTests' }, () => {
         `add-account-${mainConstants.addresses.ledgerAccount1}`
       )
       await expect(firstLedgerAccount).toBeVisible({ timeout: 10000 })
+
+      // The copy button shifts and the bot clicks right on it instead of importing the account
+      await expect(page.getByText('Resolving domain')).toHaveCount(0, { timeout: 30000 })
+
       await firstLedgerAccount.click()
       await page.getByTestId(selectors.getStarted.importAccountButton).click()
       await page.getByTestId(selectors.getStarted.saveAndContinueBtn).click()
     })
 
     await test.step('make sure account is imported', async () => {
+      await page.waitForTimeout(1000)
       await pages.auth.goToDashboard()
       await page.getByTestId(selectors.accountSelectBtn).click()
 
