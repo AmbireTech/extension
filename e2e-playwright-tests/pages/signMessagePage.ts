@@ -86,7 +86,11 @@ export class SignMessagePage extends BasePage {
       }
     }
 
-    const signature = await this.page.locator('.signatureResult-signature').first().innerText()
+    const signatureResult = this.page.locator('.signatureResult-signature').first()
+    // Wait for the signature to actually be produced before reading it; otherwise innerText()
+    // can return an empty string and the verification step below fails intermittently.
+    await expect(signatureResult).not.toBeEmpty({ timeout: 30000 })
+    const signature = await signatureResult.innerText()
 
     // Verify
     const verifyTab = this.page.getByRole('link', { name: 'Verify' })

@@ -51,7 +51,7 @@ test.describe('auto-login', { tag: '@autoLogin' }, () => {
 
       const ambireAppConnectWindow = await pages.basePage.handleNewPage(metamask)
       await ambireAppConnectWindow.getByTestId(selectors.dappConnectButton).click()
-      await connectionSuccessfulText.isVisible()
+      await expect(connectionSuccessfulText).toBeVisible()
     })
   })
 
