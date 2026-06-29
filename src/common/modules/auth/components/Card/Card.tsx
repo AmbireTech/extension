@@ -1,6 +1,6 @@
 import React from 'react'
 import { Trans, useTranslation } from 'react-i18next'
-import { TextStyle, View, ViewProps } from 'react-native'
+import { View, ViewProps } from 'react-native'
 import { SvgProps } from 'react-native-svg'
 
 import Button from '@common/components/Button'
