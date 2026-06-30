@@ -45,6 +45,17 @@ const TIMEOUT_FOR_RETRIEVING_FROM_LEDGER = 5000
 // signing, so a slow/offline Ledger service can't block a transaction signature.
 const CLEAR_SIGN_RESOLUTION_TIMEOUT = 5000
 
+// The user declined the operation on the device (Ledger status words 0x6985
+// "denied by user" / 0x5501 "rejected"). Detected so we never silently retry a
+// rejected signature.
+const isUserRejection = (e: any): boolean => {
+  if (e?.statusCode === 0x6985 || e?.statusCode === 0x5501) return true
+  const message = (e?.message || '').toLowerCase()
+  return (
+    message.includes('6985') || message.includes('5501') || message.includes('denied by the user')
+  )
+}
+
 const withTimeoutProtection = <T>(operation: () => Promise<T>): Promise<T> => {
   const timeout = new Promise<never>((_, reject) => {
     setTimeout(() => {
@@ -259,7 +270,14 @@ class LedgerBleService {
         // hashed-message fallback below.
         const { r, s, v } = await eth.signEIP712Message(hdPath, typedData as any)
         return { r: `0x${r}`, s: `0x${s}`, v }
-      } catch {
+      } catch (e: any) {
+        // signEIP712Message is unsupported on some apps/devices (e.g. Nano S) →
+        // fall back to blind hashed signing. But a USER REJECTION must NOT fall
+        // back: that would silently re-prompt the device and could produce a
+        // signature the user refused (leaving the account op looking "signed").
+        // Re-throw it so the sign fails cleanly.
+        if (isUserRejection(e)) throw e
+
         // Strip the EIP712Domain entry; hashStruct only takes the message types.
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const { EIP712Domain, ...structTypes } = typedData.types
