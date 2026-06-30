@@ -1,11 +1,13 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react'
+import React, { useCallback, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Animated, ScrollView, View } from 'react-native'
+import { ScrollView, View } from 'react-native'
 
 import { Dapp } from '@ambire-common/interfaces/dapp'
 import { Network } from '@ambire-common/interfaces/network'
 import CheckIcon from '@common/assets/svg/CheckIcon'
 import NetworksIcon from '@common/assets/svg/NetworksIcon'
+import SearchIcon from '@common/assets/svg/SearchIcon'
+import Input from '@common/components/Input'
 import NetworkIcon from '@common/components/NetworkIcon'
 import Text from '@common/components/Text'
 import useController from '@common/hooks/useController'
@@ -80,7 +82,15 @@ const NetworkSelector = ({
   const { theme } = useTheme()
   const { t } = useTranslation()
 
+  const [search, setSearch] = useState('')
+
   const networkData = networks.filter((n) => Number(n.chainId) === dapp.chainId)[0]
+
+  const filteredNetworks = useMemo(() => {
+    const term = search.trim().toLowerCase()
+    if (!term) return networks
+    return networks.filter((n) => n.name.toLowerCase().includes(term))
+  }, [networks, search])
 
   const [bindAnim, animStyle] = useCustomHover({
     property: 'backgroundColor',
@@ -99,16 +109,17 @@ const NetworkSelector = ({
           chainId: Number(chainId)
         }
       })
+      setSearch('')
       setIsExpanded(false)
     },
-    [dispatch, dapp.id, setIsExpanded]
+    [dispatch, dapp.id, setIsExpanded, setSearch]
   )
 
   const networkList = (
     // I've been unable to animate the maxHeight of the container without causing
     // jittering of the other elements on Firefox.
     <ScrollView style={{ maxHeight: isExpanded ? 320 : 0 }}>
-      {networks.map((network) => (
+      {filteredNetworks.map((network) => (
         <NetworkOption
           onSelectNetwork={onSelectNetwork}
           key={network.chainId}
@@ -119,9 +130,27 @@ const NetworkSelector = ({
     </ScrollView>
   )
 
+  const searchInput = isExpanded && (
+    <Input
+      containerStyle={spacings.mb0}
+      inputWrapperStyle={{
+        borderRadius: 20,
+        height: 36,
+        backgroundColor: theme.tertiaryBackground
+      }}
+      leftIcon={() => <SearchIcon color={theme.secondaryText} />}
+      leftIconStyle={spacings.plSm}
+      inputStyle={spacings.plTy}
+      placeholder={t('Search network...')}
+      value={search}
+      onChangeText={setSearch}
+    />
+  )
+
   return (
     <View>
       {isAbove && networkList}
+      {isAbove && searchInput}
       <AnimatedPressable
         {...bindAnim}
         style={[
@@ -134,6 +163,7 @@ const NetworkSelector = ({
           { borderRadius: 8 }
         ]}
         onPress={() => {
+          if (isExpanded) setSearch('')
           setIsExpanded((prev) => !prev)
         }}
       >
@@ -161,6 +191,7 @@ const NetworkSelector = ({
           }}
         />
       </AnimatedPressable>
+      {!isAbove && searchInput}
       {!isAbove && networkList}
     </View>
   )
