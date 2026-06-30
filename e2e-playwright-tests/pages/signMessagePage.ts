@@ -51,7 +51,17 @@ export class SignMessagePage extends BasePage {
     // Connect
     const actionWindowPage = await actionWindowPagePromise
     const dappConnect = actionWindowPage.getByTestId(selectors.dappConnectButton)
+    // The connect button stays disabled while the dapp security check is loading
+    // (blacklisted === 'LOADING'). We can't wait via toBeEnabled() because the button is a
+    // RN-Web Pressable <div> without role="button", so Playwright ignores its aria-disabled and
+    // treats it as always enabled. RN-Web only renders aria-disabled="true" while disabled and
+    // drops the attribute entirely once enabled, so wait for it to no longer be "true".
+    await expect(dappConnect).not.toHaveAttribute('aria-disabled', 'true', { timeout: 30000 })
     await dappConnect.click()
+
+    // The connect request window closes once the connection is authorized. Wait for that
+    // instead of proceeding immediately, so signing only starts after the wallet is connected.
+    await actionWindowPage.waitForEvent('close', { timeout: 15000 })
 
     await signSubTab.click()
 
