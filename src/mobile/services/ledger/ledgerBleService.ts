@@ -1,8 +1,13 @@
 import { TypedDataEncoder } from 'ethers'
 import { PermissionsAndroid, Platform } from 'react-native'
 
+import { BIP44_LEDGER_DERIVATION_TEMPLATE } from '@ambire-common/consts/derivation'
+import { getHdPathFromTemplate } from '@ambire-common/utils/hdPath'
 import AppEth, { ledgerService } from '@ledgerhq/hw-app-eth'
+import type Transport from '@ledgerhq/hw-transport'
 import TransportBLE from '@ledgerhq/react-native-hw-transport-ble'
+
+import ledgerUsbTransport from './ledgerUsbTransport'
 
 // All Ledger device communication on mobile happens HERE, in the React Native
 // native JS context. The WebView worker (where the controllers live) has no
@@ -56,6 +61,11 @@ const isUserRejection = (e: any): boolean => {
   )
 }
 
+const sleep = (ms: number) =>
+  new Promise<void>((resolve) => {
+    setTimeout(resolve, ms)
+  })
+
 const withTimeoutProtection = <T>(operation: () => Promise<T>): Promise<T> => {
   const timeout = new Promise<never>((_, reject) => {
     setTimeout(() => {
@@ -71,7 +81,10 @@ const withTimeoutProtection = <T>(operation: () => Promise<T>): Promise<T> => {
 }
 
 class LedgerBleService {
-  #transport: TransportBLE | null = null
+  // Holds either a BLE or a USB (Android HID) transport — both implement
+  // @ledgerhq/hw-transport's Transport, so AppEth and all signing code below are
+  // transport-agnostic.
+  #transport: Transport | null = null
 
   #eth: AppEth | null = null
 
@@ -81,6 +94,15 @@ class LedgerBleService {
   // can transparently reopen the transport (the worker tears the session down
   // between import attempts, and signing happens after the screen is gone).
   #lastDeviceId = ''
+
+  // Which transport the last/active connection used, so reconnect reopens the
+  // right one.
+  #lastTransportType: 'ble' | 'usb' = 'ble'
+
+  // Active subscription to USB detach events (cable pulled), so we drop the
+  // connection state even while idle. BLE handles this via the transport's own
+  // 'disconnect' event.
+  #usbDetachSub: LedgerSubscription | null = null
 
   // BLE cannot handle parallel APDU exchanges (the device throws "busy"), so
   // every device operation is serialized through this single-concurrency chain.
@@ -176,31 +198,119 @@ class LedgerBleService {
     return { unsubscribe: () => sub.unsubscribe() }
   }
 
+  isUsbSupported = (): Promise<boolean> => ledgerUsbTransport.isSupported()
+
+  // Currently connected USB Ledger devices (Android; empty on iOS / when none).
+  listUsbDevices = () => ledgerUsbTransport.list()
+
   /**
-   * Opens a transport to the selected device and builds the Ethereum app client.
-   * A fresh transport/app is created on every connect; any previous one is torn
-   * down first.
+   * Whether BLE scanning is already permitted, WITHOUT prompting (so the connect
+   * UI can auto-scan only when allowed and otherwise show an explicit
+   * "Scan via Bluetooth" action).
+   */
+  hasBlePermissions = async (): Promise<boolean> => {
+    if (Platform.OS !== 'android') return true
+
+    if (Platform.Version < 31) {
+      return PermissionsAndroid.check(PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION)
+    }
+
+    const [scan, connect] = await Promise.all([
+      PermissionsAndroid.check(PermissionsAndroid.PERMISSIONS.BLUETOOTH_SCAN),
+      PermissionsAndroid.check(PermissionsAndroid.PERMISSIONS.BLUETOOTH_CONNECT)
+    ])
+    return scan && connect
+  }
+
+  // Wires an opened transport (BLE or USB) into the service: builds the Ethereum
+  // app client and resets everything if the device drops the link, so the next
+  // operation surfaces a clean "not connected" instead of hanging on a dead
+  // transport.
+  #setActiveTransport(transport: Transport, deviceId: string, type: 'ble' | 'usb') {
+    this.#transport = transport
+    this.#connectedDeviceId = deviceId
+    this.#lastDeviceId = deviceId
+    this.#lastTransportType = type
+    this.#eth = new AppEth(transport)
+
+    // BLE drops fire the transport's own 'disconnect'. USB only emits that on a
+    // failed exchange, so also listen for the cable being pulled while idle —
+    // otherwise the UI keeps thinking it's connected and signing fails with an
+    // I/O error instead of showing the reconnect modal.
+    transport.on('disconnect', this.#handleDisconnect)
+    if (type === 'usb') {
+      this.#usbDetachSub = ledgerUsbTransport.onDisconnect(this.#handleDisconnect)
+    }
+
+    this.#emitConnection()
+  }
+
+  #handleDisconnect = () => {
+    this.#transport = null
+    this.#eth = null
+    this.#connectedDeviceId = ''
+    this.#usbDetachSub?.unsubscribe()
+    this.#usbDetachSub = null
+    this.#emitConnection()
+  }
+
+  /**
+   * Opens a BLE transport to the selected device and builds the Ethereum app
+   * client. A fresh transport/app is created on every connect; any previous one
+   * is torn down first.
    */
   connect = async (deviceId: string): Promise<void> => {
     if (this.#connectedDeviceId === deviceId && this.isConnected()) return
 
     await this.cleanUp()
 
-    this.#transport = await TransportBLE.open(deviceId)
-    this.#connectedDeviceId = deviceId
-    this.#lastDeviceId = deviceId
-    this.#eth = new AppEth(this.#transport)
+    const transport = await TransportBLE.open(deviceId)
+    this.#setActiveTransport(transport, deviceId, 'ble')
+  }
 
-    // Reset everything if the device drops the link, so the next operation
-    // surfaces a clean "not connected" instead of hanging on a dead transport.
-    this.#transport.on('disconnect', () => {
-      this.#transport = null
-      this.#eth = null
-      this.#connectedDeviceId = ''
-      this.#emitConnection()
-    })
+  /**
+   * Opens a USB (Android HID) transport to the connected Ledger. Wired, so there
+   * is no scanning/pairing — opening triggers Android's USB permission dialog.
+   */
+  connectUsb = async (): Promise<void> => {
+    if (this.#lastTransportType === 'usb' && this.isConnected()) return
 
-    this.#emitConnection()
+    await this.cleanUp()
+
+    const transport = await ledgerUsbTransport.open()
+    this.#setActiveTransport(transport, 'usb', 'usb')
+  }
+
+  /**
+   * Connects via the device's transport, then probes one address to verify the
+   * device is usable (unlocked + Ethereum app open). The first exchange right
+   * after a fresh connection — especially a just-permitted USB device whose link
+   * hasn't settled — can fail with a transient "device busy / cannot connect"
+   * error; the transport itself is fine and just needs a moment, so the probe is
+   * retried with a short backoff (this is what a manual retry-after-a-moment does
+   * today). getAddress(checkOnDevice=false) doesn't prompt, so retrying is safe;
+   * a genuinely locked / wrong-app device fails every attempt and surfaces its
+   * error.
+   */
+  connectAndProbe = async (device: { id: string; transport: 'ble' | 'usb' }): Promise<void> => {
+    if (device.transport === 'usb') await this.connectUsb()
+    else await this.connect(device.id)
+
+    const probePath = getHdPathFromTemplate(BIP44_LEDGER_DERIVATION_TEMPLATE, 0)
+    const backoffMs = [0, 600, 1200, 1800]
+    let lastError: any
+
+    for (const ms of backoffMs) {
+      if (ms) await sleep(ms)
+      try {
+        await this.getAddress(probePath)
+        return
+      } catch (e) {
+        lastError = e
+      }
+    }
+
+    throw lastError
   }
 
   // Returns a live Ethereum app client, transparently reopening the transport to
@@ -209,10 +319,14 @@ class LedgerBleService {
   async #ensureConnected(): Promise<AppEth> {
     if (this.#eth) return this.#eth
 
-    if (!this.#lastDeviceId)
-      throw new Error('Ledger is not connected. Please connect your device and try again.')
+    if (this.#lastTransportType === 'usb') {
+      await this.connectUsb()
+    } else {
+      if (!this.#lastDeviceId)
+        throw new Error('Ledger is not connected. Please connect your device and try again.')
+      await this.connect(this.#lastDeviceId)
+    }
 
-    await this.connect(this.#lastDeviceId)
     if (!this.#eth) throw new Error('Could not reconnect to the Ledger device.')
 
     return this.#eth
@@ -308,6 +422,8 @@ class LedgerBleService {
     this.#transport = null
     this.#eth = null
     this.#connectedDeviceId = ''
+    this.#usbDetachSub?.unsubscribe()
+    this.#usbDetachSub = null
     this.#emitConnection()
   }
 }
