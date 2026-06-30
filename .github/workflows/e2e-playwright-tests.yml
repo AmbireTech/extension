@@ -224,12 +224,12 @@ jobs:
       # A failing or slow shard must not cancel the others — each uploads its own blob report.
       fail-fast: false
       matrix:
-        shard: [1, 2, 3]
+        shard: [1, 2, 3, 4, 5]
     uses: ./.github/workflows/_e2e-suite.yml
     with:
       # `suite` is unique per shard so the uploaded blob-report-* artifact names never collide.
       suite: non-hw-${{ matrix.shard }}
-      command: yarn test:all:non-hw --shard=${{ matrix.shard }}/3
+      command: yarn test:all:non-hw --shard=${{ matrix.shard }}/5
     secrets: inherit
 
   ledger:
