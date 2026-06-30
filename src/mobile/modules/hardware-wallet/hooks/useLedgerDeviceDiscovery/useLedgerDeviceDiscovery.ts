@@ -11,19 +11,8 @@ export interface LedgerDiscoveredDevice {
 }
 
 // Bluetooth scanning is costly; stop after this window and offer a manual rescan.
-const BLE_SCAN_TIMEOUT = 20000
+const BLE_SCAN_TIMEOUT = 15000
 
-/**
- * Ledger device discovery for one transport at a time (the active connect tab).
- * Keeping it single-transport avoids the same physical Ledger showing up twice
- * (once over Bluetooth, once over USB — there's no reliable key to dedupe across
- * transports) and ensures only one transport ever touches the device.
- *
- * - `usb`: wired, detected instantly and for free (Android only).
- * - `ble`: scanned only when already permitted; otherwise the UI shows an
- *   explicit "Scan via Bluetooth" action, so we never fire an unprompted BLE
- *   permission request.
- */
 const useLedgerDeviceDiscovery = ({
   transport,
   isActive,
@@ -82,10 +71,7 @@ const useLedgerDeviceDiscovery = ({
 
   // Discover the active transport whenever it / activity changes.
   useEffect(() => {
-    if (!isActive) {
-      // The previous run's cleanup already stopped any scan.
-      return undefined
-    }
+    if (!isActive) return undefined
 
     let cancelled = false
     // Reset + detect asynchronously so there's no synchronous setState in the

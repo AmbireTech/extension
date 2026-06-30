@@ -3,14 +3,10 @@ import { AppState } from 'react-native'
 
 import ledgerBleService from '@mobile/services/ledger/ledgerBleService'
 
-// Tears down the persistent Ledger BLE connection on lock / background.
-//
-// Unlike Rabby mobile (which opens and closes the transport per operation, so it
-// has nothing to tear down), our connection is established on the connect screen
-// and reused by later worker-driven signing over the bridge. That persistent link
-// must not linger when the wallet is locked or the app is backgrounded (battery
-// + security). The transport transparently reopens via ledgerBleService's
-// reconnect (ensureConnected + lastDeviceId) on the next operation.
+// Tears down the persistent Ledger BLE connection on lock / background, so it
+// doesn't linger while locked or backgrounded (battery + security). The
+// transport transparently reopens via ledgerBleService's reconnect on the next
+// operation.
 const useLedgerBleLifecycle = (isKeystoreUnlocked: boolean) => {
   // A locked wallet should hold no hardware-wallet connection.
   useEffect(() => {

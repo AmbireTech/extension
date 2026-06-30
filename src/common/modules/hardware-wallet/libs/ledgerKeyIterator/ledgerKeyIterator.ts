@@ -1,10 +1,10 @@
 import { HD_PATH_TEMPLATE_TYPE } from '@ambire-common/consts/derivation'
 import { KeyIterator as KeyIteratorInterface } from '@ambire-common/interfaces/keyIterator'
+import { ExternalSignerController } from '@ambire-common/interfaces/keystore'
 import { getHdPathFromTemplate } from '@ambire-common/utils/hdPath'
-import LedgerController from '@mobile/modules/hardware-wallet/controllers/LedgerController'
 
 interface KeyIteratorProps {
-  controller: LedgerController
+  controller: ExternalSignerController
 }
 
 const MISSING_CONTROLLER_MSG =
@@ -20,7 +20,7 @@ class LedgerKeyIterator implements KeyIteratorInterface {
 
   subType = 'hw' as const
 
-  controller: LedgerController
+  controller: ExternalSignerController
 
   constructor({ controller }: KeyIteratorProps) {
     if (!controller) throw new Error(MISSING_CONTROLLER_MSG)
@@ -32,7 +32,7 @@ class LedgerKeyIterator implements KeyIteratorInterface {
     fromToArr: { from: number; to: number }[],
     hdPathTemplate?: HD_PATH_TEMPLATE_TYPE
   ) {
-    if (!this.controller) throw new Error(MISSING_CONTROLLER_MSG)
+    if (!this.controller?.retrieveAddresses) throw new Error(MISSING_CONTROLLER_MSG)
 
     const pathsOfAddressesToRetrieve: string[] = []
 
