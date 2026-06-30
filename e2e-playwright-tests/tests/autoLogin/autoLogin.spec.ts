@@ -5,11 +5,28 @@ import { createSiweMessage } from 'viem/siwe'
 
 import { expect, Page } from '@playwright/test'
 
-// Connect the wallet on sigtool. Clicking "Connect wallet" auto-connects when the dapp is already
-// authorized in the extension, so the wallet picker is not shown. The MetaMask pick is therefore
-// optional - only perform it if the picker actually opens (a fresh connect).
+// Connect the wallet on sigtool. After (re)loading sigtool the dapp is often still connected (the
+// authorization persists in the extension across reloads), in which case sigtool renders the
+// "Disconnect Wallet" button and no "Connect Wallet" button - so there's nothing to connect.
+// Otherwise click "Connect Wallet"; the MetaMask pick is only needed when the wallet picker
+// actually opens (a fresh connect, not an auto-connect of an already authorized dapp).
 const connectSigtool = async (page: Page) => {
-  await page.locator(selectors.sigtool.connectWalletButton).click()
+  const connectWallet = page.locator(selectors.sigtool.connectWalletButton)
+  const disconnectWallet = page.locator(selectors.sigtool.disconnectButton)
+
+  // sigtool briefly shows "Connect Wallet" on load and then auto-reconnects (the dapp authorization
+  // persists in the extension), flipping to "Disconnect Wallet" after ~1s. "Disconnect Wallet" is
+  // the sticky/terminal state, so wait for it to (maybe) appear before deciding - otherwise we'd
+  // click a "Connect Wallet" button that's about to disappear and the click would hang.
+  const alreadyConnected = await disconnectWallet
+    .waitFor({ state: 'visible', timeout: 8000 })
+    .then(() => true)
+    .catch(() => false)
+
+  // Already connected - nothing to do.
+  if (alreadyConnected) return
+
+  await connectWallet.click()
 
   const metamask = page.locator(selectors.sigtool.metamaskOption)
   const pickerOpened = await metamask
@@ -45,13 +62,25 @@ test.describe('auto-login', { tag: '@autoLogin' }, () => {
       // selectors
       const connectWallet = page.locator(selectors.sigtool.connectWalletButton)
       const metamask = page.locator(selectors.sigtool.metamaskOption)
-      const connectionSuccessfulText = page.locator(selectors.sigtool.connectionSuccessfulText)
 
       await connectWallet.click()
 
       const ambireAppConnectWindow = await pages.basePage.handleNewPage(metamask)
-      await ambireAppConnectWindow.getByTestId(selectors.dappConnectButton).click()
-      await connectionSuccessfulText.isVisible()
+
+      const dappConnectButton = ambireAppConnectWindow.getByTestId(selectors.dappConnectButton)
+      // The connect button stays disabled while the dapp security check is loading
+      // (blacklisted === 'LOADING'). We can't wait via toBeEnabled() because the button is a
+      // RN-Web Pressable <div> without role="button", so Playwright ignores its aria-disabled and
+      // treats it as always enabled. RN-Web only renders aria-disabled="true" while disabled and
+      // drops the attribute entirely once enabled, so wait for it to no longer be "true".
+      await expect(dappConnectButton).not.toHaveAttribute('aria-disabled', 'true', {
+        timeout: 30000
+      })
+      await dappConnectButton.click()
+
+      // The connect request window closes once the connection is authorized. Wait for that
+      // instead of a blind timeout, so the test proceeds only after the wallet is connected.
+      await ambireAppConnectWindow.waitForEvent('close', { timeout: 15000 })
     })
   })
 

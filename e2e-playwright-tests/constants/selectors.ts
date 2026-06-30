@@ -197,7 +197,8 @@ const selectors = {
     sigToolIconButton: 'manage-dapp-dropdown',
     sigToolNetworkEth: '//div[contains(text(), "Ethereum")]',
     sigToolNetworkBase: '//div[contains(text(), "Base")]',
-    disconnectButton: '//div[contains(text(), "Disconnect")]'
+    disconnectButton: '//button[contains(text(), "Disconnect Wallet")]',
+    disconnectDapp: '//div[contains(text(), "Disconnect")]'
   },
   swapAndBridge: {
     fromTokenDropdown: 'from-token-select',

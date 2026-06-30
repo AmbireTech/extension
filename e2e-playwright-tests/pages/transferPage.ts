@@ -127,7 +127,8 @@ export class TransferPage extends BasePage {
     message,
     ledgerSimulatorControls,
     holdProceedButton = true,
-    awaitConfirmation = true
+    awaitConfirmation = true,
+    assertPortfolioRefreshScopedToSendNetwork = true
   }: {
     sendToken: Token
     feeToken?: Token
@@ -136,6 +137,13 @@ export class TransferPage extends BasePage {
     ledgerSimulatorControls?: SpeculosDevice
     holdProceedButton?: boolean
     awaitConfirmation?: boolean
+    // When true, asserts that broadcasting a transaction refreshes the portfolio ONLY for the send
+    // token's network (a guard against a past regression that refreshed every enabled network).
+    // The check captures all portfolio RPC calls during a short window after broadcast and assumes
+    // the broadcast is their only trigger — true only for an isolated test. In a long-lived shared
+    // session the app's periodic (every 2 min) all-network portfolio refresh can land inside that
+    // window and fail the check, so shared-state callers must set this to false.
+    assertPortfolioRefreshScopedToSendNetwork?: boolean
   }) {
     // await this.page.pause()
     // Proceed
@@ -191,12 +199,16 @@ export class TransferPage extends BasePage {
       // Verify that portfolio updates run only for the send token network.
       // A previous regression was triggering updates on all enabled networks after a broadcast,
       // which caused a significant performance downgrade.
-      expect(
-        rpc.every((req) => req === `https://invictus.ambire.com/${sendToken.chainName}`),
-        `Invalid portfolio update behavior detected.
+      // Skipped in shared state (see assertPortfolioRefreshScopedToSendNetwork above): the
+      // periodic all-network portfolio refresh can overlap the monitoring window there.
+      if (assertPortfolioRefreshScopedToSendNetwork) {
+        expect(
+          rpc.every((req) => req === `https://invictus.ambire.com/${sendToken.chainName}`),
+          `Invalid portfolio update behavior detected.
    After a broadcast, the portfolio must be refreshed only for *${sendToken.chainName}*.
    However, RPC requests were also made for other networks: ${rpc.toString()}`
-      ).toEqual(true)
+        ).toEqual(true)
+      }
 
       if (awaitConfirmation) {
         // validate success message
