@@ -81,26 +81,24 @@ const LedgerConnectScreen = () => {
   const isInitLoading = mainCtrlState.statuses.handleAccountPickerInitLedger === 'LOADING'
   const isUsbTab = tab === 'usb'
 
-  const footer = isConnecting ? undefined : (
-    <View>
-      {!isUsbTab && needsBlePermission ? (
-        <Button
-          text={t('Scan via Bluetooth')}
-          disabled={!bluetoothOn}
-          onPress={scanViaBluetooth}
-          hasBottomSpacing={false}
-        />
-      ) : (
-        <Button
-          type="secondary"
-          text={isScanning ? t('Searching…') : t('Rescan')}
-          disabled={isScanning}
-          onPress={rescan}
-          hasBottomSpacing={false}
-        />
-      )}
-    </View>
-  )
+  const showScanViaBluetooth = !isUsbTab && needsBlePermission
+  const showRescan = !showScanViaBluetooth && !isScanning
+
+  const footer =
+    isConnecting || (!showScanViaBluetooth && !showRescan) ? undefined : (
+      <View>
+        {showScanViaBluetooth ? (
+          <Button
+            text={t('Scan via Bluetooth')}
+            disabled={!bluetoothOn}
+            onPress={scanViaBluetooth}
+            hasBottomSpacing={false}
+          />
+        ) : (
+          <Button type="secondary" text={t('Rescan')} onPress={rescan} hasBottomSpacing={false} />
+        )}
+      </View>
+    )
 
   return (
     <MobileLayoutContainer footer={footer}>
@@ -157,9 +155,11 @@ const LedgerConnectScreen = () => {
           </View>
         ) : (
           <View>
-            <Text style={spacings.mbLg} fontSize={14} appearance="secondaryText">
-              {devices.length ? t('Select your Ledger:') : t('Looking for your Ledger…')}
-            </Text>
+            {devices.length > 0 && (
+              <Text style={spacings.mbLg} fontSize={14} appearance="secondaryText">
+                {t('Select your Ledger:')}
+              </Text>
+            )}
             {devices.map((device) => (
               <Button
                 key={device.id}
@@ -169,10 +169,24 @@ const LedgerConnectScreen = () => {
               />
             ))}
             {isScanning && (
-              <View style={[flexbox.directionRow, flexbox.alignCenter]}>
+              <View
+                style={[
+                  flexbox.directionRow,
+                  flexbox.alignCenter,
+                  flexbox.justifyCenter,
+                  spacings.pvLg
+                ]}
+              >
                 <Spinner style={{ width: 18, height: 18 }} />
                 <Text style={spacings.mlSm} fontSize={14} appearance="secondaryText">
-                  {t('Searching for nearby Bluetooth devices…')}
+                  {t('Searching for your Ledger…')}
+                </Text>
+              </View>
+            )}
+            {!isScanning && devices.length === 0 && (
+              <View style={[flexbox.alignCenter, spacings.pvLg]}>
+                <Text fontSize={14} appearance="secondaryText">
+                  {t('No devices were found')}
                 </Text>
               </View>
             )}
