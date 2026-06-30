@@ -7,12 +7,11 @@ import { normalizeLedgerMessage } from '@ambire-common/libs/ledger/ledger'
 import { getHdPathFromTemplate } from '@ambire-common/utils/hdPath'
 import { stripHexPrefix } from '@ambire-common/utils/stripHexPrefix'
 
-// Mobile counterpart of the web LedgerController. The actual device lives in the
+// Mobile counterpart of the web LedgerController. The actual device handling lives in the
 // React Native native context (see src/mobile/services/ledger/ledgerBleService).
 // This controller runs inside the WebView worker bundle alongside the rest of
 // the ambire-common controllers, and forwards every operation to the native
-// service over the message bridge (`window.sendToRNAsync`), mirroring how
-// `crypto.scrypt` is bridged from src/mobile/shims/scrypt-js.ts.
+// service over the message bridge (`window.sendToRNAsync`).
 export type LedgerSignature = { r: string; s: string; v: number }
 
 const callNative = <T>(type: string, payload: Record<string, any> = {}): Promise<T> => {
@@ -26,10 +25,6 @@ class LedgerController implements ExternalSignerController {
 
   unlockedPathKeyAddr: string = ''
 
-  // Sentinel mirroring the web controller's DMK `walletSDK`: ambire-common's
-  // handleAccountPickerInitLedger uses its truthiness to detect an established
-  // session (and to decide whether to clean up a previous one). The real device
-  // session lives natively in ledgerBleService; here it's just a connected flag.
   walletSDK: boolean = false
 
   type = 'ledger'
@@ -39,14 +34,10 @@ class LedgerController implements ExternalSignerController {
   deviceId = ''
 
   isUnlocked(path?: string, expectedKeyOnThisPath?: string) {
-    // If no path or expected key is provided, just check if there is any
-    // unlocked path, that's a valid case when retrieving accounts for import.
     if (!path || !expectedKeyOnThisPath) {
       return !!(this.unlockedPath && this.unlockedPathKeyAddr)
     }
 
-    // Make sure it's unlocked with the right path and with the right key,
-    // otherwise - treat as not unlocked.
     return this.unlockedPathKeyAddr === expectedKeyOnThisPath && this.unlockedPath === path
   }
 
@@ -61,7 +52,6 @@ class LedgerController implements ExternalSignerController {
 
       this.unlockedPath = path
       this.unlockedPathKeyAddr = address
-      // The native getAddress succeeded, so the device session is established.
       this.walletSDK = true
 
       return 'JUST_UNLOCKED' as const

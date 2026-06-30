@@ -30,11 +30,6 @@ type Props = {
   displayOptionToAuthorize?: boolean
 }
 
-// Mobile counterpart of the web LedgerConnectModal. Shown during signing when a
-// Ledger key is involved but the connection has dropped (BLE disconnects on
-// idle). Reconnecting flips ledgerBleService.isConnected() →
-// useLedger.isLedgerConnected → useSign auto-dismisses this modal, after which
-// the user signs again (same flow as the extension).
 const LedgerConnectModal = ({ isVisible, handleClose = () => {}, handleOnConnect }: Props) => {
   const { ref, open, close } = useModalize()
   const { t } = useTranslation()
@@ -64,9 +59,6 @@ const LedgerConnectModal = ({ isVisible, handleClose = () => {}, handleOnConnect
     async (device: LedgerDiscoveredDevice) => {
       setIsConnecting(true)
       try {
-        // Connect + probe (also settles the link and verifies the device is
-        // usable before the user signs). Connected — useSign closes this modal
-        // once useLedger reports the device as connected; the user then signs.
         await ledgerBleService.connectAndProbe(device)
         if (handleOnConnect) handleOnConnect()
       } catch (e: any) {
@@ -106,8 +98,6 @@ const LedgerConnectModal = ({ isVisible, handleClose = () => {}, handleOnConnect
           : t('2. Open the Ethereum app on the device.')}
       </Text>
 
-      {/* Always rendered (not gated on connecting) so the uncontrolled toggle
-          keeps its selected tab across a failed connect attempt. */}
       {isAndroid && (
         <MultistateToggleButton
           style={spacings.mbLg}
