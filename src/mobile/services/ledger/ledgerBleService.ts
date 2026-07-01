@@ -109,7 +109,8 @@ class LedgerBleService {
   #queue: Promise<unknown> = Promise.resolve()
 
   // Connection-state subscribers (e.g. the useLedger hook), so the UI can react
-  // to connect/disconnect without polling.
+  // without polling. "Connected" means verified usable (post-probe), not merely
+  // a transport being open — see connectAndProbe / #setActiveTransport.
   #connectionListeners = new Set<(connected: boolean) => void>()
 
   subscribeConnection = (listener: (connected: boolean) => void): LedgerSubscription => {
@@ -242,7 +243,10 @@ class LedgerBleService {
       this.#usbDetachSub = ledgerUsbTransport.onDisconnect(this.#handleDisconnect)
     }
 
-    this.#emitConnection()
+    // Intentionally NOT emitting "connected" here: an open transport doesn't mean
+    // the device is usable (it may be locked or not on the Ethereum app).
+    // connectAndProbe emits only after a successful probe, so the connect modal
+    // stays open until the device is actually ready.
   }
 
   #handleDisconnect = () => {
@@ -304,6 +308,10 @@ class LedgerBleService {
       if (ms) await sleep(ms)
       try {
         await this.getAddress(probePath)
+        // Only now is the device verified usable (unlocked + Ethereum app open),
+        // so announce the connection. Subscribers (useLedger -> isLedgerConnected)
+        // drive the connect modal, which must stay open until this point.
+        this.#emitConnection()
         return
       } catch (e) {
         lastError = e
