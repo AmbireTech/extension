@@ -3,6 +3,7 @@ import { View } from 'react-native'
 
 import { normalizeLedgerMessage } from '@ambire-common/libs/ledger/ledger'
 import LedgerLetterIconFilled from '@common/assets/svg/LedgerLetterIconFilled'
+import Banner from '@common/components/Banner'
 import Button from '@common/components/Button'
 import MultistateToggleButton from '@common/components/MultistateToggleButton'
 import Spinner from '@common/components/Spinner'
@@ -48,8 +49,19 @@ const LedgerConnectScreen = () => {
     [addToast]
   )
 
-  const { devices, isScanning, needsBlePermission, bluetoothOn, scanViaBluetooth, rescan } =
-    useLedgerDeviceDiscovery({ transport: tab, isActive: !isConnecting, onError: onDiscoveryError })
+  const {
+    devices,
+    isScanning,
+    needsBlePermission,
+    bluetoothOn,
+    hasScanned,
+    scanViaBluetooth,
+    rescan
+  } = useLedgerDeviceDiscovery({
+    transport: tab,
+    isActive: !isConnecting,
+    onError: onDiscoveryError
+  })
 
   const handleSelectDevice = useCallback(
     async (device: LedgerDiscoveredDevice) => {
@@ -95,7 +107,13 @@ const LedgerConnectScreen = () => {
             hasBottomSpacing={false}
           />
         ) : (
-          <Button type="secondary" text={t('Rescan')} onPress={rescan} hasBottomSpacing={false} />
+          <Button
+            type="secondary"
+            text={hasScanned ? t('Rescan') : t('Scan')}
+            disabled={!isUsbTab && !bluetoothOn}
+            onPress={rescan}
+            hasBottomSpacing={false}
+          />
         )}
       </View>
     )
@@ -139,9 +157,12 @@ const LedgerConnectScreen = () => {
         )}
 
         {!isUsbTab && !bluetoothOn && (
-          <Text style={spacings.mbLg} fontSize={14} appearance="errorText">
-            {t('Bluetooth is turned off. Please enable it to continue.')}
-          </Text>
+          <Banner
+            type="error"
+            singleRow
+            style={spacings.mbLg}
+            title={t('Bluetooth is turned off. Please enable it to continue.')}
+          />
         )}
 
         {isConnecting ? (

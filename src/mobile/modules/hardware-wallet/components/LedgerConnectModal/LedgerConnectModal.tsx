@@ -4,6 +4,7 @@ import { useModalize } from 'react-native-modalize'
 
 import { normalizeLedgerMessage } from '@ambire-common/libs/ledger/ledger'
 import LedgerLetterIconFilled from '@common/assets/svg/LedgerLetterIconFilled'
+import Banner from '@common/components/Banner'
 import BottomSheet from '@common/components/BottomSheet'
 import ModalHeader from '@common/components/BottomSheet/ModalHeader'
 import Button from '@common/components/Button'
@@ -43,12 +44,19 @@ const LedgerConnectModal = ({ isVisible, handleClose = () => {}, handleOnConnect
     [addToast]
   )
 
-  const { devices, isScanning, needsBlePermission, bluetoothOn, scanViaBluetooth, rescan } =
-    useLedgerDeviceDiscovery({
-      transport: tab,
-      isActive: isVisible && !isConnecting,
-      onError: onDiscoveryError
-    })
+  const {
+    devices,
+    isScanning,
+    needsBlePermission,
+    bluetoothOn,
+    hasScanned,
+    scanViaBluetooth,
+    rescan
+  } = useLedgerDeviceDiscovery({
+    transport: tab,
+    isActive: isVisible && !isConnecting,
+    onError: onDiscoveryError
+  })
 
   useEffect(() => {
     if (isVisible) open()
@@ -110,9 +118,12 @@ const LedgerConnectModal = ({ isVisible, handleClose = () => {}, handleOnConnect
       )}
 
       {!isUsbTab && !bluetoothOn && (
-        <Text style={spacings.mbLg} fontSize={14} appearance="errorText">
-          {t('Bluetooth is turned off. Please enable it to continue.')}
-        </Text>
+        <Banner
+          type="error"
+          singleRow
+          style={spacings.mbLg}
+          title={t('Bluetooth is turned off. Please enable it to continue.')}
+        />
       )}
 
       {isConnecting ? (
@@ -172,7 +183,8 @@ const LedgerConnectModal = ({ isVisible, handleClose = () => {}, handleOnConnect
             <View style={spacings.ptLg}>
               <Button
                 type="secondary"
-                text={t('Rescan')}
+                text={hasScanned ? t('Rescan') : t('Scan')}
+                disabled={!isUsbTab && !bluetoothOn}
                 onPress={rescan}
                 hasBottomSpacing={false}
               />
