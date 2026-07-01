@@ -6,6 +6,7 @@ import { TypedMessageUserRequest } from '@ambire-common/interfaces/userRequest'
 import { normalizeLedgerMessage } from '@ambire-common/libs/ledger/ledger'
 import { getHdPathFromTemplate } from '@ambire-common/utils/hdPath'
 import { stripHexPrefix } from '@ambire-common/utils/stripHexPrefix'
+import { LedgerControllerInterface } from '@common/modules/hardware-wallet/interfaces/ledgerController'
 
 // Mobile counterpart of the web LedgerController. The actual device handling lives in the
 // React Native native context (see src/mobile/services/ledger/ledgerBleService).
@@ -20,7 +21,7 @@ const callNative = <T>(type: string, payload: Record<string, any> = {}): Promise
   return (window as any).sendToRNAsync(type, payload)
 }
 
-class LedgerController implements ExternalSignerController {
+class LedgerController implements ExternalSignerController, LedgerControllerInterface {
   unlockedPath: string = ''
 
   unlockedPathKeyAddr: string = ''

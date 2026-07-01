@@ -18,9 +18,9 @@ import * as richJson from '@ambire-common/libs/richJson/richJson'
 // setTimeout and drop the browser-only logic, which is correct for mobile.
 import { AutoLockController } from '@common/controllers/auto-lock/auto-lock.native'
 import { WalletStateController } from '@common/controllers/wallet-state/wallet-state.native'
+import LedgerSigner from '@common/modules/hardware-wallet/libs/LedgerSigner'
 import { handleActions } from '@mobile/handlers/handleActions'
 import LedgerController from '@mobile/modules/hardware-wallet/controllers/LedgerController'
-import LedgerSigner from '@mobile/modules/hardware-wallet/libs/LedgerSigner'
 
 import {
   buildStateForFE,
