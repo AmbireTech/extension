@@ -111,8 +111,8 @@ const LedgerConnectModal = ({ isVisible, handleClose = () => {}, handleOnConnect
         <MultistateToggleButton
           style={spacings.mbLg}
           states={[
-            { text: 'Bluetooth', callback: () => setTab('ble') },
-            { text: 'USB', callback: () => setTab('usb') }
+            { text: t('Bluetooth'), callback: () => setTab('ble') },
+            { text: t('USB'), callback: () => setTab('usb') }
           ]}
         />
       )}

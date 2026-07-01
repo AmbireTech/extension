@@ -420,6 +420,10 @@ class LedgerBleService {
 
   cleanUp = async (): Promise<void> => {
     if (this.#transport) {
+      // Remove the 'disconnect' listener before closing, otherwise a
+      // just-replaced transport can still fire it asynchronously afterwards
+      // and #handleDisconnect would null out the newer, active transport.
+      this.#transport.off('disconnect', this.#handleDisconnect)
       try {
         await this.#transport.close()
       } catch {
