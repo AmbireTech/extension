@@ -130,7 +130,7 @@ const LedgerConnectModal = ({ isVisible, handleClose = () => {}, handleOnConnect
         <View style={[flexbox.directionRow, flexbox.alignCenter, flexbox.justifyCenter]}>
           <Spinner style={{ width: 18, height: 18 }} />
           <Text style={spacings.mlSm} fontSize={14} appearance="secondaryText">
-            {t('Connecting to your Ledger…')}
+            {t('Connecting to your Ledger')}
           </Text>
         </View>
       ) : (
@@ -160,7 +160,7 @@ const LedgerConnectModal = ({ isVisible, handleClose = () => {}, handleOnConnect
             >
               <Spinner style={{ width: 18, height: 18 }} />
               <Text style={spacings.mlSm} fontSize={14} appearance="secondaryText">
-                {t('Searching for your Ledger…')}
+                {t('Searching for Ledger devices')}
               </Text>
             </View>
           )}

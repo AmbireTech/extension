@@ -171,7 +171,7 @@ const LedgerConnectScreen = () => {
             <Text style={spacings.mlSm} fontSize={14} appearance="secondaryText">
               {isInitLoading
                 ? t('Loading accounts from your Ledger…')
-                : t('Connecting to your Ledger…')}
+                : t('Connecting to your Ledger')}
             </Text>
           </View>
         ) : (
@@ -200,7 +200,7 @@ const LedgerConnectScreen = () => {
               >
                 <Spinner style={{ width: 18, height: 18 }} />
                 <Text style={spacings.mlSm} fontSize={14} appearance="secondaryText">
-                  {t('Searching for your Ledger…')}
+                  {t('Searching for Ledger devices')}
                 </Text>
               </View>
             )}
