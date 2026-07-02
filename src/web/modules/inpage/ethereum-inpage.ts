@@ -6,6 +6,14 @@ import '@common/modules/inpage/globals'
 // causing AppKit to disconnect the real EIP-6963 session. Fix: once a page proves it's EIP-6963-
 // aware, `window.ethereum` stops silently confirming connection status until it's explicitly
 // asked to connect. Legacy-only dapps (no EIP-6963) are unaffected.
+//
+// This gates only the handful of methods that can silently reveal connection status (no consent
+// prompt involved), rather than giving `window.ethereum` a separate provider instance/identity.
+// A separate instance wouldn't fix this on its own anyway (permission is keyed by tab+origin, not
+// by which JS object asked) without also piping extra context to the background and adding
+// decision logic there for it - real background work, not a client-side tweak. Keeping this file
+// this small also matters on its own: it's injected into every page, so less code here means
+// faster injection.
 const SILENT_CONNECTION_CHECK_METHODS = ['eth_accounts', 'eth_coinbase']
 
 let isEip6963AwarePage = false
