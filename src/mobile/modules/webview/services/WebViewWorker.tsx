@@ -434,9 +434,15 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, object>((_, ref) => {
           }
           break
         case 'ledger.signingCleanup':
-          // Best-effort: there is no reliable way to cancel an in-flight BLE
-          // APDU exchange; the device prompt still resolves/rejects on-device.
-          sendResponse(data.id, null)
+          // Flushes the device's pending command state after an abandoned/rejected
+          // sign so the next command starts clean. Does NOT cancel an in-flight
+          // on-device prompt (that still resolves on the device). Best-effort.
+          try {
+            await ledgerBleService.signingCleanup()
+            sendResponse(data.id, null)
+          } catch (err: any) {
+            sendResponse(data.id, null, err.message)
+          }
           break
         case 'ledger.cleanUp':
           try {

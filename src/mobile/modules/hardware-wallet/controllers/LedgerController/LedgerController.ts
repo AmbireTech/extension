@@ -46,16 +46,19 @@ class LedgerController implements ExternalSignerController, LedgerControllerInte
     path: ReturnType<typeof getHdPathFromTemplate>,
     expectedKeyOnThisPath?: string
   ): Promise<'ALREADY_UNLOCKED' | 'JUST_UNLOCKED'> {
-    if (this.isUnlocked(path, expectedKeyOnThisPath)) return 'ALREADY_UNLOCKED'
+    // Cache is trusted only for the keyless "is anything unlocked" check. With an
+    // expected key (pre-signing), always re-derive: device/seed may have changed.
+    if (!expectedKeyOnThisPath && this.isUnlocked(path)) return 'ALREADY_UNLOCKED'
 
     try {
       const address = await callNative<string>('ledger.getAddress', { path })
 
+      const wasAlreadyUnlocked = this.unlockedPath === path && this.unlockedPathKeyAddr === address
       this.unlockedPath = path
       this.unlockedPathKeyAddr = address
       this.walletSDK = true
 
-      return 'JUST_UNLOCKED' as const
+      return wasAlreadyUnlocked ? 'ALREADY_UNLOCKED' : 'JUST_UNLOCKED'
     } catch (e: any) {
       throw new ExternalSignerError(normalizeLedgerMessage(e?.message))
     }

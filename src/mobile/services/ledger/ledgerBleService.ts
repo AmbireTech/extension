@@ -50,15 +50,25 @@ const TIMEOUT_FOR_RETRIEVING_FROM_LEDGER = 5000
 // signing, so a slow/offline Ledger service can't block a transaction signature.
 const CLEAR_SIGN_RESOLUTION_TIMEOUT = 5000
 
-// The user declined the operation on the device (Ledger status words 0x6985
-// "denied by user" / 0x5501 "rejected"). Detected so we never silently retry a
-// rejected signature.
-const isUserRejection = (e: any): boolean => {
-  if (e?.statusCode === 0x6985 || e?.statusCode === 0x5501) return true
+// App doesn't support full EIP-712 clear-signing (INS_NOT_SUPPORTED / 0x6d00,
+// e.g. Nano S) — the only case we may fall back to blind hashed signing.
+const isEip712UnsupportedError = (e: any): boolean => {
+  if (e?.statusCode === 0x6d00) return true
+  const statusText = (e?.statusText || '').toUpperCase()
+  if (statusText === 'INS_NOT_SUPPORTED') return true
+  const message = (e?.message || '').toUpperCase()
+  return message.includes('6D00') || message.includes('INS_NOT_SUPPORTED')
+}
+
+// Errors that won't clear by waiting: the device is locked, on the wrong app, or
+// needs a firmware/app update. Retrying the connect probe through the full
+// backoff just delays surfacing the real error, so we bail on the first one.
+const UNRECOVERABLE_STATUS_CODES = [0x5515, 0x6b0c, 0x650f, 0x6511, 0x6e00, 0x6b00, 0x6d00, 0x6a80]
+const isUnrecoverableProbeError = (e: any): boolean => {
+  if (UNRECOVERABLE_STATUS_CODES.includes(e?.statusCode)) return true
   const message = (e?.message || '').toLowerCase()
-  return (
-    message.includes('6985') || message.includes('5501') || message.includes('denied by the user')
-  )
+  if (message.includes('unlock-device') || message.includes('confirm-open-app')) return true
+  return UNRECOVERABLE_STATUS_CODES.some((code) => message.includes(code.toString(16)))
 }
 
 const sleep = (ms: number) =>
@@ -315,6 +325,9 @@ class LedgerBleService {
         return
       } catch (e) {
         lastError = e
+        // Locked / wrong-app / firmware errors won't clear by waiting — surface
+        // them right away instead of burning the full backoff.
+        if (isUnrecoverableProbeError(e)) break
       }
     }
 
@@ -393,12 +406,9 @@ class LedgerBleService {
         const { r, s, v } = await eth.signEIP712Message(hdPath, typedData as any)
         return { r: `0x${r}`, s: `0x${s}`, v }
       } catch (e: any) {
-        // signEIP712Message is unsupported on some apps/devices (e.g. Nano S) →
-        // fall back to blind hashed signing. But a USER REJECTION must NOT fall
-        // back: that would silently re-prompt the device and could produce a
-        // signature the user refused (leaving the account op looking "signed").
-        // Re-throw it so the sign fails cleanly.
-        if (isUserRejection(e)) throw e
+        // Fall back to blind hashed signing ONLY on INS_NOT_SUPPORTED. Re-throw
+        // anything else — never silently blind-sign a payload after another error.
+        if (!isEip712UnsupportedError(e)) throw e
 
         // Strip the EIP712Domain entry; hashStruct only takes the message types.
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -415,6 +425,20 @@ class LedgerBleService {
           hashStruct.slice(2)
         )
         return { r: `0x${r}`, s: `0x${s}`, v }
+      }
+    })
+
+  // Flushes the device's pending command state after an abandoned/rejected sign
+  // so the next command starts clean (mirrors Ledger Live). Not cancellation.
+  signingCleanup = (): Promise<void> =>
+    this.#enqueue(async () => {
+      if (!this.#transport) return
+      try {
+        // Zero APDU completes one exchange to realign framing; device replies with
+        // a non-0x9000 status (hw-transport throws) — swallow, the flush happened.
+        await this.#transport.send(0xe0, 0x00, 0x00, 0x00)
+      } catch {
+        // Non-9000 status (expected) or idle/disconnected device — nothing to do.
       }
     })
 
