@@ -7,7 +7,7 @@ import useController from '@common/hooks/useController'
 import GasFeeUpdatedModal from '@common/modules/sign-account-op/components/GasFeeUpdatedModal/GasFeeUpdatedModal'
 import SignAccountOpHardwareWalletSigningModal from '@common/modules/sign-account-op/components/SignAccountOpHardwareWalletSigningModal'
 import { ModalsProps } from '@common/modules/sign-account-op/types/modals'
-import LedgerConnectModal from '@mobile/modules/hardware-wallet/components/LedgerConnectModal'
+import LedgerConnectModal from '@common/modules/hardware-wallets/components/LedgerConnectModal'
 import spacings from '@common/styles/spacings'
 import text from '@common/styles/utils/text'
 

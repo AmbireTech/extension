@@ -10,7 +10,7 @@ import { ModalsProps } from '@common/modules/sign-account-op/types/modals'
 import spacings from '@common/styles/spacings'
 import text from '@common/styles/utils/text'
 import { getUiType } from '@common/utils/uiType'
-import LedgerConnectModal from '@web/modules/hardware-wallet/components/LedgerConnectModal'
+import LedgerConnectModal from '@common/modules/hardware-wallets/components/LedgerConnectModal'
 import QrSigningFlowScreen from '@common/modules/hardware-wallets/screens/QrSigningFlowScreen'
 
 const { isTab, isRequestWindow } = getUiType()

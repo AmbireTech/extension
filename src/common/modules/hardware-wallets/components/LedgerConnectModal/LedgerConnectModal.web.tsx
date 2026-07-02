@@ -1,6 +1,160 @@
-// Resolves to the web (WebHID) Ledger connect modal. Lives under common so
-// shared sign-message/sign-account-op code can import one path; the actual
-// web implementation stays in @web.
-import LedgerConnectModal from '@web/modules/hardware-wallet/components/LedgerConnectModal'
+import React, { useCallback, useEffect, useState } from 'react'
+import { View } from 'react-native'
+import { useModalize } from 'react-native-modalize'
+
+import AmbireDevice from '@common/assets/svg/AmbireDevice'
+import DriveIcon from '@common/assets/svg/DriveIcon'
+import LeftPointerArrowIcon from '@common/assets/svg/LeftPointerArrowIcon'
+import BottomSheet from '@common/components/BottomSheet'
+import ModalHeader from '@common/components/BottomSheet/ModalHeader'
+import Button from '@common/components/Button'
+import Text from '@common/components/Text'
+import { Trans, useTranslation } from '@common/config/localization'
+import useController from '@common/hooks/useController'
+import useTheme from '@common/hooks/useTheme'
+import useToast from '@common/hooks/useToast'
+import useLedger from '@common/modules/hardware-wallets/hooks/useLedger'
+import { WEB_ROUTES } from '@common/modules/router/constants/common'
+import spacings from '@common/styles/spacings'
+import flexbox from '@common/styles/utils/flexbox'
+import text from '@common/styles/utils/text'
+import { openInternalPageInTab } from '@common/utils/links/links'
+import { getUiType } from '@common/utils/uiType'
+
+type Props = {
+  isVisible: boolean
+  handleClose?: () => void
+  handleOnConnect?: () => void
+  /**
+   * The WebHID API allows the authorization to happen only in the extension
+   * foreground and on a new tab (not in an request window).
+   */
+  displayOptionToAuthorize?: boolean
+}
+
+const { isTab } = getUiType()
+
+const LedgerConnectModal = ({
+  isVisible,
+  handleClose = () => {},
+  handleOnConnect,
+  displayOptionToAuthorize = true
+}: Props) => {
+  const { ref, open, close } = useModalize()
+  const mainCtrlState = useController('MainController').state
+  const { requestLedgerDeviceAccess } = useLedger()
+  const { addToast } = useToast()
+  const { t } = useTranslation()
+  const [isGrantingPermission, setIsGrantingPermission] = useState(false)
+  const { currentUserRequest, requestWindow } = useController('RequestsController').state
+  const { theme } = useTheme()
+
+  useEffect(() => {
+    if (isVisible) open()
+    else close()
+  }, [open, close, isVisible])
+
+  const onPressNext = async () => {
+    try {
+      // Request Ledger access first, before any state updates to prevent error:
+      // "Failed to execute 'requestDevice' on 'HID': Must be handling a user
+      // gesture to show a permission request." on some browsers like Vivaldi.
+      await requestLedgerDeviceAccess()
+
+      setIsGrantingPermission(true)
+
+      if (handleOnConnect) handleOnConnect()
+    } catch (error: any) {
+      addToast(error.message, { type: 'error' })
+    } finally {
+      // Clear the flag to allow the user to try again. For all other cases,
+      // the state gets reset automatically, because the on connect success
+      // the flow redirects the user to another route (and this component unmounts).
+      setIsGrantingPermission(false)
+    }
+  }
+
+  const handleOnLedgerReauthorize = useCallback(
+    () =>
+      openInternalPageInTab({
+        route: `${WEB_ROUTES.ledgerConnect}?requestId=${currentUserRequest?.id}`,
+        // Don't close the request window if the current request is a sign message
+        // as that would reject the message automatically.
+        shouldCloseCurrentWindow: currentUserRequest?.kind === 'calls',
+        windowId: requestWindow.windowProps?.createdFromWindowId
+      }),
+    [
+      currentUserRequest?.id,
+      currentUserRequest?.kind,
+      requestWindow.windowProps?.createdFromWindowId
+    ]
+  )
+
+  const isLoading =
+    isGrantingPermission || mainCtrlState.statuses.handleAccountPickerInitLedger === 'LOADING'
+
+  return (
+    <BottomSheet
+      id="ledger-connect-modal"
+      sheetRef={ref}
+      autoWidth={false}
+      closeBottomSheet={handleClose}
+      onClosed={handleClose}
+      autoOpen={isVisible}
+      // The modal is displayed in tab in swap and bridge
+      type={!isTab ? 'bottom-sheet' : 'modal'}
+      containerInnerWrapperStyles={isTab ? { ...spacings.pv2Xl, ...spacings.ph2Xl } : {}}
+      withBackdropBlur={false}
+    >
+      <ModalHeader title={t('Connect Ledger')} handleClose={handleClose} />
+      <View style={[flexbox.alignSelfCenter, spacings.mbSm]}>
+        <Text weight="regular" style={spacings.mbTy} fontSize={14}>
+          {t('1. Plug in your Ledger via cable and enter a PIN to unlock it.')}
+        </Text>
+        <Text weight="regular" fontSize={14} style={{ marginBottom: 40 }}>
+          {t('2. Open the Ethereum app.')}
+        </Text>
+      </View>
+      <View
+        style={[flexbox.directionRow, flexbox.alignSelfCenter, flexbox.alignCenter, spacings.mb3Xl]}
+      >
+        <DriveIcon style={spacings.mrLg} />
+        <LeftPointerArrowIcon style={spacings.mrLg} />
+        <AmbireDevice />
+      </View>
+      <Text weight="regular" style={[spacings.mbLg, text.center]} fontSize={14}>
+        {displayOptionToAuthorize ? (
+          t('If not previously granted, Ambire will ask for permission to connect to a HID device.')
+        ) : (
+          <Trans>
+            <Text weight="regular" fontSize={14}>
+              If it still doesn&apos;t work after completing these steps,{' '}
+            </Text>
+            <Text
+              weight="semiBold"
+              fontSize={14}
+              underline
+              color={theme.infoDecorative}
+              onPress={handleOnLedgerReauthorize}
+            >
+              try re-authorizing Ambire to connect
+            </Text>
+            <Text weight="regular" fontSize={14}>
+              .
+            </Text>
+          </Trans>
+        )}
+      </Text>
+      {displayOptionToAuthorize && (
+        <Button
+          text={isLoading ? t('Connecting...') : t('Authorize & Connect')}
+          disabled={isLoading}
+          style={{ width: 264, ...flexbox.alignSelfCenter }}
+          onPress={onPressNext}
+        />
+      )}
+    </BottomSheet>
+  )
+}
 
 export default LedgerConnectModal
