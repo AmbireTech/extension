@@ -117,7 +117,7 @@ const LedgerConnectModal = ({ isVisible, handleClose = () => {}, handleOnConnect
         />
       )}
 
-      {!isUsbTab && !bluetoothOn && (
+      {!isUsbTab && bluetoothOn === false && (
         <Banner
           type="error"
           singleRow

@@ -156,7 +156,7 @@ const LedgerConnectScreen = () => {
           />
         )}
 
-        {!isUsbTab && !bluetoothOn && (
+        {!isUsbTab && bluetoothOn === false && (
           <Banner
             type="error"
             singleRow
