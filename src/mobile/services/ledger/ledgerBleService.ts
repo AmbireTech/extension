@@ -1,8 +1,11 @@
 import { TypedDataEncoder } from 'ethers'
 import { PermissionsAndroid, Platform } from 'react-native'
+import { Hex } from 'viem'
 
 import { BIP44_LEDGER_DERIVATION_TEMPLATE } from '@ambire-common/consts/derivation'
 import { getHdPathFromTemplate } from '@ambire-common/utils/hdPath'
+import wait from '@ambire-common/utils/wait'
+import { withTimeout } from '@ambire-common/utils/with-timeout'
 import AppEth, { ledgerService } from '@ledgerhq/hw-app-eth'
 import type Transport from '@ledgerhq/hw-transport'
 import TransportBLE from '@ledgerhq/react-native-hw-transport-ble'
@@ -17,8 +20,8 @@ import ledgerUsbTransport from './ledgerUsbTransport'
 // `network.fetch` are bridged.
 
 export interface LedgerBleSignature {
-  r: string // 0x-prefixed
-  s: string // 0x-prefixed
+  r: Hex
+  s: Hex
   v: number
 }
 
@@ -72,25 +75,6 @@ const isUnrecoverableProbeError = (e: any): boolean => {
   const message = (e?.message || '').toLowerCase()
   if (message.includes('unlock-device') || message.includes('confirm-open-app')) return true
   return UNRECOVERABLE_STATUS_CODES.some((code) => message.includes(code.toString(16)))
-}
-
-const sleep = (ms: number) =>
-  new Promise<void>((resolve) => {
-    setTimeout(resolve, ms)
-  })
-
-const withTimeoutProtection = <T>(operation: () => Promise<T>): Promise<T> => {
-  const timeout = new Promise<never>((_, reject) => {
-    setTimeout(() => {
-      reject(
-        new Error(
-          'Cannot connect to your Ledger device for an extended period. Please make sure it is unlocked, the Ethereum app is open, and it is within Bluetooth range, then try again.'
-        )
-      )
-    }, TIMEOUT_FOR_RETRIEVING_FROM_LEDGER)
-  })
-
-  return Promise.race([operation(), timeout])
 }
 
 class LedgerBleService {
@@ -318,7 +302,7 @@ class LedgerBleService {
     let lastError: any
 
     for (const ms of backoffMs) {
-      if (ms) await sleep(ms)
+      if (ms) await wait(ms)
       try {
         await this.getAddress(probePath)
         // Only now is the device verified usable (unlocked + Ethereum app open),
@@ -359,8 +343,13 @@ class LedgerBleService {
   getAddress = (path: string): Promise<string> =>
     this.#enqueue(async () => {
       const eth = await this.#ensureConnected()
-      const { address } = await withTimeoutProtection(() =>
-        eth.getAddress(stripHdPathRoot(path), false, false)
+      const { address } = await withTimeout(
+        () => eth.getAddress(stripHdPathRoot(path), false, false),
+        {
+          timeoutMs: TIMEOUT_FOR_RETRIEVING_FROM_LEDGER,
+          message:
+            'Cannot connect to your Ledger device for an extended period. Please make sure it is unlocked, the Ethereum app is open, and it is within Bluetooth range, then try again.'
+        }
       )
       return address
     })
