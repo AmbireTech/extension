@@ -7,7 +7,11 @@ import Avatar from '@common/components/Avatar'
 import Text from '@common/components/Text'
 import useController from '@common/hooks/useController'
 import useReverseLookup from '@common/hooks/useReverseLookup'
+import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
+import { getUiType } from '@common/utils/uiType'
+
+const { isSidePanel } = getUiType()
 
 const AccountDataDetailed = () => {
   const {
@@ -15,30 +19,37 @@ const AccountDataDetailed = () => {
   } = useController('SelectedAccountController')
   const { isLoading, name, type } = useReverseLookup({ address: account?.addr || '' })
 
-  if (!account) return null
-
   const smartAccountType = useMemo(() => {
     if (account?.creation) return 'Ambire'
     if (account?.safeCreation) return 'Safe'
     return undefined
   }, [account])
 
+  if (!account) return null
+
   return (
-    <View style={[flexbox.directionRow, flexbox.alignCenter, flexbox.flex1]}>
+    <View style={[flexbox.directionRow, flexbox.alignCenter, flexbox.flex1, { minWidth: 0 }]}>
       <Avatar
         address={account.addr}
         pfp={account.preferences.pfp}
         smartAccountType={smartAccountType}
       />
-      <View style={flexbox.flex1}>
-        <View style={[flexbox.directionRow, flexbox.alignCenter]}>
+      <View style={[flexbox.flex1, spacings.mlSm, { minWidth: 0 }]}>
+        <View style={[flexbox.directionRow, flexbox.alignCenter, { minWidth: 0 }]}>
           <Text fontSize={16} weight="semiBold" numberOfLines={1}>
             {account.preferences.label}
           </Text>
           <AccountBadges accountData={account} />
         </View>
-        <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-          <AccountAddress isLoading={isLoading} name={name} type={type} address={account.addr} />
+        <View style={[flexbox.directionRow, flexbox.alignCenter, { minWidth: 0 }]}>
+          <AccountAddress
+            isLoading={isLoading}
+            name={name}
+            type={type}
+            address={account.addr}
+            plainAddressMaxLength={isSidePanel ? 16 : 42}
+            withCopy={!isSidePanel}
+          />
         </View>
       </View>
     </View>

@@ -25,7 +25,6 @@ import TitleAndIcon from '@common/components/TitleAndIcon'
 import { isMobile, isWeb } from '@common/config/env'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
-import useWindowSize from '@common/hooks/useWindowSize'
 import BundlerWarning from '@common/modules/sign-account-op/components/Estimation/components/bundlerWarning'
 import CustomGasPrice from '@common/modules/sign-account-op/components/Estimation/components/CustomGasPrice'
 import DefaultFeeSelector from '@common/modules/sign-account-op/components/Estimation/components/DefaultFeeSelector'
@@ -37,6 +36,7 @@ import Sponsored from '@common/modules/sign-account-op/components/Estimation/com
 import PendingTransactions from '@common/modules/sign-account-op/components/PendingTransactions'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
+import { getUiType } from '@common/utils/uiType'
 
 import { NO_FEE_OPTIONS } from './consts'
 import { mapFeeOptions, sortFeeOptions } from './helpers'
@@ -119,7 +119,7 @@ const Estimation = ({
   const { networks } = useController('NetworksController').state
   const { t } = useTranslation()
   const { theme } = useTheme(getStyles)
-  const { maxWidthSize } = useWindowSize()
+  const { isSidePanel } = getUiType()
   const {
     ref: customGasPriceSheetRef,
     open: openCustomGasPriceSheet,
@@ -428,7 +428,7 @@ const Estimation = ({
   const currentGas = signAccountOpState?.accountOp.gasFeePayment?.simulatedGasLimit.toString() || ''
   const canSetCustomGasPrices = !!signAccountOpState?.canSetCustomGasPrices
   const canSetCustomGas = !!signAccountOpState?.canSetCustomGas
-  const isNarrowLayout = !maxWidthSize('s')
+  const isNarrowLayout = isSidePanel
 
   const advancedOptionsTooltip = useMemo(() => {
     if (canSetCustomGasPrices) return undefined

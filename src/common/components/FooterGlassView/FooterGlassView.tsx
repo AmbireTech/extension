@@ -5,6 +5,9 @@ import GlassView from '@common/components/GlassView'
 import { isMobile } from '@common/config/env'
 import { SPACING, SPACING_SM } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
+import { getUiType } from '@common/utils/uiType'
+
+const { isSidePanel } = getUiType()
 
 const params: {
   [key in 'sm' | 'md']: ViewStyle
@@ -40,6 +43,8 @@ const FooterGlassView: FC<{
   absolute = true,
   isSimpleBlur
 }) => {
+  const isCompactLayout = isSidePanel
+
   if (isMobile) {
     return (
       <View style={[{ flexDirection: 'column-reverse', width: '100%' }, mobileStyle]}>
@@ -58,6 +63,7 @@ const FooterGlassView: FC<{
         ...flexbox.center,
         zIndex: 3,
         pointerEvents: 'none',
+        ...(isCompactLayout ? { paddingHorizontal: SPACING_SM } : {}),
         ...style
       }}
     >
@@ -67,17 +73,20 @@ const FooterGlassView: FC<{
         borderRadius={Number(params[size].borderRadius)}
         cssStyle={{
           pointerEvents: 'all',
+          ...(isCompactLayout ? { width: '100%' } : {}),
           ...(glassViewProps?.cssStyle || {})
         }}
       >
         <View
           style={[
             flexbox.directionRow,
-            flexbox.alignCenter,
             {
               paddingHorizontal: params[size].paddingHorizontal,
               paddingVertical: params[size].paddingVertical
             },
+            isCompactLayout
+              ? { width: '100%', gap: 4, alignItems: 'stretch' }
+              : flexbox.alignCenter,
             innerContainerStyle
           ]}
         >

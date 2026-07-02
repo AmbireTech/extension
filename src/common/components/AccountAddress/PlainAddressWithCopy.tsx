@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { View, ViewStyle } from 'react-native'
 
 import CopyIcon from '@common/assets/svg/CopyIcon'
-import { isMobile, isWeb } from '@common/config/env'
+import { isMobile } from '@common/config/env'
 import useHover, { AnimatedPressable } from '@common/hooks/useHover'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
@@ -60,9 +60,7 @@ const PlainAddressWithCopy: FC<Props> = ({
         flexbox.alignCenter,
         withWrap
           ? { flexBasis: 110, flexGrow: 1, flexShrink: 1 }
-          : isMobile
-            ? { flexShrink: 1, minWidth: 0 }
-            : {}
+          : { flexShrink: 1, minWidth: 0, flex: 1 }
       ]}
     >
       <PlainAddress
@@ -71,9 +69,7 @@ const PlainAddressWithCopy: FC<Props> = ({
         hideParentheses={hideParentheses}
         style={{
           ...style,
-          ...(maxLength === 42 ? { flexShrink: 1 } : {}),
-          ...(isWeb ? { flexShrink: 0 } : {}),
-          ...(withWrap ? { minWidth: isMobile ? 70 : 170 } : {})
+          ...(withWrap ? { minWidth: isMobile ? 70 : 170 } : { flexShrink: 1, minWidth: 0 })
         }}
         fontSize={fontSize}
         withWrap={withWrap}

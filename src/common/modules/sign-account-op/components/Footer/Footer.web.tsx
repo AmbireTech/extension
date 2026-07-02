@@ -13,10 +13,10 @@ import HoldToProceedButton from '@common/components/HoldToProceedButton'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
-import useWindowSize from '@common/hooks/useWindowSize'
 import ActionsPagination from '@common/modules/action-requests/components/ActionsPagination'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
+import { getUiType } from '@common/utils/uiType'
 
 import { Props } from './Footer'
 import getStyles from './styles'
@@ -38,14 +38,14 @@ const Footer = ({
 }: Props) => {
   const { t } = useTranslation()
   const { styles } = useTheme(getStyles)
-  const { maxWidthSize } = useWindowSize()
+  const { isSidePanel } = getUiType()
   const { userRequests } = useController('RequestsController').state
   const {
     state: { account }
   } = useController('SelectedAccountController')
   const { accountOp } = useController('SignAccountOpController').state || {}
   const chainId = accountOp?.chainId
-  const isNarrowLayout = !maxWidthSize('s')
+  const isNarrowLayout = isSidePanel
 
   const batchCount = useMemo(() => {
     const requests = userRequests.filter((r) => {

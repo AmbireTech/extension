@@ -14,6 +14,7 @@ import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import useWindowSize from '@common/hooks/useWindowSize'
 import spacings from '@common/styles/spacings'
+import flexbox from '@common/styles/utils/flexbox'
 import { setStringAsync } from '@common/utils/clipboard'
 import { getUiType } from '@common/utils/uiType'
 
@@ -34,7 +35,8 @@ const AccountData: FC<Props> = ({ onPress, withArrowRightIcon }) => {
   const { addToast } = useToast()
   const { styles } = useTheme(getStyles)
   const { maxWidthSize } = useWindowSize()
-  const { isPopup } = getUiType()
+  const { isPopup, isSidePanel } = getUiType()
+  const addressMaxLength = isSidePanel ? 9 : 13
   const { account } = useController('SelectedAccountController').state
   const [bindAddressAnim, addressAnimStyle] = useHover({
     preset: 'opacityInverted',
@@ -85,7 +87,7 @@ const AccountData: FC<Props> = ({ onPress, withArrowRightIcon }) => {
           {
             backgroundColor: '#000000A3',
             flexShrink: 1,
-            // @ts-ignore
+            minWidth: 0,
             ...(isWeb && !onPress ? { cursor: 'auto' } : {})
           },
           isMobile && {
@@ -106,21 +108,29 @@ const AccountData: FC<Props> = ({ onPress, withArrowRightIcon }) => {
           <Text
             numberOfLines={1}
             weight={isMobile ? 'medium' : 'semiBold'}
-            style={[spacings.mrMi, { maxWidth: isPopup ? 112 : 160, flexShrink: 1 }]}
+            style={[
+              spacings.mrMi,
+              {
+                flexShrink: 0,
+                ...(isSidePanel ? { maxWidth: '55%' } : isPopup ? { maxWidth: 160 } : {})
+              }
+            ]}
             color="#FFFFFF"
             fontSize={14}
           >
             {account.preferences.label}
           </Text>
 
-          <>
+          <View style={[flexbox.directionRow, flexbox.alignCenter, { flexShrink: 1, minWidth: 0 }]}>
             <Text
               color="#B9BFC9"
-              style={[isWeb ? spacings.mrTy : undefined]}
+              numberOfLines={1}
+              ellipsizeMode="middle"
+              style={[{ flexShrink: 1, minWidth: 0 }, isWeb ? spacings.mrTy : undefined]}
               weight="mono_regular"
               fontSize={12}
             >
-              ({shortenAddress(account.addr, 13)})
+              ({shortenAddress(account.addr, addressMaxLength)})
             </Text>
             {isWeb && (
               <AnimatedPressable
@@ -131,7 +141,7 @@ const AccountData: FC<Props> = ({ onPress, withArrowRightIcon }) => {
                 <CopyIcon width={24} height={24} color="#E3E6EB" />
               </AnimatedPressable>
             )}
-          </>
+          </View>
 
           {!!withArrowRightIcon && (
             <Animated.View style={accountBtnAnimStyle}>

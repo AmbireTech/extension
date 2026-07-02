@@ -40,7 +40,7 @@ export type OneClickEstimationProps = {
   Modals: React.ComponentType<ModalsProps>
 }
 
-const { isRequestWindow, isTab } = getUiType()
+const { isRequestWindow, isTab, isSidePanel } = getUiType()
 
 const OneClickEstimation = ({
   closeEstimationModal,
@@ -114,7 +114,7 @@ const OneClickEstimation = ({
       <BottomSheet
         id="estimation-modal"
         sheetRef={estimationModalRef}
-        type={isTab ? 'modal' : 'bottom-sheet'}
+        type={isTab && !isSidePanel ? 'modal' : 'bottom-sheet'}
         // NOTE: This must be lower than SigningKeySelect's z-index
         customZIndex={5}
         style={spacings.pb}

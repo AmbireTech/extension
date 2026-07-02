@@ -37,9 +37,12 @@ import useTheme from '@common/hooks/useTheme'
 import { ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
+import { getUiType } from '@common/utils/uiType'
 import { ItemPanel } from '@web/components/TransactionsScreen'
 
 import styles from './styles'
+
+const { isSidePanel } = getUiType()
 
 interface Props extends InputProps {
   setAddress: (text: string) => void
@@ -239,6 +242,7 @@ const Recipient: React.FC<Props> = ({
   const { navigate } = useNavigation()
   const { t } = useTranslation()
   const { theme } = useTheme()
+  const contactAddressMaxLength = isSidePanel ? 16 : undefined
   const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useModalize()
   const { contacts } = useController('AddressBookController').state
   const {
@@ -308,10 +312,11 @@ const Recipient: React.FC<Props> = ({
               }}
               address={contact.address}
               name={contact.name}
+              plainAddressMaxLength={contactAddressMaxLength}
             />
           )
         })),
-    [contacts, filteredContacts]
+    [contacts, filteredContacts, contactAddressMaxLength]
   )
 
   const manuallyAddedContactOptions = useMemo(
@@ -331,10 +336,11 @@ const Recipient: React.FC<Props> = ({
               }}
               address={contact.address}
               name={contact.name}
+              plainAddressMaxLength={contactAddressMaxLength}
             />
           )
         })),
-    [contacts, filteredContacts]
+    [contacts, filteredContacts, contactAddressMaxLength]
   )
 
   const selectedOption = useMemo(
@@ -469,6 +475,7 @@ const Recipient: React.FC<Props> = ({
       <SectionedSelect
         value={selectedOption}
         setValue={setAddressWrapped}
+        mode={isSidePanel ? 'bottomSheet' : undefined}
         sections={sections}
         headerHeight={32}
         menuOptionHeight={54}

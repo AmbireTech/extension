@@ -32,6 +32,7 @@ interface Props {
   isManageable?: boolean
   isEditable?: boolean
   withCopy?: boolean
+  plainAddressMaxLength?: number
   onPress?: () => void
   style?: ViewStyle
   testID?: string
@@ -47,6 +48,7 @@ const AddressBookContact: FC<Props> = ({
   isManageable,
   isEditable,
   withCopy = true,
+  plainAddressMaxLength,
   onPress,
   testID,
   style = {},
@@ -137,7 +139,7 @@ const AddressBookContact: FC<Props> = ({
       {...(onPress ? bindAnim : {})}
       testID={testID}
     >
-      <View style={[flexbox.directionRow, flexbox.alignCenter, flexbox.flex1]}>
+      <View style={[flexbox.directionRow, flexbox.alignCenter, flexbox.flex1, { minWidth: 0 }]}>
         <Avatar
           {...(avatarSize && { size: avatarSize })}
           pfp={address}
@@ -145,7 +147,7 @@ const AddressBookContact: FC<Props> = ({
           smartAccountType={smartAccountType}
           displayTypeBadge={displayTypeBadge}
         />
-        <View style={{ flex: 1 }}>
+        <View style={{ flex: 1, minWidth: 0 }}>
           {isEditable ? (
             <Editable
               fontSize={fontSize}
@@ -177,6 +179,7 @@ const AddressBookContact: FC<Props> = ({
               addressHighlight={addressHighlight}
               containerStyle={{ paddingVertical: 0 }}
               withCopy={withCopy}
+              plainAddressMaxLength={plainAddressMaxLength}
             />
           </View>
         </View>

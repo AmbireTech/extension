@@ -28,7 +28,7 @@ const ActionHeader = () => {
       ]}
     >
       <Header.AccountDataDetailed />
-      {isWeb && <Header.Logo />}
+      {isWeb && <Header.Logo style={spacings.mlSm} />}
     </View>
   )
 }

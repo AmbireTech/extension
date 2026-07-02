@@ -31,7 +31,10 @@ const Option = React.memo(({ item, ...rest }: { item: SelectValue }) => {
 
   if (!item) return null
   return (
-    <View style={[flexbox.directionRow, flexbox.alignCenter, flexbox.flex1]} testID={testID}>
+    <View
+      style={[flexbox.directionRow, flexbox.alignCenter, flexbox.flex1, { minWidth: 0 }]}
+      testID={testID}
+    >
       {!!item?.icon && typeof item?.icon !== 'string' && (
         <View style={spacings.mrTy}>{item.icon}</View>
       )}

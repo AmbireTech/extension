@@ -15,13 +15,13 @@ import { BOTTOM_SHEET_Z_INDEX } from './styles'
 
 const ANIMATION_DURATION: number = 250
 
-const { isPopup, isMobileApp } = getUiType()
+const { isPopup, isMobileApp, isSidePanel } = getUiType()
 
 const useBottomSheetInternal = (props: BottomSheetProps) => {
   const { id: _id, type: _type, sheetRef, autoOpen = false, customZIndex } = props
   const { closeBottomSheet: _closeBottomSheet = () => {} } = props
   const closeBottomSheet = useCallback(_closeBottomSheet, [_closeBottomSheet])
-  const type = _type || (isPopup || isMobileApp ? 'bottom-sheet' : 'modal')
+  const type = _type || (isPopup || isMobileApp || isSidePanel ? 'bottom-sheet' : 'modal')
   const isModal = type === 'modal'
   const [isOpen, setIsOpen] = useState(false)
   const prevIsOpen = usePrevious(isOpen)
