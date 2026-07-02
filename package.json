@@ -24,6 +24,7 @@
     "build:ios:production": "yarn build:ios:archive && yarn build:ios:export",
     "build:ios:production-for-testing": "yarn build:ios:archive && yarn build:ios:export-for-testing",
     "build:android:production:apk": "yarn build:webview && cd android && APP_ENV=production ./gradlew assembleRelease",
+    "build:android:production:apk:install": "yarn build:android:production:apk && adb shell am force-stop com.ambire.wallet && adb install -r android/app/build/outputs/apk/release/app-release.apk",
     "build:android:production:aab": "yarn build:webview && cd android && APP_ENV=production ./gradlew bundleRelease",
     "build:web:webkit": "rm -rf ./build/webkit-prod && APP_ENV=production WEB_ENGINE=webkit WEBPACK_BUILD_OUTPUT_PATH=webkit-prod expo export:web",
     "build:web:webkit:generate-policy": "LAVAMOAT_GENERATE_POLICY=true yarn build:web:webkit",
@@ -158,6 +159,7 @@
     "expo-updates": "29.0.16",
     "fuse.js": "7.1.0",
     "gridplus-sdk": "4.0.0",
+    "hash-wasm": "4.12.0",
     "https-browserify": "1.0.0",
     "i18next": "21.10.0",
     "intro.js": "7.2.0",
@@ -222,7 +224,7 @@
     "stream-browserify": "3.0.0",
     "stream-http": "3.2.0",
     "string_decoder": "0.10.31",
-    "swiper": "11.1.14",
+    "swiper": "12.1.2",
     "timers-browserify": "1.4.2",
     "tldts": "7.0.17",
     "toggle-switch-react-native": "3.3.0",
@@ -283,7 +285,6 @@
     "eslint-plugin-react-hooks": "7.1.1",
     "globals": "15.9.0",
     "html-webpack-plugin": "5.6.0",
-    "imapflow": "1.0.160",
     "node-polyfill-webpack-plugin": "2.0.1",
     "patch-package": "8.0.0",
     "postinstall-postinstall": "2.1.0",
@@ -303,7 +304,8 @@
   },
   "resolutions": {
     "elliptic": "^6.6.1",
-    "browserslist": "^4.23.0"
+    "browserslist": "^4.23.0",
+    "cipher-base": "^1.0.6"
   },
   "private": true,
   "lavamoat": {

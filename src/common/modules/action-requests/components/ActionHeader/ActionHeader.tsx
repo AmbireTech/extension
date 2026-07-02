@@ -33,4 +33,4 @@ const ActionHeader = () => {
   )
 }
 
-export default ActionHeader
+export default React.memo(ActionHeader)

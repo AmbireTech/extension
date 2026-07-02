@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { Pressable, View } from 'react-native'
 
 import Text from '@common/components/Text'
+import { isMobile, isWeb } from '@common/config/env'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
@@ -16,8 +17,8 @@ const Header: FC = () => {
   return (
     <View
       style={[
-        flexbox.directionRow,
-        flexbox.alignCenter,
+        isWeb && flexbox.directionRow,
+        isWeb && flexbox.alignCenter,
         flexbox.justifySpaceBetween,
         spacings.mbSm,
         spacings.pbTy,
@@ -26,10 +27,17 @@ const Header: FC = () => {
         }
       ]}
     >
-      <Text fontSize={20} weight="medium" color={theme.primaryText}>
+      <Text
+        fontSize={20}
+        weight="medium"
+        color={theme.primaryText}
+        style={[isMobile && spacings.mbTy]}
+      >
         {t('Portfolio errors')}
       </Text>
-      <View style={[flexbox.directionRow, flexbox.alignCenter]}>
+      <View
+        style={[flexbox.directionRow, flexbox.alignCenter, isMobile && flexbox.justifySpaceBetween]}
+      >
         <Text fontSize={12} weight="medium" appearance="secondaryText" style={spacings.mrSm}>
           {t('Frequent issues?')}
         </Text>

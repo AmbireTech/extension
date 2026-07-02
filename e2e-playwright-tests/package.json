@@ -51,7 +51,10 @@
     "@trezor/connect-plugin-ethereum": "9.1.5",
     "@trezor/connect-webextension": "9.7.1",
     "@trezor/trezor-user-env-link": "1.0.0",
+    "aes-js": "3.1.2",
     "dotenv": "^16.4.5",
-    "qs": "^6.12.0"
+    "node-fetch": "2.7.0",
+    "qs": "^6.12.0",
+    "viem": "2.45.2"
   }
 }

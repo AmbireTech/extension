@@ -5,17 +5,23 @@ import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 
 import { Dapp } from '@ambire-common/interfaces/dapp'
+import ConnectedIcon from '@common/assets/svg/ConnectedIcon'
+import DeleteIcon from '@common/assets/svg/DeleteIcon'
 import LayoutWrapper from '@common/components/LayoutWrapper'
 import ScrollableWrapper, { WRAPPER_TYPES } from '@common/components/ScrollableWrapper'
 import Search from '@common/components/Search'
 import useController from '@common/hooks/useController'
 import useDebounce from '@common/hooks/useDebounce'
 import useNavigation from '@common/hooks/useNavigation'
+import useTheme from '@common/hooks/useTheme'
 import ClearRecentsBottomSheet, {
   ClearRecentsBottomSheetHandle
 } from '@common/modules/explore/components/ClearRecentsBottomSheet'
 import DappItem from '@common/modules/explore/components/DappItem'
 import DappsSkeletonLoader from '@common/modules/explore/components/DappsSkeletonLoader'
+import DisconnectAllBottomSheet, {
+  DisconnectAllBottomSheetHandle
+} from '@common/modules/explore/components/DisconnectAllBottomSheet'
 import HorizontalDappsRow from '@common/modules/explore/components/HorizontalDappsRow'
 import SectionHeader from '@common/modules/explore/components/SectionHeader'
 import useExploreSections, {
@@ -34,8 +40,10 @@ const ExploreScreen = () => {
   const { state } = useController('DappsController')
   const { navigate } = useNavigation()
   const search = watch('search')
+  const { theme } = useTheme()
   const debouncedSearch = useDebounce({ value: search, delay: 350 })
   const clearRecentsRef = useRef<ClearRecentsBottomSheetHandle>(null)
+  const disconnectAllRef = useRef<DisconnectAllBottomSheetHandle>(null)
 
   const sections = useExploreSections()
 
@@ -47,6 +55,10 @@ const ExploreScreen = () => {
 
   const handleClearRecentsPress = useCallback(() => {
     clearRecentsRef.current?.open()
+  }, [])
+
+  const handleDisconnectAllPress = useCallback(() => {
+    disconnectAllRef.current?.open()
   }, [])
 
   const searchableDapps = useMemo(
@@ -98,17 +110,28 @@ const ExploreScreen = () => {
     ({ section }: { section: { type: ExploreSection['type'] } }) => {
       const matching = sections.find((s) => s.type === section.type)
       if (!matching) return null
+
+      let actionIcon: React.ReactNode
+      let onActionPress: (() => void) | undefined
+      if (matching.showTrash) {
+        actionIcon = <DeleteIcon width={24} height={24} strokeWidth="1.75" />
+        onActionPress = handleClearRecentsPress
+      } else if (matching.type === 'connected') {
+        actionIcon = <ConnectedIcon width={20} height={20} color={theme.errorDecorative} />
+        onActionPress = handleDisconnectAllPress
+      }
+
       return (
         <SectionHeader
           icon={matching.icon}
           title={matching.title}
           onPress={() => handleOpenSection(matching)}
-          showTrash={matching.showTrash}
-          onTrashPress={matching.showTrash ? handleClearRecentsPress : undefined}
+          actionIcon={actionIcon}
+          onActionPress={onActionPress}
         />
       )
     },
-    [sections, handleOpenSection, handleClearRecentsPress]
+    [sections, handleOpenSection, handleClearRecentsPress, handleDisconnectAllPress, theme]
   )
 
   const sectionKeyExtractor = useCallback(
@@ -157,6 +180,7 @@ const ExploreScreen = () => {
         </View>
       )}
       <ClearRecentsBottomSheet ref={clearRecentsRef} />
+      <DisconnectAllBottomSheet ref={disconnectAllRef} />
     </LayoutWrapper>
   )
 }
