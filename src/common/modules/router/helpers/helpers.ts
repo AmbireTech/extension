@@ -10,6 +10,58 @@ import { getUiType } from '@common/utils/uiType'
 
 const { isRequestWindow } = getUiType()
 
+/**
+ * Maps the current user request to the route that renders it. Shared between the request
+ * window's initial route resolution and the side panel, which renders the same action
+ * screens in-place (over the dashboard) instead of opening a separate window.
+ */
+const getRouteForUserRequest = ({
+  currentUserRequest,
+  transferState
+}: {
+  currentUserRequest: IRequestsController['currentUserRequest']
+  transferState: ITransferController
+}): string | null => {
+  if (!currentUserRequest) return null
+
+  if (currentUserRequest.kind === 'dappConnect') return ROUTES.dappConnectRequest
+  if (currentUserRequest.kind === 'walletAddEthereumChain') return ROUTES.addChain
+  if (currentUserRequest.kind === 'walletWatchAsset') return ROUTES.watchAsset
+  if (currentUserRequest.kind === 'ethGetEncryptionPublicKey')
+    return ROUTES.getEncryptionPublicKeyRequest
+  if (currentUserRequest.kind === 'ethDecrypt') return ROUTES.decryptRequest
+  if (currentUserRequest.kind === 'calls') return ROUTES.signAccountOp
+
+  if (
+    currentUserRequest.kind === 'message' ||
+    currentUserRequest.kind === 'typedMessage' ||
+    currentUserRequest.kind === 'authorization-7702' ||
+    currentUserRequest.kind === 'siwe'
+  )
+    return ROUTES.signMessage
+
+  if (currentUserRequest.kind === 'swapAndBridge') return ROUTES.swapAndBridge
+
+  if (currentUserRequest.kind === 'transfer')
+    return transferState.isTopUp ? ROUTES.topUpGasTank : ROUTES.transfer
+
+  if (currentUserRequest.kind === 'benzin') {
+    return (
+      ROUTES.benzin +
+      getBenzinUrlParams({
+        chainId: currentUserRequest.meta.chainId,
+        isInternal: true,
+        txnId: currentUserRequest.meta?.txnId, // can be undefined
+        identifiedBy: currentUserRequest.meta?.identifiedBy
+      })
+    )
+  }
+
+  if (currentUserRequest.kind === 'switchAccount') return ROUTES.switchAccount
+
+  return null
+}
+
 const getInitialRoute = ({
   keystoreState,
   authStatus,
@@ -34,51 +86,10 @@ const getInitialRoute = ({
   }
 
   if (isRequestWindow && requestsState.currentUserRequest) {
-    const { currentUserRequest } = requestsState
-    if (currentUserRequest.kind === 'dappConnect') return ROUTES.dappConnectRequest
-
-    if (currentUserRequest.kind === 'walletAddEthereumChain') return ROUTES.addChain
-
-    if (currentUserRequest.kind === 'walletWatchAsset') return ROUTES.watchAsset
-
-    if (currentUserRequest.kind === 'ethGetEncryptionPublicKey')
-      return ROUTES.getEncryptionPublicKeyRequest
-    if (currentUserRequest.kind === 'ethDecrypt') return ROUTES.decryptRequest
-
-    if (currentUserRequest.kind === 'calls') return ROUTES.signAccountOp
-
-    if (
-      currentUserRequest.kind === 'message' ||
-      currentUserRequest.kind === 'typedMessage' ||
-      currentUserRequest.kind === 'authorization-7702' ||
-      currentUserRequest.kind === 'siwe'
-    ) {
-      return ROUTES.signMessage
-    }
-
-    if (currentUserRequest.kind === 'swapAndBridge') return ROUTES.swapAndBridge
-
-    if (currentUserRequest.kind === 'transfer') {
-      if (transferState.isTopUp) {
-        return ROUTES.topUpGasTank
-      }
-
-      return ROUTES.transfer
-    }
-
-    if (currentUserRequest.kind === 'benzin') {
-      const link =
-        ROUTES.benzin +
-        getBenzinUrlParams({
-          chainId: currentUserRequest.meta.chainId,
-          isInternal: true,
-          txnId: currentUserRequest.meta?.txnId, // can be undefined
-          identifiedBy: currentUserRequest.meta?.identifiedBy
-        })
-      return link
-    }
-
-    if (currentUserRequest.kind === 'switchAccount') return ROUTES.switchAccount
+    return getRouteForUserRequest({
+      currentUserRequest: requestsState.currentUserRequest,
+      transferState
+    })
   } else if (!isRequestWindow) {
     // TODO: Always redirects to Dashboard, which for initial extension load is okay, but
     // for other scenarios, ideally, it should be the last route before the keystore got locked.
@@ -102,4 +113,4 @@ const getInitialRoute = ({
   return null
 }
 
-export { getInitialRoute }
+export { getInitialRoute, getRouteForUserRequest }

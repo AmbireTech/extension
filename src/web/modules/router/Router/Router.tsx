@@ -17,6 +17,7 @@ import { getInitialRoute } from '@common/modules/router/helpers'
 import flexbox from '@common/styles/utils/flexbox'
 import Splash from '@web/components/Splash'
 import useCurrentActionSideEffects from '@web/hooks/useCurrentActionSideEffects'
+import useSidePanelActionRequestRouting from '@web/hooks/useSidePanelActionRequestRouting'
 import DashboardScreen from '@web/modules/dashboard/screens/DashboardScreen'
 import KeyStoreUnlockScreen from '@web/modules/keystore/screens/KeyStoreUnlockScreen'
 
@@ -39,6 +40,7 @@ const Router = () => {
     ControllersStateLoadedContext
   )
   useCurrentActionSideEffects()
+  useSidePanelActionRequestRouting()
 
   if (isStatesLoadingTakingTooLong && !areControllerStatesLoaded) {
     return (

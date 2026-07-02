@@ -1,0 +1,91 @@
+import { useContext, useEffect, useRef } from 'react'
+
+import { ControllersStateLoadedContext } from '@common/contexts/controllersStateLoadedContext'
+import useController from '@common/hooks/useController'
+import useNavigation from '@common/hooks/useNavigation'
+import useRoute from '@common/hooks/useRoute'
+import { AUTH_STATUS } from '@common/modules/auth/constants/authStatus'
+import useAuth from '@common/modules/auth/hooks/useAuth'
+import { ROUTES } from '@common/modules/router/constants/common'
+import { getRouteForUserRequest } from '@common/modules/router/helpers'
+import { getUiType } from '@common/utils/uiType'
+
+const { isSidePanel } = getUiType()
+
+const getRoutePathname = (route: string) => (route.split('?')[0] ?? route).replace(/^\//, '')
+
+/**
+ * In side-panel mode the action requests (sign transaction/message, dapp connect, switch
+ * account, etc.) are rendered inside the always-visible panel instead of a separate
+ * request window. The background skips opening the window (see RequestsController), so the
+ * panel itself has to react to `currentUserRequest`: navigate to the matching action
+ * screen when a request appears and back to the dashboard once it is resolved.
+ *
+ * Auto-navigation to an action screen only happens when a request becomes active (new id
+ * or re-activated after dismiss). This lets the user dismiss to the dashboard — e.g. via
+ * "Start a batch" — without being pulled back to the sign screen while the request stays
+ * queued.
+ */
+const useSidePanelActionRequestRouting = () => {
+  const { navigate } = useNavigation()
+  const { path } = useRoute()
+  const { authStatus } = useAuth()
+  const keystoreState = useController('KeystoreController').state
+  const {
+    state: { currentUserRequest }
+  } = useController('RequestsController')
+  const transferState = useController('TransferController').state
+  const { areControllerStatesLoaded } = useContext(ControllersStateLoadedContext)
+
+  const prevRequestIdRef = useRef<string | number | null>(null)
+  const lastOpenedRequestIdRef = useRef<string | number | null>(null)
+  const lastRequestRouteRef = useRef<string | null>(null)
+
+  useEffect(() => {
+    if (!isSidePanel || !areControllerStatesLoaded) return
+
+    const isLocked = keystoreState.isReadyToStoreKeys && !keystoreState.isUnlocked
+    if (isLocked || authStatus === AUTH_STATUS.NOT_AUTHENTICATED) return
+
+    if (currentUserRequest) {
+      const activeRequestId = currentUserRequest.id
+      const targetRoute = getRouteForUserRequest({ currentUserRequest, transferState })
+      if (!targetRoute) return
+
+      const targetPath = getRoutePathname(targetRoute)
+      const currentPath = getRoutePathname(path)
+      const requestJustActivated = prevRequestIdRef.current === null
+      const isDifferentRequest = activeRequestId !== lastOpenedRequestIdRef.current
+
+      if (requestJustActivated || isDifferentRequest) {
+        lastOpenedRequestIdRef.current = activeRequestId
+        lastRequestRouteRef.current = targetPath
+        if (currentPath !== targetPath) navigate(targetRoute)
+      }
+
+      prevRequestIdRef.current = activeRequestId
+      return
+    }
+
+    if (prevRequestIdRef.current !== null) {
+      if (lastRequestRouteRef.current && getRoutePathname(path) === lastRequestRouteRef.current) {
+        navigate(ROUTES.dashboard)
+      }
+      lastOpenedRequestIdRef.current = null
+      lastRequestRouteRef.current = null
+    }
+
+    prevRequestIdRef.current = null
+  }, [
+    areControllerStatesLoaded,
+    authStatus,
+    currentUserRequest,
+    keystoreState.isReadyToStoreKeys,
+    keystoreState.isUnlocked,
+    navigate,
+    path,
+    transferState
+  ])
+}
+
+export default useSidePanelActionRequestRouting

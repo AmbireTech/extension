@@ -11,7 +11,7 @@ import ActionsPagination from '@common/modules/action-requests/components/Action
 import SafeOwners from '@common/modules/sign-account-op/components/SafeOwners'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import { closeCurrentWindow } from '@web/extension-services/background/webapi/window'
+import useCloseActionWindow from '@web/hooks/useCloseActionWindow'
 
 const SafeFooter = ({
   account,
@@ -35,6 +35,7 @@ const SafeFooter = ({
   onReject: (event: GestureResponderEvent) => void
 }) => {
   const { t } = useTranslation()
+  const closeActionWindow = useCloseActionWindow()
   const [showSafeSigners, setShowSafeSigners] = useState(false)
 
   const isSingle = useMemo(() => {
@@ -116,7 +117,7 @@ const SafeFooter = ({
                     size="large"
                     type="secondary"
                     hasBottomSpacing={false}
-                    onPress={() => closeCurrentWindow()}
+                    onPress={() => closeActionWindow()}
                     text={'Sign later'}
                     disabled={signed.length === 0}
                     style={[{ maxWidth: 'auto' }]}

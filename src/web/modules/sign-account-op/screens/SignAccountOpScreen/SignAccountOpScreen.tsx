@@ -30,7 +30,7 @@ import {
   TabLayoutContainer,
   TabLayoutWrapperMainContent
 } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
-import { closeCurrentWindow } from '@web/extension-services/background/webapi/window'
+import useCloseActionWindow from '@web/hooks/useCloseActionWindow'
 import useDappVerificationHoldButtonType from '@web/hooks/useDappVerificationHoldButtonType'
 import Modals from '@web/modules/sign-account-op/components/Modals/Modals'
 
@@ -147,10 +147,11 @@ const SignAccountOpScreen = () => {
     })
   }, [requestsDispatch, accountOpRequest, visibleUserRequests.length])
 
+  const closeActionWindow = useCloseActionWindow()
+
   const handleAddToCart = useCallback(() => {
-    // eslint-disable-next-line @typescript-eslint/no-floating-promises
-    closeCurrentWindow()
-  }, [])
+    closeActionWindow()
+  }, [closeActionWindow])
 
   useEffect(() => {
     if (isSignDisabled || !containerHeight || !contentHeight) return
