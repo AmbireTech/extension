@@ -63,7 +63,10 @@ const isEip712UnsupportedError = (e: any): boolean => {
 // Errors that won't clear by waiting: the device is locked, on the wrong app, or
 // needs a firmware/app update. Retrying the connect probe through the full
 // backoff just delays surfacing the real error, so we bail on the first one.
-const UNRECOVERABLE_STATUS_CODES = [0x5515, 0x6b0c, 0x650f, 0x6511, 0x6e00, 0x6b00, 0x6d00, 0x6a80]
+// 0x6d02 = Ethereum app not open (device on the dashboard).
+const UNRECOVERABLE_STATUS_CODES = [
+  0x5515, 0x6b0c, 0x650f, 0x6511, 0x6e00, 0x6b00, 0x6d00, 0x6d02, 0x6a80
+]
 const isUnrecoverableProbeError = (e: any): boolean => {
   if (UNRECOVERABLE_STATUS_CODES.includes(e?.statusCode)) return true
   const message = (e?.message || '').toLowerCase()
