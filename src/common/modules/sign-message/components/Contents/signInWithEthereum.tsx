@@ -21,12 +21,15 @@ import Info from '@common/modules/sign-message/components/Info'
 import spacings, { SPACING, SPACING_LG, SPACING_MD, SPACING_SM } from '@common/styles/spacings'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
+import { getUiType } from '@common/utils/uiType'
 import { MobileLayoutWrapperMainContent } from '@mobile/components/MobileLayoutWrapper'
 import { TabLayoutWrapperMainContent } from '@web/components/TabLayoutWrapper'
 import LedgerConnectModal from '@web/modules/hardware-wallet/components/LedgerConnectModal'
 import { QrSigningStep } from '@web/modules/hardware-wallet/qr/types'
 import QrSigningFlowScreen from '@web/modules/hardware-wallet/screens/QrSigningFlowScreen'
 import getStyles from '@web/modules/sign-message/screens/SignMessageScreen/styles'
+
+const { isSidePanel } = getUiType()
 
 interface Props {
   shouldDisplayLedgerConnectModal: boolean
@@ -223,32 +226,47 @@ const SignInWithEthereum = ({
 
   return (
     <Container>
-      <View
-        style={[
-          flexbox.directionRow,
-          flexbox.alignCenter,
-          flexbox.justifySpaceBetween,
-          {
-            marginBottom: SPACING_MD * responsiveSizeMultiplier
-          }
-        ]}
-      >
-        <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-          <Text
-            weight="medium"
-            fontSize={isMobile ? 20 : 24 * responsiveSizeMultiplier}
-            style={spacings.mrSm}
-          >
+      {isSidePanel ? (
+        <View style={{ marginBottom: SPACING_MD * responsiveSizeMultiplier }}>
+          <Text weight="medium" fontSize={24 * responsiveSizeMultiplier}>
             {t('Sign-in request')}
           </Text>
+          <View style={[flexbox.alignStart, spacings.mtTy]}>
+            <NetworkBadge
+              chainId={signMessageState.messageToSign?.chainId}
+              responsiveSizeMultiplier={responsiveSizeMultiplier}
+              withOnPrefix
+            />
+          </View>
         </View>
-        <NetworkBadge
-          chainId={signMessageState.messageToSign?.chainId}
-          responsiveSizeMultiplier={responsiveSizeMultiplier}
-          withOnPrefix
-        />
-        {/* @TODO: Replace with Badge; add size prop to badge; add tooltip  */}
-      </View>
+      ) : (
+        <View
+          style={[
+            flexbox.directionRow,
+            flexbox.alignCenter,
+            flexbox.justifySpaceBetween,
+            {
+              marginBottom: SPACING_MD * responsiveSizeMultiplier
+            }
+          ]}
+        >
+          <View style={[flexbox.directionRow, flexbox.alignCenter]}>
+            <Text
+              weight="medium"
+              fontSize={isMobile ? 20 : 24 * responsiveSizeMultiplier}
+              style={spacings.mrSm}
+            >
+              {t('Sign-in request')}
+            </Text>
+          </View>
+          <NetworkBadge
+            chainId={signMessageState.messageToSign?.chainId}
+            responsiveSizeMultiplier={responsiveSizeMultiplier}
+            withOnPrefix
+          />
+          {/* @TODO: Replace with Badge; add size prop to badge; add tooltip  */}
+        </View>
+      )}
       <View style={styles.container}>
         <View
           style={{
