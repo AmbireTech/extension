@@ -18,6 +18,7 @@ import HoldToProceedButton from '@common/components/HoldToProceedButton'
 import NoKeysToSignAlert from '@common/components/NoKeysToSignAlert'
 import { isMobile, isWeb } from '@common/config/env'
 import useSign from '@common/hooks/useSign'
+import useWindowSize from '@common/hooks/useWindowSize'
 import Estimation from '@common/modules/sign-account-op/components/Estimation'
 import BundlerWarning from '@common/modules/sign-account-op/components/Estimation/components/bundlerWarning'
 import SafetyChecksBanner from '@common/modules/sign-account-op/components/SafetyChecksBanner'
@@ -56,6 +57,8 @@ const OneClickEstimation = ({
   Modals
 }: OneClickEstimationProps) => {
   const { t } = useTranslation()
+  const { maxWidthSize } = useWindowSize()
+  const isCompactSidePanelLayout = isSidePanel && !maxWidthSize('s')
 
   const signingErrors = useMemo(() => {
     const signAccountOpErrors = signAccountOpController ? signAccountOpController.errors : []
@@ -192,6 +195,11 @@ const OneClickEstimation = ({
               absolute={false}
               isSimpleBlur={false}
               style={isMobile ? spacings.ptLg : spacings.pt}
+              innerContainerStyle={
+                isCompactSidePanelLayout
+                  ? { width: '100%', gap: 8, alignItems: 'stretch' }
+                  : undefined
+              }
             >
               {!isMobile && (
                 <Button
@@ -201,7 +209,11 @@ const OneClickEstimation = ({
                   onPress={closeEstimationModal}
                   hasBottomSpacing={false}
                   disabled={isSignLoading}
-                  style={{ width: 98, ...spacings.mrLg }}
+                  style={
+                    isCompactSidePanelLayout
+                      ? { flex: 1, minWidth: 0 }
+                      : { width: 98, ...spacings.mrLg }
+                  }
                   size="smaller"
                 />
               )}
@@ -214,6 +226,7 @@ const OneClickEstimation = ({
                   disabled={isSignDisabled || signingErrors.length > 0}
                   onHoldComplete={onSignButtonClick}
                   size={isMobile ? 'regular' : 'smaller'}
+                  style={isCompactSidePanelLayout ? { flex: 1, minWidth: 0 } : undefined}
                 />
               ) : (
                 <ButtonWithLoader
@@ -224,6 +237,7 @@ const OneClickEstimation = ({
                   disabled={isSignDisabled || signingErrors.length > 0}
                   onPress={onSignButtonClick}
                   size={isMobile ? 'regular' : 'smaller'}
+                  style={isCompactSidePanelLayout ? { flex: 1, minWidth: 0 } : undefined}
                 />
               )}
             </ButtonsWrapper>
