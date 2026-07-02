@@ -12,6 +12,7 @@ import { isAndroid } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
+import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
 import spacings from '@common/styles/spacings'
@@ -29,6 +30,7 @@ import ledgerBleService from '@mobile/services/ledger/ledgerBleService'
 const LedgerConnectScreen = () => {
   const { t } = useTranslation()
   const { addToast } = useToast()
+  const { theme } = useTheme()
   const { goToPrevRoute, goToNextRoute } = useOnboardingNavigation()
   const { dispatch } = useControllersMiddleware()
   const mainCtrlState = useController('MainController').state
@@ -187,6 +189,7 @@ const LedgerConnectScreen = () => {
                 type="secondary"
                 text={device.name}
                 onPress={() => handleSelectDevice(device)}
+                style={{ backgroundColor: theme.neutral400 }}
               />
             ))}
             {isScanning && (

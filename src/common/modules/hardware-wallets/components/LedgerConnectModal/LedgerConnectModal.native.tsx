@@ -13,6 +13,7 @@ import Spinner from '@common/components/Spinner'
 import Text from '@common/components/Text'
 import { isAndroid } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
+import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
@@ -35,7 +36,7 @@ const LedgerConnectModal = ({ isVisible, handleClose = () => {}, handleOnConnect
   const { ref, open, close } = useModalize()
   const { t } = useTranslation()
   const { addToast } = useToast()
-
+  const { theme } = useTheme()
   const [tab, setTab] = useState<LedgerTransportType>('ble')
   const [isConnecting, setIsConnecting] = useState(false)
 
@@ -147,6 +148,7 @@ const LedgerConnectModal = ({ isVisible, handleClose = () => {}, handleOnConnect
               text={device.name}
               onPress={() => handleSelectDevice(device)}
               hasBottomSpacing
+              style={{ backgroundColor: theme.neutral400 }}
             />
           ))}
           {isScanning && (
