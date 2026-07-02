@@ -25,6 +25,7 @@ import TitleAndIcon from '@common/components/TitleAndIcon'
 import { isMobile, isWeb } from '@common/config/env'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
+import useWindowSize from '@common/hooks/useWindowSize'
 import BundlerWarning from '@common/modules/sign-account-op/components/Estimation/components/bundlerWarning'
 import CustomGasPrice from '@common/modules/sign-account-op/components/Estimation/components/CustomGasPrice'
 import DefaultFeeSelector from '@common/modules/sign-account-op/components/Estimation/components/DefaultFeeSelector'
@@ -118,6 +119,7 @@ const Estimation = ({
   const { networks } = useController('NetworksController').state
   const { t } = useTranslation()
   const { theme } = useTheme(getStyles)
+  const { maxWidthSize } = useWindowSize()
   const {
     ref: customGasPriceSheetRef,
     open: openCustomGasPriceSheet,
@@ -426,6 +428,7 @@ const Estimation = ({
   const currentGas = signAccountOpState?.accountOp.gasFeePayment?.simulatedGasLimit.toString() || ''
   const canSetCustomGasPrices = !!signAccountOpState?.canSetCustomGasPrices
   const canSetCustomGas = !!signAccountOpState?.canSetCustomGas
+  const isNarrowLayout = !maxWidthSize('s')
 
   const advancedOptionsTooltip = useMemo(() => {
     if (canSetCustomGasPrices) return undefined
@@ -549,15 +552,25 @@ const Estimation = ({
       </View>
       <View
         style={[
-          flexbox.directionRow,
-          flexbox.alignCenter,
-          flexbox.justifySpaceBetween,
+          isNarrowLayout ? undefined : flexbox.directionRow,
+          isNarrowLayout ? flexbox.alignStart : flexbox.alignCenter,
+          !isNarrowLayout && flexbox.justifySpaceBetween,
           spacings.mbSm,
           isMobile && spacings.ptSm
         ]}
       >
-        <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-          <Text fontSize={20} weight="medium">
+        <View
+          style={[
+            flexbox.directionRow,
+            flexbox.alignCenter,
+            isNarrowLayout && { width: '100%', flexWrap: 'wrap' }
+          ]}
+        >
+          <Text
+            fontSize={isNarrowLayout ? 18 : 20}
+            weight="medium"
+            style={isNarrowLayout ? { flexShrink: 1 } : undefined}
+          >
             {t(
               signAccountOpState.canAccountBroadcastByItself
                 ? isMobile
@@ -622,7 +635,11 @@ const Estimation = ({
             menuStyle={{ minWidth: feeTokenPriceUnavailableWarning ? 200 : 148 }}
             bottomSheetTitle={t('Gas fee')}
             withSearch={false}
-            containerStyle={{ ...spacings.mb0, width: isWeb ? 116 : 126 }}
+            containerStyle={{
+              ...spacings.mb0,
+              width: isNarrowLayout ? '100%' : isWeb ? 116 : 126,
+              ...(isNarrowLayout ? spacings.mtSm : {})
+            }}
             testID="fee-speed-select"
           />
         )}

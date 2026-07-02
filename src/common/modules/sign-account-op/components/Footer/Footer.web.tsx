@@ -13,6 +13,7 @@ import HoldToProceedButton from '@common/components/HoldToProceedButton'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
+import useWindowSize from '@common/hooks/useWindowSize'
 import ActionsPagination from '@common/modules/action-requests/components/ActionsPagination'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
@@ -36,13 +37,15 @@ const Footer = ({
   signButtonType = 'primary'
 }: Props) => {
   const { t } = useTranslation()
-  const { styles, themeType } = useTheme(getStyles)
+  const { styles } = useTheme(getStyles)
+  const { maxWidthSize } = useWindowSize()
   const { userRequests } = useController('RequestsController').state
   const {
     state: { account }
   } = useController('SelectedAccountController')
   const { accountOp } = useController('SignAccountOpController').state || {}
   const chainId = accountOp?.chainId
+  const isNarrowLayout = !maxWidthSize('s')
 
   const batchCount = useMemo(() => {
     const requests = userRequests.filter((r) => {
@@ -78,8 +81,22 @@ const Footer = ({
   const { ref: sheetRef, open: openModal, close: closeModal } = useModalize()
 
   return (
-    <View style={styles.container}>
-      <View style={[!isAddToCartDisplayed && flexbox.flex1, flexbox.alignStart]}>
+    <View
+      style={[
+        styles.container,
+        isNarrowLayout && {
+          flexDirection: 'column',
+          alignItems: 'stretch'
+        }
+      ]}
+    >
+      <View
+        style={[
+          !isAddToCartDisplayed && !isNarrowLayout && flexbox.flex1,
+          flexbox.alignStart,
+          isNarrowLayout && { width: '100%' }
+        ]}
+      >
         <Button
           testID="transaction-button-reject"
           type="danger"
@@ -94,12 +111,19 @@ const Footer = ({
           hasBottomSpacing={false}
           size="large"
           disabled={isSignLoading}
-          style={{ width: 98 }}
+          style={isNarrowLayout ? { width: '100%' } : { width: 98 }}
         />
       </View>
-      <ActionsPagination />
+      <View style={isNarrowLayout ? [spacings.mvSm, flexbox.alignCenter] : undefined}>
+        <ActionsPagination />
+      </View>
       <View
-        style={[flexbox.directionRow, !isAddToCartDisplayed && flexbox.flex1, flexbox.justifyEnd]}
+        style={[
+          flexbox.directionRow,
+          !isAddToCartDisplayed && !isNarrowLayout && flexbox.flex1,
+          isNarrowLayout ? { flexDirection: 'column' } : flexbox.justifyEnd,
+          isNarrowLayout && { width: '100%' }
+        ]}
       >
         {isAddToCartDisplayed && (
           <Button
@@ -110,7 +134,7 @@ const Footer = ({
             onPress={onAddToCart}
             disabled={isAddToCartDisabled}
             hasBottomSpacing={false}
-            style={{ minWidth: 160, ...spacings.ph }}
+            style={isNarrowLayout ? { width: '100%' } : { minWidth: 160, ...spacings.ph }}
             size="large"
             {...(!isMultisigSigned && {
               tooltipDataSet: createGlobalTooltipDataSet({
@@ -128,6 +152,7 @@ const Footer = ({
             hidden: !buttonTooltipText,
             content: buttonTooltipText
           })}
+          style={isNarrowLayout ? spacings.mtSm : undefined}
         >
           {shouldHoldToProceed && (
             <HoldToProceedButton
@@ -142,7 +167,7 @@ const Footer = ({
               disabled={isSignDisabled}
               onHoldComplete={onSign}
               testID="proceed-btn"
-              style={[{ minWidth: 128 }, spacings.mlLg]}
+              style={isNarrowLayout ? { width: '100%' } : [{ minWidth: 128 }, spacings.mlLg]}
               size="large"
             />
           )}
@@ -155,7 +180,7 @@ const Footer = ({
               text={isSignLoading ? inProgressButtonText : buttonText}
               onPress={onSign}
               size="large"
-              style={[{ minWidth: 128 }, spacings.mlLg]}
+              style={isNarrowLayout ? { width: '100%' } : [{ minWidth: 128 }, spacings.mlLg]}
             />
           )}
           <BottomSheet
