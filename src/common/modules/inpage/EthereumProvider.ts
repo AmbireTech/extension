@@ -318,6 +318,14 @@ export class EthereumProvider extends EventEmitter {
       }
       this.chainId = chainId
       this.networkVersion = networkVersion
+      // Mark initialized before emitting chainChanged/accountsChanged: PushEventHandlers._emit
+      // only forwards events to dapp listeners once `_initialized` is true, and this used to be
+      // set in the `finally` block below - i.e. after these two emits already ran. That meant
+      // the very first accountsChanged/chainChanged fired on every page load was silently
+      // dropped, so dapps that reconnect via event listeners (rather than polling eth_accounts)
+      // never saw the already-connected account and showed "disconnected" after every refresh.
+      this._initialized = true
+      this._state.initialized = true
       this.emit('connect', { chainId })
       this.#pushEventHandlers?.chainChanged({
         chain: chainId,
