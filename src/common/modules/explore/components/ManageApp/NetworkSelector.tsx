@@ -118,7 +118,7 @@ const NetworkSelector = ({
   const networkList = (
     // I've been unable to animate the maxHeight of the container without causing
     // jittering of the other elements on Firefox.
-    <ScrollView style={{ maxHeight: isExpanded ? 320 : 0 }}>
+    <ScrollView style={{ maxHeight: isExpanded ? 280 : 0 }}>
       {filteredNetworks.map((network) => (
         <NetworkOption
           onSelectNetwork={onSelectNetwork}
@@ -132,10 +132,10 @@ const NetworkSelector = ({
 
   const searchInput = isExpanded && (
     <Input
-      containerStyle={spacings.mb0}
+      containerStyle={spacings.mvMi}
       inputWrapperStyle={{
-        borderRadius: 20,
-        height: 36,
+        borderRadius: 42,
+        height: 40,
         backgroundColor: theme.tertiaryBackground
       }}
       leftIcon={() => <SearchIcon color={theme.secondaryText} />}
