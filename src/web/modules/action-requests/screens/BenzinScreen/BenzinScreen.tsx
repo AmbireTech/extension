@@ -15,10 +15,14 @@ import useController from '@common/hooks/useController'
 import useWindowSize from '@common/hooks/useWindowSize'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
+import { getUiType } from '@common/utils/uiType'
+
+const { isSidePanel } = getUiType()
 
 const BenzinScreen = () => {
   const { t } = useTranslation()
   const { maxWidthSize } = useWindowSize()
+  const isCompactSidePanelLayout = isSidePanel && !maxWidthSize('s')
 
   const {
     state: { currentUserRequest, visibleUserRequests },
@@ -53,22 +57,38 @@ const BenzinScreen = () => {
 
   return (
     <Benzin state={state}>
-      <FooterGlassView>
+      <FooterGlassView
+        innerContainerStyle={
+          isCompactSidePanelLayout
+            ? { width: '100%', flexDirection: 'column', alignItems: 'stretch', gap: 8 }
+            : undefined
+        }
+      >
         {!!state?.handleOpenExplorer && (
           <OpenExplorerButton
             handleOpenExplorer={state.handleOpenExplorer}
             disableOpenExplorerBtn={state.disableOpenExplorerBtn}
           />
         )}
-        <View style={[flexbox.directionRow, flexbox.alignCenter]}>
+        <View
+          style={[
+            flexbox.directionRow,
+            flexbox.alignCenter,
+            isCompactSidePanelLayout && { width: '100%', minWidth: 0, gap: 8 }
+          ]}
+        >
           {!!state?.showCopyBtn && !!state?.handleCopyText && (
             <CopyButton handleCopyText={state.handleCopyText} />
           )}
           <Button
             onPress={resolveAction}
-            style={{ minWidth: maxWidthSize('s') ? 180 : 120, ...spacings.mlSm }}
+            style={
+              isCompactSidePanelLayout
+                ? { flex: 1, minWidth: 0 }
+                : { minWidth: 180, ...spacings.mlSm }
+            }
             hasBottomSpacing={false}
-            size="large"
+            size={isCompactSidePanelLayout ? 'smaller' : 'large'}
             text={pendingRequests.length ? t('Proceed to Next Request') : t('Close')}
           >
             {!!pendingRequests.length && (

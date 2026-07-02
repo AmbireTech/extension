@@ -3,6 +3,7 @@ import { View, ViewStyle } from 'react-native'
 
 import GlassView from '@common/components/GlassView'
 import { isMobile } from '@common/config/env'
+import useWindowSize from '@common/hooks/useWindowSize'
 import { SPACING, SPACING_SM } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { getUiType } from '@common/utils/uiType'
@@ -43,7 +44,8 @@ const FooterGlassView: FC<{
   absolute = true,
   isSimpleBlur
 }) => {
-  const isCompactLayout = isSidePanel
+  const { maxWidthSize } = useWindowSize()
+  const isCompactLayout = isSidePanel && !maxWidthSize('s')
 
   if (isMobile) {
     return (
