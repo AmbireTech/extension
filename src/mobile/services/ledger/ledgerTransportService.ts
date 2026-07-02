@@ -19,7 +19,7 @@ import ledgerUsbTransport from './ledgerUsbTransport'
 // (see WebViewWorker.tsx `ledger.*` cases). This mirrors how `crypto.scrypt` and
 // `network.fetch` are bridged.
 
-export interface LedgerBleSignature {
+export interface LedgerTransportSignature {
   r: Hex
   s: Hex
   v: number
@@ -77,37 +77,49 @@ const isUnrecoverableProbeError = (e: any): boolean => {
   return UNRECOVERABLE_STATUS_CODES.some((code) => message.includes(code.toString(16)))
 }
 
-class LedgerBleService {
-  // Holds either a BLE or a USB (Android HID) transport — both implement
-  // @ledgerhq/hw-transport's Transport, so AppEth and all signing code below are
-  // transport-agnostic.
+class LedgerTransportService {
+  /**
+   * Holds either a BLE or a USB (Android HID) transport — both implement
+   * @ledgerhq/hw-transport's Transport, so AppEth and all signing code below are
+   * transport-agnostic.
+   */
   #transport: Transport | null = null
 
   #eth: AppEth | null = null
 
   #connectedDeviceId = ''
 
-  // The last device we connected to, kept across cleanUp() so device operations
-  // can transparently reopen the transport (the worker tears the session down
-  // between import attempts, and signing happens after the screen is gone).
+  /**
+   * The last device we connected to, kept across cleanUp() so device operations
+   * can transparently reopen the transport (the worker tears the session down
+   * between import attempts, and signing happens after the screen is gone).
+   */
   #lastDeviceId = ''
 
-  // Which transport the last/active connection used, so reconnect reopens the
-  // right one.
+  /**
+   * Which transport the last/active connection used, so reconnect reopens the
+   * right one.
+   */
   #lastTransportType: 'ble' | 'usb' = 'ble'
 
-  // Active subscription to USB detach events (cable pulled), so we drop the
-  // connection state even while idle. BLE handles this via the transport's own
-  // 'disconnect' event.
+  /**
+   * Active subscription to USB detach events (cable pulled), so we drop the
+   * connection state even while idle. BLE handles this via the transport's own
+   * 'disconnect' event.
+   */
   #usbDetachSub: LedgerSubscription | null = null
 
-  // BLE cannot handle parallel APDU exchanges (the device throws "busy"), so
-  // every device operation is serialized through this single-concurrency chain.
+  /**
+   * BLE cannot handle parallel APDU exchanges (the device throws "busy"), so
+   * every device operation is serialized through this single-concurrency chain.
+   */
   #queue: Promise<unknown> = Promise.resolve()
 
-  // Connection-state subscribers (e.g. the useLedger hook), so the UI can react
-  // without polling. "Connected" means verified usable (post-probe), not merely
-  // a transport being open — see connectAndProbe / #setActiveTransport.
+  /**
+   * Connection-state subscribers (e.g. the useLedger hook), so the UI can react
+   * without polling. "Connected" means verified usable (post-probe), not merely
+   * a transport being open — see connectAndProbe / #setActiveTransport.
+   */
   #connectionListeners = new Set<(connected: boolean) => void>()
 
   subscribeConnection = (listener: (connected: boolean) => void): LedgerSubscription => {
@@ -198,7 +210,7 @@ class LedgerBleService {
 
   isUsbSupported = (): Promise<boolean> => ledgerUsbTransport.isSupported()
 
-  // Currently connected USB Ledger devices (Android; empty on iOS / when none).
+  /** Currently connected USB Ledger devices (Android; empty on iOS / when none). */
   listUsbDevices = () => ledgerUsbTransport.list()
 
   /**
@@ -220,10 +232,12 @@ class LedgerBleService {
     return scan && connect
   }
 
-  // Wires an opened transport (BLE or USB) into the service: builds the Ethereum
-  // app client and resets everything if the device drops the link, so the next
-  // operation surfaces a clean "not connected" instead of hanging on a dead
-  // transport.
+  /**
+   * Wires an opened transport (BLE or USB) into the service: builds the Ethereum
+   * app client and resets everything if the device drops the link, so the next
+   * operation surfaces a clean "not connected" instead of hanging on a dead
+   * transport.
+   */
   #setActiveTransport(transport: Transport, deviceId: string, type: 'ble' | 'usb') {
     this.#transport = transport
     this.#connectedDeviceId = deviceId
@@ -321,9 +335,11 @@ class LedgerBleService {
     throw lastError
   }
 
-  // Returns a live Ethereum app client, transparently reopening the transport to
-  // the last device if the session was torn down (e.g. by the worker between
-  // import attempts, or after the connect screen unmounted).
+  /**
+   * Returns a live Ethereum app client, transparently reopening the transport to
+   * the last device if the session was torn down (e.g. by the worker between
+   * import attempts, or after the connect screen unmounted).
+   */
   async #ensureConnected(): Promise<AppEth> {
     if (this.#eth) return this.#eth
 
@@ -354,14 +370,14 @@ class LedgerBleService {
       return address
     })
 
-  signPersonalMessage = (path: string, messageHex: string): Promise<LedgerBleSignature> =>
+  signPersonalMessage = (path: string, messageHex: string): Promise<LedgerTransportSignature> =>
     this.#enqueue(async () => {
       const eth = await this.#ensureConnected()
       const { r, s, v } = await eth.signPersonalMessage(stripHdPathRoot(path), messageHex)
       return { r: `0x${r}`, s: `0x${s}`, v }
     })
 
-  signTransaction = (path: string, rawTxHex: string): Promise<LedgerBleSignature> =>
+  signTransaction = (path: string, rawTxHex: string): Promise<LedgerTransportSignature> =>
     this.#enqueue(async () => {
       const eth = await this.#ensureConnected()
       // Clear-signing: resolve token / NFT / known-plugin descriptors from
@@ -387,7 +403,7 @@ class LedgerBleService {
       return { r: `0x${r}`, s: `0x${s}`, v: parseInt(v, 16) }
     })
 
-  signTypedData = (path: string, typedData: LedgerTypedData): Promise<LedgerBleSignature> =>
+  signTypedData = (path: string, typedData: LedgerTypedData): Promise<LedgerTransportSignature> =>
     this.#enqueue(async () => {
       const eth = await this.#ensureConnected()
 
@@ -420,8 +436,10 @@ class LedgerBleService {
       }
     })
 
-  // Flushes the device's pending command state after an abandoned/rejected sign
-  // so the next command starts clean (mirrors Ledger Live). Not cancellation.
+  /**
+   * Flushes the device's pending command state after an abandoned/rejected sign
+   * so the next command starts clean (mirrors Ledger Live). Not cancellation.
+   */
   signingCleanup = (): Promise<void> =>
     this.#enqueue(async () => {
       if (!this.#transport) return
@@ -456,4 +474,4 @@ class LedgerBleService {
   }
 }
 
-export default new LedgerBleService()
+export default new LedgerTransportService()

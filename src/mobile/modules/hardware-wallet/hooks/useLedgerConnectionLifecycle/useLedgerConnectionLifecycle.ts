@@ -1,18 +1,18 @@
 import { useEffect } from 'react'
 import { AppState } from 'react-native'
 
-import ledgerBleService from '@mobile/services/ledger/ledgerBleService'
+import ledgerTransportService from '@mobile/services/ledger/ledgerTransportService'
 
 // Tears down the persistent Ledger BLE connection on lock / background, so it
 // doesn't linger while locked or backgrounded (battery + security). The
-// transport transparently reopens via ledgerBleService's reconnect on the next
+// transport transparently reopens via ledgerTransportService's reconnect on the next
 // operation.
-const useLedgerBleLifecycle = (isKeystoreUnlocked: boolean) => {
+const useLedgerConnectionLifecycle = (isKeystoreUnlocked: boolean) => {
   // A locked wallet should hold no hardware-wallet connection.
   useEffect(() => {
     if (!isKeystoreUnlocked) {
       // eslint-disable-next-line @typescript-eslint/no-floating-promises
-      ledgerBleService.cleanUp()
+      ledgerTransportService.cleanUp()
     }
   }, [isKeystoreUnlocked])
 
@@ -22,7 +22,7 @@ const useLedgerBleLifecycle = (isKeystoreUnlocked: boolean) => {
     const subscription = AppState.addEventListener('change', (nextState) => {
       if (nextState === 'background') {
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
-        ledgerBleService.cleanUp()
+        ledgerTransportService.cleanUp()
       }
     })
 
@@ -30,4 +30,4 @@ const useLedgerBleLifecycle = (isKeystoreUnlocked: boolean) => {
   }, [])
 }
 
-export default useLedgerBleLifecycle
+export default useLedgerConnectionLifecycle

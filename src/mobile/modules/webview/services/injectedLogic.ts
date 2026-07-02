@@ -228,7 +228,7 @@ const initControllers = (config: any) => {
     }
 
     // Single shared Ledger controller for the worker's lifetime; it forwards
-    // device operations to the native ledgerBleService over the bridge.
+    // device operations to the native ledgerTransportService over the bridge.
     const ledgerCtrl = new LedgerController()
 
     mainCtrl = new MainController({

@@ -25,7 +25,7 @@ import useLedgerDeviceDiscovery, {
   LedgerDiscoveredDevice,
   LedgerTransportType
 } from '@mobile/modules/hardware-wallet/hooks/useLedgerDeviceDiscovery'
-import ledgerBleService from '@mobile/services/ledger/ledgerBleService'
+import ledgerTransportService from '@mobile/services/ledger/ledgerTransportService'
 
 const LedgerConnectScreen = () => {
   const { t } = useTranslation()
@@ -72,7 +72,7 @@ const LedgerConnectScreen = () => {
         // Connects + probes (verifies the device is usable, surfacing locked /
         // wrong-app errors here instead of later inside the worker init), then
         // asks the worker to derive accounts via the bridge (mirrors web).
-        await ledgerBleService.connectAndProbe(device)
+        await ledgerTransportService.connectAndProbe(device)
         dispatch({ type: 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_LEDGER' })
         setImportStarted(true)
       } catch (e: any) {

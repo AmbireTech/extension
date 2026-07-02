@@ -9,7 +9,7 @@ import { stripHexPrefix } from '@ambire-common/utils/stripHexPrefix'
 import { LedgerControllerInterface } from '@common/modules/hardware-wallet/interfaces/ledgerController'
 
 // Mobile counterpart of the web LedgerController. The actual device handling lives in the
-// React Native native context (see src/mobile/services/ledger/ledgerBleService).
+// React Native native context (see src/mobile/services/ledger/ledgerTransportService).
 // This controller runs inside the WebView worker bundle alongside the rest of
 // the ambire-common controllers, and forwards every operation to the native
 // service over the message bridge (`window.sendToRNAsync`).

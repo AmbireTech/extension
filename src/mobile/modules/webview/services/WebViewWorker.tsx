@@ -19,7 +19,7 @@ import {
   respondToWalletConnectRequest
 } from '@mobile/modules/wallet-connect/services/walletConnectService'
 import getWebviewBundleUri from '@mobile/modules/webview/services/getWebviewBundleUri'
-import ledgerBleService from '@mobile/services/ledger/ledgerBleService'
+import ledgerTransportService from '@mobile/services/ledger/ledgerTransportService'
 
 import { decode, encode } from './bridgeCodec'
 
@@ -377,11 +377,11 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, object>((_, ref) => {
         // --- LEDGER DEVICE DELEGATION HANDLERS ---
         // The worker-side LedgerController forwards device operations here; the
         // actual BLE/USB transport + Ethereum app run natively in
-        // ledgerBleService. Scanning/connecting is driven separately from the
+        // ledgerTransportService. Scanning/connecting is driven separately from the
         // RN connect screen (via the useLedger hook), not over this bridge.
         case 'ledger.getAddress':
           try {
-            const address = await ledgerBleService.getAddress(data.payload.path)
+            const address = await ledgerTransportService.getAddress(data.payload.path)
             sendResponse(data.id, address)
           } catch (err: any) {
             sendResponse(data.id, null, err.message)
@@ -393,7 +393,7 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, object>((_, ref) => {
             // Serialized one-by-one (the service queue enforces this too); the
             // Ledger can't handle parallel getAddress calls.
             for (const path of data.payload.paths) {
-              addresses.push(await ledgerBleService.getAddress(path))
+              addresses.push(await ledgerTransportService.getAddress(path))
             }
             sendResponse(data.id, addresses)
           } catch (err: any) {
@@ -402,7 +402,7 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, object>((_, ref) => {
           break
         case 'ledger.signPersonalMessage':
           try {
-            const sig = await ledgerBleService.signPersonalMessage(
+            const sig = await ledgerTransportService.signPersonalMessage(
               data.payload.path,
               data.payload.messageHex
             )
@@ -413,7 +413,7 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, object>((_, ref) => {
           break
         case 'ledger.signTransaction':
           try {
-            const sig = await ledgerBleService.signTransaction(
+            const sig = await ledgerTransportService.signTransaction(
               data.payload.path,
               data.payload.rawTxHex
             )
@@ -424,7 +424,7 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, object>((_, ref) => {
           break
         case 'ledger.signTypedData':
           try {
-            const sig = await ledgerBleService.signTypedData(
+            const sig = await ledgerTransportService.signTypedData(
               data.payload.path,
               data.payload.typedData
             )
@@ -438,7 +438,7 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, object>((_, ref) => {
           // sign so the next command starts clean. Does NOT cancel an in-flight
           // on-device prompt (that still resolves on the device). Best-effort.
           try {
-            await ledgerBleService.signingCleanup()
+            await ledgerTransportService.signingCleanup()
             sendResponse(data.id, null)
           } catch (err: any) {
             sendResponse(data.id, null, err.message)
@@ -446,7 +446,7 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, object>((_, ref) => {
           break
         case 'ledger.cleanUp':
           try {
-            await ledgerBleService.cleanUp()
+            await ledgerTransportService.cleanUp()
             sendResponse(data.id, null)
           } catch (err: any) {
             sendResponse(data.id, null, err.message)

@@ -21,7 +21,7 @@ import useLedgerDeviceDiscovery, {
   LedgerDiscoveredDevice,
   LedgerTransportType
 } from '@mobile/modules/hardware-wallet/hooks/useLedgerDeviceDiscovery'
-import ledgerBleService from '@mobile/services/ledger/ledgerBleService'
+import ledgerTransportService from '@mobile/services/ledger/ledgerTransportService'
 
 type Props = {
   isVisible: boolean
@@ -68,7 +68,7 @@ const LedgerConnectModal = ({ isVisible, handleClose = () => {}, handleOnConnect
     async (device: LedgerDiscoveredDevice) => {
       setIsConnecting(true)
       try {
-        await ledgerBleService.connectAndProbe(device)
+        await ledgerTransportService.connectAndProbe(device)
         addToast(t('Ledger connected'), { type: 'success' })
         if (handleOnConnect) handleOnConnect()
       } catch (e: any) {

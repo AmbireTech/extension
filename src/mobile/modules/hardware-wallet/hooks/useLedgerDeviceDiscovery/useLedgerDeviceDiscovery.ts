@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 
-import ledgerBleService, { LedgerSubscription } from '@mobile/services/ledger/ledgerBleService'
+import ledgerTransportService, {
+  LedgerSubscription
+} from '@mobile/services/ledger/ledgerTransportService'
 
 export type LedgerTransportType = 'ble' | 'usb'
 
@@ -49,7 +51,7 @@ const useLedgerDeviceDiscovery = ({
     stopBleScan()
     setIsScanning(true)
     setHasScanned(true)
-    scanSubRef.current = ledgerBleService.startScan(
+    scanSubRef.current = ledgerTransportService.startScan(
       (device) => mergeDevice({ id: device.id, name: device.name, transport: 'ble' }),
       (e: any) => onError(e?.message || 'Failed to scan for devices.')
     )
@@ -59,7 +61,7 @@ const useLedgerDeviceDiscovery = ({
   const detectUsb = useCallback(async () => {
     setHasScanned(true)
     try {
-      const usbDevices = await ledgerBleService.listUsbDevices()
+      const usbDevices = await ledgerTransportService.listUsbDevices()
       usbDevices.forEach((d) => mergeDevice({ id: d.id, name: d.name, transport: 'usb' }))
     } catch {
       // No USB device plugged in / not supported — ignore.
@@ -68,7 +70,9 @@ const useLedgerDeviceDiscovery = ({
 
   // Track the Bluetooth adapter state (drives the BLE tab's UI).
   useEffect(() => {
-    const sub = ledgerBleService.observeBluetoothState((state) => setBluetoothOn(state.available))
+    const sub = ledgerTransportService.observeBluetoothState((state) =>
+      setBluetoothOn(state.available)
+    )
     return () => sub.unsubscribe()
   }, [])
 
@@ -92,7 +96,7 @@ const useLedgerDeviceDiscovery = ({
         return
       }
 
-      const granted = await ledgerBleService.hasBlePermissions()
+      const granted = await ledgerTransportService.hasBlePermissions()
       if (cancelled) return
       if (granted) startBleScan()
       else setNeedsBlePermission(true)
@@ -106,7 +110,7 @@ const useLedgerDeviceDiscovery = ({
 
   // Request BLE permission, then scan (the BLE tab's "Scan via Bluetooth" action).
   const scanViaBluetooth = useCallback(async () => {
-    const granted = await ledgerBleService.requestAndroidPermissions()
+    const granted = await ledgerTransportService.requestAndroidPermissions()
     if (!granted) {
       onError('Bluetooth permission is required to connect a Ledger device.')
       return
