@@ -17,10 +17,11 @@ import useHasGasTank from '@common/hooks/useHasGasTank'
 import useNavigation from '@common/hooks/useNavigation'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
+import { WEB_ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { getGasTankTokenDetails } from '@common/utils/getGasTankTokenDetails'
-import { openInTab } from '@common/utils/links'
+import { openInTab, openInternalPageInTab } from '@common/utils/links'
 import { getUiType } from '@common/utils/uiType'
 
 import getStyles from './styles'
@@ -73,9 +74,16 @@ const GasTankModal = ({ modalRef, handleClose, portfolio, account }: Props) => {
         <Pressable
           onPress={async () => {
             try {
-              await openInTab({
-                url: 'https://help.ambire.com/en/articles/13752152-what-is-the-gas-tank'
-              })
+              if (isWeb) {
+                await openInternalPageInTab({
+                  route: WEB_ROUTES.gasTank,
+                  shouldCloseCurrentWindow: isPopup
+                })
+              } else {
+                await openInTab({
+                  url: 'https://help.ambire.com/en/articles/13752152-what-is-the-gas-tank'
+                })
+              }
             } catch {
               addToast("Couldn't open link", { type: 'error' })
             }

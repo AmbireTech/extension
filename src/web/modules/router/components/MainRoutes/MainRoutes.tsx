@@ -34,6 +34,7 @@ import InternalLogsScreen from '@web/modules/debug/screens/InternalLogsScreen'
 import ExploreScreen from '@web/modules/explore/screens/ExploreScreen'
 import ExploreSectionScreen from '@web/modules/explore/screens/ExploreSectionScreen'
 import ExtensionRewardsScreen from '@web/modules/extension-rewards/screens/ExtensionRewardsScreen'
+import GasTankScreen from '@web/modules/gas-tank/screens/GasTankScreen'
 import LedgerConnectScreen from '@web/modules/hardware-wallet/screens/LedgerConnectScreen/LedgerConnectScreen'
 import QrCameraPermissionPage from '@web/modules/hardware-wallet/screens/QrCameraPermissionPage'
 import QrConnectScreen from '@web/modules/hardware-wallet/screens/QrConnectScreen/QrConnectScreen'
@@ -93,6 +94,7 @@ const MainRoutes = () => {
           element={<PrivacyOptOutsConfiguration />}
         />
         <Route path={WEB_ROUTES.keyStoreSetup} element={<KeyStoreSetupScreen />} />
+        <Route path={WEB_ROUTES.gasTank} element={<GasTankScreen />} />
         <Route path={WEB_ROUTES.keyStoreEmailRecovery} element={<KeyStoreEmailRecoveryScreen />} />
         <Route
           path={WEB_ROUTES.keyStoreEmailRecoverySetNewPassword}
