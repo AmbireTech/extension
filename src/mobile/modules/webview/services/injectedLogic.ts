@@ -19,8 +19,10 @@ import * as richJson from '@ambire-common/libs/richJson/richJson'
 import { AutoLockController } from '@common/controllers/auto-lock/auto-lock.native'
 import { WalletStateController } from '@common/controllers/wallet-state/wallet-state.native'
 import LedgerSigner from '@common/modules/hardware-wallet/libs/LedgerSigner'
+import TrezorSigner from '@common/modules/hardware-wallet/libs/TrezorSigner'
 import { handleActions } from '@mobile/handlers/handleActions'
 import LedgerController from '@mobile/modules/hardware-wallet/controllers/LedgerController'
+import TrezorController from '@mobile/modules/hardware-wallet/controllers/TrezorController'
 
 import {
   buildStateForFE,
@@ -231,6 +233,10 @@ const initControllers = (config: any) => {
     // device operations to the native ledgerTransportService over the bridge.
     const ledgerCtrl = new LedgerController()
 
+    // Trezor counterpart; forwards Trezor Connect calls to the native
+    // trezorDeeplinkService (which delegates to the Trezor Suite Lite app).
+    const trezorCtrl = new TrezorController()
+
     mainCtrl = new MainController({
       eventEmitterRegistry,
       storageAPI,
@@ -247,10 +253,12 @@ const initControllers = (config: any) => {
       keystoreSigners: {
         internal: KeystoreSigner,
         // TODO: there is a mismatch in hw signer types, it's not a big deal
-        ledger: LedgerSigner
+        ledger: LedgerSigner,
+        trezor: TrezorSigner
       } as any,
       externalSignerControllers: {
-        ledger: ledgerCtrl
+        ledger: ledgerCtrl,
+        trezor: trezorCtrl
       } as any,
       uiManager: {
         window: {
