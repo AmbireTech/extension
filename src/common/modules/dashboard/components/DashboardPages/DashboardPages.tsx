@@ -1,20 +1,23 @@
 import { nanoid } from 'nanoid'
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { lazy, Suspense, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Animated, NativeScrollEvent, NativeSyntheticEvent, View } from 'react-native'
 import { useSearchParams } from 'react-router-dom'
 
+import Spinner from '@common/components/Spinner'
 import useController from '@common/hooks/useController'
 import usePrevious from '@common/hooks/usePrevious'
 import useRoute from '@common/hooks/useRoute'
 import flexbox from '@common/styles/utils/flexbox'
 import { getUiType } from '@common/utils/uiType'
 
-import Activity from '../Activity'
-import Collections from '../Collections'
-import DeFiPositions from '../DeFiPositions'
 import { TabType } from '../TabsAndSearch/Tabs/Tab/Tab'
 import Tokens from '../Tokens'
+
+// Lazy load all tabs
+const Collections = lazy(() => import('../Collections'))
+const DeFiPositions = lazy(() => import('../DeFiPositions'))
+const Activity = lazy(() => import('../Activity'))
 
 interface Props {
   onScroll: (event: NativeSyntheticEvent<NativeScrollEvent>) => void
@@ -120,44 +123,60 @@ const DashboardPages = ({
         onRefresh={onRefresh}
         refreshing={refreshing}
       />
-      <Collections
-        openTab={openTab}
-        sessionId={sessionId}
-        setOpenTab={setOpenTab}
-        initTab={initTab}
-        onScroll={onScroll}
-        networks={networks}
-        dashboardNetworkFilterName={dashboardNetworkFilterName}
-        animatedOverviewHeight={animatedOverviewHeight}
-        isSearchHidden={isSearchHidden}
-        onRefresh={onRefresh}
-        refreshing={refreshing}
-      />
+      {/* Lazy tabs are mounted only once their tab is opened (and kept mounted afterwards via
+          initTab), so their chunks load on demand rather than on dashboard open. */}
+      <Suspense
+        fallback={
+          <View style={[flexbox.flex1, flexbox.center]}>
+            <Spinner />
+          </View>
+        }
+      >
+        {(openTab === 'collectibles' || initTab?.collectibles) && (
+          <Collections
+            openTab={openTab}
+            sessionId={sessionId}
+            setOpenTab={setOpenTab}
+            initTab={initTab}
+            onScroll={onScroll}
+            networks={networks}
+            dashboardNetworkFilterName={dashboardNetworkFilterName}
+            animatedOverviewHeight={animatedOverviewHeight}
+            isSearchHidden={isSearchHidden}
+            onRefresh={onRefresh}
+            refreshing={refreshing}
+          />
+        )}
 
-      <DeFiPositions
-        openTab={openTab}
-        sessionId={sessionId}
-        setOpenTab={setOpenTab}
-        onScroll={onScroll}
-        initTab={initTab}
-        dashboardNetworkFilterName={dashboardNetworkFilterName}
-        animatedOverviewHeight={animatedOverviewHeight}
-        isSearchHidden={isSearchHidden}
-        onRefresh={onRefresh}
-        refreshing={refreshing}
-      />
+        {(openTab === 'defi' || initTab?.defi) && (
+          <DeFiPositions
+            openTab={openTab}
+            sessionId={sessionId}
+            setOpenTab={setOpenTab}
+            onScroll={onScroll}
+            initTab={initTab}
+            dashboardNetworkFilterName={dashboardNetworkFilterName}
+            animatedOverviewHeight={animatedOverviewHeight}
+            isSearchHidden={isSearchHidden}
+            onRefresh={onRefresh}
+            refreshing={refreshing}
+          />
+        )}
 
-      <Activity
-        openTab={openTab}
-        sessionId={sessionId}
-        setOpenTab={setOpenTab}
-        onScroll={onScroll}
-        initTab={initTab}
-        animatedOverviewHeight={animatedOverviewHeight}
-        network={network}
-        onRefresh={onRefresh}
-        refreshing={refreshing}
-      />
+        {(openTab === 'activity' || initTab?.activity) && (
+          <Activity
+            openTab={openTab}
+            sessionId={sessionId}
+            setOpenTab={setOpenTab}
+            onScroll={onScroll}
+            initTab={initTab}
+            animatedOverviewHeight={animatedOverviewHeight}
+            network={network}
+            onRefresh={onRefresh}
+            refreshing={refreshing}
+          />
+        )}
+      </Suspense>
     </View>
   )
 }
