@@ -145,7 +145,6 @@ export class TransferPage extends BasePage {
     // window and fail the check, so shared-state callers must set this to false.
     assertPortfolioRefreshScopedToSendNetwork?: boolean
   }) {
-    // await this.page.pause()
     // Proceed
     await this.expectButtonEnabled(selectors.transaction.proceedBtn)
     if (holdProceedButton) {
