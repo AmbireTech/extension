@@ -318,6 +318,9 @@ export class EthereumProvider extends EventEmitter {
       }
       this.chainId = chainId
       this.networkVersion = networkVersion
+      // Must be true before these emits, since PushEventHandlers._emit only forwards events once _initialized is set.
+      this._initialized = true
+      this._state.initialized = true
       this.emit('connect', { chainId })
       this.#pushEventHandlers?.chainChanged({
         chain: chainId,
