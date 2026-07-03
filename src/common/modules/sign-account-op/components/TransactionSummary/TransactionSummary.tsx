@@ -14,7 +14,7 @@ import {
 import {
   noStateUpdateStatuses,
   SigningStatus
-} from '@ambire-common/controllers/signAccountOp/signAccountOp'
+} from '@ambire-common/interfaces/signAccountOp'
 import { DecodedCall } from '@ambire-common/interfaces/decodeCall'
 import { HumanizerErc7730Visualization, IrCall } from '@ambire-common/libs/humanizer/interfaces'
 import {
@@ -25,11 +25,11 @@ import {
 } from '@ambire-common/libs/humanizer/utils'
 import DeleteIcon from '@common/assets/svg/DeleteIcon'
 import ExpandableCard from '@common/components/ExpandableCard'
-import HumanizerAddress from '@common/components/HumanizerAddress'
 import HumanizedVisualization, {
   getErc7730DescriptionRows,
   shouldUseErc7730DetailedLayout
 } from '@common/components/HumanizedVisualization'
+import HumanizerAddress from '@common/components/HumanizerAddress'
 import Label from '@common/components/Label'
 import Text from '@common/components/Text'
 import { isMobile, isWeb } from '@common/config/env'

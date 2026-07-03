@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 
 import { getFeeSpeedIdentifier } from '@ambire-common/controllers/signAccountOp/helper'
-import { SpeedCalc } from '@ambire-common/controllers/signAccountOp/signAccountOp'
+import { SpeedCalc } from '@ambire-common/interfaces/signAccountOp'
 import { ISignAccountOpController } from '@ambire-common/interfaces/signAccountOp'
 import { canFeeOptionCoverAmount } from '@ambire-common/libs/account/feeOptions'
 import { TokenResult } from '@ambire-common/libs/portfolio'
