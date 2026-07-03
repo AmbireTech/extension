@@ -46,6 +46,7 @@ const useAccountsList = ({
           .join(' '),
         ens: domains[account.addr]?.ens?.toLowerCase().trim() || '',
         namoshi: domains[account.addr]?.namoshi?.toLowerCase().trim() || '',
+        gwei: domains[account.addr]?.gwei?.toLowerCase().trim() || '',
         address: account.addr.toLowerCase(),
         smart: isSmartAccount(account) ? 'smart' : ''
       })),
@@ -60,6 +61,7 @@ const useAccountsList = ({
         { name: 'label', weight: 0.5 },
         { name: 'ens', weight: 0.3 },
         { name: 'namoshi', weight: 0.3 },
+        { name: 'gwei', weight: 0.3 },
         { name: 'address', weight: 0.1 },
         { name: 'keyLabels', weight: 0.2 },
         { name: 'smart', weight: 0.1 }

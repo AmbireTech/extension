@@ -10,6 +10,7 @@ import shortenAddress from '@ambire-common/utils/shortenAddress'
 import CloseIcon from '@common/assets/svg/CloseIcon'
 import CopyIcon from '@common/assets/svg/CopyIcon'
 import EnsIcon from '@common/assets/svg/EnsIcon'
+import GnsIcon from '@common/assets/svg/GnsIcon'
 import NamoshiIcon from '@common/assets/svg/NamoshiIcon'
 import AddressBookContact from '@common/components/AddressBookContact'
 import Input, { InputProps } from '@common/components/Input'
@@ -110,7 +111,7 @@ const AddressInput: React.FC<Props> = ({
         validLabelAppearance={severity ? `${severity}Text` : undefined}
         error={isError ? message : ''}
         isValid={!isError && !isValidationInDomainResolvingState}
-        placeholder={placeholder || t('Address / ENS / Namoshi')}
+        placeholder={placeholder || t('Address / ENS / Namoshi / GNS')}
         bottomLabelStyle={styles.bottomLabel}
         info={
           !isError && severity === 'info'
@@ -152,6 +153,7 @@ const AddressInput: React.FC<Props> = ({
                   <View style={[flexbox.directionRow, flexbox.alignCenter]}>
                     {resolvedAddressType === 'ens' && <EnsIcon isActive />}
                     {resolvedAddressType === 'namoshi' && <NamoshiIcon isActive />}
+                    {resolvedAddressType === 'gwei' && <GnsIcon isActive />}
                   </View>
                 )}
               </View>

@@ -60,6 +60,7 @@ const useAddressInput = ({
         isRecipientDomainResolving: addressState.isDomainResolving,
         isValidEns: addressState.resolvedAddressType === 'ens',
         isValidNamoshi: addressState.resolvedAddressType === 'namoshi',
+        isValidGwei: addressState.resolvedAddressType === 'gwei',
         hasDomainResolveFailed,
         overwriteValidation
       }),

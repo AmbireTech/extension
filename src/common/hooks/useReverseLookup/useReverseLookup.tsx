@@ -10,7 +10,7 @@ interface Props {
 export interface ReverseLookupResult {
   isLoading: boolean
   name: string | null | undefined
-  type: 'ens' | 'namoshi' | null
+  type: 'ens' | 'namoshi' | 'gwei' | null
 }
 
 const useReverseLookup = ({ address }: Props): ReverseLookupResult => {
@@ -33,8 +33,14 @@ const useReverseLookup = ({ address }: Props): ReverseLookupResult => {
 
   return {
     isLoading: isLoading || !addressInDomains,
-    name: addressInDomains?.ens || addressInDomains?.namoshi,
-    type: addressInDomains?.ens ? 'ens' : addressInDomains?.namoshi ? 'namoshi' : null
+    name: addressInDomains?.ens || addressInDomains?.namoshi || addressInDomains?.gwei,
+    type: addressInDomains?.ens
+      ? 'ens'
+      : addressInDomains?.namoshi
+        ? 'namoshi'
+        : addressInDomains?.gwei
+          ? 'gwei'
+          : null
   }
 }
 
