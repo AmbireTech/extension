@@ -43,7 +43,8 @@ function categorizeRequests(requests: string[]) {
     // Token images
     'static.debank.com',
     'tokenlist.superfluid.org',
-    'strapi.jumper.exchange'
+    'strapi.jumper.exchange',
+    'assets.coingecko.com'
   ]
 
   const reqs = requests.reduce(
