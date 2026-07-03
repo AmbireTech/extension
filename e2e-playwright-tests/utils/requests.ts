@@ -14,7 +14,7 @@ function categorizeRequests(requests: string[]) {
     'bundler.biconomy.io',
     // Swap & Bridge quotes
     'li.quest',
-    'dedicated-backend.bungee.exchange',
+    'dedicated-backend.socket.tech',
     'trade-api.gateway.uniswap.org',
     // RPCs
     '480.rpc.thirdweb.com',
