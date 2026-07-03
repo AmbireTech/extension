@@ -13,7 +13,7 @@ import Button from '@common/components/Button'
 import FooterGlassView from '@common/components/FooterGlassView'
 import useController from '@common/hooks/useController'
 import useWindowSize from '@common/hooks/useWindowSize'
-import spacings from '@common/styles/spacings'
+import spacings, { SPACING_TY } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { getUiType } from '@common/utils/uiType'
 
@@ -60,7 +60,7 @@ const BenzinScreen = () => {
       <FooterGlassView
         innerContainerStyle={
           isCompactSidePanelLayout
-            ? { width: '100%', flexDirection: 'column', alignItems: 'stretch', gap: 8 }
+            ? { width: '100%', flexDirection: 'column', alignItems: 'stretch', gap: SPACING_TY }
             : undefined
         }
       >
@@ -74,7 +74,7 @@ const BenzinScreen = () => {
           style={[
             flexbox.directionRow,
             flexbox.alignCenter,
-            isCompactSidePanelLayout && { width: '100%', minWidth: 0, gap: 8 }
+            isCompactSidePanelLayout && { width: '100%', minWidth: 0, gap: SPACING_TY }
           ]}
         >
           {!!state?.showCopyBtn && !!state?.handleCopyText && (

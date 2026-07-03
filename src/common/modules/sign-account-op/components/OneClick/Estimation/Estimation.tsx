@@ -24,7 +24,7 @@ import BundlerWarning from '@common/modules/sign-account-op/components/Estimatio
 import SafetyChecksBanner from '@common/modules/sign-account-op/components/SafetyChecksBanner'
 import { ModalsProps } from '@common/modules/sign-account-op/types/modals'
 import KeySelect from '@common/modules/sign-message/components/KeySelect'
-import spacings from '@common/styles/spacings'
+import spacings, { SPACING_TY } from '@common/styles/spacings'
 import { getUiType } from '@common/utils/uiType'
 
 export type OneClickEstimationProps = {
@@ -197,7 +197,7 @@ const OneClickEstimation = ({
               style={isMobile ? spacings.ptLg : spacings.pt}
               innerContainerStyle={
                 isCompactSidePanelLayout
-                  ? { width: '100%', gap: 8, alignItems: 'stretch' }
+                  ? { width: '100%', gap: SPACING_TY, alignItems: 'stretch' }
                   : undefined
               }
             >

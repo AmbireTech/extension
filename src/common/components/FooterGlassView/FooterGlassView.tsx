@@ -4,7 +4,7 @@ import { View, ViewStyle } from 'react-native'
 import GlassView from '@common/components/GlassView'
 import { isMobile } from '@common/config/env'
 import useWindowSize from '@common/hooks/useWindowSize'
-import { SPACING, SPACING_SM } from '@common/styles/spacings'
+import { SPACING, SPACING_MI, SPACING_SM } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { getUiType } from '@common/utils/uiType'
 
@@ -87,7 +87,7 @@ const FooterGlassView: FC<{
               paddingVertical: params[size].paddingVertical
             },
             isCompactLayout
-              ? { width: '100%', gap: 4, alignItems: 'stretch' }
+              ? { width: '100%', gap: SPACING_MI, alignItems: 'stretch' }
               : flexbox.alignCenter,
             innerContainerStyle
           ]}

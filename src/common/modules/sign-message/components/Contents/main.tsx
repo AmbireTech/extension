@@ -152,7 +152,7 @@ const Main = ({
               flexbox.alignCenter,
               flexbox.wrap,
               spacings.mtTy,
-              { minWidth: 0, rowGap: 8, columnGap: 8 }
+              { minWidth: 0, rowGap: SPACING_TY, columnGap: SPACING_TY }
             ]}
           >
             {messageTypeBadge}
