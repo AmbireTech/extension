@@ -1,4 +1,4 @@
-import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+import { AllControllersMappingType } from '@common/constants/controllersMapping'
 
 // Controllers whose state must be present in the controllerStore before the
 // mobile splash screen can hide and the initial route can render. Everything

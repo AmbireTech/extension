@@ -15,11 +15,11 @@ import { bootstrap } from '../../common-helpers/bootstrap'
  * This test opens a fresh UI window and sums the JavaScript actually downloaded on load.
  *
  * If this fails, do NOT just bump the budget - first check whether background-only code leaked
- * into the UI (see the import-type rule and ambire-app#6919). Only raise the budget for a
+ * into the UI (see the import-type eslint rule). Only raise the budget for a
  * deliberate, understood increase.
  */
 
-const EAGER_JS_BUDGET_BYTES = 11 * 1024 * 1024
+const EAGER_JS_BUDGET_BYTES = 8 * 1024 * 1024
 
 test.describe('performance: UI bundle size', { tag: '@performance' }, () => {
   test.setTimeout(120000)
