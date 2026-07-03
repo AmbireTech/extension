@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react'
+import React, { useCallback, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Pressable, View } from 'react-native'
 
@@ -17,7 +17,7 @@ import useHasGasTank from '@common/hooks/useHasGasTank'
 import useNavigation from '@common/hooks/useNavigation'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
-import { WEB_ROUTES } from '@common/modules/router/constants/common'
+import { ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { getGasTankTokenDetails } from '@common/utils/getGasTankTokenDetails'
@@ -25,6 +25,8 @@ import { openInTab, openInternalPageInTab } from '@common/utils/links'
 import { getUiType } from '@common/utils/uiType'
 
 import getStyles from './styles'
+
+const GAS_TANK_HELP_URL = 'https://help.ambire.com/en/articles/13752152-what-is-the-gas-tank'
 
 type Props = {
   modalRef: any
@@ -43,12 +45,35 @@ const GasTankModal = ({ modalRef, handleClose, portfolio, account }: Props) => {
     state: { networks }
   } = useController('NetworksController')
   const { canUseGasTank, disabledReason } = useHasGasTank({ account })
+  const isSafeAccount = !!account?.safeCreation
 
   // Note: total balance Gas Tank details
   const { token, balanceFormatted } = useMemo(
     () => getGasTankTokenDetails(portfolio, account, networks),
     [account, networks, portfolio]
   )
+
+  const handleLearnMorePress = useCallback(async () => {
+    try {
+      if (!isSafeAccount) {
+        await openInTab({ url: GAS_TANK_HELP_URL })
+        return
+      }
+
+      if (isWeb) {
+        await openInternalPageInTab({
+          route: ROUTES.gasTank,
+          shouldCloseCurrentWindow: isPopup
+        })
+        return
+      }
+
+      handleClose()
+      navigate(ROUTES.gasTank)
+    } catch {
+      addToast("Couldn't open link", { type: 'error' })
+    }
+  }, [addToast, handleClose, isPopup, isSafeAccount, navigate])
 
   return (
     <BottomSheet
@@ -71,24 +96,7 @@ const GasTankModal = ({ modalRef, handleClose, portfolio, account }: Props) => {
             </Text>
           )}
         </Text>
-        <Pressable
-          onPress={async () => {
-            try {
-              if (isWeb) {
-                await openInternalPageInTab({
-                  route: WEB_ROUTES.gasTank,
-                  shouldCloseCurrentWindow: isPopup
-                })
-              } else {
-                await openInTab({
-                  url: 'https://help.ambire.com/en/articles/13752152-what-is-the-gas-tank'
-                })
-              }
-            } catch {
-              addToast("Couldn't open link", { type: 'error' })
-            }
-          }}
-        >
+        <Pressable onPress={handleLearnMorePress}>
           <Text color={theme.tertiaryText} weight="medium" underline>
             {t('Learn more >')}
           </Text>
