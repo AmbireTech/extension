@@ -335,7 +335,8 @@
       "secp256k1": false,
       "@trezor/connect-webextension>@trezor/connect>@trezor/blockchain-link>@stellar/stellar-sdk": false,
       "@sentry/cli": true,
-      "@keystonehq/bc-ur-registry-eth>hdkey>secp256k1": false
+      "@keystonehq/bc-ur-registry-eth>hdkey>secp256k1": false,
+      "hardhat>keccak": false
     }
   }
 }
