@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
-import { View, ViewStyle } from 'react-native'
+import { Pressable, View, ViewStyle } from 'react-native'
 
 import { Account } from '@ambire-common/interfaces/account'
 import { SelectedAccountPortfolio } from '@ambire-common/interfaces/selectedAccount'
@@ -11,10 +11,10 @@ import { captureException } from '@common/config/analytics/CrashAnalytics'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import useHasGasTank from '@common/hooks/useHasGasTank'
-import useHover, { AnimatedPressable } from '@common/hooks/useHover'
 import useTheme from '@common/hooks/useTheme'
 import { storage } from '@common/services/storage'
 import spacings from '@common/styles/spacings'
+import { THEME_TYPES } from '@common/styles/themeConfig'
 import { hexToRgba } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import { getGasTankTokenDetails } from '@common/utils/getGasTankTokenDetails'
@@ -30,8 +30,8 @@ interface Props {
 
 const GasTankButton = ({ onPress, portfolio, account }: Props) => {
   const { t } = useTranslation()
-  const { theme } = useTheme()
-  const [bindBtnAnim, btnAnimStyle] = useHover({ preset: 'opacityInverted' })
+  const { theme, themeType } = useTheme()
+  const [isHovered, setIsHovered] = useState(false)
   const [isSafeGasTankBannerDismissed, setIsSafeGasTankBannerDismissed] = useState(true)
   const [isSafeGasTankBannerDismissalLoaded, setIsSafeGasTankBannerDismissalLoaded] =
     useState(false)
@@ -156,8 +156,24 @@ const GasTankButton = ({ onPress, portfolio, account }: Props) => {
 
   const shouldDisplayOnGasTank = buttonState === 'balance' || shouldDisplaySafeGasTankBanner
   const shouldDisplayValue = buttonState === 'balance' || shouldDisplaySafeGasTankBanner
-  const primaryButtonTextColor = theme.neutral200
-  const secondaryButtonTextColor = hexToRgba(theme.neutral200, 0.72)
+  const isRegularHovered = isHovered && !shouldDisplaySafeGasTankBanner
+  const isSafeGasTankBannerHovered = isHovered && shouldDisplaySafeGasTankBanner
+  const primaryButtonTextColor = useMemo(() => {
+    if (isRegularHovered) return '#000000'
+    if (isSafeGasTankBannerHovered) return '#000000'
+
+    return theme.neutral200
+  }, [isRegularHovered, isSafeGasTankBannerHovered, theme.neutral200])
+
+  const secondaryButtonTextColor = useMemo(() => {
+    if (isRegularHovered) return '#000000'
+    if (isSafeGasTankBannerHovered) return '#000000'
+
+    return hexToRgba(theme.neutral200, 0.72)
+  }, [isRegularHovered, isSafeGasTankBannerHovered, theme.neutral200])
+
+  const handleHoverIn = useCallback(() => setIsHovered(true), [])
+  const handleHoverOut = useCallback(() => setIsHovered(false), [])
 
   const buttonStyle = useMemo<ViewStyle>(
     () => ({
@@ -165,29 +181,45 @@ const GasTankButton = ({ onPress, portfolio, account }: Props) => {
       ...flexbox.center,
       ...spacings.phSm,
       ...spacings.mrMi,
-      ...btnAnimStyle,
       ...(!!tooltipText && ({ cursor: 'default' } as unknown as ViewStyle)),
-      borderColor: shouldDisplaySafeGasTankBanner ? theme.success200 : '#FFFFFF1F',
+      borderColor: shouldDisplaySafeGasTankBanner
+        ? theme.success200
+        : isRegularHovered
+          ? '#FFFFFF'
+          : '#FFFFFF1F',
       borderRadius: 12,
       borderWidth: 1,
-      background: shouldDisplaySafeGasTankBanner ? 'rgb(14 59 24)' : '#000000',
-      height: 26, // check if broken in safe
-      shadowColor: shouldDisplaySafeGasTankBanner ? theme.success400 : undefined,
+      backgroundColor: shouldDisplaySafeGasTankBanner
+        ? isSafeGasTankBannerHovered
+          ? theme.success200
+          : 'rgb(14 59 24)'
+        : isRegularHovered
+          ? '#FFFFFF'
+          : '#000000',
+      height: 26,
+      shadowColor: shouldDisplaySafeGasTankBanner
+        ? isSafeGasTankBannerHovered
+          ? theme.success200
+          : theme.success400
+        : undefined,
       shadowOffset: { width: 0, height: 0 },
       shadowOpacity: shouldDisplaySafeGasTankBanner ? 0.7 : 0,
       shadowRadius: shouldDisplaySafeGasTankBanner ? 18 : 0,
       elevation: shouldDisplaySafeGasTankBanner ? 12 : 0,
       ...(shouldDisplaySafeGasTankBanner
         ? {
-            boxShadow: `0 0 22px 3px ${hexToRgba(theme.success400, 0.55)}`
+            boxShadow: `0 0 8px 3px ${hexToRgba(
+              isSafeGasTankBannerHovered ? theme.success200 : theme.success400,
+              0.55
+            )}`
           }
         : {})
     }),
     [
-      btnAnimStyle,
+      isRegularHovered,
+      isSafeGasTankBannerHovered,
       shouldDisplaySafeGasTankBanner,
-      theme.neutral200,
-      theme.shadowPrimary,
+      theme.success200,
       theme.success400,
       tooltipText
     ]
@@ -198,11 +230,12 @@ const GasTankButton = ({ onPress, portfolio, account }: Props) => {
   }
 
   return (
-    <AnimatedPressable
+    <Pressable
       onPress={handleOnPress}
       // @ts-ignore
       style={buttonStyle}
-      {...bindBtnAnim}
+      onHoverIn={handleHoverIn}
+      onHoverOut={handleHoverOut}
       testID={
         shouldDisplaySafeGasTankBanner
           ? 'dashboard-safe-gas-tank-banner'
@@ -217,20 +250,24 @@ const GasTankButton = ({ onPress, portfolio, account }: Props) => {
             style={{
               ...flexbox.center,
               ...spacings.phTy,
-              backgroundColor: theme.success200,
+              backgroundColor: themeType === THEME_TYPES.DARK ? theme.success300 : theme.success200,
               borderRadius: 12,
               height: 20,
               marginLeft: -8
             }}
           >
-            <Text color={theme.success500} weight="number_bold" fontSize={13}>
+            <Text
+              color={isSafeGasTankBannerHovered ? '#000000' : theme.success500}
+              weight="number_bold"
+              fontSize={13}
+            >
               {t('NEW')}
             </Text>
           </View>
           <View
             style={{
               ...spacings.mhTy,
-              backgroundColor: theme.success400,
+              backgroundColor: isSafeGasTankBannerHovered ? '#000000' : theme.success400,
               height: 20,
               width: 1
             }}
@@ -271,7 +308,7 @@ const GasTankButton = ({ onPress, portfolio, account }: Props) => {
           {t('on Gas Tank')}
         </Text>
       )}
-    </AnimatedPressable>
+    </Pressable>
   )
 }
 
