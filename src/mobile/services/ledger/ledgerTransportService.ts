@@ -10,7 +10,6 @@ import wait from '@ambire-common/utils/wait'
 import { isProd } from '@common/config/env'
 import { ContextModuleBuilder } from '@ledgerhq/context-module'
 import {
-  ConsoleLogger,
   DeviceActionStatus,
   DeviceManagementKitBuilder,
   DeviceStatus,
@@ -72,14 +71,13 @@ const isDeviceActionNeededError = (e: any): boolean => {
   return message.includes('unlock-device') || message.includes('confirm-open-app')
 }
 
-const buildDmk = (): Dmk => {
-  const builder = new DeviceManagementKitBuilder()
+const buildDmk = (): Dmk =>
+  new DeviceManagementKitBuilder()
     .addTransport(RNBleTransportFactory)
     .addTransport(RNHidTransportFactory)
-  // Surfaces DMK's internal discovery/permission/scan logs to the RN console.
-  if (!isProd) builder.addLogger(new ConsoleLogger())
-  return builder.build()
-}
+    // To debug discovery/permission/scan, add DMK's ConsoleLogger here:
+    // .addLogger(new ConsoleLogger())
+    .build()
 
 /**
  * The DMK ContextModule requires a logger factory to work with a physical
