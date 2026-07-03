@@ -14,8 +14,10 @@ import useSignMessage from '@common/modules/sign-message/hooks/useSignMessage'
 import flexbox from '@common/styles/utils/flexbox'
 import SmallNotificationWindowWrapper from '@web/components/SmallNotificationWindowWrapper'
 import { TabLayoutContainer } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
+import useCloseActionWindow from '@web/hooks/useCloseActionWindow'
 
 const SignMessageScreen = () => {
+  const closeActionWindow = useCloseActionWindow()
   const {
     signMessageState,
     signStatus,
@@ -83,6 +85,7 @@ const SignMessageScreen = () => {
                 // the first signer from the array is the current one
                 signingKeyAddr={signMessageState.signers?.[0]?.addr || ''}
                 onReject={handleReject}
+                onSignLater={closeActionWindow}
               />
             )
           }

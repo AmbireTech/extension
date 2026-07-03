@@ -11,7 +11,6 @@ import ActionsPagination from '@common/modules/action-requests/components/Action
 import SafeOwners from '@common/modules/sign-account-op/components/SafeOwners'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import useCloseActionWindow from '@web/hooks/useCloseActionWindow'
 
 const SafeFooter = ({
   account,
@@ -22,7 +21,8 @@ const SafeFooter = ({
   signed = [],
   importedKeys,
   threshold,
-  onReject
+  onReject,
+  onSignLater
 }: {
   account: Account
   onSign?: (signingKeyAddr: Key['addr'], _chosenSigningKeyType: Key['type']) => void
@@ -33,9 +33,9 @@ const SafeFooter = ({
   importedKeys: Key[]
   threshold: number
   onReject: (event: GestureResponderEvent) => void
+  onSignLater: () => void
 }) => {
   const { t } = useTranslation()
-  const closeActionWindow = useCloseActionWindow()
   const [showSafeSigners, setShowSafeSigners] = useState(false)
 
   const isSingle = useMemo(() => {
@@ -117,7 +117,7 @@ const SafeFooter = ({
                     size="large"
                     type="secondary"
                     hasBottomSpacing={false}
-                    onPress={() => closeActionWindow()}
+                    onPress={onSignLater}
                     text={'Sign later'}
                     disabled={signed.length === 0}
                     style={[{ maxWidth: 'auto' }]}
