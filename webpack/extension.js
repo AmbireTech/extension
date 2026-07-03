@@ -532,5 +532,19 @@ module.exports = async function buildExtension(
     })
   }
 
+  if (process.env.ANALYZE === 'true') {
+    const { BundleAnalyzerPlugin } = require('webpack-bundle-analyzer')
+    config.plugins.push(
+      new BundleAnalyzerPlugin({
+        analyzerMode: 'static', // writes a self-contained HTML report
+        reportFilename: 'bundle-report.html',
+        openAnalyzer: true,
+        generateStatsFile: true,
+        statsFilename: 'stats.json',
+        defaultSizes: 'parsed'
+      })
+    )
+  }
+
   return config
 }
