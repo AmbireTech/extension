@@ -20,7 +20,7 @@ import flexbox from '@common/styles/utils/flexbox'
 import { getGasTankTokenDetails } from '@common/utils/getGasTankTokenDetails'
 import { privateValue } from '@common/utils/ui'
 
-const SAFE_GAS_TANK_BANNER_DISMISSED_STORAGE_KEY = 'safeGasTankDashboardBannerDismissed'
+const SAFE_GAS_TANK_BANNER_DISMISSED_STORAGE_KEY_PREFIX = 'safeGasTankDashboardBannerDismissed'
 
 interface Props {
   onPress: () => void
@@ -49,6 +49,11 @@ const GasTankButton = ({ onPress, portfolio, account }: Props) => {
 
   const isSafeAccount = !!account?.safeCreation
   const hasGasTankBalance = !!totalBalanceGasTankDetails.balanceUSDFormatted
+  const safeGasTankBannerDismissedStorageKey = useMemo(() => {
+    if (!isSafeAccount || !account?.addr) return null
+
+    return `${SAFE_GAS_TANK_BANNER_DISMISSED_STORAGE_KEY_PREFIX}:${account.addr.toLowerCase()}`
+  }, [account?.addr, isSafeAccount])
 
   const buttonState = useMemo(() => {
     if (totalBalanceGasTankDetails.token === null) return 'error'
@@ -64,8 +69,19 @@ const GasTankButton = ({ onPress, portfolio, account }: Props) => {
   useEffect(() => {
     let isMounted = true
 
+    setIsSafeGasTankBannerDismissed(true)
+    setIsSafeGasTankBannerDismissalLoaded(false)
+
+    if (!safeGasTankBannerDismissedStorageKey) {
+      setIsSafeGasTankBannerDismissalLoaded(true)
+
+      return () => {
+        isMounted = false
+      }
+    }
+
     storage
-      .get(SAFE_GAS_TANK_BANNER_DISMISSED_STORAGE_KEY, false)
+      .get(safeGasTankBannerDismissedStorageKey, false)
       .then((isDismissed) => {
         if (!isMounted) return
 
@@ -82,7 +98,7 @@ const GasTankButton = ({ onPress, portfolio, account }: Props) => {
     return () => {
       isMounted = false
     }
-  }, [])
+  }, [safeGasTankBannerDismissedStorageKey])
 
   const shouldDisplaySafeGasTankBanner =
     isSafeAccount &&
@@ -96,16 +112,21 @@ const GasTankButton = ({ onPress, portfolio, account }: Props) => {
   const handleOnPress = useCallback(() => {
     if (doesHaveTooltip) return
 
-    if (shouldDisplaySafeGasTankBanner) {
+    if (shouldDisplaySafeGasTankBanner && safeGasTankBannerDismissedStorageKey) {
       setIsSafeGasTankBannerDismissed(true)
-      storage.set(SAFE_GAS_TANK_BANNER_DISMISSED_STORAGE_KEY, true).catch((error) => {
+      storage.set(safeGasTankBannerDismissedStorageKey, true).catch((error) => {
         console.error('Failed to persist safeGasTankDashboardBannerDismissed', error)
         captureException(error)
       })
     }
 
     return onPress()
-  }, [doesHaveTooltip, onPress, shouldDisplaySafeGasTankBanner])
+  }, [
+    doesHaveTooltip,
+    onPress,
+    safeGasTankBannerDismissedStorageKey,
+    shouldDisplaySafeGasTankBanner
+  ])
 
   const text = useMemo(() => {
     if (shouldDisplaySafeGasTankBanner) {
