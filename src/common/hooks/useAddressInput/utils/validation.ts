@@ -1,7 +1,7 @@
 import { getAddress } from 'ethers'
 
 import { isValidAddress } from '@ambire-common/services/address'
-import { getIsNamoshiDomain } from '@ambire-common/services/ensDomains'
+import { getIsNamoshiDomain } from '@ambire-common/services/ensDomains/ensDomains'
 import { Validation } from '@ambire-common/services/validations'
 
 type AddressInputValidation = {
