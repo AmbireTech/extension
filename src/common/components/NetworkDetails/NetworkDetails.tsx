@@ -18,9 +18,9 @@ import useController from '@common/hooks/useController'
 import useRoute from '@common/hooks/useRoute'
 import useTheme from '@common/hooks/useTheme'
 import { ROUTES } from '@common/modules/router/constants/common'
+import NetworkForm from '@common/modules/settings/components/Networks/NetworkForm'
 import spacings, { SPACING, SPACING_MD, SPACING_SM, SPACING_TY } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import NetworkForm from '@web/modules/settings/screens/NetworksSettingsScreen/NetworkForm'
 
 import getStyles from './styles'
 
@@ -311,7 +311,7 @@ const NetworkDetails = ({
           >
             {t('Network details')}
           </Text>
-          {!!shouldDisplayEditButton && (
+          {!!shouldDisplayEditButton && isWeb && (
             <Button
               style={[
                 { maxHeight: 40 * responsiveSizeMultiplier },
@@ -329,7 +329,7 @@ const NetworkDetails = ({
               <EditPenIcon width={20} height={20} color={theme.primaryText} style={spacings.mrMi} />
             </Button>
           )}
-          {!!shouldDisplayDisableButton && (
+          {!!shouldDisplayDisableButton && isWeb && (
             <Button
               style={{ maxHeight: 40 * responsiveSizeMultiplier }}
               disabled={statuses.updateNetwork !== 'INITIAL'}
@@ -344,7 +344,6 @@ const NetworkDetails = ({
               hasBottomSpacing={false}
             />
           )}
-          {}
         </View>
         <View style={isWeb ? { flex: 1 } : {}}>
           {renderInfoItem(t('Network Name'), name)}
@@ -356,6 +355,47 @@ const NetworkDetails = ({
           {renderInfoItem(t('Currency Name'), nativeAssetName)}
           {renderInfoItem(t('Block Explorer URL'), explorerUrl, false)}
         </View>
+        {isMobile && (
+          <View style={[flexbox.directionRow, spacings.ptSm, { columnGap: SPACING_SM }]}>
+            {!!shouldDisplayEditButton && (
+              <View style={flexbox.flex1}>
+                <Button
+                  text={t('Edit')}
+                  type="secondary"
+                  size="smaller"
+                  onPress={openBottomSheet as any}
+                  hasBottomSpacing={false}
+                  childrenPosition="left"
+                  style={{ height: 44, backgroundColor: theme.neutral400 }}
+                >
+                  <EditPenIcon
+                    width={20}
+                    height={20}
+                    color={theme.primaryText}
+                    style={spacings.mrMi}
+                  />
+                </Button>
+              </View>
+            )}
+            {!!shouldDisplayDisableButton && (
+              <View style={flexbox.flex1}>
+                <Button
+                  style={{ height: 44 }}
+                  disabled={statuses.updateNetwork !== 'INITIAL'}
+                  text={!networkData?.disabled ? t('Disable') : t('Enable')}
+                  testID="disable-network-btn" // @TODO
+                  type={!networkData?.disabled ? 'danger' : 'primary'}
+                  onPress={() => {
+                    if (!chainId || !allowRemoveNetwork) return
+
+                    toggleNetworkDisabled()
+                  }}
+                  hasBottomSpacing={false}
+                />
+              </View>
+            )}
+          </View>
+        )}
       </View>
       <Dialog
         dialogRef={dialogRef}
@@ -366,27 +406,38 @@ const NetworkDetails = ({
         )}
         closeDialog={closeDialog}
       >
-        <DialogFooter horizontalAlignment="justifyEnd">
-          <DialogButton text={t('Close')} type="secondary" onPress={() => closeDialog()} />
-          <DialogButton
-            style={spacings.ml}
-            text={t('Disable')}
-            testID="disable-network-confirm-btn"
-            type="danger"
-            onPress={updateNetworkDisabled}
-          />
+        <DialogFooter
+          horizontalAlignment="justifyEnd"
+          style={isMobile ? { columnGap: SPACING_SM } : {}}
+        >
+          <View style={isMobile && flexbox.flex1}>
+            <DialogButton text={t('Close')} type="secondary" onPress={() => closeDialog()} />
+          </View>
+          <View style={isMobile && flexbox.flex1}>
+            <DialogButton
+              style={isWeb && spacings.ml}
+              text={t('Disable')}
+              testID="disable-network-confirm-btn"
+              type="danger"
+              onPress={updateNetworkDisabled}
+            />
+          </View>
         </DialogFooter>
       </Dialog>
       <BottomSheet
         id="edit-network-bottom-sheet"
         sheetRef={sheetRef}
         closeBottomSheet={closeBottomSheet}
-        scrollViewProps={{
-          scrollEnabled: false,
-          contentContainerStyle: { flex: 1 }
-        }}
-        containerInnerWrapperStyles={{ flex: 1 }}
-        style={{ ...spacings.ph0, ...spacings.pv0, overflow: 'hidden', maxWidth: 880 }}
+        scrollViewProps={
+          isWeb
+            ? {
+                scrollEnabled: false,
+                contentContainerStyle: { flex: 1 }
+              }
+            : {}
+        }
+        containerInnerWrapperStyles={isWeb ? { flex: 1 } : {}}
+        style={isWeb ? { ...spacings.ph0, ...spacings.pv0, overflow: 'hidden', maxWidth: 880 } : {}}
       >
         <NetworkForm
           selectedChainId={chainId.toString()}

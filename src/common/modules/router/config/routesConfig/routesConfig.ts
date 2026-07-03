@@ -328,6 +328,11 @@ const routesConfig: RouteConfig = {
     }),
     name: Platform.select({ default: i18n.t('General Settings') })
   },
+  [ROUTES.internalLogs]: {
+    route: ROUTES.internalLogs,
+    title: Platform.select({ default: i18n.t('Debug Logs') }),
+    name: Platform.select({ default: i18n.t('Debug Logs') })
+  },
   [ROUTES.accountsSettings]: {
     route: ROUTES.accountsSettings,
     title: Platform.select({

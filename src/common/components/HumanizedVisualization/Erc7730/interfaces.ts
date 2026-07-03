@@ -25,6 +25,7 @@ export interface Erc7730StructuredVisualizationProps {
   isTransactionSummaryLayout?: boolean
   hasTransactionSummaryHeaderLeftControl?: boolean
   hasTransactionSummaryHeaderRightControl?: boolean
+  showDescriptionTitle?: boolean
 }
 
 export type Erc7730Row = HumanizerErc7730Visualization['rows'][number]

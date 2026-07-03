@@ -257,6 +257,7 @@ const TrackProgress: FC<Props> = ({ activeRoute, handleClose }) => {
 
       {lastCompletedRoute?.routeStatus === 'failed' && (
         <Failed
+          activeRouteIdToDelete={lastCompletedRoute.activeRouteId}
           title={t(isSwap ? 'Swap failed' : 'Bridge failed')}
           errorMessage={`Error: ${lastCompletedRoute.error!}`}
           toToken={

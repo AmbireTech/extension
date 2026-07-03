@@ -3,6 +3,8 @@ const COMMON_ROUTES = {
   keyStoreUnlock: 'unlock',
   dashboard: 'dashboard',
   getStarted: 'get-started',
+  networksConfiguration: 'networks-configuration',
+  privacyOptOutsConfiguration: 'privacy-opt-outs-configuration',
   importPrivateKey: 'import-private-key',
   importSmartAccountJson: 'import-smart-account-json',
   importSeedPhrase: 'import-recovery-phrase',
@@ -29,6 +31,7 @@ const COMMON_ROUTES = {
   menu: 'menu',
   generalSettings: 'settings/general',
   accountsSettings: 'settings/accounts',
+  networksSettings: 'settings/networks',
   settingsAbout: 'settings/about',
   settingsTerms: 'settings/terms',
   explore: 'explore',
@@ -62,9 +65,6 @@ const WEB_ROUTES = {
   authEmailAccount: 'auth-email-account',
   authEmailLogin: 'auth-email-login',
   authEmailRegister: 'auth-email-register',
-  networksConfiguration: 'networks-configuration',
-  privacyOptOutsConfiguration: 'privacy-opt-outs-configuration',
-  networksSettings: 'settings/networks',
   devicePasswordSet: 'settings/device-password-set',
   devicePasswordChange: 'settings/device-password-change',
   devicePasswordRecovery: 'settings/device-password-recovery',
@@ -74,7 +74,9 @@ const WEB_ROUTES = {
   safeImport: 'safe-import',
   optOuts: 'settings/opt-outs',
   survey: 'survey',
-  qrPermission: 'qr-permission'
+  qrPermission: 'qr-permission',
+  // INTERNAL ROUTES
+  internalLogs: 'internal/logs'
 }
 
 const ROUTES = { ...MOBILE_ROUTES, ...WEB_ROUTES }

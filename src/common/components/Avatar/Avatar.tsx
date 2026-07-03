@@ -62,6 +62,7 @@ interface Props {
 }
 
 const Avatar: FC<Props> = ({
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   pfp,
   address,
   smartAccountType,
@@ -90,9 +91,7 @@ const Avatar: FC<Props> = ({
     avatarTypeSetting = walletState?.avatarType || 'jazzicons'
   }
 
-  const isEnsLoading = address
-    ? (domains && !domains[address]) || loadingAddresses?.includes(address)
-    : false
+  const isEnsLoading = address ? loadingAddresses?.includes(address) : false
   const ensAvatar = domains?.[address]?.ensAvatar
   const avatarType = getAvatarType({
     ensAvatar,

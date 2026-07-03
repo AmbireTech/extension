@@ -150,7 +150,7 @@ const AddressInput: React.FC<Props> = ({
               <View style={[styles.domainIcons, rest.button ? spacings.pr0 : spacings.prSm]}>
                 {!!resolvedAddressType && (
                   <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-                    {resolvedAddressType === 'ens' && <EnsIcon isActive />}
+                    {resolvedAddressType === 'ens' && <EnsIcon state="fresh" />}
                     {resolvedAddressType === 'namoshi' && <NamoshiIcon isActive />}
                   </View>
                 )}
@@ -177,6 +177,7 @@ const AddressInput: React.FC<Props> = ({
                   (resolvedAddressType ? value : undefined)
                 }
                 withCopy={isWeb}
+                isActive
               />
             </View>
           ) : null

@@ -123,7 +123,7 @@ const EditApproval = ({
 }) => {
   const { t } = useTranslation()
   const { theme } = useTheme()
-  const [bindEditApprovals, editApprovalsStyle] = useHover({
+  const [bindEditApprovals, , isEditApprovalsHovered] = useHover({
     preset: 'opacityInverted'
   })
   const {
@@ -198,7 +198,6 @@ const EditApproval = ({
     <>
       <AnimatedPressable
         style={[
-          editApprovalsStyle,
           flexbox.directionRow,
           flexbox.alignCenter,
           spacings.mrTy,
@@ -213,7 +212,7 @@ const EditApproval = ({
         </Text>
         <EditPenIcon width={20} height={20} color={theme.linkText} />
         {!isMobile && (
-          <Text fontSize={14} color={theme.linkText}>
+          <Text fontSize={14} color={theme.linkText} underline={isEditApprovalsHovered}>
             {t('Edit')}
           </Text>
         )}

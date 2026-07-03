@@ -3,6 +3,7 @@ import { View } from 'react-native'
 
 import { HumanizerVisualization } from '@ambire-common/libs/humanizer/interfaces'
 import useNetworksContext from '@benzin/hooks/useBenzinNetworksContext'
+import RightArrowIcon from '@common/assets/svg/RightArrowIcon'
 import ChainVisualization from '@common/components/HumanizedVisualization/ChainVisualization'
 import EditApproval from '@common/components/HumanizedVisualization/EditApproval'
 import { Erc7730StructuredVisualizationProps } from '@common/components/HumanizedVisualization/Erc7730/interfaces'
@@ -24,6 +25,7 @@ import {
   getDetailedValueLines,
   getErc7730SpenderRow,
   getErc7730SummaryRows,
+  getVisibleErc7730Rows,
   hasErc7730NativeValueRow,
   hasTokenValue,
   isNestedErc7730Row,
@@ -43,7 +45,8 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
   hideMobileSummaryTitle = false,
   isTransactionSummaryLayout = false,
   hasTransactionSummaryHeaderLeftControl = false,
-  hasTransactionSummaryHeaderRightControl = false
+  hasTransactionSummaryHeaderRightControl = false,
+  showDescriptionTitle = false
 }) => {
   const { theme } = useTheme()
   const { t } = useTranslation()
@@ -76,14 +79,11 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
     () => getDetailedRows(item).filter((row) => !hideNestedRows || !isNestedErc7730Row(row)),
     [hideNestedRows, item]
   )
-  const getNestedVisualizationMode = useCallback(
-    (nestedVisualization: HumanizerVisualization) =>
-      nestedVisualization.type === 'erc7730' && nestedVisualization.title === 'Account setup'
-        ? 'description'
-        : 'summary',
-    []
-  )
-
+  const shouldShowDescriptionTitle =
+    showDescriptionTitle &&
+    !!item.title?.trim() &&
+    detailedRows[0]?.label.trim() !== item.title.trim()
+  const visibleRows = useMemo(() => getVisibleErc7730Rows(item), [item])
   const renderValue = useCallback(
     (valueItem: HumanizerVisualization, overrideTextSize = textSize): React.ReactNode => {
       if (!valueItem || ('isHidden' in valueItem && valueItem.isHidden)) return null
@@ -258,6 +258,73 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
     ),
     [renderValue]
   )
+  const renderNestedVisualization = useCallback(
+    (nestedVisualization: HumanizerVisualization, nestedIndex: number) => {
+      if (!isNestedErc7730Value(nestedVisualization)) return null
+
+      const nestedTitle = nestedVisualization.title?.trim()
+      const shouldShowNestedConnector = getDetailedRows(nestedVisualization).some(
+        (row) => !nestedTitle || row.label.trim() !== nestedTitle
+      )
+
+      return (
+        <View
+          key={nestedVisualization.id}
+          style={[
+            flexbox.directionRow,
+            flexbox.alignStart,
+            {
+              width: '100%',
+              minWidth: 0,
+              paddingLeft: SPACING_SM
+            },
+            nestedIndex > 0 && {
+              marginTop: SPACING_TY,
+              paddingTop: SPACING_TY
+            }
+          ]}
+        >
+          <View
+            style={[
+              flexbox.alignCenter,
+              {
+                alignSelf: 'stretch',
+                width: 18,
+                marginRight: SPACING_TY
+              }
+            ]}
+          >
+            {shouldShowNestedConnector && (
+              <View
+                style={{
+                  position: 'absolute',
+                  top: SPACING_TY + textSize + 6,
+                  bottom: 0,
+                  left: 8.5,
+                  width: 1,
+                  backgroundColor: theme.secondaryBorder
+                }}
+              />
+            )}
+            <View style={{ marginTop: SPACING_TY + 3 }}>
+              <RightArrowIcon width={7} height={12} color={theme.secondaryText} />
+            </View>
+          </View>
+          <View style={{ flex: 1, minWidth: 0 }}>
+            <Erc7730StructuredVisualization
+              item={nestedVisualization}
+              chainId={chainId}
+              sizeMultiplierSize={sizeMultiplierSize}
+              textSize={textSize}
+              mode="description"
+              showDescriptionTitle
+            />
+          </View>
+        </View>
+      )
+    },
+    [chainId, sizeMultiplierSize, textSize, theme.secondaryBorder, theme.secondaryText]
+  )
 
   if (mode === 'summary') {
     if (isTransactionSummaryLayout) {
@@ -309,7 +376,7 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
               { width: '100%', minWidth: 0 }
             ]}
           >
-            {item.rows.map((row, rowIndex) => (
+            {visibleRows.map((row) => (
               <View
                 key={`${item.id}-transaction-summary-${row.label}-${row.value
                   .map((value) => value.id)
@@ -421,7 +488,6 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
             {!!item.title && (
               <Text
                 fontSize={textSize + 2}
-                weight="semiBold"
                 color={theme.secondaryAccent400}
                 numberOfLines={1}
                 style={spacings.mrSm}
@@ -443,7 +509,6 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
               >
                 <Text
                   fontSize={subtitleTextSize}
-                  weight="semiBold"
                   appearance="secondaryText"
                   numberOfLines={1}
                   style={spacings.mrTy}
@@ -499,7 +564,6 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
                 (!hasTokenValue(row) || shouldStackSummaryRows) && (
                   <Text
                     fontSize={Math.max(textSize - 4, 10)}
-                    weight="semiBold"
                     appearance="secondaryText"
                     numberOfLines={1}
                     style={[
@@ -536,6 +600,13 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
   if (isMobile) {
     return (
       <View style={{ width: '100%' }}>
+        {shouldShowDescriptionTitle && (
+          <View style={{ width: '100%', paddingVertical: SPACING_TY }}>
+            <Text fontSize={textSize} color={theme.secondaryAccent400}>
+              {item.title}
+            </Text>
+          </View>
+        )}
         {detailedRows.map((row) => {
           const actionParts = getDetailedActionParts(row)
           const rowKey = `${item.id}-${row.label}-${row.value.map((value) => value.id).join('-')}`
@@ -546,35 +617,12 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
             return (
               <View key={rowKey} style={{ width: '100%', paddingVertical: SPACING_TY }}>
                 {!!row.label.trim() && (
-                  <Text
-                    fontSize={textSize}
-                    weight="semiBold"
-                    appearance="secondaryText"
-                    style={spacings.mbTy}
-                  >
+                  <Text fontSize={textSize} appearance="secondaryText" style={spacings.mbTy}>
                     {row.label}
                   </Text>
                 )}
                 <View style={{ width: '100%' }}>
-                  {nestedVisualizations.map((nestedVisualization, nestedIndex) => (
-                    <View
-                      key={nestedVisualization.id}
-                      style={[
-                        nestedIndex > 0 && {
-                          marginTop: SPACING_TY,
-                          paddingTop: SPACING_TY
-                        }
-                      ]}
-                    >
-                      <Erc7730StructuredVisualization
-                        item={nestedVisualization}
-                        chainId={chainId}
-                        sizeMultiplierSize={sizeMultiplierSize}
-                        textSize={textSize}
-                        mode={getNestedVisualizationMode(nestedVisualization)}
-                      />
-                    </View>
-                  ))}
+                  {nestedVisualizations.map(renderNestedVisualization)}
                 </View>
               </View>
             )
@@ -583,7 +631,7 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
           if (actionParts) {
             return (
               <View key={rowKey} style={{ width: '100%', paddingVertical: SPACING_TY }}>
-                <Text fontSize={textSize} weight="semiBold" color={theme.secondaryAccent400}>
+                <Text fontSize={textSize} color={theme.secondaryAccent400}>
                   {actionParts.action.content}
                 </Text>
                 {!!actionParts.recipientValues.length && (
@@ -605,12 +653,7 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
           return (
             <View key={rowKey} style={{ width: '100%', paddingVertical: SPACING_TY }}>
               {!!row.label.trim() && (
-                <Text
-                  fontSize={textSize}
-                  weight="semiBold"
-                  appearance="secondaryText"
-                  style={spacings.mbMi}
-                >
+                <Text fontSize={textSize} appearance="secondaryText" style={spacings.mbMi}>
                   {row.label}
                 </Text>
               )}
@@ -624,6 +667,13 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
 
   return (
     <View style={{ width: '100%' }}>
+      {shouldShowDescriptionTitle && (
+        <View style={{ width: '100%', paddingVertical: SPACING_TY }}>
+          <Text fontSize={textSize} color={theme.secondaryAccent400}>
+            {item.title}
+          </Text>
+        </View>
+      )}
       {detailedRows.map((row) => {
         const actionParts = getDetailedActionParts(row)
         const rowKey = `${item.id}-${row.label}-${row.value.map((value) => value.id).join('-')}`
@@ -634,37 +684,12 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
           return (
             <View key={rowKey} style={{ width: '100%', paddingVertical: SPACING_TY }}>
               {!!row.label.trim() && (
-                <Text
-                  fontSize={textSize}
-                  weight="semiBold"
-                  appearance="secondaryText"
-                  style={spacings.mbTy}
-                >
+                <Text fontSize={textSize} appearance="secondaryText" style={spacings.mbTy}>
                   {row.label}
                 </Text>
               )}
               <View style={{ width: '100%' }}>
-                {nestedVisualizations.map((nestedVisualization, nestedIndex) => (
-                  <View
-                    key={nestedVisualization.id}
-                    style={[
-                      flexbox.directionRow,
-                      flexbox.alignCenter,
-                      nestedIndex > 0 && {
-                        marginTop: SPACING_TY,
-                        paddingTop: SPACING_TY
-                      }
-                    ]}
-                  >
-                    <Erc7730StructuredVisualization
-                      item={nestedVisualization}
-                      chainId={chainId}
-                      sizeMultiplierSize={sizeMultiplierSize}
-                      textSize={textSize}
-                      mode={getNestedVisualizationMode(nestedVisualization)}
-                    />
-                  </View>
-                ))}
+                {nestedVisualizations.map(renderNestedVisualization)}
               </View>
             </View>
           )
@@ -688,7 +713,6 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
               <View style={{ flex: 1, minWidth: 160, marginRight: SPACING_SM }}>
                 <Text
                   fontSize={textSize}
-                  weight="semiBold"
                   color={theme.secondaryAccent400}
                   style={{ flexShrink: 1 }}
                 >
@@ -734,7 +758,6 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
           >
             <Text
               fontSize={textSize}
-              weight="semiBold"
               appearance="secondaryText"
               style={{ flex: 1, minWidth: 120, marginRight: SPACING_SM }}
             >

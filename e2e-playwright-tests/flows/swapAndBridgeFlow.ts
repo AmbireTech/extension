@@ -12,6 +12,7 @@ export async function runSwapFlow({
   bridgeAmount,
   message = 'Nice trade!',
   assertNoInitialTx = false,
+  assertPortfolioRefreshScopedToSendNetwork = true,
   ledgerSimulatorControls
 }: {
   pages: PageManager
@@ -20,6 +21,9 @@ export async function runSwapFlow({
   bridgeAmount: number
   message?: string
   assertNoInitialTx?: boolean
+  // Set to false in shared state, where the periodic all-network portfolio refresh makes this
+  // post-broadcast guard unreliable (see signSlowSpeedTransaction for the full explanation).
+  assertPortfolioRefreshScopedToSendNetwork?: boolean
   ledgerSimulatorControls?: SpeculosDevice
 }) {
   if (assertNoInitialTx) {
@@ -36,7 +40,9 @@ export async function runSwapFlow({
     await pages.transfer.signSlowSpeedTransaction({
       sendToken,
       message,
-      ledgerSimulatorControls
+      ledgerSimulatorControls,
+      awaitConfirmation: false,
+      assertPortfolioRefreshScopedToSendNetwork
     })
   })
 

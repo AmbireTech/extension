@@ -31,8 +31,14 @@ const OptOutControlOption = (opts: Opts) => {
   }, [featureFlagsDispatch, flags, flag])
 
   return (
-    <ControlOption style={spacings.mbTy} title={title} description={description} renderIcon={icon}>
-      <FatToggle isOn={flags[flag]} onToggle={handleToggle} />
+    <ControlOption
+      style={spacings.mbTy}
+      title={title}
+      description={description}
+      forceDescriptionOnMobile
+      renderIcon={icon}
+    >
+      <FatToggle isOn={flags[flag]} onToggle={handleToggle} trackStyle={spacings.mr0} />
     </ControlOption>
   )
 }

@@ -5,12 +5,17 @@ import common from '@common/styles/utils/common'
 
 interface Style {
   container: ViewStyle
+  hoverOverlay: ViewStyle
 }
 
 const getStyles = (theme: ThemeProps) =>
   StyleSheet.create<Style>({
     container: {
       backgroundColor: theme.secondaryBackground,
+      ...common.borderRadiusPrimary
+    },
+    hoverOverlay: {
+      ...StyleSheet.absoluteFillObject,
       ...common.borderRadiusPrimary
     }
   })

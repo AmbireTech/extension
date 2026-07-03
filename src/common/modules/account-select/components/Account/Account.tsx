@@ -73,7 +73,7 @@ const Account = ({
     state: { account: selectedAccount, balanceByAccounts }
   } = useController('SelectedAccountController')
   const { dispatch: accountsDispatch } = useController('AccountsController')
-  const { name, type, isLoading } = useReverseLookup({ address: addr })
+  const reverseLookup = useReverseLookup({ address: addr, privacyUpdateMode: 'never' })
   const { keys } = useController('KeystoreController').state
   const [bindAnim, animStyle] = useCustomHover({
     property: 'backgroundColor',
@@ -175,7 +175,7 @@ const Account = ({
       style={[
         styles.accountContainer,
         containerStyle,
-        // @ts-ignore
+        // @ts-expect-error: Web style
         isSelectable ? animStyle : { cursor: 'default' },
         isSelectable &&
           options.markSelected &&
@@ -237,14 +237,13 @@ const Account = ({
           </View>
           <View style={[flexbox.directionRow, flexbox.alignCenter]}>
             <AccountAddress
+              {...reverseLookup}
               containerStyle={spacings.pb0}
-              isLoading={isLoading}
-              name={name}
-              type={type}
               address={addr}
               plainAddressMaxLength={maxAccountAddrLength}
               withCopy={isWeb && withCopy}
               withReceive={isWeb && withReceive}
+              withUpdateEnsInTooltip={isSelectable}
             />
           </View>
         </View>

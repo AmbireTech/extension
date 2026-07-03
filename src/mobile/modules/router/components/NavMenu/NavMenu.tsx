@@ -10,7 +10,7 @@ import BugIcon from '@common/assets/svg/BugIcon'
 import DiscordIcon from '@common/assets/svg/DiscordIcon'
 import HelpIcon from '@common/assets/svg/HelpIcon'
 // import KeyStoreSettingsIcon from '@common/assets/svg/KeyStoreSettingsIcon'
-// import NetworksIcon from '@common/assets/svg/NetworksIcon'
+import NetworksIcon from '@common/assets/svg/NetworksIcon'
 // import PasswordRecoverySettingsIcon from '@common/assets/svg/PasswordRecoverySettingsIcon'
 // import PrivacyIcon from '@common/assets/svg/PrivacyIcon'
 import SettingsIcon from '@common/assets/svg/SettingsIcon'
@@ -43,19 +43,19 @@ export const SETTINGS_LINKS = [
     Icon: AccountsIcon,
     label: 'Accounts',
     path: ROUTES.accountsSettings
-  }
+  },
   // {
   //   key: 'address-book',
   //   Icon: AddressBookIcon,
   //   label: 'Address Book',
   //   path: ROUTES.addressBook
   // },
-  // {
-  //   key: 'networks',
-  //   Icon: NetworksIcon,
-  //   label: 'Networks',
-  //   path: ROUTES.networksSettings
-  // },
+  {
+    key: 'networks',
+    Icon: NetworksIcon,
+    label: 'Networks',
+    path: ROUTES.networksSettings
+  }
   // {
   //   key: 'transactions',
   //   Icon: TransactionHistoryIcon,

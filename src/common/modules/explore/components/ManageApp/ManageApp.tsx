@@ -13,11 +13,12 @@ import AccountOption from '@common/components/Option/AccountOption'
 import Select from '@common/components/Select'
 import { SelectValue } from '@common/components/Select/types'
 import Text from '@common/components/Text'
-import { isMobile } from '@common/config/env'
+import { isMobile, isWeb } from '@common/config/env'
 import useController from '@common/hooks/useController'
 import { AnimatedPressable } from '@common/hooks/useHover'
 import useTheme from '@common/hooks/useTheme'
 import DappItem from '@common/modules/explore/components/DappItem'
+import AccountPreferencesBottomSheet from '@common/modules/explore/components/ManageApp/AccountPreferencesBottomSheet'
 import useManageApp from '@common/modules/explore/hooks/useManageApp'
 import spacings, { SPACING_SM } from '@common/styles/spacings'
 import common from '@common/styles/utils/common'
@@ -32,14 +33,7 @@ interface ManageAppProps {
   onClosed?: () => void
 }
 
-const ManageApp = ({
-  dapp,
-  children,
-  isParentHovered: _isParentHovered,
-  buttonProps,
-  style = {},
-  onClosed
-}: ManageAppProps) => {
+const ManageApp = ({ dapp, children, buttonProps, style = {}, onClosed }: ManageAppProps) => {
   const { theme } = useTheme()
   const { account, accounts, networks, onDisconnect, onSelectNetwork } = useManageApp(dapp)
   const { ref: sheetRef, open, close } = useModalize()
@@ -47,6 +41,11 @@ const ManageApp = ({
     ref: disconnectChooserRef,
     open: openDisconnectChooser,
     close: closeDisconnectChooser
+  } = useModalize()
+  const {
+    ref: accountPreferencesRef,
+    open: openAccountPreferences,
+    close: closeAccountPreferences
   } = useModalize()
   const { t } = useTranslation()
   const { dispatch: mainDispatch } = useController('MainController')
@@ -109,6 +108,19 @@ const ManageApp = ({
       })),
     [accounts]
   )
+
+  // On web the dapp can be scoped to a subset of accounts. The account it "sees" is the
+  // currently selected one when it's part of the allowed list, otherwise the last selected
+  // account that was active during the dapp session.
+  const connectedAccount = useMemo(() => {
+    const preferences = dapp.accountPreferences
+
+    if (preferences?.enabled && account && !preferences.accounts.includes(account.addr)) {
+      return accounts.find((acc) => acc.addr === preferences.selectedAccount) ?? account
+    }
+
+    return account
+  }, [dapp.accountPreferences, account, accounts])
 
   const handleSelectAccount = useCallback(
     (option: SelectValue) => {
@@ -216,7 +228,7 @@ const ManageApp = ({
           selectStyle={{ backgroundColor: theme.tertiaryBackground }}
         />
 
-        {!!account && (
+        {isMobile && !!account && (
           <Select
             value={{
               value: account.addr,
@@ -227,6 +239,35 @@ const ManageApp = ({
             label={t('Account')}
             selectStyle={{ backgroundColor: theme.tertiaryBackground }}
           />
+        )}
+
+        {isWeb && !!connectedAccount && (
+          <View style={spacings.mbSm}>
+            <Text fontSize={14} appearance="secondaryText" style={spacings.mbMi}>
+              {t('Account')}
+            </Text>
+            <View style={[flexbox.directionRow, flexbox.alignCenter]}>
+              <View
+                style={[
+                  flexbox.flex1,
+                  flexbox.directionRow,
+                  flexbox.alignCenter,
+                  common.borderRadiusPrimary,
+                  spacings.ph,
+                  { backgroundColor: theme.tertiaryBackground, height: 50 }
+                ]}
+              >
+                <AccountOption acc={connectedAccount} />
+              </View>
+              <Button
+                type="tertiary"
+                text={t('Manage')}
+                onPress={() => openAccountPreferences()}
+                hasBottomSpacing={false}
+                style={{ ...spacings.mlSm, height: 50 }}
+              />
+            </View>
+          </View>
         )}
 
         {connectedSources.length > 0 && (
@@ -278,6 +319,14 @@ const ManageApp = ({
           style={spacings.mtTy}
         />
       </BottomSheet>
+
+      {isWeb && (
+        <AccountPreferencesBottomSheet
+          dapp={dapp}
+          sheetRef={accountPreferencesRef}
+          closeBottomSheet={closeAccountPreferences}
+        />
+      )}
     </>
   )
 }

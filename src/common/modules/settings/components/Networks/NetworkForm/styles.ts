@@ -1,5 +1,6 @@
 import { StyleSheet, ViewStyle } from 'react-native'
 
+import { isMobile, isWeb } from '@common/config/env'
 import spacings from '@common/styles/spacings'
 import { ThemeProps } from '@common/styles/themeConfig'
 import common from '@common/styles/utils/common'
@@ -19,9 +20,10 @@ const getStyles = (theme: ThemeProps) =>
     modalHeader: {
       ...flexbox.directionRow,
       ...flexbox.alignCenter,
-      ...spacings.mhMi,
-      ...spacings.mvMi,
-      ...spacings.phXl,
+      ...(isWeb ? spacings.mhMi : {}),
+      ...(isWeb ? spacings.mvMi : {}),
+      ...(isMobile ? spacings.mbSm : {}),
+      ...(isMobile ? spacings.phSm : spacings.phXl),
       borderRadius: 12,
       height: 60,
       backgroundColor: theme.secondaryBackground,
@@ -31,11 +33,12 @@ const getStyles = (theme: ThemeProps) =>
     rpcUrlsContainer: {
       backgroundColor: theme.secondaryBackground,
       ...common.borderRadiusPrimary,
-      maxHeight: 110,
-      ...spacings.mb
+      maxHeight: isMobile ? 200 : 110,
+      ...(isMobile ? spacings.mbSm : spacings.mb),
+      ...(isMobile ? spacings.phTy : {})
     },
     selectRpcItem: {
-      ...spacings.pvMi,
+      ...(isMobile ? spacings.pvTy : spacings.pvMi),
       ...spacings.phTy,
       ...flexbox.directionRow,
       ...flexbox.alignCenter

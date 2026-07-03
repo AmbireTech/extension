@@ -11,6 +11,7 @@ import {
 import {
   getErc7730DescriptionRows,
   getErc7730SummaryRows,
+  getVisibleErc7730Rows,
   hasErc7730NativeValueRow,
   shouldShowErc7730SummaryRowLabel
 } from './helpers'
@@ -93,6 +94,45 @@ describe('getErc7730DescriptionRows', () => {
 
     expect(summaryRows.map((row) => row.label)).toEqual(['Amount to Send', 'Minimum to Receive'])
     expect(descriptionRows.map((row) => row.label)).toEqual(['Additional action'])
+  })
+})
+
+describe('getVisibleErc7730Rows', () => {
+  test('hides zero-address beneficiary rows', () => {
+    const visualization: HumanizerErc7730Visualization = {
+      type: 'erc7730',
+      title: 'Swap',
+      rows: [
+        {
+          label: 'Amount to Send',
+          value: [getToken('0x833589fcd6edb6e08f4c7c32d4f71b54bda02913', 300000n)]
+        },
+        {
+          label: 'Beneficiary',
+          value: [getAddressVisualization(zeroAddress)]
+        }
+      ]
+    }
+
+    expect(getVisibleErc7730Rows(visualization).map((row) => row.label)).toEqual([
+      'Amount to Send'
+    ])
+  })
+
+  test('keeps nonzero beneficiary rows', () => {
+    const beneficiary = '0xd8293ad21678c6f09da139b4b62d38e514a03b78'
+    const visualization: HumanizerErc7730Visualization = {
+      type: 'erc7730',
+      title: 'Swap',
+      rows: [
+        {
+          label: 'Beneficiary',
+          value: [getAddressVisualization(beneficiary)]
+        }
+      ]
+    }
+
+    expect(getVisibleErc7730Rows(visualization).map((row) => row.label)).toEqual(['Beneficiary'])
   })
 })
 

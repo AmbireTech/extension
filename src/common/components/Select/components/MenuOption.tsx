@@ -53,6 +53,8 @@ const Option = React.memo(({ item, ...rest }: { item: SelectValue }) => {
   )
 })
 
+Option.displayName = 'Option'
+
 const MenuOption = React.memo(
   ({
     item,
@@ -117,5 +119,7 @@ const MenuOption = React.memo(
     )
   }
 )
+
+MenuOption.displayName = 'MenuOption'
 
 export { MenuOption, Option }

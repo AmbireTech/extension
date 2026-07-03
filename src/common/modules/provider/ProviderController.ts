@@ -937,7 +937,16 @@ export class ProviderController {
    * {@link https://github.com/MetaMask/metamask-improvement-proposals/blob/main/MIPs/mip-2.md}
    */
   @metadata('SAFE', true)
-  walletRevokePermissions = async ({ session: { id } }: DappProviderRequest) => {
+  walletRevokePermissions = async ({
+    params: permissions,
+    session: { id }
+  }: DappProviderRequest) => {
+    // Per MIP-2, `params[0]` names the specific permission(s) being revoked - a call that
+    // doesn't name `eth_accounts` isn't asking to disconnect the dapp. Some dapps call this
+    // method defensively for unrelated permissions; without this check, any such call would
+    // unconditionally disconnect the dapp instead of being a no-op, unlike MetaMask/Rabby.
+    if (!permissions || !('eth_accounts' in permissions[0])) return null
+
     // The request can only originate from the injected channel (WC dapps don't use
     // MIP-2 revocation), so scope the disconnect to that source. If WC is also
     // connected for this dapp, it stays connected — the user has to explicitly

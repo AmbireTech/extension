@@ -17,7 +17,9 @@ const AccountDataDetailed = () => {
   const {
     state: { account }
   } = useController('SelectedAccountController')
-  const { isLoading, name, type } = useReverseLookup({ address: account?.addr || '' })
+  const reverseLookup = useReverseLookup({
+    address: account?.addr || ''
+  })
 
   const smartAccountType = useMemo(() => {
     if (account?.creation) return 'Ambire'
@@ -43,9 +45,7 @@ const AccountDataDetailed = () => {
         </View>
         <View style={[flexbox.directionRow, flexbox.alignCenter, { minWidth: 0 }]}>
           <AccountAddress
-            isLoading={isLoading}
-            name={name}
-            type={type}
+            {...reverseLookup}
             address={account.addr}
             plainAddressMaxLength={isSidePanel ? 16 : 42}
             withCopy={!isSidePanel}

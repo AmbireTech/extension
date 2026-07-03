@@ -61,12 +61,7 @@ const useDAppAccountPreferences = (
       let nextAccountList = isCurrentlySelected
         ? localPreferences?.accounts.filter((addr) => addr !== address) || []
         : [...(localPreferences?.accounts || []), address]
-      let nextSelectedAccount =
-        target === 'dappToConnect' ? selectedAccount.addr : localPreferences?.selectedAccount
-
-      if (target === 'dappToConnect') {
-        nextAccountList = Array.from(new Set([...nextAccountList, selectedAccount.addr]))
-      }
+      let nextSelectedAccount = localPreferences?.selectedAccount
 
       if (!nextSelectedAccount || !nextAccountList.includes(nextSelectedAccount)) {
         nextSelectedAccount = nextAccountList[0] || selectedAccount.addr
@@ -79,7 +74,7 @@ const useDAppAccountPreferences = (
       })
     },
 
-    [selectedAccount, localPreferences?.accounts, localPreferences?.selectedAccount, target]
+    [selectedAccount, localPreferences?.accounts, localPreferences?.selectedAccount]
   )
 
   const toggleOnlyConnectWithSomeAccounts = useCallback(() => {
@@ -134,6 +129,7 @@ const useDAppAccountPreferences = (
   }, [accounts, accountPreferences?.accounts, selectedAccount])
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     updateOrderedAccountList()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [accounts.length])

@@ -19,6 +19,8 @@ import ExploreScreen from '@mobile/modules/explore/screens/ExploreScreen'
 import ExploreSectionScreen from '@mobile/modules/explore/screens/ExploreSectionScreen'
 import LedgerConnectScreen from '@mobile/modules/hardware-wallet/screens/LedgerConnectScreen'
 import KeyStoreSetupScreen from '@mobile/modules/keystore/screens/KeyStoreSetupScreen'
+import NetworksConfiguration from '@mobile/modules/network-settings/screens'
+import PrivacyOptOutsConfiguration from '@mobile/modules/network-settings/screens/PrivacyOptOutsConfiguration'
 import NetworksScreen from '@mobile/modules/networks/screens'
 import QrReaderScreen from '@mobile/modules/qr-reader/screens/QrReaderScreen'
 import ReceiveScreen from '@mobile/modules/receive/screens/ReceiveScreen'
@@ -26,6 +28,7 @@ import NavMenu from '@mobile/modules/router/components/NavMenu'
 import AboutSettingsScreen from '@mobile/modules/settings/screens/AboutSettingsScreen'
 import AccountsSettingsScreen from '@mobile/modules/settings/screens/AccountsSettingsScreen'
 import GeneralSettingsScreen from '@mobile/modules/settings/screens/GeneralSettingsScreen'
+import NetworksSettingsScreen from '@mobile/modules/settings/screens/NetworksSettingsScreen'
 import TermsSettingsScreen from '@mobile/modules/settings/screens/TermsSettingsScreen'
 import SwapAndBridgeScreen from '@mobile/modules/swap-and-bridge/screens/SwapAndBridgeScreen'
 import TokenDetailsScreen from '@mobile/modules/token-details/screens/TokenDetailsScreen'
@@ -38,6 +41,11 @@ const MainRoutes = () => {
       <Route path={ROUTES.keyStoreSetup} element={<KeyStoreSetupScreen />} />
       <Route element={<KeystoreUnlockedRoute />}>
         <Route path={ROUTES.getStarted} element={<GetStartedScreen />} />
+        <Route path={ROUTES.networksConfiguration} element={<NetworksConfiguration />} />
+        <Route
+          path={ROUTES.privacyOptOutsConfiguration}
+          element={<PrivacyOptOutsConfiguration />}
+        />
         <Route path={ROUTES.viewOnlyAccountAdder} element={<ViewOnlyAccountAdderScreen />} />
         <Route
           path={ROUTES.importExistingAccount}
@@ -66,6 +74,7 @@ const MainRoutes = () => {
           <Route path={ROUTES.menu} element={<NavMenu />} />
           <Route path={ROUTES.generalSettings} element={<GeneralSettingsScreen />} />
           <Route path={ROUTES.accountsSettings} element={<AccountsSettingsScreen />} />
+          <Route path={ROUTES.networksSettings} element={<NetworksSettingsScreen />} />
           <Route path={ROUTES.settingsAbout} element={<AboutSettingsScreen />} />
           <Route path={ROUTES.settingsTerms} element={<TermsSettingsScreen />} />
           <Route path={ROUTES.explore} element={<ExploreScreen />} />

@@ -268,7 +268,7 @@ const RouteStepsPreview = ({
               </Text>
             </View>
 
-            {providerId === 'socket' ? (
+            {providerId === 'socket' || providerId === 'socketv3' ? (
               <BungeeIcon width={56.7} height={11.2} />
             ) : providerId === 'squid' ? (
               <SquidLongIcon width={180} height={50} />

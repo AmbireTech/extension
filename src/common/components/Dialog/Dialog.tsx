@@ -3,7 +3,7 @@ import React, { FC } from 'react'
 import BottomSheet from '@common/components/BottomSheet'
 import { BOTTOM_SHEET_Z_INDEX } from '@common/components/BottomSheet/styles'
 import Text from '@common/components/Text'
-import useTheme from '@common/hooks/useTheme'
+import { isMobile, isWeb } from '@common/config/env'
 import spacings from '@common/styles/spacings'
 
 interface Props {
@@ -16,23 +16,26 @@ interface Props {
 }
 
 const Dialog: FC<Props> = ({ id, dialogRef, closeDialog, title, text, children }) => {
-  const { themeType } = useTheme()
   return (
     <BottomSheet
       id={id}
       sheetRef={dialogRef}
       closeBottomSheet={closeDialog}
-      type="modal"
-      style={{
-        overflow: 'hidden',
-        width: 512
-      }}
+      type={isMobile ? 'bottom-sheet' : 'modal'}
+      style={
+        isWeb
+          ? {
+              overflow: 'hidden',
+              width: 512
+            }
+          : {}
+      }
       customZIndex={BOTTOM_SHEET_Z_INDEX + 1}
     >
       <Text fontSize={18} weight="semiBold" style={spacings.mbMi}>
         {title}
       </Text>
-      <Text fontSize={14} style={spacings.mb}>
+      <Text fontSize={14} style={isMobile ? spacings.mbLg : spacings.mb}>
         {text}
       </Text>
       {children}
