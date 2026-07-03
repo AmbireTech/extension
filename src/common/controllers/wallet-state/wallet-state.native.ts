@@ -129,9 +129,8 @@ export class WalletStateController extends EventEmitter implements IWalletStateC
     this.emitUpdate()
   }
 
-  async setSidePanelModeEnabled(enabled: boolean) {
-    this.isSidePanelModeEnabled = enabled
-    this.emitUpdate()
+  async setSidePanelModeEnabled(_enabled: boolean) {
+    // Chrome side panel mode is extension-only; no UI or persistence on mobile.
   }
 
   toJSON() {
