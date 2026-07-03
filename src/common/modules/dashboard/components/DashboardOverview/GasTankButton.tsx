@@ -167,13 +167,11 @@ const GasTankButton = ({ onPress, portfolio, account }: Props) => {
       ...spacings.mrMi,
       ...btnAnimStyle,
       ...(!!tooltipText && ({ cursor: 'default' } as unknown as ViewStyle)),
-      borderColor: shouldDisplaySafeGasTankBanner
-        ? theme.success200
-        : hexToRgba(theme.neutral200, 0.12),
-      borderRadius: 14,
+      borderColor: shouldDisplaySafeGasTankBanner ? theme.success200 : '#FFFFFF1F',
+      borderRadius: 12,
       borderWidth: 1,
-      background: shouldDisplaySafeGasTankBanner ? 'rgb(14 59 24)' : theme.shadowPrimary,
-      height: shouldDisplaySafeGasTankBanner ? 31 : 26,
+      background: shouldDisplaySafeGasTankBanner ? 'rgb(14 59 24)' : '#000000',
+      height: 26, // check if broken in safe
       shadowColor: shouldDisplaySafeGasTankBanner ? theme.success400 : undefined,
       shadowOffset: { width: 0, height: 0 },
       shadowOpacity: shouldDisplaySafeGasTankBanner ? 0.7 : 0,
@@ -221,7 +219,7 @@ const GasTankButton = ({ onPress, portfolio, account }: Props) => {
               ...spacings.phTy,
               backgroundColor: theme.success200,
               borderRadius: 12,
-              height: 23,
+              height: 20,
               marginLeft: -8
             }}
           >
