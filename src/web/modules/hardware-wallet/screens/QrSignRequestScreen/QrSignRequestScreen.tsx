@@ -7,7 +7,8 @@ import FooterGlassView from '@common/components/FooterGlassView'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
 import SigningRequestDetails from '@common/modules/hardware-wallets/components/SigningRequestDetails'
-import spacings from '@common/styles/spacings'
+import spacings, { SPACING_LG } from '@common/styles/spacings'
+import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import { AnimatedQRCode } from '@keystonehq/animated-qr'
 
@@ -24,6 +25,9 @@ type Props = {
 }
 
 const ANIMATION_INTERVAL = 300
+const QR_QUIET_ZONE = SPACING_LG
+const BASE_QR_SIZE = 300
+const BASE_QR_SIZE_WITH_PROGRESS = 280
 
 const QrSignRequestScreen = ({
   onContinue,
@@ -34,17 +38,27 @@ const QrSignRequestScreen = ({
   signingRequest = null
 }: Props) => {
   const { t } = useTranslation()
-  const qrSize = transactionProgress ? 280 : 300
+  const baseQrSize = transactionProgress ? BASE_QR_SIZE_WITH_PROGRESS : BASE_QR_SIZE
+  const qrSize = baseQrSize - QR_QUIET_ZONE * 2
 
   return (
     <View style={[flexbox.center, { width: '100%', flexGrow: 1, flexShrink: 0 }]}>
       <Text>{t('Scan this QR code with your QR-based device to sign.')}</Text>
       <View style={[flexbox.center, flexbox.flex1, spacings.mtSm, { width: '100%' }]}>
-        <AnimatedQRCode
-          options={{ size: qrSize, interval: ANIMATION_INTERVAL }}
-          type={urType}
-          cbor={urCborHex}
-        />
+        <View
+          style={[
+            spacings.ph,
+            spacings.pv,
+            common.borderRadiusPrimary,
+            { backgroundColor: '#fff' }
+          ]}
+        >
+          <AnimatedQRCode
+            options={{ size: qrSize, interval: ANIMATION_INTERVAL }}
+            type={urType}
+            cbor={urCborHex}
+          />
+        </View>
         {transactionProgress ? (
           <Text fontSize={14} weight="medium" style={spacings.mtSm}>
             {transactionProgress.current} / {transactionProgress.total}{' '}
@@ -55,7 +69,7 @@ const QrSignRequestScreen = ({
           <SigningRequestDetails
             signingRequest={signingRequest}
             style={[
-              spacings.mt,
+              transactionProgress ? spacings.mtSm : spacings.mt,
               {
                 width: 420
               }
