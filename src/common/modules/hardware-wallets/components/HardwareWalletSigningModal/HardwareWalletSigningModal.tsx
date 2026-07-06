@@ -133,11 +133,10 @@ const HardwareWalletSigningModal = ({
       </View>
       {isTrezor && !!cancelReq && (
         <Button
-          type="dangerFilled"
+          type="danger"
           text={t('Cancel request')}
           onPress={cancelReq}
           hasBottomSpacing={false}
-          style={[flexbox.alignSelfCenter, { width: '100%', maxWidth: 420 }]}
         />
       )}
     </BottomSheet>
