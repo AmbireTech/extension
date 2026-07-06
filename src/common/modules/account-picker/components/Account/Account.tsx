@@ -111,7 +111,13 @@ const Account = ({
       onPress={isDisabled ? undefined : toggleSelectedState}
       testID={`add-account-${account.addr}`}
     >
-      <View style={[styles.container, { backgroundColor: theme.secondaryBackground }]}>
+      <View
+        style={[
+          styles.container,
+          { backgroundColor: theme.secondaryBackground },
+          isMobile && type === 'linked' && { backgroundColor: theme.infoBackground }
+        ]}
+      >
         <FatToggle
           isOn={isSelected}
           onToggle={toggleSelectedState}
@@ -144,7 +150,7 @@ const Account = ({
                   <Text
                     fontSize={16}
                     weight="medium"
-                    appearance="primaryText"
+                    appearance={isMobile && type === 'linked' ? 'infoText' : 'primaryText'}
                     style={spacings.mrTy}
                   >
                     {account.preferences.label}
@@ -170,7 +176,7 @@ const Account = ({
                     <Text
                       fontSize={16}
                       weight="medium"
-                      appearance="primaryText"
+                      appearance={isMobile && type === 'linked' ? 'infoText' : 'primaryText'}
                       style={spacings.mrTy}
                     >
                       {reverseLookupName}
@@ -182,7 +188,7 @@ const Account = ({
                   ) : null}
                   <Text
                     fontSize={14}
-                    appearance="secondaryText"
+                    appearance={isMobile && type === 'linked' ? 'infoText' : 'secondaryText'}
                     style={spacings.mrMi}
                     weight="mono_regular"
                   >
@@ -205,7 +211,7 @@ const Account = ({
                   <BadgeWithPreset style={spacings.mrMi} preset="smart-account" />
                 )}
 
-                {type === 'linked' && (
+                {isWeb && type === 'linked' && (
                   <>
                     <BadgeWithPreset preset="linked" style={spacings.mrMi} />
                     {isAmbireV1LinkedAccount(account.creation?.factoryAddr) && (
