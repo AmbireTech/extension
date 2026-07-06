@@ -70,6 +70,7 @@ export class SwapAndBridgePage extends BasePage {
   // TODO: refactor this method
   async prepareSwapAndBridge(send_amount: number, fromToken: Token, toToken: Token) {
     await this.openSwapAndBridge()
+
     try {
       await this.selectSendToken(fromToken)
       // The receive network does not follow the send token, so select it explicitly.
@@ -376,7 +377,6 @@ export class SwapAndBridgePage extends BasePage {
     await this.openSwapAndBridge()
     await this.page.waitForTimeout(2000)
     await this.selectSendToken(sendToken)
-
     try {
       // The receive network does not follow the send token, so select it explicitly.
       await this.selectReceiveNetwork(receiveToken)
