@@ -1,4 +1,4 @@
-import { EmitterSubscription, Linking } from 'react-native'
+import { AppState, EmitterSubscription, Linking, NativeEventSubscription } from 'react-native'
 
 import TrezorConnect from '@trezor/connect-mobile'
 
@@ -32,10 +32,22 @@ const TREZOR_CONNECT_MANIFEST = {
 // it distinct from the WalletConnect `wc` deep links.
 const CALLBACK_URL = 'ambire://trezor'
 
+// Trezor Suite deep-links back to us on approval but NOT on reject/cancel — it
+// just stays on its own screen. So when the user returns to Ambire with a call
+// still in flight, we treat it as a cancellation. This grace window lets an
+// in-flight approval callback (which arrives right as the app becomes active)
+// resolve first, so we only cancel genuine rejects/abandons.
+const RETURN_CANCEL_GRACE_MS = 1500
+
 class TrezorDeeplinkService {
   #initPromise: Promise<void> | null = null
 
   #deeplinkSubscription: EmitterSubscription | null = null
+
+  #appStateSubscription: NativeEventSubscription | null = null
+
+  // Number of SDK calls awaiting a Suite deep-link response.
+  #pendingCalls = 0
 
   #callbackUrl = CALLBACK_URL
 
@@ -49,6 +61,18 @@ class TrezorDeeplinkService {
       // are ignored — only our callback path is forwarded to the SDK.
       this.#deeplinkSubscription = Linking.addEventListener('url', ({ url }) => {
         if (url.startsWith(CALLBACK_URL)) TrezorConnect.handleDeeplink(url)
+      })
+
+      // Reject-in-Suite fallback: Suite sends no callback on cancel, so the only
+      // signal is the user coming back to Ambire with a call unresolved.
+      this.#appStateSubscription = AppState.addEventListener('change', (state) => {
+        if (state !== 'active' || this.#pendingCalls === 0) return
+        setTimeout(() => {
+          // If an approval callback resolved the call in the meantime, #pendingCalls
+          // is already 0 and this is a no-op.
+          if (this.#pendingCalls > 0)
+            TrezorConnect.cancel('The request was cancelled in Trezor Suite.')
+        }, RETURN_CANCEL_GRACE_MS)
       })
 
       await TrezorConnect.init({
@@ -72,6 +96,15 @@ class TrezorDeeplinkService {
     return this.#initPromise
   }
 
+  // Counts a call as in-flight while it awaits a Suite deep-link response, so the
+  // AppState fallback can cancel it if the user returns after rejecting.
+  #track<T>(promise: Promise<T>): Promise<T> {
+    this.#pendingCalls += 1
+    return promise.finally(() => {
+      this.#pendingCalls -= 1
+    })
+  }
+
   // Pure passthroughs: the params/response cross the worker bridge as JSON, and
   // the SDK methods are overloaded (e.g. getPublicKey has single/bundle forms)
   // which a single arrow can't satisfy — so these are typed loosely here. The
@@ -79,27 +112,27 @@ class TrezorDeeplinkService {
   // TrezorKeyIterator call `controller.walletSDK.*` (typed via TrezorWalletSDK).
   ethereumGetAddress = async (params: any): Promise<any> => {
     await this.#ensureInit()
-    return TrezorConnect.ethereumGetAddress(params)
+    return this.#track(TrezorConnect.ethereumGetAddress(params))
   }
 
   getPublicKey = async (params: any): Promise<any> => {
     await this.#ensureInit()
-    return TrezorConnect.getPublicKey(params)
+    return this.#track(TrezorConnect.getPublicKey(params))
   }
 
   ethereumSignTransaction = async (params: any): Promise<any> => {
     await this.#ensureInit()
-    return TrezorConnect.ethereumSignTransaction(params)
+    return this.#track(TrezorConnect.ethereumSignTransaction(params))
   }
 
   ethereumSignTypedData = async (params: any): Promise<any> => {
     await this.#ensureInit()
-    return TrezorConnect.ethereumSignTypedData(params)
+    return this.#track(TrezorConnect.ethereumSignTypedData(params))
   }
 
   ethereumSignMessage = async (params: any): Promise<any> => {
     await this.#ensureInit()
-    return TrezorConnect.ethereumSignMessage(params)
+    return this.#track(TrezorConnect.ethereumSignMessage(params))
   }
 
   // Cancels any in-flight deep-link call after an abandoned/rejected sign so the
