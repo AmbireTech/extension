@@ -1,4 +1,3 @@
-import { createURL } from 'expo-linking'
 import { EmitterSubscription, Linking } from 'react-native'
 
 import TrezorConnect from '@trezor/connect-mobile'
@@ -25,25 +24,20 @@ const TREZOR_CONNECT_MANIFEST = {
   appIcon: 'https://www.ambire.com/ambire-trezor-connect-icon-light.png'
 }
 
-// The deep link Suite Lite redirects back to once it has a result. Its own
-// `/trezor` path keeps it distinct from the WalletConnect `/wc` deep links.
-const CALLBACK_PATH = '/trezor'
-
-// Deep-link DIRECTLY into the Trezor Suite Lite app (its native connect handler,
-// which is wired to the live device session). Without this, connect-mobile
-// defaults connectSrc to https://connect.trezor.io/<ver>/ and opens the web
-// deeplink instead — which on Android only reaches Suite via App Links and whose
-// handler is NOT bound to the connected device, so Suite reports "device not
-// connected" even while its header shows the device. `trezorsuite://connect` is
-// the one non-HTTPS connectSrc the SDK special-cases for exactly this purpose.
-const TREZOR_SUITE_CONNECT_SRC = 'trezorsuite://connect'
+// The deep link Suite Lite redirects back to once it has a result. Use the app's
+// literal `ambire://` scheme (like WalletConnect's `ambire://wc`) — NOT
+// expo-linking's createURL, because app.json has no `scheme` set, so createURL
+// can't produce a resolvable ambire:// URL and Suite's redirect back would fail
+// (leaving Ambire stuck on the account-picker spinner). The `trezor` host keeps
+// it distinct from the WalletConnect `wc` deep links.
+const CALLBACK_URL = 'ambire://trezor'
 
 class TrezorDeeplinkService {
   #initPromise: Promise<void> | null = null
 
   #deeplinkSubscription: EmitterSubscription | null = null
 
-  #callbackUrl = createURL(CALLBACK_PATH)
+  #callbackUrl = CALLBACK_URL
 
   // Idempotent: the SDK is initialized once and kept for the app's lifetime.
   #ensureInit(): Promise<void> {
@@ -54,12 +48,11 @@ class TrezorDeeplinkService {
       // Suite's redirect back is handled. Other deep links (e.g. WalletConnect)
       // are ignored — only our callback path is forwarded to the SDK.
       this.#deeplinkSubscription = Linking.addEventListener('url', ({ url }) => {
-        if (url.includes(CALLBACK_PATH)) TrezorConnect.handleDeeplink(url)
+        if (url.startsWith(CALLBACK_URL)) TrezorConnect.handleDeeplink(url)
       })
 
       await TrezorConnect.init({
         manifest: TREZOR_CONNECT_MANIFEST,
-        connectSrc: TREZOR_SUITE_CONNECT_SRC,
         deeplinkOpen: async (url: string) => {
           try {
             await Linking.openURL(url)
