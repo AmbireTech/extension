@@ -39,6 +39,13 @@ const CALLBACK_URL = 'ambire://trezor'
 // resolve first, so we only cancel genuine rejects/abandons.
 const RETURN_CANCEL_GRACE_MS = 1500
 
+// Absolute backstop: Suite sends no callback on reject AND the SDK has no
+// timeout, so a call whose result never arrives (e.g. the user rejects and never
+// returns to Ambire, so the AppState fallback never fires) would hang for the
+// app's lifetime. Generous so it never cuts off a user still confirming on the
+// device — MetaMask/WalletConnect use similar multi-minute request expiries.
+const CALL_TIMEOUT_MS = 5 * 60 * 1000
+
 class TrezorDeeplinkService {
   #initPromise: Promise<void> | null = null
 
@@ -97,10 +104,17 @@ class TrezorDeeplinkService {
   }
 
   // Counts a call as in-flight while it awaits a Suite deep-link response, so the
-  // AppState fallback can cancel it if the user returns after rejecting.
+  // AppState fallback can cancel it if the user returns after rejecting, and arms
+  // an absolute timeout so it can never hang for the app's lifetime if the result
+  // never arrives at all. Both cancels are no-ops once the call has settled.
   #track<T>(promise: Promise<T>): Promise<T> {
     this.#pendingCalls += 1
+    const timeout = setTimeout(() => {
+      TrezorConnect.cancel('The Trezor request timed out. Please try again.')
+    }, CALL_TIMEOUT_MS)
+
     return promise.finally(() => {
+      clearTimeout(timeout)
       this.#pendingCalls -= 1
     })
   }
