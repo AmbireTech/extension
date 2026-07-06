@@ -53,7 +53,7 @@
     "extension:type:check": "tsc --noEmit --project tsconfig.typecheck-extension.json",
     "extension:type:check-new": "yarn extension:type:check | yarn tsc-baseline check",
     "extension:type:update": "yarn extension:type:check | yarn tsc-baseline save && node scripts/patchBaseline.js",
-    "setup": "rm src/ambire-common/node_modules -fr && yarn install && yarn allow-scripts && yarn patch-package",
+    "setup": "sh ./scripts/setup.sh",
     "setup:ci": "yarn install --frozen-lockfile && yarn allow-scripts && yarn patch-package"
   },
   "engines": {
