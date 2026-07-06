@@ -11,7 +11,7 @@ import {
 } from '@common/modules/hardware-wallet/interfaces/trezorController'
 
 // Mobile counterpart of the web TrezorController. The actual device handling is
-// delegated to the Trezor Suite Lite app via deep links, driven from the React
+// delegated to the Trezor Suite app via deep links, driven from the React
 // Native native context (see src/mobile/services/trezor/trezorDeeplinkService).
 // This controller runs inside the WebView worker bundle alongside the rest of
 // the ambire-common controllers; its `walletSDK` is a shim that forwards each
@@ -36,17 +36,21 @@ class TrezorController implements ExternalSignerController, TrezorControllerInte
 
   deviceId = ''
 
-  // The native service initializes @trezor/connect-mobile lazily on the first
-  // call, so from the worker's perspective the SDK is always ready to be called.
+  /**
+   * The native service initializes @trezor/connect-mobile lazily on the first
+   * call, so from the worker's perspective the SDK is always ready to be called.
+   */
   isInitiated = true
 
   initialLoadPromise = Promise.resolve()
 
-  // Bridge shim: each method forwards the Trezor Connect call to the native
-  // service and resolves with the raw `{ success, payload }` response. The SDK
-  // methods are overloaded, so the object is cast to the interface once here;
-  // the real type-checking of arguments happens where TrezorSigner /
-  // TrezorKeyIterator call `controller.walletSDK.*` (typed via the interface).
+  /**
+   * Bridge shim: each method forwards the Trezor Connect call to the native
+   * service and resolves with the raw `{ success, payload }` response. The SDK
+   * methods are overloaded, so the object is cast to the interface once here;
+   * the real type-checking of arguments happens where TrezorSigner /
+   * TrezorKeyIterator call `controller.walletSDK.*` (typed via the interface).
+   */
   walletSDK: TrezorWalletSDK = {
     ethereumGetAddress: (params: any) => callNative('trezor.ethereumGetAddress', params),
     getPublicKey: (params: any) => callNative('trezor.getPublicKey', params),

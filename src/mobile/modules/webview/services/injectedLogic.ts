@@ -1,8 +1,5 @@
 // MUST be first: installs a BigInt-safe structuredClone before any controller
 // code runs. iOS 16's native structuredClone corrupts BigInt-containing
-// portfolio state (see structuredCloneShim.ts), crashing the dashboard.
-import { getStructuredCloneShimStatus } from './structuredCloneShim'
-
 import { EventEmitter as Emitter } from 'events'
 
 import { EventEmitterRegistryController } from '@ambire-common/controllers/eventEmitterRegistry/eventEmitterRegistry'
@@ -36,6 +33,8 @@ import {
 } from './bootPhase'
 import { decode, encode } from './bridgeCodec'
 import { createBridgedFetch } from './bridgedFetch'
+// portfolio state (see structuredCloneShim.ts), crashing the dashboard.
+import { getStructuredCloneShimStatus } from './structuredCloneShim'
 import { sendToReactEvent } from './webviewLogger'
 
 // Bridge setup
@@ -233,8 +232,8 @@ const initControllers = (config: any) => {
     // device operations to the native ledgerTransportService over the bridge.
     const ledgerCtrl = new LedgerController()
 
-    // Trezor counterpart; forwards Trezor Connect calls to the native
-    // trezorDeeplinkService (which delegates to the Trezor Suite Lite app).
+    // TrezorController - forwards Trezor Connect calls to the native
+    // trezorDeeplinkService (which delegates to the Trezor Suite app).
     const trezorCtrl = new TrezorController()
 
     mainCtrl = new MainController({

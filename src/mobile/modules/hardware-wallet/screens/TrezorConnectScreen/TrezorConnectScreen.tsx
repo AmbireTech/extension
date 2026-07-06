@@ -18,8 +18,8 @@ import {
   MobileLayoutWrapperMainContent
 } from '@mobile/components/MobileLayoutWrapper'
 
-// Unlike Ledger, Trezor has no in-app device connection on mobile: the only
-// supported path is deep-linking into the Trezor Suite Lite app, which owns the
+// Trezor has no in-app device connection on mobile: the only
+// supported path is deep-linking into the Trezor Suite app, which owns the
 // USB/Bluetooth connection and the on-device confirmation. So this screen has no
 // device discovery — it just kicks off account retrieval (which deep-links to
 // Suite) and advances to account selection once the picker is ready.
@@ -42,7 +42,7 @@ const TrezorConnectScreen = () => {
 
   const startImport = useCallback(() => {
     // Retrieving the accounts triggers a getPublicKey call that deep-links into
-    // Trezor Suite Lite; the user approves there and Suite returns the result.
+    // Trezor Suite app; the user approves there and Suite returns the result.
     setImportStarted(true)
     dispatch({ type: 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_TREZOR' })
   }, [dispatch])
@@ -76,10 +76,10 @@ const TrezorConnectScreen = () => {
         <TrezorBadgeIcon style={{ alignSelf: 'center', marginBottom: 32 }} width={96} height={96} />
 
         <Text weight="medium" style={spacings.mbSm} fontSize={14}>
-          {t('1. Make sure the Trezor Suite Lite app is installed on this phone.')}
+          {t('1. Make sure the Trezor Suite app is installed on this device.')}
         </Text>
         <Text weight="medium" style={spacings.mbSm} fontSize={14}>
-          {t('2. Connect your Trezor to the phone and unlock it.')}
+          {t('2. Connect your Trezor to the device and unlock it.')}
         </Text>
         <Text weight="medium" style={spacings.mbXl} fontSize={14}>
           {t('3. Approve the request in Trezor Suite, then return to Ambire.')}
@@ -89,10 +89,7 @@ const TrezorConnectScreen = () => {
           <Banner
             type="info"
             style={spacings.mbLg}
-            title={t('Trezor on iPhone')}
-            text={t(
-              'On iOS, only the Trezor Safe 7 (which supports Bluetooth) can sign. Other Trezor models are not supported on iPhone — please use Android or the desktop app.'
-            )}
+            title={t('On iOS, only Trezor devices with Bluetooth are supported.')}
           />
         )}
 

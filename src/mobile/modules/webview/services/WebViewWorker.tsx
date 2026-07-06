@@ -457,7 +457,7 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, object>((_, ref) => {
         // --- TREZOR DEVICE DELEGATION HANDLERS ---
         // The worker-side TrezorController forwards each Trezor Connect SDK call
         // here; the SDK (@trezor/connect-mobile) runs natively in
-        // trezorDeeplinkService and delegates to the Trezor Suite Lite app via
+        // trezorDeeplinkService and delegates to the Trezor Suite app via
         // deep links. Each handler returns the raw `{ success, payload }` connect
         // response so the shared TrezorSigner / TrezorKeyIterator can inspect it.
         case 'trezor.ethereumGetAddress':
