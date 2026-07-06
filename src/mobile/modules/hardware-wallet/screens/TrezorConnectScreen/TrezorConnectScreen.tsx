@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef } from 'react'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { View } from 'react-native'
 
 import TrezorBadgeIcon from '@common/assets/svg/TrezorBadgeIcon'
@@ -30,6 +30,12 @@ const TrezorConnectScreen = () => {
   const mainCtrlState = useController('MainController').state
   const { initParams, type } = useController('AccountPickerController').state
 
+  // Set when the user explicitly starts the import on this screen. The deep-link
+  // to Suite must only happen on that action, never on mount — otherwise every
+  // entry (including navigating back from the account picker) would instantly
+  // redirect to Suite and trap the user.
+  const [importStarted, setImportStarted] = useState(false)
+
   // Guards against navigating twice if the picker-ready effect re-fires before
   // this screen unmounts.
   const hasNavigatedRef = useRef(false)
@@ -37,22 +43,19 @@ const TrezorConnectScreen = () => {
   const startImport = useCallback(() => {
     // Retrieving the accounts triggers a getPublicKey call that deep-links into
     // Trezor Suite Lite; the user approves there and Suite returns the result.
+    setImportStarted(true)
     dispatch({ type: 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_TREZOR' })
   }, [dispatch])
 
-  // Kick off the flow on mount (mirrors the extension, which dispatches the
-  // INIT_TREZOR action straight from the "Connect Trezor" option).
+  // Advance to account selection only after the user started the import HERE and
+  // the picker became ready. Gating on `importStarted` prevents auto-forwarding
+  // when the user navigates back and `initParams` is still set from before.
   useEffect(() => {
-    startImport()
-  }, [startImport])
-
-  // Once the account picker is initialized for Trezor, advance to account selection.
-  useEffect(() => {
-    if (initParams && type === 'trezor' && !hasNavigatedRef.current) {
+    if (importStarted && initParams && type === 'trezor' && !hasNavigatedRef.current) {
       hasNavigatedRef.current = true
       goToNextRoute()
     }
-  }, [initParams, type, goToNextRoute])
+  }, [importStarted, initParams, type, goToNextRoute])
 
   const isLoading = mainCtrlState.statuses.handleAccountPickerInitTrezor === 'LOADING'
 
