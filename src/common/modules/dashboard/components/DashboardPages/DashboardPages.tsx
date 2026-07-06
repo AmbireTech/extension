@@ -11,12 +11,12 @@ import useRoute from '@common/hooks/useRoute'
 import flexbox from '@common/styles/utils/flexbox'
 import { getUiType } from '@common/utils/uiType'
 
+import Collections from '../Collections'
+import DeFiPositions from '../DeFiPositions'
 import { TabType } from '../TabsAndSearch/Tabs/Tab/Tab'
 import Tokens from '../Tokens'
 
-// Lazy load all tabs
-const Collections = lazy(() => import('../Collections'))
-const DeFiPositions = lazy(() => import('../DeFiPositions'))
+// Lazy load the activity because of the humanizer
 const Activity = lazy(() => import('../Activity'))
 
 interface Props {

@@ -479,6 +479,20 @@ module.exports = async function buildExtension(
     } else {
       hardenTerser(config)
     }
+
+    if (process.env.ANALYZE === 'true') {
+      const { BundleAnalyzerPlugin } = require('webpack-bundle-analyzer')
+      config.plugins.push(
+        new BundleAnalyzerPlugin({
+          analyzerMode: 'static', // writes a self-contained HTML report
+          reportFilename: 'bundle-report.html',
+          openAnalyzer: true,
+          generateStatsFile: true,
+          statsFilename: 'stats.json',
+          defaultSizes: 'parsed'
+        })
+      )
+    }
   } else if (config.mode === 'development') {
     // Expo bakes the dev-server host (0.0.0.0) into the HMR WebSocket URL. Chrome connects
     // to ws://0.0.0.0 fine, but Firefox refuses it, and the extension pages can't fall back
@@ -530,20 +544,6 @@ module.exports = async function buildExtension(
         })
       }
     })
-  }
-
-  if (process.env.ANALYZE === 'true') {
-    const { BundleAnalyzerPlugin } = require('webpack-bundle-analyzer')
-    config.plugins.push(
-      new BundleAnalyzerPlugin({
-        analyzerMode: 'static', // writes a self-contained HTML report
-        reportFilename: 'bundle-report.html',
-        openAnalyzer: true,
-        generateStatsFile: true,
-        statsFilename: 'stats.json',
-        defaultSizes: 'parsed'
-      })
-    )
   }
 
   return config
