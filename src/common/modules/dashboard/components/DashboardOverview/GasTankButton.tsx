@@ -130,9 +130,7 @@ const GasTankButton = ({ onPress, portfolio, account }: Props) => {
 
   const text = useMemo(() => {
     if (shouldDisplaySafeGasTankBanner) {
-      return totalBalanceGasTankDetails.balanceUSD === 0
-        ? '$0'
-        : `${totalBalanceGasTankDetails.balanceUSDFormatted}`
+      return t('Gas Tank')
     }
 
     if (['generic', 'error'].includes(buttonState)) return t('Gas Tank')
@@ -154,8 +152,9 @@ const GasTankButton = ({ onPress, portfolio, account }: Props) => {
     return ''
   }, [buttonState, t])
 
-  const shouldDisplayOnGasTank = buttonState === 'balance' || shouldDisplaySafeGasTankBanner
-  const shouldDisplayValue = buttonState === 'balance' || shouldDisplaySafeGasTankBanner
+  const shouldDisplayOnGasTank = buttonState === 'balance' && !shouldDisplaySafeGasTankBanner
+  const shouldDisplayValue = buttonState === 'balance'
+  const shouldDisplayPrimaryText = shouldDisplayValue || shouldDisplaySafeGasTankBanner
   const isRegularHovered = isHovered && !shouldDisplaySafeGasTankBanner
   const isSafeGasTankBannerHovered = isHovered && shouldDisplaySafeGasTankBanner
   const primaryButtonTextColor = useMemo(() => {
@@ -293,7 +292,7 @@ const GasTankButton = ({ onPress, portfolio, account }: Props) => {
               })
             : {}
         }
-        color={shouldDisplayValue ? primaryButtonTextColor : secondaryButtonTextColor}
+        color={shouldDisplayPrimaryText ? primaryButtonTextColor : secondaryButtonTextColor}
         weight="number_medium"
         fontSize={shouldDisplaySafeGasTankBanner ? 13 : 12}
       >
