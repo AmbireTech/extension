@@ -3305,16 +3305,16 @@
     "@peculiar/asn1-schema" "^2.3.13"
 
 "@safe-global/safe-deployments@^1.37.56":
-  version "1.37.58"
-  resolved "https://registry.yarnpkg.com/@safe-global/safe-deployments/-/safe-deployments-1.37.58.tgz#64f70ff4be7bbb93714396c7fee895dee2683e4d"
-  integrity sha512-OZJamxC1rI4s/EWH9ss+FOMPutbDsSOUHjdtjkSqHXRca+p+/yMERduQSKi3Th3vzLDFqnpdch1+/sx0DJVJHQ==
+  version "1.37.56"
+  resolved "https://registry.yarnpkg.com/@safe-global/safe-deployments/-/safe-deployments-1.37.56.tgz#8a13d2aed4d8bfb5ab8fcc105fec3025b45114e5"
+  integrity sha512-HF3ETre/KSP3nCOZ72XEbq5U56gOGgYLJ22LxOAnR8+YzMjzZ8cpnHpx5Z31Zt1xkUTGSCMi9XF950lJt6WbsQ==
   dependencies:
     semver "^7.6.2"
 
 "@safe-global/safe-modules-deployments@^3.0.4":
-  version "3.0.6"
-  resolved "https://registry.yarnpkg.com/@safe-global/safe-modules-deployments/-/safe-modules-deployments-3.0.6.tgz#b6db71df4951474628d52c90481e27f77a2317f3"
-  integrity sha512-k5zfRNb1OFi+uhFfV7nhmGpFi4NsVuLsVn6R+c9AaAi00y39FaFaUSUCptKyDEqZPzfHYVLPBREfeCITZmVqxw==
+  version "3.0.4"
+  resolved "https://registry.yarnpkg.com/@safe-global/safe-modules-deployments/-/safe-modules-deployments-3.0.4.tgz#36fae3e242f4a5caab7fd8a61aec3bdd6fe2af2e"
+  integrity sha512-aOFcv5tLPA/CS50Lknuo0QyB+zbwTCLKhnwzOoHRU9az6YDhB1q7ppq3jYk7+xhvzluhpPEfDd8HGKAOxHpLoQ==
 
 "@safe-global/types-kit@^3.1.0":
   version "3.1.0"

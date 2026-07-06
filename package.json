@@ -303,7 +303,9 @@
   },
   "resolutions": {
     "elliptic": "^6.6.1",
-    "browserslist": "^4.23.0"
+    "browserslist": "^4.23.0",
+    "@safe-global/safe-deployments": "1.37.56",
+    "@safe-global/safe-modules-deployments": "3.0.4"
   },
   "private": true,
   "lavamoat": {
