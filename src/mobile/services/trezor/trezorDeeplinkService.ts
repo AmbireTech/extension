@@ -1,4 +1,4 @@
-import { AppState, EmitterSubscription, Linking, NativeEventSubscription } from 'react-native'
+import { EmitterSubscription, Linking } from 'react-native'
 
 import TrezorConnect from '@trezor/connect-mobile'
 
@@ -32,29 +32,23 @@ const TREZOR_CONNECT_MANIFEST = {
 // it distinct from the WalletConnect `wc` deep links.
 const CALLBACK_URL = 'ambire://trezor'
 
-// Trezor Suite deep-links back to us on approval but NOT on reject/cancel — it
-// just stays on its own screen. So when the user returns to Ambire with a call
-// still in flight, we treat it as a cancellation. This grace window lets an
-// in-flight approval callback (which arrives right as the app becomes active)
-// resolve first, so we only cancel genuine rejects/abandons.
-const RETURN_CANCEL_GRACE_MS = 1500
-
-// Absolute backstop: Suite sends no callback on reject AND the SDK has no
-// timeout, so a call whose result never arrives (e.g. the user rejects and never
-// returns to Ambire, so the AppState fallback never fires) would hang for the
-// app's lifetime. Generous so it never cuts off a user still confirming on the
-// device — MetaMask/WalletConnect use similar multi-minute request expiries.
+// Absolute backstop for a call whose result never arrives. Trezor Suite sends NO
+// callback when the user rejects/cancels on the device (verified in trezor-suite:
+// the reject path lands in the `call-error` state, which its deeplinkCallback
+// reducer never redirects from), and connect-mobile has no timeout — so the
+// promise would otherwise hang for the app's lifetime. We deliberately do NOT
+// auto-cancel when the app returns to the foreground: that can't tell a genuine
+// reject from the user briefly switching back to Ambire before confirming in
+// Suite, and would wrongly kill a still-valid request. The user cancels
+// explicitly via the signing modal's "Cancel request" button; this timeout is
+// only the last-resort net. Generous so it never cuts off a slow confirmation —
+// MetaMask/WalletConnect use similar multi-minute request expiries.
 const CALL_TIMEOUT_MS = 5 * 60 * 1000
 
 class TrezorDeeplinkService {
   #initPromise: Promise<void> | null = null
 
   #deeplinkSubscription: EmitterSubscription | null = null
-
-  #appStateSubscription: NativeEventSubscription | null = null
-
-  // Number of SDK calls awaiting a Suite deep-link response.
-  #pendingCalls = 0
 
   #callbackUrl = CALLBACK_URL
 
@@ -68,18 +62,6 @@ class TrezorDeeplinkService {
       // are ignored — only our callback path is forwarded to the SDK.
       this.#deeplinkSubscription = Linking.addEventListener('url', ({ url }) => {
         if (url.startsWith(CALLBACK_URL)) TrezorConnect.handleDeeplink(url)
-      })
-
-      // Reject-in-Suite fallback: Suite sends no callback on cancel, so the only
-      // signal is the user coming back to Ambire with a call unresolved.
-      this.#appStateSubscription = AppState.addEventListener('change', (state) => {
-        if (state !== 'active' || this.#pendingCalls === 0) return
-        setTimeout(() => {
-          // If an approval callback resolved the call in the meantime, #pendingCalls
-          // is already 0 and this is a no-op.
-          if (this.#pendingCalls > 0)
-            TrezorConnect.cancel('The request was cancelled in Trezor Suite.')
-        }, RETURN_CANCEL_GRACE_MS)
       })
 
       await TrezorConnect.init({
@@ -103,19 +85,16 @@ class TrezorDeeplinkService {
     return this.#initPromise
   }
 
-  // Counts a call as in-flight while it awaits a Suite deep-link response, so the
-  // AppState fallback can cancel it if the user returns after rejecting, and arms
-  // an absolute timeout so it can never hang for the app's lifetime if the result
-  // never arrives at all. Both cancels are no-ops once the call has settled.
+  // Arms an absolute timeout so a call can never hang for the app's lifetime if
+  // its result never arrives (see CALL_TIMEOUT_MS). The cancel is a no-op once
+  // the call has settled.
   #track<T>(promise: Promise<T>): Promise<T> {
-    this.#pendingCalls += 1
     const timeout = setTimeout(() => {
       TrezorConnect.cancel('The Trezor request timed out. Please try again.')
     }, CALL_TIMEOUT_MS)
 
     return promise.finally(() => {
       clearTimeout(timeout)
-      this.#pendingCalls -= 1
     })
   }
 

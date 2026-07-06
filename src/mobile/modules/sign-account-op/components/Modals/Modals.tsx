@@ -30,12 +30,16 @@ const Modals: FC<ModalsProps> = ({
   handleDismissLedgerConnectModal
 }) => {
   const { t } = useTranslation()
-  const { signAccountOpController: swapAndBridgeSignAccountOp } =
-    useController('SwapAndBridgeController').state
   const {
-    state: { signAccountOpController: transferSignAccountOp }
+    state: { signAccountOpController: swapAndBridgeSignAccountOp },
+    dispatch: swapAndBridgeDispatch
+  } = useController('SwapAndBridgeController')
+  const {
+    state: { signAccountOpController: transferSignAccountOp },
+    dispatch: transferDispatch
   } = useController('TransferController')
-  const currentSignAccountOp = useController('SignAccountOpController').state
+  const { state: currentSignAccountOp, dispatch: signAccountOpDispatch } =
+    useController('SignAccountOpController')
 
   if (renderedButNotNecessarilyVisibleModal === 'warnings') {
     return (
@@ -130,6 +134,25 @@ const Modals: FC<ModalsProps> = ({
         hardwareWalletSigningRequest={signAccountOpState.hardwareWalletSigningRequest}
         accountOp={signAccountOpState.accountOp}
         actionType={actionType}
+        cancelReq={() => {
+          if (actionType === 'swapAndBridge') {
+            return swapAndBridgeDispatch({
+              type: 'method',
+              params: { method: 'cancelSignReq', args: [] }
+            })
+          }
+          if (actionType === 'transfer') {
+            return transferDispatch({
+              type: 'method',
+              params: { method: 'cancelSignReq', args: [] }
+            })
+          }
+
+          signAccountOpDispatch({
+            type: 'method',
+            params: { method: 'cancelSignReq', args: [] }
+          })
+        }}
       />
     )
   }
