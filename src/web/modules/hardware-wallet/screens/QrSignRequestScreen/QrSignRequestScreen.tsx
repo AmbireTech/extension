@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useMemo } from 'react'
 import { View } from 'react-native'
 
 import { HardwareWalletSigningRequest } from '@ambire-common/interfaces/signAccountOp'
@@ -6,8 +6,10 @@ import Button from '@common/components/Button'
 import FooterGlassView from '@common/components/FooterGlassView'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
+import useTheme from '@common/hooks/useTheme'
 import SigningRequestDetails from '@common/modules/hardware-wallets/components/SigningRequestDetails'
 import spacings, { SPACING_LG } from '@common/styles/spacings'
+import { THEME_TYPES } from '@common/styles/themeConfig'
 import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import { AnimatedQRCode } from '@keystonehq/animated-qr'
@@ -38,27 +40,43 @@ const QrSignRequestScreen = ({
   signingRequest = null
 }: Props) => {
   const { t } = useTranslation()
+  const { themeType } = useTheme()
+  const isDarkMode = themeType === THEME_TYPES.DARK
   const baseQrSize = transactionProgress ? BASE_QR_SIZE_WITH_PROGRESS : BASE_QR_SIZE
-  const qrSize = baseQrSize - QR_QUIET_ZONE * 2
+  const qrSize = useMemo(
+    () => (isDarkMode ? baseQrSize - QR_QUIET_ZONE * 2 : baseQrSize),
+    [baseQrSize, isDarkMode]
+  )
+
+  const qrCode = useMemo(
+    () => (
+      <AnimatedQRCode
+        options={{ size: qrSize, interval: ANIMATION_INTERVAL }}
+        type={urType}
+        cbor={urCborHex}
+      />
+    ),
+    [qrSize, urType, urCborHex]
+  )
 
   return (
     <View style={[flexbox.center, { width: '100%', flexGrow: 1, flexShrink: 0 }]}>
       <Text>{t('Scan this QR code with your QR-based device to sign.')}</Text>
       <View style={[flexbox.center, flexbox.flex1, spacings.mtSm, { width: '100%' }]}>
-        <View
-          style={[
-            spacings.ph,
-            spacings.pv,
-            common.borderRadiusPrimary,
-            { backgroundColor: '#fff' }
-          ]}
-        >
-          <AnimatedQRCode
-            options={{ size: qrSize, interval: ANIMATION_INTERVAL }}
-            type={urType}
-            cbor={urCborHex}
-          />
-        </View>
+        {isDarkMode ? (
+          <View
+            style={[
+              spacings.phLg,
+              spacings.pvLg,
+              common.borderRadiusPrimary,
+              { backgroundColor: '#fff' }
+            ]}
+          >
+            {qrCode}
+          </View>
+        ) : (
+          qrCode
+        )}
         {transactionProgress ? (
           <Text fontSize={14} weight="medium" style={spacings.mtSm}>
             {transactionProgress.current} / {transactionProgress.total}{' '}
