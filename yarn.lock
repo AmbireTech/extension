@@ -3279,24 +3279,24 @@
   resolved "https://registry.yarnpkg.com/@rtsao/scc/-/scc-1.1.0.tgz#927dd2fae9bc3361403ac2c7a00c32ddce9ad7e8"
   integrity sha512-zt6OdqaDoOnJ1ZYsCYGt9YmWzDXl4vQdKTyJev62gFhRGKdx7mcT54V9KIjg+d2wi9EXsPvAPKe7i7WjfVWB8g==
 
-"@safe-global/api-kit@4.0.1":
-  version "4.0.1"
-  resolved "https://registry.yarnpkg.com/@safe-global/api-kit/-/api-kit-4.0.1.tgz#91414e19377f985ac30f03fd0508a11e70d867b3"
-  integrity sha512-pNtDLgMHlCSr4Hwwe6jsnvMheAu2SZCTqjYlnNe4cKH2pSKINVRTiILoeJ0wOpixrMCH4NlgJ+9N3QruRNcCpQ==
+"@safe-global/api-kit@4.2.0":
+  version "4.2.0"
+  resolved "https://registry.yarnpkg.com/@safe-global/api-kit/-/api-kit-4.2.0.tgz#e184dae6e704f11dca47887feee16bb9a0ae4f18"
+  integrity sha512-K65OCsIXq70y19qliu6cjpzCGYpOQ7gsBClLTxktDBNayk/G8udef23Di162jv4xWNf3KQ2+OX844/80g6wQ/A==
   dependencies:
-    "@safe-global/protocol-kit" "^6.1.2"
-    "@safe-global/types-kit" "^3.0.0"
+    "@safe-global/protocol-kit" "^7.2.0"
+    "@safe-global/types-kit" "^3.1.0"
     node-fetch "^2.7.0"
     viem "^2.21.8"
 
-"@safe-global/protocol-kit@^6.1.2":
-  version "6.1.2"
-  resolved "https://registry.yarnpkg.com/@safe-global/protocol-kit/-/protocol-kit-6.1.2.tgz#6cafd55aaf119998b794ff3a0cdaa2556ba2374c"
-  integrity sha512-cTpPdUAS2AMfGCkD1T601rQNjT0rtMQLA2TH7L/C+iFPAC6WrrDFop2B9lzeHjczlnVzrRpfFe4cL1bLrJ9NZw==
+"@safe-global/protocol-kit@^7.2.0":
+  version "7.2.0"
+  resolved "https://registry.yarnpkg.com/@safe-global/protocol-kit/-/protocol-kit-7.2.0.tgz#aff05e3d9b404631d1c54d0a921d92405967ff8f"
+  integrity sha512-ALYkC2UmtZRdz7nFf55d1lcXcrTAZNS1bNDnyeBqCCLVKy/VEFU6orAi1+hdQGaaxoAPx5KsqH6LmOC40RLvWQ==
   dependencies:
-    "@safe-global/safe-deployments" "^1.37.49"
-    "@safe-global/safe-modules-deployments" "^2.2.21"
-    "@safe-global/types-kit" "^3.0.0"
+    "@safe-global/safe-deployments" "^1.37.56"
+    "@safe-global/safe-modules-deployments" "^3.0.4"
+    "@safe-global/types-kit" "^3.1.0"
     abitype "^1.0.2"
     semver "^7.7.2"
     viem "^2.21.8"
@@ -3304,22 +3304,22 @@
     "@noble/curves" "^1.6.0"
     "@peculiar/asn1-schema" "^2.3.13"
 
-"@safe-global/safe-deployments@^1.37.49":
-  version "1.37.51"
-  resolved "https://registry.yarnpkg.com/@safe-global/safe-deployments/-/safe-deployments-1.37.51.tgz#a527843117787f6ba5de84851f3475e60a8f866f"
-  integrity sha512-w+p9XOtoS6j0sN57zfKkSGz2ts0blf+gzVZz5sqKUlov4wsSJdqtaUPcNJnKvpV8x1aes/k1Do7qJMBvJivPtQ==
+"@safe-global/safe-deployments@1.37.56", "@safe-global/safe-deployments@^1.37.56":
+  version "1.37.56"
+  resolved "https://registry.yarnpkg.com/@safe-global/safe-deployments/-/safe-deployments-1.37.56.tgz#8a13d2aed4d8bfb5ab8fcc105fec3025b45114e5"
+  integrity sha512-HF3ETre/KSP3nCOZ72XEbq5U56gOGgYLJ22LxOAnR8+YzMjzZ8cpnHpx5Z31Zt1xkUTGSCMi9XF950lJt6WbsQ==
   dependencies:
     semver "^7.6.2"
 
-"@safe-global/safe-modules-deployments@^2.2.21":
-  version "2.2.23"
-  resolved "https://registry.yarnpkg.com/@safe-global/safe-modules-deployments/-/safe-modules-deployments-2.2.23.tgz#5a6a49a17ed4b147006fdf89f46e7f2c03b57721"
-  integrity sha512-73V/PM3ire3Xc2JacalHEif3E3zyIF5xpJ9c0MVrzK3eS5S04CaTaTH/Sy6kCqh4g5fmJp/8Mc4hs20Op/Cd6A==
+"@safe-global/safe-modules-deployments@3.0.4", "@safe-global/safe-modules-deployments@^3.0.4":
+  version "3.0.4"
+  resolved "https://registry.yarnpkg.com/@safe-global/safe-modules-deployments/-/safe-modules-deployments-3.0.4.tgz#36fae3e242f4a5caab7fd8a61aec3bdd6fe2af2e"
+  integrity sha512-aOFcv5tLPA/CS50Lknuo0QyB+zbwTCLKhnwzOoHRU9az6YDhB1q7ppq3jYk7+xhvzluhpPEfDd8HGKAOxHpLoQ==
 
-"@safe-global/types-kit@^3.0.0":
-  version "3.0.0"
-  resolved "https://registry.yarnpkg.com/@safe-global/types-kit/-/types-kit-3.0.0.tgz#b35826af0e417fa02a540b874c109b5ddb5ed086"
-  integrity sha512-AZWIlR5MguDPdGiOj7BB4JQPY2afqmWQww1mu8m8Oi16HHBW99G01kFOu4NEHBwEU1cgwWOMY19hsI5KyL4W2w==
+"@safe-global/types-kit@^3.1.0":
+  version "3.1.0"
+  resolved "https://registry.yarnpkg.com/@safe-global/types-kit/-/types-kit-3.1.0.tgz#c18a784d365df8757a1f51bb2ee56c1d73889f0c"
+  integrity sha512-uI6lFV8wOji4rb7juu0/LRMND0rq2NWaqH4zFzE2FUjO8lTvbCT+/5W/+flUUfkcaqyLDlJ1OPjasa2bEakrbw==
   dependencies:
     abitype "^1.0.2"
 
