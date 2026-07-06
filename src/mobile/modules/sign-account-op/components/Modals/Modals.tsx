@@ -10,6 +10,7 @@ import { ModalsProps } from '@common/modules/sign-account-op/types/modals'
 import LedgerConnectModal from '@common/modules/hardware-wallets/components/LedgerConnectModal'
 import spacings from '@common/styles/spacings'
 import text from '@common/styles/utils/text'
+import trezorDeeplinkService from '@mobile/services/trezor/trezorDeeplinkService'
 
 const Modals: FC<ModalsProps> = ({
   renderedButNotNecessarilyVisibleModal,
@@ -135,6 +136,14 @@ const Modals: FC<ModalsProps> = ({
         accountOp={signAccountOpState.accountOp}
         actionType={actionType}
         cancelReq={() => {
+          // Release the pending Trezor deep-link call so the native SDK promise
+          // settles now instead of waiting for the absolute timeout. This is
+          // LOCAL only — Suite exposes no remote-cancel (verified in trezor-suite:
+          // no cancel deeplink method/URL, and its cancel thunk has no external
+          // trigger), so Suite's on-device prompt must still be dismissed by the
+          // user (press ✗ on the device or Close in Suite).
+          void trezorDeeplinkService.signingCleanup()
+
           if (actionType === 'swapAndBridge') {
             return swapAndBridgeDispatch({
               type: 'method',
