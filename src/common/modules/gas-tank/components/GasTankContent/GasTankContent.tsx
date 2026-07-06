@@ -58,7 +58,8 @@ const SUPPORTED_NETWORKS: SupportedNetwork[] = [
   },
   { name: 'Ink', chainId: 57073n },
   { name: 'Linea', chainId: 59144n },
-  { name: 'Scroll', chainId: 534352n }
+  { name: 'Scroll', chainId: 534352n },
+  { name: 'Kaia', chainId: 8217n }
 ]
 
 const BENEFITS = [
