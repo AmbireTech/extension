@@ -85,6 +85,24 @@ class TrezorDeeplinkService {
     return this.#initPromise
   }
 
+  // A `success: false` result that comes back through the Suite deep link means
+  // the user cancelled in Suite — on mobile, genuine device/connection errors
+  // never redirect back (they leave the promise hanging), so anything that DOES
+  // return unsuccessfully is a cancellation. Suite sends it with an empty
+  // payload (no `code`/`error`), which the shared error mapping would otherwise
+  // render as the misleading "Could not connect to your Trezor device". Stamp a
+  // clear cancel message so the signer surfaces the real reason. (Our own
+  // cancel/timeout resolves with `success: undefined`, not `false`, and already
+  // carries its own message, so it's untouched here.)
+  #normalizeDeeplinkFailure = (res: any): any => {
+    if (res?.success !== false) return res
+
+    const payload = res.payload || {}
+    if (payload.code || payload.error || payload.message) return res
+
+    return { ...res, payload: { ...payload, error: 'The request was cancelled in Trezor Suite.' } }
+  }
+
   // Arms an absolute timeout so a call can never hang for the app's lifetime if
   // its result never arrives (see CALL_TIMEOUT_MS). The cancel is a no-op once
   // the call has settled.
@@ -93,9 +111,11 @@ class TrezorDeeplinkService {
       TrezorConnect.cancel('The Trezor request timed out. Please try again.')
     }, CALL_TIMEOUT_MS)
 
-    return promise.finally(() => {
-      clearTimeout(timeout)
-    })
+    return promise
+      .then((res) => this.#normalizeDeeplinkFailure(res))
+      .finally(() => {
+        clearTimeout(timeout)
+      })
   }
 
   // Pure passthroughs: the params/response cross the worker bridge as JSON, and
