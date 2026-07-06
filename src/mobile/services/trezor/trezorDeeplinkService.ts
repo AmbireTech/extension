@@ -29,6 +29,15 @@ const TREZOR_CONNECT_MANIFEST = {
 // `/trezor` path keeps it distinct from the WalletConnect `/wc` deep links.
 const CALLBACK_PATH = '/trezor'
 
+// Deep-link DIRECTLY into the Trezor Suite Lite app (its native connect handler,
+// which is wired to the live device session). Without this, connect-mobile
+// defaults connectSrc to https://connect.trezor.io/<ver>/ and opens the web
+// deeplink instead — which on Android only reaches Suite via App Links and whose
+// handler is NOT bound to the connected device, so Suite reports "device not
+// connected" even while its header shows the device. `trezorsuite://connect` is
+// the one non-HTTPS connectSrc the SDK special-cases for exactly this purpose.
+const TREZOR_SUITE_CONNECT_SRC = 'trezorsuite://connect'
+
 class TrezorDeeplinkService {
   #initPromise: Promise<void> | null = null
 
@@ -50,6 +59,7 @@ class TrezorDeeplinkService {
 
       await TrezorConnect.init({
         manifest: TREZOR_CONNECT_MANIFEST,
+        connectSrc: TREZOR_SUITE_CONNECT_SRC,
         deeplinkOpen: async (url: string) => {
           try {
             await Linking.openURL(url)
