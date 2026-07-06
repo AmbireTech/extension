@@ -33,6 +33,7 @@ const ManifestImage = ({
   hideOnError = false
 }: Props) => {
   const { theme } = useTheme()
+
   const [isLoading, setIsLoading] = useState(true)
   const [hasError, setHasError] = useState(false)
   const [currentUri, setCurrentUri] = useState({
@@ -53,7 +54,9 @@ const ManifestImage = ({
     }
   }, [currentUri.index, uris])
 
-  const onLoadEnd = useCallback(() => setIsLoading(false), [])
+  const onLoadEnd = useCallback(() => {
+    setIsLoading(false)
+  }, [])
 
   useEffect(() => {
     if (!uris.length && !uri) {
@@ -68,7 +71,7 @@ const ManifestImage = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [uri, uris?.length])
 
-  if (hideOnError && !isLoading && hasError && !fallback) return null
+    if (hideOnError && !isLoading && hasError && !fallback) return null
 
   return (
     <View

@@ -822,3 +822,22 @@ try {
 // evaluation of worker script. More info: https://developer.chrome.com/docs/extensions/mv3/service_workers/events/
 // Would be tricky to replace this workaround with different logic, but it's doable.
 if ('hid' in navigator) navigator.hid.addEventListener('disconnect', () => {})
+
+// Reset the dashboard network filter when the user's computer wakes up or unlocks.
+// This prevents the confusing situation where the user returns to find only one network's
+// assets displayed because they had filtered before putting the computer to sleep.
+try {
+  browser.idle.onStateChanged.addListener((newState: chrome.idle.IdleState) => {
+    if (newState !== 'active') return
+    if (!mainCtrl || !mainCtrl.selectedAccount.account) {
+      console.error(
+        'Idle state changed to active but mainCtrl or selected account is not initialized',
+        mainCtrl
+      )
+      return
+    }
+    mainCtrl.selectedAccount.setDashboardNetworkFilter(null)
+  })
+} catch (error) {
+  console.error('Failed to register browser.idle.onStateChanged listener', error)
+}

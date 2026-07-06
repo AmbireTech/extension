@@ -57,7 +57,7 @@ Workflow
 10. Apply the exclusion rules (see "Excluded product areas" below) to drop Rewards/Legends PRs. Every other PR is included.
 11. Convert each remaining PR into a changelog entry.
 12. Categorize each remaining PR as Added, Changed, or Fixed.
-13. Preserve the original merge-commit timeline within each category.
+13. Order entries within each category oldest-merge first (chronological). Note that `git log` lists newest merges first, so reverse that order.
 14. Always append a Full Changelog GitHub compare link.
 
 ## ambire-common submodule bump (root repo changelogs only)
@@ -206,7 +206,7 @@ Start the changelog with exactly: "Changelog:"
 
 Keep all entries in one flat bullet list. Group entries in this order: Added, Changed, Fixed.
 
-Within each category group, preserve the original merge-commit order.
+Within each category group, order entries oldest-merge first (chronological). Since `git log` outputs newest merges first, reverse that order so the earliest-merged PR appears at the top of each group.
 
 Do not add category headings or visual separators between groups.
 
@@ -245,6 +245,7 @@ Always use the current public product names in changelog entries, regardless of 
 |-------------------------------|----------------------------------|
 | Benzin                        | Ambire Explorer                  |
 | Legends                       | Ambire Rewards                   |
+| Sign Account Op screen        | Ambire Transaction Builder       |
 
 Apply this silently — do not mention the rename in the entry.
 
