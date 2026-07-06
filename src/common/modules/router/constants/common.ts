@@ -21,7 +21,6 @@ const COMMON_ROUTES = {
   qrConnect: 'qr-connect',
   transfer: 'transfer',
   topUpGasTank: 'top-up-gas-tank',
-  gasTank: 'gas-tank',
   tokenDetails: 'token-details',
   accountSelect: 'account-select',
   receive: 'receive',

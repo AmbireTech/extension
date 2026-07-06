@@ -17,11 +17,10 @@ import useHasGasTank from '@common/hooks/useHasGasTank'
 import useNavigation from '@common/hooks/useNavigation'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
-import { ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { getGasTankTokenDetails } from '@common/utils/getGasTankTokenDetails'
-import { openInTab, openInternalPageInTab } from '@common/utils/links'
+import { openInTab } from '@common/utils/links'
 import { getUiType } from '@common/utils/uiType'
 
 import getStyles from './styles'
@@ -45,7 +44,6 @@ const GasTankModal = ({ modalRef, handleClose, portfolio, account }: Props) => {
     state: { networks }
   } = useController('NetworksController')
   const { canUseGasTank, disabledReason } = useHasGasTank({ account })
-  const isSafeAccount = !!account?.safeCreation
 
   // Note: total balance Gas Tank details
   const { token, balanceFormatted } = useMemo(
@@ -55,25 +53,11 @@ const GasTankModal = ({ modalRef, handleClose, portfolio, account }: Props) => {
 
   const handleLearnMorePress = useCallback(async () => {
     try {
-      if (!isSafeAccount) {
-        await openInTab({ url: GAS_TANK_HELP_URL })
-        return
-      }
-
-      if (isWeb) {
-        await openInternalPageInTab({
-          route: ROUTES.gasTank,
-          shouldCloseCurrentWindow: isPopup
-        })
-        return
-      }
-
-      handleClose()
-      navigate(ROUTES.gasTank)
+      await openInTab({ url: GAS_TANK_HELP_URL })
     } catch {
       addToast("Couldn't open link", { type: 'error' })
     }
-  }, [addToast, handleClose, isPopup, isSafeAccount, navigate])
+  }, [addToast])
 
   return (
     <BottomSheet

@@ -17,7 +17,6 @@ import SeedPhraseImportScreen from '@mobile/modules/auth/screens/SeedPhraseImpor
 import ViewOnlyAccountAdderScreen from '@mobile/modules/auth/screens/ViewOnlyAccountAdderScreen'
 import ExploreScreen from '@mobile/modules/explore/screens/ExploreScreen'
 import ExploreSectionScreen from '@mobile/modules/explore/screens/ExploreSectionScreen'
-import GasTankScreen from '@mobile/modules/gas-tank/screens/GasTankScreen'
 import LedgerConnectScreen from '@mobile/modules/hardware-wallet/screens/LedgerConnectScreen'
 import KeyStoreSetupScreen from '@mobile/modules/keystore/screens/KeyStoreSetupScreen'
 import NetworksConfiguration from '@mobile/modules/network-settings/screens'
@@ -68,7 +67,6 @@ const MainRoutes = () => {
           <Route path={ROUTES.receive} element={<ReceiveScreen />} />
           <Route path={ROUTES.transfer} element={<TransferScreen />} />
           <Route path={ROUTES.topUpGasTank} element={<TransferScreen isTopUpScreen />} />
-          <Route path={ROUTES.gasTank} element={<GasTankScreen />} />
           <Route path={ROUTES.accountSelect} element={<AccountSelectScreen />} />
           <Route path={ROUTES.tokenDetails} element={<TokenDetailsScreen />} />
           <Route path={ROUTES.networks} element={<NetworksScreen />} />

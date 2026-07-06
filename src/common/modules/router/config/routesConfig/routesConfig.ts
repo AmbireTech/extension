@@ -313,13 +313,6 @@ const routesConfig: RouteConfig = {
     }),
     name: Platform.select({ default: i18n.t('Top Up Gas Tank') })
   },
-  [ROUTES.gasTank]: {
-    route: ROUTES.gasTank,
-    title: Platform.select({
-      default: i18n.t('Gas tank for Safe accounts')
-    }),
-    name: Platform.select({ default: i18n.t('Gas tank for Safe accounts') })
-  },
   [ROUTES.swapAndBridge]: {
     route: ROUTES.swapAndBridge,
     title: Platform.select({
