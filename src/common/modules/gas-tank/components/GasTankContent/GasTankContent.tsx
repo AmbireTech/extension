@@ -49,17 +49,9 @@ const SUPPORTED_NETWORKS: SupportedNetwork[] = [
   { name: 'Celo', chainId: 42220n },
   { name: 'Arbitrum', chainId: 42161n },
   { name: 'Avalanche', chainId: 43114n },
-  {
-    name: 'Robinhood',
-    chainId: 46630n,
-    iconUrls: [
-      'https://assets.coingecko.com/asset_platforms/images/102132299/standard/robinhood.png'
-    ]
-  },
   { name: 'Ink', chainId: 57073n },
   { name: 'Linea', chainId: 59144n },
-  { name: 'Scroll', chainId: 534352n },
-  { name: 'Kaia', chainId: 8217n }
+  { name: 'Scroll', chainId: 534352n }
 ]
 
 const BENEFITS = [
