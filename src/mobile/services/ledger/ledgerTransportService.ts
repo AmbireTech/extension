@@ -1,23 +1,37 @@
-import { TypedDataEncoder } from 'ethers'
 import { PermissionsAndroid, Platform } from 'react-native'
+import { BleManager, State as BleState } from 'react-native-ble-plx'
+import { Observable } from 'rxjs'
 import { Hex } from 'viem'
 
 import { BIP44_LEDGER_DERIVATION_TEMPLATE } from '@ambire-common/consts/derivation'
-import { getHdPathFromTemplate } from '@ambire-common/utils/hdPath'
+import { getHdPathFromTemplate, getHdPathWithoutRoot } from '@ambire-common/utils/hdPath'
+import hexStringToUint8Array from '@ambire-common/utils/hexStringToUint8Array'
 import wait from '@ambire-common/utils/wait'
-import { withTimeout } from '@ambire-common/utils/with-timeout'
-import AppEth, { ledgerService } from '@ledgerhq/hw-app-eth'
-import type Transport from '@ledgerhq/hw-transport'
-import TransportBLE from '@ledgerhq/react-native-hw-transport-ble'
-
-import ledgerUsbTransport from './ledgerUsbTransport'
+import { isProd } from '@common/config/env'
+import { ContextModuleBuilder } from '@ledgerhq/context-module'
+import {
+  DeviceActionStatus,
+  DeviceManagementKitBuilder,
+  DeviceStatus,
+  DiscoveredDevice,
+  UserInteractionRequired
+} from '@ledgerhq/device-management-kit'
+import { SignerEthBuilder, TypedDataDomain } from '@ledgerhq/device-signer-kit-ethereum'
+import { RNBleTransportFactory } from '@ledgerhq/device-transport-kit-react-native-ble'
+import { RNHidTransportFactory } from '@ledgerhq/device-transport-kit-react-native-hid'
 
 // All Ledger device communication on mobile happens HERE, in the React Native
-// native JS context. The WebView worker (where the controllers live) has no
-// access to Bluetooth/USB or native modules, so the worker-side LedgerController
-// forwards every operation to this singleton over the message bridge
-// (see WebViewWorker.tsx `ledger.*` cases). This mirrors how `crypto.scrypt` and
-// `network.fetch` are bridged.
+// native JS context, using Ledger's Device Management Kit (DMK) — the same
+// stack the extension uses (see src/web/.../LedgerController.ts), but with the
+// React Native BLE/USB transports. The WebView worker (where the controllers
+// live) has no access to Bluetooth/USB or native modules, so the worker-side
+// LedgerController forwards every operation to this singleton over the message
+// bridge (see WebViewWorker.tsx `ledger.*` cases).
+//
+// This service throws RAW device messages / status codes (never normalized):
+// both call sites — the worker LedgerController (bridge) and the connect UI —
+// run the result through `normalizeLedgerMessage`, so normalizing here would
+// double-map and mangle the text.
 
 export interface LedgerTransportSignature {
   r: Hex
@@ -34,6 +48,8 @@ export interface LedgerSubscription {
   unsubscribe: () => void
 }
 
+export type LedgerTransportType = 'ble' | 'usb'
+
 // EIP-712 typed data, as it travels across the bridge from the worker.
 interface LedgerTypedData {
   domain: Record<string, any>
@@ -42,83 +58,80 @@ interface LedgerTypedData {
   primaryType: string
 }
 
-// Paths arrive from ambire-common as e.g. "m/44'/60'/0'/0/0", but hw-app-eth
-// expects them without the "m/" root (matches the web controller's
-// getHdPathWithoutRoot).
-const stripHdPathRoot = (path: string) => (path.startsWith('m/') ? path.slice(2) : path)
+type Dmk = ReturnType<DeviceManagementKitBuilder['build']>
+type SignerEth = ReturnType<SignerEthBuilder['build']>
 
-const TIMEOUT_FOR_RETRIEVING_FROM_LEDGER = 5000
+// DiscoveredDevice.transport identifiers exposed by the RN transports.
+const TRANSPORT_ID: Record<LedgerTransportType, string> = { ble: 'RN_BLE', usb: 'RN_HID' }
 
-// Upper bound on the clear-signing descriptor lookup before falling back to blind
-// signing, so a slow/offline Ledger service can't block a transaction signature.
-const CLEAR_SIGN_RESOLUTION_TIMEOUT = 5000
-
-// App doesn't support full EIP-712 clear-signing (INS_NOT_SUPPORTED / 0x6d00,
-// e.g. Nano S) — the only case we may fall back to blind hashed signing.
-const isEip712UnsupportedError = (e: any): boolean => {
-  if (e?.statusCode === 0x6d00) return true
-  const statusText = (e?.statusText || '').toUpperCase()
-  if (statusText === 'INS_NOT_SUPPORTED') return true
-  const message = (e?.message || '').toUpperCase()
-  return message.includes('6D00') || message.includes('INS_NOT_SUPPORTED')
+// The device is reachable but needs the user to act (unlock / open the Ethereum
+// app) — retrying the connect probe won't clear it, so surface it right away.
+const isDeviceActionNeededError = (e: any): boolean => {
+  const message = (e?.message || '').toLowerCase()
+  return message.includes('unlock-device') || message.includes('confirm-open-app')
 }
 
-// Errors that won't clear by waiting: the device is locked, on the wrong app, or
-// needs a firmware/app update. Retrying the connect probe through the full
-// backoff just delays surfacing the real error, so we bail on the first one.
-// 0x6d02 = Ethereum app not open (device on the dashboard).
-const UNRECOVERABLE_STATUS_CODES = [
-  0x5515, 0x6b0c, 0x650f, 0x6511, 0x6e00, 0x6b00, 0x6d00, 0x6d02, 0x6a80
-]
-const isUnrecoverableProbeError = (e: any): boolean => {
-  if (UNRECOVERABLE_STATUS_CODES.includes(e?.statusCode)) return true
-  const message = (e?.message || '').toLowerCase()
-  if (message.includes('unlock-device') || message.includes('confirm-open-app')) return true
-  return UNRECOVERABLE_STATUS_CODES.some((code) => message.includes(code.toString(16)))
+const buildDmk = (): Dmk =>
+  new DeviceManagementKitBuilder()
+    .addTransport(RNBleTransportFactory)
+    .addTransport(RNHidTransportFactory)
+    // To debug discovery/permission/scan, add DMK's ConsoleLogger here:
+    // .addLogger(new ConsoleLogger())
+    .build()
+
+/**
+ * The DMK ContextModule requires a logger factory to work with a physical
+ * device (mirrors the extension). No-op in prod so nothing leaks to logs.
+ */
+const createContextLogger = (tag: string) => {
+  if (isProd) {
+    return { subscribers: [], error: () => {}, warn: () => {}, info: () => {}, debug: () => {} }
+  }
+
+  return {
+    subscribers: [],
+    error: (message: string) => console.error(`[ContextModule:${tag}]`, message),
+    warn: (message: string) => console.warn(`[ContextModule:${tag}]`, message),
+    info: (message: string) => console.info(`[ContextModule:${tag}]`, message),
+    debug: (message: string) => console.debug(`[ContextModule:${tag}]`, message)
+  }
 }
 
 class LedgerTransportService {
-  /**
-   * Holds either a BLE or a USB (Android HID) transport — both implement
-   * @ledgerhq/hw-transport's Transport, so AppEth and all signing code below are
-   * transport-agnostic.
-   */
-  #transport: Transport | null = null
+  /** The DMK instance, built once and kept alive for discovery + sessions. */
+  #dmk: Dmk | null = null
 
-  #eth: AppEth | null = null
+  /** The Ethereum signer bound to the current device session (clear signing). */
+  #signerEth: SignerEth | null = null
 
-  #connectedDeviceId = ''
+  /** Current device session id; null when no device is connected. */
+  #sessionId: string | null = null
 
   /**
-   * The last device we connected to, kept across cleanUp() so device operations
-   * can transparently reopen the transport (the worker tears the session down
-   * between import attempts, and signing happens after the screen is gone).
+   * The last device we opened a session to, kept so signing can transparently
+   * reopen a session (the worker tears the session down between import attempts,
+   * and signing happens after the connect screen is gone).
    */
-  #lastDeviceId = ''
+  #lastDevice: DiscoveredDevice | null = null
 
-  /**
-   * Which transport the last/active connection used, so reconnect reopens the
-   * right one.
-   */
-  #lastTransportType: 'ble' | 'usb' = 'ble'
+  /** Raw discovered devices by id, so connect can pass DMK the device object. */
+  #discovered = new Map<string, DiscoveredDevice>()
 
-  /**
-   * Active subscription to USB detach events (cable pulled), so we drop the
-   * connection state even while idle. BLE handles this via the transport's own
-   * 'disconnect' event.
-   */
-  #usbDetachSub: LedgerSubscription | null = null
+  /** Active discovery (scan) subscription; stopped before connecting. */
+  #discoverySub: LedgerSubscription | null = null
 
-  /**
-   * BLE cannot handle parallel APDU exchanges (the device throws "busy"), so
-   * every device operation is serialized through this single-concurrency chain.
-   */
-  #queue: Promise<unknown> = Promise.resolve()
+  /** Live subscription to the device session state (idle disconnect detection). */
+  #sessionStateSub: LedgerSubscription | null = null
+
+  /** Cancels the in-flight signing subscription (used by signingCleanup). */
+  #rejectSigningSubscription: (() => void) | null = null
+
+  /** Lazily-created BLE manager, used only to observe the adapter state. */
+  #bleManager: BleManager | null = null
 
   /**
    * Connection-state subscribers (e.g. the useLedger hook), so the UI can react
-   * without polling. "Connected" means verified usable (post-probe), not merely
-   * a transport being open — see connectAndProbe / #setActiveTransport.
+   * without polling. "Connected" means a live session with a usable signer.
    */
   #connectionListeners = new Set<(connected: boolean) => void>()
 
@@ -132,33 +145,21 @@ class LedgerTransportService {
     this.#connectionListeners.forEach((listener) => listener(connected))
   }
 
-  #enqueue<T>(task: () => Promise<T>): Promise<T> {
-    const run = this.#queue.then(task, task)
-    // Swallow the result/rejection on the chain itself so one failed op doesn't
-    // break the chain for the next; callers still get the real promise.
-    this.#queue = run.then(
-      () => {},
-      () => {}
-    )
-    return run
-  }
-
-  isConnected = () => !!this.#transport && !!this.#eth
+  isConnected = () => !!this.#signerEth && !!this.#sessionId
 
   /**
-   * Subscribes to the Bluetooth adapter state. `onState.available` is true only
-   * when Bluetooth is powered on and usable.
+   * Reports the Bluetooth adapter state (`available` is true only when powered
+   * on). Uses ble-plx directly since DMK does not surface adapter state.
    */
   observeBluetoothState = (
-    onState: (state: { available: boolean; type: string }) => void,
-    onError: (error: any) => void = () => {}
+    onState: (state: { available: boolean; type: string }) => void
   ): LedgerSubscription => {
-    const sub = TransportBLE.observeState({
-      next: onState,
-      error: onError,
-      complete: () => {}
-    })
-    return { unsubscribe: () => sub.unsubscribe() }
+    if (!this.#bleManager) this.#bleManager = new BleManager()
+    const sub = this.#bleManager.onStateChange(
+      (state) => onState({ available: state === BleState.PoweredOn, type: state }),
+      true
+    )
+    return { unsubscribe: () => sub.remove() }
   }
 
   /**
@@ -188,32 +189,6 @@ class LedgerTransportService {
   }
 
   /**
-   * Starts a BLE scan. Devices are reported one-by-one via `onAdd` as they are
-   * discovered. Scanning is costly, so the caller MUST unsubscribe once a device
-   * is selected.
-   */
-  startScan = (
-    onAdd: (device: LedgerScannedDevice) => void,
-    onError: (error: any) => void
-  ): LedgerSubscription => {
-    const sub = TransportBLE.listen({
-      next: (event: any) => {
-        if (event.type !== 'add' || !event.descriptor) return
-        onAdd({ id: event.descriptor.id, name: event.descriptor.name || 'Ledger' })
-      },
-      error: onError,
-      complete: () => {}
-    })
-
-    return { unsubscribe: () => sub.unsubscribe() }
-  }
-
-  isUsbSupported = (): Promise<boolean> => ledgerUsbTransport.isSupported()
-
-  /** Currently connected USB Ledger devices (Android; empty on iOS / when none). */
-  listUsbDevices = () => ledgerUsbTransport.list()
-
-  /**
    * Whether BLE scanning is already permitted, WITHOUT prompting (so the connect
    * UI can auto-scan only when allowed and otherwise show an explicit
    * "Scan via Bluetooth" action).
@@ -233,244 +208,340 @@ class LedgerTransportService {
   }
 
   /**
-   * Wires an opened transport (BLE or USB) into the service: builds the Ethereum
-   * app client and resets everything if the device drops the link, so the next
-   * operation surfaces a clean "not connected" instead of hanging on a dead
-   * transport.
+   * Streams discovered devices of one transport (BLE or USB) via DMK. Devices
+   * are reported one-by-one via `onAdd`. Scanning is costly, so the caller MUST
+   * unsubscribe once a device is selected.
    */
-  #setActiveTransport(transport: Transport, deviceId: string, type: 'ble' | 'usb') {
-    this.#transport = transport
-    this.#connectedDeviceId = deviceId
-    this.#lastDeviceId = deviceId
-    this.#lastTransportType = type
-    this.#eth = new AppEth(transport)
+  startDiscovering = (
+    transport: LedgerTransportType,
+    onAdd: (device: LedgerScannedDevice) => void,
+    onError: (error: any) => void
+  ): LedgerSubscription => {
+    if (!this.#dmk) this.#dmk = buildDmk()
 
-    // BLE drops fire the transport's own 'disconnect'. USB only emits that on a
-    // failed exchange, so also listen for the cable being pulled while idle —
-    // otherwise the UI keeps thinking it's connected and signing fails with an
-    // I/O error instead of showing the reconnect modal.
-    transport.on('disconnect', this.#handleDisconnect)
-    if (type === 'usb') {
-      this.#usbDetachSub = ledgerUsbTransport.onDisconnect(this.#handleDisconnect)
+    // One scan at a time; drop any previous before starting a new one.
+    this.#stopDiscovering()
+
+    // The RN transports scan via listenToAvailableDevices (their startDiscovering
+    // is a no-op stub). It re-emits the full device list; filter to the requested
+    // transport and let the caller dedupe by id.
+    const sub = this.#dmk.listenToAvailableDevices({}).subscribe({
+      next: (devices) => {
+        devices.forEach((device) => {
+          this.#discovered.set(device.id, device)
+          if (device.transport !== TRANSPORT_ID[transport]) return
+          onAdd({ id: device.id, name: device.name || 'Ledger' })
+        })
+      },
+      error: onError,
+      complete: () => {}
+    })
+
+    const wrapped: LedgerSubscription = {
+      unsubscribe: () => {
+        sub.unsubscribe()
+        if (this.#discoverySub === wrapped) this.#discoverySub = null
+      }
     }
-
-    // Intentionally NOT emitting "connected" here: an open transport doesn't mean
-    // the device is usable (it may be locked or not on the Ethereum app).
-    // connectAndProbe emits only after a successful probe, so the connect modal
-    // stays open until the device is actually ready.
+    this.#discoverySub = wrapped
+    return wrapped
   }
 
-  #handleDisconnect = () => {
-    this.#transport = null
-    this.#eth = null
-    this.#connectedDeviceId = ''
-    this.#usbDetachSub?.unsubscribe()
-    this.#usbDetachSub = null
-    this.#emitConnection()
+  #stopDiscovering = () => {
+    this.#discoverySub?.unsubscribe()
+    this.#discoverySub = null
   }
 
   /**
-   * Opens a BLE transport to the selected device and builds the Ethereum app
-   * client. A fresh transport/app is created on every connect; any previous one
-   * is torn down first.
+   * Connects to a discovered device, then probes one address to verify the
+   * device is usable (unlocked + Ethereum app open). Only after the probe
+   * succeeds is the connection announced, so the connect modal stays open until
+   * the device is actually ready.
    */
-  connect = async (deviceId: string): Promise<void> => {
-    if (this.#connectedDeviceId === deviceId && this.isConnected()) return
+  connectAndProbe = async (device: {
+    id: string
+    transport: LedgerTransportType
+  }): Promise<void> => {
+    const discovered = this.#discovered.get(device.id)
+    if (!discovered)
+      throw new Error('Ledger device is no longer available. Please rescan and try again.')
 
+    // Stop scanning before connecting: Android BLE can't reliably connect while a
+    // scan is running, and the discovery subscription would otherwise re-arm it.
+    this.#stopDiscovering()
     await this.cleanUp()
-
-    const transport = await TransportBLE.open(deviceId)
-    this.#setActiveTransport(transport, deviceId, 'ble')
-  }
-
-  /**
-   * Opens a USB (Android HID) transport to the connected Ledger. Wired, so there
-   * is no scanning/pairing — opening triggers Android's USB permission dialog.
-   */
-  connectUsb = async (): Promise<void> => {
-    if (this.#lastTransportType === 'usb' && this.isConnected()) return
-
-    await this.cleanUp()
-
-    const transport = await ledgerUsbTransport.open()
-    this.#setActiveTransport(transport, 'usb', 'usb')
-  }
-
-  /**
-   * Connects via the device's transport, then probes one address to verify the
-   * device is usable (unlocked + Ethereum app open). The first exchange right
-   * after a fresh connection — especially a just-permitted USB device whose link
-   * hasn't settled — can fail with a transient "device busy / cannot connect"
-   * error; the transport itself is fine and just needs a moment, so the probe is
-   * retried with a short backoff (this is what a manual retry-after-a-moment does
-   * today). getAddress(checkOnDevice=false) doesn't prompt, so retrying is safe;
-   * a genuinely locked / wrong-app device fails every attempt and surfaces its
-   * error.
-   */
-  connectAndProbe = async (device: { id: string; transport: 'ble' | 'usb' }): Promise<void> => {
-    if (device.transport === 'usb') await this.connectUsb()
-    else await this.connect(device.id)
 
     const probePath = getHdPathFromTemplate(BIP44_LEDGER_DERIVATION_TEMPLATE, 0)
-    const backoffMs = [0, 600, 1200, 1800]
+    // BLE's first connect right after a scan is flaky; retry once with a short
+    // settle. Bail early when the device just needs user action (won't self-clear).
+    const backoffMs = [0, 500]
     let lastError: any
-
     for (const ms of backoffMs) {
       if (ms) await wait(ms)
       try {
+        await this.#openSession(discovered)
         await this.getAddress(probePath)
-        // Only now is the device verified usable (unlocked + Ethereum app open),
-        // so announce the connection. Subscribers (useLedger -> isLedgerConnected)
-        // drive the connect modal, which must stay open until this point.
         this.#emitConnection()
         return
-      } catch (e) {
+      } catch (e: any) {
         lastError = e
-        // Locked / wrong-app / firmware errors won't clear by waiting — surface
-        // them right away instead of burning the full backoff.
-        if (isUnrecoverableProbeError(e)) break
+        await this.cleanUp()
+        if (isDeviceActionNeededError(e)) break
       }
     }
 
     throw lastError
   }
 
-  /**
-   * Returns a live Ethereum app client, transparently reopening the transport to
-   * the last device if the session was torn down (e.g. by the worker between
-   * import attempts, or after the connect screen unmounted).
-   */
-  async #ensureConnected(): Promise<AppEth> {
-    if (this.#eth) return this.#eth
+  #openSession = async (device: DiscoveredDevice): Promise<void> => {
+    if (!this.#dmk) this.#dmk = buildDmk()
 
-    if (this.#lastTransportType === 'usb') {
-      await this.connectUsb()
-    } else {
-      if (!this.#lastDeviceId)
-        throw new Error('Ledger is not connected. Please connect your device and try again.')
-      await this.connect(this.#lastDeviceId)
-    }
+    const sessionId = await this.#dmk.connect({
+      device,
+      sessionRefresherOptions: { isRefresherDisabled: true }
+    })
+    this.#sessionId = sessionId
+    this.#lastDevice = device
 
-    if (!this.#eth) throw new Error('Could not reconnect to the Ledger device.')
+    const contextModule = new ContextModuleBuilder({
+      originToken: 'ambire',
+      loggerFactory: createContextLogger
+    }).build()
+    this.#signerEth = new SignerEthBuilder({ dmk: this.#dmk, sessionId })
+      .withContextModule(contextModule)
+      .build()
 
-    return this.#eth
+    this.#subscribeSessionState(sessionId)
   }
 
-  getAddress = (path: string): Promise<string> =>
-    this.#enqueue(async () => {
-      const eth = await this.#ensureConnected()
-      const { address } = await withTimeout(
-        () => eth.getAddress(stripHdPathRoot(path), false, false),
-        {
-          timeoutMs: TIMEOUT_FOR_RETRIEVING_FROM_LEDGER,
-          message:
-            'Cannot connect to your Ledger device for an extended period. Please make sure it is unlocked, the Ethereum app is open, and it is within Bluetooth range, then try again.'
-        }
-      )
-      return address
+  /**
+   * Returns a live Ethereum signer, transparently reopening a session to the
+   * last device if it was torn down (e.g. by the worker between import attempts,
+   * or after the connect screen unmounted).
+   */
+  #ensureSession = async (): Promise<SignerEth> => {
+    if (this.#signerEth && this.#sessionId) return this.#signerEth
+
+    const device = this.#lastDevice
+    if (!device)
+      throw new Error('Ledger is not connected. Please connect your device and try again.')
+
+    await this.#openSession(device)
+    if (!this.#signerEth) throw new Error('Could not reconnect to the Ledger device.')
+
+    return this.#signerEth
+  }
+
+  #subscribeSessionState = (sessionId: string) => {
+    this.#sessionStateSub?.unsubscribe()
+    if (!this.#dmk) return
+
+    const sub = this.#dmk.getDeviceSessionState({ sessionId }).subscribe({
+      next: (state) => {
+        if (state.deviceStatus === DeviceStatus.NOT_CONNECTED) this.#handleDisconnect()
+      },
+      error: () => {}
     })
+    this.#sessionStateSub = { unsubscribe: () => sub.unsubscribe() }
+  }
 
-  signPersonalMessage = (path: string, messageHex: string): Promise<LedgerTransportSignature> =>
-    this.#enqueue(async () => {
-      const eth = await this.#ensureConnected()
-      const { r, s, v } = await eth.signPersonalMessage(stripHdPathRoot(path), messageHex)
-      return { r: `0x${r}`, s: `0x${s}`, v }
-    })
+  #handleDisconnect = () => {
+    this.#sessionStateSub?.unsubscribe()
+    this.#sessionStateSub = null
+    this.#signerEth = null
+    this.#sessionId = null
+    this.#emitConnection()
+  }
 
-  signTransaction = (path: string, rawTxHex: string): Promise<LedgerTransportSignature> =>
-    this.#enqueue(async () => {
-      const eth = await this.#ensureConnected()
-      // Clear-signing: resolve token / NFT / known-plugin descriptors from
-      // Ledger's services so the device shows human-readable details (amount,
-      // symbol, decoded action) instead of raw hex — the hw-app-eth equivalent
-      // of the extension's DMK ContextModule. If the lookup errors or is slow
-      // (offline / unknown contract), fall back to a null resolution, i.e. blind
-      // signing (which then needs "Blind signing" enabled on the device;
-      // normalizeLedgerMessage surfaces a clear 0x6a80 hint when it isn't).
-      const resolution = await Promise.race([
-        ledgerService
-          .resolveTransaction(
-            rawTxHex,
-            {},
-            { externalPlugins: true, erc20: true, nft: true, uniswapV3: true }
-          )
-          .catch(() => null),
-        new Promise<null>((resolve) => {
-          setTimeout(() => resolve(null), CLEAR_SIGN_RESOLUTION_TIMEOUT)
-        })
-      ])
-      const { r, s, v } = await eth.signTransaction(stripHdPathRoot(path), rawTxHex, resolution)
-      return { r: `0x${r}`, s: `0x${s}`, v: parseInt(v, 16) }
-    })
-
-  signTypedData = (path: string, typedData: LedgerTypedData): Promise<LedgerTransportSignature> =>
-    this.#enqueue(async () => {
-      const eth = await this.#ensureConnected()
-
-      const hdPath = stripHdPathRoot(path)
-      try {
-        // Full EIP-712 clear-signing. Not supported on the Nano S, hence the
-        // hashed-message fallback below.
-        const { r, s, v } = await eth.signEIP712Message(hdPath, typedData as any)
-        return { r: `0x${r}`, s: `0x${s}`, v }
-      } catch (e: any) {
-        // Fall back to blind hashed signing ONLY on INS_NOT_SUPPORTED. Re-throw
-        // anything else — never silently blind-sign a payload after another error.
-        if (!isEip712UnsupportedError(e)) throw e
-
-        // Strip the EIP712Domain entry; hashStruct only takes the message types.
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const { EIP712Domain, ...structTypes } = typedData.types
-        const domainSeparator = TypedDataEncoder.hashDomain(typedData.domain)
-        const hashStruct = TypedDataEncoder.hashStruct(
-          typedData.primaryType,
-          structTypes,
-          typedData.message
-        )
-        const { r, s, v } = await eth.signEIP712HashedMessage(
-          hdPath,
-          domainSeparator.slice(2),
-          hashStruct.slice(2)
-        )
-        return { r: `0x${r}`, s: `0x${s}`, v }
+  getAddress = async (path: string): Promise<string> => {
+    const signerEth = await this.#ensureSession()
+    return this.#handleLedgerSubscription<string>(
+      signerEth.getAddress(getHdPathWithoutRoot(path), {
+        checkOnDevice: false,
+        returnChainCode: false
+      }).observable,
+      {
+        onCompleted: (output) => output.address,
+        errorMessage: 'Failed to get address from Ledger device'
       }
-    })
+    )
+  }
+
+  signPersonalMessage = async (
+    path: string,
+    messageHex: string
+  ): Promise<LedgerTransportSignature> => {
+    const signerEth = await this.#ensureSession()
+    return this.#handleLedgerSubscription<LedgerTransportSignature>(
+      signerEth.signMessage(getHdPathWithoutRoot(path), hexStringToUint8Array(messageHex))
+        .observable,
+      {
+        onCompleted: (output) => output,
+        errorMessage: 'Failed to sign message with Ledger device',
+        isSign: true
+      }
+    )
+  }
+
+  signTransaction = async (path: string, rawTxHex: string): Promise<LedgerTransportSignature> => {
+    const signerEth = await this.#ensureSession()
+    // Clear signing is applied automatically by the ContextModule (built in
+    // #openSession) — the device shows human-readable details when metadata
+    // exists, otherwise it falls back to blind signing.
+    return this.#handleLedgerSubscription<LedgerTransportSignature>(
+      signerEth.signTransaction(getHdPathWithoutRoot(path), hexStringToUint8Array(rawTxHex))
+        .observable,
+      {
+        onCompleted: (output) => output,
+        errorMessage: 'Failed to sign transaction with Ledger device',
+        isSign: true
+      }
+    )
+  }
+
+  signTypedData = async (
+    path: string,
+    typedData: LedgerTypedData
+  ): Promise<LedgerTransportSignature> => {
+    const signerEth = await this.#ensureSession()
+    // DMK handles device-capability fallback (e.g. Nano S hashed signing)
+    // internally, so no manual EIP-712 fallback is needed here.
+    return this.#handleLedgerSubscription<LedgerTransportSignature>(
+      signerEth.signTypedData(getHdPathWithoutRoot(path), {
+        domain: { ...typedData.domain } as TypedDataDomain,
+        types: typedData.types,
+        message: typedData.message,
+        primaryType: typedData.primaryType
+      }).observable,
+      {
+        onCompleted: (output) => output,
+        errorMessage: 'Failed to sign typed data with Ledger device',
+        isSign: true
+      }
+    )
+  }
 
   /**
-   * Flushes the device's pending command state after an abandoned/rejected sign
-   * so the next command starts clean (mirrors Ledger Live). Not cancellation.
+   * Cancels the in-flight signing subscription after an abandoned/rejected sign
+   * so the next command starts clean (mirrors the extension). Not a device flush.
    */
-  signingCleanup = (): Promise<void> =>
-    this.#enqueue(async () => {
-      if (!this.#transport) return
+  signingCleanup = async (): Promise<void> => {
+    if (!this.#rejectSigningSubscription) return
+    this.#rejectSigningSubscription()
+    this.#rejectSigningSubscription = null
+  }
+
+  cleanUp = async (): Promise<void> => {
+    this.#sessionStateSub?.unsubscribe()
+    this.#sessionStateSub = null
+
+    if (this.#dmk && this.#sessionId) {
       try {
-        // Zero APDU completes one exchange to realign framing; device replies with
-        // a non-0x9000 status (hw-transport throws) — swallow, the flush happened.
-        await this.#transport.send(0xe0, 0x00, 0x00, 0x00)
+        await this.#dmk.disconnect({ sessionId: this.#sessionId })
       } catch {
-        // Non-9000 status (expected) or idle/disconnected device — nothing to do.
+        // The device may already be gone (unplugged/out of range); disconnecting
+        // a dead session is not actionable, just reset our state.
+      }
+    }
+
+    this.#signerEth = null
+    this.#sessionId = null
+    this.#emitConnection()
+  }
+
+  /**
+   * Bridges a DMK device-action observable to a promise: rejects (raw) on a
+   * required user interaction (unlock / open app) or device error, resolves on
+   * completion. Mirrors the extension's #handleLedgerSubscription.
+   */
+  #handleLedgerSubscription<T>(
+    observable: Observable<any>,
+    options: { onCompleted: (output: any) => T; errorMessage: string; isSign?: boolean }
+  ): Promise<T> {
+    const { onCompleted, errorMessage, isSign } = options
+
+    const subscriptionPromise = new Promise<T>((resolve, reject) => {
+      let subscription: { unsubscribe: () => void } | undefined
+      let isCancelled = false
+
+      subscription = observable.subscribe({
+        next: (response: any) => {
+          if (isCancelled) return
+
+          // Surface the device-not-ready states so the caller can prompt the
+          // user (both callers normalize these raw strings).
+          const missingRequiredUserInteraction =
+            response.status === DeviceActionStatus.Pending &&
+            [UserInteractionRequired.UnlockDevice, UserInteractionRequired.ConfirmOpenApp].includes(
+              response.intermediateValue.requiredUserInteraction
+            )
+
+          if (missingRequiredUserInteraction) {
+            subscription?.unsubscribe()
+            reject(new Error(response.intermediateValue.requiredUserInteraction))
+            return
+          }
+
+          if (response.status === DeviceActionStatus.Error) {
+            subscription?.unsubscribe()
+            const deviceMessage =
+              response.error?.message || response.error?._tag || 'no response from device'
+            const deviceErrorCode = response.error?.errorCode
+            let message = `<${deviceMessage}>`
+            message = deviceErrorCode ? `${message}, error code: <${deviceErrorCode}>` : message
+            reject(new Error(message))
+            return
+          }
+
+          if (response.status !== DeviceActionStatus.Completed) return
+
+          subscription?.unsubscribe()
+          if (response?.output) resolve(onCompleted(response.output))
+          else reject(new Error(errorMessage))
+        },
+        error: (error: any) => {
+          subscription?.unsubscribe()
+          reject(new Error(error?.message || 'no response from device'))
+        }
+      })
+
+      if (isSign) {
+        this.#rejectSigningSubscription = () => {
+          isCancelled = true
+          subscription?.unsubscribe()
+          reject(new Error('Operation cancelled by user'))
+        }
       }
     })
 
-  cleanUp = async (): Promise<void> => {
-    if (this.#transport) {
-      // Remove the 'disconnect' listener before closing, otherwise a
-      // just-replaced transport can still fire it asynchronously afterwards
-      // and #handleDisconnect would null out the newer, active transport.
-      this.#transport.off('disconnect', this.#handleDisconnect)
-      try {
-        await this.#transport.close()
-      } catch {
-        // The transport may already be gone (device unplugged/out of range);
-        // closing a dead transport is not actionable, just reset our state.
-      }
+    return this.#withDisconnectProtection(() => subscriptionPromise)
+  }
+
+  /**
+   * Races an operation against the device session going NOT_CONNECTED, so a
+   * mid-operation disconnect rejects promptly instead of hanging the SDK.
+   */
+  async #withDisconnectProtection<T>(operation: () => Promise<T>): Promise<T> {
+    const sessionId = this.#sessionId
+    if (!sessionId || !this.#dmk) return operation()
+
+    let sub: { unsubscribe: () => void } | undefined
+    try {
+      return await Promise.race<T>([
+        operation(),
+        new Promise<never>((_, reject) => {
+          sub = this.#dmk!.getDeviceSessionState({ sessionId }).subscribe({
+            next: (state) => {
+              if (state.deviceStatus === DeviceStatus.NOT_CONNECTED)
+                reject(new Error('DeviceDisconnectedWhileSendingError'))
+            },
+            error: () => {}
+          })
+        })
+      ])
+    } finally {
+      sub?.unsubscribe()
     }
-    this.#transport = null
-    this.#eth = null
-    this.#connectedDeviceId = ''
-    this.#usbDetachSub?.unsubscribe()
-    this.#usbDetachSub = null
-    this.#emitConnection()
   }
 }
 

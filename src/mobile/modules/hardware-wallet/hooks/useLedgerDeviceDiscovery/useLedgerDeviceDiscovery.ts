@@ -37,7 +37,7 @@ const useLedgerDeviceDiscovery = ({
     setDevices((prev) => (prev.some((d) => d.id === device.id) ? prev : [...prev, device]))
   }, [])
 
-  const stopBleScan = useCallback(() => {
+  const stopScan = useCallback(() => {
     scanSubRef.current?.unsubscribe()
     scanSubRef.current = null
     if (scanTimeoutRef.current) {
@@ -47,26 +47,24 @@ const useLedgerDeviceDiscovery = ({
     setIsScanning(false)
   }, [])
 
-  const startBleScan = useCallback(() => {
-    stopBleScan()
-    setIsScanning(true)
-    setHasScanned(true)
-    scanSubRef.current = ledgerTransportService.startScan(
-      (device) => mergeDevice({ id: device.id, name: device.name, transport: 'ble' }),
-      (e: any) => onError(e?.message || 'Failed to scan for devices.')
-    )
-    scanTimeoutRef.current = setTimeout(stopBleScan, BLE_SCAN_TIMEOUT)
-  }, [stopBleScan, mergeDevice, onError])
-
-  const detectUsb = useCallback(async () => {
-    setHasScanned(true)
-    try {
-      const usbDevices = await ledgerTransportService.listUsbDevices()
-      usbDevices.forEach((d) => mergeDevice({ id: d.id, name: d.name, transport: 'usb' }))
-    } catch {
-      // No USB device plugged in / not supported — ignore.
-    }
-  }, [mergeDevice])
+  const startScan = useCallback(
+    (scanTransport: LedgerTransportType) => {
+      stopScan()
+      setIsScanning(true)
+      setHasScanned(true)
+      scanSubRef.current = ledgerTransportService.startDiscovering(
+        scanTransport,
+        (device) => mergeDevice({ id: device.id, name: device.name, transport: scanTransport }),
+        (e: any) => onError(e?.message || 'Failed to scan for devices.')
+      )
+      // Bluetooth scanning drains battery, so cap it; USB discovery is cheap and
+      // streams until the effect cleans up.
+      if (scanTransport === 'ble') {
+        scanTimeoutRef.current = setTimeout(stopScan, BLE_SCAN_TIMEOUT)
+      }
+    },
+    [stopScan, mergeDevice, onError]
+  )
 
   // Track the Bluetooth adapter state (drives the BLE tab's UI).
   useEffect(() => {
@@ -85,28 +83,28 @@ const useLedgerDeviceDiscovery = ({
     if (transport === 'ble' && bluetoothOn !== true) return undefined
 
     let cancelled = false
-    // Reset + detect asynchronously so there's no synchronous setState in the
+    // Reset + start asynchronously so there's no synchronous setState in the
     // effect body.
     void (async () => {
       setDevices([])
       setNeedsBlePermission(false)
 
       if (transport === 'usb') {
-        await detectUsb()
+        startScan('usb')
         return
       }
 
       const granted = await ledgerTransportService.hasBlePermissions()
       if (cancelled) return
-      if (granted) startBleScan()
+      if (granted) startScan('ble')
       else setNeedsBlePermission(true)
     })()
 
     return () => {
       cancelled = true
-      stopBleScan()
+      stopScan()
     }
-  }, [transport, isActive, bluetoothOn, detectUsb, startBleScan, stopBleScan])
+  }, [transport, isActive, bluetoothOn, startScan, stopScan])
 
   // Request BLE permission, then scan (the BLE tab's "Scan via Bluetooth" action).
   const scanViaBluetooth = useCallback(async () => {
@@ -116,18 +114,15 @@ const useLedgerDeviceDiscovery = ({
       return
     }
     setNeedsBlePermission(false)
-    startBleScan()
-  }, [startBleScan, onError])
+    startScan('ble')
+  }, [startScan, onError])
 
   const rescan = useCallback(async () => {
     if (transport === 'ble' && bluetoothOn !== true) return
     setDevices([])
-    if (transport === 'usb') {
-      await detectUsb()
-      return
-    }
-    if (!needsBlePermission) startBleScan()
-  }, [transport, bluetoothOn, detectUsb, needsBlePermission, startBleScan])
+    if (transport === 'ble' && needsBlePermission) return
+    startScan(transport)
+  }, [transport, bluetoothOn, needsBlePermission, startScan])
 
   return {
     devices,
