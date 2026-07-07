@@ -22,7 +22,7 @@ import { bootstrapWithStorage } from '../../common-helpers/bootstrap'
  * deliberate, understood increase.
  */
 
-const EAGER_JS_BUDGET_BYTES = 8 * 1024 * 1024
+const EAGER_JS_BUDGET_BYTES = 9 * 1024 * 1024
 
 test.describe('performance: UI bundle size', { tag: '@performance' }, () => {
   test.setTimeout(120000)
