@@ -183,12 +183,33 @@ export class TransferPage extends BasePage {
       await this.expectButtonEnabled(selectors.signButton)
       await this.click(selectors.signButton)
 
-      // Accept dual choice modal if it appears
-      try {
-        await this.compareText(selectors.transaction.dualChoiceModalTitle, 'Gas fee updated')
-        await this.click(selectors.transaction.dualChoiceModalAcceptButton)
-      } catch {
-        console.log('Gas fee updated modal did not appear.')
+      // Accept dual choice modal if fee difference is below 0.1$
+      const modalTitle = this.page.getByTestId(selectors.transaction.dualChoiceModalTitle)
+
+      const modalAppeared = await modalTitle
+        .waitFor({ state: 'visible', timeout: 5000 })
+        .then(() => true)
+        .catch(() => false)
+
+      if (modalAppeared) {
+        const parseFee = (text: string) => Number.parseFloat(text.replace(/[^0-9.]/g, ''))
+
+        const previousFeeText = await this.page
+          .getByTestId(selectors.transaction.previousFeeAmountText)
+          .innerText()
+        const updatedFeeText = await this.page
+          .getByTestId(selectors.transaction.updatedFeeAmountText)
+          .innerText()
+
+        const previousFee = parseFee(previousFeeText)
+        const updatedFee = parseFee(updatedFeeText)
+        const feeIncrease = updatedFee - previousFee
+
+        if (feeIncrease > 0.1) {
+          console.warn(`⚠️ Gas fee increased by $${feeIncrease}; transaction signing skipped.`)
+        } else {
+          await this.click(selectors.transaction.dualChoiceModalAcceptButton)
+        }
       }
 
       if (ledgerSimulatorControls && !payWithGasTank) {
