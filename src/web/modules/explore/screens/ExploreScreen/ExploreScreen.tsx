@@ -4,13 +4,9 @@ import { useForm } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 
-<<<<<<< HEAD
 import { Dapp, TrendingToken } from '@ambire-common/interfaces/dapp'
-=======
-import { Dapp } from '@ambire-common/interfaces/dapp'
 import ConnectedIcon from '@common/assets/svg/ConnectedIcon'
 import DeleteIcon from '@common/assets/svg/DeleteIcon'
->>>>>>> v2
 import LayoutWrapper from '@common/components/LayoutWrapper'
 import ScrollableWrapper, { WRAPPER_TYPES } from '@common/components/ScrollableWrapper'
 import Search from '@common/components/Search'
