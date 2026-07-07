@@ -3,47 +3,63 @@ import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 
 import { TrendingToken } from '@ambire-common/interfaces/dapp'
-import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
-import OpenIcon from '@common/assets/svg/OpenIcon'
+import { TokenResult } from '@ambire-common/libs/portfolio'
+import { getTokenAmount } from '@ambire-common/libs/portfolio/helpers'
+import FooterGlassView from '@common/components/FooterGlassView'
 import LayoutWrapper from '@common/components/LayoutWrapper'
 import ScrollableWrapper from '@common/components/ScrollableWrapper'
 import Text from '@common/components/Text'
 import useController from '@common/hooks/useController'
-import { AnimatedPressable, useCustomHover } from '@common/hooks/useHover'
 import useRoute from '@common/hooks/useRoute'
 import useTheme from '@common/hooks/useTheme'
+import getAndFormatTokenDetails from '@common/modules/dashboard/helpers/getTokenDetails'
 import Header from '@common/modules/header/components/Header/Header'
+import TokenDetailsButton from '@common/modules/token-details/components/Button'
+import Exchanges from '@common/modules/token-details/components/Exchanges'
+import HideTokenModal from '@common/modules/token-details/components/HideTokenModal'
 import TokenDetailsTitle from '@common/modules/token-details/components/Title'
+import TokenBalanceCard from '@common/modules/token-details/components/TokenBalanceCard'
+import TokenData from '@common/modules/token-details/components/TokenData'
+import TokenPriceDisplay from '@common/modules/token-details/components/TokenPriceDisplay'
+import useTokenActions from '@common/modules/token-details/hooks/useTokenActions'
 import spacings from '@common/styles/spacings'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
-import { openInTab } from '@common/utils/links'
-import ManifestImage from '@web/components/ManifestImage'
 
-const formatChange = (change: number) => `${change >= 0 ? '+' : ''}${change.toFixed(2)}%`
-
-type InfoRow = { label: string; value: string }
-
-const Row = ({ label, value, isLast }: InfoRow & { isLast: boolean }) => (
-  <View style={[flexbox.directionRow, flexbox.justifySpaceBetween, !isLast && spacings.mbSm]}>
-    <Text weight="medium" fontSize={14} appearance="secondaryText">
-      {label}
-    </Text>
-    <Text weight="medium" fontSize={14} appearance="primaryText">
-      {value}
-    </Text>
-  </View>
-)
+// Builds a portfolio-shaped TokenResult from a trending token so the same token-details components
+// (price, balance, "About", exchanges) can render it. The trending endpoint now provides the
+// contract, chain, decimals and USD market data the portfolio components expect.
+const buildTokenResult = (token: TrendingToken, chainId: bigint): TokenResult => ({
+  symbol: token.symbol,
+  name: token.name,
+  decimals: token.decimals ?? 18,
+  address: token.address ?? '',
+  chainId,
+  amount: 0n,
+  priceIn: [{ baseCurrency: 'usd', price: token.priceUSD }],
+  marketDataIn: [
+    {
+      baseCurrency: 'usd',
+      change24h: token.priceChange24hUSD ?? undefined,
+      marketCap: token.marketCapUSD ?? undefined,
+      totalSupply: token.totalSupply ?? undefined,
+      fullyDilutedValuation: token.fullyDilutedValuationUSD ?? undefined,
+      volume24h: token.totalVolumeUSD ?? undefined
+    }
+  ],
+  meta: { exchanges: token.exchangeIds, website: token.website ?? undefined },
+  flags: { onGasTank: false, rewardsType: null, canTopUpGasTank: false, isFeeToken: false }
+})
 
 const TrendingTokenDetailsScreen = () => {
   const { t } = useTranslation()
   const { theme } = useTheme()
   const { state } = useRoute()
   const { state: dappsState } = useController('DappsController')
-  const [bindCoingeckoAnim, coingeckoAnimStyle] = useCustomHover({
-    property: 'opacity',
-    values: { from: 1, to: 0.7 }
-  })
+  const { state: networks } = useController('NetworksController', (s) => s.networks)
+  const {
+    state: { portfolio }
+  } = useController('SelectedAccountController')
 
   const token: TrendingToken | undefined = useMemo(
     () =>
@@ -53,105 +69,89 @@ const TrendingTokenDetailsScreen = () => {
     [dappsState.trendingTokens, state?.trendingTokenId]
   )
 
-  const rows: InfoRow[] = useMemo(() => {
-    if (!token) return []
-    return [
-      typeof token.marketCapRank === 'number' && {
-        label: t('Market cap rank'),
-        value: `#${token.marketCapRank}`
-      },
-      !!token.marketCap && { label: t('Market cap'), value: token.marketCap },
-      !!token.totalVolume && { label: t('Volume (24h)'), value: token.totalVolume }
-    ].filter(Boolean) as InfoRow[]
-  }, [token, t])
+  const chainId = useMemo(
+    () => networks.find((n) => n.platformId === token?.platformId)?.chainId ?? null,
+    [networks, token?.platformId]
+  )
+
+  // Prefer the real portfolio token (carries the account's balance) when the user holds it;
+  // otherwise fall back to a synthetic result built from the trending data.
+  const displayToken: TokenResult | null = useMemo(() => {
+    if (!token) return null
+
+    const heldToken =
+      token.address && chainId !== null
+        ? portfolio.tokens.find(
+            (pt) =>
+              pt.address.toLowerCase() === token.address!.toLowerCase() &&
+              pt.chainId === chainId &&
+              !pt.flags.onGasTank &&
+              !pt.flags.rewardsType
+          )
+        : undefined
+
+    if (heldToken) return heldToken
+
+    return buildTokenResult(token, chainId ?? 0n)
+  }, [token, chainId, portfolio.tokens])
+
+  const formatted = useMemo(
+    () => (displayToken ? getAndFormatTokenDetails(displayToken, networks) : null),
+    [displayToken, networks]
+  )
+
+  const isHeld = !!displayToken && getTokenAmount(displayToken) > 0n
+
+  const { hideTokenModalRef, closeHideTokenModal, handleHideTokenFromModal, actions } =
+    useTokenActions(displayToken)
 
   return (
     <LayoutWrapper>
-      <Header.Wrapper>
+      <Header.Wrapper containerStyle={spacings.pbMd}>
         <Header.BackButton />
         <Header.Logo />
       </Header.Wrapper>
-      {!token ? (
+      {!token || !displayToken || !formatted ? (
         <View style={[flexbox.flex1, flexbox.center, spacings.phSm]}>
           <Text fontSize={16} appearance="secondaryText">
             {t('Trending token not found.')}
           </Text>
         </View>
       ) : (
-        <ScrollableWrapper contentContainerStyle={spacings.phSm}>
-          <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mbLg]}>
-            <ManifestImage
-              uri={token.icon}
-              size={48}
-              isRound
-              containerStyle={{ ...spacings.mrSm, backgroundColor: theme.primaryBackground }}
+        <ScrollableWrapper
+          // The bottom padding is because of the footer, to make sure the content is not hidden behind it.
+          contentContainerStyle={[spacings.phSm, { paddingBottom: 124 }]}
+        >
+          <HideTokenModal
+            modalRef={hideTokenModalRef}
+            handleClose={closeHideTokenModal}
+            handleHideToken={handleHideTokenFromModal}
+          />
+          <TokenPriceDisplay
+            symbol={displayToken.symbol}
+            address={displayToken.address}
+            chainId={displayToken.chainId}
+            priceUSDFormatted={formatted.priceUSDFormatted}
+            change24h={formatted.change24h}
+            change24hFormatted={formatted.change24hFormatted}
+          />
+          {isHeld && (
+            <TokenBalanceCard
+              symbol={displayToken.symbol}
+              address={displayToken.address}
+              chainId={displayToken.chainId}
+              balance={formatted.balance}
+              balanceFormatted={formatted.balanceFormatted}
+              balanceUSDFormatted={formatted.balanceUSDFormatted}
+              change24h={formatted.change24h}
+              change24hFormatted={formatted.change24hFormatted}
             />
-            <View style={flexbox.flex1}>
-              <Text fontSize={20} weight="semiBold" appearance="primaryText" numberOfLines={1}>
-                {token.symbol}
-              </Text>
-              <Text fontSize={14} weight="medium" appearance="secondaryText" numberOfLines={1}>
-                {token.name}
-              </Text>
-            </View>
-          </View>
-
-          <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mbLg]}>
-            <Text fontSize={32} weight="medium" style={{ ...spacings.mrTy, lineHeight: 48 }}>
-              {formatDecimals(token.priceUSD, 'price')}
-            </Text>
-            {typeof token.priceChange24hUSD === 'number' && (
-              <Text
-                fontSize={14}
-                weight="number_medium"
-                appearance={token.priceChange24hUSD >= 0 ? 'successText' : 'errorText'}
-              >
-                {formatChange(token.priceChange24hUSD)} ({t('24h')})
-              </Text>
-            )}
-          </View>
-
-          {!!rows.length && (
-            <View
-              style={[
-                spacings.phSm,
-                spacings.pv,
-                spacings.mbTy,
-                { backgroundColor: theme.secondaryBackground, borderRadius: BORDER_RADIUS_PRIMARY }
-              ]}
-            >
-              {rows.map((row, index) => (
-                <Row key={row.label} {...row} isLast={index === rows.length - 1} />
-              ))}
-            </View>
           )}
-
-          <AnimatedPressable
-            {...bindCoingeckoAnim}
-            onPress={() => openInTab({ url: `https://www.coingecko.com/en/coins/${token.id}` })}
-            style={[
-              flexbox.directionRow,
-              flexbox.alignCenter,
-              flexbox.justifySpaceBetween,
-              spacings.phSm,
-              spacings.mbTy,
-              {
-                height: 56,
-                backgroundColor: theme.secondaryBackground,
-                borderRadius: BORDER_RADIUS_PRIMARY
-              },
-              coingeckoAnimStyle
-            ]}
-          >
-            <Text fontSize={14} weight="medium" appearance="secondaryText">
-              {t('View on CoinGecko')}
-            </Text>
-            <OpenIcon />
-          </AnimatedPressable>
-
+          {chainId !== null && <TokenData token={displayToken} />}
+          <Exchanges exchanges={displayToken.meta?.exchanges || []} />
           {!!token.description && (
             <>
-              <TokenDetailsTitle title={t('About')} />
+              <TokenDetailsTitle title={t('Description')} />
               <View
                 style={[
                   spacings.phSm,
@@ -169,6 +169,19 @@ const TrendingTokenDetailsScreen = () => {
             </>
           )}
         </ScrollableWrapper>
+      )}
+      {!!displayToken && (
+        <FooterGlassView size="sm">
+          {actions.map((action) => (
+            <TokenDetailsButton
+              key={action.id}
+              {...action}
+              isDisabled={!!action.isDisabled}
+              token={displayToken}
+              iconWidth={action.iconWidth}
+            />
+          ))}
+        </FooterGlassView>
       )}
     </LayoutWrapper>
   )
