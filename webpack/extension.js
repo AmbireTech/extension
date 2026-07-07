@@ -465,20 +465,7 @@ module.exports = async function buildExtension(
       }
     }
 
-    // Check if we're generating LavaMoat policy - disable minification during policy generation
-    // because Terser cannot properly parse LavaMoat-wrapped modules
-    const isGeneratingPolicy = config.plugins.some(
-      (plugin) =>
-        plugin.constructor.name === 'LavaMoatPlugin' && plugin.options?.generatePolicy === true
-    )
-
-    // Disable minification entirely when generating LavaMoat policy
-    // to avoid Terser conflicts with wrapped modules
-    if (isGeneratingPolicy) {
-      config.optimization.minimize = false
-    } else {
-      hardenTerser(config)
-    }
+    hardenTerser(config)
 
     if (process.env.ANALYZE === 'true') {
       const { BundleAnalyzerPlugin } = require('webpack-bundle-analyzer')
