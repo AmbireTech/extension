@@ -25,8 +25,6 @@ const useHasGasTank = ({ account }: { account: Account | null }) => {
   const canUseGasTank = useMemo(() => {
     if (!account) return false
 
-    if (account.safeCreation) return false // not available for Safe accounts
-
     // not available for v1 accounts
     // one could argue if checking the factoryAddr is the best approach for this
     // but the alternative is checking the account state (onchain metric),

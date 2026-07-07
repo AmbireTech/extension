@@ -1,85 +1,57 @@
+import { expect, test } from '@playwright/test'
 import { baParams, ledgerSaParams, saParams } from 'constants/env'
-import tokens from 'constants/tokens'
-import { test } from 'fixtures/pageObjects'
-import Threshold from 'interfaces/threshold'
 
-test.describe('Basic Account - Tokens balance check', { tag: '@balanceCheck' }, async () => {
-  test.setTimeout(30000)
+type InsufficientToken = {
+  chain: string
+  addr: string
+  token: string
+  minValue: string
+  currentBalance: string
+  insufficient: boolean
+}
 
-  test.beforeEach(async ({ pages }) => {
-    await pages.initWithStorage(baParams)
-  })
+const RELAYER_E2E_BALANCE_URL = 'https://relayer.ambire.com/v2/e2eBalance'
 
-  test.afterEach(async ({ context }) => {
-    await context.close()
-  })
+// The relayer checks the funding addresses against a predefined set of tokens
+// and minimum balances. It returns 200 when every token is sufficiently funded
+// and 500 when at least one token is below its threshold. This lets us verify
+// the e2e funding accounts without booting up the extension.
+const ACCOUNTS: { name: string; address: string }[] = [
+  { name: 'Basic Account', address: baParams.envSelectedAccount },
+  { name: 'Smart Account', address: saParams.envSelectedAccount },
+  { name: 'Ledger SA e2e tests', address: ledgerSaParams.envSelectedAccount }
+]
 
-  test('check balance of test tokens', async ({ pages }) => {
-    const THRESHOLDS: Threshold[] = [
-      ['gas-token', 1],
-      [tokens.wallet.base, 1],
-      // These tokens are used to pay fees in transactions, so we need more funds here:
-      [tokens.usdc.base, 2],
-      [tokens.usdc.optimism, 2],
-      [tokens.eth.optimism, 0.000025]
-    ]
+test.describe('Tokens balance check', { tag: '@balanceCheck' }, () => {
+  for (const { name, address } of ACCOUNTS) {
+    test(`${name} - check balance of test tokens`, async ({ request }) => {
+      const response = await request.get(`${RELAYER_E2E_BALANCE_URL}/${address}`)
 
-    await pages.dashboard.checkBalances({
-      accountName: 'Basic Account',
-      thresholds: THRESHOLDS
+      if (response.ok()) return
+
+      const body = await response.text()
+      let tokens: InsufficientToken[]
+      try {
+        tokens = JSON.parse(body)
+      } catch {
+        throw new Error(
+          `${name} (${address}) balance check failed with status ${response.status()}: ${body}`
+        )
+      }
+
+      const insufficientTokens = tokens.filter((token) => token.insufficient)
+
+      const report = insufficientTokens
+        .map(
+          ({ chain, token, minValue, currentBalance }) =>
+            `  - ${chain} ${token}: has ${currentBalance}, needs ${minValue}`
+        )
+        .join('\n')
+
+      expect(
+        insufficientTokens,
+        `${name} (${address}) has insufficient balance:\n${report}`
+      ).toHaveLength(0)
     })
-  })
-})
-
-test.describe('Smart Account - Tokens balance check', { tag: '@balanceCheck' }, async () => {
-  test.setTimeout(30000)
-
-  test.beforeEach(async ({ pages }) => {
-    await pages.initWithStorage(saParams)
-  })
-
-  test.afterEach(async ({ context }) => {
-    await context.close()
-  })
-
-  test('check balance of test tokens', async ({ pages }) => {
-    const THRESHOLDS: Threshold[] = [
-      ['gas-token', 1],
-      [tokens.wallet.base, 1],
-      [tokens.dai.optimism, 1],
-      // These tokens are used to pay fees in transactions, so we need more funds here:
-      [tokens.usdc.base, 2],
-      [tokens.usdc.optimism, 2]
-    ]
-
-    await pages.dashboard.checkBalances({
-      accountName: 'Smart Account',
-      thresholds: THRESHOLDS
-    })
-  })
-})
-
-test.describe('LEDGER Smart Account - Tokens balance check', { tag: '@balanceCheck' }, async () => {
-  test.setTimeout(30000)
-
-  test.beforeEach(async ({ pages }) => {
-    await pages.initWithStorage(ledgerSaParams)
-  })
-
-  test.afterEach(async ({ context }) => {
-    await context.close()
-  })
-
-  test('check balance of test tokens', async ({ pages }) => {
-    const THRESHOLDS: Threshold[] = [
-      ['gas-token', 0.5],
-      // These tokens are used to pay fees in transactions, so we need more funds here:
-      [tokens.usdc.base, 1]
-    ]
-
-    await pages.dashboard.checkBalances({
-      accountName: 'Ledger SA e2e tests',
-      thresholds: THRESHOLDS
-    })
-  })
+  }
 })

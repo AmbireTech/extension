@@ -89,14 +89,17 @@ const mapFeeOptions = (
   if (!speedCoverage.includes(FeeSpeed.Slow)) {
     if (!feeOption.token.priceIn.length) {
       disabledReason = 'No price data'
-    } else if (
-      feeOption.paidBy === signAccountOpState.account.addr &&
-      signAccountOpState.account.safeCreation
-    ) {
-      disabledReason = 'Coming soon'
     } else {
       disabledReason = 'Insufficient amount'
     }
+  }
+
+  if (
+    signAccountOpState.account.safeCreation &&
+    feeOption.paidBy === signAccountOpState.account.addr &&
+    !feeOption.token.flags.onGasTank
+  ) {
+    disabledReason = 'Not supported'
   }
 
   // TODO: TBD, should we refactor and move `disabledReason` logic together with `speedCoverage` into controller.

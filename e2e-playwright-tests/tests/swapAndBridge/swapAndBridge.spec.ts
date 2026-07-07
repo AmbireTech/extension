@@ -11,72 +11,55 @@ test.describe('swapAndBridge Smart Account', { tag: '@swapAndBridge' }, () => {
   test.afterEach(async ({ context }) => {
     await context.close()
   })
-  test('should accept amount starting with zeros like "00.01" with during Swap & Bridge with a Smart Account', async ({
-    pages
-  }) => {
-    const fromToken = tokens.dai.optimism
-    const toToken = tokens.usdc.optimism
+  // These are pure UI/UX checks that don't submit a transaction. Each page-object method below
+  // self-resets the form via openSwapAndBridge() (which reloads when already on the page), so they
+  // can safely share a single extension instance and run as sub-steps of one test instead of
+  // bootstrapping a fresh isolated environment for every assertion.
+  test('Swap & Bridge UI/UX checks with a Smart Account', async ({ pages }) => {
+    test.setTimeout(180000)
 
-    await pages.swapAndBridge.prepareSwapAndBridge(0.1, fromToken, toToken)
-    await pages.swapAndBridge.enterNumber('00.01', true)
-  })
+    await test.step('should switch from token amount to USD value and vise-versa', async () => {
+      await pages.swapAndBridge.switchUSDValueOnSwapAndBridge(tokens.dai.optimism, 0.2)
+      await pages.swapAndBridge.switchUSDValueOnSwapAndBridge(tokens.usdc.base, 0.2)
+    })
 
-  test('should accept amount starting with point like ".01" during Swap & Bridge with a Smart Account', async ({
-    pages
-  }) => {
-    const fromToken = tokens.dai.optimism
-    const toToken = tokens.usdc.optimism
+    await test.step('should switch tokens', async () => {
+      await pages.swapAndBridge.openSwapAndBridge()
+      await pages.swapAndBridge.prepareSwapAndBridge(null, tokens.usdc.base, tokens.wallet.base)
+      await pages.swapAndBridge.switchTokensOnSwapAndBridge()
+    })
 
-    await pages.swapAndBridge.prepareSwapAndBridge(0.1, fromToken, toToken)
-    await pages.swapAndBridge.enterNumber('.01', true)
-  })
+    await test.step('should do MAX token "From" amount', async () => {
+      await pages.swapAndBridge.verifySendMaxTokenAmount(tokens.dai.optimism)
+      await pages.swapAndBridge.verifySendMaxTokenAmount(tokens.usdc.base)
+    })
 
-  test('should not accept chars as amount during Swap & Bridge with a Smart Account', async ({
-    pages
-  }) => {
-    const fromToken = tokens.dai.optimism
-    const toToken = tokens.usdc.optimism
+    await test.step('should find token that already exists within the "Receive" list', async () => {
+      await pages.swapAndBridge.verifyDefaultReceiveToken(tokens.usdc.base, tokens.wallet.base)
+      await pages.swapAndBridge.verifyDefaultReceiveToken(tokens.eth.base, tokens.wallet.base)
+    })
 
-    await pages.swapAndBridge.prepareSwapAndBridge(0.1, fromToken, toToken) // ~ 0.1$
-    await pages.swapAndBridge.enterNumber('abc', true)
-  })
+    await test.step('import a token by address that is NOT in the default "Receive" list returns error', async () => {
+      await pages.swapAndBridge.verifyNonDefaultReceiveToken(
+        tokens.eth.ethereum,
+        tokens.wcres.ethereum
+      )
+    })
 
-  test('should switch tokens during Swap & Bridge with a Smart Account', async ({ pages }) => {
-    const fromToken = tokens.usdc.base
-    const toToken = tokens.wallet.base
+    await test.step('should accept amount starting with zeros like "00.01"', async () => {
+      await pages.swapAndBridge.prepareSwapAndBridge(0.1, tokens.dai.optimism, tokens.usdc.optimism)
+      await pages.swapAndBridge.enterNumber('00.01', true)
+    })
 
-    await pages.swapAndBridge.openSwapAndBridge()
-    await pages.swapAndBridge.prepareSwapAndBridge(null, fromToken, toToken)
-    await pages.swapAndBridge.switchTokensOnSwapAndBridge()
-  })
+    await test.step('should accept amount starting with point like ".01"', async () => {
+      await pages.swapAndBridge.prepareSwapAndBridge(0.1, tokens.dai.optimism, tokens.usdc.optimism)
+      await pages.swapAndBridge.enterNumber('.01', true)
+    })
 
-  test('should do MAX token "From" amount during Swap & Bridge with a Smart Account', async ({
-    pages
-  }) => {
-    const dai = tokens.dai.optimism
-    const usdc = tokens.usdc.base
-
-    await pages.swapAndBridge.verifySendMaxTokenAmount(dai)
-    await pages.swapAndBridge.verifySendMaxTokenAmount(usdc)
-  })
-
-  test('should find token that already exists within the "Receive" list during Swap & Bridge with a Smart Account', async ({
-    pages
-  }) => {
-    const usdc = tokens.usdc.base
-    const wallet = tokens.wallet.base
-    const eth = tokens.eth.base
-
-    await pages.swapAndBridge.verifyDefaultReceiveToken(usdc, wallet)
-    await pages.swapAndBridge.verifyDefaultReceiveToken(eth, wallet)
-  })
-
-  test('import a token by address that is NOT in the default "Receive" list during Swap & Bridge with a Smart Account returns error', async ({
-    pages
-  }) => {
-    const eth = tokens.eth.ethereum
-    const wcres = tokens.wcres.ethereum
-    await pages.swapAndBridge.verifyNonDefaultReceiveToken(eth, wcres)
+    await test.step('should not accept chars as amount', async () => {
+      await pages.swapAndBridge.prepareSwapAndBridge(0.1, tokens.dai.optimism, tokens.usdc.optimism) // ~ 0.1$
+      await pages.swapAndBridge.enterNumber('abc', true)
+    })
   })
 
   test('should "reject" (ie cancel) Swap & Bridge from the Pending Route component with a Smart Account', async ({
@@ -87,15 +70,6 @@ test.describe('swapAndBridge Smart Account', { tag: '@swapAndBridge' }, () => {
     await pages.swapAndBridge.openSwapAndBridge()
     await pages.swapAndBridge.prepareSwapAndBridge(1, usdc, wallet) // ~ 0,1$
     await pages.swapAndBridge.rejectTransaction()
-  })
-
-  test('should switch from token amount to USD value and vise-versa during Swap & Bridge with a Smart Account', async ({
-    pages
-  }) => {
-    const dai = tokens.dai.optimism
-    const usdc = tokens.usdc.base
-    await pages.swapAndBridge.switchUSDValueOnSwapAndBridge(dai, 0.2)
-    await pages.swapAndBridge.switchUSDValueOnSwapAndBridge(usdc, 0.2)
   })
 
   test('should auto-refresh active route after 60s during Swap & Bridge with a Smart Account', async ({
@@ -131,7 +105,7 @@ test.describe('swapAndBridge Smart Account', { tag: '@swapAndBridge' }, () => {
   })
 
   test('should Bridge tokens with a Smart Account', async ({ pages }) => {
-    test.setTimeout(300000)
+    test.setTimeout(60000)
     await runSwapFlow({
       pages,
       sendToken: tokens.usdc.base,

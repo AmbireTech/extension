@@ -214,7 +214,7 @@ export class DashboardPage extends BasePage {
 
     const wrapper = this.page.getByTestId(selectors.sigtool.dappWrapper)
     const button = this.page.getByTestId(selectors.sigtool.sigToolIconButton)
-    const disconnect = this.page.locator(selectors.sigtool.disconnectButton)
+    const disconnect = this.page.locator(selectors.sigtool.disconnectDapp)
 
     // define element box
     const box = await wrapper.boundingBox()

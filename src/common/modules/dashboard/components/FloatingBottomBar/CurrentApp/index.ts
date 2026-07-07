@@ -1,3 +1,3 @@
-import CurrentApp from './CurrentApp'
+import CurrentApp from './CurrentApp.web'
 
 export default CurrentApp

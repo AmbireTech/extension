@@ -262,7 +262,7 @@ const DappItem = (dapp: DappItemProps) => {
                       style={spacings.mrTy}
                     />
                   )}
-                  {!isInSettings && isConnected && (
+                  {!isInSettings && (
                     <View testID="manage-dapp-dropdown" style={{ zIndex: 999 }}>
                       <ManageApp
                         dapp={dapp}

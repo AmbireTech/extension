@@ -54,6 +54,9 @@ const TrackProgress: FC<Props> = ({ activeRoute, handleClose }) => {
   const toAsset = lastStep ? lastStep.toAsset : null
   const toAssetSymbol = steps ? steps[steps.length - 1]!.toAsset.symbol : null
   const isSwap = lastCompletedRoute?.route && !getIsBridgeRoute(lastCompletedRoute?.route)
+  const providerId = lastCompletedRoute?.route
+    ? lastCompletedRoute.route.providerId
+    : lastCompletedRoute?.serviceProviderId
 
   const refunded = useMemo(() => {
     if (!steps || steps.length === 0 || !firstStep) return null
@@ -118,6 +121,7 @@ const TrackProgress: FC<Props> = ({ activeRoute, handleClose }) => {
 
   const explorerLink = useMemo(() => {
     if (!lastCompletedRoute) return
+    if (providerId === 'uniswap') return
 
     if (!isSwap) {
       return getLink(lastCompletedRoute)
@@ -134,7 +138,7 @@ const TrackProgress: FC<Props> = ({ activeRoute, handleClose }) => {
       txnId: lastCompletedRoute.userTxHash,
       identifiedBy
     })}`
-  }, [isSwap, lastCompletedRoute])
+  }, [isSwap, lastCompletedRoute, providerId])
 
   return (
     <TrackProgressWrapper
@@ -257,6 +261,7 @@ const TrackProgress: FC<Props> = ({ activeRoute, handleClose }) => {
 
       {lastCompletedRoute?.routeStatus === 'failed' && (
         <Failed
+          activeRouteIdToDelete={lastCompletedRoute.activeRouteId}
           title={t(isSwap ? 'Swap failed' : 'Bridge failed')}
           errorMessage={`Error: ${lastCompletedRoute.error!}`}
           toToken={

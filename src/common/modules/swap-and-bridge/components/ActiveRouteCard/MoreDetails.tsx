@@ -18,9 +18,14 @@ const MoreDetails = ({
 }) => {
   const { t } = useTranslation()
   const { themeType, theme } = useTheme()
+  const providerId = activeRoute.route
+    ? activeRoute.route.providerId
+    : activeRoute.serviceProviderId
   const handleOpenExplorer = async (route: SwapAndBridgeActiveRoute) => {
     await openInTab({ url: getLink(route) })
   }
+
+  if (providerId === 'uniswap') return null
 
   return (
     <View style={[flexbox.directionRow, flexbox.justifyEnd, style]}>
