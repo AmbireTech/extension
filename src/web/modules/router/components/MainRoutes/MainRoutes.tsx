@@ -8,14 +8,25 @@ import KeystoreUnlockedRoute from '@common/modules/router/components/KeystoreUnl
 import routesConfig from '@common/modules/router/config/routesConfig'
 import { WEB_ROUTES } from '@common/modules/router/constants/common'
 import Splash from '@web/components/Splash'
+import AccountSelectScreen from '@web/modules/account-select/screens/AccountSelectScreen'
+import GetEncryptionPublicKeyRequestScreen from '@web/modules/action-requests/screens/GetEncryptionPublicKeyRequestScreen'
+import ExploreScreen from '@web/modules/explore/screens/ExploreScreen'
+import ExploreSectionScreen from '@web/modules/explore/screens/ExploreSectionScreen'
+import ExtensionRewardsScreen from '@web/modules/extension-rewards/screens/ExtensionRewardsScreen'
+import NetworksScreen from '@web/modules/networks/screens'
+import ReceiveScreen from '@web/modules/receive/screens/ReceiveScreen'
 import NavMenu from '@web/modules/router/components/NavMenu'
 import TabOnlyRoute from '@web/modules/router/components/TabOnlyRoute'
 import {
   AuthGroupScreen,
-  PopupGroupScreen,
+  RequestWindowGroupScreen,
   SettingsGroupScreen
 } from '@web/modules/router/route-bundles/groupScreens'
 import { SettingsRoutesProvider } from '@web/modules/settings/contexts/SettingsRoutesContext'
+import SurveyScreen from '@web/modules/survey/screens/SurveyScreen/SurveyScreen'
+import SwapAndBridgeScreen from '@web/modules/swap-and-bridge/screens/SwapAndBridgeScreen'
+import TokenDetailsScreen from '@web/modules/token-details/screens/TokenDetailsScreen'
+import TransferScreen from '@web/modules/transfer/screens/TransferScreen'
 
 const MainRoutes = () => {
   const location = useLocation()
@@ -209,90 +220,57 @@ const MainRoutes = () => {
 
         <Route element={<KeystoreUnlockedRoute />}>
           <Route element={<AuthenticatedRoute />}>
-            <Route
-              path={WEB_ROUTES.transfer}
-              element={<PopupGroupScreen pick={(m) => m.TransferScreen} />}
-            />
-            <Route
-              path={WEB_ROUTES.topUpGasTank}
-              element={<PopupGroupScreen pick={(m) => m.TransferScreen} isTopUpScreen />}
-            />
+            <Route path={WEB_ROUTES.transfer} element={<TransferScreen />} />
+            <Route path={WEB_ROUTES.topUpGasTank} element={<TransferScreen isTopUpScreen />} />
             <Route
               path={WEB_ROUTES.signAccountOp}
-              element={<PopupGroupScreen pick={(m) => m.SignAccountOpScreen} />}
+              element={<RequestWindowGroupScreen pick={(m) => m.SignAccountOpScreen} />}
             />
-            <Route
-              path={WEB_ROUTES.swapAndBridge}
-              element={<PopupGroupScreen pick={(m) => m.SwapAndBridgeScreen} />}
-            />
+            <Route path={WEB_ROUTES.swapAndBridge} element={<SwapAndBridgeScreen />} />
             <Route
               path={WEB_ROUTES.signMessage}
-              element={<PopupGroupScreen pick={(m) => m.SignMessageScreen} />}
+              element={<RequestWindowGroupScreen pick={(m) => m.SignMessageScreen} />}
             />
             <Route
               path={WEB_ROUTES.benzin}
-              element={<PopupGroupScreen pick={(m) => m.BenzinScreen} />}
+              element={<RequestWindowGroupScreen pick={(m) => m.BenzinScreen} />}
             />
             <Route
               path={WEB_ROUTES.switchAccount}
-              element={<PopupGroupScreen pick={(m) => m.SwitchAccountScreen} />}
+              element={<RequestWindowGroupScreen pick={(m) => m.SwitchAccountScreen} />}
             />
 
             <Route
               path={WEB_ROUTES.dappConnectRequest}
-              element={<PopupGroupScreen pick={(m) => m.DappConnectScreen} />}
+              element={<RequestWindowGroupScreen pick={(m) => m.DappConnectScreen} />}
             />
             <Route
               path={WEB_ROUTES.addChain}
-              element={<PopupGroupScreen pick={(m) => m.AddOrUpdateNetworkScreen} />}
+              element={<RequestWindowGroupScreen pick={(m) => m.AddOrUpdateNetworkScreen} />}
             />
             <Route
               path={WEB_ROUTES.watchAsset}
-              element={<PopupGroupScreen pick={(m) => m.WatchTokenRequestScreen} />}
+              element={<RequestWindowGroupScreen pick={(m) => m.WatchTokenRequestScreen} />}
             />
 
             <Route
               path={WEB_ROUTES.getEncryptionPublicKeyRequest}
-              element={<PopupGroupScreen pick={(m) => m.GetEncryptionPublicKeyRequestScreen} />}
+              element={<GetEncryptionPublicKeyRequestScreen />}
             />
             <Route
               path={WEB_ROUTES.decryptRequest}
-              element={<PopupGroupScreen pick={(m) => m.DecryptRequestScreen} />}
+              element={<RequestWindowGroupScreen pick={(m) => m.DecryptRequestScreen} />}
             />
 
             <Route path={WEB_ROUTES.menu} element={<NavMenu />} />
-            <Route
-              path={WEB_ROUTES.tokenDetails}
-              element={<PopupGroupScreen pick={(m) => m.TokenDetailsScreen} />}
-            />
-            <Route
-              path={WEB_ROUTES.accountSelect}
-              element={<PopupGroupScreen pick={(m) => m.AccountSelectScreen} />}
-            />
-            <Route
-              path={WEB_ROUTES.receive}
-              element={<PopupGroupScreen pick={(m) => m.ReceiveScreen} />}
-            />
-            <Route
-              path={WEB_ROUTES.explore}
-              element={<PopupGroupScreen pick={(m) => m.ExploreScreen} />}
-            />
-            <Route
-              path={WEB_ROUTES.exploreSection}
-              element={<PopupGroupScreen pick={(m) => m.ExploreSectionScreen} />}
-            />
-            <Route
-              path={WEB_ROUTES.networks}
-              element={<PopupGroupScreen pick={(m) => m.NetworksScreen} />}
-            />
-            <Route
-              path={WEB_ROUTES.rewards}
-              element={<PopupGroupScreen pick={(m) => m.ExtensionRewardsScreen} />}
-            />
-            <Route
-              path={WEB_ROUTES.survey}
-              element={<PopupGroupScreen pick={(m) => m.SurveyScreen} />}
-            />
+            <Route path={WEB_ROUTES.tokenDetails} element={<TokenDetailsScreen />} />
+            <Route path={WEB_ROUTES.accountSelect} element={<AccountSelectScreen />} />
+            <Route path={WEB_ROUTES.receive} element={<ReceiveScreen />} />
+            <Route path={WEB_ROUTES.explore} element={<ExploreScreen />} />
+            <Route path={WEB_ROUTES.exploreSection} element={<ExploreSectionScreen />} />
+            <Route path={WEB_ROUTES.networks} element={<NetworksScreen />} />
+            <Route path={WEB_ROUTES.rewards} element={<ExtensionRewardsScreen />} />
+            <Route path={WEB_ROUTES.survey} element={<SurveyScreen />} />
           </Route>
         </Route>
       </Routes>

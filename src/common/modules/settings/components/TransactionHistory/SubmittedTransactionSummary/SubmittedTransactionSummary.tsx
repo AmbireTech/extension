@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react'
+import React, { lazy, Suspense, useMemo } from 'react'
 import { View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 
@@ -6,7 +6,7 @@ import { Network } from '@ambire-common/interfaces/network'
 import useController from '@common/hooks/useController'
 import { AnimatedPressable, useMultiHover } from '@common/hooks/useHover'
 import useTheme from '@common/hooks/useTheme'
-import { sizeMultiplier } from '@common/modules/sign-account-op/components/TransactionSummary'
+import { sizeMultiplier } from '@common/modules/sign-account-op/components/TransactionSummary/sizeMultiplier'
 import spacings, { SPACING_SM } from '@common/styles/spacings'
 import { getUiType } from '@common/utils/uiType'
 
@@ -17,10 +17,11 @@ import {
   MAX_VISIBLE_BALANCE_CHANGES
 } from './helpers'
 import getStyles from './styles'
-import SummaryDetailsSheet from './SummaryDetailsSheet'
 import SummaryHeader from './SummaryHeader'
 import SummaryPreview from './SummaryPreview'
 import { Props } from './types'
+
+const SummaryDetailsSheet = lazy(() => import('./SummaryDetailsSheet'))
 
 const { isTab } = getUiType()
 
@@ -107,15 +108,17 @@ const SubmittedTransactionSummaryInner = ({
           shouldShowBalanceChangesSummary={shouldShowBalanceChangesSummary}
         />
       </AnimatedPressable>
-      <SummaryDetailsSheet
-        sheetRef={sheetRef}
-        closeBottomSheet={closeBottomSheet}
-        modalType={isTab ? 'modal' : modalType}
-        submittedAccountOp={submittedAccountOp}
-        network={network}
-        size={size}
-        defaultType={defaultType}
-      />
+      <Suspense fallback={null}>
+        <SummaryDetailsSheet
+          sheetRef={sheetRef}
+          closeBottomSheet={closeBottomSheet}
+          modalType={isTab ? 'modal' : modalType}
+          submittedAccountOp={submittedAccountOp}
+          network={network}
+          size={size}
+          defaultType={defaultType}
+        />
+      </Suspense>
     </>
   )
 }
