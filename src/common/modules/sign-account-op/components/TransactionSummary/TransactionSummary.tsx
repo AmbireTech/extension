@@ -79,6 +79,9 @@ const increaseAllowanceAbi = parseAbi([
 const decreaseAllowanceAbi = parseAbi([
   'function decreaseAllowance(address spender, uint256 amount)'
 ])
+// legacy naming used by some tokens (e.g. OMG) instead of increaseAllowance/decreaseAllowance
+const increaseApprovalAbi = parseAbi(['function increaseApproval(address spender, uint256 amount)'])
+const decreaseApprovalAbi = parseAbi(['function decreaseApproval(address spender, uint256 amount)'])
 
 const DataArgs = ({
   decodedArgs,
@@ -387,6 +390,32 @@ const TransactionSummary = ({
             })
             break
           }
+          case toFunctionSelector(increaseApprovalAbi[0]): {
+            const { args } = decodeFunctionData({
+              abi: increaseApprovalAbi,
+              data: replacedCall.data
+            })
+            const [spender] = args
+            calldata = encodeFunctionData({
+              abi: increaseApprovalAbi,
+              functionName: 'increaseApproval',
+              args: [spender, parseUnits(newAmount || '0', portfolioToken.decimals)]
+            })
+            break
+          }
+          case toFunctionSelector(decreaseApprovalAbi[0]): {
+            const { args } = decodeFunctionData({
+              abi: decreaseApprovalAbi,
+              data: replacedCall.data
+            })
+            const [spender] = args
+            calldata = encodeFunctionData({
+              abi: decreaseApprovalAbi,
+              functionName: 'decreaseApproval',
+              args: [spender, parseUnits(newAmount || '0', portfolioToken.decimals)]
+            })
+            break
+          }
           default:
             addToast('Internal error: failed to edit the approval', { type: 'error' })
             return
@@ -481,6 +510,26 @@ const TransactionSummary = ({
         case toFunctionSelector(decreaseAllowanceAbi[0]): {
           const { args } = decodeFunctionData({
             abi: decreaseAllowanceAbi,
+            data: call.data
+          })
+          const [, currentDecrease] = args
+          amount = currentDecrease
+          token = call.to
+          break
+        }
+        case toFunctionSelector(increaseApprovalAbi[0]): {
+          const { args } = decodeFunctionData({
+            abi: increaseApprovalAbi,
+            data: call.data
+          })
+          const [, currentIncrease] = args
+          amount = currentIncrease
+          token = call.to
+          break
+        }
+        case toFunctionSelector(decreaseApprovalAbi[0]): {
+          const { args } = decodeFunctionData({
+            abi: decreaseApprovalAbi,
             data: call.data
           })
           const [, currentDecrease] = args
