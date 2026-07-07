@@ -457,11 +457,6 @@ module.exports = async function buildExtension(
           chunk.name !== 'content-script' &&
           (!enableLavaMoat || chunk.name !== 'background')
         )
-      },
-      // Disable random cache groups (resulting non-deterministic chunk names)
-      cacheGroups: {
-        default: false,
-        vendors: false
       }
     }
 
