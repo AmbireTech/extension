@@ -1,11 +1,11 @@
 import React, { FC, useCallback, useEffect, useMemo, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Pressable, View } from 'react-native'
+import { View } from 'react-native'
 
 import { EstimationStatus } from '@ambire-common/controllers/estimation/types'
 import { SwapAndBridgeFormStatus } from '@ambire-common/controllers/swapAndBridge/swapAndBridge'
 import { getIsBridgeRoute } from '@ambire-common/libs/swapAndBridge/swapAndBridge'
-import { FEE_PERCENT } from '@ambire-common/services/socket/constants'
+import { FEE_PERCENT } from '@ambire-common/services/socketv3/constants'
 import InfoIcon from '@common/assets/svg/InfoIcon'
 import WarningIcon from '@common/assets/svg/WarningIcon'
 import Text from '@common/components/Text'

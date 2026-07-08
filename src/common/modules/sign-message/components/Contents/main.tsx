@@ -16,7 +16,6 @@ import { isMobile, isWeb } from '@common/config/env'
 import useController from '@common/hooks/useController'
 import useResponsiveActionWindow from '@common/hooks/useResponsiveActionWindow'
 import useTheme from '@common/hooks/useTheme'
-import useWindowSize from '@common/hooks/useWindowSize'
 import HardwareWalletSigningModal from '@common/modules/hardware-wallets/components/HardwareWalletSigningModal'
 import SafeEip712Data from '@common/modules/sign-account-op/components/SafeEip712Data'
 import SafetyChecksBanner from '@common/modules/sign-account-op/components/SafetyChecksBanner'
@@ -90,7 +89,7 @@ const Main = ({
   const signStatus = signMessageState.statuses.sign
   const { styles, theme } = useTheme(getStyles)
   const { responsiveSizeMultiplier } = useResponsiveActionWindow()
-  const { minHeightSize } = useWindowSize()
+
   const { networks } = useController('NetworksController').state
   const network = useMemo(
     () =>
@@ -216,15 +215,19 @@ const Main = ({
         <View style={flexbox.flex1}>
           <ExpandableCard
             key={messageVisualizationKey}
-            enableToggleExpand={visualizeHumanized}
-            hasArrow={!humanizedMessage?.canHideDropdownArrow && visualizeHumanized}
+            enableToggleExpand={visualizeHumanized && !shouldUseErc7730TypedMessageCard}
+            hasArrow={
+              shouldUseErc7730TypedMessageCard
+                ? false
+                : !humanizedMessage?.canHideDropdownArrow && visualizeHumanized
+            }
             isInitiallyExpanded={!visualizeHumanized && !isHumanizing}
             style={{
               marginBottom: SPACING_TY * responsiveSizeMultiplier,
               backgroundColor: theme.secondaryBackground,
               ...(humanizedMessage?.warnings?.length ? styles.warningContainer : {})
             }}
-            content={
+            content={() =>
               isHumanizing ? (
                 <View style={flexbox.flex1}>
                   <Spinner />
@@ -234,6 +237,7 @@ const Main = ({
                   data={typedMessageErc7730Visualizations}
                   chainId={network?.chainId || signMessageState.messageToSign?.chainId || 1n}
                   responsiveSizeMultiplier={responsiveSizeMultiplier}
+                  messageContent={signMessageState.messageToSign?.content}
                   warnings={humanizedMessage?.warnings}
                 />
               ) : visualizeHumanized &&
@@ -276,16 +280,16 @@ const Main = ({
               )
             }
             expandedContent={
-              <FallbackVisualization
-                setHasReachedBottom={setHasReachedBottom}
-                hasReachedBottom={!!hasReachedBottom}
-                messageToSign={signMessageState.messageToSign}
-                humanizedMessage={humanizedMessage}
-                responsiveSizeMultiplier={responsiveSizeMultiplier}
-                withScrollDownArrow
-                rawOnly={shouldUseErc7730TypedMessageCard}
-                disableScroll={isMobile && shouldUseErc7730TypedMessageCard}
-              />
+              shouldUseErc7730TypedMessageCard ? undefined : (
+                <FallbackVisualization
+                  setHasReachedBottom={setHasReachedBottom}
+                  hasReachedBottom={!!hasReachedBottom}
+                  messageToSign={signMessageState.messageToSign}
+                  humanizedMessage={humanizedMessage}
+                  responsiveSizeMultiplier={responsiveSizeMultiplier}
+                  withScrollDownArrow
+                />
+              )
             }
           >
             {!shouldUseErc7730TypedMessageCard &&

@@ -30,6 +30,7 @@ interface Props {
   currentDapp: Dapp | null | undefined
   smartAccountType?: 'Ambire' | 'Safe'
   onManageAppClosed?: () => void
+  showBackButton?: boolean
 }
 
 const DappWebViewFooter: React.FC<Props> = ({
@@ -41,13 +42,19 @@ const DappWebViewFooter: React.FC<Props> = ({
   account,
   currentDapp,
   smartAccountType,
-  onManageAppClosed
+  onManageAppClosed,
+  showBackButton
 }) => {
   const { theme } = useTheme()
   const { navigate, goBack, canGoBack: canGoBackInHistory } = useNavigation()
   const route = useRoute()
 
   const url = useWatch({ control: headerControl, name: 'search' })
+
+  // The footer belongs to the in-app browser, so "connected" must mean connected via the
+  // injected channel specifically - not `isConnected`, which is true for any source (e.g. a
+  // dapp connected only through WalletConnect should still show as not connected here).
+  const isConnectedViaInjected = !!currentDapp?.connectedSources?.includes('injected')
 
   const handleNavigateToApps = useCallback(() => {
     // If we navigated here straight from the apps catalog (the typical flow),
@@ -65,7 +72,7 @@ const DappWebViewFooter: React.FC<Props> = ({
   return (
     <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.phSm, spacings.ptSm]}>
       <Pressable
-        onPress={handleNavigateToApps}
+        onPress={showBackButton ? goBack : handleNavigateToApps}
         style={[
           flexbox.alignCenter,
           flexbox.justifyCenter,
@@ -77,7 +84,11 @@ const DappWebViewFooter: React.FC<Props> = ({
           }
         ]}
       >
-        <HomeIcon width={18} height={18} />
+        {showBackButton ? (
+          <LeftArrowIcon width={9} height={16} />
+        ) : (
+          <HomeIcon width={18} height={18} />
+        )}
       </Pressable>
       <View
         style={[
@@ -96,13 +107,9 @@ const DappWebViewFooter: React.FC<Props> = ({
         <Pressable
           onPress={handleGoBack}
           disabled={!canGoBack}
-          style={[{ width: 28 }, flexbox.center]}
+          style={[{ width: 28, opacity: canGoBack ? 1 : 0.4 }, flexbox.center]}
         >
-          <LeftArrowIcon
-            width={9}
-            height={16}
-            color={canGoBack ? theme.iconPrimary : theme.neutral400}
-          />
+          <LeftArrowIcon width={9} height={16} />
         </Pressable>
         <Pressable
           onPress={handleOpenSearchModal}
@@ -141,7 +148,7 @@ const DappWebViewFooter: React.FC<Props> = ({
                       : theme.primaryBackground
                 }}
               >
-                {!currentDapp.isConnected && (
+                {!isConnectedViaInjected && (
                   <NotConnected
                     width={12}
                     height={12}
@@ -150,7 +157,7 @@ const DappWebViewFooter: React.FC<Props> = ({
                 )}
               </View>
 
-              {currentDapp.isConnected && currentDapp.chainId && (
+              {isConnectedViaInjected && currentDapp.chainId && (
                 <View
                   style={{
                     position: 'absolute',

@@ -30,6 +30,7 @@ import PrivateKeyImportScreen from '@web/modules/auth/screens/PrivateKeyImportSc
 import SafeImportScreen from '@web/modules/auth/screens/SafeImportScreen'
 import SeedPhraseImportScreen from '@web/modules/auth/screens/SeedPhraseImportScreen'
 import ViewOnlyAccountAdderScreen from '@web/modules/auth/screens/ViewOnlyAccountAdderScreen'
+import InternalLogsScreen from '@web/modules/debug/screens/InternalLogsScreen'
 import ExploreScreen from '@web/modules/explore/screens/ExploreScreen'
 import ExploreSectionScreen from '@web/modules/explore/screens/ExploreSectionScreen'
 import ExtensionRewardsScreen from '@web/modules/extension-rewards/screens/ExtensionRewardsScreen'
@@ -54,7 +55,7 @@ import DevicePasswordRecoverySettingsScreen from '@web/modules/settings/screens/
 import DevicePasswordSetSettingsScreen from '@web/modules/settings/screens/DevicePasswordSetSettingsScreen'
 import GeneralSettingsScreen from '@web/modules/settings/screens/GeneralSettingsScreen'
 import ManageTokensSettingsScreen from '@web/modules/settings/screens/ManageTokensSettingsScreen'
-import NetworksSettingsScreen from '@web/modules/settings/screens/NetworksSettingsScreen/NetworksSettingsScreen'
+import NetworksSettingsScreen from '@web/modules/settings/screens/NetworksSettingsScreen'
 import OptOutsScreen from '@web/modules/settings/screens/OptOutsScreen'
 import RecoveryPhrasesSettingsScreen from '@web/modules/settings/screens/RecoveryPhrasesSettingsScreen'
 import SignedMessageHistorySettingsScreen from '@web/modules/settings/screens/SignedMessageHistorySettingsScreen'
@@ -85,6 +86,7 @@ const MainRoutes = () => {
       <Route path={WEB_ROUTES.noConnection} element={<NoConnectionScreen />} />
 
       <Route element={<TabOnlyRoute />}>
+        <Route path={WEB_ROUTES.internalLogs} element={<InternalLogsScreen />} />
         <Route path={WEB_ROUTES.networksConfiguration} element={<NetworksConfiguration />} />
         <Route
           path={WEB_ROUTES.privacyOptOutsConfiguration}

@@ -18,7 +18,7 @@ import Pagination from '@common/components/Pagination'
 import ScrollableWrapper from '@common/components/ScrollableWrapper'
 import Spinner from '@common/components/Spinner'
 import Text from '@common/components/Text'
-import { isMobile } from '@common/config/env'
+import { isMobile, isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
@@ -229,7 +229,7 @@ const AccountsOnPageList = ({
   if (!state.isInitialized) return null
 
   return (
-    <View style={[spacings.ptTy, flexbox.flex1]} nativeID="account-picker-page-list">
+    <View style={[isWeb && spacings.ptTy, flexbox.flex1]} nativeID="account-picker-page-list">
       <View style={flexbox.flex1}>
         {!!networkNamesWithAccountStateError.length && (
           <Alert

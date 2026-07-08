@@ -18,3 +18,6 @@ export const secureStorage: {
   set: (key: string, value: string) => Promise<void>
   remove: (key: string) => Promise<void>
 }
+// PERF: snapshot of the whole async storage as raw serialized strings, used to
+// seed the mobile WebView worker's in-memory cache at init (see WebViewWorker).
+export const getAllSerialized: () => Record<string, string>

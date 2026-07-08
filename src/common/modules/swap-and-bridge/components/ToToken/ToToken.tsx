@@ -284,6 +284,7 @@ const ToToken: FC<Props> = ({ simulationFailed }) => {
           value={getToNetworkSelectValue}
           mode="bottomSheet"
           bottomSheetTitle={t('Receive token network')}
+          testID="to-network-select"
         />
       </View>
       <View

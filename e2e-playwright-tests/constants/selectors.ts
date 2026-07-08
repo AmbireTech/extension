@@ -147,7 +147,11 @@ const selectors = {
     backButton: 'back-button',
     amountField: 'amount-field',
     proceedBtn: 'proceed-btn',
-    transactionError: '//span[contains(text(),"Error")]' // e.g. snackbar when relayer is down
+    transactionError: '//span[contains(text(),"Error")]', // e.g. snackbar when relayer is down,
+    dualChoiceModalAcceptButton: 'dual-choice-modal-primary-button',
+    dualChoiceModalTitle: 'dual-choice-modal-title-text',
+    previousFeeAmountText: 'previous-fee-amount',
+    updatedFeeAmountText: 'updated-fee-amount'
   },
   // TODO: update selectors wiyh testID
   ambireRewards: {
@@ -197,11 +201,13 @@ const selectors = {
     sigToolIconButton: 'manage-dapp-dropdown',
     sigToolNetworkEth: '//div[contains(text(), "Ethereum")]',
     sigToolNetworkBase: '//div[contains(text(), "Base")]',
-    disconnectButton: '//div[contains(text(), "Disconnect")]'
+    disconnectButton: '//button[contains(text(), "Disconnect Wallet")]',
+    disconnectDapp: '//div[contains(text(), "Disconnect")]'
   },
   swapAndBridge: {
     fromTokenDropdown: 'from-token-select',
     receiveTokenDropdown: 'to-token-select',
+    receiveNetworkDropdown: 'to-network-select',
     oneInchSwapRoute: '//div[contains(text(), "1Inch")]',
     kyberSwapRoute: '//div[contains(text(), "Kyberswap")]',
     sushiSwapRoute: 'div:has-text("SushiSwap Aggregator")' // no route
@@ -297,9 +303,6 @@ const selectors = {
   refreshButton: 'refresh-button',
   dashboardGasTankBalance: 'dashboard-gas-tank-balance',
   createSmartAccountGasTankModalButton: 'create-smart-account-gas-tank-modal-button',
-  recieveNetworkBase: 'option-8453',
-  recieveNetworkOptimism: 'option-10',
-  receiveNetworkEth: 'option-1',
   confirmFollowUpTxn: 'confirm-follow-up-txns-checkbox',
   USDC: 'option-0x0b2c639c533813f4aa9d7837caf62653d097ff85.usdc',
   signTransactionButton: 'transaction-button-sign',
@@ -340,7 +343,7 @@ const selectors = {
   // TODO: change once we have IDs on FE
   disableNetworkButton: 'disable-network-btn',
   disableNetworkConfirmButton: 'disable-network-confirm-btn',
-  addRPCURLButton: '//div[.//div[text()="RPC URL"]]//div[text()="Add"]',
+  addRPCURLButton: '//div[.//div[text()="Add RPC URL"]]//div[text()="Add"]',
   addNetworkButton: '//div[.//div[text()="Network details"]]//div[text()="Add network"]',
   connectWalletButton:
     "//div[.//span[text()='Include Testnets']]//button[normalize-space()='Connect Wallet']",

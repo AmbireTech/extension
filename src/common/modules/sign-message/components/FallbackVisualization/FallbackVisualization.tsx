@@ -30,7 +30,11 @@ import spacings, { SPACING_SM, SPACING_TY } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { getMessageAsText, simplifyTypedMessage } from '@common/utils/messageToString'
 
-import { getEip712IntegerFieldNames, getParsedMessageValue } from './helpers'
+import {
+  getEip712IntegerFieldNames,
+  getParsedMessageValue,
+  isParsedMessageValueShortened
+} from './helpers'
 import getStyles from './styles'
 
 const isCloseToBottom = ({ layoutMeasurement, contentOffset, contentSize }: NativeScrollEvent) => {
@@ -128,6 +132,7 @@ const FallbackVisualization: FC<{
   withCompactDataRow?: boolean
   withDecimalIntegerRows?: boolean
   disableScroll?: boolean
+  hideTabs?: boolean
   containerStyle?: StyleProp<ViewStyle>
   separatorColor?: ColorValue
 }> = ({
@@ -142,6 +147,7 @@ const FallbackVisualization: FC<{
   withCompactDataRow = false,
   withDecimalIntegerRows = false,
   disableScroll = false,
+  hideTabs = false,
   containerStyle,
   separatorColor
 }) => {
@@ -223,7 +229,7 @@ const FallbackVisualization: FC<{
 
   return (
     <View style={[styles.container, containerStyle]}>
-      {isTypedMessage && !rawOnly && (
+      {isTypedMessage && !rawOnly && !hideTabs && (
         <View style={[styles.tabHeader, !!separatorColor && { borderBottomColor: separatorColor }]}>
           {tabs.map(([tab, label]) => {
             const isActive = activeTab === tab
@@ -295,63 +301,77 @@ const FallbackVisualization: FC<{
             />
           ) : (
             <View>
-              {parsedRows.map((i) => (
-                <View
-                  key={`${i.path}-${i.value}`}
-                  style={[
-                    styles.parsedRow,
-                    {
-                      marginBottom:
-                        i.isArrayItem && isHexString(String(i.value))
-                          ? SPACING_TY * responsiveSizeMultiplier
-                          : 0
-                    }
-                  ]}
-                >
-                  <Text
-                    selectable
-                    weight="semiBold"
-                    fontSize={14 * responsiveSizeMultiplier}
-                    appearance="secondaryText"
+              {parsedRows.map((i) => {
+                const plainValue =
+                  typeof i.componentToReturn === 'string' ||
+                  typeof i.componentToReturn === 'number'
+                    ? i.componentToReturn
+                    : null
+                const hasPlainValue = plainValue !== null
+                const displayedValue = hasPlainValue
+                  ? getParsedMessageValue(i.label, plainValue, integerFieldNames)
+                  : i.componentToReturn
+                const copyValue =
+                  typeof plainValue === 'string' &&
+                  isParsedMessageValueShortened(i.label, plainValue, integerFieldNames)
+                    ? plainValue
+                    : null
+
+                return (
+                  <View
+                    key={`${i.path}-${i.value}`}
                     style={[
-                      styles.parsedLabel,
-                      { marginLeft: Math.max(i.n - 1, 0) * SPACING_SM * responsiveSizeMultiplier }
+                      styles.parsedRow,
+                      {
+                        marginBottom:
+                          i.isArrayItem && isHexString(String(i.value))
+                            ? SPACING_TY * responsiveSizeMultiplier
+                            : 0
+                      }
                     ]}
                   >
-                    {i.label}
-                  </Text>
-                  <View style={styles.parsedValue}>
-                    {typeof i.componentToReturn === 'string' ||
-                    typeof i.componentToReturn === 'number' ? (
-                      <>
-                        <Text
-                          selectable
-                          weight="medium"
-                          fontSize={14 * responsiveSizeMultiplier}
-                          appearance="primaryText"
-                          style={styles.parsedValueText}
-                        >
-                          {withCompactDataRow || withDecimalIntegerRows
-                            ? getParsedMessageValue(i.label, i.componentToReturn, integerFieldNames)
-                            : i.componentToReturn}
-                        </Text>
-                        {withCompactDataRow &&
-                          i.label === 'data' &&
-                          typeof i.componentToReturn === 'string' && (
+                    <Text
+                      selectable
+                      weight="semiBold"
+                      fontSize={14 * responsiveSizeMultiplier}
+                      appearance="secondaryText"
+                      style={[
+                        styles.parsedLabel,
+                        {
+                          marginLeft: Math.max(i.n - 1, 0) * SPACING_SM * responsiveSizeMultiplier
+                        }
+                      ]}
+                    >
+                      {i.label}
+                    </Text>
+                    <View style={styles.parsedValue}>
+                      {hasPlainValue ? (
+                        <>
+                          <Text
+                            selectable
+                            weight="medium"
+                            fontSize={14 * responsiveSizeMultiplier}
+                            appearance="primaryText"
+                            style={styles.parsedValueText}
+                          >
+                            {displayedValue}
+                          </Text>
+                          {!!copyValue && (
                             <CopyText
-                              text={i.componentToReturn}
+                              text={copyValue}
                               iconColor={theme.secondaryText}
                               iconSize={16 * responsiveSizeMultiplier}
                               style={spacings.mlMi}
                             />
                           )}
-                      </>
-                    ) : (
-                      i.componentToReturn
-                    )}
+                        </>
+                      ) : (
+                        i.componentToReturn
+                      )}
+                    </View>
                   </View>
-                </View>
-              ))}
+                )
+              })}
             </View>
           ))}
         {content.kind === 'authorization-7702' && (

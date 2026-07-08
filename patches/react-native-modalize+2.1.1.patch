@@ -1,5 +1,5 @@
 diff --git a/node_modules/react-native-modalize/lib/index.js b/node_modules/react-native-modalize/lib/index.js
-index 5d5edac..1005aa5 100644
+index 5d5edac..cf58e3d 100644
 --- a/node_modules/react-native-modalize/lib/index.js
 +++ b/node_modules/react-native-modalize/lib/index.js
 @@ -47,7 +47,11 @@ const AnimatedKeyboardAvoidingView = react_native_1.Animated.createAnimatedCompo
@@ -38,7 +38,37 @@ index 5d5edac..1005aa5 100644
              dragY.setValue(0);
              willCloseModalize = false;
              setLastSnap(lastSnapValue);
-@@ -316,11 +327,11 @@ onOpen, onOpened, onClose, onClosed, onBackButtonPress, onPositionChange, onOver
+@@ -265,12 +276,23 @@ onOpen, onOpened, onClose, onClosed, onBackButtonPress, onPositionChange, onOver
+         });
+     };
+     const handleModalizeContentLayout = ({ nativeEvent: { layout } }) => {
+-        const value = Math.min(layout.height + (!adjustToContentHeight || keyboardHeight ? layout.y : 0), endHeight -
+-            react_native_1.Platform.select({
+-                ios: 0,
+-                android: keyboardHeight,
+-                default: 0,
+-            }));
++        // Patched: when adjustToContentHeight is false the sheet is meant to occupy the
++        // fixed `endHeight` (the consumer flips adjustToContentHeight off on keyboard show
++        // precisely to make the sheet expand to the top of the screen). Under
++        // react-native-keyboard-controller's KeyboardProvider the Android window stays at
++        // full height and animates the keyboard over the content via insets, so during
++        // that animation this onLayout transiently measures a keyboard-reduced
++        // `layout.height + layout.y` that is shorter than `endHeight`. The original
++        // `Math.min(..., endHeight - keyboardHeight)` then locked the sheet to that shorter
++        // value, which is the "flash to the top then collapse" seen on Android. Keeping
++        // `endHeight` when not adjusting to content height avoids that race; iOS was
++        // unaffected because the OS keyboard floats over the content and the measured
++        // height stayed at endHeight.
++        if (!adjustToContentHeight) {
++            setModalHeightValue(endHeight);
++            return;
++        }
++        const value = Math.min(layout.height + (!adjustToContentHeight || keyboardHeight ? layout.y : 0), endHeight);
+         setModalHeightValue(value);
+     };
+     const handleBaseLayout = (component, height) => {
+@@ -316,11 +338,11 @@ onOpen, onOpened, onClose, onClosed, onBackButtonPress, onPositionChange, onOver
          const { timing } = closeAnimationConfig;
          const { velocityY, translationY } = nativeEvent;
          const negativeReverseScroll = modalPosition === 'top' &&
@@ -53,7 +83,7 @@ index 5d5edac..1005aa5 100644
              : thresholdProps;
          let enableBouncesValue = true;
          // We make sure to reset the value if we are dragging from the children
-@@ -334,8 +345,8 @@ onOpen, onOpened, onClose, onClosed, onBackButtonPress, onPositionChange, onOver
+@@ -334,8 +356,8 @@ onOpen, onOpened, onClose, onClosed, onBackButtonPress, onPositionChange, onOver
          if (nativeEvent.oldState === react_native_gesture_handler_1.State.BEGAN) {
              setCancelClose(false);
              if (!closeSnapPointStraightEnabled && snapPoint
@@ -64,7 +94,7 @@ index 5d5edac..1005aa5 100644
                  setCancelClose(true);
                  translateY.setValue(0);
                  dragY.setValue(0);
-@@ -353,10 +364,10 @@ onOpen, onOpened, onClose, onClosed, onBackButtonPress, onPositionChange, onOver
+@@ -353,10 +375,10 @@ onOpen, onOpened, onClose, onClosed, onBackButtonPress, onPositionChange, onOver
          setEnableBounces(devices_1.isAndroid
              ? false
              : alwaysOpen
@@ -77,7 +107,7 @@ index 5d5edac..1005aa5 100644
              let destSnapPoint = 0;
              if (snapPoint || alwaysOpen) {
                  const endOffsetY = lastSnap + toValue + dragToss * velocityY;
-@@ -389,13 +400,13 @@ onOpen, onOpened, onClose, onClosed, onBackButtonPress, onPositionChange, onOver
+@@ -389,13 +411,13 @@ onOpen, onOpened, onClose, onClosed, onBackButtonPress, onPositionChange, onOver
                          }
                      }
                      // For alwaysOpen props
@@ -93,7 +123,7 @@ index 5d5edac..1005aa5 100644
                  willCloseModalize = true;
                  handleClose();
              }
-@@ -422,7 +433,7 @@ onOpen, onOpened, onClose, onClosed, onBackButtonPress, onPositionChange, onOver
+@@ -422,7 +444,7 @@ onOpen, onOpened, onClose, onClosed, onBackButtonPress, onPositionChange, onOver
                  toValue: destSnapPoint,
                  useNativeDriver: USE_NATIVE_DRIVER,
              }).start();
@@ -102,7 +132,7 @@ index 5d5edac..1005aa5 100644
                  const modalPositionValue = destSnapPoint <= 0 ? 'top' : 'initial';
                  if (panGestureAnimatedValue) {
                      react_native_1.Animated.timing(panGestureAnimatedValue, {
-@@ -536,6 +547,10 @@ onOpen, onOpened, onClose, onClosed, onBackButtonPress, onPositionChange, onOver
+@@ -536,6 +558,10 @@ onOpen, onOpened, onClose, onClosed, onBackButtonPress, onPositionChange, onOver
                  useNativeDriver: USE_NATIVE_DRIVER,
                  listener: onScrollBeginDrag,
              }),
@@ -113,7 +143,7 @@ index 5d5edac..1005aa5 100644
              scrollEventThrottle,
              onLayout: handleContentLayout,
              scrollEnabled,
-@@ -553,9 +568,38 @@ onOpen, onOpened, onClose, onClosed, onBackButtonPress, onPositionChange, onOver
+@@ -553,9 +579,38 @@ onOpen, onOpened, onClose, onClosed, onBackButtonPress, onPositionChange, onOver
          }
          return (React.createElement(react_native_1.Animated.ScrollView, Object.assign({}, scrollViewProps, opts), children));
      };
@@ -152,7 +182,7 @@ index 5d5edac..1005aa5 100644
          return (React.createElement(react_native_gesture_handler_1.PanGestureHandler, { ref: panGestureChildrenRef, enabled: panGestureEnabled, simultaneousHandlers: [nativeViewChildrenRef, tapGestureModalizeRef], shouldCancelWhenOutside: false, onGestureEvent: handleGestureEvent, minDist: minDist, activeOffsetY: ACTIVATED, activeOffsetX: ACTIVATED, onHandlerStateChange: handleChildren },
              React.createElement(react_native_1.Animated.View, { style: [style, childrenStyle] },
                  React.createElement(react_native_gesture_handler_1.NativeViewGestureHandler, { ref: nativeViewChildrenRef, waitFor: tapGestureModalizeRef, simultaneousHandlers: panGestureChildrenRef }, renderContent()))));
-@@ -658,14 +702,20 @@ onOpen, onOpened, onClose, onClosed, onBackButtonPress, onPositionChange, onOver
+@@ -658,14 +713,20 @@ onOpen, onOpened, onClose, onClosed, onBackButtonPress, onPositionChange, onOver
          keyboardAvoidingViewProps.onLayout = handleModalizeContentLayout;
      }
      const renderModalize = (React.createElement(react_native_1.View, { style: [styles_1.default.modalize, rootStyle], pointerEvents: alwaysOpen || !withOverlay ? 'box-none' : 'auto' },
