@@ -317,7 +317,11 @@ const useSign = ({
         return
       }
 
-      if ((signAccountOpState?.feePayerKeyStoreKeys?.length || 0) > 1 && !isFeePayerSameAsSigner) {
+      if (
+        !signAccountOpState?.account.safeCreation &&
+        (signAccountOpState?.feePayerKeyStoreKeys?.length || 0) > 1 &&
+        !isFeePayerSameAsSigner
+      ) {
         setIsChooseFeePayerKeyShown(true)
         return
       }
@@ -334,6 +338,7 @@ const useSign = ({
       signAccountOpState?.accountOp.signingKeyAddr,
       signAccountOpState?.accountOp.gasFeePayment?.paidBy,
       signAccountOpState?.feePayerKeyStoreKeys?.length,
+      signAccountOpState?.account.safeCreation,
       signAccountOpState?.accountOp.signingKeyType,
       signAccountOpState?.accountOp.gasFeePayment?.paidByKeyType,
       warningToPromptBeforeSign,
