@@ -4,7 +4,7 @@ import { getCurrentAccountBanners } from '@ambire-common/libs/banners/banners'
 import useController from '@common/hooks/useController'
 import useOtaUpdateBanner from '@common/modules/dashboard/hooks/useOtaUpdateBanner'
 
-import type { Banner as BannerInterface, IBannerController } from '@ambire-common/interfaces/banner'
+import type { Banner as BannerInterface } from '@ambire-common/interfaces/banner'
 const OFFLINE_BANNER: BannerInterface = {
   id: 'offline-banner',
   type: 'error',
