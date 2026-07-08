@@ -1394,7 +1394,8 @@
         "stream-http>inherits": true,
         "react-native-quick-crypto>safe-buffer": true,
         "stream-browserify": true,
-        "string_decoder": true
+        "string_decoder": true,
+        "@ngraveio/bc-ur>sha.js>to-buffer": true
       }
     },
     "react-tooltip>classnames": {

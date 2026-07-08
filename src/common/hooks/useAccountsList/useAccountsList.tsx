@@ -2,6 +2,7 @@ import Fuse from 'fuse.js'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { FlatList } from 'react-native'
+import { isAddress } from 'viem'
 
 import { Account as AccountType } from '@ambire-common/interfaces/account'
 import { isSmartAccount } from '@ambire-common/libs/account/account'
@@ -54,6 +55,15 @@ const useAccountsList = ({
 
   const filteredAccounts = useMemo(() => {
     if (!search) return accounts
+
+    // Exact match if the search is an address
+    if (isAddress(search)) {
+      const account = accounts.find(
+        (account) => account.addr.toLowerCase() === search.toLowerCase()
+      )
+
+      return account ? [account] : []
+    }
 
     const fuse = new Fuse(searchableAccounts, {
       keys: [
