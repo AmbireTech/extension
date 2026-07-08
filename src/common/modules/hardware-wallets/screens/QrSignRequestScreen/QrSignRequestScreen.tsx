@@ -37,7 +37,7 @@ const QrSignRequestScreen = ({
   const { t } = useTranslation()
   // A smaller code leaves room for the details + footer inside the mobile
   // bottom sheet; the desktop panel has space for the larger code.
-  const qrSize = isMobile ? 220 : transactionProgress ? 280 : 300
+  const qrSize = isMobile ? 260 : transactionProgress ? 280 : 300
 
   return (
     // Top-aligned (not vertically centered): when the content is taller than the
