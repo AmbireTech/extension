@@ -523,7 +523,14 @@ const NetworkForm = ({
       try {
         if (!trimmedColibriProverUrl) throw new Error('Colibri prover URL is required')
 
-        if (!trimmedColibriProverUrl.startsWith('http')) {
+        let parsedColibriProverUrl: URL
+        try {
+          parsedColibriProverUrl = new URL(trimmedColibriProverUrl)
+        } catch {
+          throw new Error('Invalid Colibri prover URL')
+        }
+
+        if (!['http:', 'https:'].includes(parsedColibriProverUrl.protocol)) {
           throw new Error('Colibri prover URL must include the correct HTTP/HTTPS prefix')
         }
 
@@ -553,8 +560,16 @@ const NetworkForm = ({
         return trimmedColibriProverUrl
       } catch (error: any) {
         console.error(error)
-        const errorMessage = error?.message || 'Unknown error'
-        addToast(t('Colibri prover malfunction: {{message}}', { message: errorMessage }), {
+        const rawErrorMessage = error?.message || ''
+        const safeErrorMessage =
+          rawErrorMessage === 'Colibri prover URL is required' ||
+          rawErrorMessage === 'Colibri prover URL must include the correct HTTP/HTTPS prefix' ||
+          rawErrorMessage === 'Invalid Colibri prover URL' ||
+          rawErrorMessage.startsWith('Execution RPC chain id ')
+            ? rawErrorMessage
+            : 'Colibri prover validation failed'
+
+        addToast(t('Colibri prover malfunction: {{message}}', { message: safeErrorMessage }), {
           type: 'error'
         })
         throw error

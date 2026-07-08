@@ -26,9 +26,16 @@ const ColibriVerificationBadge: FC<Props> = ({ color, isVisible }) => {
   const configuredChainIds = useMemo(
     () =>
       allNetworks
-        .filter((network) => !!network.isColibriEnabled)
+        .filter((network) => {
+          const networkState = portfolio.portfolioState[network.chainId.toString()]
+
+          if (!network.isColibriEnabled) return false
+          if (networkState?.verification?.provider !== 'colibri') return false
+
+          return !networkState.accountOps?.length
+        })
         .map((network) => network.chainId.toString()),
-    [allNetworks]
+    [allNetworks, portfolio.portfolioState]
   )
 
   const statusByChainId = useMemo<Record<string, ChainStatus>>(() => {
@@ -41,12 +48,9 @@ const ColibriVerificationBadge: FC<Props> = ({ color, isVisible }) => {
 
   const getChainStatus = useCallback(
     (chainId: string): ChainStatus => {
-      return (
-        statusByChainId[chainId] ||
-        (portfolio.portfolioState[chainId]?.isReady ? 'success' : 'loading')
-      )
+      return statusByChainId[chainId] || 'loading'
     },
-    [portfolio.portfolioState, statusByChainId]
+    [statusByChainId]
   )
 
   const status = useMemo(() => {
