@@ -7,7 +7,6 @@ import AuthenticatedRoute from '@common/modules/router/components/AuthenticatedR
 import KeystoreUnlockedRoute from '@common/modules/router/components/KeystoreUnlockedRoute'
 import routesConfig from '@common/modules/router/config/routesConfig'
 import { WEB_ROUTES } from '@common/modules/router/constants/common'
-import Splash from '@web/components/Splash'
 import AccountSelectScreen from '@web/modules/account-select/screens/AccountSelectScreen'
 import GetEncryptionPublicKeyRequestScreen from '@web/modules/action-requests/screens/GetEncryptionPublicKeyRequestScreen'
 import ExploreScreen from '@web/modules/explore/screens/ExploreScreen'
@@ -42,7 +41,9 @@ const MainRoutes = () => {
   }, [location.pathname, t])
 
   return (
-    <Suspense fallback={<Splash />}>
+    // Rendering null instead of another Splash screen as before rendering this component, the Router component already renders a Splash screen while the controllers are loading.
+    // We want to avoid displaying different Splash screens back to back and this loads pretty quickly
+    <Suspense fallback={null}>
       <Routes>
         <Route path={WEB_ROUTES.noConnection} element={<NoConnectionScreen />} />
 
