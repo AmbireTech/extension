@@ -1,10 +1,6 @@
 name: Publish OTA update — iOS 📲
 
 on:
-  # TODO: Temporary trigger for testing
-  push:
-    branches:
-      - 'config/ota'
   workflow_dispatch: # Manual trigger, usually from a release branch
     inputs:
       release_note:
