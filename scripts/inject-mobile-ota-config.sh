@@ -15,9 +15,8 @@ set -euo pipefail
 # NOTE: it mutates the committed files in place - do NOT commit the result; restore
 # the placeholders (git checkout) before committing.
 #
-# Requires STALLION_PROJECT_ID and STALLION_APP_TOKEN. Optionally STALLION_PUBLIC_SIGNING_KEY
-# (a single-line base64 public key) to enable OTA signature verification - when empty, the app
-# does not verify signatures. (All from .env or environment.)
+# Requires STALLION_PROJECT_ID, STALLION_APP_TOKEN and STALLION_PUBLIC_SIGNING_KEY (a single-line
+# base64 public key enabling on-device OTA signature verification). All from .env or environment.
 # Usage: sh ./scripts/inject-mobile-ota-config.sh
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -29,8 +28,8 @@ if [ -f "$ROOT_DIR/.env" ]; then
   set +a
 fi
 
-if [ -z "${STALLION_PROJECT_ID:-}" ] || [ -z "${STALLION_APP_TOKEN:-}" ]; then
-  echo "Missing STALLION_PROJECT_ID or STALLION_APP_TOKEN (from .env or environment)." >&2
+if [ -z "${STALLION_PROJECT_ID:-}" ] || [ -z "${STALLION_APP_TOKEN:-}" ] || [ -z "${STALLION_PUBLIC_SIGNING_KEY:-}" ]; then
+  echo "Missing STALLION_PROJECT_ID, STALLION_APP_TOKEN or STALLION_PUBLIC_SIGNING_KEY (from .env or environment)." >&2
   exit 1
 fi
 
@@ -42,14 +41,14 @@ ANDROID_STRINGS="$ROOT_DIR/android/app/src/main/res/values/strings.xml"
 sed -i.bak \
   -e "s/__STALLION_PROJECT_ID__/${STALLION_PROJECT_ID}/g" \
   -e "s/__STALLION_APP_TOKEN__/${STALLION_APP_TOKEN}/g" \
-  -e "s|__STALLION_PUBLIC_SIGNING_KEY__|${STALLION_PUBLIC_SIGNING_KEY:-}|g" \
+  -e "s|__STALLION_PUBLIC_SIGNING_KEY__|${STALLION_PUBLIC_SIGNING_KEY}|g" \
   "$IOS_PLIST"
 rm -f "$IOS_PLIST.bak"
 
 sed -i.bak \
   -e "s/__STALLION_PROJECT_ID__/${STALLION_PROJECT_ID}/g" \
   -e "s/__STALLION_APP_TOKEN__/${STALLION_APP_TOKEN}/g" \
-  -e "s|__STALLION_PUBLIC_SIGNING_KEY__|${STALLION_PUBLIC_SIGNING_KEY:-}|g" \
+  -e "s|__STALLION_PUBLIC_SIGNING_KEY__|${STALLION_PUBLIC_SIGNING_KEY}|g" \
   "$ANDROID_STRINGS"
 rm -f "$ANDROID_STRINGS.bak"
 
