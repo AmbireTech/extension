@@ -19,10 +19,21 @@ import { ROUTES } from '@common/modules/router/constants/common'
 import { storage } from '@common/services/storage'
 import { RELAYER_URL } from '@env'
 
+type UseTokenActionsOptions = {
+  // When set, a zero-balance token keeps Send disabled but shows this tooltip explaining why
+  // (instead of a silently disabled button). Used by the trending screen where the user may not
+  // hold the token.
+  noBalanceSendTooltip?: string
+  // Enables Swap/Bridge regardless of balance and preselects the token as the buy (to) token,
+  // so the user can swap to acquire it. Used by the trending screen.
+  enableSwapToBuy?: boolean
+}
+
 // Builds the token-details footer actions (send, swap/bridge, top up, hide) and the hide-token
 // modal wiring for a given token. Extracted from useTokenDetails so both the portfolio token
 // details and the trending token details screens can share the exact same footer.
-const useTokenActions = (token: TokenResult | null) => {
+const useTokenActions = (token: TokenResult | null, options: UseTokenActionsOptions = {}) => {
+  const { noBalanceSendTooltip, enableSwapToBuy } = options
   const { navigate } = useNavigation()
   const {
     ref: hideTokenModalRef,
@@ -170,7 +181,9 @@ const useTokenActions = (token: TokenResult | null) => {
           isDisabled: isGasTankOrRewardsToken || isAmountZero,
           tooltipText: isGasTankOrRewardsToken
             ? unavailableBecauseGasTankOrRewardsTokenTooltipText
-            : '',
+            : isAmountZero && noBalanceSendTooltip
+              ? noBalanceSendTooltip
+              : '',
           strokeWidth: 1.5,
           testID: 'token-send'
         },
@@ -181,14 +194,15 @@ const useTokenActions = (token: TokenResult | null) => {
           iconWidth: 86,
           onPress: ({ chainId, address }: TokenResult) =>
             navigate(ROUTES.swapAndBridge, {
-              state: {
-                preselectedFromToken: {
-                  address,
-                  chainId
-                }
-              }
+              state: enableSwapToBuy
+                ? { preselectedToToken: { address, chainId } }
+                : { preselectedFromToken: { address, chainId } }
             }),
-          isDisabled: shouldDisableSwapAndBridge,
+          // When buying (trending), keep Swap available regardless of balance; only a fully
+          // unsupported network can block it.
+          isDisabled: enableSwapToBuy
+            ? !network || !!network.isNotSupported
+            : shouldDisableSwapAndBridge,
           tooltipText: isGasTankOrRewardsToken
             ? unavailableBecauseGasTankOrRewardsTokenTooltipText
             : network?.isNotSupported
@@ -266,10 +280,11 @@ const useTokenActions = (token: TokenResult | null) => {
       t,
       isGasTankOrRewardsToken,
       isAmountZero,
+      noBalanceSendTooltip,
+      enableSwapToBuy,
+      network,
       unavailableBecauseGasTankOrRewardsTokenTooltipText,
       shouldDisableSwapAndBridge,
-      network?.isNotSupported,
-      network?.notSupportedReason,
       topUpDisabledTooltipText,
       isHidden,
       handleHideTokenFromButton,

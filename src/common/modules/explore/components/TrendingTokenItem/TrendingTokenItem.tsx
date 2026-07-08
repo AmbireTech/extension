@@ -1,9 +1,12 @@
-import React, { useCallback } from 'react'
+import React, { useCallback, useMemo } from 'react'
 import { View } from 'react-native'
 
 import { TrendingToken } from '@ambire-common/interfaces/dapp'
 import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
 import Text from '@common/components/Text'
+import TokenIcon from '@common/components/TokenIcon'
+import { useTranslation } from '@common/config/localization'
+import useController from '@common/hooks/useController'
 import { AnimatedPressable, useCustomHover } from '@common/hooks/useHover'
 import useNavigation from '@common/hooks/useNavigation'
 import useTheme from '@common/hooks/useTheme'
@@ -11,7 +14,6 @@ import { ROUTES } from '@common/modules/router/constants/common'
 import spacings, { SPACING_SM } from '@common/styles/spacings'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
-import ManifestImage from '@web/components/ManifestImage'
 
 type Props = {
   token: TrendingToken
@@ -20,8 +22,15 @@ type Props = {
 const formatChange = (change: number) => `${change >= 0 ? '+' : ''}${change.toFixed(2)}%`
 
 const TrendingTokenItem = ({ token }: Props) => {
+  const { t } = useTranslation()
   const { theme } = useTheme()
   const { navigate } = useNavigation()
+  const { state: networks } = useController('NetworksController', (s) => s.networks)
+
+  const chainId = useMemo(
+    () => networks.find((n) => n.platformId === token.platformId)?.chainId,
+    [networks, token.platformId]
+  )
 
   const [bindAnim, animStyle] = useCustomHover({
     property: 'backgroundColor',
@@ -46,15 +55,22 @@ const TrendingTokenItem = ({ token }: Props) => {
       ]}
       {...bindAnim}
     >
-      <ManifestImage
-        uri={token.icon}
-        size={40}
-        isRound
-        containerStyle={{ ...spacings.mrSm, backgroundColor: theme.primaryBackground }}
-      />
+      <View style={[spacings.mrSm, flexbox.justifyCenter]}>
+        <TokenIcon
+          withContainer
+          address={token.address ?? ''}
+          chainId={chainId}
+          uri={token.icon}
+          containerHeight={40}
+          containerWidth={40}
+          width={32}
+          height={32}
+          networkSize={16}
+        />
+      </View>
       <View style={flexbox.flex1}>
         <Text fontSize={16} weight="semiBold" appearance="primaryText" numberOfLines={1}>
-          {token.symbol}
+          {token.symbol.toUpperCase()}
         </Text>
         <Text fontSize={12} weight="number_medium" appearance="secondaryText" numberOfLines={1}>
           {token.name}

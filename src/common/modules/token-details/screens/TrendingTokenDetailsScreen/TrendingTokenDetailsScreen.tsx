@@ -30,7 +30,7 @@ import flexbox from '@common/styles/utils/flexbox'
 // (price, balance, "About", exchanges) can render it. The trending endpoint now provides the
 // contract, chain, decimals and USD market data the portfolio components expect.
 const buildTokenResult = (token: TrendingToken, chainId: bigint): TokenResult => ({
-  symbol: token.symbol,
+  symbol: token.symbol.toUpperCase(),
   name: token.name,
   decimals: token.decimals ?? 18,
   address: token.address ?? '',
@@ -103,7 +103,10 @@ const TrendingTokenDetailsScreen = () => {
   const isHeld = !!displayToken && getTokenAmount(displayToken) > 0n
 
   const { hideTokenModalRef, closeHideTokenModal, handleHideTokenFromModal, actions } =
-    useTokenActions(displayToken)
+    useTokenActions(displayToken, {
+      noBalanceSendTooltip: t("You don't hold this token, so there's nothing to send."),
+      enableSwapToBuy: true
+    })
 
   return (
     <LayoutWrapper>
@@ -131,6 +134,7 @@ const TrendingTokenDetailsScreen = () => {
             symbol={displayToken.symbol}
             address={displayToken.address}
             chainId={displayToken.chainId}
+            uri={token.icon}
             priceUSDFormatted={formatted.priceUSDFormatted}
             change24h={formatted.change24h}
             change24hFormatted={formatted.change24hFormatted}
