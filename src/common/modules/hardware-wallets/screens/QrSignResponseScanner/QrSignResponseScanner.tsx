@@ -18,6 +18,8 @@ type Props = {
   onBack: () => void
 }
 
+const SCANNER_SIZE = 280
+
 const QrSignResponseScanner = ({ onSignatureScanned, onBack }: Props) => {
   const { t } = useTranslation()
   const [isCameraTornDown, setIsCameraTornDown] = useState(false)
@@ -43,7 +45,12 @@ const QrSignResponseScanner = ({ onSignatureScanned, onBack }: Props) => {
       <View
         style={
           isMobile
-            ? { width: 260, height: 260, borderRadius: BORDER_RADIUS_PRIMARY, overflow: 'hidden' }
+            ? {
+                width: SCANNER_SIZE + 4,
+                height: SCANNER_SIZE + 4,
+                borderRadius: BORDER_RADIUS_PRIMARY + 6,
+                overflow: 'hidden'
+              }
             : [flexbox.center, { width: '100%', maxWidth: 300 }]
         }
       >
