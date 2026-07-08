@@ -81,8 +81,9 @@ export const RpcSelectorItem = React.memo(
       try {
         await setStringAsync(url)
         addToast(t('Copied to clipboard!'), { timeout: 2500 })
-      } catch (error) {
+      } catch (e) {
         addToast(t('Failed to copy to clipboard'), { type: 'error' })
+        console.log('Copy failed', e)
       }
     }, [addToast, t, url])
 
@@ -970,7 +971,8 @@ const NetworkForm = ({
                 <ScrollableWrapper
                   style={[
                     styles.rpcUrlsContainer,
-                    // @ts-ignore
+                    // @ts-expect-error the ScrollableWrapper expects ViewStyle
+                    // but the below style is legit as well
                     { flex: 'unset', minHeight: rpcUrls.length > 1 ? 80 : 40 }
                   ]}
                   contentContainerStyle={{ flexGrow: 1, paddingBottom: 0 }}
@@ -1224,7 +1226,7 @@ const NetworkForm = ({
                   <Button
                     onPress={onCancel}
                     text={t('Cancel')}
-                    type="gray"
+                    type="outline"
                     hasBottomSpacing={false}
                     style={[
                       flexbox.flex1,
