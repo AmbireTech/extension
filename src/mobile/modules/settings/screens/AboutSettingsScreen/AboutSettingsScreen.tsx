@@ -1,12 +1,13 @@
 import React from 'react'
 import { useTranslation } from 'react-i18next'
 import { Pressable } from 'react-native'
+import { useStallionUpdate } from 'react-native-stallion'
 
 import NewsletterIcon from '@common/assets/svg/NewsletterIcon'
 import OpenIcon from '@common/assets/svg/OpenIcon'
 import TosIcon from '@common/assets/svg/TosIcon'
 import ControlOption from '@common/components/ControlOption'
-import { APP_VERSION, isDev } from '@common/config/env'
+import { APP_VERSION, BUILD_NUMBER, isDev } from '@common/config/env'
 import useNavigation from '@common/hooks/useNavigation'
 import useTheme from '@common/hooks/useTheme'
 import { ROUTES } from '@common/modules/router/constants/common'
@@ -21,6 +22,13 @@ const AboutSettingsScreen = () => {
   const { theme } = useTheme()
   const { t } = useTranslation()
   const { navigate } = useNavigation()
+  const { currentlyRunningBundle } = useStallionUpdate()
+
+  // Debug meta for support: which native build the user is on + whether an OTA bundle is
+  // applied on top (id + version, matchable in the Stallion console). null = base build.
+  const otaInfo = currentlyRunningBundle
+    ? `OTA v${currentlyRunningBundle.version} · ${currentlyRunningBundle.id}`
+    : 'No OTA (base build)'
 
   const openTos = () => {
     navigate(ROUTES.settingsTerms)
@@ -35,7 +43,7 @@ const AboutSettingsScreen = () => {
       <MobileLayoutWrapperMainContent withScroll withBackButton title="About">
         <ControlOption
           style={spacings.mbTy}
-          title={`v${APP_VERSION}${isDev ? '-dev' : ''}`}
+          title={`v${APP_VERSION}${isDev ? '-dev' : ''} | build ${BUILD_NUMBER} | ${otaInfo}`}
           description={''}
           renderIcon={null}
         />
