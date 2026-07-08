@@ -13,15 +13,17 @@ const AccountDataDetailed = () => {
   const {
     state: { account }
   } = useController('SelectedAccountController')
-  const { isLoading, name, type } = useReverseLookup({ address: account?.addr || '' })
-
-  if (!account) return null
+  const reverseLookup = useReverseLookup({
+    address: account?.addr || ''
+  })
 
   const smartAccountType = useMemo(() => {
     if (account?.creation) return 'Ambire'
     if (account?.safeCreation) return 'Safe'
     return undefined
   }, [account])
+
+  if (!account) return null
 
   return (
     <View style={[flexbox.directionRow, flexbox.alignCenter, flexbox.flex1]}>
@@ -38,7 +40,7 @@ const AccountDataDetailed = () => {
           <AccountBadges accountData={account} />
         </View>
         <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-          <AccountAddress isLoading={isLoading} name={name} type={type} address={account.addr} />
+          <AccountAddress {...reverseLookup} address={account.addr} />
         </View>
       </View>
     </View>

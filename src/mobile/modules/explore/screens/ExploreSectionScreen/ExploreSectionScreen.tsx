@@ -5,6 +5,7 @@ import { Pressable, View } from 'react-native'
 
 import { Dapp } from '@ambire-common/interfaces/dapp'
 import { Network } from '@ambire-common/interfaces/network'
+import ConnectedIcon from '@common/assets/svg/ConnectedIcon'
 import DeleteIcon from '@common/assets/svg/DeleteIcon'
 import NetworksIcon from '@common/assets/svg/NetworksIcon'
 import NetworkIcon from '@common/components/NetworkIcon'
@@ -22,6 +23,9 @@ import ClearRecentsBottomSheet, {
   ClearRecentsBottomSheetHandle
 } from '@common/modules/explore/components/ClearRecentsBottomSheet'
 import DappItem from '@common/modules/explore/components/DappItem'
+import DisconnectAllBottomSheet, {
+  DisconnectAllBottomSheetHandle
+} from '@common/modules/explore/components/DisconnectAllBottomSheet'
 import useExploreFilteredDapps from '@common/modules/explore/hooks/useExploreFilteredDapps'
 import { ExploreSectionType } from '@common/modules/explore/hooks/useExploreSections'
 import { ROUTES } from '@common/modules/router/constants/common'
@@ -52,6 +56,7 @@ const ExploreSectionScreen = () => {
   const [category, setCategory] = useState<string | null>(null)
 
   const clearRecentsRef = useRef<ClearRecentsBottomSheetHandle>(null)
+  const disconnectAllRef = useRef<DisconnectAllBottomSheetHandle>(null)
 
   const sectionType: ExploreSectionType = (params?.type as ExploreSectionType) || 'apps'
   const title = (params?.title as string) || t(TYPE_TITLES[sectionType])
@@ -66,6 +71,14 @@ const ExploreSectionScreen = () => {
     network,
     category
   })
+
+  // Drive header-button visibility from the section's underlying items (not the search/filter
+  // result) so the button hides only when the section is truly empty (e.g. after deletion).
+  const hasSectionItems = useMemo(() => {
+    if (sectionType === 'recent') return (state.recentDapps || []).length > 0
+    if (sectionType === 'connected') return (state.dapps || []).some((d: Dapp) => !!d.isConnected)
+    return false
+  }, [sectionType, state.recentDapps, state.dapps])
 
   const ALL_NETWORKS_OPTION = useMemo(
     () => ({
@@ -153,6 +166,10 @@ const ExploreSectionScreen = () => {
     clearRecentsRef.current?.open()
   }, [])
 
+  const handleDisconnectAllPress = useCallback(() => {
+    disconnectAllRef.current?.open()
+  }, [])
+
   const renderItem = useCallback(({ item }: { item: Dapp }) => <DappItem {...item} />, [])
 
   return (
@@ -163,9 +180,13 @@ const ExploreSectionScreen = () => {
         onBackButtonPress={() => navigate(ROUTES.explore)}
         withScroll={false}
         rightIcon={
-          sectionType === 'recent' ? (
+          !hasSectionItems ? undefined : sectionType === 'recent' ? (
             <Pressable onPress={handleClearRecentPress} hitSlop={8}>
               <DeleteIcon width={24} height={24} strokeWidth="1.75" />
+            </Pressable>
+          ) : sectionType === 'connected' ? (
+            <Pressable onPress={handleDisconnectAllPress} hitSlop={8}>
+              <ConnectedIcon width={20} height={20} color={theme.errorDecorative} />
             </Pressable>
           ) : undefined
         }
@@ -253,6 +274,7 @@ const ExploreSectionScreen = () => {
         </View>
       </MobileLayoutWrapperMainContent>
       <ClearRecentsBottomSheet ref={clearRecentsRef} />
+      <DisconnectAllBottomSheet ref={disconnectAllRef} />
     </MobileLayoutContainer>
   )
 }

@@ -134,6 +134,39 @@ export const handleActions = async (
       break
     }
 
+    case 'DAPPS_CONTROLLER_DISCONNECT_ALL_DAPPS': {
+      // Capture the WC topics up front — broadcasting `disconnect` tears down the WC sessions,
+      // so they'd be gone by the time `disconnectAllDapps` returns.
+      const wcTopicsToTerminate =
+        params.source === 'injected'
+          ? []
+          : (Object.values(mainCtrl.dapps.dappSessions) as Session[])
+              .filter((s) => !!s.wcTopic)
+              .map((s) => s.wcTopic as string)
+
+      const disconnectedDapps = await mainCtrl.dapps.disconnectAllDapps(params.source)
+
+      for (const topic of wcTopicsToTerminate) {
+        sendToReactEvent('action.wcSessionBroadcast', {
+          wcSessionTopic: topic,
+          chainId: 1,
+          event: 'disconnect',
+          data: {}
+        })
+      }
+
+      // Process sequentially: each disconnect may call `revokeAllPoliciesForDomain`, which
+      // is guarded by a status lock that throws if a previous call hasn't finished yet.
+      for (const dapp of disconnectedDapps) {
+        const stillConnected = mainCtrl.dapps.hasPermission(dapp.id)
+        if (!stillConnected) {
+          await mainCtrl.autoLogin.revokeAllPoliciesForDomain(dapp.id, dapp.url)
+        }
+      }
+
+      break
+    }
+
     case 'CHANGE_CURRENT_DAPP_NETWORK': {
       mainCtrl.dapps.updateDapp(params.id, { chainId: params.chainId })
       await mainCtrl.dapps.broadcastDappSessionEvent(
