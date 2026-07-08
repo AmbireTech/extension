@@ -20,10 +20,6 @@ type Props = {
 
 const QrSignResponseScanner = ({ onSignatureScanned, onBack }: Props) => {
   const { t } = useTranslation()
-  // On mobile the step change is async (bridge round-trip), so this screen stays
-  // mounted while the sheet transitions. The native camera surface then desyncs
-  // from the RN overlay and the scan-frame corners jump around. Tear the camera
-  // down synchronously on Back so nothing native is animating during the change.
   const [isCameraTornDown, setIsCameraTornDown] = useState(false)
 
   const handleBack = useCallback(() => {
@@ -44,8 +40,6 @@ const QrSignResponseScanner = ({ onSignatureScanned, onBack }: Props) => {
       <Text style={[spacings.mbSm, { textAlign: 'center' }]}>
         {t('Scan the QR code displayed on your QR-based wallet to complete the signature.')}
       </Text>
-      {/* On mobile the native camera fills its parent, so the box needs an explicit
-          size; on web the scanner self-sizes (its <video/> sets the height). */}
       <View
         style={
           isMobile

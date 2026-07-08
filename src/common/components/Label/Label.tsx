@@ -177,8 +177,6 @@ const Label = ({
       ]}
     >
       <View style={spacings.mrTy}>{icon}</View>
-      {/* On mobile flexShrink lets the text wrap within the row instead of
-          overflowing the screen; web keeps its intrinsic-width behavior. */}
       <Text style={isMobile ? { flexShrink: 1 } : undefined}>
         {!isTypeLabelHidden && (
           <Text fontSize={16 * sizeMultiplier[size]} weight="semiBold" style={textStyle}>

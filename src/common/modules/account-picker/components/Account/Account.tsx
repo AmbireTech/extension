@@ -285,8 +285,6 @@ const Account = ({
           style={[
             spacings.mh,
             spacings.mvTy,
-            // On mobile the label must stretch to the row width so long text
-            // wraps instead of overflowing the screen; web keeps content-width.
             isMobile ? { alignSelf: 'stretch' } : flexbox.alignSelfStart
           ]}
         >
