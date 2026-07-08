@@ -1,5 +1,6 @@
 import { getBytes, hexlify } from 'ethers'
 
+import { EntropyGenerator } from '@ambire-common/libs/entropyGenerator/entropyGenerator'
 import { CIPHER, decryptWithKey, encryptWithKey } from '@ambire-common/libs/keystore/keystore'
 import { storage } from '@common/services/storage'
 
@@ -181,7 +182,11 @@ export const webauthnBiometrics = {
     return !!(await getStoredCredential())
   },
 
-  async createSecret() {
+  /**
+   * Note: the extra entropy is used for v2 biometrics only as v1 is derived
+   * hmac/prf - they don't need it
+   */
+  async createSecret(extraEntropy: string) {
     const isSupported = await this.isSupported()
     if (!isSupported) return null
 
@@ -251,7 +256,7 @@ export const webauthnBiometrics = {
 
     // coming here means prf/hmac are not supported for the chosen
     // passkey generation and we must use a different method
-    const secret = hexlify(getRandomBytes(32))
+    const secret = hexlify(new EntropyGenerator().generateRandomBytes(32, extraEntropy))
     const key = await getBiometricsSecretKey(userHandle)
     const encrypted = await encryptWithKey(key, encoder.encode(secret))
     const storedCredential: StoredEncryptedBiometricsCredential = {
