@@ -5,6 +5,7 @@ import InfoIcon from '@common/assets/svg/InfoIcon'
 import SuccessIcon from '@common/assets/svg/SuccessIcon'
 import WarningIcon from '@common/assets/svg/WarningIcon'
 import Text from '@common/components/Text'
+import { isMobile } from '@common/config/env'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
@@ -176,7 +177,9 @@ const Label = ({
       ]}
     >
       <View style={spacings.mrTy}>{icon}</View>
-      <Text>
+      {/* On mobile flexShrink lets the text wrap within the row instead of
+          overflowing the screen; web keeps its intrinsic-width behavior. */}
+      <Text style={isMobile ? { flexShrink: 1 } : undefined}>
         {!isTypeLabelHidden && (
           <Text fontSize={16 * sizeMultiplier[size]} weight="semiBold" style={textStyle}>
             {`${typeLabel}: `}

@@ -31,7 +31,7 @@ import { UiController } from '@ambire-common/controllers/ui/ui'
 import { AutoLockController } from '@common/controllers/auto-lock'
 import { WalletStateController } from '@common/controllers/wallet-state'
 import { ExtensionUpdateController } from '@web/extension-services/background/controllers/extension-update'
-import QrHardwareController from '@web/modules/hardware-wallet/controllers/QrHardwareController'
+import QrHardwareController from '@common/modules/hardware-wallets/controllers/QrHardwareController'
 
 export const controllersNestedInMainMapping = {
   StorageController,

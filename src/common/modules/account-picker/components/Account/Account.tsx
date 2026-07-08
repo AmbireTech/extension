@@ -106,7 +106,8 @@ const Account = ({
         flexbox.alignCenter,
         withBottomSpacing ? spacings.mbTy : spacings.mb0,
         common.borderRadiusPrimary,
-        common.hidden
+        common.hidden,
+        { backgroundColor: theme.neutral200 }
       ]}
       onPress={isDisabled ? undefined : toggleSelectedState}
       testID={`add-account-${account.addr}`}
@@ -280,7 +281,15 @@ const Account = ({
         ImportStatus.ImportedWithDifferentKeys,
         ImportStatus.ImportedWithoutKey
       ].includes(importStatus) && (
-        <View style={[spacings.mh, spacings.mvTy, flexbox.alignSelfStart]}>
+        <View
+          style={[
+            spacings.mh,
+            spacings.mvTy,
+            // On mobile the label must stretch to the row width so long text
+            // wraps instead of overflowing the screen; web keeps content-width.
+            isMobile ? { alignSelf: 'stretch' } : flexbox.alignSelfStart
+          ]}
+        >
           {importStatus === ImportStatus.ImportedWithSomeOfTheKeys && (
             <Label
               isTypeLabelHidden

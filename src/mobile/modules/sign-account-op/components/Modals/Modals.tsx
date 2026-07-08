@@ -1,10 +1,11 @@
-import { FC } from 'react'
+import { FC, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import BottomSheet from '@common/components/BottomSheet'
 import DualChoiceWarningModal from '@common/components/DualChoiceWarningModal'
 import useController from '@common/hooks/useController'
 import LedgerConnectModal from '@common/modules/hardware-wallets/components/LedgerConnectModal'
+import QrSigningFlowScreen from '@common/modules/hardware-wallets/screens/QrSigningFlowScreen'
 import GasFeeUpdatedModal from '@common/modules/sign-account-op/components/GasFeeUpdatedModal/GasFeeUpdatedModal'
 import SignAccountOpHardwareWalletSigningModal from '@common/modules/sign-account-op/components/SignAccountOpHardwareWalletSigningModal'
 import { ModalsProps } from '@common/modules/sign-account-op/types/modals'
@@ -28,7 +29,15 @@ const Modals: FC<ModalsProps> = ({
   autoOpen,
   actionType,
   shouldDisplayLedgerConnectModal,
-  handleDismissLedgerConnectModal
+  handleDismissLedgerConnectModal,
+  shouldDisplayQrSigningModal,
+  handleQrSingingFlowOnContinuePressed,
+  handleQrSigningFlowSubmitSignatureResponse,
+  handleQrSigningFlowOnClosePressed,
+  handleQrSigningFlowOnRejectPressed,
+  handleQrSigningFlowOnBackPressed,
+  currentRequest,
+  signingStep
 }) => {
   const { t } = useTranslation()
   const {
@@ -41,6 +50,23 @@ const Modals: FC<ModalsProps> = ({
   } = useController('TransferController')
   const { state: currentSignAccountOp, dispatch: signAccountOpDispatch } =
     useController('SignAccountOpController')
+
+  const transactionProgress = useMemo(() => {
+    const totalTransactions = signAccountOpState?.accountOp?.calls?.length || 0
+    const signedTransactionsCount = signAccountOpState?.signedTransactionsCount
+
+    if (
+      totalTransactions <= 1 ||
+      typeof signedTransactionsCount !== 'number' ||
+      signedTransactionsCount < 0
+    )
+      return null
+
+    return {
+      current: Math.min(signedTransactionsCount, totalTransactions),
+      total: totalTransactions
+    }
+  }, [signAccountOpState?.accountOp?.calls?.length, signAccountOpState?.signedTransactionsCount])
 
   if (renderedButNotNecessarilyVisibleModal === 'warnings') {
     return (
@@ -110,6 +136,23 @@ const Modals: FC<ModalsProps> = ({
       <LedgerConnectModal
         isVisible={shouldDisplayLedgerConnectModal}
         handleClose={handleDismissLedgerConnectModal}
+      />
+    )
+  }
+
+  if (renderedButNotNecessarilyVisibleModal === 'qr-sign' && currentRequest && signingStep) {
+    return (
+      <QrSigningFlowScreen
+        handleClose={handleQrSigningFlowOnClosePressed}
+        isVisible={shouldDisplayQrSigningModal}
+        onContinue={handleQrSingingFlowOnContinuePressed}
+        currentRequest={currentRequest}
+        signingStep={signingStep}
+        signingRequest={signAccountOpState?.hardwareWalletSigningRequest}
+        transactionProgress={transactionProgress}
+        submitSignatureResponse={handleQrSigningFlowSubmitSignatureResponse}
+        onReject={handleQrSigningFlowOnRejectPressed}
+        handleQrSigningFlowOnBackPressed={handleQrSigningFlowOnBackPressed}
       />
     )
   }

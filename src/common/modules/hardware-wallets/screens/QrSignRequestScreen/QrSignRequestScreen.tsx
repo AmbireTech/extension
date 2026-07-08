@@ -6,10 +6,10 @@ import Button from '@common/components/Button'
 import FooterGlassView from '@common/components/FooterGlassView'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
+import AnimatedQrCode from '@common/modules/hardware-wallets/components/AnimatedQrCode'
 import SigningRequestDetails from '@common/modules/hardware-wallets/components/SigningRequestDetails'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import { AnimatedQRCode } from '@keystonehq/animated-qr'
 
 type Props = {
   onContinue: () => void
@@ -40,8 +40,9 @@ const QrSignRequestScreen = ({
     <View style={[flexbox.center, { width: '100%', flexGrow: 1, flexShrink: 0 }]}>
       <Text>{t('Scan this QR code with your QR-based device to sign.')}</Text>
       <View style={[flexbox.center, flexbox.flex1, spacings.mtSm, { width: '100%' }]}>
-        <AnimatedQRCode
-          options={{ size: qrSize, interval: ANIMATION_INTERVAL }}
+        <AnimatedQrCode
+          size={qrSize}
+          interval={ANIMATION_INTERVAL}
           type={urType}
           cbor={urCborHex}
         />

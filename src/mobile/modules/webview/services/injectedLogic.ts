@@ -17,6 +17,9 @@ import { AutoLockController } from '@common/controllers/auto-lock/auto-lock.nati
 import { WalletStateController } from '@common/controllers/wallet-state/wallet-state.native'
 import LedgerSigner from '@common/modules/hardware-wallet/libs/LedgerSigner'
 import TrezorSigner from '@common/modules/hardware-wallet/libs/TrezorSigner'
+import QrHardwareController from '@common/modules/hardware-wallets/controllers/QrHardwareController'
+import UrQrProtocolAdapter from '@common/modules/hardware-wallets/qr/protocol/UrQrProtocolAdapter'
+import QrHardwareSigner from '@common/modules/hardware-wallets/signers/QrHardwareSigner'
 import { handleActions } from '@mobile/handlers/handleActions'
 import LedgerController from '@mobile/modules/hardware-wallet/controllers/LedgerController'
 import TrezorController from '@mobile/modules/hardware-wallet/controllers/TrezorController'
@@ -236,6 +239,11 @@ const initControllers = (config: any) => {
     // trezorDeeplinkService (which delegates to the Trezor Suite app).
     const trezorCtrl = new TrezorController()
 
+    // QR (Keystone/Keycard/imToken) is air-gapped: the controller is pure logic
+    // that runs in the worker (no native transport). The camera scan + QR display
+    // happen in the RN UI layer and exchange payloads via controller state.
+    const qrCtrl = new QrHardwareController(new UrQrProtocolAdapter(), eventEmitterRegistry)
+
     mainCtrl = new MainController({
       eventEmitterRegistry,
       storageAPI,
@@ -253,11 +261,13 @@ const initControllers = (config: any) => {
         internal: KeystoreSigner,
         // TODO: there is a mismatch in hw signer types, it's not a big deal
         ledger: LedgerSigner,
-        trezor: TrezorSigner
+        trezor: TrezorSigner,
+        qr: QrHardwareSigner
       } as any,
       externalSignerControllers: {
         ledger: ledgerCtrl,
-        trezor: trezorCtrl
+        trezor: trezorCtrl,
+        qr: qrCtrl
       } as any,
       uiManager: {
         window: {
