@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react'
+import React from 'react'
 
 import { formatScore, getValueFromKey, Icon, SECTIONS, Stat } from '@common/components/RewardsStat'
 import { faChevronDown } from '@fortawesome/free-solid-svg-icons/faChevronDown'
@@ -6,11 +6,9 @@ import { faTrophy } from '@fortawesome/free-solid-svg-icons/faTrophy'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import ChevronDownIcon from '@legends/common/assets/svg/ChevronDownIcon'
 import Page from '@legends/components/Page'
-import useAccountContext from '@legends/hooks/useAccountContext'
 import useLeaderboardContext from '@legends/hooks/useLeaderboardContext'
 import usePortfolio from '@legends/hooks/usePortfolio'
 import FaqSection from '@legends/modules/Home/components/FaqSection'
-import { reorderLeaderboardWithLiveData } from '@legends/utils/leaderboards'
 
 import styles from './Dashboard.module.scss'
 import Background1 from './media/Background1'
@@ -21,16 +19,7 @@ const Dashboard = () => {
   const { season2LeaderboardData } = useLeaderboardContext()
   const { userRewardsStats, isLoadingClaimableRewards } = usePortfolio()
   const [expandedIds, setExpandedIds] = React.useState<Set<Stat['id']>>(new Set())
-  const { connectedAccount } = useAccountContext()
 
-  // since we reorder the leaderboard, the rank should be calculate dynamically
-  const dynamicLiveRank: number | null = useMemo(() => {
-    if (!season2LeaderboardData) return null
-    return (
-      reorderLeaderboardWithLiveData(season2LeaderboardData, userRewardsStats, connectedAccount)
-        .currentUser?.rank || null
-    )
-  }, [connectedAccount, season2LeaderboardData, userRewardsStats])
   const sections: Stat[] = SECTIONS.map((section) => {
     let score
     let explanation = section.explanation
@@ -155,7 +144,9 @@ const Dashboard = () => {
             </div>
             <div className={styles.rank}>
               <div className={styles.content}>
-                <span className={styles.badge}>{dynamicLiveRank || '-'}</span>
+                <span className={styles.badge}>
+                  {season2LeaderboardData?.currentUser?.rank || '-'}
+                </span>
                 <div className={styles.labelWithIcon}>
                   <FontAwesomeIcon icon={faTrophy} className={styles.icon} />
                   <span className={styles.label}>Rank</span>

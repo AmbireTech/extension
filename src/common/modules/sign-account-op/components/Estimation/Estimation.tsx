@@ -26,10 +26,10 @@ import { isMobile, isWeb } from '@common/config/env'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import BundlerWarning from '@common/modules/sign-account-op/components/Estimation/components/bundlerWarning'
-import ExtremeGasFeeWarning from '@common/modules/sign-account-op/components/Estimation/components/ExtremeGasFeeWarning'
 import CustomGasPrice from '@common/modules/sign-account-op/components/Estimation/components/CustomGasPrice'
 import DefaultFeeSelector from '@common/modules/sign-account-op/components/Estimation/components/DefaultFeeSelector'
 import EstimationSkeleton from '@common/modules/sign-account-op/components/Estimation/components/EstimationSkeleton'
+import ExtremeGasFeeWarning from '@common/modules/sign-account-op/components/Estimation/components/ExtremeGasFeeWarning'
 import PayOption from '@common/modules/sign-account-op/components/Estimation/components/PayOption'
 import ServiceFee from '@common/modules/sign-account-op/components/Estimation/components/ServiceFee'
 import Sponsored from '@common/modules/sign-account-op/components/Estimation/components/Sponsored'
@@ -560,7 +560,9 @@ const Estimation = ({
           <Text fontSize={20} weight="medium">
             {t(
               signAccountOpState.canAccountBroadcastByItself
-                ? 'Pay network fee with'
+                ? isMobile
+                  ? 'Pay gas with'
+                  : 'Pay network fee with'
                 : 'Broadcast from'
             )}
           </Text>

@@ -47,9 +47,9 @@ const AccountData: FC<Props> = ({ onPress, withArrowRightIcon }) => {
     duration: 50
   })
 
-  if (!account) return null
-
   const handleCopyText = async () => {
+    if (!account) return
+
     try {
       await setStringAsync(account.addr)
       addToast(t('Copied address to clipboard!') as string, { timeout: 2500 })
@@ -66,6 +66,8 @@ const AccountData: FC<Props> = ({ onPress, withArrowRightIcon }) => {
     if (account?.safeCreation) return 'Safe'
     return undefined
   }, [account])
+
+  if (!account) return null
 
   return (
     <View

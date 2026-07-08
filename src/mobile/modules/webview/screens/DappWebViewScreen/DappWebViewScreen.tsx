@@ -10,8 +10,12 @@ import { useLocation } from 'react-router-native'
 import { Dapp } from '@ambire-common/interfaces/dapp'
 import { getDappIdFromUrl } from '@ambire-common/libs/dapps/helpers'
 import { isValidHostname, isValidURL } from '@ambire-common/services/validations'
+import AmbireBrandLogo from '@common/assets/svg/AmbireBrandLogo'
+import AmbireLogo from '@common/assets/svg/AmbireLogo'
+import AmbireLogoWithBackgroundAndLogotype from '@common/assets/svg/AmbireLogoWithBackgroundAndLogotype'
 import GlobeIcon from '@common/assets/svg/GlobeIcon'
 import GoogleIcon from '@common/assets/svg/GoogleIcon'
+import Banner from '@common/components/Banner'
 import BottomSheet from '@common/components/BottomSheet'
 import Search from '@common/components/Search'
 import Text from '@common/components/Text'
@@ -45,6 +49,12 @@ const generateBridgeToken = () => {
 const ambireInpageBundle = require('../../services/ambire-inpage-bundle.json')
 // @ts-ignore
 const ethereumInpageBundle = require('../../services/ethereum-inpage-bundle.json')
+
+// Some dapps (e.g. chainlist) gate their "Connect Wallet" UI on a mobile
+// User-Agent and never call the injected provider, even though window.ethereum
+// is present. Presenting a desktop UA makes them offer the injected wallet path.
+const DESKTOP_USER_AGENT =
+  'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15'
 
 // SECURITY: Stash native references before any page JS can overwrite them.
 // injectJavaScript (used for responses/broadcasts) runs AFTER page JS, so
@@ -214,8 +224,15 @@ const DappWebViewScreen = () => {
     dispatch: dappsDispatch
   } = useController('DappsController')
 
+  const {
+    state: { visibleUserRequests, currentUserRequest }
+  } = useController('RequestsController')
+
   // Initial State from Route
   const initialUrl = (location.state as any)?.url || 'https://google.com'
+  // When opened to view a single URL (e.g. a DeFi position), the footer renders
+  // a back arrow instead of the home icon so the user returns to the previous screen.
+  const showBackButton = !!(location.state as any)?.showBackButton
 
   useEffect(() => {
     // Record the visited dapp into Recents. addToRecentDapps no-ops when the URL
@@ -933,6 +950,17 @@ const DappWebViewScreen = () => {
     return () => eventBus.removeEventListener('requestsBottomSheet.closed', dispatchWebViewFocus)
   }, [dispatchWebViewFocus])
 
+  const handleOpenPendingRequests = useCallback(() => {
+    dispatch({
+      type: 'method',
+      params: {
+        ctrlName: 'RequestsController',
+        method: 'setCurrentUserRequestByIndex',
+        args: [visibleUserRequests.length - 1]
+      }
+    })
+  }, [dispatch, visibleUserRequests.length])
+
   //   - onLoadStart only resets state on real top-level navigations. On iOS
   //     every `onLoadStart` is treated as such; on Android only when the
   //     event is an explicit reload, there is no previously resolved URL,
@@ -1065,14 +1093,37 @@ const DappWebViewScreen = () => {
             currentDapp={currentDapp}
             smartAccountType={smartAccountType}
             onManageAppClosed={dispatchWebViewFocus}
+            showBackButton={showBackButton}
           />
         </>
       }
     >
+      {!!visibleUserRequests.length && !currentUserRequest && (
+        <View style={spacings.phSm}>
+          <Banner
+            type="info"
+            singleRow
+            title={`You have ${visibleUserRequests.length} pending ${
+              visibleUserRequests.length === 1 ? 'request' : 'requests'
+            }.`}
+            CustomIcon={() => (
+              <AmbireLogoWithBackgroundAndLogotype
+                withText={false}
+                style={spacings.mrTy}
+                width={30}
+                height={30}
+              />
+            )}
+            buttonText="Open"
+            onPress={handleOpenPendingRequests}
+          />
+        </View>
+      )}
       <View style={flexbox.flex1}>
         <WebView
           ref={webviewRef}
           source={{ uri: activeDappUrl }}
+          userAgent={DESKTOP_USER_AGENT}
           onNavigationStateChange={handleNavigationStateChange}
           injectedJavaScriptBeforeContentLoaded={injectionScript}
           onMessage={handleMessage}

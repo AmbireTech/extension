@@ -58,7 +58,11 @@ const PlainAddressWithCopy: FC<Props> = ({
       style={[
         flexbox.directionRow,
         flexbox.alignCenter,
-        withWrap ? { flexBasis: 110, flexGrow: 1, flexShrink: 1 } : {}
+        withWrap
+          ? { flexBasis: 110, flexGrow: 1, flexShrink: 1 }
+          : isMobile
+            ? { flexShrink: 1, minWidth: 0 }
+            : {}
       ]}
     >
       <PlainAddress

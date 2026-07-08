@@ -91,7 +91,7 @@ export class SettingsPage extends BasePage {
     await this.typeNetworkField('Network name', network.networkName)
     await this.typeNetworkField('Currency Symbol', network.ccySymbol)
     await this.typeNetworkField('Currency Name', network.ccyName)
-    await this.typeNetworkField('RPC URL', network.rpcUrl)
+    await this.typeNetworkField('Add RPC URL', network.rpcUrl)
 
     // confirm adding rpc url
     await this.page.locator(selectors.addRPCURLButton).click()
@@ -163,7 +163,7 @@ export class SettingsPage extends BasePage {
     await this.page.locator('//div[contains(text(),"Flow EVM Mainnet")]').first().click()
 
     // assert button is enabled
-    await this.page.getByTestId(selectors.disableNetworkButton).isVisible()
+    await expect(this.page.getByTestId(selectors.disableNetworkButton)).toBeVisible()
   }
 
   // method working on networks page with network selected
@@ -176,7 +176,7 @@ export class SettingsPage extends BasePage {
 
     // Select Edit, change 'Block Explorer URL' and 'Cancel'
     await this.page.locator(selectors.networkDetailEditButton).click()
-    await this.page.locator(selectors.editNetworkModalTitle).isVisible()
+    await expect(this.page.locator(selectors.editNetworkModalTitle)).toBeVisible()
     await this.typeNetworkField('Block Explorer URL', '/')
     await this.page.locator(selectors.editNetworkCancelButton).click()
     await expect(this.page.locator(selectors.blockExplorerURL(network.explorerUrl))).toContainText(
@@ -185,7 +185,7 @@ export class SettingsPage extends BasePage {
     // Select Edit, change 'Block Explorer URL' and 'Save'
     await this.page.waitForTimeout(1000)
     await this.page.locator(selectors.networkDetailEditButton).click()
-    await this.page.locator(selectors.editNetworkModalTitle).isVisible()
+    await expect(this.page.locator(selectors.editNetworkModalTitle)).toBeVisible()
     await this.typeNetworkField('Block Explorer URL', `${network.explorerUrl}/test`)
     await this.page.locator(selectors.editNetworkSaveButton).click()
 

@@ -2,7 +2,6 @@ import React, { useState } from 'react'
 import { Pressable, View } from 'react-native'
 
 import ArrowRightIcon from '@common/assets/svg/ArrowRightIcon'
-import DeleteIcon from '@common/assets/svg/DeleteIcon'
 import RightArrowIcon from '@common/assets/svg/RightArrowIcon'
 import Text from '@common/components/Text'
 import { AnimatedPressable, useCustomHover } from '@common/hooks/useHover'
@@ -14,11 +13,12 @@ type Props = {
   icon: React.ReactNode
   title: string
   onPress: () => void
-  showTrash?: boolean
-  onTrashPress?: () => void
+  // Icon-button revealed on hover (e.g. clear recents, disconnect connected apps)
+  actionIcon?: React.ReactNode
+  onActionPress?: () => void
 }
 
-const SectionHeader = ({ icon, title, onPress, showTrash, onTrashPress }: Props) => {
+const SectionHeader = ({ icon, title, onPress, actionIcon, onActionPress }: Props) => {
   const { theme } = useTheme()
   const [isHovered, setIsHovered] = useState(false)
   const [bindAnim, animStyle] = useCustomHover({
@@ -56,9 +56,9 @@ const SectionHeader = ({ icon, title, onPress, showTrash, onTrashPress }: Props)
 
         <RightArrowIcon style={spacings.mlSm} />
       </AnimatedPressable>
-      {showTrash && onTrashPress && isHovered && (
-        <Pressable onPress={onTrashPress} hitSlop={8}>
-          <DeleteIcon width={24} height={24} strokeWidth="1.75" />
+      {actionIcon && onActionPress && isHovered && (
+        <Pressable onPress={onActionPress} hitSlop={8}>
+          {actionIcon}
         </Pressable>
       )}
     </View>
