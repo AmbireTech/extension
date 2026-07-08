@@ -5,11 +5,13 @@ import { View } from 'react-native'
 import { TrendingToken } from '@ambire-common/interfaces/dapp'
 import { TokenResult } from '@ambire-common/libs/portfolio'
 import { getTokenAmount } from '@ambire-common/libs/portfolio/helpers'
+import OpenIcon from '@common/assets/svg/OpenIcon'
 import FooterGlassView from '@common/components/FooterGlassView'
 import LayoutWrapper from '@common/components/LayoutWrapper'
 import ScrollableWrapper from '@common/components/ScrollableWrapper'
 import Text from '@common/components/Text'
 import useController from '@common/hooks/useController'
+import { AnimatedPressable, useCustomHover } from '@common/hooks/useHover'
 import useRoute from '@common/hooks/useRoute'
 import useTheme from '@common/hooks/useTheme'
 import getAndFormatTokenDetails from '@common/modules/dashboard/helpers/getTokenDetails'
@@ -25,6 +27,7 @@ import useTokenActions from '@common/modules/token-details/hooks/useTokenActions
 import spacings from '@common/styles/spacings'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
+import { openInTab } from '@common/utils/links'
 
 // Builds a portfolio-shaped TokenResult from a trending token so the same token-details components
 // (price, balance, "About", exchanges) can render it. The trending endpoint now provides the
@@ -102,6 +105,11 @@ const TrendingTokenDetailsScreen = () => {
 
   const isHeld = !!displayToken && getTokenAmount(displayToken) > 0n
 
+  const [bindCoingeckoAnim, coingeckoAnimStyle] = useCustomHover({
+    property: 'backgroundColor',
+    values: { from: theme.secondaryBackground, to: theme.tertiaryBackground }
+  })
+
   const { hideTokenModalRef, closeHideTokenModal, handleHideTokenFromModal, actions } =
     useTokenActions(displayToken, {
       noBalanceSendTooltip: t("You don't hold this token, so there's nothing to send."),
@@ -152,6 +160,44 @@ const TrendingTokenDetailsScreen = () => {
             />
           )}
           {chainId !== null && <TokenData token={displayToken} />}
+          <AnimatedPressable
+            {...bindCoingeckoAnim}
+            onPress={() => openInTab({ url: `https://www.coingecko.com/en/coins/${token.id}` })}
+            style={[
+              flexbox.directionRow,
+              flexbox.alignCenter,
+              spacings.phSm,
+              spacings.mbTy,
+              { height: 56, borderRadius: BORDER_RADIUS_PRIMARY },
+              coingeckoAnimStyle
+            ]}
+          >
+            <Text fontSize={14} weight="medium" appearance="secondaryText">
+              {t('CoinGecko')}
+            </Text>
+            <View
+              style={[
+                flexbox.directionRow,
+                flexbox.alignCenter,
+                flexbox.flex1,
+                flexbox.justifyEnd,
+                spacings.mlXl
+              ]}
+            >
+              <Text
+                fontSize={14}
+                weight="medium"
+                appearance="secondaryText"
+                numberOfLines={1}
+                ellipsizeMode="tail"
+              >
+                {token.id}
+              </Text>
+              <View style={spacings.mlTy}>
+                <OpenIcon />
+              </View>
+            </View>
+          </AnimatedPressable>
           <Exchanges exchanges={displayToken.meta?.exchanges || []} />
           {!!token.description && (
             <>
