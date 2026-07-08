@@ -5,6 +5,7 @@ import { HardwareWalletSigningRequest } from '@ambire-common/interfaces/signAcco
 import Button from '@common/components/Button'
 import FooterGlassView from '@common/components/FooterGlassView'
 import Text from '@common/components/Text'
+import { isMobile, isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import AnimatedQrCode from '@common/modules/hardware-wallets/components/AnimatedQrCode'
 import SigningRequestDetails from '@common/modules/hardware-wallets/components/SigningRequestDetails'
@@ -34,12 +35,18 @@ const QrSignRequestScreen = ({
   signingRequest = null
 }: Props) => {
   const { t } = useTranslation()
-  const qrSize = transactionProgress ? 280 : 300
+  // A smaller code leaves room for the details + footer inside the mobile
+  // bottom sheet; the desktop panel has space for the larger code.
+  const qrSize = isMobile ? 220 : transactionProgress ? 280 : 300
 
   return (
-    <View style={[flexbox.center, { width: '100%', flexGrow: 1, flexShrink: 0 }]}>
-      <Text>{t('Scan this QR code with your QR-based device to sign.')}</Text>
-      <View style={[flexbox.center, flexbox.flex1, spacings.mtSm, { width: '100%' }]}>
+    // Top-aligned (not vertically centered): when the content is taller than the
+    // sheet, centering would overflow symmetrically and bleed the QR over the title.
+    <View style={[flexbox.alignCenter, { width: '100%', flexGrow: 1, flexShrink: 0 }]}>
+      <Text style={[spacings.mbSm, { textAlign: 'center' }]}>
+        {t('Scan this QR code with your QR-based device to sign.')}
+      </Text>
+      <View style={[flexbox.alignCenter, flexbox.flex1, { width: '100%' }]}>
         <AnimatedQrCode
           size={qrSize}
           interval={ANIMATION_INTERVAL}
@@ -55,26 +62,26 @@ const QrSignRequestScreen = ({
         {!!signingRequest && (
           <SigningRequestDetails
             signingRequest={signingRequest}
-            style={[
-              spacings.mt,
-              {
-                width: 420
-              }
-            ]}
+            style={isMobile ? [spacings.mtSm, { width: '100%' }] : [spacings.mt, { width: 420 }]}
           />
         )}
-        <FooterGlassView size="sm" absolute={false} style={{ ...spacings.ptSm, marginTop: 'auto' }}>
+        <FooterGlassView
+          size="sm"
+          absolute={false}
+          style={{ ...spacings.ptSm, marginTop: 'auto' }}
+          mobileStyle={spacings.ptLg}
+        >
           <Button
-            size="smaller"
+            size={isMobile ? 'regular' : 'smaller'}
             hasBottomSpacing={false}
             type="secondary"
             text={t('Back')}
             onPress={onReject}
-            style={{ width: 98, ...spacings.mrLg }}
+            style={isWeb ? { width: 98, ...spacings.mrLg } : undefined}
           />
           <Button
-            size="smaller"
-            hasBottomSpacing={false}
+            size={isMobile ? 'regular' : 'smaller'}
+            hasBottomSpacing={isMobile}
             text={t('Get signature')}
             onPress={onContinue}
           />

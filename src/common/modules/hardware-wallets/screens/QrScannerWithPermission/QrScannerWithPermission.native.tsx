@@ -83,8 +83,13 @@ const QrScannerWithPermission = ({
 
   const errorMessage = externalError || decodeError
 
+  // `useCameraPermissions` returns null until the status resolves. Render nothing
+  // meanwhile so the "grant access" prompt doesn't flash before an already-granted
+  // camera mounts.
+  if (!permission) return <View style={flexbox.flex1} />
+
   if (!permissionGranted) {
-    const canAskAgain = !permission || permission.canAskAgain
+    const canAskAgain = permission.canAskAgain
 
     return (
       <View style={[flexbox.flex1, flexbox.center, spacings.ph]}>
