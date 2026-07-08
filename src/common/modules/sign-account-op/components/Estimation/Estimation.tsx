@@ -14,6 +14,7 @@ import { ZERO_ADDRESS } from '@ambire-common/services/socket/constants'
 import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
 import AssetIcon from '@common/assets/svg/AssetIcon'
 import FeeIcon from '@common/assets/svg/FeeIcon'
+import RightArrowIcon from '@common/assets/svg/RightArrowIcon'
 import SettingsIcon from '@common/assets/svg/SettingsIcon'
 import Alert from '@common/components/Alert'
 import Button from '@common/components/Button'
@@ -445,6 +446,60 @@ const Estimation = ({
     openCustomGasPriceSheet()
   }, [canSetCustomGasPrices, openCustomGasPriceSheet])
 
+  const estimationTitle = useMemo(() => {
+    if (!signAccountOpState?.canAccountBroadcastByItself) return t('Broadcast from')
+
+    return t('Network fee')
+  }, [signAccountOpState?.canAccountBroadcastByItself, t])
+
+  const renderAdvancedButton = useCallback(() => {
+    const advancedButtonContent = (
+      <View style={[flexbox.directionRow, flexbox.alignCenter]}>
+        <SettingsIcon width={16} height={16} color={theme.secondaryText} />
+        <Text
+          fontSize={12}
+          weight="medium"
+          appearance="secondaryText"
+          style={[spacings.mlMi, spacings.mrMi]}
+        >
+          {t('Advanced')}
+        </Text>
+        <RightArrowIcon width={6} height={10} color={theme.secondaryText} weight="2" />
+      </View>
+    )
+
+    if (isMobile) {
+      return (
+        <Pressable
+          disabled={!canSetCustomGasPrices}
+          onPress={openAdvancedOptions}
+          style={!canSetCustomGasPrices && { opacity: 0.3 }}
+          testID="advanced-options-button"
+        >
+          {advancedButtonContent}
+        </Pressable>
+      )
+    }
+
+    return (
+      <Button
+        type="ghost"
+        size="tiny"
+        disabled={!canSetCustomGasPrices}
+        onPress={openAdvancedOptions}
+        hasBottomSpacing={false}
+        testID="advanced-options-button"
+        style={{
+          alignSelf: 'flex-end',
+          paddingHorizontal: 0,
+          minHeight: 0
+        }}
+      >
+        {advancedButtonContent}
+      </Button>
+    )
+  }, [canSetCustomGasPrices, openAdvancedOptions, t, theme.secondaryText])
+
   const renderFeeOptionSectionHeader = useCallback(({ section }: any) => {
     if (section.data.length === 0 || !section.title) return null
 
@@ -556,16 +611,10 @@ const Estimation = ({
           isMobile && spacings.ptSm
         ]}
       >
-        <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-          <Text fontSize={20} weight="medium">
-            {t(
-              signAccountOpState.canAccountBroadcastByItself
-                ? isMobile
-                  ? 'Pay gas with'
-                  : 'Pay network fee with'
-                : 'Broadcast from'
-            )}
-          </Text>
+        <Text fontSize={20} weight="medium">
+          {estimationTitle}
+        </Text>
+        {signAccountOpState.canAccountBroadcastByItself && (
           <View
             dataSet={
               advancedOptionsTooltip
@@ -575,36 +624,53 @@ const Estimation = ({
                   })
                 : undefined
             }
-            style={spacings.mlTy}
           >
-            {isMobile ? (
-              <Pressable
-                disabled={!canSetCustomGasPrices}
-                onPress={openAdvancedOptions}
-                style={!canSetCustomGasPrices && { opacity: 0.3 }}
-              >
-                <SettingsIcon />
-              </Pressable>
-            ) : (
-              <Button
-                type="ghost"
-                size="tiny"
-                text={t('Advanced')}
-                textUnderline
-                disabled={!canSetCustomGasPrices}
-                onPress={openAdvancedOptions}
-                hasBottomSpacing={false}
-                style={{
-                  alignSelf: 'flex-start',
-                  paddingHorizontal: 0,
-                  minHeight: 0
-                }}
-                textStyle={{ color: theme.secondaryText }}
-              />
-            )}
+            {renderAdvancedButton()}
           </View>
-        </View>
-        {selectedFee && (
+        )}
+      </View>
+      <View>
+        <Text fontSize={12} weight="medium" appearance="secondaryText" style={spacings.mbTy}>
+          {t('Pay with')}
+        </Text>
+        <SectionedSelect
+          setValue={setFeeOption}
+          testID="fee-option-select"
+          headerHeight={FEE_SECTION_LIST_MENU_HEADER_HEIGHT}
+          sections={feeOptionSelectSections}
+          renderSectionHeader={renderFeeOptionSectionHeader}
+          containerStyle={spacings.mb0}
+          value={payValue || NO_FEE_OPTIONS}
+          disabled={
+            disabled ||
+            (!payOptionsPaidByUsOrGasTank.length && !payOptionsPaidByEOA.length) ||
+            !signAccountOpState.selectedOption
+          }
+          selectStyle={{
+            backgroundColor:
+              isOneClick || isMobile ? theme.secondaryBackground : theme.primaryBackground,
+            ...spacings.phSm
+          }}
+          defaultValue={payValue ?? undefined}
+          withSearch={!!payOptionsPaidByUsOrGasTank.length || !!payOptionsPaidByEOA.length}
+          stickySectionHeadersEnabled
+          bottomSheetTitle={t('Network fee')}
+        />
+      </View>
+      <View style={{ height: 1, backgroundColor: theme.secondaryBorder, ...spacings.mtSm }} />
+      {selectedFee && (
+        <View
+          style={[
+            flexbox.directionRow,
+            flexbox.alignCenter,
+            flexbox.justifySpaceBetween,
+            spacings.ptSm,
+            spacings.mbSm
+          ]}
+        >
+          <Text fontSize={12} weight="medium" appearance="secondaryText">
+            {t('Speed')}
+          </Text>
           <Select
             value={selectedFee}
             // @ts-ignore
@@ -620,36 +686,13 @@ const Estimation = ({
             // as the native amount takes up more space
             menuLeftHorizontalOffset={feeTokenPriceUnavailableWarning ? 100 : 48}
             menuStyle={{ minWidth: feeTokenPriceUnavailableWarning ? 200 : 148 }}
-            bottomSheetTitle={t('Gas fee')}
+            bottomSheetTitle={t('Network fee')}
             withSearch={false}
             containerStyle={{ ...spacings.mb0, width: isWeb ? 116 : 126 }}
             testID="fee-speed-select"
           />
-        )}
-      </View>
-      <SectionedSelect
-        setValue={setFeeOption}
-        testID="fee-option-select"
-        headerHeight={FEE_SECTION_LIST_MENU_HEADER_HEIGHT}
-        sections={feeOptionSelectSections}
-        renderSectionHeader={renderFeeOptionSectionHeader}
-        containerStyle={spacings.mb0}
-        value={payValue || NO_FEE_OPTIONS}
-        disabled={
-          disabled ||
-          (!payOptionsPaidByUsOrGasTank.length && !payOptionsPaidByEOA.length) ||
-          !signAccountOpState.selectedOption
-        }
-        selectStyle={{
-          backgroundColor:
-            isOneClick || isMobile ? theme.secondaryBackground : theme.primaryBackground,
-          ...spacings.phSm
-        }}
-        defaultValue={payValue ?? undefined}
-        withSearch={!!payOptionsPaidByUsOrGasTank.length || !!payOptionsPaidByEOA.length}
-        stickySectionHeadersEnabled
-        bottomSheetTitle={t('Gas token')}
-      />
+        </View>
+      )}
       <DefaultFeeSelector
         networkName={network?.name}
         payValue={payValue}
