@@ -1,4 +1,4 @@
-name: Publish OTA update — Android 📲
+name: Publish OTA update - Android 📲
 
 on:
   workflow_dispatch: # Manual trigger, usually from a release branch
