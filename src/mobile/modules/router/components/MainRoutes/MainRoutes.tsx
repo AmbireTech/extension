@@ -12,6 +12,7 @@ import CreateSeedPhraseWriteScreen from '@mobile/modules/auth/screens/CreateSeed
 import GetStartedScreen from '@mobile/modules/auth/screens/GetStartedScreen'
 import ImportExistingAccountSelectorScreen from '@mobile/modules/auth/screens/ImportExistingAccountSelectorScreen'
 import ImportSmartAccountJsonScreen from '@mobile/modules/auth/screens/ImportSmartAccountJson'
+import MigrationOnboardingScreen from '@mobile/modules/auth/screens/MigrationOnboardingScreen'
 import PrivateKeyImportScreen from '@mobile/modules/auth/screens/PrivateKeyImportScreen'
 import SeedPhraseImportScreen from '@mobile/modules/auth/screens/SeedPhraseImportScreen'
 import ViewOnlyAccountAdderScreen from '@mobile/modules/auth/screens/ViewOnlyAccountAdderScreen'
@@ -41,6 +42,7 @@ const MainRoutes = () => {
       <Route path={ROUTES.keyStoreSetup} element={<KeyStoreSetupScreen />} />
       <Route element={<KeystoreUnlockedRoute />}>
         <Route path={ROUTES.getStarted} element={<GetStartedScreen />} />
+        <Route path={ROUTES.migrationOnboarding} element={<MigrationOnboardingScreen />} />
         <Route path={ROUTES.networksConfiguration} element={<NetworksConfiguration />} />
         <Route
           path={ROUTES.privacyOptOutsConfiguration}

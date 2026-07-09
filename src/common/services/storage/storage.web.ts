@@ -122,10 +122,4 @@ const secureStorage = {
 // On web/extension there is no such worker bridge, so this is a no-op.
 const getAllSerialized = (): Record<string, string> => ({})
 
-export {
-  asyncStorage as storage,
-  syncStorage,
-  syncSessionStorage,
-  secureStorage,
-  getAllSerialized
-}
+export { asyncStorage as storage, syncStorage, syncSessionStorage, secureStorage, getAllSerialized }
