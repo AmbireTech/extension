@@ -29,7 +29,7 @@ const STEPS = [
 ]
 
 const LAST_STEP_INDEX = STEPS.length - 1
-const CAROUSEL_HEIGHT = 200
+const CAROUSEL_HEIGHT = 260
 
 const MigrationOnboardingScreen = () => {
   const { styles } = useTheme(getStyles)
@@ -63,11 +63,14 @@ const MigrationOnboardingScreen = () => {
 
   const renderStep = useCallback(
     ({ item }: { item: string }) => (
-      <View style={spacings.ptLg}>
-        <Text fontSize={18} weight="medium" appearance="secondaryText">
-          {t(item)}
-        </Text>
-      </View>
+      <Text
+        fontSize={18}
+        weight="medium"
+        appearance="secondaryText"
+        style={{ ...spacings.phLg, ...spacings.ptLg }}
+      >
+        {t(item)}
+      </Text>
     ),
     [t]
   )
@@ -75,19 +78,31 @@ const MigrationOnboardingScreen = () => {
   return (
     <MobileLayoutContainer
       footer={
-        activeIndex === LAST_STEP_INDEX ? (
-          <>
-            <Button type="primary" text={t('Export backup')} onPress={handleExportBackup} />
+        <>
+          <View style={[styles.dotsContainer, spacings.mbLg]}>
+            {STEPS.map((step, index) => (
+              <View key={step} style={[styles.dot, index === activeIndex && styles.dotActive]} />
+            ))}
+          </View>
+          {activeIndex === LAST_STEP_INDEX ? (
+            <>
+              <Button type="primary" text={t('Export backup')} onPress={handleExportBackup} />
+              <Button
+                type="secondary"
+                hasBottomSpacing={false}
+                text={t('I already have a backup')}
+                onPress={finishOnboarding}
+              />
+            </>
+          ) : (
             <Button
               type="secondary"
               hasBottomSpacing={false}
-              text={t('I already have a backup')}
-              onPress={finishOnboarding}
+              text={t('Next')}
+              onPress={handleNext}
             />
-          </>
-        ) : (
-          <Button type="secondary" hasBottomSpacing={false} text={t('Next')} onPress={handleNext} />
-        )
+          )}
+        </>
       }
     >
       <MobileLayoutWrapperMainContent>
@@ -130,21 +145,12 @@ const MigrationOnboardingScreen = () => {
               <Carousel
                 ref={carouselRef}
                 width={carouselWidth}
-                height={CAROUSEL_HEIGHT}
                 data={STEPS}
                 loop={false}
                 onSnapToItem={setActiveIndex}
                 renderItem={renderStep}
               />
             )}
-          </View>
-
-          <View style={flexbox.flex1} />
-
-          <View style={[styles.dotsContainer, spacings.mbLg]}>
-            {STEPS.map((step, index) => (
-              <View key={step} style={[styles.dot, index === activeIndex && styles.dotActive]} />
-            ))}
           </View>
         </View>
       </MobileLayoutWrapperMainContent>
