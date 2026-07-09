@@ -10,7 +10,7 @@ import { Key } from '@ambire-common/interfaces/keystore'
 import { CallsUserRequest, RequestExecutionType } from '@ambire-common/interfaces/userRequest'
 import { getSanitizedAmount } from '@ambire-common/libs/transfer/amount'
 import { getBenzinUrlParams } from '@ambire-common/utils/benzin'
-import { getAddressFromAddressState } from '@ambire-common/utils/domains'
+import { getAddressFromAddressState, getDomainFromAddressState } from '@ambire-common/utils/domains'
 import { getCallsCount } from '@ambire-common/utils/userRequest'
 import useAddressInput from '@common/hooks/useAddressInput'
 import useController from '@common/hooks/useController'
@@ -48,7 +48,8 @@ const useTransfer = (isTopUpScreen: boolean) => {
     amount: controllerAmount,
     amountInFiat,
     isRecipientAddressViewOnly,
-    addressPoisoningMatch
+    addressPoisoningMatch,
+    recipientDomainAddressChange
   } = transferState
 
   const amountInFiatBigInt = useMemo(() => {
@@ -360,7 +361,8 @@ const useTransfer = (isTopUpScreen: boolean) => {
                       recipientAddress: isTopUp
                         ? FEE_COLLECTOR
                         : getAddressFromAddressState(addressState),
-                      executionType
+                      executionType,
+                      recipientDomain: getDomainFromAddressState(addressState)
                     }
                   }
                 ]
@@ -388,7 +390,8 @@ const useTransfer = (isTopUpScreen: boolean) => {
                   recipientAddress: isTopUp
                     ? FEE_COLLECTOR
                     : getAddressFromAddressState(addressState),
-                  executionType
+                  executionType,
+                  recipientDomain: getDomainFromAddressState(addressState)
                 }
               }
             ]
@@ -451,7 +454,9 @@ const useTransfer = (isTopUpScreen: boolean) => {
             isRecipientAddressFirstTimeSend) ||
           isRecipientAddressViewOnly ||
           // poisoning detected - require hold-to-proceed as an additional safety step
-          !!addressPoisoningMatch
+          !!addressPoisoningMatch ||
+          // domain now resolves to a different address than last time - possible expiry/snipe
+          !!recipientDomainAddressChange
         }
         onRecipientAddressUnknownAgree={onRecipientAddressUnknownAgree}
       />
@@ -469,6 +474,7 @@ const useTransfer = (isTopUpScreen: boolean) => {
     isRecipientAddressFirstTimeSend,
     isRecipientAddressViewOnly,
     addressPoisoningMatch,
+    recipientDomainAddressChange,
     onRecipientAddressUnknownAgree,
     addTransaction
   ])
