@@ -631,8 +631,14 @@ const Estimation = ({
             menuOptionHeight={isWeb ? 40 : undefined}
             // Display a wider menu if the fee token price is unavailable
             // as the native amount takes up more space
-            menuLeftHorizontalOffset={feeTokenPriceUnavailableWarning ? 100 : 48}
-            menuStyle={{ minWidth: feeTokenPriceUnavailableWarning ? 200 : 148 }}
+            menuLeftHorizontalOffset={
+              isNarrowLayout ? 0 : feeTokenPriceUnavailableWarning ? 100 : 48
+            }
+            menuStyle={
+              isNarrowLayout
+                ? { minWidth: 0 }
+                : { minWidth: feeTokenPriceUnavailableWarning ? 200 : 148 }
+            }
             bottomSheetTitle={t('Gas fee')}
             withSearch={false}
             containerStyle={{
