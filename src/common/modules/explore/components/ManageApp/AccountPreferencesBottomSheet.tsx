@@ -8,6 +8,7 @@ import BottomSheet from '@common/components/BottomSheet'
 import ModalHeader from '@common/components/BottomSheet/ModalHeader'
 import Button from '@common/components/Button'
 import FooterGlassView from '@common/components/FooterGlassView'
+import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import Text from '@common/components/Text'
 import useTheme from '@common/hooks/useTheme'
 import DAppAccountList from '@common/modules/dapp-catalog/components/DAppAccountList'
@@ -37,6 +38,7 @@ const AccountPreferencesBottomSheet = ({
     updateLocalPreferences,
     save
   } = useDAppAccountPreferences(dapp.id, 'existingDapp', dapp.accountPreferences)
+  const isConfirmDisabled = !!localPreferences?.enabled && !localPreferences.accounts.length
 
   const handleConfirm = useCallback(() => {
     save()
@@ -74,7 +76,6 @@ const AccountPreferencesBottomSheet = ({
             accounts={orderedAccountList}
             allowedAccounts={localPreferences?.accounts || []}
             onToggleAccount={toggleSelectAccount}
-            enforce="atLeastOne"
           />
         </>
       ) : (
@@ -90,13 +91,22 @@ const AccountPreferencesBottomSheet = ({
           hasBottomSpacing={false}
           style={spacings.mrLg}
         />
-        <Button
-          type="primary"
-          size="smaller"
-          text={t('Confirm')}
-          onPress={handleConfirm}
-          hasBottomSpacing={false}
-        />
+        <View
+          dataSet={createGlobalTooltipDataSet({
+            id: 'manage-accounts-confirm-button-tooltip',
+            hidden: !isConfirmDisabled,
+            content: t('Please select an account to connect')
+          })}
+        >
+          <Button
+            type="primary"
+            size="smaller"
+            text={t('Confirm')}
+            onPress={handleConfirm}
+            hasBottomSpacing={false}
+            disabled={isConfirmDisabled}
+          />
+        </View>
       </FooterGlassView>
     </BottomSheet>
   )
