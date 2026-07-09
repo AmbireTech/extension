@@ -3,6 +3,7 @@ import { getBytes, hexlify } from 'ethers'
 import { EntropyGenerator } from '@ambire-common/libs/entropyGenerator/entropyGenerator'
 import { CIPHER, decryptWithKey, encryptWithKey } from '@ambire-common/libs/keystore/keystore'
 import { storage } from '@common/services/storage'
+import { captureException } from '@sentry/browser'
 
 import type { AESGCMEncrypted } from '@ambire-common/interfaces/keystore'
 const WEBAUTHN_BIOMETRICS_STORAGE_KEY = 'biometricsWebAuthnCredential'
@@ -32,6 +33,17 @@ const toArrayBuffer = (value: Uint8Array) =>
 
 const decodeStoredBytes = (value: string) => getBytes(value)
 
+const toBase64Url = (value: Uint8Array) => {
+  let binary = ''
+  value.forEach((byte) => {
+    binary += String.fromCharCode(byte)
+  })
+
+  return btoa(binary).replaceAll('+', '-').replaceAll('/', '_').replaceAll('=', '')
+}
+
+const getBiometricRpId = () => window.location.hostname
+
 const getRandomBytes = (length: number) => {
   const bytes = new Uint8Array(length)
   crypto.getRandomValues(bytes)
@@ -52,11 +64,24 @@ const equalBytes = (left: Uint8Array, right: Uint8Array) => {
   return true
 }
 
-const getBiometricsSecretKey = (userHandle: Uint8Array) =>
-  crypto.subtle.importKey('raw', toArrayBuffer(userHandle.slice(0, 32)), { name: CIPHER }, false, [
-    'encrypt',
-    'decrypt'
+const getBiometricsSecretKey = async (userHandle: Uint8Array) => {
+  const hkdfKey = await crypto.subtle.importKey('raw', toArrayBuffer(userHandle), 'HKDF', false, [
+    'deriveKey'
   ])
+
+  return crypto.subtle.deriveKey(
+    {
+      name: 'HKDF',
+      hash: 'SHA-256',
+      salt: new Uint8Array(0),
+      info: encoder.encode('ambire-biometrics-unlock')
+    },
+    hkdfKey,
+    { name: CIPHER, length: 256 },
+    false,
+    ['encrypt', 'decrypt']
+  )
+}
 
 const getHmacSecretOutput = (results: any) => {
   // prioritize, because that's the modern WebAuthn approach
@@ -135,21 +160,37 @@ const getAssertionUserHandle = async (storedCredential: StoredEncryptedBiometric
     }
   } as CredentialRequestOptions)) as PublicKeyCredential | null
 
+  // the user cancelled the req
   if (!credential) return null
 
+  if (!(credential instanceof PublicKeyCredential)) {
+    captureException(
+      new Error('Biometric unlock not supported: credential not instanceof PublicKeyCredential')
+    )
+    return null
+  }
+
+  if (!(credential.response instanceof AuthenticatorAssertionResponse)) {
+    captureException(
+      new Error(
+        'Biometric unlock not supported: credential.response not instanceof AuthenticatorAssertionResponse'
+      )
+    )
+    return null
+  }
+
+  const { userHandle } = credential.response
+  if (!userHandle) {
+    captureException(new Error('Biometric unlock not supported: userHandle not in response'))
+    return null
+  }
+
+  // credentials mismatch
   const expectedCredentialId = decodeStoredBytes(storedCredential.credentialId)
   const credentialId = toUint8Array((credential as any).rawId)
   if (!equalBytes(credentialId, expectedCredentialId)) return null
 
-  if (
-    typeof AuthenticatorAssertionResponse === 'undefined' ||
-    !(credential.response instanceof AuthenticatorAssertionResponse) ||
-    !credential.response.userHandle
-  ) {
-    return null
-  }
-
-  return toUint8Array(credential.response.userHandle)
+  return toUint8Array(userHandle)
 }
 
 export const webauthnBiometrics = {
@@ -221,7 +262,6 @@ export const webauthnBiometrics = {
         timeout: WEBAUTHN_TIMEOUT_MS,
         attestation: 'none',
         extensions: {
-          credProps: true,
           prf: {
             eval: {
               first: salt
@@ -296,6 +336,23 @@ export const webauthnBiometrics = {
   },
 
   async removeCredential() {
+    const storedCredential = await getStoredCredential()
     await storage.remove(WEBAUTHN_BIOMETRICS_STORAGE_KEY)
+    if (!storedCredential || typeof PublicKeyCredential === 'undefined') return
+
+    // not every browser supports this
+    const publicKeyCredentialCtor = PublicKeyCredential as typeof PublicKeyCredential & {
+      signalUnknownCredential?: (options: { rpId: string; credentialId: string }) => Promise<void>
+    }
+    try {
+      if (publicKeyCredentialCtor.signalUnknownCredential) {
+        await publicKeyCredentialCtor.signalUnknownCredential({
+          rpId: getBiometricRpId(),
+          credentialId: toBase64Url(decodeStoredBytes(storedCredential.credentialId))
+        })
+      }
+    } catch (e) {
+      console.error(e)
+    }
   }
 }
