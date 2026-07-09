@@ -36,7 +36,6 @@ const AccountData: FC<Props> = ({ onPress, withArrowRightIcon }) => {
   const { styles } = useTheme(getStyles)
   const { maxWidthSize } = useWindowSize()
   const { isPopup, isSidePanel } = getUiType()
-  const addressMaxLength = isSidePanel ? 9 : 13
   const { account } = useController('SelectedAccountController').state
   const [bindAddressAnim, addressAnimStyle] = useHover({
     preset: 'opacityInverted',
@@ -68,6 +67,16 @@ const AccountData: FC<Props> = ({ onPress, withArrowRightIcon }) => {
     if (account?.safeCreation) return 'Safe'
     return undefined
   }, [account])
+
+  const formattedAddress = useMemo(() => {
+    if (!account) return ''
+
+    if (isSidePanel) return account.addr
+
+    if (isMobile) return shortenAddress(account.addr, 18, 4)
+
+    return shortenAddress(account.addr, 13)
+  }, [account, isSidePanel])
 
   if (!account) return null
 
@@ -125,12 +134,12 @@ const AccountData: FC<Props> = ({ onPress, withArrowRightIcon }) => {
             <Text
               color="#B9BFC9"
               numberOfLines={1}
-              ellipsizeMode="middle"
+              ellipsizeMode={isSidePanel ? 'tail' : undefined}
               style={[{ flexShrink: 1, minWidth: 0 }, isWeb ? spacings.mrTy : undefined]}
               weight="mono_regular"
               fontSize={12}
             >
-              ({shortenAddress(account.addr, addressMaxLength)})
+              ({formattedAddress})
             </Text>
             {isWeb && (
               <AnimatedPressable
