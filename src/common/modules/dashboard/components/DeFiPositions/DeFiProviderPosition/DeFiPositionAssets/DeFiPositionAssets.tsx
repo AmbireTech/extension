@@ -1,11 +1,12 @@
 import { formatUnits } from 'ethers'
 import React, { FC, useMemo } from 'react'
-import { View } from 'react-native'
+import { View, ViewStyle } from 'react-native'
 
 import { AssetType, Position } from '@ambire-common/libs/defiPositions/types'
 import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
 import Text from '@common/components/Text'
 import TokenIcon from '@common/components/TokenIcon'
+import useWindowSize from '@common/hooks/useWindowSize'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
@@ -14,31 +15,36 @@ import DeFiPositionAssetsHeader from './DeFiPositionAssetsHeader'
 
 const COLUMNS = [
   { label: 'AMOUNT', flex: 1 },
-  { label: 'USD VALUE', flex: 0.5 }
+  { label: 'USD VALUE', flex: 0.75 }
 ]
 
 const COLUMNS_WITH_APY = [
-  { label: 'AMOUNT', flex: 1 },
-  { label: 'APY', flex: 0.5 },
-  { label: 'USD VALUE', flex: 0.5 }
+  { label: 'AMOUNT', flex: 0.9 },
+  { label: 'APY', flex: 0.55 },
+  { label: 'USD VALUE', flex: 0.75 }
 ]
+
+const getColumnStyle = (flex: number): ViewStyle => ({ flex, minWidth: 0 })
 
 const DeFiPositionAssets: FC<{
   assets: Position['assets']
   label: string
   chainId?: bigint
 }> = ({ assets, label, chainId }) => {
+  const { maxWidthSize } = useWindowSize()
+  const isCompactLayout = !maxWidthSize('s')
   const shouldDisplayAPY = assets.some((a) => !!a?.additionalData?.APY)
+  const rowFontSize = isCompactLayout ? 12 : 14
 
   const columns = useMemo(() => {
     return [
       {
         label,
-        flex: 1
+        flex: isCompactLayout ? 1.1 : 1
       },
       ...(shouldDisplayAPY ? COLUMNS_WITH_APY : COLUMNS)
     ]
-  }, [label, shouldDisplayAPY])
+  }, [isCompactLayout, label, shouldDisplayAPY])
 
   return (
     <View>
@@ -48,14 +54,26 @@ const DeFiPositionAssets: FC<{
           ({ symbol, amount, decimals, type, address, additionalData, value, iconUrl }) => {
             return (
               <View
-                style={[flexbox.directionRow, spacings.phSm, spacings.pvTy, flexbox.alignCenter]}
+                style={[
+                  flexbox.directionRow,
+                  spacings.phSm,
+                  spacings.pvTy,
+                  flexbox.alignCenter,
+                  { minWidth: 0, overflow: 'hidden' }
+                ]}
                 key={address}
               >
-                <View style={[flexbox.directionRow, flexbox.flex1, flexbox.alignCenter]}>
+                <View
+                  style={[
+                    flexbox.directionRow,
+                    flexbox.alignCenter,
+                    getColumnStyle(isCompactLayout ? 1.1 : 1)
+                  ]}
+                >
                   {type !== AssetType.Prediction && (
                     <TokenIcon
-                      width={24}
-                      height={24}
+                      width={isCompactLayout ? 20 : 24}
+                      height={isCompactLayout ? 20 : 24}
                       uri={iconUrl}
                       withContainer={false}
                       chainId={chainId}
@@ -64,24 +82,47 @@ const DeFiPositionAssets: FC<{
                     />
                   )}
                   <Text
-                    fontSize={14}
+                    fontSize={rowFontSize}
                     weight="semiBold"
-                    style={type !== AssetType.Prediction ? spacings.mlTy : undefined}
+                    numberOfLines={1}
+                    ellipsizeMode="tail"
+                    style={[
+                      type !== AssetType.Prediction ? spacings.mlTy : undefined,
+                      { flexShrink: 1, minWidth: 0 }
+                    ]}
                   >
                     {symbol}
                   </Text>
                 </View>
-                <Text style={flexbox.flex1} fontSize={14} weight="semiBold">
+                <Text
+                  style={getColumnStyle(shouldDisplayAPY ? 0.9 : 1)}
+                  fontSize={rowFontSize}
+                  weight="semiBold"
+                  numberOfLines={1}
+                  ellipsizeMode="tail"
+                >
                   {formatDecimals(Number(formatUnits(amount, decimals)), 'amount')}
                 </Text>
                 {shouldDisplayAPY && (
-                  <Text style={{ flex: 0.5 }} fontSize={14} weight="semiBold">
+                  <Text
+                    style={getColumnStyle(0.55)}
+                    fontSize={rowFontSize}
+                    weight="semiBold"
+                    numberOfLines={1}
+                    ellipsizeMode="tail"
+                  >
                     {additionalData?.APY
                       ? `${formatDecimals(additionalData?.APY, 'amount')}%`
                       : 'N/A'}
                   </Text>
                 )}
-                <Text style={{ flex: 0.5, ...text.right }} fontSize={14} weight="semiBold">
+                <Text
+                  style={[getColumnStyle(0.75), text.right]}
+                  fontSize={rowFontSize}
+                  weight="semiBold"
+                  numberOfLines={1}
+                  ellipsizeMode="tail"
+                >
                   {formatDecimals(value, 'value')}
                 </Text>
               </View>
