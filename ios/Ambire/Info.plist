@@ -97,5 +97,22 @@
     <string>__STALLION_APP_TOKEN__</string>
     <key>StallionPublicSigningKey</key>
     <string>__STALLION_PUBLIC_SIGNING_KEY__</string>
+    <!-- Fonts are embedded natively (registered at launch), NOT loaded at runtime from the JS
+         bundle. This keeps them independent of the Stallion OTA bundle slot, which otherwise
+         breaks font application for text rendered after an OTA download/restart. Paths are
+         relative to the `fonts` folder reference copied into the app bundle. -->
+    <key>UIAppFonts</key>
+    <array>
+      <string>fonts/Poppins-Light.ttf</string>
+      <string>fonts/Poppins-Regular.ttf</string>
+      <string>fonts/Poppins-Medium.ttf</string>
+      <string>fonts/Poppins-SemiBold.ttf</string>
+      <string>fonts/Roboto-Light.ttf</string>
+      <string>fonts/Roboto-Regular.ttf</string>
+      <string>fonts/Roboto-Medium.ttf</string>
+      <string>fonts/Roboto-Bold.ttf</string>
+      <string>fonts/Roboto-Black.ttf</string>
+      <string>fonts/GeistMono-Regular.ttf</string>
+    </array>
   </dict>
 </plist>
