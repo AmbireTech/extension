@@ -373,7 +373,12 @@ const SignAccountOpScreen = () => {
                 style={spacings.mt}
               />
             )}
-            {isViewOnly && <NoKeysToSignAlert chainId={signAccountOpState?.accountOp?.chainId} />}
+            {isViewOnly && (
+              <NoKeysToSignAlert
+                style={spacings.mt}
+                chainId={signAccountOpState?.accountOp?.chainId}
+              />
+            )}
           </ScrollView>
         </TabLayoutWrapperMainContent>
       </TabLayoutContainer>

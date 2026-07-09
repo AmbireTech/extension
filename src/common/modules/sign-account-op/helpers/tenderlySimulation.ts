@@ -19,7 +19,72 @@ type GetTenderlySimulationLinkProps = {
   state?: AccountOnchainState
 }
 
+type TenderlyStateOverride = {
+  id: string
+  contractAddress: string
+  balance: string
+  storage: {
+    key: string
+    value: string
+  }[]
+}
+
+type GetTenderlyDraftParamsProps = {
+  chainId: bigint
+  from: string
+  contractAddress?: string
+  rawFunctionInput: string
+  value: bigint | number | string
+  stateOverrides?: TenderlyStateOverride[]
+}
+
 const TENDERLY_SIMULATOR_URL = 'https://dashboard.tenderly.co/simulator/new'
+
+const getTenderlyDraftParams = ({
+  chainId,
+  from,
+  contractAddress = '',
+  rawFunctionInput,
+  stateOverrides = [],
+  value
+}: GetTenderlyDraftParamsProps) => {
+  // Tenderly's new UI uses base64 encoded json to provide simulation
+  // parameters. Keeping network and transaction fields in one draft avoids
+  // transient re-validation errors in the simulator form.
+  const draftTemplate = {
+    v: 1,
+    network: { id: chainId.toString() },
+    row: {
+      from,
+      gas: '0',
+      gasPrice: '0',
+      value: value.toString(),
+      block: '',
+      blockIndex: null,
+      endOfBlock: false,
+      usePendingBlock: true,
+      depositTx: false,
+      systemTx: false,
+      mint: '0',
+      l1BlockNumber: '',
+      l1Timestamp: '',
+      l1MessageSender: '0x0000000000000000000000000000000000000000',
+      l1Turing: '',
+      contractAddress,
+      functionInputs: {},
+      inputDataType: 'raw',
+      rawFunctionInput,
+      contractAbiImport: '',
+      blockHeaderOverrides: {},
+      stateOverrides,
+      contractFunction: null
+    }
+  }
+
+  return new URLSearchParams({
+    draft: btoa(JSON.stringify(draftTemplate)).replace(/=+$/, '') // remove trailing padding, tenderly doesn't use it
+  })
+}
 
 const getTenderlySimulationLink = ({
   signAccountOpState,
@@ -44,8 +109,8 @@ const getTenderlySimulationLink = ({
           getSignableCalls(signAccountOpState.accountOp),
           getSpoof(signAccountOpState.account)
         ])
-        params = new URLSearchParams({
-          network: signAccountOpState.accountOp.chainId.toString(),
+        params = getTenderlyDraftParams({
+          chainId: signAccountOpState.accountOp.chainId,
           from: DEPLOYLESS_SIMULATION_FROM,
           contractAddress: signAccountOpState.account.creation.factoryAddr,
           rawFunctionInput: executeData,
@@ -57,8 +122,8 @@ const getTenderlySimulationLink = ({
           getSignableCalls(signAccountOpState.accountOp),
           getSpoof(signAccountOpState.account)
         ])
-        params = new URLSearchParams({
-          network: signAccountOpState.accountOp.chainId.toString(),
+        params = getTenderlyDraftParams({
+          chainId: signAccountOpState.accountOp.chainId,
           from: DEPLOYLESS_SIMULATION_FROM,
           contractAddress: signAccountOpState.accountOp.accountAddr,
           rawFunctionInput: executeData,
@@ -85,65 +150,38 @@ const getTenderlySimulationLink = ({
         preValidatedSig
       ])
 
-      // Tenderly's new UI uses base64 encoded json to provide simulation
-      // parameters. The new format is required to use state overrides
-      const draftTemplate = {
-        v: 1,
-        network: { id: signAccountOpState.accountOp.chainId.toString() },
-        row: {
-          from: firstSigner,
-          gas: '0',
-          gasPrice: '0',
-          value: 0,
-          block: '',
-          blockIndex: null,
-          endOfBlock: false,
-          usePendingBlock: true,
-          depositTx: false,
-          systemTx: false,
-          mint: '0',
-          l1BlockNumber: '',
-          l1Timestamp: '',
-          l1MessageSender: '0x0000000000000000000000000000000000000000',
-          l1Turing: '',
-          contractAddress: signAccountOpState.accountOp.accountAddr,
-          functionInputs: {},
-          inputDataType: 'raw',
-          rawFunctionInput: execData,
-          contractAbiImport: '',
-          blockHeaderOverrides: {},
-          stateOverrides:
-            state.threshold > 1
-              ? [
-                  {
-                    id: uuidv4(),
-                    contractAddress: signAccountOpState.accountOp.accountAddr,
-                    balance: '',
-                    storage: [
-                      {
-                        key: '0x0000000000000000000000000000000000000000000000000000000000000004', // threshold slot
-                        value: '0x0000000000000000000000000000000000000000000000000000000000000001'
-                      }
-                    ]
-                  }
-                ]
-              : [],
-          contractFunction: null
-        }
-      }
-
-      params = new URLSearchParams({
-        draft: btoa(JSON.stringify(draftTemplate)).replace(/=+$/, '') // remove trailing padding, tenderly doesn't use it
+      params = getTenderlyDraftParams({
+        chainId: signAccountOpState.accountOp.chainId,
+        from: firstSigner,
+        contractAddress: signAccountOpState.accountOp.accountAddr,
+        rawFunctionInput: execData,
+        value: '0',
+        stateOverrides:
+          state.threshold > 1
+            ? [
+                {
+                  id: uuidv4(),
+                  contractAddress: signAccountOpState.accountOp.accountAddr,
+                  balance: '',
+                  storage: [
+                    {
+                      key: '0x0000000000000000000000000000000000000000000000000000000000000004', // threshold slot
+                      value: '0x0000000000000000000000000000000000000000000000000000000000000001'
+                    }
+                  ]
+                }
+              ]
+            : []
       })
     } else {
       // only a single call for EOAs
       const call = signAccountOpState.accountOp.calls[0]!
-      params = new URLSearchParams({
-        network: signAccountOpState.accountOp.chainId.toString(),
+      params = getTenderlyDraftParams({
+        chainId: signAccountOpState.accountOp.chainId,
         from: signAccountOpState.accountOp.accountAddr,
         rawFunctionInput: call.data,
         value: call.value.toString(),
-        ...(call.to ? { contractAddress: call.to } : {})
+        contractAddress: call.to
       })
     }
 
