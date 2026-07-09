@@ -8,6 +8,8 @@ import { captureException } from '@sentry/browser'
 import type { AESGCMEncrypted } from '@ambire-common/interfaces/keystore'
 const WEBAUTHN_BIOMETRICS_STORAGE_KEY = 'biometricsWebAuthnCredential'
 const WEBAUTHN_TIMEOUT_MS = 60_000
+const WEBAUTHN_AUTHENTICATOR_DATA_FLAGS_INDEX = 32
+const WEBAUTHN_USER_VERIFIED_FLAG = 0x04
 
 type StoredPrfBiometricsCredential = {
   version: 1
@@ -43,6 +45,15 @@ const toBase64Url = (value: Uint8Array) => {
 }
 
 const getBiometricRpId = () => window.location.hostname
+
+const hasUserVerifiedFlag = (authenticatorData: ArrayBuffer) => {
+  const authenticatorDataBytes = toUint8Array(authenticatorData)
+  if (authenticatorDataBytes.byteLength <= WEBAUTHN_AUTHENTICATOR_DATA_FLAGS_INDEX) return false
+
+  const flags = authenticatorDataBytes[WEBAUTHN_AUTHENTICATOR_DATA_FLAGS_INDEX] ?? 0
+
+  return (flags & WEBAUTHN_USER_VERIFIED_FLAG) === WEBAUTHN_USER_VERIFIED_FLAG
+}
 
 const getRandomBytes = (length: number) => {
   const bytes = new Uint8Array(length)
@@ -178,6 +189,9 @@ const getAssertionUserHandle = async (storedCredential: StoredEncryptedBiometric
     )
     return null
   }
+
+  // user didn't verify
+  if (!hasUserVerifiedFlag(credential.response.authenticatorData)) return null
 
   const { userHandle } = credential.response
   if (!userHandle) {
