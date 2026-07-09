@@ -99,7 +99,7 @@
     "@react-native-community/netinfo": "12.0.1",
     "@react-native-masked-view/masked-view": "0.3.2",
     "@reown/walletkit": "1.5.5",
-    "@safe-global/api-kit": "4.0.1",
+    "@safe-global/api-kit": "4.2.0",
     "@sentry/browser": "10.37.0",
     "@sentry/react": "10.37.0",
     "@signinwithethereum/siwe": "4.2.0",
@@ -309,7 +309,9 @@
     "elliptic": "^6.6.1",
     "browserslist": "^4.23.0",
     "cipher-base": "^1.0.6",
-    "react-native-ble-plx": "3.5.1"
+    "react-native-ble-plx": "3.5.1",
+    "@safe-global/safe-deployments": "1.37.56",
+    "@safe-global/safe-modules-deployments": "3.0.4"
   },
   "private": true,
   "lavamoat": {
