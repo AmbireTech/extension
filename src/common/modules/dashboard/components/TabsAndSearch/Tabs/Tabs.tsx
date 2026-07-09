@@ -1,7 +1,10 @@
 import React, { useMemo } from 'react'
 import { ColorValue, View } from 'react-native'
 
-import { getCurrentAccountBanners } from '@ambire-common/libs/banners/banners'
+import {
+  defiPositionsOnDisabledNetworksBannerId,
+  getCurrentAccountBanners
+} from '@ambire-common/libs/banners/banners'
 import Spinner from '@common/components/Spinner'
 import Text from '@common/components/Text'
 import useController from '@common/hooks/useController'
@@ -56,7 +59,10 @@ const Tabs: React.FC<Props> = ({ openTab, setOpenTab, handleChangeQuery }) => {
   } = useController('SelectedAccountController')
 
   const currentDefiBanners = useMemo(
-    () => getCurrentAccountBanners(defiBanners, account?.addr),
+    () =>
+      getCurrentAccountBanners(defiBanners, account?.addr).filter(
+        ({ id }) => id === defiPositionsOnDisabledNetworksBannerId
+      ),
     [defiBanners, account]
   )
 

@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react'
+import React, { useCallback, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Pressable, View } from 'react-native'
 
@@ -25,6 +25,8 @@ import { getUiType } from '@common/utils/uiType'
 
 import getStyles from './styles'
 
+const GAS_TANK_HELP_URL = 'https://help.ambire.com/en/articles/13752152-what-is-the-gas-tank'
+
 type Props = {
   modalRef: any
   handleClose: () => void
@@ -49,6 +51,14 @@ const GasTankModal = ({ modalRef, handleClose, portfolio, account }: Props) => {
     [account, networks, portfolio]
   )
 
+  const handleLearnMorePress = useCallback(async () => {
+    try {
+      await openInTab({ url: GAS_TANK_HELP_URL })
+    } catch {
+      addToast("Couldn't open link", { type: 'error' })
+    }
+  }, [addToast])
+
   return (
     <BottomSheet
       id="gas-tank-modal"
@@ -70,17 +80,7 @@ const GasTankModal = ({ modalRef, handleClose, portfolio, account }: Props) => {
             </Text>
           )}
         </Text>
-        <Pressable
-          onPress={async () => {
-            try {
-              await openInTab({
-                url: 'https://help.ambire.com/en/articles/13752152-what-is-the-gas-tank'
-              })
-            } catch {
-              addToast("Couldn't open link", { type: 'error' })
-            }
-          }}
-        >
+        <Pressable onPress={handleLearnMorePress}>
           <Text color={theme.tertiaryText} weight="medium" underline>
             {t('Learn more >')}
           </Text>
