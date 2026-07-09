@@ -3,13 +3,9 @@ import { Controller, useForm } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
 import { Image, ImageSourcePropType, Pressable, View, ViewStyle } from 'react-native'
 
-import {
-  getDefaultColibriProverUrl,
-  isColibriProviderAvailable
-} from '@ambire-common/libs/networks/colibri'
+import { isColibriProviderAvailable } from '@ambire-common/libs/networks/colibri'
 import { getFeatures } from '@ambire-common/libs/networks/networks'
 import { getRpcProvider } from '@ambire-common/services/provider'
-import { getColibriRpcProvider } from '@ambire-common/services/provider/colibri'
 import { isValidURL } from '@ambire-common/services/validations'
 import colibriLogo from '@common/assets/images/colibri-logo.png'
 import CopyIcon from '@common/assets/svg/CopyIcon'
@@ -191,7 +187,6 @@ const NetworkForm = ({
     dispatch: networksDispatch
   } = useController('NetworksController')
   const [isValidatingRPC, setValidatingRPC] = useState<boolean>(false)
-  const [isValidatingVerifierRPC, setValidatingVerifierRPC] = useState<boolean>(false)
   const { styles, theme } = useTheme(getStyles)
 
   const selectedNetwork = useMemo(
@@ -219,8 +214,7 @@ const NetworkForm = ({
       coingeckoPlatformId: '',
       coingeckoNativeAssetId: '',
       customBundlerUrl: '',
-      isColibriEnabled: false,
-      colibriProverUrl: ''
+      isColibriEnabled: false
     },
     values: {
       name: selectedNetwork?.name || '',
@@ -232,10 +226,7 @@ const NetworkForm = ({
       coingeckoPlatformId: (selectedNetwork?.platformId as string) || '',
       coingeckoNativeAssetId: (selectedNetwork?.nativeAssetId as string) || '',
       customBundlerUrl: (selectedNetwork?.customBundlerUrl as string) || '',
-      isColibriEnabled: !!selectedNetwork?.isColibriEnabled,
-      colibriProverUrl:
-        (selectedNetwork?.colibriProverUrl as string) ||
-        getDefaultColibriProverUrl(selectedNetwork?.chainId || 0n)
+      isColibriEnabled: !!selectedNetwork?.isColibriEnabled
     }
   })
   const [rpcUrls, setRpcUrls] = useState(selectedNetwork?.rpcUrls || [])
@@ -405,8 +396,7 @@ const NetworkForm = ({
         if (
           name !== 'rpcUrl' &&
           name !== 'customBundlerUrl' &&
-          name !== 'isColibriEnabled' &&
-          name !== 'colibriProverUrl'
+          name !== 'isColibriEnabled'
         ) {
           setError(name, { type: 'custom-error', message: 'Field is required' })
           return
@@ -478,10 +468,6 @@ const NetworkForm = ({
       if (name === 'rpcUrl') {
         clearErrors('rpcUrl')
       }
-
-      if (name === 'colibriProverUrl') {
-        clearErrors('colibriProverUrl')
-      }
     })
 
     return () => {
@@ -496,90 +482,6 @@ const NetworkForm = ({
     setError,
     watch
   ])
-
-  useEffect(() => {
-    if (!networkFormValues.isColibriEnabled || !shouldShowColibriSettings) return
-    if (networkFormValues.colibriProverUrl?.trim()) return
-
-    const chainId = Number(networkFormValues.chainId)
-    if (!Number.isSafeInteger(chainId) || chainId <= 0) return
-
-    setValue('colibriProverUrl', getDefaultColibriProverUrl(BigInt(chainId)))
-  }, [
-    networkFormValues.chainId,
-    networkFormValues.colibriProverUrl,
-    networkFormValues.isColibriEnabled,
-    setValue,
-    shouldShowColibriSettings
-  ])
-
-  const validateColibriProverUrl = useCallback(
-    async (colibriProverUrl: string, chainId: bigint, executionRpcUrl: string) => {
-      const trimmedColibriProverUrl = colibriProverUrl.trim() || getDefaultColibriProverUrl(chainId)
-
-      let executionRpc
-      let colibriRpc
-
-      try {
-        if (!trimmedColibriProverUrl) throw new Error('Colibri prover URL is required')
-
-        let parsedColibriProverUrl: URL
-        try {
-          parsedColibriProverUrl = new URL(trimmedColibriProverUrl)
-        } catch {
-          throw new Error('Invalid Colibri prover URL')
-        }
-
-        if (!['http:', 'https:'].includes(parsedColibriProverUrl.protocol)) {
-          throw new Error('Colibri prover URL must include the correct HTTP/HTTPS prefix')
-        }
-
-        if (!isValidURL(trimmedColibriProverUrl)) {
-          throw new Error('Invalid Colibri prover URL')
-        }
-
-        executionRpc = getRpcProvider([executionRpcUrl], chainId, executionRpcUrl)
-        const executionNetwork = await executionRpc.getNetwork()
-
-        if (executionNetwork.chainId !== chainId) {
-          throw new Error(
-            `Execution RPC chain id ${executionNetwork.chainId} does not match chain id ${chainId}`
-          )
-        }
-
-        colibriRpc = getColibriRpcProvider({
-          ...selectedNetwork,
-          rpcUrls: [executionRpcUrl],
-          selectedRpcUrl: executionRpcUrl,
-          chainId,
-          isColibriEnabled: true,
-          colibriProverUrl: trimmedColibriProverUrl
-        } as any)
-        await colibriRpc.send('eth_blockNumber', [])
-
-        return trimmedColibriProverUrl
-      } catch (error: any) {
-        console.error(error)
-        const rawErrorMessage = error?.message || ''
-        const safeErrorMessage =
-          rawErrorMessage === 'Colibri prover URL is required' ||
-          rawErrorMessage === 'Colibri prover URL must include the correct HTTP/HTTPS prefix' ||
-          rawErrorMessage === 'Invalid Colibri prover URL' ||
-          rawErrorMessage.startsWith('Execution RPC chain id ')
-            ? rawErrorMessage
-            : 'Colibri prover validation failed'
-
-        addToast(t('Colibri prover malfunction: {{message}}', { message: safeErrorMessage }), {
-          type: 'error'
-        })
-        throw error
-      } finally {
-        executionRpc?.destroy()
-        colibriRpc?.destroy()
-      }
-    },
-    [addToast, selectedNetwork, t]
-  )
 
   useEffect(() => {
     if (statuses.addNetwork === 'SUCCESS') {
@@ -609,8 +511,7 @@ const NetworkForm = ({
               'coingeckoPlatformId',
               'coingeckoNativeAssetId',
               'customBundlerUrl',
-              'isColibriEnabled',
-              'colibriProverUrl'
+              'isColibriEnabled'
             ].includes(key) && !formFields[key].length
         )
       } else {
@@ -631,25 +532,7 @@ const NetworkForm = ({
 
       if (emptyFields.length || !rpcUrls.length || !selectedRpcUrl) return
 
-      setValidatingVerifierRPC(true)
-      let colibriProverUrl = selectedNetwork?.colibriProverUrl || ''
       const isColibriEnabled = !!networkFormValues.isColibriEnabled && shouldShowColibriSettings
-
-      try {
-        if (isColibriEnabled) {
-          colibriProverUrl = await validateColibriProverUrl(
-            networkFormValues.colibriProverUrl,
-            BigInt(networkFormValues.chainId),
-            selectedRpcUrl
-          )
-        } else {
-          colibriProverUrl = networkFormValues.colibriProverUrl || ''
-        }
-      } catch {
-        setValidatingVerifierRPC(false)
-        return
-      }
-      setValidatingVerifierRPC(false)
 
       if (selectedChainId === 'add-custom-network') {
         networksDispatch({
@@ -668,8 +551,7 @@ const NetworkForm = ({
                 chainId: BigInt(networkFormValues.chainId),
                 iconUrls: [],
                 customBundlerUrl: networkFormValues.customBundlerUrl,
-                isColibriEnabled,
-                colibriProverUrl
+                isColibriEnabled
               }
             ]
           }
@@ -685,8 +567,7 @@ const NetworkForm = ({
                 selectedRpcUrl,
                 explorerUrl: networkFormValues.explorerUrl,
                 customBundlerUrl: networkFormValues.customBundlerUrl,
-                isColibriEnabled,
-                colibriProverUrl
+                isColibriEnabled
               },
               BigInt(networkFormValues.chainId)
             ]
@@ -751,12 +632,11 @@ const NetworkForm = ({
     () =>
       !!errorCount ||
       isValidatingRPC ||
-      isValidatingVerifierRPC ||
       features.some((f) => f.level === 'loading') ||
       !!features.filter((f) => f.id === 'flagged')[0],
     // errorCount must be a dependency in order to re-calculate the value when
     // errors change. Using errors as a dependency doesn't work
-    [errorCount, features, isValidatingVerifierRPC, isValidatingRPC]
+    [errorCount, features, isValidatingRPC]
   )
 
   const displayedRpcUrls = useMemo(
@@ -1055,16 +935,7 @@ const NetworkForm = ({
                     <Checkbox
                       value={!!value}
                       style={flexbox.alignCenter}
-                      onValueChange={(nextValue) => {
-                        onChange(nextValue)
-
-                        if (!nextValue || networkFormValues.colibriProverUrl?.trim()) return
-
-                        const chainId = Number(networkFormValues.chainId)
-                        if (!Number.isSafeInteger(chainId) || chainId <= 0) return
-
-                        setValue('colibriProverUrl', getDefaultColibriProverUrl(BigInt(chainId)))
-                      }}
+                      onValueChange={onChange}
                     >
                       <Pressable
                         style={[flexbox.directionRow, flexbox.alignCenter]}
@@ -1082,25 +953,6 @@ const NetworkForm = ({
                     </Checkbox>
                   )}
                   name="isColibriEnabled"
-                />
-              )}
-              {shouldShowColibriSettings && networkFormValues.isColibriEnabled && (
-                <Controller
-                  control={control}
-                  render={({ field: { onChange, onBlur, value } }) => (
-                    <Input
-                      backgroundColor={theme.secondaryBackground}
-                      onBlur={onBlur}
-                      onChangeText={onChange}
-                      value={value}
-                      inputWrapperStyle={{ height: 40 }}
-                      inputStyle={{ height: 40 }}
-                      containerStyle={{ ...spacings.mb, flex: 1 }}
-                      label={t('Colibri prover URL')}
-                      error={handleErrors(errors.colibriProverUrl)}
-                    />
-                  )}
-                  name="colibriProverUrl"
                 />
               )}
 

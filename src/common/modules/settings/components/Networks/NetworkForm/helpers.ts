@@ -29,11 +29,6 @@ const getAreDefaultsChanged = (values: any, selectedNetwork?: Network) => {
     if (key === 'customBundlerUrl') {
       return values[key] !== (selectedNetwork[key] || '')
     }
-    if (key === 'colibriProverUrl') {
-      if (!values.isColibriEnabled && !selectedNetwork.isColibriEnabled) return false
-
-      return values[key] !== (selectedNetwork[key] || '')
-    }
     if (key === 'isColibriEnabled') {
       return values[key] !== !!selectedNetwork[key]
     }
