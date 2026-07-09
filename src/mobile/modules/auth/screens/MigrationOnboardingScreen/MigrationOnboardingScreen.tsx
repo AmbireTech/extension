@@ -29,7 +29,6 @@ const STEPS = [
 ]
 
 const LAST_STEP_INDEX = STEPS.length - 1
-const CAROUSEL_HEIGHT = 260
 
 const MigrationOnboardingScreen = () => {
   const { styles } = useTheme(getStyles)
