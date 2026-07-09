@@ -1,5 +1,5 @@
 import React, { useCallback, useRef, useState } from 'react'
-import { Image, useWindowDimensions, View } from 'react-native'
+import { Image, LayoutChangeEvent, View } from 'react-native'
 import Carousel, { ICarouselInstance } from 'react-native-reanimated-carousel'
 
 import AmbireLogoWithBackgroundAndLogotype from '@common/assets/svg/AmbireLogoWithBackgroundAndLogotype'
@@ -29,16 +29,23 @@ const STEPS = [
 ]
 
 const LAST_STEP_INDEX = STEPS.length - 1
+const CAROUSEL_HEIGHT = 200
 
 const MigrationOnboardingScreen = () => {
   const { styles } = useTheme(getStyles)
   const { t } = useTranslation()
   const { navigate } = useNavigation()
-  const { width } = useWindowDimensions()
   const { exportEmailAccountsBackup } = useLegacyAccountsBackup()
 
   const carouselRef = useRef<ICarouselInstance>(null)
   const [activeIndex, setActiveIndex] = useState(0)
+  // The carousel needs an explicit width equal to its container's actual
+  // laid-out width, so we measure it instead of guessing from the window.
+  const [carouselWidth, setCarouselWidth] = useState(0)
+
+  const handleCarouselLayout = useCallback((e: LayoutChangeEvent) => {
+    setCarouselWidth(e.nativeEvent.layout.width)
+  }, [])
 
   const finishOnboarding = useCallback(() => {
     markMigrationOnboardingPassed()
@@ -56,7 +63,7 @@ const MigrationOnboardingScreen = () => {
 
   const renderStep = useCallback(
     ({ item }: { item: string }) => (
-      <View style={[flexbox.flex1, spacings.phLg, spacings.ptLg]}>
+      <View style={spacings.ptLg}>
         <Text fontSize={18} weight="medium" appearance="secondaryText">
           {t(item)}
         </Text>
@@ -84,7 +91,7 @@ const MigrationOnboardingScreen = () => {
       }
     >
       <MobileLayoutWrapperMainContent>
-        <View style={[flexbox.flex1, spacings.ph]}>
+        <View style={flexbox.flex1}>
           {/* Reuse the same banner background as the keystore unlock screen */}
           <View style={styles.hero}>
             <Image
@@ -93,30 +100,46 @@ const MigrationOnboardingScreen = () => {
               }
               style={styles.heroBackground}
             />
-            <AmbireLogoWithBackgroundAndLogotype
-              withText={false}
-              color="#fff"
-              style={spacings.mbSm}
-            />
-            <Text fontSize={28} weight="semiBold" color="#fff" style={text.center}>
-              {t('Ambire v2')}
-            </Text>
-            <Text fontSize={16} weight="medium" color="#fff" style={text.center}>
-              {t('a major new version, has landed on mobile.')}
-            </Text>
+            <View style={styles.heroContent}>
+              <AmbireLogoWithBackgroundAndLogotype
+                withText={false}
+                color="#fff"
+                style={spacings.mbSm}
+              />
+              <Text
+                fontSize={28}
+                weight="semiBold"
+                color="#fff"
+                style={[text.center, styles.fullWidthText]}
+              >
+                {t('Ambire v2')}
+              </Text>
+              <Text
+                fontSize={16}
+                weight="medium"
+                color="#fff"
+                style={[text.center, styles.fullWidthText]}
+              >
+                {t('a major new version, has landed on mobile.')}
+              </Text>
+            </View>
           </View>
 
-          <View style={[flexbox.flex1, spacings.mtLg]}>
-            <Carousel
-              ref={carouselRef}
-              width={width - 32}
-              height={200}
-              data={STEPS}
-              loop={false}
-              onSnapToItem={setActiveIndex}
-              renderItem={renderStep}
-            />
+          <View style={spacings.mtLg} onLayout={handleCarouselLayout}>
+            {carouselWidth > 0 && (
+              <Carousel
+                ref={carouselRef}
+                width={carouselWidth}
+                height={CAROUSEL_HEIGHT}
+                data={STEPS}
+                loop={false}
+                onSnapToItem={setActiveIndex}
+                renderItem={renderStep}
+              />
+            )}
           </View>
+
+          <View style={flexbox.flex1} />
 
           <View style={[styles.dotsContainer, spacings.mbLg]}>
             {STEPS.map((step, index) => (
