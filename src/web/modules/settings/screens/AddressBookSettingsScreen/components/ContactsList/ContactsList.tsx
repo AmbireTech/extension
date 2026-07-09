@@ -70,7 +70,7 @@ const ContactsList = () => {
         contact,
         name: contact.name.toLowerCase(),
         address: contact.address.toLowerCase(),
-        domain: domains[contact.address]?.ens?.toLowerCase().trim() || ''
+        domain: domains[contact.address]?.names?.ens?.toLowerCase().trim() || ''
       })),
     [contacts, domains]
   )

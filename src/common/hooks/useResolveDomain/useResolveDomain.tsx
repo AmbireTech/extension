@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef } from 'react'
 
+import { NameServiceId } from '@ambire-common/services/nameResolvers'
 import useController from '@common/hooks/useController'
 
 interface Props {
@@ -9,7 +10,7 @@ interface Props {
 
 // Define the type for our pending promises tracker
 type Resolver = {
-  resolve: (result: { address: string | undefined; type: 'ens' | 'namoshi' } | undefined) => void
+  resolve: (result: { address: string | undefined; type: NameServiceId } | undefined) => void
   reject: (reason?: any) => void
 }
 
@@ -42,7 +43,7 @@ const useResolveDomain = () => {
     ({
       domain,
       bip44Item
-    }: Props): Promise<{ address: string | undefined; type: 'ens' | 'namoshi' } | undefined> => {
+    }: Props): Promise<{ address: string | undefined; type: NameServiceId } | undefined> => {
       const status = resolveDomainsStatus[domain]
 
       if (status === 'RESOLVED') return Promise.resolve(domainToAddresses[domain])

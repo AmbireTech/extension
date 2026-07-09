@@ -45,8 +45,9 @@ const useAccountsList = ({
           .filter((key) => account.associatedKeys.includes(key.addr))
           .map((key) => `${key.label} ${key.type}`.toLowerCase())
           .join(' '),
-        ens: domains[account.addr]?.ens?.toLowerCase().trim() || '',
-        namoshi: domains[account.addr]?.namoshi?.toLowerCase().trim() || '',
+        ens: domains[account.addr]?.names?.ens?.toLowerCase().trim() || '',
+        namoshi: domains[account.addr]?.names?.namoshi?.toLowerCase().trim() || '',
+        gns: domains[account.addr]?.names?.gns?.toLowerCase().trim() || '',
         address: account.addr.toLowerCase(),
         smart: isSmartAccount(account) ? 'smart' : ''
       })),
