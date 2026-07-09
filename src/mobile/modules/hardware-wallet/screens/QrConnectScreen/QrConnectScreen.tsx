@@ -33,6 +33,7 @@ const QrConnectScreen = () => {
   const { goToPrevRoute, goToNextRoute } = useOnboardingNavigation()
   const { initParams, type } = useController('AccountPickerController').state
   const mainCtrlState = useController('MainController').state
+  const { height } = useWindowSize()
 
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [scanError, setScanError] = useState<string | null>(null)
@@ -130,7 +131,7 @@ const QrConnectScreen = () => {
           />
         </View>
 
-        <View style={spacings.mtSm}>
+        <View style={height < 700 ? spacings.mtSm : spacings.mtLg}>
           {QrWalletConfigs.map((wallet) => (
             <QrWalletRow
               key={`${wallet.type}-${wallet.protocol}`}
