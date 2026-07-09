@@ -6,6 +6,7 @@ import { isAddress } from 'viem'
 
 import { Account as AccountType } from '@ambire-common/interfaces/account'
 import { isSmartAccount } from '@ambire-common/libs/account/account'
+import { getSearchableNames } from '@ambire-common/services/nameResolvers'
 import useController from '@common/hooks/useController'
 import {
   ACCOUNT_SELECT_ACCOUNT_HEIGHT,
@@ -45,9 +46,7 @@ const useAccountsList = ({
           .filter((key) => account.associatedKeys.includes(key.addr))
           .map((key) => `${key.label} ${key.type}`.toLowerCase())
           .join(' '),
-        ens: domains[account.addr]?.names?.ens?.toLowerCase().trim() || '',
-        namoshi: domains[account.addr]?.names?.namoshi?.toLowerCase().trim() || '',
-        gns: domains[account.addr]?.names?.gns?.toLowerCase().trim() || '',
+        domainNames: getSearchableNames(domains[account.addr]?.names),
         address: account.addr.toLowerCase(),
         smart: isSmartAccount(account) ? 'smart' : ''
       })),
@@ -69,8 +68,7 @@ const useAccountsList = ({
     const fuse = new Fuse(searchableAccounts, {
       keys: [
         { name: 'label', weight: 0.5 },
-        { name: 'ens', weight: 0.3 },
-        { name: 'namoshi', weight: 0.3 },
+        { name: 'domainNames', weight: 0.3 },
         { name: 'address', weight: 0.1 },
         { name: 'keyLabels', weight: 0.2 },
         { name: 'smart', weight: 0.1 }

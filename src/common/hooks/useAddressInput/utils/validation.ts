@@ -1,14 +1,12 @@
 import { getAddress } from 'ethers'
 
 import { isValidAddress } from '@ambire-common/services/address'
-import { getNameService, NameServiceId } from '@ambire-common/services/nameResolvers'
+import {
+  getNameService,
+  NAME_SERVICE_LABELS,
+  NameServiceId
+} from '@ambire-common/services/nameResolvers'
 import { Validation } from '@ambire-common/services/validations'
-
-const NAME_SERVICE_LABELS: Record<NameServiceId, string> = {
-  ens: 'ENS',
-  namoshi: 'Namoshi',
-  gns: 'GNS'
-}
 
 type AddressInputValidation = {
   address: string
@@ -96,7 +94,7 @@ const getAddressInputValidation = ({
     }
   } else if (address && !isValidAddress(address)) {
     return {
-      message: 'Please enter a valid address or ENS/Namoshi domain',
+      message: `Please enter a valid address or ${Object.values(NAME_SERVICE_LABELS).join('/')} domain`,
       severity: 'error'
     }
   }
