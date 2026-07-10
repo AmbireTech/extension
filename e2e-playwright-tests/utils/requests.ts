@@ -52,9 +52,13 @@ function categorizeRequests(requests: string[]) {
     (acc, urlStr) => {
       const url = new URL(urlStr)
       const isAmbire = url.hostname.endsWith('.ambire.com')
+      // Cloudflare Turnstile serves its challenge-platform from rotating
+      // codename subdomains (e.g. brunhild.challenges.cloudflare.com).
+      const isCloudflareChallenge = url.hostname.endsWith('.challenges.cloudflare.com')
       const isThirdPartyAllowed =
         thirdPartyExactMatchAllowlist.includes(urlStr) ||
-        thirdPartyHostsAllowList.includes(url.hostname)
+        thirdPartyHostsAllowList.includes(url.hostname) ||
+        isCloudflareChallenge
 
       if (url.hostname === 'relayer.ambire.com' && url.pathname.includes('/multi-hints')) {
         acc.hints.push(urlStr)
