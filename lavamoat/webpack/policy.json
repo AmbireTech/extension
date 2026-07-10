@@ -174,7 +174,7 @@
         "@metamask/eth-sig-util>@ethereumjs/util>micro-ftch": true
       }
     },
-    "@ledgerhq/hw-app-eth>@ethersproject/abi": {
+    "eth-crypto>ethers>@ethersproject/abi": {
       "globals": {
         "console.log": true
       },
@@ -211,7 +211,7 @@
         "@ethersproject/providers>@ethersproject/bytes": true,
         "eth-crypto>ethers>@ethersproject/keccak256": true,
         "@ethersproject/providers>@ethersproject/logger": true,
-        "@ledgerhq/hw-app-eth>@ethersproject/rlp": true
+        "@ethersproject/providers>@ethersproject/rlp": true
       }
     },
     "eth-crypto>ethers>@ethersproject/base64": {
@@ -251,7 +251,7 @@
         "setTimeout": true
       },
       "packages": {
-        "@ledgerhq/hw-app-eth>@ethersproject/abi": true,
+        "eth-crypto>ethers>@ethersproject/abi": true,
         "@ethersproject/providers>@ethersproject/abstract-provider": true,
         "@ethersproject/providers>@ethersproject/abstract-signer": true,
         "@ethersproject/providers>@ethersproject/address": true,
@@ -259,7 +259,7 @@
         "@ethersproject/providers>@ethersproject/bytes": true,
         "@ethersproject/providers>@ethersproject/logger": true,
         "@ethersproject/providers>@ethersproject/properties": true,
-        "@ledgerhq/hw-app-eth>@ethersproject/transactions": true
+        "@ethersproject/providers>@ethersproject/transactions": true
       }
     },
     "@ethersproject/providers>@ethersproject/hash": {
@@ -285,7 +285,7 @@
         "@ethersproject/providers>@ethersproject/sha2": true,
         "eth-crypto>ethers>@ethersproject/signing-key": true,
         "@ethersproject/providers>@ethersproject/strings": true,
-        "@ledgerhq/hw-app-eth>@ethersproject/transactions": true,
+        "@ethersproject/providers>@ethersproject/transactions": true,
         "eth-crypto>ethers>@ethersproject/wordlists": true
       }
     },
@@ -300,7 +300,7 @@
         "@ethersproject/providers>@ethersproject/properties": true,
         "@ethersproject/providers>@ethersproject/random": true,
         "@ethersproject/providers>@ethersproject/strings": true,
-        "@ledgerhq/hw-app-eth>@ethersproject/transactions": true,
+        "@ethersproject/providers>@ethersproject/transactions": true,
         "eth-crypto>ethers>@ethersproject/json-wallets>aes-js": true,
         "scrypt-js": true
       }
@@ -361,7 +361,7 @@
         "@ethersproject/providers>@ethersproject/random": true,
         "@ethersproject/providers>@ethersproject/sha2": true,
         "@ethersproject/providers>@ethersproject/strings": true,
-        "@ledgerhq/hw-app-eth>@ethersproject/transactions": true,
+        "@ethersproject/providers>@ethersproject/transactions": true,
         "@ethersproject/providers>@ethersproject/web": true,
         "@ethersproject/providers>bech32": true,
         "node-polyfill-webpack-plugin>console-browserify": true
@@ -373,7 +373,7 @@
         "@ethersproject/providers>@ethersproject/logger": true
       }
     },
-    "@ledgerhq/hw-app-eth>@ethersproject/rlp": {
+    "@ethersproject/providers>@ethersproject/rlp": {
       "packages": {
         "@ethersproject/providers>@ethersproject/bytes": true,
         "@ethersproject/providers>@ethersproject/logger": true
@@ -412,7 +412,7 @@
         "@ethersproject/providers>@ethersproject/logger": true
       }
     },
-    "@ledgerhq/hw-app-eth>@ethersproject/transactions": {
+    "@ethersproject/providers>@ethersproject/transactions": {
       "packages": {
         "@ethersproject/providers>@ethersproject/address": true,
         "@ethersproject/providers>@ethersproject/bignumber": true,
@@ -421,7 +421,7 @@
         "eth-crypto>ethers>@ethersproject/keccak256": true,
         "@ethersproject/providers>@ethersproject/logger": true,
         "@ethersproject/providers>@ethersproject/properties": true,
-        "@ledgerhq/hw-app-eth>@ethersproject/rlp": true,
+        "@ethersproject/providers>@ethersproject/rlp": true,
         "eth-crypto>ethers>@ethersproject/signing-key": true
       }
     },
@@ -445,7 +445,7 @@
         "@ethersproject/providers>@ethersproject/properties": true,
         "@ethersproject/providers>@ethersproject/random": true,
         "eth-crypto>ethers>@ethersproject/signing-key": true,
-        "@ledgerhq/hw-app-eth>@ethersproject/transactions": true
+        "@ethersproject/providers>@ethersproject/transactions": true
       }
     },
     "@ethersproject/providers>@ethersproject/web": {
@@ -619,7 +619,7 @@
       "packages": {
         "$root$": true,
         "@ledgerhq/device-management-kit": true,
-        "@ledgerhq/hw-app-eth>axios": true,
+        "@ledgerhq/context-module>axios": true,
         "crypto-js": true,
         "ethers": true,
         "@ledgerhq/context-module>inversify": true,
@@ -646,7 +646,7 @@
       "packages": {
         "$root$": true,
         "@noble/hashes": true,
-        "@ledgerhq/hw-app-eth>axios": true,
+        "@ledgerhq/context-module>axios": true,
         "buffer": true,
         "node-polyfill-webpack-plugin>console-browserify": true,
         "@ledgerhq/context-module>inversify": true,
@@ -684,7 +684,7 @@
       },
       "packages": {
         "@ledgerhq/device-management-kit": true,
-        "@ledgerhq/hw-app-eth>axios": true,
+        "@ledgerhq/context-module>axios": true,
         "purify-ts": true,
         "rxjs": true
       }
@@ -1145,7 +1145,7 @@
         "eslint-plugin-react>array-includes>es-abstract>typed-array-length>possible-typed-array-names": true
       }
     },
-    "@ledgerhq/hw-app-eth>axios": {
+    "@ledgerhq/context-module>axios": {
       "globals": {
         "AbortController": true,
         "Blob": true,
@@ -1702,7 +1702,7 @@
     },
     "@ambire/signature-validator>ethers": {
       "packages": {
-        "@ledgerhq/hw-app-eth>@ethersproject/abi": true,
+        "eth-crypto>ethers>@ethersproject/abi": true,
         "@ethersproject/providers>@ethersproject/abstract-signer": true,
         "@ethersproject/providers>@ethersproject/address": true,
         "eth-crypto>ethers>@ethersproject/base64": true,
@@ -1719,12 +1719,12 @@
         "@ethersproject/providers>@ethersproject/properties": true,
         "@ambire/signature-validator>ethers>@ethersproject/providers": true,
         "@ethersproject/providers>@ethersproject/random": true,
-        "@ledgerhq/hw-app-eth>@ethersproject/rlp": true,
+        "@ethersproject/providers>@ethersproject/rlp": true,
         "@ethersproject/providers>@ethersproject/sha2": true,
         "eth-crypto>ethers>@ethersproject/signing-key": true,
         "eth-crypto>ethers>@ethersproject/solidity": true,
         "@ethersproject/providers>@ethersproject/strings": true,
-        "@ledgerhq/hw-app-eth>@ethersproject/transactions": true,
+        "@ethersproject/providers>@ethersproject/transactions": true,
         "eth-crypto>ethers>@ethersproject/units": true,
         "eth-crypto>ethers>@ethersproject/wallet": true,
         "@ethersproject/providers>@ethersproject/web": true,
