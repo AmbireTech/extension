@@ -10,6 +10,7 @@ type AddressInputValidation = {
   isValidEns: boolean
   isValidNamoshi: boolean
   hasDomainResolveFailed: boolean
+  isNamoshiAvailable: boolean
   overwriteValidation?: Validation | null
 }
 
@@ -28,6 +29,7 @@ const getAddressInputValidation = ({
   hasDomainResolveFailed = false,
   isValidEns,
   isValidNamoshi,
+  isNamoshiAvailable,
   overwriteValidation
 }: AddressInputValidation): Validation => {
   if (!address) {
@@ -48,6 +50,13 @@ const getAddressInputValidation = ({
 
   if (hasDomainResolveFailed) {
     const isNamoshiDomain = getIsNamoshiDomain(address)
+
+    if (isNamoshiDomain && !isNamoshiAvailable) {
+      return {
+        message: 'Citrea network is disabled. Enable it to resolve Namoshi domains.',
+        severity: 'error'
+      }
+    }
 
     return {
       message: `Failed to resolve ${isNamoshiDomain ? 'Namoshi' : 'ENS'} domain. Please try again later or enter a hex address.`,

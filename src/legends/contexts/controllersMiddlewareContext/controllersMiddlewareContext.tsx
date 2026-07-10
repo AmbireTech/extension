@@ -74,7 +74,8 @@ export const ControllersMiddlewareProvider: React.FC<{
 
       ctrls.DomainsController = new DomainsController({
         eventEmitterRegistry: eventEmitterRegistry.current,
-        providers: ctrls.ProvidersController.providers
+        providers: ctrls.ProvidersController.providers,
+        isNetworkEnabled: () => true
       })
 
       return ctrls

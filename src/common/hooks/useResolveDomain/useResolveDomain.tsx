@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef } from 'react'
+import { useCallback, useEffect, useMemo, useRef } from 'react'
 
 import useController from '@common/hooks/useController'
 
@@ -18,6 +18,9 @@ const useResolveDomain = () => {
     state: { domainToAddresses, resolveDomainsStatus },
     dispatch
   } = useController('DomainsController')
+  const {
+    state: { networks }
+  } = useController('NetworksController')
 
   const requests = useRef<Record<string, Resolver>>({})
 
@@ -37,6 +40,10 @@ const useResolveDomain = () => {
       }
     })
   }, [domainToAddresses, resolveDomainsStatus])
+
+  const isNamoshiAvailable = useMemo(() => {
+    return networks.some((network) => network.chainId === 4114n)
+  }, [networks])
 
   const handleResolveDomain = useCallback(
     ({
@@ -64,7 +71,8 @@ const useResolveDomain = () => {
   )
 
   return {
-    resolveDomain: handleResolveDomain
+    resolveDomain: handleResolveDomain,
+    isNamoshiAvailable
   }
 }
 

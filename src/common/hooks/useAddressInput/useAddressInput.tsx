@@ -47,7 +47,7 @@ const useAddressInput = ({
   const lastResolvedFieldValueRef = useRef<string | null>(null)
   const fieldValue = addressState.fieldValue
   const [hasDomainResolveFailed, setHasDomainResolveFailed] = useState(false)
-  const { resolveDomain } = useResolveDomain()
+  const { resolveDomain, isNamoshiAvailable } = useResolveDomain()
   const [debouncedValidation, setDebouncedValidation] = useState<Validation>({
     severity: 'error',
     message: ''
@@ -61,7 +61,8 @@ const useAddressInput = ({
         isValidEns: addressState.resolvedAddressType === 'ens',
         isValidNamoshi: addressState.resolvedAddressType === 'namoshi',
         hasDomainResolveFailed,
-        overwriteValidation
+        overwriteValidation,
+        isNamoshiAvailable
       }),
     [
       overwriteValidationFieldValue,
@@ -69,7 +70,8 @@ const useAddressInput = ({
       addressState.isDomainResolving,
       addressState.resolvedAddressType,
       hasDomainResolveFailed,
-      overwriteValidation
+      overwriteValidation,
+      isNamoshiAvailable
     ]
   )
 
