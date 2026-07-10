@@ -12,6 +12,7 @@ type AddressInputValidation = {
   isDomainVerifiedByColibri?: boolean
   hasDomainResolveFailed: boolean
   domainResolveError?: string
+  isNamoshiAvailable: boolean
   overwriteValidation?: Validation | null
 }
 
@@ -32,6 +33,7 @@ const getAddressInputValidation = ({
   isValidEns,
   isValidNamoshi,
   isDomainVerifiedByColibri,
+  isNamoshiAvailable,
   overwriteValidation
 }: AddressInputValidation): Validation => {
   if (!address) {
@@ -52,6 +54,13 @@ const getAddressInputValidation = ({
 
   if (hasDomainResolveFailed) {
     const isNamoshiDomain = getIsNamoshiDomain(address)
+
+    if (isNamoshiDomain && !isNamoshiAvailable) {
+      return {
+        message: 'Citrea network is disabled. Enable it to resolve Namoshi domains.',
+        severity: 'error'
+      }
+    }
 
     return {
       message:
