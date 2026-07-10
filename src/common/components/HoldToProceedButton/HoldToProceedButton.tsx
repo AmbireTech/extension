@@ -17,6 +17,7 @@ type Props = Omit<CommonButtonProps, 'style' | 'children' | 'childrenPosition' |
 
 const HoldToProceedButton: FC<Props> = ({
   style,
+  textStyle,
   text = 'Hold to proceed',
   holdText = 'Sure?',
   completeText = 'Proceed',
@@ -42,6 +43,18 @@ const HoldToProceedButton: FC<Props> = ({
     primary: theme.primaryAccent100,
     dangerFilled: theme.error100,
     warning: theme.warning100
+  }
+
+  // The button's background is forced to stay static and light (see progressColorMap
+  // above), but Button's own per-type text color assumes a solid/dark background
+  // (white text for primary/dangerFilled) or a background that darkens on hover
+  // (warning). Pin the text color to match the light static background instead,
+  // using the same light-bg/accent-text pairing as Badge.tsx, otherwise the text
+  // is invisible (primary/dangerFilled at rest, warning on hover).
+  const textColorMap = {
+    primary: theme.primaryAccent,
+    dangerFilled: theme.errorText,
+    warning: theme.warningText
   }
 
   const startHold = useCallback(() => {
@@ -227,6 +240,7 @@ const HoldToProceedButton: FC<Props> = ({
           },
           style
         ]}
+        textStyle={[{ color: textColorMap[buttonType] }, textStyle]}
         size={isWeb ? 'smaller' : 'regular'}
         hasBottomSpacing={false}
         text={buttonText}
