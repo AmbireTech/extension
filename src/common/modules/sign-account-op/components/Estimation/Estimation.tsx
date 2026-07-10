@@ -189,6 +189,34 @@ const Estimation = ({
     [swapAndBridgeDispatch, transferDispatch, signAccountOpDispatch, updateType]
   )
 
+  const enableErc4337AndReestimate = useCallback(() => {
+    if (updateType === 'Swap&Bridge') {
+      swapAndBridgeDispatch({
+        type: 'method',
+        params: {
+          method: 'callSignAccountOpMethod',
+          args: ['enableErc4337AndReestimate', []]
+        }
+      })
+    } else if (updateType === 'Transfer&TopUp') {
+      transferDispatch({
+        type: 'method',
+        params: {
+          method: 'callSignAccountOpMethod',
+          args: ['enableErc4337AndReestimate', []]
+        }
+      })
+    } else {
+      signAccountOpDispatch({
+        type: 'method',
+        params: {
+          method: 'enableErc4337AndReestimate',
+          args: []
+        }
+      })
+    }
+  }, [signAccountOpDispatch, swapAndBridgeDispatch, transferDispatch, updateType])
+
   const setFeeOption = useCallback(
     (localPayValue: any, skipDispatch?: boolean) => {
       if (!signAccountOpState?.selectedFeeSpeed) return
@@ -276,6 +304,42 @@ const Estimation = ({
       !!feeSpeeds.length
     )
   }, [feeSpeeds, signAccountOpState?.errors.length, signAccountOpState?.estimation.error])
+
+  const shouldShowEnableErc4337Prompt = useMemo(() => {
+    if (!signAccountOpState?.canEnableErc4337 || !hasEstimation) return false
+
+    const hasNoFeeOptions = !payOptionsPaidByUsOrGasTank.length && !payOptionsPaidByEOA.length
+    const selectedOptionCannotCoverFee =
+      !!feeSpeeds.length && feeSpeeds.every((speed) => speed.disabled)
+
+    return hasNoFeeOptions || selectedOptionCannotCoverFee
+  }, [
+    feeSpeeds,
+    hasEstimation,
+    payOptionsPaidByEOA.length,
+    payOptionsPaidByUsOrGasTank.length,
+    signAccountOpState?.canEnableErc4337
+  ])
+
+  const enableErc4337Prompt = useMemo(() => {
+    if (!shouldShowEnableErc4337Prompt) return null
+
+    return (
+      <Alert
+        type="info"
+        size="sm"
+        title={t('More fee payment options are available')}
+        text={t(
+          'Enable ERC-4337 to use smart account gas estimation, gas tank, sponsored gas, and token fee payments for this transaction.'
+        )}
+        style={spacings.mbSm}
+        buttonProps={{
+          text: t('Enable'),
+          onPress: enableErc4337AndReestimate
+        }}
+      />
+    )
+  }, [enableErc4337AndReestimate, shouldShowEnableErc4337Prompt, t])
 
   const feeSpeedOptions = useMemo(() => {
     return feeSpeeds.map((speed) => ({
@@ -472,6 +536,10 @@ const Estimation = ({
     (!hasEstimation && signAccountOpState.estimation.estimationRetryError) ||
     !payValue
   ) {
+    if (enableErc4337Prompt) {
+      return <View style={spacings.ptTy}>{enableErc4337Prompt}</View>
+    }
+
     return (
       <EstimationSkeleton
         // Overwrite the appearance in Swap/Transfer as the background behind the skeleton is different
@@ -546,6 +614,7 @@ const Estimation = ({
           signAccountOpState={signAccountOpState}
           bundlerNonceDiscrepancy={bundlerNonceDiscrepancy}
         />
+        {enableErc4337Prompt}
       </View>
       <View
         style={[

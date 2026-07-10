@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 
 import EnsIcon from '@common/assets/svg/EnsIcon'
+import LightningIcon from '@common/assets/svg/LightningIcon'
 import SearchIcon from '@common/assets/svg/SearchIcon'
 import useTheme from '@common/hooks/useTheme'
 import CrashAnalyticsControlOption from '@common/modules/settings/components/General/CrashAnalyticsControlOption'
@@ -45,6 +46,14 @@ const OptOutsScreen = () => {
           )}
           icon={<EnsIcon width={20} height={20} color={theme.iconPrimary} />}
           flag="keepEnsProfilesUpToDate"
+        />
+        <OptOutControlOption
+          title={t('ERC-4337 smart account features')}
+          description={t(
+            'Use bundlers and paymasters for smart account gas estimation, gas tank, sponsored gas, and token fee payments.'
+          )}
+          icon={<LightningIcon width={24} height={24} color={theme.iconPrimary} />}
+          flag="erc4337"
         />
         <CrashAnalyticsControlOption />
       </View>
