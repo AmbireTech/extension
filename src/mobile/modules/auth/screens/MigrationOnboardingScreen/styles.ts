@@ -12,7 +12,6 @@ interface Style {
   fullWidthText: TextStyle
   dotsContainer: ViewStyle
   dot: ViewStyle
-  dotActive: ViewStyle
 }
 
 const getStyles = (theme: ThemeProps) =>
@@ -49,15 +48,11 @@ const getStyles = (theme: ThemeProps) =>
       ...flexbox.justifyCenter
     },
     dot: {
-      width: 8,
-      height: 8,
-      borderRadius: 4,
+      width: 10,
+      height: 10,
+      borderRadius: 50,
       backgroundColor: theme.tertiaryText,
       ...spacings.mhTy
-    },
-    dotActive: {
-      width: 24,
-      backgroundColor: theme.secondaryText
     }
   })
 
