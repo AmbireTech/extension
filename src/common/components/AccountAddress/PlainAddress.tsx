@@ -3,7 +3,7 @@ import React, { FC } from 'react'
 import shortenAddress from '@ambire-common/utils/shortenAddress'
 import HighlightedPlainAddress from '@common/components/AccountAddress/HighlightedPlainAddress'
 import Text from '@common/components/Text'
-import { isMobile } from '@common/config/env'
+import { isMobile, isWeb } from '@common/config/env'
 import spacings from '@common/styles/spacings'
 
 interface Props {
@@ -29,6 +29,8 @@ const PlainAddress: FC<Props> = ({
   withWrap = false,
   highlight
 }) => {
+  const shouldShowFullAddressOnWeb = isWeb && maxLength >= 42
+
   if (highlight) {
     return (
       <HighlightedPlainAddress
@@ -47,12 +49,22 @@ const PlainAddress: FC<Props> = ({
       fontSize={fontSize}
       appearance="secondaryText"
       weight="mono_regular"
-      style={[spacings.mrMi, style]}
-      numberOfLines={1}
+      style={[
+        spacings.mrMi,
+        style,
+        shouldShowFullAddressOnWeb && {
+          flex: 1,
+          flexShrink: 1,
+          minWidth: 0,
+          // @ts-ignore web-only style for wrapping long hex addresses
+          wordBreak: 'break-all'
+        }
+      ]}
+      numberOfLines={shouldShowFullAddressOnWeb ? undefined : 1}
       ellipsizeMode={isMobile ? 'middle' : undefined}
     >
       {hideParentheses ? '' : '('}
-      {shortenAddress(address, maxLength)}
+      {shouldShowFullAddressOnWeb ? address : shortenAddress(address, maxLength)}
       {hideParentheses ? '' : ')'}
     </Text>
   )

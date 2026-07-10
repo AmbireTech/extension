@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { View, ViewStyle } from 'react-native'
 
 import CopyIcon from '@common/assets/svg/CopyIcon'
-import { isMobile } from '@common/config/env'
+import { isMobile, isWeb } from '@common/config/env'
 import useHover, { AnimatedPressable } from '@common/hooks/useHover'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
@@ -53,6 +53,8 @@ const PlainAddressWithCopy: FC<Props> = ({
     }
   }
 
+  const shouldShowFullAddressOnWeb = isWeb && maxLength >= 42
+
   return (
     <View
       style={[
@@ -60,7 +62,9 @@ const PlainAddressWithCopy: FC<Props> = ({
         flexbox.alignCenter,
         withWrap
           ? { flexBasis: 110, flexGrow: 1, flexShrink: 1 }
-          : { flexShrink: 1, minWidth: 0, flex: 1 }
+          : shouldShowFullAddressOnWeb
+            ? { width: '100%', maxWidth: '100%' }
+            : { flexShrink: 1, minWidth: 0, flex: 1 }
       ]}
     >
       <PlainAddress
@@ -69,13 +73,21 @@ const PlainAddressWithCopy: FC<Props> = ({
         hideParentheses={hideParentheses}
         style={{
           ...style,
-          ...(withWrap ? { minWidth: isMobile ? 70 : 170 } : { flexShrink: 1, minWidth: 0 })
+          ...(withWrap
+            ? { minWidth: isMobile ? 70 : 170 }
+            : shouldShowFullAddressOnWeb
+              ? { flex: 1, flexShrink: 1, minWidth: 0 }
+              : { flexShrink: 1, minWidth: 0 })
         }}
         fontSize={fontSize}
         withWrap={withWrap}
         highlight={highlight}
       />
-      <AnimatedPressable onPress={handleCopy} style={animStyle} {...bindAnim}>
+      <AnimatedPressable
+        onPress={handleCopy}
+        style={[animStyle, shouldShowFullAddressOnWeb && { flexShrink: 0 }]}
+        {...bindAnim}
+      >
         <CopyIcon width={fontSize + 8} height={fontSize + 8} color={theme.secondaryText} />
       </AnimatedPressable>
       {children}
