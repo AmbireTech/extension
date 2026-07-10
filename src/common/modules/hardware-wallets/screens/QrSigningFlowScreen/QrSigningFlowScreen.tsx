@@ -10,13 +10,12 @@ import Button from '@common/components/Button'
 import FooterGlassView from '@common/components/FooterGlassView'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
+import { QrSigningStep } from '@common/modules/hardware-wallets/qr/types'
+import QrSignRequestScreen from '@common/modules/hardware-wallets/screens/QrSignRequestScreen'
+import QrSignResponseScanner from '@common/modules/hardware-wallets/screens/QrSignResponseScanner'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { getUiType } from '@common/utils/uiType'
-
-import { QrSigningStep } from '../../qr/types'
-import QrSignRequestScreen from '../QrSignRequestScreen/QrSignRequestScreen'
-import QrSignResponseScanner from '../QrSignResponseScanner/QrSignResponseScanner'
 
 const { isTab } = getUiType()
 

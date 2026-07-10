@@ -6,7 +6,7 @@ import { TypedMessageUserRequest } from '@ambire-common/interfaces/userRequest'
 import { stripHexPrefix } from '@ambire-common/utils/stripHexPrefix'
 import { CryptoHDKey, DataType, ETHSignature, EthSignRequest } from '@keystonehq/bc-ur-registry-eth'
 
-import { QrProtocolAdapter, QrSignaturePayload } from '../types'
+import { QrProtocolAdapter, QrSignaturePayload } from '@common/modules/hardware-wallets/qr/types'
 import { isSignatureParts, normalizeOriginHdPath } from '../utils'
 import { QrRequest } from '@ambire-common/interfaces/keystore'
 

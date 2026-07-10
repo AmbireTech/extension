@@ -4,7 +4,11 @@ import { IEventEmitterRegistryController } from '@ambire-common/interfaces/event
 import { ExternalSignerController, QrRequest } from '@ambire-common/interfaces/keystore'
 import { TypedMessageUserRequest } from '@ambire-common/interfaces/userRequest'
 
-import { QrProtocolAdapter, QrSignaturePayload, QrSigningStep } from '../../qr/types'
+import {
+  QrProtocolAdapter,
+  QrSignaturePayload,
+  QrSigningStep
+} from '@common/modules/hardware-wallets/qr/types'
 
 /**
  * The QrHardwareController is responsible for managing QR-based hardware wallet interactions.

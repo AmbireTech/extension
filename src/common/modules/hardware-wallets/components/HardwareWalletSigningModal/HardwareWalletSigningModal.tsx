@@ -16,6 +16,7 @@ import BottomSheet from '@common/components/BottomSheet'
 import ModalHeader from '@common/components/BottomSheet/ModalHeader'
 import Text from '@common/components/Text'
 import Tooltip from '@common/components/Tooltip'
+import { isMobile } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import useTheme from '@common/hooks/useTheme'
 import SigningRequestDetails from '@common/modules/hardware-wallets/components/SigningRequestDetails'
@@ -55,12 +56,33 @@ const HardwareWalletSigningModal = ({
     else close()
   }, [open, close, isVisible])
 
-  const titleSuffix = useMemo(() => {
+  const title = useMemo(() => {
     const Icon = keyType && iconByKeyType[keyType as keyof typeof iconByKeyType]
-    if (!Icon) return undefined
+    const icon = Icon ? <Icon style={spacings.mlTy} width={32} height={32} /> : null
+    const text = t('Sign with your {{deviceName}} device', {
+      deviceName: HARDWARE_WALLET_DEVICE_NAMES[keyType]
+    })
 
-    return <Icon style={spacings.mlTy} width={32} height={32} />
-  }, [keyType])
+    // On native a <Text> is not a flexbox container, so an icon nested directly
+    // in it is baseline-aligned and ends up vertically misaligned with the
+    // title. Wrapping the title in a <View> row makes flexbox centering apply.
+    if (isMobile)
+      return (
+        <View style={[flexbox.directionRow, flexbox.alignCenter]}>
+          <Text fontSize={18} weight="medium">
+            {text}
+          </Text>
+          {icon}
+        </View>
+      )
+
+    return (
+      <>
+        {text}
+        {icon}
+      </>
+    )
+  }, [keyType, t])
 
   const isTrezor = useMemo(() => {
     return HARDWARE_WALLET_DEVICE_NAMES[keyType] === 'Trezor'
@@ -78,17 +100,7 @@ const HardwareWalletSigningModal = ({
       withBackdropBlur={false}
       containerInnerWrapperStyles={isTab ? { ...spacings.pv2Xl, ...spacings.ph2Xl } : {}}
     >
-      <ModalHeader
-        title={
-          <>
-            {t('Sign with your {{deviceName}} device', {
-              deviceName: HARDWARE_WALLET_DEVICE_NAMES[keyType]
-            })}
-            {titleSuffix}
-          </>
-        }
-        style={flexbox.justifyCenter}
-      >
+      <ModalHeader title={title} style={flexbox.justifyCenter}>
         {isTrezor && !!cancelReq && (
           <>
             <Pressable
