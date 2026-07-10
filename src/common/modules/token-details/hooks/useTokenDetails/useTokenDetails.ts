@@ -34,6 +34,10 @@ const useTokenDetails = () => {
   const {
     state: { account, portfolio }
   } = useController('SelectedAccountController')
+  const {
+    state: { flags }
+  } = useController('FeatureFlagsController')
+  const isErc4337Enabled = flags.erc4337
   const { state: supportedChainIds } = useController(
     'SwapAndBridgeController',
     (state) => state.supportedChainIds
@@ -94,6 +98,8 @@ const useTokenDetails = () => {
   }, [setDoNotDisplayHideTokenModal])
 
   useEffect(() => {
+    if (!isErc4337Enabled) return
+
     // Fetch gas tank assets
     fetch(`${RELAYER_URL}/gas-tank/assets`)
       .then((r) => r.json())
@@ -109,7 +115,7 @@ const useTokenDetails = () => {
         )
         setGasTankAssets(null)
       })
-  }, [t])
+  }, [isErc4337Enabled, t])
 
   const hideToken = useCallback(() => {
     if (!token) return
@@ -149,6 +155,12 @@ const useTokenDetails = () => {
   const topUpDisabledTooltipText = useMemo(() => {
     if (!canUseGasTank) return disabledReason
 
+    if (!isErc4337Enabled) {
+      return t(
+        'Gas Tank is turned off because ERC-4337 smart account features are disabled. Enable them to top up.'
+      )
+    }
+
     if (!canToToppedUp) {
       return t(
         'This token is not eligible for filling up the Gas Tank. Please select a supported token instead.'
@@ -160,7 +172,7 @@ const useTokenDetails = () => {
     }
 
     return undefined
-  }, [canUseGasTank, canToToppedUp, disabledReason, gasTankAssetsError, t])
+  }, [canUseGasTank, canToToppedUp, disabledReason, gasTankAssetsError, isErc4337Enabled, t])
 
   const actions = useMemo(
     () =>
