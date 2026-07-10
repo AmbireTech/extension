@@ -3,6 +3,7 @@ import { StyleSheet, View } from 'react-native'
 
 import NoKeysToSignAlert from '@common/components/NoKeysToSignAlert'
 import Spinner from '@common/components/Spinner'
+import useController from '@common/hooks/useController'
 import ActionFooter from '@common/modules/action-requests/components/ActionFooter'
 import ActionHeader from '@common/modules/action-requests/components/ActionHeader'
 import Main from '@common/modules/sign-message/components/Contents/main'
@@ -49,6 +50,7 @@ const SignMessageScreen = () => {
     isSafeNotDeployed,
     isLoading
   } = useSignMessage()
+  const { closeRequestModal } = useController('RequestsController')
 
   if (isLoading || !account || !userRequest) {
     return (
@@ -77,6 +79,7 @@ const SignMessageScreen = () => {
               // the first signer from the array is the current one
               signingKeyAddr={signMessageState.signers?.[0]?.addr || ''}
               onReject={handleReject}
+              onSignLater={() => closeRequestModal?.()}
             />
           ) : (
             <ActionFooter

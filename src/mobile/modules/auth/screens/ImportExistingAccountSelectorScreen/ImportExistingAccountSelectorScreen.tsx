@@ -5,6 +5,7 @@ import { SvgProps } from 'react-native-svg'
 import DiagonalRightArrowIcon from '@common/assets/svg/DiagonalRightArrowIcon'
 import PrivateKeyIcon from '@common/assets/svg/PrivateKeyIcon'
 import RightArrowIcon from '@common/assets/svg/RightArrowIcon'
+import SafeIcon from '@common/assets/svg/SafeIcon'
 import SeedPhraseIcon from '@common/assets/svg/SeedPhraseIcon'
 import Button from '@common/components/Button'
 import Panel from '@common/components/Panel'
@@ -56,6 +57,13 @@ const ImportExistingAccountSelectorScreen = () => {
           goToNextRoute(ROUTES.importSeedPhrase)
         },
         icon: SeedPhraseIcon
+      },
+      {
+        title: 'Safe',
+        onPress: () => {
+          goToNextRoute(ROUTES.safeImport)
+        },
+        icon: SafeIcon
       }
     ],
     [goToNextRoute]
