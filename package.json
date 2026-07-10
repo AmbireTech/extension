@@ -310,7 +310,6 @@
     "elliptic": "^6.6.1",
     "browserslist": "^4.23.0",
     "cipher-base": "^1.0.6",
-    "react-native-ble-plx": "3.5.1",
     "@safe-global/safe-deployments": "1.37.56",
     "@safe-global/safe-modules-deployments": "3.0.4"
   },
