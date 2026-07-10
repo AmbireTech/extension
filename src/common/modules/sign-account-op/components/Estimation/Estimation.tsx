@@ -151,6 +151,7 @@ const Estimation = ({
   }, [hasEstimation, signAccountOpState, state.contacts, isViewOnly])
 
   const [selectedFeeOption, setSelectedFeeOption] = useState<SelectValue['value'] | null>(null)
+  const [isEnableErc4337PromptDismissed, setIsEnableErc4337PromptDismissed] = useState(false)
 
   const dispatchUpdate = useCallback(
     (update: {
@@ -216,6 +217,10 @@ const Estimation = ({
       })
     }
   }, [signAccountOpDispatch, swapAndBridgeDispatch, transferDispatch, updateType])
+
+  const dismissEnableErc4337Prompt = useCallback(() => {
+    setIsEnableErc4337PromptDismissed(true)
+  }, [])
 
   const setFeeOption = useCallback(
     (localPayValue: any, skipDispatch?: boolean) => {
@@ -306,7 +311,8 @@ const Estimation = ({
   }, [feeSpeeds, signAccountOpState?.errors.length, signAccountOpState?.estimation.error])
 
   const shouldShowEnableErc4337Prompt = useMemo(() => {
-    if (!signAccountOpState?.canEnableErc4337 || !hasEstimation) return false
+    if (isEnableErc4337PromptDismissed || !signAccountOpState?.canEnableErc4337 || !hasEstimation)
+      return false
 
     const hasNoFeeOptions = !payOptionsPaidByUsOrGasTank.length && !payOptionsPaidByEOA.length
     const selectedOptionCannotCoverFee =
@@ -318,6 +324,7 @@ const Estimation = ({
     hasEstimation,
     payOptionsPaidByEOA.length,
     payOptionsPaidByUsOrGasTank.length,
+    isEnableErc4337PromptDismissed,
     signAccountOpState?.canEnableErc4337
   ])
 
@@ -337,9 +344,10 @@ const Estimation = ({
           text: t('Enable'),
           onPress: enableErc4337AndReestimate
         }}
+        onClose={dismissEnableErc4337Prompt}
       />
     )
-  }, [enableErc4337AndReestimate, shouldShowEnableErc4337Prompt, t])
+  }, [dismissEnableErc4337Prompt, enableErc4337AndReestimate, shouldShowEnableErc4337Prompt, t])
 
   const feeSpeedOptions = useMemo(() => {
     return feeSpeeds.map((speed) => ({
