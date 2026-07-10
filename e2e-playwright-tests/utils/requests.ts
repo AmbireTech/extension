@@ -44,7 +44,8 @@ function categorizeRequests(requests: string[]) {
     'static.debank.com',
     'tokenlist.superfluid.org',
     'strapi.jumper.exchange',
-    'assets.coingecko.com'
+    'assets.coingecko.com',
+    'coin-images.coingecko.com'
   ]
 
   const reqs = requests.reduce(
