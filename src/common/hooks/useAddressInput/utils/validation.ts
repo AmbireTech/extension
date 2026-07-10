@@ -9,7 +9,9 @@ type AddressInputValidation = {
   isRecipientDomainResolving: boolean
   isValidEns: boolean
   isValidNamoshi: boolean
+  isDomainVerifiedByColibri?: boolean
   hasDomainResolveFailed: boolean
+  domainResolveError?: string
   overwriteValidation?: Validation | null
 }
 
@@ -26,8 +28,10 @@ const getAddressInputValidation = ({
   address,
   isRecipientDomainResolving,
   hasDomainResolveFailed = false,
+  domainResolveError,
   isValidEns,
   isValidNamoshi,
+  isDomainVerifiedByColibri,
   overwriteValidation
 }: AddressInputValidation): Validation => {
   if (!address) {
@@ -50,7 +54,9 @@ const getAddressInputValidation = ({
     const isNamoshiDomain = getIsNamoshiDomain(address)
 
     return {
-      message: `Failed to resolve ${isNamoshiDomain ? 'Namoshi' : 'ENS'} domain. Please try again later or enter a hex address.`,
+      message:
+        domainResolveError ||
+        `Failed to resolve ${isNamoshiDomain ? 'Namoshi' : 'ENS'} domain. Please try again later or enter a hex address.`,
       severity: 'error'
     }
   }
@@ -87,7 +93,9 @@ const getAddressInputValidation = ({
 
   if (isValidEns) {
     successValidation = {
-      message: 'Valid ENS domain',
+      message: isDomainVerifiedByColibri
+        ? 'Valid ENS domain. Verified by Colibri'
+        : 'Valid ENS domain',
       severity: 'success'
     }
   } else if (isValidNamoshi) {
