@@ -7,6 +7,7 @@ import useController from '@common/hooks/useController'
 import GasFeeUpdatedModal from '@common/modules/sign-account-op/components/GasFeeUpdatedModal/GasFeeUpdatedModal'
 import SignAccountOpHardwareWalletSigningModal from '@common/modules/sign-account-op/components/SignAccountOpHardwareWalletSigningModal'
 import { ModalsProps } from '@common/modules/sign-account-op/types/modals'
+import LedgerConnectModal from '@common/modules/hardware-wallets/components/LedgerConnectModal'
 import spacings from '@common/styles/spacings'
 import text from '@common/styles/utils/text'
 
@@ -24,7 +25,9 @@ const Modals: FC<ModalsProps> = ({
   acknowledgeWarning,
   dismissWarning,
   autoOpen,
-  actionType
+  actionType,
+  shouldDisplayLedgerConnectModal,
+  handleDismissLedgerConnectModal
 }) => {
   const { t } = useTranslation()
   const { signAccountOpController: swapAndBridgeSignAccountOp } =
@@ -98,8 +101,12 @@ const Modals: FC<ModalsProps> = ({
   }
 
   if (renderedButNotNecessarilyVisibleModal === 'ledger-connect') {
-    // TODO: impl ledger connect modal
-    return null
+    return (
+      <LedgerConnectModal
+        isVisible={shouldDisplayLedgerConnectModal}
+        handleClose={handleDismissLedgerConnectModal}
+      />
+    )
   }
 
   if (renderedButNotNecessarilyVisibleModal === 'hw-sign' && signAccountOpState) {

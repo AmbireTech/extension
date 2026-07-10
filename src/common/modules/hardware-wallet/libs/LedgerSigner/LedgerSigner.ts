@@ -7,23 +7,24 @@ import { getHdPathFromTemplate } from '@ambire-common/utils/hdPath'
 import hexStringToUint8Array from '@ambire-common/utils/hexStringToUint8Array'
 import shortenAddress from '@ambire-common/utils/shortenAddress'
 import { stripHexPrefix } from '@ambire-common/utils/stripHexPrefix'
-import LedgerController, {
+import {
+  LedgerControllerInterface,
   LedgerSignature
-} from '@web/modules/hardware-wallet/controllers/LedgerController'
+} from '@common/modules/hardware-wallet/interfaces/ledgerController'
 
 class LedgerSigner implements KeystoreSignerInterface {
   key: ExternalKey & { isExternallyStored: boolean }
 
-  controller: LedgerController | null = null
+  controller: LedgerControllerInterface | null = null
 
   constructor(_key: ExternalKey) {
     this.key = { ..._key, isExternallyStored: true }
   }
 
   // TODO: the ExternalSignerController type is missing some properties from
-  // type 'LedgerController', sync the types mismatch
-  // @ts-ignore
-  init(externalDeviceController?: LedgerController) {
+  // type 'LedgerControllerInterface', sync the types mismatch
+  // @ts-expect-error param is the concrete LedgerControllerInterface, not the interface
+  init(externalDeviceController?: LedgerControllerInterface) {
     if (!externalDeviceController) {
       throw new ExternalSignerError('ledgerSigner: externalDeviceController not initialized', {
         sendCrashReport: true
