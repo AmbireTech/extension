@@ -4,17 +4,6 @@ import { createMMKV, MMKV } from 'react-native-mmkv'
 import { Storage, StorageProps } from '@ambire-common/interfaces/storage'
 import { parse, stringify } from '@ambire-common/libs/richJson/richJson'
 
-import mockLegacyAccount from './mockLegacyAccount.json'
-
-// TEMP (dev/testing only): seed the DEFAULT MMKV instance (the one the legacy
-// v1 app used) with a v1 email smart account, so the migration onboarding is
-// triggered on a fresh install. Runs before the v2 instances are created.
-// Remove before shipping.
-const legacyDefaultInstance: MMKV = createMMKV()
-if (!legacyDefaultInstance.getString('accounts')) {
-  legacyDefaultInstance.set('accounts', JSON.stringify([mockLegacyAccount]))
-}
-
 const asyncStorageInstance: MMKV = createMMKV({ id: 'asyncStorage' })
 const syncStorageInstance: MMKV = createMMKV({ id: 'syncStorage' })
 // NOTE: for testing while settings are still not implemented
@@ -31,7 +20,7 @@ const clearAllStorages = () => {
   syncSessionStorageInstance.clearAll()
 }
 
-clearAllStorages()
+// clearAllStorages()
 
 function get<K extends keyof StorageProps>(key: K): Promise<StorageProps[K] | undefined>
 function get<K extends keyof StorageProps>(
