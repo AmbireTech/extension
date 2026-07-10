@@ -8,11 +8,13 @@ import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
 import useNavigation from '@common/hooks/useNavigation'
 import useTheme from '@common/hooks/useTheme'
+import useWindowSize from '@common/hooks/useWindowSize'
 import backgroundImage from '@common/modules/keystore/images/background.png'
 import { ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
+import { openInTab } from '@common/utils/links'
 import {
   MobileLayoutContainer,
   MobileLayoutWrapperMainContent
@@ -30,10 +32,15 @@ const STEPS = [
 
 const LAST_STEP_INDEX = STEPS.length - 1
 
+const WALLET_URL = 'https://wallet.ambire.com'
+const LEARN_MORE_URL =
+  'https://help.ambire.com/en/articles/13714255-how-to-add-your-v1-ambire-smart-account-legacy-to-the-extension'
+
 const MigrationOnboardingScreen = () => {
   const { styles } = useTheme(getStyles)
   const { t } = useTranslation()
   const { navigate } = useNavigation()
+  const { height } = useWindowSize()
   const { exportEmailAccountsBackup } = useLegacyAccountsBackup()
 
   const carouselRef = useRef<ICarouselInstance>(null)
@@ -61,17 +68,53 @@ const MigrationOnboardingScreen = () => {
   }, [exportEmailAccountsBackup, finishOnboarding])
 
   const renderStep = useCallback(
-    ({ item }: { item: string }) => (
-      <Text
-        fontSize={18}
-        weight="medium"
-        appearance="secondaryText"
-        style={{ ...spacings.phLg, ...spacings.ptLg }}
-      >
-        {t(item)}
-      </Text>
-    ),
-    [t]
+    ({ item, index }: { item: string; index: number }) => {
+      if (index === LAST_STEP_INDEX) {
+        // Split the sentence around the wallet.ambire.com mention so it can be
+        // rendered as an inline link without duplicating the copy.
+        const [beforeLink = '', afterLink = ''] = item.split('wallet.ambire.com')
+
+        return (
+          <View style={{ ...spacings.phLg, ...(height < 700 ? spacings.pt : spacings.ptLg) }}>
+            <Text fontSize={16} weight="medium" appearance="secondaryText">
+              {t(beforeLink)}
+              <Text
+                fontSize={16}
+                weight="medium"
+                appearance="primary"
+                underline
+                onPress={() => openInTab({ url: WALLET_URL })}
+              >
+                wallet.ambire.com
+              </Text>
+              {t(afterLink)}
+            </Text>
+            <Text
+              fontSize={16}
+              weight="medium"
+              appearance="primary"
+              underline
+              style={spacings.mtMd}
+              onPress={() => openInTab({ url: LEARN_MORE_URL })}
+            >
+              {t('Read more')} ›
+            </Text>
+          </View>
+        )
+      }
+
+      return (
+        <Text
+          fontSize={16}
+          weight="medium"
+          appearance="secondaryText"
+          style={{ ...spacings.phLg, ...spacings.ptLg }}
+        >
+          {t(item)}
+        </Text>
+      )
+    },
+    [t, height]
   )
 
   return (
