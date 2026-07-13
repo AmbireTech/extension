@@ -30,6 +30,7 @@ const AddContactFormModal = ({ id, sheetRef, closeBottomSheet }: Props) => {
   const { dispatch } = useControllersMiddleware()
   const { contacts } = useController('AddressBookController').state
   const { accounts } = useController('AccountsController').state
+  const { verifiedDomainsStatus } = useController('DomainsController').state
 
   const {
     control,
@@ -54,6 +55,8 @@ const AddContactFormModal = ({ id, sheetRef, closeBottomSheet }: Props) => {
 
   const name = watch('name')
   const addressState = watch('addressState')
+  const isDomainVerifiedByColibri =
+    verifiedDomainsStatus[addressState.fieldValue.trim()] === 'VERIFIED'
 
   const setAddressState = useCallback(
     (newState: AddressStateOptional) => {
@@ -99,7 +102,8 @@ const AddContactFormModal = ({ id, sheetRef, closeBottomSheet }: Props) => {
     addressState,
     setAddressState,
     handleRevalidate,
-    overwriteValidation
+    overwriteValidation,
+    isDomainVerifiedByColibri
   })
 
   const submitForm = handleSubmit(() => {

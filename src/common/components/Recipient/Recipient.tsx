@@ -48,6 +48,7 @@ interface Props extends InputProps {
   resolvedAddress: AddressState['resolvedAddress']
   resolvedAddressType: AddressState['resolvedAddressType']
   addressValidationMsg: string
+  domainVerificationMessage?: string
   isRecipientHumanizerKnownTokenOrSmartContract: boolean
   isRecipientAddressUnknown: boolean
   validation: Validation
@@ -223,6 +224,7 @@ const Recipient: React.FC<Props> = ({
   resolvedAddress,
   resolvedAddressType,
   addressValidationMsg,
+  domainVerificationMessage,
   isRecipientHumanizerKnownTokenOrSmartContract,
   isRecipientAddressUnknown,
   validation,
@@ -396,6 +398,7 @@ const Recipient: React.FC<Props> = ({
         isRecipientAddressUnknown={isRecipientAddressUnknown}
         isRecipientAddressSameAsSender={actualAddress === account?.addr}
         addressValidationMsg={addressValidationMsg}
+        domainVerificationMessage={domainVerificationMessage}
         onAddToAddressBookPress={openBottomSheet}
       />
     ),
@@ -405,6 +408,7 @@ const Recipient: React.FC<Props> = ({
       actualAddress,
       account,
       addressValidationMsg,
+      domainVerificationMessage,
       openBottomSheet
     ]
   )

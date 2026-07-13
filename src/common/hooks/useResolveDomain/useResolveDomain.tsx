@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef } from 'react'
+import { useCallback, useEffect, useMemo, useRef } from 'react'
 
 import { NameServiceId } from '@ambire-common/services/nameResolvers'
 import useController from '@common/hooks/useController'
@@ -16,9 +16,12 @@ type Resolver = {
 
 const useResolveDomain = () => {
   const {
-    state: { domainToAddresses, resolveDomainsStatus },
+    state: { domainToAddresses, resolveDomainsErrors, resolveDomainsStatus },
     dispatch
   } = useController('DomainsController')
+  const {
+    state: { networks }
+  } = useController('NetworksController')
 
   const requests = useRef<Record<string, Resolver>>({})
 
@@ -33,11 +36,17 @@ const useResolveDomain = () => {
         resolver.resolve(domainToAddresses[domain])
         delete requests.current[domain]
       } else if (status === 'FAILED') {
-        resolver.reject(new Error(`Failed to resolve domain: ${domain}`))
+        resolver.reject(
+          new Error(resolveDomainsErrors[domain] || `Failed to resolve domain: ${domain}`)
+        )
         delete requests.current[domain]
       }
     })
-  }, [domainToAddresses, resolveDomainsStatus])
+  }, [domainToAddresses, resolveDomainsErrors, resolveDomainsStatus])
+
+  const isNamoshiAvailable = useMemo(() => {
+    return networks.some((network) => network.chainId === 4114n)
+  }, [networks])
 
   const handleResolveDomain = useCallback(
     ({
@@ -49,7 +58,9 @@ const useResolveDomain = () => {
       if (status === 'RESOLVED') return Promise.resolve(domainToAddresses[domain])
 
       if (status === 'FAILED')
-        return Promise.reject(new Error(`Failed to resolve domain: ${domain}`))
+        return Promise.reject(
+          new Error(resolveDomainsErrors[domain] || `Failed to resolve domain: ${domain}`)
+        )
 
       if (!status)
         dispatch({
@@ -61,11 +72,12 @@ const useResolveDomain = () => {
         requests.current[domain] = { resolve, reject }
       })
     },
-    [dispatch, domainToAddresses, resolveDomainsStatus]
+    [dispatch, domainToAddresses, resolveDomainsErrors, resolveDomainsStatus]
   )
 
   return {
-    resolveDomain: handleResolveDomain
+    resolveDomain: handleResolveDomain,
+    isNamoshiAvailable
   }
 }
 

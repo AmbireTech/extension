@@ -1171,6 +1171,11 @@
   resolved "https://registry.npmjs.org/@bcoe/v8-coverage/-/v8-coverage-0.2.3.tgz"
   integrity sha512-0hYQ8SB4Db5zvZB4axdMHGwEaQjkZzFjQiN9LVYvIFB2nSUHW9tYpxWriPrWDASIxiaXax83REcLxuSdnGPZtw==
 
+"@corpus-core/colibri-stateless@1.1.30":
+  version "1.1.30"
+  resolved "https://registry.yarnpkg.com/@corpus-core/colibri-stateless/-/colibri-stateless-1.1.30.tgz#5ddcad43fba8a73b3939f1e7fc756d4c0e0661f6"
+  integrity sha512-U/oFj14tKfGZUESGxEegJt1d8B0OZYGclXUQl8HIN5ttTUS0QQML//DPvR9k0PsVU9xz7ZWFt3B4pk0Ij6P/Kg==
+
 "@craftzdog/react-native-buffer@6.1.0":
   version "6.1.0"
   resolved "https://registry.yarnpkg.com/@craftzdog/react-native-buffer/-/react-native-buffer-6.1.0.tgz#101d09d4eb5fa06b12453313b173d5036d96462f"
@@ -2711,6 +2716,25 @@
     reflect-metadata "0.2.2"
     semver "7.7.2"
     xstate "5.19.2"
+
+"@ledgerhq/device-transport-kit-react-native-ble@1.3.2":
+  version "1.3.2"
+  resolved "https://registry.yarnpkg.com/@ledgerhq/device-transport-kit-react-native-ble/-/device-transport-kit-react-native-ble-1.3.2.tgz#da9997c74d0c9c752582659cab46dcd4e8c945f5"
+  integrity sha512-NX/Ml23AR/8iQ5pUPQqum3qjQpValxNhZSbp+Zm/lSl8W0HETLMFK03w/4lj2nfPjiwBy3U+uPhzYNDzdROYQg==
+  dependencies:
+    "@sentry/minimal" "6.19.7"
+    js-base64 "^3.7.8"
+    purify-ts "2.1.0"
+    uuid "11.0.3"
+
+"@ledgerhq/device-transport-kit-react-native-hid@1.0.3":
+  version "1.0.3"
+  resolved "https://registry.yarnpkg.com/@ledgerhq/device-transport-kit-react-native-hid/-/device-transport-kit-react-native-hid-1.0.3.tgz#7ae5ea87bb9df096ea810fd86e2d5beeff7c4755"
+  integrity sha512-GNkJf7vLQ3PsnsZ9vHaTI3osjDlnf+7NoBJj5ZusHDfsz4B9s0ajRv+OYbz9NIhd2B7OE2DAYAuYwnnImkbDUw==
+  dependencies:
+    "@sentry/minimal" "6.19.7"
+    purify-ts "2.1.0"
+    uuid "11.0.3"
 
 "@ledgerhq/device-transport-kit-speculos@1.2.0":
   version "1.2.0"
@@ -10690,6 +10714,11 @@ jimp-compact@0.16.1:
   resolved "https://registry.npmjs.org/jimp-compact/-/jimp-compact-0.16.1.tgz"
   integrity sha512-dZ6Ra7u1G8c4Letq/B5EzAxj4tLFHL+cGtdpR+PVm4yzPDj+lCk+AbivWt1eOM+ikzkowtyV7qSqX6qr3t71Ww==
 
+js-base64@^3.7.8:
+  version "3.8.0"
+  resolved "https://registry.yarnpkg.com/js-base64/-/js-base64-3.8.0.tgz#cfc7b3d0f15dc6f69403c50df8ff2decca1a23ad"
+  integrity sha512-65kvbemyZhj+ExQt1PEFyBEjL5vAHysu1lJdW1AwhhChkO8ZBPizYk/m9GVrpbS2Je1hF+UYZ+6KywqtZV8mHw==
+
 js-sha3@0.8.0:
   version "0.8.0"
   resolved "https://registry.yarnpkg.com/js-sha3/-/js-sha3-0.8.0.tgz#b9b7a5da73afad7dedd0f8c463954cbde6818840"
@@ -13336,6 +13365,11 @@ react-native-app-intro-slider@4.0.4:
   version "4.0.4"
   resolved "https://registry.yarnpkg.com/react-native-app-intro-slider/-/react-native-app-intro-slider-4.0.4.tgz#fa5cda7057db62c448ac975ffd2ba0cff94cc8d8"
   integrity sha512-Zkjaol6X3BbZkHUpVDj2LjdidpS6rCgKi0fx80xgGKa0pHxBRd4swWTv2bHnnvu5k1/HXwYk0mY2TbK+2jHl5w==
+
+react-native-ble-plx@3.5.1:
+  version "3.5.1"
+  resolved "https://registry.yarnpkg.com/react-native-ble-plx/-/react-native-ble-plx-3.5.1.tgz#344ce0d8803cf63d35b4f0588f18f795a05afea7"
+  integrity sha512-SxksmrUt9jG6DOarrrdkb5c/HBLSfZOKauo/9VQSSi3WJA4bmF78GkrtXrgSoGNk0m1ksacFTjB5DuL39xZq/g==
 
 react-native-confirmation-code-field@7.3.1:
   version "7.3.1"

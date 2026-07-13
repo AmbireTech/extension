@@ -17,20 +17,20 @@ import useController from '@common/hooks/useController'
 import useResponsiveActionWindow from '@common/hooks/useResponsiveActionWindow'
 import useTheme from '@common/hooks/useTheme'
 import HardwareWalletSigningModal from '@common/modules/hardware-wallets/components/HardwareWalletSigningModal'
+import LedgerConnectModal from '@common/modules/hardware-wallets/components/LedgerConnectModal'
+import { QrSigningStep } from '@common/modules/hardware-wallets/qr/types'
+import QrSigningFlowScreen from '@common/modules/hardware-wallets/screens/QrSigningFlowScreen'
 import SafeEip712Data from '@common/modules/sign-account-op/components/SafeEip712Data'
 import SafetyChecksBanner from '@common/modules/sign-account-op/components/SafetyChecksBanner'
 import Erc7730TypedMessageContent from '@common/modules/sign-message/components/Contents/Erc7730TypedMessageContent'
+import MessageContentLayout from '@common/modules/sign-message/components/Contents/MessageContentLayout'
 import FallbackVisualization from '@common/modules/sign-message/components/FallbackVisualization'
 import Info from '@common/modules/sign-message/components/Info'
 import isErc7730Visualization from '@common/modules/sign-message/utils/isErc7730Visualization'
 import spacings, { SPACING_LG, SPACING_MD, SPACING_TY } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import { MobileLayoutWrapperMainContent } from '@mobile/components/MobileLayoutWrapper'
-import { TabLayoutWrapperMainContent } from '@web/components/TabLayoutWrapper'
-import LedgerConnectModal from '@web/modules/hardware-wallet/components/LedgerConnectModal'
-import { QrSigningStep } from '@web/modules/hardware-wallet/qr/types'
-import QrSigningFlowScreen from '@web/modules/hardware-wallet/screens/QrSigningFlowScreen'
-import getStyles from '@web/modules/sign-message/screens/SignMessageScreen/styles'
+
+import getStyles from './styles'
 
 interface Props {
   shouldDisplayLedgerConnectModal: boolean
@@ -56,15 +56,11 @@ const Container = ({
 }: {
   children: React.ReactNode
   withScroll?: boolean
-}) => {
-  if (isMobile)
-    return (
-      <MobileLayoutWrapperMainContent contentContainerStyle={spacings.ph0} withScroll={withScroll}>
-        {children}
-      </MobileLayoutWrapperMainContent>
-    )
-  return <TabLayoutWrapperMainContent style={spacings.mbLg}>{children}</TabLayoutWrapperMainContent>
-}
+}) => (
+  <MessageContentLayout webStyle={spacings.mbLg} withScroll={withScroll}>
+    {children}
+  </MessageContentLayout>
+)
 
 const Main = ({
   shouldDisplayLedgerConnectModal,

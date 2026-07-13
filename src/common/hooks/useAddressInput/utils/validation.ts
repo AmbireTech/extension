@@ -12,7 +12,10 @@ type AddressInputValidation = {
   address: string
   isRecipientDomainResolving: boolean
   resolvedAddressType: NameServiceId | null
+  isDomainVerifiedByColibri?: boolean
   hasDomainResolveFailed: boolean
+  domainResolveError?: string
+  isNamoshiAvailable: boolean
   overwriteValidation?: Validation | null
 }
 
@@ -30,6 +33,9 @@ const getAddressInputValidation = ({
   isRecipientDomainResolving,
   hasDomainResolveFailed = false,
   resolvedAddressType,
+  domainResolveError,
+  isDomainVerifiedByColibri,
+  isNamoshiAvailable,
   overwriteValidation
 }: AddressInputValidation): Validation => {
   if (!address) {
@@ -51,8 +57,17 @@ const getAddressInputValidation = ({
   if (hasDomainResolveFailed) {
     const serviceLabel = NAME_SERVICE_LABELS[getNameService(address)?.id ?? 'ens']
 
+    if (resolvedAddressType === 'namoshi' && !isNamoshiAvailable) {
+      return {
+        message: 'Citrea network is disabled. Enable it to resolve Namoshi domains.',
+        severity: 'error'
+      }
+    }
+
     return {
-      message: `Failed to resolve ${serviceLabel} domain. Please try again later or enter a hex address.`,
+      message:
+        domainResolveError ||
+        `Failed to resolve ${serviceLabel} domain. Please try again later or enter a hex address.`,
       severity: 'error'
     }
   }
@@ -89,7 +104,7 @@ const getAddressInputValidation = ({
 
   if (resolvedAddressType) {
     successValidation = {
-      message: `Valid ${NAME_SERVICE_LABELS[resolvedAddressType]} domain`,
+      message: `Valid ${NAME_SERVICE_LABELS[resolvedAddressType]} domain${isDomainVerifiedByColibri ? ' (verified by Colibri)' : ''}`,
       severity: 'success'
     }
   } else if (address && !isValidAddress(address)) {
