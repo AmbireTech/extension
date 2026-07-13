@@ -2,6 +2,8 @@ import { EmitterSubscription, Linking } from 'react-native'
 
 import TrezorConnect from '@trezor/connect-mobile'
 
+import { TREZOR_CONNECT_MANIFEST } from '@common/modules/hardware-wallet/constants/trezor'
+
 // All Trezor communication on mobile happens HERE, in the React Native native
 // JS context. Trezor has no supported way to talk to the device from inside our own process on mobile:
 // the only official path is @trezor/connect-mobile, which deep-links into the
@@ -10,13 +12,6 @@ import TrezorConnect from '@trezor/connect-mobile'
 // link. The WebView worker (where the controllers live) can't open deep links,
 // so the worker-side TrezorController forwards every SDK call to this singleton
 // over the message bridge (see WebViewWorker.tsx `trezor.*` cases).
-
-const TREZOR_CONNECT_MANIFEST = {
-  email: 'wallet@ambire.com',
-  appUrl: 'https://ambire.com',
-  appName: 'Ambire',
-  appIcon: 'https://www.ambire.com/ambire-trezor-connect-icon-light.png'
-}
 
 const CALLBACK_URL = 'ambire://trezor'
 
