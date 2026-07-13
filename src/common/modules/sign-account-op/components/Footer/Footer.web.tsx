@@ -15,9 +15,9 @@ import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import ActionsPagination from '@common/modules/action-requests/components/ActionsPagination'
+import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import spacings, { SPACING_SM, SPACING_TY } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import { getUiType } from '@common/utils/uiType'
 
 import { Props } from './Footer'
 import getStyles from './styles'
@@ -39,14 +39,13 @@ const Footer = ({
 }: Props) => {
   const { t } = useTranslation()
   const { styles } = useTheme(getStyles)
-  const { isSidePanel } = getUiType()
+  const { isCompactLayout } = useCompactActionRequestLayout()
   const { userRequests } = useController('RequestsController').state
   const {
     state: { account }
   } = useController('SelectedAccountController')
   const { accountOp } = useController('SignAccountOpController').state || {}
   const chainId = accountOp?.chainId
-  const isNarrowLayout = isSidePanel
 
   const batchCount = useMemo(() => {
     const requests = userRequests.filter((r) => {
@@ -120,7 +119,13 @@ const Footer = ({
     </BottomSheet>
   )
 
-  const rejectButton = ({ fullWidth, compact = false }: { fullWidth: boolean; compact?: boolean }) => (
+  const rejectButton = ({
+    fullWidth,
+    compact = false
+  }: {
+    fullWidth: boolean
+    compact?: boolean
+  }) => (
     <Button
       testID="transaction-button-reject"
       type="danger"
@@ -133,7 +138,13 @@ const Footer = ({
     />
   )
 
-  const batchButton = ({ fullWidth, compact = false }: { fullWidth: boolean; compact?: boolean }) => (
+  const batchButton = ({
+    fullWidth,
+    compact = false
+  }: {
+    fullWidth: boolean
+    compact?: boolean
+  }) => (
     <Button
       testID="queue-and-sign-later-button"
       type="secondary"
@@ -206,7 +217,7 @@ const Footer = ({
     </View>
   )
 
-  if (isNarrowLayout) {
+  if (isCompactLayout) {
     return (
       <View
         style={[
@@ -221,6 +232,7 @@ const Footer = ({
           }
         ]}
       >
+        <ActionsPagination />
         <View style={{ width: '100%' }}>
           {signButton(true)}
           {confirmRejectModal}
@@ -244,7 +256,6 @@ const Footer = ({
             {rejectButton({ fullWidth: true })}
           </View>
         )}
-        <ActionsPagination />
       </View>
     )
   }

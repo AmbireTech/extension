@@ -17,9 +17,11 @@ import { isMobile, isWeb } from '@common/config/env'
 import useController from '@common/hooks/useController'
 import useHover, { AnimatedPressable } from '@common/hooks/useHover'
 import useTheme from '@common/hooks/useTheme'
+import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import MaxAmount from '@common/modules/swap-and-bridge/components/MaxAmount'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
+import { getUiType } from '@common/utils/uiType'
 
 type EditApprovalAmountInputProps = {
   initialAmount: string
@@ -123,6 +125,9 @@ const EditApproval = ({
 }) => {
   const { t } = useTranslation()
   const { theme } = useTheme()
+  const { isSidePanel } = getUiType()
+  const { isCompactLayout } = useCompactActionRequestLayout()
+  const footerButtonStyle = isCompactLayout ? flexbox.flex1 : isWeb ? { width: 100 } : undefined
   const [bindEditApprovals, , isEditApprovalsHovered] = useHover({
     preset: 'opacityInverted'
   })
@@ -223,9 +228,9 @@ const EditApproval = ({
       <BottomSheet
         sheetRef={editApprovalsSheetRef}
         id={`edit-approvals-bottom-sheet-${id}`}
-        type="modal"
+        type={isSidePanel ? 'bottom-sheet' : 'modal'}
         closeBottomSheet={closeEditApprovals}
-        style={{ maxWidth: 460 }}
+        style={isCompactLayout ? { width: '100%' } : { maxWidth: 460 }}
         shouldBeClosableOnDrag={false}
       >
         <View style={flexbox.alignCenter}>
@@ -251,6 +256,7 @@ const EditApproval = ({
               ...flexbox.directionRow,
               ...spacings.mtLg
             }}
+            innerContainerStyle={isCompactLayout && !isMobile ? { width: '100%' } : undefined}
           >
             <Button
               type="secondary"
@@ -258,7 +264,7 @@ const EditApproval = ({
               onPress={() => closeEditApprovals()}
               hasBottomSpacing={false}
               size="smaller"
-              style={[spacings.mrTy, isWeb && { width: 100 }, isMobile && flexbox.flex1]}
+              style={[isCompactLayout && spacings.mrTy, footerButtonStyle]}
             />
             <Button
               type="primary"
@@ -266,7 +272,7 @@ const EditApproval = ({
               onPress={() => editCall(amountRef.current, token, chainId, closeEditApprovals)}
               hasBottomSpacing={false}
               size="smaller"
-              style={[isWeb && { width: 100 }, isMobile && flexbox.flex1]}
+              style={footerButtonStyle}
             />
           </FooterGlassView>
         </View>
