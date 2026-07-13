@@ -20,6 +20,7 @@ import {
 } from '@mobile/modules/wallet-connect/services/walletConnectService'
 import getWebviewBundleUri from '@mobile/modules/webview/services/getWebviewBundleUri'
 import ledgerTransportService from '@mobile/services/ledger/ledgerTransportService'
+import trezorDeeplinkService from '@mobile/services/trezor/trezorDeeplinkService'
 
 import { decode, encode } from './bridgeCodec'
 
@@ -447,6 +448,56 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, object>((_, ref) => {
         case 'ledger.cleanUp':
           try {
             await ledgerTransportService.cleanUp()
+            sendResponse(data.id, null)
+          } catch (err: any) {
+            sendResponse(data.id, null, err.message)
+          }
+          break
+
+        // --- TREZOR DEVICE DELEGATION HANDLERS ---
+        // The worker-side TrezorController forwards each Trezor Connect SDK call
+        // here; the SDK (@trezor/connect-mobile) runs natively in
+        // trezorDeeplinkService and delegates to the Trezor Suite app via
+        // deep links. Each handler returns the raw `{ success, payload }` connect
+        // response so the shared TrezorSigner / TrezorKeyIterator can inspect it.
+        case 'trezor.ethereumGetAddress':
+          try {
+            sendResponse(data.id, await trezorDeeplinkService.ethereumGetAddress(data.payload))
+          } catch (err: any) {
+            sendResponse(data.id, null, err.message)
+          }
+          break
+        case 'trezor.getPublicKey':
+          try {
+            sendResponse(data.id, await trezorDeeplinkService.getPublicKey(data.payload))
+          } catch (err: any) {
+            sendResponse(data.id, null, err.message)
+          }
+          break
+        case 'trezor.ethereumSignTransaction':
+          try {
+            sendResponse(data.id, await trezorDeeplinkService.ethereumSignTransaction(data.payload))
+          } catch (err: any) {
+            sendResponse(data.id, null, err.message)
+          }
+          break
+        case 'trezor.ethereumSignTypedData':
+          try {
+            sendResponse(data.id, await trezorDeeplinkService.ethereumSignTypedData(data.payload))
+          } catch (err: any) {
+            sendResponse(data.id, null, err.message)
+          }
+          break
+        case 'trezor.ethereumSignMessage':
+          try {
+            sendResponse(data.id, await trezorDeeplinkService.ethereumSignMessage(data.payload))
+          } catch (err: any) {
+            sendResponse(data.id, null, err.message)
+          }
+          break
+        case 'trezor.signingCleanup':
+          try {
+            await trezorDeeplinkService.signingCleanup()
             sendResponse(data.id, null)
           } catch (err: any) {
             sendResponse(data.id, null, err.message)
