@@ -3,6 +3,7 @@ import { Animated, Pressable, View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 
 import BurgerIcon from '@common/assets/svg/BurgerIcon'
+import CloseIcon from '@common/assets/svg/CloseIcon'
 import NetworkStatusesIcon from '@common/assets/svg/NetworkStatusIcon'
 import { isAmbireNext, isDev, isMobile } from '@common/config/env'
 import useController from '@common/hooks/useController'
@@ -11,12 +12,14 @@ import useNavigation from '@common/hooks/useNavigation'
 import { WEB_ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
+import { openInternalPageInTab } from '@common/utils/links/links'
 import { getUiType } from '@common/utils/uiType'
+import useSidePanelSettingsTab from '@web/hooks/useSidePanelSettingsTab'
 
 import NetworkStatusesBottomSheet from '../NetworkStatusesBottomSheet'
 import AccountButton from './AccountButton'
 
-const { isPopup } = getUiType()
+const { isPopup, isSidePanel } = getUiType()
 
 const SHOULD_DISPLAY_NETWORK_STATUSES = isAmbireNext || isDev
 
@@ -30,6 +33,7 @@ const DashboardHeader = () => {
     duration: 50
   })
   const { navigate } = useNavigation()
+  const { isSettingsTabOpen, closeSettingsTab, windowId } = useSidePanelSettingsTab()
 
   const {
     ref: networkStatusesSheetRef,
@@ -80,12 +84,30 @@ const DashboardHeader = () => {
               }
             ]}
             onPress={() => {
+              if (isSidePanel && isSettingsTabOpen) {
+                closeSettingsTab()
+                return
+              }
+
+              if (isSidePanel) {
+                openInternalPageInTab({
+                  route: WEB_ROUTES.generalSettings,
+                  shouldCloseCurrentWindow: false,
+                  windowId
+                })
+                return
+              }
+
               isPopup || isMobile ? navigate(WEB_ROUTES.menu) : navigate(WEB_ROUTES.generalSettings)
             }}
             {...bindBurgerAnim}
           >
             <Animated.View style={burgerAnimStyle}>
-              <BurgerIcon color="#FFFFFF" width={28} height={28} />
+              {isSidePanel && isSettingsTabOpen ? (
+                <CloseIcon color="#FFFFFF" width={15} height={15} />
+              ) : (
+                <BurgerIcon color="#FFFFFF" width={28} height={28} />
+              )}
             </Animated.View>
           </Pressable>
         </View>
