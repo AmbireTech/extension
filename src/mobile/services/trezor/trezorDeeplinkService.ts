@@ -1,4 +1,4 @@
-import { EmitterSubscription, Linking } from 'react-native'
+import { Linking } from 'react-native'
 
 import TrezorConnect from '@trezor/connect-mobile'
 
@@ -18,8 +18,6 @@ const CALLBACK_URL = 'ambire://trezor'
 class TrezorDeeplinkService {
   #initPromise: Promise<void> | null = null
 
-  #deeplinkSubscription: EmitterSubscription | null = null
-
   #callbackUrl = CALLBACK_URL
 
   /** Idempotent: the SDK is initialized once and kept for the app's lifetime. */
@@ -29,8 +27,10 @@ class TrezorDeeplinkService {
     this.#initPromise = (async () => {
       // The listener must be live before the first call opens Suite, so that
       // Suite's redirect back is handled. Other deep links (e.g. WalletConnect)
-      // are ignored — only our callback path is forwarded to the SDK.
-      this.#deeplinkSubscription = Linking.addEventListener('url', ({ url }) => {
+      // are ignored — only our callback path is forwarded to the SDK. Never
+      // removed on purpose: this is an app-lifetime singleton and the listener
+      // must stay live to receive Suite's redirect for every future sign.
+      Linking.addEventListener('url', ({ url }) => {
         if (url.startsWith(CALLBACK_URL)) TrezorConnect.handleDeeplink(url)
       })
 
