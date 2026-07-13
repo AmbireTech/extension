@@ -4,9 +4,13 @@ import { View } from 'react-native'
 
 import Button, { Props as ButtonProps } from '@common/components/Button'
 import GlassView from '@common/components/GlassView'
+import useWindowSize from '@common/hooks/useWindowSize'
 import ActionsPagination from '@common/modules/action-requests/components/ActionsPagination'
-import spacings from '@common/styles/spacings'
+import spacings, { SPACING_TY } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
+import { getUiType } from '@common/utils/uiType'
+
+const { isSidePanel } = getUiType()
 
 type Props = {
   onReject?: () => void
@@ -33,9 +37,50 @@ const ActionFooter = ({
   resolveNode
 }: Props) => {
   const { t } = useTranslation()
+  const { maxWidthSize } = useWindowSize()
+  const isWideFooterLayout = !isSidePanel || maxWidthSize('m')
 
   const handleOnResolve = useCallback(() => onResolve(), [onResolve])
   const showReject = useMemo(() => !!onReject, [onReject])
+
+  const rejectButton = showReject ? (
+    <View style={[flexbox.flex1, { minWidth: 0 }]}>
+      <Button
+        text={rejectButtonText || t('Reject')}
+        type="danger"
+        hasBottomSpacing={false}
+        size="large"
+        onPress={onReject}
+        testID={rejectButtonTestID}
+      />
+    </View>
+  ) : null
+
+  const resolveButton = resolveNode || (
+    <View style={[flexbox.flex1, { minWidth: 0 }]}>
+      <Button
+        testID={resolveButtonTestID}
+        size="large"
+        type={resolveType}
+        hasBottomSpacing={false}
+        onPress={handleOnResolve}
+        disabled={resolveDisabled}
+        text={resolveButtonText}
+      />
+    </View>
+  )
+
+  if (!isWideFooterLayout) {
+    return (
+      <View style={[spacings.ptSm, spacings.phSm, spacings.pb, { width: '100%' }]}>
+        <ActionsPagination />
+        <View style={[flexbox.directionRow, { width: '100%', gap: SPACING_TY }]}>
+          {rejectButton}
+          {resolveButton}
+        </View>
+      </View>
+    )
+  }
 
   return (
     <View style={[flexbox.alignCenter, spacings.pb]}>

@@ -1,6 +1,7 @@
 import React, { FC } from 'react'
 import { View, ViewStyle } from 'react-native'
 
+import { useIsInsideBottomSheet } from '@common/components/BottomSheet/BottomSheetContext'
 import GlassView from '@common/components/GlassView'
 import { isMobile } from '@common/config/env'
 import useWindowSize from '@common/hooks/useWindowSize'
@@ -45,12 +46,46 @@ const FooterGlassView: FC<{
   isSimpleBlur
 }) => {
   const { maxWidthSize } = useWindowSize()
+  const isInsideBottomSheet = useIsInsideBottomSheet()
   const isCompactLayout = isSidePanel && !maxWidthSize('s')
 
   if (isMobile) {
     return (
       <View style={[{ flexDirection: 'column-reverse', width: '100%' }, mobileStyle]}>
         {children}
+      </View>
+    )
+  }
+
+  if (isInsideBottomSheet && isSidePanel) {
+    return (
+      <View
+        style={[
+          {
+            width: '100%',
+            ...flexbox.center,
+            ...(absolute
+              ? { position: 'absolute', left: 0, bottom: SPACING_SM, zIndex: 3, pointerEvents: 'none' }
+              : { pointerEvents: 'auto' })
+          },
+          style
+        ]}
+      >
+        <View
+          style={[
+            flexbox.directionRow,
+            {
+              width: '100%',
+              gap: SPACING_MI,
+              paddingHorizontal: params[size].paddingHorizontal,
+              paddingVertical: params[size].paddingVertical
+            },
+            isCompactLayout ? { alignItems: 'stretch' } : flexbox.alignCenter,
+            innerContainerStyle
+          ]}
+        >
+          {children}
+        </View>
       </View>
     )
   }

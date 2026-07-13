@@ -14,6 +14,9 @@ import FooterGlassView from '@common/components/FooterGlassView'
 import NumberInput from '@common/components/NumberInput'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
+import { getUiType } from '@common/utils/uiType'
+
+const { isSidePanel } = getUiType()
 
 type CustomGasPriceInputProps = {
   initialAmount: string
@@ -219,13 +222,14 @@ const CustomGasPrice = ({
       id="custom-gas-price-sheet"
       sheetRef={sheetRef}
       closeBottomSheet={closeBottomSheet}
-      type="modal"
+      type={isSidePanel ? 'bottom-sheet' : 'modal'}
       animationDuration={0}
       onOpen={resetState}
+      style={isSidePanel ? { width: '100%' } : undefined}
     >
       <ModalHeader title={t('Advanced options')} handleClose={closeBottomSheet} />
-      <View style={{ flexDirection: 'row', gap: 12 }}>
-        <View style={{ flex: 1 }}>
+      <View style={isSidePanel ? { gap: 12 } : { flexDirection: 'row', gap: 12 }}>
+        <View style={isSidePanel ? undefined : { flex: 1 }}>
           <CustomGasPriceInput
             initialAmount={initialMaxFeePerGas}
             backgroundColor={backgroundColor}
@@ -236,7 +240,7 @@ const CustomGasPrice = ({
           />
         </View>
         {!!is1559 && (
-          <View style={{ flex: 1 }}>
+          <View style={isSidePanel ? undefined : { flex: 1 }}>
             <CustomGasPriceInput
               initialAmount={initialMaxPriorityFeePerGas}
               backgroundColor={backgroundColor}
@@ -261,17 +265,18 @@ const CustomGasPrice = ({
       </View>
       <FooterGlassView
         absolute={false}
-        isSimpleBlur={false}
+        isSimpleBlur
         size="sm"
         style={spacings.mtLg}
         mobileStyle={{ ...flexbox.directionRow, ...spacings.mtLg }}
+        innerContainerStyle={isSidePanel ? { width: '100%' } : undefined}
       >
         <Button
           type="secondary"
           text={t('Cancel')}
           onPress={closeBottomSheet}
           hasBottomSpacing={false}
-          style={{ flex: 1, width: 100, ...spacings.mrSm }}
+          style={{ flex: 1, ...spacings.mrSm }}
           size="smaller"
         />
         <Button
@@ -279,7 +284,7 @@ const CustomGasPrice = ({
           text={t('Save')}
           onPress={saveCustomGasPrice}
           hasBottomSpacing={false}
-          style={{ flex: 1, width: 100 }}
+          style={{ flex: 1 }}
           size="smaller"
         />
       </FooterGlassView>

@@ -15,10 +15,14 @@ import { isMobile, isWeb } from '@common/config/env'
 import useDappInfo from '@common/hooks/useDappInfo'
 import useResponsiveActionWindow from '@common/hooks/useResponsiveActionWindow'
 import useTheme from '@common/hooks/useTheme'
+import useWindowSize from '@common/hooks/useWindowSize'
 import getStyles from '@common/modules/action-requests/styles/styles'
 import spacings, { SPACING, SPACING_LG, SPACING_MD } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
+import { getUiType } from '@common/utils/uiType'
 import ManifestImage from '@web/components/ManifestImage'
+
+const { isSidePanel } = getUiType()
 
 type AddChainProps = {
   handleRetryWithDifferentRpcUrl: () => void
@@ -52,6 +56,8 @@ const AddChain = ({
   const { t } = useTranslation()
   const { name, icon } = useDappInfo(userRequest)
   const { responsiveSizeMultiplier } = useResponsiveActionWindow({ maxBreakpoints: 2 })
+  const { maxWidthSize } = useWindowSize()
+  const isTwoColumnLayout = isWeb && !isMobile && (!isSidePanel || maxWidthSize('m'))
 
   return (
     <>
@@ -139,7 +145,7 @@ const AddChain = ({
       {!!areParamsValid && !!networkDetails && (
         <View
           style={[
-            isWeb && flexbox.directionRow,
+            isTwoColumnLayout && flexbox.directionRow,
             flexbox.flex1,
             isWeb && {
               marginBottom: SPACING_LG * responsiveSizeMultiplier
@@ -149,7 +155,9 @@ const AddChain = ({
           <Container
             style={[
               styles.boxWrapper,
-              { width: '50%', maxHeight: '100%' },
+              isTwoColumnLayout
+                ? { width: '50%', maxHeight: '100%' }
+                : { width: '100%' },
               // @ts-ignore value missing in the props, but it's available on web
               { height: 'fit-content' }
             ]}
@@ -171,8 +179,11 @@ const AddChain = ({
               type="vertical"
             />
           </Container>
-          {isWeb && <View style={styles.separator} />}
-          <Container style={flexbox.flex1} contentContainerStyle={{ flexGrow: 1 }}>
+          {isTwoColumnLayout && <View style={styles.separator} />}
+          <Container
+            style={[flexbox.flex1, !isTwoColumnLayout && isSidePanel && spacings.mtMd]}
+            contentContainerStyle={{ flexGrow: 1 }}
+          >
             {!!networkDetails && (
               <NetworkAvailableFeatures
                 features={features}
@@ -180,6 +191,7 @@ const AddChain = ({
                 withRetryButton={!!rpcUrls.length && rpcUrlIndex < rpcUrls.length - 1}
                 handleRetryWithDifferentRpcUrl={handleRetryWithDifferentRpcUrl}
                 responsiveSizeMultiplier={responsiveSizeMultiplier}
+                withScroll={isSidePanel && !isTwoColumnLayout}
               />
             )}
           </Container>

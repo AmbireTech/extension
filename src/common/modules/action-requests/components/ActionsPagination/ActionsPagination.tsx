@@ -8,10 +8,14 @@ import Text from '@common/components/Text'
 import { isMobile, isWeb } from '@common/config/env'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
+import useWindowSize from '@common/hooks/useWindowSize'
 import spacings from '@common/styles/spacings'
 import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
+import { getUiType } from '@common/utils/uiType'
+
+const { isSidePanel } = getUiType()
 
 const SET_CURRENT_REQUEST_PARAMS = {
   skipFocus: true
@@ -24,6 +28,8 @@ const ActionsPagination = () => {
   } = useController('RequestsController')
   const { t } = useTranslation()
   const { theme, themeType } = useTheme()
+  const { maxWidthSize } = useWindowSize()
+  const isWideFooterLayout = !isSidePanel || maxWidthSize('m')
   const currentRequestIndex = useMemo(() => {
     if (!currentUserRequest) return undefined
 
@@ -85,11 +91,12 @@ const ActionsPagination = () => {
       style={[
         flexbox.directionRow,
         flexbox.alignCenter,
-        isWeb && flexbox.flex1,
+        isWeb && isWideFooterLayout && flexbox.flex1,
         spacings.phSm,
         flexbox.justifyCenter,
         isMobile && { columnGap: 16 },
-        isMobile && spacings.ptLg
+        isMobile && spacings.ptLg,
+        isSidePanel && !isWideFooterLayout && spacings.pbSm
       ]}
     >
       <TouchableOpacity
