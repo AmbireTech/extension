@@ -1,10 +1,10 @@
 import { useCallback, useContext, useEffect, useMemo, useSyncExternalStore } from 'react'
 
 import { isDev } from '@common/config/env'
-import { AllControllersMappingType } from '@common/constants/controllersMapping'
 import { ControllerStoreContext } from '@common/contexts/controllerStoreContext'
 import { ControllerHelpersMapping } from '@common/contexts/controllerStoreContext/controllerHelpersStore'
 
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 type MethodKeys<T> = {
   [K in keyof T]-?: T[K] extends (...args: any[]) => any ? K : never
 }[keyof T]

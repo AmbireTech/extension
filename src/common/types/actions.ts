@@ -2,7 +2,8 @@ import { Account } from '@ambire-common/interfaces/account'
 import { Contact } from '@ambire-common/interfaces/addressBook'
 import { ConnectionSource, Dapp } from '@ambire-common/interfaces/dapp'
 import { Key, ReadyToAddKeys } from '@ambire-common/interfaces/keystore'
-import { AllControllersMappingType } from '@common/constants/controllersMapping'
+
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 
 type MethodKeys<T> = {
   [K in keyof T]-?: T[K] extends (...args: any[]) => any ? K : never
