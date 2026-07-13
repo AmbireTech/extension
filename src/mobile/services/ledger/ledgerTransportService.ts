@@ -496,6 +496,7 @@ class LedgerTransportService {
           if (response.status !== DeviceActionStatus.Completed) return
 
           subscription?.unsubscribe()
+          this.#rejectSigningSubscription = null
           if (response?.output) resolve(onCompleted(response.output))
           else reject(new Error(errorMessage))
         },

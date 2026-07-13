@@ -19,6 +19,7 @@ import { privateValue } from '@common/utils/ui'
 import { isExtension } from '@web/constants/browserapi'
 
 import BalanceAffectingErrors from './BalanceAffectingErrors'
+import ColibriVerificationBadge from './ColibriVerificationBadge'
 import GasTankButton from './GasTankButton'
 import { OverviewBackground } from './OverviewBackground'
 import RefreshIcon from './RefreshIcon'
@@ -69,6 +70,10 @@ const DashboardOverview: FC<Props> = ({
     networksWithErrors
   } = useBalanceAffectingErrors()
   const totalPortfolioAmount = useMemo(() => portfolio?.totalBalance || 0, [portfolio])
+  const totalPortfolioAmountColor = useMemo(
+    () => (networksWithErrors.length || isOffline ? theme.warningDecorative2 : '#FFFFFF'),
+    [isOffline, networksWithErrors.length, theme.warningDecorative2]
+  )
 
   // Display the button always on mobile
   const shouldShowRefreshButton = isBalanceHovered || !portfolio?.isReadyToVisualize || !isExtension
@@ -172,48 +177,48 @@ const DashboardOverview: FC<Props> = ({
                       borderRadius={8}
                     />
                   ) : (
-                    <Pressable
-                      testID="full-balance"
-                      onPress={togglePrivacyMode}
-                      style={[flexbox.directionRow, flexbox.alignEnd]}
-                    >
-                      <Text
-                        fontSize={34}
-                        shouldScale={false}
-                        weight="number_bold"
-                        // Line height should be constant based on font size, not on parent height
-                        style={!isWeb ? { lineHeight: 36 } : { lineHeight: 28 }}
-                        color={
-                          networksWithErrors.length || isOffline
-                            ? theme.warningDecorative2
-                            : '#FFFFFF'
-                        }
-                        testID="total-portfolio-amount-integer"
+                    <View style={[flexbox.directionRow, flexbox.alignCenter]}>
+                      {!warningMessage && (
+                        <ColibriVerificationBadge
+                          color={totalPortfolioAmountColor}
+                          isVisible={shouldShowRefreshButton}
+                        />
+                      )}
+                      <Pressable
+                        testID="full-balance"
+                        onPress={togglePrivacyMode}
+                        style={[flexbox.directionRow, flexbox.alignEnd]}
                       >
-                        {privateValue(
-                          totalPortfolioAmountIntegerFormattedPart,
-                          isPrivacyModeEnabled,
-                          7
-                        )}
-                      </Text>
-                      {totalPortfolioAmount < THRESHOLD_AMOUNT_TO_HIDE_BALANCE_DECIMALS &&
-                        !isPrivacyModeEnabled && (
-                          <Text
-                            fontSize={20}
-                            shouldScale={false}
-                            weight="number_bold"
-                            color={
-                              networksWithErrors.length || isOffline
-                                ? theme.warningDecorative2
-                                : '#FFFFFF'
-                            }
-                            style={!isWeb ? { lineHeight: isiOS ? 30 : 28 } : { lineHeight: 20 }}
-                          >
-                            {t('.')}
-                            {totalPortfolioAmountDecimalFormattedPart}
-                          </Text>
-                        )}
-                    </Pressable>
+                        <Text
+                          fontSize={34}
+                          shouldScale={false}
+                          weight="number_bold"
+                          // Line height should be constant based on font size, not on parent height
+                          style={!isWeb ? { lineHeight: 36 } : { lineHeight: 28 }}
+                          color={totalPortfolioAmountColor}
+                          testID="total-portfolio-amount-integer"
+                        >
+                          {privateValue(
+                            totalPortfolioAmountIntegerFormattedPart,
+                            isPrivacyModeEnabled,
+                            7
+                          )}
+                        </Text>
+                        {totalPortfolioAmount < THRESHOLD_AMOUNT_TO_HIDE_BALANCE_DECIMALS &&
+                          !isPrivacyModeEnabled && (
+                            <Text
+                              fontSize={20}
+                              shouldScale={false}
+                              weight="number_bold"
+                              color={totalPortfolioAmountColor}
+                              style={!isWeb ? { lineHeight: isiOS ? 30 : 28 } : { lineHeight: 20 }}
+                            >
+                              {t('.')}
+                              {totalPortfolioAmountDecimalFormattedPart}
+                            </Text>
+                          )}
+                      </Pressable>
+                    </View>
                   )}
                 </View>
                 {

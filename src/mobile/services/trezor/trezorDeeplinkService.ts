@@ -1,6 +1,8 @@
-import { EmitterSubscription, Linking } from 'react-native'
+import { Linking } from 'react-native'
 
 import TrezorConnect from '@trezor/connect-mobile'
+
+import { TREZOR_CONNECT_MANIFEST } from '@common/modules/hardware-wallet/constants/trezor'
 
 // All Trezor communication on mobile happens HERE, in the React Native native
 // JS context. Trezor has no supported way to talk to the device from inside our own process on mobile:
@@ -11,19 +13,10 @@ import TrezorConnect from '@trezor/connect-mobile'
 // so the worker-side TrezorController forwards every SDK call to this singleton
 // over the message bridge (see WebViewWorker.tsx `trezor.*` cases).
 
-const TREZOR_CONNECT_MANIFEST = {
-  email: 'wallet@ambire.com',
-  appUrl: 'https://ambire.com',
-  appName: 'Ambire',
-  appIcon: 'https://www.ambire.com/ambire-trezor-connect-icon-light.png'
-}
-
 const CALLBACK_URL = 'ambire://trezor'
 
 class TrezorDeeplinkService {
   #initPromise: Promise<void> | null = null
-
-  #deeplinkSubscription: EmitterSubscription | null = null
 
   #callbackUrl = CALLBACK_URL
 
@@ -34,8 +27,10 @@ class TrezorDeeplinkService {
     this.#initPromise = (async () => {
       // The listener must be live before the first call opens Suite, so that
       // Suite's redirect back is handled. Other deep links (e.g. WalletConnect)
-      // are ignored — only our callback path is forwarded to the SDK.
-      this.#deeplinkSubscription = Linking.addEventListener('url', ({ url }) => {
+      // are ignored — only our callback path is forwarded to the SDK. Never
+      // removed on purpose: this is an app-lifetime singleton and the listener
+      // must stay live to receive Suite's redirect for every future sign.
+      Linking.addEventListener('url', ({ url }) => {
         if (url.startsWith(CALLBACK_URL)) TrezorConnect.handleDeeplink(url)
       })
 
