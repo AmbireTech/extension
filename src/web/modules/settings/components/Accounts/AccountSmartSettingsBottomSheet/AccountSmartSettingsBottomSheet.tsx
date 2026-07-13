@@ -1,4 +1,4 @@
-import React, { FC, useEffect, useMemo } from 'react'
+import React, { FC, useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 import { Modalize } from 'react-native-modalize'
@@ -19,11 +19,15 @@ import SkeletonLoader from '@common/components/SkeletonLoader'
 import Text from '@common/components/Text'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
+import useToast from '@common/hooks/useToast'
 import Authorization7702 from '@common/modules/sign-message/components/Contents/authorization7702'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
 import { TAB_CONTENT_WIDTH } from '@web/constants/spacings'
+import LedgerController from '@web/modules/hardware-wallet/controllers/LedgerController'
+import { AMBIRE_SIGNER_APDUS } from '@web/modules/hardware-wallet/controllers/LedgerController/artifacts'
+import { installLedgerApp } from '@web/modules/hardware-wallet/controllers/LedgerController/ledgerSideload'
 
 interface Props {
   sheetRef: React.RefObject<Modalize>
@@ -41,7 +45,10 @@ const AccountSmartSettingsBottomSheet: FC<Props> = ({ sheetRef, closeBottomSheet
   const { dispatch: requestsDispatch } = useController('RequestsController')
   const { theme } = useTheme()
   const { t } = useTranslation()
+  const { addToast } = useToast()
   const accountStateCheckedForRef = React.useRef<string | null>(null)
+  const [isInstalling, setIsInstalling] = useState(false)
+  const [installProgress, setInstallProgress] = useState(0)
 
   const accountState = useMemo(() => {
     if (!account) return null
@@ -75,6 +82,37 @@ const AccountSmartSettingsBottomSheet: FC<Props> = ({ sheetRef, closeBottomSheet
       keys.filter((k) => account.associatedKeys.includes(k.addr))
     )
   }, [account, keys])
+
+  const hasLedgerKey = useMemo(
+    () =>
+      !!account && keys.some((k) => account.associatedKeys.includes(k.addr) && k.type === 'ledger'),
+    [account, keys]
+  )
+
+  // Sideloads the "Ambire Signer" app (a fork of the Ethereum app that whitelists
+  // the Ambire EIP-7702 delegator) needed to authorize delegation with a Ledger.
+  // It coexists with the official Ethereum app and is used only for this one-off.
+  const installAmbireSigner = useCallback(async () => {
+    try {
+      setIsInstalling(true)
+      setInstallProgress(0)
+      await LedgerController.grantDevicePermissionIfNeeded()
+      await installLedgerApp(AMBIRE_SIGNER_APDUS, (sent, total) =>
+        setInstallProgress(Math.round((sent / total) * 100))
+      )
+      addToast(
+        t(
+          'Ambire Signer installed. On your Ledger, open the app and approve, then enable EIP-7702.'
+        )
+      )
+    } catch (error: any) {
+      addToast(error?.message || t('Failed to install Ambire Signer on your Ledger.'), {
+        type: 'error'
+      })
+    } finally {
+      setIsInstalling(false)
+    }
+  }, [addToast, t])
 
   const delegate = (chainId: bigint) => {
     const network = networks.find((n) => n.chainId === chainId)
@@ -130,6 +168,40 @@ const AccountSmartSettingsBottomSheet: FC<Props> = ({ sheetRef, closeBottomSheet
                   'While we support multiple networks, only those that have implemented EIP-7702 are listed here. As more networks adopt this upgrade, we will update the list to reflect broader availability.'
                 )}
               </Text>
+
+              {/* TODO: UI and wording are BOTH not polished yet */}
+              {hasLedgerKey && (
+                <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mbMd]}>
+                  <View style={[flexbox.flex1, spacings.mrTy]}>
+                    <Text fontSize={14} weight="medium">
+                      {t('Ledger EIP-7702 setup')}
+                    </Text>
+                    <Text fontSize={12} appearance="secondaryText">
+                      {t(
+                        'Install the Ambire Signer app on your Ledger to authorize EIP-7702 delegation. It is used once - keep using the official Ethereum app for everything else.'
+                      )}
+                    </Text>
+                    <Text fontSize={12} appearance="warningText" style={spacings.mtMi}>
+                      {t(
+                        'Not available on the Ledger Nano X - use a Nano S Plus, Stax, Flex, or Nano Gen5.'
+                      )}
+                    </Text>
+                  </View>
+                  <Button
+                    type="secondary"
+                    size="small"
+                    disabled={isInstalling}
+                    style={spacings.mb0}
+                    onPress={installAmbireSigner}
+                    text={
+                      isInstalling
+                        ? t('Installing... {{progress}}%', { progress: installProgress })
+                        : t('Install Ambire Signer')
+                    }
+                  />
+                </View>
+              )}
+
               <View
                 style={[
                   {
