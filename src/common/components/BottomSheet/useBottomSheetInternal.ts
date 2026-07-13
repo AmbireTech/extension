@@ -5,6 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import { isWeb } from '@common/config/env'
 import usePrevious from '@common/hooks/usePrevious'
+import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import { HEADER_HEIGHT } from '@common/modules/header/components/Header/Header'
 import { SPACING_SM } from '@common/styles/spacings'
 import { getUiType } from '@common/utils/uiType'
@@ -21,10 +22,17 @@ const useBottomSheetInternal = (props: BottomSheetProps) => {
   const { id: _id, type: _type, sheetRef, autoOpen = false, customZIndex } = props
   const { closeBottomSheet: _closeBottomSheet = () => {} } = props
   const closeBottomSheet = useCallback(_closeBottomSheet, [_closeBottomSheet])
-  const defaultType = isPopup || isMobileApp || isSidePanel ? 'bottom-sheet' : 'modal'
+  const { isCompactLayout } = useCompactActionRequestLayout()
+  const isNarrowSidePanel = isSidePanel && isCompactLayout
+  const defaultType =
+    isPopup || isMobileApp || isNarrowSidePanel ? 'bottom-sheet' : 'modal'
   const resolvedType = _type || defaultType
-  // Side panel is too narrow for centered modals; always use bottom sheets there.
-  const type = isSidePanel && resolvedType === 'modal' ? 'bottom-sheet' : resolvedType
+  const type = (() => {
+    if (isNarrowSidePanel && resolvedType === 'modal') return 'bottom-sheet'
+    if (isSidePanel && !isCompactLayout && resolvedType === 'bottom-sheet') return 'modal'
+
+    return resolvedType
+  })()
   const isModal = type === 'modal'
   const [isOpen, setIsOpen] = useState(false)
   const prevIsOpen = usePrevious(isOpen)
@@ -97,11 +105,11 @@ const useBottomSheetInternal = (props: BottomSheetProps) => {
 
   const modalTopOffset = useMemo(() => {
     if (isPopup && isModal) return 0
-    if (isSidePanel) return 0
+    if (isNarrowSidePanel) return 0
     if (isWeb) return HEADER_HEIGHT - 20
 
     return top + SPACING_SM
-  }, [isModal, top])
+  }, [isModal, isNarrowSidePanel, top])
 
   // Compute dynamic zIndex based on nesting level when the sheet opened
   // Each nested sheet gets a higher zIndex so its backdrop renders on top of parent sheets

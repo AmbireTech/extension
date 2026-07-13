@@ -228,7 +228,7 @@ const EditApproval = ({
       <BottomSheet
         sheetRef={editApprovalsSheetRef}
         id={`edit-approvals-bottom-sheet-${id}`}
-        type={isSidePanel ? 'bottom-sheet' : 'modal'}
+        type={isCompactLayout && isSidePanel ? 'bottom-sheet' : 'modal'}
         closeBottomSheet={closeEditApprovals}
         style={isCompactLayout ? { width: '100%' } : { maxWidth: 460 }}
         shouldBeClosableOnDrag={false}

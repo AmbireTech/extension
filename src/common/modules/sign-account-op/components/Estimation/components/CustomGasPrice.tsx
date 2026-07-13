@@ -12,6 +12,7 @@ import ModalHeader from '@common/components/BottomSheet/ModalHeader'
 import Button from '@common/components/Button'
 import FooterGlassView from '@common/components/FooterGlassView'
 import NumberInput from '@common/components/NumberInput'
+import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { getUiType } from '@common/utils/uiType'
@@ -106,6 +107,8 @@ const CustomGasPrice = ({
   sheetRef
 }: Props) => {
   const { t } = useTranslation()
+  const { isCompactLayout } = useCompactActionRequestLayout()
+  const isNarrowSidePanel = isSidePanel && isCompactLayout
   const [customGasPriceError, setCustomGasPriceError] = useState<string | boolean>(false)
   const gasRef = useRef('')
   const maxFeePerGasRef = useRef('')
@@ -222,14 +225,14 @@ const CustomGasPrice = ({
       id="custom-gas-price-sheet"
       sheetRef={sheetRef}
       closeBottomSheet={closeBottomSheet}
-      type={isSidePanel ? 'bottom-sheet' : 'modal'}
+      type={isNarrowSidePanel ? 'bottom-sheet' : 'modal'}
       animationDuration={0}
       onOpen={resetState}
-      style={isSidePanel ? { width: '100%' } : undefined}
+      style={isNarrowSidePanel ? { width: '100%' } : undefined}
     >
       <ModalHeader title={t('Advanced options')} handleClose={closeBottomSheet} />
-      <View style={isSidePanel ? { gap: 12 } : { flexDirection: 'row', gap: 12 }}>
-        <View style={isSidePanel ? undefined : { flex: 1 }}>
+      <View style={isNarrowSidePanel ? { gap: 12 } : { flexDirection: 'row', gap: 12 }}>
+        <View style={isNarrowSidePanel ? undefined : { flex: 1 }}>
           <CustomGasPriceInput
             initialAmount={initialMaxFeePerGas}
             backgroundColor={backgroundColor}
@@ -240,7 +243,7 @@ const CustomGasPrice = ({
           />
         </View>
         {!!is1559 && (
-          <View style={isSidePanel ? undefined : { flex: 1 }}>
+          <View style={isNarrowSidePanel ? undefined : { flex: 1 }}>
             <CustomGasPriceInput
               initialAmount={initialMaxPriorityFeePerGas}
               backgroundColor={backgroundColor}
@@ -269,7 +272,7 @@ const CustomGasPrice = ({
         size="sm"
         style={spacings.mtLg}
         mobileStyle={{ ...flexbox.directionRow, ...spacings.mtLg }}
-        innerContainerStyle={isSidePanel ? { width: '100%' } : undefined}
+        innerContainerStyle={isNarrowSidePanel ? { width: '100%' } : undefined}
       >
         <Button
           type="secondary"

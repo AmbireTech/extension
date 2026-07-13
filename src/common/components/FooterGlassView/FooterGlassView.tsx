@@ -4,7 +4,7 @@ import { View, ViewStyle } from 'react-native'
 import { useIsInsideBottomSheet } from '@common/components/BottomSheet/BottomSheetContext'
 import GlassView from '@common/components/GlassView'
 import { isMobile } from '@common/config/env'
-import useWindowSize from '@common/hooks/useWindowSize'
+import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import { SPACING, SPACING_MI, SPACING_SM } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { getUiType } from '@common/utils/uiType'
@@ -45,9 +45,8 @@ const FooterGlassView: FC<{
   absolute = true,
   isSimpleBlur
 }) => {
-  const { maxWidthSize } = useWindowSize()
   const isInsideBottomSheet = useIsInsideBottomSheet()
-  const isCompactLayout = isSidePanel && !maxWidthSize('s')
+  const { isCompactLayout } = useCompactActionRequestLayout()
 
   if (isMobile) {
     return (
@@ -57,7 +56,7 @@ const FooterGlassView: FC<{
     )
   }
 
-  if (isInsideBottomSheet && isSidePanel) {
+  if (isInsideBottomSheet && isSidePanel && isCompactLayout) {
     return (
       <View
         style={[
