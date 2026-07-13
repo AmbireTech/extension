@@ -24,7 +24,7 @@ import { getUiType } from '@common/utils/uiType'
 
 type SessionId = ReturnType<typeof nanoid>
 
-const { isPopup, isRequestWindow } = getUiType()
+const { isPopup, isRequestWindow, isSidePanel } = getUiType()
 
 const useSwapAndBridgeForm = () => {
   const {
@@ -109,6 +109,7 @@ const useSwapAndBridgeForm = () => {
   const sessionId = useMemo(() => {
     if (isPopup) return 'popup'
     if (isRequestWindow) return 'request-window'
+    if (isSidePanel) return 'side-panel'
 
     return nanoid()
   }, []) // purposely, so it is unique per hook lifetime
