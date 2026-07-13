@@ -1,11 +1,11 @@
-import React, { useCallback, useEffect, useMemo, useRef } from 'react'
+import React, { Suspense, useCallback, useEffect, useMemo, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 
 import { EstimationStatus } from '@ambire-common/controllers/estimation/types'
-import { SigningStatus } from '@ambire-common/controllers/signAccountOp/signAccountOp'
-import { SwapAndBridgeFormStatus } from '@ambire-common/controllers/swapAndBridge/swapAndBridge'
 import { Key } from '@ambire-common/interfaces/keystore'
+import { SigningStatus } from '@ambire-common/interfaces/signAccountOp'
+import { SwapAndBridgeFormStatus } from '@ambire-common/libs/swapAndBridge/constants'
 import Alert from '@common/components/Alert'
 import { PanelBackButton, PanelTitle } from '@common/components/Panel/Panel'
 import useController from '@common/hooks/useController'
@@ -271,18 +271,20 @@ const SwapAndBridgeScreen = () => {
         />
       </Content>
       <RoutesModal sheetRef={routesModalRef} closeBottomSheet={closeRoutesModal} />
-      <Estimation
-        updateType="Swap&Bridge"
-        estimationModalRef={estimationModalRef}
-        closeEstimationModal={closeEstimationModalWrapped}
-        updateController={updateController}
-        handleUpdateStatus={handleUpdateStatus}
-        hasProceeded={hasProceeded}
-        signAccountOpController={signAccountOpController}
-        serviceFee={quote?.selectedRoute?.serviceFee}
-        shouldShowTxnDetails
-        Modals={Modals}
-      />
+      <Suspense fallback={null}>
+        <Estimation
+          updateType="Swap&Bridge"
+          estimationModalRef={estimationModalRef}
+          closeEstimationModal={closeEstimationModalWrapped}
+          updateController={updateController}
+          handleUpdateStatus={handleUpdateStatus}
+          hasProceeded={hasProceeded}
+          signAccountOpController={signAccountOpController}
+          serviceFee={quote?.selectedRoute?.serviceFee}
+          shouldShowTxnDetails
+          Modals={Modals}
+        />
+      </Suspense>
       <PriceImpactWarningModal
         sheetRef={priceImpactModalRef}
         closeBottomSheet={closePriceImpactModal}

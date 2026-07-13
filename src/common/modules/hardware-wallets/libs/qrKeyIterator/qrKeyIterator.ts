@@ -7,7 +7,7 @@ import {
 } from '@ambire-common/consts/derivation'
 import { KeyIterator as KeyIteratorInterface } from '@ambire-common/interfaces/keyIterator'
 import { ParsedQrAccount } from '@ambire-common/interfaces/keystore'
-import QrHardwareController from '@web/modules/hardware-wallet/controllers/QrHardwareController'
+import QrHardwareController from '@common/modules/hardware-wallets/controllers/QrHardwareController'
 
 import { getRelativePathTemplateFromOrigin, normalizeOriginHdPath } from '../../qr/utils'
 

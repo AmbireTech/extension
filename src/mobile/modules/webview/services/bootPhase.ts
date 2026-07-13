@@ -64,7 +64,7 @@ function buildStateForFE(ctrlName: string, ctrl: any) {
   if (ctrlName === 'MainController') {
     // We are removing the state of the nested controllers in main to avoid the CPU-intensive task of parsing + stringifying.
     // We should access the state of the nested controllers directly from their context instead of accessing them through the main ctrl state on the FE.
-    Object.keys(controllersNestedInMainMapping).forEach((nestedCtrlName) => {
+    controllersNestedInMainMapping.forEach((nestedCtrlName) => {
       delete (stateToSendToFE as any)[nestedCtrlName]
     })
   }
