@@ -1,5 +1,9 @@
 // MUST be first: installs a BigInt-safe structuredClone before any controller
-// code runs. iOS 16's native structuredClone corrupts BigInt-containing
+// code runs. iOS < 17.4's native structuredClone corrupts BigInt-containing
+// portfolio state (see structuredCloneShim.ts), crashing the dashboard. Kept as
+// a bare side-effect import so the editor's organize-imports leaves it in place.
+import './structuredCloneShim'
+
 import { EventEmitter as Emitter } from 'events'
 
 import { EventEmitterRegistryController } from '@ambire-common/controllers/eventEmitterRegistry/eventEmitterRegistry'
@@ -33,8 +37,6 @@ import {
 } from './bootPhase'
 import { decode, encode } from './bridgeCodec'
 import { createBridgedFetch } from './bridgedFetch'
-// portfolio state (see structuredCloneShim.ts), crashing the dashboard.
-import { getStructuredCloneShimStatus } from './structuredCloneShim'
 import { sendToReactEvent } from './webviewLogger'
 
 // Bridge setup
@@ -219,7 +221,7 @@ const initControllers = (config: any) => {
   try {
     // Logged here (not in structuredCloneShim) because that module loads before
     // console forwarding is wired up, so its logs never reach Metro.
-    console.log(getStructuredCloneShimStatus())
+    console.log((globalThis as any).__structuredCloneShimStatus)
 
     // PERF: seed the storage cache BEFORE constructing controllers, so their
     // initial-load storage reads hit the in-memory cache instead of the bridge.
