@@ -1,7 +1,8 @@
 // GENERATED — do not edit by hand.
-// Source: nanox-ambire-signer.zip -> bin/app.apdu (Ambire Signer v1.21.0-dev, Nano X).
+// Source: ambire_signer_builds.zip -> nanox/bin/app.apdu (Ambire Signer, Nano X).
 // Plaintext BOLOS load script: one hex-encoded APDU per line. See ../ledgerAppLoader.ts.
-// Productionize: ship per-model .apdu as a fetched web-accessible asset instead?
+// ponytail: bundled as a source string. Move to a fetched per-model asset if bundle size matters.
+/* eslint-disable */
 export const AMBIRE_SIGNER_NANO_X_APDU = `
 e00000000f0c0d416d62697265205369676e6572
 e0000000160b1a0001980000000100000000a100000a0000000001
