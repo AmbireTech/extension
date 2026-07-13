@@ -206,7 +206,7 @@ const Account = ({
                   {account.preferences.label}
                 </Text>
                 {!!withKeyType && (
-                  <View style={[isWeb && spacings.mlMi]}>
+                  <View style={[spacings.mlMi]}>
                     <AccountKeyIcons isExtended account={account} />
                   </View>
                 )}
