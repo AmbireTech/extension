@@ -1,7 +1,6 @@
 import React, { FC } from 'react'
 import { Animated, Pressable, View } from 'react-native'
 
-import { TokenResult } from '@ambire-common/libs/portfolio'
 import Text from '@common/components/Text'
 import Tooltip from '@common/components/Tooltip'
 import { isMobile, isWeb } from '@common/config/env'
@@ -20,6 +19,7 @@ const DESKTOP_ICON_AREA_HEIGHT = 52
 const COMPACT_LABEL_AREA_HEIGHT = 28
 const DESKTOP_LABEL_AREA_HEIGHT = 32
 
+import type { TokenResult } from '@ambire-common/libs/portfolio'
 interface Props {
   id: string
   text: string

@@ -114,9 +114,7 @@ describe('getVisibleErc7730Rows', () => {
       ]
     }
 
-    expect(getVisibleErc7730Rows(visualization).map((row) => row.label)).toEqual([
-      'Amount to Send'
-    ])
+    expect(getVisibleErc7730Rows(visualization).map((row) => row.label)).toEqual(['Amount to Send'])
   })
 
   test('keeps nonzero beneficiary rows', () => {

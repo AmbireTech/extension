@@ -4,10 +4,7 @@ import { useModalize } from 'react-native-modalize'
 
 import { EstimationStatus } from '@ambire-common/controllers/estimation/types'
 import { SignAccountOpType } from '@ambire-common/controllers/signAccountOp/helper'
-import {
-  SignAccountOpUpdateProps,
-  SigningStatus
-} from '@ambire-common/controllers/signAccountOp/signAccountOp'
+import { SigningStatus } from '@ambire-common/interfaces/signAccountOp'
 import { Key } from '@ambire-common/interfaces/keystore'
 import { ISignAccountOpController } from '@ambire-common/interfaces/signAccountOp'
 import useController from '@common/hooks/useController'
@@ -18,6 +15,7 @@ import useQrSigningFlow from '@common/modules/hardware-wallets/hooks/useQrSignin
 import { OneClickEstimationProps } from '@common/modules/sign-account-op/components/OneClick/Estimation/Estimation'
 import { getIsSignLoading } from '@web/modules/sign-account-op/utils/helpers'
 
+import type { SignAccountOpUpdateProps } from '@ambire-common/controllers/signAccountOp/signAccountOp'
 type ButtonMode = OneClickEstimationProps['updateType'] | 'Sign' | 'HW' | 'Safe'
 
 const PRIMARY_BUTTON_LABELS: Record<
@@ -206,7 +204,7 @@ const useSign = ({
     []
   )
 
-  const handleQrSingingFlowOnContinuePressed = moveToResponseScan
+  const handleQrSigningFlowOnContinuePressed = moveToResponseScan
   const handleQrSigningFlowOnBackPressed = moveBack
   const handleQrSigningFlowSubmitSignatureResponse = submitSignatureResponse
 
@@ -319,7 +317,11 @@ const useSign = ({
         return
       }
 
-      if ((signAccountOpState?.feePayerKeyStoreKeys?.length || 0) > 1 && !isFeePayerSameAsSigner) {
+      if (
+        !signAccountOpState?.account.safeCreation &&
+        (signAccountOpState?.feePayerKeyStoreKeys?.length || 0) > 1 &&
+        !isFeePayerSameAsSigner
+      ) {
         setIsChooseFeePayerKeyShown(true)
         return
       }
@@ -336,6 +338,7 @@ const useSign = ({
       signAccountOpState?.accountOp.signingKeyAddr,
       signAccountOpState?.accountOp.gasFeePayment?.paidBy,
       signAccountOpState?.feePayerKeyStoreKeys?.length,
+      signAccountOpState?.account.safeCreation,
       signAccountOpState?.accountOp.signingKeyType,
       signAccountOpState?.accountOp.gasFeePayment?.paidByKeyType,
       warningToPromptBeforeSign,
@@ -637,7 +640,7 @@ const useSign = ({
     setIsChooseFeePayerKeyShown,
     shouldHoldToProceed: !!signAccountOpState?.banners?.length,
     shouldDisplayQrSigningModal,
-    handleQrSingingFlowOnContinuePressed,
+    handleQrSigningFlowOnContinuePressed,
     handleQrSigningFlowSubmitSignatureResponse,
     handleQrSigningFlowOnClosePressed,
     handleQrSigningFlowOnRejectPressed,

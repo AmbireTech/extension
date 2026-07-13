@@ -22,7 +22,6 @@ import {
 import { AccountOpStatus } from '@ambire-common/libs/accountOp/types'
 import { getAccountsForDapp } from '@ambire-common/libs/dapps/helpers'
 import { networkChainIdToHex } from '@ambire-common/libs/networks/networks'
-import { TokenResult } from '@ambire-common/libs/portfolio'
 import { getBenzinUrlParams } from '@ambire-common/utils/benzin'
 import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
 import { APP_VERSION } from '@common/config/env'
@@ -31,6 +30,7 @@ import { metadata } from '@common/modules/provider/metadata'
 import { RequestRes, Web3WalletPermission } from '@common/modules/provider/types'
 import { openInTab } from '@common/utils/links'
 
+import type { TokenResult } from '@ambire-common/libs/portfolio'
 type ProviderRequest = DappProviderRequest & { requestRes: RequestRes }
 
 // Derive the connection source from the session, mirroring rpcFlow.ts: WC sessions carry a

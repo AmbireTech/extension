@@ -10,7 +10,7 @@ const TrezorBadgeIcon: React.FC<SvgProps> = ({ width = 24, height = 24, color, .
 
   return (
     <Svg width={width} height={height} viewBox="0 0 24 24" fill="none" {...rest}>
-      <Mask id={maskId} maskUnits="userSpaceOnUse">
+      <Mask id={maskId} maskUnits="userSpaceOnUse" x="0" y="0" width="24" height="24">
         <Circle cx="12" cy="12" r="10" fill="white" />
         <Path
           stroke="black"

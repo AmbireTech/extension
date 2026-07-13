@@ -5,7 +5,7 @@ import { Network } from '@ambire-common/interfaces/network'
 import NetworkIcon from '@common/components/NetworkIcon'
 import Text from '@common/components/Text'
 import useTheme from '@common/hooks/useTheme'
-import { sizeMultiplier } from '@common/modules/sign-account-op/components/TransactionSummary'
+import { sizeMultiplier } from '@common/modules/sign-account-op/components/TransactionSummary/sizeMultiplier'
 import spacings from '@common/styles/spacings'
 
 import {

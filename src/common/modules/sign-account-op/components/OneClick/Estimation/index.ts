@@ -1,3 +1,3 @@
-import OneClickEstimation from './Estimation'
+import { lazy } from 'react'
 
-export default OneClickEstimation
+export default lazy(() => import('./Estimation'))

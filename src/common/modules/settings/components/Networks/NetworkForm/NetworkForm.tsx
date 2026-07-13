@@ -1,16 +1,19 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { Controller, useForm } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
-import { Pressable, View, ViewStyle } from 'react-native'
+import { Image, ImageSourcePropType, Pressable, View, ViewStyle } from 'react-native'
 
+import { isColibriProviderAvailable } from '@ambire-common/libs/networks/colibri'
 import { getFeatures } from '@ambire-common/libs/networks/networks'
 import { getRpcProvider } from '@ambire-common/services/provider'
 import { isValidURL } from '@ambire-common/services/validations'
+import colibriLogo from '@common/assets/images/colibri-logo.png'
 import CopyIcon from '@common/assets/svg/CopyIcon'
 import DownArrowIcon from '@common/assets/svg/DownArrowIcon'
 import UpArrowIcon from '@common/assets/svg/UpArrowIcon'
 import WarningIcon from '@common/assets/svg/WarningIcon'
 import Button from '@common/components/Button'
+import Checkbox from '@common/components/Checkbox'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import Input from '@common/components/Input'
 import NetworkAvailableFeatures from '@common/components/NetworkAvailableFeatures'
@@ -74,8 +77,9 @@ export const RpcSelectorItem = React.memo(
       try {
         await setStringAsync(url)
         addToast(t('Copied to clipboard!'), { timeout: 2500 })
-      } catch (error) {
+      } catch (e) {
         addToast(t('Failed to copy to clipboard'), { type: 'error' })
+        console.log('Copy failed', e)
       }
     }, [addToast, t, url])
 
@@ -209,7 +213,8 @@ const NetworkForm = ({
       explorerUrl: '',
       coingeckoPlatformId: '',
       coingeckoNativeAssetId: '',
-      customBundlerUrl: ''
+      customBundlerUrl: '',
+      isColibriEnabled: false
     },
     values: {
       name: selectedNetwork?.name || '',
@@ -220,7 +225,8 @@ const NetworkForm = ({
       explorerUrl: selectedNetwork?.explorerUrl || '',
       coingeckoPlatformId: (selectedNetwork?.platformId as string) || '',
       coingeckoNativeAssetId: (selectedNetwork?.nativeAssetId as string) || '',
-      customBundlerUrl: (selectedNetwork?.customBundlerUrl as string) || ''
+      customBundlerUrl: (selectedNetwork?.customBundlerUrl as string) || '',
+      isColibriEnabled: !!selectedNetwork?.isColibriEnabled
     }
   })
   const [rpcUrls, setRpcUrls] = useState(selectedNetwork?.rpcUrls || [])
@@ -243,6 +249,16 @@ const NetworkForm = ({
           : selectedNetwork?.features || getFeatures(undefined, selectedNetwork),
     [errors.chainId, networkToAddOrUpdate?.info, selectedNetwork]
   )
+  const isColibriAvailable = useMemo(() => {
+    try {
+      return (
+        !!networkFormValues.chainId && isColibriProviderAvailable(BigInt(networkFormValues.chainId))
+      )
+    } catch {
+      return false
+    }
+  }, [networkFormValues.chainId])
+  const shouldShowColibriSettings = isColibriAvailable
 
   useEffect(() => {
     networksDispatch({
@@ -377,7 +393,11 @@ const NetworkForm = ({
     // when resetting the form.
     const subscription = watch(async (value, { name }) => {
       if (name && !value[name]) {
-        if (name !== 'rpcUrl' && name !== 'customBundlerUrl') {
+        if (
+          name !== 'rpcUrl' &&
+          name !== 'customBundlerUrl' &&
+          name !== 'isColibriEnabled'
+        ) {
           setError(name, { type: 'custom-error', message: 'Field is required' })
           return
         }
@@ -490,7 +510,8 @@ const NetworkForm = ({
               'rpcUrls',
               'coingeckoPlatformId',
               'coingeckoNativeAssetId',
-              'customBundlerUrl'
+              'customBundlerUrl',
+              'isColibriEnabled'
             ].includes(key) && !formFields[key].length
         )
       } else {
@@ -511,6 +532,8 @@ const NetworkForm = ({
 
       if (emptyFields.length || !rpcUrls.length || !selectedRpcUrl) return
 
+      const isColibriEnabled = !!networkFormValues.isColibriEnabled && shouldShowColibriSettings
+
       if (selectedChainId === 'add-custom-network') {
         networksDispatch({
           type: 'method',
@@ -527,7 +550,8 @@ const NetworkForm = ({
                 selectedRpcUrl,
                 chainId: BigInt(networkFormValues.chainId),
                 iconUrls: [],
-                customBundlerUrl: networkFormValues.customBundlerUrl
+                customBundlerUrl: networkFormValues.customBundlerUrl,
+                isColibriEnabled
               }
             ]
           }
@@ -542,7 +566,8 @@ const NetworkForm = ({
                 rpcUrls,
                 selectedRpcUrl,
                 explorerUrl: networkFormValues.explorerUrl,
-                customBundlerUrl: networkFormValues.customBundlerUrl
+                customBundlerUrl: networkFormValues.customBundlerUrl,
+                isColibriEnabled
               },
               BigInt(networkFormValues.chainId)
             ]
@@ -841,7 +866,8 @@ const NetworkForm = ({
                 <ScrollableWrapper
                   style={[
                     styles.rpcUrlsContainer,
-                    // @ts-ignore
+                    // @ts-expect-error the ScrollableWrapper expects ViewStyle
+                    // but the below style is legit as well
                     { flex: 'unset', minHeight: rpcUrls.length > 1 ? 80 : 40 }
                   ]}
                   contentContainerStyle={{ flexGrow: 1, paddingBottom: 0 }}
@@ -902,6 +928,34 @@ const NetworkForm = ({
                   />
                 </View>
               )}
+              {shouldShowColibriSettings && (
+                <Controller
+                  control={control}
+                  render={({ field: { onChange, value } }) => (
+                    <Checkbox
+                      value={!!value}
+                      style={flexbox.alignCenter}
+                      onValueChange={onChange}
+                    >
+                      <Pressable
+                        style={[flexbox.directionRow, flexbox.alignCenter]}
+                        onPress={() => onChange(!value)}
+                      >
+                        <Image
+                          source={colibriLogo as ImageSourcePropType}
+                          style={{ width: 22, height: 22, marginRight: 8 }}
+                          resizeMode="contain"
+                        />
+                        <Text appearance="secondaryText" fontSize={12} shouldScale={false}>
+                          {t('Enable Colibri for RPC verification')}
+                        </Text>
+                      </Pressable>
+                    </Checkbox>
+                  )}
+                  name="isColibriEnabled"
+                />
+              )}
+
               <View style={[flexbox.directionRow, flexbox.alignStart]}>
                 <Controller
                   control={control}
@@ -997,7 +1051,7 @@ const NetworkForm = ({
                             />
                             <Tooltip
                               id="customBundlerId"
-                              content="The custom bundler is an experimental feature. The extension might not work well with it. Proceed with caution"
+                              content="The custom bundler is an experimental feature. The extension may not work well with it. Proceed with caution"
                             />
                           </>
                         )
@@ -1039,7 +1093,7 @@ const NetworkForm = ({
                   <Button
                     onPress={onCancel}
                     text={t('Cancel')}
-                    type="gray"
+                    type="outline"
                     hasBottomSpacing={false}
                     style={[
                       flexbox.flex1,

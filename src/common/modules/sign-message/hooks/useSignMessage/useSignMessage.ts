@@ -5,10 +5,7 @@ import { Key } from '@ambire-common/interfaces/keystore'
 import { SignMessageStatus } from '@ambire-common/interfaces/signMessage'
 import { isSmartAccount } from '@ambire-common/libs/account/account'
 import { humanizeMessage } from '@ambire-common/libs/humanizer'
-import {
-  EIP_1271_NOT_SUPPORTED_BY,
-  toPersonalSignHex
-} from '@ambire-common/libs/signMessage/signMessage'
+import { EIP_1271_NOT_SUPPORTED_BY, toPersonalSignHex } from '@ambire-common/libs/signMessage/utils'
 import useController from '@common/hooks/useController'
 import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useDappInfo from '@common/hooks/useDappInfo/useDappInfo'

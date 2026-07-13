@@ -5,7 +5,6 @@ import { View } from 'react-native'
 
 import { SupportedNetworks } from '@ambire-common/interfaces/network'
 import { SwapAndBridgeToToken } from '@ambire-common/interfaces/swapAndBridge'
-import { TokenResult } from '@ambire-common/libs/portfolio'
 import { getIsTokenEligibleForSwapAndBridge } from '@ambire-common/libs/swapAndBridge/swapAndBridge'
 import shortenAddress from '@ambire-common/utils/shortenAddress'
 import BatchIcon from '@common/assets/svg/BatchIcon'
@@ -24,6 +23,7 @@ import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { getTokenId } from '@common/utils/token'
 
+import type { TokenResult } from '@ambire-common/libs/portfolio'
 const TextFallbackState: React.FC<{ children: React.ReactNode }> = ({ children }) => (
   <Text fontSize={14} appearance="secondaryText" style={spacings.plTy}>
     {children}
