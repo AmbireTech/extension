@@ -7,7 +7,7 @@ import { Action, MethodAction } from '@common/types/actions'
 import { storage } from '@common/services/storage'
 import { browser } from '@web/constants/browserapi'
 import { openSidePanel } from '@web/extension-services/background/webapi/sidePanel'
-import { Port, PortMessenger } from '@web/extension-services/messengers'
+import { MessageMeta, Port, PortMessenger } from '@web/extension-services/messengers'
 import LatticeKeyIterator from '@web/modules/hardware-wallet/libs/latticeKeyIterator'
 import LedgerKeyIterator from '@web/modules/hardware-wallet/libs/ledgerKeyIterator'
 import QrKeyIterator from '@web/modules/hardware-wallet/libs/qrKeyIterator/qrKeyIterator'
@@ -26,12 +26,14 @@ export const handleActions = async (
     eventEmitterRegistry,
     mainCtrl,
     pm,
-    port
+    port,
+    meta
   }: {
     eventEmitterRegistry: IEventEmitterRegistryController
     mainCtrl: MainController
     pm?: PortMessenger
     port?: Port
+    meta?: MessageMeta
   }
 ) => {
   // @ts-ignore
@@ -237,10 +239,30 @@ export const handleActions = async (
 
       const isSidePanelModeEnabled = await storage.get('isSidePanelModeEnabled', false)
       const overlayPortName = isSidePanelModeEnabled ? 'side-panel' : 'popup'
+      const targetWindowId = meta?.windowId ?? port?.sender?.tab?.windowId
+
+      const getOverlayPort = () => pm!.ports.find((p) => p.name === overlayPortName)
+
+      const focusOverlay = async () => {
+        if (isSidePanelModeEnabled) {
+          await openSidePanel(targetWindowId)
+          return
+        }
+
+        await browser.action.openPopup()
+      }
+
+      const navigateOverlayToDashboard = async () => {
+        const overlayPort = getOverlayPort()
+        if (!overlayPort) return
+
+        pm!.sendToPort(overlayPort, '> ui', { method: 'navigate', params: { route: '/' } })
+        await mainCtrl.onPopupOpen(overlayPort.id)
+      }
 
       async function waitForOverlayOpen(timeout = 10000, interval = 100) {
         const startTime = Date.now()
-        while (!pm!.ports.some((p) => p.name === overlayPortName)) {
+        while (!getOverlayPort()) {
           if (Date.now() - startTime > timeout) break
           await wait(interval)
         }
@@ -248,23 +270,23 @@ export const handleActions = async (
 
       try {
         const isLoading = await sessionStorage.get('isOpenExtensionPopupLoading', false)
-        const isOverlayAlreadyOpened = pm.ports.some((p) => p.name === overlayPortName)
-        if (isLoading || isOverlayAlreadyOpened) return
+        if (isLoading) return
+
+        const overlayPort = getOverlayPort()
+        if (overlayPort && isSidePanelModeEnabled) {
+          await focusOverlay()
+          await navigateOverlayToDashboard()
+          return
+        }
+
+        if (overlayPort) return
 
         await sessionStorage.set('isOpenExtensionPopupLoading', true)
-        if (isSidePanelModeEnabled) {
-          await openSidePanel()
-        } else {
-          await browser.action.openPopup()
-        }
+        await focusOverlay()
         await waitForOverlayOpen()
       } catch (error) {
         try {
-          if (isSidePanelModeEnabled) {
-            await openSidePanel()
-          } else {
-            await chrome.action.openPopup()
-          }
+          await focusOverlay()
           await waitForOverlayOpen()
         } catch (e) {
           pm.send('> ui', { method: 'navigate', params: { route: '/' } })

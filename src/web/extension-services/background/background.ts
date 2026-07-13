@@ -694,7 +694,7 @@ const init = async () => {
 
             try {
               if (messageType === '> background' && type) {
-                await handleActions(action, { pm, port, eventEmitterRegistry, mainCtrl })
+                await handleActions(action, { pm, port, eventEmitterRegistry, mainCtrl, meta })
               }
             } catch (err: any) {
               console.error(`${type} action failed:`, err)

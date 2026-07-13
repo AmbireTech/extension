@@ -14,15 +14,21 @@ export const applySidePanelMode = async (enabled: boolean) => {
   }
 }
 
-export const openSidePanel = async () => {
+export const openSidePanel = async (windowId?: number) => {
   const sidePanelApi = getChromeSidePanelApi()
   if (!sidePanelApi) return
 
   try {
-    const [activeTab] = await chrome.tabs.query({ active: true, currentWindow: true })
-    if (!activeTab?.windowId) return
+    let resolvedWindowId = windowId
 
-    await sidePanelApi.open({ windowId: activeTab.windowId })
+    if (!resolvedWindowId) {
+      const [activeTab] = await chrome.tabs.query({ active: true, currentWindow: true })
+      resolvedWindowId = activeTab?.windowId
+    }
+
+    if (!resolvedWindowId) return
+
+    await sidePanelApi.open({ windowId: resolvedWindowId })
   } catch (error) {
     console.error('Failed to open side panel', error)
   }
