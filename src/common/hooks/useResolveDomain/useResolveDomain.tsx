@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef } from 'react'
+import { useCallback, useEffect, useRef } from 'react'
 
 import { NameServiceId } from '@ambire-common/services/nameResolvers'
 import useController from '@common/hooks/useController'
@@ -19,9 +19,6 @@ const useResolveDomain = () => {
     state: { domainToAddresses, resolveDomainsErrors, resolveDomainsStatus },
     dispatch
   } = useController('DomainsController')
-  const {
-    state: { networks }
-  } = useController('NetworksController')
 
   const requests = useRef<Record<string, Resolver>>({})
 
@@ -43,10 +40,6 @@ const useResolveDomain = () => {
       }
     })
   }, [domainToAddresses, resolveDomainsErrors, resolveDomainsStatus])
-
-  const isNamoshiAvailable = useMemo(() => {
-    return networks.some((network) => network.chainId === 4114n)
-  }, [networks])
 
   const handleResolveDomain = useCallback(
     ({
@@ -76,8 +69,7 @@ const useResolveDomain = () => {
   )
 
   return {
-    resolveDomain: handleResolveDomain,
-    isNamoshiAvailable
+    resolveDomain: handleResolveDomain
   }
 }
 

@@ -78,10 +78,7 @@ const SendForm = ({
   const { networks } = useController('NetworksController').state
   const { verifiedDomainsStatus } = useController('DomainsController').state
   const domainVerificationMessage =
-    addressState.resolvedAddressType === 'ens' &&
-    verifiedDomainsStatus[addressStateFieldValue.trim()] === 'VERIFIED'
-      ? 'Verified by Colibri'
-      : ''
+    verifiedDomainsStatus[addressStateFieldValue.trim()] === 'VERIFIED' ? 'Verified by Colibri' : ''
 
   const [gasTankAssets, setGasTankAssets] = useState<
     { chainId?: number; address?: string; symbol?: string }[] | null
