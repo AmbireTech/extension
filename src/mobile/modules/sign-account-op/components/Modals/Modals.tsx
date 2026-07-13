@@ -31,7 +31,7 @@ const Modals: FC<ModalsProps> = ({
   shouldDisplayLedgerConnectModal,
   handleDismissLedgerConnectModal,
   shouldDisplayQrSigningModal,
-  handleQrSingingFlowOnContinuePressed,
+  handleQrSigningFlowOnContinuePressed,
   handleQrSigningFlowSubmitSignatureResponse,
   handleQrSigningFlowOnClosePressed,
   handleQrSigningFlowOnRejectPressed,
@@ -145,7 +145,7 @@ const Modals: FC<ModalsProps> = ({
       <QrSigningFlowScreen
         handleClose={handleQrSigningFlowOnClosePressed}
         isVisible={shouldDisplayQrSigningModal}
-        onContinue={handleQrSingingFlowOnContinuePressed}
+        onContinue={handleQrSigningFlowOnContinuePressed}
         currentRequest={currentRequest}
         signingStep={signingStep}
         signingRequest={signAccountOpState?.hardwareWalletSigningRequest}

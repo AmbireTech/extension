@@ -4,14 +4,14 @@ import { useTranslation } from 'react-i18next'
 import BottomSheet from '@common/components/BottomSheet'
 import DualChoiceWarningModal from '@common/components/DualChoiceWarningModal'
 import useController from '@common/hooks/useController'
+import LedgerConnectModal from '@common/modules/hardware-wallets/components/LedgerConnectModal'
+import QrSigningFlowScreen from '@common/modules/hardware-wallets/screens/QrSigningFlowScreen'
 import GasFeeUpdatedModal from '@common/modules/sign-account-op/components/GasFeeUpdatedModal/GasFeeUpdatedModal'
 import SignAccountOpHardwareWalletSigningModal from '@common/modules/sign-account-op/components/SignAccountOpHardwareWalletSigningModal'
 import { ModalsProps } from '@common/modules/sign-account-op/types/modals'
 import spacings from '@common/styles/spacings'
 import text from '@common/styles/utils/text'
 import { getUiType } from '@common/utils/uiType'
-import LedgerConnectModal from '@common/modules/hardware-wallets/components/LedgerConnectModal'
-import QrSigningFlowScreen from '@common/modules/hardware-wallets/screens/QrSigningFlowScreen'
 
 const { isTab, isRequestWindow } = getUiType()
 
@@ -28,7 +28,7 @@ const Modals: FC<ModalsProps> = ({
   shouldDisplayLedgerConnectModal,
   handleDismissLedgerConnectModal,
   shouldDisplayQrSigningModal,
-  handleQrSingingFlowOnContinuePressed,
+  handleQrSigningFlowOnContinuePressed,
   handleQrSigningFlowSubmitSignatureResponse,
   handleQrSigningFlowOnClosePressed,
   handleQrSigningFlowOnRejectPressed,
@@ -149,7 +149,7 @@ const Modals: FC<ModalsProps> = ({
       <QrSigningFlowScreen
         handleClose={handleQrSigningFlowOnClosePressed}
         isVisible={shouldDisplayQrSigningModal}
-        onContinue={handleQrSingingFlowOnContinuePressed}
+        onContinue={handleQrSigningFlowOnContinuePressed}
         currentRequest={currentRequest}
         signingStep={signingStep}
         signingRequest={signAccountOpState?.hardwareWalletSigningRequest}

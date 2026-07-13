@@ -206,7 +206,7 @@ const useSign = ({
     []
   )
 
-  const handleQrSingingFlowOnContinuePressed = moveToResponseScan
+  const handleQrSigningFlowOnContinuePressed = moveToResponseScan
   const handleQrSigningFlowOnBackPressed = moveBack
   const handleQrSigningFlowSubmitSignatureResponse = submitSignatureResponse
 
@@ -642,7 +642,7 @@ const useSign = ({
     setIsChooseFeePayerKeyShown,
     shouldHoldToProceed: !!signAccountOpState?.banners?.length,
     shouldDisplayQrSigningModal,
-    handleQrSingingFlowOnContinuePressed,
+    handleQrSigningFlowOnContinuePressed,
     handleQrSigningFlowSubmitSignatureResponse,
     handleQrSigningFlowOnClosePressed,
     handleQrSigningFlowOnRejectPressed,
