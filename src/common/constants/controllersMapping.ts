@@ -30,6 +30,7 @@ import type { TransferController } from '@ambire-common/controllers/transfer/tra
 import type { UiController } from '@ambire-common/controllers/ui/ui'
 import type { AutoLockController } from '@common/controllers/auto-lock'
 import type { WalletStateController } from '@common/controllers/wallet-state'
+import type { VerificationController } from '@ambire-common/controllers/verification/verification'
 import { createExhaustiveArray } from '@common/utils/createExhaustiveArray'
 import QrHardwareController from '@web/modules/hardware-wallet/controllers/QrHardwareController'
 
@@ -66,6 +67,7 @@ export type ControllersNestedInMainMappingType = {
   ContractInfoController: ContractInfoController
   SurveyController: SurveyController
   DebugController: DebugController
+  VerificationController: VerificationController
 
   // Add the rest of the controllers that are part of the main controller:
   // - key is the name of the controller
@@ -103,7 +105,8 @@ export const controllersNestedInMainMapping =
     'QrHardwareController',
     'ContractInfoController',
     'SurveyController',
-    'DebugController'
+    'DebugController',
+    'VerificationController'
   ] as const)
 
 export type AllControllersMappingType = {

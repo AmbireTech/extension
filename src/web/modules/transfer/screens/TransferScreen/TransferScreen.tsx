@@ -12,7 +12,7 @@ import { CallsUserRequest, RequestExecutionType } from '@ambire-common/interface
 import { AccountOpStatus } from '@ambire-common/libs/accountOp/types'
 import { getSanitizedAmount } from '@ambire-common/libs/transfer/amount'
 import { getBenzinUrlParams } from '@ambire-common/utils/benzin'
-import { getAddressFromAddressState } from '@ambire-common/utils/domains'
+import { getAddressFromAddressState, getDomainFromAddressState } from '@ambire-common/utils/domains'
 import { getCallsCount } from '@ambire-common/utils/userRequest'
 import Alert from '@common/components/Alert'
 import { PanelBackButton, PanelTitle } from '@common/components/Panel/Panel'
@@ -50,6 +50,7 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
   const { addToast } = useToast()
   const { state: transferState, dispatch: transferDispatch } = useController('TransferController')
   const { dispatch: requestsDispatch } = useController('RequestsController')
+  const { verifiedDomainsStatus } = useController('DomainsController').state
   const {
     isTopUp,
     validationFormMsgs,
@@ -270,7 +271,7 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
     [transferDispatch]
   )
 
-  // Used to resolve ENS, not to update the field value
+  // Used to resolve ENS and keep the controller in sync with the resolved field value
   const setAddressState = useCallback(
     (newPartialAddressState: AddressStateOptional) => {
       transferDispatch({
@@ -301,7 +302,8 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
     },
     overwriteValidationFieldValue: addressState.fieldValue,
     setAddressState,
-    overwriteValidation: validationFormMsgs.recipientAddress
+    overwriteValidation: validationFormMsgs.recipientAddress,
+    isDomainVerifiedByColibri: verifiedDomainsStatus[addressStateFieldValue.trim()] === 'VERIFIED'
   })
 
   /**
@@ -379,7 +381,8 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
                       recipientAddress: isTopUp
                         ? FEE_COLLECTOR
                         : getAddressFromAddressState(addressState),
-                      executionType
+                      executionType,
+                      recipientDomain: getDomainFromAddressState(addressState)
                     }
                   }
                 ]
@@ -407,7 +410,8 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
                   recipientAddress: isTopUp
                     ? FEE_COLLECTOR
                     : getAddressFromAddressState(addressState),
-                  executionType
+                  executionType,
+                  recipientDomain: getDomainFromAddressState(addressState)
                 }
               }
             ]

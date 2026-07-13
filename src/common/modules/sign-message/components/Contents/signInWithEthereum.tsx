@@ -17,16 +17,15 @@ import useController from '@common/hooks/useController'
 import useResponsiveActionWindow from '@common/hooks/useResponsiveActionWindow'
 import useTheme from '@common/hooks/useTheme'
 import HardwareWalletSigningModal from '@common/modules/hardware-wallets/components/HardwareWalletSigningModal'
+import LedgerConnectModal from '@common/modules/hardware-wallets/components/LedgerConnectModal'
 import Info from '@common/modules/sign-message/components/Info'
 import spacings, { SPACING, SPACING_LG, SPACING_MD, SPACING_SM } from '@common/styles/spacings'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
-import { MobileLayoutWrapperMainContent } from '@mobile/components/MobileLayoutWrapper'
-import { TabLayoutWrapperMainContent } from '@web/components/TabLayoutWrapper'
-import LedgerConnectModal from '@web/modules/hardware-wallet/components/LedgerConnectModal'
-import { QrSigningStep } from '@web/modules/hardware-wallet/qr/types'
-import QrSigningFlowScreen from '@web/modules/hardware-wallet/screens/QrSigningFlowScreen'
-import getStyles from '@web/modules/sign-message/screens/SignMessageScreen/styles'
+import MessageContentLayout from './MessageContentLayout'
+import { QrSigningStep } from '@common/modules/hardware-wallets/qr/types'
+import QrSigningFlowScreen from '@common/modules/hardware-wallets/screens/QrSigningFlowScreen'
+import getStyles from './styles'
 
 interface Props {
   shouldDisplayLedgerConnectModal: boolean
@@ -99,15 +98,9 @@ const Row = ({
   )
 }
 
-const Container = ({ children }: { children: React.ReactNode }) => {
-  if (isMobile)
-    return (
-      <MobileLayoutWrapperMainContent contentContainerStyle={spacings.ph0}>
-        {children}
-      </MobileLayoutWrapperMainContent>
-    )
-  return <TabLayoutWrapperMainContent style={spacings.mbLg}>{children}</TabLayoutWrapperMainContent>
-}
+const Container = ({ children }: { children: React.ReactNode }) => (
+  <MessageContentLayout webStyle={spacings.mbLg}>{children}</MessageContentLayout>
+)
 
 const SignInWithEthereum = ({
   shouldDisplayLedgerConnectModal,

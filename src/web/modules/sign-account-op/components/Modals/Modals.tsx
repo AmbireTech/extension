@@ -13,10 +13,10 @@ import { getUiType } from '@common/utils/uiType'
 
 // Lazy to not load HW libraries
 const LedgerConnectModal = lazy(
-  () => import('@web/modules/hardware-wallet/components/LedgerConnectModal')
+  () => import('@common/modules/hardware-wallets/components/LedgerConnectModal')
 )
 const QrSigningFlowScreen = lazy(
-  () => import('@web/modules/hardware-wallet/screens/QrSigningFlowScreen')
+  () => import('@common/modules/hardware-wallets/screens/QrSigningFlowScreen')
 )
 
 const { isTab, isRequestWindow } = getUiType()

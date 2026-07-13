@@ -635,11 +635,6 @@ const Estimation = ({
         renderSectionHeader={renderFeeOptionSectionHeader}
         containerStyle={spacings.mb0}
         value={payValue || NO_FEE_OPTIONS}
-        disabled={
-          disabled ||
-          (!payOptionsPaidByUsOrGasTank.length && !payOptionsPaidByEOA.length) ||
-          !signAccountOpState.selectedOption
-        }
         selectStyle={{
           backgroundColor:
             isOneClick || isMobile ? theme.secondaryBackground : theme.primaryBackground,
