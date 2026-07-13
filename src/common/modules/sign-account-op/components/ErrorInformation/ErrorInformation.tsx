@@ -1,16 +1,7 @@
-import { Interface } from 'ethers'
 import { setStringAsync } from 'expo-clipboard'
 import React, { useCallback, useMemo } from 'react'
 import { View } from 'react-native'
-import { v4 as uuidv4 } from 'uuid'
 
-import AmbireAccount from '@ambire-common/../contracts/compiled/AmbireAccount.json'
-import AmbireFactory from '@ambire-common/../contracts/compiled/AmbireFactory.json'
-import { execTransactionAbi } from '@ambire-common/consts/safe'
-import { DEPLOYLESS_SIMULATION_FROM } from '@ambire-common/consts/deploy'
-import { getSpoof } from '@ambire-common/libs/account/account'
-import { getSignableCalls } from '@ambire-common/libs/accountOp/accountOp'
-import { getSafeTxn } from '@ambire-common/libs/safe/safe'
 import { getErrorCodeStringFromReason } from '@ambire-common/libs/errorDecoder/helpers'
 import CopyIcon from '@common/assets/svg/CopyIcon'
 import AlertVertical from '@common/components/AlertVertical'
@@ -19,6 +10,7 @@ import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
+import { getTenderlySimulationLink } from '@common/modules/sign-account-op/helpers/tenderlySimulation'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
@@ -39,144 +31,12 @@ const ErrorInformation = () => {
     ]
   }, [signAccountOpState, accountStates])
 
-  const estimationUsesStateOverrides = useMemo(() => {
-    if (!signAccountOpState || !!signAccountOpState.account.safeCreation || !state) return false
-
-    return state.isEOA && !state.isSmarterEoa && signAccountOpState.accountOp.calls.length > 1
-  }, [signAccountOpState, state])
-
   const tenderlyLink = useMemo(() => {
-    try {
-      if (
-        !signAccountOpState ||
-        !signAccountOpState.accountOp.calls.length ||
-        !state ||
-        estimationUsesStateOverrides
-      )
-        return null
-
-      let params
-
-      if (signAccountOpState.account.creation || state.isSmarterEoa) {
-        if (signAccountOpState.account.creation && !state.isDeployed) {
-          const ambireFactory = new Interface(AmbireFactory.abi)
-          const executeData = ambireFactory.encodeFunctionData('deployAndExecute', [
-            signAccountOpState.account.creation.bytecode,
-            signAccountOpState.account.creation.salt,
-            getSignableCalls(signAccountOpState.accountOp),
-            getSpoof(signAccountOpState.account)
-          ])
-          params = new URLSearchParams({
-            network: signAccountOpState.accountOp.chainId.toString(),
-            from: DEPLOYLESS_SIMULATION_FROM,
-            contractAddress: signAccountOpState.account.creation.factoryAddr,
-            rawFunctionInput: executeData,
-            value: '0'
-          })
-        } else {
-          const ambireAccount = new Interface(AmbireAccount.abi)
-          const executeData = ambireAccount.encodeFunctionData('execute', [
-            getSignableCalls(signAccountOpState.accountOp),
-            getSpoof(signAccountOpState.account)
-          ])
-          params = new URLSearchParams({
-            network: signAccountOpState.accountOp.chainId.toString(),
-            from: DEPLOYLESS_SIMULATION_FROM,
-            contractAddress: signAccountOpState.accountOp.accountAddr,
-            rawFunctionInput: executeData,
-            value: '0'
-          })
-        }
-      } else if (signAccountOpState.account.safeCreation && state.isDeployed) {
-        const firstSigner = state.associatedKeys[0]
-        if (!firstSigner) throw new Error('No Safe owners found')
-
-        const safeTxn = getSafeTxn(signAccountOpState.accountOp, state)
-        const exec = new Interface(execTransactionAbi)
-        const preValidatedSig = `0x000000000000000000000000${firstSigner.slice(2).toLowerCase()}000000000000000000000000000000000000000000000000000000000000000001`
-        const execData = exec.encodeFunctionData('execTransaction', [
-          safeTxn.to,
-          safeTxn.value,
-          safeTxn.data,
-          safeTxn.operation,
-          safeTxn.safeTxGas,
-          safeTxn.baseGas,
-          safeTxn.gasPrice,
-          safeTxn.gasToken,
-          safeTxn.refundReceiver,
-          preValidatedSig
-        ])
-
-        // Tenderly's new UI uses base64 encoded json to provide simulation
-        // parameters. The new format is required to use state overrides
-        const draftTemplate = {
-          v: 1,
-          network: { id: signAccountOpState.accountOp.chainId.toString() },
-          row: {
-            from: firstSigner,
-            gas: '0',
-            gasPrice: '0',
-            value: 0,
-            block: '',
-            blockIndex: null,
-            endOfBlock: false,
-            usePendingBlock: true,
-            depositTx: false,
-            systemTx: false,
-            mint: '0',
-            l1BlockNumber: '',
-            l1Timestamp: '',
-            l1MessageSender: '0x0000000000000000000000000000000000000000',
-            l1Turing: '',
-            contractAddress: signAccountOpState.accountOp.accountAddr,
-            functionInputs: {},
-            inputDataType: 'raw',
-            rawFunctionInput: execData,
-            contractAbiImport: '',
-            blockHeaderOverrides: {},
-            stateOverrides:
-              state.threshold > 1
-                ? [
-                    {
-                      id: uuidv4(),
-                      contractAddress: signAccountOpState.accountOp.accountAddr,
-                      balance: '',
-                      storage: [
-                        {
-                          key: '0x0000000000000000000000000000000000000000000000000000000000000004', // threshold slot
-                          value:
-                            '0x0000000000000000000000000000000000000000000000000000000000000001'
-                        }
-                      ]
-                    }
-                  ]
-                : [],
-            contractFunction: null
-          }
-        }
-
-        params = new URLSearchParams({
-          draft: btoa(JSON.stringify(draftTemplate)).replace(/=+$/, '') // remove trailing padding, tenderly doesn't use it
-        })
-      } else {
-        // only a single call for EOAs
-        const call = signAccountOpState.accountOp.calls[0]!
-        params = new URLSearchParams({
-          network: signAccountOpState.accountOp.chainId.toString(),
-          from: signAccountOpState.accountOp.accountAddr,
-          rawFunctionInput: call.data,
-          value: call.value.toString(),
-          ...(call.to ? { contractAddress: call.to } : {})
-        })
-      }
-
-      const base = 'https://dashboard.tenderly.co/simulator/new'
-      return `${base}?${params.toString()}`
-    } catch (e: any) {
-      console.error('Error generating Tenderly link', e)
-      return null
-    }
-  }, [signAccountOpState, estimationUsesStateOverrides, state])
+    return getTenderlySimulationLink({
+      signAccountOpState,
+      state
+    })
+  }, [signAccountOpState, state])
 
   const copySignAccountOpError = useCallback(async () => {
     let devInfo = tenderlyLink ? `URL: ${tenderlyLink}` : ''
@@ -195,10 +55,10 @@ const ErrorInformation = () => {
     try {
       await setStringAsync(devInfo)
       addToast(t('Copied to clipboard!'))
-    } catch (e) {
+    } catch {
       addToast(t('Error copying to clipboard'))
     }
-  }, [addToast, signAccountOpState?.errors, t, tenderlyLink])
+  }, [addToast, signAccountOpState, t, tenderlyLink])
 
   const errorText = useMemo(() => {
     const { code, text } = signAccountOpState?.errors?.[0] || {}
@@ -249,6 +109,7 @@ const ErrorInformation = () => {
       size="sm"
       title={signAccountOpState.errors[0]?.title}
       text={errorText}
+      style={spacings.mbLg}
     />
   )
 }

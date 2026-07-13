@@ -1171,6 +1171,11 @@
   resolved "https://registry.npmjs.org/@bcoe/v8-coverage/-/v8-coverage-0.2.3.tgz"
   integrity sha512-0hYQ8SB4Db5zvZB4axdMHGwEaQjkZzFjQiN9LVYvIFB2nSUHW9tYpxWriPrWDASIxiaXax83REcLxuSdnGPZtw==
 
+"@corpus-core/colibri-stateless@1.1.30":
+  version "1.1.30"
+  resolved "https://registry.yarnpkg.com/@corpus-core/colibri-stateless/-/colibri-stateless-1.1.30.tgz#5ddcad43fba8a73b3939f1e7fc756d4c0e0661f6"
+  integrity sha512-U/oFj14tKfGZUESGxEegJt1d8B0OZYGclXUQl8HIN5ttTUS0QQML//DPvR9k0PsVU9xz7ZWFt3B4pk0Ij6P/Kg==
+
 "@craftzdog/react-native-buffer@6.1.0":
   version "6.1.0"
   resolved "https://registry.yarnpkg.com/@craftzdog/react-native-buffer/-/react-native-buffer-6.1.0.tgz#101d09d4eb5fa06b12453313b173d5036d96462f"
