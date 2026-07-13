@@ -4,6 +4,7 @@ import { IEventEmitterRegistryController } from '@ambire-common/interfaces/event
 import { getDappIdFromUrl } from '@ambire-common/libs/dapps/helpers'
 import { KeyIterator } from '@ambire-common/libs/keyIterator/keyIterator'
 import LedgerKeyIterator from '@common/modules/hardware-wallet/libs/ledgerKeyIterator'
+import TrezorKeyIterator from '@common/modules/hardware-wallet/libs/trezorKeyIterator'
 import handleProviderRequests from '@common/modules/provider/handleProviderRequests'
 import { Action, MethodAction } from '@common/types/actions'
 import { getWcTabIdFromTopic } from '@mobile/modules/wallet-connect/utils'
@@ -195,6 +196,10 @@ export const handleActions = async (
 
     case 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_LEDGER': {
       return await mainCtrl.handleAccountPickerInitLedger(LedgerKeyIterator)
+    }
+
+    case 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_TREZOR': {
+      return await mainCtrl.handleAccountPickerInitTrezor(TrezorKeyIterator)
     }
 
     case 'WEBVIEW_ORIGIN_CHANGED': {

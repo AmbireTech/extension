@@ -66,7 +66,7 @@ import LedgerController from '@web/modules/hardware-wallet/controllers/LedgerCon
 import QrHardwareController from '@web/modules/hardware-wallet/controllers/QrHardwareController/QrHardwareController'
 import TrezorController from '@web/modules/hardware-wallet/controllers/TrezorController'
 import LatticeSigner from '@web/modules/hardware-wallet/libs/LatticeSigner'
-import TrezorSigner from '@web/modules/hardware-wallet/libs/TrezorSigner'
+import TrezorSigner from '@common/modules/hardware-wallet/libs/TrezorSigner'
 import UrQrProtocolAdapter from '@web/modules/hardware-wallet/qr/protocol/UrQrProtocolAdapter'
 import QrHardwareSigner from '@web/modules/hardware-wallet/signers/QrHardwareSigner'
 import { providerRequestTransport } from '@web/modules/provider/providerRequestTransport'
