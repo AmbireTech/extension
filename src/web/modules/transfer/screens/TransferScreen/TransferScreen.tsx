@@ -1,13 +1,13 @@
 import { parseUnits } from 'ethers'
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import React, { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Trans, useTranslation } from 'react-i18next'
 import { Pressable, View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 
 import { FEE_COLLECTOR } from '@ambire-common/consts/addresses'
-import { SigningStatus } from '@ambire-common/controllers/signAccountOp/signAccountOp'
 import { AddressStateOptional } from '@ambire-common/interfaces/domains'
 import { Key } from '@ambire-common/interfaces/keystore'
+import { SigningStatus } from '@ambire-common/interfaces/signAccountOp'
 import { CallsUserRequest, RequestExecutionType } from '@ambire-common/interfaces/userRequest'
 import { AccountOpStatus } from '@ambire-common/libs/accountOp/types'
 import { getSanitizedAmount } from '@ambire-common/libs/transfer/amount'
@@ -714,16 +714,18 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
         portfolio={portfolio}
         account={account}
       />
-      <Estimation
-        updateType="Transfer&TopUp"
-        estimationModalRef={estimationModalRef}
-        closeEstimationModal={closeEstimationModalAndDispatch}
-        updateController={updateController}
-        handleUpdateStatus={handleUpdateStatus}
-        hasProceeded={hasProceeded}
-        signAccountOpController={signAccountOpController}
-        Modals={Modals}
-      />
+      <Suspense fallback={null}>
+        <Estimation
+          updateType="Transfer&TopUp"
+          estimationModalRef={estimationModalRef}
+          closeEstimationModal={closeEstimationModalAndDispatch}
+          updateController={updateController}
+          handleUpdateStatus={handleUpdateStatus}
+          hasProceeded={hasProceeded}
+          signAccountOpController={signAccountOpController}
+          Modals={Modals}
+        />
+      </Suspense>
     </Wrapper>
   )
 }

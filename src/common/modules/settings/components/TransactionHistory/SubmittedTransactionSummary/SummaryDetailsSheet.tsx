@@ -1,9 +1,10 @@
-import React from 'react'
+import React, { lazy, Suspense } from 'react'
 import { Pressable, ScrollView, View } from 'react-native'
 
 import { Network } from '@ambire-common/interfaces/network'
 import LeftArrowIcon from '@common/assets/svg/LeftArrowIcon'
 import BottomSheet from '@common/components/BottomSheet'
+import SkeletonLoader from '@common/components/SkeletonLoader'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
 import useTheme from '@common/hooks/useTheme'
@@ -11,10 +12,13 @@ import useTheme from '@common/hooks/useTheme'
 import Footer from './Footer'
 import { getPresentationalStatus } from './helpers'
 import getStyles from './styles'
-import SummaryDetails from './SummaryDetails'
 import { Props, SubmittedAccountOpLike } from './types'
 
 import type { Modalize } from 'react-native-modalize'
+
+// Lazy so the humanizer (pulled in via SummaryDetails) stays out of the main bundle.
+// The sheet shell itself stays eager so its Modalize ref is mounted and openable on tap.
+const SummaryDetails = lazy(() => import('./SummaryDetails'))
 
 type SummaryDetailsSheetProps = {
   sheetRef: React.RefObject<Modalize>
@@ -73,12 +77,14 @@ const SummaryDetailsSheet = ({
             style={styles.sheetScroll}
             contentContainerStyle={styles.sheetScrollContent}
           >
-            <SummaryDetails
-              submittedAccountOp={submittedAccountOp}
-              network={network}
-              size={size}
-              defaultType={defaultType}
-            />
+            <Suspense fallback={<SkeletonLoader width="100%" height={240} />}>
+              <SummaryDetails
+                submittedAccountOp={submittedAccountOp}
+                network={network}
+                size={size}
+                defaultType={defaultType}
+              />
+            </Suspense>
           </ScrollView>
           <Footer
             size={size}

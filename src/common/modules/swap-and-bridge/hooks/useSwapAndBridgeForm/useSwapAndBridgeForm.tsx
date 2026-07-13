@@ -5,9 +5,9 @@ import { useModalize } from 'react-native-modalize'
 import { useLocation } from 'react-router-dom'
 
 import { SwapAmountWarning } from '@ambire-common/consts/safeguards/swapAmountWarnings'
-import { SwapAndBridgeFormStatus } from '@ambire-common/controllers/swapAndBridge/swapAndBridge'
 import { SwapAndBridgeActiveRoute } from '@ambire-common/interfaces/swapAndBridge'
 import { CallsUserRequest } from '@ambire-common/interfaces/userRequest'
+import { SwapAndBridgeFormStatus } from '@ambire-common/libs/swapAndBridge/constants'
 import {
   calculateAmountWarnings,
   getIsTokenEligibleForSwapAndBridge

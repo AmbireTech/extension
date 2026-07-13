@@ -1,17 +1,23 @@
-import { FC, useMemo } from 'react'
+import { FC, lazy, Suspense, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import BottomSheet from '@common/components/BottomSheet'
 import DualChoiceWarningModal from '@common/components/DualChoiceWarningModal'
 import useController from '@common/hooks/useController'
-import LedgerConnectModal from '@common/modules/hardware-wallets/components/LedgerConnectModal'
-import QrSigningFlowScreen from '@common/modules/hardware-wallets/screens/QrSigningFlowScreen'
 import GasFeeUpdatedModal from '@common/modules/sign-account-op/components/GasFeeUpdatedModal/GasFeeUpdatedModal'
 import SignAccountOpHardwareWalletSigningModal from '@common/modules/sign-account-op/components/SignAccountOpHardwareWalletSigningModal'
 import { ModalsProps } from '@common/modules/sign-account-op/types/modals'
 import spacings from '@common/styles/spacings'
 import text from '@common/styles/utils/text'
 import { getUiType } from '@common/utils/uiType'
+
+// Lazy to not load HW libraries
+const LedgerConnectModal = lazy(
+  () => import('@common/modules/hardware-wallets/components/LedgerConnectModal')
+)
+const QrSigningFlowScreen = lazy(
+  () => import('@common/modules/hardware-wallets/screens/QrSigningFlowScreen')
+)
 
 const { isTab, isRequestWindow } = getUiType()
 
@@ -136,28 +142,32 @@ const Modals: FC<ModalsProps> = ({
 
   if (renderedButNotNecessarilyVisibleModal === 'ledger-connect') {
     return (
-      <LedgerConnectModal
-        isVisible={shouldDisplayLedgerConnectModal}
-        handleClose={handleDismissLedgerConnectModal}
-        displayOptionToAuthorize={false}
-      />
+      <Suspense fallback={null}>
+        <LedgerConnectModal
+          isVisible={shouldDisplayLedgerConnectModal}
+          handleClose={handleDismissLedgerConnectModal}
+          displayOptionToAuthorize={false}
+        />
+      </Suspense>
     )
   }
 
   if (renderedButNotNecessarilyVisibleModal === 'qr-sign' && currentRequest && signingStep) {
     return (
-      <QrSigningFlowScreen
-        handleClose={handleQrSigningFlowOnClosePressed}
-        isVisible={shouldDisplayQrSigningModal}
-        onContinue={handleQrSigningFlowOnContinuePressed}
-        currentRequest={currentRequest}
-        signingStep={signingStep}
-        signingRequest={signAccountOpState?.hardwareWalletSigningRequest}
-        transactionProgress={transactionProgress}
-        submitSignatureResponse={handleQrSigningFlowSubmitSignatureResponse}
-        onReject={handleQrSigningFlowOnRejectPressed}
-        handleQrSigningFlowOnBackPressed={handleQrSigningFlowOnBackPressed}
-      />
+      <Suspense fallback={null}>
+        <QrSigningFlowScreen
+          handleClose={handleQrSigningFlowOnClosePressed}
+          isVisible={shouldDisplayQrSigningModal}
+          onContinue={handleQrSigningFlowOnContinuePressed}
+          currentRequest={currentRequest}
+          signingStep={signingStep}
+          signingRequest={signAccountOpState?.hardwareWalletSigningRequest}
+          transactionProgress={transactionProgress}
+          submitSignatureResponse={handleQrSigningFlowSubmitSignatureResponse}
+          onReject={handleQrSigningFlowOnRejectPressed}
+          handleQrSigningFlowOnBackPressed={handleQrSigningFlowOnBackPressed}
+        />
+      </Suspense>
     )
   }
 

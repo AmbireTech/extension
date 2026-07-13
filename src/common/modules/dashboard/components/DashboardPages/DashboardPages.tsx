@@ -8,7 +8,6 @@ import useController from '@common/hooks/useController'
 import usePrevious from '@common/hooks/usePrevious'
 import useRoute from '@common/hooks/useRoute'
 import flexbox from '@common/styles/utils/flexbox'
-import { getUiType } from '@common/utils/uiType'
 
 import Activity from '../Activity'
 import Collections from '../Collections'
@@ -23,8 +22,6 @@ interface Props {
   refreshing?: boolean
   onRefresh?: () => void
 }
-
-const { isTab } = getUiType()
 
 const DashboardPages = ({
   onScroll,
@@ -120,44 +117,50 @@ const DashboardPages = ({
         onRefresh={onRefresh}
         refreshing={refreshing}
       />
-      <Collections
-        openTab={openTab}
-        sessionId={sessionId}
-        setOpenTab={setOpenTab}
-        initTab={initTab}
-        onScroll={onScroll}
-        networks={networks}
-        dashboardNetworkFilterName={dashboardNetworkFilterName}
-        animatedOverviewHeight={animatedOverviewHeight}
-        isSearchHidden={isSearchHidden}
-        onRefresh={onRefresh}
-        refreshing={refreshing}
-      />
+      {(openTab === 'collectibles' || initTab?.collectibles) && (
+        <Collections
+          openTab={openTab}
+          sessionId={sessionId}
+          setOpenTab={setOpenTab}
+          initTab={initTab}
+          onScroll={onScroll}
+          networks={networks}
+          dashboardNetworkFilterName={dashboardNetworkFilterName}
+          animatedOverviewHeight={animatedOverviewHeight}
+          isSearchHidden={isSearchHidden}
+          onRefresh={onRefresh}
+          refreshing={refreshing}
+        />
+      )}
 
-      <DeFiPositions
-        openTab={openTab}
-        sessionId={sessionId}
-        setOpenTab={setOpenTab}
-        onScroll={onScroll}
-        initTab={initTab}
-        dashboardNetworkFilterName={dashboardNetworkFilterName}
-        animatedOverviewHeight={animatedOverviewHeight}
-        isSearchHidden={isSearchHidden}
-        onRefresh={onRefresh}
-        refreshing={refreshing}
-      />
+      {(openTab === 'defi' || initTab?.defi) && (
+        <DeFiPositions
+          openTab={openTab}
+          sessionId={sessionId}
+          setOpenTab={setOpenTab}
+          onScroll={onScroll}
+          initTab={initTab}
+          dashboardNetworkFilterName={dashboardNetworkFilterName}
+          animatedOverviewHeight={animatedOverviewHeight}
+          isSearchHidden={isSearchHidden}
+          onRefresh={onRefresh}
+          refreshing={refreshing}
+        />
+      )}
 
-      <Activity
-        openTab={openTab}
-        sessionId={sessionId}
-        setOpenTab={setOpenTab}
-        onScroll={onScroll}
-        initTab={initTab}
-        animatedOverviewHeight={animatedOverviewHeight}
-        network={network}
-        onRefresh={onRefresh}
-        refreshing={refreshing}
-      />
+      {(openTab === 'activity' || initTab?.activity) && (
+        <Activity
+          openTab={openTab}
+          sessionId={sessionId}
+          setOpenTab={setOpenTab}
+          onScroll={onScroll}
+          initTab={initTab}
+          animatedOverviewHeight={animatedOverviewHeight}
+          network={network}
+          onRefresh={onRefresh}
+          refreshing={refreshing}
+        />
+      )}
     </View>
   )
 }

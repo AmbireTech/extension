@@ -2,7 +2,7 @@ import React, { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 
-import { SigningStatus } from '@ambire-common/controllers/signAccountOp/signAccountOp'
+import { SigningStatus } from '@ambire-common/interfaces/signAccountOp'
 import { Key } from '@ambire-common/interfaces/keystore'
 import {
   ISignAccountOpController,

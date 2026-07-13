@@ -2,7 +2,7 @@ import React, { useCallback, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 
-import { AUTO_LOGIN_DURATION_OPTIONS } from '@ambire-common/controllers/autoLogin/autoLogin'
+import { AUTO_LOGIN_DURATION_OPTIONS } from '@ambire-common/consts/autoLogin'
 import { QrRequest } from '@ambire-common/interfaces/keystore'
 import { SiweMessageUserRequest } from '@ambire-common/interfaces/userRequest'
 import Alert from '@common/components/Alert'
