@@ -9,6 +9,7 @@ import ModalHeader from '@common/components/BottomSheet/ModalHeader'
 import Button from '@common/components/Button'
 import FooterGlassView from '@common/components/FooterGlassView'
 import Text from '@common/components/Text'
+import { isMobile, isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import { QrSigningStep } from '@common/modules/hardware-wallets/qr/types'
 import QrSignRequestScreen from '@common/modules/hardware-wallets/screens/QrSignRequestScreen'
@@ -70,17 +71,21 @@ const QrSigningFlowScreen = ({
       id="qr-signing-flow-screen"
       sheetRef={ref}
       autoWidth={false}
-      adjustToContentHeight={false}
-      modalHeight={585}
+      adjustToContentHeight={isMobile}
+      modalHeight={isWeb ? 585 : undefined}
       onClosed={handleClose}
       autoOpen={isVisible}
       type={!isTab ? 'bottom-sheet' : 'modal'}
       withBackdropBlur={false}
       shouldBeClosableOnDrag={false}
-      containerInnerWrapperStyles={flexbox.flex1}
-      scrollViewProps={{
-        contentContainerStyle: flexbox.flex1
-      }}
+      containerInnerWrapperStyles={isWeb ? flexbox.flex1 : undefined}
+      scrollViewProps={
+        isWeb
+          ? {
+              contentContainerStyle: flexbox.flex1
+            }
+          : undefined
+      }
     >
       <ModalHeader title={title} />
 

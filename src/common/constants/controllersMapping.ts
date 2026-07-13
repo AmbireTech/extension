@@ -31,8 +31,8 @@ import type { UiController } from '@ambire-common/controllers/ui/ui'
 import type { AutoLockController } from '@common/controllers/auto-lock'
 import type { WalletStateController } from '@common/controllers/wallet-state'
 import type { VerificationController } from '@ambire-common/controllers/verification/verification'
+import QrHardwareController from '@common/modules/hardware-wallets/controllers/QrHardwareController'
 import { createExhaustiveArray } from '@common/utils/createExhaustiveArray'
-import QrHardwareController from '@web/modules/hardware-wallet/controllers/QrHardwareController'
 
 import type { ExtensionUpdateController } from '@web/extension-services/background/controllers/extension-update'
 
