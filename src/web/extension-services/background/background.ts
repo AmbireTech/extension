@@ -46,6 +46,7 @@ import { browser, platform } from '@web/constants/browserapi'
 import { BadgesController } from '@web/extension-services/background/controllers/badges'
 import ExtensionUpdateController from '@web/extension-services/background/controllers/extension-update'
 import { handleActions } from '@web/extension-services/background/handlers/handleActions'
+import { scheduleDappTabFocusDispatch, DappTabTarget } from '@web/extension-services/background/handlers/dispatchDappTabFocus'
 import { handleCleanUpOnPortDisconnect } from '@web/extension-services/background/handlers/handleCleanUpOnPortDisconnect'
 import { handleKeepAlive } from '@web/extension-services/background/handlers/handleKeepAlive'
 import {
@@ -556,6 +557,9 @@ const init = async () => {
           // TODO:
           // pm.send('> ui-navigate', ...)
         }
+      },
+      dispatchDappTabFocus: (targets: DappTabTarget[]) => {
+        scheduleDappTabFocusDispatch(targets)
       }
     }
   })

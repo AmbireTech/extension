@@ -7,7 +7,7 @@ import { nanoid } from 'nanoid'
 import { Session } from '@ambire-common/classes/session'
 import { MainController } from '@ambire-common/controllers/main/main'
 import { ConnectionSource, DappProviderRequest } from '@ambire-common/interfaces/dapp'
-import { UiManager } from '@ambire-common/interfaces/ui'
+import { UiManager, isSidePanelView } from '@ambire-common/interfaces/ui'
 import {
   getFailureStatus,
   getPendingStatus,
@@ -146,6 +146,12 @@ export class ProviderController {
     const accounts = this._internalGetAccounts(id)
 
     await this.mainCtrl.dapps.broadcastDappSessionEvent('accountsChanged', accounts)
+
+    if (this.mainCtrl.ui.views.some(isSidePanelView)) {
+      this.mainCtrl.ui.dispatchDappTabFocus?.([
+        { tabId: session.tabId, windowId: session.windowId }
+      ])
+    }
 
     return accounts
   }

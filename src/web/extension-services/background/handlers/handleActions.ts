@@ -1,4 +1,5 @@
 import { MainController } from '@ambire-common/controllers/main/main'
+import { Dapp } from '@ambire-common/interfaces/dapp'
 import { IEventEmitterRegistryController } from '@ambire-common/interfaces/eventEmitter'
 import { KeyIterator } from '@ambire-common/libs/keyIterator/keyIterator'
 import wait from '@ambire-common/utils/wait'
@@ -13,6 +14,11 @@ import QrKeyIterator from '@web/modules/hardware-wallet/libs/qrKeyIterator/qrKey
 import TrezorKeyIterator from '@web/modules/hardware-wallet/libs/trezorKeyIterator'
 
 import sessionStorage from '../webapi/sessionStorage'
+import {
+  dispatchDappTabFocusFromMainCtrl,
+  getDappTabTargetsFromDappId,
+  getDappTabTargetsFromDappIds
+} from './dispatchDappTabFocus'
 
 export const handleActions = async (
   action: MethodAction | Action,
@@ -166,6 +172,8 @@ export const handleActions = async (
     }
 
     case 'DAPPS_CONTROLLER_DISCONNECT_DAPP': {
+      const tabTargets = getDappTabTargetsFromDappId(mainCtrl, params.id, params.source)
+
       if (params.source) {
         await mainCtrl.dapps.disconnectDappSource(params.id, params.source)
       } else {
@@ -181,9 +189,21 @@ export const handleActions = async (
         await mainCtrl.autoLogin.revokeAllPoliciesForDomain(params.id, params.url)
       }
 
+      dispatchDappTabFocusFromMainCtrl(mainCtrl, tabTargets)
+
       break
     }
     case 'DAPPS_CONTROLLER_DISCONNECT_ALL_DAPPS': {
+      const dappIdsToDisconnect = (mainCtrl.dapps.dapps as Dapp[])
+        .filter((dapp) => {
+          if (!dapp.isConnected) return false
+          if (!params.source) return true
+
+          return dapp.connectedSources?.includes(params.source)
+        })
+        .map((dapp) => dapp.id)
+      const tabTargets = getDappTabTargetsFromDappIds(mainCtrl, dappIdsToDisconnect, params.source)
+
       const disconnectedDapps = await mainCtrl.dapps.disconnectAllDapps(params.source)
 
       // Process sequentially: each disconnect may call `revokeAllPoliciesForDomain`, which
@@ -194,6 +214,8 @@ export const handleActions = async (
           await mainCtrl.autoLogin.revokeAllPoliciesForDomain(dapp.id, dapp.url)
         }
       }
+
+      dispatchDappTabFocusFromMainCtrl(mainCtrl, tabTargets)
 
       break
     }
@@ -249,6 +271,11 @@ export const handleActions = async (
         }
       }
       await sessionStorage.set('isOpenExtensionPopupLoading', false)
+      break
+    }
+
+    case 'DISPATCH_DAPP_TAB_FOCUS': {
+      dispatchDappTabFocusFromMainCtrl(mainCtrl, params.targets, params.delayMs)
       break
     }
 

@@ -1,6 +1,7 @@
 import { useContext, useEffect, useRef } from 'react'
 
 import { ControllersStateLoadedContext } from '@common/contexts/controllersStateLoadedContext'
+import { ControllersMiddlewareContext } from '@common/contexts/controllersMiddlewareContext/controllersMiddlewareContext'
 import useController from '@common/hooks/useController'
 import useNavigation from '@common/hooks/useNavigation'
 import useRoute from '@common/hooks/useRoute'
@@ -9,6 +10,7 @@ import useAuth from '@common/modules/auth/hooks/useAuth'
 import { ROUTES } from '@common/modules/router/constants/common'
 import { getRouteForUserRequest } from '@common/modules/router/helpers'
 import { getUiType } from '@common/utils/uiType'
+import { getDappTabTargetsFromUserRequest } from '@web/utils/dispatchDappTabFocus'
 
 const { isSidePanel } = getUiType()
 
@@ -30,6 +32,7 @@ const useSidePanelActionRequestRouting = () => {
   const { navigate } = useNavigation()
   const { path } = useRoute()
   const { authStatus } = useAuth()
+  const { dispatch } = useContext(ControllersMiddlewareContext)
   const keystoreState = useController('KeystoreController').state
   const {
     state: { currentUserRequest }
@@ -40,6 +43,7 @@ const useSidePanelActionRequestRouting = () => {
   const prevRequestIdRef = useRef<string | number | null>(null)
   const lastOpenedRequestIdRef = useRef<string | number | null>(null)
   const lastRequestRouteRef = useRef<string | null>(null)
+  const lastDappTabTargetsRef = useRef<ReturnType<typeof getDappTabTargetsFromUserRequest>>([])
 
   useEffect(() => {
     if (!isSidePanel || !areControllerStatesLoaded) return
@@ -48,6 +52,8 @@ const useSidePanelActionRequestRouting = () => {
     if (isLocked || authStatus === AUTH_STATUS.NOT_AUTHENTICATED) return
 
     if (currentUserRequest) {
+      lastDappTabTargetsRef.current = getDappTabTargetsFromUserRequest(currentUserRequest)
+
       const activeRequestId = currentUserRequest.id
       const targetRoute = getRouteForUserRequest({ currentUserRequest, transferState })
       if (!targetRoute) return
@@ -71,6 +77,15 @@ const useSidePanelActionRequestRouting = () => {
       if (lastRequestRouteRef.current && getRoutePathname(path) === lastRequestRouteRef.current) {
         navigate(ROUTES.dashboard)
       }
+
+      // Mirror mobile: after the in-panel request UI closes, nudge the dapp tab with a
+      // synthetic focus so libraries like React Query refetch connection state.
+      dispatch({
+        type: 'DISPATCH_DAPP_TAB_FOCUS',
+        params: { targets: lastDappTabTargetsRef.current, delayMs: 800 }
+      })
+      lastDappTabTargetsRef.current = []
+
       lastOpenedRequestIdRef.current = null
       lastRequestRouteRef.current = null
     }
@@ -84,7 +99,8 @@ const useSidePanelActionRequestRouting = () => {
     keystoreState.isUnlocked,
     navigate,
     path,
-    transferState
+    transferState,
+    dispatch
   ])
 }
 
