@@ -1,9 +1,9 @@
-import LottieView from 'lottie-react'
 import React, { useCallback, useEffect } from 'react'
 import { View } from 'react-native'
 
 import KeyStoreIcon from '@common/assets/svg/KeyStoreIcon'
 import Button from '@common/components/Button'
+import LottieView from '@common/components/LottieView'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
@@ -19,11 +19,20 @@ export const CARD_WIDTH = 400
 const KeyStoreSetNewPasswordCompleted = () => {
   const { t } = useTranslation()
   const { dispatch } = useControllersMiddleware()
-  const { isPinned } = useController('WalletStateController').state
+  const {
+    state: { isPinned },
+    dispatch: walletStateDispatch
+  } = useController('WalletStateController')
 
   useEffect(() => {
-    dispatch({ type: 'SET_IS_SETUP_COMPLETE', params: { isSetupComplete: true } })
-  }, [dispatch])
+    walletStateDispatch({
+      type: 'method',
+      params: {
+        method: 'setIsSetupComplete',
+        args: [true]
+      }
+    })
+  }, [walletStateDispatch])
 
   const handleOpenDashboardPress = useCallback(async () => {
     dispatch({ type: 'OPEN_EXTENSION_POPUP' })

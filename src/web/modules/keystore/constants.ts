@@ -1,0 +1,1 @@
+export const SKIP_AUTO_BIOMETRICS_PROMPT_ONCE = 'skipAutoBiometricsPromptOnce'

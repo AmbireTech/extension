@@ -4,22 +4,22 @@ import { Navigate, Route, Routes } from 'react-router-dom'
 
 import Alert from '@common/components/Alert'
 import { useTranslation } from '@common/config/localization'
+import { ControllersStateLoadedContext } from '@common/contexts/controllersStateLoadedContext'
 import useController from '@common/hooks/useController'
 import useRoute from '@common/hooks/useRoute'
 import useTheme from '@common/hooks/useTheme'
 import { AUTH_STATUS } from '@common/modules/auth/constants/authStatus'
 import useAuth from '@common/modules/auth/hooks/useAuth'
-import DashboardScreen from '@common/modules/dashboard/screens'
+import AuthenticatedRoute from '@common/modules/router/components/AuthenticatedRoute'
+import KeystoreUnlockedRoute from '@common/modules/router/components/KeystoreUnlockedRoute'
 import { WEB_ROUTES } from '@common/modules/router/constants/common'
+import { getInitialRoute } from '@common/modules/router/helpers'
 import flexbox from '@common/styles/utils/flexbox'
 import Splash from '@web/components/Splash'
-import { ControllersStateLoadedContext } from '@web/contexts/controllersStateLoadedContext'
 import useCurrentActionSideEffects from '@web/hooks/useCurrentActionSideEffects'
+import DashboardScreen from '@web/modules/dashboard/screens/DashboardScreen'
 import KeyStoreUnlockScreen from '@web/modules/keystore/screens/KeyStoreUnlockScreen'
-import AuthenticatedRoute from '@web/modules/router/components/AuthenticatedRoute'
-import KeystoreUnlockedRoute from '@web/modules/router/components/KeystoreUnlockedRoute'
 
-import { getInitialRoute } from './helpers'
 import getStyles from './styles'
 
 const AsyncMainRoute = lazy(() => import('@web/modules/router/components/MainRoutes'))
@@ -34,6 +34,7 @@ const Router = () => {
   const requestsState = useController('RequestsController').state
   const swapAndBridgeState = useController('SwapAndBridgeController').state
   const transferState = useController('TransferController').state
+  const surveyState = useController('SurveyController').state
   const { areControllerStatesLoaded, isStatesLoadingTakingTooLong } = useContext(
     ControllersStateLoadedContext
   )
@@ -63,7 +64,8 @@ const Router = () => {
     authStatus,
     requestsState,
     swapAndBridgeState,
-    transferState
+    transferState,
+    surveyState
   })
 
   if (initialRoute && !pathname) {

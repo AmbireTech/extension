@@ -9,6 +9,8 @@ import { BasePage } from './basePage'
 export class AuthPage extends BasePage {
   extensionURL: string
 
+  generatedSeed: string = ''
+
   constructor(opts: BootstrapContext) {
     super(opts)
     this.extensionURL = opts.extensionURL
@@ -39,6 +41,7 @@ export class AuthPage extends BasePage {
       selectors.getStarted.confirmationMessageForViewOnly,
       'Added successfully'
     )
+    await this.expectButtonEnabled(selectors.getStarted.saveAndContinueBtn)
     await this.click(selectors.getStarted.saveAndContinueBtn)
     await this.compareText(
       selectors.getStarted.confirmationMessageAmbireWallet,
@@ -48,7 +51,9 @@ export class AuthPage extends BasePage {
     // assertion on Dashboard after login
   }
 
-  async verifyRecoveryPhraseScreen(): Promise<void> {
+  async verifyRecoveryPhraseScreen(): Promise<string> {
+    this.generatedSeed = ''
+
     const locator = this.page.getByTestId('info-0').locator('div').nth(3)
     if (
       await this.page
@@ -60,19 +65,25 @@ export class AuthPage extends BasePage {
       await locator.click()
     }
     await this.isVisible(selectors.getStarted.recoveryPhraseHeader)
+    await this.context.grantPermissions(['clipboard-read'])
     await this.click(selectors.getStarted.copyRecoveryPhraseButton)
     await this.compareText(
       selectors.getStarted.recoveryPhraseCopiedSnackbar,
       'Recovery phrase copied to clipboard'
     )
+    this.generatedSeed = await this.page.evaluate(() => navigator.clipboard.readText())
     await this.page
       .getByTestId(selectors.getStarted.recoveryPhraseCopiedSnackbar)
       .waitFor({ state: 'hidden' })
     await this.click(selectors.getStarted.savedPhraseButton)
+
+    return this.generatedSeed
   }
 
   // TODO: imporove method assertions
-  async createNewAccount(): Promise<void> {
+  async createNewAccount(): Promise<string> {
+    this.generatedSeed = ''
+
     await this.click(selectors.getStarted.createNewAccountButton)
     for (let index = 0; index < 3; index++) {
       await this.click(selectors.getStarted.checkbox, index)
@@ -86,12 +97,15 @@ export class AuthPage extends BasePage {
       'Added successfully'
     )
     await this.compareText(selectors.getStarted.addMoreAccountsButton, 'Add more accounts')
+    await this.expectButtonEnabled(selectors.getStarted.saveAndContinueBtn)
     await this.click(selectors.getStarted.saveAndContinueBtn)
     await this.compareText(
       selectors.getStarted.confirmationMessageAmbireWallet,
       'Ambire Wallet is ready to use'
     )
     await this.click(selectors.getStarted.openDashboardButton)
+
+    return this.generatedSeed
   }
 
   // TODO: imporove method assertions
@@ -107,6 +121,7 @@ export class AuthPage extends BasePage {
       selectors.getStarted.confirmationMessageForViewOnly,
       'Added successfully'
     )
+    await this.expectButtonEnabled(selectors.getStarted.saveAndContinueBtn)
     await this.click(selectors.getStarted.saveAndContinueBtn)
     await this.compareText(
       selectors.getStarted.confirmationMessageAmbireWallet,
@@ -131,6 +146,8 @@ export class AuthPage extends BasePage {
     await this.personalizeAccountName('Name 1')
     // assertion on Dashboard after login
     await this.compareText(selectors.getStarted.addMoreAccountsButton, 'Add more accounts')
+
+    await this.expectButtonEnabled(selectors.getStarted.saveAndContinueBtn)
     await this.click(selectors.getStarted.saveAndContinueBtn)
     await this.compareText(
       selectors.getStarted.confirmationMessageAmbireWallet,
@@ -164,6 +181,7 @@ export class AuthPage extends BasePage {
       'Added successfully'
     )
     await this.personalizeAccountName('Name 1')
+    await this.expectButtonEnabled(selectors.getStarted.saveAndContinueBtn)
     await this.click(selectors.getStarted.saveAndContinueBtn)
     await this.compareText(
       selectors.getStarted.confirmationMessageAmbireWallet,
@@ -190,6 +208,7 @@ export class AuthPage extends BasePage {
     )
     await this.personalizeAccountName('Name 1')
     await this.isVisible(selectors.getStarted.addMoreAccountsButton)
+    await this.expectButtonEnabled(selectors.getStarted.saveAndContinueBtn)
     await this.click(selectors.getStarted.saveAndContinueBtn)
     await this.compareText(
       selectors.getStarted.confirmationMessageAmbireWallet,
@@ -215,8 +234,10 @@ export class AuthPage extends BasePage {
     await this.click(selectors.getStarted.createRecoveryPhraseButton)
     await this.verifyRecoveryPhraseScreen()
     await this.setExtensionPassword()
+    await this.page.waitForTimeout(1000)
     await this.expectButtonEnabled(selectors.getStarted.addMoreAccountsButton)
     await this.click(selectors.getStarted.addMoreAccountsButton)
+    await this.page.waitForTimeout(3000)
     await this.selectHDPath(selectors.getStarted.hdPathLegerLive)
     await this.page.locator(locators.smartAccountPicker).click()
     // await this.click(selectors.getStarted.smartAccountPicker, 5) // TODO: not working
@@ -228,6 +249,7 @@ export class AuthPage extends BasePage {
     // add another acc
     await this.expectButtonEnabled(selectors.getStarted.addMoreAccountsButton)
     await this.click(selectors.getStarted.addMoreAccountsButton)
+    await this.page.waitForTimeout(3000)
     await this.selectHDPath(selectors.getStarted.hdPathLegerLive)
     await this.page.locator(locators.smartAccountPicker).click()
     // await this.click(selectors.getStarted.smartAccountPicker, 5) // TODO: not working
@@ -237,6 +259,7 @@ export class AuthPage extends BasePage {
       'Added successfully'
     )
     await this.isVisible(selectors.getStarted.addMoreAccountsButton)
+    await this.expectButtonEnabled(selectors.getStarted.saveAndContinueBtn)
     await this.click(selectors.getStarted.saveAndContinueBtn)
     await this.compareText(
       selectors.getStarted.confirmationMessageAmbireWallet,
@@ -262,6 +285,7 @@ export class AuthPage extends BasePage {
     await this.decryptBackup()
     await this.setExtensionPassword()
     // assertion on Dashboard after login
+    await this.expectButtonEnabled(selectors.getStarted.saveAndContinueBtn)
     await this.click(selectors.getStarted.saveAndContinueBtn)
     await this.compareText(
       selectors.getStarted.confirmationMessageAmbireWallet,

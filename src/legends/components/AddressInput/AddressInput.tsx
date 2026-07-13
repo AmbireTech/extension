@@ -21,7 +21,7 @@ const AddressInput: FC<Props> = ({
   setAddressState,
   disabled
 }) => {
-  const { fieldValue, ensAddress } = addressState
+  const { fieldValue, resolvedAddressType } = addressState
 
   const onChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setAddressState((prev) => ({
@@ -46,9 +46,8 @@ const AddressInput: FC<Props> = ({
         />
         <div className={styles.domainsIcons}>
           <EnsIcon
-            color="currentColor"
             width={22}
-            isActive={!!ensAddress}
+            state={resolvedAddressType === 'ens' ? 'fresh' : 'none'}
             className={styles.ensIcon}
           />
         </div>

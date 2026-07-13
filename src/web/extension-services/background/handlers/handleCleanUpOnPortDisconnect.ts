@@ -78,13 +78,10 @@ export const handleCleanUpOnPortDisconnect = async ({
     const windows = await chrome.windows.getAll()
     const popupWindows = windows.filter((w) => w.type === 'popup')
 
-    // eslint-disable-next-line no-restricted-syntax
     for (const w of popupWindows) {
       if (w && w.id) {
-        // eslint-disable-next-line no-await-in-loop
         const tabs = await chrome.tabs.query({ windowId: w.id })
         if (tabs[0]?.url === 'about:blank' && tabs[0].status !== 'loading') {
-          // eslint-disable-next-line no-await-in-loop
           await chrome.windows.remove(w.id)
         }
       }

@@ -14,7 +14,6 @@ import {
   Roboto_900Black
 } from '@expo-google-fonts/roboto'
 
-// eslint-disable-next-line @typescript-eslint/naming-convention
 export enum FONT_FAMILIES {
   LIGHT = 'Poppins_300Light',
   REGULAR = 'Poppins_400Regular',
@@ -22,7 +21,6 @@ export enum FONT_FAMILIES {
   SEMI_BOLD = 'Poppins_600SemiBold'
 }
 
-// eslint-disable-next-line @typescript-eslint/naming-convention
 export enum ROBOTO_FONT_FAMILIES {
   LIGHT = 'Roboto_300Light',
   REGULAR = 'Roboto_400Regular',

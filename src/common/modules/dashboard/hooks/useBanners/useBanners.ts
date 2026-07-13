@@ -1,9 +1,12 @@
 import { useMemo } from 'react'
 
-import { Banner as BannerInterface } from '@ambire-common/interfaces/banner'
-import { getCurrentAccountBanners } from '@ambire-common/libs/banners/banners'
+import {
+  defiPositionsOnDisabledNetworksBannerId,
+  getCurrentAccountBanners
+} from '@ambire-common/libs/banners/banners'
 import useController from '@common/hooks/useController'
 
+import type { Banner as BannerInterface } from '@ambire-common/interfaces/banner'
 const OFFLINE_BANNER: BannerInterface = {
   id: 'offline-banner',
   type: 'error',
@@ -11,16 +14,22 @@ const OFFLINE_BANNER: BannerInterface = {
   text: 'Your network connection is too slow or you may be offline. Please check your internet connection.',
   actions: [
     {
-      actionName: 'reload-selected-account'
+      actionName: 'reload-selected-account',
+      label: 'Retry'
     }
   ]
 }
 
 export default function useBanners(): [BannerInterface[], BannerInterface[]] {
   const { isOffline } = useController('MainController').state
-  const { banners: marketingBanners } = useController('BannerController').state
+  const { bannersData: marketingBannersData } = useController('BannerController').state
   const {
-    state: { account, portfolio, deprecatedSmartAccountBanner }
+    state: {
+      account,
+      portfolio,
+      deprecatedSmartAccountBanner,
+      banners: selectedAccountBanners = []
+    }
   } = useController('SelectedAccountController')
 
   const { banners: emailVaultBanners = [] } = useController('EmailVaultController').state
@@ -29,14 +38,31 @@ export default function useBanners(): [BannerInterface[], BannerInterface[]] {
   const { extensionUpdateBanner } = useController('ExtensionUpdateController').state
   const { hasFundedHotAccount } = useController('PortfolioController').state
 
+  const marketingBanners = useMemo(() => {
+    return marketingBannersData.banners.filter(
+      // if the banner is not a survey banner there is no need to hide it
+      // but for surveys we have other requirements that are acc specific
+      // the acc comparing is used to hide the fact that banners are not updated at the
+      // selected same time as the acc
+      (b) => b.actions[0]?.actionName !== 'survey' || marketingBannersData.account === account?.addr
+    )
+  }, [account?.addr, marketingBannersData.account, marketingBannersData.banners])
+
   const controllerBanners = useMemo(() => {
     return [
-      ...deprecatedSmartAccountBanner,
-      ...requestBanners,
+      ...(deprecatedSmartAccountBanner || []),
+      ...(requestBanners || []),
       ...(isOffline && portfolio.isAllReady ? [OFFLINE_BANNER] : []),
-      ...(isOffline ? [] : [...swapAndBridgeBanners]),
-      ...getCurrentAccountBanners(hasFundedHotAccount ? emailVaultBanners : [], account?.addr),
-      ...extensionUpdateBanner
+      ...(isOffline ? [] : [...(swapAndBridgeBanners || [])]),
+      ...getCurrentAccountBanners(
+        hasFundedHotAccount ? emailVaultBanners || [] : [],
+        account?.addr
+      ),
+      // The defi-positions banner renders inside the DeFi tab, not the general dashboard.
+      ...getCurrentAccountBanners(selectedAccountBanners || [], account?.addr).filter(
+        (b) => b.id !== defiPositionsOnDisabledNetworksBannerId
+      ),
+      ...(extensionUpdateBanner || [])
     ]
   }, [
     deprecatedSmartAccountBanner,
@@ -46,6 +72,7 @@ export default function useBanners(): [BannerInterface[], BannerInterface[]] {
     swapAndBridgeBanners,
     hasFundedHotAccount,
     emailVaultBanners,
+    selectedAccountBanners,
     account?.addr,
     extensionUpdateBanner
   ])

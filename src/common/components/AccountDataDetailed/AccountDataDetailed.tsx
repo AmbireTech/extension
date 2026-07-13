@@ -1,11 +1,9 @@
-import React from 'react'
+import React, { useMemo } from 'react'
 import { View } from 'react-native'
 
-import { isSmartAccount } from '@ambire-common/libs/account/account'
 import AccountAddress from '@common/components/AccountAddress'
 import AccountBadges from '@common/components/AccountBadges'
 import Avatar from '@common/components/Avatar'
-import DomainBadge from '@common/components/Avatar/DomainBadge'
 import Text from '@common/components/Text'
 import useController from '@common/hooks/useController'
 import useReverseLookup from '@common/hooks/useReverseLookup'
@@ -15,7 +13,15 @@ const AccountDataDetailed = () => {
   const {
     state: { account }
   } = useController('SelectedAccountController')
-  const { isLoading, ens } = useReverseLookup({ address: account?.addr || '' })
+  const reverseLookup = useReverseLookup({
+    address: account?.addr || ''
+  })
+
+  const smartAccountType = useMemo(() => {
+    if (account?.creation) return 'Ambire'
+    if (account?.safeCreation) return 'Safe'
+    return undefined
+  }, [account])
 
   if (!account) return null
 
@@ -24,19 +30,17 @@ const AccountDataDetailed = () => {
       <Avatar
         address={account.addr}
         pfp={account.preferences.pfp}
-        isSmart={isSmartAccount(account)}
+        smartAccountType={smartAccountType}
       />
       <View style={flexbox.flex1}>
-        <View style={[flexbox.flex1, flexbox.directionRow]}>
+        <View style={[flexbox.directionRow, flexbox.alignCenter]}>
           <Text fontSize={16} weight="semiBold" numberOfLines={1}>
             {account.preferences.label}
           </Text>
-
           <AccountBadges accountData={account} />
         </View>
         <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-          <DomainBadge ens={ens} />
-          <AccountAddress isLoading={isLoading} ens={ens} address={account.addr} />
+          <AccountAddress {...reverseLookup} address={account.addr} />
         </View>
       </View>
     </View>

@@ -2,8 +2,13 @@ import 'dotenv/config'
 
 import { PlaywrightTestConfig } from '@playwright/test'
 
+const workersFromEnv = process.env.PLAYWRIGHT_WORKERS
+  ? Number.parseInt(process.env.PLAYWRIGHT_WORKERS, 10)
+  : NaN
+const workers = Number.isFinite(workersFromEnv) ? workersFromEnv : process.env.CI ? 2 : 3
+
 const config: PlaywrightTestConfig = {
-  forbidOnly: true,
+  forbidOnly: !!process.env.CI,
   expect: {
     timeout: 30 * 1000,
     toHaveScreenshot: {
@@ -12,12 +17,18 @@ const config: PlaywrightTestConfig = {
   },
   testDir: 'tests',
   testMatch: '**/*.spec.ts',
-  reporter: [['list'], ['html', { outputFolder: 'html-report', open: 'never' }]],
+  // In CI each suite/shard emits a `blob` report and the `report` job merges them into a
+  // single HTML report. Locally we keep the directly-viewable HTML report.
+  reporter: process.env.CI
+    ? [['list'], ['blob']]
+    : [['list'], ['html', { outputFolder: 'html-report', open: 'never' }]],
   timeout: 180 * 1000, // 3min
   reportSlowTests: null,
   snapshotPathTemplate: 'data/screenshots/{projectName}/{testFilePath}/{arg}/text',
-  retries: process.env.CI ? 3 : 0,
-  workers: process.env.CI ? 4 : 3,
+  // Increasing also increases the time it takes to run the tests!
+  retries: process.env.CI ? 2 : 0,
+  // CI runners are small; fewer workers avoids fighting Speculos + Docker for CPU/RAM.
+  workers,
   fullyParallel: true,
   use: {
     viewport: { width: 1920, height: 1080 },

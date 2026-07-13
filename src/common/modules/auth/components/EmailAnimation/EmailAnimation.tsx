@@ -1,6 +1,7 @@
-import LottieView from 'lottie-react'
 import React from 'react'
 import { ViewStyle } from 'react-native'
+
+import LottieView from '@common/components/LottieView'
 
 import animation from './email-animation.json'
 

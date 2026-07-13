@@ -96,7 +96,7 @@ export const tabMessenger = createMessenger({
         // Errors do not serialize properly over `chrome.runtime.sendMessage`, so
         // we are manually serializing it to an object.
         const error: Record<string, unknown> = {}
-        // eslint-disable-next-line no-restricted-syntax
+
         for (const key of Object.getOwnPropertyNames(error_)) {
           error[key] = (<Error>error_)[<keyof Error>key]
         }

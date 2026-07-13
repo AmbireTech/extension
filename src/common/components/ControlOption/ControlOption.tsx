@@ -3,20 +3,22 @@ import { useTranslation } from 'react-i18next'
 import { View, ViewStyle } from 'react-native'
 
 import Text from '@common/components/Text'
+import { isMobile, isWeb } from '@common/config/env'
+import { AnimatedPressable, useCustomHover } from '@common/hooks/useHover'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import spacings from '@common/styles/spacings'
 import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
-import { openInTab } from '@web/extension-services/background/webapi/tab'
-import { AnimatedPressable, useCustomHover } from '@web/hooks/useHover'
+import { openInTab } from '@common/utils/links'
 
 interface Props {
   title: string
   description: string
+  forceDescriptionOnMobile?: boolean
   readMoreLink?: string
   renderIcon: React.ReactNode
-  children: React.ReactNode
+  children?: React.ReactNode
   style?: ViewStyle
   onPress?: () => void
 }
@@ -24,13 +26,14 @@ interface Props {
 const ControlOption: FC<Props> = ({
   title,
   description,
+  forceDescriptionOnMobile,
   readMoreLink,
   children,
   renderIcon,
   style,
   onPress
 }) => {
-  const { theme, themeType } = useTheme()
+  const { theme } = useTheme()
   const { addToast } = useToast()
   const { t } = useTranslation()
   const [bindAnim, animStyle] = useCustomHover({
@@ -50,7 +53,9 @@ const ControlOption: FC<Props> = ({
   return (
     <ParentElement
       style={[
-        spacings.pv,
+        isWeb && spacings.pv,
+        isMobile && !!forceDescriptionOnMobile && spacings.pvSm,
+        isMobile && !forceDescriptionOnMobile && { height: 66 },
         spacings.ph,
         common.borderRadiusPrimary,
         flexbox.directionRow,
@@ -66,32 +71,31 @@ const ControlOption: FC<Props> = ({
       {...(onPress ? bindAnim : {})}
     >
       <View style={[flexbox.directionRow, flexbox.alignCenter, flexbox.flex1, spacings.pr]}>
-        <View
-          style={{
-            width: 24,
-            ...flexbox.center
-          }}
-        >
-          {renderIcon}
-        </View>
-        <View style={[spacings.ml, flexbox.flex1]}>
+        {isWeb && <View style={{ width: 24, ...flexbox.center }}>{renderIcon}</View>}
+        <View style={[isWeb && spacings.ml, flexbox.flex1]}>
           <Text fontSize={16} weight="medium">
             {title}
           </Text>
-          <Text appearance="secondaryText" fontSize={14}>
-            {description}
-            {!!readMoreLink && ' '}
-            {!!readMoreLink && (
-              <Text
-                fontSize={14}
-                color={theme.linkText}
-                style={{ textDecorationLine: 'underline' }}
-                onPress={openReadMoreLink}
-              >
-                {t('Read more')}
-              </Text>
-            )}
-          </Text>
+          {(isWeb || !!forceDescriptionOnMobile) && (
+            <Text
+              appearance="secondaryText"
+              fontSize={isMobile ? 12 : 14}
+              style={isMobile && spacings.ptMi}
+            >
+              {description}
+              {!!readMoreLink && ' '}
+              {!!readMoreLink && (
+                <Text
+                  fontSize={isMobile ? 12 : 14}
+                  color={theme.linkText}
+                  style={{ textDecorationLine: 'underline' }}
+                  onPress={openReadMoreLink}
+                >
+                  {t('Read more')}
+                </Text>
+              )}
+            </Text>
+          )}
         </View>
       </View>
       {children}

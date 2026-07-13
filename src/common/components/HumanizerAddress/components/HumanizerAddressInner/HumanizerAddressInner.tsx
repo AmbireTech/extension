@@ -16,7 +16,7 @@ interface Props extends TextProps {
   // example of highestPriorityAlias: a name coming from the humanizer's metadata
   highestPriorityAlias?: string
   humanizerInfo?: HumanizerMetaAddress
-  hideLinks?: boolean
+  actionsMode?: 'tooltip' | 'inline'
   chainId: bigint
   verification?: BlacklistedStatus
 }
@@ -25,7 +25,7 @@ const HumanizerAddressInner: FC<Props> = ({
   humanizerInfo,
   address,
   highestPriorityAlias,
-  hideLinks = false,
+  actionsMode = 'tooltip',
   chainId,
   ...rest
 }) => {
@@ -64,18 +64,60 @@ const HumanizerAddressInner: FC<Props> = ({
     accountsState?.accounts
   ])
 
-  // highestPriorityAlias and account labels are of higher priority than domains
+  if (actionsMode === 'inline') {
+    if (!isExtension)
+      return (
+        <BenzinAddressName
+          address={checksummedAddress}
+          chainId={chainId}
+          actionsMode={actionsMode}
+          fallbackLabel={localAddressLabel || undefined}
+          {...rest}
+        />
+      )
+
+    return (
+      <AddressName
+        address={checksummedAddress}
+        chainId={chainId}
+        actionsMode={actionsMode}
+        fallbackLabel={localAddressLabel || undefined}
+        {...rest}
+      />
+    )
+  }
+
+  // highestPriorityAlias and account labels are of higher priority than domains outside inline mode.
   if (localAddressLabel)
     return (
-      <BaseAddress address={checksummedAddress} hideLinks={hideLinks} chainId={chainId} {...rest}>
+      <BaseAddress
+        address={checksummedAddress}
+        actionsMode={actionsMode}
+        chainId={chainId}
+        {...rest}
+      >
         {localAddressLabel}
       </BaseAddress>
     )
 
   if (!isExtension)
-    return <BenzinAddressName address={checksummedAddress} chainId={chainId} {...rest} />
+    return (
+      <BenzinAddressName
+        address={checksummedAddress}
+        chainId={chainId}
+        actionsMode={actionsMode}
+        {...rest}
+      />
+    )
 
-  return <AddressName address={checksummedAddress} chainId={chainId} {...rest} />
+  return (
+    <AddressName
+      address={checksummedAddress}
+      chainId={chainId}
+      actionsMode={actionsMode}
+      {...rest}
+    />
+  )
 }
 
 export default React.memo(HumanizerAddressInner)

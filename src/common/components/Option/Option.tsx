@@ -5,11 +5,11 @@ import DownArrowIcon from '@common/assets/svg/DownArrowIcon'
 import RightArrowIcon from '@common/assets/svg/RightArrowIcon'
 import UpArrowIcon from '@common/assets/svg/UpArrowIcon'
 import Text from '@common/components/Text'
+import { AnimatedPressable, useCustomHover } from '@common/hooks/useHover'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
-import { AnimatedPressable, useCustomHover } from '@web/hooks/useHover'
 
 import getStyles from './styles'
 
@@ -24,6 +24,7 @@ interface Props {
   disabled?: boolean
   status?: 'default' | 'expanded' | 'collapsed' | 'none'
   icons?: { key: string; component: React.FC<any> }[]
+  ref?: React.Ref<any>
 }
 
 const Option = ({
@@ -36,7 +37,8 @@ const Option = ({
   testID,
   disabled,
   status = 'default',
-  icons = []
+  icons = [],
+  ref
 }: Props) => {
   const { theme, styles, themeType } = useTheme(getStyles)
   const [bindAnim, animStyle, isHovered] = useCustomHover({
@@ -63,6 +65,7 @@ const Option = ({
       {...bindAnim}
       testID={testID}
       disabled={disabled}
+      ref={ref}
     >
       <View style={[flexbox.directionRow, flexbox.alignCenter]}>
         <View style={styles.iconWrapper}>

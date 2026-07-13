@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef } from 'react'
+import { useCallback, useEffect, useMemo, useRef } from 'react'
 
 import useController from '@common/hooks/useController'
 
@@ -9,15 +9,18 @@ interface Props {
 
 // Define the type for our pending promises tracker
 type Resolver = {
-  resolve: (ensAddress: string | undefined) => void
+  resolve: (result: { address: string | undefined; type: 'ens' | 'namoshi' } | undefined) => void
   reject: (reason?: any) => void
 }
 
 const useResolveDomain = () => {
   const {
-    state: { ensToAddress, resolveDomainsStatus },
+    state: { domainToAddresses, resolveDomainsErrors, resolveDomainsStatus },
     dispatch
   } = useController('DomainsController')
+  const {
+    state: { networks }
+  } = useController('NetworksController')
 
   const requests = useRef<Record<string, Resolver>>({})
 
@@ -29,42 +32,51 @@ const useResolveDomain = () => {
       if (!resolver) return
 
       if (status === 'RESOLVED') {
-        resolver.resolve(ensToAddress[domain])
+        resolver.resolve(domainToAddresses[domain])
         delete requests.current[domain]
       } else if (status === 'FAILED') {
-        resolver.reject(new Error(`Failed to resolve domain: ${domain}`))
+        resolver.reject(
+          new Error(resolveDomainsErrors[domain] || `Failed to resolve domain: ${domain}`)
+        )
         delete requests.current[domain]
       }
     })
-  }, [ensToAddress, resolveDomainsStatus])
+  }, [domainToAddresses, resolveDomainsErrors, resolveDomainsStatus])
+
+  const isNamoshiAvailable = useMemo(() => {
+    return networks.some((network) => network.chainId === 4114n)
+  }, [networks])
 
   const handleResolveDomain = useCallback(
-    ({ domain, bip44Item }: Props) => {
+    ({
+      domain,
+      bip44Item
+    }: Props): Promise<{ address: string | undefined; type: 'ens' | 'namoshi' } | undefined> => {
       const status = resolveDomainsStatus[domain]
 
-      if (status === 'RESOLVED') return Promise.resolve(ensToAddress[domain])
+      if (status === 'RESOLVED') return Promise.resolve(domainToAddresses[domain])
 
       if (status === 'FAILED')
-        return Promise.reject(new Error(`Failed to resolve domain: ${domain}`))
+        return Promise.reject(
+          new Error(resolveDomainsErrors[domain] || `Failed to resolve domain: ${domain}`)
+        )
 
       if (!status)
         dispatch({
           type: 'method',
-          params: { method: 'resolveDomain', args: [{ domain, bip44Item }] }
+          params: { method: 'resolveDomain', args: [{ domain }] }
         })
 
       return new Promise((resolve, reject) => {
         requests.current[domain] = { resolve, reject }
       })
     },
-    [dispatch, ensToAddress, resolveDomainsStatus]
+    [dispatch, domainToAddresses, resolveDomainsErrors, resolveDomainsStatus]
   )
 
   return {
-    resolveDomain: handleResolveDomain as ({
-      domain,
-      bip44Item
-    }: Props) => Promise<string | undefined>
+    resolveDomain: handleResolveDomain,
+    isNamoshiAvailable
   }
 }
 

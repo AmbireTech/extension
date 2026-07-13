@@ -1,5 +1,4 @@
-import React from 'react'
-import { FlatList } from 'react-native'
+import React, { useMemo } from 'react'
 
 import EmptyListPlaceholder from './components/EmptyListPlaceholder'
 import SelectContainer from './components/SelectContainer'
@@ -17,12 +16,14 @@ const Select = ({
   onSearch,
   ...props
 }: SelectProps) => {
+  const data = useMemo(
+    () => [{ data: options, title: '', key: 'default' }] as SectionedSelectProps['sections'],
+    [options]
+  )
   const selectData = useSelectInternal({
     value,
     setValue,
-    // To address the structural differences between SectionList and FlatList,
-    // we wrap non-sectioned list data in a default single section
-    data: [{ data: options, title: '', key: 'default' }] as SectionedSelectProps['sections'],
+    data,
     menuOptionHeight,
     attemptToFetchMoreOptions,
     mode: props.mode,
@@ -38,6 +39,34 @@ const Select = ({
     handleScroll
   } = selectData
 
+  const flatListProps = useMemo(
+    () => ({
+      ref: listRef,
+      data: filteredData?.[0]?.data || [],
+      renderItem: renderItem as any,
+      keyExtractor,
+      onLayout: handleLayout,
+      initialNumToRender: 15,
+      windowSize: 10,
+      maxToRenderPerBatch: 20,
+      removeClippedSubviews: true,
+      getItemLayout,
+      ListEmptyComponent: <EmptyListPlaceholder placeholderText={emptyListPlaceholderText} />,
+      onScroll: handleScroll,
+      scrollEventThrottle: 16
+    }),
+    [
+      listRef,
+      filteredData,
+      renderItem,
+      keyExtractor,
+      handleLayout,
+      getItemLayout,
+      handleScroll,
+      emptyListPlaceholderText
+    ]
+  )
+
   return (
     <SelectContainer
       value={value}
@@ -46,24 +75,9 @@ const Select = ({
       menuProps={{ ...selectData.menuProps, ...(props.menuProps || {}) }}
       id={testID}
       testID={testID}
-    >
-      <FlatList
-        ref={listRef}
-        // get the data (the options) from the default section
-        data={filteredData?.[0]?.data || []}
-        renderItem={renderItem as any}
-        keyExtractor={keyExtractor}
-        onLayout={handleLayout}
-        initialNumToRender={15}
-        windowSize={10}
-        maxToRenderPerBatch={20}
-        removeClippedSubviews
-        getItemLayout={getItemLayout}
-        ListEmptyComponent={<EmptyListPlaceholder placeholderText={emptyListPlaceholderText} />}
-        onScroll={handleScroll}
-        scrollEventThrottle={16}
-      />
-    </SelectContainer>
+      listRef={listRef}
+      flatListProps={flatListProps}
+    />
   )
 }
 

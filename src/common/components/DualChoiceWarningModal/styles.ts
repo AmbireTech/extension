@@ -15,7 +15,8 @@ const getStyles = () =>
     container: {},
     content: {
       ...spacings.mbXl,
-      ...spacings.ptLg
+      ...spacings.phMi,
+      ...spacings.ptXl
     },
     titleAndIcon: {
       ...flexbox.directionRow,

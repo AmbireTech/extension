@@ -25,10 +25,10 @@ import useNavigation from '@common/hooks/useNavigation'
 import useRoute from '@common/hooks/useRoute'
 import useTheme from '@common/hooks/useTheme'
 import { ROUTES, WEB_ROUTES } from '@common/modules/router/constants/common'
+import SettingsLink from '@common/modules/settings/components/SettingsLink'
 import spacings, { SPACING_TY } from '@common/styles/spacings'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
-import SettingsLink from '@web/modules/settings/components/SettingsLink'
 
 import getStyles from './styles'
 
@@ -90,7 +90,7 @@ export const SETTINGS_LINKS = [
   {
     key: 'opt-outs',
     Icon: PrivacyIcon,
-    label: 'Privacy Opt-outs',
+    label: 'Privacy opt-outs',
     path: ROUTES.optOuts
   },
   // Disabled for now - will be added in future releases
@@ -120,15 +120,15 @@ const OTHER_LINKS = [
   {
     key: 'help-center',
     Icon: HelpIcon,
-    label: 'Help Center',
-    path: 'https://help.ambire.com/hc/en-us',
+    label: 'Help center',
+    path: 'https://help.ambire.com/en',
     isExternal: true
   },
   {
     key: 'report-issue',
     Icon: BugIcon,
     label: 'Report an issue',
-    path: 'https://help.ambire.com/hc/en-us/requests/new',
+    path: 'https://help.ambire.com/en',
     isExternal: true
   }
 ]
@@ -136,6 +136,7 @@ const OTHER_LINKS = [
 const Sidebar = ({ activeLink }: { activeLink?: string }) => {
   const { theme, styles } = useTheme(getStyles)
   const keystoreState = useController('KeystoreController').state
+  const { isReady: evIsReady, emailVaultStates } = useController('EmailVaultController').state
   const { state } = useRoute()
   const { navigate } = useNavigation()
   const [validBackRoute, setValidBackRoute] = useState<'dashboard' | 'transfer' | null>(null)
@@ -155,12 +156,12 @@ const Sidebar = ({ activeLink }: { activeLink?: string }) => {
   }, [isDashboardPreviousPage, isTransferPreviousPage, validBackRoute])
 
   const glassViewStyle: ViewStyle & React.CSSProperties = {
-    borderRadius: BORDER_RADIUS_PRIMARY,
     flexDirection: 'column',
     paddingLeft: SPACING_TY,
     paddingBottom: SPACING_TY,
     paddingRight: SPACING_TY,
-    height: '100%'
+    height: '100%',
+    display: 'flex'
   }
 
   return (
@@ -169,9 +170,7 @@ const Sidebar = ({ activeLink }: { activeLink?: string }) => {
         ...spacings.pbLg,
         ...spacings.mlTy,
         ...spacings.mvTy,
-        maxHeight: '100%',
-        // @ts-ignore
-        height: 'fit-content',
+        height: '100%',
         position: 'relative'
       }}
     >
@@ -198,6 +197,11 @@ const Sidebar = ({ activeLink }: { activeLink?: string }) => {
         </View>
         <ScrollableWrapper>
           {SETTINGS_LINKS.map((_link, i) => {
+            if (
+              (!evIsReady || !Object.keys(emailVaultStates?.email || {}).length) &&
+              _link.key === 'device-password-recovery'
+            )
+              return null
             // If the KeyStore device password is not configured yet, redirect to DevicePassword->Set route under the hood,
             // instead of loading DevicePassword->Change route.
             const link =
@@ -211,6 +215,7 @@ const Sidebar = ({ activeLink }: { activeLink?: string }) => {
                 isSidebarLink
                 {...link}
                 key={link.key}
+                testID={`settings-nav-${link.key}`}
                 isActive={isActive}
                 style={i === SETTINGS_LINKS.length - 1 ? spacings.mb0 : {}}
               />
@@ -225,6 +230,7 @@ const Sidebar = ({ activeLink }: { activeLink?: string }) => {
                 isSidebarLink
                 {...link}
                 key={link.key}
+                testID={`settings-nav-${link.key}`}
                 isActive={isActive}
                 style={i === OTHER_LINKS.length - 1 ? spacings.mb0 : {}}
               />

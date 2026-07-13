@@ -28,10 +28,10 @@ const ProtocolIcon = ({
   iconUrl
 }: {
   providerName: string
-  chainId: bigint
+  chainId?: bigint
   iconUrl?: string
 }) => {
-  const { theme, themeType } = useTheme()
+  const { theme } = useTheme()
   const Icon = POSITION_TO_ICON[providerName]
 
   return (
@@ -60,19 +60,21 @@ const ProtocolIcon = ({
           >
             <Icon width={24} height={24} />
           </View>
-          <View
-            style={{
-              position: 'absolute',
-              left: -1,
-              top: -1,
-              zIndex: 3,
-              borderWidth: 1,
-              borderColor: theme.neutral200,
-              borderRadius: 12
-            }}
-          >
-            <NetworkIcon id={chainId.toString()} size={14} />
-          </View>
+          {!!chainId && (
+            <View
+              style={{
+                position: 'absolute',
+                left: -1,
+                top: -1,
+                zIndex: 3,
+                borderWidth: 1,
+                borderColor: theme.neutral200,
+                borderRadius: 12
+              }}
+            >
+              <NetworkIcon id={chainId.toString()} size={14} />
+            </View>
+          )}
         </View>
       ) : null}
     </View>

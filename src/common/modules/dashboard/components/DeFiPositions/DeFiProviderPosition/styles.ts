@@ -20,7 +20,8 @@ const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
       ...spacings.mbTy,
       overflow: 'hidden',
       borderWidth: 1,
-      borderColor: 'transparent'
+      borderColor: 'transparent',
+      backgroundColor: theme.secondaryBackground
     },
     header: {
       ...flexbox.directionRow,

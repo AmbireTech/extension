@@ -14,7 +14,7 @@ export class GasTankPage extends BasePage {
   }
 
   async topUpGasTank(token: Token, amount: string) {
-    await this.page.getByTestId(selectors.dashboardGasTankButton).click()
+    await this.page.getByTestId(selectors.dashboardGasTankBalance).click()
     await this.page.getByTestId(selectors.topUpButton).click()
 
     await this.clickOnMenuToken(token)
@@ -24,18 +24,19 @@ export class GasTankPage extends BasePage {
 
     // Switching to dollars takes a few milliseconds for the controller to update,
     // and if the amount is filled at the same time, sometimes the amount is not set in the UI or in the controller.
-    await this.page.waitForTimeout(1000)
+    await this.page.waitForTimeout(3000)
 
     // Amount
-    await this.page.waitForTimeout(1000) // script misses input due to modal animation sometimes
-    const amountField = this.page.getByTestId(selectors.amountField)
+    const amountField = this.page.getByTestId(selectors.transaction.amountField)
+    await amountField.isEnabled({ timeout: 30000 })
     await amountField.fill(amount)
+    await this.page.waitForTimeout(1000)
   }
 
   async signAndValidate() {
     // Proceed
-    await this.expectButtonEnabled(selectors.proceedBtn)
-    await this.click(selectors.proceedBtn)
+    await this.expectButtonEnabled(selectors.transaction.proceedBtn)
+    await this.click(selectors.transaction.proceedBtn)
 
     // Sign & Broadcast
     await this.click(selectors.signButton)
@@ -66,6 +67,14 @@ export class GasTankPage extends BasePage {
   // TODO: move to dashboard page once POM is refactored
   async checkSendTransactionOnActivityTab() {
     await this.click(selectors.dashboard.activityTabButton)
+
+    // open transaction modal
+    const firstTransaction = this.page
+      .locator(selectors.dashboard.transactionFuelGasTankText)
+      .first()
+    await firstTransaction.click()
+
+    // assert
     await expect(this.page.locator(selectors.dashboard.fuelGasTankTransactionPill)).toContainText(
       'Fuel gas tank with'
     )

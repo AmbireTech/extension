@@ -1,0 +1,16 @@
+name: Build production Android APK ⚡
+
+on:
+  workflow_dispatch: # Manual trigger
+
+jobs:
+  build-android-apk:
+    name: Build Android APK and upload artifact
+    uses: ./.github/workflows/_build-android.yml
+    with:
+      build_command: yarn build:android:production:apk
+      artifact_suffix: apk
+      package_mode: apk
+      # APK build is for testing, so we target only modern devices (arm64-v8a) for faster builds and smaller artifacts.
+      architectures: arm64-v8a
+    secrets: inherit

@@ -8,11 +8,11 @@ import InfoIcon from '@common/assets/svg/InfoIcon'
 import SuccessIcon from '@common/assets/svg/SuccessIcon'
 import WarningIcon from '@common/assets/svg/WarningIcon'
 import Text from '@common/components/Text'
+import { isMobile, isWeb } from '@common/config/env'
 import useTheme from '@common/hooks/useTheme'
+import BannerButton from '@common/modules/dashboard/components/DashboardBanners/DashboardBanner/BannerButton'
 import spacings from '@common/styles/spacings'
-import { hexToRgba } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
-import { AnimatedPressable, useCustomHover } from '@web/hooks/useHover'
 
 import getStyles from './styles'
 
@@ -34,8 +34,12 @@ export interface Props {
   style?: ViewStyle
   contentContainerStyle?: ViewStyle
   titleFontSize?: number
+  singleRow?: boolean
+  buttonText?: string
   onPress?: () => void
-  onClosePress?: () => void
+  onCloseIconPress?: () => void
+  dismissButtonText?: string
+  onDismissButtonPress?: () => void
 }
 
 const Banner = React.memo(
@@ -46,20 +50,19 @@ const Banner = React.memo(
     children,
     CustomIcon,
     titleFontSize,
+    singleRow,
+    buttonText,
     style,
-    onClosePress,
+    onCloseIconPress,
+    onDismissButtonPress,
+    dismissButtonText,
     onPress
   }: Props) => {
     const { styles, theme } = useTheme(getStyles)
-    const [bindAnim, animStyle] = useCustomHover({
-      property: 'borderColor',
-      values: {
-        from: hexToRgba(theme[`${type}Text`], 0),
-        to: hexToRgba(theme[`${type}Text`], 1)
-      }
-    })
+    const hasPrimaryAction = !!buttonText && !!onPress
+    const hasDismissAction = !!dismissButtonText && !!onDismissButtonPress
+    const hasActions = hasPrimaryAction || hasDismissAction
 
-    const WrapperElement = onPress ? AnimatedPressable : View
     const Icon = useMemo(() => {
       if (CustomIcon) return CustomIcon
 
@@ -67,52 +70,120 @@ const Banner = React.memo(
     }, [CustomIcon, type])
 
     return (
-      <WrapperElement
+      <View
         style={[
           styles.container,
           flexbox.alignStart,
           {
-            backgroundColor: theme[`${type}Background`],
-            borderWidth: 1,
-            borderColor: !onPress ? 'transparent' : animStyle.borderColor
+            backgroundColor: theme[`${type}Background`]
           },
           style
         ]}
-        {...(onPress ? { ...bindAnim, onPress } : {})}
-        testID={`dashboard-${type}-banner`}
       >
-        <View style={[spacings.mrMi, { marginTop: 1 }]}>
-          <Icon width={24} height={24} color={theme[`${type}Text`]} />
-        </View>
+        <View
+          style={[
+            flexbox.directionRow,
+            flexbox.justifySpaceBetween,
+            singleRow ? flexbox.alignCenter : undefined,
 
-        <View style={[flexbox.wrap, flexbox.flex1]}>
-          <Text appearance={`${type}Text`} fontSize={titleFontSize || 16} weight="medium">
-            {title}
-          </Text>
-          {!!text && (
-            <Text fontSize={14} weight="regular" appearance={`${type}Text`}>
-              {text}
+            singleRow ? undefined : !!text ? spacings.mbTy : spacings.mbSm,
+            {
+              width: '100%'
+            }
+          ]}
+        >
+          <View style={[flexbox.directionRow, flexbox.alignCenter, flexbox.flex1]}>
+            <Icon
+              width={isMobile ? 22 : 24}
+              height={isMobile ? 22 : 24}
+              color={theme[`${type}Text`]}
+            />
+            <Text
+              fontSize={titleFontSize || (isMobile ? 14 : 16)}
+              weight="medium"
+              style={[flexbox.flex1, spacings.mlMi, !singleRow && isMobile && { marginTop: 2 }]}
+            >
+              {title}
             </Text>
+          </View>
+          {singleRow && hasPrimaryAction && (
+            <BannerButton
+              type="primary"
+              colorType={type}
+              onPress={onPress}
+              testID={`dashboard-${type}-banner`}
+              style={spacings.mlTy}
+            >
+              {buttonText}
+            </BannerButton>
+          )}
+          {!!onCloseIconPress && (
+            <Pressable
+              onPress={onCloseIconPress}
+              hitSlop={8}
+              style={{
+                width: 24,
+                height: 24,
+                ...flexbox.center
+              }}
+              testID="banner-button-reject"
+            >
+              <CloseIcon color={theme.iconPrimary} strokeWidth="2" width={12} height={12} />
+            </Pressable>
           )}
         </View>
-        {!!onClosePress && (
-          <Pressable
-            onPress={onClosePress}
-            hitSlop={8}
-            style={{
-              width: 24,
-              height: 24,
-              ...flexbox.center
-            }}
-            testID="banner-button-reject"
-          >
-            <CloseIcon color={theme.iconPrimary} strokeWidth="2" width={12} height={12} />
-          </Pressable>
+
+        {!singleRow && (
+          <View style={[isWeb && flexbox.wrap, { width: '100%' }]}>
+            {!!text && (
+              <Text
+                fontSize={isMobile ? 12 : 14}
+                weight="regular"
+                appearance="secondaryText"
+                style={hasActions ? spacings.mbSm : undefined}
+              >
+                {text}
+              </Text>
+            )}
+            <View
+              style={[
+                flexbox.directionRow,
+                flexbox.alignCenter,
+                flexbox.justifyEnd,
+                isWeb && flexbox.wrap,
+                { width: '100%' }
+              ]}
+            >
+              {hasDismissAction && (
+                <BannerButton
+                  type="secondary"
+                  colorType="error"
+                  onPress={onDismissButtonPress}
+                  testID="banner-button-reject"
+                  style={hasPrimaryAction && spacings.mrTy}
+                >
+                  {dismissButtonText}
+                </BannerButton>
+              )}
+              {hasPrimaryAction && (
+                <BannerButton
+                  type="primary"
+                  colorType={type}
+                  onPress={onPress}
+                  testID={`dashboard-${type}-banner`}
+                >
+                  {buttonText}
+                </BannerButton>
+              )}
+            </View>
+          </View>
         )}
         {children}
-      </WrapperElement>
+      </View>
     )
   }
 )
+
+Banner.displayName = 'Banner'
 
 export default Banner

@@ -10,10 +10,10 @@ import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
+import { openInTab } from '@common/utils/links'
+import { getUiType } from '@common/utils/uiType'
 import ImageIcon from '@web/assets/svg/ImageIcon'
 import ManifestImage from '@web/components/ManifestImage'
-import { createTab } from '@web/extension-services/background/webapi/tab'
-import { getUiType } from '@web/utils/uiType'
 
 import Row from './Row'
 import getStyles, { COLLECTIBLE_IMAGE_SIZE } from './styles'
@@ -42,7 +42,7 @@ const CollectibleModal = ({
   hideSendNft?: boolean
 }) => {
   const { t } = useTranslation()
-  const { styles, theme, themeType } = useTheme(getStyles)
+  const { styles, theme } = useTheme(getStyles)
   const {
     state: { networks }
   } = useController('NetworksController')
@@ -78,29 +78,32 @@ const CollectibleModal = ({
           style={[
             flexbox.directionRow,
             flexbox.alignCenter,
-            spacings.mbSm,
+            spacings.mbMd,
             flexbox.justifyCenter,
             { width: '100%' }
           ]}
         >
           <Text
             fontSize={isTab ? 18 : 16}
-            weight="medium"
+            weight="semiBold"
             style={[spacings.mrMi]}
             numberOfLines={1}
+            ellipsizeMode="tail"
             selectable
           >
             {name || 'Unknown Name'}
           </Text>
           <Pressable
-            style={spacings.mlTy}
-            onPress={() => createTab(`${networkData?.explorerUrl}/nft/${address}/${String(id)}`)}
+            style={spacings.mlSm}
+            onPress={() =>
+              openInTab({ url: `${networkData?.explorerUrl}/nft/${address}/${String(id)}` })
+            }
           >
             {({ hovered }: any) => (
               <OpenIcon
                 color={hovered ? theme.primaryText : theme.secondaryText}
-                width={isTab ? 16 : 12}
-                height={isTab ? 16 : 12}
+                width={20}
+                height={20}
                 strokeWidth="2"
               />
             )}

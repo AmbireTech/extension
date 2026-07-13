@@ -4,6 +4,15 @@ import { ACCENT_PRIMITIVES, FEEDBACK_PRIMITIVES, NEUTRAL_PRIMITIVES } from './th
 import { THEME_TYPES, ThemeType } from './theme/types'
 import { hexToRgba } from './utils/common'
 
+/**
+ * Theme color configuration for the application.
+ *
+ * To determine the color of an element:
+ * 1. Identify the color in Figma (e.g., "grey/300 bg 1")
+ * 2. Map design color to theme prefix (grey → neutral, purple → primaryAccent, etc.)
+ * 3. Find the semantic token in this object (prefer over primitives) (e.g., primaryBackground)
+ * 4. Fall back to primitives if no semantic token exists
+ */
 const ThemeColors = {
   ...NEUTRAL_PRIMITIVES,
   ...ACCENT_PRIMITIVES,
@@ -12,37 +21,25 @@ const ThemeColors = {
   primaryBackground: NEUTRAL_PRIMITIVES.neutral300,
   secondaryBackground: NEUTRAL_PRIMITIVES.neutral100,
   tertiaryBackground: NEUTRAL_PRIMITIVES.neutral400,
-  /**
-   * @deprecated
-   */
-  secondaryBackgroundInverted: NEUTRAL_PRIMITIVES.neutral700,
-  /**
-   * @deprecated
-   */
-  quaternaryBackground: NEUTRAL_PRIMITIVES.neutral400,
-  /**
-   * @deprecated
-   */
-  primaryBackgroundInverted: NEUTRAL_PRIMITIVES.neutral900,
   // --- Text tokens ---
   primaryText: NEUTRAL_PRIMITIVES.neutral900,
-  secondaryText: NEUTRAL_PRIMITIVES.neutral600,
-  tertiaryText: NEUTRAL_PRIMITIVES.neutral500,
+  secondaryText: NEUTRAL_PRIMITIVES.neutral700,
+  tertiaryText: NEUTRAL_PRIMITIVES.neutral600,
   // --- Border tokens ---
   primaryBorder: NEUTRAL_PRIMITIVES.neutral100,
   secondaryBorder: NEUTRAL_PRIMITIVES.neutral300,
   // --- Icon tokens ---
-  iconPrimary: NEUTRAL_PRIMITIVES.neutral500,
+  iconPrimary: NEUTRAL_PRIMITIVES.neutral700,
   /**
    * @deprecated
    */
-  iconSecondary: NEUTRAL_PRIMITIVES.neutral500,
+  iconSecondary: NEUTRAL_PRIMITIVES.neutral700,
   // --- Accent tokens ---
   /**
    * @deprecated - please use primaryAccent
    */
-  primary: ACCENT_PRIMITIVES.primaryAccent200,
-  primaryAccent: ACCENT_PRIMITIVES.primaryAccent200,
+  primary: ACCENT_PRIMITIVES.primaryAccent300,
+  primaryAccent: ACCENT_PRIMITIVES.primaryAccent300,
   primaryAccentHovered: ACCENT_PRIMITIVES.primaryAccent400,
   secondaryAccent: ACCENT_PRIMITIVES.secondaryAccent500,
   secondaryAccentHovered: ACCENT_PRIMITIVES.secondaryAccent400,
@@ -67,6 +64,10 @@ const ThemeColors = {
   backdrop: {
     [THEME_TYPES.LIGHT]: hexToRgba('#2C2F33', 0.8),
     [THEME_TYPES.DARK]: hexToRgba('#2C2F33', 0.8)
+  },
+  shadowPrimary: {
+    [THEME_TYPES.LIGHT]: '#2F343D',
+    [THEME_TYPES.DARK]: '#101114'
   },
   linkText: ACCENT_PRIMITIVES.primaryAccent300,
   /**

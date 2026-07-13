@@ -8,7 +8,7 @@ import usePortfolio from '@legends/hooks/usePortfolio'
 import RewardsPoolChart from './components/RewardsPoolChart'
 import styles from './RewardsPool.module.scss'
 
-const END_DATE = new Date('2026-03-15T11:59:59.999Z')
+const END_DATE = new Date('2026-04-15T11:59:59.999Z')
 
 const MIN_SWAP_VOLUME = 3 * 1_000_000
 

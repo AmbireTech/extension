@@ -5,7 +5,6 @@ import { StyleSheet, View } from 'react-native'
 
 import { Account } from '@ambire-common/interfaces/account'
 import { Network } from '@ambire-common/interfaces/network'
-import { SubmittedAccountOp } from '@ambire-common/libs/accountOp/submittedAccountOp'
 import shortenAddress from '@ambire-common/utils/shortenAddress'
 import Text from '@common/components/Text'
 import useController from '@common/hooks/useController'
@@ -13,8 +12,8 @@ import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
 
-import HistorySettingsPage from '../../components/TransactionHistory/HistorySettingsPage'
-import SubmittedTransactionSummary from '../../components/TransactionHistory/SubmittedTransactionSummary'
+import HistorySettingsPage from '../../../../../common/modules/settings/components/TransactionHistory/HistorySettingsPage'
+import SubmittedTransactionSummary from '../../../../../common/modules/settings/components/TransactionHistory/SubmittedTransactionSummary'
 
 const AccountOpHistory: FC<{ network?: Network; account: Account; sessionId: string }> = ({
   network,
@@ -47,13 +46,14 @@ const AccountOpHistory: FC<{ network?: Network; account: Account; sessionId: str
 
   return (
     <>
-      {items.map((item: SubmittedAccountOp, i) => (
+      {items.map((item, i) => (
         <SubmittedTransactionSummary
-          key={item.txnId}
+          key={`${item.id}-${item.txnId}-${item.timestamp}`}
           size="md"
           defaultType="full-info"
           submittedAccountOp={item}
           style={i !== items.length - 1 ? spacings.mbLg : {}}
+          modalType="modal"
         />
       ))}
     </>

@@ -17,6 +17,12 @@ export class BasePage {
 
   collectedRequests: string[] = []
 
+  private collectedRequestEntries: Array<{
+    url: string
+    postData: string | null
+    headers: Record<string, string>
+  }> = []
+
   constructor({ page, context }: BootstrapContext) {
     this.page = page
     this.context = context
@@ -132,7 +138,9 @@ export class BasePage {
   }
 
   async expectButtonEnabled(selector: string) {
-    await expect(this.page.getByTestId(selector)).toBeEnabled({ timeout: 10000 })
+    const locator = this.page.getByTestId(selector)
+    await expect(locator).not.toHaveAttribute('aria-disabled', 'true', { timeout: 10000 })
+    await expect(locator).toBeEnabled({ timeout: 10000 })
   }
 
   async compareText(
@@ -162,9 +170,35 @@ export class BasePage {
     this._reqListener = (request: PWRequest) => {
       const url = request.url()
       if (!url.startsWith('http')) return
-      if (request.resourceType() !== 'fetch' || request.method() === 'OPTIONS') return
+      // OPTIONS preflights never carry a payload and only duplicate the real
+      // request, so they are irrelevant to both surfaces below.
+      if (request.method() === 'OPTIONS') return
 
-      this.collectedRequests.push(url)
+      const resourceType = request.resourceType()
+
+      // Two intentionally different capture surfaces:
+      //
+      // 1. Content scan (collectedRequestEntries) — captures EVERY http(s)
+      //    request regardless of resourceType. A secret can leak through more
+      //    than just fetch/xhr: navigator.sendBeacon (resourceType "ping"), a
+      //    tracking pixel ("image"), or EventSource/SSE ("eventsource") would
+      //    otherwise bypass the content check entirely. The leak detector is an
+      //    exact-match search for the secret, so widening this surface adds zero
+      //    false positives — only more coverage, which is exactly what we want.
+      //    (WebSocket frames are NOT delivered through the "request" event and
+      //    would need a separate page.on("websocket") listener — out of scope here.)
+      //
+      // 2. Domain check (collectedRequests) — stays narrow to fetch/xhr on
+      //    purpose. categorizeRequests() flags requests to unknown domains, and
+      //    legitimate images/fonts/CDN assets routinely hit "unknown" domains;
+      //    feeding those in would make the uncategorized-domain assertion flaky.
+      const postData = request.postData()
+      const headers = request.headers()
+      this.collectedRequestEntries.push({ url, postData, headers })
+
+      if (resourceType === 'fetch' || resourceType === 'xhr') {
+        this.collectedRequests.push(url)
+      }
     }
     this.context.on('request', this._reqListener)
     this._monitorInstalled = true
@@ -177,6 +211,15 @@ export class BasePage {
     }
 
     this.collectedRequests = []
+    this.collectedRequestEntries = []
+  }
+
+  getRequestsWithBodies(): Array<{
+    url: string
+    postData: string | null
+    headers: Record<string, string>
+  }> {
+    return [...this.collectedRequestEntries]
   }
 
   getCategorizedRequests() {

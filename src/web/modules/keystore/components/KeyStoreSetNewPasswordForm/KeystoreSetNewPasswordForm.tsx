@@ -12,7 +12,6 @@ import ScrollableWrapper from '@common/components/ScrollableWrapper'
 import Text from '@common/components/Text'
 import { isWeb } from '@common/config/env'
 import useController from '@common/hooks/useController'
-import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
@@ -23,8 +22,7 @@ import getStyles from './styles'
 const KeystoreSetNewPasswordForm = () => {
   const { t } = useTranslation()
 
-  const emailVault = useController('EmailVaultController').state
-  const { dispatch } = useControllersMiddleware()
+  const { state: emailVault, dispatch: evDispatch } = useController('EmailVaultController')
   const {
     watch,
     control,
@@ -41,12 +39,15 @@ const KeystoreSetNewPasswordForm = () => {
 
   const handleSetNewPassword = useCallback(async () => {
     await handleSubmit(({ password: newPass }) => {
-      dispatch({
-        type: 'EMAIL_VAULT_CONTROLLER_RECOVER_KEYSTORE',
-        params: { email, newPass }
+      evDispatch({
+        type: 'method',
+        params: {
+          method: 'recoverKeyStore',
+          args: [email!, newPass]
+        }
       })
     })()
-  }, [dispatch, email, handleSubmit])
+  }, [email, evDispatch, handleSubmit])
 
   return (
     <>

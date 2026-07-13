@@ -1,48 +1,49 @@
-import React from 'react'
-import { Image, Pressable, View } from 'react-native'
+import React, { useCallback } from 'react'
+import { Pressable, View } from 'react-native'
 
 import { Banner, MarketingBannerTypes } from '@ambire-common/interfaces/banner'
 import CloseIcon from '@common/assets/svg/CloseIcon'
 import Text from '@common/components/Text'
-import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
+import { isMobile } from '@common/config/env'
+import useController from '@common/hooks/useController'
+import { AnimatedPressable, useMultiHover } from '@common/hooks/useHover'
+import useNavigation from '@common/hooks/useNavigation'
 import useTheme from '@common/hooks/useTheme'
+import { WEB_ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
 import { BORDER_RADIUS_PRIMARY, hexToRgba } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
-import { openInTab } from '@web/extension-services/background/webapi/tab'
-import { AnimatedPressable, useMultiHover } from '@web/hooks/useHover'
-import { getUiType } from '@web/utils/uiType'
+import { openInTab } from '@common/utils/links'
+import { getUiType } from '@common/utils/uiType'
 
-import temporaryImage from './assets/temporary-image.png'
+const TYPE_EMOJI_MAP: { [key in MarketingBannerTypes]: string } = {
+  updates: '💜',
+  rewards: '💎',
+  new: '📢',
+  vote: '✋',
+  tips: '💡',
+  alert: '🚨'
+}
 
-const RELAYER_BANNER_TYPES = ['updates', 'rewards', 'new', 'vote', 'tips', 'alert'] as const
+const FALLBACK_EMOJI = '🔥'
 
 interface Props {
   banner: Banner
 }
 
-// @TODO: Replace temporary images
-const typeImageMap: {
-  [key in (typeof RELAYER_BANNER_TYPES)[number]]: string
-} = {
-  updates: temporaryImage,
-  rewards: temporaryImage,
-  new: temporaryImage,
-  vote: temporaryImage,
-  tips: temporaryImage,
-  alert: temporaryImage
-}
-
 const MarketingBanner: React.FC<Props> = ({ banner }) => {
   const { isPopup } = getUiType()
-  const { dispatch } = useControllersMiddleware()
+  const { dispatch: bannerDispatch } = useController('BannerController')
+  const { dispatch: surveyDispatch } = useController('SurveyController')
   const { theme } = useTheme()
-  const { text, title, type: bannerType = 'updates', actions } = banner
-  const type = (
-    RELAYER_BANNER_TYPES.includes(bannerType as any) ? bannerType : 'updates'
-  ) as Exclude<MarketingBannerTypes, 'alert'>
+  const { text, title, type: bannerType = 'updates', actions, emoji: backendEmoji } = banner
+  const emoji = backendEmoji || TYPE_EMOJI_MAP[bannerType as MarketingBannerTypes] || FALLBACK_EMOJI
   const action = actions?.[0]
   const url = action?.actionName === 'open-link' ? action.meta.url : ''
+  const size = (banner.text?.length || 0) > 50 ? 'large' : 'normal'
+  const emojiSize = isMobile ? 48 : size === 'large' ? 64 : 48
+  const { navigate } = useNavigation()
+
   const [bindAnim, animStyle] = useMultiHover({
     values: [
       {
@@ -58,6 +59,16 @@ const MarketingBanner: React.FC<Props> = ({ banner }) => {
     ]
   })
 
+  const dismissBanner = useCallback(() => {
+    bannerDispatch({
+      type: 'method',
+      params: {
+        method: 'dismissBanner',
+        args: [banner.id]
+      }
+    })
+  }, [banner.id, bannerDispatch])
+
   return (
     <AnimatedPressable
       style={[
@@ -66,41 +77,55 @@ const MarketingBanner: React.FC<Props> = ({ banner }) => {
         flexbox.directionRow,
         { borderRadius: BORDER_RADIUS_PRIMARY, borderWidth: 1 },
         spacings.mbTy,
-        animStyle
+        animStyle,
+        { alignItems: 'center' }
       ]}
       onPress={async () => {
-        await openInTab({ url, shouldCloseCurrentWindow: isPopup })
+        const action = banner.actions[0]
+        if (action?.actionName === 'survey') {
+          surveyDispatch({
+            type: 'method',
+            params: { method: 'fetchSurvey', args: [action.meta.surveyId, banner.id] }
+          })
+          navigate(WEB_ROUTES.survey)
+        } else await openInTab({ url, shouldCloseCurrentWindow: isPopup })
       }}
       {...bindAnim}
     >
-      <Image
-        source={{ uri: typeImageMap[type] }}
-        width={64}
-        height={64}
-        style={{ width: 64, height: 64 }}
-      />
+      <View
+        style={[
+          flexbox.center,
+          {
+            width: emojiSize,
+            height: emojiSize
+          },
+          spacings.plTy
+        ]}
+      >
+        <Text
+          style={{
+            fontSize: emojiSize * 0.7,
+            lineHeight: emojiSize
+          }}
+        >
+          {emoji}
+        </Text>
+      </View>
       <View style={[spacings.ml, flexbox.flex1]}>
         <View style={[flexbox.directionRow, flexbox.justifySpaceBetween]}>
-          <Text weight="medium">{title}</Text>
+          <Text weight="medium" style={{ flexShrink: 1 }}>
+            {title}
+          </Text>
           <Pressable
-            onPress={() => {
-              dispatch({
-                type: 'DISMISS_BANNER',
-                params: { bannerId: banner.id }
-              })
-            }}
+            onPress={dismissBanner}
             hitSlop={8}
-            style={{
-              width: 24,
-              height: 24,
-              ...flexbox.center
-            }}
+            style={{ width: 24, height: 24, ...flexbox.center }}
             testID="banner-button-reject"
           >
             <CloseIcon color={theme.iconPrimary} strokeWidth="2" width={12} height={12} />
           </Pressable>
         </View>
-        <Text appearance="secondaryText" fontSize={14} style={spacings.prLg}>
+        <Text appearance="secondaryText" fontSize={14} style={spacings.mrLg}>
           {text}
         </Text>
       </View>

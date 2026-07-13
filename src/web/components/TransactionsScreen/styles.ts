@@ -2,7 +2,7 @@ import { StyleSheet, ViewStyle } from 'react-native'
 
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import { getUiType } from '@web/utils/uiType'
+import { getUiType } from '@common/utils/uiType'
 
 interface Style {
   container: ViewStyle

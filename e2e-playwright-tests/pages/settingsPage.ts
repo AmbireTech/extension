@@ -36,6 +36,14 @@ export class SettingsPage extends BasePage {
     await this.checkUrl('/settings/manage-tokens')
   }
 
+  async removeLastAccount() {
+    const account = this.page.getByTestId(selectors.settings.manageAccountTreeDotsButton).last()
+    await account.locator('div>div>div>div>svg').last().click() // should be last, try to add ID for more test
+
+    await this.page.locator(selectors.settings.removeAccountButton).click({ timeout: 5000 })
+    await this.click(selectors.settings.confirmRemoveAccountButton)
+  }
+
   async lockKeystore(): Promise<void> {
     await this.openSettingsGeneral()
 
@@ -83,15 +91,17 @@ export class SettingsPage extends BasePage {
     await this.typeNetworkField('Network name', network.networkName)
     await this.typeNetworkField('Currency Symbol', network.ccySymbol)
     await this.typeNetworkField('Currency Name', network.ccyName)
-    await this.typeNetworkField('RPC URL', network.rpcUrl)
+    await this.typeNetworkField('Add RPC URL', network.rpcUrl)
 
     // confirm adding rpc url
     await this.page.locator(selectors.addRPCURLButton).click()
+    await this.page.waitForTimeout(5000) // wait for adding rpc
     await this.typeNetworkField('Block Explorer URL', network.explorerUrl)
 
     // add network
-    await this.page.locator(selectors.addNetworkButton).click({ timeout: 5000 })
-    await expect(this.page.locator(selectors.networkSuccessfullyAddedSnackbar)).toHaveText(
+    await this.page.locator(selectors.addNetworkButton).click()
+
+    await expect(this.page.locator(selectors.networkSuccessfullyAddedSnackbar)).toContainText(
       'Network successfully added!'
     )
   }
@@ -153,7 +163,7 @@ export class SettingsPage extends BasePage {
     await this.page.locator('//div[contains(text(),"Flow EVM Mainnet")]').first().click()
 
     // assert button is enabled
-    await this.page.getByTestId(selectors.disableNetworkButton).isVisible()
+    await expect(this.page.getByTestId(selectors.disableNetworkButton)).toBeVisible()
   }
 
   // method working on networks page with network selected
@@ -166,7 +176,7 @@ export class SettingsPage extends BasePage {
 
     // Select Edit, change 'Block Explorer URL' and 'Cancel'
     await this.page.locator(selectors.networkDetailEditButton).click()
-    await this.page.locator(selectors.editNetworkModalTitle).isVisible()
+    await expect(this.page.locator(selectors.editNetworkModalTitle)).toBeVisible()
     await this.typeNetworkField('Block Explorer URL', '/')
     await this.page.locator(selectors.editNetworkCancelButton).click()
     await expect(this.page.locator(selectors.blockExplorerURL(network.explorerUrl))).toContainText(
@@ -175,14 +185,14 @@ export class SettingsPage extends BasePage {
     // Select Edit, change 'Block Explorer URL' and 'Save'
     await this.page.waitForTimeout(1000)
     await this.page.locator(selectors.networkDetailEditButton).click()
-    await this.page.locator(selectors.editNetworkModalTitle).isVisible()
+    await expect(this.page.locator(selectors.editNetworkModalTitle)).toBeVisible()
     await this.typeNetworkField('Block Explorer URL', `${network.explorerUrl}/test`)
     await this.page.locator(selectors.editNetworkSaveButton).click()
 
     // assert snackbar and new blockexplorer URL
     await expect(
       this.page.locator(selectors.networkSettingsSavedSnackbar(network.networkName))
-    ).toHaveText(`${network.networkName} settings saved!`)
+    ).toContainText(`${network.networkName} settings saved!`)
     await expect(this.page.locator(selectors.blockExplorerURL(network.explorerUrl))).toContainText(
       `${network.explorerUrl}/test`
     )

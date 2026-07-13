@@ -7,12 +7,18 @@ const PlugDisconnectIcon: FC<SvgProps> = ({ width = 24, height = 24, color, ...r
   const { theme } = useTheme()
 
   return (
-    <Svg width={width} height={height} viewBox="0 0 16 16" fill="none" {...rest}>
+    <Svg width={width} height={height} viewBox="0 0 20 20" fill="none" {...rest}>
       <Path
+        d="M10 2.5L10 7.5"
         stroke={color || theme.iconPrimary}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        d="M11.617 8.486 7.514 4.383l1.23-1.23a2.902 2.902 0 1 1 4.103 4.102l-1.23 1.23ZM13.062 2.938 14.4 1.6M4.386 7.513l4.102 4.102-1.23 1.231a2.902 2.902 0 1 1-4.103-4.102l1.23-1.231ZM1.6 14.399l1.343-1.343M6.886 6.652 5.702 7.835M9.35 9.111l-1.186 1.186"
+        stroke-width="1.5"
+        stroke-linecap="round"
+      />
+      <Path
+        d="M7.48102 4.1665C5.04785 5.117 3.33325 7.62006 3.33325 10.2894C3.33325 13.8114 6.31802 16.6665 9.99992 16.6665C13.6818 16.6665 16.6666 13.8114 16.6666 10.2894C16.6666 7.62006 14.952 5.11703 12.5188 4.16654"
+        stroke={color || theme.iconPrimary}
+        stroke-width="1.5"
+        stroke-linecap="round"
       />
     </Svg>
   )

@@ -11,7 +11,7 @@ import flexbox from '@common/styles/utils/flexbox'
 import AccountKeyBanner from '../AccountKeyBanner'
 import AccountKeyIcon from '../AccountKeyIcon/AccountKeyIcon'
 
-export type KeyType = Key['type'] | 'none'
+export type KeyType = Key['type'] | 'none' | 'safe'
 
 const AccountKeyIconOrBanner = ({
   type,
@@ -44,6 +44,11 @@ const AccountKeyIcons = ({
   )
   const hasKeys = React.useMemo(() => importedKeyTypes.length > 0, [importedKeyTypes])
 
+  if (account.safeCreation)
+    return (
+      <AccountKeyIconOrBanner type="safe" isExtended={isExtended} color={theme.primaryBackground} />
+    )
+
   return (
     <View style={[flexbox.directionRow, hasKeys ? spacings.mlTy : spacings.ml0]}>
       {hasKeys ? (
@@ -63,7 +68,7 @@ const AccountKeyIcons = ({
         })
       ) : (
         <AccountKeyIconOrBanner
-          type="none"
+          type={'none'}
           isExtended={isExtended}
           color={theme.primaryBackground}
         />

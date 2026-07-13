@@ -6,6 +6,7 @@ import { Modalize } from 'react-native-modalize'
 
 import { AddressStateOptional } from '@ambire-common/interfaces/domains'
 import { Validation } from '@ambire-common/services/validations'
+import { getAddressFromAddressState } from '@ambire-common/utils/domains'
 import AddressInput from '@common/components/AddressInput'
 import BottomSheet from '@common/components/BottomSheet'
 import DualChoiceModal from '@common/components/DualChoiceModal'
@@ -29,6 +30,7 @@ const AddContactFormModal = ({ id, sheetRef, closeBottomSheet }: Props) => {
   const { dispatch } = useControllersMiddleware()
   const { contacts } = useController('AddressBookController').state
   const { accounts } = useController('AccountsController').state
+  const { verifiedDomainsStatus } = useController('DomainsController').state
 
   const {
     control,
@@ -45,13 +47,16 @@ const AddContactFormModal = ({ id, sheetRef, closeBottomSheet }: Props) => {
       addressState: {
         fieldValue: '',
         isDomainResolving: false,
-        ensAddress: ''
+        resolvedAddress: '',
+        resolvedAddressType: null
       }
     }
   })
 
   const name = watch('name')
   const addressState = watch('addressState')
+  const isDomainVerifiedByColibri =
+    verifiedDomainsStatus[addressState.fieldValue.trim()] === 'VERIFIED'
 
   const setAddressState = useCallback(
     (newState: AddressStateOptional) => {
@@ -69,11 +74,12 @@ const AddContactFormModal = ({ id, sheetRef, closeBottomSheet }: Props) => {
 
   const handleRevalidate = useCallback(() => {
     trigger('addressState.fieldValue')
-    trigger('addressState.ensAddress')
+    trigger('addressState.resolvedAddress')
+    trigger('addressState.resolvedAddressType')
   }, [trigger])
 
   const overwriteValidation: Validation | null = useMemo(() => {
-    const address = addressState.ensAddress || addressState.fieldValue
+    const address = getAddressFromAddressState(addressState)
 
     if (accounts.some((account) => account.addr.toLowerCase() === address.toLowerCase())) {
       return {
@@ -90,13 +96,14 @@ const AddContactFormModal = ({ id, sheetRef, closeBottomSheet }: Props) => {
     }
 
     return null
-  }, [accounts, addressState.ensAddress, addressState.fieldValue, contacts, t])
+  }, [accounts, addressState, contacts, t])
 
   const { validation, RHFValidate } = useAddressInput({
     addressState,
     setAddressState,
     handleRevalidate,
-    overwriteValidation
+    overwriteValidation,
+    isDomainVerifiedByColibri
   })
 
   const submitForm = handleSubmit(() => {
@@ -106,7 +113,7 @@ const AddContactFormModal = ({ id, sheetRef, closeBottomSheet }: Props) => {
       type: 'ADDRESS_BOOK_CONTROLLER_ADD_CONTACT',
       params: {
         name,
-        address: addressState.ensAddress || addressState.fieldValue
+        address: getAddressFromAddressState(addressState)
       }
     })
 
@@ -165,14 +172,15 @@ const AddContactFormModal = ({ id, sheetRef, closeBottomSheet }: Props) => {
               render={({ field: { onChange, onBlur } }) => (
                 <View style={{ width: '100%' }}>
                   <AddressInput
-                    label={t('Address / ENS')}
+                    label={t('Address / ENS / Namoshi')}
                     onChangeText={(text) => {
                       onChange(text)
                       trigger('addressState.fieldValue')
                     }}
                     onBlur={onBlur}
                     validation={validation}
-                    ensAddress={addressState.ensAddress}
+                    resolvedAddress={addressState.resolvedAddress}
+                    resolvedAddressType={addressState.resolvedAddressType}
                     value={addressState.fieldValue}
                     isRecipientDomainResolving={addressState.isDomainResolving}
                     containerStyle={{ ...spacings.mbLg, width: '100%' }}

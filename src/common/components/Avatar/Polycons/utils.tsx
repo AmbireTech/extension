@@ -1,4 +1,3 @@
-/* eslint-disable no-bitwise */
 import React, { ReactNode } from 'react'
 import { Path, Rect } from 'react-native-svg'
 
@@ -163,7 +162,7 @@ export function renderPolycon(seed: number | number[], size = 100): ReactNode[] 
 
   while (stack.length > 0) {
     // Using destructuring assignment with a non-null assertion is safe here because we've verified stack.length > 0
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+
     const [x, y] = stack.pop()!
 
     if (typeof x !== 'number' || typeof y !== 'number') {

@@ -1,5 +1,6 @@
 import { StyleSheet, TextStyle, ViewStyle } from 'react-native'
 
+import { isWeb } from '@common/config/env'
 import { FONT_FAMILIES } from '@common/hooks/useFonts'
 import spacings from '@common/styles/spacings'
 import { ThemeProps, ThemeType } from '@common/styles/themeConfig'
@@ -41,7 +42,11 @@ const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
       alignItems: 'center',
       borderWidth: 1,
       borderColor: 'transparent',
-      ...commonStyles.borderRadiusPrimary
+      ...commonStyles.borderRadiusPrimary,
+      // Without overflow and willChange there is a squared background
+      // on webkit browsers when hardware acceleration is disabled
+      overflow: 'hidden',
+      ...(isWeb ? { willChange: 'opacity' } : {})
     },
 
     buttonText: {
@@ -62,7 +67,7 @@ const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
     },
     buttonContainerDanger: {
       borderColor: theme.errorDecorative,
-      borderWidth: 0
+      borderWidth: 1
     },
     buttonContainerOutline: {
       borderColor: theme.primaryBorder

@@ -9,13 +9,13 @@ import {
   parseUnits,
   WeiPerEther
 } from 'ethers'
-import LottieView from 'lottie-react'
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { createPortal } from 'react-dom'
 
 import { STK_WALLET, WALLET_STAKING_ADDR, WALLET_TOKEN } from '@ambire-common/consts/addresses'
 import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
 import WarningIcon from '@common/assets/svg/WarningIcon'
+import LottieView from '@common/components/LottieView/LottieView.web'
 import { RELAYER_URL } from '@env'
 import HumanReadableError from '@legends/classes/HumanReadableError'
 import background from '@legends/common/assets/images/background.png'
@@ -145,7 +145,7 @@ const StakeWalletModal: React.FC<{ isOpen: boolean; handleClose: () => void }> =
         if (!success) addToast(`Getting unstake logs: ${message}`, { type: 'error' })
         else setLeaveLogs(data?.logs)
       })
-      // eslint-disable-next-line no-console
+
       .catch((err) => console.error(err))
   }, [isConnected, isOpen, connectedAccount, addToast])
 
@@ -486,7 +486,7 @@ const StakeWalletModal: React.FC<{ isOpen: boolean; handleClose: () => void }> =
             Learn more about{' '}
             <a
               target="_blank"
-              href="https://help.ambire.com/hc/en-us/sections/4421155466130-Staking/"
+              href="https://help.ambire.com/en/collections/18211458-wallet-token-governance"
               rel="noreferrer"
             >
               how staking works

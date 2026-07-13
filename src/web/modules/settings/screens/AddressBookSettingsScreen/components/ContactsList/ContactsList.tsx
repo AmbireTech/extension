@@ -4,6 +4,7 @@ import { useForm } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
+import { isAddress } from 'viem'
 
 import AddCircularIcon from '@common/assets/svg/AddCircularIcon'
 import AddressBookIcon from '@common/assets/svg/AddressBookIcon'
@@ -25,7 +26,7 @@ import SettingsPageHeader from '@web/modules/settings/components/SettingsPageHea
 
 import AddContactFormModal from '../AddContactFormModal'
 
-const ContactWrapper = ({ children }: { children: React.ReactNode }) => {
+export const ContactWrapper = ({ children }: { children: React.ReactNode }) => {
   const { theme } = useTheme()
 
   return (
@@ -76,6 +77,15 @@ const ContactsList = () => {
 
   const filteredContacts = useMemo(() => {
     if (!debouncedSearch) return contacts
+
+    // Exact match if the search is an address
+    if (isAddress(search)) {
+      const contact = contacts.find(
+        (contact) => contact.address.toLowerCase() === search.toLowerCase()
+      )
+
+      return contact ? [contact] : []
+    }
 
     const fuse = new Fuse(searchableContacts, {
       keys: [
@@ -134,7 +144,7 @@ const ContactsList = () => {
             text={t('Add a contact')}
             type="primary"
             size="smaller"
-            textStyle={{ fontSize: 12, marginTop: 2 }}
+            textStyle={{ fontSize: 12 }}
             style={[spacings.phSm, { height: 40 }]}
             hasBottomSpacing={false}
             onPress={openAddContactForm as any}

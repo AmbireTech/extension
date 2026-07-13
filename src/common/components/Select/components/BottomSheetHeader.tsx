@@ -1,14 +1,13 @@
-/* eslint-disable react/prop-types */
 import React, { FC } from 'react'
 import { View } from 'react-native'
 
 import CloseIcon from '@common/assets/svg/CloseIcon'
 import getStyles from '@common/components/Select/styles'
 import Text from '@common/components/Text'
+import useHover, { AnimatedPressable } from '@common/hooks/useHover'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import useHover, { AnimatedPressable } from '@web/hooks/useHover'
 
 import { RenderSelectedOptionParams, SelectProps } from '../types'
 

@@ -1,0 +1,125 @@
+import { Storage, StorageProps } from '@ambire-common/interfaces/storage'
+import { parse, stringify } from '@ambire-common/libs/richJson/richJson'
+import { browser, isExtension } from '@web/constants/browserapi'
+
+function commonGet<K extends keyof StorageProps>(key: K): Promise<StorageProps[K] | undefined>
+function commonGet<K extends keyof StorageProps>(
+  key: K,
+  defaultValue: StorageProps[K]
+): Promise<StorageProps[K]>
+function commonGet<K extends keyof StorageProps>(
+  key: K,
+  defaultValue: null
+): Promise<StorageProps[K] | null>
+function commonGet<K extends keyof StorageProps>(
+  key: K,
+  defaultValue?: StorageProps[K] | null
+): Promise<StorageProps[K] | null | undefined> {
+  const serialized = typeof localStorage !== 'undefined' ? localStorage.getItem(String(key)) : null
+  return Promise.resolve(serialized ? parse(serialized) : defaultValue)
+}
+
+const commonAsyncStorage: Storage = {
+  get: commonGet,
+  set: (key: string, value: any) => {
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem(key, stringify(value))
+    }
+    return Promise.resolve(null)
+  },
+  remove: (key: string) => {
+    if (typeof localStorage !== 'undefined') {
+      localStorage.removeItem(key)
+    }
+    return Promise.resolve(null)
+  }
+}
+
+const formatValue = (value: any, defaultValue?: any) => {
+  try {
+    return typeof value === 'string' ? parse(value) : value
+  } catch (error) {
+    return typeof value === 'string' ? value : defaultValue
+  }
+}
+
+async function get<K extends keyof StorageProps>(key: K): Promise<StorageProps[K] | undefined>
+async function get<K extends keyof StorageProps>(
+  key: K,
+  defaultValue: StorageProps[K]
+): Promise<StorageProps[K]>
+async function get<K extends keyof StorageProps>(
+  key: K,
+  defaultValue: null
+): Promise<StorageProps[K] | null>
+async function get<K extends keyof StorageProps>(
+  key: K,
+  defaultValue?: StorageProps[K] | null
+): Promise<StorageProps[K] | null | undefined> {
+  const res = await browser.storage.local.get(String(key))
+
+  if (!res[String(key)]) return defaultValue
+
+  return formatValue(res[String(key)])
+}
+
+const set = async (key: string, value: any): Promise<null> => {
+  await browser.storage.local.set({
+    [key]: typeof value === 'string' ? value : stringify(value)
+  })
+  return null
+}
+
+const remove = async (key: string): Promise<null> => {
+  await browser.storage.local.remove([key])
+  return null
+}
+
+const extensionAsyncStorage: Storage = { get, set, remove }
+
+const asyncStorage: Storage = isExtension ? extensionAsyncStorage : commonAsyncStorage
+
+const syncStorage = {
+  get: (key: string, defaultValue?: any): any => {
+    return localStorage.getItem(key) ?? defaultValue
+  },
+  set: (key: string, value: any) => {
+    return localStorage.setItem(key, value)
+  },
+  remove: (key: string) => {
+    return localStorage.removeItem(key)
+  }
+}
+
+const syncSessionStorage = {
+  get: (key: string, defaultValue?: any): any => {
+    return sessionStorage.getItem(key) ?? defaultValue
+  },
+  set: (key: string, value: any) => {
+    return sessionStorage.setItem(key, value)
+  },
+  remove: (key: string) => {
+    return sessionStorage.removeItem(key)
+  }
+}
+
+const secureStorage = {
+  get: (key: string) => {
+    console.warn(`Secure storage is not supported on web. Attempted to get key: ${key}`)
+    return Promise.resolve(null)
+  },
+  set: (key: string) => {
+    console.warn(`Secure storage is not supported on web. Attempted to set key: ${key}`)
+    return Promise.resolve()
+  },
+  remove: (key: string) => {
+    console.warn(`Secure storage is not supported on web. Attempted to remove key: ${key}`)
+    return Promise.resolve()
+  }
+}
+
+// PERF: mobile-only optimization (seeds the WebView worker's storage cache).
+// On web/extension there is no such worker bridge, so this is a no-op.
+const getAllSerialized = (): Record<string, string> => ({})
+
+export { asyncStorage as storage, syncStorage, syncSessionStorage, secureStorage, getAllSerialized }

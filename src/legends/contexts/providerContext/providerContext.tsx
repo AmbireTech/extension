@@ -1,8 +1,8 @@
 import { ethers } from 'ethers'
 import React, { createContext, useCallback, useEffect, useMemo, useState } from 'react'
 
+import { EthereumProvider } from '@common/modules/inpage/EthereumProvider'
 import Spinner from '@legends/components/Spinner'
-import { EthereumProvider } from '@web/extension-services/inpage/EthereumProvider'
 
 import SelectProviderModal from './SelectProviderModal'
 import { EIP6963AnnounceProviderEvent, Providers, WalletType } from './types'

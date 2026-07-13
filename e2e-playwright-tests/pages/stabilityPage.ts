@@ -39,6 +39,18 @@ export class StabilityPage extends BasePage {
     await this.click(selectors.buttonUnlock)
   }
 
+  async blockRoute(blockedRoute: string) {
+    await this.context.route(blockedRoute, async (route) => {
+      await route.fulfill({
+        status: 500,
+        contentType: 'application/json',
+        body: JSON.stringify({ error: 'failed' })
+      })
+    })
+
+    await this.unlock()
+  }
+
   async blockRouteAndUnlock(blockedRoute: string) {
     await this.context.route(blockedRoute, async (route) => {
       await route.fulfill({

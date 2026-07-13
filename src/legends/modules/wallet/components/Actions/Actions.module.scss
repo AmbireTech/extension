@@ -43,7 +43,7 @@
     }
   }
   :global(.swiper) {
-    margin-left: calc((100% - 62.5rem) / 2);
+    margin-left: calc((100% - #{$container-width}) / 2);
     position: relative;
     display: flex;
     padding-left: 0.25rem; // Otherwise the card effect isn't visible
@@ -56,7 +56,7 @@
 
     :global(.swiper-slide) {
       @include breakpoint-from(medium-desktop) {
-        width: 17.3125rem;
+        width: 17.8125;
       }
     }
   }
@@ -100,9 +100,6 @@
   }
 
   @include breakpoint-down-from(tablet) {
-    padding-left: 0;
-    .slide {
-      width: 100%;
-    }
+    display: none;
   }
 }

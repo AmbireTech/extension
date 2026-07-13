@@ -2,10 +2,10 @@ import React, { FC } from 'react'
 import { View } from 'react-native'
 
 import Text from '@common/components/Text'
+import { AnimatedPressable, useCustomHover } from '@common/hooks/useHover'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import { AnimatedPressable, useCustomHover } from '@web/hooks/useHover'
 
 interface Props {
   renderIcon: () => React.ReactNode

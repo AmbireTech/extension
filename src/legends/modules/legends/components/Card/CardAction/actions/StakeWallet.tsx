@@ -1,4 +1,3 @@
-/* eslint-disable no-console */
 import { Contract, Interface, JsonRpcProvider } from 'ethers'
 import React, { useCallback, useEffect, useState } from 'react'
 

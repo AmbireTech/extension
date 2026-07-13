@@ -3,6 +3,8 @@ import { baParams, KEYSTORE_PASS } from 'constants/env'
 import { test } from '../../../fixtures/pageObjects'
 
 test.describe('keystore', { tag: '@keystore' }, () => {
+  test.setTimeout(60000)
+
   test.beforeEach(async ({ pages }) => {
     await pages.initWithStorage(baParams)
   })

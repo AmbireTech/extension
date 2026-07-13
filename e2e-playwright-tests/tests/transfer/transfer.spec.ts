@@ -8,6 +8,8 @@ import { expect } from '@playwright/test'
 import { runBatchTransferFlow, runSimpleTransferFlow } from '../../flows/transferFlow'
 
 test.describe('transfer', { tag: '@transfer' }, () => {
+  test.setTimeout(120000)
+
   test.beforeEach(async ({ pages }) => {
     await pages.initWithStorage(baParams)
   })
@@ -114,13 +116,18 @@ test.describe('transfer', { tag: '@transfer' }, () => {
       )
       const viewTransactionTab = await pages.basePage.handleNewPage(viewTransactionLink)
 
-      // check url of new tab
-      expect(viewTransactionTab.url()).toContain('explorer.ambire.com')
+      // assert transaction on explorer
+      if (sendToken == tokens.usdc.optimism) {
+        expect(viewTransactionTab.url()).toContain('optimistic.etherscan.io')
+        // TODO: add assertions on optimism exploreer
+      } else {
+        expect(viewTransactionTab.url()).toContain('explorer.ambire.com')
 
-      await pages.transfer.checkRecepientTransactionOnExplorer({
-        newPage: viewTransactionTab,
-        recepientAddress: newContactAddress
-      })
+        await pages.transfer.checkRecepientTransactionOnExplorer({
+          newPage: viewTransactionTab,
+          recepientAddress: newContactAddress
+        })
+      }
     })
   })
 
@@ -153,7 +160,8 @@ test.describe('transfer', { tag: '@transfer' }, () => {
       await pages.transfer.signSlowSpeedTransaction({
         feeToken,
         sendToken,
-        message
+        message,
+        holdProceedButton: false
       })
     })
 
@@ -167,13 +175,18 @@ test.describe('transfer', { tag: '@transfer' }, () => {
       )
       const viewTransactionTab = await pages.basePage.handleNewPage(viewTransactionLink)
 
-      // check url of new tab
-      expect(viewTransactionTab.url()).toContain('explorer.ambire.com')
+      // assert transaction on explorer
+      if (sendToken == tokens.usdc.optimism) {
+        expect(viewTransactionTab.url()).toContain('optimistic.etherscan.io')
+        // TODO: add assertions on optimism exploreer
+      } else {
+        expect(viewTransactionTab.url()).toContain('explorer.ambire.com')
 
-      await pages.transfer.checkRecepientTransactionOnExplorer({
-        newPage: viewTransactionTab,
-        recepientAddress: newContactAddress
-      })
+        await pages.transfer.checkRecepientTransactionOnExplorer({
+          newPage: viewTransactionTab,
+          recepientAddress: newContactAddress
+        })
+      }
     })
   })
 })

@@ -1,13 +1,18 @@
 import { getAddress } from 'ethers'
 
 import { isValidAddress } from '@ambire-common/services/address'
+import { getIsNamoshiDomain } from '@ambire-common/services/ensDomains'
 import { Validation } from '@ambire-common/services/validations'
 
 type AddressInputValidation = {
   address: string
   isRecipientDomainResolving: boolean
   isValidEns: boolean
+  isValidNamoshi: boolean
+  isDomainVerifiedByColibri?: boolean
   hasDomainResolveFailed: boolean
+  domainResolveError?: string
+  isNamoshiAvailable: boolean
   overwriteValidation?: Validation | null
 }
 
@@ -24,7 +29,11 @@ const getAddressInputValidation = ({
   address,
   isRecipientDomainResolving,
   hasDomainResolveFailed = false,
+  domainResolveError,
   isValidEns,
+  isValidNamoshi,
+  isDomainVerifiedByColibri,
+  isNamoshiAvailable,
   overwriteValidation
 }: AddressInputValidation): Validation => {
   if (!address) {
@@ -44,9 +53,19 @@ const getAddressInputValidation = ({
   }
 
   if (hasDomainResolveFailed) {
+    const isNamoshiDomain = getIsNamoshiDomain(address)
+
+    if (isNamoshiDomain && !isNamoshiAvailable) {
+      return {
+        message: 'Citrea network is disabled. Enable it to resolve Namoshi domains.',
+        severity: 'error'
+      }
+    }
+
     return {
-      // Change ENS to domain if we add more resolvers (like Unstoppable Domains)
-      message: 'Failed to resolve ENS. Please try again later or enter a hex address.',
+      message:
+        domainResolveError ||
+        `Failed to resolve ${isNamoshiDomain ? 'Namoshi' : 'ENS'} domain. Please try again later or enter a hex address.`,
       severity: 'error'
     }
   }
@@ -69,14 +88,33 @@ const getAddressInputValidation = ({
     }
   }
 
+  // ENS/Namoshi that looks like an address
+  if (
+    (isValidNamoshi || isValidEns) &&
+    address.indexOf('.') !== -1 &&
+    isValidAddress(address.split('.')[0] || '')
+  ) {
+    return {
+      message: `This {${isValidNamoshi ? 'Namoshi' : 'ENS'}} name may not point to the address you expect. Double-check before sending.`,
+      severity: 'warning'
+    }
+  }
+
   if (isValidEns) {
     successValidation = {
-      message: 'Valid ENS domain',
+      message: isDomainVerifiedByColibri
+        ? 'Valid ENS domain. Verified by Colibri'
+        : 'Valid ENS domain',
+      severity: 'success'
+    }
+  } else if (isValidNamoshi) {
+    successValidation = {
+      message: 'Valid Namoshi domain',
       severity: 'success'
     }
   } else if (address && !isValidAddress(address)) {
     return {
-      message: 'Please enter a valid address or ENS domain',
+      message: 'Please enter a valid address or ENS/Namoshi domain',
       severity: 'error'
     }
   }

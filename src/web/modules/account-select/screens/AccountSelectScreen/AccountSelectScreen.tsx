@@ -5,9 +5,11 @@ import { useModalize } from 'react-native-modalize'
 
 import { Account as AccountType } from '@ambire-common/interfaces/account'
 import AddCircularIcon from '@common/assets/svg/AddCircularIcon'
-import SettingsWheelIcon from '@common/assets/svg/SettingsWheelIcon'
+import SettingsIcon from '@common/assets/svg/SettingsIcon'
 import Button from '@common/components/Button'
 import FooterGlassView from '@common/components/FooterGlassView'
+import HoverablePressable from '@common/components/HoverablePressable'
+import LayoutWrapper from '@common/components/LayoutWrapper'
 import ScrollableWrapper, { WRAPPER_TYPES } from '@common/components/ScrollableWrapper'
 import Search from '@common/components/Search'
 import Text from '@common/components/Text'
@@ -16,14 +18,13 @@ import useController from '@common/hooks/useController'
 import useNavigation from '@common/hooks/useNavigation'
 import useRoute from '@common/hooks/useRoute'
 import useTheme from '@common/hooks/useTheme'
-import DashboardSkeleton from '@common/modules/dashboard/screens/Skeleton'
+import Account from '@common/modules/account-select/components/Account'
+import AddAccount from '@common/modules/account-select/components/AddAccount'
+import DashboardSkeleton from '@common/modules/dashboard/components/Skeleton'
 import { HeaderWithTitle } from '@common/modules/header/components/Header/Header'
 import { ROUTES, WEB_ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import LayoutWrapper from '@web/components/LayoutWrapper'
-import Account from '@web/modules/account-select/components/Account'
-import AddAccount from '@web/modules/account-select/components/AddAccount'
 
 import getStyles from './styles'
 
@@ -50,9 +51,14 @@ const extractTriggerAddAccountSheetParam = (search: string | undefined): boolean
 const AccountSelectScreen = () => {
   const { styles } = useTheme(getStyles)
   const flatlistRef = useRef(null)
-  const { accounts, control, keyExtractor, getItemLayout, shouldDisplayAccounts } = useAccountsList(
-    { flatlistRef }
-  )
+  const {
+    accounts,
+    control,
+    keyExtractor,
+    getItemLayout,
+    selectedAccountIndex,
+    shouldDisplayAccounts
+  } = useAccountsList({ flatlistRef })
   const { search: routeParams } = useRoute()
   const { navigate } = useNavigation()
   const {
@@ -86,10 +92,11 @@ const AccountSelectScreen = () => {
     return (
       <Account
         onSelect={onAccountSelect}
-        key={acc.addr}
         account={acc}
         withSettings={false}
         options={{ markSelected: true }}
+        maxAccountAddrLength={32}
+        withReceive
       />
     )
   }
@@ -107,9 +114,9 @@ const AccountSelectScreen = () => {
   return !pendingToBeSetSelectedAccount ? (
     <LayoutWrapper>
       <HeaderWithTitle>
-        <Pressable onPress={() => navigate(WEB_ROUTES.accountsSettings)}>
-          <SettingsWheelIcon width={28} height={28} />
-        </Pressable>
+        <HoverablePressable onPress={() => navigate(WEB_ROUTES.accountsSettings)}>
+          <SettingsIcon width={28} height={28} />
+        </HoverablePressable>
       </HeaderWithTitle>
       <View style={[spacings.pt, spacings.phSm, flexbox.flex1]} ref={accountsContainerRef}>
         <Search autoFocus control={control} style={styles.searchBar} />
@@ -129,7 +136,7 @@ const AccountSelectScreen = () => {
           keyExtractor={keyExtractor}
           ListEmptyComponent={<Text>{t('No accounts found')}</Text>}
         />
-        <FooterGlassView>
+        <FooterGlassView isSimpleBlur={false}>
           <Button
             testID="button-add-account"
             text={t('Add account')}

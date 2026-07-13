@@ -19,7 +19,8 @@ interface Props {
   sizeMultiplierSize?: number
   textSize?: number
   chainId: bigint
-  hideLinks?: boolean
+  tokenMarginRight?: number
+  tokenIconContainerSize?: number
 }
 
 const TokenOrNft: FC<Props> = ({
@@ -28,9 +29,11 @@ const TokenOrNft: FC<Props> = ({
   textSize = 16,
   chainId,
   sizeMultiplierSize = 1,
-  hideLinks = false
+  tokenMarginRight,
+  tokenIconContainerSize
 }) => {
-  const marginRight = SPACING_TY * sizeMultiplierSize
+  const marginRight =
+    tokenMarginRight !== undefined ? tokenMarginRight : SPACING_TY * sizeMultiplierSize
   const { addToast } = useToast()
   const [assetInfo, setAssetInfo] = useState<{
     tokenInfo?: TokenResult
@@ -130,7 +133,6 @@ const TokenOrNft: FC<Props> = ({
           highestPriorityAlias={`${fallbackName} #${value}`}
           marginRight={marginRight}
           fontSize={textSize}
-          hideLinks={hideLinks}
           chainId={chainId}
         />
       )
@@ -143,8 +145,8 @@ const TokenOrNft: FC<Props> = ({
           amount={value}
           tokenInfo={assetInfo?.tokenInfo}
           marginRight={marginRight}
-          hideLinks={hideLinks}
           chainId={chainId}
+          tokenIconContainerSize={tokenIconContainerSize}
         />
       )
 
@@ -168,8 +170,8 @@ const TokenOrNft: FC<Props> = ({
       amount={value}
       tokenInfo={assetInfo?.tokenInfo}
       marginRight={marginRight}
-      hideLinks={hideLinks}
       chainId={chainId}
+      tokenIconContainerSize={tokenIconContainerSize}
     />
   )
 }

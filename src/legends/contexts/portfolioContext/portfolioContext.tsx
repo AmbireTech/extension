@@ -43,6 +43,7 @@ type WalletTokenInfo = {
   percentageStakedWallet: number
   stakedWallets: number
   walletPrice: number
+  apy: number
   season2PoolInfo: {
     poolSize: number
     totalVolumeSwapAndBridge: number
@@ -52,8 +53,6 @@ type WalletTokenInfo = {
 const PortfolioContext = createContext<{
   accountPortfolio?: AccountPortfolio
   updateAccountPortfolio: () => void
-  claimableRewardsError: string | null
-  claimableRewards: ClaimableRewards | null
   isLoadingClaimableRewards: boolean
   walletTokenInfo: WalletTokenInfo
   walletTokenPrice: number | null
@@ -63,8 +62,6 @@ const PortfolioContext = createContext<{
   xWalletClaimableBalance: PortfolioRewardsResult['xWalletClaimableBalance'] | null
 }>({
   updateAccountPortfolio: () => {},
-  claimableRewardsError: null,
-  claimableRewards: null,
   isLoadingClaimableRewards: true,
   walletTokenInfo: null,
   walletTokenPrice: null,
@@ -93,12 +90,10 @@ const PortfolioProvider: React.FC<any> = ({ children }) => {
     eth: number
   }>()
   const [stkBalance, setStkBalance] = useState<number>()
-  const [claimableRewards, setClaimableRewards] = useState<any>(null)
   const [isLoadingPortfolioProjectionData, setIsLoadingPortfolioProjectionData] = useState(true)
   const [isLoadingUniPositions, setIsLoadingUniPositions] = useState(true)
   const [isLoadingStkBalance, setIsLoadingStkBalance] = useState(true)
   const [isLoadingPrices, setIsLoadingPrices] = useState(true)
-  const [claimableRewardsError, setClaimableRewardsError] = useState<string | null>(null)
   const [xWalletClaimableBalance, setXWalletClaimableBalance] = useState<
     PortfolioRewardsResult['xWalletClaimableBalance'] | null
   >(null)
@@ -135,19 +130,16 @@ const PortfolioProvider: React.FC<any> = ({ children }) => {
       )
 
       const additionalPortfolioJson = await additionalPortfolioResponse.json()
+
       const xWalletClaimableBalanceData =
         additionalPortfolioJson?.data?.rewards?.xWalletClaimableBalance
-      const claimableBalance = additionalPortfolioJson?.data?.rewards?.stkWalletClaimableBalance
 
       setRewardsProjectionData(additionalPortfolioJson?.data?.rewardsProjectionDataV2)
-      setClaimableRewards(claimableBalance)
       setXWalletClaimableBalance(xWalletClaimableBalanceData)
       setIsLoadingPortfolioProjectionData(false)
     } catch (e) {
       console.error('Error fetching additional portfolio:', e)
       setIsLoadingPortfolioProjectionData(false)
-      setClaimableRewards(null)
-      setClaimableRewardsError('Error fetching claimable data')
     }
   }, [connectedAccount])
 
@@ -366,8 +358,6 @@ const PortfolioProvider: React.FC<any> = ({ children }) => {
         () => ({
           accountPortfolio,
           updateAccountPortfolio,
-          claimableRewardsError,
-          claimableRewards,
           isLoadingClaimableRewards,
           isLoadingWalletTokenInfo,
           xWalletClaimableBalance,
@@ -379,8 +369,6 @@ const PortfolioProvider: React.FC<any> = ({ children }) => {
         [
           accountPortfolio,
           updateAccountPortfolio,
-          claimableRewards,
-          claimableRewardsError,
           isLoadingClaimableRewards,
           isLoadingWalletTokenInfo,
           xWalletClaimableBalance,

@@ -8,33 +8,32 @@ import { useSearchParams } from 'react-router-dom'
 import AddCircularIcon from '@common/assets/svg/AddCircularIcon'
 import Button from '@common/components/Button'
 import FooterGlassView from '@common/components/FooterGlassView'
+import LayoutWrapper from '@common/components/LayoutWrapper'
 import ScrollableWrapper from '@common/components/ScrollableWrapper'
 import Search from '@common/components/Search'
 import useController from '@common/hooks/useController'
-import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useNavigation from '@common/hooks/useNavigation/useNavigation.web'
 import useToast from '@common/hooks/useToast'
 import { HeaderWithTitle } from '@common/modules/header/components/Header/Header'
+import AddNetworkBottomSheet from '@common/modules/networks/components/AddNetworkBottomSheet'
+import AllNetworksOption from '@common/modules/networks/components/AllNetworksOption/AllNetworksOption'
+import NetworkBottomSheet, {
+  NO_BLOCK_EXPLORER_AVAILABLE_TOOLTIP
+} from '@common/modules/networks/components/NetworkBottomSheet'
+import Networks from '@common/modules/networks/components/Networks'
 import { WEB_ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import LayoutWrapper from '@web/components/LayoutWrapper'
-import { createTab } from '@web/extension-services/background/webapi/tab'
-import Networks from '@web/modules/networks/components/Networks'
-
-import AddNetworkBottomSheet from '../components/AddNetworkBottomSheet'
-import AllNetworksOption from '../components/AllNetworksOption/AllNetworksOption'
-import NetworkBottomSheet, {
-  NO_BLOCK_EXPLORER_AVAILABLE_TOOLTIP
-} from '../components/NetworkBottomSheet'
+import { openInTab } from '@common/utils/links'
 
 const NetworksScreen = () => {
   const { t } = useTranslation()
   const { addToast } = useToast()
-  const { dispatch } = useControllersMiddleware()
+
   const { navigate } = useNavigation()
   const {
-    state: { account, dashboardNetworkFilter }
+    state: { account, dashboardNetworkFilter },
+    dispatch: selectedAccountDispatch
   } = useController('SelectedAccountController')
   const [settingsChainId, setSettingsChainId] = useState<bigint | string | null>(null)
   const [searchParams] = useSearchParams()
@@ -71,13 +70,13 @@ const NetworksScreen = () => {
 
   const handleChangeNetwork = useCallback(
     (chainId: bigint | string | null) => {
-      dispatch({
-        type: 'SELECTED_ACCOUNT_SET_DASHBOARD_NETWORK_FILTER',
-        params: { dashboardNetworkFilter: chainId }
+      selectedAccountDispatch({
+        type: 'method',
+        params: { method: 'setDashboardNetworkFilter', args: [chainId] }
       })
       setChangedNetwork(chainId)
     },
-    [dispatch, setChangedNetwork]
+    [selectedAccountDispatch, setChangedNetwork]
   )
 
   const handleOpenSettingsBottomSheet = useCallback(
@@ -107,7 +106,7 @@ const NetworksScreen = () => {
       }
 
       try {
-        await createTab(`${url}/address/${account?.addr}`)
+        await openInTab({ url: `${url}/address/${account?.addr}` })
       } catch {
         addToast(t('Failed to open block explorer in a new tab.'), {
           type: 'info'

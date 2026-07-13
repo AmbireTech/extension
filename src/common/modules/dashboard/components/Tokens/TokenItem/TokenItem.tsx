@@ -2,9 +2,8 @@ import React, { useCallback } from 'react'
 
 import { TokenResult } from '@ambire-common/libs/portfolio'
 import useController from '@common/hooks/useController'
-import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import getAndFormatTokenDetails from '@common/modules/dashboard/helpers/getTokenDetails'
-import { getUiType } from '@web/utils/uiType'
+import { getUiType } from '@common/utils/uiType'
 
 import BaseTokenItem from './BaseTokenItem'
 import RewardsTokenItem from './RewardsTokenItem'
@@ -12,7 +11,7 @@ import RewardsTokenItem from './RewardsTokenItem'
 const { isPopup } = getUiType()
 
 const TokenItem = ({ token }: { token: TokenResult }) => {
-  const { dispatch } = useControllersMiddleware()
+  const { dispatch: requestsDispatch } = useController('RequestsController')
   const { state: portfolio } = useController(
     'SelectedAccountController',
     (state) => state.portfolio
@@ -23,12 +22,15 @@ const TokenItem = ({ token }: { token: TokenResult }) => {
 
   const sendTransaction = useCallback(
     (type: 'claimWalletRequest' | 'mintVestingRequest') => {
-      dispatch({
-        type: 'REQUESTS_CONTROLLER_BUILD_REQUEST',
-        params: { type, params: { token } }
+      requestsDispatch({
+        type: 'method',
+        params: {
+          method: 'build',
+          args: [{ type, params: { token } }]
+        }
       })
     },
-    [dispatch, token]
+    [requestsDispatch, token]
   )
 
   if (isRewards)

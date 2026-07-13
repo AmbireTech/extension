@@ -1,7 +1,8 @@
 import './styles.css'
 
-import LottieView, { LottieComponentProps } from 'lottie-react'
 import React from 'react'
+
+import LottieView, { LottieViewProps } from '@common/components/LottieView'
 
 import alternativeAnimation from './alternativeAnimation.json'
 import animation from './animation.json'
@@ -18,7 +19,7 @@ type ConfettiAnimationProps = {
   height: number
   style?: React.CSSProperties
   type?: 'primary' | 'secondary' | 'tertiary'
-} & Omit<LottieComponentProps, 'animationData'>
+} & Omit<LottieViewProps, 'animationData'>
 
 const ConfettiAnimation = ({
   width,
@@ -39,6 +40,7 @@ const ConfettiAnimation = ({
         alignSelf: 'center',
         ...style
       }}
+      autoPlay
     />
   )
 }

@@ -1,8 +1,10 @@
 import BootstrapContext from 'interfaces/bootstrapContext'
+import { AccountKeysPage } from 'pages/accountKeysPage'
 import { AuthPage } from 'pages/authPage'
 import { BasePage } from 'pages/basePage'
 import { DashboardPage } from 'pages/dashboardPage'
 import { GasTankPage } from 'pages/gasTankPage'
+import { RecoveryPhrasesPage } from 'pages/recoveryPhrasesPage'
 import { SettingsPage } from 'pages/settingsPage'
 import { SignMessagePage } from 'pages/signMessagePage'
 import { StabilityPage } from 'pages/stabilityPage'
@@ -30,6 +32,14 @@ export class PageManager {
 
   transfer: TransferPage
 
+  recoveryPhrases: RecoveryPhrasesPage
+
+  accountKeys: AccountKeysPage
+
+  serviceWorker: any
+
+  extensionURL: string
+
   private initializePages(bootstrapContext: BootstrapContext): void {
     this.basePage = new BasePage(bootstrapContext)
     this.auth = new AuthPage(bootstrapContext)
@@ -40,6 +50,8 @@ export class PageManager {
     this.swapAndBridge = new SwapAndBridgePage(bootstrapContext)
     this.transfer = new TransferPage(bootstrapContext)
     this.stability = new StabilityPage(bootstrapContext)
+    this.recoveryPhrases = new RecoveryPhrasesPage(bootstrapContext)
+    this.accountKeys = new AccountKeysPage(bootstrapContext)
   }
 
   async initWithStorage(param: any, opts?: { shouldUnlockManually?: boolean }): Promise<void> {
@@ -48,6 +60,9 @@ export class PageManager {
       param,
       opts?.shouldUnlockManually ?? false
     )
+
+    this.serviceWorker = serviceWorker
+    this.extensionURL = extensionURL
 
     const bootstrapContext = { page, context, serviceWorker, extensionURL }
 

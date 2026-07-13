@@ -3,36 +3,41 @@ import { useTranslation } from 'react-i18next'
 import { Pressable, View } from 'react-native'
 
 import Text from '@common/components/Text'
+import { isMobile, isWeb } from '@common/config/env'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import { openInTab } from '@web/extension-services/background/webapi/tab'
+import { openInTab } from '@common/utils/links'
 
 const Header: FC = () => {
   const { theme } = useTheme()
   const { t } = useTranslation()
 
-  const openHelpCenter = useCallback(
-    () => openInTab({ url: 'https://help.ambire.com/hc/en-us/requests/new' }),
-    []
-  )
+  const openHelpCenter = useCallback(() => openInTab({ url: 'https://help.ambire.com/en' }), [])
   return (
     <View
       style={[
-        flexbox.directionRow,
-        flexbox.alignCenter,
+        isWeb && flexbox.directionRow,
+        isWeb && flexbox.alignCenter,
         flexbox.justifySpaceBetween,
         spacings.mbSm,
         spacings.pbTy,
         {
-          backgroundColor: theme.secondaryBackground
+          backgroundColor: theme.primaryBackground
         }
       ]}
     >
-      <Text fontSize={20} weight="medium" color={theme.primaryText}>
+      <Text
+        fontSize={20}
+        weight="medium"
+        color={theme.primaryText}
+        style={[isMobile && spacings.mbTy]}
+      >
         {t('Portfolio errors')}
       </Text>
-      <View style={[flexbox.directionRow, flexbox.alignCenter]}>
+      <View
+        style={[flexbox.directionRow, flexbox.alignCenter, isMobile && flexbox.justifySpaceBetween]}
+      >
         <Text fontSize={12} weight="medium" appearance="secondaryText" style={spacings.mrSm}>
           {t('Frequent issues?')}
         </Text>

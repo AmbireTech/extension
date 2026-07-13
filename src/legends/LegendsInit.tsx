@@ -2,10 +2,10 @@ import React from 'react'
 import { HashRouter } from 'react-router-dom'
 
 import { ControllerStoreProvider } from '@common/contexts/controllerStoreContext'
+import { EthereumProvider } from '@common/modules/inpage/EthereumProvider'
 import { PortalHost, PortalProvider } from '@gorhom/portal'
 import { ControllersMiddlewareProvider } from '@legends/contexts/controllersMiddlewareContext'
 import * as Sentry from '@sentry/react'
-import { EthereumProvider } from '@web/extension-services/inpage/EthereumProvider'
 
 import ErrorPage from './components/ErrorPage'
 import { AccountContextProvider } from './contexts/accountContext'

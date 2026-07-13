@@ -27,9 +27,9 @@ export const ambireRewardsText = {
       'Projected rewards are an estimate of how much $WALLET you might earn based on your current score compared to all other participants. These values change throughout the season as scores update. Projections also assume that the community goal is reached. If the goal is not met, the season is extended. If higher goal levels are reached, the total reward pool increases.'
   },
   leaderboard: {
-    title: 'Leaderboard',
+    title: 'Historical Leaderboard',
     description:
-      'Find your current position on the Ambire Rewards Leaderboard or check the archives of the previous seasons'
+      'Ambire Rewards is a currently paused incentive program designed to reward real usage of the Ambire Wallet with its native token, $WALLET.'
   },
   rewardsPool: {
     title: 'Rewards Pool',

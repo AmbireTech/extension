@@ -1,4 +1,4 @@
-import { EthereumProvider } from '@web/extension-services/inpage/EthereumProvider'
+import { EthereumProvider } from '@common/modules/inpage/EthereumProvider'
 
 type WalletType = 'ambire' | 'ambire-next'
 

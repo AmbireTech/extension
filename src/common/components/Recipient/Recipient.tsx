@@ -1,11 +1,15 @@
 import Fuse from 'fuse.js'
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { Pressable } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 
-import { Contact } from '@ambire-common/controllers/addressBook/addressBook'
+import { Contact } from '@ambire-common/interfaces/addressBook'
+import { AddressState } from '@ambire-common/interfaces/domains'
+import { AddressPoisoningMatch } from '@ambire-common/interfaces/transfer'
 import { TokenResult } from '@ambire-common/libs/portfolio'
 import { validateAddress, Validation } from '@ambire-common/services/validations'
+import { getAddressFromAddressState } from '@ambire-common/utils/domains'
 import AddressBookIcon from '@common/assets/svg/AddressBookIcon'
 import DownArrowIcon from '@common/assets/svg/DownArrowIcon'
 import SettingsIcon from '@common/assets/svg/SettingsIcon'
@@ -24,7 +28,9 @@ import {
 } from '@common/components/Select/types'
 import Text from '@common/components/Text'
 import TitleAndIcon from '@common/components/TitleAndIcon'
+import { isMobile, isWeb } from '@common/config/env'
 import useController from '@common/hooks/useController'
+import useHover, { AnimatedPressable } from '@common/hooks/useHover'
 import useNavigation from '@common/hooks/useNavigation'
 import usePrevious from '@common/hooks/usePrevious'
 import useTheme from '@common/hooks/useTheme'
@@ -32,21 +38,23 @@ import { ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { ItemPanel } from '@web/components/TransactionsScreen'
-import useHover, { AnimatedPressable } from '@web/hooks/useHover'
 
 import styles from './styles'
 
 interface Props extends InputProps {
   setAddress: (text: string) => void
   address: string
-  ensAddress: string
+  resolvedAddress: AddressState['resolvedAddress']
+  resolvedAddressType: AddressState['resolvedAddressType']
   addressValidationMsg: string
+  domainVerificationMessage?: string
   isRecipientHumanizerKnownTokenOrSmartContract: boolean
   isRecipientAddressUnknown: boolean
   validation: Validation
   isRecipientDomainResolving: boolean
   selectedTokenSymbol?: TokenResult['symbol']
   menuPosition?: 'top' | 'bottom'
+  addressPoisoningMatch?: AddressPoisoningMatch | null
 }
 
 const ADDRESS_BOOK_VISIBLE_VALIDATION: Validation = {
@@ -55,10 +63,11 @@ const ADDRESS_BOOK_VISIBLE_VALIDATION: Validation = {
 }
 
 const SelectedMenuOption: React.FC<{
-  selectRef: React.RefObject<any>
+  selectRef?: React.RefObject<any>
   validation: Validation
   isMenuOpen: boolean
-  ensAddress: string
+  resolvedAddress: AddressState['resolvedAddress']
+  resolvedAddressType: AddressState['resolvedAddressType']
   isRecipientDomainResolving: boolean
   address: string
   setAddress: (text: string) => void
@@ -66,29 +75,45 @@ const SelectedMenuOption: React.FC<{
   setIsMenuOpen: (isMenuOpen: boolean) => void
   filteredContacts: Contact[]
   renderConfirmAddress?: () => React.ReactNode
+  type?: 'input' | 'selected-menu-option'
+  autoFocus?: boolean
+  addressHighlight?: {
+    prefix: number
+    suffix: number
+    color: 'errorText'
+  }
 }> = ({
   selectRef,
   filteredContacts,
   validation,
   isMenuOpen,
-  ensAddress,
+  resolvedAddress,
+  resolvedAddressType,
   isRecipientDomainResolving,
   address,
   setAddress,
   disabled,
   setIsMenuOpen,
-  renderConfirmAddress
+  renderConfirmAddress,
+  type = 'selected-menu-option',
+  autoFocus = false,
+  addressHighlight
 }) => {
   const [isFocused, setIsFocused] = useState(false)
+  const { theme } = useTheme()
   const prevFilteredContactsLength = usePrevious(filteredContacts.length)
 
   const isValidAddress = useMemo(
-    () => validateAddress(ensAddress || address).severity === 'success',
-    [ensAddress, address]
+    () =>
+      validateAddress(getAddressFromAddressState({ resolvedAddress, fieldValue: address }))
+        .severity === 'success',
+    [resolvedAddress, address]
   )
   const prevIsValidAddress = usePrevious(isValidAddress)
 
   useEffect(() => {
+    if (type === 'input') return
+
     if (isMenuOpen && !filteredContacts.length && !!isFocused) {
       setIsMenuOpen(false)
     }
@@ -106,59 +131,113 @@ const SelectedMenuOption: React.FC<{
     setIsMenuOpen,
     isFocused,
     prevIsValidAddress,
-    isValidAddress
+    isValidAddress,
+    type
   ])
 
-  return (
-    <AddressInput
-      inputBorderWrapperRef={selectRef}
-      validation={isMenuOpen ? ADDRESS_BOOK_VISIBLE_VALIDATION : validation}
-      containerStyle={styles.inputContainer}
-      ensAddress={ensAddress}
-      isRecipientDomainResolving={isRecipientDomainResolving}
-      value={address}
-      withDetails
-      onChangeText={setAddress}
-      disabled={disabled}
-      renderConfirmAddress={renderConfirmAddress}
-      onFocus={() => {
-        setIsFocused(true)
-        if (filteredContacts.length) {
-          setIsMenuOpen(true)
+  const isButtonMode = type === 'selected-menu-option' && isMobile
+
+  const content = useMemo(
+    () => (
+      <AddressInput
+        inputBorderWrapperRef={selectRef}
+        validation={
+          isMenuOpen && type === 'selected-menu-option'
+            ? ADDRESS_BOOK_VISIBLE_VALIDATION
+            : validation
         }
-      }}
-      onBlur={() => {
-        setIsFocused(false)
-      }}
-      onClearButtonPress={() => setIsMenuOpen(true)}
-      button={address ? undefined : isMenuOpen ? <UpArrowIcon /> : <DownArrowIcon />}
-      buttonProps={{
-        onPress: () => {
-          if (!address || filteredContacts.length) {
+        autoFocus={autoFocus}
+        containerStyle={styles.inputContainer}
+        resolvedAddress={resolvedAddress}
+        resolvedAddressType={resolvedAddressType}
+        addressHighlight={addressHighlight}
+        isRecipientDomainResolving={isRecipientDomainResolving}
+        value={address}
+        // On mobile input mode we still need details view when poisoning highlight exists,
+        // because highlight rendering lives in the detailed address row.
+        withDetails={type === 'selected-menu-option' || (isMobile && !!addressHighlight)}
+        onChangeText={setAddress}
+        disabled={disabled}
+        editable={!isButtonMode}
+        pointerEvents={isButtonMode ? 'none' : 'auto'}
+        renderConfirmAddress={renderConfirmAddress}
+        onFocus={() => {
+          setIsFocused(true)
+          if (type === 'input') return
+
+          if (filteredContacts.length) {
             setIsMenuOpen(true)
           }
+        }}
+        onBlur={() => {
+          if (type === 'input') return
+
+          setIsFocused(false)
+        }}
+        onClearButtonPress={() => setIsMenuOpen(true)}
+        button={
+          type === 'input' || address ? undefined : isMenuOpen ? <UpArrowIcon /> : <DownArrowIcon />
         }
-      }}
-      buttonStyle={{ ...spacings.pv0, ...spacings.ph, ...spacings.mr0, ...spacings.ml0 }}
-    />
+        buttonProps={{
+          onPress: () => {
+            if (!address || filteredContacts.length) {
+              setIsMenuOpen(true)
+            }
+          }
+        }}
+        inputWrapperStyle={type === 'input' ? { backgroundColor: theme.neutral400 } : undefined}
+        buttonStyle={{ ...spacings.pv0, ...spacings.ph, ...spacings.mr0, ...spacings.ml0 }}
+      />
+    ),
+    [
+      address,
+      autoFocus,
+      disabled,
+      resolvedAddress,
+      filteredContacts.length,
+      isButtonMode,
+      isMenuOpen,
+      isRecipientDomainResolving,
+      resolvedAddressType,
+      renderConfirmAddress,
+      selectRef,
+      setAddress,
+      setIsMenuOpen,
+      theme.neutral400,
+      addressHighlight,
+      type,
+      validation
+    ]
+  )
+
+  return isButtonMode ? (
+    <Pressable onPress={() => setIsMenuOpen(true)}>{content}</Pressable>
+  ) : (
+    content
   )
 }
 
 const Recipient: React.FC<Props> = ({
   setAddress,
   address,
-  ensAddress,
+  resolvedAddress,
+  resolvedAddressType,
   addressValidationMsg,
+  domainVerificationMessage,
   isRecipientHumanizerKnownTokenOrSmartContract,
   isRecipientAddressUnknown,
   validation,
   isRecipientDomainResolving,
-  disabled
+  disabled,
+  addressPoisoningMatch
 }) => {
   const {
     state: { account }
   } = useController('SelectedAccountController')
-  const actualAddress = ensAddress || address
+  const actualAddress = getAddressFromAddressState({
+    resolvedAddress,
+    fieldValue: address
+  })
   const { navigate } = useNavigation()
   const { t } = useTranslation()
   const { theme } = useTheme()
@@ -215,7 +294,7 @@ const Recipient: React.FC<Props> = ({
 
   const walletAccountsSourcedContactOptions = useMemo(
     () =>
-      filteredContacts
+      (isMobile ? contacts : filteredContacts)
         .filter((contact) => contact.isWalletAccount)
         .map((contact, index) => ({
           value: contact.address,
@@ -234,12 +313,12 @@ const Recipient: React.FC<Props> = ({
             />
           )
         })),
-    [filteredContacts]
+    [contacts, filteredContacts]
   )
 
   const manuallyAddedContactOptions = useMemo(
     () =>
-      filteredContacts
+      (isMobile ? contacts : filteredContacts)
         .filter((contact) => !contact.isWalletAccount)
         .map((contact) => ({
           value: contact.address,
@@ -257,7 +336,7 @@ const Recipient: React.FC<Props> = ({
             />
           )
         })),
-    [filteredContacts]
+    [contacts, filteredContacts]
   )
 
   const selectedOption = useMemo(
@@ -289,22 +368,60 @@ const Recipient: React.FC<Props> = ({
 
       return section.key === 'contacts' ? (
         <TitleAndIcon title={t('Address Book')} icon={AddressBookIcon}>
-          <AnimatedPressable
-            style={[flexbox.directionRow, flexbox.alignCenter, manageBtnAnimStyle]}
-            onPress={onManagePress}
-            {...bindManageBtnAnim}
-          >
-            <SettingsIcon width={18} height={18} color={theme.secondaryText} />
-            <Text fontSize={14} style={spacings.mlMi} appearance="secondaryText">
-              {t('Manage contacts')}
-            </Text>
-          </AnimatedPressable>
+          {isWeb && (
+            <AnimatedPressable
+              style={[flexbox.directionRow, flexbox.alignCenter, manageBtnAnimStyle]}
+              onPress={onManagePress}
+              {...bindManageBtnAnim}
+            >
+              <SettingsIcon width={18} height={18} color={theme.secondaryText} />
+              <Text fontSize={14} style={spacings.mlMi} appearance="secondaryText">
+                {t('Manage contacts')}
+              </Text>
+            </AnimatedPressable>
+          )}
         </TitleAndIcon>
       ) : (
         <TitleAndIcon title={t('My wallets')} icon={WalletIcon} />
       )
     },
     [bindManageBtnAnim, manageBtnAnimStyle, onManagePress, t, theme.secondaryText]
+  )
+
+  const renderConfirmAddress = useCallback(
+    () => (
+      <AddToAddressBook
+        isRecipientHumanizerKnownTokenOrSmartContract={
+          isRecipientHumanizerKnownTokenOrSmartContract
+        }
+        isRecipientAddressUnknown={isRecipientAddressUnknown}
+        isRecipientAddressSameAsSender={actualAddress === account?.addr}
+        addressValidationMsg={addressValidationMsg}
+        domainVerificationMessage={domainVerificationMessage}
+        onAddToAddressBookPress={openBottomSheet}
+      />
+    ),
+    [
+      isRecipientHumanizerKnownTokenOrSmartContract,
+      isRecipientAddressUnknown,
+      actualAddress,
+      account,
+      addressValidationMsg,
+      domainVerificationMessage,
+      openBottomSheet
+    ]
+  )
+
+  const selectedAddressHighlight = useMemo(
+    () =>
+      addressPoisoningMatch
+        ? {
+            prefix: addressPoisoningMatch.matchedPrefixCharsCount,
+            suffix: addressPoisoningMatch.matchedSuffixCharsCount,
+            color: 'errorText' as const
+          }
+        : undefined,
+    [addressPoisoningMatch]
   )
 
   const renderSelectedOption = useCallback(
@@ -316,50 +433,41 @@ const Recipient: React.FC<Props> = ({
           filteredContacts={filteredContacts}
           isMenuOpen={isMenuOpen}
           validation={validation}
-          ensAddress={ensAddress}
+          resolvedAddress={resolvedAddress}
+          resolvedAddressType={resolvedAddressType}
           isRecipientDomainResolving={isRecipientDomainResolving}
           address={address}
           setAddress={setAddress}
           disabled={disabled}
-          renderConfirmAddress={() => (
-            <AddToAddressBook
-              isRecipientHumanizerKnownTokenOrSmartContract={
-                isRecipientHumanizerKnownTokenOrSmartContract
-              }
-              isRecipientAddressUnknown={isRecipientAddressUnknown}
-              isRecipientAddressSameAsSender={actualAddress === account?.addr}
-              addressValidationMsg={addressValidationMsg}
-              onAddToAddressBookPress={openBottomSheet}
-            />
-          )}
+          renderConfirmAddress={renderConfirmAddress}
+          addressHighlight={selectedAddressHighlight}
         />
       )
     },
     [
       filteredContacts,
       validation,
-      ensAddress,
+      resolvedAddress,
+      resolvedAddressType,
       isRecipientDomainResolving,
       address,
       setAddress,
       disabled,
-      isRecipientHumanizerKnownTokenOrSmartContract,
-      isRecipientAddressUnknown,
-      actualAddress,
-      account?.addr,
-      addressValidationMsg,
-      openBottomSheet
+      renderConfirmAddress,
+      selectedAddressHighlight
     ]
   )
 
+  const shouldAutoFocus = useMemo(() => {
+    if (walletAccountsSourcedContactOptions.length || manuallyAddedContactOptions.length)
+      return false
+
+    return true
+  }, [walletAccountsSourcedContactOptions, manuallyAddedContactOptions])
+
   return (
     <ItemPanel style={{ ...spacings.pbTy, ...spacings.mbTy }}>
-      <Text
-        appearance="secondaryText"
-        fontSize={14}
-        weight="medium"
-        style={[spacings.mbSm, spacings.mlTy]}
-      >
+      <Text appearance="secondaryText" fontSize={14} weight="medium" style={[spacings.mbSm]}>
         {t('Add recipient')}
       </Text>
       <SectionedSelect
@@ -373,12 +481,35 @@ const Recipient: React.FC<Props> = ({
         renderSelectedOption={renderSelectedOption}
         emptyListPlaceholderText={t('No contacts found')}
         menuPosition="bottom"
+        bottomSheetTitle={t('Add recipient')}
+        renderHeaderChildren={({ toggleMenu, isMenuOpen, selectRef }) => (
+          <SelectedMenuOption
+            type="input"
+            selectRef={selectRef}
+            autoFocus={shouldAutoFocus}
+            setIsMenuOpen={toggleMenu}
+            filteredContacts={filteredContacts}
+            isMenuOpen={isMenuOpen}
+            validation={validation}
+            resolvedAddress={resolvedAddress}
+            resolvedAddressType={resolvedAddressType}
+            // Keep highlight visible on mobile; don't show resolving UI when poisoning highlight exists.
+            isRecipientDomainResolving={isRecipientDomainResolving && !selectedAddressHighlight}
+            address={address}
+            setAddress={setAddress}
+            disabled={disabled}
+            addressHighlight={selectedAddressHighlight}
+          />
+        )}
         containerStyle={spacings.mb0}
       />
 
       <AddContactBottomSheet
         sheetRef={sheetRef}
-        address={ensAddress || address}
+        address={getAddressFromAddressState({
+          resolvedAddress,
+          fieldValue: address
+        })}
         closeBottomSheet={closeBottomSheet}
       />
     </ItemPanel>

@@ -8,28 +8,26 @@ import { SwapAndBridgeFormStatus } from '@ambire-common/controllers/swapAndBridg
 import { Key } from '@ambire-common/interfaces/keystore'
 import Alert from '@common/components/Alert'
 import { PanelBackButton, PanelTitle } from '@common/components/Panel/Panel'
-import Spinner from '@common/components/Spinner'
 import useController from '@common/hooks/useController'
-import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useNavigation from '@common/hooks/useNavigation'
 import usePrevious from '@common/hooks/usePrevious'
 import { ROUTES, WEB_ROUTES } from '@common/modules/router/constants/common'
+import BatchAdded from '@common/modules/sign-account-op/components/OneClick/BatchModal/BatchAdded'
+import Buttons from '@common/modules/sign-account-op/components/OneClick/Buttons'
+import Estimation from '@common/modules/sign-account-op/components/OneClick/Estimation'
+import TrackProgress from '@common/modules/swap-and-bridge/components/Estimation/TrackProgress'
+import FromToken from '@common/modules/swap-and-bridge/components/FromToken'
+import PriceImpactWarningModal from '@common/modules/swap-and-bridge/components/PriceImpactWarningModal'
+import RouteInfo from '@common/modules/swap-and-bridge/components/RouteInfo'
+import RoutesModal from '@common/modules/swap-and-bridge/components/RoutesModal'
+import ToToken from '@common/modules/swap-and-bridge/components/ToToken'
+import useSwapAndBridgeForm from '@common/modules/swap-and-bridge/hooks/useSwapAndBridgeForm'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
+import { getUiType } from '@common/utils/uiType'
 import { Content, Wrapper } from '@web/components/TransactionsScreen'
 import useSimulationError from '@web/modules/portfolio/hooks/SimulationError/useSimulationError'
-import BatchAdded from '@web/modules/sign-account-op/components/OneClick/BatchModal/BatchAdded'
-import Buttons from '@web/modules/sign-account-op/components/OneClick/Buttons'
-import Estimation from '@web/modules/sign-account-op/components/OneClick/Estimation'
-import RoutesModal from '@web/modules/swap-and-bridge/components/RoutesModal'
-import useSwapAndBridgeForm from '@web/modules/swap-and-bridge/hooks/useSwapAndBridgeForm'
-import { getUiType } from '@web/utils/uiType'
-
-import TrackProgress from '../../components/Estimation/TrackProgress'
-import FromToken from '../../components/FromToken'
-import PriceImpactWarningModal from '../../components/PriceImpactWarningModal'
-import RouteInfo from '../../components/RouteInfo'
-import ToToken from '../../components/ToToken'
+import Modals from '@web/modules/sign-account-op/components/Modals'
 
 const { isRequestWindow } = getUiType()
 
@@ -44,6 +42,7 @@ const SwapAndBridgeScreen = () => {
     fromTokenValue,
     fromTokenAmountSelectDisabled,
     handleSubmitForm,
+    frozenPriceImpactWarning,
     highPriceImpactOrSlippageWarning,
     priceImpactModalRef,
     closePriceImpactModal,
@@ -65,26 +64,31 @@ const SwapAndBridgeScreen = () => {
     shouldDisableAddToBatch
   } = useSwapAndBridgeForm()
   const {
-    sessionIds,
-    formStatus,
-    fromChainId,
-    toChainId,
-    isHealthy,
-    shouldEnableRoutesSelection,
-    updateQuoteStatus,
-    signAccountOpController,
-    hasProceeded,
-    swapSignErrors,
-    quote
-  } = useController('SwapAndBridgeController').state
+    state: {
+      sessionIds,
+      formStatus,
+      fromChainId,
+      toChainId,
+      isHealthy,
+      shouldEnableRoutesSelection,
+      updateQuoteStatus,
+      signAccountOpController,
+      hasProceeded,
+      swapSignErrors,
+      quote
+    },
+    dispatch: swapAndBridgeDispatch
+  } = useController('SwapAndBridgeController')
   const {
-    state: { portfolio }
+    state: { portfolio, account }
   } = useController('SelectedAccountController')
 
-  const { statuses: requestsCtrlStatuses } = useController('RequestsController').state
+  const {
+    dispatch: requestsCtrlDispatch,
+    state: { statuses: requestsCtrlStatuses }
+  } = useController('RequestsController')
   const prevSelectedAccActiveRoutes: any[] | undefined = usePrevious(selectedAccActiveRoutes)
   const scrollViewRef: any = useRef(null)
-  const { dispatch } = useControllersMiddleware()
 
   const { simulationError: fromChainSimulationError } = useSimulationError({ chainId: fromChainId })
   const { simulationError: toChainSimulationError } = useSimulationError({ chainId: toChainId })
@@ -97,12 +101,6 @@ const SwapAndBridgeScreen = () => {
       scrollViewRef.current?.scrollTo({ y: 0 })
     }
   }, [selectedAccActiveRoutes, prevSelectedAccActiveRoutes])
-
-  // TODO: Disable tokens that are NOT supported
-  // (not in the `fromTokenList` of the SwapAndBridge controller)
-
-  // TODO: Confirmation modal (warn) if the diff in dollar amount between the
-  // FROM and TO tokens is too high (therefore, user will lose money).
 
   const isEstimatingRoute =
     formStatus === SwapAndBridgeFormStatus.ReadyToEstimate &&
@@ -128,52 +126,62 @@ const SwapAndBridgeScreen = () => {
   }, [formStatus, isLoading])
 
   const onBatchAddedPrimaryButtonPress = useCallback(() => {
+    swapAndBridgeDispatch({
+      type: 'method',
+      params: {
+        method: 'resetForm',
+        args: []
+      }
+    })
     navigate(WEB_ROUTES.dashboard)
-  }, [navigate])
+  }, [swapAndBridgeDispatch, navigate])
   const onBatchAddedSecondaryButtonPress = useCallback(() => {
     setShowAddedToBatch(false)
   }, [setShowAddedToBatch])
 
   const onBackButtonPress = useCallback(() => {
-    dispatch({
-      type: 'SWAP_AND_BRIDGE_CONTROLLER_UNLOAD_SCREEN',
-      params: { sessionId, forceUnload: true }
+    swapAndBridgeDispatch({
+      type: 'method',
+      params: { method: 'unloadScreen', args: [sessionId, true] }
     })
     if (isRequestWindow) {
-      dispatch({
-        type: 'CLOSE_SIGNING_REQUEST_WINDOW',
+      if (!account) return
+
+      requestsCtrlDispatch({
+        type: 'method',
         params: {
-          type: 'swapAndBridge'
+          method: 'removeUserRequests',
+          args: [[`${account.addr}-swap-and-bridge-sign`]]
         }
       })
     } else {
       navigate(ROUTES.dashboard)
     }
-  }, [dispatch, navigate, sessionId])
+  }, [requestsCtrlDispatch, account, navigate, sessionId, swapAndBridgeDispatch])
 
   const handleUpdateStatus = useCallback(
     (status: SigningStatus) => {
-      dispatch({
-        type: 'CURRENT_SIGN_ACCOUNT_OP_UPDATE_STATUS',
+      swapAndBridgeDispatch({
+        type: 'method',
         params: {
-          updateType: 'Swap&Bridge',
-          status
+          method: 'callSignAccountOpMethod',
+          args: ['updateStatus', [status]]
         }
       })
     },
-    [dispatch]
+    [swapAndBridgeDispatch]
   )
   const updateController = useCallback(
     (params: { signingKeyAddr?: Key['addr']; signingKeyType?: Key['type'] }) => {
-      dispatch({
-        type: 'CURRENT_SIGN_ACCOUNT_OP_UPDATE',
+      swapAndBridgeDispatch({
+        type: 'method',
         params: {
-          updateType: 'Swap&Bridge',
-          ...params
+          method: 'callSignAccountOpMethod',
+          args: ['update', [params]]
         }
       })
     },
-    [dispatch]
+    [swapAndBridgeDispatch]
   )
 
   const buttons = useMemo(() => {
@@ -199,18 +207,6 @@ const SwapAndBridgeScreen = () => {
     isLocalStateOutOfSync,
     shouldDisableAddToBatch
   ])
-
-  if (!sessionIds.includes(sessionId)) {
-    // If the portfolio has loaded we can skip the spinner as initializing the screen
-    // takes a short time and the spinner will only flash.
-    if (portfolio.isReadyToVisualize) return null
-
-    return (
-      <View style={[flexbox.flex1, flexbox.justifyCenter, flexbox.alignCenter]}>
-        <Spinner />
-      </View>
-    )
-  }
 
   if (activeRoute && displayedView === 'track') {
     return (
@@ -263,6 +259,7 @@ const SwapAndBridgeScreen = () => {
               fromTokenAmountSelectDisabled={fromTokenAmountSelectDisabled}
               onFromAmountChange={onFromAmountChange}
               simulationFailed={!!fromChainSimulationError}
+              isLoading={!sessionIds.includes(sessionId) || !portfolio.isReadyToVisualize}
             />
           </View>
           <ToToken simulationFailed={!!toChainSimulationError} />
@@ -283,12 +280,16 @@ const SwapAndBridgeScreen = () => {
         hasProceeded={hasProceeded}
         signAccountOpController={signAccountOpController}
         serviceFee={quote?.selectedRoute?.serviceFee}
+        shouldShowTxnDetails
+        Modals={Modals}
       />
       <PriceImpactWarningModal
         sheetRef={priceImpactModalRef}
         closeBottomSheet={closePriceImpactModal}
         acknowledgeHighPriceImpact={acknowledgeHighPriceImpact}
-        highPriceImpactOrSlippageWarning={highPriceImpactOrSlippageWarning}
+        highPriceImpactOrSlippageWarning={
+          frozenPriceImpactWarning ?? highPriceImpactOrSlippageWarning
+        }
       />
     </Wrapper>
   )

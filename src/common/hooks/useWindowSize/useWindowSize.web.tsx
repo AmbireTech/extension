@@ -1,19 +1,15 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 
 import { breakpointsByWindowHeight, breakpointsByWindowWidth } from './breakpoints'
 import { WindowSizeProps } from './types'
 
 const useWindowSize = (): WindowSizeProps => {
-  const [dimensions, setDimensions] = useState({
-    width: window.innerWidth,
-    height: window.innerHeight
-  })
+  const [width, setWidth] = useState(window.innerWidth)
+  const [height, setHeight] = useState(window.innerHeight)
 
   const updateWindowSize = useCallback(() => {
-    setDimensions({
-      width: window.innerWidth,
-      height: window.innerHeight
-    })
+    setWidth(window.innerWidth)
+    setHeight(window.innerHeight)
   }, [])
 
   useEffect(() => {
@@ -26,36 +22,49 @@ const useWindowSize = (): WindowSizeProps => {
     }
   }, [updateWindowSize])
 
-  const maxWidthSize: WindowSizeProps['maxWidthSize'] = (size) => {
-    if (typeof size === 'number') {
-      return size <= dimensions.width
-    }
+  const maxWidthSize: WindowSizeProps['maxWidthSize'] = useCallback(
+    (size) => {
+      if (typeof size === 'number') {
+        return size <= width
+      }
 
-    return breakpointsByWindowWidth[size] <= dimensions.width
-  }
+      return breakpointsByWindowWidth[size] <= width
+    },
+    [width]
+  )
 
-  const minWidthSize: WindowSizeProps['minWidthSize'] = (size) => {
-    if (typeof size === 'number') {
-      return size > dimensions.width
-    }
+  const minWidthSize: WindowSizeProps['minWidthSize'] = useCallback(
+    (size) => {
+      if (typeof size === 'number') {
+        return size > width
+      }
 
-    return breakpointsByWindowWidth[size] > dimensions.width
-  }
+      return breakpointsByWindowWidth[size] > width
+    },
+    [width]
+  )
 
-  const minHeightSize: WindowSizeProps['minHeightSize'] = (size) => {
-    if (typeof size === 'number') {
-      return size > dimensions.height
-    }
+  const minHeightSize: WindowSizeProps['minHeightSize'] = useCallback(
+    (size) => {
+      if (typeof size === 'number') {
+        return size > height
+      }
 
-    return breakpointsByWindowHeight[size] > dimensions.height
-  }
+      return breakpointsByWindowHeight[size] > height
+    },
+    [height]
+  )
 
-  return {
-    ...dimensions,
-    minWidthSize,
-    maxWidthSize,
-    minHeightSize
-  }
+  return useMemo(
+    () => ({
+      width,
+      height,
+      minWidthSize,
+      maxWidthSize,
+      minHeightSize
+    }),
+    [width, height, maxWidthSize, minWidthSize, minHeightSize]
+  )
 }
 
 export default useWindowSize

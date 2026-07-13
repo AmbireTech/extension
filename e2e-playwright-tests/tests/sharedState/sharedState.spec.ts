@@ -111,7 +111,11 @@ test.describe('sharedState', () => {
         pages: sharedPages,
         sendToken: tokens.usdc.base,
         receiveToken: tokens.usdc.optimism,
-        bridgeAmount: 0.01
+        bridgeAmount: 0.01,
+        // The periodic all-network portfolio refresh can overlap the post-broadcast monitoring
+        // window in this long-lived shared session, so this guard is unreliable here. It stays
+        // enforced by the isolated swapAndBridge spec.
+        assertPortfolioRefreshScopedToSendNetwork: false
       })
     })
 

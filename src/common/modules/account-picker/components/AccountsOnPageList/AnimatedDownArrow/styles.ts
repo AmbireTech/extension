@@ -1,0 +1,36 @@
+import { StyleSheet, ViewStyle } from 'react-native'
+
+import { ThemeProps } from '@common/styles/themeConfig'
+import flexbox from '@common/styles/utils/flexbox'
+
+interface Styles {
+  container: ViewStyle
+  primary: ViewStyle
+  secondary: ViewStyle
+  iconContainer: ViewStyle
+}
+
+const getStyles = (theme: ThemeProps) =>
+  StyleSheet.create<Styles>({
+    container: {
+      ...flexbox.alignSelfCenter,
+      position: 'absolute'
+    },
+    iconContainer: {
+      ...flexbox.center,
+      borderRadius: 25,
+      width: 32,
+      height: 32,
+      borderWidth: 1
+    },
+    secondary: {
+      backgroundColor: theme.secondaryBackground,
+      borderColor: theme.secondaryBorder
+    },
+    primary: {
+      backgroundColor: theme.primaryBackground,
+      borderColor: theme.primaryBorder
+    }
+  })
+
+export default getStyles

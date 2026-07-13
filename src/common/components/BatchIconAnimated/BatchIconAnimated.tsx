@@ -1,11 +1,12 @@
-import LottieView, { LottieComponentProps } from 'lottie-react'
 import React from 'react'
+
+import LottieView, { LottieViewProps } from '@common/components/LottieView'
 
 import iconAnimation from './icon-animated.json'
 
 type Props = {
   height?: number
-} & Omit<LottieComponentProps, 'animationData'>
+} & Omit<LottieViewProps, 'animationData'>
 
 const ASPECT_RATIO = 1280 / 720
 

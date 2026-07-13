@@ -1,11 +1,12 @@
-import { randomBytes } from 'ethers'
-import React, { memo, useMemo } from 'react'
-import { Image, ScrollView, View, ViewStyle } from 'react-native'
+import React, { Fragment, memo, useCallback, useMemo } from 'react'
+import { Image, Linking, ScrollView, StyleSheet, View, ViewStyle } from 'react-native'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
-// @ts-ignore
-import meshGradientLarge from '@benzin/assets/images/mesh-gradient-large.png'
-// @ts-ignore
-import meshGradient from '@benzin/assets/images/mesh-gradient.png'
+import { AccountOpStatus } from '@ambire-common/libs/accountOp/types'
+import gradient1560 from '@benzin/assets/images/gradient-1560.png'
+import gradient1920 from '@benzin/assets/images/gradient-1920.png'
+import gradient2560 from '@benzin/assets/images/gradient-2560.png'
+import gradient780 from '@benzin/assets/images/gradient-780.png'
 import Buttons from '@benzin/screens/BenzinScreen/components/Buttons'
 import Header from '@benzin/screens/BenzinScreen/components/Header'
 import Steps from '@benzin/screens/BenzinScreen/components/Steps'
@@ -13,45 +14,111 @@ import useBenzin from '@benzin/screens/BenzinScreen/hooks/useBenzin'
 import OpenIcon from '@common/assets/svg/OpenIcon'
 import Spinner from '@common/components/Spinner'
 import Text from '@common/components/Text'
+import { isMobile, isWeb } from '@common/config/env'
 import useControllerStore from '@common/hooks/useControllerStore'
 import useTheme from '@common/hooks/useTheme'
 import useWindowSize from '@common/hooks/useWindowSize'
-import spacings from '@common/styles/spacings'
+import TransactionSummary from '@common/modules/sign-account-op/components/TransactionSummary'
+import spacings, { DEVICE_HEIGHT, DEVICE_WIDTH, SPACING_SM } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import TransactionSummary from '@web/modules/sign-account-op/components/TransactionSummary'
+import { isExtension } from '@web/constants/browserapi'
 
 import { IS_MOBILE_UP_BENZIN_BREAKPOINT } from '../../styles'
 import getStyles from './styles'
 
-const Benzin = ({ state }: { state: ReturnType<typeof useBenzin> }) => {
+const Container = ({ children }: { children: React.ReactNode }) => {
+  if (isMobile) return <Fragment>{children}</Fragment>
+  return <View style={flexbox.flex1}>{children}</View>
+}
+
+const Benzin = ({
+  state,
+  children
+}: {
+  state: ReturnType<typeof useBenzin>
+  children?: React.ReactNode
+}) => {
   const { styles } = useTheme(getStyles)
   const { maxWidthSize } = useWindowSize()
   const { isStoreReady } = useControllerStore()
+  const insets = useSafeAreaInsets()
+
+  const sizeStr = useMemo(() => {
+    if (isMobile) return 'lg'
+    if (IS_MOBILE_UP_BENZIN_BREAKPOINT) return 'md'
+    return 'sm'
+  }, [])
+
+  const size = useMemo(() => {
+    if (isMobile || IS_MOBILE_UP_BENZIN_BREAKPOINT) return 20
+    return 14
+  }, [])
+
+  const identifiedByType =
+    state?.stepsState?.submittedAccountOp?.identifiedBy?.type ||
+    state?.stepsState?.extensionAccOp?.identifiedBy?.type
+  const accountOp = state?.stepsState?.submittedAccountOp || state?.stepsState?.extensionAccOp
+  const rawCalls = useMemo(() => accountOp?.calls, [accountOp?.calls])
+  const disableOpenExplorerBtn = state?.disableOpenExplorerBtn
+
+  const handleOpenCallExplorer = useCallback(
+    async (callTxnId?: string) => {
+      if (!callTxnId || !state?.network?.explorerUrl) return
+
+      const explorerUrl = state.network.explorerUrl.replace(/\/$/, '')
+      await Linking.openURL(`${explorerUrl}/tx/${callTxnId}`)
+    },
+    [state?.network?.explorerUrl]
+  )
 
   const summary = useMemo(() => {
     const calls = state?.stepsState?.calls
     if (!calls || !state.network?.chainId) return []
 
-    return calls.map((call, i) => (
-      <TransactionSummary
-        key={call.data + randomBytes(6)}
-        style={i !== calls.length! - 1 ? (spacings.mbSm as ViewStyle) : {}}
-        call={call}
-        chainId={state.network!.chainId}
-        rightIcon={
-          <OpenIcon
-            width={IS_MOBILE_UP_BENZIN_BREAKPOINT ? 20 : 14}
-            height={IS_MOBILE_UP_BENZIN_BREAKPOINT ? 20 : 14}
-          />
-        }
-        onRightIconPress={state?.handleOpenExplorer}
-        size={IS_MOBILE_UP_BENZIN_BREAKPOINT ? 'lg' : 'sm'}
-        type="benzin"
-      />
-    ))
+    return calls.map((call, i) => {
+      const callTxnId = call.txnId || rawCalls?.[i]?.txnId
+      const shouldShowCallExplorerIcon =
+        identifiedByType === 'MultipleTxns' && !!callTxnId && !!state.network?.explorerUrl
+
+      return (
+        <TransactionSummary
+          key={
+            call.id ||
+            call.txnId ||
+            `${call.to || 'deploy'}-${call.value.toString()}-${call.data}-${i}`
+          }
+          style={i !== calls.length! - 1 ? (spacings.mbSm as ViewStyle) : {}}
+          call={call}
+          chainId={state.network!.chainId}
+          rightIcon={shouldShowCallExplorerIcon ? <OpenIcon width={size} height={size} /> : null}
+          onRightIconPress={
+            shouldShowCallExplorerIcon ? () => handleOpenCallExplorer(callTxnId) : undefined
+          }
+          size={sizeStr}
+          type="benzin"
+          hasCallFailed={call.status === AccountOpStatus.Rejected}
+          disableSelectorFetching
+        />
+      )
+    })
     // Prevents unnecessary re-renders of the humanizer
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state?.handleOpenExplorer, state?.network?.chainId, state?.stepsState?.calls?.length])
+  }, [
+    handleOpenCallExplorer,
+    identifiedByType,
+    rawCalls,
+    state?.network?.chainId,
+    state?.network?.explorerUrl,
+    state?.stepsState?.calls
+  ])
+
+  const backgroundSource = useMemo(() => {
+    if (maxWidthSize(1920)) return gradient2560
+    if (maxWidthSize(1560)) return gradient1920
+    if (maxWidthSize(780) || isExtension) return gradient1560
+
+    return gradient780
+  }, [maxWidthSize])
 
   if ((state && !state?.isInitialized) || !isStoreReady)
     return (
@@ -100,7 +167,6 @@ const Benzin = ({ state }: { state: ReturnType<typeof useBenzin> }) => {
     txnId,
     userOpHash,
     stepsState,
-    isRenderedInternally,
     handleCopyText,
     handleOpenExplorer,
     showCopyBtn,
@@ -108,13 +174,30 @@ const Benzin = ({ state }: { state: ReturnType<typeof useBenzin> }) => {
   } = state
 
   return (
-    <View style={flexbox.flex1}>
-      <Image
-        style={styles.backgroundImage}
-        source={maxWidthSize('xl') ? (meshGradientLarge as any) : (meshGradient as any)}
-        resizeMode="cover"
-      />
-      <ScrollView contentContainerStyle={styles.container}>
+    <Container>
+      <View
+        pointerEvents="none"
+        style={
+          isWeb
+            ? { ...StyleSheet.absoluteFillObject, zIndex: -1 }
+            : {
+                position: 'absolute',
+                top: -insets.top - SPACING_SM,
+                left: 0,
+                height: DEVICE_HEIGHT,
+                width: DEVICE_WIDTH
+              }
+        }
+      >
+        <Image
+          style={isWeb ? styles.backgroundImage : { flex: 1, objectFit: 'fill' }}
+          source={
+            typeof backgroundSource === 'number' ? backgroundSource : { uri: backgroundSource }
+          }
+          resizeMode="cover"
+        />
+      </View>
+      <ScrollView style={flexbox.flex1} contentContainerStyle={styles.container}>
         <View style={styles.content}>
           <Header activeStep={activeStep} network={network} />
           <Steps
@@ -125,17 +208,22 @@ const Benzin = ({ state }: { state: ReturnType<typeof useBenzin> }) => {
             summary={summary}
             delegation={state?.stepsState?.delegation}
           />
-          {!isRenderedInternally && (
+          {!children ? (
             <Buttons
               handleCopyText={handleCopyText}
               handleOpenExplorer={handleOpenExplorer}
+              disableOpenExplorerBtn={disableOpenExplorerBtn}
               showCopyBtn={showCopyBtn}
               showOpenExplorerBtn={showOpenExplorerBtn}
             />
+          ) : (
+            // Leave enough space for the absolutely positioned buttons
+            <View style={{ marginBottom: isMobile ? 0 : 80 }} />
           )}
         </View>
       </ScrollView>
-    </View>
+      {children}
+    </Container>
   )
 }
 

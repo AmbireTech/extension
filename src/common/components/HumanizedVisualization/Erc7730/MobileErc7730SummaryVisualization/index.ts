@@ -1,0 +1,3 @@
+import MobileErc7730SummaryVisualization from './MobileErc7730SummaryVisualization'
+
+export default MobileErc7730SummaryVisualization

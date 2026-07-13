@@ -43,6 +43,8 @@ const selectors = {
     smartAccountPicker: 'add-account-' // need add index 5
   },
   dashboard: {
+    dashboardGasTankBalance: 'dashboard-gas-tank-balance',
+    appsButton: 'dashboard-button-explore',
     tokensTabButton: 'tokens-defi',
     noTokensText: 'no-tokens-text',
     tokenTitleText: '[data-testid^="token-balance-"]',
@@ -61,28 +63,36 @@ const selectors = {
     portfolioErrorAlert: 'portfolio-error-alert',
     noTransactionOnActivityTab: 'no-transaction-history-text',
     transactionSendText: '(//div[contains(text(),"Send")])[2]', // TODO: change once we have id on FE
-    confirmedTransactionPill: '//div[contains(text(),"Confirmed")]', // TODO: chage once we have id on FE
+    transactionFuelGasTankText: '(//div[contains(text(),"Fuel gas tank")])',
+    swapAndBridgeTransactionText: '//div[contains(text(),"Swap/Bridge")]', // TODO: change once we have id on FE
+    activityTabConfirmedPill: '//div[contains(text(),"Confirmed")]',
+    confirmedTransactionPill: '(//div[contains(text(),"Confirmed")])[2]', // TODO: chage once we have id on FE
+    activityTransactionConfirmed: 'activity-confirmed-step',
     fuelGasTankTransactionPill: '//div[contains(text(),"Fuel gas tank with")]', // TODO: chage once we have id on FE,
-    grantApprovalText: '//div[contains(text(),"Grant approval")]', // TODO: change once we have id on FE,
-    networksDropdown: 'networks-dropdown',
+    grantApprovalText: '//div[contains(text(),"Approve")]', // TODO: change once we have id on FE,
     magnifyingGlassIcon: 'search-glass-icon',
+    tokensNetworksDropdownButton: 'networks-dropdown-tokens',
+    nftNetworkDropdownButton: 'networks-dropdown-collectibles',
+    defiNetworkDropdownButton: 'networks-dropdown-defi',
+    activityNetworkDropdownButton: 'networks-dropdown-activity',
     tokenBalance: '[data-testid^="token-balance"]',
     networkBase: '//div[text()="Base"]',
     nftTitle: 'collection-item',
     nftsTitle: '[data-testid^="collection-item"]',
-    searchForNetwork: 'search-for-network-field',
     hideTokenButton: 'hide-token-button',
     yesHideItButton: 'yes-hide-it-text',
     hideTokenModalTitle: 'hide-token-modal-title',
     hideTokenModalDescription: 'hide-token-modal-description',
     rewardsButton: 'dashboard-button-rewards',
-    projecteedRewardsWalletAssetRewardsButton: 'projected-rewards-asset-button',
     rewardsForClaimingButton: 'marketing-banner-button',
-    backRewardsButton: '//div[contains(text(),"Back")]',
     rewardsLink: '//div[contains(text(),"Ambire Rewards")]',
-    projectedRewardsClaimButton: 'projected-rewards-claim-button'
+    projectedRewardsClaimButton: 'projected-rewards-claim-button',
+    searchInputPlaceholder: 'search-input-placeholder',
+    searchInputField: 'search-input-field'
   },
   settings: {
+    navAccounts: 'settings-nav-accounts',
+    navRecoveryPhrases: 'settings-nav-recovery-phrases',
     createNewRecoveryPhraseButton: 'create-new-recovery-phrase',
     importAccountButton: 'import-account',
     connectHardwareWallet: 'connect-hardware-wallet',
@@ -96,7 +106,10 @@ const selectors = {
     hiddenTokenName: 'hidden-token-name', // works for custom tokens section
     hiddenTokenNetwork: 'hidden-token-network', // works for custom tokens section
     unhideTokenButton: 'unhide-button',
-    youDontHaveInfoText: 'you-dont-have-any-text', // there can be multiple on same page
+    youDontHaveInfoText: 'you-dont-have-any-text', // there can be multiple on same page,
+    manageAccountTreeDotsButton: 'account', // on accounts page, has multiple sam IDs,
+    removeAccountButton: '//div[contains(text(),"Remove account")]',
+    confirmRemoveAccountButton: 'confirm-remove-account-button',
     customTokens: {
       addCustomTokenButton: 'add-custom-token-button',
       addTokenModalTitle: 'add-token-modal-title-text',
@@ -123,15 +136,22 @@ const selectors = {
     feeSpeedMedium: 'option-medium',
     feeSpeedFast: 'option-fast',
     feeSpeedApe: 'option-ape',
-    feeGasTankInDollars: '//span[contains(text(),"Gas Tank")]/../../../div[contains(text(),"$")]', // returning e.g. "<$0.01"
-    feeTokenInDollars: '//span[contains(text(),"")]/../../div[contains(text(),"$")]',
+    feeTokenInDollars: '//div[contains(text(), "<$") or contains(text(), "$")]',
     confirmingYourTransactionText: 'confirming-your',
     explorer: {
       txnSignedStep: 'signed-step',
       txnProgressStep: 'txn-progress-step',
       txnConfirmedStep: 'finalized-rows',
       recepientAddressBlock: 'recipient-address-undefined'
-    }
+    },
+    backButton: 'back-button',
+    amountField: 'amount-field',
+    proceedBtn: 'proceed-btn',
+    transactionError: '//span[contains(text(),"Error")]', // e.g. snackbar when relayer is down,
+    dualChoiceModalAcceptButton: 'dual-choice-modal-primary-button',
+    dualChoiceModalTitle: 'dual-choice-modal-title-text',
+    previousFeeAmountText: 'previous-fee-amount',
+    updatedFeeAmountText: 'updated-fee-amount'
   },
   // TODO: update selectors wiyh testID
   ambireRewards: {
@@ -159,11 +179,41 @@ const selectors = {
     pageTitle: '//h1',
     pageDescription: '//p',
     homePage: '//span[contains(text(),"Home")]',
-    leaderboardPage: '//span[contains(text(),"Leaderboard")]',
+    leaderboardPage: '//span[contains(text(),"Rewards")]',
     rewardsPoolPage: '//span[contains(text(),"Rewards Pool")]',
-    walletPage: '//span[contains(text(),"WALLET")]',
+    walletPage: '//span[contains(text(),"$Wallet")]',
     faqPage: '//span[contains(text(),"FAQ")]'
   },
+  sigtool: {
+    connectWalletButton: '.button-connect',
+    metamaskOption: 'div[class*="wallet-button-container"] >> text=MetaMask',
+    connectionSuccessfulText: '//div[contains(text(),"Connection Successful")]',
+    humanMessageTextbox: '.messageInputHeader',
+    signButton: '.actionContainer > button > span',
+    messageSignatureTitle: '.signatureResult-title',
+    autoLoginSwitch: 'label > input[type="checkbox"] ~ div',
+    signRequestForEVMText: '//div[contains(text(), "SigTool for EVM")]',
+    deceptiveAppError: '//span[contains(text(),"Deceptive")]',
+    deceptiveAppErrorDescription: '//div[contains(text(),"The app")]',
+    signInSiweButton: '//div[contains(text(),"Sign in")]',
+    error: '#error',
+    dappWrapper: 'dapp-wrapper',
+    sigToolIconButton: 'manage-dapp-dropdown',
+    sigToolNetworkEth: '//div[contains(text(), "Ethereum")]',
+    sigToolNetworkBase: '//div[contains(text(), "Base")]',
+    disconnectButton: '//button[contains(text(), "Disconnect Wallet")]',
+    disconnectDapp: '//div[contains(text(), "Disconnect")]'
+  },
+  swapAndBridge: {
+    fromTokenDropdown: 'from-token-select',
+    receiveTokenDropdown: 'to-token-select',
+    receiveNetworkDropdown: 'to-network-select',
+    oneInchSwapRoute: '//div[contains(text(), "1Inch")]',
+    kyberSwapRoute: '//div[contains(text(), "Kyberswap")]',
+    sushiSwapRoute: 'div:has-text("SushiSwap Aggregator")' // no route
+  },
+  searchInput: 'search-input',
+  backArrowButton: 'back-arrow-button',
   account: 'account',
   importMethodTrezor: 'import-method-trezor',
   trezorConnectConfirmTerms: '@analytics/continue-button',
@@ -219,6 +269,7 @@ const selectors = {
   lockExtensionButton: 'lock-extension-button',
   passphraseField: 'passphrase-field',
   buttonUnlock: 'button-unlock',
+  buttonUnlockBiometricsIcon: 'button-unlock-biometrics-icon',
   fullBalance: 'full-balance',
   tabNft: 'tab-nft',
   collectionItem: 'collection-item',
@@ -227,7 +278,6 @@ const selectors = {
   addressBookMyWalletContactDyn: 'address-book-my-wallet-contact',
   continueAnywayCheckboxSaB: 'checkbox',
   continueAnywayButton: '//div[contains(text(),"Continue anyway")]',
-  amountField: 'amount-field',
   transferButtonConfirm: 'transfer-button-confirm',
   addAccountField: 'add-account-field',
   importExistingSeedBtn: 'import-existing-seed-btn',
@@ -244,34 +294,26 @@ const selectors = {
   feeApe: 'option-ape',
   transactionButtonReject: 'transaction-button-reject',
   totalPortfolioAmountInteger: 'total-portfolio-amount-integer',
-  proceedBtn: 'proceed-btn',
   privateKeyWarningCheckbox1: 'private-key-warning-checkbox-1',
   privateKeyWarningCheckbox2: 'private-key-warning-checkbox-2',
   nativeTokenBaseDashboard: 'token-0x0000000000000000000000000000000000000000-8453',
-  bannerButtonOpen: 'banner-info-open',
+  bannerButtonOpen: 'dashboard-info-banner',
   bannerButtonReject: 'banner-button-reject',
   confettiModalActionButton: 'confetti-modal-action-button',
   refreshButton: 'refresh-button',
-  dashboardGasTankButton: 'dashboard-gas-tank-button',
   dashboardGasTankBalance: 'dashboard-gas-tank-balance',
   createSmartAccountGasTankModalButton: 'create-smart-account-gas-tank-modal-button',
-  recieveNetworkBase: 'option-8453',
-  recieveNetworkOptimism: 'option-10',
   confirmFollowUpTxn: 'confirm-follow-up-txns-checkbox',
   USDC: 'option-0x0b2c639c533813f4aa9d7837caf62653d097ff85.usdc',
   signTransactionButton: 'transaction-button-sign',
   maxAvailableAmount: 'max-available-amount',
-  searchInput: 'search-input',
   // Swap & Bridge selectors
-  sendTokenSab: 'from-token-select',
-  receiveTokenSab: 'to-token-select',
   selectRouteButton: 'select-route',
   routeLoadingTextSab: 'route-loading-text-sab',
   fromAmountInputSab: 'from-amount-input-sab',
   switchTokensTooltipSab: 'switch-tokens-condition-tooltip-sab',
   switchCurrencySab: 'switch-currency-sab',
   routePrioritySab: 'route-priority-sab',
-  sushiSwapRoute: 'div:has-text("SushiSwap Aggregator")',
   highPriceImpactSab: '//div[contains(text(), "Very high price impact")]', // TODO: change with ID when we add it
   highSlippageModal: '//div[contains(text(), "higher slippage")]', // TODO: change with ID when we add it
   settingsAddNetworkManually: 'add-network-manually',
@@ -301,7 +343,7 @@ const selectors = {
   // TODO: change once we have IDs on FE
   disableNetworkButton: 'disable-network-btn',
   disableNetworkConfirmButton: 'disable-network-confirm-btn',
-  addRPCURLButton: '//div[.//div[text()="RPC URL"]]//div[text()="Add"]',
+  addRPCURLButton: '//div[.//div[text()="Add RPC URL"]]//div[text()="Add"]',
   addNetworkButton: '//div[.//div[text()="Network details"]]//div[text()="Add network"]',
   connectWalletButton:
     "//div[.//span[text()='Include Testnets']]//button[normalize-space()='Connect Wallet']",
@@ -324,7 +366,20 @@ const selectors = {
   networkSuccessfullyAddedSnackbar:
     '(//div[contains(normalize-space(), "Network successfully added!")])[4]', // TODO: snackbar selector finding 8 elements; change once we have ID on FE
   contactSuccessfullyAddedSnackbar:
-    '(//div[contains(normalize-space(), "Contact added to Address Book")])[4]' // TODO: snackbar selector finding 8 elements; change once we have ID on FE
+    '(//div[contains(normalize-space(), "Contact added to Address Book")])[4]', // TODO: snackbar selector finding 8 elements; change once we have ID on FE
+  importMethodLedger: 'import-method-ledger',
+  keystoreMigration: {
+    recoveryPhraseRow: (id: string) => `recovery-phrase-row-${id}`,
+    manageRecoveryPhrase: (id: string) => `manage-recovery-phrase-${id}`,
+    recoveryPhraseValue: 'recovery-phrase-value',
+    recoveryPhrasePassphraseValue: 'recovery-phrase-passphrase-value',
+    revealRecoveryPhraseButton: 'reveal-recovery-phrase-button',
+    copyRecoveryPhraseButton: 'copy-recovery-phrase-button',
+    exportKeyButton: (addr: string) => `export-key-button-${addr}`,
+    privateKeyValue: 'private-key-value',
+    revealPrivateKeyButton: 'reveal-private-key-button',
+    copyPrivateKeyButton: 'copy-private-key-button'
+  }
 }
 
 type SelectorKey = keyof typeof selectors

@@ -1,4 +1,23 @@
+import ErrorIcon from '@common/assets/svg/ErrorIcon'
+import InfoIcon from '@common/assets/svg/InfoIcon'
+import SuccessIcon from '@common/assets/svg/SuccessIcon'
+import WarningIcon from '@common/assets/svg/WarningIcon'
+
 import { ParsedTextLink } from './types'
+
+export const TOAST_CLOSE_BACKGROUND_COLOR = {
+  success: '#0186491A',
+  error: '#EA01291A',
+  warning: '#CA7E041A',
+  info: '#6000FF1A'
+}
+
+export const ICON_MAP = {
+  error: ErrorIcon,
+  warning: WarningIcon,
+  success: SuccessIcon,
+  info: InfoIcon
+}
 
 const DOMAIN_WHITELIST = ['ambire.com']
 
@@ -10,8 +29,7 @@ const addInteractiveSupportLinks = (text: string): string => {
   return text
     .split(/(\bcontact support\b)/i)
     .map((part) => {
-      if (part.toLowerCase() === 'contact support')
-        return `[${part}](https://help.ambire.com/hc/en-us/requests/new)`
+      if (part.toLowerCase() === 'contact support') return `[${part}](https://help.ambire.com/en)`
 
       return part
     })

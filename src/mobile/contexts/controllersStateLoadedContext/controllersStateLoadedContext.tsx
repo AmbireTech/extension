@@ -1,0 +1,86 @@
+import React, { createContext, ReactNode, useEffect, useMemo, useRef, useState } from 'react'
+
+import { captureMessage } from '@common/config/analytics/CrashAnalytics.web'
+import { APP_VERSION } from '@common/config/env'
+import {
+  ControllersStateLoadedContext,
+  ControllersStateLoadedContextType
+} from '@common/contexts/controllersStateLoadedContext'
+import useControllerStore from '@common/hooks/useControllerStore'
+
+const MIN_LOADING_TIME = 250
+
+const ControllersStateLoadedProvider = ({ children }: { children: ReactNode }) => {
+  const startTimeRef = useRef(Date.now())
+  const unsubscribeRef = useRef<(() => void) | null>(null)
+  const [areControllerStatesLoaded, setAreControllerStatesLoaded] = useState(false)
+  const [isStatesLoadingTakingTooLong, setIsStatesLoadingTakingTooLong] = useState(false)
+
+  const { isReadyToLoadRoutes, controllerStore } = useControllerStore()
+
+  useEffect(() => {
+    if (areControllerStatesLoaded) return
+
+    unsubscribeRef.current = controllerStore.addEventsListener((eventData: string) => {
+      if (eventData === 'controllersLoadingTakingTooLong') {
+        const msg = 'ControllersStateLoadedProvider: states loading taking too long'
+
+        const loadingControllers = Array.from(controllerStore.controllersByName).filter(
+          (controllerName) => !controllerStore.initializedControllers.has(controllerName)
+        )
+        const errorData: any = {
+          loadingControllers,
+          uiVersion: APP_VERSION
+        }
+
+        if (controllerStore.initializedControllers.has('WalletStateController')) {
+          errorData.backgroundVersion =
+            controllerStore.getSnapshot('WalletStateController').extensionVersion
+        }
+
+        setIsStatesLoadingTakingTooLong(true)
+        captureMessage(msg, { level: 'warning', extra: errorData })
+        console.error(msg)
+      }
+
+      if (eventData === 'controllersReady') {
+        unsubscribeRef.current?.()
+      }
+    })
+  }, [areControllerStatesLoaded, controllerStore])
+
+  useEffect(() => {
+    if (areControllerStatesLoaded) return
+
+    const elapsed = Date.now() - startTimeRef.current
+    const delay = Math.max(0, MIN_LOADING_TIME - elapsed)
+
+    const timeoutId = setTimeout(() => {
+      setAreControllerStatesLoaded(true)
+    }, delay)
+
+    return () => clearTimeout(timeoutId)
+  }, [areControllerStatesLoaded])
+
+  // On mobile we gate the splash on the critical-controllers-only flag so the
+  // initial route renders ASAP. The full `isStoreReady` flag still fires later
+  // when every controller has crossed the webview bridge — screens that need
+  // the heavy state (portfolio, dapps, ...) should gate on `isStoreReady`
+  // directly via `useControllerStore`. The `isStatesLoadingTakingTooLong`
+  // telemetry below still observes the full set.
+  const contextValue = useMemo<ControllersStateLoadedContextType>(
+    () => ({
+      areControllerStatesLoaded: areControllerStatesLoaded && isReadyToLoadRoutes,
+      isStatesLoadingTakingTooLong
+    }),
+    [areControllerStatesLoaded, isReadyToLoadRoutes, isStatesLoadingTakingTooLong]
+  )
+
+  return (
+    <ControllersStateLoadedContext.Provider value={contextValue}>
+      {children}
+    </ControllersStateLoadedContext.Provider>
+  )
+}
+
+export { ControllersStateLoadedProvider, ControllersStateLoadedContext }

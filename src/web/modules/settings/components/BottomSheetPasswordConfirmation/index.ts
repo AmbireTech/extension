@@ -1,0 +1,3 @@
+import BottomSheetPasswordConfirmationComponent from './BottomSheetPasswordConfirmationComponent'
+
+export default BottomSheetPasswordConfirmationComponent

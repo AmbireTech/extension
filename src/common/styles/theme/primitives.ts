@@ -45,7 +45,7 @@ const ACCENT_PRIMITIVES = {
 
 const NEUTRAL_PRIMITIVES = {
   neutral100: {
-    [THEME_TYPES.LIGHT]: '#FFFFFF',
+    [THEME_TYPES.LIGHT]: '#F2F4F7',
     [THEME_TYPES.DARK]: '#2C2F33'
   },
   neutral200: {
@@ -53,31 +53,27 @@ const NEUTRAL_PRIMITIVES = {
     [THEME_TYPES.DARK]: '#F9FAFB'
   },
   neutral300: {
-    [THEME_TYPES.LIGHT]: '#F2F4F7',
+    [THEME_TYPES.LIGHT]: '#FFFFFF',
     [THEME_TYPES.DARK]: '#1B1D20'
   },
   neutral400: {
     [THEME_TYPES.LIGHT]: '#E3E6EB',
-    [THEME_TYPES.DARK]: '#000000'
-  },
-  neutral500: {
-    [THEME_TYPES.LIGHT]: '#96A1B1',
-    [THEME_TYPES.DARK]: '#96A1B1'
+    [THEME_TYPES.DARK]: '#0D0E0F'
   },
   neutral600: {
-    [THEME_TYPES.LIGHT]: '#50555D',
-    [THEME_TYPES.DARK]: '#B9BFC9'
+    [THEME_TYPES.LIGHT]: '#808EA1',
+    [THEME_TYPES.DARK]: '#96A1B1'
   },
   neutral700: {
-    [THEME_TYPES.LIGHT]: '#2C2F33',
-    [THEME_TYPES.DARK]: '#F2F4F7'
+    [THEME_TYPES.LIGHT]: '#50555D',
+    [THEME_TYPES.DARK]: '#B9BFC9'
   },
   neutral800: {
     [THEME_TYPES.LIGHT]: '#1B1D20',
     [THEME_TYPES.DARK]: '#F9FAFB'
   },
   neutral900: {
-    [THEME_TYPES.LIGHT]: '#000000',
+    [THEME_TYPES.LIGHT]: '#0D0E0F',
     [THEME_TYPES.DARK]: '#FFFFFF'
   }
 } as const
@@ -92,7 +88,7 @@ const FEEDBACK_PRIMITIVES = {
     [THEME_TYPES.DARK]: '#70B4FF'
   },
   info300: {
-    [THEME_TYPES.LIGHT]: '#295E96',
+    [THEME_TYPES.LIGHT]: '#1563B6',
     [THEME_TYPES.DARK]: '#70B4FF'
   },
   info400: {
@@ -116,7 +112,7 @@ const FEEDBACK_PRIMITIVES = {
     [THEME_TYPES.DARK]: '#29963F'
   },
   success400: {
-    [THEME_TYPES.LIGHT]: '#096A1D',
+    [THEME_TYPES.LIGHT]: '#00861B',
     [THEME_TYPES.DARK]: '#70FF8D'
   },
   success500: {
@@ -136,7 +132,7 @@ const FEEDBACK_PRIMITIVES = {
     [THEME_TYPES.DARK]: '#967929'
   },
   warning400: {
-    [THEME_TYPES.LIGHT]: '#6A5009',
+    [THEME_TYPES.LIGHT]: '#936C00',
     [THEME_TYPES.DARK]: '#FFD970'
   },
   warning500: {
@@ -152,7 +148,7 @@ const FEEDBACK_PRIMITIVES = {
     [THEME_TYPES.DARK]: '#FF7089'
   },
   error300: {
-    [THEME_TYPES.LIGHT]: '#96293B',
+    [THEME_TYPES.LIGHT]: '#B30522',
     [THEME_TYPES.DARK]: '#FF7089'
   },
   error400: {

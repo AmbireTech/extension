@@ -27,7 +27,6 @@ const IS_DEBUGGING = false
 
 const log = (...args: any[]) => {
   if (IS_DEBUGGING) {
-    // eslint-disable-next-line no-console
     console.info('ℹ️ DataPollingContext:', ...args)
   }
 }
@@ -105,7 +104,7 @@ const DataPollingContextProvider: React.FC<any> = ({ children }) => {
       } catch (error) {
         // For now, in case of a context update failure during polling, we simply reschedule the next polling,
         // as each context has its own error handling.
-        // eslint-disable-next-line no-console
+
         console.error('An error occurred while polling the latest character data:', error)
       }
 

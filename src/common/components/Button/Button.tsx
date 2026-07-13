@@ -1,14 +1,16 @@
-import React, { useMemo } from 'react'
+import React, { useCallback, useMemo } from 'react'
 import { Animated, ColorValue, PressableProps, TextStyle, ViewStyle } from 'react-native'
 
 import InfoIcon from '@common/assets/svg/InfoIcon'
+import { isMobile, isWeb } from '@common/config/env'
+import { AnimatedPressable, useCustomHover, useMultiHover } from '@common/hooks/useHover'
+import { AnimatedText } from '@common/hooks/useHover/useHover'
+import { AnimationValues } from '@common/hooks/useHover/useMultiHover'
 import useTheme from '@common/hooks/useTheme'
+import useToast from '@common/hooks/useToast'
 import spacings from '@common/styles/spacings'
 import common, { hexToRgba } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
-import { AnimatedPressable, useCustomHover, useMultiHover } from '@web/hooks/useHover'
-import { AnimatedText } from '@web/hooks/useHover/useHover'
-import { AnimationValues } from '@web/hooks/useHover/useMultiHover'
 import useOnEnterKeyPress from '@web/hooks/useOnEnterKeyPress'
 
 import { createGlobalTooltipDataSet } from '../GlobalTooltip'
@@ -18,11 +20,13 @@ type ButtonTypes =
   | 'primary'
   | 'secondary'
   | 'tertiary'
+  // Use danger if the button is a secondary action and dangerFilled
+  // if it's the primary action on the screen
   | 'danger'
+  | 'dangerFilled'
   | 'outline'
   | 'ghost'
   | 'ghost2'
-  | 'error'
   | 'warning'
   | 'info'
   | 'success'
@@ -78,6 +82,7 @@ const ButtonInnerContainer = ({
       secondary: [],
       tertiary: [],
       danger: [],
+      dangerFilled: [],
       outline: [],
       ghost: [
         {
@@ -87,7 +92,6 @@ const ButtonInnerContainer = ({
         }
       ],
       ghost2: [],
-      error: [],
       warning: [],
       info: [],
       info2: [],
@@ -125,12 +129,13 @@ const ButtonInnerContainer = ({
           !!rest.onHoverOut && rest.onHoverOut(e)
           buttonInnerContainerBind.onHoverOut(e)
         }}
-        onPressIn={(e) => {
+        onPressIn={(e: any) => {
           !!rest.onPressIn && rest.onPressIn(e)
           buttonInnerContainerBind.onPressIn(e)
         }}
-        onPressOut={(e) => {
+        onPressOut={(e: any) => {
           !!rest.onPressOut && rest.onPressOut(e)
+          buttonInnerContainerBind.onPressOut(e)
         }}
       >
         {children}
@@ -159,13 +164,26 @@ const Button = ({
   testID,
   submitOnEnter: _submitOnEnter,
   tooltipDataSet,
+  onPress,
   ...rest
 }: Props) => {
   const { styles, theme } = useTheme(getStyles)
+  const { clearToasts } = useToast()
   const submitOnEnter = _submitOnEnter ?? type === 'primary'
 
+  const handlePress = useCallback(
+    (e: any) => {
+      if (type === 'primary') {
+        clearToasts({ type: 'error' })
+      }
+
+      onPress?.(e)
+    },
+    [clearToasts, onPress, type]
+  )
+
   useOnEnterKeyPress({
-    action: rest.onPress,
+    action: handlePress,
     disabled: !!disabled || !submitOnEnter
   })
 
@@ -183,7 +201,7 @@ const Button = ({
       secondary: [
         {
           property: 'backgroundColor',
-          from: theme.primaryBackground,
+          from: isMobile ? theme.secondaryBackground : theme.primaryBackground,
           to: theme.tertiaryBackground
         }
       ],
@@ -201,6 +219,13 @@ const Button = ({
           to: theme.error300
         }
       ],
+      dangerFilled: [
+        {
+          property: 'backgroundColor',
+          from: theme.error200,
+          to: theme.error300
+        }
+      ],
       outline: [
         {
           property: 'backgroundColor',
@@ -215,8 +240,13 @@ const Button = ({
       ],
       ghost: [],
       ghost2: [],
-      error: [OPACITY_ANIMATION],
-      warning: [OPACITY_ANIMATION],
+      warning: [
+        {
+          property: 'backgroundColor',
+          from: theme.warningBackground,
+          to: theme.warning400
+        }
+      ],
       info: [OPACITY_ANIMATION],
       success: [OPACITY_ANIMATION],
       gray: [
@@ -243,13 +273,13 @@ const Button = ({
     outline: styles.buttonContainerOutline,
     ghost: styles.buttonContainerGhost,
     ghost2: {},
-    error: {
+    dangerFilled: {
       backgroundColor: theme.error200,
       borderWidth: 0
     },
     warning: {
-      backgroundColor: theme.warningText,
-      borderWidth: 0
+      borderColor: theme.warningDecorative,
+      borderWidth: 1
     },
     info: {
       backgroundColor: theme.infoText,
@@ -306,6 +336,13 @@ const Button = ({
           to: theme.error100
         }
       ],
+      dangerFilled: [
+        {
+          property: 'color',
+          from: '#fff',
+          to: '#fff'
+        }
+      ],
       outline: [
         {
           property: 'color',
@@ -327,18 +364,11 @@ const Button = ({
           to: theme.primaryText
         }
       ],
-      error: [
-        {
-          property: 'color',
-          from: '#fff',
-          to: '#fff'
-        }
-      ],
       warning: [
         {
           property: 'color',
-          from: theme.primaryBackground,
-          to: theme.primaryBackground
+          from: theme.warningText,
+          to: theme.warning100
         }
       ],
       info: [
@@ -413,15 +443,16 @@ const Button = ({
           containerStylesSizes[size],
           styles.buttonContainer,
           containerStyles[type],
-          style,
           !!accentColor && { borderColor: accentColor },
           !hasBottomSpacing && spacings.mb0,
           buttonContainerAnimatedStyle,
+          style,
           disabled && disabledStyle ? disabledStyle : {},
           disabled && !disabledStyle ? styles.disabled : {}
         ] as ViewStyle[]
       }
       {...rest}
+      onPress={handlePress}
       onHoverIn={(e) => {
         if (buttonTypesWithInnerContainer.includes(type)) return
 
@@ -452,6 +483,10 @@ const Button = ({
       onPressOut={(e) => {
         if (buttonTypesWithInnerContainer.includes(type)) return
 
+        buttonContainerBind.onPressOut(e)
+        buttonTextBind.onPressOut(e)
+        childrenScaleBind.onPressOut(e)
+
         rest?.onPressOut && rest.onPressOut(e)
       }}
     >
@@ -460,6 +495,7 @@ const Button = ({
         type={type}
         forceHoveredStyle={forceHoveredStyle}
         {...rest}
+        onPress={handlePress}
         onHoverIn={(e) => {
           buttonContainerBind.onHoverIn(e)
           buttonTextBind.onHoverIn(e)
@@ -482,21 +518,13 @@ const Button = ({
           rest?.onPressIn && rest.onPressIn(e)
         }}
         onPressOut={(e) => {
+          buttonContainerBind.onPressOut(e)
+          buttonTextBind.onPressOut(e)
+          childrenScaleBind.onPressOut(e)
+
           rest?.onPressOut && rest.onPressOut(e)
         }}
       >
-        {!!tooltipDataSet && (
-          <InfoIcon
-            width={16}
-            height={16}
-            style={{
-              position: 'absolute',
-              right: 0,
-              top: 0
-            }}
-            dataSet={tooltipDataSet}
-          />
-        )}
         {childrenPosition === 'left' && (
           <Animated.View
             style={[
@@ -523,6 +551,17 @@ const Button = ({
           >
             {text}
           </AnimatedText>
+        )}
+        {!!tooltipDataSet && isWeb && (
+          <InfoIcon
+            width={16}
+            height={16}
+            style={{
+              ...flexbox.alignSelfStart,
+              ...spacings.mlMi
+            }}
+            dataSet={tooltipDataSet}
+          />
         )}
 
         {childrenPosition === 'right' && (

@@ -21,6 +21,5 @@ interface Props {
   chainId: Networks
 }
 export const NetworkIcon = ({ chainId }: Props) => {
-  // eslint-disable-next-line react/jsx-no-useless-fragment
   return <>{NETWORK_ICONS[chainId]}</>
 }

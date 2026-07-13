@@ -1,274 +1,105 @@
-import { EventEmitter as Emitter } from 'events'
 /* eslint-disable @typescript-eslint/no-floating-promises */
-import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
+import React, { useCallback, useContext, useEffect, useMemo, useRef } from 'react'
+import { Platform as RNPlatform } from 'react-native'
 
-import { EventEmitterRegistryController } from '@ambire-common/controllers/eventEmitterRegistry/eventEmitterRegistry'
-import { MainController } from '@ambire-common/controllers/main/main'
-import { IKeystoreController } from '@ambire-common/interfaces/keystore'
-import { WindowProps } from '@ambire-common/interfaces/ui'
-import { KeystoreSigner } from '@ambire-common/libs/keystoreSigner/keystoreSigner'
 import { LIFI_EXPLORER_URL } from '@ambire-common/services/lifi/consts'
 import { APP_VERSION } from '@common/config/env'
-import { AllControllersMappingType } from '@common/constants/controllersMapping'
 import { ControllersMiddlewareContext } from '@common/contexts/controllersMiddlewareContext'
 import { ControllerStoreContext } from '@common/contexts/controllerStoreContext'
-import { BUNGEE_API_KEY, RELAYER_URL, VELCRO_URL } from '@env'
-import { MobileBaseControllersMappingType } from '@mobile/constants/controllersMapping'
-import { Action } from '@web/extension-services/background/actions'
-import { WalletStateController } from '@web/extension-services/background/controllers/wallet-state'
-import { storage } from '@web/extension-services/background/webapi/storage'
-import eventBus from '@web/extension-services/event/eventBus'
+import useRoute from '@common/hooks/useRoute'
+import { Action, MethodAction } from '@common/types/actions'
+import { BUNGEE_API_KEY, RELAYER_URL, SQUID_INTEGRATOR_ID, UNISWAP_API_KEY, VELCRO_URL } from '@env'
+import { MOBILE_CRITICAL_CONTROLLERS } from '@mobile/constants/criticalControllers'
+import useDappsControllerHelpers from '@mobile/hooks/useDappsControllerHelpers'
+import useRequestsControllerHelpers from '@mobile/hooks/useRequestsControllerHelpers'
+import { WebViewWorker, WebViewWorkerRef } from '@mobile/modules/webview/services/WebViewWorker'
 
 export const ControllersMiddlewareProvider: React.FC<{
   children: React.ReactNode
 }> = ({ children }) => {
-  const [isUnlocked, setIsUnlocked] = useState(false)
-  const { controllerStore, debounceControllerUpdates } = useContext(ControllerStoreContext)
+  const { controllerStore, stateSubscriptionManager } = useContext(ControllerStoreContext)
+  const webviewRef = useRef<WebViewWorkerRef>(null)
+  const route = useRoute()
+
+  const dispatch = useCallback(
+    (action: MethodAction | Action, windowId?: number, raw?: boolean) => {
+      webviewRef.current?.dispatch(action, raw)
+    },
+    []
+  )
+
+  // Report which controllers currently have an active subscriber so the WebView
+  // worker can skip serializing + bridging the state of controllers no screen is
+  // displaying. The SubscriptionManager fires on every first-subscribe /
+  // last-unsubscribe; a single screen transition can mount/unmount many hooks at
+  // once, so we coalesce to one dispatch per tick using the latest reported set.
+  // Critical controllers are always included — they gate unlock/route readiness
+  // and must never be suppressed.
+  useEffect(() => {
+    let latestSubscribed: string[] = []
+    let flushHandle: ReturnType<typeof setImmediate> | null = null
+
+    const flush = () => {
+      flushHandle = null
+      const controllers = Array.from(
+        new Set<string>([...MOBILE_CRITICAL_CONTROLLERS, ...latestSubscribed])
+      )
+      dispatch({ type: 'SET_SUBSCRIBED_CONTROLLERS', params: { controllers } })
+    }
+
+    stateSubscriptionManager.setOnSubscribedControllersChange((ids) => {
+      latestSubscribed = ids
+      if (flushHandle) return
+      flushHandle = setImmediate(flush)
+    })
+
+    return () => {
+      stateSubscriptionManager.setOnSubscribedControllersChange(undefined)
+      if (flushHandle) clearImmediate(flushHandle)
+    }
+  }, [stateSubscriptionManager, dispatch])
 
   useEffect(() => {
-    controllerStore.init(
-      Object.keys(controllers.current) as (keyof MobileBaseControllersMappingType)[],
-      (allCtrls: (keyof AllControllersMappingType)[]) => {
-        allCtrls.forEach((ctrlName) => {
-          controllerStore.update(ctrlName, (controllers.current as any)[ctrlName])
+    webviewRef.current
+      ?.init({
+        APP_VERSION,
+        platform: `mobile-${RNPlatform.OS}`,
+        RELAYER_URL,
+        VELCRO_URL,
+        LIFI_EXPLORER_URL,
+        BUNGEE_API_KEY,
+        SQUID_INTEGRATOR_ID,
+        criticalControllers: MOBILE_CRITICAL_CONTROLLERS,
+        UNISWAP_API_KEY
+      })
+      .then((ctrlsNames) => {
+        controllerStore.init(ctrlsNames as any[], MOBILE_CRITICAL_CONTROLLERS, () => {
+          dispatch({ type: 'INIT_ALL_CONTROLLERS', params: { controllers: ctrlsNames as any[] } })
         })
-      }
-    )
-  }, [controllerStore])
-
-  const eventEmitterRegistry = useRef<EventEmitterRegistryController>(
-    new EventEmitterRegistryController(() => {
-      eventEmitterRegistry.current.values().forEach((ctrl) => {
-        const hasOnUpdateInitialized = ctrl.onUpdateIds.includes('background')
-        if (!hasOnUpdateInitialized) {
-          ctrl.onUpdate(async (forceEmit) => {
-            const res = debounceControllerUpdates(ctrl.name, ctrl, forceEmit)
-            if (res === 'DEBOUNCED') return
-
-            if (ctrl.name === 'KeystoreController') {
-              const keystoreCtrl = ctrl as IKeystoreController
-              if (keystoreCtrl.isReadyToStoreKeys) {
-                // TODO: sentry
-                // setBackgroundUserContext({
-                //   id: getExtensionInstanceId(keystoreCtrl.keyStoreUid, mainCtrl.invite.verifiedCode)
-                // })
-                if (isUnlocked && !keystoreCtrl.isUnlocked) {
-                  await (
-                    controllers.current as MobileBaseControllersMappingType
-                  ).MainController!.dapps.broadcastDappSessionEvent('lock')
-                }
-                setIsUnlocked(keystoreCtrl.isUnlocked)
-              }
-            }
-
-            if (ctrl.name === 'SelectedAccountController') {
-              // TODO: sentry
-              // const selectedAccountCtrl = ctrl as ISelectedAccountController
-              // if (selectedAccountCtrl?.account?.addr) {
-              //   setBackgroundExtraContext('account', selectedAccountCtrl.account.addr)
-              // }
-            }
-          }, 'background')
-        }
       })
+  }, [controllerStore, dispatch])
 
-      //
-      // Add onError listeners
-      //
+  useEffect(() => {
+    const { pathname = '/', search = '' } = route
+    const searchParams = new URLSearchParams(search)
+    const searchParamsFormatted = Object.fromEntries(searchParams.entries())
 
-      eventEmitterRegistry.current.values().forEach((ctrl) => {
-        const hasOnErrorInitialized = ctrl.onErrorIds.includes('background')
-
-        if (!hasOnErrorInitialized) {
-          ctrl.onError(() => {
-            eventBus.emit('error', { errors: ctrl.emittedErrors, controller: ctrl.name })
-            // TODO: sentry
-            // captureBackgroundExceptionFromControllerError(error, ctrl.name)
-          }, 'background')
-        }
-      })
-    })
-  )
-
-  const controllers = useRef<MobileBaseControllersMappingType>(
-    {} as MobileBaseControllersMappingType
-  )
-
-  // Skip adding custom headers and URL modifications for 3rd party URLs
-  // (only internal Ambire APIs need the x-app-* headers and tracking params)
-  // @ts-ignore
-  const fetchWithAnalytics: Fetch = useCallback((url, init) => {
-    const urlString = url.toString()
-    try {
-      const urlObj = new URL(urlString)
-      if (!urlObj.hostname.endsWith('.ambire.com') && urlObj.hostname !== 'ambire.com') {
-        // @ts-ignore
-        return fetch(url, init)
-      }
-    } catch (error) {
-      // eslint-disable-next-line no-console
-      console.error(error)
-      // If URL parsing fails, skip analytics for safety
-      // @ts-ignore
-      return fetch(url, init)
-    }
-
-    // As of v4.26.0, custom extension-specific headers. TBD for the other apps.
-    const initWithCustomHeaders = init || { headers: { 'x-app-source': '', 'x-app-version': '' } }
-    initWithCustomHeaders.headers = initWithCustomHeaders.headers || {}
-
-    // if the fetch method is called while the keystore is constructing the keyStoreUid won't be defined yet
-    // in that case we can still fetch but without our custom header
-    if (controllers.current.MainController?.keystore?.keyStoreUid) {
-      // const instanceId = getExtensionInstanceId(
-      //   controllers.current.MainController.keystore.keyStoreUid,
-      //   controllers.current.MainController.invite?.verifiedCode || ''
-      // )
-      // initWithCustomHeaders.headers['x-app-source'] = instanceId
-      // const versionHeader = `extension-${APP_VERSION}-${process.env.WEB_ENGINE}`
-      // initWithCustomHeaders.headers['x-app-version'] = versionHeader
-    }
-
-    // we want to calculate the TVL of our users
-    // we can achieve this by making a relayer (server-side trusted environment) script that gets the balances of all our users
-    // but doing this with all our users would be 'expensive'.
-    // we already calculate the user balance in the extension, but is not 100% trusted as any user can modify it
-    // that why we will use the user balance from the extension as a 'hint' so we can determine
-    // on which accounts we should execute the 'expensive' script on the backend
-    // those addresses should be 1) loaded with key in the extension 2) have more than $0 balance
-    /*
-    const currentAccount = controllers.current.MainController.selectedAccount.account
-    const hasCurrentAccountKeys =
-      currentAccount &&
-      getAccountKeysCount({
-        accountAddr: currentAccount.addr,
-        keys: controllers.current.MainController.keystore.keys,
-        accounts: controllers.current.MainController.accounts.accounts
-      })
-    // we use any cena request, because if we narrow it down to one route we might not have the full balance loaded
-    // // on the relayer side we will simply use middleware that captures all routes and looks for the specific params with balance
-    // // we want to attach the data only if the user has keys for the account
-    const currentBalance = controllers.current.MainController.selectedAccount.portfolio.totalBalance
-    if (
-      currentAccount &&
-      (backgroundState.userBalances[currentAccount?.addr] || 0) < currentBalance
-    )
-      backgroundState.userBalances[currentAccount?.addr] = currentBalance
-
-    const shouldAttachBalance =
-      url.toString().startsWith('https://cena.ambire.com/') && hasCurrentAccountKeys
-    if (shouldAttachBalance) {
-      const urlObj = new URL(url.toString())
-      const balance = backgroundState.userBalances[currentAccount?.addr] || 0
-
-      urlObj.searchParams.append('panVal', JSON.stringify({ a: currentAccount.addr, b: balance }))
-
-      // eslint-disable-next-line no-param-reassign
-      url = decodeURIComponent(urlObj.toString())
-    }
-    */
-
-    // Use the native fetch (instead of node-fetch or whatever else) since
-    // browser extensions are designed to run within the web environment,
-    // which already provides a native and well-optimized fetch API.
-    // @ts-ignore
-    return fetch(url, initWithCustomHeaders)
-  }, [])
-
-  if (Object.keys(controllers.current).length === 0) {
-    const ctrls: MobileBaseControllersMappingType = {} as MobileBaseControllersMappingType
-    ctrls.WalletStateController = new WalletStateController({
-      eventEmitterRegistry: eventEmitterRegistry.current,
-      onLogLevelUpdateCallback: async () => {}
-    })
-    ctrls.MainController = new MainController({
-      eventEmitterRegistry: eventEmitterRegistry.current,
-      appVersion: APP_VERSION,
-      platform: 'default',
-      storageAPI: storage,
-      fetch: fetchWithAnalytics,
-      relayerUrl: RELAYER_URL,
-      velcroUrl: VELCRO_URL,
-      liFiApiKey: LIFI_EXPLORER_URL,
-      bungeeApiKey: BUNGEE_API_KEY,
-      featureFlags: {},
-      keystoreSigners: {
-        internal: KeystoreSigner
-      },
-      externalSignerControllers: {},
-      uiManager: {
-        window: {
-          open: async () => {
-            return {
-              id: 1,
-              width: 0,
-              height: 0,
-              left: 0,
-              top: 0,
-              focused: true,
-              createdFromWindowId: 0
-            } as WindowProps
-          },
-          focus: async () => {
-            return {
-              id: 1,
-              width: 0,
-              height: 0,
-              left: 0,
-              top: 0,
-              focused: true,
-              createdFromWindowId: 0
-            } as WindowProps
-          },
-          closePopupWithUrl: async () => {},
-          remove: async () => {},
-          event: new Emitter()
-        },
-        notification: {
-          create: async () => {}
-        },
-        message: {
-          sendToastMessage: (text, options) => {
-            eventBus.emit('addToast', { text, options })
-          },
-          sendUiMessage: (params) => {
-            eventBus.emit('receiveOneTimeData', params)
-          },
-          sendNavigateMessage: () => {
-            // TODO:
-            // pm.send('> ui-navigate', ...)
-          }
-        }
+    dispatch({
+      type: 'UPDATE_UI_VIEW_ROUTE',
+      params: {
+        id: 'default-mobile-app-view',
+        route: pathname.startsWith('/') ? pathname.slice(1) : pathname,
+        searchParams: searchParamsFormatted
       }
     })
+  }, [route.pathname, route.search, dispatch])
 
-    controllers.current = ctrls
-  }
-
-  const dispatch = useCallback((action: Action) => {
-    if (action.type === 'method') {
-      const { ctrlName, method, args } = action.params
-
-      let targetCtrl: any = Object.values(controllers.current as any).find(
-        (ctrl: any) => ctrl.name === ctrlName
-      )
-      if (!targetCtrl) {
-        console.error(`handleAction: Controller ${ctrlName.toString()} not found`)
-        return
-      }
-
-      if (targetCtrl && typeof targetCtrl[method] === 'function') {
-        targetCtrl[method](...args)
-      }
-
-      return
-    }
-
-    //TODO: handle common actions for the mobile app
-  }, [])
+  useRequestsControllerHelpers(dispatch)
+  useDappsControllerHelpers(dispatch)
 
   return (
     <ControllersMiddlewareContext.Provider value={useMemo(() => ({ dispatch }), [dispatch])}>
+      <WebViewWorker ref={webviewRef} />
       {children}
     </ControllersMiddlewareContext.Provider>
   )

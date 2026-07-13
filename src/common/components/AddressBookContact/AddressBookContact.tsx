@@ -3,22 +3,20 @@ import { useTranslation } from 'react-i18next'
 import { View, ViewStyle } from 'react-native'
 import { TooltipRefProps } from 'react-tooltip'
 
-import { isSmartAccount } from '@ambire-common/libs/account/account'
 import AccountAddress from '@common/components/AccountAddress'
 import Avatar from '@common/components/Avatar'
-import DomainBadge from '@common/components/Avatar/DomainBadge'
 import Editable from '@common/components/Editable'
 import Text from '@common/components/Text'
 import { isWeb } from '@common/config/env'
 import useController from '@common/hooks/useController'
 import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
+import { AnimatedPressable, useCustomHover } from '@common/hooks/useHover'
 import useReverseLookup from '@common/hooks/useReverseLookup'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import spacings from '@common/styles/spacings'
 import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
-import { AnimatedPressable, useCustomHover } from '@web/hooks/useHover'
 
 import ManageContact from './ManageContact'
 import getStyles from './styles'
@@ -26,27 +24,37 @@ import getStyles from './styles'
 interface Props {
   address: string
   name?: string
+  addressHighlight?: {
+    prefix: number
+    suffix: number
+    color: 'errorText'
+  }
   isManageable?: boolean
   isEditable?: boolean
+  withCopy?: boolean
   onPress?: () => void
   style?: ViewStyle
   testID?: string
   avatarSize?: number
   fontSize?: number
   height?: number
+  isActive?: boolean
 }
 
 const AddressBookContact: FC<Props> = ({
   address,
   name,
+  addressHighlight,
   isManageable,
   isEditable,
+  withCopy = true,
   onPress,
   testID,
   style = {},
   avatarSize,
   fontSize = 14,
-  height = 20
+  height = 20,
+  isActive = false
 }) => {
   const ContainerElement = onPress ? AnimatedPressable : View
 
@@ -58,7 +66,14 @@ const AddressBookContact: FC<Props> = ({
   const {
     state: { account: selectedAccount }
   } = useController('SelectedAccountController')
-  const { ens, isLoading } = useReverseLookup({ address })
+  const reverseLookup = useReverseLookup({
+    address,
+    // This is needed because the component is rendered in AddressInput when a valid address
+    // is entered. If the field contains an address (not an ENS name), then we do a reverse lookup,
+    // instead of forward resolution. In this case, we want to keep the ENS name up to date,
+    // but we must ensure we don't trigger it for every account in the account book list
+    privacyUpdateMode: isActive ? 'whenStale' : 'never'
+  })
   const [bindAnim, animStyle] = useCustomHover({
     property: 'backgroundColor',
     values: {
@@ -99,8 +114,10 @@ const AddressBookContact: FC<Props> = ({
     }
   }, [closeTooltip])
 
-  const isSmart = useMemo(() => {
-    return account ? isSmartAccount(account) : false
+  const smartAccountType = useMemo(() => {
+    if (account?.creation) return 'Ambire'
+    if (account?.safeCreation) return 'Safe'
+    return undefined
   }, [account])
 
   const displayTypeBadge = useMemo(() => {
@@ -113,6 +130,7 @@ const AddressBookContact: FC<Props> = ({
       style={[
         flexbox.directionRow,
         flexbox.alignCenter,
+        flexbox.flex1,
         flexbox.justifySpaceBetween,
         spacings.phTy,
         spacings.pvTy,
@@ -124,15 +142,15 @@ const AddressBookContact: FC<Props> = ({
       {...(onPress ? bindAnim : {})}
       testID={testID}
     >
-      <View style={[flexbox.directionRow, flexbox.alignCenter]}>
+      <View style={[flexbox.directionRow, flexbox.alignCenter, flexbox.flex1]}>
         <Avatar
           {...(avatarSize && { size: avatarSize })}
           pfp={address}
           address={address}
-          isSmart={isSmart}
+          smartAccountType={smartAccountType}
           displayTypeBadge={displayTypeBadge}
         />
-        <View>
+        <View style={{ flex: 1 }}>
           {isEditable ? (
             <Editable
               fontSize={fontSize}
@@ -156,12 +174,13 @@ const AddressBookContact: FC<Props> = ({
             </View>
           )}
           <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-            <DomainBadge ens={ens} />
             <AccountAddress
-              isLoading={isLoading}
-              ens={ens}
+              {...reverseLookup}
               address={address}
+              addressHighlight={addressHighlight}
               containerStyle={{ paddingVertical: 0 }}
+              withCopy={withCopy}
+              withUpdateEnsInTooltip={!isEditable}
             />
           </View>
         </View>

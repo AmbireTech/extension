@@ -1,4 +1,3 @@
-/* eslint-disable no-console */
 import { Contract, formatEther, formatUnits, Interface, JsonRpcProvider } from 'ethers'
 import React, { useCallback, useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'

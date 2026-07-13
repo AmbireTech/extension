@@ -1,6 +1,6 @@
 import { StyleSheet, TextStyle, ViewStyle } from 'react-native'
 
-import { isWeb } from '@common/config/env'
+import { isAndroid, isWeb } from '@common/config/env'
 import { FONT_FAMILIES } from '@common/hooks/useFonts'
 import spacings, { SPACING_MI } from '@common/styles/spacings'
 import { ThemeProps } from '@common/styles/themeConfig'
@@ -23,7 +23,7 @@ export interface Style {
   errorContainer: ViewStyle
 }
 
-const INPUT_HEIGHT = 48
+export const INPUT_HEIGHT = 48
 export const INPUT_WRAPPER_HEIGHT = INPUT_HEIGHT + 2 // 1px border top and bottom
 
 const getStyles = (theme: ThemeProps) =>
@@ -34,6 +34,7 @@ const getStyles = (theme: ThemeProps) =>
     },
     inputWrapper: {
       ...flexbox.directionRow,
+      ...flexbox.alignCenter,
       borderWidth: 1,
       height: INPUT_WRAPPER_HEIGHT,
       ...common.borderRadiusPrimary
@@ -50,7 +51,14 @@ const getStyles = (theme: ThemeProps) =>
       height: '100%',
       fontFamily: isWeb ? FONT_FAMILIES.REGULAR : FONT_FAMILIES.LIGHT,
       color: theme.secondaryText,
-      fontSize: 14
+      fontSize: 14,
+      ...(isAndroid
+        ? {
+            includeFontPadding: false,
+            paddingVertical: 0,
+            paddingHorizontal: 0
+          }
+        : {})
     },
     bottomLabel: {
       ...spacings.phMi,
@@ -68,7 +76,6 @@ const getStyles = (theme: ThemeProps) =>
       ...spacings.mrTy,
       ...spacings.mvTy,
       ...spacings.pvMi,
-      ...spacings.phSm,
       ...common.borderRadiusPrimary
     },
     buttonWithBackground: {

@@ -4,7 +4,6 @@ import { useForm } from 'react-hook-form'
 import { isDev, isTesting } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
-import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useExtraEntropy from '@common/hooks/useExtraEntropy'
 import useToast from '@common/hooks/useToast'
 import { DEFAULT_KEYSTORE_PASSWORD_DEV } from '@env'
@@ -12,8 +11,7 @@ import { DEFAULT_KEYSTORE_PASSWORD_DEV } from '@env'
 const useKeyStoreSetup = () => {
   const { t } = useTranslation()
   const { addToast } = useToast()
-  const state = useController('KeystoreController').state
-  const { dispatch } = useControllersMiddleware()
+  const { state, dispatch: keystoreDispatch } = useController('KeystoreController')
   const { control, handleSubmit, watch, trigger, getValues, formState } = useForm({
     mode: 'all',
     defaultValues: {
@@ -21,16 +19,19 @@ const useKeyStoreSetup = () => {
       confirmPassword: isDev && !isTesting ? (DEFAULT_KEYSTORE_PASSWORD_DEV ?? '') : ''
     }
   })
+
+  const [biometricsEnabled, setBiometricsEnabled] = useState(false)
   const [isKeystoreReady, setKeystoreReady] = useState(false)
   const password = watch('password', '')
+  const confirmPassword = watch('confirmPassword', '')
 
   useEffect(() => {
-    if (!getValues('confirmPassword')) return
+    if (!confirmPassword) return
 
     trigger('confirmPassword').catch(() => {
       addToast(t('Something went wrong, please try again later.'), { type: 'error' })
     })
-  }, [password, trigger, addToast, t, getValues])
+  }, [confirmPassword, trigger, addToast, t, getValues])
 
   useEffect(() => {
     if (state.statuses.addSecret === 'SUCCESS') {
@@ -42,13 +43,11 @@ const useKeyStoreSetup = () => {
 
   const handleKeystoreSetup = async () => {
     await handleSubmit(({ password: passwordFieldValue }) => {
-      dispatch({
-        type: 'KEYSTORE_CONTROLLER_ADD_SECRET',
+      keystoreDispatch({
+        type: 'method',
         params: {
-          secretId: 'password',
-          secret: passwordFieldValue,
-          extraEntropy: getExtraEntropy(),
-          leaveUnlocked: true
+          method: 'addSecret',
+          args: ['password', passwordFieldValue, getExtraEntropy(), true]
         }
       })
     })()
@@ -62,8 +61,11 @@ const useKeyStoreSetup = () => {
     formState,
     control,
     password,
+    confirmPassword,
     handleKeystoreSetup,
-    hasPasswordSecret: state.hasPasswordSecret
+    hasPasswordSecret: state.hasPasswordSecret,
+    setBiometricsEnabled,
+    biometricsEnabled
   }
 }
 

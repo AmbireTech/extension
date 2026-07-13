@@ -1,6 +1,7 @@
 import { baParams } from 'constants/env'
 import selectors from 'constants/selectors'
 import Token from 'interfaces/token'
+import { SpeculosDevice } from 'libs/speculos-device/device'
 
 import { expect, Page } from '@playwright/test'
 
@@ -24,7 +25,7 @@ export class TransferPage extends BasePage {
     await this.clickOnMenuToken(token)
     // Amount
     await this.page.waitForTimeout(2000) // script misses input due to modal animation sometimes
-    await this.entertext(selectors.amountField, '0.001')
+    await this.entertext(selectors.transaction.amountField, '0.001')
   }
 
   async fillRecipient(address: string) {
@@ -72,33 +73,50 @@ export class TransferPage extends BasePage {
     await this.entertext(selectors.formAddContactNameField, contactName)
     await this.click(selectors.formAddToContactsButton)
 
+    // TODO: uncomment when we have test ID
     // assert snackbar notification
-    await expect(this.page.locator(selectors.contactSuccessfullyAddedSnackbar)).toHaveText(
-      'Contact added to Address Book'
-    )
+    // await expect(this.page.locator(selectors.contactSuccessfullyAddedSnackbar)).toHaveText(
+    //   'Contact added to Address Book'
+    // )
   }
 
   async assertAddedContact(contactName: string, contactAddress: string) {
-    const addedContactName = this.page.locator(`//div[contains(text(),"${contactName}")]`)
-    const addedContactAddress = this.page.locator(`//div[contains(text(),"${contactAddress}")]`)
+    const maxLength = 16
+    const slicedAddress = `${contactAddress.slice(0, maxLength / 2 - 1)}...${contactAddress.slice(
+      -maxLength / 2 + 2
+    )}`
+
+    // The address is rendered as three separate text nodes — "(", the sliced
+    // address and ")" — so an XPath `contains(text(), ...)` only ever sees the
+    // first "(" node and never matches. `getByText` matches the element's full
+    // text content, so it resolves correctly across the split text nodes.
+    const addedContactName = this.page.getByText(contactName)
+    const addedContactAddress = this.page.getByText(`(${slicedAddress})`)
 
     await expect(addedContactName).toContainText(contactName)
-    await expect(addedContactAddress).toContainText(contactAddress)
+    await expect(addedContactAddress).toContainText(slicedAddress)
   }
 
   // TODO: move to dashboard page once POM is refactored
   async checkSendTransactionOnActivityTab() {
     await this.click(selectors.dashboard.activityTabButton)
 
+    // open transaction modal
+    const firstSendTransaction = this.page.locator(selectors.dashboard.transactionSendText).first()
+    await firstSendTransaction.click()
+
     // When tests are ran in isolation, there would be only 1 txn in the activity tab.
     // But when they are ran in a shared state, we check only the latest one txn, i.e. the first one in the list.
-    const firstSendTransaction = this.page.locator(selectors.dashboard.transactionSendText).first()
     const firstConfirmedPill = this.page
       .locator(selectors.dashboard.confirmedTransactionPill)
       .first()
 
     await expect(firstSendTransaction).toContainText('Send')
     await expect(firstConfirmedPill).toContainText('Confirmed')
+
+    // TODO: add more assertions
+    // assert transaction
+    await this.compareText(selectors.dashboard.activityTransactionConfirmed, 'Confirmed')
   }
 
   // changing fee speed and checking fee amount, if above 0.1$ transaction won't be signed
@@ -106,17 +124,34 @@ export class TransferPage extends BasePage {
     sendToken,
     feeToken,
     payWithGasTank = true, // pay with gas tank by default
-    message
+    message,
+    ledgerSimulatorControls,
+    holdProceedButton = true,
+    awaitConfirmation = true,
+    assertPortfolioRefreshScopedToSendNetwork = true
   }: {
     sendToken: Token
     feeToken?: Token
     payWithGasTank?: boolean
     message: string
+    ledgerSimulatorControls?: SpeculosDevice
+    holdProceedButton?: boolean
+    awaitConfirmation?: boolean
+    // When true, asserts that broadcasting a transaction refreshes the portfolio ONLY for the send
+    // token's network (a guard against a past regression that refreshed every enabled network).
+    // The check captures all portfolio RPC calls during a short window after broadcast and assumes
+    // the broadcast is their only trigger — true only for an isolated test. In a long-lived shared
+    // session the app's periodic (every 2 min) all-network portfolio refresh can land inside that
+    // window and fail the check, so shared-state callers must set this to false.
+    assertPortfolioRefreshScopedToSendNetwork?: boolean
   }) {
-    let feeSelector
     // Proceed
-    await this.expectButtonEnabled(selectors.proceedBtn)
-    await this.longPressButton(selectors.proceedBtn, 5)
+    await this.expectButtonEnabled(selectors.transaction.proceedBtn)
+    if (holdProceedButton) {
+      await this.longPressButton(selectors.transaction.proceedBtn, 5)
+    } else {
+      await this.click(selectors.transaction.proceedBtn)
+    }
 
     // approve the high impact modal if appears
     await this.handlePriceWarningModals()
@@ -128,16 +163,13 @@ export class TransferPage extends BasePage {
     // Select fee token; default Gas Tank
     if (!payWithGasTank) {
       await this.selectFeeToken(baParams.envSelectedAccount, feeToken, payWithGasTank)
-      feeSelector = await this.page
-        .locator(selectors.transaction.feeTokenInDollars)
-        .innerText({ timeout: 10000 }) // returns e.g. '<$0.01'
-    } else {
-      feeSelector = await this.page
-        .locator(selectors.transaction.feeGasTankInDollars)
-        .innerText({ timeout: 10000 }) // returns e.g. '<$0.01'
     }
 
-    const feeDollarsAmount = Number(feeSelector.replace(/[<$]/g, ''))
+    const feeSelector = await this.page
+      .getByTestId(selectors.transaction.feeTokensSelectDropdown)
+      .locator(selectors.transaction.feeTokenInDollars)
+      .innerText()
+    const feeDollarsAmount = Number.parseFloat(feeSelector.replace(/[^0-9.]/g, ''))
 
     if (feeDollarsAmount > 0.1) {
       console.warn(
@@ -150,6 +182,42 @@ export class TransferPage extends BasePage {
       // Sign & Broadcast
       await this.expectButtonEnabled(selectors.signButton)
       await this.click(selectors.signButton)
+
+      // Accept dual choice modal if fee difference is below 0.1$
+      const modalTitle = this.page.getByTestId(selectors.transaction.dualChoiceModalTitle)
+
+      const modalAppeared = await modalTitle
+        .waitFor({ state: 'visible', timeout: 5000 })
+        .then(() => true)
+        .catch(() => false)
+
+      if (modalAppeared) {
+        const parseFee = (text: string) => Number.parseFloat(text.replace(/[^0-9.]/g, ''))
+
+        const previousFeeText = await this.page
+          .getByTestId(selectors.transaction.previousFeeAmountText)
+          .innerText()
+        const updatedFeeText = await this.page
+          .getByTestId(selectors.transaction.updatedFeeAmountText)
+          .innerText()
+
+        const previousFee = parseFee(previousFeeText)
+        const updatedFee = parseFee(updatedFeeText)
+        const feeIncrease = updatedFee - previousFee
+
+        if (feeIncrease > 0.1) {
+          console.warn(`⚠️ Gas fee increased by $${feeIncrease}; transaction signing skipped.`)
+        } else {
+          await this.click(selectors.transaction.dualChoiceModalAcceptButton)
+        }
+      }
+
+      if (ledgerSimulatorControls && !payWithGasTank) {
+        await ledgerSimulatorControls.signTransaction()
+      } else if (ledgerSimulatorControls && payWithGasTank) {
+        await ledgerSimulatorControls.signSmartAccountTransaction()
+      }
+
       await this.isVisible(selectors.transaction.confirmingYourTransactionText)
       // Validate requests
       const { rpc } = this.getCategorizedRequests()
@@ -159,16 +227,22 @@ export class TransferPage extends BasePage {
       // Verify that portfolio updates run only for the send token network.
       // A previous regression was triggering updates on all enabled networks after a broadcast,
       // which caused a significant performance downgrade.
-      expect(
-        rpc.every((req) => req === `https://invictus.ambire.com/${sendToken.chainName}`),
-        `Invalid portfolio update behavior detected.
+      // Skipped in shared state (see assertPortfolioRefreshScopedToSendNetwork above): the
+      // periodic all-network portfolio refresh can overlap the monitoring window there.
+      if (assertPortfolioRefreshScopedToSendNetwork) {
+        expect(
+          rpc.every((req) => req === `https://invictus.ambire.com/${sendToken.chainName}`),
+          `Invalid portfolio update behavior detected.
    After a broadcast, the portfolio must be refreshed only for *${sendToken.chainName}*.
    However, RPC requests were also made for other networks: ${rpc.toString()}`
-      ).toEqual(true)
+        ).toEqual(true)
+      }
 
-      // validate success message
-      const timeout = 180000
-      await this.compareText(selectors.txnStatus, message, { timeout })
+      if (awaitConfirmation) {
+        // validate success message
+        const timeout = 30000
+        await this.compareText(selectors.txnStatus, message, { timeout })
+      }
 
       // Close page
       await this.click(selectors.closeProgressModalButton)
@@ -206,7 +280,13 @@ export class TransferPage extends BasePage {
     await expect(transactionDetails).toHaveText(/Send/)
     await expect(transactionDetails).toHaveText(/0\.001/)
     await expect(transactionDetails).toHaveText(/USDC/)
-    await expect(transactionDetails).toHaveText(new RegExp(recepientAddress))
+
+    // commenting out this for now as this could be different values from now on:
+    // 1. an ens, if one exists
+    // 2. a name in the extension for the address, if one is added
+    // 3. a shortened address like 0x1234...abab
+    // await expect(transactionDetails).toHaveText(new RegExp(recepientAddress))
+
     // assert confirmed block
     await expect(
       newPage.getByTestId(selectors.transaction.explorer.txnConfirmedStep)

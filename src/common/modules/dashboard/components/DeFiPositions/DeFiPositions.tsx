@@ -11,7 +11,6 @@ import {
 import PrivacyIcon from '@common/assets/svg/PrivacyIcon'
 import Text from '@common/components/Text'
 import useController from '@common/hooks/useController'
-import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useNavigation from '@common/hooks/useNavigation'
 import usePrevious from '@common/hooks/usePrevious'
 import useTheme from '@common/hooks/useTheme'
@@ -23,11 +22,11 @@ import { TabType } from '@common/modules/dashboard/components/TabsAndSearch/Tabs
 import { ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
+import { openInTab } from '@common/utils/links'
 import { searchWithNetworkName } from '@common/utils/search'
-import { openInTab } from '@web/extension-services/background/webapi/tab'
-import { getUiType } from '@web/utils/uiType'
+import { getUiType } from '@common/utils/uiType'
 
-import SearchAndCurrentApp from '../SearchAndCurrentApp'
+import FloatingBottomBar from '../FloatingBottomBar'
 import DefiPositionsSkeleton from './DefiPositionsSkeleton'
 import DeFiPosition from './DeFiProviderPosition'
 import styles from './styles'
@@ -41,6 +40,8 @@ interface Props {
   dashboardNetworkFilterName: string | null
   animatedOverviewHeight: Animated.Value
   isSearchHidden: boolean
+  refreshing?: boolean
+  onRefresh?: () => void
 }
 
 const { isPopup } = getUiType()
@@ -53,22 +54,24 @@ const DeFiPositions: FC<Props> = ({
   onScroll,
   dashboardNetworkFilterName,
   animatedOverviewHeight,
-  isSearchHidden
+  isSearchHidden,
+  refreshing,
+  onRefresh
 }) => {
   const { t } = useTranslation()
   const { flags } = useController('FeatureFlagsController').state
   const { control, watch, setValue } = useForm({ mode: 'all', defaultValues: { search: '' } })
-  const { theme, themeType } = useTheme()
+  const { theme } = useTheme()
   const searchValue = watch('search')
   const {
     state: { networks }
   } = useController('NetworksController')
+  const { dispatch: portfolioDispatch } = useController('PortfolioController')
   const {
     state: { account, portfolio, dashboardNetworkFilter, banners }
   } = useController('SelectedAccountController')
   const { setSearchParams, navigate } = useNavigation()
 
-  const { dispatch } = useControllersMiddleware()
   const prevInitTab: any = usePrevious(initTab)
 
   const currentAccountBanners = useMemo(
@@ -85,23 +88,41 @@ const DeFiPositions: FC<Props> = ({
 
   useEffect(() => {
     if (!prevInitTab?.defi && initTab?.defi) {
-      dispatch({ type: 'DEFI_CONTOLLER_ADD_SESSION', params: { sessionId } })
-      setSearchParams((prev) => {
+      portfolioDispatch({
+        type: 'method',
+        params: {
+          method: 'addDefiSession',
+          args: [sessionId]
+        }
+      })
+      setSearchParams((prev: any) => {
         prev.set('sessionId', sessionId)
         return prev
       })
     }
 
     if (prevInitTab?.defi && !initTab?.defi) {
-      dispatch({ type: 'DEFI_CONTOLLER_REMOVE_SESSION', params: { sessionId } })
+      portfolioDispatch({
+        type: 'method',
+        params: {
+          method: 'removeDefiSession',
+          args: [sessionId]
+        }
+      })
     }
-  }, [dispatch, setSearchParams, prevInitTab?.defi, initTab?.defi, sessionId])
+  }, [portfolioDispatch, setSearchParams, prevInitTab?.defi, initTab?.defi, sessionId])
 
   useEffect(() => {
     return () => {
-      dispatch({ type: 'DEFI_CONTOLLER_REMOVE_SESSION', params: { sessionId } })
+      portfolioDispatch({
+        type: 'method',
+        params: {
+          method: 'removeDefiSession',
+          args: [sessionId]
+        }
+      })
     }
-  }, [sessionId, dispatch])
+  }, [sessionId, portfolioDispatch])
 
   const filteredPositions = useMemo(() => {
     const defiToSearch = portfolio.defiPositions
@@ -186,7 +207,7 @@ const DeFiPositions: FC<Props> = ({
                 color={theme.linkText}
                 onPress={() => {
                   // eslint-disable-next-line @typescript-eslint/no-floating-promises
-                  openInTab({ url: 'https://help.ambire.com/hc/en-us' })
+                  openInTab({ url: 'https://help.ambire.com/en' })
                 }}
               >
                 {t('open a ticket.')}
@@ -231,7 +252,6 @@ const DeFiPositions: FC<Props> = ({
       initTab?.defi,
       theme.primaryBackground,
       theme.linkText,
-      theme.primary,
       theme.infoText,
       openTab,
       setOpenTab,
@@ -240,7 +260,6 @@ const DeFiPositions: FC<Props> = ({
       searchValue,
       dashboardNetworkFilterName,
       t,
-      themeType,
       navigate
     ]
   )
@@ -289,9 +308,18 @@ const DeFiPositions: FC<Props> = ({
         initialNumToRender={isPopup ? 10 : 20}
         windowSize={9} // Larger values can cause performance issues.
         onScroll={onScroll}
+        scrollEventThrottle={16}
         animatedOverviewHeight={animatedOverviewHeight}
+        refreshing={refreshing}
+        onRefresh={onRefresh}
       />
-      {openTab === 'defi' && <SearchAndCurrentApp control={control} isHidden={isSearchHidden} />}
+      {openTab === 'defi' && (
+        <FloatingBottomBar
+          control={control}
+          isHidden={isSearchHidden}
+          searchPlaceholder={t('Search DeFi')}
+        />
+      )}
     </>
   )
 }

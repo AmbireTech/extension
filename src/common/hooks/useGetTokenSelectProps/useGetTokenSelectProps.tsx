@@ -3,27 +3,26 @@ import React from 'react'
 import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 
-import { Network } from '@ambire-common/interfaces/network'
+import { SupportedNetworks } from '@ambire-common/interfaces/network'
 import { SwapAndBridgeToToken } from '@ambire-common/interfaces/swapAndBridge'
 import { TokenResult } from '@ambire-common/libs/portfolio'
-import {
-  getIsNetworkSupported,
-  getIsTokenEligibleForSwapAndBridge
-} from '@ambire-common/libs/swapAndBridge/swapAndBridge'
+import { getIsTokenEligibleForSwapAndBridge } from '@ambire-common/libs/swapAndBridge/swapAndBridge'
 import shortenAddress from '@ambire-common/utils/shortenAddress'
 import BatchIcon from '@common/assets/svg/BatchIcon'
 import PendingToBeConfirmedIcon from '@common/assets/svg/PendingToBeConfirmedIcon'
+import CopyText from '@common/components/CopyText'
 import Text from '@common/components/Text'
 import TokenIcon from '@common/components/TokenIcon'
 import Tooltip from '@common/components/Tooltip'
+import { isMobile } from '@common/config/env'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import PendingBadge from '@common/modules/dashboard/components/Tokens/TokenItem/PendingBadge'
 import getAndFormatTokenDetails from '@common/modules/dashboard/helpers/getTokenDetails'
+import NotSupportedNetworkTooltip from '@common/modules/swap-and-bridge/components/NotSupportedNetworkTooltip'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import NotSupportedNetworkTooltip from '@web/modules/swap-and-bridge/components/NotSupportedNetworkTooltip'
-import { getTokenId } from '@web/utils/token'
+import { getTokenId } from '@common/utils/token'
 
 const TextFallbackState: React.FC<{ children: React.ReactNode }> = ({ children }) => (
   <Text fontSize={14} appearance="secondaryText" style={spacings.plTy}>
@@ -36,7 +35,7 @@ const getTokenOptionsEmptyState = (isToToken = false) => [
     value: 'noTokens',
     label: (
       <TextFallbackState>
-        {isToToken ? 'Failed to retrieve tokens' : "You don't have any tokens"}
+        {isToToken ? 'Failed to retrieve tokens' : 'No tokens found'}
       </TextFallbackState>
     ),
     icon: null
@@ -63,14 +62,12 @@ const useGetTokenSelectProps = ({
   tokens,
   token,
   networks,
-  supportedChainIds,
   isLoading,
   isToToken: _isToToken = false
 }: {
   tokens: (SwapAndBridgeToToken | TokenResult)[]
   token: string
-  networks: Network[]
-  supportedChainIds?: Network['chainId'][]
+  networks: SupportedNetworks[]
   isLoading?: boolean
   isToToken?: boolean
 }) => {
@@ -122,9 +119,6 @@ const useGetTokenSelectProps = ({
     )
     const tooltipIdNotSupported = `token-${currentToken.address}-on-network-${currentToken.chainId}-not-supported-tooltip`
     const tooltipIdPendingBalance = `token-${currentToken.address}-on-network-${currentToken.chainId}-pending-balance`
-    const isTokenNetworkSupported = supportedChainIds
-      ? getIsNetworkSupported(supportedChainIds, network)
-      : true
 
     const simulatedAccountOp =
       portfolio.networkSimulatedAccountOp[currentToken.chainId.toString() || '']
@@ -158,7 +152,7 @@ const useGetTokenSelectProps = ({
     const formattedBalancesLabel = !!tokenInPortfolio && (
       <View
         dataSet={isPending ? { tooltipId: tooltipIdPendingBalance } : undefined}
-        style={flexbox.alignEnd}
+        style={[flexbox.alignEnd, spacings.mlSm]}
       >
         <Text
           fontSize={16}
@@ -221,51 +215,99 @@ const useGetTokenSelectProps = ({
       </View>
     )
 
+    const networkName = network?.name || (tokenInPortfolio?.flags.onGasTank ? 'Gas Tank' : '')
+
     const isNameDifferentThanSymbol = name.toLowerCase() !== symbol.toLowerCase()
     const label = getIsToTokenTypeGuard(currentToken) ? (
       <>
         <View
           dataSet={tooltipIdNotSupported ? { tooltipId: tooltipIdNotSupported } : undefined}
-          style={flexbox.flex1}
+          style={[flexbox.flex1]}
         >
-          <Text numberOfLines={1}>
-            <Text fontSize={16} weight="medium" numberOfLines={1}>
+          <Text numberOfLines={1} style={{ lineHeight: 20 }}>
+            <Text fontSize={isMobile ? 14 : 16} weight="medium" numberOfLines={1}>
               {symbol}{' '}
             </Text>
             {/* Displaying the name of the token is confusing for native tokens. Example
             ETH (Ethereum) may confuse the user that the ETH is on Ethereum  */}
-            {isNameDifferentThanSymbol && !isNative && (
-              <Text fontSize={14} appearance="secondaryText">
+            {isNameDifferentThanSymbol && !isNative && (!isMobile || !isSelected) && (
+              <Text fontSize={isMobile ? 14 : 16} appearance="secondaryText">
                 ({name})
               </Text>
             )}
           </Text>
-          <Text numberOfLines={1} fontSize={12} appearance="secondaryText" weight="mono_regular">
-            {isNative && 'Native'}
-            {!isNative && isSelected && shortenAddress(currentToken.address, 13)}
-            {!isNative && !isSelected && currentToken.address}
-          </Text>
+          {isNative ? (
+            <Text numberOfLines={1} fontSize={12} appearance="secondaryText" weight="mono_regular">
+              Native
+            </Text>
+          ) : (
+            <View style={[flexbox.directionRow, flexbox.alignCenter]}>
+              <Text
+                numberOfLines={1}
+                fontSize={12}
+                appearance="secondaryText"
+                weight="mono_regular"
+                {...(isMobile ? { ellipsizeMode: 'middle' } : {})}
+              >
+                {isSelected ? shortenAddress(currentToken.address, 13) : currentToken.address}
+              </Text>
+              {!isSelected && (
+                <CopyText
+                  text={currentToken.address}
+                  iconSize={14}
+                  iconColor={theme.secondaryText}
+                  style={spacings.mlMi}
+                />
+              )}
+            </View>
+          )}
         </View>
 
         {!isSelected && formattedBalancesLabel}
-        {!isTokenNetworkSupported && (
-          <NotSupportedNetworkTooltip tooltipId={tooltipIdNotSupported} network={network} />
+        {network?.isNotSupported && (
+          <NotSupportedNetworkTooltip
+            tooltipId={tooltipIdNotSupported}
+            message={network.notSupportedReason || t('Network unavailable')}
+          />
         )}
       </>
     ) : (
       <>
-        <Text
-          numberOfLines={1}
-          dataSet={{ tooltipId: tooltipIdNotSupported }}
-          style={flexbox.flex1}
+        <View
+          style={[
+            flexbox.flex1,
+            !isSelected && flexbox.directionRow,
+            !isSelected && flexbox.alignEnd
+          ]}
         >
-          <Text fontSize={16} weight="semiBold">
+          <Text
+            fontSize={isSelected && isMobile ? 14 : 16}
+            weight="semiBold"
+            style={{ lineHeight: 20 }}
+            numberOfLines={1}
+            dataSet={{ tooltipId: tooltipIdNotSupported }}
+          >
             {symbol}
           </Text>
-        </Text>
+          {!!networkName && (
+            <Text
+              fontSize={isSelected ? 12 : 14}
+              weight={isSelected ? 'regular' : 'medium'}
+              appearance="secondaryText"
+              ellipsizeMode="tail"
+              numberOfLines={1}
+              style={!isSelected && spacings.mlTy}
+            >
+              {`${isSelected ? '' : ' '}on ${networkName}`}
+            </Text>
+          )}
+        </View>
         {!isSelected && formattedBalancesLabel}
-        {!isTokenNetworkSupported && (
-          <NotSupportedNetworkTooltip tooltipId={tooltipIdNotSupported} network={network} />
+        {network?.isNotSupported && (
+          <NotSupportedNetworkTooltip
+            tooltipId={tooltipIdNotSupported}
+            message={network?.notSupportedReason || t('Network unavailable')}
+          />
         )}
       </>
     )
@@ -274,7 +316,7 @@ const useGetTokenSelectProps = ({
       value: getTokenId(currentToken),
       address: currentToken.address,
       chainId: currentToken.chainId,
-      disabled: !isTokenNetworkSupported,
+      disabled: network?.isNotSupported,
       extraSearchProps: { symbol, name, address: currentToken.address, networkName: network?.name },
       isPending,
       pendingBalanceFormatted: pendingBalanceFormatted || '0',

@@ -4,17 +4,20 @@ import { SvgProps } from 'react-native-svg'
 
 import DiagonalRightArrowIcon from '@common/assets/svg/DiagonalRightArrowIcon'
 import ImportJsonIcon from '@common/assets/svg/ImportJsonIcon'
-import LatticeWithBorderIcon from '@common/assets/svg/LatticeWithBorderIcon'
-import LedgerLetterIcon from '@common/assets/svg/LedgerLetterIcon'
+import GridPlusIcon from '@common/assets/svg/GridPlusIcon'
+import LedgerBadgeIcon from '@common/assets/svg/LedgerBadgeIcon'
 import PrivateKeyIcon from '@common/assets/svg/PrivateKeyIcon'
+import ReceiveIcon from '@common/assets/svg/ReceiveIcon'
 import RightArrowIcon from '@common/assets/svg/RightArrowIcon'
+import SafeIcon from '@common/assets/svg/SafeIcon'
 import SeedPhraseIcon from '@common/assets/svg/SeedPhraseIcon'
-import TrezorLockIcon from '@common/assets/svg/TrezorLockIcon'
+import TrezorBadgeIcon from '@common/assets/svg/TrezorBadgeIcon'
 import Button from '@common/components/Button'
 import Panel from '@common/components/Panel'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
 import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
+import { AnimatedPressable, useMultiHover } from '@common/hooks/useHover'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
@@ -28,12 +31,11 @@ import {
   TabLayoutWrapperMainContent
 } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
 import { isSafari } from '@web/constants/browserapi'
-import { AnimatedPressable, useCustomHover, useMultiHover } from '@web/hooks/useHover'
 
 import getStyles from './styles'
 
 export const CARD_WIDTH = 400
-const VISIBLE_BUTTONS_COUNT = 4
+const VISIBLE_BUTTONS_COUNT = 5
 
 type ButtonType = {
   title: string
@@ -90,6 +92,13 @@ const ImportExistingAccountSelectorScreen = () => {
         icon: SeedPhraseIcon
       },
       {
+        title: 'Safe',
+        onPress: () => {
+          goToNextRoute(WEB_ROUTES.safeImport)
+        },
+        icon: SafeIcon
+      },
+      {
         title: 'Trezor',
         onPress: () => {
           if (isSafari()) {
@@ -104,14 +113,14 @@ const ImportExistingAccountSelectorScreen = () => {
             dispatch({ type: 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_TREZOR' })
           }
         },
-        icon: TrezorLockIcon
+        icon: TrezorBadgeIcon
       },
       {
         title: 'Ledger',
         onPress: () => {
           goToNextRoute(WEB_ROUTES.ledgerConnect)
         },
-        icon: LedgerLetterIcon
+        icon: LedgerBadgeIcon
       },
       {
         title: 'Grid Plus',
@@ -119,7 +128,14 @@ const ImportExistingAccountSelectorScreen = () => {
           setTriggeredHwWalletFlow('lattice')
           dispatch({ type: 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_LATTICE' })
         },
-        icon: LatticeWithBorderIcon
+        icon: GridPlusIcon
+      },
+      {
+        title: 'QR-based',
+        onPress: () => {
+          goToNextRoute(WEB_ROUTES.qrConnect)
+        },
+        icon: ReceiveIcon
       },
       {
         title: 'JSON backup file',
@@ -251,7 +267,7 @@ const ImportExistingAccountSelectorScreen = () => {
                     height={20}
                     width={20}
                     style={{
-                      transform: [{ rotate: showMore ? '90deg' : '0deg' }]
+                      transform: [{ rotate: showMore ? '270deg' : '0deg' }]
                     }}
                   />
                 </Animated.View>

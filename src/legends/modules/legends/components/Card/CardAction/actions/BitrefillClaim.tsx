@@ -1,5 +1,3 @@
-/* eslint-disable no-console */
-
 import { Interface } from 'ethers'
 import React, { useCallback, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'

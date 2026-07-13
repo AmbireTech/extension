@@ -1,20 +1,21 @@
-import React, { FC, memo } from 'react'
+import React, { FC, memo, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Animated } from 'react-native'
+import { Animated, View } from 'react-native'
 
-import { isSmartAccount } from '@ambire-common/libs/account/account'
 import shortenAddress from '@ambire-common/utils/shortenAddress'
 import CopyIcon from '@common/assets/svg/CopyIcon'
 import RightArrowIcon from '@common/assets/svg/RightArrowIcon'
 import Avatar from '@common/components/Avatar'
 import Text from '@common/components/Text'
-import { isWeb } from '@common/config/env'
+import { isMobile, isWeb } from '@common/config/env'
 import useController from '@common/hooks/useController'
+import useHover, { AnimatedPressable, useCustomHover } from '@common/hooks/useHover'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
+import useWindowSize from '@common/hooks/useWindowSize'
 import spacings from '@common/styles/spacings'
 import { setStringAsync } from '@common/utils/clipboard'
-import useHover, { AnimatedPressable, useCustomHover } from '@web/hooks/useHover'
+import { getUiType } from '@common/utils/uiType'
 
 import getStyles from './styles'
 
@@ -32,22 +33,23 @@ const AccountData: FC<Props> = ({ onPress, withArrowRightIcon }) => {
   const { t } = useTranslation()
   const { addToast } = useToast()
   const { styles } = useTheme(getStyles)
-
+  const { maxWidthSize } = useWindowSize()
+  const { isPopup } = getUiType()
   const { account } = useController('SelectedAccountController').state
   const [bindAddressAnim, addressAnimStyle] = useHover({
-    preset: 'opacityInverted'
-  })
-  const [bindAccountBtnAnim, accountBtnAnimStyle] = useCustomHover({
-    property: 'left',
-    values: {
-      from: 0,
-      to: 2
-    }
+    preset: 'opacityInverted',
+    duration: 50
   })
 
-  if (!account) return null
+  const [bindAccountBtnAnim, accountBtnAnimStyle] = useCustomHover({
+    property: isWeb ? 'left' : 'opacity',
+    values: isWeb ? { from: 0, to: 2 } : { from: 1, to: 1 },
+    duration: 50
+  })
 
   const handleCopyText = async () => {
+    if (!account) return
+
     try {
       await setStringAsync(account.addr)
       addToast(t('Copied address to clipboard!') as string, { timeout: 2500 })
@@ -59,49 +61,93 @@ const AccountData: FC<Props> = ({ onPress, withArrowRightIcon }) => {
     }
   }
 
+  const smartAccountType = useMemo(() => {
+    if (account?.creation) return 'Ambire'
+    if (account?.safeCreation) return 'Safe'
+    return undefined
+  }, [account])
+
+  if (!account) return null
+
   return (
-    <AnimatedPressable
-      testID="account-select-btn"
-      style={[
-        styles.accountButton,
-        {
-          backgroundColor: '#000000A3',
-          // @ts-ignore
-          ...(isWeb && !onPress ? { cursor: 'auto' } : {})
-        }
-      ]}
-      onPress={onPress}
-      {...(onPress ? bindAccountBtnAnim : {})}
+    <View
+      style={{
+        overflow: 'hidden',
+        flexShrink: 1,
+        borderTopRightRadius: 50,
+        borderBottomRightRadius: 50
+      }}
     >
-      <>
-        <Avatar
-          pfp={account.preferences.pfp}
-          address={account.addr}
-          size={32}
-          isSmart={isSmartAccount(account)}
-        />
-        <Text
-          numberOfLines={1}
-          weight="semiBold"
-          style={[spacings.mlTy, spacings.mrTy]}
-          color="#FFFFFF"
-          fontSize={14}
-        >
-          {account.preferences.label}
-        </Text>
-        <Text color="#E3E6EB" style={spacings.mrMi} weight="mono_regular" fontSize={14}>
-          ({shortenAddress(account.addr, 13)})
-        </Text>
-        <AnimatedPressable style={addressAnimStyle} onPress={handleCopyText} {...bindAddressAnim}>
-          <CopyIcon width={24} height={24} color="#E3E6EB" />
-        </AnimatedPressable>
-        {!!withArrowRightIcon && (
-          <Animated.View style={accountBtnAnimStyle}>
-            <RightArrowIcon style={styles.accountButtonRightIcon} width={12} color="#E3E6EB" />
-          </Animated.View>
-        )}
-      </>
-    </AnimatedPressable>
+      <AnimatedPressable
+        testID="account-select-btn"
+        style={[
+          styles.accountButton,
+          {
+            backgroundColor: '#000000A3',
+            flexShrink: 1,
+            // @ts-ignore
+            ...(isWeb && !onPress ? { cursor: 'auto' } : {})
+          },
+          isMobile && {
+            borderWidth: 1,
+            borderColor: '#FFFFFF1F'
+          }
+        ]}
+        onPress={onPress}
+        {...(onPress ? bindAccountBtnAnim : {})}
+      >
+        <>
+          <Avatar
+            pfp={account.preferences.pfp}
+            address={account.addr}
+            size={32}
+            smartAccountType={smartAccountType}
+          />
+          <Text
+            numberOfLines={1}
+            weight={isMobile ? 'medium' : 'semiBold'}
+            style={[spacings.mrMi, { maxWidth: isPopup ? 112 : 160, flexShrink: 1 }]}
+            color="#FFFFFF"
+            fontSize={14}
+          >
+            {account.preferences.label}
+          </Text>
+
+          <>
+            <Text
+              color="#B9BFC9"
+              style={[isWeb ? spacings.mrTy : undefined]}
+              weight="mono_regular"
+              fontSize={12}
+            >
+              ({shortenAddress(account.addr, 13)})
+            </Text>
+            {isWeb && (
+              <AnimatedPressable
+                style={addressAnimStyle}
+                onPress={handleCopyText}
+                {...bindAddressAnim}
+              >
+                <CopyIcon width={24} height={24} color="#E3E6EB" />
+              </AnimatedPressable>
+            )}
+          </>
+
+          {!!withArrowRightIcon && (
+            <Animated.View style={accountBtnAnimStyle}>
+              <RightArrowIcon
+                style={[
+                  styles.accountButtonRightIcon,
+                  maxWidthSize(480) ? spacings.mlMd : spacings.mlTy
+                ]}
+                width={12}
+                color="#E3E6EB"
+              />
+            </Animated.View>
+          )}
+        </>
+      </AnimatedPressable>
+    </View>
   )
 }
 

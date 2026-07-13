@@ -13,8 +13,9 @@ const mainConstants = {
     basicAccount: '0x048d8573402CE085A6c8f34d568eC2Ccc995196e',
     smartAccount: '0xC254b41be9582e45a2aCE62D5adD3F8092D4ea6C',
     trezorAccount1: '0x3f2329C9ADFbcCd9A84f52c906E936A42dA18CB8',
-    trezorAccount2: '0x4f4F1488ACB1Ae1b46146CEfF804f591dFe660ac'
-  },
+    trezorAccount2: '0x4f4F1488ACB1Ae1b46146CEfF804f591dFe660ac',
+    ledgerAccount1: '0x579f87277E14f32df7FA4036D76BbfC94C325033'
+  }
 }
 
 export default mainConstants

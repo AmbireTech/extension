@@ -1,0 +1,23 @@
+diff --git a/node_modules/ses/dist/ses.cjs b/node_modules/ses/dist/ses.cjs
+index 4caf868..ad0f363 100644
+--- a/node_modules/ses/dist/ses.cjs
++++ b/node_modules/ses/dist/ses.cjs
+@@ -5022,6 +5022,8 @@ const CommonMath = {
+     toUTCString: fn,
+     valueOf: fn,
+     '@@toPrimitive': fn,
++    // Temporal API: Date.prototype.toTemporalInstant()
++    toTemporalInstant: fn,
+ 
+     // Annex B: Additional Properties of the Date.prototype Object
+     getYear: fn,
+@@ -5419,2 +5419,4 @@
+     get: fn,
++    getOrInsert: fn,
++    getOrInsertComputed: fn,
+     has: fn,
+@@ -5489,2 +5489,4 @@
+     get: fn,
++    getOrInsert: fn,
++    getOrInsertComputed: fn,
+     has: fn,

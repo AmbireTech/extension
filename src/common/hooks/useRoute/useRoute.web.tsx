@@ -5,7 +5,6 @@ import { UseRouteReturnType } from './types'
 function getSearchParamsAsObject(searchParams: URLSearchParams) {
   const paramsObject: any = {}
 
-  // eslint-disable-next-line no-restricted-syntax
   for (const [key, value] of searchParams.entries()) {
     paramsObject[key] = value
   }

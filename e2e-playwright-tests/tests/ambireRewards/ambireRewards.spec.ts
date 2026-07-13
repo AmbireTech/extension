@@ -5,7 +5,10 @@ import { ambireRewardsText } from 'pages/utils/data/ambireRewardsText'
 
 import { expect, Page } from '@playwright/test'
 
-test.describe('ambire rewards', { tag: '@rewards' }, () => {
+// TODO: skipping until further notice - rewards are temporarily disabled
+test.describe.skip('ambire rewards', { tag: '@rewards' }, () => {
+  test.setTimeout(80000)
+
   test.beforeEach(async ({ pages }) => {
     await pages.initWithStorage(saParams)
   })
@@ -15,19 +18,12 @@ test.describe('ambire rewards', { tag: '@rewards' }, () => {
   })
 
   test('Check redirection to Ambire rewards page', async ({ pages }) => {
-    await pages.auth.pause()
     await test.step('assert rewards button is visible', async () => {
       await pages.basePage.isVisible(selectors.dashboard.rewardsButton)
     })
 
     await test.step('rewards button should redirect to rewards page', async () => {
       await pages.dashboard.checkRewardsPageRedirection(selectors.dashboard.rewardsButton)
-    })
-
-    await test.step('rewards button should redirect to rewards page', async () => {
-      await pages.dashboard.checkRewardsPageRedirection(
-        selectors.dashboard.projecteedRewardsWalletAssetRewardsButton
-      )
     })
   })
 
@@ -166,8 +162,9 @@ test.describe('ambire rewards', { tag: '@rewards' }, () => {
       const walletPage = rewardsTab.locator(selectors.ambireRewards.walletPage)
       await walletPage.click()
 
-      // check url
-      expect(rewardsTab.url()).toContain('/wallet')
+      // check url (default $Wallet is / or legacy /wallet)
+      const walletUrl = rewardsTab.url()
+      expect(walletUrl.endsWith('#/') || walletUrl.endsWith('#/wallet')).toBe(true)
 
       // check page content
       // TODO:

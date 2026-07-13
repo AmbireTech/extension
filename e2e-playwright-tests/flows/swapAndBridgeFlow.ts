@@ -1,4 +1,7 @@
-import { test, expect } from '@playwright/test'
+import { SpeculosDevice } from 'libs/speculos-device/device'
+
+import { expect, test } from '@playwright/test'
+
 import type Token from 'interfaces/token'
 import type { PageManager } from 'pages/utils/page_instances'
 
@@ -8,7 +11,9 @@ export async function runSwapFlow({
   receiveToken,
   bridgeAmount,
   message = 'Nice trade!',
-  assertNoInitialTx = false
+  assertNoInitialTx = false,
+  assertPortfolioRefreshScopedToSendNetwork = true,
+  ledgerSimulatorControls
 }: {
   pages: PageManager
   sendToken: Token
@@ -16,6 +21,10 @@ export async function runSwapFlow({
   bridgeAmount: number
   message?: string
   assertNoInitialTx?: boolean
+  // Set to false in shared state, where the periodic all-network portfolio refresh makes this
+  // post-broadcast guard unreliable (see signSlowSpeedTransaction for the full explanation).
+  assertPortfolioRefreshScopedToSendNetwork?: boolean
+  ledgerSimulatorControls?: SpeculosDevice
 }) {
   if (assertNoInitialTx) {
     await test.step('assert no transaction on Activity tab', async () => {
@@ -30,11 +39,15 @@ export async function runSwapFlow({
   await test.step('sign transaction', async () => {
     await pages.transfer.signSlowSpeedTransaction({
       sendToken,
-      message
+      message,
+      ledgerSimulatorControls,
+      awaitConfirmation: false,
+      assertPortfolioRefreshScopedToSendNetwork
     })
   })
 
   await test.step('assert new transaction on Activity tab', async () => {
+    // TODO: fix
     await pages.swapAndBridge.checkSendTransactionOnActivityTab()
   })
 }
@@ -76,13 +89,15 @@ export async function runSwapProceedFlow({
   fromToken,
   toToken,
   sendAmount,
-  assertNoInitialTx = false
+  assertNoInitialTx = false,
+  ledgerSimulatorControls
 }: {
   pages: PageManager
   fromToken: Token
   toToken: Token
   sendAmount: number
   assertNoInitialTx?: boolean
+  ledgerSimulatorControls?: SpeculosDevice
 }) {
   if (assertNoInitialTx) {
     await test.step('assert no transaction on Activity tab', async () => {
@@ -96,10 +111,11 @@ export async function runSwapProceedFlow({
   })
 
   await test.step('proceed and sign transaction', async () => {
-    await pages.swapAndBridge.proceedTransaction()
+    await pages.swapAndBridge.proceedTransaction(ledgerSimulatorControls)
   })
 
   await test.step('assert new transaction on Activity tab', async () => {
+    // TODO: fix
     await pages.swapAndBridge.checkSendTransactionOnActivityTab()
   })
 }

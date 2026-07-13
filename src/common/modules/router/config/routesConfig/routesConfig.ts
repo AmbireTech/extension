@@ -188,15 +188,26 @@ const routesConfig: RouteConfig = {
       default: i18n.t('App Wants to Connect')
     })
   },
-  [ROUTES.apps]: {
-    route: ROUTES.apps,
+  [ROUTES.explore]: {
+    route: ROUTES.explore,
     title: Platform.select({
-      web: i18n.t('Apps'),
-      default: i18n.t('Apps')
+      web: i18n.t('Explore'),
+      default: i18n.t('Explore')
     }),
     name: Platform.select({
-      web: i18n.t('Apps'),
-      default: i18n.t('Apps')
+      web: i18n.t('Explore'),
+      default: i18n.t('Explore')
+    })
+  },
+  [ROUTES.exploreSection]: {
+    route: ROUTES.exploreSection,
+    title: Platform.select({
+      web: i18n.t('Explore'),
+      default: i18n.t('Explore')
+    }),
+    name: Platform.select({
+      web: i18n.t('Explore'),
+      default: i18n.t('Explore')
     })
   },
   [ROUTES.watchAsset]: {
@@ -317,6 +328,11 @@ const routesConfig: RouteConfig = {
     }),
     name: Platform.select({ default: i18n.t('General Settings') })
   },
+  [ROUTES.internalLogs]: {
+    route: ROUTES.internalLogs,
+    title: Platform.select({ default: i18n.t('Debug Logs') }),
+    name: Platform.select({ default: i18n.t('Debug Logs') })
+  },
   [ROUTES.accountsSettings]: {
     route: ROUTES.accountsSettings,
     title: Platform.select({
@@ -401,8 +417,18 @@ const routesConfig: RouteConfig = {
   },
   [ROUTES.receive]: {
     route: ROUTES.receive,
-    title: Platform.select({ default: i18n.t('Receive Assets') }),
-    name: Platform.select({ default: i18n.t('Receive Assets') })
+    title: Platform.select({ default: i18n.t('Receive assets') }),
+    name: Platform.select({ default: i18n.t('Receive assets') })
+  },
+  [ROUTES.qrConnect]: {
+    route: ROUTES.qrConnect,
+    title: Platform.select({ default: i18n.t('Connect QR wallet') }),
+    name: Platform.select({ default: i18n.t('Connect QR wallet') })
+  },
+  [ROUTES.qrPermission]: {
+    route: ROUTES.qrPermission,
+    title: Platform.select({ default: i18n.t('Camera permission') }),
+    name: Platform.select({ default: i18n.t('Camera permission') })
   }
 }
 

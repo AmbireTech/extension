@@ -6,14 +6,17 @@ import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
 import DownArrowIcon from '@common/assets/svg/DownArrowIcon'
 import OpenIcon from '@common/assets/svg/OpenIcon'
 import Text from '@common/components/Text'
+import { isMobile, isWeb } from '@common/config/env'
 import useController from '@common/hooks/useController'
+import useHover, { AnimatedPressable, useMultiHover } from '@common/hooks/useHover'
+import useNavigation from '@common/hooks/useNavigation'
 import useTheme from '@common/hooks/useTheme'
 import getStyles from '@common/modules/dashboard/components/DeFiPositions/DeFiProviderPosition/styles'
+import { ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
 import { hexToRgba } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
-import { openInTab } from '@web/extension-services/background/webapi/tab'
-import useHover, { AnimatedPressable, useCustomHover, useMultiHover } from '@web/hooks/useHover'
+import { openInTab } from '@common/utils/links'
 
 import Badge from './Badge'
 import ProtocolIcon from './ProtocolIcon'
@@ -22,7 +25,7 @@ type Props = Omit<PositionsByProvider, 'type' | 'positionInUSD' | 'positions' | 
   toggleExpanded: () => void
   isExpanded: boolean
   positionInUSD?: string
-  healthRate?: number
+  healthRate?: number | null
 }
 
 const HEALTH_RATE_LEVELS: {
@@ -57,6 +60,8 @@ const DeFiPositionHeader: FC<Props> = ({
     state: { dapps }
   } = useController('DappsController')
   const { styles, theme } = useTheme(getStyles)
+  const { navigate } = useNavigation()
+
   const [bindAnim, animStyle] = useMultiHover({
     values: [
       {
@@ -69,8 +74,7 @@ const DeFiPositionHeader: FC<Props> = ({
         from: hexToRgba(theme.primaryBorder, 0),
         to: theme.primaryBorder
       }
-    ],
-    forceHoveredStyle: isExpanded
+    ]
   })
   const [bindOpenIconAnim, openIconAnimStyle] = useHover({
     preset: 'opacityInverted'
@@ -87,31 +91,69 @@ const DeFiPositionHeader: FC<Props> = ({
 
   const openDAppUrl = useCallback(async () => {
     if (!dappUrl) return
+
+    // On mobile, open the dapp inside the in-app browser (DappWebView) and
+    // signal the footer to render a back arrow instead of the home icon, so the
+    // user returns to the previous screen instead of the apps catalog.
+    if (isMobile) {
+      navigate(ROUTES.dappWebView, { state: { url: dappUrl, showBackButton: true } })
+      return
+    }
+
     try {
       await openInTab({ url: dappUrl })
     } catch (e) {
       console.error(e)
     }
-  }, [dappUrl])
+  }, [dappUrl, navigate])
 
   return (
     <AnimatedPressable
       onPress={toggleExpanded}
-      style={[styles.header, animStyle, !!isExpanded && styles.expandedHeader]}
+      style={[
+        styles.header,
+        animStyle,
+        !!isExpanded && styles.expandedHeader,
+        isExpanded && {
+          backgroundColor: theme.tertiaryBackground,
+          borderColor: theme.primaryBorder
+        }
+      ]}
       {...bindAnim}
     >
       <View style={styles.providerData}>
         <ProtocolIcon iconUrl={iconUrl} providerName={providerName} chainId={chainId} />
-        <Text fontSize={16} weight="semiBold" style={spacings.mrMi}>
-          {providerName}
-        </Text>
-        {dappUrl && (
-          <AnimatedPressable onPress={openDAppUrl} style={openIconAnimStyle} {...bindOpenIconAnim}>
-            <OpenIcon width={14} height={14} color={theme.secondaryText} />
-          </AnimatedPressable>
-        )}
-        <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mlLg]}>
-          {healthRate && (
+        <View>
+          <View style={[flexbox.directionRow, flexbox.alignCenter]}>
+            <Text fontSize={16} weight="semiBold" style={spacings.mrMi}>
+              {providerName}
+            </Text>
+            {dappUrl && (
+              <AnimatedPressable
+                onPress={openDAppUrl}
+                style={openIconAnimStyle}
+                {...bindOpenIconAnim}
+              >
+                <OpenIcon width={14} height={14} color={theme.secondaryText} />
+              </AnimatedPressable>
+            )}
+          </View>
+          {isMobile && !!healthRate && (
+            <Badge
+              text={`Health Rate: ${healthRate <= 10 ? formatDecimals(healthRate) : '>10'}`}
+              type={HEALTH_RATE_LEVELS.find((level) => level.to >= healthRate)?.color || 'success'}
+              style={spacings.mtMi}
+            />
+          )}
+        </View>
+        <View
+          style={[
+            flexbox.directionRow,
+            flexbox.alignCenter,
+            isMobile ? spacings.mlTy : spacings.mlLg
+          ]}
+        >
+          {isWeb && !!healthRate && (
             <Badge
               text={`Health Rate: ${healthRate <= 10 ? formatDecimals(healthRate) : '>10'}`}
               type={HEALTH_RATE_LEVELS.find((level) => level.to >= healthRate)?.color || 'success'}

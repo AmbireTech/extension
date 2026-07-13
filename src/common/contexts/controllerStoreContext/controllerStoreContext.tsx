@@ -1,14 +1,11 @@
-import { EventEmitter as Emitter } from 'events'
-/* eslint-disable @typescript-eslint/no-floating-promises */
 import React, { createContext, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import EventEmitter from '@ambire-common/controllers/eventEmitter/eventEmitter'
 import { ErrorRef } from '@ambire-common/interfaces/eventEmitter'
-import { allControllersMapping } from '@common/constants/controllersMapping'
 import { ToastOptions } from '@common/contexts/toastContext'
 import useNavigation from '@common/hooks/useNavigation'
 import useToast from '@common/hooks/useToast'
-import eventBus from '@web/extension-services/event/eventBus'
+import eventBus from '@common/services/event/eventBus'
 
 import { ControllerHelpersStore } from './controllerHelpersStore'
 import { ControllerStore } from './controllerStore'
@@ -27,12 +24,16 @@ export const ControllerStoreProvider: React.FC<{
   const { navigate } = useNavigation()
   const ctrlOnUpdateIsDirtyFlags = useRef<Record<string, boolean>>({})
   const [isStoreReady, setIsStoreReady] = useState(false)
+  const [isReadyToLoadRoutes, setIsReadyToLoadRoutes] = useState(false)
 
   const [controllerStore] = useState(
     () =>
       new ControllerStore({
         onReady: () => {
           setIsStoreReady(true)
+        },
+        onReadyToLoadRoutes: () => {
+          setIsReadyToLoadRoutes(true)
         }
       })
   )
@@ -72,9 +73,20 @@ export const ControllerStoreProvider: React.FC<{
   )
 
   useEffect(() => {
-    const onCtrlUpdate = ({ ctrlName, ctrlState }: { ctrlName: string; ctrlState: any }) => {
-      if ((allControllersMapping as any)[ctrlName])
-        controllerStore.update(ctrlName as any, ctrlState)
+    const onCtrlUpdate = ({
+      ctrlName,
+      ctrlState,
+      forceEmit
+    }: {
+      ctrlName: string
+      ctrlState: any
+      forceEmit?: boolean
+    }) => {
+      try {
+        controllerStore.update(ctrlName as any, ctrlState, forceEmit)
+      } catch (e) {
+        console.error(`controllerStore.update failed for controller "${ctrlName}":`, e)
+      }
     }
 
     eventBus.addEventListener('ctrlUpdate', onCtrlUpdate)
@@ -112,12 +124,13 @@ export const ControllerStoreProvider: React.FC<{
   }, [addToast])
 
   useEffect(() => {
-    const onNavigate = ({ route: navRoute }: { route: string }) => navigate(navRoute)
+    const onNavigate = ({ route, params }: { route: string; params?: any }) =>
+      navigate(route, params)
 
     eventBus.addEventListener('navigate', onNavigate)
 
     return () => eventBus.removeEventListener('navigate', onNavigate)
-  }, [addToast, navigate])
+  }, [navigate])
 
   return (
     <ControllerStoreContext.Provider
@@ -128,6 +141,7 @@ export const ControllerStoreProvider: React.FC<{
           stateSubscriptionManager,
           helpersSubscriptionManager,
           isStoreReady,
+          isReadyToLoadRoutes,
           debounceControllerUpdates
         }),
         [
@@ -136,6 +150,7 @@ export const ControllerStoreProvider: React.FC<{
           stateSubscriptionManager,
           helpersSubscriptionManager,
           isStoreReady,
+          isReadyToLoadRoutes,
           debounceControllerUpdates
         ]
       )}

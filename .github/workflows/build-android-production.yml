@@ -1,0 +1,17 @@
+name: Build production Android app (Play Store AAB) ⚡
+
+on:
+  workflow_dispatch: # Manual trigger
+
+jobs:
+  build-android-production:
+    name: Build Android production .aab (Play Store) and upload artifact
+    uses: ./.github/workflows/_build-android.yml
+    with:
+      build_command: yarn build:android:production:aab
+      artifact_suffix: aab
+      package_mode: aab
+      # Play Store bundle should support both modern (arm64-v8a) and older 32-bit ARM (armeabi-v7a) devices for wider device coverage.
+      architectures: armeabi-v7a,arm64-v8a
+      enable_signing: true
+    secrets: inherit

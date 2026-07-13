@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>method</key>
+	<string>debugging</string>
+	<key>signingStyle</key>
+	<string>manual</string>
+	<key>signingCertificate</key>
+	<string>Apple Development: Ivo Georgiev (28R4GUDKQ8)</string>
+	<key>provisioningProfiles</key>
+	<dict>
+		<key>com.ambire.app.wallet</key>
+		<string>Ambire iOS App Development</string>
+	</dict>
+	<key>destination</key>
+	<string>export</string>
+</dict>
+</plist>

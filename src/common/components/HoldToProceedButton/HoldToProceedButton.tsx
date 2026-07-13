@@ -1,21 +1,23 @@
 import React, { FC, useCallback, useEffect, useRef, useState } from 'react'
-import { Animated, PanResponder, ViewStyle } from 'react-native'
+import { Animated, PanResponder, StyleProp, ViewStyle } from 'react-native'
 
 import Button, { Props as CommonButtonProps } from '@common/components/Button'
+import { isWeb } from '@common/config/env'
 import useTheme from '@common/hooks/useTheme'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 
 type Props = Omit<CommonButtonProps, 'style' | 'children' | 'childrenPosition' | 'onPress'> & {
-  style?: ViewStyle
+  style?: StyleProp<ViewStyle>
   onHoldComplete: () => void
   holdDuration?: number // in milliseconds
   holdText?: string
   completeText?: string
-  buttonType?: 'primary' | 'error' | 'warning'
+  buttonType?: 'primary' | 'dangerFilled' | 'warning'
 }
 
 const HoldToProceedButton: FC<Props> = ({
   style,
+  textStyle,
   text = 'Hold to proceed',
   holdText = 'Sure?',
   completeText = 'Proceed',
@@ -35,16 +37,32 @@ const HoldToProceedButton: FC<Props> = ({
   const animationRef = useRef<Animated.CompositeAnimation | null>(null)
   const holdStartTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const isCurrentlyHoldingRef = useRef(false)
+  const isCompletedRef = useRef(false)
 
-  const colorTypes = {
-    primary: theme.primary,
-    error: theme.errorText,
+  const progressColorMap = {
+    primary: theme.primaryAccent100,
+    dangerFilled: theme.error100,
+    warning: theme.warning100
+  }
+
+  // The button's background is forced to stay static and light (see progressColorMap
+  // above), but Button's own per-type text color assumes a solid/dark background
+  // (white text for primary/dangerFilled) or a background that darkens on hover
+  // (warning). Pin the text color to match the light static background instead,
+  // using the same light-bg/accent-text pairing as Badge.tsx, otherwise the text
+  // is invisible (primary/dangerFilled at rest, warning on hover).
+  const textColorMap = {
+    primary: theme.primaryAccent,
+    dangerFilled: theme.errorText,
     warning: theme.warningText
   }
 
   const startHold = useCallback(() => {
     if (disabled) return
-
+    if (isCompleted) {
+      onHoldComplete()
+      return
+    }
     // Scale down animation for immediate visual feedback
     Animated.timing(scaleAnim, {
       toValue: 0.98,
@@ -66,6 +84,7 @@ const HoldToProceedButton: FC<Props> = ({
 
       animationRef.current.start(({ finished }) => {
         if (finished && isCurrentlyHoldingRef.current) {
+          isCompletedRef.current = true
           setIsCompleted(true)
           // Add a small delay before calling completion handler
           holdTimeoutRef.current = setTimeout(() => {
@@ -75,17 +94,16 @@ const HoldToProceedButton: FC<Props> = ({
         }
       })
     }, 200)
-  }, [disabled, holdDuration, progressAnim, scaleAnim, onHoldComplete])
+  }, [disabled, isCompleted, holdDuration, progressAnim, scaleAnim, onHoldComplete])
 
   const endHold = useCallback(() => {
     // Don't reset if already completed
-    if (isCompleted) return
-
+    if (isCompletedRef.current || isCompleted) return
     // Mark that we're no longer holding
     isCurrentlyHoldingRef.current = false
 
-    // Clear the hold start timeout if still waiting
-    if (holdStartTimeoutRef.current) {
+    // Clear the pre-hold delay timeout if we're still in the 200ms grace period
+    if (holdStartTimeoutRef.current && !isCompletedRef.current) {
       clearTimeout(holdStartTimeoutRef.current)
       holdStartTimeoutRef.current = null
     }
@@ -122,15 +140,7 @@ const HoldToProceedButton: FC<Props> = ({
     // Always reset the holding state
     setIsHolding(false)
     // Don't reset isCompleted here - let it stay true if the action completed
-  }, [
-    isHolding,
-    isCompleted,
-    animationRef,
-    holdTimeoutRef,
-    holdStartTimeoutRef,
-    progressAnim,
-    scaleAnim
-  ])
+  }, [isHolding, isCompleted, animationRef, holdTimeoutRef, progressAnim, scaleAnim])
 
   const panResponder = useRef(
     PanResponder.create({
@@ -203,11 +213,7 @@ const HoldToProceedButton: FC<Props> = ({
   })
 
   // Progress bar background color - using theme colors for consistency
-  const progressColor = isCompleted
-    ? theme.successDecorative
-    : isHolding
-      ? colorTypes[buttonType]
-      : 'transparent'
+  const progressColor = isHolding && !isCompleted ? progressColorMap[buttonType] : 'transparent'
 
   return (
     <Animated.View
@@ -229,12 +235,12 @@ const HoldToProceedButton: FC<Props> = ({
         style={[
           {
             minWidth: buttonWidth || 108,
-            position: 'relative',
-            backgroundColor: colorTypes[buttonType]
+            position: 'relative'
           },
           style
         ]}
-        size="smaller"
+        textStyle={[{ color: textColorMap[buttonType] }, textStyle]}
+        size={isWeb ? 'smaller' : 'regular'}
         hasBottomSpacing={false}
         text={buttonText}
         disabled={disabled}
@@ -252,7 +258,7 @@ const HoldToProceedButton: FC<Props> = ({
           width: progressWidth,
           backgroundColor: progressColor,
           borderRadius: BORDER_RADIUS_PRIMARY,
-          opacity: 0.3,
+          opacity: isHolding && !isCompleted ? 0.3 : 0,
           zIndex: 10
         }}
       />

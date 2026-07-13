@@ -10,7 +10,7 @@ const LedgerLetterIconFilled: FC<SvgProps> = ({ width = 96, height = 96, color, 
       />
       <Path
         stroke="#fff"
-        stroke-width="2"
+        strokeWidth="2"
         d="M43.556 64.889H28v-8.89M43.556 31.11H28V40M44.89 39.11v15.556h8.888M52.444 31.11H68V40M52.444 64.889H68v-8.89"
       />
     </Svg>

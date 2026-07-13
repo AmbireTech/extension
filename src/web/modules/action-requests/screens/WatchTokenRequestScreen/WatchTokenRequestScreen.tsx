@@ -1,9 +1,6 @@
-import { getAddress } from 'ethers'
-import React, { useCallback, useEffect, useMemo, useState } from 'react'
+import React from 'react'
 import { View } from 'react-native'
 
-import { getNetworksWithFailedRPC } from '@ambire-common/libs/networks/networks'
-import { TokenResult } from '@ambire-common/libs/portfolio'
 import AmountIcon from '@common/assets/svg/AmountIcon'
 import DollarIcon from '@common/assets/svg/DollarIcon'
 import ValueIcon from '@common/assets/svg/ValueIcon'
@@ -14,22 +11,14 @@ import Spinner from '@common/components/Spinner'
 import Text from '@common/components/Text'
 import TokenIcon from '@common/components/TokenIcon'
 import { useTranslation } from '@common/config/localization'
-import useController from '@common/hooks/useController'
-import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useTheme from '@common/hooks/useTheme'
+import ActionFooter from '@common/modules/action-requests/components/ActionFooter'
+import useWatchToken from '@common/modules/action-requests/hooks/useWatchToken'
 import getAndFormatTokenDetails from '@common/modules/dashboard/helpers/getTokenDetails'
 import { HeaderWithLogoOnly } from '@common/modules/header/components/Header/Header'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { TabLayoutContainer } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
-import ActionFooter from '@web/modules/action-requests/components/ActionFooter'
-import {
-  getTokenEligibility,
-  getTokenFromPortfolio,
-  getTokenFromTemporaryTokens,
-  handleTokenIsInPortfolio,
-  selectNetwork
-} from '@web/modules/action-requests/screens/WatchTokenRequestScreen/utils'
 
 import getStyles from './styles'
 
@@ -44,215 +33,23 @@ export type TokenData = {
 const WatchTokenRequestScreen = () => {
   const { t } = useTranslation()
   const { theme, styles, themeType } = useTheme(getStyles)
-  const { dispatch } = useControllersMiddleware()
-  const { currentUserRequest } = useController('RequestsController').state
-  const { temporaryTokens, validTokens, customTokens } = useController('PortfolioController').state
   const {
-    state: { portfolio: selectedAccountPortfolio }
-  } = useController('SelectedAccountController')
-  const { networks } = useController('NetworksController').state
-  const { state } = useController('ProvidersController')
-
-  const userRequest = useMemo(
-    () => (currentUserRequest?.kind === 'walletWatchAsset' ? currentUserRequest : undefined),
-    [currentUserRequest]
-  )
-
-  // TODO: fix types here
-  const tokenData = userRequest?.meta.params.options as any
-  const origin = userRequest?.dappPromises[0].session.origin
-  const network =
-    networks.find((n) => n.explorerUrl === origin) ||
-    networks.find((n) => n.chainId === tokenData?.chainId)
-  const [showAlreadyInPortfolioMessage, setShowAlreadyInPortfolioMessage] = useState<boolean>(false)
-  const [isLoading, setIsLoading] = useState(true)
-  const [tokenNetwork, setTokenNetwork] = useState(network)
-  const [isTemporaryTokenRequested, setTemporaryTokenRequested] = useState(false)
-
-  const isLoadingTemporaryToken = useMemo(
-    () => tokenNetwork?.chainId && temporaryTokens?.[tokenNetwork?.chainId.toString()]?.isLoading,
-    [tokenNetwork?.chainId, temporaryTokens]
-  )
-
-  const networkWithFailedRPC =
-    tokenNetwork?.chainId &&
-    getNetworksWithFailedRPC({ providers: state.providers }).filter(
-      (chainId: string) => tokenNetwork?.chainId.toString() === chainId
-    )
-
-  const tokenTypeEligibility = useMemo(
-    () => getTokenEligibility(tokenData, validTokens, tokenNetwork),
-    [validTokens, tokenData, tokenNetwork]
-  )
-
-  const tokenValidation = useMemo(() => {
-    if (!tokenData?.address || !tokenNetwork) return null
-    return validTokens.erc20[`${tokenData.address}-${tokenNetwork.chainId}`]
-  }, [validTokens, tokenData?.address, tokenNetwork])
-
-  const tokenValidationError = useMemo(() => {
-    if (!tokenData?.address) return null
-
-    if (tokenNetwork?.chainId) {
-      return validTokens.erc20[`${tokenData.address}-${tokenNetwork.chainId}`]?.error
-    }
-
-    // When we don't have tokenNetwork.chainId, find any validation error for this address across all networks
-    const validationEntry = Object.entries(validTokens.erc20 || {}).find(([key]) =>
-      key.startsWith(`${tokenData.address}-`)
-    )
-
-    return (validationEntry?.[1] as any)?.error
-  }, [validTokens, tokenData?.address, tokenNetwork?.chainId])
-
-  const handleCancel = useCallback(() => {
-    if (!userRequest) return
-
-    dispatch({
-      type: 'REQUESTS_CONTROLLER_REJECT_USER_REQUEST',
-      params: { err: t('User rejected the request.'), id: userRequest.id }
-    })
-  }, [userRequest, t, dispatch])
-
-  // Handle the case its already in token preferences
-  const isTokenCustom = !!customTokens.find(
-    (token) =>
-      token.address.toLowerCase() === tokenData?.address.toLowerCase() &&
-      token.chainId === tokenNetwork?.chainId
-  )
-
-  const temporaryToken = useMemo(
-    () => getTokenFromTemporaryTokens(temporaryTokens, tokenData, tokenNetwork),
-    [temporaryTokens, tokenData, tokenNetwork]
-  )
-
-  const portfolioToken = useMemo(
-    () => getTokenFromPortfolio(tokenData, tokenNetwork, selectedAccountPortfolio),
-    [selectedAccountPortfolio, tokenNetwork, tokenData]
-  )
-
-  const handleTokenType = (chainId: bigint) => {
-    dispatch({
-      type: 'PORTFOLIO_CONTROLLER_CHECK_TOKEN',
-      params: { token: { address: tokenData?.address, chainId }, allNetworks: false }
-    })
-  }
-
-  const handleSelectNetwork = useCallback(async () => {
-    await selectNetwork(
-      network,
-      tokenNetwork,
-      tokenData,
-      networks,
-      validTokens,
-      setIsLoading,
-      setTokenNetwork,
-      handleTokenType,
-      state.providers
-    )
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    network,
-    tokenNetwork,
-    tokenData,
-    networks,
-    validTokens,
-    setIsLoading,
-    setTokenNetwork,
-    handleTokenType,
-    state.providers,
-    tokenTypeEligibility
-  ])
-
-  useEffect(() => {
-    const handleEffect = async () => {
-      handleSelectNetwork()
-      if (tokenNetwork) {
-        // Check if token is already in portfolio
-        const isTokenInHints = await handleTokenIsInPortfolio(
-          isTokenCustom,
-          selectedAccountPortfolio,
-          tokenNetwork,
-          tokenData
-        )
-        if (isTokenInHints) {
-          setIsLoading(false)
-          setShowAlreadyInPortfolioMessage(true)
-        }
-        if (!temporaryToken) {
-          // Check if token is eligible to add in portfolio
-          if (tokenData && (!tokenTypeEligibility || tokenValidation?.error)) {
-            handleTokenType(tokenNetwork?.chainId)
-          }
-
-          if (tokenTypeEligibility && !isTokenInHints && !isTemporaryTokenRequested) {
-            setTemporaryTokenRequested(true)
-            dispatch({
-              type: 'PORTFOLIO_CONTROLLER_GET_TEMPORARY_TOKENS',
-              params: {
-                chainId: tokenNetwork?.chainId,
-                additionalHint: getAddress(tokenData?.address)
-              }
-            })
-          }
-        }
-
-        // Stop loading if there's a validation error
-        if (tokenValidation?.error) {
-          setIsLoading(false)
-        }
-      }
-    }
-
-    handleEffect().catch((error) => {
-      // eslint-disable-next-line no-console
-      console.error(error)
-      return setIsLoading(false)
-    })
-
-    if (tokenTypeEligibility === false || !!temporaryToken || tokenValidation?.error) {
-      setIsLoading(false)
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    network,
+    userRequest,
     tokenData,
     tokenNetwork,
-    networks,
+    isLoading,
+    showAlreadyInPortfolioMessage,
+    networkWithFailedRPC,
     tokenTypeEligibility,
-    temporaryToken,
+    tokenValidation,
+    tokenValidationError,
+    handleCancel,
     isTokenCustom,
-    selectedAccountPortfolio,
-    validTokens
-  ])
-
-  const handleAddToken = useCallback(async () => {
-    if (!userRequest) return
-    if (!tokenNetwork?.chainId) return
-
-    dispatch({
-      type: 'PORTFOLIO_CONTROLLER_ADD_CUSTOM_TOKEN',
-      params: {
-        token: {
-          address: getAddress(tokenData.address),
-          standard: 'ERC20',
-          chainId: tokenNetwork?.chainId
-        },
-        shouldUpdatePortfolio: true
-      }
-    })
-
-    dispatch({
-      type: 'REQUESTS_CONTROLLER_RESOLVE_USER_REQUEST',
-      params: { data: null, id: userRequest.id }
-    })
-  }, [dispatch, userRequest, tokenData, tokenNetwork])
-
-  const tokenDetails = useMemo(() => {
-    const token = portfolioToken || temporaryToken
-
-    return token && token?.flags && getAndFormatTokenDetails(token as TokenResult, networks)
-  }, [temporaryToken, portfolioToken, networks])
+    temporaryToken,
+    portfolioToken,
+    handleAddToken,
+    tokenDetails
+  } = useWatchToken()
 
   if (networkWithFailedRPC && networkWithFailedRPC?.length > 0 && !!temporaryToken) {
     return <Alert type="error" title={t('This network RPC is failing')} />
@@ -277,8 +74,11 @@ const WatchTokenRequestScreen = () => {
           resolveDisabled={
             isLoading ||
             showAlreadyInPortfolioMessage ||
-            (!tokenTypeEligibility && !temporaryToken) ||
-            !!tokenValidation?.error?.message
+            (!temporaryToken && !tokenTypeEligibility) ||
+            !!tokenValidation?.error?.message ||
+            !temporaryToken?.address ||
+            !temporaryToken?.symbol ||
+            !temporaryToken?.decimals
           }
         />
       )}

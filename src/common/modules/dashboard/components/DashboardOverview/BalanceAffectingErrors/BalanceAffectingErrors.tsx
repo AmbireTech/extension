@@ -34,7 +34,7 @@ const BalanceAffectingErrors: FC<Props> = ({
   isLoadingTakingTooLong
 }) => {
   const { t } = useTranslation()
-  const { theme, themeType } = useTheme()
+  const { theme } = useTheme()
   const {
     state: { balanceAffectingErrors, portfolio }
   } = useController('SelectedAccountController')
@@ -59,13 +59,12 @@ const BalanceAffectingErrors: FC<Props> = ({
     return (
       <WarningIcon
         color={theme.warningDecorative2}
-        style={spacings.mlTy}
         dataSet={createGlobalTooltipDataSet({
           id: 'balance-affecting-error',
           content: warningMessage
         })}
-        width={21}
-        height={21}
+        width={20}
+        height={20}
       />
     )
   }, [theme.warningDecorative2, warningMessage])
@@ -139,7 +138,7 @@ const BalanceAffectingErrors: FC<Props> = ({
         </Pressable>
       )}
       <BottomSheet
-        style={{ maxWidth: 720, ...spacings.pvLg, ...spacings.phXl, width: '100%' }}
+        style={isWeb ? { maxWidth: 720, ...spacings.pvLg, ...spacings.phXl, width: '100%' } : {}}
         id="portfolio-errors"
         sheetRef={sheetRef}
         closeBottomSheet={closeBottomSheetWrapped}
@@ -155,7 +154,7 @@ const BalanceAffectingErrors: FC<Props> = ({
               ]}
             >
               {areErrorsOutdatedAndPortfolioIsReady ? (
-                <Text fontSize={16} style={spacings.mbMd}>
+                <Text fontSize={16} style={spacings.mbMd} appearance="secondaryText">
                   {t('All errors have been resolved. Feel free to close this modal.')}
                 </Text>
               ) : null}

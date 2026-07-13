@@ -10,7 +10,7 @@ import { ExternalKey, ExternalSignerController } from '@ambire-common/interfaces
 import { RLP } from '@ethereumjs/rlp'
 import { browser } from '@web/constants/browserapi'
 
-export { GridPlusSDKConstants }
+export { GridPlusSDKConstants, Utils as GridPlusSDKUtils }
 
 const LATTICE_APP_NAME = 'Ambire Wallet (browser)' // should be 6-23 characters
 const LATTICE_MANAGER_URL = 'https://lattice.gridplus.io'

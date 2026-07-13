@@ -1,9 +1,11 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { Image, ImageProps, View, ViewStyle } from 'react-native'
+import { SvgUri } from 'react-native-svg'
 
 import useBenzinNetworksContext from '@benzin/hooks/useBenzinNetworksContext'
 import MissingTokenIcon from '@common/assets/svg/MissingTokenIcon'
 import NetworkIcon from '@common/components/NetworkIcon'
+import { isMobile } from '@common/config/env'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
@@ -149,6 +151,16 @@ const TokenIcon: React.FC<Props> = ({
           width={withContainer ? containerWidth : width}
           height={withContainer ? containerHeight : height}
         />
+      ) : isMobile && imageUrl?.toLowerCase().endsWith('.svg') ? (
+        <View style={{ borderRadius: BORDER_RADIUS_PRIMARY, overflow: 'hidden' }}>
+          <SvgUri
+            width={width}
+            height={height}
+            uri={imageUrl}
+            onError={attemptToLoadFallbackImage}
+            onLoad={handleImageLoaded}
+          />
+        </View>
       ) : (
         <Image
           source={{ uri: imageUrl }}

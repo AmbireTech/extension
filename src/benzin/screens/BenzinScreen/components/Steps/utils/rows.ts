@@ -2,19 +2,11 @@ import { Block } from 'ethers'
 
 import { FeePaidWith } from '@benzin/screens/BenzinScreen/hooks/useSteps'
 import { FinalizedStatusType } from '@benzin/screens/BenzinScreen/interfaces/steps'
+import formatDateTime from '@common/utils/formatDateTime'
 
 const doNotShow = ['dropped', 'rejected', 'not-found']
 
-const getDate = (timestamp: number) => {
-  return new Date(timestamp * 1000).toLocaleString('en-us', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-    hour: 'numeric',
-    minute: 'numeric',
-    hourCycle: 'h12'
-  })
-}
+const getDate = (timestamp: number) => formatDateTime(timestamp * 1000)
 
 const shouldShowTxnProgress = (finalizedStatus: FinalizedStatusType) => {
   if (!finalizedStatus) return true

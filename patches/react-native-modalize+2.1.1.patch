@@ -1,0 +1,207 @@
+diff --git a/node_modules/react-native-modalize/lib/index.js b/node_modules/react-native-modalize/lib/index.js
+index 5d5edac..cf58e3d 100644
+--- a/node_modules/react-native-modalize/lib/index.js
++++ b/node_modules/react-native-modalize/lib/index.js
+@@ -47,7 +47,11 @@ const AnimatedKeyboardAvoidingView = react_native_1.Animated.createAnimatedCompo
+  * not dismiss Modalize when we are using the ScrollView and we don't want to dismiss.
+  */
+ const SCROLL_THRESHOLD = -4;
+-const USE_NATIVE_DRIVER = true;
++const USE_NATIVE_DRIVER = react_native_1.Platform.select({
++    ios: true,
++    android: false,
++    web: false
++});
+ const ACTIVATED = 20;
+ const PAN_DURATION = 150;
+ const ModalizeBase = ({ 
+@@ -116,6 +120,7 @@ onOpen, onOpened, onClose, onClosed, onBackButtonPress, onPositionChange, onOver
+     const contentViewRef = React.useRef(null);
+     const tapGestureOverlayRef = React.useRef(null);
+     const backButtonListenerRef = React.useRef(null);
++    const nativeViewActive = React.useRef(false);
+     // We diff and get the negative value only. It sometimes go above 0
+     // (e.g. 1.5) and creates the flickering on Modalize for a ms
+     const diffClamp = react_native_1.Animated.diffClamp(reverseBeginScrollY, -screenHeight, 0);
+@@ -257,7 +262,13 @@ onOpen, onOpened, onClose, onClosed, onBackButtonPress, onPositionChange, onOver
+                 setModalPosition('initial');
+             }
+             setShowContent(toInitialAlwaysOpen);
+-            translateY.setValue(toValue);
++            translateY.setValue(
++                react_native_1.Platform.select({
++                    ios: toValue,
++                    web: toValue, 
++                    android: 0
++                })
++            );
+             dragY.setValue(0);
+             willCloseModalize = false;
+             setLastSnap(lastSnapValue);
+@@ -265,12 +276,23 @@ onOpen, onOpened, onClose, onClosed, onBackButtonPress, onPositionChange, onOver
+         });
+     };
+     const handleModalizeContentLayout = ({ nativeEvent: { layout } }) => {
+-        const value = Math.min(layout.height + (!adjustToContentHeight || keyboardHeight ? layout.y : 0), endHeight -
+-            react_native_1.Platform.select({
+-                ios: 0,
+-                android: keyboardHeight,
+-                default: 0,
+-            }));
++        // Patched: when adjustToContentHeight is false the sheet is meant to occupy the
++        // fixed `endHeight` (the consumer flips adjustToContentHeight off on keyboard show
++        // precisely to make the sheet expand to the top of the screen). Under
++        // react-native-keyboard-controller's KeyboardProvider the Android window stays at
++        // full height and animates the keyboard over the content via insets, so during
++        // that animation this onLayout transiently measures a keyboard-reduced
++        // `layout.height + layout.y` that is shorter than `endHeight`. The original
++        // `Math.min(..., endHeight - keyboardHeight)` then locked the sheet to that shorter
++        // value, which is the "flash to the top then collapse" seen on Android. Keeping
++        // `endHeight` when not adjusting to content height avoids that race; iOS was
++        // unaffected because the OS keyboard floats over the content and the measured
++        // height stayed at endHeight.
++        if (!adjustToContentHeight) {
++            setModalHeightValue(endHeight);
++            return;
++        }
++        const value = Math.min(layout.height + (!adjustToContentHeight || keyboardHeight ? layout.y : 0), endHeight);
+         setModalHeightValue(value);
+     };
+     const handleBaseLayout = (component, height) => {
+@@ -316,11 +338,11 @@ onOpen, onOpened, onClose, onClosed, onBackButtonPress, onPositionChange, onOver
+         const { timing } = closeAnimationConfig;
+         const { velocityY, translationY } = nativeEvent;
+         const negativeReverseScroll = modalPosition === 'top' &&
+-            beginScrollYValue >= (snapPoint ? 0 : SCROLL_THRESHOLD) &&
++            Math.max(0, beginScrollY._value) >= (snapPoint ? 0 : SCROLL_THRESHOLD) &&
+             translationY < 0;
+-        const thresholdProps = translationY > threshold && beginScrollYValue === 0;
++        const thresholdProps = translationY > threshold && Math.max(0, beginScrollY._value) === 0;
+         const closeThreshold = velocity
+-            ? (beginScrollYValue <= 20 && velocityY >= velocity) || thresholdProps
++            ? (Math.max(0, beginScrollY._value) <= 20 && velocityY >= velocity) || thresholdProps
+             : thresholdProps;
+         let enableBouncesValue = true;
+         // We make sure to reset the value if we are dragging from the children
+@@ -334,8 +356,8 @@ onOpen, onOpened, onClose, onClosed, onBackButtonPress, onPositionChange, onOver
+         if (nativeEvent.oldState === react_native_gesture_handler_1.State.BEGAN) {
+             setCancelClose(false);
+             if (!closeSnapPointStraightEnabled && snapPoint
+-                ? beginScrollYValue > 0
+-                : beginScrollYValue > 0 || negativeReverseScroll) {
++                ? Math.max(0, beginScrollY._value) > 0
++                : Math.max(0, beginScrollY._value) > 0 || negativeReverseScroll) {
+                 setCancelClose(true);
+                 translateY.setValue(0);
+                 dragY.setValue(0);
+@@ -353,10 +375,10 @@ onOpen, onOpened, onClose, onClosed, onBackButtonPress, onPositionChange, onOver
+         setEnableBounces(devices_1.isAndroid
+             ? false
+             : alwaysOpen
+-                ? beginScrollYValue > 0 || translationY < 0
++                ? Math.max(0, beginScrollY._value) > 0 || translationY < 0
+                 : enableBouncesValue);
+         if (nativeEvent.oldState === react_native_gesture_handler_1.State.ACTIVE) {
+-            const toValue = translationY - beginScrollYValue;
++            const toValue = translationY - Math.max(0, beginScrollY._value);
+             let destSnapPoint = 0;
+             if (snapPoint || alwaysOpen) {
+                 const endOffsetY = lastSnap + toValue + dragToss * velocityY;
+@@ -389,13 +411,13 @@ onOpen, onOpened, onClose, onClosed, onBackButtonPress, onPositionChange, onOver
+                         }
+                     }
+                     // For alwaysOpen props
+-                    if (distFromSnap < diffPoint && alwaysOpen && beginScrollYValue <= 0) {
++                    if (distFromSnap < diffPoint && alwaysOpen && Math.max(0, beginScrollY._value) <= 0) {
+                         destSnapPoint = (modalHeightValue || 0) - alwaysOpen;
+                         willCloseModalize = false;
+                     }
+                 });
+             }
+-            else if (closeThreshold && !alwaysOpen && !cancelClose) {
++            else if (closeThreshold && !alwaysOpen && !cancelClose && !(customRenderer && nativeViewActive.current)) {
+                 willCloseModalize = true;
+                 handleClose();
+             }
+@@ -422,7 +444,7 @@ onOpen, onOpened, onClose, onClosed, onBackButtonPress, onPositionChange, onOver
+                 toValue: destSnapPoint,
+                 useNativeDriver: USE_NATIVE_DRIVER,
+             }).start();
+-            if (beginScrollYValue <= 0) {
++            if (Math.max(0, beginScrollY._value) <= 0) {
+                 const modalPositionValue = destSnapPoint <= 0 ? 'top' : 'initial';
+                 if (panGestureAnimatedValue) {
+                     react_native_1.Animated.timing(panGestureAnimatedValue, {
+@@ -536,6 +558,10 @@ onOpen, onOpened, onClose, onClosed, onBackButtonPress, onPositionChange, onOver
+                 useNativeDriver: USE_NATIVE_DRIVER,
+                 listener: onScrollBeginDrag,
+             }),
++            onScroll: react_native_1.Animated.event([{ nativeEvent: { contentOffset: { y: beginScrollY } } }], {
++                useNativeDriver: USE_NATIVE_DRIVER,
++                listener: passedOnProps === null || passedOnProps === void 0 ? void 0 : passedOnProps.onScroll,
++            }),
+             scrollEventThrottle,
+             onLayout: handleContentLayout,
+             scrollEnabled,
+@@ -553,9 +579,38 @@ onOpen, onOpened, onClose, onClosed, onBackButtonPress, onPositionChange, onOver
+         }
+         return (React.createElement(react_native_1.Animated.ScrollView, Object.assign({}, scrollViewProps, opts), children));
+     };
++    const handleNativeViewStateChange = ({ nativeEvent }) => {
++        if (nativeEvent.state === react_native_gesture_handler_1.State.ACTIVE) {
++            nativeViewActive.current = true;
++            // Cancel visual drag immediately when native scroll starts
++            cancelTranslateY.setValue(0);
++            translateY.setValue(0);
++            dragY.setValue(0);
++        } else if (nativeEvent.oldState === react_native_gesture_handler_1.State.ACTIVE) {
++            // Native gesture ended
++            nativeViewActive.current = false;
++        }
++    };
+     const renderChildren = () => {
+         const style = adjustToContentHeight ? styles_1.default.content__adjustHeight : styles_1.default.content__container;
+         const minDist = libraries_1.isRNGH2() ? undefined : ACTIVATED;
++        // Patched: when the pan gesture is disabled (e.g. shouldBeClosableOnDrag={false}),
++        // skip the PanGestureHandler/NativeViewGestureHandler wrappers around the children.
++        // On Android these wrappers intercept native touch events, which prevents nested
++        // ScrollViews/Touchables inside the sheet content (e.g. customRenderer screens) from
++        // receiving them. Bypassing them makes the content behave like it is rendered in a
++        // regular React Native View.
++        if (!panGestureEnabled) {
++            return (React.createElement(react_native_1.Animated.View, { style: [style, childrenStyle] }, renderContent()));
++        }
++        // Patched: when customRenderer is used, add onHandlerStateChange to NativeViewGestureHandler
++        // to track when a native scroll gesture is active. The handleChildren function checks
++        // nativeViewActive.current to cancel the close animation during nested scroll.
++        if (customRenderer) {
++            return (React.createElement(react_native_gesture_handler_1.PanGestureHandler, { ref: panGestureChildrenRef, enabled: panGestureEnabled, simultaneousHandlers: [nativeViewChildrenRef, tapGestureModalizeRef], shouldCancelWhenOutside: false, onGestureEvent: handleGestureEvent, minDist: minDist, activeOffsetY: ACTIVATED, activeOffsetX: ACTIVATED, onHandlerStateChange: handleChildren },
++                React.createElement(react_native_1.Animated.View, { style: [style, childrenStyle] },
++                    React.createElement(react_native_gesture_handler_1.NativeViewGestureHandler, { ref: nativeViewChildrenRef, waitFor: tapGestureModalizeRef, simultaneousHandlers: panGestureChildrenRef, onHandlerStateChange: handleNativeViewStateChange }, renderContent()))));
++        }
+         return (React.createElement(react_native_gesture_handler_1.PanGestureHandler, { ref: panGestureChildrenRef, enabled: panGestureEnabled, simultaneousHandlers: [nativeViewChildrenRef, tapGestureModalizeRef], shouldCancelWhenOutside: false, onGestureEvent: handleGestureEvent, minDist: minDist, activeOffsetY: ACTIVATED, activeOffsetX: ACTIVATED, onHandlerStateChange: handleChildren },
+             React.createElement(react_native_1.Animated.View, { style: [style, childrenStyle] },
+                 React.createElement(react_native_gesture_handler_1.NativeViewGestureHandler, { ref: nativeViewChildrenRef, waitFor: tapGestureModalizeRef, simultaneousHandlers: panGestureChildrenRef }, renderContent()))));
+@@ -658,14 +713,20 @@ onOpen, onOpened, onClose, onClosed, onBackButtonPress, onPositionChange, onOver
+         keyboardAvoidingViewProps.onLayout = handleModalizeContentLayout;
+     }
+     const renderModalize = (React.createElement(react_native_1.View, { style: [styles_1.default.modalize, rootStyle], pointerEvents: alwaysOpen || !withOverlay ? 'box-none' : 'auto' },
+-        React.createElement(react_native_gesture_handler_1.TapGestureHandler, { ref: tapGestureModalizeRef, maxDurationMs: tapGestureEnabled ? 100000 : 50, maxDeltaY: lastSnap, enabled: panGestureEnabled },
++        panGestureEnabled ? (React.createElement(react_native_gesture_handler_1.TapGestureHandler, { ref: tapGestureModalizeRef, maxDurationMs: tapGestureEnabled ? 100000 : 50, maxDeltaY: lastSnap, enabled: panGestureEnabled },
+             React.createElement(react_native_1.View, { style: styles_1.default.modalize__wrapper, pointerEvents: "box-none" },
+                 showContent && (React.createElement(AnimatedKeyboardAvoidingView, Object.assign({}, keyboardAvoidingViewProps),
+                     renderHandle(),
+                     renderComponent(HeaderComponent, 'header'),
+                     renderChildren(),
+                     renderComponent(FooterComponent, 'footer'))),
+-                withOverlay && renderOverlay())),
++                withOverlay && renderOverlay()))) : (React.createElement(react_native_1.View, { style: styles_1.default.modalize__wrapper, pointerEvents: "box-none" },
++            showContent && (React.createElement(AnimatedKeyboardAvoidingView, Object.assign({}, keyboardAvoidingViewProps),
++                renderHandle(),
++                renderComponent(HeaderComponent, 'header'),
++                renderChildren(),
++                renderComponent(FooterComponent, 'footer'))),
++            withOverlay && renderOverlay())),
+         renderComponent(FloatingComponent, 'floating')));
+     const renderReactModal = (child) => (React.createElement(react_native_1.Modal, Object.assign({}, reactModalProps, { supportedOrientations: ['landscape', 'portrait', 'portrait-upside-down'], onRequestClose: handleBackPress, hardwareAccelerated: USE_NATIVE_DRIVER, visible: isVisible, transparent: true }), child));
+     if (!isVisible) {

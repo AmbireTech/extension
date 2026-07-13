@@ -1,1 +1,0 @@
-export { useEncryptionCapability } from './useEncryptionCapability'

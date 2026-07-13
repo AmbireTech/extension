@@ -1,5 +1,6 @@
 import { StyleSheet, ViewStyle } from 'react-native'
 
+import { isMobile } from '@common/config/env'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
@@ -17,12 +18,12 @@ const getStyles = () =>
       ...flexbox.alignCenter,
       height: 40,
       ...spacings.plMi,
-      ...spacings.prSm,
+      ...(isMobile ? spacings.prTy : spacings.prSm),
+      ...(isMobile ? spacings.mrMi : spacings.mrTy),
       borderRadius: 50
     },
     accountButtonRightIcon: {
-      borderColor: 'transparent',
-      ...spacings.mlMd
+      borderColor: 'transparent'
     },
     accountCopyIcon: { backgroundColor: 'transparent', borderColor: 'transparent' }
   })

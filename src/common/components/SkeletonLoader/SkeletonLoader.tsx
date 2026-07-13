@@ -29,12 +29,12 @@ const SkeletonLoader = ({
       Animated.sequence([
         Animated.timing(pulseAnim, {
           ...sharedAnimationConfig,
-          toValue: lowOpacity ? 0.15 : 1,
+          toValue: lowOpacity ? 0.7 : 1,
           easing: Easing.out(Easing.ease)
         }),
         Animated.timing(pulseAnim, {
           ...sharedAnimationConfig,
-          toValue: lowOpacity ? 0.05 : 0.2,
+          toValue: 0.2,
           easing: Easing.in(Easing.ease)
         })
       ])

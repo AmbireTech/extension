@@ -1,5 +1,3 @@
-/* eslint-disable no-console */
-
 import { hashMessage, Interface } from 'ethers'
 import React, { useCallback, useMemo, useState } from 'react'
 import { Linking } from 'react-native'

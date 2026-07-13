@@ -5,7 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import ToastComponent from '@common/components/Toast'
 import { isWeb } from '@common/config/env'
 import { HEADER_HEIGHT } from '@common/modules/header/components/Header/Header'
-import { SPACING_TY } from '@common/styles/spacings'
+import { SPACING_SM, SPACING_TY } from '@common/styles/spacings'
 import { Portal } from '@gorhom/portal'
 
 import styles from './styles'
@@ -28,21 +28,18 @@ export interface Toast extends ToastOptions {
   text: string
 }
 
-// Magic spacing for positioning the toast list
-// to match exactly the area of the header + its bottom spacing
-const ADDITIONAL_TOP_SPACING_MOBILE = SPACING_TY
-
 const ToastContext = React.createContext<{
   addToast: (text: string, options?: ToastOptions) => number
   removeToast: (id: number) => void
+  clearToasts: (options?: { type?: ToastOptions['type'] }) => void
 }>({
   addToast: () => -1,
-  removeToast: () => {}
+  removeToast: () => {},
+  clearToasts: () => {}
 })
 
 const defaultOptions = {
   timeout: 8000,
-  error: false,
   sticky: false
 }
 
@@ -54,6 +51,14 @@ const ToastProvider = ({ children }: Props) => {
 
   const removeToast = useCallback((tId: number) => {
     setToasts((_toasts) => _toasts.filter((_t) => _t.id !== tId))
+  }, [])
+
+  const clearToasts = useCallback((options?: { type?: ToastOptions['type'] }) => {
+    setToasts((prevToasts) => {
+      if (!options?.type) return []
+
+      return prevToasts.filter((toast) => toast.type !== options.type)
+    })
   }, [])
 
   const addToast = useCallback(
@@ -81,16 +86,17 @@ const ToastProvider = ({ children }: Props) => {
     [setToasts, removeToast]
   )
 
-  const topInset = insets.top + HEADER_HEIGHT + (isWeb ? 0 : ADDITIONAL_TOP_SPACING_MOBILE)
+  const topInset = insets.top + (isWeb ? HEADER_HEIGHT : SPACING_SM)
 
   return (
     <ToastContext.Provider
       value={useMemo(
         () => ({
           addToast,
-          removeToast
+          removeToast,
+          clearToasts
         }),
-        [addToast, removeToast]
+        [addToast, removeToast, clearToasts]
       )}
     >
       <Portal hostName="global">

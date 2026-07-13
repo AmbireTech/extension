@@ -3,7 +3,9 @@ function categorizeRequests(requests: string[]) {
     'https://api.github.com/repos/MetaMask/eth-phishing-detect/contents/src/config.json?ref=main',
     'https://api.github.com/repos/phantom/blocklist/contents/blocklist.yaml?ref=master',
     'https://raw.githubusercontent.com/phantom/blocklist/master/blocklist.yaml',
-    'https://raw.githubusercontent.com/MetaMask/eth-phishing-detect/main/src/config.json'
+    'https://raw.githubusercontent.com/MetaMask/eth-phishing-detect/main/src/config.json',
+    'http://localhost:5000/apdu',
+    'http://localhost:5000/events'
   ]
   const thirdPartyHostsAllowList = [
     // Bundles
@@ -12,7 +14,8 @@ function categorizeRequests(requests: string[]) {
     'bundler.biconomy.io',
     // Swap & Bridge quotes
     'li.quest',
-    'dedicated-backend.bungee.exchange',
+    'dedicated-backend.socket.tech',
+    'trade-api.gateway.uniswap.org',
     // RPCs
     '480.rpc.thirdweb.com',
     'unichain-rpc.publicnode.com',
@@ -30,17 +33,32 @@ function categorizeRequests(requests: string[]) {
     'api.llama.fi',
     'base-mainnet.public.blastapi.io',
     'rpc.monad.xyz',
+    'api.gelato.cloud',
+    'ledger.com',
+    'rpc.mainnet.citrea.xyz',
+    'crypto-assets-service.api.ledger.com',
+    'nft.api.live.ledger.com',
+    'challenges.cloudflare.com',
+    'optimistic.etherscan.io',
     // Token images
-    'static.debank.com'
+    'static.debank.com',
+    'tokenlist.superfluid.org',
+    'strapi.jumper.exchange',
+    'assets.coingecko.com',
+    'coin-images.coingecko.com'
   ]
 
   const reqs = requests.reduce(
     (acc, urlStr) => {
       const url = new URL(urlStr)
       const isAmbire = url.hostname.endsWith('.ambire.com')
+      // Cloudflare Turnstile serves its challenge-platform from rotating
+      // codename subdomains (e.g. brunhild.challenges.cloudflare.com).
+      const isCloudflareChallenge = url.hostname.endsWith('.challenges.cloudflare.com')
       const isThirdPartyAllowed =
         thirdPartyExactMatchAllowlist.includes(urlStr) ||
-        thirdPartyHostsAllowList.includes(url.hostname)
+        thirdPartyHostsAllowList.includes(url.hostname) ||
+        isCloudflareChallenge
 
       if (url.hostname === 'relayer.ambire.com' && url.pathname.includes('/multi-hints')) {
         acc.hints.push(urlStr)
@@ -78,7 +96,6 @@ function categorizeRequests(requests: string[]) {
   )
 
   if (reqs.uncategorized.length) {
-    // eslint-disable-next-line no-console
     console.log(
       "⚠️ We've detected some uncategorized requests. Please review them carefully!" +
         ' If any are known and expected, make sure to include them in the appropriate categories above.',

@@ -72,9 +72,8 @@ const useErc5792 = () => {
     if (!provider) return
 
     let receipt = null
-    // eslint-disable-next-line no-constant-condition
+
     while (true) {
-      // eslint-disable-next-line no-await-in-loop
       const callStatus: any = await provider.request({
         method: 'wallet_getCallsStatus',
         params: [callsId]
@@ -88,7 +87,6 @@ const useErc5792 = () => {
         throw new Error('Error, try again')
       }
 
-      // eslint-disable-next-line no-await-in-loop
       await delayPromise(1500)
     }
 

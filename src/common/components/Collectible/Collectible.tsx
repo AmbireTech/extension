@@ -3,13 +3,13 @@ import { Animated, Pressable, View, ViewStyle } from 'react-native'
 
 import { Network } from '@ambire-common/interfaces/network'
 import { SelectedCollectible } from '@common/components/CollectibleModal'
+import { useCustomHover } from '@common/hooks/useHover'
 import useTheme from '@common/hooks/useTheme'
 import { formatCollectiblePrice } from '@common/modules/dashboard/components/Collections/Collection/Collection'
 import flexbox from '@common/styles/utils/flexbox'
 import { NFT_CDN_URL } from '@env'
 import ImageIcon from '@web/assets/svg/ImageIcon'
 import ManifestImage from '@web/components/ManifestImage'
-import { useCustomHover } from '@web/hooks/useHover'
 
 import styles, { COLLECTIBLE_SIZE } from './styles'
 

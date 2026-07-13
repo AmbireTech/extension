@@ -3,10 +3,10 @@ module.exports = function (api) {
   api.cache(true)
 
   const pathAliases = {
+    '@': './src/ambire-common/src',
+    '@test': './src/ambire-common/test',
     '@ambire-common': './src/ambire-common/src',
     '@contracts': './src/ambire-common/contracts',
-    // v1 is legacy and should be removed when v1 imports are replaced with @ambire-common
-    '@ambire-common-v1': './src/ambire-common/v1',
     '@common': './src/common',
     '@mobile': './src/mobile',
     '@web': './src/web',
@@ -20,8 +20,6 @@ module.exports = function (api) {
       ['@babel/plugin-transform-export-namespace-from'],
       ['transform-inline-environment-variables'],
       ['@babel/plugin-proposal-decorators', { legacy: true }],
-      ['@babel/plugin-transform-class-properties', { loose: true }],
-      ['@babel/plugin-transform-private-methods', { loose: true }],
       [
         'module:react-native-dotenv',
         {
@@ -37,6 +35,11 @@ module.exports = function (api) {
     ...config,
     plugins: [
       ...config.plugins,
+      // Required for @Reflect.metadata() decorators on class properties (e.g. ProviderController).
+      // Must run after the decorators transform, and use loose: true to match legacy decorator mode.
+      // Not included in mobile config as Hermes handles class properties natively and these cause issues there.
+      ['@babel/plugin-transform-class-properties', { loose: true }],
+      ['@babel/plugin-transform-private-methods', { loose: true }],
       [
         'module-resolver',
         {
@@ -82,16 +85,23 @@ module.exports = function (api) {
             '.json'
           ],
           alias: {
-            // alias for better crypto performance on mobile
-            'scrypt-js': './src/common/config/alias/scrypt.js',
-            // alias for better crypto performance on mobile
-            '@ethersproject/pbkdf2': './src/common/config/alias/pbkdf2.js',
-            // node's crypto polyfill for React Native
+            // Lazy load eth-crypto to prevent load-time errors in the Hermes engine
+            'eth-crypto': './src/mobile/shims/eth-crypto',
+            // Shim scrypt-js to use native implementations, drastically improving keystore performance
+            'scrypt-js': './src/mobile/shims/scrypt-js',
+            // Shim pbkdf2 to use native implementations for better performance during wallet operations
+            pbkdf2: './src/mobile/shims/pbkdf2',
+            // Use react-native-quick-crypto for high-performance native crypto operations instead of slow JS polyfills
             crypto: 'react-native-quick-crypto',
-            // stream-browserify: used by react-native-quick-crypto
-            stream: 'stream-browserify',
-            // @craftzdog/react-native-buffer: used by react-native-quick-crypto
-            buffer: '@craftzdog/react-native-buffer',
+            // Polyfill Node.js built-ins for compatibility with libraries using Node.js features (e.g. ethers.js, stream-based libs)
+            stream: 'readable-stream',
+            // Provide Buffer global for cryptographic and binary data processing
+            buffer: 'buffer',
+            // Redirect http/https to browser-compatible versions for networking libraries
+            http: 'stream-http',
+            https: 'https-browserify',
+            // Provide compression support for libraries requiring Node's zlib
+            zlib: 'browserify-zlib',
 
             // absolute imports
             ...pathAliases

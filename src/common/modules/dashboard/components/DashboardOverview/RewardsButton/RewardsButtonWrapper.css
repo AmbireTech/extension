@@ -1,0 +1,43 @@
+@property --angle {
+  syntax: '<angle>';
+  initial-value: 0deg;
+  inherits: false;
+}
+
+.rewards-button-wrapper {
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  height: 26px;
+  padding: 0 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background:
+    linear-gradient(#000, #000) padding-box,
+    linear-gradient(var(--angle), rgba(255, 255, 255, 0.12) 0%, #d7ff00 100%) border-box;
+  background-position: -100% -100%;
+  cursor: pointer;
+  outline: none;
+  transition: all 0.25s ease;
+}
+
+.rewards-button-wrapper:not(:hover) {
+  background:
+    linear-gradient(#000, #000) padding-box,
+    linear-gradient(#000, #000) border-box;
+}
+
+.rewards-button-wrapper:hover {
+  animation: rewards-border-spin 3s linear infinite;
+  box-shadow: 0 0 12px 4px rgba(215, 255, 0, 0.18);
+}
+
+@keyframes rewards-border-spin {
+  from {
+    --angle: 0deg;
+  }
+  to {
+    --angle: 360deg;
+  }
+}

@@ -2,11 +2,17 @@ import Fuse from 'fuse.js'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { FlatList } from 'react-native'
+import { isAddress } from 'viem'
 
 import { Account as AccountType } from '@ambire-common/interfaces/account'
 import { isSmartAccount } from '@ambire-common/libs/account/account'
 import useController from '@common/hooks/useController'
+import {
+  ACCOUNT_SELECT_ACCOUNT_HEIGHT,
+  ACCOUNT_SELECT_ACCOUNT_MB
+} from '@common/modules/account-select/components/Account/styles'
 
+const ITEM_HEIGHT = ACCOUNT_SELECT_ACCOUNT_HEIGHT + ACCOUNT_SELECT_ACCOUNT_MB
 const useAccountsList = ({
   flatlistRef
 }: {
@@ -24,6 +30,7 @@ const useAccountsList = ({
     state: { domains }
   } = useController('DomainsController')
   const { accounts } = useController('AccountsController').state
+  const { keys } = useController('KeystoreController').state
   const {
     state: { account: selectedAccount }
   } = useController('SelectedAccountController')
@@ -34,21 +41,37 @@ const useAccountsList = ({
       accounts.map((account) => ({
         account,
         label: account.preferences.label.toLowerCase(),
-        domain: domains[account.addr]?.ens?.toLowerCase().trim() || '',
+        keyLabels: keys
+          .filter((key) => account.associatedKeys.includes(key.addr))
+          .map((key) => `${key.label} ${key.type}`.toLowerCase())
+          .join(' '),
+        ens: domains[account.addr]?.ens?.toLowerCase().trim() || '',
+        namoshi: domains[account.addr]?.namoshi?.toLowerCase().trim() || '',
         address: account.addr.toLowerCase(),
         smart: isSmartAccount(account) ? 'smart' : ''
       })),
-    [accounts, domains]
+    [accounts, domains, keys]
   )
 
   const filteredAccounts = useMemo(() => {
     if (!search) return accounts
 
+    // Exact match if the search is an address
+    if (isAddress(search)) {
+      const account = accounts.find(
+        (account) => account.addr.toLowerCase() === search.toLowerCase()
+      )
+
+      return account ? [account] : []
+    }
+
     const fuse = new Fuse(searchableAccounts, {
       keys: [
         { name: 'label', weight: 0.5 },
-        { name: 'domain', weight: 0.3 },
+        { name: 'ens', weight: 0.3 },
+        { name: 'namoshi', weight: 0.3 },
         { name: 'address', weight: 0.1 },
+        { name: 'keyLabels', weight: 0.2 },
         { name: 'smart', weight: 0.1 }
       ],
       threshold: 0.3,
@@ -86,16 +109,14 @@ const useAccountsList = ({
 
   const getItemLayout = useCallback(
     (_: any, index: number) => ({
-      length: 64,
-      offset: 64 * index,
+      length: ITEM_HEIGHT,
+      offset: ITEM_HEIGHT * index,
       index
     }),
     []
   )
 
-  // Scrolls to the selected account in the FlatList
-  // It's complexity comes from the fact that the FlatList is not mounted when the component is first rendered
-  // and so are the accounts.
+  // Scrolls to the selected account in the FlatList.
   const scrollToSelectedAccount = useCallback(
     (attempt: number = 0) => {
       const MAX_ATTEMPTS = 3
@@ -103,27 +124,23 @@ const useAccountsList = ({
         clearTimeout(timeoutRef.current)
         timeoutRef.current = null
       }
-      if (attempt > MAX_ATTEMPTS) {
-        // Display the accounts after reaching MAX_ATTEMPTS
+
+      if (attempt > MAX_ATTEMPTS || !accounts.length || selectedAccountIndex === -1) {
         setShouldDisplayAccounts(true)
         return
       }
-      if (
-        accounts.length &&
-        selectedAccountIndex !== -1 &&
-        flatlistRef?.current &&
-        !shouldDisplayAccounts
-      ) {
-        try {
-          flatlistRef.current.scrollToIndex({
-            animated: false,
-            index: selectedAccountIndex
-          })
-          setShouldDisplayAccounts(true)
-        } catch (error) {
-          console.warn(`Failed to scroll to the selected account. Attempt ${attempt}`, error)
-          timeoutRef.current = setTimeout(() => scrollToSelectedAccount(attempt + 1), 100)
-        }
+
+      if (flatlistRef?.current && !shouldDisplayAccounts) {
+        // Uses scrollToOffset (instead of scrollToIndex) so that FlatList does NOT need to
+        // pre-render every item between 0 and selectedAccountIndex
+        flatlistRef.current.scrollToOffset({
+          animated: false,
+          offset: selectedAccountIndex * ITEM_HEIGHT
+        })
+        setShouldDisplayAccounts(true)
+      } else if (!shouldDisplayAccounts) {
+        // Retry
+        timeoutRef.current = setTimeout(() => scrollToSelectedAccount(attempt + 1), 100)
       }
     },
     [accounts.length, flatlistRef, shouldDisplayAccounts, selectedAccountIndex]

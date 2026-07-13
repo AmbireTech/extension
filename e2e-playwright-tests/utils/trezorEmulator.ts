@@ -122,6 +122,8 @@ export const setup = async (trezorUserEnvLink, options) => {
 }
 
 export const initTrezorConnect = async (trezorUserEnvLink, options?) => {
+  // Ensure stale singleton state from a previous test run is cleared.
+  TrezorConnect.dispose()
   TrezorConnect.removeAllListeners()
 
   TrezorConnect.on('device-connect', (device) => {
@@ -150,4 +152,9 @@ export const initTrezorConnect = async (trezorUserEnvLink, options?) => {
     // connectSrc: process.env.TREZOR_CONNECT_SRC,
     ...options
   })
+}
+
+export const disposeTrezorConnect = () => {
+  TrezorConnect.removeAllListeners()
+  TrezorConnect.dispose()
 }

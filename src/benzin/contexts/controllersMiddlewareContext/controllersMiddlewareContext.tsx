@@ -1,5 +1,4 @@
 import { EventEmitter as Emitter } from 'events'
-/* eslint-disable @typescript-eslint/no-floating-promises */
 import React, { useCallback, useContext, useEffect, useMemo, useRef } from 'react'
 
 import { networks } from '@ambire-common/consts/networks'
@@ -11,9 +10,9 @@ import { StorageController } from '@ambire-common/controllers/storage/storage'
 import { ExplorerBaseControllersMappingType } from '@benzin/constants/controllersMapping'
 import { ControllersMiddlewareContext } from '@common/contexts/controllersMiddlewareContext'
 import { ControllerStoreContext } from '@common/contexts/controllerStoreContext'
-import { Action } from '@web/extension-services/background/actions'
-import { storage } from '@web/extension-services/background/webapi/storage'
-import eventBus from '@web/extension-services/event/eventBus'
+import eventBus from '@common/services/event/eventBus'
+import { storage } from '@common/services/storage'
+import { Action, MethodAction } from '@common/types/actions'
 
 export const ControllersMiddlewareProvider: React.FC<{
   children: React.ReactNode
@@ -23,6 +22,7 @@ export const ControllersMiddlewareProvider: React.FC<{
   useEffect(() => {
     controllerStore.init(
       Object.keys(controllers.current) as (keyof ExplorerBaseControllersMappingType)[],
+      [],
       (allCtrls: any) => {
         allCtrls.forEach((ctrlName: any) => {
           controllerStore.update(ctrlName, (controllers.current as any)[ctrlName])
@@ -75,7 +75,8 @@ export const ControllersMiddlewareProvider: React.FC<{
 
       ctrls.DomainsController = new DomainsController({
         eventEmitterRegistry: eventEmitterRegistry.current,
-        providers: ctrls.ProvidersController.providers
+        providers: ctrls.ProvidersController.providers,
+        isNetworkEnabled: () => true
       })
 
       ctrls.ContractNamesController = new ContractNamesController({
@@ -87,7 +88,7 @@ export const ControllersMiddlewareProvider: React.FC<{
     })()
   )
 
-  const dispatch = useCallback((action: Action) => {
+  const dispatch = useCallback((action: MethodAction | Action) => {
     if (action.type === 'method') {
       const { ctrlName, method, args } = action.params
 

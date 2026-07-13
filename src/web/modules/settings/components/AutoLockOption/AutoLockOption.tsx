@@ -3,18 +3,14 @@ import { useTranslation } from 'react-i18next'
 
 import CheckIcon from '@common/assets/svg/CheckIcon'
 import Text from '@common/components/Text'
+import { AUTO_LOCK_TIMES, getAutoLockLabel } from '@common/controllers/auto-lock'
 import useController from '@common/hooks/useController'
-import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
+import { AnimatedPressable, useCustomHover } from '@common/hooks/useHover'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import spacings from '@common/styles/spacings'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
-import {
-  AUTO_LOCK_TIMES,
-  getAutoLockLabel
-} from '@web/extension-services/background/controllers/auto-lock'
-import { AnimatedPressable, useCustomHover } from '@web/hooks/useHover'
 
 type Props = {
   time: AUTO_LOCK_TIMES
@@ -23,8 +19,10 @@ type Props = {
 const AutoLockOption: FC<Props> = ({ time }: Props) => {
   const { t } = useTranslation()
   const { theme } = useTheme()
-  const { dispatch } = useControllersMiddleware()
-  const { autoLockTime } = useController('AutoLockController').state
+  const {
+    state: { autoLockTime },
+    dispatch: autoLockDispatch
+  } = useController('AutoLockController')
   const { addToast } = useToast()
   const isSelected = useMemo(() => autoLockTime === time, [autoLockTime, time])
 
@@ -33,14 +31,19 @@ const AutoLockOption: FC<Props> = ({ time }: Props) => {
     values: {
       from: theme.secondaryBackground,
       to: theme.tertiaryBackground
-    },
-    forceHoveredStyle: isSelected
+    }
   })
 
   return (
     <AnimatedPressable
       onPress={() => {
-        dispatch({ type: 'AUTO_LOCK_CONTROLLER_SET_AUTO_LOCK_TIME', params: time })
+        autoLockDispatch({
+          type: 'method',
+          params: {
+            method: 'setAutoLockTime',
+            args: [time]
+          }
+        })
         addToast(t(`Auto lock time updated to ${getAutoLockLabel(time)}.`))
       }}
       disabled={!!isSelected}
@@ -55,7 +58,10 @@ const AutoLockOption: FC<Props> = ({ time }: Props) => {
           borderWidth: 1,
           borderColor: theme.secondaryBorder
         },
-        animStyle
+        animStyle,
+        isSelected && {
+          backgroundColor: theme.tertiaryBackground
+        }
       ]}
       {...bindAnim}
     >

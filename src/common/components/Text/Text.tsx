@@ -1,6 +1,7 @@
 import React from 'react'
 import { ColorValue, StyleSheet, Text as RNText, TextProps, TextStyle } from 'react-native'
 
+import { isAndroid } from '@common/config/env'
 import {
   FONT_FAMILIES,
   GEIST_MONO_FONT_FAMILIES,
@@ -97,7 +98,8 @@ const Text: React.FC<Props> = ({
         { color: theme.primaryText },
         textStyles[type],
         {
-          fontFamily: textWeights[weight]
+          fontFamily: textWeights[weight],
+          ...(isAndroid ? { includeFontPadding: false } : {})
         },
         !!underline && styles.underline,
         !!fontSize && {
