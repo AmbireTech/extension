@@ -5,10 +5,10 @@ import { useModalize } from 'react-native-modalize'
 
 import AddCircularIcon from '@common/assets/svg/AddCircularIcon'
 import AddFromCurrentRecoveryPhraseIcon from '@common/assets/svg/AddFromCurrentRecoveryPhraseIcon'
+import GridPlusIcon from '@common/assets/svg/GridPlusIcon'
 import HWIcon from '@common/assets/svg/HWIcon'
 import ImportAccountIcon from '@common/assets/svg/ImportAccountIcon'
 import ImportJsonIcon from '@common/assets/svg/ImportJsonIcon'
-import GridPlusIcon from '@common/assets/svg/GridPlusIcon'
 import LedgerBadgeIcon from '@common/assets/svg/LedgerBadgeIcon'
 import PrivateKeyIcon from '@common/assets/svg/PrivateKeyIcon'
 import ReceiveIcon from '@common/assets/svg/ReceiveIcon'
@@ -53,7 +53,27 @@ const AddAccount = ({
   const { seeds } = useController('KeystoreController').state
 
   const optionsHW = useMemo(() => {
-    if (isMobile) return []
+    if (isMobile)
+      return [
+        {
+          key: 'ledger',
+          text: t('Ledger'),
+          icon: LedgerBadgeIcon,
+          onPress: () => {
+            goToNextRoute(ROUTES.ledgerConnect)
+          },
+          testID: 'ledger-option'
+        },
+        {
+          key: 'trezor',
+          text: t('Trezor'),
+          icon: TrezorBadgeIcon,
+          onPress: () => {
+            goToNextRoute(ROUTES.trezorConnect)
+          },
+          testID: 'trezor-option'
+        }
+      ]
 
     return [
       {
@@ -71,7 +91,7 @@ const AddAccount = ({
         text: t('Ledger'),
         icon: LedgerBadgeIcon,
         onPress: () => {
-          goToNextRoute(WEB_ROUTES.ledgerConnect)
+          goToNextRoute(ROUTES.ledgerConnect)
         },
         testID: 'ledger-option'
       },

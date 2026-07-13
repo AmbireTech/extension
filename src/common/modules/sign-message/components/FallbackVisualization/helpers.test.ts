@@ -18,7 +18,9 @@ describe('getParsedMessageValue', () => {
   test('shortens long EIP-712 hex string values from any field', () => {
     const value = `0x${'1'.repeat(100)}`
 
-    expect(getParsedMessageValue('messageHash', value)).toHaveLength(EIP712_VALUE_PREVIEW_MAX_LENGTH)
+    expect(getParsedMessageValue('messageHash', value)).toHaveLength(
+      EIP712_VALUE_PREVIEW_MAX_LENGTH
+    )
     expect(isParsedMessageValueShortened('messageHash', value)).toBe(true)
   })
 

@@ -303,8 +303,7 @@ const FallbackVisualization: FC<{
             <View>
               {parsedRows.map((i) => {
                 const plainValue =
-                  typeof i.componentToReturn === 'string' ||
-                  typeof i.componentToReturn === 'number'
+                  typeof i.componentToReturn === 'string' || typeof i.componentToReturn === 'number'
                     ? i.componentToReturn
                     : null
                 const hasPlainValue = plainValue !== null

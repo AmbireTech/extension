@@ -66,6 +66,11 @@
         <category android:name="android.intent.category.BROWSABLE"/>
         <data android:scheme="https" android:host="ambire.com" android:pathPrefix="/wc"/>
       </intent-filter>
+      <!-- Detects when a Ledger device is attached over USB (DMK RN HID transport discovery) -->
+      <intent-filter>
+        <action android:name="android.hardware.usb.action.USB_DEVICE_ATTACHED"/>
+      </intent-filter>
+      <meta-data android:name="android.hardware.usb.action.USB_DEVICE_ATTACHED" android:resource="@xml/usb_device_filter"/>
     </activity>
   </application>
 </manifest>

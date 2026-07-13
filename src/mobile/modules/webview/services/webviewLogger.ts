@@ -1,3 +1,5 @@
+import * as richJson from '@ambire-common/libs/richJson/richJson'
+
 import { encode } from './bridgeCodec'
 
 declare global {
@@ -40,7 +42,7 @@ if (typeof __DEV__ !== 'undefined' && __DEV__) {
         try {
           if (typeof arg === 'object' && arg !== null) {
             // Limited depth/size to avoid bridge congestion
-            const str = JSON.stringify(arg)
+            const str = richJson.stringify(arg)
             return str.length > 1000 ? `${str.substring(0, 1000)}... (truncated)` : str
           }
           return String(arg)

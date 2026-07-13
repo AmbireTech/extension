@@ -22,6 +22,7 @@ import SafeOwners from '@common/modules/sign-account-op/components/SafeOwners'
 import SafetyChecksOverlay from '@common/modules/sign-account-op/components/SafetyChecksOverlay'
 import SectionHeading from '@common/modules/sign-account-op/components/SectionHeading'
 import Simulation from '@common/modules/sign-account-op/components/Simulation'
+import TenderlySimulation from '@common/modules/sign-account-op/components/TenderlySimulation'
 import KeySelect from '@common/modules/sign-message/components/KeySelect'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
@@ -362,6 +363,7 @@ const SignAccountOpScreen = () => {
                 />
               </>
             )}
+            <TenderlySimulation />
             {signAccountOpState?.hasSafeApiFailed && (
               <Alert
                 size="sm"
@@ -371,7 +373,12 @@ const SignAccountOpScreen = () => {
                 style={spacings.mt}
               />
             )}
-            {isViewOnly && <NoKeysToSignAlert chainId={signAccountOpState?.accountOp?.chainId} />}
+            {isViewOnly && (
+              <NoKeysToSignAlert
+                style={spacings.mt}
+                chainId={signAccountOpState?.accountOp?.chainId}
+              />
+            )}
           </ScrollView>
         </TabLayoutWrapperMainContent>
       </TabLayoutContainer>
