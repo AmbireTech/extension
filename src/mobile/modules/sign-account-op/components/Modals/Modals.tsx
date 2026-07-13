@@ -4,11 +4,13 @@ import { useTranslation } from 'react-i18next'
 import BottomSheet from '@common/components/BottomSheet'
 import DualChoiceWarningModal from '@common/components/DualChoiceWarningModal'
 import useController from '@common/hooks/useController'
+import LedgerConnectModal from '@common/modules/hardware-wallets/components/LedgerConnectModal'
 import GasFeeUpdatedModal from '@common/modules/sign-account-op/components/GasFeeUpdatedModal/GasFeeUpdatedModal'
 import SignAccountOpHardwareWalletSigningModal from '@common/modules/sign-account-op/components/SignAccountOpHardwareWalletSigningModal'
 import { ModalsProps } from '@common/modules/sign-account-op/types/modals'
 import spacings from '@common/styles/spacings'
 import text from '@common/styles/utils/text'
+import trezorDeeplinkService from '@mobile/services/trezor/trezorDeeplinkService'
 
 const Modals: FC<ModalsProps> = ({
   renderedButNotNecessarilyVisibleModal,
@@ -24,15 +26,21 @@ const Modals: FC<ModalsProps> = ({
   acknowledgeWarning,
   dismissWarning,
   autoOpen,
-  actionType
+  actionType,
+  shouldDisplayLedgerConnectModal,
+  handleDismissLedgerConnectModal
 }) => {
   const { t } = useTranslation()
-  const { signAccountOpController: swapAndBridgeSignAccountOp } =
-    useController('SwapAndBridgeController').state
   const {
-    state: { signAccountOpController: transferSignAccountOp }
+    state: { signAccountOpController: swapAndBridgeSignAccountOp },
+    dispatch: swapAndBridgeDispatch
+  } = useController('SwapAndBridgeController')
+  const {
+    state: { signAccountOpController: transferSignAccountOp },
+    dispatch: transferDispatch
   } = useController('TransferController')
-  const currentSignAccountOp = useController('SignAccountOpController').state
+  const { state: currentSignAccountOp, dispatch: signAccountOpDispatch } =
+    useController('SignAccountOpController')
 
   if (renderedButNotNecessarilyVisibleModal === 'warnings') {
     return (
@@ -98,8 +106,12 @@ const Modals: FC<ModalsProps> = ({
   }
 
   if (renderedButNotNecessarilyVisibleModal === 'ledger-connect') {
-    // TODO: impl ledger connect modal
-    return null
+    return (
+      <LedgerConnectModal
+        isVisible={shouldDisplayLedgerConnectModal}
+        handleClose={handleDismissLedgerConnectModal}
+      />
+    )
   }
 
   if (renderedButNotNecessarilyVisibleModal === 'hw-sign' && signAccountOpState) {
@@ -123,6 +135,27 @@ const Modals: FC<ModalsProps> = ({
         hardwareWalletSigningRequest={signAccountOpState.hardwareWalletSigningRequest}
         accountOp={signAccountOpState.accountOp}
         actionType={actionType}
+        cancelReq={() => {
+          void trezorDeeplinkService.signingCleanup()
+
+          if (actionType === 'swapAndBridge') {
+            return swapAndBridgeDispatch({
+              type: 'method',
+              params: { method: 'cancelSignReq', args: [] }
+            })
+          }
+          if (actionType === 'transfer') {
+            return transferDispatch({
+              type: 'method',
+              params: { method: 'cancelSignReq', args: [] }
+            })
+          }
+
+          signAccountOpDispatch({
+            type: 'method',
+            params: { method: 'cancelSignReq', args: [] }
+          })
+        }}
       />
     )
   }

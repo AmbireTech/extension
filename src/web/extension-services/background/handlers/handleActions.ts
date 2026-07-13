@@ -5,10 +5,10 @@ import wait from '@ambire-common/utils/wait'
 import { Action, MethodAction } from '@common/types/actions'
 import { browser } from '@web/constants/browserapi'
 import { Port, PortMessenger } from '@web/extension-services/messengers'
+import LedgerKeyIterator from '@common/modules/hardware-wallet/libs/ledgerKeyIterator'
 import LatticeKeyIterator from '@web/modules/hardware-wallet/libs/latticeKeyIterator'
-import LedgerKeyIterator from '@web/modules/hardware-wallet/libs/ledgerKeyIterator'
 import QrKeyIterator from '@web/modules/hardware-wallet/libs/qrKeyIterator/qrKeyIterator'
-import TrezorKeyIterator from '@web/modules/hardware-wallet/libs/trezorKeyIterator'
+import TrezorKeyIterator from '@common/modules/hardware-wallet/libs/trezorKeyIterator'
 
 import sessionStorage from '../webapi/sessionStorage'
 

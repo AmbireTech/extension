@@ -19,6 +19,8 @@ import {
   respondToWalletConnectRequest
 } from '@mobile/modules/wallet-connect/services/walletConnectService'
 import getWebviewBundleUri from '@mobile/modules/webview/services/getWebviewBundleUri'
+import ledgerTransportService from '@mobile/services/ledger/ledgerTransportService'
+import trezorDeeplinkService from '@mobile/services/trezor/trezorDeeplinkService'
 
 import { decode, encode } from './bridgeCodec'
 
@@ -370,6 +372,135 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, object>((_, ref) => {
             } catch (fetchErr: any) {
               sendResponse(data.id, null, fetchErr.message || 'Network request failed')
             }
+          }
+          break
+
+        // --- LEDGER DEVICE DELEGATION HANDLERS ---
+        // The worker-side LedgerController forwards device operations here; the
+        // actual BLE/USB transport + Ethereum app run natively in
+        // ledgerTransportService. Scanning/connecting is driven separately from the
+        // RN connect screen (via the useLedger hook), not over this bridge.
+        case 'ledger.getAddress':
+          try {
+            const address = await ledgerTransportService.getAddress(data.payload.path)
+            sendResponse(data.id, address)
+          } catch (err: any) {
+            sendResponse(data.id, null, err.message)
+          }
+          break
+        case 'ledger.retrieveAddresses':
+          try {
+            const addresses: string[] = []
+            // Serialized one-by-one (the service queue enforces this too); the
+            // Ledger can't handle parallel getAddress calls.
+            for (const path of data.payload.paths) {
+              addresses.push(await ledgerTransportService.getAddress(path))
+            }
+            sendResponse(data.id, addresses)
+          } catch (err: any) {
+            sendResponse(data.id, null, err.message)
+          }
+          break
+        case 'ledger.signPersonalMessage':
+          try {
+            const sig = await ledgerTransportService.signPersonalMessage(
+              data.payload.path,
+              data.payload.messageHex
+            )
+            sendResponse(data.id, sig)
+          } catch (err: any) {
+            sendResponse(data.id, null, err.message)
+          }
+          break
+        case 'ledger.signTransaction':
+          try {
+            const sig = await ledgerTransportService.signTransaction(
+              data.payload.path,
+              data.payload.rawTxHex
+            )
+            sendResponse(data.id, sig)
+          } catch (err: any) {
+            sendResponse(data.id, null, err.message)
+          }
+          break
+        case 'ledger.signTypedData':
+          try {
+            const sig = await ledgerTransportService.signTypedData(
+              data.payload.path,
+              data.payload.typedData
+            )
+            sendResponse(data.id, sig)
+          } catch (err: any) {
+            sendResponse(data.id, null, err.message)
+          }
+          break
+        case 'ledger.signingCleanup':
+          // Flushes the device's pending command state after an abandoned/rejected
+          // sign so the next command starts clean. Does NOT cancel an in-flight
+          // on-device prompt (that still resolves on the device). Best-effort.
+          try {
+            await ledgerTransportService.signingCleanup()
+            sendResponse(data.id, null)
+          } catch (err: any) {
+            sendResponse(data.id, null, err.message)
+          }
+          break
+        case 'ledger.cleanUp':
+          try {
+            await ledgerTransportService.cleanUp()
+            sendResponse(data.id, null)
+          } catch (err: any) {
+            sendResponse(data.id, null, err.message)
+          }
+          break
+
+        // --- TREZOR DEVICE DELEGATION HANDLERS ---
+        // The worker-side TrezorController forwards each Trezor Connect SDK call
+        // here; the SDK (@trezor/connect-mobile) runs natively in
+        // trezorDeeplinkService and delegates to the Trezor Suite app via
+        // deep links. Each handler returns the raw `{ success, payload }` connect
+        // response so the shared TrezorSigner / TrezorKeyIterator can inspect it.
+        case 'trezor.ethereumGetAddress':
+          try {
+            sendResponse(data.id, await trezorDeeplinkService.ethereumGetAddress(data.payload))
+          } catch (err: any) {
+            sendResponse(data.id, null, err.message)
+          }
+          break
+        case 'trezor.getPublicKey':
+          try {
+            sendResponse(data.id, await trezorDeeplinkService.getPublicKey(data.payload))
+          } catch (err: any) {
+            sendResponse(data.id, null, err.message)
+          }
+          break
+        case 'trezor.ethereumSignTransaction':
+          try {
+            sendResponse(data.id, await trezorDeeplinkService.ethereumSignTransaction(data.payload))
+          } catch (err: any) {
+            sendResponse(data.id, null, err.message)
+          }
+          break
+        case 'trezor.ethereumSignTypedData':
+          try {
+            sendResponse(data.id, await trezorDeeplinkService.ethereumSignTypedData(data.payload))
+          } catch (err: any) {
+            sendResponse(data.id, null, err.message)
+          }
+          break
+        case 'trezor.ethereumSignMessage':
+          try {
+            sendResponse(data.id, await trezorDeeplinkService.ethereumSignMessage(data.payload))
+          } catch (err: any) {
+            sendResponse(data.id, null, err.message)
+          }
+          break
+        case 'trezor.signingCleanup':
+          try {
+            await trezorDeeplinkService.signingCleanup()
+            sendResponse(data.id, null)
+          } catch (err: any) {
+            sendResponse(data.id, null, err.message)
           }
           break
 
