@@ -6,7 +6,7 @@ import { useModalize } from 'react-native-modalize'
 
 import { EstimationStatus } from '@ambire-common/controllers/estimation/types'
 import { getFeeSpeedIdentifier } from '@ambire-common/controllers/signAccountOp/helper'
-import { FeeSpeed, SpeedCalc } from '@ambire-common/controllers/signAccountOp/signAccountOp'
+import { FeeSpeed, SpeedCalc } from '@ambire-common/interfaces/signAccountOp'
 import { Warning } from '@ambire-common/interfaces/signAccountOp'
 import { FeePaymentOption } from '@ambire-common/libs/estimate/interfaces'
 import { GasSpeeds } from '@ambire-common/services/bundlers/types'

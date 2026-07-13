@@ -2,7 +2,7 @@ import { isHexString } from 'ethers'
 import React, { FC, useEffect, useMemo, useState } from 'react'
 import { View } from 'react-native'
 
-import { SigningStatus } from '@ambire-common/controllers/signAccountOp/signAccountOp'
+import { SigningStatus } from '@ambire-common/interfaces/signAccountOp'
 import { Network } from '@ambire-common/interfaces/network'
 import { isSmartAccount } from '@ambire-common/libs/account/account'
 import SuccessIcon from '@common/assets/svg/SuccessIcon'
