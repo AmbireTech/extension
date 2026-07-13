@@ -11,10 +11,10 @@ import Alert from '@common/components/Alert'
 import Banner from '@common/components/Banner'
 import NetworkAvailableFeatures from '@common/components/NetworkAvailableFeatures'
 import Text from '@common/components/Text'
-import { isMobile, isWeb } from '@common/config/env'
 import useDappInfo from '@common/hooks/useDappInfo'
 import useResponsiveActionWindow from '@common/hooks/useResponsiveActionWindow'
 import useTheme from '@common/hooks/useTheme'
+import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import getStyles from '@common/modules/action-requests/styles/styles'
 import spacings, { SPACING, SPACING_MD, SPACING_SM, SPACING_TY } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
@@ -50,6 +50,7 @@ const UpdateChain = ({
   const { t } = useTranslation()
   const { name, icon } = useDappInfo(userRequest)
   const { responsiveSizeMultiplier } = useResponsiveActionWindow({ maxBreakpoints: 2 })
+  const { isCompactLayout, isTwoColumnLayout } = useCompactActionRequestLayout()
 
   return (
     <>
@@ -58,8 +59,8 @@ const UpdateChain = ({
           weight="medium"
           fontSize={20 * responsiveSizeMultiplier}
           style={{
-            marginBottom: isMobile ? SPACING : SPACING_MD * responsiveSizeMultiplier,
-            textAlign: isMobile ? 'center' : 'left'
+            marginBottom: isCompactLayout ? SPACING : SPACING_MD * responsiveSizeMultiplier,
+            textAlign: isCompactLayout ? 'center' : 'left'
           }}
         >
           {t('Update network')}
@@ -69,7 +70,7 @@ const UpdateChain = ({
           style={[
             styles.dappInfoContainer,
             {
-              marginBottom: isMobile ? SPACING : SPACING_MD * responsiveSizeMultiplier
+              marginBottom: isCompactLayout ? SPACING : SPACING_MD * responsiveSizeMultiplier
             }
           ]}
         >
@@ -78,7 +79,7 @@ const UpdateChain = ({
             size={50 * responsiveSizeMultiplier}
             fallback={() => <ManifestFallbackIcon />}
             containerStyle={
-              isMobile
+              isCompactLayout
                 ? spacings.mbSm
                 : {
                     marginRight: SPACING_MD * responsiveSizeMultiplier
@@ -87,7 +88,7 @@ const UpdateChain = ({
           />
 
           <Trans values={{ name: name || 'The App' }}>
-            <Text style={isMobile ? text.center : {}}>
+            <Text style={isCompactLayout ? text.center : {}}>
               <Text fontSize={20 * responsiveSizeMultiplier} appearance="secondaryText">
                 {t('Allow ')}
               </Text>
@@ -106,7 +107,7 @@ const UpdateChain = ({
           appearance="secondaryText"
           style={{
             marginBottom: SPACING * responsiveSizeMultiplier,
-            textAlign: isMobile ? 'center' : 'left'
+            textAlign: isCompactLayout ? 'center' : 'left'
           }}
         >
           {t('This site is requesting to update your default RPC')}
@@ -118,9 +119,9 @@ const UpdateChain = ({
         <>
           <View
             style={[
-              isWeb && flexbox.directionRow,
+              isTwoColumnLayout && flexbox.directionRow,
               flexbox.flex1,
-              flexbox.justifySpaceBetween,
+              isTwoColumnLayout && flexbox.justifySpaceBetween,
               {
                 marginBottom: SPACING_SM * responsiveSizeMultiplier,
                 paddingBottom: SPACING_TY * responsiveSizeMultiplier
@@ -128,7 +129,7 @@ const UpdateChain = ({
             ]}
           >
             <RpcCard title="Old RPC URL" url={networkAlreadyAdded.selectedRpcUrl}>
-              {isWeb && (
+              {isTwoColumnLayout && (
                 <NetworkAvailableFeatures
                   hideBackgroundAndBorders
                   titleSize={16 * responsiveSizeMultiplier}
@@ -141,7 +142,7 @@ const UpdateChain = ({
                 />
               )}
             </RpcCard>
-            {isMobile ? (
+            {isCompactLayout ? (
               <View
                 style={{
                   width: 32,

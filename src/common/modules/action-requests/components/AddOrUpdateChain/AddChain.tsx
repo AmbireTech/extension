@@ -15,14 +15,11 @@ import { isMobile, isWeb } from '@common/config/env'
 import useDappInfo from '@common/hooks/useDappInfo'
 import useResponsiveActionWindow from '@common/hooks/useResponsiveActionWindow'
 import useTheme from '@common/hooks/useTheme'
-import useWindowSize from '@common/hooks/useWindowSize'
+import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import getStyles from '@common/modules/action-requests/styles/styles'
 import spacings, { SPACING, SPACING_LG, SPACING_MD } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import { getUiType } from '@common/utils/uiType'
 import ManifestImage from '@web/components/ManifestImage'
-
-const { isSidePanel } = getUiType()
 
 type AddChainProps = {
   handleRetryWithDifferentRpcUrl: () => void
@@ -36,8 +33,16 @@ type AddChainProps = {
   userRequest: UserRequest | undefined
 }
 
-const Container = ({ children, ...rest }: any) => {
-  if (isMobile) return <>{children}</>
+const Container = ({
+  children,
+  usePlainWrapper,
+  ...rest
+}: {
+  children: React.ReactNode
+  usePlainWrapper?: boolean
+  [key: string]: unknown
+}) => {
+  if (usePlainWrapper) return <>{children}</>
   return <ScrollableWrapper {...rest}>{children}</ScrollableWrapper>
 }
 
@@ -56,8 +61,7 @@ const AddChain = ({
   const { t } = useTranslation()
   const { name, icon } = useDappInfo(userRequest)
   const { responsiveSizeMultiplier } = useResponsiveActionWindow({ maxBreakpoints: 2 })
-  const { maxWidthSize } = useWindowSize()
-  const isTwoColumnLayout = isWeb && !isMobile && (!isSidePanel || maxWidthSize('m'))
+  const { isCompactLayout, isTwoColumnLayout } = useCompactActionRequestLayout()
 
   return (
     <>
@@ -153,6 +157,7 @@ const AddChain = ({
           ]}
         >
           <Container
+            usePlainWrapper={isCompactLayout}
             style={[
               styles.boxWrapper,
               isTwoColumnLayout
@@ -173,7 +178,7 @@ const AddChain = ({
               explorerUrl={networkDetails.explorerUrl || '-'}
               style={{
                 backgroundColor: theme.secondaryBackground,
-                ...(isMobile && spacings.mbSm)
+                ...(isCompactLayout && spacings.mbSm)
               }}
               responsiveSizeMultiplier={responsiveSizeMultiplier}
               type="vertical"
@@ -181,7 +186,8 @@ const AddChain = ({
           </Container>
           {isTwoColumnLayout && <View style={styles.separator} />}
           <Container
-            style={[flexbox.flex1, !isTwoColumnLayout && isSidePanel && spacings.mtMd]}
+            usePlainWrapper={isCompactLayout}
+            style={[flexbox.flex1, !isTwoColumnLayout && spacings.mtMd]}
             contentContainerStyle={{ flexGrow: 1 }}
           >
             {!!networkDetails && (
@@ -191,7 +197,7 @@ const AddChain = ({
                 withRetryButton={!!rpcUrls.length && rpcUrlIndex < rpcUrls.length - 1}
                 handleRetryWithDifferentRpcUrl={handleRetryWithDifferentRpcUrl}
                 responsiveSizeMultiplier={responsiveSizeMultiplier}
-                withScroll={isSidePanel && !isTwoColumnLayout}
+                withScroll={isCompactLayout && !isMobile}
               />
             )}
           </Container>

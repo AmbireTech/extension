@@ -4,13 +4,10 @@ import { View } from 'react-native'
 
 import Button, { Props as ButtonProps } from '@common/components/Button'
 import GlassView from '@common/components/GlassView'
-import useWindowSize from '@common/hooks/useWindowSize'
+import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import ActionsPagination from '@common/modules/action-requests/components/ActionsPagination'
 import spacings, { SPACING_TY } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import { getUiType } from '@common/utils/uiType'
-
-const { isSidePanel } = getUiType()
 
 type Props = {
   onReject?: () => void
@@ -37,8 +34,7 @@ const ActionFooter = ({
   resolveNode
 }: Props) => {
   const { t } = useTranslation()
-  const { maxWidthSize } = useWindowSize()
-  const isWideFooterLayout = !isSidePanel || maxWidthSize('m')
+  const { isWideFooterLayout } = useCompactActionRequestLayout()
 
   const handleOnResolve = useCallback(() => onResolve(), [onResolve])
   const showReject = useMemo(() => !!onReject, [onReject])
