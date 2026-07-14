@@ -248,10 +248,12 @@ if (CONFIG.SENTRY_DSN_BROWSER_EXTENSION) {
         }
       }
 
-      // We don't want to miss errors that occur before the controllers are initialized
-      if (!walletStateCtrl) return event
-
       const scrubbedEvent = scrubSentryEventSecrets(event)
+
+      // We don't want to miss errors that occur before the controllers are initialized.
+      // Scrubbing above still applies -- only the crashAnalyticsEnabled gate below,
+      // which depends on walletStateCtrl, can't run yet.
+      if (!walletStateCtrl) return scrubbedEvent
 
       if (isDev) {
         console.log(`Sentry event captured in background: ${event.event_id}`, scrubbedEvent)
