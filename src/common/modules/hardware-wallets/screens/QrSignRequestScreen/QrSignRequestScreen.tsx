@@ -31,7 +31,7 @@ const ANIMATION_INTERVAL = 300
 const QR_QUIET_ZONE = SPACING_LG
 const BASE_QR_SIZE = 300
 const BASE_QR_SIZE_WITH_PROGRESS = 280
-const MOBILE_QR_SIZE = 260
+const MOBILE_QR_SIZE = 284
 
 const QrSignRequestScreen = ({
   onContinue,
@@ -74,8 +74,8 @@ const QrSignRequestScreen = ({
         {isDarkMode ? (
           <View
             style={[
-              spacings.phLg,
-              spacings.pvLg,
+              isMobile ? spacings.phSm : spacings.phLg,
+              isMobile ? spacings.pvSm : spacings.pvLg,
               common.borderRadiusPrimary,
               { backgroundColor: '#fff' }
             ]}
