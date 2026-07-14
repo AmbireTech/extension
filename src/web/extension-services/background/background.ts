@@ -23,6 +23,7 @@ import { getAccountKeysCount } from '@ambire-common/libs/keys/keys'
 import { KeystoreSigner } from '@ambire-common/libs/keystoreSigner/keystoreSigner'
 import { parse, stringify } from '@ambire-common/libs/richJson/richJson'
 import wait from '@ambire-common/utils/wait'
+import { scrubSentryEventSecrets } from '@common/config/analytics/sentryDataScrubbing'
 import CONFIG, { APP_VERSION, isAmbireNext, isDev, isProd } from '@common/config/env'
 import { controllersNestedInMainMapping } from '@common/constants/controllersMapping'
 import { AutoLockController } from '@common/controllers/auto-lock'
@@ -78,6 +79,7 @@ import {
   setBackgroundExtraContext,
   setBackgroundUserContext
 } from './CrashAnalytics'
+import { getReportableAction } from './getReportableAction'
 
 const debugLogs: {
   key: string
@@ -249,12 +251,14 @@ if (CONFIG.SENTRY_DSN_BROWSER_EXTENSION) {
       // We don't want to miss errors that occur before the controllers are initialized
       if (!walletStateCtrl) return event
 
+      const scrubbedEvent = scrubSentryEventSecrets(event)
+
       if (isDev) {
-        console.log(`Sentry event captured in background: ${event.event_id}`, event)
+        console.log(`Sentry event captured in background: ${event.event_id}`, scrubbedEvent)
       }
 
       // If the Sentry is disabled, we don't send any events
-      return walletStateCtrl?.crashAnalyticsEnabled ? event : null
+      return walletStateCtrl?.crashAnalyticsEnabled ? scrubbedEvent : null
     }
   })
 }
@@ -689,7 +693,7 @@ const init = async () => {
               console.error(`${type} action failed:`, err)
               captureBackgroundException(err, {
                 extra: {
-                  action: stringify(action),
+                  action: stringify(getReportableAction(action)),
                   portId: port.id,
                   windowId
                 }

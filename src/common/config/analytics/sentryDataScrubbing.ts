@@ -35,6 +35,25 @@ const scrubString = (value: string): string => {
   }, value)
 }
 
+// A password/secret has no detectable shape (unlike a private key or seed phrase),
+// so it can't be caught by REDACTION_RULES. Its key name is the only reliable signal,
+// so any value under a matching key is redacted wholesale regardless of its content.
+const SENSITIVE_KEY_SUBSTRINGS = [
+  'password',
+  'passphrase',
+  'pwd',
+  'secret',
+  'mnemonic',
+  'seedphrase',
+  'privatekey',
+  'privkey'
+]
+
+const isSensitiveKey = (key: string): boolean => {
+  const normalizedKey = key.toLowerCase()
+  return SENSITIVE_KEY_SUBSTRINGS.some((term) => normalizedKey.includes(term))
+}
+
 const scrubUnknown = (value: unknown, seen: WeakSet<object>): unknown => {
   if (typeof value === 'string') {
     return scrubString(value)
@@ -61,7 +80,9 @@ const scrubUnknown = (value: unknown, seen: WeakSet<object>): unknown => {
   const objectValue = value as Record<string, unknown>
 
   Object.keys(objectValue).forEach((key) => {
-    objectValue[key] = scrubUnknown(objectValue[key], seen)
+    objectValue[key] = isSensitiveKey(key)
+      ? '[REDACTED]'
+      : scrubUnknown(objectValue[key], seen)
   })
 
   return objectValue
