@@ -6,7 +6,7 @@ import { useModalize } from 'react-native-modalize'
 
 import { EstimationStatus } from '@ambire-common/controllers/estimation/types'
 import { getFeeSpeedIdentifier } from '@ambire-common/controllers/signAccountOp/helper'
-import { FeeSpeed, SpeedCalc } from '@ambire-common/controllers/signAccountOp/signAccountOp'
+import { FeeSpeed, SpeedCalc } from '@ambire-common/interfaces/signAccountOp'
 import { Warning } from '@ambire-common/interfaces/signAccountOp'
 import { FeePaymentOption } from '@ambire-common/libs/estimate/interfaces'
 import { GasSpeeds } from '@ambire-common/services/bundlers/types'
@@ -635,11 +635,6 @@ const Estimation = ({
         renderSectionHeader={renderFeeOptionSectionHeader}
         containerStyle={spacings.mb0}
         value={payValue || NO_FEE_OPTIONS}
-        disabled={
-          disabled ||
-          (!payOptionsPaidByUsOrGasTank.length && !payOptionsPaidByEOA.length) ||
-          !signAccountOpState.selectedOption
-        }
         selectStyle={{
           backgroundColor:
             isOneClick || isMobile ? theme.secondaryBackground : theme.primaryBackground,

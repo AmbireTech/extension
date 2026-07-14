@@ -19,7 +19,7 @@ import spacings from '@common/styles/spacings'
 import { hexToRgba } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import { TabLayoutContainer, TabLayoutWrapperMainContent } from '@web/components/TabLayoutWrapper'
-import { QrWalletConfigs } from '@web/modules/hardware-wallet/qr/wallets'
+import { QrWalletConfigs } from '@common/modules/hardware-wallets/qr/wallets'
 import QrScannerWithPermission from '@web/modules/hardware-wallet/screens/QrScannerWithPermission'
 
 const VISIBLE_WALLETS_COUNT = 2

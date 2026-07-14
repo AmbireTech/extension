@@ -154,7 +154,9 @@ const Alert = ({
   }
 
   const titleContent = !!title && (
-    <Text>
+    // flexShrink lets a long title wrap within the row on mobile instead of
+    // overflowing off-screen; web keeps its intrinsic-width behavior.
+    <Text style={isMobile ? { flexShrink: 1 } : undefined}>
       {!isTypeLabelHidden && (
         <Text
           selectable

@@ -11,11 +11,8 @@ import {
   zeroAddress
 } from 'viem'
 
-import {
-  noStateUpdateStatuses,
-  SigningStatus
-} from '@ambire-common/controllers/signAccountOp/signAccountOp'
 import { DecodedCall } from '@ambire-common/interfaces/decodeCall'
+import { noStateUpdateStatuses, SigningStatus } from '@ambire-common/interfaces/signAccountOp'
 import { HumanizerErc7730Visualization, IrCall } from '@ambire-common/libs/humanizer/interfaces'
 import {
   getAction,
@@ -25,11 +22,11 @@ import {
 } from '@ambire-common/libs/humanizer/utils'
 import DeleteIcon from '@common/assets/svg/DeleteIcon'
 import ExpandableCard from '@common/components/ExpandableCard'
-import HumanizerAddress from '@common/components/HumanizerAddress'
 import HumanizedVisualization, {
   getErc7730DescriptionRows,
   shouldUseErc7730DetailedLayout
 } from '@common/components/HumanizedVisualization'
+import HumanizerAddress from '@common/components/HumanizerAddress'
 import Label from '@common/components/Label'
 import Text from '@common/components/Text'
 import { isMobile, isWeb } from '@common/config/env'
@@ -44,6 +41,7 @@ import spacings, { SPACING_MI, SPACING_SM, SPACING_TY } from '@common/styles/spa
 import flexbox from '@common/styles/utils/flexbox'
 import ManifestImage from '@web/components/ManifestImage'
 
+import { sizeMultiplier } from './sizeMultiplier'
 import getStyles from './styles'
 
 interface Props {
@@ -61,11 +59,7 @@ interface Props {
   disableSelectorFetching?: boolean
 }
 
-export const sizeMultiplier = {
-  sm: 0.75,
-  md: 0.85,
-  lg: 1
-}
+export { sizeMultiplier }
 
 type Tab = 'description' | 'raw' | 'parsed'
 
@@ -79,6 +73,9 @@ const increaseAllowanceAbi = parseAbi([
 const decreaseAllowanceAbi = parseAbi([
   'function decreaseAllowance(address spender, uint256 amount)'
 ])
+// legacy naming used by some tokens (e.g. OMG) instead of increaseAllowance/decreaseAllowance
+const increaseApprovalAbi = parseAbi(['function increaseApproval(address spender, uint256 amount)'])
+const decreaseApprovalAbi = parseAbi(['function decreaseApproval(address spender, uint256 amount)'])
 
 const DataArgs = ({
   decodedArgs,
@@ -387,6 +384,32 @@ const TransactionSummary = ({
             })
             break
           }
+          case toFunctionSelector(increaseApprovalAbi[0]): {
+            const { args } = decodeFunctionData({
+              abi: increaseApprovalAbi,
+              data: replacedCall.data
+            })
+            const [spender] = args
+            calldata = encodeFunctionData({
+              abi: increaseApprovalAbi,
+              functionName: 'increaseApproval',
+              args: [spender, parseUnits(newAmount || '0', portfolioToken.decimals)]
+            })
+            break
+          }
+          case toFunctionSelector(decreaseApprovalAbi[0]): {
+            const { args } = decodeFunctionData({
+              abi: decreaseApprovalAbi,
+              data: replacedCall.data
+            })
+            const [spender] = args
+            calldata = encodeFunctionData({
+              abi: decreaseApprovalAbi,
+              functionName: 'decreaseApproval',
+              args: [spender, parseUnits(newAmount || '0', portfolioToken.decimals)]
+            })
+            break
+          }
           default:
             addToast('Internal error: failed to edit the approval', { type: 'error' })
             return
@@ -481,6 +504,26 @@ const TransactionSummary = ({
         case toFunctionSelector(decreaseAllowanceAbi[0]): {
           const { args } = decodeFunctionData({
             abi: decreaseAllowanceAbi,
+            data: call.data
+          })
+          const [, currentDecrease] = args
+          amount = currentDecrease
+          token = call.to
+          break
+        }
+        case toFunctionSelector(increaseApprovalAbi[0]): {
+          const { args } = decodeFunctionData({
+            abi: increaseApprovalAbi,
+            data: call.data
+          })
+          const [, currentIncrease] = args
+          amount = currentIncrease
+          token = call.to
+          break
+        }
+        case toFunctionSelector(decreaseApprovalAbi[0]): {
+          const { args } = decodeFunctionData({
+            abi: decreaseApprovalAbi,
             data: call.data
           })
           const [, currentDecrease] = args

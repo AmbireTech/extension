@@ -71,7 +71,7 @@ const ManifestImage = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [uri, uris?.length])
 
-    if (hideOnError && !isLoading && hasError && !fallback) return null
+  if (hideOnError && !isLoading && hasError && !fallback) return null
 
   return (
     <View
