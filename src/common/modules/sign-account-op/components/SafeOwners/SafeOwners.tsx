@@ -86,6 +86,7 @@ const SafeOwners = ({
             <AccountKey
               addr={o.addr}
               label={o.addr}
+              singleLineLabel={!isWeb}
               type={o.type || 'internal'}
               dedicatedToOneSA={false}
               isImported
