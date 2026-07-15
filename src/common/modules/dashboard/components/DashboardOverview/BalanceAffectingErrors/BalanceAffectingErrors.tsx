@@ -138,7 +138,7 @@ const BalanceAffectingErrors: FC<Props> = ({
         </Pressable>
       )}
       <BottomSheet
-        style={{ maxWidth: 720, ...spacings.pvLg, ...spacings.phXl, width: '100%' }}
+        style={isWeb ? { maxWidth: 720, ...spacings.pvLg, ...spacings.phXl, width: '100%' } : {}}
         id="portfolio-errors"
         sheetRef={sheetRef}
         closeBottomSheet={closeBottomSheetWrapped}
@@ -154,7 +154,7 @@ const BalanceAffectingErrors: FC<Props> = ({
               ]}
             >
               {areErrorsOutdatedAndPortfolioIsReady ? (
-                <Text fontSize={16} style={spacings.mbMd}>
+                <Text fontSize={16} style={spacings.mbMd} appearance="secondaryText">
                   {t('All errors have been resolved. Feel free to close this modal.')}
                 </Text>
               ) : null}

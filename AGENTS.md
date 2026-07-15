@@ -45,6 +45,7 @@ react, react-native, react-native-web, typescript, expo (bare workflow), ethers,
 - ALWAYS use `react-native-modalize` with `BottomSheet` for modals and bottom sheets
 - Tooltips are added using the pattern: `dataSet={createGlobalTooltipDataSet(...)}` which creates a global dataset that is picked up by a `GlobalTooltip` component at the root of the app.
 - All icons are in src/common/assets/svg/...; ALWAYS use icons from there and report if you can't find a suitable one by adding a comment instead of the icon and asking the human to add it
+
 ### Security:
 
 - This is a security-critical Web3 wallet. Private keys and seed phrases must never be logged or exposed
@@ -72,3 +73,9 @@ react, react-native, react-native-web, typescript, expo (bare workflow), ethers,
 6. Because of this asynchronous cycle, state changes are NOT immediate after `dispatch`. If an action fails silently or the controller doesn't call `emitUpdate`, the UI will never re-render
 
 - On standalone websites (`benzin`, `legends`) controllers run in the main thread directly and `dispatch` invokes methods synchronously, but the `emitUpdate` → store → re-render cycle still applies
+
+## Local, per-developer rules (optional)
+
+Personal rules may be added in `AGENTS.local.md`. This file is gitignored, auto-loaded when present, and ignored when missing.
+
+@AGENTS.local.md

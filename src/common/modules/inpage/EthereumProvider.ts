@@ -22,6 +22,18 @@ export interface ExternalHandlers {
   logWarn?: (prefix: string, ...args: any[]) => void
 }
 
+// Ordered ranks for `loglevel`'s descriptors
+// ('trace' | 'debug' | 'info' | 'warn' | 'error' | 'silent'). Used to decide
+// which provider logs to emit based on the wallet's configured log level.
+const LOG_LEVEL_RANKS = {
+  trace: 0,
+  debug: 1,
+  info: 2,
+  warn: 3,
+  error: 4,
+  silent: 5
+} as const
+
 const $ = document.querySelector.bind(document)
 
 const domReadyCall = (callback: any) => {
@@ -208,11 +220,22 @@ export class EthereumProvider extends EventEmitter {
 
   #externalHandlers: ExternalHandlers
 
+  // Numeric rank of the active log level, mirroring `loglevel`'s ordered
+  // descriptors. Defaults to the most permissive level (TRACE) until
+  // `setLogLevel` runs with the wallet's configured level (received from
+  // `getProviderState`), so logging matches the rest of the app.
+  #logLevelRank: number = LOG_LEVEL_RANKS.trace
+
   logInfo = (prefix: string, ...args: any[]) => {
+    // `logInfo` is info-level; suppress it once the active level is 'warn' or
+    // stricter. Dapps poll provider methods continuously, so leaving these on in
+    // production floods the RN bridge with stringify+postMessage work per call.
+    if (this.#logLevelRank > LOG_LEVEL_RANKS.info) return
     this.#externalHandlers.logInfo?.(prefix, ...args)
   }
 
   logWarn = (prefix: string, ...args: any[]) => {
+    if (this.#logLevelRank > LOG_LEVEL_RANKS.warn) return
     this.#externalHandlers.logWarn?.(prefix, ...args)
   }
 
@@ -295,6 +318,9 @@ export class EthereumProvider extends EventEmitter {
       }
       this.chainId = chainId
       this.networkVersion = networkVersion
+      // Must be true before these emits, since PushEventHandlers._emit only forwards events once _initialized is set.
+      this._initialized = true
+      this._state.initialized = true
       this.emit('connect', { chainId })
       this.#pushEventHandlers?.chainChanged({
         chain: chainId,
@@ -319,7 +345,11 @@ export class EthereumProvider extends EventEmitter {
     }
   }
 
-  #handleBackgroundMessage = async ({ event, data }: any) => {
+  #handleBackgroundMessage = async ({ event, data, origin }: any) => {
+    // SECURITY: broadcasts are tab-wide, so drop any whose session origin doesn't
+    // match this document's, preventing cross-origin/stale-document event leakage.
+    if (origin && origin !== window.location.origin) return
+
     if (event === 'tabCheckin') {
       const id = this.#requestId++
       const params = {
@@ -456,6 +486,10 @@ export class EthereumProvider extends EventEmitter {
       })
 
       if (response.id !== id) return
+      // SECURITY: backstop if the transport can't bind the reply to this frame;
+      // the background echoes providerId, so ignore replies from another provider.
+      if (typeof response.providerId !== 'undefined' && response.providerId !== this.#providerId)
+        return
       if (response.error) {
         const error =
           (response.error as any)?.code && response.error?.message
@@ -560,7 +594,10 @@ export class EthereumProvider extends EventEmitter {
   }
 
   setLogLevel = (nextLogLevel: any) => {
-    // Platform specific logger can handle this
+    const descriptor = String(nextLogLevel).toLowerCase() as keyof typeof LOG_LEVEL_RANKS
+    const rank = LOG_LEVEL_RANKS[descriptor]
+    if (rank !== undefined) this.#logLevelRank = rank
+
     this.logInfo('[setLogLevel]', nextLogLevel)
   }
 }

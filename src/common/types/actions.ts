@@ -96,6 +96,17 @@ type DappsControllerRemoveConnectedSiteAction = {
   }
 }
 
+type DappsControllerDisconnectAllDappsAction = {
+  type: 'DAPPS_CONTROLLER_DISCONNECT_ALL_DAPPS'
+  params: {
+    // Optional: when set, only that channel is torn down for every connected dapp
+    // (web passes 'injected'). Omitting it disconnects every channel (mobile: WC + injected).
+    // Handled in a single action so the per-dapp autoLogin revoke runs sequentially —
+    // firing one action per dapp would race the `revokeAllPoliciesForDomain` status lock.
+    source?: ConnectionSource
+  }
+}
+
 type AddressBookControllerAddContact = {
   type: 'ADDRESS_BOOK_CONTROLLER_ADD_CONTACT'
   params: {
@@ -187,6 +198,19 @@ type DisconnectWcSessionAction = {
   }
 }
 
+type SetBootPhaseAction = {
+  type: 'SET_BOOT_PHASE'
+  params: { phase: 'critical' | 'full' }
+}
+
+// Mobile-only. The UI reports which controllers currently have at least one
+// active `useController` subscriber so the WebView worker can skip serializing
+// and bridging the state of controllers no screen is displaying.
+type SetSubscribedControllersAction = {
+  type: 'SET_SUBSCRIBED_CONTROLLERS'
+  params: { controllers: string[] }
+}
+
 export type Action =
   | UpdateNavigationUrl
   | UpdateUiViewRoute
@@ -199,6 +223,7 @@ export type Action =
   | ResetAccountAddingOnPageErrorAction
   | MainControllerHandleSignMessage
   | DappsControllerRemoveConnectedSiteAction
+  | DappsControllerDisconnectAllDappsAction
   | AddressBookControllerAddContact
   | AddressBookControllerRenameContact
   | ChangeCurrentDappNetworkAction
@@ -213,3 +238,5 @@ export type Action =
   | SetupWcSessionMessengerAction
   | RestoreWcSessionsAction
   | DisconnectWcSessionAction
+  | SetBootPhaseAction
+  | SetSubscribedControllersAction

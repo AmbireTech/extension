@@ -1,0 +1,167 @@
+name: E2E suite (reusable)
+
+# Runs ONE e2e suite against the prebuilt webkit extension (the `webkit-build` artifact
+# produced by the caller's `build` job in the same run). Parameterized so non-hw / ledger /
+# trezor share a single step definition.
+on:
+  workflow_call:
+    inputs:
+      suite:
+        description: 'Suite name — used for the uploaded report artifact name'
+        required: true
+        type: string
+      command:
+        description: 'The test command to run (e.g. "yarn ledger:tests")'
+        required: true
+        type: string
+      emulator:
+        description: 'Hardware emulator to start before the suite: none | ledger | trezor'
+        required: false
+        default: 'none'
+        type: string
+
+# Non-secret config (vars). Reusable workflows do NOT inherit the caller's env, so the shared
+# vars block is repeated here once for all three suite invocations. Resolves because the `run`
+# job below declares `environment: testing`. Secrets are NOT allowed in workflow-level env and
+# live in the job's `env` instead.
+env:
+  IS_TESTING: 'true'
+  E2E_DEBUG: ${{ vars.E2E_DEBUG }}
+  RELAYER_URL: ${{ vars.RELAYER_URL }}
+  VELCRO_URL: ${{ vars.VELCRO_URL }}
+  LI_FI_API_KEY: ${{ vars.LI_FI_API_KEY }}
+  BUNGEE_API_KEY: ${{ vars.BUNGEE_API_KEY }}
+  SQUID_INTEGRATOR_ID: ${{ vars.SQUID_INTEGRATOR_ID }}
+  UNISWAP_API_KEY: ${{ vars.UNISWAP_API_KEY }}
+  SAFE_API_KEY: ${{ vars.SAFE_API_KEY }}
+  WALLETCONNECT_PROJECT_ID: ${{ vars.WALLETCONNECT_PROJECT_ID }}
+  REACT_APP_PIMLICO_API_KEY: ${{ vars.REACT_APP_PIMLICO_API_KEY }}
+  REACT_APP_ETHERSPOT_API_KEY: ${{ vars.REACT_APP_ETHERSPOT_API_KEY }}
+  REACT_APP_CANDIDE_API_KEY: ${{ vars.REACT_APP_CANDIDE_API_KEY }}
+  REACT_APP_GELATO_API_KEY: ${{ vars.REACT_APP_GELATO_API_KEY }}
+  BA_ACCOUNTS: ${{ vars.BA_ACCOUNTS }}
+  BA_KEYSTORE_UID: ${{ vars.BA_KEYSTORE_UID }}
+  BA_KEYS: ${{ vars.BA_KEYS }}
+  BA_SEEDS: ${{ vars.BA_SEEDS }}
+  BA_LEARNED_ASSETS: ${{ vars.BA_LEARNED_ASSETS }}
+  BA_SELECTED_ACCOUNT: ${{ vars.BA_SELECTED_ACCOUNT }}
+  SA_ACCOUNTS: ${{ vars.SA_ACCOUNTS }}
+  SA_KEYSTORE_UID: ${{ vars.SA_KEYSTORE_UID }}
+  SA_KEYS: ${{ vars.SA_KEYS }}
+  SA_SEEDS: ${{ vars.SA_SEEDS }}
+  SA_LEARNED_ASSETS: ${{ vars.SA_LEARNED_ASSETS }}
+  SA_SELECTED_ACCOUNT: ${{ vars.SA_SELECTED_ACCOUNT }}
+  DEFAULT_INVITATION_CODE_DEV: ${{ vars.DEFAULT_INVITATION_CODE_DEV }}
+  SHOULD_RUN_TREZOR_TESTS: 'true'
+  PLAYWRIGHT_SKIP_GIT_METADATA: '1'
+  PW_EXPERIMENTAL_SERVICE_WORKER_NETWORK_EVENTS: '1'
+  IS_LEDGER_EMULATOR: ${{ vars.IS_LEDGER_EMULATOR }}
+  LEDGER_BA_SELECTED_ACCOUNT: ${{ vars.LEDGER_BA_SELECTED_ACCOUNT }}
+  LEDGER_BA_ACCOUNTS: ${{ vars.LEDGER_BA_ACCOUNTS }}
+  LEDGER_BA_KEYSTORE_UID: ${{ vars.LEDGER_BA_KEYSTORE_UID }}
+  LEDGER_BA_KEYS: ${{ vars.LEDGER_BA_KEYS }}
+  LEDGER_BA_SEEDS: ${{ vars.LEDGER_BA_SEEDS }}
+  LEDGER_BA_LEARNED_ASSETS: ${{ vars.LEDGER_BA_LEARNED_ASSETS }}
+  LEDGER_SA_SELECTED_ACCOUNT: ${{ vars.LEDGER_SA_SELECTED_ACCOUNT }}
+  LEDGER_SA_ACCOUNTS: ${{ vars.LEDGER_SA_ACCOUNTS }}
+  LEDGER_SA_KEYSTORE_UID: ${{ vars.LEDGER_SA_KEYSTORE_UID }}
+  LEDGER_SA_KEYS: ${{ vars.LEDGER_SA_KEYS }}
+  LEDGER_SA_SEEDS: ${{ vars.LEDGER_SA_SEEDS }}
+  LEDGER_SA_LEARNED_ASSETS: ${{ vars.LEDGER_SA_LEARNED_ASSETS }}
+  LEDGER_EMULATOR_HTTP_URL: ${{ vars.LEDGER_EMULATOR_HTTP_URL }}
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    environment: testing
+    env:
+      # Unique blob-report filename per suite/shard. The `report` job downloads every
+      # blob-report-* artifact with merge-multiple (which flattens them into one dir), so two
+      # suites both emitting the default `report.zip` would collide. Keying the name on the
+      # (already per-shard-unique) suite name guarantees distinct filenames.
+      PWTEST_BLOB_REPORT_NAME: ${{ inputs.suite }}
+      KEYSTORE_PASS: ${{ secrets.KEYSTORE_PASS }}
+      SEED: ${{ secrets.SEED }}
+      SEED_24_WORDS: ${{ secrets.SEED_24_WORDS }}
+      PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
+      BA_SECRETS: ${{ secrets.BA_SECRETS }}
+      SA_SECRETS: ${{ secrets.SA_SECRETS }}
+      SA_ACCOUNT_JSON: ${{ secrets.SA_ACCOUNT_JSON }}
+      LEDGER_BA_SECRETS: ${{ secrets.LEDGER_BA_SECRETS }}
+      LEDGER_SA_SECRETS: ${{ secrets.LEDGER_SA_SECRETS }}
+      LEDGER_EMULATOR_SEED: ${{ secrets.LEDGER_EMULATOR_SEED }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
+
+      - name: Add SSH key
+        uses: webfactory/ssh-agent@v0.9.1
+        with:
+          ssh-private-key: ${{ secrets.DEPLOY_KEY }}
+
+      - name: Git submodules
+        run: git submodule update --init --recursive --depth 1
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'yarn'
+
+      - name: Download webkit build
+        uses: actions/download-artifact@v6
+        with:
+          name: webkit-build
+          path: ./build/webkit-prod/
+
+      - name: Install e2e test dependencies
+        working-directory: ./e2e-playwright-tests
+        run: yarn install --frozen-lockfile && yarn postinstall
+
+      - name: Get Playwright version
+        working-directory: ./e2e-playwright-tests
+        run: echo "PLAYWRIGHT_VERSION=$(node -p 'require(\"./node_modules/@playwright/test/package.json\").version')" >> $GITHUB_ENV
+
+      - name: Cache Playwright browsers
+        id: playwright-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ env.PLAYWRIGHT_VERSION }}
+
+      - name: Install Playwright browsers
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
+        working-directory: ./e2e-playwright-tests
+        run: yarn playwright install --with-deps chromium
+
+      - name: Start ledger emulator
+        if: ${{ inputs.emulator == 'ledger' }}
+        working-directory: ./e2e-playwright-tests/ledger-emulator
+        run: ./start-emulator.sh
+
+      - name: Check ledger emulator connection
+        if: ${{ inputs.emulator == 'ledger' }}
+        working-directory: ./e2e-playwright-tests
+        run: yarn exec ts-node ./ledger-emulator/ledger-emulator-health-check.ts
+
+      # Same stack the Trezor e2e flow was validated against (do not switch compose files lightly).
+      - name: Start trezor-emulator container
+        if: ${{ inputs.emulator == 'trezor' }}
+        run: |
+          docker pull ghcr.io/trezor/trezor-user-env
+          docker compose -f ./docker-compose-mac.yml up --force-recreate -d
+
+      - name: Run Playwright tests (${{ inputs.suite }})
+        working-directory: ./e2e-playwright-tests
+        run: ${{ inputs.command }}
+
+      - name: Upload ${{ inputs.suite }} blob report
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: blob-report-${{ inputs.suite }}
+          path: ./e2e-playwright-tests/blob-report/
+          retention-days: 14

@@ -10,8 +10,12 @@ import { useLocation } from 'react-router-native'
 import { Dapp } from '@ambire-common/interfaces/dapp'
 import { getDappIdFromUrl } from '@ambire-common/libs/dapps/helpers'
 import { isValidHostname, isValidURL } from '@ambire-common/services/validations'
+import AmbireBrandLogo from '@common/assets/svg/AmbireBrandLogo'
+import AmbireLogo from '@common/assets/svg/AmbireLogo'
+import AmbireLogoWithBackgroundAndLogotype from '@common/assets/svg/AmbireLogoWithBackgroundAndLogotype'
 import GlobeIcon from '@common/assets/svg/GlobeIcon'
 import GoogleIcon from '@common/assets/svg/GoogleIcon'
+import Banner from '@common/components/Banner'
 import BottomSheet from '@common/components/BottomSheet'
 import Search from '@common/components/Search'
 import Text from '@common/components/Text'
@@ -45,6 +49,12 @@ const generateBridgeToken = () => {
 const ambireInpageBundle = require('../../services/ambire-inpage-bundle.json')
 // @ts-ignore
 const ethereumInpageBundle = require('../../services/ethereum-inpage-bundle.json')
+
+// Some dapps (e.g. chainlist) gate their "Connect Wallet" UI on a mobile
+// User-Agent and never call the injected provider, even though window.ethereum
+// is present. Presenting a desktop UA makes them offer the injected wallet path.
+const DESKTOP_USER_AGENT =
+  'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15'
 
 // SECURITY: Stash native references before any page JS can overwrite them.
 // injectJavaScript (used for responses/broadcasts) runs AFTER page JS, so
@@ -214,8 +224,15 @@ const DappWebViewScreen = () => {
     dispatch: dappsDispatch
   } = useController('DappsController')
 
+  const {
+    state: { visibleUserRequests, currentUserRequest }
+  } = useController('RequestsController')
+
   // Initial State from Route
   const initialUrl = (location.state as any)?.url || 'https://google.com'
+  // When opened to view a single URL (e.g. a DeFi position), the footer renders
+  // a back arrow instead of the home icon so the user returns to the previous screen.
+  const showBackButton = !!(location.state as any)?.showBackButton
 
   useEffect(() => {
     // Record the visited dapp into Recents. addToRecentDapps no-ops when the URL
@@ -330,8 +347,11 @@ const DappWebViewScreen = () => {
         const parsed = new URL(url)
         const protocol = parsed.protocol.replace(':', '')
 
-        // Allow HTTPS and about: (blank pages, error pages)
-        if (protocol === 'https' || protocol === 'about') {
+        // Allow HTTPS and about: (blank pages, error pages).
+        // Also allow blob: — chart/visualization libraries (and the web workers
+        // they spawn) commonly render via blob: URLs, so blocking it leaves the
+        // chart area blank even though the rest of the page loads fine.
+        if (protocol === 'https' || protocol === 'about' || protocol === 'blob') {
           return true
         }
 
@@ -535,15 +555,25 @@ const DappWebViewScreen = () => {
         // Mirrors the check in the extension's windowMessenger (web/extension-services/messengers/internal/window.ts).
         if (event.source !== window) return;
 
-        // Log EVERY message for debugging
-        console.log('[Ambire] [Bridge DEBUG] window message received:', typeof event.data === 'string' ? event.data : JSON.stringify(event.data));
+        ${
+          // Debug-only: dapps poll the provider continuously, so logging (and
+          // especially JSON.stringify-ing) every window message floods the RN
+          // bridge and heats the device. Keep it out of production builds.
+          __DEV__
+            ? "console.log('[Ambire] [Bridge DEBUG] window message received:', typeof event.data === 'string' ? event.data : JSON.stringify(event.data));"
+            : ''
+        }
 
         if (event.data && typeof event.data.topic === 'string' && (event.data.topic.indexOf('ambireProviderRequest') > -1 || event.data.topic.indexOf('ambireNextBuildProviderRequest') > -1)) {
           if (event.data.topic.indexOf('<') === 0) {
             // Ignore response messages sent from RN back to the injected provider.
             return;
           }
-          console.log('[Ambire] [Bridge] Caught MATCHING message:', event.data.topic, event.data.payload ? event.data.payload.method : 'no-payload');
+          ${
+            __DEV__
+              ? "console.log('[Ambire] [Bridge] Caught MATCHING message:', event.data.topic, event.data.payload ? event.data.payload.method : 'no-payload');"
+              : ''
+          }
           if (window.ReactNativeWebView) {
             window.ReactNativeWebView.postMessage(JSON.stringify({
               type: 'providerRequest',
@@ -559,15 +589,19 @@ const DappWebViewScreen = () => {
 
       (function() {
         try {
-        console.log('[Ambire] injecting provider code');
+        ${__DEV__ ? "console.log('[Ambire] injecting provider code');" : ''}
           ${baseCodeAmbire}
           ${baseCodeEthereum}
-          console.log('[Ambire] Provider code executed successfully');
+          ${__DEV__ ? "console.log('[Ambire] Provider code executed successfully');" : ''}
         } catch(e) {
           console.error('[Ambire] Provider code CRASHED:', e && e.stack ? e.stack : (e && e.message ? e.message : String(e)));
         }
 
-        console.log('[Ambire] window.ethereum:', !!window.ethereum, 'window.ambire:', !!window.ambire);
+        ${
+          __DEV__
+            ? "console.log('[Ambire] window.ethereum:', !!window.ethereum, 'window.ambire:', !!window.ambire);"
+            : ''
+        }
       })();
       true;
     } catch (e) {
@@ -720,17 +754,19 @@ const DappWebViewScreen = () => {
     (event: any) => {
       try {
         const data = JSON.parse(event.nativeEvent.data)
-        console.log(
-          '[DappWebView] RN received message type:',
-          data.type || (data.method ? 'raw-provider-request' : 'unknown')
-        )
+        if (__DEV__) {
+          console.log(
+            '[DappWebView] RN received message type:',
+            data.type || (data.method ? 'raw-provider-request' : 'unknown')
+          )
+        }
         if (data.type === 'log') {
           const prefix = `[WebView ${data.logType}]`
 
           console.log(prefix, ...data.args)
         } else if (data.type === 'providerRequest' || (data.method && data.id)) {
           const method = data.type === 'providerRequest' ? data.payload?.method : data.method
-          console.log('[DappWebView] Received providerRequest:', method, data.id)
+          if (__DEV__) console.log('[DappWebView] Received providerRequest:', method, data.id)
 
           // SECURITY: Verify the bridge token. The token is injected only into the
           // main frame, so cross-origin iframes cannot forge messages with it.
@@ -793,11 +829,13 @@ const DappWebViewScreen = () => {
 
   useEffect(() => {
     const onProviderResponse = (data: any) => {
-      console.log(
-        '[DappWebView] Sending response back to WebView:',
-        data.requestId,
-        data.result ? 'SUCCESS' : 'ERROR/NULL'
-      )
+      if (__DEV__) {
+        console.log(
+          '[DappWebView] Sending response back to WebView:',
+          data.requestId,
+          data.result ? 'SUCCESS' : 'ERROR/NULL'
+        )
+      }
 
       // SECURITY: Look up the expected origin recorded when the request was received.
       const expectedOrigin = requestOriginsRef.current[data.requestId]
@@ -911,6 +949,17 @@ const DappWebViewScreen = () => {
     eventBus.addEventListener('requestsBottomSheet.closed', dispatchWebViewFocus)
     return () => eventBus.removeEventListener('requestsBottomSheet.closed', dispatchWebViewFocus)
   }, [dispatchWebViewFocus])
+
+  const handleOpenPendingRequests = useCallback(() => {
+    dispatch({
+      type: 'method',
+      params: {
+        ctrlName: 'RequestsController',
+        method: 'setCurrentUserRequestByIndex',
+        args: [visibleUserRequests.length - 1]
+      }
+    })
+  }, [dispatch, visibleUserRequests.length])
 
   //   - onLoadStart only resets state on real top-level navigations. On iOS
   //     every `onLoadStart` is treated as such; on Android only when the
@@ -1044,14 +1093,37 @@ const DappWebViewScreen = () => {
             currentDapp={currentDapp}
             smartAccountType={smartAccountType}
             onManageAppClosed={dispatchWebViewFocus}
+            showBackButton={showBackButton}
           />
         </>
       }
     >
+      {!!visibleUserRequests.length && !currentUserRequest && (
+        <View style={spacings.phSm}>
+          <Banner
+            type="info"
+            singleRow
+            title={`You have ${visibleUserRequests.length} pending ${
+              visibleUserRequests.length === 1 ? 'request' : 'requests'
+            }.`}
+            CustomIcon={() => (
+              <AmbireLogoWithBackgroundAndLogotype
+                withText={false}
+                style={spacings.mrTy}
+                width={30}
+                height={30}
+              />
+            )}
+            buttonText="Open"
+            onPress={handleOpenPendingRequests}
+          />
+        </View>
+      )}
       <View style={flexbox.flex1}>
         <WebView
           ref={webviewRef}
           source={{ uri: activeDappUrl }}
+          userAgent={DESKTOP_USER_AGENT}
           onNavigationStateChange={handleNavigationStateChange}
           injectedJavaScriptBeforeContentLoaded={injectionScript}
           onMessage={handleMessage}
@@ -1059,7 +1131,7 @@ const DappWebViewScreen = () => {
           domStorageEnabled={true}
           allowFileAccessFromFileURLs={false}
           allowUniversalAccessFromFileURLs={false}
-          originWhitelist={['https://*']}
+          originWhitelist={['https://*', 'blob:*']}
           setSupportMultipleWindows={false}
           onShouldStartLoadWithRequest={handleShouldStartLoadWithRequest}
           onLoadStart={handleLoadStart}
@@ -1068,6 +1140,7 @@ const DappWebViewScreen = () => {
           onError={handleLoadError}
           onRenderProcessGone={handleRenderProcessGone}
           onContentProcessDidTerminate={handleRenderProcessGone}
+          webviewDebuggingEnabled={__DEV__}
           nestedScrollEnabled={true}
         />
       </View>

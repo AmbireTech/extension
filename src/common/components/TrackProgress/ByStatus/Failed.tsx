@@ -23,6 +23,10 @@ type FailedProps = {
   amount?: string
   handleClose?: () => void
   alertStyle?: ViewStyle
+  // When retrying a failed swap & bridge route, the route it belongs to is no
+  // longer relevant and should be disposed of (removes the "Failed bridge" banner
+  // and the stale Activity failed banner/badge for the original transaction).
+  activeRouteIdToDelete?: string
 }
 
 const Failed: FC<FailedProps> = ({
@@ -31,7 +35,8 @@ const Failed: FC<FailedProps> = ({
   handleClose,
   toToken,
   amount,
-  alertStyle
+  alertStyle,
+  activeRouteIdToDelete
 }) => {
   const { t } = useTranslation()
   const { theme } = useTheme()
@@ -70,7 +75,8 @@ const Failed: FC<FailedProps> = ({
                       {
                         toSelectedTokenAddr: toToken?.address,
                         toChainId: BigInt(toToken?.chainId),
-                        fromAmount: amount
+                        fromAmount: amount,
+                        activeRouteIdToDelete
                       },
                       {
                         shouldIncrementFromAmountUpdateCounter: true

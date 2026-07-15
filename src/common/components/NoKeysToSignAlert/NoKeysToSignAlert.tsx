@@ -52,7 +52,7 @@ const NoKeysToSignAlert: FC<Props> = ({ style, isTransaction = true, type = 'lon
           ]}
         >
           <NoKeysIcon />
-          <Text fontSize={14} appearance="primaryText" style={spacings.mhSm}>
+          <Text fontSize={14} appearance="primaryText" style={[spacings.mhSm, flexbox.flex1]}>
             {!!account.safeCreation
               ? t(`No owners imported to sign this ${isTransaction ? 'transaction' : 'message'}`)
               : t(`No keys available to sign this ${isTransaction ? 'transaction' : 'message'}`)}
@@ -64,6 +64,7 @@ const NoKeysToSignAlert: FC<Props> = ({ style, isTransaction = true, type = 'lon
             textStyle={{ fontSize: 12 }}
             onPress={() => openBottomSheet()}
             text={t('Check')}
+            style={{ flexShrink: 0 }}
           />
         </View>
       ) : (

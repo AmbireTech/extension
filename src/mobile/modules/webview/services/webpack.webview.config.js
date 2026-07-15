@@ -5,6 +5,7 @@ const NodePolyfillPlugin = require('node-polyfill-webpack-plugin')
 const TerserPlugin = require('terser-webpack-plugin')
 const HtmlWebpackPlugin = require('html-webpack-plugin')
 const fs = require('fs')
+const crypto = require('crypto')
 const { execSync } = require('child_process')
 
 // Since Webpack is executed from the project root via package.json scripts,
@@ -12,15 +13,18 @@ const { execSync } = require('child_process')
 const ROOT_DIR = process.cwd()
 const isDev = process.env.NODE_ENV === 'development' || process.argv.includes('serve')
 
-// In dev mode, ensure JSON bundle files exist before starting the dev server.
-// If missing, run a production build to generate them.
+// Production worker bundle output dirs, loaded by the WebView via `file://`.
+// iOS: folder-referenced from Xcode into the signed `.app`. Android: packaged
+// by Gradle, reachable via `file:///android_asset/`.
+const IOS_WEBVIEW_DIR = path.resolve(ROOT_DIR, 'ios/Ambire/Resources/webview')
+const ANDROID_WEBVIEW_DIR = path.resolve(ROOT_DIR, 'android/app/src/main/assets/webview')
+
+// In dev, ensure inpage bundle JSON files exist (injected into dapp WebViews
+// as strings, no file-based fallback). The worker bundle is served from
+// webpack-dev-server in dev.
 if (isDev) {
   const SERVICES_DIR = path.resolve(ROOT_DIR, 'src/mobile/modules/webview/services')
-  const bundleFiles = [
-    'webview-bundle.json',
-    'ethereum-inpage-bundle.json',
-    'ambire-inpage-bundle.json'
-  ]
+  const bundleFiles = ['ethereum-inpage-bundle.json', 'ambire-inpage-bundle.json']
   const allBundlesExist = bundleFiles.every((file) => fs.existsSync(path.join(SERVICES_DIR, file)))
 
   if (!allBundlesExist) {
@@ -146,8 +150,116 @@ class JsonWrapPlugin {
 }
 
 /**
+ * Emits `webview-bundle.html` next to `webview-bundle.js`. The bundle loads via
+ * a `<script src>` tag pinned with a build-time SHA-384 SRI hash under a strict
+ * CSP (`script-src 'self'`, `connect-src 'none'`).
+ */
+class WorkerHtmlPlugin {
+  apply(compiler) {
+    compiler.hooks.thisCompilation.tap('WorkerHtmlPlugin', (compilation) => {
+      // REPORT stage runs after TerserPlugin minifies, so the SRI hash matches
+      // the shipped bytes.
+      compilation.hooks.processAssets.tap(
+        {
+          name: 'WorkerHtmlPlugin',
+          stage: webpack.Compilation.PROCESS_ASSETS_STAGE_REPORT
+        },
+        (assets) => {
+          const jsAsset = assets['webview-bundle.js']
+          if (!jsAsset) return
+
+          const jsBytes = jsAsset.source()
+          const jsBuffer = Buffer.isBuffer(jsBytes) ? jsBytes : Buffer.from(jsBytes)
+          const sriHash = `sha384-${crypto.createHash('sha384').update(jsBuffer).digest('base64')}`
+
+          // Reports a failure to LOAD the bundle <script> (missing/blocked
+          // file) to RN. Scoped to the bundle script element so benign resource
+          // errors elsewhere are not reported. Allowed by a CSP hash, so the
+          // policy avoids `'unsafe-inline'`.
+          const onErrorScript = `window.addEventListener('error', function (e) {
+  var t = e && e.target;
+  if (!t || t.tagName !== 'SCRIPT' || (t.src || '').indexOf('webview-bundle.js') === -1) return;
+  try {
+    window.ReactNativeWebView.postMessage(JSON.stringify({
+      type: 'ctrl.error',
+      payload: { ctrlName: 'BundleLoad', errors: [{ message: 'Failed to load webview-bundle.js', url: t.src }] }
+    }));
+  } catch (_) {}
+}, true);`
+          const onErrorHash = `sha384-${crypto
+            .createHash('sha384')
+            .update(Buffer.from(onErrorScript, 'utf8'))
+            .digest('base64')}`
+
+          // `script-src` uses the `file:` scheme (not `'self'`, which an opaque
+          // `file://` origin does not match) for the sibling bundle, plus a hash
+          // for the inline error handler. Not a wide grant — navigation is
+          // locked to the single bundle URI (see onShouldStartLoadWithRequest),
+          // so the only `file:` script reachable is our own bundle.
+          const csp = [
+            "default-src 'none'",
+            `script-src file: '${onErrorHash}'`,
+            "connect-src 'none'",
+            "frame-src 'none'",
+            "object-src 'none'",
+            "base-uri 'none'",
+            "form-action 'none'"
+          ].join('; ')
+
+          const html = `<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="${csp}">
+    <script>${onErrorScript}</script>
+  </head>
+  <body>
+    <script src="webview-bundle.js" integrity="${sriHash}" crossorigin="anonymous"></script>
+  </body>
+</html>
+`
+
+          compilation.emitAsset('webview-bundle.html', new webpack.sources.RawSource(html))
+        }
+      )
+    })
+  }
+}
+
+/**
+ * Mirrors the worker bundle to the Android assets dir so it ships in the APK.
+ * iOS uses the webpack output path directly (folder-referenced from Xcode).
+ */
+class MirrorToAndroidAssetsPlugin {
+  constructor({ sourceDir, targetDir }) {
+    this.sourceDir = sourceDir
+    this.targetDir = targetDir
+  }
+
+  apply(compiler) {
+    compiler.hooks.afterEmit.tap('MirrorToAndroidAssetsPlugin', (compilation) => {
+      try {
+        fs.mkdirSync(this.targetDir, { recursive: true })
+        for (const name of ['webview-bundle.js', 'webview-bundle.html']) {
+          const src = path.join(this.sourceDir, name)
+          if (!fs.existsSync(src)) continue
+          fs.copyFileSync(src, path.join(this.targetDir, name))
+        }
+      } catch (err) {
+        compilation.errors.push(new Error(`MirrorToAndroidAssetsPlugin failed: ${err.message}`))
+      }
+    })
+  }
+}
+
+/**
  * Configuration 1: WebView Worker
  * Background instance that runs the wallet's controllers.
+ *
+ * Prod: bundle written to `ios/Ambire/Resources/webview/`, mirrored to Android
+ * assets, loaded from disk via `file://` (WKWebView stream-parses and caches
+ * bytecode). Dev: served from webpack-dev-server (HTTP) for HMR.
  */
 const workerConfig = {
   name: 'worker',
@@ -157,7 +269,7 @@ const workerConfig = {
   target: 'web',
   devtool: false,
   output: {
-    path: path.resolve(ROOT_DIR, 'src/mobile/modules/webview/services'),
+    path: isDev ? path.resolve(ROOT_DIR, 'src/mobile/modules/webview/services') : IOS_WEBVIEW_DIR,
     filename: 'webview-bundle.js',
     libraryTarget: 'window',
     publicPath: isDev ? '/' : ''
@@ -173,9 +285,18 @@ const workerConfig = {
         WEB_ENGINE: 'webview',
         APP_ENV: isDev ? 'development' : 'production'
       })
-    }),
-    new JsonWrapPlugin({ assetName: 'webview-bundle.js' })
+    })
   ]
+}
+
+if (!isDev) {
+  workerConfig.plugins.push(
+    new WorkerHtmlPlugin(),
+    new MirrorToAndroidAssetsPlugin({
+      sourceDir: IOS_WEBVIEW_DIR,
+      targetDir: ANDROID_WEBVIEW_DIR
+    })
+  )
 }
 
 // Dev-only plugins for Worker (HtmlWebpackPlugin)
@@ -231,7 +352,14 @@ if (isDev) {
     minimizer: [
       new TerserPlugin({
         extractComments: false,
-        terserOptions: { mangle: false, keep_classnames: true, keep_fnames: true }
+        // Mangle local variable + function names to shrink the worker bundle
+        // (cuts both the disk-fetch and the JS parse/eval cost on cold start —
+        // the dominant boot bottleneck on low-end devices). `keep_classnames`
+        // MUST stay: the controller pipeline derives every controller's identity
+        // from `this.constructor.name` (eventEmitter.ts `get name()`), and code
+        // like criticalControllers, buildStateForFE and transactionManager keys
+        // off those exact class-name strings — mangling them breaks the app.
+        terserOptions: { mangle: { keep_classnames: true }, keep_classnames: true }
       })
     ],
     splitChunks: false,

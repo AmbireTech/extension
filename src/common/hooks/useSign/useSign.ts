@@ -246,7 +246,10 @@ const useSign = ({
       type: 'method',
       params: {
         method: 'handleSignAndBroadcastAccountOp',
-        args: [type, signAccountOpState.fromRequestId]
+        // Pass the id of the accountOp the user is reviewing on screen. The
+        // background compares it against the live accountOp before signing to
+        // reject signing calls that were appended after this review.
+        args: [type, signAccountOpState.fromRequestId, signAccountOpState.accountOp.id]
       }
     })
   }, [mainControllerDispatch, signAccountOpState, updateType])
@@ -319,7 +322,11 @@ const useSign = ({
         return
       }
 
-      if ((signAccountOpState?.feePayerKeyStoreKeys?.length || 0) > 1 && !isFeePayerSameAsSigner) {
+      if (
+        !signAccountOpState?.account.safeCreation &&
+        (signAccountOpState?.feePayerKeyStoreKeys?.length || 0) > 1 &&
+        !isFeePayerSameAsSigner
+      ) {
         setIsChooseFeePayerKeyShown(true)
         return
       }
@@ -336,6 +343,7 @@ const useSign = ({
       signAccountOpState?.accountOp.signingKeyAddr,
       signAccountOpState?.accountOp.gasFeePayment?.paidBy,
       signAccountOpState?.feePayerKeyStoreKeys?.length,
+      signAccountOpState?.account.safeCreation,
       signAccountOpState?.accountOp.signingKeyType,
       signAccountOpState?.accountOp.gasFeePayment?.paidByKeyType,
       warningToPromptBeforeSign,

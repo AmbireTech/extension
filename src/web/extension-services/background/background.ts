@@ -294,7 +294,7 @@ providerRequestTransport.reply(async ({ method, id, providerId, params }, meta) 
       notificationManager
     })
 
-    return { id, result: res }
+    return { id, providerId, result: res }
   } catch (error: any) {
     let errorRes
     try {
@@ -302,7 +302,7 @@ providerRequestTransport.reply(async ({ method, id, providerId, params }, meta) 
     } catch (e) {
       errorRes = error
     }
-    return { id, error: errorRes }
+    return { id, providerId, error: errorRes }
   }
 })
 
@@ -563,24 +563,29 @@ const init = async () => {
     eventEmitterRegistry,
     onLogLevelUpdateCallback: async (nextLogLevel: LOG_LEVELS) => {
       await mainCtrl.dapps.broadcastDappSessionEvent('logLevelUpdate', nextLogLevel)
-    }
+    },
+    storage
   })
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const badgesCtrl = new BadgesController(mainCtrl, walletStateCtrl)
-  autoLockCtrl = new AutoLockController(eventEmitterRegistry, () => {
-    // Prevents sending multiple notifications if the event is triggered multiple times
-    if (mainCtrl.keystore.isUnlocked) {
-      notificationManager
-        .create({
-          title: 'Ambire locked',
-          message: 'Your wallet has been locked due to inactivity.'
-        })
-        .catch((err) => {
-          console.error('Failed to create notification', err)
-        })
-    }
-    mainCtrl.lock()
-  })
+  autoLockCtrl = new AutoLockController(
+    eventEmitterRegistry,
+    () => {
+      // Prevents sending multiple notifications if the event is triggered multiple times
+      if (mainCtrl.keystore.isUnlocked) {
+        notificationManager
+          .create({
+            title: 'Ambire locked',
+            message: 'Your wallet has been locked due to inactivity.'
+          })
+          .catch((err) => {
+            console.error('Failed to create notification', err)
+          })
+      }
+      mainCtrl.lock()
+    },
+    storage
+  )
   const extensionUpdateCtrl = new ExtensionUpdateController(eventEmitterRegistry)
 
   function debounceFrontEndEventUpdatesOnSameTick(
@@ -806,10 +811,11 @@ try {
     // wait for mainCtrl to be initialized before handling dapp requests
     while (!mainCtrl) await wait(200)
 
-    const sessionKeys = Object.keys(mainCtrl.dapps.dappSessions || {})
-
-    for (const key of sessionKeys.filter((k) => k.startsWith(`${tabId}-`))) {
-      mainCtrl.dapps.deleteDappSession(key)
+    // Match by the session's own tabId: keys are `windowId-tabId-dappId`, so the
+    // old `${tabId}-` prefix never matched and leaked sessions past tab close.
+    const { dappSessions } = mainCtrl.dapps
+    for (const key of Object.keys(dappSessions)) {
+      if (dappSessions[key]?.tabId === tabId) mainCtrl.dapps.deleteDappSession(key)
     }
   })
 } catch (error) {
