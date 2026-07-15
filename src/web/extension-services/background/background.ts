@@ -294,7 +294,7 @@ providerRequestTransport.reply(async ({ method, id, providerId, params }, meta) 
       notificationManager
     })
 
-    return { id, result: res }
+    return { id, providerId, result: res }
   } catch (error: any) {
     let errorRes
     try {
@@ -302,7 +302,7 @@ providerRequestTransport.reply(async ({ method, id, providerId, params }, meta) 
     } catch (e) {
       errorRes = error
     }
-    return { id, error: errorRes }
+    return { id, providerId, error: errorRes }
   }
 })
 
@@ -811,10 +811,11 @@ try {
     // wait for mainCtrl to be initialized before handling dapp requests
     while (!mainCtrl) await wait(200)
 
-    const sessionKeys = Object.keys(mainCtrl.dapps.dappSessions || {})
-
-    for (const key of sessionKeys.filter((k) => k.startsWith(`${tabId}-`))) {
-      mainCtrl.dapps.deleteDappSession(key)
+    // Match by the session's own tabId: keys are `windowId-tabId-dappId`, so the
+    // old `${tabId}-` prefix never matched and leaked sessions past tab close.
+    const { dappSessions } = mainCtrl.dapps
+    for (const key of Object.keys(dappSessions)) {
+      if (dappSessions[key]?.tabId === tabId) mainCtrl.dapps.deleteDappSession(key)
     }
   })
 } catch (error) {
