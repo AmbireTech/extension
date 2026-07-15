@@ -23,6 +23,7 @@ import { getAccountKeysCount } from '@ambire-common/libs/keys/keys'
 import { KeystoreSigner } from '@ambire-common/libs/keystoreSigner/keystoreSigner'
 import { parse, stringify } from '@ambire-common/libs/richJson/richJson'
 import wait from '@ambire-common/utils/wait'
+import { scrubSentryEventSecrets } from '@common/config/analytics/sentryDataScrubbing'
 import CONFIG, { APP_VERSION, isAmbireNext, isDev, isProd } from '@common/config/env'
 import { controllersNestedInMainMapping } from '@common/constants/controllersMapping'
 import { AutoLockController } from '@common/controllers/auto-lock'
@@ -78,6 +79,8 @@ import {
   setBackgroundExtraContext,
   setBackgroundUserContext
 } from './CrashAnalytics'
+import { buildScrubFailureFallbackEvent } from './buildScrubFailureFallbackEvent'
+import { getReportableAction } from './getReportableAction'
 
 const debugLogs: {
   key: string
@@ -246,15 +249,29 @@ if (CONFIG.SENTRY_DSN_BROWSER_EXTENSION) {
         }
       }
 
-      // We don't want to miss errors that occur before the controllers are initialized
-      if (!walletStateCtrl) return event
+      // No explicit type annotation here: `event`'s type is inferred contextually
+      // as the narrower ErrorEvent (from Sentry.init's expected beforeSend
+      // signature), and both scrubSentryEventSecrets and
+      // buildScrubFailureFallbackEvent are generic in that same type, so
+      // scrubbedEvent stays ErrorEvent instead of widening to Sentry.Event.
+      let scrubbedEvent
+      try {
+        scrubbedEvent = scrubSentryEventSecrets(event)
+      } catch (scrubError) {
+        scrubbedEvent = buildScrubFailureFallbackEvent(event, scrubError)
+      }
+
+      // We don't want to miss errors that occur before the controllers are initialized.
+      // Scrubbing above still applies -- only the crashAnalyticsEnabled gate below,
+      // which depends on walletStateCtrl, can't run yet.
+      if (!walletStateCtrl) return scrubbedEvent
 
       if (isDev) {
-        console.log(`Sentry event captured in background: ${event.event_id}`, event)
+        console.log(`Sentry event captured in background: ${event.event_id}`, scrubbedEvent)
       }
 
       // If the Sentry is disabled, we don't send any events
-      return walletStateCtrl?.crashAnalyticsEnabled ? event : null
+      return walletStateCtrl?.crashAnalyticsEnabled ? scrubbedEvent : null
     }
   })
 }
@@ -689,7 +706,7 @@ const init = async () => {
               console.error(`${type} action failed:`, err)
               captureBackgroundException(err, {
                 extra: {
-                  action: stringify(action),
+                  action: stringify(getReportableAction(action)),
                   portId: port.id,
                   windowId
                 }
