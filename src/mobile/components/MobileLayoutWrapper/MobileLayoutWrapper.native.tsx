@@ -124,6 +124,7 @@ const MobileLayoutWrapperMainContent: React.FC<MobileLayoutWrapperMainContentPro
   withScroll = false,
   keyboardAwareScrollViewProps = {},
   withBackButton = false,
+  withHorizontalPadding = true,
   onBackButtonPress,
   rightIcon,
   title,
@@ -164,7 +165,7 @@ const MobileLayoutWrapperMainContent: React.FC<MobileLayoutWrapperMainContentPro
 
   if (withScroll) {
     return (
-      <View style={[flexbox.flex1, spacings.phSm]}>
+      <View style={[flexbox.flex1, withHorizontalPadding && spacings.phSm]}>
         {step > 0 ? renderProgress() : <View style={{ height: isOnboardingRoute ? 24 : 0 }} />}
         {(!!title || !!withBackButton) && (
           <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mbLg]}>
@@ -197,7 +198,10 @@ const MobileLayoutWrapperMainContent: React.FC<MobileLayoutWrapperMainContentPro
   }
 
   return (
-    <View ref={wrapperRef} style={[flexbox.flex1, spacings.phSm, contentContainerStyle]}>
+    <View
+      ref={wrapperRef}
+      style={[flexbox.flex1, withHorizontalPadding && spacings.phSm, contentContainerStyle]}
+    >
       {step > 0 ? renderProgress() : <View style={{ height: isOnboardingRoute ? 24 : 0 }} />}
       {(!!title || !!withBackButton) && (
         <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mbLg]}>

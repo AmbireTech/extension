@@ -121,7 +121,7 @@ const Main = ({
   const messageVisualizationKey = `${signMessageState.messageToSign?.fromRequestId}-${messageVisualizationMode}`
 
   return (
-    <Container withScroll={shouldUseErc7730TypedMessageCard}>
+    <Container withScroll={shouldUseErc7730TypedMessageCard || isMobile}>
       <View
         style={[
           flexbox.directionRow,
