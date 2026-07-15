@@ -1,7 +1,8 @@
 // MUST be first: installs a BigInt-safe structuredClone before any controller
-// code runs. iOS 16's native structuredClone corrupts BigInt-containing
-// portfolio state (see structuredCloneShim.ts), crashing the dashboard.
-import { getStructuredCloneShimStatus } from './structuredCloneShim'
+// code runs. iOS < 17.4's native structuredClone corrupts BigInt-containing
+// portfolio state (see structuredCloneShim.ts), crashing the dashboard. Kept as
+// a bare side-effect import so the editor's organize-imports leaves it in place.
+import './structuredCloneShim'
 
 import { EventEmitter as Emitter } from 'events'
 
@@ -19,8 +20,13 @@ import * as richJson from '@ambire-common/libs/richJson/richJson'
 import { AutoLockController } from '@common/controllers/auto-lock/auto-lock.native'
 import { WalletStateController } from '@common/controllers/wallet-state/wallet-state.native'
 import LedgerSigner from '@common/modules/hardware-wallet/libs/LedgerSigner'
+import TrezorSigner from '@common/modules/hardware-wallet/libs/TrezorSigner'
+import QrHardwareController from '@common/modules/hardware-wallets/controllers/QrHardwareController'
+import UrQrProtocolAdapter from '@common/modules/hardware-wallets/qr/protocol/UrQrProtocolAdapter'
+import QrHardwareSigner from '@common/modules/hardware-wallets/signers/QrHardwareSigner'
 import { handleActions } from '@mobile/handlers/handleActions'
 import LedgerController from '@mobile/modules/hardware-wallet/controllers/LedgerController'
+import TrezorController from '@mobile/modules/hardware-wallet/controllers/TrezorController'
 
 import {
   buildStateForFE,
@@ -218,7 +224,7 @@ const initControllers = (config: any) => {
   try {
     // Logged here (not in structuredCloneShim) because that module loads before
     // console forwarding is wired up, so its logs never reach Metro.
-    console.log(getStructuredCloneShimStatus())
+    console.log((globalThis as any).__structuredCloneShimStatus)
 
     // PERF: seed the storage cache BEFORE constructing controllers, so their
     // initial-load storage reads hit the in-memory cache instead of the bridge.
@@ -230,6 +236,15 @@ const initControllers = (config: any) => {
     // Single shared Ledger controller for the worker's lifetime; it forwards
     // device operations to the native ledgerTransportService over the bridge.
     const ledgerCtrl = new LedgerController()
+
+    // TrezorController - forwards Trezor Connect calls to the native
+    // trezorDeeplinkService (which delegates to the Trezor Suite app).
+    const trezorCtrl = new TrezorController()
+
+    // QR (Keystone/Keycard/imToken) is air-gapped: the controller is pure logic
+    // that runs in the worker (no native transport). The camera scan + QR display
+    // happen in the RN UI layer and exchange payloads via controller state.
+    const qrCtrl = new QrHardwareController(new UrQrProtocolAdapter(), eventEmitterRegistry)
 
     mainCtrl = new MainController({
       eventEmitterRegistry,
@@ -247,10 +262,14 @@ const initControllers = (config: any) => {
       keystoreSigners: {
         internal: KeystoreSigner,
         // TODO: there is a mismatch in hw signer types, it's not a big deal
-        ledger: LedgerSigner
+        ledger: LedgerSigner,
+        trezor: TrezorSigner,
+        qr: QrHardwareSigner
       } as any,
       externalSignerControllers: {
-        ledger: ledgerCtrl
+        ledger: ledgerCtrl,
+        trezor: trezorCtrl,
+        qr: qrCtrl
       } as any,
       uiManager: {
         window: {

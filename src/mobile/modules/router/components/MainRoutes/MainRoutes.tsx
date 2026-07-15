@@ -12,6 +12,7 @@ import CreateSeedPhraseWriteScreen from '@mobile/modules/auth/screens/CreateSeed
 import GetStartedScreen from '@mobile/modules/auth/screens/GetStartedScreen'
 import ImportExistingAccountSelectorScreen from '@mobile/modules/auth/screens/ImportExistingAccountSelectorScreen'
 import ImportSmartAccountJsonScreen from '@mobile/modules/auth/screens/ImportSmartAccountJson'
+import MigrationOnboardingScreen from '@mobile/modules/auth/screens/MigrationOnboardingScreen'
 import PrivateKeyImportScreen from '@mobile/modules/auth/screens/PrivateKeyImportScreen'
 import SafeImportScreen from '@mobile/modules/auth/screens/SafeImportScreen'
 import SeedPhraseImportScreen from '@mobile/modules/auth/screens/SeedPhraseImportScreen'
@@ -19,6 +20,8 @@ import ViewOnlyAccountAdderScreen from '@mobile/modules/auth/screens/ViewOnlyAcc
 import ExploreScreen from '@mobile/modules/explore/screens/ExploreScreen'
 import ExploreSectionScreen from '@mobile/modules/explore/screens/ExploreSectionScreen'
 import LedgerConnectScreen from '@mobile/modules/hardware-wallet/screens/LedgerConnectScreen'
+import QrConnectScreen from '@mobile/modules/hardware-wallet/screens/QrConnectScreen'
+import TrezorConnectScreen from '@mobile/modules/hardware-wallet/screens/TrezorConnectScreen'
 import KeyStoreSetupScreen from '@mobile/modules/keystore/screens/KeyStoreSetupScreen'
 import NetworksConfiguration from '@mobile/modules/network-settings/screens'
 import PrivacyOptOutsConfiguration from '@mobile/modules/network-settings/screens/PrivacyOptOutsConfiguration'
@@ -42,6 +45,7 @@ const MainRoutes = () => {
       <Route path={ROUTES.keyStoreSetup} element={<KeyStoreSetupScreen />} />
       <Route element={<KeystoreUnlockedRoute />}>
         <Route path={ROUTES.getStarted} element={<GetStartedScreen />} />
+        <Route path={ROUTES.migrationOnboarding} element={<MigrationOnboardingScreen />} />
         <Route path={ROUTES.networksConfiguration} element={<NetworksConfiguration />} />
         <Route
           path={ROUTES.privacyOptOutsConfiguration}
@@ -53,6 +57,8 @@ const MainRoutes = () => {
           element={<ImportExistingAccountSelectorScreen />}
         />
         <Route path={ROUTES.ledgerConnect} element={<LedgerConnectScreen />} />
+        <Route path={ROUTES.trezorConnect} element={<TrezorConnectScreen />} />
+        <Route path={ROUTES.qrConnect} element={<QrConnectScreen />} />
 
         <Route path={ROUTES.importPrivateKey} element={<PrivateKeyImportScreen />} />
         <Route path={ROUTES.importSeedPhrase} element={<SeedPhraseImportScreen />} />

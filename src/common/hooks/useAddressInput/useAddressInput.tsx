@@ -50,7 +50,7 @@ const useAddressInput = ({
   const fieldValue = addressState.fieldValue
   const [hasDomainResolveFailed, setHasDomainResolveFailed] = useState(false)
   const [domainResolveError, setDomainResolveError] = useState('')
-  const { resolveDomain } = useResolveDomain()
+  const { resolveDomain, isNamoshiAvailable } = useResolveDomain()
   const [debouncedValidation, setDebouncedValidation] = useState<Validation>({
     severity: 'error',
     message: ''
@@ -66,7 +66,8 @@ const useAddressInput = ({
         isDomainVerifiedByColibri,
         hasDomainResolveFailed,
         domainResolveError,
-        overwriteValidation
+        overwriteValidation,
+        isNamoshiAvailable
       }),
     [
       overwriteValidationFieldValue,
@@ -76,7 +77,8 @@ const useAddressInput = ({
       isDomainVerifiedByColibri,
       hasDomainResolveFailed,
       domainResolveError,
-      overwriteValidation
+      overwriteValidation,
+      isNamoshiAvailable
     ]
   )
 

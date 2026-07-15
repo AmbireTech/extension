@@ -63,12 +63,12 @@ import {
 } from '@web/extension-services/messengers'
 import LatticeController from '@web/modules/hardware-wallet/controllers/LatticeController'
 import LedgerController from '@web/modules/hardware-wallet/controllers/LedgerController'
-import QrHardwareController from '@web/modules/hardware-wallet/controllers/QrHardwareController/QrHardwareController'
+import QrHardwareController from '@common/modules/hardware-wallets/controllers/QrHardwareController/QrHardwareController'
 import TrezorController from '@web/modules/hardware-wallet/controllers/TrezorController'
 import LatticeSigner from '@web/modules/hardware-wallet/libs/LatticeSigner'
-import TrezorSigner from '@web/modules/hardware-wallet/libs/TrezorSigner'
-import UrQrProtocolAdapter from '@web/modules/hardware-wallet/qr/protocol/UrQrProtocolAdapter'
-import QrHardwareSigner from '@web/modules/hardware-wallet/signers/QrHardwareSigner'
+import TrezorSigner from '@common/modules/hardware-wallet/libs/TrezorSigner'
+import UrQrProtocolAdapter from '@common/modules/hardware-wallets/qr/protocol/UrQrProtocolAdapter'
+import QrHardwareSigner from '@common/modules/hardware-wallets/signers/QrHardwareSigner'
 import { providerRequestTransport } from '@web/modules/provider/providerRequestTransport'
 import { getExtensionInstanceId } from '@web/utils/analytics'
 
@@ -605,7 +605,7 @@ const init = async () => {
         // We are removing the state of the nested controllers in main to avoid the CPU-intensive task of parsing + stringifying.
         // We should access the state of the nested controllers directly from their context instead of accessing them through the main ctrl state on the FE.
         // Keep in mind: if we just spread `ctrl` instead of calling `ctrl.toJSON()`, the getters won't be included.
-        Object.keys(controllersNestedInMainMapping).forEach((nestedCtrlName) => {
+        controllersNestedInMainMapping.forEach((nestedCtrlName) => {
           delete (stateToSendToFE as any)[nestedCtrlName]
         })
       }
