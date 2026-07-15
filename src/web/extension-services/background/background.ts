@@ -79,6 +79,7 @@ import {
   setBackgroundExtraContext,
   setBackgroundUserContext
 } from './CrashAnalytics'
+import { buildScrubFailureFallbackEvent } from './buildScrubFailureFallbackEvent'
 import { getReportableAction } from './getReportableAction'
 
 const debugLogs: {
@@ -248,7 +249,12 @@ if (CONFIG.SENTRY_DSN_BROWSER_EXTENSION) {
         }
       }
 
-      const scrubbedEvent = scrubSentryEventSecrets(event)
+      let scrubbedEvent: Sentry.Event
+      try {
+        scrubbedEvent = scrubSentryEventSecrets(event)
+      } catch (scrubError) {
+        scrubbedEvent = buildScrubFailureFallbackEvent(event, scrubError)
+      }
 
       // We don't want to miss errors that occur before the controllers are initialized.
       // Scrubbing above still applies -- only the crashAnalyticsEnabled gate below,

@@ -132,7 +132,8 @@ const NON_SECRET_KEY_SUBSTRINGS = [
   'calldata',
   'blocknumber',
   'address',
-  'addr'
+  'addr',
+  'entropy'
 ]
 
 const isNonSecretKey = (key: string): boolean => {
