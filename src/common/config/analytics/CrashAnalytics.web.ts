@@ -31,7 +31,7 @@ export const ErrorBoundary = Sentry.ErrorBoundary
  * because that's part of our privacy policy now.
  * Except in development. Even tho we tag errors with the environment,
  * we don't want to spam Sentry with errors that occur during development.
-и * Since v5.21.2, disabled by default for Firefox. The flow must be different -
+ * Since v5.21.2, disabled by default for Firefox. The flow must be different -
  * control mechanism must be shown at first-run of the add-on and should
  * contain a choice accompanied by the data collection summary.
  */
