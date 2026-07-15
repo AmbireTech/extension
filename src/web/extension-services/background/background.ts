@@ -249,7 +249,12 @@ if (CONFIG.SENTRY_DSN_BROWSER_EXTENSION) {
         }
       }
 
-      let scrubbedEvent: Sentry.Event
+      // No explicit type annotation here: `event`'s type is inferred contextually
+      // as the narrower ErrorEvent (from Sentry.init's expected beforeSend
+      // signature), and both scrubSentryEventSecrets and
+      // buildScrubFailureFallbackEvent are generic in that same type, so
+      // scrubbedEvent stays ErrorEvent instead of widening to Sentry.Event.
+      let scrubbedEvent
       try {
         scrubbedEvent = scrubSentryEventSecrets(event)
       } catch (scrubError) {
