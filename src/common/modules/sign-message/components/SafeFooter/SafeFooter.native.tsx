@@ -20,8 +20,7 @@ const SafeFooter = ({
   signed = [],
   importedKeys,
   threshold,
-  onReject,
-  onSignLater
+  onReject
 }: {
   account: Account
   onSign?: (signingKeyAddr: Key['addr'], _chosenSigningKeyType: Key['type']) => void
@@ -32,9 +31,6 @@ const SafeFooter = ({
   importedKeys: Key[]
   threshold: number
   onReject: (event: GestureResponderEvent) => void
-  // closes the signing UI while keeping the txn pending with the collected
-  // signatures already pushed to Safe Global (web: close popup; mobile: dismiss sheet)
-  onSignLater: () => void
 }) => {
   const { t } = useTranslation()
   const [showSafeSigners, setShowSafeSigners] = useState(false)
@@ -62,18 +58,20 @@ const SafeFooter = ({
           importedKeys={importedKeys}
           threshold={threshold}
           signingKeyAddr={signingKeyAddr}
-          style={spacings.mbSm}
+          style={spacings.mbXl}
         />
       )}
       {threshold === 0 && (
-        <View style={flexbox.flex1}>
-          <Button
-            text={t('Reject')}
-            type="danger"
-            hasBottomSpacing={false}
-            size="large"
-            onPress={onReject}
-          />
+        <View style={[flexbox.directionRow, { columnGap: SPACING_TY }]}>
+          <View style={flexbox.flex1}>
+            <Button
+              text={t('Reject')}
+              type="danger"
+              hasBottomSpacing={false}
+              size="large"
+              onPress={onReject}
+            />
+          </View>
         </View>
       )}
       {threshold > 0 && isSingle && (
@@ -122,18 +120,9 @@ const SafeFooter = ({
                   hasBottomSpacing={false}
                   onPress={() => setShowSafeSigners((prev) => !prev)}
                   text={!showSafeSigners ? 'Begin signing' : 'Close signing'}
+                  style={spacings.phSm}
                 />
               </View>
-            </View>
-            <View style={[flexbox.flex1, spacings.mtSm]}>
-              <Button
-                size="large"
-                type="secondary"
-                hasBottomSpacing={false}
-                onPress={onSignLater}
-                text="Sign later"
-                disabled={signed.length === 0}
-              />
             </View>
             <ActionsPagination />
           </>

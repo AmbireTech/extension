@@ -64,8 +64,12 @@ const SafeOwners = ({
   }, [importedKeys, account.addr, chainId, accountStates, signed])
 
   return (
-    <View style={[spacings.ptTy, style]}>
-      <Text weight="semiBold" style={{ textAlign: 'center', ...spacings.mb }}>
+    <View style={[style]}>
+      <Text
+        fontSize={16}
+        weight="semiBold"
+        style={{ textAlign: 'center', ...spacings.mb, ...spacings.mtMi }}
+      >
         {t(`${threshold} out of ${owners.length} signatures required:`)}
       </Text>
       <ScrollableWrapper

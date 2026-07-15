@@ -226,10 +226,10 @@ const SignAccountOpScreen = () => {
         footerStyle={{ ...spacings.ph0, ...spacings.pt0 }}
         footer={
           <View style={styles.footerContainer}>
-            <View style={spacings.mbSm}>
-              {!estimationFailed &&
-              signAccountOpState?.canBroadcast &&
-              signAccountOpState?.status?.type !== SigningStatus.Queued ? (
+            {!estimationFailed &&
+            signAccountOpState?.canBroadcast &&
+            signAccountOpState?.status?.type !== SigningStatus.Queued ? (
+              <View style={spacings.mbMd}>
                 <Estimation
                   signAccountOpState={signAccountOpState}
                   disabled={isSignLoading}
@@ -241,14 +241,16 @@ const SignAccountOpScreen = () => {
                   updateType="Requests"
                   bundlerNonceDiscrepancy={bundlerNonceDiscrepancy}
                 />
-              ) : null}
+              </View>
+            ) : null}
 
-              {!isViewOnly &&
-                signAccountOpState &&
-                signAccountOpState?.errors.length === 0 &&
-                !signAccountOpState.canBroadcast &&
-                !!signAccountOpState.account.safeCreation &&
-                showSafeSigners && (
+            {!isViewOnly &&
+              signAccountOpState &&
+              signAccountOpState?.errors.length === 0 &&
+              !signAccountOpState.canBroadcast &&
+              !!signAccountOpState.account.safeCreation &&
+              showSafeSigners && (
+                <View style={[spacings.ptSm, spacings.mbMd]}>
                   <SafeOwners
                     account={signAccountOpState.account}
                     onSign={handleChangeSigningKey}
@@ -258,10 +260,10 @@ const SignAccountOpScreen = () => {
                     signed={signAccountOpState.accountOp.signed || []}
                     importedKeys={signAccountOpState.accountKeyStoreKeys}
                     threshold={signAccountOpState.threshold}
-                    style={spacings.mb}
                   />
-                )}
-            </View>
+                </View>
+              )}
+
             <Footer
               onReject={handleRejectAccountOp}
               onAddToCart={handleAddToCart}
