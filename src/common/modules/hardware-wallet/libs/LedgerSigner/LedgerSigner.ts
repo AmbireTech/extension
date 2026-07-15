@@ -165,12 +165,21 @@ class LedgerSigner implements KeystoreSignerInterface {
   }
 
   sign7702: KeystoreSignerInterface['sign7702'] = async ({ chainId, contract, nonce }) => {
-    await this.#prepareForSigning()
+    // Intentionally skip #prepareForSigning() here: it unlocks via getAddress,
+    // which opens the official Ethereum app. The 7702 delegation must instead be
+    // signed by the sideloaded "Ambire Signer" app (a fork of the Ethereum app
+    // that whitelists the Ambire delegator). controller.sign7702 inits the
+    // session and opens Ambire Signer itself.
+    if (!this.controller) {
+      throw new ExternalSignerError(
+        'Something went wrong when preparing Ledger to sign. Please try again or contact support if the problem persists.',
+        { sendCrashReport: true }
+      )
+    }
 
     try {
       const path = getHdPathFromTemplate(this.key.meta.hdPathTemplate, this.key.meta.index)
-      // Note: '0x4Cd241E8d1510e30b2076397afc7508Ae59C66c9' (Simple7702Account) contact is the only one whitelisted
-      const signature = await this.controller!.sign7702(path, chainId, contract, nonce)
+      const signature = await this.controller.sign7702(path, chainId, contract, nonce)
       const v = Signature.getNormalizedV(signature.v)
 
       return {

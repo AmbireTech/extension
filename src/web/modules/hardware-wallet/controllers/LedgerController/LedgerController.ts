@@ -319,13 +319,15 @@ class LedgerController implements ExternalSignerController, LedgerControllerInte
       subscription = observable.subscribe({
         next: (response: any) => {
           if (isCancelled) return
-          // TODO: If we communicate this to the user in the UI better, we can
-          // wait for the user to do all required interactions instead of rejecting.
+          // Only a locked device blocks us here. When the device needs to open
+          // the target app (ConfirmOpenApp), let the DMK device action open it
+          // and wait for the user to confirm on-device — this covers both the
+          // official Ethereum app and the sideloaded "Ambire Signer" app used for
+          // the 7702 authorization, instead of erroring that no app is open.
           const missingRequiredUserInteraction =
             response.status === 'pending' &&
-            [UserInteractionRequired.UnlockDevice, UserInteractionRequired.ConfirmOpenApp].includes(
-              response.intermediateValue.requiredUserInteraction
-            )
+            response.intermediateValue.requiredUserInteraction ===
+              UserInteractionRequired.UnlockDevice
 
           if (missingRequiredUserInteraction) {
             subscription?.unsubscribe()
@@ -516,6 +518,12 @@ class LedgerController implements ExternalSignerController, LedgerControllerInte
   }
 
   async sign7702(derivationPath: string, chainId: bigint, delegationAddr: Hex, nonce: bigint) {
+    // Init the session WITHOUT unlocking via getAddress: unlock would open the
+    // official Ethereum app, but the 7702 delegation must be signed by the
+    // sideloaded "Ambire Signer" app. signDelegationAuthorization (patched to
+    // target "Ambire Signer") opens the right app itself.
+    await this.#initSDKSessionIfNeeded()
+
     if (!this.signerEth) throw new ExternalSignerError(normalizeLedgerMessage())
 
     return this.#handleLedgerSubscription<LedgerSignature>(
