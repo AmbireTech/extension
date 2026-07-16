@@ -87,13 +87,15 @@ publish_args=(
 if [ -n "${STALLION_CI_TOKEN:-}" ]; then
   publish_args+=(--ci-token="$STALLION_CI_TOKEN")
 fi
-if [ -n "$PRIVATE_KEY_PATH" ]; then
-  publish_args+=(--private-key="$PRIVATE_KEY_PATH")
-else
-  echo "WARNING: publishing UNSIGNED - app builds with StallionPublicSigningKey embedded will" >&2
-  echo "         REJECT this OTA. Set STALLION_PRIVATE_SIGNING_KEY_BASE_64 (CI) or stallion/secret-keys/" >&2
-  echo "         private-key.pem (local) to sign. See https://stalliontech.io/learn/docs/bundle-signing" >&2
+if [ -z "$PRIVATE_KEY_PATH" ]; then
+  # Signing is mandatory: an unsigned bundle would be rejected by every app build with
+  # StallionPublicSigningKey embedded, so publishing it is a broken release, never allowed.
+  echo "ERROR: no signing key present. Set STALLION_PRIVATE_SIGNING_KEY_BASE_64 (CI) or add" >&2
+  echo "       stallion/secret-keys/private-key.pem (local) to sign the OTA. Refusing to publish" >&2
+  echo "       UNSIGNED. See https://stalliontech.io/learn/docs/bundle-signing" >&2
+  exit 1
 fi
+publish_args+=(--private-key="$PRIVATE_KEY_PATH")
 
 npx stallion publish-bundle "${publish_args[@]}"
 
