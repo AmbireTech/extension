@@ -109,6 +109,7 @@ const SafeFooter = ({
           <>
             <View style={spacings.mbSm}>
               <Button
+                key={showSafeSigners ? 'close-signing' : 'begin-signing'}
                 size="large"
                 type="primary"
                 hasBottomSpacing={false}
