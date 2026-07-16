@@ -31,10 +31,13 @@ const AccountKeyIconOrBanner = ({
 
 const AccountKeyIcons = ({
   account,
-  isExtended
+  isExtended,
+  // When false, drops the leading left margin so a parent columnGap can space it
+  withContainerSpacing = true
 }: {
   account: AccountInterface
   isExtended: boolean
+  withContainerSpacing?: boolean
 }) => {
   const { keys } = useController('KeystoreController').state
   const { theme } = useTheme()
@@ -49,8 +52,12 @@ const AccountKeyIcons = ({
       <AccountKeyIconOrBanner type="safe" isExtended={isExtended} color={theme.primaryBackground} />
     )
 
+  // In extended (banner) mode a keyless account renders nothing, so avoid an empty
+  // wrapper that would still consume a slot in a parent columnGap layout
+  if (!hasKeys && isExtended) return null
+
   return (
-    <View style={[flexbox.directionRow, hasKeys ? spacings.mlTy : spacings.ml0]}>
+    <View style={[flexbox.directionRow, hasKeys && withContainerSpacing ? spacings.mlTy : spacings.ml0]}>
       {hasKeys ? (
         importedKeyTypes.map((type, index) => {
           return (
