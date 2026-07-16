@@ -45,6 +45,14 @@ const HoldToProceedButton: FC<Props> = ({
     warning: theme.warning100
   }
 
+  // One shade more saturated than progressColorMap so the animated fill is visible
+  // against the static background instead of blending into it.
+  const progressFillColorMap = {
+    primary: theme.primaryAccent200,
+    dangerFilled: theme.error200,
+    warning: theme.warning200
+  }
+
   // The button's background is forced to stay static and light (see progressColorMap
   // above), but Button's own per-type text color assumes a solid/dark background
   // (white text for primary/dangerFilled) or a background that darkens on hover
@@ -213,7 +221,7 @@ const HoldToProceedButton: FC<Props> = ({
   })
 
   // Progress bar background color - using theme colors for consistency
-  const progressColor = isHolding && !isCompleted ? progressColorMap[buttonType] : 'transparent'
+  const progressColor = isHolding && !isCompleted ? progressFillColorMap[buttonType] : 'transparent'
 
   return (
     <Animated.View
