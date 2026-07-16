@@ -6,17 +6,9 @@ import { useTranslation } from '@common/config/localization'
 
 const OTA_BANNER_ID = 'ota-update-available'
 
-// Returns the Stallion OTA "update ready" banner for useBanners to render in the shared
-// dashboard banner list via the NON-marketing controllerBanners path - the same path the
-// browser-extension update banner uses (rendered by DashboardBanner, which has the
-// 'apply-ota-update' action handling).
-//
-// NOT BannerController.addBanner: that is the MARKETING path (MarketingBanner renderer with
-// no action button + dismiss-forever persistence + account gating), which is wrong here.
-//
-// Stallion is a native module + React hook, so this is the .native variant; the .web one
-// returns [] (no OTA on web). The Restart action is handled in DashboardBanner via the
-// .native applyOtaUpdate helper, which calls Stallion's restart() on the RN main thread.
+// Renders via the controllerBanners path (DashboardBanner + 'apply-ota-update' action),
+// same as the extension's update banner - NOT BannerController.addBanner, which is the
+// marketing path (no action button, dismiss-forever, account gating).
 const useOtaUpdateBanner = (): Banner[] => {
   const { t } = useTranslation()
   const { isRestartRequired } = useStallionUpdate()
