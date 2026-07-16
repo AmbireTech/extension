@@ -11,12 +11,15 @@ set -euo pipefail
 # NOT about publishing a bundle - that is scripts/publish-ota.sh.
 #
 # It is inlined into the build commands (build:ios:simulator, build:ios:archive,
-# build:android:production:*), so it runs the same way locally and in CI.
+# build:android:production:*). In CI (CI env var set) the credentials are required and a
+# missing one fails the build; locally they are optional - injection is skipped and the
+# committed placeholders are kept, since local builds don't need working OTA.
 # NOTE: it mutates the committed files in place - do NOT commit the result; restore
 # the placeholders (git checkout) before committing.
 #
-# Requires STALLION_PROJECT_ID, STALLION_APP_TOKEN and STALLION_PUBLIC_SIGNING_KEY (a single-line
-# base64 public key enabling on-device OTA signature verification). All from .env or environment.
+# Uses STALLION_PROJECT_ID, STALLION_APP_TOKEN and STALLION_PUBLIC_SIGNING_KEY (a single-line
+# base64 public key enabling on-device OTA signature verification), from .env or environment.
+# Required in CI; optional locally.
 # Usage: sh ./scripts/inject-mobile-ota-config.sh
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -29,8 +32,17 @@ if [ -f "$ROOT_DIR/.env" ]; then
 fi
 
 if [ -z "${STALLION_PROJECT_ID:-}" ] || [ -z "${STALLION_APP_TOKEN:-}" ] || [ -z "${STALLION_PUBLIC_SIGNING_KEY:-}" ]; then
-  echo "Missing STALLION_PROJECT_ID, STALLION_APP_TOKEN or STALLION_PUBLIC_SIGNING_KEY (from .env or environment)." >&2
-  exit 1
+  # OTA updates are published only from CI, so a CI build without these credentials would ship
+  # an app that can't pull OTA - fail closed. Local builds don't need working OTA, so let them
+  # proceed with the committed placeholders instead of blocking development.
+  if [ -n "${CI:-}" ]; then
+    echo "Missing STALLION_PROJECT_ID, STALLION_APP_TOKEN or STALLION_PUBLIC_SIGNING_KEY in CI." >&2
+    exit 1
+  fi
+  echo "WARNING: STALLION_PROJECT_ID / STALLION_APP_TOKEN / STALLION_PUBLIC_SIGNING_KEY not set;" >&2
+  echo "         skipping injection. This local build keeps the placeholder OTA config and will" >&2
+  echo "         not receive OTA updates (fine for local dev)." >&2
+  exit 0
 fi
 
 IOS_PLIST="$ROOT_DIR/ios/Ambire/Info.plist"
