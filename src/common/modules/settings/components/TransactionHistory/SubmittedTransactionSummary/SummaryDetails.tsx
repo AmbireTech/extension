@@ -27,13 +27,13 @@ import DelegationHumanization from '@web/components/DelegationHumanization'
 
 import {
   getFormattedSubmittedDate,
-  getHumanizedCalls,
   getModalFinalStatus,
   getPresentationalStatus,
   getSummaryBalanceChanges,
   getTruncatedNetworkName,
   getTruncatedTxnHash
 } from './helpers'
+import { getHumanizedCalls } from './humanizedHelpers'
 import getStyles from './styles'
 import { DisplayBalanceChange, Props, SubmittedAccountOpLike } from './types'
 

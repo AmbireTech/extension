@@ -52,7 +52,7 @@ const HoldToProceedButton: FC<Props> = ({
   // using the same light-bg/accent-text pairing as Badge.tsx, otherwise the text
   // is invisible (primary/dangerFilled at rest, warning on hover).
   const textColorMap = {
-    primary: theme.primaryAccent,
+    primary: theme.neutral900,
     dangerFilled: theme.errorText,
     warning: theme.warningText
   }

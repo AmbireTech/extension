@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo } from 'react'
 import { View } from 'react-native'
 
-import { SigningStatus } from '@ambire-common/controllers/signAccountOp/signAccountOp'
+import { SigningStatus } from '@ambire-common/interfaces/signAccountOp'
 import { Key } from '@ambire-common/interfaces/keystore'
 import { HardwareWalletSigningRequest } from '@ambire-common/interfaces/signAccountOp'
 import { AccountOp } from '@ambire-common/libs/accountOp/accountOp'
