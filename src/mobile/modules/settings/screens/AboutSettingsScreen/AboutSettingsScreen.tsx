@@ -28,7 +28,7 @@ const AboutSettingsScreen = () => {
   // applied on top (id + version, matchable in the Stallion console). null = base build.
   const otaInfo = currentlyRunningBundle
     ? `OTA v${currentlyRunningBundle.version} · ${currentlyRunningBundle.id}`
-    : 'No OTA (base build)'
+    : 'default'
 
   const openTos = () => {
     navigate(ROUTES.settingsTerms)
