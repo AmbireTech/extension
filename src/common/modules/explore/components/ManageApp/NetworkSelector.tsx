@@ -136,6 +136,9 @@ const NetworkSelector = ({
       inputWrapperStyle={{
         borderRadius: 42,
         height: 40,
+        // Matches the dropdown's `minWidth: 216` in ManageCurrentlyConnectedApp.web.tsx,
+        // minus its horizontal padding (`spacings.phTy` = 8 on each side)
+        width: 200,
         backgroundColor: theme.tertiaryBackground
       }}
       leftIcon={() => <SearchIcon color={theme.secondaryText} />}
