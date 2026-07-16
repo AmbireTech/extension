@@ -40,29 +40,9 @@ const HoldToProceedButton: FC<Props> = ({
   const isCompletedRef = useRef(false)
 
   const progressColorMap = {
-    primary: theme.primaryAccent100,
+    primary: theme.primaryAccent300,
     dangerFilled: theme.error100,
     warning: theme.warning100
-  }
-
-  // One shade more saturated than progressColorMap so the animated fill is visible
-  // against the static background instead of blending into it.
-  const progressFillColorMap = {
-    primary: theme.primaryAccent200,
-    dangerFilled: theme.error200,
-    warning: theme.warning200
-  }
-
-  // The button's background is forced to stay static and light (see progressColorMap
-  // above), but Button's own per-type text color assumes a solid/dark background
-  // (white text for primary/dangerFilled) or a background that darkens on hover
-  // (warning). Pin the text color to match the light static background instead,
-  // using the same light-bg/accent-text pairing as Badge.tsx, otherwise the text
-  // is invisible (primary/dangerFilled at rest, warning on hover).
-  const textColorMap = {
-    primary: theme.primaryAccent,
-    dangerFilled: theme.errorText,
-    warning: theme.warningText
   }
 
   const startHold = useCallback(() => {
@@ -221,7 +201,7 @@ const HoldToProceedButton: FC<Props> = ({
   })
 
   // Progress bar background color - using theme colors for consistency
-  const progressColor = isHolding && !isCompleted ? progressFillColorMap[buttonType] : 'transparent'
+  const progressColor = isHolding && !isCompleted ? progressColorMap[buttonType] : 'transparent'
 
   return (
     <Animated.View
@@ -243,12 +223,11 @@ const HoldToProceedButton: FC<Props> = ({
         style={[
           {
             minWidth: buttonWidth || 108,
-            position: 'relative',
-            backgroundColor: progressColorMap[buttonType]
+            position: 'relative'
           },
           style
         ]}
-        textStyle={[{ color: textColorMap[buttonType] }, textStyle]}
+        textStyle={[textStyle]}
         size={isWeb ? 'smaller' : 'regular'}
         hasBottomSpacing={false}
         text={buttonText}
