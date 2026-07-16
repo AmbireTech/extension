@@ -12,10 +12,10 @@ import {
   getTrezorErrorMessageFromPayload
 } from '@ambire-common/libs/trezor/trezor'
 import { getHdPathFromTemplate, getParentHdPathFromTemplate } from '@ambire-common/utils/hdPath'
-import { TrezorConnect } from '@web/modules/hardware-wallet/controllers/TrezorController'
+import { TrezorWalletSDK } from '@common/modules/hardware-wallet/interfaces/trezorController'
 
 interface KeyIteratorProps {
-  walletSDK: TrezorConnect
+  walletSDK: TrezorWalletSDK
 }
 
 const ADDRESSES_PER_PAGE = 5

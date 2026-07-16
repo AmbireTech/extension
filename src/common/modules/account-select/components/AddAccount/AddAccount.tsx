@@ -63,6 +63,24 @@ const AddAccount = ({
             goToNextRoute(ROUTES.ledgerConnect)
           },
           testID: 'ledger-option'
+        },
+        {
+          key: 'trezor',
+          text: t('Trezor'),
+          icon: TrezorBadgeIcon,
+          onPress: () => {
+            goToNextRoute(ROUTES.trezorConnect)
+          },
+          testID: 'trezor-option'
+        },
+        {
+          key: 'qr',
+          text: t('QR-based'),
+          icon: ReceiveIcon,
+          onPress: () => {
+            goToNextRoute(ROUTES.qrConnect)
+          },
+          testID: 'qr-option'
         }
       ]
 

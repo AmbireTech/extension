@@ -172,7 +172,12 @@ async function createBaseConfig(env, argv) {
     // Defaults to using 'auto', but this is causing problems in some environments
     // like in certain browsers, when building (and running) in extension context.
     publicPath: '',
-    environment: { dynamicImport: true },
+    // LavaMoat wraps every chunk module in SES scope terminators using `with`, which is a
+    // SyntaxError in an ES module. webpack-target-webextension's import-first chunk loader would
+    // then fail native import() on parse and re-fetch each lazy chunk via its classic <script>
+    // fallback, doubling the network request. Disabling dynamicImport under LavaMoat makes the
+    // plugin load chunks via createElement('script')/importScripts directly, which tolerate `with`.
+    environment: { dynamicImport: !enableLavaMoat },
     hashSalt: 'ambire-salt'
   }
 

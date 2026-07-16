@@ -21,11 +21,9 @@ import { getHdPathFromTemplate } from '@ambire-common/utils/hdPath'
 import shortenAddress from '@ambire-common/utils/shortenAddress'
 import { stripHexPrefix } from '@ambire-common/utils/stripHexPrefix'
 import wait from '@ambire-common/utils/wait'
+import { TrezorControllerInterface } from '@common/modules/hardware-wallet/interfaces/trezorController'
 import transformTypedData from '@trezor/connect-plugin-ethereum'
-import TrezorController, {
-  EthereumTransaction,
-  EthereumTransactionEIP1559
-} from '@web/modules/hardware-wallet/controllers/TrezorController'
+import type { EthereumTransaction, EthereumTransactionEIP1559 } from '@trezor/connect/lib/types'
 
 const DELAY_BETWEEN_POPUPS = 1000
 const HYPER_EVM_CHAIN_ID = 999n
@@ -44,12 +42,12 @@ const delayBetweenPopupsIfNeeded = (status: 'JUST_UNLOCKED' | 'ALREADY_UNLOCKED'
 const delayBetweenStarting = () => wait(DELAY_BETWEEN_POPUPS)
 
 class TrezorSigner implements KeystoreSignerInterface {
-  key: ExternalKey
+  key: ExternalKey & { isExternallyStored: boolean }
 
-  controller: TrezorController | null = null
+  controller: TrezorControllerInterface | null = null
 
   constructor(_key: ExternalKey) {
-    this.key = _key
+    this.key = { ..._key, isExternallyStored: true }
   }
 
   init(externalDeviceController?: ExternalSignerController) {
@@ -60,7 +58,7 @@ class TrezorSigner implements KeystoreSignerInterface {
     }
 
     // TODO: Figure out a better approach than to cast the controller type
-    this.controller = externalDeviceController as TrezorController
+    this.controller = externalDeviceController as TrezorControllerInterface
   }
 
   #prepareForSigning = async () => {

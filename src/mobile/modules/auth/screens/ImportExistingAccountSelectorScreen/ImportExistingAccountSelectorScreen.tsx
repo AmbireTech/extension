@@ -6,7 +6,9 @@ import DiagonalRightArrowIcon from '@common/assets/svg/DiagonalRightArrowIcon'
 import LedgerLetterIcon from '@common/assets/svg/LedgerLetterIcon'
 import PrivateKeyIcon from '@common/assets/svg/PrivateKeyIcon'
 import RightArrowIcon from '@common/assets/svg/RightArrowIcon'
+import ScanIcon from '@common/assets/svg/ScanIcon'
 import SeedPhraseIcon from '@common/assets/svg/SeedPhraseIcon'
+import TrezorLockIcon from '@common/assets/svg/TrezorLockIcon'
 import Button from '@common/components/Button'
 import Panel from '@common/components/Panel'
 import Text from '@common/components/Text'
@@ -64,6 +66,20 @@ const ImportExistingAccountSelectorScreen = () => {
           goToNextRoute(ROUTES.ledgerConnect)
         },
         icon: LedgerLetterIcon
+      },
+      {
+        title: 'Trezor',
+        onPress: () => {
+          goToNextRoute(ROUTES.trezorConnect)
+        },
+        icon: TrezorLockIcon
+      },
+      {
+        title: 'QR-based',
+        onPress: () => {
+          goToNextRoute(ROUTES.qrConnect)
+        },
+        icon: ScanIcon
       }
     ],
     [goToNextRoute]

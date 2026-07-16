@@ -1,6 +1,5 @@
 import React, { useMemo } from 'react'
 
-import { TokenResult } from '@ambire-common/libs/portfolio'
 import Button, { Props } from '@common/components/Button'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
@@ -8,6 +7,7 @@ import useTheme from '@common/hooks/useTheme'
 
 import BaseTokenItem from './BaseTokenItem'
 
+import type { TokenResult } from '@ambire-common/libs/portfolio'
 export interface ClaimButtonProps extends Omit<Props, 'type'> {}
 
 const ClaimButton = ({ textStyle, ...rest }: ClaimButtonProps) => {

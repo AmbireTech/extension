@@ -7,7 +7,6 @@ import { useModalize } from 'react-native-modalize'
 import { Contact } from '@ambire-common/interfaces/addressBook'
 import { AddressState } from '@ambire-common/interfaces/domains'
 import { AddressPoisoningMatch } from '@ambire-common/interfaces/transfer'
-import { TokenResult } from '@ambire-common/libs/portfolio'
 import { getSearchableNames } from '@ambire-common/services/nameResolvers'
 import { validateAddress, Validation } from '@ambire-common/services/validations'
 import { getAddressFromAddressState } from '@ambire-common/utils/domains'
@@ -42,6 +41,7 @@ import { ItemPanel } from '@web/components/TransactionsScreen'
 
 import styles from './styles'
 
+import type { TokenResult } from '@ambire-common/libs/portfolio'
 interface Props extends InputProps {
   setAddress: (text: string) => void
   address: string

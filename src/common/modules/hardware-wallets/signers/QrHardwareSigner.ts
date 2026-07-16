@@ -8,7 +8,7 @@ import {
 } from '@ambire-common/interfaces/keystore'
 import { getHdPathFromTemplate } from '@ambire-common/utils/hdPath'
 import { normalizeSignatureHex } from '@ambire-common/utils/normalizeSignatureHex'
-import QrHardwareController from '@web/modules/hardware-wallet/controllers/QrHardwareController'
+import QrHardwareController from '@common/modules/hardware-wallets/controllers/QrHardwareController'
 
 /**
  * The QrHardwareSigner is responsible for signing data with QR-based hardware wallets.

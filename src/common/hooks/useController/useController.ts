@@ -1,13 +1,13 @@
 import { useCallback, useContext, useMemo, useState } from 'react'
 import { v4 as uuidv4 } from 'uuid'
 
-import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 import { ControllersMiddlewareContext } from '@common/contexts/controllersMiddlewareContext/controllersMiddlewareContext'
 import { AnyControllerAction } from '@common/contexts/controllersMiddlewareContext/types'
 import { ControllerHelpersMapping } from '@common/contexts/controllerStoreContext/controllerHelpersStore'
 import useControllerState from '@common/hooks/useControllerState'
 import eventBus from '@common/services/event/eventBus'
 
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 type MethodKeys<T> = {
   [K in keyof T]-?: T[K] extends (...args: any[]) => any ? K : never
 }[keyof T]

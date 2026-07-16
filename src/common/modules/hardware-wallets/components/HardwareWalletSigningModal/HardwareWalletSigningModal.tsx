@@ -1,12 +1,11 @@
 import React, { useEffect, useMemo } from 'react'
-import { Pressable, View } from 'react-native'
+import { View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 
 import { HARDWARE_WALLET_DEVICE_NAMES } from '@ambire-common/consts/hardwareWallets'
 import { ExternalKey } from '@ambire-common/interfaces/keystore'
 import { HardwareWalletSigningRequest } from '@ambire-common/interfaces/signAccountOp'
 import AmbireDevice from '@common/assets/svg/AmbireDevice'
-import CloseIcon from '@common/assets/svg/CloseIcon'
 import DriveIcon from '@common/assets/svg/DriveIcon'
 import GridPlusIcon from '@common/assets/svg/GridPlusIcon'
 import LedgerBadgeIcon from '@common/assets/svg/LedgerBadgeIcon'
@@ -14,8 +13,8 @@ import LeftPointerArrowIcon from '@common/assets/svg/LeftPointerArrowIcon'
 import TrezorBadgeIcon from '@common/assets/svg/TrezorBadgeIcon'
 import BottomSheet from '@common/components/BottomSheet'
 import ModalHeader from '@common/components/BottomSheet/ModalHeader'
+import Button from '@common/components/Button'
 import Text from '@common/components/Text'
-import Tooltip from '@common/components/Tooltip'
 import { isMobile } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import useTheme from '@common/hooks/useTheme'
@@ -100,24 +99,7 @@ const HardwareWalletSigningModal = ({
       withBackdropBlur={false}
       containerInnerWrapperStyles={isTab ? { ...spacings.pv2Xl, ...spacings.ph2Xl } : {}}
     >
-      <ModalHeader title={title} style={flexbox.justifyCenter}>
-        {isTrezor && !!cancelReq && (
-          <>
-            <Pressable
-              onPress={cancelReq}
-              style={spacings.mr}
-              dataSet={{ tooltipId: 'trezor-cancel-sign-tooltip' }}
-            >
-              <CloseIcon />
-            </Pressable>
-            <Tooltip id="trezor-cancel-sign-tooltip">
-              <Text fontSize={14} appearance="secondaryText">
-                {t('Cancel request')}
-              </Text>
-            </Tooltip>
-          </>
-        )}
-      </ModalHeader>
+      <ModalHeader title={title} style={flexbox.justifyCenter} />
       <View
         style={[flexbox.directionRow, flexbox.alignSelfCenter, flexbox.alignCenter, spacings.mvXl]}
       >
@@ -149,6 +131,14 @@ const HardwareWalletSigningModal = ({
           <SigningRequestDetails signingRequest={signingRequest} style={spacings.mtLg} />
         )}
       </View>
+      {isTrezor && !!cancelReq && (
+        <Button
+          type="danger"
+          text={t('Cancel request')}
+          onPress={cancelReq}
+          hasBottomSpacing={false}
+        />
+      )}
     </BottomSheet>
   )
 }

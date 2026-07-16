@@ -3,7 +3,6 @@ import { View } from 'react-native'
 import { SvgProps } from 'react-native-svg'
 
 import gasTankFeeTokens from '@ambire-common/consts/gasTankFeeTokens'
-import { TokenResult } from '@ambire-common/libs/portfolio'
 import CoinsIcon from '@common/assets/svg/CoinsIcon'
 import GasTankIcon from '@common/assets/svg/GasTankIcon'
 import Recipient from '@common/components/Recipient'
@@ -24,6 +23,7 @@ import { getTokenId } from '@common/utils/token'
 import { RELAYER_URL } from '@env'
 import useSimulationError from '@web/modules/portfolio/hooks/SimulationError/useSimulationError'
 
+import type { TokenResult } from '@ambire-common/libs/portfolio'
 type GasTankSection = {
   title: { icon: FC<SvgProps>; text: string }
   data: SelectValue[]
