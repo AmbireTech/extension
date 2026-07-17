@@ -76,7 +76,7 @@ export const ControllersMiddlewareProvider: React.FC<{
       ctrls.DomainsController = new DomainsController({
         eventEmitterRegistry: eventEmitterRegistry.current,
         providers: ctrls.ProvidersController.providers,
-        isNetworkEnabled: () => true
+        getNetwork: (chainId) => networks.find((n) => n.chainId === chainId)
       })
 
       return ctrls

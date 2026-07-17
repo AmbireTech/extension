@@ -20,6 +20,10 @@ import useController from '@common/hooks/useController'
 import useElementSize from '@common/hooks/useElementSize'
 import useTheme from '@common/hooks/useTheme'
 import Account from '@common/modules/account-select/components/Account'
+import {
+  ACCOUNT_SELECT_ACCOUNT_HEIGHT,
+  ACCOUNT_SELECT_ACCOUNT_MB
+} from '@common/modules/account-select/components/Account/styles'
 import AddAccount from '@common/modules/account-select/components/AddAccount'
 import spacings from '@common/styles/spacings'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
@@ -142,49 +146,52 @@ const AccountsSettingsScreen = () => {
       attributes: any
     ) => {
       return (
-        <View
-          style={[
-            flexbox.flex1,
-            flexbox.directionRow,
-            flexbox.alignCenter,
-            spacings.mbTy,
-            {
-              backgroundColor: theme.secondaryBackground,
-              borderRadius: BORDER_RADIUS_PRIMARY
-            }
-          ]}
-        >
-          <View {...listeners} {...attributes}>
-            <Pressable
-              style={[
-                flexbox.alignCenter,
-                flexbox.justifyCenter,
-                spacings.pvMi,
-                isWeb && spacings.phSm,
-                isMobile && spacings.plSm,
-                isMobile && spacings.prMi,
-                isWeb && spacings.mbMi,
-                //@ts-ignore
-                { cursor: 'grab', touchAction: 'manipulation' }
-              ]}
-            >
-              <DragIndicatorIcon
-                color={isDragging ? theme.primary : theme.iconPrimary}
-                width={isMobile ? 10 : 12.5}
+        // Transparent outer wrapper: the draggable list positions items by their measured
+        // onLayout height (margins are ignored), so the gap between items must be padding here
+        <View style={spacings.pbTy}>
+          <View
+            style={[
+              flexbox.flex1,
+              flexbox.directionRow,
+              flexbox.alignCenter,
+              {
+                backgroundColor: theme.secondaryBackground,
+                borderRadius: BORDER_RADIUS_PRIMARY
+              }
+            ]}
+          >
+            <View {...listeners} {...attributes}>
+              <Pressable
+                style={[
+                  flexbox.alignCenter,
+                  flexbox.justifyCenter,
+                  spacings.pvMi,
+                  isWeb && spacings.phSm,
+                  isMobile && spacings.plSm,
+                  isMobile && spacings.prMi,
+                  isWeb && spacings.mbMi,
+                  //@ts-ignore
+                  { cursor: 'grab', touchAction: 'manipulation' }
+                ]}
+              >
+                <DragIndicatorIcon
+                  color={isDragging ? theme.primary : theme.iconPrimary}
+                  width={isMobile ? 10 : 12.5}
+                />
+              </Pressable>
+            </View>
+            <View style={flexbox.flex1}>
+              <Account
+                account={item}
+                maxAccountAddrLength={shortenAccountAddr()}
+                options={accountOptions}
+                inverseInteractionColors
+                isSelectable={false}
+                containerStyle={{ ...spacings.mb0, ...spacings.pvTy }}
+                withReceive={!isMobile}
+                withCopy={!isMobile}
               />
-            </Pressable>
-          </View>
-          <View style={flexbox.flex1}>
-            <Account
-              account={item}
-              maxAccountAddrLength={shortenAccountAddr()}
-              options={accountOptions}
-              inverseInteractionColors
-              isSelectable={false}
-              containerStyle={{ ...spacings.mb0, ...spacings.pvSm }}
-              withReceive={!isMobile}
-              withCopy={!isMobile}
-            />
+            </View>
           </View>
         </View>
       )
@@ -224,6 +231,7 @@ const AccountsSettingsScreen = () => {
             onDragEnd={handleAccDragEnd}
             renderItem={renderItem as any}
             getItemLayout={getItemLayout}
+            itemHeight={ACCOUNT_SELECT_ACCOUNT_HEIGHT + ACCOUNT_SELECT_ACCOUNT_MB}
             ListEmptyComponent={<Text>{t('No accounts found')}</Text>}
           />
         </View>

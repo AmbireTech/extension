@@ -7,6 +7,7 @@ import { useModalize } from 'react-native-modalize'
 import { Contact } from '@ambire-common/interfaces/addressBook'
 import { AddressState } from '@ambire-common/interfaces/domains'
 import { AddressPoisoningMatch } from '@ambire-common/interfaces/transfer'
+import { getSearchableNames } from '@ambire-common/services/nameResolvers'
 import { validateAddress, Validation } from '@ambire-common/services/validations'
 import { getAddressFromAddressState } from '@ambire-common/utils/domains'
 import AddressBookIcon from '@common/assets/svg/AddressBookIcon'
@@ -157,6 +158,7 @@ const SelectedMenuOption: React.FC<{
         // because highlight rendering lives in the detailed address row.
         withDetails={type === 'selected-menu-option' || (isMobile && !!addressHighlight)}
         onChangeText={setAddress}
+        onScanAddress={type === 'input' ? setAddress : undefined}
         disabled={disabled}
         editable={!isButtonMode}
         pointerEvents={isButtonMode ? 'none' : 'auto'}
@@ -260,7 +262,7 @@ const Recipient: React.FC<Props> = ({
         contact,
         name: contact.name.toLowerCase(),
         address: contact.address.toLowerCase(),
-        domain: domains[contact.address]?.ens?.toLowerCase().trim() || ''
+        domain: getSearchableNames(domains[contact.address]?.names)
       })),
     [contacts, domains]
   )
