@@ -1,4 +1,4 @@
-import React, { FC, useCallback } from 'react'
+import React, { FC, useCallback, useMemo } from 'react'
 import { View } from 'react-native'
 
 import CopyIcon from '@common/assets/svg/CopyIcon'
@@ -29,6 +29,12 @@ const PrivateKeyExport: FC<Props> = ({ privateKey, blurred, setBlurred, openConf
 
   const { theme, styles } = useTheme(getStyles)
   const { addToast } = useToast()
+
+  const visibilityButtonText = useMemo(() => {
+    if (!privateKey) return t('Reveal key')
+
+    return blurred ? t('Show key') : t('Hide key')
+  }, [blurred, privateKey, t])
 
   const handleCopyText = useCallback(async () => {
     if (!privateKey) return
@@ -100,7 +106,7 @@ const PrivateKeyExport: FC<Props> = ({ privateKey, blurred, setBlurred, openConf
               hasBottomSpacing={false}
               type={isWeb ? 'ghost' : 'outline'}
               size={isWeb ? 'small' : 'regular'}
-              text={blurred ? t('Reveal key') : t('Hide key')}
+              text={visibilityButtonText}
             >
               {blurred ? (
                 <VisibilityIcon color={theme.iconPrimary} style={spacings.mlTy} width={18} />
