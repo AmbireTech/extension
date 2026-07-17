@@ -13,6 +13,7 @@ import EnsIcon from '@common/assets/svg/EnsIcon'
 import GnsIcon from '@common/assets/svg/GnsIcon'
 import NamoshiIcon from '@common/assets/svg/NamoshiIcon'
 import AddressBookContact from '@common/components/AddressBookContact'
+import AddressScanButton from '@common/components/AddressInput/AddressScanButton'
 import Input, { InputProps } from '@common/components/Input'
 import Text from '@common/components/Text'
 import { isWeb } from '@common/config/env'
@@ -39,6 +40,9 @@ interface Props extends InputProps {
   label?: string
   onClearButtonPress?: () => void
   renderConfirmAddress?: () => React.ReactNode
+  // When provided, a scan icon is shown that opens a camera QR scanner
+  // (mobile only) and passes the scanned address back. No-op on web.
+  onScanAddress?: (address: string) => void
 }
 
 const AddressInput: React.FC<Props> = ({
@@ -56,6 +60,7 @@ const AddressInput: React.FC<Props> = ({
   onClearButtonPress,
   value,
   renderConfirmAddress,
+  onScanAddress,
   ...rest
 }) => {
   const { t } = useTranslation()
@@ -123,42 +128,47 @@ const AddressInput: React.FC<Props> = ({
         renderConfirmAddress={renderConfirmAddress}
         preventJumpOnValidationChange
         childrenBeforeButtons={
-          childrenBeforeButtons ||
-          (!withDetails && (
-            <>
-              {resolvedAddress && !isRecipientDomainResolving ? (
-                <AnimatedPressable
-                  style={[flexbox.alignCenter, flexbox.directionRow, animStyle]}
-                  onPress={handleCopyResolvedAddress}
-                  {...bindAnim}
-                >
-                  <Text style={flexbox.flex1} numberOfLines={1}>
-                    <Text
-                      style={{
-                        flex: 1
-                      }}
-                      fontSize={12}
-                      appearance="secondaryText"
-                      numberOfLines={1}
-                      ellipsizeMode="head"
+          <>
+            {childrenBeforeButtons ||
+              (!withDetails && (
+                <>
+                  {resolvedAddress && !isRecipientDomainResolving ? (
+                    <AnimatedPressable
+                      style={[flexbox.alignCenter, flexbox.directionRow, animStyle]}
+                      onPress={handleCopyResolvedAddress}
+                      {...bindAnim}
                     >
-                      ({shortenAddress(resolvedAddress, 18)})
-                    </Text>
-                  </Text>
-                  <CopyIcon width={16} height={16} style={[spacings.mlMi, { minWidth: 16 }]} />
-                </AnimatedPressable>
-              ) : null}
-              <View style={[styles.domainIcons, rest.button ? spacings.pr0 : spacings.prSm]}>
-                {!!resolvedAddressType && (
-                  <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-                    {resolvedAddressType === 'ens' && <EnsIcon state="fresh" />}
-                    {resolvedAddressType === 'namoshi' && <NamoshiIcon isActive />}
-                    {resolvedAddressType === 'gns' && <GnsIcon isActive />}
+                      <Text style={flexbox.flex1} numberOfLines={1}>
+                        <Text
+                          style={{
+                            flex: 1
+                          }}
+                          fontSize={12}
+                          appearance="secondaryText"
+                          numberOfLines={1}
+                          ellipsizeMode="head"
+                        >
+                          ({shortenAddress(resolvedAddress, 18)})
+                        </Text>
+                      </Text>
+                      <CopyIcon width={16} height={16} style={[spacings.mlMi, { minWidth: 16 }]} />
+                    </AnimatedPressable>
+                  ) : null}
+                  <View style={[styles.domainIcons, rest.button ? spacings.pr0 : spacings.prSm]}>
+                    {!!resolvedAddressType && (
+                      <View style={[flexbox.directionRow, flexbox.alignCenter]}>
+                        {resolvedAddressType === 'ens' && <EnsIcon state="fresh" />}
+                        {resolvedAddressType === 'namoshi' && <NamoshiIcon isActive />}
+                        {resolvedAddressType === 'gns' && <GnsIcon isActive />}
+                      </View>
+                    )}
                   </View>
-                )}
-              </View>
-            </>
-          ))
+                </>
+              ))}
+            {onScanAddress && !isValidAddress ? (
+              <AddressScanButton onScanned={onScanAddress} />
+            ) : null}
+          </>
         }
         customInputContent={
           !!withDetails && !!isValidAddress ? (
