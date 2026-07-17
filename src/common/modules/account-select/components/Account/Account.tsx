@@ -226,7 +226,7 @@ const Account = ({
                 initialValue={account.preferences.label}
                 onSave={onSave}
                 fontSize={withSettings ? 16 : 14}
-                height={20}
+                height={isMobile ? 24 : 20}
                 textProps={{
                   weight: 'medium'
                 }}
