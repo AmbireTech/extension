@@ -149,6 +149,7 @@ const ViewOnlyAccountAdderAddressField: FC<Props> = ({
               containerStyle={{ ...spacings.mb0, ...flexbox.flex1 }}
               onBlur={onBlur}
               onChangeText={onChange}
+              onScanAddress={onChange}
               value={value.fieldValue}
               autoFocus
               withDetails

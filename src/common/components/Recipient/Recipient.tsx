@@ -158,6 +158,7 @@ const SelectedMenuOption: React.FC<{
         // because highlight rendering lives in the detailed address row.
         withDetails={type === 'selected-menu-option' || (isMobile && !!addressHighlight)}
         onChangeText={setAddress}
+        onScanAddress={type === 'input' ? setAddress : undefined}
         disabled={disabled}
         editable={!isButtonMode}
         pointerEvents={isButtonMode ? 'none' : 'auto'}
