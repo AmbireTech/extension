@@ -1,6 +1,7 @@
 import * as SplashScreen from 'expo-splash-screen'
 import React, { useCallback, useContext, useEffect, useRef } from 'react'
-import { View } from 'react-native'
+import { AppState, View } from 'react-native'
+import { KeyboardController } from 'react-native-keyboard-controller'
 import { Navigate, Route, Routes } from 'react-router-native'
 
 import { ControllersMiddlewareContext } from '@common/contexts/controllersMiddlewareContext'
@@ -72,6 +73,16 @@ const Router = () => {
       dispatch({ type: 'SET_BOOT_PHASE', params: { phase: 'full' } })
     }
   }, [isReady, dispatch])
+
+  // Dismiss the keyboard the moment the app leaves the foreground so iOS never
+  // snapshots a visible keyboard, which would otherwise flash on the next launch.
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', (next) => {
+      if (next !== 'active') KeyboardController.dismiss()
+    })
+
+    return () => sub.remove()
+  }, [])
 
   // Keep the native splash screen visible until controllers, auth and fonts are ready
   if (!isReady) {

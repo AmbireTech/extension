@@ -239,7 +239,6 @@ const DappWebViewScreen = () => {
   const {
     state: { dapps },
     currentDapp,
-    dappUrl,
     setDappUrl,
     dispatch: dappsDispatch
   } = useController('DappsController')
@@ -287,6 +286,9 @@ const DappWebViewScreen = () => {
   const [progress, setProgress] = useState(0)
   const [isLoading, setIsLoading] = useState(true)
   const [canGoBack, setCanGoBack] = useState(false)
+  // Drives WebView source; set at mount + only by user address-bar nav. Never
+  // from nav callbacks, else source.uri re-feeds → RNW reloads → snaps back.
+  const [sourceUri, setSourceUri] = useState<string>(initialUrl)
 
   // Atomic setter used by every WebView load callback so `progress` and
   // `isLoading` always stay in sync. Mirrors Rabby's `updateProgressState`.
@@ -295,11 +297,13 @@ const DappWebViewScreen = () => {
     setIsLoading(next.isLoading)
   }, [])
 
+  // Load the nav-state URL on mount and when a new dapp opens in the mounted
+  // browser. Keyed on initialUrl only so in-dapp nav can't retrigger a reload.
   useEffect(() => {
-    if (!dappUrl && setDappUrl) setDappUrl(initialUrl)
-  }, [dappUrl, initialUrl, setDappUrl])
-
-  const activeDappUrl = dappUrl || initialUrl
+    setSourceUri(initialUrl)
+    setDappUrl?.(initialUrl)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialUrl])
 
   // Bottom Sheet & Search Form State
   const { ref: searchModalRef, open: openSearchModal, close: closeSearchModal } = useModalize()
@@ -679,6 +683,7 @@ const DappWebViewScreen = () => {
 
   const handleNavigateToUrl = useCallback(
     (url: string) => {
+      setSourceUri(url)
       setDappUrl?.(url)
       closeSearchModal()
     },
@@ -1144,7 +1149,7 @@ const DappWebViewScreen = () => {
       <View style={flexbox.flex1}>
         <WebView
           ref={webviewRef}
-          source={{ uri: activeDappUrl }}
+          source={{ uri: sourceUri }}
           userAgent={DESKTOP_USER_AGENT}
           onNavigationStateChange={handleNavigationStateChange}
           injectedJavaScriptBeforeContentLoaded={injectionScript}
