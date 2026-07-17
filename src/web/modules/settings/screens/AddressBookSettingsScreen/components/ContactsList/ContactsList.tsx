@@ -6,6 +6,7 @@ import { View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 import { isAddress } from 'viem'
 
+import { getSearchableNames } from '@ambire-common/services/nameResolvers'
 import AddCircularIcon from '@common/assets/svg/AddCircularIcon'
 import AddressBookIcon from '@common/assets/svg/AddressBookIcon'
 import WalletIcon from '@common/assets/svg/WalletIcon'
@@ -70,7 +71,7 @@ const ContactsList = () => {
         contact,
         name: contact.name.toLowerCase(),
         address: contact.address.toLowerCase(),
-        domain: domains[contact.address]?.ens?.toLowerCase().trim() || ''
+        domain: getSearchableNames(domains[contact.address]?.names)
       })),
     [contacts, domains]
   )

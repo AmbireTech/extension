@@ -4,7 +4,7 @@ import { ListRenderItemInfo, Pressable, View } from 'react-native'
 import { IHandles } from 'react-native-modalize/lib/options'
 
 import AddCircularIcon from '@common/assets/svg/AddCircularIcon'
-import SettingsWheelIcon from '@common/assets/svg/SettingsWheelIcon'
+import SettingsIcon from '@common/assets/svg/SettingsIcon'
 import BottomSheet from '@common/components/BottomSheet'
 import ModalHeader from '@common/components/BottomSheet/ModalHeader'
 import Button from '@common/components/Button'
@@ -166,7 +166,7 @@ const SavedSeedPhrasesBottomSheet = ({
             }}
           >
             {({ hovered }: any) => (
-              <SettingsWheelIcon
+              <SettingsIcon
                 width={28}
                 height={28}
                 color={hovered ? theme.primaryText : theme.iconPrimary}

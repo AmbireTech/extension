@@ -12,6 +12,7 @@ const COMMON_ROUTES = {
   createSeedPhrasePrepare: 'create-new-recovery-phrase',
   createSeedPhraseWrite: 'backup-recovery-phrase',
   ledgerConnect: 'ledger-connect',
+  trezorConnect: 'trezor-connect',
   keyStoreSetup: 'set-extension-password',
   accountPersonalize: 'account-personalize',
   accountPicker: 'account-picker',
@@ -47,7 +48,8 @@ const COMMON_ROUTES = {
 const MOBILE_ROUTES = {
   ...COMMON_ROUTES,
   dappWebView: 'explore/webview',
-  qrReader: 'qr-reader'
+  qrReader: 'qr-reader',
+  migrationOnboarding: 'migration-onboarding'
 }
 
 const WEB_ROUTES = {
@@ -91,6 +93,7 @@ const ONBOARDING_WEB_ROUTES = [
   COMMON_ROUTES.importSmartAccountJson,
   COMMON_ROUTES.viewOnlyAccountAdder,
   COMMON_ROUTES.ledgerConnect,
+  COMMON_ROUTES.trezorConnect,
   COMMON_ROUTES.keyStoreSetup,
   COMMON_ROUTES.accountPersonalize,
   COMMON_ROUTES.accountPicker,

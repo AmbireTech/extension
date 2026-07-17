@@ -7,6 +7,7 @@ import { normalizeLedgerMessage } from '@ambire-common/libs/ledger/ledger'
 import { getHdPathFromTemplate, getHdPathWithoutRoot } from '@ambire-common/utils/hdPath'
 import hexStringToUint8Array from '@ambire-common/utils/hexStringToUint8Array'
 import { isLedgerEmulator, isProd, LEDGER_EMULATOR_HTTP_URL } from '@common/config/env'
+import { LedgerControllerInterface } from '@common/modules/hardware-wallet/interfaces/ledgerController'
 import { ContextModuleBuilder } from '@ledgerhq/context-module'
 import {
   DeviceManagementKitBuilder,
@@ -25,7 +26,7 @@ export type LedgerSignature = Signature
 
 const TIMEOUT_FOR_RETRIEVING_FROM_LEDGER = 5000
 
-class LedgerController implements ExternalSignerController {
+class LedgerController implements ExternalSignerController, LedgerControllerInterface {
   unlockedPath: string = ''
 
   unlockedPathKeyAddr: string = ''

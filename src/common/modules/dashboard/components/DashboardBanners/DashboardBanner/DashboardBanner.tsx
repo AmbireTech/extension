@@ -205,6 +205,13 @@ const DashboardBanner = ({
           })
           break
 
+        case 'dismiss-ens-expiry-banner':
+          selectedAccountDispatch({
+            type: 'method',
+            params: { method: 'dismissEnsExpiryBannerForTheSelectedAccount', args: [] }
+          })
+          break
+
         default:
           break
       }

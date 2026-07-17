@@ -1,6 +1,9 @@
 import { useMemo } from 'react'
 
-import { getCurrentAccountBanners } from '@ambire-common/libs/banners/banners'
+import {
+  defiPositionsOnDisabledNetworksBannerId,
+  getCurrentAccountBanners
+} from '@ambire-common/libs/banners/banners'
 import useController from '@common/hooks/useController'
 import useOtaUpdateBanner from '@common/modules/dashboard/hooks/useOtaUpdateBanner'
 
@@ -22,7 +25,12 @@ export default function useBanners(): [BannerInterface[], BannerInterface[]] {
   const { isOffline } = useController('MainController').state
   const { bannersData: marketingBannersData } = useController('BannerController').state
   const {
-    state: { account, portfolio, deprecatedSmartAccountBanner }
+    state: {
+      account,
+      portfolio,
+      deprecatedSmartAccountBanner,
+      banners: selectedAccountBanners = []
+    }
   } = useController('SelectedAccountController')
 
   const { banners: emailVaultBanners = [] } = useController('EmailVaultController').state
@@ -52,6 +60,10 @@ export default function useBanners(): [BannerInterface[], BannerInterface[]] {
         hasFundedHotAccount ? emailVaultBanners || [] : [],
         account?.addr
       ),
+      // The defi-positions banner renders inside the DeFi tab, not the general dashboard.
+      ...getCurrentAccountBanners(selectedAccountBanners || [], account?.addr).filter(
+        (b) => b.id !== defiPositionsOnDisabledNetworksBannerId
+      ),
       ...(extensionUpdateBanner || []),
       ...otaUpdateBanner
     ]
@@ -63,6 +75,7 @@ export default function useBanners(): [BannerInterface[], BannerInterface[]] {
     swapAndBridgeBanners,
     hasFundedHotAccount,
     emailVaultBanners,
+    selectedAccountBanners,
     account?.addr,
     extensionUpdateBanner,
     otaUpdateBanner

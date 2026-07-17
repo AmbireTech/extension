@@ -345,7 +345,11 @@ export class EthereumProvider extends EventEmitter {
     }
   }
 
-  #handleBackgroundMessage = async ({ event, data }: any) => {
+  #handleBackgroundMessage = async ({ event, data, origin }: any) => {
+    // SECURITY: broadcasts are tab-wide, so drop any whose session origin doesn't
+    // match this document's, preventing cross-origin/stale-document event leakage.
+    if (origin && origin !== window.location.origin) return
+
     if (event === 'tabCheckin') {
       const id = this.#requestId++
       const params = {
@@ -482,6 +486,10 @@ export class EthereumProvider extends EventEmitter {
       })
 
       if (response.id !== id) return
+      // SECURITY: backstop if the transport can't bind the reply to this frame;
+      // the background echoes providerId, so ignore replies from another provider.
+      if (typeof response.providerId !== 'undefined' && response.providerId !== this.#providerId)
+        return
       if (response.error) {
         const error =
           (response.error as any)?.code && response.error?.message

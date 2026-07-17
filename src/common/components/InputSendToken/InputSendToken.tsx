@@ -2,7 +2,6 @@ import React, { useCallback } from 'react'
 import isEqual from 'react-fast-compare'
 import { Pressable, View } from 'react-native'
 
-import { TransferController } from '@ambire-common/controllers/transfer/transfer'
 import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
 import FlipIcon from '@common/assets/svg/FlipIcon'
 import NumberInput from '@common/components/NumberInput'
@@ -15,6 +14,7 @@ import flexbox from '@common/styles/utils/flexbox'
 
 import SkeletonLoader from '../SkeletonLoader'
 
+import type { TransferController } from '@ambire-common/controllers/transfer/transfer'
 const MaxAmount = ({
   maxAmount,
   maxAmountInFiat,
