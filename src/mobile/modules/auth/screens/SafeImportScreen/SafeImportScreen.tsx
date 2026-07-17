@@ -5,6 +5,7 @@ import { View } from 'react-native'
 import SafeIcon from '@common/assets/svg/SafeIcon'
 import SuccessIcon from '@common/assets/svg/SuccessIcon'
 import Alert from '@common/components/Alert'
+import AddressScanButton from '@common/components/AddressInput/AddressScanButton'
 import Button from '@common/components/Button'
 import Input from '@common/components/Input'
 import NetworkIcon from '@common/components/NetworkIcon'
@@ -65,22 +66,29 @@ const SafeImportScreen = () => {
               control={control}
               rules={{ validate: (value) => handleValidation(value), required: true }}
               name="safeAddress"
-              render={({ field: { onChange, onBlur, value } }) => (
-                <Input
-                  testID="add-safe-address-field"
-                  onBlur={onBlur}
-                  autoFocus
-                  placeholder={t('Add Safe address')}
-                  onChangeText={onChange}
-                  value={value}
-                  isValid={!handleValidation(value) && !!value.length}
-                  containerStyle={spacings.mbLg}
-                  backgroundColor={theme.secondaryBackground}
-                  error={value.length ? errors?.safeAddress?.message : ''}
-                  autoCorrect={false}
-                  onSubmitEditing={handleFormSubmit}
-                />
-              )}
+              render={({ field: { onChange, onBlur, value } }) => {
+                const isAddressValid = !handleValidation(value) && !!value.length
+
+                return (
+                  <Input
+                    testID="add-safe-address-field"
+                    onBlur={onBlur}
+                    autoFocus
+                    placeholder={t('Add Safe address')}
+                    onChangeText={onChange}
+                    value={value}
+                    isValid={isAddressValid}
+                    containerStyle={spacings.mbLg}
+                    backgroundColor={theme.secondaryBackground}
+                    error={value.length ? errors?.safeAddress?.message : ''}
+                    autoCorrect={false}
+                    onSubmitEditing={handleFormSubmit}
+                    childrenBeforeButtons={
+                      !isAddressValid ? <AddressScanButton onScanned={onChange} /> : null
+                    }
+                  />
+                )
+              }}
             />
             {statuses.findSafe === 'LOADING' ? (
               <View style={[flexbox.directionRow, flexbox.alignSelfCenter]}>
