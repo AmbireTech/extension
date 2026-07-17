@@ -147,6 +147,7 @@ const NetworkSelector = ({
       placeholder={t('Search network...')}
       value={search}
       onChangeText={setSearch}
+      autoFocus
     />
   )
 
