@@ -5,7 +5,7 @@ import { Account as AccountInterface } from '@ambire-common/interfaces/account'
 import { Key } from '@ambire-common/interfaces/keystore'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
-import spacings from '@common/styles/spacings'
+import spacings, { SPACING_TY } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
 import AccountKeyBanner from '../AccountKeyBanner'
@@ -57,14 +57,17 @@ const AccountKeyIcons = ({
   if (!hasKeys && isExtended) return null
 
   return (
-    <View style={[flexbox.directionRow, hasKeys && withContainerSpacing ? spacings.mlTy : spacings.ml0]}>
+    <View
+      style={[
+        flexbox.directionRow,
+        hasKeys && withContainerSpacing ? spacings.mlTy : spacings.ml0,
+        { columnGap: SPACING_TY }
+      ]}
+    >
       {hasKeys ? (
-        importedKeyTypes.map((type, index) => {
+        importedKeyTypes.map((type) => {
           return (
-            <View
-              key={type || 'internal'}
-              style={[index !== importedKeyTypes.length - 1 ? spacings.mrTy : spacings.mr0]}
-            >
+            <View key={type || 'internal'}>
               <AccountKeyIconOrBanner
                 type={type || 'internal'}
                 isExtended={isExtended}
