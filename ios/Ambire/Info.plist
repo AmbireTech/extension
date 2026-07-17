@@ -20,7 +20,7 @@
     <string>$(PRODUCT_BUNDLE_PACKAGE_TYPE)</string>
     <!-- This is planned to be in sync with app.json 's "version" two components, e.g. 5.39 -->
     <key>CFBundleShortVersionString</key>
-    <string>6.14</string>
+    <string>6.15</string>
     <key>CFBundleSignature</key>
     <string>????</string>
     <key>CFBundleURLTypes</key>
@@ -35,7 +35,7 @@
       </dict>
     </array>
     <key>CFBundleVersion</key>
-    <string>66</string>
+    <string>67</string>
     <key>LSMinimumSystemVersion</key>
     <string>12.0</string>
     <key>LSApplicationQueriesSchemes</key>
