@@ -9,10 +9,7 @@ interface Style {
 const getStyles = (theme: ThemeProps) =>
   StyleSheet.create<Style>({
     icon: {
-      position: 'absolute',
-      right: 10,
-      top: 11,
-      zIndex: 1
+      marginLeft: 10
     }
   })
 

@@ -6,12 +6,11 @@ import { Account } from '@ambire-common/interfaces/account'
 import { Key } from '@ambire-common/interfaces/keystore'
 import Button from '@common/components/Button'
 import GlassView from '@common/components/GlassView'
-import SpinnerWeb from '@common/components/Spinner/Spinner.web'
+import Spinner from '@common/components/Spinner'
 import ActionsPagination from '@common/modules/action-requests/components/ActionsPagination'
 import SafeOwners from '@common/modules/sign-account-op/components/SafeOwners'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import { closeCurrentWindow } from '@web/extension-services/background/webapi/window'
 
 const SafeFooter = ({
   account,
@@ -22,7 +21,8 @@ const SafeFooter = ({
   signed = [],
   importedKeys,
   threshold,
-  onReject
+  onReject,
+  onSignLater
 }: {
   account: Account
   onSign?: (signingKeyAddr: Key['addr'], _chosenSigningKeyType: Key['type']) => void
@@ -33,6 +33,9 @@ const SafeFooter = ({
   importedKeys: Key[]
   threshold: number
   onReject: (event: GestureResponderEvent) => void
+  // closes the signing UI while keeping the txn pending with the collected
+  // signatures already pushed to Safe Global (web: close popup; mobile: dismiss sheet)
+  onSignLater: () => void
 }) => {
   const { t } = useTranslation()
   const [showSafeSigners, setShowSafeSigners] = useState(false)
@@ -116,7 +119,7 @@ const SafeFooter = ({
                     size="large"
                     type="secondary"
                     hasBottomSpacing={false}
-                    onPress={() => closeCurrentWindow()}
+                    onPress={onSignLater}
                     text={'Sign later'}
                     disabled={signed.length === 0}
                     style={[{ maxWidth: 'auto' }]}
@@ -132,7 +135,7 @@ const SafeFooter = ({
                 </View>
               </View>
             ) : (
-              <SpinnerWeb
+              <Spinner
                 style={{
                   width: 28,
                   height: 28,

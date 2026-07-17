@@ -73,6 +73,12 @@ export const handleActions = async (
       break
     }
 
+    case 'SET_VIEW_FOCUS': {
+      if (!params.id) return
+      mainCtrl.ui.emitViewFocus(params.id)
+      break
+    }
+
     case 'SET_BOOT_PHASE': {
       setBootPhase(params.phase)
       break
