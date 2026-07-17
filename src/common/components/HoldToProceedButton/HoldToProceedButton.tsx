@@ -1,4 +1,4 @@
-import React, { FC, useCallback, useEffect, useRef, useState } from 'react'
+import React, { FC, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Animated, PanResponder, StyleProp, ViewStyle } from 'react-native'
 
 import Button, { Props as CommonButtonProps } from '@common/components/Button'
@@ -28,8 +28,8 @@ const HoldToProceedButton: FC<Props> = ({
   ...rest
 }) => {
   const { theme } = useTheme()
-  const progressAnim = useRef(new Animated.Value(0)).current
-  const scaleAnim = useRef(new Animated.Value(1)).current
+  const [progressAnim] = useState(() => new Animated.Value(0))
+  const [scaleAnim] = useState(() => new Animated.Value(1))
   const [isHolding, setIsHolding] = useState(false)
   const [isCompleted, setIsCompleted] = useState(false)
   const [buttonWidth, setButtonWidth] = useState<number | undefined>(undefined)
@@ -40,21 +40,9 @@ const HoldToProceedButton: FC<Props> = ({
   const isCompletedRef = useRef(false)
 
   const progressColorMap = {
-    primary: theme.primaryAccent100,
+    primary: theme.primaryAccent300,
     dangerFilled: theme.error100,
     warning: theme.warning100
-  }
-
-  // The button's background is forced to stay static and light (see progressColorMap
-  // above), but Button's own per-type text color assumes a solid/dark background
-  // (white text for primary/dangerFilled) or a background that darkens on hover
-  // (warning). Pin the text color to match the light static background instead,
-  // using the same light-bg/accent-text pairing as Badge.tsx, otherwise the text
-  // is invisible (primary/dangerFilled at rest, warning on hover).
-  const textColorMap = {
-    primary: theme.neutral900,
-    dangerFilled: theme.errorText,
-    warning: theme.warningText
   }
 
   const startHold = useCallback(() => {
@@ -142,46 +130,35 @@ const HoldToProceedButton: FC<Props> = ({
     // Don't reset isCompleted here - let it stay true if the action completed
   }, [isHolding, isCompleted, animationRef, holdTimeoutRef, progressAnim, scaleAnim])
 
-  const panResponder = useRef(
-    PanResponder.create({
-      onStartShouldSetPanResponder: () => !disabled,
-      onStartShouldSetPanResponderCapture: () => !disabled,
-      onMoveShouldSetPanResponder: () => true,
-      onMoveShouldSetPanResponderCapture: () => false,
-      onPanResponderGrant: startHold,
-      onPanResponderMove: (_, gestureState) => {
-        // If user moves too far from the button, end the hold
-        const threshold = 50
-        if (Math.abs(gestureState.dx) > threshold || Math.abs(gestureState.dy) > threshold) {
-          endHold()
-        }
-      },
-      onPanResponderRelease: endHold,
-      onPanResponderTerminate: endHold,
-      onPanResponderTerminationRequest: () => true
-    })
+  // Recreated synchronously on every render where disabled/startHold/endHold change
+  // (not via useRef+useEffect) so panHandlers can never be stale: a ref update alone
+  // doesn't trigger a re-render, which previously left the pan handlers' closures
+  // bound to a prior (e.g. disabled) state for a render until something else happened
+  // to re-render the component.
+  const panResponder = useMemo(
+    () =>
+      // PanResponder.create only stores these callbacks for later gesture events, it
+      // never invokes them during construction
+      // eslint-disable-next-line react-hooks/refs
+      PanResponder.create({
+        onStartShouldSetPanResponder: () => !disabled,
+        onStartShouldSetPanResponderCapture: () => !disabled,
+        onMoveShouldSetPanResponder: () => true,
+        onMoveShouldSetPanResponderCapture: () => false,
+        onPanResponderGrant: startHold,
+        onPanResponderMove: (_, gestureState) => {
+          // If user moves too far from the button, end the hold
+          const threshold = 50
+          if (Math.abs(gestureState.dx) > threshold || Math.abs(gestureState.dy) > threshold) {
+            endHold()
+          }
+        },
+        onPanResponderRelease: endHold,
+        onPanResponderTerminate: endHold,
+        onPanResponderTerminationRequest: () => true
+      }),
+    [disabled, startHold, endHold]
   )
-
-  // Update PanResponder when disabled state changes
-  useEffect(() => {
-    panResponder.current = PanResponder.create({
-      onStartShouldSetPanResponder: () => !disabled,
-      onStartShouldSetPanResponderCapture: () => !disabled,
-      onMoveShouldSetPanResponder: () => true,
-      onMoveShouldSetPanResponderCapture: () => false,
-      onPanResponderGrant: startHold,
-      onPanResponderMove: (_, gestureState) => {
-        // If user moves too far from the button, end the hold
-        const threshold = 50
-        if (Math.abs(gestureState.dx) > threshold || Math.abs(gestureState.dy) > threshold) {
-          endHold()
-        }
-      },
-      onPanResponderRelease: endHold,
-      onPanResponderTerminate: endHold,
-      onPanResponderTerminationRequest: () => true
-    })
-  }, [disabled, startHold, endHold])
 
   // Clean up on unmount
   useEffect(() => {
@@ -226,7 +203,7 @@ const HoldToProceedButton: FC<Props> = ({
         },
         style
       ]}
-      {...panResponder.current.panHandlers}
+      {...panResponder.panHandlers}
     >
       <Button
         onLayout={(e) => {
@@ -239,7 +216,7 @@ const HoldToProceedButton: FC<Props> = ({
           },
           style
         ]}
-        textStyle={[{ color: textColorMap[buttonType] }, textStyle]}
+        textStyle={[textStyle]}
         size={isWeb ? 'smaller' : 'regular'}
         hasBottomSpacing={false}
         text={buttonText}
