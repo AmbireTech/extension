@@ -141,11 +141,6 @@ jobs:
 
       - name: Build iOS app
         env:
-          # Important: everything here is in scope for the build, but only keys allowlisted in
-          # WORKER_BUNDLE_SAFE_ENV_KEYS (src/mobile/modules/webview/services/webpack.webview.config.js)
-          # get inlined into the device-shipped worker bundle (embedded in the app binary). Keep it
-          # that way: a new secret here must stay OFF the allowlist; new non-secret config the bundle
-          # reads at runtime must be ADDED to the allowlist (or it is undefined on-device).
           # Force production React/Metro bundle in CI (avoids dev/prod mismatch with NODE_ENV undefined)
           NODE_ENV: production
           # Stallion native config — the build command inlines build:inject:mobile-ota-config,

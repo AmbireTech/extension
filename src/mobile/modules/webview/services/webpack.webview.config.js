@@ -293,51 +293,26 @@ class EmitOtaBundleJsonPlugin {
  * assets, loaded from disk via `file://` (WKWebView stream-parses and caches
  * bytecode). Dev: served from webpack-dev-server (HTTP) for HMR.
  *
- * SECURITY: this allowlist is what the DefinePlugin below inlines for the worker bundle's wholesale
- * `process.env` object - NOT the full `process.env`. The bundle ships to every device, so spreading
- * the full `process.env` would bake the build machine's entire environment - including CI-injected
- * secrets - into the shipped bytes in cleartext. Add a key ONLY if it is non-secret config that
- * worker-bundled code reads as `process.env.X` at runtime.
+ * SECURITY: the DefinePlugin below gives the worker bundle this MINIMAL `process.env` object instead
+ * of spreading the full `process.env` - which would bake the build machine's whole environment
+ * (including CI-injected secrets) into the device-shipped bytes in cleartext.
  *
- * This is deliberately NOT the app's full config list, which is a common source of confusion:
- * values imported via `@env` (RELAYER_URL, VELCRO_URL, NFT_CDN_URL, the LI_FI/BUNGEE/SQUID/UNISWAP/
- * WALLETCONNECT keys, SENTRY_DSN, ...) are inlined SEPARATELY by react-native-dotenv/babel at each
- * import site, so they already reach the bundle without being listed here - do NOT add them, it
- * would be dead, duplicated data. Membership here is decided by one thing only: the key is read as
- * `process.env.X` in worker-bundled code. Where the value is set (package.json script / CI yml /
- * .env) is irrelevant - do not mirror those lists here.
+ * Why only these three keys? Everything else is already inlined WITHOUT this object:
+ *   - our own `process.env.X` reads -> babel's transform-inline-environment-variables replaces them
+ *     with their literal value at each read site;
+ *   - `@env` imports (RELAYER_URL, VELCRO_URL, the REACT_APP_ keys, LI_FI, BUNGEE, SQUID, UNISWAP,
+ *     WALLETCONNECT, SENTRY_DSN, ...) -> react-native-dotenv inlines them at each import site.
+ * This object only backstops WHOLESALE `process.env` reads in third-party deps, and the only key a
+ * bundled dep actually reads that way is NODE_ENV (React et al. branch on it). WEB_ENGINE and APP_ENV
+ * are kept as an explicit, build-host-independent fallback for our own env.ts.
+ *
+ * So do NOT grow this back into the app's config list: a secret must never be added, and non-secret
+ * config is already handled by babel/@env and does not belong here.
  */
-const WORKER_BUNDLE_SAFE_ENV_KEYS = [
-  'AMBIRE_NEXT',
-  'BENZIN',
-  'ENVIRONMENT',
-  'IS_LEDGER_EMULATOR',
-  'IS_TESTING',
-  'LEDGER_EMULATOR_HTTP_URL',
-  'LEGENDS',
-  'LEGENDS_NFT_ADDRESS',
-  'REACT_APP_ALCHEMY_API_KEY',
-  'REACT_APP_CANDIDE_API_KEY',
-  'REACT_APP_ETHERSPOT_API_KEY',
-  'REACT_APP_GELATO_API_KEY',
-  'REACT_APP_PIMLICO_API_KEY',
-  'SAFE_API_KEY',
-  'SENTRY_DSN_BROWSER_EXTENSION',
-  'SENTRY_DSN_LEGENDS'
-]
-
 const workerBundleEnv = {
   WEB_ENGINE: 'webview',
   APP_ENV: isDev ? 'development' : 'production',
-  // React and other deps branch on NODE_ENV via wholesale process.env reads; set it explicitly
-  // so the shipped bundle is always the production build, independent of the build host's env.
-  NODE_ENV: isDev ? 'development' : 'production',
-  ...Object.fromEntries(
-    WORKER_BUNDLE_SAFE_ENV_KEYS.filter((key) => process.env[key] !== undefined).map((key) => [
-      key,
-      process.env[key]
-    ])
-  )
+  NODE_ENV: isDev ? 'development' : 'production'
 }
 
 const workerConfig = {
