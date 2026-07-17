@@ -21,7 +21,7 @@ import useHover, { AnimatedPressable, useCustomHover } from '@common/hooks/useHo
 import useReverseLookup from '@common/hooks/useReverseLookup'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
-import spacings from '@common/styles/spacings'
+import spacings, { SPACING_TY } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
 import getStyles from './styles'
@@ -186,15 +186,22 @@ const Account = ({
           }
       ]}
     >
-      <View style={[flexbox.flex1, flexbox.directionRow]}>
+      <View style={[flexbox.flex1, flexbox.directionRow, isMobile && flexbox.alignCenter]}>
         <Avatar
           address={account.addr}
           pfp={account.preferences.pfp}
           smartAccountType={(account.creation && 'Ambire') || (account.safeCreation && 'Safe')}
           showTooltip
         />
-        <View style={flexbox.flex1}>
-          <View style={[flexbox.flex1, flexbox.directionRow, flexbox.alignCenter, spacings.mrTy]}>
+        <View style={[flexbox.flex1, isMobile && flexbox.justifyCenter]}>
+          <View
+            style={[
+              isWeb && flexbox.flex1,
+              flexbox.directionRow,
+              flexbox.alignCenter,
+              spacings.mrTy
+            ]}
+          >
             {!withSettings ? (
               <>
                 <Text
@@ -205,33 +212,34 @@ const Account = ({
                 >
                   {account.preferences.label}
                 </Text>
-                {!!withKeyType && (
-                  <View style={[isWeb && spacings.mlMi]}>
+                {/* On mobile the key icons and badges move to the balance row below */}
+                {isWeb && !!withKeyType && (
+                  <View style={[spacings.mlMi]}>
                     <AccountKeyIcons isExtended account={account} />
                   </View>
                 )}
 
-                <AccountBadges accountData={account} />
+                {isWeb && <AccountBadges accountData={account} />}
               </>
             ) : (
               <Editable
                 initialValue={account.preferences.label}
                 onSave={onSave}
                 fontSize={withSettings ? 16 : 14}
-                height={20}
+                height={isMobile ? 24 : 20}
                 textProps={{
                   weight: 'medium'
                 }}
                 minWidth={120}
                 maxLength={40}
               >
-                {!!withKeyType && (
+                {isWeb && !!withKeyType && (
                   <View style={[spacings.mlMi]}>
                     <AccountKeyIcons isExtended account={account} />
                   </View>
                 )}
 
-                <AccountBadges accountData={account} />
+                {isWeb && <AccountBadges accountData={account} />}
               </Editable>
             )}
           </View>
@@ -246,6 +254,26 @@ const Account = ({
               withUpdateEnsInTooltip={isSelectable}
             />
           </View>
+          {isMobile && (
+            <View
+              style={[
+                flexbox.directionRow,
+                flexbox.alignCenter,
+                spacings.mtMi,
+                { columnGap: SPACING_TY }
+              ]}
+            >
+              {balance !== null && (
+                <Text fontSize={14} weight="semiBold" color={theme.secondaryText}>
+                  {formatDecimals(balance, 'value')}
+                </Text>
+              )}
+              {!!withKeyType && (
+                <AccountKeyIcons isExtended account={account} withContainerSpacing={false} />
+              )}
+              <AccountBadges accountData={account} withSpacing={false} />
+            </View>
+          )}
         </View>
       </View>
       <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mlTy]}>
