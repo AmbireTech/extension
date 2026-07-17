@@ -1,11 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
-import { Dapp } from '@ambire-common/interfaces/dapp'
 import { Key } from '@ambire-common/interfaces/keystore'
 import { SignMessageStatus } from '@ambire-common/interfaces/signMessage'
 import { isSmartAccount } from '@ambire-common/libs/account/account'
-import { getDappIdFromUrl } from '@ambire-common/libs/dapps/helpers'
+import { getDappIconFromUrl } from '@ambire-common/libs/dapps/helpers'
 import { humanizeMessage } from '@ambire-common/libs/humanizer'
 import { EIP_1271_NOT_SUPPORTED_BY, toPersonalSignHex } from '@ambire-common/libs/signMessage/utils'
 import useController from '@common/hooks/useController'
@@ -59,20 +58,14 @@ const useSignMessage = () => {
   const { name, icon } = useDappInfo(userRequest)
   const { state: dappsState } = useController('DappsController')
 
-  // Safe messages co-signed from another device carry only the dapp name and url
-  // (no live session, so no icon). Recover the icon from the dapp catalog by url.
   const dappUrl = useMemo(
     () => userRequest?.dappPromises[0]?.session?.origin || userRequest?.meta.dappUrl,
     [userRequest]
   )
-  const resolvedIcon = useMemo(() => {
-    if (icon) return icon
-    if (!dappUrl) return ''
-
-    const id = getDappIdFromUrl(dappUrl)
-    const dapp = (dappsState.dapps || []).find((d: Dapp) => d.id === id)
-    return dapp?.icon || ''
-  }, [icon, dappUrl, dappsState.dapps])
+  const resolvedIcon = useMemo(
+    () => icon || getDappIconFromUrl(dappUrl || '', dappsState.dapps || []),
+    [icon, dappUrl, dappsState.dapps]
+  )
 
   const isSiwe = useMemo(() => {
     if (!userRequest) return false
