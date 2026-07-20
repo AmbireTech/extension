@@ -1,13 +1,11 @@
-import React, { FC, useCallback, useEffect, useMemo, useRef } from 'react'
+import React, { FC, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { View, ViewStyle } from 'react-native'
-import { TooltipRefProps } from 'react-tooltip'
 
 import AccountAddress from '@common/components/AccountAddress'
 import Avatar from '@common/components/Avatar'
 import Editable from '@common/components/Editable'
 import Text from '@common/components/Text'
-import { isWeb } from '@common/config/env'
 import useController from '@common/hooks/useController'
 import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import { AnimatedPressable, useCustomHover } from '@common/hooks/useHover'
@@ -83,9 +81,6 @@ const AddressBookContact: FC<Props> = ({
       to: theme.secondaryBackground
     }
   })
-  const tooltipRef = useRef<TooltipRefProps>(null)
-  const containerRef = useRef(null)
-
   const account = useMemo(() => {
     return accounts.find((acc) => acc.addr.toLowerCase() === address.toLowerCase())
   }, [accounts, address])
@@ -97,24 +92,6 @@ const AddressBookContact: FC<Props> = ({
     })
     addToast(t('Successfully renamed contact'))
   }
-
-  const closeTooltip = useCallback(() => {
-    tooltipRef?.current?.close()
-  }, [])
-
-  useEffect(() => {
-    if (!isWeb) return
-
-    if (!containerRef.current) return
-
-    const container = containerRef.current as HTMLElement
-
-    container.addEventListener('mouseleave', closeTooltip, { passive: true })
-
-    return () => {
-      container.removeEventListener('mouseleave', () => closeTooltip)
-    }
-  }, [closeTooltip])
 
   const smartAccountType = useMemo(() => {
     if (account?.creation) return 'Ambire'
@@ -128,7 +105,6 @@ const AddressBookContact: FC<Props> = ({
 
   return (
     <ContainerElement
-      ref={containerRef}
       style={[
         flexbox.directionRow,
         flexbox.alignCenter,
@@ -188,9 +164,7 @@ const AddressBookContact: FC<Props> = ({
           </View>
         </View>
       </View>
-      {isManageable && name ? (
-        <ManageContact tooltipRef={tooltipRef} address={address} name={name} />
-      ) : null}
+      {isManageable && name ? <ManageContact address={address} name={name} /> : null}
     </ContainerElement>
   )
 }
