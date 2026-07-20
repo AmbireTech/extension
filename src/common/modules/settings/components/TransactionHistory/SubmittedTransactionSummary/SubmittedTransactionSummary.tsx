@@ -32,7 +32,6 @@ const SubmittedTransactionSummaryInner = ({
   modalType
 }: Props) => {
   const { styles, theme } = useTheme(getStyles)
-  const { dispatch: activityDispatch } = useController('ActivityController')
   const { networks } = useController('NetworksController').state
   const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useModalize()
 
