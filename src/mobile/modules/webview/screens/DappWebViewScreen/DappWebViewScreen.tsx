@@ -184,6 +184,26 @@ const devOnlyHelpers = `
   });
 `
 
+// Comma-locale keypads type "," as the decimal separator. Rewrite it to "."
+// in numeric dapp inputs (React-safe: native setter + bubbled input event).
+const decimalSeparatorFix = `
+  (function() {
+    document.addEventListener('input', function(e) {
+      var el = e.target;
+      if (!el || el.tagName !== 'INPUT') return;
+      var inputMode = (el.getAttribute('inputmode') || '').toLowerCase();
+      var type = (el.type || '').toLowerCase();
+      var isNumeric = inputMode === 'decimal' || inputMode === 'numeric' || type === 'number';
+      if (!isNumeric) return;
+      if (el.value.indexOf(',') === -1) return;
+      var normalized = el.value.split(',').join('.');
+      var setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
+      setter.call(el, normalized);
+      el.dispatchEvent(new Event('input', { bubbles: true }));
+    }, true);
+  })();
+`
+
 const WEBVIEW_DEV_SERVER_PORT = 8182
 const getDevServerUrl = () => {
   if (Platform.OS === 'android') {
@@ -219,7 +239,6 @@ const DappWebViewScreen = () => {
   const {
     state: { dapps },
     currentDapp,
-    dappUrl,
     setDappUrl,
     dispatch: dappsDispatch
   } = useController('DappsController')
@@ -267,6 +286,9 @@ const DappWebViewScreen = () => {
   const [progress, setProgress] = useState(0)
   const [isLoading, setIsLoading] = useState(true)
   const [canGoBack, setCanGoBack] = useState(false)
+  // Drives WebView source; set at mount + only by user address-bar nav. Never
+  // from nav callbacks, else source.uri re-feeds → RNW reloads → snaps back.
+  const [sourceUri, setSourceUri] = useState<string>(initialUrl)
 
   // Atomic setter used by every WebView load callback so `progress` and
   // `isLoading` always stay in sync. Mirrors Rabby's `updateProgressState`.
@@ -275,11 +297,13 @@ const DappWebViewScreen = () => {
     setIsLoading(next.isLoading)
   }, [])
 
+  // Load the nav-state URL on mount and when a new dapp opens in the mounted
+  // browser. Keyed on initialUrl only so in-dapp nav can't retrigger a reload.
   useEffect(() => {
-    if (!dappUrl && setDappUrl) setDappUrl(initialUrl)
-  }, [dappUrl, initialUrl, setDappUrl])
-
-  const activeDappUrl = dappUrl || initialUrl
+    setSourceUri(initialUrl)
+    setDappUrl?.(initialUrl)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialUrl])
 
   // Bottom Sheet & Search Form State
   const { ref: searchModalRef, open: openSearchModal, close: closeSearchModal } = useModalize()
@@ -545,6 +569,8 @@ const DappWebViewScreen = () => {
 
       ${jsBridgeHarden}
 
+      ${decimalSeparatorFix}
+
       ${__DEV__ ? devOnlyHelpers : ''}
 
       window.addEventListener('message', function(event) {
@@ -657,6 +683,7 @@ const DappWebViewScreen = () => {
 
   const handleNavigateToUrl = useCallback(
     (url: string) => {
+      setSourceUri(url)
       setDappUrl?.(url)
       closeSearchModal()
     },
@@ -1122,7 +1149,7 @@ const DappWebViewScreen = () => {
       <View style={flexbox.flex1}>
         <WebView
           ref={webviewRef}
-          source={{ uri: activeDappUrl }}
+          source={{ uri: sourceUri }}
           userAgent={DESKTOP_USER_AGENT}
           onNavigationStateChange={handleNavigationStateChange}
           injectedJavaScriptBeforeContentLoaded={injectionScript}

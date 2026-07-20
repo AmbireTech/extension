@@ -61,8 +61,7 @@ const useAddressInput = ({
       getAddressInputValidation({
         address: overwriteValidationFieldValue ?? fieldValue,
         isRecipientDomainResolving: addressState.isDomainResolving,
-        isValidEns: addressState.resolvedAddressType === 'ens',
-        isValidNamoshi: addressState.resolvedAddressType === 'namoshi',
+        resolvedAddressType: addressState.resolvedAddressType,
         isDomainVerifiedByColibri,
         hasDomainResolveFailed,
         domainResolveError,

@@ -6,6 +6,7 @@ import SafeIcon from '@common/assets/svg/SafeIcon'
 import BADGE_PRESETS from '@common/components/BadgeWithPreset/presets'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import Text from '@common/components/Text'
+import { isMobile, isWeb } from '@common/config/env'
 import useTheme from '@common/hooks/useTheme'
 import { SPACING_MI } from '@common/styles/spacings'
 import { THEME_TYPES } from '@common/styles/themeConfig'
@@ -53,28 +54,31 @@ const TypeBadge: FC<Props> = ({ smartAccountType, size, showTooltip = false }) =
   }
 
   return (
-    <SafeIcon
+    <View
       dataSet={createGlobalTooltipDataSet({
         id: tooltipId,
         content: badgePreset.tooltipText,
         hidden: !showTooltip
       })}
-      width={size === 'big' ? 21 : 15}
-      height={size === 'big' ? 21 : 15}
       style={{
         position: 'absolute',
-        left: size === 'big' ? -2 : -SPACING_MI,
-        top: size === 'big' ? -4 : -SPACING_MI,
+        left: (size === 'big' ? -2 : -SPACING_MI) + (isMobile ? 2 : 0),
+        top: (size === 'big' ? -4 : -SPACING_MI) + (isMobile ? 2 : 0),
         paddingHorizontal: 2,
         paddingVertical: 2,
         backgroundColor: theme.successText,
         zIndex: 2,
         borderRadius: 50,
-        borderWidth: size === 'big' ? 3 : 2,
+        borderWidth: isMobile ? 0 : size === 'big' ? 3 : 2,
         borderColor:
           themeType === THEME_TYPES.DARK ? theme.secondaryBackground : theme.primaryBackground
       }}
-    />
+    >
+      <SafeIcon
+        width={size === 'big' && isWeb ? 21 : 15}
+        height={size === 'big' && isWeb ? 21 : 15}
+      />
+    </View>
   )
 }
 

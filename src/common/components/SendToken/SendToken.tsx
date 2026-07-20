@@ -2,7 +2,6 @@ import React, { FC, memo, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Pressable, View } from 'react-native'
 
-import { TokenResult } from '@ambire-common/libs/portfolio'
 import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
 import { textToValidDecimal } from '@ambire-common/utils/numbers/formatters'
 import FlipIcon from '@common/assets/svg/FlipIcon'
@@ -21,6 +20,7 @@ import { ItemPanel } from '@web/components/TransactionsScreen'
 
 import getStyles from './styles'
 
+import type { TokenResult } from '@ambire-common/libs/portfolio'
 const SECTION_MENU_HEADER_HEIGHT = 50
 
 type Props = {

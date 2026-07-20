@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react'
+import React, { Suspense, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Route, Routes, useLocation } from 'react-router-dom'
 
@@ -7,62 +7,21 @@ import AuthenticatedRoute from '@common/modules/router/components/AuthenticatedR
 import KeystoreUnlockedRoute from '@common/modules/router/components/KeystoreUnlockedRoute'
 import routesConfig from '@common/modules/router/config/routesConfig'
 import { WEB_ROUTES } from '@common/modules/router/constants/common'
-import AccountPersonalizeScreen from '@web/modules/account-personalize/screens/AccountPersonalizeScreen'
-import AccountPickerScreen from '@web/modules/account-picker/screens/AccountPickerScreen'
 import AccountSelectScreen from '@web/modules/account-select/screens/AccountSelectScreen'
-import AddOrUpdateNetworkScreen from '@web/modules/action-requests/screens/AddOrUpdateNetworkScreen'
-import BenzinScreen from '@web/modules/action-requests/screens/BenzinScreen'
-import DappConnectScreen from '@web/modules/action-requests/screens/DappConnectScreen'
-import DecryptRequestScreen from '@web/modules/action-requests/screens/DecryptRequestScreen'
 import GetEncryptionPublicKeyRequestScreen from '@web/modules/action-requests/screens/GetEncryptionPublicKeyRequestScreen'
-import SwitchAccountScreen from '@web/modules/action-requests/screens/SwitchAccountScreen'
-import WatchTokenRequestScreen from '@web/modules/action-requests/screens/WatchTokenRequestScreen'
-import CreateSeedPhrasePrepareScreen from '@web/modules/auth/screens/CreateSeedPhrasePrepareScreen'
-import CreateSeedPhraseWriteScreen from '@web/modules/auth/screens/CreateSeedPhraseWriteScreen'
-import EmailAccountScreen from '@web/modules/auth/screens/EmailAccountScreen'
-import EmailLoginScreen from '@web/modules/auth/screens/EmailLoginScreen'
-import EmailRegisterScreen from '@web/modules/auth/screens/EmailRegisterScreen'
-import GetStartedScreen from '@web/modules/auth/screens/GetStartedScreen'
-import ImportExistingAccountSelectorScreen from '@web/modules/auth/screens/ImportExistingAccountSelectorScreen'
-import ImportSmartAccountJsonScreen from '@web/modules/auth/screens/ImportSmartAccountJson'
-import OnboardingCompletedScreen from '@web/modules/auth/screens/OnboardingCompletedScreen'
-import PrivateKeyImportScreen from '@web/modules/auth/screens/PrivateKeyImportScreen'
-import SafeImportScreen from '@web/modules/auth/screens/SafeImportScreen'
-import SeedPhraseImportScreen from '@web/modules/auth/screens/SeedPhraseImportScreen'
-import ViewOnlyAccountAdderScreen from '@web/modules/auth/screens/ViewOnlyAccountAdderScreen'
-import InternalLogsScreen from '@web/modules/debug/screens/InternalLogsScreen'
 import ExploreScreen from '@web/modules/explore/screens/ExploreScreen'
 import ExploreSectionScreen from '@web/modules/explore/screens/ExploreSectionScreen'
 import ExtensionRewardsScreen from '@web/modules/extension-rewards/screens/ExtensionRewardsScreen'
-import LedgerConnectScreen from '@web/modules/hardware-wallet/screens/LedgerConnectScreen/LedgerConnectScreen'
-import QrCameraPermissionPage from '@web/modules/hardware-wallet/screens/QrCameraPermissionPage'
-import QrConnectScreen from '@web/modules/hardware-wallet/screens/QrConnectScreen/QrConnectScreen'
-import KeyStoreEmailRecoveryScreen from '@web/modules/keystore/screens/KeyStoreEmailRecoveryScreen/KeyStoreEmailRecoveryScreen'
-import KeyStoreEmailRecoverySetNewPasswordScreen from '@web/modules/keystore/screens/KeyStoreEmailRecoverySetNewPasswordScreen'
-import KeyStoreSetupScreen from '@web/modules/keystore/screens/KeyStoreSetupScreen'
-import NetworksConfiguration from '@web/modules/network-settings/screens'
-import PrivacyOptOutsConfiguration from '@web/modules/network-settings/screens/PrivacyOptOutsConfiguration'
 import NetworksScreen from '@web/modules/networks/screens'
 import ReceiveScreen from '@web/modules/receive/screens/ReceiveScreen'
 import NavMenu from '@web/modules/router/components/NavMenu'
 import TabOnlyRoute from '@web/modules/router/components/TabOnlyRoute'
+import {
+  AuthGroupScreen,
+  RequestWindowGroupScreen,
+  SettingsGroupScreen
+} from '@web/modules/router/route-bundles/groupScreens'
 import { SettingsRoutesProvider } from '@web/modules/settings/contexts/SettingsRoutesContext'
-import AboutSettingsScreen from '@web/modules/settings/screens/AboutSettingsScreen'
-import AccountsSettingsScreen from '@web/modules/settings/screens/AccountsSettingsScreen'
-import AddressBookSettingsScreen from '@web/modules/settings/screens/AddressBookSettingsScreen'
-import DevicePasswordChangeSettingsScreen from '@web/modules/settings/screens/DevicePasswordChangeSettingsScreen'
-import DevicePasswordRecoverySettingsScreen from '@web/modules/settings/screens/DevicePasswordRecoverySettingsScreen'
-import DevicePasswordSetSettingsScreen from '@web/modules/settings/screens/DevicePasswordSetSettingsScreen'
-import GeneralSettingsScreen from '@web/modules/settings/screens/GeneralSettingsScreen'
-import ManageTokensSettingsScreen from '@web/modules/settings/screens/ManageTokensSettingsScreen'
-import NetworksSettingsScreen from '@web/modules/settings/screens/NetworksSettingsScreen'
-import OptOutsScreen from '@web/modules/settings/screens/OptOutsScreen'
-import RecoveryPhrasesSettingsScreen from '@web/modules/settings/screens/RecoveryPhrasesSettingsScreen'
-import SignedMessageHistorySettingsScreen from '@web/modules/settings/screens/SignedMessageHistorySettingsScreen'
-import TermsSettingsScreen from '@web/modules/settings/screens/TermsSettingsScreen'
-import TransactionHistorySettingsScreen from '@web/modules/settings/screens/TransactionHistorySettingsScreen'
-import SignAccountOpScreen from '@web/modules/sign-account-op/screens/SignAccountOpScreen'
-import SignMessageScreen from '@web/modules/sign-message/screens/SignMessageScreen'
 import SurveyScreen from '@web/modules/survey/screens/SurveyScreen/SurveyScreen'
 import SwapAndBridgeScreen from '@web/modules/swap-and-bridge/screens/SwapAndBridgeScreen'
 import TokenDetailsScreen from '@web/modules/token-details/screens/TokenDetailsScreen'
@@ -82,129 +41,241 @@ const MainRoutes = () => {
   }, [location.pathname, t])
 
   return (
-    <Routes>
-      <Route path={WEB_ROUTES.noConnection} element={<NoConnectionScreen />} />
+    // Rendering null instead of another Splash screen as before rendering this component, the Router component already renders a Splash screen while the controllers are loading.
+    // We want to avoid displaying different Splash screens back to back and this loads pretty quickly
+    <Suspense fallback={null}>
+      <Routes>
+        <Route path={WEB_ROUTES.noConnection} element={<NoConnectionScreen />} />
 
-      <Route element={<TabOnlyRoute />}>
-        <Route path={WEB_ROUTES.internalLogs} element={<InternalLogsScreen />} />
-        <Route path={WEB_ROUTES.networksConfiguration} element={<NetworksConfiguration />} />
-        <Route
-          path={WEB_ROUTES.privacyOptOutsConfiguration}
-          element={<PrivacyOptOutsConfiguration />}
-        />
-        <Route path={WEB_ROUTES.keyStoreSetup} element={<KeyStoreSetupScreen />} />
-        <Route path={WEB_ROUTES.keyStoreEmailRecovery} element={<KeyStoreEmailRecoveryScreen />} />
-        <Route
-          path={WEB_ROUTES.keyStoreEmailRecoverySetNewPassword}
-          element={<KeyStoreEmailRecoverySetNewPasswordScreen />}
-        />
-
-        <Route element={<KeystoreUnlockedRoute />}>
-          <Route path={WEB_ROUTES.getStarted} element={<GetStartedScreen />} />
-          <Route path={WEB_ROUTES.authEmailAccount} element={<EmailAccountScreen />} />
-          <Route path={WEB_ROUTES.authEmailLogin} element={<EmailLoginScreen />} />
-          <Route path={WEB_ROUTES.authEmailRegister} element={<EmailRegisterScreen />} />
-          <Route path={WEB_ROUTES.viewOnlyAccountAdder} element={<ViewOnlyAccountAdderScreen />} />
-
+        <Route element={<TabOnlyRoute />}>
           <Route
-            path={WEB_ROUTES.importExistingAccount}
-            element={<ImportExistingAccountSelectorScreen />}
-          />
-          <Route path={WEB_ROUTES.ledgerConnect} element={<LedgerConnectScreen />} />
-          <Route path={WEB_ROUTES.safeImport} element={<SafeImportScreen />} />
-          <Route path={WEB_ROUTES.qrConnect} element={<QrConnectScreen />} />
-          <Route path={WEB_ROUTES.importPrivateKey} element={<PrivateKeyImportScreen />} />
-          <Route path={WEB_ROUTES.importSeedPhrase} element={<SeedPhraseImportScreen />} />
-          <Route
-            path={WEB_ROUTES.importSmartAccountJson}
-            element={<ImportSmartAccountJsonScreen />}
-          />
-
-          <Route
-            path={WEB_ROUTES.createSeedPhrasePrepare}
-            element={<CreateSeedPhrasePrepareScreen />}
+            path={WEB_ROUTES.internalLogs}
+            element={<SettingsGroupScreen pick={(m) => m.InternalLogsScreen} />}
           />
           <Route
-            path={WEB_ROUTES.createSeedPhraseWrite}
-            element={<CreateSeedPhraseWriteScreen />}
+            path={WEB_ROUTES.networksConfiguration}
+            element={<SettingsGroupScreen pick={(m) => m.NetworksConfiguration} />}
+          />
+          <Route
+            path={WEB_ROUTES.privacyOptOutsConfiguration}
+            element={<SettingsGroupScreen pick={(m) => m.PrivacyOptOutsConfiguration} />}
+          />
+          <Route
+            path={WEB_ROUTES.keyStoreSetup}
+            element={<AuthGroupScreen pick={(m) => m.KeyStoreSetupScreen} />}
+          />
+          <Route
+            path={WEB_ROUTES.keyStoreEmailRecovery}
+            element={<AuthGroupScreen pick={(m) => m.KeyStoreEmailRecoveryScreen} />}
+          />
+          <Route
+            path={WEB_ROUTES.keyStoreEmailRecoverySetNewPassword}
+            element={<AuthGroupScreen pick={(m) => m.KeyStoreEmailRecoverySetNewPasswordScreen} />}
           />
 
-          <Route path={WEB_ROUTES.accountPicker} element={<AccountPickerScreen />} />
-          <Route path={WEB_ROUTES.accountPersonalize} element={<AccountPersonalizeScreen />} />
-          <Route path={WEB_ROUTES.onboardingCompleted} element={<OnboardingCompletedScreen />} />
-          <Route path={WEB_ROUTES.qrPermission} element={<QrCameraPermissionPage />} />
+          <Route element={<KeystoreUnlockedRoute />}>
+            <Route
+              path={WEB_ROUTES.getStarted}
+              element={<AuthGroupScreen pick={(m) => m.GetStartedScreen} />}
+            />
+            <Route
+              path={WEB_ROUTES.authEmailAccount}
+              element={<AuthGroupScreen pick={(m) => m.EmailAccountScreen} />}
+            />
+            <Route
+              path={WEB_ROUTES.authEmailLogin}
+              element={<AuthGroupScreen pick={(m) => m.EmailLoginScreen} />}
+            />
+            <Route
+              path={WEB_ROUTES.authEmailRegister}
+              element={<AuthGroupScreen pick={(m) => m.EmailRegisterScreen} />}
+            />
+            <Route
+              path={WEB_ROUTES.viewOnlyAccountAdder}
+              element={<AuthGroupScreen pick={(m) => m.ViewOnlyAccountAdderScreen} />}
+            />
 
-          <Route element={<AuthenticatedRoute />}>
-            <Route element={<SettingsRoutesProvider />}>
-              <Route path={WEB_ROUTES.generalSettings} element={<GeneralSettingsScreen />} />
-              <Route path={WEB_ROUTES.accountsSettings} element={<AccountsSettingsScreen />} />
-              <Route
-                path={WEB_ROUTES.recoveryPhrasesSettings}
-                element={<RecoveryPhrasesSettingsScreen />}
-              />
-              <Route path={WEB_ROUTES.networksSettings} element={<NetworksSettingsScreen />} />
-              <Route
-                path={WEB_ROUTES.transactions}
-                element={<TransactionHistorySettingsScreen />}
-              />
-              <Route
-                path={WEB_ROUTES.signedMessages}
-                element={<SignedMessageHistorySettingsScreen />}
-              />
-              <Route
-                path={WEB_ROUTES.devicePasswordSet}
-                element={<DevicePasswordSetSettingsScreen />}
-              />
-              <Route
-                path={WEB_ROUTES.devicePasswordChange}
-                element={<DevicePasswordChangeSettingsScreen />}
-              />
-              <Route
-                path={WEB_ROUTES.devicePasswordRecovery}
-                element={<DevicePasswordRecoverySettingsScreen />}
-              />
-              <Route path={WEB_ROUTES.optOuts} element={<OptOutsScreen />} />
-              <Route path={WEB_ROUTES.manageTokens} element={<ManageTokensSettingsScreen />} />
-              <Route path={WEB_ROUTES.addressBook} element={<AddressBookSettingsScreen />} />
-              <Route path={WEB_ROUTES.settingsTerms} element={<TermsSettingsScreen />} />
-              <Route path={WEB_ROUTES.settingsAbout} element={<AboutSettingsScreen />} />
+            <Route
+              path={WEB_ROUTES.importExistingAccount}
+              element={<AuthGroupScreen pick={(m) => m.ImportExistingAccountSelectorScreen} />}
+            />
+            <Route
+              path={WEB_ROUTES.ledgerConnect}
+              element={<AuthGroupScreen pick={(m) => m.LedgerConnectScreen} />}
+            />
+            <Route
+              path={WEB_ROUTES.safeImport}
+              element={<AuthGroupScreen pick={(m) => m.SafeImportScreen} />}
+            />
+            <Route
+              path={WEB_ROUTES.qrConnect}
+              element={<AuthGroupScreen pick={(m) => m.QrConnectScreen} />}
+            />
+            <Route
+              path={WEB_ROUTES.importPrivateKey}
+              element={<AuthGroupScreen pick={(m) => m.PrivateKeyImportScreen} />}
+            />
+            <Route
+              path={WEB_ROUTES.importSeedPhrase}
+              element={<AuthGroupScreen pick={(m) => m.SeedPhraseImportScreen} />}
+            />
+            <Route
+              path={WEB_ROUTES.importSmartAccountJson}
+              element={<AuthGroupScreen pick={(m) => m.ImportSmartAccountJsonScreen} />}
+            />
+
+            <Route
+              path={WEB_ROUTES.createSeedPhrasePrepare}
+              element={<AuthGroupScreen pick={(m) => m.CreateSeedPhrasePrepareScreen} />}
+            />
+            <Route
+              path={WEB_ROUTES.createSeedPhraseWrite}
+              element={<AuthGroupScreen pick={(m) => m.CreateSeedPhraseWriteScreen} />}
+            />
+
+            <Route
+              path={WEB_ROUTES.accountPicker}
+              element={<AuthGroupScreen pick={(m) => m.AccountPickerScreen} />}
+            />
+            <Route
+              path={WEB_ROUTES.accountPersonalize}
+              element={<AuthGroupScreen pick={(m) => m.AccountPersonalizeScreen} />}
+            />
+            <Route
+              path={WEB_ROUTES.onboardingCompleted}
+              element={<AuthGroupScreen pick={(m) => m.OnboardingCompletedScreen} />}
+            />
+            <Route
+              path={WEB_ROUTES.qrPermission}
+              element={<AuthGroupScreen pick={(m) => m.QrCameraPermissionPage} />}
+            />
+
+            <Route element={<AuthenticatedRoute />}>
+              <Route element={<SettingsRoutesProvider />}>
+                <Route
+                  path={WEB_ROUTES.generalSettings}
+                  element={<SettingsGroupScreen pick={(m) => m.GeneralSettingsScreen} />}
+                />
+                <Route
+                  path={WEB_ROUTES.accountsSettings}
+                  element={<SettingsGroupScreen pick={(m) => m.AccountsSettingsScreen} />}
+                />
+                <Route
+                  path={WEB_ROUTES.recoveryPhrasesSettings}
+                  element={<SettingsGroupScreen pick={(m) => m.RecoveryPhrasesSettingsScreen} />}
+                />
+                <Route
+                  path={WEB_ROUTES.networksSettings}
+                  element={<SettingsGroupScreen pick={(m) => m.NetworksSettingsScreen} />}
+                />
+                <Route
+                  path={WEB_ROUTES.transactions}
+                  element={<SettingsGroupScreen pick={(m) => m.TransactionHistorySettingsScreen} />}
+                />
+                <Route
+                  path={WEB_ROUTES.signedMessages}
+                  element={
+                    <SettingsGroupScreen pick={(m) => m.SignedMessageHistorySettingsScreen} />
+                  }
+                />
+                <Route
+                  path={WEB_ROUTES.devicePasswordSet}
+                  element={<SettingsGroupScreen pick={(m) => m.DevicePasswordSetSettingsScreen} />}
+                />
+                <Route
+                  path={WEB_ROUTES.devicePasswordChange}
+                  element={
+                    <SettingsGroupScreen pick={(m) => m.DevicePasswordChangeSettingsScreen} />
+                  }
+                />
+                <Route
+                  path={WEB_ROUTES.devicePasswordRecovery}
+                  element={
+                    <SettingsGroupScreen pick={(m) => m.DevicePasswordRecoverySettingsScreen} />
+                  }
+                />
+                <Route
+                  path={WEB_ROUTES.optOuts}
+                  element={<SettingsGroupScreen pick={(m) => m.OptOutsScreen} />}
+                />
+                <Route
+                  path={WEB_ROUTES.manageTokens}
+                  element={<SettingsGroupScreen pick={(m) => m.ManageTokensSettingsScreen} />}
+                />
+                <Route
+                  path={WEB_ROUTES.addressBook}
+                  element={<SettingsGroupScreen pick={(m) => m.AddressBookSettingsScreen} />}
+                />
+                <Route
+                  path={WEB_ROUTES.settingsTerms}
+                  element={<SettingsGroupScreen pick={(m) => m.TermsSettingsScreen} />}
+                />
+                <Route
+                  path={WEB_ROUTES.settingsAbout}
+                  element={<SettingsGroupScreen pick={(m) => m.AboutSettingsScreen} />}
+                />
+              </Route>
             </Route>
           </Route>
         </Route>
-      </Route>
 
-      <Route element={<KeystoreUnlockedRoute />}>
-        <Route element={<AuthenticatedRoute />}>
-          <Route path={WEB_ROUTES.transfer} element={<TransferScreen />} />
-          <Route path={WEB_ROUTES.topUpGasTank} element={<TransferScreen isTopUpScreen />} />
-          <Route path={WEB_ROUTES.signAccountOp} element={<SignAccountOpScreen />} />
-          <Route path={WEB_ROUTES.swapAndBridge} element={<SwapAndBridgeScreen />} />
-          <Route path={WEB_ROUTES.signMessage} element={<SignMessageScreen />} />
-          <Route path={WEB_ROUTES.benzin} element={<BenzinScreen />} />
-          <Route path={WEB_ROUTES.switchAccount} element={<SwitchAccountScreen />} />
+        <Route element={<KeystoreUnlockedRoute />}>
+          <Route element={<AuthenticatedRoute />}>
+            <Route path={WEB_ROUTES.transfer} element={<TransferScreen />} />
+            <Route path={WEB_ROUTES.topUpGasTank} element={<TransferScreen isTopUpScreen />} />
+            <Route
+              path={WEB_ROUTES.signAccountOp}
+              element={<RequestWindowGroupScreen pick={(m) => m.SignAccountOpScreen} />}
+            />
+            <Route path={WEB_ROUTES.swapAndBridge} element={<SwapAndBridgeScreen />} />
+            <Route
+              path={WEB_ROUTES.signMessage}
+              element={<RequestWindowGroupScreen pick={(m) => m.SignMessageScreen} />}
+            />
+            <Route
+              path={WEB_ROUTES.benzin}
+              element={<RequestWindowGroupScreen pick={(m) => m.BenzinScreen} />}
+            />
+            <Route
+              path={WEB_ROUTES.switchAccount}
+              element={<RequestWindowGroupScreen pick={(m) => m.SwitchAccountScreen} />}
+            />
 
-          <Route path={WEB_ROUTES.dappConnectRequest} element={<DappConnectScreen />} />
-          <Route path={WEB_ROUTES.addChain} element={<AddOrUpdateNetworkScreen />} />
-          <Route path={WEB_ROUTES.watchAsset} element={<WatchTokenRequestScreen />} />
+            <Route
+              path={WEB_ROUTES.dappConnectRequest}
+              element={<RequestWindowGroupScreen pick={(m) => m.DappConnectScreen} />}
+            />
+            <Route
+              path={WEB_ROUTES.addChain}
+              element={<RequestWindowGroupScreen pick={(m) => m.AddOrUpdateNetworkScreen} />}
+            />
+            <Route
+              path={WEB_ROUTES.watchAsset}
+              element={<RequestWindowGroupScreen pick={(m) => m.WatchTokenRequestScreen} />}
+            />
 
-          <Route
-            path={WEB_ROUTES.getEncryptionPublicKeyRequest}
-            element={<GetEncryptionPublicKeyRequestScreen />}
-          />
-          <Route path={WEB_ROUTES.decryptRequest} element={<DecryptRequestScreen />} />
+            <Route
+              path={WEB_ROUTES.getEncryptionPublicKeyRequest}
+              element={<GetEncryptionPublicKeyRequestScreen />}
+            />
+            <Route
+              path={WEB_ROUTES.decryptRequest}
+              element={<RequestWindowGroupScreen pick={(m) => m.DecryptRequestScreen} />}
+            />
 
-          <Route path={WEB_ROUTES.menu} element={<NavMenu />} />
-          <Route path={WEB_ROUTES.tokenDetails} element={<TokenDetailsScreen />} />
-          <Route path={WEB_ROUTES.accountSelect} element={<AccountSelectScreen />} />
-          <Route path={WEB_ROUTES.receive} element={<ReceiveScreen />} />
-          <Route path={WEB_ROUTES.explore} element={<ExploreScreen />} />
-          <Route path={WEB_ROUTES.exploreSection} element={<ExploreSectionScreen />} />
-          <Route path={WEB_ROUTES.networks} element={<NetworksScreen />} />
-          <Route path={WEB_ROUTES.rewards} element={<ExtensionRewardsScreen />} />
-          <Route path={WEB_ROUTES.survey} element={<SurveyScreen />} />
+            <Route path={WEB_ROUTES.menu} element={<NavMenu />} />
+            <Route path={WEB_ROUTES.tokenDetails} element={<TokenDetailsScreen />} />
+            <Route path={WEB_ROUTES.accountSelect} element={<AccountSelectScreen />} />
+            <Route path={WEB_ROUTES.receive} element={<ReceiveScreen />} />
+            <Route path={WEB_ROUTES.explore} element={<ExploreScreen />} />
+            <Route path={WEB_ROUTES.exploreSection} element={<ExploreSectionScreen />} />
+            <Route path={WEB_ROUTES.networks} element={<NetworksScreen />} />
+            <Route path={WEB_ROUTES.rewards} element={<ExtensionRewardsScreen />} />
+            <Route path={WEB_ROUTES.survey} element={<SurveyScreen />} />
+          </Route>
         </Route>
-      </Route>
-    </Routes>
+      </Routes>
+    </Suspense>
   )
 }
 

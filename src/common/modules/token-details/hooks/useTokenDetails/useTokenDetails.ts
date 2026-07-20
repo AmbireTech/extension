@@ -3,7 +3,6 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useModalize } from 'react-native-modalize'
 
-import { TokenResult } from '@ambire-common/libs/portfolio'
 import { getTokenAmount } from '@ambire-common/libs/portfolio/helpers'
 import InvisibilityIcon from '@common/assets/svg/InvisibilityIcon'
 import SendIcon from '@common/assets/svg/SendIcon'
@@ -21,6 +20,7 @@ import { storage } from '@common/services/storage'
 import { getTokenId } from '@common/utils/token'
 import { RELAYER_URL } from '@env'
 
+import type { TokenResult } from '@ambire-common/libs/portfolio'
 const useTokenDetails = () => {
   const { navigate } = useNavigation()
   const { state } = useRoute()

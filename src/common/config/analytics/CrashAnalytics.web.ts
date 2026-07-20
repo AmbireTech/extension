@@ -1,14 +1,23 @@
+import { scrubSentryEventSecrets } from '@common/config/analytics/sentryDataScrubbing'
 import CONFIG, { APP_VERSION, isDev } from '@common/config/env'
 import * as Sentry from '@sentry/react'
 import { IS_FIREFOX } from '@web/constants/common'
 
-export const CRASH_ANALYTICS_WEB_CONFIG = {
+export const CRASH_ANALYTICS_WEB_CONFIG: Sentry.BrowserOptions = {
   dsn: CONFIG.SENTRY_DSN_BROWSER_EXTENSION,
   environment: CONFIG.APP_ENV as string,
   release: `extension-${process.env.WEB_ENGINE}@${APP_VERSION}`,
   // Disables sending personally identifiable information
   sendDefaultPii: false,
-  integrations: []
+  integrations: [],
+  // No explicit `event` param type here: annotating this object as
+  // Sentry.BrowserOptions lets `event`'s type be inferred contextually as the
+  // narrower `ErrorEvent`, which scrubSentryEventSecrets (generic) then
+  // preserves in its return type -- an explicit `event: Sentry.Event` param
+  // widens both to the general Event union, which BrowserOptions rejects.
+  beforeSend(event) {
+    return scrubSentryEventSecrets(event)
+  }
 }
 
 export const captureException = Sentry.captureException

@@ -24,6 +24,7 @@ import SafeOwners from '@common/modules/sign-account-op/components/SafeOwners'
 import SafetyChecksOverlay from '@common/modules/sign-account-op/components/SafetyChecksOverlay'
 import SectionHeading from '@common/modules/sign-account-op/components/SectionHeading'
 import Simulation from '@common/modules/sign-account-op/components/Simulation'
+import TenderlySimulation from '@common/modules/sign-account-op/components/TenderlySimulation'
 import KeySelect from '@common/modules/sign-message/components/KeySelect'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
@@ -112,7 +113,7 @@ const SignAccountOpScreen = () => {
     disabledReason,
     showSafeSigners,
     shouldDisplayQrSigningModal,
-    handleQrSingingFlowOnContinuePressed,
+    handleQrSigningFlowOnContinuePressed,
     handleQrSigningFlowSubmitSignatureResponse,
     handleQrSigningFlowOnClosePressed,
     handleQrSigningFlowOnRejectPressed,
@@ -208,7 +209,7 @@ const SignAccountOpScreen = () => {
         currentRequest={currentRequest}
         signingStep={signingStep}
         shouldDisplayQrSigningModal={shouldDisplayQrSigningModal}
-        handleQrSingingFlowOnContinuePressed={handleQrSingingFlowOnContinuePressed}
+        handleQrSigningFlowOnContinuePressed={handleQrSigningFlowOnContinuePressed}
         handleQrSigningFlowSubmitSignatureResponse={handleQrSigningFlowSubmitSignatureResponse}
         handleQrSigningFlowOnClosePressed={handleQrSigningFlowOnClosePressed}
         handleQrSigningFlowOnRejectPressed={handleQrSigningFlowOnRejectPressed}
@@ -225,10 +226,10 @@ const SignAccountOpScreen = () => {
         footerStyle={{ ...spacings.ph0, ...spacings.pt0 }}
         footer={
           <View style={styles.footerContainer}>
-            <View style={spacings.mbSm}>
-              {!estimationFailed &&
-              signAccountOpState?.canBroadcast &&
-              signAccountOpState?.status?.type !== SigningStatus.Queued ? (
+            {!estimationFailed &&
+            signAccountOpState?.canBroadcast &&
+            signAccountOpState?.status?.type !== SigningStatus.Queued ? (
+              <View style={spacings.mbMd}>
                 <Estimation
                   signAccountOpState={signAccountOpState}
                   disabled={isSignLoading}
@@ -240,28 +241,29 @@ const SignAccountOpScreen = () => {
                   updateType="Requests"
                   bundlerNonceDiscrepancy={bundlerNonceDiscrepancy}
                 />
-              ) : null}
+              </View>
+            ) : null}
 
-              {!isViewOnly &&
-                signAccountOpState &&
-                signAccountOpState?.errors.length === 0 &&
-                !signAccountOpState.canBroadcast &&
-                !!signAccountOpState.account.safeCreation &&
-                showSafeSigners && (
-                  <ScrollView style={[{ maxHeight: 140 }, flexbox.flex1, spacings.mb]}>
-                    <SafeOwners
-                      account={signAccountOpState.account}
-                      onSign={handleChangeSigningKey}
-                      isSignLoading={isSignLoading}
-                      signingKeyAddr={signAccountOpState.accountOp.signingKeyAddr}
-                      chainId={signAccountOpState.accountOp.chainId.toString()}
-                      signed={signAccountOpState.accountOp.signed || []}
-                      importedKeys={signAccountOpState.accountKeyStoreKeys}
-                      threshold={signAccountOpState.threshold}
-                    />
-                  </ScrollView>
-                )}
-            </View>
+            {!isViewOnly &&
+              signAccountOpState &&
+              signAccountOpState?.errors.length === 0 &&
+              !signAccountOpState.canBroadcast &&
+              !!signAccountOpState.account.safeCreation &&
+              showSafeSigners && (
+                <View style={[spacings.ptSm, spacings.mbMd]}>
+                  <SafeOwners
+                    account={signAccountOpState.account}
+                    onSign={handleChangeSigningKey}
+                    isSignLoading={isSignLoading}
+                    signingKeyAddr={signAccountOpState.accountOp.signingKeyAddr}
+                    chainId={signAccountOpState.accountOp.chainId.toString()}
+                    signed={signAccountOpState.accountOp.signed || []}
+                    importedKeys={signAccountOpState.accountKeyStoreKeys}
+                    threshold={signAccountOpState.threshold}
+                  />
+                </View>
+              )}
+
             <Footer
               onReject={handleRejectAccountOp}
               onAddToCart={handleAddToCart}
@@ -354,6 +356,7 @@ const SignAccountOpScreen = () => {
               isEstimationComplete={!!signAccountOpState?.isInitialized && !!network}
             />
           )}
+          <TenderlySimulation />
           {signAccountOpState?.hasSafeApiFailed && (
             <Alert
               size="sm"
@@ -363,7 +366,12 @@ const SignAccountOpScreen = () => {
               style={spacings.mt}
             />
           )}
-          {isViewOnly && <NoKeysToSignAlert chainId={signAccountOpState?.accountOp?.chainId} />}
+          {isViewOnly && (
+            <NoKeysToSignAlert
+              style={spacings.mt}
+              chainId={signAccountOpState?.accountOp?.chainId}
+            />
+          )}
         </ScrollView>
       </MobileLayoutContainer>
     </View>

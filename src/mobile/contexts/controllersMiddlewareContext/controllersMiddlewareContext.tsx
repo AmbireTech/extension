@@ -6,6 +6,7 @@ import { LIFI_EXPLORER_URL } from '@ambire-common/services/lifi/consts'
 import { APP_VERSION } from '@common/config/env'
 import { ControllersMiddlewareContext } from '@common/contexts/controllersMiddlewareContext'
 import { ControllerStoreContext } from '@common/contexts/controllerStoreContext'
+import useIsAppFocused from '@common/hooks/useIsAppFocused'
 import useRoute from '@common/hooks/useRoute'
 import { Action, MethodAction } from '@common/types/actions'
 import { BUNGEE_API_KEY, RELAYER_URL, SQUID_INTEGRATOR_ID, UNISWAP_API_KEY, VELCRO_URL } from '@env'
@@ -20,6 +21,7 @@ export const ControllersMiddlewareProvider: React.FC<{
   const { controllerStore, stateSubscriptionManager } = useContext(ControllerStoreContext)
   const webviewRef = useRef<WebViewWorkerRef>(null)
   const route = useRoute()
+  const isFocused = useIsAppFocused()
 
   const dispatch = useCallback(
     (action: MethodAction | Action, windowId?: number, raw?: boolean) => {
@@ -93,6 +95,11 @@ export const ControllersMiddlewareProvider: React.FC<{
       }
     })
   }, [route.pathname, route.search, dispatch])
+
+  useEffect(() => {
+    if (!isFocused) return
+    dispatch({ type: 'SET_VIEW_FOCUS', params: { id: 'default-mobile-app-view' } })
+  }, [isFocused, dispatch])
 
   useRequestsControllerHelpers(dispatch)
   useDappsControllerHelpers(dispatch)

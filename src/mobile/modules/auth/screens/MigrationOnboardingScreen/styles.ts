@@ -1,0 +1,59 @@
+import { ImageStyle, StyleSheet, TextStyle, ViewStyle } from 'react-native'
+
+import spacings from '@common/styles/spacings'
+import { ThemeProps } from '@common/styles/themeConfig'
+import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
+import flexbox from '@common/styles/utils/flexbox'
+
+interface Style {
+  hero: ViewStyle
+  heroContent: ViewStyle
+  heroBackground: ImageStyle
+  fullWidthText: TextStyle
+  dotsContainer: ViewStyle
+  dot: ViewStyle
+}
+
+const getStyles = (theme: ThemeProps) =>
+  StyleSheet.create<Style>({
+    // Same banner background as the keystore unlock screen
+    hero: {
+      height: 240,
+      ...flexbox.alignCenter,
+      ...flexbox.justifyCenter,
+      borderRadius: BORDER_RADIUS_PRIMARY,
+      overflow: 'hidden'
+    },
+    heroContent: {
+      width: '100%',
+      ...flexbox.alignCenter,
+      ...flexbox.justifyCenter,
+      ...spacings.phLg
+    },
+    heroBackground: {
+      width: '100%',
+      height: '100%',
+      position: 'absolute',
+      objectFit: 'fill',
+      top: 0,
+      left: 0,
+      zIndex: -1
+    },
+    fullWidthText: {
+      width: '100%'
+    },
+    dotsContainer: {
+      ...flexbox.directionRow,
+      ...flexbox.alignCenter,
+      ...flexbox.justifyCenter
+    },
+    dot: {
+      width: 10,
+      height: 10,
+      borderRadius: 50,
+      backgroundColor: theme.tertiaryText,
+      ...spacings.mhTy
+    }
+  })
+
+export default getStyles

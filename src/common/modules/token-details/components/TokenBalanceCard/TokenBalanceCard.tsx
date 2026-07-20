@@ -2,7 +2,6 @@ import React from 'react'
 import { useTranslation } from 'react-i18next'
 import { View, ViewStyle } from 'react-native'
 
-import { TokenResult } from '@ambire-common/libs/portfolio'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import Text from '@common/components/Text'
 import TokenIcon from '@common/components/TokenIcon'
@@ -14,6 +13,7 @@ import flexbox from '@common/styles/utils/flexbox'
 
 import getStyles from './styles'
 
+import type { TokenResult } from '@ambire-common/libs/portfolio'
 type TokenBalanceCardProps = Pick<
   ReturnType<typeof getAndFormatTokenDetails>,
   'balanceFormatted' | 'balanceUSDFormatted' | 'change24h' | 'change24hFormatted' | 'balance'

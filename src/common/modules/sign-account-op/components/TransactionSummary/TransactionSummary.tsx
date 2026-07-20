@@ -11,11 +11,8 @@ import {
   zeroAddress
 } from 'viem'
 
-import {
-  noStateUpdateStatuses,
-  SigningStatus
-} from '@ambire-common/controllers/signAccountOp/signAccountOp'
 import { DecodedCall } from '@ambire-common/interfaces/decodeCall'
+import { noStateUpdateStatuses, SigningStatus } from '@ambire-common/interfaces/signAccountOp'
 import { HumanizerErc7730Visualization, IrCall } from '@ambire-common/libs/humanizer/interfaces'
 import {
   getAction,
@@ -25,11 +22,11 @@ import {
 } from '@ambire-common/libs/humanizer/utils'
 import DeleteIcon from '@common/assets/svg/DeleteIcon'
 import ExpandableCard from '@common/components/ExpandableCard'
-import HumanizerAddress from '@common/components/HumanizerAddress'
 import HumanizedVisualization, {
   getErc7730DescriptionRows,
   shouldUseErc7730DetailedLayout
 } from '@common/components/HumanizedVisualization'
+import HumanizerAddress from '@common/components/HumanizerAddress'
 import Label from '@common/components/Label'
 import Text from '@common/components/Text'
 import { isMobile, isWeb } from '@common/config/env'
@@ -44,6 +41,7 @@ import spacings, { SPACING_MI, SPACING_SM, SPACING_TY } from '@common/styles/spa
 import flexbox from '@common/styles/utils/flexbox'
 import ManifestImage from '@web/components/ManifestImage'
 
+import { sizeMultiplier } from './sizeMultiplier'
 import getStyles from './styles'
 
 interface Props {
@@ -61,11 +59,7 @@ interface Props {
   disableSelectorFetching?: boolean
 }
 
-export const sizeMultiplier = {
-  sm: 0.75,
-  md: 0.85,
-  lg: 1
-}
+export { sizeMultiplier }
 
 type Tab = 'description' | 'raw' | 'parsed'
 
