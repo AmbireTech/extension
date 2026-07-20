@@ -33,6 +33,7 @@ import AboutSettingsScreen from '@mobile/modules/settings/screens/AboutSettingsS
 import AccountsSettingsScreen from '@mobile/modules/settings/screens/AccountsSettingsScreen'
 import GeneralSettingsScreen from '@mobile/modules/settings/screens/GeneralSettingsScreen'
 import NetworksSettingsScreen from '@mobile/modules/settings/screens/NetworksSettingsScreen'
+import RecoveryPhrasesSettingsScreen from '@mobile/modules/settings/screens/RecoveryPhrasesSettingsScreen'
 import TermsSettingsScreen from '@mobile/modules/settings/screens/TermsSettingsScreen'
 import SwapAndBridgeScreen from '@mobile/modules/swap-and-bridge/screens/SwapAndBridgeScreen'
 import TokenDetailsScreen from '@mobile/modules/token-details/screens/TokenDetailsScreen'
@@ -83,6 +84,10 @@ const MainRoutes = () => {
           <Route path={ROUTES.generalSettings} element={<GeneralSettingsScreen />} />
           <Route path={ROUTES.accountsSettings} element={<AccountsSettingsScreen />} />
           <Route path={ROUTES.networksSettings} element={<NetworksSettingsScreen />} />
+          <Route
+            path={ROUTES.recoveryPhrasesSettings}
+            element={<RecoveryPhrasesSettingsScreen />}
+          />
           <Route path={ROUTES.settingsAbout} element={<AboutSettingsScreen />} />
           <Route path={ROUTES.settingsTerms} element={<TermsSettingsScreen />} />
           <Route path={ROUTES.explore} element={<ExploreScreen />} />

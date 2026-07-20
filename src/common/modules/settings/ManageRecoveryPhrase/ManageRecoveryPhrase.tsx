@@ -14,9 +14,11 @@ import Checkbox from '@common/components/Checkbox'
 import Editable from '@common/components/Editable'
 import { PanelBackButton, PanelTitle } from '@common/components/Panel/Panel'
 import Text from '@common/components/Text'
+import { isMobile, isWeb } from '@common/config/env'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
+import PasswordConfirmation from '@common/modules/settings/components/PasswordConfirmation'
 import eventBus from '@common/services/event/eventBus'
 import spacings, { SPACING_SM } from '@common/styles/spacings'
 import { THEME_TYPES } from '@common/styles/themeConfig'
@@ -24,7 +26,6 @@ import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
 import { setStringAsync } from '@common/utils/clipboard'
-import PasswordConfirmation from '@web/modules/settings/components/PasswordConfirmation'
 
 import getStyles from './styles'
 
@@ -137,10 +138,10 @@ const ManageRecoveryPhrase = ({
     <>
       <View style={flexbox.flex1}>
         <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mbLg]}>
-          <PanelBackButton onPress={onBackButtonPress} style={spacings.mrSm} />
-          <PanelTitle title={t('Manage recovery phrase')} style={text.left} />
+          {isWeb && <PanelBackButton onPress={onBackButtonPress} style={spacings.mrSm} />}
+          <PanelTitle title={t('Manage recovery phrase')} style={isWeb ? text.left : text.center} />
         </View>
-        <View style={spacings.mb}>
+        <View style={isMobile ? spacings.mbSm : spacings.mb}>
           <Editable
             initialValue={recoveryPhrase.label}
             onSave={onSave}
@@ -192,7 +193,8 @@ const ManageRecoveryPhrase = ({
             flexbox.directionRow,
             flexbox.justifySpaceBetween,
             spacings.mtTy,
-            { marginHorizontal: -SPACING_SM }
+            { marginHorizontal: -SPACING_SM },
+            isMobile && spacings.mbLg
           ]}
         >
           <View
@@ -229,7 +231,7 @@ const ManageRecoveryPhrase = ({
             )}
           </Button>
         </View>
-        <View style={[flexbox.flex1, flexbox.justifyEnd, flexbox.alignCenter]}>
+        <View style={[flexbox.flex1, flexbox.justifyEnd, isWeb && flexbox.alignCenter]}>
           <Button
             type="danger"
             style={spacings.mtTy}
@@ -242,16 +244,19 @@ const ManageRecoveryPhrase = ({
 
       <BottomSheet
         id="delete-saved-seed-sheet"
-        type="modal"
+        type={isWeb ? 'modal' : 'bottom-sheet'}
         sheetRef={sheetRefDeleteConfirmation}
         closeBottomSheet={closeDeleteConfirmation}
-        scrollViewProps={{ contentContainerStyle: { flex: 1 } }}
+        scrollViewProps={isWeb ? { contentContainerStyle: { flex: 1 } } : undefined}
         containerInnerWrapperStyles={{ flex: 1 }}
-        style={{ maxWidth: 432, minHeight: 432, ...spacings.pvLg }}
+        style={isWeb ? { maxWidth: 432, minHeight: 432, ...spacings.pvLg } : undefined}
       >
         <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mbLg]}>
-          <PanelBackButton onPress={closeDeleteConfirmation} style={spacings.mrSm} />
-          <PanelTitle title={t('Confirm phrase removal')} style={text.left} />
+          {!isMobile && <PanelBackButton onPress={closeDeleteConfirmation} style={spacings.mrSm} />}
+          <PanelTitle
+            title={t('Confirm phrase removal')}
+            style={isMobile ? text.center : text.left}
+          />
         </View>
         <View style={[flexbox.flex1, flexbox.justifyEnd]}>
           <Alert
@@ -288,14 +293,18 @@ const ManageRecoveryPhrase = ({
       <BottomSheet
         sheetRef={sheetRefConfirmPassword}
         id="confirm-password-bottom-sheet"
-        type="modal"
+        type={isWeb ? 'modal' : 'bottom-sheet'}
         closeBottomSheet={closeConfirmPassword}
-        scrollViewProps={{ contentContainerStyle: { flex: 1 } }}
+        scrollViewProps={isWeb ? { contentContainerStyle: { flex: 1 } } : undefined}
         containerInnerWrapperStyles={{ flex: 1 }}
-        style={{ maxWidth: 432, minHeight: 432, ...spacings.pvLg }}
+        style={isWeb ? { maxWidth: 432, minHeight: 432, ...spacings.pvLg } : undefined}
       >
         <PasswordConfirmation
-          text={t('Please enter your extension password to reveal your recovery phrase.')}
+          text={t(
+            `Please enter your ${
+              isWeb ? 'extension' : 'device'
+            } password to reveal your recovery phrase.`
+          )}
           onPasswordConfirmed={onPasswordConfirmed}
           onBackButtonPress={closeConfirmPassword}
         />

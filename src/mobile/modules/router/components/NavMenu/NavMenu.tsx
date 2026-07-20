@@ -14,7 +14,7 @@ import NetworksIcon from '@common/assets/svg/NetworksIcon'
 // import PasswordRecoverySettingsIcon from '@common/assets/svg/PasswordRecoverySettingsIcon'
 // import PrivacyIcon from '@common/assets/svg/PrivacyIcon'
 import SettingsIcon from '@common/assets/svg/SettingsIcon'
-// import SidebarSecurityIcon from '@common/assets/svg/SidebarSecurityIcon'
+import SidebarSecurityIcon from '@common/assets/svg/SidebarSecurityIcon'
 // import SignedMessageIcon from '@common/assets/svg/SignedMessageIcon'
 import TelegramIcon from '@common/assets/svg/TelegramIcon'
 // import TransactionHistoryIcon from '@common/assets/svg/TransactionHistoryIcon'
@@ -55,7 +55,7 @@ export const SETTINGS_LINKS = [
     Icon: NetworksIcon,
     label: 'Networks',
     path: ROUTES.networksSettings
-  }
+  },
   // {
   //   key: 'transactions',
   //   Icon: TransactionHistoryIcon,
@@ -68,12 +68,12 @@ export const SETTINGS_LINKS = [
   //   label: 'Signed messages',
   //   path: ROUTES.signedMessages
   // },
-  // {
-  //   key: 'recovery-phrases',
-  //   Icon: SidebarSecurityIcon,
-  //   label: 'Recovery phrases',
-  //   path: ROUTES.recoveryPhrasesSettings
-  // },
+  {
+    key: 'recovery-phrases',
+    Icon: SidebarSecurityIcon,
+    label: 'Recovery phrases',
+    path: ROUTES.recoveryPhrasesSettings
+  }
   // {
   //   key: 'device-password-change',
   //   Icon: KeyStoreSettingsIcon,

@@ -1,4 +1,4 @@
-import React, { useCallback, useContext, useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { FlatList, ListRenderItemInfo, StyleSheet, View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
@@ -12,14 +12,16 @@ import Text from '@common/components/Text'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import Account from '@common/modules/account-select/components/Account'
+import ManageRecoveryPhrase from '@common/modules/settings/ManageRecoveryPhrase'
 import spacings, { SPACING_TY } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
-import SettingsPageHeader from '@web/modules/settings/components/SettingsPageHeader'
-import { SettingsRoutesContext } from '@web/modules/settings/contexts/SettingsRoutesContext'
-import ManageRecoveryPhrase from '@common/modules/settings/ManageRecoveryPhrase'
+import {
+  MobileLayoutContainer,
+  MobileLayoutWrapperMainContent
+} from '@mobile/components/MobileLayoutWrapper'
 
-const RecoveryPhraseSettingsScreen = () => {
+const RecoveryPhrasesSettingsScreen = () => {
   const { t } = useTranslation()
   const { theme } = useTheme()
   const { statuses } = useController('StorageController').state
@@ -31,11 +33,6 @@ const RecoveryPhraseSettingsScreen = () => {
     label: string
     hdPathTemplate: HD_PATH_TEMPLATE_TYPE
   } | null>(null)
-  const { setCurrentSettingsPage } = useContext(SettingsRoutesContext)
-
-  useEffect(() => {
-    setCurrentSettingsPage('recovery-phrases')
-  }, [setCurrentSettingsPage])
 
   const getAccountsForSeed = useCallback(
     (seedId: string) => {
@@ -70,7 +67,7 @@ const RecoveryPhraseSettingsScreen = () => {
           style={[
             flexbox.directionRow,
             flexbox.alignCenter,
-            !!associatedAccounts.length && spacings.mbMd
+            !!associatedAccounts.length && spacings.mbSm
           ]}
         >
           <Text weight="medium" numberOfLines={1} style={flexbox.flex1}>
@@ -84,6 +81,8 @@ const RecoveryPhraseSettingsScreen = () => {
             text={t('Manage')}
             hasBottomSpacing={false}
             onPress={() => setRecoveryPhraseToManage(item)}
+            style={spacings.ph0}
+            innerContainerStyle={() => spacings.ph0}
           >
             <SettingsWheelIcon
               width={20}
@@ -101,9 +100,13 @@ const RecoveryPhraseSettingsScreen = () => {
               withSettings={false}
               isSelectable={false}
               containerStyle={{
-                marginBottom: accIdx < associatedAccounts.length - 1 ? SPACING_TY : 0
+                marginBottom: 0,
+                paddingHorizontal: 0,
+                minHeight: 82,
+                maxHeight: 82
               }}
               withKeyType={false}
+              withCopy={false}
             />
           )
         })}
@@ -125,28 +128,30 @@ const RecoveryPhraseSettingsScreen = () => {
   }
 
   return (
-    <View style={flexbox.flex1}>
-      <SettingsPageHeader title={t('Recovery phrases')} />
-      {seeds.length ? (
-        <FlatList data={seeds} renderItem={renderItem} keyExtractor={(item) => item.id} />
-      ) : (
-        <View
-          style={[
-            StyleSheet.absoluteFill,
-            flexbox.flex1,
-            flexbox.alignCenter,
-            flexbox.justifyCenter
-          ]}
-        >
-          <Text style={text.center}>
-            {t("You don't have any recovery phrases added to the extension.")}
-          </Text>
-        </View>
-      )}
+    <MobileLayoutContainer>
+      <MobileLayoutWrapperMainContent title={t('Recovery phrases')} withBackButton>
+        {seeds.length ? (
+          <FlatList data={seeds} renderItem={renderItem} keyExtractor={(item) => item.id} />
+        ) : (
+          <View
+            style={[
+              StyleSheet.absoluteFill,
+              flexbox.flex1,
+              flexbox.alignCenter,
+              flexbox.justifyCenter
+            ]}
+          >
+            <Text style={text.center}>
+              {t("You don't have any recovery phrases added to the wallet.")}
+            </Text>
+          </View>
+        )}
+      </MobileLayoutWrapperMainContent>
 
       <BottomSheet
         sheetRef={sheetRef}
         id="manage-recovery-phrase-bottom-sheet"
+        type="bottom-sheet"
         onBackdropPress={() => {
           setRecoveryPhraseToManage(null)
           closeBottomSheet()
@@ -155,9 +160,7 @@ const RecoveryPhraseSettingsScreen = () => {
           setRecoveryPhraseToManage(null)
           closeBottomSheet()
         }}
-        scrollViewProps={{ contentContainerStyle: { flex: 1 } }}
         containerInnerWrapperStyles={{ flex: 1 }}
-        style={{ maxWidth: 432, minHeight: 432, ...spacings.pvLg }}
       >
         {!!recoveryPhraseToManage && (
           <ManageRecoveryPhrase
@@ -169,8 +172,8 @@ const RecoveryPhraseSettingsScreen = () => {
           />
         )}
       </BottomSheet>
-    </View>
+    </MobileLayoutContainer>
   )
 }
 
-export default React.memo(RecoveryPhraseSettingsScreen)
+export default React.memo(RecoveryPhrasesSettingsScreen)
