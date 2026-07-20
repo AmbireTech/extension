@@ -1,6 +1,10 @@
 name: Publish OTA update - iOS 📲
 
 on:
+  # TODO: Temporary trigger for testing
+  push:
+    branches:
+      - 'config/ota'
   workflow_dispatch: # Manual trigger, usually from a release branch
     inputs:
       release_note:
@@ -21,5 +25,9 @@ jobs:
       platform: ios
       runner: macos-15
       release_note: ${{ inputs.release_note }}
-      bypass_guardrail: ${{ inputs.bypass_guardrail }}
+      # `inputs` are empty on the temporary `push` trigger (they exist only for
+      # workflow_dispatch), and an empty string is not a valid boolean. On push also bypass the
+      # guardrail: test builds on this branch differ from the last release tag (native Stallion
+      # wiring), so it would otherwise block. Remove this together with the push trigger above.
+      bypass_guardrail: ${{ inputs.bypass_guardrail || github.event_name == 'push' }}
     secrets: inherit
