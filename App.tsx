@@ -2,6 +2,7 @@ import '@common/config/localization'
 
 import * as SplashScreen from 'expo-splash-screen'
 import React from 'react'
+import { withStallion } from 'react-native-stallion'
 
 import AppInit from '@common/modules/app-init/screens/AppInit'
 
@@ -9,4 +10,4 @@ SplashScreen.preventAutoHideAsync().catch(console.warn) // TODO: log a sentry er
 
 const App = () => <AppInit />
 
-export default App
+export default withStallion(App)

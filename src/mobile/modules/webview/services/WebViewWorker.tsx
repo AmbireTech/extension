@@ -1,10 +1,11 @@
 import { isDevice } from 'expo-device'
-import React, { forwardRef, useImperativeHandle, useRef, useState } from 'react'
+import React, { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react'
 import { Platform } from 'react-native'
 import { pbkdf2Sync, scrypt } from 'react-native-quick-crypto'
 import { WebView } from 'react-native-webview'
 
 import * as richJson from '@ambire-common/libs/richJson/richJson'
+import { captureException } from '@common/config/analytics/CrashAnalytics'
 import { CONTROLLER_STORE_MAX_LOADING_TIME } from '@common/contexts/controllerStoreContext/controllerStore'
 import eventBus from '@common/services/event/eventBus'
 import { getAllSerialized, storage } from '@common/services/storage'
@@ -19,25 +20,20 @@ import {
   respondToWalletConnectRequest
 } from '@mobile/modules/wallet-connect/services/walletConnectService'
 import getWebviewBundleUri from '@mobile/modules/webview/services/getWebviewBundleUri'
+import materializeWorkerBundle from '@mobile/modules/webview/services/materializeWorkerBundle'
 import ledgerTransportService from '@mobile/services/ledger/ledgerTransportService'
 import trezorDeeplinkService from '@mobile/services/trezor/trezorDeeplinkService'
 
 import { decode, encode } from './bridgeCodec'
 
-// In production the worker bundle ships as a static file inside the signed
-// app (iOS Resources / Android assets) and the WebView loads it from disk via
-// `file://`. The HTML stub is built at compile time with a strict CSP
-// (`script-src file:`) and loads the bundle through a `<script src>` tag
-// pinned with a SHA-384 Subresource Integrity hash, which the engine
-// recomputes and validates before executing the script.
-// In dev the bundle is fetched from webpack-dev-server (HTTP) so HMR keeps
-// working.
-const PROD_BUNDLE_URI = !__DEV__ ? getWebviewBundleUri() : ''
-// Directory containing the HTML + JS pair. WKWebView's `loadFileURL` defaults
-// its read-access scope to the HTML file alone, which blocks the sibling
-// `<script src="webview-bundle.js">` from resolving. We grant read access to
-// the directory only — narrowest scope that lets the bundle load.
-const PROD_BUNDLE_DIR = !__DEV__ ? PROD_BUNDLE_URI.replace(/\/[^/]+$/, '/') : ''
+// In production the worker bundle is materialized from the OTA-shipped copy (which rides
+// the Metro bundle) into a writable, app-sandboxed dir and loaded from there via `file://`,
+// so OTA updates reach it. It falls back to the native-asset copy baked into the signed app
+// if materialization fails. Either way the HTML stub carries a strict CSP (`script-src
+// file:`) and a SHA-384 SRI pinning its sibling `<script src>`, both built together so the
+// SRI always matches the JS. In dev the bundle is fetched from webpack-dev-server (HTTP) so
+// HMR keeps working. The bundle URI resolves asynchronously (see materializeWorkerBundle),
+// so the WebView mounts only once it is ready.
 
 // The dev server URL for webpack-dev-server.
 // - Simulator/emulator: auto-detected via Device.isDevice; uses platform loopback (localhost / 10.0.2.2)
@@ -79,6 +75,25 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, object>((_, ref) => {
   // Incrementing the key forces a full WebView remount (used for Android dev reload)
   const [webviewKey, setWebviewKey] = useState(0)
   const devUrl = getDevServerUrl()
+
+  // Worker bundle URI. In prod it is materialized from the OTA-shipped copy into a writable
+  // dir (so OTA updates reach it); empty until ready, which gates the WebView mount below.
+  const [prodBundleUri, setProdBundleUri] = useState('')
+
+  useEffect(() => {
+    if (__DEV__) return undefined
+
+    let isActive = true
+    // Falls back to the native-asset bundle baked into the signed app if the OTA copy
+    // cannot be materialized, so the worker always has a working bundle to load.
+    materializeWorkerBundle().then((uri) => {
+      if (isActive) setProdBundleUri(uri || getWebviewBundleUri())
+    })
+
+    return () => {
+      isActive = false
+    }
+  }, [])
 
   const clearInitWarningTimeout = () => {
     if (initReadyWarningTimeoutRef.current) {
@@ -523,8 +538,9 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, object>((_, ref) => {
 
   // Production loads the static HTML stub from disk; dev keeps the inline
   // template that points at webpack-dev-server so HMR keeps working.
+  const prodBundleDir = prodBundleUri.replace(/\/[^/]+$/, '/')
   const source = !__DEV__
-    ? { uri: PROD_BUNDLE_URI }
+    ? { uri: prodBundleUri }
     : (() => {
         const devCsp = `default-src 'none'; script-src ${devUrl}; connect-src ${devUrl} ws: wss:; frame-src 'none'; object-src 'none';`
         return {
@@ -603,6 +619,10 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, object>((_, ref) => {
       true;
     `
 
+  // Prod: hold off mounting until the worker bundle URI resolves (see top-of-file note).
+  // The worker is invisible and init() queues via pendingConfig, so this only defers boot.
+  if (!__DEV__ && !prodBundleUri) return null
+
   return (
     <WebView
       key={webviewKey}
@@ -635,7 +655,7 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, object>((_, ref) => {
       // iOS only: grant the WebView read access to the bundle directory so
       // the HTML's sibling `<script src="webview-bundle.js">` can resolve.
       // Without this, `loadFileURL` scopes access to the HTML file alone.
-      allowingReadAccessToURL={__DEV__ ? undefined : PROD_BUNDLE_DIR}
+      allowingReadAccessToURL={__DEV__ ? undefined : prodBundleDir}
       originWhitelist={__DEV__ ? ['file://*', `${devUrl}/*`] : ['file://*']}
       onShouldStartLoadWithRequest={(request) => {
         if (__DEV__) {
@@ -645,7 +665,7 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, object>((_, ref) => {
         // stub. The bundle JS is loaded as a sibling `<script src>` from inside
         // that page (so we never see a navigation for it here). Anything else
         // is rejected.
-        return request.url === PROD_BUNDLE_URI
+        return request.url === prodBundleUri
       }}
       mixedContentMode="never"
       // Required on Android for the sibling `<script src>` to load over

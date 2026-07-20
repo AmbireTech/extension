@@ -12,6 +12,7 @@ import com.facebook.react.ReactHost
 import com.facebook.react.common.ReleaseLevel
 import com.facebook.react.defaults.DefaultNewArchitectureEntryPoint
 import com.facebook.react.defaults.DefaultReactNativeHost
+import com.stallion.Stallion
 
 import expo.modules.ApplicationLifecycleDispatcher
 import expo.modules.ReactNativeHostWrapper
@@ -27,11 +28,18 @@ class MainApplication : Application(), ReactApplication {
               // add(MyReactNativePackage())
             }
 
-          override fun getJSMainModuleName(): String = ".expo/.virtual-metro-entry"
+        override fun getJSMainModuleName(): String = ".expo/.virtual-metro-entry"
 
-          override fun getUseDeveloperSupport(): Boolean = BuildConfig.DEBUG
+        override fun getUseDeveloperSupport(): Boolean = BuildConfig.DEBUG
 
-          override val isNewArchEnabled: Boolean = BuildConfig.IS_NEW_ARCHITECTURE_ENABLED
+        override val isNewArchEnabled: Boolean = BuildConfig.IS_NEW_ARCHITECTURE_ENABLED
+
+        // NOTE: When upgrading to React Native 0.82+ with the new ReactHost API,
+        // Stallion recommends passing jsBundleFilePath to getDefaultReactHost instead
+        // of overriding getJSBundleFile() here. See Stallion RN 0.82+ docs.
+        override fun getJSBundleFile(): String? {
+          return Stallion.getJSBundleFile(applicationContext)
+        }
       }
   )
 

@@ -46,13 +46,6 @@ export const APP_VERSION = appJSON.version
  */
 export const BUILD_NUMBER = Application.nativeBuildVersion || 'N/A'
 
-export const RELEASE_CHANNEL = 'N/A' // TODO: Get the release channel
-export const RUNTIME_VERSION = 'N/A' // TODO: Get the runtime version
-// FIXME: We should figure out a way to get this,
-// because 'expo-constants' uses window refs that break our extension service worker
-// export const EXPO_SDK = Constants?.manifest?.sdkVersion || 'N/A'
-export const EXPO_SDK = 'N/A'
-
 export const isMobile = Platform.OS === 'ios' || Platform.OS === 'android'
 export const isiOS = Platform.OS === 'ios'
 export const isAndroid = Platform.OS === 'android'
@@ -95,12 +88,5 @@ if (isProd) {
 
 // This is only used for development builds, and it is not a secret, so it's fine to log it.
 export const LEDGER_EMULATOR_HTTP_URL = process.env.LEDGER_EMULATOR_HTTP_URL
-
-/**
- * Option to run the app without the Ambire Relayer. See `RELAYER_URL`
- * That's special app mode, which is meant to be turned on only manually.
- * TODO: This is never tested, so it might not work!
- */
-export const isRelayerless = !CONFIG.RELAYER_URL
 
 export default CONFIG
