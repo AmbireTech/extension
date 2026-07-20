@@ -142,15 +142,15 @@ const AddAccount = ({
         onPress: () => goToNextRoute(ROUTES.importPrivateKey),
         testID: 'import-private-key'
       },
+      {
+        key: 'import-safe',
+        text: t('Safe account'),
+        icon: SafeBadgeIcon,
+        onPress: () => goToNextRoute(ROUTES.safeImport),
+        testID: 'import-safe'
+      },
       ...(!isMobile
         ? [
-            {
-              key: 'import-safe',
-              text: t('Safe account'),
-              icon: SafeBadgeIcon,
-              onPress: () => goToNextRoute(ROUTES.safeImport),
-              testID: 'import-safe'
-            },
             {
               key: 'json-backup-file',
               text: t('JSON backup file'),

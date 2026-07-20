@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react'
+import React, { useCallback, useEffect, useMemo, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 
@@ -56,6 +56,7 @@ const OneClickEstimation = ({
   Modals
 }: OneClickEstimationProps) => {
   const { t } = useTranslation()
+  const hasFreshActionPressRef = useRef(false)
 
   const signingErrors = useMemo(() => {
     const signAccountOpErrors = signAccountOpController ? signAccountOpController.errors : []
@@ -108,6 +109,23 @@ const OneClickEstimation = ({
   const { banners } = signAccountOpController || {}
 
   const ButtonsWrapper = isMobile ? View : FooterGlassView
+
+  useEffect(() => {
+    // Require a fresh click/press for each newly opened estimation flow.
+    hasFreshActionPressRef.current = false
+  }, [hasProceeded, signAccountOpController?.fromRequestId])
+
+  const markFreshActionPress = useCallback(() => {
+    hasFreshActionPressRef.current = true
+  }, [])
+
+  const runWithFreshActionPress = useCallback((action: () => void) => {
+    if (isWeb && !hasFreshActionPressRef.current) return
+
+    // Consume once to prevent accidental repeats in the same interaction cycle.
+    hasFreshActionPressRef.current = false
+    action()
+  }, [])
 
   return (
     <>
@@ -212,7 +230,8 @@ const OneClickEstimation = ({
                   text={t('Hold to sign')}
                   buttonType={extremeGasFeeSignButtonType === 'warning' ? 'warning' : 'primary'}
                   disabled={isSignDisabled || signingErrors.length > 0}
-                  onHoldComplete={onSignButtonClick}
+                  onPressIn={markFreshActionPress}
+                  onHoldComplete={() => runWithFreshActionPress(onSignButtonClick)}
                   size={isMobile ? 'regular' : 'smaller'}
                 />
               ) : (
@@ -222,7 +241,8 @@ const OneClickEstimation = ({
                   type={extremeGasFeeSignButtonType}
                   isLoading={isSignLoading}
                   disabled={isSignDisabled || signingErrors.length > 0}
-                  onPress={onSignButtonClick}
+                  onPressIn={markFreshActionPress}
+                  onPress={() => runWithFreshActionPress(onSignButtonClick)}
                   size={isMobile ? 'regular' : 'smaller'}
                 />
               )}

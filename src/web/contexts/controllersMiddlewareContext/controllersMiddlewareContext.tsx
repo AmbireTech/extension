@@ -262,6 +262,14 @@ export const ControllersMiddlewareProvider: React.FC<{ children: React.ReactNode
   }, [isFocused])
 
   useEffect(() => {
+    if (!isFocused) return
+    // use globalDispatch (not the memoized dispatch) so this fires once per focus
+    // transition; dispatch's identity changes when windowId resolves, which would
+    // otherwise re-run this effect and signal focus twice on popup open
+    globalDispatch({ type: 'SET_VIEW_FOCUS', params: {} })
+  }, [isFocused])
+
+  useEffect(() => {
     if (!isExtension) return
 
     try {

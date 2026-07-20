@@ -63,6 +63,11 @@ export const handleActions = async (
       })
       break
     }
+    case 'SET_VIEW_FOCUS': {
+      if (!port) return
+      mainCtrl.ui.emitViewFocus(port.id)
+      break
+    }
     case 'GET_ALL_CONTROLLER_NAMES': {
       if (!pm || !port) return
       pm.sendToPort(port, '> ui', {
