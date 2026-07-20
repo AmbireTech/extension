@@ -7,16 +7,21 @@ import { Modalize } from 'react-native-modalize'
 import { AddressStateOptional } from '@ambire-common/interfaces/domains'
 import { Validation } from '@ambire-common/services/validations'
 import { getAddressFromAddressState } from '@ambire-common/utils/domains'
+import AddCircularIcon from '@common/assets/svg/AddCircularIcon'
 import AddressInput from '@common/components/AddressInput'
 import BottomSheet from '@common/components/BottomSheet'
+import Button from '@common/components/Button'
 import DualChoiceModal from '@common/components/DualChoiceModal'
 import Input from '@common/components/Input'
+import Text from '@common/components/Text'
+import { isWeb } from '@common/config/env'
 import useAddressInput from '@common/hooks/useAddressInput'
 import useController from '@common/hooks/useController'
 import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
+import text from '@common/styles/utils/text'
 
 type Props = {
   id: string
@@ -126,81 +131,113 @@ const AddContactFormModal = ({ id, sheetRef, closeBottomSheet }: Props) => {
     closeBottomSheet()
   }, [closeBottomSheet, reset])
 
+  const formFields = (
+    <>
+      <Controller
+        name="name"
+        control={control}
+        rules={{
+          required: true,
+          maxLength: 32
+        }}
+        render={({ field: { onChange, onBlur, value } }) => (
+          <Input
+            testID="contact-name-field"
+            label={t('Name')}
+            placeholder={' '}
+            maxLength={32}
+            value={value}
+            onChangeText={onChange}
+            onBlur={onBlur}
+            error={errors.name?.message}
+            isValid={!!name && !errors.name}
+            backgroundColor={theme.secondaryBackground}
+            containerStyle={{ width: '100%', ...spacings.mb }}
+          />
+        )}
+      />
+      <Controller
+        name="addressState.fieldValue"
+        control={control}
+        rules={{
+          validate: RHFValidate,
+          required: true
+        }}
+        render={({ field: { onChange, onBlur } }) => (
+          <View style={{ width: '100%' }}>
+            <AddressInput
+              label={t('Address / ENS / GNS / Namoshi')}
+              onChangeText={(text) => {
+                onChange(text)
+                trigger('addressState.fieldValue')
+              }}
+              onBlur={onBlur}
+              validation={validation}
+              placeholder={' '}
+              resolvedAddress={addressState.resolvedAddress}
+              resolvedAddressType={addressState.resolvedAddressType}
+              value={addressState.fieldValue}
+              isRecipientDomainResolving={addressState.isDomainResolving}
+              containerStyle={{ ...spacings.mbLg, width: '100%' }}
+              onSubmitEditing={submitForm}
+              backgroundColor={theme.secondaryBackground}
+            />
+          </View>
+        )}
+      />
+    </>
+  )
+
   return (
     <BottomSheet
       id={id}
       sheetRef={sheetRef}
       closeBottomSheet={closeBottomSheet}
-      type="modal"
-      style={{ ...spacings.ph0, ...spacings.pv0 }}
+      type={isWeb ? 'modal' : 'bottom-sheet'}
+      style={isWeb ? { ...spacings.ph0, ...spacings.pv0 } : {}}
     >
-      <DualChoiceModal
-        title={t('Add new contact')}
-        style={flexbox.flex1}
-        description={
-          <>
-            <Controller
-              name="name"
-              control={control}
-              rules={{
-                required: true,
-                maxLength: 32
-              }}
-              render={({ field: { onChange, onBlur, value } }) => (
-                <Input
-                  testID="contact-name-field"
-                  label={t('Name')}
-                  placeholder={t('Contact name')}
-                  maxLength={32}
-                  value={value}
-                  onChangeText={onChange}
-                  onBlur={onBlur}
-                  error={errors.name?.message}
-                  isValid={!!name && !errors.name}
-                  backgroundColor={theme.secondaryBackground}
-                  containerStyle={{ width: '100%', ...spacings.mb }}
-                />
-              )}
-            />
-            <Controller
-              name="addressState.fieldValue"
-              control={control}
-              rules={{
-                validate: RHFValidate,
-                required: true
-              }}
-              render={({ field: { onChange, onBlur } }) => (
-                <View style={{ width: '100%' }}>
-                  <AddressInput
-                    label={t('Address / ENS / GNS / Namoshi')}
-                    onChangeText={(text) => {
-                      onChange(text)
-                      trigger('addressState.fieldValue')
-                    }}
-                    onBlur={onBlur}
-                    validation={validation}
-                    resolvedAddress={addressState.resolvedAddress}
-                    resolvedAddressType={addressState.resolvedAddressType}
-                    value={addressState.fieldValue}
-                    isRecipientDomainResolving={addressState.isDomainResolving}
-                    containerStyle={{ ...spacings.mbLg, width: '100%' }}
-                    onSubmitEditing={submitForm}
-                    backgroundColor={theme.secondaryBackground}
-                  />
-                </View>
-              )}
-            />
-          </>
-        }
-        primaryButtonText={t('+ Add to Address Book')}
-        primaryButtonTestID="add-to-address-book-button"
-        onPrimaryButtonPress={submitForm}
-        secondaryButtonTestID="cancel-add-to-address-book-button"
-        secondaryButtonText={t('Cancel')}
-        onSecondaryButtonPress={handleClose}
-        buttonsContainerStyle={flexbox.justifySpaceBetween}
-        primaryButtonDisabled={!isValid || isSubmitting}
-      />
+      {isWeb ? (
+        <DualChoiceModal
+          title={t('Add new contact')}
+          style={flexbox.flex1}
+          description={formFields}
+          primaryButtonText={t('+ Add to Address Book')}
+          primaryButtonTestID="add-to-address-book-button"
+          onPrimaryButtonPress={submitForm}
+          secondaryButtonTestID="cancel-add-to-address-book-button"
+          secondaryButtonText={t('Cancel')}
+          onSecondaryButtonPress={handleClose}
+          buttonsContainerStyle={flexbox.justifySpaceBetween}
+          primaryButtonDisabled={!isValid || isSubmitting}
+        />
+      ) : (
+        <View>
+          <Text weight="medium" fontSize={20} style={[spacings.mbLg, text.center]}>
+            {t('Add new contact')}
+          </Text>
+          {formFields}
+          <Button
+            testID="add-to-address-book-button"
+            text={t('Add to Address Book')}
+            onPress={submitForm}
+            size="large"
+            childrenPosition="left"
+            hasBottomSpacing={false}
+            disabled={!isValid || isSubmitting}
+            style={spacings.mbSm}
+          >
+            <AddCircularIcon width={24} height={24} color="#fff" style={spacings.mrTy} />
+          </Button>
+          <Button
+            testID="cancel-add-to-address-book-button"
+            text={t('Cancel')}
+            onPress={handleClose}
+            type="tertiary"
+            size="large"
+            hasBottomSpacing={false}
+          />
+        </View>
+      )}
     </BottomSheet>
   )
 }
