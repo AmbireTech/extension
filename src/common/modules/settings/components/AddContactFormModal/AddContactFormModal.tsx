@@ -1,11 +1,10 @@
-import React, { useCallback, useMemo } from 'react'
+import React, { useCallback } from 'react'
 import { Controller, useForm } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 import { Modalize } from 'react-native-modalize'
 
 import { AddressStateOptional } from '@ambire-common/interfaces/domains'
-import { Validation } from '@ambire-common/services/validations'
 import { getAddressFromAddressState } from '@ambire-common/utils/domains'
 import AddCircularIcon from '@common/assets/svg/AddCircularIcon'
 import AddressInput from '@common/components/AddressInput'
@@ -19,6 +18,7 @@ import useAddressInput from '@common/hooks/useAddressInput'
 import useController from '@common/hooks/useController'
 import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useTheme from '@common/hooks/useTheme'
+import useToast from '@common/hooks/useToast'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
@@ -32,6 +32,7 @@ type Props = {
 const AddContactFormModal = ({ id, sheetRef, closeBottomSheet }: Props) => {
   const { t } = useTranslation()
   const { theme } = useTheme()
+  const { addToast } = useToast()
   const { dispatch } = useControllersMiddleware()
   const { contacts } = useController('AddressBookController').state
   const { accounts } = useController('AccountsController').state
@@ -83,44 +84,37 @@ const AddContactFormModal = ({ id, sheetRef, closeBottomSheet }: Props) => {
     trigger('addressState.resolvedAddressType')
   }, [trigger])
 
-  const overwriteValidation: Validation | null = useMemo(() => {
-    const address = getAddressFromAddressState(addressState)
-
-    if (accounts.some((account) => account.addr.toLowerCase() === address.toLowerCase())) {
-      return {
-        severity: 'error',
-        message: t('This address is already in your account list')
-      }
-    }
-
-    if (contacts.some((contact) => contact.address.toLowerCase() === address.toLowerCase())) {
-      return {
-        severity: 'error',
-        message: t('This address is already in your Address Book')
-      }
-    }
-
-    return null
-  }, [accounts, addressState, contacts, t])
-
   const { validation, RHFValidate } = useAddressInput({
     addressState,
     setAddressState,
     handleRevalidate,
-    overwriteValidation,
     isDomainVerifiedByColibri
   })
 
   const submitForm = handleSubmit(() => {
     if (!isValid || isSubmitting) return
 
+    const address = getAddressFromAddressState(addressState)
+    // `contacts` excludes the selected account, so also check `accounts` to catch it
+    const isAlreadyAdded =
+      accounts.some((account) => account.addr.toLowerCase() === address.toLowerCase()) ||
+      contacts.some((contact) => contact.address.toLowerCase() === address.toLowerCase())
+
+    if (isAlreadyAdded) {
+      addToast(t('Contact already added'))
+      reset()
+      closeBottomSheet()
+      return
+    }
+
     dispatch({
       type: 'ADDRESS_BOOK_CONTROLLER_ADD_CONTACT',
       params: {
         name,
-        address: getAddressFromAddressState(addressState)
+        address
       }
     })
+    addToast(t('Contact added'))
 
     reset()
     closeBottomSheet()
@@ -169,6 +163,10 @@ const AddContactFormModal = ({ id, sheetRef, closeBottomSheet }: Props) => {
               label={t('Address / ENS / GNS / Namoshi')}
               onChangeText={(text) => {
                 onChange(text)
+                trigger('addressState.fieldValue')
+              }}
+              onScanAddress={(scannedAddress) => {
+                onChange(scannedAddress)
                 trigger('addressState.fieldValue')
               }}
               onBlur={onBlur}

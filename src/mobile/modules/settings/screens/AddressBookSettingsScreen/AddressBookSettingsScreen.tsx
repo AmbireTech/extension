@@ -84,7 +84,7 @@ const AddressBookSettingsScreen = () => {
         />
         <ScrollableWrapper style={flexbox.flex1}>
           {walletAccountsSourcedContacts.length > 0 ? (
-            <View style={spacings.mb2Xl}>
+            <View style={spacings.mbSm}>
               <TitleAndIcon
                 title={t('My wallets')}
                 icon={WalletIcon}
@@ -95,6 +95,8 @@ const AddressBookSettingsScreen = () => {
                   <AddressBookContact
                     fontSize={16}
                     height={24}
+                    withCopy={false}
+                    plainAddressMaxLength={32}
                     testID={`name-${contact.name.toLowerCase().replace(/\s+/g, '-')}`}
                     name={contact.name}
                     address={contact.address}
@@ -110,12 +112,14 @@ const AddressBookSettingsScreen = () => {
               <TitleAndIcon
                 title={t('Contacts')}
                 icon={AddressBookIcon}
-                style={{ ...spacings.pl0, ...spacings.mbSm }}
+                style={{ ...spacings.pl0, ...spacings.mbMi }}
               />
               {manuallyAddedContacts.map((contact) => (
                 <ContactWrapper key={`${contact.address}-address`}>
                   <AddressBookContact
                     testID="contact-name-text"
+                    withCopy={false}
+                    plainAddressMaxLength={32}
                     name={contact.name}
                     address={contact.address}
                     isManageable={!contact.isWalletAccount}

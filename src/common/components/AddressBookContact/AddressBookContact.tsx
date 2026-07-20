@@ -32,6 +32,7 @@ interface Props {
   isManageable?: boolean
   isEditable?: boolean
   withCopy?: boolean
+  plainAddressMaxLength?: number
   onPress?: () => void
   style?: ViewStyle
   testID?: string
@@ -48,6 +49,7 @@ const AddressBookContact: FC<Props> = ({
   isManageable,
   isEditable,
   withCopy = true,
+  plainAddressMaxLength,
   onPress,
   testID,
   style = {},
@@ -180,6 +182,7 @@ const AddressBookContact: FC<Props> = ({
               addressHighlight={addressHighlight}
               containerStyle={{ paddingVertical: 0 }}
               withCopy={withCopy}
+              plainAddressMaxLength={plainAddressMaxLength}
               withUpdateEnsInTooltip={!isEditable}
             />
           </View>
