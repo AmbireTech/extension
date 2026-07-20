@@ -36,7 +36,14 @@ function extractResolvedPackages(lockObject) {
     for (const selector of key.split(/,\s*/)) {
       const at = selector.lastIndexOf('@')
       if (at > 0) {
-        const name = selector.slice(0, at)
+        let name = selector.slice(0, at)
+        // yarn npm-alias selectors look like "alias@npm:real-name@range"
+        // (e.g. "string-width-cjs@npm:string-width@^4.2.0"). Only the real
+        // package name after "@npm:" exists on the registry, so use it.
+        const npmAliasIdx = name.indexOf('@npm:')
+        if (npmAliasIdx !== -1) {
+          name = name.slice(npmAliasIdx + '@npm:'.length)
+        }
         result.add(`${name}@${entry.version}`)
       }
     }
