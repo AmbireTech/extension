@@ -19,6 +19,7 @@ const DraggableFlatList = forwardRef(
       renderItem,
       onDragEnd,
       getItemLayout,
+      itemHeight,
       scrollableWrapperStyles,
       contentContainerStyle,
       keyboardShouldPersistTaps,
@@ -37,6 +38,10 @@ const DraggableFlatList = forwardRef(
       [data, keyExtractor]
     )
 
+    // When all rows share a fixed height, use it for deterministic positioning. Dynamic
+    // measurement is unreliable here (heights stay at the estimate), which overlaps taller rows.
+    const hasFixedItemHeight = typeof itemHeight === 'number'
+
     // We use the hook directly to have more control over the FlatList props
     const {
       scrollViewRef,
@@ -48,7 +53,8 @@ const DraggableFlatList = forwardRef(
     } = useSortableList({
       data: sortableData as any,
       itemKeyExtractor: (item: any) => item.id,
-      enableDynamicHeights: true, // Default to dynamic heights
+      itemHeight: hasFixedItemHeight ? itemHeight : undefined,
+      enableDynamicHeights: !hasFixedItemHeight,
       estimatedItemHeight: 72
     })
 

@@ -4,9 +4,9 @@ import {
   SelectedAccountPortfolio,
   SelectedAccountPortfolioTokenResult
 } from '@ambire-common/interfaces/selectedAccount'
-import { GasTankTokenResult } from '@ambire-common/libs/portfolio'
 import getAndFormatTokenDetails from '@common/modules/dashboard/helpers/getTokenDetails'
 
+import type { GasTankTokenResult } from '@ambire-common/libs/portfolio'
 const parseGasTankToken = (token: GasTankTokenResult): SelectedAccountPortfolioTokenResult => {
   const { availableAmount, ...rest } = token
 

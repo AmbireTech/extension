@@ -1,11 +1,12 @@
-import React, { lazy, Suspense, useContext } from 'react'
+import React, { lazy, Suspense, useContext, useEffect, useMemo } from 'react'
 import { StyleSheet, View } from 'react-native'
-import { Navigate, Route, Routes } from 'react-router-dom'
+import { Route, Routes } from 'react-router-dom'
 
 import Alert from '@common/components/Alert'
 import { useTranslation } from '@common/config/localization'
 import { ControllersStateLoadedContext } from '@common/contexts/controllersStateLoadedContext'
 import useController from '@common/hooks/useController'
+import useNavigation from '@common/hooks/useNavigation'
 import useRoute from '@common/hooks/useRoute'
 import useTheme from '@common/hooks/useTheme'
 import { AUTH_STATUS } from '@common/modules/auth/constants/authStatus'
@@ -30,6 +31,7 @@ const Router = () => {
   const { path } = useRoute()
   const pathname = path?.substring(1)
   const { authStatus } = useAuth()
+  const { navigate } = useNavigation()
   const keystoreState = useController('KeystoreController').state
   const requestsState = useController('RequestsController').state
   const swapAndBridgeState = useController('SwapAndBridgeController').state
@@ -39,6 +41,35 @@ const Router = () => {
     ControllersStateLoadedContext
   )
   useCurrentActionSideEffects()
+
+  // Guard against running `getInitialRoute` on empty state before controllers load.
+  const initialRoute = useMemo(() => {
+    if (authStatus === AUTH_STATUS.LOADING || !areControllerStatesLoaded) return null
+
+    return getInitialRoute({
+      keystoreState,
+      authStatus,
+      requestsState,
+      swapAndBridgeState,
+      transferState,
+      surveyState
+    })
+  }, [
+    authStatus,
+    areControllerStatesLoaded,
+    keystoreState,
+    requestsState,
+    swapAndBridgeState,
+    transferState,
+    surveyState
+  ])
+
+  // Redirect from an effect, not <Navigate>. The request-window reset in
+  // `useRequestsControllerHelpers` can bounce the URL back to `/` right after a redirect,
+  // and <Navigate> would never fire again (because it's one shot).
+  useEffect(() => {
+    if (initialRoute && !pathname) navigate(initialRoute, { replace: true })
+  }, [initialRoute, pathname, navigate, requestsState])
 
   if (isStatesLoadingTakingTooLong && !areControllerStatesLoaded) {
     return (
@@ -56,20 +87,6 @@ const Router = () => {
 
   if (authStatus === AUTH_STATUS.LOADING || !areControllerStatesLoaded) {
     return <Splash />
-  }
-
-  // Never move this above the check for `areControllerStatesLoaded`
-  const initialRoute = getInitialRoute({
-    keystoreState,
-    authStatus,
-    requestsState,
-    swapAndBridgeState,
-    transferState,
-    surveyState
-  })
-
-  if (initialRoute && !pathname) {
-    return <Navigate to={initialRoute} replace />
   }
 
   return (

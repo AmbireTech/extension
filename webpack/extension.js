@@ -457,27 +457,23 @@ module.exports = async function buildExtension(
           chunk.name !== 'content-script' &&
           (!enableLavaMoat || chunk.name !== 'background')
         )
-      },
-      // Disable random cache groups (resulting non-deterministic chunk names)
-      cacheGroups: {
-        default: false,
-        vendors: false
       }
     }
 
-    // Check if we're generating LavaMoat policy - disable minification during policy generation
-    // because Terser cannot properly parse LavaMoat-wrapped modules
-    const isGeneratingPolicy = config.plugins.some(
-      (plugin) =>
-        plugin.constructor.name === 'LavaMoatPlugin' && plugin.options?.generatePolicy === true
-    )
+    hardenTerser(config)
 
-    // Disable minification entirely when generating LavaMoat policy
-    // to avoid Terser conflicts with wrapped modules
-    if (isGeneratingPolicy) {
-      config.optimization.minimize = false
-    } else {
-      hardenTerser(config)
+    if (process.env.ANALYZE === 'true') {
+      const { BundleAnalyzerPlugin } = require('webpack-bundle-analyzer')
+      config.plugins.push(
+        new BundleAnalyzerPlugin({
+          analyzerMode: 'static', // writes a self-contained HTML report
+          reportFilename: 'bundle-report.html',
+          openAnalyzer: true,
+          generateStatsFile: true,
+          statsFilename: 'stats.json',
+          defaultSizes: 'parsed'
+        })
+      )
     }
   } else if (config.mode === 'development') {
     // Expo bakes the dev-server host (0.0.0.0) into the HMR WebSocket URL. Chrome connects

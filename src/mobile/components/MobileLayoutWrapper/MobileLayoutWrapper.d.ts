@@ -27,6 +27,7 @@ export interface MobileLayoutWrapperMainContentProps extends WrapperProps {
   withBackButton?: boolean
   keyboardAwareScrollViewProps?: KeyboardAwareScrollViewProps
   onBackButtonPress?: () => void
+  withHorizontalPadding?: boolean
   rightIcon?: ReactNode
   title?: string
   step?: number

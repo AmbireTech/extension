@@ -5,7 +5,7 @@ import { useModalize } from 'react-native-modalize'
 
 import { Account as AccountType } from '@ambire-common/interfaces/account'
 import AddCircularIcon from '@common/assets/svg/AddCircularIcon'
-import SettingsWheelIcon from '@common/assets/svg/SettingsWheelIcon'
+import SettingsIcon from '@common/assets/svg/SettingsIcon'
 import Button from '@common/components/Button'
 import ScrollableWrapper, { WRAPPER_TYPES } from '@common/components/ScrollableWrapper'
 import Search from '@common/components/Search'
@@ -92,6 +92,7 @@ const AccountSelectScreen = () => {
         withSettings={false}
         options={{ markSelected: true }}
         withReceive
+        withCopy={false}
         maxAccountAddrLength={32}
       />
     )
@@ -129,7 +130,7 @@ const AccountSelectScreen = () => {
             navigate(WEB_ROUTES.accountsSettings)
           }}
         >
-          <SettingsWheelIcon width={28} height={28} />
+          <SettingsIcon width={28} height={28} />
         </Pressable>
       </HeaderWithTitle>
       <View style={[spacings.phSm, flexbox.flex1]} ref={accountsContainerRef}>

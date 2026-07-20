@@ -15,8 +15,8 @@ interface Style {
 const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
   StyleSheet.create<Style>({
     container: {
-      ...spacings.mrSm,
       ...flexbox.directionRow,
+      alignSelf: 'stretch',
       paddingHorizontal: SPACING_MI / 2,
       paddingVertical: SPACING_MI / 2,
       borderRadius: BORDER_RADIUS_PRIMARY,
@@ -27,9 +27,9 @@ const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
       ...spacings.pvMi,
       ...spacings.phTy,
       ...text.center,
+      flex: 1,
       fontSize: 14,
       color: theme.secondaryText,
-      width: 72,
       borderRadius: BORDER_RADIUS_PRIMARY
     },
     activeElement: {

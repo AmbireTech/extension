@@ -16,7 +16,7 @@ import useWindowSize from '@common/hooks/useWindowSize'
 import { Erc7730Visualization } from '@common/modules/sign-message/utils/isErc7730Visualization'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import getStyles from '@web/modules/sign-message/screens/SignMessageScreen/styles'
+import getStyles from './styles'
 
 type ActiveTab = 'parsed' | 'raw'
 

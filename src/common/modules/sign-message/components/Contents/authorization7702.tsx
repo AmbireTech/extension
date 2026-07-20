@@ -9,12 +9,10 @@ import VisibilityIcon from '@common/assets/svg/VisibilityIcon'
 import Alert from '@common/components/Alert'
 import Checkbox from '@common/components/Checkbox'
 import Text from '@common/components/Text'
-import { isMobile } from '@common/config/env'
+import Card from '@common/modules/auth/components/Card'
+import MessageContentLayout from '@common/modules/sign-message/components/Contents/MessageContentLayout'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import { MobileLayoutWrapperMainContent } from '@mobile/components/MobileLayoutWrapper'
-import { TabLayoutWrapperMainContent } from '@web/components/TabLayoutWrapper'
-import Card from '@web/modules/auth/components/Card'
 
 interface Props {
   onDoNotAskMeAgainChange?: () => void
@@ -23,19 +21,11 @@ interface Props {
   children?: React.ReactNode
 }
 
-const Container = ({ children }: { children: React.ReactNode }) => {
-  if (isMobile)
-    return (
-      <MobileLayoutWrapperMainContent contentContainerStyle={spacings.ph0}>
-        {children}
-      </MobileLayoutWrapperMainContent>
-    )
-  return (
-    <TabLayoutWrapperMainContent contentContainerStyle={spacings.pvMd} showsVerticalScrollIndicator>
-      {children}
-    </TabLayoutWrapperMainContent>
-  )
-}
+const Container = ({ children }: { children: React.ReactNode }) => (
+  <MessageContentLayout webContentContainerStyle={spacings.pvMd} webShowsVerticalScrollIndicator>
+    {children}
+  </MessageContentLayout>
+)
 
 const Authorization7702 = ({
   onDoNotAskMeAgainChange,
