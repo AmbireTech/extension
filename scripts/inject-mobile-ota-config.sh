@@ -20,7 +20,7 @@ set -euo pipefail
 # Uses STALLION_PROJECT_ID, STALLION_APP_TOKEN and STALLION_PUBLIC_SIGNING_KEY (a single-line
 # base64 public key enabling on-device OTA signature verification), from .env or environment.
 # Required in CI; optional locally.
-# Usage: sh ./scripts/inject-mobile-ota-config.sh
+# Usage: bash ./scripts/inject-mobile-ota-config.sh
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
