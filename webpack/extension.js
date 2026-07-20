@@ -118,6 +118,11 @@ function processManifest(content, mode) {
   if (isWebkit && !isSafari) permissions.push('system.display')
   manifest.permissions = permissions
 
+  // Opt into structured clone serialization for chrome.runtime messaging
+  // (Chrome 148+). It sends BigInt/Error natively, letting PortMessenger skip
+  // richJson.
+  if (isWebkit && !isSafari) manifest.message_serialization = 'structured_clone'
+
   if (isSafari) {
     manifest.permissions = manifest.permissions.filter((p) => p !== 'notifications')
   }

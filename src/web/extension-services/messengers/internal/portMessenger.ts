@@ -1,7 +1,9 @@
 /* eslint-disable @typescript-eslint/no-floating-promises */
-import { parse, stringify } from '@ambire-common/libs/richJson/richJson'
+import { stringify } from '@ambire-common/libs/richJson/richJson'
 import { Action, MethodAction } from '@common/types/actions'
 import { browser } from '@web/constants/browserapi'
+
+import { deserializeMessagePart, detectStructuredCloneSupport } from './messageSerialization'
 
 export type Port = chrome.runtime.Port & { id: string; name: 'popup' | 'tab' | 'request-window' }
 
@@ -33,6 +35,10 @@ export type PortMessageType = {
   params: any
   forceEmit?: boolean
 }
+
+// Whether the browser supports structured clone for port messages. This is probed once on the first message
+// send and cached for subsequent sends.
+let structuredCloneSupport: boolean | null = null
 
 /**
  * Creates a "port messenger" that can be used for communication between ui <-> background.
@@ -90,8 +96,8 @@ export class PortMessenger {
 
     const listener = (data: any) => {
       if (!data.messageType || !data.message) return
-      const message = parse(data.message)
-      const meta = data.meta ? parse(data.meta) : {}
+      const message = deserializeMessagePart(data.message)
+      const meta = data.meta ? deserializeMessagePart(data.meta) : {}
       callback(data.messageType, message, meta)
     }
 
@@ -122,22 +128,48 @@ export class PortMessenger {
 
   // sends a message to all ports
   send: SendType = (type, message, meta = {}) => {
-    if (!this.ports.length) return
+    const [probePort] = this.ports
+    if (!probePort) return
 
-    try {
-      this.ports.forEach((port) => {
-        port.postMessage({ messageType: type, message: stringify(message), meta: stringify(meta) })
-      })
-    } catch (error) {
-      console.error('Error in port.postMessage', error)
-    }
+    const useStructuredClone = this.#supportsStructuredClone(probePort)
+    this.ports.forEach((port) => {
+      this.#postMessage(port, useStructuredClone, type, message, meta)
+    })
   }
 
   // sends a message to a specific port
   sendToPort: SendPortType = (port, type, message, meta = {}) => {
+    this.#postMessage(port, this.#supportsStructuredClone(port), type, message, meta)
+  }
+
+  // Probes structured clone support once (see messageSerialization.ts) and
+  // caches it. The probe posts an inert message on the given port.
+  #supportsStructuredClone(probePort: chrome.runtime.Port): boolean {
+    if (structuredCloneSupport === null) {
+      structuredCloneSupport = detectStructuredCloneSupport((msg) => probePort.postMessage(msg))
+    }
+    return structuredCloneSupport
+  }
+
+  #postMessage(
+    port: chrome.runtime.Port,
+    useStructuredClone: boolean,
+    type: MessageType,
+    message: any,
+    meta: MessageMeta
+  ) {
+    if (useStructuredClone) {
+      try {
+        port.postMessage({ messageType: type, message, meta })
+        return
+      } catch (error) {
+        console.error('Structured clone postMessage failed, falling back to richJson', error)
+      }
+    }
+
     try {
       port.postMessage({ messageType: type, message: stringify(message), meta: stringify(meta) })
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error in port.postMessage', error)
     }
   }
