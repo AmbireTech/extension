@@ -165,9 +165,6 @@ const AddressInput: React.FC<Props> = ({
                   </View>
                 </>
               ))}
-            {onScanAddress && !isValidAddress ? (
-              <AddressScanButton onScanned={onScanAddress} />
-            ) : null}
           </>
         }
         customInputContent={
@@ -196,7 +193,9 @@ const AddressInput: React.FC<Props> = ({
         }
         button={
           rest.button ||
-          (value && withDetails ? (
+          (!value && onScanAddress ? (
+            <AddressScanButton onScanned={onScanAddress} />
+          ) : value && withDetails ? (
             <Pressable
               style={{ width: 24, height: 24, ...flexbox.center }}
               onPress={() => {

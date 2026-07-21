@@ -160,6 +160,7 @@ const AddContactFormModal = ({ id, sheetRef, closeBottomSheet }: Props) => {
         render={({ field: { onChange, onBlur } }) => (
           <View style={{ width: '100%' }}>
             <AddressInput
+              withDetails
               label={t('Address / ENS / GNS / Namoshi')}
               onChangeText={(text) => {
                 onChange(text)
