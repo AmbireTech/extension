@@ -13,6 +13,7 @@ import { useTranslation } from '@common/config/localization'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import spacings, { SPACING_SM } from '@common/styles/spacings'
+import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import { setStringAsync } from '@common/utils/clipboard'
 
@@ -64,6 +65,8 @@ const PrivateKeyExport: FC<Props> = ({ privateKey, blurred, setBlurred, openConf
             spacings.phMd,
             {
               backgroundColor: theme.secondaryBackground,
+              borderRadius: BORDER_RADIUS_PRIMARY,
+
               overflow: 'hidden'
             }
           ]}

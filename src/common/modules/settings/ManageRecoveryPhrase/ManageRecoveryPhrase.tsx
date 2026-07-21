@@ -144,7 +144,7 @@ const ManageRecoveryPhrase = ({
           {isWeb && <PanelBackButton onPress={onBackButtonPress} style={spacings.mrSm} />}
           <PanelTitle title={t('Manage recovery phrase')} style={isWeb ? text.left : text.center} />
         </View>
-        <View style={isMobile ? spacings.mbSm : spacings.mb}>
+        <View style={[isMobile ? spacings.mbSm : spacings.mb, flexbox.directionRow]}>
           <Editable
             initialValue={recoveryPhrase.label}
             onSave={onSave}
@@ -206,30 +206,27 @@ const ManageRecoveryPhrase = ({
             isMobile && spacings.mbLg
           ]}
         >
-          {((isMobile && isSeedRevealed) || isWeb) && (
-            <>
-              <View
-                style={[
-                  isMobile && flexbox.flex1,
-                  { opacity: !seed || seed === DUMMY_SEED ? 0 : 1 }
-                ]}
-              >
-                <Button
-                  testID="copy-recovery-phrase-button"
-                  onPress={handleCopySeed}
-                  hasBottomSpacing={false}
-                  type={isWeb ? 'ghost' : 'outline'}
-                  size={isWeb ? 'small' : 'regular'}
-                  text={t('Copy phrase')}
-                  // @ts-expect-error react-native-web supports `cursor`, but it's missing from React Native StyleProp<ViewStyle> types
-                  style={isWeb && { cursor: !seed || seed === DUMMY_SEED ? 'default' : 'pointer' }}
-                >
-                  <CopyIcon style={spacings.mlTy} width={18} />
-                </Button>
-              </View>
-              {isMobile && <View style={{ width: SPACING_SM }} />}
-            </>
-          )}
+          <View
+            pointerEvents={isSeedRevealed ? 'auto' : 'none'}
+            style={[
+              isMobile && (isSeedRevealed ? flexbox.flex1 : { width: 0, overflow: 'hidden' }),
+              { opacity: isSeedRevealed ? 1 : 0 }
+            ]}
+          >
+            <Button
+              testID="copy-recovery-phrase-button"
+              onPress={handleCopySeed}
+              hasBottomSpacing={false}
+              type={isWeb ? 'ghost' : 'outline'}
+              size={isWeb ? 'small' : 'regular'}
+              text={t('Copy phrase')}
+              // @ts-expect-error react-native-web supports `cursor`, but it's missing from React Native StyleProp<ViewStyle> types
+              style={isWeb && { cursor: isSeedRevealed ? 'pointer' : 'default' }}
+            >
+              <CopyIcon style={spacings.mlTy} width={18} />
+            </Button>
+          </View>
+          {isMobile && <View style={{ width: isSeedRevealed ? SPACING_SM : 0 }} />}
           <View style={isMobile && flexbox.flex1}>
             <Button
               testID="reveal-recovery-phrase-button"
