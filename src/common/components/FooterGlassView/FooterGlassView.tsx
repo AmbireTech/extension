@@ -34,6 +34,8 @@ const FooterGlassView: FC<{
   size?: 'sm' | 'md'
   absolute?: boolean
   isSimpleBlur?: boolean
+  /** Side-panel bottom sheets: use centered glass pill footer instead of flat full-width buttons. */
+  preferGlassFooter?: boolean
   glassViewProps?: Partial<React.ComponentProps<typeof GlassView>>
 }> = ({
   children,
@@ -43,10 +45,15 @@ const FooterGlassView: FC<{
   size = 'md',
   glassViewProps = {},
   absolute = true,
-  isSimpleBlur
+  isSimpleBlur,
+  preferGlassFooter = false
 }) => {
   const isInsideBottomSheet = useIsInsideBottomSheet()
   const { isCompactLayout } = useCompactActionRequestLayout()
+  const isSidePanelBottomSheet = isSidePanel && isInsideBottomSheet
+  const shouldUseGlassPillFooter = isSidePanelBottomSheet && preferGlassFooter
+  const shouldUseCompactFlatFooter = isSidePanelBottomSheet && isCompactLayout && !preferGlassFooter
+  const shouldStretchFooter = isCompactLayout && !shouldUseGlassPillFooter
 
   if (isMobile) {
     return (
@@ -56,7 +63,7 @@ const FooterGlassView: FC<{
     )
   }
 
-  if (isInsideBottomSheet && isSidePanel && isCompactLayout) {
+  if (shouldUseCompactFlatFooter) {
     return (
       <View
         style={[
@@ -64,7 +71,13 @@ const FooterGlassView: FC<{
             width: '100%',
             ...flexbox.center,
             ...(absolute
-              ? { position: 'absolute', left: 0, bottom: SPACING_SM, zIndex: 3, pointerEvents: 'none' }
+              ? {
+                  position: 'absolute',
+                  left: 0,
+                  bottom: SPACING_SM,
+                  zIndex: 3,
+                  pointerEvents: 'none'
+                }
               : { pointerEvents: 'auto' })
           },
           style
@@ -77,9 +90,10 @@ const FooterGlassView: FC<{
               width: '100%',
               gap: SPACING_MI,
               paddingHorizontal: params[size].paddingHorizontal,
-              paddingVertical: params[size].paddingVertical
+              paddingVertical: params[size].paddingVertical,
+              pointerEvents: 'auto'
             },
-            isCompactLayout ? { alignItems: 'stretch' } : flexbox.alignCenter,
+            shouldStretchFooter ? { alignItems: 'stretch' } : flexbox.alignCenter,
             innerContainerStyle
           ]}
         >
@@ -99,7 +113,7 @@ const FooterGlassView: FC<{
         ...flexbox.center,
         zIndex: 3,
         pointerEvents: 'none',
-        ...(isCompactLayout ? { paddingHorizontal: SPACING_SM } : {}),
+        ...(shouldStretchFooter ? { paddingHorizontal: SPACING_SM } : {}),
         ...style
       }}
     >
@@ -109,7 +123,7 @@ const FooterGlassView: FC<{
         borderRadius={Number(params[size].borderRadius)}
         cssStyle={{
           pointerEvents: 'all',
-          ...(isCompactLayout ? { width: '100%' } : {}),
+          ...(shouldStretchFooter ? { width: '100%' } : {}),
           ...(glassViewProps?.cssStyle || {})
         }}
       >
@@ -120,7 +134,7 @@ const FooterGlassView: FC<{
               paddingHorizontal: params[size].paddingHorizontal,
               paddingVertical: params[size].paddingVertical
             },
-            isCompactLayout
+            shouldStretchFooter
               ? { width: '100%', gap: SPACING_MI, alignItems: 'stretch' }
               : flexbox.alignCenter,
             innerContainerStyle
