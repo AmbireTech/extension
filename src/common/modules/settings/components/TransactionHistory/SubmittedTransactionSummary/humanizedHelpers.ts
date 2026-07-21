@@ -98,14 +98,19 @@ export const getDappInteractions = (
     })
   }
 
-  const fuelsGasTank = humanizedCalls.some(
+  const gasTankHumanization = humanizedCalls.find(
     (call) => call.fullVisualization?.[0]?.content === 'Fuel gas tank with'
   )
-  if (fuelsGasTank) {
+  if (gasTankHumanization) {
+    const gasTankToken = gasTankHumanization.fullVisualization?.[1]
+
     addInteraction({
       id: 'fallback:gasTank',
       name: 'Fuel gas tank',
-      iconType: 'ambire'
+      iconType: 'ambire',
+      ...(gasTankToken?.type === 'token'
+        ? { token: gasTankToken.address, amount: gasTankToken.value }
+        : {})
     })
   }
 
