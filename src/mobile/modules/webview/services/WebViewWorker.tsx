@@ -668,6 +668,12 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, object>((_, ref) => {
         return request.url === prodBundleUri
       }}
       mixedContentMode="never"
+      // Android-only, defaults to false. Required in prod so the WebView can load the
+      // worker HTML that materializeWorkerBundle() writes to the app's files dir (a real
+      // `file://` path, unlike the exempt `file:///android_asset/` fallback). Without it
+      // the worker never boots and the app hangs on the splash screen. No-op on iOS, which
+      // uses allowingReadAccessToURL above.
+      allowFileAccess={!__DEV__}
       // Required on Android for the sibling `<script src>` to load over
       // `file://`. Safe: navigation is locked to the single bundle URI and
       // `allowUniversalAccessFromFileURLs` stays `false`, so the page cannot
