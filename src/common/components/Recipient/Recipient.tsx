@@ -188,7 +188,13 @@ const SelectedMenuOption: React.FC<{
           }
         }}
         inputWrapperStyle={type === 'input' ? { backgroundColor: theme.neutral400 } : undefined}
-        buttonStyle={{ ...spacings.pv0, ...spacings.ph, ...spacings.mr0, ...spacings.ml0 }}
+        buttonStyle={{
+          ...spacings.pv0,
+          ...spacings.pl,
+          ...spacings.prTy,
+          ...spacings.mr0,
+          ...spacings.ml0
+        }}
       />
     ),
     [
