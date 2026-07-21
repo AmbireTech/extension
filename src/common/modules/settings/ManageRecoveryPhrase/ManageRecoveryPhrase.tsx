@@ -1,6 +1,7 @@
+import { BlurView } from 'expo-blur'
 import React, { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { View } from 'react-native'
+import { StyleSheet, View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 
 import { HD_PATH_TEMPLATE_TYPE } from '@ambire-common/consts/derivation'
@@ -61,6 +62,8 @@ const ManageRecoveryPhrase = ({
   const { addToast } = useToast()
   const { theme, styles, themeType } = useTheme(getStyles)
   const { t } = useTranslation()
+
+  const isSeedRevealed = !blurred && seed !== DUMMY_SEED
 
   const onPasswordConfirmed = () => {
     keystoreDispatch({
@@ -156,7 +159,9 @@ const ManageRecoveryPhrase = ({
         </View>
         <View
           style={[
-            !blurred && seed !== DUMMY_SEED ? styles.notBlurred : styles.blurred,
+            // On web the blur is a CSS `filter`; on native it doesn't apply,
+            // so a BlurView overlay is rendered below instead
+            isWeb && (isSeedRevealed ? styles.notBlurred : styles.blurred),
             spacings.pvMd,
             spacings.phMd,
             {
@@ -164,7 +169,8 @@ const ManageRecoveryPhrase = ({
                 themeType === THEME_TYPES.DARK
                   ? theme.tertiaryBackground
                   : theme.secondaryBackground,
-              borderRadius: BORDER_RADIUS_PRIMARY
+              borderRadius: BORDER_RADIUS_PRIMARY,
+              overflow: 'hidden'
             }
           ]}
         >
@@ -185,6 +191,9 @@ const ManageRecoveryPhrase = ({
                 </Text>
               </Text>
             </View>
+          )}
+          {isMobile && !isSeedRevealed && (
+            <BlurView intensity={18} tint={themeType} style={StyleSheet.absoluteFill} />
           )}
         </View>
         <View
@@ -209,7 +218,7 @@ const ManageRecoveryPhrase = ({
               type="ghost"
               size="small"
               text={t('Copy phrase')}
-              // @ts-ignore react-native-web supports `cursor`, but it's missing from React Native StyleProp<ViewStyle> types
+              // @ts-expect-error react-native-web supports `cursor`, but it's missing from React Native StyleProp<ViewStyle> types
               style={{ cursor: !seed || seed === DUMMY_SEED ? 'default' : 'pointer' }}
             >
               <CopyIcon style={spacings.mlTy} width={18} />
@@ -264,7 +273,7 @@ const ManageRecoveryPhrase = ({
             isTypeLabelHidden
             titleWeight="semiBold"
             size="md"
-            text={t('Deleting the recovery phrase will not remove any accounts imported from it.')}
+            title={t('Deleting the recovery phrase will not remove any accounts imported from it.')}
             style={spacings.mbLg}
           />
           <Checkbox

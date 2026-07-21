@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { FlatList, ListRenderItemInfo, StyleSheet, View } from 'react-native'
+import { FlatList, ListRenderItemInfo, StyleSheet, View, ViewStyle } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 
 import { HD_PATH_TEMPLATE_TYPE } from '@ambire-common/consts/derivation'
@@ -82,7 +82,7 @@ const RecoveryPhrasesSettingsScreen = () => {
             hasBottomSpacing={false}
             onPress={() => setRecoveryPhraseToManage(item)}
             style={spacings.ph0}
-            innerContainerStyle={() => spacings.ph0}
+            innerContainerStyle={() => spacings.ph0 as ViewStyle}
           >
             <SettingsWheelIcon
               width={20}
@@ -92,7 +92,7 @@ const RecoveryPhrasesSettingsScreen = () => {
             />
           </Button>
         </View>
-        {associatedAccounts.map((a, accIdx) => {
+        {associatedAccounts.map((a) => {
           return (
             <Account
               key={a.addr}
