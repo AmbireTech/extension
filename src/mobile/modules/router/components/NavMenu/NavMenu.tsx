@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 
 import AccountsIcon from '@common/assets/svg/AccountsIcon'
-// import AddressBookIcon from '@common/assets/svg/AddressBookIcon'
+import AddressBookIcon from '@common/assets/svg/AddressBookIcon'
 import AmbireLogoSquare from '@common/assets/svg/AmbireLogoSquare'
 import BugIcon from '@common/assets/svg/BugIcon'
 // import CustomTokensIcon from '@common/assets/svg/CustomTokensIcon'
@@ -44,12 +44,12 @@ export const SETTINGS_LINKS = [
     label: 'Accounts',
     path: ROUTES.accountsSettings
   },
-  // {
-  //   key: 'address-book',
-  //   Icon: AddressBookIcon,
-  //   label: 'Address Book',
-  //   path: ROUTES.addressBook
-  // },
+  {
+    key: 'address-book',
+    Icon: AddressBookIcon,
+    label: 'Address Book',
+    path: ROUTES.addressBook
+  },
   {
     key: 'networks',
     Icon: NetworksIcon,
