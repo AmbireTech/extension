@@ -1,5 +1,5 @@
 import { ReactNode, useEffect, useMemo } from 'react'
-import { BackHandler, Dimensions, Platform } from 'react-native'
+import { BackHandler, Dimensions, Platform, StatusBar } from 'react-native'
 import { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler'
 
 import {
@@ -97,7 +97,13 @@ const GestureHandler = ({ children }: { children: ReactNode }) => {
         .onTouchesDown((event) => {
           const touch = event.allTouches[0]
           if (touch) {
-            checkDropdownDismiss(touch.absoluteX, touch.absoluteY)
+            // Android gesture coords are raw screen coords (include the status
+            // bar), but Dropdown bounds come from measureInWindow (excludes it).
+            // Align them so the outside-touch hit-test compares the same space.
+            const absoluteY = isAndroid
+              ? touch.absoluteY - (StatusBar.currentHeight ?? 0)
+              : touch.absoluteY
+            checkDropdownDismiss(touch.absoluteX, absoluteY)
           }
         }),
     []
