@@ -1,5 +1,6 @@
+import { BlurView } from 'expo-blur'
 import React, { FC, useCallback } from 'react'
-import { View } from 'react-native'
+import { StyleSheet, View } from 'react-native'
 
 import CopyIcon from '@common/assets/svg/CopyIcon'
 import InvisibilityIcon from '@common/assets/svg/InvisibilityIcon'
@@ -17,6 +18,8 @@ import { setStringAsync } from '@common/utils/clipboard'
 
 import getStyles from './styles'
 
+const DUMMY_PRIVATE_KEY = '0x92f3a1c4e5b6d7089a1b2c3d4e5f60718293a4b5c6d7e8f90a1b2c3d4e5f6a7b8'
+
 interface Props {
   privateKey: string | null
   blurred: boolean
@@ -27,7 +30,7 @@ interface Props {
 const PrivateKeyExport: FC<Props> = ({ privateKey, blurred, setBlurred, openConfirmPassword }) => {
   const { t } = useTranslation()
 
-  const { theme, styles } = useTheme(getStyles)
+  const { theme, styles, themeType } = useTheme(getStyles)
   const { addToast } = useToast()
 
   const handleCopyText = useCallback(async () => {
@@ -54,17 +57,23 @@ const PrivateKeyExport: FC<Props> = ({ privateKey, blurred, setBlurred, openConf
       <View style={[flexbox.flex1, isMobile && spacings.mb]}>
         <View
           style={[
-            blurred ? styles.blurred : styles.notBlurred,
+            // On web the blur is a CSS `filter`; on native it doesn't apply,
+            // so a BlurView overlay is rendered below instead
+            isWeb && (blurred ? styles.blurred : styles.notBlurred),
             spacings.pvMd,
             spacings.phMd,
             {
-              backgroundColor: theme.secondaryBackground
+              backgroundColor: theme.secondaryBackground,
+              overflow: 'hidden'
             }
           ]}
         >
           <Text testID="private-key-value" fontSize={14} color={theme.secondaryText}>
-            {privateKey}
+            {blurred ? DUMMY_PRIVATE_KEY : privateKey}
           </Text>
+          {isMobile && blurred && (
+            <BlurView intensity={18} tint={themeType} style={StyleSheet.absoluteFill} />
+          )}
         </View>
         <View
           style={[
@@ -84,7 +93,7 @@ const PrivateKeyExport: FC<Props> = ({ privateKey, blurred, setBlurred, openConf
                   type={isWeb ? 'ghost' : 'outline'}
                   size={isWeb ? 'small' : 'regular'}
                   text={t('Copy key')}
-                  // @ts-ignore react-native-web supports `cursor`, but it's missing from React Native StyleProp<ViewStyle> types
+                  // @ts-expect-error react-native-web supports `cursor`, but it's missing from React Native StyleProp<ViewStyle> types
                   style={isWeb && { cursor: !privateKey ? 'default' : 'pointer' }}
                 >
                   <CopyIcon style={spacings.mlTy} width={18} color={theme.iconPrimary} />
