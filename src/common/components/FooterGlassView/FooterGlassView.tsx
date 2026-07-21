@@ -36,6 +36,11 @@ const FooterGlassView: FC<{
   isSimpleBlur?: boolean
   /** Side-panel bottom sheets: use centered glass pill footer instead of flat full-width buttons. */
   preferGlassFooter?: boolean
+  /**
+   * When false, keeps the glass pill sized to its content (centered).
+   * Defaults to stretching full-width on compact side-panel layouts.
+   */
+  fullWidth?: boolean
   glassViewProps?: Partial<React.ComponentProps<typeof GlassView>>
 }> = ({
   children,
@@ -46,14 +51,16 @@ const FooterGlassView: FC<{
   glassViewProps = {},
   absolute = true,
   isSimpleBlur,
-  preferGlassFooter = false
+  preferGlassFooter = false,
+  fullWidth
 }) => {
   const isInsideBottomSheet = useIsInsideBottomSheet()
   const { isCompactLayout } = useCompactActionRequestLayout()
   const isSidePanelBottomSheet = isSidePanel && isInsideBottomSheet
   const shouldUseGlassPillFooter = isSidePanelBottomSheet && preferGlassFooter
   const shouldUseCompactFlatFooter = isSidePanelBottomSheet && isCompactLayout && !preferGlassFooter
-  const shouldStretchFooter = isCompactLayout && !shouldUseGlassPillFooter
+  const shouldStretchFooter =
+    fullWidth ?? (isCompactLayout && !shouldUseGlassPillFooter)
 
   if (isMobile) {
     return (
@@ -123,7 +130,7 @@ const FooterGlassView: FC<{
         borderRadius={Number(params[size].borderRadius)}
         cssStyle={{
           pointerEvents: 'all',
-          ...(shouldStretchFooter ? { width: '100%' } : {}),
+          ...(shouldStretchFooter ? { width: '100%' } : { width: 'fit-content', alignSelf: 'center' }),
           ...(glassViewProps?.cssStyle || {})
         }}
       >
