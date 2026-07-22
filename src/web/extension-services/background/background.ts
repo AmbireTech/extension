@@ -28,6 +28,10 @@ import { controllersNestedInMainMapping } from '@common/constants/controllersMap
 import { AutoLockController } from '@common/controllers/auto-lock'
 import { WalletStateController } from '@common/controllers/wallet-state'
 import LedgerSigner from '@common/modules/hardware-wallet/libs/LedgerSigner'
+import TrezorSigner from '@common/modules/hardware-wallet/libs/TrezorSigner'
+import QrHardwareController from '@common/modules/hardware-wallets/controllers/QrHardwareController/QrHardwareController'
+import UrQrProtocolAdapter from '@common/modules/hardware-wallets/qr/protocol/UrQrProtocolAdapter'
+import QrHardwareSigner from '@common/modules/hardware-wallets/signers/QrHardwareSigner'
 import handleProviderRequests from '@common/modules/provider/handleProviderRequests'
 import { storage } from '@common/services/storage'
 import { Action, MethodAction } from '@common/types/actions'
@@ -46,8 +50,11 @@ import * as Sentry from '@sentry/browser'
 import { browser, platform } from '@web/constants/browserapi'
 import { BadgesController } from '@web/extension-services/background/controllers/badges'
 import ExtensionUpdateController from '@web/extension-services/background/controllers/extension-update'
+import {
+  DappTabTarget,
+  scheduleDappTabFocusDispatch
+} from '@web/extension-services/background/handlers/dispatchDappTabFocus'
 import { handleActions } from '@web/extension-services/background/handlers/handleActions'
-import { scheduleDappTabFocusDispatch, DappTabTarget } from '@web/extension-services/background/handlers/dispatchDappTabFocus'
 import { handleCleanUpOnPortDisconnect } from '@web/extension-services/background/handlers/handleCleanUpOnPortDisconnect'
 import { handleKeepAlive } from '@web/extension-services/background/handlers/handleKeepAlive'
 import {
@@ -55,6 +62,7 @@ import {
   handleRegisterScripts
 } from '@web/extension-services/background/handlers/handleScripting'
 import { notificationManager } from '@web/extension-services/background/webapi/notification'
+import { openSidePanel } from '@web/extension-services/background/webapi/sidePanel'
 import windowManager from '@web/extension-services/background/webapi/window'
 import {
   initializeMessenger,
@@ -64,12 +72,8 @@ import {
 } from '@web/extension-services/messengers'
 import LatticeController from '@web/modules/hardware-wallet/controllers/LatticeController'
 import LedgerController from '@web/modules/hardware-wallet/controllers/LedgerController'
-import QrHardwareController from '@common/modules/hardware-wallets/controllers/QrHardwareController/QrHardwareController'
 import TrezorController from '@web/modules/hardware-wallet/controllers/TrezorController'
 import LatticeSigner from '@web/modules/hardware-wallet/libs/LatticeSigner'
-import TrezorSigner from '@common/modules/hardware-wallet/libs/TrezorSigner'
-import UrQrProtocolAdapter from '@common/modules/hardware-wallets/qr/protocol/UrQrProtocolAdapter'
-import QrHardwareSigner from '@common/modules/hardware-wallets/signers/QrHardwareSigner'
 import { providerRequestTransport } from '@web/modules/provider/providerRequestTransport'
 import { getExtensionInstanceId } from '@web/utils/analytics'
 import { isExtensionOverlayPort } from '@web/utils/sidePanel'
@@ -560,6 +564,9 @@ const init = async () => {
       },
       dispatchDappTabFocus: (targets: DappTabTarget[]) => {
         scheduleDappTabFocusDispatch(targets)
+      },
+      openSidePanel: async (windowId?: number) => {
+        await openSidePanel(windowId)
       }
     }
   })
