@@ -2,7 +2,6 @@ import React from 'react'
 import { useTranslation } from 'react-i18next'
 
 import FooterGlassView from '@common/components/FooterGlassView'
-import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import LayoutWrapper from '@common/components/LayoutWrapper'
 import ScrollableWrapper from '@common/components/ScrollableWrapper'
 import getAndFormatTokenDetails from '@common/modules/dashboard/helpers/getTokenDetails'
@@ -15,7 +14,7 @@ import TokenData from '@common/modules/token-details/components/TokenData'
 import TokenPriceDisplay from '@common/modules/token-details/components/TokenPriceDisplay'
 import TokenDetailsTransactionHistory from '@common/modules/token-details/components/TransactionHistory'
 import useTokenDetails from '@common/modules/token-details/hooks/useTokenDetails'
-import spacings from '@common/styles/spacings'
+import spacings, { SPACING_MI } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
 const TokenDetailsScreen = () => {
@@ -90,7 +89,7 @@ const TokenDetailsScreen = () => {
         <Exchanges exchanges={token.meta?.exchanges || []} />
         <TokenDetailsTransactionHistory />
       </ScrollableWrapper>
-      <FooterGlassView size="sm">
+      <FooterGlassView size="sm" innerContainerStyle={{ gap: SPACING_MI }}>
         {actions.map((action) => (
           <TokenDetailsButton
             key={action.id}

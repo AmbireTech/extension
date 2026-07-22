@@ -18,7 +18,7 @@ import HoldToProceedButton from '@common/components/HoldToProceedButton'
 import NoKeysToSignAlert from '@common/components/NoKeysToSignAlert'
 import { isMobile, isWeb } from '@common/config/env'
 import useSign from '@common/hooks/useSign'
-import useWindowSize from '@common/hooks/useWindowSize'
+import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import Estimation from '@common/modules/sign-account-op/components/Estimation'
 import BundlerWarning from '@common/modules/sign-account-op/components/Estimation/components/bundlerWarning'
 import SafetyChecksBanner from '@common/modules/sign-account-op/components/SafetyChecksBanner'
@@ -41,7 +41,7 @@ export type OneClickEstimationProps = {
   Modals: React.ComponentType<ModalsProps>
 }
 
-const { isRequestWindow, isTab, isSidePanel } = getUiType()
+const { isRequestWindow, isTab } = getUiType()
 
 const OneClickEstimation = ({
   closeEstimationModal,
@@ -57,8 +57,7 @@ const OneClickEstimation = ({
   Modals
 }: OneClickEstimationProps) => {
   const { t } = useTranslation()
-  const { maxWidthSize } = useWindowSize()
-  const isCompactSidePanelLayout = isSidePanel && !maxWidthSize('s')
+  const { isCompactSidePanelLayout } = useCompactActionRequestLayout()
 
   const signingErrors = useMemo(() => {
     const signAccountOpErrors = signAccountOpController ? signAccountOpController.errors : []

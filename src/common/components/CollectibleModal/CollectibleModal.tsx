@@ -19,7 +19,7 @@ import ManifestImage from '@web/components/ManifestImage'
 import Row from './Row'
 import getStyles, { COLLECTIBLE_IMAGE_SIZE } from './styles'
 
-const { isTab, isSidePanel } = getUiType()
+const { isTab } = getUiType()
 
 export type SelectedCollectible = {
   address: string
@@ -44,8 +44,7 @@ const CollectibleModal = ({
 }) => {
   const { t } = useTranslation()
   const { styles, theme } = useTheme(getStyles)
-  const { isCompactLayout } = useCompactActionRequestLayout()
-  const isCompactSidePanelLayout = isSidePanel && isCompactLayout
+  const { isCompactSidePanelLayout } = useCompactActionRequestLayout()
   const {
     state: { networks }
   } = useController('NetworksController')

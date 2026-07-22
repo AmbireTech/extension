@@ -22,10 +22,8 @@ const useBottomSheetInternal = (props: BottomSheetProps) => {
   const { id: _id, type: _type, sheetRef, autoOpen = false, customZIndex } = props
   const { closeBottomSheet: _closeBottomSheet = () => {} } = props
   const closeBottomSheet = useCallback(_closeBottomSheet, [_closeBottomSheet])
-  const { isCompactLayout } = useCompactActionRequestLayout()
-  const isNarrowSidePanel = isSidePanel && isCompactLayout
-  const defaultType =
-    isPopup || isMobileApp || isNarrowSidePanel ? 'bottom-sheet' : 'modal'
+  const { isNarrowSidePanel, isCompactLayout } = useCompactActionRequestLayout()
+  const defaultType = isPopup || isMobileApp || isNarrowSidePanel ? 'bottom-sheet' : 'modal'
   const resolvedType = _type || defaultType
   const type = (() => {
     if (isNarrowSidePanel && resolvedType === 'modal') return 'bottom-sheet'

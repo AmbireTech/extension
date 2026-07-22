@@ -11,19 +11,16 @@ import useController from '@common/hooks/useController'
 import useHover, { AnimatedPressable, useMultiHover } from '@common/hooks/useHover'
 import useNavigation from '@common/hooks/useNavigation'
 import useTheme from '@common/hooks/useTheme'
-import useWindowSize from '@common/hooks/useWindowSize'
+import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import getStyles from '@common/modules/dashboard/components/DeFiPositions/DeFiProviderPosition/styles'
 import { ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
 import { hexToRgba } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import { openInTab } from '@common/utils/links'
-import { getUiType } from '@common/utils/uiType'
 
 import Badge from './Badge'
 import ProtocolIcon from './ProtocolIcon'
-
-const { isSidePanel } = getUiType()
 
 type Props = Omit<PositionsByProvider, 'type' | 'positionInUSD' | 'positions' | 'source'> & {
   toggleExpanded: () => void
@@ -65,8 +62,7 @@ const DeFiPositionHeader: FC<Props> = ({
   } = useController('DappsController')
   const { styles, theme } = useTheme(getStyles)
   const { navigate } = useNavigation()
-  const { maxWidthSize } = useWindowSize()
-  const isCompactLayout = isSidePanel && !maxWidthSize('s')
+  const { isCompactLayout } = useCompactActionRequestLayout()
 
   const [bindAnim, animStyle] = useMultiHover({
     values: [

@@ -9,18 +9,17 @@ import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import { isBenzin, isMobile, isWeb } from '@common/config/env'
 import useTheme from '@common/hooks/useTheme'
 import useWindowSize from '@common/hooks/useWindowSize'
+import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import { EXPLORER_LINKS_DISABLED_TOOLTIP } from '@common/modules/settings/components/TransactionHistory/SubmittedTransactionSummary/constants'
 import spacings, { SPACING_LG, SPACING_TY } from '@common/styles/spacings'
-import { getUiType } from '@common/utils/uiType'
 import { isExtension } from '@web/constants/browserapi'
-
-const { isSidePanel } = getUiType()
 
 const useIsCompactBenzinButtonsLayout = () => {
   const { maxWidthSize } = useWindowSize()
-  const isNarrowWidth = !maxWidthSize('s')
+  const { isCompactSidePanelLayout } = useCompactActionRequestLayout()
 
-  return (isBenzin && isNarrowWidth) || (isExtension && isSidePanel && isNarrowWidth)
+  // Standalone Benzin website uses viewport width only; extension uses the shared side-panel rule.
+  return (isBenzin && !maxWidthSize('m')) || (isExtension && isCompactSidePanelLayout)
 }
 
 interface Props {

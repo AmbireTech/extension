@@ -30,7 +30,7 @@ type Props = {
   onRecipientAddressUnknownAgree?: () => void
 }
 
-const { isRequestWindow, isSidePanel } = getUiType()
+const { isRequestWindow } = getUiType()
 
 const Buttons: FC<Props> = ({
   signAccountOpErrors,
@@ -50,8 +50,7 @@ const Buttons: FC<Props> = ({
   isLocalStateOutOfSync
 }) => {
   const { t } = useTranslation()
-  const { isCompactLayout } = useCompactActionRequestLayout()
-  const isCompactSidePanelLayout = isWeb && isSidePanel && isCompactLayout
+  const { isCompactSidePanelLayout } = useCompactActionRequestLayout()
   const callsCount = getCallsCount(networkUserRequests)
 
   const oneClickDisabledReason = useMemo(() => {

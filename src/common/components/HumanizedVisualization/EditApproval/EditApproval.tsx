@@ -21,7 +21,6 @@ import useCompactActionRequestLayout from '@common/modules/action-requests/hooks
 import MaxAmount from '@common/modules/swap-and-bridge/components/MaxAmount'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import { getUiType } from '@common/utils/uiType'
 
 type EditApprovalAmountInputProps = {
   initialAmount: string
@@ -125,8 +124,7 @@ const EditApproval = ({
 }) => {
   const { t } = useTranslation()
   const { theme } = useTheme()
-  const { isSidePanel } = getUiType()
-  const { isCompactLayout } = useCompactActionRequestLayout()
+  const { isCompactLayout, isCompactSidePanelLayout } = useCompactActionRequestLayout()
   const footerButtonStyle = isCompactLayout ? flexbox.flex1 : isWeb ? { width: 100 } : undefined
   const [bindEditApprovals, , isEditApprovalsHovered] = useHover({
     preset: 'opacityInverted'
@@ -228,7 +226,7 @@ const EditApproval = ({
       <BottomSheet
         sheetRef={editApprovalsSheetRef}
         id={`edit-approvals-bottom-sheet-${id}`}
-        type={isCompactLayout && isSidePanel ? 'bottom-sheet' : 'modal'}
+        type={isCompactSidePanelLayout ? 'bottom-sheet' : 'modal'}
         closeBottomSheet={closeEditApprovals}
         style={isCompactLayout ? { width: '100%' } : { maxWidth: 460 }}
         shouldBeClosableOnDrag={false}

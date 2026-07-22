@@ -7,9 +7,6 @@ import { isMobile } from '@common/config/env'
 import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import { SPACING, SPACING_MI, SPACING_SM, SPACING_TY } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import { getUiType } from '@common/utils/uiType'
-
-const { isSidePanel } = getUiType()
 
 const params: {
   [key in 'sm' | 'md']: ViewStyle
@@ -55,12 +52,10 @@ const FooterGlassView: FC<{
   fullWidth
 }) => {
   const isInsideBottomSheet = useIsInsideBottomSheet()
-  const { isCompactLayout } = useCompactActionRequestLayout()
-  const isSidePanelBottomSheet = isSidePanel && isInsideBottomSheet
-  const isCompactSidePanelFooter = isSidePanel && isCompactLayout && !preferGlassFooter
-  const shouldUseGlassPillFooter = isSidePanelBottomSheet && preferGlassFooter
+  const { isCompactSidePanelLayout } = useCompactActionRequestLayout()
+  // preferGlassFooter keeps the glass pill path by skipping the flat footer branch.
   const shouldUseCompactFlatFooter =
-    isCompactSidePanelFooter && (isInsideBottomSheet || fullWidth === true)
+    isCompactSidePanelLayout && !preferGlassFooter && (isInsideBottomSheet || fullWidth === true)
   const shouldStretchFooter = shouldUseCompactFlatFooter || fullWidth === true
   const compactSidePanelInnerStyle: ViewStyle | undefined = shouldUseCompactFlatFooter
     ? {

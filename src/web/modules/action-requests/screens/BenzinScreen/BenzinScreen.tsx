@@ -12,17 +12,13 @@ import RightArrowIcon from '@common/assets/svg/RightArrowIcon'
 import Button from '@common/components/Button'
 import FooterGlassView from '@common/components/FooterGlassView'
 import useController from '@common/hooks/useController'
-import useWindowSize from '@common/hooks/useWindowSize'
+import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import spacings, { SPACING_TY } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import { getUiType } from '@common/utils/uiType'
-
-const { isSidePanel } = getUiType()
 
 const BenzinScreen = () => {
   const { t } = useTranslation()
-  const { maxWidthSize } = useWindowSize()
-  const isCompactSidePanelLayout = isSidePanel && !maxWidthSize('s')
+  const { isCompactSidePanelLayout } = useCompactActionRequestLayout()
 
   const {
     state: { currentUserRequest, visibleUserRequests },

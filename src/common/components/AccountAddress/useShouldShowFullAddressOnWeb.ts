@@ -10,8 +10,7 @@ export const NARROW_SIDE_PANEL_ADDRESS_MAX_LENGTH = 16
 export const FULL_ADDRESS_MIN_CONTAINER_WIDTH = 330
 
 const useShouldShowFullAddressOnWeb = (maxLength: number, containerWidth?: number | null) => {
-  const { isCompactLayout } = useCompactActionRequestLayout()
-  const isNarrowSidePanel = isSidePanel && isCompactLayout
+  const { isNarrowSidePanel } = useCompactActionRequestLayout()
   const hasEnoughContainerSpace =
     containerWidth != null && containerWidth >= FULL_ADDRESS_MIN_CONTAINER_WIDTH
 

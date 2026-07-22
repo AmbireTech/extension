@@ -6,11 +6,11 @@ import Tooltip from '@common/components/Tooltip'
 import { isMobile, isWeb } from '@common/config/env'
 import { useCustomHover } from '@common/hooks/useHover'
 import useTheme from '@common/hooks/useTheme'
+import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import spacings from '@common/styles/spacings'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
-import { getUiType } from '@common/utils/uiType'
 
 import getStyles from './styles'
 
@@ -46,8 +46,7 @@ const TokenDetailsButton: FC<Props> = ({
   testID
 }) => {
   const { styles, theme } = useTheme(getStyles)
-  const { isSidePanel } = getUiType()
-  const isCompactLayout = isMobile || isSidePanel
+  const { isCompactLayout } = useCompactActionRequestLayout()
   const iconAreaHeight = isCompactLayout ? COMPACT_ICON_AREA_HEIGHT : DESKTOP_ICON_AREA_HEIGHT
   const labelAreaHeight = isCompactLayout ? COMPACT_LABEL_AREA_HEIGHT : DESKTOP_LABEL_AREA_HEIGHT
   const resolvedIconWidth = isCompactLayout ? Math.min(iconWidth, 24) : iconWidth
@@ -68,8 +67,7 @@ const TokenDetailsButton: FC<Props> = ({
         dataSet={tooltipText ? { tooltipId } : undefined}
         style={[
           isCompactLayout ? styles.actionCompact : styles.action,
-          isDisabled && { opacity: 0.4 },
-          isWeb && !isCompactLayout && id !== 'hide-unhide' && { marginRight: 6 }
+          isDisabled && { opacity: 0.4 }
         ]}
         // Purposely don't disable the button (but block the onPress action) in
         // case of a tooltip, because it should be clickable to show the tooltip.

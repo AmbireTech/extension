@@ -13,7 +13,7 @@ import { getUiType } from '@common/utils/uiType'
 
 import LayoutWrapper from '../../../common/components/LayoutWrapper'
 
-const { isPopup, isRequestWindow, isSidePanel } = getUiType()
+const { isPopup, isRequestWindow } = getUiType()
 
 type WrapperProps = {
   children: React.ReactNode
@@ -67,8 +67,7 @@ const Wrapper: FC<WrapperProps> = ({ children }) => {
 }
 
 const Content: FC<ContentProps> = ({ children, buttons }) => {
-  const { isCompactLayout } = useCompactActionRequestLayout()
-  const isCompactSidePanelLayout = isSidePanel && isCompactLayout
+  const { isCompactSidePanelLayout } = useCompactActionRequestLayout()
 
   return (
     <View style={[flexbox.flex1, spacings.phSm, spacings.pvSm]}>

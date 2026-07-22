@@ -15,9 +15,6 @@ import NumberInput from '@common/components/NumberInput'
 import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import { getUiType } from '@common/utils/uiType'
-
-const { isSidePanel } = getUiType()
 
 type CustomGasPriceInputProps = {
   initialAmount: string
@@ -107,8 +104,7 @@ const CustomGasPrice = ({
   sheetRef
 }: Props) => {
   const { t } = useTranslation()
-  const { isCompactLayout } = useCompactActionRequestLayout()
-  const isNarrowSidePanel = isSidePanel && isCompactLayout
+  const { isNarrowSidePanel } = useCompactActionRequestLayout()
   const [customGasPriceError, setCustomGasPriceError] = useState<string | boolean>(false)
   const gasRef = useRef('')
   const maxFeePerGasRef = useRef('')

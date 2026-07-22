@@ -6,7 +6,7 @@ import { AssetType, Position } from '@ambire-common/libs/defiPositions/types'
 import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
 import Text from '@common/components/Text'
 import TokenIcon from '@common/components/TokenIcon'
-import useWindowSize from '@common/hooks/useWindowSize'
+import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
@@ -31,8 +31,7 @@ const DeFiPositionAssets: FC<{
   label: string
   chainId?: bigint
 }> = ({ assets, label, chainId }) => {
-  const { maxWidthSize } = useWindowSize()
-  const isCompactLayout = !maxWidthSize('s')
+  const { isCompactLayout } = useCompactActionRequestLayout()
   const shouldDisplayAPY = assets.some((a) => !!a?.additionalData?.APY)
   const rowFontSize = isCompactLayout ? 12 : 14
 
