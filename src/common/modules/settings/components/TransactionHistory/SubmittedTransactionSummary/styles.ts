@@ -1,10 +1,14 @@
 import { StyleSheet, TextStyle, ViewStyle } from 'react-native'
 
 import { isMobile } from '@common/config/env'
-import spacings from '@common/styles/spacings'
+import spacings, { SPACING_TY } from '@common/styles/spacings'
 import { ThemeProps } from '@common/styles/themeConfig'
 import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
+import { getUiType } from '@common/utils/uiType'
+
+const { isSidePanel } = getUiType()
+const isCompactFooter = isMobile || isSidePanel
 
 interface Style {
   container: ViewStyle
@@ -159,25 +163,43 @@ const getStyles = (theme: ThemeProps) =>
       borderTopColor: theme.primaryBorder,
       borderTopWidth: 1,
       backgroundColor: theme.primaryBackground,
-      ...(isMobile ? spacings.phSm : spacings.phLg),
+      ...(isCompactFooter ? spacings.phSm : spacings.phLg),
       ...spacings.pvMd
     },
     footerButtonsRow: {
-      ...flexbox.directionRow,
-      ...flexbox.justifySpaceBetween,
-      ...flexbox.alignCenter,
-      ...(isMobile ? flexbox.wrap : {})
+      ...(isSidePanel
+        ? {
+            flexDirection: 'column',
+            alignItems: 'stretch',
+            gap: SPACING_TY
+          }
+        : {
+            ...flexbox.directionRow,
+            ...flexbox.justifySpaceBetween,
+            ...flexbox.alignCenter,
+            ...(isMobile ? flexbox.wrap : {})
+          })
     },
     footerRightButtonsGroup: {
-      ...flexbox.directionRow,
-      ...flexbox.alignCenter,
-      ...(isMobile ? { flexShrink: 1 } : {})
+      ...(isSidePanel
+        ? {
+            flexDirection: 'column',
+            alignItems: 'stretch',
+            width: '100%',
+            gap: SPACING_TY
+          }
+        : {
+            ...flexbox.directionRow,
+            ...flexbox.alignCenter,
+            ...(isMobile ? { flexShrink: 1 } : {})
+          })
     },
     footerButton: {
       ...spacings.mb0,
-      ...(isMobile ? spacings.plTy : spacings.pl),
-      ...(isMobile ? spacings.prTy : spacings.prLg),
-      ...(isMobile ? { flexShrink: 1 } : {})
+      ...(isCompactFooter ? spacings.plTy : spacings.pl),
+      ...(isCompactFooter ? spacings.prTy : spacings.prLg),
+      ...(isCompactFooter ? { flexShrink: 1 } : {}),
+      ...(isSidePanel ? { width: '100%' } : {})
     }
   })
 

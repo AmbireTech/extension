@@ -23,6 +23,7 @@ import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import { setStringAsync } from '@common/utils/clipboard'
 import { openInTab } from '@common/utils/links'
+import { getUiType } from '@common/utils/uiType'
 import DelegationHumanization from '@web/components/DelegationHumanization'
 
 import {
@@ -36,6 +37,8 @@ import {
 import { getHumanizedCalls } from './humanizedHelpers'
 import getStyles from './styles'
 import { DisplayBalanceChange, Props, SubmittedAccountOpLike } from './types'
+
+const { isSidePanel } = getUiType()
 
 const SummaryDetails = ({
   submittedAccountOp,
@@ -276,13 +279,31 @@ const SummaryDetails = ({
         )}
         {!!modalFinalStatus && (
           <View style={[styles.modalConfirmedRow, spacings.mbSm]} testID="activity-confirmed-step">
-            <View style={[styles.modalStepRow, spacings.mbSm]}>
-              <Text appearance={modalFinalStatus.appearance} fontSize={16} weight="medium">
+            <View
+              style={[
+                styles.modalStepRow,
+                spacings.mbSm,
+                isSidePanel && { gap: SPACING_SM, flexWrap: 'wrap' }
+              ]}
+            >
+              <Text
+                appearance={modalFinalStatus.appearance}
+                fontSize={16}
+                weight="medium"
+                style={isSidePanel ? spacings.mrTy : undefined}
+              >
                 {modalFinalStatus.label}
               </Text>
               {submittedAccountOp.status === AccountOpStatus.Success && (
-                <View style={styles.modalStepRowRight}>
-                  <Text fontSize={14} appearance="secondaryText">
+                <View
+                  style={[styles.modalStepRowRight, isSidePanel && { flexShrink: 1, minWidth: 0 }]}
+                >
+                  <Text
+                    fontSize={14}
+                    appearance="secondaryText"
+                    numberOfLines={isSidePanel ? 1 : undefined}
+                    style={isSidePanel ? { flexShrink: 1 } : undefined}
+                  >
                     {submittedDate} on {getTruncatedNetworkName(network.name)}
                   </Text>
                   <NetworkIcon

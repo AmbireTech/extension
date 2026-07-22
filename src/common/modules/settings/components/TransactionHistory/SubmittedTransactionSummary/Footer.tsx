@@ -19,10 +19,13 @@ import useToast from '@common/hooks/useToast'
 import spacings from '@common/styles/spacings'
 import { setStringAsync } from '@common/utils/clipboard'
 import { openInTab } from '@common/utils/links'
+import { getUiType } from '@common/utils/uiType'
 
 import getStyles from './styles'
 import { EXPLORER_LINKS_DISABLED_TOOLTIP } from './constants'
 import { SubmittedAccountOpLike } from './types'
+
+const { isSidePanel } = getUiType()
 
 type Props = {
   network: Network
@@ -260,7 +263,7 @@ const Footer: FC<Props> = ({
               size="smaller"
               hasBottomSpacing={false}
               disabled={!canRepeatTransaction}
-              style={[styles.footerButton, spacings.mrTy]}
+              style={[styles.footerButton, !isSidePanel && spacings.mrTy]}
               childrenPosition="left"
             >
               {shouldShowSpeedUp ? (
