@@ -12,7 +12,7 @@ import HelpIcon from '@common/assets/svg/HelpIcon'
 import KeyStoreSettingsIcon from '@common/assets/svg/KeyStoreSettingsIcon'
 import NetworksIcon from '@common/assets/svg/NetworksIcon'
 // import PasswordRecoverySettingsIcon from '@common/assets/svg/PasswordRecoverySettingsIcon'
-// import PrivacyIcon from '@common/assets/svg/PrivacyIcon'
+import PrivacyIcon from '@common/assets/svg/PrivacyIcon'
 import SettingsIcon from '@common/assets/svg/SettingsIcon'
 // import SidebarSecurityIcon from '@common/assets/svg/SidebarSecurityIcon'
 // import SignedMessageIcon from '@common/assets/svg/SignedMessageIcon'
@@ -61,6 +61,12 @@ export const SETTINGS_LINKS = [
     Icon: KeyStoreSettingsIcon,
     label: 'Change app password',
     path: ROUTES.devicePasswordChange
+  },
+  {
+    key: 'opt-outs',
+    Icon: PrivacyIcon,
+    label: 'Privacy opt-outs',
+    path: ROUTES.optOuts
   }
   // {
   //   key: 'transactions',

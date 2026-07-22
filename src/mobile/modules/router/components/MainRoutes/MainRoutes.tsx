@@ -35,6 +35,7 @@ import AddressBookSettingsScreen from '@mobile/modules/settings/screens/AddressB
 import ChangeAppPasswordScreen from '@mobile/modules/settings/screens/ChangeAppPasswordScreen'
 import GeneralSettingsScreen from '@mobile/modules/settings/screens/GeneralSettingsScreen'
 import NetworksSettingsScreen from '@mobile/modules/settings/screens/NetworksSettingsScreen'
+import PrivacyOptOutsSettingsScreen from '@mobile/modules/settings/screens/PrivacyOptOutsSettingsScreen'
 import TermsSettingsScreen from '@mobile/modules/settings/screens/TermsSettingsScreen'
 import SwapAndBridgeScreen from '@mobile/modules/swap-and-bridge/screens/SwapAndBridgeScreen'
 import TokenDetailsScreen from '@mobile/modules/token-details/screens/TokenDetailsScreen'
@@ -87,6 +88,7 @@ const MainRoutes = () => {
           <Route path={ROUTES.addressBook} element={<AddressBookSettingsScreen />} />
           <Route path={ROUTES.devicePasswordChange} element={<ChangeAppPasswordScreen />} />
           <Route path={ROUTES.networksSettings} element={<NetworksSettingsScreen />} />
+          <Route path={ROUTES.optOuts} element={<PrivacyOptOutsSettingsScreen />} />
           <Route path={ROUTES.settingsAbout} element={<AboutSettingsScreen />} />
           <Route path={ROUTES.settingsTerms} element={<TermsSettingsScreen />} />
           <Route path={ROUTES.explore} element={<ExploreScreen />} />
