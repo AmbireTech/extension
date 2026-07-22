@@ -4,7 +4,6 @@ import { View } from 'react-native'
 
 import { TrendingToken } from '@ambire-common/interfaces/dapp'
 import { TokenResult } from '@ambire-common/libs/portfolio'
-import { getTokenAmount } from '@ambire-common/libs/portfolio/helpers'
 import OpenIcon from '@common/assets/svg/OpenIcon'
 import FooterGlassView from '@common/components/FooterGlassView'
 import LayoutWrapper from '@common/components/LayoutWrapper'
@@ -104,8 +103,6 @@ const TrendingTokenDetailsScreen = () => {
     [displayToken, networks]
   )
 
-  const isHeld = !!displayToken && getTokenAmount(displayToken) > 0n
-
   const [bindCoingeckoAnim, coingeckoAnimStyle] = useCustomHover({
     property: 'backgroundColor',
     values: { from: theme.secondaryBackground, to: theme.tertiaryBackground }
@@ -148,18 +145,17 @@ const TrendingTokenDetailsScreen = () => {
             change24h={formatted.change24h}
             change24hFormatted={formatted.change24hFormatted}
           />
-          {isHeld && (
-            <TokenBalanceCard
-              symbol={displayToken.symbol}
-              address={displayToken.address}
-              chainId={displayToken.chainId}
-              balance={formatted.balance}
-              balanceFormatted={formatted.balanceFormatted}
-              balanceUSDFormatted={formatted.balanceUSDFormatted}
-              change24h={formatted.change24h}
-              change24hFormatted={formatted.change24hFormatted}
-            />
-          )}
+          <TokenBalanceCard
+            symbol={displayToken.symbol}
+            address={displayToken.address}
+            chainId={displayToken.chainId}
+            uri={token.icon}
+            balance={formatted.balance}
+            balanceFormatted={formatted.balanceFormatted}
+            balanceUSDFormatted={formatted.balanceUSDFormatted}
+            change24h={formatted.change24h}
+            change24hFormatted={formatted.change24hFormatted}
+          />
           {chainId !== null && <TokenData token={displayToken} />}
           <AnimatedPressable
             {...bindCoingeckoAnim}

@@ -23,6 +23,9 @@ type TokenBalanceCardProps = Pick<
     isRewards?: boolean
     isVesting?: boolean
     containerStyle?: ViewStyle
+    // Fallback icon uri (e.g. the trending token icon) used when the token can't be
+    // resolved by address/chainId, so the balance icon matches the price display above.
+    uri?: string
   }
 
 const TokenBalanceCard = ({
@@ -37,7 +40,8 @@ const TokenBalanceCard = ({
   change24hFormatted,
   isRewards,
   isVesting,
-  containerStyle
+  containerStyle,
+  uri
 }: TokenBalanceCardProps) => {
   const { t } = useTranslation()
   const { styles, theme } = useTheme(getStyles)
@@ -56,6 +60,7 @@ const TokenBalanceCard = ({
           address={address}
           onGasTank={onGasTank}
           chainId={chainId}
+          uri={uri}
         />
         <View style={styles.tokenInfo}>
           <View style={[flexbox.directionRow, flexbox.alignCenter]}>
