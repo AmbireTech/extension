@@ -10,7 +10,7 @@ import FooterGlassView from '@common/components/FooterGlassView'
 import LayoutWrapper from '@common/components/LayoutWrapper'
 import ScrollableWrapper from '@common/components/ScrollableWrapper'
 import Text from '@common/components/Text'
-import { isMobile } from '@common/config/env'
+import { isMobile, isWeb } from '@common/config/env'
 import useController from '@common/hooks/useController'
 import { AnimatedPressable, useCustomHover } from '@common/hooks/useHover'
 import useRoute from '@common/hooks/useRoute'
@@ -119,7 +119,7 @@ const TrendingTokenDetailsScreen = () => {
 
   return (
     <LayoutWrapper>
-      <Header.Wrapper containerStyle={spacings.pbMd}>
+      <Header.Wrapper containerStyle={isWeb ? spacings.pbMd : undefined}>
         <Header.BackButton />
         <Header.Logo />
       </Header.Wrapper>
@@ -132,7 +132,7 @@ const TrendingTokenDetailsScreen = () => {
       ) : (
         <ScrollableWrapper
           // The bottom padding is because of the footer, to make sure the content is not hidden behind it.
-          contentContainerStyle={[spacings.phSm, { paddingBottom: 124 }]}
+          contentContainerStyle={[spacings.phSm, isWeb && { paddingBottom: 124 }]}
         >
           <HideTokenModal
             modalRef={hideTokenModalRef}
