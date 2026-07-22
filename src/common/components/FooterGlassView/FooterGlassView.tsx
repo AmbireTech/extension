@@ -5,7 +5,7 @@ import { useIsInsideBottomSheet } from '@common/components/BottomSheet/BottomShe
 import GlassView from '@common/components/GlassView'
 import { isMobile } from '@common/config/env'
 import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
-import { SPACING, SPACING_MI, SPACING_SM } from '@common/styles/spacings'
+import { SPACING, SPACING_MI, SPACING_SM, SPACING_TY } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { getUiType } from '@common/utils/uiType'
 
@@ -57,10 +57,22 @@ const FooterGlassView: FC<{
   const isInsideBottomSheet = useIsInsideBottomSheet()
   const { isCompactLayout } = useCompactActionRequestLayout()
   const isSidePanelBottomSheet = isSidePanel && isInsideBottomSheet
+  const isCompactSidePanelFooter = isSidePanel && isCompactLayout && !preferGlassFooter
   const shouldUseGlassPillFooter = isSidePanelBottomSheet && preferGlassFooter
-  const shouldUseCompactFlatFooter = isSidePanelBottomSheet && isCompactLayout && !preferGlassFooter
-  const shouldStretchFooter =
-    fullWidth ?? (isCompactLayout && !shouldUseGlassPillFooter)
+  const shouldUseCompactFlatFooter =
+    isCompactSidePanelFooter && (isInsideBottomSheet || fullWidth === true)
+  const shouldStretchFooter = shouldUseCompactFlatFooter || fullWidth === true
+  const compactSidePanelInnerStyle: ViewStyle | undefined = shouldUseCompactFlatFooter
+    ? {
+        width: '100%',
+        flexDirection: 'column',
+        alignItems: 'stretch',
+        gap: SPACING_TY,
+        paddingHorizontal: params[size].paddingHorizontal,
+        paddingVertical: params[size].paddingVertical,
+        pointerEvents: 'auto'
+      }
+    : undefined
 
   if (isMobile) {
     return (
@@ -92,15 +104,17 @@ const FooterGlassView: FC<{
       >
         <View
           style={[
-            flexbox.directionRow,
-            {
-              width: '100%',
-              gap: SPACING_MI,
-              paddingHorizontal: params[size].paddingHorizontal,
-              paddingVertical: params[size].paddingVertical,
-              pointerEvents: 'auto'
-            },
-            shouldStretchFooter ? { alignItems: 'stretch' } : flexbox.alignCenter,
+            compactSidePanelInnerStyle ?? [
+              flexbox.directionRow,
+              {
+                width: '100%',
+                gap: SPACING_MI,
+                paddingHorizontal: params[size].paddingHorizontal,
+                paddingVertical: params[size].paddingVertical,
+                pointerEvents: 'auto'
+              },
+              shouldStretchFooter ? { alignItems: 'stretch' } : flexbox.alignCenter
+            ],
             innerContainerStyle
           ]}
         >
@@ -120,7 +134,6 @@ const FooterGlassView: FC<{
         ...flexbox.center,
         zIndex: 3,
         pointerEvents: 'none',
-        ...(shouldStretchFooter ? { paddingHorizontal: SPACING_SM } : {}),
         ...style
       }}
     >
@@ -130,20 +143,19 @@ const FooterGlassView: FC<{
         borderRadius={Number(params[size].borderRadius)}
         cssStyle={{
           pointerEvents: 'all',
-          ...(shouldStretchFooter ? { width: '100%' } : { width: 'fit-content', alignSelf: 'center' }),
+          width: 'fit-content',
+          alignSelf: 'center',
           ...(glassViewProps?.cssStyle || {})
         }}
       >
         <View
           style={[
             flexbox.directionRow,
+            flexbox.alignCenter,
             {
               paddingHorizontal: params[size].paddingHorizontal,
               paddingVertical: params[size].paddingVertical
             },
-            shouldStretchFooter
-              ? { width: '100%', gap: SPACING_MI, alignItems: 'stretch' }
-              : flexbox.alignCenter,
             innerContainerStyle
           ]}
         >
