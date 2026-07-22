@@ -1,6 +1,6 @@
 import { StyleSheet, ViewStyle } from 'react-native'
 
-import { isWeb } from '@common/config/env'
+import { isMobile, isWeb } from '@common/config/env'
 import spacings, { SPACING_TY } from '@common/styles/spacings'
 import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
@@ -9,7 +9,8 @@ interface Style {
   accountContainer: ViewStyle
 }
 
-export const ACCOUNT_SELECT_ACCOUNT_HEIGHT = 57
+// Mobile stacks name / address / balance+badges on three rows, so it needs more height
+export const ACCOUNT_SELECT_ACCOUNT_HEIGHT = isMobile ? 88 : 57
 export const ACCOUNT_SELECT_ACCOUNT_MB = SPACING_TY
 
 const getStyles = () =>

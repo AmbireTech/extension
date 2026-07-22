@@ -1,11 +1,9 @@
-import { BlurView } from 'expo-blur'
-import { CameraView, scanFromURLAsync } from 'expo-camera'
+import { scanFromURLAsync } from 'expo-camera'
 import * as ImagePicker from 'expo-image-picker'
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { AppState, LayoutChangeEvent, Linking, Pressable, StyleSheet, View } from 'react-native'
+import { AppState, Linking, Pressable, View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
-import Svg, { Defs, Mask, Rect } from 'react-native-svg'
 
 import EditPenIcon from '@common/assets/svg/EditPenIcon'
 import GalleryIcon from '@common/assets/svg/GalleryIcon'
@@ -18,17 +16,15 @@ import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import spacings, { SPACING_SM } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
+import CameraScanner from '@mobile/components/CameraScanner'
 import {
   MobileLayoutContainer,
   MobileLayoutWrapperMainContent
 } from '@mobile/components/MobileLayoutWrapper'
 import useWalletConnect from '@mobile/modules/wallet-connect/hooks/useWalletConnect'
-import MaskedView from '@react-native-masked-view/masked-view'
-
-import getStyles, { CORNER_RADIUS, SCAN_FRAME_SIZE } from './styles'
 
 const QrReaderScreen = () => {
-  const { theme, styles } = useTheme(getStyles)
+  const { theme } = useTheme()
   const { goBack } = useNavigation()
   const { t } = useTranslation()
   const { addToast } = useToast()
@@ -40,23 +36,12 @@ const QrReaderScreen = () => {
   } = useWalletConnect()
   const permissionGranted = !!permission?.granted
   const isProcessingRef = useRef(false)
-  const [containerSize, setContainerSize] = useState<{ width: number; height: number } | null>(null)
   const {
     ref: manualEntrySheetRef,
     open: openManualEntrySheet,
     close: closeManualEntrySheet
   } = useModalize()
   const [manualValue, setManualValue] = useState('')
-  const [galleryPermission, requestGalleryPermission] = ImagePicker.useMediaLibraryPermissions()
-  const galleryRequestedRef = useRef(false)
-
-  const frameTop = containerSize ? (containerSize.height - SCAN_FRAME_SIZE) / 2 : 0
-  const frameLeft = containerSize ? (containerSize.width - SCAN_FRAME_SIZE) / 2 : 0
-
-  const handleLayout = useCallback((event: LayoutChangeEvent) => {
-    const { width, height } = event.nativeEvent.layout
-    setContainerSize({ width, height })
-  }, [])
 
   useEffect(() => {
     if (permission && !permission.granted && permission.canAskAgain) {
@@ -70,12 +55,9 @@ const QrReaderScreen = () => {
       if (permission && !permission.granted) {
         void requestPermission()
       }
-      if (galleryRequestedRef.current && galleryPermission && !galleryPermission.granted) {
-        void requestGalleryPermission()
-      }
     })
     return () => subscription.remove()
-  }, [permission, requestPermission, galleryPermission, requestGalleryPermission])
+  }, [permission, requestPermission])
 
   const handleOpenSettings = useCallback(() => {
     void Linking.openSettings()
@@ -107,10 +89,9 @@ const QrReaderScreen = () => {
     [pair, isWcInitialized, addToast, t, goBack]
   )
 
-  const handleBarcodeScanned = useCallback(
-    (event: { data: string }) => {
+  const handleScan = useCallback(
+    (value: string) => {
       if (isProcessingRef.current) return
-      const value = event.data
       if (!value) return
       isProcessingRef.current = true
       void handleScannedValue(value)
@@ -136,17 +117,8 @@ const QrReaderScreen = () => {
   }, [closeManualEntrySheet])
 
   const handleGalleryPress = useCallback(async () => {
-    galleryRequestedRef.current = true
-    if (!galleryPermission?.granted) {
-      if (!galleryPermission || galleryPermission.canAskAgain) {
-        const result = await requestGalleryPermission()
-        if (!result.granted) return
-      } else {
-        void Linking.openSettings()
-        return
-      }
-    }
-
+    // Uses the Android Photo Picker / iOS picker, which grants one-time access to the selected
+    // image without requiring a persistent media-library permission.
     const pickerResult = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ['images'],
       allowsEditing: false,
@@ -166,7 +138,7 @@ const QrReaderScreen = () => {
     } catch {
       addToast(t('The image does not contain a valid QR code for connection.'), { type: 'error' })
     }
-  }, [galleryPermission, requestGalleryPermission, addToast, t, handleScannedValue])
+  }, [addToast, t, handleScannedValue])
 
   const rightIcon = permissionGranted ? (
     <Pressable onPress={handleGalleryPress} hitSlop={12}>
@@ -207,83 +179,8 @@ const QrReaderScreen = () => {
         style={spacings.ph0}
       >
         {permissionGranted ? (
-          <View
-            onLayout={handleLayout}
-            style={[
-              flexbox.flex1,
-              {
-                marginHorizontal: -SPACING_SM,
-                position: 'relative',
-                overflow: 'hidden',
-                backgroundColor: 'transparent'
-              }
-            ]}
-          >
-            {/* Corner markers */}
-            <View style={[StyleSheet.absoluteFill, flexbox.flex1, flexbox.center, { zIndex: 200 }]}>
-              <View style={styles.scanFrame} pointerEvents="none">
-                <View style={[styles.corner, styles.cornerTopLeft]} />
-                <View style={[styles.corner, styles.cornerTopRight]} />
-                <View style={[styles.corner, styles.cornerBottomLeft]} />
-                <View style={[styles.corner, styles.cornerBottomRight]} />
-              </View>
-            </View>
-
-            {/* Blur overlay with rounded hole using MaskedView */}
-            {containerSize && (
-              <MaskedView
-                style={[StyleSheet.absoluteFill, { zIndex: 100 }]}
-                maskElement={
-                  <Svg
-                    width={containerSize.width}
-                    height={containerSize.height}
-                    viewBox={`0 0 ${containerSize.width} ${containerSize.height}`}
-                  >
-                    <Defs>
-                      <Mask id="hole">
-                        {/* White = visible (blur shows) */}
-                        <Rect
-                          x="0"
-                          y="0"
-                          width={containerSize.width}
-                          height={containerSize.height}
-                          fill="white"
-                        />
-                        {/* Black = hidden (hole where camera shows through) */}
-                        <Rect
-                          x={frameLeft}
-                          y={frameTop}
-                          width={SCAN_FRAME_SIZE}
-                          height={SCAN_FRAME_SIZE}
-                          rx={CORNER_RADIUS}
-                          ry={CORNER_RADIUS}
-                          fill="black"
-                        />
-                      </Mask>
-                    </Defs>
-                    <Rect
-                      x="0"
-                      y="0"
-                      width={containerSize.width}
-                      height={containerSize.height}
-                      fill="white"
-                      mask="url(#hole)"
-                    />
-                  </Svg>
-                }
-              >
-                <BlurView intensity={60} tint="dark" style={StyleSheet.absoluteFill} />
-              </MaskedView>
-            )}
-
-            <CameraView
-              style={[StyleSheet.absoluteFill]}
-              facing="back"
-              barcodeScannerSettings={{
-                barcodeTypes: ['qr']
-              }}
-              onBarcodeScanned={handleBarcodeScanned}
-            />
+          <View style={[flexbox.flex1, { marginHorizontal: -SPACING_SM }]}>
+            <CameraScanner onScan={handleScan} />
           </View>
         ) : (
           <View style={[flexbox.flex1, flexbox.center, spacings.phLg]}>

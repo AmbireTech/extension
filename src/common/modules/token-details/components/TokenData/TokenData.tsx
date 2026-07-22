@@ -2,7 +2,6 @@ import { FC, memo, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 
-import { TokenResult } from '@ambire-common/libs/portfolio'
 import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
 import shortenAddress from '@ambire-common/utils/shortenAddress'
 import OpenIcon from '@common/assets/svg/OpenIcon'
@@ -20,6 +19,7 @@ import { openInTab } from '@common/utils/links'
 
 import TokenDetailsTitle from '../Title'
 
+import type { TokenResult } from '@ambire-common/libs/portfolio'
 type Props = {
   token: TokenResult
 }

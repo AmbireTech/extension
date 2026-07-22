@@ -1,26 +1,35 @@
-import React, { useMemo } from 'react'
+import React, { lazy, Suspense, useMemo } from 'react'
 import { View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 
 import { Network } from '@ambire-common/interfaces/network'
+import SkeletonLoader from '@common/components/SkeletonLoader'
 import useController from '@common/hooks/useController'
 import { AnimatedPressable, useMultiHover } from '@common/hooks/useHover'
 import useTheme from '@common/hooks/useTheme'
-import { sizeMultiplier } from '@common/modules/sign-account-op/components/TransactionSummary'
+import { sizeMultiplier } from '@common/modules/sign-account-op/components/TransactionSummary/sizeMultiplier'
 import spacings, { SPACING_SM } from '@common/styles/spacings'
 import { getUiType } from '@common/utils/uiType'
 
-import {
-  getDappInteractions,
-  getSummaryBalanceChanges,
-  getVisibleSummaryBalanceChanges,
-  MAX_VISIBLE_BALANCE_CHANGES
-} from './helpers'
 import getStyles from './styles'
 import SummaryDetailsSheet from './SummaryDetailsSheet'
 import SummaryHeader from './SummaryHeader'
-import SummaryPreview from './SummaryPreview'
 import { Props } from './types'
+
+// Single import closure reused for both the lazy component and the preloader, so warming
+// the chunk (see preloadSummaryPreview) hits the exact same webpack chunk instead of
+// producing a duplicate.
+const importSummaryPreview = () => import('./SummaryPreview')
+const SummaryPreview = lazy(importSummaryPreview)
+
+// Kicks off the humanizer-carrying chunk before the rows mount (e.g. while the activity
+// list is still fetching its data), so the full-row skeleton below is skipped in the
+// common case.
+export const preloadSummaryPreview = importSummaryPreview
+
+// Matches ActivityPositionsSkeleton's row height so the loading state is visually seamless
+// and the whole row swaps to its final content in one step (no intra-row layout shift).
+const ROW_SKELETON_HEIGHT = 96
 
 const { isTab } = getUiType()
 
@@ -38,23 +47,6 @@ const SubmittedTransactionSummaryInner = ({
   const network: Network | undefined = useMemo(
     () => networks.find((n) => n.chainId === submittedAccountOp.chainId),
     [networks, submittedAccountOp.chainId]
-  )
-  const orderedBalanceChanges = useMemo(
-    () => getSummaryBalanceChanges(submittedAccountOp),
-    [submittedAccountOp]
-  )
-  const visibleBalanceChanges = useMemo(
-    () => getVisibleSummaryBalanceChanges(orderedBalanceChanges),
-    [orderedBalanceChanges]
-  )
-  const hiddenBalanceChangesCount = Math.max(
-    orderedBalanceChanges.length - MAX_VISIBLE_BALANCE_CHANGES,
-    0
-  )
-  const shouldShowBalanceChangesSummary = orderedBalanceChanges.length > 0
-  const dappInteractions = useMemo(
-    () => getDappInteractions(submittedAccountOp),
-    [submittedAccountOp]
   )
 
   const handleOpenDetails = () => {
@@ -75,37 +67,35 @@ const SubmittedTransactionSummaryInner = ({
 
   return (
     <>
-      <AnimatedPressable
-        onPress={handleOpenDetails}
-        style={[
-          styles.container,
-          style,
-          {
-            paddingTop: SPACING_SM * sizeMultiplier[size]
-          },
-          animStyle
-        ]}
-        {...bindAnim}
+      <Suspense
+        fallback={<SkeletonLoader width="100%" height={ROW_SKELETON_HEIGHT} style={style} />}
       >
-        <SummaryHeader submittedAccountOp={submittedAccountOp} network={network} size={size} />
-        <View
+        <AnimatedPressable
+          onPress={handleOpenDetails}
           style={[
-            spacings.mvSm,
-            spacings.mhSm,
+            styles.container,
+            style,
             {
-              height: 1,
-              backgroundColor: theme.secondaryBorder
-            }
+              paddingTop: SPACING_SM * sizeMultiplier[size]
+            },
+            animStyle
           ]}
-        />
-        <SummaryPreview
-          submittedAccountOp={submittedAccountOp}
-          dappInteractions={dappInteractions}
-          visibleBalanceChanges={visibleBalanceChanges}
-          hiddenBalanceChangesCount={hiddenBalanceChangesCount}
-          shouldShowBalanceChangesSummary={shouldShowBalanceChangesSummary}
-        />
-      </AnimatedPressable>
+          {...bindAnim}
+        >
+          <SummaryHeader submittedAccountOp={submittedAccountOp} network={network} size={size} />
+          <View
+            style={[
+              spacings.mvSm,
+              spacings.mhSm,
+              {
+                height: 1,
+                backgroundColor: theme.secondaryBorder
+              }
+            ]}
+          />
+          <SummaryPreview submittedAccountOp={submittedAccountOp} />
+        </AnimatedPressable>
+      </Suspense>
       <SummaryDetailsSheet
         sheetRef={sheetRef}
         closeBottomSheet={closeBottomSheet}

@@ -6,6 +6,7 @@ import { Key } from '@ambire-common/interfaces/keystore'
 import CheckIcon from '@common/assets/svg/CheckIcon'
 import NoEntryIcon from '@common/assets/svg/NoEntryIcon/NoEntryIcon'
 import Text from '@common/components/Text'
+import { isMobile } from '@common/config/env'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import { default as flexbox } from '@common/styles/utils/flexbox'
@@ -63,7 +64,7 @@ const SafeKeyWrapper = ({
   return (
     <View style={style}>
       <View style={[flexbox.directionRow, flexbox.alignCenter, isDisabled && { opacity: 0.6 }]}>
-        <View style={flexbox.flex1}>{children}</View>
+        <View style={[flexbox.flex1, { minWidth: 0 }]}>{children}</View>
         {hasSigned && (
           <CheckIcon color={theme.success300} style={styles.icon} width={18} height={18} />
         )}
@@ -74,7 +75,7 @@ const SafeKeyWrapper = ({
             text={t('Sign')}
             onPress={() => onSign(addr, type)}
             size="tiny"
-            style={[styles.icon, { minWidth: 60 }]}
+            style={[styles.icon, { minWidth: 60 }, isMobile && { height: 40 }]}
           />
         )}
         {isDisabled && !hasSigned && <NoEntryIcon width={18} height={18} style={styles.icon} />}

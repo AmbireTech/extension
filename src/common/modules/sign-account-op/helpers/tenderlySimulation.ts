@@ -7,11 +7,10 @@ import { DEPLOYLESS_SIMULATION_FROM } from '@ambire-common/consts/deploy'
 import { execTransactionAbi } from '@ambire-common/consts/safe'
 import { getSpoof } from '@ambire-common/libs/account/account'
 import { getSignableCalls } from '@ambire-common/libs/accountOp/accountOp'
-import { getSafeTxn } from '@ambire-common/libs/safe/safe'
+import { getSafeTxn } from '@ambire-common/libs/safe/helpers'
 
 import type { AccountOnchainState } from '@ambire-common/interfaces/account'
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
-
 type SignAccountOpState = AllControllersMappingType['SignAccountOpController'] | null
 
 type GetTenderlySimulationLinkProps = {

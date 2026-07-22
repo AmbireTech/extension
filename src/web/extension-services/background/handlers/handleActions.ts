@@ -5,10 +5,10 @@ import wait from '@ambire-common/utils/wait'
 import { Action, MethodAction } from '@common/types/actions'
 import { browser } from '@web/constants/browserapi'
 import { Port, PortMessenger } from '@web/extension-services/messengers'
+import LedgerKeyIterator from '@common/modules/hardware-wallet/libs/ledgerKeyIterator'
 import LatticeKeyIterator from '@web/modules/hardware-wallet/libs/latticeKeyIterator'
-import LedgerKeyIterator from '@web/modules/hardware-wallet/libs/ledgerKeyIterator'
-import QrKeyIterator from '@web/modules/hardware-wallet/libs/qrKeyIterator/qrKeyIterator'
-import TrezorKeyIterator from '@web/modules/hardware-wallet/libs/trezorKeyIterator'
+import QrKeyIterator from '@common/modules/hardware-wallets/libs/qrKeyIterator/qrKeyIterator'
+import TrezorKeyIterator from '@common/modules/hardware-wallet/libs/trezorKeyIterator'
 
 import sessionStorage from '../webapi/sessionStorage'
 
@@ -61,6 +61,11 @@ export const handleActions = async (
         currentRoute: params.route,
         searchParams: params.searchParams
       })
+      break
+    }
+    case 'SET_VIEW_FOCUS': {
+      if (!port) return
+      mainCtrl.ui.emitViewFocus(port.id)
       break
     }
     case 'GET_ALL_CONTROLLER_NAMES': {

@@ -16,7 +16,7 @@ jest.mock('@ambire-common/libs/account/account', () => ({ getSpoof: jest.fn() })
 jest.mock('@ambire-common/libs/accountOp/accountOp', () => ({ getSignableCalls: jest.fn() }), {
   virtual: true
 })
-jest.mock('@ambire-common/libs/safe/safe', () => ({ getSafeTxn: jest.fn() }), {
+jest.mock('@ambire-common/libs/safe/helpers', () => ({ getSafeTxn: jest.fn() }), {
   virtual: true
 })
 

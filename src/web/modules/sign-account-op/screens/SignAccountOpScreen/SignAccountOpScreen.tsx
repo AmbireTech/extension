@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { NativeScrollEvent, ScrollView, View } from 'react-native'
 
-import { SigningStatus } from '@ambire-common/controllers/signAccountOp/signAccountOp'
+import { SigningStatus } from '@ambire-common/interfaces/signAccountOp'
 import { Key } from '@ambire-common/interfaces/keystore'
 import { CallsUserRequest } from '@ambire-common/interfaces/userRequest'
 import Alert from '@common/components/Alert'
@@ -111,7 +111,7 @@ const SignAccountOpScreen = () => {
     extremeGasFeeSignButtonType,
     shouldHoldToProceed,
     shouldDisplayQrSigningModal,
-    handleQrSingingFlowOnContinuePressed,
+    handleQrSigningFlowOnContinuePressed,
     handleQrSigningFlowSubmitSignatureResponse,
     handleQrSigningFlowOnClosePressed,
     handleQrSigningFlowOnRejectPressed,
@@ -207,7 +207,7 @@ const SignAccountOpScreen = () => {
         currentRequest={currentRequest}
         signingStep={signingStep}
         shouldDisplayQrSigningModal={shouldDisplayQrSigningModal}
-        handleQrSingingFlowOnContinuePressed={handleQrSingingFlowOnContinuePressed}
+        handleQrSigningFlowOnContinuePressed={handleQrSigningFlowOnContinuePressed}
         handleQrSigningFlowSubmitSignatureResponse={handleQrSigningFlowSubmitSignatureResponse}
         handleQrSigningFlowOnClosePressed={handleQrSigningFlowOnClosePressed}
         handleQrSigningFlowOnRejectPressed={handleQrSigningFlowOnRejectPressed}

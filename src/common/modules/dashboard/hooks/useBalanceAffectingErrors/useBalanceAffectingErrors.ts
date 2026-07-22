@@ -10,7 +10,7 @@ const useBalanceAffectingErrors = () => {
   const {
     state: { balanceAffectingErrors, portfolio }
   } = useController('SelectedAccountController')
-  const { areNetworksFetchingFromRelayer } = useController('NetworksController').state
+  const { allNetworks, areNetworksFetchingFromRelayer } = useController('NetworksController').state
   // While the networks config is being refreshed from the relayer, the balance is
   // held in a loading (skeleton) state and any updated RPC will trigger a portfolio
   // reload. Suppress balance-affecting warnings during this window so the user
@@ -28,15 +28,26 @@ const useBalanceAffectingErrors = () => {
     SelectedAccountBalanceError[]
   >([])
 
+  const colibriWarningNetworkNames = useMemo(() => {
+    if (portfolio.verification?.provider !== 'colibri') return []
+    if (portfolio.verification.status !== 'warning') return []
+
+    return portfolio.verification.failedChains.map((chainId) => {
+      const network = allNetworks.find((n) => n.chainId.toString() === chainId)
+
+      return network?.name || chainId
+    })
+  }, [allNetworks, portfolio.verification])
+
   const networksWithErrors = useMemo(() => {
     if (areNetworksFetchingFromRelayer) return []
 
     const allNetworkNames = balanceAffectingErrors.flatMap((banner) => banner.networkNames)
 
-    const uniqueNetworkNames = [...new Set(allNetworkNames)]
+    const uniqueNetworkNames = [...new Set([...allNetworkNames, ...colibriWarningNetworkNames])]
 
     return uniqueNetworkNames
-  }, [areNetworksFetchingFromRelayer, balanceAffectingErrors])
+  }, [areNetworksFetchingFromRelayer, balanceAffectingErrors, colibriWarningNetworkNames])
 
   const warningMessage = useMemo(() => {
     if (areNetworksFetchingFromRelayer) return undefined
@@ -57,6 +68,15 @@ const useBalanceAffectingErrors = () => {
 
     if (isOffline && portfolio.isAllReady) return t('Please check your internet connection.')
 
+    if (
+      portfolio.verification?.provider === 'colibri' &&
+      portfolio.verification.status === 'stale'
+    ) {
+      return t("Stale RPC, {{blockDiff}} blocks behind Colibri's latest block", {
+        blockDiff: portfolio.verification.blockDiff
+      })
+    }
+
     if (balanceAffectingErrors.length) {
       if (balanceAffectingErrors.length === 1 && balanceAffectingErrors[0]) {
         return t(balanceAffectingErrors[0].title)
@@ -70,19 +90,27 @@ const useBalanceAffectingErrors = () => {
       )
     }
 
+    if (colibriWarningNetworkNames.length) {
+      return t("Colibri couldn't verify the balances on {{chains}}", {
+        chains: colibriWarningNetworkNames.join(', ')
+      })
+    }
+
     return undefined
   }, [
     areNetworksFetchingFromRelayer,
     balanceAffectingErrors,
+    colibriWarningNetworkNames,
     isLoadingTakingTooLong,
     isOffline,
     networksWithErrors,
     portfolio.isAllReady,
+    portfolio.verification,
     t
   ])
 
   const onIconPress = useCallback(() => {
-    if (isLoadingTakingTooLong || isOffline) {
+    if (isLoadingTakingTooLong || isOffline || !balanceAffectingErrors.length) {
       return
     }
 

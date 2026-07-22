@@ -3,11 +3,14 @@ import { Animated, ScrollView, TouchableOpacity, View } from 'react-native'
 import { SvgProps } from 'react-native-svg'
 
 import DiagonalRightArrowIcon from '@common/assets/svg/DiagonalRightArrowIcon'
+import LedgerLetterIcon from '@common/assets/svg/LedgerLetterIcon'
 import PrivateKeyIcon from '@common/assets/svg/PrivateKeyIcon'
 import RightArrowIcon from '@common/assets/svg/RightArrowIcon'
+import SafeIcon from '@common/assets/svg/SafeIcon'
+import ScanIcon from '@common/assets/svg/ScanIcon'
 import SeedPhraseIcon from '@common/assets/svg/SeedPhraseIcon'
+import TrezorLockIcon from '@common/assets/svg/TrezorLockIcon'
 import Button from '@common/components/Button'
-import Panel from '@common/components/Panel'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
 import useTheme from '@common/hooks/useTheme'
@@ -56,6 +59,34 @@ const ImportExistingAccountSelectorScreen = () => {
           goToNextRoute(ROUTES.importSeedPhrase)
         },
         icon: SeedPhraseIcon
+      },
+      {
+        title: 'Safe',
+        onPress: () => {
+          goToNextRoute(ROUTES.safeImport)
+        },
+        icon: SafeIcon
+      },
+      {
+        title: 'Ledger',
+        onPress: () => {
+          goToNextRoute(ROUTES.ledgerConnect)
+        },
+        icon: LedgerLetterIcon
+      },
+      {
+        title: 'Trezor',
+        onPress: () => {
+          goToNextRoute(ROUTES.trezorConnect)
+        },
+        icon: TrezorLockIcon
+      },
+      {
+        title: 'QR-based',
+        onPress: () => {
+          goToNextRoute(ROUTES.qrConnect)
+        },
+        icon: ScanIcon
       }
     ],
     [goToNextRoute]

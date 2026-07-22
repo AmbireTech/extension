@@ -7,7 +7,7 @@ import { useModalize } from 'react-native-modalize'
 import { Contact } from '@ambire-common/interfaces/addressBook'
 import { AddressState } from '@ambire-common/interfaces/domains'
 import { AddressPoisoningMatch } from '@ambire-common/interfaces/transfer'
-import { TokenResult } from '@ambire-common/libs/portfolio'
+import { getSearchableNames } from '@ambire-common/services/nameResolvers'
 import { validateAddress, Validation } from '@ambire-common/services/validations'
 import { getAddressFromAddressState } from '@ambire-common/utils/domains'
 import AddressBookIcon from '@common/assets/svg/AddressBookIcon'
@@ -41,12 +41,14 @@ import { ItemPanel } from '@web/components/TransactionsScreen'
 
 import styles from './styles'
 
+import type { TokenResult } from '@ambire-common/libs/portfolio'
 interface Props extends InputProps {
   setAddress: (text: string) => void
   address: string
   resolvedAddress: AddressState['resolvedAddress']
   resolvedAddressType: AddressState['resolvedAddressType']
   addressValidationMsg: string
+  domainVerificationMessage?: string
   isRecipientHumanizerKnownTokenOrSmartContract: boolean
   isRecipientAddressUnknown: boolean
   validation: Validation
@@ -156,6 +158,7 @@ const SelectedMenuOption: React.FC<{
         // because highlight rendering lives in the detailed address row.
         withDetails={type === 'selected-menu-option' || (isMobile && !!addressHighlight)}
         onChangeText={setAddress}
+        onScanAddress={type === 'input' ? setAddress : undefined}
         disabled={disabled}
         editable={!isButtonMode}
         pointerEvents={isButtonMode ? 'none' : 'auto'}
@@ -185,7 +188,13 @@ const SelectedMenuOption: React.FC<{
           }
         }}
         inputWrapperStyle={type === 'input' ? { backgroundColor: theme.neutral400 } : undefined}
-        buttonStyle={{ ...spacings.pv0, ...spacings.ph, ...spacings.mr0, ...spacings.ml0 }}
+        buttonStyle={{
+          ...spacings.pv0,
+          ...spacings.pl,
+          ...spacings.prTy,
+          ...spacings.mr0,
+          ...spacings.ml0
+        }}
       />
     ),
     [
@@ -222,6 +231,7 @@ const Recipient: React.FC<Props> = ({
   resolvedAddress,
   resolvedAddressType,
   addressValidationMsg,
+  domainVerificationMessage,
   isRecipientHumanizerKnownTokenOrSmartContract,
   isRecipientAddressUnknown,
   validation,
@@ -258,7 +268,7 @@ const Recipient: React.FC<Props> = ({
         contact,
         name: contact.name.toLowerCase(),
         address: contact.address.toLowerCase(),
-        domain: domains[contact.address]?.ens?.toLowerCase().trim() || ''
+        domain: getSearchableNames(domains[contact.address]?.names)
       })),
     [contacts, domains]
   )
@@ -395,6 +405,7 @@ const Recipient: React.FC<Props> = ({
         isRecipientAddressUnknown={isRecipientAddressUnknown}
         isRecipientAddressSameAsSender={actualAddress === account?.addr}
         addressValidationMsg={addressValidationMsg}
+        domainVerificationMessage={domainVerificationMessage}
         onAddToAddressBookPress={openBottomSheet}
       />
     ),
@@ -404,6 +415,7 @@ const Recipient: React.FC<Props> = ({
       actualAddress,
       account,
       addressValidationMsg,
+      domainVerificationMessage,
       openBottomSheet
     ]
   )

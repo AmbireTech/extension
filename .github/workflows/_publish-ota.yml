@@ -1,0 +1,132 @@
+name: The reusable (common) OTA publish steps
+
+on:
+  workflow_call:
+    inputs:
+      platform:
+        description: Target platform (ios or android)
+        required: true
+        type: string
+      runner:
+        description: GitHub runner (macos-15 for ios, ubuntu-latest for android) - matches the store build for bundle parity
+        required: true
+        type: string
+      release_note:
+        description: Release note for the Stallion console. Optional - defaults to "OTA release for v<version> (<sha>)".
+        required: false
+        type: string
+      bypass_guardrail:
+        description: Skip the native-change guardrail (use only when certain there are no native changes since the live build)
+        required: false
+        default: false
+        type: boolean
+
+jobs:
+  publish-ota:
+    name: Publish OTA bundle (${{ inputs.platform }})
+    environment: extension-production
+    runs-on: ${{ inputs.runner }}
+    concurrency:
+      group: ${{ github.workflow }}-${{ inputs.platform }}-${{ github.ref }}
+
+    steps:
+      - name: Checkout code 🛎️
+        uses: actions/checkout@v6
+        with:
+          # Full history + tags so the guardrail can resolve the latest release tag.
+          fetch-depth: 0
+          fetch-tags: true
+
+      # An OTA only swaps JS; it must stay compatible with the installed native binary.
+      - name: Guardrail — block OTA when native code changed since the live build
+        env:
+          BYPASS: ${{ inputs.bypass_guardrail }}
+        run: |
+          set -euo pipefail
+          if [ "$BYPASS" = "true" ]; then
+            echo "::warning::OTA guardrail BYPASSED via workflow input — make sure there are NO native changes since the live build."
+            exit 0
+          fi
+          # Native baseline = the latest release tag reachable from HEAD (e.g. v6.13.0),
+          # i.e. the commit the currently-installed binary was built from.
+          BASE_TAG="$(git describe --tags --abbrev=0 --match 'v*' HEAD 2>/dev/null || true)"
+          if [ -z "$BASE_TAG" ]; then
+            echo "::error::No release tag (v*) found in history — cannot determine the native baseline. Tag the release, or re-run with the bypass option if you are sure."
+            exit 1
+          fi
+          # These paths are the source of truth for the native binary in a bare workflow:
+          # ios/ + android/ (native code, deps, config) plus the build-toolchain pins that live
+          # at the repo root (xcode/ruby/cocoapods for iOS, java for Android, node for bundling).
+          # JS-only changes (src/, ambire-common, the webpack webview bundle) never touch them.
+          # app.json is intentionally excluded: in a bare workflow it is not consumed at build
+          # time (only `expo prebuild` reads it, which we do not run) - ios/ and android/ are.
+          # The Android gradle wrapper lives inside android/, so it is already covered.
+          NATIVE_PATHS="ios android .xcode-version .ruby-version Gemfile Gemfile.lock .java-version .nvmrc"
+          # shellcheck disable=SC2086
+          CHANGED="$(git diff --name-only "$BASE_TAG" HEAD -- $NATIVE_PATHS)"
+          if [ -n "$CHANGED" ]; then
+            echo "::error::Native-affecting changes since $BASE_TAG — an OTA would be incompatible with installed binaries. Ship a full store build instead (or re-run with the bypass option if you are certain)."
+            echo "Changed native files:"
+            echo "$CHANGED"
+            exit 1
+          fi
+          echo "No native changes since $BASE_TAG — OTA is safe to publish."
+        shell: bash
+
+      - name: Add SSH key to checkout a private repo
+        uses: webfactory/ssh-agent@v0.9.1
+        with:
+          ssh-private-key: ${{ secrets.DEPLOY_KEY }}
+
+      - name: Git submodules init
+        run: git submodule init
+        shell: bash
+
+      - name: Git submodules update
+        run: git submodule update
+        shell: bash
+
+      - name: Install Node.js ⚙️
+        uses: actions/setup-node@v6
+        with:
+          node-version-file: .nvmrc
+
+      - name: Install JS dependencies
+        run: yarn setup:ci
+        shell: bash
+
+      - name: Build OTA bundle and publish to Stallion
+        env:
+          # Same build-time env as the store build so the OTA bundle inlines identical config.
+          # Force production React/Metro bundle in CI (avoids dev/prod mismatch with NODE_ENV undefined)
+          NODE_ENV: production
+          RELAYER_URL: ${{ vars.RELAYER_URL }}
+          VELCRO_URL: ${{ vars.VELCRO_URL }}
+          REACT_APP_PIMLICO_API_KEY: ${{ vars.REACT_APP_PIMLICO_API_KEY }}
+          REACT_APP_ETHERSPOT_API_KEY: ${{ vars.REACT_APP_ETHERSPOT_API_KEY }}
+          REACT_APP_CANDIDE_API_KEY: ${{ vars.REACT_APP_CANDIDE_API_KEY }}
+          REACT_APP_GELATO_API_KEY: ${{ vars.REACT_APP_GELATO_API_KEY }}
+          NFT_CDN_URL: ${{ vars.NFT_CDN_URL }}
+          LEGENDS_NFT_ADDRESS: ${{ vars.LEGENDS_NFT_ADDRESS }}
+          LI_FI_API_KEY: ${{ vars.LI_FI_API_KEY }}
+          BUNGEE_API_KEY: ${{ vars.BUNGEE_API_KEY }}
+          SQUID_INTEGRATOR_ID: ${{ vars.SQUID_INTEGRATOR_ID }}
+          UNISWAP_API_KEY: ${{ vars.UNISWAP_API_KEY }}
+          SAFE_API_KEY: ${{ vars.SAFE_API_KEY }}
+          WALLETCONNECT_PROJECT_ID: ${{ vars.WALLETCONNECT_PROJECT_ID }}
+          # Stallion CI auth - there is no interactive `stallion login` in CI.
+          STALLION_CI_TOKEN: ${{ secrets.STALLION_CI_TOKEN }}
+          # Private signing key (base64 secret) - signs the OTA so signed app builds accept it.
+          STALLION_PRIVATE_SIGNING_KEY_BASE_64: ${{ secrets.STALLION_PRIVATE_SIGNING_KEY_BASE_64 }}
+          # Passed via env (not interpolated into the command) to avoid shell injection.
+          RELEASE_NOTE_INPUT: ${{ inputs.release_note }}
+        run: |
+          set -euo pipefail
+          NOTE="${RELEASE_NOTE_INPUT:-}"
+          if [ -z "$NOTE" ]; then
+            VERSION="$(node -e "const a=require('./app.json');process.stdout.write(String((a.expo&&a.expo.version)||a.version||'unknown'))")"
+            NOTE="OTA release for v${VERSION} ($(git rev-parse --short HEAD))"
+          fi
+          echo "Publishing OTA with note: $NOTE"
+          yarn publish:ota:${{ inputs.platform }} "$NOTE"
+        shell: bash

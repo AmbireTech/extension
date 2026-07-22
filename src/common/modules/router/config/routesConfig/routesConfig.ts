@@ -66,6 +66,17 @@ const routesConfig: RouteConfig = {
       web: i18n.t('Connect Ledger')
     })
   },
+  [ROUTES.trezorConnect]: {
+    route: ROUTES.trezorConnect,
+    title: Platform.select({
+      default: i18n.t('Welcome to Ambire Wallet'),
+      web: i18n.t('Welcome to Ambire Wallet')
+    }),
+    name: Platform.select({
+      default: i18n.t('Connect Trezor'),
+      web: i18n.t('Connect Trezor')
+    })
+  },
   [ROUTES.authEmailAccount]: {
     route: ROUTES.authEmailAccount,
     title: Platform.select({

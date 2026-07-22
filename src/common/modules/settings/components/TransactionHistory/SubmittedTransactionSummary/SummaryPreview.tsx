@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 
@@ -13,28 +13,38 @@ import flexbox from '@common/styles/utils/flexbox'
 import {
   formatBalanceChangeAmount,
   getBalanceChangeTooltipId,
-  getFullBalanceChangeAmount
+  getFullBalanceChangeAmount,
+  getSummaryBalanceChanges,
+  getVisibleSummaryBalanceChanges,
+  MAX_VISIBLE_BALANCE_CHANGES
 } from './helpers'
+import { getDappInteractions } from './humanizedHelpers'
 import InteractionAddress from './InteractionAddress'
 import getStyles from './styles'
 import { BalanceChangeToken, DappInteractionIcon } from './SummaryIcons'
-import { DappInteraction, DisplayBalanceChange, SubmittedAccountOpLike } from './types'
+import { SubmittedAccountOpLike } from './types'
 
-const SummaryPreview = ({
-  submittedAccountOp,
-  dappInteractions,
-  visibleBalanceChanges,
-  hiddenBalanceChangesCount,
-  shouldShowBalanceChangesSummary
-}: {
-  submittedAccountOp: SubmittedAccountOpLike
-  dappInteractions: DappInteraction[]
-  visibleBalanceChanges: DisplayBalanceChange[]
-  hiddenBalanceChangesCount: number
-  shouldShowBalanceChangesSummary: boolean
-}) => {
+const SummaryPreview = ({ submittedAccountOp }: { submittedAccountOp: SubmittedAccountOpLike }) => {
   const { styles } = useTheme(getStyles)
   const { t } = useTranslation()
+
+  const orderedBalanceChanges = useMemo(
+    () => getSummaryBalanceChanges(submittedAccountOp),
+    [submittedAccountOp]
+  )
+  const visibleBalanceChanges = useMemo(
+    () => getVisibleSummaryBalanceChanges(orderedBalanceChanges),
+    [orderedBalanceChanges]
+  )
+  const hiddenBalanceChangesCount = Math.max(
+    orderedBalanceChanges.length - MAX_VISIBLE_BALANCE_CHANGES,
+    0
+  )
+  const shouldShowBalanceChangesSummary = orderedBalanceChanges.length > 0
+  const dappInteractions = useMemo(
+    () => getDappInteractions(submittedAccountOp),
+    [submittedAccountOp]
+  )
 
   return (
     <View style={styles.contentContainer}>
