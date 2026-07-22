@@ -3,7 +3,7 @@ import { View, ViewStyle } from 'react-native'
 
 import FooterGlassView from '@common/components/FooterGlassView'
 import useTheme from '@common/hooks/useTheme'
-import useWindowSize from '@common/hooks/useWindowSize'
+import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import ActionHeader from '@common/modules/action-requests/components/ActionHeader'
 import Header from '@common/modules/header/components/Header'
 import spacings, { SPACING, SPACING_TY } from '@common/styles/spacings'
@@ -67,14 +67,15 @@ const Wrapper: FC<WrapperProps> = ({ children }) => {
 }
 
 const Content: FC<ContentProps> = ({ children, buttons }) => {
-  const { maxWidthSize } = useWindowSize()
-  const isCompactSidePanelLayout = isSidePanel && !maxWidthSize('s')
+  const { isCompactLayout } = useCompactActionRequestLayout()
+  const isCompactSidePanelLayout = isSidePanel && isCompactLayout
 
   return (
     <View style={[flexbox.flex1, spacings.phSm, spacings.pvSm]}>
       {children}
       <FooterGlassView
         size="sm"
+        fullWidth={isCompactSidePanelLayout}
         style={isRequestWindow ? { bottom: SPACING } : {}}
         innerContainerStyle={
           isCompactSidePanelLayout
@@ -82,15 +83,7 @@ const Content: FC<ContentProps> = ({ children, buttons }) => {
             : undefined
         }
       >
-        <View
-          style={
-            isCompactSidePanelLayout
-              ? { width: '100%', alignItems: 'stretch' }
-              : [flexbox.directionRow, flexbox.alignCenter]
-          }
-        >
-          {buttons}
-        </View>
+        {buttons}
       </FooterGlassView>
     </View>
   )

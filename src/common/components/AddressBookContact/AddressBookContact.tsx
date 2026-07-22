@@ -17,9 +17,12 @@ import useToast from '@common/hooks/useToast'
 import spacings from '@common/styles/spacings'
 import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
+import { getUiType } from '@common/utils/uiType'
 
 import ManageContact from './ManageContact'
 import getStyles from './styles'
+
+const { isSidePanel } = getUiType()
 
 interface Props {
   address: string
@@ -175,7 +178,13 @@ const AddressBookContact: FC<Props> = ({
               </Text>
             </View>
           )}
-          <View style={[flexbox.directionRow, flexbox.alignCenter]}>
+          <View
+            style={[
+              flexbox.directionRow,
+              flexbox.alignCenter,
+              isSidePanel && { flex: 1, minWidth: 0 }
+            ]}
+          >
             <AccountAddress
               {...reverseLookup}
               address={address}

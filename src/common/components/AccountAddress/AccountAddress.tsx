@@ -18,6 +18,9 @@ import useTheme from '@common/hooks/useTheme'
 import { WEB_ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
+import { getUiType } from '@common/utils/uiType'
+
+const { isSidePanel } = getUiType()
 
 interface Props extends Omit<ReturnType<typeof useReverseLookup>, 'updatedAt' | 'isFetched'> {
   // Optional so callers that don't run a reverse lookup (e.g. receive screens) can omit them.
@@ -93,6 +96,7 @@ const AccountAddress: FC<Props> = ({
   const isEnsOlderThanOneDay = updatedAt ? Date.now() - updatedAt > 24 * 60 * 60 * 1000 : false
 
   const shouldShowFullAddressOnWeb =
+    !isSidePanel &&
     isWeb &&
     plainAddressMaxLength >= 42 &&
     !showResolvedName &&
