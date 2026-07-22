@@ -1,4 +1,5 @@
 import { getChromeSidePanelApi } from '@web/utils/sidePanel'
+import { captureBackgroundException } from '@web/extension-services/background/CrashAnalytics'
 
 const POPUP_PATH = 'index.html'
 
@@ -11,6 +12,7 @@ export const applySidePanelMode = async (enabled: boolean) => {
     await chrome.action.setPopup({ popup: enabled ? '' : POPUP_PATH })
   } catch (error) {
     console.error('Failed to apply side panel mode', error)
+    captureBackgroundException(error)
   }
 }
 
@@ -31,5 +33,6 @@ export const openSidePanel = async (windowId?: number) => {
     await sidePanelApi.open({ windowId: resolvedWindowId })
   } catch (error) {
     console.error('Failed to open side panel', error)
+    captureBackgroundException(error)
   }
 }

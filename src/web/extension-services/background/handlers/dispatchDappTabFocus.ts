@@ -3,6 +3,7 @@ import { MainController } from '@ambire-common/controllers/main/main'
 import { ConnectionSource } from '@ambire-common/interfaces/dapp'
 import { isSidePanelView } from '@ambire-common/interfaces/ui'
 import { browser } from '@web/constants/browserapi'
+import { captureBackgroundException } from '@web/extension-services/background/CrashAnalytics'
 
 const ALLOWED_TAB_URL_PREFIXES = ['http://', 'https://', 'file://']
 const FOCUS_DISPATCH_DELAY_MS = 300
@@ -106,6 +107,7 @@ export const dispatchFocusEventToTab = async ({ tabId, windowId }: DappTabTarget
     })
   } catch (error) {
     console.error('Failed to dispatch focus event to dapp tab', error)
+    captureBackgroundException(error)
   }
 }
 
