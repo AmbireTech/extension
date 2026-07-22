@@ -14,24 +14,24 @@ const AddressBookIcon: React.FC<SvgProps> = ({ width = 24, height = 24, color, .
         height="14.1667"
         rx="2"
         stroke={color || theme.iconPrimary}
-        strokeWidth="1.35"
+        strokeWidth="1.3"
       />
       <Path
         d="M2.5 6.66675H5.83333"
         stroke={color || theme.iconPrimary}
-        strokeWidth="1.35"
+        strokeWidth="1.3"
         strokeLinecap="round"
       />
       <Path
         d="M2.5 10H5.83333"
         stroke={color || theme.iconPrimary}
-        strokeWidth="1.35"
+        strokeWidth="1.3"
         strokeLinecap="round"
       />
       <Path
         d="M2.5 13.3333H5.83333"
         stroke={color || theme.iconPrimary}
-        strokeWidth="1.35"
+        strokeWidth="1.3"
         strokeLinecap="round"
       />
       <Circle
@@ -39,13 +39,13 @@ const AddressBookIcon: React.FC<SvgProps> = ({ width = 24, height = 24, color, .
         cy="7.66667"
         r="1.91667"
         stroke={color || theme.iconPrimary}
-        strokeWidth="1.35"
+        strokeWidth="1.3"
         strokeLinecap="round"
       />
       <Path
         d="M11.6667 11.6667C13.8004 11.6667 14.5683 13.0325 14.8447 14.0156C14.9941 14.5473 14.5523 15.0001 14 15.0001H9.33337C8.78109 15.0001 8.33929 14.5473 8.48876 14.0156C8.76513 13.0325 9.53303 11.6667 11.6667 11.6667Z"
         stroke={color || theme.iconPrimary}
-        strokeWidth="1.35"
+        strokeWidth="1.3"
         strokeLinecap="round"
       />
     </Svg>
