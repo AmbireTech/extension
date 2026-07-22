@@ -4,7 +4,10 @@ import { parse, stringify } from '@ambire-common/libs/richJson/richJson'
 import { isMobile } from '@common/config/env'
 import { isExtension } from '@web/constants/browserapi'
 
+import { reconcile } from './reconcileState'
+
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
 export const CONTROLLER_STORE_MAX_LOADING_TIME = 10000
 
 export class ControllerStore {
@@ -63,6 +66,14 @@ export class ControllerStore {
     this.#checkRoutesReadiness()
   }
 
+  // Narrows the set of controllers whose readiness gates `isReadyToLoadRoutes`.
+  // Called once the background reports the initial route, so the splash can hide
+  // as soon as only the controllers that route needs are ready.
+  setCriticalControllers(criticalControllers: (keyof AllControllersMappingType)[]) {
+    this.#criticalControllers = criticalControllers
+    this.#checkRoutesReadiness()
+  }
+
   update<K extends keyof AllControllersMappingType>(
     id: K,
     ctrl: AllControllersMappingType[K],
@@ -70,7 +81,8 @@ export class ControllerStore {
   ) {
     if (ctrl === undefined) return
     try {
-      this.#states[id] = isExtension || isMobile ? { ...ctrl } : parse(stringify(ctrl))
+      const incoming = isExtension || isMobile ? ctrl : parse(stringify(ctrl))
+      this.#states[id] = reconcile(this.#states[id], incoming) as AllControllersMappingType[K]
     } catch (error) {
       console.error(error)
     }

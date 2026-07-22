@@ -95,7 +95,9 @@ const Router = () => {
     authStatus,
     requestsState,
     swapAndBridgeState,
-    transferState
+    transferState,
+    // Mobile has no request window; that flow is extension-only.
+    isRequestWindow: false
   })
 
   // Users updating from the legacy v1 app land on the migration onboarding
