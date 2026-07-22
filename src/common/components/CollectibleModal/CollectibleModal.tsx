@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react'
+import React, { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Pressable, View } from 'react-native'
 
@@ -7,6 +7,7 @@ import BottomSheet from '@common/components/BottomSheet'
 import Text from '@common/components/Text'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
+import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import spacings from '@common/styles/spacings'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
@@ -18,7 +19,7 @@ import ManifestImage from '@web/components/ManifestImage'
 import Row from './Row'
 import getStyles, { COLLECTIBLE_IMAGE_SIZE } from './styles'
 
-const { isTab } = getUiType()
+const { isTab, isSidePanel } = getUiType()
 
 export type SelectedCollectible = {
   address: string
@@ -43,10 +44,12 @@ const CollectibleModal = ({
 }) => {
   const { t } = useTranslation()
   const { styles, theme } = useTheme(getStyles)
+  const { isCompactLayout } = useCompactActionRequestLayout()
+  const isCompactSidePanelLayout = isSidePanel && isCompactLayout
   const {
     state: { networks }
   } = useController('NetworksController')
-  const ModalInner = useCallback(() => {
+  const modalContent = useMemo(() => {
     if (!selectedCollectible) return null
 
     const { address, image, name, collectionName, chainId, id, lastPrice } = selectedCollectible
@@ -162,10 +165,15 @@ const CollectibleModal = ({
       type="modal"
       sheetRef={modalRef}
       closeBottomSheet={handleClose}
-      style={styles.modal}
-      autoWidth
+      style={isCompactSidePanelLayout ? styles.sidePanelSheet : styles.modal}
+      autoWidth={!isCompactSidePanelLayout}
+      containerInnerWrapperStyles={isCompactSidePanelLayout ? flexbox.alignCenter : undefined}
     >
-      <ModalInner />
+      {isCompactSidePanelLayout ? (
+        <View style={styles.sidePanelContent}>{modalContent}</View>
+      ) : (
+        modalContent
+      )}
     </BottomSheet>
   )
 }
