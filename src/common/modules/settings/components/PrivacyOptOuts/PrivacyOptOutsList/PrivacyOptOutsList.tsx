@@ -3,6 +3,7 @@ import { View } from 'react-native'
 
 import EnsIcon from '@common/assets/svg/EnsIcon'
 import SearchIcon from '@common/assets/svg/SearchIcon'
+import { isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import useTheme from '@common/hooks/useTheme'
 import CrashAnalyticsControlOption from '@common/modules/settings/components/General/CrashAnalyticsControlOption'
@@ -14,7 +15,7 @@ const PrivacyOptOutsList = () => {
   const { t } = useTranslation()
 
   return (
-    <View style={spacings.mb2Xl}>
+    <View style={isWeb && spacings.mb2Xl}>
       <OptOutControlOption
         title={t('Tokens, NFTs & DeFi positions auto discovery')}
         description={t('Fetch tokens and positions via Ambire API, using third party providers')}
