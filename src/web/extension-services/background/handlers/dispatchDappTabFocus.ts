@@ -16,15 +16,20 @@ export type DappTabTarget = {
   windowId?: number
 }
 
-export const isSidePanelOpen = (mainCtrl: MainController) =>
-  mainCtrl.ui.views.some(isSidePanelView)
+export const isSidePanelOpen = (mainCtrl: MainController) => mainCtrl.ui.views.some(isSidePanelView)
 
-const isLikelyChromeTabId = (tabId: number) => tabId > 0 && tabId < 1_000_000_000
+/**
+ * Session.tabId falls back to Date.now() (~1e12) when there is no real browser tab
+ * (e.g. WalletConnect). Real Chrome/Firefox tab IDs are small positive integers.
+ * Skip synthetic IDs so we don't call tabs.get / scripting.executeScript with them.
+ */
+const isBrowserTabId = (tabId: number) =>
+  Number.isInteger(tabId) && tabId > 0 && tabId < 1_000_000_000
 
 const dedupeTabTargets = (targets: DappTabTarget[]) => {
   const uniqueTargets = new Map<number, DappTabTarget>()
   targets.forEach((target) => {
-    if (!isLikelyChromeTabId(target.tabId)) return
+    if (!isBrowserTabId(target.tabId)) return
     uniqueTargets.set(target.tabId, target)
   })
 
@@ -65,7 +70,7 @@ export const getDappTabTargetsFromDappIds = (
   )
 
 export const dispatchFocusEventToTab = async ({ tabId, windowId }: DappTabTarget) => {
-  if (!isLikelyChromeTabId(tabId)) return
+  if (!isBrowserTabId(tabId)) return
   if (!browser?.tabs?.get || !browser?.scripting?.executeScript) return
 
   try {
