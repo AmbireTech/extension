@@ -14,6 +14,8 @@ import useToast from '@common/hooks/useToast'
 import DashboardBannerBottomSheet from '@common/modules/dashboard/components/DashboardBanners/DashboardBannerBottomSheet'
 import { ROUTES } from '@common/modules/router/constants/common'
 
+import applyOtaUpdate from './applyOtaUpdate'
+
 const DashboardBanner = ({
   banner
 }: {
@@ -165,6 +167,12 @@ const DashboardBanner = ({
           break
         }
 
+        // Mobile-only: a Stallion OTA bundle is downloaded; restart to apply it.
+        // restart() lives on the RN main thread, so it is behind a .native/.web helper.
+        case 'apply-ota-update':
+          applyOtaUpdate()
+          break
+
         case 'reload-selected-account':
           mainDispatch({
             type: 'method',
@@ -194,6 +202,13 @@ const DashboardBanner = ({
           selectedAccountDispatch({
             type: 'method',
             params: { method: 'dismissDefiPositionsBannerForTheSelectedAccount', args: [] }
+          })
+          break
+
+        case 'dismiss-ens-expiry-banner':
+          selectedAccountDispatch({
+            type: 'method',
+            params: { method: 'dismissEnsExpiryBannerForTheSelectedAccount', args: [] }
           })
           break
 

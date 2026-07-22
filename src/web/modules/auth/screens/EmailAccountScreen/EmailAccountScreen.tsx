@@ -1,16 +1,14 @@
 import React from 'react'
 import { View } from 'react-native'
 
-import { useTranslation } from '@common/config/localization'
 import useNavigation from '@common/hooks/useNavigation'
+import Card from '@common/modules/auth/components/Card'
 import { ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { TabLayoutWrapperMainContent } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
-import Card from '@web/modules/auth/components/Card'
 
 const EmailAccountScreen = () => {
-  const { t } = useTranslation()
   const { navigate } = useNavigation()
 
   return (

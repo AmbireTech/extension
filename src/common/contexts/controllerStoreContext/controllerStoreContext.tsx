@@ -1,6 +1,5 @@
 import React, { createContext, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
-import EventEmitter from '@ambire-common/controllers/eventEmitter/eventEmitter'
 import { ErrorRef } from '@ambire-common/interfaces/eventEmitter'
 import { ToastOptions } from '@common/contexts/toastContext'
 import useNavigation from '@common/hooks/useNavigation'
@@ -12,6 +11,7 @@ import { ControllerStore } from './controllerStore'
 import { SubscriptionManager } from './subscriptionManager'
 import { controllerStoreContextDefaults, ControllerStoreContextReturnType } from './types'
 
+import type EventEmitter from '@ambire-common/controllers/eventEmitter/eventEmitter'
 export const ControllerStoreContext = createContext<ControllerStoreContextReturnType>(
   controllerStoreContextDefaults
 )

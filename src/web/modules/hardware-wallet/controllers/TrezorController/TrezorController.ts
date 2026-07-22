@@ -6,6 +6,7 @@ import {
   getTrezorErrorMessageFromPayload
 } from '@ambire-common/libs/trezor/trezor'
 import { getHdPathFromTemplate } from '@ambire-common/utils/hdPath'
+import { TREZOR_CONNECT_MANIFEST } from '@common/modules/hardware-wallet/constants/trezor'
 import trezorConnect, { TrezorConnect } from '@trezor/connect-webextension'
 
 export type {
@@ -13,13 +14,6 @@ export type {
   EthereumTransactionEIP1559,
   TrezorConnect
 } from '@trezor/connect-webextension'
-
-const TREZOR_CONNECT_MANIFEST = {
-  email: 'wallet@ambire.com',
-  appUrl: 'https://ambire.com',
-  appName: 'Ambire',
-  appIcon: 'https://www.ambire.com/ambire-trezor-connect-icon-light.png'
-}
 
 class TrezorController implements ExternalSignerController {
   type = 'trezor'
@@ -74,6 +68,7 @@ class TrezorController implements ExternalSignerController {
 
   async signingCleanup() {
     try {
+      this.walletSDK.cancel()
       await this.#windowManager.closePopupWithUrl('https://connect.trezor.io/9/popup.html')
     } catch (e) {
       console.error('Error while removing Trezor window', e)

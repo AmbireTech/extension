@@ -80,6 +80,9 @@ export async function runSwapBatchFlow({
   await test.step('stop monitoring requests and expect no uncategorized requests', async () => {
     const { uncategorized } = pages.swapAndBridge.getCategorizedRequests()
     pages.swapAndBridge.stopMonitorRequests()
+
+    // log for easier debuggin
+    console.log(`Uncategorized requests: ${uncategorized.length}`)
     expect(uncategorized.length).toBeLessThanOrEqual(0)
   })
 }

@@ -3,10 +3,8 @@ import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 
 import { getFeeSpeedIdentifier } from '@ambire-common/controllers/signAccountOp/helper'
-import { SpeedCalc } from '@ambire-common/controllers/signAccountOp/signAccountOp'
-import { ISignAccountOpController } from '@ambire-common/interfaces/signAccountOp'
+import { ISignAccountOpController, SpeedCalc } from '@ambire-common/interfaces/signAccountOp'
 import { canFeeOptionCoverAmount } from '@ambire-common/libs/account/feeOptions'
-import { TokenResult } from '@ambire-common/libs/portfolio'
 import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
 import GasTankIcon from '@common/assets/svg/GasTankIcon'
 import RightArrowIcon from '@common/assets/svg/RightArrowIcon'
@@ -19,6 +17,7 @@ import flexbox from '@common/styles/utils/flexbox'
 
 import getStyles from './styles'
 
+import type { TokenResult } from '@ambire-common/libs/portfolio'
 type Props = {
   signAccountOpState: ISignAccountOpController
   onAccept: () => void

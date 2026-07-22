@@ -1,5 +1,3 @@
-import { EventEmitter as Emitter } from 'events'
-
 import React, { useCallback, useContext, useEffect, useMemo, useRef } from 'react'
 
 import { networks } from '@ambire-common/consts/networks'
@@ -8,13 +6,13 @@ import { DomainsController } from '@ambire-common/controllers/domains/domains'
 import { EventEmitterRegistryController } from '@ambire-common/controllers/eventEmitterRegistry/eventEmitterRegistry'
 import { ProvidersController } from '@ambire-common/controllers/providers/providers'
 import { StorageController } from '@ambire-common/controllers/storage/storage'
-import { ExplorerBaseControllersMappingType } from '@benzin/constants/controllersMapping'
 import { ControllersMiddlewareContext } from '@common/contexts/controllersMiddlewareContext'
 import { ControllerStoreContext } from '@common/contexts/controllerStoreContext'
 import eventBus from '@common/services/event/eventBus'
 import { storage } from '@common/services/storage'
 import { Action, MethodAction } from '@common/types/actions'
 
+import type { ExplorerBaseControllersMappingType } from '@benzin/constants/controllersMapping'
 export const ControllersMiddlewareProvider: React.FC<{
   children: React.ReactNode
 }> = ({ children }) => {
@@ -76,7 +74,8 @@ export const ControllersMiddlewareProvider: React.FC<{
 
       ctrls.DomainsController = new DomainsController({
         eventEmitterRegistry: eventEmitterRegistry.current,
-        providers: ctrls.ProvidersController.providers
+        providers: ctrls.ProvidersController.providers,
+        getNetwork: (chainId) => networks.find((n) => n.chainId === chainId)
       })
 
       ctrls.ContractNamesController = new ContractNamesController({

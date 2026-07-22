@@ -237,6 +237,26 @@ Example:
 
 Do not add 📣 to small refactors, tests, CI-only changes, dependency bumps, copy tweaks, internal docs/config, or minor visual fixes.
 
+### Wording 📣 items for a general audience
+
+📣 items surface in release highlights, newsletters, and social posts, so they are read by people who do not know the internals. The **title** must state the user benefit in plain language. Keep implementation jargon (protocol internals, mechanisms like "reverse lookups", "resolvers", "batching") out of the title; if it matters, move it to a sub-bullet.
+
+Ask: would someone who has never seen the codebase understand what improved for them? If not, rewrite the title around the benefit, not the mechanism.
+
+Good:
+
+```markdown
+* 📣 Changed: Ambire now better protects your privacy when resolving ENS names https://github.com/AmbireTech/ambire-app/pull/7364
+  * The wallet no longer refreshes ENS profiles for all accounts by default, reducing address exposure to ENS resolvers.
+```
+
+Bad:
+
+```markdown
+* 📣 Changed: Reduce ENS reverse lookups for better privacy https://github.com/AmbireTech/ambire-app/pull/7364
+  * "Reduce ENS reverse lookups" describes the internal mechanism, not the benefit, so it means nothing to most readers. The privacy win is real and worth announcing, it is just worded in an alien language.
+```
+
 ## Product name normalization
 
 Always use the current public product names in changelog entries, regardless of what appears in branch names, commit messages, or PR titles:
@@ -340,7 +360,7 @@ Before returning the changelog, verify:
 * only merge commits were used
 * every top-level entry links to a GitHub PR
 * marketing-worthy entries have 📣
-* public wording is clear
+* public wording is clear (📣 titles state the user benefit in plain language, not internal jargon)
 * no em dashes or en dashes in any entry
 * Rewards/Legends PRs are excluded; all other PRs are present (including CI, QA, config, docs, TS fixes)
 * skipped PRs and branch-sync commits are listed after the changelog block

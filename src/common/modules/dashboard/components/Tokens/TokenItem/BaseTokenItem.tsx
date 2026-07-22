@@ -1,7 +1,6 @@
 import React, { useMemo } from 'react'
 import { Image, View } from 'react-native'
 
-import { TokenResult } from '@ambire-common/libs/portfolio'
 import { FormatType } from '@ambire-common/utils/formatDecimals/formatDecimals'
 // @ts-ignore
 import rewardsImage from '@common/assets/images/AmbireLogoLikeCoin.png'
@@ -26,6 +25,7 @@ import { privateValue } from '@common/utils/ui'
 import PendingBadge from './PendingBadge'
 import getStyles from './styles'
 
+import type { TokenResult } from '@ambire-common/libs/portfolio'
 type Props = {
   token: TokenResult
   extraActions?: React.ReactNode

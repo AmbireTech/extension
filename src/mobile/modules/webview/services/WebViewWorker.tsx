@@ -1,10 +1,11 @@
 import { isDevice } from 'expo-device'
-import React, { forwardRef, useImperativeHandle, useRef, useState } from 'react'
+import React, { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react'
 import { Platform } from 'react-native'
 import { pbkdf2Sync, scrypt } from 'react-native-quick-crypto'
 import { WebView } from 'react-native-webview'
 
 import * as richJson from '@ambire-common/libs/richJson/richJson'
+import { captureException } from '@common/config/analytics/CrashAnalytics'
 import { CONTROLLER_STORE_MAX_LOADING_TIME } from '@common/contexts/controllerStoreContext/controllerStore'
 import eventBus from '@common/services/event/eventBus'
 import { getAllSerialized, storage } from '@common/services/storage'
@@ -19,23 +20,20 @@ import {
   respondToWalletConnectRequest
 } from '@mobile/modules/wallet-connect/services/walletConnectService'
 import getWebviewBundleUri from '@mobile/modules/webview/services/getWebviewBundleUri'
+import materializeWorkerBundle from '@mobile/modules/webview/services/materializeWorkerBundle'
+import ledgerTransportService from '@mobile/services/ledger/ledgerTransportService'
+import trezorDeeplinkService from '@mobile/services/trezor/trezorDeeplinkService'
 
 import { decode, encode } from './bridgeCodec'
 
-// In production the worker bundle ships as a static file inside the signed
-// app (iOS Resources / Android assets) and the WebView loads it from disk via
-// `file://`. The HTML stub is built at compile time with a strict CSP
-// (`script-src file:`) and loads the bundle through a `<script src>` tag
-// pinned with a SHA-384 Subresource Integrity hash, which the engine
-// recomputes and validates before executing the script.
-// In dev the bundle is fetched from webpack-dev-server (HTTP) so HMR keeps
-// working.
-const PROD_BUNDLE_URI = !__DEV__ ? getWebviewBundleUri() : ''
-// Directory containing the HTML + JS pair. WKWebView's `loadFileURL` defaults
-// its read-access scope to the HTML file alone, which blocks the sibling
-// `<script src="webview-bundle.js">` from resolving. We grant read access to
-// the directory only — narrowest scope that lets the bundle load.
-const PROD_BUNDLE_DIR = !__DEV__ ? PROD_BUNDLE_URI.replace(/\/[^/]+$/, '/') : ''
+// In production the worker bundle is materialized from the OTA-shipped copy (which rides
+// the Metro bundle) into a writable, app-sandboxed dir and loaded from there via `file://`,
+// so OTA updates reach it. It falls back to the native-asset copy baked into the signed app
+// if materialization fails. Either way the HTML stub carries a strict CSP (`script-src
+// file:`) and a SHA-384 SRI pinning its sibling `<script src>`, both built together so the
+// SRI always matches the JS. In dev the bundle is fetched from webpack-dev-server (HTTP) so
+// HMR keeps working. The bundle URI resolves asynchronously (see materializeWorkerBundle),
+// so the WebView mounts only once it is ready.
 
 // The dev server URL for webpack-dev-server.
 // - Simulator/emulator: auto-detected via Device.isDevice; uses platform loopback (localhost / 10.0.2.2)
@@ -77,6 +75,25 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, object>((_, ref) => {
   // Incrementing the key forces a full WebView remount (used for Android dev reload)
   const [webviewKey, setWebviewKey] = useState(0)
   const devUrl = getDevServerUrl()
+
+  // Worker bundle URI. In prod it is materialized from the OTA-shipped copy into a writable
+  // dir (so OTA updates reach it); empty until ready, which gates the WebView mount below.
+  const [prodBundleUri, setProdBundleUri] = useState('')
+
+  useEffect(() => {
+    if (__DEV__) return undefined
+
+    let isActive = true
+    // Falls back to the native-asset bundle baked into the signed app if the OTA copy
+    // cannot be materialized, so the worker always has a working bundle to load.
+    materializeWorkerBundle().then((uri) => {
+      if (isActive) setProdBundleUri(uri || getWebviewBundleUri())
+    })
+
+    return () => {
+      isActive = false
+    }
+  }, [])
 
   const clearInitWarningTimeout = () => {
     if (initReadyWarningTimeoutRef.current) {
@@ -373,6 +390,135 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, object>((_, ref) => {
           }
           break
 
+        // --- LEDGER DEVICE DELEGATION HANDLERS ---
+        // The worker-side LedgerController forwards device operations here; the
+        // actual BLE/USB transport + Ethereum app run natively in
+        // ledgerTransportService. Scanning/connecting is driven separately from the
+        // RN connect screen (via the useLedger hook), not over this bridge.
+        case 'ledger.getAddress':
+          try {
+            const address = await ledgerTransportService.getAddress(data.payload.path)
+            sendResponse(data.id, address)
+          } catch (err: any) {
+            sendResponse(data.id, null, err.message)
+          }
+          break
+        case 'ledger.retrieveAddresses':
+          try {
+            const addresses: string[] = []
+            // Serialized one-by-one (the service queue enforces this too); the
+            // Ledger can't handle parallel getAddress calls.
+            for (const path of data.payload.paths) {
+              addresses.push(await ledgerTransportService.getAddress(path))
+            }
+            sendResponse(data.id, addresses)
+          } catch (err: any) {
+            sendResponse(data.id, null, err.message)
+          }
+          break
+        case 'ledger.signPersonalMessage':
+          try {
+            const sig = await ledgerTransportService.signPersonalMessage(
+              data.payload.path,
+              data.payload.messageHex
+            )
+            sendResponse(data.id, sig)
+          } catch (err: any) {
+            sendResponse(data.id, null, err.message)
+          }
+          break
+        case 'ledger.signTransaction':
+          try {
+            const sig = await ledgerTransportService.signTransaction(
+              data.payload.path,
+              data.payload.rawTxHex
+            )
+            sendResponse(data.id, sig)
+          } catch (err: any) {
+            sendResponse(data.id, null, err.message)
+          }
+          break
+        case 'ledger.signTypedData':
+          try {
+            const sig = await ledgerTransportService.signTypedData(
+              data.payload.path,
+              data.payload.typedData
+            )
+            sendResponse(data.id, sig)
+          } catch (err: any) {
+            sendResponse(data.id, null, err.message)
+          }
+          break
+        case 'ledger.signingCleanup':
+          // Flushes the device's pending command state after an abandoned/rejected
+          // sign so the next command starts clean. Does NOT cancel an in-flight
+          // on-device prompt (that still resolves on the device). Best-effort.
+          try {
+            await ledgerTransportService.signingCleanup()
+            sendResponse(data.id, null)
+          } catch (err: any) {
+            sendResponse(data.id, null, err.message)
+          }
+          break
+        case 'ledger.cleanUp':
+          try {
+            await ledgerTransportService.cleanUp()
+            sendResponse(data.id, null)
+          } catch (err: any) {
+            sendResponse(data.id, null, err.message)
+          }
+          break
+
+        // --- TREZOR DEVICE DELEGATION HANDLERS ---
+        // The worker-side TrezorController forwards each Trezor Connect SDK call
+        // here; the SDK (@trezor/connect-mobile) runs natively in
+        // trezorDeeplinkService and delegates to the Trezor Suite app via
+        // deep links. Each handler returns the raw `{ success, payload }` connect
+        // response so the shared TrezorSigner / TrezorKeyIterator can inspect it.
+        case 'trezor.ethereumGetAddress':
+          try {
+            sendResponse(data.id, await trezorDeeplinkService.ethereumGetAddress(data.payload))
+          } catch (err: any) {
+            sendResponse(data.id, null, err.message)
+          }
+          break
+        case 'trezor.getPublicKey':
+          try {
+            sendResponse(data.id, await trezorDeeplinkService.getPublicKey(data.payload))
+          } catch (err: any) {
+            sendResponse(data.id, null, err.message)
+          }
+          break
+        case 'trezor.ethereumSignTransaction':
+          try {
+            sendResponse(data.id, await trezorDeeplinkService.ethereumSignTransaction(data.payload))
+          } catch (err: any) {
+            sendResponse(data.id, null, err.message)
+          }
+          break
+        case 'trezor.ethereumSignTypedData':
+          try {
+            sendResponse(data.id, await trezorDeeplinkService.ethereumSignTypedData(data.payload))
+          } catch (err: any) {
+            sendResponse(data.id, null, err.message)
+          }
+          break
+        case 'trezor.ethereumSignMessage':
+          try {
+            sendResponse(data.id, await trezorDeeplinkService.ethereumSignMessage(data.payload))
+          } catch (err: any) {
+            sendResponse(data.id, null, err.message)
+          }
+          break
+        case 'trezor.signingCleanup':
+          try {
+            await trezorDeeplinkService.signingCleanup()
+            sendResponse(data.id, null)
+          } catch (err: any) {
+            sendResponse(data.id, null, err.message)
+          }
+          break
+
         default:
           if (__DEV__) console.warn('Unknown message from WebViewWorker:', data.type)
       }
@@ -392,8 +538,9 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, object>((_, ref) => {
 
   // Production loads the static HTML stub from disk; dev keeps the inline
   // template that points at webpack-dev-server so HMR keeps working.
+  const prodBundleDir = prodBundleUri.replace(/\/[^/]+$/, '/')
   const source = !__DEV__
-    ? { uri: PROD_BUNDLE_URI }
+    ? { uri: prodBundleUri }
     : (() => {
         const devCsp = `default-src 'none'; script-src ${devUrl}; connect-src ${devUrl} ws: wss:; frame-src 'none'; object-src 'none';`
         return {
@@ -472,6 +619,10 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, object>((_, ref) => {
       true;
     `
 
+  // Prod: hold off mounting until the worker bundle URI resolves (see top-of-file note).
+  // The worker is invisible and init() queues via pendingConfig, so this only defers boot.
+  if (!__DEV__ && !prodBundleUri) return null
+
   return (
     <WebView
       key={webviewKey}
@@ -504,7 +655,7 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, object>((_, ref) => {
       // iOS only: grant the WebView read access to the bundle directory so
       // the HTML's sibling `<script src="webview-bundle.js">` can resolve.
       // Without this, `loadFileURL` scopes access to the HTML file alone.
-      allowingReadAccessToURL={__DEV__ ? undefined : PROD_BUNDLE_DIR}
+      allowingReadAccessToURL={__DEV__ ? undefined : prodBundleDir}
       originWhitelist={__DEV__ ? ['file://*', `${devUrl}/*`] : ['file://*']}
       onShouldStartLoadWithRequest={(request) => {
         if (__DEV__) {
@@ -514,9 +665,15 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, object>((_, ref) => {
         // stub. The bundle JS is loaded as a sibling `<script src>` from inside
         // that page (so we never see a navigation for it here). Anything else
         // is rejected.
-        return request.url === PROD_BUNDLE_URI
+        return request.url === prodBundleUri
       }}
       mixedContentMode="never"
+      // Android-only, defaults to false. Required in prod so the WebView can load the
+      // worker HTML that materializeWorkerBundle() writes to the app's files dir (a real
+      // `file://` path, unlike the exempt `file:///android_asset/` fallback). Without it
+      // the worker never boots and the app hangs on the splash screen. No-op on iOS, which
+      // uses allowingReadAccessToURL above.
+      allowFileAccess={!__DEV__}
       // Required on Android for the sibling `<script src>` to load over
       // `file://`. Safe: navigation is locked to the single bundle URI and
       // `allowUniversalAccessFromFileURLs` stays `false`, so the page cannot

@@ -7,10 +7,16 @@ import flexbox from '@common/styles/utils/flexbox'
 
 interface Style {
   addressBookButton: ViewStyle
+  confirmAddressWrapper: ViewStyle
 }
 
 const getStyles = () =>
   StyleSheet.create<Style>({
+    confirmAddressWrapper: {
+      ...flexbox.directionRow,
+      ...flexbox.alignCenter,
+      ...(isMobile ? flexbox.wrap : {})
+    },
     addressBookButton: {
       ...spacings.phTy,
       ...flexbox.directionRow,

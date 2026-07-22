@@ -4,7 +4,7 @@ import { View } from 'react-native'
 
 import { useTranslation } from '@common/config/localization'
 import { browser, engine, isExtension } from '@web/constants/browserapi'
-import { UrFragmentDecoder } from '@web/modules/hardware-wallet/qr/utils/UrFragmentDecoder'
+import { UrFragmentDecoder } from '@common/modules/hardware-wallets/qr/utils/UrFragmentDecoder'
 
 // Firefox does not implement `BarcodeDetector`, so `qr-scanner` falls back to a Web Worker that it
 // spawns from a `blob:` URL (see `qr-scanner-worker.min.js`). Firefox MV3 extension pages reject

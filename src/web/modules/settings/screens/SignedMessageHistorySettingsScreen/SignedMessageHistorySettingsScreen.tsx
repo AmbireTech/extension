@@ -3,7 +3,6 @@ import React, { FC, useMemo, useState } from 'react'
 import { Trans } from 'react-i18next'
 import { StyleSheet, View } from 'react-native'
 
-import { SignedMessage } from '@ambire-common/controllers/activity/types'
 import { Account } from '@ambire-common/interfaces/account'
 import shortenAddress from '@ambire-common/utils/shortenAddress'
 import Text from '@common/components/Text'
@@ -15,6 +14,7 @@ import text from '@common/styles/utils/text'
 import HistorySettingsPage from '../../../../../common/modules/settings/components/TransactionHistory/HistorySettingsPage'
 import SignedMessageSummary from '../../../../../common/modules/settings/components/TransactionHistory/SignedMessageSummary'
 
+import type { SignedMessage } from '@ambire-common/controllers/activity/types'
 const SignedMessageHistory: FC<{
   page?: number
   account: Account

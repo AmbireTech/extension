@@ -57,6 +57,11 @@ type UpdateUiViewRoute = {
   params: { id: string; route?: string; searchParams?: { [key: string]: string } }
 }
 
+type SetViewFocusAction = {
+  type: 'SET_VIEW_FOCUS'
+  params: { id?: string }
+}
+
 type MainControllerAccountPickerInitLedgerAction = {
   type: 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_LEDGER'
 }
@@ -214,6 +219,7 @@ type SetSubscribedControllersAction = {
 export type Action =
   | UpdateNavigationUrl
   | UpdateUiViewRoute
+  | SetViewFocusAction
   | MainControllerAccountPickerInitQrWalletAction
   | MainControllerAccountPickerInitLatticeAction
   | MainControllerAccountPickerInitTrezorAction

@@ -1,6 +1,5 @@
 import React, { useCallback } from 'react'
 
-import { TokenResult } from '@ambire-common/libs/portfolio'
 import useController from '@common/hooks/useController'
 import getAndFormatTokenDetails from '@common/modules/dashboard/helpers/getTokenDetails'
 import { getUiType } from '@common/utils/uiType'
@@ -8,6 +7,7 @@ import { getUiType } from '@common/utils/uiType'
 import BaseTokenItem from './BaseTokenItem'
 import RewardsTokenItem from './RewardsTokenItem'
 
+import type { TokenResult } from '@ambire-common/libs/portfolio'
 const { isPopup } = getUiType()
 
 const TokenItem = ({ token }: { token: TokenResult }) => {

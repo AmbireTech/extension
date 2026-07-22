@@ -1,17 +1,19 @@
-import { MainController } from '@ambire-common/controllers/main/main'
+import type { MainController } from '@ambire-common/controllers/main/main'
 import { controllersNestedInMainMapping } from '@common/constants/controllersMapping'
-import { WalletStateController } from '@common/controllers/wallet-state'
+import { createExhaustiveArray } from '@common/utils/createExhaustiveArray'
 
-export const baseControllersMapping = {
-  MainController,
-  WalletStateController
+import type { WalletStateController } from '@common/controllers/wallet-state'
+export type MobileBaseControllersMappingType = {
+  MainController: MainController
+  WalletStateController: WalletStateController
 }
+
+export const baseControllersMapping = createExhaustiveArray<MobileBaseControllersMappingType>()([
+  'MainController',
+  'WalletStateController'
+])
 
 export const controllersMapping = {
   ...baseControllersMapping,
   ...controllersNestedInMainMapping
-}
-
-export type MobileBaseControllersMappingType = {
-  [K in keyof typeof baseControllersMapping]: InstanceType<(typeof baseControllersMapping)[K]>
 }

@@ -1,7 +1,6 @@
 import React, { FC } from 'react'
 import { Animated, Pressable } from 'react-native'
 
-import { TokenResult } from '@ambire-common/libs/portfolio'
 import Text from '@common/components/Text'
 import Tooltip from '@common/components/Tooltip'
 import { isMobile, isWeb } from '@common/config/env'
@@ -14,6 +13,7 @@ import text from '@common/styles/utils/text'
 
 import getStyles from './styles'
 
+import type { TokenResult } from '@ambire-common/libs/portfolio'
 interface Props {
   id: string
   text: string
