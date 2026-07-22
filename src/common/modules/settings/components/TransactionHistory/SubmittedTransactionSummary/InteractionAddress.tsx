@@ -7,6 +7,9 @@ import useController from '@common/hooks/useController'
 import useReverseLookup from '@common/hooks/useReverseLookup'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
+import { getUiType } from '@common/utils/uiType'
+
+const { isSidePanel } = getUiType()
 
 // TODO: Refactor to use the <AccountAddress /> component instead
 const InteractionAddress = ({ address }: { address: string }) => {
@@ -25,13 +28,29 @@ const InteractionAddress = ({ address }: { address: string }) => {
     localLabel && localLabel.length > 15 ? `${localLabel.slice(0, 15)}...` : localLabel
 
   return (
-    <View style={[flexbox.directionRow, flexbox.alignCenter]}>
+    <View
+      style={[
+        flexbox.directionRow,
+        flexbox.alignCenter,
+        isSidePanel && { flexShrink: 1, minWidth: 0 }
+      ]}
+    >
       {truncatedLocalLabel && (
-        <Text fontSize={12} weight="medium" appearance="secondaryText" style={spacings.mrMi}>
+        <Text
+          fontSize={12}
+          weight="medium"
+          appearance="secondaryText"
+          numberOfLines={isSidePanel ? 1 : undefined}
+          style={[spacings.mrMi, isSidePanel && { flexShrink: 1, lineHeight: 16 }]}
+        >
           {truncatedLocalLabel}
         </Text>
       )}
-      <Text fontSize={12} appearance="secondaryText">
+      <Text
+        fontSize={12}
+        appearance="secondaryText"
+        style={isSidePanel ? { lineHeight: 16 } : undefined}
+      >
         {truncatedLocalLabel ? `(${shortenAddress(address, 12)})` : shortenAddress(address, 12)}
       </Text>
     </View>

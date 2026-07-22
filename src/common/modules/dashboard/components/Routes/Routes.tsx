@@ -9,9 +9,12 @@ import { isMobile } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import { ROUTES } from '@common/modules/router/constants/common'
 import flexbox from '@common/styles/utils/flexbox'
+import { getUiType } from '@common/utils/uiType'
 
 import RouteItem from './RouteItem'
 import { RouteItemType } from './RouteItem/RouteItem'
+
+const { isSidePanel } = getUiType()
 
 const Routes = () => {
   const { t } = useTranslation()
@@ -56,7 +59,12 @@ const Routes = () => {
   ]
 
   return (
-    <View style={[flexbox.directionRow]}>
+    <View
+      style={[
+        flexbox.directionRow,
+        isSidePanel && [flexbox.justifySpaceBetween, { width: '100%' }]
+      ]}
+    >
       {routeItems.map((routeItem, index) => (
         <RouteItem
           key={routeItem.label}

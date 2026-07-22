@@ -8,6 +8,7 @@ import Text from '@common/components/Text'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
+import { getUiType } from '@common/utils/uiType'
 
 import {
   formatBalanceChangeAmount,
@@ -22,6 +23,8 @@ import InteractionAddress from './InteractionAddress'
 import getStyles from './styles'
 import { BalanceChangeToken, DappInteractionIcon } from './SummaryIcons'
 import { SubmittedAccountOpLike } from './types'
+
+const { isSidePanel } = getUiType()
 
 const SummaryPreview = ({ submittedAccountOp }: { submittedAccountOp: SubmittedAccountOpLike }) => {
   const { styles } = useTheme(getStyles)
@@ -46,11 +49,12 @@ const SummaryPreview = ({ submittedAccountOp }: { submittedAccountOp: SubmittedA
   )
 
   return (
-    <View style={styles.contentContainer}>
+    <View style={[styles.contentContainer, isSidePanel && { minWidth: 0 }]}>
       <View
         style={[
           styles.dappInteractionsColumn,
-          shouldShowBalanceChangesSummary ? spacings.mrSm : undefined
+          shouldShowBalanceChangesSummary ? spacings.mrSm : undefined,
+          isSidePanel && { minWidth: 0, flexShrink: 1 }
         ]}
       >
         {dappInteractions.length ? (
@@ -60,24 +64,40 @@ const SummaryPreview = ({ submittedAccountOp }: { submittedAccountOp: SubmittedA
                 key={interaction.id}
                 style={[
                   styles.dappInteractionRow,
-                  index < dappInteractions.length - 1 ? spacings.mbTy : undefined
+                  index < dappInteractions.length - 1 ? spacings.mbTy : undefined,
+                  isSidePanel && { minWidth: 0, maxWidth: '100%' }
                 ]}
               >
                 <DappInteractionIcon interaction={interaction} />
-                <View>
-                  <Text fontSize={14} weight="semiBold">
+                <View style={isSidePanel ? { flexShrink: 1, minWidth: 0 } : undefined}>
+                  <Text fontSize={14} weight="semiBold" numberOfLines={isSidePanel ? 1 : undefined}>
                     {interaction.name}
                   </Text>
                   {(!!interaction.address || !!interaction.description) && (
-                    <View style={[flexbox.alignCenter, flexbox.directionRow]}>
-                      <Text fontSize={12} appearance="secondaryText">
+                    <View
+                      style={[
+                        flexbox.alignCenter,
+                        flexbox.directionRow,
+                        isSidePanel && { minWidth: 0 }
+                      ]}
+                    >
+                      <Text
+                        fontSize={12}
+                        appearance="secondaryText"
+                        style={isSidePanel ? { lineHeight: 16 } : undefined}
+                      >
                         {t('to ')}
                       </Text>
                       {!!interaction.address && (
                         <InteractionAddress address={interaction.address} />
                       )}
                       {!!interaction.description && (
-                        <Text fontSize={12} appearance="secondaryText">
+                        <Text
+                          fontSize={12}
+                          appearance="secondaryText"
+                          numberOfLines={isSidePanel ? 1 : undefined}
+                          style={isSidePanel ? { flexShrink: 1, lineHeight: 16 } : undefined}
+                        >
                           {interaction.description}
                         </Text>
                       )}
@@ -92,7 +112,12 @@ const SummaryPreview = ({ submittedAccountOp }: { submittedAccountOp: SubmittedA
         )}
       </View>
       {shouldShowBalanceChangesSummary && (
-        <View style={styles.balanceChangesRightColumn}>
+        <View
+          style={[
+            styles.balanceChangesRightColumn,
+            isSidePanel && { flexShrink: 0, ...spacings.mlTy }
+          ]}
+        >
           {visibleBalanceChanges.map((change, index) => (
             <View
               key={`${change.address}-${change.balanceChange.toString()}`}
@@ -100,7 +125,9 @@ const SummaryPreview = ({ submittedAccountOp }: { submittedAccountOp: SubmittedA
                 styles.balanceChangeRow,
                 index < visibleBalanceChanges.length - 1 || hiddenBalanceChangesCount
                   ? spacings.mbTy
-                  : null
+                  : null,
+                // Custom fontSize clears Text lineHeight; keep row height stable so amounts don't overlap.
+                isSidePanel && { minHeight: 18 }
               ]}
             >
               <Text
@@ -108,7 +135,7 @@ const SummaryPreview = ({ submittedAccountOp }: { submittedAccountOp: SubmittedA
                 weight="medium"
                 appearance={change.balanceChange > 0n ? 'successText' : 'errorText'}
                 // @ts-ignore
-                style={{ cursor: 'pointer' }}
+                style={{ cursor: 'pointer', ...(isSidePanel ? { lineHeight: 16 } : {}) }}
                 dataSet={createGlobalTooltipDataSet({
                   id: getBalanceChangeTooltipId(change, submittedAccountOp),
                   content: getFullBalanceChangeAmount(change)
@@ -116,7 +143,12 @@ const SummaryPreview = ({ submittedAccountOp }: { submittedAccountOp: SubmittedA
               >
                 {formatBalanceChangeAmount(change)}
               </Text>
-              <Text fontSize={12} weight="medium" appearance="secondaryText" style={spacings.mlTy}>
+              <Text
+                fontSize={12}
+                weight="medium"
+                appearance="secondaryText"
+                style={[spacings.mlTy, isSidePanel && { lineHeight: 16 }]}
+              >
                 {change.symbol}
               </Text>
               <BalanceChangeToken change={change} />

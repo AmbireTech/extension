@@ -12,6 +12,7 @@ import alert from '@common/services/alert'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { openInTab } from '@common/utils/links'
+import { getUiType } from '@common/utils/uiType'
 
 export type RouteItemType = {
   icon: any
@@ -31,6 +32,8 @@ interface Props {
   routeItemsLength: number
 }
 
+const { isSidePanel } = getUiType()
+
 const ITEM_HEIGHT = 40
 const ICON_SIZE = 24
 
@@ -42,7 +45,10 @@ const RouteItem: FC<Props> = ({ routeItem, index, routeItemsLength }) => {
   return (
     <Pressable
       key={routeItem.label}
-      style={[flexbox.alignCenter, index !== routeItemsLength - 1 && spacings.mrSm]}
+      style={[
+        flexbox.alignCenter,
+        isSidePanel ? { flexShrink: 0 } : index !== routeItemsLength - 1 && spacings.mrSm
+      ]}
       disabled={routeItem.disabled}
       onPress={async () => {
         if (routeItem?.onPress) {
