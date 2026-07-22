@@ -1,3 +1,4 @@
+import { ZeroAddress } from 'ethers'
 import React, { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
@@ -32,11 +33,11 @@ import { openInTab } from '@common/utils/links'
 // Builds a portfolio-shaped TokenResult from a trending token so the same token-details components
 // (price, balance, "About", exchanges) can render it. The trending endpoint now provides the
 // contract, chain, decimals and USD market data the portfolio components expect.
-const buildTokenResult = (token: TrendingToken, chainId: bigint): TokenResult => ({
+const buildTokenResult = (token: TrendingToken, chainId: bigint, address: string): TokenResult => ({
   symbol: token.symbol.toUpperCase(),
   name: token.name,
   decimals: token.decimals ?? 18,
-  address: token.address ?? '',
+  address,
   chainId,
   amount: 0n,
   priceIn: [{ baseCurrency: 'usd', price: token.priceUSD }],
@@ -72,10 +73,23 @@ const TrendingTokenDetailsScreen = () => {
     [dappsState.trendingTokens, state?.trendingTokenId]
   )
 
-  const chainId = useMemo(
-    () => networks.find((n) => n.platformId === token?.platformId)?.chainId ?? null,
-    [networks, token?.platformId]
-  )
+  const network = useMemo(() => {
+    if (!token) return undefined
+    // Contract tokens carry their CoinGecko asset platform; native coins (e.g. BNB) have no
+    // contract/platform, so fall back to the network whose native asset is this CoinGecko coin.
+    return token.platformId
+      ? networks.find((n) => n.platformId === token.platformId)
+      : networks.find((n) => n.nativeAssetId === token.id)
+  }, [networks, token])
+
+  const chainId = network?.chainId ?? null
+
+  // Native coins live at the zero address in the account portfolio.
+  const tokenAddress = useMemo(() => {
+    if (!token) return null
+    if (token.address) return token.address
+    return network?.nativeAssetId === token.id ? ZeroAddress : null
+  }, [token, network])
 
   // Prefer the real portfolio token (carries the account's balance) when the user holds it;
   // otherwise fall back to a synthetic result built from the trending data.
@@ -83,10 +97,10 @@ const TrendingTokenDetailsScreen = () => {
     if (!token) return null
 
     const heldToken =
-      token.address && chainId !== null
+      tokenAddress && chainId !== null
         ? portfolio.tokens.find(
             (pt) =>
-              pt.address.toLowerCase() === token.address!.toLowerCase() &&
+              pt.address.toLowerCase() === tokenAddress.toLowerCase() &&
               pt.chainId === chainId &&
               !pt.flags.onGasTank &&
               !pt.flags.rewardsType
@@ -95,8 +109,8 @@ const TrendingTokenDetailsScreen = () => {
 
     if (heldToken) return heldToken
 
-    return buildTokenResult(token, chainId ?? 0n)
-  }, [token, chainId, portfolio.tokens])
+    return buildTokenResult(token, chainId ?? 0n, tokenAddress ?? '')
+  }, [token, chainId, tokenAddress, portfolio.tokens])
 
   const formatted = useMemo(
     () => (displayToken ? getAndFormatTokenDetails(displayToken, networks) : null),
