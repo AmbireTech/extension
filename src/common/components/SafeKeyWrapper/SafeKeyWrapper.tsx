@@ -31,7 +31,7 @@ const SafeGlobalLagWarning = React.memo(function SafeGlobalLagWarning() {
 
   return (
     <Text type="caption" appearance="warningText" style={[spacings.mtMi, spacings.phMi]}>
-      {t('Sending to Safe global is lagging. Please wait')}
+      {t('Sending to Safe Global is taking longer than usual. Please wait.')}
     </Text>
   )
 })
