@@ -1,0 +1,54 @@
+name: Unit Tests
+
+on:
+  push:
+    branches:
+      - v2
+      - main
+      - 'release/*'
+  pull_request:
+    types: ['opened', 'ready_for_review', 'synchronize']
+    branches:
+      - v2
+      - main
+      - 'release/*'
+  workflow_dispatch:
+
+concurrency:
+  group: unit-tests-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  unit-tests:
+    # Prevent running this workflow for PRs that are not ready for review
+    if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code 🛎️
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
+
+      - name: Add SSH key for private submodule
+        uses: webfactory/ssh-agent@v0.9.1
+        with:
+          ssh-private-key: ${{ secrets.DEPLOY_KEY }}
+
+      - name: Git submodules
+        run: git submodule update --init --recursive --depth 1
+
+      - name: Setup Node.js ⚙️
+        uses: actions/setup-node@v6
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'yarn'
+
+      - name: Install root dependencies
+        run: yarn setup:ci
+
+      - name: Run unit tests
+        run: yarn test
+        env:
+          NODE_OPTIONS: '--max-old-space-size=4096'
