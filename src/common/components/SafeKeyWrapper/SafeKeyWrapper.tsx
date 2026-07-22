@@ -15,7 +15,7 @@ import getStyles from './styles'
 
 const SAFE_GLOBAL_STALL_WARNING_DELAY_MS = 5000
 
-const SafeGlobalStallWarning = React.memo(function SafeGlobalStallWarning() {
+const SafeGlobalLagWarning = React.memo(function SafeGlobalLagWarning() {
   const { t } = useTranslation()
   const [isVisible, setIsVisible] = useState(false)
 
@@ -31,7 +31,7 @@ const SafeGlobalStallWarning = React.memo(function SafeGlobalStallWarning() {
 
   return (
     <Text type="caption" appearance="warningText" style={[spacings.mtMi, spacings.phMi]}>
-      {t('Sending to Safe global is stalling. Please wait')}
+      {t('Sending to Safe global is lagging. Please wait')}
     </Text>
   )
 })
@@ -79,7 +79,7 @@ const SafeKeyWrapper = ({
         )}
         {isDisabled && !hasSigned && <NoEntryIcon width={18} height={18} style={styles.icon} />}
       </View>
-      {isSignLoading && <SafeGlobalStallWarning />}
+      {isSignLoading && <SafeGlobalLagWarning />}
     </View>
   )
 }
