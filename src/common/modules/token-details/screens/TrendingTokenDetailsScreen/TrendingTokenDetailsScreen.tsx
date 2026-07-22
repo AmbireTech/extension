@@ -10,6 +10,7 @@ import FooterGlassView from '@common/components/FooterGlassView'
 import LayoutWrapper from '@common/components/LayoutWrapper'
 import ScrollableWrapper from '@common/components/ScrollableWrapper'
 import Text from '@common/components/Text'
+import { isMobile } from '@common/config/env'
 import useController from '@common/hooks/useController'
 import { AnimatedPressable, useCustomHover } from '@common/hooks/useHover'
 import useRoute from '@common/hooks/useRoute'
@@ -24,7 +25,7 @@ import TokenBalanceCard from '@common/modules/token-details/components/TokenBala
 import TokenData from '@common/modules/token-details/components/TokenData'
 import TokenPriceDisplay from '@common/modules/token-details/components/TokenPriceDisplay'
 import useTokenActions from '@common/modules/token-details/hooks/useTokenActions'
-import spacings from '@common/styles/spacings'
+import spacings, { SPACING_MI } from '@common/styles/spacings'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import { openInTab } from '@common/utils/links'
@@ -222,15 +223,25 @@ const TrendingTokenDetailsScreen = () => {
       )}
       {!!displayToken && (
         <FooterGlassView size="sm">
-          {actions.map((action) => (
-            <TokenDetailsButton
-              key={action.id}
-              {...action}
-              isDisabled={!!action.isDisabled}
-              token={displayToken}
-              iconWidth={action.iconWidth}
-            />
-          ))}
+          <View
+            style={[
+              flexbox.directionRow,
+              flexbox.alignStart,
+              isMobile && { columnGap: SPACING_MI },
+              isMobile && spacings.ptTy,
+              isMobile && spacings.phSm
+            ]}
+          >
+            {actions.map((action) => (
+              <TokenDetailsButton
+                key={action.id}
+                {...action}
+                isDisabled={!!action.isDisabled}
+                token={displayToken}
+                iconWidth={action.iconWidth}
+              />
+            ))}
+          </View>
         </FooterGlassView>
       )}
     </LayoutWrapper>

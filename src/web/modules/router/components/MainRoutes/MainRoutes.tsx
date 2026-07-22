@@ -8,12 +8,7 @@ import AuthenticatedRoute from '@common/modules/router/components/AuthenticatedR
 import KeystoreUnlockedRoute from '@common/modules/router/components/KeystoreUnlockedRoute'
 import routesConfig from '@common/modules/router/config/routesConfig'
 import { WEB_ROUTES } from '@common/modules/router/constants/common'
-<<<<<<< HEAD
 import TrendingTokenDetailsScreen from '@common/modules/token-details/screens/TrendingTokenDetailsScreen'
-import AccountPersonalizeScreen from '@web/modules/account-personalize/screens/AccountPersonalizeScreen'
-import AccountPickerScreen from '@web/modules/account-picker/screens/AccountPickerScreen'
-=======
->>>>>>> v2
 import AccountSelectScreen from '@web/modules/account-select/screens/AccountSelectScreen'
 import GetEncryptionPublicKeyRequestScreen from '@web/modules/action-requests/screens/GetEncryptionPublicKeyRequestScreen'
 import ExploreScreen from '@web/modules/explore/screens/ExploreScreen'
@@ -270,30 +265,21 @@ const MainRoutes = () => {
               element={<RequestWindowGroupScreen pick={(m) => m.DecryptRequestScreen} />}
             />
 
-<<<<<<< HEAD
-          <Route path={WEB_ROUTES.menu} element={<NavMenu />} />
-          <Route path={WEB_ROUTES.tokenDetails} element={<TokenDetailsScreen />} />
-          <Route path={WEB_ROUTES.accountSelect} element={<AccountSelectScreen />} />
-          <Route path={WEB_ROUTES.receive} element={<ReceiveScreen />} />
-          <Route path={WEB_ROUTES.explore} element={<ExploreScreen />} />
-          <Route path={WEB_ROUTES.exploreSection} element={<ExploreSectionScreen />} />
-          <Route path={WEB_ROUTES.trendingTokens} element={<TrendingTokensScreen />} />
-          <Route path={WEB_ROUTES.trendingTokenDetails} element={<TrendingTokenDetailsScreen />} />
-          <Route path={WEB_ROUTES.networks} element={<NetworksScreen />} />
-          <Route path={WEB_ROUTES.rewards} element={<ExtensionRewardsScreen />} />
-          <Route path={WEB_ROUTES.survey} element={<SurveyScreen />} />
-=======
             <Route path={WEB_ROUTES.menu} element={<NavMenu />} />
             <Route path={WEB_ROUTES.tokenDetails} element={<TokenDetailsScreen />} />
             <Route path={WEB_ROUTES.accountSelect} element={<AccountSelectScreen />} />
             <Route path={WEB_ROUTES.receive} element={<ReceiveScreen />} />
             <Route path={WEB_ROUTES.explore} element={<ExploreScreen />} />
             <Route path={WEB_ROUTES.exploreSection} element={<ExploreSectionScreen />} />
+            <Route path={WEB_ROUTES.trendingTokens} element={<TrendingTokensScreen />} />
+            <Route
+              path={WEB_ROUTES.trendingTokenDetails}
+              element={<TrendingTokenDetailsScreen />}
+            />
             <Route path={WEB_ROUTES.networks} element={<NetworksScreen />} />
             <Route path={WEB_ROUTES.rewards} element={<ExtensionRewardsScreen />} />
             <Route path={WEB_ROUTES.survey} element={<SurveyScreen />} />
           </Route>
->>>>>>> v2
         </Route>
       </Routes>
     </Suspense>
