@@ -14,6 +14,7 @@ import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
+import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import PendingTokenSummary from '@common/modules/sign-account-op/components/PendingTokenSummary'
 import TransactionSummary, {
   sizeMultiplier
@@ -23,7 +24,6 @@ import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import { setStringAsync } from '@common/utils/clipboard'
 import { openInTab } from '@common/utils/links'
-import { getUiType } from '@common/utils/uiType'
 import DelegationHumanization from '@web/components/DelegationHumanization'
 
 import {
@@ -38,8 +38,6 @@ import { getHumanizedCalls } from './humanizedHelpers'
 import getStyles from './styles'
 import { DisplayBalanceChange, Props, SubmittedAccountOpLike } from './types'
 
-const { isSidePanel } = getUiType()
-
 const SummaryDetails = ({
   submittedAccountOp,
   network,
@@ -51,6 +49,7 @@ const SummaryDetails = ({
   size: 'sm' | 'md' | 'lg'
   defaultType: Props['defaultType']
 }) => {
+  const { isCompactSidePanelLayout } = useCompactActionRequestLayout()
   const { styles, theme } = useTheme(getStyles)
   const { t } = useTranslation()
   const { addToast } = useToast()
@@ -283,26 +282,29 @@ const SummaryDetails = ({
               style={[
                 styles.modalStepRow,
                 spacings.mbSm,
-                isSidePanel && { gap: SPACING_SM, flexWrap: 'wrap' }
+                isCompactSidePanelLayout && { gap: SPACING_SM, flexWrap: 'wrap' }
               ]}
             >
               <Text
                 appearance={modalFinalStatus.appearance}
                 fontSize={16}
                 weight="medium"
-                style={isSidePanel ? spacings.mrTy : undefined}
+                style={isCompactSidePanelLayout ? spacings.mrTy : undefined}
               >
                 {modalFinalStatus.label}
               </Text>
               {submittedAccountOp.status === AccountOpStatus.Success && (
                 <View
-                  style={[styles.modalStepRowRight, isSidePanel && { flexShrink: 1, minWidth: 0 }]}
+                  style={[
+                    styles.modalStepRowRight,
+                    isCompactSidePanelLayout && { flexShrink: 1, minWidth: 0 }
+                  ]}
                 >
                   <Text
                     fontSize={14}
                     appearance="secondaryText"
-                    numberOfLines={isSidePanel ? 1 : undefined}
-                    style={isSidePanel ? { flexShrink: 1 } : undefined}
+                    numberOfLines={isCompactSidePanelLayout ? 1 : undefined}
+                    style={isCompactSidePanelLayout ? { flexShrink: 1 } : undefined}
                   >
                     {submittedDate} on {getTruncatedNetworkName(network.name)}
                   </Text>

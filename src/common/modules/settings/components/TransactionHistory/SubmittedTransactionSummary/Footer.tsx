@@ -16,16 +16,14 @@ import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
-import spacings from '@common/styles/spacings'
+import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
+import spacings, { SPACING_TY } from '@common/styles/spacings'
 import { setStringAsync } from '@common/utils/clipboard'
 import { openInTab } from '@common/utils/links'
-import { getUiType } from '@common/utils/uiType'
 
 import getStyles from './styles'
 import { EXPLORER_LINKS_DISABLED_TOOLTIP } from './constants'
 import { SubmittedAccountOpLike } from './types'
-
-const { isSidePanel } = getUiType()
 
 type Props = {
   network: Network
@@ -65,6 +63,7 @@ const Footer: FC<Props> = ({
 }) => {
   const { styles } = useTheme(getStyles)
   const { addToast } = useToast()
+  const { isCompactSidePanelLayout } = useCompactActionRequestLayout()
   const {
     state: { account: selectedAccount }
   } = useController('SelectedAccountController')
@@ -222,8 +221,17 @@ const Footer: FC<Props> = ({
   if (!canRepeatTransaction && !isMinedTransaction) return null
 
   return (
-    <View style={styles.footer}>
-      <View style={styles.footerButtonsRow}>
+    <View style={[styles.footer, isCompactSidePanelLayout && spacings.phSm]}>
+      <View
+        style={[
+          styles.footerButtonsRow,
+          isCompactSidePanelLayout && {
+            flexDirection: 'column',
+            alignItems: 'stretch',
+            gap: SPACING_TY
+          }
+        ]}
+      >
         <View
           dataSet={createGlobalTooltipDataSet({
             id: `open-explorer-disabled-${submittedAccountOp.id}`,
@@ -238,7 +246,15 @@ const Footer: FC<Props> = ({
             size="smaller"
             disabled={areExplorerButtonsDisabled}
             hasBottomSpacing={false}
-            style={[styles.footerButton]}
+            style={[
+              styles.footerButton,
+              isCompactSidePanelLayout && {
+                width: '100%',
+                ...spacings.plTy,
+                ...spacings.prTy,
+                flexShrink: 1
+              }
+            ]}
             childrenPosition="left"
             testID="view-transaction-link"
           >
@@ -246,7 +262,17 @@ const Footer: FC<Props> = ({
           </Button>
         </View>
 
-        <View style={styles.footerRightButtonsGroup}>
+        <View
+          style={[
+            styles.footerRightButtonsGroup,
+            isCompactSidePanelLayout && {
+              flexDirection: 'column',
+              alignItems: 'stretch',
+              width: '100%',
+              gap: SPACING_TY
+            }
+          ]}
+        >
           <View
             dataSet={createGlobalTooltipDataSet({
               id: `repeat-disabled-${submittedAccountOp.id}`,
@@ -263,7 +289,16 @@ const Footer: FC<Props> = ({
               size="smaller"
               hasBottomSpacing={false}
               disabled={!canRepeatTransaction}
-              style={[styles.footerButton, !isSidePanel && spacings.mrTy]}
+              style={[
+                styles.footerButton,
+                !isCompactSidePanelLayout && spacings.mrTy,
+                isCompactSidePanelLayout && {
+                  width: '100%',
+                  ...spacings.plTy,
+                  ...spacings.prTy,
+                  flexShrink: 1
+                }
+              ]}
               childrenPosition="left"
             >
               {shouldShowSpeedUp ? (
@@ -288,7 +323,15 @@ const Footer: FC<Props> = ({
               size="smaller"
               disabled={areExplorerButtonsDisabled}
               hasBottomSpacing={false}
-              style={styles.footerButton}
+              style={[
+                styles.footerButton,
+                isCompactSidePanelLayout && {
+                  width: '100%',
+                  ...spacings.plTy,
+                  ...spacings.prTy,
+                  flexShrink: 1
+                }
+              ]}
               childrenPosition="left"
             >
               <CopyIcon style={spacings.mrMi} width={16} height={16} />
