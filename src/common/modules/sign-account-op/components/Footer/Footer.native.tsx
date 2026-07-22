@@ -58,9 +58,15 @@ const Footer = ({
     [t]
   )
 
+  const signature = accountOp?.signature
   const isMultisigSigned = useMemo(() => {
-    return !!accountOp?.signature
-  }, [accountOp?.signature])
+    // '0x' is the placeholder signature for self-broadcast EOA account ops (they
+    // carry no smart-account signature). It is NOT a real signature, so it must
+    // not trigger the "already signed" reject warning. Otherwise, rejecting on a
+    // hardware wallet — which leaves the '0x' placeholder set on accountOp —
+    // wrongly warns the user about discarding an already-signed transaction.
+    return !!signature && signature !== '0x'
+  }, [signature])
 
   const batchBtnText = useMemo(() => {
     if (isMultisigSigned) return t('Sign later')

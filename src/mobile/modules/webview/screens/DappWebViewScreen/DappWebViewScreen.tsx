@@ -184,6 +184,26 @@ const devOnlyHelpers = `
   });
 `
 
+// Comma-locale keypads type "," as the decimal separator. Rewrite it to "."
+// in numeric dapp inputs (React-safe: native setter + bubbled input event).
+const decimalSeparatorFix = `
+  (function() {
+    document.addEventListener('input', function(e) {
+      var el = e.target;
+      if (!el || el.tagName !== 'INPUT') return;
+      var inputMode = (el.getAttribute('inputmode') || '').toLowerCase();
+      var type = (el.type || '').toLowerCase();
+      var isNumeric = inputMode === 'decimal' || inputMode === 'numeric' || type === 'number';
+      if (!isNumeric) return;
+      if (el.value.indexOf(',') === -1) return;
+      var normalized = el.value.split(',').join('.');
+      var setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
+      setter.call(el, normalized);
+      el.dispatchEvent(new Event('input', { bubbles: true }));
+    }, true);
+  })();
+`
+
 const WEBVIEW_DEV_SERVER_PORT = 8182
 const getDevServerUrl = () => {
   if (Platform.OS === 'android') {
@@ -544,6 +564,8 @@ const DappWebViewScreen = () => {
       ${jsNativeStash}
 
       ${jsBridgeHarden}
+
+      ${decimalSeparatorFix}
 
       ${__DEV__ ? devOnlyHelpers : ''}
 
