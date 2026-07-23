@@ -34,7 +34,7 @@ const AmbireApiOptions = () => {
         </View>
       }
       expandedContent={
-        <View style={[spacings.phTy, spacings.pbTy]}>
+        <View style={[spacings.plTy, spacings.pbTy]}>
           <OptOutControlOption
             title={t('Gas Tank')}
             description={t('We use the Ambire API to fetch your gas tank balance.')}
