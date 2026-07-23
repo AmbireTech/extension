@@ -1,5 +1,4 @@
-# Temporarily build webkit only, because gecko build requires ARM64 architecture, see build-extension-gecko.yml
-name: Build AMD64 webkit production browser extension ⚡
+name: Build browser extensions (webkit & gecko) 🌐
 
 on:
   workflow_dispatch: # Manual trigger
@@ -8,21 +7,29 @@ on:
 
 jobs:
   build:
-    name: Build extension .zips, ready for review submission
-    runs-on: ubuntu-24.04
+    name: Build ${{ matrix.artifact_suffix }} extension .zips, ready for review submission
+    runs-on: ${{ matrix.runner }}
     strategy:
+      # Don't cancel the other variants if one fails (important for releases)
+      fail-fast: false
       matrix:
         include:
           - environment: extension-production
             build_variant: webkit
             artifact_suffix: webkit
+            runner: ubuntu-24.04
           - environment: extension-production-next
             build_variant: next:webkit
             artifact_suffix: next-webkit
-          # TODO: Enable gecko builds when build-extension-gecko.yml is deprecated
-          # - environment: extension-production
-          #   build_variant: gecko
-          #   artifact_suffix: gecko
+            runner: ubuntu-24.04
+          # gecko must be built natively on ARM64, otherwise Firefox can't
+          # reproduce the build during review. Native arm64 standard runners
+          # became available for private repositories on 2026-01-29, which let
+          # us drop the previous QEMU-based emulation workflow.
+          - environment: extension-production
+            build_variant: gecko
+            artifact_suffix: gecko
+            runner: ubuntu-24.04-arm
     environment: ${{ matrix.environment }}
     concurrency:
       group: ${{ github.workflow }}-${{ github.ref }}-${{ matrix.build_variant }}
@@ -98,17 +105,20 @@ jobs:
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN_BROWSER_EXTENSIONS }}
         run: yarn build:extensions:${{ matrix.build_variant }}
 
-      # TODO: Gecko-only, so skip while building webkit only
-      # - name: Generate .zip with the full source code (including .env)
-      #   run: |
-      #     zip -r extension-source-code.zip . -x "node_modules/*" -x ".git/*" -x "build/*" -x "*.zip" -x "src/legends/*"
-      #   shell: bash
+      # Firefox requires the full source code (including .env) to reproduce the
+      # build during review, so this is only needed for the gecko variant.
+      - name: Generate .zip with the full source code (including .env)
+        if: matrix.build_variant == 'gecko'
+        run: |
+          zip -r extension-source-code.zip . -x "node_modules/*" -x ".git/*" -x "build/*" -x "*.zip" -x "src/legends/*"
+        shell: bash
 
-      # - name: Upload source code 📦
-      #   uses: actions/upload-artifact@v6
-      #   with:
-      #     name: extension-source-code
-      #     path: ./extension-source-code.zip
+      - name: Upload source code 📦
+        if: matrix.build_variant == 'gecko'
+        uses: actions/upload-artifact@v6
+        with:
+          name: ambire-extension-v${{ steps.version.outputs.VERSION }}-${{ matrix.artifact_suffix }}-SOURCE-CODE
+          path: ./extension-source-code.zip
 
       - name: Upload extension builds 📦
         uses: actions/upload-artifact@v6
