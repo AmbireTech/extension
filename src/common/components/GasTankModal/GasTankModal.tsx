@@ -49,7 +49,7 @@ const GasTankModal = ({ modalRef, handleClose, portfolio, account }: Props) => {
     state: { flags }
   } = useController('FeatureFlagsController')
   const { canUseGasTank, disabledReason } = useHasGasTank({ account })
-  const isErc4337Enabled = flags.erc4337 && flags.gasTank
+  const isGasTankEnabled = flags.erc4337 && flags.gasTank && flags.tokenPrices
 
   // Note: total balance Gas Tank details
   const { token, balanceFormatted } = useMemo(
@@ -65,12 +65,12 @@ const GasTankModal = ({ modalRef, handleClose, portfolio, account }: Props) => {
     }
   }, [addToast])
 
-  const handleEnableErc4337 = useCallback(() => {
+  const handleEnableGasTank = useCallback(() => {
     featureFlagsDispatch({
       type: 'method',
       params: {
         method: 'setFeatureFlags',
-        args: [{ erc4337: true, gasTank: true }]
+        args: [{ erc4337: true, gasTank: true, tokenPrices: true }]
       }
     })
   }, [featureFlagsDispatch])
@@ -86,7 +86,7 @@ const GasTankModal = ({ modalRef, handleClose, portfolio, account }: Props) => {
       isScrollEnabled={false}
     >
       <ModalHeader title={t('Gas Tank')} handleClose={handleClose} />
-      {isErc4337Enabled || !canUseGasTank ? (
+      {isGasTankEnabled || !canUseGasTank ? (
         <View style={[flexbox.alignStart, spacings.mbLg]}>
           <Text fontSize={16} weight="medium" style={[spacings.mbTy]}>
             {t('Use Gas Tank to cover gas fees across most chains.')}
@@ -109,17 +109,17 @@ const GasTankModal = ({ modalRef, handleClose, portfolio, account }: Props) => {
           size="sm"
           title={t('Enable the gas tank right now!')}
           text={t(
-            'Enable ERC-4337 to use smart account gas estimation, gas tank, sponsored gas, and token fee payments.'
+            'Enable Gas Tank, ERC-4337, and token prices to use smart account gas estimation, gas tank, sponsored gas, and token fee payments.'
           )}
           style={spacings.mbSm}
           buttonProps={{
             text: t('Enable'),
-            onPress: handleEnableErc4337
+            onPress: handleEnableGasTank
           }}
         />
       )}
 
-      {!isErc4337Enabled ? null : (
+      {!isGasTankEnabled ? null : (
         <FooterGlassView
           size="sm"
           style={{ ...flexbox.flex1, alignItems: 'stretch' }}

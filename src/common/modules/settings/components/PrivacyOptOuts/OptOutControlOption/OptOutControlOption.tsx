@@ -21,11 +21,26 @@ const OptOutControlOption = (opts: Opts) => {
   const { title, description, icon, flag } = opts
 
   const handleToggle = useCallback(() => {
+    const isEnabling = !flags[flag]
+    let nextFlags: Partial<FeatureFlags> = { [flag]: isEnabling }
+
+    if (flag === 'gasTank' && isEnabling) {
+      nextFlags = { gasTank: true, erc4337: true, tokenPrices: true }
+    }
+
+    if (flag === 'erc4337' && !isEnabling) {
+      nextFlags = { erc4337: false, gasTank: false }
+    }
+
+    if (flag === 'tokenPrices' && !isEnabling) {
+      nextFlags = { tokenPrices: false, erc4337: false, gasTank: false }
+    }
+
     featureFlagsDispatch({
       type: 'method',
       params: {
-        method: 'setFeatureFlag',
-        args: [flag, !flags[flag]]
+        method: 'setFeatureFlags',
+        args: [nextFlags]
       }
     })
   }, [featureFlagsDispatch, flags, flag])

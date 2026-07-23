@@ -40,7 +40,7 @@ const GasTankButton = ({ onPress, portfolio, account }: Props) => {
   const {
     state: { flags }
   } = useController('FeatureFlagsController')
-  const isErc4337Enabled = flags.erc4337 && flags.gasTank
+  const isGasTankEnabled = flags.erc4337 && flags.gasTank && flags.tokenPrices
 
   const {
     state: { networks }
@@ -61,14 +61,14 @@ const GasTankButton = ({ onPress, portfolio, account }: Props) => {
 
   const buttonState = useMemo(() => {
     if (!canUseGasTank) return 'generic'
-    if (!isErc4337Enabled) return 'disabled'
+    if (!isGasTankEnabled) return 'disabled'
     if (totalBalanceGasTankDetails.token === null) return 'error'
     if (totalBalanceGasTankDetails.balanceUSDFormatted) return 'balance'
 
     return 'generic'
   }, [
     canUseGasTank,
-    isErc4337Enabled,
+    isGasTankEnabled,
     totalBalanceGasTankDetails.balanceUSDFormatted,
     totalBalanceGasTankDetails.token
   ])
@@ -108,7 +108,7 @@ const GasTankButton = ({ onPress, portfolio, account }: Props) => {
   }, [safeGasTankBannerDismissedStorageKey])
 
   const shouldDisplaySafeGasTankBanner =
-    isErc4337Enabled &&
+    isGasTankEnabled &&
     isSafeAccount &&
     hasGasTankBalance &&
     isSafeGasTankBannerDismissalLoaded &&

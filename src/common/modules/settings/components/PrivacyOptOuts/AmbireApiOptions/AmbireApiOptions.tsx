@@ -7,6 +7,7 @@ import AmbireLogoSquare from '@common/assets/svg/AmbireLogoSquare'
 import GasTankIcon from '@common/assets/svg/GasTankIcon'
 import NetworksIcon from '@common/assets/svg/NetworksIcon'
 import SearchIcon from '@common/assets/svg/SearchIcon'
+import ValueIcon from '@common/assets/svg/ValueIcon'
 import ExpandableCard from '@common/components/ExpandableCard'
 import Text from '@common/components/Text'
 import useTheme from '@common/hooks/useTheme'
@@ -70,6 +71,14 @@ const AmbireApiOptions = () => {
             description={t('Find and manage related Ambire smart accounts.')}
             icon={<AccountsIcon width={24} height={24} color={theme.iconPrimary} />}
             flag="ambireSmartAccounts"
+          />
+          <OptOutControlOption
+            title={t('Token prices')}
+            description={t(
+              `Fetch token prices through Ambire's API. Needed for Gas Tank and token payments`
+            )}
+            icon={<ValueIcon width={24} height={24} color={theme.iconPrimary} />}
+            flag="tokenPrices"
           />
         </View>
       }
