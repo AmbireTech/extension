@@ -1,6 +1,10 @@
 name: Build production browser extensions ⚡🦊
 
 on:
+  # TODO: Temporary trigger for testing
+  push:
+    branches:
+      - 'config/gecko-arm-64'
   workflow_dispatch: # Manual trigger
   release:
     types: [published] # Triggers on new releases (from any branch)
