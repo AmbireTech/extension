@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import FooterGlassView from '@common/components/FooterGlassView'
 import LayoutWrapper from '@common/components/LayoutWrapper'
 import ScrollableWrapper from '@common/components/ScrollableWrapper'
+import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import getAndFormatTokenDetails from '@common/modules/dashboard/helpers/getTokenDetails'
 import Header from '@common/modules/header/components/Header/Header'
 import TokenDetailsButton from '@common/modules/token-details/components/Button'
@@ -19,6 +20,7 @@ import flexbox from '@common/styles/utils/flexbox'
 
 const TokenDetailsScreen = () => {
   const { t } = useTranslation()
+  const { isCompactSidePanelLayout } = useCompactActionRequestLayout()
   const {
     token,
     networks,
@@ -89,7 +91,19 @@ const TokenDetailsScreen = () => {
         <Exchanges exchanges={token.meta?.exchanges || []} />
         <TokenDetailsTransactionHistory />
       </ScrollableWrapper>
-      <FooterGlassView size="sm" innerContainerStyle={{ gap: SPACING_MI }}>
+      <FooterGlassView
+        size="sm"
+        style={isCompactSidePanelLayout ? spacings.phSm : undefined}
+        glassViewProps={
+          isCompactSidePanelLayout
+            ? { cssStyle: { width: '100%', alignSelf: 'stretch' } }
+            : undefined
+        }
+        innerContainerStyle={{
+          gap: SPACING_MI,
+          ...(isCompactSidePanelLayout ? { width: '100%' } : {})
+        }}
+      >
         {actions.map((action) => (
           <TokenDetailsButton
             key={action.id}
