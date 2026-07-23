@@ -22,6 +22,8 @@ export type DappInteraction = {
   iconType?: 'send' | 'swap' | 'receive' | 'ambire'
   description?: string
   address?: string
+  token?: string
+  amount?: bigint
 }
 
 export type DisplayBalanceChange = BalanceChange & {

@@ -80,7 +80,7 @@ const Footer = ({
   const { ref: sheetRef, open: openModal, close: closeModal } = useModalize()
 
   return (
-    <View style={spacings.pt}>
+    <View style={spacings.ptSm}>
       <View
         dataSet={createGlobalTooltipDataSet({
           id: 'sign-button-tooltip',

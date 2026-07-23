@@ -8,7 +8,7 @@ import { isAmbireNext, isDev, isMobile } from '@common/config/env'
 import useController from '@common/hooks/useController'
 import useHover from '@common/hooks/useHover'
 import useNavigation from '@common/hooks/useNavigation'
-import { WEB_ROUTES } from '@common/modules/router/constants/common'
+import { ROUTES, WEB_ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { getUiType } from '@common/utils/uiType'
@@ -80,7 +80,7 @@ const DashboardHeader = () => {
               }
             ]}
             onPress={() => {
-              isPopup || isMobile ? navigate(WEB_ROUTES.menu) : navigate(WEB_ROUTES.generalSettings)
+              isPopup || isMobile ? navigate(ROUTES.menu) : navigate(WEB_ROUTES.generalSettings)
             }}
             {...bindBurgerAnim}
           >

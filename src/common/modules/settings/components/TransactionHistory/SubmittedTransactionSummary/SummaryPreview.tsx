@@ -5,6 +5,7 @@ import { View } from 'react-native'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import SkeletonLoader from '@common/components/SkeletonLoader'
 import Text from '@common/components/Text'
+import TokenOrNft from '@common/components/TokenOrNft'
 import useTheme from '@common/hooks/useTheme'
 import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import spacings from '@common/styles/spacings'
@@ -108,6 +109,23 @@ const SummaryPreview = ({ submittedAccountOp }: { submittedAccountOp: SubmittedA
                       )}
                     </View>
                   )}
+                  {interaction.id === 'fallback:gasTank' &&
+                    !!interaction.token &&
+                    interaction.amount !== undefined && (
+                      <View style={[flexbox.alignCenter, flexbox.directionRow]}>
+                        <Text fontSize={12} appearance="secondaryText">
+                          {t('with ')}
+                        </Text>
+                        <TokenOrNft
+                          value={interaction.amount}
+                          address={interaction.token}
+                          textSize={12}
+                          chainId={submittedAccountOp.chainId}
+                          tokenMarginRight={0}
+                          tokenIconContainerSize={16}
+                        />
+                      </View>
+                    )}
                 </View>
               </View>
             ))}

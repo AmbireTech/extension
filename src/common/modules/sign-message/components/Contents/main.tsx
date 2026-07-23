@@ -136,7 +136,7 @@ const Main = ({
   ) : null
 
   return (
-    <Container withScroll={shouldUseErc7730TypedMessageCard}>
+    <Container withScroll={shouldUseErc7730TypedMessageCard || isMobile}>
       {isSidePanel ? (
         <View style={{ marginBottom: SPACING_MD * responsiveSizeMultiplier }}>
           <Text weight="medium" fontSize={24 * responsiveSizeMultiplier}>

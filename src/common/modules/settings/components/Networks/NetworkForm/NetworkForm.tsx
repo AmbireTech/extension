@@ -393,11 +393,7 @@ const NetworkForm = ({
     // when resetting the form.
     const subscription = watch(async (value, { name }) => {
       if (name && !value[name]) {
-        if (
-          name !== 'rpcUrl' &&
-          name !== 'customBundlerUrl' &&
-          name !== 'isColibriEnabled'
-        ) {
+        if (name !== 'rpcUrl' && name !== 'customBundlerUrl' && name !== 'isColibriEnabled') {
           setError(name, { type: 'custom-error', message: 'Field is required' })
           return
         }
@@ -932,11 +928,7 @@ const NetworkForm = ({
                 <Controller
                   control={control}
                   render={({ field: { onChange, value } }) => (
-                    <Checkbox
-                      value={!!value}
-                      style={flexbox.alignCenter}
-                      onValueChange={onChange}
-                    >
+                    <Checkbox value={!!value} style={flexbox.alignCenter} onValueChange={onChange}>
                       <Pressable
                         style={[flexbox.directionRow, flexbox.alignCenter]}
                         onPress={() => onChange(!value)}

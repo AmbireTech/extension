@@ -6,7 +6,7 @@ import { Account } from '@ambire-common/interfaces/account'
 import { Key } from '@ambire-common/interfaces/keystore'
 import Button from '@common/components/Button'
 import GlassView from '@common/components/GlassView'
-import SpinnerWeb from '@common/components/Spinner/Spinner.web'
+import Spinner from '@common/components/Spinner'
 import ActionsPagination from '@common/modules/action-requests/components/ActionsPagination'
 import SafeOwners from '@common/modules/sign-account-op/components/SafeOwners'
 import spacings from '@common/styles/spacings'
@@ -33,6 +33,8 @@ const SafeFooter = ({
   importedKeys: Key[]
   threshold: number
   onReject: (event: GestureResponderEvent) => void
+  // closes the signing UI while keeping the txn pending with the collected
+  // signatures already pushed to Safe Global (web: close popup; mobile: dismiss sheet)
   onSignLater: () => void
 }) => {
   const { t } = useTranslation()
@@ -133,7 +135,7 @@ const SafeFooter = ({
                 </View>
               </View>
             ) : (
-              <SpinnerWeb
+              <Spinner
                 style={{
                   width: 28,
                   height: 28,

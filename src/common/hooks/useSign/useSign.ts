@@ -244,7 +244,10 @@ const useSign = ({
       type: 'method',
       params: {
         method: 'handleSignAndBroadcastAccountOp',
-        args: [type, signAccountOpState.fromRequestId]
+        // Pass the id of the accountOp the user is reviewing on screen. The
+        // background compares it against the live accountOp before signing to
+        // reject signing calls that were appended after this review.
+        args: [type, signAccountOpState.fromRequestId, signAccountOpState.accountOp.id]
       }
     })
   }, [mainControllerDispatch, signAccountOpState, updateType])

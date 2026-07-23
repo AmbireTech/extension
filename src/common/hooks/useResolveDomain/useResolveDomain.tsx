@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useMemo, useRef } from 'react'
+import { useCallback, useEffect, useRef } from 'react'
 
+import { NameServiceId } from '@ambire-common/services/nameResolvers'
 import useController from '@common/hooks/useController'
 
 interface Props {
@@ -9,7 +10,7 @@ interface Props {
 
 // Define the type for our pending promises tracker
 type Resolver = {
-  resolve: (result: { address: string | undefined; type: 'ens' | 'namoshi' } | undefined) => void
+  resolve: (result: { address: string | undefined; type: NameServiceId } | undefined) => void
   reject: (reason?: any) => void
 }
 
@@ -18,9 +19,6 @@ const useResolveDomain = () => {
     state: { domainToAddresses, resolveDomainsErrors, resolveDomainsStatus },
     dispatch
   } = useController('DomainsController')
-  const {
-    state: { networks }
-  } = useController('NetworksController')
 
   const requests = useRef<Record<string, Resolver>>({})
 
@@ -43,15 +41,11 @@ const useResolveDomain = () => {
     })
   }, [domainToAddresses, resolveDomainsErrors, resolveDomainsStatus])
 
-  const isNamoshiAvailable = useMemo(() => {
-    return networks.some((network) => network.chainId === 4114n)
-  }, [networks])
-
   const handleResolveDomain = useCallback(
     ({
       domain,
       bip44Item
-    }: Props): Promise<{ address: string | undefined; type: 'ens' | 'namoshi' } | undefined> => {
+    }: Props): Promise<{ address: string | undefined; type: NameServiceId } | undefined> => {
       const status = resolveDomainsStatus[domain]
 
       if (status === 'RESOLVED') return Promise.resolve(domainToAddresses[domain])
@@ -75,8 +69,7 @@ const useResolveDomain = () => {
   )
 
   return {
-    resolveDomain: handleResolveDomain,
-    isNamoshiAvailable
+    resolveDomain: handleResolveDomain
   }
 }
 
