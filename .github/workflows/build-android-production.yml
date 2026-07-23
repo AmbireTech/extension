@@ -1,4 +1,4 @@
-name: Build production Android app (Play Store AAB) ⚡
+name: 🤖 Build · Android Play Store
 
 on:
   workflow_dispatch: # Manual trigger

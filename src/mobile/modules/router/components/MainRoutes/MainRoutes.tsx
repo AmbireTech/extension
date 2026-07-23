@@ -31,6 +31,7 @@ import ReceiveScreen from '@mobile/modules/receive/screens/ReceiveScreen'
 import NavMenu from '@mobile/modules/router/components/NavMenu'
 import AboutSettingsScreen from '@mobile/modules/settings/screens/AboutSettingsScreen'
 import AccountsSettingsScreen from '@mobile/modules/settings/screens/AccountsSettingsScreen'
+import AddressBookSettingsScreen from '@mobile/modules/settings/screens/AddressBookSettingsScreen'
 import GeneralSettingsScreen from '@mobile/modules/settings/screens/GeneralSettingsScreen'
 import NetworksSettingsScreen from '@mobile/modules/settings/screens/NetworksSettingsScreen'
 import TermsSettingsScreen from '@mobile/modules/settings/screens/TermsSettingsScreen'
@@ -82,6 +83,7 @@ const MainRoutes = () => {
           <Route path={ROUTES.menu} element={<NavMenu />} />
           <Route path={ROUTES.generalSettings} element={<GeneralSettingsScreen />} />
           <Route path={ROUTES.accountsSettings} element={<AccountsSettingsScreen />} />
+          <Route path={ROUTES.addressBook} element={<AddressBookSettingsScreen />} />
           <Route path={ROUTES.networksSettings} element={<NetworksSettingsScreen />} />
           <Route path={ROUTES.settingsAbout} element={<AboutSettingsScreen />} />
           <Route path={ROUTES.settingsTerms} element={<TermsSettingsScreen />} />
