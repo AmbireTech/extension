@@ -7,6 +7,7 @@ import {
   convertToAmbireNetworkFormat,
   mapRelayerNetworkConfigToAmbireNetwork
 } from '@ambire-common/utils/networks'
+import { storage } from '@common/services/storage'
 import { RELAYER_URL } from '@env'
 
 const fetch = window.fetch.bind(window) as any
@@ -68,11 +69,24 @@ const BenzinNetworksContextProvider: FC<Props> = ({ children }) => {
   const [notFoundNetworks, setNotFoundNetworks] = useState<bigint[]>([])
 
   useEffect(() => {
+    let isMounted = true
+
     const fetchAndSetNetworks = async () => {
+      const featureFlags = await storage.get('flags', {})
+      if (featureFlags.networkConfig === false) {
+        if (isMounted) setBenzinNetworks(predefinedNetworks)
+        return
+      }
+
       const networks = (await fetchNetworks()) as Network[]
-      setBenzinNetworks(networks)
+      if (isMounted) setBenzinNetworks(networks)
     }
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises
     fetchAndSetNetworks()
+
+    return () => {
+      isMounted = false
+    }
   }, [])
 
   const addNetwork = useCallback(

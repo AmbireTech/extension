@@ -8,6 +8,7 @@ import Panel from '@common/components/Panel'
 import { PanelBackButton, PanelTitle } from '@common/components/Panel/Panel'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
+import AmbireSmartAccountsDisabledModal from '@common/modules/account-picker/components/AmbireSmartAccountsDisabledModal'
 import AccountsOnPageList from '@common/modules/account-picker/components/AccountsOnPageList'
 import ChangeHdPath from '@common/modules/account-picker/components/ChangeHdPath'
 import useAccountPicker from '@common/modules/account-picker/hooks/useAccountPicker/useAccountPicker'
@@ -91,6 +92,7 @@ const AccountPickerScreen = () => {
           </AccountsOnPageList>
         </Panel>
       </TabLayoutWrapperMainContent>
+      <AmbireSmartAccountsDisabledModal />
     </TabLayoutContainer>
   )
 }

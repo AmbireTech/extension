@@ -4,9 +4,9 @@ import { View } from 'react-native'
 
 import EnsIcon from '@common/assets/svg/EnsIcon'
 import LightningIcon from '@common/assets/svg/LightningIcon'
-import SearchIcon from '@common/assets/svg/SearchIcon'
 import useTheme from '@common/hooks/useTheme'
 import CrashAnalyticsControlOption from '@common/modules/settings/components/General/CrashAnalyticsControlOption'
+import AmbireApiOptions from '@common/modules/settings/components/PrivacyOptOuts/AmbireApiOptions'
 import OptOutControlOption from '@common/modules/settings/components/PrivacyOptOuts/OptOutControlOption'
 import spacings from '@common/styles/spacings'
 import SettingsPageHeader from '@web/modules/settings/components/SettingsPageHeader'
@@ -25,19 +25,14 @@ const OptOutsScreen = () => {
     <>
       <SettingsPageHeader title="Privacy opt outs" />
       <View style={spacings.mb2Xl}>
+        <AmbireApiOptions />
         <OptOutControlOption
-          title={t('Tokens, NFTs & DeFi positions auto discovery')}
-          description={t('Fetch tokens and positions via Ambire API, using third party providers')}
-          icon={<SearchIcon width={24} height={24} />}
-          flag="tokenAndDefiAutoDiscovery"
-        />
-        <OptOutControlOption
-          title={t('Transaction arguments decoding')}
+          title={t('ERC-4337 smart account features')}
           description={t(
-            `Use Ambire's API to decode transaction arguments and show action names when signing calls`
+            'Use bundlers and paymasters for smart account gas estimation, gas tank, sponsored gas, and token fee payments.'
           )}
-          icon={<SearchIcon width={24} height={24} />}
-          flag="apiForFunctionSelectors"
+          icon={<LightningIcon width={24} height={24} color={theme.iconPrimary} />}
+          flag="erc4337"
         />
         <OptOutControlOption
           title={t('Keep ENS profiles up to date')}
@@ -46,14 +41,6 @@ const OptOutsScreen = () => {
           )}
           icon={<EnsIcon width={20} height={20} color={theme.iconPrimary} />}
           flag="keepEnsProfilesUpToDate"
-        />
-        <OptOutControlOption
-          title={t('ERC-4337 smart account features')}
-          description={t(
-            'Use bundlers and paymasters for smart account gas estimation, gas tank, sponsored gas, and token fee payments.'
-          )}
-          icon={<LightningIcon width={24} height={24} color={theme.iconPrimary} />}
-          flag="erc4337"
         />
         <CrashAnalyticsControlOption />
       </View>

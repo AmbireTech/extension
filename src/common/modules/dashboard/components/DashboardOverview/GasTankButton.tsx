@@ -40,7 +40,7 @@ const GasTankButton = ({ onPress, portfolio, account }: Props) => {
   const {
     state: { flags }
   } = useController('FeatureFlagsController')
-  const isErc4337Enabled = flags.erc4337
+  const isErc4337Enabled = flags.erc4337 && flags.gasTank
 
   const {
     state: { networks }
@@ -241,7 +241,6 @@ const GasTankButton = ({ onPress, portfolio, account }: Props) => {
   return (
     <Pressable
       onPress={handleOnPress}
-      // @ts-ignore
       style={buttonStyle}
       onHoverIn={handleHoverIn}
       onHoverOut={handleHoverOut}

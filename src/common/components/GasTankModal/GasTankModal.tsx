@@ -49,7 +49,7 @@ const GasTankModal = ({ modalRef, handleClose, portfolio, account }: Props) => {
     state: { flags }
   } = useController('FeatureFlagsController')
   const { canUseGasTank, disabledReason } = useHasGasTank({ account })
-  const isErc4337Enabled = flags.erc4337
+  const isErc4337Enabled = flags.erc4337 && flags.gasTank
 
   // Note: total balance Gas Tank details
   const { token, balanceFormatted } = useMemo(
@@ -69,8 +69,8 @@ const GasTankModal = ({ modalRef, handleClose, portfolio, account }: Props) => {
     featureFlagsDispatch({
       type: 'method',
       params: {
-        method: 'setFeatureFlag',
-        args: ['erc4337', true]
+        method: 'setFeatureFlags',
+        args: [{ erc4337: true, gasTank: true }]
       }
     })
   }, [featureFlagsDispatch])
