@@ -218,7 +218,7 @@ const OneClickEstimation = ({
                   : undefined
               }
             >
-              {!isMobile && (
+              {!isMobile && !isCompactSidePanelLayout && (
                 <Button
                   testID="back-button"
                   type="secondary"
@@ -226,11 +226,7 @@ const OneClickEstimation = ({
                   onPress={closeEstimationModal}
                   hasBottomSpacing={false}
                   disabled={isSignLoading}
-                  style={
-                    isCompactSidePanelLayout
-                      ? { flex: 1, minWidth: 0 }
-                      : { width: 98, ...spacings.mrLg }
-                  }
+                  style={{ width: 98, ...spacings.mrLg }}
                   size="smaller"
                 />
               )}
@@ -257,6 +253,20 @@ const OneClickEstimation = ({
                   onPress={() => runWithFreshActionPress(onSignButtonClick)}
                   size={isMobile ? 'regular' : 'smaller'}
                   style={isCompactSidePanelLayout ? { flex: 1, minWidth: 0 } : undefined}
+                />
+              )}
+
+              {/* Side panel only: stack Back under the primary action */}
+              {!isMobile && isCompactSidePanelLayout && (
+                <Button
+                  testID="back-button"
+                  type="secondary"
+                  text={t('Back')}
+                  onPress={closeEstimationModal}
+                  hasBottomSpacing={false}
+                  disabled={isSignLoading}
+                  style={{ flex: 1, minWidth: 0 }}
+                  size="smaller"
                 />
               )}
             </ButtonsWrapper>
