@@ -45,9 +45,8 @@ const RouteItem: FC<Props> = ({ routeItem, index, routeItemsLength, isCompactSid
       key={routeItem.label}
       style={[
         flexbox.alignCenter,
-        isCompactSidePanelLayout
-          ? { flexShrink: 0 }
-          : index !== routeItemsLength - 1 && spacings.mrSm
+        isCompactSidePanelLayout && { flexShrink: 0 },
+        index !== routeItemsLength - 1 && spacings.mrSm
       ]}
       disabled={routeItem.disabled}
       onPress={async () => {

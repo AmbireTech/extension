@@ -61,7 +61,7 @@ const Routes = () => {
     <View
       style={[
         flexbox.directionRow,
-        isCompactSidePanelLayout && [flexbox.justifySpaceBetween, { width: '100%' }]
+        isCompactSidePanelLayout && [flexbox.justifyCenter, { width: '100%' }]
       ]}
     >
       {routeItems.map((routeItem, index) => (
