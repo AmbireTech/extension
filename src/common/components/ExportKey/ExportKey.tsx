@@ -102,8 +102,6 @@ const ExportKey = ({
       })
     }
 
-    if (blurred) setBlurred(false)
-
     closeConfirmPassword()
   }
 
