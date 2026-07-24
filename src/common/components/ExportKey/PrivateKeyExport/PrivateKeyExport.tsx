@@ -1,5 +1,6 @@
+import { BlurView } from 'expo-blur'
 import React, { FC, useCallback, useMemo } from 'react'
-import { View } from 'react-native'
+import { StyleSheet, View } from 'react-native'
 
 import CopyIcon from '@common/assets/svg/CopyIcon'
 import InvisibilityIcon from '@common/assets/svg/InvisibilityIcon'
@@ -12,10 +13,14 @@ import { useTranslation } from '@common/config/localization'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import spacings, { SPACING_SM } from '@common/styles/spacings'
+import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
 import { setStringAsync } from '@common/utils/clipboard'
 
 import getStyles from './styles'
+
+// Dummy value shown blurred before the real key is revealed, so the box doesn't look empty
+const PLACEHOLDER_PRIVATE_KEY = `0x${'0123456789abcdef'.repeat(4)}`
 
 interface Props {
   privateKey: string | null
@@ -27,7 +32,7 @@ interface Props {
 const PrivateKeyExport: FC<Props> = ({ privateKey, blurred, setBlurred, openConfirmPassword }) => {
   const { t } = useTranslation()
 
-  const { theme, styles } = useTheme(getStyles)
+  const { theme, themeType, styles } = useTheme(getStyles)
   const { addToast } = useToast()
 
   const visibilityButtonText = useMemo(() => {
@@ -69,8 +74,18 @@ const PrivateKeyExport: FC<Props> = ({ privateKey, blurred, setBlurred, openConf
           ]}
         >
           <Text testID="private-key-value" fontSize={14} color={theme.secondaryText}>
-            {privateKey}
+            {/* Before the key is revealed, render a dummy hex so the blur (CSS filter on web,
+                BlurView on native) has something to obscure instead of showing a flat solid box */}
+            {privateKey || PLACEHOLDER_PRIVATE_KEY}
           </Text>
+          {/* On native `filter: blur()` is a no-op (web-only CSS), so overlay a real BlurView to hide the key */}
+          {isMobile && blurred && (
+            <BlurView
+              intensity={12}
+              tint={themeType === THEME_TYPES.DARK ? 'dark' : 'light'}
+              style={StyleSheet.absoluteFill}
+            />
+          )}
         </View>
         <View
           style={[
