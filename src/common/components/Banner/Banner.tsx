@@ -103,6 +103,7 @@ const Banner = React.memo(
             <Text
               fontSize={titleFontSize || (isMobile ? 14 : 16)}
               weight="medium"
+              numberOfLines={singleRow ? 1 : undefined}
               style={[
                 !titleAfter ? flexbox.flex1 : { flexShrink: 1 },
                 spacings.mlMi,
@@ -113,6 +114,17 @@ const Banner = React.memo(
             </Text>
             {titleAfter}
           </View>
+          {singleRow && hasDismissAction && (
+            <BannerButton
+              type="secondary"
+              colorType="error"
+              onPress={onDismissButtonPress}
+              testID="banner-button-reject"
+              style={spacings.mlTy}
+            >
+              {dismissButtonText}
+            </BannerButton>
+          )}
           {singleRow && hasPrimaryAction && (
             <BannerButton
               type="primary"
