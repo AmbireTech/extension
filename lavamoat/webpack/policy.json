@@ -174,7 +174,7 @@
         "@metamask/eth-sig-util>@ethereumjs/util>micro-ftch": true
       }
     },
-    "hardhat>@ethersproject/abi": {
+    "eth-crypto>ethers>@ethersproject/abi": {
       "globals": {
         "console.log": true
       },
@@ -184,7 +184,7 @@
         "@ethersproject/providers>@ethersproject/bytes": true,
         "@ethersproject/providers>@ethersproject/constants": true,
         "@ethersproject/providers>@ethersproject/hash": true,
-        "hardhat>@ethersproject/abi>@ethersproject/keccak256": true,
+        "eth-crypto>ethers>@ethersproject/keccak256": true,
         "@ethersproject/providers>@ethersproject/logger": true,
         "@ethersproject/providers>@ethersproject/properties": true,
         "@ethersproject/providers>@ethersproject/strings": true,
@@ -209,7 +209,7 @@
       "packages": {
         "@ethersproject/providers>@ethersproject/bignumber": true,
         "@ethersproject/providers>@ethersproject/bytes": true,
-        "hardhat>@ethersproject/abi>@ethersproject/keccak256": true,
+        "eth-crypto>ethers>@ethersproject/keccak256": true,
         "@ethersproject/providers>@ethersproject/logger": true,
         "@ethersproject/providers>@ethersproject/rlp": true
       }
@@ -251,7 +251,7 @@
         "setTimeout": true
       },
       "packages": {
-        "hardhat>@ethersproject/abi": true,
+        "eth-crypto>ethers>@ethersproject/abi": true,
         "@ethersproject/providers>@ethersproject/abstract-provider": true,
         "@ethersproject/providers>@ethersproject/abstract-signer": true,
         "@ethersproject/providers>@ethersproject/address": true,
@@ -268,7 +268,7 @@
         "eth-crypto>ethers>@ethersproject/base64": true,
         "@ethersproject/providers>@ethersproject/bignumber": true,
         "@ethersproject/providers>@ethersproject/bytes": true,
-        "hardhat>@ethersproject/abi>@ethersproject/keccak256": true,
+        "eth-crypto>ethers>@ethersproject/keccak256": true,
         "@ethersproject/providers>@ethersproject/logger": true,
         "@ethersproject/providers>@ethersproject/properties": true,
         "@ethersproject/providers>@ethersproject/strings": true
@@ -294,7 +294,7 @@
         "@ethersproject/providers>@ethersproject/address": true,
         "@ethersproject/providers>@ethersproject/bytes": true,
         "eth-crypto>ethers>@ethersproject/hdnode": true,
-        "hardhat>@ethersproject/abi>@ethersproject/keccak256": true,
+        "eth-crypto>ethers>@ethersproject/keccak256": true,
         "@ethersproject/providers>@ethersproject/logger": true,
         "eth-crypto>ethers>@ethersproject/pbkdf2": true,
         "@ethersproject/providers>@ethersproject/properties": true,
@@ -305,10 +305,10 @@
         "scrypt-js": true
       }
     },
-    "hardhat>@ethersproject/abi>@ethersproject/keccak256": {
+    "eth-crypto>ethers>@ethersproject/keccak256": {
       "packages": {
         "@ethersproject/providers>@ethersproject/bytes": true,
-        "solc>js-sha3": true
+        "eth-crypto>ethers>@ethersproject/keccak256>js-sha3": true
       }
     },
     "@ethersproject/providers>@ethersproject/logger": {
@@ -399,7 +399,7 @@
       "packages": {
         "@ethersproject/providers>@ethersproject/bignumber": true,
         "@ethersproject/providers>@ethersproject/bytes": true,
-        "hardhat>@ethersproject/abi>@ethersproject/keccak256": true,
+        "eth-crypto>ethers>@ethersproject/keccak256": true,
         "@ethersproject/providers>@ethersproject/logger": true,
         "@ethersproject/providers>@ethersproject/sha2": true,
         "@ethersproject/providers>@ethersproject/strings": true
@@ -418,7 +418,7 @@
         "@ethersproject/providers>@ethersproject/bignumber": true,
         "@ethersproject/providers>@ethersproject/bytes": true,
         "@ethersproject/providers>@ethersproject/constants": true,
-        "hardhat>@ethersproject/abi>@ethersproject/keccak256": true,
+        "eth-crypto>ethers>@ethersproject/keccak256": true,
         "@ethersproject/providers>@ethersproject/logger": true,
         "@ethersproject/providers>@ethersproject/properties": true,
         "@ethersproject/providers>@ethersproject/rlp": true,
@@ -440,7 +440,7 @@
         "@ethersproject/providers>@ethersproject/hash": true,
         "eth-crypto>ethers>@ethersproject/hdnode": true,
         "eth-crypto>ethers>@ethersproject/json-wallets": true,
-        "hardhat>@ethersproject/abi>@ethersproject/keccak256": true,
+        "eth-crypto>ethers>@ethersproject/keccak256": true,
         "@ethersproject/providers>@ethersproject/logger": true,
         "@ethersproject/providers>@ethersproject/properties": true,
         "@ethersproject/providers>@ethersproject/random": true,
@@ -969,7 +969,7 @@
       },
       "packages": {
         "@ledgerhq/device-management-kit>@sentry/minimal>@sentry/hub>@sentry/utils": true,
-        "@ledgerhq/device-management-kit>@sentry/minimal>tslib": true
+        "@ledgerhq/device-management-kit>@sentry/minimal>@sentry/hub>tslib": true
       }
     },
     "@ledgerhq/device-management-kit>@sentry/minimal": {
@@ -1005,7 +1005,7 @@
       },
       "packages": {
         "process": true,
-        "@ledgerhq/device-management-kit>@sentry/minimal>tslib": true
+        "@ledgerhq/device-management-kit>@sentry/minimal>@sentry/hub>@sentry/utils>tslib": true
       }
     },
     "@signinwithethereum/siwe": {
@@ -1618,7 +1618,7 @@
       "meta": {
         "webpack-optimization": [
           "Dependency 'eth-crypto>ethers' reexports from 'eth-crypto>ethers>@ethersproject/wallet' and webpack collapsed that to a direct import.",
-          "Dependency 'eth-crypto>ethers' reexports from 'hardhat>@ethersproject/abi>@ethersproject/keccak256' and webpack collapsed that to a direct import.",
+          "Dependency 'eth-crypto>ethers' reexports from 'eth-crypto>ethers>@ethersproject/keccak256' and webpack collapsed that to a direct import.",
           "Dependency 'eth-crypto>ethers' reexports from '@ethersproject/providers>@ethersproject/bytes' and webpack collapsed that to a direct import.",
           "Dependency 'eth-crypto>ethers' reexports from '@ethersproject/providers>@ethersproject/random' and webpack collapsed that to a direct import.",
           "Dependency 'eth-crypto>ethers' reexports from 'eth-crypto>ethers>@ethersproject/contracts' and webpack collapsed that to a direct import.",
@@ -1630,7 +1630,7 @@
         "eth-crypto>@ethereumjs/tx": true,
         "@ethersproject/providers>@ethersproject/bytes": true,
         "eth-crypto>ethers>@ethersproject/contracts": true,
-        "hardhat>@ethersproject/abi>@ethersproject/keccak256": true,
+        "eth-crypto>ethers>@ethersproject/keccak256": true,
         "@ethersproject/providers>@ethersproject/random": true,
         "eth-crypto>ethers>@ethersproject/solidity": true,
         "eth-crypto>ethers>@ethersproject/wallet": true,
@@ -1662,7 +1662,7 @@
       },
       "packages": {
         "buffer": true,
-        "hardhat>keccak": true,
+        "eth-crypto>ethereumjs-util>ethereum-cryptography>keccak": true,
         "crypto-browserify>randombytes": true,
         "eth-crypto>ethereumjs-util>ethereum-cryptography>secp256k1": true
       }
@@ -1702,7 +1702,7 @@
     },
     "@ambire/signature-validator>ethers": {
       "packages": {
-        "hardhat>@ethersproject/abi": true,
+        "eth-crypto>ethers>@ethersproject/abi": true,
         "@ethersproject/providers>@ethersproject/abstract-signer": true,
         "@ethersproject/providers>@ethersproject/address": true,
         "eth-crypto>ethers>@ethersproject/base64": true,
@@ -1714,7 +1714,7 @@
         "@ethersproject/providers>@ethersproject/hash": true,
         "eth-crypto>ethers>@ethersproject/hdnode": true,
         "eth-crypto>ethers>@ethersproject/json-wallets": true,
-        "hardhat>@ethersproject/abi>@ethersproject/keccak256": true,
+        "eth-crypto>ethers>@ethersproject/keccak256": true,
         "@ethersproject/providers>@ethersproject/logger": true,
         "@ethersproject/providers>@ethersproject/properties": true,
         "@ambire/signature-validator>ethers>@ethersproject/providers": true,
@@ -2092,7 +2092,7 @@
         "WebSocket": true
       }
     },
-    "solc>js-sha3": {
+    "eth-crypto>ethers>@ethersproject/keccak256>js-sha3": {
       "globals": {
         "define": true,
         "process": true
@@ -2106,7 +2106,7 @@
         "define": true
       }
     },
-    "hardhat>keccak": {
+    "eth-crypto>ethereumjs-util>ethereum-cryptography>keccak": {
       "globals": {
         "Buffer.alloc": true,
         "Buffer.from": true,
@@ -2114,7 +2114,7 @@
       },
       "packages": {
         "buffer": true,
-        "hardhat>keccak>readable-stream": true
+        "eth-crypto>ethereumjs-util>ethereum-cryptography>keccak>readable-stream": true
       }
     },
     "lodash": {
@@ -2909,7 +2909,7 @@
         "stream-http>readable-stream>util-deprecate": true
       }
     },
-    "hardhat>keccak>readable-stream": {
+    "eth-crypto>ethereumjs-util>ethereum-cryptography>keccak>readable-stream": {
       "globals": {
         "process.nextTick": true,
         "process.stderr": true,
@@ -2920,7 +2920,7 @@
         "events": true,
         "stream-http>inherits": true,
         "process": true,
-        "hardhat>keccak>readable-stream>string_decoder": true,
+        "eth-crypto>ethereumjs-util>ethereum-cryptography>keccak>readable-stream>string_decoder": true,
         "stream-http>readable-stream>util-deprecate": true
       }
     },
@@ -3183,7 +3183,7 @@
         "crypto-browserify>pbkdf2>ripemd160>hash-base>readable-stream>string_decoder>safe-buffer": true
       }
     },
-    "hardhat>keccak>readable-stream>string_decoder": {
+    "eth-crypto>ethereumjs-util>ethereum-cryptography>keccak>readable-stream>string_decoder": {
       "packages": {
         "react-native-quick-crypto>safe-buffer": true
       }

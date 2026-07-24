@@ -21,14 +21,24 @@ export const resolveInitialRoute = async (
   mainCtrl: MainController,
   isRequestWindow: boolean
 ): Promise<string | null> => {
-  await Promise.all([
-    awaitInitialLoad(mainCtrl.keystore),
-    awaitInitialLoad(mainCtrl.accounts),
-    awaitInitialLoad(mainCtrl.requests),
-    awaitInitialLoad(mainCtrl.swapAndBridge),
-    awaitInitialLoad(mainCtrl.transfer),
-    awaitInitialLoad(mainCtrl.survey)
-  ])
+  // Single source of truth: the controllers whose persisted state `getInitialRoute`
+  // reads. The await list below and the args passed to `getInitialRoute` are both
+  // derived from this object, so they cannot drift — and `getInitialRoute`'s
+  // required args compile-enforce that every controller it reads is listed here.
+  const routeControllers = {
+    keystoreState: mainCtrl.keystore,
+    requestsState: mainCtrl.requests,
+    swapAndBridgeState: mainCtrl.swapAndBridge,
+    transferState: mainCtrl.transfer,
+    surveyState: mainCtrl.survey
+  }
+
+  // `accounts` gates authStatus (it isn't passed as a state object), so await it
+  // alongside the rest. Note: swapAndBridge and transfer expose `initialLoadPromise`
+  // privately, so their await here is a no-op — acceptable, because that promise is
+  // only pending during the very first load, when there is no persisted swap/transfer
+  // session to restore anyway (on later resolves it is already resolved).
+  await Promise.all([...Object.values(routeControllers), mainCtrl.accounts].map(awaitInitialLoad))
 
   // `getInitialRoute` uses authStatus only to detect the not-authenticated case,
   // which is fully determined by whether any account exists. The richer UI check
@@ -37,13 +47,5 @@ export const resolveInitialRoute = async (
     ? AUTH_STATUS.AUTHENTICATED
     : AUTH_STATUS.NOT_AUTHENTICATED
 
-  return getInitialRoute({
-    keystoreState: mainCtrl.keystore,
-    authStatus,
-    requestsState: mainCtrl.requests,
-    swapAndBridgeState: mainCtrl.swapAndBridge,
-    transferState: mainCtrl.transfer,
-    surveyState: mainCtrl.survey,
-    isRequestWindow
-  })
+  return getInitialRoute({ ...routeControllers, authStatus, isRequestWindow })
 }
