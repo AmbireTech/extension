@@ -3,7 +3,7 @@ import { syncStorage } from '@common/services/storage'
 // Persists the last-known total balance per account so the shell can show it
 // (pulsing) on the next open instead of a bare skeleton.
 
-const KEY_PREFIX = 'dashboardBalanceCache'
+const STORAGE_KEY = 'dashboardBalanceCache'
 const TTL_MS = 60 * 60 * 1000 // 1 hour
 // Past this age the cached balance is shown with a spinner (like the overview's
 // reloading state) to signal it may be outdated and is being refreshed.
@@ -20,11 +20,23 @@ export interface DashboardBalanceCache {
   cachedAt: number
 }
 
-const getKey = (addr: string) => `${KEY_PREFIX}:${addr.toLowerCase()}`
+type DashboardBalanceCacheStore = { [addr: string]: DashboardBalanceCache }
+
+const getStore = (): DashboardBalanceCacheStore => {
+  try {
+    const raw = syncStorage.get(STORAGE_KEY)
+    return raw ? JSON.parse(raw) : {}
+  } catch (error) {
+    console.error('Failed to read cached dashboard balances', error)
+    return {}
+  }
+}
 
 export const setCachedDashboardBalance = (cache: DashboardBalanceCache) => {
   try {
-    syncStorage.set(getKey(cache.addr), JSON.stringify(cache))
+    const store = getStore()
+    store[cache.addr.toLowerCase()] = cache
+    syncStorage.set(STORAGE_KEY, JSON.stringify(store))
   } catch (error) {
     console.error('Failed to cache dashboard balance', error)
   }
@@ -40,21 +52,16 @@ export const getCachedDashboardBalance = (
 ): DashboardBalanceCache | null => {
   if (!addr) return null
 
-  try {
-    const raw = syncStorage.get(getKey(addr))
-    if (!raw) return null
+  const store = getStore()
+  const cached = store[addr.toLowerCase()]
+  if (!cached) return null
 
-    const parsed = JSON.parse(raw) as DashboardBalanceCache
-    const isForRequestedAddress = parsed?.addr?.toLowerCase() === addr.toLowerCase()
-    const isFresh = typeof parsed?.cachedAt === 'number' && now - parsed.cachedAt < TTL_MS
+  const isForRequestedAddress = cached?.addr?.toLowerCase() === addr.toLowerCase()
+  const isFresh = typeof cached?.cachedAt === 'number' && now - cached.cachedAt < TTL_MS
 
-    if (!isForRequestedAddress || !isFresh) return null
+  if (!isForRequestedAddress || !isFresh) return null
 
-    return parsed
-  } catch (error) {
-    console.error('Failed to read cached dashboard balance', error)
-    return null
-  }
+  return cached
 }
 
 export const isCachedDashboardBalanceStale = (
