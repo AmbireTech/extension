@@ -21,7 +21,6 @@ import useTheme from '@common/hooks/useTheme'
 import { WEB_ROUTES } from '@common/modules/router/constants/common'
 import useTrackAccountOp from '@common/modules/sign-account-op/hooks/OneClick/useTrackAccountOp'
 import spacings from '@common/styles/spacings'
-import { THEME_TYPES } from '@common/styles/theme/types'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
@@ -30,6 +29,8 @@ import { getUiType } from '@common/utils/uiType'
 
 import RouteStepsToken from '../RouteStepsToken'
 
+import { getSwapCompletedMessageTemplate } from './getSwapCompletedMessage'
+
 const { isRequestWindow } = getUiType()
 
 type Props = {
@@ -37,9 +38,25 @@ type Props = {
   handleClose: () => void
 }
 
+const buildCompletedMessage = (
+  activeRouteId: SwapAndBridgeActiveRoute['activeRouteId'],
+  toAssetSymbol: string | null,
+  translate: (key: string, options?: { symbol: string }) => string
+) => {
+  const template = getSwapCompletedMessageTemplate(toAssetSymbol, activeRouteId)
+  const symbol = toAssetSymbol || 'The token'
+
+  return {
+    title: translate(template.title),
+    titleSecondary: template.titleSecondary
+      ? translate(template.titleSecondary, { symbol })
+      : undefined
+  }
+}
+
 const TrackProgress: FC<Props> = ({ activeRoute, handleClose }) => {
   const { t } = useTranslation()
-  const { theme, themeType } = useTheme()
+  const { theme } = useTheme()
   const { navigate } = useNavigation()
   const { activeRoutes } = useController('SwapAndBridgeController').state
   const { dispatch: requestsDispatch } = useController('RequestsController')
@@ -57,6 +74,11 @@ const TrackProgress: FC<Props> = ({ activeRoute, handleClose }) => {
   const providerId = lastCompletedRoute?.route
     ? lastCompletedRoute.route.providerId
     : lastCompletedRoute?.serviceProviderId
+
+  const completedMessage =
+    lastCompletedRoute?.routeStatus === 'completed'
+      ? buildCompletedMessage(lastCompletedRoute.activeRouteId, toAssetSymbol, t)
+      : null
 
   const refunded = useMemo(() => {
     if (!steps || steps.length === 0 || !firstStep) return null
@@ -248,12 +270,10 @@ const TrackProgress: FC<Props> = ({ activeRoute, handleClose }) => {
         </InProgress>
       )}
 
-      {lastCompletedRoute?.routeStatus === 'completed' && (
+      {lastCompletedRoute?.routeStatus === 'completed' && !!completedMessage && (
         <Completed
-          title={t('Nice trade!')}
-          titleSecondary={t('{{symbol}} delivered - like magic.', {
-            symbol: toAssetSymbol || 'The token'
-          })}
+          title={completedMessage.title}
+          titleSecondary={completedMessage.titleSecondary}
           openExplorerText={isSwap ? t('View swap') : t('View bridge')}
           explorerLink={explorerLink}
         />
