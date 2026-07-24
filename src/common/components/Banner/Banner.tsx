@@ -27,6 +27,7 @@ const ICON_MAP: {
 
 export interface Props {
   title: string
+  titleAfter?: React.ReactNode
   type: BannerType
   text?: string
   children?: React.ReactNode | React.ReactNode[]
@@ -46,6 +47,7 @@ const Banner = React.memo(
   ({
     type,
     title,
+    titleAfter,
     text,
     children,
     CustomIcon,
@@ -101,10 +103,15 @@ const Banner = React.memo(
             <Text
               fontSize={titleFontSize || (isMobile ? 14 : 16)}
               weight="medium"
-              style={[flexbox.flex1, spacings.mlMi, !singleRow && isMobile && { marginTop: 2 }]}
+              style={[
+                !titleAfter ? flexbox.flex1 : { flexShrink: 1 },
+                spacings.mlMi,
+                !singleRow && isMobile && { marginTop: 2 }
+              ]}
             >
               {title}
             </Text>
+            {titleAfter}
           </View>
           {singleRow && hasPrimaryAction && (
             <BannerButton
