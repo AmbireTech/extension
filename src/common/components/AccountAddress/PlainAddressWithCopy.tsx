@@ -70,7 +70,7 @@ const PlainAddressWithCopy: FC<Props> = ({
 
   const iconSize = fontSize + 8
 
-  const containerStyle = useMemo(() => {
+  const containerStyle = useMemo((): ViewStyle => {
     if (withWrap) {
       return {
         flexBasis: 110,
