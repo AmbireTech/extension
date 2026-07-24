@@ -58,10 +58,6 @@ const DashboardShell = () => {
           <View style={{ zIndex: 2 }}>
             <DashboardHeader />
             <View style={[flexbox.alignCenter, spacings.pt]}>
-              {/* Mirror the balance row (BALANCE_HEIGHT) in DashboardOverview 1:1 so
-              swapping the shell for the real overview causes no vertical shift. A fresh,
-              error-free cached balance shows pulsing; once it's older than 5 minutes a
-              spinner is added on the left, the same way the overview shows a reload. */}
               <View style={[{ height: BALANCE_HEIGHT }, flexbox.center, spacings.mbMi]}>
                 <DashboardBalance
                   variant={showBalanceSkeleton ? 'skeleton' : 'cached'}

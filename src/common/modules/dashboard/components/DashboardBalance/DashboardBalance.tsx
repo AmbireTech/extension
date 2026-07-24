@@ -70,18 +70,20 @@ const DashboardBalance: React.FC<Props> = ({
       >
         {privateValue(integerPart, isPrivacyModeEnabled, 7)}
       </Text>
-      {totalAmount < THRESHOLD_AMOUNT_TO_HIDE_BALANCE_DECIMALS && !isPrivacyModeEnabled && (
-        <Text
-          fontSize={20}
-          shouldScale={false}
-          weight="number_bold"
-          color={color}
-          style={!isWeb ? { lineHeight: isiOS ? 30 : 28 } : { lineHeight: 20 }}
-        >
-          {t('.')}
-          {decimalPart}
-        </Text>
-      )}
+      {totalAmount < THRESHOLD_AMOUNT_TO_HIDE_BALANCE_DECIMALS &&
+        !isPrivacyModeEnabled &&
+        typeof decimalPart === 'string' && (
+          <Text
+            fontSize={20}
+            shouldScale={false}
+            weight="number_bold"
+            color={color}
+            style={!isWeb ? { lineHeight: isiOS ? 30 : 28 } : { lineHeight: 20 }}
+          >
+            {t('.')}
+            {decimalPart}
+          </Text>
+        )}
     </Pressable>
   )
 

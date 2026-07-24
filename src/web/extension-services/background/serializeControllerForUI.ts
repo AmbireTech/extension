@@ -3,15 +3,9 @@ import { controllersNestedInMainMapping } from '@common/constants/controllersMap
 
 const MAIN_CONTROLLER_NAME = 'MainController'
 
-// Serializes a controller's public state for the UI.
-//
-// For the MainController we strip the nested sub-controllers' states: each nested
-// controller is sent to the UI as its own top-level message, so keeping them here
-// would stringify the same (potentially large) state twice.
-// Keep in mind: if we just spread `ctrl` instead of calling `ctrl.toJSON()`, the getters won't be included.
-//
-// Used by both the update path (background `sendUpdate`) and the initial-state path
-// (`INIT_CONTROLLER_STATE`) so the two can never drift apart.
+/**
+ * Serializes a controller's public state for the UI.
+ */
 export function serializeControllerForUI(ctrl: EventEmitter): object {
   const state = ctrl.toJSON()
 

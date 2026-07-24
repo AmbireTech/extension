@@ -1,4 +1,4 @@
-import React, { createContext, ReactNode, useEffect, useMemo, useRef, useState } from 'react'
+import React, { ReactNode, useEffect, useMemo, useRef, useState } from 'react'
 
 import { captureMessage } from '@common/config/analytics/CrashAnalytics.web'
 import { APP_VERSION } from '@common/config/env'
@@ -13,7 +13,6 @@ import { getUiType } from '@common/utils/uiType'
 const { isPopup } = getUiType()
 
 const ControllersStateLoadedProvider = ({ children }: { children: ReactNode }) => {
-  // const startTimeRef = useRef(Date.now())
   const unsubscribeRef = useRef<(() => void) | null>(null)
   const [isStatesLoadingTakingTooLong, setIsStatesLoadingTakingTooLong] = useState(false)
 

@@ -3,12 +3,7 @@
 
 <head>
   <meta charset="utf-8" />
-  <!-- Critical popup CSS, inlined so the popup's fixed size is in the very first
-         CSSOM — before the render-blocking lockdown/rootTheme scripts. Otherwise, on
-         cold opens where those scripts delay the first layout, Chrome shows the popup
-         at a default size and visibly grows it to fit. color-scheme lets the browser
-         paint the correct backdrop before the theme class lands. Kept in sync with
-         style.css. -->
+  <!-- Prevents rendering the popup as a small white square the first few ms it opens -->
   <style>
     html {
       color-scheme: light dark;
