@@ -322,7 +322,14 @@ const SignAccountOpScreen = () => {
             ]}
           >
             <SectionHeading withMb={false}>{t('Overview')}</SectionHeading>
-            <NetworkBadge chainId={network?.chainId} withOnPrefix />
+            <View style={[flexbox.directionRow, flexbox.alignCenter]}>
+              <SafeNonce />
+              <NetworkBadge
+                chainId={network?.chainId}
+                withOnPrefix
+                style={signAccountOpState?.account.safeCreation ? spacings.mlSm : undefined}
+              />
+            </View>
           </View>
           {/* TabLayoutWrapperMainContent supports scroll but the logic that determines the height
           of the content doesn't work with it, so we use a ScrollView here */}
@@ -339,7 +346,6 @@ const SignAccountOpScreen = () => {
             scrollEventThrottle={16}
             style={contentHeight > containerHeight ? spacings.prMi : {}}
           >
-            <SafeNonce />
             <PendingTransactions
               network={network}
               setDelegation={signAccountOpState?.accountOp.meta?.setDelegation}

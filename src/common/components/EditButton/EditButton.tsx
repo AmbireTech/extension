@@ -13,9 +13,10 @@ import Text from '../Text'
 interface Props {
   onPress: (event: GestureResponderEvent) => void
   style?: StyleProp<ViewStyle>
+  iconOnly?: boolean
 }
 
-const EditButton = ({ onPress, style }: Props) => {
+const EditButton = ({ onPress, style, iconOnly = false }: Props) => {
   const { t } = useTranslation()
   const { theme } = useTheme()
   const [bindEdit, , isHovered] = useHover({ preset: 'opacityInverted' })
@@ -25,19 +26,25 @@ const EditButton = ({ onPress, style }: Props) => {
       style={[flexbox.directionRow, flexbox.alignCenter, style]}
       {...bindEdit}
       onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={iconOnly ? t('Edit') : undefined}
     >
-      <Text fontSize={14} color={theme.linkText}>
-        {'['}
-      </Text>
+      {!iconOnly && (
+        <Text fontSize={14} color={theme.linkText}>
+          {'['}
+        </Text>
+      )}
       <EditPenIcon width={20} height={20} color={theme.linkText} />
-      {!isMobile && (
+      {!iconOnly && !isMobile && (
         <Text fontSize={14} color={theme.linkText} underline={isHovered}>
           {t('Edit')}
         </Text>
       )}
-      <Text fontSize={14} color={theme.linkText}>
-        {']'}
-      </Text>
+      {!iconOnly && (
+        <Text fontSize={14} color={theme.linkText}>
+          {']'}
+        </Text>
+      )}
     </AnimatedPressable>
   )
 }

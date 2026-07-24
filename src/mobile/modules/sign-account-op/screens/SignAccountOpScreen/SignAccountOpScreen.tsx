@@ -325,18 +325,26 @@ const SignAccountOpScreen = () => {
           contentContainerStyle={spacings.pbSm}
           showsVerticalScrollIndicator={false}
         >
-          <View
-            style={[
-              flexbox.directionRow,
-              flexbox.alignCenter,
-              flexbox.justifySpaceBetween,
-              spacings.mbSm
-            ]}
-          >
-            <SectionHeading withMb={false}>{t('Overview')}</SectionHeading>
-            <NetworkBadge chainId={network?.chainId} withOnPrefix />
-          </View>
-          <SafeNonce />
+          {signAccountOpState?.account.safeCreation ? (
+            <>
+              <View style={spacings.mbSm}>
+                <SectionHeading withMb={false}>{t('Overview')}</SectionHeading>
+              </View>
+              <SafeNonce />
+            </>
+          ) : (
+            <View
+              style={[
+                flexbox.directionRow,
+                flexbox.alignCenter,
+                flexbox.justifySpaceBetween,
+                spacings.mbSm
+              ]}
+            >
+              <SectionHeading withMb={false}>{t('Overview')}</SectionHeading>
+              <NetworkBadge chainId={network?.chainId} withOnPrefix />
+            </View>
+          )}
           <PendingTransactions
             network={network}
             setDelegation={signAccountOpState?.accountOp.meta?.setDelegation}

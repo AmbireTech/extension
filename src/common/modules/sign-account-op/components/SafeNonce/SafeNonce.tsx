@@ -7,6 +7,7 @@ import BottomSheet from '@common/components/BottomSheet'
 import Button from '@common/components/Button'
 import EditButton from '@common/components/EditButton'
 import FooterGlassView from '@common/components/FooterGlassView'
+import NetworkIcon from '@common/components/NetworkIcon'
 import NumberInput from '@common/components/NumberInput'
 import Text from '@common/components/Text'
 import { isMobile, isWeb } from '@common/config/env'
@@ -25,6 +26,7 @@ const SafeNonce = () => {
   const { theme } = useTheme()
   const { state: signAccountOpState, dispatch } = useController('SignAccountOpController')
   const { accountStates } = useController('AccountsController').state
+  const { networks } = useController('NetworksController').state
   const { ref: sheetRef, open, close } = useModalize()
   const nonce = useMemo(
     () =>
@@ -41,6 +43,10 @@ const SafeNonce = () => {
       signAccountOpState.accountOp.chainId.toString()
     ]?.nonce
   }, [accountStates, signAccountOpState])
+  const network = useMemo(
+    () => networks.find(({ chainId }) => chainId === signAccountOpState?.accountOp.chainId),
+    [networks, signAccountOpState?.accountOp.chainId]
+  )
   const [draftNonce, setDraftNonce] = useState(nonce.toString())
   const canEdit =
     !signAccountOpState?.isSignInProgress &&
@@ -76,24 +82,90 @@ const SafeNonce = () => {
 
   return (
     <>
-      <View
-        style={[
-          flexbox.directionRow,
-          flexbox.alignCenter,
-          flexbox.justifySpaceBetween,
-          spacings.mb
-        ]}
-      >
-        <Text fontSize={14} appearance="secondaryText">
-          {t('Nonce')}
-        </Text>
-        <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-          <Text fontSize={14} weight="medium" style={canEdit ? spacings.mrTy : undefined}>
+      {isWeb ? (
+        <View
+          style={[
+            flexbox.directionRow,
+            flexbox.alignCenter,
+            spacings.phSm,
+            {
+              height: 40,
+              borderRadius: 50,
+              borderWidth: 1,
+              borderColor: theme.primaryBorder
+            }
+          ]}
+        >
+          <Text fontSize={14} appearance="secondaryText">
+            {t('Nonce')}
+          </Text>
+          <Text fontSize={14} weight="medium" style={spacings.mlTy}>
             {nonce.toString()}
           </Text>
-          {canEdit && <EditButton onPress={handleOpen} />}
+          {canEdit && (
+            <View
+              style={[
+                spacings.mlTy,
+                spacings.plTy,
+                { borderLeftWidth: 1, borderLeftColor: theme.primaryBorder }
+              ]}
+            >
+              <EditButton iconOnly onPress={handleOpen} />
+            </View>
+          )}
         </View>
-      </View>
+      ) : (
+        <View
+          style={[
+            flexbox.directionRow,
+            flexbox.alignCenter,
+            spacings.ph,
+            spacings.pvSm,
+            spacings.mbSm,
+            {
+              minHeight: 72,
+              borderRadius: 16,
+              borderWidth: 1,
+              borderColor: theme.primaryBorder
+            }
+          ]}
+        >
+          <View style={{ flex: 1.4 }}>
+            <Text fontSize={12} appearance="secondaryText">
+              {t('Network')}
+            </Text>
+            <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mtMi]}>
+              <NetworkIcon id={signAccountOpState.accountOp.chainId.toString()} size={20} />
+              <Text
+                fontSize={16}
+                weight="medium"
+                numberOfLines={1}
+                style={[spacings.mlTy, { flexShrink: 1 }]}
+              >
+                {network?.name || t('Unknown network')}
+              </Text>
+            </View>
+          </View>
+          <View
+            style={{
+              width: 1,
+              height: 48,
+              backgroundColor: theme.primaryBorder
+            }}
+          />
+          <View style={[flexbox.flex1, spacings.pl]}>
+            <Text fontSize={12} appearance="secondaryText">
+              {t('Nonce')}
+            </Text>
+            <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mtMi]}>
+              <Text fontSize={16} weight="medium" style={canEdit ? spacings.mrTy : undefined}>
+                {nonce.toString()}
+              </Text>
+              {canEdit && <EditButton iconOnly onPress={handleOpen} />}
+            </View>
+          </View>
+        </View>
+      )}
       <BottomSheet
         sheetRef={sheetRef}
         id="edit-safe-nonce-bottom-sheet"
