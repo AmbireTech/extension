@@ -219,21 +219,23 @@ const ManageRecoveryPhrase = ({
               <CopyIcon style={spacings.mlTy} width={18} />
             </Button>
           </View>
-          <Button
-            testID="reveal-recovery-phrase-button"
-            onPress={toggleKeyVisibility}
-            hasBottomSpacing={false}
-            type="ghost"
-            size="small"
-            style={{ minWidth: 137 }}
-            text={visibilityButtonText}
-          >
-            {blurred ? (
-              <VisibilityIcon style={spacings.mlTy} width={18} />
-            ) : (
-              <InvisibilityIcon style={spacings.mlTy} width={18} />
-            )}
-          </Button>
+          <View>
+            <Button
+              testID="reveal-recovery-phrase-button"
+              onPress={toggleKeyVisibility}
+              hasBottomSpacing={false}
+              type="ghost"
+              size="small"
+              style={{ minWidth: 137 }}
+              text={visibilityButtonText}
+            >
+              {blurred ? (
+                <VisibilityIcon style={spacings.mlTy} width={18} />
+              ) : (
+                <InvisibilityIcon style={spacings.mlTy} width={18} />
+              )}
+            </Button>
+          </View>
         </View>
         <View style={[flexbox.flex1, flexbox.justifyEnd, flexbox.alignCenter]}>
           <Button
