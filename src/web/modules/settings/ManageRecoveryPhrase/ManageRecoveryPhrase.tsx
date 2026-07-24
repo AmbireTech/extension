@@ -1,6 +1,7 @@
-import React, { useCallback, useEffect, useState } from 'react'
+import { BlurView } from 'expo-blur'
+import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { View } from 'react-native'
+import { StyleSheet, View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 
 import { HD_PATH_TEMPLATE_TYPE } from '@ambire-common/consts/derivation'
@@ -14,6 +15,7 @@ import Checkbox from '@common/components/Checkbox'
 import Editable from '@common/components/Editable'
 import { PanelBackButton, PanelTitle } from '@common/components/Panel/Panel'
 import Text from '@common/components/Text'
+import { isMobile } from '@common/config/env'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
@@ -66,7 +68,6 @@ const ManageRecoveryPhrase = ({
       type: 'method',
       params: { method: 'sendSeedToUi', args: [recoveryPhrase.id] }
     })
-    if (blurred) setBlurred(false)
     closeConfirmPassword()
   }
 
@@ -96,6 +97,13 @@ const ManageRecoveryPhrase = ({
 
     setBlurred((prev) => !prev)
   }, [seed, blurred, openConfirmPassword])
+
+  const visibilityButtonText = useMemo(() => {
+    const hasRealSeed = !!seed && seed !== DUMMY_SEED
+    if (!hasRealSeed) return t('Reveal phrase')
+
+    return blurred ? t('Show phrase') : t('Hide phrase')
+  }, [blurred, seed, t])
 
   const handleCopySeed = useCallback(async () => {
     if (!seed || seed === DUMMY_SEED) return
@@ -133,6 +141,8 @@ const ManageRecoveryPhrase = ({
     [addToast, keystoreDispatch, recoveryPhrase.id, t]
   )
 
+  const isBlurred = blurred || seed === DUMMY_SEED
+
   return (
     <>
       <View style={flexbox.flex1}>
@@ -155,7 +165,7 @@ const ManageRecoveryPhrase = ({
         </View>
         <View
           style={[
-            !blurred && seed !== DUMMY_SEED ? styles.notBlurred : styles.blurred,
+            isBlurred ? styles.blurred : styles.notBlurred,
             spacings.pvMd,
             spacings.phMd,
             {
@@ -163,7 +173,8 @@ const ManageRecoveryPhrase = ({
                 themeType === THEME_TYPES.DARK
                   ? theme.tertiaryBackground
                   : theme.secondaryBackground,
-              borderRadius: BORDER_RADIUS_PRIMARY
+              borderRadius: BORDER_RADIUS_PRIMARY,
+              overflow: 'hidden'
             }
           ]}
         >
@@ -184,6 +195,14 @@ const ManageRecoveryPhrase = ({
                 </Text>
               </Text>
             </View>
+          )}
+          {/* On native `filter: blur()` is a no-op (web-only CSS), so overlay a real BlurView to hide the phrase */}
+          {isMobile && isBlurred && (
+            <BlurView
+              intensity={12}
+              tint={themeType === THEME_TYPES.DARK ? 'dark' : 'light'}
+              style={StyleSheet.absoluteFill}
+            />
           )}
         </View>
         <View
@@ -213,21 +232,23 @@ const ManageRecoveryPhrase = ({
               <CopyIcon style={spacings.mlTy} width={18} />
             </Button>
           </View>
-          <Button
-            testID="reveal-recovery-phrase-button"
-            onPress={toggleKeyVisibility}
-            hasBottomSpacing={false}
-            type="ghost"
-            size="small"
-            style={{ minWidth: 137 }}
-            text={blurred ? t('Reveal phrase') : t('Hide phrase')}
-          >
-            {blurred ? (
-              <VisibilityIcon style={spacings.mlTy} width={18} />
-            ) : (
-              <InvisibilityIcon style={spacings.mlTy} width={18} />
-            )}
-          </Button>
+          <View>
+            <Button
+              testID="reveal-recovery-phrase-button"
+              onPress={toggleKeyVisibility}
+              hasBottomSpacing={false}
+              type="ghost"
+              size="small"
+              style={{ minWidth: 137 }}
+              text={visibilityButtonText}
+            >
+              {blurred ? (
+                <VisibilityIcon style={spacings.mlTy} width={18} />
+              ) : (
+                <InvisibilityIcon style={spacings.mlTy} width={18} />
+              )}
+            </Button>
+          </View>
         </View>
         <View style={[flexbox.flex1, flexbox.justifyEnd, flexbox.alignCenter]}>
           <Button
