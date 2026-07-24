@@ -1,6 +1,6 @@
 import React, { FC, useCallback, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { LayoutChangeEvent, View, ViewStyle } from 'react-native'
+import { LayoutChangeEvent, View, ViewStyle, type DimensionValue } from 'react-native'
 
 import CopyIcon from '@common/assets/svg/CopyIcon'
 import useShouldShowFullAddressOnWeb from '@common/components/AccountAddress/useShouldShowFullAddressOnWeb'
@@ -85,7 +85,9 @@ const PlainAddressWithCopy: FC<Props> = ({
     }
 
     if (shouldShowFullAddressOnWeb) {
-      return { width: '100%', maxWidth: '100%' }
+      const fullWidth: DimensionValue = '100%'
+
+      return { width: fullWidth, maxWidth: fullWidth }
     }
 
     return { flexShrink: 1, minWidth: 0, flex: 1 }
