@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
@@ -66,7 +66,6 @@ const ManageRecoveryPhrase = ({
       type: 'method',
       params: { method: 'sendSeedToUi', args: [recoveryPhrase.id] }
     })
-    if (blurred) setBlurred(false)
     closeConfirmPassword()
   }
 
@@ -96,6 +95,13 @@ const ManageRecoveryPhrase = ({
 
     setBlurred((prev) => !prev)
   }, [seed, blurred, openConfirmPassword])
+
+  const visibilityButtonText = useMemo(() => {
+    const hasRealSeed = !!seed && seed !== DUMMY_SEED
+    if (!hasRealSeed) return t('Reveal phrase')
+
+    return blurred ? t('Show phrase') : t('Hide phrase')
+  }, [blurred, seed, t])
 
   const handleCopySeed = useCallback(async () => {
     if (!seed || seed === DUMMY_SEED) return
@@ -220,7 +226,7 @@ const ManageRecoveryPhrase = ({
             type="ghost"
             size="small"
             style={{ minWidth: 137 }}
-            text={blurred ? t('Reveal phrase') : t('Hide phrase')}
+            text={visibilityButtonText}
           >
             {blurred ? (
               <VisibilityIcon style={spacings.mlTy} width={18} />
