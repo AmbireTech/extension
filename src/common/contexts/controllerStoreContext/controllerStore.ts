@@ -4,8 +4,6 @@ import { parse, stringify } from '@ambire-common/libs/richJson/richJson'
 import { isMobile } from '@common/config/env'
 import { isExtension } from '@web/constants/browserapi'
 
-import { reconcile } from './reconcileState'
-
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 
 export const CONTROLLER_STORE_MAX_LOADING_TIME = 10000
@@ -81,8 +79,7 @@ export class ControllerStore {
   ) {
     if (ctrl === undefined) return
     try {
-      const incoming = isExtension || isMobile ? ctrl : parse(stringify(ctrl))
-      this.#states[id] = reconcile(this.#states[id], incoming) as AllControllersMappingType[K]
+      this.#states[id] = isExtension || isMobile ? { ...ctrl } : parse(stringify(ctrl))
     } catch (error) {
       console.error(error)
     }
