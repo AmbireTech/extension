@@ -71,3 +71,22 @@ export const getSwapCompletedMessageTemplate = (
 
   return candidates[index]!
 }
+
+// In-progress "delighters" (#4505) — replace static "Confirming your trade".
+export const SWAP_IN_PROGRESS_MESSAGES = [
+  'Counting banknotes',
+  'Channeling big swap energy',
+  'Big biznis',
+  'Verifying transaction details...',
+  'Routing through the most efficient path.',
+  'Ensuring optimal execution.'
+]
+
+export const getSwapInProgressMessage = (routeId: string | number): string => {
+  // Salt so in-progress and completed picks aren't locked to the same slot.
+  const index = Math.floor(
+    getUnitIntervalFromRouteId(`${routeId}-in-progress`) * SWAP_IN_PROGRESS_MESSAGES.length
+  )
+
+  return SWAP_IN_PROGRESS_MESSAGES[index]!
+}

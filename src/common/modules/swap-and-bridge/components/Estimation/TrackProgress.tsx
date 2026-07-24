@@ -29,7 +29,10 @@ import { getUiType } from '@common/utils/uiType'
 
 import RouteStepsToken from '../RouteStepsToken'
 
-import { getSwapCompletedMessageTemplate } from './getSwapCompletedMessage'
+import {
+  getSwapCompletedMessageTemplate,
+  getSwapInProgressMessage
+} from './getSwapCompletedMessage'
 
 const { isRequestWindow } = getUiType()
 
@@ -74,6 +77,8 @@ const TrackProgress: FC<Props> = ({ activeRoute, handleClose }) => {
   const providerId = lastCompletedRoute?.route
     ? lastCompletedRoute.route.providerId
     : lastCompletedRoute?.serviceProviderId
+
+  const inProgressMessage = t(getSwapInProgressMessage(lastCompletedRoute.activeRouteId))
 
   const completedMessage =
     lastCompletedRoute?.routeStatus === 'completed'
@@ -170,7 +175,7 @@ const TrackProgress: FC<Props> = ({ activeRoute, handleClose }) => {
       routeStatus={lastCompletedRoute?.routeStatus}
     >
       {lastCompletedRoute?.routeStatus === 'in-progress' && (
-        <InProgress title={t('Confirming your trade')}>
+        <InProgress title={inProgressMessage}>
           {!!fromAsset && !!toAsset && (
             <>
               <View
