@@ -18,6 +18,7 @@ import Estimation from '@common/modules/sign-account-op/components/Estimation'
 import Footer from '@common/modules/sign-account-op/components/Footer'
 import PendingTransactions from '@common/modules/sign-account-op/components/PendingTransactions'
 import SafeEip712Data from '@common/modules/sign-account-op/components/SafeEip712Data'
+import SafeNonce from '@common/modules/sign-account-op/components/SafeNonce'
 import SafeOwners from '@common/modules/sign-account-op/components/SafeOwners'
 import SafetyChecksOverlay from '@common/modules/sign-account-op/components/SafetyChecksOverlay'
 import SectionHeading from '@common/modules/sign-account-op/components/SectionHeading'
@@ -338,6 +339,7 @@ const SignAccountOpScreen = () => {
             scrollEventThrottle={16}
             style={contentHeight > containerHeight ? spacings.prMi : {}}
           >
+            <SafeNonce />
             <PendingTransactions
               network={network}
               setDelegation={signAccountOpState?.accountOp.meta?.setDelegation}
