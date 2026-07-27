@@ -14,6 +14,7 @@ import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import spacings, { SPACING_SM } from '@common/styles/spacings'
 import { THEME_TYPES } from '@common/styles/themeConfig'
+import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import { setStringAsync } from '@common/utils/clipboard'
 
@@ -69,6 +70,8 @@ const PrivateKeyExport: FC<Props> = ({ privateKey, blurred, setBlurred, openConf
             spacings.pvMd,
             spacings.phMd,
             {
+              borderRadius: BORDER_RADIUS_PRIMARY,
+              overflow: 'hidden',
               backgroundColor: theme.secondaryBackground
             }
           ]}
@@ -82,6 +85,10 @@ const PrivateKeyExport: FC<Props> = ({ privateKey, blurred, setBlurred, openConf
           {isMobile && blurred && (
             <BlurView
               intensity={12}
+              // Android renders a barely visible tint instead of a blur unless this
+              // experimental method is on, leaving the phrase readable
+              experimentalBlurMethod="dimezisBlurView"
+              blurReductionFactor={1}
               tint={themeType === THEME_TYPES.DARK ? 'dark' : 'light'}
               style={StyleSheet.absoluteFill}
             />

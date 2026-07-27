@@ -29,7 +29,7 @@ const PasswordConfirmation: React.FC<Props> = ({
   onPasswordConfirmed,
   onBackButtonPress,
   text,
-  title = 'Confirm extension password',
+  title = isMobile ? 'Confirm app password' : 'Confirm extension password',
   onCustomSubmit
 }) => {
   const { t } = useTranslation()
