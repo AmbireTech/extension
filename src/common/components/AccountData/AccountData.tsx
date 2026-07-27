@@ -96,7 +96,7 @@ const AccountData: FC<Props> = ({ onPress, withArrowRightIcon }) => {
           {
             backgroundColor: '#000000A3',
             flexShrink: 1,
-            minWidth: 0,
+            ...(isSidePanel ? { minWidth: 0 } : {}),
             ...(isWeb && !onPress ? { cursor: 'auto' } : {})
           },
           isMobile && {
@@ -114,43 +114,73 @@ const AccountData: FC<Props> = ({ onPress, withArrowRightIcon }) => {
             size={32}
             smartAccountType={smartAccountType}
           />
-          <Text
-            numberOfLines={1}
-            weight={isMobile ? 'medium' : 'semiBold'}
-            style={[
-              spacings.mrMi,
-              {
-                flexShrink: 0,
-                ...(isSidePanel ? { maxWidth: '55%' } : isPopup ? { maxWidth: 160 } : {})
-              }
-            ]}
-            color="#FFFFFF"
-            fontSize={14}
-          >
-            {account.preferences.label}
-          </Text>
-
-          <View style={[flexbox.directionRow, flexbox.alignCenter, { flexShrink: 1, minWidth: 0 }]}>
-            <Text
-              color="#B9BFC9"
-              numberOfLines={1}
-              ellipsizeMode={isSidePanel ? 'tail' : undefined}
-              style={[{ flexShrink: 1, minWidth: 0 }, isWeb ? spacings.mrTy : undefined]}
-              weight="mono_regular"
-              fontSize={12}
-            >
-              ({formattedAddress})
-            </Text>
-            {isWeb && (
-              <AnimatedPressable
-                style={addressAnimStyle}
-                onPress={handleCopyText}
-                {...bindAddressAnim}
+          {isSidePanel ? (
+            <>
+              <Text
+                numberOfLines={1}
+                weight={isMobile ? 'medium' : 'semiBold'}
+                style={[spacings.mrMi, { flexShrink: 0, maxWidth: '55%' }]}
+                color="#FFFFFF"
+                fontSize={14}
               >
-                <CopyIcon width={24} height={24} color="#E3E6EB" />
-              </AnimatedPressable>
-            )}
-          </View>
+                {account.preferences.label}
+              </Text>
+              <View
+                style={[flexbox.directionRow, flexbox.alignCenter, { flexShrink: 1, minWidth: 0 }]}
+              >
+                <Text
+                  color="#B9BFC9"
+                  numberOfLines={1}
+                  ellipsizeMode="tail"
+                  style={[{ flexShrink: 1, minWidth: 0 }, isWeb ? spacings.mrTy : undefined]}
+                  weight="mono_regular"
+                  fontSize={12}
+                >
+                  ({formattedAddress})
+                </Text>
+                {isWeb && (
+                  <AnimatedPressable
+                    style={addressAnimStyle}
+                    onPress={handleCopyText}
+                    {...bindAddressAnim}
+                  >
+                    <CopyIcon width={24} height={24} color="#E3E6EB" />
+                  </AnimatedPressable>
+                )}
+              </View>
+            </>
+          ) : (
+            <>
+              <Text
+                numberOfLines={1}
+                weight={isMobile ? 'medium' : 'semiBold'}
+                style={[spacings.mrMi, { maxWidth: isPopup ? 112 : 160, flexShrink: 1 }]}
+                color="#FFFFFF"
+                fontSize={14}
+              >
+                {account.preferences.label}
+              </Text>
+              <>
+                <Text
+                  color="#B9BFC9"
+                  style={[isWeb ? spacings.mrTy : undefined]}
+                  weight="mono_regular"
+                  fontSize={12}
+                >
+                  ({formattedAddress})
+                </Text>
+                {isWeb && (
+                  <AnimatedPressable
+                    style={addressAnimStyle}
+                    onPress={handleCopyText}
+                    {...bindAddressAnim}
+                  >
+                    <CopyIcon width={24} height={24} color="#E3E6EB" />
+                  </AnimatedPressable>
+                )}
+              </>
+            </>
+          )}
 
           {!!withArrowRightIcon && (
             <Animated.View style={accountBtnAnimStyle}>

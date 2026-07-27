@@ -12,6 +12,7 @@ import RightArrowIcon from '@common/assets/svg/RightArrowIcon'
 import Button from '@common/components/Button'
 import FooterGlassView from '@common/components/FooterGlassView'
 import useController from '@common/hooks/useController'
+import useWindowSize from '@common/hooks/useWindowSize'
 import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import spacings, { SPACING_TY } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
@@ -19,6 +20,7 @@ import flexbox from '@common/styles/utils/flexbox'
 const BenzinScreen = () => {
   const { t } = useTranslation()
   const { isCompactSidePanelLayout } = useCompactActionRequestLayout()
+  const { maxWidthSize } = useWindowSize()
 
   const {
     state: { currentUserRequest, visibleUserRequests },
@@ -81,7 +83,7 @@ const BenzinScreen = () => {
             style={
               isCompactSidePanelLayout
                 ? { flex: 1, minWidth: 0 }
-                : { minWidth: 180, ...spacings.mlSm }
+                : { minWidth: maxWidthSize('s') ? 180 : 120, ...spacings.mlSm }
             }
             hasBottomSpacing={false}
             size={isCompactSidePanelLayout ? 'smaller' : 'large'}

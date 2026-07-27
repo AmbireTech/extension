@@ -7,6 +7,9 @@ import { isMobile } from '@common/config/env'
 import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import { SPACING, SPACING_MI, SPACING_SM, SPACING_TY } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
+import { getUiType } from '@common/utils/uiType'
+
+const { isSidePanel } = getUiType()
 
 const params: {
   [key in 'sm' | 'md']: ViewStyle
@@ -138,8 +141,8 @@ const FooterGlassView: FC<{
         borderRadius={Number(params[size].borderRadius)}
         cssStyle={{
           pointerEvents: 'all',
-          width: 'fit-content',
-          alignSelf: 'center',
+          // Side panel glass pills stay content-sized/centered; popup keeps v2 intrinsic sizing.
+          ...(isSidePanel ? { width: 'fit-content', alignSelf: 'center' } : {}),
           ...(glassViewProps?.cssStyle || {})
         }}
       >

@@ -1,10 +1,10 @@
 import React, { FC, useCallback, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { LayoutChangeEvent, View, ViewStyle, type DimensionValue } from 'react-native'
+import { LayoutChangeEvent, View, ViewStyle } from 'react-native'
 
 import CopyIcon from '@common/assets/svg/CopyIcon'
 import useShouldShowFullAddressOnWeb from '@common/components/AccountAddress/useShouldShowFullAddressOnWeb'
-import { isMobile } from '@common/config/env'
+import { isMobile, isWeb } from '@common/config/env'
 import useHover, { AnimatedPressable } from '@common/hooks/useHover'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
@@ -71,41 +71,47 @@ const PlainAddressWithCopy: FC<Props> = ({
   const iconSize = fontSize + 8
 
   const containerStyle = useMemo((): ViewStyle => {
+    if (!isSidePanel) {
+      // Keep popup / tab layout identical to v2.
+      if (withWrap) {
+        return { flexBasis: 110, flexGrow: 1, flexShrink: 1 }
+      }
+
+      return isMobile ? { flexShrink: 1, minWidth: 0 } : {}
+    }
+
     if (withWrap) {
       return {
         flexBasis: 110,
         flexGrow: 1,
         flexShrink: 1,
-        ...(isSidePanel && { minWidth: 0 })
+        minWidth: 0
       }
     }
 
-    if (isSidePanel) {
-      return { flex: 1, flexShrink: 1, minWidth: 0 }
+    return { flex: 1, flexShrink: 1, minWidth: 0 }
+  }, [withWrap])
+
+  const plainAddressStyle = useMemo(() => {
+    if (!isSidePanel) {
+      // Keep popup / tab layout identical to v2.
+      return {
+        ...style,
+        ...(maxLength === 42 ? { flexShrink: 1 } : {}),
+        ...(isWeb ? { flexShrink: 0 } : {}),
+        ...(withWrap ? { minWidth: isMobile ? 70 : 170 } : {})
+      }
     }
 
-    if (shouldShowFullAddressOnWeb) {
-      const fullWidth: DimensionValue = '100%'
-
-      return { width: fullWidth, maxWidth: fullWidth }
-    }
-
-    return { flexShrink: 1, minWidth: 0, flex: 1 }
-  }, [withWrap, shouldShowFullAddressOnWeb])
-
-  const plainAddressStyle = useMemo(
-    () => ({
+    return {
       ...style,
       ...(withWrap
         ? { minWidth: isMobile ? 70 : 170 }
-        : isSidePanel
+        : shouldShowFullAddressOnWeb
           ? { flex: 1, flexShrink: 1, minWidth: 0 }
-          : shouldShowFullAddressOnWeb
-            ? { flex: 1, flexShrink: 1, minWidth: 0 }
-            : { flexShrink: 1, minWidth: 0 })
-    }),
-    [style, withWrap, shouldShowFullAddressOnWeb]
-  )
+          : { flex: 1, flexShrink: 1, minWidth: 0 })
+    }
+  }, [style, withWrap, shouldShowFullAddressOnWeb, maxLength])
 
   return (
     <View
@@ -124,12 +130,7 @@ const PlainAddressWithCopy: FC<Props> = ({
       />
       <AnimatedPressable
         onPress={handleCopy}
-        style={[
-          animStyle,
-          isSidePanel
-            ? [spacings.mlMi, { flexShrink: 0 }]
-            : shouldShowFullAddressOnWeb && { flexShrink: 0 }
-        ]}
+        style={[animStyle, isSidePanel && [spacings.mlMi, { flexShrink: 0 }]]}
         {...bindAnim}
       >
         <CopyIcon width={iconSize} height={iconSize} color={theme.secondaryText} />

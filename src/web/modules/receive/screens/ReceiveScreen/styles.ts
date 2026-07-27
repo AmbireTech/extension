@@ -23,7 +23,7 @@ interface Style {
   extraNetworkVisible: ViewStyle
 }
 
-const { isTab } = getUiType()
+const { isTab, isSidePanel } = getUiType()
 
 const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
   StyleSheet.create<Style>({
@@ -70,9 +70,16 @@ const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
     },
     accountAddressWrapper: {
       marginHorizontal: 'auto',
-      maxWidth: 420,
-      width: '100%',
-      alignItems: 'stretch',
+      ...(isSidePanel
+        ? {
+            maxWidth: 420,
+            width: '100%',
+            alignItems: 'stretch'
+          }
+        : {
+            maxWidth: '100%',
+            ...flexbox.center
+          }),
       ...spacings.phSm,
       ...spacings.pvSm,
       ...spacings.mbSm,

@@ -58,7 +58,7 @@ const SwitchAccountScreen = () => {
           {
             paddingVertical: SPACING_LG * responsiveSizeMultiplier,
             width: contentWidth,
-            maxWidth: '100%'
+            ...(isSidePanel ? { maxWidth: '100%' } : {})
           }
         ]}
       >
@@ -80,7 +80,7 @@ const SwitchAccountScreen = () => {
                 weight="medium"
                 style={{
                   marginBottom: SPACING_MD * responsiveSizeMultiplier,
-                  textAlign: 'center'
+                  ...(isSidePanel ? { textAlign: 'center' as const } : {})
                 }}
               >
                 {t('Switch Account Request')}
@@ -177,10 +177,9 @@ const SwitchAccountScreen = () => {
             style={{
               ...styles.container,
               paddingVertical: SPACING_LG * responsiveSizeMultiplier,
-              width: '100%',
-              maxWidth: '100%'
+              ...(isSidePanel ? { width: '100%', maxWidth: '100%' } : {})
             }}
-            width="100%"
+            width={isSidePanel ? '100%' : responsiveSizeMultiplier * 450}
             height={responsiveSizeMultiplier * 450}
             appearance="primaryBackground"
           />

@@ -14,11 +14,12 @@ const useShouldShowFullAddressOnWeb = (maxLength: number, containerWidth?: numbe
   const hasEnoughContainerSpace =
     containerWidth != null && containerWidth >= FULL_ADDRESS_MIN_CONTAINER_WIDTH
 
-  const shouldShowFullAddressOnWeb = isSidePanel
-    ? isWeb &&
-      maxLength >= 42 &&
-      (containerWidth != null ? hasEnoughContainerSpace : !isNarrowSidePanel)
-    : isWeb && maxLength >= 42
+  // Full-address wrap path is side-panel only. Popup / tab keep v2 shortenAddress behavior.
+  const shouldShowFullAddressOnWeb =
+    isSidePanel &&
+    isWeb &&
+    maxLength >= 42 &&
+    (containerWidth != null ? hasEnoughContainerSpace : !isNarrowSidePanel)
 
   const effectiveMaxLength =
     !isSidePanel || shouldShowFullAddressOnWeb || !isNarrowSidePanel

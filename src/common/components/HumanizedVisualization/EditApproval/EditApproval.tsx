@@ -262,7 +262,7 @@ const EditApproval = ({
               onPress={() => closeEditApprovals()}
               hasBottomSpacing={false}
               size="smaller"
-              style={[isCompactLayout && spacings.mrTy, footerButtonStyle]}
+              style={[spacings.mrTy, footerButtonStyle]}
             />
             <Button
               type="primary"

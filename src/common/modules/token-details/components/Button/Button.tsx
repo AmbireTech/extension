@@ -67,7 +67,8 @@ const TokenDetailsButton: FC<Props> = ({
         dataSet={tooltipText ? { tooltipId } : undefined}
         style={[
           isCompactLayout ? styles.actionCompact : styles.action,
-          isDisabled && { opacity: 0.4 }
+          isDisabled && { opacity: 0.4 },
+          !isCompactLayout && isWeb && id !== 'hide-unhide' && { marginRight: 6 }
         ]}
         // Purposely don't disable the button (but block the onPress action) in
         // case of a tooltip, because it should be clickable to show the tooltip.

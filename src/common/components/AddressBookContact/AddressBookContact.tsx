@@ -123,7 +123,14 @@ const AddressBookContact: FC<Props> = ({
       {...(onPress ? bindAnim : {})}
       testID={testID}
     >
-      <View style={[flexbox.directionRow, flexbox.alignCenter, flexbox.flex1, { minWidth: 0 }]}>
+      <View
+        style={[
+          flexbox.directionRow,
+          flexbox.alignCenter,
+          flexbox.flex1,
+          isSidePanel && { minWidth: 0 }
+        ]}
+      >
         <Avatar
           {...(avatarSize && { size: avatarSize })}
           pfp={address}
@@ -131,7 +138,7 @@ const AddressBookContact: FC<Props> = ({
           smartAccountType={smartAccountType}
           displayTypeBadge={displayTypeBadge}
         />
-        <View style={{ flex: 1, minWidth: 0 }}>
+        <View style={[{ flex: 1 }, isSidePanel && { minWidth: 0 }]}>
           {isEditable ? (
             <Editable
               fontSize={fontSize}
@@ -145,11 +152,13 @@ const AddressBookContact: FC<Props> = ({
               onSave={onSave}
             />
           ) : (
-            <View style={[flexbox.directionRow, flexbox.alignCenter, { minWidth: 0 }]}>
+            <View
+              style={[flexbox.directionRow, flexbox.alignCenter, isSidePanel && { minWidth: 0 }]}
+            >
               <Text
                 fontSize={fontSize}
                 weight="medium"
-                numberOfLines={1}
+                numberOfLines={isSidePanel ? 1 : undefined}
                 style={!name && spacings.mrTy}
               >
                 {name ||

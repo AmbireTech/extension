@@ -18,8 +18,11 @@ import { HeaderWithTitle } from '@common/modules/header/components/Header/Header
 import useReceive from '@common/modules/receive/hooks/useReceive'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
+import { getUiType } from '@common/utils/uiType'
 
 import getStyles from './styles'
+
+const { isSidePanel } = getUiType()
 
 const ReceiveScreen: FC = () => {
   const { t } = useTranslation()
@@ -84,7 +87,14 @@ const ReceiveScreen: FC = () => {
         </View>
         <View style={spacings.phSm}>
           <View style={[styles.accountAddressWrapper]}>
-            <View style={[flexbox.directionRow, flexbox.alignCenter, { width: '100%' }]}>
+            <View
+              style={[
+                flexbox.directionRow,
+                isSidePanel
+                  ? [flexbox.alignCenter, { width: '100%' }]
+                  : [flexbox.center, { flexShrink: 1, minWidth: 0, maxWidth: '100%' }]
+              ]}
+            >
               <AccountAddress
                 isLoading={isDomainResolving}
                 name={name}

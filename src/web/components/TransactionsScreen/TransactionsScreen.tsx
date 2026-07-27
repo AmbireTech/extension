@@ -77,7 +77,11 @@ const Content: FC<ContentProps> = ({ children, buttons }) => {
         fullWidth={isCompactSidePanelLayout}
         style={isRequestWindow ? { bottom: SPACING } : {}}
       >
-        {buttons}
+        {isCompactSidePanelLayout ? (
+          buttons
+        ) : (
+          <View style={[flexbox.directionRow, flexbox.alignCenter]}>{buttons}</View>
+        )}
       </FooterGlassView>
     </View>
   )

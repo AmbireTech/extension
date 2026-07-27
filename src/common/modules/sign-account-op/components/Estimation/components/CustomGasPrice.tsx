@@ -264,7 +264,7 @@ const CustomGasPrice = ({
       </View>
       <FooterGlassView
         absolute={false}
-        isSimpleBlur
+        isSimpleBlur={isNarrowSidePanel}
         size="sm"
         style={spacings.mtLg}
         mobileStyle={{ ...flexbox.directionRow, ...spacings.mtLg }}
@@ -275,7 +275,7 @@ const CustomGasPrice = ({
           text={t('Cancel')}
           onPress={closeBottomSheet}
           hasBottomSpacing={false}
-          style={{ flex: 1, ...spacings.mrSm }}
+          style={{ flex: 1, ...(!isNarrowSidePanel && { width: 100 }), ...spacings.mrSm }}
           size="smaller"
         />
         <Button
@@ -283,7 +283,7 @@ const CustomGasPrice = ({
           text={t('Save')}
           onPress={saveCustomGasPrice}
           hasBottomSpacing={false}
-          style={{ flex: 1 }}
+          style={{ flex: 1, ...(!isNarrowSidePanel && { width: 100 }) }}
           size="smaller"
         />
       </FooterGlassView>

@@ -99,10 +99,9 @@ const TokenDetailsScreen = () => {
             ? { cssStyle: { width: '100%', alignSelf: 'stretch' } }
             : undefined
         }
-        innerContainerStyle={{
-          gap: SPACING_MI,
-          ...(isCompactSidePanelLayout ? { width: '100%' } : {})
-        }}
+        innerContainerStyle={
+          isCompactSidePanelLayout ? { gap: SPACING_MI, width: '100%' } : undefined
+        }
       >
         {actions.map((action) => (
           <TokenDetailsButton
