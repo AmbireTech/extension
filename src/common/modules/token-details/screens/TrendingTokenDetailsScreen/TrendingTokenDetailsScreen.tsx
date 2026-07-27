@@ -93,26 +93,25 @@ const TrendingTokenDetailsScreen = () => {
     return network?.nativeAssetId === token.id ? ZeroAddress : null
   }, [token, network])
 
+  const portfolioToken = useMemo(() => {
+    if (!tokenAddress || chainId === null) return undefined
+
+    return portfolio.tokens.find(
+      (pt) =>
+        pt.address.toLowerCase() === tokenAddress.toLowerCase() &&
+        pt.chainId === chainId &&
+        !pt.flags.onGasTank &&
+        !pt.flags.rewardsType
+    )
+  }, [chainId, tokenAddress, portfolio.tokens])
+
   // Prefer the real portfolio token (carries the account's balance) when the user holds it;
   // otherwise fall back to a synthetic result built from the trending data.
   const displayToken: TokenResult | null = useMemo(() => {
     if (!token) return null
 
-    const heldToken =
-      tokenAddress && chainId !== null
-        ? portfolio.tokens.find(
-            (pt) =>
-              pt.address.toLowerCase() === tokenAddress.toLowerCase() &&
-              pt.chainId === chainId &&
-              !pt.flags.onGasTank &&
-              !pt.flags.rewardsType
-          )
-        : undefined
-
-    if (heldToken) return heldToken
-
-    return buildTokenResult(token, chainId ?? 0n, tokenAddress ?? '')
-  }, [token, chainId, tokenAddress, portfolio.tokens])
+    return portfolioToken ?? buildTokenResult(token, chainId ?? 0n, tokenAddress ?? '')
+  }, [token, chainId, tokenAddress, portfolioToken])
 
   const formatted = useMemo(
     () => (displayToken ? getAndFormatTokenDetails(displayToken, networks) : null),
@@ -127,7 +126,8 @@ const TrendingTokenDetailsScreen = () => {
   const { hideTokenModalRef, closeHideTokenModal, handleHideTokenFromModal, actions } =
     useTokenActions(displayToken, {
       noBalanceSendTooltip: t("You don't hold this token, so there's nothing to send."),
-      enableSwapToBuy: true
+      enableSwapToBuy: true,
+      isNotInPortfolio: !portfolioToken
     })
 
   return (

@@ -31,6 +31,11 @@ type UseTokenActionsOptions = {
    * so the user can swap to acquire it. Used by the trending screen.
    */
   enableSwapToBuy?: boolean
+  /**
+   * The token is not part of the account portfolio at all (e.g. a trending token the user doesn't
+   * hold), so hiding it would have no effect and the Hide button is disabled.
+   */
+  isNotInPortfolio?: boolean
 }
 
 /**
@@ -39,7 +44,7 @@ type UseTokenActionsOptions = {
  * details and the trending token details screens can share the exact same footer.
  */
 const useTokenActions = (token: TokenResult | null, options: UseTokenActionsOptions = {}) => {
-  const { noBalanceSendTooltip, enableSwapToBuy } = options
+  const { noBalanceSendTooltip, enableSwapToBuy, isNotInPortfolio } = options
   const { navigate } = useNavigation()
   const {
     ref: hideTokenModalRef,
@@ -162,6 +167,10 @@ const useTokenActions = (token: TokenResult | null, options: UseTokenActionsOpti
   const topUpDisabledTooltipText = useMemo(() => {
     if (!canUseGasTank) return disabledReason
 
+    if (isNotInPortfolio) {
+      return t("You don't hold this token, so there's nothing to top up your Gas Tank with.")
+    }
+
     if (!canToToppedUp) {
       return t(
         'This token is not eligible for filling up the Gas Tank. Please select a supported token instead.'
@@ -173,7 +182,7 @@ const useTokenActions = (token: TokenResult | null, options: UseTokenActionsOpti
     }
 
     return undefined
-  }, [canUseGasTank, canToToppedUp, disabledReason, gasTankAssetsError, t])
+  }, [canUseGasTank, canToToppedUp, disabledReason, gasTankAssetsError, isNotInPortfolio, t])
 
   const actions = useMemo(
     () =>
@@ -272,10 +281,12 @@ const useTokenActions = (token: TokenResult | null, options: UseTokenActionsOpti
         {
           id: 'hide-unhide',
           testID: 'hide-token-button',
-          isDisabled: isGasTankOrRewardsToken,
+          isDisabled: isGasTankOrRewardsToken || isNotInPortfolio,
           tooltipText: isGasTankOrRewardsToken
             ? t('Hiding is not available for Gas Tank or Reward tokens.')
-            : undefined,
+            : isNotInPortfolio
+              ? t("You don't hold this token, so there's nothing to hide.")
+              : undefined,
           text: isHidden ? t('Unhide') : t('Hide'),
           icon: isHidden ? VisibilityIcon : InvisibilityIcon,
           // @TODO: Handle unhide and make the UX good
@@ -288,6 +299,7 @@ const useTokenActions = (token: TokenResult | null, options: UseTokenActionsOpti
       isAmountZero,
       noBalanceSendTooltip,
       enableSwapToBuy,
+      isNotInPortfolio,
       network,
       unavailableBecauseGasTankOrRewardsTokenTooltipText,
       shouldDisableSwapAndBridge,
