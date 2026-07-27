@@ -1,5 +1,5 @@
 import { BlurView } from 'expo-blur'
-import React, { useCallback, useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { StyleSheet, View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
@@ -70,7 +70,6 @@ const ManageRecoveryPhrase = ({
       type: 'method',
       params: { method: 'sendSeedToUi', args: [recoveryPhrase.id] }
     })
-    if (blurred) setBlurred(false)
     closeConfirmPassword()
   }
 
@@ -100,6 +99,13 @@ const ManageRecoveryPhrase = ({
 
     setBlurred((prev) => !prev)
   }, [seed, blurred, openConfirmPassword])
+
+  const visibilityButtonText = useMemo(() => {
+    const hasRealSeed = !!seed && seed !== DUMMY_SEED
+    if (!hasRealSeed) return t('Reveal phrase')
+
+    return blurred ? t('Show phrase') : t('Hide phrase')
+  }, [blurred, seed, t])
 
   const handleCopySeed = useCallback(async () => {
     if (!seed || seed === DUMMY_SEED) return
@@ -137,6 +143,8 @@ const ManageRecoveryPhrase = ({
     [addToast, keystoreDispatch, recoveryPhrase.id, t]
   )
 
+  const isBlurred = blurred || seed === DUMMY_SEED
+
   return (
     <>
       <View style={flexbox.flex1}>
@@ -161,7 +169,7 @@ const ManageRecoveryPhrase = ({
           style={[
             // On web the blur is a CSS `filter`; on native it doesn't apply,
             // so a BlurView overlay is rendered below instead
-            isWeb && (isSeedRevealed ? styles.notBlurred : styles.blurred),
+            isWeb && isBlurred && (isSeedRevealed ? styles.notBlurred : styles.blurred),
             spacings.pvMd,
             spacings.phMd,
             {
@@ -192,8 +200,13 @@ const ManageRecoveryPhrase = ({
               </Text>
             </View>
           )}
-          {isMobile && !isSeedRevealed && (
-            <BlurView intensity={18} tint={themeType} style={StyleSheet.absoluteFill} />
+          {/* On native `filter: blur()` is a no-op (web-only CSS), so overlay a real BlurView to hide the phrase */}
+          {isMobile && isBlurred && (
+            <BlurView
+              intensity={12}
+              tint={themeType === THEME_TYPES.DARK ? 'dark' : 'light'}
+              style={StyleSheet.absoluteFill}
+            />
           )}
         </View>
         <View
@@ -235,7 +248,7 @@ const ManageRecoveryPhrase = ({
               type={isWeb ? 'ghost' : 'outline'}
               size={isWeb ? 'small' : 'regular'}
               style={isWeb ? { minWidth: 137 } : undefined}
-              text={blurred ? t('Reveal phrase') : t('Hide phrase')}
+              text={visibilityButtonText}
             >
               {blurred ? (
                 <VisibilityIcon style={spacings.mlTy} width={18} />
