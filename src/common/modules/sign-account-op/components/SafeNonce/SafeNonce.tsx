@@ -11,7 +11,7 @@ import Text from '@common/components/Text'
 import { isWeb } from '@common/config/env'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
-import spacings from '@common/styles/spacings'
+import spacings, { SPACING_MI } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
 import { isValidSafeNonce } from './helpers'
@@ -106,7 +106,7 @@ const SafeNonce = () => {
           precision={0}
           autoFocus={isEditing}
           disabled={!isEditing}
-          returnKeyType="done"
+          returnKeyType={isWeb ? 'done' : undefined}
           blurOnSubmit={false}
           onSubmitEditing={handleSave}
           containerStyle={[spacings.mb0 as ViewStyle, isWeb ? { width: 80 } : flexbox.flex1]}
@@ -202,14 +202,14 @@ const SafeNonce = () => {
         spacings.pvSm,
         spacings.mbSm,
         {
-          minHeight: 72,
+          minHeight: 88,
           borderRadius: 16,
           borderWidth: 1,
           borderColor: theme.primaryBorder
         }
       ]}
     >
-      <View style={{ flex: 1.4 }}>
+      <View style={flexbox.flex1}>
         <Text fontSize={12} appearance="secondaryText">
           {t('Network')}
         </Text>
@@ -228,7 +228,7 @@ const SafeNonce = () => {
       <View
         style={{
           width: 1,
-          height: 48,
+          height: 64,
           backgroundColor: theme.primaryBorder
         }}
       />
@@ -244,7 +244,13 @@ const SafeNonce = () => {
             fontSize={10}
             appearance="errorText"
             numberOfLines={1}
-            style={{ position: 'absolute', top: 48, right: 0, width: 200, textAlign: 'right' }}
+            style={{
+              position: 'absolute',
+              top: 48 + SPACING_MI,
+              right: 0,
+              width: 200,
+              textAlign: 'right'
+            }}
           >
             {validationMessage}
           </Text>
