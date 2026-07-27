@@ -118,11 +118,20 @@ const ManageRecoveryPhrase = ({
   }, [addToast, seed, t])
 
   useEffect(() => {
-    if (keystoreState.statuses.deleteSeed === 'SUCCESS') {
-      addToast(t('Recovery phrase deleted successfully'))
-      !!onBackButtonPress && onBackButtonPress()
-    }
-  }, [keystoreState.statuses.deleteSeed, onBackButtonPress, addToast, t])
+    const isSeedDeleted = !keystoreState.seeds.some(({ id }) => id === recoveryPhrase.id)
+    if (!isSeedDeleted) return
+
+    closeDeleteConfirmation()
+    addToast(t('Recovery phrase deleted successfully'))
+    !!onBackButtonPress && onBackButtonPress()
+  }, [
+    keystoreState.seeds,
+    recoveryPhrase.id,
+    onBackButtonPress,
+    closeDeleteConfirmation,
+    addToast,
+    t
+  ])
 
   const deleteSavedSeed = async () => {
     if (!deleteSeedIsConfirmed) return
