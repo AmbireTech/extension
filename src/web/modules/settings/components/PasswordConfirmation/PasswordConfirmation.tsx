@@ -7,7 +7,7 @@ import wait from '@ambire-common/utils/wait'
 import Button from '@common/components/Button'
 import InputPassword from '@common/components/InputPassword'
 import { PanelBackButton, PanelTitle } from '@common/components/Panel/Panel'
-import { isMobile, isWeb } from '@common/config/env'
+import { isDev, isMobile, isTesting, isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import useNavigation from '@common/hooks/useNavigation'
@@ -15,6 +15,7 @@ import { WEB_ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import textStyles from '@common/styles/utils/text'
+import { DEFAULT_KEYSTORE_PASSWORD_DEV } from '@env'
 
 interface Props {
   onPasswordConfirmed: (password: string) => void
@@ -69,7 +70,7 @@ const PasswordConfirmation: React.FC<Props> = ({
   } = useForm({
     mode: 'all',
     defaultValues: {
-      password: ''
+      password: isDev && !isTesting ? (DEFAULT_KEYSTORE_PASSWORD_DEV ?? '') : ''
     }
   })
 
