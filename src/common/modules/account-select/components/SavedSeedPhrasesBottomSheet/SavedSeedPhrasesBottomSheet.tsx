@@ -9,15 +9,13 @@ import BottomSheet from '@common/components/BottomSheet'
 import ModalHeader from '@common/components/BottomSheet/ModalHeader'
 import Button from '@common/components/Button'
 import Text from '@common/components/Text'
-import { isMobile } from '@common/config/env'
 import useController from '@common/hooks/useController'
 import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useNavigation from '@common/hooks/useNavigation'
 import useTheme from '@common/hooks/useTheme'
 import Account from '@common/modules/account-select/components/Account'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
-import { WEB_ROUTES } from '@common/modules/router/constants/common'
-import alert from '@common/services/alert'
+import { ROUTES, WEB_ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
@@ -158,11 +156,7 @@ const SavedSeedPhrasesBottomSheet = ({
         <ModalHeader handleClose={handleClose} title={t('Add from recovery phrase')}>
           <Pressable
             onPress={() => {
-              if (isMobile) {
-                alert('Coming soon!')
-                return
-              }
-              navigate(WEB_ROUTES.recoveryPhrasesSettings)
+              navigate(ROUTES.recoveryPhrasesSettings)
             }}
           >
             {({ hovered }: any) => (
