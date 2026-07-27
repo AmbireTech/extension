@@ -35,7 +35,11 @@ const CrashAnalyticsControlOption = () => {
       )}
       renderIcon={<DevIcon color={theme.iconPrimary} />}
     >
-      <FatToggle isOn={crashAnalyticsEnabled} onToggle={handleToggleCrashAnalytics} />
+      <FatToggle
+        isOn={crashAnalyticsEnabled}
+        onToggle={handleToggleCrashAnalytics}
+        trackStyle={spacings.mr0}
+      />
     </ControlOption>
   )
 }

@@ -14,17 +14,18 @@ import { Action, MethodAction } from '@common/types/actions'
 export default function useDappsControllerHelpers(
   dispatch: (action: MethodAction | Action) => void
 ) {
-  const {
-    state,
-    helpers: { isLoadingCurrentDapp },
-    updateHelpers
-  } = useControllerState({
+  const { state, updateHelpers } = useControllerState({
     id: 'DappsController',
     subscriptionEnabled: true
   })
 
   const [dappUrl, setDappUrlState] = useState<string>('')
   const lastFetchedOriginRef = useRef<string>('')
+  // In-flight lock for the refetch effect below. It must be a ref, NOT the
+  // isLoadingCurrentDapp helper: reading that helper as an effect dependency
+  // and resetting it on completion re-triggers the effect, spinning a
+  // getCurrentDapp round-trip loop (~70/s) that saturates the bridge.
+  const isFetchingCurrentDappRef = useRef(false)
   const route = useRoute()
 
   const getCurrentDapp = useCallback(
@@ -103,8 +104,9 @@ export default function useDappsControllerHelpers(
   // Re-fetch current dapp when controller state changes (e.g., connection status)
   // This effect should NOT depend on currentDapp to avoid circular updates
   useEffect(() => {
-    if (!dappUrl || isLoadingCurrentDapp) return
+    if (!dappUrl || isFetchingCurrentDappRef.current) return
 
+    isFetchingCurrentDappRef.current = true
     updateHelpers({ isLoadingCurrentDapp: true })
     getCurrentDapp(dappUrl)
       .then((dapp) => {
@@ -114,7 +116,10 @@ export default function useDappsControllerHelpers(
         captureException(error)
         updateHelpers({ currentDapp: null, isLoadingCurrentDapp: false })
       })
-  }, [state, dappUrl, isLoadingCurrentDapp, getCurrentDapp, updateHelpers])
+      .finally(() => {
+        isFetchingCurrentDappRef.current = false
+      })
+  }, [state, dappUrl, getCurrentDapp, updateHelpers])
 
   const setDappUrl = useCallback(
     (url: string) => {
