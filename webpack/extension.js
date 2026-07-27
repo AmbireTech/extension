@@ -417,6 +417,14 @@ module.exports = async function buildExtension(
     type: 'asset'
   })
 
+  // Colibri loads this package-owned WASM binary at runtime. Declare it explicitly so
+  // LavaMoat does not treat it as an ambient node_modules asset and suppress its emission.
+  config.module.rules.push({
+    test: /c4w\.wasm$/,
+    include: path.resolve(ROOT_DIR, 'node_modules/@corpus-core/colibri-stateless'),
+    type: 'asset'
+  })
+
   config.experiments = {
     asyncWebAssembly: true,
     topLevelAwait: true

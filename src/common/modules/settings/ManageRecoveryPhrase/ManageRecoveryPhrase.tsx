@@ -1,6 +1,7 @@
-import React, { useCallback, useEffect, useState } from 'react'
+import { BlurView } from 'expo-blur'
+import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { View } from 'react-native'
+import { StyleSheet, View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 
 import { HD_PATH_TEMPLATE_TYPE } from '@ambire-common/consts/derivation'
@@ -14,9 +15,11 @@ import Checkbox from '@common/components/Checkbox'
 import Editable from '@common/components/Editable'
 import { PanelBackButton, PanelTitle } from '@common/components/Panel/Panel'
 import Text from '@common/components/Text'
+import { isMobile, isWeb } from '@common/config/env'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
+import PasswordConfirmation from '@common/modules/settings/components/PasswordConfirmation'
 import eventBus from '@common/services/event/eventBus'
 import spacings, { SPACING_SM } from '@common/styles/spacings'
 import { THEME_TYPES } from '@common/styles/themeConfig'
@@ -24,7 +27,6 @@ import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
 import { setStringAsync } from '@common/utils/clipboard'
-import PasswordConfirmation from '@web/modules/settings/components/PasswordConfirmation'
 
 import getStyles from './styles'
 
@@ -61,12 +63,13 @@ const ManageRecoveryPhrase = ({
   const { theme, styles, themeType } = useTheme(getStyles)
   const { t } = useTranslation()
 
+  const isSeedRevealed = !blurred && seed !== DUMMY_SEED
+
   const onPasswordConfirmed = () => {
     keystoreDispatch({
       type: 'method',
       params: { method: 'sendSeedToUi', args: [recoveryPhrase.id] }
     })
-    if (blurred) setBlurred(false)
     closeConfirmPassword()
   }
 
@@ -97,6 +100,13 @@ const ManageRecoveryPhrase = ({
     setBlurred((prev) => !prev)
   }, [seed, blurred, openConfirmPassword])
 
+  const visibilityButtonText = useMemo(() => {
+    const hasRealSeed = !!seed && seed !== DUMMY_SEED
+    if (!hasRealSeed) return t('Reveal phrase')
+
+    return blurred ? t('Show phrase') : t('Hide phrase')
+  }, [blurred, seed, t])
+
   const handleCopySeed = useCallback(async () => {
     if (!seed || seed === DUMMY_SEED) return
     try {
@@ -108,11 +118,20 @@ const ManageRecoveryPhrase = ({
   }, [addToast, seed, t])
 
   useEffect(() => {
-    if (keystoreState.statuses.deleteSeed === 'SUCCESS') {
-      addToast(t('Recovery phrase deleted successfully'))
-      !!onBackButtonPress && onBackButtonPress()
-    }
-  }, [keystoreState.statuses.deleteSeed, onBackButtonPress, addToast, t])
+    const isSeedDeleted = !keystoreState.seeds.some(({ id }) => id === recoveryPhrase.id)
+    if (!isSeedDeleted) return
+
+    closeDeleteConfirmation()
+    addToast(t('Recovery phrase deleted successfully'))
+    !!onBackButtonPress && onBackButtonPress()
+  }, [
+    keystoreState.seeds,
+    recoveryPhrase.id,
+    onBackButtonPress,
+    closeDeleteConfirmation,
+    addToast,
+    t
+  ])
 
   const deleteSavedSeed = async () => {
     if (!deleteSeedIsConfirmed) return
@@ -133,14 +152,16 @@ const ManageRecoveryPhrase = ({
     [addToast, keystoreDispatch, recoveryPhrase.id, t]
   )
 
+  const isBlurred = blurred || seed === DUMMY_SEED
+
   return (
     <>
       <View style={flexbox.flex1}>
         <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mbLg]}>
-          <PanelBackButton onPress={onBackButtonPress} style={spacings.mrSm} />
-          <PanelTitle title={t('Manage recovery phrase')} style={text.left} />
+          {isWeb && <PanelBackButton onPress={onBackButtonPress} style={spacings.mrSm} />}
+          <PanelTitle title={t('Manage recovery phrase')} style={isWeb ? text.left : text.center} />
         </View>
-        <View style={spacings.mb}>
+        <View style={[isMobile ? spacings.mbSm : spacings.mb, flexbox.directionRow]}>
           <Editable
             initialValue={recoveryPhrase.label}
             onSave={onSave}
@@ -155,7 +176,9 @@ const ManageRecoveryPhrase = ({
         </View>
         <View
           style={[
-            !blurred && seed !== DUMMY_SEED ? styles.notBlurred : styles.blurred,
+            // On web the blur is a CSS `filter`; on native it doesn't apply,
+            // so a BlurView overlay is rendered below instead
+            isWeb && isBlurred && (isSeedRevealed ? styles.notBlurred : styles.blurred),
             spacings.pvMd,
             spacings.phMd,
             {
@@ -163,7 +186,8 @@ const ManageRecoveryPhrase = ({
                 themeType === THEME_TYPES.DARK
                   ? theme.tertiaryBackground
                   : theme.secondaryBackground,
-              borderRadius: BORDER_RADIUS_PRIMARY
+              borderRadius: BORDER_RADIUS_PRIMARY,
+              overflow: 'hidden'
             }
           ]}
         >
@@ -185,51 +209,69 @@ const ManageRecoveryPhrase = ({
               </Text>
             </View>
           )}
+          {/* On native `filter: blur()` is a no-op (web-only CSS), so overlay a real BlurView to hide the phrase */}
+          {isMobile && isBlurred && (
+            <BlurView
+              intensity={12}
+              // Android renders a barely visible tint instead of a blur unless this
+              // experimental method is on, leaving the phrase readable
+              experimentalBlurMethod="dimezisBlurView"
+              blurReductionFactor={1}
+              tint={themeType === THEME_TYPES.DARK ? 'dark' : 'light'}
+              style={StyleSheet.absoluteFill}
+            />
+          )}
         </View>
         <View
           style={[
-            flexbox.flex1,
             flexbox.directionRow,
-            flexbox.justifySpaceBetween,
-            spacings.mtTy,
-            { marginHorizontal: -SPACING_SM }
+            isWeb && flexbox.flex1,
+            isWeb && flexbox.justifySpaceBetween,
+            isWeb ? spacings.mtTy : spacings.mtSm,
+            isWeb && { marginHorizontal: -SPACING_SM },
+            isMobile && spacings.mbLg
           ]}
         >
           <View
-            style={{
-              opacity: !seed || seed === DUMMY_SEED ? 0 : 1
-            }}
+            pointerEvents={isSeedRevealed ? 'auto' : 'none'}
+            style={[
+              isMobile && (isSeedRevealed ? flexbox.flex1 : { width: 0, overflow: 'hidden' }),
+              { opacity: isSeedRevealed ? 1 : 0 }
+            ]}
           >
             <Button
               testID="copy-recovery-phrase-button"
               onPress={handleCopySeed}
               hasBottomSpacing={false}
-              type="ghost"
-              size="small"
+              type={isWeb ? 'ghost' : 'outline'}
+              size={isWeb ? 'small' : 'regular'}
               text={t('Copy phrase')}
-              // @ts-ignore react-native-web supports `cursor`, but it's missing from React Native StyleProp<ViewStyle> types
-              style={{ cursor: !seed || seed === DUMMY_SEED ? 'default' : 'pointer' }}
+              // @ts-expect-error react-native-web supports `cursor`, but it's missing from React Native StyleProp<ViewStyle> types
+              style={isWeb && { cursor: isSeedRevealed ? 'pointer' : 'default' }}
             >
               <CopyIcon style={spacings.mlTy} width={18} />
             </Button>
           </View>
-          <Button
-            testID="reveal-recovery-phrase-button"
-            onPress={toggleKeyVisibility}
-            hasBottomSpacing={false}
-            type="ghost"
-            size="small"
-            style={{ minWidth: 137 }}
-            text={blurred ? t('Reveal phrase') : t('Hide phrase')}
-          >
-            {blurred ? (
-              <VisibilityIcon style={spacings.mlTy} width={18} />
-            ) : (
-              <InvisibilityIcon style={spacings.mlTy} width={18} />
-            )}
-          </Button>
+          {isMobile && <View style={{ width: isSeedRevealed ? SPACING_SM : 0 }} />}
+          <View style={isMobile && flexbox.flex1}>
+            <Button
+              testID="reveal-recovery-phrase-button"
+              onPress={toggleKeyVisibility}
+              hasBottomSpacing={false}
+              type={isWeb ? 'ghost' : 'outline'}
+              size={isWeb ? 'small' : 'regular'}
+              style={isWeb ? { minWidth: 137 } : undefined}
+              text={visibilityButtonText}
+            >
+              {blurred ? (
+                <VisibilityIcon style={spacings.mlTy} width={18} />
+              ) : (
+                <InvisibilityIcon style={spacings.mlTy} width={18} />
+              )}
+            </Button>
+          </View>
         </View>
-        <View style={[flexbox.flex1, flexbox.justifyEnd, flexbox.alignCenter]}>
+        <View style={[flexbox.flex1, flexbox.justifyEnd, isWeb && flexbox.alignCenter]}>
           <Button
             type="danger"
             style={spacings.mtTy}
@@ -242,16 +284,19 @@ const ManageRecoveryPhrase = ({
 
       <BottomSheet
         id="delete-saved-seed-sheet"
-        type="modal"
+        type={isWeb ? 'modal' : 'bottom-sheet'}
         sheetRef={sheetRefDeleteConfirmation}
         closeBottomSheet={closeDeleteConfirmation}
-        scrollViewProps={{ contentContainerStyle: { flex: 1 } }}
+        scrollViewProps={isWeb ? { contentContainerStyle: { flex: 1 } } : undefined}
         containerInnerWrapperStyles={{ flex: 1 }}
-        style={{ maxWidth: 432, minHeight: 432, ...spacings.pvLg }}
+        style={isWeb ? { maxWidth: 432, minHeight: 432, ...spacings.pvLg } : undefined}
       >
         <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mbLg]}>
-          <PanelBackButton onPress={closeDeleteConfirmation} style={spacings.mrSm} />
-          <PanelTitle title={t('Confirm phrase removal')} style={text.left} />
+          {!isMobile && <PanelBackButton onPress={closeDeleteConfirmation} style={spacings.mrSm} />}
+          <PanelTitle
+            title={t('Confirm phrase removal')}
+            style={isMobile ? text.center : text.left}
+          />
         </View>
         <View style={[flexbox.flex1, flexbox.justifyEnd]}>
           <Alert
@@ -259,7 +304,7 @@ const ManageRecoveryPhrase = ({
             isTypeLabelHidden
             titleWeight="semiBold"
             size="md"
-            text={t('Deleting the recovery phrase will not remove any accounts imported from it.')}
+            title={t('Deleting the recovery phrase will not remove any accounts imported from it.')}
             style={spacings.mbLg}
           />
           <Checkbox
@@ -288,14 +333,18 @@ const ManageRecoveryPhrase = ({
       <BottomSheet
         sheetRef={sheetRefConfirmPassword}
         id="confirm-password-bottom-sheet"
-        type="modal"
+        type={isWeb ? 'modal' : 'bottom-sheet'}
         closeBottomSheet={closeConfirmPassword}
-        scrollViewProps={{ contentContainerStyle: { flex: 1 } }}
+        scrollViewProps={isWeb ? { contentContainerStyle: { flex: 1 } } : undefined}
         containerInnerWrapperStyles={{ flex: 1 }}
-        style={{ maxWidth: 432, minHeight: 432, ...spacings.pvLg }}
+        style={isWeb ? { maxWidth: 432, minHeight: 432, ...spacings.pvLg } : undefined}
       >
         <PasswordConfirmation
-          text={t('Please enter your extension password to reveal your recovery phrase.')}
+          text={t(
+            `Please enter your ${
+              isWeb ? 'extension' : 'device'
+            } password to reveal your recovery phrase.`
+          )}
           onPasswordConfirmed={onPasswordConfirmed}
           onBackButtonPress={closeConfirmPassword}
         />
