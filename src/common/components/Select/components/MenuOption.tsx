@@ -16,42 +16,51 @@ const formatOptionString = (optionString: string): string => {
     .replace(/\s+/g, '-')
 }
 
-const Option = React.memo(({ item, ...rest }: { item: SelectValue }) => {
-  const { styles } = useTheme(getStyles)
+const Option = React.memo(
+  ({ item, allowShrink = false }: { item: SelectValue; allowShrink?: boolean }) => {
+    const { styles } = useTheme(getStyles)
 
-  // Attempt to create a dynamic testID using the label or value if they contain a string.
-  // Otherwise, default to 'undefined', and letting Playwright to assert using alternative selectors.
-  const testID = `option-${
-    typeof item.label === 'string'
-      ? formatOptionString(item.label)
-      : typeof item.value === 'string'
-        ? formatOptionString(item.value)
-        : undefined
-  }`
+    // Attempt to create a dynamic testID using the label or value if they contain a string.
+    // Otherwise, default to 'undefined', and letting Playwright to assert using alternative selectors.
+    const testID = `option-${
+      typeof item.label === 'string'
+        ? formatOptionString(item.label)
+        : typeof item.value === 'string'
+          ? formatOptionString(item.value)
+          : undefined
+    }`
 
-  if (!item) return null
-  return (
-    <View
-      style={[flexbox.directionRow, flexbox.alignCenter, flexbox.flex1, { minWidth: 0 }]}
-      testID={testID}
-    >
-      {!!item?.icon && typeof item?.icon !== 'string' && (
-        <View style={spacings.mrTy}>{item.icon}</View>
-      )}
-      {!!item?.icon && typeof item?.icon === 'string' && (
-        <Image source={{ uri: item.icon }} style={styles.optionIcon} />
-      )}
-      {/* The label can be a string or a React component. If it is a string, it will be rendered as a text element. */}
-      {typeof item?.label === 'string' ? (
-        <Text fontSize={14} numberOfLines={1}>
-          {item.label}
-        </Text>
-      ) : (
-        item?.label
-      )}
-    </View>
-  )
-})
+    if (!item) return null
+    return (
+      <View
+        style={[
+          flexbox.directionRow,
+          flexbox.alignCenter,
+          flexbox.flex1,
+          // Only shrink in menu lists (side panel / narrow sheets). On the closed select,
+          // shrinking truncates token names in popup transfer / swap layouts.
+          allowShrink && { minWidth: 0 }
+        ]}
+        testID={testID}
+      >
+        {!!item?.icon && typeof item?.icon !== 'string' && (
+          <View style={spacings.mrTy}>{item.icon}</View>
+        )}
+        {!!item?.icon && typeof item?.icon === 'string' && (
+          <Image source={{ uri: item.icon }} style={styles.optionIcon} />
+        )}
+        {/* The label can be a string or a React component. If it is a string, it will be rendered as a text element. */}
+        {typeof item?.label === 'string' ? (
+          <Text fontSize={14} numberOfLines={1}>
+            {item.label}
+          </Text>
+        ) : (
+          item?.label
+        )}
+      </View>
+    )
+  }
+)
 
 Option.displayName = 'Option'
 
@@ -114,7 +123,7 @@ const MenuOption = React.memo(
         onHoverOut={onHoverOut}
         onPress={onPressWrapped}
       >
-        <Option item={item} />
+        <Option item={item} allowShrink />
       </Pressable>
     )
   }

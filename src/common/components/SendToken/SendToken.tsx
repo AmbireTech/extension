@@ -164,11 +164,17 @@ const SendToken: FC<Props> = ({
                 />
               )}
             </View>
-            <View
-              style={
-                isCompactSidePanelLayout ? { width: '100%', alignItems: 'flex-end' } : undefined
-              }
-            >
+            {isCompactSidePanelLayout ? (
+              <View style={{ width: '100%', alignItems: 'flex-end' }}>
+                <AmountInput
+                  type={fromAmountFieldMode}
+                  value={fromAmountValue}
+                  onChangeText={handleOnChangeTextAndFormat}
+                  disabled={fromTokenAmountSelectDisabled}
+                  inputTestId={inputTestId}
+                />
+              </View>
+            ) : (
               <AmountInput
                 type={fromAmountFieldMode}
                 value={fromAmountValue}
@@ -176,7 +182,7 @@ const SendToken: FC<Props> = ({
                 disabled={fromTokenAmountSelectDisabled}
                 inputTestId={inputTestId}
               />
-            </View>
+            )}
           </View>
           <View
             style={[

@@ -145,8 +145,13 @@ const AddressBookContact: FC<Props> = ({
               onSave={onSave}
             />
           ) : (
-            <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-              <Text fontSize={fontSize} weight="medium" style={!name && spacings.mrTy}>
+            <View style={[flexbox.directionRow, flexbox.alignCenter, { minWidth: 0 }]}>
+              <Text
+                fontSize={fontSize}
+                weight="medium"
+                numberOfLines={1}
+                style={!name && spacings.mrTy}
+              >
                 {name ||
                   (account?.addr === selectedAccount?.addr
                     ? account?.preferences.label
