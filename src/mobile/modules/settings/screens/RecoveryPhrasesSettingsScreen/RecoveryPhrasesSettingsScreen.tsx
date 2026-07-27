@@ -138,7 +138,8 @@ const RecoveryPhrasesSettingsScreen = () => {
               StyleSheet.absoluteFill,
               flexbox.flex1,
               flexbox.alignCenter,
-              flexbox.justifyCenter
+              flexbox.justifyCenter,
+              spacings.phSm
             ]}
           >
             <Text style={text.center}>
