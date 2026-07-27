@@ -30,9 +30,11 @@ import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import { openInTab } from '@common/utils/links'
 
-// Builds a portfolio-shaped TokenResult from a trending token so the same token-details components
-// (price, balance, "About", exchanges) can render it. The trending endpoint now provides the
-// contract, chain, decimals and USD market data the portfolio components expect.
+/**
+ * Builds a portfolio-shaped TokenResult from a trending token so the same token-details components
+ * (price, balance, "About", exchanges) can render it. The trending endpoint now provides the
+ * contract, chain, decimals and USD market data the portfolio components expect.
+ */
 const buildTokenResult = (token: TrendingToken, chainId: bigint, address: string): TokenResult => ({
   symbol: token.symbol.toUpperCase(),
   name: token.name,

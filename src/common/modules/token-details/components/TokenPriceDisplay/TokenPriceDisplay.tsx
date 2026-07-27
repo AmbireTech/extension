@@ -15,7 +15,7 @@ type TokenPriceDisplayProps = Pick<TokenResult, 'symbol' | 'address' | 'chainId'
     'priceUSDFormatted' | 'change24h' | 'change24hFormatted'
   > & {
     onGasTank?: boolean
-    // Fallback image and network badge for tokens not resolvable from the portfolio (e.g. trending).
+    /** Fallback image and network badge for tokens not resolvable from the portfolio (e.g. trending). */
     uri?: string
   }
 

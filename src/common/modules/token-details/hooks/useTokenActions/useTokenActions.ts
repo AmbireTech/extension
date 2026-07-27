@@ -20,18 +20,24 @@ import { storage } from '@common/services/storage'
 import { RELAYER_URL } from '@env'
 
 type UseTokenActionsOptions = {
-  // When set, a zero-balance token keeps Send disabled but shows this tooltip explaining why
-  // (instead of a silently disabled button). Used by the trending screen where the user may not
-  // hold the token.
+  /**
+   * When set, a zero-balance token keeps Send disabled but shows this tooltip explaining why
+   * (instead of a silently disabled button). Used by the trending screen where the user may not
+   * hold the token.
+   */
   noBalanceSendTooltip?: string
-  // Enables Swap/Bridge regardless of balance and preselects the token as the buy (to) token,
-  // so the user can swap to acquire it. Used by the trending screen.
+  /**
+   * Enables Swap/Bridge regardless of balance and preselects the token as the buy (to) token,
+   * so the user can swap to acquire it. Used by the trending screen.
+   */
   enableSwapToBuy?: boolean
 }
 
-// Builds the token-details footer actions (send, swap/bridge, top up, hide) and the hide-token
-// modal wiring for a given token. Extracted from useTokenDetails so both the portfolio token
-// details and the trending token details screens can share the exact same footer.
+/**
+ * Builds the token-details footer actions (send, swap/bridge, top up, hide) and the hide-token
+ * modal wiring for a given token. Extracted from useTokenDetails so both the portfolio token
+ * details and the trending token details screens can share the exact same footer.
+ */
 const useTokenActions = (token: TokenResult | null, options: UseTokenActionsOptions = {}) => {
   const { noBalanceSendTooltip, enableSwapToBuy } = options
   const { navigate } = useNavigation()

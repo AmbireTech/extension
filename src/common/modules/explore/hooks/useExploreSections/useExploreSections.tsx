@@ -17,8 +17,10 @@ type ExploreSectionBase = {
   showTrash: boolean
 }
 
-// Discriminated union: dapp sections carry `data: Dapp[]`, while the trending section carries
-// `trendingTokens: TrendingToken[]` (a different shape), so consumers must narrow on `type`.
+/**
+ * Discriminated union: dapp sections carry `data: Dapp[]`, while the trending section carries
+ * `trendingTokens: TrendingToken[]` (a different shape), so consumers must narrow on `type`.
+ */
 export type ExploreSection =
   | (ExploreSectionBase & {
       type: 'recent' | 'connected' | 'favorites' | 'apps'

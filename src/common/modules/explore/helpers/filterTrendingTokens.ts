@@ -1,7 +1,9 @@
 import { TrendingToken } from '@ambire-common/interfaces/dapp'
 
-// Case-insensitive substring match on symbol or name. Substring (not fuzzy) is intentional here:
-// token symbols are short tickers (e.g. "BTC") where fuzzy matching produces noisy results.
+/**
+ * Case-insensitive substring match on symbol or name. Substring (not fuzzy) is intentional here:
+ * token symbols are short tickers (e.g. "BTC") where fuzzy matching produces noisy results.
+ */
 export const filterTrendingTokensBySearch = (
   tokens: TrendingToken[],
   search: string
