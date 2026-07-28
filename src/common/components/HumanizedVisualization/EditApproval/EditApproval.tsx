@@ -6,16 +6,15 @@ import { useModalize } from 'react-native-modalize'
 
 import { getTokenAmount } from '@ambire-common/libs/portfolio/helpers'
 import { getSafeAmountFromFieldValue } from '@ambire-common/utils/numbers/formatters'
-import EditPenIcon from '@common/assets/svg/EditPenIcon'
 import AmountInput from '@common/components/AmountInput'
 import BottomSheet from '@common/components/BottomSheet'
 import Button from '@common/components/Button'
+import EditButton from '@common/components/EditButton'
 import FooterGlassView from '@common/components/FooterGlassView'
 import Text from '@common/components/Text'
 import TokenIcon from '@common/components/TokenIcon'
 import { isMobile, isWeb } from '@common/config/env'
 import useController from '@common/hooks/useController'
-import useHover, { AnimatedPressable } from '@common/hooks/useHover'
 import useTheme from '@common/hooks/useTheme'
 import MaxAmount from '@common/modules/swap-and-bridge/components/MaxAmount'
 import spacings from '@common/styles/spacings'
@@ -123,9 +122,6 @@ const EditApproval = ({
 }) => {
   const { t } = useTranslation()
   const { theme } = useTheme()
-  const [bindEditApprovals, , isEditApprovalsHovered] = useHover({
-    preset: 'opacityInverted'
-  })
   const {
     ref: editApprovalsSheetRef,
     open: openEditApprovals,
@@ -196,30 +192,10 @@ const EditApproval = ({
 
   return (
     <>
-      <AnimatedPressable
-        style={[
-          flexbox.directionRow,
-          flexbox.alignCenter,
-          spacings.mrTy,
-          { marginLeft: -8 },
-          style
-        ]}
-        {...bindEditApprovals}
+      <EditButton
         onPress={handleOpenEditApprovals}
-      >
-        <Text fontSize={14} color={theme.linkText}>
-          {'['}
-        </Text>
-        <EditPenIcon width={20} height={20} color={theme.linkText} />
-        {!isMobile && (
-          <Text fontSize={14} color={theme.linkText} underline={isEditApprovalsHovered}>
-            {t('Edit')}
-          </Text>
-        )}
-        <Text fontSize={14} color={theme.linkText}>
-          {']'}
-        </Text>
-      </AnimatedPressable>
+        style={[spacings.mrTy, { marginLeft: -8 }, style]}
+      />
       <BottomSheet
         sheetRef={editApprovalsSheetRef}
         id={`edit-approvals-bottom-sheet-${id}`}

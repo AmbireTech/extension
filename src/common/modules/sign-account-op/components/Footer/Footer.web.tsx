@@ -36,7 +36,7 @@ const Footer = ({
   signButtonType = 'primary'
 }: Props) => {
   const { t } = useTranslation()
-  const { styles, themeType } = useTheme(getStyles)
+  const { styles } = useTheme(getStyles)
   const { userRequests } = useController('RequestsController').state
   const {
     state: { account }
