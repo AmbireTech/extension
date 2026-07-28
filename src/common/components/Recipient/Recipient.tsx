@@ -324,6 +324,8 @@ const Recipient: React.FC<Props> = ({
               }}
               address={contact.address}
               name={contact.name}
+              // Tapping a row selects the recipient, so a copy icon is not needed on mobile
+              withCopy={isWeb}
             />
           )
         })),
@@ -347,6 +349,7 @@ const Recipient: React.FC<Props> = ({
               }}
               address={contact.address}
               name={contact.name}
+              withCopy={isWeb}
             />
           )
         })),
