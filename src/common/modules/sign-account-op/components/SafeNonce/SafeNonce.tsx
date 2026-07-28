@@ -1,10 +1,7 @@
 import React, { useCallback, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { GestureResponderEvent, View, ViewStyle } from 'react-native'
+import { View, ViewStyle } from 'react-native'
 
-import CheckIcon2 from '@common/assets/svg/CheckIcon2'
-import EditPenIcon from '@common/assets/svg/EditPenIcon'
-import HoverablePressable from '@common/components/HoverablePressable'
 import NetworkIcon from '@common/components/NetworkIcon'
 import NumberInput from '@common/components/NumberInput'
 import Text from '@common/components/Text'
@@ -44,8 +41,16 @@ const SafeNonce = () => {
     () => networks.find(({ chainId }) => chainId === signAccountOpState?.accountOp.chainId),
     [networks, signAccountOpState?.accountOp.chainId]
   )
-  const [draftNonce, setDraftNonce] = useState(nonce.toString())
-  const [isEditing, setIsEditing] = useState(false)
+  const nonceString = nonce.toString()
+  const fromRequestId = signAccountOpState?.fromRequestId
+  const [draftNonceState, setDraftNonceState] = useState({
+    fromRequestId,
+    sourceNonce: nonceString,
+    value: nonceString
+  })
+  const isDraftForCurrentNonce =
+    draftNonceState.fromRequestId === fromRequestId && draftNonceState.sourceNonce === nonceString
+  const draftNonce = isDraftForCurrentNonce ? draftNonceState.value : nonceString
   const canEdit =
     !signAccountOpState?.isSignInProgress &&
     !signAccountOpState?.accountOp.signed?.length &&
@@ -64,56 +69,35 @@ const SafeNonce = () => {
     return ''
   }, [isDraftBelowLatestNonce, isDraftValid, latestNonce, t])
 
-  const handleEdit = useCallback(() => {
-    setDraftNonce(nonce.toString())
-    setIsEditing(true)
-  }, [nonce])
+  const handleNonceChange = useCallback(
+    (value: string) => {
+      setDraftNonceState({ fromRequestId, sourceNonce: nonceString, value })
+      if (!isValidSafeNonce(value, latestNonce)) return
 
-  const handleSave = useCallback(() => {
-    if (!isValidSafeNonce(draftNonce, latestNonce)) return
-
-    dispatch({
-      type: 'method',
-      params: {
-        method: 'setSafeNonce',
-        args: [BigInt(draftNonce)]
-      }
-    })
-    setIsEditing(false)
-  }, [dispatch, draftNonce, latestNonce])
-
-  const handleButtonPress = useCallback(
-    (event: GestureResponderEvent) => {
-      event.stopPropagation()
-
-      if (isEditing) {
-        handleSave()
-        return
-      }
-
-      handleEdit()
+      dispatch({
+        type: 'method',
+        params: {
+          method: 'setSafeNonce',
+          args: [BigInt(value)]
+        }
+      })
     },
-    [handleEdit, handleSave, isEditing]
+    [dispatch, fromRequestId, latestNonce, nonceString]
   )
 
-  const nonceInputAndButton = useMemo(
+  const nonceInput = useMemo(
     () => (
       <View style={[flexbox.directionRow, flexbox.alignCenter, flexbox.justifyEnd, flexbox.flex1]}>
         <NumberInput
-          key={isEditing ? 'enabled' : 'disabled'}
-          value={isEditing ? draftNonce : nonce.toString()}
-          onChangeText={setDraftNonce}
+          value={canEdit ? draftNonce : nonce.toString()}
+          onChangeText={handleNonceChange}
           precision={0}
-          autoFocus={isEditing}
-          disabled={!isEditing}
-          returnKeyType={isWeb ? 'done' : undefined}
-          blurOnSubmit={false}
-          onSubmitEditing={handleSave}
+          disabled={!canEdit}
           containerStyle={[spacings.mb0 as ViewStyle, isWeb ? { width: 80 } : flexbox.flex1]}
           inputWrapperStyle={{
             height: 32,
             borderRadius: 8,
-            ...(isEditing && !!validationMessage ? { borderColor: theme.errorDecorative } : {})
+            ...(canEdit && !!validationMessage ? { borderColor: theme.errorDecorative } : {})
           }}
           inputStyle={[spacings.phTy as ViewStyle, { height: 30 }]}
           nativeInputStyle={{
@@ -123,47 +107,15 @@ const SafeNonce = () => {
           }}
           backgroundColor={theme.tertiaryBackground}
         />
-        <HoverablePressable
-          onPress={handleButtonPress}
-          disabled={!canEdit || (isEditing && !isDraftValid)}
-          accessibilityRole="button"
-          accessibilityLabel={isEditing ? t('Save') : t('Edit')}
-          style={[
-            flexbox.center,
-            spacings.mlTy,
-            {
-              width: 28,
-              height: 28,
-              opacity: !canEdit || (isEditing && !isDraftValid) ? 0.4 : 1
-            }
-          ]}
-        >
-          {isEditing ? (
-            <CheckIcon2 width={18} height={18} />
-          ) : (
-            <EditPenIcon width={18} height={18} color={theme.linkText} />
-          )}
-        </HoverablePressable>
       </View>
     ),
-    [
-      canEdit,
-      draftNonce,
-      handleButtonPress,
-      handleSave,
-      isDraftValid,
-      isEditing,
-      nonce,
-      t,
-      theme,
-      validationMessage
-    ]
+    [canEdit, draftNonce, handleNonceChange, nonce, theme, validationMessage]
   )
 
   if (!signAccountOpState?.account.safeCreation) return null
 
   return isWeb ? (
-    <View style={{ width: 205, height: 40 }}>
+    <View style={{ width: 165, height: 40 }}>
       <View
         style={[
           flexbox.directionRow,
@@ -180,9 +132,9 @@ const SafeNonce = () => {
         <Text fontSize={14} appearance="secondaryText">
           {t('Nonce')}
         </Text>
-        <View style={[flexbox.flex1, spacings.mlTy]}>{nonceInputAndButton}</View>
+        <View style={[flexbox.flex1, spacings.mlTy]}>{nonceInput}</View>
       </View>
-      {isEditing && !!validationMessage && (
+      {canEdit && !!validationMessage && (
         <Text
           fontSize={10}
           appearance="errorText"
@@ -237,9 +189,9 @@ const SafeNonce = () => {
           {t('Nonce')}
         </Text>
         <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mtMi, { width: '100%' }]}>
-          {nonceInputAndButton}
+          {nonceInput}
         </View>
-        {isEditing && !!validationMessage && (
+        {canEdit && !!validationMessage && (
           <Text
             fontSize={10}
             appearance="errorText"
