@@ -1,11 +1,11 @@
-import React, { useCallback, useRef, useState } from 'react'
+import React, { useCallback, useContext, useRef, useState } from 'react'
 import { Animated, NativeScrollEvent, NativeSyntheticEvent, View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 
 import GasTankModal from '@common/components/GasTankModal'
 import LayoutWrapper from '@common/components/LayoutWrapper'
+import { ControllersStateLoadedContext } from '@common/contexts/controllersStateLoadedContext'
 import useController from '@common/hooks/useController'
-import useControllerStore from '@common/hooks/useControllerStore'
 import useDebounce from '@common/hooks/useDebounce'
 import useTheme from '@common/hooks/useTheme'
 import DashboardOverview from '@common/modules/dashboard/components/DashboardOverview'
@@ -38,7 +38,7 @@ const DashboardScreen = () => {
   // many deferred controllers (keystore, requests, portfolio, banners, ...). Until
   // they all arrive, render a lightweight shell (real header, menu buttons and
   // skeletons); mount the full dashboard only once every controller is ready.
-  const { isStoreReady } = useControllerStore()
+  const { areAllControllerStatesLoaded } = useContext(ControllersStateLoadedContext)
 
   const onScroll = useCallback(
     (event: NativeSyntheticEvent<NativeScrollEvent>) => {
@@ -86,7 +86,7 @@ const DashboardScreen = () => {
 
   return (
     <LayoutWrapper>
-      {!isStoreReady ? (
+      {!areAllControllerStatesLoaded ? (
         <View style={styles.container}>
           <DashboardShell />
         </View>

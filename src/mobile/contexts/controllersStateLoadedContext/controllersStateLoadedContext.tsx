@@ -13,13 +13,13 @@ const MIN_LOADING_TIME = 250
 const ControllersStateLoadedProvider = ({ children }: { children: ReactNode }) => {
   const startTimeRef = useRef(Date.now())
   const unsubscribeRef = useRef<(() => void) | null>(null)
-  const [areControllerStatesLoaded, setAreControllerStatesLoaded] = useState(false)
+  const [hasMinLoadingTimePassed, setHasMinLoadingTimePassed] = useState(false)
   const [isStatesLoadingTakingTooLong, setIsStatesLoadingTakingTooLong] = useState(false)
 
-  const { isReadyToLoadRoutes, controllerStore } = useControllerStore()
+  const { isStoreReady, isReadyToLoadRoutes, controllerStore } = useControllerStore()
 
   useEffect(() => {
-    if (areControllerStatesLoaded) return
+    if (hasMinLoadingTimePassed) return
 
     unsubscribeRef.current = controllerStore.addEventsListener((eventData: string) => {
       if (eventData === 'controllersLoadingTakingTooLong') {
@@ -47,33 +47,32 @@ const ControllersStateLoadedProvider = ({ children }: { children: ReactNode }) =
         unsubscribeRef.current?.()
       }
     })
-  }, [areControllerStatesLoaded, controllerStore])
+  }, [hasMinLoadingTimePassed, controllerStore])
 
   useEffect(() => {
-    if (areControllerStatesLoaded) return
+    if (hasMinLoadingTimePassed) return
 
     const elapsed = Date.now() - startTimeRef.current
     const delay = Math.max(0, MIN_LOADING_TIME - elapsed)
 
     const timeoutId = setTimeout(() => {
-      setAreControllerStatesLoaded(true)
+      setHasMinLoadingTimePassed(true)
     }, delay)
 
     return () => clearTimeout(timeoutId)
-  }, [areControllerStatesLoaded])
+  }, [hasMinLoadingTimePassed])
 
-  // On mobile we gate the splash on the critical-controllers-only flag so the
-  // initial route renders ASAP. The full `isStoreReady` flag still fires later
-  // when every controller has crossed the webview bridge — screens that need
-  // the heavy state (portfolio, dapps, ...) should gate on `isStoreReady`
-  // directly via `useControllerStore`. The `isStatesLoadingTakingTooLong`
-  // telemetry below still observes the full set.
+  // On mobile the route renders on the critical-controllers-only flag so it shows up
+  // ASAP, but never before MIN_LOADING_TIME so the splash doesn't just flash.
+  // `areAllControllerStatesLoaded` still fires later, when every controller has
+  // crossed the webview bridge.
   const contextValue = useMemo<ControllersStateLoadedContextType>(
     () => ({
-      areControllerStatesLoaded: areControllerStatesLoaded && isReadyToLoadRoutes,
+      canRenderRoute: hasMinLoadingTimePassed && isReadyToLoadRoutes,
+      areAllControllerStatesLoaded: isStoreReady,
       isStatesLoadingTakingTooLong
     }),
-    [areControllerStatesLoaded, isReadyToLoadRoutes, isStatesLoadingTakingTooLong]
+    [hasMinLoadingTimePassed, isReadyToLoadRoutes, isStoreReady, isStatesLoadingTakingTooLong]
   )
 
   return (

@@ -19,6 +19,7 @@ const ControllersStateLoadedProvider = ({ children }: { children: ReactNode }) =
   const { isStoreReady, isReadyToLoadRoutes, controllerStore } = useControllerStore()
   const { state: uiControllerState } = useController('UiController')
 
+  // Diagnostics only - it goes into the Sentry payload below and must not gate rendering.
   const isViewReady = useMemo(() => {
     if (!isPopup) return true
 
@@ -61,11 +62,11 @@ const ControllersStateLoadedProvider = ({ children }: { children: ReactNode }) =
   // When the background reports a dashboard route, the store flips
   // `isReadyToLoadRoutes` as soon as the dashboard subset lands, hiding the splash
   // before the heavier controllers finish. For other routes no critical subset is
-  // set, so this stays false and we fall back to the full `isStoreReady`. Screens
-  // that need the deferred controllers should gate on `isStoreReady` directly.
+  // set, so it stays false and we fall back to the full store readiness.
   const contextValue = useMemo<ControllersStateLoadedContextType>(
     () => ({
-      areControllerStatesLoaded: isReadyToLoadRoutes || isStoreReady,
+      canRenderRoute: isReadyToLoadRoutes || isStoreReady,
+      areAllControllerStatesLoaded: isStoreReady,
       isStatesLoadingTakingTooLong
     }),
     [isReadyToLoadRoutes, isStoreReady, isStatesLoadingTakingTooLong]

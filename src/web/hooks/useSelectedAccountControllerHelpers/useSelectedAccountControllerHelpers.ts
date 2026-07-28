@@ -3,13 +3,17 @@ import { useEffect, useRef } from 'react'
 import { setExtraContext } from '@common/config/analytics/CrashAnalytics'
 import useControllerState from '@common/hooks/useControllerState'
 import { isBalanceMaybeInaccurate } from '@common/modules/dashboard/helpers/balanceWarnings'
-import { setCachedDashboardBalance } from '@web/modules/dashboard/helpers/dashboardBalanceCache'
+import {
+  CACHE_REFRESH_INTERVAL_MS,
+  setCachedDashboardBalance
+} from '@web/modules/dashboard/helpers/dashboardBalanceCache'
 
 export default function useSelectedAccountControllerHelpers() {
   const { state } = useControllerState({ id: 'SelectedAccountController' })
   const { state: networksState } = useControllerState({ id: 'NetworksController' })
   const { state: mainState } = useControllerState({ id: 'MainController' })
   const lastCacheSignatureRef = useRef<string | null>(null)
+  const lastCacheAttemptAtRef = useRef(0)
 
   useEffect(() => {
     if (!state.account?.addr) return
@@ -38,17 +42,19 @@ export default function useSelectedAccountControllerHelpers() {
 
     const totalBalance = portfolio.totalBalance || 0
 
-    // Skip redundant writes when neither the account nor the values changed.
+    // In-memory fast path so a portfolio tick that changes nothing doesn't even read
+    // storage. It can only skip what the cache helper would skip anyway - the helper
+    // owns the refresh interval, because these refs are gone on the next popup open.
+    const now = Date.now()
     const signature = `${addr.toLowerCase()}:${totalBalance}:${hasBalanceAffectingErrors}`
-    if (lastCacheSignatureRef.current === signature) return
-    lastCacheSignatureRef.current = signature
+    const isUnchanged = lastCacheSignatureRef.current === signature
 
-    setCachedDashboardBalance({
-      addr,
-      totalBalance,
-      hasBalanceAffectingErrors,
-      cachedAt: Date.now()
-    })
+    if (isUnchanged && now - lastCacheAttemptAtRef.current < CACHE_REFRESH_INTERVAL_MS) return
+
+    lastCacheSignatureRef.current = signature
+    lastCacheAttemptAtRef.current = now
+
+    setCachedDashboardBalance({ addr, totalBalance, hasBalanceAffectingErrors }, now)
   }, [
     state.account,
     state.portfolio,

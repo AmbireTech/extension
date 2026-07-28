@@ -35,12 +35,16 @@ const Router = () => {
   const { path } = useRoute()
   const pathname = path?.substring(1)
   const { authStatus } = useAuth()
-  const { areControllerStatesLoaded, isStatesLoadingTakingTooLong } = useContext(
+  const { canRenderRoute, areAllControllerStatesLoaded, isStatesLoadingTakingTooLong } = useContext(
     ControllersStateLoadedContext
   )
   useCurrentActionSideEffects()
 
-  if (isStatesLoadingTakingTooLong && !areControllerStatesLoaded) {
+  // Gated on all the controllers and not on `canRenderRoute`, because a route can
+  // already be on screen (the dashboard shell) while a deferred controller never
+  // reports its state. Otherwise the warning would be unreachable and the user would
+  // sit on an animating skeleton forever.
+  if (isStatesLoadingTakingTooLong && !areAllControllerStatesLoaded) {
     return (
       <View style={[StyleSheet.absoluteFill, flexbox.center]}>
         <Alert
@@ -54,7 +58,7 @@ const Router = () => {
     )
   }
 
-  if (authStatus === AUTH_STATUS.LOADING || !areControllerStatesLoaded) {
+  if (authStatus === AUTH_STATUS.LOADING || !canRenderRoute) {
     // Routes in ROUTE_CRITICAL_CONTROLLERS load next to instantly so it doesn't make sense to display
     // a Splash screen for < 200ms. We still need to do it for state persisted screens in the popup (transfer, swap)
     // and all other ui types
