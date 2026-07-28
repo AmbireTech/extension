@@ -11,6 +11,7 @@ import NetworkIcon from '@common/components/NetworkIcon'
 import SkeletonLoader from '@common/components/SkeletonLoader'
 import Spinner from '@common/components/Spinner'
 import Text from '@common/components/Text'
+import { isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
@@ -94,12 +95,7 @@ const SummaryDetails = ({
   }
 
   const renderBalanceChangesCard = (title: string, changes: DisplayBalanceChange[]) => (
-    <View
-      style={[
-        styles.modalSimulationContainer,
-        title === 'Assets out' && assetsIn.length ? spacings.mrTy : undefined
-      ]}
-    >
+    <View style={styles.modalSimulationContainer}>
       <View style={styles.modalSimulationContainerHeader}>
         <Text fontSize={14} weight="semiBold" appearance="secondaryText">
           {t(title)}
@@ -202,14 +198,21 @@ const SummaryDetails = ({
         </Text>
         <View style={flexbox.flex1}>
           {hasAssetBalanceChanges && (
-            <View style={[flexbox.directionRow, flexbox.flex1]}>
+            <View style={isWeb ? [flexbox.directionRow, flexbox.flex1] : undefined}>
               {!!assetsOut.length && (
-                <View style={[flexbox.flex1, assetsIn.length ? spacings.mrTy : undefined]}>
+                <View
+                  style={[
+                    isWeb && flexbox.flex1,
+                    assetsIn.length ? (isWeb ? spacings.mrTy : spacings.mbTy) : undefined
+                  ]}
+                >
                   {renderBalanceChangesCard('Assets out', assetsOut)}
                 </View>
               )}
               {!!assetsIn.length && (
-                <View style={flexbox.flex1}>{renderBalanceChangesCard('Assets in', assetsIn)}</View>
+                <View style={isWeb ? flexbox.flex1 : undefined}>
+                  {renderBalanceChangesCard('Assets in', assetsIn)}
+                </View>
               )}
             </View>
           )}
