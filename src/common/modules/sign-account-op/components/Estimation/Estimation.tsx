@@ -1,5 +1,5 @@
 import { formatUnits } from 'ethers'
-import React, { Fragment, useCallback, useMemo, useState } from 'react'
+import React, { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Pressable, View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
@@ -234,7 +234,7 @@ const Estimation = ({
 
   const setFeeOption = useCallback(
     (localPayValue: any) => {
-      if (!selectedFeeSpeed) return
+      if (!selectedFeeSpeed || localPayValue.value === selectedFeeOption) return
       setSelectedFeeOptionOverride({
         value: localPayValue.value,
         controllerSelectedFeeOption
@@ -248,7 +248,7 @@ const Estimation = ({
           : FeeSpeed.Fast
       })
     },
-    [controllerSelectedFeeOption, dispatchUpdate, selectedFeeSpeed]
+    [controllerSelectedFeeOption, dispatchUpdate, selectedFeeOption, selectedFeeSpeed]
   )
 
   const payValue = useMemo(() => {
@@ -257,25 +257,35 @@ const Estimation = ({
       payOptionsPaidByEOA.find(({ value }) => value === selectedFeeOption)
 
     // If result becomes undefined because of a recalculation to availableFeeOptions,
-    // we reset it the first available option from whatever is available.
+    // use the first available option from whatever is available.
     if (result === undefined && selectedFeeOption) {
       const firstOption = payOptionsPaidByUsOrGasTank[0] || payOptionsPaidByEOA[0]
       if (!firstOption) return undefined
 
-      setFeeOption({
-        value: firstOption.value,
-        label: firstOption.label,
-        extraSearchProps: firstOption.extraSearchProps,
-        paidByAccountLabel: firstOption.paidByAccountLabel,
-        paidBy: firstOption.paidBy,
-        token: firstOption.token,
-        disabled: firstOption.disabled,
-        speedCoverage: firstOption.speedCoverage
-      })
+      return firstOption
     }
 
     return result
-  }, [payOptionsPaidByUsOrGasTank, payOptionsPaidByEOA, selectedFeeOption, setFeeOption])
+  }, [payOptionsPaidByUsOrGasTank, payOptionsPaidByEOA, selectedFeeOption])
+
+  const fallbackDispatchKeyRef = useRef<string | null>(null)
+  useEffect(() => {
+    if (!payValue || !selectedFeeOption || payValue.value === selectedFeeOption) {
+      fallbackDispatchKeyRef.current = null
+      return
+    }
+
+    const dispatchKey = `${selectedFeeOption}-${payValue.value}`
+    if (fallbackDispatchKeyRef.current === dispatchKey || !selectedFeeSpeed) return
+
+    fallbackDispatchKeyRef.current = dispatchKey
+
+    dispatchUpdate({
+      feeToken: payValue.token,
+      paidBy: payValue.paidBy,
+      speed: payValue.speedCoverage.includes(selectedFeeSpeed) ? selectedFeeSpeed : FeeSpeed.Fast
+    })
+  }, [dispatchUpdate, payValue, selectedFeeOption, selectedFeeSpeed])
 
   const feeSpeeds = useMemo(() => {
     if (!signAccountOpState?.selectedOption) return []

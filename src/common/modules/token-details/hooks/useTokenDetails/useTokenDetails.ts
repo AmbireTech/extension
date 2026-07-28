@@ -54,15 +54,17 @@ const useTokenDetails = () => {
     }
   })
   const [doNotDisplayHideTokenModal, setDoNotDisplayHideTokenModal] = useState(false)
-  const [gasTankAssets, setGasTankAssets] = useState<{ chainId: number; address: string }[] | null>(
-    null
-  )
+  const [fetchedGasTankAssets, setFetchedGasTankAssets] = useState<
+    { chainId: number; address: string }[] | null
+  >(null)
   const token = useMemo(() => {
     if (!state?.tokenId) return null
     return portfolio.tokens.find((t) => getTokenId(t) === state.tokenId)
   }, [portfolio, state?.tokenId])
 
-  const [gasTankAssetsError, setGasTankAssetsError] = useState<string | null>(null)
+  const [fetchedGasTankAssetsError, setFetchedGasTankAssetsError] = useState<string | null>(null)
+  const gasTankAssets = isErc4337Enabled ? fetchedGasTankAssets : null
+  const gasTankAssetsError = isErc4337Enabled ? fetchedGasTankAssetsError : null
   const network = useMemo(
     () => networks.find((n) => n.chainId === token?.chainId),
     [networks, token?.chainId]
@@ -98,23 +100,39 @@ const useTokenDetails = () => {
   }, [setDoNotDisplayHideTokenModal])
 
   useEffect(() => {
-    if (!isErc4337Enabled) return
+    if (!isErc4337Enabled) {
+      // Clearing remote data when its feature is disabled is intentional synchronization.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setFetchedGasTankAssets(null)
+      setFetchedGasTankAssetsError(null)
+      return
+    }
+
+    let isActive = true
 
     // Fetch gas tank assets
     fetch(`${RELAYER_URL}/gas-tank/assets`)
       .then((r) => r.json())
       .then((assets) => {
-        setGasTankAssets(assets)
-        setGasTankAssetsError(null)
+        if (!isActive) return
+
+        setFetchedGasTankAssets(assets)
+        setFetchedGasTankAssetsError(null)
       })
       .catch(() => {
-        setGasTankAssetsError(
+        if (!isActive) return
+
+        setFetchedGasTankAssetsError(
           t(
             'Unable to top up right now. This might be a temporary service issue. Please try again later.'
           )
         )
-        setGasTankAssets(null)
+        setFetchedGasTankAssets(null)
       })
+
+    return () => {
+      isActive = false
+    }
   }, [isErc4337Enabled, t])
 
   const hideToken = useCallback(() => {
