@@ -483,16 +483,28 @@ const useSign = ({
     warningToPromptBeforeSign
   ])
 
+  const isSignedSafeWaitingForNonce = useMemo(() => {
+    if (
+      !signAccountOpState?.account.safeCreation ||
+      signAccountOpState.canBroadcast ||
+      signAccountOpState.threshold === 0
+    )
+      return false
+
+    return (signAccountOpState.accountOp.signed?.length || 0) >= signAccountOpState.threshold
+  }, [
+    signAccountOpState?.account.safeCreation,
+    signAccountOpState?.accountOp.signed?.length,
+    signAccountOpState?.canBroadcast,
+    signAccountOpState?.threshold
+  ])
+
   const primaryButtonText = useMemo(() => {
     let buttonLabelType: ButtonMode =
       updateType || (isAtLeastOneOfTheKeysInvolvedExternal ? 'HW' : 'Sign')
 
     if (signAccountOpState?.account.safeCreation) {
-      const isBroadcast =
-        (signAccountOpState?.accountOp.signed?.length || 0) >= signAccountOpState?.threshold ||
-        (signAccountOpState?.threshold === 1 &&
-          signAccountOpState?.accountKeyStoreKeys.length === 1)
-      if (isBroadcast) {
+      if (signAccountOpState.canBroadcast || isSignedSafeWaitingForNonce) {
         // the "Safe" term for broadcast is called "Execute"
         return isSignLoading ? 'Executing...' : 'Execute'
       }
@@ -514,10 +526,9 @@ const useSign = ({
     t,
     updateType,
     signAccountOpState?.account.safeCreation,
-    signAccountOpState?.accountOp.signed?.length,
-    signAccountOpState?.threshold,
-    showSafeSigners,
-    signAccountOpState?.accountKeyStoreKeys.length
+    signAccountOpState?.canBroadcast,
+    isSignedSafeWaitingForNonce,
+    showSafeSigners
   ])
 
   // When being done, there is a corner case if the sign succeeds, but the broadcast fails.
@@ -548,12 +559,14 @@ const useSign = ({
       notReadyToSignButAlsoNotDone ||
       !signAccountOpState?.readyToSign ||
       (signAccountOpState && signAccountOpState.estimation.status === EstimationStatus.Loading) ||
+      isSignedSafeWaitingForNonce ||
       isExtremeGasFeeProceedDelayedForSign
     )
   }, [
     isViewOnly,
     isSignLoading,
     isExtremeGasFeeProceedDelayedForSign,
+    isSignedSafeWaitingForNonce,
     notReadyToSignButAlsoNotDone,
     signAccountOpState
   ])
