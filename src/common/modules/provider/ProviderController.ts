@@ -481,7 +481,12 @@ export class ProviderController {
       const accout = this.mainCtrl.accounts.accounts.find(
         (acc: Account) => acc.addr === accountAddr
       )!
-      const baseAccount = getBaseAccount(accout, accountState, network)
+      const baseAccount = getBaseAccount(
+        accout,
+        accountState,
+        network,
+        this.mainCtrl.featureFlags.isFeatureEnabled('erc4337')
+      )
       const isSmart = baseAccount.getAtomicStatus() !== 'unsupported'
 
       capabilities[networkChainIdToHex(network.chainId)] = {
