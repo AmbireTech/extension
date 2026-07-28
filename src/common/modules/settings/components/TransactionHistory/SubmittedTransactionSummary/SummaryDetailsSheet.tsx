@@ -1,4 +1,4 @@
-import React, { lazy, Suspense } from 'react'
+import React, { Suspense } from 'react'
 import { Pressable, ScrollView, View } from 'react-native'
 
 import { Network } from '@ambire-common/interfaces/network'
@@ -11,14 +11,13 @@ import useTheme from '@common/hooks/useTheme'
 
 import Footer from './Footer'
 import { getPresentationalStatus } from './helpers'
+// Lazy on web/extension, static on mobile - see `lazySummaryDetails.native.ts`. The sheet
+// shell itself stays eager so its Modalize ref is mounted and openable on tap.
+import SummaryDetails from './lazySummaryDetails'
 import getStyles from './styles'
 import { Props, SubmittedAccountOpLike } from './types'
 
 import type { Modalize } from 'react-native-modalize'
-
-// Lazy so the humanizer (pulled in via SummaryDetails) stays out of the main bundle.
-// The sheet shell itself stays eager so its Modalize ref is mounted and openable on tap.
-const SummaryDetails = lazy(() => import('./SummaryDetails'))
 
 type SummaryDetailsSheetProps = {
   sheetRef: React.RefObject<Modalize>
