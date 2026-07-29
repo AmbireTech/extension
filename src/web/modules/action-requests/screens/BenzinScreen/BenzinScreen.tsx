@@ -53,49 +53,73 @@ const BenzinScreen = () => {
     return visibleUserRequests.filter((r) => r.kind !== 'benzin')
   }, [visibleUserRequests])
 
+  const primaryButton = (
+    <Button
+      onPress={resolveAction}
+      style={
+        isCompactSidePanelLayout
+          ? { width: '100%' }
+          : { minWidth: maxWidthSize('s') ? 180 : 120, ...spacings.mlSm }
+      }
+      hasBottomSpacing={false}
+      size={isCompactSidePanelLayout ? 'smaller' : 'large'}
+      text={pendingRequests.length ? t('Proceed to Next Request') : t('Close')}
+    >
+      {!!pendingRequests.length && (
+        <View style={spacings.pl}>
+          <RightArrowIcon color="#fff" />
+        </View>
+      )}
+    </Button>
+  )
+
   return (
     <Benzin state={state}>
       <FooterGlassView
+        fullWidth={isCompactSidePanelLayout}
         innerContainerStyle={
           isCompactSidePanelLayout
             ? { width: '100%', flexDirection: 'column', alignItems: 'stretch', gap: SPACING_TY }
             : undefined
         }
       >
-        {!!state?.handleOpenExplorer && (
-          <OpenExplorerButton
-            handleOpenExplorer={state.handleOpenExplorer}
-            disableOpenExplorerBtn={state.disableOpenExplorerBtn}
-          />
-        )}
-        <View
-          style={[
-            flexbox.directionRow,
-            flexbox.alignCenter,
-            isCompactSidePanelLayout && { width: '100%', minWidth: 0, gap: SPACING_TY }
-          ]}
-        >
-          {!!state?.showCopyBtn && !!state?.handleCopyText && (
-            <CopyButton handleCopyText={state.handleCopyText} />
-          )}
-          <Button
-            onPress={resolveAction}
-            style={
-              isCompactSidePanelLayout
-                ? { flex: 1, minWidth: 0 }
-                : { minWidth: maxWidthSize('s') ? 180 : 120, ...spacings.mlSm }
-            }
-            hasBottomSpacing={false}
-            size={isCompactSidePanelLayout ? 'smaller' : 'large'}
-            text={pendingRequests.length ? t('Proceed to Next Request') : t('Close')}
-          >
-            {!!pendingRequests.length && (
-              <View style={spacings.pl}>
-                <RightArrowIcon color="#fff" />
-              </View>
+        {isCompactSidePanelLayout ? (
+          <>
+            {primaryButton}
+            <View
+              style={[
+                flexbox.directionRow,
+                flexbox.alignCenter,
+                { width: '100%', minWidth: 0, gap: SPACING_TY }
+              ]}
+            >
+              {!!state?.handleOpenExplorer && (
+                <OpenExplorerButton
+                  handleOpenExplorer={state.handleOpenExplorer}
+                  disableOpenExplorerBtn={state.disableOpenExplorerBtn}
+                />
+              )}
+              {!!state?.showCopyBtn && !!state?.handleCopyText && (
+                <CopyButton handleCopyText={state.handleCopyText} />
+              )}
+            </View>
+          </>
+        ) : (
+          <>
+            {!!state?.handleOpenExplorer && (
+              <OpenExplorerButton
+                handleOpenExplorer={state.handleOpenExplorer}
+                disableOpenExplorerBtn={state.disableOpenExplorerBtn}
+              />
             )}
-          </Button>
-        </View>
+            <View style={[flexbox.directionRow, flexbox.alignCenter]}>
+              {!!state?.showCopyBtn && !!state?.handleCopyText && (
+                <CopyButton handleCopyText={state.handleCopyText} />
+              )}
+              {primaryButton}
+            </View>
+          </>
+        )}
       </FooterGlassView>
     </Benzin>
   )
