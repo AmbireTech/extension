@@ -1,7 +1,7 @@
 import React, { createContext, ReactNode, useEffect, useMemo, useRef, useState } from 'react'
 
 import { captureMessage } from '@common/config/analytics/CrashAnalytics.web'
-import { APP_VERSION } from '@common/config/env'
+import { APP_VERSION, isDev } from '@common/config/env'
 import {
   ControllersStateLoadedContext,
   ControllersStateLoadedContextType
@@ -39,7 +39,9 @@ const ControllersStateLoadedProvider = ({ children }: { children: ReactNode }) =
         }
 
         setIsStatesLoadingTakingTooLong(true)
-        captureMessage(msg, { level: 'warning', extra: errorData })
+        // In dev this fires on every boot with the webview worker dev server down,
+        // which is a local setup problem, not something worth a Sentry event.
+        if (!isDev) captureMessage(msg, { level: 'warning', extra: errorData })
         console.error(msg)
       }
 
