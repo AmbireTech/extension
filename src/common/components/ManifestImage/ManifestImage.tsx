@@ -1,8 +1,10 @@
-import React, { useCallback, useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { Image, ImageStyle, StyleProp, View, ViewStyle } from 'react-native'
+import { SvgUri } from 'react-native-svg'
 
 import SkeletonLoader from '@common/components/SkeletonLoader'
 import { SkeletonLoaderProps } from '@common/components/SkeletonLoader/types'
+import { isMobile } from '@common/config/env'
 import useTheme from '@common/hooks/useTheme'
 import commonStyles from '@common/styles/utils/common'
 import flexboxStyles from '@common/styles/utils/flexbox'
@@ -42,9 +44,22 @@ const ManifestImage = ({
   })
   const scaledSize = typeof size === 'number' ? size * iconScale : size
   const roundBorderRadius = typeof scaledSize === 'number' ? scaledSize / 2 : 50
+  const svgSize = typeof scaledSize === 'number' ? scaledSize : '100%'
+
+  // React Native's Image can't render SVGs, so on mobile they go through SvgUri
+  const shouldRenderAsSvg = useMemo(() => {
+    if (!isMobile) return false
+
+    const lowercasedUri = currentUri.uri?.toLowerCase()
+
+    return !!lowercasedUri && (lowercasedUri.endsWith('.svg') || lowercasedUri.includes('.svg?'))
+  }, [currentUri.uri])
 
   const onError = useCallback(() => {
     setHasError(true)
+    // Unlike Image's onLoadEnd, SvgUri's onLoad doesn't fire on failure,
+    // so without this the skeleton would hide the fallback forever
+    setIsLoading(false)
 
     if (uris.length && uris.length > 1 && currentUri.index < uris.length - 1) {
       setCurrentUri({
@@ -97,7 +112,17 @@ const ManifestImage = ({
         />
       )}
       {!isLoading && hasError && !!fallback && fallback()}
-      {!!currentUri.uri && !hasError && (
+      {!!currentUri.uri && !hasError && shouldRenderAsSvg && (
+        <SvgUri
+          uri={currentUri.uri}
+          width={svgSize}
+          height={svgSize}
+          onError={onError}
+          onLoad={onLoadEnd}
+          style={{ opacity: isLoading ? 0 : 1 }}
+        />
+      )}
+      {!!currentUri.uri && !hasError && !shouldRenderAsSvg && (
         <Image
           source={{ uri: currentUri.uri }}
           onError={onError}

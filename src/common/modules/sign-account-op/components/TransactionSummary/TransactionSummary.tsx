@@ -28,6 +28,7 @@ import HumanizedVisualization, {
 } from '@common/components/HumanizedVisualization'
 import HumanizerAddress from '@common/components/HumanizerAddress'
 import Label from '@common/components/Label'
+import ManifestImage from '@common/components/ManifestImage'
 import Text from '@common/components/Text'
 import { isMobile, isWeb } from '@common/config/env'
 import useController from '@common/hooks/useController'
@@ -39,7 +40,6 @@ import ExpandedContent from '@common/modules/sign-account-op/components/Transact
 import FallbackVisualization from '@common/modules/sign-account-op/components/TransactionSummary/FallbackVisualization'
 import spacings, { SPACING_MI, SPACING_SM, SPACING_TY } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import ManifestImage from '@web/components/ManifestImage'
 
 import { sizeMultiplier } from './sizeMultiplier'
 import getStyles from './styles'

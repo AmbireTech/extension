@@ -6,6 +6,7 @@ import { AddNetworkRequestParams, Network, NetworkFeature } from '@ambire-common
 import { UserRequest } from '@ambire-common/interfaces/userRequest'
 import ManifestFallbackIcon from '@common/assets/svg/ManifestFallbackIcon'
 import Alert from '@common/components/Alert'
+import ManifestImage from '@common/components/ManifestImage'
 import NetworkAvailableFeatures from '@common/components/NetworkAvailableFeatures'
 import NetworkDetails from '@common/components/NetworkDetails'
 import NetworkIcon from '@common/components/NetworkIcon'
@@ -18,7 +19,6 @@ import useTheme from '@common/hooks/useTheme'
 import getStyles from '@common/modules/action-requests/styles/styles'
 import spacings, { SPACING, SPACING_LG, SPACING_MD } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import ManifestImage from '@web/components/ManifestImage'
 
 type AddChainProps = {
   handleRetryWithDifferentRpcUrl: () => void

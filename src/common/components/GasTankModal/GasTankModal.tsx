@@ -131,7 +131,7 @@ const GasTankModal = ({ modalRef, handleClose, portfolio, account }: Props) => {
           }}
           absolute={false}
         >
-          <View style={[flexbox.directionRow, isMobile && spacings.mbLg]}>
+          <View style={[flexbox.directionRow, flexbox.alignCenter, isMobile && spacings.mbLg]}>
             <TokenIcon
               withContainer
               address={token?.address || ''}
@@ -139,8 +139,8 @@ const GasTankModal = ({ modalRef, handleClose, portfolio, account }: Props) => {
               onGasTank={token?.flags.onGasTank || false}
               containerHeight={40}
               containerWidth={40}
-              width={32}
-              height={32}
+              width={40}
+              height={40}
               withNetworkIcon={false}
             />
             <View style={spacings.ml}>
