@@ -6,7 +6,9 @@ import { nanoid } from 'nanoid'
 
 import { Session } from '@ambire-common/classes/session'
 import { MainController } from '@ambire-common/controllers/main/main'
+import { Account } from '@ambire-common/interfaces/account'
 import { ConnectionSource, DappProviderRequest } from '@ambire-common/interfaces/dapp'
+import { Network } from '@ambire-common/interfaces/network'
 import { UiManager, isSidePanelView } from '@ambire-common/interfaces/ui'
 import {
   getFailureStatus,
@@ -104,7 +106,7 @@ export class ProviderController {
   }
 
   getDappNetwork = (id: string) => {
-    const defaultNetwork = this.mainCtrl.networks.networks.find((n) => n.chainId === 1n)
+    const defaultNetwork = this.mainCtrl.networks.networks.find((n: Network) => n.chainId === 1n)
     if (!defaultNetwork)
       throw new Error(
         'Missing default network data, which should never happen. Please contact support.'
@@ -114,7 +116,7 @@ export class ProviderController {
     if (!dappChainId) return defaultNetwork
 
     return (
-      this.mainCtrl.networks.networks.find((n) => n.chainId === BigInt(dappChainId)) ||
+      this.mainCtrl.networks.networks.find((n: Network) => n.chainId === BigInt(dappChainId)) ||
       defaultNetwork
     )
   }
@@ -185,7 +187,7 @@ export class ProviderController {
     if (chainParams && chainParams.chainIds?.length) {
       chainParams.chainIds.forEach((chainId: string) => {
         const network = this.mainCtrl.networks.networks.find(
-          (n) => Number(n.chainId) === Number(chainId)
+          (n: Network) => Number(n.chainId) === Number(chainId)
         )
         if (!network) return
 
@@ -243,7 +245,7 @@ export class ProviderController {
     Object.entries(assetFilter).forEach(([chainId, tokens]: [string, string[]]) => {
       if (!res[chainId]) res[chainId] = []
       const network = this.mainCtrl.networks.networks.find(
-        (n) => Number(n.chainId) === Number(chainId)
+        (n: Network) => Number(n.chainId) === Number(chainId)
       )
       if (!network) return
 
@@ -414,7 +416,9 @@ export class ProviderController {
   ])
   walletAddEthereumChain = async ({ params: [chainParams], session: { id } }: ProviderRequest) => {
     const chainId = Number(chainParams.chainId)
-    const network = this.mainCtrl.networks.networks.find((n) => Number(n.chainId) === chainId)
+    const network = this.mainCtrl.networks.networks.find(
+      (n: Network) => Number(n.chainId) === chainId
+    )
 
     // should never happen
     if (!network)
@@ -456,7 +460,8 @@ export class ProviderController {
 
     const states = await this.mainCtrl.accounts.getOrFetchAccountStates(accountAddr)
     const capabilities: any = {}
-    this.mainCtrl.networks.networks.forEach((network) => {
+    const isErc4337Enabled = this.mainCtrl.featureFlags.isFeatureEnabled('erc4337')
+    this.mainCtrl.networks.networks.forEach((network: Network) => {
       const accountState = states[network.chainId.toString()]
 
       // if there's no account state for some reason (RPC not working atm),
@@ -479,8 +484,15 @@ export class ProviderController {
         return
       }
 
-      const accout = this.mainCtrl.accounts.accounts.find((acc) => acc.addr === accountAddr)!
-      const baseAccount = getBaseAccount(accout, accountState, network)
+      const accout = this.mainCtrl.accounts.accounts.find(
+        (acc: Account) => acc.addr === accountAddr
+      )!
+      const baseAccount = getBaseAccount(
+        accout,
+        accountState,
+        network,
+        this.mainCtrl.featureFlags.isFeatureEnabled('erc4337')
+      )
       const isSmart = baseAccount.getAtomicStatus() !== 'unsupported'
 
       capabilities[networkChainIdToHex(network.chainId)] = {
@@ -498,6 +510,7 @@ export class ProviderController {
             // hasBundlerSupport means it might not be 4337 but we support it
             // our default may be the relayer but we will broadcast an userOp
             // in case of sponsorships
+            isErc4337Enabled &&
             network.erc4337.hasBundlerSupport
         },
         atomic: {
@@ -547,7 +560,7 @@ export class ProviderController {
 
     const dappNetwork = this.getDappNetwork(data.session.id)
     const network = this.mainCtrl.networks.networks.filter(
-      (n) => n.chainId === dappNetwork.chainId
+      (n: Network) => n.chainId === dappNetwork.chainId
     )[0]
     if (!network) throw ethErrors.rpc.invalidParams('invalid chain')
 
@@ -688,7 +701,7 @@ export class ProviderController {
 
     const dappNetwork = this.getDappNetwork(data.session.id)
     const network = this.mainCtrl.networks.networks.filter(
-      (n) => n.chainId === dappNetwork.chainId
+      (n: Network) => n.chainId === dappNetwork.chainId
     )[0]
     if (!network) throw ethErrors.rpc.invalidParams('invalid chain')
     const chainId = Number(network.chainId)
@@ -726,7 +739,9 @@ export class ProviderController {
       const dapp = mainCtrl.dapps.getDapp(request.session.id)
       if (!dapp?.isConnected) return false
 
-      const network = mainCtrl.networks.networks.find((n) => Number(n.chainId) === Number(chainId))
+      const network = mainCtrl.networks.networks.find(
+        (n: Network) => Number(n.chainId) === Number(chainId)
+      )
       if (!network) {
         throw ethErrors.provider.custom({
           code: 4902,
@@ -743,7 +758,9 @@ export class ProviderController {
     session: { id, origin, name }
   }: ProviderRequest) => {
     const chainId = Number(chainParams.chainId)
-    const network = this.mainCtrl.networks.networks.find((n) => Number(n.chainId) === chainId)
+    const network = this.mainCtrl.networks.networks.find(
+      (n: Network) => Number(n.chainId) === chainId
+    )
 
     // should never happen, because this gets validated beforehand
     if (!network)
