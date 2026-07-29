@@ -223,13 +223,17 @@ const EditApproval = ({
       <BottomSheet
         sheetRef={editApprovalsSheetRef}
         id={`edit-approvals-bottom-sheet-${id}`}
-        type="modal"
+        type={isMobile ? 'bottom-sheet' : 'modal'}
         closeBottomSheet={closeEditApprovals}
-        style={{ maxWidth: 460 }}
-        shouldBeClosableOnDrag={false}
+        style={isMobile ? undefined : { maxWidth: 460 }}
+        shouldBeClosableOnDrag={isMobile}
       >
         <View style={flexbox.alignCenter}>
-          <Text fontSize={20} weight="medium" style={[spacings.mbXl, spacings.mtTy]}>
+          <Text
+            fontSize={20}
+            weight="medium"
+            style={isMobile ? [spacings.mbLg] : [spacings.mbXl, spacings.mtTy]}
+          >
             {t('Grant approval for')}
           </Text>
           <View style={{ width: '100%' }}>
@@ -249,7 +253,7 @@ const EditApproval = ({
             style={{ ...spacings.mt2Xl }}
             mobileStyle={{
               ...flexbox.directionRow,
-              ...spacings.mtLg
+              ...spacings.mt2Xl
             }}
           >
             <Button
@@ -258,7 +262,12 @@ const EditApproval = ({
               onPress={() => closeEditApprovals()}
               hasBottomSpacing={false}
               size="smaller"
-              style={[spacings.mrTy, isWeb && { width: 100 }, isMobile && flexbox.flex1]}
+              style={[
+                spacings.mrTy,
+                isWeb && { width: 100 },
+                isMobile && flexbox.flex1,
+                isMobile && { height: 44 }
+              ]}
             />
             <Button
               type="primary"
@@ -266,7 +275,11 @@ const EditApproval = ({
               onPress={() => editCall(amountRef.current, token, chainId, closeEditApprovals)}
               hasBottomSpacing={false}
               size="smaller"
-              style={[isWeb && { width: 100 }, isMobile && flexbox.flex1]}
+              style={[
+                isWeb && { width: 100 },
+                isMobile && flexbox.flex1,
+                isMobile && { height: 44 }
+              ]}
             />
           </FooterGlassView>
         </View>
