@@ -14,9 +14,13 @@ import useNavigation from '@common/hooks/useNavigation'
 import useToast from '@common/hooks/useToast'
 import DashboardBannerBottomSheet from '@common/modules/dashboard/components/DashboardBanners/DashboardBannerBottomSheet'
 import { ROUTES } from '@common/modules/router/constants/common'
+import { getRouteForUserRequest } from '@common/modules/router/helpers'
 import spacings from '@common/styles/spacings'
+import { getUiType } from '@common/utils/uiType'
 
 import applyOtaUpdate from './applyOtaUpdate'
+
+const { isSidePanel } = getUiType()
 
 const DashboardBanner = ({
   banner
@@ -30,6 +34,7 @@ const DashboardBanner = ({
     state: { visibleUserRequests },
     dispatch: requestsDispatch
   } = useController('RequestsController')
+  const transferState = useController('TransferController').state
   const { dispatch: networksDispatch } = useController('NetworksController')
   const { dispatch: selectedAccountDispatch } = useController('SelectedAccountController')
   const { dispatch: mainDispatch } = useController('MainController')
@@ -57,17 +62,28 @@ const DashboardBanner = ({
           if (!visibleUserRequests.length) break
           const dappRequests = visibleUserRequests.filter((r) => r.kind !== 'calls')
           if (!dappRequests.length) break
+          const targetRequest = dappRequests[0]!
           requestsDispatch({
             type: 'method',
             params: {
               method: 'setCurrentUserRequestById',
-              args: [dappRequests[0]!.id]
+              args: [targetRequest.id]
             }
           })
+          if (isSidePanel) {
+            const targetRoute = getRouteForUserRequest({
+              currentUserRequest: targetRequest,
+              transferState
+            })
+            if (targetRoute) navigate(targetRoute)
+          }
           break
         }
 
-        case 'open-accountOp':
+        case 'open-accountOp': {
+          const targetRequest = visibleUserRequests.find(
+            (request) => String(request.id) === String(action.meta.requestId)
+          )
           requestsDispatch({
             type: 'method',
             params: {
@@ -75,7 +91,15 @@ const DashboardBanner = ({
               args: [action.meta.requestId]
             }
           })
+          if (isSidePanel && targetRequest) {
+            const targetRoute = getRouteForUserRequest({
+              currentUserRequest: targetRequest,
+              transferState
+            })
+            if (targetRoute) navigate(targetRoute)
+          }
           break
+        }
 
         case 'reject-accountOp':
           requestsDispatch({
@@ -232,10 +256,12 @@ const DashboardBanner = ({
       navigate,
       addToast,
       visibleUserRequests,
+      transferState,
       type,
       openBottomSheet,
       selectedAccountDispatch,
-      requestsDispatch
+      requestsDispatch,
+      navigate
     ]
   )
 
