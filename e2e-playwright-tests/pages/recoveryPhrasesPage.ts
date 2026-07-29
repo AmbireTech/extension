@@ -31,6 +31,16 @@ export class RecoveryPhrasesPage extends BasePage {
     return this.page.locator('[data-testid^="recovery-phrase-row-"]').count()
   }
 
+  async getFirstSeedId(): Promise<string> {
+    const row = this.page.locator('[data-testid^="recovery-phrase-row-"]').first()
+    await row.waitFor({ state: 'visible', timeout: PRESENCE_TIMEOUT })
+    const testId = await row.getAttribute('data-testid')
+
+    if (!testId) throw new Error('No recovery phrase rows found')
+
+    return testId.replace('recovery-phrase-row-', '')
+  }
+
   async revealSeed(seedId: string): Promise<SeedRevealResult> {
     // Open the manage sheet and wait for the reveal button to be ready before clicking
     await this.click(selectors.keystoreMigration.manageRecoveryPhrase(seedId))

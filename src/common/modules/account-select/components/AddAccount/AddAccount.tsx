@@ -23,6 +23,7 @@ import { isMobile, isWeb } from '@common/config/env'
 import useController from '@common/hooks/useController'
 import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import SavedSeedPhrasesBottomSheet from '@common/modules/account-select/components/SavedSeedPhrasesBottomSheet'
+import useCreateNewSeedAccount from '@common/modules/auth/hooks/useCreateNewSeedAccount'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
 import { ROUTES, WEB_ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
@@ -41,6 +42,7 @@ const AddAccount = ({
   const { t } = useTranslation()
   const { dispatch } = useControllersMiddleware()
   const { goToNextRoute, setTriggeredHwWalletFlow } = useOnboardingNavigation()
+  const { createNewSeedAccount, isCreating: isCreatingNewSeedAccount } = useCreateNewSeedAccount()
   const [height, setHeight] = useState<number>(0)
   const scrollViewRef = useRef<any>(null)
   const [expandedDropdown, setExpandedDropdown] = useState<'import-acc' | 'connect-hw' | null>(null)
@@ -200,9 +202,10 @@ const AddAccount = ({
           <Option
             text={t('Create new recovery phrase')}
             icon={AddCircularIcon}
-            onPress={() => goToNextRoute(ROUTES.createSeedPhrasePrepare)}
+            onPress={createNewSeedAccount}
             testID="create-new-recovery-phrase"
             status="none"
+            disabled={isCreatingNewSeedAccount}
           />
         )}
         <ExpandableOptionSection

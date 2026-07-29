@@ -29,7 +29,7 @@ const GetStartedScreen = () => {
   const { theme } = useTheme(getStyles)
   const { t } = useTranslation()
   const { navigate } = useNavigation()
-  const { handleAuthButtonPress } = useGetStarted()
+  const { handleAuthButtonPress, isCreatingNewAccount } = useGetStarted()
 
   const [isMenuOpen, setIsMenuOpen] = React.useState(false)
 
@@ -50,6 +50,7 @@ const GetStartedScreen = () => {
             type="primary"
             text={t('Create new account')}
             onPress={() => handleAuthButtonPress('create-new-account')}
+            disabled={isCreatingNewAccount}
             childrenPosition="left"
           >
             <AddCircularIcon width={24} height={24} color="#fff" style={spacings.mrMi} />

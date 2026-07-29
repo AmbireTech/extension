@@ -125,15 +125,6 @@ const MainRoutes = () => {
             />
 
             <Route
-              path={WEB_ROUTES.createSeedPhrasePrepare}
-              element={<AuthGroupScreen pick={(m) => m.CreateSeedPhrasePrepareScreen} />}
-            />
-            <Route
-              path={WEB_ROUTES.createSeedPhraseWrite}
-              element={<AuthGroupScreen pick={(m) => m.CreateSeedPhraseWriteScreen} />}
-            />
-
-            <Route
               path={WEB_ROUTES.accountPicker}
               element={<AuthGroupScreen pick={(m) => m.AccountPickerScreen} />}
             />

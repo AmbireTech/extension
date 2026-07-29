@@ -65,7 +65,9 @@ export default function useSeedPhraseImport() {
             {
               seed: formattedSeed,
               seedPassphrase: passphrase || null,
-              hdPathTemplate: BIP44_STANDARD_DERIVATION_TEMPLATE
+              hdPathTemplate: BIP44_STANDARD_DERIVATION_TEMPLATE,
+              // The user typed this phrase in, so they already have it written down
+              isBackedUp: true
             }
           ]
         }
