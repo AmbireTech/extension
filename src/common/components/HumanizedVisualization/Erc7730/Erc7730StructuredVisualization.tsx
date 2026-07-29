@@ -17,7 +17,10 @@ import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import spacings, { SPACING_SM, SPACING_TY } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
+import { getUiType } from '@common/utils/uiType'
 import ManifestImage from '@web/components/ManifestImage'
+
+const { isSidePanel } = getUiType()
 
 import {
   getDetailedActionParts,
@@ -276,7 +279,7 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
             {
               width: '100%',
               minWidth: 0,
-              paddingLeft: SPACING_SM
+              paddingLeft: isSidePanel ? 0 : SPACING_SM
             },
             nestedIndex > 0 && {
               marginTop: SPACING_TY,
