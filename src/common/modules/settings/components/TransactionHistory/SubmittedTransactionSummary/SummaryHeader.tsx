@@ -7,7 +7,7 @@ import Text from '@common/components/Text'
 import useTheme from '@common/hooks/useTheme'
 import { sizeMultiplier } from '@common/modules/sign-account-op/components/TransactionSummary/sizeMultiplier'
 import spacings from '@common/styles/spacings'
-import getUiType from '@common/utils/uiType'
+import { getUiType } from '@common/utils/uiType'
 
 import {
   getFormattedSubmittedDate,
