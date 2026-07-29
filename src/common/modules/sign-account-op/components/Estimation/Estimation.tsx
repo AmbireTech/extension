@@ -1,13 +1,12 @@
 import { formatUnits } from 'ethers'
-import React, { Fragment, useCallback, useEffect, useMemo, useState } from 'react'
+import React, { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Pressable, View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 
 import { EstimationStatus } from '@ambire-common/controllers/estimation/types'
 import { getFeeSpeedIdentifier } from '@ambire-common/controllers/signAccountOp/helper'
-import { FeeSpeed, SpeedCalc } from '@ambire-common/interfaces/signAccountOp'
-import { Warning } from '@ambire-common/interfaces/signAccountOp'
+import { FeeSpeed, SpeedCalc, Warning } from '@ambire-common/interfaces/signAccountOp'
 import { FeePaymentOption } from '@ambire-common/libs/estimate/interfaces'
 import { GasSpeeds } from '@ambire-common/services/bundlers/types'
 import { ZERO_ADDRESS } from '@ambire-common/services/socket/constants'
@@ -38,7 +37,7 @@ import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
 import { NO_FEE_OPTIONS } from './consts'
-import { mapFeeOptions, sortFeeOptions } from './helpers'
+import { getFeeOptionValue, mapFeeOptions, sortFeeOptions } from './helpers'
 import getStyles from './styles'
 import { Props } from './types'
 
@@ -150,7 +149,19 @@ const Estimation = ({
       )
   }, [hasEstimation, signAccountOpState, state.contacts, isViewOnly])
 
-  const [selectedFeeOption, setSelectedFeeOption] = useState<SelectValue['value'] | null>(null)
+  const controllerSelectedFeeOption = signAccountOpState?.selectedOption
+    ? getFeeOptionValue(signAccountOpState.selectedOption)
+    : null
+  const [selectedFeeOptionOverride, setSelectedFeeOptionOverride] = useState<{
+    value: SelectValue['value']
+    controllerSelectedFeeOption: SelectValue['value'] | null
+  } | null>(null)
+  const selectedFeeOption =
+    selectedFeeOptionOverride?.controllerSelectedFeeOption === controllerSelectedFeeOption
+      ? selectedFeeOptionOverride.value
+      : controllerSelectedFeeOption
+  const selectedFeeSpeed = signAccountOpState?.selectedFeeSpeed
+  const [isEnableErc4337PromptDismissed, setIsEnableErc4337PromptDismissed] = useState(false)
 
   const dispatchUpdate = useCallback(
     (update: {
@@ -189,22 +200,55 @@ const Estimation = ({
     [swapAndBridgeDispatch, transferDispatch, signAccountOpDispatch, updateType]
   )
 
-  const setFeeOption = useCallback(
-    (localPayValue: any, skipDispatch?: boolean) => {
-      if (!signAccountOpState?.selectedFeeSpeed) return
-      setSelectedFeeOption(localPayValue.value)
+  const enableErc4337AndReestimate = useCallback(() => {
+    if (updateType === 'Swap&Bridge') {
+      swapAndBridgeDispatch({
+        type: 'method',
+        params: {
+          method: 'callSignAccountOpMethod',
+          args: ['enableErc4337AndReestimate', []]
+        }
+      })
+    } else if (updateType === 'Transfer&TopUp') {
+      transferDispatch({
+        type: 'method',
+        params: {
+          method: 'callSignAccountOpMethod',
+          args: ['enableErc4337AndReestimate', []]
+        }
+      })
+    } else {
+      signAccountOpDispatch({
+        type: 'method',
+        params: {
+          method: 'enableErc4337AndReestimate',
+          args: []
+        }
+      })
+    }
+  }, [signAccountOpDispatch, swapAndBridgeDispatch, transferDispatch, updateType])
 
-      if (!skipDispatch) {
-        dispatchUpdate({
-          feeToken: localPayValue.token,
-          paidBy: localPayValue.paidBy,
-          speed: localPayValue.speedCoverage.includes(signAccountOpState.selectedFeeSpeed)
-            ? signAccountOpState.selectedFeeSpeed
-            : FeeSpeed.Fast
-        })
-      }
+  const dismissEnableErc4337Prompt = useCallback(() => {
+    setIsEnableErc4337PromptDismissed(true)
+  }, [])
+
+  const setFeeOption = useCallback(
+    (localPayValue: any) => {
+      if (!selectedFeeSpeed || localPayValue.value === selectedFeeOption) return
+      setSelectedFeeOptionOverride({
+        value: localPayValue.value,
+        controllerSelectedFeeOption
+      })
+
+      dispatchUpdate({
+        feeToken: localPayValue.token,
+        paidBy: localPayValue.paidBy,
+        speed: localPayValue.speedCoverage.includes(selectedFeeSpeed)
+          ? selectedFeeSpeed
+          : FeeSpeed.Fast
+      })
     },
-    [dispatchUpdate, signAccountOpState?.selectedFeeSpeed]
+    [controllerSelectedFeeOption, dispatchUpdate, selectedFeeOption, selectedFeeSpeed]
   )
 
   const payValue = useMemo(() => {
@@ -213,44 +257,36 @@ const Estimation = ({
       payOptionsPaidByEOA.find(({ value }) => value === selectedFeeOption)
 
     // If result becomes undefined because of a recalculation to availableFeeOptions,
-    // we reset it the first available option from whatever is available.
+    // use the first available option from whatever is available.
     if (result === undefined && selectedFeeOption) {
       const firstOption = payOptionsPaidByUsOrGasTank[0] || payOptionsPaidByEOA[0]
       if (!firstOption) return undefined
 
-      setFeeOption(
-        {
-          value: firstOption.value,
-          label: firstOption.label,
-          extraSearchProps: firstOption.extraSearchProps,
-          paidByAccountLabel: firstOption.paidByAccountLabel,
-          paidBy: firstOption.paidBy,
-          token: firstOption.token,
-          disabled: firstOption.disabled,
-          speedCoverage: firstOption.speedCoverage
-        },
-        false
-      )
+      return firstOption
     }
 
     return result
-  }, [payOptionsPaidByUsOrGasTank, payOptionsPaidByEOA, selectedFeeOption, setFeeOption])
+  }, [payOptionsPaidByUsOrGasTank, payOptionsPaidByEOA, selectedFeeOption])
 
+  const fallbackDispatchKeyRef = useRef<string | null>(null)
   useEffect(() => {
-    if (!hasEstimation || !signAccountOpState) return
-
-    if (!payValue && signAccountOpState.selectedOption) {
-      setFeeOption(
-        mapFeeOptions(
-          signAccountOpState.selectedOption,
-          signAccountOpState,
-          state.contacts,
-          !!isViewOnly
-        ),
-        true
-      )
+    if (!payValue || !selectedFeeOption || payValue.value === selectedFeeOption) {
+      fallbackDispatchKeyRef.current = null
+      return
     }
-  }, [payValue, setFeeOption, hasEstimation, signAccountOpState, state.contacts, isViewOnly])
+
+    const dispatchKey = `${selectedFeeOption}-${payValue.value}`
+    if (fallbackDispatchKeyRef.current === dispatchKey || !selectedFeeSpeed) return
+
+    fallbackDispatchKeyRef.current = dispatchKey
+
+    dispatchUpdate({
+      feeToken: payValue.token,
+      paidBy: payValue.paidBy,
+      speed: payValue.speedCoverage.includes(selectedFeeSpeed) ? selectedFeeSpeed : FeeSpeed.Fast
+    })
+  }, [dispatchUpdate, payValue, selectedFeeOption, selectedFeeSpeed])
+
   const feeSpeeds = useMemo(() => {
     if (!signAccountOpState?.selectedOption) return []
 
@@ -276,6 +312,45 @@ const Estimation = ({
       !!feeSpeeds.length
     )
   }, [feeSpeeds, signAccountOpState?.errors.length, signAccountOpState?.estimation.error])
+
+  const shouldShowEnableErc4337Prompt = useMemo(() => {
+    if (isEnableErc4337PromptDismissed || !signAccountOpState?.canEnableErc4337 || !hasEstimation)
+      return false
+
+    const hasNoFeeOptions = !payOptionsPaidByUsOrGasTank.length && !payOptionsPaidByEOA.length
+    const selectedOptionCannotCoverFee =
+      !feeSpeeds.length || feeSpeeds.every((speed) => speed.disabled)
+
+    return hasNoFeeOptions || selectedOptionCannotCoverFee
+  }, [
+    feeSpeeds,
+    hasEstimation,
+    payOptionsPaidByEOA.length,
+    payOptionsPaidByUsOrGasTank.length,
+    isEnableErc4337PromptDismissed,
+    signAccountOpState?.canEnableErc4337
+  ])
+
+  const enableErc4337Prompt = useMemo(() => {
+    if (!shouldShowEnableErc4337Prompt) return null
+
+    return (
+      <Alert
+        type="info"
+        size="sm"
+        title={t('More fee payment options are available')}
+        text={t(
+          'Enable ERC-4337 to use smart account gas estimation, gas tank, sponsored gas, and token fee payments for this transaction.'
+        )}
+        style={spacings.mbSm}
+        buttonProps={{
+          text: t('Enable'),
+          onPress: enableErc4337AndReestimate
+        }}
+        onClose={dismissEnableErc4337Prompt}
+      />
+    )
+  }, [dismissEnableErc4337Prompt, enableErc4337AndReestimate, shouldShowEnableErc4337Prompt, t])
 
   const feeSpeedOptions = useMemo(() => {
     return feeSpeeds.map((speed) => ({
@@ -472,6 +547,10 @@ const Estimation = ({
     (!hasEstimation && signAccountOpState.estimation.estimationRetryError) ||
     !payValue
   ) {
+    if (enableErc4337Prompt) {
+      return <View style={spacings.ptTy}>{enableErc4337Prompt}</View>
+    }
+
     return (
       <EstimationSkeleton
         // Overwrite the appearance in Swap/Transfer as the background behind the skeleton is different
@@ -546,6 +625,7 @@ const Estimation = ({
           signAccountOpState={signAccountOpState}
           bundlerNonceDiscrepancy={bundlerNonceDiscrepancy}
         />
+        {enableErc4337Prompt}
       </View>
       <View
         style={[

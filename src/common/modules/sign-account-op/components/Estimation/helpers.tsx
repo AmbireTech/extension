@@ -22,6 +22,12 @@ const sortBasedOnUSDValue = (a: FeePaymentOption, b: FeePaymentOption) => {
   return 0
 }
 
+const getFeeOptionValue = (feeOption: FeePaymentOption) =>
+  feeOption.paidBy +
+  feeOption.token.address +
+  feeOption.token.symbol.toLowerCase() +
+  (feeOption.token.flags.onGasTank ? 'gasTank' : '')
+
 /**
  * Sorts fee options by the following criteria:
  * - Native token options first
@@ -71,7 +77,6 @@ const mapFeeOptions = (
   let disabledReason: string | undefined
   let disabledTextAppearance: 'errorText' | 'infoText' | undefined
 
-  const gasTankKey = feeOption.token.flags.onGasTank ? 'gasTank' : ''
   const speedCoverage: FeeSpeed[] = []
   const id = getFeeSpeedIdentifier(feeOption, signAccountOpState.accountOp.accountAddr)
 
@@ -148,11 +153,7 @@ const mapFeeOptions = (
     !!getExtremeGasFeeWarningState(signAccountOpState, signAccountOpState.accountOp.chainId)
 
   return {
-    value:
-      feeOption.paidBy +
-      feeOption.token.address +
-      feeOption.token.symbol.toLowerCase() +
-      gasTankKey,
+    value: getFeeOptionValue(feeOption),
     label: (
       <PayOption
         amount={feeSpeedAmount}
@@ -175,4 +176,4 @@ const mapFeeOptions = (
   }
 }
 
-export { mapFeeOptions, sortFeeOptions }
+export { getFeeOptionValue, mapFeeOptions, sortFeeOptions }
