@@ -58,7 +58,7 @@ const InnerToken: FC<Props> = ({
       address === ZeroAddress && network?.nativeAssetId
         ? // Exception for native tokens, they don't have a block explorer URLs
           getCoinGeckoTokenUrl(network.nativeAssetId)
-        : `${network?.explorerUrl}/address/${address}`
+        : `${network?.explorerUrl}/token/${address}`
 
     await Linking.openURL(targetUrl)
   }, [network, address])
@@ -164,6 +164,7 @@ const InnerToken: FC<Props> = ({
                   fontSize={textSize}
                   address={address}
                   hideLogo
+                  isToken
                 />
               )}
             </Text>
