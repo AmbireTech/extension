@@ -72,11 +72,7 @@ const RecoveryPhraseBackupBottomSheet = ({
       containerInnerWrapperStyles={{ flex: 1 }}
       style={isWeb ? { maxWidth: 432, minHeight: 432, ...spacings.pvLg } : undefined}
     >
-      <ModalHeader
-        handleClose={handleClose}
-        title={t('Backup recovery phrase')}
-        forceBackButtonOnMobile
-      />
+      <ModalHeader handleClose={handleClose} title={t('Backup recovery phrase')} />
       {step === 'unlock' && (
         <BackupUnlockStep
           isUnlocking={isUnlocking}
@@ -98,6 +94,7 @@ const RecoveryPhraseBackupBottomSheet = ({
           enteredWords={enteredWords}
           onEnteredWordChange={setEnteredWord}
           areEnteredWordsValid={areEnteredWordsValid}
+          onGoBackPress={goBackToRevealStep}
           onFinishPress={finishBackup}
         />
       )}

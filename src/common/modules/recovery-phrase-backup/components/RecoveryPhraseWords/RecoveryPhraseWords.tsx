@@ -3,6 +3,7 @@ import { View } from 'react-native'
 
 import ScrollableWrapper from '@common/components/ScrollableWrapper'
 import Text from '@common/components/Text'
+import { isMobile } from '@common/config/env'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import common from '@common/styles/utils/common'
@@ -16,7 +17,7 @@ const RecoveryPhraseWords = ({ words }: { words: string[] }) => {
 
   return (
     <ScrollableWrapper
-      style={[{ maxHeight: 204 }, spacings.mbTy]}
+      style={[spacings.mbTy]}
       contentContainerStyle={{
         ...flexbox.directionRow,
         ...flexbox.wrap,
@@ -38,7 +39,7 @@ const RecoveryPhraseWords = ({ words }: { words: string[] }) => {
             ...spacings.pvMi,
             ...spacings.phTy,
             ...flexbox.alignCenter,
-            ...flexbox.justifyCenter
+            height: 60
           }}
         >
           <View style={[flexbox.directionRow, flexbox.alignCenter, { width: '100%' }]}>
@@ -46,16 +47,13 @@ const RecoveryPhraseWords = ({ words }: { words: string[] }) => {
               fontSize={12}
               appearance="tertiaryText"
               weight="medium"
-              style={{ lineHeight: 11 }}
+              style={{ lineHeight: isMobile ? 16 : 11 }}
             >
               {index + 1}.
             </Text>
           </View>
           <Text fontSize={14} weight="medium" style={{ lineHeight: 19 }}>
             {word}
-          </Text>
-          <Text fontSize={12} style={{ lineHeight: 11 }}>
-            {' '}
           </Text>
         </View>
       ))}

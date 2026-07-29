@@ -8,7 +8,7 @@ import FingerprintIcon from '@common/assets/svg/FingerprintIcon'
 import Button from '@common/components/Button'
 import InputPassword from '@common/components/InputPassword'
 import Text from '@common/components/Text'
-import { isMobile, isWeb } from '@common/config/env'
+import { isDev, isMobile, isTesting, isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import { DEVICE_SUPPORTED_AUTH_TYPES } from '@common/contexts/biometricsContext/constants'
 import useBiometrics from '@common/hooks/useBiometrics'
@@ -17,6 +17,7 @@ import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
+import { DEFAULT_KEYSTORE_PASSWORD_DEV } from '@env'
 
 type Props = {
   isUnlocking: boolean
@@ -35,7 +36,9 @@ const BackupUnlockStep = ({
   const { theme } = useTheme()
   const { hasBiometricsSecret } = useController('KeystoreController').state
   const { getBiometricsSecret, deviceSupportedAuthTypes } = useBiometrics()
-  const [password, setPassword] = useState('')
+  const [password, setPassword] = useState(
+    isDev && !isTesting ? (DEFAULT_KEYSTORE_PASSWORD_DEV ?? '') : ''
+  )
 
   const canUseBiometrics = isMobile && hasBiometricsSecret
   const BiometricsIcon = deviceSupportedAuthTypes.includes(
@@ -72,7 +75,7 @@ const BackupUnlockStep = ({
 
   return (
     <View style={flexbox.flex1}>
-      <View style={[flexbox.alignCenter, spacings.mbLg]}>
+      <View style={[flexbox.alignCenter, spacings.mbXl]}>
         <EditPenIcon width={32} height={32} color={theme.secondaryText} style={spacings.mbMd} />
         <Text weight="semiBold" fontSize={16} style={[text.center, spacings.mbTy]}>
           {t('Prepare to write down your recovery phrase')}
@@ -92,7 +95,9 @@ const BackupUnlockStep = ({
             isValid={isValidPassword(password)}
             error={unlockErrorMessage}
             onSubmitEditing={handleStartWithPassword}
-            containerStyle={isWeb ? { width: '100%' } : undefined}
+            containerStyle={spacings.mbXl}
+            // The sheet itself is on primaryBackground, so the field needs to stand out from it
+            backgroundColor={theme.secondaryBackground}
           />
         )}
         <Button

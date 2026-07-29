@@ -5,6 +5,7 @@ import Button from '@common/components/Button'
 import Input from '@common/components/Input'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
+import useTheme from '@common/hooks/useTheme'
 import { WordToConfirm } from '@common/modules/recovery-phrase-backup/hooks/useRecoveryPhraseBackup/useRecoveryPhraseBackup'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
@@ -14,6 +15,7 @@ type Props = {
   enteredWords: string[]
   onEnteredWordChange: (index: number, value: string) => void
   areEnteredWordsValid: boolean
+  onGoBackPress: () => void
   onFinishPress: () => void
 }
 
@@ -22,9 +24,11 @@ const BackupConfirmStep = ({
   enteredWords,
   onEnteredWordChange,
   areEnteredWordsValid,
+  onGoBackPress,
   onFinishPress
 }: Props) => {
   const { t } = useTranslation()
+  const { theme } = useTheme()
 
   return (
     <View style={flexbox.flex1}>
@@ -35,7 +39,7 @@ const BackupConfirmStep = ({
         {t('Enter the following words from your recovery phrase to confirm you wrote it down.')}
       </Text>
 
-      <View style={flexbox.flex1}>
+      <View style={[flexbox.flex1, spacings.mbMd]}>
         {wordsToConfirm.map(({ position, word }, index) => {
           const enteredWord = enteredWords[index] || ''
           const isMismatching = !!enteredWord && enteredWord.trim() !== word
@@ -56,19 +60,33 @@ const BackupConfirmStep = ({
                   ? t("This word doesn't match. Please check what you wrote down.")
                   : undefined
               }
+              // The sheet itself is on primaryBackground, so the fields need to stand out from it
+              backgroundColor={theme.secondaryBackground}
             />
           )
         })}
       </View>
 
-      <Button
-        testID="finish-recovery-phrase-backup-button"
-        text={t('Finish')}
-        size="large"
-        hasBottomSpacing={false}
-        disabled={!areEnteredWordsValid}
-        onPress={onFinishPress}
-      />
+      <View style={[flexbox.directionRow, flexbox.alignCenter]}>
+        <Button
+          testID="go-back-to-recovery-phrase-button"
+          type="secondary"
+          text={t('Go back')}
+          size="large"
+          hasBottomSpacing={false}
+          style={[flexbox.flex1, spacings.mrTy]}
+          onPress={onGoBackPress}
+        />
+        <Button
+          testID="finish-recovery-phrase-backup-button"
+          text={t('Finish')}
+          size="large"
+          hasBottomSpacing={false}
+          style={flexbox.flex1}
+          disabled={!areEnteredWordsValid}
+          onPress={onFinishPress}
+        />
+      </View>
     </View>
   )
 }

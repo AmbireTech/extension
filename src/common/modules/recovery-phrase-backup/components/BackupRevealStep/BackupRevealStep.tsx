@@ -52,7 +52,7 @@ const BackupRevealStep = ({ seedWords, onCopyPress, onContinuePress }: Props) =>
             type="tertiary"
             text={t('Copy recovery phrase')}
             hasBottomSpacing={false}
-            size="small"
+            size="smaller"
             testID="copy-recovery-phrase"
             onPress={onCopyPress}
           >
