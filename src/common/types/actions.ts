@@ -29,6 +29,10 @@ type GetAllControllerNamesAction = {
   type: 'GET_ALL_CONTROLLER_NAMES'
 }
 
+type GetInitialRouteAction = {
+  type: 'GET_INITIAL_ROUTE'
+}
+
 type InitControllerStateAction = {
   type: 'INIT_CONTROLLER_STATE'
   params: {
@@ -238,6 +242,7 @@ export type Action =
   | InitAllControllersAction
   | WindowRemovedAction
   | GetAllControllerNamesAction
+  | GetInitialRouteAction
   | InitControllerStateAction
   | HandleProviderRequestAction
   | WebviewOriginChangedAction

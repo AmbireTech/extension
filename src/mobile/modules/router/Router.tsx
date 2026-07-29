@@ -38,7 +38,7 @@ const Router = () => {
   } = useController('RequestsController')
   const swapAndBridgeState = useController('SwapAndBridgeController').state
   const transferState = useController('TransferController').state
-  const { areControllerStatesLoaded } = useContext(ControllersStateLoadedContext)
+  const { canRenderRoute } = useContext(ControllersStateLoadedContext)
   const { dispatch } = useContext(ControllersMiddlewareContext)
   // Fonts load in parallel with controller boot (the tree mounts before fonts
   // are ready — see AppInit). Gate the splash hide on fonts too so the first
@@ -59,7 +59,7 @@ const Router = () => {
 
   const splashHidden = useRef(false)
 
-  const isReady = authStatus !== AUTH_STATUS.LOADING && areControllerStatesLoaded && fontsLoaded
+  const isReady = authStatus !== AUTH_STATUS.LOADING && canRenderRoute && fontsLoaded
 
   useEffect(() => {
     if (isReady && !splashHidden.current) {
@@ -95,7 +95,9 @@ const Router = () => {
     authStatus,
     requestsState,
     swapAndBridgeState,
-    transferState
+    transferState,
+    // Mobile has no request window; that flow is extension-only.
+    isRequestWindow: false
   })
 
   // Users updating from the legacy v1 app land on the migration onboarding
