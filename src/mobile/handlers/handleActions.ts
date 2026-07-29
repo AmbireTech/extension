@@ -12,6 +12,7 @@ import { getWcTabIdFromTopic } from '@mobile/modules/wallet-connect/utils'
 import { setBootPhase, setSubscribedControllers } from '@mobile/modules/webview/services/bootPhase'
 import { mobileMessenger } from '@mobile/modules/webview/services/mobileMessenger'
 import { createWcBridgeMessenger } from '@mobile/modules/webview/services/wcBridgeMessenger'
+import { flushWorkerBootProfile } from '@mobile/modules/webview/services/workerBootProfiler'
 
 export const handleActions = async (
   action: MethodAction | Action,
@@ -86,6 +87,11 @@ export const handleActions = async (
 
     case 'SET_SUBSCRIBED_CONTROLLERS': {
       setSubscribedControllers(params.controllers)
+      break
+    }
+
+    case 'FLUSH_BOOT_PROFILE': {
+      flushWorkerBootProfile()
       break
     }
 

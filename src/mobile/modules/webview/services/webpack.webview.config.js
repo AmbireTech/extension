@@ -196,6 +196,18 @@ class WorkerHtmlPlugin {
             .update(Buffer.from(onErrorScript, 'utf8'))
             .digest('base64')}`
 
+          // Stamps the instant the HTML parser reached the bundle <script> tag. Sits
+          // immediately before that tag so the gap to the bundle's first executed line
+          // is purely fetch + SRI hashing + compile, with the HTML parse excluded.
+          // Needed because a `file://` load populates no resource timing entry, which
+          // leaves that window (the largest single phase of the worker boot) opaque.
+          // Read by workerBootProfiler.ts.
+          const bootMarkScript = `window.__ambireBundleTagReachedAt = performance.now();`
+          const bootMarkHash = `sha384-${crypto
+            .createHash('sha384')
+            .update(Buffer.from(bootMarkScript, 'utf8'))
+            .digest('base64')}`
+
           // `script-src` uses the `file:` scheme (not `'self'`, which an opaque
           // `file://` origin does not match) for the sibling bundle, plus a hash
           // for the inline error handler. Not a wide grant — navigation is
@@ -203,7 +215,7 @@ class WorkerHtmlPlugin {
           // so the only `file:` script reachable is our own bundle.
           const csp = [
             "default-src 'none'",
-            `script-src file: '${onErrorHash}'`,
+            `script-src file: '${onErrorHash}' '${bootMarkHash}'`,
             "connect-src 'none'",
             "frame-src 'none'",
             "object-src 'none'",
@@ -220,6 +232,7 @@ class WorkerHtmlPlugin {
     <script>${onErrorScript}</script>
   </head>
   <body>
+    <script>${bootMarkScript}</script>
     <script src="webview-bundle.js" integrity="${sriHash}" crossorigin="anonymous"></script>
   </body>
 </html>
@@ -259,7 +272,7 @@ class MirrorToAndroidAssetsPlugin {
 }
 
 /**
- * Emits `webview-bundle-ota.json` ({ html, js, integrity }) into the services dir so the
+ * Emits `webview-bundle-ota.json` ({ html, js, version }) into the services dir so the
  * worker bundle rides the Metro/OTA JS bundle - the native asset copy cannot be OTA-updated.
  * At runtime materializeWorkerBundle writes it to a writable dir and loads it via `file://`.
  */
@@ -274,9 +287,15 @@ class EmitOtaBundleJsonPlugin {
       try {
         const js = fs.readFileSync(path.join(this.sourceDir, 'webview-bundle.js'))
         const html = fs.readFileSync(path.join(this.sourceDir, 'webview-bundle.html'), 'utf8')
-        // Same SHA-384 the HTML's SRI uses; doubles as the materialization version marker.
-        const integrity = `sha384-${crypto.createHash('sha384').update(js).digest('base64')}`
-        const json = JSON.stringify({ html, js: js.toString('utf8'), integrity })
+        // Materialization version marker. Covers the HTML as well as the JS: the two are
+        // separate files on disk, so keying only on the JS meant an HTML-only change (a CSP
+        // tweak, the inline boot mark) never replaced the already-materialized copy.
+        const version = `sha384-${crypto
+          .createHash('sha384')
+          .update(js)
+          .update(Buffer.from(html, 'utf8'))
+          .digest('base64')}`
+        const json = JSON.stringify({ html, js: js.toString('utf8'), version })
         fs.writeFileSync(path.join(this.targetDir, 'webview-bundle-ota.json'), json)
       } catch (err) {
         compilation.errors.push(new Error(`EmitOtaBundleJsonPlugin failed: ${err.message}`))
@@ -334,7 +353,14 @@ const workerConfig = {
     ...sharedPlugins,
     new webpack.DefinePlugin({
       __DEV__: JSON.stringify(isDev),
-      'process.env': JSON.stringify(workerBundleEnv)
+      'process.env': JSON.stringify(workerBundleEnv),
+      // Boot profiler switch. Defined as its own key rather than added to
+      // `workerBundleEnv` above, which is deliberately not a config list. The more
+      // specific key wins over the wholesale `process.env` replacement, which would
+      // otherwise leave the worker unprofiled while the RN side records.
+      'process.env.IS_BOOT_PROFILING_ENABLED': JSON.stringify(
+        process.env.IS_BOOT_PROFILING_ENABLED ?? ''
+      )
     })
   ]
 }

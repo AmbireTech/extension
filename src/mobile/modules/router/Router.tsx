@@ -22,6 +22,7 @@ import useLedgerConnectionLifecycle from '@mobile/modules/hardware-wallet/hooks/
 import KeyStoreUnlockScreen from '@mobile/modules/keystore/screens/KeyStoreUnlockScreen'
 import MainRoutes from '@mobile/modules/router/components/MainRoutes'
 import RequestsBottomSheet from '@mobile/modules/router/components/RequestsBottomSheet'
+import { markSplashHidden } from '@mobile/services/bootProfiler'
 import { shouldShowMigrationOnboarding } from '@mobile/services/legacyMigration/legacyMigration'
 
 const Router = () => {
@@ -66,6 +67,7 @@ const Router = () => {
       splashHidden.current = true
       SplashScreen.setOptions({ duration: 200, fade: true })
       SplashScreen.hideAsync().catch(() => {})
+      markSplashHidden()
       // Now that the splash is hidden, let the webview worker stream the
       // heavy controller states (portfolio, dapps, activity, ...) that were
       // held back during the critical boot phase. Done after the splash hide

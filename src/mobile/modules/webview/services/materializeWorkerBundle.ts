@@ -36,12 +36,13 @@ const materializeWorkerBundle = async (): Promise<string | null> => {
     const jsPath = `${webviewDir}webview-bundle.js`
     const versionPath = `${webviewDir}webview-bundle.version`
 
-    // { html, js, integrity } are emitted together by build:webview, so the HTML's SRI
-    // always matches its JS. Required lazily so it is not loaded into memory in dev.
+    // { html, js, version } are emitted together by build:webview, so the HTML's SRI
+    // always matches its JS. `version` hashes both, so an HTML-only change still
+    // invalidates the on-disk copy. Required lazily so it is not loaded into memory in dev.
     const otaBundle: {
       html: string
       js: string
-      integrity: string
+      version: string
     } = require('./webview-bundle-ota.json')
 
     const dirInfo = await getInfoAsync(webviewDir)
@@ -51,7 +52,7 @@ const materializeWorkerBundle = async (): Promise<string | null> => {
     const currentVersion = versionInfo.exists ? await readAsStringAsync(versionPath) : null
 
     const [htmlInfo, jsInfo] = await Promise.all([getInfoAsync(htmlPath), getInfoAsync(jsPath)])
-    const isUpToDate = currentVersion === otaBundle.integrity && htmlInfo.exists && jsInfo.exists
+    const isUpToDate = currentVersion === otaBundle.version && htmlInfo.exists && jsInfo.exists
 
     // Skip the multi-MB write when the on-disk copy already matches (avoids startup cost on
     // every launch; only the launch after an OTA actually rewrites).
@@ -60,7 +61,7 @@ const materializeWorkerBundle = async (): Promise<string | null> => {
       // mid-write never leaves a "valid" version pointing at a partial/mismatched bundle.
       await writeAsStringAsync(jsPath, otaBundle.js)
       await writeAsStringAsync(htmlPath, otaBundle.html)
-      await writeAsStringAsync(versionPath, otaBundle.integrity)
+      await writeAsStringAsync(versionPath, otaBundle.version)
     }
 
     return htmlPath

@@ -220,6 +220,12 @@ type SetSubscribedControllersAction = {
   params: { controllers: string[] }
 }
 
+// Mobile-only, boot profiling. Asks the WebView worker to post its boot marks so
+// the RN side can assemble one timeline across both JS realms.
+type FlushBootProfileAction = {
+  type: 'FLUSH_BOOT_PROFILE'
+}
+
 export type Action =
   | UpdateNavigationUrl
   | UpdateUiViewRoute
@@ -251,3 +257,4 @@ export type Action =
   | DisconnectWcSessionAction
   | SetBootPhaseAction
   | SetSubscribedControllersAction
+  | FlushBootProfileAction
