@@ -104,7 +104,8 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
                 flexbox.justifyEnd,
                 {
                   minWidth: 0,
-                  maxWidth: '100%'
+                  maxWidth: '100%',
+                  flexShrink: 1
                 }
               ]}
             >
