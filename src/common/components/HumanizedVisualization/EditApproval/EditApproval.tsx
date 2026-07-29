@@ -232,22 +232,45 @@ const EditApproval = ({
             }}
             innerContainerStyle={isCompactLayout && !isMobile ? { width: '100%' } : undefined}
           >
-            <Button
-              type="secondary"
-              text={t('Cancel')}
-              onPress={() => closeEditApprovals()}
-              hasBottomSpacing={false}
-              size="smaller"
-              style={[spacings.mrTy, footerButtonStyle]}
-            />
-            <Button
-              type="primary"
-              text={t('Save')}
-              onPress={() => editCall(amountRef.current, token, chainId, closeEditApprovals)}
-              hasBottomSpacing={false}
-              size="smaller"
-              style={footerButtonStyle}
-            />
+            {isMobile ? (
+              <>
+                <Button
+                  type="outline"
+                  text={t('Cancel')}
+                  onPress={() => closeEditApprovals()}
+                  hasBottomSpacing={false}
+                  size="smaller"
+                  style={footerButtonStyle}
+                />
+                <Button
+                  type="primary"
+                  text={t('Save')}
+                  onPress={() => editCall(amountRef.current, token, chainId, closeEditApprovals)}
+                  hasBottomSpacing={false}
+                  size="smaller"
+                  style={footerButtonStyle}
+                />
+              </>
+            ) : (
+              <>
+                <Button
+                  type="primary"
+                  text={t('Save')}
+                  onPress={() => editCall(amountRef.current, token, chainId, closeEditApprovals)}
+                  hasBottomSpacing={false}
+                  size="smaller"
+                  style={footerButtonStyle}
+                />
+                <Button
+                  type="outline"
+                  text={t('Cancel')}
+                  onPress={() => closeEditApprovals()}
+                  hasBottomSpacing={false}
+                  size="smaller"
+                  style={footerButtonStyle}
+                />
+              </>
+            )}
           </FooterGlassView>
         </View>
       </BottomSheet>
