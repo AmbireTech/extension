@@ -9,6 +9,7 @@ import { getSafeAmountFromFieldValue } from '@ambire-common/utils/numbers/format
 import EditPenIcon from '@common/assets/svg/EditPenIcon'
 import AmountInput from '@common/components/AmountInput'
 import BottomSheet from '@common/components/BottomSheet'
+import ModalHeader from '@common/components/BottomSheet/ModalHeader'
 import Button from '@common/components/Button'
 import FooterGlassView from '@common/components/FooterGlassView'
 import Text from '@common/components/Text'
@@ -228,14 +229,12 @@ const EditApproval = ({
         style={isMobile ? undefined : { maxWidth: 460 }}
         shouldBeClosableOnDrag={isMobile}
       >
+        <ModalHeader
+          title={t('Grant approval for')}
+          handleClose={closeEditApprovals}
+          style={isMobile ? spacings.mbSm : spacings.mbLg}
+        />
         <View style={flexbox.alignCenter}>
-          <Text
-            fontSize={20}
-            weight="medium"
-            style={isMobile ? [spacings.mbLg] : [spacings.mbXl, spacings.mtTy]}
-          >
-            {t('Grant approval for')}
-          </Text>
           <View style={{ width: '100%' }}>
             <EditApprovalAmountInput
               initialAmount={initialAmount}
@@ -262,12 +261,7 @@ const EditApproval = ({
               onPress={() => closeEditApprovals()}
               hasBottomSpacing={false}
               size="smaller"
-              style={[
-                spacings.mrTy,
-                isWeb && { width: 100 },
-                isMobile && flexbox.flex1,
-                isMobile && { height: 44 }
-              ]}
+              style={[spacings.mrTy, isWeb && { width: 100 }, isMobile && flexbox.flex1]}
             />
             <Button
               type="primary"
@@ -275,11 +269,7 @@ const EditApproval = ({
               onPress={() => editCall(amountRef.current, token, chainId, closeEditApprovals)}
               hasBottomSpacing={false}
               size="smaller"
-              style={[
-                isWeb && { width: 100 },
-                isMobile && flexbox.flex1,
-                isMobile && { height: 44 }
-              ]}
+              style={[isWeb && { width: 100 }, isMobile && flexbox.flex1]}
             />
           </FooterGlassView>
         </View>
