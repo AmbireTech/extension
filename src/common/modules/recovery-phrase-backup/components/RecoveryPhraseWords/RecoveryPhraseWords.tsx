@@ -24,7 +24,10 @@ const RecoveryPhraseWords = ({ words }: { words: string[] }) => {
         ...flexbox.justifyCenter,
         borderWidth: 1,
         borderColor: theme.neutral600,
-        ...common.borderRadiusPrimary
+        ...common.borderRadiusPrimary,
+        // The grid never sits at the screen bottom, so the wrapper's safe area inset would
+        // only add dead space between the last row and the border
+        paddingBottom: 0
       }}
     >
       {words.map((word, index) => (
@@ -33,9 +36,6 @@ const RecoveryPhraseWords = ({ words }: { words: string[] }) => {
           key={`${index.toString()}-${word}`}
           style={{
             width: '33.33%',
-            borderRightWidth: (index + 1) % COLUMNS === 0 ? 0 : 1,
-            borderBottomWidth: index < lastRowFirstIndex ? 1 : 0,
-            borderColor: theme.neutral600,
             ...spacings.pvMi,
             ...spacings.phTy,
             ...flexbox.alignCenter,
@@ -55,6 +55,32 @@ const RecoveryPhraseWords = ({ words }: { words: string[] }) => {
           <Text fontSize={14} weight="medium" style={{ lineHeight: 19 }}>
             {word}
           </Text>
+          {/* Drawn as views rather than the cell's own borderRight/borderBottom, because */}
+          {/* per side border widths were leaking onto the next step as stray grey lines */}
+          {(index + 1) % COLUMNS !== 0 && (
+            <View
+              style={{
+                position: 'absolute',
+                top: 0,
+                bottom: 0,
+                right: 0,
+                width: 1,
+                backgroundColor: theme.neutral600
+              }}
+            />
+          )}
+          {index < lastRowFirstIndex && (
+            <View
+              style={{
+                position: 'absolute',
+                left: 0,
+                right: 0,
+                bottom: 0,
+                height: 1,
+                backgroundColor: theme.neutral600
+              }}
+            />
+          )}
         </View>
       ))}
     </ScrollableWrapper>

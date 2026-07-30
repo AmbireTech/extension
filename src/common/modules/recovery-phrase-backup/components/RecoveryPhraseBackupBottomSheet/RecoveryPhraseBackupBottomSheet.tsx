@@ -1,4 +1,5 @@
-import React, { useCallback } from 'react'
+import React, { useCallback, useState } from 'react'
+import { LayoutChangeEvent, View } from 'react-native'
 import { Modalize } from 'react-native-modalize'
 
 import BottomSheet from '@common/components/BottomSheet'
@@ -11,6 +12,7 @@ import BackupRevealStep from '@common/modules/recovery-phrase-backup/components/
 import BackupUnlockStep from '@common/modules/recovery-phrase-backup/components/BackupUnlockStep'
 import useRecoveryPhraseBackup from '@common/modules/recovery-phrase-backup/hooks/useRecoveryPhraseBackup'
 import spacings from '@common/styles/spacings'
+import flexbox from '@common/styles/utils/flexbox'
 
 type Props = {
   seedId: string
@@ -61,13 +63,29 @@ const RecoveryPhraseBackupBottomSheet = ({
     closeBottomSheet()
   }, [closeBottomSheet, goBackToRevealStep, step])
 
+  // The sheet adjusts to its content height, so swapping the taller reveal step for the
+  // shorter confirm step makes it resize, which looks like the phrase is animating away.
+  // Keeping both steps at the tallest measured height makes the swap invisible.
+  const [tallestStepHeight, setTallestStepHeight] = useState(0)
+
+  const handleStepLayout = useCallback(({ nativeEvent }: LayoutChangeEvent) => {
+    const { height } = nativeEvent.layout
+
+    setTallestStepHeight((prevHeight) => (height > prevHeight ? height : prevHeight))
+  }, [])
+
+  const handleClosed = useCallback(() => {
+    setTallestStepHeight(0)
+    reset()
+  }, [reset])
+
   return (
     <BottomSheet
       id={`recovery-phrase-backup-bottom-sheet-${seedId}`}
       type={isWeb ? 'modal' : 'bottom-sheet'}
       sheetRef={sheetRef}
       closeBottomSheet={closeBottomSheet}
-      onClosed={reset}
+      onClosed={handleClosed}
       scrollViewProps={isWeb ? { contentContainerStyle: { flex: 1 } } : undefined}
       containerInnerWrapperStyles={{ flex: 1 }}
       style={isWeb ? { maxWidth: 432, minHeight: 432, ...spacings.pvLg } : undefined}
@@ -81,22 +99,28 @@ const RecoveryPhraseBackupBottomSheet = ({
           onPasswordChange={resetKeystoreErrorIfNeeded}
         />
       )}
-      {step === 'reveal' && (
-        <BackupRevealStep
-          seedWords={seedWords}
-          onCopyPress={copySeedToClipboard}
-          onContinuePress={goToConfirmStep}
-        />
-      )}
-      {step === 'confirm' && (
-        <BackupConfirmStep
-          wordsToConfirm={wordsToConfirm}
-          enteredWords={enteredWords}
-          onEnteredWordChange={setEnteredWord}
-          areEnteredWordsValid={areEnteredWordsValid}
-          onGoBackPress={goBackToRevealStep}
-          onFinishPress={finishBackup}
-        />
+      {step !== 'unlock' && (
+        <View
+          onLayout={handleStepLayout}
+          style={[flexbox.flex1, tallestStepHeight ? { minHeight: tallestStepHeight } : {}]}
+        >
+          {step === 'reveal' ? (
+            <BackupRevealStep
+              seedWords={seedWords}
+              onCopyPress={copySeedToClipboard}
+              onContinuePress={goToConfirmStep}
+            />
+          ) : (
+            <BackupConfirmStep
+              wordsToConfirm={wordsToConfirm}
+              enteredWords={enteredWords}
+              onEnteredWordChange={setEnteredWord}
+              areEnteredWordsValid={areEnteredWordsValid}
+              onGoBackPress={goBackToRevealStep}
+              onFinishPress={finishBackup}
+            />
+          )}
+        </View>
       )}
     </BottomSheet>
   )
