@@ -80,7 +80,7 @@ const SafeAccountList = ({
     ]
   )
 
-  const keyExtractor = useCallback((account: SafeAccountByOwner) => account.addr, [])
+  const keyExtractor = useCallback((account: SafeAccountByOwner) => account.addr.toLowerCase(), [])
 
   return (
     <ScrollableWrapper

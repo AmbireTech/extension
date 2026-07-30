@@ -19,7 +19,7 @@ const Toggle: React.FC<ToggleProps> = ({
   stopPropagation,
   testID
 }) => {
-  const { theme, themeType } = useTheme()
+  const { theme } = useTheme()
   const handleOnToggle: React.ChangeEventHandler<HTMLInputElement> = (e) => {
     onToggle(e.target.checked)
   }
@@ -34,7 +34,7 @@ const Toggle: React.FC<ToggleProps> = ({
     <label
       htmlFor={id}
       onClick={handleClick}
-      // @ts-ignore it exists for the React Native Web component
+      // @ts-expect-error it exists for the React Native Web component
       testID={testID}
       style={{
         alignItems: 'center',

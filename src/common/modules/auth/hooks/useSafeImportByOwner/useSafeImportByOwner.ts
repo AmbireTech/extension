@@ -1,5 +1,5 @@
 import { getAddress, isAddress } from 'ethers'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useForm, useWatch } from 'react-hook-form'
 
 import { SAFE_NETWORKS } from '@ambire-common/consts/safe'
@@ -41,6 +41,7 @@ const useSafeImportByOwner = () => {
     deselectedAddresses: string[]
   }>({ owner: '', selectedAddresses: [], deselectedAddresses: [] })
   const [onImportPressed, setOnImportPressed] = useState(false)
+  const hasCurrentImportStarted = useRef(false)
 
   const handleValidation = useCallback(
     (value: string) => {
@@ -71,10 +72,18 @@ const useSafeImportByOwner = () => {
 
   useEffect(() => {
     if (!onImportPressed) return
+    if (mainStatuses.updateAccounts === 'LOADING') {
+      hasCurrentImportStarted.current = true
+      return
+    }
+    if (!hasCurrentImportStarted.current) return
     if (mainStatuses.updateAccounts === 'SUCCESS') goToNextRoute()
     // The external controller result unlocks the button so the user can retry.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    if (mainStatuses.updateAccounts === 'ERROR') setOnImportPressed(false)
+    if (mainStatuses.updateAccounts === 'ERROR') {
+      hasCurrentImportStarted.current = false
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setOnImportPressed(false)
+    }
   }, [goToNextRoute, mainStatuses.updateAccounts, onImportPressed])
 
   const safeAccounts = useMemo(
@@ -181,6 +190,8 @@ const useSafeImportByOwner = () => {
       })
       .map((account) => account.addr)
 
+    hasCurrentImportStarted.current = false
+    setOnImportPressed(true)
     mainDispatch({
       type: 'method',
       params: {
@@ -188,7 +199,6 @@ const useSafeImportByOwner = () => {
         args: [{ accountsToAdd: accountsToImport, accountAddressesToRemove }]
       }
     })
-    setOnImportPressed(true)
   }, [
     importedAccounts,
     isSearching,
