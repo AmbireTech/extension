@@ -114,19 +114,32 @@ const SafeImportByOwnerScreen = () => {
               )}
             </View>
 
-            <Button
-              testID="import-safe-owner-button"
-              size="large"
-              text={t('Import')}
-              hasBottomSpacing={false}
-              onPress={handleImport}
-              disabled={
-                !isValid ||
-                isSearching ||
-                isImporting ||
-                (hasSearchCompleted && !safeAccounts.length)
-              }
-            />
+            <View>
+              {!!safeAccounts.length && (
+                <View style={spacings.mvTy}>
+                  <Alert
+                    type="warning"
+                    title={t("Don't add accounts you don't recognize")}
+                    style={{ maxWidth: '100%' }}
+                    titleWeight="light"
+                    size="sm"
+                  />
+                </View>
+              )}
+              <Button
+                testID="import-safe-owner-button"
+                size="large"
+                text={t('Import')}
+                hasBottomSpacing={false}
+                onPress={handleImport}
+                disabled={
+                  !isValid ||
+                  isSearching ||
+                  isImporting ||
+                  (hasSearchCompleted && !safeAccounts.length)
+                }
+              />
+            </View>
           </View>
         </Panel>
       </TabLayoutWrapperMainContent>
