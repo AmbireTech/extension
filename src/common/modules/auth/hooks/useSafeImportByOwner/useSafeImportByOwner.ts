@@ -42,6 +42,7 @@ const useSafeImportByOwner = () => {
   }>({ owner: '', selectedAddresses: [], deselectedAddresses: [] })
   const [onImportPressed, setOnImportPressed] = useState(false)
   const hasCurrentImportStarted = useRef(false)
+  const requestedOwner = useRef('')
 
   const handleValidation = useCallback(
     (value: string) => {
@@ -59,16 +60,19 @@ const useSafeImportByOwner = () => {
   }, [ownerAddressValue])
 
   useEffect(() => {
-    if (!owner || safeOwnerSearch?.owner === owner || statuses.findSafesByOwner === 'LOADING')
+    if (!owner || requestedOwner.current === owner) return
+
+    const isSameOwnerSearchLoading =
+      statuses.findSafesByOwner === 'LOADING' && safeOwnerSearch?.owner === owner
+    if (isSameOwnerSearchLoading) {
+      requestedOwner.current = owner
       return
+    }
+    if (statuses.findSafesByOwner === 'LOADING') return
+
+    requestedOwner.current = owner
     safeDispatch({ type: 'method', params: { method: 'findSafesByOwner', args: [owner] } })
   }, [owner, safeOwnerSearch?.owner, safeDispatch, statuses.findSafesByOwner])
-
-  useEffect(() => {
-    return () => {
-      safeDispatch({ type: 'method', params: { method: 'resetFindSafesByOwner', args: [] } })
-    }
-  }, [safeDispatch])
 
   useEffect(() => {
     if (!onImportPressed) return
