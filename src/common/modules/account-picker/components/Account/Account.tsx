@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo } from 'react'
-import { Platform, Pressable, View } from 'react-native'
+import { Pressable, View } from 'react-native'
 
 import {
   Account as AccountInterface,
@@ -43,7 +43,10 @@ const Account = ({
   importStatus,
   displayTypeBadge = true,
   displayTypePill = true,
-  shouldBeDisplayedAsNew = false
+  shouldBeDisplayedAsNew = false,
+  deployedOnNetworks,
+  hideAddressWhenAccountHasLabel = false,
+  shouldAlwaysShortenAddress = false
 }: {
   account: AccountWithNetworkMeta
   type: 'basic' | 'smart' | 'linked'
@@ -57,6 +60,9 @@ const Account = ({
   displayTypeBadge?: boolean
   displayTypePill?: boolean
   shouldBeDisplayedAsNew?: boolean
+  deployedOnNetworks?: bigint[]
+  hideAddressWhenAccountHasLabel?: boolean
+  shouldAlwaysShortenAddress?: boolean
 }) => {
   const { isLoading: isDomainResolving, name: reverseLookupName } = useReverseLookup({
     address: account.addr
@@ -69,7 +75,8 @@ const Account = ({
   const usedOnNetworks = Array.isArray(account.usedOnNetworks) ? account.usedOnNetworks : undefined
   const isUsedOnNetworksLoading = account.usedOnNetworks !== null && !usedOnNetworks
   const hasUsedOnNetworks = !!usedOnNetworks && usedOnNetworks.length > 0
-  const shouldShowUsedOnNetworks = !unused && (hasUsedOnNetworks || isUsedOnNetworksLoading)
+  const shouldShowUsedOnNetworks =
+    deployedOnNetworks === undefined && !unused && (hasUsedOnNetworks || isUsedOnNetworksLoading)
 
   const toggleSelectedState = useCallback(() => {
     if (isSelected) {
@@ -79,7 +86,19 @@ const Account = ({
     }
   }, [isSelected, onSelect, onDeselect, account])
 
+  const setSelectedState = useCallback(
+    (shouldSelect: boolean) => {
+      if (shouldSelect) {
+        !!onSelect && onSelect(account)
+      } else {
+        !!onDeselect && onDeselect(account)
+      }
+    },
+    [account, onDeselect, onSelect]
+  )
+
   const formattedAddress = useMemo(() => {
+    if (shouldAlwaysShortenAddress) return shortenAddress(account.addr, 16)
     if (minWidthSize('m') || reverseLookupName || isDomainResolving) {
       return shortenAddress(account.addr, 16)
     }
@@ -90,7 +109,14 @@ const Account = ({
       return account.addr
     }
     return shortenAddress(account.addr, 16)
-  }, [account.addr, reverseLookupName, isDomainResolving, maxWidthSize, minWidthSize])
+  }, [
+    account.addr,
+    reverseLookupName,
+    isDomainResolving,
+    maxWidthSize,
+    minWidthSize,
+    shouldAlwaysShortenAddress
+  ])
 
   const handleCopyAddress = useCallback(() => {
     setStringAsync(account.addr)
@@ -120,9 +146,11 @@ const Account = ({
         ]}
       >
         <FatToggle
+          id={`add-account-toggle-${account.addr}`}
           isOn={isSelected}
-          onToggle={toggleSelectedState}
+          onToggle={setSelectedState}
           disabled={isDisabled}
+          stopPropagation
           style={flexbox.alignSelfStart}
           width={44}
           height={24}
@@ -156,7 +184,8 @@ const Account = ({
                   >
                     {account.preferences.label}
                   </Text>
-                  {(!isMobile || !account.preferences.label) && (
+                  {(!account.preferences.label ||
+                    (!isMobile && !hideAddressWhenAccountHasLabel)) && (
                     <Text
                       fontSize={14}
                       appearance="secondaryText"
@@ -276,6 +305,23 @@ const Account = ({
           </View>
         </View>
       </View>
+      {!!deployedOnNetworks?.length && (
+        <View style={styles.deployedOnContainer}>
+          <Text appearance="secondaryText" fontSize={12}>
+            {t('Deployed on:')}
+          </Text>
+          <View style={[flexbox.directionRow, flexbox.alignCenter]}>
+            {deployedOnNetworks.map((chainId, index) => (
+              <NetworkIcon
+                key={chainId.toString()}
+                id={chainId.toString()}
+                style={index === 0 ? { marginLeft: 0 } : { marginLeft: -11 }}
+                size={22}
+              />
+            ))}
+          </View>
+        </View>
+      )}
       {[
         ImportStatus.ImportedWithSomeOfTheKeys,
         ImportStatus.ImportedWithDifferentKeys,
