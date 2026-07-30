@@ -2,11 +2,13 @@ import React, { Suspense, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Route, Routes, useLocation } from 'react-router-dom'
 
+import TrendingTokensScreen from '@common/modules/explore/screens/TrendingTokensScreen'
 import NoConnectionScreen from '@common/modules/no-connection/screens/NoConnectionScreen'
 import AuthenticatedRoute from '@common/modules/router/components/AuthenticatedRoute'
 import KeystoreUnlockedRoute from '@common/modules/router/components/KeystoreUnlockedRoute'
 import routesConfig from '@common/modules/router/config/routesConfig'
 import { WEB_ROUTES } from '@common/modules/router/constants/common'
+import TrendingTokenDetailsScreen from '@common/modules/token-details/screens/TrendingTokenDetailsScreen'
 import AccountSelectScreen from '@web/modules/account-select/screens/AccountSelectScreen'
 import GetEncryptionPublicKeyRequestScreen from '@web/modules/action-requests/screens/GetEncryptionPublicKeyRequestScreen'
 import ExploreScreen from '@web/modules/explore/screens/ExploreScreen'
@@ -260,6 +262,11 @@ const MainRoutes = () => {
             <Route path={WEB_ROUTES.receive} element={<ReceiveScreen />} />
             <Route path={WEB_ROUTES.explore} element={<ExploreScreen />} />
             <Route path={WEB_ROUTES.exploreSection} element={<ExploreSectionScreen />} />
+            <Route path={WEB_ROUTES.trendingTokens} element={<TrendingTokensScreen />} />
+            <Route
+              path={WEB_ROUTES.trendingTokenDetails}
+              element={<TrendingTokenDetailsScreen />}
+            />
             <Route path={WEB_ROUTES.networks} element={<NetworksScreen />} />
             <Route path={WEB_ROUTES.rewards} element={<ExtensionRewardsScreen />} />
             <Route path={WEB_ROUTES.survey} element={<SurveyScreen />} />

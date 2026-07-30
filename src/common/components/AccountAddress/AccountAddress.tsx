@@ -99,6 +99,15 @@ const AccountAddress: FC<Props> = ({
     return `${name} (${t('Updated {{timeAgo}}', { timeAgo: getTimeAgo(new Date(updatedAt)) })})`
   }, [name, updatedAt, t])
 
+  // On mobile the address takes the whole row width, but when a resolved name is
+  // displayed next to it, keep it short so the name isn't truncated
+  const getWithCopyMaxLength = () => {
+    if (addressHighlight || withWrap) return 42
+    if (!isMobile) return 16
+
+    return showResolvedName ? 13 : 42
+  }
+
   return (
     <View
       style={[{ flexShrink: 1, minWidth: 0, maxWidth: '100%' }, containerStyle]}
@@ -153,7 +162,7 @@ const AccountAddress: FC<Props> = ({
           {withCopy ? (
             <>
               <PlainAddressWithCopy
-                maxLength={addressHighlight || withWrap ? 42 : isMobile ? 42 : 16}
+                maxLength={getWithCopyMaxLength()}
                 address={address}
                 fontSize={fontSize}
                 withWrap={withWrap}

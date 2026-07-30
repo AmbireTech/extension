@@ -86,6 +86,12 @@ const InnerToken: FC<Props> = ({
   }, [amount, tokenInfo?.decimals])
 
   const shouldDisplayALotOf = useMemo(() => fullAmount >= 10_000_000_000, [fullAmount])
+  // "unlimited"/"a lot of" are much wider than a number, so downsize them on mobile
+  // to leave room for the token symbol next to them
+  const amountTextSize =
+    isMobile && (shouldDisplayUnlimitedAmount || shouldDisplayALotOf)
+      ? Math.max(textSize - 2, 10)
+      : textSize
   const amountTooltipId = useMemo(
     () =>
       shouldDisplayUnlimitedAmount
@@ -104,7 +110,7 @@ const InnerToken: FC<Props> = ({
           style={{ maxWidth: '100%', ...(isMobile ? spacings.mrMi : {}) }}
         >
           <Text
-            fontSize={textSize}
+            fontSize={amountTextSize}
             weight={shouldDisplayUnlimitedAmount ? undefined : 'medium'}
             appearance={
               shouldDisplayUnlimitedAmount || shouldDisplayALotOf ? 'warningText' : 'primaryText'
@@ -135,7 +141,13 @@ const InnerToken: FC<Props> = ({
         </Text>
       ) : null}
       <Pressable
-        style={{ ...flexbox.directionRow, ...flexbox.alignCenter, marginRight }}
+        style={{
+          ...flexbox.directionRow,
+          ...flexbox.alignCenter,
+          marginRight,
+          minWidth: 0,
+          flexShrink: 1
+        }}
         onPress={canOpenExplorer ? openExplorer : undefined}
         accessibilityRole={canOpenExplorer ? 'link' : undefined}
       >
@@ -156,7 +168,10 @@ const InnerToken: FC<Props> = ({
               weight="medium"
               appearance="primaryText"
               underline={canOpenExplorer && hovered}
-              style={spacings.mlMi}
+              // Truncating is possible only for the symbol, because the fallback
+              // renders a nested view, which numberOfLines can't clamp
+              numberOfLines={tokenInfo?.symbol ? 1 : undefined}
+              style={[spacings.mlMi, { flexShrink: 1 }]}
             >
               {tokenInfo?.symbol || (
                 <HumanizerAddress
@@ -167,12 +182,13 @@ const InnerToken: FC<Props> = ({
                 />
               )}
             </Text>
-            {canOpenExplorer && (
-              <View style={[!isMobile ? { marginLeft: 2, marginTop: -8 } : {}, flexbox.center]}>
+            {/* On mobile the icon clutters the rows and the whole value is tappable anyway */}
+            {canOpenExplorer && !isMobile && (
+              <View style={[{ marginLeft: 2, marginTop: -8 }, flexbox.center]}>
                 <OpenIcon
                   color={hovered ? theme.primaryText : theme.secondaryText}
-                  width={isMobile ? 14 : 11}
-                  height={isMobile ? 14 : 11}
+                  width={11}
+                  height={11}
                 />
               </View>
             )}

@@ -7,12 +7,9 @@ import FooterGlassView from '@common/components/FooterGlassView'
 import Text from '@common/components/Text'
 import { isMobile, isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
-import useTheme from '@common/hooks/useTheme'
 import AnimatedQrCode from '@common/modules/hardware-wallets/components/AnimatedQrCode'
 import SigningRequestDetails from '@common/modules/hardware-wallets/components/SigningRequestDetails'
-import spacings, { SPACING_LG } from '@common/styles/spacings'
-import { THEME_TYPES } from '@common/styles/themeConfig'
-import common from '@common/styles/utils/common'
+import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
 type Props = {
@@ -28,7 +25,6 @@ type Props = {
 }
 
 const ANIMATION_INTERVAL = 300
-const QR_QUIET_ZONE = SPACING_LG
 const BASE_QR_SIZE = 300
 const BASE_QR_SIZE_WITH_PROGRESS = 280
 const MOBILE_QR_SIZE = 284
@@ -42,19 +38,13 @@ const QrSignRequestScreen = ({
   signingRequest = null
 }: Props) => {
   const { t } = useTranslation()
-  const { themeType } = useTheme()
-  const isDarkMode = themeType === THEME_TYPES.DARK
   // A smaller code leaves room for the details + footer inside the mobile
   // bottom sheet; the desktop panel has space for the larger code.
-  const baseQrSize = isMobile
+  const qrSize = isMobile
     ? MOBILE_QR_SIZE
     : transactionProgress
       ? BASE_QR_SIZE_WITH_PROGRESS
       : BASE_QR_SIZE
-  const qrSize = useMemo(
-    () => (isDarkMode ? baseQrSize - QR_QUIET_ZONE * 2 : baseQrSize),
-    [baseQrSize, isDarkMode]
-  )
 
   const qrCode = useMemo(
     () => (
@@ -71,20 +61,7 @@ const QrSignRequestScreen = ({
         {t('Scan this QR code with your QR-based device to sign.')}
       </Text>
       <View style={[flexbox.alignCenter, flexbox.flex1, { width: '100%' }]}>
-        {isDarkMode ? (
-          <View
-            style={[
-              isMobile ? spacings.phSm : spacings.phLg,
-              isMobile ? spacings.pvSm : spacings.pvLg,
-              common.borderRadiusPrimary,
-              { backgroundColor: '#fff' }
-            ]}
-          >
-            {qrCode}
-          </View>
-        ) : (
-          qrCode
-        )}
+        {qrCode}
         {transactionProgress ? (
           <Text fontSize={14} weight="medium" style={spacings.mtSm}>
             {transactionProgress.current} / {transactionProgress.total}{' '}
