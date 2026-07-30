@@ -42,6 +42,8 @@ import RecoveryPhrasesSettingsScreen from '@mobile/modules/settings/screens/Reco
 import TermsSettingsScreen from '@mobile/modules/settings/screens/TermsSettingsScreen'
 import SwapAndBridgeScreen from '@mobile/modules/swap-and-bridge/screens/SwapAndBridgeScreen'
 import TokenDetailsScreen from '@mobile/modules/token-details/screens/TokenDetailsScreen'
+import TrendingTokenDetailsScreen from '@common/modules/token-details/screens/TrendingTokenDetailsScreen'
+import TrendingTokensScreen from '@common/modules/explore/screens/TrendingTokensScreen'
 import TransferScreen from '@mobile/modules/transfer/screens/TransferScreen'
 import DappWebViewScreen from '@mobile/modules/webview/screens/DappWebViewScreen'
 
@@ -85,6 +87,8 @@ const MainRoutes = () => {
           <Route path={ROUTES.topUpGasTank} element={<TransferScreen isTopUpScreen />} />
           <Route path={ROUTES.accountSelect} element={<AccountSelectScreen />} />
           <Route path={ROUTES.tokenDetails} element={<TokenDetailsScreen />} />
+          <Route path={ROUTES.trendingTokens} element={<TrendingTokensScreen />} />
+          <Route path={ROUTES.trendingTokenDetails} element={<TrendingTokenDetailsScreen />} />
           <Route path={ROUTES.networks} element={<NetworksScreen />} />
           <Route path={ROUTES.swapAndBridge} element={<SwapAndBridgeScreen />} />
           <Route path={ROUTES.menu} element={<NavMenu />} />
