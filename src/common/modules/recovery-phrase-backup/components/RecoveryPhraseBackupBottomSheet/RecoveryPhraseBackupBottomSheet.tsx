@@ -46,9 +46,9 @@ const RecoveryPhraseBackupBottomSheet = ({
     goToConfirmStep,
     goBackToRevealStep,
     wordsToConfirm,
-    enteredWords,
-    setEnteredWord,
-    areEnteredWordsValid,
+    selectedWords,
+    selectWord,
+    areSelectedWordsValid,
     copySeedToClipboard,
     finishBackup,
     reset
@@ -113,9 +113,9 @@ const RecoveryPhraseBackupBottomSheet = ({
           ) : (
             <BackupConfirmStep
               wordsToConfirm={wordsToConfirm}
-              enteredWords={enteredWords}
-              onEnteredWordChange={setEnteredWord}
-              areEnteredWordsValid={areEnteredWordsValid}
+              selectedWords={selectedWords}
+              onWordSelect={selectWord}
+              areSelectedWordsValid={areSelectedWordsValid}
               onGoBackPress={goBackToRevealStep}
               onFinishPress={finishBackup}
             />

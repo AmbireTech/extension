@@ -1,3 +1,4 @@
+import { wordlists } from 'bip39'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import { useTranslation } from '@common/config/localization'
@@ -12,9 +13,35 @@ export type WordToConfirm = {
   /** 1 based position of the word inside the phrase, as shown to the user */
   position: number
   word: string
+  /** The correct word plus decoys, in the order they are offered to the user */
+  options: string[]
 }
 
 const WORDS_TO_CONFIRM_COUNT = 3
+const DECOYS_PER_WORD = 2
+
+const shuffle = <T>(items: T[]): T[] => {
+  const shuffled = [...items]
+
+  for (let i = shuffled.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(Math.random() * (i + 1))
+
+    ;[shuffled[i], shuffled[j]] = [shuffled[j] as T, shuffled[i] as T]
+  }
+
+  return shuffled
+}
+
+/**
+ * Offers the correct word among decoys taken from the BIP39 wordlist, so picking the
+ * right one is only possible by having the phrase written down.
+ */
+const buildOptions = (word: string): string[] => {
+  const decoyPool = (wordlists.english || []).filter((candidate) => candidate !== word)
+  const decoys = shuffle(decoyPool).slice(0, DECOYS_PER_WORD)
+
+  return shuffle([word, ...decoys])
+}
 
 /**
  * Picks one word out of every equally sized part of the phrase, so the user has to
@@ -26,8 +53,9 @@ const pickWordsToConfirm = (words: string[]): WordToConfirm[] => {
   return Array.from({ length: WORDS_TO_CONFIRM_COUNT }, (_, partIndex) => {
     const offset = Math.floor(Math.random() * partSize)
     const index = partIndex * partSize + offset
+    const word = words[index] as string
 
-    return { position: index + 1, word: words[index] as string }
+    return { position: index + 1, word, options: buildOptions(word) }
   })
 }
 
@@ -48,7 +76,7 @@ export default function useRecoveryPhraseBackup({
   const [step, setStep] = useState<RecoveryPhraseBackupStep>('unlock')
   const [seed, setSeed] = useState<string | null>(null)
   const [isUnlocking, setIsUnlocking] = useState(false)
-  const [enteredWords, setEnteredWords] = useState<string[]>([])
+  const [selectedWords, setSelectedWords] = useState<string[]>([])
   // The SUCCESS status can be collapsed away before the UI renders it, so completion is
   // derived from having seen LOADING and then no longer being in it, without an error.
   const hasSeenUnlockLoading = useRef(false)
@@ -114,19 +142,19 @@ export default function useRecoveryPhraseBackup({
 
   const goToConfirmStep = useCallback(() => {
     setWordsToConfirm(pickWordsToConfirm(seedWords))
-    setEnteredWords(Array.from({ length: WORDS_TO_CONFIRM_COUNT }, () => ''))
+    setSelectedWords(Array.from({ length: WORDS_TO_CONFIRM_COUNT }, () => ''))
     setStep('confirm')
   }, [seedWords])
 
-  const setEnteredWord = useCallback((index: number, value: string) => {
-    setEnteredWords((prev) => prev.map((word, i) => (i === index ? value : word)))
+  const selectWord = useCallback((index: number, value: string) => {
+    setSelectedWords((prev) => prev.map((word, i) => (i === index ? value : word)))
   }, [])
 
-  const areEnteredWordsValid = useMemo(
+  const areSelectedWordsValid = useMemo(
     () =>
       wordsToConfirm.length > 0 &&
-      wordsToConfirm.every(({ word }, index) => enteredWords[index]?.trim() === word),
-    [enteredWords, wordsToConfirm]
+      wordsToConfirm.every(({ word }, index) => selectedWords[index] === word),
+    [selectedWords, wordsToConfirm]
   )
 
   const copySeedToClipboard = useCallback(async () => {
@@ -142,17 +170,17 @@ export default function useRecoveryPhraseBackup({
   }, [addToast, seed, t])
 
   const finishBackup = useCallback(() => {
-    if (!areEnteredWordsValid) return
+    if (!areSelectedWordsValid) return
 
     keystoreDispatch({ type: 'method', params: { method: 'markSeedAsBackedUp', args: [seedId] } })
     onBackedUp()
-  }, [areEnteredWordsValid, keystoreDispatch, onBackedUp, seedId])
+  }, [areSelectedWordsValid, keystoreDispatch, onBackedUp, seedId])
 
   // Keep the phrase in memory only for as long as the flow is open
   const reset = useCallback(() => {
     setSeed(null)
     setWordsToConfirm([])
-    setEnteredWords([])
+    setSelectedWords([])
     setStep('unlock')
     setIsUnlocking(false)
     hasSeenUnlockLoading.current = false
@@ -170,9 +198,9 @@ export default function useRecoveryPhraseBackup({
     goToConfirmStep,
     goBackToRevealStep: useCallback(() => setStep('reveal'), []),
     wordsToConfirm,
-    enteredWords,
-    setEnteredWord,
-    areEnteredWordsValid,
+    selectedWords,
+    selectWord,
+    areSelectedWordsValid,
     copySeedToClipboard,
     finishBackup,
     reset

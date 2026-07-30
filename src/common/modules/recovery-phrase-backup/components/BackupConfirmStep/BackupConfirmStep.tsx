@@ -2,28 +2,30 @@ import React from 'react'
 import { View } from 'react-native'
 
 import Button from '@common/components/Button'
-import Input from '@common/components/Input'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
 import useTheme from '@common/hooks/useTheme'
 import { WordToConfirm } from '@common/modules/recovery-phrase-backup/hooks/useRecoveryPhraseBackup/useRecoveryPhraseBackup'
 import spacings from '@common/styles/spacings'
+import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
+
+import WordOption from './WordOption'
 
 type Props = {
   wordsToConfirm: WordToConfirm[]
-  enteredWords: string[]
-  onEnteredWordChange: (index: number, value: string) => void
-  areEnteredWordsValid: boolean
+  selectedWords: string[]
+  onWordSelect: (index: number, value: string) => void
+  areSelectedWordsValid: boolean
   onGoBackPress: () => void
   onFinishPress: () => void
 }
 
 const BackupConfirmStep = ({
   wordsToConfirm,
-  enteredWords,
-  onEnteredWordChange,
-  areEnteredWordsValid,
+  selectedWords,
+  onWordSelect,
+  areSelectedWordsValid,
   onGoBackPress,
   onFinishPress
 }: Props) => {
@@ -32,39 +34,55 @@ const BackupConfirmStep = ({
 
   return (
     <View style={flexbox.flex1}>
-      <Text weight="semiBold" fontSize={16} style={spacings.mbTy}>
+      <Text weight="semiBold" fontSize={16} style={spacings.mbMd}>
         {t("Let's double check it")}
       </Text>
-      <Text fontSize={14} appearance="secondaryText" style={spacings.mbMd}>
-        {t('Enter the following words from your recovery phrase to confirm you wrote it down.')}
-      </Text>
 
-      <View style={[flexbox.flex1, spacings.mbMd]}>
-        {wordsToConfirm.map(({ position, word }, index) => {
-          const enteredWord = enteredWords[index] || ''
-          const isMismatching = !!enteredWord && enteredWord.trim() !== word
+      <View style={flexbox.flex1}>
+        {wordsToConfirm.map(({ position, word, options }, index) => {
+          const selectedWord = selectedWords[index] || ''
+          const selectedOptionIndex = options.indexOf(selectedWord)
 
           return (
-            <Input
-              key={position}
-              testID={`confirm-recovery-phrase-word-${position}`}
-              label={t('Word #{{position}}', { position })}
-              placeholder={t('Enter word #{{position}}', { position })}
-              value={enteredWord}
-              autoCapitalize="none"
-              autoCorrect={false}
-              onChangeText={(value: string) => onEnteredWordChange(index, value)}
-              isValid={enteredWord.trim() === word}
-              error={
-                isMismatching
-                  ? t("This word doesn't match. Please check what you wrote down.")
-                  : undefined
-              }
-              // The sheet itself is on primaryBackground, so the fields need to stand out from it
-              backgroundColor={theme.secondaryBackground}
-            />
+            <View key={position} style={spacings.mbMd}>
+              <Text fontSize={14} appearance="secondaryText" style={spacings.mbTy}>
+                {t('Select word #{{position}}', { position })}
+              </Text>
+              <View
+                style={[
+                  flexbox.directionRow,
+                  flexbox.alignCenter,
+                  common.borderRadiusPrimary,
+                  { backgroundColor: theme.secondaryBackground }
+                ]}
+              >
+                {options.map((option, optionIndex) => {
+                  // The separator sits on the option's right edge, so the one touching either
+                  // side of the selected option is the selected option's own and its left neighbour's
+                  const isNextToSelectedOption =
+                    optionIndex === selectedOptionIndex || optionIndex + 1 === selectedOptionIndex
+
+                  return (
+                    <WordOption
+                      key={option}
+                      option={option}
+                      position={position}
+                      wordIndex={index}
+                      isSelected={selectedWord === option}
+                      isCorrect={option === word}
+                      hasSeparator={optionIndex < options.length - 1 && !isNextToSelectedOption}
+                      onSelect={onWordSelect}
+                    />
+                  )
+                })}
+              </View>
+            </View>
           )
         })}
+
+        <Text fontSize={12} appearance="secondaryText" style={spacings.mbMd}>
+          {t('Please make sure your recovery phrase is written down correctly.')}
+        </Text>
       </View>
 
       <View style={[flexbox.directionRow, flexbox.alignCenter]}>
@@ -83,7 +101,7 @@ const BackupConfirmStep = ({
           size="large"
           hasBottomSpacing={false}
           style={flexbox.flex1}
-          disabled={!areEnteredWordsValid}
+          disabled={!areSelectedWordsValid}
           onPress={onFinishPress}
         />
       </View>
