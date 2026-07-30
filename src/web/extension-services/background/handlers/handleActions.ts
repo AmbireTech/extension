@@ -9,10 +9,13 @@ import QrKeyIterator from '@common/modules/hardware-wallets/libs/qrKeyIterator/q
 import { storage } from '@common/services/storage'
 import { Action, MethodAction } from '@common/types/actions'
 import { browser } from '@web/constants/browserapi'
+import { ROUTE_CRITICAL_CONTROLLERS } from '@web/constants/criticalControllers'
 import { openSidePanel } from '@web/extension-services/background/webapi/sidePanel'
 import { MessageMeta, Port, PortMessenger } from '@web/extension-services/messengers'
 import LatticeKeyIterator from '@web/modules/hardware-wallet/libs/latticeKeyIterator'
 
+import { resolveInitialRoute } from '../resolveInitialRoute'
+import { serializeControllerForUI } from '../serializeControllerForUI'
 import sessionStorage from '../webapi/sessionStorage'
 import {
   dispatchDappTabFocusFromMainCtrl,
@@ -80,9 +83,30 @@ export const handleActions = async (
     }
     case 'GET_ALL_CONTROLLER_NAMES': {
       if (!pm || !port) return
+      const registeredCtrls = eventEmitterRegistry.values()
       pm.sendToPort(port, '> ui', {
         method: 'allControllerNames',
-        params: { names: eventEmitterRegistry.values().map((c) => c.name) }
+        params: { names: registeredCtrls.map((c) => c.name) }
+      })
+      break
+    }
+    case 'GET_INITIAL_ROUTE': {
+      if (!pm || !port) return
+      const route = await resolveInitialRoute(mainCtrl, port.name === 'request-window')
+      pm.sendToPort(port, '> ui', { method: 'initialRoute', params: { route } })
+
+      // Proactively push the resolved route's critical states in the same burst so
+      // the screen paints without a second request/response round-trip. The UI
+      // requests only the remaining (deferred) controllers afterwards.
+      const criticalControllers = (route && ROUTE_CRITICAL_CONTROLLERS[route]) || []
+      const registeredCtrls = eventEmitterRegistry.values()
+      criticalControllers.forEach((ctrlName) => {
+        const ctrl = registeredCtrls.find((c) => c.name === ctrlName)
+        if (!ctrl) return
+        pm.sendToPort(port, '> ui', {
+          method: ctrlName,
+          params: serializeControllerForUI(ctrl)
+        })
       })
       break
     }
@@ -90,7 +114,10 @@ export const handleActions = async (
       if (!pm) return
 
       const ctrl = eventEmitterRegistry.values().find((c) => c.name === params.controller)
-      pm.send('> ui', { method: params.controller, params: ctrl ?? null })
+      pm.send('> ui', {
+        method: params.controller,
+        params: ctrl ? serializeControllerForUI(ctrl) : null
+      })
 
       break
     }

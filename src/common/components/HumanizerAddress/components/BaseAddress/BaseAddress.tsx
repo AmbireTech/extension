@@ -143,13 +143,16 @@ const BaseAddress: FC<Props> = ({
               >
                 {displayValue}
               </Text>
-              <View style={[!isMobile ? { marginLeft: 2, marginTop: -8 } : {}, flexbox.center]}>
-                <OpenIcon
-                  color={hovered ? theme.primaryText : theme.secondaryText}
-                  width={isMobile ? 14 : 10}
-                  height={isMobile ? 14 : 10}
-                />
-              </View>
+              {/* On mobile the icon clutters the rows and the whole value is tappable anyway */}
+              {!isMobile && (
+                <View style={[{ marginLeft: 2, marginTop: -8 }, flexbox.center]}>
+                  <OpenIcon
+                    color={hovered ? theme.primaryText : theme.secondaryText}
+                    width={10}
+                    height={10}
+                  />
+                </View>
+              )}
             </>
           )}
         </Pressable>

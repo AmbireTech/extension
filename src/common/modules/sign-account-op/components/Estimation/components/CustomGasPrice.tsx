@@ -12,6 +12,7 @@ import ModalHeader from '@common/components/BottomSheet/ModalHeader'
 import Button from '@common/components/Button'
 import FooterGlassView from '@common/components/FooterGlassView'
 import NumberInput from '@common/components/NumberInput'
+import { isMobile } from '@common/config/env'
 import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
@@ -104,7 +105,7 @@ const CustomGasPrice = ({
   sheetRef
 }: Props) => {
   const { t } = useTranslation()
-  const { isNarrowSidePanel } = useCompactActionRequestLayout()
+  const { isNarrowSidePanel, isCompactLayout } = useCompactActionRequestLayout()
   const [customGasPriceError, setCustomGasPriceError] = useState<string | boolean>(false)
   const gasRef = useRef('')
   const maxFeePerGasRef = useRef('')
@@ -221,12 +222,17 @@ const CustomGasPrice = ({
       id="custom-gas-price-sheet"
       sheetRef={sheetRef}
       closeBottomSheet={closeBottomSheet}
-      type={isNarrowSidePanel ? 'bottom-sheet' : 'modal'}
+      type={isCompactLayout ? 'bottom-sheet' : 'modal'}
       animationDuration={0}
       onOpen={resetState}
+      shouldBeClosableOnDrag={isMobile}
       style={isNarrowSidePanel ? { width: '100%' } : undefined}
     >
-      <ModalHeader title={t('Advanced options')} handleClose={closeBottomSheet} />
+      <ModalHeader
+        title={t('Advanced options')}
+        handleClose={closeBottomSheet}
+        style={isMobile ? spacings.mbSm : undefined}
+      />
       <View style={isNarrowSidePanel ? { gap: 12 } : { flexDirection: 'row', gap: 12 }}>
         <View style={isNarrowSidePanel ? undefined : { flex: 1 }}>
           <CustomGasPriceInput
@@ -267,7 +273,7 @@ const CustomGasPrice = ({
         isSimpleBlur={isNarrowSidePanel}
         size="sm"
         style={spacings.mtLg}
-        mobileStyle={{ ...flexbox.directionRow, ...spacings.mtLg }}
+        mobileStyle={{ ...flexbox.directionRow, ...spacings.mtXl }}
         innerContainerStyle={isNarrowSidePanel ? { width: '100%' } : undefined}
       >
         <Button
@@ -275,7 +281,7 @@ const CustomGasPrice = ({
           text={t('Cancel')}
           onPress={closeBottomSheet}
           hasBottomSpacing={false}
-          style={{ flex: 1, ...(!isNarrowSidePanel && { width: 100 }), ...spacings.mrSm }}
+          style={[spacings.mrTy, isCompactLayout ? flexbox.flex1 : { width: 100 }]}
           size="smaller"
         />
         <Button
@@ -283,7 +289,7 @@ const CustomGasPrice = ({
           text={t('Save')}
           onPress={saveCustomGasPrice}
           hasBottomSpacing={false}
-          style={{ flex: 1, ...(!isNarrowSidePanel && { width: 100 }) }}
+          style={isCompactLayout ? flexbox.flex1 : { width: 100 }}
           size="smaller"
         />
       </FooterGlassView>

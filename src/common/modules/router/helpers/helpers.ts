@@ -6,9 +6,6 @@ import { ITransferController } from '@ambire-common/interfaces/transfer'
 import { getBenzinUrlParams } from '@ambire-common/utils/benzin'
 import { AUTH_STATUS } from '@common/modules/auth/constants/authStatus'
 import { ROUTES } from '@common/modules/router/constants/common'
-import { getUiType } from '@common/utils/uiType'
-
-const { isRequestWindow } = getUiType()
 
 /**
  * Maps the current user request to the route that renders it. Shared between the request
@@ -68,7 +65,8 @@ const getInitialRoute = ({
   requestsState,
   swapAndBridgeState,
   transferState,
-  surveyState
+  surveyState,
+  isRequestWindow
 }: {
   keystoreState: IKeystoreController
   authStatus?: AUTH_STATUS
@@ -76,6 +74,7 @@ const getInitialRoute = ({
   swapAndBridgeState: ISwapAndBridgeController
   transferState: ITransferController
   surveyState?: ISurveyController
+  isRequestWindow: boolean
 }) => {
   if (keystoreState.isReadyToStoreKeys && !keystoreState.isUnlocked) {
     return ROUTES.keyStoreUnlock

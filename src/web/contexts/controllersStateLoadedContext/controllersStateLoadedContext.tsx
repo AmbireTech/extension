@@ -1,4 +1,4 @@
-import React, { createContext, ReactNode, useEffect, useMemo, useRef, useState } from 'react'
+import React, { ReactNode, useEffect, useMemo, useRef, useState } from 'react'
 
 import { captureMessage } from '@common/config/analytics/CrashAnalytics.web'
 import { APP_VERSION } from '@common/config/env'
@@ -12,17 +12,15 @@ import { getUiType } from '@common/utils/uiType'
 
 const { isPopup, isSidePanel } = getUiType()
 const isOverlayView = isPopup || isSidePanel
-const MIN_LOADING_TIME = 300
 
 const ControllersStateLoadedProvider = ({ children }: { children: ReactNode }) => {
-  const startTimeRef = useRef(Date.now())
   const unsubscribeRef = useRef<(() => void) | null>(null)
-  const [areControllerStatesLoaded, setAreControllerStatesLoaded] = useState(false)
   const [isStatesLoadingTakingTooLong, setIsStatesLoadingTakingTooLong] = useState(false)
 
-  const { isStoreReady, controllerStore } = useControllerStore()
+  const { isStoreReady, isReadyToLoadRoutes, controllerStore } = useControllerStore()
   const { state: uiControllerState } = useController('UiController')
 
+  // Diagnostics only - it goes into the Sentry payload below and must not gate rendering.
   const isViewReady = useMemo(() => {
     if (!isOverlayView) return true
 
@@ -34,7 +32,7 @@ const ControllersStateLoadedProvider = ({ children }: { children: ReactNode }) =
   }, [uiControllerState])
 
   useEffect(() => {
-    if (areControllerStatesLoaded) return
+    if (isStoreReady) return
 
     unsubscribeRef.current = controllerStore.addEventsListener((eventData: string) => {
       if (eventData === 'controllersLoadingTakingTooLong') {
@@ -66,27 +64,19 @@ const ControllersStateLoadedProvider = ({ children }: { children: ReactNode }) =
         unsubscribeRef.current?.()
       }
     })
-  }, [areControllerStatesLoaded, isViewReady, controllerStore])
+  }, [isViewReady, controllerStore, isStoreReady])
 
-  useEffect(() => {
-    if (!isViewReady || areControllerStatesLoaded) return
-
-    const elapsed = Date.now() - startTimeRef.current
-    const delay = Math.max(0, MIN_LOADING_TIME - elapsed)
-
-    const timeoutId = setTimeout(() => {
-      setAreControllerStatesLoaded(true)
-    }, delay)
-
-    return () => clearTimeout(timeoutId)
-  }, [isViewReady, areControllerStatesLoaded])
-
+  // When the background reports a dashboard route, the store flips
+  // `isReadyToLoadRoutes` as soon as the dashboard subset lands, hiding the splash
+  // before the heavier controllers finish. For other routes no critical subset is
+  // set, so it stays false and we fall back to the full store readiness.
   const contextValue = useMemo<ControllersStateLoadedContextType>(
     () => ({
-      areControllerStatesLoaded: areControllerStatesLoaded && isStoreReady,
+      canRenderRoute: isReadyToLoadRoutes || isStoreReady,
+      areAllControllerStatesLoaded: isStoreReady,
       isStatesLoadingTakingTooLong
     }),
-    [areControllerStatesLoaded, isStoreReady, isStatesLoadingTakingTooLong]
+    [isReadyToLoadRoutes, isStoreReady, isStatesLoadingTakingTooLong]
   )
 
   return (

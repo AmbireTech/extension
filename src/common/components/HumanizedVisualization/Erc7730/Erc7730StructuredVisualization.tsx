@@ -9,6 +9,7 @@ import EditApproval from '@common/components/HumanizedVisualization/EditApproval
 import { Erc7730StructuredVisualizationProps } from '@common/components/HumanizedVisualization/Erc7730/interfaces'
 import MobileErc7730SummaryVisualization from '@common/components/HumanizedVisualization/Erc7730/MobileErc7730SummaryVisualization'
 import HumanizerAddress from '@common/components/HumanizerAddress'
+import ManifestImage from '@common/components/ManifestImage'
 import Text from '@common/components/Text'
 import TokenOrNft from '@common/components/TokenOrNft'
 import { isMobile } from '@common/config/env'
@@ -18,9 +19,6 @@ import useTheme from '@common/hooks/useTheme'
 import spacings, { SPACING_SM, SPACING_TY } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { getUiType } from '@common/utils/uiType'
-import ManifestImage from '@web/components/ManifestImage'
-
-const { isSidePanel } = getUiType()
 
 import {
   getDetailedActionParts,
@@ -36,6 +34,8 @@ import {
   shouldShowErc7730SpenderRowInSummary,
   shouldShowErc7730SummaryRowLabel
 } from './helpers'
+
+const { isSidePanel } = getUiType()
 
 const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = ({
   item,
@@ -107,7 +107,8 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
                 flexbox.justifyEnd,
                 {
                   minWidth: 0,
-                  maxWidth: '100%'
+                  maxWidth: '100%',
+                  flexShrink: 1
                 }
               ]}
             >

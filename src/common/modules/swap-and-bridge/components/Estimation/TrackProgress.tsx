@@ -182,9 +182,9 @@ const TrackProgress: FC<Props> = ({ activeRoute, handleClose }) => {
                 style={[
                   flexbox.directionRow,
                   flexbox.justifySpaceBetween,
-                  {
-                    alignItems: 'baseline'
-                  },
+                  // Not baseline, because a wrapping token symbol moves the card's
+                  // text baseline and vertically offsets it from the other card.
+                  flexbox.alignCenter,
                   spacings.mbLg
                 ]}
               >

@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-floating-promises */
 import React, { FC, useCallback } from 'react'
 import { View } from 'react-native'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import { Network } from '@ambire-common/interfaces/network'
 import { AccountOpStatus } from '@ambire-common/libs/accountOp/types'
@@ -12,17 +13,18 @@ import RefreshIcon from '@common/assets/svg/RefreshIcon'
 import SpeedUpIcon from '@common/assets/svg/SpeedUpIcon'
 import Button from '@common/components/Button'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
+import { isMobile } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
-import spacings, { SPACING_TY } from '@common/styles/spacings'
+import spacings, { SPACING_SM, SPACING_TY } from '@common/styles/spacings'
 import { setStringAsync } from '@common/utils/clipboard'
 import { openInTab } from '@common/utils/links'
 
-import getStyles from './styles'
 import { EXPLORER_LINKS_DISABLED_TOOLTIP } from './constants'
+import getStyles from './styles'
 import { SubmittedAccountOpLike } from './types'
 
 type Props = {
@@ -62,6 +64,7 @@ const Footer: FC<Props> = ({
   status
 }) => {
   const { styles } = useTheme(getStyles)
+  const { bottom } = useSafeAreaInsets()
   const { addToast } = useToast()
   const { isCompactSidePanelLayout } = useCompactActionRequestLayout()
   const {
@@ -220,6 +223,122 @@ const Footer: FC<Props> = ({
 
   if (!canRepeatTransaction && !isMinedTransaction) return null
 
+  const buttonSize = isMobile ? 'regular' : 'smaller'
+
+  const openExplorerButton = (
+    <View
+      style={isMobile ? styles.footerButtonWrapper : undefined}
+      dataSet={createGlobalTooltipDataSet({
+        id: `open-explorer-disabled-${submittedAccountOp.id}`,
+        content: t(EXPLORER_LINKS_DISABLED_TOOLTIP),
+        hidden: !areExplorerButtonsDisabled
+      })}
+    >
+      <Button
+        text={t('Open explorer')}
+        type="outline"
+        onPress={handleOpenExplorer}
+        size={buttonSize}
+        disabled={areExplorerButtonsDisabled}
+        hasBottomSpacing={false}
+        style={[
+          styles.footerButton,
+          isCompactSidePanelLayout && {
+            width: '100%',
+            ...spacings.plTy,
+            ...spacings.prTy,
+            flexShrink: 1
+          }
+        ]}
+        childrenPosition="left"
+        testID="view-transaction-link"
+      >
+        <OpenIcon style={spacings.mrMi} width={16} height={16} />
+      </Button>
+    </View>
+  )
+
+  const repeatButton = (
+    <View
+      style={isMobile ? styles.footerButtonWrapper : undefined}
+      dataSet={createGlobalTooltipDataSet({
+        id: `repeat-disabled-${submittedAccountOp.id}`,
+        content: isExternal
+          ? t('Incoming transactions cannot be repeated')
+          : t('Switch to this account to proceed'),
+        hidden: canRepeatTransaction
+      })}
+    >
+      <Button
+        type="tertiary"
+        text={t(shouldShowSpeedUp ? 'Speed up' : 'Repeat')}
+        onPress={shouldShowSpeedUp ? handleSpeedUpTransaction : handleRepeatTransaction}
+        size={buttonSize}
+        hasBottomSpacing={false}
+        disabled={!canRepeatTransaction}
+        style={[
+          styles.footerButton,
+          !isMobile && !isCompactSidePanelLayout && spacings.mrTy,
+          isCompactSidePanelLayout && {
+            width: '100%',
+            ...spacings.plTy,
+            ...spacings.prTy,
+            flexShrink: 1
+          }
+        ]}
+        childrenPosition="left"
+      >
+        {shouldShowSpeedUp ? (
+          <SpeedUpIcon style={spacings.mrMi} width={16} height={16} />
+        ) : (
+          <RefreshIcon style={spacings.mrMi} width={16} height={16} />
+        )}
+      </Button>
+    </View>
+  )
+
+  const copyLinkButton = (
+    <View
+      dataSet={createGlobalTooltipDataSet({
+        id: `copy-explorer-link-disabled-${submittedAccountOp.id}`,
+        content: t(EXPLORER_LINKS_DISABLED_TOOLTIP),
+        hidden: !areExplorerButtonsDisabled
+      })}
+    >
+      <Button
+        text={t('Copy link')}
+        onPress={handleCopyTransaction}
+        type="primary"
+        size={buttonSize}
+        disabled={areExplorerButtonsDisabled}
+        hasBottomSpacing={false}
+        style={[
+          styles.footerButton,
+          isCompactSidePanelLayout && {
+            width: '100%',
+            ...spacings.plTy,
+            ...spacings.prTy,
+            flexShrink: 1
+          }
+        ]}
+        childrenPosition="left"
+      >
+        <CopyIcon style={spacings.mrMi} width={16} height={16} />
+      </Button>
+    </View>
+  )
+
+  if (isMobile)
+    return (
+      <View style={[styles.footer, { paddingBottom: bottom || SPACING_SM }]}>
+        <View style={styles.footerButtonsRow}>
+          {openExplorerButton}
+          {repeatButton}
+        </View>
+        {copyLinkButton}
+      </View>
+    )
+
   return (
     <View style={[styles.footer, isCompactSidePanelLayout && spacings.phSm]}>
       <View
@@ -232,36 +351,7 @@ const Footer: FC<Props> = ({
           }
         ]}
       >
-        <View
-          dataSet={createGlobalTooltipDataSet({
-            id: `open-explorer-disabled-${submittedAccountOp.id}`,
-            content: t(EXPLORER_LINKS_DISABLED_TOOLTIP),
-            hidden: !areExplorerButtonsDisabled
-          })}
-        >
-          <Button
-            text={t('Open explorer')}
-            type="outline"
-            onPress={handleOpenExplorer}
-            size="smaller"
-            disabled={areExplorerButtonsDisabled}
-            hasBottomSpacing={false}
-            style={[
-              styles.footerButton,
-              isCompactSidePanelLayout && {
-                width: '100%',
-                ...spacings.plTy,
-                ...spacings.prTy,
-                flexShrink: 1
-              }
-            ]}
-            childrenPosition="left"
-            testID="view-transaction-link"
-          >
-            <OpenIcon style={spacings.mrMi} width={16} height={16} />
-          </Button>
-        </View>
-
+        {openExplorerButton}
         <View
           style={[
             styles.footerRightButtonsGroup,
@@ -273,70 +363,8 @@ const Footer: FC<Props> = ({
             }
           ]}
         >
-          <View
-            dataSet={createGlobalTooltipDataSet({
-              id: `repeat-disabled-${submittedAccountOp.id}`,
-              content: isExternal
-                ? t('Incoming transactions cannot be repeated')
-                : t('Switch to this account to proceed'),
-              hidden: canRepeatTransaction
-            })}
-          >
-            <Button
-              type="tertiary"
-              text={t(shouldShowSpeedUp ? 'Speed up' : 'Repeat')}
-              onPress={shouldShowSpeedUp ? handleSpeedUpTransaction : handleRepeatTransaction}
-              size="smaller"
-              hasBottomSpacing={false}
-              disabled={!canRepeatTransaction}
-              style={[
-                styles.footerButton,
-                !isCompactSidePanelLayout && spacings.mrTy,
-                isCompactSidePanelLayout && {
-                  width: '100%',
-                  ...spacings.plTy,
-                  ...spacings.prTy,
-                  flexShrink: 1
-                }
-              ]}
-              childrenPosition="left"
-            >
-              {shouldShowSpeedUp ? (
-                <SpeedUpIcon style={spacings.mrMi} width={16} height={16} />
-              ) : (
-                <RefreshIcon style={spacings.mrMi} width={16} height={16} />
-              )}
-            </Button>
-          </View>
-
-          <View
-            dataSet={createGlobalTooltipDataSet({
-              id: `copy-explorer-link-disabled-${submittedAccountOp.id}`,
-              content: t(EXPLORER_LINKS_DISABLED_TOOLTIP),
-              hidden: !areExplorerButtonsDisabled
-            })}
-          >
-            <Button
-              text={t('Copy link')}
-              onPress={handleCopyTransaction}
-              type="primary"
-              size="smaller"
-              disabled={areExplorerButtonsDisabled}
-              hasBottomSpacing={false}
-              style={[
-                styles.footerButton,
-                isCompactSidePanelLayout && {
-                  width: '100%',
-                  ...spacings.plTy,
-                  ...spacings.prTy,
-                  flexShrink: 1
-                }
-              ]}
-              childrenPosition="left"
-            >
-              <CopyIcon style={spacings.mrMi} width={16} height={16} />
-            </Button>
-          </View>
+          {repeatButton}
+          {copyLinkButton}
         </View>
       </View>
     </View>

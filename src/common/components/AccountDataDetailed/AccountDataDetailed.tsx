@@ -5,6 +5,7 @@ import AccountAddress from '@common/components/AccountAddress'
 import AccountBadges from '@common/components/AccountBadges'
 import Avatar from '@common/components/Avatar'
 import Text from '@common/components/Text'
+import { isWeb } from '@common/config/env'
 import useController from '@common/hooks/useController'
 import useReverseLookup from '@common/hooks/useReverseLookup'
 import spacings from '@common/styles/spacings'
@@ -59,7 +60,7 @@ const AccountDataDetailed = () => {
               withCopy={false}
             />
           ) : (
-            <AccountAddress {...reverseLookup} address={account.addr} />
+            <AccountAddress {...reverseLookup} address={account.addr} withCopy={isWeb} />
           )}
         </View>
       </View>
