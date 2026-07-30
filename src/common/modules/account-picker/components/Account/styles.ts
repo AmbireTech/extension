@@ -6,7 +6,6 @@ import flexbox from '@common/styles/utils/flexbox'
 
 interface Style {
   container: ViewStyle
-  deployedOnContainer: ViewStyle
   networkIcon: ViewStyle
   label: TextStyle
 }
@@ -21,15 +20,6 @@ const getStyles = (theme: ThemeProps) =>
       ...spacings.pvSm,
       width: '100%',
       height: 48
-    },
-    deployedOnContainer: {
-      ...flexbox.directionRow,
-      ...flexbox.alignCenter,
-      ...flexbox.justifySpaceBetween,
-      ...spacings.phSm,
-      ...spacings.pbSm,
-      width: '100%',
-      backgroundColor: theme.secondaryBackground
     },
     networkIcon: {
       borderRadius: 50,

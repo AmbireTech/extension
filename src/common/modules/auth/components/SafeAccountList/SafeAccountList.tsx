@@ -1,10 +1,11 @@
 import React, { useCallback, useMemo } from 'react'
 
-import { Account as AccountInterface, ImportStatus } from '@ambire-common/interfaces/account'
+import { Account as AccountInterface } from '@ambire-common/interfaces/account'
 import { SafeAccountByOwner } from '@ambire-common/interfaces/safe'
 import ScrollableWrapper, { WRAPPER_TYPES } from '@common/components/ScrollableWrapper'
-import Account from '@common/modules/account-picker/components/Account'
 import flexbox from '@common/styles/utils/flexbox'
+
+import SafeAccountRow from './SafeAccountRow'
 
 type Props = {
   accounts: SafeAccountByOwner[]
@@ -41,33 +42,15 @@ const SafeAccountList = ({
     ({ item, index }: { item: SafeAccountByOwner; index: number }) => {
       const normalizedAddress = item.addr.toLowerCase()
       const importedAccount = importedAccountByAddress.get(normalizedAddress)
-      const account = importedAccount
-        ? {
-            ...item,
-            preferences: {
-              ...item.preferences,
-              label: importedAccount.preferences.label
-            }
-          }
-        : item
 
       return (
-        <Account
-          account={account}
-          type="smart"
-          unused={false}
+        <SafeAccountRow
+          account={item}
+          importedAccount={importedAccount}
           withBottomSpacing={index < accounts.length - 1}
           isSelected={selectedAddressSet.has(normalizedAddress)}
           onSelect={handleSelectAccount}
           onDeselect={handleDeselectAccount}
-          importStatus={
-            importedAccount ? ImportStatus.ImportedWithTheSameKeys : ImportStatus.NotImported
-          }
-          displayTypeBadge={false}
-          displayTypePill={false}
-          deployedOnNetworks={item.deployedOn}
-          hideAddressWhenAccountHasLabel
-          shouldAlwaysShortenAddress
         />
       )
     },

@@ -44,9 +44,9 @@ const Account = ({
   displayTypeBadge = true,
   displayTypePill = true,
   shouldBeDisplayedAsNew = false,
-  deployedOnNetworks,
-  hideAddressWhenAccountHasLabel = false,
-  shouldAlwaysShortenAddress = false
+  identityDisplayMode = 'responsive',
+  selectOnRowPress = true,
+  footer
 }: {
   account: AccountWithNetworkMeta
   type: 'basic' | 'smart' | 'linked'
@@ -60,9 +60,9 @@ const Account = ({
   displayTypeBadge?: boolean
   displayTypePill?: boolean
   shouldBeDisplayedAsNew?: boolean
-  deployedOnNetworks?: bigint[]
-  hideAddressWhenAccountHasLabel?: boolean
-  shouldAlwaysShortenAddress?: boolean
+  identityDisplayMode?: 'responsive' | 'compact'
+  selectOnRowPress?: boolean
+  footer?: React.ReactNode
 }) => {
   const { isLoading: isDomainResolving, name: reverseLookupName } = useReverseLookup({
     address: account.addr
@@ -76,29 +76,27 @@ const Account = ({
   const isUsedOnNetworksLoading = account.usedOnNetworks !== null && !usedOnNetworks
   const hasUsedOnNetworks = !!usedOnNetworks && usedOnNetworks.length > 0
   const shouldShowUsedOnNetworks =
-    deployedOnNetworks === undefined && !unused && (hasUsedOnNetworks || isUsedOnNetworksLoading)
+    identityDisplayMode === 'responsive' &&
+    !unused &&
+    (hasUsedOnNetworks || isUsedOnNetworksLoading)
 
-  const toggleSelectedState = useCallback(() => {
-    if (isSelected) {
-      !!onDeselect && onDeselect(account)
-    } else {
-      !!onSelect && onSelect(account)
-    }
-  }, [isSelected, onSelect, onDeselect, account])
-
-  const setSelectedState = useCallback(
+  const handleSelectionChange = useCallback(
     (shouldSelect: boolean) => {
       if (shouldSelect) {
-        !!onSelect && onSelect(account)
+        onSelect(account)
       } else {
-        !!onDeselect && onDeselect(account)
+        onDeselect(account)
       }
     },
     [account, onDeselect, onSelect]
   )
 
+  const handlePress = useCallback(() => {
+    handleSelectionChange(!isSelected)
+  }, [handleSelectionChange, isSelected])
+
   const formattedAddress = useMemo(() => {
-    if (shouldAlwaysShortenAddress) return shortenAddress(account.addr, 16)
+    if (identityDisplayMode === 'compact') return shortenAddress(account.addr, 16)
     if (minWidthSize('m') || reverseLookupName || isDomainResolving) {
       return shortenAddress(account.addr, 16)
     }
@@ -111,12 +109,15 @@ const Account = ({
     return shortenAddress(account.addr, 16)
   }, [
     account.addr,
+    identityDisplayMode,
     reverseLookupName,
     isDomainResolving,
     maxWidthSize,
-    minWidthSize,
-    shouldAlwaysShortenAddress
+    minWidthSize
   ])
+
+  const shouldShowImportedAddress =
+    !account.preferences.label || (!isMobile && identityDisplayMode === 'responsive')
 
   const handleCopyAddress = useCallback(() => {
     setStringAsync(account.addr)
@@ -133,9 +134,11 @@ const Account = ({
         withBottomSpacing ? spacings.mbTy : spacings.mb0,
         common.borderRadiusPrimary,
         common.hidden,
+        // @ts-expect-error react-native-web supports `cursor`, but it's missing from React Native StyleProp<ViewStyle> types
+        isWeb && !selectOnRowPress && { cursor: 'default' },
         { backgroundColor: theme.neutral200 }
       ]}
-      onPress={isDisabled ? undefined : toggleSelectedState}
+      onPress={isDisabled || !selectOnRowPress ? undefined : handlePress}
       testID={`add-account-${account.addr}`}
     >
       <View
@@ -148,7 +151,7 @@ const Account = ({
         <FatToggle
           id={`add-account-toggle-${account.addr}`}
           isOn={isSelected}
-          onToggle={setSelectedState}
+          onToggle={handleSelectionChange}
           disabled={isDisabled}
           stopPropagation
           style={flexbox.alignSelfStart}
@@ -184,8 +187,7 @@ const Account = ({
                   >
                     {account.preferences.label}
                   </Text>
-                  {(!account.preferences.label ||
-                    (!isMobile && !hideAddressWhenAccountHasLabel)) && (
+                  {shouldShowImportedAddress && (
                     <Text
                       fontSize={14}
                       appearance="secondaryText"
@@ -230,7 +232,7 @@ const Account = ({
               )}
 
               {!isMobile && (maxWidthSize('l') || isAccountImported || reverseLookupName) && (
-                <Pressable onPress={handleCopyAddress}>
+                <Pressable style={{ cursor: 'pointer' }} onPress={handleCopyAddress}>
                   <CopyIcon width={14} height={14} />
                 </Pressable>
               )}
@@ -305,23 +307,7 @@ const Account = ({
           </View>
         </View>
       </View>
-      {!!deployedOnNetworks?.length && (
-        <View style={styles.deployedOnContainer}>
-          <Text appearance="secondaryText" fontSize={12}>
-            {t('Deployed on:')}
-          </Text>
-          <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-            {deployedOnNetworks.map((chainId, index) => (
-              <NetworkIcon
-                key={chainId.toString()}
-                id={chainId.toString()}
-                style={index === 0 ? { marginLeft: 0 } : { marginLeft: -11 }}
-                size={22}
-              />
-            ))}
-          </View>
-        </View>
-      )}
+      {footer}
       {[
         ImportStatus.ImportedWithSomeOfTheKeys,
         ImportStatus.ImportedWithDifferentKeys,
