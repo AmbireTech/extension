@@ -18,23 +18,16 @@ type Props = {
   seedId: string
   sheetRef: React.RefObject<Modalize>
   closeBottomSheet: () => void
-  onBackedUp?: () => void
 }
 
-const RecoveryPhraseBackupBottomSheet = ({
-  seedId,
-  sheetRef,
-  closeBottomSheet,
-  onBackedUp
-}: Props) => {
+const RecoveryPhraseBackupBottomSheet = ({ seedId, sheetRef, closeBottomSheet }: Props) => {
   const { t } = useTranslation()
   const { addToast } = useToast()
 
   const handleBackedUp = useCallback(() => {
     addToast(t('Recovery phrase backed up successfully'))
     closeBottomSheet()
-    onBackedUp?.()
-  }, [addToast, closeBottomSheet, onBackedUp, t])
+  }, [addToast, closeBottomSheet, t])
 
   const {
     step,
