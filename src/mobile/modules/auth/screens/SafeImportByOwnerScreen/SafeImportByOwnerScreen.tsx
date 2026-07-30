@@ -48,7 +48,9 @@ const SafeImportByOwnerScreen = () => {
           text={t('Import')}
           hasBottomSpacing={false}
           onPress={handleImport}
-          disabled={!isValid || isSearching || isImporting}
+          disabled={
+            !isValid || isSearching || isImporting || (hasSearchCompleted && !safeAccounts.length)
+          }
         />
       }
     >
