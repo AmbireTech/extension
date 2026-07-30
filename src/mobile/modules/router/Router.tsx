@@ -78,9 +78,11 @@ const Router = () => {
 
   // Dismiss the keyboard the moment the app leaves the foreground so iOS never
   // snapshots a visible keyboard, which would otherwise flash on the next launch.
+  // Not animated, because the app suspends mid-animation and the keyboard
+  // position values freeze at whatever height the last delivered frame had.
   useEffect(() => {
     const sub = AppState.addEventListener('change', (next) => {
-      if (next !== 'active') KeyboardController.dismiss()
+      if (next !== 'active') KeyboardController.dismiss({ animated: false })
     })
 
     return () => sub.remove()

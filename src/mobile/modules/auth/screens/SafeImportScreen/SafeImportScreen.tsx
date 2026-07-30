@@ -83,9 +83,7 @@ const SafeImportScreen = () => {
                     error={value.length ? errors?.safeAddress?.message : ''}
                     autoCorrect={false}
                     onSubmitEditing={handleFormSubmit}
-                    childrenBeforeButtons={
-                      !isAddressValid ? <AddressScanButton onScanned={onChange} /> : null
-                    }
+                    button={!isAddressValid ? <AddressScanButton onScanned={onChange} /> : null}
                   />
                 )
               }}

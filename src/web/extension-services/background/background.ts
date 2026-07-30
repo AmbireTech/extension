@@ -286,16 +286,24 @@ providerRequestTransport.reply(async ({ method, id, providerId, params }, meta) 
   // wait for mainCtrl to be initialized before handling dapp requests
   while (!mainCtrl || !walletStateCtrl) await wait(200)
 
-  const tabId = meta.sender?.tab?.id
-  const windowId = meta.sender?.tab?.windowId
-  if (tabId === undefined || windowId === undefined || !meta.sender?.url) {
+  const senderTab = meta.sender?.tab
+  const tabId = senderTab?.id
+  const windowId = senderTab?.windowId
+  if (!senderTab || tabId === undefined || windowId === undefined || !meta.sender?.url) {
     return
   }
 
   const session = await mainCtrl.dapps.getOrCreateDappSession({
     tabId,
     windowId,
-    url: meta.sender.url
+    url: meta.sender.url,
+    // SECURITY: `frameId` and `tab.url` come from the browser, not from the page, so an embedded
+    // dApp cannot lie about sitting inside a phishing top-level document. `sender.url` is the
+    // requesting frame's URL, while `sender.tab.url` is the tab's top-level document URL.
+    // Default to the top frame when the browser omits `frameId`, so the frame context is always
+    // refreshed on the extension - leaving it undefined would preserve a previous visit's value.
+    frameId: meta.sender.frameId ?? 0,
+    topFrameUrl: senderTab.url
   })
 
   await mainCtrl.dapps.initialLoadPromise
@@ -821,12 +829,9 @@ try {
     // wait for mainCtrl to be initialized before handling dapp requests
     while (!mainCtrl) await wait(200)
 
-    // Match by the session's own tabId: keys are `windowId-tabId-dappId`, so the
+    // Sessions are matched by their own tabId: keys are `windowId-tabId-dappId`, so the
     // old `${tabId}-` prefix never matched and leaked sessions past tab close.
-    const { dappSessions } = mainCtrl.dapps
-    for (const key of Object.keys(dappSessions)) {
-      if (dappSessions[key]?.tabId === tabId) mainCtrl.dapps.deleteDappSession(key)
-    }
+    mainCtrl.dapps.deleteDappSessionsForTab(tabId)
   })
 } catch (error) {
   console.error('Failed to register browser.tabs.onRemoved.addListener', error)

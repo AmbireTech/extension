@@ -103,10 +103,7 @@ const SignMessageScreen = () => {
                       <View style={flexbox.flex1}>
                         <HoldToProceedButton
                           testID="button-sign"
-                          style={{
-                            ...flexbox.alignSelfEnd,
-                            minWidth: 128
-                          }}
+                          style={flexbox.alignSelfEnd}
                           textStyle={{
                             whiteSpace: 'nowrap'
                           }}
