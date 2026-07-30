@@ -2,11 +2,13 @@ import React from 'react'
 import { StyleProp, TextProps, TextStyle, View, ViewStyle } from 'react-native'
 import { SvgProps } from 'react-native-svg'
 
+import CloseIcon from '@common/assets/svg/CloseIcon'
 import ErrorIcon from '@common/assets/svg/ErrorIcon'
 import InfoIcon from '@common/assets/svg/InfoIcon'
 import SuccessIcon from '@common/assets/svg/SuccessIcon'
 import WarningIcon from '@common/assets/svg/WarningIcon'
 import Button, { Props as ButtonProps } from '@common/components/Button'
+import HoverablePressable from '@common/components/HoverablePressable'
 import { isMobile } from '@common/config/env'
 import useTheme from '@common/hooks/useTheme'
 import { THEME_TYPES } from '@common/styles/themeConfig'
@@ -31,6 +33,7 @@ interface Props {
   isButtonTopRight?: boolean
   customIcon?: React.FC<SvgProps>
   withIcon?: boolean
+  onClose?: () => void
   testID?: string
 }
 
@@ -118,6 +121,7 @@ const Alert = ({
   isButtonTopRight = false,
   customIcon: CustomIcon,
   withIcon = true,
+  onClose,
   testID
 }: Props) => {
   const Icon = ICON_MAP[type]
@@ -152,6 +156,21 @@ const Alert = ({
       />
     )
   }
+
+  const closeButton = !!onClose && (
+    <HoverablePressable
+      onPress={onClose}
+      hitSlop={8}
+      style={{
+        width: 24,
+        height: 24,
+        ...flexbox.center
+      }}
+      testID="alert-close-button"
+    >
+      <CloseIcon color={theme.iconPrimary} strokeWidth="2" width={12} height={12} />
+    </HoverablePressable>
+  )
 
   const titleContent = !!title && (
     // flexShrink lets a long title wrap within the row on mobile instead of
@@ -221,6 +240,7 @@ const Alert = ({
               <View style={[flexbox.directionRow, flexbox.alignStart, titleRowMarginBottom]}>
                 {!!title && <View style={[flexbox.flex1, spacings.mrSm]}>{titleContent}</View>}
                 {renderButton({ flexShrink: 0 })}
+                {closeButton}
               </View>
               {textContent}
             </View>
@@ -237,7 +257,8 @@ const Alert = ({
                   )}
                 </View>
               )}
-              {titleContent}
+              <View style={flexbox.flex1}>{titleContent}</View>
+              {closeButton}
             </View>
             {textContent}
             {renderButton({ alignSelf: 'flex-end', ...spacings.mtTy })}

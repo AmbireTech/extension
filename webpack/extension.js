@@ -27,7 +27,6 @@ const { CJS_RULE, hardenTerser, ROOT_DIR } = require('./shared')
 // If only (1) is enabled, runtime code is removed but wrapped modules may remain, which can cause
 // runtime failures due to missing LavaMoat bootstrapping symbols.
 const LAVAMOAT_UNSAFE_ENTRIES = new Set([
-  'rootTheme',
   'ambire-inpage',
   'ethereum-inpage',
   'content-script',
@@ -150,8 +149,7 @@ function createLavaMoatPlugins() {
       // Inline the SES lockdown shim directly into the background and main UI chunks.
       // This is critical for MV3 service workers where we can't control
       // script load order via <script> tags and ensures that popup/tab UIs
-      // run under SES lockdown. rootTheme runs outside SES for now due to
-      // immutable-arraybuffer shim limitations.
+      // run under SES lockdown.
       // Note: Chunk files (e.g. 738.js in build/webpack-prod) do NOT need inline SES:
       // they are always loaded by the webpack runtime inside background.js or
       // main.js (including background-*.js / main-*.js variants) and execute
@@ -261,7 +259,6 @@ module.exports = async function buildExtension(
   config.entry = Object.fromEntries(
     Object.entries({
       main: config.entry[0],
-      rootTheme: './src/web/public/rootTheme.ts',
       background: './src/web/extension-services/background/background.ts',
       'content-script':
         './src/web/extension-services/content-script/content-script-messenger-bridge.ts',
@@ -296,6 +293,14 @@ module.exports = async function buildExtension(
       from: './src/web/public/manifest.json',
       to: 'manifest.json',
       transform: (content) => processManifest(content, config.mode)
+    },
+    // Plain static file (like style.css/manifest.json): rootTheme.js has zero
+    // imports and must load as a render-blocking <head> script before paint, so
+    // it is shipped outside the webpack bundle for a stable filename and to keep
+    // it out of the LavaMoat/SES/HMR runtime coupling.
+    {
+      from: './src/web/public/rootTheme.js',
+      to: 'rootTheme.js'
     },
     {
       from: './node_modules/webextension-polyfill/dist/browser-polyfill.min.js',
@@ -344,19 +349,19 @@ module.exports = async function buildExtension(
       template: './src/web/public/index.html',
       filename: 'index.html',
       inject: 'body', // to auto inject the main.js bundle in the body
-      chunks: ['runtime', 'rootTheme', 'main'] // include only chunks from the main entry
+      chunks: ['runtime', 'main'] // include only chunks from the main entry
     }),
     new HtmlWebpackPlugin({
       template: './src/web/public/request-window.html',
       filename: 'request-window.html',
       inject: 'body', // to auto inject the main.js bundle in the body
-      chunks: ['runtime', 'rootTheme', 'main'] // include only chunks from the main entry
+      chunks: ['runtime', 'main'] // include only chunks from the main entry
     }),
     new HtmlWebpackPlugin({
       template: './src/web/public/tab.html',
       filename: 'tab.html',
       inject: 'body', // to auto inject the main.js bundle in the body
-      chunks: ['runtime', 'rootTheme', 'main'] // include only chunks from the main entry
+      chunks: ['runtime', 'main'] // include only chunks from the main entry
     }),
     new CopyPlugin({ patterns: extensionCopyPatterns })
   ]
@@ -495,13 +500,11 @@ module.exports = async function buildExtension(
 
     // Fixes websocket errors in the background,
     // the inpage script HMR conflicting with web page websockets
-    // and rootTheme breaking HMR
     const noHmrChunkNames = new Set([
       'ambire-inpage',
       'ethereum-inpage',
       'content-script',
       'background',
-      'rootTheme',
       ...(isGecko ? ['content-script-ambire-injection', 'content-script-ethereum-injection'] : [])
     ])
 

@@ -5,6 +5,7 @@ import AccountAddress from '@common/components/AccountAddress'
 import AccountBadges from '@common/components/AccountBadges'
 import Avatar from '@common/components/Avatar'
 import Text from '@common/components/Text'
+import { isWeb } from '@common/config/env'
 import useController from '@common/hooks/useController'
 import useReverseLookup from '@common/hooks/useReverseLookup'
 import flexbox from '@common/styles/utils/flexbox'
@@ -40,7 +41,7 @@ const AccountDataDetailed = () => {
           <AccountBadges accountData={account} />
         </View>
         <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-          <AccountAddress {...reverseLookup} address={account.addr} />
+          <AccountAddress {...reverseLookup} address={account.addr} withCopy={isWeb} />
         </View>
       </View>
     </View>

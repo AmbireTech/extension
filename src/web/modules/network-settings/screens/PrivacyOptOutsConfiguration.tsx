@@ -2,6 +2,7 @@ import React from 'react'
 import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 
+import LightningIcon from '@common/assets/svg/LightningIcon'
 import SearchIcon from '@common/assets/svg/SearchIcon'
 import Button from '@common/components/Button'
 import { PanelBackButton } from '@common/components/Panel/Panel'
@@ -43,6 +44,14 @@ const PrivacyOptOutsConfiguration = () => {
             )}
             icon={<SearchIcon width={24} height={24} />}
             flag="tokenAndDefiAutoDiscovery"
+          />
+          <OptOutControlOption
+            title={t('ERC-4337 smart account features')}
+            description={t(
+              'Use bundlers and paymasters for smart account gas estimation, gas tank, sponsored gas, and token fee payments.'
+            )}
+            icon={<LightningIcon width={24} height={24} color={theme.iconPrimary} />}
+            flag="erc4337"
           />
         </View>
         <View style={[flexbox.directionRow, flexbox.alignSelfEnd]}>

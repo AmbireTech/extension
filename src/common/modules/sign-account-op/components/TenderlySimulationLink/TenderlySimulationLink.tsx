@@ -2,6 +2,7 @@ import React, { FC, useCallback } from 'react'
 import { Linking, View, ViewStyle } from 'react-native'
 
 import Button from '@common/components/Button'
+import { isMobile } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import useToast from '@common/hooks/useToast'
 
@@ -30,11 +31,12 @@ const TenderlySimulationLink: FC<Props> = ({ tenderlyLink, text, renderIcon, sty
     <View style={style}>
       <Button
         type="outline"
-        size="small"
+        size={isMobile ? 'regular' : 'small'}
         text={text}
         onPress={handleOpenTenderly}
         hasBottomSpacing={false}
         childrenPosition="right"
+        style={isMobile ? { height: 44 } : {}}
         childrenContainerStyle={iconContainerStyle}
       >
         {renderIcon}

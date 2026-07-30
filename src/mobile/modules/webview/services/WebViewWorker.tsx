@@ -19,6 +19,7 @@ import {
   rejectWcAuthenticate,
   respondToWalletConnectRequest
 } from '@mobile/modules/wallet-connect/services/walletConnectService'
+import WebviewDevServerError from '@mobile/modules/webview/components/WebviewDevServerError'
 import getWebviewBundleUri from '@mobile/modules/webview/services/getWebviewBundleUri'
 import materializeWorkerBundle from '@mobile/modules/webview/services/materializeWorkerBundle'
 import ledgerTransportService from '@mobile/services/ledger/ledgerTransportService'
@@ -39,6 +40,7 @@ import { decode, encode } from './bridgeCodec'
 // - Simulator/emulator: auto-detected via Device.isDevice; uses platform loopback (localhost / 10.0.2.2)
 // - Real device: set WEBVIEW_DEV_HOST to the host machine's LAN IP in .env
 const WEBVIEW_DEV_SERVER_PORT = 8182
+const DEV_SERVER_PROBE_INTERVAL = 2000
 const getDevServerUrl = () => {
   if (!isDevice) {
     return Platform.OS === 'android'
@@ -79,6 +81,53 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, object>((_, ref) => {
   // Worker bundle URI. In prod it is materialized from the OTA-shipped copy into a writable
   // dir (so OTA updates reach it); empty until ready, which gates the WebView mount below.
   const [prodBundleUri, setProdBundleUri] = useState('')
+
+  // Dev only. The worker bundle is a subresource of the WebView's inline HTML, so
+  // a missing dev server fires neither onError nor onHttpError - the app just hangs
+  // on the splash with nothing but a console warning. Optimistic, so the happy path
+  // mounts the WebView without waiting for the first probe.
+  const [isDevServerReachable, setIsDevServerReachable] = useState(true)
+  const wasDevServerReachableRef = useRef(true)
+  // Sticky, so the notice stays up until the worker actually boots instead of
+  // flashing back to a blank screen the moment the dev server answers again.
+  const [hasDevServerFailed, setHasDevServerFailed] = useState(false)
+
+  useEffect(() => {
+    if (!__DEV__ || isReady) return undefined
+
+    let isActive = true
+    let probeTimeoutId: ReturnType<typeof setTimeout> | null = null
+
+    const probe = async () => {
+      let isReachable = false
+      try {
+        // Any HTTP response means the server is up. Only a transport failure
+        // (connection refused, wrong host) counts as unreachable.
+        await fetch(`${devUrl}/webview-bundle.js`, { method: 'HEAD' })
+        isReachable = true
+      } catch {
+        isReachable = false
+      }
+
+      if (!isActive) return
+
+      // Back up after being down: the WebView still holds the page whose <script>
+      // failed and nothing retries it, so remount to re-fetch the bundle.
+      if (isReachable && !wasDevServerReachableRef.current) setWebviewKey((k) => k + 1)
+      wasDevServerReachableRef.current = isReachable
+      setIsDevServerReachable(isReachable)
+      if (!isReachable) setHasDevServerFailed(true)
+
+      probeTimeoutId = setTimeout(probe, DEV_SERVER_PROBE_INTERVAL)
+    }
+
+    void probe()
+
+    return () => {
+      isActive = false
+      if (probeTimeoutId) clearTimeout(probeTimeoutId)
+    }
+  }, [devUrl, isReady])
 
   useEffect(() => {
     if (__DEV__) return undefined
@@ -624,68 +673,73 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, object>((_, ref) => {
   if (!__DEV__ && !prodBundleUri) return null
 
   return (
-    <WebView
-      key={webviewKey}
-      ref={webviewRef}
-      source={source}
-      onMessage={handleMessage}
-      onError={(syntheticEvent) => {
-        if (__DEV__) {
-          const { nativeEvent } = syntheticEvent
-          console.warn(
-            `[WebViewWorker] WebView Error (dev host: ${devUrl}). If the dev webview server is down, start it and reload the app.`,
-            nativeEvent
-          )
-        }
-      }}
-      onHttpError={(syntheticEvent) => {
-        if (__DEV__) {
-          const { nativeEvent } = syntheticEvent
-          console.warn(
-            `[WebViewWorker] WebView HTTP Error (dev host: ${devUrl}). ` +
-              `This usually means the dev webview server is not started.`,
-            nativeEvent
-          )
-        }
-      }}
-      onRenderProcessGone={handleRenderProcessGone}
-      onContentProcessDidTerminate={handleRenderProcessGone}
-      javaScriptEnabled={true}
-      injectedJavaScriptBeforeContentLoaded={injectedJSBefore}
-      // iOS only: grant the WebView read access to the bundle directory so
-      // the HTML's sibling `<script src="webview-bundle.js">` can resolve.
-      // Without this, `loadFileURL` scopes access to the HTML file alone.
-      allowingReadAccessToURL={__DEV__ ? undefined : prodBundleDir}
-      originWhitelist={__DEV__ ? ['file://*', `${devUrl}/*`] : ['file://*']}
-      onShouldStartLoadWithRequest={(request) => {
-        if (__DEV__) {
-          return request.url.startsWith('file:///') || request.url.startsWith(devUrl)
-        }
-        // In production the WebView only ever navigates to the bundled HTML
-        // stub. The bundle JS is loaded as a sibling `<script src>` from inside
-        // that page (so we never see a navigation for it here). Anything else
-        // is rejected.
-        return request.url === prodBundleUri
-      }}
-      mixedContentMode="never"
-      // Android-only, defaults to false. Required in prod so the WebView can load the
-      // worker HTML that materializeWorkerBundle() writes to the app's files dir (a real
-      // `file://` path, unlike the exempt `file:///android_asset/` fallback). Without it
-      // the worker never boots and the app hangs on the splash screen. No-op on iOS, which
-      // uses allowingReadAccessToURL above.
-      allowFileAccess={!__DEV__}
-      // Required on Android for the sibling `<script src>` to load over
-      // `file://`. Safe: navigation is locked to the single bundle URI and
-      // `allowUniversalAccessFromFileURLs` stays `false`, so the page cannot
-      // reach http(s) or cross-origin resources.
-      allowFileAccessFromFileURLs={!__DEV__}
-      allowUniversalAccessFromFileURLs={false}
-      domStorageEnabled={true}
-      webviewDebuggingEnabled={__DEV__}
-      style={{ position: 'absolute', width: 0, height: 0, opacity: 0 }}
-      containerStyle={{ position: 'absolute', width: 0, height: 0, opacity: 0 }}
-      pointerEvents="none"
-    />
+    <>
+      {__DEV__ && hasDevServerFailed && !isReady && (
+        <WebviewDevServerError devUrl={devUrl} isDevServerReachable={isDevServerReachable} />
+      )}
+      <WebView
+        key={webviewKey}
+        ref={webviewRef}
+        source={source}
+        onMessage={handleMessage}
+        onError={(syntheticEvent) => {
+          if (__DEV__) {
+            const { nativeEvent } = syntheticEvent
+            console.warn(
+              `[WebViewWorker] WebView Error (dev host: ${devUrl}). If the dev webview server is down, start it and reload the app.`,
+              nativeEvent
+            )
+          }
+        }}
+        onHttpError={(syntheticEvent) => {
+          if (__DEV__) {
+            const { nativeEvent } = syntheticEvent
+            console.warn(
+              `[WebViewWorker] WebView HTTP Error (dev host: ${devUrl}). ` +
+                `This usually means the dev webview server is not started.`,
+              nativeEvent
+            )
+          }
+        }}
+        onRenderProcessGone={handleRenderProcessGone}
+        onContentProcessDidTerminate={handleRenderProcessGone}
+        javaScriptEnabled={true}
+        injectedJavaScriptBeforeContentLoaded={injectedJSBefore}
+        // iOS only: grant the WebView read access to the bundle directory so
+        // the HTML's sibling `<script src="webview-bundle.js">` can resolve.
+        // Without this, `loadFileURL` scopes access to the HTML file alone.
+        allowingReadAccessToURL={__DEV__ ? undefined : prodBundleDir}
+        originWhitelist={__DEV__ ? ['file://*', `${devUrl}/*`] : ['file://*']}
+        onShouldStartLoadWithRequest={(request) => {
+          if (__DEV__) {
+            return request.url.startsWith('file:///') || request.url.startsWith(devUrl)
+          }
+          // In production the WebView only ever navigates to the bundled HTML
+          // stub. The bundle JS is loaded as a sibling `<script src>` from inside
+          // that page (so we never see a navigation for it here). Anything else
+          // is rejected.
+          return request.url === prodBundleUri
+        }}
+        mixedContentMode="never"
+        // Android-only, defaults to false. Required in prod so the WebView can load the
+        // worker HTML that materializeWorkerBundle() writes to the app's files dir (a real
+        // `file://` path, unlike the exempt `file:///android_asset/` fallback). Without it
+        // the worker never boots and the app hangs on the splash screen. No-op on iOS, which
+        // uses allowingReadAccessToURL above.
+        allowFileAccess={!__DEV__}
+        // Required on Android for the sibling `<script src>` to load over
+        // `file://`. Safe: navigation is locked to the single bundle URI and
+        // `allowUniversalAccessFromFileURLs` stays `false`, so the page cannot
+        // reach http(s) or cross-origin resources.
+        allowFileAccessFromFileURLs={!__DEV__}
+        allowUniversalAccessFromFileURLs={false}
+        domStorageEnabled={true}
+        webviewDebuggingEnabled={__DEV__}
+        style={{ position: 'absolute', width: 0, height: 0, opacity: 0 }}
+        containerStyle={{ position: 'absolute', width: 0, height: 0, opacity: 0 }}
+        pointerEvents="none"
+      />
+    </>
   )
 })
 
