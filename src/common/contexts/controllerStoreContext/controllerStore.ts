@@ -5,6 +5,7 @@ import { isMobile } from '@common/config/env'
 import { isExtension } from '@web/constants/browserapi'
 
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
 export const CONTROLLER_STORE_MAX_LOADING_TIME = 10000
 
 export class ControllerStore {
@@ -60,6 +61,14 @@ export class ControllerStore {
     this.#criticalControllers = criticalControllers
     onInitReady?.(allControllersByName)
     this.#checkReadiness()
+    this.#checkRoutesReadiness()
+  }
+
+  // Narrows the set of controllers whose readiness gates `isReadyToLoadRoutes`.
+  // Called once the background reports the initial route, so the splash can hide
+  // as soon as only the controllers that route needs are ready.
+  setCriticalControllers(criticalControllers: (keyof AllControllersMappingType)[]) {
+    this.#criticalControllers = criticalControllers
     this.#checkRoutesReadiness()
   }
 

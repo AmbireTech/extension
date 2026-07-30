@@ -8,11 +8,13 @@ import {
 } from '@ambire-common/interfaces/banner'
 import BatchIcon from '@common/assets/svg/BatchIcon'
 import Banner from '@common/components/Banner'
+import NetworkIcon from '@common/components/NetworkIcon'
 import useController from '@common/hooks/useController'
 import useNavigation from '@common/hooks/useNavigation'
 import useToast from '@common/hooks/useToast'
 import DashboardBannerBottomSheet from '@common/modules/dashboard/components/DashboardBanners/DashboardBannerBottomSheet'
 import { ROUTES } from '@common/modules/router/constants/common'
+import spacings from '@common/styles/spacings'
 
 import applyOtaUpdate from './applyOtaUpdate'
 
@@ -21,7 +23,7 @@ const DashboardBanner = ({
 }: {
   banner: Omit<BannerType, 'type'> & { type: NonMarketingBannerType }
 }) => {
-  const { type, category, title, text, actions = [], dismissAction } = banner
+  const { type, category, title, text, actions = [], dismissAction, meta } = banner
   const { addToast } = useToast()
   const { navigate } = useNavigation()
   const {
@@ -41,6 +43,12 @@ const DashboardBanner = ({
 
     return null
   }, [category])
+
+  const titleAfter = useMemo(() => {
+    if (category !== 'pending-to-be-signed-acc-op' || !meta?.chainId) return null
+
+    return <NetworkIcon id={meta.chainId.toString()} size={20} withTooltip style={spacings.mlMi} />
+  }, [category, meta])
 
   const handleActionPress = useCallback(
     (action: Action) => {
@@ -236,8 +244,11 @@ const DashboardBanner = ({
       <Banner
         CustomIcon={Icon}
         title={title}
+        titleAfter={titleAfter}
         type={type}
         text={text}
+        singleRow={category === 'pending-to-be-signed-acc-op'}
+        style={category === 'pending-to-be-signed-acc-op' ? spacings.pbTy : undefined}
         buttonText={primaryAction?.label}
         onCloseIconPress={
           dismissAction && !dismissAction.label ? () => handleActionPress(dismissAction) : undefined

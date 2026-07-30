@@ -38,7 +38,7 @@ const Router = () => {
   } = useController('RequestsController')
   const swapAndBridgeState = useController('SwapAndBridgeController').state
   const transferState = useController('TransferController').state
-  const { areControllerStatesLoaded } = useContext(ControllersStateLoadedContext)
+  const { canRenderRoute } = useContext(ControllersStateLoadedContext)
   const { dispatch } = useContext(ControllersMiddlewareContext)
   // Fonts load in parallel with controller boot (the tree mounts before fonts
   // are ready — see AppInit). Gate the splash hide on fonts too so the first
@@ -59,7 +59,7 @@ const Router = () => {
 
   const splashHidden = useRef(false)
 
-  const isReady = authStatus !== AUTH_STATUS.LOADING && areControllerStatesLoaded && fontsLoaded
+  const isReady = authStatus !== AUTH_STATUS.LOADING && canRenderRoute && fontsLoaded
 
   useEffect(() => {
     if (isReady && !splashHidden.current) {
@@ -76,9 +76,11 @@ const Router = () => {
 
   // Dismiss the keyboard the moment the app leaves the foreground so iOS never
   // snapshots a visible keyboard, which would otherwise flash on the next launch.
+  // Not animated, because the app suspends mid-animation and the keyboard
+  // position values freeze at whatever height the last delivered frame had.
   useEffect(() => {
     const sub = AppState.addEventListener('change', (next) => {
-      if (next !== 'active') KeyboardController.dismiss()
+      if (next !== 'active') KeyboardController.dismiss({ animated: false })
     })
 
     return () => sub.remove()
@@ -95,7 +97,9 @@ const Router = () => {
     authStatus,
     requestsState,
     swapAndBridgeState,
-    transferState
+    transferState,
+    // Mobile has no request window; that flow is extension-only.
+    isRequestWindow: false
   })
 
   // Users updating from the legacy v1 app land on the migration onboarding
