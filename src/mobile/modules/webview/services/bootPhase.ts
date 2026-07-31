@@ -1,6 +1,5 @@
-import { controllersNestedInMainMapping } from '@common/constants/controllersMapping'
+import { serializeControllerForUI } from '@common/utils/serializeControllerForUI'
 import { BOOT_MARK, BOOT_MARK_PREFIX } from '@mobile/services/bootProfiler/constants'
-import { serializeControllerForUI } from '@web/extension-services/background/serializeControllerForUI'
 
 import { sendToReactEvent } from './webviewLogger'
 import { workerBootProfiler } from './workerBootProfiler'

@@ -41,6 +41,7 @@ const useBootProfileReport = (
 
     let deadlineId: ReturnType<typeof setTimeout> | null = null
     let workerFlushId: ReturnType<typeof setTimeout> | null = null
+    let reportFrameId: number | null = null
     let removeWorkerMarksListener: (() => void) | null = null
     // The worker's marks arriving and the flush timeout firing can race, and only
     // one of them should print.
@@ -89,11 +90,14 @@ const useBootProfileReport = (
 
     // Report a frame after the last state landed, so building the report never
     // lands inside the boot it is measuring.
-    if (isStoreReady) requestAnimationFrame(report)
+    if (isStoreReady) reportFrameId = requestAnimationFrame(report)
 
     return () => {
       if (deadlineId) clearTimeout(deadlineId)
       if (workerFlushId) clearTimeout(workerFlushId)
+      // Must be cancelled too: a frame that fires after cleanup would run `report`,
+      // which adds an event listener and a timeout that nothing is left to remove.
+      if (reportFrameId !== null) cancelAnimationFrame(reportFrameId)
       removeWorkerMarksListener?.()
     }
   }, [isStoreReady, dispatch])
