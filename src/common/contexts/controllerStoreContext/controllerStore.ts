@@ -166,6 +166,15 @@ export class ControllerStore {
     return true
   }
 
+  /**
+   * Whether every one of the given controllers has sent a first state and, when that
+   * state carries an `isReady` flag, has it set to true. Lets a caller wait on its own
+   * subset of controllers instead of on the whole store.
+   */
+  areControllersReady(ctrlNames: (keyof AllControllersMappingType)[]) {
+    return ctrlNames.every((ctrlName) => this.#isControllerReady(ctrlName))
+  }
+
   #checkReadiness() {
     if (this.isReady) return
     if (!this.controllersByName.length) return

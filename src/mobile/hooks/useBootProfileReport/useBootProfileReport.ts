@@ -3,6 +3,7 @@ import { useEffect, useRef } from 'react'
 import useControllerStore from '@common/hooks/useControllerStore'
 import eventBus from '@common/services/event/eventBus'
 import { Action, MethodAction } from '@common/types/actions'
+import { MOBILE_DEFERRED_CONTROLLERS } from '@mobile/constants/criticalControllers'
 import {
   BOOT_MARK,
   BOOT_PROFILE_DEADLINE,
@@ -17,13 +18,15 @@ import {
  * asks the WebView worker for its marks and prints the assembled two-realm
  * timeline. A no-op unless boot profiling is switched on.
  *
- * Reports on whichever comes first: every controller state having landed, or
- * BOOT_PROFILE_DEADLINE elapsing.
+ * Reports on whichever comes first: every non-deferred controller state having
+ * landed, or BOOT_PROFILE_DEADLINE elapsing. The deferred controllers are left out
+ * because they only start loading after unlock, which may take a long time or never
+ * happen at all.
  */
 const useBootProfileReport = (
   dispatch: (action: MethodAction | Action, windowId?: number, raw?: boolean) => void
 ) => {
-  const { isStoreReady, isReadyToLoadRoutes } = useControllerStore()
+  const { controllerStore, isReadyToLoadRoutes } = useControllerStore()
   const hasReportedRef = useRef(false)
 
   useEffect(() => {
@@ -32,16 +35,11 @@ const useBootProfileReport = (
   }, [isReadyToLoadRoutes])
 
   useEffect(() => {
-    if (!isStoreReady || !IS_BOOT_PROFILING_ENABLED) return
-    markBootOnce(BOOT_MARK.rnStoreAllReady)
-  }, [isStoreReady])
-
-  useEffect(() => {
     if (!IS_BOOT_PROFILING_ENABLED) return
 
     let deadlineId: ReturnType<typeof setTimeout> | null = null
     let workerFlushId: ReturnType<typeof setTimeout> | null = null
-    let reportFrameId: number | null = null
+    let readinessFrameId: number | null = null
     let removeWorkerMarksListener: (() => void) | null = null
     // The worker's marks arriving and the flush timeout firing can race, and only
     // one of them should print.
@@ -86,21 +84,44 @@ const useBootProfileReport = (
       }, BOOT_PROFILE_WORKER_FLUSH_TIMEOUT)
     }
 
-    deadlineId = setTimeout(report, BOOT_PROFILE_DEADLINE)
+    const checkNonDeferredReadiness = () => {
+      readinessFrameId = null
 
-    // Report a frame after the last state landed, so building the report never
-    // lands inside the boot it is measuring.
-    if (isStoreReady) reportFrameId = requestAnimationFrame(report)
+      const nonDeferredControllers = controllerStore.controllersByName.filter(
+        (ctrlName) => !MOBILE_DEFERRED_CONTROLLERS.includes(ctrlName)
+      )
+      if (!nonDeferredControllers.length) return
+      if (!controllerStore.areControllersReady(nonDeferredControllers)) return
+
+      markBootOnce(BOOT_MARK.rnStoreNonDeferredReady)
+      eventBus.removeEventListener('ctrlUpdate', onCtrlUpdate)
+      report()
+    }
+
+    // The store is written by a listener on this same event that lives in the parent
+    // provider, so the check has to wait a frame for the state it reads. Waiting also
+    // keeps building the report out of the boot it is measuring.
+    function onCtrlUpdate() {
+      if (readinessFrameId !== null) return
+      readinessFrameId = requestAnimationFrame(checkNonDeferredReadiness)
+    }
+
+    eventBus.addEventListener('ctrlUpdate', onCtrlUpdate)
+    // Covers the case where the last state already landed before this effect ran.
+    onCtrlUpdate()
+
+    deadlineId = setTimeout(report, BOOT_PROFILE_DEADLINE)
 
     return () => {
       if (deadlineId) clearTimeout(deadlineId)
       if (workerFlushId) clearTimeout(workerFlushId)
       // Must be cancelled too: a frame that fires after cleanup would run `report`,
       // which adds an event listener and a timeout that nothing is left to remove.
-      if (reportFrameId !== null) cancelAnimationFrame(reportFrameId)
+      if (readinessFrameId !== null) cancelAnimationFrame(readinessFrameId)
+      eventBus.removeEventListener('ctrlUpdate', onCtrlUpdate)
       removeWorkerMarksListener?.()
     }
-  }, [isStoreReady, dispatch])
+  }, [controllerStore, dispatch])
 }
 
 export default useBootProfileReport

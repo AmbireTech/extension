@@ -112,9 +112,9 @@ const PHASES: { label: string; from: string; to: string }[] = [
     to: BOOT_MARK.rnFirstPaint
   },
   {
-    label: 'Critical ready → ALL controller states in store',
+    label: 'Critical ready → all non-deferred controller states in store',
     from: BOOT_MARK.rnStoreCriticalReady,
-    to: BOOT_MARK.rnStoreAllReady
+    to: BOOT_MARK.rnStoreNonDeferredReady
   }
 ]
 

@@ -35,7 +35,7 @@ export const BOOT_PROFILE_MARKS_EVENT = 'bootProfileMarks'
 export const BOOT_PROFILE_WORKER_FLUSH_TIMEOUT = 1500
 
 /**
- * Fallback deadline in ms. A boot that never reaches "all controllers ready" (a stuck
+ * Fallback deadline in ms. A boot that never reaches "all non-deferred controllers ready" (a stuck
  * controller, a dead dev server) is exactly the case worth profiling, so report anyway
  * once this elapses.
  */
@@ -78,7 +78,10 @@ export const BOOT_MARK = {
   rnInitPayloadInjected: 'rn.initPayload.injected',
   rnWorkerReadyReceived: 'rn.worker.readyReceived',
   rnStoreCriticalReady: 'rn.store.criticalReady',
-  rnStoreAllReady: 'rn.store.allReady',
+  // Every controller except the deferred ones has landed in the store. The deferred
+  // ones only start loading after unlock, which may never happen, so this is where the
+  // measured boot ends and the report is printed.
+  rnStoreNonDeferredReady: 'rn.store.nonDeferredReady',
   rnSplashHidden: 'rn.splash.hidden',
   rnFirstPaint: 'rn.firstPaint',
 
