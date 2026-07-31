@@ -2,12 +2,12 @@ import { isHexString } from 'ethers'
 import React, { FC, useEffect, useMemo, useState } from 'react'
 import { View } from 'react-native'
 
-import { SigningStatus } from '@ambire-common/interfaces/signAccountOp'
 import { Network } from '@ambire-common/interfaces/network'
+import { SigningStatus } from '@ambire-common/interfaces/signAccountOp'
 import { isSmartAccount } from '@ambire-common/libs/account/account'
 import SuccessIcon from '@common/assets/svg/SuccessIcon'
 import Alert from '@common/components/Alert'
-import ScrollableWrapper from '@common/components/ScrollableWrapper'
+import ScrollableWrapper, { WRAPPER_TYPES } from '@common/components/ScrollableWrapper'
 import Text from '@common/components/Text'
 import Nft from '@common/components/TokenOrNft/components/Nft'
 import { isMobile, isWeb } from '@common/config/env'
@@ -87,6 +87,9 @@ const Simulation: FC<Props> = ({ network, isEstimationComplete, isViewOnly }) =>
     () => pendingTokens.filter((token) => token.simulationAmount! > 0),
     [pendingTokens]
   )
+
+  const hasAssetsOut = !!pendingSendTokens.length || !!pendingSendCollection.length
+  const hasAssetsIn = !!pendingReceiveTokens.length || !!pendingReceiveCollection.length
 
   const simulationErrorMsg = useMemo(() => {
     if (portfolioNetworkState?.isLoading && !initialSimulationLoaded) return ''
@@ -216,12 +219,11 @@ const Simulation: FC<Props> = ({ network, isEstimationComplete, isViewOnly }) =>
     <View style={styles.simulationSection}>
       {simulationView === 'changes' && (
         <View style={[isWeb && flexbox.directionRow, flexbox.flex1]}>
-          {(!!pendingSendTokens.length || !!pendingSendCollection.length) && (
+          {hasAssetsOut && (
             <View
               style={[
                 styles.simulationContainer,
-                isWeb && !!pendingReceiveTokens.length && spacings.mrTy,
-                isMobile && spacings.mbTy
+                hasAssetsIn && (isWeb ? spacings.mrTy : spacings.mbTy)
               ]}
             >
               <View style={styles.simulationContainerHeader}>
@@ -230,6 +232,7 @@ const Simulation: FC<Props> = ({ network, isEstimationComplete, isViewOnly }) =>
                 </Text>
               </View>
               <ScrollableWrapper
+                type={isMobile ? WRAPPER_TYPES.VIEW : WRAPPER_TYPES.SCROLL_VIEW}
                 style={styles.simulationScrollView}
                 contentContainerStyle={{ flexGrow: 1 }}
               >
@@ -239,7 +242,9 @@ const Simulation: FC<Props> = ({ network, isEstimationComplete, isViewOnly }) =>
                       key={token.address}
                       token={token}
                       chainId={network?.chainId}
-                      hasBottomSpacing={i < pendingTokens.length - 1}
+                      hasBottomSpacing={
+                        i < pendingSendTokens.length - 1 || pendingSendCollection.length > 0
+                      }
                     />
                   )
                 })}
@@ -268,7 +273,7 @@ const Simulation: FC<Props> = ({ network, isEstimationComplete, isViewOnly }) =>
               </ScrollableWrapper>
             </View>
           )}
-          {(!!pendingReceiveTokens.length || !!pendingReceiveCollection.length) && (
+          {hasAssetsIn && (
             <View style={styles.simulationContainer}>
               <View style={styles.simulationContainerHeader}>
                 <Text fontSize={14} weight="semiBold" appearance="secondaryText" numberOfLines={1}>
@@ -276,6 +281,7 @@ const Simulation: FC<Props> = ({ network, isEstimationComplete, isViewOnly }) =>
                 </Text>
               </View>
               <ScrollableWrapper
+                type={isMobile ? WRAPPER_TYPES.VIEW : WRAPPER_TYPES.SCROLL_VIEW}
                 style={styles.simulationScrollView}
                 contentContainerStyle={{ flexGrow: 1 }}
               >
@@ -286,7 +292,7 @@ const Simulation: FC<Props> = ({ network, isEstimationComplete, isViewOnly }) =>
                       token={token}
                       chainId={network?.chainId}
                       hasBottomSpacing={
-                        i < pendingTokens.length - 1 || pendingReceiveCollection.length > 0
+                        i < pendingReceiveTokens.length - 1 || pendingReceiveCollection.length > 0
                       }
                     />
                   )

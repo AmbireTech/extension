@@ -8,6 +8,7 @@ import { getTokenAmount } from '@ambire-common/libs/portfolio/helpers'
 import { getSafeAmountFromFieldValue } from '@ambire-common/utils/numbers/formatters'
 import AmountInput from '@common/components/AmountInput'
 import BottomSheet from '@common/components/BottomSheet'
+import ModalHeader from '@common/components/BottomSheet/ModalHeader'
 import Button from '@common/components/Button'
 import EditButton from '@common/components/EditButton'
 import FooterGlassView from '@common/components/FooterGlassView'
@@ -199,15 +200,17 @@ const EditApproval = ({
       <BottomSheet
         sheetRef={editApprovalsSheetRef}
         id={`edit-approvals-bottom-sheet-${id}`}
-        type="modal"
+        type={isMobile ? 'bottom-sheet' : 'modal'}
         closeBottomSheet={closeEditApprovals}
-        style={{ maxWidth: 460 }}
-        shouldBeClosableOnDrag={false}
+        style={isMobile ? undefined : { maxWidth: 460 }}
+        shouldBeClosableOnDrag={isMobile}
       >
+        <ModalHeader
+          title={t('Grant approval for')}
+          handleClose={closeEditApprovals}
+          style={isMobile ? spacings.mbSm : spacings.mbLg}
+        />
         <View style={flexbox.alignCenter}>
-          <Text fontSize={20} weight="medium" style={[spacings.mbXl, spacings.mtTy]}>
-            {t('Grant approval for')}
-          </Text>
           <View style={{ width: '100%' }}>
             <EditApprovalAmountInput
               initialAmount={initialAmount}
@@ -225,7 +228,7 @@ const EditApproval = ({
             style={{ ...spacings.mt2Xl }}
             mobileStyle={{
               ...flexbox.directionRow,
-              ...spacings.mtLg
+              ...spacings.mt2Xl
             }}
           >
             <Button

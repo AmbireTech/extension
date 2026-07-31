@@ -1,13 +1,12 @@
 import React, { FC, useCallback, useMemo, useState } from 'react'
 import { Animated, Pressable, View } from 'react-native'
 
-import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
-import SkeletonLoader from '@common/components/SkeletonLoader'
-import Text from '@common/components/Text'
-import { isiOS, isMobile, isWeb } from '@common/config/env'
-import { useTranslation } from '@common/config/localization'
+import { isMobile, isWeb } from '@common/config/env'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
+import DashboardBalance, {
+  BALANCE_HEIGHT
+} from '@common/modules/dashboard/components/DashboardBalance'
 import DashboardHeader from '@common/modules/dashboard/components/DashboardHeader'
 import Routes from '@common/modules/dashboard/components/Routes'
 import useBalanceAffectingErrors from '@common/modules/dashboard/hooks/useBalanceAffectingErrors'
@@ -15,7 +14,6 @@ import useDashboardReload from '@common/modules/dashboard/hooks/useDashboardRelo
 import spacings, { SPACING, SPACING_SM, SPACING_TY, SPACING_XL } from '@common/styles/spacings'
 import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
-import { privateValue } from '@common/utils/ui'
 import { isExtension } from '@web/constants/browserapi'
 
 import BalanceAffectingErrors from './BalanceAffectingErrors'
@@ -25,7 +23,6 @@ import { OverviewBackground } from './OverviewBackground'
 import RefreshIcon from './RefreshIcon'
 import getStyles from './styles'
 
-const THRESHOLD_AMOUNT_TO_HIDE_BALANCE_DECIMALS = 10000
 export const OVERVIEW_CONTENT_MAX_HEIGHT = 162
 
 interface Props {
@@ -38,16 +35,11 @@ interface Props {
   setDashboardOverviewSize: React.Dispatch<React.SetStateAction<{ width: number; height: number }>>
 }
 
-// We create a reusable height constant for both the Balance amount height and the Balance skeleton.
-// We want both components to have the same height; otherwise, clicking on the RefreshIcon causes a layout shift.
-const BALANCE_HEIGHT = 40
-
 const DashboardOverview: FC<Props> = ({
   openGasTankModal,
   animatedOverviewHeight,
   setDashboardOverviewSize
 }) => {
-  const { t } = useTranslation()
   const { theme } = useTheme(getStyles)
   const {
     state: { isOffline }
@@ -77,9 +69,6 @@ const DashboardOverview: FC<Props> = ({
 
   // Display the button always on mobile
   const shouldShowRefreshButton = isBalanceHovered || !portfolio?.isReadyToVisualize || !isExtension
-
-  const [totalPortfolioAmountIntegerFormattedPart, totalPortfolioAmountDecimalFormattedPart] =
-    formatDecimals(totalPortfolioAmount, 'value').split('.')
 
   const { reloadAccount } = useDashboardReload()
 
@@ -169,57 +158,26 @@ const DashboardOverview: FC<Props> = ({
                   config is being refreshed from the relayer — an updated RPC may
                   trigger a portfolio reload, and we want to show the fresh result
                   rather than flashing a value computed from the stale RPC. */}
-                  {!portfolio?.isReadyToVisualize || areNetworksFetchingFromRelayer ? (
-                    <SkeletonLoader
-                      lowOpacity
-                      width={180}
-                      height={BALANCE_HEIGHT}
-                      borderRadius={8}
-                    />
-                  ) : (
-                    <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-                      {!warningMessage && (
+                  <DashboardBalance
+                    variant={
+                      !portfolio?.isReadyToVisualize || areNetworksFetchingFromRelayer
+                        ? 'skeleton'
+                        : 'ready'
+                    }
+                    totalAmount={totalPortfolioAmount}
+                    color={totalPortfolioAmountColor}
+                    isPrivacyModeEnabled={isPrivacyModeEnabled}
+                    onPress={togglePrivacyMode}
+                    testID="full-balance"
+                    badge={
+                      !warningMessage ? (
                         <ColibriVerificationBadge
                           color={totalPortfolioAmountColor}
                           isVisible={shouldShowRefreshButton}
                         />
-                      )}
-                      <Pressable
-                        testID="full-balance"
-                        onPress={togglePrivacyMode}
-                        style={[flexbox.directionRow, flexbox.alignEnd]}
-                      >
-                        <Text
-                          fontSize={34}
-                          shouldScale={false}
-                          weight="number_bold"
-                          // Line height should be constant based on font size, not on parent height
-                          style={!isWeb ? { lineHeight: 36 } : { lineHeight: 28 }}
-                          color={totalPortfolioAmountColor}
-                          testID="total-portfolio-amount-integer"
-                        >
-                          {privateValue(
-                            totalPortfolioAmountIntegerFormattedPart,
-                            isPrivacyModeEnabled,
-                            7
-                          )}
-                        </Text>
-                        {totalPortfolioAmount < THRESHOLD_AMOUNT_TO_HIDE_BALANCE_DECIMALS &&
-                          !isPrivacyModeEnabled && (
-                            <Text
-                              fontSize={20}
-                              shouldScale={false}
-                              weight="number_bold"
-                              color={totalPortfolioAmountColor}
-                              style={!isWeb ? { lineHeight: isiOS ? 30 : 28 } : { lineHeight: 20 }}
-                            >
-                              {t('.')}
-                              {totalPortfolioAmountDecimalFormattedPart}
-                            </Text>
-                          )}
-                      </Pressable>
-                    </View>
-                  )}
+                      ) : null
+                    }
+                  />
                 </View>
                 {
                   isWeb ? (

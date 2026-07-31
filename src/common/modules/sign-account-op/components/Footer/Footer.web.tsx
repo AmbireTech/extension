@@ -142,7 +142,7 @@ const Footer = ({
               disabled={isSignDisabled}
               onHoldComplete={onSign}
               testID="proceed-btn"
-              style={[{ minWidth: 128 }, spacings.mlLg]}
+              style={[spacings.mlLg]}
               size="large"
             />
           )}

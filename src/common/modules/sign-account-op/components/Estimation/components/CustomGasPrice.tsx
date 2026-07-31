@@ -12,6 +12,7 @@ import ModalHeader from '@common/components/BottomSheet/ModalHeader'
 import Button from '@common/components/Button'
 import FooterGlassView from '@common/components/FooterGlassView'
 import NumberInput from '@common/components/NumberInput'
+import { isMobile, isWeb } from '@common/config/env'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
@@ -219,11 +220,16 @@ const CustomGasPrice = ({
       id="custom-gas-price-sheet"
       sheetRef={sheetRef}
       closeBottomSheet={closeBottomSheet}
-      type="modal"
+      type={isMobile ? 'bottom-sheet' : 'modal'}
       animationDuration={0}
       onOpen={resetState}
+      shouldBeClosableOnDrag={isMobile}
     >
-      <ModalHeader title={t('Advanced options')} handleClose={closeBottomSheet} />
+      <ModalHeader
+        title={t('Advanced options')}
+        handleClose={closeBottomSheet}
+        style={isMobile ? spacings.mbSm : undefined}
+      />
       <View style={{ flexDirection: 'row', gap: 12 }}>
         <View style={{ flex: 1 }}>
           <CustomGasPriceInput
@@ -264,14 +270,14 @@ const CustomGasPrice = ({
         isSimpleBlur={false}
         size="sm"
         style={spacings.mtLg}
-        mobileStyle={{ ...flexbox.directionRow, ...spacings.mtLg }}
+        mobileStyle={{ ...flexbox.directionRow, ...spacings.mtXl }}
       >
         <Button
           type="secondary"
           text={t('Cancel')}
           onPress={closeBottomSheet}
           hasBottomSpacing={false}
-          style={{ flex: 1, width: 100, ...spacings.mrSm }}
+          style={[spacings.mrTy, isWeb && { width: 100 }, isMobile && flexbox.flex1]}
           size="smaller"
         />
         <Button
@@ -279,7 +285,7 @@ const CustomGasPrice = ({
           text={t('Save')}
           onPress={saveCustomGasPrice}
           hasBottomSpacing={false}
-          style={{ flex: 1, width: 100 }}
+          style={[isWeb && { width: 100 }, isMobile && flexbox.flex1]}
           size="smaller"
         />
       </FooterGlassView>
