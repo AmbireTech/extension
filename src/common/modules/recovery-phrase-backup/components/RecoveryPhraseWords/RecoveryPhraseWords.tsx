@@ -5,7 +5,7 @@ import ScrollableWrapper from '@common/components/ScrollableWrapper'
 import Text from '@common/components/Text'
 import { isMobile } from '@common/config/env'
 import useTheme from '@common/hooks/useTheme'
-import spacings from '@common/styles/spacings'
+import spacings, { SPACING_MI, SPACING_TY } from '@common/styles/spacings'
 import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 
@@ -27,7 +27,9 @@ const RecoveryPhraseWords = ({ words }: { words: string[] }) => {
         ...common.borderRadiusPrimary,
         // The grid never sits at the screen bottom, so the wrapper's safe area inset would
         // only add dead space between the last row and the border
-        paddingBottom: 0
+        paddingBottom: 0,
+        // The wrapper's scrollbar padding would keep the row separators short of the right border
+        paddingRight: 0
       }}
     >
       {words.map((word, index) => (
@@ -39,10 +41,18 @@ const RecoveryPhraseWords = ({ words }: { words: string[] }) => {
             ...spacings.pvMi,
             ...spacings.phTy,
             ...flexbox.alignCenter,
+            ...flexbox.justifyCenter,
             height: 60
           }}
         >
-          <View style={[flexbox.directionRow, flexbox.alignCenter, { width: '100%' }]}>
+          {/* Taken out of the flow, so the word stays centered in the whole cell */}
+          <View
+            style={{
+              position: 'absolute',
+              top: SPACING_MI,
+              left: SPACING_TY
+            }}
+          >
             <Text
               fontSize={12}
               appearance="tertiaryText"

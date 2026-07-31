@@ -56,9 +56,6 @@ const RecoveryPhraseBackupBottomSheet = ({ seedId, sheetRef, closeBottomSheet }:
     closeBottomSheet()
   }, [closeBottomSheet, goBackToRevealStep, step])
 
-  // The sheet adjusts to its content height, so swapping the taller reveal step for the
-  // shorter confirm step makes it resize, which looks like the phrase is animating away.
-  // Keeping both steps at the tallest measured height makes the swap invisible.
   const [tallestStepHeight, setTallestStepHeight] = useState(0)
 
   const handleStepLayout = useCallback(({ nativeEvent }: LayoutChangeEvent) => {

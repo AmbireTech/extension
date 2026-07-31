@@ -15,6 +15,7 @@ import useBiometrics from '@common/hooks/useBiometrics'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
+import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
 import { DEFAULT_KEYSTORE_PASSWORD_DEV } from '@env'
@@ -95,7 +96,7 @@ const BackupUnlockStep = ({
             isValid={isValidPassword(password)}
             error={unlockErrorMessage}
             onSubmitEditing={handleStartWithPassword}
-            containerStyle={spacings.mbXl}
+            containerStyle={[spacings.mbXl, common.fullWidth]}
             // The sheet itself is on primaryBackground, so the field needs to stand out from it
             backgroundColor={theme.secondaryBackground}
           />
