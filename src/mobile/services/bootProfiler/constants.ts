@@ -2,21 +2,6 @@
 // by the very first line of the RN bundle (before the shims run) and by the first
 // line of the WebView worker bundle, where `react-native` and `@env` are not
 // resolvable.
-
-// Master switch for the boot profiler, off unless `IS_BOOT_PROFILING_ENABLED=true`
-// is in the environment of the build. Read through `process.env` rather than `@env`
-// because this module is also compiled into the WebView worker bundle, whose webpack
-// resolver has no `@env` alias. Both realms inline the read at build time: babel's
-// transform-inline-environment-variables for the RN bundle, DefinePlugin for the
-// worker bundle. It therefore has to be a shell variable and NOT a `.env` entry —
-// `.env` reaches the worker's webpack config but never Metro. Both bundles are built
-// separately, so both builds need the variable. See this folder's README.
-//
-// The numbers that matter come from a RELEASE build: dev boots download the RN
-// bundle from Metro instead of mmap-ing Hermes bytecode, and fetch the worker
-// bundle over HTTP from webpack-dev-server instead of reading it from `file://`.
-// Those two differences dominate the timeline, so a dev profile tells you almost
-// nothing about what users wait for.
 export const IS_BOOT_PROFILING_ENABLED = process.env.IS_BOOT_PROFILING_ENABLED === 'true'
 
 export const BOOT_PROFILE_REALM = {

@@ -47,7 +47,6 @@ import {
 import { decode, encode } from './bridgeCodec'
 import { createBridgedFetch } from './bridgedFetch'
 import { sendToReactEvent } from './webviewLogger'
-import { workerBootProfiler } from './workerBootProfiler'
 
 // Everything the worker bundle pulls in (ambire-common, ethers, the controllers)
 // has now been evaluated. The gap to `worker.bundle.evalStart` is the cost of the
@@ -179,10 +178,7 @@ const seedStorageCache = (snapshot: Record<string, string> | undefined) => {
   storageCacheSeeded = true
 }
 
-// Records the first read of each storage key. Together with the per-key sizes the
-// RN side marks, this is what separates keys the controllers genuinely need to
-// construct from keys that are only paid for at boot because the whole MMKV dump
-// travels in the init payload.
+// Records the first read of each storage key.
 const markFirstStorageRead = (key: string) => {
   const markName = `${BOOT_MARK_PREFIX.workerStorageRead}${key}`
   if (workerBootProfiler.reserveOnce(markName)) workerBootProfiler.mark(markName)

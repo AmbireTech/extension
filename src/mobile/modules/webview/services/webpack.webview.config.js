@@ -272,7 +272,7 @@ class MirrorToAndroidAssetsPlugin {
 }
 
 /**
- * Emits `webview-bundle-ota.json` ({ html, js, version }) into the services dir so the
+ * Emits `webview-bundle-ota.json` ({ html, js, integrity }) into the services dir so the
  * worker bundle rides the Metro/OTA JS bundle - the native asset copy cannot be OTA-updated.
  * At runtime materializeWorkerBundle writes it to a writable dir and loads it via `file://`.
  */
@@ -287,15 +287,13 @@ class EmitOtaBundleJsonPlugin {
       try {
         const js = fs.readFileSync(path.join(this.sourceDir, 'webview-bundle.js'))
         const html = fs.readFileSync(path.join(this.sourceDir, 'webview-bundle.html'), 'utf8')
-        // Materialization version marker. Covers the HTML as well as the JS: the two are
-        // separate files on disk, so keying only on the JS meant an HTML-only change (a CSP
-        // tweak, the inline boot mark) never replaced the already-materialized copy.
-        const version = `sha384-${crypto
+        // Hashes both the HTML and JS so a change to either triggers an OTA update.
+        const integrity = `sha384-${crypto
           .createHash('sha384')
           .update(js)
           .update(Buffer.from(html, 'utf8'))
           .digest('base64')}`
-        const json = JSON.stringify({ html, js: js.toString('utf8'), version })
+        const json = JSON.stringify({ html, js: js.toString('utf8'), integrity })
         fs.writeFileSync(path.join(this.targetDir, 'webview-bundle-ota.json'), json)
       } catch (err) {
         compilation.errors.push(new Error(`EmitOtaBundleJsonPlugin failed: ${err.message}`))
@@ -354,10 +352,10 @@ const workerConfig = {
     new webpack.DefinePlugin({
       __DEV__: JSON.stringify(isDev),
       'process.env': JSON.stringify(workerBundleEnv),
-      // Boot profiler switch. Defined as its own key rather than added to
-      // `workerBundleEnv` above, which is deliberately not a config list. The more
-      // specific key wins over the wholesale `process.env` replacement, which would
-      // otherwise leave the worker unprofiled while the RN side records.
+      // Boot profiler switch. Kept out of `workerBundleEnv`, which stays limited to the
+      // three keys above. The more specific key wins over the wholesale `process.env`
+      // replacement and inlines to a string literal, so Terser drops the profiler code
+      // when the switch is off.
       'process.env.IS_BOOT_PROFILING_ENABLED': JSON.stringify(
         process.env.IS_BOOT_PROFILING_ENABLED ?? ''
       )

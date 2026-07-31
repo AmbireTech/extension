@@ -18,8 +18,7 @@ import {
  * timeline. A no-op unless boot profiling is switched on.
  *
  * Reports on whichever comes first: every controller state having landed, or
- * BOOT_PROFILE_DEADLINE elapsing — a boot that never finishes is the one most
- * worth looking at.
+ * BOOT_PROFILE_DEADLINE elapsing.
  */
 const useBootProfileReport = (
   dispatch: (action: MethodAction | Action, windowId?: number, raw?: boolean) => void
@@ -28,17 +27,17 @@ const useBootProfileReport = (
   const hasReportedRef = useRef(false)
 
   useEffect(() => {
-    if (!isReadyToLoadRoutes) return
+    if (!isReadyToLoadRoutes || !IS_BOOT_PROFILING_ENABLED) return
     markBootOnce(BOOT_MARK.rnStoreCriticalReady)
   }, [isReadyToLoadRoutes])
 
   useEffect(() => {
-    if (!isStoreReady) return
+    if (!isStoreReady || !IS_BOOT_PROFILING_ENABLED) return
     markBootOnce(BOOT_MARK.rnStoreAllReady)
   }, [isStoreReady])
 
   useEffect(() => {
-    if (!IS_BOOT_PROFILING_ENABLED) return undefined
+    if (!IS_BOOT_PROFILING_ENABLED) return
 
     let deadlineId: ReturnType<typeof setTimeout> | null = null
     let workerFlushId: ReturnType<typeof setTimeout> | null = null

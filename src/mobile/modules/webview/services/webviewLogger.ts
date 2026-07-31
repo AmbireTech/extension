@@ -16,9 +16,7 @@ declare global {
 // Everything else (controller state, errors, one-time data, ...) keeps richJson.
 const JSON_SAFE_EVENTS = new Set(['action.sendToDappWebView', 'action.broadcastDappEvent'])
 
-// Controller state is the bulk of what crosses the bridge during boot, so the
-// richJson stringify below and the resulting wire size are timed for the first
-// emit of each controller. Only the first: later emits are not boot cost.
+// Profiles the first update of each controller
 const profileCtrlUpdateEncode = (ctrlName: string, encodeState: () => string) => {
   const markName = `${BOOT_MARK_PREFIX.workerCtrlEncode}${ctrlName}`
   if (!workerBootProfiler.reserveOnce(markName)) return encodeState()

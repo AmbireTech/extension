@@ -9,20 +9,10 @@ Off unless the `IS_BOOT_PROFILING_ENABLED=true` environment variable is present 
 the bundles are built, so a shipped build carries none of it.
 
 ## Switching it on
-
-It must be a **shell** variable, not a `.env` entry: `.env` is read by the worker
-bundle's webpack config but never by Metro, so a `.env` entry would profile the worker
-realm and silently skip the RN one. Export it, so it reaches both the RN bundle and the
-`build:webview` step the release builds run:
-
+Update `.env` to: 
 ```sh
-export IS_BOOT_PROFILING_ENABLED=true
+IS_BOOT_PROFILING_ENABLED=true
 ```
-
-The value is inlined at build time (babel's `transform-inline-environment-variables`
-for the RN bundle, webpack's `DefinePlugin` for the worker one), so flipping it needs a
-rebuild. Metro caches Babel transforms, so on a dev build follow the flip with
-`yarn start:clean`.
 
 ## Getting a profile
 
@@ -44,7 +34,7 @@ xcrun simctl terminate booted com.ambire.wallet
 xcrun simctl launch --console booted com.ambire.wallet
 ```
 
-Do at least five runs and take the median — first-launch-after-install pays for the
+Do at least five runs and take the median - first-launch-after-install pays for the
 worker bundle materialization and a cold page cache, so it is not representative.
 
 The report prints once the last controller state has landed, or after
@@ -56,19 +46,19 @@ pull it with `adb pull` / `xcrun simctl get_app_container`.
 
 Five sections:
 
-- **Phase summary** — the boot broken into consecutive phases. Start here.
-- **Measured spans, slowest first** — individually timed operations (the MMKV dump,
+- **Phase summary** - the boot broken into consecutive phases. Start here.
+- **Measured spans, slowest first** - individually timed operations (the MMKV dump,
   the init-payload stringify, `new MainController`, the OTA bundle write). The hit
   list.
-- **First controller state across the bridge** — per controller: `toJSON` ms,
+- **First controller state across the bridge** - per controller: `toJSON` ms,
   richJson stringify ms, wire bytes, richJson parse ms on the RN side, and when it
   arrived. Ranked by total cost. This is usually where the time is.
-- **Init storage snapshot by key** — per storage key: its share of the MMKV dump that
+- **Init storage snapshot by key** - per storage key: its share of the MMKV dump that
   travels in the init payload, and when the worker first read it. `when` is about
   timing only: a key read while the splash is up is genuinely needed there only if a
   critical controller waits on it. A controller that eagerly loads a bulk cache in
   its constructor reads during the splash without the splash needing it.
-- **Full timeline** — every mark with `t+ms` from the origin and the delta from the
+- **Full timeline** - every mark with `t+ms` from the origin and the delta from the
   previous mark, tagged by realm. The per-key and per-storage-read marks are left out
   here (they have their own table) but are all in the JSON.
 
@@ -84,12 +74,12 @@ which is populated from native `ReactMarker` calls and is not guaranteed on ever
 platform or build. When it is empty the report says so and the pre-JS window has to
 be measured with platform tooling:
 
-- **Android** — `adb shell am start -W` gives ThisTime/TotalTime/WaitTime.
+- **Android** - `adb shell am start -W` gives ThisTime/TotalTime/WaitTime.
   `ActivityTaskManager: Displayed com.ambire.wallet/...` in logcat gives the same
   from the system's point of view. For the breakdown inside it (zygote fork, `.so`
   loading, dex/class init, Hermes bytecode load) record a Perfetto trace:
   `record_android_trace -t 20s -a com.ambire.wallet sched freq gfx view wm am dalvik`.
-- **iOS** — Xcode → Product → Profile → **App Launch**, which splits pre-main dyld
+- **iOS** - Xcode → Product → Profile → **App Launch**, which splits pre-main dyld
   work from post-main. Time Profiler on the JS thread for the rest.
 
 Correlate either one with `t+0` in the report: the marks carry wall-clock epochs, so
@@ -99,14 +89,14 @@ a logcat line and a mark can be placed on the same axis.
 
 The profiler tells you which phase is expensive; these tell you why:
 
-- **Worker realm** (controller construction, state serialization) —
+- **Worker realm** (controller construction, state serialization) -
   `webviewDebuggingEnabled` is already on in dev, so attach `chrome://inspect`
   (Android) or Safari → Develop (iOS) to the worker WebView and record a Performance
   profile of the boot. This is the most useful tool for the worker half.
-- **RN realm** — Hermes sampling profiler from the dev menu ("Start/Stop JS Sampling
+- **RN realm** - Hermes sampling profiler from the dev menu ("Start/Stop JS Sampling
   Profiler"), then open the `.cpuprofile` in Chrome DevTools. React render cost:
   React DevTools Profiler.
-- **Module graph eval** — if `worker.bundle.evalStart → worker.imports.evaluated` is
+- **Module graph eval** - if `worker.bundle.evalStart → worker.imports.evaluated` is
   large, the worker bundle is the problem: `npx webpack --config
   src/mobile/modules/webview/services/webpack.webview.config.js --json > stats.json`
   and inspect it (statoscope, or the reason graph directly). For the RN bundle,

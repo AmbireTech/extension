@@ -89,6 +89,7 @@ export class BootMarkRecorder {
 
   /** Times a synchronous call and records it as a span, returning its result. */
   measure<T>(name: string, fn: () => T, detail?: BootMarkDetail): T {
+    // MUST NOT BE SHORT-CIRCUITED: the fn must run even if profiling is off, so the boot path is not altered.
     this.startSpan(name)
     try {
       return fn()
@@ -99,6 +100,7 @@ export class BootMarkRecorder {
 
   /** Times a promise and records it as a span, passing the settlement through. */
   async measureAsync<T>(name: string, promise: Promise<T>, detail?: BootMarkDetail): Promise<T> {
+    // MUST NOT BE SHORT-CIRCUITED: the fn must run even if profiling is off, so the boot path is not altered.
     this.startSpan(name)
     try {
       return await promise
