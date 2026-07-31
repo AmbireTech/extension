@@ -14,6 +14,7 @@ import { ProviderError } from '@ambire-common/classes/ProviderError'
 import EventEmitter from '@ambire-common/controllers/eventEmitter/eventEmitter'
 import { EventEmitterRegistryController } from '@ambire-common/controllers/eventEmitterRegistry/eventEmitterRegistry'
 import { MainController } from '@ambire-common/controllers/main/main'
+import { openAmbireIdb } from '@ambire-common/services/storage/idbDatabase'
 import { ErrorRef } from '@ambire-common/interfaces/eventEmitter'
 import { Fetch } from '@ambire-common/interfaces/fetch'
 import { IKeystoreController } from '@ambire-common/interfaces/keystore'
@@ -516,6 +517,11 @@ const init = async () => {
 
   const qrCtrl = new QrHardwareController(new UrQrProtocolAdapter(), eventEmitterRegistry)
 
+  const idb = await openAmbireIdb().catch((error) => {
+    console.error('[background] Failed to open IDB, activity will fall back to storage', error)
+    return undefined
+  })
+
   mainCtrl = new MainController({
     eventEmitterRegistry,
     appVersion: APP_VERSION,
@@ -529,6 +535,7 @@ const init = async () => {
     squidIntegratorId: SQUID_INTEGRATOR_ID,
     uniswapApiKey: UNISWAP_API_KEY,
     featureFlags: {},
+    idb,
     keystoreSigners: {
       internal: KeystoreSigner,
       // TODO: there is a mismatch in hw signer types, it's not a big deal
