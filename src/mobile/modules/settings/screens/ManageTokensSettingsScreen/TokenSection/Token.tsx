@@ -78,7 +78,9 @@ const Token: FC<Props> = ({ token, onTokenPreferenceOrCustomTokenChange }) => {
         testID={isHidden ? 'unhide-button' : 'remove-button'}
         type="secondary"
         size="small"
-        style={{ width: 88 }}
+        // The button sits on the row's secondaryBackground, so it needs the
+        // background the web button gets on hover to stand out
+        style={{ width: 88, backgroundColor: theme.tertiaryBackground }}
         text={isHidden ? t('Unhide') : t('Remove')}
         onPress={isHidden ? toggleHideToken : removeCustomToken}
         hasBottomSpacing={false}
