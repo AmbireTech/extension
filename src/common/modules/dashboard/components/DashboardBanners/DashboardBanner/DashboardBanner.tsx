@@ -42,6 +42,10 @@ const DashboardBanner = ({
   const { dispatch: extensionUpdateDispatch } = useController('ExtensionUpdateController')
   const { ref: sheetRef, close: closeBottomSheet, open: openBottomSheet } = useModalize()
   const primaryAction = actions[0]
+  // The title, the network icon and the two action buttons don't fit on one row in the narrow
+  // side panel, which leaves the title unreadable. There it falls back to the stacked layout
+  // used on mobile, where the buttons get a row of their own.
+  const withSingleRow = !isSidePanel && category === 'pending-to-be-signed-acc-op'
 
   const Icon = useMemo(() => {
     if (category === 'pending-to-be-signed-acc-op') return BatchIcon
@@ -260,8 +264,7 @@ const DashboardBanner = ({
       type,
       openBottomSheet,
       selectedAccountDispatch,
-      requestsDispatch,
-      navigate
+      requestsDispatch
     ]
   )
 
@@ -273,8 +276,8 @@ const DashboardBanner = ({
         titleAfter={titleAfter}
         type={type}
         text={text}
-        singleRow={category === 'pending-to-be-signed-acc-op'}
-        style={category === 'pending-to-be-signed-acc-op' ? spacings.pbTy : undefined}
+        singleRow={withSingleRow}
+        style={withSingleRow ? spacings.pbTy : undefined}
         buttonText={primaryAction?.label}
         onCloseIconPress={
           dismissAction && !dismissAction.label ? () => handleActionPress(dismissAction) : undefined
