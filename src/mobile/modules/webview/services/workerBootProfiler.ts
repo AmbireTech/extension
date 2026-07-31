@@ -8,11 +8,11 @@ import {
 import { BootMarkRecorder } from '@mobile/services/bootProfiler/markRecorder'
 import { BootProfilePayload } from '@mobile/services/bootProfiler/types'
 
-// Boot profiler for the WebView worker realm. It is the FIRST import of
-// injectedLogic.ts so the mark below lands before the module graph is evaluated,
-// which means this file must only import the dependency-free bootProfiler
-// siblings — no richJson, no controllers, nothing that would run ahead of the
-// structuredClone shim.
+// Boot profiler for the WebView worker realm. The worker webpack entry lists this
+// module ahead of injectedLogic.ts so the mark below lands before the controller
+// module graph is evaluated, which means this file must only import the
+// dependency-free bootProfiler siblings — no richJson, no controllers, nothing that
+// would run ahead of the structuredClone shim.
 
 export const workerBootProfiler = new BootMarkRecorder(BOOT_PROFILE_REALM.worker)
 
