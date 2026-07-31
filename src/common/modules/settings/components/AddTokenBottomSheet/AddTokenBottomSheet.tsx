@@ -42,7 +42,6 @@ type Props = {
   handleClose: () => void
 }
 
-// Matches the network icon size of the networks settings screen on mobile
 const NETWORK_ICON_SIZE = isMobile ? 28 : 32
 
 const AddTokenBottomSheet: FC<Props> = ({ sheetRef, handleClose }) => {
