@@ -126,43 +126,61 @@ const AccountData: FC<Props> = ({ onPress, withArrowRightIcon }) => {
             <>
               <Text
                 numberOfLines={1}
+                ellipsizeMode="tail"
                 weight={isMobile ? 'medium' : 'semiBold'}
-                style={[spacings.mrMi, { flexShrink: 0, maxWidth: '55%' }]}
+                style={[
+                  spacings.mrMi,
+                  // While the address is next to the name, the name keeps its width and the
+                  // address shrinks. On a narrow panel the address is hidden, so the name is
+                  // the only thing that can give way to a long label.
+                  maxWidthSize('s')
+                    ? { flexShrink: 0, minWidth: 0, maxWidth: '55%' }
+                    : { flexShrink: 1, minWidth: 0 }
+                ]}
                 color="#FFFFFF"
                 fontSize={14}
               >
                 {account.preferences.label}
               </Text>
-              <View
-                style={[flexbox.directionRow, flexbox.alignCenter, { flexShrink: 1, minWidth: 0 }]}
-              >
-                <Text
-                  color="#B9BFC9"
-                  numberOfLines={1}
-                  ellipsizeMode="tail"
-                  style={[{ flexShrink: 1, minWidth: 0 }, isWeb ? spacings.mrTy : undefined]}
-                  weight="mono_regular"
-                  fontSize={12}
+              {maxWidthSize('s') && (
+                <View
+                  style={[
+                    flexbox.directionRow,
+                    flexbox.alignCenter,
+                    { flexShrink: 1, minWidth: 0 }
+                  ]}
                 >
-                  ({formattedAddress})
-                </Text>
-                {isWeb && (
-                  <AnimatedPressable
-                    style={addressAnimStyle}
-                    onPress={handleCopyText}
-                    {...bindAddressAnim}
+                  <Text
+                    color="#B9BFC9"
+                    numberOfLines={1}
+                    ellipsizeMode="tail"
+                    style={[{ flexShrink: 1, minWidth: 0 }, isWeb ? spacings.mrTy : undefined]}
+                    weight="mono_regular"
+                    fontSize={12}
                   >
-                    <CopyIcon width={24} height={24} color="#E3E6EB" />
-                  </AnimatedPressable>
-                )}
-              </View>
+                    ({formattedAddress})
+                  </Text>
+                  {isWeb && (
+                    <AnimatedPressable
+                      style={addressAnimStyle}
+                      onPress={handleCopyText}
+                      {...bindAddressAnim}
+                    >
+                      <CopyIcon width={24} height={24} color="#E3E6EB" />
+                    </AnimatedPressable>
+                  )}
+                </View>
+              )}
             </>
           ) : (
             <>
               <Text
                 numberOfLines={1}
                 weight={isMobile ? 'medium' : 'semiBold'}
-                style={[spacings.mrMi, { maxWidth: isPopup ? 112 : 160, flexShrink: 1 }]}
+                style={[
+                  spacings.mrMi,
+                  { maxWidth: isPopup ? 112 : 160, flexShrink: 1, minWidth: 0 }
+                ]}
                 color="#FFFFFF"
                 fontSize={14}
               >
