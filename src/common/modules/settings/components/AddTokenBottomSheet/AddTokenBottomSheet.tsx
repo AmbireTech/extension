@@ -17,6 +17,7 @@ import Select from '@common/components/Select'
 import Spinner from '@common/components/Spinner'
 import Text from '@common/components/Text'
 import TokenIcon from '@common/components/TokenIcon'
+import { isMobile, isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
@@ -40,6 +41,9 @@ type Props = {
   sheetRef: React.RefObject<any>
   handleClose: () => void
 }
+
+// Matches the network icon size of the networks settings screen on mobile
+const NETWORK_ICON_SIZE = isMobile ? 28 : 32
 
 const AddTokenBottomSheet: FC<Props> = ({ sheetRef, handleClose }) => {
   const { t } = useTranslation()
@@ -95,6 +99,7 @@ const AddTokenBottomSheet: FC<Props> = ({ sheetRef, handleClose }) => {
             key={n.chainId.toString()}
             id={n.chainId.toString()}
             name={n.name as NetworkIconIdType}
+            size={NETWORK_ICON_SIZE}
           />
         )
       })),
@@ -276,7 +281,7 @@ const AddTokenBottomSheet: FC<Props> = ({ sheetRef, handleClose }) => {
   return (
     <BottomSheet id="add-custom-token" sheetRef={sheetRef} closeBottomSheet={handleCloseAndReset}>
       <ModalHeader
-        title={t('Add Token')}
+        title={t('Add token')}
         handleClose={handleCloseAndReset}
         headerTestID="add-token-modal-title-text"
       />
@@ -286,7 +291,7 @@ const AddTokenBottomSheet: FC<Props> = ({ sheetRef, handleClose }) => {
             setValue={handleSetNetworkValue as any}
             options={networksOptions}
             value={networksOptions.filter((opt) => opt.value === network.name)[0]}
-            label={t('Choose Network')}
+            label={t('Choose network')}
             containerStyle={spacings.mbMd}
             selectStyle={{
               backgroundColor: theme.secondaryBackground
@@ -300,7 +305,7 @@ const AddTokenBottomSheet: FC<Props> = ({ sheetRef, handleClose }) => {
                 testID="token-address-field"
                 onBlur={onBlur}
                 onChangeText={onChange}
-                label={t('Token Address')}
+                label={t('Token address')}
                 placeholder={t('0x...')}
                 value={value}
                 containerStyle={spacings.mbSm}
@@ -311,7 +316,8 @@ const AddTokenBottomSheet: FC<Props> = ({ sheetRef, handleClose }) => {
           />
           <View
             style={[
-              spacings.mbXl,
+              isMobile && spacings.mbLg,
+              isWeb && spacings.mbXl,
               {
                 minHeight: 50 // To prevent the bottom sheet from resizing
               }
@@ -389,7 +395,7 @@ const AddTokenBottomSheet: FC<Props> = ({ sheetRef, handleClose }) => {
               !network ||
               isSubmitting
             }
-            text={t('Add Token')}
+            text={t('Add token')}
             hasBottomSpacing={false}
             onPress={handleAddToken}
           />
