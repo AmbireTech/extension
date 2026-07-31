@@ -2,7 +2,6 @@ import React, { useCallback, useMemo } from 'react'
 import { useModalize } from 'react-native-modalize'
 
 import {
-  BIP44_LEDGER_DERIVATION_TEMPLATE,
   BIP44_STANDARD_TESTNET_DERIVATION_TEMPLATE,
   DERIVATION_OPTIONS,
   HD_PATH_TEMPLATE_TYPE
@@ -20,16 +19,15 @@ import spacings from '@common/styles/spacings'
 import AdvancedModeBottomSheet from './AdvancedModeBottomSheet'
 
 type Props = {
-  setPage: (page: number) => void
   disabled?: boolean
   type?: IAccountPickerController['type']
 }
 
-const ChangeHdPath: React.FC<Props> = ({ setPage, disabled, type }) => {
+const ChangeHdPath: React.FC<Props> = ({ disabled, type }) => {
   const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useModalize()
   const { t } = useTranslation()
   const {
-    state: { hdPathTemplate, accountsLoading, pageError, page },
+    state: { hdPathTemplate, pageError, page },
     dispatch: accountPickerDispatch
   } = useController('AccountPickerController')
 
@@ -84,7 +82,7 @@ const ChangeHdPath: React.FC<Props> = ({ setPage, disabled, type }) => {
 
       <AdvancedModeBottomSheet
         sheetRef={sheetRef}
-        disabled={accountsLoading || !!pageError}
+        disabled={!!pageError}
         closeBottomSheet={closeBottomSheet}
         page={page}
         value={value}
