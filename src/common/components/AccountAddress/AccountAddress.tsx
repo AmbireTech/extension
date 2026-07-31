@@ -191,7 +191,10 @@ const AccountAddress: FC<Props> = ({
               <PlainAddress
                 maxLength={isMobile ? 13 : 16}
                 address={address}
-                style={{ ...spacings.mlMi }}
+                // A shortened address already hides its middle, so letting it shrink would add a
+                // trailing ellipsis on top of that and hide the suffix. On the narrow side panel
+                // the resolved name next to it gives way instead.
+                style={{ ...spacings.mlMi, ...(isSidePanel ? { flexShrink: 0 } : {}) }}
                 fontSize={fontSize}
                 withWrap={withWrap}
                 highlight={addressHighlight}
