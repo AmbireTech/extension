@@ -504,6 +504,9 @@ const Estimation = ({
   const canSetCustomGasPrices = !!signAccountOpState?.canSetCustomGasPrices
   const canSetCustomGas = !!signAccountOpState?.canSetCustomGas
   const isNarrowLayout = isCompactSidePanelLayout
+  // The narrow side panel reuses the mobile fee header: a short label with the settings icon
+  // instead of the wider "Advanced" button, which leaves room for the fee speed on the same row
+  const withCompactFeeHeader = isMobile || isNarrowLayout
 
   const advancedOptionsTooltip = useMemo(() => {
     if (canSetCustomGasPrices) return undefined
@@ -632,9 +635,9 @@ const Estimation = ({
       </View>
       <View
         style={[
-          isNarrowLayout ? undefined : flexbox.directionRow,
-          isNarrowLayout ? flexbox.alignStart : flexbox.alignCenter,
-          !isNarrowLayout && flexbox.justifySpaceBetween,
+          flexbox.directionRow,
+          flexbox.alignCenter,
+          flexbox.justifySpaceBetween,
           spacings.mbSm,
           isMobile && spacings.ptSm
         ]}
@@ -643,7 +646,7 @@ const Estimation = ({
           style={[
             flexbox.directionRow,
             flexbox.alignCenter,
-            isNarrowLayout && { width: '100%', flexWrap: 'wrap' }
+            isNarrowLayout && { flexShrink: 1, minWidth: 0 }
           ]}
         >
           <Text
@@ -653,7 +656,7 @@ const Estimation = ({
           >
             {t(
               signAccountOpState.canAccountBroadcastByItself
-                ? isMobile
+                ? withCompactFeeHeader
                   ? 'Pay gas with'
                   : 'Pay network fee with'
                 : 'Broadcast from'
@@ -670,7 +673,7 @@ const Estimation = ({
             }
             style={spacings.mlTy}
           >
-            {isMobile ? (
+            {withCompactFeeHeader ? (
               <Pressable
                 disabled={!canSetCustomGasPrices}
                 onPress={openAdvancedOptions}
@@ -711,20 +714,14 @@ const Estimation = ({
             menuOptionHeight={isWeb ? 40 : undefined}
             // Display a wider menu if the fee token price is unavailable
             // as the native amount takes up more space
-            menuLeftHorizontalOffset={
-              isNarrowLayout ? 0 : feeTokenPriceUnavailableWarning ? 100 : 48
-            }
-            menuStyle={
-              isNarrowLayout
-                ? { minWidth: 0 }
-                : { minWidth: feeTokenPriceUnavailableWarning ? 200 : 148 }
-            }
+            menuLeftHorizontalOffset={feeTokenPriceUnavailableWarning ? 100 : 48}
+            menuStyle={{ minWidth: feeTokenPriceUnavailableWarning ? 200 : 148 }}
             bottomSheetTitle={t('Gas fee')}
             withSearch={false}
             containerStyle={{
               ...spacings.mb0,
-              width: isNarrowLayout ? '100%' : isWeb ? 116 : 126,
-              ...(isNarrowLayout ? spacings.mtSm : {})
+              width: isWeb ? 116 : 126,
+              flexShrink: 0
             }}
             testID="fee-speed-select"
           />
