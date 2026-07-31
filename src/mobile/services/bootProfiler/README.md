@@ -104,15 +104,4 @@ The profiler tells you which phase is expensive; these tell you why:
 
 ## Where the marks are
 
-| Realm  | File | Covers |
-| --- | --- | --- |
-| RN | `shim.js` | earliest JS line (imports this folder's `bootProfiler`) |
-| RN | `App.tsx` | entry graph evaluated, App rendered |
-| RN | `AppInit.native.tsx` | provider tree committed |
-| RN | `WebViewWorker.tsx` | MMKV dump + per-key sizes, OTA bundle write, WebView mount + load, init payload encode/inject, worker loaded/ready, per-controller decode |
-| RN | `Router.tsx` | splash hidden, first paint |
-| RN | `useBootProfileReport` | controller-store readiness, report trigger |
-| worker | `workerBootProfiler.ts` | bundle eval start, WebView navigation + resource timings |
-| worker | `injectedLogic.ts` | module graph evaluated, init received, storage seed, first read per storage key, controller construction, ready |
-| worker | `bootPhase.ts` | per-controller `toJSON`, boot-phase flip |
-| worker | `webviewLogger.ts` | per-controller stringify + wire size |
+You can trace them by searching for `bootProfiler.`

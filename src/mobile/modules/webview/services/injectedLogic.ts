@@ -47,6 +47,10 @@ import {
 import { decode, encode } from './bridgeCodec'
 import { createBridgedFetch } from './bridgedFetch'
 import { sendToReactEvent } from './webviewLogger'
+// Do NOT let organize-imports collapse this into the bare import at the top of the file:
+// the bare one is there to fix evaluation order, this one provides the binding the marks
+// below need. Dropping it compiles fine and throws a ReferenceError at worker startup.
+import { workerBootProfiler } from './workerBootProfiler'
 
 // Everything the worker bundle pulls in (ambire-common, ethers, the controllers)
 // has now been evaluated. The gap to `worker.bundle.evalStart` is the cost of the
