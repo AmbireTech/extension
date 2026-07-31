@@ -507,9 +507,9 @@ run-tests.sh
 # Kiro editor
 /.kiro
 
-# WebView bundles
-webview-bundle.json
-webview-bundle-ota.json
+# WebView bundles. Globbed rather than listed by name so a new build output in this
+# family (a version marker, a stats dump) cannot slip into a commit unignored.
+webview-bundle*.json
 *inpage-bundle.json
 /ios/Ambire/Resources/webview/
 /android/app/src/main/assets/webview/
