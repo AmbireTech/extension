@@ -38,7 +38,9 @@ const useSidePanelActionRequestRouting = () => {
     state: { currentUserRequest }
   } = useController('RequestsController')
   const transferState = useController('TransferController').state
-  const { areControllerStatesLoaded } = useContext(ControllersStateLoadedContext)
+  // Gated on every controller, because `getRouteForUserRequest` reads the transfer state,
+  // which isn't part of any route's critical subset (`canRenderRoute`).
+  const { areAllControllerStatesLoaded } = useContext(ControllersStateLoadedContext)
 
   const prevRequestIdRef = useRef<string | number | null>(null)
   const lastOpenedRequestIdRef = useRef<string | number | null>(null)
@@ -46,7 +48,7 @@ const useSidePanelActionRequestRouting = () => {
   const lastDappTabTargetsRef = useRef<ReturnType<typeof getDappTabTargetsFromUserRequest>>([])
 
   useEffect(() => {
-    if (!isSidePanel || !areControllerStatesLoaded) return
+    if (!isSidePanel || !areAllControllerStatesLoaded) return
 
     const isLocked = keystoreState.isReadyToStoreKeys && !keystoreState.isUnlocked
     if (isLocked || authStatus === AUTH_STATUS.NOT_AUTHENTICATED) return
@@ -92,7 +94,7 @@ const useSidePanelActionRequestRouting = () => {
 
     prevRequestIdRef.current = null
   }, [
-    areControllerStatesLoaded,
+    areAllControllerStatesLoaded,
     authStatus,
     currentUserRequest,
     keystoreState.isReadyToStoreKeys,

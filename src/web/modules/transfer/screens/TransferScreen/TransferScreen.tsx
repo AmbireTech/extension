@@ -31,6 +31,7 @@ import useNavigation from '@common/hooks/useNavigation'
 import useSyncedState from '@common/hooks/useSyncedState'
 import useToast from '@common/hooks/useToast'
 import { ROUTES, WEB_ROUTES } from '@common/modules/router/constants/common'
+import { getRouteForUserRequest } from '@common/modules/router/helpers'
 import BatchAdded from '@common/modules/sign-account-op/components/OneClick/BatchModal/BatchAdded'
 import Buttons from '@common/modules/sign-account-op/components/OneClick/Buttons'
 import Estimation from '@common/modules/sign-account-op/components/OneClick/Estimation'
@@ -44,7 +45,7 @@ import { getUiType } from '@common/utils/uiType'
 import { Content, Wrapper } from '@web/components/TransactionsScreen'
 import Modals from '@web/modules/sign-account-op/components/Modals'
 
-const { isRequestWindow, isPopup } = getUiType()
+const { isRequestWindow, isPopup, isSidePanel } = getUiType()
 
 const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
   const { addToast } = useToast()
@@ -359,6 +360,15 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
             args: [request.id]
           }
         })
+        // Side-panel routing only auto-navigates on request id changes. Re-opening the
+        // same queued batch from Send must navigate explicitly.
+        if (isSidePanel) {
+          const targetRoute = getRouteForUserRequest({
+            currentUserRequest: request,
+            transferState
+          })
+          if (targetRoute) navigate(targetRoute)
+        }
         return
       }
 
@@ -427,8 +437,7 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
     [
       isSendingBatch,
       isFormValid,
-      transferState.selectedToken,
-      transferState.amount,
+      transferState,
       amountInFiatBigInt,
       visibleUserRequests,
       requestsDispatch,
@@ -439,7 +448,8 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
       resetTransferForm,
       networkUserRequests.length,
       openEstimationModalAndDispatch,
-      account?.safeCreation
+      account?.safeCreation,
+      navigate
     ]
   )
 
@@ -463,7 +473,7 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
         }
         proceedBtnText={submitButtonText}
         isBatchDisabled={isSendingBatch || isSignAccountOpInProgress}
-        isNotReadyToProceed={!isTransferFormValid}
+        isNotReadyToProceed={!isSendingBatch && !isTransferFormValid}
         signAccountOpErrors={[]}
         networkUserRequests={networkUserRequests}
         isLocalStateOutOfSync={isLocalStateOutOfSync}
