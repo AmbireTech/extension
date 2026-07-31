@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo } from 'react'
-import { Platform, Pressable, View } from 'react-native'
+import { Pressable, View } from 'react-native'
 
 import {
   Account as AccountInterface,

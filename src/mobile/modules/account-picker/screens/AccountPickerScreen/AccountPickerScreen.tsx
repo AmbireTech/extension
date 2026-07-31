@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react'
+import React from 'react'
 import { useTranslation } from 'react-i18next'
 
 import ImportAccountIcon from '@common/assets/svg/ImportAccountIcon'
@@ -56,14 +56,7 @@ const AccountPickerScreen = () => {
         withBackButton
         onBackButtonPress={goToPrevRoute}
         title={setTitle(accountPickerState.type, accountPickerState.subType)}
-        rightIcon={
-          !!shouldDisplayChangeHdPath && (
-            <ChangeHdPath
-              disabled={accountPickerState.accountsLoading || !!isLoading}
-              setPage={setPage}
-            />
-          )
-        }
+        rightIcon={!!shouldDisplayChangeHdPath && <ChangeHdPath setPage={setPage} />}
       >
         <AccountsOnPageList
           state={accountPickerState}

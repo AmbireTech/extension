@@ -53,11 +53,7 @@ const AccountPickerScreen = () => {
               style={{ textAlign: 'left', flex: 1 }}
             />
             {!!shouldDisplayChangeHdPath && (
-              <ChangeHdPath
-                disabled={accountPickerState.accountsLoading || !!isLoading}
-                setPage={setPage}
-                type={accountPickerState.type}
-              />
+              <ChangeHdPath setPage={setPage} type={accountPickerState.type} />
             )}
           </View>
 
