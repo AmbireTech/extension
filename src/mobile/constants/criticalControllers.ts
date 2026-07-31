@@ -11,3 +11,13 @@ export const MOBILE_CRITICAL_CONTROLLERS: (keyof AllControllersMappingType)[] = 
   'SelectedAccountController',
   'WalletStateController'
 ]
+
+// Controllers that only load once the splash has hidden, because the data they read
+// (the phishing lists, the dapp catalog) is too large to sit on the boot path. They
+// still have to report a ready state before `areAllControllerStatesLoaded` flips, but
+// the wait for them is intentional, so it must not trip the store's
+// "loading is taking too long" alarm.
+export const MOBILE_DEFERRED_CONTROLLERS: (keyof AllControllersMappingType)[] = [
+  'PhishingController',
+  'DappsController'
+]

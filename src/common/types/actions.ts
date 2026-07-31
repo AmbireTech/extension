@@ -226,6 +226,12 @@ type FlushBootProfileAction = {
   type: 'FLUSH_BOOT_PROFILE'
 }
 
+// Mobile-only. Loads the dapp catalog and phishing lists in the WebView worker after
+// the dashboard has rendered, keeping them off the boot path. Idempotent in the worker.
+type InitDeferredControllersAction = {
+  type: 'INIT_DEFERRED_CONTROLLERS'
+}
+
 export type Action =
   | UpdateNavigationUrl
   | UpdateUiViewRoute
@@ -258,3 +264,4 @@ export type Action =
   | SetBootPhaseAction
   | SetSubscribedControllersAction
   | FlushBootProfileAction
+  | InitDeferredControllersAction

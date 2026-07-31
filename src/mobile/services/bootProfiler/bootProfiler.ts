@@ -1,8 +1,11 @@
+import type { SerializedStorageSnapshot } from '@common/services/storage/types'
+
 import {
   BOOT_MARK,
   BOOT_MARK_PREFIX,
   BOOT_PROFILE_REALM,
-  IS_BOOT_PROFILING_ENABLED
+  IS_BOOT_PROFILING_ENABLED,
+  STORAGE_KEY_NOT_SNAPSHOTTED
 } from './constants'
 import { BootMarkRecorder, monotonicNow } from './markRecorder'
 import { BootMark, BootMarkDetail, BootProfilePayload } from './types'
@@ -87,18 +90,26 @@ export const markBootOnce = (name: string, detail?: BootMarkDetail) => {
 
 /**
  * Records the wire size of every key in the init storage snapshot, so the report
- * can say which keys make up the multi-MB payload the worker has to receive and
- * parse before it can construct a single controller.
+ * can say which keys make up the payload the worker has to receive and parse
+ * before it can construct a single controller.
  *
  * Sizes are string lengths, the same unit the bridge payload marks use, so the
- * per-key numbers add up against `rn.initPayload.encoded`.
+ * per-key numbers add up against `rn.initPayload.encoded`. Keys held out of the
+ * snapshot are marked too, without a size (reading them to measure would cost as
+ * much as shipping them), so the report still shows they exist and are deferred.
  */
-export const markStorageSnapshotKeys = (snapshot: Record<string, string>) => {
+export const markStorageSnapshotKeys = (snapshot: SerializedStorageSnapshot) => {
   if (!IS_BOOT_PROFILING_ENABLED) return
 
-  Object.entries(snapshot).forEach(([key, serialized]) => {
+  Object.entries(snapshot.values).forEach(([key, serialized]) => {
     markBoot(`${BOOT_MARK_PREFIX.rnStorageKey}${key}`, { bytes: serialized.length })
   })
+
+  snapshot.allKeys
+    .filter((key) => snapshot.values[key] === undefined)
+    .forEach((key) => {
+      markBoot(`${BOOT_MARK_PREFIX.rnStorageKey}${key}`, { note: STORAGE_KEY_NOT_SNAPSHOTTED })
+    })
 }
 
 /**

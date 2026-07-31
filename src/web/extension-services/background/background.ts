@@ -585,6 +585,10 @@ const init = async () => {
     }
   })
 
+  // Load them immediately (the optimization is for mobile only)
+  void mainCtrl.phishing.init()
+  void mainCtrl.dapps.init()
+
   walletStateCtrl = new WalletStateController({
     eventEmitterRegistry,
     onLogLevelUpdateCallback: async (nextLogLevel: LOG_LEVELS) => {
