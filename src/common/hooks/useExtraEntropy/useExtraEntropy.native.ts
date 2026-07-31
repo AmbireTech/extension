@@ -1,45 +1,47 @@
-import { useCallback, useRef, useState } from 'react'
+import { useCallback } from 'react'
 import { GestureResponderEvent } from 'react-native'
 
 import { generateUuid } from '@ambire-common/utils/uuid'
 
-const MAX_KEYSTROKE_SAMPLES = 5
+// The pool is kept at module level rather than in React state for two reasons:
+// - it is shared, so touches collected anywhere in the app are available to whichever screen
+//   later needs entropy (the web hook gets this for free by listening on `document`)
+// - onTouchMove fires on every frame of a drag, and re-rendering the app root at that rate
+//   would be a serious performance regression
+// Capped because the app stays alive for long periods and the pool would otherwise grow
+// unbounded; keccak256 in the EntropyGenerator compresses whatever it is given anyway.
+const MAX_TOUCH_SAMPLES = 32
+const touchSamples: string[] = []
+
+const collectTouchEntropy = (e: GestureResponderEvent) => {
+  const { pageX, pageY, timestamp } = e.nativeEvent
+
+  touchSamples.push(`${pageX}-${pageY}-${timestamp}`)
+  if (touchSamples.length > MAX_TOUCH_SAMPLES) touchSamples.shift()
+}
+
+// Spread onto the app-wide root view once - the mobile counterpart of the mousemove listener
+// the web hook attaches to `document`.
+// React Native registers onTouchStart/onTouchMove as bubbling events, so they fire for touches
+// on any child without taking part in responder negotiation. That is what makes this safe:
+// unlike a gesture-handler based observer, it can never claim (or fail to release) the touch
+// responder and freeze the elements underneath.
+export const entropyTouchHandlers = {
+  onTouchStart: collectTouchEntropy,
+  onTouchMove: collectTouchEntropy
+}
 
 const useExtraEntropy = () => {
-  const [touchPos, setTouchPos] = useState<{ x: number; y: number; timestamp: number } | null>(null)
-  const keystrokeTimestamps = useRef<number[]>([])
-
-  const onTouch = useCallback((e: GestureResponderEvent) => {
-    const { pageX, pageY, timestamp } = e.nativeEvent
-    setTouchPos({ x: pageX, y: pageY, timestamp })
-  }, [])
-
-  // Call this from the onChangeText of the password/PIN input on screens that need extra
-  // entropy, so the irregular timing between real keystrokes feeds into the pool as well.
-  const notifyKeystroke = useCallback(() => {
-    const samples = keystrokeTimestamps.current
-    samples.push(performance.now())
-    if (samples.length > MAX_KEYSTROKE_SAMPLES) samples.shift()
-  }, [])
-
   const getExtraEntropy = useCallback(() => {
-    const touchEntropy = touchPos ? `${touchPos.x}-${touchPos.y}-${touchPos.timestamp}` : null
-    const keystrokeEntropy = keystrokeTimestamps.current.length
-      ? keystrokeTimestamps.current.join('-')
-      : null
-    const uuid = generateUuid()
-    const realEntropy = [touchEntropy, keystrokeEntropy].filter(Boolean).join('-')
+    // The uuid is only a fallback for the (unlikely) case of not a single touch being
+    // registered yet. It is drawn from the same CSPRNG the EntropyGenerator already uses,
+    // so unlike the touch samples it adds no independent entropy.
+    const touchEntropy = touchSamples.join('-') || generateUuid()
 
-    return `${realEntropy || uuid}-${performance.now()}`
-  }, [touchPos])
+    return `${touchEntropy}-${performance.now()}`
+  }, [])
 
-  return {
-    getExtraEntropy,
-    // Spread onto the root View of screens that create secrets/seeds, so real touch
-    // movement feeds the pool the same way mouse movement does on web.
-    touchHandlers: { onTouchStart: onTouch, onTouchMove: onTouch },
-    notifyKeystroke
-  }
+  return { getExtraEntropy }
 }
 
 export default useExtraEntropy
