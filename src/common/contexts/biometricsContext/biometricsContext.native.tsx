@@ -1,11 +1,13 @@
-import { hexlify, randomBytes } from 'ethers'
+import { hexlify } from 'ethers'
 import { BlurView } from 'expo-blur'
 import * as LocalAuthentication from 'expo-local-authentication'
 import React, { createContext, useCallback, useEffect, useMemo, useState } from 'react'
 import { Platform, StyleSheet, View } from 'react-native'
 
+import { EntropyGenerator } from '@ambire-common/libs/entropyGenerator/entropyGenerator'
 import { useTranslation } from '@common/config/localization/localization'
 import useController from '@common/hooks/useController'
+import useExtraEntropy from '@common/hooks/useExtraEntropy'
 import useIsAppFocused from '@common/hooks/useIsAppFocused'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
@@ -27,6 +29,7 @@ const BiometricsProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const { addToast } = useToast()
   const { theme, themeType } = useTheme()
   const isAppFocused = useIsAppFocused()
+  const { getExtraEntropy } = useExtraEntropy()
   const {
     state: { isUnlocked, hasBiometricsSecret }
   } = useController('KeystoreController')
@@ -123,7 +126,13 @@ const BiometricsProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const saveBiometricsSecret = useCallback(async () => {
     setIsAuthInProcess(true)
 
-    const biometricsSecret = hexlify(randomBytes(32))
+    // This secret unlocks the main key just like the password does, so it is generated the
+    // same way the extension generates its biometrics secret - through the EntropyGenerator,
+    // which mixes user-driven entropy into the random bytes instead of trusting the platform
+    // randomness alone.
+    const biometricsSecret = hexlify(
+      new EntropyGenerator().generateRandomBytes(32, getExtraEntropy())
+    )
 
     // on iOS secureStorage.set does not trigger the biometric prompt
     // so we need to trigger it manually
@@ -140,7 +149,7 @@ const BiometricsProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     } catch (e) {
       return null
     }
-  }, [authenticate])
+  }, [authenticate, getExtraEntropy])
 
   const getBiometricsSecret = useCallback(async () => {
     setIsAuthInProcess(true)
