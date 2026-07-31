@@ -1,23 +1,30 @@
+import { concat, keccak256, toUtf8Bytes } from 'ethers'
 import { useCallback } from 'react'
 import { GestureResponderEvent } from 'react-native'
 
 import { generateUuid } from '@ambire-common/utils/uuid'
 
-// The pool is kept at module level rather than in React state for two reasons:
-// - it is shared, so touches collected anywhere in the app are available to whichever screen
-//   later needs entropy (the web hook gets this for free by listening on `document`)
-// - onTouchMove fires on every frame of a drag, and re-rendering the app root at that rate
-//   would be a serious performance regression
-// Capped because the app stays alive for long periods and the pool would otherwise grow
-// unbounded; keccak256 in the EntropyGenerator compresses whatever it is given anyway.
-const MAX_TOUCH_SAMPLES = 32
-const touchSamples: string[] = []
+// Every touch is folded into a running 256-bit hash rather than stored, so nothing is ever
+// evicted the way a fixed-size buffer would evict its oldest sample. Those 256 bits are the
+// pool's capacity, not its yield - what it holds grows only with input that is genuinely
+// independent, not with the number of events, so a long smooth drag adds close to nothing.
+// Kept at module level so touches collected anywhere in the app reach whichever screen later
+// needs entropy, and so collecting never goes through React state - onTouchMove fires on every
+// frame of a drag and re-rendering the app root at that rate would be a real regression.
+// Note there is no keystroke source here as there is on web: the OS keyboard is a native overlay
+// outside the React Native view tree, so typing produces no touch events at all.
+let entropyPool: string | null = null
+
+const foldIntoEntropyPool = (sample: string) => {
+  const sampleBytes = toUtf8Bytes(sample)
+
+  entropyPool = keccak256(entropyPool ? concat([entropyPool, sampleBytes]) : sampleBytes)
+}
 
 const collectTouchEntropy = (e: GestureResponderEvent) => {
   const { pageX, pageY, timestamp } = e.nativeEvent
 
-  touchSamples.push(`${pageX}-${pageY}-${timestamp}`)
-  if (touchSamples.length > MAX_TOUCH_SAMPLES) touchSamples.shift()
+  foldIntoEntropyPool(`${pageX}-${pageY}-${timestamp}`)
 }
 
 // Spread onto the app-wide root view once - the mobile counterpart of the mousemove listener
@@ -33,12 +40,12 @@ export const entropyTouchHandlers = {
 
 const useExtraEntropy = () => {
   const getExtraEntropy = useCallback(() => {
-    // The uuid is only a fallback for the (unlikely) case of not a single touch being
-    // registered yet. It is drawn from the same CSPRNG the EntropyGenerator already uses,
-    // so unlike the touch samples it adds no independent entropy.
-    const touchEntropy = touchSamples.join('-') || generateUuid()
+    // The uuid is only a fallback for the (unlikely) case of not a single touch being registered
+    // yet. It is drawn from the same CSPRNG the EntropyGenerator already uses, so unlike the
+    // touch samples it adds no entropy that is independent of the platform randomness.
+    const userEntropy = entropyPool ?? generateUuid()
 
-    return `${touchEntropy}-${performance.now()}`
+    return `${userEntropy}-${performance.now()}`
   }, [])
 
   return { getExtraEntropy }
