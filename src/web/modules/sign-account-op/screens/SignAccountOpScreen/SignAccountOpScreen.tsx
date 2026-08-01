@@ -54,6 +54,11 @@ const SignAccountOpScreen = () => {
   const [contentHeight, setContentHeight] = useState(0)
   const [hasReachedBottom, setHasReachedBottom] = useState<boolean | null>(null)
 
+  const handleAddToCart = useCallback(() => {
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises
+    closeCurrentWindow()
+  }, [])
+
   const handleUpdateStatus = useCallback(
     (status: SigningStatus) => {
       signAccountOpDispatch({
@@ -88,6 +93,7 @@ const SignAccountOpScreen = () => {
     setIsChooseSignerShown,
     onSignButtonClick,
     handleChangeSigningKey,
+    handleChangeSigningKeyAndClose,
     warningToPromptBeforeSign,
     handleDismissLedgerConnectModal,
     slowPaymasterRequest,
@@ -125,7 +131,8 @@ const SignAccountOpScreen = () => {
     handleUpdateStatus,
     signAccountOpState,
     handleUpdate: updateController,
-    hasReachedBottom
+    hasReachedBottom,
+    onSafeSignComplete: handleAddToCart
   })
 
   const accountOpRequest = useMemo(() => {
@@ -148,11 +155,6 @@ const SignAccountOpScreen = () => {
       }
     })
   }, [requestsDispatch, accountOpRequest, visibleUserRequests.length])
-
-  const handleAddToCart = useCallback(() => {
-    // eslint-disable-next-line @typescript-eslint/no-floating-promises
-    closeCurrentWindow()
-  }, [])
 
   useEffect(() => {
     if (isSignDisabled || !containerHeight || !contentHeight) return
@@ -256,6 +258,7 @@ const SignAccountOpScreen = () => {
                     <SafeOwners
                       account={signAccountOpState.account}
                       onSign={handleChangeSigningKey}
+                      onSignAndClose={handleChangeSigningKeyAndClose}
                       isSignLoading={isSignLoading}
                       signingKeyAddr={signAccountOpState.accountOp.signingKeyAddr}
                       chainId={signAccountOpState.accountOp.chainId.toString()}
