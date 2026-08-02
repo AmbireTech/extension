@@ -118,6 +118,8 @@ const Account = ({
 
   const shouldShowImportedAddress =
     !account.preferences.label || (!isMobile && identityDisplayMode === 'responsive')
+  const shouldShowOnlyResolvedName =
+    isWeb && identityDisplayMode === 'compact' && !!reverseLookupName
 
   const handleCopyAddress = useCallback(() => {
     setStringAsync(account.addr)
@@ -136,7 +138,10 @@ const Account = ({
         common.hidden,
         // @ts-expect-error react-native-web supports `cursor`, but it's missing from React Native StyleProp<ViewStyle> types
         isWeb && !selectOnRowPress && { cursor: 'default' },
-        { backgroundColor: theme.neutral200 }
+        {
+          backgroundColor:
+            identityDisplayMode === 'compact' ? theme.secondaryBackground : theme.neutral200
+        }
       ]}
       onPress={isDisabled || !selectOnRowPress ? undefined : handlePress}
       testID={`add-account-${account.addr}`}
@@ -210,6 +215,14 @@ const Account = ({
                       weight="medium"
                       appearance={isMobile && type === 'linked' ? 'infoText' : 'primaryText'}
                       style={spacings.mrTy}
+                      dataSet={
+                        shouldShowOnlyResolvedName
+                          ? createGlobalTooltipDataSet({
+                              id: `account-picker-domain-${account.addr}`,
+                              content: account.addr
+                            })
+                          : undefined
+                      }
                     >
                       {reverseLookupName}
                     </Text>
@@ -218,16 +231,18 @@ const Account = ({
                       {t('Resolving domain...')}
                     </Text>
                   ) : null}
-                  <Text
-                    fontSize={14}
-                    appearance={isMobile && type === 'linked' ? 'infoText' : 'secondaryText'}
-                    style={spacings.mrMi}
-                    weight="mono_regular"
-                  >
-                    {reverseLookupName || (isWeb && isDomainResolving) ? '(' : ''}
-                    {formattedAddress}
-                    {reverseLookupName || (isWeb && isDomainResolving) ? ')' : ''}
-                  </Text>
+                  {!shouldShowOnlyResolvedName && (
+                    <Text
+                      fontSize={14}
+                      appearance={isMobile && type === 'linked' ? 'infoText' : 'secondaryText'}
+                      style={spacings.mrMi}
+                      weight="mono_regular"
+                    >
+                      {reverseLookupName || (isWeb && isDomainResolving) ? '(' : ''}
+                      {formattedAddress}
+                      {reverseLookupName || (isWeb && isDomainResolving) ? ')' : ''}
+                    </Text>
+                  )}
                 </>
               )}
 

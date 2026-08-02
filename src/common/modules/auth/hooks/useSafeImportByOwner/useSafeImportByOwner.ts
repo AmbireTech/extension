@@ -4,14 +4,13 @@ import { useForm, useWatch } from 'react-hook-form'
 
 import { SAFE_NETWORKS } from '@ambire-common/consts/safe'
 import { Account } from '@ambire-common/interfaces/account'
-import { useTranslation } from '@common/config/localization'
+import { AddressState, AddressStateOptional } from '@ambire-common/interfaces/domains'
+import useAddressInput from '@common/hooks/useAddressInput'
 import useController from '@common/hooks/useController'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
 
-const getOwnerAddress = (value: string) => {
-  const trimmedValue = value.trim()
-  const separatorIndex = trimmedValue.indexOf(':')
-  return separatorIndex === -1 ? trimmedValue : trimmedValue.slice(separatorIndex + 1)
+type FormValues = {
+  ownerAddress: AddressState
 }
 
 const useSafeImportByOwner = () => {
@@ -26,15 +25,23 @@ const useSafeImportByOwner = () => {
   } = useController('MainController')
   const { state: enabledNetworks } = useController('NetworksController', (state) => state.networks)
   const { goToPrevRoute, goToNextRoute } = useOnboardingNavigation()
-  const { t } = useTranslation()
   const {
     control,
-    formState: { errors, isValid }
-  } = useForm({
+    setValue,
+    trigger,
+    formState: { isValid }
+  } = useForm<FormValues>({
     mode: 'all',
-    defaultValues: { ownerAddress: '' }
+    defaultValues: {
+      ownerAddress: {
+        fieldValue: '',
+        resolvedAddress: '',
+        resolvedAddressType: null,
+        isDomainResolving: false
+      }
+    }
   })
-  const ownerAddressValue = useWatch({ control, name: 'ownerAddress' })
+  const ownerAddressState = useWatch({ control, name: 'ownerAddress' })
   const [selectionOverrides, setSelectionOverrides] = useState<{
     owner: string
     selectedAddresses: string[]
@@ -44,20 +51,40 @@ const useSafeImportByOwner = () => {
   const hasCurrentImportStarted = useRef(false)
   const requestedOwner = useRef('')
 
-  const handleValidation = useCallback(
-    (value: string) => {
-      const ownerAddress = getOwnerAddress(value)
-      if (!ownerAddress.length) return t('Field is required.')
-      if (!isAddress(ownerAddress)) return t('Invalid address.')
-      return undefined
-    },
-    [t]
-  )
+  const setOwnerAddressState = useCallback(
+    (newState: AddressStateOptional) => {
+      const addressStateEntries = Object.entries(newState) as [
+        keyof AddressState,
+        AddressState[keyof AddressState]
+      ][]
 
-  const owner = useMemo(() => {
-    const ownerAddress = getOwnerAddress(ownerAddressValue)
-    return isAddress(ownerAddress) ? getAddress(ownerAddress) : ''
-  }, [ownerAddressValue])
+      addressStateEntries.forEach(([key, value]) => {
+        setValue(`ownerAddress.${key}`, value, {
+          shouldDirty: true,
+          shouldTouch: true,
+          shouldValidate: true
+        })
+      })
+    },
+    [setValue]
+  )
+  const handleRevalidateOwnerAddress = useCallback(() => {
+    void trigger('ownerAddress.fieldValue')
+  }, [trigger])
+  const {
+    address: ownerAddress,
+    validation: ownerAddressValidation,
+    RHFValidate: validateOwnerAddress
+  } = useAddressInput({
+    addressState: ownerAddressState,
+    setAddressState: setOwnerAddressState,
+    handleRevalidate: handleRevalidateOwnerAddress
+  })
+
+  const owner = useMemo(
+    () => (isAddress(ownerAddress) ? getAddress(ownerAddress) : ''),
+    [ownerAddress]
+  )
 
   useEffect(() => {
     if (!owner || requestedOwner.current === owner) return
@@ -214,19 +241,20 @@ const useSafeImportByOwner = () => {
 
   return {
     control,
-    errors,
     failedNetworkNames,
     handleImport,
-    handleValidation,
     hasSearchCompleted,
     isSearching,
     isValid,
     goToPrevRoute,
     importedAccounts,
     isImporting: onImportPressed,
+    ownerAddressState,
+    ownerAddressValidation,
     safeAccounts,
     selectedAddresses,
-    setAccountSelected
+    setAccountSelected,
+    validateOwnerAddress
   }
 }
 

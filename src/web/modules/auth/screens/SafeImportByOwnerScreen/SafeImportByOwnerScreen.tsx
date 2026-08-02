@@ -2,9 +2,9 @@ import React from 'react'
 import { Controller } from 'react-hook-form'
 import { View } from 'react-native'
 
+import AddressInput from '@common/components/AddressInput'
 import Alert from '@common/components/Alert'
 import Button from '@common/components/Button'
-import Input from '@common/components/Input'
 import Panel from '@common/components/Panel'
 import Spinner from '@common/components/Spinner'
 import Text from '@common/components/Text'
@@ -22,19 +22,20 @@ import {
 const SafeImportByOwnerScreen = () => {
   const {
     control,
-    errors,
     failedNetworkNames,
     handleImport,
-    handleValidation,
     hasSearchCompleted,
     importedAccounts,
     isImporting,
     isSearching,
     isValid,
     goToPrevRoute,
+    ownerAddressState,
+    ownerAddressValidation,
     safeAccounts,
     setAccountSelected,
-    selectedAddresses
+    selectedAddresses,
+    validateOwnerAddress
   } = useSafeImportByOwner()
   const { t } = useTranslation()
   const { theme } = useTheme()
@@ -55,19 +56,22 @@ const SafeImportByOwnerScreen = () => {
             <View>
               <Controller
                 control={control}
-                rules={{ validate: handleValidation, required: true }}
-                name="ownerAddress"
+                rules={{ validate: validateOwnerAddress, required: true }}
+                name="ownerAddress.fieldValue"
                 render={({ field: { onChange, onBlur, value } }) => (
-                  <Input
+                  <AddressInput
                     testID="add-safe-owner-field"
                     onBlur={onBlur}
                     autoFocus
                     placeholder={t('Add Safe owner address')}
                     onChangeText={onChange}
+                    onScanAddress={onChange}
                     value={value}
-                    isValid={!handleValidation(value) && !!value.length}
+                    validation={ownerAddressValidation}
+                    resolvedAddress={ownerAddressState.resolvedAddress}
+                    resolvedAddressType={ownerAddressState.resolvedAddressType}
+                    isRecipientDomainResolving={ownerAddressState.isDomainResolving}
                     inputWrapperStyle={{ borderColor: theme.primaryBorder }}
-                    error={value.length ? errors.ownerAddress?.message : ''}
                     autoCorrect={false}
                   />
                 )}

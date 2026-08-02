@@ -2,10 +2,9 @@ import React from 'react'
 import { Controller } from 'react-hook-form'
 import { View } from 'react-native'
 
-import AddressScanButton from '@common/components/AddressInput/AddressScanButton'
+import AddressInput from '@common/components/AddressInput'
 import Alert from '@common/components/Alert'
 import Button from '@common/components/Button'
-import Input from '@common/components/Input'
 import Spinner from '@common/components/Spinner'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
@@ -22,19 +21,20 @@ import {
 const SafeImportByOwnerScreen = () => {
   const {
     control,
-    errors,
     failedNetworkNames,
     handleImport,
-    handleValidation,
     hasSearchCompleted,
     importedAccounts,
     isImporting,
     isSearching,
     isValid,
     goToPrevRoute,
+    ownerAddressState,
+    ownerAddressValidation,
     safeAccounts,
     setAccountSelected,
-    selectedAddresses
+    selectedAddresses,
+    validateOwnerAddress
   } = useSafeImportByOwner()
   const { t } = useTranslation()
   const { theme } = useTheme()
@@ -76,27 +76,25 @@ const SafeImportByOwnerScreen = () => {
       >
         <Controller
           control={control}
-          rules={{ validate: handleValidation, required: true }}
-          name="ownerAddress"
-          render={({ field: { onChange, onBlur, value } }) => {
-            const isOwnerValid = !handleValidation(value) && !!value.length
-
-            return (
-              <Input
-                testID="add-safe-owner-field"
-                onBlur={onBlur}
-                autoFocus
-                placeholder={t('Add Safe owner address')}
-                onChangeText={onChange}
-                value={value}
-                isValid={isOwnerValid}
-                backgroundColor={theme.secondaryBackground}
-                error={value.length ? errors.ownerAddress?.message : ''}
-                autoCorrect={false}
-                button={!isOwnerValid ? <AddressScanButton onScanned={onChange} /> : null}
-              />
-            )
-          }}
+          rules={{ validate: validateOwnerAddress, required: true }}
+          name="ownerAddress.fieldValue"
+          render={({ field: { onChange, onBlur, value } }) => (
+            <AddressInput
+              testID="add-safe-owner-field"
+              onBlur={onBlur}
+              autoFocus
+              placeholder={t('Add Safe owner address')}
+              onChangeText={onChange}
+              onScanAddress={onChange}
+              value={value}
+              validation={ownerAddressValidation}
+              resolvedAddress={ownerAddressState.resolvedAddress}
+              resolvedAddressType={ownerAddressState.resolvedAddressType}
+              isRecipientDomainResolving={ownerAddressState.isDomainResolving}
+              backgroundColor={theme.secondaryBackground}
+              autoCorrect={false}
+            />
+          )}
         />
 
         {!!safeAccounts.length && (
