@@ -242,6 +242,15 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
           handleUpdateStatus={handleUpdateStatus}
           hasProceeded={hasProceeded}
           signAccountOpController={signAccountOpController}
+          onGenerateUnsignedTransaction={() => {
+            transferDispatch({
+              type: 'method',
+              params: {
+                method: 'callSignAccountOpMethod',
+                args: ['generateUnsignedTransaction', []]
+              }
+            })
+          }}
           Modals={Modals}
         />
       </MobileLayoutWrapperMainContent>

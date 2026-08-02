@@ -17,6 +17,7 @@ import ErrorInformation from '@common/modules/sign-account-op/components/ErrorIn
 import Estimation from '@common/modules/sign-account-op/components/Estimation'
 import Footer from '@common/modules/sign-account-op/components/Footer'
 import PendingTransactions from '@common/modules/sign-account-op/components/PendingTransactions'
+import CopyUnsignedTransaction from '@common/modules/sign-account-op/components/CopyUnsignedTransaction'
 import SafeEip712Data from '@common/modules/sign-account-op/components/SafeEip712Data'
 import SafeOwners from '@common/modules/sign-account-op/components/SafeOwners'
 import SafetyChecksOverlay from '@common/modules/sign-account-op/components/SafetyChecksOverlay'
@@ -379,6 +380,18 @@ const SignAccountOpScreen = () => {
                 chainId={signAccountOpState?.accountOp?.chainId}
               />
             )}
+            <CopyUnsignedTransaction
+              signAccountOpState={signAccountOpState}
+              onGenerate={() => {
+                signAccountOpDispatch({
+                  type: 'method',
+                  params: {
+                    method: 'generateUnsignedTransaction',
+                    args: []
+                  }
+                })
+              }}
+            />
           </ScrollView>
         </TabLayoutWrapperMainContent>
       </TabLayoutContainer>
