@@ -269,6 +269,15 @@ const SwapAndBridgeScreen = () => {
           handleUpdateStatus={handleUpdateStatus}
           hasProceeded={hasProceeded}
           signAccountOpController={signAccountOpController}
+          onGenerateUnsignedTransaction={() => {
+            swapAndBridgeDispatch({
+              type: 'method',
+              params: {
+                method: 'callSignAccountOpMethod',
+                args: ['generateUnsignedTransaction', []]
+              }
+            })
+          }}
           serviceFee={quote?.selectedRoute?.serviceFee}
           Modals={Modals}
         />

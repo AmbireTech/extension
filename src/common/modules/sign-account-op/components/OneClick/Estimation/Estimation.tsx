@@ -21,6 +21,7 @@ import useSign from '@common/hooks/useSign'
 import Estimation from '@common/modules/sign-account-op/components/Estimation'
 import BundlerWarning from '@common/modules/sign-account-op/components/Estimation/components/bundlerWarning'
 import SafetyChecksBanner from '@common/modules/sign-account-op/components/SafetyChecksBanner'
+import CopyUnsignedTransaction from '@common/modules/sign-account-op/components/CopyUnsignedTransaction'
 import { ModalsProps } from '@common/modules/sign-account-op/types/modals'
 import KeySelect from '@common/modules/sign-message/components/KeySelect'
 import spacings from '@common/styles/spacings'
@@ -38,6 +39,7 @@ export type OneClickEstimationProps = {
   serviceFee?: SwapAndBridgeRoute['serviceFee']
   shouldShowTxnDetails?: boolean
   Modals: React.ComponentType<ModalsProps>
+  onGenerateUnsignedTransaction?: () => void
 }
 
 const { isRequestWindow, isTab } = getUiType()
@@ -53,7 +55,8 @@ const OneClickEstimation = ({
   updateType,
   serviceFee,
   shouldShowTxnDetails = false,
-  Modals
+  Modals,
+  onGenerateUnsignedTransaction
 }: OneClickEstimationProps) => {
   const { t } = useTranslation()
   const hasFreshActionPressRef = useRef(false)
@@ -138,8 +141,8 @@ const OneClickEstimation = ({
         style={spacings.pb}
         closeBottomSheet={isWeb ? undefined : closeEstimationModal}
         autoOpen={hasProceeded || (isRequestWindow && !!signAccountOpController)}
-        isScrollEnabled={isMobile || shouldShowTxnDetails}
-        reserveScrollPadding={shouldShowTxnDetails}
+        isScrollEnabled={isMobile || shouldShowTxnDetails || !!onGenerateUnsignedTransaction}
+        reserveScrollPadding={shouldShowTxnDetails || !!onGenerateUnsignedTransaction}
         shouldBeClosableOnDrag={isMobile}
       >
         {!!banners && !!banners.length && (
@@ -195,6 +198,12 @@ const OneClickEstimation = ({
               <NoKeysToSignAlert
                 style={spacings.mt}
                 chainId={signAccountOpController?.accountOp?.chainId}
+              />
+            )}
+            {!!onGenerateUnsignedTransaction && (
+              <CopyUnsignedTransaction
+                signAccountOpState={signAccountOpController}
+                onGenerate={onGenerateUnsignedTransaction}
               />
             )}
             {!isViewOnly && signingErrors && signingErrors[0] && (
