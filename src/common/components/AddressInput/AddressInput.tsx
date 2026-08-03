@@ -5,7 +5,7 @@ import { Pressable, TextInput, View } from 'react-native'
 
 import { AddressState } from '@ambire-common/interfaces/domains'
 import { validateAddress, Validation } from '@ambire-common/services/validations'
-import { getAddressFromAddressState } from '@ambire-common/utils/domains'
+import { getAddressFromAddressState, getResolvedDomainName } from '@ambire-common/utils/domains'
 import shortenAddress from '@ambire-common/utils/shortenAddress'
 import CloseIcon from '@common/assets/svg/CloseIcon'
 import CopyIcon from '@common/assets/svg/CopyIcon'
@@ -67,6 +67,7 @@ const AddressInput: React.FC<Props> = ({
   const { addToast } = useToast()
   const { styles } = useTheme(getStyles)
   const { contacts } = useController('AddressBookController').state
+  const { domains } = useController('DomainsController').state
   const { message, severity } = validation
   const isError = severity === 'error'
 
@@ -94,6 +95,12 @@ const AddressInput: React.FC<Props> = ({
   })
 
   const isValidAddress = useMemo(() => validateAddress(address).severity === 'success', [address])
+
+  // Ensure the displayed name is the normalized one stored by the resolver, not the raw field value
+  const resolvedDomainName = useMemo(
+    () => getResolvedDomainName(domains, { resolvedAddress, resolvedAddressType }),
+    [domains, resolvedAddress, resolvedAddressType]
+  )
 
   return (
     <>
@@ -182,8 +189,9 @@ const AddressInput: React.FC<Props> = ({
                 address={address}
                 addressHighlight={addressHighlight}
                 name={
-                  contacts.find((c) => c.address.toLowerCase() === address.toLowerCase())?.name ||
-                  (resolvedAddressType ? value : undefined)
+                  (contacts.find((c) => c.address.toLowerCase() === address.toLowerCase())?.name ||
+                    resolvedDomainName) ??
+                  undefined
                 }
                 withCopy={isWeb}
                 isActive

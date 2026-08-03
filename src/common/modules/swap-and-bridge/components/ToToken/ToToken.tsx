@@ -87,7 +87,7 @@ const ToToken: FC<Props> = ({ simulationFailed }) => {
               toChainId: networks.filter((n) => String(n.chainId) === networkOption.value)[0]
                 ?.chainId
             },
-            undefined
+            { isToSelectionByUser: true }
           ]
         }
       })
@@ -208,7 +208,7 @@ const ToToken: FC<Props> = ({ simulationFailed }) => {
               // Reset the from token if it's the same. undefined acts as "do nothing", null as reset
               fromSelectedToken: isSameAsFromToken ? null : undefined
             },
-            undefined
+            { isToSelectionByUser: true }
           ]
         }
       })

@@ -12,7 +12,7 @@ import { CallsUserRequest, RequestExecutionType } from '@ambire-common/interface
 import { AccountOpStatus } from '@ambire-common/libs/accountOp/types'
 import { getSanitizedAmount } from '@ambire-common/libs/transfer/amount'
 import { getBenzinUrlParams } from '@ambire-common/utils/benzin'
-import { getAddressFromAddressState, getDomainFromAddressState } from '@ambire-common/utils/domains'
+import { getAddressFromAddressState, getResolvedDomainName } from '@ambire-common/utils/domains'
 import { getCallsCount } from '@ambire-common/utils/userRequest'
 import Alert from '@common/components/Alert'
 import { PanelBackButton, PanelTitle } from '@common/components/Panel/Panel'
@@ -51,7 +51,7 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
   const { addToast } = useToast()
   const { state: transferState, dispatch: transferDispatch } = useController('TransferController')
   const { dispatch: requestsDispatch } = useController('RequestsController')
-  const { verifiedDomainsStatus } = useController('DomainsController').state
+  const { verifiedDomainsStatus, domains } = useController('DomainsController').state
   const {
     isTopUp,
     validationFormMsgs,
@@ -392,7 +392,7 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
                         ? FEE_COLLECTOR
                         : getAddressFromAddressState(addressState),
                       executionType,
-                      recipientDomain: getDomainFromAddressState(addressState)
+                      recipientDomain: getResolvedDomainName(domains, addressState)
                     }
                   }
                 ]
@@ -421,7 +421,7 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
                     ? FEE_COLLECTOR
                     : getAddressFromAddressState(addressState),
                   executionType,
-                  recipientDomain: getDomainFromAddressState(addressState)
+                  recipientDomain: getResolvedDomainName(domains, addressState)
                 }
               }
             ]

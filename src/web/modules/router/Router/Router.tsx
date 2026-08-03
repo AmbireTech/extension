@@ -60,12 +60,16 @@ const Router = () => {
     )
   }
 
-  if (authStatus === AUTH_STATUS.LOADING || !canRenderRoute) {
+  // Render quickly only the routes that are adjusted for this (to prevent errors from missing ctrl state)
+  const isRouteWithCriticalControllers = Object.keys(ROUTE_CRITICAL_CONTROLLERS).includes(pathname)
+  const canRenderCurrentRoute =
+    areAllControllerStatesLoaded || (isRouteWithCriticalControllers && canRenderRoute)
+
+  if (authStatus === AUTH_STATUS.LOADING || !canRenderCurrentRoute) {
     // Routes in ROUTE_CRITICAL_CONTROLLERS load next to instantly so it doesn't make sense to display
     // a Splash screen for < 200ms. We still need to do it for state persisted screens in the popup (transfer, swap)
     // and all other ui types
-    if (isPopup && (Object.keys(ROUTE_CRITICAL_CONTROLLERS).includes(pathname) || !pathname))
-      return null
+    if (isPopup && (isRouteWithCriticalControllers || !pathname)) return null
 
     return <Splash />
   }
