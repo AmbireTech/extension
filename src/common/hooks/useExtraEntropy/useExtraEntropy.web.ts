@@ -44,8 +44,16 @@ const useExtraEntropy = () => {
     // same CSPRNG the EntropyGenerator already uses, so unlike the pool it adds no entropy that
     // is independent of the platform randomness.
     const userEntropy = entropyPool ?? generateUuid()
+    // Date.now() is an absolute wall clock, unlike performance.now() which only measures time
+    // since this page's timeOrigin. It is the one part that still carries entropy independent of
+    // the platform randomness on the uuid fallback path, when nothing has been observed yet.
+    const extraEntropy = `${userEntropy}-${performance.now()}-${Date.now()}`
 
-    return `${userEntropy}-${performance.now()}`
+    // Advance the pool so the value just handed out is not the state a later call would return -
+    // one leaked extraEntropy string then cannot stand in for the pool for the rest of the session.
+    foldIntoEntropyPool(extraEntropy)
+
+    return extraEntropy
   }, [])
 
   return { getExtraEntropy }
