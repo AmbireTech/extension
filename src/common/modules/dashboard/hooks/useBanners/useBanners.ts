@@ -51,22 +51,24 @@ export default function useBanners(): [BannerInterface[], BannerInterface[]] {
   }, [account?.addr, marketingBannersData.account, marketingBannersData.banners])
 
   const controllerBanners = useMemo(() => {
-    return [
-      ...(deprecatedSmartAccountBanner || []),
-      ...(requestBanners || []),
-      ...(isOffline && portfolio.isAllReady ? [OFFLINE_BANNER] : []),
-      ...(isOffline ? [] : [...(swapAndBridgeBanners || [])]),
-      ...getCurrentAccountBanners(
-        hasFundedHotAccount ? emailVaultBanners || [] : [],
-        account?.addr
-      ),
-      // The defi-positions banner renders inside the DeFi tab, not the general dashboard.
-      ...getCurrentAccountBanners(selectedAccountBanners || [], account?.addr).filter(
-        (b) => b.id !== defiPositionsOnDisabledNetworksBannerId
-      ),
-      ...(extensionUpdateBanner || []),
-      ...otaUpdateBanner
-    ]
+    // Banners without meta.accountAddr are shown regardless of the selected account,
+    // so it's safe to route every source through getCurrentAccountBanners uniformly.
+    return getCurrentAccountBanners(
+      [
+        ...(deprecatedSmartAccountBanner || []),
+        ...(requestBanners || []),
+        ...(isOffline && portfolio.isAllReady ? [OFFLINE_BANNER] : []),
+        ...(isOffline ? [] : swapAndBridgeBanners || []),
+        ...(hasFundedHotAccount ? emailVaultBanners || [] : []),
+        // The defi-positions banner renders inside the DeFi tab, not the general dashboard.
+        ...(selectedAccountBanners || []).filter(
+          (b) => b.id !== defiPositionsOnDisabledNetworksBannerId
+        ),
+        ...(extensionUpdateBanner || []),
+        ...otaUpdateBanner
+      ],
+      account?.addr
+    )
   }, [
     deprecatedSmartAccountBanner,
     requestBanners,
