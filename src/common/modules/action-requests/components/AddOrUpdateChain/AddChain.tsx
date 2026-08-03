@@ -12,7 +12,7 @@ import NetworkDetails from '@common/components/NetworkDetails'
 import NetworkIcon from '@common/components/NetworkIcon'
 import ScrollableWrapper from '@common/components/ScrollableWrapper'
 import Text from '@common/components/Text'
-import { isMobile, isWeb } from '@common/config/env'
+import { isWeb } from '@common/config/env'
 import useDappInfo from '@common/hooks/useDappInfo'
 import useResponsiveActionWindow from '@common/hooks/useResponsiveActionWindow'
 import useTheme from '@common/hooks/useTheme'
@@ -26,7 +26,7 @@ type AddChainProps = {
   areParamsValid: boolean | null
   features: NetworkFeature[]
   networkDetails?: AddNetworkRequestParams
-  actionButtonPressedRef: React.MutableRefObject<boolean>
+  isActionButtonPressed: boolean
   rpcUrls: string[]
   rpcUrlIndex: number
   existingNetwork: Network | null | undefined
@@ -51,7 +51,7 @@ const AddChain = ({
   areParamsValid,
   features,
   networkDetails,
-  actionButtonPressedRef,
+  isActionButtonPressed,
   rpcUrls,
   rpcUrlIndex,
   existingNetwork,
@@ -61,7 +61,7 @@ const AddChain = ({
   const { t } = useTranslation()
   const { name, icon } = useDappInfo(userRequest)
   const { responsiveSizeMultiplier } = useResponsiveActionWindow({ maxBreakpoints: 2 })
-  const { isCompactLayout, isTwoColumnLayout } = useCompactActionRequestLayout()
+  const { isCompactLayout, isTwoColumnLayout, isNarrowSidePanel } = useCompactActionRequestLayout()
 
   return (
     <>
@@ -150,7 +150,10 @@ const AddChain = ({
         <View
           style={[
             isTwoColumnLayout && flexbox.directionRow,
-            flexbox.flex1,
+            // In the side panel the details and the features are taller than the panel. Filling
+            // the remaining space would squeeze them and hide the overflow, so instead they keep
+            // their full height and the screen scrolls as a whole.
+            !isNarrowSidePanel && flexbox.flex1,
             isWeb && {
               marginBottom: SPACING_LG * responsiveSizeMultiplier
             }
@@ -160,9 +163,7 @@ const AddChain = ({
             usePlainWrapper={isCompactLayout}
             style={[
               styles.boxWrapper,
-              isTwoColumnLayout
-                ? { width: '50%', maxHeight: '100%' }
-                : { width: '100%' },
+              isTwoColumnLayout ? { width: '50%', maxHeight: '100%' } : { width: '100%' },
               // @ts-ignore value missing in the props, but it's available on web
               { height: 'fit-content' }
             ]}
@@ -197,13 +198,12 @@ const AddChain = ({
                 withRetryButton={!!rpcUrls.length && rpcUrlIndex < rpcUrls.length - 1}
                 handleRetryWithDifferentRpcUrl={handleRetryWithDifferentRpcUrl}
                 responsiveSizeMultiplier={responsiveSizeMultiplier}
-                withScroll={isCompactLayout && !isMobile}
               />
             )}
           </Container>
         </View>
       )}
-      {!areParamsValid && areParamsValid !== null && !actionButtonPressedRef.current && (
+      {!areParamsValid && areParamsValid !== null && !isActionButtonPressed && (
         <View style={[flexbox.flex1, flexbox.alignCenter, flexbox.justifyCenter]}>
           <Alert
             title={t('Invalid Request Params')}

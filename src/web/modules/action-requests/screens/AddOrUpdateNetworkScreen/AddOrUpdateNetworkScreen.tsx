@@ -1,5 +1,5 @@
 import React from 'react'
-import { View } from 'react-native'
+import { View, ViewStyle } from 'react-native'
 
 import Spinner from '@common/components/Spinner'
 import useResponsiveActionWindow from '@common/hooks/useResponsiveActionWindow'
@@ -14,6 +14,15 @@ import spacings, { SPACING_LG } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { TabLayoutContainer, TabLayoutWrapperMainContent } from '@web/components/TabLayoutWrapper'
 
+// The layout's content container is locked to the height of the scroll view, which caps the
+// content and clips whatever doesn't fit. Sizing it to its content instead lets the side panel
+// scroll through the whole screen.
+const GROWING_CONTENT_CONTAINER_STYLE: ViewStyle = {
+  height: 'auto',
+  flexBasis: 'auto',
+  flexShrink: 0
+}
+
 /**
  * This screen is used to add a new network to the wallet. If the network is already in the wallet
  * but disabled, it will be enabled. The configuration usually comes from the dApp, but in the case
@@ -26,7 +35,7 @@ const AddOrUpdateNetworkScreen = () => {
     statuses,
     features,
     existingNetwork,
-    actionButtonPressedRef,
+    isActionButtonPressed,
     successStateText,
     areParamsValid,
     networkAlreadyAdded,
@@ -70,7 +79,7 @@ const AddOrUpdateNetworkScreen = () => {
               (features &&
                 (features.some((f) => f.level === 'loading') ||
                   !!features.find((f) => f.id === 'flagged'))) ||
-              actionButtonPressedRef.current
+              isActionButtonPressed
             }
           />
         )}
@@ -88,7 +97,7 @@ const AddOrUpdateNetworkScreen = () => {
             networkDetails={networkDetails}
             networkAlreadyAdded={networkAlreadyAdded}
             userRequest={userRequest}
-            actionButtonPressedRef={actionButtonPressedRef}
+            isActionButtonPressed={isActionButtonPressed}
             rpcUrls={rpcUrls}
             rpcUrlIndex={rpcUrlIndex}
           />
@@ -140,7 +149,7 @@ const AddOrUpdateNetworkScreen = () => {
             (features &&
               (features.some((f) => f.level === 'loading') ||
                 !!features.filter((f) => f.id === 'flagged')[0])) ||
-            actionButtonPressedRef.current
+            isActionButtonPressed
           }
         />
       )}
@@ -150,13 +159,14 @@ const AddOrUpdateNetworkScreen = () => {
           marginBottom: SPACING_LG * responsiveSizeMultiplier
         }}
         withScroll={isCompactLayout}
+        contentContainerStyle={isCompactLayout ? GROWING_CONTENT_CONTAINER_STYLE : undefined}
       >
         <AddChain
           handleRetryWithDifferentRpcUrl={handleRetryWithDifferentRpcUrl}
           areParamsValid={areParamsValid}
           features={features}
           networkDetails={networkDetails}
-          actionButtonPressedRef={actionButtonPressedRef}
+          isActionButtonPressed={isActionButtonPressed}
           rpcUrls={rpcUrls}
           rpcUrlIndex={rpcUrlIndex}
           existingNetwork={existingNetwork}

@@ -30,7 +30,7 @@ type UpdateChainProps = {
   networkDetails?: AddNetworkRequestParams
   networkAlreadyAdded: Network
   userRequest: UserRequest | undefined
-  actionButtonPressedRef: React.MutableRefObject<boolean>
+  isActionButtonPressed: boolean
   rpcUrls: string[]
   rpcUrlIndex: number
 }
@@ -42,7 +42,7 @@ const UpdateChain = ({
   networkDetails,
   networkAlreadyAdded,
   userRequest,
-  actionButtonPressedRef,
+  isActionButtonPressed,
   rpcUrls,
   rpcUrlIndex
 }: UpdateChainProps) => {
@@ -114,8 +114,7 @@ const UpdateChain = ({
         </Text>
       </View>
 
-      {(areParamsValid || areParamsValid === null || actionButtonPressedRef.current) &&
-      networkDetails ? (
+      {(areParamsValid || areParamsValid === null || isActionButtonPressed) && networkDetails ? (
         <>
           <View
             style={[
