@@ -40,9 +40,13 @@ import ExpandedContent from '@common/modules/sign-account-op/components/Transact
 import FallbackVisualization from '@common/modules/sign-account-op/components/TransactionSummary/FallbackVisualization'
 import spacings, { SPACING_MI, SPACING_SM, SPACING_TY } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
+import { getUiType } from '@common/utils/uiType'
 
 import { sizeMultiplier } from './sizeMultiplier'
 import getStyles from './styles'
+
+const { isSidePanel } = getUiType()
+const withMobileLayout = isMobile || isSidePanel
 
 interface Props {
   style: ViewStyle
@@ -584,8 +588,8 @@ const TransactionSummary = ({
   const shouldShowDeleteControl = !!call.id && type === 'default' && !rightIcon && !hideDeleteIcon
   const shouldShowRightControl = !!rightIcon && !!onRightIconPress && !hasCallFailed
   const shouldOverlayErc7730TransactionSummaryControls =
-    !isMobile && shouldUseErc7730TransactionSummaryLayout
-  const shouldOverlayDetailedErc7730Controls = !isMobile && shouldUseDetailedErc7730Layout
+    !withMobileLayout && shouldUseErc7730TransactionSummaryLayout
+  const shouldOverlayDetailedErc7730Controls = !withMobileLayout && shouldUseDetailedErc7730Layout
   const rightControl = useMemo(() => {
     if (!shouldShowDeleteControl && !shouldShowRightControl) return null
 
@@ -604,7 +608,7 @@ const TransactionSummary = ({
             {...bindDeleteIconAnim}
             testID={`delete-txn-call-${index}`}
           >
-            <DeleteIcon width={isMobile ? 26 : 28} height={isMobile ? 26 : 28} />
+            <DeleteIcon width={withMobileLayout ? 26 : 28} height={withMobileLayout ? 26 : 28} />
           </AnimatedPressable>
         )}
         {shouldShowRightControl && (
@@ -638,7 +642,7 @@ const TransactionSummary = ({
     shouldUseErc7730TransactionSummaryLayout
   ])
   const shouldRenderRightControlInDetailedErc7730Header =
-    !isMobile && shouldUseDetailedErc7730Layout && !!rightControl
+    !withMobileLayout && shouldUseDetailedErc7730Layout && !!rightControl
   const mobileErc7730Title = useMemo(() => {
     if (!erc7730Visualization) return null
 
@@ -687,7 +691,7 @@ const TransactionSummary = ({
     theme
   ])
   const mobileFlatVisualization = useMemo(() => {
-    if (!isMobile || !callVisualization || erc7730Visualization) return null
+    if (!withMobileLayout || !callVisualization || erc7730Visualization) return null
 
     const firstContentIndex = callVisualization.findIndex((item) => item && item.type !== 'break')
     const visualizationData =
@@ -756,12 +760,14 @@ const TransactionSummary = ({
       overlayArrow={
         shouldOverlayErc7730TransactionSummaryControls || shouldOverlayDetailedErc7730Controls
       }
-      mobileHeaderContent={isMobile ? rightControl : undefined}
-      mobileHeaderTitle={isMobile ? mobileErc7730Title || mobileFlatVisualization : undefined}
+      mobileHeaderContent={withMobileLayout ? rightControl : undefined}
+      mobileHeaderTitle={
+        withMobileLayout ? mobileErc7730Title || mobileFlatVisualization : undefined
+      }
       mobileHeaderStyle={
-        isMobile && mobileFlatVisualization
+        withMobileLayout && mobileFlatVisualization
           ? spacings.pvTy
-          : isMobile && shouldUseDetailedErc7730Layout
+          : withMobileLayout && shouldUseDetailedErc7730Layout
             ? spacings.pt
             : undefined
       }
@@ -773,7 +779,7 @@ const TransactionSummary = ({
           : { ...style })
       }}
       contentStyle={
-        isWeb
+        isWeb && !withMobileLayout
           ? {
               paddingHorizontal: SPACING_SM,
               paddingVertical: type !== 'history' ? SPACING_SM * sizeMultiplier[size] : 0,
@@ -788,7 +794,7 @@ const TransactionSummary = ({
           {callVisualization ? (
             shouldUseDetailedErc7730Layout && erc7730Visualization ? (
               <View style={{ flex: 1, minWidth: 0 }}>
-                {!isMobile && (
+                {!withMobileLayout && (
                   <>
                     <View
                       style={[
@@ -892,7 +898,7 @@ const TransactionSummary = ({
               {t('Failed')}
             </Text>
           )}
-          {!isMobile &&
+          {!withMobileLayout &&
             !shouldRenderRightControlInDetailedErc7730Header &&
             (shouldOverlayErc7730TransactionSummaryControls && rightControl ? (
               <View style={{ position: 'absolute', top: 0, right: 0 }}>{rightControl}</View>
@@ -982,7 +988,9 @@ const TransactionSummary = ({
       <View
         style={{
           paddingHorizontal:
-            (shouldUseErc7730TransactionSummaryLayout || shouldUseDetailedErc7730Layout) && isWeb
+            (shouldUseErc7730TransactionSummaryLayout || shouldUseDetailedErc7730Layout) &&
+            isWeb &&
+            !withMobileLayout
               ? SPACING_SM
               : 42 * sizeMultiplier[size] // magic number
         }}

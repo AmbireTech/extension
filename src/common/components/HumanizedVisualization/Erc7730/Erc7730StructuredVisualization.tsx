@@ -36,6 +36,7 @@ import {
 } from './helpers'
 
 const { isSidePanel } = getUiType()
+const withMobileLayout = isMobile || isSidePanel
 
 const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = ({
   item,
@@ -58,7 +59,7 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
   } = useController('NetworksController')
   const { benzinNetworks } = useNetworksContext()
   const networks = controllerNetworks ?? benzinNetworks
-  const shouldHideTransactionSummaryTitle = isMobile && hideMobileSummaryTitle
+  const shouldHideTransactionSummaryTitle = withMobileLayout && hideMobileSummaryTitle
   const nativeAssetSymbol = useMemo(
     () => networks.find((network) => network.chainId === chainId)?.nativeAssetSymbol,
     [chainId, networks]
@@ -432,7 +433,7 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
       : undefined
     const subtitleTextSize = Math.max(textSize - 3, 11)
 
-    if (isMobile) {
+    if (withMobileLayout) {
       return (
         <MobileErc7730SummaryVisualization
           item={item}
@@ -601,7 +602,7 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
     )
   }
 
-  if (isMobile) {
+  if (withMobileLayout) {
     return (
       <View style={{ width: '100%' }}>
         {shouldShowDescriptionTitle && (
