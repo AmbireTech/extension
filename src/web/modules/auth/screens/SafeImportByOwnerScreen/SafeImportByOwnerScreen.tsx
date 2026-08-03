@@ -26,7 +26,7 @@ const SafeImportByOwnerScreen = () => {
     handleImport,
     hasSearchCompleted,
     importedAccounts,
-    isImporting,
+    isMainBusy,
     isSearching,
     isValid,
     goToPrevRoute,
@@ -139,7 +139,7 @@ const SafeImportByOwnerScreen = () => {
                 disabled={
                   !isValid ||
                   isSearching ||
-                  isImporting ||
+                  isMainBusy ||
                   (hasSearchCompleted && !safeAccounts.length)
                 }
               />

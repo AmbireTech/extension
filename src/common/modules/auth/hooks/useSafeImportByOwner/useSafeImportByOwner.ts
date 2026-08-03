@@ -167,7 +167,6 @@ const useSafeImportByOwner = () => {
 
   const isSearching = !!owner && statuses.findSafesByOwner === 'LOADING'
   const isMainBusy = Object.values(mainStatuses).some((status) => status !== 'INITIAL')
-  const isImporting = mainStatuses.updateAccounts === 'LOADING'
   const safeSupportedNetworkCount = useMemo(
     () =>
       enabledNetworks.filter((network) => SAFE_NETWORKS.includes(Number(network.chainId))).length,
@@ -253,11 +252,11 @@ const useSafeImportByOwner = () => {
     failedNetworkNames,
     handleImport,
     hasSearchCompleted,
+    isMainBusy,
     isSearching,
     isValid,
     goToPrevRoute,
     importedAccounts,
-    isImporting,
     ownerAddressState,
     ownerAddressValidation,
     safeAccounts,
