@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import SidePanelIcon from '@common/assets/svg/SidePanelIcon'
 import ControlOption from '@common/components/ControlOption'
 import FatToggle from '@common/components/FatToggle'
+import { isAmbireNext, isDev } from '@common/config/env'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
@@ -27,7 +28,8 @@ const SidePanelControlOption = () => {
     })
   }, [walletStateDispatch, isSidePanelModeEnabled])
 
-  if (!isSidePanelSupported()) return null
+  // Keep this behind Next / development until the side panel is ready for production users
+  if (!isSidePanelSupported() || !(isDev || isAmbireNext)) return null
 
   return (
     <ControlOption
