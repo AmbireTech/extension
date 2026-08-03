@@ -1,7 +1,5 @@
 import { concat, keccak256, toUtf8Bytes } from 'ethers'
 
-import { generateUuid } from '@ambire-common/utils/uuid'
-
 /**
  * A pool of unpredictable user input - the timing and position of whichever events each platform's
  * hook can observe - which `EntropyGenerator` hashes and XORs into the output of the platform
@@ -39,14 +37,14 @@ export const foldIntoEntropyPool = (sample: string) => {
  * much the pool and the two clocks are worth there.
  */
 export const takeExtraEntropy = () => {
-  // The uuid is only a fallback for when nothing has been observed yet. It is drawn from the same
-  // CSPRNG the EntropyGenerator already uses, so unlike the pool it adds no entropy that is
-  // independent of the platform randomness.
-  const userEntropy = entropyPool ?? generateUuid()
   // Date.now() is an absolute wall clock, so unlike performance.now() it survives an attacker who
   // can bound when this JS context started, which is what bounds performance.now(). Both only
-  // really matter on the fallback path.
-  const extraEntropy = `${userEntropy}-${performance.now()}-${Date.now()}`
+  // really matter before anything has been observed, when they carry the whole string. There is
+  // deliberately no random fallback for that case: it would have to come from the same CSPRNG the
+  // EntropyGenerator already draws from, so in the one scenario this pool exists for - that CSPRNG
+  // being predictable - it would be predictable too, and contribute nothing.
+  const clocks = `${performance.now()}-${Date.now()}`
+  const extraEntropy = entropyPool ? `${entropyPool}-${clocks}` : clocks
 
   // Advance the pool so the value just handed out is not the state a later call would return - one
   // leaked extraEntropy string then cannot stand in for the pool for the rest of the session.
