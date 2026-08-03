@@ -16,6 +16,9 @@ import useWindowSize from '@common/hooks/useWindowSize'
 import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import spacings, { SPACING_TY } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
+import { getUiType } from '@common/utils/uiType'
+
+const { isSidePanel } = getUiType()
 
 const BenzinScreen = () => {
   const { t } = useTranslation()
@@ -76,7 +79,12 @@ const BenzinScreen = () => {
   return (
     <Benzin state={state}>
       <FooterGlassView
+        // In the side panel the footer is a flex sibling under the scroll view, so it stays pinned
+        // to the bottom of the screen without an absolute spacer that would force a scrollbar
+        absolute={!isSidePanel}
         fullWidth={isCompactSidePanelLayout}
+        size={isSidePanel ? 'sm' : 'md'}
+        style={isSidePanel ? spacings.pbSm : undefined}
         innerContainerStyle={
           isCompactSidePanelLayout
             ? { width: '100%', flexDirection: 'column', alignItems: 'stretch', gap: SPACING_TY }
