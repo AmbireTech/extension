@@ -1,6 +1,4 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
-import { NavigateOptions } from 'react-router-dom'
-
 import { Account } from '@ambire-common/interfaces/account'
 import { parse, stringify } from '@ambire-common/libs/richJson/richJson'
 import { ControllersStateLoadedContext } from '@common/contexts/controllersStateLoadedContext'
@@ -20,7 +18,7 @@ type HwWalletsNeedingRedirect = 'trezor' | 'lattice' | null
 
 const OnboardingNavigationContext = createContext<{
   isOnboardingRoute: boolean
-  goToNextRoute: (routeName?: OnboardingRoute, routeParams?: NavigateOptions) => void
+  goToNextRoute: (routeName?: OnboardingRoute, routeParams?: Record<string, unknown>) => void
   goToPrevRoute: () => void
   setTriggeredHwWalletFlow: React.Dispatch<React.SetStateAction<HwWalletsNeedingRedirect>>
   setAccountsToPersonalize: React.Dispatch<React.SetStateAction<Account[]>>
@@ -244,7 +242,7 @@ const OnboardingNavigationProvider = ({ children }: { children: React.ReactNode 
   )
 
   const goToNextRoute = useCallback(
-    (routeName?: OnboardingRoute, routeParams?: NavigateOptions) => {
+    (routeName?: OnboardingRoute, routeParams?: Record<string, unknown>) => {
       const currentRoute = path?.substring(1) || '/'
 
       let nextRoute: RouteNode | null = null

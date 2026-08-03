@@ -1,5 +1,5 @@
 import { getAddress, isAddress } from 'ethers'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useForm, useWatch } from 'react-hook-form'
 
 import { SAFE_NETWORKS } from '@ambire-common/consts/safe'
@@ -48,7 +48,6 @@ const useSafeImportByOwner = () => {
     deselectedAddresses: string[]
   }>({ owner: '', selectedAddresses: [], deselectedAddresses: [] })
   const isImportRequested = useRef(false)
-  const hasSeenUpdateAccountsLoading = useRef(false)
   const requestedOwner = useRef('')
 
   const setOwnerAddressState = useCallback(
@@ -112,23 +111,12 @@ const useSafeImportByOwner = () => {
     [safeDispatch]
   )
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!isImportRequested.current) return
-    if (mainStatuses.updateAccounts === 'LOADING') {
-      hasSeenUpdateAccountsLoading.current = true
-      return
-    }
-    if (!hasSeenUpdateAccountsLoading.current) return
-    if (mainStatuses.updateAccounts === 'SUCCESS') {
-      isImportRequested.current = false
-      hasSeenUpdateAccountsLoading.current = false
-      goToNextRoute()
-      return
-    }
-    if (mainStatuses.updateAccounts === 'ERROR') {
-      isImportRequested.current = false
-      hasSeenUpdateAccountsLoading.current = false
-    }
+    if (mainStatuses.updateAccounts !== 'LOADING') return
+
+    isImportRequested.current = false
+    goToNextRoute(undefined, { waitForAccountUpdate: true })
   }, [goToNextRoute, mainStatuses.updateAccounts])
 
   const safeAccounts = useMemo(
@@ -237,7 +225,6 @@ const useSafeImportByOwner = () => {
       })
       .map((account) => account.addr)
 
-    hasSeenUpdateAccountsLoading.current = false
     isImportRequested.current = true
     mainDispatch({
       type: 'method',
