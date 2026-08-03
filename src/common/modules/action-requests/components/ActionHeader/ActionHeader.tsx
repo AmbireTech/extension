@@ -3,12 +3,14 @@ import { View } from 'react-native'
 
 import { isMobile, isWeb } from '@common/config/env'
 import useTheme from '@common/hooks/useTheme'
+import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import Header from '@common/modules/header/components/Header'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
 const ActionHeader = () => {
   const { theme } = useTheme()
+  const { isCompactSidePanelLayout } = useCompactActionRequestLayout()
   return (
     <View
       style={[
@@ -28,7 +30,8 @@ const ActionHeader = () => {
       ]}
     >
       <Header.AccountDataDetailed />
-      {isWeb && <Header.Logo style={spacings.mlSm} />}
+      {/* A narrow panel needs the whole row for the account label and address */}
+      {isWeb && !isCompactSidePanelLayout && <Header.Logo style={spacings.mlSm} />}
     </View>
   )
 }

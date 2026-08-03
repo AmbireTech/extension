@@ -274,14 +274,25 @@ const CustomGasPrice = ({
         size="sm"
         style={spacings.mtLg}
         mobileStyle={{ ...flexbox.directionRow, ...spacings.mtXl }}
-        innerContainerStyle={isNarrowSidePanel ? { width: '100%' } : undefined}
+        innerContainerStyle={
+          isNarrowSidePanel
+            ? // The buttons stack here, and the primary one goes on top. Reversing the direction
+              // keeps the same child order as the row layouts, where the primary one goes last
+              { width: '100%', flexDirection: 'column-reverse' }
+            : undefined
+        }
       >
         <Button
           type="secondary"
           text={t('Cancel')}
           onPress={closeBottomSheet}
           hasBottomSpacing={false}
-          style={[spacings.mrTy, isCompactLayout ? flexbox.flex1 : { width: 100 }]}
+          style={[
+            // Stacked buttons are spaced by the footer's gap, and a right margin would make this
+            // one narrower than the primary button
+            !isNarrowSidePanel && spacings.mrTy,
+            isCompactLayout ? flexbox.flex1 : { width: 100 }
+          ]}
           size="smaller"
         />
         <Button

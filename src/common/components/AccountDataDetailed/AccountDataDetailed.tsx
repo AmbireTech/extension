@@ -46,7 +46,13 @@ const AccountDataDetailed = () => {
       />
       <View style={[flexbox.flex1, isSidePanel && spacings.mlSm, isSidePanel && { minWidth: 0 }]}>
         <View style={[flexbox.directionRow, flexbox.alignCenter, isSidePanel && { minWidth: 0 }]}>
-          <Text fontSize={16} weight="semiBold" numberOfLines={1}>
+          <Text
+            fontSize={16}
+            weight="semiBold"
+            numberOfLines={1}
+            // A long label would otherwise push the badges out of the narrow panel
+            style={isSidePanel ? { flexShrink: 1, minWidth: 0 } : undefined}
+          >
             {account.preferences.label}
           </Text>
           <AccountBadges accountData={account} />
