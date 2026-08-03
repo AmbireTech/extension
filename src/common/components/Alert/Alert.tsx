@@ -9,7 +9,6 @@ import SuccessIcon from '@common/assets/svg/SuccessIcon'
 import WarningIcon from '@common/assets/svg/WarningIcon'
 import Button, { Props as ButtonProps } from '@common/components/Button'
 import HoverablePressable from '@common/components/HoverablePressable'
-import { isMobile } from '@common/config/env'
 import useTheme from '@common/hooks/useTheme'
 import { THEME_TYPES } from '@common/styles/themeConfig'
 import spacings from '@common/styles/spacings'
@@ -173,9 +172,7 @@ const Alert = ({
   )
 
   const titleContent = !!title && (
-    // flexShrink lets a long title wrap within the row on mobile instead of
-    // overflowing off-screen; web keeps its intrinsic-width behavior.
-    <Text style={isMobile ? { flexShrink: 1 } : undefined}>
+    <Text>
       {!isTypeLabelHidden && (
         <Text
           selectable
@@ -224,7 +221,7 @@ const Alert = ({
       ]}
       testID={testID}
     >
-      <View style={isMobile ? { flexShrink: 1 } : flexbox.flex1}>
+      <View style={flexbox.flex1}>
         {isButtonTopRight ? (
           <View style={[flexbox.directionRow, flexbox.alignStart]}>
             {!!withIcon && (
