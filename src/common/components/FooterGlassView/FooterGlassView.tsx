@@ -66,7 +66,9 @@ const FooterGlassView: FC<{
         flexDirection: 'column',
         alignItems: 'stretch',
         gap: SPACING_TY,
-        paddingHorizontal: params[size].paddingHorizontal,
+        // A bottom sheet already pads its content horizontally, so padding the footer too would
+        // make the buttons narrower than everything above them
+        paddingHorizontal: isInsideBottomSheet ? 0 : params[size].paddingHorizontal,
         paddingVertical: params[size].paddingVertical,
         pointerEvents: 'auto'
       }

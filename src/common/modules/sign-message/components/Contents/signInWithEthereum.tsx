@@ -62,7 +62,9 @@ const Label = ({
       weight="medium"
       fontSize={14 * responsiveSizeMultiplier}
       appearance="primaryText"
-      style={{ flexShrink: 0 }}
+      // Only the web layout puts the label and the value on one row, where the value is the one
+      // that has to give way
+      style={isWeb ? { flexShrink: 0 } : undefined}
     >
       {children}
     </Text>
@@ -89,7 +91,7 @@ const Value = ({
       dataSet={{ tooltipId }}
       numberOfLines={withWrap ? undefined : 1}
       style={[
-        { flexShrink: 1, minWidth: 0 },
+        isWeb && { flexShrink: 1, minWidth: 0 },
         withWrap && {
           // Custom fontSize clears Text's default lineHeight; without an explicit value the
           // wrapped lines overlap
