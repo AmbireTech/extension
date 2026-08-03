@@ -12,6 +12,7 @@ import usePrevious from '@common/hooks/usePrevious'
 import useRoute from '@common/hooks/useRoute'
 import useTheme from '@common/hooks/useTheme'
 import { ROUTES } from '@common/modules/router/constants/common'
+import { goBackInWebViewHistory } from '@common/services/webview/webViewBackNavigation'
 import flexbox from '@common/styles/utils/flexbox'
 
 const GestureHandler = ({ children }: { children: ReactNode }) => {
@@ -42,7 +43,7 @@ const GestureHandler = ({ children }: { children: ReactNode }) => {
       if (!isRootPath && canGoBack) {
         if (openBottomSheetsCount.value > 0) {
           bottomSheetCloseEventStream.next()
-        } else {
+        } else if (!goBackInWebViewHistory()) {
           goBack()
         }
       }
@@ -88,6 +89,8 @@ const GestureHandler = ({ children }: { children: ReactNode }) => {
               bottomSheetCloseEventStream.next()
               return
             }
+
+            if (goBackInWebViewHistory()) return
 
             if (canGoBack) {
               goBack()
