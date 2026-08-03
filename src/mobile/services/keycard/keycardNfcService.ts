@@ -2,13 +2,14 @@ import { Buffer } from 'buffer'
 import { Platform } from 'react-native'
 import NfcManager, { NfcError, NfcTech } from 'react-native-nfc-manager'
 
+import { CardIOError } from 'keycard-sdk/dist/apdu-exception'
 import { APDUResponse } from 'keycard-sdk/dist/apdu-response'
-import { ApplicationInfo } from 'keycard-sdk/dist/application-info'
 import { BIP32KeyPair } from 'keycard-sdk/dist/bip32key'
-import { Commandset } from 'keycard-sdk/dist/commandset'
 import type { APDUCommand } from 'keycard-sdk/dist/apdu-command'
 import type { CardChannel } from 'keycard-sdk/dist/card-channel'
+import type { Commandset } from 'keycard-sdk/dist/commandset'
 import {
+  CardCmdExecutionError,
   CardLoadKeyError,
   CardPairingError,
   CardPinVerificationError,
@@ -20,6 +21,7 @@ import { RecoverableSignature } from 'keycard-sdk/dist/recoverable-signature'
 
 import hexStringToUint8Array from '@ambire-common/utils/hexStringToUint8Array'
 import { addHexPrefix } from '@ambire-common/utils/addHexPrefix'
+import { isDev } from '@common/config/env'
 import {
   NfcExportedKey,
   NfcSessionPurpose,
@@ -67,10 +69,24 @@ class KeycardCancelledError extends Error {
 class NfcCardChannel implements CardChannel {
   connected = false
 
-  async send(cmd: APDUCommand): Promise<APDUResponse> {
-    const response = await NfcManager.isoDepHandler.transceive(Array.from(cmd.serialize()))
+  /**
+   * Set when the radio link, rather than the card, is what failed. The SDK reports
+   * every mid-handshake failure as a pairing problem, so this is the only reliable
+   * way to tell "the card slipped" from "the pairing is bad".
+   */
+  transportError: any = null
 
-    return new APDUResponse(new Uint8Array(response))
+  async send(cmd: APDUCommand): Promise<APDUResponse> {
+    try {
+      const response = await NfcManager.isoDepHandler.transceive(Array.from(cmd.serialize()))
+
+      return new APDUResponse(new Uint8Array(response))
+    } catch (e: any) {
+      this.transportError = e
+      // Must be a CardIOError: the SDK deletes the stored pairing (and burns one of
+      // the card's pairing slots re-pairing) for any other error type.
+      throw new CardIOError(e)
+    }
   }
 
   isConnected(): boolean {
@@ -103,8 +119,31 @@ const assertCardHoldsKey = (keyUid: string, expectedKeyUid: string) => {
   }
 }
 
+// Card sessions are hard to debug after the fact - every step, and above all every
+// cancellation (with the call site), is traced in dev so a failed tap can be read
+// off the Metro logs.
+const logKeycard = (event: string, data?: any) => {
+  if (!isDev) return
+
+  console.log(`[keycard] ${event}`, data ?? '')
+}
+
 const isUserCancelledNfcError = (e: any) =>
   e instanceof NfcError.UserCancel || e instanceof KeycardCancelledError
+
+/**
+ * The RF link broke mid-exchange - the card shifted, was lifted too early, or the
+ * antenna lost it for a moment (Core NFC errors 100 / 102). The card itself is fine,
+ * so the operation is worth retrying once the card is back.
+ */
+const isTagLostError = (e: any) =>
+  e instanceof NfcError.TagConnectionLost ||
+  e instanceof NfcError.TagResponseError ||
+  e instanceof NfcError.SessionInvalidated ||
+  e instanceof CardIOError
+
+/** How many times a lost card is waited for again before giving up. */
+const TAG_LOST_RETRIES = 2
 
 class KeycardNfcService {
   #state: NfcSessionState = {
@@ -125,6 +164,9 @@ class KeycardNfcService {
 
   #isCancelled = false
 
+  /** The last error thrown by a card command, kept because the SDK loses it. */
+  #callbackError: any = null
+
   subscribe = (listener: (state: NfcSessionState) => void) => {
     this.#listeners.add(listener)
 
@@ -132,6 +174,9 @@ class KeycardNfcService {
   }
 
   getState = (): NfcSessionState => this.#state
+
+  /** Whether the card session is currently blocked on user input. */
+  hasPendingPrompt = () => !!this.#pendingPrompt
 
   #setState(next: Partial<NfcSessionState>) {
     this.#state = { ...this.#state, ...next }
@@ -166,6 +211,7 @@ class KeycardNfcService {
   /** Called by the UI when the user submits the PIN or the pairing password. */
   submitPrompt = (value: string) => {
     const prompt = this.#pendingPrompt
+    logKeycard('submitPrompt', { hasPendingPrompt: !!prompt, step: this.#state.step })
     if (!prompt) return
 
     this.#pendingPrompt = null
@@ -175,6 +221,13 @@ class KeycardNfcService {
   /** Called by the UI when the user dismisses the card session. */
   cancel = () => {
     const prompt = this.#pendingPrompt
+    logKeycard('cancel', {
+      step: this.#state.step,
+      hasPendingPrompt: !!prompt,
+      // The usual cause of a mystery cancellation is an unmount / effect teardown,
+      // so record who asked for it.
+      calledFrom: new Error('cancel called').stack
+    })
     this.#pendingPrompt = null
     // Cancelling mid-tap surfaces as a plain transport error, so remember the
     // intent and report it as a cancellation rather than a card failure.
@@ -188,10 +241,8 @@ class KeycardNfcService {
     })
   }
 
-  #promptUser(
-    step: 'awaiting-pin' | 'awaiting-pairing-password',
-    error: string | null = null
-  ): Promise<string> {
+  #promptUser(step: 'awaiting-pin', error: string | null = null): Promise<string> {
+    logKeycard('prompting the user', { step, error })
     this.#setState({ step, error })
 
     return new Promise<string>((resolve, reject) => {
@@ -214,16 +265,19 @@ class KeycardNfcService {
 
     try {
       this.#setState({ step: 'awaiting-tap', error: null })
+      logKeycard('requestTechnology: waiting for a tap')
       await NfcManager.requestTechnology(NfcTech.IsoDep, { alertMessage })
+      logKeycard('requestTechnology: card connected')
 
       if (Platform.OS === 'android') await NfcManager.setTimeout(ANDROID_ISO_DEP_TIMEOUT)
 
       channel.connected = true
       this.#setState({ step: 'communicating' })
 
-      return await cb(channel)
+      return await this.#runWithTagRetry(channel, cb)
     } finally {
       channel.connected = false
+      logKeycard('closing NFC session')
       await NfcManager.cancelTechnologyRequest().catch(() => {
         // The session may already be closed (card moved away, user cancelled).
       })
@@ -231,9 +285,61 @@ class KeycardNfcService {
   }
 
   /**
+   * Runs a card command, waiting for the card again if the RF link drops mid-exchange
+   * instead of failing the whole operation. On iOS the session (and its system sheet)
+   * is kept open and polling is restarted, which is what Keycard's own iOS SDK does
+   * for the same errors. Everything is re-sent from the start, so the retry re-opens
+   * the secure channel - card commands are not resumable.
+   */
+  async #runWithTagRetry<T>(
+    channel: NfcCardChannel,
+    cb: (channel: NfcCardChannel) => Promise<T>
+  ): Promise<T> {
+    for (let attempt = 0; ; attempt++) {
+      channel.transportError = null
+
+      try {
+        return await cb(channel)
+      } catch (e: any) {
+        // The SDK rewraps transport failures as pairing/secure-channel errors, so the
+        // channel's own flag is what decides whether the card merely slipped.
+        const isTagLost = isTagLostError(e) || !!channel.transportError
+
+        if (!isTagLost || attempt >= TAG_LOST_RETRIES || this.#isCancelled) throw e
+
+        logKeycard('lost the card mid-command, waiting for it again', {
+          attempt: attempt + 1,
+          error: e?.constructor?.name,
+          transportError: channel.transportError?.constructor?.name
+        })
+        this.#setState({ step: 'awaiting-tap' })
+
+        await this.#waitForCardAgain()
+        this.#setState({ step: 'communicating' })
+      }
+    }
+  }
+
+  async #waitForCardAgain() {
+    if (Platform.OS === 'ios') {
+      await NfcManager.setAlertMessageIOS('Hold your card still against the phone.')
+      // Keeps the same session and sheet; resolves once a card is presented again.
+      await NfcManager.restartTechnologyRequestIOS()
+      return
+    }
+
+    // Android has no session to keep alive - re-request the tag instead.
+    await NfcManager.cancelTechnologyRequest().catch(() => {
+      // Already closed; the re-request below is what matters.
+    })
+    await NfcManager.requestTechnology(NfcTech.IsoDep)
+    await NfcManager.setTimeout(ANDROID_ISO_DEP_TIMEOUT)
+  }
+
+  /**
    * Runs one card command: gets the card and the PIN, opens the secure channel and
-   * executes `cb`. A wrong PIN or a missing pairing password re-prompts instead of
-   * failing, so the user does not have to restart the whole flow.
+   * executes `cb`. A wrong PIN re-prompts instead of failing, so the user does not
+   * have to restart the whole flow.
    *
    * The card is tapped first and the PIN asked once it is on the phone (IS_TAP_FIRST).
    * On iOS that order is impossible: an open NFC session puts a system sheet over the
@@ -242,73 +348,85 @@ class KeycardNfcService {
    */
   async #runOnCard<T>(
     purpose: NfcSessionPurpose,
-    cb: (cmdSet: Commandset) => Promise<T>,
-    checkCard: (keyUid: string) => void
+    cb: (cmdSet: Commandset) => Promise<T>
   ): Promise<T> {
     let pin: string | null = null
-    let pairingPassword: string | undefined
     let pinError: string | null = null
-    let isCardIdentified = false
 
     this.#isCancelled = false
+    this.#callbackError = null
+    logKeycard('runOnCard: start', { purpose, isTapFirst: IS_TAP_FIRST })
     this.#setState({ purpose, error: null, pinAttemptsLeft: null })
 
     try {
       while (true) {
-        if (!IS_TAP_FIRST && !isCardIdentified) {
-          // iOS keeps a system sheet over the app for as long as the NFC session
-          // is open, so the PIN can only be typed after the session ends - and the
-          // card connection ends with it. Hence two taps: this one identifies the
-          // card (no PIN needed) so a wrong or empty card is caught before the user
-          // types anything, and the one below does the actual work.
-          checkCard(await this.#identifyCard())
-          isCardIdentified = true
-        }
-
         if (!IS_TAP_FIRST && !pin) pin = await this.#promptUser('awaiting-pin', pinError)
 
         try {
-          const result = await this.#withCardSession(
-            async (channel) => {
-              // The card stays in the field while the PIN is typed, so this whole
-              // operation is a single tap.
-              if (!pin) {
-                pin = await this.#promptUser('awaiting-pin', pinError)
-                this.#setState({ step: 'communicating', error: null })
-              }
+          const result = await this.#withCardSession(async (channel) => {
+            // The card stays in the field while the PIN is typed, so this whole
+            // operation is a single tap.
+            if (!pin) {
+              pin = await this.#promptUser('awaiting-pin', pinError)
+              this.#setState({ step: 'communicating', error: null })
+            }
 
-              const response = await this.#keycardManager.runOnSecureChannel(
-                channel,
-                LOADED,
-                {
-                  pin: pin as string,
-                  pairingPassword,
-                  // Empty lists tell the SDK to skip the card authenticity check, which
-                  // needs Keycard's certificate authority keys. Cards running applet 4.0+
-                  // are verified by the SDK through their on-card certificate instead.
-                  caPublicKeys: [],
-                  skipVerificationUID: []
-                },
-                cb
+            const response = await this.#keycardManager.runOnSecureChannel(
+              channel,
+              LOADED,
+              {
+                pin: pin as string,
+                // The SDK falls back to Keycard's default pairing password, which is
+                // what every Keycard app and SDK uses - a custom one is not something
+                // users are ever asked to set, so it is never prompted for here.
+                // Empty lists tell the SDK to skip the card authenticity check, which
+                // needs Keycard's certificate authority keys. Cards running applet 4.0+
+                // are verified by the SDK through their on-card certificate instead.
+                caPublicKeys: [],
+                skipVerificationUID: []
+              },
+              // The SDK collapses anything the callback throws into
+              // "Error executing callback function. ${err}", losing the message on
+              // errors that stringify poorly. Keep the original so the failure can
+              // still be reported (and logged) accurately.
+              async (cmdSet) => {
+                try {
+                  return await cb(cmdSet)
+                } catch (callbackError: any) {
+                  this.#callbackError = callbackError
+                  logKeycard('card command failed', {
+                    message: callbackError?.message,
+                    name: callbackError?.name,
+                    asString: String(callbackError),
+                    stack: callbackError?.stack
+                  })
+                  throw callbackError
+                }
+              }
+            )
+
+            if (response.status !== 'success') {
+              throw new KManagerError(
+                response.data?.message || 'Card command failed.',
+                response.data?.type,
+                response.data
               )
+            }
 
-              if (response.status !== 'success') {
-                throw new KManagerError(
-                  response.data?.message || 'Card command failed.',
-                  response.data?.type,
-                  response.data
-                )
-              }
-
-              return response.data.cbFuncResponse as T
-            },
-            isCardIdentified ? 'Hold your card again to finish.' : undefined
-          )
+            return response.data.cbFuncResponse as T
+          })
 
           this.#setState({ step: 'idle', purpose: null, error: null, pinAttemptsLeft: null })
 
           return result
         } catch (e: any) {
+          logKeycard('card session failed', {
+            message: e?.message,
+            errorCode: e?.errorCode,
+            name: e?.constructor?.name,
+            isCancelled: this.#isCancelled,
+            cardData: e?.cardData
+          })
           if (this.#isCancelled || isUserCancelledNfcError(e)) throw new KeycardCancelledError()
 
           const attemptsLeft = this.#getPinAttemptsLeft(e)
@@ -318,12 +436,6 @@ class KeycardNfcService {
               attemptsLeft === 1 ? 'attempt' : 'attempts'
             } left before the card locks.`
             this.#setState({ pinAttemptsLeft: attemptsLeft })
-
-            continue
-          }
-
-          if (e?.errorCode === CardPairingError && !pairingPassword) {
-            pairingPassword = await this.#promptUser('awaiting-pairing-password')
 
             continue
           }
@@ -338,22 +450,7 @@ class KeycardNfcService {
       throw new Error(message || 'Could not talk to your card. Please try again.')
     } finally {
       pin = null
-      pairingPassword = undefined
     }
-  }
-
-  /**
-   * Reads which wallet the tapped card holds. Only SELECT is sent, which needs
-   * neither a secure channel nor the PIN.
-   */
-  async #identifyCard(): Promise<string> {
-    const keyUid = await this.#withCardSession(async (channel) => {
-      const cmdSet = new Commandset(channel)
-
-      return new ApplicationInfo((await cmdSet.select()).checkOK().data).keyUID
-    })
-
-    return keyUid?.length ? Buffer.from(keyUid).toString('hex') : ''
   }
 
   #getPinAttemptsLeft(e: any): number | null {
@@ -365,6 +462,12 @@ class KeycardNfcService {
   }
 
   #getUserFacingError(e: any): string {
+    // The card was reached and unlocked; the command itself is what failed, so
+    // report that error instead of the SDK's generic wrapper.
+    if (e?.errorCode === CardCmdExecutionError && this.#callbackError) {
+      return this.#callbackError?.message || 'The card could not complete the operation.'
+    }
+
     if (e?.errorCode === CardPinVerificationError) {
       return 'The card is locked because the PIN was entered wrongly too many times. Unblock it with your PUK code in the Keycard app.'
     }
@@ -374,11 +477,11 @@ class KeycardNfcService {
     }
 
     if (e?.errorCode === CardPairingError) {
-      return 'Could not pair with this card. Check the pairing password, or free up a pairing slot in the Keycard app.'
+      return 'Could not connect to this card. It may have run out of free slots for apps - remove the ones you no longer use in the Keycard app, then try again.'
     }
 
-    if (e instanceof NfcError.Timeout || e?.message?.includes('CardIO Error')) {
-      return 'Lost connection to the card. Hold it against your phone until the operation finishes.'
+    if (isTagLostError(e) || e instanceof NfcError.Timeout) {
+      return 'Lost connection to the card. Hold it flat against the phone, without moving it, until the operation finishes.'
     }
 
     return e?.message || 'Could not talk to your card. Please try again.'
@@ -389,25 +492,30 @@ class KeycardNfcService {
    * without the card. Tapped once, during import.
    */
   exportAccountKey = async (): Promise<NfcExportedKey> => {
-    return this.#runOnCard(
-      'import',
-      async (cmdSet) => {
-        const keyUid = cmdSet.applicationInfo?.keyUID
-        const tappedKeyUid = keyUid?.length ? Buffer.from(keyUid).toString('hex') : ''
-        assertCardHasWallet(tappedKeyUid)
+    return this.#runOnCard('import', async (cmdSet) => {
+      const keyUid = cmdSet.applicationInfo?.keyUID
+      const tappedKeyUid = keyUid?.length ? Buffer.from(keyUid).toString('hex') : ''
+      assertCardHasWallet(tappedKeyUid)
 
-        const exportedKey = (
-          await cmdSet.exportExtendedKey(0, KEYCARD_ACCOUNT_HD_PATH, false)
-        ).checkOK().data
+      logKeycard('exporting the account key', {
+        appVersion: cmdSet.applicationInfo?.appVersion?.toString(16)
+      })
+      const response = await cmdSet.exportExtendedKey(0, KEYCARD_ACCOUNT_HD_PATH, false)
+      logKeycard('export responded', {
+        sw: response.sw?.toString(16),
+        tlv: Buffer.from(response.data || []).toString('hex')
+      })
 
-        return {
-          extendedPublicKey: BIP32KeyPair.extendedKey(exportedKey).publicExtendedKey,
-          hdPath: KEYCARD_ACCOUNT_HD_PATH,
-          keyUid: tappedKeyUid
-        }
-      },
-      assertCardHasWallet
-    )
+      const exportedKey = response.checkOK().data
+      const extendedPublicKey = BIP32KeyPair.extendedKey(exportedKey).publicExtendedKey
+      logKeycard('account key parsed', { extendedPublicKey })
+
+      return {
+        extendedPublicKey,
+        hdPath: KEYCARD_ACCOUNT_HD_PATH,
+        keyUid: tappedKeyUid
+      }
+    })
   }
 
   /** Signs an already computed 32-byte hash with the key at `path`. */
@@ -422,24 +530,20 @@ class KeycardNfcService {
   }): Promise<NfcSignature> => {
     const hash = hexStringToUint8Array(hashHex)
 
-    return this.#runOnCard(
-      'sign',
-      async (cmdSet) => {
-        const keyUid = cmdSet.applicationInfo?.keyUID
-        const tappedKeyUid = keyUid?.length ? Buffer.from(keyUid).toString('hex') : ''
-        assertCardHoldsKey(tappedKeyUid, expectedKeyUid)
+    return this.#runOnCard('sign', async (cmdSet) => {
+      const keyUid = cmdSet.applicationInfo?.keyUID
+      const tappedKeyUid = keyUid?.length ? Buffer.from(keyUid).toString('hex') : ''
+      assertCardHoldsKey(tappedKeyUid, expectedKeyUid)
 
-        const response = (await cmdSet.signWithPath(hash, path, false)).checkOK().data
-        const signature = new RecoverableSignature({ hash, tlvData: response })
+      const response = (await cmdSet.signWithPath(hash, path, false)).checkOK().data
+      const signature = new RecoverableSignature({ hash, tlvData: response })
 
-        return {
-          r: toSignatureComponentHex(signature.r!),
-          s: toSignatureComponentHex(signature.s!),
-          v: signature.recId! + 27
-        }
-      },
-      (tappedKeyUid) => assertCardHoldsKey(tappedKeyUid, expectedKeyUid)
-    )
+      return {
+        r: toSignatureComponentHex(signature.r!),
+        s: toSignatureComponentHex(signature.s!),
+        v: signature.recId! + 27
+      }
+    })
   }
 }
 

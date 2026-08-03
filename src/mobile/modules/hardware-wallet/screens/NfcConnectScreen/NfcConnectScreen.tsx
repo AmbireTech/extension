@@ -3,7 +3,9 @@ import { View } from 'react-native'
 
 import NfcIcon from '@common/assets/svg/NfcIcon'
 import Alert from '@common/components/Alert'
+import Button from '@common/components/Button'
 import Text from '@common/components/Text'
+import { isDev } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
@@ -57,6 +59,7 @@ const NfcConnectScreen = () => {
 
     try {
       const exportedKey = await keycardNfcService.exportAccountKey()
+      if (isDev) console.log('[keycard] account key exported', { keyUid: exportedKey.keyUid })
 
       setIsSubmitting(true)
       dispatch({
@@ -64,24 +67,24 @@ const NfcConnectScreen = () => {
         params: { payload: exportedKey }
       })
     } catch (e: any) {
+      if (isDev) console.log('[keycard] import failed', e?.message)
       setError(e?.message || t('Could not read the card. Please try again.'))
     } finally {
       isScanningRef.current = false
     }
   }, [dispatch, t])
 
-  // Scanning starts as soon as the screen opens - the card is the only thing the
-  // user has to do here, so there is nothing to press first.
+  // Nothing is started until the user presses Scan, so the NFC prompt never comes
+  // up unasked. Leaving the screen mid-session ends it.
   useEffect(() => {
-    void scanCard()
-
     return () => keycardNfcService.cancel()
-  }, [scanCard])
+  }, [])
 
+  // Only re-checks the setting; scanning still waits for an explicit Scan press.
   const handleTurnOnNfc = useCallback(async () => {
     await keycardNfcService.openNfcSettings()
-    void scanCard()
-  }, [scanCard])
+    setIsNfcOff(!(await keycardNfcService.isEnabled()))
+  }, [])
 
   const handleBackButtonPress = useCallback(() => {
     keycardNfcService.cancel()
@@ -97,28 +100,26 @@ const NfcConnectScreen = () => {
     }
   }, [isSubmitting, initParams, type, goToNextRoute])
 
-  const footerText = (() => {
+  const isBusy = isSubmitting || (step !== 'idle' && step !== 'awaiting-pin')
+
+  const buttonText = (() => {
     if (isNfcOff) return t('Turn on NFC')
-    if (error) return t('Tap to scan again')
     if (isSubmitting) return t('Reading accounts...')
-    if (step === 'communicating' || step === 'awaiting-pin') return t('Reading card...')
+    if (step === 'awaiting-tap') return t('Waiting for card...')
+    if (isBusy) return t('Reading card...')
 
-    return t('Tap to scan')
+    return t('Scan')
   })()
-
-  const isFooterPressable = isNfcOff || !!error
 
   return (
     <MobileLayoutContainer
       footer={
-        <AnimatedPressable
-          disabled={!isFooterPressable}
+        <Button
+          text={buttonText}
+          disabled={isBusy}
+          hasBottomSpacing={false}
           onPress={isNfcOff ? handleTurnOnNfc : scanCard}
-        >
-          <Text fontSize={16} weight="medium" style={{ textAlign: 'center' }}>
-            {footerText}
-          </Text>
-        </AnimatedPressable>
+        />
       }
     >
       <MobileLayoutWrapperMainContent

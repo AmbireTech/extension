@@ -5,12 +5,7 @@ import { NfcWalletType } from '@ambire-common/interfaces/keystore'
  * native NFC service (not by a controller), because the card credentials must
  * never leave the React Native context.
  */
-export type NfcSessionStep =
-  | 'idle'
-  | 'awaiting-pin'
-  | 'awaiting-pairing-password'
-  | 'awaiting-tap'
-  | 'communicating'
+export type NfcSessionStep = 'idle' | 'awaiting-pin' | 'awaiting-tap' | 'communicating'
 
 export type NfcSessionPurpose = 'import' | 'sign'
 

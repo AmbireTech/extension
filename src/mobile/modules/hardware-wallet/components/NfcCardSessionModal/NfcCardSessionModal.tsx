@@ -13,6 +13,7 @@ import { useTranslation } from '@common/config/localization'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import useNfcCardSession from '@mobile/modules/hardware-wallet/hooks/useNfcCardSession'
+import keycardNfcService from '@mobile/services/keycard/keycardNfcService'
 
 /**
  * Drives every card tap in the app - both importing accounts and signing.
@@ -29,9 +30,9 @@ const NfcCardSessionModal = () => {
 
   const [promptValue, setPromptValue] = useState('')
 
-  const isPrompting = step === 'awaiting-pin' || step === 'awaiting-pairing-password'
+  const isPrompting = step === 'awaiting-pin'
   // While importing, the connect screen is the one showing the tap prompt, so the
-  // sheet only comes up for the PIN / pairing password.
+  // sheet only comes up for the PIN.
   const isVisible = step !== 'idle' && (purpose !== 'import' || isPrompting)
 
   useEffect(() => {
@@ -54,14 +55,14 @@ const NfcCardSessionModal = () => {
     cancel()
   }, [cancel])
 
-  // The sheet also closes on its own once a session finishes, so only treat a
-  // close as a cancellation while a session is still running.
+  // The sheet also closes on its own when the session moves on (PIN submitted, or
+  // the whole operation finished). Only a close while the card is still waiting for
+  // input is the user backing out - asked live, because this fires after a render.
   const handleClosed = useCallback(() => {
-    if (isVisible) handleCancel()
-  }, [isVisible, handleCancel])
+    if (keycardNfcService.hasPendingPrompt()) handleCancel()
+  }, [handleCancel])
 
   const title = (() => {
-    if (step === 'awaiting-pairing-password') return t('Card pairing password')
     if (step === 'awaiting-pin') return t('Enter your card PIN')
 
     return purpose === 'import' ? t('Tap your card to import') : t('Tap your card to sign')
@@ -82,21 +83,17 @@ const NfcCardSessionModal = () => {
       {isPrompting ? (
         <View style={spacings.pbLg}>
           <Text fontSize={14} appearance="secondaryText" style={spacings.mbSm}>
-            {step === 'awaiting-pin'
-              ? t('Your PIN unlocks the card for this one operation only. It is never saved.')
-              : t(
-                  'This card is protected with a pairing password. You can find it in the app you set the card up with.'
-                )}
+            {t('Your PIN unlocks the card for this one operation only. It is never saved.')}
           </Text>
 
           <InputPassword
             value={promptValue}
             onChangeText={setPromptValue}
             onSubmitEditing={handleSubmit}
-            keyboardType={step === 'awaiting-pin' ? 'number-pad' : 'default'}
+            keyboardType="number-pad"
             autoFocus
             error={error || undefined}
-            placeholder={step === 'awaiting-pin' ? t('PIN') : t('Pairing password')}
+            placeholder={t('PIN')}
           />
 
           <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mtSm]}>
