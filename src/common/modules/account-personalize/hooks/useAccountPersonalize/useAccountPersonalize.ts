@@ -4,8 +4,6 @@ import { useFieldArray, useForm } from 'react-hook-form'
 import { Account } from '@ambire-common/interfaces/account'
 import wait from '@ambire-common/utils/wait'
 import useController from '@common/hooks/useController'
-import useNavigation from '@common/hooks/useNavigation'
-import useRoute from '@common/hooks/useRoute'
 import useToast from '@common/hooks/useToast'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
 import { openInTab } from '@common/utils/links'
@@ -13,8 +11,6 @@ import { openInTab } from '@common/utils/links'
 export default function useAccountPersonalize() {
   const { goToNextRoute, setAccountsToPersonalize, accountsToPersonalize } =
     useOnboardingNavigation()
-  const { navigate } = useNavigation()
-  const { params, path } = useRoute()
 
   const { state: accountPickerState, dispatch: accountPickerDispatch } =
     useController('AccountPickerController')
@@ -22,17 +18,10 @@ export default function useAccountPersonalize() {
     state: { statuses, accounts },
     dispatch: accountsDispatch
   } = useController('AccountsController')
-  const { statuses: mainStatuses } = useController('MainController').state
   const { isSetupComplete } = useController('WalletStateController').state
   const { addToast } = useToast()
   const initPassed = useRef(false)
   const newlyAddedAccounts = useMemo(() => accounts.filter((a) => a.newlyAdded) || [], [accounts])
-  const shouldWaitForAccountUpdate = params.waitForAccountUpdate === true
-  const isAccountUpdatePending =
-    shouldWaitForAccountUpdate && mainStatuses.updateAccounts === 'LOADING'
-  const hasAccountUpdateFailed =
-    params.accountUpdateFailed === true ||
-    (shouldWaitForAccountUpdate && mainStatuses.updateAccounts === 'ERROR')
 
   const { handleSubmit, control, setValue, getValues } = useForm({
     defaultValues: {
@@ -44,17 +33,6 @@ export default function useAccountPersonalize() {
   const [isLoading, setIsLoading] = useState(true)
   // Enters into completed state after the `Complete` button is pressed
   const [completed, setCompleted] = useState(false)
-
-  useEffect(() => {
-    if (!shouldWaitForAccountUpdate) return
-    if (params.accountUpdateFailed === true) return
-    if (mainStatuses.updateAccounts !== 'ERROR') return
-
-    navigate(path, {
-      replace: true,
-      state: { ...params, accountUpdateFailed: true }
-    })
-  }, [mainStatuses.updateAccounts, navigate, params, path, shouldWaitForAccountUpdate])
 
   useEffect(() => {
     if (!accountPickerState.initParams) return
@@ -141,8 +119,6 @@ export default function useAccountPersonalize() {
     // async effect could read outdated values, since state updates are not guaranteed
     // to sync during the async wait loops.
     const getShouldStopLoadingBasedOnLatestState = () => {
-      if (isAccountUpdatePending) return false
-
       const hasAccounts =
         (accountsToPersonalizeRef.current && accountsToPersonalizeRef.current.length > 0) ||
         (newlyAddedAccountsRef.current && newlyAddedAccountsRef.current.length > 0)
@@ -207,7 +183,6 @@ export default function useAccountPersonalize() {
 
       if (resolved) return
       if (!isLoadingRef.current) return
-      if (isAccountUpdatePending) return
 
       setIsLoading(false)
       if (getShouldComplete()) setCompleted(true)
@@ -216,7 +191,7 @@ export default function useAccountPersonalize() {
     return () => {
       resolved = true
     }
-  }, [isAccountUpdatePending, isLoading])
+  }, [isLoading])
 
   // the hook inits the list with accountsToPersonalize
   useEffect(() => {
@@ -244,7 +219,6 @@ export default function useAccountPersonalize() {
     } else {
       if (accountsToPersonalize.length) return
       if (isLoading) return
-      if (hasAccountUpdateFailed) return
 
       const shouldAddAutomatically =
         accountPickerState.initParams?.shouldAddNextAccountAutomatically ?? true
@@ -264,7 +238,6 @@ export default function useAccountPersonalize() {
     accountsToPersonalize,
     newlyAddedAccounts,
     statuses.addAccounts,
-    hasAccountUpdateFailed,
     setAccountsToPersonalize,
     goToNextRoute
   ])
@@ -348,7 +321,6 @@ export default function useAccountPersonalize() {
     control,
     accounts,
     accountPickerState,
-    hasAccountUpdateFailed,
     accountsToPersonalize,
     handleSave,
     handleComplete,

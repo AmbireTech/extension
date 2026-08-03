@@ -39,16 +39,12 @@ const AccountPersonalizeScreen = () => {
     fields,
     control,
     accountPickerState,
-    hasAccountUpdateFailed,
     accountsToPersonalize,
     accounts,
     handleSave,
     handleComplete,
     handleContactSupport
   } = useAccountPersonalize()
-  const pageError =
-    accountPickerState.pageError ||
-    (hasAccountUpdateFailed ? t('Failed to update your accounts') : '')
 
   return (
     <>
@@ -58,14 +54,14 @@ const AccountPersonalizeScreen = () => {
           <Panel
             type="onboarding"
             spacingsSize="small"
-            style={!pageError && spacings.ptMd}
-            withBackButton={!!pageError}
+            style={!accountPickerState.pageError && spacings.ptMd}
+            withBackButton={!!accountPickerState.pageError}
             onBackButtonPress={() => {
               goToPrevRoute()
             }}
-            title={pageError ? t('Accounts') : undefined}
+            title={accountPickerState.pageError ? t('Accounts') : undefined}
           >
-            {isLoading && !pageError ? (
+            {isLoading && !accountPickerState.pageError ? (
               <View style={[flexbox.alignCenter]}>
                 <View style={spacings.mbXl}>
                   <AccountsLoadingAnimation />
@@ -75,11 +71,11 @@ const AccountPersonalizeScreen = () => {
                 </Text>
                 <DotsLoadingAnimation />
               </View>
-            ) : pageError ? (
+            ) : accountPickerState.pageError ? (
               <View style={flexbox.alignCenter}>
                 <Alert
                   type="warning"
-                  title={pageError}
+                  title={accountPickerState.pageError}
                   text={
                     <Trans>
                       <Alert.Text type="warning">

@@ -35,22 +35,18 @@ const AccountPersonalizeScreen = () => {
     fields,
     control,
     accountPickerState,
-    hasAccountUpdateFailed,
     accounts,
     accountsToPersonalize,
     handleSave,
     handleComplete,
     handleContactSupport
   } = useAccountPersonalize()
-  const pageError =
-    accountPickerState.pageError ||
-    (hasAccountUpdateFailed ? t('Failed to update your accounts') : '')
 
   return (
     <MobileLayoutContainer
       footer={
         !isLoading &&
-        !pageError && (
+        !accountPickerState.pageError && (
           <>
             <Button
               testID="button-save-and-continue"
@@ -98,7 +94,7 @@ const AccountPersonalizeScreen = () => {
         withBackButton
         onBackButtonPress={goToPrevRoute}
         title={
-          pageError
+          accountPickerState.pageError
             ? t('Accounts')
             : !isLoading
               ? accountsToPersonalize.length
@@ -108,7 +104,7 @@ const AccountPersonalizeScreen = () => {
         }
         withScroll
       >
-        {isLoading && !pageError ? (
+        {isLoading && !accountPickerState.pageError ? (
           <View style={[flexbox.alignCenter]}>
             <View style={spacings.mbLg}>
               <AccountsLoadingAnimation />
@@ -118,11 +114,11 @@ const AccountPersonalizeScreen = () => {
             </Text>
             <DotsLoadingAnimation />
           </View>
-        ) : pageError ? (
+        ) : accountPickerState.pageError ? (
           <View style={flexbox.alignCenter}>
             <Alert
               type="warning"
-              title={pageError}
+              title={accountPickerState.pageError}
               text={
                 <Trans>
                   <Alert.Text type="warning">
