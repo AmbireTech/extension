@@ -47,8 +47,8 @@ const useSafeImportByOwner = () => {
     selectedAddresses: string[]
     deselectedAddresses: string[]
   }>({ owner: '', selectedAddresses: [], deselectedAddresses: [] })
-  const [onImportPressed, setOnImportPressed] = useState(false)
-  const hasCurrentImportStarted = useRef(false)
+  const isImportRequested = useRef(false)
+  const hasSeenUpdateAccountsLoading = useRef(false)
   const requestedOwner = useRef('')
 
   const setOwnerAddressState = useCallback(
@@ -101,21 +101,35 @@ const useSafeImportByOwner = () => {
     safeDispatch({ type: 'method', params: { method: 'findSafesByOwner', args: [owner] } })
   }, [owner, safeOwnerSearch?.owner, safeDispatch, statuses.findSafesByOwner])
 
+  /**
+   * We need this to mitigate the flashing when reentering this screen.
+   * This cleans up the controller state after the user finishes
+   */
+  useEffect(
+    () => () => {
+      safeDispatch({ type: 'method', params: { method: 'resetFindSafesByOwner', args: [] } })
+    },
+    [safeDispatch]
+  )
+
   useEffect(() => {
-    if (!onImportPressed) return
+    if (!isImportRequested.current) return
     if (mainStatuses.updateAccounts === 'LOADING') {
-      hasCurrentImportStarted.current = true
+      hasSeenUpdateAccountsLoading.current = true
       return
     }
-    if (!hasCurrentImportStarted.current) return
-    if (mainStatuses.updateAccounts === 'SUCCESS') goToNextRoute()
-    // The external controller result unlocks the button so the user can retry.
-    if (mainStatuses.updateAccounts === 'ERROR') {
-      hasCurrentImportStarted.current = false
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setOnImportPressed(false)
+    if (!hasSeenUpdateAccountsLoading.current) return
+    if (mainStatuses.updateAccounts === 'SUCCESS') {
+      isImportRequested.current = false
+      hasSeenUpdateAccountsLoading.current = false
+      goToNextRoute()
+      return
     }
-  }, [goToNextRoute, mainStatuses.updateAccounts, onImportPressed])
+    if (mainStatuses.updateAccounts === 'ERROR') {
+      isImportRequested.current = false
+      hasSeenUpdateAccountsLoading.current = false
+    }
+  }, [goToNextRoute, mainStatuses.updateAccounts])
 
   const safeAccounts = useMemo(
     () => (safeOwnerSearch?.owner === owner ? safeOwnerSearch.accounts : []),
@@ -152,6 +166,8 @@ const useSafeImportByOwner = () => {
   }, [importedAddressSet, owner, safeAccounts, selectionOverrides])
 
   const isSearching = !!owner && statuses.findSafesByOwner === 'LOADING'
+  const isMainBusy = Object.values(mainStatuses).some((status) => status !== 'INITIAL')
+  const isImporting = mainStatuses.updateAccounts === 'LOADING'
   const safeSupportedNetworkCount = useMemo(
     () =>
       enabledNetworks.filter((network) => SAFE_NETWORKS.includes(Number(network.chainId))).length,
@@ -196,7 +212,7 @@ const useSafeImportByOwner = () => {
   )
 
   const handleImport = useCallback(() => {
-    if (isSearching || onImportPressed) return
+    if (isSearching || isMainBusy) return
 
     const selectedAddressSet = new Set(selectedAddresses.map((address) => address.toLowerCase()))
     const importedAddressSet = new Set(
@@ -221,8 +237,8 @@ const useSafeImportByOwner = () => {
       })
       .map((account) => account.addr)
 
-    hasCurrentImportStarted.current = false
-    setOnImportPressed(true)
+    hasSeenUpdateAccountsLoading.current = false
+    isImportRequested.current = true
     mainDispatch({
       type: 'method',
       params: {
@@ -230,14 +246,7 @@ const useSafeImportByOwner = () => {
         args: [{ accountsToAdd: accountsToImport, accountAddressesToRemove }]
       }
     })
-  }, [
-    importedAccounts,
-    isSearching,
-    mainDispatch,
-    onImportPressed,
-    safeAccounts,
-    selectedAddresses
-  ])
+  }, [importedAccounts, isMainBusy, isSearching, mainDispatch, safeAccounts, selectedAddresses])
 
   return {
     control,
@@ -248,7 +257,7 @@ const useSafeImportByOwner = () => {
     isValid,
     goToPrevRoute,
     importedAccounts,
-    isImporting: onImportPressed,
+    isImporting,
     ownerAddressState,
     ownerAddressValidation,
     safeAccounts,

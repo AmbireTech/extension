@@ -118,8 +118,19 @@ const Account = ({
 
   const shouldShowImportedAddress =
     !account.preferences.label || (!isMobile && identityDisplayMode === 'responsive')
-  const shouldShowOnlyResolvedName =
-    isWeb && identityDisplayMode === 'compact' && !!reverseLookupName
+  const identityFontSize = identityDisplayMode === 'compact' ? 14 : 16
+  const isCompactWebIdentity = isWeb && identityDisplayMode === 'compact'
+  const compactIdentityTooltipDataSet = useMemo(
+    () =>
+      isCompactWebIdentity
+        ? createGlobalTooltipDataSet({
+            id: `account-picker-identity-${account.addr}`,
+            content: account.addr
+          })
+        : undefined,
+    [account.addr, isCompactWebIdentity]
+  )
+  const shouldShowOnlyResolvedName = isCompactWebIdentity && !!reverseLookupName
 
   const handleCopyAddress = useCallback(() => {
     setStringAsync(account.addr)
@@ -185,10 +196,11 @@ const Account = ({
                     displayTypeBadge={displayTypeBadge}
                   />
                   <Text
-                    fontSize={16}
+                    fontSize={identityFontSize}
                     weight="medium"
                     appearance={isMobile && type === 'linked' ? 'infoText' : 'primaryText'}
                     style={spacings.mrTy}
+                    dataSet={compactIdentityTooltipDataSet}
                   >
                     {account.preferences.label}
                   </Text>
@@ -211,18 +223,11 @@ const Account = ({
                 <>
                   {reverseLookupName ? (
                     <Text
-                      fontSize={16}
+                      fontSize={identityFontSize}
                       weight="medium"
                       appearance={isMobile && type === 'linked' ? 'infoText' : 'primaryText'}
                       style={spacings.mrTy}
-                      dataSet={
-                        shouldShowOnlyResolvedName
-                          ? createGlobalTooltipDataSet({
-                              id: `account-picker-domain-${account.addr}`,
-                              content: account.addr
-                            })
-                          : undefined
-                      }
+                      dataSet={compactIdentityTooltipDataSet}
                     >
                       {reverseLookupName}
                     </Text>
