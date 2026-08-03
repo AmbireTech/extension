@@ -1,6 +1,7 @@
 import React from 'react'
 
 import GridPlusIcon from '@common/assets/svg/GridPlusIcon'
+import HWIcon from '@common/assets/svg/HWIcon'
 import LedgerBadgeIcon from '@common/assets/svg/LedgerBadgeIcon'
 import ReceiveIcon from '@common/assets/svg/ReceiveIcon'
 import SafeIcon from '@common/assets/svg/SafeIcon'
@@ -52,6 +53,15 @@ const AccountKeyBanner = ({ type }: { type: KeyType }) => {
     return (
       <Wrapper text="Qr-based">
         <ReceiveIcon {...iconProps} />
+      </Wrapper>
+    )
+
+  if (type === 'nfc')
+    return (
+      <Wrapper text="NFC card">
+        {/* TODO: no NFC / contactless card icon exists in @common/assets/svg yet,
+        falling back to the generic hardware wallet one. Please add a proper icon. */}
+        <HWIcon {...iconProps} />
       </Wrapper>
     )
 

@@ -2,6 +2,7 @@ import React from 'react'
 import { ColorValue } from 'react-native'
 
 import GridPlusIcon from '@common/assets/svg/GridPlusIcon'
+import HWIcon from '@common/assets/svg/HWIcon'
 import LedgerBadgeIcon from '@common/assets/svg/LedgerBadgeIcon'
 import NoKeysIcon from '@common/assets/svg/NoKeysIcon'
 import ReceiveIcon from '@common/assets/svg/ReceiveIcon'
@@ -31,6 +32,9 @@ const AccountKeyIcon = ({
   if (type === 'none') return <NoKeysIcon {...props} />
   if (type === 'safe') return <SafeIcon width={iconSize} height={iconSize} />
   if (type === 'qr') return <ReceiveIcon {...props} />
+  // TODO: no NFC / contactless card icon exists in @common/assets/svg yet,
+  // falling back to the generic hardware wallet one. Please add a proper icon.
+  if (type === 'nfc') return <HWIcon {...props} />
 
   return <SingleKeyIcon {...props} />
 }

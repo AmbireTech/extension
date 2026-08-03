@@ -3,6 +3,7 @@ import { Animated, ScrollView, TouchableOpacity, View } from 'react-native'
 import { SvgProps } from 'react-native-svg'
 
 import DiagonalRightArrowIcon from '@common/assets/svg/DiagonalRightArrowIcon'
+import HWIcon from '@common/assets/svg/HWIcon'
 import LedgerLetterIcon from '@common/assets/svg/LedgerLetterIcon'
 import PrivateKeyIcon from '@common/assets/svg/PrivateKeyIcon'
 import RightArrowIcon from '@common/assets/svg/RightArrowIcon'
@@ -87,6 +88,15 @@ const ImportExistingAccountSelectorScreen = () => {
           goToNextRoute(ROUTES.qrConnect)
         },
         icon: ScanIcon
+      },
+      {
+        title: 'NFC card',
+        onPress: () => {
+          goToNextRoute(ROUTES.nfcConnect)
+        },
+        // TODO: no NFC / contactless card icon exists in @common/assets/svg yet,
+        // falling back to the generic hardware wallet one. Please add a proper icon.
+        icon: HWIcon
       }
     ],
     [goToNextRoute]

@@ -16,6 +16,7 @@ import { OnboardingNavigationProvider } from '@common/modules/auth/contexts/onbo
 import { PortalHost, PortalProvider } from '@gorhom/portal'
 import { ControllersMiddlewareProvider } from '@mobile/contexts/controllersMiddlewareContext'
 import { ControllersStateLoadedProvider } from '@mobile/contexts/controllersStateLoadedContext'
+import NfcCardSessionModal from '@mobile/modules/hardware-wallet/components/NfcCardSessionModal'
 import { WalletConnectProvider } from '@mobile/modules/wallet-connect/contexts/walletConnectContext'
 
 const AppInit = () => {
@@ -37,6 +38,9 @@ const AppInit = () => {
                               <BiometricsProvider>
                                 <OnboardingNavigationProvider>
                                   <AppRouter />
+                                  {/* Mounted globally: a card tap can be requested
+                                  from any screen, including a dapp signing request */}
+                                  <NfcCardSessionModal />
                                   <PortalHost name="global" />
                                 </OnboardingNavigationProvider>
                               </BiometricsProvider>

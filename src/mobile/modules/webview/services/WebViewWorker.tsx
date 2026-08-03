@@ -22,6 +22,7 @@ import {
 import WebviewDevServerError from '@mobile/modules/webview/components/WebviewDevServerError'
 import getWebviewBundleUri from '@mobile/modules/webview/services/getWebviewBundleUri'
 import materializeWorkerBundle from '@mobile/modules/webview/services/materializeWorkerBundle'
+import keycardNfcService from '@mobile/services/keycard/keycardNfcService'
 import ledgerTransportService from '@mobile/services/ledger/ledgerTransportService'
 import trezorDeeplinkService from '@mobile/services/trezor/trezorDeeplinkService'
 
@@ -566,6 +567,24 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, object>((_, ref) => {
           } catch (err: any) {
             sendResponse(data.id, null, err.message)
           }
+          break
+
+        // --- NFC CARD DELEGATION HANDLERS ---
+        // The worker-side NfcController forwards signing here; the NFC radio and
+        // the Keycard APDU protocol live natively in keycardNfcService. Importing
+        // an account calls that service directly from the connect screen, so it
+        // does not go through the bridge. The PIN never crosses this bridge - the
+        // native service collects it from the UI itself.
+        case 'keycard.signHash':
+          try {
+            sendResponse(data.id, await keycardNfcService.signHash(data.payload))
+          } catch (err: any) {
+            sendResponse(data.id, null, err.message)
+          }
+          break
+        case 'keycard.cancel':
+          keycardNfcService.cancel()
+          sendResponse(data.id, null)
           break
 
         default:

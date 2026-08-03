@@ -6,5 +6,11 @@
     <array>
       <string>applinks:ambire.com</string>
     </array>
+    <!-- Tap-to-sign with NFC cards (Keycard). Requires the "Near Field Communication
+         Tag Reading" capability on the provisioning profile. -->
+    <key>com.apple.developer.nfc.readersession.formats</key>
+    <array>
+      <string>TAG</string>
+    </array>
   </dict>
 </plist>

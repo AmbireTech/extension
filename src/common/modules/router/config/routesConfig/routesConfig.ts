@@ -436,6 +436,11 @@ const routesConfig: RouteConfig = {
     title: Platform.select({ default: i18n.t('Connect QR wallet') }),
     name: Platform.select({ default: i18n.t('Connect QR wallet') })
   },
+  [ROUTES.nfcConnect]: {
+    route: ROUTES.nfcConnect,
+    title: Platform.select({ default: i18n.t('Connect card') }),
+    name: Platform.select({ default: i18n.t('Connect card') })
+  },
   [ROUTES.qrPermission]: {
     route: ROUTES.qrPermission,
     title: Platform.select({ default: i18n.t('Camera permission') }),

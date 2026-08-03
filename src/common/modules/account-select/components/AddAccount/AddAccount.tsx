@@ -81,6 +81,17 @@ const AddAccount = ({
             goToNextRoute(ROUTES.qrConnect)
           },
           testID: 'qr-option'
+        },
+        {
+          key: 'nfc',
+          text: t('NFC card'),
+          // TODO: no NFC / contactless card icon exists in @common/assets/svg yet,
+          // falling back to the generic hardware wallet one. Please add a proper icon.
+          icon: HWIcon,
+          onPress: () => {
+            goToNextRoute(ROUTES.nfcConnect)
+          },
+          testID: 'nfc-option'
         }
       ]
 
