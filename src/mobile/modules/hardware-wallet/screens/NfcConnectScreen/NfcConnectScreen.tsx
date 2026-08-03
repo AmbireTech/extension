@@ -5,11 +5,9 @@ import NfcIcon from '@common/assets/svg/NfcIcon'
 import Alert from '@common/components/Alert'
 import Button from '@common/components/Button'
 import Text from '@common/components/Text'
-import { isDev } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
-import { AnimatedPressable } from '@common/hooks/useHover'
 import useTheme from '@common/hooks/useTheme'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
 import { NfcWalletConfigs } from '@common/modules/hardware-wallets/nfc/wallets'
@@ -59,7 +57,6 @@ const NfcConnectScreen = () => {
 
     try {
       const exportedKey = await keycardNfcService.exportAccountKey()
-      if (isDev) console.log('[keycard] account key exported', { keyUid: exportedKey.keyUid })
 
       setIsSubmitting(true)
       dispatch({
@@ -67,7 +64,6 @@ const NfcConnectScreen = () => {
         params: { payload: exportedKey }
       })
     } catch (e: any) {
-      if (isDev) console.log('[keycard] import failed', e?.message)
       setError(e?.message || t('Could not read the card. Please try again.'))
     } finally {
       isScanningRef.current = false

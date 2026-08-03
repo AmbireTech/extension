@@ -10,6 +10,7 @@ import HWIcon from '@common/assets/svg/HWIcon'
 import ImportAccountIcon from '@common/assets/svg/ImportAccountIcon'
 import ImportJsonIcon from '@common/assets/svg/ImportJsonIcon'
 import LedgerBadgeIcon from '@common/assets/svg/LedgerBadgeIcon'
+import NfcIcon from '@common/assets/svg/NfcIcon'
 import PrivateKeyIcon from '@common/assets/svg/PrivateKeyIcon'
 import ReceiveIcon from '@common/assets/svg/ReceiveIcon'
 import SafeBadgeIcon from '@common/assets/svg/SafeBadgeIcon'
@@ -85,9 +86,7 @@ const AddAccount = ({
         {
           key: 'nfc',
           text: t('NFC card'),
-          // TODO: no NFC / contactless card icon exists in @common/assets/svg yet,
-          // falling back to the generic hardware wallet one. Please add a proper icon.
-          icon: HWIcon,
+          icon: NfcIcon,
           onPress: () => {
             goToNextRoute(ROUTES.nfcConnect)
           },

@@ -50,7 +50,11 @@ describe('NfcKeyIterator', () => {
       { from: 42, to: 42 }
     ])
 
-    expect(addresses).toEqual([getExpectedAddress(5), getExpectedAddress(6), getExpectedAddress(42)])
+    expect(addresses).toEqual([
+      getExpectedAddress(5),
+      getExpectedAddress(6),
+      getExpectedAddress(42)
+    ])
   })
 
   it('uses the standard BIP44 template and records which card the accounts came from', () => {

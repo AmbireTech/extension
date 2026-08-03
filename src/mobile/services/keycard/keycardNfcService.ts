@@ -21,7 +21,6 @@ import { RecoverableSignature } from 'keycard-sdk/dist/recoverable-signature'
 
 import hexStringToUint8Array from '@ambire-common/utils/hexStringToUint8Array'
 import { addHexPrefix } from '@ambire-common/utils/addHexPrefix'
-import { isDev } from '@common/config/env'
 import {
   NfcExportedKey,
   NfcSessionPurpose,
@@ -119,15 +118,6 @@ const assertCardHoldsKey = (keyUid: string, expectedKeyUid: string) => {
   }
 }
 
-// Card sessions are hard to debug after the fact - every step, and above all every
-// cancellation (with the call site), is traced in dev so a failed tap can be read
-// off the Metro logs.
-const logKeycard = (event: string, data?: any) => {
-  if (!isDev) return
-
-  console.log(`[keycard] ${event}`, data ?? '')
-}
-
 const isUserCancelledNfcError = (e: any) =>
   e instanceof NfcError.UserCancel || e instanceof KeycardCancelledError
 
@@ -155,7 +145,7 @@ class KeycardNfcService {
 
   #listeners = new Set<(state: NfcSessionState) => void>()
 
-  /** Resolves the PIN / pairing password the UI is currently being asked for. */
+  /** Resolves the PIN the UI is currently being asked for. */
   #pendingPrompt: { resolve: (value: string) => void; reject: (error: Error) => void } | null = null
 
   #keycardManager = new KeycardManager(keycardPairingStorage)
@@ -208,10 +198,9 @@ class KeycardNfcService {
     await NfcManager.goToNfcSetting()
   }
 
-  /** Called by the UI when the user submits the PIN or the pairing password. */
+  /** Called by the UI when the user submits the PIN. */
   submitPrompt = (value: string) => {
     const prompt = this.#pendingPrompt
-    logKeycard('submitPrompt', { hasPendingPrompt: !!prompt, step: this.#state.step })
     if (!prompt) return
 
     this.#pendingPrompt = null
@@ -221,13 +210,6 @@ class KeycardNfcService {
   /** Called by the UI when the user dismisses the card session. */
   cancel = () => {
     const prompt = this.#pendingPrompt
-    logKeycard('cancel', {
-      step: this.#state.step,
-      hasPendingPrompt: !!prompt,
-      // The usual cause of a mystery cancellation is an unmount / effect teardown,
-      // so record who asked for it.
-      calledFrom: new Error('cancel called').stack
-    })
     this.#pendingPrompt = null
     // Cancelling mid-tap surfaces as a plain transport error, so remember the
     // intent and report it as a cancellation rather than a card failure.
@@ -242,7 +224,6 @@ class KeycardNfcService {
   }
 
   #promptUser(step: 'awaiting-pin', error: string | null = null): Promise<string> {
-    logKeycard('prompting the user', { step, error })
     this.#setState({ step, error })
 
     return new Promise<string>((resolve, reject) => {
@@ -265,9 +246,7 @@ class KeycardNfcService {
 
     try {
       this.#setState({ step: 'awaiting-tap', error: null })
-      logKeycard('requestTechnology: waiting for a tap')
       await NfcManager.requestTechnology(NfcTech.IsoDep, { alertMessage })
-      logKeycard('requestTechnology: card connected')
 
       if (Platform.OS === 'android') await NfcManager.setTimeout(ANDROID_ISO_DEP_TIMEOUT)
 
@@ -277,7 +256,6 @@ class KeycardNfcService {
       return await this.#runWithTagRetry(channel, cb)
     } finally {
       channel.connected = false
-      logKeycard('closing NFC session')
       await NfcManager.cancelTechnologyRequest().catch(() => {
         // The session may already be closed (card moved away, user cancelled).
       })
@@ -307,11 +285,6 @@ class KeycardNfcService {
 
         if (!isTagLost || attempt >= TAG_LOST_RETRIES || this.#isCancelled) throw e
 
-        logKeycard('lost the card mid-command, waiting for it again', {
-          attempt: attempt + 1,
-          error: e?.constructor?.name,
-          transportError: channel.transportError?.constructor?.name
-        })
         this.#setState({ step: 'awaiting-tap' })
 
         await this.#waitForCardAgain()
@@ -355,7 +328,6 @@ class KeycardNfcService {
 
     this.#isCancelled = false
     this.#callbackError = null
-    logKeycard('runOnCard: start', { purpose, isTapFirst: IS_TAP_FIRST })
     this.#setState({ purpose, error: null, pinAttemptsLeft: null })
 
     try {
@@ -394,12 +366,6 @@ class KeycardNfcService {
                   return await cb(cmdSet)
                 } catch (callbackError: any) {
                   this.#callbackError = callbackError
-                  logKeycard('card command failed', {
-                    message: callbackError?.message,
-                    name: callbackError?.name,
-                    asString: String(callbackError),
-                    stack: callbackError?.stack
-                  })
                   throw callbackError
                 }
               }
@@ -420,13 +386,6 @@ class KeycardNfcService {
 
           return result
         } catch (e: any) {
-          logKeycard('card session failed', {
-            message: e?.message,
-            errorCode: e?.errorCode,
-            name: e?.constructor?.name,
-            isCancelled: this.#isCancelled,
-            cardData: e?.cardData
-          })
           if (this.#isCancelled || isUserCancelledNfcError(e)) throw new KeycardCancelledError()
 
           const attemptsLeft = this.#getPinAttemptsLeft(e)
@@ -497,21 +456,12 @@ class KeycardNfcService {
       const tappedKeyUid = keyUid?.length ? Buffer.from(keyUid).toString('hex') : ''
       assertCardHasWallet(tappedKeyUid)
 
-      logKeycard('exporting the account key', {
-        appVersion: cmdSet.applicationInfo?.appVersion?.toString(16)
-      })
-      const response = await cmdSet.exportExtendedKey(0, KEYCARD_ACCOUNT_HD_PATH, false)
-      logKeycard('export responded', {
-        sw: response.sw?.toString(16),
-        tlv: Buffer.from(response.data || []).toString('hex')
-      })
-
-      const exportedKey = response.checkOK().data
-      const extendedPublicKey = BIP32KeyPair.extendedKey(exportedKey).publicExtendedKey
-      logKeycard('account key parsed', { extendedPublicKey })
+      const exportedKey = (
+        await cmdSet.exportExtendedKey(0, KEYCARD_ACCOUNT_HD_PATH, false)
+      ).checkOK().data
 
       return {
-        extendedPublicKey,
+        extendedPublicKey: BIP32KeyPair.extendedKey(exportedKey).publicExtendedKey,
         hdPath: KEYCARD_ACCOUNT_HD_PATH,
         keyUid: tappedKeyUid
       }
