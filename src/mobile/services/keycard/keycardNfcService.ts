@@ -56,7 +56,7 @@ const ANDROID_ISO_DEP_TIMEOUT = 5000
  */
 const IS_TAP_FIRST = Platform.OS === 'android'
 
-const CANCELLED_MESSAGE = 'Card operation cancelled.'
+export const CANCELLED_MESSAGE = 'Card operation cancelled.'
 
 class KeycardCancelledError extends Error {
   constructor() {
@@ -164,9 +164,6 @@ class KeycardNfcService {
   }
 
   getState = (): NfcSessionState => this.#state
-
-  /** Whether the card session is currently blocked on user input. */
-  hasPendingPrompt = () => !!this.#pendingPrompt
 
   #setState(next: Partial<NfcSessionState>) {
     this.#state = { ...this.#state, ...next }

@@ -20,7 +20,6 @@ import ViewOnlyAccountAdderScreen from '@mobile/modules/auth/screens/ViewOnlyAcc
 import ExploreScreen from '@mobile/modules/explore/screens/ExploreScreen'
 import ExploreSectionScreen from '@mobile/modules/explore/screens/ExploreSectionScreen'
 import LedgerConnectScreen from '@mobile/modules/hardware-wallet/screens/LedgerConnectScreen'
-import NfcConnectScreen from '@mobile/modules/hardware-wallet/screens/NfcConnectScreen'
 import QrConnectScreen from '@mobile/modules/hardware-wallet/screens/QrConnectScreen'
 import TrezorConnectScreen from '@mobile/modules/hardware-wallet/screens/TrezorConnectScreen'
 import KeyStoreSetupScreen from '@mobile/modules/keystore/screens/KeyStoreSetupScreen'
@@ -66,7 +65,6 @@ const MainRoutes = () => {
         <Route path={ROUTES.ledgerConnect} element={<LedgerConnectScreen />} />
         <Route path={ROUTES.trezorConnect} element={<TrezorConnectScreen />} />
         <Route path={ROUTES.qrConnect} element={<QrConnectScreen />} />
-        <Route path={ROUTES.nfcConnect} element={<NfcConnectScreen />} />
 
         <Route path={ROUTES.importPrivateKey} element={<PrivateKeyImportScreen />} />
         <Route path={ROUTES.importSeedPhrase} element={<SeedPhraseImportScreen />} />

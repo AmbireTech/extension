@@ -26,6 +26,7 @@ import useController from '@common/hooks/useController'
 import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import SavedSeedPhrasesBottomSheet from '@common/modules/account-select/components/SavedSeedPhrasesBottomSheet'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
+import useNfcAccountImport from '@common/modules/hardware-wallets/nfc/hooks/useNfcAccountImport'
 import { ROUTES, WEB_ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
 
@@ -43,6 +44,7 @@ const AddAccount = ({
   const { t } = useTranslation()
   const { dispatch } = useControllersMiddleware()
   const { goToNextRoute, setTriggeredHwWalletFlow } = useOnboardingNavigation()
+  const { scanCard } = useNfcAccountImport()
   const [height, setHeight] = useState<number>(0)
   const scrollViewRef = useRef<any>(null)
   const [expandedDropdown, setExpandedDropdown] = useState<
@@ -140,13 +142,16 @@ const AddAccount = ({
         key: 'keycard',
         text: t('Keycard'),
         icon: KeycardIcon,
+        // The card session takes over from here (tap and PIN prompts, then the
+        // account picker), so this sheet gets out of the way instead of navigating.
         onPress: () => {
-          goToNextRoute(ROUTES.nfcConnect)
+          closeBottomSheet()
+          scanCard()
         },
         testID: 'keycard-option'
       }
     ]
-  }, [goToNextRoute, t])
+  }, [closeBottomSheet, scanCard, t])
 
   const optionsImportAccount = useMemo(() => {
     return [

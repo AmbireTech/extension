@@ -20,7 +20,6 @@ const COMMON_ROUTES = {
   viewOnlyAccountAdder: 'view-only-account-adder',
   safeImport: 'safe-import',
   qrConnect: 'qr-connect',
-  nfcConnect: 'nfc-connect',
   transfer: 'transfer',
   topUpGasTank: 'top-up-gas-tank',
   tokenDetails: 'token-details',
@@ -102,8 +101,7 @@ const ONBOARDING_WEB_ROUTES = [
   COMMON_ROUTES.accountPicker,
   COMMON_ROUTES.onboardingCompleted,
   COMMON_ROUTES.safeImport,
-  COMMON_ROUTES.qrConnect,
-  COMMON_ROUTES.nfcConnect
+  COMMON_ROUTES.qrConnect
 ] as const
 
 export { MOBILE_ROUTES, ONBOARDING_WEB_ROUTES, ROUTES, WEB_ROUTES }

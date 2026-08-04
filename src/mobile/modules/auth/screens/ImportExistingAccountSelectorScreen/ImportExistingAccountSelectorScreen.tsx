@@ -18,6 +18,7 @@ import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
 import useTheme from '@common/hooks/useTheme'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
+import useNfcAccountImport from '@common/modules/hardware-wallets/nfc/hooks/useNfcAccountImport'
 import { ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
@@ -170,6 +171,9 @@ const ImportExistingAccountSelectorScreen = () => {
 
   const { goToPrevRoute, goToNextRoute } = useOnboardingNavigation()
   const [areNfcCardsExpanded, setAreNfcCardsExpanded] = useState(false)
+  // The card session runs on this screen: the tap and PIN prompts come up in the
+  // globally mounted NfcCardSessionModal and the account picker follows.
+  const { scanCard } = useNfcAccountImport()
 
   const buttons: ImportMethod[] = useMemo(
     () => [
@@ -225,13 +229,11 @@ const ImportExistingAccountSelectorScreen = () => {
     () => [
       {
         title: 'Keycard',
-        onPress: () => {
-          goToNextRoute(ROUTES.nfcConnect)
-        },
+        onPress: scanCard,
         icon: KeycardIcon
       }
     ],
-    [goToNextRoute]
+    [scanCard]
   )
 
   const toggleNfcCards = useCallback(() => setAreNfcCardsExpanded((p) => !p), [])

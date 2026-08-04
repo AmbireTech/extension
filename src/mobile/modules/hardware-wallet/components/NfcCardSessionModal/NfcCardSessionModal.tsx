@@ -10,10 +10,75 @@ import InputPassword from '@common/components/InputPassword'
 import Spinner from '@common/components/Spinner'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
+import { NfcWalletConfigs } from '@common/modules/hardware-wallets/nfc/wallets'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import useNfcCardSession from '@mobile/modules/hardware-wallet/hooks/useNfcCardSession'
 import keycardNfcService from '@mobile/services/keycard/keycardNfcService'
+
+// Keycard is the only supported card, so the copy can name it. Once a second card
+// is added, the one being used must reach this modal through the session state.
+const [{ label: CARD_LABEL }] = NfcWalletConfigs
+
+interface PinPromptProps {
+  error: string | null
+  onSubmit: (pin: string) => void
+  onCancel: () => void
+}
+
+/**
+ * The typed PIN is kept here instead of in the modal, so typing re-renders only
+ * this subtree. Keeping it in the modal re-renders the whole bottom sheet on every
+ * keystroke, which makes the field lag behind and its content jump around.
+ * Unmounting on step change is what wipes the PIN - it is never kept across steps.
+ */
+const PinPrompt: React.FC<PinPromptProps> = ({ error, onSubmit, onCancel }) => {
+  const { t } = useTranslation()
+  const [pin, setPin] = useState('')
+
+  const handleSubmit = useCallback(() => {
+    if (!pin) return
+
+    onSubmit(pin)
+  }, [pin, onSubmit])
+
+  return (
+    <View style={spacings.pbLg}>
+      <Text fontSize={14} appearance="secondaryText" style={spacings.mbSm}>
+        {t('Your PIN unlocks the card for this one operation only. It is never saved.')}
+      </Text>
+
+      <InputPassword
+        value={pin}
+        onChangeText={setPin}
+        onSubmitEditing={handleSubmit}
+        keyboardType="number-pad"
+        autoFocus
+        error={error || undefined}
+        placeholder={t('PIN')}
+      />
+
+      <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mtSm]}>
+        <Button
+          type="secondary"
+          text={t('Cancel')}
+          onPress={onCancel}
+          hasBottomSpacing={false}
+          style={[flexbox.flex1, spacings.mrSm]}
+        />
+        <Button
+          text={t('Continue')}
+          onPress={handleSubmit}
+          disabled={!pin}
+          hasBottomSpacing={false}
+          style={flexbox.flex1}
+        />
+      </View>
+    </View>
+  )
+}
+
+const MemoizedPinPrompt = React.memo(PinPrompt)
 
 /**
  * Drives every card tap in the app - both importing accounts and signing.
@@ -28,42 +93,25 @@ const NfcCardSessionModal = () => {
   const { ref, open, close } = useModalize()
   const { step, purpose, error, submitPrompt, cancel } = useNfcCardSession()
 
-  const [promptValue, setPromptValue] = useState('')
-
   const isPrompting = step === 'awaiting-pin'
-  // While importing, the connect screen is the one showing the tap prompt, so the
-  // sheet only comes up for the PIN.
-  const isVisible = step !== 'idle' && (purpose !== 'import' || isPrompting)
+  // The sheet drives the whole session, importing included, so a card can be read
+  // without leaving the screen the import was started from.
+  const isVisible = step !== 'idle'
 
   useEffect(() => {
     if (isVisible) open()
     else close()
   }, [isVisible, open, close])
 
-  // Submitting and cancelling are the only ways out of a prompt, and both wipe the
-  // typed credential, so it is never kept around across steps.
-  const handleSubmit = useCallback(() => {
-    if (!promptValue) return
-
-    const value = promptValue
-    setPromptValue('')
-    submitPrompt(value)
-  }, [promptValue, submitPrompt])
-
-  const handleCancel = useCallback(() => {
-    setPromptValue('')
-    cancel()
+  // The sheet also closes on its own once the session is over. Only a close while it
+  // is still running is the user backing out - the step is read live, because this
+  // fires after a render.
+  const handleClosed = useCallback(() => {
+    if (keycardNfcService.getState().step !== 'idle') cancel()
   }, [cancel])
 
-  // The sheet also closes on its own when the session moves on (PIN submitted, or
-  // the whole operation finished). Only a close while the card is still waiting for
-  // input is the user backing out - asked live, because this fires after a render.
-  const handleClosed = useCallback(() => {
-    if (keycardNfcService.hasPendingPrompt()) handleCancel()
-  }, [handleCancel])
-
   const title = (() => {
-    if (step === 'awaiting-pin') return t('Enter your card PIN')
+    if (step === 'awaiting-pin') return t('{{cardLabel}} PIN', { cardLabel: CARD_LABEL })
 
     return purpose === 'import' ? t('Tap your card to import') : t('Tap your card to sign')
   })()
@@ -81,38 +129,7 @@ const NfcCardSessionModal = () => {
       <ModalHeader title={title} />
 
       {isPrompting ? (
-        <View style={spacings.pbLg}>
-          <Text fontSize={14} appearance="secondaryText" style={spacings.mbSm}>
-            {t('Your PIN unlocks the card for this one operation only. It is never saved.')}
-          </Text>
-
-          <InputPassword
-            value={promptValue}
-            onChangeText={setPromptValue}
-            onSubmitEditing={handleSubmit}
-            keyboardType="number-pad"
-            autoFocus
-            error={error || undefined}
-            placeholder={t('PIN')}
-          />
-
-          <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mtSm]}>
-            <Button
-              type="secondary"
-              text={t('Cancel')}
-              onPress={handleCancel}
-              hasBottomSpacing={false}
-              style={[flexbox.flex1, spacings.mrSm]}
-            />
-            <Button
-              text={t('Continue')}
-              onPress={handleSubmit}
-              disabled={!promptValue}
-              hasBottomSpacing={false}
-              style={flexbox.flex1}
-            />
-          </View>
-        </View>
+        <MemoizedPinPrompt error={error} onSubmit={submitPrompt} onCancel={cancel} />
       ) : (
         <View style={[flexbox.alignCenter, spacings.pbLg]}>
           <Spinner style={{ width: 32, height: 32 }} />
@@ -132,7 +149,7 @@ const NfcCardSessionModal = () => {
           <Button
             type="secondary"
             text={t('Cancel')}
-            onPress={handleCancel}
+            onPress={cancel}
             hasBottomSpacing={false}
             style={spacings.mtSm}
           />
