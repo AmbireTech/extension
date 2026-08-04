@@ -112,7 +112,7 @@ const RecoveryPhraseSettingsScreen = () => {
             fontSize={14}
             weight="medium"
             appearance="secondaryText"
-            style={[spacings.mvM, text.center]}
+            style={[spacings.mvMd, text.center]}
           >
             {item.id === 'legacy-saved-seed' &&
             statuses.associateAccountKeysWithLegacySavedSeedMigration !== 'INITIAL'
