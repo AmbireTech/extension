@@ -1,10 +1,8 @@
+import { NfcWalletType } from '@ambire-common/interfaces/keystore'
 import { NfcWalletConfigEntry } from '@common/modules/hardware-wallets/nfc/types'
 
 /**
  * Registry of supported NFC (tap-to-sign) cards.
- *
- * To add a new card: add an entry here and teach the native NFC service how to
- * talk to it (each card has its own applet / APDU protocol).
  */
 export const NfcWalletConfigs = [
   {
@@ -12,3 +10,11 @@ export const NfcWalletConfigs = [
     label: 'Keycard'
   }
 ] as const satisfies readonly NfcWalletConfigEntry[]
+
+export const NfcWalletRegistry = NfcWalletConfigs.reduce(
+  (acc, card) => {
+    acc[card.type] = card
+    return acc
+  },
+  {} as Record<NfcWalletType, (typeof NfcWalletConfigs)[number]>
+)

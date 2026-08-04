@@ -12,16 +12,12 @@ import Text from '@common/components/Text'
 import { isiOS } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import { NfcSessionState } from '@common/modules/hardware-wallets/nfc/types'
-import { NfcWalletConfigs } from '@common/modules/hardware-wallets/nfc/wallets'
+import { NfcWalletRegistry } from '@common/modules/hardware-wallets/nfc/wallets'
 import spacings from '@common/styles/spacings'
 import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import useNfcCardSession from '@mobile/modules/hardware-wallet/hooks/useNfcCardSession'
-import keycardNfcService from '@mobile/services/keycard/keycardNfcService'
-
-// Keycard is the only supported card, so the copy can name it. Once a second card
-// is added, the one being used must reach this modal through the session state.
-const [{ label: CARD_LABEL }] = NfcWalletConfigs
+import { getActiveNfcCardService } from '@mobile/services/nfc'
 
 /**
  * iOS puts its own system scan sheet over the app for as long as the NFC session is
@@ -102,7 +98,11 @@ const MemoizedPinPrompt = React.memo(PinPrompt)
 const NfcCardSessionModal = () => {
   const { t } = useTranslation()
   const { ref, open, close } = useModalize()
-  const { step, purpose, error, submitPrompt, cancel } = useNfcCardSession()
+  const { step, purpose, error, nfcWalletType, submitPrompt, cancel } = useNfcCardSession()
+
+  // Named after the card the session is running with, so the copy fits whichever
+  // card the user tapped. There is no card to name while no session is running.
+  const cardLabel = nfcWalletType ? NfcWalletRegistry[nfcWalletType].label : t('card')
 
   const isPrompting = step === 'awaiting-pin'
   // The sheet drives the whole session, importing included, so a card can be read
@@ -118,15 +118,17 @@ const NfcCardSessionModal = () => {
   // while it should still be up is the user backing out - the step is read live,
   // because this fires after a render.
   const handleClosed = useCallback(() => {
-    if (getIsSheetVisible(keycardNfcService.getState().step)) cancel()
+    const activeStep = getActiveNfcCardService()?.getState().step || 'idle'
+
+    if (getIsSheetVisible(activeStep)) cancel()
   }, [cancel])
 
   const title = (() => {
-    if (step === 'awaiting-pin') return t('{{cardLabel}} PIN', { cardLabel: CARD_LABEL })
+    if (step === 'awaiting-pin') return t('{{cardLabel}} PIN', { cardLabel })
 
     return purpose === 'import'
-      ? t('Tap your {{cardLabel}} to import', { cardLabel: CARD_LABEL })
-      : t('Tap your {{cardLabel}} to sign', { cardLabel: CARD_LABEL })
+      ? t('Tap your {{cardLabel}} to import', { cardLabel })
+      : t('Tap your {{cardLabel}} to sign', { cardLabel })
   })()
 
   return (

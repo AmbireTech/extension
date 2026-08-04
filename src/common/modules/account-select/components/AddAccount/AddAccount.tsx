@@ -9,7 +9,6 @@ import GridPlusIcon from '@common/assets/svg/GridPlusIcon'
 import HWIcon from '@common/assets/svg/HWIcon'
 import ImportAccountIcon from '@common/assets/svg/ImportAccountIcon'
 import ImportJsonIcon from '@common/assets/svg/ImportJsonIcon'
-import KeycardIcon from '@common/assets/svg/KeycardIcon'
 import LedgerBadgeIcon from '@common/assets/svg/LedgerBadgeIcon'
 import NfcIcon from '@common/assets/svg/NfcIcon'
 import PrivateKeyIcon from '@common/assets/svg/PrivateKeyIcon'
@@ -27,6 +26,8 @@ import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import SavedSeedPhrasesBottomSheet from '@common/modules/account-select/components/SavedSeedPhrasesBottomSheet'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
 import useNfcAccountImport from '@common/modules/hardware-wallets/nfc/hooks/useNfcAccountImport'
+import { NfcWalletConfigs } from '@common/modules/hardware-wallets/nfc/wallets'
+import { NfcWalletIcons } from '@common/modules/hardware-wallets/nfc/wallets/icons'
 import { ROUTES, WEB_ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
 
@@ -135,18 +136,16 @@ const AddAccount = ({
   const optionsNfc = useMemo(() => {
     if (!isMobile) return []
 
-    return [
-      {
-        key: 'keycard',
-        text: t('Keycard'),
-        icon: KeycardIcon,
-        onPress: () => {
-          closeBottomSheet()
-          scanCard()
-        },
-        testID: 'keycard-option'
-      }
-    ]
+    return NfcWalletConfigs.map(({ type, label }) => ({
+      key: type,
+      text: t(label),
+      icon: NfcWalletIcons[type],
+      onPress: () => {
+        closeBottomSheet()
+        scanCard(type)
+      },
+      testID: `${type}-option`
+    }))
   }, [closeBottomSheet, scanCard, t])
 
   const optionsImportAccount = useMemo(() => {

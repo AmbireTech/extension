@@ -1,20 +1,23 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 
+import { NfcWalletType } from '@ambire-common/interfaces/keystore'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useToast from '@common/hooks/useToast'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
-import { NfcWalletConfigs } from '@common/modules/hardware-wallets/nfc/wallets'
+import { NFC_CANCELLED_MESSAGE } from '@common/modules/hardware-wallets/nfc/consts'
+import { NfcWalletRegistry } from '@common/modules/hardware-wallets/nfc/wallets'
 import { ROUTES } from '@common/modules/router/constants/common'
-import keycardNfcService, { CANCELLED_MESSAGE } from '@mobile/services/keycard/keycardNfcService'
-
-const [{ label: CARD_LABEL }] = NfcWalletConfigs
+import { getNfcCardService } from '@mobile/services/nfc'
 
 /**
  * Reads the card's extended public key and hands it to the account picker. The tap
  * prompt and the PIN prompt are shown by the globally mounted NfcCardSessionModal,
  * so the import runs without leaving the screen it was started from.
+ *
+ * Every card is imported through here: `scanCard` is given the card the user picked
+ * and the talking is done by that card's own service.
  */
 const useNfcAccountImport = () => {
   const { t } = useTranslation()
@@ -27,51 +30,55 @@ const useNfcAccountImport = () => {
   // Guards against a second scan being started while one is already running
   const isScanningRef = useRef(false)
 
-  const scanCard = useCallback(async () => {
-    if (isScanningRef.current) return
+  const scanCard = useCallback(
+    async (nfcWalletType: NfcWalletType) => {
+      if (isScanningRef.current) return
 
-    if (!(await keycardNfcService.isSupported())) {
-      addToast(
-        t('This phone cannot read NFC cards, so a {{cardLabel}} cannot be imported on it.', {
-          cardLabel: CARD_LABEL
-        }),
-        { type: 'error' }
-      )
-      return
-    }
+      const cardService = getNfcCardService(nfcWalletType)
+      const { label: cardLabel } = NfcWalletRegistry[nfcWalletType]
 
-    if (!(await keycardNfcService.isEnabled())) {
-      addToast(
-        t('NFC is turned off. Turn it on to use your {{cardLabel}}.', { cardLabel: CARD_LABEL }),
-        { type: 'error' }
-      )
-      await keycardNfcService.openNfcSettings()
-      return
-    }
+      if (!(await cardService.isSupported())) {
+        addToast(
+          t('This phone cannot read NFC cards, so a {{cardLabel}} cannot be imported on it.', {
+            cardLabel
+          }),
+          { type: 'error' }
+        )
+        return
+      }
 
-    isScanningRef.current = true
+      if (!(await cardService.isEnabled())) {
+        addToast(t('NFC is turned off. Turn it on to use your {{cardLabel}}.', { cardLabel }), {
+          type: 'error'
+        })
+        await cardService.openNfcSettings()
+        return
+      }
 
-    try {
-      const exportedKey = await keycardNfcService.exportAccountKey()
+      isScanningRef.current = true
 
-      setIsSubmitting(true)
-      dispatch({
-        type: 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_NFC_WALLET',
-        params: { payload: exportedKey }
-      })
-    } catch (e: any) {
-      // Backing out of the card session is not a failure worth reporting
-      if (e?.message === CANCELLED_MESSAGE) return
+      try {
+        const exportedKey = await cardService.exportAccountKey()
 
-      addToast(
-        e?.message ||
-          t('Could not read your {{cardLabel}}. Please try again.', { cardLabel: CARD_LABEL }),
-        { type: 'error' }
-      )
-    } finally {
-      isScanningRef.current = false
-    }
-  }, [addToast, dispatch, t])
+        setIsSubmitting(true)
+        dispatch({
+          type: 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_NFC_WALLET',
+          params: { payload: exportedKey }
+        })
+      } catch (e: any) {
+        // Backing out of the card session is not a failure worth reporting
+        if (e?.message === NFC_CANCELLED_MESSAGE) return
+
+        addToast(
+          e?.message || t('Could not read your {{cardLabel}}. Please try again.', { cardLabel }),
+          { type: 'error' }
+        )
+      } finally {
+        isScanningRef.current = false
+      }
+    },
+    [addToast, dispatch, t]
+  )
 
   // Keyed off the durable account picker state rather than the transient SUCCESS
   // status, which can be collapsed away before the UI ever renders it on mobile.

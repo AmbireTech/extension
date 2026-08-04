@@ -16,7 +16,7 @@ const getExpectedAddress = (index: number) =>
   HDNodeWallet.fromMnemonic(Mnemonic.fromPhrase(MNEMONIC), `${ACCOUNT_HD_PATH}/${index}`).address
 
 const getController = () =>
-  ({ type: 'nfc', deviceId: '', deviceModel: 'Keycard' }) as ExternalSignerController
+  ({ type: 'nfc', deviceId: '', deviceModel: '' }) as ExternalSignerController
 
 const getInitializedIterator = () => {
   const controller = getController()
@@ -27,7 +27,8 @@ const getInitializedIterator = () => {
     // `neuter()` produces here (public key + chain code, no private key).
     extendedPublicKey: getAccountNode().neuter().extendedKey,
     hdPath: ACCOUNT_HD_PATH,
-    keyUid: KEY_UID
+    keyUid: KEY_UID,
+    nfcWalletType: 'keycard'
   })
 
   return { keyIterator, controller }
@@ -63,6 +64,8 @@ describe('NfcKeyIterator', () => {
     expect(keyIterator.hdPathTemplate).toBe(BIP44_STANDARD_DERIVATION_TEMPLATE)
     expect(keyIterator.type).toBe('nfc')
     expect(controller.deviceId).toBe(KEY_UID)
+    expect(controller.nfcWalletType).toBe('keycard')
+    expect(controller.deviceModel).toBe('Keycard')
   })
 
   it('refuses an account key exported from an unexpected path', () => {
@@ -72,7 +75,8 @@ describe('NfcKeyIterator', () => {
       keyIterator.initFromExportedKey({
         extendedPublicKey: getAccountNode().neuter().extendedKey,
         hdPath: "m/44'/60'/0'",
-        keyUid: KEY_UID
+        keyUid: KEY_UID,
+        nfcWalletType: 'keycard'
       })
     ).toThrow(/Unsupported account path/)
   })
@@ -84,7 +88,8 @@ describe('NfcKeyIterator', () => {
       keyIterator.initFromExportedKey({
         extendedPublicKey: '',
         hdPath: ACCOUNT_HD_PATH,
-        keyUid: KEY_UID
+        keyUid: KEY_UID,
+        nfcWalletType: 'keycard'
       })
     ).toThrow(/did not return an account key/)
   })

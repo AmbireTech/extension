@@ -248,8 +248,8 @@ const initControllers = (config: any) => {
     // happen in the RN UI layer and exchange payloads via controller state.
     const qrCtrl = new QrHardwareController(new UrQrProtocolAdapter(), eventEmitterRegistry)
 
-    // NFC cards (Keycard) tap-to-sign: the controller only forwards signing to the
-    // native keycardNfcService, which owns the NFC radio and the card credentials.
+    // NFC cards (Keycard, ...) tap-to-sign: the controller only forwards signing to
+    // the tapped card's native service, which owns the NFC radio and the credentials.
     const nfcCtrl = new NfcController()
 
     mainCtrl = new MainController({

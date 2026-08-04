@@ -50,10 +50,20 @@ class NfcHardwareSigner implements KeystoreSignerInterface {
       })
     }
 
+    // Recorded for every card account on import. Without it there is no telling which
+    // card to ask, and guessing would send the request to the wrong card's service.
+    if (!this.key.meta.nfcWalletType) {
+      throw new ExternalSignerError(
+        'Could not tell which card this account was imported with. Please re-import the account.',
+        { sendCrashReport: true }
+      )
+    }
+
     return this.controller.signHash({
       hashHex,
       path: getHdPathFromTemplate(this.key.meta.hdPathTemplate, this.key.meta.index),
-      expectedKeyUid: this.key.meta.deviceId
+      expectedKeyUid: this.key.meta.deviceId,
+      nfcWalletType: this.key.meta.nfcWalletType
     })
   }
 

@@ -8,6 +8,7 @@ import {
 import { KeyIterator as KeyIteratorInterface } from '@ambire-common/interfaces/keyIterator'
 import { ExternalSignerController } from '@ambire-common/interfaces/keystore'
 import { NfcExportedKey } from '@common/modules/hardware-wallets/nfc/types'
+import { NfcWalletRegistry } from '@common/modules/hardware-wallets/nfc/wallets'
 
 interface KeyIteratorProps {
   controller: ExternalSignerController
@@ -45,7 +46,7 @@ class NfcKeyIterator implements KeyIteratorInterface {
     this.controller = controller
   }
 
-  initFromExportedKey({ extendedPublicKey, hdPath, keyUid }: NfcExportedKey) {
+  initFromExportedKey({ extendedPublicKey, hdPath, keyUid, nfcWalletType }: NfcExportedKey) {
     if (!extendedPublicKey) {
       throw new ExternalSignerError(
         'The card did not return an account key. Please try tapping it again.'
@@ -64,6 +65,10 @@ class NfcKeyIterator implements KeyIteratorInterface {
     // accounts belong to. It ends up in the key meta as the device id, so signing
     // can tell the user when a different card is tapped.
     this.controller.deviceId = keyUid
+    // Which kind of card it was also ends up in the key meta, so signing later goes
+    // to the service that knows how to talk to it, and the key shows the card's name.
+    this.controller.nfcWalletType = nfcWalletType
+    this.controller.deviceModel = NfcWalletRegistry[nfcWalletType].label
   }
 
   #deriveAddress(index: number): string {

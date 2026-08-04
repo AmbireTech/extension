@@ -19,21 +19,25 @@ import {
 } from 'keycard-sdk/dist/keycard-manager'
 import { RecoverableSignature } from 'keycard-sdk/dist/recoverable-signature'
 
+import { NfcWalletType } from '@ambire-common/interfaces/keystore'
 import hexStringToUint8Array from '@ambire-common/utils/hexStringToUint8Array'
 import { addHexPrefix } from '@ambire-common/utils/addHexPrefix'
+import { NFC_CANCELLED_MESSAGE } from '@common/modules/hardware-wallets/nfc/consts'
 import {
+  NfcCardService,
   NfcExportedKey,
   NfcSessionPurpose,
   NfcSessionState,
-  NfcSignature
+  NfcSignature,
+  NfcSignHashParams
 } from '@common/modules/hardware-wallets/nfc/types'
-import keycardPairingStorage from '@mobile/services/keycard/keycardPairingStorage'
+import keycardPairingStorage from '@mobile/services/nfc/keycard/keycardPairingStorage'
 
 // All Keycard communication happens HERE, in the React Native context, because
 // the NFC radio is a native module the WebView worker (where the controllers run)
 // cannot reach. The worker-side NfcController forwards signing to this singleton
-// over the message bridge (see WebViewWorker.tsx `keycard.*` cases), while the
-// account import flow calls it directly from the connect screen.
+// over the message bridge (see WebViewWorker.tsx `nfc.*` cases), while the
+// account import flow calls it directly through the import hook.
 //
 // The PIN never leaves this file: the UI hands it in through `submitPin` and it is
 // wiped as soon as the card session ends. It is never persisted, never sent over
@@ -48,11 +52,9 @@ export const KEYCARD_ACCOUNT_HD_PATH = "m/44'/60'/0'/0"
  */
 const ANDROID_ISO_DEP_TIMEOUT = 5000
 
-export const CANCELLED_MESSAGE = 'Card operation cancelled.'
-
 class KeycardCancelledError extends Error {
   constructor() {
-    super(CANCELLED_MESSAGE)
+    super(NFC_CANCELLED_MESSAGE)
   }
 }
 
@@ -127,7 +129,9 @@ const isTagLostError = (e: any) =>
 /** How many times a lost card is waited for again before giving up. */
 const TAG_LOST_RETRIES = 2
 
-class KeycardNfcService {
+class KeycardNfcService implements NfcCardService {
+  nfcWalletType: NfcWalletType = 'keycard'
+
   #state: NfcSessionState = {
     step: 'idle',
     purpose: null,
@@ -384,7 +388,7 @@ class KeycardNfcService {
         }
       }
     } catch (e: any) {
-      const message = isUserCancelledNfcError(e) ? CANCELLED_MESSAGE : e?.message
+      const message = isUserCancelledNfcError(e) ? NFC_CANCELLED_MESSAGE : e?.message
       this.#setState({ step: 'idle', purpose: null, error: null, pinAttemptsLeft: null })
 
       throw new Error(message || 'Could not talk to your card. Please try again.')
@@ -444,7 +448,8 @@ class KeycardNfcService {
       return {
         extendedPublicKey: BIP32KeyPair.extendedKey(exportedKey).publicExtendedKey,
         hdPath: KEYCARD_ACCOUNT_HD_PATH,
-        keyUid: tappedKeyUid
+        keyUid: tappedKeyUid,
+        nfcWalletType: this.nfcWalletType
       }
     })
   }
@@ -454,11 +459,7 @@ class KeycardNfcService {
     hashHex,
     path,
     expectedKeyUid
-  }: {
-    hashHex: string
-    path: string
-    expectedKeyUid: string
-  }): Promise<NfcSignature> => {
+  }: NfcSignHashParams): Promise<NfcSignature> => {
     const hash = hexStringToUint8Array(hashHex)
 
     return this.#runOnCard('sign', async (cmdSet) => {

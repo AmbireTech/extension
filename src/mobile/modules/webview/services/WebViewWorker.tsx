@@ -22,8 +22,8 @@ import {
 import WebviewDevServerError from '@mobile/modules/webview/components/WebviewDevServerError'
 import getWebviewBundleUri from '@mobile/modules/webview/services/getWebviewBundleUri'
 import materializeWorkerBundle from '@mobile/modules/webview/services/materializeWorkerBundle'
-import keycardNfcService from '@mobile/services/keycard/keycardNfcService'
 import ledgerTransportService from '@mobile/services/ledger/ledgerTransportService'
+import { getNfcCardService } from '@mobile/services/nfc'
 import trezorDeeplinkService from '@mobile/services/trezor/trezorDeeplinkService'
 
 import { decode, encode } from './bridgeCodec'
@@ -571,19 +571,23 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, object>((_, ref) => {
 
         // --- NFC CARD DELEGATION HANDLERS ---
         // The worker-side NfcController forwards signing here; the NFC radio and
-        // the Keycard APDU protocol live natively in keycardNfcService. Importing
-        // an account calls that service directly from the connect screen, so it
-        // does not go through the bridge. The PIN never crosses this bridge - the
-        // native service collects it from the UI itself.
-        case 'keycard.signHash':
+        // each card's own protocol live natively in that card's service, which is
+        // picked by the `nfcWalletType` the request carries. Importing an account
+        // calls the service directly from the import hook, so it does not go through
+        // the bridge. The PIN never crosses this bridge - the native service
+        // collects it from the UI itself.
+        case 'nfc.signHash': {
+          const { nfcWalletType, ...signHashParams } = data.payload
+
           try {
-            sendResponse(data.id, await keycardNfcService.signHash(data.payload))
+            sendResponse(data.id, await getNfcCardService(nfcWalletType).signHash(signHashParams))
           } catch (err: any) {
             sendResponse(data.id, null, err.message)
           }
           break
-        case 'keycard.cancel':
-          keycardNfcService.cancel()
+        }
+        case 'nfc.cancel':
+          getNfcCardService(data.payload.nfcWalletType).cancel()
           sendResponse(data.id, null)
           break
 

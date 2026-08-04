@@ -3,7 +3,6 @@ import { Pressable, ScrollView, View } from 'react-native'
 import { SvgProps } from 'react-native-svg'
 
 import DownArrowIcon from '@common/assets/svg/DownArrowIcon'
-import KeycardIcon from '@common/assets/svg/KeycardIcon'
 import LedgerLetterIcon from '@common/assets/svg/LedgerLetterIcon'
 import NfcIcon from '@common/assets/svg/NfcIcon'
 import PrivateKeyIcon from '@common/assets/svg/PrivateKeyIcon'
@@ -19,6 +18,8 @@ import { useTranslation } from '@common/config/localization'
 import useTheme from '@common/hooks/useTheme'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
 import useNfcAccountImport from '@common/modules/hardware-wallets/nfc/hooks/useNfcAccountImport'
+import { NfcWalletConfigs } from '@common/modules/hardware-wallets/nfc/wallets'
+import { NfcWalletIcons } from '@common/modules/hardware-wallets/nfc/wallets/icons'
 import { ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
@@ -224,15 +225,13 @@ const ImportExistingAccountSelectorScreen = () => {
     [goToNextRoute]
   )
 
-  // Tangem will be added here as a second card
   const nfcCards: ImportMethod[] = useMemo(
-    () => [
-      {
-        title: 'Keycard',
-        onPress: scanCard,
-        icon: KeycardIcon
-      }
-    ],
+    () =>
+      NfcWalletConfigs.map(({ type, label }) => ({
+        title: label,
+        onPress: () => scanCard(type),
+        icon: NfcWalletIcons[type]
+      })),
     [scanCard]
   )
 
