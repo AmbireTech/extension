@@ -85,8 +85,7 @@ const SafeQueueItem: FC<Props> = ({ request, closeBottomSheet, withBorder = true
       type: 'method',
       params: { method: 'restoreSafeUserRequest', args: [request.id] }
     })
-    closeBottomSheet()
-  }, [closeBottomSheet, request.id, requestsDispatch])
+  }, [request.id, requestsDispatch])
 
   return (
     <View

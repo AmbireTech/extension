@@ -66,7 +66,18 @@ export const getSafeQueueNetworkGroups = (
       })
 
       const nonceGroups = [...requestsByNonce.entries()]
-        .map(([nonce, nonceRequests]) => ({ nonce: BigInt(nonce), requests: nonceRequests }))
+        .map(([nonce, nonceRequests]) => ({
+          nonce: BigInt(nonce),
+          requests: [...nonceRequests].sort((a, b) => {
+            const aCreatedAt = Date.parse(a.signAccountOp.accountOp.safeTx?.submissionDate || '')
+            const bCreatedAt = Date.parse(b.signAccountOp.accountOp.safeTx?.submissionDate || '')
+
+            return (
+              (Number.isNaN(bCreatedAt) ? 0 : bCreatedAt) -
+              (Number.isNaN(aCreatedAt) ? 0 : aCreatedAt)
+            )
+          })
+        }))
         .sort((a, b) => (a.nonce < b.nonce ? -1 : a.nonce > b.nonce ? 1 : 0))
 
       return {

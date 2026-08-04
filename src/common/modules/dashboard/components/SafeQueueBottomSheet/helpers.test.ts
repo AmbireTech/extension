@@ -12,7 +12,8 @@ const makeRequest = ({
   rejected = false,
   signed = [],
   threshold = 2,
-  importedOwners = []
+  importedOwners = [],
+  submissionDate
 }: {
   id: string
   chainId: bigint
@@ -21,6 +22,7 @@ const makeRequest = ({
   signed?: string[]
   threshold?: number
   importedOwners?: string[]
+  submissionDate?: string
 }) =>
   ({
     id,
@@ -36,7 +38,8 @@ const makeRequest = ({
         chainId,
         nonce,
         txnId: `0x${id}`,
-        signed
+        signed,
+        safeTx: submissionDate ? { submissionDate } : undefined
       }
     }
   }) as unknown as CallsUserRequest
@@ -75,6 +78,33 @@ describe('Safe Queue helpers', () => {
     expect(groups[0]!.nonceGroups.map(({ nonce }) => nonce)).toEqual([18n, 19n])
     expect(groups[0]!.nonceGroups[0]!.requests).toHaveLength(2)
     expect(groups[1]!.nonceGroups.map(({ nonce }) => nonce)).toEqual([7n, 8n])
+  })
+
+  test('sorts transactions with the same nonce by creation time, newest first', () => {
+    const requests = [
+      makeRequest({
+        id: 'older',
+        chainId: 1n,
+        nonce: 18n,
+        submissionDate: '2026-08-04T10:00:00Z'
+      }),
+      makeRequest({
+        id: 'newest',
+        chainId: 1n,
+        nonce: 18n,
+        submissionDate: '2026-08-04T12:00:00Z'
+      }),
+      makeRequest({
+        id: 'newer',
+        chainId: 1n,
+        nonce: 18n,
+        submissionDate: '2026-08-04T11:00:00Z'
+      })
+    ]
+
+    const [nonceGroup] = getSafeQueueNetworkGroups(requests, networks)[0]!.nonceGroups
+
+    expect(nonceGroup!.requests.map(({ id }) => id)).toEqual(['newest', 'newer', 'older'])
   })
 
   test('derives the action state from imported owners and collected signatures', () => {
