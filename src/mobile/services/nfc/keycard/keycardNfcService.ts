@@ -1,13 +1,7 @@
 import { Buffer } from 'buffer'
-import { Platform } from 'react-native'
-import NfcManager, { NfcError, NfcTech } from 'react-native-nfc-manager'
-
 import { CardIOError } from 'keycard-sdk/dist/apdu-exception'
 import { APDUResponse } from 'keycard-sdk/dist/apdu-response'
 import { BIP32KeyPair } from 'keycard-sdk/dist/bip32key'
-import type { APDUCommand } from 'keycard-sdk/dist/apdu-command'
-import type { CardChannel } from 'keycard-sdk/dist/card-channel'
-import type { Commandset } from 'keycard-sdk/dist/commandset'
 import {
   CardCmdExecutionError,
   CardLoadKeyError,
@@ -18,10 +12,12 @@ import {
   LOADED
 } from 'keycard-sdk/dist/keycard-manager'
 import { RecoverableSignature } from 'keycard-sdk/dist/recoverable-signature'
+import { Platform } from 'react-native'
+import NfcManager, { NfcError, NfcTech } from 'react-native-nfc-manager'
 
 import { NfcWalletType } from '@ambire-common/interfaces/keystore'
-import hexStringToUint8Array from '@ambire-common/utils/hexStringToUint8Array'
 import { addHexPrefix } from '@ambire-common/utils/addHexPrefix'
+import hexStringToUint8Array from '@ambire-common/utils/hexStringToUint8Array'
 import { NFC_CANCELLED_MESSAGE } from '@common/modules/hardware-wallets/nfc/consts'
 import {
   NfcCardService,
@@ -33,6 +29,9 @@ import {
 } from '@common/modules/hardware-wallets/nfc/types'
 import keycardPairingStorage from '@mobile/services/nfc/keycard/keycardPairingStorage'
 
+import type { APDUCommand } from 'keycard-sdk/dist/apdu-command'
+import type { CardChannel } from 'keycard-sdk/dist/card-channel'
+import type { Commandset } from 'keycard-sdk/dist/commandset'
 // All Keycard communication happens HERE, in the React Native context, because
 // the NFC radio is a native module the WebView worker (where the controllers run)
 // cannot reach. The worker-side NfcController forwards signing to this singleton
@@ -98,15 +97,17 @@ const toSignatureComponentHex = (component: Uint8Array) =>
 const NO_WALLET_ON_CARD_MESSAGE =
   'There is no wallet on this card yet. Set the card up in the Keycard app first, then import it here.'
 
+class KeycardOperationError extends Error {}
+
 const assertCardHasWallet = (keyUid: string) => {
-  if (!keyUid) throw new Error(NO_WALLET_ON_CARD_MESSAGE)
+  if (!keyUid) throw new KeycardOperationError(NO_WALLET_ON_CARD_MESSAGE)
 }
 
 const assertCardHoldsKey = (keyUid: string, expectedKeyUid: string) => {
   assertCardHasWallet(keyUid)
 
   if (expectedKeyUid && keyUid !== expectedKeyUid) {
-    throw new Error(
+    throw new KeycardOperationError(
       'This card holds a different wallet than the account you are signing with. Please tap the right card.'
     )
   }
@@ -152,6 +153,13 @@ class KeycardNfcService implements NfcCardService {
 
   /** The last error thrown by a card command, kept because the SDK loses it. */
   #callbackError: any = null
+
+  /**
+   * Set when the last tap failed on the radio link rather than on the card. The SDK
+   * rewraps such failures as pairing or secure channel errors, so without it a card
+   * that merely slipped is reported as a broken pairing.
+   */
+  #transportError: any = null
 
   subscribe = (listener: (state: NfcSessionState) => void) => {
     this.#listeners.add(listener)
@@ -248,6 +256,7 @@ class KeycardNfcService implements NfcCardService {
 
       return await this.#runWithTagRetry(channel, cb)
     } finally {
+      this.#transportError = channel.transportError
       channel.connected = false
       await NfcManager.cancelTechnologyRequest().catch(() => {
         // The session may already be closed (card moved away, user cancelled).
@@ -320,12 +329,15 @@ class KeycardNfcService implements NfcCardService {
     let pinError: string | null = null
 
     this.#isCancelled = false
-    this.#callbackError = null
     this.#setState({ purpose, error: null, pinAttemptsLeft: null })
 
     try {
       while (true) {
         pin = await this.#promptUser('awaiting-pin', pinError)
+        // Per attempt, so a wrong PIN retry is not reported through the failure of the
+        // attempt before it.
+        this.#callbackError = null
+        this.#transportError = null
 
         try {
           const result = await this.#withCardSession(async (channel) => {
@@ -406,10 +418,25 @@ class KeycardNfcService implements NfcCardService {
   }
 
   #getUserFacingError(e: any): string {
-    // The card was reached and unlocked; the command itself is what failed, so
-    // report that error instead of the SDK's generic wrapper.
-    if (e?.errorCode === CardCmdExecutionError && this.#callbackError) {
-      return this.#callbackError?.message || 'The card could not complete the operation.'
+    // Checked first, and on the callback error too: a card that shifts mid-command
+    // fails the command, so the SDK reports it as one - the dropped radio link is
+    // only visible on the error the command itself threw.
+    if (
+      this.#transportError ||
+      isTagLostError(e) ||
+      isTagLostError(this.#callbackError) ||
+      e instanceof NfcError.Timeout
+    ) {
+      return 'Lost connection to the card. Hold it flat against the phone, without moving it, until the operation finishes.'
+    }
+
+    // The card was reached and unlocked; the command itself is what failed. Only our
+    // own messages are worth showing - the SDK's are technical.
+    if (
+      e?.errorCode === CardCmdExecutionError &&
+      this.#callbackError instanceof KeycardOperationError
+    ) {
+      return this.#callbackError.message
     }
 
     if (e?.errorCode === CardPinVerificationError) {
@@ -424,11 +451,11 @@ class KeycardNfcService implements NfcCardService {
       return 'Could not connect to this card. It may have run out of free slots for apps - remove the ones you no longer use in the Keycard app, then try again.'
     }
 
-    if (isTagLostError(e) || e instanceof NfcError.Timeout) {
-      return 'Lost connection to the card. Hold it flat against the phone, without moving it, until the operation finishes.'
-    }
+    // Anything left is not something the user can be told how to fix, and the SDK's
+    // wording would only confuse - it is logged instead, so it can be recognized later.
+    console.error('Unknown Keycard error:', e, 'card command error:', this.#callbackError)
 
-    return e?.message || 'Could not talk to your card. Please try again.'
+    return 'Could not talk to your card. Please try again.'
   }
 
   /**
