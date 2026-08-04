@@ -9,7 +9,9 @@ import Button from '@common/components/Button'
 import InputPassword from '@common/components/InputPassword'
 import Spinner from '@common/components/Spinner'
 import Text from '@common/components/Text'
+import { isiOS } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
+import { NfcSessionState } from '@common/modules/hardware-wallets/nfc/types'
 import { NfcWalletConfigs } from '@common/modules/hardware-wallets/nfc/wallets'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
@@ -19,6 +21,14 @@ import keycardNfcService from '@mobile/services/keycard/keycardNfcService'
 // Keycard is the only supported card, so the copy can name it. Once a second card
 // is added, the one being used must reach this modal through the session state.
 const [{ label: CARD_LABEL }] = NfcWalletConfigs
+
+/**
+ * iOS puts its own system scan sheet over the app for as long as the NFC session is
+ * open, so our tap UI would sit behind it - there the sheet is only needed for the
+ * PIN. Android has no such overlay, so it shows the whole session.
+ */
+const getIsSheetVisible = (step: NfcSessionState['step']) =>
+  isiOS ? step === 'awaiting-pin' : step !== 'idle'
 
 interface PinPromptProps {
   error: string | null
@@ -96,18 +106,18 @@ const NfcCardSessionModal = () => {
   const isPrompting = step === 'awaiting-pin'
   // The sheet drives the whole session, importing included, so a card can be read
   // without leaving the screen the import was started from.
-  const isVisible = step !== 'idle'
+  const isVisible = getIsSheetVisible(step)
 
   useEffect(() => {
     if (isVisible) open()
     else close()
   }, [isVisible, open, close])
 
-  // The sheet also closes on its own once the session is over. Only a close while it
-  // is still running is the user backing out - the step is read live, because this
-  // fires after a render.
+  // The sheet also closes on its own once it has nothing left to show. Only a close
+  // while it should still be up is the user backing out - the step is read live,
+  // because this fires after a render.
   const handleClosed = useCallback(() => {
-    if (keycardNfcService.getState().step !== 'idle') cancel()
+    if (getIsSheetVisible(keycardNfcService.getState().step)) cancel()
   }, [cancel])
 
   const title = (() => {

@@ -48,14 +48,6 @@ export const KEYCARD_ACCOUNT_HD_PATH = "m/44'/60'/0'/0"
  */
 const ANDROID_ISO_DEP_TIMEOUT = 5000
 
-/**
- * Whether the card can be tapped before the PIN is asked. Android keeps the tag
- * connected while the app UI stays interactive, so the whole operation is one tap.
- * iOS covers the app with a system sheet for the duration of the NFC session, so
- * there the PIN has to be collected up front.
- */
-const IS_TAP_FIRST = Platform.OS === 'android'
-
 export const CANCELLED_MESSAGE = 'Card operation cancelled.'
 
 class KeycardCancelledError extends Error {
@@ -307,20 +299,20 @@ class KeycardNfcService {
   }
 
   /**
-   * Runs one card command: gets the card and the PIN, opens the secure channel and
+   * Runs one card command: gets the PIN and the card, opens the secure channel and
    * executes `cb`. A wrong PIN re-prompts instead of failing, so the user does not
    * have to restart the whole flow.
    *
-   * The card is tapped first and the PIN asked once it is on the phone (IS_TAP_FIRST).
-   * On iOS that order is impossible: an open NFC session puts a system sheet over the
-   * app, so nothing of ours can be typed into until the session ends - there, the PIN
-   * is asked before the tap instead.
+   * The PIN is always collected before the tap. iOS leaves no other option (an open
+   * NFC session puts a system sheet over the app, so nothing of ours can be typed
+   * into until the session ends) and Android follows the same order, so the flow the
+   * user goes through is identical on both platforms.
    */
   async #runOnCard<T>(
     purpose: NfcSessionPurpose,
     cb: (cmdSet: Commandset) => Promise<T>
   ): Promise<T> {
-    let pin: string | null = null
+    let pin = ''
     let pinError: string | null = null
 
     this.#isCancelled = false
@@ -329,22 +321,15 @@ class KeycardNfcService {
 
     try {
       while (true) {
-        if (!IS_TAP_FIRST && !pin) pin = await this.#promptUser('awaiting-pin', pinError)
+        pin = await this.#promptUser('awaiting-pin', pinError)
 
         try {
           const result = await this.#withCardSession(async (channel) => {
-            // The card stays in the field while the PIN is typed, so this whole
-            // operation is a single tap.
-            if (!pin) {
-              pin = await this.#promptUser('awaiting-pin', pinError)
-              this.#setState({ step: 'communicating', error: null })
-            }
-
             const response = await this.#keycardManager.runOnSecureChannel(
               channel,
               LOADED,
               {
-                pin: pin as string,
+                pin,
                 // The SDK falls back to Keycard's default pairing password, which is
                 // what every Keycard app and SDK uses - a custom one is not something
                 // users are ever asked to set, so it is never prompted for here.
@@ -387,7 +372,6 @@ class KeycardNfcService {
 
           const attemptsLeft = this.#getPinAttemptsLeft(e)
           if (attemptsLeft !== null && attemptsLeft > 0) {
-            pin = null
             pinError = `Wrong PIN. ${attemptsLeft} ${
               attemptsLeft === 1 ? 'attempt' : 'attempts'
             } left before the card locks.`
@@ -405,7 +389,7 @@ class KeycardNfcService {
 
       throw new Error(message || 'Could not talk to your card. Please try again.')
     } finally {
-      pin = null
+      pin = ''
     }
   }
 
