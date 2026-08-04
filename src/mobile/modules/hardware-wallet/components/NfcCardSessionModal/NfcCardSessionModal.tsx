@@ -2,18 +2,19 @@ import React, { useCallback, useEffect, useState } from 'react'
 import { View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 
+import NfcIcon from '@common/assets/svg/NfcIcon'
 import Alert from '@common/components/Alert'
 import BottomSheet from '@common/components/BottomSheet'
 import ModalHeader from '@common/components/BottomSheet/ModalHeader'
 import Button from '@common/components/Button'
 import InputPassword from '@common/components/InputPassword'
-import Spinner from '@common/components/Spinner'
 import Text from '@common/components/Text'
 import { isiOS } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import { NfcSessionState } from '@common/modules/hardware-wallets/nfc/types'
 import { NfcWalletConfigs } from '@common/modules/hardware-wallets/nfc/wallets'
 import spacings from '@common/styles/spacings'
+import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import useNfcCardSession from '@mobile/modules/hardware-wallet/hooks/useNfcCardSession'
 import keycardNfcService from '@mobile/services/keycard/keycardNfcService'
@@ -123,7 +124,9 @@ const NfcCardSessionModal = () => {
   const title = (() => {
     if (step === 'awaiting-pin') return t('{{cardLabel}} PIN', { cardLabel: CARD_LABEL })
 
-    return purpose === 'import' ? t('Tap your card to import') : t('Tap your card to sign')
+    return purpose === 'import'
+      ? t('Tap your {{cardLabel}} to import', { cardLabel: CARD_LABEL })
+      : t('Tap your {{cardLabel}} to sign', { cardLabel: CARD_LABEL })
   })()
 
   return (
@@ -136,18 +139,19 @@ const NfcCardSessionModal = () => {
       withBackdropBlur={false}
       shouldBeClosableOnDrag={false}
     >
-      <ModalHeader title={title} />
+      <ModalHeader title={title} style={isPrompting ? undefined : spacings.mbLg} />
 
       {isPrompting ? (
         <MemoizedPinPrompt error={error} onSubmit={submitPrompt} onCancel={cancel} />
       ) : (
         <View style={[flexbox.alignCenter, spacings.pbLg]}>
-          <Spinner style={{ width: 32, height: 32 }} />
-          <Text fontSize={14} style={[spacings.mtSm, { textAlign: 'center' }]}>
+          <Text fontSize={14} style={[spacings.mbSm, { textAlign: 'center' }]}>
             {step === 'awaiting-tap'
               ? t('Hold your card against the top of your phone.')
               : t('Keep the card in place until this finishes.')}
           </Text>
+          {/* The icon set has no phone-and-card NFC mark, so this is the closest one. */}
+          <NfcIcon width={72} height={72} />
           {step === 'communicating' && (
             <Alert
               type="info"
@@ -161,7 +165,7 @@ const NfcCardSessionModal = () => {
             text={t('Cancel')}
             onPress={cancel}
             hasBottomSpacing={false}
-            style={spacings.mtSm}
+            style={[spacings.mtLg, common.fullWidth]}
           />
         </View>
       )}
