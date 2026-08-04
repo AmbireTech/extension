@@ -169,6 +169,7 @@ const Estimation = ({
       feeToken?: SelectValue['token']
       paidBy?: string
       speed?: FeeSpeed
+      shouldPersistSpeed?: boolean
       customGasPrices?: GasSpeeds
       customGasLimit?: bigint
     }) => {
@@ -401,7 +402,8 @@ const Estimation = ({
       }
 
       dispatchUpdate({
-        speed: value as FeeSpeed
+        speed: value as FeeSpeed,
+        shouldPersistSpeed: true
       })
     },
     [dispatchUpdate]
