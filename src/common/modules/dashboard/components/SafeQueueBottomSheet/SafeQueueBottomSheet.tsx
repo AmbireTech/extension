@@ -82,7 +82,7 @@ const NonceGroup: FC<NonceGroupProps> = ({
             <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mtMi, spacings.mbSm]}>
               <InfoIcon width={14} height={14} color={theme.warningText} />
               <Text fontSize={12} color={theme.warningText} style={spacings.mlMi}>
-                {t('Only one can execute')}
+                {t('Only one can be executed')}
               </Text>
             </View>
             {group.requests.map((request, requestIndex) => (
