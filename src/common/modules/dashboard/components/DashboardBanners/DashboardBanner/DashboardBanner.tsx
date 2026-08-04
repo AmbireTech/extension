@@ -266,6 +266,8 @@ const DashboardBanner = ({
         titleAfter={titleAfter}
         type={type}
         text={text}
+        singleRow={category === 'pending-to-be-signed-acc-op'}
+        style={category === 'pending-to-be-signed-acc-op' ? spacings.pbTy : undefined}
         buttonText={primaryAction?.label}
         onCloseIconPress={
           dismissAction && !dismissAction.label ? () => handleActionPress(dismissAction) : undefined
