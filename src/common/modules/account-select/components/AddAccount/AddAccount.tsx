@@ -9,6 +9,7 @@ import GridPlusIcon from '@common/assets/svg/GridPlusIcon'
 import HWIcon from '@common/assets/svg/HWIcon'
 import ImportAccountIcon from '@common/assets/svg/ImportAccountIcon'
 import ImportJsonIcon from '@common/assets/svg/ImportJsonIcon'
+import KeycardIcon from '@common/assets/svg/KeycardIcon'
 import LedgerBadgeIcon from '@common/assets/svg/LedgerBadgeIcon'
 import NfcIcon from '@common/assets/svg/NfcIcon'
 import PrivateKeyIcon from '@common/assets/svg/PrivateKeyIcon'
@@ -44,7 +45,9 @@ const AddAccount = ({
   const { goToNextRoute, setTriggeredHwWalletFlow } = useOnboardingNavigation()
   const [height, setHeight] = useState<number>(0)
   const scrollViewRef = useRef<any>(null)
-  const [expandedDropdown, setExpandedDropdown] = useState<'import-acc' | 'connect-hw' | null>(null)
+  const [expandedDropdown, setExpandedDropdown] = useState<
+    'import-acc' | 'connect-hw' | 'connect-nfc' | null
+  >(null)
 
   const {
     ref: seedPhraseSheetRef,
@@ -82,15 +85,6 @@ const AddAccount = ({
             goToNextRoute(ROUTES.qrConnect)
           },
           testID: 'qr-option'
-        },
-        {
-          key: 'nfc',
-          text: t('NFC card'),
-          icon: NfcIcon,
-          onPress: () => {
-            goToNextRoute(ROUTES.nfcConnect)
-          },
-          testID: 'nfc-option'
         }
       ]
 
@@ -135,6 +129,24 @@ const AddAccount = ({
       }
     ]
   }, [dispatch, goToNextRoute, setTriggeredHwWalletFlow, t])
+
+  // Tap-to-sign cards are not hardware wallets, so they get their own section.
+  // Only mobile can read NFC cards. Tangem will be added here as a second option.
+  const optionsNfc = useMemo(() => {
+    if (!isMobile) return []
+
+    return [
+      {
+        key: 'keycard',
+        text: t('Keycard'),
+        icon: KeycardIcon,
+        onPress: () => {
+          goToNextRoute(ROUTES.nfcConnect)
+        },
+        testID: 'keycard-option'
+      }
+    ]
+  }, [goToNextRoute, t])
 
   const optionsImportAccount = useMemo(() => {
     return [
@@ -233,6 +245,17 @@ const AddAccount = ({
             scrollViewRef={scrollViewRef}
             isExpanded={expandedDropdown === 'connect-hw'}
             setIsExpanded={(isExpanded) => setExpandedDropdown(isExpanded ? 'connect-hw' : null)}
+          />
+        )}
+        {!!optionsNfc.length && (
+          <ExpandableOptionSection
+            dropdownText={t('Connect an NFC card')}
+            dropdownIcon={NfcIcon}
+            dropdownTestID="connect-nfc-card"
+            options={optionsNfc}
+            scrollViewRef={scrollViewRef}
+            isExpanded={expandedDropdown === 'connect-nfc'}
+            setIsExpanded={(isExpanded) => setExpandedDropdown(isExpanded ? 'connect-nfc' : null)}
           />
         )}
         {!showImportOnly && (

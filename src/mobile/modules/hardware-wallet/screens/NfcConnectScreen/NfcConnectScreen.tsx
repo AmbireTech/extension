@@ -8,11 +8,9 @@ import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
-import useTheme from '@common/hooks/useTheme'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
 import { NfcWalletConfigs } from '@common/modules/hardware-wallets/nfc/wallets'
 import spacings from '@common/styles/spacings'
-import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import {
   MobileLayoutContainer,
@@ -24,9 +22,12 @@ import keycardNfcService from '@mobile/services/keycard/keycardNfcService'
 // Matches the QR scanner surface, so both connect screens read the same
 const NFC_ICON_SIZE = 280
 
+// Keycard is the only supported card, so the copy can name it. Once a second card
+// is added, the one picked in the selector must be passed to this screen instead.
+const [{ label: CARD_LABEL }] = NfcWalletConfigs
+
 const NfcConnectScreen = () => {
   const { t } = useTranslation()
-  const { theme } = useTheme()
   const { dispatch } = useControllersMiddleware()
   const { goToPrevRoute, goToNextRoute } = useOnboardingNavigation()
   const { initParams, type } = useController('AccountPickerController').state
@@ -42,7 +43,11 @@ const NfcConnectScreen = () => {
     if (isScanningRef.current) return
 
     if (!(await keycardNfcService.isSupported())) {
-      setError(t('This phone cannot read NFC cards, so a card cannot be imported on it.'))
+      setError(
+        t('This phone cannot read NFC cards, so a {{cardLabel}} cannot be imported on it.', {
+          cardLabel: CARD_LABEL
+        })
+      )
       return
     }
 
@@ -64,7 +69,10 @@ const NfcConnectScreen = () => {
         params: { payload: exportedKey }
       })
     } catch (e: any) {
-      setError(e?.message || t('Could not read the card. Please try again.'))
+      setError(
+        e?.message ||
+          t('Could not read your {{cardLabel}}. Please try again.', { cardLabel: CARD_LABEL })
+      )
     } finally {
       isScanningRef.current = false
     }
@@ -101,8 +109,8 @@ const NfcConnectScreen = () => {
   const buttonText = (() => {
     if (isNfcOff) return t('Turn on NFC')
     if (isSubmitting) return t('Reading accounts...')
-    if (step === 'awaiting-tap') return t('Waiting for card...')
-    if (isBusy) return t('Reading card...')
+    if (step === 'awaiting-tap') return t('Waiting for {{cardLabel}}...', { cardLabel: CARD_LABEL })
+    if (isBusy) return t('Reading {{cardLabel}}...', { cardLabel: CARD_LABEL })
 
     return t('Scan')
   })()
@@ -121,10 +129,12 @@ const NfcConnectScreen = () => {
       <MobileLayoutWrapperMainContent
         withBackButton
         onBackButtonPress={handleBackButtonPress}
-        title={t('Connect card')}
+        title={t('Connect {{cardLabel}}', { cardLabel: CARD_LABEL })}
       >
         <Text fontSize={14} style={[spacings.mbSm, { textAlign: 'center' }]}>
-          {t('Tap your card on the back of your phone to import its accounts.')}
+          {t('Tap your {{cardLabel}} on the back of your phone to import its accounts.', {
+            cardLabel: CARD_LABEL
+          })}
         </Text>
 
         <View
@@ -140,32 +150,13 @@ const NfcConnectScreen = () => {
           <NfcIcon width={NFC_ICON_SIZE * 0.6} height={NFC_ICON_SIZE * 0.6} />
         </View>
 
-        {NfcWalletConfigs.map((wallet) => (
-          <View
-            key={wallet.type}
-            style={[
-              flexbox.directionRow,
-              flexbox.alignCenter,
-              spacings.phSm,
-              spacings.pvSm,
-              spacings.mbSm,
-              {
-                backgroundColor: theme.secondaryBackground,
-                borderRadius: BORDER_RADIUS_PRIMARY
-              }
-            ]}
-          >
-            <Text fontSize={16} weight="medium">
-              {wallet.label}
-            </Text>
-          </View>
-        ))}
-
         {isNfcOff && (
           <Alert
             type="warning"
             size="sm"
-            title={t('NFC is turned off. Turn it on to use your card.')}
+            title={t('NFC is turned off. Turn it on to use your {{cardLabel}}.', {
+              cardLabel: CARD_LABEL
+            })}
           />
         )}
 

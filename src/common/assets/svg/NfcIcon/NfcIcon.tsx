@@ -17,21 +17,16 @@ const NfcIcon: FC<LegendsSvgProps> = ({ width = 24, height = 24, color, ...rest 
         strokeWidth="1.5"
         d="M12 2.75a9.25 9.25 0 1 1 0 18.5 9.25 9.25 0 0 1 0-18.5Z"
       />
+      <Path stroke={stroke} strokeWidth="1.2" strokeLinecap="round" d="M8.93 9.7a3 3 0 0 1 0 4.6" />
       <Path
         stroke={stroke}
-        strokeWidth="1.4"
-        strokeLinecap="round"
-        d="M8.93 9.7a3 3 0 0 1 0 4.6"
-      />
-      <Path
-        stroke={stroke}
-        strokeWidth="1.4"
+        strokeWidth="1.2"
         strokeLinecap="round"
         d="M10.7 7.6a5.75 5.75 0 0 1 0 8.8"
       />
       <Path
         stroke={stroke}
-        strokeWidth="1.4"
+        strokeWidth="1.2"
         strokeLinecap="round"
         d="M12.47 5.49a8.5 8.5 0 0 1 0 13.02"
       />
