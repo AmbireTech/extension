@@ -124,12 +124,47 @@ const NfcCardSessionModal = () => {
   }, [cancel])
 
   const title = (() => {
-    if (step === 'awaiting-pin') return t('{{cardLabel}} PIN', { cardLabel })
+    if (isPrompting || isiOS) return t('{{cardLabel}} PIN', { cardLabel })
 
     return purpose === 'import'
       ? t('Tap your {{cardLabel}} to import', { cardLabel })
       : t('Tap your {{cardLabel}} to sign', { cardLabel })
   })()
+
+  const renderContent = () => {
+    if (isPrompting) {
+      return <MemoizedPinPrompt error={error} onSubmit={submitPrompt} onCancel={cancel} />
+    }
+
+    if (isiOS) return null
+
+    return (
+      <View style={[flexbox.alignCenter, spacings.pbLg]}>
+        <Text fontSize={14} style={[spacings.mbSm, { textAlign: 'center' }]}>
+          {step === 'awaiting-tap'
+            ? t('Hold your card against the top of your phone.')
+            : t('Keep the card in place until this finishes.')}
+        </Text>
+        {/* The icon set has no phone-and-card NFC mark, so this is the closest one. */}
+        <NfcIcon width={72} height={72} />
+        {step === 'communicating' && (
+          <Alert
+            type="info"
+            size="sm"
+            style={spacings.mtSm}
+            title={t('Moving the card away now cancels the operation.')}
+          />
+        )}
+        <Button
+          type="secondary"
+          text={t('Cancel')}
+          onPress={cancel}
+          hasBottomSpacing={false}
+          style={[spacings.mtLg, common.fullWidth]}
+        />
+      </View>
+    )
+  }
 
   return (
     <BottomSheet
@@ -142,35 +177,7 @@ const NfcCardSessionModal = () => {
       shouldBeClosableOnDrag={false}
     >
       <ModalHeader title={title} style={isPrompting ? undefined : spacings.mbLg} />
-
-      {isPrompting ? (
-        <MemoizedPinPrompt error={error} onSubmit={submitPrompt} onCancel={cancel} />
-      ) : (
-        <View style={[flexbox.alignCenter, spacings.pbLg]}>
-          <Text fontSize={14} style={[spacings.mbSm, { textAlign: 'center' }]}>
-            {step === 'awaiting-tap'
-              ? t('Hold your card against the top of your phone.')
-              : t('Keep the card in place until this finishes.')}
-          </Text>
-          {/* The icon set has no phone-and-card NFC mark, so this is the closest one. */}
-          <NfcIcon width={72} height={72} />
-          {step === 'communicating' && (
-            <Alert
-              type="info"
-              size="sm"
-              style={spacings.mtSm}
-              title={t('Moving the card away now cancels the operation.')}
-            />
-          )}
-          <Button
-            type="secondary"
-            text={t('Cancel')}
-            onPress={cancel}
-            hasBottomSpacing={false}
-            style={[spacings.mtLg, common.fullWidth]}
-          />
-        </View>
-      )}
+      {renderContent()}
     </BottomSheet>
   )
 }
