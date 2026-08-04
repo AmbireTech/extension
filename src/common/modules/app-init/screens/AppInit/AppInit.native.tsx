@@ -38,8 +38,6 @@ const AppInit = () => {
                               <BiometricsProvider>
                                 <OnboardingNavigationProvider>
                                   <AppRouter />
-                                  {/* Mounted globally: a card tap can be requested
-                                  from any screen, including a dapp signing request */}
                                   <NfcCardSessionModal />
                                   <PortalHost name="global" />
                                 </OnboardingNavigationProvider>

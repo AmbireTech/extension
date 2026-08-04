@@ -3,9 +3,6 @@ import Svg, { G, Path, SvgProps } from 'react-native-svg'
 
 import useTheme from '@common/hooks/useTheme'
 
-// The official Keycard brand mark (the ring-on-a-k key) from the wordmark in
-// keycard-tech/keycard-website, scaled from its 19.5x34 box down to 12.5px tall so its
-// filled shapes read at the same weight as the stroked glyphs of the other wallet icons.
 const MARK_SCALE = 0.3676
 const MARK_TRANSFORM = `translate(8.415 5.75) scale(${MARK_SCALE})`
 

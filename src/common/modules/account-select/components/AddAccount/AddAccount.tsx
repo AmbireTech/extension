@@ -132,8 +132,6 @@ const AddAccount = ({
     ]
   }, [dispatch, goToNextRoute, setTriggeredHwWalletFlow, t])
 
-  // Tap-to-sign cards are not hardware wallets, so they get their own section.
-  // Only mobile can read NFC cards. Tangem will be added here as a second option.
   const optionsNfc = useMemo(() => {
     if (!isMobile) return []
 
@@ -142,8 +140,6 @@ const AddAccount = ({
         key: 'keycard',
         text: t('Keycard'),
         icon: KeycardIcon,
-        // The card session takes over from here (tap and PIN prompts, then the
-        // account picker), so this sheet gets out of the way instead of navigating.
         onPress: () => {
           closeBottomSheet()
           scanCard()

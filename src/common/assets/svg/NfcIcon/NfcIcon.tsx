@@ -4,8 +4,6 @@ import { Path, Svg } from 'react-native-svg'
 import useTheme from '@common/hooks/useTheme'
 import { LegendsSvgProps } from '@legends/types/svg'
 
-// TODO: placeholder contactless mark drawn to match the icon set's stroke style.
-// Please replace it with the designed NFC icon when there is one.
 const NfcIcon: FC<LegendsSvgProps> = ({ width = 24, height = 24, color, ...rest }) => {
   const { theme } = useTheme()
   const stroke = color || theme.iconPrimary

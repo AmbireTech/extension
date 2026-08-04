@@ -9,8 +9,6 @@ import { NfcWalletConfigs } from '@common/modules/hardware-wallets/nfc/wallets'
 import { ROUTES } from '@common/modules/router/constants/common'
 import keycardNfcService, { CANCELLED_MESSAGE } from '@mobile/services/keycard/keycardNfcService'
 
-// Keycard is the only supported card, so the copy can name it. Once a second card
-// is added, the one picked by the user must be passed in here instead.
 const [{ label: CARD_LABEL }] = NfcWalletConfigs
 
 /**
@@ -42,8 +40,6 @@ const useNfcAccountImport = () => {
       return
     }
 
-    // There is no screen of ours to host a "Turn on NFC" button, so the setting is
-    // opened right away.
     if (!(await keycardNfcService.isEnabled())) {
       addToast(
         t('NFC is turned off. Turn it on to use your {{cardLabel}}.', { cardLabel: CARD_LABEL }),
