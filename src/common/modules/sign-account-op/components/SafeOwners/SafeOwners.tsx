@@ -8,11 +8,15 @@ import AccountKey from '@common/components/AccountKey'
 import SafeKeyWrapper from '@common/components/SafeKeyWrapper'
 import ScrollableWrapper from '@common/components/ScrollableWrapper'
 import Text from '@common/components/Text'
-import { isWeb } from '@common/config/env'
+import { isMobile, isWeb } from '@common/config/env'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import { THEME_TYPES } from '@common/styles/themeConfig'
+import { getUiType } from '@common/utils/uiType'
+
+const { isSidePanel } = getUiType()
+const withMobileLayout = isMobile || isSidePanel
 
 const SafeOwners = ({
   account,
@@ -73,6 +77,8 @@ const SafeOwners = ({
         {t(`${threshold} out of ${owners.length} signatures required:`)}
       </Text>
       <ScrollableWrapper
+        // Web (incl. side panel) needs maxHeight so the list keeps intrinsic height;
+        // `{ flex: 0 }` alone collapses the rows on RN web.
         style={isWeb ? { maxHeight: 120, flexShrink: 0 } : { flex: 0 }}
         contentContainerStyle={{ flexGrow: 0 }}
       >
@@ -90,7 +96,7 @@ const SafeOwners = ({
             <AccountKey
               addr={o.addr}
               label={o.addr}
-              singleLineLabel={!isWeb}
+              singleLineLabel={withMobileLayout}
               type={o.type || 'internal'}
               dedicatedToOneSA={false}
               isImported

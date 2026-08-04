@@ -13,6 +13,7 @@ import useController from '@common/hooks/useController'
 import useSign from '@common/hooks/useSign'
 import useTheme from '@common/hooks/useTheme'
 import ActionHeader from '@common/modules/action-requests/components/ActionHeader'
+import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import ErrorInformation from '@common/modules/sign-account-op/components/ErrorInformation'
 import Estimation from '@common/modules/sign-account-op/components/Estimation'
 import Footer from '@common/modules/sign-account-op/components/Footer'
@@ -50,6 +51,7 @@ const SignAccountOpScreen = () => {
     useController('SignAccountOpController')
   const { t } = useTranslation()
   const { theme } = useTheme()
+  const { isCompactSidePanelLayout } = useCompactActionRequestLayout()
   const [containerHeight, setContainerHeight] = useState(0)
   const [contentHeight, setContentHeight] = useState(0)
   const [hasReachedBottom, setHasReachedBottom] = useState<boolean | null>(null)
@@ -315,15 +317,25 @@ const SignAccountOpScreen = () => {
         )}
         <TabLayoutWrapperMainContent withScroll={false}>
           <View
-            style={[
-              flexbox.directionRow,
-              flexbox.alignCenter,
-              flexbox.justifySpaceBetween,
-              spacings.mb
-            ]}
+            style={
+              isCompactSidePanelLayout
+                ? spacings.mb
+                : [
+                    flexbox.directionRow,
+                    flexbox.alignCenter,
+                    flexbox.justifySpaceBetween,
+                    spacings.mb
+                  ]
+            }
           >
             <SectionHeading withMb={false}>{t('Overview')}</SectionHeading>
-            <View style={[flexbox.directionRow, flexbox.alignCenter]}>
+            <View
+              style={[
+                flexbox.directionRow,
+                flexbox.alignCenter,
+                isCompactSidePanelLayout && [spacings.mtTy, flexbox.justifySpaceBetween]
+              ]}
+            >
               <SafeNonce />
               <NetworkBadge
                 chainId={network?.chainId}
