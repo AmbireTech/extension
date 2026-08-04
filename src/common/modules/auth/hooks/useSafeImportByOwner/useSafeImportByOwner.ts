@@ -14,12 +14,10 @@ type FormValues = {
   ownerAddress: AddressState
 }
 
-const SAFE_OWNER_SEARCH_TTL = 5 * 60 * 1000
-
 const useSafeImportByOwner = () => {
   const {
     dispatch: safeDispatch,
-    state: { safeOwnerSearches, statuses }
+    state: { safeOwnerSearches, ownerCurrentlyDisplayingFor }
   } = useController('SafeController')
   const { state: importedAccounts } = useController('AccountsController', (state) => state.accounts)
   const {
@@ -52,8 +50,6 @@ const useSafeImportByOwner = () => {
   }>({ owner: '', selectedAddresses: [], deselectedAddresses: [] })
   const isImportRequested = useRef(false)
   const hasSeenUpdateAccountsLoading = useRef(false)
-  const requestedOwner = useRef('')
-  const [safeOwnerSearchFreshAfter] = useState(() => Date.now() - SAFE_OWNER_SEARCH_TTL)
 
   const setOwnerAddressState = useCallback(
     (newState: AddressStateOptional) => {
@@ -97,53 +93,21 @@ const useSafeImportByOwner = () => {
         .map((network) => network.chainId),
     [enabledNetworks]
   )
+
   const cachedSafeOwnerSearch = owner ? safeOwnerSearches[owner] : undefined
-  const isCachedSafeOwnerSearchFresh =
-    !!cachedSafeOwnerSearch &&
-    cachedSafeOwnerSearch.updatedAt > 0 &&
-    cachedSafeOwnerSearch.updatedAt > safeOwnerSearchFreshAfter
   const hasSearchedAllSafeNetworks =
     !!cachedSafeOwnerSearch &&
     cachedSafeOwnerSearch.searchedNetworks.length === safeSupportedNetworkIds.length &&
     safeSupportedNetworkIds.every((chainId) =>
       cachedSafeOwnerSearch.searchedNetworks.includes(chainId)
     )
-  const canReuseCachedSafeOwnerSearch =
-    isCachedSafeOwnerSearchFresh &&
-    hasSearchedAllSafeNetworks &&
-    cachedSafeOwnerSearch.failedNetworks.length === 0
-  const isSameOwnerSearchLoading =
-    statuses.findSafesByOwner === 'LOADING' && cachedSafeOwnerSearch?.updatedAt === 0
 
   useEffect(() => {
-    if (!owner) {
-      requestedOwner.current = ''
-      return
-    }
-
-    if (isSameOwnerSearchLoading) {
-      requestedOwner.current = owner
-      return
-    }
-    if (statuses.findSafesByOwner === 'LOADING') {
-      requestedOwner.current = ''
-      return
-    }
-    if (canReuseCachedSafeOwnerSearch) {
-      requestedOwner.current = owner
-      return
-    }
-    if (requestedOwner.current === owner) return
-
-    requestedOwner.current = owner
-    safeDispatch({ type: 'method', params: { method: 'findSafesByOwner', args: [owner] } })
-  }, [
-    canReuseCachedSafeOwnerSearch,
-    isSameOwnerSearchLoading,
-    owner,
-    safeDispatch,
-    statuses.findSafesByOwner
-  ])
+    if (!owner) safeDispatch({ type: 'method', params: { method: 'resetSearchByOwner', args: [] } })
+    else safeDispatch({ type: 'method', params: { method: 'findSafesByOwner', args: [owner] } })
+    return () =>
+      safeDispatch({ type: 'method', params: { method: 'resetSearchByOwner', args: [] } })
+  }, [owner, safeDispatch])
 
   useEffect(() => {
     if (!isImportRequested.current) return
@@ -164,12 +128,11 @@ const useSafeImportByOwner = () => {
     }
   }, [goToNextRoute, mainStatuses.updateAccounts])
 
-  const safeOwnerSearch =
-    isCachedSafeOwnerSearchFresh ||
-    (isSameOwnerSearchLoading && cachedSafeOwnerSearch?.updatedAt === 0)
-      ? cachedSafeOwnerSearch
-      : undefined
-  const safeAccounts = useMemo(() => safeOwnerSearch?.accounts || [], [safeOwnerSearch])
+  const currentDisplayableData = useMemo(
+    () =>
+      owner && owner === ownerCurrentlyDisplayingFor ? safeOwnerSearches[owner] || null : null,
+    [safeOwnerSearches, owner, ownerCurrentlyDisplayingFor]
+  )
   const importedAddresses = useMemo(
     () => importedAccounts.map((account) => account.addr),
     [importedAccounts]
@@ -190,7 +153,7 @@ const useSafeImportByOwner = () => {
       overridesForOwner.deselectedAddresses.map((address) => address.toLowerCase())
     )
 
-    return safeAccounts
+    return (currentDisplayableData?.accounts || [])
       .map((account) => account.addr)
       .filter((address) => {
         const normalizedAddress = address.toLowerCase()
@@ -198,19 +161,25 @@ const useSafeImportByOwner = () => {
         if (deselectedAddressSet.has(normalizedAddress)) return false
         return importedAddressSet.has(normalizedAddress)
       })
-  }, [importedAddressSet, owner, safeAccounts, selectionOverrides])
+  }, [importedAddressSet, owner, currentDisplayableData?.accounts, selectionOverrides])
 
-  const isSearching = !!owner && statuses.findSafesByOwner === 'LOADING'
+  const isSearching =
+    (ownerCurrentlyDisplayingFor &&
+      safeOwnerSearches[ownerCurrentlyDisplayingFor]?.status === 'LOADING') ||
+    (owner && owner !== ownerCurrentlyDisplayingFor)
+
   const isMainBusy = Object.values(mainStatuses).some((status) => status !== 'INITIAL')
   const hasSearchCompleted =
-    !!owner && !!safeOwnerSearch && hasSearchedAllSafeNetworks && !isSearching
+    !!owner && !!currentDisplayableData && hasSearchedAllSafeNetworks && !isSearching
+
   const failedNetworkNames = useMemo(() => {
-    if (!safeOwnerSearch) return []
-    return safeOwnerSearch.failedNetworks.map(
+    if (!currentDisplayableData) return []
+    console.log(currentDisplayableData.failedNetworks)
+    return currentDisplayableData.failedNetworks.map(
       (chainId) =>
         enabledNetworks.find((network) => network.chainId === chainId)?.name || chainId.toString()
     )
-  }, [enabledNetworks, safeOwnerSearch])
+  }, [enabledNetworks, currentDisplayableData])
 
   const setAccountSelected = useCallback(
     (address: string, shouldSelect: boolean) => {
@@ -238,13 +207,13 @@ const useSafeImportByOwner = () => {
   )
 
   const handleImport = useCallback(() => {
-    if (isSearching || isMainBusy) return
+    if (isSearching || isMainBusy || !currentDisplayableData?.accounts) return
 
     const selectedAddressSet = new Set(selectedAddresses.map((address) => address.toLowerCase()))
     const importedAddressSet = new Set(
       importedAccounts.map((account) => account.addr.toLowerCase())
     )
-    const accountsToImport: Account[] = safeAccounts
+    const accountsToImport: Account[] = currentDisplayableData.accounts
       .filter((account) => selectedAddressSet.has(account.addr.toLowerCase()))
       .map(({ addr, associatedKeys, initialPrivileges, creation, safeCreation, preferences }) => ({
         addr,
@@ -254,7 +223,7 @@ const useSafeImportByOwner = () => {
         safeCreation,
         preferences
       }))
-    const accountAddressesToRemove = safeAccounts
+    const accountAddressesToRemove = currentDisplayableData.accounts
       .filter((account) => {
         const normalizedAddress = account.addr.toLowerCase()
         return (
@@ -272,21 +241,33 @@ const useSafeImportByOwner = () => {
         args: [{ accountsToAdd: accountsToImport, accountAddressesToRemove }]
       }
     })
-  }, [importedAccounts, isMainBusy, isSearching, mainDispatch, safeAccounts, selectedAddresses])
+  }, [
+    importedAccounts,
+    isMainBusy,
+    isSearching,
+    mainDispatch,
+    currentDisplayableData,
+    selectedAddresses
+  ])
+
+  const isImportButtonDisabled =
+    !isValid ||
+    isSearching ||
+    isMainBusy ||
+    (hasSearchCompleted && !currentDisplayableData.accounts?.length)
 
   return {
+    isImportButtonDisabled,
     control,
     failedNetworkNames,
     handleImport,
     hasSearchCompleted,
-    isMainBusy,
     isSearching,
-    isValid,
     goToPrevRoute,
     importedAccounts,
     ownerAddressState,
     ownerAddressValidation,
-    safeAccounts,
+    safeAccounts: currentDisplayableData?.accounts || [],
     selectedAddresses,
     setAccountSelected,
     validateOwnerAddress

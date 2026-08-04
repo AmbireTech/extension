@@ -26,9 +26,8 @@ const SafeImportByOwnerScreen = () => {
     handleImport,
     hasSearchCompleted,
     importedAccounts,
-    isMainBusy,
     isSearching,
-    isValid,
+    isImportButtonDisabled,
     goToPrevRoute,
     ownerAddressState,
     ownerAddressValidation,
@@ -136,12 +135,7 @@ const SafeImportByOwnerScreen = () => {
                 text={t('Import')}
                 hasBottomSpacing={false}
                 onPress={handleImport}
-                disabled={
-                  !isValid ||
-                  isSearching ||
-                  isMainBusy ||
-                  (hasSearchCompleted && !safeAccounts.length)
-                }
+                disabled={isImportButtonDisabled}
               />
             </View>
           </View>
