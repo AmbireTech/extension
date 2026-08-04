@@ -1,13 +1,10 @@
 import React, { useMemo } from 'react'
 import { View } from 'react-native'
-import { useModalize } from 'react-native-modalize'
 
 import { getCallsCount } from '@ambire-common/utils/userRequest'
 import BatchIcon from '@common/assets/svg/BatchIcon'
-import BottomSheet from '@common/components/BottomSheet'
 import Button from '@common/components/Button'
 import ButtonWithLoader from '@common/components/ButtonWithLoader/ButtonWithLoader'
-import DualChoiceWarningModal from '@common/components/DualChoiceWarningModal'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import HoldToProceedButton from '@common/components/HoldToProceedButton'
 import { useTranslation } from '@common/config/localization'
@@ -60,11 +57,7 @@ const Footer = ({
 
   const signature = accountOp?.signature
   const isMultisigSigned = useMemo(() => {
-    // '0x' is the placeholder signature for self-broadcast EOA account ops (they
-    // carry no smart-account signature). It is NOT a real signature, so it must
-    // not trigger the "already signed" reject warning. Otherwise, rejecting on a
-    // hardware wallet — which leaves the '0x' placeholder set on accountOp —
-    // wrongly warns the user about discarding an already-signed transaction.
+    // '0x' is a placeholder used by self-broadcast account ops, not a real signature.
     return !!signature && signature !== '0x'
   }, [signature])
 
@@ -76,8 +69,6 @@ const Footer = ({
         })
       : t('Start a batch')
   }, [isMultisigSigned, batchCount, t])
-
-  const { ref: sheetRef, open: openModal, close: closeModal } = useModalize()
 
   return (
     <View style={spacings.ptSm}>
@@ -116,25 +107,6 @@ const Footer = ({
             size="large"
           />
         )}
-        <BottomSheet
-          id="confirm-hide"
-          type="modal"
-          sheetRef={sheetRef}
-          closeBottomSheet={closeModal}
-          onBackdropPress={closeModal}
-        >
-          <DualChoiceWarningModal
-            title={t('Are you sure?')}
-            description={t(
-              'You are about to reject an already signed transcation. It will no longer be visible in Ambire.'
-            )}
-            primaryButtonText={t('Proceed')}
-            secondaryButtonText={t('Return')}
-            onPrimaryButtonPress={onReject}
-            onSecondaryButtonPress={closeModal}
-            type="error"
-          />
-        </BottomSheet>
       </View>
 
       <View style={[flexbox.directionRow, { columnGap: SPACING_SM }]}>
@@ -143,13 +115,7 @@ const Footer = ({
             testID="transaction-button-reject"
             type="danger"
             text={t('Reject')}
-            onPress={() => {
-              if (isMultisigSigned) {
-                openModal()
-              } else {
-                onReject()
-              }
-            }}
+            onPress={onReject}
             style={{ height: 50 }}
             hasBottomSpacing={false}
             disabled={isSignLoading}

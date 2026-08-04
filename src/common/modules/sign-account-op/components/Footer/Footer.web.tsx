@@ -1,13 +1,10 @@
 import React, { useMemo } from 'react'
 import { View } from 'react-native'
-import { useModalize } from 'react-native-modalize'
 
 import { getCallsCount } from '@ambire-common/utils/userRequest'
 import BatchIcon from '@common/assets/svg/BatchIcon'
-import BottomSheet from '@common/components/BottomSheet'
 import Button from '@common/components/Button'
 import ButtonWithLoader from '@common/components/ButtonWithLoader/ButtonWithLoader'
-import DualChoiceWarningModal from '@common/components/DualChoiceWarningModal'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import HoldToProceedButton from '@common/components/HoldToProceedButton'
 import { useTranslation } from '@common/config/localization'
@@ -75,8 +72,6 @@ const Footer = ({
       : t('Start a batch')
   }, [isMultisigSigned, batchCount, t])
 
-  const { ref: sheetRef, open: openModal, close: closeModal } = useModalize()
-
   return (
     <View style={styles.container}>
       <View style={[!isAddToCartDisplayed && flexbox.flex1, flexbox.alignStart]}>
@@ -84,13 +79,7 @@ const Footer = ({
           testID="transaction-button-reject"
           type="danger"
           text={t('Reject')}
-          onPress={() => {
-            if (isMultisigSigned) {
-              openModal()
-            } else {
-              onReject()
-            }
-          }}
+          onPress={onReject}
           hasBottomSpacing={false}
           size="large"
           disabled={isSignLoading}
@@ -158,25 +147,6 @@ const Footer = ({
               style={[{ minWidth: 128 }, spacings.mlLg]}
             />
           )}
-          <BottomSheet
-            id="confirm-hide"
-            type="modal"
-            sheetRef={sheetRef}
-            closeBottomSheet={closeModal}
-            onBackdropPress={closeModal}
-          >
-            <DualChoiceWarningModal
-              title={t('Are you sure?')}
-              description={t(
-                'You are about to reject an already signed transcation. It will no longer be visible in Ambire.'
-              )}
-              primaryButtonText={t('Proceed')}
-              secondaryButtonText={t('Return')}
-              onPrimaryButtonPress={onReject}
-              onSecondaryButtonPress={closeModal}
-              type="error"
-            />
-          </BottomSheet>
         </View>
       </View>
     </View>

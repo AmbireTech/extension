@@ -6,6 +6,7 @@ import Text from '@common/components/Text'
 import { isMobile } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import useNavigation from '@common/hooks/useNavigation'
+import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import { WEB_ROUTES } from '@common/modules/router/constants/common'
 import alert from '@common/services/alert'
@@ -23,6 +24,7 @@ export type RouteItemType = {
   isExternal?: boolean
   scale: number
   scaleOnHover: number
+  badge?: number
 }
 
 interface Props {
@@ -38,6 +40,7 @@ const RouteItem: FC<Props> = ({ routeItem, index, routeItemsLength }) => {
   const { t } = useTranslation()
   const { navigate } = useNavigation()
   const { addToast } = useToast()
+  const { theme } = useTheme()
 
   return (
     <Pressable
@@ -94,6 +97,26 @@ const RouteItem: FC<Props> = ({ routeItem, index, routeItemsLength }) => {
                 height={ICON_SIZE}
                 width={ICON_SIZE}
               />
+              {!!routeItem.badge && (
+                <View
+                  style={[
+                    flexbox.center,
+                    {
+                      position: 'absolute',
+                      top: 3,
+                      right: 3,
+                      minWidth: 14,
+                      height: 14,
+                      borderRadius: 7,
+                      backgroundColor: theme.primaryAccent
+                    }
+                  ]}
+                >
+                  <Text fontSize={9} weight="semiBold" color={theme.neutral100}>
+                    {routeItem.badge}
+                  </Text>
+                </View>
+              )}
             </View>
           </GlassView>
           <Text
