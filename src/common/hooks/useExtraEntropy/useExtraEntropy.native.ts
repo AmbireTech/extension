@@ -1,6 +1,6 @@
 import { GestureResponderEvent } from 'react-native'
 
-import { foldIntoEntropyPool, takeExtraEntropy } from './entropyPool'
+import { observeEntropySample, takeExtraEntropy } from './entropyPool'
 
 // ~4-8 bits per event, most of it in the sub-pixel fraction of the coordinates, which is sensor
 // noise and so does not follow from the shape of the gesture the way the coordinates themselves do.
@@ -9,7 +9,7 @@ import { foldIntoEntropyPool, takeExtraEntropy } from './entropyPool'
 const collectTouchEntropy = (e: GestureResponderEvent) => {
   const { pageX, pageY, timestamp } = e.nativeEvent
 
-  foldIntoEntropyPool(`${pageX}-${pageY}-${timestamp}`)
+  observeEntropySample(`${pageX}-${pageY}-${timestamp}`)
 }
 
 // Spread onto the app-wide root view once - the mobile counterpart of the mousemove listener the

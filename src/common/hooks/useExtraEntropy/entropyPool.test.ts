@@ -42,4 +42,24 @@ describe('entropyPool', () => {
     // Change one digit, get a different hash: what it was given is not being ignored.
     expect(poolAfterFolding('100-200-1234.5')).not.toEqual(poolAfterFolding('100-200-1234.6'))
   })
+
+  it('throttles a burst, so a stream at the display refresh rate is not all kept', () => {
+    const poolAfterObserving = (...samples: string[]) => {
+      jest.resetModules()
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const freshPool = require('./entropyPool')
+
+      samples.forEach((sample) => freshPool.observeEntropySample(sample))
+
+      return poolHashOf(freshPool.takeExtraEntropy())
+    }
+
+    const afterOne = poolAfterObserving('100-200-1')
+
+    // A hash rather than a clock means the sample got through at all, which is what would break if
+    // the cap on how many to observe were ever inverted
+    expect(afterOne.startsWith('0x')).toBe(true)
+    // Three back-to-back samples land inside one throttle window, so only the first is kept
+    expect(poolAfterObserving('100-200-1', '101-201-2', '102-202-3')).toEqual(afterOne)
+  })
 })

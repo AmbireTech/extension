@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 
-import { foldIntoEntropyPool, takeExtraEntropy } from './entropyPool'
+import { observeEntropySample, takeExtraEntropy } from './entropyPool'
 
 /**
  * The web half of the entropy pool - see `entropyPool.ts` for what the pool is for and why it
@@ -17,7 +17,7 @@ const useExtraEntropy = () => {
     // ~5-8 bits per event: 2-4 from the position, most of which a smooth path gives away, and
     // 3-4 from the jitter in the timestamp.
     const handleMouseMove = (e: MouseEvent) => {
-      foldIntoEntropyPool(`${e.clientX}-${e.clientY}-${e.timeStamp}`)
+      observeEntropySample(`${e.clientX}-${e.clientY}-${e.timeStamp}`)
     }
 
     // Only the timing of a keystroke is folded in, never which key it was. The unpredictability
@@ -25,7 +25,7 @@ const useExtraEntropy = () => {
     // per-event source here. Recording the keys themselves would amount to keeping a keylog in
     // memory, for entropy we already have. It also matters because someone navigating by keyboard
     // alone moves the mouse rarely, or not at all.
-    const handleKeyDown = (e: KeyboardEvent) => foldIntoEntropyPool(`${e.timeStamp}`)
+    const handleKeyDown = (e: KeyboardEvent) => observeEntropySample(`${e.timeStamp}`)
 
     document.addEventListener('mousemove', handleMouseMove, { passive: true })
     document.addEventListener('keydown', handleKeyDown, { passive: true })
