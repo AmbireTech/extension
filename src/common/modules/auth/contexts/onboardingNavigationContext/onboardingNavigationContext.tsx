@@ -78,7 +78,7 @@ const OnboardingNavigationProvider = ({ children }: { children: React.ReactNode 
     () => ONBOARDING_WEB_ROUTES.includes((path || '').substring(1)),
     [path]
   )
-  const { areControllerStatesLoaded } = useContext(ControllersStateLoadedContext)
+  const { areAllControllerStatesLoaded } = useContext(ControllersStateLoadedContext)
 
   // session storage is needed here to prevent state reset on account-personalize page reload
   const [accountsToPersonalize, setAccountsToPersonalize] = useState<Account[]>(() => {
@@ -159,6 +159,7 @@ const OnboardingNavigationProvider = ({ children }: { children: React.ReactNode 
             new RouteNode(WEB_ROUTES.importPrivateKey, common, false, false),
             new RouteNode(WEB_ROUTES.importSeedPhrase, common, false, false),
             new RouteNode(WEB_ROUTES.ledgerConnect, common, false, false),
+            new RouteNode(WEB_ROUTES.trezorConnect, common, false, false),
             new RouteNode(WEB_ROUTES.safeImport, common, false, false),
             new RouteNode(WEB_ROUTES.qrConnect, common, false, false),
             new RouteNode(WEB_ROUTES.importSmartAccountJson, common, false, false)
@@ -409,7 +410,7 @@ const OnboardingNavigationProvider = ({ children }: { children: React.ReactNode 
   useEffect(() => {
     const currentRoute = path?.substring(1)
     if (!currentRoute) return
-    if (!areControllerStatesLoaded) return
+    if (!areAllControllerStatesLoaded) return
     if (emailVaultStatuses?.recoverKeyStore !== 'INITIAL') return
 
     if (
@@ -424,7 +425,7 @@ const OnboardingNavigationProvider = ({ children }: { children: React.ReactNode 
     path,
     goToNextRoute,
     hasPasswordSecret,
-    areControllerStatesLoaded,
+    areAllControllerStatesLoaded,
     emailVaultStatuses?.recoverKeyStore
   ])
 

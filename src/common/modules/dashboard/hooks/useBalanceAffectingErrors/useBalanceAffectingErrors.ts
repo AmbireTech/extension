@@ -4,13 +4,17 @@ import { useModalize } from 'react-native-modalize'
 
 import { SelectedAccountBalanceError } from '@ambire-common/libs/selectedAccount/errors'
 import useController from '@common/hooks/useController'
+import {
+  getBalanceAffectedNetworkNames,
+  getColibriWarningNetworkNames
+} from '@common/modules/dashboard/helpers/balanceWarnings'
 
 const useBalanceAffectingErrors = () => {
   const { t } = useTranslation()
   const {
     state: { balanceAffectingErrors, portfolio }
   } = useController('SelectedAccountController')
-  const { areNetworksFetchingFromRelayer } = useController('NetworksController').state
+  const { allNetworks, areNetworksFetchingFromRelayer } = useController('NetworksController').state
   // While the networks config is being refreshed from the relayer, the balance is
   // held in a loading (skeleton) state and any updated RPC will trigger a portfolio
   // reload. Suppress balance-affecting warnings during this window so the user
@@ -28,15 +32,21 @@ const useBalanceAffectingErrors = () => {
     SelectedAccountBalanceError[]
   >([])
 
-  const networksWithErrors = useMemo(() => {
-    if (areNetworksFetchingFromRelayer) return []
+  const colibriWarningNetworkNames = useMemo(
+    () => getColibriWarningNetworkNames(portfolio.verification, allNetworks),
+    [allNetworks, portfolio.verification]
+  )
 
-    const allNetworkNames = balanceAffectingErrors.flatMap((banner) => banner.networkNames)
-
-    const uniqueNetworkNames = [...new Set(allNetworkNames)]
-
-    return uniqueNetworkNames
-  }, [areNetworksFetchingFromRelayer, balanceAffectingErrors])
+  const networksWithErrors = useMemo(
+    () =>
+      getBalanceAffectedNetworkNames({
+        balanceAffectingErrors,
+        verification: portfolio.verification,
+        allNetworks,
+        areNetworksFetchingFromRelayer
+      }),
+    [allNetworks, areNetworksFetchingFromRelayer, balanceAffectingErrors, portfolio.verification]
+  )
 
   const warningMessage = useMemo(() => {
     if (areNetworksFetchingFromRelayer) return undefined
@@ -57,6 +67,15 @@ const useBalanceAffectingErrors = () => {
 
     if (isOffline && portfolio.isAllReady) return t('Please check your internet connection.')
 
+    if (
+      portfolio.verification?.provider === 'colibri' &&
+      portfolio.verification.status === 'stale'
+    ) {
+      return t("Stale RPC, {{blockDiff}} blocks behind Colibri's latest block", {
+        blockDiff: portfolio.verification.blockDiff
+      })
+    }
+
     if (balanceAffectingErrors.length) {
       if (balanceAffectingErrors.length === 1 && balanceAffectingErrors[0]) {
         return t(balanceAffectingErrors[0].title)
@@ -70,19 +89,27 @@ const useBalanceAffectingErrors = () => {
       )
     }
 
+    if (colibriWarningNetworkNames.length) {
+      return t("Colibri couldn't verify the balances on {{chains}}", {
+        chains: colibriWarningNetworkNames.join(', ')
+      })
+    }
+
     return undefined
   }, [
     areNetworksFetchingFromRelayer,
     balanceAffectingErrors,
+    colibriWarningNetworkNames,
     isLoadingTakingTooLong,
     isOffline,
     networksWithErrors,
     portfolio.isAllReady,
+    portfolio.verification,
     t
   ])
 
   const onIconPress = useCallback(() => {
-    if (isLoadingTakingTooLong || isOffline) {
+    if (isLoadingTakingTooLong || isOffline || !balanceAffectingErrors.length) {
       return
     }
 

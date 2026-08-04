@@ -4,12 +4,8 @@ import { useModalize } from 'react-native-modalize'
 
 import { EstimationStatus } from '@ambire-common/controllers/estimation/types'
 import { SignAccountOpType } from '@ambire-common/controllers/signAccountOp/helper'
-import {
-  SignAccountOpUpdateProps,
-  SigningStatus
-} from '@ambire-common/controllers/signAccountOp/signAccountOp'
 import { Key } from '@ambire-common/interfaces/keystore'
-import { ISignAccountOpController } from '@ambire-common/interfaces/signAccountOp'
+import { ISignAccountOpController, SigningStatus } from '@ambire-common/interfaces/signAccountOp'
 import useController from '@common/hooks/useController'
 import useExtremeGasFeeWarning from '@common/hooks/useExtremeGasFeeWarning'
 import usePrevious from '@common/hooks/usePrevious'
@@ -18,6 +14,7 @@ import useQrSigningFlow from '@common/modules/hardware-wallets/hooks/useQrSignin
 import { OneClickEstimationProps } from '@common/modules/sign-account-op/components/OneClick/Estimation/Estimation'
 import { getIsSignLoading } from '@web/modules/sign-account-op/utils/helpers'
 
+import type { SignAccountOpUpdateProps } from '@ambire-common/controllers/signAccountOp/signAccountOp'
 type ButtonMode = OneClickEstimationProps['updateType'] | 'Sign' | 'HW' | 'Safe'
 
 const PRIMARY_BUTTON_LABELS: Record<
@@ -79,6 +76,7 @@ const useSign = ({
   const [isChooseFeePayerKeyShown, setIsChooseFeePayerKeyShown] = useState(false)
   const [shouldDisplayLedgerConnectModal, setShouldDisplayLedgerConnectModal] = useState(false)
   const [shouldDisplayQrSigningModal, setShouldDisplayQrSigningModal] = useState(false)
+  const [acknowledgedBannersKey, setAcknowledgedBannersKey] = useState<string | null>(null)
   const prevIsChooseSignerShown = usePrevious(isChooseSignerShown)
   const { isLedgerConnected } = useLedger()
   const {
@@ -89,6 +87,14 @@ const useSign = ({
     submitSignatureResponse,
     signingCleanup
   } = useQrSigningFlow()
+
+  const currentBannersKey = useMemo(
+    () => JSON.stringify(signAccountOpState?.banners || []),
+    [signAccountOpState?.banners]
+  )
+  const shouldHoldToProceed =
+    !!signAccountOpState?.banners.length && acknowledgedBannersKey !== currentBannersKey
+  const shouldShowSafeSigners = showSafeSigners && !shouldHoldToProceed
 
   const [slowRequest, setSlowRequest] = useState<boolean>(false)
   const [slowPaymasterRequest, setSlowPaymasterRequest] = useState<boolean>(true)
@@ -206,7 +212,7 @@ const useSign = ({
     []
   )
 
-  const handleQrSingingFlowOnContinuePressed = moveToResponseScan
+  const handleQrSigningFlowOnContinuePressed = moveToResponseScan
   const handleQrSigningFlowOnBackPressed = moveBack
   const handleQrSigningFlowSubmitSignatureResponse = submitSignatureResponse
 
@@ -246,7 +252,10 @@ const useSign = ({
       type: 'method',
       params: {
         method: 'handleSignAndBroadcastAccountOp',
-        args: [type, signAccountOpState.fromRequestId]
+        // Pass the id of the accountOp the user is reviewing on screen. The
+        // background compares it against the live accountOp before signing to
+        // reject signing calls that were appended after this review.
+        args: [type, signAccountOpState.fromRequestId, signAccountOpState.accountOp.id]
       }
     })
   }, [mainControllerDispatch, signAccountOpState, updateType])
@@ -319,7 +328,11 @@ const useSign = ({
         return
       }
 
-      if ((signAccountOpState?.feePayerKeyStoreKeys?.length || 0) > 1 && !isFeePayerSameAsSigner) {
+      if (
+        !signAccountOpState?.account.safeCreation &&
+        (signAccountOpState?.feePayerKeyStoreKeys?.length || 0) > 1 &&
+        !isFeePayerSameAsSigner
+      ) {
         setIsChooseFeePayerKeyShown(true)
         return
       }
@@ -336,6 +349,7 @@ const useSign = ({
       signAccountOpState?.accountOp.signingKeyAddr,
       signAccountOpState?.accountOp.gasFeePayment?.paidBy,
       signAccountOpState?.feePayerKeyStoreKeys?.length,
+      signAccountOpState?.account.safeCreation,
       signAccountOpState?.accountOp.signingKeyType,
       signAccountOpState?.accountOp.gasFeePayment?.paidByKeyType,
       warningToPromptBeforeSign,
@@ -373,8 +387,10 @@ const useSign = ({
   const onSignButtonClick = useCallback(() => {
     if (!signAccountOpState) return
 
+    setAcknowledgedBannersKey(currentBannersKey)
+
     if (!!signAccountOpState.account.safeCreation && !signAccountOpState.canBroadcast) {
-      setShowSafeSigners((prev) => !prev)
+      setShowSafeSigners((prev) => (shouldHoldToProceed ? true : !prev))
       return
     }
 
@@ -387,7 +403,7 @@ const useSign = ({
     }
 
     setIsChooseSignerShown(true)
-  }, [signAccountOpState, handleSign])
+  }, [currentBannersKey, handleSign, shouldHoldToProceed, signAccountOpState])
 
   const acknowledgeWarning = useCallback(() => {
     if (!warningToPromptBeforeSign) return
@@ -477,22 +493,34 @@ const useSign = ({
     warningToPromptBeforeSign
   ])
 
+  const isSignedSafeWaitingForNonce = useMemo(() => {
+    if (
+      !signAccountOpState?.account.safeCreation ||
+      signAccountOpState.canBroadcast ||
+      signAccountOpState.threshold === 0
+    )
+      return false
+
+    return (signAccountOpState.accountOp.signed?.length || 0) >= signAccountOpState.threshold
+  }, [
+    signAccountOpState?.account.safeCreation,
+    signAccountOpState?.accountOp.signed?.length,
+    signAccountOpState?.canBroadcast,
+    signAccountOpState?.threshold
+  ])
+
   const primaryButtonText = useMemo(() => {
     let buttonLabelType: ButtonMode =
       updateType || (isAtLeastOneOfTheKeysInvolvedExternal ? 'HW' : 'Sign')
 
     if (signAccountOpState?.account.safeCreation) {
-      const isBroadcast =
-        (signAccountOpState?.accountOp.signed?.length || 0) >= signAccountOpState?.threshold ||
-        (signAccountOpState?.threshold === 1 &&
-          signAccountOpState?.accountKeyStoreKeys.length === 1)
-      if (isBroadcast) {
+      if (signAccountOpState.canBroadcast || isSignedSafeWaitingForNonce) {
         // the "Safe" term for broadcast is called "Execute"
         return isSignLoading ? 'Executing...' : 'Execute'
       }
 
       // always use the default state of Safes
-      return !showSafeSigners
+      return !shouldShowSafeSigners
         ? PRIMARY_BUTTON_LABELS['Safe'].default
         : PRIMARY_BUTTON_LABELS['Safe'].isLoading
     }
@@ -508,10 +536,9 @@ const useSign = ({
     t,
     updateType,
     signAccountOpState?.account.safeCreation,
-    signAccountOpState?.accountOp.signed?.length,
-    signAccountOpState?.threshold,
-    showSafeSigners,
-    signAccountOpState?.accountKeyStoreKeys.length
+    signAccountOpState?.canBroadcast,
+    isSignedSafeWaitingForNonce,
+    shouldShowSafeSigners
   ])
 
   // When being done, there is a corner case if the sign succeeds, but the broadcast fails.
@@ -542,12 +569,14 @@ const useSign = ({
       notReadyToSignButAlsoNotDone ||
       !signAccountOpState?.readyToSign ||
       (signAccountOpState && signAccountOpState.estimation.status === EstimationStatus.Loading) ||
+      isSignedSafeWaitingForNonce ||
       isExtremeGasFeeProceedDelayedForSign
     )
   }, [
     isViewOnly,
     isSignLoading,
     isExtremeGasFeeProceedDelayedForSign,
+    isSignedSafeWaitingForNonce,
     notReadyToSignButAlsoNotDone,
     signAccountOpState
   ])
@@ -635,9 +664,9 @@ const useSign = ({
     bundlerNonceDiscrepancy,
     isChooseFeePayerKeyShown,
     setIsChooseFeePayerKeyShown,
-    shouldHoldToProceed: !!signAccountOpState?.banners?.length,
+    shouldHoldToProceed,
     shouldDisplayQrSigningModal,
-    handleQrSingingFlowOnContinuePressed,
+    handleQrSigningFlowOnContinuePressed,
     handleQrSigningFlowSubmitSignatureResponse,
     handleQrSigningFlowOnClosePressed,
     handleQrSigningFlowOnRejectPressed,
@@ -645,7 +674,7 @@ const useSign = ({
     currentRequest,
     signingStep,
     disabledReason,
-    showSafeSigners
+    showSafeSigners: shouldShowSafeSigners
   }
 }
 

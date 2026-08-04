@@ -4,12 +4,12 @@ import { View } from 'react-native'
 
 import { Sponsor } from '@ambire-common/libs/erc7677/types'
 import ManifestFallbackIcon from '@common/assets/svg/ManifestFallbackIcon'
+import ManifestImage from '@common/components/ManifestImage'
 import Text from '@common/components/Text'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import ManifestImage from '@web/components/ManifestImage'
 
 const Sponsored = ({ sponsor, isOneClick }: { sponsor?: Sponsor; isOneClick?: boolean }) => {
   const { t } = useTranslation()

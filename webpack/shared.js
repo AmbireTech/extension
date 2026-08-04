@@ -95,17 +95,17 @@ async function createBaseConfig(env, argv) {
     // writeToDisk: output dev bundled files (in /webkit-dev or /gecko-dev) to import them as unpacked extension in the browser
     config.devServer.devMiddleware.writeToDisk = true
 
-    // The extension loads two entries (main + rootTheme). Without a shared runtime each one
-    // embeds its own webpack runtime, so the page ends up with two competing HMR runtimes
-    // and hot reloading breaks. Give main + rootTheme a single shared runtime chunk.
-    // Every other entry returns `false` to keep its runtime embedded — they run in separate
-    // contexts (service worker, content script, injected script) and can't load an external
-    // runtime file. Don't return the entry name here: that points `runtime` at the entry's
-    // own chunk and webpack errors out.
+    // Give the extension's main UI entry a shared runtime chunk so the page has a
+    // single HMR runtime. rootTheme is no longer a webpack entry (it ships as a
+    // plain static file), so only `main` needs this. Every other entry returns
+    // `false` to keep its runtime embedded — they run in separate contexts
+    // (service worker, content script, injected script) and can't load an
+    // external runtime file. Don't return the entry name here: that points
+    // `runtime` at the entry's own chunk and webpack errors out.
     config.optimization = {
       ...config.optimization,
       runtimeChunk: {
-        name: (entrypoint) => (['main', 'rootTheme'].includes(entrypoint.name) ? 'runtime' : false)
+        name: (entrypoint) => (entrypoint.name === 'main' ? 'runtime' : false)
       }
     }
   }
@@ -172,7 +172,12 @@ async function createBaseConfig(env, argv) {
     // Defaults to using 'auto', but this is causing problems in some environments
     // like in certain browsers, when building (and running) in extension context.
     publicPath: '',
-    environment: { dynamicImport: true },
+    // LavaMoat wraps every chunk module in SES scope terminators using `with`, which is a
+    // SyntaxError in an ES module. webpack-target-webextension's import-first chunk loader would
+    // then fail native import() on parse and re-fetch each lazy chunk via its classic <script>
+    // fallback, doubling the network request. Disabling dynamicImport under LavaMoat makes the
+    // plugin load chunks via createElement('script')/importScripts directly, which tolerate `with`.
+    environment: { dynamicImport: !enableLavaMoat },
     hashSalt: 'ambire-salt'
   }
 

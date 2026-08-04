@@ -1,0 +1,3 @@
+import PrivacyOptOutsSettingsScreen from './PrivacyOptOutsSettingsScreen'
+
+export default PrivacyOptOutsSettingsScreen

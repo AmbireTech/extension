@@ -44,6 +44,7 @@ react, react-native, react-native-web, typescript, expo (bare workflow), ethers,
 - ALWAYS wrap text in `t()` from `useTranslation()` (`imported from '@common/config/localization'`)
 - ALWAYS use `react-native-modalize` with `BottomSheet` for modals and bottom sheets
 - Tooltips are added using the pattern: `dataSet={createGlobalTooltipDataSet(...)}` which creates a global dataset that is picked up by a `GlobalTooltip` component at the root of the app.
+- All warnings, errors, and other user-facing text (banners, toasts, etc.) must be written in plain, human-understandable language — NEVER assume the user is technical or Web3/blockchain-knowledgeable. Same rule for controller errors and humanizer warnings originating in `src/ambire-common` — see its `AGENTS.md` for the jargon-avoidance guidance and examples
 - All icons are in src/common/assets/svg/...; ALWAYS use icons from there and report if you can't find a suitable one by adding a comment instead of the icon and asking the human to add it
 
 ### Security:

@@ -18,13 +18,18 @@ const isDev = process.env.NODE_ENV === 'development' || process.argv.includes('s
 // by Gradle, reachable via `file:///android_asset/`.
 const IOS_WEBVIEW_DIR = path.resolve(ROOT_DIR, 'ios/Ambire/Resources/webview')
 const ANDROID_WEBVIEW_DIR = path.resolve(ROOT_DIR, 'android/app/src/main/assets/webview')
+// Services dir holds the require()-d JSON bundles that ride the Metro/OTA bundle.
+const SERVICES_DIR = path.resolve(ROOT_DIR, 'src/mobile/modules/webview/services')
 
 // In dev, ensure inpage bundle JSON files exist (injected into dapp WebViews
 // as strings, no file-based fallback). The worker bundle is served from
 // webpack-dev-server in dev.
 if (isDev) {
-  const SERVICES_DIR = path.resolve(ROOT_DIR, 'src/mobile/modules/webview/services')
-  const bundleFiles = ['ethereum-inpage-bundle.json', 'ambire-inpage-bundle.json']
+  const bundleFiles = [
+    'ethereum-inpage-bundle.json',
+    'ambire-inpage-bundle.json',
+    'webview-bundle-ota.json'
+  ]
   const allBundlesExist = bundleFiles.every((file) => fs.existsSync(path.join(SERVICES_DIR, file)))
 
   if (!allBundlesExist) {
@@ -254,13 +259,62 @@ class MirrorToAndroidAssetsPlugin {
 }
 
 /**
+ * Emits `webview-bundle-ota.json` ({ html, js, integrity }) into the services dir so the
+ * worker bundle rides the Metro/OTA JS bundle - the native asset copy cannot be OTA-updated.
+ * At runtime materializeWorkerBundle writes it to a writable dir and loads it via `file://`.
+ */
+class EmitOtaBundleJsonPlugin {
+  constructor({ sourceDir, targetDir }) {
+    this.sourceDir = sourceDir
+    this.targetDir = targetDir
+  }
+
+  apply(compiler) {
+    compiler.hooks.afterEmit.tap('EmitOtaBundleJsonPlugin', (compilation) => {
+      try {
+        const js = fs.readFileSync(path.join(this.sourceDir, 'webview-bundle.js'))
+        const html = fs.readFileSync(path.join(this.sourceDir, 'webview-bundle.html'), 'utf8')
+        // Same SHA-384 the HTML's SRI uses; doubles as the materialization version marker.
+        const integrity = `sha384-${crypto.createHash('sha384').update(js).digest('base64')}`
+        const json = JSON.stringify({ html, js: js.toString('utf8'), integrity })
+        fs.writeFileSync(path.join(this.targetDir, 'webview-bundle-ota.json'), json)
+      } catch (err) {
+        compilation.errors.push(new Error(`EmitOtaBundleJsonPlugin failed: ${err.message}`))
+      }
+    })
+  }
+}
+
+/**
  * Configuration 1: WebView Worker
  * Background instance that runs the wallet's controllers.
  *
  * Prod: bundle written to `ios/Ambire/Resources/webview/`, mirrored to Android
  * assets, loaded from disk via `file://` (WKWebView stream-parses and caches
  * bytecode). Dev: served from webpack-dev-server (HTTP) for HMR.
+ *
+ * SECURITY: the DefinePlugin below gives the worker bundle this MINIMAL `process.env` object instead
+ * of spreading the full `process.env` - which would bake the build machine's whole environment
+ * (including CI-injected secrets) into the device-shipped bytes in cleartext.
+ *
+ * Why only these three keys? Everything else is already inlined WITHOUT this object:
+ *   - our own `process.env.X` reads -> babel's transform-inline-environment-variables replaces them
+ *     with their literal value at each read site;
+ *   - `@env` imports (RELAYER_URL, VELCRO_URL, the REACT_APP_ keys, LI_FI, BUNGEE, SQUID, UNISWAP,
+ *     WALLETCONNECT, SENTRY_DSN, ...) -> react-native-dotenv inlines them at each import site.
+ * This object only backstops WHOLESALE `process.env` reads in third-party deps, and the only key a
+ * bundled dep actually reads that way is NODE_ENV (React et al. branch on it). WEB_ENGINE and APP_ENV
+ * are kept as an explicit, build-host-independent fallback for our own env.ts.
+ *
+ * So do NOT grow this back into the app's config list: a secret must never be added, and non-secret
+ * config is already handled by babel/@env and does not belong here.
  */
+const workerBundleEnv = {
+  WEB_ENGINE: 'webview',
+  APP_ENV: isDev ? 'development' : 'production',
+  NODE_ENV: isDev ? 'development' : 'production'
+}
+
 const workerConfig = {
   name: 'worker',
   context: ROOT_DIR,
@@ -280,11 +334,7 @@ const workerConfig = {
     ...sharedPlugins,
     new webpack.DefinePlugin({
       __DEV__: JSON.stringify(isDev),
-      'process.env': JSON.stringify({
-        ...process.env,
-        WEB_ENGINE: 'webview',
-        APP_ENV: isDev ? 'development' : 'production'
-      })
+      'process.env': JSON.stringify(workerBundleEnv)
     })
   ]
 }
@@ -295,6 +345,11 @@ if (!isDev) {
     new MirrorToAndroidAssetsPlugin({
       sourceDir: IOS_WEBVIEW_DIR,
       targetDir: ANDROID_WEBVIEW_DIR
+    }),
+    // Also ship the worker bundle inside the Metro/OTA bundle so OTA can update it.
+    new EmitOtaBundleJsonPlugin({
+      sourceDir: IOS_WEBVIEW_DIR,
+      targetDir: SERVICES_DIR
     })
   )
 }

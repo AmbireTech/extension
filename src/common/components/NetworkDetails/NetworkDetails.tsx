@@ -1,10 +1,14 @@
 import React, { useCallback, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Pressable, View, ViewStyle } from 'react-native'
+import { Image, ImageSourcePropType, Pressable, View, ViewStyle } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 
+import { isColibriProviderAvailable } from '@ambire-common/libs/networks/colibri'
+import colibriLogo from '@common/assets/images/colibri-logo.png'
+import CheckIcon from '@common/assets/svg/CheckIcon'
 import DownArrowIcon from '@common/assets/svg/DownArrowIcon'
 import EditPenIcon from '@common/assets/svg/EditPenIcon'
+import ErrorIcon from '@common/assets/svg/ErrorIcon'
 import UpArrowIcon from '@common/assets/svg/UpArrowIcon'
 import BottomSheet from '@common/components/BottomSheet'
 import Button from '@common/components/Button'
@@ -88,12 +92,29 @@ const NetworkDetails = ({
     [pathname]
   )
 
-  const shouldDisplayEditButton = useMemo(() => isEditableRoute && !isEmpty, [pathname, isEmpty])
+  const shouldDisplayEditButton = useMemo(
+    () => isEditableRoute && !isEmpty,
+    [isEditableRoute, isEmpty]
+  )
 
   const shouldDisplayDisableButton = useMemo(
     () => isEditableRoute && !isEmpty && allowRemoveNetwork && String(chainId) !== '1',
     [isEmpty, allowRemoveNetwork, chainId, isEditableRoute]
   )
+
+  const shouldDisplayColibriVerification = useMemo(() => {
+    try {
+      return isColibriProviderAvailable(BigInt(chainId))
+    } catch (e) {
+      // in NetworkDetails, we use '-' for some reason to say that there is no chain associated.
+      // So when the above statement throws an error, we check if the string is '-'.
+      // If it is, throwing an error is expected
+      if (chainId === '-') return false
+
+      console.log('invalid chain id passed', e)
+      return false
+    }
+  }, [chainId])
 
   const updateNetworkDisabled = useCallback(() => {
     if (statuses.updateNetwork !== 'INITIAL') return
@@ -116,7 +137,12 @@ const NetworkDetails = ({
   }, [networkData?.disabled, openDialog, updateNetworkDisabled, allowDisableWithoutConfirmation])
 
   const renderInfoItem = useCallback(
-    (title: string, value: string, withBottomSpacing = true) => {
+    (
+      title: string,
+      value: string | React.ReactNode,
+      withBottomSpacing = true,
+      titleIcon?: React.ReactNode
+    ) => {
       return (
         <View
           style={[
@@ -130,20 +156,26 @@ const NetworkDetails = ({
             }
           ]}
         >
-          <Text
-            fontSize={14 * responsiveSizeMultiplier}
-            appearance="tertiaryText"
+          <View
             style={[
+              flexbox.directionRow,
+              flexbox.alignCenter,
               type === 'horizontal'
                 ? {
                     marginRight: SPACING * responsiveSizeMultiplier
                   }
                 : {}
             ]}
-            numberOfLines={1}
           >
-            {title}
-          </Text>
+            {!!titleIcon && <View style={spacings.mrMi}>{titleIcon}</View>}
+            <Text
+              fontSize={14 * responsiveSizeMultiplier}
+              appearance="tertiaryText"
+              numberOfLines={1}
+            >
+              {title}
+            </Text>
+          </View>
           <View
             style={[
               flexbox.directionRow,
@@ -163,15 +195,19 @@ const NetworkDetails = ({
                 />
               </View>
             )}
-            <Text
-              fontSize={14 * responsiveSizeMultiplier}
-              appearance={value === 'Invalid Chain ID' ? 'errorText' : 'secondaryText'}
-              numberOfLines={1}
-              weight="medium"
-              selectable
-            >
-              {value}
-            </Text>
+            {typeof value === 'string' ? (
+              <Text
+                fontSize={14 * responsiveSizeMultiplier}
+                appearance={value === 'Invalid Chain ID' ? 'errorText' : 'secondaryText'}
+                numberOfLines={1}
+                weight="medium"
+                selectable
+              >
+                {value}
+              </Text>
+            ) : (
+              value
+            )}
           </View>
         </View>
       )
@@ -275,6 +311,30 @@ const NetworkDetails = ({
     )
   }, [type, responsiveSizeMultiplier, t, sortedRpcUrls, showMoreRpcUrlsButton, showAllRpcUrls])
 
+  const colibriVerificationIcon = useMemo(
+    () => (
+      <Image
+        source={colibriLogo as ImageSourcePropType}
+        style={{
+          width: 16 * responsiveSizeMultiplier,
+          height: 16 * responsiveSizeMultiplier
+        }}
+        resizeMode="contain"
+      />
+    ),
+    [responsiveSizeMultiplier]
+  )
+
+  const colibriVerificationStatusIcon = useMemo(() => {
+    const iconSize = 20 * responsiveSizeMultiplier
+
+    return networkData?.isColibriEnabled ? (
+      <CheckIcon width={iconSize} height={iconSize} />
+    ) : (
+      <ErrorIcon color={theme.error300} width={iconSize} height={iconSize} />
+    )
+  }, [networkData?.isColibriEnabled, responsiveSizeMultiplier, theme.error300])
+
   return (
     <>
       <View
@@ -353,7 +413,14 @@ const NetworkDetails = ({
           {renderInfoItem(t('Chain ID'), chainId.toString())}
           {renderInfoItem(t('Currency Symbol'), nativeAssetSymbol)}
           {renderInfoItem(t('Currency Name'), nativeAssetName)}
-          {renderInfoItem(t('Block Explorer URL'), explorerUrl, false)}
+          {renderInfoItem(t('Block Explorer URL'), explorerUrl, shouldDisplayColibriVerification)}
+          {shouldDisplayColibriVerification &&
+            renderInfoItem(
+              t('Colibri verification'),
+              colibriVerificationStatusIcon,
+              false,
+              colibriVerificationIcon
+            )}
         </View>
         {isMobile && (
           <View style={[flexbox.directionRow, spacings.ptSm, { columnGap: SPACING_SM }]}>

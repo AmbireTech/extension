@@ -12,12 +12,16 @@ import CreateSeedPhraseWriteScreen from '@mobile/modules/auth/screens/CreateSeed
 import GetStartedScreen from '@mobile/modules/auth/screens/GetStartedScreen'
 import ImportExistingAccountSelectorScreen from '@mobile/modules/auth/screens/ImportExistingAccountSelectorScreen'
 import ImportSmartAccountJsonScreen from '@mobile/modules/auth/screens/ImportSmartAccountJson'
+import MigrationOnboardingScreen from '@mobile/modules/auth/screens/MigrationOnboardingScreen'
 import PrivateKeyImportScreen from '@mobile/modules/auth/screens/PrivateKeyImportScreen'
+import SafeImportScreen from '@mobile/modules/auth/screens/SafeImportScreen'
 import SeedPhraseImportScreen from '@mobile/modules/auth/screens/SeedPhraseImportScreen'
 import ViewOnlyAccountAdderScreen from '@mobile/modules/auth/screens/ViewOnlyAccountAdderScreen'
 import ExploreScreen from '@mobile/modules/explore/screens/ExploreScreen'
 import ExploreSectionScreen from '@mobile/modules/explore/screens/ExploreSectionScreen'
 import LedgerConnectScreen from '@mobile/modules/hardware-wallet/screens/LedgerConnectScreen'
+import QrConnectScreen from '@mobile/modules/hardware-wallet/screens/QrConnectScreen'
+import TrezorConnectScreen from '@mobile/modules/hardware-wallet/screens/TrezorConnectScreen'
 import KeyStoreSetupScreen from '@mobile/modules/keystore/screens/KeyStoreSetupScreen'
 import NetworksConfiguration from '@mobile/modules/network-settings/screens'
 import PrivacyOptOutsConfiguration from '@mobile/modules/network-settings/screens/PrivacyOptOutsConfiguration'
@@ -27,11 +31,17 @@ import ReceiveScreen from '@mobile/modules/receive/screens/ReceiveScreen'
 import NavMenu from '@mobile/modules/router/components/NavMenu'
 import AboutSettingsScreen from '@mobile/modules/settings/screens/AboutSettingsScreen'
 import AccountsSettingsScreen from '@mobile/modules/settings/screens/AccountsSettingsScreen'
+import AddressBookSettingsScreen from '@mobile/modules/settings/screens/AddressBookSettingsScreen'
+import ChangeAppPasswordScreen from '@mobile/modules/settings/screens/ChangeAppPasswordScreen'
 import GeneralSettingsScreen from '@mobile/modules/settings/screens/GeneralSettingsScreen'
 import NetworksSettingsScreen from '@mobile/modules/settings/screens/NetworksSettingsScreen'
+import PrivacyOptOutsSettingsScreen from '@mobile/modules/settings/screens/PrivacyOptOutsSettingsScreen'
+import RecoveryPhrasesSettingsScreen from '@mobile/modules/settings/screens/RecoveryPhrasesSettingsScreen'
 import TermsSettingsScreen from '@mobile/modules/settings/screens/TermsSettingsScreen'
 import SwapAndBridgeScreen from '@mobile/modules/swap-and-bridge/screens/SwapAndBridgeScreen'
 import TokenDetailsScreen from '@mobile/modules/token-details/screens/TokenDetailsScreen'
+import TrendingTokenDetailsScreen from '@common/modules/token-details/screens/TrendingTokenDetailsScreen'
+import TrendingTokensScreen from '@common/modules/explore/screens/TrendingTokensScreen'
 import TransferScreen from '@mobile/modules/transfer/screens/TransferScreen'
 import DappWebViewScreen from '@mobile/modules/webview/screens/DappWebViewScreen'
 
@@ -41,6 +51,7 @@ const MainRoutes = () => {
       <Route path={ROUTES.keyStoreSetup} element={<KeyStoreSetupScreen />} />
       <Route element={<KeystoreUnlockedRoute />}>
         <Route path={ROUTES.getStarted} element={<GetStartedScreen />} />
+        <Route path={ROUTES.migrationOnboarding} element={<MigrationOnboardingScreen />} />
         <Route path={ROUTES.networksConfiguration} element={<NetworksConfiguration />} />
         <Route
           path={ROUTES.privacyOptOutsConfiguration}
@@ -52,10 +63,13 @@ const MainRoutes = () => {
           element={<ImportExistingAccountSelectorScreen />}
         />
         <Route path={ROUTES.ledgerConnect} element={<LedgerConnectScreen />} />
+        <Route path={ROUTES.trezorConnect} element={<TrezorConnectScreen />} />
+        <Route path={ROUTES.qrConnect} element={<QrConnectScreen />} />
 
         <Route path={ROUTES.importPrivateKey} element={<PrivateKeyImportScreen />} />
         <Route path={ROUTES.importSeedPhrase} element={<SeedPhraseImportScreen />} />
         <Route path={ROUTES.importSmartAccountJson} element={<ImportSmartAccountJsonScreen />} />
+        <Route path={ROUTES.safeImport} element={<SafeImportScreen />} />
 
         <Route path={ROUTES.createSeedPhrasePrepare} element={<CreateSeedPhrasePrepareScreen />} />
         <Route path={ROUTES.createSeedPhraseWrite} element={<CreateSeedPhraseWriteScreen />} />
@@ -69,12 +83,21 @@ const MainRoutes = () => {
           <Route path={ROUTES.topUpGasTank} element={<TransferScreen isTopUpScreen />} />
           <Route path={ROUTES.accountSelect} element={<AccountSelectScreen />} />
           <Route path={ROUTES.tokenDetails} element={<TokenDetailsScreen />} />
+          <Route path={ROUTES.trendingTokens} element={<TrendingTokensScreen />} />
+          <Route path={ROUTES.trendingTokenDetails} element={<TrendingTokenDetailsScreen />} />
           <Route path={ROUTES.networks} element={<NetworksScreen />} />
           <Route path={ROUTES.swapAndBridge} element={<SwapAndBridgeScreen />} />
           <Route path={ROUTES.menu} element={<NavMenu />} />
           <Route path={ROUTES.generalSettings} element={<GeneralSettingsScreen />} />
           <Route path={ROUTES.accountsSettings} element={<AccountsSettingsScreen />} />
+          <Route path={ROUTES.addressBook} element={<AddressBookSettingsScreen />} />
+          <Route path={ROUTES.devicePasswordChange} element={<ChangeAppPasswordScreen />} />
           <Route path={ROUTES.networksSettings} element={<NetworksSettingsScreen />} />
+          <Route
+            path={ROUTES.recoveryPhrasesSettings}
+            element={<RecoveryPhrasesSettingsScreen />}
+          />
+          <Route path={ROUTES.optOuts} element={<PrivacyOptOutsSettingsScreen />} />
           <Route path={ROUTES.settingsAbout} element={<AboutSettingsScreen />} />
           <Route path={ROUTES.settingsTerms} element={<TermsSettingsScreen />} />
           <Route path={ROUTES.explore} element={<ExploreScreen />} />

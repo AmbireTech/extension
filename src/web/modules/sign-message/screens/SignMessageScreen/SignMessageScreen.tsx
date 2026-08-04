@@ -14,6 +14,7 @@ import useSignMessage from '@common/modules/sign-message/hooks/useSignMessage'
 import flexbox from '@common/styles/utils/flexbox'
 import SmallNotificationWindowWrapper from '@web/components/SmallNotificationWindowWrapper'
 import { TabLayoutContainer } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
+import { closeCurrentWindow } from '@web/extension-services/background/webapi/window'
 
 const SignMessageScreen = () => {
   const {
@@ -83,6 +84,7 @@ const SignMessageScreen = () => {
                 // the first signer from the array is the current one
                 signingKeyAddr={signMessageState.signers?.[0]?.addr || ''}
                 onReject={handleReject}
+                onSignLater={() => closeCurrentWindow()}
               />
             )
           }
@@ -101,10 +103,7 @@ const SignMessageScreen = () => {
                       <View style={flexbox.flex1}>
                         <HoldToProceedButton
                           testID="button-sign"
-                          style={{
-                            ...flexbox.alignSelfEnd,
-                            minWidth: 128
-                          }}
+                          style={flexbox.alignSelfEnd}
                           textStyle={{
                             whiteSpace: 'nowrap'
                           }}

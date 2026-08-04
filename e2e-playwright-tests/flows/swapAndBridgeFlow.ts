@@ -10,7 +10,9 @@ export async function runSwapFlow({
   sendToken,
   receiveToken,
   bridgeAmount,
-  message = 'Nice trade!',
+  // Success copy rotates across several titles; keep this in sync with getSwapCompletedMessage.ts
+  // if awaitConfirmation is enabled and you assert a specific message.
+  message = 'Mission accomplished.',
   assertNoInitialTx = false,
   assertPortfolioRefreshScopedToSendNetwork = true,
   ledgerSimulatorControls
@@ -80,6 +82,9 @@ export async function runSwapBatchFlow({
   await test.step('stop monitoring requests and expect no uncategorized requests', async () => {
     const { uncategorized } = pages.swapAndBridge.getCategorizedRequests()
     pages.swapAndBridge.stopMonitorRequests()
+
+    // log for easier debuggin
+    console.log(`Uncategorized requests: ${uncategorized.length}`)
     expect(uncategorized.length).toBeLessThanOrEqual(0)
   })
 }

@@ -5,13 +5,15 @@ import { Pressable, TextInput, View } from 'react-native'
 
 import { AddressState } from '@ambire-common/interfaces/domains'
 import { validateAddress, Validation } from '@ambire-common/services/validations'
-import { getAddressFromAddressState } from '@ambire-common/utils/domains'
+import { getAddressFromAddressState, getResolvedDomainName } from '@ambire-common/utils/domains'
 import shortenAddress from '@ambire-common/utils/shortenAddress'
 import CloseIcon from '@common/assets/svg/CloseIcon'
 import CopyIcon from '@common/assets/svg/CopyIcon'
 import EnsIcon from '@common/assets/svg/EnsIcon'
+import GnsIcon from '@common/assets/svg/GnsIcon'
 import NamoshiIcon from '@common/assets/svg/NamoshiIcon'
 import AddressBookContact from '@common/components/AddressBookContact'
+import AddressScanButton from '@common/components/AddressInput/AddressScanButton'
 import Input, { InputProps } from '@common/components/Input'
 import Text from '@common/components/Text'
 import { isWeb } from '@common/config/env'
@@ -38,6 +40,9 @@ interface Props extends InputProps {
   label?: string
   onClearButtonPress?: () => void
   renderConfirmAddress?: () => React.ReactNode
+  // When provided, a scan icon is shown that opens a camera QR scanner
+  // (mobile only) and passes the scanned address back. No-op on web.
+  onScanAddress?: (address: string) => void
 }
 
 const AddressInput: React.FC<Props> = ({
@@ -55,12 +60,14 @@ const AddressInput: React.FC<Props> = ({
   onClearButtonPress,
   value,
   renderConfirmAddress,
+  onScanAddress,
   ...rest
 }) => {
   const { t } = useTranslation()
   const { addToast } = useToast()
   const { styles } = useTheme(getStyles)
   const { contacts } = useController('AddressBookController').state
+  const { domains } = useController('DomainsController').state
   const { message, severity } = validation
   const isError = severity === 'error'
 
@@ -89,6 +96,12 @@ const AddressInput: React.FC<Props> = ({
 
   const isValidAddress = useMemo(() => validateAddress(address).severity === 'success', [address])
 
+  // Ensure the displayed name is the normalized one stored by the resolver, not the raw field value
+  const resolvedDomainName = useMemo(
+    () => getResolvedDomainName(domains, { resolvedAddress, resolvedAddressType }),
+    [domains, resolvedAddress, resolvedAddressType]
+  )
+
   return (
     <>
       {label && (
@@ -110,7 +123,7 @@ const AddressInput: React.FC<Props> = ({
         validLabelAppearance={severity ? `${severity}Text` : undefined}
         error={isError ? message : ''}
         isValid={!isError && !isValidationInDomainResolvingState}
-        placeholder={placeholder || t('Address / ENS / Namoshi')}
+        placeholder={placeholder || t('Address / ENS / GNS / Namoshi')}
         bottomLabelStyle={styles.bottomLabel}
         info={
           !isError && severity === 'info'
@@ -122,41 +135,44 @@ const AddressInput: React.FC<Props> = ({
         renderConfirmAddress={renderConfirmAddress}
         preventJumpOnValidationChange
         childrenBeforeButtons={
-          childrenBeforeButtons ||
-          (!withDetails && (
-            <>
-              {resolvedAddress && !isRecipientDomainResolving ? (
-                <AnimatedPressable
-                  style={[flexbox.alignCenter, flexbox.directionRow, animStyle]}
-                  onPress={handleCopyResolvedAddress}
-                  {...bindAnim}
-                >
-                  <Text style={flexbox.flex1} numberOfLines={1}>
-                    <Text
-                      style={{
-                        flex: 1
-                      }}
-                      fontSize={12}
-                      appearance="secondaryText"
-                      numberOfLines={1}
-                      ellipsizeMode="head"
+          <>
+            {childrenBeforeButtons ||
+              (!withDetails && (
+                <>
+                  {resolvedAddress && !isRecipientDomainResolving ? (
+                    <AnimatedPressable
+                      style={[flexbox.alignCenter, flexbox.directionRow, animStyle]}
+                      onPress={handleCopyResolvedAddress}
+                      {...bindAnim}
                     >
-                      ({shortenAddress(resolvedAddress, 18)})
-                    </Text>
-                  </Text>
-                  <CopyIcon width={16} height={16} style={[spacings.mlMi, { minWidth: 16 }]} />
-                </AnimatedPressable>
-              ) : null}
-              <View style={[styles.domainIcons, rest.button ? spacings.pr0 : spacings.prSm]}>
-                {!!resolvedAddressType && (
-                  <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-                    {resolvedAddressType === 'ens' && <EnsIcon state="fresh" />}
-                    {resolvedAddressType === 'namoshi' && <NamoshiIcon isActive />}
+                      <Text style={flexbox.flex1} numberOfLines={1}>
+                        <Text
+                          style={{
+                            flex: 1
+                          }}
+                          fontSize={12}
+                          appearance="secondaryText"
+                          numberOfLines={1}
+                          ellipsizeMode="head"
+                        >
+                          ({shortenAddress(resolvedAddress, 18)})
+                        </Text>
+                      </Text>
+                      <CopyIcon width={16} height={16} style={[spacings.mlMi, { minWidth: 16 }]} />
+                    </AnimatedPressable>
+                  ) : null}
+                  <View style={[styles.domainIcons, rest.button ? spacings.pr0 : spacings.prSm]}>
+                    {!!resolvedAddressType && (
+                      <View style={[flexbox.directionRow, flexbox.alignCenter]}>
+                        {resolvedAddressType === 'ens' && <EnsIcon state="fresh" />}
+                        {resolvedAddressType === 'namoshi' && <NamoshiIcon isActive />}
+                        {resolvedAddressType === 'gns' && <GnsIcon isActive />}
+                      </View>
+                    )}
                   </View>
-                )}
-              </View>
-            </>
-          ))
+                </>
+              ))}
+          </>
         }
         customInputContent={
           !!withDetails && !!isValidAddress ? (
@@ -173,8 +189,9 @@ const AddressInput: React.FC<Props> = ({
                 address={address}
                 addressHighlight={addressHighlight}
                 name={
-                  contacts.find((c) => c.address.toLowerCase() === address.toLowerCase())?.name ||
-                  (resolvedAddressType ? value : undefined)
+                  (contacts.find((c) => c.address.toLowerCase() === address.toLowerCase())?.name ||
+                    resolvedDomainName) ??
+                  undefined
                 }
                 withCopy={isWeb}
                 isActive
@@ -184,7 +201,9 @@ const AddressInput: React.FC<Props> = ({
         }
         button={
           rest.button ||
-          (value && withDetails ? (
+          (!value && onScanAddress ? (
+            <AddressScanButton onScanned={onScanAddress} />
+          ) : value && withDetails ? (
             <Pressable
               style={{ width: 24, height: 24, ...flexbox.center }}
               onPress={() => {

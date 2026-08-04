@@ -2,7 +2,7 @@ import Fuse from 'fuse.js'
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
-import { Linking, Platform, View } from 'react-native'
+import { Linking, Platform, RefreshControl, ScrollView, View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 import { WebView, WebViewNavigation } from 'react-native-webview'
 import { useLocation } from 'react-router-native'
@@ -10,8 +10,6 @@ import { useLocation } from 'react-router-native'
 import { Dapp } from '@ambire-common/interfaces/dapp'
 import { getDappIdFromUrl } from '@ambire-common/libs/dapps/helpers'
 import { isValidHostname, isValidURL } from '@ambire-common/services/validations'
-import AmbireBrandLogo from '@common/assets/svg/AmbireBrandLogo'
-import AmbireLogo from '@common/assets/svg/AmbireLogo'
 import AmbireLogoWithBackgroundAndLogotype from '@common/assets/svg/AmbireLogoWithBackgroundAndLogotype'
 import GlobeIcon from '@common/assets/svg/GlobeIcon'
 import GoogleIcon from '@common/assets/svg/GoogleIcon'
@@ -19,6 +17,7 @@ import Banner from '@common/components/Banner'
 import BottomSheet from '@common/components/BottomSheet'
 import Search from '@common/components/Search'
 import Text from '@common/components/Text'
+import { isAndroid } from '@common/config/env'
 import { ControllersMiddlewareContext } from '@common/contexts/controllersMiddlewareContext'
 import useController from '@common/hooks/useController'
 import useDebounce from '@common/hooks/useDebounce'
@@ -26,6 +25,7 @@ import { AnimatedPressable } from '@common/hooks/useHover'
 import useTheme from '@common/hooks/useTheme'
 import DappItem from '@common/modules/explore/components/DappItem'
 import eventBus from '@common/services/event/eventBus'
+import { setWebViewGoBackHandler } from '@common/services/webview/webViewBackNavigation'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { WEBVIEW_DEV_HOST } from '@env'
@@ -184,6 +184,26 @@ const devOnlyHelpers = `
   });
 `
 
+// Comma-locale keypads type "," as the decimal separator. Rewrite it to "."
+// in numeric dapp inputs (React-safe: native setter + bubbled input event).
+const decimalSeparatorFix = `
+  (function() {
+    document.addEventListener('input', function(e) {
+      var el = e.target;
+      if (!el || el.tagName !== 'INPUT') return;
+      var inputMode = (el.getAttribute('inputmode') || '').toLowerCase();
+      var type = (el.type || '').toLowerCase();
+      var isNumeric = inputMode === 'decimal' || inputMode === 'numeric' || type === 'number';
+      if (!isNumeric) return;
+      if (el.value.indexOf(',') === -1) return;
+      var normalized = el.value.split(',').join('.');
+      var setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
+      setter.call(el, normalized);
+      el.dispatchEvent(new Event('input', { bubbles: true }));
+    }, true);
+  })();
+`
+
 const WEBVIEW_DEV_SERVER_PORT = 8182
 const getDevServerUrl = () => {
   if (Platform.OS === 'android') {
@@ -219,7 +239,6 @@ const DappWebViewScreen = () => {
   const {
     state: { dapps },
     currentDapp,
-    dappUrl,
     setDappUrl,
     dispatch: dappsDispatch
   } = useController('DappsController')
@@ -267,19 +286,32 @@ const DappWebViewScreen = () => {
   const [progress, setProgress] = useState(0)
   const [isLoading, setIsLoading] = useState(true)
   const [canGoBack, setCanGoBack] = useState(false)
+  const [isPullToRefreshing, setIsPullToRefreshing] = useState(false)
+  // Android has no native WebView pull-to-refresh, so the WebView is wrapped in a
+  // ScrollView with a RefreshControl. That control must only engage while the page
+  // itself is scrolled to the very top, otherwise it steals mid-page scroll gestures.
+  const [isPageScrolledToTop, setIsPageScrolledToTop] = useState(true)
+  // Drives WebView source; set at mount + only by user address-bar nav. Never
+  // from nav callbacks, else source.uri re-feeds → RNW reloads → snaps back.
+  const [sourceUri, setSourceUri] = useState<string>(initialUrl)
 
   // Atomic setter used by every WebView load callback so `progress` and
   // `isLoading` always stay in sync. Mirrors Rabby's `updateProgressState`.
   const updateProgressState = useCallback((next: { progress: number; isLoading: boolean }) => {
     setProgress(next.progress)
     setIsLoading(next.isLoading)
+    // Every "load finished" path (progress 1, onLoadEnd, onError) funnels through
+    // here, so this is the single place that can dismiss the refresh spinner.
+    if (!next.isLoading) setIsPullToRefreshing(false)
   }, [])
 
+  // Load the nav-state URL on mount and when a new dapp opens in the mounted
+  // browser. Keyed on initialUrl only so in-dapp nav can't retrigger a reload.
   useEffect(() => {
-    if (!dappUrl && setDappUrl) setDappUrl(initialUrl)
-  }, [dappUrl, initialUrl, setDappUrl])
-
-  const activeDappUrl = dappUrl || initialUrl
+    setSourceUri(initialUrl)
+    setDappUrl?.(initialUrl)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialUrl])
 
   // Bottom Sheet & Search Form State
   const { ref: searchModalRef, open: openSearchModal, close: closeSearchModal } = useModalize()
@@ -326,6 +358,29 @@ const DappWebViewScreen = () => {
   const handleRefresh = useCallback(() => {
     webviewRef.current?.reload()
   }, [])
+
+  // Let the app-wide back gesture (and the Android back button) walk the page
+  // history first. Unregistering when there is nothing to go back to makes the
+  // gesture fall through to the route-level back, i.e. leave the browser.
+  useEffect(() => {
+    setWebViewGoBackHandler(canGoBack ? handleGoBack : null)
+
+    return () => setWebViewGoBackHandler(null)
+  }, [canGoBack, handleGoBack])
+
+  const handlePullToRefresh = useCallback(() => {
+    setIsPullToRefreshing(true)
+    webviewRef.current?.reload()
+  }, [])
+
+  // Typed structurally rather than with RNW's exported `WebViewScrollEvent`, whose
+  // `zoomScale` is stricter than the codegen'd `onScroll` prop type it must satisfy.
+  const handleWebViewScroll = useCallback(
+    (event: { nativeEvent: { contentOffset: { y: number } } }) => {
+      setIsPageScrolledToTop(event.nativeEvent.contentOffset.y <= 0)
+    },
+    []
+  )
 
   const hostname = useMemo(() => {
     try {
@@ -545,6 +600,8 @@ const DappWebViewScreen = () => {
 
       ${jsBridgeHarden}
 
+      ${decimalSeparatorFix}
+
       ${__DEV__ ? devOnlyHelpers : ''}
 
       window.addEventListener('message', function(event) {
@@ -657,6 +714,7 @@ const DappWebViewScreen = () => {
 
   const handleNavigateToUrl = useCallback(
     (url: string) => {
+      setSourceUri(url)
       setDappUrl?.(url)
       closeSearchModal()
     },
@@ -991,6 +1049,10 @@ const DappWebViewScreen = () => {
       // path, first non-zero progress) and `handleNavigationStateChange`
       // (backstop, `loading=false`).
 
+      // A new document always starts at the top, and Android doesn't reliably emit
+      // `onScroll` for the native scroll reset, so re-arm pull-to-refresh here.
+      setIsPageScrolledToTop(true)
+
       let treatAsReload: boolean
       if (Platform.OS === 'ios') {
         treatAsReload = true
@@ -1076,6 +1138,52 @@ const DappWebViewScreen = () => {
     [updateProgressState]
   )
 
+  // Extracted so Android can wrap it in the pull-to-refresh ScrollView without
+  // duplicating the (security-sensitive) prop list. `isAndroid` is constant, so
+  // the branch below never remounts the WebView.
+  const webViewComponent = useMemo(
+    () => (
+      <WebView
+        ref={webviewRef}
+        source={{ uri: sourceUri }}
+        userAgent={DESKTOP_USER_AGENT}
+        onNavigationStateChange={handleNavigationStateChange}
+        injectedJavaScriptBeforeContentLoaded={injectionScript}
+        onMessage={handleMessage}
+        javaScriptEnabled={true}
+        domStorageEnabled={true}
+        allowFileAccessFromFileURLs={false}
+        allowUniversalAccessFromFileURLs={false}
+        originWhitelist={['https://*', 'blob:*']}
+        setSupportMultipleWindows={false}
+        onShouldStartLoadWithRequest={handleShouldStartLoadWithRequest}
+        onLoadStart={handleLoadStart}
+        onLoadEnd={handleLoadEnd}
+        onLoadProgress={handleLoadProgress}
+        onError={handleLoadError}
+        onRenderProcessGone={handleRenderProcessGone}
+        onContentProcessDidTerminate={handleRenderProcessGone}
+        webviewDebuggingEnabled={__DEV__}
+        nestedScrollEnabled={true}
+        pullToRefreshEnabled={!isAndroid}
+        onScroll={isAndroid ? handleWebViewScroll : undefined}
+      />
+    ),
+    [
+      sourceUri,
+      handleNavigationStateChange,
+      injectionScript,
+      handleMessage,
+      handleShouldStartLoadWithRequest,
+      handleLoadStart,
+      handleLoadEnd,
+      handleLoadProgress,
+      handleLoadError,
+      handleRenderProcessGone,
+      handleWebViewScroll
+    ]
+  )
+
   return (
     <MobileLayoutContainer
       keyboardAwareFooter={false}
@@ -1120,29 +1228,25 @@ const DappWebViewScreen = () => {
         </View>
       )}
       <View style={flexbox.flex1}>
-        <WebView
-          ref={webviewRef}
-          source={{ uri: activeDappUrl }}
-          userAgent={DESKTOP_USER_AGENT}
-          onNavigationStateChange={handleNavigationStateChange}
-          injectedJavaScriptBeforeContentLoaded={injectionScript}
-          onMessage={handleMessage}
-          javaScriptEnabled={true}
-          domStorageEnabled={true}
-          allowFileAccessFromFileURLs={false}
-          allowUniversalAccessFromFileURLs={false}
-          originWhitelist={['https://*', 'blob:*']}
-          setSupportMultipleWindows={false}
-          onShouldStartLoadWithRequest={handleShouldStartLoadWithRequest}
-          onLoadStart={handleLoadStart}
-          onLoadEnd={handleLoadEnd}
-          onLoadProgress={handleLoadProgress}
-          onError={handleLoadError}
-          onRenderProcessGone={handleRenderProcessGone}
-          onContentProcessDidTerminate={handleRenderProcessGone}
-          webviewDebuggingEnabled={__DEV__}
-          nestedScrollEnabled={true}
-        />
+        {isAndroid ? (
+          <ScrollView
+            style={flexbox.flex1}
+            contentContainerStyle={flexbox.flex1}
+            refreshControl={
+              <RefreshControl
+                refreshing={isPullToRefreshing}
+                onRefresh={handlePullToRefresh}
+                enabled={isPageScrolledToTop}
+                tintColor={theme.iconPrimary}
+                progressBackgroundColor={theme.secondaryBackground}
+              />
+            }
+          >
+            {webViewComponent}
+          </ScrollView>
+        ) : (
+          webViewComponent
+        )}
       </View>
 
       <BottomSheet

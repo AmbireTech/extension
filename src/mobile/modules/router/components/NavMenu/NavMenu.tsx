@@ -3,18 +3,18 @@ import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 
 import AccountsIcon from '@common/assets/svg/AccountsIcon'
-// import AddressBookIcon from '@common/assets/svg/AddressBookIcon'
+import AddressBookIcon from '@common/assets/svg/AddressBookIcon'
 import AmbireLogoSquare from '@common/assets/svg/AmbireLogoSquare'
 import BugIcon from '@common/assets/svg/BugIcon'
 // import CustomTokensIcon from '@common/assets/svg/CustomTokensIcon'
 import DiscordIcon from '@common/assets/svg/DiscordIcon'
 import HelpIcon from '@common/assets/svg/HelpIcon'
-// import KeyStoreSettingsIcon from '@common/assets/svg/KeyStoreSettingsIcon'
+import KeyStoreSettingsIcon from '@common/assets/svg/KeyStoreSettingsIcon'
 import NetworksIcon from '@common/assets/svg/NetworksIcon'
 // import PasswordRecoverySettingsIcon from '@common/assets/svg/PasswordRecoverySettingsIcon'
-// import PrivacyIcon from '@common/assets/svg/PrivacyIcon'
+import PrivacyIcon from '@common/assets/svg/PrivacyIcon'
 import SettingsIcon from '@common/assets/svg/SettingsIcon'
-// import SidebarSecurityIcon from '@common/assets/svg/SidebarSecurityIcon'
+import SidebarSecurityIcon from '@common/assets/svg/SidebarSecurityIcon'
 // import SignedMessageIcon from '@common/assets/svg/SignedMessageIcon'
 import TelegramIcon from '@common/assets/svg/TelegramIcon'
 // import TransactionHistoryIcon from '@common/assets/svg/TransactionHistoryIcon'
@@ -44,17 +44,35 @@ export const SETTINGS_LINKS = [
     label: 'Accounts',
     path: ROUTES.accountsSettings
   },
-  // {
-  //   key: 'address-book',
-  //   Icon: AddressBookIcon,
-  //   label: 'Address Book',
-  //   path: ROUTES.addressBook
-  // },
+  {
+    key: 'address-book',
+    Icon: AddressBookIcon,
+    label: 'Address book',
+    path: ROUTES.addressBook
+  },
   {
     key: 'networks',
     Icon: NetworksIcon,
     label: 'Networks',
     path: ROUTES.networksSettings
+  },
+  {
+    key: 'recovery-phrases',
+    Icon: SidebarSecurityIcon,
+    label: 'Recovery phrases',
+    path: ROUTES.recoveryPhrasesSettings
+  },
+  {
+    key: 'device-password-change',
+    Icon: KeyStoreSettingsIcon,
+    label: 'Change app password',
+    path: ROUTES.devicePasswordChange
+  },
+  {
+    key: 'opt-outs',
+    Icon: PrivacyIcon,
+    label: 'Privacy opt-outs',
+    path: ROUTES.optOuts
   }
   // {
   //   key: 'transactions',
@@ -67,12 +85,6 @@ export const SETTINGS_LINKS = [
   //   Icon: SignedMessageIcon,
   //   label: 'Signed messages',
   //   path: ROUTES.signedMessages
-  // },
-  // {
-  //   key: 'recovery-phrases',
-  //   Icon: SidebarSecurityIcon,
-  //   label: 'Recovery phrases',
-  //   path: ROUTES.recoveryPhrasesSettings
   // },
   // {
   //   key: 'device-password-change',

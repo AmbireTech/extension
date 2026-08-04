@@ -1,11 +1,10 @@
 import React, { lazy, Suspense, useContext } from 'react'
 import { StyleSheet, View } from 'react-native'
-import { Navigate, Route, Routes } from 'react-router-dom'
+import { Route, Routes } from 'react-router-dom'
 
 import Alert from '@common/components/Alert'
 import { useTranslation } from '@common/config/localization'
 import { ControllersStateLoadedContext } from '@common/contexts/controllersStateLoadedContext'
-import useController from '@common/hooks/useController'
 import useRoute from '@common/hooks/useRoute'
 import useTheme from '@common/hooks/useTheme'
 import { AUTH_STATUS } from '@common/modules/auth/constants/authStatus'
@@ -13,9 +12,10 @@ import useAuth from '@common/modules/auth/hooks/useAuth'
 import AuthenticatedRoute from '@common/modules/router/components/AuthenticatedRoute'
 import KeystoreUnlockedRoute from '@common/modules/router/components/KeystoreUnlockedRoute'
 import { WEB_ROUTES } from '@common/modules/router/constants/common'
-import { getInitialRoute } from '@common/modules/router/helpers'
 import flexbox from '@common/styles/utils/flexbox'
+import { getUiType } from '@common/utils/uiType'
 import Splash from '@web/components/Splash'
+import { ROUTE_CRITICAL_CONTROLLERS } from '@web/constants/criticalControllers'
 import useCurrentActionSideEffects from '@web/hooks/useCurrentActionSideEffects'
 import DashboardScreen from '@web/modules/dashboard/screens/DashboardScreen'
 import KeyStoreUnlockScreen from '@web/modules/keystore/screens/KeyStoreUnlockScreen'
@@ -24,23 +24,27 @@ import getStyles from './styles'
 
 const AsyncMainRoute = lazy(() => import('@web/modules/router/components/MainRoutes'))
 
+const { isPopup } = getUiType()
+
+// The initial route is computed in the background and navigated to via the
+// controllers middleware (GET_INITIAL_ROUTE). This component only renders the
+// route tree and the loading splash.
 const Router = () => {
   const { t } = useTranslation()
   const { styles } = useTheme(getStyles)
   const { path } = useRoute()
   const pathname = path?.substring(1)
   const { authStatus } = useAuth()
-  const keystoreState = useController('KeystoreController').state
-  const requestsState = useController('RequestsController').state
-  const swapAndBridgeState = useController('SwapAndBridgeController').state
-  const transferState = useController('TransferController').state
-  const surveyState = useController('SurveyController').state
-  const { areControllerStatesLoaded, isStatesLoadingTakingTooLong } = useContext(
+  const { canRenderRoute, areAllControllerStatesLoaded, isStatesLoadingTakingTooLong } = useContext(
     ControllersStateLoadedContext
   )
   useCurrentActionSideEffects()
 
-  if (isStatesLoadingTakingTooLong && !areControllerStatesLoaded) {
+  // Gated on all the controllers and not on `canRenderRoute`, because a route can
+  // already be on screen (the dashboard shell) while a deferred controller never
+  // reports its state. Otherwise the warning would be unreachable and the user would
+  // sit on an animating skeleton forever.
+  if (isStatesLoadingTakingTooLong && !areAllControllerStatesLoaded) {
     return (
       <View style={[StyleSheet.absoluteFill, flexbox.center]}>
         <Alert
@@ -54,22 +58,18 @@ const Router = () => {
     )
   }
 
-  if (authStatus === AUTH_STATUS.LOADING || !areControllerStatesLoaded) {
+  // Render quickly only the routes that are adjusted for this (to prevent errors from missing ctrl state)
+  const isRouteWithCriticalControllers = Object.keys(ROUTE_CRITICAL_CONTROLLERS).includes(pathname)
+  const canRenderCurrentRoute =
+    areAllControllerStatesLoaded || (isRouteWithCriticalControllers && canRenderRoute)
+
+  if (authStatus === AUTH_STATUS.LOADING || !canRenderCurrentRoute) {
+    // Routes in ROUTE_CRITICAL_CONTROLLERS load next to instantly so it doesn't make sense to display
+    // a Splash screen for < 200ms. We still need to do it for state persisted screens in the popup (transfer, swap)
+    // and all other ui types
+    if (isPopup && (isRouteWithCriticalControllers || !pathname)) return null
+
     return <Splash />
-  }
-
-  // Never move this above the check for `areControllerStatesLoaded`
-  const initialRoute = getInitialRoute({
-    keystoreState,
-    authStatus,
-    requestsState,
-    swapAndBridgeState,
-    transferState,
-    surveyState
-  })
-
-  if (initialRoute && !pathname) {
-    return <Navigate to={initialRoute} replace />
   }
 
   return (

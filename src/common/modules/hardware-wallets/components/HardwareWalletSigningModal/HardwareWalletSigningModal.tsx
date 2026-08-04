@@ -1,12 +1,11 @@
 import React, { useEffect, useMemo } from 'react'
-import { Pressable, View } from 'react-native'
+import { View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 
 import { HARDWARE_WALLET_DEVICE_NAMES } from '@ambire-common/consts/hardwareWallets'
 import { ExternalKey } from '@ambire-common/interfaces/keystore'
 import { HardwareWalletSigningRequest } from '@ambire-common/interfaces/signAccountOp'
 import AmbireDevice from '@common/assets/svg/AmbireDevice'
-import CloseIcon from '@common/assets/svg/CloseIcon'
 import DriveIcon from '@common/assets/svg/DriveIcon'
 import GridPlusIcon from '@common/assets/svg/GridPlusIcon'
 import LedgerBadgeIcon from '@common/assets/svg/LedgerBadgeIcon'
@@ -14,8 +13,9 @@ import LeftPointerArrowIcon from '@common/assets/svg/LeftPointerArrowIcon'
 import TrezorBadgeIcon from '@common/assets/svg/TrezorBadgeIcon'
 import BottomSheet from '@common/components/BottomSheet'
 import ModalHeader from '@common/components/BottomSheet/ModalHeader'
+import Button from '@common/components/Button'
 import Text from '@common/components/Text'
-import Tooltip from '@common/components/Tooltip'
+import { isMobile } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import useTheme from '@common/hooks/useTheme'
 import SigningRequestDetails from '@common/modules/hardware-wallets/components/SigningRequestDetails'
@@ -55,12 +55,33 @@ const HardwareWalletSigningModal = ({
     else close()
   }, [open, close, isVisible])
 
-  const titleSuffix = useMemo(() => {
+  const title = useMemo(() => {
     const Icon = keyType && iconByKeyType[keyType as keyof typeof iconByKeyType]
-    if (!Icon) return undefined
+    const icon = Icon ? <Icon style={spacings.mlTy} width={32} height={32} /> : null
+    const text = t('Sign with your {{deviceName}} device', {
+      deviceName: HARDWARE_WALLET_DEVICE_NAMES[keyType]
+    })
 
-    return <Icon style={spacings.mlTy} width={32} height={32} />
-  }, [keyType])
+    // On native a <Text> is not a flexbox container, so an icon nested directly
+    // in it is baseline-aligned and ends up vertically misaligned with the
+    // title. Wrapping the title in a <View> row makes flexbox centering apply.
+    if (isMobile)
+      return (
+        <View style={[flexbox.directionRow, flexbox.alignCenter]}>
+          <Text fontSize={18} weight="medium">
+            {text}
+          </Text>
+          {icon}
+        </View>
+      )
+
+    return (
+      <>
+        {text}
+        {icon}
+      </>
+    )
+  }, [keyType, t])
 
   const isTrezor = useMemo(() => {
     return HARDWARE_WALLET_DEVICE_NAMES[keyType] === 'Trezor'
@@ -78,34 +99,7 @@ const HardwareWalletSigningModal = ({
       withBackdropBlur={false}
       containerInnerWrapperStyles={isTab ? { ...spacings.pv2Xl, ...spacings.ph2Xl } : {}}
     >
-      <ModalHeader
-        title={
-          <>
-            {t('Sign with your {{deviceName}} device', {
-              deviceName: HARDWARE_WALLET_DEVICE_NAMES[keyType]
-            })}
-            {titleSuffix}
-          </>
-        }
-        style={flexbox.justifyCenter}
-      >
-        {isTrezor && !!cancelReq && (
-          <>
-            <Pressable
-              onPress={cancelReq}
-              style={spacings.mr}
-              dataSet={{ tooltipId: 'trezor-cancel-sign-tooltip' }}
-            >
-              <CloseIcon />
-            </Pressable>
-            <Tooltip id="trezor-cancel-sign-tooltip">
-              <Text fontSize={14} appearance="secondaryText">
-                {t('Cancel request')}
-              </Text>
-            </Tooltip>
-          </>
-        )}
-      </ModalHeader>
+      <ModalHeader title={title} style={flexbox.justifyCenter} />
       <View
         style={[flexbox.directionRow, flexbox.alignSelfCenter, flexbox.alignCenter, spacings.mvXl]}
       >
@@ -137,6 +131,14 @@ const HardwareWalletSigningModal = ({
           <SigningRequestDetails signingRequest={signingRequest} style={spacings.mtLg} />
         )}
       </View>
+      {isTrezor && !!cancelReq && (
+        <Button
+          type="danger"
+          text={t('Cancel request')}
+          onPress={cancelReq}
+          hasBottomSpacing={false}
+        />
+      )}
     </BottomSheet>
   )
 }

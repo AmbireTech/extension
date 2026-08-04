@@ -8,13 +8,13 @@ import { Hex } from '@ambire-common/interfaces/hex'
 import { ISignAccountOpController } from '@ambire-common/interfaces/signAccountOp'
 import { GasSpeeds } from '@ambire-common/services/bundlers/types'
 import BottomSheet from '@common/components/BottomSheet'
+import ModalHeader from '@common/components/BottomSheet/ModalHeader'
 import Button from '@common/components/Button'
 import FooterGlassView from '@common/components/FooterGlassView'
-import GlassView from '@common/components/GlassView'
 import NumberInput from '@common/components/NumberInput'
 import Text from '@common/components/Text'
+import { isMobile, isWeb } from '@common/config/env'
 import useTheme from '@common/hooks/useTheme'
-import Header from '@common/modules/header/components/Header'
 import spacings from '@common/styles/spacings'
 import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
@@ -248,19 +248,19 @@ const CustomGasPrice = ({
       id="custom-gas-price-sheet"
       sheetRef={sheetRef}
       closeBottomSheet={closeBottomSheet}
-      type="bottom-sheet"
+      type={isMobile ? 'bottom-sheet' : 'modal'}
       animationDuration={0}
       onOpen={resetState}
+      shouldBeClosableOnDrag={isMobile}
       backgroundColor="primaryBackground"
       style={spacings.pbLg}
     >
-      <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mbTy]}>
-        <Header.BackButton onGoBackPress={closeBottomSheet} forceBack displayIn="always" />
-        <Text weight="medium" fontSize={20} style={spacings.mlTy}>
-          {t('Advanced')}
-        </Text>
-      </View>
-      <Text fontSize={14} appearance="secondaryText" style={[spacings.mbLg, spacings.mlXl]}>
+      <ModalHeader
+        title={t('Advanced options')}
+        handleClose={closeBottomSheet}
+        style={isMobile ? spacings.mbSm : undefined}
+      />
+      <Text fontSize={14} appearance="secondaryText" style={spacings.mbLg}>
         {t('Set gas values manually')}
       </Text>
       <View>
@@ -295,27 +295,30 @@ const CustomGasPrice = ({
           disabledReason={t('Custom gas cannot be set for an EOA batch')}
         />
       </View>
-      <View style={[spacings.mt, flexbox.alignCenter]}>
-        <FooterGlassView size="sm" absolute={false}>
-          <Button
-            type="secondary"
-            text={t('Cancel')}
-            onPress={closeBottomSheet}
-            hasBottomSpacing={false}
-            style={{ flex: 1, minHeight: 48, minWidth: 99 }}
-            size="smaller"
-          />
-
-          <Button
-            type="primary"
-            text={t('Save')}
-            onPress={saveCustomGasPrice}
-            hasBottomSpacing={false}
-            style={[spacings.ml, { flex: 1, minHeight: 48, minWidth: 99 }]}
-            size="smaller"
-          />
-        </FooterGlassView>
-      </View>
+      <FooterGlassView
+        absolute={false}
+        isSimpleBlur={false}
+        size="sm"
+        style={spacings.mtLg}
+        mobileStyle={{ ...flexbox.directionRow, ...spacings.mtXl }}
+      >
+        <Button
+          type="secondary"
+          text={t('Cancel')}
+          onPress={closeBottomSheet}
+          hasBottomSpacing={false}
+          style={[spacings.mrTy, isWeb && { width: 100 }, isMobile && flexbox.flex1]}
+          size="smaller"
+        />
+        <Button
+          type="primary"
+          text={t('Save')}
+          onPress={saveCustomGasPrice}
+          hasBottomSpacing={false}
+          style={[isWeb && { width: 100 }, isMobile && flexbox.flex1]}
+          size="smaller"
+        />
+      </FooterGlassView>
     </BottomSheet>
   )
 }

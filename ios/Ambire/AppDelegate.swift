@@ -1,6 +1,7 @@
 import Expo
 import React
 import ReactAppDependencyProvider
+import react_native_stallion
 
 @UIApplicationMain
 public class AppDelegate: ExpoAppDelegate {
@@ -64,7 +65,7 @@ class ReactNativeDelegate: ExpoReactNativeFactoryDelegate {
 #if DEBUG
     return RCTBundleURLProvider.sharedSettings().jsBundleURL(forBundleRoot: ".expo/.virtual-metro-entry")
 #else
-    return Bundle.main.url(forResource: "main", withExtension: "jsbundle")
+    return StallionModule.getBundleURL()
 #endif
   }
 }

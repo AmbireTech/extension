@@ -29,6 +29,10 @@ type GetAllControllerNamesAction = {
   type: 'GET_ALL_CONTROLLER_NAMES'
 }
 
+type GetInitialRouteAction = {
+  type: 'GET_INITIAL_ROUTE'
+}
+
 type InitControllerStateAction = {
   type: 'INIT_CONTROLLER_STATE'
   params: {
@@ -55,6 +59,11 @@ type UpdateNavigationUrl = {
 type UpdateUiViewRoute = {
   type: 'UPDATE_UI_VIEW_ROUTE'
   params: { id: string; route?: string; searchParams?: { [key: string]: string } }
+}
+
+type SetViewFocusAction = {
+  type: 'SET_VIEW_FOCUS'
+  params: { id?: string }
 }
 
 type MainControllerAccountPickerInitLedgerAction = {
@@ -214,6 +223,7 @@ type SetSubscribedControllersAction = {
 export type Action =
   | UpdateNavigationUrl
   | UpdateUiViewRoute
+  | SetViewFocusAction
   | MainControllerAccountPickerInitQrWalletAction
   | MainControllerAccountPickerInitLatticeAction
   | MainControllerAccountPickerInitTrezorAction
@@ -232,6 +242,7 @@ export type Action =
   | InitAllControllersAction
   | WindowRemovedAction
   | GetAllControllerNamesAction
+  | GetInitialRouteAction
   | InitControllerStateAction
   | HandleProviderRequestAction
   | WebviewOriginChangedAction

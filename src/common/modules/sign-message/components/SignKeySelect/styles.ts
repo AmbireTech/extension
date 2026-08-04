@@ -1,5 +1,7 @@
 import { StyleSheet, TextStyle, ViewStyle } from 'react-native'
 
+import { BOTTOM_SHEET_Z_INDEX } from '@common/components/BottomSheet/styles'
+import { isMobile } from '@common/config/env'
 import spacings, { SPACING_LG } from '@common/styles/spacings'
 import { ThemeProps } from '@common/styles/themeConfig'
 import common, { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
@@ -26,7 +28,10 @@ const getStyles = (theme: ThemeProps) =>
       ...common.borderRadiusPrimary,
       ...common.shadowPrimary,
       backgroundColor: theme.primaryBackground,
-      zIndex: 8,
+      // On mobile the whole sign flow lives in a BottomSheet that portals into
+      // the same "global" host at BOTTOM_SHEET_Z_INDEX, so the key selector must
+      // sit above it or it renders hidden behind the sheet. Web isn't in a sheet.
+      zIndex: isMobile ? BOTTOM_SHEET_Z_INDEX + 2 : 8,
       overflow: 'hidden'
     },
     overlay: {
@@ -36,7 +41,7 @@ const getStyles = (theme: ThemeProps) =>
       top: 0,
       left: 0,
       backgroundColor: theme.backdrop,
-      zIndex: 7
+      zIndex: isMobile ? BOTTOM_SHEET_Z_INDEX + 1 : 7
     },
     title: {
       ...spacings.pvTy,

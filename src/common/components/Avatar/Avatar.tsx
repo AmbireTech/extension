@@ -92,7 +92,7 @@ const Avatar: FC<Props> = ({
   }
 
   const isEnsLoading = address ? loadingAddresses?.includes(address) : false
-  const ensAvatar = domains?.[address]?.ensAvatar
+  const ensAvatar = domains?.[address]?.avatar
   const avatarType = getAvatarType({
     ensAvatar,
     ensAvatarImageFetchFailed,

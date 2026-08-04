@@ -2,7 +2,6 @@ import React from 'react'
 import { useTranslation } from 'react-i18next'
 import { View, ViewStyle } from 'react-native'
 
-import { TokenResult } from '@ambire-common/libs/portfolio'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import Text from '@common/components/Text'
 import TokenIcon from '@common/components/TokenIcon'
@@ -14,6 +13,7 @@ import flexbox from '@common/styles/utils/flexbox'
 
 import getStyles from './styles'
 
+import type { TokenResult } from '@ambire-common/libs/portfolio'
 type TokenBalanceCardProps = Pick<
   ReturnType<typeof getAndFormatTokenDetails>,
   'balanceFormatted' | 'balanceUSDFormatted' | 'change24h' | 'change24hFormatted' | 'balance'
@@ -23,6 +23,11 @@ type TokenBalanceCardProps = Pick<
     isRewards?: boolean
     isVesting?: boolean
     containerStyle?: ViewStyle
+    /**
+     * Fallback icon uri (e.g. the trending token icon) used when the token can't be
+     * resolved by address/chainId, so the balance icon matches the price display above.
+     */
+    uri?: string
   }
 
 const TokenBalanceCard = ({
@@ -37,7 +42,8 @@ const TokenBalanceCard = ({
   change24hFormatted,
   isRewards,
   isVesting,
-  containerStyle
+  containerStyle,
+  uri
 }: TokenBalanceCardProps) => {
   const { t } = useTranslation()
   const { styles, theme } = useTheme(getStyles)
@@ -56,6 +62,7 @@ const TokenBalanceCard = ({
           address={address}
           onGasTank={onGasTank}
           chainId={chainId}
+          uri={uri}
         />
         <View style={styles.tokenInfo}>
           <View style={[flexbox.directionRow, flexbox.alignCenter]}>

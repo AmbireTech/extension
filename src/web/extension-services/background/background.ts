@@ -23,10 +23,16 @@ import { getAccountKeysCount } from '@ambire-common/libs/keys/keys'
 import { KeystoreSigner } from '@ambire-common/libs/keystoreSigner/keystoreSigner'
 import { parse, stringify } from '@ambire-common/libs/richJson/richJson'
 import wait from '@ambire-common/utils/wait'
+import { scrubSentryEventSecrets } from '@common/config/analytics/sentryDataScrubbing'
 import CONFIG, { APP_VERSION, isAmbireNext, isDev, isProd } from '@common/config/env'
 import { controllersNestedInMainMapping } from '@common/constants/controllersMapping'
 import { AutoLockController } from '@common/controllers/auto-lock'
 import { WalletStateController } from '@common/controllers/wallet-state'
+import LedgerSigner from '@common/modules/hardware-wallet/libs/LedgerSigner'
+import TrezorSigner from '@common/modules/hardware-wallet/libs/TrezorSigner'
+import QrHardwareController from '@common/modules/hardware-wallets/controllers/QrHardwareController/QrHardwareController'
+import UrQrProtocolAdapter from '@common/modules/hardware-wallets/qr/protocol/UrQrProtocolAdapter'
+import QrHardwareSigner from '@common/modules/hardware-wallets/signers/QrHardwareSigner'
 import handleProviderRequests from '@common/modules/provider/handleProviderRequests'
 import { storage } from '@common/services/storage'
 import { Action, MethodAction } from '@common/types/actions'
@@ -52,6 +58,7 @@ import {
   handleKeepBridgeContentScriptAcrossSessions,
   handleRegisterScripts
 } from '@web/extension-services/background/handlers/handleScripting'
+import { serializeControllerForUI } from '@web/extension-services/background/serializeControllerForUI'
 import { notificationManager } from '@web/extension-services/background/webapi/notification'
 import windowManager from '@web/extension-services/background/webapi/window'
 import {
@@ -62,22 +69,19 @@ import {
 } from '@web/extension-services/messengers'
 import LatticeController from '@web/modules/hardware-wallet/controllers/LatticeController'
 import LedgerController from '@web/modules/hardware-wallet/controllers/LedgerController'
-import QrHardwareController from '@web/modules/hardware-wallet/controllers/QrHardwareController/QrHardwareController'
 import TrezorController from '@web/modules/hardware-wallet/controllers/TrezorController'
 import LatticeSigner from '@web/modules/hardware-wallet/libs/LatticeSigner'
-import LedgerSigner from '@web/modules/hardware-wallet/libs/LedgerSigner'
-import TrezorSigner from '@web/modules/hardware-wallet/libs/TrezorSigner'
-import UrQrProtocolAdapter from '@web/modules/hardware-wallet/qr/protocol/UrQrProtocolAdapter'
-import QrHardwareSigner from '@web/modules/hardware-wallet/signers/QrHardwareSigner'
 import { providerRequestTransport } from '@web/modules/provider/providerRequestTransport'
 import { getExtensionInstanceId } from '@web/utils/analytics'
 
+import { buildScrubFailureFallbackEvent } from './buildScrubFailureFallbackEvent'
 import {
   captureBackgroundException,
   CRASH_ANALYTICS_BACKGROUND_CONFIG,
   setBackgroundExtraContext,
   setBackgroundUserContext
 } from './CrashAnalytics'
+import { getReportableAction } from './getReportableAction'
 
 const debugLogs: {
   key: string
@@ -246,15 +250,29 @@ if (CONFIG.SENTRY_DSN_BROWSER_EXTENSION) {
         }
       }
 
-      // We don't want to miss errors that occur before the controllers are initialized
-      if (!walletStateCtrl) return event
+      // No explicit type annotation here: `event`'s type is inferred contextually
+      // as the narrower ErrorEvent (from Sentry.init's expected beforeSend
+      // signature), and both scrubSentryEventSecrets and
+      // buildScrubFailureFallbackEvent are generic in that same type, so
+      // scrubbedEvent stays ErrorEvent instead of widening to Sentry.Event.
+      let scrubbedEvent
+      try {
+        scrubbedEvent = scrubSentryEventSecrets(event)
+      } catch (scrubError) {
+        scrubbedEvent = buildScrubFailureFallbackEvent(event, scrubError)
+      }
+
+      // We don't want to miss errors that occur before the controllers are initialized.
+      // Scrubbing above still applies -- only the crashAnalyticsEnabled gate below,
+      // which depends on walletStateCtrl, can't run yet.
+      if (!walletStateCtrl) return scrubbedEvent
 
       if (isDev) {
-        console.log(`Sentry event captured in background: ${event.event_id}`, event)
+        console.log(`Sentry event captured in background: ${event.event_id}`, scrubbedEvent)
       }
 
       // If the Sentry is disabled, we don't send any events
-      return walletStateCtrl?.crashAnalyticsEnabled ? event : null
+      return walletStateCtrl?.crashAnalyticsEnabled ? scrubbedEvent : null
     }
   })
 }
@@ -268,16 +286,24 @@ providerRequestTransport.reply(async ({ method, id, providerId, params }, meta) 
   // wait for mainCtrl to be initialized before handling dapp requests
   while (!mainCtrl || !walletStateCtrl) await wait(200)
 
-  const tabId = meta.sender?.tab?.id
-  const windowId = meta.sender?.tab?.windowId
-  if (tabId === undefined || windowId === undefined || !meta.sender?.url) {
+  const senderTab = meta.sender?.tab
+  const tabId = senderTab?.id
+  const windowId = senderTab?.windowId
+  if (!senderTab || tabId === undefined || windowId === undefined || !meta.sender?.url) {
     return
   }
 
   const session = await mainCtrl.dapps.getOrCreateDappSession({
     tabId,
     windowId,
-    url: meta.sender.url
+    url: meta.sender.url,
+    // SECURITY: `frameId` and `tab.url` come from the browser, not from the page, so an embedded
+    // dApp cannot lie about sitting inside a phishing top-level document. `sender.url` is the
+    // requesting frame's URL, while `sender.tab.url` is the tab's top-level document URL.
+    // Default to the top frame when the browser omits `frameId`, so the frame context is always
+    // refreshed on the extension - leaving it undefined would preserve a previous visit's value.
+    frameId: meta.sender.frameId ?? 0,
+    topFrameUrl: senderTab.url
   })
 
   await mainCtrl.dapps.initialLoadPromise
@@ -294,7 +320,7 @@ providerRequestTransport.reply(async ({ method, id, providerId, params }, meta) 
       notificationManager
     })
 
-    return { id, result: res }
+    return { id, providerId, result: res }
   } catch (error: any) {
     let errorRes
     try {
@@ -302,7 +328,7 @@ providerRequestTransport.reply(async ({ method, id, providerId, params }, meta) 
     } catch (e) {
       errorRes = error
     }
-    return { id, error: errorRes }
+    return { id, providerId, error: errorRes }
   }
 })
 
@@ -598,17 +624,9 @@ const init = async () => {
       const registeredCtrl = eventEmitterRegistry.values().find((ctrl) => ctrl.name === ctrlName)
       if (!registeredCtrl) return
 
-      // Controller updates
-      const stateToSendToFE = registeredCtrl.toJSON()
-
-      if (ctrlName === 'MainController') {
-        // We are removing the state of the nested controllers in main to avoid the CPU-intensive task of parsing + stringifying.
-        // We should access the state of the nested controllers directly from their context instead of accessing them through the main ctrl state on the FE.
-        // Keep in mind: if we just spread `ctrl` instead of calling `ctrl.toJSON()`, the getters won't be included.
-        Object.keys(controllersNestedInMainMapping).forEach((nestedCtrlName) => {
-          delete (stateToSendToFE as any)[nestedCtrlName]
-        })
-      }
+      // Controller updates. We should access the state of the nested controllers
+      // directly from their context instead of through the main ctrl state on the FE.
+      const stateToSendToFE = serializeControllerForUI(registeredCtrl)
 
       pm.send('> ui', { method: ctrlName, params: stateToSendToFE, forceEmit })
 
@@ -689,7 +707,7 @@ const init = async () => {
               console.error(`${type} action failed:`, err)
               captureBackgroundException(err, {
                 extra: {
-                  action: stringify(action),
+                  action: stringify(getReportableAction(action)),
                   portId: port.id,
                   windowId
                 }
@@ -811,11 +829,9 @@ try {
     // wait for mainCtrl to be initialized before handling dapp requests
     while (!mainCtrl) await wait(200)
 
-    const sessionKeys = Object.keys(mainCtrl.dapps.dappSessions || {})
-
-    for (const key of sessionKeys.filter((k) => k.startsWith(`${tabId}-`))) {
-      mainCtrl.dapps.deleteDappSession(key)
-    }
+    // Sessions are matched by their own tabId: keys are `windowId-tabId-dappId`, so the
+    // old `${tabId}-` prefix never matched and leaked sessions past tab close.
+    mainCtrl.dapps.deleteDappSessionsForTab(tabId)
   })
 } catch (error) {
   console.error('Failed to register browser.tabs.onRemoved.addListener', error)

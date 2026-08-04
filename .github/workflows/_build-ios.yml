@@ -143,6 +143,11 @@ jobs:
         env:
           # Force production React/Metro bundle in CI (avoids dev/prod mismatch with NODE_ENV undefined)
           NODE_ENV: production
+          # Stallion native config — the build command inlines build:inject:mobile-ota-config,
+          # which seeds these into Info.plist/strings.xml so the app knows its Stallion project.
+          STALLION_PROJECT_ID: ${{ vars.STALLION_PROJECT_ID }}
+          STALLION_APP_TOKEN: ${{ secrets.STALLION_APP_TOKEN }}
+          STALLION_PUBLIC_SIGNING_KEY: ${{ vars.STALLION_PUBLIC_SIGNING_KEY }}
           RELAYER_URL: ${{ vars.RELAYER_URL }}
           VELCRO_URL: ${{ vars.VELCRO_URL }}
           REACT_APP_PIMLICO_API_KEY: ${{ vars.REACT_APP_PIMLICO_API_KEY }}
@@ -155,7 +160,7 @@ jobs:
           BUNGEE_API_KEY: ${{ vars.BUNGEE_API_KEY }}
           SQUID_INTEGRATOR_ID: ${{ vars.SQUID_INTEGRATOR_ID }}
           UNISWAP_API_KEY: ${{ vars.UNISWAP_API_KEY }}
-          SAFE_API: ${{ vars.SAFE_API }}
+          SAFE_API_KEY: ${{ vars.SAFE_API_KEY }}
           WALLETCONNECT_PROJECT_ID: ${{ vars.WALLETCONNECT_PROJECT_ID }}
         run: ${{ inputs.build_command }}
         shell: bash

@@ -81,20 +81,15 @@ export class TransferPage extends BasePage {
   }
 
   async assertAddedContact(contactName: string, contactAddress: string) {
-    const maxLength = 16
-    const slicedAddress = `${contactAddress.slice(0, maxLength / 2 - 1)}...${contactAddress.slice(
-      -maxLength / 2 + 2
-    )}`
+    const addedContact = this.page
+      .getByTestId(selectors.contactNameText)
+      .filter({ hasText: contactName })
+    const addedContactAddress = addedContact.getByTestId(selectors.contactAddressText)
 
-    // The address is rendered as three separate text nodes — "(", the sliced
-    // address and ")" — so an XPath `contains(text(), ...)` only ever sees the
-    // first "(" node and never matches. `getByText` matches the element's full
-    // text content, so it resolves correctly across the split text nodes.
-    const addedContactName = this.page.getByText(contactName)
-    const addedContactAddress = this.page.getByText(`(${slicedAddress})`)
-
-    await expect(addedContactName).toContainText(contactName)
-    await expect(addedContactAddress).toContainText(slicedAddress)
+    // The address can be full or shortened depending on the ENS lookup state.
+    await expect(addedContact).toContainText(contactName)
+    await expect(addedContactAddress).toContainText(contactAddress.slice(0, 7))
+    await expect(addedContactAddress).toContainText(contactAddress.slice(-6))
   }
 
   // TODO: move to dashboard page once POM is refactored
@@ -182,6 +177,35 @@ export class TransferPage extends BasePage {
       // Sign & Broadcast
       await this.expectButtonEnabled(selectors.signButton)
       await this.click(selectors.signButton)
+
+      // Accept dual choice modal if fee difference is below 0.1$
+      const modalTitle = this.page.getByTestId(selectors.transaction.dualChoiceModalTitle)
+
+      const modalAppeared = await modalTitle
+        .waitFor({ state: 'visible', timeout: 5000 })
+        .then(() => true)
+        .catch(() => false)
+
+      if (modalAppeared) {
+        const parseFee = (text: string) => Number.parseFloat(text.replace(/[^0-9.]/g, ''))
+
+        const previousFeeText = await this.page
+          .getByTestId(selectors.transaction.previousFeeAmountText)
+          .innerText()
+        const updatedFeeText = await this.page
+          .getByTestId(selectors.transaction.updatedFeeAmountText)
+          .innerText()
+
+        const previousFee = parseFee(previousFeeText)
+        const updatedFee = parseFee(updatedFeeText)
+        const feeIncrease = updatedFee - previousFee
+
+        if (feeIncrease > 0.1) {
+          console.warn(`⚠️ Gas fee increased by $${feeIncrease}; transaction signing skipped.`)
+        } else {
+          await this.click(selectors.transaction.dualChoiceModalAcceptButton)
+        }
+      }
 
       if (ledgerSimulatorControls && !payWithGasTank) {
         await ledgerSimulatorControls.signTransaction()

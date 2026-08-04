@@ -1,10 +1,10 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Animated, Easing, Pressable, View } from 'react-native'
+import { Animated, Easing, Pressable } from 'react-native'
 import { Circle, G, Path, Svg, SvgProps } from 'react-native-svg'
 
 import { UPDATE_SWAP_AND_BRIDGE_QUOTE_INTERVAL } from '@ambire-common/consts/intervals'
-import { SwapAndBridgeFormStatus } from '@ambire-common/controllers/swapAndBridge/swapAndBridge'
+import { SwapAndBridgeFormStatus } from '@ambire-common/libs/swapAndBridge/constants'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import useController from '@common/hooks/useController'
 import usePrevious from '@common/hooks/usePrevious'

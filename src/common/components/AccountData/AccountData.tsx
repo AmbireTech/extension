@@ -6,9 +6,11 @@ import shortenAddress from '@ambire-common/utils/shortenAddress'
 import CopyIcon from '@common/assets/svg/CopyIcon'
 import RightArrowIcon from '@common/assets/svg/RightArrowIcon'
 import Avatar from '@common/components/Avatar'
+import SkeletonLoader from '@common/components/SkeletonLoader'
 import Text from '@common/components/Text'
 import { isMobile, isWeb } from '@common/config/env'
 import useController from '@common/hooks/useController'
+import useControllerStore from '@common/hooks/useControllerStore'
 import useHover, { AnimatedPressable, useCustomHover } from '@common/hooks/useHover'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
@@ -35,6 +37,8 @@ const AccountData: FC<Props> = ({ onPress, withArrowRightIcon }) => {
   const { styles } = useTheme(getStyles)
   const { maxWidthSize } = useWindowSize()
   const { isPopup } = getUiType()
+  const { isStoreReady } = useControllerStore()
+
   const { account } = useController('SelectedAccountController').state
   const [bindAddressAnim, addressAnimStyle] = useHover({
     preset: 'opacityInverted',
@@ -97,12 +101,16 @@ const AccountData: FC<Props> = ({ onPress, withArrowRightIcon }) => {
         {...(onPress ? bindAccountBtnAnim : {})}
       >
         <>
-          <Avatar
-            pfp={account.preferences.pfp}
-            address={account.addr}
-            size={32}
-            smartAccountType={smartAccountType}
-          />
+          {isStoreReady ? (
+            <Avatar
+              pfp={account.preferences.pfp}
+              address={account.addr}
+              size={32}
+              smartAccountType={smartAccountType}
+            />
+          ) : (
+            <SkeletonLoader width={32} height={32} borderRadius={16} style={spacings.mrTy} />
+          )}
           <Text
             numberOfLines={1}
             weight={isMobile ? 'medium' : 'semiBold'}

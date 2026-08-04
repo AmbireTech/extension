@@ -7,7 +7,7 @@ import { useModalize } from 'react-native-modalize'
 import { Contact } from '@ambire-common/interfaces/addressBook'
 import { AddressState } from '@ambire-common/interfaces/domains'
 import { AddressPoisoningMatch } from '@ambire-common/interfaces/transfer'
-import { TokenResult } from '@ambire-common/libs/portfolio'
+import { getSearchableNames } from '@ambire-common/services/nameResolvers'
 import { validateAddress, Validation } from '@ambire-common/services/validations'
 import { getAddressFromAddressState } from '@ambire-common/utils/domains'
 import AddressBookIcon from '@common/assets/svg/AddressBookIcon'
@@ -17,6 +17,7 @@ import UpArrowIcon from '@common/assets/svg/UpArrowIcon'
 import WalletIcon from '@common/assets/svg/WalletIcon'
 import AddressBookContact from '@common/components/AddressBookContact'
 import AddressInput from '@common/components/AddressInput'
+import AddressScanButton from '@common/components/AddressInput/AddressScanButton'
 import { InputProps } from '@common/components/Input'
 import AddContactBottomSheet from '@common/components/Recipient/AddContactBottomSheet'
 import AddToAddressBook from '@common/components/Recipient/AddToAddressBook'
@@ -41,12 +42,14 @@ import { ItemPanel } from '@web/components/TransactionsScreen'
 
 import styles from './styles'
 
+import type { TokenResult } from '@ambire-common/libs/portfolio'
 interface Props extends InputProps {
   setAddress: (text: string) => void
   address: string
   resolvedAddress: AddressState['resolvedAddress']
   resolvedAddressType: AddressState['resolvedAddressType']
   addressValidationMsg: string
+  domainVerificationMessage?: string
   isRecipientHumanizerKnownTokenOrSmartContract: boolean
   isRecipientAddressUnknown: boolean
   validation: Validation
@@ -156,6 +159,12 @@ const SelectedMenuOption: React.FC<{
         // because highlight rendering lives in the detailed address row.
         withDetails={type === 'selected-menu-option' || (isMobile && !!addressHighlight)}
         onChangeText={setAddress}
+        onScanAddress={type === 'input' ? setAddress : undefined}
+        // The collapsed row is a button that opens the contacts menu, so the scan
+        // icon is rendered next to the dropdown arrow to stay reachable without it.
+        childrenBeforeButtons={
+          isButtonMode && !address ? <AddressScanButton onScanned={setAddress} /> : undefined
+        }
         disabled={disabled}
         editable={!isButtonMode}
         pointerEvents={isButtonMode ? 'none' : 'auto'}
@@ -185,7 +194,13 @@ const SelectedMenuOption: React.FC<{
           }
         }}
         inputWrapperStyle={type === 'input' ? { backgroundColor: theme.neutral400 } : undefined}
-        buttonStyle={{ ...spacings.pv0, ...spacings.ph, ...spacings.mr0, ...spacings.ml0 }}
+        buttonStyle={{
+          ...spacings.pv0,
+          ...spacings.pl,
+          ...spacings.prTy,
+          ...spacings.mr0,
+          ...spacings.ml0
+        }}
       />
     ),
     [
@@ -222,6 +237,7 @@ const Recipient: React.FC<Props> = ({
   resolvedAddress,
   resolvedAddressType,
   addressValidationMsg,
+  domainVerificationMessage,
   isRecipientHumanizerKnownTokenOrSmartContract,
   isRecipientAddressUnknown,
   validation,
@@ -258,7 +274,7 @@ const Recipient: React.FC<Props> = ({
         contact,
         name: contact.name.toLowerCase(),
         address: contact.address.toLowerCase(),
-        domain: domains[contact.address]?.ens?.toLowerCase().trim() || ''
+        domain: getSearchableNames(domains[contact.address]?.names)
       })),
     [contacts, domains]
   )
@@ -308,6 +324,8 @@ const Recipient: React.FC<Props> = ({
               }}
               address={contact.address}
               name={contact.name}
+              // Tapping a row selects the recipient, so a copy icon is not needed on mobile
+              withCopy={isWeb}
             />
           )
         })),
@@ -331,6 +349,7 @@ const Recipient: React.FC<Props> = ({
               }}
               address={contact.address}
               name={contact.name}
+              withCopy={isWeb}
             />
           )
         })),
@@ -395,6 +414,7 @@ const Recipient: React.FC<Props> = ({
         isRecipientAddressUnknown={isRecipientAddressUnknown}
         isRecipientAddressSameAsSender={actualAddress === account?.addr}
         addressValidationMsg={addressValidationMsg}
+        domainVerificationMessage={domainVerificationMessage}
         onAddToAddressBookPress={openBottomSheet}
       />
     ),
@@ -404,6 +424,7 @@ const Recipient: React.FC<Props> = ({
       actualAddress,
       account,
       addressValidationMsg,
+      domainVerificationMessage,
       openBottomSheet
     ]
   )

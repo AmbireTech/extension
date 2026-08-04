@@ -1,6 +1,7 @@
 import * as SplashScreen from 'expo-splash-screen'
 import React, { useCallback, useContext, useEffect, useRef } from 'react'
-import { View } from 'react-native'
+import { AppState, View } from 'react-native'
+import { KeyboardController } from 'react-native-keyboard-controller'
 import { Navigate, Route, Routes } from 'react-router-native'
 
 import { ControllersMiddlewareContext } from '@common/contexts/controllersMiddlewareContext'
@@ -17,9 +18,11 @@ import { getInitialRoute } from '@common/modules/router/helpers'
 import eventBus from '@common/services/event/eventBus'
 import flexbox from '@common/styles/utils/flexbox'
 import DashboardScreen from '@mobile/modules/dashboard/screens/DashboardScreen'
+import useLedgerConnectionLifecycle from '@mobile/modules/hardware-wallet/hooks/useLedgerConnectionLifecycle'
 import KeyStoreUnlockScreen from '@mobile/modules/keystore/screens/KeyStoreUnlockScreen'
 import MainRoutes from '@mobile/modules/router/components/MainRoutes'
 import RequestsBottomSheet from '@mobile/modules/router/components/RequestsBottomSheet'
+import { shouldShowMigrationOnboarding } from '@mobile/services/legacyMigration/legacyMigration'
 
 const Router = () => {
   const { path } = useRoute()
@@ -35,12 +38,16 @@ const Router = () => {
   } = useController('RequestsController')
   const swapAndBridgeState = useController('SwapAndBridgeController').state
   const transferState = useController('TransferController').state
-  const { areControllerStatesLoaded } = useContext(ControllersStateLoadedContext)
+  const { canRenderRoute } = useContext(ControllersStateLoadedContext)
   const { dispatch } = useContext(ControllersMiddlewareContext)
   // Fonts load in parallel with controller boot (the tree mounts before fonts
   // are ready — see AppInit). Gate the splash hide on fonts too so the first
   // painted frame already has the custom fonts applied.
   const { fontsLoaded } = useFonts()
+
+  // Disconnect the Ledger BLE transport when the wallet locks or the app is
+  // backgrounded; it transparently reconnects on the next device operation.
+  useLedgerConnectionLifecycle(keystoreState.isUnlocked)
 
   // Wrap onBottomSheetClosed to emit event for DappWebViewScreen focus
   // Must be at top level before any early returns
@@ -52,7 +59,7 @@ const Router = () => {
 
   const splashHidden = useRef(false)
 
-  const isReady = authStatus !== AUTH_STATUS.LOADING && areControllerStatesLoaded && fontsLoaded
+  const isReady = authStatus !== AUTH_STATUS.LOADING && canRenderRoute && fontsLoaded
 
   useEffect(() => {
     if (isReady && !splashHidden.current) {
@@ -67,6 +74,18 @@ const Router = () => {
     }
   }, [isReady, dispatch])
 
+  // Dismiss the keyboard the moment the app leaves the foreground so iOS never
+  // snapshots a visible keyboard, which would otherwise flash on the next launch.
+  // Not animated, because the app suspends mid-animation and the keyboard
+  // position values freeze at whatever height the last delivered frame had.
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', (next) => {
+      if (next !== 'active') KeyboardController.dismiss({ animated: false })
+    })
+
+    return () => sub.remove()
+  }, [])
+
   // Keep the native splash screen visible until controllers, auth and fonts are ready
   if (!isReady) {
     return null
@@ -78,12 +97,22 @@ const Router = () => {
     authStatus,
     requestsState,
     swapAndBridgeState,
-    transferState
+    transferState,
+    // Mobile has no request window; that flow is extension-only.
+    isRequestWindow: false
   })
+
+  // Users updating from the legacy v1 app land on the migration onboarding
+  // (once) before the get-started screen, so they understand why their data
+  // is gone and can back up their v1 email accounts.
+  const startRoute =
+    initialRoute === ROUTES.getStarted && shouldShowMigrationOnboarding()
+      ? ROUTES.migrationOnboarding
+      : initialRoute
 
   return (
     <View style={flexbox.flex1}>
-      {initialRoute && !pathname && <Navigate to={initialRoute} replace />}
+      {startRoute && !pathname && <Navigate to={startRoute} replace />}
       <Routes>
         <Route element={<KeystoreUnlockedRoute />}>
           <Route element={<AuthenticatedRoute />}>

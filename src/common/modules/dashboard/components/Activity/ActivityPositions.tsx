@@ -20,7 +20,9 @@ import DashboardBanners from '@common/modules/dashboard/components/DashboardBann
 import DashboardPageScrollContainer from '@common/modules/dashboard/components/DashboardPageScrollContainer'
 import TabsAndSearch from '@common/modules/dashboard/components/TabsAndSearch'
 import { TabType } from '@common/modules/dashboard/components/TabsAndSearch/Tabs/Tab/Tab'
-import SubmittedTransactionSummary from '@common/modules/settings/components/TransactionHistory/SubmittedTransactionSummary'
+import SubmittedTransactionSummary, {
+  preloadSummaryPreview
+} from '@common/modules/settings/components/TransactionHistory/SubmittedTransactionSummary'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { openInTab } from '@common/utils/links'
@@ -86,6 +88,12 @@ const ActivityPositions: FC<Props> = ({
   const currentAccountBanners = useMemo(() => {
     return getCurrentAccountBanners(banners, account?.addr)
   }, [banners, account])
+
+  // Warm the humanizer-carrying preview chunk while the account ops are still loading, so
+  // rows render their final content in one step instead of flashing a skeleton on mount.
+  useEffect(() => {
+    void preloadSummaryPreview()
+  }, [])
 
   useEffect(() => {
     if (prevOpenTab === 'activity' && openTab !== 'activity') {

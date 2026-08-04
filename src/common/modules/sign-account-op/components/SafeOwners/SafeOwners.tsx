@@ -8,6 +8,7 @@ import AccountKey from '@common/components/AccountKey'
 import SafeKeyWrapper from '@common/components/SafeKeyWrapper'
 import ScrollableWrapper from '@common/components/ScrollableWrapper'
 import Text from '@common/components/Text'
+import { isWeb } from '@common/config/env'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
@@ -63,12 +64,16 @@ const SafeOwners = ({
   }, [importedKeys, account.addr, chainId, accountStates, signed])
 
   return (
-    <View style={[spacings.ptTy, style]}>
-      <Text weight="semiBold" style={{ textAlign: 'center', ...spacings.mb }}>
+    <View style={[style]}>
+      <Text
+        fontSize={16}
+        weight="semiBold"
+        style={{ textAlign: 'center', ...spacings.mb, ...spacings.mtMi }}
+      >
         {t(`${threshold} out of ${owners.length} signatures required:`)}
       </Text>
       <ScrollableWrapper
-        style={{ maxHeight: 120, flexShrink: 0 }}
+        style={isWeb ? { maxHeight: 120, flexShrink: 0 } : { flex: 0 }}
         contentContainerStyle={{ flexGrow: 0 }}
       >
         {owners.map((o, i) => (
@@ -85,6 +90,7 @@ const SafeOwners = ({
             <AccountKey
               addr={o.addr}
               label={o.addr}
+              singleLineLabel={!isWeb}
               type={o.type || 'internal'}
               dedicatedToOneSA={false}
               isImported
