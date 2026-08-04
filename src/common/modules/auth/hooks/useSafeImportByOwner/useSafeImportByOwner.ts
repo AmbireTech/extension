@@ -5,6 +5,7 @@ import { useForm, useWatch } from 'react-hook-form'
 import { SAFE_NETWORKS } from '@ambire-common/consts/safe'
 import { Account } from '@ambire-common/interfaces/account'
 import { AddressState, AddressStateOptional } from '@ambire-common/interfaces/domains'
+import { Hex } from '@ambire-common/interfaces/hex'
 import useAddressInput from '@common/hooks/useAddressInput'
 import useController from '@common/hooks/useController'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
@@ -13,10 +14,12 @@ type FormValues = {
   ownerAddress: AddressState
 }
 
+const SAFE_OWNER_SEARCH_TTL = 5 * 60 * 1000
+
 const useSafeImportByOwner = () => {
   const {
     dispatch: safeDispatch,
-    state: { safeOwnerSearch, statuses }
+    state: { safeOwnerSearches, statuses }
   } = useController('SafeController')
   const { state: importedAccounts } = useController('AccountsController', (state) => state.accounts)
   const {
@@ -50,6 +53,7 @@ const useSafeImportByOwner = () => {
   const isImportRequested = useRef(false)
   const hasSeenUpdateAccountsLoading = useRef(false)
   const requestedOwner = useRef('')
+  const [safeOwnerSearchFreshAfter] = useState(() => Date.now() - SAFE_OWNER_SEARCH_TTL)
 
   const setOwnerAddressState = useCallback(
     (newState: AddressStateOptional) => {
@@ -81,36 +85,65 @@ const useSafeImportByOwner = () => {
     handleRevalidate: handleRevalidateOwnerAddress
   })
 
-  const owner = useMemo(
-    () => (isAddress(ownerAddress) ? getAddress(ownerAddress) : ''),
+  const owner = useMemo<Hex | ''>(
+    () => (isAddress(ownerAddress) ? (getAddress(ownerAddress) as Hex) : ''),
     [ownerAddress]
   )
 
-  useEffect(() => {
-    if (!owner || requestedOwner.current === owner) return
+  const safeSupportedNetworkIds = useMemo(
+    () =>
+      enabledNetworks
+        .filter((network) => SAFE_NETWORKS.includes(Number(network.chainId)))
+        .map((network) => network.chainId),
+    [enabledNetworks]
+  )
+  const cachedSafeOwnerSearch = owner ? safeOwnerSearches[owner] : undefined
+  const isCachedSafeOwnerSearchFresh =
+    !!cachedSafeOwnerSearch &&
+    cachedSafeOwnerSearch.updatedAt > 0 &&
+    cachedSafeOwnerSearch.updatedAt > safeOwnerSearchFreshAfter
+  const hasSearchedAllSafeNetworks =
+    !!cachedSafeOwnerSearch &&
+    cachedSafeOwnerSearch.searchedNetworks.length === safeSupportedNetworkIds.length &&
+    safeSupportedNetworkIds.every((chainId) =>
+      cachedSafeOwnerSearch.searchedNetworks.includes(chainId)
+    )
+  const canReuseCachedSafeOwnerSearch =
+    isCachedSafeOwnerSearchFresh &&
+    hasSearchedAllSafeNetworks &&
+    cachedSafeOwnerSearch.failedNetworks.length === 0
+  const isSameOwnerSearchLoading =
+    statuses.findSafesByOwner === 'LOADING' && cachedSafeOwnerSearch?.updatedAt === 0
 
-    const isSameOwnerSearchLoading =
-      statuses.findSafesByOwner === 'LOADING' && safeOwnerSearch?.owner === owner
+  useEffect(() => {
+    if (!owner) {
+      requestedOwner.current = ''
+      return
+    }
+
     if (isSameOwnerSearchLoading) {
       requestedOwner.current = owner
       return
     }
-    if (statuses.findSafesByOwner === 'LOADING') return
+    if (statuses.findSafesByOwner === 'LOADING') {
+      requestedOwner.current = ''
+      return
+    }
+    if (canReuseCachedSafeOwnerSearch) {
+      requestedOwner.current = owner
+      return
+    }
+    if (requestedOwner.current === owner) return
 
     requestedOwner.current = owner
     safeDispatch({ type: 'method', params: { method: 'findSafesByOwner', args: [owner] } })
-  }, [owner, safeOwnerSearch?.owner, safeDispatch, statuses.findSafesByOwner])
-
-  /**
-   * We need this to mitigate the flashing when reentering this screen.
-   * This cleans up the controller state after the user finishes
-   */
-  useEffect(
-    () => () => {
-      safeDispatch({ type: 'method', params: { method: 'resetFindSafesByOwner', args: [] } })
-    },
-    [safeDispatch]
-  )
+  }, [
+    canReuseCachedSafeOwnerSearch,
+    isSameOwnerSearchLoading,
+    owner,
+    safeDispatch,
+    statuses.findSafesByOwner
+  ])
 
   useEffect(() => {
     if (!isImportRequested.current) return
@@ -131,10 +164,12 @@ const useSafeImportByOwner = () => {
     }
   }, [goToNextRoute, mainStatuses.updateAccounts])
 
-  const safeAccounts = useMemo(
-    () => (safeOwnerSearch?.owner === owner ? safeOwnerSearch.accounts : []),
-    [owner, safeOwnerSearch]
-  )
+  const safeOwnerSearch =
+    isCachedSafeOwnerSearchFresh ||
+    (isSameOwnerSearchLoading && cachedSafeOwnerSearch?.updatedAt === 0)
+      ? cachedSafeOwnerSearch
+      : undefined
+  const safeAccounts = useMemo(() => safeOwnerSearch?.accounts || [], [safeOwnerSearch])
   const importedAddresses = useMemo(
     () => importedAccounts.map((account) => account.addr),
     [importedAccounts]
@@ -167,23 +202,15 @@ const useSafeImportByOwner = () => {
 
   const isSearching = !!owner && statuses.findSafesByOwner === 'LOADING'
   const isMainBusy = Object.values(mainStatuses).some((status) => status !== 'INITIAL')
-  const safeSupportedNetworkCount = useMemo(
-    () =>
-      enabledNetworks.filter((network) => SAFE_NETWORKS.includes(Number(network.chainId))).length,
-    [enabledNetworks]
-  )
   const hasSearchCompleted =
-    !!owner &&
-    safeOwnerSearch?.owner === owner &&
-    safeOwnerSearch.searchedNetworks.length === safeSupportedNetworkCount &&
-    !isSearching
+    !!owner && !!safeOwnerSearch && hasSearchedAllSafeNetworks && !isSearching
   const failedNetworkNames = useMemo(() => {
-    if (safeOwnerSearch?.owner !== owner) return []
+    if (!safeOwnerSearch) return []
     return safeOwnerSearch.failedNetworks.map(
       (chainId) =>
         enabledNetworks.find((network) => network.chainId === chainId)?.name || chainId.toString()
     )
-  }, [enabledNetworks, owner, safeOwnerSearch])
+  }, [enabledNetworks, safeOwnerSearch])
 
   const setAccountSelected = useCallback(
     (address: string, shouldSelect: boolean) => {
