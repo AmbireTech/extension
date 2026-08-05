@@ -33,38 +33,30 @@ export const foldIntoEntropyPool = (sample: string) => {
   return entropyPool
 }
 
-// A mouse or a digitizer reports at up to 120Hz, but samples 8ms apart on a smooth path are nearly
-// redundant, while ones further apart carry more each. Throttling therefore keeps almost all of the
-// entropy for a fraction of the work, which matters most on mobile, where this runs on the same JS
-// thread as the gesture being performed.
-const MIN_MS_BETWEEN_SAMPLES = 50
-// The pool saturates its 256 bits within the first few dozen samples, so this is far more than it
-// can ever hold and observing past it buys nothing. What it gives up: fresh input is the only thing
-// that would recover the pool if its state ever leaked, since advancing it only folds in the two
-// clocks, which an attacker can bound. That is a thin enough scenario not to be worth collecting for
-// a whole session.
-const MAX_OBSERVED_SAMPLES = 1000
+// Every event a platform reports is folded, deliberately unthrottled. A fold measures ~11us on V8
+// and so roughly 30-50us on Hermes, against an 8.3ms frame at 120Hz - a tenth of a percent of the
+// frame - while rate limiting hurts exactly where events are scarcest: a mobile tap is only a handful
+// of touch events over ~100ms, so a 50ms throttle would keep two or three of them and throw the rest
+// away. Reaching a full pool in the first second of interaction is worth far more than the CPU that
+// costs, so the cap below bounds the total work instead of the rate.
+//
+// The pool saturates its 256 bits within the first few dozen samples, so this leaves a wide margin
+// even if the per-event estimates in each hook turn out optimistic, and observing past it buys
+// nothing. What it gives up: fresh input is the only thing that would recover the pool if its state
+// ever leaked, since advancing it only folds in the two clocks, which an attacker can bound. That is
+// a thin enough scenario not to be worth collecting for a whole session.
+export const MAX_OBSERVED_SAMPLES = 512
 
-// Starts before any possible reading rather than at 0, so the very first sample is never throttled.
-// performance.now() is 0 at the time origin, so 0 here would mean "50ms into this JS context".
-let lastSampleAt = -Infinity
 let observedSamples = 0
 
 /**
- * Folds one observed event into the pool, throttled and bounded. For collection only -
- * `takeExtraEntropy` calls `foldIntoEntropyPool` directly, because a throttled or capped fold there
- * would let two calls hand out the same value.
+ * Folds one observed event into the pool, up to the cap. For collection only - `takeExtraEntropy`
+ * calls `foldIntoEntropyPool` directly, because a capped fold there would let two calls hand out the
+ * same value.
  */
 export const observeEntropySample = (sample: string) => {
   if (observedSamples >= MAX_OBSERVED_SAMPLES) return
 
-  // Monotonic on purpose. Date.now() can step backwards - an NTP correction, the user changing the
-  // date - which would make this difference negative, keep it under the threshold, and silently drop
-  // every sample until wall time caught up. performance.now() only ever moves forward.
-  const now = performance.now()
-  if (now - lastSampleAt < MIN_MS_BETWEEN_SAMPLES) return
-
-  lastSampleAt = now
   observedSamples += 1
   foldIntoEntropyPool(sample)
 

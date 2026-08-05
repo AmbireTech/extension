@@ -14,8 +14,10 @@ import { observeEntropySample, takeExtraEntropy } from './entropyPool'
  */
 const useExtraEntropy = () => {
   useEffect(() => {
-    // ~5-8 bits per event: 2-4 from the position, most of which a smooth path gives away, and
-    // 3-4 from the jitter in the timestamp.
+    // ~2-4 bits per event at the ~8ms spacing a 120Hz mouse reports at: 1-2 from the position, most
+    // of which a smooth path gives away, and 1-2 from the jitter in the timestamp. Events further
+    // apart carry more each, closer to 5-8, but there is no reason to wait for them - a hundred cheap
+    // samples fill the pool sooner than twenty expensive ones, and cost ~1ms of CPU to fold.
     const handleMouseMove = (e: MouseEvent) => {
       observeEntropySample(`${e.clientX}-${e.clientY}-${e.timeStamp}`)
     }

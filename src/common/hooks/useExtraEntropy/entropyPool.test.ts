@@ -1,10 +1,7 @@
-import { takeExtraEntropy } from './entropyPool'
+import { MAX_OBSERVED_SAMPLES, takeExtraEntropy } from './entropyPool'
 
 // Both clocks are folded into every value handed out, so they have to be pinned for any two values to
-// be comparable at all. Pinning performance.now() also freezes the throttle window, which is what lets
-// the burst below be asserted exactly rather than raced against the real clock. It is pinned below the
-// throttle window on purpose, so that the burst test also fails if lastSampleAt ever starts at 0 -
-// which would throttle away the first sample of a freshly loaded JS context.
+// be comparable at all.
 beforeEach(() => {
   jest.spyOn(performance, 'now').mockReturnValue(12.5)
   jest.spyOn(Date, 'now').mockReturnValue(1_700_000_000_000)
@@ -50,16 +47,18 @@ describe('entropyPool', () => {
     expect(afterFolding('100-200-1234.5')).not.toEqual(afterFolding('100-200-1234.6'))
   })
 
-  it('throttles a burst, so a stream at the display refresh rate is not all kept', () => {
+  it('observes every sample it is given, up to the cap, and nothing past it', () => {
     const afterObserving = (...samples: string[]) =>
       takeFromFreshPool((pool) => samples.forEach((sample) => pool.observeEntropySample(sample)))
 
-    const afterOne = afterObserving('100-200-1')
+    // Differing from an untouched pool means samples get through at all, which is what would break
+    // if the cap were ever inverted, and that a burst is kept rather than rate limited away
+    expect(afterObserving('100-200-1')).not.toEqual(afterObserving())
+    expect(afterObserving('100-200-1', '101-201-2')).not.toEqual(afterObserving('100-200-1'))
 
-    // Differing from an untouched pool means the sample got through at all, which is what would
-    // break if the cap on how many to observe were ever inverted
-    expect(afterOne).not.toEqual(afterObserving())
-    // Three back-to-back samples land inside one throttle window, so only the first is kept
-    expect(afterObserving('100-200-1', '101-201-2', '102-202-3')).toEqual(afterOne)
+    // Past the cap the pool stops changing, so a long session cannot keep folding forever
+    const upToTheCap = Array.from({ length: MAX_OBSERVED_SAMPLES }, (_, i) => `100-200-${i}`)
+
+    expect(afterObserving(...upToTheCap, 'past-the-cap')).toEqual(afterObserving(...upToTheCap))
   })
 })
