@@ -319,16 +319,12 @@ const SignAccountOpScreen = () => {
         )}
         <TabLayoutWrapperMainContent withScroll={false} contentContainerStyle={spacings.mtSm}>
           <View
-            style={
-              isCompactSidePanelLayout
-                ? spacings.mb
-                : [
-                    flexbox.directionRow,
-                    flexbox.alignCenter,
-                    flexbox.justifySpaceBetween,
-                    spacings.mb
-                  ]
-            }
+            style={[
+              flexbox.directionRow,
+              flexbox.alignCenter,
+              flexbox.justifySpaceBetween,
+              spacings.mb
+            ]}
           >
             <SectionHeading withMb={false}>{t('Overview')}</SectionHeading>
             <View
