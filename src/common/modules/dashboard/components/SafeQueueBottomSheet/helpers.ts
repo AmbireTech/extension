@@ -71,11 +71,13 @@ export const getSafeQueueNetworkGroups = (
           requests: [...nonceRequests].sort((a, b) => {
             const aCreatedAt = Date.parse(a.signAccountOp.accountOp.safeTx?.submissionDate || '')
             const bCreatedAt = Date.parse(b.signAccountOp.accountOp.safeTx?.submissionDate || '')
+            const aHasSubmissionDate = !Number.isNaN(aCreatedAt)
+            const bHasSubmissionDate = !Number.isNaN(bCreatedAt)
 
-            return (
-              (Number.isNaN(bCreatedAt) ? 0 : bCreatedAt) -
-              (Number.isNaN(aCreatedAt) ? 0 : aCreatedAt)
-            )
+            if (aHasSubmissionDate !== bHasSubmissionDate) return aHasSubmissionDate ? 1 : -1
+            if (!aHasSubmissionDate) return 0
+
+            return bCreatedAt - aCreatedAt
           })
         }))
         .sort((a, b) => (a.nonce < b.nonce ? -1 : a.nonce > b.nonce ? 1 : 0))

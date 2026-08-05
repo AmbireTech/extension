@@ -80,7 +80,7 @@ describe('Safe Queue helpers', () => {
     expect(groups[1]!.nonceGroups.map(({ nonce }) => nonce)).toEqual([7n, 8n])
   })
 
-  test('sorts transactions with the same nonce by creation time, newest first', () => {
+  test('prioritizes transactions without a submission date, then sorts newest first', () => {
     const requests = [
       makeRequest({
         id: 'older',
@@ -99,12 +99,18 @@ describe('Safe Queue helpers', () => {
         chainId: 1n,
         nonce: 18n,
         submissionDate: '2026-08-04T11:00:00Z'
-      })
+      }),
+      makeRequest({ id: 'extension-created', chainId: 1n, nonce: 18n })
     ]
 
     const [nonceGroup] = getSafeQueueNetworkGroups(requests, networks)[0]!.nonceGroups
 
-    expect(nonceGroup!.requests.map(({ id }) => id)).toEqual(['newest', 'newer', 'older'])
+    expect(nonceGroup!.requests.map(({ id }) => id)).toEqual([
+      'extension-created',
+      'newest',
+      'newer',
+      'older'
+    ])
   })
 
   test('derives the action state from imported owners and collected signatures', () => {
