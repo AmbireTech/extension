@@ -8,7 +8,8 @@ import FingerprintIcon from '@common/assets/svg/FingerprintIcon'
 import Button from '@common/components/Button'
 import InputPassword from '@common/components/InputPassword'
 import Text from '@common/components/Text'
-import { isDev, isMobile, isTesting, isWeb } from '@common/config/env'
+import { captureException } from '@common/config/analytics/CrashAnalytics'
+import { isDev, isTesting, isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import { DEVICE_SUPPORTED_AUTH_TYPES } from '@common/contexts/biometricsContext/constants'
 import useBiometrics from '@common/hooks/useBiometrics'
@@ -36,12 +37,16 @@ const BackupUnlockStep = ({
   const { t } = useTranslation()
   const { theme } = useTheme()
   const { hasBiometricsSecret } = useController('KeystoreController').state
-  const { getBiometricsSecret, deviceSupportedAuthTypes } = useBiometrics()
+  const { hasBiometricsHardware, getBiometricsSecret, deviceSupportedAuthTypes } = useBiometrics()
   const [password, setPassword] = useState(
     isDev && !isTesting ? (DEFAULT_KEYSTORE_PASSWORD_DEV ?? '') : ''
   )
+  const [hasSwitchedToPassword, setHasSwitchedToPassword] = useState(false)
 
-  const canUseBiometrics = isMobile && hasBiometricsSecret
+  const canUseBiometrics = !!hasBiometricsSecret && !!hasBiometricsHardware
+  // Biometrics are offered first when set up, but the password stays reachable, because
+  // the prompt can be unavailable (Firefox popups) or keep failing on a given device.
+  const isUsingBiometrics = canUseBiometrics && !hasSwitchedToPassword
   const BiometricsIcon = deviceSupportedAuthTypes.includes(
     DEVICE_SUPPORTED_AUTH_TYPES.FACIAL_RECOGNITION
   )
@@ -56,6 +61,8 @@ const BackupUnlockStep = ({
     [onPasswordChange]
   )
 
+  const handleSwitchToPassword = useCallback(() => setHasSwitchedToPassword(true), [])
+
   const handleStartWithPassword = useCallback(() => {
     if (!isValidPassword(password)) return
 
@@ -69,8 +76,10 @@ const BackupUnlockStep = ({
 
       onUnlock('biometrics', biometricsSecret)
     } catch (error) {
-      // The device already told the user that the authentication failed or was cancelled
+      // A failed or cancelled prompt resolves to null instead of throwing, so getting here
+      // means something unexpected broke and the user is left without a way in
       console.error('Recovery phrase backup: biometrics authentication failed', error)
+      captureException(error)
     }
   }, [getBiometricsSecret, onUnlock])
 
@@ -87,7 +96,7 @@ const BackupUnlockStep = ({
       </View>
 
       <View style={[flexbox.flex1, flexbox.justifyEnd, isWeb && flexbox.alignCenter]}>
-        {!canUseBiometrics && (
+        {!isUsingBiometrics && (
           <InputPassword
             testID="backup-recovery-phrase-password-field"
             placeholder={t('Enter your password')}
@@ -106,14 +115,27 @@ const BackupUnlockStep = ({
           text={isUnlocking ? t('Unlocking...') : t('Start')}
           size="large"
           hasBottomSpacing={false}
-          disabled={isUnlocking || (!canUseBiometrics && !isValidPassword(password))}
-          onPress={canUseBiometrics ? handleStartWithBiometrics : handleStartWithPassword}
+          disabled={isUnlocking || (!isUsingBiometrics && !isValidPassword(password))}
+          onPress={isUsingBiometrics ? handleStartWithBiometrics : handleStartWithPassword}
           childrenPosition="left"
+          style={common.fullWidth}
         >
-          {!!canUseBiometrics && (
+          {!!isUsingBiometrics && (
             <BiometricsIcon width={24} height={24} color="#fff" style={spacings.mrTy} />
           )}
         </Button>
+        {!!isUsingBiometrics && (
+          <Button
+            testID="backup-recovery-phrase-use-password-button"
+            text={t('Unlock with password')}
+            type="secondary"
+            size="large"
+            hasBottomSpacing={false}
+            disabled={isUnlocking}
+            onPress={handleSwitchToPassword}
+            style={[spacings.mtSm, common.fullWidth]}
+          />
+        )}
       </View>
     </View>
   )
