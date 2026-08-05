@@ -107,7 +107,15 @@ const MainRoutes = () => {
             />
             <Route
               path={WEB_ROUTES.safeImport}
+              element={<AuthGroupScreen pick={(m) => m.SafeImportMethodScreen} />}
+            />
+            <Route
+              path={WEB_ROUTES.safeImportAddress}
               element={<AuthGroupScreen pick={(m) => m.SafeImportScreen} />}
+            />
+            <Route
+              path={WEB_ROUTES.safeImportByOwner}
+              element={<AuthGroupScreen pick={(m) => m.SafeImportByOwnerScreen} />}
             />
             <Route
               path={WEB_ROUTES.qrConnect}
@@ -124,15 +132,6 @@ const MainRoutes = () => {
             <Route
               path={WEB_ROUTES.importSmartAccountJson}
               element={<AuthGroupScreen pick={(m) => m.ImportSmartAccountJsonScreen} />}
-            />
-
-            <Route
-              path={WEB_ROUTES.createSeedPhrasePrepare}
-              element={<AuthGroupScreen pick={(m) => m.CreateSeedPhrasePrepareScreen} />}
-            />
-            <Route
-              path={WEB_ROUTES.createSeedPhraseWrite}
-              element={<AuthGroupScreen pick={(m) => m.CreateSeedPhraseWriteScreen} />}
             />
 
             <Route

@@ -66,6 +66,7 @@ const SafeImportScreen = () => {
                     onChangeText={onChange}
                     value={value}
                     isValid={!handleValidation(value) && !!value.length}
+                    inputWrapperStyle={{ borderColor: theme.primaryBorder }}
                     error={value.length ? errors?.safeAddress?.message : ''}
                     autoCorrect={false}
                     onSubmitEditing={handleFormSubmit}
