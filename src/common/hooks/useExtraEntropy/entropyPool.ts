@@ -45,7 +45,9 @@ const MIN_MS_BETWEEN_SAMPLES = 50
 // a whole session.
 const MAX_OBSERVED_SAMPLES = 1000
 
-let lastSampleAt = 0
+// Starts before any possible reading rather than at 0, so the very first sample is never throttled.
+// performance.now() is 0 at the time origin, so 0 here would mean "50ms into this JS context".
+let lastSampleAt = -Infinity
 let observedSamples = 0
 
 /**
@@ -56,7 +58,10 @@ let observedSamples = 0
 export const observeEntropySample = (sample: string) => {
   if (observedSamples >= MAX_OBSERVED_SAMPLES) return
 
-  const now = Date.now()
+  // Monotonic on purpose. Date.now() can step backwards - an NTP correction, the user changing the
+  // date - which would make this difference negative, keep it under the threshold, and silently drop
+  // every sample until wall time caught up. performance.now() only ever moves forward.
+  const now = performance.now()
   if (now - lastSampleAt < MIN_MS_BETWEEN_SAMPLES) return
 
   lastSampleAt = now

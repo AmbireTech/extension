@@ -1,10 +1,12 @@
 import { takeExtraEntropy } from './entropyPool'
 
-// Both clocks are folded into every value handed out, so they have to be pinned for any two values
-// to be comparable at all. Date.now() also has to be pinned past the throttle window, which starts
-// counting from 0, otherwise the very first sample of every test would be throttled away.
+// Both clocks are folded into every value handed out, so they have to be pinned for any two values to
+// be comparable at all. Pinning performance.now() also freezes the throttle window, which is what lets
+// the burst below be asserted exactly rather than raced against the real clock. It is pinned below the
+// throttle window on purpose, so that the burst test also fails if lastSampleAt ever starts at 0 -
+// which would throttle away the first sample of a freshly loaded JS context.
 beforeEach(() => {
-  jest.spyOn(performance, 'now').mockReturnValue(1234.5)
+  jest.spyOn(performance, 'now').mockReturnValue(12.5)
   jest.spyOn(Date, 'now').mockReturnValue(1_700_000_000_000)
 })
 
