@@ -12,12 +12,12 @@ import Text from '@common/components/Text'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import Account from '@common/modules/account-select/components/Account'
+import ManageRecoveryPhrase from '@common/modules/settings/ManageRecoveryPhrase'
 import spacings, { SPACING_TY } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
 import SettingsPageHeader from '@web/modules/settings/components/SettingsPageHeader'
 import { SettingsRoutesContext } from '@web/modules/settings/contexts/SettingsRoutesContext'
-import ManageRecoveryPhrase from '@web/modules/settings/ManageRecoveryPhrase'
 
 const RecoveryPhraseSettingsScreen = () => {
   const { t } = useTranslation()
@@ -135,7 +135,8 @@ const RecoveryPhraseSettingsScreen = () => {
             StyleSheet.absoluteFill,
             flexbox.flex1,
             flexbox.alignCenter,
-            flexbox.justifyCenter
+            flexbox.justifyCenter,
+            spacings.phLg
           ]}
         >
           <Text style={text.center}>

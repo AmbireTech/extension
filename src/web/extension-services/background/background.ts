@@ -29,6 +29,10 @@ import { controllersNestedInMainMapping } from '@common/constants/controllersMap
 import { AutoLockController } from '@common/controllers/auto-lock'
 import { WalletStateController } from '@common/controllers/wallet-state'
 import LedgerSigner from '@common/modules/hardware-wallet/libs/LedgerSigner'
+import TrezorSigner from '@common/modules/hardware-wallet/libs/TrezorSigner'
+import QrHardwareController from '@common/modules/hardware-wallets/controllers/QrHardwareController/QrHardwareController'
+import UrQrProtocolAdapter from '@common/modules/hardware-wallets/qr/protocol/UrQrProtocolAdapter'
+import QrHardwareSigner from '@common/modules/hardware-wallets/signers/QrHardwareSigner'
 import handleProviderRequests from '@common/modules/provider/handleProviderRequests'
 import { storage } from '@common/services/storage'
 import { Action, MethodAction } from '@common/types/actions'
@@ -54,6 +58,7 @@ import {
   handleKeepBridgeContentScriptAcrossSessions,
   handleRegisterScripts
 } from '@web/extension-services/background/handlers/handleScripting'
+import { serializeControllerForUI } from '@web/extension-services/background/serializeControllerForUI'
 import { notificationManager } from '@web/extension-services/background/webapi/notification'
 import windowManager from '@web/extension-services/background/webapi/window'
 import {
@@ -64,22 +69,18 @@ import {
 } from '@web/extension-services/messengers'
 import LatticeController from '@web/modules/hardware-wallet/controllers/LatticeController'
 import LedgerController from '@web/modules/hardware-wallet/controllers/LedgerController'
-import QrHardwareController from '@common/modules/hardware-wallets/controllers/QrHardwareController/QrHardwareController'
 import TrezorController from '@web/modules/hardware-wallet/controllers/TrezorController'
 import LatticeSigner from '@web/modules/hardware-wallet/libs/LatticeSigner'
-import TrezorSigner from '@common/modules/hardware-wallet/libs/TrezorSigner'
-import UrQrProtocolAdapter from '@common/modules/hardware-wallets/qr/protocol/UrQrProtocolAdapter'
-import QrHardwareSigner from '@common/modules/hardware-wallets/signers/QrHardwareSigner'
 import { providerRequestTransport } from '@web/modules/provider/providerRequestTransport'
 import { getExtensionInstanceId } from '@web/utils/analytics'
 
+import { buildScrubFailureFallbackEvent } from './buildScrubFailureFallbackEvent'
 import {
   captureBackgroundException,
   CRASH_ANALYTICS_BACKGROUND_CONFIG,
   setBackgroundExtraContext,
   setBackgroundUserContext
 } from './CrashAnalytics'
-import { buildScrubFailureFallbackEvent } from './buildScrubFailureFallbackEvent'
 import { getReportableAction } from './getReportableAction'
 
 const debugLogs: {
@@ -623,17 +624,9 @@ const init = async () => {
       const registeredCtrl = eventEmitterRegistry.values().find((ctrl) => ctrl.name === ctrlName)
       if (!registeredCtrl) return
 
-      // Controller updates
-      const stateToSendToFE = registeredCtrl.toJSON()
-
-      if (ctrlName === 'MainController') {
-        // We are removing the state of the nested controllers in main to avoid the CPU-intensive task of parsing + stringifying.
-        // We should access the state of the nested controllers directly from their context instead of accessing them through the main ctrl state on the FE.
-        // Keep in mind: if we just spread `ctrl` instead of calling `ctrl.toJSON()`, the getters won't be included.
-        controllersNestedInMainMapping.forEach((nestedCtrlName) => {
-          delete (stateToSendToFE as any)[nestedCtrlName]
-        })
-      }
+      // Controller updates. We should access the state of the nested controllers
+      // directly from their context instead of through the main ctrl state on the FE.
+      const stateToSendToFE = serializeControllerForUI(registeredCtrl)
 
       pm.send('> ui', { method: ctrlName, params: stateToSendToFE, forceEmit })
 

@@ -1,4 +1,4 @@
-name: Build browser extensions (webkit & gecko) 🌐
+name: 🌐 Build · Browser Extensions
 
 on:
   workflow_dispatch: # Manual trigger

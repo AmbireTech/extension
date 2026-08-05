@@ -34,6 +34,10 @@ const useTokenDetails = () => {
   const {
     state: { account, portfolio }
   } = useController('SelectedAccountController')
+  const {
+    state: { flags }
+  } = useController('FeatureFlagsController')
+  const isErc4337Enabled = flags.erc4337
   const { state: supportedChainIds } = useController(
     'SwapAndBridgeController',
     (state) => state.supportedChainIds
@@ -50,15 +54,17 @@ const useTokenDetails = () => {
     }
   })
   const [doNotDisplayHideTokenModal, setDoNotDisplayHideTokenModal] = useState(false)
-  const [gasTankAssets, setGasTankAssets] = useState<{ chainId: number; address: string }[] | null>(
-    null
-  )
+  const [fetchedGasTankAssets, setFetchedGasTankAssets] = useState<
+    { chainId: number; address: string }[] | null
+  >(null)
   const token = useMemo(() => {
     if (!state?.tokenId) return null
     return portfolio.tokens.find((t) => getTokenId(t) === state.tokenId)
   }, [portfolio, state?.tokenId])
 
-  const [gasTankAssetsError, setGasTankAssetsError] = useState<string | null>(null)
+  const [fetchedGasTankAssetsError, setFetchedGasTankAssetsError] = useState<string | null>(null)
+  const gasTankAssets = isErc4337Enabled ? fetchedGasTankAssets : null
+  const gasTankAssetsError = isErc4337Enabled ? fetchedGasTankAssetsError : null
   const network = useMemo(
     () => networks.find((n) => n.chainId === token?.chainId),
     [networks, token?.chainId]
@@ -94,22 +100,40 @@ const useTokenDetails = () => {
   }, [setDoNotDisplayHideTokenModal])
 
   useEffect(() => {
+    if (!isErc4337Enabled) {
+      // Clearing remote data when its feature is disabled is intentional synchronization.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setFetchedGasTankAssets(null)
+      setFetchedGasTankAssetsError(null)
+      return
+    }
+
+    let isActive = true
+
     // Fetch gas tank assets
     fetch(`${RELAYER_URL}/gas-tank/assets`)
       .then((r) => r.json())
       .then((assets) => {
-        setGasTankAssets(assets)
-        setGasTankAssetsError(null)
+        if (!isActive) return
+
+        setFetchedGasTankAssets(assets)
+        setFetchedGasTankAssetsError(null)
       })
       .catch(() => {
-        setGasTankAssetsError(
+        if (!isActive) return
+
+        setFetchedGasTankAssetsError(
           t(
             'Unable to top up right now. This might be a temporary service issue. Please try again later.'
           )
         )
-        setGasTankAssets(null)
+        setFetchedGasTankAssets(null)
       })
-  }, [t])
+
+    return () => {
+      isActive = false
+    }
+  }, [isErc4337Enabled, t])
 
   const hideToken = useCallback(() => {
     if (!token) return
@@ -149,6 +173,12 @@ const useTokenDetails = () => {
   const topUpDisabledTooltipText = useMemo(() => {
     if (!canUseGasTank) return disabledReason
 
+    if (!isErc4337Enabled) {
+      return t(
+        'Gas Tank is turned off because ERC-4337 smart account features are disabled. Enable them to top up.'
+      )
+    }
+
     if (!canToToppedUp) {
       return t(
         'This token is not eligible for filling up the Gas Tank. Please select a supported token instead.'
@@ -160,7 +190,7 @@ const useTokenDetails = () => {
     }
 
     return undefined
-  }, [canUseGasTank, canToToppedUp, disabledReason, gasTankAssetsError, t])
+  }, [canUseGasTank, canToToppedUp, disabledReason, gasTankAssetsError, isErc4337Enabled, t])
 
   const actions = useMemo(
     () =>

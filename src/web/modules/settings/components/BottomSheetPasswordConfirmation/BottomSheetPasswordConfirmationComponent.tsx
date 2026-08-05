@@ -3,7 +3,7 @@ import { Modalize } from 'react-native-modalize'
 
 import BottomSheet from '@common/components/BottomSheet'
 import spacings from '@common/styles/spacings'
-import PasswordConfirmation from '@web/modules/settings/components/PasswordConfirmation'
+import PasswordConfirmation from '@common/modules/settings/components/PasswordConfirmation'
 
 interface Props {
   sheetRef: React.RefObject<Modalize>
