@@ -17,9 +17,11 @@ import LedgerSigner from '@common/modules/hardware-wallet/libs/LedgerSigner'
 import TrezorSigner from '@common/modules/hardware-wallet/libs/TrezorSigner'
 import QrHardwareController from '@common/modules/hardware-wallets/controllers/QrHardwareController'
 import UrQrProtocolAdapter from '@common/modules/hardware-wallets/qr/protocol/UrQrProtocolAdapter'
+import NfcHardwareSigner from '@common/modules/hardware-wallets/signers/NfcHardwareSigner'
 import QrHardwareSigner from '@common/modules/hardware-wallets/signers/QrHardwareSigner'
 import { handleActions } from '@mobile/handlers/handleActions'
 import LedgerController from '@mobile/modules/hardware-wallet/controllers/LedgerController'
+import NfcController from '@mobile/modules/hardware-wallet/controllers/NfcController'
 import TrezorController from '@mobile/modules/hardware-wallet/controllers/TrezorController'
 import { BOOT_MARK, BOOT_MARK_PREFIX } from '@mobile/services/bootProfiler/constants'
 
@@ -249,6 +251,10 @@ const initControllers = (config: any) => {
     const qrCtrl = new QrHardwareController(new UrQrProtocolAdapter(), eventEmitterRegistry)
 
     workerBootProfiler.startSpan(BOOT_MARK.workerMainCtrlConstructed)
+    // NFC cards (Keycard, ...) tap-to-sign: the controller only forwards signing to
+    // the tapped card's native service, which owns the NFC radio and the credentials.
+    const nfcCtrl = new NfcController()
+
     mainCtrl = new MainController({
       eventEmitterRegistry,
       storageAPI,
@@ -267,12 +273,14 @@ const initControllers = (config: any) => {
         // TODO: there is a mismatch in hw signer types, it's not a big deal
         ledger: LedgerSigner,
         trezor: TrezorSigner,
-        qr: QrHardwareSigner
+        qr: QrHardwareSigner,
+        nfc: NfcHardwareSigner
       } as any,
       externalSignerControllers: {
         ledger: ledgerCtrl,
         trezor: trezorCtrl,
-        qr: qrCtrl
+        qr: qrCtrl,
+        nfc: nfcCtrl
       } as any,
       uiManager: {
         window: {

@@ -3,6 +3,7 @@ import { ColorValue } from 'react-native'
 
 import GridPlusIcon from '@common/assets/svg/GridPlusIcon'
 import LedgerBadgeIcon from '@common/assets/svg/LedgerBadgeIcon'
+import NfcIcon from '@common/assets/svg/NfcIcon'
 import NoKeysIcon from '@common/assets/svg/NoKeysIcon'
 import ReceiveIcon from '@common/assets/svg/ReceiveIcon'
 import SafeIcon from '@common/assets/svg/SafeIcon'
@@ -31,6 +32,7 @@ const AccountKeyIcon = ({
   if (type === 'none') return <NoKeysIcon {...props} />
   if (type === 'safe') return <SafeIcon width={iconSize} height={iconSize} />
   if (type === 'qr') return <ReceiveIcon {...props} />
+  if (type === 'nfc') return <NfcIcon {...props} />
 
   return <SingleKeyIcon {...props} />
 }

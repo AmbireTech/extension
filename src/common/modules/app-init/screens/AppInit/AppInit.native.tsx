@@ -16,6 +16,7 @@ import { OnboardingNavigationProvider } from '@common/modules/auth/contexts/onbo
 import { PortalHost, PortalProvider } from '@gorhom/portal'
 import { ControllersMiddlewareProvider } from '@mobile/contexts/controllersMiddlewareContext'
 import { ControllersStateLoadedProvider } from '@mobile/contexts/controllersStateLoadedContext'
+import NfcCardSessionModal from '@mobile/modules/hardware-wallet/components/NfcCardSessionModal'
 import { WalletConnectProvider } from '@mobile/modules/wallet-connect/contexts/walletConnectContext'
 import { BOOT_MARK, markBoot } from '@mobile/services/bootProfiler'
 
@@ -42,6 +43,7 @@ const AppInit = () => {
                               <BiometricsProvider>
                                 <OnboardingNavigationProvider>
                                   <AppRouter />
+                                  <NfcCardSessionModal />
                                   <PortalHost name="global" />
                                 </OnboardingNavigationProvider>
                               </BiometricsProvider>

@@ -38,6 +38,7 @@ import {
   setWorkerBootProfile
 } from '@mobile/services/bootProfiler'
 import ledgerTransportService from '@mobile/services/ledger/ledgerTransportService'
+import { getNfcCardService } from '@mobile/services/nfc'
 import trezorDeeplinkService from '@mobile/services/trezor/trezorDeeplinkService'
 
 import { decode, encode } from './bridgeCodec'
@@ -651,6 +652,20 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, object>((_, ref) => {
           } catch (err: any) {
             sendResponse(data.id, null, err.message)
           }
+          break
+        case 'nfc.signHash': {
+          const { nfcWalletType, ...signHashParams } = data.payload
+
+          try {
+            sendResponse(data.id, await getNfcCardService(nfcWalletType).signHash(signHashParams))
+          } catch (err: any) {
+            sendResponse(data.id, null, err.message)
+          }
+          break
+        }
+        case 'nfc.cancel':
+          getNfcCardService(data.payload.nfcWalletType).cancel()
+          sendResponse(data.id, null)
           break
 
         default:

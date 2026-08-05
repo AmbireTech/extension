@@ -2,8 +2,6 @@
 // instant instead of a fresh suspend per step.
 export { default as AccountPersonalizeScreen } from '@web/modules/account-personalize/screens/AccountPersonalizeScreen'
 export { default as AccountPickerScreen } from '@web/modules/account-picker/screens/AccountPickerScreen'
-export { default as CreateSeedPhrasePrepareScreen } from '@web/modules/auth/screens/CreateSeedPhrasePrepareScreen'
-export { default as CreateSeedPhraseWriteScreen } from '@web/modules/auth/screens/CreateSeedPhraseWriteScreen'
 export { default as EmailAccountScreen } from '@web/modules/auth/screens/EmailAccountScreen'
 export { default as EmailLoginScreen } from '@web/modules/auth/screens/EmailLoginScreen'
 export { default as EmailRegisterScreen } from '@web/modules/auth/screens/EmailRegisterScreen'
@@ -19,5 +17,7 @@ export { default as PrivateKeyImportScreen } from '@web/modules/auth/screens/Pri
 export { default as QrCameraPermissionPage } from '@web/modules/hardware-wallet/screens/QrCameraPermissionPage'
 export { default as QrConnectScreen } from '@web/modules/hardware-wallet/screens/QrConnectScreen/QrConnectScreen'
 export { default as SafeImportScreen } from '@web/modules/auth/screens/SafeImportScreen'
+export { default as SafeImportByOwnerScreen } from '@web/modules/auth/screens/SafeImportByOwnerScreen'
+export { default as SafeImportMethodScreen } from '@web/modules/auth/screens/SafeImportMethodScreen'
 export { default as SeedPhraseImportScreen } from '@web/modules/auth/screens/SeedPhraseImportScreen'
 export { default as ViewOnlyAccountAdderScreen } from '@web/modules/auth/screens/ViewOnlyAccountAdderScreen'

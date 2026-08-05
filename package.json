@@ -174,6 +174,7 @@
     "jest-environment-jsdom": "29.7.0",
     "jest-expo": "54.0.16",
     "js-yaml": "4.1.0",
+    "keycard-sdk": "4.0.0",
     "koa-compose": "4.1.0",
     "lodash": "4.17.21",
     "loglevel": "1.9.2",
@@ -207,6 +208,7 @@
     "react-native-linear-gradient": "2.6.2",
     "react-native-mmkv": "4.1.2",
     "react-native-modalize": "2.1.1",
+    "react-native-nfc-manager": "3.17.2",
     "react-native-nitro-modules": "0.33.9",
     "react-native-performance": "2.1.0",
     "react-native-qrcode-svg": "6.3.15",
@@ -354,7 +356,8 @@
       "@trezor/connect-webextension>@trezor/connect>@trezor/blockchain-link>@stellar/stellar-sdk": false,
       "@sentry/cli": true,
       "@keystonehq/bc-ur-registry-eth>hdkey>secp256k1": false,
-      "hardhat>keccak": false
+      "hardhat>keccak": false,
+      "keycard-sdk>@nonth/pcsclite": false
     }
   }
 }
