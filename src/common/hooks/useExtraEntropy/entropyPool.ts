@@ -52,14 +52,15 @@ export const foldIntoEntropyPool = (sample: string) => {
 // keydown, the richest source here at ~6-10 bits against ~2-4, ever got to contribute a single sample.
 export const MAX_OBSERVED_SAMPLES_PER_SOURCE = 512
 
-const observedSamples: Record<string, number> = {}
+type EntropySource = 'pointermove' | 'keydown' | 'touch'
+const observedSamples: Partial<Record<EntropySource, number>> = {}
 
 /**
  * Folds one observed event into the pool, up to that source's cap. For collection only -
  * `takeExtraEntropy` calls `foldIntoEntropyPool` directly, because a capped fold there would let two
  * calls hand out the same value.
  */
-export const observeEntropySample = (source: string, sample: string) => {
+export const observeEntropySample = (source: EntropySource, sample: string) => {
   const observedForSource = observedSamples[source] ?? 0
 
   if (observedForSource >= MAX_OBSERVED_SAMPLES_PER_SOURCE) return
