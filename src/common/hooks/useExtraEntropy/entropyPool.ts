@@ -46,9 +46,11 @@ export const foldIntoEntropyPool = (sample: string) => {
 // and by several times in worth: pointermove fires at 60-120Hz and would drain a shared budget
 // within seconds of the page opening - long before the user reaches a password field, and so before
 // keydown, the richest source here at ~6-10 bits against ~2-4, ever got to contribute a single sample.
+// The same split applies to the two touch sources on mobile: touchMove fires every frame of a drag,
+// so a shared budget would be spent by one scroll and no later tap could ever contribute.
 export const MAX_OBSERVED_SAMPLES_PER_SOURCE = 512
 
-type EntropySource = 'pointermove' | 'keydown' | 'touch'
+export type EntropySource = 'pointermove' | 'keydown' | 'touchStart' | 'touchMove'
 const observedSamples: Partial<Record<EntropySource, number>> = {}
 
 /**

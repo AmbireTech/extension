@@ -1,15 +1,17 @@
 import { GestureResponderEvent } from 'react-native'
 
-import { observeEntropySample, takeExtraEntropy } from './entropyPool'
+import { EntropySource, observeEntropySample, takeExtraEntropy } from './entropyPool'
 
 // ~4-8 bits per event, most of it in the sub-pixel fraction of the coordinates, which is sensor
 // noise and so does not follow from the shape of the gesture the way the coordinates themselves do.
 // The timestamp carries less here than the mouse timestamp does on web, because the digitizer
-// samples on a fixed 60-120Hz clock and so jitters far less than a mouse polling on its own.
-const collectTouchEntropy = (e: GestureResponderEvent) => {
+// samples on a fixed 60-120Hz clock and so jitters far less than a mouse polling on its own - except
+// on a touchStart, where the moment the finger lands is not on any clock and is the least predictable
+// thing this platform observes.
+const collectTouchEntropy = (source: EntropySource) => (e: GestureResponderEvent) => {
   const { pageX, pageY, timestamp } = e.nativeEvent
 
-  observeEntropySample('touch', `${pageX}-${pageY}-${timestamp}`)
+  observeEntropySample(source, `${pageX}-${pageY}-${timestamp}`)
 }
 
 // Spread onto the app-wide root view once - the mobile counterpart of the pointermove listener the
@@ -19,9 +21,12 @@ const collectTouchEntropy = (e: GestureResponderEvent) => {
 // child without taking part in responder negotiation. That is what makes this safe: unlike a
 // gesture-handler based observer, it can never claim (or fail to release) the touch responder and
 // freeze the elements underneath.
+// The two report as separate sources so they get separate budgets: onTouchMove fires every frame, so
+// a shared one would be drained by ~8s of scrolling and no tap after that could contribute - and on
+// mobile touch is the only source there is, with no keydown to fall back on.
 export const entropyTouchHandlers = {
-  onTouchStart: collectTouchEntropy,
-  onTouchMove: collectTouchEntropy
+  onTouchStart: collectTouchEntropy('touchStart'),
+  onTouchMove: collectTouchEntropy('touchMove')
 }
 
 /**
