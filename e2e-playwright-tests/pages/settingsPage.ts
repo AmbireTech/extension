@@ -264,7 +264,7 @@ export class SettingsPage extends BasePage {
     await this.click(selectors.settings.customTokens.addCustomTokenButton)
 
     // assert at token modal
-    await this.compareText(selectors.settings.customTokens.addTokenModalTitle, 'Add Token')
+    await this.compareText(selectors.settings.customTokens.addTokenModalTitle, 'Add token')
 
     // choose network; ETH is selected by default; clicking it opens dropdown
     await this.click(selectors.settings.customTokens.ethNetworkOption)
