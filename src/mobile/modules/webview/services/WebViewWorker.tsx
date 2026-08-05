@@ -568,14 +568,6 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, object>((_, ref) => {
             sendResponse(data.id, null, err.message)
           }
           break
-
-        // --- NFC CARD DELEGATION HANDLERS ---
-        // The worker-side NfcController forwards signing here; the NFC radio and
-        // each card's own protocol live natively in that card's service, which is
-        // picked by the `nfcWalletType` the request carries. Importing an account
-        // calls the service directly from the import hook, so it does not go through
-        // the bridge. The PIN never crosses this bridge - the native service
-        // collects it from the UI itself.
         case 'nfc.signHash': {
           const { nfcWalletType, ...signHashParams } = data.payload
 
