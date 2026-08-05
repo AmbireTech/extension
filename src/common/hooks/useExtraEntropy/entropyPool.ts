@@ -45,25 +45,32 @@ export const foldIntoEntropyPool = (sample: string) => {
 // nothing. What it gives up: fresh input is the only thing that would recover the pool if its state
 // ever leaked, since advancing it only folds in the two clocks, which an attacker can bound. That is
 // a thin enough scenario not to be worth collecting for a whole session.
-export const MAX_OBSERVED_SAMPLES = 512
+//
+// Budgeted per source rather than shared, because the sources differ by orders of magnitude in rate
+// and by several times in worth: mousemove fires at 60-120Hz and would drain a shared budget within
+// seconds of the page opening - long before the user reaches a password field, and so before keydown,
+// the richest source here at ~6-10 bits against ~2-4, ever got to contribute a single sample.
+export const MAX_OBSERVED_SAMPLES_PER_SOURCE = 512
 
-let observedSamples = 0
+const observedSamples: Record<string, number> = {}
 
 /**
- * Folds one observed event into the pool, up to the cap. For collection only - `takeExtraEntropy`
- * calls `foldIntoEntropyPool` directly, because a capped fold there would let two calls hand out the
- * same value.
+ * Folds one observed event into the pool, up to that source's cap. For collection only -
+ * `takeExtraEntropy` calls `foldIntoEntropyPool` directly, because a capped fold there would let two
+ * calls hand out the same value.
  */
-export const observeEntropySample = (sample: string) => {
-  if (observedSamples >= MAX_OBSERVED_SAMPLES) return
+export const observeEntropySample = (source: string, sample: string) => {
+  const observedForSource = observedSamples[source] ?? 0
 
-  observedSamples += 1
+  if (observedForSource >= MAX_OBSERVED_SAMPLES_PER_SOURCE) return
+
+  observedSamples[source] = observedForSource + 1
   foldIntoEntropyPool(sample)
 
   // For debugging: uncomment to check that events are reaching the pool at all
-  // if (observedSamples === MAX_OBSERVED_SAMPLES)
-  //   console.log(`[extraEntropy] full at ${MAX_OBSERVED_SAMPLES} samples, no longer observing`)
-  // console.log(`[extraEntropy] ${observedSamples} samples observed so far`)
+  // if (observedSamples[source] === MAX_OBSERVED_SAMPLES_PER_SOURCE)
+  //   console.log(`[extraEntropy] ${source} full at ${MAX_OBSERVED_SAMPLES_PER_SOURCE}, no longer observing it`)
+  // console.log(`[extraEntropy] ${observedSamples[source]} ${source} samples observed so far`)
 }
 
 /**
@@ -88,9 +95,9 @@ export const takeExtraEntropy = () => {
   // the pool that produced it, and therefore cannot derive what any later call will hand out.
   const extraEntropy = keccak256(toUtf8Bytes(`take-${pool}`))
 
-  // For debugging: uncomment to see how much had been collected when a secret was generated.
-  // observedSamples 0 means nothing is being collected at all, leaving the two clocks above as the
-  // only entropy here that is independent of the platform randomness.
+  // For debugging: uncomment to see how much had been collected from each source when a secret was
+  // generated. An empty observedSamples means nothing is being collected at all, leaving the two
+  // clocks above as the only entropy here that is independent of the platform randomness.
   // console.log('[extraEntropy] taken for secret generation', { observedSamples })
 
   return extraEntropy

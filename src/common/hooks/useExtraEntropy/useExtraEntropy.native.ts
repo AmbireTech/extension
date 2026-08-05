@@ -9,7 +9,7 @@ import { observeEntropySample, takeExtraEntropy } from './entropyPool'
 const collectTouchEntropy = (e: GestureResponderEvent) => {
   const { pageX, pageY, timestamp } = e.nativeEvent
 
-  observeEntropySample(`${pageX}-${pageY}-${timestamp}`)
+  observeEntropySample('touch', `${pageX}-${pageY}-${timestamp}`)
 }
 
 // Spread onto the app-wide root view once - the mobile counterpart of the mousemove listener the

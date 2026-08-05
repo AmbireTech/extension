@@ -19,7 +19,7 @@ const useExtraEntropy = () => {
     // apart carry more each, closer to 5-8, but there is no reason to wait for them - a hundred cheap
     // samples fill the pool sooner than twenty expensive ones, and cost ~1ms of CPU to fold.
     const handleMouseMove = (e: MouseEvent) => {
-      observeEntropySample(`${e.clientX}-${e.clientY}-${e.timeStamp}`)
+      observeEntropySample('mousemove', `${e.clientX}-${e.clientY}-${e.timeStamp}`)
     }
 
     // Only the timing of a keystroke is folded in, never which key it was. The unpredictability
@@ -27,7 +27,9 @@ const useExtraEntropy = () => {
     // per-event source here. Recording the keys themselves would amount to keeping a keylog in
     // memory, for entropy we already have. It also matters because someone navigating by keyboard
     // alone moves the mouse rarely, or not at all.
-    const handleKeyDown = (e: KeyboardEvent) => observeEntropySample(`${e.timeStamp}`)
+    // Its budget is its own, so the mousemove burst that fills within seconds of the page opening
+    // cannot spend it before the user has typed anything - see MAX_OBSERVED_SAMPLES_PER_SOURCE.
+    const handleKeyDown = (e: KeyboardEvent) => observeEntropySample('keydown', `${e.timeStamp}`)
 
     document.addEventListener('mousemove', handleMouseMove, { passive: true })
     document.addEventListener('keydown', handleKeyDown, { passive: true })

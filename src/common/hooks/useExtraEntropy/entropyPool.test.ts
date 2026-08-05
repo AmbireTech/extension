@@ -1,4 +1,6 @@
-import { MAX_OBSERVED_SAMPLES, takeExtraEntropy } from './entropyPool'
+import { MAX_OBSERVED_SAMPLES_PER_SOURCE, takeExtraEntropy } from './entropyPool'
+
+type EntropyPool = typeof import('./entropyPool')
 
 // Both clocks are folded into every value handed out, so they have to be pinned for any two values to
 // be comparable at all.
@@ -13,10 +15,10 @@ afterEach(() => {
 
 // Gives each call a brand new, empty pool. The real one is module state that never resets, so there
 // is no other way to observe two samples from the same starting point and compare.
-const takeFromFreshPool = (fold: (pool: typeof import('./entropyPool')) => void) => {
+const takeFromFreshPool = (fold: (pool: EntropyPool) => void) => {
   jest.resetModules()
   // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const freshPool = require('./entropyPool') as typeof import('./entropyPool')
+  const freshPool = require('./entropyPool') as EntropyPool
 
   fold(freshPool)
 
@@ -49,7 +51,9 @@ describe('entropyPool', () => {
 
   it('observes every sample it is given, up to the cap, and nothing past it', () => {
     const afterObserving = (...samples: string[]) =>
-      takeFromFreshPool((pool) => samples.forEach((sample) => pool.observeEntropySample(sample)))
+      takeFromFreshPool((pool) =>
+        samples.forEach((sample) => pool.observeEntropySample('mousemove', sample))
+      )
 
     // Differing from an untouched pool means samples get through at all, which is what would break
     // if the cap were ever inverted, and that a burst is kept rather than rate limited away
@@ -57,8 +61,28 @@ describe('entropyPool', () => {
     expect(afterObserving('100-200-1', '101-201-2')).not.toEqual(afterObserving('100-200-1'))
 
     // Past the cap the pool stops changing, so a long session cannot keep folding forever
-    const upToTheCap = Array.from({ length: MAX_OBSERVED_SAMPLES }, (_, i) => `100-200-${i}`)
+    const upToTheCap = Array.from(
+      { length: MAX_OBSERVED_SAMPLES_PER_SOURCE },
+      (_, i) => `100-200-${i}`
+    )
 
     expect(afterObserving(...upToTheCap, 'past-the-cap')).toEqual(afterObserving(...upToTheCap))
+  })
+
+  // The cap is what makes the source argument load-bearing rather than decorative: with one shared
+  // budget, mousemove fills it within seconds of the page opening and every later keystroke is
+  // dropped - which is exactly the source worth the most bits per event.
+  it('caps each source on its own, so a noisy source cannot starve a quiet one', () => {
+    const spendTheMouseBudget = (pool: EntropyPool) => {
+      for (let i = 0; i < MAX_OBSERVED_SAMPLES_PER_SOURCE; i += 1)
+        pool.observeEntropySample('mousemove', `100-200-${i}`)
+    }
+
+    const afterTheKeystroke = takeFromFreshPool((pool) => {
+      spendTheMouseBudget(pool)
+      pool.observeEntropySample('keydown', '1234.5')
+    })
+
+    expect(afterTheKeystroke).not.toEqual(takeFromFreshPool(spendTheMouseBudget))
   })
 })
