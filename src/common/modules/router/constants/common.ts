@@ -9,8 +9,6 @@ const COMMON_ROUTES = {
   importSmartAccountJson: 'import-smart-account-json',
   importSeedPhrase: 'import-recovery-phrase',
   importExistingAccount: 'import-existing-account',
-  createSeedPhrasePrepare: 'create-new-recovery-phrase',
-  createSeedPhraseWrite: 'backup-recovery-phrase',
   ledgerConnect: 'ledger-connect',
   trezorConnect: 'trezor-connect',
   keyStoreSetup: 'set-extension-password',
@@ -89,8 +87,6 @@ const ROUTES = { ...MOBILE_ROUTES, ...WEB_ROUTES }
 
 const ONBOARDING_WEB_ROUTES = [
   COMMON_ROUTES.getStarted,
-  COMMON_ROUTES.createSeedPhrasePrepare,
-  COMMON_ROUTES.createSeedPhraseWrite,
   COMMON_ROUTES.importExistingAccount,
   COMMON_ROUTES.importPrivateKey,
   COMMON_ROUTES.importSeedPhrase,

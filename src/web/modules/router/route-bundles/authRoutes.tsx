@@ -2,8 +2,6 @@
 // instant instead of a fresh suspend per step.
 export { default as AccountPersonalizeScreen } from '@web/modules/account-personalize/screens/AccountPersonalizeScreen'
 export { default as AccountPickerScreen } from '@web/modules/account-picker/screens/AccountPickerScreen'
-export { default as CreateSeedPhrasePrepareScreen } from '@web/modules/auth/screens/CreateSeedPhrasePrepareScreen'
-export { default as CreateSeedPhraseWriteScreen } from '@web/modules/auth/screens/CreateSeedPhraseWriteScreen'
 export { default as EmailAccountScreen } from '@web/modules/auth/screens/EmailAccountScreen'
 export { default as EmailLoginScreen } from '@web/modules/auth/screens/EmailLoginScreen'
 export { default as EmailRegisterScreen } from '@web/modules/auth/screens/EmailRegisterScreen'
