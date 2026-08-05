@@ -2,6 +2,7 @@ import { FC, memo, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 
+import { isNative } from '@ambire-common/libs/portfolio/helpers'
 import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
 import shortenAddress from '@ambire-common/utils/shortenAddress'
 import OpenIcon from '@common/assets/svg/OpenIcon'
@@ -85,7 +86,7 @@ const Row = memo(
                   {...bindOpenAnim}
                   style={[openAnimStyle, spacings.mlTy]}
                   onPress={async () => {
-                    await openInTab({ url: `${networkData.explorerUrl}/address/${value}` })
+                    await openInTab({ url: `${networkData.explorerUrl}/token/${value}` })
                   }}
                 >
                   <OpenIcon width={20} height={20} />
@@ -118,7 +119,7 @@ const TokenData: FC<Props> = ({ token }) => {
         label: t('Chain'),
         value: token.chainId
       },
-      {
+      !isNative(token) && {
         id: 'address',
         label: t('Contract address'),
         value: token.address

@@ -54,6 +54,14 @@ const SignAccountOpScreen = () => {
   const [hasReachedBottom, setHasReachedBottom] = useState<boolean | null>(null)
   const { navigate } = useNavigation()
   const isInsideBottomSheet = useIsInsideBottomSheet()
+  const handleAddToCart = useCallback(() => {
+    if (isInsideBottomSheet && closeRequestModal) {
+      closeRequestModal()
+    } else {
+      navigate(ROUTES.dashboard)
+    }
+  }, [isInsideBottomSheet, closeRequestModal, navigate])
+
   const handleUpdateStatus = useCallback(
     (status: SigningStatus) => {
       signAccountOpDispatch({
@@ -88,6 +96,7 @@ const SignAccountOpScreen = () => {
     setIsChooseSignerShown,
     onSignButtonClick,
     handleChangeSigningKey,
+    handleChangeSigningKeyAndClose,
     warningToPromptBeforeSign,
     handleDismissLedgerConnectModal,
     slowPaymasterRequest,
@@ -125,7 +134,8 @@ const SignAccountOpScreen = () => {
     handleUpdateStatus,
     signAccountOpState,
     handleUpdate: updateController,
-    hasReachedBottom
+    hasReachedBottom,
+    onSafeSignComplete: handleAddToCart
   })
 
   const accountOpRequest = useMemo(() => {
@@ -148,14 +158,6 @@ const SignAccountOpScreen = () => {
       }
     })
   }, [requestsDispatch, accountOpRequest, visibleUserRequests.length])
-
-  const handleAddToCart = useCallback(() => {
-    if (isInsideBottomSheet && closeRequestModal) {
-      closeRequestModal()
-    } else {
-      navigate(ROUTES.dashboard)
-    }
-  }, [isInsideBottomSheet, closeRequestModal, navigate])
 
   useEffect(() => {
     if (isSignDisabled || !containerHeight || !contentHeight) return
@@ -255,6 +257,7 @@ const SignAccountOpScreen = () => {
                   <SafeOwners
                     account={signAccountOpState.account}
                     onSign={handleChangeSigningKey}
+                    onSignAndClose={handleChangeSigningKeyAndClose}
                     isSignLoading={isSignLoading}
                     signingKeyAddr={signAccountOpState.accountOp.signingKeyAddr}
                     chainId={signAccountOpState.accountOp.chainId.toString()}
