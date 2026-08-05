@@ -92,7 +92,6 @@ const selectors = {
     importAccountButton: 'import-account',
     connectHardwareWallet: 'connect-hardware-wallet',
     watchAnAddressButton: 'watch-an-address-button',
-    viewOnlyAddressField: 'address-ens-field',
     viewOnlyImportButton: 'view-only-button-import',
     validENSDomainText: '//div[contains(text(),"Valid ENS domain")]',
     addedSuccessfullyText: '//div[contains(text(),"Added successfully")]',

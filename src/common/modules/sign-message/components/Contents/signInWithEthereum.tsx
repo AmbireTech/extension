@@ -378,7 +378,9 @@ const SignInWithEthereum = ({
         )}
         {signMessageState.signer &&
           signMessageState.signer.key.type !== 'internal' &&
-          signMessageState.signer.key.type !== 'qr' && (
+          signMessageState.signer.key.type !== 'qr' &&
+          // NFC cards drive their own tap/PIN modal, mounted globally
+          signMessageState.signer.key.type !== 'nfc' && (
             <HardwareWalletSigningModal
               keyType={signMessageState.signer.key.type}
               isVisible={signStatus === 'LOADING'}

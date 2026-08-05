@@ -17,6 +17,8 @@ const COMMON_ROUTES = {
   onboardingCompleted: 'wallet-setup-completed',
   viewOnlyAccountAdder: 'view-only-account-adder',
   safeImport: 'safe-import',
+  safeImportAddress: 'safe-import-address',
+  safeImportByOwner: 'safe-import-by-owner',
   qrConnect: 'qr-connect',
   transfer: 'transfer',
   topUpGasTank: 'top-up-gas-tank',
@@ -97,6 +99,8 @@ const ONBOARDING_WEB_ROUTES = [
   COMMON_ROUTES.accountPicker,
   COMMON_ROUTES.onboardingCompleted,
   COMMON_ROUTES.safeImport,
+  COMMON_ROUTES.safeImportAddress,
+  COMMON_ROUTES.safeImportByOwner,
   COMMON_ROUTES.qrConnect
 ] as const
 

@@ -10,6 +10,7 @@ import HWIcon from '@common/assets/svg/HWIcon'
 import ImportAccountIcon from '@common/assets/svg/ImportAccountIcon'
 import ImportJsonIcon from '@common/assets/svg/ImportJsonIcon'
 import LedgerBadgeIcon from '@common/assets/svg/LedgerBadgeIcon'
+import NfcIcon from '@common/assets/svg/NfcIcon'
 import PrivateKeyIcon from '@common/assets/svg/PrivateKeyIcon'
 import ReceiveIcon from '@common/assets/svg/ReceiveIcon'
 import SafeBadgeIcon from '@common/assets/svg/SafeBadgeIcon'
@@ -25,6 +26,9 @@ import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import SavedSeedPhrasesBottomSheet from '@common/modules/account-select/components/SavedSeedPhrasesBottomSheet'
 import useCreateNewSeedAccount from '@common/modules/auth/hooks/useCreateNewSeedAccount'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
+import useNfcAccountImport from '@common/modules/hardware-wallets/nfc/hooks/useNfcAccountImport'
+import { NfcWalletConfigs } from '@common/modules/hardware-wallets/nfc/wallets'
+import { NfcWalletIcons } from '@common/modules/hardware-wallets/nfc/wallets/icons'
 import { ROUTES, WEB_ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
 
@@ -43,9 +47,12 @@ const AddAccount = ({
   const { dispatch } = useControllersMiddleware()
   const { goToNextRoute, setTriggeredHwWalletFlow } = useOnboardingNavigation()
   const { createNewSeedAccount, isCreating: isCreatingNewSeedAccount } = useCreateNewSeedAccount()
+  const { scanCard } = useNfcAccountImport()
   const [height, setHeight] = useState<number>(0)
   const scrollViewRef = useRef<any>(null)
-  const [expandedDropdown, setExpandedDropdown] = useState<'import-acc' | 'connect-hw' | null>(null)
+  const [expandedDropdown, setExpandedDropdown] = useState<
+    'import-acc' | 'connect-hw' | 'connect-nfc' | null
+  >(null)
 
   const {
     ref: seedPhraseSheetRef,
@@ -127,6 +134,21 @@ const AddAccount = ({
       }
     ]
   }, [dispatch, goToNextRoute, setTriggeredHwWalletFlow, t])
+
+  const optionsNfc = useMemo(() => {
+    if (!isMobile) return []
+
+    return NfcWalletConfigs.map(({ type, label }) => ({
+      key: type,
+      text: t(label),
+      icon: NfcWalletIcons[type],
+      onPress: () => {
+        closeBottomSheet()
+        scanCard(type)
+      },
+      testID: `${type}-option`
+    }))
+  }, [closeBottomSheet, scanCard, t])
 
   const optionsImportAccount = useMemo(() => {
     return [
@@ -226,6 +248,17 @@ const AddAccount = ({
             scrollViewRef={scrollViewRef}
             isExpanded={expandedDropdown === 'connect-hw'}
             setIsExpanded={(isExpanded) => setExpandedDropdown(isExpanded ? 'connect-hw' : null)}
+          />
+        )}
+        {!!optionsNfc.length && (
+          <ExpandableOptionSection
+            dropdownText={t('Connect an NFC card')}
+            dropdownIcon={NfcIcon}
+            dropdownTestID="connect-nfc-card"
+            options={optionsNfc}
+            scrollViewRef={scrollViewRef}
+            isExpanded={expandedDropdown === 'connect-nfc'}
+            setIsExpanded={(isExpanded) => setExpandedDropdown(isExpanded ? 'connect-nfc' : null)}
           />
         )}
         {!showImportOnly && (
