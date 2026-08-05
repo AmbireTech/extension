@@ -1,10 +1,10 @@
-import React, { useCallback, useEffect, useState } from 'react'
-import { View } from 'react-native'
+import React, { useCallback, useEffect, useMemo, useState } from 'react'
+import { Animated, Easing, Pressable, View } from 'react-native'
 
 import Button from '@common/components/Button'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
-import useHover, { AnimatedPressable } from '@common/hooks/useHover'
+import { DURATIONS } from '@common/hooks/useHover'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
@@ -21,19 +21,37 @@ interface KeyProps {
   onPress: (digit: string) => void
 }
 
+/**
+ * `useHover` is skipped here, because it dims the whole key, digit included. iOS
+ * instead brightens only the fill, and it does so the instant the finger lands (so a
+ * quickly typed PIN still lights up every key), then fades it back out on release.
+ */
 const PinKey: React.FC<KeyProps> = ({ digit, onPress }) => {
   const { styles } = useTheme(getStyles)
-  const [bindAnim, animStyle] = useHover({ preset: 'opacityInverted' })
+  const pressProgress = useMemo(() => new Animated.Value(0), [])
+
+  const handlePressIn = useCallback(() => pressProgress.setValue(1), [pressProgress])
+
+  const handlePressOut = useCallback(() => {
+    Animated.timing(pressProgress, {
+      toValue: 0,
+      duration: DURATIONS.SLOW,
+      easing: Easing.out(Easing.quad),
+      useNativeDriver: true
+    }).start()
+  }, [pressProgress])
 
   return (
-    <AnimatedPressable
-      {...bindAnim}
-      style={[styles.key, animStyle]}
+    <Pressable
+      style={styles.key}
+      onPressIn={handlePressIn}
+      onPressOut={handlePressOut}
       onPress={() => onPress(digit)}
       testID={`nfc-pin-key-${digit}`}
     >
+      <Animated.View style={[styles.keyPressHighlight, { opacity: pressProgress }]} />
       <Text fontSize={KEY_FONT_SIZE}>{digit}</Text>
-    </AnimatedPressable>
+    </Pressable>
   )
 }
 
