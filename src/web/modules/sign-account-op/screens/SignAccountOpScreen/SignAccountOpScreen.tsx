@@ -315,7 +315,7 @@ const SignAccountOpScreen = () => {
             }}
           />
         )}
-        <TabLayoutWrapperMainContent withScroll={false}>
+        <TabLayoutWrapperMainContent withScroll={false} contentContainerStyle={spacings.mtSm}>
           <View
             style={[
               flexbox.directionRow,
