@@ -4,6 +4,7 @@ import { View } from 'react-native'
 import EnsIcon from '@common/assets/svg/EnsIcon'
 import LightningIcon from '@common/assets/svg/LightningIcon'
 import SearchIcon from '@common/assets/svg/SearchIcon'
+import SwapAndBridgeIcon from '@common/assets/svg/SwapAndBridgeIcon'
 import { isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import useTheme from '@common/hooks/useTheme'
@@ -38,6 +39,14 @@ const PrivacyOptOutsList = () => {
         )}
         icon={<EnsIcon width={20} height={20} color={theme.iconPrimary} />}
         flag="keepEnsProfilesUpToDate"
+      />
+      <OptOutControlOption
+        title={t('Enrich swap and bridge token info')}
+        description={t(
+          'Show the 24 hour price change and the exchanges a token is traded on when picking a token to receive. This sends the addresses of the listed tokens to Ambire’s price API.'
+        )}
+        icon={<SwapAndBridgeIcon width={24} height={24} color={theme.iconPrimary} />}
+        flag="swapAndBridgeTokenInfo"
       />
       <OptOutControlOption
         title={t('ERC-4337 smart account features')}
