@@ -1,7 +1,7 @@
 import { StyleSheet, TextStyle, ViewStyle } from 'react-native'
 
 import { ThemeProps } from '@common/styles/themeConfig'
-import common from '@common/styles/utils/common'
+import common, { hexToRgba } from '@common/styles/utils/common'
 
 interface Styles {
   closeButton: ViewStyle
@@ -49,14 +49,16 @@ const getStyles = (theme: ThemeProps) =>
       top: 0,
       height: 18,
       width: 2,
-      backgroundColor: theme.primaryAccent
+      backgroundColor: hexToRgba(theme.primaryAccent, 0.35),
+      zIndex: 1
     },
     timelineLineBottom: {
       position: 'absolute',
       top: 18,
       bottom: 0,
       width: 2,
-      backgroundColor: theme.primaryAccent
+      backgroundColor: hexToRgba(theme.primaryAccent, 0.35),
+      zIndex: 1
     },
     nonceMarker: {
       minHeight: 28,
@@ -71,19 +73,19 @@ const getStyles = (theme: ThemeProps) =>
       zIndex: 2
     },
     nonceMarkerCurrent: {
-      borderColor: theme.primaryAccent,
-      backgroundColor: theme.primaryAccent
+      borderColor: hexToRgba(theme.primaryAccent, 0.16),
+      backgroundColor: theme.primaryAccent100
     },
     nonceMarkerText: {
       color: theme.primaryText
     },
     nonceMarkerTextCurrent: {
-      color: theme.neutral100
+      color: theme.primaryAccent
     },
     nextBadge: {
       borderWidth: 1,
-      borderColor: theme.primaryAccent,
-      backgroundColor: theme.secondaryBackground,
+      borderColor: hexToRgba(theme.primaryAccent, 0.16),
+      backgroundColor: theme.primaryAccent100,
       borderRadius: 6,
       zIndex: 3
     },
