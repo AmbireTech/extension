@@ -34,7 +34,7 @@ export class AuthPage extends BasePage {
   // TODO: improve method assertions
   async importViewOnlyAccount(account: string): Promise<void> {
     await this.click(selectors.getStarted.watchAddress)
-    await this.entertext(selectors.getStarted.addressEnsField, account)
+    await this.page.locator(locators.viewOnlyInputAddressField).fill(account)
     await this.click(selectors.getStarted.viewOnlyBtnImport)
     await this.setExtensionPassword()
     await this.compareText(
@@ -167,10 +167,10 @@ export class AuthPage extends BasePage {
   async importCoupleOfViewOnlyAccount(account1: string, account2: string): Promise<void> {
     await this.click(selectors.getStarted.watchAddress)
     // add address 1
-    await this.entertext(selectors.getStarted.addressEnsField, account1)
+    await this.page.locator(locators.viewOnlyInputAddressField).fill(account1)
     // add address 2
     await this.click(selectors.getStarted.addOneMoreAddress)
-    await this.entertext(selectors.getStarted.addressEnsField, account2, 1)
+    await this.page.locator(locators.viewOnlySecondInputAddressField).fill(account2)
     // import
     await this.click(selectors.getStarted.viewOnlyBtnImport)
     // set pass and name

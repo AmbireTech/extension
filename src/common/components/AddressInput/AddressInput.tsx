@@ -115,7 +115,7 @@ const AddressInput: React.FC<Props> = ({
         value={value}
         setInputRef={setInputRef}
         onChangeText={onChangeText}
-        testID="address-ens-field"
+        testID={rest.testID || 'address-ens-field'}
         containerStyle={containerStyle}
         validLabel={
           !isError && severity !== 'info' && !isValidationInDomainResolvingState ? message : ''
