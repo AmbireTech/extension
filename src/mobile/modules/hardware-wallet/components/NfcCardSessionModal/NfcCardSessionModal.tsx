@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react'
+import React, { useCallback, useEffect } from 'react'
 import { View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 
@@ -7,7 +7,6 @@ import Alert from '@common/components/Alert'
 import BottomSheet from '@common/components/BottomSheet'
 import ModalHeader from '@common/components/BottomSheet/ModalHeader'
 import Button from '@common/components/Button'
-import InputPassword from '@common/components/InputPassword'
 import Text from '@common/components/Text'
 import { isiOS } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
@@ -16,6 +15,7 @@ import { NfcWalletRegistry } from '@common/modules/hardware-wallets/nfc/wallets'
 import spacings from '@common/styles/spacings'
 import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
+import PinPrompt from '@mobile/modules/hardware-wallet/components/NfcCardSessionModal/PinPrompt'
 import useNfcCardSession from '@mobile/modules/hardware-wallet/hooks/useNfcCardSession'
 import { getActiveNfcCardService } from '@mobile/services/nfc'
 
@@ -26,66 +26,6 @@ import { getActiveNfcCardService } from '@mobile/services/nfc'
  */
 const getIsSheetVisible = (step: NfcSessionState['step']) =>
   isiOS ? step === 'awaiting-pin' : step !== 'idle'
-
-interface PinPromptProps {
-  error: string | null
-  onSubmit: (pin: string) => void
-  onCancel: () => void
-}
-
-/**
- * The typed PIN is kept here instead of in the modal, so typing re-renders only
- * this subtree. Keeping it in the modal re-renders the whole bottom sheet on every
- * keystroke, which makes the field lag behind and its content jump around.
- * Unmounting on step change is what wipes the PIN - it is never kept across steps.
- */
-const PinPrompt: React.FC<PinPromptProps> = ({ error, onSubmit, onCancel }) => {
-  const { t } = useTranslation()
-  const [pin, setPin] = useState('')
-
-  const handleSubmit = useCallback(() => {
-    if (!pin) return
-
-    onSubmit(pin)
-  }, [pin, onSubmit])
-
-  return (
-    <View style={spacings.pbLg}>
-      <Text fontSize={14} appearance="secondaryText" style={spacings.mbSm}>
-        {t('Your PIN unlocks the card for this one operation only. It is never saved.')}
-      </Text>
-
-      <InputPassword
-        value={pin}
-        onChangeText={setPin}
-        onSubmitEditing={handleSubmit}
-        keyboardType="number-pad"
-        autoFocus
-        error={error || undefined}
-        placeholder={t('PIN')}
-      />
-
-      <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mtSm]}>
-        <Button
-          type="secondary"
-          text={t('Cancel')}
-          onPress={onCancel}
-          hasBottomSpacing={false}
-          style={[flexbox.flex1, spacings.mrSm]}
-        />
-        <Button
-          text={t('Continue')}
-          onPress={handleSubmit}
-          disabled={!pin}
-          hasBottomSpacing={false}
-          style={flexbox.flex1}
-        />
-      </View>
-    </View>
-  )
-}
-
-const MemoizedPinPrompt = React.memo(PinPrompt)
 
 /**
  * Drives every card tap in the app - both importing accounts and signing.
@@ -133,7 +73,7 @@ const NfcCardSessionModal = () => {
 
   const renderContent = () => {
     if (isPrompting) {
-      return <MemoizedPinPrompt error={error} onSubmit={submitPrompt} onCancel={cancel} />
+      return <PinPrompt error={error} onSubmit={submitPrompt} onCancel={cancel} />
     }
 
     if (isiOS) return null
