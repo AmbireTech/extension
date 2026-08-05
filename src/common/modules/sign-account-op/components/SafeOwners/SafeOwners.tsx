@@ -14,9 +14,12 @@ import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import { THEME_TYPES } from '@common/styles/themeConfig'
 
+import { getSignAndCloseOwnerAddr } from './helpers'
+
 const SafeOwners = ({
   account,
   onSign,
+  onSignAndClose,
   isSignLoading,
   signingKeyAddr,
   chainId,
@@ -27,6 +30,7 @@ const SafeOwners = ({
 }: {
   account: Account
   onSign?: (signingKeyAddr: Key['addr'], _chosenSigningKeyType: Key['type']) => void
+  onSignAndClose?: (signingKeyAddr: Key['addr'], _chosenSigningKeyType: Key['type']) => void
   isSignLoading: boolean
   signingKeyAddr: string | null
   chainId: string
@@ -63,6 +67,11 @@ const SafeOwners = ({
       })
   }, [importedKeys, account.addr, chainId, accountStates, signed])
 
+  const signAndCloseOwnerAddr = useMemo(
+    () => getSignAndCloseOwnerAddr(owners, threshold),
+    [owners, threshold]
+  )
+
   return (
     <View style={[style]}>
       <Text
@@ -83,8 +92,9 @@ const SafeOwners = ({
             hasSigned={o.hasSigned}
             addr={o.addr}
             type={o.type}
+            shouldSignAndClose={signAndCloseOwnerAddr === o.addr && !!onSignAndClose}
             style={[i === owners.length - 1 ? spacings.mb0 : spacings.mbTy, { width: '100%' }]}
-            onSign={onSign}
+            onSign={signAndCloseOwnerAddr === o.addr && onSignAndClose ? onSignAndClose : onSign}
             isSignLoading={isSignLoading && signingKeyAddr === o.addr}
           >
             <AccountKey

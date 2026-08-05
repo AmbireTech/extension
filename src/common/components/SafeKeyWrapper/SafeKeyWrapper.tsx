@@ -46,6 +46,7 @@ interface Props {
   addr: Key['addr']
   type: Key['type']
   onSign?: (signingKeyAddr: Key['addr'], _chosenSigningKeyType: Key['type']) => void
+  shouldSignAndClose?: boolean
 }
 
 const SafeKeyWrapper = ({
@@ -56,7 +57,8 @@ const SafeKeyWrapper = ({
   isSignLoading,
   onSign,
   addr,
-  type
+  type,
+  shouldSignAndClose
 }: Props) => {
   const { theme, styles } = useTheme(getStyles)
   const { t } = useTranslation()
@@ -72,7 +74,7 @@ const SafeKeyWrapper = ({
           <ButtonWithLoader
             type="primary"
             isLoading={isSignLoading}
-            text={t('Sign')}
+            text={t(shouldSignAndClose ? 'Sign & Close' : 'Sign')}
             onPress={() => onSign(addr, type)}
             size="tiny"
             style={[styles.icon, { minWidth: 60 }, isMobile && { height: 40 }]}
