@@ -17,7 +17,7 @@ export default function useRecoveryPhraseBackupStatus() {
   } = useController('SelectedAccountController')
 
   const notBackedUpSeedIds = useMemo(
-    () => seeds.filter(({ isBackedUp }) => !isBackedUp).map(({ id }) => id),
+    () => seeds.filter(({ notBackedUp }) => notBackedUp).map(({ id }) => id),
     [seeds]
   )
 

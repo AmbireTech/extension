@@ -1,5 +1,5 @@
 import React, { useCallback, useState } from 'react'
-import { View } from 'react-native'
+import { View, ViewStyle } from 'react-native'
 
 import { isValidPassword } from '@ambire-common/services/validations'
 import EditPenIcon from '@common/assets/svg/EditPenIcon'
@@ -96,7 +96,7 @@ const BackupUnlockStep = ({
             isValid={isValidPassword(password)}
             error={unlockErrorMessage}
             onSubmitEditing={handleStartWithPassword}
-            containerStyle={[spacings.mbXl, common.fullWidth]}
+            containerStyle={[spacings.mbXl as ViewStyle, common.fullWidth]}
             // The sheet itself is on primaryBackground, so the field needs to stand out from it
             backgroundColor={theme.secondaryBackground}
           />
