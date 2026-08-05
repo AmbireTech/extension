@@ -29,6 +29,8 @@ export const foldIntoEntropyPool = (sample: string) => {
   const sampleBytes = toUtf8Bytes(sample)
 
   entropyPool = keccak256(entropyPool ? concat([entropyPool, sampleBytes]) : sampleBytes)
+
+  return entropyPool
 }
 
 // A mouse or a digitizer reports at up to 120Hz, but samples 8ms apart on a smooth path are nearly
@@ -38,17 +40,18 @@ export const foldIntoEntropyPool = (sample: string) => {
 const MIN_MS_BETWEEN_SAMPLES = 50
 // The pool saturates its 256 bits within the first few dozen samples, so this is far more than it
 // can ever hold and observing past it buys nothing. What it gives up: fresh input is the only thing
-// that would recover the pool if its state ever leaked, since the ratchet derives its input from the
-// pool itself. That is a thin enough scenario not to be worth collecting for a whole session.
+// that would recover the pool if its state ever leaked, since advancing it only folds in the two
+// clocks, which an attacker can bound. That is a thin enough scenario not to be worth collecting for
+// a whole session.
 const MAX_OBSERVED_SAMPLES = 1000
 
 let lastSampleAt = 0
 let observedSamples = 0
 
 /**
- * Folds one observed event into the pool, throttled and bounded. For collection only - the ratchet in
- * `takeExtraEntropy` calls `foldIntoEntropyPool` directly, because skipping a fold there would let
- * two calls hand out the same value.
+ * Folds one observed event into the pool, throttled and bounded. For collection only -
+ * `takeExtraEntropy` calls `foldIntoEntropyPool` directly, because a throttled or capped fold there
+ * would let two calls hand out the same value.
  */
 export const observeEntropySample = (sample: string) => {
   if (observedSamples >= MAX_OBSERVED_SAMPLES) return
@@ -67,31 +70,31 @@ export const observeEntropySample = (sample: string) => {
 }
 
 /**
- * Reads the pool and advances it, so no two calls can hand out the same value. Named to take rather
+ * Hands out a one-way hash of the pool and advances it, so no two calls can hand out the same value
+ * and a leaked value tells an attacker nothing about the pool it came from. Named to take rather
  * than to get for that reason - this is not an idempotent read. See each platform's hook for how
  * much the pool and the two clocks are worth there.
  */
 export const takeExtraEntropy = () => {
   // Date.now() is an absolute wall clock, so unlike performance.now() it survives an attacker who
   // can bound when this JS context started, which is what bounds performance.now(). Both only
-  // really matter before anything has been observed, when they carry the whole string. There is
-  // deliberately no random fallback for that case: it would have to come from the same CSPRNG the
-  // EntropyGenerator already draws from, so in the one scenario this pool exists for - that CSPRNG
-  // being predictable - it would be predictable too, and contribute nothing.
-  const clocks = `${performance.now()}-${Date.now()}`
-  const extraEntropy = entropyPool ? `${entropyPool}-${clocks}` : clocks
+  // really matter before anything has been observed, when they are the only entropy in the pool.
+  // There is deliberately no random fallback for that case: it would have to come from the same
+  // CSPRNG the EntropyGenerator already draws from, so in the one scenario this pool exists for -
+  // that CSPRNG being predictable - it would be predictable too, and contribute nothing.
+  // Folding them in rather than only reading them is also what advances the pool: the new state is a
+  // hash of the old one, so it can never repeat, and two calls landing on the same coarsened clock
+  // reading still hand out different values.
+  const pool = foldIntoEntropyPool(`${performance.now()}-${Date.now()}`)
 
-  // For debugging: uncomment to see what a secret was generated with. fromPool false means it went
-  // down the fallback path, with the two clocks as the only entropy independent of the platform
-  // randomness, and observedSamples 0 means nothing is being collected at all.
-  // console.log('[extraEntropy] taken for secret generation', {
-  //   observedSamples,
-  //   fromPool: extraEntropy !== clocks
-  // })
+  // A hash of the pool rather than the pool itself, so one leaked extraEntropy reveals nothing about
+  // the pool that produced it, and therefore cannot derive what any later call will hand out.
+  const extraEntropy = keccak256(toUtf8Bytes(`take-${pool}`))
 
-  // Advance the pool so the value just handed out is not the state a later call would return - one
-  // leaked extraEntropy string then cannot stand in for the pool for the rest of the session.
-  foldIntoEntropyPool(extraEntropy)
+  // For debugging: uncomment to see how much had been collected when a secret was generated.
+  // observedSamples 0 means nothing is being collected at all, leaving the two clocks above as the
+  // only entropy here that is independent of the platform randomness.
+  // console.log('[extraEntropy] taken for secret generation', { observedSamples })
 
   return extraEntropy
 }
