@@ -14,21 +14,20 @@ const collectTouchEntropy = (e: GestureResponderEvent) => {
 
 // Spread onto the app-wide root view once - the mobile counterpart of the pointermove listener the
 // web hook attaches to `document`. Collecting has to stay out of React state because onTouchMove
-// fires on every frame of a drag, and re-rendering the app root at that rate would be a real
-// regression.
-// React Native registers onTouchStart/onTouchMove as bubbling events, so they fire for touches
-// on any child without taking part in responder negotiation. That is what makes this safe:
-// unlike a gesture-handler based observer, it can never claim (or fail to release) the touch
-// responder and freeze the elements underneath.
+// fires on every frame of a drag.
+// React Native registers onTouchStart/onTouchMove as bubbling events, so they fire for touches on any
+// child without taking part in responder negotiation. That is what makes this safe: unlike a
+// gesture-handler based observer, it can never claim (or fail to release) the touch responder and
+// freeze the elements underneath.
 export const entropyTouchHandlers = {
   onTouchStart: collectTouchEntropy,
   onTouchMove: collectTouchEntropy
 }
 
 /**
- * The mobile half of the entropy pool - see `entropyPool.ts` for what the pool is for and why it
- * exists. Here it is fed from the position and timing of touches, collected by
- * `entropyTouchHandlers` on the app root rather than by a listener this hook owns.
+ * The mobile half of the entropy pool - see `entropyPool.ts` for what the pool is for. Fed from the
+ * position and timing of touches, collected by `entropyTouchHandlers` on the app root rather than by
+ * a listener this hook owns.
  *
  * Worth ~50 bits when no touch has been observed and the two clocks in `takeExtraEntropy` carry it
  * alone (~20-30 from performance.now(), being how long the app had been running, which unlike a
