@@ -21,6 +21,13 @@ export default function useRecoveryPhraseBackupStatus() {
     [seeds]
   )
 
+  // Phrases awaiting a backup come first, so the user doesn't have to scroll past
+  // long lists of accounts to find out that one of their phrases is at risk.
+  const seedsSortedByBackupStatus = useMemo(
+    () => [...seeds].sort((a, b) => Number(!!b.notBackedUp) - Number(!!a.notBackedUp)),
+    [seeds]
+  )
+
   const seedIdOfSelectedAccountNeedingBackup = useMemo(() => {
     if (!selectedAccount || portfolio.totalBalance <= 0) return null
 
@@ -34,5 +41,5 @@ export default function useRecoveryPhraseBackupStatus() {
     return notBackedUpSeedIds.includes(seedIdOfSelectedAccount) ? seedIdOfSelectedAccount : null
   }, [keys, notBackedUpSeedIds, portfolio.totalBalance, selectedAccount])
 
-  return { notBackedUpSeedIds, seedIdOfSelectedAccountNeedingBackup }
+  return { notBackedUpSeedIds, seedsSortedByBackupStatus, seedIdOfSelectedAccountNeedingBackup }
 }

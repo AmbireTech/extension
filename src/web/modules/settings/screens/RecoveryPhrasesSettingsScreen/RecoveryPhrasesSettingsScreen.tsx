@@ -27,7 +27,7 @@ const RecoveryPhraseSettingsScreen = () => {
   const { statuses } = useController('StorageController').state
   const { accounts } = useController('AccountsController').state
   const { seeds, keys } = useController('KeystoreController').state
-  const { notBackedUpSeedIds } = useRecoveryPhraseBackupStatus()
+  const { notBackedUpSeedIds, seedsSortedByBackupStatus } = useRecoveryPhraseBackupStatus()
   const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useModalize()
   const [recoveryPhraseToManage, setRecoveryPhraseToManage] = useState<{
     id: string
@@ -65,7 +65,7 @@ const RecoveryPhraseSettingsScreen = () => {
         testID={`recovery-phrase-row-${item.id}`}
         spacingsSize="small"
         style={{
-          marginBottom: index < seeds.length - 1 ? SPACING_TY : 0,
+          marginBottom: index < seedsSortedByBackupStatus.length - 1 ? SPACING_TY : 0,
           backgroundColor: theme.secondaryBackground
         }}
       >
@@ -134,7 +134,11 @@ const RecoveryPhraseSettingsScreen = () => {
     <View style={flexbox.flex1}>
       <SettingsPageHeader title={t('Recovery phrases')} />
       {seeds.length ? (
-        <FlatList data={seeds} renderItem={renderItem} keyExtractor={(item) => item.id} />
+        <FlatList
+          data={seedsSortedByBackupStatus}
+          renderItem={renderItem}
+          keyExtractor={(item) => item.id}
+        />
       ) : (
         <View
           style={[
