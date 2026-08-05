@@ -5,6 +5,7 @@ import React, { createContext, useCallback, useEffect, useMemo, useState } from 
 import { Platform, StyleSheet, View } from 'react-native'
 
 import { EntropyGenerator } from '@ambire-common/libs/entropyGenerator/entropyGenerator'
+import { captureException } from '@common/config/analytics/CrashAnalytics'
 import { useTranslation } from '@common/config/localization/localization'
 import useController from '@common/hooks/useController'
 import useExtraEntropy from '@common/hooks/useExtraEntropy'
@@ -126,13 +127,23 @@ const BiometricsProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const saveBiometricsSecret = useCallback(async () => {
     setIsAuthInProcess(true)
 
-    // This secret unlocks the main key just like the password does, so it is generated the
-    // same way the extension generates its biometrics secret - through the EntropyGenerator,
-    // which mixes user-driven entropy into the random bytes instead of trusting the platform
-    // randomness alone.
-    const biometricsSecret = hexlify(
-      new EntropyGenerator().generateRandomBytes(32, getExtraEntropy())
-    )
+    let biometricsSecret: string
+    try {
+      // This secret unlocks the main key just like the password does, so it is generated the
+      // same way the extension generates its biometrics secret - through the EntropyGenerator,
+      // which mixes user-driven entropy into the random bytes instead of trusting the platform
+      // randomness alone.
+      biometricsSecret = hexlify(new EntropyGenerator().generateRandomBytes(32, getExtraEntropy()))
+    } catch (e) {
+      // Unlike the plain randomBytes() this replaced, EntropyGenerator can throw - so without this
+      // the toggle would silently do nothing while isAuthInProcess stayed set.
+      captureException(e)
+      addToast(t('Could not turn on biometrics unlock. Please try again.') as string, {
+        type: 'error'
+      })
+
+      return null
+    }
 
     // on iOS secureStorage.set does not trigger the biometric prompt
     // so we need to trigger it manually
@@ -149,7 +160,7 @@ const BiometricsProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     } catch (e) {
       return null
     }
-  }, [authenticate, getExtraEntropy])
+  }, [authenticate, getExtraEntropy, addToast, t])
 
   const getBiometricsSecret = useCallback(async () => {
     setIsAuthInProcess(true)
