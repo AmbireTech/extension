@@ -7,6 +7,7 @@ import Checkbox from '@common/components/Checkbox'
 import { SelectValue } from '@common/components/Select/types'
 import useController from '@common/hooks/useController'
 import spacings from '@common/styles/spacings'
+import flexbox from '@common/styles/utils/flexbox'
 
 import { Props as EstimationProps } from '../types'
 
@@ -119,7 +120,7 @@ const DefaultFeeSelector = ({
   return (
     <Checkbox
       value={isDefaultFeeOptionSelected}
-      style={[spacings.mt, spacings.mb0]}
+      style={[spacings.mt, spacings.mb0, flexbox.alignSelfEnd]}
       onValueChange={onSetDefaultFeeOption}
       label={defaultFeeOptionCheckboxLabel}
       labelProps={{ fontSize: 14 }}
