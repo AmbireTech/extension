@@ -12,6 +12,8 @@ import Text from '@common/components/Text'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import Account from '@common/modules/account-select/components/Account'
+import RecoveryPhraseNotBackedUpAlert from '@common/modules/recovery-phrase-backup/components/RecoveryPhraseNotBackedUpAlert'
+import useRecoveryPhraseBackupStatus from '@common/modules/recovery-phrase-backup/hooks/useRecoveryPhraseBackupStatus'
 import ManageRecoveryPhrase from '@common/modules/settings/ManageRecoveryPhrase'
 import spacings, { SPACING_TY } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
@@ -27,6 +29,7 @@ const RecoveryPhrasesSettingsScreen = () => {
   const { statuses } = useController('StorageController').state
   const { accounts } = useController('AccountsController').state
   const { seeds, keys } = useController('KeystoreController').state
+  const { notBackedUpSeedIds, seedsSortedByBackupStatus } = useRecoveryPhraseBackupStatus()
   const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useModalize()
   const [recoveryPhraseToManage, setRecoveryPhraseToManage] = useState<{
     id: string
@@ -59,7 +62,7 @@ const RecoveryPhrasesSettingsScreen = () => {
         testID={`recovery-phrase-row-${item.id}`}
         spacingsSize="small"
         style={{
-          marginBottom: index < seeds.length - 1 ? SPACING_TY : 0,
+          marginBottom: index < seedsSortedByBackupStatus.length - 1 ? SPACING_TY : 0,
           backgroundColor: theme.secondaryBackground
         }}
       >
@@ -123,6 +126,9 @@ const RecoveryPhrasesSettingsScreen = () => {
               : t('No accounts added from this seed.')}
           </Text>
         )}
+        {notBackedUpSeedIds.includes(item.id) && (
+          <RecoveryPhraseNotBackedUpAlert seedId={item.id} style={spacings.mtSm} />
+        )}
       </Panel>
     )
   }
@@ -131,7 +137,11 @@ const RecoveryPhrasesSettingsScreen = () => {
     <MobileLayoutContainer>
       <MobileLayoutWrapperMainContent title={t('Recovery phrases')} withBackButton>
         {seeds.length ? (
-          <FlatList data={seeds} renderItem={renderItem} keyExtractor={(item) => item.id} />
+          <FlatList
+            data={seedsSortedByBackupStatus}
+            renderItem={renderItem}
+            keyExtractor={(item) => item.id}
+          />
         ) : (
           <View
             style={[

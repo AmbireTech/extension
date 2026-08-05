@@ -1,0 +1,3 @@
+import RecoveryPhraseBackupBottomSheet from './RecoveryPhraseBackupBottomSheet'
+
+export default RecoveryPhraseBackupBottomSheet

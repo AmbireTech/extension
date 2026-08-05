@@ -2,6 +2,7 @@ import React from 'react'
 
 import GridPlusIcon from '@common/assets/svg/GridPlusIcon'
 import LedgerBadgeIcon from '@common/assets/svg/LedgerBadgeIcon'
+import NfcIcon from '@common/assets/svg/NfcIcon'
 import ReceiveIcon from '@common/assets/svg/ReceiveIcon'
 import SafeIcon from '@common/assets/svg/SafeIcon'
 import SingleKeyIcon from '@common/assets/svg/SingleKeyIcon'
@@ -52,6 +53,13 @@ const AccountKeyBanner = ({ type }: { type: KeyType }) => {
     return (
       <Wrapper text="Qr-based">
         <ReceiveIcon {...iconProps} />
+      </Wrapper>
+    )
+
+  if (type === 'nfc')
+    return (
+      <Wrapper text="NFC card">
+        <NfcIcon {...iconProps} />
       </Wrapper>
     )
 
