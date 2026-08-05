@@ -47,9 +47,9 @@ export const foldIntoEntropyPool = (sample: string) => {
 // a thin enough scenario not to be worth collecting for a whole session.
 //
 // Budgeted per source rather than shared, because the sources differ by orders of magnitude in rate
-// and by several times in worth: mousemove fires at 60-120Hz and would drain a shared budget within
-// seconds of the page opening - long before the user reaches a password field, and so before keydown,
-// the richest source here at ~6-10 bits against ~2-4, ever got to contribute a single sample.
+// and by several times in worth: pointermove fires at 60-120Hz and would drain a shared budget
+// within seconds of the page opening - long before the user reaches a password field, and so before
+// keydown, the richest source here at ~6-10 bits against ~2-4, ever got to contribute a single sample.
 export const MAX_OBSERVED_SAMPLES_PER_SOURCE = 512
 
 const observedSamples: Record<string, number> = {}

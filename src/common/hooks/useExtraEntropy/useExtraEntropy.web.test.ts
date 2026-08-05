@@ -51,7 +51,7 @@ describe('useExtraEntropy (web)', () => {
     // Exactly one distinct callback per source: more than zero means the source reaches the pool at
     // all, and exactly one means the three consumers share a callback, which is what lets
     // addEventListener dedupe them into a single registration rather than folding each event 3x.
-    expect(listenersByType('mousemove').size).toBe(1)
+    expect(listenersByType('pointermove').size).toBe(1)
     expect(listenersByType('keydown').size).toBe(1)
   })
 })

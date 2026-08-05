@@ -52,7 +52,7 @@ describe('entropyPool', () => {
   it('observes every sample it is given, up to the cap, and nothing past it', () => {
     const afterObserving = (...samples: string[]) =>
       takeFromFreshPool((pool) =>
-        samples.forEach((sample) => pool.observeEntropySample('mousemove', sample))
+        samples.forEach((sample) => pool.observeEntropySample('pointermove', sample))
       )
 
     // Differing from an untouched pool means samples get through at all, which is what would break
@@ -70,19 +70,19 @@ describe('entropyPool', () => {
   })
 
   // The cap is what makes the source argument load-bearing rather than decorative: with one shared
-  // budget, mousemove fills it within seconds of the page opening and every later keystroke is
+  // budget, pointermove fills it within seconds of the page opening and every later keystroke is
   // dropped - which is exactly the source worth the most bits per event.
   it('caps each source on its own, so a noisy source cannot starve a quiet one', () => {
-    const spendTheMouseBudget = (pool: EntropyPool) => {
+    const spendThePointerBudget = (pool: EntropyPool) => {
       for (let i = 0; i < MAX_OBSERVED_SAMPLES_PER_SOURCE; i += 1)
-        pool.observeEntropySample('mousemove', `100-200-${i}`)
+        pool.observeEntropySample('pointermove', `100-200-${i}`)
     }
 
     const afterTheKeystroke = takeFromFreshPool((pool) => {
-      spendTheMouseBudget(pool)
+      spendThePointerBudget(pool)
       pool.observeEntropySample('keydown', '1234.5')
     })
 
-    expect(afterTheKeystroke).not.toEqual(takeFromFreshPool(spendTheMouseBudget))
+    expect(afterTheKeystroke).not.toEqual(takeFromFreshPool(spendThePointerBudget))
   })
 })

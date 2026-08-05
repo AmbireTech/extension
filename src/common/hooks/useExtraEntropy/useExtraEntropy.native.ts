@@ -12,7 +12,7 @@ const collectTouchEntropy = (e: GestureResponderEvent) => {
   observeEntropySample('touch', `${pageX}-${pageY}-${timestamp}`)
 }
 
-// Spread onto the app-wide root view once - the mobile counterpart of the mousemove listener the
+// Spread onto the app-wide root view once - the mobile counterpart of the pointermove listener the
 // web hook attaches to `document`. Collecting has to stay out of React state because onTouchMove
 // fires on every frame of a drag, and re-rendering the app root at that rate would be a real
 // regression.
