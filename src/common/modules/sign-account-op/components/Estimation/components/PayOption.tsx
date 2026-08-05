@@ -4,9 +4,9 @@ import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 
 import { FeePaymentOption } from '@ambire-common/libs/estimate/interfaces'
+import { ZERO_ADDRESS } from '@ambire-common/services/socket/constants'
 import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
 import shortenAddress from '@ambire-common/utils/shortenAddress'
-import GasTankIcon from '@common/assets/svg/GasTankIcon'
 import WarningIcon from '@common/assets/svg/WarningIcon'
 import Avatar from '@common/components/Avatar'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
@@ -43,7 +43,6 @@ const PayOption = ({
   const {
     state: { account }
   } = useController('SelectedAccountController')
-  const { networks } = useController('NetworksController').state
   const signAccountOpState = useController('SignAccountOpController').state
 
   const paidByAccountData = useMemo(
@@ -55,14 +54,6 @@ const PayOption = ({
     return formatDecimals(Number(formatUnits(amount, feeOption.token.decimals)), 'amount')
   }, [amount, feeOption.token.decimals])
 
-  const feeTokenNetworkName = useMemo(() => {
-    if (feeOption.token.flags.onGasTank) {
-      return 'Gas Tank'
-    }
-
-    return networks.find((n) => n.chainId === feeOption.token.chainId)?.name || ''
-  }, [feeOption.token.flags.onGasTank, feeOption.token.chainId, networks])
-
   const warning = useMemo(() => {
     if (!signAccountOpState) return
 
@@ -72,6 +63,9 @@ const PayOption = ({
   }, [signAccountOpState])
 
   const isPaidByAnotherAccount = feeOption.paidBy !== account?.addr
+  const isNativeToken = feeOption.token.address === ZERO_ADDRESS && !feeOption.token.flags.onGasTank
+  const showWalletBalanceBadge = isNativeToken && !isPaidByAnotherAccount
+  const showGasTankBadge = !!feeOption.token.flags.onGasTank
 
   if (!paidByAccountData) return null
 
@@ -85,71 +79,67 @@ const PayOption = ({
         }
       ]}
     >
-      <View style={[flexbox.flex1, flexbox.directionRow, flexbox.alignCenter, spacings.mrTy]}>
-        {feeOption.token.flags.onGasTank ? (
-          <View style={styles.gasTankIconWrapper}>
-            <GasTankIcon
-              color={theme.primaryAccent300}
-              width={20}
-              height={20}
-              style={{ marginLeft: 2 }}
-            />
-          </View>
+      <TokenIcon
+        containerStyle={{
+          width: 32,
+          height: 32
+        }}
+        withContainer
+        width={28}
+        height={28}
+        networkSize={14}
+        address={feeOption.token.address}
+        chainId={feeOption.token.chainId}
+        onGasTank={feeOption.token.flags.onGasTank}
+        skeletonAppearance="secondaryBackground"
+      />
+
+      <View style={[flexbox.flex1, spacings.mlTy, spacings.mrTy]}>
+        {disabledReason ? (
+          <Text
+            weight="medium"
+            fontSize={isMobile ? 10 : 12}
+            numberOfLines={1}
+            appearance={disabledTextAppearance}
+          >
+            {disabledReason}
+          </Text>
         ) : (
-          <TokenIcon
-            containerStyle={{
-              width: 32,
-              height: 32
-            }}
-            withContainer
-            width={28}
-            height={28}
-            networkSize={14}
-            address={feeOption.token.address}
-            chainId={feeOption.token.chainId}
-            onGasTank={feeOption.token.flags.onGasTank}
-            skeletonAppearance="secondaryBackground"
-          />
-        )}
-
-        <View style={[flexbox.flex1, spacings.mlTy]}>
-          <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-            <Text
-              weight="semiBold"
-              fontSize={13}
-              numberOfLines={1}
-              appearance={shouldHighlightExtremeGasFee ? 'warningText' : 'primaryText'}
-            >
-              {formattedAmount} {feeOption.token.symbol}{' '}
-            </Text>
-            {!!feeOption.token.flags.onGasTank && (
-              <View style={styles.gasTankBadge}>
-                <Text fontSize={10} color="white" weight="medium">
-                  {t('Gas Tank')}
-                </Text>
-              </View>
-            )}
-          </View>
-
-          {disabledReason ? (
-            <Text
-              weight="medium"
-              fontSize={isMobile ? 10 : 12}
-              numberOfLines={1}
-              appearance={disabledTextAppearance}
-            >
-              {disabledReason}
-            </Text>
-          ) : (
+          <View>
+            <View style={[flexbox.directionRow, flexbox.alignCenter]}>
+              <Text
+                weight="semiBold"
+                fontSize={14}
+                numberOfLines={1}
+                appearance={shouldHighlightExtremeGasFee ? 'warningText' : 'primaryText'}
+              >
+                {formatDecimals(Number(amountUsd), 'value')}
+              </Text>
+              {showGasTankBadge && (
+                <View style={styles.gasTankBadge}>
+                  <Text fontSize={10} color="white" weight="medium">
+                    {t('Gas Tank')}
+                  </Text>
+                </View>
+              )}
+              {showWalletBalanceBadge && (
+                <View style={styles.walletBalanceBadge}>
+                  <Text fontSize={10} weight="medium" appearance="infoText">
+                    {t('Wallet balance')}
+                  </Text>
+                </View>
+              )}
+            </View>
             <Text
               appearance={shouldHighlightExtremeGasFee ? 'warningText' : 'secondaryText'}
               weight="medium"
               fontSize={12}
+              numberOfLines={1}
             >
-              {formatDecimals(Number(amountUsd), 'value')}
+              {formattedAmount} {feeOption.token.symbol}
             </Text>
-          )}
-        </View>
+          </View>
+        )}
       </View>
       {isPaidByAnotherAccount && (
         <View style={[flexbox.alignEnd]}>

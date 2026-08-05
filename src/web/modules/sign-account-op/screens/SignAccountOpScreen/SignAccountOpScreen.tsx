@@ -33,7 +33,7 @@ import {
   TabLayoutContainer,
   TabLayoutWrapperMainContent
 } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
-import useCloseActionWindow from '@web/hooks/useCloseActionWindow'
+import { closeCurrentWindow } from '@web/extension-services/background/webapi/window'
 import useDappVerificationHoldButtonType from '@web/hooks/useDappVerificationHoldButtonType'
 import Modals from '@web/modules/sign-account-op/components/Modals/Modals'
 
@@ -55,6 +55,11 @@ const SignAccountOpScreen = () => {
   const [containerHeight, setContainerHeight] = useState(0)
   const [contentHeight, setContentHeight] = useState(0)
   const [hasReachedBottom, setHasReachedBottom] = useState<boolean | null>(null)
+
+  const handleAddToCart = useCallback(() => {
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises
+    closeCurrentWindow()
+  }, [])
 
   const handleUpdateStatus = useCallback(
     (status: SigningStatus) => {
@@ -90,6 +95,7 @@ const SignAccountOpScreen = () => {
     setIsChooseSignerShown,
     onSignButtonClick,
     handleChangeSigningKey,
+    handleChangeSigningKeyAndClose,
     warningToPromptBeforeSign,
     handleDismissLedgerConnectModal,
     slowPaymasterRequest,
@@ -127,7 +133,8 @@ const SignAccountOpScreen = () => {
     handleUpdateStatus,
     signAccountOpState,
     handleUpdate: updateController,
-    hasReachedBottom
+    hasReachedBottom,
+    onSafeSignComplete: handleAddToCart
   })
 
   const accountOpRequest = useMemo(() => {
@@ -150,12 +157,6 @@ const SignAccountOpScreen = () => {
       }
     })
   }, [requestsDispatch, accountOpRequest, visibleUserRequests.length])
-
-  const closeActionWindow = useCloseActionWindow()
-
-  const handleAddToCart = useCallback(() => {
-    closeActionWindow()
-  }, [closeActionWindow])
 
   useEffect(() => {
     if (isSignDisabled || !containerHeight || !contentHeight) return
@@ -259,6 +260,7 @@ const SignAccountOpScreen = () => {
                     <SafeOwners
                       account={signAccountOpState.account}
                       onSign={handleChangeSigningKey}
+                      onSignAndClose={handleChangeSigningKeyAndClose}
                       isSignLoading={isSignLoading}
                       signingKeyAddr={signAccountOpState.accountOp.signingKeyAddr}
                       chainId={signAccountOpState.accountOp.chainId.toString()}
