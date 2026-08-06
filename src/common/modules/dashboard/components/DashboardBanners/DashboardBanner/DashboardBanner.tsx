@@ -10,15 +10,21 @@ import BatchIcon from '@common/assets/svg/BatchIcon'
 import Banner from '@common/components/Banner'
 import NetworkIcon from '@common/components/NetworkIcon'
 import Text from '@common/components/Text'
-import { isMobile } from '@common/config/env'
+import { isMobile, isWeb } from '@common/config/env'
 import useController from '@common/hooks/useController'
 import useNavigation from '@common/hooks/useNavigation'
 import useToast from '@common/hooks/useToast'
 import DashboardBannerBottomSheet from '@common/modules/dashboard/components/DashboardBanners/DashboardBannerBottomSheet'
 import { ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
+import { getUiType } from '@common/utils/uiType'
 
 import applyOtaUpdate from './applyOtaUpdate'
+
+const { isPopup, isTab } = getUiType()
+// the single row layout truncates the title when there is little horizontal
+// space, so it is limited to the extension popup and the full tab
+const supportsSingleRow = isWeb && (isPopup || isTab)
 
 const DashboardBanner = ({
   banner
@@ -42,6 +48,7 @@ const DashboardBanner = ({
   const { dispatch: extensionUpdateDispatch } = useController('ExtensionUpdateController')
   const { ref: sheetRef, close: closeBottomSheet, open: openBottomSheet } = useModalize()
   const primaryAction = actions[0]
+  const isSingleRow = supportsSingleRow && category === 'pending-to-be-signed-acc-op'
 
   const Icon = useMemo(() => {
     if (category === 'pending-to-be-signed-acc-op') return BatchIcon
@@ -266,8 +273,8 @@ const DashboardBanner = ({
         titleAfter={titleAfter}
         type={type}
         text={text}
-        singleRow={category === 'pending-to-be-signed-acc-op'}
-        style={category === 'pending-to-be-signed-acc-op' ? spacings.pbTy : undefined}
+        singleRow={isSingleRow}
+        style={isSingleRow ? spacings.pbTy : undefined}
         buttonText={primaryAction?.label}
         onCloseIconPress={
           dismissAction && !dismissAction.label ? () => handleActionPress(dismissAction) : undefined
