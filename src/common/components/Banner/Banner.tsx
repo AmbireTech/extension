@@ -64,6 +64,7 @@ const Banner = React.memo(
     const hasPrimaryAction = !!buttonText && !!onPress
     const hasDismissAction = !!dismissButtonText && !!onDismissButtonPress
     const hasActions = hasPrimaryAction || hasDismissAction
+    const hasContentBelowTitle = !singleRow && (!!text || hasActions)
 
     const Icon = useMemo(() => {
       if (CustomIcon) return CustomIcon
@@ -87,8 +88,8 @@ const Banner = React.memo(
             flexbox.directionRow,
             flexbox.justifySpaceBetween,
             singleRow ? flexbox.alignCenter : undefined,
-
-            singleRow ? undefined : !!text ? spacings.mbTy : spacings.mbSm,
+            // the title row needs a bottom margin only when something renders below it
+            hasContentBelowTitle && (text ? spacings.mbTy : spacings.mbSm),
             {
               width: '100%'
             }
@@ -152,7 +153,7 @@ const Banner = React.memo(
           )}
         </View>
 
-        {!singleRow && (
+        {hasContentBelowTitle && (
           <View style={[isWeb && flexbox.wrap, { width: '100%' }]}>
             {!!text && (
               <Text
