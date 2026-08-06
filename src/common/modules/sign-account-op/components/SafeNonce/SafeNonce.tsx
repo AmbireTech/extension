@@ -5,10 +5,10 @@ import { View, ViewStyle } from 'react-native'
 import NetworkIcon from '@common/components/NetworkIcon'
 import NumberInput from '@common/components/NumberInput'
 import Text from '@common/components/Text'
-import { isWeb } from '@common/config/env'
+import { isMobile, isWeb } from '@common/config/env'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
-import spacings, { SPACING_MI } from '@common/styles/spacings'
+import spacings, { SPACING_MI, SPACING_TY } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
 import { isValidSafeNonce } from './helpers'
@@ -95,7 +95,7 @@ const SafeNonce = () => {
           disabled={!canEdit}
           containerStyle={[spacings.mb0 as ViewStyle, isWeb ? { width: 80 } : flexbox.flex1]}
           inputWrapperStyle={{
-            height: 32,
+            height: isMobile ? 30 : 32,
             borderRadius: 8,
             ...(canEdit && !!validationMessage ? { borderColor: theme.errorDecorative } : {})
           }}
@@ -149,12 +149,11 @@ const SafeNonce = () => {
     <View
       style={[
         flexbox.directionRow,
-        flexbox.alignCenter,
-        spacings.ph,
-        spacings.pvSm,
+        flexbox.alignStart,
+        spacings.pvTy,
+        spacings.phSm,
         spacings.mbSm,
         {
-          minHeight: 88,
           borderRadius: 16,
           borderWidth: 1,
           borderColor: theme.primaryBorder
@@ -165,8 +164,9 @@ const SafeNonce = () => {
         <Text fontSize={12} appearance="secondaryText">
           {t('Network')}
         </Text>
-        <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mtMi]}>
-          <NetworkIcon id={signAccountOpState.accountOp.chainId.toString()} size={20} />
+        {/* Same height as the nonce input so both values are centered with one another */}
+        <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mtMi, { height: 32 }]}>
+          <NetworkIcon id={signAccountOpState.accountOp.chainId.toString()} size={20} scale={1} />
           <Text
             fontSize={16}
             weight="medium"
@@ -177,14 +177,16 @@ const SafeNonce = () => {
           </Text>
         </View>
       </View>
+      {/* Negative vertical margin cancels the card padding so the line spans edge to edge */}
       <View
         style={{
           width: 1,
-          height: 64,
+          alignSelf: 'stretch',
+          marginVertical: -SPACING_TY,
           backgroundColor: theme.primaryBorder
         }}
       />
-      <View style={[flexbox.flex1, spacings.pl, { position: 'relative' }]}>
+      <View style={[flexbox.flex1, spacings.plSm, { position: 'relative' }]}>
         <Text fontSize={12} appearance="secondaryText">
           {t('Nonce')}
         </Text>

@@ -329,12 +329,7 @@ const SignAccountOpScreen = () => {
           showsVerticalScrollIndicator={false}
         >
           {signAccountOpState?.account.safeCreation ? (
-            <>
-              <View style={spacings.mbSm}>
-                <SectionHeading withMb={false}>{t('Overview')}</SectionHeading>
-              </View>
-              <SafeNonce />
-            </>
+            <SafeNonce />
           ) : (
             <View
               style={[
