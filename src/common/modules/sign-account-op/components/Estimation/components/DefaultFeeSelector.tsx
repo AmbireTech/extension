@@ -75,7 +75,7 @@ const DefaultFeeSelector = ({
   }, [doesFeeTokenPreferenceMatchPayValue, payValue, pendingFeeTokenPreference, signAccountOpState])
 
   const defaultFeeOptionCheckboxLabel = useMemo(() => {
-    return t('Set this as a default option for {{network}}?', {
+    return t('Set this as a default speed for {{network}}?', {
       network: networkName || t('this network')
     })
   }, [networkName, t])
