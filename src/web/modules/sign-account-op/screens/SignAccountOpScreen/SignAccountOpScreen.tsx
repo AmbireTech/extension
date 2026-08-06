@@ -33,7 +33,7 @@ import {
   TabLayoutContainer,
   TabLayoutWrapperMainContent
 } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
-import { closeCurrentWindow } from '@web/extension-services/background/webapi/window'
+import useCloseActionWindow from '@web/hooks/useCloseActionWindow'
 import useDappVerificationHoldButtonType from '@web/hooks/useDappVerificationHoldButtonType'
 import Modals from '@web/modules/sign-account-op/components/Modals/Modals'
 
@@ -52,14 +52,14 @@ const SignAccountOpScreen = () => {
   const { t } = useTranslation()
   const { theme } = useTheme()
   const { isCompactSidePanelLayout } = useCompactActionRequestLayout()
+  const closeActionWindow = useCloseActionWindow()
   const [containerHeight, setContainerHeight] = useState(0)
   const [contentHeight, setContentHeight] = useState(0)
   const [hasReachedBottom, setHasReachedBottom] = useState<boolean | null>(null)
 
   const handleAddToCart = useCallback(() => {
-    // eslint-disable-next-line @typescript-eslint/no-floating-promises
-    closeCurrentWindow()
-  }, [])
+    closeActionWindow()
+  }, [closeActionWindow])
 
   const handleUpdateStatus = useCallback(
     (status: SigningStatus) => {
