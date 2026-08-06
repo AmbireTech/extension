@@ -85,7 +85,7 @@ const ToToken: FC<Props> = ({ simulationFailed }) => {
               toChainId: networks.filter((n) => String(n.chainId) === networkOption.value)[0]
                 ?.chainId
             },
-            undefined
+            { isToSelectionByUser: true }
           ]
         }
       })
@@ -206,7 +206,7 @@ const ToToken: FC<Props> = ({ simulationFailed }) => {
               // Reset the from token if it's the same. undefined acts as "do nothing", null as reset
               fromSelectedToken: isSameAsFromToken ? null : undefined
             },
-            undefined
+            { isToSelectionByUser: true }
           ]
         }
       })
@@ -354,8 +354,8 @@ const ToToken: FC<Props> = ({ simulationFailed }) => {
             })}
           >
             <WalletIcon
-              width={18}
-              height={18}
+              width={20}
+              height={20}
               color={simulationFailed ? theme.warningDecorative : theme.tertiaryText}
             />
             <Text

@@ -20,6 +20,7 @@ import Estimation from '@common/modules/sign-account-op/components/Estimation'
 import Footer from '@common/modules/sign-account-op/components/Footer'
 import PendingTransactions from '@common/modules/sign-account-op/components/PendingTransactions'
 import SafeEip712Data from '@common/modules/sign-account-op/components/SafeEip712Data'
+import SafeNonce from '@common/modules/sign-account-op/components/SafeNonce'
 import SafeOwners from '@common/modules/sign-account-op/components/SafeOwners'
 import SafetyChecksOverlay from '@common/modules/sign-account-op/components/SafetyChecksOverlay'
 import SectionHeading from '@common/modules/sign-account-op/components/SectionHeading'
@@ -53,6 +54,14 @@ const SignAccountOpScreen = () => {
   const [hasReachedBottom, setHasReachedBottom] = useState<boolean | null>(null)
   const { navigate } = useNavigation()
   const isInsideBottomSheet = useIsInsideBottomSheet()
+  const handleAddToCart = useCallback(() => {
+    if (isInsideBottomSheet && closeRequestModal) {
+      closeRequestModal()
+    } else {
+      navigate(ROUTES.dashboard)
+    }
+  }, [isInsideBottomSheet, closeRequestModal, navigate])
+
   const handleUpdateStatus = useCallback(
     (status: SigningStatus) => {
       signAccountOpDispatch({
@@ -87,6 +96,7 @@ const SignAccountOpScreen = () => {
     setIsChooseSignerShown,
     onSignButtonClick,
     handleChangeSigningKey,
+    handleChangeSigningKeyAndClose,
     warningToPromptBeforeSign,
     handleDismissLedgerConnectModal,
     slowPaymasterRequest,
@@ -124,7 +134,8 @@ const SignAccountOpScreen = () => {
     handleUpdateStatus,
     signAccountOpState,
     handleUpdate: updateController,
-    hasReachedBottom
+    hasReachedBottom,
+    onSafeSignComplete: handleAddToCart
   })
 
   const accountOpRequest = useMemo(() => {
@@ -147,14 +158,6 @@ const SignAccountOpScreen = () => {
       }
     })
   }, [requestsDispatch, accountOpRequest, visibleUserRequests.length])
-
-  const handleAddToCart = useCallback(() => {
-    if (isInsideBottomSheet && closeRequestModal) {
-      closeRequestModal()
-    } else {
-      navigate(ROUTES.dashboard)
-    }
-  }, [isInsideBottomSheet, closeRequestModal, navigate])
 
   useEffect(() => {
     if (isSignDisabled || !containerHeight || !contentHeight) return
@@ -254,6 +257,7 @@ const SignAccountOpScreen = () => {
                   <SafeOwners
                     account={signAccountOpState.account}
                     onSign={handleChangeSigningKey}
+                    onSignAndClose={handleChangeSigningKeyAndClose}
                     isSignLoading={isSignLoading}
                     signingKeyAddr={signAccountOpState.accountOp.signingKeyAddr}
                     chainId={signAccountOpState.accountOp.chainId.toString()}
@@ -324,17 +328,26 @@ const SignAccountOpScreen = () => {
           contentContainerStyle={spacings.pbSm}
           showsVerticalScrollIndicator={false}
         >
-          <View
-            style={[
-              flexbox.directionRow,
-              flexbox.alignCenter,
-              flexbox.justifySpaceBetween,
-              spacings.mbSm
-            ]}
-          >
-            <SectionHeading withMb={false}>{t('Overview')}</SectionHeading>
-            <NetworkBadge chainId={network?.chainId} withOnPrefix />
-          </View>
+          {signAccountOpState?.account.safeCreation ? (
+            <>
+              <View style={spacings.mbSm}>
+                <SectionHeading withMb={false}>{t('Overview')}</SectionHeading>
+              </View>
+              <SafeNonce />
+            </>
+          ) : (
+            <View
+              style={[
+                flexbox.directionRow,
+                flexbox.alignCenter,
+                flexbox.justifySpaceBetween,
+                spacings.mbSm
+              ]}
+            >
+              <SectionHeading withMb={false}>{t('Overview')}</SectionHeading>
+              <NetworkBadge chainId={network?.chainId} withOnPrefix />
+            </View>
+          )}
           <PendingTransactions
             network={network}
             setDelegation={signAccountOpState?.accountOp.meta?.setDelegation}

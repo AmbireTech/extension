@@ -50,7 +50,7 @@ const MobileErc7730SummaryVisualization = ({
         ]}
       >
         {values.map((value, index) => (
-          <View key={value.id} style={index > 0 && spacings.mlTy}>
+          <View key={value.id} style={[{ minWidth: 0, flexShrink: 1 }, index > 0 && spacings.mlTy]}>
             {renderValue(value, overrideTextSize)}
           </View>
         ))}
@@ -91,8 +91,13 @@ const MobileErc7730SummaryVisualization = ({
             { width: '100%', minWidth: 0 }
           ]}
         >
-          <View style={[flexbox.directionRow, flexbox.alignCenter, { minWidth: 0, flexShrink: 1 }]}>
-            <Text fontSize={subtitleTextSize} appearance="secondaryText" style={spacings.mrTy}>
+          <View style={[flexbox.directionRow, flexbox.alignCenter, { flexShrink: 0 }]}>
+            <Text
+              fontSize={subtitleTextSize}
+              appearance="secondaryText"
+              numberOfLines={1}
+              style={[spacings.mrTy, { flexShrink: 0 }]}
+            >
               {spenderRow.label}
             </Text>
           </View>
@@ -116,7 +121,8 @@ const MobileErc7730SummaryVisualization = ({
             <Text
               fontSize={Math.max(textSize - 4, 10)}
               appearance="secondaryText"
-              style={spacings.mrTy}
+              numberOfLines={1}
+              style={[spacings.mrTy, { flexShrink: 0 }]}
             >
               {row.label}
             </Text>

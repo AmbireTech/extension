@@ -2,10 +2,10 @@ import React, { FC, memo } from 'react'
 import { StyleProp, View, ViewStyle } from 'react-native'
 
 import { IrCall } from '@ambire-common/libs/humanizer/interfaces'
+import ManifestImage from '@common/components/ManifestImage'
 import { isMobile } from '@common/config/env'
 import spacings, { SPACING_SM, SPACING_TY } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import ManifestImage from '@web/components/ManifestImage'
 
 import HumanizedVisualizationItem from './HumanizedVisualizationItem'
 

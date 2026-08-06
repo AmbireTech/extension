@@ -9,6 +9,7 @@ import EditApproval from '@common/components/HumanizedVisualization/EditApproval
 import { Erc7730StructuredVisualizationProps } from '@common/components/HumanizedVisualization/Erc7730/interfaces'
 import MobileErc7730SummaryVisualization from '@common/components/HumanizedVisualization/Erc7730/MobileErc7730SummaryVisualization'
 import HumanizerAddress from '@common/components/HumanizerAddress'
+import ManifestImage from '@common/components/ManifestImage'
 import Text from '@common/components/Text'
 import TokenOrNft from '@common/components/TokenOrNft'
 import { isMobile } from '@common/config/env'
@@ -17,7 +18,6 @@ import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import spacings, { SPACING_SM, SPACING_TY } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import ManifestImage from '@web/components/ManifestImage'
 
 import {
   getDetailedActionParts,
@@ -104,7 +104,8 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
                 flexbox.justifyEnd,
                 {
                   minWidth: 0,
-                  maxWidth: '100%'
+                  maxWidth: '100%',
+                  flexShrink: 1
                 }
               ]}
             >

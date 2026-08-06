@@ -8,12 +8,17 @@ import { Hex } from '@ambire-common/interfaces/hex'
 import { ISignAccountOpController } from '@ambire-common/interfaces/signAccountOp'
 import { GasSpeeds } from '@ambire-common/services/bundlers/types'
 import BottomSheet from '@common/components/BottomSheet'
-import ModalHeader from '@common/components/BottomSheet/ModalHeader'
 import Button from '@common/components/Button'
 import FooterGlassView from '@common/components/FooterGlassView'
 import NumberInput from '@common/components/NumberInput'
+import Text from '@common/components/Text'
+import { isMobile, isWeb } from '@common/config/env'
+import useTheme from '@common/hooks/useTheme'
+import Header from '@common/modules/header/components/Header'
 import spacings from '@common/styles/spacings'
+import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
+import { getUiType } from '@common/utils/uiType/uiType'
 
 type CustomGasPriceInputProps = {
   initialAmount: string
@@ -21,6 +26,7 @@ type CustomGasPriceInputProps = {
   onSanitizedAmountChange: (value: string) => void
   inputError: string | boolean
   label: string
+  unitLabel?: string
   autoFocus?: boolean
   disabled?: boolean
   disabledReason?: string
@@ -34,11 +40,13 @@ const CustomGasPriceInput = memo(
     onSanitizedAmountChange,
     inputError,
     label,
+    unitLabel,
     autoFocus,
     disabled,
     disabledReason,
     precision = 9
   }: CustomGasPriceInputProps) => {
+    const { theme } = useTheme()
     const [draftAmount, setDraftAmount] = useState(initialAmount)
 
     useEffect(() => {
@@ -72,6 +80,27 @@ const CustomGasPriceInput = memo(
         autoFocus={autoFocus}
         backgroundColor={backgroundColor}
         disabled={disabled}
+        button={unitLabel}
+        buttonProps={{ withBackground: true }}
+        containerStyle={spacings.mbLg}
+        inputWrapperStyle={[
+          common.borderRadiusPrimary,
+          {
+            minHeight: 48,
+            borderWidth: 0
+          }
+        ]}
+        inputStyle={{ flex: 1, height: 46, ...spacings.phSm }}
+        nativeInputStyle={{
+          fontSize: 16,
+          color: theme.primaryText
+        }}
+        buttonStyle={{
+          borderRadius: 8,
+          backgroundColor: theme.tertiaryBackground,
+          ...spacings.phTy,
+          ...spacings.mvTy
+        }}
       />
     )
   }
@@ -103,6 +132,7 @@ const CustomGasPrice = ({
   sheetRef
 }: Props) => {
   const { t } = useTranslation()
+  const { theme } = useTheme()
   const [customGasPriceError, setCustomGasPriceError] = useState<string | boolean>(false)
   const gasRef = useRef('')
   const maxFeePerGasRef = useRef('')
@@ -110,6 +140,7 @@ const CustomGasPrice = ({
   const [initialGas, setInitialGas] = useState('')
   const [initialMaxFeePerGas, setInitialMaxFeePerGas] = useState('')
   const [initialMaxPriorityFeePerGas, setInitialMaxPriorityFeePerGas] = useState('')
+  const { isPopup } = getUiType()
 
   const resetState = useCallback(() => {
     gasRef.current = currentGas
@@ -219,41 +250,51 @@ const CustomGasPrice = ({
       id="custom-gas-price-sheet"
       sheetRef={sheetRef}
       closeBottomSheet={closeBottomSheet}
-      type="modal"
+      type={isMobile || isPopup ? 'bottom-sheet' : 'modal'}
       animationDuration={0}
       onOpen={resetState}
+      shouldBeClosableOnDrag={isMobile}
+      backgroundColor="primaryBackground"
+      style={spacings.pbLg}
     >
-      <ModalHeader title={t('Advanced options')} handleClose={closeBottomSheet} />
-      <View style={{ flexDirection: 'row', gap: 12 }}>
-        <View style={{ flex: 1 }}>
-          <CustomGasPriceInput
-            initialAmount={initialMaxFeePerGas}
-            backgroundColor={backgroundColor}
-            onSanitizedAmountChange={onMaxFeePerGasChange}
-            inputError={customGasPriceError}
-            label={t('Max fee per gas (GWEI)')}
-            autoFocus
-          />
+      <View style={[flexbox.directionRow, flexbox.alignStart, spacings.mbLg]}>
+        <Header.BackButton onGoBackPress={closeBottomSheet} forceBack displayIn="always" />
+        <View style={spacings.mlTy}>
+          <Text weight="medium" fontSize={20}>
+            {t('Advanced options')}
+          </Text>
+          <Text fontSize={14} appearance="secondaryText" style={spacings.mtTy}>
+            {t('Set gas values manually')}
+          </Text>
         </View>
-        {!!is1559 && (
-          <View style={{ flex: 1 }}>
-            <CustomGasPriceInput
-              initialAmount={initialMaxPriorityFeePerGas}
-              backgroundColor={backgroundColor}
-              onSanitizedAmountChange={onMaxPriorityFeePerGasChange}
-              inputError={customGasPriceError}
-              label={t('Max priority fee (GWEI)')}
-            />
-          </View>
-        )}
       </View>
       <View>
         <CustomGasPriceInput
+          initialAmount={initialMaxFeePerGas}
+          backgroundColor={theme.secondaryBackground}
+          onSanitizedAmountChange={onMaxFeePerGasChange}
+          inputError={customGasPriceError}
+          label={t('Max fee per gas')}
+          unitLabel="GWEI"
+          autoFocus
+        />
+        {!!is1559 && (
+          <CustomGasPriceInput
+            initialAmount={initialMaxPriorityFeePerGas}
+            backgroundColor={theme.secondaryBackground}
+            onSanitizedAmountChange={onMaxPriorityFeePerGasChange}
+            inputError={customGasPriceError}
+            label={t('Max priority fee')}
+            unitLabel="GWEI"
+          />
+        )}
+
+        <CustomGasPriceInput
           initialAmount={initialGas}
-          backgroundColor={backgroundColor}
+          backgroundColor={theme.secondaryBackground}
           onSanitizedAmountChange={onGasChange}
           inputError={customGasPriceError}
-          label={t('Gas')}
+          label={t('Gas limit')}
           precision={0}
           disabled={!canSetCustomGas}
           disabledReason={t('Custom gas cannot be set for an EOA batch')}
@@ -263,15 +304,15 @@ const CustomGasPrice = ({
         absolute={false}
         isSimpleBlur={false}
         size="sm"
-        style={spacings.mtLg}
-        mobileStyle={{ ...flexbox.directionRow, ...spacings.mtLg }}
+        style={spacings.mt}
+        mobileStyle={{ ...flexbox.directionRow, ...spacings.mtXl }}
       >
         <Button
           type="secondary"
           text={t('Cancel')}
           onPress={closeBottomSheet}
           hasBottomSpacing={false}
-          style={{ flex: 1, width: 100, ...spacings.mrSm }}
+          style={[spacings.mrTy, isWeb && { width: 100 }, isMobile && flexbox.flex1]}
           size="smaller"
         />
         <Button
@@ -279,7 +320,7 @@ const CustomGasPrice = ({
           text={t('Save')}
           onPress={saveCustomGasPrice}
           hasBottomSpacing={false}
-          style={{ flex: 1, width: 100 }}
+          style={[isWeb && { width: 100 }, isMobile && flexbox.flex1]}
           size="smaller"
         />
       </FooterGlassView>

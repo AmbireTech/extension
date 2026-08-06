@@ -1,7 +1,8 @@
 import { StyleSheet, ViewStyle } from 'react-native'
 
+import { isMobile, isWeb } from '@common/config/env'
 import spacings from '@common/styles/spacings'
-import { THEME_TYPES, ThemeProps, ThemeType } from '@common/styles/themeConfig'
+import { ThemeProps, ThemeType } from '@common/styles/themeConfig'
 import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 
@@ -16,7 +17,7 @@ interface Style {
 const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
   StyleSheet.create<Style>({
     simulationSection: {
-      ...spacings.pbLg
+      ...(isMobile ? spacings.pb : spacings.pbMd)
     },
     simulationScrollView: {
       ...spacings.phSm,
@@ -28,7 +29,8 @@ const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
       borderColor: theme.primaryBorder,
       overflow: 'hidden',
       ...flexbox.flex1,
-      maxHeight: '100%'
+      // On mobile the assets are not scrollable, so a max height would clip them
+      ...(isWeb ? { maxHeight: '100%' as const } : {})
     },
     simulationContainerHeader: {
       backgroundColor: theme.secondaryBackground,

@@ -36,7 +36,7 @@ const Footer = ({
   signButtonType = 'primary'
 }: Props) => {
   const { t } = useTranslation()
-  const { styles, themeType } = useTheme(getStyles)
+  const { styles } = useTheme(getStyles)
   const { userRequests } = useController('RequestsController').state
   const {
     state: { account }
@@ -142,7 +142,7 @@ const Footer = ({
               disabled={isSignDisabled}
               onHoldComplete={onSign}
               testID="proceed-btn"
-              style={[{ minWidth: 128 }, spacings.mlLg]}
+              style={[spacings.mlLg]}
               size="large"
             />
           )}

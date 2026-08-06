@@ -18,6 +18,7 @@ import Estimation from '@common/modules/sign-account-op/components/Estimation'
 import Footer from '@common/modules/sign-account-op/components/Footer'
 import PendingTransactions from '@common/modules/sign-account-op/components/PendingTransactions'
 import SafeEip712Data from '@common/modules/sign-account-op/components/SafeEip712Data'
+import SafeNonce from '@common/modules/sign-account-op/components/SafeNonce'
 import SafeOwners from '@common/modules/sign-account-op/components/SafeOwners'
 import SafetyChecksOverlay from '@common/modules/sign-account-op/components/SafetyChecksOverlay'
 import SectionHeading from '@common/modules/sign-account-op/components/SectionHeading'
@@ -53,6 +54,11 @@ const SignAccountOpScreen = () => {
   const [contentHeight, setContentHeight] = useState(0)
   const [hasReachedBottom, setHasReachedBottom] = useState<boolean | null>(null)
 
+  const handleAddToCart = useCallback(() => {
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises
+    closeCurrentWindow()
+  }, [])
+
   const handleUpdateStatus = useCallback(
     (status: SigningStatus) => {
       signAccountOpDispatch({
@@ -87,6 +93,7 @@ const SignAccountOpScreen = () => {
     setIsChooseSignerShown,
     onSignButtonClick,
     handleChangeSigningKey,
+    handleChangeSigningKeyAndClose,
     warningToPromptBeforeSign,
     handleDismissLedgerConnectModal,
     slowPaymasterRequest,
@@ -124,7 +131,8 @@ const SignAccountOpScreen = () => {
     handleUpdateStatus,
     signAccountOpState,
     handleUpdate: updateController,
-    hasReachedBottom
+    hasReachedBottom,
+    onSafeSignComplete: handleAddToCart
   })
 
   const accountOpRequest = useMemo(() => {
@@ -147,11 +155,6 @@ const SignAccountOpScreen = () => {
       }
     })
   }, [requestsDispatch, accountOpRequest, visibleUserRequests.length])
-
-  const handleAddToCart = useCallback(() => {
-    // eslint-disable-next-line @typescript-eslint/no-floating-promises
-    closeCurrentWindow()
-  }, [])
 
   useEffect(() => {
     if (isSignDisabled || !containerHeight || !contentHeight) return
@@ -222,7 +225,7 @@ const SignAccountOpScreen = () => {
         width="full"
         backgroundColor={theme.primaryBackground}
         withHorizontalPadding={false}
-        style={spacings.phMd}
+        style={spacings.ph}
         header={<ActionHeader />}
         renderDirectChildren={() => (
           <View style={[spacings.mh, spacings.mv]}>
@@ -255,6 +258,7 @@ const SignAccountOpScreen = () => {
                     <SafeOwners
                       account={signAccountOpState.account}
                       onSign={handleChangeSigningKey}
+                      onSignAndClose={handleChangeSigningKeyAndClose}
                       isSignLoading={isSignLoading}
                       signingKeyAddr={signAccountOpState.accountOp.signingKeyAddr}
                       chainId={signAccountOpState.accountOp.chainId.toString()}
@@ -311,7 +315,7 @@ const SignAccountOpScreen = () => {
             }}
           />
         )}
-        <TabLayoutWrapperMainContent withScroll={false}>
+        <TabLayoutWrapperMainContent withScroll={false} contentContainerStyle={spacings.mtSm}>
           <View
             style={[
               flexbox.directionRow,
@@ -321,7 +325,14 @@ const SignAccountOpScreen = () => {
             ]}
           >
             <SectionHeading withMb={false}>{t('Overview')}</SectionHeading>
-            <NetworkBadge chainId={network?.chainId} withOnPrefix />
+            <View style={[flexbox.directionRow, flexbox.alignCenter]}>
+              <SafeNonce />
+              <NetworkBadge
+                chainId={network?.chainId}
+                withOnPrefix
+                style={signAccountOpState?.account.safeCreation ? spacings.mlSm : undefined}
+              />
+            </View>
           </View>
           {/* TabLayoutWrapperMainContent supports scroll but the logic that determines the height
           of the content doesn't work with it, so we use a ScrollView here */}
