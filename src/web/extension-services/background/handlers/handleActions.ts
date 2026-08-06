@@ -92,7 +92,10 @@ export const handleActions = async (
     }
     case 'GET_INITIAL_ROUTE': {
       if (!pm || !port) return
-      const route = await resolveInitialRoute(mainCtrl, port.name === 'request-window')
+      const route = await resolveInitialRoute(mainCtrl, {
+        isRequestWindow: port.name === 'request-window',
+        isSidePanel: port.name === 'side-panel'
+      })
       pm.sendToPort(port, '> ui', { method: 'initialRoute', params: { route } })
 
       // Proactively push the resolved route's critical states in the same burst so

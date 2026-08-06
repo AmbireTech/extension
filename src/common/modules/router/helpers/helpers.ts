@@ -66,7 +66,8 @@ const getInitialRoute = ({
   swapAndBridgeState,
   transferState,
   surveyState,
-  isRequestWindow
+  isRequestWindow,
+  isSidePanel
 }: {
   keystoreState: IKeystoreController
   authStatus?: AUTH_STATUS
@@ -75,13 +76,15 @@ const getInitialRoute = ({
   transferState: ITransferController
   surveyState?: ISurveyController
   isRequestWindow: boolean
+  isSidePanel?: boolean
 }) => {
   if (keystoreState.isReadyToStoreKeys && !keystoreState.isUnlocked) {
     return ROUTES.keyStoreUnlock
   }
 
   if (authStatus === AUTH_STATUS.NOT_AUTHENTICATED) {
-    return ROUTES.getStarted
+    // Full onboarding is tab-only; side panel shows a dedicated empty-state page.
+    return isSidePanel ? ROUTES.sidePanelNoAccounts : ROUTES.getStarted
   }
 
   if (isRequestWindow && requestsState.currentUserRequest) {

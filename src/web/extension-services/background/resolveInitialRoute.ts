@@ -12,8 +12,10 @@ const awaitInitialLoad = (ctrl: object): Promise<void> | undefined =>
  */
 export const resolveInitialRoute = async (
   mainCtrl: MainController,
-  isRequestWindow: boolean
+  options: { isRequestWindow: boolean; isSidePanel?: boolean }
 ): Promise<string | null> => {
+  const { isRequestWindow, isSidePanel = false } = options
+
   // Await only the controllers we need for getInitialRoute
   const routeControllers = {
     keystoreState: mainCtrl.keystore,
@@ -29,5 +31,5 @@ export const resolveInitialRoute = async (
     ? AUTH_STATUS.AUTHENTICATED
     : AUTH_STATUS.NOT_AUTHENTICATED
 
-  return getInitialRoute({ ...routeControllers, authStatus, isRequestWindow })
+  return getInitialRoute({ ...routeControllers, authStatus, isRequestWindow, isSidePanel })
 }
