@@ -31,6 +31,7 @@ import useTheme from '@common/hooks/useTheme'
 import BundlerWarning from '@common/modules/sign-account-op/components/Estimation/components/bundlerWarning'
 import CustomGasPrice from '@common/modules/sign-account-op/components/Estimation/components/CustomGasPrice'
 import DefaultFeeSelector from '@common/modules/sign-account-op/components/Estimation/components/DefaultFeeSelector'
+import DefaultSpeedSelector from '@common/modules/sign-account-op/components/Estimation/components/DefaultSpeedSelector'
 import EstimationSkeleton from '@common/modules/sign-account-op/components/Estimation/components/EstimationSkeleton'
 import ExtremeGasFeeWarning from '@common/modules/sign-account-op/components/Estimation/components/ExtremeGasFeeWarning'
 import PayOption from '@common/modules/sign-account-op/components/Estimation/components/PayOption'
@@ -43,7 +44,7 @@ import flexbox from '@common/styles/utils/flexbox'
 import { NO_FEE_OPTIONS } from './consts'
 import { getFeeOptionValue, mapFeeOptions, sortFeeOptions } from './helpers'
 import getStyles from './styles'
-import { Props } from './types'
+import { DispatchUpdate, Props } from './types'
 
 const FEE_SECTION_LIST_MENU_HEADER_HEIGHT = 34
 const ADVANCED_OPTIONS_TOOLTIP_ID = 'sign-account-op-advanced-options-tooltip'
@@ -173,16 +174,14 @@ const Estimation = ({
       : controllerSelectedFeeOption
   const selectedFeeSpeed = signAccountOpState?.selectedFeeSpeed
   const [isEnableErc4337PromptDismissed, setIsEnableErc4337PromptDismissed] = useState(false)
+  // What was selected right before the user's first change on this screen. Going
+  // back to it means no different default is being proposed anymore, and null
+  // means the user hasn't touched the field at all
+  const [baselineFeeSpeed, setBaselineFeeSpeed] = useState<FeeSpeed | null>(null)
+  const [baselineFeeOption, setBaselineFeeOption] = useState<SelectValue['value'] | null>(null)
 
-  const dispatchUpdate = useCallback(
-    (update: {
-      feeToken?: SelectValue['token']
-      paidBy?: string
-      speed?: FeeSpeed
-      shouldPersistSpeed?: boolean
-      customGasPrices?: GasSpeeds
-      customGasLimit?: bigint
-    }) => {
+  const dispatchUpdate = useCallback<DispatchUpdate>(
+    (update) => {
       if (updateType === 'Swap&Bridge') {
         swapAndBridgeDispatch({
           type: 'method',
@@ -247,6 +246,7 @@ const Estimation = ({
   const setFeeOption = useCallback(
     (localPayValue: any) => {
       if (!selectedFeeSpeed || localPayValue.value === selectedFeeOption) return
+      setBaselineFeeOption((prev) => prev ?? selectedFeeOption)
       setSelectedFeeOptionOverride({
         value: localPayValue.value,
         controllerSelectedFeeOption
@@ -411,12 +411,10 @@ const Estimation = ({
         return
       }
 
-      dispatchUpdate({
-        speed: value as FeeSpeed,
-        shouldPersistSpeed: true
-      })
+      setBaselineFeeSpeed((prev) => prev ?? selectedFeeSpeed ?? null)
+      dispatchUpdate({ speed: value as FeeSpeed })
     },
-    [dispatchUpdate]
+    [dispatchUpdate, selectedFeeSpeed]
   )
 
   const network = useMemo(() => {
@@ -832,12 +830,11 @@ const Estimation = ({
         {isMobile && renderFeeSpeedSelect()}
       </View>
       {isMobile && (
-        <DefaultFeeSelector
+        <DefaultSpeedSelector
           networkName={network?.name}
-          payValue={payValue}
           signAccountOpState={signAccountOpState}
-          updateType={updateType}
-          hasManyPayOptionsByUsOrGasTank={payOptionsPaidByUsOrGasTank.length > 1}
+          dispatchUpdate={dispatchUpdate}
+          baselineFeeSpeed={baselineFeeSpeed}
           style={[spacings.mbSm, spacings.mt0]}
         />
       )}
@@ -870,6 +867,15 @@ const Estimation = ({
           stickySectionHeadersEnabled
           bottomSheetTitle={t('Network fee')}
         />
+        <DefaultFeeSelector
+          networkName={network?.name}
+          payValue={payValue}
+          signAccountOpState={signAccountOpState}
+          dispatchUpdate={dispatchUpdate}
+          hasManyPayOptionsByUsOrGasTank={payOptionsPaidByUsOrGasTank.length > 1}
+          baselineFeeOption={baselineFeeOption}
+          style={isMobile ? [spacings.mtSm, spacings.mb0] : undefined}
+        />
       </View>
       {!isMobile && (
         <>
@@ -889,12 +895,11 @@ const Estimation = ({
               {renderFeeSpeedSelect()}
             </View>
           )}
-          <DefaultFeeSelector
+          <DefaultSpeedSelector
             networkName={network?.name}
-            payValue={payValue}
             signAccountOpState={signAccountOpState}
-            updateType={updateType}
-            hasManyPayOptionsByUsOrGasTank={payOptionsPaidByUsOrGasTank.length > 1}
+            dispatchUpdate={dispatchUpdate}
+            baselineFeeSpeed={baselineFeeSpeed}
           />
         </>
       )}
