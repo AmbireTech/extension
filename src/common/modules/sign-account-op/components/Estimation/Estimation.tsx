@@ -564,7 +564,7 @@ const Estimation = ({
           style={!canSetCustomGasPrices && { opacity: 0.3 }}
           testID="advanced-options-button"
         >
-          <SettingsIcon width={20} height={20} color={theme.secondaryText} />
+          <SettingsIcon width={24} height={24} color={theme.secondaryText} />
         </Pressable>
       )
     }
