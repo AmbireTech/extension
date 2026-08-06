@@ -60,6 +60,13 @@ const FooterGlassView: FC<{
   const shouldUseCompactFlatFooter =
     isCompactSidePanelLayout && !preferGlassFooter && (isInsideBottomSheet || fullWidth === true)
   const shouldStretchFooter = shouldUseCompactFlatFooter || fullWidth === true
+  // Only stretch the glass pill when the call site opts in (e.g. TokenDetails).
+  // Do not change the default centered side-panel pill for other screens.
+  const shouldStretchGlass = Boolean(
+    glassViewProps?.cssStyle &&
+      ((glassViewProps.cssStyle as ViewStyle).width === '100%' ||
+        (glassViewProps.cssStyle as ViewStyle).alignSelf === 'stretch')
+  )
   const compactSidePanelInnerStyle: ViewStyle | undefined = shouldUseCompactFlatFooter
     ? {
         width: '100%',
@@ -126,16 +133,20 @@ const FooterGlassView: FC<{
 
   return (
     <View
-      style={{
-        position: absolute ? 'absolute' : 'relative',
-        left: 0,
-        bottom: absolute ? SPACING_SM : 0,
-        width: '100%',
-        ...flexbox.center,
-        zIndex: 3,
-        pointerEvents: 'none',
-        ...style
-      }}
+      style={[
+        {
+          position: absolute ? 'absolute' : 'relative',
+          left: 0,
+          bottom: absolute ? SPACING_SM : 0,
+          width: '100%',
+          justifyContent: 'center',
+          // Call-site width:100% glass needs stretch; center would keep the pill content-sized.
+          alignItems: shouldStretchGlass ? 'stretch' : 'center',
+          zIndex: 3,
+          pointerEvents: 'none'
+        },
+        style
+      ]}
     >
       <GlassView
         {...glassViewProps}
@@ -143,8 +154,11 @@ const FooterGlassView: FC<{
         borderRadius={Number(params[size].borderRadius)}
         cssStyle={{
           pointerEvents: 'all',
-          // Side panel glass pills stay content-sized/centered; popup keeps v2 intrinsic sizing.
-          ...(isSidePanel ? { width: 'fit-content', alignSelf: 'center' } : {}),
+          // Side panel glass pills stay content-sized/centered unless the call site opts into stretch.
+          // Popup keeps v2 intrinsic sizing.
+          ...(isSidePanel && !shouldStretchGlass
+            ? { width: 'fit-content', alignSelf: 'center' }
+            : {}),
           ...(glassViewProps?.cssStyle || {})
         }}
       >
