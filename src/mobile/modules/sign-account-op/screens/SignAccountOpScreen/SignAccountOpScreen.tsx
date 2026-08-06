@@ -232,7 +232,7 @@ const SignAccountOpScreen = () => {
             {!estimationFailed &&
             signAccountOpState?.canBroadcast &&
             signAccountOpState?.status?.type !== SigningStatus.Queued ? (
-              <View style={spacings.mbMd}>
+              <View style={spacings.mbTy}>
                 <Estimation
                   signAccountOpState={signAccountOpState}
                   disabled={isSignLoading}

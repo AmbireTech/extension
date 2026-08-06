@@ -1,5 +1,6 @@
 import React, { useCallback, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
+import { ViewProps } from 'react-native'
 
 import { ISignAccountOpController } from '@ambire-common/interfaces/signAccountOp'
 import { ZERO_ADDRESS } from '@ambire-common/services/socket/constants'
@@ -17,6 +18,7 @@ type Props = {
   signAccountOpState: ISignAccountOpController | null
   updateType: EstimationProps['updateType']
   hasManyPayOptionsByUsOrGasTank: boolean
+  style?: ViewProps['style']
 }
 
 const DefaultFeeSelector = ({
@@ -24,7 +26,8 @@ const DefaultFeeSelector = ({
   payValue,
   signAccountOpState,
   updateType,
-  hasManyPayOptionsByUsOrGasTank
+  hasManyPayOptionsByUsOrGasTank,
+  style
 }: Props) => {
   const { dispatch: signAccountOpDispatch } = useController('SignAccountOpController')
   const { dispatch: swapAndBridgeDispatch } = useController('SwapAndBridgeController')
@@ -120,7 +123,7 @@ const DefaultFeeSelector = ({
   return (
     <Checkbox
       value={isDefaultFeeOptionSelected}
-      style={[spacings.mt, spacings.mb0, flexbox.alignSelfEnd]}
+      style={style || [spacings.mt, spacings.mb0, flexbox.alignSelfEnd]}
       onValueChange={onSetDefaultFeeOption}
       label={defaultFeeOptionCheckboxLabel}
       labelProps={{ fontSize: 14 }}
