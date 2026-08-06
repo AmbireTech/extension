@@ -1,4 +1,5 @@
 import React, { useCallback, useMemo } from 'react'
+import { View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 
 import {
@@ -10,21 +11,17 @@ import BatchIcon from '@common/assets/svg/BatchIcon'
 import Banner from '@common/components/Banner'
 import NetworkIcon from '@common/components/NetworkIcon'
 import Text from '@common/components/Text'
-import { isMobile, isWeb } from '@common/config/env'
+import { isMobile } from '@common/config/env'
+import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import useNavigation from '@common/hooks/useNavigation'
 import useToast from '@common/hooks/useToast'
 import DashboardBannerBottomSheet from '@common/modules/dashboard/components/DashboardBanners/DashboardBannerBottomSheet'
 import { ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
-import { getUiType } from '@common/utils/uiType'
+import flexbox from '@common/styles/utils/flexbox'
 
 import applyOtaUpdate from './applyOtaUpdate'
-
-const { isPopup, isTab } = getUiType()
-// the single row layout truncates the title when there is little horizontal
-// space, so it is limited to the extension popup and the full tab
-const supportsSingleRow = isWeb && (isPopup || isTab)
 
 const DashboardBanner = ({
   banner
@@ -32,6 +29,7 @@ const DashboardBanner = ({
   banner: Omit<BannerType, 'type'> & { type: NonMarketingBannerType }
 }) => {
   const { type, category, title, text, actions = [], dismissAction, meta } = banner
+  const { t } = useTranslation()
   const { addToast } = useToast()
   const { navigate } = useNavigation()
   const {
@@ -48,7 +46,7 @@ const DashboardBanner = ({
   const { dispatch: extensionUpdateDispatch } = useController('ExtensionUpdateController')
   const { ref: sheetRef, close: closeBottomSheet, open: openBottomSheet } = useModalize()
   const primaryAction = actions[0]
-  const isSingleRow = supportsSingleRow && category === 'pending-to-be-signed-acc-op'
+  const isPendingAccountOp = category === 'pending-to-be-signed-acc-op'
 
   const Icon = useMemo(() => {
     if (category === 'pending-to-be-signed-acc-op') return BatchIcon
@@ -56,25 +54,27 @@ const DashboardBanner = ({
     return null
   }, [category])
 
-  const titleAfter = useMemo(() => {
-    if (category !== 'pending-to-be-signed-acc-op' || !meta?.chainId) return null
+  // the network goes on a second row so the banner stays short on every screen size
+  const subtitle = useMemo(() => {
+    if (!isPendingAccountOp || !meta?.chainId) return null
 
-    // no hover on mobile, so the icon alone doesn't tell which network it is
-    const networkName = isMobile
-      ? networks.find(({ chainId }) => chainId === meta.chainId)?.name
-      : undefined
+    const networkName = networks.find(({ chainId }) => chainId === meta.chainId)?.name
+    const fontSize = isMobile ? 12 : 14
 
     return (
-      <>
-        <NetworkIcon id={meta.chainId.toString()} size={20} withTooltip style={spacings.mlMi} />
+      <View style={[flexbox.directionRow, flexbox.alignCenter, { marginTop: 2 }]}>
+        <Text fontSize={fontSize} appearance="secondaryText">
+          {t('On')}
+        </Text>
+        <NetworkIcon id={meta.chainId.toString()} size={18} style={spacings.mhMi} />
         {!!networkName && (
-          <Text fontSize={14} weight="medium" style={spacings.mlMi}>
+          <Text fontSize={fontSize} appearance="secondaryText">
             {networkName}
           </Text>
         )}
-      </>
+      </View>
     )
-  }, [category, meta, networks])
+  }, [isPendingAccountOp, meta, networks, t])
 
   const handleActionPress = useCallback(
     (action: Action) => {
@@ -270,11 +270,11 @@ const DashboardBanner = ({
       <Banner
         CustomIcon={Icon}
         title={title}
-        titleAfter={titleAfter}
+        subtitle={subtitle}
         type={type}
         text={text}
-        singleRow={isSingleRow}
-        style={isSingleRow ? spacings.pbTy : undefined}
+        singleRow={isPendingAccountOp}
+        style={isPendingAccountOp ? spacings.pbTy : undefined}
         buttonText={primaryAction?.label}
         onCloseIconPress={
           dismissAction && !dismissAction.label ? () => handleActionPress(dismissAction) : undefined
