@@ -435,7 +435,7 @@ const Estimation = ({
       {
         title: {
           icon: FeeIcon,
-          text: t('With fee tokens from current account')
+          text: t('Fee tokens in this account')
         },
         data: payOptionsPaidByUsOrGasTank,
         key: 'account-tokens'
@@ -443,7 +443,7 @@ const Estimation = ({
       {
         title: {
           icon: AssetIcon,
-          text: t('With native assets of my EOA accounts')
+          text: t('Native tokens from my EOAs')
         },
         data: payOptionsPaidByEOA,
         key: 'eoa-tokens'
