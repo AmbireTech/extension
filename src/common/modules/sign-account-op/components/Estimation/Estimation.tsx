@@ -72,7 +72,7 @@ const FeeSpeedLabel = ({
 
   if (isValue) {
     return (
-      <Text weight="semiBold" fontSize={14} testID={SPEED_TEST_IDS[speed.type]}>
+      <Text weight="semiBold" fontSize={16} testID={SPEED_TEST_IDS[speed.type]}>
         {t(getFeeSpeedLabelText(speed))}
       </Text>
     )
@@ -435,7 +435,7 @@ const Estimation = ({
       {
         title: {
           icon: FeeIcon,
-          text: t('With fee tokens from current account')
+          text: t('Fee tokens in this account')
         },
         data: payOptionsPaidByUsOrGasTank,
         key: 'account-tokens'
@@ -443,7 +443,7 @@ const Estimation = ({
       {
         title: {
           icon: AssetIcon,
-          text: t('With native assets of my EOA accounts')
+          text: t('Native tokens from my EOAs')
         },
         data: payOptionsPaidByEOA,
         key: 'eoa-tokens'
@@ -543,14 +543,14 @@ const Estimation = ({
       <View style={[flexbox.directionRow, flexbox.alignCenter]}>
         <SettingsWheelIcon width={16} height={16} color={theme.secondaryText} />
         <Text
-          fontSize={12}
+          fontSize={14}
           weight="medium"
           appearance="secondaryText"
-          style={[spacings.mlMi, spacings.mrMi]}
+          style={[spacings.mlTy, spacings.mrMi]}
         >
           {t('Advanced')}
         </Text>
-        <RightArrowIcon width={6} height={10} color={theme.secondaryText} weight="2" />
+        <RightArrowIcon width={6} height={12} color={theme.secondaryText} weight="2" />
       </View>
     )
 
@@ -748,7 +748,7 @@ const Estimation = ({
         )}
       </View>
       <View>
-        <Text fontSize={12} weight="medium" appearance="secondaryText" style={spacings.mbTy}>
+        <Text fontSize={16} weight="medium" appearance="secondaryText" style={spacings.mbTy}>
           {t('Pay with')}
         </Text>
         <SectionedSelect
@@ -772,6 +772,7 @@ const Estimation = ({
           defaultValue={payValue ?? undefined}
           withSearch={!!payOptionsPaidByUsOrGasTank.length || !!payOptionsPaidByEOA.length}
           stickySectionHeadersEnabled
+          menuPosition="top"
           bottomSheetTitle={t('Network fee')}
         />
       </View>
@@ -785,7 +786,9 @@ const Estimation = ({
             spacings.mtSm
           ]}
         >
-          <Text fontSize={14}>{t('Speed')}</Text>
+          <Text fontSize={16} weight="medium" appearance="secondaryText">
+            {t('Speed')}
+          </Text>
           <Select
             value={selectedFee}
             // @ts-ignore
