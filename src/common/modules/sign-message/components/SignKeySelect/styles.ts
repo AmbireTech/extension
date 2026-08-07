@@ -4,7 +4,7 @@ import { BOTTOM_SHEET_Z_INDEX } from '@common/components/BottomSheet/styles'
 import { isMobile } from '@common/config/env'
 import spacings, { SPACING_LG } from '@common/styles/spacings'
 import { ThemeProps } from '@common/styles/themeConfig'
-import common, { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
+import common, { BORDER_RADIUS_PRIMARY, getDropdownBorderStyle } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 
 interface Style {
@@ -27,6 +27,7 @@ const getStyles = (theme: ThemeProps) =>
       ],
       ...common.borderRadiusPrimary,
       ...common.shadowPrimary,
+      ...getDropdownBorderStyle(theme),
       backgroundColor: theme.primaryBackground,
       // On mobile the whole sign flow lives in a BottomSheet that portals into
       // the same "global" host at BOTTOM_SHEET_Z_INDEX, so the key selector must
