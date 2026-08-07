@@ -35,7 +35,7 @@ type DispatchUpdate = (update: {
   feeToken?: SelectValue['token']
   paidBy?: string
   speed?: FeeSpeed
-  pendingFeeSpeedPreference?: FeeSpeed | null
+  shouldPersistSpeed?: boolean
   pendingFeeTokenPreference?: SelectValue['token'] | null
   customGasPrices?: GasSpeeds
   customGasLimit?: bigint

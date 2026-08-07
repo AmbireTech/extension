@@ -31,7 +31,6 @@ import useTheme from '@common/hooks/useTheme'
 import BundlerWarning from '@common/modules/sign-account-op/components/Estimation/components/bundlerWarning'
 import CustomGasPrice from '@common/modules/sign-account-op/components/Estimation/components/CustomGasPrice'
 import DefaultFeeSelector from '@common/modules/sign-account-op/components/Estimation/components/DefaultFeeSelector'
-import DefaultSpeedSelector from '@common/modules/sign-account-op/components/Estimation/components/DefaultSpeedSelector'
 import EstimationSkeleton from '@common/modules/sign-account-op/components/Estimation/components/EstimationSkeleton'
 import ExtremeGasFeeWarning from '@common/modules/sign-account-op/components/Estimation/components/ExtremeGasFeeWarning'
 import PayOption from '@common/modules/sign-account-op/components/Estimation/components/PayOption'
@@ -177,7 +176,6 @@ const Estimation = ({
   // What was selected right before the user's first change on this screen. Going
   // back to it means no different default is being proposed anymore, and null
   // means the user hasn't touched the field at all
-  const [baselineFeeSpeed, setBaselineFeeSpeed] = useState<FeeSpeed | null>(null)
   const [baselineFeeOption, setBaselineFeeOption] = useState<SelectValue['value'] | null>(null)
 
   const dispatchUpdate = useCallback<DispatchUpdate>(
@@ -411,10 +409,9 @@ const Estimation = ({
         return
       }
 
-      setBaselineFeeSpeed((prev) => prev ?? selectedFeeSpeed ?? null)
-      dispatchUpdate({ speed: value as FeeSpeed })
+      dispatchUpdate({ speed: value as FeeSpeed, shouldPersistSpeed: true })
     },
-    [dispatchUpdate, selectedFeeSpeed]
+    [dispatchUpdate]
   )
 
   const network = useMemo(() => {
@@ -829,15 +826,6 @@ const Estimation = ({
         )}
         {isMobile && renderFeeSpeedSelect()}
       </View>
-      {isMobile && (
-        <DefaultSpeedSelector
-          networkName={network?.name}
-          signAccountOpState={signAccountOpState}
-          dispatchUpdate={dispatchUpdate}
-          baselineFeeSpeed={baselineFeeSpeed}
-          style={[spacings.mbSm, spacings.mt0]}
-        />
-      )}
       <View>
         {!isMobile && (
           <Text fontSize={12} weight="medium" appearance="secondaryText" style={spacings.mbTy}>
@@ -895,12 +883,6 @@ const Estimation = ({
               {renderFeeSpeedSelect()}
             </View>
           )}
-          <DefaultSpeedSelector
-            networkName={network?.name}
-            signAccountOpState={signAccountOpState}
-            dispatchUpdate={dispatchUpdate}
-            baselineFeeSpeed={baselineFeeSpeed}
-          />
         </>
       )}
       <ServiceFee
