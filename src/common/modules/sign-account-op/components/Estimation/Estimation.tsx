@@ -8,7 +8,6 @@ import { EstimationStatus } from '@ambire-common/controllers/estimation/types'
 import { getFeeSpeedIdentifier } from '@ambire-common/controllers/signAccountOp/helper'
 import { FeeSpeed, SpeedCalc, Warning } from '@ambire-common/interfaces/signAccountOp'
 import { FeePaymentOption } from '@ambire-common/libs/estimate/interfaces'
-import { GasSpeeds } from '@ambire-common/services/bundlers/types'
 import { ZERO_ADDRESS } from '@ambire-common/services/socket/constants'
 import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
 import AssetIcon from '@common/assets/svg/AssetIcon'
@@ -73,7 +72,7 @@ const FeeSpeedLabel = ({
 
   if (isValue) {
     return (
-      <Text weight="semiBold" fontSize={14} testID={SPEED_TEST_IDS[speed.type]}>
+      <Text weight="semiBold" fontSize={16} testID={SPEED_TEST_IDS[speed.type]}>
         {t(getFeeSpeedLabelText(speed))}
       </Text>
     )
@@ -431,7 +430,7 @@ const Estimation = ({
       {
         title: {
           icon: FeeIcon,
-          text: t('With fee tokens from current account')
+          text: t('Fee tokens in this account')
         },
         data: payOptionsPaidByUsOrGasTank,
         key: 'account-tokens'
@@ -439,7 +438,7 @@ const Estimation = ({
       {
         title: {
           icon: AssetIcon,
-          text: t('With native assets of my EOA accounts')
+          text: t('Native tokens from my EOAs')
         },
         data: payOptionsPaidByEOA,
         key: 'eoa-tokens'
@@ -539,14 +538,14 @@ const Estimation = ({
       <View style={[flexbox.directionRow, flexbox.alignCenter]}>
         <SettingsWheelIcon width={16} height={16} color={theme.secondaryText} />
         <Text
-          fontSize={12}
+          fontSize={14}
           weight="medium"
           appearance="secondaryText"
-          style={[spacings.mlMi, spacings.mrMi]}
+          style={[spacings.mlTy, spacings.mrMi]}
         >
           {t('Advanced')}
         </Text>
-        <RightArrowIcon width={6} height={10} color={theme.secondaryText} weight="2" />
+        <RightArrowIcon width={6} height={12} color={theme.secondaryText} weight="2" />
       </View>
     )
 
@@ -618,7 +617,7 @@ const Estimation = ({
       return (
         <Select
           value={selectedFee}
-          // @ts-ignore
+          // @ts-expect-error TODO: types mismatch
           setValue={onFeeSelect}
           options={feeSpeedOptions}
           selectStyle={{ height: 40, backgroundColor: theme.secondaryBackground }}
@@ -634,7 +633,7 @@ const Estimation = ({
     return (
       <Select
         value={selectedFee}
-        // @ts-ignore
+        // @ts-expect-error TODO: types mismatch
         setValue={onFeeSelect}
         options={feeSpeedOptions}
         renderSelectedOption={renderFeeSpeedSelectedOption}
@@ -643,6 +642,7 @@ const Estimation = ({
         // as the native amount takes up more space
         menuLeftHorizontalOffset={feeTokenPriceUnavailableWarning ? 160 : 100}
         menuStyle={{ width: feeTokenPriceUnavailableWarning ? 200 : 148 }}
+        menuPosition="top"
         bottomSheetTitle={t('Network fee')}
         withSearch={false}
         containerStyle={{
@@ -828,7 +828,7 @@ const Estimation = ({
       </View>
       <View>
         {!isMobile && (
-          <Text fontSize={12} weight="medium" appearance="secondaryText" style={spacings.mbTy}>
+          <Text fontSize={16} weight="medium" appearance="secondaryText" style={spacings.mbTy}>
             {t('Pay with')}
           </Text>
         )}
@@ -853,6 +853,7 @@ const Estimation = ({
           defaultValue={payValue ?? undefined}
           withSearch={!!payOptionsPaidByUsOrGasTank.length || !!payOptionsPaidByEOA.length}
           stickySectionHeadersEnabled
+          menuPosition="top"
           bottomSheetTitle={t('Network fee')}
         />
         <DefaultFeeSelector
@@ -879,7 +880,9 @@ const Estimation = ({
                 spacings.mtSm
               ]}
             >
-              <Text fontSize={14}>{t('Speed')}</Text>
+              <Text fontSize={16} weight="medium" appearance="secondaryText">
+                {t('Speed')}
+              </Text>
               {renderFeeSpeedSelect()}
             </View>
           )}
