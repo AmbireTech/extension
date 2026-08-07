@@ -96,14 +96,19 @@ const PayOption = ({
 
       <View style={[flexbox.flex1, spacings.mlTy, spacings.mrTy]}>
         {disabledReason ? (
-          <Text
-            weight="medium"
-            fontSize={isMobile ? 10 : 12}
-            numberOfLines={1}
-            appearance={disabledTextAppearance}
-          >
-            {disabledReason}
-          </Text>
+          <View>
+            <Text weight="semiBold" fontSize={14} numberOfLines={1}>
+              {formattedAmount} {feeOption.token.symbol}
+            </Text>
+            <Text
+              weight="medium"
+              fontSize={isMobile ? 10 : 12}
+              numberOfLines={1}
+              appearance={disabledTextAppearance}
+            >
+              {disabledReason}
+            </Text>
+          </View>
         ) : (
           <View>
             <View style={[flexbox.directionRow, flexbox.alignCenter]}>
