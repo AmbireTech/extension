@@ -6,11 +6,13 @@ import NoKeysToSignAlert from '@common/components/NoKeysToSignAlert'
 import Spinner from '@common/components/Spinner'
 import ActionFooter from '@common/modules/action-requests/components/ActionFooter'
 import ActionHeader from '@common/modules/action-requests/components/ActionHeader'
+import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import Main from '@common/modules/sign-message/components/Contents/main'
 import SignInWithEthereum from '@common/modules/sign-message/components/Contents/signInWithEthereum'
 import KeySelect from '@common/modules/sign-message/components/KeySelect'
 import SafeFooter from '@common/modules/sign-message/components/SafeFooter'
 import useSignMessage from '@common/modules/sign-message/hooks/useSignMessage'
+import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import SmallNotificationWindowWrapper from '@web/components/SmallNotificationWindowWrapper'
 import { TabLayoutContainer } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
@@ -18,6 +20,7 @@ import useCloseActionWindow from '@web/hooks/useCloseActionWindow'
 
 const SignMessageScreen = () => {
   const closeActionWindow = useCloseActionWindow()
+  const { isWideFooterLayout } = useCompactActionRequestLayout()
   const {
     signMessageState,
     signStatus,
@@ -101,10 +104,14 @@ const SignMessageScreen = () => {
               {...(hasSafetyBanners && !isViewOnly
                 ? {
                     resolveNode: (
-                      <View style={flexbox.flex1}>
+                      <View style={isWideFooterLayout ? flexbox.flex1 : undefined}>
                         <HoldToProceedButton
                           testID="button-sign"
-                          style={flexbox.alignSelfEnd}
+                          style={
+                            isWideFooterLayout
+                              ? flexbox.alignSelfEnd
+                              : { width: '100%', alignSelf: 'stretch' }
+                          }
                           textStyle={{
                             whiteSpace: 'nowrap'
                           }}
@@ -119,7 +126,7 @@ const SignMessageScreen = () => {
                     )
                   }
                 : {})}
-              {...(isViewOnly
+              {...(isViewOnly && isWideFooterLayout
                 ? {
                     resolveNode: (
                       <View style={[{ flex: 3 }, flexbox.directionRow, flexbox.justifyEnd]}>
@@ -132,7 +139,17 @@ const SignMessageScreen = () => {
                     )
                   }
                 : {})}
-            />
+            >
+              {isViewOnly && !isWideFooterLayout ? (
+                <View style={spacings.mbSm}>
+                  <NoKeysToSignAlert
+                    type="short"
+                    isTransaction={false}
+                    chainId={signMessageState.network?.chainId}
+                  />
+                </View>
+              ) : null}
+            </ActionFooter>
           )
         }}
       >

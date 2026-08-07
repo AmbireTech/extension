@@ -20,6 +20,8 @@ type Props = {
   resolveButtonTestID?: string
   /** Optional custom node to replace the default resolve button */
   resolveNode?: React.ReactNode
+  /** Optional content rendered above the footer buttons (e.g. view-only alert) */
+  children?: React.ReactNode
 }
 
 const ActionFooter = ({
@@ -31,7 +33,8 @@ const ActionFooter = ({
   resolveType = 'primary',
   rejectButtonTestID,
   resolveButtonTestID,
-  resolveNode
+  resolveNode,
+  children
 }: Props) => {
   const { t } = useTranslation()
   const { isWideFooterLayout } = useCompactActionRequestLayout()
@@ -52,7 +55,9 @@ const ActionFooter = ({
     </View>
   ) : null
 
-  const resolveButton = resolveNode || (
+  const resolveButton = resolveNode ? (
+    <View style={[flexbox.flex1, { minWidth: 0 }]}>{resolveNode}</View>
+  ) : (
     <View style={[flexbox.flex1, { minWidth: 0 }]}>
       <Button
         testID={resolveButtonTestID}
@@ -68,7 +73,8 @@ const ActionFooter = ({
 
   if (!isWideFooterLayout) {
     return (
-      <View style={[spacings.ptSm, spacings.phSm, spacings.pb, { width: '100%' }]}>
+      <View style={[spacings.ptSm, spacings.phSm, spacings.pbMd, { width: '100%' }]}>
+        {children}
         <ActionsPagination />
         <View style={[flexbox.directionRow, { width: '100%', gap: SPACING_TY }]}>
           {rejectButton}
@@ -80,6 +86,7 @@ const ActionFooter = ({
 
   return (
     <View style={[flexbox.alignCenter, spacings.pb]}>
+      {children}
       <GlassView borderRadius={28}>
         <View style={[flexbox.directionRow, spacings.phSm, spacings.pvSm]}>
           <View style={flexbox.flex1}>
