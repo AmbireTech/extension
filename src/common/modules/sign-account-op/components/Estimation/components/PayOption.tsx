@@ -4,7 +4,6 @@ import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 
 import { FeePaymentOption } from '@ambire-common/libs/estimate/interfaces'
-import { ZERO_ADDRESS } from '@ambire-common/services/socket/constants'
 import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
 import shortenAddress from '@ambire-common/utils/shortenAddress'
 import WarningIcon from '@common/assets/svg/WarningIcon'
@@ -28,6 +27,7 @@ const PayOption = ({
   amount,
   paidByAccountLabel,
   shouldHighlightExtremeGasFee = false
+  // showAccountBalanceBadge = false // Note: Under discussion
 }: {
   feeOption: FeePaymentOption
   amountUsd: string
@@ -36,6 +36,7 @@ const PayOption = ({
   disabledReason?: string
   disabledTextAppearance?: 'errorText' | 'infoText'
   shouldHighlightExtremeGasFee?: boolean
+  // showAccountBalanceBadge?: boolean // Note: Under discussion
 }) => {
   const { t } = useTranslation()
   const { styles, theme } = useTheme(getStyles)
@@ -63,9 +64,10 @@ const PayOption = ({
   }, [signAccountOpState])
 
   const isPaidByAnotherAccount = feeOption.paidBy !== account?.addr
-  const isNativeToken = feeOption.token.address === ZERO_ADDRESS && !feeOption.token.flags.onGasTank
-  const showWalletBalanceBadge = isNativeToken && !isPaidByAnotherAccount
   const showGasTankBadge = !!feeOption.token.flags.onGasTank
+  // Note: Under discussion
+  // const showWalletBalanceBadge =
+  //   showAccountBalanceBadge && !showGasTankBadge && !isPaidByAnotherAccount
 
   if (!paidByAccountData) return null
 
@@ -98,16 +100,21 @@ const PayOption = ({
         {disabledReason ? (
           <View>
             <Text weight="semiBold" fontSize={14} numberOfLines={1}>
-              {formattedAmount} {feeOption.token.symbol}
+              {formatDecimals(Number(amountUsd), 'value')}
             </Text>
-            <Text
-              weight="medium"
-              fontSize={isMobile ? 10 : 12}
-              numberOfLines={1}
-              appearance={disabledTextAppearance}
-            >
-              {disabledReason}
-            </Text>
+            <View style={[flexbox.directionRow, flexbox.alignCenter]}>
+              <Text weight="semiBold" fontSize={14} numberOfLines={1} style={spacings.mrTy}>
+                {formattedAmount} {feeOption.token.symbol}
+              </Text>
+              <Text
+                weight="medium"
+                fontSize={isMobile ? 10 : 12}
+                numberOfLines={1}
+                appearance={disabledTextAppearance}
+              >
+                {disabledReason}
+              </Text>
+            </View>
           </View>
         ) : (
           <View>
@@ -127,13 +134,14 @@ const PayOption = ({
                   </Text>
                 </View>
               )}
-              {showWalletBalanceBadge && (
+              {/* Note: Under discussion */}
+              {/* {showWalletBalanceBadge && (
                 <View style={styles.walletBalanceBadge}>
                   <Text fontSize={10} weight="medium" appearance="infoText">
-                    {t('Wallet balance')}
+                    {t('in account')}
                   </Text>
                 </View>
-              )}
+              )} */}
             </View>
             <Text
               appearance={shouldHighlightExtremeGasFee ? 'warningText' : 'secondaryText'}
