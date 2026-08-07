@@ -61,6 +61,16 @@ class NfcController implements NfcControllerInterface {
     }
   }
 
+  // No `nfcWalletType`: these run before the first `signHash`, when the card is not
+  // known yet, so the bridge tells every card service.
+  async beginPinSession() {
+    await callNative('nfc.beginPinSession')
+  }
+
+  async endPinSession() {
+    await callNative('nfc.endPinSession')
+  }
+
   async signingCleanup() {
     await this.#cancelCardSession()
   }
