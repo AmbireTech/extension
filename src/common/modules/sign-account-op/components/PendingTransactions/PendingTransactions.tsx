@@ -35,7 +35,7 @@ const PendingTransactions: FC<Props> = ({
   const { humanization, banners } = signAccountOpState || controllerSignAccountOpState || {}
 
   return (
-    <View style={isWeb ? spacings.mbLg : spacings.mb}>
+    <View style={isWeb ? spacings.mbMd : spacings.mb}>
       {!!banners && !!banners.length && (
         <View style={spacings.mbTy}>
           {banners.map((banner) => (

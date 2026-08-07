@@ -2,7 +2,7 @@ import { nanoid } from 'nanoid'
 import { useCallback, useEffect, useRef, useState } from 'react'
 
 import { Dapp } from '@ambire-common/interfaces/dapp'
-import { getDappIdFromUrl } from '@ambire-common/libs/dapps/helpers'
+import { getDappIdFromUrl, getNormalizedHostnameFromUrl } from '@ambire-common/libs/dapps/helpers'
 import { isValidURL } from '@ambire-common/services/validations'
 import { captureException } from '@common/config/analytics/CrashAnalytics.web'
 import useControllerState from '@common/hooks/useControllerState'
@@ -68,7 +68,7 @@ export default function useDappsControllerHelpers(
             return resolve({
               id: dappId,
               url,
-              name: new URL(url).hostname, // Fallback name
+              name: getNormalizedHostnameFromUrl(url) ?? url, // Fallback name
               icon: '',
               isConnected: false,
               description: '',

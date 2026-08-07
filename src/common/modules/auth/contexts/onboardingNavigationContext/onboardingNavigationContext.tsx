@@ -147,12 +147,6 @@ const OnboardingNavigationProvider = ({ children }: { children: React.ReactNode 
       WEB_ROUTES.getStarted,
       [
         new RouteNode(
-          WEB_ROUTES.createSeedPhrasePrepare,
-          [new RouteNode(WEB_ROUTES.createSeedPhraseWrite, common)],
-          false,
-          false
-        ),
-        new RouteNode(
           WEB_ROUTES.importExistingAccount,
           [
             ...(common && common[0] && common[0].disabled ? common[0].children : common),
@@ -160,7 +154,15 @@ const OnboardingNavigationProvider = ({ children }: { children: React.ReactNode 
             new RouteNode(WEB_ROUTES.importSeedPhrase, common, false, false),
             new RouteNode(WEB_ROUTES.ledgerConnect, common, false, false),
             new RouteNode(WEB_ROUTES.trezorConnect, common, false, false),
-            new RouteNode(WEB_ROUTES.safeImport, common, false, false),
+            new RouteNode(
+              WEB_ROUTES.safeImport,
+              [
+                new RouteNode(WEB_ROUTES.safeImportAddress, common, false, false),
+                new RouteNode(WEB_ROUTES.safeImportByOwner, common, false, false)
+              ],
+              false,
+              false
+            ),
             new RouteNode(WEB_ROUTES.qrConnect, common, false, false),
             new RouteNode(WEB_ROUTES.importSmartAccountJson, common, false, false)
           ],

@@ -225,7 +225,7 @@ const SignAccountOpScreen = () => {
         width="full"
         backgroundColor={theme.primaryBackground}
         withHorizontalPadding={false}
-        style={spacings.phMd}
+        style={spacings.ph}
         header={<ActionHeader />}
         renderDirectChildren={() => (
           <View style={[spacings.mh, spacings.mv]}>
@@ -315,7 +315,7 @@ const SignAccountOpScreen = () => {
             }}
           />
         )}
-        <TabLayoutWrapperMainContent withScroll={false}>
+        <TabLayoutWrapperMainContent withScroll={false} contentContainerStyle={spacings.mtSm}>
           <View
             style={[
               flexbox.directionRow,
