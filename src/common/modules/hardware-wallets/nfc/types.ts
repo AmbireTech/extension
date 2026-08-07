@@ -56,6 +56,12 @@ export interface NfcCardService {
   /** Answers whatever the session is currently asking the user for (a PIN, so far). */
   submitPrompt: (value: string) => void
   cancel: () => void
+  /**
+   * Mark the start and the end of one account op's signing, so the card can keep the
+   * PIN for that long and an op taking several signatures needs a single PIN entry.
+   */
+  beginPinSession: () => void
+  endPinSession: () => void
   /** Reads the account-level extended public key, so accounts can be imported. */
   exportAccountKey: () => Promise<NfcExportedKey>
   signHash: (args: NfcSignHashParams) => Promise<NfcSignature>
