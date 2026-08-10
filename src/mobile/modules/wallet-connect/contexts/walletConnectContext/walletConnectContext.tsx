@@ -1,6 +1,6 @@
 import { PermissionResponse, useCameraPermissions } from 'expo-camera'
 import React, { createContext, useCallback, useContext, useEffect, useState } from 'react'
-import { Linking } from 'react-native'
+import { AppState, Linking } from 'react-native'
 
 import { ControllersMiddlewareContext } from '@common/contexts/controllersMiddlewareContext'
 import { ControllerStoreContext } from '@common/contexts/controllerStoreContext'
@@ -9,8 +9,11 @@ import {
   getPendingRestoreSessions,
   getWalletKit,
   initWalletConnect,
-  isWalletConnectInitialized
+  isWalletConnectInitialized,
+  reconnectWalletConnectIfNeeded
 } from '@mobile/modules/wallet-connect/services/walletConnectService'
+
+const PAIR_TIMEOUT = 20000
 
 type WalletConnectContextValue = {
   pair: (uri: string) => Promise<void>
@@ -74,22 +77,47 @@ export const WalletConnectProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   }, [isStoreReady, isInitialized, dispatch])
 
+  // The relay socket dies while the app is suspended and the SDK doesn't always recover.
+  useEffect(() => {
+    if (!isInitialized) return
+
+    const subscription = AppState.addEventListener('change', (nextState) => {
+      if (nextState === 'active') void reconnectWalletConnectIfNeeded()
+    })
+
+    return () => subscription.remove()
+  }, [isInitialized])
+
   const pair = useCallback(
     async (uri: string) => {
       const walletKit = getWalletKit()
       if (!walletKit || !isInitialized) return
 
+      let pairTimeout: ReturnType<typeof setTimeout> | undefined
+
       try {
-        await walletKit.pair({ uri })
+        await reconnectWalletConnectIfNeeded()
+        // Pairing over a dead socket never settles, so the scan looks like a no-op.
+        await Promise.race([
+          walletKit.pair({ uri }),
+          new Promise((_, reject) => {
+            pairTimeout = setTimeout(() => reject(new Error('Pairing timed out')), PAIR_TIMEOUT)
+          })
+        ])
       } catch (e: any) {
         // "Pairing already exists" is expected on Android when the OS fires the
         // deep link event twice (once on intent, once on focus restore). WalletKit
         // checks its internal pairing store and throws — silently ignore it.
         if (e?.message?.includes('Pairing already exists')) return
         console.error('WalletConnect pair failed:', e)
+        addToast('Could not connect to the app. Check your internet connection and try again.', {
+          type: 'error'
+        })
+      } finally {
+        clearTimeout(pairTimeout)
       }
     },
-    [isInitialized]
+    [isInitialized, addToast]
   )
 
   useEffect(() => {
