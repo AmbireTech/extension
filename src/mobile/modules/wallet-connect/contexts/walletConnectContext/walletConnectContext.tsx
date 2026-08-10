@@ -13,7 +13,7 @@ import {
   reconnectWalletConnectIfNeeded
 } from '@mobile/modules/wallet-connect/services/walletConnectService'
 
-const PAIR_TIMEOUT = 20000
+const PAIR_TIMEOUT = 15000
 
 type WalletConnectContextValue = {
   pair: (uri: string) => Promise<void>
