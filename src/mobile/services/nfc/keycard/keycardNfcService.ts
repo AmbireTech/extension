@@ -13,7 +13,7 @@ import {
 } from 'keycard-sdk/dist/keycard-manager'
 import { RecoverableSignature } from 'keycard-sdk/dist/recoverable-signature'
 import { Platform } from 'react-native'
-import NfcManager, { NfcError, NfcTech } from 'react-native-nfc-manager'
+import NfcManager, { NfcError, NfcEvents, NfcTech } from 'react-native-nfc-manager'
 
 import { NfcWalletType } from '@ambire-common/interfaces/keystore'
 import { addHexPrefix } from '@ambire-common/utils/addHexPrefix'
@@ -39,8 +39,8 @@ import type { Commandset } from 'keycard-sdk/dist/commandset'
 // account import flow calls it directly through the import hook.
 //
 // The PIN never leaves this file: the UI hands it in through `submitPin` and it is
-// wiped as soon as the card session ends. It is never persisted, never sent over
-// the bridge and never written to a controller.
+// held in memory for one account op's signing at most (see `#sessionPin`). It is never
+// persisted, never sent over the bridge and never written to a controller.
 
 /** The account-level path the extended public key is exported from (BIP44 standard). */
 export const KEYCARD_ACCOUNT_HD_PATH = "m/44'/60'/0'/0"
@@ -50,6 +50,12 @@ export const KEYCARD_ACCOUNT_HD_PATH = "m/44'/60'/0'/0"
  * derivation and signing, which makes long taps fail with a transceive error.
  */
 const ANDROID_ISO_DEP_TIMEOUT = 5000
+
+/**
+ * How long iOS is given to report a card session as closed before signing carries on
+ * without the report. See `#closeCardSession`.
+ */
+const IOS_SESSION_CLOSE_TIMEOUT = 5000
 
 class KeycardCancelledError extends Error {
   constructor() {
@@ -145,6 +151,15 @@ class KeycardNfcService implements NfcCardService {
   /** Resolves the PIN the UI is currently being asked for. */
   #pendingPrompt: { resolve: (value: string) => void; reject: (error: Error) => void } | null = null
 
+  /**
+   * The PIN of the account op being signed right now, kept only for as long as
+   * SignAccountOpController says its signing lasts. Null while no session is open,
+   * which is what makes every other tap (a message, the next op) ask for it again.
+   */
+  #sessionPin: string | null = null
+
+  #isPinSessionOpen = false
+
   #keycardManager = new KeycardManager(keycardPairingStorage)
 
   #isNfcManagerStarted = false
@@ -208,6 +223,18 @@ class KeycardNfcService implements NfcCardService {
     prompt.resolve(value)
   }
 
+  // Opens / closes the window in which one PIN entry covers every tap. `cancel` must
+  // never close it: it also runs as routine cleanup right before every signature.
+  beginPinSession = () => {
+    this.#isPinSessionOpen = true
+    this.#sessionPin = null
+  }
+
+  endPinSession = () => {
+    this.#isPinSessionOpen = false
+    this.#sessionPin = null
+  }
+
   /** Called by the UI when the user dismisses the card session. */
   cancel = () => {
     const prompt = this.#pendingPrompt
@@ -244,10 +271,12 @@ class KeycardNfcService implements NfcCardService {
     }
 
     const channel = new NfcCardChannel()
+    let didOpenSession = false
 
     try {
       this.#setState({ step: 'awaiting-tap', error: null })
       await NfcManager.requestTechnology(NfcTech.IsoDep, { alertMessage })
+      didOpenSession = true
 
       if (Platform.OS === 'android') await NfcManager.setTimeout(ANDROID_ISO_DEP_TIMEOUT)
 
@@ -258,10 +287,42 @@ class KeycardNfcService implements NfcCardService {
     } finally {
       this.#transportError = channel.transportError
       channel.connected = false
+      await this.#closeCardSession(didOpenSession)
+    }
+  }
+
+  /**
+   * iOS reports a session closed only once its scan sheet has dismissed, seconds after
+   * `cancelTechnologyRequest` resolved, and delivers that report to whichever card
+   * request is pending by then - so a session opened in between is killed by the
+   * previous one's cancellation. Waiting for the report stops consecutive signatures
+   * of one account op from cancelling each other. Android closes synchronously.
+   */
+  async #closeCardSession(didOpenSession: boolean) {
+    if (Platform.OS !== 'ios' || !didOpenSession) {
       await NfcManager.cancelTechnologyRequest().catch(() => {
         // The session may already be closed (card moved away, user cancelled).
       })
+      return
     }
+
+    const sessionClosed = new Promise<void>((resolve) => {
+      const finish = () => {
+        clearTimeout(timeoutId)
+        NfcManager.setEventListener(NfcEvents.SessionClosed, null)
+        resolve()
+      }
+      // A session that never reports back must not block signing forever.
+      const timeoutId = setTimeout(finish, IOS_SESSION_CLOSE_TIMEOUT)
+
+      NfcManager.setEventListener(NfcEvents.SessionClosed, finish)
+    })
+
+    await NfcManager.cancelTechnologyRequest().catch(() => {
+      // The session may already be closed (card moved away, user cancelled).
+    })
+
+    await sessionClosed
   }
 
   /**
@@ -316,15 +377,19 @@ class KeycardNfcService implements NfcCardService {
    * executes `cb`. A wrong PIN re-prompts instead of failing, so the user does not
    * have to restart the whole flow.
    *
-   * The PIN is always collected before the tap. iOS leaves no other option (an open
-   * NFC session puts a system sheet over the app, so nothing of ours can be typed
-   * into until the session ends) and Android follows the same order, so the flow the
-   * user goes through is identical on both platforms.
+   * The PIN is collected before the tap, never during it. iOS leaves no other option
+   * (an open NFC session puts a system sheet over the app, so nothing of ours can be
+   * typed into until the session ends) and Android follows the same order, so the flow
+   * the user goes through is identical on both platforms.
    */
   async #runOnCard<T>(
     purpose: NfcSessionPurpose,
     cb: (cmdSet: Commandset) => Promise<T>
   ): Promise<T> {
+    // Only signing taps inside an account op's session share a PIN. An import is a
+    // one-off tap and never part of one, so it always asks.
+    const isPinReusable = purpose === 'sign' && this.#isPinSessionOpen
+
     let pin = ''
     let pinError: string | null = null
 
@@ -333,7 +398,8 @@ class KeycardNfcService implements NfcCardService {
 
     try {
       while (true) {
-        pin = await this.#promptUser('awaiting-pin', pinError)
+        pin =
+          (isPinReusable && this.#sessionPin) || (await this.#promptUser('awaiting-pin', pinError))
         // Per attempt, so a wrong PIN retry is not reported through the failure of the
         // attempt before it.
         this.#callbackError = null
@@ -380,11 +446,16 @@ class KeycardNfcService implements NfcCardService {
             return response.data.cbFuncResponse as T
           })
 
+          if (isPinReusable) this.#sessionPin = pin
           this.#setState({ step: 'idle', purpose: null, error: null, pinAttemptsLeft: null })
 
           return result
         } catch (e: any) {
           if (this.#isCancelled || isUserCancelledNfcError(e)) throw new KeycardCancelledError()
+
+          // A kept PIN the card rejected must never be retried - it would burn the
+          // card's remaining attempts without ever prompting.
+          if (e?.errorCode === CardPinVerificationError) this.#sessionPin = null
 
           const attemptsLeft = this.#getPinAttemptsLeft(e)
           if (attemptsLeft !== null && attemptsLeft > 0) {
