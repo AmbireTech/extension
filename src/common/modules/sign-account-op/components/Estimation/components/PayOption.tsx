@@ -138,7 +138,7 @@ const PayOption = ({
               numberOfLines={1}
               appearance={disabledTextAppearance}
             >
-              {disabledReason}
+              {t(disabledReason)}
             </Text>
           ) : (
             <Text

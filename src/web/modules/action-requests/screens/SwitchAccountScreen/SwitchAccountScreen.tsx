@@ -3,6 +3,7 @@ import { View } from 'react-native'
 
 import DownArrowLongIcon from '@common/assets/svg/DownArrowLongIcon'
 import ManifestFallbackIcon from '@common/assets/svg/ManifestFallbackIcon'
+import Alert from '@common/components/Alert'
 import AmbireLogoHorizontal from '@common/components/AmbireLogoHorizontal'
 import ManifestImage from '@common/components/ManifestImage'
 import SkeletonLoader from '@common/components/SkeletonLoader'
@@ -11,7 +12,7 @@ import useTheme from '@common/hooks/useTheme'
 import ActionFooter from '@common/modules/action-requests/components/ActionFooter'
 import Account from '@common/modules/action-requests/components/SwitchAccount/Account'
 import useSwitchAccount from '@common/modules/action-requests/hooks/useSwitchAccount'
-import spacings, { SPACING_LG, SPACING_MD, SPACING_SM } from '@common/styles/spacings'
+import spacings, { SPACING_LG, SPACING_MD } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
 import { TabLayoutContainer } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
@@ -23,7 +24,7 @@ const SwitchAccountScreen = () => {
     t,
     account,
     isAuthorizing,
-    userRequest,
+    isRequestBroken,
     nextAccount,
     nextAccountData,
     nextRequestLabel,
@@ -42,7 +43,7 @@ const SwitchAccountScreen = () => {
           onReject={handleDenyButtonPress}
           onResolve={handleAuthorizeButtonPress}
           resolveButtonText={isAuthorizing ? t('Switching...') : t('Switch Account')}
-          resolveDisabled={isAuthorizing}
+          resolveDisabled={isAuthorizing || isRequestBroken}
           rejectButtonText={t('Deny')}
           resolveButtonTestID="switch-account-button"
         />
@@ -156,14 +157,16 @@ const SwitchAccountScreen = () => {
                 />
               ) : (
                 <Text appearance="errorText" style={spacings.mbLg}>
-                  {t('Invalid account data')}
+                  {nextAccount || t('Invalid account data')}
                 </Text>
               )}
-              <Text style={text.center} weight="medium">
-                {t(
-                  'Would you like to switch to this account now to continue with the signing process?'
-                )}
-              </Text>
+              {!isRequestBroken && (
+                <Text style={text.center} weight="medium">
+                  {t(
+                    'Would you like to switch to this account now to continue with the signing process?'
+                  )}
+                </Text>
+              )}
             </View>
           </View>
         ) : (
@@ -175,6 +178,16 @@ const SwitchAccountScreen = () => {
             width={responsiveSizeMultiplier * 450}
             height={responsiveSizeMultiplier * 450}
             appearance="primaryBackground"
+          />
+        )}
+        {isRequestBroken && (
+          <Alert
+            style={spacings.mtLg}
+            type="error"
+            title={t('Unable to switch account')}
+            text={t(
+              'The requested account is not available. Add the account or reconnect the app to continue. If the issue persists, please contact support.'
+            )}
           />
         )}
       </View>
