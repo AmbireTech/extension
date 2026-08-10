@@ -5,6 +5,7 @@ import common, { hexToRgba } from '@common/styles/utils/common'
 
 interface Styles {
   closeButton: ViewStyle
+  refreshButton: ViewStyle
   networkHeaderIcon: ViewStyle
   networkSection: ViewStyle
   timelineRail: ViewStyle
@@ -29,6 +30,9 @@ const getStyles = (theme: ThemeProps) =>
       width: 32,
       height: 32,
       borderRadius: 16
+    },
+    refreshButton: {
+      height: 32
     },
     networkHeaderIcon: {
       width: 53,

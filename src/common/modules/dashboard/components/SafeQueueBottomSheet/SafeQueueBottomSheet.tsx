@@ -6,11 +6,13 @@ import { CallsUserRequest } from '@ambire-common/interfaces/userRequest'
 import CloseIcon from '@common/assets/svg/CloseIcon'
 import InfoIcon from '@common/assets/svg/InfoIcon'
 import NetworksIcon from '@common/assets/svg/NetworksIcon'
+import RefreshIcon from '@common/assets/svg/RefreshIcon'
 import BottomSheet from '@common/components/BottomSheet'
 import HoverablePressable from '@common/components/HoverablePressable'
 import NetworkIcon from '@common/components/NetworkIcon'
 import Select from '@common/components/Select'
 import { SelectValue } from '@common/components/Select/types'
+import Spinner from '@common/components/Spinner'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
@@ -21,6 +23,10 @@ import flexbox from '@common/styles/utils/flexbox'
 import { getSafeQueueNetworkGroups, SafeQueueNetworkGroup, SafeQueueNonceGroup } from './helpers'
 import SafeQueueItem from './SafeQueueItem'
 import getStyles from './styles'
+
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+const selectRefreshSafeTxnsStatus = (state: AllControllersMappingType['MainController']) =>
+  state.statuses?.refreshSafeTxns
 
 interface Props {
   sheetRef: ReturnType<typeof useModalize>['ref']
@@ -167,7 +173,12 @@ const SafeQueueBottomSheet: FC<Props> = ({
   const {
     state: { account }
   } = useController('SelectedAccountController')
+  const { state: refreshSafeTxnsStatus, dispatch: mainDispatch } = useController(
+    'MainController',
+    selectRefreshSafeTxnsStatus
+  )
   const [selectedNetwork, setSelectedNetwork] = useState<string>('all')
+  const isRefreshing = refreshSafeTxnsStatus === 'LOADING'
   const networkGroups = useMemo(
     () => getSafeQueueNetworkGroups(requests, networks),
     [networks, requests]
@@ -206,6 +217,9 @@ const SafeQueueBottomSheet: FC<Props> = ({
   const handleSelectNetwork = useCallback((option: SelectValue) => {
     setSelectedNetwork(String(option.value))
   }, [])
+  const handleRefresh = useCallback(() => {
+    mainDispatch({ type: 'method', params: { method: 'refreshSafeTxns', args: [] } })
+  }, [mainDispatch])
 
   return (
     <BottomSheet
@@ -219,20 +233,45 @@ const SafeQueueBottomSheet: FC<Props> = ({
       reserveScrollPadding
     >
       <View style={[flexbox.directionRow, flexbox.justifySpaceBetween, flexbox.alignStart]}>
-        <View>
-          <Text fontSize={24} weight="semiBold">
-            {t('Safe Queue')}
-          </Text>
-          <Text fontSize={13} appearance="secondaryText" style={spacings.mtMi}>
-            {account?.preferences.label}
-          </Text>
-        </View>
+        <Text fontSize={24} weight="semiBold">
+          {t('Queue')}
+        </Text>
         <HoverablePressable
-          accessibilityLabel={t('Close Safe Queue')}
+          accessibilityLabel={t('Close Queue')}
           style={[styles.closeButton, flexbox.center]}
           onPress={closeBottomSheet}
         >
           <CloseIcon width={20} height={20} color={theme.iconPrimary} />
+        </HoverablePressable>
+      </View>
+      <View
+        style={[
+          flexbox.directionRow,
+          flexbox.justifySpaceBetween,
+          flexbox.alignCenter,
+          spacings.mtMi
+        ]}
+      >
+        <Text fontSize={13} appearance="secondaryText">
+          {account?.preferences.label}
+        </Text>
+        <HoverablePressable
+          accessibilityRole="button"
+          accessibilityLabel={t('Refresh Safe Queue')}
+          accessibilityState={{ busy: isRefreshing, disabled: isRefreshing }}
+          testID="safe-queue-refresh-button"
+          disabled={isRefreshing}
+          onPress={handleRefresh}
+          style={[styles.refreshButton, flexbox.directionRow, flexbox.alignCenter, spacings.phMi]}
+        >
+          {isRefreshing ? (
+            <Spinner style={{ width: 16, height: 16 }} />
+          ) : (
+            <RefreshIcon width={16} height={16} color={theme.primaryAccent} />
+          )}
+          <Text fontSize={13} color={theme.primaryAccent} style={spacings.mlMi}>
+            {isRefreshing ? t('Refreshing...') : t('Refresh')}
+          </Text>
         </HoverablePressable>
       </View>
 
