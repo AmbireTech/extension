@@ -17,7 +17,7 @@ interface Style {
 const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
   StyleSheet.create<Style>({
     simulationSection: {
-      ...(isMobile ? spacings.pb : spacings.pbMd)
+      ...(isMobile ? spacings.pbSm : spacings.pbMd)
     },
     simulationScrollView: {
       ...spacings.phSm,

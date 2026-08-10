@@ -321,7 +321,7 @@ const SignAccountOpScreen = () => {
           <View
             style={[
               flexbox.directionRow,
-              flexbox.alignCenter,
+              flexbox.alignStart,
               flexbox.justifySpaceBetween,
               spacings.mb
             ]}

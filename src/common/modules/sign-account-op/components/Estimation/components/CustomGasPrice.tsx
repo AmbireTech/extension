@@ -8,6 +8,7 @@ import { Hex } from '@ambire-common/interfaces/hex'
 import { ISignAccountOpController } from '@ambire-common/interfaces/signAccountOp'
 import { GasSpeeds } from '@ambire-common/services/bundlers/types'
 import BottomSheet from '@common/components/BottomSheet'
+import ModalHeader from '@common/components/BottomSheet/ModalHeader'
 import Button from '@common/components/Button'
 import FooterGlassView from '@common/components/FooterGlassView'
 import NumberInput from '@common/components/NumberInput'
@@ -19,7 +20,8 @@ import Header from '@common/modules/header/components/Header'
 import spacings from '@common/styles/spacings'
 import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
-import { getUiType } from '@common/utils/uiType'
+import textStyles from '@common/styles/utils/text'
+import { getUiType } from '@common/utils/uiType/uiType'
 
 type CustomGasPriceInputProps = {
   initialAmount: string
@@ -259,17 +261,26 @@ const CustomGasPrice = ({
       backgroundColor="primaryBackground"
       style={[spacings.pbLg, isNarrowSidePanel && { width: '100%' }]}
     >
-      <View style={[flexbox.directionRow, flexbox.alignStart, spacings.mbLg]}>
-        <Header.BackButton onGoBackPress={closeBottomSheet} forceBack displayIn="always" />
-        <View style={spacings.mlTy}>
-          <Text weight="medium" fontSize={20}>
-            {t('Advanced options')}
-          </Text>
-          <Text fontSize={14} appearance="secondaryText" style={spacings.mtTy}>
+      {isMobile ? (
+        <>
+          <ModalHeader title={t('Advanced options')} style={spacings.mbTy} />
+          <Text fontSize={14} appearance="secondaryText" style={[spacings.mbLg, textStyles.center]}>
             {t('Set gas values manually')}
           </Text>
+        </>
+      ) : (
+        <View style={[flexbox.directionRow, flexbox.alignStart, spacings.mbLg]}>
+          <Header.BackButton onGoBackPress={closeBottomSheet} forceBack displayIn="always" />
+          <View style={spacings.mlTy}>
+            <Text weight="medium" fontSize={20}>
+              {t('Advanced options')}
+            </Text>
+            <Text fontSize={14} appearance="secondaryText" style={spacings.mtTy}>
+              {t('Set gas values manually')}
+            </Text>
+          </View>
         </View>
-      </View>
+      )}
       <View>
         <CustomGasPriceInput
           initialAmount={initialMaxFeePerGas}

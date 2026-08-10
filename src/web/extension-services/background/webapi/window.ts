@@ -18,6 +18,23 @@ type CustomSize = {
   height: number
 }
 
+/**
+ * The usable area of a single display, positioned in the desktop coordinate space. A display
+ * doesn't necessarily start at (0, 0), so `left` and `top` are what make the position usable.
+ */
+type WorkArea = {
+  left: number
+  top: number
+  width: number
+  height: number
+}
+
+/**
+ * The screen of a browser that reports where its display sits on the desktop. Firefox has no
+ * `system.display` API and exposes the offset through these non-standard properties instead.
+ */
+type ScreenWithOffset = Screen & { availLeft?: number; availTop?: number }
+
 const event = new EventEmitter()
 
 if (isExtension) {
@@ -61,6 +78,74 @@ const formatScreenWidth = (w: number) => {
   }
 }
 
+const isPointInWorkArea = (workArea: WorkArea, x: number, y: number) =>
+  x >= workArea.left &&
+  x <= workArea.left + workArea.width &&
+  y >= workArea.top &&
+  y <= workArea.top + workArea.height
+
+/**
+ * Finds the work area of the display holding the given window, falling back to the primary display
+ * when the window can't be located. Returns null when the browser hides the layout, as in Safari.
+ */
+const getDisplayWorkArea = async (baseWindow: chrome.windows.Window): Promise<WorkArea | null> => {
+  if (isSafari()) return null
+
+  if (engine === 'webkit' && browser?.system?.display?.getInfo) {
+    const displays: chrome.system.display.DisplayInfo[] = await browser.system.display.getInfo()
+
+    if (!displays?.length) return null
+
+    const canLocateBaseWindow =
+      baseWindow.left !== undefined &&
+      baseWindow.top !== undefined &&
+      !!baseWindow.width &&
+      !!baseWindow.height
+
+    // Wayland never reports the global position of a window, so the base window appears to be at
+    // (0, 0) there and the primary display is used instead
+    const displayWithBaseWindow = canLocateBaseWindow
+      ? displays.find((display) =>
+          isPointInWorkArea(
+            display.workArea,
+            baseWindow.left! + baseWindow.width! / 2,
+            baseWindow.top! + baseWindow.height! / 2
+          )
+        )
+      : undefined
+
+    const display = displayWithBaseWindow || displays.find((d) => d.isPrimary) || displays[0]
+
+    return display?.workArea || null
+  }
+
+  const screen: ScreenWithOffset | undefined = window?.screen
+
+  if (!screen) return null
+
+  return {
+    left: screen.availLeft || 0,
+    top: screen.availTop || 0,
+    width: screen.availWidth || screen.width,
+    height: screen.availHeight || screen.height
+  }
+}
+
+const clampToWorkArea = (
+  position: number,
+  windowSize: number,
+  workAreaStart: number,
+  workAreaSize: number
+) => {
+  const min = workAreaStart + SPACING
+  const max = workAreaStart + workAreaSize - windowSize - SPACING
+
+  // The window doesn't fit, so align it to the start of the work area
+  if (max < min) return Math.round(min)
+
+  return Math.round(Math.min(Math.max(position, min), max))
+}
+
 const calculateWindowSizeAndPosition = async (
   baseWindow: chrome.windows.Window,
   customSize?: CustomSize
@@ -77,16 +162,17 @@ const calculateWindowSizeAndPosition = async (
     }
   }
 
+  const workArea = await getDisplayWorkArea(baseWindow)
+
   let screenWidth = 0
   let screenHeight = 0
 
   if (isSafari()) {
     screenWidth = formatScreenWidth(NOTIFICATION_WINDOW_WIDTH)
     screenHeight = formatScreenHeight(NOTIFICATION_WINDOW_HEIGHT)
-  } else if (engine === 'webkit' && browser?.system?.display?.getInfo) {
-    const displayInfo = await browser.system.display.getInfo()
-    screenWidth = formatScreenWidth(displayInfo?.[0]?.workArea?.width)
-    screenHeight = formatScreenHeight(displayInfo?.[0]?.workArea?.height)
+  } else if (engine === 'webkit' && workArea) {
+    screenWidth = formatScreenWidth(workArea.width)
+    screenHeight = formatScreenHeight(workArea.height)
   } else {
     screenWidth = formatScreenWidth(window.screen.width)
     screenHeight = formatScreenHeight(window.screen.height)
@@ -132,11 +218,17 @@ const calculateWindowSizeAndPosition = async (
       (activeTab.height - desiredHeight) / 2 + topOffset + baseWindow.height! - activeTab.height
   }
 
+  // The browser rejects bounds that are mostly outside the visible screen space. Without a known
+  // display layout the position can only be kept away from the top left corner.
   return {
     width: desiredWidth,
     height: desiredHeight,
-    left: leftPosition <= SPACING ? Math.round(SPACING) : Math.round(leftPosition),
-    top: topPosition <= SPACING ? Math.round(SPACING) : Math.round(topPosition)
+    left: workArea
+      ? clampToWorkArea(leftPosition, desiredWidth, workArea.left, workArea.width)
+      : Math.round(Math.max(leftPosition, SPACING)),
+    top: workArea
+      ? clampToWorkArea(topPosition, desiredHeight, workArea.top, workArea.height)
+      : Math.round(Math.max(topPosition, SPACING))
   }
 }
 
