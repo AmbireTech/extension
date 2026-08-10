@@ -2,7 +2,7 @@ import React from 'react'
 import { Controller } from 'react-hook-form'
 import { View } from 'react-native'
 
-import SafeIcon from '@common/assets/svg/SafeIcon'
+import SafeIcon, { SAFE_ICON_INLINE_SCALE } from '@common/assets/svg/SafeIcon'
 import SuccessIcon from '@common/assets/svg/SuccessIcon'
 import Alert from '@common/components/Alert'
 import Button from '@common/components/Button'
@@ -83,7 +83,10 @@ const SafeImportScreen = () => {
                   {safe && safeInfo && safe === safeInfo.address && (
                     <View style={[flexbox.directionRow, flexbox.justifySpaceBetween]}>
                       <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-                        <SafeIcon width={20} height={20} />
+                        <SafeIcon
+                          width={20 * SAFE_ICON_INLINE_SCALE}
+                          height={20 * SAFE_ICON_INLINE_SCALE}
+                        />
                         <Text style={spacings.mlTy}>{t('Deployed on:')}</Text>
                       </View>
                       <View style={[flexbox.directionRow, flexbox.alignCenter]}>
