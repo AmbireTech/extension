@@ -20,10 +20,7 @@ import useTheme from '@common/hooks/useTheme'
 import PendingBadge from '@common/modules/dashboard/components/Tokens/TokenItem/PendingBadge'
 import getAndFormatTokenDetails from '@common/modules/dashboard/helpers/getTokenDetails'
 import NotSupportedNetworkTooltip from '@common/modules/swap-and-bridge/components/NotSupportedNetworkTooltip'
-import {
-  TokenExchanges,
-  TokenPriceChange
-} from '@common/modules/swap-and-bridge/components/ToToken/TokenMarketData'
+import { TokenExchanges } from '@common/modules/swap-and-bridge/components/ToToken/TokenMarketData'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { getTokenId } from '@common/utils/token'
@@ -266,7 +263,7 @@ const useGetTokenSelectProps = ({
                 weight="mono_regular"
                 {...(isMobile ? { ellipsizeMode: 'middle' } : {})}
               >
-                {isSelected ? shortenAddress(currentToken.address, 13) : currentToken.address}
+                {shortenAddress(currentToken.address, 13)}
               </Text>
               {!isSelected && (
                 <CopyText
@@ -280,9 +277,6 @@ const useGetTokenSelectProps = ({
           )}
         </View>
 
-        {!isSelected && (
-          <TokenPriceChange chainId={currentToken.chainId} address={currentToken.address} />
-        )}
         {!isSelected && formattedBalancesLabel}
         {network?.isNotSupported && (
           <NotSupportedNetworkTooltip
