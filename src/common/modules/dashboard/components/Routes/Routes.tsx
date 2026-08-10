@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo } from 'react'
+import React, { Suspense, useCallback, useMemo, useState } from 'react'
 import { View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 
@@ -13,9 +13,11 @@ import useController from '@common/hooks/useController'
 import { ROUTES } from '@common/modules/router/constants/common'
 import flexbox from '@common/styles/utils/flexbox'
 
-import SafeQueueBottomSheet, { getSafeQueueRequests } from '../SafeQueueBottomSheet'
+import { getSafeQueueRequests } from '../SafeQueueBottomSheet/helpers'
 import RouteItem from './RouteItem'
 import { RouteItemType } from './RouteItem/RouteItem'
+
+const SafeQueueBottomSheet = React.lazy(() => import('../SafeQueueBottomSheet'))
 
 const Routes = () => {
   const { t } = useTranslation()
@@ -25,6 +27,8 @@ const Routes = () => {
   const { accountStates } = useController('AccountsController').state
   const { userRequests } = useController('RequestsController').state
   const { ref: safeQueueSheetRef, open: openSafeQueue, close: closeSafeQueue } = useModalize()
+  const [safeQueueMountedForAccount, setSafeQueueMountedForAccount] = useState<string | null>(null)
+  const isSafeQueueMounted = safeQueueMountedForAccount === account?.addr
   const currentNonces = useMemo(() => {
     if (!account) return {}
 
@@ -45,7 +49,14 @@ const Routes = () => {
   const pendingSafeRequests = useMemo(() => {
     return safeQueueRequests.filter((r) => !r.meta.isSafeRejected)
   }, [safeQueueRequests])
-  const handleOpenSafeQueue = useCallback(() => openSafeQueue(), [openSafeQueue])
+  const handleOpenSafeQueue = useCallback(() => {
+    if (isSafeQueueMounted) {
+      openSafeQueue()
+      return
+    }
+
+    if (account) setSafeQueueMountedForAccount(account.addr)
+  }, [account, isSafeQueueMounted, openSafeQueue])
 
   const routeItems: RouteItemType[] = useMemo(
     () => [
@@ -104,13 +115,16 @@ const Routes = () => {
 
   return (
     <>
-      {!isMobile && account?.safeCreation && (
-        <SafeQueueBottomSheet
-          sheetRef={safeQueueSheetRef}
-          closeBottomSheet={closeSafeQueue}
-          requests={safeQueueRequests}
-          currentNonces={currentNonces}
-        />
+      {!isMobile && account?.safeCreation && isSafeQueueMounted && (
+        <Suspense fallback={null}>
+          <SafeQueueBottomSheet
+            sheetRef={safeQueueSheetRef}
+            closeBottomSheet={closeSafeQueue}
+            requests={safeQueueRequests}
+            currentNonces={currentNonces}
+            autoOpen
+          />
+        </Suspense>
       )}
       <View style={[flexbox.directionRow]}>
         {routeItems.map((routeItem, index) => (

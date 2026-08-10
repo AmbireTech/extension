@@ -1,5 +1,6 @@
-import { Network } from '@ambire-common/interfaces/network'
-import { CallsUserRequest, UserRequest } from '@ambire-common/interfaces/userRequest'
+import type { Network } from '@ambire-common/interfaces/network'
+
+import type { CallsUserRequest, UserRequest } from '@ambire-common/interfaces/userRequest'
 
 export type SafeQueueStatus = 'needs-signature' | 'waiting' | 'ready' | 'rejected'
 

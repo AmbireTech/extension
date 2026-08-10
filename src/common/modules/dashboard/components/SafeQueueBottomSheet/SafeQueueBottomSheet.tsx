@@ -33,6 +33,7 @@ interface Props {
   closeBottomSheet: () => void
   requests: CallsUserRequest[]
   currentNonces: Record<string, bigint | undefined>
+  autoOpen?: boolean
 }
 
 interface NonceGroupProps {
@@ -163,7 +164,8 @@ const SafeQueueBottomSheet: FC<Props> = ({
   sheetRef,
   closeBottomSheet,
   requests,
-  currentNonces
+  currentNonces,
+  autoOpen = false
 }) => {
   const { t } = useTranslation()
   const { styles, theme } = useTheme(getStyles)
@@ -231,6 +233,7 @@ const SafeQueueBottomSheet: FC<Props> = ({
       modalHeight={540}
       backgroundColor="primaryBackground"
       reserveScrollPadding
+      autoOpen={autoOpen}
     >
       <View style={[flexbox.directionRow, flexbox.justifySpaceBetween, flexbox.alignStart]}>
         <Text fontSize={24} weight="semiBold">
