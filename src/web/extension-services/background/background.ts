@@ -82,6 +82,7 @@ import {
   setBackgroundUserContext
 } from './CrashAnalytics'
 import { getReportableAction } from './getReportableAction'
+import { syncRequestWindowRoute } from './initialRoute'
 
 const debugLogs: {
   key: string
@@ -487,6 +488,11 @@ const init = async () => {
             if (selectedAccountCtrl?.account?.addr) {
               setBackgroundExtraContext('account', selectedAccountCtrl.account.addr)
             }
+          }
+
+          // Update the UI requests route if needed
+          if (ctrl.name === 'RequestsController' || ctrl.name === 'KeystoreController') {
+            syncRequestWindowRoute({ pm, mainCtrl }).catch(captureBackgroundException)
           }
         }, 'background')
       }
