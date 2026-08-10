@@ -306,6 +306,13 @@ const SafeQueueBottomSheet: FC<Props> = ({
           </Text>
         </View>
       )}
+      {isRefreshing && (
+        <View style={[flexbox.directionRow, flexbox.justifyCenter, spacings.mtSm, spacings.pbSm]}>
+          <Text fontSize={12} appearance="secondaryText">
+            {t('Loading...')}
+          </Text>
+        </View>
+      )}
     </BottomSheet>
   )
 }
