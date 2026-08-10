@@ -38,7 +38,7 @@ interface Props {
 
 interface NonceGroupProps {
   group: SafeQueueNonceGroup
-  currentNonce: bigint
+  currentNonce: bigint | undefined
   index: number
   groupsCount: number
   closeBottomSheet: () => void
@@ -107,7 +107,7 @@ const NonceGroup: FC<NonceGroupProps> = ({
         ) : (
           <SafeQueueItem request={group.requests[0]!} closeBottomSheet={closeBottomSheet} />
         )}
-        {group.nonce > currentNonce && (
+        {currentNonce !== undefined && group.nonce > currentNonce && (
           <Text fontSize={11} appearance="secondaryText" style={[spacings.mtMi, spacings.mlSm]}>
             {t('Runs after nonce {{nonce}}', { nonce: (group.nonce - 1n).toString() })}
           </Text>
@@ -121,7 +121,7 @@ const MemoizedNonceGroup = React.memo(NonceGroup)
 
 const NetworkGroup: FC<{
   group: SafeQueueNetworkGroup
-  currentNonce: bigint
+  currentNonce: bigint | undefined
   closeBottomSheet: () => void
 }> = ({ group, currentNonce, closeBottomSheet }) => {
   const { t } = useTranslation()
@@ -293,9 +293,7 @@ const SafeQueueBottomSheet: FC<Props> = ({
           <MemoizedNetworkGroup
             key={group.network.chainId.toString()}
             group={group}
-            currentNonce={
-              currentNonces[group.network.chainId.toString()] ?? group.nonceGroups[0]!.nonce
-            }
+            currentNonce={currentNonces[group.network.chainId.toString()]}
             closeBottomSheet={closeBottomSheet}
           />
         ))
