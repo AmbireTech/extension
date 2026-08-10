@@ -56,8 +56,6 @@ const SafeImportScreen = () => {
         withBackButton
         onBackButtonPress={goToPrevRoute}
         title={t('Import Safe address')}
-        step={1}
-        totalSteps={1}
         withScroll
       >
         <View style={[flexbox.justifySpaceBetween, flexbox.flex1]}>

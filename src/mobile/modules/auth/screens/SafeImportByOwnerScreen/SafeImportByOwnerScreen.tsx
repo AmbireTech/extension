@@ -74,8 +74,6 @@ const SafeImportByOwnerScreen = () => {
         withBackButton
         onBackButtonPress={goToPrevRoute}
         title={t('Import Safe by owner')}
-        step={1}
-        totalSteps={1}
       >
         {/* Tapping anywhere outside the input (or another touchable) hides the keyboard */}
         <Pressable style={flexbox.flex1} onPress={Keyboard.dismiss}>
