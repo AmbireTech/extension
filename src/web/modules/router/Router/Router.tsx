@@ -46,12 +46,19 @@ const Router = () => {
   const [isWaitingForRouteForTooLong, setIsWaitingForRouteForTooLong] = useState(false)
 
   useEffect(() => {
-    if (!hasNothingToRender) return
+    if (!hasNothingToRender) {
+      if (isWaitingForRouteForTooLong) {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setIsWaitingForRouteForTooLong(false)
+      }
+
+      return
+    }
 
     const timeout = setTimeout(() => setIsWaitingForRouteForTooLong(true), TIME_TO_LAND_ON_A_ROUTE)
 
     return () => clearTimeout(timeout)
-  }, [hasNothingToRender])
+  }, [hasNothingToRender, isWaitingForRouteForTooLong])
 
   // Gated on all the controllers and not on `canRenderRoute`, because a route can
   // already be on screen (the dashboard shell) while a deferred controller never
