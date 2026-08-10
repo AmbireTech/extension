@@ -2025,6 +2025,19 @@
         "node-polyfill-webpack-plugin>console-browserify": true
       }
     },
+    "@react-native-async-storage/async-storage>idb": {
+      "globals": {
+        "DOMException": true,
+        "IDBCursor": true,
+        "IDBDatabase": true,
+        "IDBIndex": true,
+        "IDBObjectStore": true,
+        "IDBRequest": true,
+        "IDBTransaction": true,
+        "indexedDB.deleteDatabase": true,
+        "indexedDB.open": true
+      }
+    },
     "react-native-web>inline-style-prefixer": {
       "packages": {
         "react-native-web>inline-style-prefixer>css-in-js-utils": true

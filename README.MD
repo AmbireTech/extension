@@ -165,7 +165,7 @@ Do NOT regenerate for:
 1. **Generate policy:**
 
    ```bash
-   yarn build:extensions:generate-policy
+   yarn build:web:webkit:generate-policy
    ```
 
 2. **Review generated policy:**
