@@ -48,6 +48,10 @@ export const ControllersMiddlewareProvider: React.FC<{
   // view may be moved at all, so nothing is second-guessed here.
   const handleNavigate = useCallback(
     ({ route: nextRoute, options }: { route: string; options?: NavigateOptions }) => {
+      // The initial navigation, or a retry of it, can arrive after the user has already moved on.
+      // Honouring it then would throw them back to where the app started.
+      if (options?.isInitialNavigation && !isOnRootRoute) return
+
       // Users updating from the legacy v1 app land on the migration onboarding (once) before the
       // get-started screen, so they understand why their data is gone and can back up their v1
       // email accounts.
@@ -61,7 +65,7 @@ export const ControllersMiddlewareProvider: React.FC<{
 
       navigate(destination, options)
     },
-    [route.pathname, route.search, navigate]
+    [route.pathname, route.search, navigate, isOnRootRoute]
   )
 
   // Follow where the controllers send the app. Registered before the effect that boots the

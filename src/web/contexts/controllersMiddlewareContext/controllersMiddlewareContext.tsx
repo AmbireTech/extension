@@ -232,6 +232,11 @@ export const ControllersMiddlewareProvider: React.FC<{ children: React.ReactNode
   // may be moved at all is decided there too, so nothing is second-guessed here.
   const handleNavigate = useCallback(
     ({ route: nextRoute, options }: NavigateMessage) => {
+      // The initial navigation, or a retry of it, can arrive after the user has already moved on.
+      // Honouring it then would throw them back to where the app started, and the splash gate
+      // would be narrowed to controllers the view no longer depends on.
+      if (options?.isInitialNavigation && !isOnRootRoute) return
+
       routeCriticalRef.current = ROUTE_CRITICAL_CONTROLLERS[nextRoute] || []
       applyCriticalControllers()
 
@@ -240,7 +245,7 @@ export const ControllersMiddlewareProvider: React.FC<{ children: React.ReactNode
 
       navigate(nextRoute, options)
     },
-    [applyCriticalControllers, route.pathname, route.search, navigate]
+    [applyCriticalControllers, route.pathname, route.search, navigate, isOnRootRoute]
   )
 
   useEffect(() => {

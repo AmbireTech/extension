@@ -85,7 +85,7 @@ export const handleActions = async (
 
       // The view is asking because it still has nothing on screen, which means the navigation
       // sent when it registered never arrived.
-      await mainCtrl.ui.syncViewRoute(port.id)
+      await mainCtrl.ui.syncViewRoute(port.id, { isInitialNavigation: true })
       break
     }
     case 'INIT_CONTROLLER_STATE': {
