@@ -71,7 +71,7 @@ const SafeEip712Data: FC<Props> = ({ accountAddr, chainId, safeEip712Data }) => 
   if (!messageToSign) return null
 
   return (
-    <View style={isWeb ? spacings.mbLg : spacings.mb}>
+    <View style={isWeb ? spacings.mbLg : spacings.mbSm}>
       <View style={styles.container}>
         <View style={styles.header}>
           <Text fontSize={14} weight="medium" appearance="secondaryText" numberOfLines={1}>

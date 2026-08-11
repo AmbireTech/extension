@@ -225,7 +225,7 @@ const SignAccountOpScreen = () => {
         width="full"
         backgroundColor={theme.primaryBackground}
         withHorizontalPadding={false}
-        style={spacings.phMd}
+        style={spacings.ph}
         header={<ActionHeader />}
         renderDirectChildren={() => (
           <View style={[spacings.mh, spacings.mv]}>
@@ -315,17 +315,17 @@ const SignAccountOpScreen = () => {
             }}
           />
         )}
-        <TabLayoutWrapperMainContent withScroll={false}>
+        <TabLayoutWrapperMainContent withScroll={false} contentContainerStyle={spacings.mtSm}>
           <View
             style={[
               flexbox.directionRow,
-              flexbox.alignCenter,
+              flexbox.alignStart,
               flexbox.justifySpaceBetween,
               spacings.mb
             ]}
           >
             <SectionHeading withMb={false}>{t('Overview')}</SectionHeading>
-            <View style={[flexbox.directionRow, flexbox.alignCenter]}>
+            <View style={[flexbox.directionRow, flexbox.alignStart]}>
               <SafeNonce />
               <NetworkBadge
                 chainId={network?.chainId}
