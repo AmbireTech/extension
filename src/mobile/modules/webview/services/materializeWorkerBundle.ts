@@ -37,7 +37,8 @@ const materializeWorkerBundle = async (): Promise<string | null> => {
     const versionPath = `${webviewDir}webview-bundle.version`
 
     // { html, js, integrity } are emitted together by build:webview, so the HTML's SRI
-    // always matches its JS. Required lazily so it is not loaded into memory in dev.
+    // always matches its JS. `version` hashes both, so an HTML-only change still
+    // invalidates the on-disk copy. Required lazily so it is not loaded into memory in dev.
     const otaBundle: {
       html: string
       js: string

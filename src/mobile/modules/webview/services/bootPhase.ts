@@ -1,6 +1,8 @@
-import { controllersNestedInMainMapping } from '@common/constants/controllersMapping'
+import { serializeControllerForUI } from '@common/utils/serializeControllerForUI'
+import { BOOT_MARK, BOOT_MARK_PREFIX } from '@mobile/services/bootProfiler/constants'
 
 import { sendToReactEvent } from './webviewLogger'
+import { workerBootProfiler } from './workerBootProfiler'
 
 // Boot phase controls which controllers may stream their state to the RN side.
 // On mobile the splash hides as soon as the routing-critical controllers land;
@@ -59,17 +61,17 @@ export function queueSuppressedCtrlPayload(ctrlName: string, ctrl: any, forceEmi
 }
 
 function buildStateForFE(ctrlName: string, ctrl: any) {
-  const stateToSendToFE = ctrl.toJSON()
-
-  if (ctrlName === 'MainController') {
-    // We are removing the state of the nested controllers in main to avoid the CPU-intensive task of parsing + stringifying.
-    // We should access the state of the nested controllers directly from their context instead of accessing them through the main ctrl state on the FE.
-    controllersNestedInMainMapping.forEach((nestedCtrlName) => {
-      delete (stateToSendToFE as any)[nestedCtrlName]
-    })
+  const build = () => {
+    return serializeControllerForUI(ctrl)
   }
 
-  return stateToSendToFE
+  // Every path that streams state to the UI funnels through here, so timing the
+  // first build per controller covers the debounced emits and the deferred drain
+  // alike. Later emits are not boot cost and would grow the mark list forever.
+  const markName = `${BOOT_MARK_PREFIX.workerCtrlSerialize}${ctrlName}`
+  if (!workerBootProfiler.reserveOnce(markName)) return build()
+
+  return workerBootProfiler.measure(markName, build)
 }
 
 // Drains queued controller payloads to the RN side one per macrotask so the
@@ -112,6 +114,10 @@ function drainCtrlPayloads(entries: [string, { ctrl: any; forceEmit?: boolean }]
 export function setBootPhase(phase: 'critical' | 'full') {
   if (phase === bootPhase) return
   bootPhase = phase
+
+  if (phase === 'full') {
+    workerBootProfiler.mark(BOOT_MARK.workerBootPhaseFull, { count: deferredCtrlPayloads.size })
+  }
 
   if (phase !== 'full' || deferredCtrlPayloads.size === 0) return
 
