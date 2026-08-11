@@ -51,10 +51,6 @@ import * as Sentry from '@sentry/browser'
 import { browser, platform } from '@web/constants/browserapi'
 import { BadgesController } from '@web/extension-services/background/controllers/badges'
 import ExtensionUpdateController from '@web/extension-services/background/controllers/extension-update'
-import {
-  DappTabTarget,
-  scheduleDappTabFocusDispatch
-} from '@web/extension-services/background/handlers/dispatchDappTabFocus'
 import { handleActions } from '@web/extension-services/background/handlers/handleActions'
 import { handleCleanUpOnPortDisconnect } from '@web/extension-services/background/handlers/handleCleanUpOnPortDisconnect'
 import { handleKeepAlive } from '@web/extension-services/background/handlers/handleKeepAlive'
@@ -64,7 +60,10 @@ import {
 } from '@web/extension-services/background/handlers/handleScripting'
 import { serializeControllerForUI } from '@web/extension-services/background/serializeControllerForUI'
 import { notificationManager } from '@web/extension-services/background/webapi/notification'
-import { openSidePanel } from '@web/extension-services/background/webapi/sidePanel'
+import {
+  getDappTabFocusDispatcher,
+  getPanelManager
+} from '@web/extension-services/background/webapi/panel'
 import windowManager from '@web/extension-services/background/webapi/window'
 import {
   initializeMessenger,
@@ -554,9 +553,11 @@ const init = async () => {
         ...windowManager,
         remove: async (winId: number | 'popup') => {
           if (winId === 'popup') {
+            // Only the popup is closed here. The side panel can't be closed programmatically,
+            // and it doesn't need to be - requests are rendered in it while it is open.
             return new Promise((resolve) => {
-              const overlayPort = pm.ports.find((p) => isExtensionOverlayPort(p.name))
-              if (!overlayPort) {
+              const popupPort = pm.ports.find((p) => p.name === 'popup')
+              if (!popupPort) {
                 resolve()
                 return
               }
@@ -565,7 +566,7 @@ const init = async () => {
                 resolve()
               }, 1500)
 
-              overlayPort.onDisconnect.addListener(() => {
+              popupPort.onDisconnect.addListener(() => {
                 clearTimeout(timeout)
                 resolve()
               })
@@ -575,6 +576,8 @@ const init = async () => {
           await windowManager.remove(winId, pm)
         }
       },
+      panel: getPanelManager(pm),
+      dispatchDappTabFocus: getDappTabFocusDispatcher(pm),
       notification: notificationManager,
       message: {
         sendToastMessage: (text, options) => {
@@ -587,12 +590,6 @@ const init = async () => {
           // TODO:
           // pm.send('> ui-navigate', ...)
         }
-      },
-      dispatchDappTabFocus: (targets: DappTabTarget[]) => {
-        scheduleDappTabFocusDispatch(targets)
-      },
-      openSidePanel: async (windowId?: number) => {
-        await openSidePanel(windowId)
       }
     }
   })

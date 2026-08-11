@@ -15,6 +15,7 @@ import { isMobile } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import useNavigation from '@common/hooks/useNavigation'
+import useShouldRenderRequestInPanel from '@common/hooks/useShouldRenderRequestInPanel'
 import useToast from '@common/hooks/useToast'
 import DashboardBannerBottomSheet from '@common/modules/dashboard/components/DashboardBanners/DashboardBannerBottomSheet'
 import { ROUTES } from '@common/modules/router/constants/common'
@@ -36,6 +37,7 @@ const DashboardBanner = ({
   const { t } = useTranslation()
   const { addToast } = useToast()
   const { navigate } = useNavigation()
+  const shouldRenderRequestInPanel = useShouldRenderRequestInPanel()
   const {
     state: { visibleUserRequests },
     dispatch: requestsDispatch
@@ -99,7 +101,7 @@ const DashboardBanner = ({
               args: [targetRequest.id]
             }
           })
-          if (isSidePanel) {
+          if (shouldRenderRequestInPanel) {
             const targetRoute = getRouteForUserRequest({
               currentUserRequest: targetRequest,
               transferState
@@ -120,7 +122,7 @@ const DashboardBanner = ({
               args: [action.meta.requestId]
             }
           })
-          if (isSidePanel && targetRequest) {
+          if (shouldRenderRequestInPanel && targetRequest) {
             const targetRoute = getRouteForUserRequest({
               currentUserRequest: targetRequest,
               transferState
@@ -285,6 +287,7 @@ const DashboardBanner = ({
       navigate,
       addToast,
       visibleUserRequests,
+      shouldRenderRequestInPanel,
       transferState,
       type,
       openBottomSheet,
