@@ -18,6 +18,8 @@ export default function useDappVerificationHoldButtonType(
         (banner) =>
           banner.id === DAPP_VERIFICATION_BANNER_IDS.FAILED_TO_GET_OR_UNKNOWN ||
           banner.id === DAPP_VERIFICATION_BANNER_IDS.SUSPICIOUS_HOSTING ||
+          banner.id === DAPP_VERIFICATION_BANNER_IDS.LOADING ||
+          banner.id === DAPP_VERIFICATION_BANNER_IDS.NOT_IN_CATALOG ||
           banner.id === 'significantBalanceDecrease'
       )
     )
