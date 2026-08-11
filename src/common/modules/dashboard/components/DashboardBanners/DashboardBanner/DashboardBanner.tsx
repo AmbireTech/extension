@@ -54,7 +54,7 @@ const DashboardBanner = ({
   // The title, the network icon and the two action buttons don't fit on one row in the narrow
   // side panel, which leaves the title unreadable. There it falls back to the stacked layout
   // used on mobile, where the buttons get a row of their own.
-  const isPendingAccountOp = !isSidePanel && category === 'pending-to-be-signed-acc-op'
+  const isPendingAccountOp = category === 'pending-to-be-signed-acc-op'
 
   const Icon = useMemo(() => {
     if (category === 'pending-to-be-signed-acc-op') return BatchIcon
