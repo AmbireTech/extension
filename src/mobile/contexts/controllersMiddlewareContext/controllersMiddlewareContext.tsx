@@ -15,6 +15,7 @@ import {
   MAX_VIEW_ROUTE_SYNC_ATTEMPTS,
   VIEW_ROUTE_SYNC_RE_ASK_INTERVAL
 } from '@common/modules/router/constants/viewRouteSync'
+import { toAbsoluteRoute } from '@common/modules/router/helpers/helpers'
 import eventBus from '@common/services/event/eventBus'
 import { Action, MethodAction } from '@common/types/actions'
 import { BUNGEE_API_KEY, RELAYER_URL, SQUID_INTEGRATOR_ID, UNISWAP_API_KEY, VELCRO_URL } from '@env'
@@ -43,17 +44,10 @@ export const ControllersMiddlewareProvider: React.FC<{
     []
   )
 
-  // Follow where the controllers send the app. Registered before the effect that boots the
-  // worker, because registering the view is what triggers the first navigation and the worker
-  // only starts from that effect.
-  useEffect(() => {
-    const onNavigate = ({
-      route: nextRoute,
-      options
-    }: {
-      route: string
-      options?: NavigateOptions
-    }) => {
+  // The controllers are authoritative for routing: they send the route to go to and whether the
+  // view may be moved at all, so nothing is second-guessed here.
+  const handleNavigate = useCallback(
+    ({ route: nextRoute, options }: { route: string; options?: NavigateOptions }) => {
       // Users updating from the legacy v1 app land on the migration onboarding (once) before the
       // get-started screen, so they understand why their data is gone and can back up their v1
       // email accounts.
@@ -62,13 +56,22 @@ export const ControllersMiddlewareProvider: React.FC<{
           ? ROUTES.migrationOnboarding
           : nextRoute
 
+      // Don't navigate if already there
+      if (`${route.pathname}${route.search}` === toAbsoluteRoute(destination)) return
+
       navigate(destination, options)
-    }
+    },
+    [route.pathname, route.search, navigate]
+  )
 
-    eventBus.addEventListener('navigate', onNavigate)
+  // Follow where the controllers send the app. Registered before the effect that boots the
+  // worker, because registering the view is what triggers the first navigation and the worker
+  // only starts from that effect.
+  useEffect(() => {
+    eventBus.addEventListener('navigate', handleNavigate)
 
-    return () => eventBus.removeEventListener('navigate', onNavigate)
-  }, [navigate])
+    return () => eventBus.removeEventListener('navigate', handleNavigate)
+  }, [handleNavigate])
 
   // Report which controllers currently have an active subscriber so the WebView
   // worker can skip serializing + bridging the state of controllers no screen is
