@@ -53,7 +53,7 @@ const PrivacyOptOutsList = () => {
           `Do not upgrade standard EOA accounts to smart accounts (disabling this doesn't auto revoke all delegations you have set up on your accounts)`
         )}
         icon={<LightningIcon width={24} height={24} color={theme.iconPrimary} />}
-        flag="erc7702"
+        flag="eip7702"
       />
       <CrashAnalyticsControlOption />
     </View>
