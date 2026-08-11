@@ -80,6 +80,15 @@ export const handleActions = async (
       break
     }
 
+    case 'SYNC_VIEW_ROUTE': {
+      if (!params.id) return
+
+      // The app is asking because it still has nothing on screen, which means the navigation sent
+      // when the view registered never arrived.
+      await mainCtrl.ui.syncViewRoute(params.id)
+      break
+    }
+
     case 'SET_BOOT_PHASE': {
       setBootPhase(params.phase)
       break

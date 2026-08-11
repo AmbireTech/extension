@@ -30,8 +30,11 @@ type GetAllControllerNamesAction = {
   type: 'GET_ALL_CONTROLLER_NAMES'
 }
 
-type GetInitialRouteAction = {
-  type: 'GET_INITIAL_ROUTE'
+type SyncViewRouteAction = {
+  type: 'SYNC_VIEW_ROUTE'
+  // Only mobile fills in the id. On the extension the port the action came through identifies the
+  // view, the same way it works for SET_VIEW_FOCUS.
+  params: { id?: string }
 }
 
 type InitControllerStateAction = {
@@ -248,7 +251,7 @@ export type Action =
   | InitAllControllersAction
   | WindowRemovedAction
   | GetAllControllerNamesAction
-  | GetInitialRouteAction
+  | SyncViewRouteAction
   | InitControllerStateAction
   | HandleProviderRequestAction
   | WebviewOriginChangedAction

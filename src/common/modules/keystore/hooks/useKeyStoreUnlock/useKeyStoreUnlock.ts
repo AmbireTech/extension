@@ -5,15 +5,13 @@ import { isDev, isTesting } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import useDisableNavigatingBack from '@common/hooks/useDisableNavigatingBack'
-import useNavigation from '@common/hooks/useNavigation'
 import { DEFAULT_KEYSTORE_PASSWORD_DEV } from '@env'
 
 const useKeyStoreUnlock = () => {
   const { t } = useTranslation()
 
-  const { navigate } = useNavigation()
   const {
-    state: { isUnlocked, statuses, errorMessage },
+    state: { statuses, errorMessage },
     dispatch: keystoreDispatch
   } = useController('KeystoreController')
 
@@ -37,10 +35,6 @@ const useKeyStoreUnlock = () => {
   useEffect(() => {
     if (errorMessage) setError('password', { message: errorMessage })
   }, [errorMessage, setError])
-
-  useEffect(() => {
-    if (isUnlocked) navigate('/')
-  }, [navigate, isUnlocked])
 
   const disableSubmit = useMemo(
     () => statuses.unlockWithSecret !== 'INITIAL' || !!errorMessage,

@@ -18,7 +18,7 @@ import { ErrorRef } from '@ambire-common/interfaces/eventEmitter'
 import { Fetch } from '@ambire-common/interfaces/fetch'
 import { IKeystoreController } from '@ambire-common/interfaces/keystore'
 import { ISelectedAccountController } from '@ambire-common/interfaces/selectedAccount'
-import { UiManager } from '@ambire-common/interfaces/ui'
+import { NavigateOptions, UiManager, View } from '@ambire-common/interfaces/ui'
 import { getAccountKeysCount } from '@ambire-common/libs/keys/keys'
 import { KeystoreSigner } from '@ambire-common/libs/keystoreSigner/keystoreSigner'
 import { parse, stringify } from '@ambire-common/libs/richJson/richJson'
@@ -34,6 +34,7 @@ import QrHardwareController from '@common/modules/hardware-wallets/controllers/Q
 import UrQrProtocolAdapter from '@common/modules/hardware-wallets/qr/protocol/UrQrProtocolAdapter'
 import QrHardwareSigner from '@common/modules/hardware-wallets/signers/QrHardwareSigner'
 import handleProviderRequests from '@common/modules/provider/handleProviderRequests'
+import { resolveViewRoute } from '@common/modules/router/helpers'
 import { storage } from '@common/services/storage'
 import { Action, MethodAction } from '@common/types/actions'
 import { LOG_LEVELS, logInfoWithPrefix } from '@common/utils/logger'
@@ -81,8 +82,8 @@ import {
   setBackgroundExtraContext,
   setBackgroundUserContext
 } from './CrashAnalytics'
+import { sendCriticalControllerStates } from './criticalControllerStates'
 import { getReportableAction } from './getReportableAction'
-import { syncRequestWindowRoute } from './initialRoute'
 
 const debugLogs: {
   key: string
@@ -489,11 +490,6 @@ const init = async () => {
               setBackgroundExtraContext('account', selectedAccountCtrl.account.addr)
             }
           }
-
-          // Update the UI requests route if needed
-          if (ctrl.name === 'RequestsController' || ctrl.name === 'KeystoreController') {
-            syncRequestWindowRoute({ pm, mainCtrl }).catch(captureBackgroundException)
-          }
         }, 'background')
       }
     })
@@ -583,11 +579,16 @@ const init = async () => {
         sendUiMessage: (params) => {
           pm.send('> ui', { method: 'receiveOneTimeData', params })
         },
-        sendNavigateMessage: () => {
-          // TODO:
-          // pm.send('> ui-navigate', ...)
+        sendNavigateMessage: (viewId: string, route: string, options?: NavigateOptions) => {
+          // Views are keyed by the id of the port they connected with, so only the one being
+          // navigated hears about it.
+          const port = pm.ports.find((p) => p.id === viewId)
+          if (!port) return
+
+          pm.sendToPort(port, '> ui', { method: 'navigate', params: { route, options } })
         }
-      }
+      },
+      resolveViewRoute: (view: View) => resolveViewRoute(mainCtrl, view)
     }
   })
 
@@ -697,6 +698,12 @@ const init = async () => {
       port.name = name
       pm.addOrUpdatePort(port, () => {
         mainCtrl.ui.addView({ id: port.id, type: port.name })
+
+        // Registering the view is what sends it to a screen, so give it the states that screen
+        // needs at the same time instead of making it ask.
+        sendCriticalControllerStates({ pm, port, eventEmitterRegistry }).catch(
+          captureBackgroundException
+        )
 
         pm.addConnectListener(
           port.id,
