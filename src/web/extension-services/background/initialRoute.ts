@@ -2,10 +2,9 @@ import { IEventEmitterRegistryController } from '@ambire-common/interfaces/event
 import { View } from '@ambire-common/interfaces/ui'
 import { AUTH_STATUS } from '@common/modules/auth/constants/authStatus'
 import { getInitialRoute } from '@common/modules/router/helpers'
+import { serializeControllerForUI } from '@common/utils/serializeControllerForUI'
 import { ROUTE_CRITICAL_CONTROLLERS } from '@web/constants/criticalControllers'
 import { Port, PortMessenger } from '@web/extension-services/messengers'
-
-import { serializeControllerForUI } from './serializeControllerForUI'
 
 import type { MainController } from '@ambire-common/controllers/main/main'
 type SendInitialRouteParams = {
