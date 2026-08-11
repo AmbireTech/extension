@@ -23,6 +23,7 @@ import WebviewDevServerError from '@mobile/modules/webview/components/WebviewDev
 import getWebviewBundleUri from '@mobile/modules/webview/services/getWebviewBundleUri'
 import materializeWorkerBundle from '@mobile/modules/webview/services/materializeWorkerBundle'
 import ledgerTransportService from '@mobile/services/ledger/ledgerTransportService'
+import { beginNfcPinSessions, endNfcPinSessions, getNfcCardService } from '@mobile/services/nfc'
 import trezorDeeplinkService from '@mobile/services/trezor/trezorDeeplinkService'
 
 import { decode, encode } from './bridgeCodec'
@@ -566,6 +567,28 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, object>((_, ref) => {
           } catch (err: any) {
             sendResponse(data.id, null, err.message)
           }
+          break
+        case 'nfc.signHash': {
+          const { nfcWalletType, ...signHashParams } = data.payload
+
+          try {
+            sendResponse(data.id, await getNfcCardService(nfcWalletType).signHash(signHashParams))
+          } catch (err: any) {
+            sendResponse(data.id, null, err.message)
+          }
+          break
+        }
+        case 'nfc.cancel':
+          getNfcCardService(data.payload.nfcWalletType).cancel()
+          sendResponse(data.id, null)
+          break
+        case 'nfc.beginPinSession':
+          beginNfcPinSessions()
+          sendResponse(data.id, null)
+          break
+        case 'nfc.endPinSession':
+          endNfcPinSessions()
+          sendResponse(data.id, null)
           break
 
         default:

@@ -1,5 +1,6 @@
 import '@walletconnect/react-native-compat'
 
+import { getNormalizedHostnameFromUrl } from '@ambire-common/libs/dapps/helpers'
 import CONFIG from '@common/config/env'
 import { Action, MethodAction } from '@common/types/actions'
 import { getWcTabIdFromTopic } from '@mobile/modules/wallet-connect/utils'
@@ -137,11 +138,7 @@ const getDappMetadata = async (url: string, name?: string, icon?: string) => {
   if (fetchedName) {
     finalName = fetchedName
   } else if (!finalName || finalName === 'Signature Validator') {
-    try {
-      finalName = new URL(url).hostname
-    } catch (e) {
-      // ignore
-    }
+    finalName = getNormalizedHostnameFromUrl(url) ?? finalName
   }
 
   if (finalIcon) {

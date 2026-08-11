@@ -20,7 +20,7 @@
     <string>$(PRODUCT_BUNDLE_PACKAGE_TYPE)</string>
     <!-- This is planned to be in sync with app.json 's "version" two components, e.g. 5.39 -->
     <key>CFBundleShortVersionString</key>
-    <string>6.16</string>
+    <string>6.18</string>
     <key>CFBundleSignature</key>
     <string>????</string>
     <key>CFBundleURLTypes</key>
@@ -35,7 +35,7 @@
       </dict>
     </array>
     <key>CFBundleVersion</key>
-    <string>67</string>
+    <string>68</string>
     <key>LSMinimumSystemVersion</key>
     <string>12.0</string>
     <key>LSApplicationQueriesSchemes</key>
@@ -71,6 +71,15 @@
     <string>Allow $(PRODUCT_NAME) to use Face ID</string>
     <key>NSBluetoothAlwaysUsageDescription</key>
     <string>$(PRODUCT_NAME) needs Bluetooth access to connect to your Ledger hardware wallet.</string>
+    <key>NFCReaderUsageDescription</key>
+    <string>$(PRODUCT_NAME) needs NFC access to connect to your Keycard.</string>
+    <!-- The Keycard applet identifiers iOS is allowed to select on a tapped card -->
+    <key>com.apple.developer.nfc.readersession.iso7816.select-identifiers</key>
+    <array>
+      <string>A00000080400010101</string>
+      <string>A00000080400010301</string>
+      <string>A000000151000000</string>
+    </array>
     <key>ITSAppUsesNonExemptEncryption</key>
     <false/>
     <key>RCTNewArchEnabled</key>

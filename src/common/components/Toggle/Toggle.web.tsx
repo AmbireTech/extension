@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useCallback } from 'react'
 
 import Text from '@common/components/Text'
 import useTheme from '@common/hooks/useTheme'
@@ -16,17 +16,25 @@ const Toggle: React.FC<ToggleProps> = ({
   trackStyle,
   children,
   disabled,
+  stopPropagation,
   testID
 }) => {
-  const { theme, themeType } = useTheme()
+  const { theme } = useTheme()
   const handleOnToggle: React.ChangeEventHandler<HTMLInputElement> = (e) => {
     onToggle(e.target.checked)
   }
+  const handleClick = useCallback<React.MouseEventHandler<HTMLLabelElement>>(
+    (event) => {
+      if (stopPropagation) event.stopPropagation()
+    },
+    [stopPropagation]
+  )
 
   return (
     <label
       htmlFor={id}
-      // @ts-ignore it exists for the React Native Web component
+      onClick={handleClick}
+      // @ts-expect-error it exists for the React Native Web component
       testID={testID}
       style={{
         alignItems: 'center',

@@ -2,6 +2,7 @@ import { FC, memo, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 
+import { isNative } from '@ambire-common/libs/portfolio/helpers'
 import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
 import shortenAddress from '@ambire-common/utils/shortenAddress'
 import OpenIcon from '@common/assets/svg/OpenIcon'
@@ -9,7 +10,7 @@ import CopyText from '@common/components/CopyText'
 import NetworkIcon from '@common/components/NetworkIcon'
 import Text from '@common/components/Text'
 import useController from '@common/hooks/useController'
-import useHover, { AnimatedPressable } from '@common/hooks/useHover'
+import useHover, { AnimatedPressable, useCustomHover } from '@common/hooks/useHover'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import spacings from '@common/styles/spacings'
@@ -85,7 +86,7 @@ const Row = memo(
                   {...bindOpenAnim}
                   style={[openAnimStyle, spacings.mlTy]}
                   onPress={async () => {
-                    await openInTab({ url: `${networkData.explorerUrl}/address/${value}` })
+                    await openInTab({ url: `${networkData.explorerUrl}/token/${value}` })
                   }}
                 >
                   <OpenIcon width={20} height={20} />
@@ -103,7 +104,11 @@ const Row = memo(
 const TokenData: FC<Props> = ({ token }) => {
   const { t } = useTranslation()
   const { theme } = useTheme()
-  const [bindOpenAnim, openAnimStyle] = useHover({ preset: 'opacityInverted' })
+  const [bindWebsiteAnim, websiteAnimStyle] = useCustomHover({
+    property: 'backgroundColor',
+    values: { from: theme.secondaryBackground, to: theme.tertiaryBackground }
+  })
+  const website = token.meta?.website
 
   const rows: Row[] = useMemo(() => {
     const usdMarketData = token.marketDataIn[0]
@@ -114,7 +119,7 @@ const TokenData: FC<Props> = ({ token }) => {
         label: t('Chain'),
         value: token.chainId
       },
-      {
+      !isNative(token) && {
         id: 'address',
         label: t('Contract address'),
         value: token.address
@@ -161,17 +166,18 @@ const TokenData: FC<Props> = ({ token }) => {
           />
         ))}
       </View>
-      {!!token.meta?.website && (
-        <View
-          style={{
-            ...flexbox.directionRow,
-            ...flexbox.alignCenter,
-            ...spacings.phSm,
-            ...spacings.mbTy,
-            backgroundColor: theme.secondaryBackground,
-            height: 56,
-            borderRadius: BORDER_RADIUS_PRIMARY
-          }}
+      {!!website && (
+        <AnimatedPressable
+          {...bindWebsiteAnim}
+          onPress={() => openInTab({ url: website })}
+          style={[
+            flexbox.directionRow,
+            flexbox.alignCenter,
+            spacings.phSm,
+            spacings.mbTy,
+            { height: 56, borderRadius: BORDER_RADIUS_PRIMARY },
+            websiteAnimStyle
+          ]}
         >
           <Text fontSize={14} weight="medium" appearance="secondaryText">
             {t('Website')}
@@ -185,16 +191,12 @@ const TokenData: FC<Props> = ({ token }) => {
               spacings.mlXl
             ]}
           >
-            <Label label={token.meta.website} />
-            <AnimatedPressable
-              {...bindOpenAnim}
-              style={[openAnimStyle, spacings.mlTy]}
-              onPress={() => openInTab({ url: token.meta?.website! })}
-            >
+            <Label label={website} />
+            <View style={spacings.mlTy}>
               <OpenIcon />
-            </AnimatedPressable>
+            </View>
           </View>
-        </View>
+        </AnimatedPressable>
       )}
     </>
   )
