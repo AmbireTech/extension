@@ -38,7 +38,7 @@ import {
   setWorkerBootProfile
 } from '@mobile/services/bootProfiler'
 import ledgerTransportService from '@mobile/services/ledger/ledgerTransportService'
-import { getNfcCardService } from '@mobile/services/nfc'
+import { beginNfcPinSessions, endNfcPinSessions, getNfcCardService } from '@mobile/services/nfc'
 import trezorDeeplinkService from '@mobile/services/trezor/trezorDeeplinkService'
 
 import { decode, encode } from './bridgeCodec'
@@ -665,6 +665,14 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, object>((_, ref) => {
         }
         case 'nfc.cancel':
           getNfcCardService(data.payload.nfcWalletType).cancel()
+          sendResponse(data.id, null)
+          break
+        case 'nfc.beginPinSession':
+          beginNfcPinSessions()
+          sendResponse(data.id, null)
+          break
+        case 'nfc.endPinSession':
+          endNfcPinSessions()
           sendResponse(data.id, null)
           break
 

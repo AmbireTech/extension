@@ -26,3 +26,11 @@ export const getNfcCardService = (nfcWalletType: NfcWalletType): NfcCardService 
  */
 export const getActiveNfcCardService = (): NfcCardService | null =>
   Object.values(nfcCardServices).find((service) => service.getState().step !== 'idle') || null
+
+// Every card is told, because which one will sign is not known when the signing
+// starts - and there is a single NFC radio, so at most one can be in a session.
+export const beginNfcPinSessions = () =>
+  Object.values(nfcCardServices).forEach((service) => service.beginPinSession())
+
+export const endNfcPinSessions = () =>
+  Object.values(nfcCardServices).forEach((service) => service.endPinSession())

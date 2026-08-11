@@ -8,11 +8,10 @@ import QrKeyIterator from '@common/modules/hardware-wallets/libs/qrKeyIterator/q
 import { Action, MethodAction } from '@common/types/actions'
 import { serializeControllerForUI } from '@common/utils/serializeControllerForUI'
 import { browser } from '@web/constants/browserapi'
-import { ROUTE_CRITICAL_CONTROLLERS } from '@web/constants/criticalControllers'
 import { Port, PortMessenger } from '@web/extension-services/messengers'
 import LatticeKeyIterator from '@web/modules/hardware-wallet/libs/latticeKeyIterator'
 
-import { resolveInitialRoute } from '../resolveInitialRoute'
+import { sendInitialRoute } from '../initialRoute'
 import sessionStorage from '../webapi/sessionStorage'
 
 export const handleActions = async (
@@ -51,6 +50,9 @@ export const handleActions = async (
     case 'HANDSHAKE': {
       if (!pm || !port) return
       pm.sendToPort(port, '> ui', { method: 'portReady', params: {} })
+
+      // Send the route proactively
+      await sendInitialRoute({ pm, port, mainCtrl, eventEmitterRegistry })
       break
     }
     case 'UPDATE_PORT_URL': {
@@ -82,21 +84,15 @@ export const handleActions = async (
     }
     case 'GET_INITIAL_ROUTE': {
       if (!pm || !port) return
-      const route = await resolveInitialRoute(mainCtrl, port.name === 'request-window')
-      pm.sendToPort(port, '> ui', { method: 'initialRoute', params: { route } })
 
-      // Proactively push the resolved route's critical states in the same burst so
-      // the screen paints without a second request/response round-trip. The UI
-      // requests only the remaining (deferred) controllers afterwards.
-      const criticalControllers = (route && ROUTE_CRITICAL_CONTROLLERS[route]) || []
-      const registeredCtrls = eventEmitterRegistry.values()
-      criticalControllers.forEach((ctrlName) => {
-        const ctrl = registeredCtrls.find((c) => c.name === ctrlName)
-        if (!ctrl) return
-        pm.sendToPort(port, '> ui', {
-          method: ctrlName,
-          params: serializeControllerForUI(ctrl)
-        })
+      // The view is asking because it has nothing on screen, so the route's critical
+      // controller states go with the answer to save it another round-trip.
+      await sendInitialRoute({
+        pm,
+        port,
+        mainCtrl,
+        eventEmitterRegistry,
+        withCriticalControllerStates: true
       })
       break
     }
