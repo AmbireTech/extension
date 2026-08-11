@@ -265,6 +265,7 @@ const useSafeImportByOwner = () => {
     isSearching,
     goToPrevRoute,
     importedAccounts,
+    owner,
     ownerAddressState,
     ownerAddressValidation,
     safeAccounts: currentDisplayableData?.accounts || [],

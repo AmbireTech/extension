@@ -447,6 +447,15 @@ export class ProviderController {
     }
 
     const accountAddr = data.params[0]
+
+    if (
+      !this._internalGetAccounts(data.session.id).some(
+        (acc: string) => acc.toLowerCase() === accountAddr.toLowerCase()
+      )
+    ) {
+      throw ethErrors.provider.unauthorized()
+    }
+
     const state = this.mainCtrl.accounts.accountStates[accountAddr]
     if (!state) {
       throw ethErrors.rpc.invalidParams(`account with address ${accountAddr} does not exist`)

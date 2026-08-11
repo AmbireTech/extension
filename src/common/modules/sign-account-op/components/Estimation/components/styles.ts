@@ -5,7 +5,8 @@ import { ThemeProps, ThemeType } from '@common/styles/themeConfig'
 
 interface Style {
   gasTankBadge: ViewStyle
-  walletBalanceBadge: ViewStyle
+  // Note: Under discussion
+  // walletBalanceBadge: ViewStyle
 }
 
 const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
@@ -17,13 +18,16 @@ const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
       borderWidth: 1,
       ...spacings.phMi,
       ...spacings.mlMi
-    },
-    walletBalanceBadge: {
-      borderRadius: 50,
-      backgroundColor: theme.infoBackground,
-      ...spacings.phMi,
-      ...spacings.mlMi
     }
+    // Note: Under discussion
+    // walletBalanceBadge: {
+    //   borderRadius: 50,
+    //   backgroundColor: theme.infoBackground,
+    //   borderColor: theme.infoBackground,
+    //   borderWidth: 1,
+    //   ...spacings.phMi,
+    //   ...spacings.mlMi
+    // }
   })
 
 export default getStyles

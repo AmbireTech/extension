@@ -23,7 +23,7 @@ import WebviewDevServerError from '@mobile/modules/webview/components/WebviewDev
 import getWebviewBundleUri from '@mobile/modules/webview/services/getWebviewBundleUri'
 import materializeWorkerBundle from '@mobile/modules/webview/services/materializeWorkerBundle'
 import ledgerTransportService from '@mobile/services/ledger/ledgerTransportService'
-import { getNfcCardService } from '@mobile/services/nfc'
+import { beginNfcPinSessions, endNfcPinSessions, getNfcCardService } from '@mobile/services/nfc'
 import trezorDeeplinkService from '@mobile/services/trezor/trezorDeeplinkService'
 import {
   BOOT_MARK,
@@ -640,6 +640,14 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, object>((_, ref) => {
         }
         case 'nfc.cancel':
           getNfcCardService(data.payload.nfcWalletType).cancel()
+          sendResponse(data.id, null)
+          break
+        case 'nfc.beginPinSession':
+          beginNfcPinSessions()
+          sendResponse(data.id, null)
+          break
+        case 'nfc.endPinSession':
+          endNfcPinSessions()
           sendResponse(data.id, null)
           break
 

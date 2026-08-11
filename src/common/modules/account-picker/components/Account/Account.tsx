@@ -25,6 +25,7 @@ import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import useWindowSize from '@common/hooks/useWindowSize'
 import spacings from '@common/styles/spacings'
+import { THEME_TYPES } from '@common/styles/themeConfig'
 import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import { setStringAsync } from '@common/utils/clipboard'
@@ -68,7 +69,7 @@ const Account = ({
     address: account.addr
   })
   const { t } = useTranslation()
-  const { styles, theme } = useTheme(getStyles)
+  const { styles, theme, themeType } = useTheme(getStyles)
   const { minWidthSize, maxWidthSize } = useWindowSize()
   const { addToast } = useToast()
   const isAccountImported = importStatus !== ImportStatus.NotImported
@@ -132,6 +133,12 @@ const Account = ({
   )
   const shouldShowOnlyResolvedName = isCompactWebIdentity && !!reverseLookupName
 
+  const backgroundColor = useMemo(() => {
+    if (identityDisplayMode === 'compact') return theme.secondaryBackground
+
+    return themeType === THEME_TYPES.DARK ? theme.neutral400 : theme.neutral200
+  }, [identityDisplayMode, theme, themeType])
+
   const handleCopyAddress = useCallback(() => {
     setStringAsync(account.addr)
     addToast(t('Address copied to clipboard!') as string, { timeout: 2500 })
@@ -149,10 +156,7 @@ const Account = ({
         common.hidden,
         // @ts-expect-error react-native-web supports `cursor`, but it's missing from React Native StyleProp<ViewStyle> types
         isWeb && !selectOnRowPress && { cursor: 'default' },
-        {
-          backgroundColor:
-            identityDisplayMode === 'compact' ? theme.secondaryBackground : theme.neutral200
-        }
+        { backgroundColor }
       ]}
       onPress={isDisabled || !selectOnRowPress ? undefined : handlePress}
       testID={`add-account-${account.addr}`}

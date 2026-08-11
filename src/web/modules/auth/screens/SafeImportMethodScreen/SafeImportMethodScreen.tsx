@@ -18,6 +18,8 @@ import {
   TabLayoutWrapperMainContent
 } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
 
+const ICON_SLOT_SIZE = 24
+
 const SafeImportMethodScreen = () => {
   const { t } = useTranslation()
   const { theme } = useTheme()
@@ -27,6 +29,9 @@ const SafeImportMethodScreen = () => {
       {
         title: 'Import Safe address',
         icon: SafeIcon,
+        // SafeIcon fills its whole box, so it must be drawn smaller than the slot to
+        // match the icons that inset their artwork in it
+        iconSize: 20,
         onPress: () => goToNextRoute(WEB_ROUTES.safeImportAddress)
       },
       {
@@ -49,7 +54,7 @@ const SafeImportMethodScreen = () => {
           title={t('Import Safe account')}
         >
           <View>
-            {methods.map(({ title, icon: Icon, onPress }) => (
+            {methods.map(({ title, icon: Icon, iconSize = ICON_SLOT_SIZE, onPress }) => (
               <Button
                 key={title}
                 type="tertiary"
@@ -63,7 +68,9 @@ const SafeImportMethodScreen = () => {
                 }}
               >
                 <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-                  <Icon width={24} height={24} color={theme.iconPrimary} />
+                  <View style={[flexbox.center, { width: ICON_SLOT_SIZE, height: ICON_SLOT_SIZE }]}>
+                    <Icon width={iconSize} height={iconSize} color={theme.iconPrimary} />
+                  </View>
                   <Text style={spacings.mlSm} fontSize={16} weight="medium">
                     {t(title)}
                   </Text>

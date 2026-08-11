@@ -319,13 +319,13 @@ const SignAccountOpScreen = () => {
           <View
             style={[
               flexbox.directionRow,
-              flexbox.alignCenter,
+              flexbox.alignStart,
               flexbox.justifySpaceBetween,
               spacings.mb
             ]}
           >
             <SectionHeading withMb={false}>{t('Overview')}</SectionHeading>
-            <View style={[flexbox.directionRow, flexbox.alignCenter]}>
+            <View style={[flexbox.directionRow, flexbox.alignStart]}>
               <SafeNonce />
               <NetworkBadge
                 chainId={network?.chainId}

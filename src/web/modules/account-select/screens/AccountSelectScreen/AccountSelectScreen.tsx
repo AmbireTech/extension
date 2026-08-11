@@ -48,6 +48,8 @@ const extractTriggerAddAccountSheetParam = (search: string | undefined): boolean
   return null
 }
 
+const ACCOUNT_OPTIONS = { markSelected: true }
+
 const AccountSelectScreen = () => {
   const { styles } = useTheme(getStyles)
   const flatlistRef = useRef(null)
@@ -88,18 +90,21 @@ const AccountSelectScreen = () => {
     []
   )
 
-  const renderItem = ({ item: acc }: { item: AccountType }) => {
-    return (
-      <Account
-        onSelect={onAccountSelect}
-        account={acc}
-        withSettings={false}
-        options={{ markSelected: true }}
-        maxAccountAddrLength={32}
-        withReceive
-      />
-    )
-  }
+  const renderItem = useCallback(
+    ({ item: acc }: { item: AccountType }) => {
+      return (
+        <Account
+          onSelect={onAccountSelect}
+          account={acc}
+          withSettings={false}
+          options={ACCOUNT_OPTIONS}
+          maxAccountAddrLength={32}
+          withReceive
+        />
+      )
+    },
+    [onAccountSelect]
+  )
 
   useEffect(() => {
     // Navigate to the dashboard after the account is selected to avoid showing the dashboard

@@ -1,5 +1,5 @@
 import * as SplashScreen from 'expo-splash-screen'
-import React, { useCallback, useContext, useEffect, useRef } from 'react'
+import React, { useCallback, useContext, useEffect, useRef, useState } from 'react'
 import { AppState, View } from 'react-native'
 import { KeyboardController } from 'react-native-keyboard-controller'
 import { Navigate, Route, Routes } from 'react-router-native'
@@ -17,6 +17,7 @@ import { ROUTES } from '@common/modules/router/constants/common'
 import { getInitialRoute } from '@common/modules/router/helpers'
 import eventBus from '@common/services/event/eventBus'
 import flexbox from '@common/styles/utils/flexbox'
+import useNativeThemeSync from '@mobile/hooks/useNativeThemeSync'
 import DashboardScreen from '@mobile/modules/dashboard/screens/DashboardScreen'
 import useLedgerConnectionLifecycle from '@mobile/modules/hardware-wallet/hooks/useLedgerConnectionLifecycle'
 import KeyStoreUnlockScreen from '@mobile/modules/keystore/screens/KeyStoreUnlockScreen'
@@ -58,16 +59,26 @@ const Router = () => {
     eventBus.emit('requestsBottomSheet.closed')
   }, [onBottomSheetClosed])
 
-  const splashHidden = useRef(false)
+  const splashHideRequested = useRef(false)
+  const [isSplashHidden, setIsSplashHidden] = useState(false)
 
   const isReady = authStatus !== AUTH_STATUS.LOADING && canRenderRoute && fontsLoaded
 
+  // The status bar and the native appearance must not be touched while the
+  // splash screen is still on screen, hence the gate on the fade being over
+  // instead of on `isReady`.
+  useNativeThemeSync(isSplashHidden)
+
   useEffect(() => {
-    if (isReady && !splashHidden.current) {
-      splashHidden.current = true
+    if (isReady && !splashHideRequested.current) {
+      splashHideRequested.current = true
       SplashScreen.setOptions({ duration: 200, fade: true })
-      SplashScreen.hideAsync().catch(() => {})
-      markSplashHidden()
+      SplashScreen.hideAsync()
+        .finally(() => {
+          setIsSplashHidden(true)
+          markSplashHidden()
+        })
+        .catch(() => {})
       // Now that the splash is hidden, let the webview worker stream the
       // heavy controller states (portfolio, dapps, activity, ...) that were
       // held back during the critical boot phase. Done after the splash hide

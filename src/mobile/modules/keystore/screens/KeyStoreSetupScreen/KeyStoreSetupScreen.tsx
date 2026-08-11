@@ -77,8 +77,6 @@ const KeyStoreSetupScreen = () => {
         withBackButton
         onBackButtonPress={goToPrevRoute}
         title={t('Set app password')}
-        step={2}
-        totalSteps={2}
         withScroll
         keyboardAwareScrollViewProps={{ bottomOffset: 220 }}
       >
