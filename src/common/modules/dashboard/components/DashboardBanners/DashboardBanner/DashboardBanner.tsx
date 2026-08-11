@@ -92,6 +92,8 @@ const DashboardBanner = ({
           const dappRequests = visibleUserRequests.filter((r) => r.kind !== 'calls')
           if (!dappRequests.length) break
           const targetRequest = dappRequests[0]!
+          // Opens/focuses the request window via RequestsController when the side
+          // panel is closed; when the side panel is open we also navigate in-panel.
           requestsDispatch({
             type: 'method',
             params: {
