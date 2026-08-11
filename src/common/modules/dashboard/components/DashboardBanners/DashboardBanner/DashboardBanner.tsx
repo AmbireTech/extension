@@ -51,9 +51,6 @@ const DashboardBanner = ({
   const { dispatch: extensionUpdateDispatch } = useController('ExtensionUpdateController')
   const { ref: sheetRef, close: closeBottomSheet, open: openBottomSheet } = useModalize()
   const primaryAction = actions[0]
-  // The title, the network icon and the two action buttons don't fit on one row in the narrow
-  // side panel, which leaves the title unreadable. There it falls back to the stacked layout
-  // used on mobile, where the buttons get a row of their own.
   const isPendingAccountOp = category === 'pending-to-be-signed-acc-op'
 
   const Icon = useMemo(() => {
