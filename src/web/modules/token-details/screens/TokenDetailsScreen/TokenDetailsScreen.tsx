@@ -1,5 +1,4 @@
 import React from 'react'
-import { useTranslation } from 'react-i18next'
 
 import FooterGlassView from '@common/components/FooterGlassView'
 import LayoutWrapper from '@common/components/LayoutWrapper'
@@ -19,7 +18,6 @@ import spacings, { SPACING_MI } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
 const TokenDetailsScreen = () => {
-  const { t } = useTranslation()
   const { isCompactSidePanelLayout } = useCompactActionRequestLayout()
   const {
     token,
@@ -100,7 +98,9 @@ const TokenDetailsScreen = () => {
             : undefined
         }
         innerContainerStyle={
-          isCompactSidePanelLayout ? { gap: SPACING_MI, width: '100%' } : undefined
+          isCompactSidePanelLayout
+            ? { gap: SPACING_MI, width: '100%', alignItems: 'stretch' }
+            : undefined
         }
       >
         {actions.map((action) => (

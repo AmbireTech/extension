@@ -1,9 +1,9 @@
 import React, { FC } from 'react'
-import { Animated, Pressable, View } from 'react-native'
+import { Animated, Pressable } from 'react-native'
 
 import Text from '@common/components/Text'
 import Tooltip from '@common/components/Tooltip'
-import { isMobile, isWeb } from '@common/config/env'
+import { isWeb } from '@common/config/env'
 import { useCustomHover } from '@common/hooks/useHover'
 import useTheme from '@common/hooks/useTheme'
 import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
@@ -14,10 +14,8 @@ import text from '@common/styles/utils/text'
 
 import getStyles from './styles'
 
-const COMPACT_ICON_AREA_HEIGHT = 44
-const DESKTOP_ICON_AREA_HEIGHT = 52
-const COMPACT_LABEL_AREA_HEIGHT = 28
-const DESKTOP_LABEL_AREA_HEIGHT = 32
+/** Matches the original mobile token-details footer icon hit area. */
+const ICON_AREA_HEIGHT = 52
 
 import type { TokenResult } from '@ambire-common/libs/portfolio'
 interface Props {
@@ -46,10 +44,8 @@ const TokenDetailsButton: FC<Props> = ({
   testID
 }) => {
   const { styles, theme } = useTheme(getStyles)
+  // Compact = mobile or narrow side panel — both use the original mobile button styles.
   const { isCompactLayout } = useCompactActionRequestLayout()
-  const iconAreaHeight = isCompactLayout ? COMPACT_ICON_AREA_HEIGHT : DESKTOP_ICON_AREA_HEIGHT
-  const labelAreaHeight = isCompactLayout ? COMPACT_LABEL_AREA_HEIGHT : DESKTOP_LABEL_AREA_HEIGHT
-  const resolvedIconWidth = isCompactLayout ? Math.min(iconWidth, 24) : iconWidth
   const [bindAnim, animStyle, isHovered] = useCustomHover({
     property: 'backgroundColor',
     values: {
@@ -80,69 +76,32 @@ const TokenDetailsButton: FC<Props> = ({
         }}
         {...bindAnim}
       >
-        {isCompactLayout ? (
-          <>
-            <Animated.View
-              style={[
-                animStyle,
-                {
-                  borderRadius: BORDER_RADIUS_PRIMARY,
-                  width: '100%',
-                  height: iconAreaHeight,
-                  ...flexbox.center
-                }
-              ]}
-            >
-              <Icon
-                color={isHovered ? theme.primaryAccent : theme.primaryText}
-                width={resolvedIconWidth}
-                height={24}
-                strokeWidth={strokeWidth}
-              />
-            </Animated.View>
-            <View
-              style={{
-                width: '100%',
-                height: labelAreaHeight,
-                justifyContent: 'flex-start',
-                alignItems: 'center'
-              }}
-            >
-              <Text
-                fontSize={isMobile ? 10 : 12}
-                weight="medium"
-                numberOfLines={2}
-                style={[text.center, { minWidth: 0, width: '100%' }]}
-              >
-                {btnText}
-              </Text>
-            </View>
-          </>
-        ) : (
-          <>
-            <Animated.View
-              style={[
-                spacings.mbTy,
-                animStyle,
-                {
-                  borderRadius: BORDER_RADIUS_PRIMARY,
-                  width: '100%',
-                  height: DESKTOP_ICON_AREA_HEIGHT,
-                  ...flexbox.center
-                }
-              ]}
-            >
-              <Icon
-                color={isHovered ? theme.primaryAccent : theme.primaryText}
-                width={iconWidth}
-                strokeWidth={strokeWidth}
-              />
-            </Animated.View>
-            <Text fontSize={12} weight="medium" style={text.center}>
-              {btnText}
-            </Text>
-          </>
-        )}
+        <Animated.View
+          style={[
+            spacings.mbTy,
+            animStyle,
+            {
+              borderRadius: BORDER_RADIUS_PRIMARY,
+              width: '100%',
+              height: ICON_AREA_HEIGHT,
+              ...flexbox.center
+            }
+          ]}
+        >
+          <Icon
+            color={isHovered ? theme.primaryAccent : theme.primaryText}
+            width={iconWidth}
+            strokeWidth={strokeWidth}
+          />
+        </Animated.View>
+        <Text
+          fontSize={isCompactLayout ? 10 : 12}
+          weight="medium"
+          numberOfLines={isCompactLayout ? 2 : 1}
+          style={[text.center, isCompactLayout && { minWidth: 0, width: '100%' }]}
+        >
+          {btnText}
+        </Text>
       </Pressable>
       {tooltipText && (
         <Tooltip id={tooltipId}>

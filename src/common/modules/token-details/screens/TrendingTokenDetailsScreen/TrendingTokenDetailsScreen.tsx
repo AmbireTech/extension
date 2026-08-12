@@ -268,7 +268,9 @@ const TrendingTokenDetailsScreen = () => {
                 : undefined
             }
             innerContainerStyle={
-              isCompactSidePanelLayout ? { gap: SPACING_MI, width: '100%' } : undefined
+              isCompactSidePanelLayout
+                ? { gap: SPACING_MI, width: '100%', alignItems: 'stretch' }
+                : undefined
             }
           >
             {actions.map((action) => (
