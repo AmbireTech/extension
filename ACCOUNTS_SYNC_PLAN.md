@@ -277,8 +277,29 @@ Not yet run on a device - that comes with Step 9/10, when the mobile side can be
 
 ## Step 9 — Mobile import, app already in use
 
-Bottom sheet → **Import from extension** → camera scan → "Verify Extension Password" → account
-personalize → dashboard.
+**Done.** `SyncFromExtensionScreen` (`syncFromExtension` route, mobile): the shared two steps, then
+the camera, then the "Verify extension password" sheet, then personalize. The mirror of Step 6, and
+like it, this one screen also serves the onboarding entry point (Step 10).
+
+- Step 1 shows the recording of the steps on the extension as a **GIF**
+  (`assets/images/sync-steps-on-the-extension.gif`, 480px wide, 12fps, 446KB), rendered with a plain
+  `Image`. The delivered Lottie was dropped: it was the screen recording rasterised into 62 base64
+  **WebP** frames, which the Lottie renderers leave blank (every other animation in the app is pure
+  vector, with no image assets). A GIF needs no new dependency - `Image` animates GIFs on iOS, Android
+  has Fresco's `animated-gif` enabled in `build.gradle`, and it works on web too. Step 2's
+  illustration is still missing (TODO in the file).
+- Scanning reuses `QrScannerWithPermission`, which resolves to the native camera + UR decoder.
+- The password sheet is `PasswordConfirmation` in a `BottomSheet` (the extension's
+  `BottomSheetPasswordConfirmation` wrapper is web only), with the same note and the same
+  wrong-password behaviour.
+- Same three-case back button and the same `hasPasswordSecret` decision for where to go next as the
+  extension, so onboarding lands on the device password first.
+- The route sits inside `KeystoreUnlockedRoute` but outside `AuthenticatedRoute`, so Step 10 can reuse
+  it before any accounts exist.
+
+Verified: `yarn extension:type:check-new` → 0 new errors, eslint clean (the one warning in the mobile
+`Router` is pre-existing). **The Lottie still needs an on-device check** - it carries 62 base64 WebP
+frames, and `lottie-react-native` renders embedded images differently across platforms.
 
 **Gate.**
 

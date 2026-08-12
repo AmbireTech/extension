@@ -44,6 +44,7 @@ import TokenDetailsScreen from '@mobile/modules/token-details/screens/TokenDetai
 import TrendingTokenDetailsScreen from '@common/modules/token-details/screens/TrendingTokenDetailsScreen'
 import TrendingTokensScreen from '@common/modules/explore/screens/TrendingTokensScreen'
 import TransferScreen from '@mobile/modules/transfer/screens/TransferScreen'
+import SyncFromExtensionScreen from '@mobile/modules/accounts-sync/screens/SyncFromExtensionScreen'
 import DappWebViewScreen from '@mobile/modules/webview/screens/DappWebViewScreen'
 
 const MainRoutes = () => {
@@ -66,6 +67,7 @@ const MainRoutes = () => {
         <Route path={ROUTES.ledgerConnect} element={<LedgerConnectScreen />} />
         <Route path={ROUTES.trezorConnect} element={<TrezorConnectScreen />} />
         <Route path={ROUTES.qrConnect} element={<QrConnectScreen />} />
+        <Route path={ROUTES.syncFromExtension} element={<SyncFromExtensionScreen />} />
 
         <Route path={ROUTES.importPrivateKey} element={<PrivateKeyImportScreen />} />
         <Route path={ROUTES.importSeedPhrase} element={<SeedPhraseImportScreen />} />

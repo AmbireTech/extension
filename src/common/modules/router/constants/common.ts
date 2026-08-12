@@ -51,7 +51,8 @@ const MOBILE_ROUTES = {
   ...COMMON_ROUTES,
   dappWebView: 'explore/webview',
   qrReader: 'qr-reader',
-  migrationOnboarding: 'migration-onboarding'
+  migrationOnboarding: 'migration-onboarding',
+  syncFromExtension: 'sync-from-extension'
 }
 
 const WEB_ROUTES = {

@@ -436,6 +436,11 @@ const routesConfig: RouteConfig = {
     route: ROUTES.syncFromMobile,
     title: Platform.select({ default: i18n.t('Sync from mobile') }),
     name: Platform.select({ default: i18n.t('Sync from mobile') })
+  },
+  [ROUTES.syncFromExtension]: {
+    route: ROUTES.syncFromExtension,
+    title: Platform.select({ default: i18n.t('Import from extension') }),
+    name: Platform.select({ default: i18n.t('Import from extension') })
   }
 }
 
