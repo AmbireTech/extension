@@ -5,6 +5,7 @@ import { ControllersMiddlewareContext } from '@common/contexts/controllersMiddle
 import useController from '@common/hooks/useController'
 import useNavigation from '@common/hooks/useNavigation'
 import useRoute from '@common/hooks/useRoute'
+import useShouldRenderRequestInPanel from '@common/hooks/useShouldRenderRequestInPanel'
 import { AUTH_STATUS } from '@common/modules/auth/constants/authStatus'
 import useAuth from '@common/modules/auth/hooks/useAuth'
 import { ROUTES } from '@common/modules/router/constants/common'
@@ -24,7 +25,8 @@ const getRoutePathname = (route: string) => (route.split('?')[0] ?? route).repla
  * screen when a request appears and back to the dashboard once it is resolved.
  *
  * Auto-navigation to an action screen only happens when a request becomes active (new id
- * or re-activated after dismiss). This lets the user dismiss to the dashboard — e.g. via
+ * or re-activated after dismiss) and when the panel is the surface that owns it (see
+ * `useShouldRenderRequestInPanel`). This lets the user dismiss to the dashboard — e.g. via
  * "Start a batch" — without being pulled back to the sign screen while the request stays
  * queued.
  */
@@ -33,6 +35,7 @@ const useSidePanelActionRequestRouting = () => {
   const { path } = useRoute()
   const { authStatus } = useAuth()
   const { dispatch } = useContext(ControllersMiddlewareContext)
+  const shouldRenderRequestInPanel = useShouldRenderRequestInPanel()
   const keystoreState = useController('KeystoreController').state
   const {
     state: { currentUserRequest }
@@ -65,29 +68,34 @@ const useSidePanelActionRequestRouting = () => {
       const requestJustActivated = prevRequestIdRef.current === null
       const isDifferentRequest = activeRequestId !== lastOpenedRequestIdRef.current
 
-      if (requestJustActivated || isDifferentRequest) {
+      if (shouldRenderRequestInPanel && (requestJustActivated || isDifferentRequest)) {
         lastOpenedRequestIdRef.current = activeRequestId
         lastRequestRouteRef.current = targetPath
         if (currentPath !== targetPath) navigate(targetRoute)
       }
+
+      // Track the request route whenever the panel actually shows it, including when it got there
+      // some other way, so it can return to the dashboard once the request is gone.
+      if (currentPath === targetPath) lastRequestRouteRef.current = targetPath
 
       prevRequestIdRef.current = activeRequestId
       return
     }
 
     if (prevRequestIdRef.current !== null) {
-      if (lastRequestRouteRef.current && getRoutePathname(path) === lastRequestRouteRef.current) {
-        navigate(ROUTES.dashboard)
+      // Only relevant when the panel was the surface showing the request
+      if (lastRequestRouteRef.current) {
+        if (getRoutePathname(path) === lastRequestRouteRef.current) navigate(ROUTES.dashboard)
+
+        // Mirror mobile: after the in-panel request UI closes, nudge the dapp tab with a
+        // synthetic focus so libraries like React Query refetch connection state.
+        dispatch({
+          type: 'DISPATCH_DAPP_TAB_FOCUS',
+          params: { targets: lastDappTabTargetsRef.current, delayMs: 800 }
+        })
       }
 
-      // Mirror mobile: after the in-panel request UI closes, nudge the dapp tab with a
-      // synthetic focus so libraries like React Query refetch connection state.
-      dispatch({
-        type: 'DISPATCH_DAPP_TAB_FOCUS',
-        params: { targets: lastDappTabTargetsRef.current, delayMs: 800 }
-      })
       lastDappTabTargetsRef.current = []
-
       lastOpenedRequestIdRef.current = null
       lastRequestRouteRef.current = null
     }
@@ -101,6 +109,7 @@ const useSidePanelActionRequestRouting = () => {
     keystoreState.isUnlocked,
     navigate,
     path,
+    shouldRenderRequestInPanel,
     transferState,
     dispatch
   ])

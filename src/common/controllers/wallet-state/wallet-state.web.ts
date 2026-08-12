@@ -11,7 +11,7 @@ import { DEFAULT_THEME } from '@common/styles/theme/types'
 import { ThemeType } from '@common/styles/themeConfig'
 import { DEFAULT_LOG_LEVEL, LOG_LEVELS, setLoggerInstanceLogLevel } from '@common/utils/logger'
 import { browser, isSafari } from '@web/constants/browserapi'
-import { applySidePanelMode } from '@web/extension-services/background/webapi/sidePanel'
+import { applyPanelMode } from '@web/extension-services/background/webapi/panel'
 
 import { WalletStateController as IWalletStateController } from './wallet-state'
 
@@ -85,7 +85,7 @@ export class WalletStateController extends EventEmitter implements IWalletStateC
       'isSidePanelModeEnabled',
       this.isSidePanelModeEnabled
     )
-    await applySidePanelMode(this.isSidePanelModeEnabled)
+    await applyPanelMode(this.isSidePanelModeEnabled)
 
     this.isPinned = await this.#checkIsPinned()
     if (!this.isPinned) this.#initContinuousCheckIsPinned()
@@ -170,7 +170,7 @@ export class WalletStateController extends EventEmitter implements IWalletStateC
   async setSidePanelModeEnabled(enabled: boolean) {
     this.isSidePanelModeEnabled = enabled
     await this.#storage.set('isSidePanelModeEnabled', enabled)
-    await applySidePanelMode(enabled)
+    await applyPanelMode(enabled)
 
     this.emitUpdate()
   }

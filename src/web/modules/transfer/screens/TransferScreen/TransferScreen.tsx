@@ -28,6 +28,7 @@ import useAddressInput from '@common/hooks/useAddressInput'
 import useController from '@common/hooks/useController'
 import useHasGasTank from '@common/hooks/useHasGasTank'
 import useNavigation from '@common/hooks/useNavigation'
+import useShouldRenderRequestInPanel from '@common/hooks/useShouldRenderRequestInPanel'
 import useSyncedState from '@common/hooks/useSyncedState'
 import useToast from '@common/hooks/useToast'
 import { ROUTES, WEB_ROUTES } from '@common/modules/router/constants/common'
@@ -45,7 +46,7 @@ import { getUiType } from '@common/utils/uiType'
 import { Content, Wrapper } from '@web/components/TransactionsScreen'
 import Modals from '@web/modules/sign-account-op/components/Modals'
 
-const { isRequestWindow, isPopup, isSidePanel } = getUiType()
+const { isRequestWindow, isPopup } = getUiType()
 
 const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
   const { addToast } = useToast()
@@ -82,6 +83,7 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
   }, [amountInFiat])
 
   const { navigate } = useNavigation()
+  const shouldRenderRequestInPanel = useShouldRenderRequestInPanel()
   const { t } = useTranslation()
   const { visibleUserRequests } = useController('RequestsController').state
   const {
@@ -362,7 +364,7 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
         })
         // Side-panel routing only auto-navigates on request id changes. Re-opening the
         // same queued batch from Send must navigate explicitly.
-        if (isSidePanel) {
+        if (shouldRenderRequestInPanel) {
           const targetRoute = getRouteForUserRequest({
             currentUserRequest: request,
             transferState
@@ -449,7 +451,9 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
       networkUserRequests.length,
       openEstimationModalAndDispatch,
       account?.safeCreation,
-      navigate
+      navigate,
+      shouldRenderRequestInPanel,
+      domains
     ]
   )
 

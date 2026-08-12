@@ -9,7 +9,7 @@ import { MainController } from '@ambire-common/controllers/main/main'
 import { Account } from '@ambire-common/interfaces/account'
 import { ConnectionSource, DappProviderRequest } from '@ambire-common/interfaces/dapp'
 import { Network } from '@ambire-common/interfaces/network'
-import { UiManager, isSidePanelView } from '@ambire-common/interfaces/ui'
+import { UiManager } from '@ambire-common/interfaces/ui'
 import {
   getFailureStatus,
   getPendingStatus,
@@ -149,11 +149,7 @@ export class ProviderController {
 
     await this.mainCtrl.dapps.broadcastDappSessionEvent('accountsChanged', accounts)
 
-    if (this.mainCtrl.ui.views.some(isSidePanelView)) {
-      this.mainCtrl.ui.dispatchDappTabFocus?.([
-        { tabId: session.tabId, windowId: session.windowId }
-      ])
-    }
+    this.mainCtrl.ui.dispatchDappTabFocus?.([{ tabId: session.tabId, windowId: session.windowId }])
 
     return accounts
   }

@@ -10,7 +10,7 @@ import { storage } from '@common/services/storage'
 import { Action, MethodAction } from '@common/types/actions'
 import { browser } from '@web/constants/browserapi'
 import { ROUTE_CRITICAL_CONTROLLERS } from '@web/constants/criticalControllers'
-import { openSidePanel } from '@web/extension-services/background/webapi/sidePanel'
+import { openPanel } from '@web/extension-services/background/webapi/panel'
 import { MessageMeta, Port, PortMessenger } from '@web/extension-services/messengers'
 import LatticeKeyIterator from '@web/modules/hardware-wallet/libs/latticeKeyIterator'
 
@@ -280,7 +280,7 @@ export const handleActions = async (
 
       const focusOverlay = async () => {
         if (isSidePanelModeEnabled) {
-          await openSidePanel(targetWindowId)
+          await openPanel(targetWindowId)
           return
         }
 

@@ -10,8 +10,8 @@ const { isSidePanel } = getUiType()
 
 /**
  * Returns a handler that dismisses an action screen. In the request window it closes the
- * window (queuing calls-type requests). In the side panel it clears the active request
- * with the same queue semantics and returns to the dashboard.
+ * window, which the background picks up. The side panel has no window of its own, so it asks
+ * the background to close the request (same queue semantics) and returns to the dashboard.
  */
 const useCloseActionWindow = () => {
   const { navigate } = useNavigation()
@@ -22,7 +22,7 @@ const useCloseActionWindow = () => {
       requestsDispatch({
         type: 'method',
         params: {
-          method: 'dismissActiveRequest',
+          method: 'closeRequestWindow',
           args: []
         }
       })
