@@ -99,17 +99,28 @@ Suite: 33 passed, 1 pre-existing failure (`should remove key`, fails identically
 
 ## Step 3 — AccountsController + MainController orchestration
 
-- `AccountsController.getAccountsForSync(addrs)` → the account records to ship (slimmed per Step 1).
-- `MainController.exportAccountsForSync({ addrs })` — pulls accounts + keystore material, builds the
-  payload, sends it over the one-time-data channel.
-- `MainController.importAccountsFromSync({ payload, password })` — `keystore.importFromSync` first,
-  then `#updateAccounts({ accountsToAdd })` so the accounts show as `newlyAdded` for the personalize
-  screen. Single failure path: nothing is persisted if the password is wrong.
+**Done.** The UI contract for Steps 4-10:
 
-Verify: `yarn extension:type:check-new`; controller test for the orchestration order; manual dispatch
-from both the extension background and the mobile WebView worker (generic `method` dispatch, no
-per-action wiring needed).
-**Gate.**
+- `AccountsController.getAccountsForSync(addrs)` → the selected `Account` records, preferences and
+  all (one-line filter; the accounts are shipped whole, per Step 1).
+- `MainController.exportAccountsForSync(addrs)` — resolves the accounts, derives the key addresses
+  from their `associatedKeys`, calls `keystore.exportForSync`, serializes and sends the result to the
+  UI as `sendUiMessage({ accountsSyncPayload })` (the existing one-time-data channel, so the payload
+  never lands in persisted controller state). Refuses an empty selection.
+- `MainController.importAccountsFromSync({ payload, password })` — `payload` is the hex string the UI
+  assembled from the scanned QR codes, `password` is the *other* device's password. Parses (invalid
+  data → plain-language error, no jargon), then `keystore.importFromSync` **before**
+  `#updateAccounts`, so a wrong password adds neither keys nor accounts. Imported accounts land as
+  `newlyAdded`, which is what the personalize screen renders.
+- Both are `withStatus`-wrapped (`exportAccountsForSync` / `importAccountsFromSync` added to the main
+  `STATUS_WRAPPED_METHODS`), so the UI gets loaders and double-submit protection. No background or
+  per-action wiring needed - the extension background and the mobile worker both dispatch `method`
+  generically.
+
+Verified: new `mainAccountsSync.test.ts` (5 tests, two full device-to-device round trips through both
+controllers): export of a subset, signer works on the importing device, preferences travel, onboarding
+order (import → set password → keys land), wrong password imports nothing, non-Ambire QR data imports
+nothing, empty selection exports nothing. `accounts.test.ts` still green.
 
 ## Step 4 — Shared UI pieces (`src/common`)
 
