@@ -8,14 +8,13 @@ import TrezorKeyIterator from '@common/modules/hardware-wallet/libs/trezorKeyIte
 import QrKeyIterator from '@common/modules/hardware-wallets/libs/qrKeyIterator/qrKeyIterator'
 import { storage } from '@common/services/storage'
 import { Action, MethodAction } from '@common/types/actions'
+import { serializeControllerForUI } from '@common/utils/serializeControllerForUI'
 import { browser } from '@web/constants/browserapi'
-import { ROUTE_CRITICAL_CONTROLLERS } from '@web/constants/criticalControllers'
 import { openPanel } from '@web/extension-services/background/webapi/panel'
 import { MessageMeta, Port, PortMessenger } from '@web/extension-services/messengers'
 import LatticeKeyIterator from '@web/modules/hardware-wallet/libs/latticeKeyIterator'
 
-import { resolveInitialRoute } from '../resolveInitialRoute'
-import { serializeControllerForUI } from '../serializeControllerForUI'
+import { sendInitialRoute } from '../initialRoute'
 import sessionStorage from '../webapi/sessionStorage'
 import {
   dispatchDappTabFocusFromMainCtrl,
@@ -39,7 +38,7 @@ export const handleActions = async (
     meta?: MessageMeta
   }
 ) => {
-  // @ts-ignore
+  // @ts-expect-error action is a discriminated union; narrowing happens in the switch below
   const { type, params } = action
   switch (type) {
     case 'method': {
@@ -61,6 +60,9 @@ export const handleActions = async (
     case 'HANDSHAKE': {
       if (!pm || !port) return
       pm.sendToPort(port, '> ui', { method: 'portReady', params: {} })
+
+      // Send the route proactively
+      await sendInitialRoute({ pm, port, mainCtrl, eventEmitterRegistry })
       break
     }
     case 'UPDATE_PORT_URL': {
@@ -92,24 +94,16 @@ export const handleActions = async (
     }
     case 'GET_INITIAL_ROUTE': {
       if (!pm || !port) return
-      const route = await resolveInitialRoute(mainCtrl, {
-        isRequestWindow: port.name === 'request-window',
-        isSidePanel: port.name === 'side-panel'
-      })
-      pm.sendToPort(port, '> ui', { method: 'initialRoute', params: { route } })
 
-      // Proactively push the resolved route's critical states in the same burst so
-      // the screen paints without a second request/response round-trip. The UI
-      // requests only the remaining (deferred) controllers afterwards.
-      const criticalControllers = (route && ROUTE_CRITICAL_CONTROLLERS[route]) || []
-      const registeredCtrls = eventEmitterRegistry.values()
-      criticalControllers.forEach((ctrlName) => {
-        const ctrl = registeredCtrls.find((c) => c.name === ctrlName)
-        if (!ctrl) return
-        pm.sendToPort(port, '> ui', {
-          method: ctrlName,
-          params: serializeControllerForUI(ctrl)
-        })
+      // The view is asking because it has nothing on screen, so the route's critical
+      // controller states go with the answer to save it another round-trip.
+      // Side-panel awareness lives in sendInitialRoute → resolveInitialRoute.
+      await sendInitialRoute({
+        pm,
+        port,
+        mainCtrl,
+        eventEmitterRegistry,
+        withCriticalControllerStates: true
       })
       break
     }
@@ -319,11 +313,11 @@ export const handleActions = async (
         await sessionStorage.set('isOpenExtensionPopupLoading', true)
         await focusOverlay()
         await waitForOverlayOpen()
-      } catch (error) {
+      } catch {
         try {
           await focusOverlay()
           await waitForOverlayOpen()
-        } catch (e) {
+        } catch {
           pm.send('> ui', { method: 'navigate', params: { route: '/' } })
         }
       }

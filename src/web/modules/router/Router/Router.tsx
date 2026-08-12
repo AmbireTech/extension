@@ -1,8 +1,7 @@
-import React, { lazy, Suspense, useContext } from 'react'
-import { StyleSheet, View } from 'react-native'
+import React, { lazy, Suspense, useContext, useEffect, useState } from 'react'
+import { View } from 'react-native'
 import { Route, Routes } from 'react-router-dom'
 
-import Alert from '@common/components/Alert'
 import { useTranslation } from '@common/config/localization'
 import { ControllersStateLoadedContext } from '@common/contexts/controllersStateLoadedContext'
 import useRoute from '@common/hooks/useRoute'
@@ -12,8 +11,8 @@ import useAuth from '@common/modules/auth/hooks/useAuth'
 import AuthenticatedRoute from '@common/modules/router/components/AuthenticatedRoute'
 import KeystoreUnlockedRoute from '@common/modules/router/components/KeystoreUnlockedRoute'
 import { WEB_ROUTES } from '@common/modules/router/constants/common'
-import flexbox from '@common/styles/utils/flexbox'
 import { getUiType } from '@common/utils/uiType'
+import RecoveryScreen from '@web/components/RecoveryScreen'
 import Splash from '@web/components/Splash'
 import { ROUTE_CRITICAL_CONTROLLERS } from '@web/constants/criticalControllers'
 import useCurrentActionSideEffects from '@web/hooks/useCurrentActionSideEffects'
@@ -27,9 +26,11 @@ const AsyncMainRoute = lazy(() => import('@web/modules/router/components/MainRou
 
 const { isPopup } = getUiType()
 
-// The initial route is computed in the background and navigated to via the
-// controllers middleware (GET_INITIAL_ROUTE). This component only renders the
-// route tree and the loading splash.
+const TIME_TO_LAND_ON_A_ROUTE = 3000
+
+// Where a view belongs is decided by the background, which sends it the route (applied by
+// the controllers middleware). This component only renders the route tree, the loading
+// splash, and the screens the user is offered when neither can happen.
 const Router = () => {
   const { t } = useTranslation()
   const { styles } = useTheme(getStyles)
@@ -42,21 +43,48 @@ const Router = () => {
   useCurrentActionSideEffects()
   useSidePanelActionRequestRouting()
 
+  // Controller state is received but the extension hasn't routed anywhere
+  const hasNothingToRender = !pathname && areAllControllerStatesLoaded
+  const [isWaitingForRouteForTooLong, setIsWaitingForRouteForTooLong] = useState(false)
+
+  useEffect(() => {
+    if (!hasNothingToRender) {
+      if (isWaitingForRouteForTooLong) {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setIsWaitingForRouteForTooLong(false)
+      }
+
+      return
+    }
+
+    const timeout = setTimeout(() => setIsWaitingForRouteForTooLong(true), TIME_TO_LAND_ON_A_ROUTE)
+
+    return () => clearTimeout(timeout)
+  }, [hasNothingToRender, isWaitingForRouteForTooLong])
+
   // Gated on all the controllers and not on `canRenderRoute`, because a route can
   // already be on screen (the dashboard shell) while a deferred controller never
   // reports its state. Otherwise the warning would be unreachable and the user would
   // sit on an animating skeleton forever.
   if (isStatesLoadingTakingTooLong && !areAllControllerStatesLoaded) {
     return (
-      <View style={[StyleSheet.absoluteFill, flexbox.center]}>
-        <Alert
-          type="warning"
-          title={t(
-            "The initial loading is taking longer than expected. This might be due to a connection issue on your side - or a glitch on ours. If it doesn't resolve soon, please try disabling and re-enabling the extension, or restarting your browser."
-          )}
-          style={{ maxWidth: 500 }}
-        />
-      </View>
+      <RecoveryScreen
+        title={t('Loading failed')}
+        description={t(
+          "We couldn't start the extension properly. Try what you were doing again, or if that doesn't help, disable and re-enable the extension or restart your browser."
+        )}
+      />
+    )
+  }
+
+  if (hasNothingToRender && isWaitingForRouteForTooLong) {
+    return (
+      <RecoveryScreen
+        title={t("This screen didn't load")}
+        description={t(
+          'Your funds are safe. Reload, disable and re-enable the extension, or restart your browser to fix this.'
+        )}
+      />
     )
   }
 
