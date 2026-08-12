@@ -9,7 +9,7 @@ import { AnimatedQrCodeProps } from './AnimatedQrCode'
 
 const DEFAULT_SIZE = 300
 const DEFAULT_INTERVAL = 300
-const MAX_FRAGMENT_LENGTH = 200
+const DEFAULT_CAPACITY = 200
 const QR_BACKGROUND_COLOR = '#fff'
 
 // Web renders the animated QR through @keystonehq/animated-qr, which relies on
@@ -19,7 +19,8 @@ const AnimatedQrCode = ({
   type,
   cbor,
   size = DEFAULT_SIZE,
-  interval = DEFAULT_INTERVAL
+  interval = DEFAULT_INTERVAL,
+  capacity = DEFAULT_CAPACITY
 }: AnimatedQrCodeProps) => (
   <View
     style={[
@@ -30,7 +31,7 @@ const AnimatedQrCode = ({
   >
     <AnimatedQRCode
       options={{
-        capacity: MAX_FRAGMENT_LENGTH,
+        capacity,
         interval,
         // AnimatedQRCode already adds 5px of white space on every side.
         size: size - SPACING_SM * 2

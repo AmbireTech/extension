@@ -47,7 +47,8 @@ const Account = ({
   },
   containerStyle,
   withReceive = false,
-  withCopy = true
+  withCopy = true,
+  switchAccountOnPress = true
 }: {
   account: AccountInterface
   onSelect?: (addr: string) => void
@@ -67,6 +68,8 @@ const Account = ({
   containerStyle?: ViewStyle
   withReceive?: boolean
   withCopy?: boolean
+  /** Set to false when pressing the row means something else than switching to it */
+  switchAccountOnPress?: boolean
 }) => {
   const { addr, preferences } = account
   const { t } = useTranslation()
@@ -108,7 +111,7 @@ const Account = ({
       return
     }
 
-    if (selectedAccount?.addr !== addr) {
+    if (switchAccountOnPress && selectedAccount?.addr !== addr) {
       mainDispatch({
         type: 'method',
         params: { method: 'selectAccount', args: [addr] }
@@ -116,7 +119,14 @@ const Account = ({
     }
 
     onSelect && onSelect(addr)
-  }, [addr, mainDispatch, onSelect, selectedAccount, options.setAccountToImportOrExport])
+  }, [
+    addr,
+    mainDispatch,
+    onSelect,
+    selectedAccount,
+    switchAccountOnPress,
+    options.setAccountToImportOrExport
+  ])
 
   const onSave = useCallback(
     (value: string) => {

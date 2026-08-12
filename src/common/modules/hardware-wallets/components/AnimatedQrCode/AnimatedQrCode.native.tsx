@@ -10,7 +10,7 @@ import { AnimatedQrCodeProps } from './AnimatedQrCode'
 
 const DEFAULT_SIZE = 300
 const DEFAULT_INTERVAL = 300
-const MAX_FRAGMENT_LENGTH = 200
+const DEFAULT_CAPACITY = 200
 const QR_BACKGROUND_COLOR = '#fff'
 const QR_FOREGROUND_COLOR = '#000'
 
@@ -21,11 +21,12 @@ const AnimatedQrCode = ({
   type,
   cbor,
   size = DEFAULT_SIZE,
-  interval = DEFAULT_INTERVAL
+  interval = DEFAULT_INTERVAL,
+  capacity = DEFAULT_CAPACITY
 }: AnimatedQrCodeProps) => {
   const encoder = useMemo(
-    () => new UREncoder(new UR(Buffer.from(cbor, 'hex'), type), MAX_FRAGMENT_LENGTH),
-    [cbor, type]
+    () => new UREncoder(new UR(Buffer.from(cbor, 'hex'), type), capacity),
+    [cbor, type, capacity]
   )
   // The initializer renders the first fragment; the interval advances the rest.
   const [frame, setFrame] = useState(() => encoder.nextPart().toUpperCase())

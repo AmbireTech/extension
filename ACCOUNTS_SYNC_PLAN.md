@@ -122,17 +122,42 @@ controllers): export of a subset, signer works on the importing device, preferen
 order (import → set password → keys land), wrong password imports nothing, non-Ambire QR data imports
 nothing, empty selection exports nothing. `accounts.test.ts` still green.
 
-## Step 4 — Shared UI pieces (`src/common`)
+## Step 4 — Shared UI pieces (`src/common/modules/accounts-sync`)
 
-- `useAccountsSyncExport` — selection state, dispatch, one-time-data listener, UR frames.
-- `useAccountsSyncImport` — scanner payload → password → dispatch → navigation.
-- `SelectAccountsToExport` list (select-all + per-account rows with label, address, balance).
-- `SyncPasswordModal` ("Verify mobile password" / "Verify extension password" wording by direction).
-- Reuse `AnimatedQrCode` for display and `QrScannerWithPermission` for scanning on both platforms.
-- Every string through `t()`, colors from `useTheme()`, spacings from `spacings`, flex from `flexbox`.
+**Done.** Everything the platform screens need, and nothing platform specific:
 
-Verify: type check + lint; components rendered from a throwaway screen.
-**Gate.**
+- `useAccountsSyncExport` — selection state (`toggleAccount`, `toggleAllAccounts`, `areAllSelected`)
+  and `prepareExport`, which awaits the payload and exposes it as `qrCbor` for `AnimatedQrCode`.
+  Changing the selection discards the payload, so stale QR codes can't be shown.
+- `useAccountsSyncImport({ onImported })` — `handleScanComplete(bytes)` parses the scanned data with
+  the Step 1 lib, so a foreign QR code is rejected **before** the password is asked for (and the UI
+  knows how many accounts are coming); `importScannedAccounts(password)` awaits the import and then
+  calls `onImported`.
+- `SelectAccountsToSync` — select-all + one row per account, reusing the existing account row
+  (`modules/account-select/components/Account`) so labels, badges, key icons and balances look
+  exactly as everywhere else.
+- `consts.ts` — QR fragment capacity (400) and the import timeout.
+
+Reuse instead of new code, three small existing-code changes:
+- Both hooks await results through the existing `dispatchAndWait` (requestId + one-time-data channel)
+  instead of a bespoke listener; the main controller methods gained an optional trailing `requestId`
+  and reply through it. This also sidesteps relying on the transient `SUCCESS` status, which mobile
+  can collapse.
+- `dispatchAndWait` got an optional `timeoutMs` (default stays 10s): deriving the other device's main
+  key runs scrypt, which can take longer than that on a low end device.
+- `AnimatedQrCode` (native + web) got an optional `capacity` prop, default unchanged at 200, so the
+  hardware wallet signing flows are untouched while sync uses 400 byte fragments.
+- The account row got `switchAccountOnPress` (default `true`): in the sync list a press ticks the row
+  instead of switching the selected account.
+- No password component was written — the existing `PasswordConfirmation` already supports
+  `onCustomSubmit` + a custom title, and it renders the keystore's `errorMessage`, which is exactly
+  where the wrong-password error for the other device's password lands.
+
+Verified: `yarn extension:type:check-new` → 0 new errors, eslint clean on the new module.
+
+**Note for the review:** all five existing `isSelectable={false}` call sites (accounts settings,
+recovery phrases, saved seed phrases sheets) still switch the selected account when a row is pressed,
+which looks unintended. Left as is — out of scope.
 
 ## Step 5 — Extension export ("Sync with mobile" → Export to mobile)
 
