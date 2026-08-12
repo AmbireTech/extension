@@ -11,6 +11,7 @@ import useRoute from '@common/hooks/useRoute'
 import { Action, MethodAction } from '@common/types/actions'
 import { BUNGEE_API_KEY, RELAYER_URL, SQUID_INTEGRATOR_ID, UNISWAP_API_KEY, VELCRO_URL } from '@env'
 import { MOBILE_CRITICAL_CONTROLLERS } from '@mobile/constants/criticalControllers'
+import useBootProfileReport from '@mobile/hooks/useBootProfileReport'
 import useDappsControllerHelpers from '@mobile/hooks/useDappsControllerHelpers'
 import useRequestsControllerHelpers from '@mobile/hooks/useRequestsControllerHelpers'
 import { WebViewWorker, WebViewWorkerRef } from '@mobile/modules/webview/services/WebViewWorker'
@@ -103,6 +104,7 @@ export const ControllersMiddlewareProvider: React.FC<{
 
   useRequestsControllerHelpers(dispatch)
   useDappsControllerHelpers(dispatch)
+  useBootProfileReport(dispatch)
 
   return (
     <ControllersMiddlewareContext.Provider value={useMemo(() => ({ dispatch }), [dispatch])}>

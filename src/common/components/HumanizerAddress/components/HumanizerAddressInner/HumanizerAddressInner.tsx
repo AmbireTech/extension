@@ -19,6 +19,7 @@ interface Props extends TextProps {
   actionsMode?: 'tooltip' | 'inline'
   chainId: bigint
   verification?: BlacklistedStatus
+  isToken?: boolean
 }
 
 const HumanizerAddressInner: FC<Props> = ({
@@ -27,6 +28,7 @@ const HumanizerAddressInner: FC<Props> = ({
   highestPriorityAlias,
   actionsMode = 'tooltip',
   chainId,
+  isToken,
   ...rest
 }) => {
   const {
@@ -72,6 +74,7 @@ const HumanizerAddressInner: FC<Props> = ({
           chainId={chainId}
           actionsMode={actionsMode}
           fallbackLabel={localAddressLabel || undefined}
+          isToken={isToken}
           {...rest}
         />
       )
@@ -82,6 +85,7 @@ const HumanizerAddressInner: FC<Props> = ({
         chainId={chainId}
         actionsMode={actionsMode}
         fallbackLabel={localAddressLabel || undefined}
+        isToken={isToken}
         {...rest}
       />
     )
@@ -94,6 +98,7 @@ const HumanizerAddressInner: FC<Props> = ({
         address={checksummedAddress}
         actionsMode={actionsMode}
         chainId={chainId}
+        isToken={isToken}
         {...rest}
       >
         {localAddressLabel}
@@ -106,6 +111,7 @@ const HumanizerAddressInner: FC<Props> = ({
         address={checksummedAddress}
         chainId={chainId}
         actionsMode={actionsMode}
+        isToken={isToken}
         {...rest}
       />
     )
@@ -115,6 +121,7 @@ const HumanizerAddressInner: FC<Props> = ({
       address={checksummedAddress}
       chainId={chainId}
       actionsMode={actionsMode}
+      isToken={isToken}
       {...rest}
     />
   )

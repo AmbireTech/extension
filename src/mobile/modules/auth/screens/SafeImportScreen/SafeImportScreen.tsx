@@ -2,7 +2,7 @@ import React from 'react'
 import { Controller } from 'react-hook-form'
 import { View } from 'react-native'
 
-import SafeIcon from '@common/assets/svg/SafeIcon'
+import SafeIcon, { SAFE_ICON_INLINE_SCALE } from '@common/assets/svg/SafeIcon'
 import SuccessIcon from '@common/assets/svg/SuccessIcon'
 import Alert from '@common/components/Alert'
 import AddressScanButton from '@common/components/AddressInput/AddressScanButton'
@@ -56,8 +56,6 @@ const SafeImportScreen = () => {
         withBackButton
         onBackButtonPress={goToPrevRoute}
         title={t('Import Safe address')}
-        step={1}
-        totalSteps={1}
         withScroll
       >
         <View style={[flexbox.justifySpaceBetween, flexbox.flex1]}>
@@ -97,7 +95,10 @@ const SafeImportScreen = () => {
                 {safe && safeInfo && safe === safeInfo.address && (
                   <View style={[flexbox.directionRow, flexbox.justifySpaceBetween]}>
                     <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-                      <SafeIcon width={20} height={20} />
+                      <SafeIcon
+                        width={20 * SAFE_ICON_INLINE_SCALE}
+                        height={20 * SAFE_ICON_INLINE_SCALE}
+                      />
                       <Text style={spacings.mlTy}>{t('Deployed on:')}</Text>
                     </View>
                     <View style={[flexbox.directionRow, flexbox.alignCenter]}>

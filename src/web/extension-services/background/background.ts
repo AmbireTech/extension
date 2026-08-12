@@ -37,6 +37,7 @@ import handleProviderRequests from '@common/modules/provider/handleProviderReque
 import { storage } from '@common/services/storage'
 import { Action, MethodAction } from '@common/types/actions'
 import { LOG_LEVELS, logInfoWithPrefix } from '@common/utils/logger'
+import { serializeControllerForUI } from '@common/utils/serializeControllerForUI'
 import {
   BROWSER_EXTENSION_LOG_UPDATED_CONTROLLER_STATE_ONLY,
   BROWSER_EXTENSION_MEMORY_INTENSIVE_LOGS,
@@ -58,7 +59,6 @@ import {
   handleKeepBridgeContentScriptAcrossSessions,
   handleRegisterScripts
 } from '@web/extension-services/background/handlers/handleScripting'
-import { serializeControllerForUI } from '@web/extension-services/background/serializeControllerForUI'
 import { notificationManager } from '@web/extension-services/background/webapi/notification'
 import windowManager from '@web/extension-services/background/webapi/window'
 import {
@@ -82,6 +82,7 @@ import {
   setBackgroundUserContext
 } from './CrashAnalytics'
 import { getReportableAction } from './getReportableAction'
+import { syncRequestWindowRoute } from './initialRoute'
 
 const debugLogs: {
   key: string
@@ -487,6 +488,11 @@ const init = async () => {
             if (selectedAccountCtrl?.account?.addr) {
               setBackgroundExtraContext('account', selectedAccountCtrl.account.addr)
             }
+          }
+
+          // Update the UI requests route if needed
+          if (ctrl.name === 'RequestsController' || ctrl.name === 'KeystoreController') {
+            syncRequestWindowRoute({ pm, mainCtrl }).catch(captureBackgroundException)
           }
         }, 'background')
       }

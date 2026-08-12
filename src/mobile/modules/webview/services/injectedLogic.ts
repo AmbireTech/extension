@@ -1,8 +1,20 @@
+// organize-imports-ignore
+// The imports below are hand-ordered for boot timing and MUST NOT be reordered.
+// The structuredClone shim and the worker boot profiler have to evaluate before
+// any heavy import, so this file opts out of the editor's Organize Imports.
+
 // MUST be first: installs a BigInt-safe structuredClone before any controller
 // code runs. iOS < 17.4's native structuredClone corrupts BigInt-containing
 // portfolio state (see structuredCloneShim.ts), crashing the dashboard. Kept as
 // a bare side-effect import so the editor's organize-imports leaves it in place.
 import './structuredCloneShim'
+// Second, and still ahead of every heavy import below: stamps the timestamp the
+// worker bundle started evaluating, which is the anchor for the whole worker half
+// of the boot profile. Kept second, ahead of every heavy import, so its
+// eval-start mark lands early. Only the tiny structuredClone shim above runs
+// before it. Safe as a named import because the file-level organize-imports-ignore
+// above stops the editor from sorting it down among the other imports.
+import { workerBootProfiler } from './workerBootProfiler'
 
 import { EventEmitter as Emitter } from 'events'
 
@@ -23,10 +35,13 @@ import LedgerSigner from '@common/modules/hardware-wallet/libs/LedgerSigner'
 import TrezorSigner from '@common/modules/hardware-wallet/libs/TrezorSigner'
 import QrHardwareController from '@common/modules/hardware-wallets/controllers/QrHardwareController'
 import UrQrProtocolAdapter from '@common/modules/hardware-wallets/qr/protocol/UrQrProtocolAdapter'
+import NfcHardwareSigner from '@common/modules/hardware-wallets/signers/NfcHardwareSigner'
 import QrHardwareSigner from '@common/modules/hardware-wallets/signers/QrHardwareSigner'
 import { handleActions } from '@mobile/handlers/handleActions'
 import LedgerController from '@mobile/modules/hardware-wallet/controllers/LedgerController'
+import NfcController from '@mobile/modules/hardware-wallet/controllers/NfcController'
 import TrezorController from '@mobile/modules/hardware-wallet/controllers/TrezorController'
+import { BOOT_MARK, BOOT_MARK_PREFIX } from '@mobile/services/bootProfiler/constants'
 
 import {
   buildStateForFE,
@@ -41,6 +56,11 @@ import {
 import { decode, encode } from './bridgeCodec'
 import { createBridgedFetch } from './bridgedFetch'
 import { sendToReactEvent } from './webviewLogger'
+
+// Everything the worker bundle pulls in (ambire-common, ethers, the controllers)
+// has now been evaluated. The gap to `worker.bundle.evalStart` is the cost of the
+// module graph alone, before a single controller is constructed.
+workerBootProfiler.mark(BOOT_MARK.workerImportsEvaluated)
 
 // Bridge setup
 const pendingPromises: Record<number, { resolve: any; reject: any }> = {}
@@ -167,9 +187,17 @@ const seedStorageCache = (snapshot: Record<string, string> | undefined) => {
   storageCacheSeeded = true
 }
 
+// Records the first read of each storage key.
+const markFirstStorageRead = (key: string) => {
+  const markName = `${BOOT_MARK_PREFIX.workerStorageRead}${key}`
+  if (workerBootProfiler.reserveOnce(markName)) workerBootProfiler.mark(markName)
+}
+
 // Proxied Storage API
 const storageAPI = {
   get: (key: string, defaultValue?: any) => {
+    markFirstStorageRead(key)
+
     // Serve from the seeded cache to avoid a bridge round-trip. A missing key in
     // a seeded cache means it genuinely isn't in storage → return defaultValue,
     // matching RN's storage.get semantics (no bridge hop needed).
@@ -228,7 +256,11 @@ const initControllers = (config: any) => {
 
     // PERF: seed the storage cache BEFORE constructing controllers, so their
     // initial-load storage reads hit the in-memory cache instead of the bridge.
-    seedStorageCache(config.__storageSnapshot)
+    workerBootProfiler.measure(
+      BOOT_MARK.workerStorageCacheSeeded,
+      () => seedStorageCache(config.__storageSnapshot),
+      { count: Object.keys(config.__storageSnapshot || {}).length }
+    )
     if (Array.isArray(config.criticalControllers)) {
       setCriticalControllers(config.criticalControllers)
     }
@@ -245,6 +277,11 @@ const initControllers = (config: any) => {
     // that runs in the worker (no native transport). The camera scan + QR display
     // happen in the RN UI layer and exchange payloads via controller state.
     const qrCtrl = new QrHardwareController(new UrQrProtocolAdapter(), eventEmitterRegistry)
+
+    workerBootProfiler.startSpan(BOOT_MARK.workerMainCtrlConstructed)
+    // NFC cards (Keycard, ...) tap-to-sign: the controller only forwards signing to
+    // the tapped card's native service, which owns the NFC radio and the credentials.
+    const nfcCtrl = new NfcController()
 
     mainCtrl = new MainController({
       eventEmitterRegistry,
@@ -264,12 +301,14 @@ const initControllers = (config: any) => {
         // TODO: there is a mismatch in hw signer types, it's not a big deal
         ledger: LedgerSigner,
         trezor: TrezorSigner,
-        qr: QrHardwareSigner
+        qr: QrHardwareSigner,
+        nfc: NfcHardwareSigner
       } as any,
       externalSignerControllers: {
         ledger: ledgerCtrl,
         trezor: trezorCtrl,
-        qr: qrCtrl
+        qr: qrCtrl,
+        nfc: nfcCtrl
       } as any,
       uiManager: {
         window: {
@@ -324,23 +363,30 @@ const initControllers = (config: any) => {
       }
     })
 
+    workerBootProfiler.endSpan(BOOT_MARK.workerMainCtrlConstructed)
+
+    workerBootProfiler.startSpan(BOOT_MARK.workerWalletStateCtrlConstructed)
     walletStateCtrl = new WalletStateController({
       eventEmitterRegistry,
       onLogLevelUpdateCallback: () => Promise.resolve(),
       storage: storageAPI
     })
+    workerBootProfiler.endSpan(BOOT_MARK.workerWalletStateCtrlConstructed)
 
+    workerBootProfiler.startSpan(BOOT_MARK.workerAutoLockCtrlConstructed)
     autoLockCtrl = new AutoLockController(
       eventEmitterRegistry,
       () => mainCtrl.keystore.lock(),
       storageAPI
     )
+    workerBootProfiler.endSpan(BOOT_MARK.workerAutoLockCtrlConstructed)
 
     // Initialize UI view inside the WebView worker context natively
     mainCtrl.ui.addView({ id: 'default-mobile-app-view', type: 'mobile' })
 
     // Notify RN that we are ready with ALL controller names
     const allControllerNames = eventEmitterRegistry.values().map((c) => c.name)
+    workerBootProfiler.mark(BOOT_MARK.workerReady, { count: allControllerNames.length })
     sendToReactEvent('system.ready', { controllers: allControllerNames })
     isConfigured = true
   } catch (e: any) {
@@ -361,6 +407,11 @@ window.addEventListener('message', (event) => {
       else pendingPromises[id]?.resolve(result)
       delete pendingPromises[id]
     } else if (data.type === 'init') {
+      // Recorded after the decode above, so the gap to `rn.initPayload.injected`
+      // is the injectJavaScript hop plus the richJson parse of the storage snapshot.
+      workerBootProfiler.mark(BOOT_MARK.workerInitReceived, {
+        bytes: typeof event.data === 'string' ? event.data.length : undefined
+      })
       initControllers(data.config)
     } else if (data.type === 'dispatchAction') {
       if (!isConfigured) {

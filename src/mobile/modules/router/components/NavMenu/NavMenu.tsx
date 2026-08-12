@@ -6,7 +6,7 @@ import AccountsIcon from '@common/assets/svg/AccountsIcon'
 import AddressBookIcon from '@common/assets/svg/AddressBookIcon'
 import AmbireLogoSquare from '@common/assets/svg/AmbireLogoSquare'
 import BugIcon from '@common/assets/svg/BugIcon'
-// import CustomTokensIcon from '@common/assets/svg/CustomTokensIcon'
+import CustomTokensIcon from '@common/assets/svg/CustomTokensIcon'
 import DiscordIcon from '@common/assets/svg/DiscordIcon'
 import HelpIcon from '@common/assets/svg/HelpIcon'
 import KeyStoreSettingsIcon from '@common/assets/svg/KeyStoreSettingsIcon'
@@ -73,6 +73,12 @@ export const SETTINGS_LINKS = [
     Icon: PrivacyIcon,
     label: 'Privacy opt-outs',
     path: ROUTES.optOuts
+  },
+  {
+    key: 'manage-tokens',
+    Icon: CustomTokensIcon,
+    label: 'Custom tokens',
+    path: ROUTES.manageTokens
   }
   // {
   //   key: 'transactions',
@@ -112,12 +118,6 @@ export const SETTINGS_LINKS = [
   //   )),
   //   label: 'Ambire Cloud (coming soon)',
   //   path: '/settings/email-vault'
-  // },
-  // {
-  //   key: 'manage-tokens',
-  //   Icon: CustomTokensIcon,
-  //   label: 'Custom tokens',
-  //   path: ROUTES.manageTokens
   // }
 ]
 

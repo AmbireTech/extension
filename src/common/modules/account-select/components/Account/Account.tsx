@@ -26,6 +26,13 @@ import flexbox from '@common/styles/utils/flexbox'
 
 import getStyles from './styles'
 
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
+const selectMainStatuses = (state: AllControllersMappingType['MainController']) => state.statuses
+const selectSelectedAccount = (state: AllControllersMappingType['SelectedAccountController']) =>
+  state.account
+const selectKeys = (state: AllControllersMappingType['KeystoreController']) => state.keys
+
 const Account = ({
   account,
   onSelect,
@@ -65,16 +72,23 @@ const Account = ({
   const { t } = useTranslation()
   const { theme, styles } = useTheme(getStyles)
   const { addToast } = useToast()
-  const {
-    state: { statuses: mainStatuses },
-    dispatch: mainDispatch
-  } = useController('MainController')
-  const {
-    state: { account: selectedAccount, balanceByAccounts }
-  } = useController('SelectedAccountController')
+  const { state: mainStatuses, dispatch: mainDispatch } = useController(
+    'MainController',
+    selectMainStatuses
+  )
+  const { state: selectedAccount } = useController(
+    'SelectedAccountController',
+    selectSelectedAccount
+  )
+  const selectBalance = useCallback(
+    (state: AllControllersMappingType['SelectedAccountController']) =>
+      state.balanceByAccounts[addr] ?? null,
+    [addr]
+  )
+  const { state: balance } = useController('SelectedAccountController', selectBalance)
   const { dispatch: accountsDispatch } = useController('AccountsController')
   const reverseLookup = useReverseLookup({ address: addr, privacyUpdateMode: 'never' })
-  const { keys } = useController('KeystoreController').state
+  const { state: keys } = useController('KeystoreController', selectKeys)
   const [bindAnim, animStyle] = useCustomHover({
     property: 'backgroundColor',
     values: {
@@ -82,7 +96,6 @@ const Account = ({
       to: !inverseInteractionColors ? theme.secondaryBackground : theme.primaryBackground
     }
   })
-  const balance = balanceByAccounts[account.addr] ?? null
 
   const [bindOpacityAnim, opacityAnimStyle] = useHover({
     preset: 'opacityInverted'

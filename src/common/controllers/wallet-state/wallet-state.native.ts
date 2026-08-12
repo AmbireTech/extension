@@ -7,7 +7,7 @@ import {
   CRASH_ANALYTICS_ENABLED_STORAGE_KEY
 } from '@common/config/analytics/CrashAnalytics.web'
 import { APP_VERSION } from '@common/config/env'
-import { DEFAULT_THEME, THEME_TYPES } from '@common/styles/theme/types'
+import { THEME_TYPES } from '@common/styles/theme/types'
 import { ThemeType } from '@common/styles/themeConfig'
 import { DEFAULT_LOG_LEVEL, LOG_LEVELS, setLoggerInstanceLogLevel } from '@common/utils/logger'
 
@@ -68,7 +68,7 @@ export class WalletStateController extends EventEmitter implements IWalletStateC
   }
 
   async #init(): Promise<void> {
-    this.themeType = (await this.#storage.get('themeType', DEFAULT_THEME)) as ThemeType
+    this.themeType = (await this.#storage.get('themeType', this.themeType)) as ThemeType
     this.avatarType = (await this.#storage.get('avatarType', this.avatarType)) as AvatarType
     this.isPrivacyModeEnabled = await this.#storage.get(
       'isPrivacyModeEnabled',

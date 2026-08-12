@@ -68,7 +68,10 @@ const getAndFormatTokenDetails = (
     amountPostSimulation,
     simulationAmount
   }: SelectedAccountPortfolioTokenResult,
-  networks: Network[],
+  /**
+   * Pass `networks` only if you need `networkData` back.
+   */
+  networks?: Network[],
   simulatedAccountOp?: AccountOp,
   options: { decimalRulesType: FormatType } = { decimalRulesType: 'amount' }
 ) => {
@@ -76,7 +79,7 @@ const getAndFormatTokenDetails = (
   const isVesting = rewardsType === 'wallet-vesting'
   const isProjectedRewards = rewardsType === 'wallet-projected-rewards'
 
-  const networkData = networks.find(({ chainId: nChainId }) => chainId === nChainId)
+  const networkData = networks?.find(({ chainId: nChainId }) => chainId === nChainId)
   const amountish = BigInt(amount)
   const amountishLatest = BigInt(latestAmount || 0n)
 

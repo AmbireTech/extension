@@ -23,7 +23,21 @@ import WebviewDevServerError from '@mobile/modules/webview/components/WebviewDev
 import getWebviewBundleUri from '@mobile/modules/webview/services/getWebviewBundleUri'
 import materializeWorkerBundle from '@mobile/modules/webview/services/materializeWorkerBundle'
 import ledgerTransportService from '@mobile/services/ledger/ledgerTransportService'
+import { beginNfcPinSessions, endNfcPinSessions, getNfcCardService } from '@mobile/services/nfc'
 import trezorDeeplinkService from '@mobile/services/trezor/trezorDeeplinkService'
+import {
+  BOOT_MARK,
+  BOOT_MARK_PREFIX,
+  BOOT_PROFILE_MARKS_EVENT,
+  BOOT_PROFILE_MARKS_MESSAGE,
+  bootProfiler,
+  IS_BOOT_PROFILING_ENABLED,
+  markBoot,
+  markBootOnce,
+  markStorageSnapshotKeys,
+  monotonicNow,
+  setWorkerBootProfile
+} from '@mobile/services/bootProfiler'
 
 import { decode, encode } from './bridgeCodec'
 
@@ -135,9 +149,11 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, object>((_, ref) => {
     let isActive = true
     // Falls back to the native-asset bundle baked into the signed app if the OTA copy
     // cannot be materialized, so the worker always has a working bundle to load.
-    materializeWorkerBundle().then((uri) => {
-      if (isActive) setProdBundleUri(uri || getWebviewBundleUri())
-    })
+    bootProfiler
+      .measureAsync(BOOT_MARK.rnWorkerBundleMaterialized, materializeWorkerBundle())
+      .then((uri) => {
+        if (isActive) setProdBundleUri(uri || getWebviewBundleUri())
+      })
 
     return () => {
       isActive = false
@@ -183,6 +199,22 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, object>((_, ref) => {
       `)
   }
 
+  // Shared by the two paths that hand the worker its config: init() when the
+  // WebView has already loaded, and the system.loaded handler otherwise (plus dev
+  // reloads). The richJson stringify here covers the whole storage snapshot, which
+  // is why it is measured separately from the injectJavaScript hop.
+  const injectInitPayload = (configToSend: any) => {
+    bootProfiler.startSpan(BOOT_MARK.rnInitPayloadEncoded)
+    const initPayload = encode({ type: 'init', config: configToSend }, true)
+    bootProfiler.endSpan(BOOT_MARK.rnInitPayloadEncoded, { bytes: initPayload.length })
+
+    webviewRef.current?.injectJavaScript(`
+        window.postMessage(${JSON.stringify(initPayload)}, '*');
+        true;
+      `)
+    markBoot(BOOT_MARK.rnInitPayloadInjected)
+  }
+
   useImperativeHandle(ref, () => ({
     dispatch: (action: any, raw?: boolean) => {
       if (!isReadyRef.current) return
@@ -193,17 +225,20 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, object>((_, ref) => {
       // seed an in-memory cache and serve controller-boot reads locally instead
       // of making 80+ separate bridged storage.get round-trips (each delivered
       // via its own injectJavaScript), which saturated the bridge for seconds.
-      const configWithStorage = { ...config, __storageSnapshot: getAllSerialized() }
+      bootProfiler.startSpan(BOOT_MARK.rnStorageSnapshot)
+      const storageSnapshot = getAllSerialized()
+      bootProfiler.endSpan(BOOT_MARK.rnStorageSnapshot, {
+        count: Object.keys(storageSnapshot).length
+      })
+      markStorageSnapshotKeys(storageSnapshot)
+
+      const configWithStorage = { ...config, __storageSnapshot: storageSnapshot }
       lastConfig.current = configWithStorage
       return new Promise((resolve) => {
         initResolver.current = resolve
         scheduleInitWarningTimeout()
         if (isLoaded) {
-          const initPayload = encode({ type: 'init', config: configWithStorage }, true)
-          webviewRef.current?.injectJavaScript(`
-              window.postMessage(${JSON.stringify(initPayload)}, '*');
-              true;
-            `)
+          injectInitPayload(configWithStorage)
         } else {
           pendingConfig.current = configWithStorage
         }
@@ -211,13 +246,40 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, object>((_, ref) => {
     }
   }))
 
+  // Times the richJson parse of the first state received per controller, together
+  // with the wire size that produced it. The message type is only known after
+  // decoding, so the duration is captured first and attributed afterwards. Guarded
+  // by the flag because every dapp JSON-RPC message also flows through here.
+  const decodeAndProfile = (raw: string) => {
+    if (!IS_BOOT_PROFILING_ENABLED) return decode(raw)
+
+    const startedAt = monotonicNow()
+    const data = decode(raw)
+    if (data?.type !== 'ctrl.update') return data
+
+    const markName = `${BOOT_MARK_PREFIX.rnCtrlDecode}${data.payload?.ctrlName}`
+    if (bootProfiler.reserveOnce(markName))
+      markBoot(markName, { durationMs: monotonicNow() - startedAt, bytes: raw.length })
+
+    return data
+  }
+
   const handleMessage = async (event: any) => {
     try {
-      const data = decode(event.nativeEvent.data)
+      const raw: string = event.nativeEvent.data
+      const data = decodeAndProfile(raw)
 
       switch (data.type) {
+        case BOOT_PROFILE_MARKS_MESSAGE:
+          // The worker's half of the timeline. Handed to the profiler and also
+          // re-emitted so whoever asked for it knows it has landed.
+          setWorkerBootProfile(data.payload)
+          eventBus.emit(BOOT_PROFILE_MARKS_EVENT, data.payload)
+          break
+
         case 'system.loaded': {
           const isReload = isReadyRef.current
+          markBootOnce(BOOT_MARK.rnWorkerLoadedReceived)
           if (__DEV__) {
             const isReloadStr = isReload ? ' (RELOAD detected)' : ''
             console.log(`[WebViewWorker] WebView internal script loaded${isReloadStr}`)
@@ -234,11 +296,7 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, object>((_, ref) => {
           const configToSend = pendingConfig.current || (isReload ? lastConfig.current : null)
 
           if (configToSend) {
-            const initPayload = encode({ type: 'init', config: configToSend }, true)
-            webviewRef.current?.injectJavaScript(`
-                window.postMessage(${JSON.stringify(initPayload)}, '*');
-                true;
-              `)
+            injectInitPayload(configToSend)
             pendingConfig.current = null
           }
           break
@@ -258,6 +316,9 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, object>((_, ref) => {
 
         case 'system.ready':
           clearInitWarningTimeout()
+          markBootOnce(BOOT_MARK.rnWorkerReadyReceived, {
+            count: data.payload.controllers?.length
+          })
           isReadyRef.current = true
           setIsReady(true)
           if (initResolver.current) {
@@ -567,6 +628,28 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, object>((_, ref) => {
             sendResponse(data.id, null, err.message)
           }
           break
+        case 'nfc.signHash': {
+          const { nfcWalletType, ...signHashParams } = data.payload
+
+          try {
+            sendResponse(data.id, await getNfcCardService(nfcWalletType).signHash(signHashParams))
+          } catch (err: any) {
+            sendResponse(data.id, null, err.message)
+          }
+          break
+        }
+        case 'nfc.cancel':
+          getNfcCardService(data.payload.nfcWalletType).cancel()
+          sendResponse(data.id, null)
+          break
+        case 'nfc.beginPinSession':
+          beginNfcPinSessions()
+          sendResponse(data.id, null)
+          break
+        case 'nfc.endPinSession':
+          endNfcPinSessions()
+          sendResponse(data.id, null)
+          break
 
         default:
           if (__DEV__) console.warn('Unknown message from WebViewWorker:', data.type)
@@ -672,6 +755,11 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, object>((_, ref) => {
   // The worker is invisible and init() queues via pendingConfig, so this only defers boot.
   if (!__DEV__ && !prodBundleUri) return null
 
+  // Past this point the WebView element is returned, so the gap from here to
+  // `worker.bundle.evalStart` is WebView process spawn + HTML load + bundle
+  // fetch and parse — the part no JS inside either realm can see on its own.
+  markBootOnce(BOOT_MARK.rnWebviewMounted)
+
   return (
     <>
       {__DEV__ && hasDevServerFailed && !isReady && (
@@ -682,6 +770,8 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, object>((_, ref) => {
         ref={webviewRef}
         source={source}
         onMessage={handleMessage}
+        onLoadStart={() => markBootOnce(BOOT_MARK.rnWebviewLoadStart)}
+        onLoadEnd={() => markBootOnce(BOOT_MARK.rnWebviewLoadEnd)}
         onError={(syntheticEvent) => {
           if (__DEV__) {
             const { nativeEvent } = syntheticEvent

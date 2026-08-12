@@ -303,7 +303,7 @@ const AccountsOnPageList = ({
                             style={{ width: isMobile ? 14 : 16, height: isMobile ? 14 : 16 }}
                           />
                           <Text appearance="primary" style={[spacings.mlTy]} fontSize={12}>
-                            {t('Searching for smart accounts')}
+                            {t('Loading smart accounts')}
                           </Text>
                         </View>
                       )}

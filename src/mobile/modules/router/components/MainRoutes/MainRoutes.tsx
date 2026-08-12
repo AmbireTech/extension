@@ -7,14 +7,14 @@ import { ROUTES } from '@common/modules/router/constants/common'
 import AccountPersonalizeScreen from '@mobile/modules/account-personalize/screens/AccountPersonalizeScreen'
 import AccountPickerScreen from '@mobile/modules/account-picker/screens/AccountPickerScreen'
 import AccountSelectScreen from '@mobile/modules/account-select/screens/AccountSelectScreen'
-import CreateSeedPhrasePrepareScreen from '@mobile/modules/auth/screens/CreateSeedPhrasePrepareScreen'
-import CreateSeedPhraseWriteScreen from '@mobile/modules/auth/screens/CreateSeedPhraseWriteScreen'
 import GetStartedScreen from '@mobile/modules/auth/screens/GetStartedScreen'
 import ImportExistingAccountSelectorScreen from '@mobile/modules/auth/screens/ImportExistingAccountSelectorScreen'
 import ImportSmartAccountJsonScreen from '@mobile/modules/auth/screens/ImportSmartAccountJson'
 import MigrationOnboardingScreen from '@mobile/modules/auth/screens/MigrationOnboardingScreen'
 import PrivateKeyImportScreen from '@mobile/modules/auth/screens/PrivateKeyImportScreen'
 import SafeImportScreen from '@mobile/modules/auth/screens/SafeImportScreen'
+import SafeImportByOwnerScreen from '@mobile/modules/auth/screens/SafeImportByOwnerScreen'
+import SafeImportMethodScreen from '@mobile/modules/auth/screens/SafeImportMethodScreen'
 import SeedPhraseImportScreen from '@mobile/modules/auth/screens/SeedPhraseImportScreen'
 import ViewOnlyAccountAdderScreen from '@mobile/modules/auth/screens/ViewOnlyAccountAdderScreen'
 import ExploreScreen from '@mobile/modules/explore/screens/ExploreScreen'
@@ -34,6 +34,7 @@ import AccountsSettingsScreen from '@mobile/modules/settings/screens/AccountsSet
 import AddressBookSettingsScreen from '@mobile/modules/settings/screens/AddressBookSettingsScreen'
 import ChangeAppPasswordScreen from '@mobile/modules/settings/screens/ChangeAppPasswordScreen'
 import GeneralSettingsScreen from '@mobile/modules/settings/screens/GeneralSettingsScreen'
+import ManageTokensSettingsScreen from '@mobile/modules/settings/screens/ManageTokensSettingsScreen'
 import NetworksSettingsScreen from '@mobile/modules/settings/screens/NetworksSettingsScreen'
 import PrivacyOptOutsSettingsScreen from '@mobile/modules/settings/screens/PrivacyOptOutsSettingsScreen'
 import RecoveryPhrasesSettingsScreen from '@mobile/modules/settings/screens/RecoveryPhrasesSettingsScreen'
@@ -69,10 +70,9 @@ const MainRoutes = () => {
         <Route path={ROUTES.importPrivateKey} element={<PrivateKeyImportScreen />} />
         <Route path={ROUTES.importSeedPhrase} element={<SeedPhraseImportScreen />} />
         <Route path={ROUTES.importSmartAccountJson} element={<ImportSmartAccountJsonScreen />} />
-        <Route path={ROUTES.safeImport} element={<SafeImportScreen />} />
-
-        <Route path={ROUTES.createSeedPhrasePrepare} element={<CreateSeedPhrasePrepareScreen />} />
-        <Route path={ROUTES.createSeedPhraseWrite} element={<CreateSeedPhraseWriteScreen />} />
+        <Route path={ROUTES.safeImport} element={<SafeImportMethodScreen />} />
+        <Route path={ROUTES.safeImportAddress} element={<SafeImportScreen />} />
+        <Route path={ROUTES.safeImportByOwner} element={<SafeImportByOwnerScreen />} />
 
         <Route path={ROUTES.accountPicker} element={<AccountPickerScreen />} />
         <Route path={ROUTES.accountPersonalize} element={<AccountPersonalizeScreen />} />
@@ -93,6 +93,7 @@ const MainRoutes = () => {
           <Route path={ROUTES.addressBook} element={<AddressBookSettingsScreen />} />
           <Route path={ROUTES.devicePasswordChange} element={<ChangeAppPasswordScreen />} />
           <Route path={ROUTES.networksSettings} element={<NetworksSettingsScreen />} />
+          <Route path={ROUTES.manageTokens} element={<ManageTokensSettingsScreen />} />
           <Route
             path={ROUTES.recoveryPhrasesSettings}
             element={<RecoveryPhrasesSettingsScreen />}

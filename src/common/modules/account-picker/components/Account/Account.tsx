@@ -25,6 +25,7 @@ import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import useWindowSize from '@common/hooks/useWindowSize'
 import spacings from '@common/styles/spacings'
+import { THEME_TYPES } from '@common/styles/themeConfig'
 import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import { setStringAsync } from '@common/utils/clipboard'
@@ -43,7 +44,10 @@ const Account = ({
   importStatus,
   displayTypeBadge = true,
   displayTypePill = true,
-  shouldBeDisplayedAsNew = false
+  shouldBeDisplayedAsNew = false,
+  identityDisplayMode = 'responsive',
+  selectOnRowPress = true,
+  footer
 }: {
   account: AccountWithNetworkMeta
   type: 'basic' | 'smart' | 'linked'
@@ -57,29 +61,43 @@ const Account = ({
   displayTypeBadge?: boolean
   displayTypePill?: boolean
   shouldBeDisplayedAsNew?: boolean
+  identityDisplayMode?: 'responsive' | 'compact'
+  selectOnRowPress?: boolean
+  footer?: React.ReactNode
 }) => {
   const { isLoading: isDomainResolving, name: reverseLookupName } = useReverseLookup({
     address: account.addr
   })
   const { t } = useTranslation()
-  const { styles, theme } = useTheme(getStyles)
+  const { styles, theme, themeType } = useTheme(getStyles)
   const { minWidthSize, maxWidthSize } = useWindowSize()
   const { addToast } = useToast()
   const isAccountImported = importStatus !== ImportStatus.NotImported
   const usedOnNetworks = Array.isArray(account.usedOnNetworks) ? account.usedOnNetworks : undefined
   const isUsedOnNetworksLoading = account.usedOnNetworks !== null && !usedOnNetworks
   const hasUsedOnNetworks = !!usedOnNetworks && usedOnNetworks.length > 0
-  const shouldShowUsedOnNetworks = !unused && (hasUsedOnNetworks || isUsedOnNetworksLoading)
+  const shouldShowUsedOnNetworks =
+    identityDisplayMode === 'responsive' &&
+    !unused &&
+    (hasUsedOnNetworks || isUsedOnNetworksLoading)
 
-  const toggleSelectedState = useCallback(() => {
-    if (isSelected) {
-      !!onDeselect && onDeselect(account)
-    } else {
-      !!onSelect && onSelect(account)
-    }
-  }, [isSelected, onSelect, onDeselect, account])
+  const handleSelectionChange = useCallback(
+    (shouldSelect: boolean) => {
+      if (shouldSelect) {
+        onSelect(account)
+      } else {
+        onDeselect(account)
+      }
+    },
+    [account, onDeselect, onSelect]
+  )
+
+  const handlePress = useCallback(() => {
+    handleSelectionChange(!isSelected)
+  }, [handleSelectionChange, isSelected])
 
   const formattedAddress = useMemo(() => {
+    if (identityDisplayMode === 'compact') return shortenAddress(account.addr, 16)
     if (minWidthSize('m') || reverseLookupName || isDomainResolving) {
       return shortenAddress(account.addr, 16)
     }
@@ -90,7 +108,36 @@ const Account = ({
       return account.addr
     }
     return shortenAddress(account.addr, 16)
-  }, [account.addr, reverseLookupName, isDomainResolving, maxWidthSize, minWidthSize])
+  }, [
+    account.addr,
+    identityDisplayMode,
+    reverseLookupName,
+    isDomainResolving,
+    maxWidthSize,
+    minWidthSize
+  ])
+
+  const shouldShowImportedAddress =
+    !account.preferences.label || (!isMobile && identityDisplayMode === 'responsive')
+  const identityFontSize = identityDisplayMode === 'compact' ? 14 : 16
+  const isCompactWebIdentity = isWeb && identityDisplayMode === 'compact'
+  const compactIdentityTooltipDataSet = useMemo(
+    () =>
+      isCompactWebIdentity
+        ? createGlobalTooltipDataSet({
+            id: `account-picker-identity-${account.addr}`,
+            content: account.addr
+          })
+        : undefined,
+    [account.addr, isCompactWebIdentity]
+  )
+  const shouldShowOnlyResolvedName = isCompactWebIdentity && !!reverseLookupName
+
+  const backgroundColor = useMemo(() => {
+    if (identityDisplayMode === 'compact') return theme.secondaryBackground
+
+    return themeType === THEME_TYPES.DARK ? theme.neutral400 : theme.neutral200
+  }, [identityDisplayMode, theme, themeType])
 
   const handleCopyAddress = useCallback(() => {
     setStringAsync(account.addr)
@@ -107,9 +154,11 @@ const Account = ({
         withBottomSpacing ? spacings.mbTy : spacings.mb0,
         common.borderRadiusPrimary,
         common.hidden,
-        { backgroundColor: theme.neutral200 }
+        // @ts-expect-error react-native-web supports `cursor`, but it's missing from React Native StyleProp<ViewStyle> types
+        isWeb && !selectOnRowPress && { cursor: 'default' },
+        { backgroundColor }
       ]}
-      onPress={isDisabled ? undefined : toggleSelectedState}
+      onPress={isDisabled || !selectOnRowPress ? undefined : handlePress}
       testID={`add-account-${account.addr}`}
     >
       <View
@@ -120,9 +169,11 @@ const Account = ({
         ]}
       >
         <FatToggle
+          id={`add-account-toggle-${account.addr}`}
           isOn={isSelected}
-          onToggle={toggleSelectedState}
+          onToggle={handleSelectionChange}
           disabled={isDisabled}
+          stopPropagation
           style={flexbox.alignSelfStart}
           width={44}
           height={24}
@@ -149,14 +200,15 @@ const Account = ({
                     displayTypeBadge={displayTypeBadge}
                   />
                   <Text
-                    fontSize={16}
+                    fontSize={identityFontSize}
                     weight="medium"
                     appearance={isMobile && type === 'linked' ? 'infoText' : 'primaryText'}
                     style={spacings.mrTy}
+                    dataSet={compactIdentityTooltipDataSet}
                   >
                     {account.preferences.label}
                   </Text>
-                  {(!isMobile || !account.preferences.label) && (
+                  {shouldShowImportedAddress && (
                     <Text
                       fontSize={14}
                       appearance="secondaryText"
@@ -175,10 +227,11 @@ const Account = ({
                 <>
                   {reverseLookupName ? (
                     <Text
-                      fontSize={16}
+                      fontSize={identityFontSize}
                       weight="medium"
                       appearance={isMobile && type === 'linked' ? 'infoText' : 'primaryText'}
                       style={spacings.mrTy}
+                      dataSet={compactIdentityTooltipDataSet}
                     >
                       {reverseLookupName}
                     </Text>
@@ -187,21 +240,23 @@ const Account = ({
                       {t('Resolving domain...')}
                     </Text>
                   ) : null}
-                  <Text
-                    fontSize={14}
-                    appearance={isMobile && type === 'linked' ? 'infoText' : 'secondaryText'}
-                    style={spacings.mrMi}
-                    weight="mono_regular"
-                  >
-                    {reverseLookupName || (isWeb && isDomainResolving) ? '(' : ''}
-                    {formattedAddress}
-                    {reverseLookupName || (isWeb && isDomainResolving) ? ')' : ''}
-                  </Text>
+                  {!shouldShowOnlyResolvedName && (
+                    <Text
+                      fontSize={14}
+                      appearance={isMobile && type === 'linked' ? 'infoText' : 'secondaryText'}
+                      style={spacings.mrMi}
+                      weight="mono_regular"
+                    >
+                      {reverseLookupName || (isWeb && isDomainResolving) ? '(' : ''}
+                      {formattedAddress}
+                      {reverseLookupName || (isWeb && isDomainResolving) ? ')' : ''}
+                    </Text>
+                  )}
                 </>
               )}
 
               {!isMobile && (maxWidthSize('l') || isAccountImported || reverseLookupName) && (
-                <Pressable onPress={handleCopyAddress}>
+                <Pressable style={{ cursor: 'pointer' }} onPress={handleCopyAddress}>
                   <CopyIcon width={14} height={14} />
                 </Pressable>
               )}
@@ -276,6 +331,7 @@ const Account = ({
           </View>
         </View>
       </View>
+      {footer}
       {[
         ImportStatus.ImportedWithSomeOfTheKeys,
         ImportStatus.ImportedWithDifferentKeys,
