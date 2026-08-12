@@ -35,7 +35,10 @@ const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
     simulationContainerHeader: {
       backgroundColor: theme.secondaryBackground,
       ...spacings.phSm,
-      ...spacings.pvTy
+      ...spacings.pvTy,
+      ...flexbox.directionRow,
+      ...flexbox.alignCenter,
+      ...flexbox.justifySpaceBetween
     },
     spinner: {
       alignSelf: 'center'

@@ -150,7 +150,9 @@ const OneClickEstimation = ({
               <SafetyChecksBanner
                 key={banner.id}
                 type={banner.type}
+                title={banner.title}
                 text={banner.text}
+                secondaryText={banner.secondaryText}
                 style={spacings.mbTy}
               />
             ))}

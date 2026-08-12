@@ -496,7 +496,8 @@ export class ProviderController {
         accout,
         accountState,
         network,
-        this.mainCtrl.featureFlags.isFeatureEnabled('erc4337')
+        this.mainCtrl.featureFlags.isFeatureEnabled('erc4337'),
+        this.mainCtrl.featureFlags.isFeatureEnabled('eip7702')
       )
       const isSmart = baseAccount.getAtomicStatus() !== 'unsupported'
 
