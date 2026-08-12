@@ -7,7 +7,6 @@ import DownArrowIcon from '@common/assets/svg/DownArrowIcon'
 import ImportAccountIcon from '@common/assets/svg/ImportAccountIcon'
 import RightArrowIcon from '@common/assets/svg/RightArrowIcon'
 import SettingsIcon from '@common/assets/svg/SettingsIcon'
-import ViewOnlyIcon from '@common/assets/svg/ViewOnlyIcon'
 import Button from '@common/components/Button'
 import Panel from '@common/components/Panel'
 import Text from '@common/components/Text'
@@ -81,20 +80,6 @@ const GetStartedScreen = () => {
                 width={24}
                 height={24}
                 color={theme.primaryText}
-                style={spacings.mrMi}
-              />
-            </Button>
-            <Button
-              testID="watch-an-address-button"
-              type="outline"
-              onPress={() => handleAuthButtonPress('view-only')}
-              text={t('Watch an address')}
-              childrenPosition="left"
-            >
-              <ViewOnlyIcon
-                color={theme.primaryText}
-                width={24}
-                height={24}
                 style={spacings.mrMi}
               />
             </Button>
