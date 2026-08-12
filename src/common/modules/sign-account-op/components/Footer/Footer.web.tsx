@@ -1,6 +1,5 @@
-import React, { useCallback, useMemo, useRef } from 'react'
+import React, { useMemo } from 'react'
 import { View } from 'react-native'
-import { useModalize } from 'react-native-modalize'
 
 import { getCallsCount } from '@ambire-common/utils/userRequest'
 import BatchIcon from '@common/assets/svg/BatchIcon'
@@ -19,6 +18,7 @@ import flexbox from '@common/styles/utils/flexbox'
 
 import { Props } from './Footer'
 import getStyles from './styles'
+import useRejectConfirmation from './useRejectConfirmation'
 
 const Footer = ({
   onReject,
@@ -75,23 +75,10 @@ const Footer = ({
       : t('Start a batch')
   }, [isMultisigSigned, batchCount, t])
 
-  const { ref: sheetRef, open: openModal, close: closeModal } = useModalize()
-  const pendingRejectRef = useRef<(() => void) | null>(null)
-  const handleReject = useCallback(() => {
-    if (!isMultisigSigned) {
-      onReject()
-      return
-    }
-
-    pendingRejectRef.current = onReject
-    openModal()
-  }, [isMultisigSigned, onReject, openModal])
-  const handleConfirmedReject = useCallback(() => {
-    const pendingReject = pendingRejectRef.current
-    pendingRejectRef.current = null
-    closeModal()
-    pendingReject?.()
-  }, [closeModal])
+  const { sheetRef, closeModal, handleReject, handleConfirmedReject } = useRejectConfirmation({
+    isMultisigSigned,
+    onReject
+  })
 
   return (
     <View style={styles.container}>
