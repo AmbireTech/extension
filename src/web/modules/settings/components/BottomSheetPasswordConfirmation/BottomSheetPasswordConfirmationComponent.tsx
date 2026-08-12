@@ -13,6 +13,10 @@ interface Props {
   title?: string
   onCustomSubmit?: (password: string) => void
   id?: string
+  /** Rendered between the password field and the submit button */
+  children?: React.ReactNode
+  submitText?: string
+  isSubmitting?: boolean
 }
 
 const BottomSheetPasswordConfirmationComponent: React.FC<Props> = ({
@@ -22,7 +26,10 @@ const BottomSheetPasswordConfirmationComponent: React.FC<Props> = ({
   text,
   title,
   onCustomSubmit,
-  id = 'confirm-password-bottom-sheet'
+  id = 'confirm-password-bottom-sheet',
+  children,
+  submitText,
+  isSubmitting
 }) => {
   return (
     <BottomSheet
@@ -40,7 +47,11 @@ const BottomSheetPasswordConfirmationComponent: React.FC<Props> = ({
         onPasswordConfirmed={onPasswordConfirmed}
         onCustomSubmit={onCustomSubmit}
         onBackButtonPress={closeBottomSheet}
-      />
+        submitText={submitText}
+        isSubmitting={isSubmitting}
+      >
+        {children}
+      </PasswordConfirmation>
     </BottomSheet>
   )
 }

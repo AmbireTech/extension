@@ -150,6 +150,10 @@ const MainRoutes = () => {
               path={WEB_ROUTES.qrPermission}
               element={<AuthGroupScreen pick={(m) => m.QrCameraPermissionPage} />}
             />
+            <Route
+              path={WEB_ROUTES.syncFromMobile}
+              element={<AuthGroupScreen pick={(m) => m.SyncFromMobileScreen} />}
+            />
 
             <Route element={<AuthenticatedRoute />}>
               <Route

@@ -23,6 +23,10 @@ interface Props {
   text: string
   title?: string
   onCustomSubmit?: (password: string) => void
+  /** Rendered between the password field and the submit button */
+  children?: React.ReactNode
+  submitText?: string
+  isSubmitting?: boolean
 }
 
 const PasswordConfirmation: React.FC<Props> = ({
@@ -30,7 +34,10 @@ const PasswordConfirmation: React.FC<Props> = ({
   onBackButtonPress,
   text,
   title = isMobile ? 'Confirm app password' : 'Confirm extension password',
-  onCustomSubmit
+  onCustomSubmit,
+  children,
+  submitText,
+  isSubmitting: isSubmittingCustom
 }) => {
   const { t } = useTranslation()
   const { state: keystoreState, dispatch: keystoreDispatch } = useController('KeystoreController')
@@ -153,6 +160,7 @@ const PasswordConfirmation: React.FC<Props> = ({
         )}
         name="password"
       />
+      {children}
       <View
         style={[
           isMobile && spacings.pt,
@@ -163,9 +171,15 @@ const PasswordConfirmation: React.FC<Props> = ({
       >
         <Button
           testID="button-submit"
-          disabled={keystoreState.statuses.unlockWithSecret !== 'INITIAL' || !isValid}
+          disabled={
+            keystoreState.statuses.unlockWithSecret !== 'INITIAL' ||
+            !isValid ||
+            !!isSubmittingCustom
+          }
           text={
-            keystoreState.statuses.unlockWithSecret === 'LOADING' ? t('Submitting...') : t('Submit')
+            keystoreState.statuses.unlockWithSecret === 'LOADING' || isSubmittingCustom
+              ? t('Submitting...')
+              : submitText || t('Submit')
           }
           size="large"
           hasBottomSpacing={false}

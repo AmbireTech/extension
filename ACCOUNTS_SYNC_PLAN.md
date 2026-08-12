@@ -190,8 +190,13 @@ hand) and all theme driven, so they follow a theme change like every other icon:
   on-device check** that `lottie-react-native` renders the embedded frames, and the file size is
   worth a second thought since it ships in the bundle.
 
-**Still needed:** the mirror animation (or image) of the **steps on the mobile app**, for the
-extension's import carousel in Step 7.
+**Still needed** (both marked with TODOs in `SyncFromMobileScreen`, where the illustrations are
+currently empty):
+1. The animation (or image) of the **steps on the mobile app** - the mirror of the Lottie we have for
+   the steps on the extension. Used by the extension's import steps.
+2. The illustration of the **QR codes on the other device's screen**, for the second step (the design
+   shows a QR picture with the "Your QR code includes sensitive information" header). Needed in both
+   directions, so a mobile-facing and an extension-facing version if they differ.
 
 Verified: `yarn extension:type:check-new` → 0 new errors, eslint clean (the two errors in
 `AccountSelectScreen` are pre-existing: an unused `Pressable` import and `selectedAccountIndex`).
@@ -200,8 +205,30 @@ Verified: `yarn extension:type:check-new` → 0 new errors, eslint clean (the tw
 
 ## Step 6 — Extension import, app already in use
 
-Bottom sheet → **Import from mobile** → camera scan (reuse the existing `qrPermission` /
-`QrCameraPermissionPage` route) → "Verify Mobile Password" modal → account personalize → dashboard.
+**Done.** `SyncFromMobileScreen` (`syncFromMobile` route): the computer's camera scans the phone's QR
+codes, then the "Verify mobile password" modal takes the **other** device's password and the imported
+accounts land on the personalize screen.
+
+- The scan reuses `QrScannerWithPermission` (web), which already assembles the animated UR fragments
+  and hands over the finished payload; the Step 4 hook validates it before the password is asked for.
+- The password step reuses `BottomSheetPasswordConfirmation` + `PasswordConfirmation` in its existing
+  `onCustomSubmit` mode. Both gained three passthrough props (`children` for the design's note under
+  the field, `submitText`, `isSubmitting`); nothing else about them changed.
+- The wrong-password error appears on the field on its own, because the keystore sets
+  `errorMessage`, which that component already renders.
+- Closing the modal without submitting resets the decoder and scanning starts over.
+- Before the camera opens, the screen walks through the design's **two steps** (what to do on the
+  other device, then what the scanning looks like), with the dots and the `Next` / `Sync from mobile`
+  buttons. `SyncImportSteps` is shared, so mobile shows the same two steps in Steps 9 and 10, and
+  both entry points (onboarding and a later sync) go through them.
+- The route deliberately sits **outside** `AuthenticatedRoute` (but inside `KeystoreUnlockedRoute`),
+  because Step 7 reuses this exact screen during onboarding, when there are no accounts yet. For the
+  same reason it decides where to go afterwards from `hasPasswordSecret`: with a password (app in
+  use) → personalize; without one (onboarding) → set the extension password first.
+- Navigating from the popup works because the route is tab only, so `TabOnlyRoute` reopens it in a
+  full tab.
+
+Verified: `yarn extension:type:check-new` → 0 new errors, eslint clean on the new files.
 
 **Gate.**
 

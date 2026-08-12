@@ -80,6 +80,7 @@ const WEB_ROUTES = {
   survey: 'survey',
   qrPermission: 'qr-permission',
   syncWithMobile: 'sync-with-mobile',
+  syncFromMobile: 'sync-from-mobile',
   // INTERNAL ROUTES
   internalLogs: 'internal/logs'
 }

@@ -186,7 +186,7 @@ const AccountSelectScreen = () => {
         }}
         onImportPress={() => {
           closeSyncBottomSheet()
-          // TODO: Step 6 - the import flow (scan the phone's QR codes) lands here
+          navigate(WEB_ROUTES.syncFromMobile)
         }}
       />
     </LayoutWrapper>

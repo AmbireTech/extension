@@ -431,6 +431,11 @@ const routesConfig: RouteConfig = {
     route: ROUTES.syncWithMobile,
     title: Platform.select({ default: i18n.t('Sync with mobile') }),
     name: Platform.select({ default: i18n.t('Sync with mobile') })
+  },
+  [ROUTES.syncFromMobile]: {
+    route: ROUTES.syncFromMobile,
+    title: Platform.select({ default: i18n.t('Sync from mobile') }),
+    name: Platform.select({ default: i18n.t('Sync from mobile') })
   }
 }
 
