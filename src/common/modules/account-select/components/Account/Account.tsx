@@ -40,6 +40,7 @@ const Account = ({
   withSettings = true,
   isSelectable = true,
   withKeyType = true,
+  renderLeftChildren,
   renderRightChildren,
   inverseInteractionColors = false,
   options = {
@@ -48,7 +49,8 @@ const Account = ({
   containerStyle,
   withReceive = false,
   withCopy = true,
-  switchAccountOnPress = true
+  switchAccountOnPress = true,
+  withBalance = true
 }: {
   account: AccountInterface
   onSelect?: (addr: string) => void
@@ -57,6 +59,8 @@ const Account = ({
   isSelectable?: boolean
   inverseInteractionColors?: boolean
   withKeyType?: boolean
+  /** Rendered before the avatar, e.g. a checkbox when the row is pickable */
+  renderLeftChildren?: () => React.ReactNode
   renderRightChildren?: () => React.ReactNode
   options?: {
     withOptionsButton?: boolean
@@ -70,6 +74,7 @@ const Account = ({
   withCopy?: boolean
   /** Set to false when pressing the row means something else than switching to it */
   switchAccountOnPress?: boolean
+  withBalance?: boolean
 }) => {
   const { addr, preferences } = account
   const { t } = useTranslation()
@@ -210,6 +215,7 @@ const Account = ({
       ]}
     >
       <View style={[flexbox.flex1, flexbox.directionRow, isMobile && flexbox.alignCenter]}>
+        {renderLeftChildren && renderLeftChildren()}
         <Avatar
           address={account.addr}
           pfp={account.preferences.pfp}
@@ -286,7 +292,7 @@ const Account = ({
                 { columnGap: SPACING_TY }
               ]}
             >
-              {balance !== null && (
+              {balance !== null && withBalance && (
                 <Text fontSize={14} weight="semiBold" color={theme.secondaryText}>
                   {formatDecimals(balance, 'value')}
                 </Text>
@@ -300,7 +306,7 @@ const Account = ({
         </View>
       </View>
       <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mlTy]}>
-        {balance !== null && !withSettings && !isMobile && (
+        {balance !== null && withBalance && !withSettings && !isMobile && (
           <Text
             fontSize={14}
             weight="semiBold"

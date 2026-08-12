@@ -61,21 +61,25 @@ const Checkbox = ({
           )}
         </TouchableOpacity>
       </View>
-      <View style={flexboxStyles.flex1}>
-        {label ? (
-          <Text
-            shouldScale={false}
-            onPress={onChange}
-            appearance="secondaryText"
-            fontSize={12}
-            {...labelProps}
-          >
-            {label}
-          </Text>
-        ) : (
-          children
-        )}
-      </View>
+      {/* Without a label or children this would be an empty `flex: 1` view, taking up
+      all the space next to the checkbox and pushing whatever follows it out of view */}
+      {(!!label || !!children) && (
+        <View style={flexboxStyles.flex1}>
+          {label ? (
+            <Text
+              shouldScale={false}
+              onPress={onChange}
+              appearance="secondaryText"
+              fontSize={12}
+              {...labelProps}
+            >
+              {label}
+            </Text>
+          ) : (
+            children
+          )}
+        </View>
+      )}
     </View>
   )
 }

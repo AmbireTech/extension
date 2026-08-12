@@ -7,9 +7,6 @@ import ambireMobilePhoneMockup from '@common/assets/images/how-to-sync-on-mobile
 import AppStoreBadgeIcon from '@common/assets/svg/AppStoreBadgeIcon'
 import GooglePlayBadgeIcon from '@common/assets/svg/GooglePlayBadgeIcon'
 import InvisibilityIcon from '@common/assets/svg/InvisibilityIcon'
-import BottomSheet from '@common/components/BottomSheet'
-import ModalHeader from '@common/components/BottomSheet/ModalHeader'
-import Button from '@common/components/Button'
 import Panel from '@common/components/Panel'
 import ScrollableWrapper from '@common/components/ScrollableWrapper'
 import Text from '@common/components/Text'
@@ -18,7 +15,7 @@ import { AnimatedPressable, useCustomHover } from '@common/hooks/useHover'
 import useNavigation from '@common/hooks/useNavigation'
 import useTheme from '@common/hooks/useTheme'
 import { ACCOUNTS_SYNC_QR_CAPACITY } from '@common/modules/accounts-sync/consts'
-import SelectAccountsToSync from '@common/modules/accounts-sync/components/SelectAccountsToSync'
+import SelectAccountsToSyncSheet from '@common/modules/accounts-sync/components/SelectAccountsToSyncSheet'
 import useAccountsSyncExport from '@common/modules/accounts-sync/hooks/useAccountsSyncExport'
 import AnimatedQrCode from '@common/modules/hardware-wallets/components/AnimatedQrCode'
 import { ACCOUNTS_SYNC_UR_TYPE } from '@ambire-common/libs/accountsSync/accountsSync'
@@ -145,28 +142,17 @@ const SyncWithMobileScreen = () => {
         </Panel>
       </TabLayoutWrapperMainContent>
 
-      <BottomSheet
-        id="select-accounts-to-sync"
+      <SelectAccountsToSyncSheet
         sheetRef={sheetRef}
         closeBottomSheet={closeSelectSheet}
-      >
-        <ModalHeader handleClose={closeSelectSheet} title={t('Select accounts to export')} />
-        <SelectAccountsToSync
-          accounts={accounts}
-          selectedAddrs={selectedAddrs}
-          areAllSelected={areAllSelected}
-          onToggleAccount={toggleAccount}
-          onToggleAllAccounts={toggleAllAccounts}
-        />
-        <Button
-          testID="confirm-accounts-to-sync"
-          text={t('Confirm')}
-          disabled={!selectedAddrs.length || isPreparing}
-          onPress={handleConfirmSelection}
-          hasBottomSpacing={false}
-          style={spacings.mtSm}
-        />
-      </BottomSheet>
+        accounts={accounts}
+        selectedAddrs={selectedAddrs}
+        areAllSelected={areAllSelected}
+        onToggleAccount={toggleAccount}
+        onToggleAllAccounts={toggleAllAccounts}
+        onConfirm={handleConfirmSelection}
+        isConfirmDisabled={isPreparing}
+      />
     </TabLayoutContainer>
   )
 }

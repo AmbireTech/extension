@@ -10,3 +10,9 @@ export const ACCOUNTS_SYNC_QR_CAPACITY = 400
  * few seconds on a low end device, so the import gets a longer timeout than usual.
  */
 export const ACCOUNTS_SYNC_IMPORT_TIMEOUT = 60_000
+
+/**
+ * Shown (and copied) on the mobile app, so the user can install the extension on their
+ * computer and sync the accounts over to it.
+ */
+export const GET_AMBIRE_EXTENSION_LINK = 'ambire.com/get-extension'

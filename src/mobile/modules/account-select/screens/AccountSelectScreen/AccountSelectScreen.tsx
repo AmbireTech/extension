@@ -6,6 +6,7 @@ import { useModalize } from 'react-native-modalize'
 import { Account as AccountType } from '@ambire-common/interfaces/account'
 import AddCircularIcon from '@common/assets/svg/AddCircularIcon'
 import SettingsIcon from '@common/assets/svg/SettingsIcon'
+import SyncIcon from '@common/assets/svg/SyncIcon'
 import Button from '@common/components/Button'
 import ScrollableWrapper, { WRAPPER_TYPES } from '@common/components/ScrollableWrapper'
 import Search from '@common/components/Search'
@@ -16,6 +17,7 @@ import useController from '@common/hooks/useController'
 import useNavigation from '@common/hooks/useNavigation'
 import useRoute from '@common/hooks/useRoute'
 import useTheme from '@common/hooks/useTheme'
+import SyncBottomSheet from '@common/modules/accounts-sync/components/SyncBottomSheet'
 import Account from '@common/modules/account-select/components/Account'
 import AddAccount from '@common/modules/account-select/components/AddAccount'
 import DashboardSkeleton from '@common/modules/dashboard/components/Skeleton'
@@ -24,6 +26,7 @@ import { ROUTES, WEB_ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { MobileLayoutContainer } from '@mobile/components/MobileLayoutWrapper'
+import ExportToExtensionSheet from '@mobile/modules/accounts-sync/components/ExportToExtensionSheet'
 
 import getStyles from './styles'
 
@@ -50,7 +53,7 @@ const extractTriggerAddAccountSheetParam = (search: string | undefined): boolean
 }
 
 const AccountSelectScreen = () => {
-  const { styles } = useTheme(getStyles)
+  const { styles, theme } = useTheme(getStyles)
   const flatlistRef = useRef(null)
   const { accounts, control, keyExtractor, getItemLayout, shouldDisplayAccounts } = useAccountsList(
     { flatlistRef }
@@ -61,6 +64,12 @@ const AccountSelectScreen = () => {
     state: { account }
   } = useController('SelectedAccountController')
   const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useModalize()
+  const {
+    ref: syncSheetRef,
+    open: openSyncBottomSheet,
+    close: closeSyncBottomSheet
+  } = useModalize()
+  const { ref: exportSheetRef, open: openExportSheet, close: closeExportSheet } = useModalize()
   const { t } = useTranslation()
   const accountsContainerRef = useRef(null)
   const [pendingToBeSetSelectedAccount, setPendingToBeSetSelectedAccount] = useState('')
@@ -111,17 +120,30 @@ const AccountSelectScreen = () => {
   return !pendingToBeSetSelectedAccount ? (
     <MobileLayoutContainer
       footer={
-        <Button
-          testID="button-add-account"
-          text={t('Add account')}
-          size="regular"
-          onPress={openBottomSheet as any}
-          hasBottomSpacing={false}
-          childrenPosition="left"
-          style={{ ...flexbox.alignSelfCenter, width: '100%' }}
-        >
-          <AddCircularIcon width={24} height={24} color="#fff" style={spacings.mrTy} />
-        </Button>
+        <>
+          <Button
+            testID="button-add-account"
+            text={t('Add account')}
+            size="regular"
+            onPress={openBottomSheet as any}
+            childrenPosition="left"
+            style={{ ...flexbox.alignSelfCenter, width: '100%' }}
+          >
+            <AddCircularIcon width={24} height={24} color="#fff" style={spacings.mrTy} />
+          </Button>
+          <Button
+            testID="button-sync-with-extension"
+            type="secondary"
+            text={t('Sync with extension')}
+            size="regular"
+            onPress={openSyncBottomSheet as any}
+            hasBottomSpacing={false}
+            childrenPosition="left"
+            style={{ ...flexbox.alignSelfCenter, width: '100%' }}
+          >
+            <SyncIcon width={20} height={20} color={theme.primaryText} style={spacings.mrTy} />
+          </Button>
+        </>
       }
     >
       <HeaderWithTitle>
@@ -161,6 +183,19 @@ const AccountSelectScreen = () => {
         />
       </View>
       <AddAccount sheetRef={sheetRef} closeBottomSheet={closeBottomSheet} />
+      <SyncBottomSheet
+        sheetRef={syncSheetRef}
+        closeBottomSheet={closeSyncBottomSheet}
+        onExportPress={() => {
+          closeSyncBottomSheet()
+          openExportSheet()
+        }}
+        onImportPress={() => {
+          closeSyncBottomSheet()
+          // TODO: Step 9 - importing from the extension lands here
+        }}
+      />
+      <ExportToExtensionSheet sheetRef={exportSheetRef} closeBottomSheet={closeExportSheet} />
     </MobileLayoutContainer>
   ) : (
     <DashboardSkeleton />

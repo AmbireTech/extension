@@ -256,9 +256,22 @@ errors in `onboardingNavigationContext` are pre-existing - same count before and
 
 ## Step 8 — Mobile export ("Sync with extension" → Export to extension)
 
-Mobile `AccountSelectScreen` gets the "Sync with extension" button → bottom sheet (Export /
-Import) → explanation sheet (get-extension link + warning) → select-accounts sheet → animated QR
-sheet with "N accounts selected. Edit your selection".
+**Done.** The mobile counterpart of Step 5, as bottom sheets instead of a page:
+
+- The accounts screen footer now has "Sync with extension" (secondary, with the design's sync glyph)
+  under "Add account".
+- It opens the **same shared `SyncBottomSheet`** as the extension - only the wording flips and the
+  actions differ (mobile opens another sheet, the extension navigates to a page).
+- `ExportToExtensionSheet` (mobile) holds the design's two numbered steps: the copyable
+  `ambire.com/get-extension` link, the "do not share" warning, and the QR area, which starts as a
+  placeholder, opens the select-accounts sheet (nested, like the existing saved-seed-phrases sheet)
+  and then loops the animated QR codes with "N accounts selected. Edit your selection".
+- Same `useAccountsSyncExport` hook and `SelectAccountsToSync` list as the extension, so the selection
+  and payload logic exists once.
+- The import option is a TODO placeholder until Step 9.
+
+Verified: `yarn extension:type:check-new` → 0 new errors (it covers `src/mobile` too), eslint clean.
+Not yet run on a device - that comes with Step 9/10, when the mobile side can be exercised end to end.
 
 **Gate.**
 
