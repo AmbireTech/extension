@@ -142,7 +142,7 @@ const Footer = ({
           <DualChoiceWarningModal
             title={t('Are you sure?')}
             description={t(
-              'You are about to reject an already signed transcation. It will no longer be visible in Ambire.'
+              'You are about to reject an already signed transaction. It will no longer be visible in Ambire.'
             )}
             primaryButtonText={t('Proceed')}
             secondaryButtonText={t('Return')}
