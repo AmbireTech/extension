@@ -6,8 +6,12 @@ import ManifestImage from '@common/components/ManifestImage'
 import { isMobile } from '@common/config/env'
 import spacings, { SPACING_SM, SPACING_TY } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
+import { getUiType } from '@common/utils/uiType'
 
 import HumanizedVisualizationItem from './HumanizedVisualizationItem'
+
+const { isSidePanel } = getUiType()
+const withMobileLayout = isMobile || isSidePanel
 
 interface Props {
   data: IrCall['fullVisualization']
@@ -69,7 +73,7 @@ const HumanizedVisualization: FC<Props> = ({
         flexbox.wrap,
         {
           marginHorizontal: hasPadding
-            ? (isMobile ? SPACING_TY : SPACING_SM) * sizeMultiplierSize
+            ? (withMobileLayout ? SPACING_TY : SPACING_SM) * sizeMultiplierSize
             : 0
         },
         style

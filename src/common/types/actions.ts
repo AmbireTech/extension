@@ -212,6 +212,14 @@ type DisconnectWcSessionAction = {
   }
 }
 
+type DispatchDappTabFocusAction = {
+  type: 'DISPATCH_DAPP_TAB_FOCUS'
+  params: {
+    targets: { tabId: number; windowId?: number }[]
+    delayMs?: number
+  }
+}
+
 type SetBootPhaseAction = {
   type: 'SET_BOOT_PHASE'
   params: { phase: 'critical' | 'full' }
@@ -261,6 +269,7 @@ export type Action =
   | SetupWcSessionMessengerAction
   | RestoreWcSessionsAction
   | DisconnectWcSessionAction
+  | DispatchDappTabFocusAction
   | SetBootPhaseAction
   | SetSubscribedControllersAction
   | FlushBootProfileAction

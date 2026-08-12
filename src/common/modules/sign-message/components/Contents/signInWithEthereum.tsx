@@ -18,14 +18,24 @@ import useResponsiveActionWindow from '@common/hooks/useResponsiveActionWindow'
 import useTheme from '@common/hooks/useTheme'
 import HardwareWalletSigningModal from '@common/modules/hardware-wallets/components/HardwareWalletSigningModal'
 import LedgerConnectModal from '@common/modules/hardware-wallets/components/LedgerConnectModal'
-import Info from '@common/modules/sign-message/components/Info'
-import spacings, { SPACING, SPACING_LG, SPACING_MD, SPACING_SM } from '@common/styles/spacings'
-import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
-import flexbox from '@common/styles/utils/flexbox'
-import MessageContentLayout from './MessageContentLayout'
 import { QrSigningStep } from '@common/modules/hardware-wallets/qr/types'
 import QrSigningFlowScreen from '@common/modules/hardware-wallets/screens/QrSigningFlowScreen'
+import Info from '@common/modules/sign-message/components/Info'
+import spacings, {
+  SPACING,
+  SPACING_LG,
+  SPACING_MD,
+  SPACING_SM,
+  SPACING_TY
+} from '@common/styles/spacings'
+import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
+import flexbox from '@common/styles/utils/flexbox'
+import { getUiType } from '@common/utils/uiType'
+
+import MessageContentLayout from './MessageContentLayout'
 import getStyles from './styles'
+
+const { isSidePanel } = getUiType()
 
 interface Props {
   shouldDisplayLedgerConnectModal: boolean
@@ -48,7 +58,14 @@ const Label = ({
   responsiveSizeMultiplier: number
 }) => {
   return (
-    <Text weight="medium" fontSize={14 * responsiveSizeMultiplier} appearance="primaryText">
+    <Text
+      weight="medium"
+      fontSize={14 * responsiveSizeMultiplier}
+      appearance="primaryText"
+      // Only the web layout puts the label and the value on one row, where the value is the one
+      // that has to give way
+      style={isWeb ? { flexShrink: 0 } : undefined}
+    >
       {children}
     </Text>
   )
@@ -57,18 +74,32 @@ const Label = ({
 const Value = ({
   children,
   tooltipId = '',
-  responsiveSizeMultiplier
+  responsiveSizeMultiplier,
+  withWrap = false
 }: {
   children: React.ReactNode
   tooltipId?: string
   responsiveSizeMultiplier: number
+  withWrap?: boolean
 }) => {
+  const fontSize = isMobile ? 12 : 14 * responsiveSizeMultiplier
+
   return (
     <Text
       appearance="secondaryText"
-      fontSize={isMobile ? 12 : 14 * responsiveSizeMultiplier}
+      fontSize={fontSize}
       dataSet={{ tooltipId }}
-      numberOfLines={1}
+      numberOfLines={withWrap ? undefined : 1}
+      style={[
+        isWeb && { flexShrink: 1, minWidth: 0 },
+        withWrap && {
+          // Custom fontSize clears Text's default lineHeight; without an explicit value the
+          // wrapped lines overlap
+          lineHeight: Math.ceil(fontSize * 1.5),
+          // @ts-expect-error web-only style, needed because a hex address has no word boundaries
+          wordBreak: 'break-all'
+        }
+      ]}
     >
       {children}
     </Text>
@@ -88,6 +119,9 @@ const Row = ({
         isWeb && flexbox.directionRow,
         isWeb && flexbox.justifySpaceBetween,
         isWeb && flexbox.alignCenter,
+        // Without a gap the label and the value touch each other once the value grows wide
+        // enough to fill the row, which happens on the narrow side panel
+        isWeb && { columnGap: SPACING_TY * responsiveSizeMultiplier },
         {
           marginBottom: SPACING_SM * responsiveSizeMultiplier
         }
@@ -216,32 +250,47 @@ const SignInWithEthereum = ({
 
   return (
     <Container>
-      <View
-        style={[
-          flexbox.directionRow,
-          flexbox.alignCenter,
-          flexbox.justifySpaceBetween,
-          {
-            marginBottom: SPACING_MD * responsiveSizeMultiplier
-          }
-        ]}
-      >
-        <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-          <Text
-            weight="medium"
-            fontSize={isMobile ? 20 : 24 * responsiveSizeMultiplier}
-            style={spacings.mrSm}
-          >
+      {isSidePanel ? (
+        <View style={{ marginBottom: SPACING_MD * responsiveSizeMultiplier }}>
+          <Text weight="medium" fontSize={24 * responsiveSizeMultiplier}>
             {t('Sign-in request')}
           </Text>
+          <View style={[flexbox.alignStart, spacings.mtTy]}>
+            <NetworkBadge
+              chainId={signMessageState.messageToSign?.chainId}
+              responsiveSizeMultiplier={responsiveSizeMultiplier}
+              withOnPrefix
+            />
+          </View>
         </View>
-        <NetworkBadge
-          chainId={signMessageState.messageToSign?.chainId}
-          responsiveSizeMultiplier={responsiveSizeMultiplier}
-          withOnPrefix
-        />
-        {/* @TODO: Replace with Badge; add size prop to badge; add tooltip  */}
-      </View>
+      ) : (
+        <View
+          style={[
+            flexbox.directionRow,
+            flexbox.alignCenter,
+            flexbox.justifySpaceBetween,
+            {
+              marginBottom: SPACING_MD * responsiveSizeMultiplier
+            }
+          ]}
+        >
+          <View style={[flexbox.directionRow, flexbox.alignCenter]}>
+            <Text
+              weight="medium"
+              fontSize={isMobile ? 20 : 24 * responsiveSizeMultiplier}
+              style={spacings.mrSm}
+            >
+              {t('Sign-in request')}
+            </Text>
+          </View>
+          <NetworkBadge
+            chainId={signMessageState.messageToSign?.chainId}
+            responsiveSizeMultiplier={responsiveSizeMultiplier}
+            withOnPrefix
+          />
+          {/* @TODO: Replace with Badge; add size prop to badge; add tooltip  */}
+        </View>
+      )}
       <View style={styles.container}>
         <View
           style={{
@@ -301,7 +350,14 @@ const SignInWithEthereum = ({
                   </>
                 )}
                 {row.label !== 'Resources' && row.label !== 'Nonce' && (
-                  <Value responsiveSizeMultiplier={responsiveSizeMultiplier}>{row.value}</Value>
+                  <Value
+                    responsiveSizeMultiplier={responsiveSizeMultiplier}
+                    // The address must stay fully readable, so it wraps onto a second line
+                    // instead of being cut off at the end
+                    withWrap={row.label === 'Account'}
+                  >
+                    {row.value}
+                  </Value>
                 )}
               </Row>
             ))}

@@ -5,6 +5,9 @@ import { BOTTOM_SHEET_Z_INDEX } from '@common/components/BottomSheet/styles'
 import Text from '@common/components/Text'
 import { isMobile, isWeb } from '@common/config/env'
 import spacings from '@common/styles/spacings'
+import { getUiType } from '@common/utils/uiType'
+
+const { isSidePanel } = getUiType()
 
 interface Props {
   id: string
@@ -26,7 +29,7 @@ const Dialog: FC<Props> = ({ id, dialogRef, closeDialog, title, text, children }
         isWeb
           ? {
               overflow: 'hidden',
-              width: 512
+              ...(isSidePanel ? {} : { width: 512 })
             }
           : {}
       }

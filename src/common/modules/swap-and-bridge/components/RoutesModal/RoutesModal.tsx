@@ -25,7 +25,7 @@ import getStyles from './styles'
 
 const FLAT_LIST_ITEM_HEIGHT = 138.5
 
-const { isPopup } = getUiType()
+const { isPopup, isSidePanel } = getUiType()
 
 const RoutesModal = ({
   sheetRef,
@@ -245,7 +245,7 @@ const RoutesModal = ({
       customRenderer={undefined}
       style={{
         overflow: 'hidden',
-        width: isMobile ? 'auto' : !isPopup ? TRANSACTION_FORM_WIDTH : '100%',
+        width: isMobile ? 'auto' : isPopup || isSidePanel ? '100%' : TRANSACTION_FORM_WIDTH,
         minHeight: isMobile ? undefined : height * 0.7
       }}
       scrollViewProps={{

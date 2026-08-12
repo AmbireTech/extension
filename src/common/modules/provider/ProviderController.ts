@@ -149,6 +149,8 @@ export class ProviderController {
 
     await this.mainCtrl.dapps.broadcastDappSessionEvent('accountsChanged', accounts)
 
+    this.mainCtrl.ui.dispatchDappTabFocus?.([{ tabId: session.tabId, windowId: session.windowId }])
+
     return accounts
   }
 

@@ -13,8 +13,9 @@ import Button from '@common/components/Button'
 import FooterGlassView from '@common/components/FooterGlassView'
 import NumberInput from '@common/components/NumberInput'
 import Text from '@common/components/Text'
-import { isMobile, isWeb } from '@common/config/env'
+import { isMobile } from '@common/config/env'
 import useTheme from '@common/hooks/useTheme'
+import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import Header from '@common/modules/header/components/Header'
 import spacings from '@common/styles/spacings'
 import common from '@common/styles/utils/common'
@@ -122,7 +123,6 @@ type Props = {
 }
 
 const CustomGasPrice = ({
-  backgroundColor,
   closeBottomSheet,
   canSetCustomGas,
   currentGas,
@@ -134,6 +134,7 @@ const CustomGasPrice = ({
   sheetRef
 }: Props) => {
   const { t } = useTranslation()
+  const { isNarrowSidePanel, isCompactLayout } = useCompactActionRequestLayout()
   const { theme } = useTheme()
   const [customGasPriceError, setCustomGasPriceError] = useState<string | boolean>(false)
   const gasRef = useRef('')
@@ -252,12 +253,13 @@ const CustomGasPrice = ({
       id="custom-gas-price-sheet"
       sheetRef={sheetRef}
       closeBottomSheet={closeBottomSheet}
-      type={isMobile || isPopup ? 'bottom-sheet' : 'modal'}
+      // Compact = mobile / narrow side panel; popup also needs a sheet (v2).
+      type={isCompactLayout || isPopup ? 'bottom-sheet' : 'modal'}
       animationDuration={0}
       onOpen={resetState}
       shouldBeClosableOnDrag={isMobile}
       backgroundColor="primaryBackground"
-      style={spacings.pbLg}
+      style={{ ...spacings.pbLg, ...(isNarrowSidePanel ? { width: '100%' } : null) }}
     >
       {isMobile ? (
         <>
@@ -313,17 +315,29 @@ const CustomGasPrice = ({
       </View>
       <FooterGlassView
         absolute={false}
-        isSimpleBlur={false}
+        isSimpleBlur={isNarrowSidePanel}
         size="sm"
         style={spacings.mt}
         mobileStyle={{ ...flexbox.directionRow, ...spacings.mtXl }}
+        innerContainerStyle={
+          isNarrowSidePanel
+            ? // The buttons stack here, and the primary one goes on top. Reversing the direction
+              // keeps the same child order as the row layouts, where the primary one goes last
+              { width: '100%', flexDirection: 'column-reverse' }
+            : undefined
+        }
       >
         <Button
           type="secondary"
           text={t('Cancel')}
           onPress={closeBottomSheet}
           hasBottomSpacing={false}
-          style={[spacings.mrTy, isWeb && { width: 100 }, isMobile && flexbox.flex1]}
+          style={[
+            // Stacked buttons are spaced by the footer's gap, and a right margin would make this
+            // one narrower than the primary button
+            !isNarrowSidePanel && spacings.mrTy,
+            isCompactLayout ? flexbox.flex1 : { width: 100 }
+          ]}
           size="smaller"
         />
         <Button
@@ -331,7 +345,7 @@ const CustomGasPrice = ({
           text={t('Save')}
           onPress={saveCustomGasPrice}
           hasBottomSpacing={false}
-          style={[isWeb && { width: 100 }, isMobile && flexbox.flex1]}
+          style={isCompactLayout ? flexbox.flex1 : { width: 100 }}
           size="smaller"
         />
       </FooterGlassView>
