@@ -15,6 +15,7 @@ import { Trans, useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import PendingTokenSummary from '@common/modules/sign-account-op/components/PendingTokenSummary'
+import TenderlySimulation from '@common/modules/sign-account-op/components/TenderlySimulation'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
@@ -230,6 +231,7 @@ const Simulation: FC<Props> = ({ network, isEstimationComplete, isViewOnly }) =>
                 <Text fontSize={14} weight="semiBold" appearance="secondaryText" numberOfLines={1}>
                   {t('Assets out')}
                 </Text>
+                {!hasAssetsIn && <TenderlySimulation />}
               </View>
               <ScrollableWrapper
                 type={isMobile ? WRAPPER_TYPES.VIEW : WRAPPER_TYPES.SCROLL_VIEW}
@@ -279,6 +281,7 @@ const Simulation: FC<Props> = ({ network, isEstimationComplete, isViewOnly }) =>
                 <Text fontSize={14} weight="semiBold" appearance="secondaryText" numberOfLines={1}>
                   {t('Assets in')}
                 </Text>
+                <TenderlySimulation />
               </View>
               <ScrollableWrapper
                 type={isMobile ? WRAPPER_TYPES.VIEW : WRAPPER_TYPES.SCROLL_VIEW}
@@ -339,17 +342,32 @@ const Simulation: FC<Props> = ({ network, isEstimationComplete, isViewOnly }) =>
         />
       )}
       {simulationView === 'no-changes' && (
-        <View style={[flexbox.directionRow, flexbox.flex1, flexbox.alignCenter]}>
-          <SuccessIcon color={theme.successDecorative} />
-          <Text
-            color={theme.successDecorative}
-            style={spacings.mlSm}
-            fontSize={16}
-            appearance="secondaryText"
-            numberOfLines={1}
+        <View style={styles.simulationContainer}>
+          <View style={styles.simulationContainerHeader}>
+            <Text fontSize={14} weight="semiBold" appearance="secondaryText" numberOfLines={1}>
+              {t('Assets in/out')}
+            </Text>
+            <TenderlySimulation />
+          </View>
+          <View
+            style={[
+              styles.simulationScrollView,
+              flexbox.directionRow,
+              flexbox.flex1,
+              flexbox.alignCenter
+            ]}
           >
-            {t('No token balance changes detected')}
-          </Text>
+            <SuccessIcon color={theme.successDecorative} />
+            <Text
+              color={theme.successDecorative}
+              style={spacings.mlSm}
+              fontSize={16}
+              appearance="secondaryText"
+              numberOfLines={1}
+            >
+              {t('No token balance changes detected')}
+            </Text>
+          </View>
         </View>
       )}
       {simulationView === 'simulation-not-supported' && (
