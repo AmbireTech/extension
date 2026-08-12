@@ -167,7 +167,9 @@ const FallbackVisualization: FC<{
   const isTypedMessage = content?.kind === 'typedMessage'
   // Stack label above value so long hashes don't collide with labels in narrow UIs
   // (side panel / Safe EIP-712 compact embedding / mobile).
-  const withStackedParsedRows = withCompactDataRow || isSidePanel
+  // In some web fullscreen layouts the container ends up narrow too; stack in
+  // that case as well to avoid overlapping text.
+  const withStackedParsedRows = withCompactDataRow || isSidePanel || maxWidthSize('m')
   const erc7730Visualizations = useMemo(
     () => humanizedMessage?.fullVisualization?.filter(isErc7730Visualization) || [],
     [humanizedMessage?.fullVisualization]
@@ -329,7 +331,9 @@ const FallbackVisualization: FC<{
                       styles.parsedRow,
                       withStackedParsedRows && {
                         flexDirection: 'column',
-                        alignItems: 'stretch'
+                        alignItems: 'stretch',
+                        justifyContent: 'flex-start',
+                        flexWrap: 'nowrap'
                       },
                       {
                         marginBottom:
