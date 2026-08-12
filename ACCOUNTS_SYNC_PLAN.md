@@ -161,10 +161,40 @@ which looks unintended. Left as is — out of scope.
 
 ## Step 5 — Extension export ("Sync with mobile" → Export to mobile)
 
-Screens 1 → 3 → 4 → 5 of the extension design: `AccountSelectScreen` gets a "Sync with mobile"
-button next to "Add account" → bottom sheet with **Export to mobile** / **Import from mobile** → sync
-page with the two cards (store badges + hidden QR placeholder "Click to select address and show QR
-code") → select-accounts modal → looping QR with "N accounts selected. Edit your selection".
+**Done.** Screens 1 → 3 → 4 → 5 of the extension design:
+
+- `AccountSelectScreen` footer now holds two buttons: "Sync with mobile" (secondary) next to
+  "Add account" (primary).
+- `SyncBottomSheet` (in `common`, so the mobile app reuses it in Step 8) — asks for the direction
+  only, with **Export to mobile** / **Import from mobile** options. The wording flips by platform and
+  what each option does is passed in, because the extension navigates to a page while mobile opens
+  another sheet.
+- `SyncWithMobileScreen` (`syncWithMobile` route, tab only, authenticated + unlocked) — the two
+  numbered cards. The QR card starts as a hidden placeholder ("Click to select accounts and show QR
+  codes") that opens the select-accounts modal; after Confirm the animated QR loops with
+  "N accounts selected. Edit your selection".
+- The import option is wired to a TODO placeholder until Step 6.
+
+**Assets, all converted from the delivered files (mechanically, by script - no path data typed by
+hand) and all theme driven, so they follow a theme change like every other icon:**
+- `SyncIcon` - the sync glyph on the "Sync with mobile" button (`#0D0E0F` → `theme.primaryText`,
+  overridable with a `color` prop).
+- `AppStoreBadgeIcon`, `GooglePlayBadgeIcon` - single color art, so `#0D0E0F` → `theme.primaryText`,
+  which makes them white on the dark theme instead of invisible. Rendered as **labels only**; they
+  become pressable once the store listings are live.
+- `SyncDevicesIcon` - the sheet illustration. Its three design greys map 1:1 to theme tokens
+  (`#808EA2` → `neutral600`, `#F2F4F7` → `secondaryBackground`, `white` → `primaryBackground`).
+- `assets/images/how-to-sync-on-mobile.png` - the phone mockup on the download card.
+- `modules/accounts-sync/animations/syncStepsOnTheExtension.json` - the delivered Lottie (480x598,
+  ~910KB, 62 base64 WebP frames embedded, so it is self contained). Wired in Step 10; **needs an
+  on-device check** that `lottie-react-native` renders the embedded frames, and the file size is
+  worth a second thought since it ships in the bundle.
+
+**Still needed:** the mirror animation (or image) of the **steps on the mobile app**, for the
+extension's import carousel in Step 7.
+
+Verified: `yarn extension:type:check-new` → 0 new errors, eslint clean (the two errors in
+`AccountSelectScreen` are pre-existing: an unused `Pressable` import and `selectedAccountIndex`).
 
 **Gate (screen review).**
 

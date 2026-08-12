@@ -152,6 +152,10 @@ const MainRoutes = () => {
             />
 
             <Route element={<AuthenticatedRoute />}>
+              <Route
+                path={WEB_ROUTES.syncWithMobile}
+                element={<AuthGroupScreen pick={(m) => m.SyncWithMobileScreen} />}
+              />
               <Route element={<SettingsRoutesProvider />}>
                 <Route
                   path={WEB_ROUTES.generalSettings}

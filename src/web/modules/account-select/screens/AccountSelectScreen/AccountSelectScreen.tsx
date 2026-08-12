@@ -5,6 +5,7 @@ import { useModalize } from 'react-native-modalize'
 
 import { Account as AccountType } from '@ambire-common/interfaces/account'
 import AddCircularIcon from '@common/assets/svg/AddCircularIcon'
+import SyncIcon from '@common/assets/svg/SyncIcon'
 import SettingsIcon from '@common/assets/svg/SettingsIcon'
 import Button from '@common/components/Button'
 import FooterGlassView from '@common/components/FooterGlassView'
@@ -18,6 +19,7 @@ import useController from '@common/hooks/useController'
 import useNavigation from '@common/hooks/useNavigation'
 import useRoute from '@common/hooks/useRoute'
 import useTheme from '@common/hooks/useTheme'
+import SyncBottomSheet from '@common/modules/accounts-sync/components/SyncBottomSheet'
 import Account from '@common/modules/account-select/components/Account'
 import AddAccount from '@common/modules/account-select/components/AddAccount'
 import DashboardSkeleton from '@common/modules/dashboard/components/Skeleton'
@@ -51,7 +53,7 @@ const extractTriggerAddAccountSheetParam = (search: string | undefined): boolean
 const ACCOUNT_OPTIONS = { markSelected: true }
 
 const AccountSelectScreen = () => {
-  const { styles } = useTheme(getStyles)
+  const { styles, theme } = useTheme(getStyles)
   const flatlistRef = useRef(null)
   const {
     accounts,
@@ -67,6 +69,11 @@ const AccountSelectScreen = () => {
     state: { account }
   } = useController('SelectedAccountController')
   const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useModalize()
+  const {
+    ref: syncSheetRef,
+    open: openSyncBottomSheet,
+    close: closeSyncBottomSheet
+  } = useModalize()
   const { t } = useTranslation()
   const accountsContainerRef = useRef(null)
   const [pendingToBeSetSelectedAccount, setPendingToBeSetSelectedAccount] = useState('')
@@ -142,20 +149,46 @@ const AccountSelectScreen = () => {
           ListEmptyComponent={<Text>{t('No accounts found')}</Text>}
         />
         <FooterGlassView isSimpleBlur={false}>
-          <Button
-            testID="button-add-account"
-            text={t('Add account')}
-            size="smaller"
-            hasBottomSpacing={false}
-            onPress={openBottomSheet as any}
-            childrenPosition="left"
-            style={{ ...flexbox.alignSelfCenter, width: '100%' }}
-          >
-            <AddCircularIcon width={24} height={24} color="#fff" style={spacings.mrTy} />
-          </Button>
+          <View style={[flexbox.directionRow, flexbox.alignCenter]}>
+            <Button
+              testID="button-sync-with-mobile"
+              type="secondary"
+              text={t('Sync with mobile')}
+              size="smaller"
+              hasBottomSpacing={false}
+              onPress={openSyncBottomSheet as any}
+              childrenPosition="left"
+              style={[flexbox.flex1, spacings.mrTy]}
+            >
+              <SyncIcon width={20} height={20} color={theme.primaryText} style={spacings.mrTy} />
+            </Button>
+            <Button
+              testID="button-add-account"
+              text={t('Add account')}
+              size="smaller"
+              hasBottomSpacing={false}
+              onPress={openBottomSheet as any}
+              childrenPosition="left"
+              style={flexbox.flex1}
+            >
+              <AddCircularIcon width={24} height={24} color="#fff" style={spacings.mrTy} />
+            </Button>
+          </View>
         </FooterGlassView>
       </View>
       <AddAccount sheetRef={sheetRef} closeBottomSheet={closeBottomSheet} />
+      <SyncBottomSheet
+        sheetRef={syncSheetRef}
+        closeBottomSheet={closeSyncBottomSheet}
+        onExportPress={() => {
+          closeSyncBottomSheet()
+          navigate(WEB_ROUTES.syncWithMobile)
+        }}
+        onImportPress={() => {
+          closeSyncBottomSheet()
+          // TODO: Step 6 - the import flow (scan the phone's QR codes) lands here
+        }}
+      />
     </LayoutWrapper>
   ) : (
     <DashboardSkeleton />
