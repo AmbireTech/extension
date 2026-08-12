@@ -169,7 +169,10 @@ const OnboardingNavigationProvider = ({ children }: { children: React.ReactNode 
           false,
           false
         ),
-        new RouteNode(WEB_ROUTES.viewOnlyAccountAdder, common, false, false)
+        new RouteNode(WEB_ROUTES.viewOnlyAccountAdder, common, false, false),
+        // Syncing from the mobile app brings the accounts in, then the device password
+        // is set and the accounts are personalized, like in every other import flow
+        new RouteNode(WEB_ROUTES.syncFromMobile, common, false, false)
       ],
       authStatus !== AUTH_STATUS.NOT_AUTHENTICATED,
       false

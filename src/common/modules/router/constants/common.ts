@@ -103,7 +103,8 @@ const ONBOARDING_WEB_ROUTES = [
   COMMON_ROUTES.safeImport,
   COMMON_ROUTES.safeImportAddress,
   COMMON_ROUTES.safeImportByOwner,
-  COMMON_ROUTES.qrConnect
+  COMMON_ROUTES.qrConnect,
+  WEB_ROUTES.syncFromMobile
 ] as const
 
 export { MOBILE_ROUTES, ONBOARDING_WEB_ROUTES, ROUTES, WEB_ROUTES }

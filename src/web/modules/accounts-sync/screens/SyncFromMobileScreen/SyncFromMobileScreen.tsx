@@ -10,6 +10,7 @@ import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import useNavigation from '@common/hooks/useNavigation'
 import useTheme from '@common/hooks/useTheme'
+import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
 import SyncImportSteps, {
   SyncImportStep
 } from '@common/modules/accounts-sync/components/SyncImportSteps'
@@ -27,12 +28,16 @@ const SCANNER_SIZE = 290
 
 const selectHasPasswordSecret = (state: AllControllersMappingType['KeystoreController']) =>
   state.hasPasswordSecret
+const selectAccountsCount = (state: AllControllersMappingType['AccountsController']) =>
+  state.accounts.length
 
 const SyncFromMobileScreen = () => {
   const { t } = useTranslation()
   const { theme } = useTheme()
   const { navigate } = useNavigation()
   const { state: hasPasswordSecret } = useController('KeystoreController', selectHasPasswordSecret)
+  const { state: accountsCount } = useController('AccountsController', selectAccountsCount)
+  const { goToPrevRoute } = useOnboardingNavigation()
   const {
     ref: passwordSheetRef,
     open: openPasswordSheet,
@@ -96,6 +101,16 @@ const SyncFromMobileScreen = () => {
     if (hasScannedPayload) openPasswordSheet()
   }, [hasScannedPayload, openPasswordSheet])
 
+  const handleBackButtonPress = useCallback(() => {
+    // The scanner is a step of this screen, so going back returns to the instructions
+    if (isScanning) return setIsScanning(false)
+
+    // Without accounts this is the onboarding flow, which came from the get started screen
+    if (!accountsCount) return goToPrevRoute()
+
+    navigate(WEB_ROUTES.accountSelect)
+  }, [accountsCount, goToPrevRoute, isScanning, navigate])
+
   // Closing the sheet without entering the password means scanning again
   const handleClosePasswordSheet = useCallback(() => {
     closePasswordSheet()
@@ -109,7 +124,7 @@ const SyncFromMobileScreen = () => {
           type="onboarding"
           spacingsSize="small"
           withBackButton
-          onBackButtonPress={() => navigate(WEB_ROUTES.accountSelect)}
+          onBackButtonPress={handleBackButtonPress}
           title={t('Sync from Ambire mobile')}
         >
           {isScanning ? (

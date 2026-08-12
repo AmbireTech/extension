@@ -234,9 +234,23 @@ Verified: `yarn extension:type:check-new` → 0 new errors, eslint clean on the 
 
 ## Step 7 — Extension onboarding import
 
-`GetStartedScreen` → "Already an Ambire user" → 2-slide carousel ("Sync from Ambire mobile") →
-scan → "Verify Mobile Password" → **Set extension password** → account personalize → dashboard.
-New route(s) under `ONBOARDING_WEB_ROUTES`; the post-password part of onboarding stays untouched.
+**Done.** `GetStartedScreen` → "Already an Ambire user" → the same `SyncFromMobileScreen` from Step 6
+→ set extension password → personalize → dashboard. No second screen was written; the one screen
+serves both entry points.
+
+- `syncFromMobile` joined `ONBOARDING_WEB_ROUTES` and the onboarding route tree as a child of
+  `getStarted` with the same `common` children every other import flow uses (`keyStoreSetup` →
+  personalize → …), so the post-password part of onboarding is untouched.
+- Being an onboarding route also means an abandoned sync tab is cleaned up by the existing
+  `handleCleanUpOnPortDisconnect` (it resets the `newlyAdded` accounts), which is what we want.
+- The back button now has three cases: from the scanner back to the instructions, in onboarding back
+  through the onboarding history (get started), and otherwise back to the accounts screen.
+- "Already an Ambire user" was **added** below the existing buttons; "Watch an address" is still
+  there, unlike the design mockup which shows only two buttons above the new one. **Say if it should
+  be removed** - it stays reachable from the "Add account" sheet either way.
+
+Verified: `yarn extension:type:check-new` → 0 new errors, eslint clean on the changed files (the
+errors in `onboardingNavigationContext` are pre-existing - same count before and after).
 
 **Gate.**
 
