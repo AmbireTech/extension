@@ -692,6 +692,17 @@ const init = async () => {
   browser.runtime.onConnect.addListener(async (port: Port) => {
     const [name, id] = port.name.split(':') as [Port['name'], Port['id']]
     if (['popup', 'tab', 'request-window'].includes(name)) {
+      // These port names grant access to every controller method (exporting keys and
+      // the seed phrase included), so only our own extension pages may claim them.
+      const senderUrl = port.sender?.url
+      const isFromOurExtension = port.sender?.id === browser.runtime.id
+      const isFromExtensionPage = !senderUrl || senderUrl.startsWith(browser.runtime.getURL(''))
+
+      if (!isFromOurExtension || !isFromExtensionPage) {
+        port.disconnect()
+        return
+      }
+
       port.id = id || nanoid()
 
       port.name = name
