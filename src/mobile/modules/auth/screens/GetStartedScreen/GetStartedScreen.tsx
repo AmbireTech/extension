@@ -5,6 +5,7 @@ import AddCircularIcon from '@common/assets/svg/AddCircularIcon'
 import AmbireLogoWithBackgroundAndLogotype from '@common/assets/svg/AmbireLogoWithBackgroundAndLogotype'
 import DownArrowIcon from '@common/assets/svg/DownArrowIcon'
 import ImportAccountIcon from '@common/assets/svg/ImportAccountIcon'
+import RightArrowIcon from '@common/assets/svg/RightArrowIcon'
 import SettingsIcon from '@common/assets/svg/SettingsIcon'
 import ViewOnlyIcon from '@common/assets/svg/ViewOnlyIcon'
 import Button from '@common/components/Button'
@@ -13,6 +14,7 @@ import { useTranslation } from '@common/config/localization'
 import useNavigation from '@common/hooks/useNavigation'
 import useTheme from '@common/hooks/useTheme'
 import useGetStarted from '@common/modules/auth/hooks/useGetStarted'
+import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
 import { ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
@@ -30,6 +32,7 @@ const GetStartedScreen = () => {
   const { t } = useTranslation()
   const { navigate } = useNavigation()
   const { handleAuthButtonPress, isCreatingNewAccount } = useGetStarted()
+  const { goToNextRoute } = useOnboardingNavigation()
 
   const [isMenuOpen, setIsMenuOpen] = React.useState(false)
 
@@ -72,12 +75,20 @@ const GetStartedScreen = () => {
           <Button
             testID="watch-an-address-button"
             type="outline"
-            hasBottomSpacing={false}
             onPress={() => handleAuthButtonPress('view-only')}
             text={t('Watch an address')}
             childrenPosition="left"
           >
             <ViewOnlyIcon color={theme.primaryText} width={24} height={24} style={spacings.mrMi} />
+          </Button>
+          <Button
+            testID="already-an-ambire-user-button"
+            type="secondary"
+            hasBottomSpacing={false}
+            onPress={() => goToNextRoute(ROUTES.syncFromExtension)}
+            text={t('Already an Ambire user')}
+          >
+            <RightArrowIcon color={theme.primaryText} style={spacings.mlMi} />
           </Button>
           <View style={[flexbox.alignSelfCenter, spacings.mtLg, { width: '100%' }]}>
             <Pressable

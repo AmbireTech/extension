@@ -305,9 +305,18 @@ frames, and `lottie-react-native` renders embedded images differently across pla
 
 ## Step 10 — Mobile onboarding import
 
-`GetStartedScreen` → "Already an Ambire user" → 2-slide carousel ("Import from extension") →
-"Scan QR code" screen → password → set device password (existing keystore setup + biometrics) →
-account personalize → dashboard.
+**Done.** The mirror of Step 7: the mobile `GetStartedScreen` got "Already an Ambire user", which opens
+the same `SyncFromExtensionScreen` from Step 9. After the accounts arrive, the existing keystore setup
+(device password + biometrics) runs, then personalize, then the dashboard.
+
+- `syncFromExtension` joined `ONBOARDING_WEB_ROUTES` and the onboarding route tree next to the
+  extension's `syncFromMobile`, both as children of `getStarted` with the usual `common` children.
+  Only one of the two is reachable per product, so they don't interfere.
+- Like on the extension, "Watch an address" was kept - **say if it should be dropped** from either get
+  started screen.
+
+Verified: `yarn extension:type:check-new` → 0 new errors, eslint clean on the changed files (the errors
+in `onboardingNavigationContext` are pre-existing - identical count with and without the change).
 
 **Gate.**
 
