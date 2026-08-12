@@ -13,14 +13,6 @@ import {
   setup
 } from '../../utils/trezorEmulator'
 
-const waitForEmulatorOperations = () =>
-  new Promise<void>((resolve) => {
-    const timeout = setTimeout(() => {
-      clearTimeout(timeout)
-      resolve()
-    }, 500)
-  })
-
 test.describe('auth', { tag: '@auth' }, () => {
   test.setTimeout(60000)
 
@@ -101,9 +93,7 @@ test.describe('trezor', { tag: '@trezorTests' }, () => {
     // Cleanup emulator and dispose of resources
     try {
       if (controller.ws && controller.ws.readyState === WebSocket.OPEN) {
-        await waitForEmulatorOperations()
         await controller.api.wipeEmu()
-        await waitForEmulatorOperations()
         await controller.api.stopBridge()
         await controller.api.stopEmu()
       } else {
