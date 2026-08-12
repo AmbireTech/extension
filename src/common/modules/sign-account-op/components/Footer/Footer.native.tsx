@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react'
+import React, { useCallback, useMemo, useRef } from 'react'
 import { View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 
@@ -78,6 +78,22 @@ const Footer = ({
   }, [isMultisigSigned, batchCount, t])
 
   const { ref: sheetRef, open: openModal, close: closeModal } = useModalize()
+  const pendingRejectRef = useRef<(() => void) | null>(null)
+  const handleReject = useCallback(() => {
+    if (!isMultisigSigned) {
+      onReject()
+      return
+    }
+
+    pendingRejectRef.current = onReject
+    openModal()
+  }, [isMultisigSigned, onReject, openModal])
+  const handleConfirmedReject = useCallback(() => {
+    const pendingReject = pendingRejectRef.current
+    pendingRejectRef.current = null
+    closeModal()
+    pendingReject?.()
+  }, [closeModal])
 
   return (
     <View style={spacings.ptSm}>
@@ -130,7 +146,7 @@ const Footer = ({
             )}
             primaryButtonText={t('Proceed')}
             secondaryButtonText={t('Return')}
-            onPrimaryButtonPress={onReject}
+            onPrimaryButtonPress={handleConfirmedReject}
             onSecondaryButtonPress={closeModal}
             type="error"
           />
@@ -143,13 +159,7 @@ const Footer = ({
             testID="transaction-button-reject"
             type="danger"
             text={t('Reject')}
-            onPress={() => {
-              if (isMultisigSigned) {
-                openModal()
-              } else {
-                onReject()
-              }
-            }}
+            onPress={handleReject}
             style={{ height: 50 }}
             hasBottomSpacing={false}
             disabled={isSignLoading}
