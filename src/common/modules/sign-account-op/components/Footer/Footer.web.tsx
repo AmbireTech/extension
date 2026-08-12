@@ -1,6 +1,5 @@
 import React, { useMemo } from 'react'
 import { View } from 'react-native'
-import { useModalize } from 'react-native-modalize'
 
 import { getCallsCount } from '@ambire-common/utils/userRequest'
 import BatchIcon from '@common/assets/svg/BatchIcon'
@@ -19,6 +18,7 @@ import flexbox from '@common/styles/utils/flexbox'
 
 import { Props } from './Footer'
 import getStyles from './styles'
+import useRejectConfirmation from './useRejectConfirmation'
 
 const Footer = ({
   onReject,
@@ -75,7 +75,10 @@ const Footer = ({
       : t('Start a batch')
   }, [isMultisigSigned, batchCount, t])
 
-  const { ref: sheetRef, open: openModal, close: closeModal } = useModalize()
+  const { sheetRef, closeModal, handleReject, handleConfirmedReject } = useRejectConfirmation({
+    isMultisigSigned,
+    onReject
+  })
 
   return (
     <View style={styles.container}>
@@ -84,13 +87,7 @@ const Footer = ({
           testID="transaction-button-reject"
           type="danger"
           text={t('Reject')}
-          onPress={() => {
-            if (isMultisigSigned) {
-              openModal()
-            } else {
-              onReject()
-            }
-          }}
+          onPress={handleReject}
           hasBottomSpacing={false}
           size="large"
           disabled={isSignLoading}
@@ -168,11 +165,11 @@ const Footer = ({
             <DualChoiceWarningModal
               title={t('Are you sure?')}
               description={t(
-                'You are about to reject an already signed transcation. It will no longer be visible in Ambire.'
+                'You are about to reject an already signed transaction. It will no longer be visible in Ambire.'
               )}
               primaryButtonText={t('Proceed')}
               secondaryButtonText={t('Return')}
-              onPrimaryButtonPress={onReject}
+              onPrimaryButtonPress={handleConfirmedReject}
               onSecondaryButtonPress={closeModal}
               type="error"
             />
