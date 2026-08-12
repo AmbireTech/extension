@@ -259,7 +259,7 @@ const CustomGasPrice = ({
       onOpen={resetState}
       shouldBeClosableOnDrag={isMobile}
       backgroundColor="primaryBackground"
-      style={[spacings.pbLg, isNarrowSidePanel && { width: '100%' }]}
+      style={{ ...spacings.pbLg, ...(isNarrowSidePanel ? { width: '100%' } : null) }}
     >
       {isMobile ? (
         <>
