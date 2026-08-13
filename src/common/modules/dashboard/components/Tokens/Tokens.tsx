@@ -8,6 +8,7 @@ import { AssetType } from '@ambire-common/libs/defiPositions/types'
 import { PORTFOLIO_LIB_ERROR_NAMES } from '@ambire-common/libs/portfolio/errorNames'
 import { getTokenAmount, getTokenBalanceInUSD } from '@ambire-common/libs/portfolio/helpers'
 import { TokenResult } from '@ambire-common/libs/portfolio/interfaces'
+import { isMobile } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import useDebounce from '@common/hooks/useDebounce'
@@ -30,7 +31,6 @@ import Skeleton from './TokensSkeleton'
 import type { NetworksController } from '@ambire-common/controllers/networks/networks'
 import type { PortfolioController } from '@ambire-common/controllers/portfolio/portfolio'
 import type { SelectedAccountController } from '@ambire-common/controllers/selectedAccount/selectedAccount'
-
 const selectNetworks = (state: NetworksController) => state.networks
 const selectCustomTokens = (state: PortfolioController) => state.customTokens
 const selectPortfolio = (state: SelectedAccountController) => state.portfolio
@@ -438,7 +438,7 @@ const Tokens = ({
         keyExtractor={keyExtractor}
         onEndReachedThreshold={isPopup ? 5 : 2.5}
         initialNumToRender={isPopup ? 10 : 20}
-        windowSize={9} // Larger values can cause performance issues.
+        windowSize={isMobile ? 3 : 9} // Larger values can cause performance issues.
         onScroll={onScroll}
         scrollEventThrottle={16}
         refreshing={refreshing}

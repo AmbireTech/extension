@@ -1,29 +1,20 @@
-import { ZeroAddress } from 'ethers'
-import React from 'react'
-import { useTranslation } from 'react-i18next'
-import { View } from 'react-native'
+import React, { useMemo } from 'react'
 
 import { SupportedNetworks } from '@ambire-common/interfaces/network'
 import { SwapAndBridgeToToken } from '@ambire-common/interfaces/swapAndBridge'
 import { getIsTokenEligibleForSwapAndBridge } from '@ambire-common/libs/swapAndBridge/swapAndBridge'
-import shortenAddress from '@ambire-common/utils/shortenAddress'
-import BatchIcon from '@common/assets/svg/BatchIcon'
-import PendingToBeConfirmedIcon from '@common/assets/svg/PendingToBeConfirmedIcon'
-import CopyText from '@common/components/CopyText'
 import Text from '@common/components/Text'
 import TokenIcon from '@common/components/TokenIcon'
-import Tooltip from '@common/components/Tooltip'
-import { isMobile } from '@common/config/env'
 import useController from '@common/hooks/useController'
-import useTheme from '@common/hooks/useTheme'
-import PendingBadge from '@common/modules/dashboard/components/Tokens/TokenItem/PendingBadge'
-import getAndFormatTokenDetails from '@common/modules/dashboard/helpers/getTokenDetails'
-import NotSupportedNetworkTooltip from '@common/modules/swap-and-bridge/components/NotSupportedNetworkTooltip'
 import spacings from '@common/styles/spacings'
-import flexbox from '@common/styles/utils/flexbox'
 import { getTokenId } from '@common/utils/token'
 
+import { createFormattedTokenDetailsReader } from './formattedTokenDetails'
+import TokenSelectOptionLabel from './TokenSelectOptionLabel'
+
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 import type { TokenResult } from '@ambire-common/libs/portfolio'
+
 const TextFallbackState: React.FC<{ children: React.ReactNode }> = ({ children }) => (
   <Text fontSize={14} appearance="secondaryText" style={spacings.plTy}>
     {children}
@@ -58,6 +49,19 @@ const NO_VALUE_SELECTED = [
   }
 ]
 
+const selectPortfolioTokens = (state: AllControllersMappingType['SelectedAccountController']) =>
+  state.portfolio.tokens
+
+const selectNetworkSimulatedAccountOp = (
+  state: AllControllersMappingType['SelectedAccountController']
+) => state.portfolio.networkSimulatedAccountOp
+
+/** Both a `SwapAndBridgeToToken`'s number and a `TokenResult`'s bigint chain id key to this. */
+const chainIdKey = (chainId: bigint | number) => chainId.toString()
+
+const portfolioTokenKey = (address: string, chainId: bigint | number) =>
+  `${address}-${chainIdKey(chainId)}`
+
 const useGetTokenSelectProps = ({
   tokens,
   token,
@@ -71,284 +75,159 @@ const useGetTokenSelectProps = ({
   isLoading?: boolean
   isToToken?: boolean
 }) => {
-  const { t } = useTranslation()
-  const { theme } = useTheme()
-  const {
-    state: { portfolio }
-  } = useController('SelectedAccountController')
+  const { state: portfolioTokens } = useController(
+    'SelectedAccountController',
+    selectPortfolioTokens
+  )
+  const { state: networkSimulatedAccountOp } = useController(
+    'SelectedAccountController',
+    selectNetworkSimulatedAccountOp
+  )
 
-  if (isLoading)
-    return {
-      options: LOADING_TOKEN_ITEMS,
-      value: LOADING_TOKEN_ITEMS[0],
-      amountSelectDisabled: true
+  return useMemo(() => {
+    if (isLoading)
+      return {
+        options: LOADING_TOKEN_ITEMS,
+        value: LOADING_TOKEN_ITEMS[0],
+        amountSelectDisabled: true
+      }
+
+    if (tokens?.length === 0 && !_isToToken) {
+      const noTokensEmptyState = getTokenOptionsEmptyState(_isToToken)
+
+      return {
+        options: noTokensEmptyState,
+        value: noTokensEmptyState[0],
+        amountSelectDisabled: true
+      }
     }
 
-  if (tokens?.length === 0 && !_isToToken) {
-    const noTokensEmptyState = getTokenOptionsEmptyState(_isToToken)
+    // Indexed once per build instead of scanned per token. Both of these used to be an
+    // `Array.prototype.find` inside the per-token callback, which is what made building
+    // the options quadratic in the size of a list that runs to thousands of tokens.
+    const networkByChainId = new Map<string, SupportedNetworks>()
+    networks.forEach((network) => {
+      const key = chainIdKey(network.chainId)
+      // First one wins, matching the `find` this replaces.
+      if (networkByChainId.has(key)) return
 
-    return {
-      options: noTokensEmptyState,
-      value: noTokensEmptyState[0],
-      amountSelectDisabled: true
-    }
-  }
+      networkByChainId.set(key, network)
+    })
 
-  /** Type guard to ensure TypeScript correctly infers the type of a token after a conditional check */
-  const getIsToTokenTypeGuard = (
-    tk: SwapAndBridgeToToken | TokenResult
-  ): tk is SwapAndBridgeToToken => _isToToken
+    // Only the "to" token list looks tokens up in the portfolio, and eligibility is
+    // decided while indexing so it is answered once per portfolio token rather than
+    // once per comparison.
+    const eligiblePortfolioTokenByKey = new Map<string, TokenResult>()
+    if (_isToToken)
+      portfolioTokens.forEach((portfolioToken) => {
+        if (!getIsTokenEligibleForSwapAndBridge(portfolioToken)) return
 
-  const renderItem = (
-    currentToken: SwapAndBridgeToToken | TokenResult,
-    isSelected: boolean = false
-  ) => {
-    const symbol = getIsToTokenTypeGuard(currentToken)
-      ? // Overprotective on purpose here, the API does return `null` values, although it shouldn't
-        currentToken.symbol?.trim() || 'No symbol'
-      : currentToken.symbol
+        const key = portfolioTokenKey(portfolioToken.address, portfolioToken.chainId)
+        if (eligiblePortfolioTokenByKey.has(key)) return
 
-    const name = getIsToTokenTypeGuard(currentToken)
-      ? // Overprotective on purpose here, the API does return `null` values, although it shouldn't
-        currentToken.name?.trim() || 'No name'
-      : ''
-    const network = networks.find((n) =>
-      getIsToTokenTypeGuard(currentToken)
-        ? Number(n.chainId) === currentToken.chainId
-        : n.chainId === currentToken.chainId
-    )
-    const tooltipIdNotSupported = `token-${currentToken.address}-on-network-${currentToken.chainId}-not-supported-tooltip`
-    const tooltipIdPendingBalance = `token-${currentToken.address}-on-network-${currentToken.chainId}-pending-balance`
+        eligiblePortfolioTokenByKey.set(key, portfolioToken)
+      })
 
-    const simulatedAccountOp =
-      portfolio.networkSimulatedAccountOp[currentToken.chainId.toString() || '']
-    const tokenInPortfolio = getIsToTokenTypeGuard(currentToken)
-      ? portfolio.tokens.find(
-          (pt) =>
-            pt.address === currentToken.address &&
-            pt.chainId === BigInt(currentToken.chainId) &&
-            getIsTokenEligibleForSwapAndBridge(pt)
-        )
-      : currentToken
-    const isNative = currentToken.address === ZeroAddress
+    /** Type guard to ensure TypeScript correctly infers the type of a token after a conditional check */
+    const getIsToTokenTypeGuard = (
+      tk: SwapAndBridgeToToken | TokenResult
+    ): tk is SwapAndBridgeToToken => _isToToken
 
-    const {
-      balanceUSDFormatted = '',
-      balanceFormatted = '',
-      isPending = false,
-      pendingToBeConfirmed = '',
-      pendingToBeConfirmedFormatted = '',
-      pendingToBeSigned = '',
-      pendingToBeSignedFormatted = '',
-      balanceLatestFormatted = '',
-      pendingBalanceFormatted = '',
-      pendingBalanceUSDFormatted = ''
-    } = getIsToTokenTypeGuard(currentToken)
-      ? tokenInPortfolio
-        ? getAndFormatTokenDetails(tokenInPortfolio, networks, simulatedAccountOp)
-        : {}
-      : getAndFormatTokenDetails(currentToken, networks, simulatedAccountOp)
+    const buildOption = (
+      currentToken: SwapAndBridgeToToken | TokenResult,
+      isSelected: boolean = false
+    ) => {
+      const symbol = getIsToTokenTypeGuard(currentToken)
+        ? // Overprotective on purpose here, the API does return `null` values, although it shouldn't
+          currentToken.symbol?.trim() || 'No symbol'
+        : currentToken.symbol
 
-    const formattedBalancesLabel = !!tokenInPortfolio && (
-      <View
-        dataSet={isPending ? { tooltipId: tooltipIdPendingBalance } : undefined}
-        style={[flexbox.alignEnd, spacings.mlSm]}
-      >
-        <Text
-          fontSize={16}
-          weight="medium"
-          appearance="primaryText"
-          color={isPending && theme.warningText}
-        >
-          {isPending ? pendingBalanceUSDFormatted : balanceUSDFormatted}
-        </Text>
-        <Text fontSize={12} appearance="secondaryText" color={isPending && theme.warningText}>
-          {isPending ? pendingBalanceFormatted : balanceFormatted}
-        </Text>
-        {isPending && (
-          <Tooltip id={tooltipIdPendingBalance}>
-            <View style={spacings.mtMi}>
-              <View style={[flexbox.directionRow, spacings.mbTy]}>
-                <Text
-                  selectable
-                  style={[spacings.mrMi, { opacity: 0.7 }]}
-                  color={theme.successText}
-                  fontSize={14}
-                  weight="number_bold"
-                  numberOfLines={1}
-                >
-                  {balanceLatestFormatted} {symbol} ({balanceUSDFormatted})
-                </Text>
-                <Text
-                  selectable
-                  style={{ opacity: 0.7 }}
-                  color={theme.successText}
-                  fontSize={12}
-                  numberOfLines={1}
-                >
-                  {t('(Onchain)')}
-                </Text>
-              </View>
-              {!!pendingToBeSigned && !!pendingToBeSignedFormatted && (
-                <PendingBadge
-                  amount={pendingToBeSigned}
-                  amountFormatted={pendingToBeSignedFormatted}
-                  label={t('{{symbol}} awaiting signature', { symbol })}
-                  backgroundColor={theme.warningBackground}
-                  textColor={theme.warningText}
-                  Icon={BatchIcon}
-                />
-              )}
-              {!!pendingToBeConfirmed && !!pendingToBeConfirmedFormatted && (
-                <PendingBadge
-                  amount={pendingToBeConfirmed}
-                  amountFormatted={pendingToBeConfirmedFormatted}
-                  label={t('confirming')}
-                  backgroundColor={theme.infoBackground}
-                  textColor={theme.infoText}
-                  Icon={PendingToBeConfirmedIcon}
-                />
-              )}
-            </View>
-          </Tooltip>
-        )}
-      </View>
-    )
+      const name = getIsToTokenTypeGuard(currentToken)
+        ? // Overprotective on purpose here, the API does return `null` values, although it shouldn't
+          currentToken.name?.trim() || 'No name'
+        : ''
 
-    const networkName = network?.name || (tokenInPortfolio?.flags.onGasTank ? 'Gas Tank' : '')
+      const network = networkByChainId.get(chainIdKey(currentToken.chainId))
+      const simulatedAccountOp = networkSimulatedAccountOp[currentToken.chainId.toString() || '']
+      const tokenInPortfolio = getIsToTokenTypeGuard(currentToken)
+        ? eligiblePortfolioTokenByKey.get(
+            portfolioTokenKey(currentToken.address, currentToken.chainId)
+          )
+        : currentToken
 
-    const isNameDifferentThanSymbol = name.toLowerCase() !== symbol.toLowerCase()
-    const label = getIsToTokenTypeGuard(currentToken) ? (
-      <>
-        <View
-          dataSet={tooltipIdNotSupported ? { tooltipId: tooltipIdNotSupported } : undefined}
-          style={[flexbox.flex1]}
-        >
-          <Text numberOfLines={1} style={{ lineHeight: 20 }}>
-            <Text fontSize={isMobile ? 14 : 16} weight="medium" numberOfLines={1}>
-              {symbol}{' '}
-            </Text>
-            {/* Displaying the name of the token is confusing for native tokens. Example
-            ETH (Ethereum) may confuse the user that the ETH is on Ethereum  */}
-            {isNameDifferentThanSymbol && !isNative && (!isMobile || !isSelected) && (
-              <Text fontSize={isMobile ? 14 : 16} appearance="secondaryText">
-                ({name})
-              </Text>
-            )}
-          </Text>
-          {isNative ? (
-            <Text numberOfLines={1} fontSize={12} appearance="secondaryText" weight="mono_regular">
-              Native
-            </Text>
-          ) : (
-            <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-              <Text
-                numberOfLines={1}
-                fontSize={12}
-                appearance="secondaryText"
-                weight="mono_regular"
-                {...(isMobile ? { ellipsizeMode: 'middle' } : {})}
-              >
-                {isSelected ? shortenAddress(currentToken.address, 13) : currentToken.address}
-              </Text>
-              {!isSelected && (
-                <CopyText
-                  text={currentToken.address}
-                  iconSize={14}
-                  iconColor={theme.secondaryText}
-                  style={spacings.mlMi}
-                />
-              )}
-            </View>
-          )}
-        </View>
+      const networkName = network?.name || (tokenInPortfolio?.flags.onGasTank ? 'Gas Tank' : '')
 
-        {!isSelected && formattedBalancesLabel}
-        {network?.isNotSupported && (
-          <NotSupportedNetworkTooltip
-            tooltipId={tooltipIdNotSupported}
-            message={network.notSupportedReason || t('Network unavailable')}
-          />
-        )}
-      </>
-    ) : (
-      <>
-        <View
-          style={[
-            flexbox.flex1,
-            !isSelected && flexbox.directionRow,
-            !isSelected && flexbox.alignEnd
-          ]}
-        >
-          <Text
-            fontSize={isSelected && isMobile ? 14 : 16}
-            weight="semiBold"
-            style={{ lineHeight: 20 }}
-            numberOfLines={1}
-            dataSet={{ tooltipId: tooltipIdNotSupported }}
-          >
-            {symbol}
-          </Text>
-          {!!networkName && (
-            <Text
-              fontSize={isSelected ? 12 : 14}
-              weight={isSelected ? 'regular' : 'medium'}
-              appearance="secondaryText"
-              ellipsizeMode="tail"
-              numberOfLines={1}
-              style={!isSelected && spacings.mlTy}
-            >
-              {`${isSelected ? '' : ' '}on ${networkName}`}
-            </Text>
-          )}
-        </View>
-        {!isSelected && formattedBalancesLabel}
-        {network?.isNotSupported && (
-          <NotSupportedNetworkTooltip
-            tooltipId={tooltipIdNotSupported}
-            message={network?.notSupportedReason || t('Network unavailable')}
-          />
-        )}
-      </>
-    )
-
-    return {
-      value: getTokenId(currentToken),
-      address: currentToken.address,
-      chainId: currentToken.chainId,
-      disabled: network?.isNotSupported,
-      extraSearchProps: { symbol, name, address: currentToken.address, networkName: network?.name },
-      isPending,
-      pendingBalanceFormatted: pendingBalanceFormatted || '0',
-      balanceFormatted: balanceFormatted || '0',
-      symbol,
-      label,
-      icon: (
-        <TokenIcon
-          key={`${currentToken.chainId}-${currentToken.address}`}
-          containerHeight={isSelected ? 28 : 32}
-          containerWidth={isSelected ? 28 : 32}
-          width={isSelected ? 24 : 28}
-          height={isSelected ? 24 : 28}
-          networkSize={isSelected ? 12 : 14}
-          withContainer
-          withNetworkIcon={!_isToToken}
-          uri={getIsToTokenTypeGuard(currentToken) ? currentToken.icon : undefined}
-          address={currentToken.address}
-          chainId={BigInt(currentToken.chainId)}
-        />
+      // The "to" list holds tokens that are not in the portfolio and have nothing to
+      // format, which is what the original code expressed by skipping the call.
+      const getFormattedDetails = createFormattedTokenDetailsReader(
+        getIsToTokenTypeGuard(currentToken) ? tokenInPortfolio : currentToken,
+        networks,
+        simulatedAccountOp
       )
+
+      return {
+        value: getTokenId(currentToken),
+        address: currentToken.address,
+        chainId: currentToken.chainId,
+        disabled: network?.isNotSupported,
+        extraSearchProps: {
+          symbol,
+          name,
+          address: currentToken.address,
+          networkName: network?.name
+        },
+        // Read off the closed select's value only, so they are formatted on access
+        // rather than for every option in the menu.
+        get isPending() {
+          return getFormattedDetails().isPending ?? false
+        },
+        get pendingBalanceFormatted() {
+          return getFormattedDetails().pendingBalanceFormatted || '0'
+        },
+        get balanceFormatted() {
+          return getFormattedDetails().balanceFormatted || '0'
+        },
+        symbol,
+        label: (
+          <TokenSelectOptionLabel
+            currentToken={currentToken}
+            symbol={symbol}
+            name={name}
+            network={network}
+            networkName={networkName}
+            tokenInPortfolio={tokenInPortfolio}
+            isToToken={_isToToken}
+            isSelected={isSelected}
+            getFormattedDetails={getFormattedDetails}
+          />
+        ),
+        icon: (
+          <TokenIcon
+            key={`${currentToken.chainId}-${currentToken.address}`}
+            containerHeight={isSelected ? 28 : 32}
+            containerWidth={isSelected ? 28 : 32}
+            width={isSelected ? 24 : 28}
+            height={isSelected ? 24 : 28}
+            networkSize={isSelected ? 12 : 14}
+            withContainer
+            withNetworkIcon={!_isToToken}
+            uri={getIsToTokenTypeGuard(currentToken) ? currentToken.icon : undefined}
+            address={currentToken.address}
+            chainId={BigInt(currentToken.chainId)}
+          />
+        )
+      }
     }
-  }
 
-  const options = tokens.map((tk) => renderItem(tk, false))
-  const selectedToken = tokens.find((tk) => getTokenId(tk) === token)
+    const options = tokens.map((tk) => buildOption(tk, false))
+    const selectedToken = tokens.find((tk) => getTokenId(tk) === token)
 
-  return {
-    options,
-    value: selectedToken ? renderItem(selectedToken, true) : NO_VALUE_SELECTED[0],
-    amountSelectDisabled: false
-  }
+    return {
+      options,
+      value: selectedToken ? buildOption(selectedToken, true) : NO_VALUE_SELECTED[0],
+      amountSelectDisabled: false
+    }
+  }, [tokens, token, networks, isLoading, _isToToken, portfolioTokens, networkSimulatedAccountOp])
 }
 
 export default useGetTokenSelectProps

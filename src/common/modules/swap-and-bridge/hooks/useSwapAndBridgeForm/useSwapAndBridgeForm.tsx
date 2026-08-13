@@ -22,9 +22,19 @@ import { ROUTES } from '@common/modules/router/constants/common'
 import { getTokenId } from '@common/utils/token'
 import { getUiType } from '@common/utils/uiType'
 
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
 type SessionId = ReturnType<typeof nanoid>
 
 const { isPopup, isRequestWindow, isSidePanel } = getUiType()
+
+const selectAccount = (state: AllControllersMappingType['SelectedAccountController']) =>
+  state.account
+const selectIsPortfolioReadyToVisualize = (
+  state: AllControllersMappingType['SelectedAccountController']
+) => state.portfolio.isReadyToVisualize
+const selectPortfolioTokens = (state: AllControllersMappingType['SelectedAccountController']) =>
+  state.portfolio.tokens
 
 const useSwapAndBridgeForm = () => {
   const {
@@ -48,9 +58,15 @@ const useSwapAndBridgeForm = () => {
   const { dispatch: swapAndBridgeDispatch } = useController('SwapAndBridgeController')
   const { dispatch: requestsDispatch, state: requestsState } = useController('RequestsController')
   const { userRequests } = requestsState
-  const {
-    state: { account, portfolio }
-  } = useController('SelectedAccountController')
+  const { state: account } = useController('SelectedAccountController', selectAccount)
+  const { state: isPortfolioReadyToVisualize } = useController(
+    'SelectedAccountController',
+    selectIsPortfolioReadyToVisualize
+  )
+  const { state: portfolioTokens } = useController(
+    'SelectedAccountController',
+    selectPortfolioTokens
+  )
   const controllerAmountFieldValue = fromAmountFieldMode === 'token' ? fromAmount : fromAmountInFiat
   const [fromAmountValue, setFromAmountValue] = useSyncedState<string>({
     backgroundState: controllerAmountFieldValue,
@@ -197,7 +213,7 @@ const useSwapAndBridgeForm = () => {
     // Init each session only once after the cleanup
     if (sessionIdsRequestedToBeInit.current.includes(sessionId)) return
 
-    if (!portfolio.isReadyToVisualize) return
+    if (!isPortfolioReadyToVisualize) return
 
     const routeState = currentRoute.state as
       | {
@@ -208,7 +224,7 @@ const useSwapAndBridgeForm = () => {
         }
       | undefined
 
-    const tokenToSelectOnInit = portfolio.tokens.find(
+    const tokenToSelectOnInit = portfolioTokens.find(
       (t) =>
         t.address === routeState?.preselectedFromToken?.address &&
         t.chainId === routeState?.preselectedFromToken?.chainId &&
@@ -239,8 +255,8 @@ const useSwapAndBridgeForm = () => {
     account,
     currentRoute.state,
     navigate,
-    portfolio.isReadyToVisualize,
-    portfolio.tokens,
+    isPortfolioReadyToVisualize,
+    portfolioTokens,
     requestsDispatch,
     sessionId,
     sessionIds,
