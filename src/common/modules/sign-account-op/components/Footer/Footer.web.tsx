@@ -91,7 +91,7 @@ const Footer = ({
           hasBottomSpacing={false}
           size="large"
           disabled={isSignLoading}
-          style={{ width: 98 }}
+          style={{ width: 100, height: 52 }}
         />
       </View>
       <ActionsPagination />
@@ -139,7 +139,7 @@ const Footer = ({
               disabled={isSignDisabled}
               onHoldComplete={onSign}
               testID="proceed-btn"
-              style={[spacings.mlLg]}
+              style={[spacings.mlLg, { height: 52 }]}
               size="large"
             />
           )}
@@ -152,7 +152,7 @@ const Footer = ({
               text={isSignLoading ? inProgressButtonText : buttonText}
               onPress={onSign}
               size="large"
-              style={[{ minWidth: 128 }, spacings.mlLg]}
+              style={[{ minWidth: 100, height: 52 }, spacings.ml]}
             />
           )}
           <BottomSheet
