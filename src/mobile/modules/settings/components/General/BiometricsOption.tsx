@@ -6,6 +6,7 @@ import LightThemeIcon from '@common/assets/svg/LightThemeIcon'
 import SystemThemeIcon from '@common/assets/svg/SystemThemeIcon'
 import ControlOption from '@common/components/ControlOption'
 import FatToggle from '@common/components/FatToggle'
+import { DEVICE_SECURITY_LEVEL } from '@common/contexts/biometricsContext/constants'
 import useBiometrics from '@common/hooks/useBiometrics'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
@@ -15,14 +16,20 @@ import { THEME_TYPES } from '@common/styles/themeConfig'
 const BiometricsOption = () => {
   const { t } = useTranslation()
   const { selectedThemeType } = useTheme()
-  const { isEnrolled, saveBiometricsSecret, removeBiometricsSecret } = useBiometrics()
+  const { isEnrolled, deviceSecurityLevel, saveBiometricsSecret, removeBiometricsSecret } =
+    useBiometrics()
 
   const {
     state: { hasBiometricsSecret, statuses },
     dispatch: keystoreDispatch
   } = useController('KeystoreController')
 
-  if (!isEnrolled) return null
+  // The secret is stored behind a key that only a strong (Class 3) biometric can release,
+  // so a weak one (e.g. 2D face unlock on Android) would fail to save it.
+  const isStrongBiometricsEnrolled =
+    isEnrolled && deviceSecurityLevel === DEVICE_SECURITY_LEVEL.BIOMETRIC_STRONG
+
+  if (!isStrongBiometricsEnrolled) return null
 
   useEffect(() => {
     // eslint-disable-next-line @typescript-eslint/no-floating-promises
