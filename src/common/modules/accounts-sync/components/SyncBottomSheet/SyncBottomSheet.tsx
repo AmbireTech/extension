@@ -2,16 +2,20 @@ import React from 'react'
 import { View } from 'react-native'
 
 import ExportIcon from '@common/assets/svg/ExportIcon'
-import ImportIcon from '@common/assets/svg/ImportIcon'
+import ImportArrowIcon from '@common/assets/svg/ImportArrowIcon'
 import SyncDevicesIcon from '@common/assets/svg/SyncDevicesIcon'
 import BottomSheet from '@common/components/BottomSheet'
 import ModalHeader from '@common/components/BottomSheet/ModalHeader'
-import Option from '@common/components/Option'
+import Button from '@common/components/Button'
 import { isMobile } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
+
+// ExportIcon rotates itself into an up arrow, which is not the icon of the design.
+// Overriding the style undoes it, leaving the arrow that leaves the box to the right.
+const EXPORT_ICON_STYLE = { ...spacings.mrTy, transform: [{ rotate: '0deg' }] }
 
 interface Props {
   sheetRef: React.RefObject<any>
@@ -35,23 +39,28 @@ const SyncBottomSheet = ({ sheetRef, closeBottomSheet, onExportPress, onImportPr
         handleClose={closeBottomSheet}
         title={isMobile ? t('Sync with extension') : t('Sync with mobile')}
       />
-      <View style={[flexbox.alignCenter, spacings.mbLg]}>
+      <View style={[flexbox.alignCenter, spacings.mb2Xl]}>
         <SyncDevicesIcon />
       </View>
-      <Option
+      <Button
+        type="secondary"
         text={isMobile ? t('Export to extension') : t('Export to mobile')}
-        icon={ExportIcon}
-        iconProps={{ color: theme.primaryText }}
         onPress={onExportPress}
+        childrenPosition="left"
         testID="sync-export-option"
-      />
-      <Option
+      >
+        <ExportIcon width={20} height={20} style={EXPORT_ICON_STYLE} />
+      </Button>
+      <Button
+        type="secondary"
         text={isMobile ? t('Import from extension') : t('Import from mobile')}
-        icon={ImportIcon}
-        iconProps={{ color: theme.primaryText }}
         onPress={onImportPress}
+        childrenPosition="left"
+        hasBottomSpacing={false}
         testID="sync-import-option"
-      />
+      >
+        <ImportArrowIcon width={20} height={20} style={spacings.mrTy} />
+      </Button>
     </BottomSheet>
   )
 }

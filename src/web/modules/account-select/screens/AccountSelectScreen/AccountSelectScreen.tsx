@@ -5,8 +5,8 @@ import { useModalize } from 'react-native-modalize'
 
 import { Account as AccountType } from '@ambire-common/interfaces/account'
 import AddCircularIcon from '@common/assets/svg/AddCircularIcon'
-import SyncIcon from '@common/assets/svg/SyncIcon'
 import SettingsIcon from '@common/assets/svg/SettingsIcon'
+import SyncIcon from '@common/assets/svg/SyncIcon'
 import Button from '@common/components/Button'
 import FooterGlassView from '@common/components/FooterGlassView'
 import HoverablePressable from '@common/components/HoverablePressable'
@@ -19,9 +19,9 @@ import useController from '@common/hooks/useController'
 import useNavigation from '@common/hooks/useNavigation'
 import useRoute from '@common/hooks/useRoute'
 import useTheme from '@common/hooks/useTheme'
-import SyncBottomSheet from '@common/modules/accounts-sync/components/SyncBottomSheet'
 import Account from '@common/modules/account-select/components/Account'
 import AddAccount from '@common/modules/account-select/components/AddAccount'
+import SyncBottomSheet from '@common/modules/accounts-sync/components/SyncBottomSheet'
 import DashboardSkeleton from '@common/modules/dashboard/components/Skeleton'
 import { HeaderWithTitle } from '@common/modules/header/components/Header/Header'
 import { ROUTES, WEB_ROUTES } from '@common/modules/router/constants/common'
@@ -160,7 +160,7 @@ const AccountSelectScreen = () => {
               childrenPosition="left"
               style={[flexbox.flex1, spacings.mrTy]}
             >
-              <SyncIcon width={20} height={20} color={theme.primaryText} style={spacings.mrTy} />
+              <SyncIcon width={24} height={24} color={theme.primaryText} style={spacings.mrTy} />
             </Button>
             <Button
               testID="button-add-account"

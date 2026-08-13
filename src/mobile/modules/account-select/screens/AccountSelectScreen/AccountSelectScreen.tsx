@@ -17,9 +17,9 @@ import useController from '@common/hooks/useController'
 import useNavigation from '@common/hooks/useNavigation'
 import useRoute from '@common/hooks/useRoute'
 import useTheme from '@common/hooks/useTheme'
-import SyncBottomSheet from '@common/modules/accounts-sync/components/SyncBottomSheet'
 import Account from '@common/modules/account-select/components/Account'
 import AddAccount from '@common/modules/account-select/components/AddAccount'
+import SyncBottomSheet from '@common/modules/accounts-sync/components/SyncBottomSheet'
 import DashboardSkeleton from '@common/modules/dashboard/components/Skeleton'
 import { HeaderWithTitle } from '@common/modules/header/components/Header/Header'
 import { ROUTES, WEB_ROUTES } from '@common/modules/router/constants/common'
@@ -141,7 +141,7 @@ const AccountSelectScreen = () => {
             childrenPosition="left"
             style={{ ...flexbox.alignSelfCenter, width: '100%' }}
           >
-            <SyncIcon width={20} height={20} color={theme.primaryText} style={spacings.mrTy} />
+            <SyncIcon width={24} height={24} color={theme.primaryText} style={spacings.mrTy} />
           </Button>
         </>
       }

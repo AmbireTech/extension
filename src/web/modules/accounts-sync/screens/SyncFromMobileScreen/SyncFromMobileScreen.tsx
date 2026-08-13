@@ -12,12 +12,12 @@ import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import useNavigation from '@common/hooks/useNavigation'
 import useTheme from '@common/hooks/useTheme'
-import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
 import SyncImportSteps, {
   SyncImportStep,
   SyncImportStepsFooter
 } from '@common/modules/accounts-sync/components/SyncImportSteps'
 import useAccountsSyncImport from '@common/modules/accounts-sync/hooks/useAccountsSyncImport'
+import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
 import { WEB_ROUTES } from '@common/modules/router/constants/common'
 import spacings, { SPACING_LG } from '@common/styles/spacings'
 import common, { BORDER_RADIUS_SECONDARY } from '@common/styles/utils/common'
@@ -225,7 +225,7 @@ const SyncFromMobileScreen = () => {
                 stepIndex={stepIndex}
                 onStepIndexChange={setStepIndex}
                 finishText={t('Sync from mobile')}
-                finishIcon={<SyncIcon width={20} height={20} color="#fff" style={spacings.mrTy} />}
+                finishIcon={<SyncIcon width={24} height={24} color="#fff" style={spacings.mrTy} />}
                 onFinish={() => setIsScanning(true)}
                 style={spacings.mtLg}
               />

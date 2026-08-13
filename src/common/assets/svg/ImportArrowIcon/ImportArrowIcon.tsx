@@ -3,18 +3,17 @@ import Svg, { Path } from 'react-native-svg'
 
 import useTheme from '@common/hooks/useTheme'
 
-const ExportIcon: React.FC<any> = ({ width = 24, height = 24, color, ...rest }) => {
+// The counterpart of ExportIcon: same box, but its arrow is mirrored around its own
+// center, so it points into the box instead of out of it
+const ARROW_MIRROR = 'translate(28.952 0) scale(-1 1)'
+
+const ImportArrowIcon: React.FC<any> = ({ width = 24, height = 24, color, ...rest }) => {
   const { theme } = useTheme()
   return (
-    <Svg
-      style={{ transform: [{ rotate: '270deg' }] }}
-      width={width}
-      height={height}
-      viewBox="0 0 24 24"
-      {...rest}
-    >
+    <Svg width={width} height={height} viewBox="0 0 24 24" {...rest}>
       <Path fill="none" d="M0 0h24v24H0z" />
       <Path
+        transform={ARROW_MIRROR}
         d="m15.792 17.708 1.293-1.293 1.738-1.738 1.969-1.968.022-.023.685-.685-.707-.707-5-5a1 1 0 1 0-1.414 1.414l1.293 1.293 2.094 2.093H8.453a1 1 0 0 0 0 2h9.124l-.168.168-1.738 1.739-1.293 1.293a1 1 0 1 0 1.414 1.414Z"
         fill={color || theme.iconPrimary}
       />
@@ -26,4 +25,4 @@ const ExportIcon: React.FC<any> = ({ width = 24, height = 24, color, ...rest }) 
   )
 }
 
-export default React.memo(ExportIcon)
+export default React.memo(ImportArrowIcon)
