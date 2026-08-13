@@ -8,8 +8,8 @@ import spacings from '@common/styles/spacings'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 
-const DOT_SIZE = 8
-const DOT_ACTIVE_WIDTH = 20
+const DOT_SIZE = 10
+const DOT_ACTIVE_WIDTH = 24
 
 export interface SyncImportStep {
   id: string
@@ -25,12 +25,15 @@ interface Props {
    * step instead of leaving the flow
    */
   stepIndex: number
+  style?: ViewStyle
+}
+
+interface FooterProps extends Props {
   onStepIndexChange: (stepIndex: number) => void
   /** Label of the button on the last step, which starts the scanning */
   finishText: string
   finishIcon?: React.ReactNode
   onFinish: () => void
-  style?: ViewStyle
 }
 
 /**
@@ -38,26 +41,10 @@ interface Props {
  * codes. Shown by both products, in the onboarding flow and when syncing later on, so
  * the steps themselves (copy and illustrations) are passed in by the platform screen.
  */
-const SyncImportSteps = ({
-  steps,
-  stepIndex,
-  onStepIndexChange,
-  finishText,
-  finishIcon,
-  onFinish,
-  style
-}: Props) => {
-  const { t } = useTranslation()
+const SyncImportSteps = ({ steps, stepIndex, style }: Props) => {
   const { theme } = useTheme()
 
-  const isLastStep = stepIndex === steps.length - 1
   const step = steps[stepIndex]
-
-  const handleNext = useCallback(() => {
-    if (isLastStep) return onFinish()
-
-    onStepIndexChange(stepIndex + 1)
-  }, [isLastStep, onFinish, onStepIndexChange, stepIndex])
 
   if (!step) return null
 
@@ -66,7 +53,8 @@ const SyncImportSteps = ({
       <View
         style={[
           flexbox.center,
-          spacings.pvSm,
+          // Enough room for the drop shadow some illustrations have to stay inside the card
+          spacings.pvLg,
           spacings.mbLg,
           { backgroundColor: theme.secondaryBackground, borderRadius: BORDER_RADIUS_PRIMARY }
         ]}
@@ -74,7 +62,37 @@ const SyncImportSteps = ({
         {step.illustration}
       </View>
       {step.content}
-      <View style={[flexbox.directionRow, flexbox.center, spacings.mtLg, spacings.mbSm]}>
+    </View>
+  )
+}
+
+/**
+ * The pagination dots and the button that advances the steps. Separate from the steps
+ * themselves, so the mobile screen can pin it to the bottom of the screen as a footer.
+ */
+const SyncImportStepsFooter = ({
+  steps,
+  stepIndex,
+  onStepIndexChange,
+  finishText,
+  finishIcon,
+  onFinish,
+  style
+}: FooterProps) => {
+  const { t } = useTranslation()
+  const { theme } = useTheme()
+
+  const isLastStep = stepIndex === steps.length - 1
+
+  const handleNext = useCallback(() => {
+    if (isLastStep) return onFinish()
+
+    onStepIndexChange(stepIndex + 1)
+  }, [isLastStep, onFinish, onStepIndexChange, stepIndex])
+
+  return (
+    <View style={style}>
+      <View style={[flexbox.directionRow, flexbox.center, spacings.mbLg]}>
         {steps.map(({ id }, index) => (
           <View
             key={id}
@@ -82,8 +100,8 @@ const SyncImportSteps = ({
               width: index === stepIndex ? DOT_ACTIVE_WIDTH : DOT_SIZE,
               height: DOT_SIZE,
               borderRadius: DOT_SIZE / 2,
-              marginHorizontal: 2,
-              backgroundColor: index === stepIndex ? theme.secondaryText : theme.secondaryBorder
+              ...spacings.mhTy,
+              backgroundColor: index === stepIndex ? theme.secondaryText : theme.tertiaryText
             }}
           />
         ))}
@@ -101,5 +119,9 @@ const SyncImportSteps = ({
     </View>
   )
 }
+
+const MemoizedSyncImportStepsFooter = React.memo(SyncImportStepsFooter)
+
+export { MemoizedSyncImportStepsFooter as SyncImportStepsFooter }
 
 export default React.memo(SyncImportSteps)

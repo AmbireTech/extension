@@ -221,15 +221,13 @@ const ImportExistingAccountSelectorScreen = () => {
           goToNextRoute(ROUTES.qrConnect)
         },
         icon: ScanIcon
-      },
-      {
-        title: 'Watch an address',
-        onPress: () => {
-          goToNextRoute(ROUTES.viewOnlyAccountAdder)
-        },
-        icon: ViewOnlyIcon
       }
     ],
+    [goToNextRoute]
+  )
+
+  const goToViewOnlyAccountAdder = useCallback(
+    () => goToNextRoute(ROUTES.viewOnlyAccountAdder),
     [goToNextRoute]
   )
 
@@ -261,6 +259,11 @@ const ImportExistingAccountSelectorScreen = () => {
               cards={nfcCards}
               isExpanded={areNfcCardsExpanded}
               onToggle={toggleNfcCards}
+            />
+            <ImportMethodButton
+              title="Watch an address"
+              onPress={goToViewOnlyAccountAdder}
+              icon={ViewOnlyIcon}
             />
           </ScrollView>
         </View>

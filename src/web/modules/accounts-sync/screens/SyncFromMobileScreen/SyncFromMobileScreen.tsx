@@ -13,7 +13,8 @@ import useNavigation from '@common/hooks/useNavigation'
 import useTheme from '@common/hooks/useTheme'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
 import SyncImportSteps, {
-  SyncImportStep
+  SyncImportStep,
+  SyncImportStepsFooter
 } from '@common/modules/accounts-sync/components/SyncImportSteps'
 import useAccountsSyncImport from '@common/modules/accounts-sync/hooks/useAccountsSyncImport'
 import { WEB_ROUTES } from '@common/modules/router/constants/common'
@@ -167,14 +168,18 @@ const SyncFromMobileScreen = () => {
               />
             </>
           ) : (
-            <SyncImportSteps
-              steps={steps}
-              stepIndex={stepIndex}
-              onStepIndexChange={setStepIndex}
-              finishText={t('Sync from mobile')}
-              finishIcon={<SyncIcon width={20} height={20} color="#fff" style={spacings.mrTy} />}
-              onFinish={() => setIsScanning(true)}
-            />
+            <>
+              <SyncImportSteps steps={steps} stepIndex={stepIndex} />
+              <SyncImportStepsFooter
+                steps={steps}
+                stepIndex={stepIndex}
+                onStepIndexChange={setStepIndex}
+                finishText={t('Sync from mobile')}
+                finishIcon={<SyncIcon width={20} height={20} color="#fff" style={spacings.mrTy} />}
+                onFinish={() => setIsScanning(true)}
+                style={spacings.mtLg}
+              />
+            </>
           )}
         </Panel>
       </TabLayoutWrapperMainContent>

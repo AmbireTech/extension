@@ -10,8 +10,10 @@ import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import useNavigation from '@common/hooks/useNavigation'
+import useTheme from '@common/hooks/useTheme'
 import SyncImportSteps, {
-  SyncImportStep
+  SyncImportStep,
+  SyncImportStepsFooter
 } from '@common/modules/accounts-sync/components/SyncImportSteps'
 import useAccountsSyncImport from '@common/modules/accounts-sync/hooks/useAccountsSyncImport'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
@@ -19,7 +21,7 @@ import QrScannerWithPermission from '@common/modules/hardware-wallets/screens/Qr
 import { ROUTES } from '@common/modules/router/constants/common'
 import PasswordConfirmation from '@common/modules/settings/components/PasswordConfirmation'
 import spacings from '@common/styles/spacings'
-import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
+import common, { BORDER_RADIUS_PRIMARY, BORDER_RADIUS_SECONDARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import {
   MobileLayoutContainer,
@@ -41,6 +43,7 @@ const selectAccountsCount = (state: AllControllersMappingType['AccountsControlle
 
 const SyncFromExtensionScreen = () => {
   const { t } = useTranslation()
+  const { theme } = useTheme()
   const { navigate, goBack, canGoBack } = useNavigation()
   const { goToPrevRoute } = useOnboardingNavigation()
   const { state: hasPasswordSecret } = useController('KeystoreController', selectHasPasswordSecret)
@@ -58,15 +61,26 @@ const SyncFromExtensionScreen = () => {
       {
         id: 'steps-on-the-extension',
         illustration: (
-          <Image
-            source={syncStepsOnTheExtension as ImageSourcePropType}
-            resizeMode="contain"
+          // The animation is a screenshot of the extension, so the design gives it the
+          // rounded corners and the drop shadow of a window floating above the card
+          <View
             style={{
-              width: ANIMATION_HEIGHT * ANIMATION_ASPECT_RATIO,
-              height: ANIMATION_HEIGHT,
-              alignSelf: 'center'
+              ...common.shadowPrimary,
+              ...flexbox.alignSelfCenter,
+              borderRadius: BORDER_RADIUS_SECONDARY,
+              backgroundColor: theme.primaryBackground
             }}
-          />
+          >
+            <Image
+              source={syncStepsOnTheExtension as ImageSourcePropType}
+              resizeMode="contain"
+              style={{
+                width: ANIMATION_HEIGHT * ANIMATION_ASPECT_RATIO,
+                height: ANIMATION_HEIGHT,
+                borderRadius: BORDER_RADIUS_SECONDARY
+              }}
+            />
+          </View>
         ),
         content: (
           <>
@@ -97,7 +111,7 @@ const SyncFromExtensionScreen = () => {
         )
       }
     ],
-    [t]
+    [t, theme]
   )
 
   const handleImported = useCallback(() => {
@@ -144,8 +158,22 @@ const SyncFromExtensionScreen = () => {
     navigate(ROUTES.accountSelect)
   }, [accountsCount, canGoBack, goBack, goToPrevRoute, isScanning, navigate, stepIndex])
 
+  const handleStartScanning = useCallback(() => setIsScanning(true), [])
+
   return (
-    <MobileLayoutContainer>
+    <MobileLayoutContainer
+      footer={
+        isScanning ? null : (
+          <SyncImportStepsFooter
+            steps={steps}
+            stepIndex={stepIndex}
+            onStepIndexChange={setStepIndex}
+            finishText={t('Scan QR code')}
+            onFinish={handleStartScanning}
+          />
+        )
+      }
+    >
       <MobileLayoutWrapperMainContent
         withBackButton
         onBackButtonPress={handleBackButtonPress}
@@ -177,13 +205,7 @@ const SyncFromExtensionScreen = () => {
             />
           </>
         ) : (
-          <SyncImportSteps
-            steps={steps}
-            stepIndex={stepIndex}
-            onStepIndexChange={setStepIndex}
-            finishText={t('Scan QR code')}
-            onFinish={() => setIsScanning(true)}
-          />
+          <SyncImportSteps steps={steps} stepIndex={stepIndex} />
         )}
       </MobileLayoutWrapperMainContent>
 
