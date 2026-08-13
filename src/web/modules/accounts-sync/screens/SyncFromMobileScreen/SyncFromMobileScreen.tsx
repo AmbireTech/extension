@@ -22,6 +22,7 @@ import { WEB_ROUTES } from '@common/modules/router/constants/common'
 import spacings, { SPACING_LG } from '@common/styles/spacings'
 import common, { BORDER_RADIUS_SECONDARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
+import text from '@common/styles/utils/text'
 import { TabLayoutContainer, TabLayoutWrapperMainContent } from '@web/components/TabLayoutWrapper'
 import QrScannerWithPermission from '@web/modules/hardware-wallet/screens/QrScannerWithPermission'
 import BottomSheetPasswordConfirmation from '@web/modules/settings/components/BottomSheetPasswordConfirmation'
@@ -109,7 +110,7 @@ const SyncFromMobileScreen = () => {
         content: (
           <Text fontSize={14} weight="medium" appearance="secondaryText">
             {t(
-              "Scan the QR codes with your computer's camera to sync the accounts. Hold the scanner until the process is complete."
+              "Scan the QR codes with your computer's camera to sync the accounts. Hold your phone still until the process is complete."
             )}
           </Text>
         )
@@ -172,12 +173,20 @@ const SyncFromMobileScreen = () => {
           spacingsSize="small"
           withBackButton
           onBackButtonPress={handleBackButtonPress}
-          title={t('Sync from Ambire mobile')}
+          title={t('Import from mobile')}
           titleContainerStyle={spacings.mb}
           style={{ minHeight: PANEL_HEIGHT }}
         >
           {isScanning ? (
             <>
+              <Text
+                fontSize={14}
+                weight="medium"
+                appearance="secondaryText"
+                style={[text.center, spacings.mbLg]}
+              >
+                {t('Scan the QR codes generated on your Ambire mobile app.')}
+              </Text>
               {/* The scanner takes the panel's free space, so the alert stays at the
               bottom of the card, where the button of the steps is */}
               <View style={flexbox.flex1}>
@@ -198,7 +207,7 @@ const SyncFromMobileScreen = () => {
               <Alert
                 type="info"
                 size="sm"
-                title={t('Hold the scanner until the process is complete.')}
+                title={t('Hold your phone still until the process is complete.')}
               />
             </>
           ) : (

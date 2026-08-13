@@ -24,6 +24,7 @@ import PasswordConfirmation from '@common/modules/settings/components/PasswordCo
 import spacings from '@common/styles/spacings'
 import common, { BORDER_RADIUS_PRIMARY, BORDER_RADIUS_SECONDARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
+import text from '@common/styles/utils/text'
 import {
   MobileLayoutContainer,
   MobileLayoutWrapperMainContent
@@ -114,7 +115,7 @@ const SyncFromExtensionScreen = () => {
         content: (
           <Text fontSize={14} weight="medium" appearance="secondaryText">
             {t(
-              'Scan the QR codes with this device to sync the accounts. Hold the scanner until the process is complete.'
+              'Scan the QR codes with this device to sync the accounts. Hold your phone still until the process is complete.'
             )}
           </Text>
         )
@@ -196,7 +197,7 @@ const SyncFromExtensionScreen = () => {
           <Alert
             type="info"
             size="sm"
-            title={t('Hold the scanner until the process is complete.')}
+            title={t('Hold your phone still until the process is complete.')}
           />
         ) : (
           <SyncImportStepsFooter
@@ -212,26 +213,36 @@ const SyncFromExtensionScreen = () => {
       <MobileLayoutWrapperMainContent
         withBackButton
         onBackButtonPress={handleBackButtonPress}
-        title={isScanning ? t('Scan QR code') : t('Import from extension')}
+        title={t('Import from extension')}
       >
         {isScanning ? (
-          // The same framing as the QR hardware wallet scanner
-          <View
-            style={{
-              width: SCANNER_SIZE + 4,
-              height: SCANNER_SIZE + 4,
-              ...flexbox.alignSelfCenter,
-              borderRadius: BORDER_RADIUS_PRIMARY + 6,
-              overflow: 'hidden'
-            }}
-          >
-            <QrScannerWithPermission
-              onComplete={handleScanComplete}
-              disabled={hasScannedPayload || isImporting}
-              externalError={scanError}
-              onExternalRetry={retryScan}
-            />
-          </View>
+          <>
+            <Text
+              fontSize={14}
+              weight="medium"
+              appearance="secondaryText"
+              style={[text.center, spacings.mbLg]}
+            >
+              {t('Scan the QR codes generated on your Ambire extension.')}
+            </Text>
+            {/* The same framing as the QR hardware wallet scanner */}
+            <View
+              style={{
+                width: SCANNER_SIZE + 4,
+                height: SCANNER_SIZE + 4,
+                ...flexbox.alignSelfCenter,
+                borderRadius: BORDER_RADIUS_PRIMARY + 6,
+                overflow: 'hidden'
+              }}
+            >
+              <QrScannerWithPermission
+                onComplete={handleScanComplete}
+                disabled={hasScannedPayload || isImporting}
+                externalError={scanError}
+                onExternalRetry={retryScan}
+              />
+            </View>
+          </>
         ) : (
           <View style={flexbox.flex1} onLayout={handleCarouselLayout}>
             {carouselWidth > 0 && (
