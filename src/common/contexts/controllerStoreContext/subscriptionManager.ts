@@ -1,5 +1,7 @@
 import isEqual from 'react-fast-compare'
 
+import { isDev } from '@common/config/env'
+
 import { ControllerHelpersStore } from './controllerHelpersStore'
 import { ControllerStore } from './controllerStore'
 
@@ -12,11 +14,27 @@ type Unsubscribe = () => void
  * 1. Aggregating subscriptions: It creates only one listener per controller ID in the store,
  *    regardless of how many components use the `useController` hook for that controller.
  * 2. Smart updates: It uses `react-fast-compare` to check for deep equality, preventing
- *    re-renders when the state reference changes but the content remains the same.
+ *    re-renders when the state reference changes but the content remains the same. A store
+ *    that reconciles its snapshots answers that question with the reference alone, so there
+ *    the comparison is skipped (see `hasStructurallySharedSnapshots`).
  * 3. Selector support: It allows components to subscribe to specific slices of state via selectors,
  *    triggering updates only when that specific slice changes.
  */
 export class SubscriptionManager {
+  /**
+   * Set for a store whose snapshots reuse every unchanged top-level value, where reference
+   * inequality already proves a real change and the deep comparison can only ever
+   * confirm it. Costs one walk of the selected slice per subscriber per emit, so it
+   * is skipped there.
+   */
+  readonly #hasStructurallySharedSnapshots: boolean
+
+  constructor({
+    hasStructurallySharedSnapshots = false
+  }: { hasStructurallySharedSnapshots?: boolean } = {}) {
+    this.#hasStructurallySharedSnapshots = hasStructurallySharedSnapshots
+  }
+
   #stores: Map<
     any,
     Map<
@@ -30,7 +48,7 @@ export class SubscriptionManager {
 
   // Optional hook fired whenever the set of controller ids with at least one
   // active subscriber changes (a controller gains its first subscriber or loses
-  // its last). Mobile uses this to tell the WebView worker which controller
+  // its last). Mobile uses this to tell the controller host which controller
   // states are worth serializing across the bridge. Unset on web/extension,
   // where it is a no-op and behavior is unchanged.
   #onSubscribedControllersChange?: (ids: string[]) => void
@@ -98,6 +116,14 @@ export class SubscriptionManager {
       // Shallow check for performance
       if (newValue === lastValue) return
 
+      if (this.#hasStructurallySharedSnapshots) {
+        if (isDev && selector) this.#warnOnAllocatingSelector(id, newValue, lastValue)
+
+        entry.lastValue = newValue
+        listener()
+        return
+      }
+
       // Deep equality check using react-fast-compare
       if (!isEqual(newValue, lastValue)) {
         entry.lastValue = newValue
@@ -107,6 +133,19 @@ export class SubscriptionManager {
         entry.lastValue = newValue
       }
     })
+  }
+
+  /**
+   * Catches a selector that builds its result instead of reading it off the state.
+   * Such a selector returns a new reference on every emit, so with the deep
+   * comparison gone it re-renders its component even when nothing it reads changed.
+   */
+  #warnOnAllocatingSelector(id: string, newValue: unknown, lastValue: unknown) {
+    if (!isEqual(newValue, lastValue)) return
+
+    console.warn(
+      `The selector for ${id} builds a new value on every update instead of returning one that lives on the state, so its component re-renders even when nothing changed. Return the state's own value, or move the derivation into the component.`
+    )
   }
 
   getSnapshot(

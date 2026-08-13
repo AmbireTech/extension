@@ -8,18 +8,13 @@ export {
   markBoot,
   markBootOnce,
   markSplashHidden,
-  markStorageSnapshotKeys,
-  monotonicNow,
-  setWorkerBootProfile
+  monotonicNow
 } from './bootProfiler'
 export {
   BOOT_MARK,
   BOOT_MARK_PREFIX,
   BOOT_PROFILE_DEADLINE,
-  BOOT_PROFILE_MARKS_EVENT,
-  BOOT_PROFILE_MARKS_MESSAGE,
   BOOT_PROFILE_REALM,
-  BOOT_PROFILE_WORKER_FLUSH_TIMEOUT,
   IS_BOOT_PROFILING_ENABLED
 } from './constants'
 export type { BootMark, BootMarkDetail, BootProfilePayload } from './types'

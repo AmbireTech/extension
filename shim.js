@@ -9,6 +9,17 @@ import './src/mobile/services/bootProfiler/bootProfiler'
 import { install } from 'react-native-quick-crypto'
 install()
 
+// install() doesn't set global.CryptoKey
+if (typeof global.CryptoKey === 'undefined') {
+  const { CryptoKey } = require('react-native-quick-crypto')
+  if (!CryptoKey) {
+    throw new Error(
+      'shim: react-native-quick-crypto did not export CryptoKey; keystore instanceof guards will fail'
+    )
+  }
+  global.CryptoKey = CryptoKey
+}
+
 // 3. Ethers/Legacy shims
 // Keep these for ethers v5/v6 compatibility until you fully migrate
 import 'react-native-get-random-values'

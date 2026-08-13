@@ -1,6 +1,20 @@
 module.exports = function (api) {
   const isLegends = process.env.WEBPACK_BUILD_OUTPUT_PATH?.includes('legends')
-  api.cache(true)
+  // Keyed on the env the config below branches on, rather than cached outright, so a
+  // build for one target cannot reuse the config computed for another.
+  api.cache.using(() => `${process.env.WEB_ENGINE}|${process.env.WEBPACK_BUILD_OUTPUT_PATH}`)
+
+  const isMobile =
+    !process.env.WEB_ENGINE &&
+    !process.env.WEBPACK_BUILD_OUTPUT_PATH?.includes('benzin') &&
+    !process.env.WEBPACK_BUILD_OUTPUT_PATH?.includes('legends')
+
+  // Bundle Mode is mobile-only: it pairs with getBundleModeMetroConfig in
+  // metro.config.js and has no counterpart in the webpack builds.
+  const workletsPluginOptions = {
+    relativeSourceLocation: true,
+    ...(isMobile ? { bundleMode: true, strictGlobal: true } : {})
+  }
 
   const pathAliases = {
     '@': './src/ambire-common/src',
@@ -27,7 +41,7 @@ module.exports = function (api) {
           path: '.env'
         }
       ],
-      ['react-native-worklets/plugin', { relativeSourceLocation: true }]
+      ['react-native-worklets/plugin', workletsPluginOptions]
     ]
   }
 
@@ -110,11 +124,6 @@ module.exports = function (api) {
       ]
     ]
   }
-
-  const isMobile =
-    !process.env.WEB_ENGINE &&
-    !process.env.WEBPACK_BUILD_OUTPUT_PATH?.includes('benzin') &&
-    !process.env.WEBPACK_BUILD_OUTPUT_PATH?.includes('legends')
 
   return isMobile ? mobileConfig : webConfig
 }

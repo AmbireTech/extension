@@ -1,14 +1,6 @@
-import type { SerializedStorageSnapshot } from '@common/services/storage/types'
-
-import {
-  BOOT_MARK,
-  BOOT_MARK_PREFIX,
-  BOOT_PROFILE_REALM,
-  IS_BOOT_PROFILING_ENABLED,
-  STORAGE_KEY_NOT_SNAPSHOTTED
-} from './constants'
+import { BOOT_MARK, BOOT_PROFILE_REALM } from './constants'
 import { BootMarkRecorder, monotonicNow } from './markRecorder'
-import { BootMark, BootMarkDetail, BootProfilePayload } from './types'
+import { BootMark, BootMarkDetail } from './types'
 
 // This module is imported by the very first line of the RN bundle so the entry
 // mark below is stamped before any shim, polyfill or Sentry init runs. Keep its
@@ -18,13 +10,6 @@ import { BootMark, BootMarkDetail, BootProfilePayload } from './types'
 export const bootProfiler = new BootMarkRecorder(BOOT_PROFILE_REALM.rn)
 
 bootProfiler.mark(BOOT_MARK.rnJsEntry)
-
-/** Marks received from the WebView worker realm. Replaced wholesale on each flush. */
-let workerPayload: BootProfilePayload | null = null
-
-export const setWorkerBootProfile = (payload: BootProfilePayload) => {
-  workerPayload = payload
-}
 
 type ReactNativeStartupTiming = {
   startTime?: number | null
@@ -68,13 +53,9 @@ const collectNativeStartupMarks = (): BootMark[] => {
   return nativeRecorder.getMarks()
 }
 
-/** Every mark from every realm, ordered by wall clock. */
+/** Every mark from both realms, ordered by wall clock. */
 export const getAllBootMarks = (): BootMark[] =>
-  [
-    ...collectNativeStartupMarks(),
-    ...bootProfiler.getMarks(),
-    ...(workerPayload?.marks ?? [])
-  ].sort((a, b) => a.epochMs - b.epochMs)
+  [...collectNativeStartupMarks(), ...bootProfiler.getMarks()].sort((a, b) => a.epochMs - b.epochMs)
 
 export { monotonicNow }
 
@@ -86,30 +67,6 @@ export const markBoot = (name: string, detail?: BootMarkDetail) => bootProfiler.
  */
 export const markBootOnce = (name: string, detail?: BootMarkDetail) => {
   if (bootProfiler.reserveOnce(name)) bootProfiler.mark(name, detail)
-}
-
-/**
- * Records the wire size of every key in the init storage snapshot, so the report
- * can say which keys make up the payload the worker has to receive and parse
- * before it can construct a single controller.
- *
- * Sizes are string lengths, the same unit the bridge payload marks use, so the
- * per-key numbers add up against `rn.initPayload.encoded`. Keys held out of the
- * snapshot are marked too, without a size (reading them to measure would cost as
- * much as shipping them), so the report still shows they exist and are deferred.
- */
-export const markStorageSnapshotKeys = (snapshot: SerializedStorageSnapshot) => {
-  if (!IS_BOOT_PROFILING_ENABLED) return
-
-  Object.entries(snapshot.values).forEach(([key, serialized]) => {
-    markBoot(`${BOOT_MARK_PREFIX.rnStorageKey}${key}`, { bytes: serialized.length })
-  })
-
-  snapshot.allKeys
-    .filter((key) => snapshot.values[key] === undefined)
-    .forEach((key) => {
-      markBoot(`${BOOT_MARK_PREFIX.rnStorageKey}${key}`, { note: STORAGE_KEY_NOT_SNAPSHOTTED })
-    })
 }
 
 /**

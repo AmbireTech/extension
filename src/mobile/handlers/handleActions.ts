@@ -9,27 +9,36 @@ import NfcKeyIterator from '@common/modules/hardware-wallets/libs/nfcKeyIterator
 import QrKeyIterator from '@common/modules/hardware-wallets/libs/qrKeyIterator'
 import handleProviderRequests from '@common/modules/provider/handleProviderRequests'
 import { Action, MethodAction } from '@common/types/actions'
+import {
+  approveWalletConnectSession,
+  approveWcAuthenticate,
+  handleWcSessionBroadcast,
+  prepareWcAuthenticate,
+  rejectWalletConnectSession,
+  rejectWcAuthenticate,
+  respondToWalletConnectRequest
+} from '@mobile/modules/wallet-connect/services/walletConnectService'
+import { createWcBridgeMessenger } from '@mobile/modules/wallet-connect/services/wcBridgeMessenger'
 import { getWcTabIdFromTopic } from '@mobile/modules/wallet-connect/utils'
+import { mobileMessenger } from '@mobile/modules/webview/mobileMessenger'
 import {
   buildStateForFE,
   queueCtrlStateIfBootPhaseDeferred,
   setBootPhase,
   setSubscribedControllers
-} from '@mobile/modules/webview/services/bootPhase'
-import { mobileMessenger } from '@mobile/modules/webview/services/mobileMessenger'
-import { createWcBridgeMessenger } from '@mobile/modules/webview/services/wcBridgeMessenger'
-import { flushWorkerBootProfile } from '@mobile/modules/webview/services/workerBootProfiler'
+} from '@mobile/services/controllerHost/bootPhase'
+import { emitCtrlUpdate, emitToDappWebView } from '@mobile/services/controllerHost/uiEvents'
 
 export const handleActions = async (
   action: MethodAction | Action,
   {
     eventEmitterRegistry,
     mainCtrl,
-    sendToReactEvent
+    dispatch
   }: {
     eventEmitterRegistry: IEventEmitterRegistryController
     mainCtrl: MainController
-    sendToReactEvent: (type: string, payload: any) => void
+    dispatch: (action: MethodAction | Action, windowId?: number, raw?: boolean) => void
   }
 ) => {
   // @ts-ignore
@@ -55,10 +64,7 @@ export const handleActions = async (
     case 'INIT_CONTROLLER_STATE': {
       const ctrl = eventEmitterRegistry.values().find((c) => c.name === params.controller)
 
-      sendToReactEvent('ctrl.update', {
-        ctrlName: params.controller,
-        state: ctrl ? buildStateForFE(params.controller, ctrl) : null
-      })
+      emitCtrlUpdate(params.controller, ctrl ? buildStateForFE(params.controller, ctrl) : null)
 
       break
     }
@@ -68,13 +74,13 @@ export const handleActions = async (
         const ctrl = eventEmitterRegistry.values().find((c) => c.name === ctrlName)
 
         if (!ctrl) {
-          sendToReactEvent('ctrl.update', { ctrlName, state: null })
+          emitCtrlUpdate(ctrlName, null)
           return
         }
 
         if (queueCtrlStateIfBootPhaseDeferred(ctrlName, ctrl)) return
 
-        sendToReactEvent('ctrl.update', { ctrlName, state: buildStateForFE(ctrlName, ctrl) })
+        emitCtrlUpdate(ctrlName, buildStateForFE(ctrlName, ctrl))
       })
       break
     }
@@ -103,16 +109,15 @@ export const handleActions = async (
       break
     }
 
-    case 'FLUSH_BOOT_PROFILE': {
-      flushWorkerBootProfile()
-      break
-    }
-
-    // Fired once from the dashboard after its first render, so the dapp catalog and
-    // phishing storage reads stay off the boot path.
+    // Fired once the portfolio has fully landed (or Explore is opened), so the dapp
+    // catalog and phishing storage reads stay off the boot path. The two are started a
+    // macrotask apart, because each parses a multi-megabyte blob synchronously and back
+    // to back they hold the JS thread for the sum of both.
     case 'INIT_DEFERRED_CONTROLLERS': {
       void mainCtrl.phishing.init()
-      void mainCtrl.dapps.init()
+      setTimeout(() => {
+        void mainCtrl.dapps.init()
+      }, 0)
       console.log(
         'handleActions: INIT_DEFERRED_CONTROLLERS dispatched, dapp catalog and phishing lists initialized'
       )
@@ -155,7 +160,7 @@ export const handleActions = async (
       }
 
       for (const topic of wcTopicsToTerminate) {
-        sendToReactEvent('action.wcSessionBroadcast', {
+        await handleWcSessionBroadcast({
           wcSessionTopic: topic,
           chainId: 1,
           event: 'disconnect',
@@ -186,7 +191,7 @@ export const handleActions = async (
       const disconnectedDapps = await mainCtrl.dapps.disconnectAllDapps(params.source)
 
       for (const topic of wcTopicsToTerminate) {
-        sendToReactEvent('action.wcSessionBroadcast', {
+        await handleWcSessionBroadcast({
           wcSessionTopic: topic,
           chainId: 1,
           event: 'disconnect',
@@ -308,38 +313,25 @@ export const handleActions = async (
             if (!!result) {
               if (isWcAuthenticate) {
                 // Account selected — format the SIWE message and dispatch personal_sign
-                sendToReactEvent('action.prepareWcAuthenticate', {
-                  id: params.requestId,
-                  accounts: result
-                })
+                await prepareWcAuthenticate(params.requestId, result[0], dispatch)
               } else {
-                sendToReactEvent('action.approveWalletConnectSession', {
-                  proposalId: params.requestId,
-                  accounts: result
-                })
+                await approveWalletConnectSession(params.requestId, result, dispatch)
               }
             }
           } else if (isWcAuthenticate && request.method === 'personal_sign') {
             // Signing done — approve the authenticate request.
             // authId is embedded in the topic because requestId = authId + 1 to bypass the per-session deduplication guard.
             const authId = parseInt(topic.replace('temp_wc_auth_', ''), 10)
-            sendToReactEvent('action.approveWalletConnectAuthenticate', {
-              id: authId,
-              signature: result
-            })
+            await approveWcAuthenticate(authId, result, dispatch)
           } else if (isWcAuthenticate) {
             // Other methods in the auth flow (e.g. tabCheckin) only set up metadata —
             // they don't yield a response we forward to WalletKit.
           } else {
-            sendToReactEvent('action.respondToWalletConnectRequest', {
-              topic: params.topic,
-              response: { result },
-              id: params.requestId
-            })
+            await respondToWalletConnectRequest(params.topic, { result }, params.requestId)
           }
         } else {
-          // In-app webview requests - send to webview bridge (existing flow)
-          sendToReactEvent('action.sendToDappWebView', {
+          // In-app webview requests - send to the dapp WebView (existing flow)
+          emitToDappWebView({
             result,
             error: null,
             requestId: params.requestId,
@@ -358,28 +350,21 @@ export const handleActions = async (
         if (isWalletConnect) {
           if (isTempSession) {
             if (isWcAuthenticate) {
-              sendToReactEvent('action.rejectWalletConnectAuthenticate', {
-                id: params.requestId
-              })
+              await rejectWcAuthenticate(params.requestId)
             } else {
-              sendToReactEvent('action.rejectWalletConnectSession', {
-                proposalId: params.requestId
-              })
+              await rejectWalletConnectSession(params.requestId)
             }
           } else if (isWcAuthenticate && request.method === 'personal_sign') {
             const authId = parseInt(topic.replace('temp_wc_auth_', ''), 10)
-            sendToReactEvent('action.rejectWalletConnectAuthenticate', { id: authId })
+            await rejectWcAuthenticate(authId)
           } else if (isWcAuthenticate) {
             // tabCheckin/etc errors during auth handshake — no auth response to send.
           } else {
-            sendToReactEvent('action.respondToWalletConnectRequest', {
-              topic: params.topic,
-              response: { error: errorRes }, // Raw error - will be formatted into JSON-RPC by walletConnectService
-              id: params.requestId
-            })
+            // Raw error - will be formatted into JSON-RPC by walletConnectService
+            await respondToWalletConnectRequest(params.topic, { error: errorRes }, params.requestId)
           }
         } else {
-          sendToReactEvent('action.sendToDappWebView', {
+          emitToDappWebView({
             result: null,
             error: errorRes,
             requestId: params.requestId,
@@ -392,8 +377,6 @@ export const handleActions = async (
     }
 
     case 'SETUP_WC_SESSION_MESSENGER': {
-      // Shoudln't be needed but just in case
-      await mainCtrl.dapps.init()
       // Remove temp session if it exists (the one that was created during handshake)
       if (params.tempSessionTopic) {
         mainCtrl.dapps.deleteDappSessionByWcTopic(params.tempSessionTopic)
@@ -427,8 +410,6 @@ export const handleActions = async (
     }
 
     case 'RESTORE_WC_SESSIONS': {
-      // Shoudln't be needed but just in case
-      await mainCtrl.dapps.init()
       for (const wcSession of params.sessions) {
         const { topic, name, icon, url, chainId, candidateChainIds } = wcSession
         try {

@@ -2,30 +2,23 @@ import { useEffect, useRef } from 'react'
 
 import useControllerStore from '@common/hooks/useControllerStore'
 import eventBus from '@common/services/event/eventBus'
-import { Action, MethodAction } from '@common/types/actions'
-import { MOBILE_DEFERRED_CONTROLLERS } from '@mobile/constants/criticalControllers'
 import {
   BOOT_MARK,
   BOOT_PROFILE_DEADLINE,
-  BOOT_PROFILE_MARKS_EVENT,
-  BOOT_PROFILE_WORKER_FLUSH_TIMEOUT,
   IS_BOOT_PROFILING_ENABLED,
   markBootOnce
 } from '@mobile/services/bootProfiler'
 
 /**
- * Marks the controller-store readiness milestones and, once the boot has settled,
- * asks the WebView worker for its marks and prints the assembled two-realm
- * timeline. A no-op unless boot profiling is switched on.
+ * Marks the controller-store readiness milestones and prints the boot timeline
+ * once the boot has settled. A no-op unless boot profiling is switched on.
  *
- * Reports on whichever comes first: every non-deferred controller state having
- * landed, or BOOT_PROFILE_DEADLINE elapsing. The deferred controllers are left out
- * because they only start loading after unlock, which may take a long time or never
- * happen at all.
+ * Reports on whichever comes first: the store reporting ready, or
+ * BOOT_PROFILE_DEADLINE elapsing. The store's readiness leaves the deferred
+ * controllers out, because they only start loading once the portfolio is in, which may
+ * take a long time or never happen at all.
  */
-const useBootProfileReport = (
-  dispatch: (action: MethodAction | Action, windowId?: number, raw?: boolean) => void
-) => {
+const useBootProfileReport = () => {
   const { controllerStore, isReadyToLoadRoutes } = useControllerStore()
   const hasReportedRef = useRef(false)
 
@@ -38,11 +31,8 @@ const useBootProfileReport = (
     if (!IS_BOOT_PROFILING_ENABLED) return
 
     let deadlineId: ReturnType<typeof setTimeout> | null = null
-    let workerFlushId: ReturnType<typeof setTimeout> | null = null
     let readinessFrameId: number | null = null
-    let removeWorkerMarksListener: (() => void) | null = null
-    // The worker's marks arriving and the flush timeout firing can race, and only
-    // one of them should print.
+    // The readiness check and the deadline can race, and only one should print.
     let hasPrinted = false
 
     const print = async () => {
@@ -65,33 +55,13 @@ const useBootProfileReport = (
       if (hasReportedRef.current) return
       hasReportedRef.current = true
 
-      const onWorkerMarks = () => {
-        if (workerFlushId) clearTimeout(workerFlushId)
-        workerFlushId = null
-        void print()
-      }
-
-      eventBus.addEventListener(BOOT_PROFILE_MARKS_EVENT, onWorkerMarks)
-      removeWorkerMarksListener = () =>
-        eventBus.removeEventListener(BOOT_PROFILE_MARKS_EVENT, onWorkerMarks)
-
-      dispatch({ type: 'FLUSH_BOOT_PROFILE' })
-      // Print without the worker's half rather than never printing at all — a
-      // worker that cannot answer is itself the finding.
-      workerFlushId = setTimeout(() => {
-        workerFlushId = null
-        void print()
-      }, BOOT_PROFILE_WORKER_FLUSH_TIMEOUT)
+      void print()
     }
 
     const checkNonDeferredReadiness = () => {
       readinessFrameId = null
 
-      const nonDeferredControllers = controllerStore.controllersByName.filter(
-        (ctrlName) => !MOBILE_DEFERRED_CONTROLLERS.includes(ctrlName)
-      )
-      if (!nonDeferredControllers.length) return
-      if (!controllerStore.areControllersReady(nonDeferredControllers)) return
+      if (!controllerStore.isReady) return
 
       markBootOnce(BOOT_MARK.rnStoreNonDeferredReady)
       eventBus.removeEventListener('ctrlUpdate', onCtrlUpdate)
@@ -114,14 +84,10 @@ const useBootProfileReport = (
 
     return () => {
       if (deadlineId) clearTimeout(deadlineId)
-      if (workerFlushId) clearTimeout(workerFlushId)
-      // Must be cancelled too: a frame that fires after cleanup would run `report`,
-      // which adds an event listener and a timeout that nothing is left to remove.
       if (readinessFrameId !== null) cancelAnimationFrame(readinessFrameId)
       eventBus.removeEventListener('ctrlUpdate', onCtrlUpdate)
-      removeWorkerMarksListener?.()
     }
-  }, [controllerStore, dispatch])
+  }, [controllerStore])
 }
 
 export default useBootProfileReport

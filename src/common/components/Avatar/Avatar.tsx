@@ -160,7 +160,7 @@ const Avatar: FC<Props> = ({
           height={size}
           borderRadius={borderRadius}
           appearance="secondaryBackground"
-          style={{ zIndex: -1, position: 'absolute' }}
+          style={{ zIndex: -1, position: 'absolute', left: 0, top: 0 }}
         />
       )}
       {avatarType === 'jazzicons' && (

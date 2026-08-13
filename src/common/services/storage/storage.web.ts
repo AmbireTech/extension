@@ -2,8 +2,6 @@ import { Storage, StorageProps } from '@ambire-common/interfaces/storage'
 import { parse, stringify } from '@ambire-common/libs/richJson/richJson'
 import { browser, isExtension } from '@web/constants/browserapi'
 
-import { SerializedStorageSnapshot } from './types'
-
 function commonGet<K extends keyof StorageProps>(key: K): Promise<StorageProps[K] | undefined>
 function commonGet<K extends keyof StorageProps>(
   key: K,
@@ -120,8 +118,4 @@ const secureStorage = {
   }
 }
 
-// PERF: mobile-only optimization (seeds the WebView worker's storage cache).
-// On web/extension there is no such worker bridge, so this is a no-op.
-const getAllSerialized = (): SerializedStorageSnapshot => ({ values: {}, allKeys: [] })
-
-export { asyncStorage as storage, syncStorage, syncSessionStorage, secureStorage, getAllSerialized }
+export { asyncStorage as storage, syncStorage, syncSessionStorage, secureStorage }

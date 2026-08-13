@@ -1,7 +1,9 @@
 import { flushSync } from 'react-dom'
 
 import { parse, stringify } from '@ambire-common/libs/richJson/richJson'
-import { isMobile } from '@common/config/env'
+import { isDev, isMobile } from '@common/config/env'
+import eventBus from '@common/services/event/eventBus'
+import { reconcileState } from '@common/utils/reconcileState'
 import { isExtension } from '@web/constants/browserapi'
 
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
@@ -10,6 +12,8 @@ export const CONTROLLER_STORE_MAX_LOADING_TIME = 10000
 
 export class ControllerStore {
   isReady = false
+
+  readonly hasStructurallySharedSnapshots = !isExtension && isMobile
 
   // Flips to true as soon as the subset of controllers required to decide the
   // initial route is initialized. Used on mobile to hide the splash screen
@@ -27,8 +31,8 @@ export class ControllerStore {
   #criticalControllers: (keyof AllControllersMappingType)[] = []
 
   /**
-   * Controllers the platform deliberately loads after the initial route renders. They
-   * still gate `isReady`, but waiting on them is expected, so they are left out of the
+   * Controllers the platform deliberately loads after the initial route renders.
+   * Waiting on them is expected, so they are left out of `isReady` and of the
    * `controllersLoadingTakingTooLong` check that reports a broken boot.
    */
   #deferredControllers: (keyof AllControllersMappingType)[] = []
@@ -49,20 +53,36 @@ export class ControllerStore {
     this.#onReady = onReady
     this.#onReadyToLoadRoutes = onReadyToLoadRoutes
 
+    eventBus.addEventListener('ctrlUpdate', this.#onCtrlUpdate)
+
     setTimeout(() => {
+      // Waiting on a deferred controller is expected and must not be reported as a
+      // broken boot
       if (this.isReady || !this.#listeners.has('events')) return
-
-      const hasNonDeferredPending =
-        !this.controllersByName.length ||
-        this.controllersByName.some(
-          (ctrlName) =>
-            !this.#deferredControllers.includes(ctrlName) && !this.#isControllerReady(ctrlName)
-        )
-
-      if (!hasNonDeferredPending) return
 
       this.#listeners.get('events')!.forEach((cb) => cb('controllersLoadingTakingTooLong'))
     }, CONTROLLER_STORE_MAX_LOADING_TIME)
+  }
+
+  #onCtrlUpdate = ({
+    ctrlName,
+    ctrlState,
+    forceEmit
+  }: {
+    ctrlName: string
+    ctrlState: any
+    forceEmit?: boolean
+  }) => {
+    try {
+      this.update(ctrlName as any, ctrlState, forceEmit)
+    } catch (e) {
+      console.error(`controllerStore.update failed for controller "${ctrlName}":`, e)
+    }
+  }
+
+  /** Stops the store from taking any further controller state. */
+  destroy() {
+    eventBus.removeEventListener('ctrlUpdate', this.#onCtrlUpdate)
   }
 
   // Track which controllers have received their first update
@@ -97,9 +117,28 @@ export class ControllerStore {
   ) {
     if (ctrl === undefined) return
     try {
-      this.#states[id] = isExtension || isMobile ? { ...ctrl } : parse(stringify(ctrl))
+      // A shallow copy is only safe when the state already arrived as a fresh deep
+      // object, which is true on the extension because it crossed the port. Mobile
+      // runs the controllers in this same realm, so `ctrl` still holds the live
+      // nested objects and the snapshot has to be detached here instead. Reconciling
+      // on top of the detached copy keeps the emit path cheap: an emit that changed
+      // nothing returns the previous snapshot untouched, so every subscriber exits on
+      // a reference check instead of a full deep comparison.
+      if (isExtension) {
+        this.#states[id] = { ...ctrl }
+      } else if (this.hasStructurallySharedSnapshots) {
+        this.#states[id] = reconcileState(this.#states[id], ctrl, {
+          label: id as string,
+          detectCycles: isDev
+        })
+      } else {
+        this.#states[id] = parse(stringify(ctrl))
+      }
     } catch (error) {
-      console.error(error)
+      // Leaving the snapshot unset means every consumer reads the empty state and
+      // the store never reports ready, so the controller has to be named or the
+      // failure looks like an unrelated crash in whichever screen read it first.
+      console.error(`controllerStore: could not snapshot the state of ${id}:`, error)
     }
     // Track first-emit. We re-check readiness on every update so a controller
     // whose `isReady` flips from `false` to `true` on a later emit can graduate
@@ -178,8 +217,12 @@ export class ControllerStore {
   #checkReadiness() {
     if (this.isReady) return
     if (!this.controllersByName.length) return
-    // Check if every required controller exists in the initialized set
-    const allReady = this.controllersByName.every((ctrlName) => this.#isControllerReady(ctrlName))
+    // Check if every required controller exists in the initialized set, leaving out the
+    // ones the platform deliberately loads after the first paint.
+    const allReady = this.controllersByName.every(
+      (ctrlName) =>
+        this.#deferredControllers.includes(ctrlName) || this.#isControllerReady(ctrlName)
+    )
 
     // NOTE: used for debugging the initial loading of controllers
     // console.log(

@@ -1,13 +1,13 @@
 // TODO: `expo-file-system/legacy` is the deprecated function-based API, kept here for
-// consistency with the other mobile call sites (getWebviewBundleUri.ts). Migrate all of
-// them together when Expo drops it.
+// consistency with the other mobile call sites. Migrate all of them together when
+// Expo drops it.
 import { documentDirectory, writeAsStringAsync } from 'expo-file-system/legacy'
 import { Platform } from 'react-native'
 
 import { APP_VERSION, isDev } from '@common/config/env'
 
 import { getAllBootMarks } from './bootProfiler'
-import { BOOT_MARK, BOOT_MARK_PREFIX, STORAGE_KEY_NOT_SNAPSHOTTED } from './constants'
+import { BOOT_MARK, BOOT_MARK_PREFIX } from './constants'
 import { BootMark } from './types'
 
 const PHASES: { label: string; from: string; to: string }[] = [
@@ -57,48 +57,28 @@ const PHASES: { label: string; from: string; to: string }[] = [
     to: BOOT_MARK.rnAppInitMounted
   },
   {
-    label: '  └ App rendered → WebView worker mounted',
-    from: BOOT_MARK.rnAppRender,
-    to: BOOT_MARK.rnWebviewMounted
-  },
-  {
-    label: 'WebView spawn + HTML load + worker bundle fetch/parse',
-    from: BOOT_MARK.rnWebviewMounted,
-    to: BOOT_MARK.workerBundleEvalStart
-  },
-  {
-    label: '  ├ WebView spawn + HTML load (to the bundle <script> tag)',
-    from: BOOT_MARK.rnWebviewMounted,
-    to: BOOT_MARK.workerPageBundleTagReached
-  },
-  {
-    label: '  └ bundle fetch + SRI hash + compile',
-    from: BOOT_MARK.workerPageBundleTagReached,
-    to: BOOT_MARK.workerBundleEvalStart
-  },
-  {
-    label: 'Worker module graph eval (ambire-common, ethers, ...)',
-    from: BOOT_MARK.workerBundleEvalStart,
-    to: BOOT_MARK.workerImportsEvaluated
-  },
-  {
-    label: 'Worker loaded → init payload injected',
-    from: BOOT_MARK.rnWorkerLoadedReceived,
-    to: BOOT_MARK.rnInitPayloadInjected
-  },
-  {
-    label: 'Init payload injected → received in worker',
-    from: BOOT_MARK.rnInitPayloadInjected,
-    to: BOOT_MARK.workerInitReceived
-  },
-  {
     label: 'Controller construction (new MainController, ...)',
-    from: BOOT_MARK.workerInitReceived,
-    to: BOOT_MARK.workerReady
+    from: BOOT_MARK.rnAppInitMounted,
+    to: BOOT_MARK.rnControllersReady
   },
   {
-    label: 'Worker ready → critical controller states in store',
-    from: BOOT_MARK.rnWorkerReadyReceived,
+    label: '  ├ MainController',
+    from: BOOT_MARK.rnMainCtrlConstructed,
+    to: BOOT_MARK.rnMainCtrlConstructed
+  },
+  {
+    label: '  ├ WalletStateController',
+    from: BOOT_MARK.rnWalletStateCtrlConstructed,
+    to: BOOT_MARK.rnWalletStateCtrlConstructed
+  },
+  {
+    label: '  └ AutoLockController',
+    from: BOOT_MARK.rnAutoLockCtrlConstructed,
+    to: BOOT_MARK.rnAutoLockCtrlConstructed
+  },
+  {
+    label: 'Controllers ready → critical controller states in store',
+    from: BOOT_MARK.rnControllersReady,
     to: BOOT_MARK.rnStoreCriticalReady
   },
   {
@@ -143,10 +123,7 @@ const findMark = (marks: BootMark[], name: string) => marks.find((mark) => mark.
 
 // Marks that have their own table and would otherwise bury the timeline under one
 // row per storage key.
-const TIMELINE_EXCLUDED_PREFIXES = [
-  BOOT_MARK_PREFIX.rnStorageKey,
-  BOOT_MARK_PREFIX.workerStorageRead
-]
+const TIMELINE_EXCLUDED_PREFIXES = [BOOT_MARK_PREFIX.rnCtrlSerialize]
 
 const buildTimeline = (allMarks: BootMark[], originMs: number) => {
   const marks = allMarks.filter(
@@ -227,163 +204,49 @@ const buildSpanRanking = (marks: BootMark[]) => {
 type ControllerRow = {
   name: string
   serializeMs?: number
-  encodeMs?: number
-  bytes?: number
-  decodeMs?: number
   arrivedAtMs?: number
 }
 
 /**
- * Per-controller cost of getting the first state across the bridge: `toJSON` in
- * the worker, richJson stringify, wire size, richJson parse on the RN side.
+ * What the first state of each controller costs to hand to the UI. Only `toJSON()`
+ * plus the nested-controller pruning is left now that the controllers run in the
+ * same realm as the UI — there is no serialization across a bridge to pay for.
  */
 const buildControllerTable = (marks: BootMark[], originMs: number) => {
   const rows: Map<string, ControllerRow> = new Map()
 
-  const rowFor = (name: string) => {
-    if (!rows.has(name)) rows.set(name, { name })
-    return rows.get(name)!
-  }
-
   marks.forEach((mark) => {
-    if (mark.name.startsWith(BOOT_MARK_PREFIX.workerCtrlSerialize)) {
-      rowFor(mark.name.slice(BOOT_MARK_PREFIX.workerCtrlSerialize.length)).serializeMs =
-        mark.detail?.durationMs
-    } else if (mark.name.startsWith(BOOT_MARK_PREFIX.workerCtrlEncode)) {
-      const row = rowFor(mark.name.slice(BOOT_MARK_PREFIX.workerCtrlEncode.length))
-      row.encodeMs = mark.detail?.durationMs
-      row.bytes = mark.detail?.bytes
-    } else if (mark.name.startsWith(BOOT_MARK_PREFIX.rnCtrlDecode)) {
-      const row = rowFor(mark.name.slice(BOOT_MARK_PREFIX.rnCtrlDecode.length))
-      row.decodeMs = mark.detail?.durationMs
-      row.arrivedAtMs = mark.epochMs - originMs
-      if (row.bytes === undefined) row.bytes = mark.detail?.bytes
-    }
+    if (!mark.name.startsWith(BOOT_MARK_PREFIX.rnCtrlSerialize)) return
+
+    const name = mark.name.slice(BOOT_MARK_PREFIX.rnCtrlSerialize.length)
+    rows.set(name, {
+      name,
+      serializeMs: mark.detail?.durationMs,
+      arrivedAtMs: mark.epochMs - originMs
+    })
   })
 
   if (!rows.size) return 'no controller states recorded'
 
-  const totalCost = (row: ControllerRow) =>
-    (row.serializeMs ?? 0) + (row.encodeMs ?? 0) + (row.decodeMs ?? 0)
-
-  const header = `${'controller'.padEnd(34)} ${'toJSON'.padStart(8)} ${'encode'.padStart(
-    8
-  )} ${'decode'.padStart(8)} ${'total'.padStart(8)} ${'wire'.padStart(10)} ${'arrived'.padStart(9)}`
+  const header = `${'controller'.padEnd(34)} ${'toJSON'.padStart(8)} ${'arrived'.padStart(9)}`
 
   const body = Array.from(rows.values())
-    .sort((a, b) => totalCost(b) - totalCost(a))
+    .sort((a, b) => (b.serializeMs ?? 0) - (a.serializeMs ?? 0))
     .map((row) =>
       [
         row.name.padEnd(34),
         `${row.serializeMs !== undefined ? formatMs(row.serializeMs) : '-'}`.padStart(8),
-        `${row.encodeMs !== undefined ? formatMs(row.encodeMs) : '-'}`.padStart(8),
-        `${row.decodeMs !== undefined ? formatMs(row.decodeMs) : '-'}`.padStart(8),
-        `${formatMs(totalCost(row))}`.padStart(8),
-        `${row.bytes !== undefined ? formatBytes(row.bytes) : '-'}`.padStart(10),
         `${row.arrivedAtMs !== undefined ? `t+${formatMs(row.arrivedAtMs)}` : '-'}`.padStart(9)
       ].join(' ')
     )
 
-  const totalBytes = Array.from(rows.values()).reduce((sum, row) => sum + (row.bytes ?? 0), 0)
-  const totalMs = Array.from(rows.values()).reduce((sum, row) => sum + totalCost(row), 0)
+  const totalMs = Array.from(rows.values()).reduce((sum, row) => sum + (row.serializeMs ?? 0), 0)
 
   return [
     header,
     ...body,
     '',
-    `${rows.size} controllers, ${formatBytes(totalBytes)} across the bridge, ${formatMs(
-      totalMs
-    )}ms of serialize+encode+decode`
-  ].join('\n')
-}
-
-type StorageKeyRow = {
-  key: string
-  bytes?: number
-  /** Set for keys held out of the init payload, which therefore have no size. */
-  isNotSnapshotted?: boolean
-  firstReadAtMs?: number
-  firstReadAtEpochMs?: number
-}
-
-/**
- * Per-key breakdown of the init storage snapshot: how much of the payload each key
- * is, and when the worker first read it.
- *
- * The `when` column says when the read happened, not whether the feature behind it
- * matters that early — a key read while the splash is up is only genuinely needed
- * there if a critical controller is waiting on it. Keys read after the splash, or
- * not read at all, are paid for during the splash for nothing.
- */
-const buildStorageTable = (marks: BootMark[], originMs: number) => {
-  const rows: Map<string, StorageKeyRow> = new Map()
-
-  const rowFor = (key: string) => {
-    if (!rows.has(key)) rows.set(key, { key })
-    return rows.get(key)!
-  }
-
-  marks.forEach((mark) => {
-    if (mark.name.startsWith(BOOT_MARK_PREFIX.rnStorageKey)) {
-      const row = rowFor(mark.name.slice(BOOT_MARK_PREFIX.rnStorageKey.length))
-      row.bytes = mark.detail?.bytes
-      row.isNotSnapshotted = mark.detail?.note === STORAGE_KEY_NOT_SNAPSHOTTED
-    } else if (mark.name.startsWith(BOOT_MARK_PREFIX.workerStorageRead)) {
-      const row = rowFor(mark.name.slice(BOOT_MARK_PREFIX.workerStorageRead.length))
-      row.firstReadAtMs = mark.epochMs - originMs
-      row.firstReadAtEpochMs = mark.epochMs
-    }
-  })
-
-  if (!rows.size) return 'no storage keys recorded'
-
-  const all = Array.from(rows.values())
-  const totalBytes = all.reduce((sum, row) => sum + (row.bytes ?? 0), 0)
-
-  const share = (bytes?: number) =>
-    bytes === undefined || !totalBytes ? '-' : `${Math.round((bytes / totalBytes) * 1000) / 10}%`
-
-  const readyMs = findMark(marks, BOOT_MARK.workerReady)?.epochMs
-  const splashMs = findMark(marks, BOOT_MARK.rnSplashHidden)?.epochMs
-
-  const isReadAfterSplash = (row: StorageKeyRow) =>
-    row.firstReadAtEpochMs === undefined ||
-    (splashMs !== undefined && row.firstReadAtEpochMs > splashMs)
-
-  const when = (row: StorageKeyRow) => {
-    if (row.isNotSnapshotted) return STORAGE_KEY_NOT_SNAPSHOTTED
-    if (row.firstReadAtEpochMs === undefined) return 'never read at boot'
-    if (readyMs !== undefined && row.firstReadAtEpochMs <= readyMs) return 'blocks construction'
-    return isReadAfterSplash(row) ? 'after splash' : 'during splash'
-  }
-
-  const header = `${'storage key'.padEnd(40)} ${'wire'.padStart(10)} ${'share'.padStart(
-    7
-  )} ${'1st read'.padStart(9)}  when`
-
-  const body = all
-    .sort((a, b) => (b.bytes ?? 0) - (a.bytes ?? 0))
-    .map((row) =>
-      [
-        row.key.padEnd(40),
-        `${row.bytes !== undefined ? formatBytes(row.bytes) : '-'}`.padStart(10),
-        share(row.bytes).padStart(7),
-        `${row.firstReadAtMs !== undefined ? `t+${formatMs(row.firstReadAtMs)}` : '-'}`.padStart(9),
-        ` ${when(row)}`
-      ].join(' ')
-    )
-
-  const afterSplashBytes = all
-    .filter(isReadAfterSplash)
-    .reduce((sum, row) => sum + (row.bytes ?? 0), 0)
-
-  return [
-    header,
-    ...body,
-    '',
-    `${rows.size} keys, ${formatBytes(totalBytes)} total, ${formatBytes(
-      afterSplashBytes
-    )} (${share(afterSplashBytes)}) not read until after the splash`
+    `${rows.size} controllers, ${formatMs(totalMs)}ms of serialization`
   ].join('\n')
 }
 
@@ -407,7 +270,7 @@ export const buildBootReport = (): string => {
   if (!firstMark) return 'Boot profile: no marks recorded'
 
   const originMs = firstMark.epochMs
-  const build = isDev ? 'DEV (Metro bundle + HTTP worker bundle — not representative)' : 'RELEASE'
+  const build = isDev ? 'DEV (Metro bundle — not representative)' : 'RELEASE'
 
   return [
     '',
@@ -421,11 +284,8 @@ export const buildBootReport = (): string => {
     '── Measured spans, slowest first ──',
     buildSpanRanking(marks),
     '',
-    '── First controller state across the bridge, most expensive first ──',
+    '── First controller state serialization, most expensive first ──',
     buildControllerTable(marks, originMs),
-    '',
-    '── Init storage snapshot by key, biggest first ──',
-    buildStorageTable(marks, originMs),
     '',
     '── Full timeline ──',
     buildTimeline(marks, originMs),
