@@ -9,7 +9,10 @@ export const MOBILE_CRITICAL_CONTROLLERS: (keyof AllControllersMappingType)[] = 
   'EmailVaultController',
   'AccountsController',
   'SelectedAccountController',
-  'WalletStateController'
+  'WalletStateController',
+  // GetStarted crashes without main. Consider removing it and unifying the critical controller
+  // logic with web so it's route-driven. (useGetStarted causes the crash)
+  'MainController'
 ]
 
 // Controllers that only load once the splash has hidden, because the data they read
