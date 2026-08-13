@@ -97,7 +97,7 @@ const PendingTokenSummary = ({ token, chainId, hasBottomSpacing = true }: Props)
             common.borderRadiusPrimary
           ]}
         >
-          <GasTankIcon width={14} height={14} color={theme.tertiaryText} />
+          <GasTankIcon width={14} height={14} color={theme.primaryAccent} />
         </View>
       ) : (
         <TokenIcon

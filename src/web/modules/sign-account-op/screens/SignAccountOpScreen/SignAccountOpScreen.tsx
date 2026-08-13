@@ -229,7 +229,7 @@ const SignAccountOpScreen = () => {
         renderDirectChildren={() => (
           <View style={[spacings.mh, spacings.mv]}>
             <GlassView>
-              <View style={[spacings.ph, spacings.pv, flexbox.flex1]}>
+              <View style={[spacings.ph, spacings.pvSm, flexbox.flex1]}>
                 {!estimationFailed &&
                 signAccountOpState?.canBroadcast &&
                 signAccountOpState?.status?.type !== SigningStatus.Queued ? (
