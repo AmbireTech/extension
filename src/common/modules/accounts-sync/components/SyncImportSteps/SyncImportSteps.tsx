@@ -26,6 +26,11 @@ interface Props {
    */
   stepIndex: number
   style?: ViewStyle
+  /**
+   * Fixes the height of the card behind the illustration, so it stays the same on every
+   * step no matter how tall the illustration of the step is
+   */
+  illustrationCardStyle?: ViewStyle
 }
 
 interface FooterProps extends Props {
@@ -41,7 +46,7 @@ interface FooterProps extends Props {
  * codes. Shown by both products, in the onboarding flow and when syncing later on, so
  * the steps themselves (copy and illustrations) are passed in by the platform screen.
  */
-const SyncImportSteps = ({ steps, stepIndex, style }: Props) => {
+const SyncImportSteps = ({ steps, stepIndex, style, illustrationCardStyle }: Props) => {
   const { theme } = useTheme()
 
   const step = steps[stepIndex]
@@ -56,7 +61,8 @@ const SyncImportSteps = ({ steps, stepIndex, style }: Props) => {
           // Enough room for the drop shadow some illustrations have to stay inside the card
           spacings.pvLg,
           spacings.mbLg,
-          { backgroundColor: theme.secondaryBackground, borderRadius: BORDER_RADIUS_PRIMARY }
+          { backgroundColor: theme.secondaryBackground, borderRadius: BORDER_RADIUS_PRIMARY },
+          illustrationCardStyle
         ]}
       >
         {step.illustration}
@@ -92,7 +98,7 @@ const SyncImportStepsFooter = ({
 
   return (
     <View style={style}>
-      <View style={[flexbox.directionRow, flexbox.center, spacings.mbLg]}>
+      <View style={[flexbox.directionRow, flexbox.center, spacings.mbMd]}>
         {steps.map(({ id }, index) => (
           <View
             key={id}
@@ -108,7 +114,9 @@ const SyncImportStepsFooter = ({
       </View>
       <Button
         testID={isLastStep ? 'sync-import-start-scanning' : 'sync-import-next-step'}
-        type={isLastStep ? 'primary' : 'secondary'}
+        // `tertiary` is the filled grey button of the design. `secondary` is the same on
+        // mobile, but on web it is white, which is invisible on the white panel.
+        type={isLastStep ? 'primary' : 'tertiary'}
         text={isLastStep ? finishText : t('Next')}
         onPress={handleNext}
         hasBottomSpacing={false}

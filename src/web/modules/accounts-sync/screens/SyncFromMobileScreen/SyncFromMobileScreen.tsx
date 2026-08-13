@@ -3,6 +3,7 @@ import { Image, ImageSourcePropType, View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 
 import scanQrCodes from '@common/assets/images/scan-qr-codes.png'
+import syncStepsOnTheMobile from '@common/assets/images/sync-steps-on-the-mobile.gif'
 import SyncIcon from '@common/assets/svg/SyncIcon'
 import Alert from '@common/components/Alert'
 import Panel from '@common/components/Panel'
@@ -18,7 +19,8 @@ import SyncImportSteps, {
 } from '@common/modules/accounts-sync/components/SyncImportSteps'
 import useAccountsSyncImport from '@common/modules/accounts-sync/hooks/useAccountsSyncImport'
 import { WEB_ROUTES } from '@common/modules/router/constants/common'
-import spacings from '@common/styles/spacings'
+import spacings, { SPACING_LG } from '@common/styles/spacings'
+import common, { BORDER_RADIUS_SECONDARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import { TabLayoutContainer, TabLayoutWrapperMainContent } from '@web/components/TabLayoutWrapper'
 import QrScannerWithPermission from '@web/modules/hardware-wallet/screens/QrScannerWithPermission'
@@ -29,6 +31,14 @@ import type { AllControllersMappingType } from '@common/constants/controllersMap
 const SCANNER_SIZE = 290
 // The asset is delivered at twice this size, so it stays sharp on dense screens
 const SCAN_ILLUSTRATION_SIZE = 236
+// The illustrations differ in height, so the card behind them is fixed to keep the panel
+// exactly as tall on every step
+const ILLUSTRATION_CARD_HEIGHT = 300
+// The scanner is shorter than the steps, so the panel is kept as tall as the steps make
+// it, no matter which of the two is on screen
+const PANEL_HEIGHT = 620
+const ANIMATION_HEIGHT = ILLUSTRATION_CARD_HEIGHT - SPACING_LG * 2
+const ANIMATION_ASPECT_RATIO = 374 / 664
 
 const selectHasPasswordSecret = (state: AllControllersMappingType['KeystoreController']) =>
   state.hasPasswordSecret
@@ -54,9 +64,28 @@ const SyncFromMobileScreen = () => {
     () => [
       {
         id: 'steps-on-mobile',
-        // TODO: Missing asset - the illustration (or animation) of the two steps on the
-        // Ambire mobile app, the counterpart of the Lottie of the steps on the extension.
-        illustration: null,
+        illustration: (
+          // The animation is a screenshot of the mobile app, so it gets the rounded
+          // corners and the drop shadow of a device floating above the card
+          <View
+            style={{
+              ...common.shadowPrimary,
+              ...flexbox.alignSelfCenter,
+              borderRadius: BORDER_RADIUS_SECONDARY,
+              backgroundColor: theme.primaryBackground
+            }}
+          >
+            <Image
+              source={syncStepsOnTheMobile as ImageSourcePropType}
+              resizeMode="contain"
+              style={{
+                width: ANIMATION_HEIGHT * ANIMATION_ASPECT_RATIO,
+                height: ANIMATION_HEIGHT,
+                borderRadius: BORDER_RADIUS_SECONDARY
+              }}
+            />
+          </View>
+        ),
         content: (
           <>
             <Text fontSize={14} weight="medium" appearance="secondaryText">
@@ -86,7 +115,7 @@ const SyncFromMobileScreen = () => {
         )
       }
     ],
-    [t]
+    [t, theme]
   )
 
   const handleImported = useCallback(() => {
@@ -144,32 +173,44 @@ const SyncFromMobileScreen = () => {
           withBackButton
           onBackButtonPress={handleBackButtonPress}
           title={t('Sync from Ambire mobile')}
+          titleContainerStyle={spacings.mb}
+          style={{ minHeight: PANEL_HEIGHT }}
         >
           {isScanning ? (
             <>
-              <View
-                style={[
-                  flexbox.alignSelfCenter,
-                  { width: SCANNER_SIZE, height: SCANNER_SIZE, overflow: 'hidden' }
-                ]}
-              >
-                <QrScannerWithPermission
-                  onComplete={handleScanComplete}
-                  disabled={hasScannedPayload || isImporting}
-                  externalError={scanError}
-                  onExternalRetry={retryScan}
-                />
+              {/* The scanner takes the panel's free space, so the alert stays at the
+              bottom of the card, where the button of the steps is */}
+              <View style={flexbox.flex1}>
+                <View
+                  style={[
+                    flexbox.alignSelfCenter,
+                    { width: SCANNER_SIZE, height: SCANNER_SIZE, overflow: 'hidden' }
+                  ]}
+                >
+                  <QrScannerWithPermission
+                    onComplete={handleScanComplete}
+                    disabled={hasScannedPayload || isImporting}
+                    externalError={scanError}
+                    onExternalRetry={retryScan}
+                  />
+                </View>
               </View>
               <Alert
                 type="info"
                 size="sm"
-                style={spacings.mtSm}
                 title={t('Hold the scanner until the process is complete.')}
               />
             </>
           ) : (
             <>
-              <SyncImportSteps steps={steps} stepIndex={stepIndex} />
+              {/* The steps take the panel's free space, so the dots and the button stay
+              at the bottom of the card, the same as on mobile */}
+              <SyncImportSteps
+                steps={steps}
+                stepIndex={stepIndex}
+                style={flexbox.flex1}
+                illustrationCardStyle={{ height: ILLUSTRATION_CARD_HEIGHT }}
+              />
               <SyncImportStepsFooter
                 steps={steps}
                 stepIndex={stepIndex}
