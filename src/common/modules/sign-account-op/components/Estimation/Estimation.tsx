@@ -637,7 +637,6 @@ const Estimation = ({
         // Display a wider menu if the fee token price is unavailable
         // as the native amount takes up more space
         menuLeftHorizontalOffset={feeTokenPriceUnavailableWarning ? 160 : 100}
-        menuStyle={{ width: feeTokenPriceUnavailableWarning ? 200 : 148 }}
         menuPosition="top"
         bottomSheetTitle={t('Network fee')}
         withSearch={false}
