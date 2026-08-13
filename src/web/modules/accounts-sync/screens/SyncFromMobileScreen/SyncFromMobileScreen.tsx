@@ -37,7 +37,7 @@ const selectAccountsCount = (state: AllControllersMappingType['AccountsControlle
 const SyncFromMobileScreen = () => {
   const { t } = useTranslation()
   const { theme } = useTheme()
-  const { navigate } = useNavigation()
+  const { navigate, goBack, canGoBack } = useNavigation()
   const { state: hasPasswordSecret } = useController('KeystoreController', selectHasPasswordSecret)
   const { state: accountsCount } = useController('AccountsController', selectAccountsCount)
   const { goToPrevRoute } = useOnboardingNavigation()
@@ -47,6 +47,7 @@ const SyncFromMobileScreen = () => {
     close: closePasswordSheet
   } = useModalize()
   const [isScanning, setIsScanning] = useState(false)
+  const [stepIndex, setStepIndex] = useState(0)
 
   const steps: SyncImportStep[] = useMemo(
     () => [
@@ -113,11 +114,19 @@ const SyncFromMobileScreen = () => {
     // The scanner is a step of this screen, so going back returns to the instructions
     if (isScanning) return setIsScanning(false)
 
+    // Same for the instructions themselves, which are a couple of steps
+    if (stepIndex) return setStepIndex(stepIndex - 1)
+
     // Without accounts this is the onboarding flow, which came from the get started screen
     if (!accountsCount) return goToPrevRoute()
 
+    // Going back instead of navigating, so the screen the user came from doesn't end up
+    // with this one still ahead of it in the history. There is nothing to go back to when
+    // the route was opened in a fresh tab.
+    if (canGoBack) return goBack()
+
     navigate(WEB_ROUTES.accountSelect)
-  }, [accountsCount, goToPrevRoute, isScanning, navigate])
+  }, [accountsCount, canGoBack, goBack, goToPrevRoute, isScanning, navigate, stepIndex])
 
   // Closing the sheet without entering the password means scanning again
   const handleClosePasswordSheet = useCallback(() => {
@@ -160,6 +169,8 @@ const SyncFromMobileScreen = () => {
           ) : (
             <SyncImportSteps
               steps={steps}
+              stepIndex={stepIndex}
+              onStepIndexChange={setStepIndex}
               finishText={t('Sync from mobile')}
               finishIcon={<SyncIcon width={20} height={20} color="#fff" style={spacings.mrTy} />}
               onFinish={() => setIsScanning(true)}

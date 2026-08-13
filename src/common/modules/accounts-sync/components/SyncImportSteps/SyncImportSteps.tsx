@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react'
+import React, { useCallback } from 'react'
 import { View, ViewStyle } from 'react-native'
 
 import Button from '@common/components/Button'
@@ -20,6 +20,12 @@ export interface SyncImportStep {
 
 interface Props {
   steps: SyncImportStep[]
+  /**
+   * The step is controlled by the screen, so its back button can return to the previous
+   * step instead of leaving the flow
+   */
+  stepIndex: number
+  onStepIndexChange: (stepIndex: number) => void
   /** Label of the button on the last step, which starts the scanning */
   finishText: string
   finishIcon?: React.ReactNode
@@ -32,10 +38,17 @@ interface Props {
  * codes. Shown by both products, in the onboarding flow and when syncing later on, so
  * the steps themselves (copy and illustrations) are passed in by the platform screen.
  */
-const SyncImportSteps = ({ steps, finishText, finishIcon, onFinish, style }: Props) => {
+const SyncImportSteps = ({
+  steps,
+  stepIndex,
+  onStepIndexChange,
+  finishText,
+  finishIcon,
+  onFinish,
+  style
+}: Props) => {
   const { t } = useTranslation()
   const { theme } = useTheme()
-  const [stepIndex, setStepIndex] = useState(0)
 
   const isLastStep = stepIndex === steps.length - 1
   const step = steps[stepIndex]
@@ -43,8 +56,8 @@ const SyncImportSteps = ({ steps, finishText, finishIcon, onFinish, style }: Pro
   const handleNext = useCallback(() => {
     if (isLastStep) return onFinish()
 
-    setStepIndex((prevIndex) => prevIndex + 1)
-  }, [isLastStep, onFinish])
+    onStepIndexChange(stepIndex + 1)
+  }, [isLastStep, onFinish, onStepIndexChange, stepIndex])
 
   if (!step) return null
 

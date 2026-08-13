@@ -32,7 +32,7 @@ const PHONE_MOCKUP_HEIGHT = 300
 const SyncWithMobileScreen = () => {
   const { t } = useTranslation()
   const { theme } = useTheme()
-  const { navigate } = useNavigation()
+  const { navigate, goBack, canGoBack } = useNavigation()
   const {
     accounts,
     selectedAddrs,
@@ -55,6 +55,15 @@ const SyncWithMobileScreen = () => {
     await prepareExport()
   }, [closeSelectSheet, prepareExport])
 
+  // Going back instead of navigating, so the screen the user came from doesn't end up with
+  // this one still ahead of it in the history. There is nothing to go back to when the
+  // route was opened in a fresh tab.
+  const handleBackButtonPress = useCallback(() => {
+    if (canGoBack) return goBack()
+
+    navigate(WEB_ROUTES.accountSelect)
+  }, [canGoBack, goBack, navigate])
+
   return (
     <TabLayoutContainer backgroundColor={theme.secondaryBackground}>
       <TabLayoutWrapperMainContent>
@@ -62,7 +71,7 @@ const SyncWithMobileScreen = () => {
           type="onboarding"
           spacingsSize="small"
           withBackButton
-          onBackButtonPress={() => navigate(WEB_ROUTES.accountSelect)}
+          onBackButtonPress={handleBackButtonPress}
           title={t('Sync with mobile')}
         >
           <ScrollableWrapper style={flexbox.flex1}>

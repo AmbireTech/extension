@@ -41,7 +41,7 @@ const selectAccountsCount = (state: AllControllersMappingType['AccountsControlle
 
 const SyncFromExtensionScreen = () => {
   const { t } = useTranslation()
-  const { navigate } = useNavigation()
+  const { navigate, goBack, canGoBack } = useNavigation()
   const { goToPrevRoute } = useOnboardingNavigation()
   const { state: hasPasswordSecret } = useController('KeystoreController', selectHasPasswordSecret)
   const { state: accountsCount } = useController('AccountsController', selectAccountsCount)
@@ -51,6 +51,7 @@ const SyncFromExtensionScreen = () => {
     close: closePasswordSheet
   } = useModalize()
   const [isScanning, setIsScanning] = useState(false)
+  const [stepIndex, setStepIndex] = useState(0)
 
   const steps: SyncImportStep[] = useMemo(
     () => [
@@ -130,11 +131,18 @@ const SyncFromExtensionScreen = () => {
     // The scanner is a step of this screen, so going back returns to the instructions
     if (isScanning) return setIsScanning(false)
 
+    // Same for the instructions themselves, which are a couple of steps
+    if (stepIndex) return setStepIndex(stepIndex - 1)
+
     // Without accounts this is the onboarding flow, which came from the get started screen
     if (!accountsCount) return goToPrevRoute()
 
+    // Going back instead of navigating, so the screen the user came from doesn't end up
+    // with this one still ahead of it in the history
+    if (canGoBack) return goBack()
+
     navigate(ROUTES.accountSelect)
-  }, [accountsCount, goToPrevRoute, isScanning, navigate])
+  }, [accountsCount, canGoBack, goBack, goToPrevRoute, isScanning, navigate, stepIndex])
 
   return (
     <MobileLayoutContainer>
@@ -171,6 +179,8 @@ const SyncFromExtensionScreen = () => {
         ) : (
           <SyncImportSteps
             steps={steps}
+            stepIndex={stepIndex}
+            onStepIndexChange={setStepIndex}
             finishText={t('Scan QR code')}
             onFinish={() => setIsScanning(true)}
           />
