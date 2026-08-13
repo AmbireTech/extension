@@ -1,14 +1,12 @@
 import React, { FC, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Animated, Easing, LayoutChangeEvent, View } from 'react-native'
 
-import { getSimulatedSafeRequest } from '@ambire-common/libs/safe/helpers'
 import LeftArrowIcon from '@common/assets/svg/LeftArrowIcon'
 import RightArrowIcon from '@common/assets/svg/RightArrowIcon'
 import HoverablePressable from '@common/components/HoverablePressable'
 import NetworkIcon from '@common/components/NetworkIcon'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
-import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
@@ -16,11 +14,6 @@ import flexbox from '@common/styles/utils/flexbox'
 import { SafeQueueNetworkGroup } from '../../SafeQueueBottomSheet/helpers'
 import PendingTransactionBundle from './PendingTransactionBundle'
 import getStyles from './styles'
-
-import type { AllControllersMappingType } from '@common/constants/controllersMapping'
-
-const selectSafeSimulationSelection = (state: AllControllersMappingType['RequestsController']) =>
-  state.safeSimulationSelection
 
 interface Props {
   group: SafeQueueNetworkGroup
@@ -61,20 +54,6 @@ const PendingChainTransactions: FC<Props> = ({ group, currentNonce }) => {
   let nonceColor
   if (isCurrentNonce) nonceColor = theme.primaryAccent
   else if (waitsForPrecedingNonce) nonceColor = theme.warningText
-  // A single bundle needs no OR divider and no card of its own - it fills the chain box
-  const isOnlyBundle = nonceGroup?.requests.length === 1
-
-  // Only one of the transactions competing for a nonce can happen, so only one of them takes
-  // part in the balance preview. The same helper resolves it here and in the background, so
-  // that the marked transaction is always the simulated one
-  const { state: safeSimulationSelection } = useController(
-    'RequestsController',
-    selectSafeSimulationSelection
-  )
-  const simulatedRequestId = useMemo(
-    () => getSimulatedSafeRequest(nonceGroup?.requests || [], safeSimulationSelection)?.id,
-    [nonceGroup?.requests, safeSimulationSelection]
-  )
   const hasPrevNonce = nonceIndex > 0
   const hasNextNonce = nonceIndex < group.nonceGroups.length - 1
   // With a single nonce there is nothing to switch between, so the arrows are left out
@@ -191,11 +170,6 @@ const PendingChainTransactions: FC<Props> = ({ group, currentNonce }) => {
             )}
           </View>
           <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mtMi]}>
-            {nonceGroup.requests.length > 1 && (
-              <Text fontSize={12} color={theme.warningText} style={spacings.mrTy}>
-                {t('{{count}} competing', { count: nonceGroup.requests.length })}
-              </Text>
-            )}
             {isCurrentNonce && (
               <View style={[styles.currentNoncePill, flexbox.center, spacings.phMi]}>
                 <Text fontSize={11} weight="medium" color={theme.primaryAccent}>
@@ -215,24 +189,9 @@ const PendingChainTransactions: FC<Props> = ({ group, currentNonce }) => {
       </View>
 
       <Animated.View style={[styles.animatedContentWrapper, { height: animatedHeight }]}>
-        <View
-          onLayout={handleContentLayout}
-          accessibilityRole={isOnlyBundle ? undefined : 'radiogroup'}
-          style={[
-            styles.measuredContent,
-            // The bundles bring their own padding and span the box up to its border, so that
-            // the transaction summaries keep as much space as possible and the sheen of the
-            // simulated one is not cut off by a strip of the box background
-            !isOnlyBundle && spacings.ptSm
-          ]}
-        >
-          {!isOnlyBundle && (
-            <Text fontSize={12} appearance="secondaryText" style={[spacings.mbSm, spacings.phSm]}>
-              {t(
-                'Only one of these can happen, so only one is simulated. Pick the one whose token changes you want to see.'
-              )}
-            </Text>
-          )}
+        {/* The bundles bring their own padding and span the box up to its border, so that
+            the transaction summaries keep as much space as possible */}
+        <View onLayout={handleContentLayout} style={styles.measuredContent}>
           {nonceGroup.requests.map((request, index) => (
             <React.Fragment key={request.id}>
               {index > 0 && (
@@ -253,8 +212,6 @@ const PendingChainTransactions: FC<Props> = ({ group, currentNonce }) => {
               <PendingTransactionBundle
                 request={request}
                 isCurrentNonce={isCurrentNonce}
-                isOnlyBundle={isOnlyBundle}
-                isSimulated={request.id === simulatedRequestId}
                 hasDividerAbove={index > 0}
                 hasDividerBelow={index < nonceGroup.requests.length - 1}
               />

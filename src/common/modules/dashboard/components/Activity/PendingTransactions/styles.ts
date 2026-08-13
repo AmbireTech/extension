@@ -14,13 +14,8 @@ interface Styles {
   animatedContentWrapper: ViewStyle
   measuredContent: ViewStyle
   bundle: ViewStyle
-  bundleNotSimulated: ViewStyle
   bundleWithDividerAbove: ViewStyle
   bundleWithDividerBelow: ViewStyle
-  onlyBundle: ViewStyle
-  radio: ViewStyle
-  radioSelected: ViewStyle
-  radioDot: ViewStyle
   humanizationItem: ViewStyle
   divider: ViewStyle
   orDividerAnchor: ViewStyle
@@ -64,14 +59,9 @@ const getStyles = (theme: ThemeProps) =>
       right: 0,
       top: 0
     },
-    // The competing bundles span the whole width of the chain box, so they carry no frame of
-    // their own - the OR divider separates them and the sheen marks the simulated one
+    // The bundles span the whole width of the chain box, so they carry no frame of their own
+    // - the OR divider separates them
     bundle: {
-      backgroundColor: theme.secondaryBackground
-    },
-    // The transaction that is not simulated keeps its actions, but drops the accent
-    // decoration, so that only one bundle per nonce stands out
-    bundleNotSimulated: {
       backgroundColor: theme.secondaryBackground
     },
     // The halves of the divider the bundles reserve, added on top of their own padding
@@ -80,28 +70,6 @@ const getStyles = (theme: ThemeProps) =>
     },
     bundleWithDividerBelow: {
       paddingBottom: SPACING_SM + OR_DIVIDER_HEIGHT / 2
-    },
-    // A lone bundle is the content of the chain box itself, so it drops the card decoration
-    onlyBundle: {
-      backgroundColor: theme.secondaryBackground
-    },
-    // Not secondaryBorder, because it is the same color as the box the radio sits on
-    radio: {
-      width: 18,
-      height: 18,
-      borderRadius: 9,
-      borderWidth: 2,
-      borderColor: theme.neutral600,
-      backgroundColor: theme.primaryBackground
-    },
-    radioSelected: {
-      borderColor: theme.primaryAccent
-    },
-    radioDot: {
-      width: 8,
-      height: 8,
-      borderRadius: 4,
-      backgroundColor: theme.primaryAccent
     },
     humanizationItem: {
       minHeight: 28,

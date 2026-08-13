@@ -6,7 +6,6 @@ import { CallsUserRequest } from '@ambire-common/interfaces/userRequest'
 import CheckIcon from '@common/assets/svg/CheckIcon'
 import EditPenIcon from '@common/assets/svg/EditPenIcon'
 import Button from '@common/components/Button'
-import HoverablePressable from '@common/components/HoverablePressable'
 import HumanizedVisualization from '@common/components/HumanizedVisualization'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
@@ -24,12 +23,6 @@ interface Props {
   /** Whether the nonce of the transaction is the one that executes next on its chain. A
    * fully signed transaction on a later nonce still has to wait for the ones before it. */
   isCurrentNonce: boolean
-  /** Whether the bundle is the only one on its nonce. It then fills the chain box, instead
-   * of being drawn as a card inside it. */
-  isOnlyBundle: boolean
-  /** Whether the balance preview of the dashboard is built with this transaction. Exactly
-   * one bundle per nonce is simulated, because only one of them can happen. */
-  isSimulated: boolean
   /** Whether an OR divider floats above the bundle. Half of the height of the divider is
    * then reserved by the bundle, so that the divider needs no background of its own. */
   hasDividerAbove: boolean
@@ -44,8 +37,6 @@ interface Props {
 const PendingTransactionBundle: FC<Props> = ({
   request,
   isCurrentNonce,
-  isOnlyBundle,
-  isSimulated,
   hasDividerAbove,
   hasDividerBelow
 }) => {
@@ -73,71 +64,26 @@ const PendingTransactionBundle: FC<Props> = ({
     })
   }, [request.id, requestsDispatch])
 
-  const handlePreview = useCallback(() => {
-    requestsDispatch({
-      type: 'method',
-      params: { method: 'selectSafeSimulationRequest', args: [request.id] }
-    })
-  }, [request.id, requestsDispatch])
-
-  // The sheen marks the transaction the balance preview is built with. A lone bundle is
-  // always the one, so it always keeps it
-  const isHighlighted = isOnlyBundle || isSimulated
-  let cardStyle = styles.bundleNotSimulated
-  if (isOnlyBundle) cardStyle = styles.onlyBundle
-  else if (isSimulated) cardStyle = styles.bundle
-
   return (
     <LinearGradient
       testID={`pending-transaction-bundle-${request.id}`}
       // A soft diagonal sheen, so a pending transaction stands out from the executed ones
-      colors={
-        isHighlighted
-          ? [
-              hexToRgba(theme.primaryAccent, 0.14),
-              hexToRgba(theme.primaryAccent, 0.03),
-              hexToRgba(theme.primaryAccent, 0.1)
-            ]
-          : [
-              hexToRgba(theme.secondaryBackground, 0),
-              hexToRgba(theme.secondaryBackground, 0),
-              hexToRgba(theme.secondaryBackground, 0)
-            ]
-      }
+      colors={[
+        hexToRgba(theme.primaryAccent, 0.14),
+        hexToRgba(theme.primaryAccent, 0.03),
+        hexToRgba(theme.primaryAccent, 0.1)
+      ]}
       locations={[0, 0.55, 1]}
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 1 }}
       style={[
-        cardStyle,
+        styles.bundle,
         spacings.phSm,
         spacings.pvSm,
         hasDividerAbove && styles.bundleWithDividerAbove,
         hasDividerBelow && styles.bundleWithDividerBelow
       ]}
     >
-      {!isOnlyBundle && (
-        <HoverablePressable
-          testID={`pending-transaction-preview-${request.id}`}
-          accessibilityRole="radio"
-          accessibilityState={{ checked: isSimulated }}
-          accessibilityLabel={t('Show the token changes of this transaction')}
-          onPress={handlePreview}
-          style={[flexbox.directionRow, flexbox.alignCenter, spacings.mbTy]}
-        >
-          <View style={[styles.radio, flexbox.center, isSimulated && styles.radioSelected]}>
-            {isSimulated && <View style={styles.radioDot} />}
-          </View>
-          <Text
-            fontSize={12}
-            weight="medium"
-            color={isSimulated ? theme.primaryAccent : undefined}
-            style={spacings.mlTy}
-          >
-            {isSimulated ? t('Simulating this one') : t('Simulate this one')}
-          </Text>
-        </HoverablePressable>
-      )}
-
       {humanization?.length ? (
         humanization.map((call, index) => (
           <View
