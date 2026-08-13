@@ -1,6 +1,7 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react'
-import { Image, ImageSourcePropType, View } from 'react-native'
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { Image, ImageSourcePropType, LayoutChangeEvent, View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
+import Carousel, { ICarouselInstance } from 'react-native-reanimated-carousel'
 
 import scanQrCodes from '@common/assets/images/scan-qr-codes.png'
 import syncStepsOnTheExtension from '@common/assets/images/sync-steps-on-the-extension.gif'
@@ -55,6 +56,14 @@ const SyncFromExtensionScreen = () => {
   } = useModalize()
   const [isScanning, setIsScanning] = useState(false)
   const [stepIndex, setStepIndex] = useState(0)
+  const carouselRef = useRef<ICarouselInstance>(null)
+  // The carousel needs an explicit width equal to its container's actual laid-out
+  // width, so we measure it instead of guessing from the window
+  const [carouselWidth, setCarouselWidth] = useState(0)
+
+  const handleCarouselLayout = useCallback((e: LayoutChangeEvent) => {
+    setCarouselWidth(e.nativeEvent.layout.width)
+  }, [])
 
   const steps: SyncImportStep[] = useMemo(
     () => [
@@ -141,12 +150,23 @@ const SyncFromExtensionScreen = () => {
     retryScan()
   }, [closePasswordSheet, retryScan])
 
+  // The steps are swipeable, so the carousel owns the current step and `stepIndex`
+  // follows it. Changing the step from the outside means scrolling the carousel.
+  const handleStepIndexChange = useCallback((nextStepIndex: number) => {
+    carouselRef.current?.scrollTo({ index: nextStepIndex, animated: true })
+  }, [])
+
+  const renderStep = useCallback(
+    ({ index }: { index: number }) => <SyncImportSteps steps={steps} stepIndex={index} />,
+    [steps]
+  )
+
   const handleBackButtonPress = useCallback(() => {
     // The scanner is a step of this screen, so going back returns to the instructions
     if (isScanning) return setIsScanning(false)
 
     // Same for the instructions themselves, which are a couple of steps
-    if (stepIndex) return setStepIndex(stepIndex - 1)
+    if (stepIndex) return handleStepIndexChange(stepIndex - 1)
 
     // Without accounts this is the onboarding flow, which came from the get started screen
     if (!accountsCount) return goToPrevRoute()
@@ -156,18 +176,33 @@ const SyncFromExtensionScreen = () => {
     if (canGoBack) return goBack()
 
     navigate(ROUTES.accountSelect)
-  }, [accountsCount, canGoBack, goBack, goToPrevRoute, isScanning, navigate, stepIndex])
+  }, [
+    accountsCount,
+    canGoBack,
+    goBack,
+    goToPrevRoute,
+    handleStepIndexChange,
+    isScanning,
+    navigate,
+    stepIndex
+  ])
 
   const handleStartScanning = useCallback(() => setIsScanning(true), [])
 
   return (
     <MobileLayoutContainer
       footer={
-        isScanning ? null : (
+        isScanning ? (
+          <Alert
+            type="info"
+            size="sm"
+            title={t('Hold the scanner until the process is complete.')}
+          />
+        ) : (
           <SyncImportStepsFooter
             steps={steps}
             stepIndex={stepIndex}
-            onStepIndexChange={setStepIndex}
+            onStepIndexChange={handleStepIndexChange}
             finishText={t('Scan QR code')}
             onFinish={handleStartScanning}
           />
@@ -180,32 +215,39 @@ const SyncFromExtensionScreen = () => {
         title={isScanning ? t('Scan QR code') : t('Import from extension')}
       >
         {isScanning ? (
-          <>
-            <View
-              style={{
-                width: SCANNER_SIZE,
-                height: SCANNER_SIZE,
-                ...flexbox.alignSelfCenter,
-                borderRadius: BORDER_RADIUS_PRIMARY,
-                overflow: 'hidden'
-              }}
-            >
-              <QrScannerWithPermission
-                onComplete={handleScanComplete}
-                disabled={hasScannedPayload || isImporting}
-                externalError={scanError}
-                onExternalRetry={retryScan}
-              />
-            </View>
-            <Alert
-              type="info"
-              size="sm"
-              style={spacings.mtSm}
-              title={t('Hold the scanner until the process is complete.')}
+          // The same framing as the QR hardware wallet scanner
+          <View
+            style={{
+              width: SCANNER_SIZE + 4,
+              height: SCANNER_SIZE + 4,
+              ...flexbox.alignSelfCenter,
+              borderRadius: BORDER_RADIUS_PRIMARY + 6,
+              overflow: 'hidden'
+            }}
+          >
+            <QrScannerWithPermission
+              onComplete={handleScanComplete}
+              disabled={hasScannedPayload || isImporting}
+              externalError={scanError}
+              onExternalRetry={retryScan}
             />
-          </>
+          </View>
         ) : (
-          <SyncImportSteps steps={steps} stepIndex={stepIndex} />
+          <View style={flexbox.flex1} onLayout={handleCarouselLayout}>
+            {carouselWidth > 0 && (
+              <Carousel
+                ref={carouselRef}
+                width={carouselWidth}
+                data={steps}
+                loop={false}
+                // Leaving the scanner remounts the carousel, which must come back on the
+                // step the scanner was started from
+                defaultIndex={stepIndex}
+                onSnapToItem={setStepIndex}
+                renderItem={renderStep}
+              />
+            )}
+          </View>
         )}
       </MobileLayoutWrapperMainContent>
 
