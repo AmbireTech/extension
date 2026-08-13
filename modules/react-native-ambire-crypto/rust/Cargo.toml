@@ -1,0 +1,17 @@
+[package]
+name = "ambire-crypto"
+edition = "2021"
+version = "0.1.0"
+publish = false
+
+[lib]
+crate-type = ["lib", "cdylib", "staticlib"]
+name = "ambire_crypto"
+
+[dependencies]
+uniffi = "=0.31.0"
+alloy-primitives = "1"
+alloy-dyn-abi = "1"
+alloy-json-abi = "1"
+serde_json = "1"
+thiserror = "2"

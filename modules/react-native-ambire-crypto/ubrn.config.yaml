@@ -1,0 +1,32 @@
+---
+rust:
+  directory: ./rust
+  manifestPath: Cargo.toml
+bindings:
+  cpp: cpp/generated
+  ts: src/generated
+android:
+  # Every ABI React Native's `reactNativeArchitectures` defaults to. This list is
+  # what ends up in the generated build.gradle's `ndk.abiFilters`, so leaving one
+  # out ships an app that installs and then crashes on those devices rather than
+  # failing at build time. arm64-v8a and armeabi-v7a are real phones, x86_64 and
+  # x86 are emulators and Chromebooks.
+  targets:
+    - arm64-v8a
+    - armeabi-v7a
+    - x86_64
+    - x86
+ios:
+  # Spelled out rather than left to ubrn's defaults, which pick the simulator
+  # triple from the host architecture — an Apple Silicon Mac would produce an
+  # xcframework an Intel Mac or CI runner cannot use, and vice versa. Both
+  # simulator triples share a platform, so ubrn lipos them into a single
+  # universal simulator slice.
+  targets:
+    - aarch64-apple-ios
+    - aarch64-apple-ios-sim
+    - x86_64-apple-ios
+  # Must stay in step with codegenConfig.outputDir.ios in package.json: the
+  # generated podspec compiles whatever is in this directory, and React Native's
+  # own codegen is what writes it.
+  codegenOutputDir: ios/generated

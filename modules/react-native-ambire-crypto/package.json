@@ -1,0 +1,64 @@
+{
+  "name": "react-native-ambire-crypto",
+  "version": "0.1.0",
+  "description": "Rust-accelerated keccak256 and ABI decode for Ambire (POC)",
+  "source": "./src/index.ts",
+  "main": "./src/index.ts",
+  "react-native": "./src/index.ts",
+  "types": "./src/index.ts",
+  "files": [
+    "src",
+    "android",
+    "ios",
+    "cpp",
+    "rust",
+    "ubrn.config.yaml",
+    "*.podspec",
+    "*.xcframework",
+    "!ios/build",
+    "!android/build",
+    "!android/gradle",
+    "!android/gradlew",
+    "!android/gradlew.bat",
+    "!android/local.properties",
+    "!**/__tests__",
+    "!**/__fixtures__",
+    "!**/__mocks__"
+  ],
+  "scripts": {
+    "ubrn:android": "ubrn build android --config ubrn.config.yaml --release --and-generate && yarn ubrn:postgenerate",
+    "ubrn:ios": "ubrn build ios --config ubrn.config.yaml --release --and-generate && yarn ubrn:postgenerate",
+    "ubrn:postgenerate": "node scripts/forceNativeStringDecoder.js",
+    "ubrn:clean": "rm -rfv cpp/ android/CMakeLists.txt android/src/main/java android/*.cpp ios/ src/Native* src/index.*ts* src/generated/"
+  },
+  "keywords": [
+    "react-native",
+    "ios",
+    "android"
+  ],
+  "author": "Ambire <petromir@goodmorning.dev> (https://github.com/AmbireTech)",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AmbireTech/ambire-mobile.git"
+  },
+  "dependencies": {
+    "@ubjs/core": "0.31.0-3"
+  },
+  "peerDependencies": {
+    "react": "*",
+    "react-native": "*"
+  },
+  "codegenConfig": {
+    "name": "RNAmbireCryptoSpec",
+    "type": "modules",
+    "jsSrcsDir": "src",
+    "outputDir": {
+      "ios": "ios/generated",
+      "android": "android/build/generated/source/codegen"
+    },
+    "android": {
+      "javaPackageName": "com.ambirecrypto"
+    }
+  }
+}
