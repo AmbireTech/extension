@@ -16,6 +16,7 @@ import RecoveryScreen from '@web/components/RecoveryScreen'
 import Splash from '@web/components/Splash'
 import { ROUTE_CRITICAL_CONTROLLERS } from '@web/constants/criticalControllers'
 import useCurrentActionSideEffects from '@web/hooks/useCurrentActionSideEffects'
+import useSidePanelActionRequestRouting from '@web/hooks/useSidePanelActionRequestRouting'
 import DashboardScreen from '@web/modules/dashboard/screens/DashboardScreen'
 import KeyStoreUnlockScreen from '@web/modules/keystore/screens/KeyStoreUnlockScreen'
 
@@ -40,6 +41,7 @@ const Router = () => {
     ControllersStateLoadedContext
   )
   useCurrentActionSideEffects()
+  useSidePanelActionRequestRouting()
 
   // Controller state is received but the extension hasn't routed anywhere
   const hasNothingToRender = !pathname && areAllControllerStatesLoaded

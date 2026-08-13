@@ -3,6 +3,7 @@ import { View, ViewStyle } from 'react-native'
 
 import FooterGlassView from '@common/components/FooterGlassView'
 import useTheme from '@common/hooks/useTheme'
+import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import ActionHeader from '@common/modules/action-requests/components/ActionHeader'
 import Header from '@common/modules/header/components/Header'
 import spacings, { SPACING } from '@common/styles/spacings'
@@ -66,11 +67,21 @@ const Wrapper: FC<WrapperProps> = ({ children }) => {
 }
 
 const Content: FC<ContentProps> = ({ children, buttons }) => {
+  const { isCompactSidePanelLayout } = useCompactActionRequestLayout()
+
   return (
     <View style={[flexbox.flex1, spacings.phSm, spacings.pvSm]}>
       {children}
-      <FooterGlassView size="sm" style={isRequestWindow ? { bottom: SPACING } : {}}>
-        <View style={[flexbox.directionRow, flexbox.alignCenter]}>{buttons}</View>
+      <FooterGlassView
+        size="sm"
+        fullWidth={isCompactSidePanelLayout}
+        style={isRequestWindow ? { bottom: SPACING } : {}}
+      >
+        {isCompactSidePanelLayout ? (
+          buttons
+        ) : (
+          <View style={[flexbox.directionRow, flexbox.alignCenter]}>{buttons}</View>
+        )}
       </FooterGlassView>
     </View>
   )

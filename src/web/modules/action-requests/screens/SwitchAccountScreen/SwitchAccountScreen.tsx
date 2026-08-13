@@ -16,8 +16,11 @@ import spacings, { SPACING_LG, SPACING_MD } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
 import { TabLayoutContainer } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
+import { getUiType } from '@common/utils/uiType'
 
 import getStyles from './styles'
+
+const { isSidePanel } = getUiType()
 
 const SwitchAccountScreen = () => {
   const {
@@ -34,6 +37,7 @@ const SwitchAccountScreen = () => {
     responsiveSizeMultiplier
   } = useSwitchAccount()
   const { theme, styles } = useTheme(getStyles)
+  const contentWidth = isSidePanel ? '100%' : responsiveSizeMultiplier * 530
 
   return (
     <TabLayoutContainer
@@ -54,7 +58,8 @@ const SwitchAccountScreen = () => {
           styles.container,
           {
             paddingVertical: SPACING_LG * responsiveSizeMultiplier,
-            width: responsiveSizeMultiplier * 530
+            width: contentWidth,
+            ...(isSidePanel ? { maxWidth: '100%' } : {})
           }
         ]}
       >
@@ -75,7 +80,8 @@ const SwitchAccountScreen = () => {
                 fontSize={20}
                 weight="medium"
                 style={{
-                  marginBottom: SPACING_MD * responsiveSizeMultiplier
+                  marginBottom: SPACING_MD * responsiveSizeMultiplier,
+                  ...(isSidePanel ? { textAlign: 'center' as const } : {})
                 }}
               >
                 {t('Switch Account Request')}
@@ -173,9 +179,10 @@ const SwitchAccountScreen = () => {
           <SkeletonLoader
             style={{
               ...styles.container,
-              paddingVertical: SPACING_LG * responsiveSizeMultiplier
+              paddingVertical: SPACING_LG * responsiveSizeMultiplier,
+              ...(isSidePanel ? { width: '100%', maxWidth: '100%' } : {})
             }}
-            width={responsiveSizeMultiplier * 450}
+            width={isSidePanel ? '100%' : responsiveSizeMultiplier * 450}
             height={responsiveSizeMultiplier * 450}
             appearance="primaryBackground"
           />

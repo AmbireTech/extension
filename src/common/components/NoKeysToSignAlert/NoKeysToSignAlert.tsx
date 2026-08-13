@@ -52,7 +52,11 @@ const NoKeysToSignAlert: FC<Props> = ({ style, isTransaction = true, type = 'lon
           ]}
         >
           <NoKeysIcon />
-          <Text fontSize={14} appearance="primaryText" style={[spacings.mhSm, flexbox.flex1]}>
+          <Text
+            fontSize={14}
+            appearance="primaryText"
+            style={[spacings.mhSm, flexbox.flex1, { minWidth: 0 }]}
+          >
             {!!account.safeCreation
               ? t(`No owners imported to sign this ${isTransaction ? 'transaction' : 'message'}`)
               : t(`No keys available to sign this ${isTransaction ? 'transaction' : 'message'}`)}

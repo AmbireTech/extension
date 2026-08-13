@@ -24,6 +24,8 @@ export class WalletStateController extends EventEmitter implements IWalletStateC
 
   isPrivacyModeEnabled: boolean = false
 
+  isSidePanelModeEnabled: boolean = false
+
   themeType: ThemeType = THEME_TYPES.SYSTEM
 
   avatarType: AvatarType = 'jazzicons'
@@ -125,6 +127,10 @@ export class WalletStateController extends EventEmitter implements IWalletStateC
     this.isPrivacyModeEnabled = !this.isPrivacyModeEnabled
     await this.#storage.set('isPrivacyModeEnabled', this.isPrivacyModeEnabled)
     this.emitUpdate()
+  }
+
+  async setSidePanelModeEnabled(_enabled: boolean) {
+    // Chrome side panel mode is extension-only; no UI or persistence on mobile.
   }
 
   toJSON() {

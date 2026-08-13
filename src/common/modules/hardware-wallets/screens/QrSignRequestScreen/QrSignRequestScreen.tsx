@@ -11,6 +11,7 @@ import AnimatedQrCode from '@common/modules/hardware-wallets/components/Animated
 import SigningRequestDetails from '@common/modules/hardware-wallets/components/SigningRequestDetails'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
+import { getUiType } from '@common/utils/uiType'
 
 type Props = {
   onContinue: () => void
@@ -29,6 +30,9 @@ const BASE_QR_SIZE = 300
 const BASE_QR_SIZE_WITH_PROGRESS = 280
 const MOBILE_QR_SIZE = 284
 
+const { isSidePanel } = getUiType()
+const withMobileLayout = isMobile || isSidePanel
+
 const QrSignRequestScreen = ({
   onContinue,
   onReject,
@@ -40,7 +44,7 @@ const QrSignRequestScreen = ({
   const { t } = useTranslation()
   // A smaller code leaves room for the details + footer inside the mobile
   // bottom sheet; the desktop panel has space for the larger code.
-  const qrSize = isMobile
+  const qrSize = withMobileLayout
     ? MOBILE_QR_SIZE
     : transactionProgress
       ? BASE_QR_SIZE_WITH_PROGRESS
@@ -72,33 +76,55 @@ const QrSignRequestScreen = ({
           <SigningRequestDetails
             signingRequest={signingRequest}
             style={
-              isMobile
+              withMobileLayout
                 ? [spacings.mtSm, { width: '100%' }]
                 : [transactionProgress ? spacings.mtSm : spacings.mt, { width: 420 }]
             }
           />
         )}
-        <FooterGlassView
-          size="sm"
-          absolute={false}
-          style={{ ...spacings.ptSm, marginTop: 'auto' }}
-          mobileStyle={spacings.ptLg}
-        >
-          <Button
-            size={isMobile ? 'regular' : 'smaller'}
-            hasBottomSpacing={false}
-            type="secondary"
-            text={t('Back')}
-            onPress={onReject}
-            style={isWeb ? { width: 98, ...spacings.mrLg } : undefined}
-          />
-          <Button
-            size={isMobile ? 'regular' : 'smaller'}
-            hasBottomSpacing={isMobile}
-            text={t('Get signature')}
-            onPress={onContinue}
-          />
-        </FooterGlassView>
+        {withMobileLayout ? (
+          <View
+            style={[
+              { flexDirection: 'column-reverse', width: '100%', marginTop: 'auto' },
+              spacings.ptLg
+            ]}
+          >
+            <Button
+              size="regular"
+              hasBottomSpacing={false}
+              type="secondary"
+              text={t('Back')}
+              onPress={onReject}
+            />
+            <Button
+              size="regular"
+              hasBottomSpacing
+              text={t('Get signature')}
+              onPress={onContinue}
+            />
+          </View>
+        ) : (
+          <FooterGlassView
+            size="sm"
+            absolute={false}
+            style={{ ...spacings.ptSm, marginTop: 'auto' }}
+          >
+            <Button
+              size="smaller"
+              hasBottomSpacing={false}
+              type="secondary"
+              text={t('Back')}
+              onPress={onReject}
+              style={isWeb ? { width: 98, ...spacings.mrLg } : undefined}
+            />
+            <Button
+              size="smaller"
+              hasBottomSpacing={false}
+              text={t('Get signature')}
+              onPress={onContinue}
+            />
+          </FooterGlassView>
+        )}
       </View>
     </View>
   )

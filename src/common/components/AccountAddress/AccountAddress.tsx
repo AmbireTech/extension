@@ -10,7 +10,7 @@ import PlainAddressWithCopy from '@common/components/AccountAddress/PlainAddress
 import DomainBadge from '@common/components/Avatar/DomainBadge'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import Text from '@common/components/Text'
-import { isMobile } from '@common/config/env'
+import { isMobile, isWeb } from '@common/config/env'
 import useHover, { AnimatedPressable } from '@common/hooks/useHover/useHover'
 import useNavigation from '@common/hooks/useNavigation'
 import useReverseLookup from '@common/hooks/useReverseLookup'
@@ -18,6 +18,9 @@ import useTheme from '@common/hooks/useTheme'
 import { WEB_ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
+import { getUiType } from '@common/utils/uiType'
+
+const { isSidePanel } = getUiType()
 
 interface Props extends Omit<ReturnType<typeof useReverseLookup>, 'updatedAt' | 'isFetched'> {
   // Optional so callers that don't run a reverse lookup (e.g. receive screens) can omit them.
@@ -92,6 +95,14 @@ const AccountAddress: FC<Props> = ({
   // eslint-disable-next-line react-hooks/purity
   const isEnsOlderThanOneDay = updatedAt ? Date.now() - updatedAt > 24 * 60 * 60 * 1000 : false
 
+  const shouldShowFullAddressOnWeb =
+    !isSidePanel &&
+    isWeb &&
+    plainAddressMaxLength >= 42 &&
+    !showResolvedName &&
+    !effectiveIsLoading &&
+    !showNoEnsData
+
   const nameTooltipContent = useMemo(() => {
     if (!name) return ''
     if (!updatedAt) return name
@@ -110,7 +121,11 @@ const AccountAddress: FC<Props> = ({
 
   return (
     <View
-      style={[{ flexShrink: 1, minWidth: 0, maxWidth: '100%' }, containerStyle]}
+      style={[
+        { flexShrink: 1, minWidth: 0, maxWidth: '100%' },
+        shouldShowFullAddressOnWeb && { width: '100%', alignSelf: 'stretch' },
+        containerStyle
+      ]}
       testID="address"
     >
       {showResolvedName || effectiveIsLoading || showNoEnsData ? (
@@ -176,7 +191,10 @@ const AccountAddress: FC<Props> = ({
               <PlainAddress
                 maxLength={isMobile ? 13 : 16}
                 address={address}
-                style={{ ...spacings.mlMi }}
+                // A shortened address already hides its middle, so letting it shrink would add a
+                // trailing ellipsis on top of that and hide the suffix. On the narrow side panel
+                // the resolved name next to it gives way instead.
+                style={{ ...spacings.mlMi, ...(isSidePanel ? { flexShrink: 0 } : {}) }}
                 fontSize={fontSize}
                 withWrap={withWrap}
                 highlight={addressHighlight}
