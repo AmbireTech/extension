@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { Image, ImageSourcePropType, View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 
+import scanQrCodes from '@common/assets/images/scan-qr-codes.png'
 import syncStepsOnTheExtension from '@common/assets/images/sync-steps-on-the-extension.gif'
 import Alert from '@common/components/Alert'
 import BottomSheet from '@common/components/BottomSheet'
@@ -28,6 +29,8 @@ import {
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 
 const SCANNER_SIZE = 280
+// The asset is delivered at twice this size, so it stays sharp on dense screens
+const SCAN_ILLUSTRATION_SIZE = 236
 const ANIMATION_HEIGHT = 300
 const ANIMATION_ASPECT_RATIO = 480 / 598
 
@@ -77,8 +80,13 @@ const SyncFromExtensionScreen = () => {
       },
       {
         id: 'scan-qr-codes',
-        // TODO: Missing asset - the illustration of the QR codes on the computer screen.
-        illustration: null,
+        illustration: (
+          <Image
+            source={scanQrCodes as ImageSourcePropType}
+            resizeMode="contain"
+            style={{ width: SCAN_ILLUSTRATION_SIZE, height: SCAN_ILLUSTRATION_SIZE }}
+          />
+        ),
         content: (
           <Text fontSize={14} weight="medium" appearance="secondaryText">
             {t(

@@ -190,13 +190,13 @@ hand) and all theme driven, so they follow a theme change like every other icon:
   on-device check** that `lottie-react-native` renders the embedded frames, and the file size is
   worth a second thought since it ships in the bundle.
 
-**Still needed** (both marked with TODOs in `SyncFromMobileScreen`, where the illustrations are
-currently empty):
-1. The animation (or image) of the **steps on the mobile app** - the mirror of the Lottie we have for
-   the steps on the extension. Used by the extension's import steps.
-2. The illustration of the **QR codes on the other device's screen**, for the second step (the design
-   shows a QR picture with the "Your QR code includes sensitive information" header). Needed in both
-   directions, so a mobile-facing and an extension-facing version if they differ.
+- `assets/images/scan-qr-codes.png` - the QR codes in the scanner frame, shown as the second import
+  step by **both** products. Delivered at 472x472 and rendered at 236, so it stays sharp on dense
+  screens (the SVG version was dropped: the QR inside it was an embedded bitmap anyway).
+
+**Still needed:** the recording of the **steps on the mobile app**, for the extension's first import
+step (TODO in `SyncFromMobileScreen`). An mp4 is enough - it gets converted to a GIF the same way as
+the extension one.
 
 Verified: `yarn extension:type:check-new` → 0 new errors, eslint clean (the two errors in
 `AccountSelectScreen` are pre-existing: an unused `Pressable` import and `selectedAccountIndex`).

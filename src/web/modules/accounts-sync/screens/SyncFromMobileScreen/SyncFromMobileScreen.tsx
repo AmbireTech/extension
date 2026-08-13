@@ -1,7 +1,8 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
-import { View } from 'react-native'
+import { Image, ImageSourcePropType, View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 
+import scanQrCodes from '@common/assets/images/scan-qr-codes.png'
 import SyncIcon from '@common/assets/svg/SyncIcon'
 import Alert from '@common/components/Alert'
 import Panel from '@common/components/Panel'
@@ -25,6 +26,8 @@ import BottomSheetPasswordConfirmation from '@web/modules/settings/components/Bo
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 
 const SCANNER_SIZE = 290
+// The asset is delivered at twice this size, so it stays sharp on dense screens
+const SCAN_ILLUSTRATION_SIZE = 236
 
 const selectHasPasswordSecret = (state: AllControllersMappingType['KeystoreController']) =>
   state.hasPasswordSecret
@@ -65,8 +68,13 @@ const SyncFromMobileScreen = () => {
       },
       {
         id: 'scan-qr-codes',
-        // TODO: Missing asset - the illustration of the QR codes shown on the phone.
-        illustration: null,
+        illustration: (
+          <Image
+            source={scanQrCodes as ImageSourcePropType}
+            resizeMode="contain"
+            style={{ width: SCAN_ILLUSTRATION_SIZE, height: SCAN_ILLUSTRATION_SIZE }}
+          />
+        ),
         content: (
           <Text fontSize={14} weight="medium" appearance="secondaryText">
             {t(
