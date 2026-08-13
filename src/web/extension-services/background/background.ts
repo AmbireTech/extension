@@ -15,6 +15,7 @@ import EventEmitter from '@ambire-common/controllers/eventEmitter/eventEmitter'
 import { EventEmitterRegistryController } from '@ambire-common/controllers/eventEmitterRegistry/eventEmitterRegistry'
 import { MainController } from '@ambire-common/controllers/main/main'
 import { openAmbireIdb } from '@ambire-common/services/storage/idbDatabase'
+import { AMBIRE_IDB_SCHEMA } from '@ambire-common/services/storage/idbSchema'
 import { ErrorRef } from '@ambire-common/interfaces/eventEmitter'
 import { Fetch } from '@ambire-common/interfaces/fetch'
 import { IKeystoreController } from '@ambire-common/interfaces/keystore'
@@ -517,8 +518,21 @@ const init = async () => {
 
   const qrCtrl = new QrHardwareController(new UrQrProtocolAdapter(), eventEmitterRegistry)
 
+  // Reported, not just logged: this is the only signal that a user has landed on the
+  // key-value fallback. The wallet stays usable — history renders from the retained legacy
+  // blob — so nothing surfaces in the UI, which means without this the fallback is invisible
+  // in aggregate and we could not tell whether it affects one user or many.
   const idb = await openAmbireIdb().catch((error) => {
     console.error('[background] Failed to open IDB, activity will fall back to storage', error)
+    captureBackgroundException(error, {
+      extra: {
+        // VersionError means a database newer than this build's dbVersion, i.e. a
+        // downgrade. Any other name points at the open itself failing.
+        errorName: error?.name,
+        expectedDbVersion: AMBIRE_IDB_SCHEMA.dbVersion
+      }
+    })
+
     return undefined
   })
 
