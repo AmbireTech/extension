@@ -35,11 +35,16 @@ export const BOOT_PROFILE_MARKS_EVENT = 'bootProfileMarks'
 export const BOOT_PROFILE_WORKER_FLUSH_TIMEOUT = 1500
 
 /**
- * Fallback deadline in ms. A boot that never reaches "all controllers ready" (a stuck
+ * Fallback deadline in ms. A boot that never reaches "all non-deferred controllers ready" (a stuck
  * controller, a dead dev server) is exactly the case worth profiling, so report anyway
  * once this elapses.
  */
 export const BOOT_PROFILE_DEADLINE = 25000
+
+// Marks a storage key that exists but is deliberately kept out of the init payload
+// (see BOOT_SNAPSHOT_EXCLUDED_STORAGE_KEYS). Carried as the mark's note because
+// there is no size to record — measuring one would cost as much as shipping it.
+export const STORAGE_KEY_NOT_SNAPSHOTTED = 'not in init payload'
 
 /**
  * Every point-in-time mark name, grouped by realm. The report keys its phase table off
@@ -49,7 +54,14 @@ export const BOOT_MARK = {
   // --- RN realm ---
   // First line of JS the RN bundle executes.
   rnJsEntry: 'rn.js.entry',
-  // Entry module body done: shims, global.js, Sentry and localization all evaluated.
+  // shim.js done: quick-crypto installed, the ethers shims and the process/location/
+  // document/window globals in place.
+  rnShimsEvaluated: 'rn.shims.evaluated',
+  // The entry's native-module bootstrap done: crash analytics, layout animation,
+  // gesture handler, expo-asset and RN core.
+  rnNativeModulesEvaluated: 'rn.nativeModules.evaluated',
+  // Entry module body done, which past the bootstrap above means localization plus the
+  // app's whole UI module graph has evaluated.
   rnEntryModuleEvaluated: 'rn.entryModule.evaluated',
   rnAppRender: 'rn.app.render',
   rnAppInitMounted: 'rn.appInit.mounted',
@@ -66,7 +78,10 @@ export const BOOT_MARK = {
   rnInitPayloadInjected: 'rn.initPayload.injected',
   rnWorkerReadyReceived: 'rn.worker.readyReceived',
   rnStoreCriticalReady: 'rn.store.criticalReady',
-  rnStoreAllReady: 'rn.store.allReady',
+  // Every controller except the deferred ones has landed in the store. The deferred
+  // ones only start loading after unlock, which may never happen, so this is where the
+  // measured boot ends and the report is printed.
+  rnStoreNonDeferredReady: 'rn.store.nonDeferredReady',
   rnSplashHidden: 'rn.splash.hidden',
   rnFirstPaint: 'rn.firstPaint',
 

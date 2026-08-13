@@ -39,7 +39,8 @@ if (isDev) {
   const bundleFiles = [
     'ethereum-inpage-bundle.json',
     'ambire-inpage-bundle.json',
-    'webview-bundle-ota.json'
+    'webview-bundle-ota.json',
+    'webview-bundle-version.json'
   ]
   const allBundlesExist = bundleFiles.every((file) => fs.existsSync(path.join(SERVICES_DIR, file)))
 
@@ -295,6 +296,10 @@ class MirrorToAndroidAssetsPlugin {
  * Emits `webview-bundle-ota.json` ({ html, js, integrity }) into the services dir so the
  * worker bundle rides the Metro/OTA JS bundle - the native asset copy cannot be OTA-updated.
  * At runtime materializeWorkerBundle writes it to a writable dir and loads it via `file://`.
+ *
+ * Also emits `webview-bundle-version.json` ({ version }) holding the same marker. The
+ * runtime up-to-date check reads that one on every launch, so it must not have to pull the
+ * multi-MB bundle into memory just to learn which version it is looking at.
  */
 class EmitOtaBundleJsonPlugin {
   constructor({ sourceDir, targetDir }) {
@@ -315,6 +320,10 @@ class EmitOtaBundleJsonPlugin {
           .digest('base64')}`
         const json = JSON.stringify({ html, js: js.toString('utf8'), integrity })
         fs.writeFileSync(path.join(this.targetDir, 'webview-bundle-ota.json'), json)
+        fs.writeFileSync(
+          path.join(this.targetDir, 'webview-bundle-version.json'),
+          JSON.stringify({ version: integrity })
+        )
       } catch (err) {
         compilation.errors.push(new Error(`EmitOtaBundleJsonPlugin failed: ${err.message}`))
       }
@@ -355,7 +364,11 @@ const workerBundleEnv = {
 const workerConfig = {
   name: 'worker',
   context: ROOT_DIR,
-  entry: './src/mobile/modules/webview/services/injectedLogic.ts',
+  entry: [
+    './src/mobile/modules/webview/services/structuredCloneShim.ts',
+    './src/mobile/modules/webview/services/workerBootProfiler.ts',
+    './src/mobile/modules/webview/services/injectedLogic.ts'
+  ],
   mode: isDev ? 'development' : 'production',
   target: 'web',
   devtool: false,
