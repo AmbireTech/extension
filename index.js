@@ -11,7 +11,7 @@ require('./src/common/services/layoutAnimation')
 require('react-native-gesture-handler')
 require('expo-asset')
 
-const { registerRootComponent } = require('expo')
+import { registerRootComponent } from 'expo'
 const { LogBox, Platform } = require('react-native')
 
 markBoot(BOOT_MARK.rnNativeModulesEvaluated)
