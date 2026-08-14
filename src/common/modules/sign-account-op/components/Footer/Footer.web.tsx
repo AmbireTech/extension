@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from 'react'
+import React, { useMemo } from 'react'
 import { TextStyle, View } from 'react-native'
 
 import { getCallsCount } from '@ambire-common/utils/userRequest'
@@ -16,6 +16,7 @@ import spacings, { SPACING_SM, SPACING_TY } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
 import { Props } from './Footer'
+import RejectButton from './RejectButton'
 import getStyles from './styles'
 
 const Footer = ({
@@ -31,13 +32,13 @@ const Footer = ({
   buttonText,
   shouldHoldToProceed,
   shouldRejectOnchain,
+  isRejectDisabled,
   holdToProceedButtonType = 'primary',
   signButtonType = 'primary'
 }: Props) => {
   const { t } = useTranslation()
   const { styles } = useTheme(getStyles)
   const { isCompactLayout } = useCompactActionRequestLayout()
-  const [isRejectOnchainLoading, setIsRejectOnchainLoading] = useState(false)
   const { userRequests } = useController('RequestsController').state
   const {
     state: { account }
@@ -85,11 +86,6 @@ const Footer = ({
       : t('Start a batch')
   }, [isMultisigSigned, batchCount, t])
 
-  const handleReject = useCallback(() => {
-    if (shouldRejectOnchain) setIsRejectOnchainLoading(true)
-    onReject()
-  }, [onReject, shouldRejectOnchain])
-
   const rejectButton = ({
     fullWidth,
     compact = false
@@ -97,15 +93,13 @@ const Footer = ({
     fullWidth: boolean
     compact?: boolean
   }) => (
-    <ButtonWithLoader
-      testID="transaction-button-reject"
-      type="danger"
-      text={shouldRejectOnchain ? t('Reject onchain') : t('Reject')}
-      onPress={handleReject}
-      isLoading={isRejectOnchainLoading}
-      hasBottomSpacing={false}
+    <RejectButton
+      onReject={onReject}
+      isSignLoading={isSignLoading}
+      shouldRejectOnchain={shouldRejectOnchain}
+      isRejectDisabled={isRejectDisabled}
       size={compact ? 'smaller' : 'large'}
-      disabled={isSignLoading || isRejectOnchainLoading}
+      containerStyle={fullWidth ? { width: '100%' } : undefined}
       style={fullWidth ? { width: '100%', minWidth: 0 } : { width: 'auto' }}
     />
   )

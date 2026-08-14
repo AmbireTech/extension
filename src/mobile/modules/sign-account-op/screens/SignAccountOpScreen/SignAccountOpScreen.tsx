@@ -147,18 +147,18 @@ const SignAccountOpScreen = () => {
     const { signature, signed } = signAccountOpState.accountOp
     const signedCount = signed?.length || 0
 
-    return (
-      !!signature &&
-      signature !== '0x' &&
-      signedCount > 0 &&
-      signedCount < signAccountOpState.threshold
-    )
+    return !!signature && signature !== '0x' && signedCount > 0
   }, [signAccountOpState])
+
+  const isCancelDisabled =
+    shouldRejectOnchain && !!signAccountOpState?.accountOp.meta?.isOnchainSafeRejection
 
   const handleRejectAccountOp = useCallback(() => {
     if (!accountOpRequest) return
 
     if (shouldRejectOnchain) {
+      if (isCancelDisabled) return
+
       requestsDispatch({
         type: 'method',
         params: {
@@ -180,7 +180,13 @@ const SignAccountOpScreen = () => {
         ]
       }
     })
-  }, [requestsDispatch, accountOpRequest, shouldRejectOnchain, visibleUserRequests.length])
+  }, [
+    requestsDispatch,
+    accountOpRequest,
+    shouldRejectOnchain,
+    isCancelDisabled,
+    visibleUserRequests.length
+  ])
 
   useEffect(() => {
     if (isSignDisabled || !containerHeight || !contentHeight) return
@@ -311,6 +317,7 @@ const SignAccountOpScreen = () => {
               buttonText={signButtonText}
               shouldHoldToProceed={shouldHoldToProceed}
               shouldRejectOnchain={shouldRejectOnchain}
+              isRejectDisabled={isCancelDisabled}
               signButtonType={extremeGasFeeSignButtonType}
             />
           </View>

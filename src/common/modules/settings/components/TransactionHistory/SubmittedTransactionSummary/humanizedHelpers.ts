@@ -52,6 +52,19 @@ export const getHumanizedCalls = (submittedAccountOp: SubmittedAccountOpLike): I
 export const getDappInteractions = (
   submittedAccountOp: SubmittedAccountOpLike
 ): DappInteraction[] => {
+  if (submittedAccountOp.meta?.isOnchainSafeRejection) {
+    const safeNonce = submittedAccountOp.safeTx?.nonce ?? submittedAccountOp.nonce
+
+    return [
+      {
+        id: 'fallback:cancel',
+        name: 'Cancel',
+        iconType: 'safe',
+        ...(safeNonce !== null && safeNonce !== undefined && { safeNonce: BigInt(safeNonce) })
+      }
+    ]
+  }
+
   const interactions: DappInteraction[] = []
   const seen = new Set<string>()
   const humanizedCalls = getHumanizedCalls(submittedAccountOp)

@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from 'react'
+import React, { useMemo } from 'react'
 import { View } from 'react-native'
 
 import { getCallsCount } from '@ambire-common/utils/userRequest'
@@ -13,6 +13,7 @@ import spacings, { SPACING_SM } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
 import { Props } from './Footer'
+import RejectButton from './RejectButton'
 
 const Footer = ({
   onReject,
@@ -27,10 +28,10 @@ const Footer = ({
   buttonText,
   shouldHoldToProceed,
   shouldRejectOnchain,
+  isRejectDisabled,
   signButtonType = 'primary'
 }: Props) => {
   const { t } = useTranslation()
-  const [isRejectOnchainLoading, setIsRejectOnchainLoading] = useState(false)
   const { userRequests } = useController('RequestsController').state
   const {
     state: { account }
@@ -70,11 +71,6 @@ const Footer = ({
         })
       : t('Start a batch')
   }, [isMultisigSigned, batchCount, t])
-
-  const handleReject = useCallback(() => {
-    if (shouldRejectOnchain) setIsRejectOnchainLoading(true)
-    onReject()
-  }, [onReject, shouldRejectOnchain])
 
   return (
     <View style={spacings.ptSm}>
@@ -117,15 +113,12 @@ const Footer = ({
 
       <View style={[flexbox.directionRow, { columnGap: SPACING_SM }]}>
         <View style={flexbox.flex1}>
-          <ButtonWithLoader
-            testID="transaction-button-reject"
-            type="danger"
-            text={shouldRejectOnchain ? t('Reject onchain') : t('Reject')}
-            onPress={handleReject}
-            isLoading={isRejectOnchainLoading}
+          <RejectButton
+            onReject={onReject}
+            isSignLoading={isSignLoading}
+            shouldRejectOnchain={shouldRejectOnchain}
+            isRejectDisabled={isRejectDisabled}
             style={{ height: 50 }}
-            hasBottomSpacing={false}
-            disabled={isSignLoading || isRejectOnchainLoading}
           />
         </View>
         {isAddToCartDisplayed && (

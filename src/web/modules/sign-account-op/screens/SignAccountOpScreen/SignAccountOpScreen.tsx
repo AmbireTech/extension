@@ -2,8 +2,8 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { NativeScrollEvent, ScrollView, View } from 'react-native'
 
-import { SigningStatus } from '@ambire-common/interfaces/signAccountOp'
 import { Key } from '@ambire-common/interfaces/keystore'
+import { SigningStatus } from '@ambire-common/interfaces/signAccountOp'
 import { CallsUserRequest } from '@ambire-common/interfaces/userRequest'
 import Alert from '@common/components/Alert'
 import GlassView from '@common/components/GlassView'
@@ -146,18 +146,18 @@ const SignAccountOpScreen = () => {
     const { signature, signed } = signAccountOpState.accountOp
     const signedCount = signed?.length || 0
 
-    return (
-      !!signature &&
-      signature !== '0x' &&
-      signedCount > 0 &&
-      signedCount < signAccountOpState.threshold
-    )
+    return !!signature && signature !== '0x' && signedCount > 0
   }, [signAccountOpState])
+
+  const isCancelDisabled =
+    shouldRejectOnchain && !!signAccountOpState?.accountOp.meta?.isOnchainSafeRejection
 
   const handleRejectAccountOp = useCallback(() => {
     if (!accountOpRequest) return
 
     if (shouldRejectOnchain) {
+      if (isCancelDisabled) return
+
       requestsDispatch({
         type: 'method',
         params: {
@@ -179,7 +179,13 @@ const SignAccountOpScreen = () => {
         ]
       }
     })
-  }, [requestsDispatch, accountOpRequest, shouldRejectOnchain, visibleUserRequests.length])
+  }, [
+    requestsDispatch,
+    accountOpRequest,
+    shouldRejectOnchain,
+    isCancelDisabled,
+    visibleUserRequests.length
+  ])
 
   useEffect(() => {
     if (isSignDisabled || !containerHeight || !contentHeight) return
@@ -314,6 +320,7 @@ const SignAccountOpScreen = () => {
                   buttonText={signButtonText}
                   shouldHoldToProceed={shouldHoldToProceed}
                   shouldRejectOnchain={shouldRejectOnchain}
+                  isRejectDisabled={isCancelDisabled}
                   holdToProceedButtonType={holdToProceedButtonType}
                   signButtonType={extremeGasFeeSignButtonType}
                 />
