@@ -8,8 +8,8 @@ import ambireMobilePhoneMockup from '@common/assets/images/how-to-sync-on-mobile
 import { ACCOUNTS_SYNC_UR_TYPE } from '@ambire-common/libs/accountsSync/accountsSync'
 import AppStoreBadgeIcon from '@common/assets/svg/AppStoreBadgeIcon'
 import GooglePlayBadgeIcon from '@common/assets/svg/GooglePlayBadgeIcon'
-import InformationIcon from '@common/assets/svg/InformationIcon'
 import ShieldInvisibilityIcon from '@common/assets/svg/ShieldInvisibilityIcon'
+import Alert from '@common/components/Alert'
 import Panel from '@common/components/Panel'
 import { PanelBackButton, PanelTitle } from '@common/components/Panel/Panel'
 import Text from '@common/components/Text'
@@ -23,7 +23,7 @@ import { ACCOUNTS_SYNC_QR_CAPACITY } from '@common/modules/accounts-sync/consts'
 import useAccountsSyncExport from '@common/modules/accounts-sync/hooks/useAccountsSyncExport'
 import AnimatedQrCode from '@common/modules/hardware-wallets/components/AnimatedQrCode'
 import { WEB_ROUTES } from '@common/modules/router/constants/common'
-import spacings, { SPACING_SM, SPACING_XL } from '@common/styles/spacings'
+import spacings, { SPACING_LG, SPACING_SM, SPACING_XL } from '@common/styles/spacings'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
@@ -32,8 +32,15 @@ import { TabLayoutContainer, TabLayoutWrapperMainContent } from '@web/components
 import getStyles from './styles'
 
 const PANEL_WIDTH = 400
-const QR_SIZE = 280
+// `spacingsSize="small"` pads the panel by this much on both sides, so the QR code and its
+// placeholder fill the card the way they fill the sheet on mobile
+const QR_SIZE = PANEL_WIDTH - SPACING_LG * 2
 const PHONE_MOCKUP_HEIGHT = 300
+// The two steps keep the same vertical rhythm, so the store buttons line up with the
+// warning and the phone mockup with the QR code. Both are the height of the taller side:
+// the back button for the titles, a store tile for the row under them.
+const TITLE_ROW_HEIGHT = 28
+const SECOND_ROW_MIN_HEIGHT = 52
 // Dummy value rendered behind the scrim before the accounts are picked, so the
 // placeholder hints at a QR code instead of showing a flat empty box.
 const PLACEHOLDER_QR_VALUE = '0123456789ABCDEF'.repeat(24)
@@ -84,11 +91,13 @@ const SyncWithMobileScreen = () => {
     [minHeightSize]
   )
 
+  // A filled tile rather than a border, which `secondaryBorder` makes invisible on the
+  // white card of the light theme
   const storeBadgeStyle = {
-    ...spacings.phSm,
-    ...spacings.pvTy,
-    borderWidth: 1,
-    borderColor: theme.secondaryBorder,
+    ...flexbox.flex1,
+    ...flexbox.center,
+    ...spacings.pvSm,
+    backgroundColor: theme.secondaryBackground,
     borderRadius: BORDER_RADIUS_PRIMARY
   }
 
@@ -109,7 +118,14 @@ const SyncWithMobileScreen = () => {
             panelWidth={PANEL_WIDTH}
             style={flexbox.flex1}
           >
-            <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mbLg]}>
+            <View
+              style={[
+                flexbox.directionRow,
+                flexbox.alignCenter,
+                spacings.mbLg,
+                { height: TITLE_ROW_HEIGHT }
+              ]}
+            >
               <PanelBackButton onPress={handleBackButtonPress} />
               <PanelTitle title={t('1. Download Ambire Wallet mobile')} size={16} />
               <View style={{ width: 20 }} />
@@ -120,7 +136,7 @@ const SyncWithMobileScreen = () => {
                 flexbox.directionRow,
                 flexbox.justifyCenter,
                 spacings.mbLg,
-                { columnGap: SPACING_SM }
+                { columnGap: SPACING_SM, minHeight: SECOND_ROW_MIN_HEIGHT }
               ]}
             >
               <View style={storeBadgeStyle}>
@@ -143,30 +159,29 @@ const SyncWithMobileScreen = () => {
             panelWidth={PANEL_WIDTH}
             style={flexbox.flex1}
           >
-            <PanelTitle title={t('2. Scan with Ambire Wallet mobile')} size={16} />
+            {/* `PanelTitle` carries `flex: 1`, which stretches it down the whole card
+            unless it sits in a row of its own */}
             <View
               style={[
                 flexbox.directionRow,
-                flexbox.justifyCenter,
-                spacings.mtTy,
+                flexbox.alignCenter,
                 spacings.mbLg,
-                spacings.phSm
+                { height: TITLE_ROW_HEIGHT }
               ]}
             >
-              <InformationIcon
-                width={16}
-                height={16}
-                color={theme.secondaryText}
-                style={[spacings.mrMi, spacings.mtMi]}
-              />
-              <Text
-                fontSize={14}
-                appearance="secondaryText"
-                style={[text.center, flexbox.flex1]}
+              <PanelTitle title={t('2. Scan with Ambire Wallet mobile')} size={16} />
+            </View>
+            <View
+              style={[flexbox.justifyCenter, spacings.mbLg, { minHeight: SECOND_ROW_MIN_HEIGHT }]}
+            >
+              <Alert
                 testID="sync-qr-warning"
-              >
-                {t('Your QR code includes sensitive information. Do not share it with anyone.')}
-              </Text>
+                type="info"
+                size="sm"
+                title={t(
+                  'Your QR code includes sensitive information. Do not share it with anyone.'
+                )}
+              />
             </View>
 
             {qrCbor ? (
@@ -201,10 +216,11 @@ const SyncWithMobileScreen = () => {
                 disabled={isPreparing}
                 style={[
                   flexbox.center,
-                  spacings.phXl,
                   qrPlaceholderAnimStyle,
                   {
-                    height: QR_SIZE,
+                    // Square and as wide as the QR code it stands in for
+                    width: '100%',
+                    aspectRatio: 1,
                     borderRadius: BORDER_RADIUS_PRIMARY,
                     overflow: 'hidden',
                     backgroundColor: theme.tertiaryBackground
@@ -222,17 +238,21 @@ const SyncWithMobileScreen = () => {
                   style={[StyleSheet.absoluteFill, { backgroundColor: theme.backdrop }]}
                   pointerEvents="none"
                 />
-                <ShieldInvisibilityIcon color={theme.neutral200} width={44} height={50} />
-                <Text
-                  fontSize={14}
-                  weight="medium"
-                  color={theme.neutral200}
-                  style={[spacings.mtSm, text.center]}
-                >
-                  {isPreparing
-                    ? t('Preparing the QR codes...')
-                    : t('Click to select accounts and show QR codes')}
-                </Text>
+                {/* An `<svg>` is not positioned, so the absolutely positioned layers above
+                would paint over the icon without a wrapper of its own to lift it */}
+                <View style={[flexbox.center, spacings.phXl, { zIndex: 1 }]}>
+                  <ShieldInvisibilityIcon color={theme.neutral200} width={44} height={50} />
+                  <Text
+                    fontSize={14}
+                    weight="medium"
+                    color={theme.neutral200}
+                    style={[spacings.mtSm, text.center]}
+                  >
+                    {isPreparing
+                      ? t('Preparing the QR codes...')
+                      : t('Click to select accounts and show QR codes')}
+                  </Text>
+                </View>
               </AnimatedPressable>
             )}
           </Panel>
