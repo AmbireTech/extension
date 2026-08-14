@@ -1,11 +1,12 @@
-import React, { useCallback } from 'react'
-import { View } from 'react-native'
+import React, { useCallback, useMemo } from 'react'
+import { useWindowDimensions, View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 
 import { ACCOUNTS_SYNC_UR_TYPE } from '@ambire-common/libs/accountsSync/accountsSync'
 import InvisibilityIcon from '@common/assets/svg/InvisibilityIcon'
 import Alert from '@common/components/Alert'
 import BottomSheet from '@common/components/BottomSheet'
+import ModalHeader from '@common/components/BottomSheet/ModalHeader'
 import CopyText from '@common/components/CopyText'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
@@ -18,12 +19,17 @@ import {
 } from '@common/modules/accounts-sync/consts'
 import useAccountsSyncExport from '@common/modules/accounts-sync/hooks/useAccountsSyncExport'
 import AnimatedQrCode from '@common/modules/hardware-wallets/components/AnimatedQrCode'
-import spacings from '@common/styles/spacings'
+import spacings, { SPACING_SM } from '@common/styles/spacings'
+import { THEME_TYPES } from '@common/styles/themeConfig'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
+import { openInTab } from '@common/utils/links'
 
-const QR_SIZE = 280
+const MAX_QR_SIZE = 400
+// Small phones can't fit the whole sheet content, so the warning is dropped there
+// to keep the QR code and the account selection visible without scrolling.
+const SHORT_SCREEN_HEIGHT = 700
 
 interface Props {
   sheetRef: React.RefObject<any>
@@ -36,7 +42,7 @@ interface Props {
  */
 const ExportToExtensionSheet = ({ sheetRef, closeBottomSheet }: Props) => {
   const { t } = useTranslation()
-  const { theme } = useTheme()
+  const { theme, themeType } = useTheme()
   const {
     accounts,
     selectedAddrs,
@@ -49,6 +55,20 @@ const ExportToExtensionSheet = ({ sheetRef, closeBottomSheet }: Props) => {
   } = useAccountsSyncExport()
   const { ref: selectSheetRef, open: openSelectSheet, close: closeSelectSheet } = useModalize()
   const [bindPlaceholderAnim, placeholderAnimStyle] = useHover({ preset: 'opacityInverted' })
+  const { width: windowWidth, height: windowHeight } = useWindowDimensions()
+
+  // Stretch the QR to the full width available inside the sheet (which is padded
+  // by SPACING_SM on both sides), but cap it on larger devices so it stays centered.
+  const qrSize = useMemo(() => Math.min(windowWidth - SPACING_SM * 2, MAX_QR_SIZE), [windowWidth])
+
+  // The sheet background is already white on the light theme, so the QR's own white
+  // quiet zone is invisible there - drop it and let the code fill that space instead.
+  const qrQuietZone = themeType === THEME_TYPES.LIGHT ? 0 : undefined
+
+  const handleOpenLink = useCallback(
+    () => openInTab({ url: `https://${GET_AMBIRE_EXTENSION_LINK}` }),
+    []
+  )
 
   const handleConfirmSelection = useCallback(async () => {
     closeSelectSheet()
@@ -62,38 +82,48 @@ const ExportToExtensionSheet = ({ sheetRef, closeBottomSheet }: Props) => {
         sheetRef={sheetRef}
         closeBottomSheet={closeBottomSheet}
       >
+        <ModalHeader handleClose={closeBottomSheet} title={t('Export accounts')} />
         <Text fontSize={16} weight="medium" style={spacings.mbTy}>
           {t('1. Download the Ambire Extension on your browser.')}
         </Text>
-        <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mbLg]}>
+        <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mb]}>
           <Text fontSize={14} appearance="secondaryText" style={spacings.mrTy}>
-            {t('Visit: {{link}}', { link: GET_AMBIRE_EXTENSION_LINK })}
+            {t('Visit')}
+            {': '}
+            <Text fontSize={14} appearance="secondaryText" underline onPress={handleOpenLink}>
+              {GET_AMBIRE_EXTENSION_LINK}
+            </Text>
           </Text>
           <CopyText
             text={GET_AMBIRE_EXTENSION_LINK}
             iconColor={theme.secondaryText}
-            iconSize={16}
+            iconSize={20}
           />
         </View>
 
         <Text fontSize={16} weight="medium" style={spacings.mbTy}>
           {t("2. Scan using your computer's camera")}
         </Text>
-        <Alert
-          type="info"
-          size="sm"
-          style={spacings.mbSm}
-          title={t('Your QR codes include sensitive information. Do not share them with anyone.')}
-        />
 
         {qrCbor ? (
           <View style={flexbox.alignCenter}>
             <AnimatedQrCode
               type={ACCOUNTS_SYNC_UR_TYPE}
               cbor={qrCbor}
-              size={QR_SIZE}
+              size={qrSize}
               capacity={ACCOUNTS_SYNC_QR_CAPACITY}
+              quietZone={qrQuietZone}
             />
+            {windowHeight >= SHORT_SCREEN_HEIGHT && (
+              <Alert
+                type="info"
+                size="sm"
+                style={{ ...spacings.mtSm, ...spacings.pvTy }}
+                title={t(
+                  'Your QR codes include sensitive information. Do not share them with anyone.'
+                )}
+              />
+            )}
             <Text fontSize={14} appearance="secondaryText" style={spacings.mtSm}>
               {t('{{count}} account{{s}} selected.', {
                 count: selectedAddrs.length,
@@ -120,7 +150,7 @@ const ExportToExtensionSheet = ({ sheetRef, closeBottomSheet }: Props) => {
               flexbox.center,
               placeholderAnimStyle,
               {
-                height: QR_SIZE,
+                height: qrSize,
                 borderRadius: BORDER_RADIUS_PRIMARY,
                 backgroundColor: theme.tertiaryBackground
               }

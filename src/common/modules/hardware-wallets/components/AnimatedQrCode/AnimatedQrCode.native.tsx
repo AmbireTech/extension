@@ -1,10 +1,10 @@
-import { UR, UREncoder } from '@ngraveio/bc-ur'
 import { Buffer } from 'buffer'
 import React, { useEffect, useMemo, useState } from 'react'
 import { View } from 'react-native'
 import QRCode from 'react-native-qrcode-svg'
 
-import { SPACING_MD } from '@common/styles/spacings'
+import { SPACING_SM } from '@common/styles/spacings'
+import { UR, UREncoder } from '@ngraveio/bc-ur'
 
 import { AnimatedQrCodeProps } from './AnimatedQrCode'
 
@@ -22,7 +22,8 @@ const AnimatedQrCode = ({
   cbor,
   size = DEFAULT_SIZE,
   interval = DEFAULT_INTERVAL,
-  capacity = DEFAULT_CAPACITY
+  capacity = DEFAULT_CAPACITY,
+  quietZone = SPACING_SM
 }: AnimatedQrCodeProps) => {
   const encoder = useMemo(
     () => new UREncoder(new UR(Buffer.from(cbor, 'hex'), type), capacity),
@@ -42,7 +43,7 @@ const AnimatedQrCode = ({
       <QRCode
         value={frame}
         size={size}
-        quietZone={SPACING_MD}
+        quietZone={quietZone}
         color={QR_FOREGROUND_COLOR}
         backgroundColor={QR_BACKGROUND_COLOR}
         ecl="L"

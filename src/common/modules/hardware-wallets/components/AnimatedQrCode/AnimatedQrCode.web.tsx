@@ -2,7 +2,7 @@ import React from 'react'
 import { View } from 'react-native'
 
 import { AnimatedQRCode } from '@keystonehq/animated-qr'
-import spacings, { SPACING_SM } from '@common/styles/spacings'
+import { SPACING_SM } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
 import { AnimatedQrCodeProps } from './AnimatedQrCode'
@@ -20,13 +20,13 @@ const AnimatedQrCode = ({
   cbor,
   size = DEFAULT_SIZE,
   interval = DEFAULT_INTERVAL,
-  capacity = DEFAULT_CAPACITY
+  capacity = DEFAULT_CAPACITY,
+  quietZone = SPACING_SM
 }: AnimatedQrCodeProps) => (
   <View
     style={[
       flexbox.center,
-      spacings.pSm,
-      { width: size, height: size, backgroundColor: QR_BACKGROUND_COLOR }
+      { padding: quietZone, width: size, height: size, backgroundColor: QR_BACKGROUND_COLOR }
     ]}
   >
     <AnimatedQRCode
@@ -34,7 +34,7 @@ const AnimatedQrCode = ({
         capacity,
         interval,
         // AnimatedQRCode already adds 5px of white space on every side.
-        size: size - SPACING_SM * 2
+        size: size - quietZone * 2
       }}
       type={type}
       cbor={cbor}

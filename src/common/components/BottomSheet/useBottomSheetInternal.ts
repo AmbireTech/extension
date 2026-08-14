@@ -1,6 +1,5 @@
 import { nanoid } from 'nanoid'
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { BackHandler } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import { isWeb } from '@common/config/env'
@@ -106,7 +105,9 @@ const useBottomSheetInternal = (props: BottomSheetProps) => {
     if (isNarrowSidePanel) return 0
     if (isWeb) return HEADER_HEIGHT - 20
 
-    return top + SPACING_SM
+    const topOffset = top - SPACING_SM
+
+    return topOffset
   }, [isModal, isNarrowSidePanel, top])
 
   // Compute dynamic zIndex based on nesting level when the sheet opened
