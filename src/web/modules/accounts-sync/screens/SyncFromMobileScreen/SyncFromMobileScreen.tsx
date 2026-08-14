@@ -52,7 +52,7 @@ const SyncFromMobileScreen = () => {
   const { navigate, goBack, canGoBack } = useNavigation()
   const { state: hasPasswordSecret } = useController('KeystoreController', selectHasPasswordSecret)
   const { state: accountsCount } = useController('AccountsController', selectAccountsCount)
-  const { goToPrevRoute } = useOnboardingNavigation()
+  const { goToNextRoute, goToPrevRoute } = useOnboardingNavigation()
   const {
     ref: passwordSheetRef,
     open: openPasswordSheet,
@@ -123,9 +123,10 @@ const SyncFromMobileScreen = () => {
     closePasswordSheet()
     // During onboarding the accounts arrive before this device has a password of its
     // own, so setting one comes next. Otherwise the freshly imported accounts can be
-    // named right away.
-    navigate(hasPasswordSecret ? WEB_ROUTES.accountPersonalize : WEB_ROUTES.keyStoreSetup)
-  }, [closePasswordSheet, hasPasswordSecret, navigate])
+    // named right away. Both are onboarding routes reachable through internal navigation
+    // only, so going there with `navigate` gets bounced back to this screen.
+    goToNextRoute(hasPasswordSecret ? WEB_ROUTES.accountPersonalize : WEB_ROUTES.keyStoreSetup)
+  }, [closePasswordSheet, goToNextRoute, hasPasswordSecret])
 
   const {
     handleScanComplete,
