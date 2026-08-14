@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useMemo, useRef, useState } from 'react'
 
 import { Account } from '@ambire-common/interfaces/account'
 import useController from '@common/hooks/useController'
@@ -27,6 +27,15 @@ const useAccountsSyncExport = () => {
 
   const discardPayload = useCallback(() => setPayload(null), [])
 
+  const resetCount = useRef(0)
+
+  /** Forgets the selection and the prepared payload, so the export starts from scratch. */
+  const reset = useCallback(() => {
+    resetCount.current += 1
+    setSelectedAddrs([])
+    setPayload(null)
+  }, [])
+
   const toggleAccount = useCallback(
     (addr: Account['addr']) => {
       discardPayload()
@@ -47,12 +56,15 @@ const useAccountsSyncExport = () => {
   const prepareExport = useCallback(async () => {
     if (!selectedAddrs.length || isPreparing) return
 
+    const resetCountAtStart = resetCount.current
     setIsPreparing(true)
     try {
       const nextPayload = await dispatchAndWait<'exportAccountsForSync', string>({
         type: 'method',
         params: { method: 'exportAccountsForSync', args: [selectedAddrs] }
       })
+
+      if (resetCount.current !== resetCountAtStart) return
 
       setPayload(nextPayload)
     } catch {
@@ -73,6 +85,7 @@ const useAccountsSyncExport = () => {
     prepareExport,
     isPreparing,
     discardPayload,
+    reset,
     // The animated QR component expects the payload without the hex prefix
     qrCbor: payload ? payload.slice(2) : null
   }

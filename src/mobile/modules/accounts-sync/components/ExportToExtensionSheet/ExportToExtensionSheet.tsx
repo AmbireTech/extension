@@ -1,9 +1,11 @@
+import { BlurView } from 'expo-blur'
 import React, { useCallback, useMemo } from 'react'
-import { useWindowDimensions, View } from 'react-native'
+import { StyleSheet, useWindowDimensions, View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
+import QRCode from 'react-native-qrcode-svg'
 
 import { ACCOUNTS_SYNC_UR_TYPE } from '@ambire-common/libs/accountsSync/accountsSync'
-import InvisibilityIcon from '@common/assets/svg/InvisibilityIcon'
+import ShieldInvisibilityIcon from '@common/assets/svg/ShieldInvisibilityIcon'
 import Alert from '@common/components/Alert'
 import BottomSheet from '@common/components/BottomSheet'
 import ModalHeader from '@common/components/BottomSheet/ModalHeader'
@@ -30,6 +32,9 @@ const MAX_QR_SIZE = 400
 // Small phones can't fit the whole sheet content, so the warning is dropped there
 // to keep the QR code and the account selection visible without scrolling.
 const SHORT_SCREEN_HEIGHT = 700
+// Dummy value rendered behind the blur before the accounts are picked, so the
+// placeholder hints at a QR code instead of showing a flat empty box.
+const PLACEHOLDER_QR_VALUE = '0123456789ABCDEF'.repeat(24)
 
 interface Props {
   sheetRef: React.RefObject<any>
@@ -51,6 +56,7 @@ const ExportToExtensionSheet = ({ sheetRef, closeBottomSheet }: Props) => {
     toggleAllAccounts,
     prepareExport,
     isPreparing,
+    reset,
     qrCbor
   } = useAccountsSyncExport()
   const { ref: selectSheetRef, open: openSelectSheet, close: closeSelectSheet } = useModalize()
@@ -70,6 +76,13 @@ const ExportToExtensionSheet = ({ sheetRef, closeBottomSheet }: Props) => {
     []
   )
 
+  // The QR codes carry sensitive data, so they are not kept around after the sheet is
+  // closed - reopening it starts over from the account selection.
+  const handleClosed = useCallback(() => {
+    closeSelectSheet()
+    reset()
+  }, [closeSelectSheet, reset])
+
   const handleConfirmSelection = useCallback(async () => {
     closeSelectSheet()
     await prepareExport()
@@ -81,6 +94,7 @@ const ExportToExtensionSheet = ({ sheetRef, closeBottomSheet }: Props) => {
         id="export-accounts-to-extension"
         sheetRef={sheetRef}
         closeBottomSheet={closeBottomSheet}
+        onClosed={handleClosed}
       >
         <ModalHeader handleClose={closeBottomSheet} title={t('Export accounts')} />
         <Text fontSize={16} weight="medium" style={spacings.mbTy}>
@@ -148,17 +162,39 @@ const ExportToExtensionSheet = ({ sheetRef, closeBottomSheet }: Props) => {
             disabled={isPreparing}
             style={[
               flexbox.center,
+              spacings.ph2Xl,
               placeholderAnimStyle,
               {
                 height: qrSize,
                 borderRadius: BORDER_RADIUS_PRIMARY,
+                overflow: 'hidden',
                 backgroundColor: theme.tertiaryBackground
               }
             ]}
             {...bindPlaceholderAnim}
           >
-            <InvisibilityIcon color={theme.primaryText} width={32} height={32} />
-            <Text fontSize={14} weight="medium" style={[spacings.mtSm, text.center]}>
+            <View style={[StyleSheet.absoluteFill, flexbox.center]} pointerEvents="none">
+              <QRCode value={PLACEHOLDER_QR_VALUE} size={qrSize} quietZone={0} ecl="L" />
+            </View>
+            {/* On native `filter: blur()` is a no-op (web-only CSS), so overlay a real BlurView,
+                plus a dark scrim, to leave only a faint hint of the dummy QR code behind */}
+            <BlurView
+              intensity={40}
+              // Android renders a barely visible tint instead of a blur unless this
+              // experimental method is on, leaving the dummy QR code recognizable
+              experimentalBlurMethod="dimezisBlurView"
+              blurReductionFactor={1}
+              tint="dark"
+              style={[StyleSheet.absoluteFill, { backgroundColor: theme.backdrop }]}
+              pointerEvents="none"
+            />
+            <ShieldInvisibilityIcon color={theme.neutral200} width={44} height={50} />
+            <Text
+              fontSize={14}
+              weight="medium"
+              color={theme.neutral200}
+              style={[spacings.mtSm, text.center]}
+            >
               {isPreparing
                 ? t('Preparing the QR codes...')
                 : t('Tap to select accounts and show QR codes')}
