@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react'
+import React, { useCallback, useMemo, useState } from 'react'
 import { TextStyle, View } from 'react-native'
 
 import { getCallsCount } from '@ambire-common/utils/userRequest'
@@ -11,7 +11,6 @@ import { isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
-import ActionsPagination from '@common/modules/action-requests/components/ActionsPagination'
 import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import spacings, { SPACING_SM, SPACING_TY } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
@@ -31,12 +30,14 @@ const Footer = ({
   inProgressButtonText,
   buttonText,
   shouldHoldToProceed,
+  shouldRejectOnchain,
   holdToProceedButtonType = 'primary',
   signButtonType = 'primary'
 }: Props) => {
   const { t } = useTranslation()
   const { styles } = useTheme(getStyles)
   const { isCompactLayout } = useCompactActionRequestLayout()
+  const [isRejectOnchainLoading, setIsRejectOnchainLoading] = useState(false)
   const { userRequests } = useController('RequestsController').state
   const {
     state: { account }
@@ -84,6 +85,11 @@ const Footer = ({
       : t('Start a batch')
   }, [isMultisigSigned, batchCount, t])
 
+  const handleReject = useCallback(() => {
+    if (shouldRejectOnchain) setIsRejectOnchainLoading(true)
+    onReject()
+  }, [onReject, shouldRejectOnchain])
+
   const rejectButton = ({
     fullWidth,
     compact = false
@@ -91,15 +97,16 @@ const Footer = ({
     fullWidth: boolean
     compact?: boolean
   }) => (
-    <Button
+    <ButtonWithLoader
       testID="transaction-button-reject"
       type="danger"
-      text={t('Reject')}
-      onPress={onReject}
+      text={shouldRejectOnchain ? t('Reject onchain') : t('Reject')}
+      onPress={handleReject}
+      isLoading={isRejectOnchainLoading}
       hasBottomSpacing={false}
       size={compact ? 'smaller' : 'large'}
-      disabled={isSignLoading}
-      style={fullWidth ? { width: '100%', minWidth: 0 } : { width: 98 }}
+      disabled={isSignLoading || isRejectOnchainLoading}
+      style={fullWidth ? { width: '100%', minWidth: 0 } : { width: 'auto' }}
     />
   )
 
@@ -197,7 +204,6 @@ const Footer = ({
           }
         ]}
       >
-        <ActionsPagination />
         <View style={{ width: '100%' }}>{signButton(true)}</View>
         {isAddToCartDisplayed ? (
           <View
@@ -227,7 +233,6 @@ const Footer = ({
       <View style={[!isAddToCartDisplayed && flexbox.flex1, flexbox.alignStart]}>
         {rejectButton({ fullWidth: false })}
       </View>
-      <ActionsPagination />
       <View
         style={[flexbox.directionRow, !isAddToCartDisplayed && flexbox.flex1, flexbox.justifyEnd]}
       >

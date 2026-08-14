@@ -141,8 +141,32 @@ const SignAccountOpScreen = () => {
     return currentUserRequest as CallsUserRequest
   }, [currentUserRequest])
 
+  const shouldRejectOnchain = useMemo(() => {
+    if (!signAccountOpState?.account.safeCreation) return false
+    const { signature, signed } = signAccountOpState.accountOp
+    const signedCount = signed?.length || 0
+
+    return (
+      !!signature &&
+      signature !== '0x' &&
+      signedCount > 0 &&
+      signedCount < signAccountOpState.threshold
+    )
+  }, [signAccountOpState])
+
   const handleRejectAccountOp = useCallback(() => {
     if (!accountOpRequest) return
+
+    if (shouldRejectOnchain) {
+      requestsDispatch({
+        type: 'method',
+        params: {
+          method: 'buildOnchainSafeRejection',
+          args: [accountOpRequest.id]
+        }
+      })
+      return
+    }
 
     requestsDispatch({
       type: 'method',
@@ -155,7 +179,7 @@ const SignAccountOpScreen = () => {
         ]
       }
     })
-  }, [requestsDispatch, accountOpRequest, visibleUserRequests.length])
+  }, [requestsDispatch, accountOpRequest, shouldRejectOnchain, visibleUserRequests.length])
 
   useEffect(() => {
     if (isSignDisabled || !containerHeight || !contentHeight) return
@@ -271,6 +295,7 @@ const SignAccountOpScreen = () => {
                   )}
 
                 <Footer
+                  key={accountOpRequest?.id}
                   onReject={handleRejectAccountOp}
                   onAddToCart={handleAddToCart}
                   isAddToCartDisplayed={
@@ -288,6 +313,7 @@ const SignAccountOpScreen = () => {
                   inProgressButtonText={primaryButtonText}
                   buttonText={signButtonText}
                   shouldHoldToProceed={shouldHoldToProceed}
+                  shouldRejectOnchain={shouldRejectOnchain}
                   holdToProceedButtonType={holdToProceedButtonType}
                   signButtonType={extremeGasFeeSignButtonType}
                 />

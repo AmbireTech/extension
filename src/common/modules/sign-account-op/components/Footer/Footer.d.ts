@@ -10,6 +10,7 @@ export type Props = {
   buttonText: string
   buttonTooltipText?: string
   shouldHoldToProceed: boolean
+  shouldRejectOnchain: boolean
   holdToProceedButtonType?: 'dangerFilled' | 'warning' | 'primary'
   signButtonType?: 'dangerFilled' | 'warning' | 'primary'
 }

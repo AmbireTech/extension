@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react'
+import React, { useCallback, useMemo, useState } from 'react'
 import { View } from 'react-native'
 
 import { getCallsCount } from '@ambire-common/utils/userRequest'
@@ -9,7 +9,6 @@ import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import HoldToProceedButton from '@common/components/HoldToProceedButton'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
-import ActionsPagination from '@common/modules/action-requests/components/ActionsPagination'
 import spacings, { SPACING_SM } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
@@ -27,9 +26,11 @@ const Footer = ({
   inProgressButtonText,
   buttonText,
   shouldHoldToProceed,
+  shouldRejectOnchain,
   signButtonType = 'primary'
 }: Props) => {
   const { t } = useTranslation()
+  const [isRejectOnchainLoading, setIsRejectOnchainLoading] = useState(false)
   const { userRequests } = useController('RequestsController').state
   const {
     state: { account }
@@ -69,6 +70,11 @@ const Footer = ({
         })
       : t('Start a batch')
   }, [isMultisigSigned, batchCount, t])
+
+  const handleReject = useCallback(() => {
+    if (shouldRejectOnchain) setIsRejectOnchainLoading(true)
+    onReject()
+  }, [onReject, shouldRejectOnchain])
 
   return (
     <View style={spacings.ptSm}>
@@ -111,14 +117,15 @@ const Footer = ({
 
       <View style={[flexbox.directionRow, { columnGap: SPACING_SM }]}>
         <View style={flexbox.flex1}>
-          <Button
+          <ButtonWithLoader
             testID="transaction-button-reject"
             type="danger"
-            text={t('Reject')}
-            onPress={onReject}
+            text={shouldRejectOnchain ? t('Reject onchain') : t('Reject')}
+            onPress={handleReject}
+            isLoading={isRejectOnchainLoading}
             style={{ height: 50 }}
             hasBottomSpacing={false}
-            disabled={isSignLoading}
+            disabled={isSignLoading || isRejectOnchainLoading}
           />
         </View>
         {isAddToCartDisplayed && (
@@ -144,8 +151,6 @@ const Footer = ({
           </View>
         )}
       </View>
-
-      <ActionsPagination />
     </View>
   )
 }

@@ -7,7 +7,6 @@ import { Key } from '@ambire-common/interfaces/keystore'
 import Button from '@common/components/Button'
 import GlassView from '@common/components/GlassView'
 import Spinner from '@common/components/Spinner'
-import ActionsPagination from '@common/modules/action-requests/components/ActionsPagination'
 import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import SafeOwners from '@common/modules/sign-account-op/components/SafeOwners'
 import spacings, { SPACING_SM, SPACING_TY } from '@common/styles/spacings'
@@ -79,29 +78,26 @@ const SafeFooter = ({
           />
         )}
         {threshold > 0 && isSingle && (
-          <>
-            <View style={[flexbox.directionRow, { columnGap: SPACING_TY }]}>
-              <View style={flexbox.flex1}>
-                <Button
-                  text={t('Reject')}
-                  type="danger"
-                  hasBottomSpacing={false}
-                  size="large"
-                  onPress={onReject}
-                />
-              </View>
-              <View style={flexbox.flex1}>
-                <Button
-                  size="large"
-                  type="primary"
-                  hasBottomSpacing={false}
-                  onPress={onSingleSignerSign}
-                  text="Sign"
-                />
-              </View>
+          <View style={[flexbox.directionRow, { columnGap: SPACING_TY }]}>
+            <View style={flexbox.flex1}>
+              <Button
+                text={t('Reject')}
+                type="danger"
+                hasBottomSpacing={false}
+                size="large"
+                onPress={onReject}
+              />
             </View>
-            <ActionsPagination />
-          </>
+            <View style={flexbox.flex1}>
+              <Button
+                size="large"
+                type="primary"
+                hasBottomSpacing={false}
+                onPress={onSingleSignerSign}
+                text="Sign"
+              />
+            </View>
+          </View>
         )}
         {threshold > 0 &&
           !isSingle &&
@@ -138,7 +134,6 @@ const SafeFooter = ({
                   />
                 </View>
               </View>
-              <ActionsPagination />
             </>
           ) : (
             <View style={flexbox.center}>
@@ -195,7 +190,6 @@ const SafeFooter = ({
                 onPress={onReject}
                 style={[{ maxWidth: 'auto' }]}
               />
-              <ActionsPagination />
               <Button
                 size="large"
                 type="primary"
@@ -218,7 +212,6 @@ const SafeFooter = ({
                   onPress={onReject}
                   style={[{ maxWidth: 'auto' }]}
                 />
-                <ActionsPagination />
                 <View style={[flexbox.directionRow, flexbox.alignCenter]}>
                   <Button
                     size="large"
