@@ -8,6 +8,7 @@ import Text from '@common/components/Text'
 import { isMobile, isWeb } from '@common/config/env'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
+import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import spacings from '@common/styles/spacings'
 import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
@@ -24,6 +25,7 @@ const ActionsPagination = () => {
   } = useController('RequestsController')
   const { t } = useTranslation()
   const { theme, themeType } = useTheme()
+  const { isWideFooterLayout, isCompactLayout } = useCompactActionRequestLayout()
   const currentRequestIndex = useMemo(() => {
     if (!currentUserRequest) return undefined
 
@@ -85,11 +87,12 @@ const ActionsPagination = () => {
       style={[
         flexbox.directionRow,
         flexbox.alignCenter,
-        isWeb && flexbox.flex1,
+        isWeb && isWideFooterLayout && flexbox.flex1,
         spacings.phSm,
         flexbox.justifyCenter,
         isMobile && { columnGap: 16 },
-        isMobile && spacings.ptLg
+        isMobile && spacings.ptLg,
+        isCompactLayout && !isMobile && spacings.pbSm
       ]}
     >
       <TouchableOpacity

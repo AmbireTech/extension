@@ -3,6 +3,9 @@ const COMMON_ROUTES = {
   keyStoreUnlock: 'unlock',
   dashboard: 'dashboard',
   getStarted: 'get-started',
+  // Side panel cannot render the full tab-only onboarding flow; this route is the placeholder
+  // shown when there are no accounts in the side panel.
+  sidePanelNoAccounts: 'side-panel-no-accounts',
   networksConfiguration: 'networks-configuration',
   privacyOptOutsConfiguration: 'privacy-opt-outs-configuration',
   importPrivateKey: 'import-private-key',

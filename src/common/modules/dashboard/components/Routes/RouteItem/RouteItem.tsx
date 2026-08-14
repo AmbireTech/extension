@@ -31,12 +31,13 @@ interface Props {
   routeItem: RouteItemType
   index: number
   routeItemsLength: number
+  isCompactSidePanelLayout: boolean
 }
 
 const ITEM_HEIGHT = 40
 const ICON_SIZE = 24
 
-const RouteItem: FC<Props> = ({ routeItem, index, routeItemsLength }) => {
+const RouteItem: FC<Props> = ({ routeItem, index, routeItemsLength, isCompactSidePanelLayout }) => {
   const { t } = useTranslation()
   const { navigate } = useNavigation()
   const { addToast } = useToast()
@@ -45,7 +46,11 @@ const RouteItem: FC<Props> = ({ routeItem, index, routeItemsLength }) => {
   return (
     <Pressable
       key={routeItem.label}
-      style={[flexbox.alignCenter, index !== routeItemsLength - 1 && spacings.mrSm]}
+      style={[
+        flexbox.alignCenter,
+        isCompactSidePanelLayout && { flexShrink: 0 },
+        index !== routeItemsLength - 1 && spacings.mrSm
+      ]}
       disabled={routeItem.disabled}
       onPress={async () => {
         if (routeItem?.onPress) {

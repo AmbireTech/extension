@@ -13,6 +13,17 @@ const { execSync } = require('child_process')
 const ROOT_DIR = process.cwd()
 const isDev = process.env.NODE_ENV === 'development' || process.argv.includes('serve')
 
+const isBootProfilingEnabled =
+  (process.env.IS_BOOT_PROFILING_ENABLED || '').toLowerCase() === 'true'
+
+// Rewritten in this process, not just handed to DefinePlugin below: babel-loader picks up
+// the root babel.config.js, whose transform-inline-environment-variables reads this env
+// directly and inlines the value before DefinePlugin ever sees the read. An off switch has
+// to reach the source as an empty string, the only falsy literal Terser folds - it leaves
+// `undefined` and any off-but-present spelling (`false`, `0`) as a runtime check, which
+// keeps every profiler body in the shipped bundle.
+process.env.IS_BOOT_PROFILING_ENABLED = isBootProfilingEnabled ? 'true' : ''
+
 // Production worker bundle output dirs, loaded by the WebView via `file://`.
 // iOS: folder-referenced from Xcode into the signed `.app`. Android: packaged
 // by Gradle, reachable via `file:///android_asset/`.
@@ -28,7 +39,8 @@ if (isDev) {
   const bundleFiles = [
     'ethereum-inpage-bundle.json',
     'ambire-inpage-bundle.json',
-    'webview-bundle-ota.json'
+    'webview-bundle-ota.json',
+    'webview-bundle-version.json'
   ]
   const allBundlesExist = bundleFiles.every((file) => fs.existsSync(path.join(SERVICES_DIR, file)))
 
@@ -196,20 +208,42 @@ class WorkerHtmlPlugin {
             .update(Buffer.from(onErrorScript, 'utf8'))
             .digest('base64')}`
 
+          // Stamps the instant the HTML parser reached the bundle <script> tag. Sits
+          // immediately before that tag so the gap to the bundle's first executed line
+          // is purely fetch + SRI hashing + compile, with the HTML parse excluded.
+          // Needed because a `file://` load populates no resource timing entry, which
+          // leaves that window (the largest single phase of the worker boot) opaque.
+          // Read by workerBootProfiler.ts.
+          const bootMarkScript = isBootProfilingEnabled
+            ? `window.__ambireBundleTagReachedAt = performance.now();`
+            : ''
+          const bootMarkHash = bootMarkScript
+            ? `sha384-${crypto
+                .createHash('sha384')
+                .update(Buffer.from(bootMarkScript, 'utf8'))
+                .digest('base64')}`
+            : ''
+
           // `script-src` uses the `file:` scheme (not `'self'`, which an opaque
           // `file://` origin does not match) for the sibling bundle, plus a hash
-          // for the inline error handler. Not a wide grant — navigation is
+          // for the inline error handler, and one for the boot mark only when
+          // profiling put it in the page. Not a wide grant — navigation is
           // locked to the single bundle URI (see onShouldStartLoadWithRequest),
           // so the only `file:` script reachable is our own bundle.
+          const scriptSrc = ['script-src file:', `'${onErrorHash}'`]
+          if (bootMarkHash) scriptSrc.push(`'${bootMarkHash}'`)
+
           const csp = [
             "default-src 'none'",
-            `script-src file: '${onErrorHash}'`,
+            scriptSrc.join(' '),
             "connect-src 'none'",
             "frame-src 'none'",
             "object-src 'none'",
             "base-uri 'none'",
             "form-action 'none'"
           ].join('; ')
+
+          const bootMarkTag = bootMarkScript ? `<script>${bootMarkScript}</script>\n    ` : ''
 
           const html = `<!DOCTYPE html>
 <html>
@@ -220,7 +254,7 @@ class WorkerHtmlPlugin {
     <script>${onErrorScript}</script>
   </head>
   <body>
-    <script src="webview-bundle.js" integrity="${sriHash}" crossorigin="anonymous"></script>
+    ${bootMarkTag}<script src="webview-bundle.js" integrity="${sriHash}" crossorigin="anonymous"></script>
   </body>
 </html>
 `
@@ -262,6 +296,10 @@ class MirrorToAndroidAssetsPlugin {
  * Emits `webview-bundle-ota.json` ({ html, js, integrity }) into the services dir so the
  * worker bundle rides the Metro/OTA JS bundle - the native asset copy cannot be OTA-updated.
  * At runtime materializeWorkerBundle writes it to a writable dir and loads it via `file://`.
+ *
+ * Also emits `webview-bundle-version.json` ({ version }) holding the same marker. The
+ * runtime up-to-date check reads that one on every launch, so it must not have to pull the
+ * multi-MB bundle into memory just to learn which version it is looking at.
  */
 class EmitOtaBundleJsonPlugin {
   constructor({ sourceDir, targetDir }) {
@@ -274,10 +312,18 @@ class EmitOtaBundleJsonPlugin {
       try {
         const js = fs.readFileSync(path.join(this.sourceDir, 'webview-bundle.js'))
         const html = fs.readFileSync(path.join(this.sourceDir, 'webview-bundle.html'), 'utf8')
-        // Same SHA-384 the HTML's SRI uses; doubles as the materialization version marker.
-        const integrity = `sha384-${crypto.createHash('sha384').update(js).digest('base64')}`
+        // Hashes both the HTML and JS so a change to either triggers an OTA update.
+        const integrity = `sha384-${crypto
+          .createHash('sha384')
+          .update(js)
+          .update(Buffer.from(html, 'utf8'))
+          .digest('base64')}`
         const json = JSON.stringify({ html, js: js.toString('utf8'), integrity })
         fs.writeFileSync(path.join(this.targetDir, 'webview-bundle-ota.json'), json)
+        fs.writeFileSync(
+          path.join(this.targetDir, 'webview-bundle-version.json'),
+          JSON.stringify({ version: integrity })
+        )
       } catch (err) {
         compilation.errors.push(new Error(`EmitOtaBundleJsonPlugin failed: ${err.message}`))
       }
@@ -318,7 +364,11 @@ const workerBundleEnv = {
 const workerConfig = {
   name: 'worker',
   context: ROOT_DIR,
-  entry: './src/mobile/modules/webview/services/injectedLogic.ts',
+  entry: [
+    './src/mobile/modules/webview/services/structuredCloneShim.ts',
+    './src/mobile/modules/webview/services/workerBootProfiler.ts',
+    './src/mobile/modules/webview/services/injectedLogic.ts'
+  ],
   mode: isDev ? 'development' : 'production',
   target: 'web',
   devtool: false,
@@ -334,7 +384,16 @@ const workerConfig = {
     ...sharedPlugins,
     new webpack.DefinePlugin({
       __DEV__: JSON.stringify(isDev),
-      'process.env': JSON.stringify(workerBundleEnv)
+      'process.env': JSON.stringify(workerBundleEnv),
+      // Boot profiler switch. Kept out of `workerBundleEnv`, which stays limited to the
+      // three keys above. The more specific key wins over the wholesale `process.env`
+      // replacement and inlines to a string literal, so Terser drops the profiler code
+      // when the switch is off.
+      //
+      // Normalized to `'true'` or `''` rather than passed through: with the raw value,
+      // an off-but-present spelling like `false` leaves constants.ts parsing at runtime,
+      // and Terser then keeps every profiler body in the shipped bundle.
+      'process.env.IS_BOOT_PROFILING_ENABLED': JSON.stringify(isBootProfilingEnabled ? 'true' : '')
     })
   ]
 }

@@ -25,7 +25,7 @@ const CustomHDPathBottomSheet: FC<Props> = ({
   options,
   value
 }) => {
-  const { theme, themeType } = useTheme()
+  const { theme } = useTheme()
   const { t } = useTranslation()
   const {
     control,

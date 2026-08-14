@@ -56,8 +56,6 @@ const PendingChainTransactions: FC<Props> = ({ group, currentNonce }) => {
   else if (waitsForPrecedingNonce) nonceColor = theme.warningText
   const hasPrevNonce = nonceIndex > 0
   const hasNextNonce = nonceIndex < group.nonceGroups.length - 1
-  // With a single nonce there is nothing to switch between, so the arrows are left out
-  const hasMultipleNonces = group.nonceGroups.length > 1
 
   const handlePrevNonce = useCallback(() => {
     setManuallySelectedNonceIndex(Math.max(nonceIndex - 1, 0))
@@ -125,49 +123,40 @@ const PendingChainTransactions: FC<Props> = ({ group, currentNonce }) => {
             <Text fontSize={16} weight="semiBold">
               {t('Nonce')}:
             </Text>
-            {hasMultipleNonces && (
-              <HoverablePressable
-                testID={`pending-transactions-prev-nonce-${group.network.chainId.toString()}`}
-                accessibilityRole="button"
-                accessibilityLabel={t('Show previous nonce')}
-                accessibilityState={{ disabled: !hasPrevNonce }}
-                disabled={!hasPrevNonce}
-                onPress={handlePrevNonce}
-                style={[
-                  styles.nonceNavigationButton,
-                  flexbox.center,
-                  spacings.mlTy,
-                  !hasPrevNonce && styles.nonceNavigationButtonDisabled
-                ]}
-              >
-                <LeftArrowIcon width={6} height={11} color={theme.iconPrimary} />
-              </HoverablePressable>
-            )}
-            <Text
-              fontSize={16}
-              weight="semiBold"
-              color={nonceColor}
-              style={hasMultipleNonces ? spacings.mhTy : spacings.mlMi}
+            <HoverablePressable
+              testID={`pending-transactions-prev-nonce-${group.network.chainId.toString()}`}
+              accessibilityRole="button"
+              accessibilityLabel={t('Show previous nonce')}
+              accessibilityState={{ disabled: !hasPrevNonce }}
+              disabled={!hasPrevNonce}
+              onPress={handlePrevNonce}
+              style={[
+                styles.nonceNavigationButton,
+                flexbox.center,
+                spacings.mlTy,
+                !hasPrevNonce && styles.nonceNavigationButtonDisabled
+              ]}
             >
+              <LeftArrowIcon width={6} height={11} color={theme.iconPrimary} />
+            </HoverablePressable>
+            <Text fontSize={16} weight="semiBold" color={nonceColor} style={spacings.mhTy}>
               {nonceGroup.nonce.toString()}
             </Text>
-            {hasMultipleNonces && (
-              <HoverablePressable
-                testID={`pending-transactions-next-nonce-${group.network.chainId.toString()}`}
-                accessibilityRole="button"
-                accessibilityLabel={t('Show next nonce')}
-                accessibilityState={{ disabled: !hasNextNonce }}
-                disabled={!hasNextNonce}
-                onPress={handleNextNonce}
-                style={[
-                  styles.nonceNavigationButton,
-                  flexbox.center,
-                  !hasNextNonce && styles.nonceNavigationButtonDisabled
-                ]}
-              >
-                <RightArrowIcon width={6} height={11} color={theme.iconPrimary} />
-              </HoverablePressable>
-            )}
+            <HoverablePressable
+              testID={`pending-transactions-next-nonce-${group.network.chainId.toString()}`}
+              accessibilityRole="button"
+              accessibilityLabel={t('Show next nonce')}
+              accessibilityState={{ disabled: !hasNextNonce }}
+              disabled={!hasNextNonce}
+              onPress={handleNextNonce}
+              style={[
+                styles.nonceNavigationButton,
+                flexbox.center,
+                !hasNextNonce && styles.nonceNavigationButtonDisabled
+              ]}
+            >
+              <RightArrowIcon width={6} height={11} color={theme.iconPrimary} />
+            </HoverablePressable>
           </View>
           <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mtMi]}>
             {isCurrentNonce && (

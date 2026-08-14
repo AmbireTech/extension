@@ -9,7 +9,6 @@ const makeRequest = ({
   id,
   chainId,
   nonce,
-  rejected = false,
   signed = [],
   threshold = 2,
   importedOwners = [],
@@ -27,7 +26,7 @@ const makeRequest = ({
   ({
     id,
     kind: 'calls',
-    meta: { accountAddr: ACCOUNT_ADDR, chainId, isSafeRejected: rejected },
+    meta: { accountAddr: ACCOUNT_ADDR, chainId },
     dappPromises: [],
     signAccountOp: {
       account: { safeCreation: {} },

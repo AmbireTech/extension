@@ -29,6 +29,7 @@ import isErc7730Visualization from '@common/modules/sign-message/utils/isErc7730
 import spacings, { SPACING_SM, SPACING_TY } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { getMessageAsText, simplifyTypedMessage } from '@common/utils/messageToString'
+import { getUiType } from '@common/utils/uiType'
 
 import {
   getEip712IntegerFieldNames,
@@ -36,6 +37,8 @@ import {
   isParsedMessageValueShortened
 } from './helpers'
 import getStyles from './styles'
+
+const { isSidePanel } = getUiType()
 
 const isCloseToBottom = ({ layoutMeasurement, contentOffset, contentSize }: NativeScrollEvent) => {
   const paddingToBottom = 40
@@ -162,6 +165,11 @@ const FallbackVisualization: FC<{
   const content = messageToSign?.content
   const chainId = messageToSign?.chainId || 1n
   const isTypedMessage = content?.kind === 'typedMessage'
+  // Stack label above value so long hashes don't collide with labels in narrow UIs
+  // (side panel / Safe EIP-712 compact embedding / mobile).
+  // In some web fullscreen layouts the container ends up narrow too; stack in
+  // that case as well to avoid overlapping text.
+  const withStackedParsedRows = withCompactDataRow || isSidePanel || maxWidthSize('m')
   const erc7730Visualizations = useMemo(
     () => humanizedMessage?.fullVisualization?.filter(isErc7730Visualization) || [],
     [humanizedMessage?.fullVisualization]
@@ -321,6 +329,12 @@ const FallbackVisualization: FC<{
                     key={`${i.path}-${i.value}`}
                     style={[
                       styles.parsedRow,
+                      withStackedParsedRows && {
+                        flexDirection: 'column',
+                        alignItems: 'stretch',
+                        justifyContent: 'flex-start',
+                        flexWrap: 'nowrap'
+                      },
                       {
                         marginBottom:
                           i.isArrayItem && isHexString(String(i.value))
@@ -336,6 +350,7 @@ const FallbackVisualization: FC<{
                       appearance="secondaryText"
                       style={[
                         styles.parsedLabel,
+                        withStackedParsedRows && { flex: 0, minWidth: 0, width: '100%' },
                         {
                           marginLeft: Math.max(i.n - 1, 0) * SPACING_SM * responsiveSizeMultiplier
                         }
@@ -343,7 +358,18 @@ const FallbackVisualization: FC<{
                     >
                       {i.label}
                     </Text>
-                    <View style={styles.parsedValue}>
+                    <View
+                      style={[
+                        styles.parsedValue,
+                        withStackedParsedRows && {
+                          flex: 0,
+                          minWidth: 0,
+                          width: '100%',
+                          justifyContent: 'flex-start',
+                          marginTop: SPACING_TY / 2
+                        }
+                      ]}
+                    >
                       {hasPlainValue ? (
                         <>
                           <Text
@@ -351,7 +377,10 @@ const FallbackVisualization: FC<{
                             weight="medium"
                             fontSize={14 * responsiveSizeMultiplier}
                             appearance="primaryText"
-                            style={styles.parsedValueText}
+                            style={[
+                              styles.parsedValueText,
+                              withStackedParsedRows && { textAlign: 'left', flexShrink: 1 }
+                            ]}
                           >
                             {displayedValue}
                           </Text>

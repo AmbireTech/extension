@@ -29,15 +29,12 @@ export const getSafeQueueRequests = (
     if (accountOp.nonce === null || accountOp.nonce === undefined) return false
 
     const currentNonce = currentNonces[accountOp.chainId.toString()]
-    if (request.meta.isSafeRejected && currentNonce !== undefined && accountOp.nonce < currentNonce)
-      return false
+    if (currentNonce !== undefined && accountOp.nonce < currentNonce) return false
 
     return true
   })
 
 export const getSafeQueueStatus = (request: CallsUserRequest): SafeQueueStatus => {
-  if (request.meta.isSafeRejected) return 'rejected'
-
   const { accountKeyStoreKeys, accountOp, threshold } = request.signAccountOp
   const signedOwners = new Set((accountOp.signed || []).map((addr) => addr.toLowerCase()))
   const hasImportedOwnerToSign = accountKeyStoreKeys.some(

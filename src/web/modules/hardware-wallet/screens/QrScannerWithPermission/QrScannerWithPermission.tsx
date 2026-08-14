@@ -40,7 +40,8 @@ const QrScannerWithPermission = ({
   externalError,
   onExternalRetry
 }: Props) => {
-  const { isPopup } = getUiType()
+  const { isPopup, isSidePanel } = getUiType()
+  const needsFullScreenCameraFallback = isPopup || isSidePanel
   const { t } = useTranslation()
   const { theme } = useTheme()
 
@@ -79,13 +80,15 @@ const QrScannerWithPermission = ({
         rawError: e
       })
       setShowFullScreenFallback(
-        isPopup && !!onOpenFullScreenScanner && shouldUseFullScreenFallback(normalizedMessage, e)
+        needsFullScreenCameraFallback &&
+          !!onOpenFullScreenScanner &&
+          shouldUseFullScreenFallback(normalizedMessage, e)
       )
       return
     }
 
     resetScanner()
-  }, [isPopup, onOpenFullScreenScanner, resetScanner, t])
+  }, [needsFullScreenCameraFallback, onOpenFullScreenScanner, resetScanner, t])
 
   const handleComplete = useCallback(
     (payload: Uint8Array) => {
@@ -112,14 +115,17 @@ const QrScannerWithPermission = ({
         rawError
       })
 
-      if (isPopup && shouldUseFullScreenFallback(normalizedMessage, rawError)) {
+      if (
+        needsFullScreenCameraFallback &&
+        shouldUseFullScreenFallback(normalizedMessage, rawError)
+      ) {
         setShowFullScreenFallback(true)
         return
       }
 
       setShowFullScreenFallback(false)
     },
-    [isPopup, t]
+    [needsFullScreenCameraFallback, t]
   )
 
   const message = useMemo(() => {
@@ -129,7 +135,7 @@ const QrScannerWithPermission = ({
 
     if (showFullScreenFallback) {
       return t(
-        'Camera scanning works in the extension popup only after camera permission is already granted. Open the full-screen scanner to allow camera access and continue.'
+        'Camera scanning needs permission first. Open the full-screen scanner to allow camera access and continue.'
       )
     }
 
@@ -138,9 +144,9 @@ const QrScannerWithPermission = ({
     }
 
     if (value.includes('denied') || value.includes('blocked') || value.includes('permission')) {
-      return isPopup
+      return needsFullScreenCameraFallback
         ? t(
-            'Camera access is blocked in the popup. Open the full-screen scanner to allow camera access and continue.'
+            'Camera access is blocked here. Open the full-screen scanner to allow camera access and continue.'
           )
         : t(
             'Camera access is blocked. Please allow camera access for this page in your browser settings, then try again.'
@@ -148,7 +154,7 @@ const QrScannerWithPermission = ({
     }
 
     return cameraError.message
-  }, [cameraError, isPopup, showFullScreenFallback, t])
+  }, [cameraError, needsFullScreenCameraFallback, showFullScreenFallback, t])
 
   const isPermissionBlocked = useMemo(() => {
     if (!cameraError) return false
