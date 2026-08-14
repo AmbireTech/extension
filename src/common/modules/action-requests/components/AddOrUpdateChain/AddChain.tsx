@@ -12,10 +12,11 @@ import NetworkDetails from '@common/components/NetworkDetails'
 import NetworkIcon from '@common/components/NetworkIcon'
 import ScrollableWrapper from '@common/components/ScrollableWrapper'
 import Text from '@common/components/Text'
-import { isMobile, isWeb } from '@common/config/env'
+import { isWeb } from '@common/config/env'
 import useDappInfo from '@common/hooks/useDappInfo'
 import useResponsiveActionWindow from '@common/hooks/useResponsiveActionWindow'
 import useTheme from '@common/hooks/useTheme'
+import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import getStyles from '@common/modules/action-requests/styles/styles'
 import spacings, { SPACING, SPACING_LG, SPACING_MD } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
@@ -25,15 +26,23 @@ type AddChainProps = {
   areParamsValid: boolean | null
   features: NetworkFeature[]
   networkDetails?: AddNetworkRequestParams
-  actionButtonPressedRef: React.MutableRefObject<boolean>
+  isActionButtonPressed: boolean
   rpcUrls: string[]
   rpcUrlIndex: number
   existingNetwork: Network | null | undefined
   userRequest: UserRequest | undefined
 }
 
-const Container = ({ children, ...rest }: any) => {
-  if (isMobile) return <>{children}</>
+const Container = ({
+  children,
+  usePlainWrapper,
+  ...rest
+}: {
+  children: React.ReactNode
+  usePlainWrapper?: boolean
+  [key: string]: unknown
+}) => {
+  if (usePlainWrapper) return <>{children}</>
   return <ScrollableWrapper {...rest}>{children}</ScrollableWrapper>
 }
 
@@ -42,7 +51,7 @@ const AddChain = ({
   areParamsValid,
   features,
   networkDetails,
-  actionButtonPressedRef,
+  isActionButtonPressed,
   rpcUrls,
   rpcUrlIndex,
   existingNetwork,
@@ -52,6 +61,7 @@ const AddChain = ({
   const { t } = useTranslation()
   const { name, icon } = useDappInfo(userRequest)
   const { responsiveSizeMultiplier } = useResponsiveActionWindow({ maxBreakpoints: 2 })
+  const { isCompactLayout, isTwoColumnLayout, isNarrowSidePanel } = useCompactActionRequestLayout()
 
   return (
     <>
@@ -139,17 +149,21 @@ const AddChain = ({
       {!!areParamsValid && !!networkDetails && (
         <View
           style={[
-            isWeb && flexbox.directionRow,
-            flexbox.flex1,
+            isTwoColumnLayout && flexbox.directionRow,
+            // In the side panel the details and the features are taller than the panel. Filling
+            // the remaining space would squeeze them and hide the overflow, so instead they keep
+            // their full height and the screen scrolls as a whole.
+            !isNarrowSidePanel && flexbox.flex1,
             isWeb && {
               marginBottom: SPACING_LG * responsiveSizeMultiplier
             }
           ]}
         >
           <Container
+            usePlainWrapper={isCompactLayout}
             style={[
               styles.boxWrapper,
-              { width: '50%', maxHeight: '100%' },
+              isTwoColumnLayout ? { width: '50%', maxHeight: '100%' } : { width: '100%' },
               // @ts-ignore value missing in the props, but it's available on web
               { height: 'fit-content' }
             ]}
@@ -165,14 +179,18 @@ const AddChain = ({
               explorerUrl={networkDetails.explorerUrl || '-'}
               style={{
                 backgroundColor: theme.secondaryBackground,
-                ...(isMobile && spacings.mbSm)
+                ...(isCompactLayout && spacings.mbSm)
               }}
               responsiveSizeMultiplier={responsiveSizeMultiplier}
               type="vertical"
             />
           </Container>
-          {isWeb && <View style={styles.separator} />}
-          <Container style={flexbox.flex1} contentContainerStyle={{ flexGrow: 1 }}>
+          {isTwoColumnLayout && <View style={styles.separator} />}
+          <Container
+            usePlainWrapper={isCompactLayout}
+            style={[flexbox.flex1, !isTwoColumnLayout && spacings.mtMd]}
+            contentContainerStyle={{ flexGrow: 1 }}
+          >
             {!!networkDetails && (
               <NetworkAvailableFeatures
                 features={features}
@@ -185,7 +203,7 @@ const AddChain = ({
           </Container>
         </View>
       )}
-      {!areParamsValid && areParamsValid !== null && !actionButtonPressedRef.current && (
+      {!areParamsValid && areParamsValid !== null && !isActionButtonPressed && (
         <View style={[flexbox.flex1, flexbox.alignCenter, flexbox.justifyCenter]}>
           <Alert
             title={t('Invalid Request Params')}

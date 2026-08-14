@@ -149,6 +149,8 @@ export class ProviderController {
 
     await this.mainCtrl.dapps.broadcastDappSessionEvent('accountsChanged', accounts)
 
+    this.mainCtrl.ui.dispatchDappTabFocus?.([{ tabId: session.tabId, windowId: session.windowId }])
+
     return accounts
   }
 
@@ -494,7 +496,8 @@ export class ProviderController {
         accout,
         accountState,
         network,
-        this.mainCtrl.featureFlags.isFeatureEnabled('erc4337')
+        this.mainCtrl.featureFlags.isFeatureEnabled('erc4337'),
+        this.mainCtrl.featureFlags.isFeatureEnabled('eip7702')
       )
       const isSmart = baseAccount.getAtomicStatus() !== 'unsupported'
 

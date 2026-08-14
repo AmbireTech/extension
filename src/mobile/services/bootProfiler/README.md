@@ -37,7 +37,9 @@ xcrun simctl launch --console booted com.ambire.wallet
 Do at least five runs and take the median - first-launch-after-install pays for the
 worker bundle materialization and a cold page cache, so it is not representative.
 
-The report prints once the last controller state has landed, or after
+The report prints once the last non-deferred controller state has landed (the deferred
+ones, see `MOBILE_DEFERRED_CONTROLLERS`, only load after unlock, which may take a long
+time or never happen, so the boot is not held open for them), or after
 `BOOT_PROFILE_DEADLINE` if the boot never gets there (a stuck controller or a dead
 dev server is exactly the case worth reading). The JSON path is logged next to it;
 pull it with `adb pull` / `xcrun simctl get_app_container`.

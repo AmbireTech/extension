@@ -10,7 +10,12 @@ import QrKeyIterator from '@common/modules/hardware-wallets/libs/qrKeyIterator'
 import handleProviderRequests from '@common/modules/provider/handleProviderRequests'
 import { Action, MethodAction } from '@common/types/actions'
 import { getWcTabIdFromTopic } from '@mobile/modules/wallet-connect/utils'
-import { setBootPhase, setSubscribedControllers } from '@mobile/modules/webview/services/bootPhase'
+import {
+  buildStateForFE,
+  queueCtrlStateIfBootPhaseDeferred,
+  setBootPhase,
+  setSubscribedControllers
+} from '@mobile/modules/webview/services/bootPhase'
 import { mobileMessenger } from '@mobile/modules/webview/services/mobileMessenger'
 import { createWcBridgeMessenger } from '@mobile/modules/webview/services/wcBridgeMessenger'
 import { flushWorkerBootProfile } from '@mobile/modules/webview/services/workerBootProfiler'
@@ -52,7 +57,7 @@ export const handleActions = async (
 
       sendToReactEvent('ctrl.update', {
         ctrlName: params.controller,
-        state: ctrl?.toJSON() || null
+        state: ctrl ? buildStateForFE(params.controller, ctrl) : null
       })
 
       break
@@ -62,7 +67,14 @@ export const handleActions = async (
       params.controllers.forEach((ctrlName: string) => {
         const ctrl = eventEmitterRegistry.values().find((c) => c.name === ctrlName)
 
-        sendToReactEvent('ctrl.update', { ctrlName, state: ctrl?.toJSON() || null })
+        if (!ctrl) {
+          sendToReactEvent('ctrl.update', { ctrlName, state: null })
+          return
+        }
+
+        if (queueCtrlStateIfBootPhaseDeferred(ctrlName, ctrl)) return
+
+        sendToReactEvent('ctrl.update', { ctrlName, state: buildStateForFE(ctrlName, ctrl) })
       })
       break
     }
@@ -93,6 +105,17 @@ export const handleActions = async (
 
     case 'FLUSH_BOOT_PROFILE': {
       flushWorkerBootProfile()
+      break
+    }
+
+    // Fired once from the dashboard after its first render, so the dapp catalog and
+    // phishing storage reads stay off the boot path.
+    case 'INIT_DEFERRED_CONTROLLERS': {
+      void mainCtrl.phishing.init()
+      void mainCtrl.dapps.init()
+      console.log(
+        'handleActions: INIT_DEFERRED_CONTROLLERS dispatched, dapp catalog and phishing lists initialized'
+      )
       break
     }
 
@@ -369,6 +392,8 @@ export const handleActions = async (
     }
 
     case 'SETUP_WC_SESSION_MESSENGER': {
+      // Shoudln't be needed but just in case
+      await mainCtrl.dapps.init()
       // Remove temp session if it exists (the one that was created during handshake)
       if (params.tempSessionTopic) {
         mainCtrl.dapps.deleteDappSessionByWcTopic(params.tempSessionTopic)
@@ -402,6 +427,8 @@ export const handleActions = async (
     }
 
     case 'RESTORE_WC_SESSIONS': {
+      // Shoudln't be needed but just in case
+      await mainCtrl.dapps.init()
       for (const wcSession of params.sessions) {
         const { topic, name, icon, url, chainId, candidateChainIds } = wcSession
         try {

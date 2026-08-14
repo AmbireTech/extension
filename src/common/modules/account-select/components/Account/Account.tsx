@@ -23,10 +23,23 @@ import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import spacings, { SPACING_TY } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
+import { getUiType } from '@common/utils/uiType'
 
 import getStyles from './styles'
 
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
+const { isSidePanel } = getUiType()
+
+// The side panel is as narrow as a phone screen, so it reuses the mobile layout, which stacks
+// the label, the address and the balance with the key icons and badges on separate rows. Keeping
+// them on one row leaves the label with a few visible characters and clips the address suffix.
+const withStackedRows = isMobile || isSidePanel
+
+// On the stacked layout the copy and receive buttons sit next to the account instead of inline
+// with the address, which gives the address the whole row. The side panel is too narrow for the
+// mobile touch target size.
+const ACTION_ICON_SIZE = isMobile ? 32 : 24
 
 const selectMainStatuses = (state: AllControllersMappingType['MainController']) => state.statuses
 const selectSelectedAccount = (state: AllControllersMappingType['SelectedAccountController']) =>
@@ -214,7 +227,7 @@ const Account = ({
           }
       ]}
     >
-      <View style={[flexbox.flex1, flexbox.directionRow, isMobile && flexbox.alignCenter]}>
+      <View style={[flexbox.flex1, flexbox.directionRow, withStackedRows && flexbox.alignCenter]}>
         {renderLeftChildren && renderLeftChildren()}
         <Avatar
           address={account.addr}
@@ -222,10 +235,10 @@ const Account = ({
           smartAccountType={(account.creation && 'Ambire') || (account.safeCreation && 'Safe')}
           showTooltip
         />
-        <View style={[flexbox.flex1, isMobile && flexbox.justifyCenter]}>
+        <View style={[flexbox.flex1, withStackedRows && flexbox.justifyCenter]}>
           <View
             style={[
-              isWeb && flexbox.flex1,
+              !withStackedRows && flexbox.flex1,
               flexbox.directionRow,
               flexbox.alignCenter,
               spacings.mrTy
@@ -241,14 +254,14 @@ const Account = ({
                 >
                   {account.preferences.label}
                 </Text>
-                {/* On mobile the key icons and badges move to the balance row below */}
-                {isWeb && !!withKeyType && (
+                {/* On mobile and in the side panel the key icons and badges move to the balance row below */}
+                {!withStackedRows && !!withKeyType && (
                   <View style={[spacings.mlMi]}>
                     <AccountKeyIcons isExtended account={account} />
                   </View>
                 )}
 
-                {isWeb && <AccountBadges accountData={account} />}
+                {!withStackedRows && <AccountBadges accountData={account} />}
               </>
             ) : (
               <Editable
@@ -262,13 +275,13 @@ const Account = ({
                 minWidth={120}
                 maxLength={40}
               >
-                {isWeb && !!withKeyType && (
+                {!withStackedRows && !!withKeyType && (
                   <View style={[spacings.mlMi]}>
                     <AccountKeyIcons isExtended account={account} />
                   </View>
                 )}
 
-                {isWeb && <AccountBadges accountData={account} />}
+                {!withStackedRows && <AccountBadges accountData={account} />}
               </Editable>
             )}
           </View>
@@ -278,12 +291,12 @@ const Account = ({
               containerStyle={spacings.pb0}
               address={addr}
               plainAddressMaxLength={maxAccountAddrLength}
-              withCopy={isWeb && withCopy}
-              withReceive={isWeb && withReceive}
+              withCopy={!withStackedRows && withCopy}
+              withReceive={!withStackedRows && withReceive}
               withUpdateEnsInTooltip={isSelectable}
             />
           </View>
-          {isMobile && (
+          {withStackedRows && (
             <View
               style={[
                 flexbox.directionRow,
@@ -306,7 +319,7 @@ const Account = ({
         </View>
       </View>
       <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mlTy]}>
-        {balance !== null && withBalance && !withSettings && !isMobile && (
+        {balance !== null && withBalance && !withSettings && !withStackedRows && (
           <Text
             fontSize={14}
             weight="semiBold"
@@ -321,14 +334,14 @@ const Account = ({
           </Text>
         )}
         {renderRightChildren && renderRightChildren()}
-        {isMobile && (
+        {withStackedRows && (
           <>
             {withCopy && (
               <AnimatedPressable onPress={handleCopy} style={opacityAnimStyle} {...bindOpacityAnim}>
-                <CopyIcon width={32} height={32} strokeWidth="1" />
+                <CopyIcon width={ACTION_ICON_SIZE} height={ACTION_ICON_SIZE} strokeWidth="1" />
               </AnimatedPressable>
             )}
-            {withReceive && <ReceiveButton address={addr} fontSize={24} />}
+            {withReceive && <ReceiveButton address={addr} fontSize={ACTION_ICON_SIZE - 8} />}
           </>
         )}
         {!!options.withOptionsButton && (

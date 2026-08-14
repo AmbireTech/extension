@@ -28,7 +28,7 @@ const AddOrUpdateNetworkScreen = () => {
     statuses,
     features,
     existingNetwork,
-    actionButtonPressedRef,
+    isActionButtonPressed,
     successStateText,
     areParamsValid,
     networkAlreadyAdded,
@@ -71,7 +71,7 @@ const AddOrUpdateNetworkScreen = () => {
               (features &&
                 (features.some((f) => f.level === 'loading') ||
                   !!features.find((f) => f.id === 'flagged'))) ||
-              actionButtonPressedRef.current
+              isActionButtonPressed
             }
           />
         }
@@ -84,7 +84,7 @@ const AddOrUpdateNetworkScreen = () => {
             networkDetails={networkDetails}
             networkAlreadyAdded={networkAlreadyAdded}
             userRequest={userRequest}
-            actionButtonPressedRef={actionButtonPressedRef}
+            isActionButtonPressed={isActionButtonPressed}
             rpcUrls={rpcUrls}
             rpcUrlIndex={rpcUrlIndex}
           />
@@ -136,7 +136,7 @@ const AddOrUpdateNetworkScreen = () => {
             (features &&
               (features.some((f) => f.level === 'loading') ||
                 !!features.filter((f) => f.id === 'flagged')[0])) ||
-            actionButtonPressedRef.current
+            isActionButtonPressed
           }
         />
       }
@@ -147,7 +147,7 @@ const AddOrUpdateNetworkScreen = () => {
           areParamsValid={areParamsValid}
           features={features}
           networkDetails={networkDetails}
-          actionButtonPressedRef={actionButtonPressedRef}
+          isActionButtonPressed={isActionButtonPressed}
           rpcUrls={rpcUrls}
           rpcUrlIndex={rpcUrlIndex}
           existingNetwork={existingNetwork}

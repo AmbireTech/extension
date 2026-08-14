@@ -1,13 +1,13 @@
 // TODO: `expo-file-system/legacy` is the deprecated function-based API, kept here for
-// consistency with the other mobile call sites (getWebviewBundleUri.ts,
-// materializeWorkerBundle.ts). Migrate all of them together when Expo drops it.
+// consistency with the other mobile call sites (getWebviewBundleUri.ts). Migrate all of
+// them together when Expo drops it.
 import { documentDirectory, writeAsStringAsync } from 'expo-file-system/legacy'
 import { Platform } from 'react-native'
 
 import { APP_VERSION, isDev } from '@common/config/env'
 
 import { getAllBootMarks } from './bootProfiler'
-import { BOOT_MARK, BOOT_MARK_PREFIX } from './constants'
+import { BOOT_MARK, BOOT_MARK_PREFIX, STORAGE_KEY_NOT_SNAPSHOTTED } from './constants'
 import { BootMark } from './types'
 
 const PHASES: { label: string; from: string; to: string }[] = [
@@ -27,8 +27,23 @@ const PHASES: { label: string; from: string; to: string }[] = [
     to: BOOT_MARK.nativeBundleEvalEnd
   },
   {
-    label: 'RN entry module eval (shims, global, Sentry, i18n)',
+    label: 'RN entry module eval (shims, native modules, UI module graph)',
     from: BOOT_MARK.rnJsEntry,
+    to: BOOT_MARK.rnEntryModuleEvaluated
+  },
+  {
+    label: '  ├ shims (quick-crypto, ethers, globals)',
+    from: BOOT_MARK.rnJsEntry,
+    to: BOOT_MARK.rnShimsEvaluated
+  },
+  {
+    label: '  ├ native modules (gesture handler, expo-asset, RN core)',
+    from: BOOT_MARK.rnShimsEvaluated,
+    to: BOOT_MARK.rnNativeModulesEvaluated
+  },
+  {
+    label: '  └ App module graph (i18n, providers, screens)',
+    from: BOOT_MARK.rnNativeModulesEvaluated,
     to: BOOT_MARK.rnEntryModuleEvaluated
   },
   {
@@ -97,9 +112,9 @@ const PHASES: { label: string; from: string; to: string }[] = [
     to: BOOT_MARK.rnFirstPaint
   },
   {
-    label: 'Critical ready → ALL controller states in store',
+    label: 'Critical ready → all non-deferred controller states in store',
     from: BOOT_MARK.rnStoreCriticalReady,
-    to: BOOT_MARK.rnStoreAllReady
+    to: BOOT_MARK.rnStoreNonDeferredReady
   }
 ]
 
@@ -166,11 +181,25 @@ const buildPhaseSummary = (marks: BootMark[]) => {
     return `${`${formatMs(end.epochMs - start.epochMs)}ms`.padStart(9)}  ${label}`
   }).filter(Boolean) as string[]
 
-  const first = marks[0]
   const paint = findMark(marks, BOOT_MARK.rnFirstPaint)
-  if (first && paint) {
+  // Anchored on the first line of JS rather than on marks[0], so the headline number
+  // stays comparable across runs whether or not the native marks came through. The
+  // native launch window gets its own total below.
+  const jsEntry = findMark(marks, BOOT_MARK.rnJsEntry)
+  if (jsEntry && paint) {
     rows.push(
-      `${`${formatMs(paint.epochMs - first.epochMs)}ms`.padStart(9)}  TOTAL (${first.name} → first paint)`
+      `${`${formatMs(paint.epochMs - jsEntry.epochMs)}ms`.padStart(9)}  TOTAL (${
+        jsEntry.name
+      } → first paint)`
+    )
+  }
+
+  const nativeStart = findMark(marks, BOOT_MARK.nativeStartTime)
+  if (nativeStart && paint) {
+    rows.push(
+      `${`${formatMs(paint.epochMs - nativeStart.epochMs)}ms`.padStart(
+        9
+      )}  TOTAL incl. native launch (${nativeStart.name} → first paint)`
     )
   }
 
@@ -271,6 +300,8 @@ const buildControllerTable = (marks: BootMark[], originMs: number) => {
 type StorageKeyRow = {
   key: string
   bytes?: number
+  /** Set for keys held out of the init payload, which therefore have no size. */
+  isNotSnapshotted?: boolean
   firstReadAtMs?: number
   firstReadAtEpochMs?: number
 }
@@ -294,7 +325,9 @@ const buildStorageTable = (marks: BootMark[], originMs: number) => {
 
   marks.forEach((mark) => {
     if (mark.name.startsWith(BOOT_MARK_PREFIX.rnStorageKey)) {
-      rowFor(mark.name.slice(BOOT_MARK_PREFIX.rnStorageKey.length)).bytes = mark.detail?.bytes
+      const row = rowFor(mark.name.slice(BOOT_MARK_PREFIX.rnStorageKey.length))
+      row.bytes = mark.detail?.bytes
+      row.isNotSnapshotted = mark.detail?.note === STORAGE_KEY_NOT_SNAPSHOTTED
     } else if (mark.name.startsWith(BOOT_MARK_PREFIX.workerStorageRead)) {
       const row = rowFor(mark.name.slice(BOOT_MARK_PREFIX.workerStorageRead.length))
       row.firstReadAtMs = mark.epochMs - originMs
@@ -318,6 +351,7 @@ const buildStorageTable = (marks: BootMark[], originMs: number) => {
     (splashMs !== undefined && row.firstReadAtEpochMs > splashMs)
 
   const when = (row: StorageKeyRow) => {
+    if (row.isNotSnapshotted) return STORAGE_KEY_NOT_SNAPSHOTTED
     if (row.firstReadAtEpochMs === undefined) return 'never read at boot'
     if (readyMs !== undefined && row.firstReadAtEpochMs <= readyMs) return 'blocks construction'
     return isReadAfterSplash(row) ? 'after splash' : 'during splash'

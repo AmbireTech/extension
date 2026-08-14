@@ -15,13 +15,18 @@ import { isMobile } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import useNavigation from '@common/hooks/useNavigation'
+import useShouldRenderRequestInPanel from '@common/hooks/useShouldRenderRequestInPanel'
 import useToast from '@common/hooks/useToast'
 import DashboardBannerBottomSheet from '@common/modules/dashboard/components/DashboardBanners/DashboardBannerBottomSheet'
 import { ROUTES } from '@common/modules/router/constants/common'
+import { getRouteForUserRequest } from '@common/modules/router/helpers'
 import spacings from '@common/styles/spacings'
+import { getUiType } from '@common/utils/uiType'
 import flexbox from '@common/styles/utils/flexbox'
 
 import applyOtaUpdate from './applyOtaUpdate'
+
+const { isSidePanel } = getUiType()
 
 const DashboardBanner = ({
   banner
@@ -32,10 +37,12 @@ const DashboardBanner = ({
   const { t } = useTranslation()
   const { addToast } = useToast()
   const { navigate } = useNavigation()
+  const shouldRenderRequestInPanel = useShouldRenderRequestInPanel()
   const {
     state: { visibleUserRequests },
     dispatch: requestsDispatch
   } = useController('RequestsController')
+  const transferState = useController('TransferController').state
   const {
     state: { networks },
     dispatch: networksDispatch
@@ -83,17 +90,30 @@ const DashboardBanner = ({
           if (!visibleUserRequests.length) break
           const dappRequests = visibleUserRequests.filter((r) => r.kind !== 'calls')
           if (!dappRequests.length) break
+          const targetRequest = dappRequests[0]!
+          // Opens/focuses the request window via RequestsController when the side
+          // panel is closed; when the side panel is open we also navigate in-panel.
           requestsDispatch({
             type: 'method',
             params: {
               method: 'setCurrentUserRequestById',
-              args: [dappRequests[0]!.id]
+              args: [targetRequest.id]
             }
           })
+          if (shouldRenderRequestInPanel) {
+            const targetRoute = getRouteForUserRequest({
+              currentUserRequest: targetRequest,
+              transferState
+            })
+            if (targetRoute) navigate(targetRoute)
+          }
           break
         }
 
-        case 'open-accountOp':
+        case 'open-accountOp': {
+          const targetRequest = visibleUserRequests.find(
+            (request) => String(request.id) === String(action.meta.requestId)
+          )
           requestsDispatch({
             type: 'method',
             params: {
@@ -101,7 +121,15 @@ const DashboardBanner = ({
               args: [action.meta.requestId]
             }
           })
+          if (shouldRenderRequestInPanel && targetRequest) {
+            const targetRoute = getRouteForUserRequest({
+              currentUserRequest: targetRequest,
+              transferState
+            })
+            if (targetRoute) navigate(targetRoute)
+          }
           break
+        }
 
         case 'reject-accountOp':
           requestsDispatch({
@@ -258,6 +286,8 @@ const DashboardBanner = ({
       navigate,
       addToast,
       visibleUserRequests,
+      shouldRenderRequestInPanel,
+      transferState,
       type,
       openBottomSheet,
       selectedAccountDispatch,

@@ -5,11 +5,11 @@ import { pbkdf2Sync, scrypt } from 'react-native-quick-crypto'
 import { WebView } from 'react-native-webview'
 
 import * as richJson from '@ambire-common/libs/richJson/richJson'
-import { captureException } from '@common/config/analytics/CrashAnalytics'
 import { CONTROLLER_STORE_MAX_LOADING_TIME } from '@common/contexts/controllerStoreContext/controllerStore'
 import eventBus from '@common/services/event/eventBus'
 import { getAllSerialized, storage } from '@common/services/storage'
 import { WEBVIEW_DEV_HOST } from '@env'
+import { BOOT_SNAPSHOT_EXCLUDED_STORAGE_KEYS } from '@mobile/constants/storageSnapshot'
 import {
   approveWalletConnectSession,
   approveWcAuthenticate,
@@ -21,10 +21,9 @@ import {
 } from '@mobile/modules/wallet-connect/services/walletConnectService'
 import WebviewDevServerError from '@mobile/modules/webview/components/WebviewDevServerError'
 import getWebviewBundleUri from '@mobile/modules/webview/services/getWebviewBundleUri'
-import materializeWorkerBundle from '@mobile/modules/webview/services/materializeWorkerBundle'
-import ledgerTransportService from '@mobile/services/ledger/ledgerTransportService'
-import { beginNfcPinSessions, endNfcPinSessions, getNfcCardService } from '@mobile/services/nfc'
-import trezorDeeplinkService from '@mobile/services/trezor/trezorDeeplinkService'
+import materializeWorkerBundle, {
+  getMaterializedWorkerBundleUri
+} from '@mobile/modules/webview/services/materializeWorkerBundle'
 import {
   BOOT_MARK,
   BOOT_MARK_PREFIX,
@@ -38,6 +37,9 @@ import {
   monotonicNow,
   setWorkerBootProfile
 } from '@mobile/services/bootProfiler'
+import ledgerTransportService from '@mobile/services/ledger/ledgerTransportService'
+import { beginNfcPinSessions, endNfcPinSessions, getNfcCardService } from '@mobile/services/nfc'
+import trezorDeeplinkService from '@mobile/services/trezor/trezorDeeplinkService'
 
 import { decode, encode } from './bridgeCodec'
 
@@ -86,15 +88,21 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, object>((_, ref) => {
   const initResolver = useRef<((ctrls: string[]) => void) | null>(null)
   const initReadyWarningTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const pendingConfig = useRef<any>(null)
-  // Stores the last config so we can re-send it when the WebView reloads (dev HMR/live reload)
+  // Stores the last config so we can re-send it when the WebView reloads (dev HMR/live
+  // reload, renderer crash). Holds no storage snapshot — that is taken fresh per injection.
   const lastConfig = useRef<any>(null)
   // Incrementing the key forces a full WebView remount (used for Android dev reload)
   const [webviewKey, setWebviewKey] = useState(0)
   const devUrl = getDevServerUrl()
 
   // Worker bundle URI. In prod it is materialized from the OTA-shipped copy into a writable
-  // dir (so OTA updates reach it); empty until ready, which gates the WebView mount below.
-  const [prodBundleUri, setProdBundleUri] = useState('')
+  // dir (so OTA updates reach it). Resolved synchronously when that dir already holds the
+  // current bundle - which is every launch except the first one after an install or an OTA -
+  // so the WebView mounts on the first render instead of a promise gating it. Empty only on
+  // the launch that has to write the bundle out first, which gates the mount below.
+  const [prodBundleUri, setProdBundleUri] = useState(() =>
+    __DEV__ ? '' : getMaterializedWorkerBundleUri() || ''
+  )
 
   // Dev only. The worker bundle is a subresource of the WebView's inline HTML, so
   // a missing dev server fires neither onError nor onHttpError - the app just hangs
@@ -144,7 +152,7 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, object>((_, ref) => {
   }, [devUrl, isReady])
 
   useEffect(() => {
-    if (__DEV__) return undefined
+    if (__DEV__ || prodBundleUri) return undefined
 
     let isActive = true
     // Falls back to the native-asset bundle baked into the signed app if the OTA copy
@@ -158,7 +166,7 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, object>((_, ref) => {
     return () => {
       isActive = false
     }
-  }, [])
+  }, [prodBundleUri])
 
   const clearInitWarningTimeout = () => {
     if (initReadyWarningTimeoutRef.current) {
@@ -203,9 +211,38 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, object>((_, ref) => {
   // WebView has already loaded, and the system.loaded handler otherwise (plus dev
   // reloads). The richJson stringify here covers the whole storage snapshot, which
   // is why it is measured separately from the injectJavaScript hop.
+  //
+  // PERF: ship a one-shot snapshot of async storage so the worker can seed an
+  // in-memory cache and serve controller-boot reads locally instead of making 80+
+  // separate bridged storage.get round-trips (each delivered via its own
+  // injectJavaScript), which saturated the bridge for seconds. Bulk keys no
+  // controller needs to construct are left out of it (see
+  // BOOT_SNAPSHOT_EXCLUDED_STORAGE_KEYS) and fetched over the bridge on first use —
+  // the snapshot's `allKeys` is what lets the worker tell those apart from keys that
+  // genuinely are not stored.
+  //
+  // The snapshot is taken here, not once in init(), so a worker that reloads (dev
+  // HMR, a renderer crash) is seeded with what storage holds NOW. Reusing the
+  // boot-time snapshot would hide every write made since from the new context.
   const injectInitPayload = (configToSend: any) => {
+    bootProfiler.startSpan(BOOT_MARK.rnStorageSnapshot)
+    const storageSnapshot = getAllSerialized(BOOT_SNAPSHOT_EXCLUDED_STORAGE_KEYS)
+    bootProfiler.endSpan(BOOT_MARK.rnStorageSnapshot, {
+      count: Object.keys(storageSnapshot.values).length
+    })
+    markStorageSnapshotKeys(storageSnapshot)
+
     bootProfiler.startSpan(BOOT_MARK.rnInitPayloadEncoded)
-    const initPayload = encode({ type: 'init', config: configToSend }, true)
+    const initPayload = encode(
+      {
+        type: 'init',
+        config: {
+          ...configToSend,
+          __storageSnapshot: storageSnapshot
+        }
+      },
+      true
+    )
     bootProfiler.endSpan(BOOT_MARK.rnInitPayloadEncoded, { bytes: initPayload.length })
 
     webviewRef.current?.injectJavaScript(`
@@ -221,26 +258,14 @@ export const WebViewWorker = forwardRef<WebViewWorkerRef, object>((_, ref) => {
       dispatchToWebView(action, raw)
     },
     init: (config: any) => {
-      // PERF: ship a one-shot snapshot of all async storage so the worker can
-      // seed an in-memory cache and serve controller-boot reads locally instead
-      // of making 80+ separate bridged storage.get round-trips (each delivered
-      // via its own injectJavaScript), which saturated the bridge for seconds.
-      bootProfiler.startSpan(BOOT_MARK.rnStorageSnapshot)
-      const storageSnapshot = getAllSerialized()
-      bootProfiler.endSpan(BOOT_MARK.rnStorageSnapshot, {
-        count: Object.keys(storageSnapshot).length
-      })
-      markStorageSnapshotKeys(storageSnapshot)
-
-      const configWithStorage = { ...config, __storageSnapshot: storageSnapshot }
-      lastConfig.current = configWithStorage
+      lastConfig.current = config
       return new Promise((resolve) => {
         initResolver.current = resolve
         scheduleInitWarningTimeout()
         if (isLoaded) {
-          injectInitPayload(configWithStorage)
+          injectInitPayload(config)
         } else {
-          pendingConfig.current = configWithStorage
+          pendingConfig.current = config
         }
       })
     }

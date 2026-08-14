@@ -61,6 +61,7 @@ if (isExtension) {
 
     let portName = 'popup'
     if (getUiType().isTab) portName = 'tab'
+    if (getUiType().isSidePanel) portName = 'side-panel'
     if (getUiType().isRequestWindow) portName = 'request-window'
 
     pm.connect({ id: portId, name: portName })
@@ -162,7 +163,8 @@ if (isExtension) {
     // dispatches from request-window should not be blocked even when unfocused
     // because we can have only one instance of request-window and only one instance for the given action screen
     // (an action screen could not be opened in tab or popup window by design)
-    const shouldBlockDispatch = document.hidden && !getUiType().isRequestWindow
+    const shouldBlockDispatch =
+      document.hidden && !getUiType().isRequestWindow && !getUiType().isSidePanel
     if (
       shouldBlockDispatch &&
       !ACTION_TYPES_TO_DISPATCH_EVEN_WHEN_HIDDEN.includes(action.type) &&
@@ -317,7 +319,7 @@ export const ControllersMiddlewareProvider: React.FC<{ children: React.ReactNode
       if (getUiType().isPopup) {
         const win = await chrome.windows.getCurrent()
         setWindowId(win.id)
-      } else if (getUiType().isTab) {
+      } else if (getUiType().isTab || getUiType().isSidePanel) {
         const tab = await chrome.tabs.getCurrent()
         if (tab) setWindowId(tab.windowId)
       }
@@ -396,7 +398,7 @@ export const ControllersMiddlewareProvider: React.FC<{ children: React.ReactNode
       timer.current = setTimeout(keepAlive, 2500)
     }
 
-    if (isFocused) {
+    if (isFocused || getUiType().isSidePanel) {
       keepAlive()
     } else if (timer.current) {
       clearTimeout(timer.current)
