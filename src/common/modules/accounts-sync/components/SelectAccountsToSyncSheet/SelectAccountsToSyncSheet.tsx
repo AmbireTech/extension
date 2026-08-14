@@ -72,13 +72,12 @@ const SelectAccountsToSyncSheet = ({
           <Checkbox
             value={selectedAddrs.includes(item.addr)}
             onValueChange={() => onToggleAccount(item.addr)}
-            style={[spacings.mb0, spacings.mrSm]}
-            uncheckedBorderColor={theme.secondaryBorder}
+            style={spacings.mb0}
           />
         )}
       />
     ),
-    [onToggleAccount, selectedAddrs, theme.secondaryBorder]
+    [onToggleAccount, selectedAddrs]
   )
 
   const flatListProps = useMemo(
@@ -122,7 +121,7 @@ const SelectAccountsToSyncSheet = ({
           />
           {/* A background view instead of a border, as per-side borders can leak onto
           the next screen on native */}
-          <View style={{ height: 1, backgroundColor: theme.secondaryBorder }} />
+          <View style={{ height: 1, backgroundColor: theme.primaryBorder }} />
         </View>
       }
       flatListProps={flatListProps}
