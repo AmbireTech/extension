@@ -37,6 +37,9 @@ const SyncWithMobileScreen = () => {
     accounts,
     selectedAddrs,
     areAllSelected,
+    selectedSeedsCount,
+    includeSeeds,
+    toggleIncludeSeeds,
     toggleAccount,
     toggleAllAccounts,
     prepareExport,
@@ -157,6 +160,9 @@ const SyncWithMobileScreen = () => {
         accounts={accounts}
         selectedAddrs={selectedAddrs}
         areAllSelected={areAllSelected}
+        selectedSeedsCount={selectedSeedsCount}
+        includeSeeds={includeSeeds}
+        onToggleIncludeSeeds={toggleIncludeSeeds}
         onToggleAccount={toggleAccount}
         onToggleAllAccounts={toggleAllAccounts}
         onConfirm={handleConfirmSelection}

@@ -6,6 +6,7 @@ import useController from '@common/hooks/useController'
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 
 const selectAccounts = (state: AllControllersMappingType['AccountsController']) => state.accounts
+const selectKeys = (state: AllControllersMappingType['KeystoreController']) => state.keys
 
 /**
  * Owns the export side of the accounts sync: which accounts the user picked and the
@@ -14,9 +15,11 @@ const selectAccounts = (state: AllControllersMappingType['AccountsController']) 
  */
 const useAccountsSyncExport = () => {
   const { state: accounts } = useController('AccountsController', selectAccounts)
+  const { state: keys } = useController('KeystoreController', selectKeys)
   const { dispatchAndWait } = useController('MainController')
 
   const [selectedAddrs, setSelectedAddrs] = useState<Account['addr'][]>([])
+  const [includeSeeds, setIncludeSeeds] = useState(true)
   const [payload, setPayload] = useState<string | null>(null)
   const [isPreparing, setIsPreparing] = useState(false)
 
@@ -24,6 +27,31 @@ const useAccountsSyncExport = () => {
     () => !!accounts.length && selectedAddrs.length === accounts.length,
     [accounts.length, selectedAddrs.length]
   )
+
+  const seedIdByKeyAddr = useMemo(
+    () =>
+      new Map(
+        keys
+          .filter(({ meta }) => !!meta.fromSeedId)
+          .map(({ addr, meta }) => [addr, meta.fromSeedId])
+      ),
+    [keys]
+  )
+
+  /**
+   * How many of the recovery phrases this device stores the picked accounts were derived
+   * from. Zero means there is no phrase that could travel along with the export.
+   */
+  const selectedSeedsCount = useMemo(() => {
+    const seedIds = new Set(
+      accounts
+        .filter((account) => selectedAddrs.includes(account.addr))
+        .flatMap((account) => account.associatedKeys.map((keyAddr) => seedIdByKeyAddr.get(keyAddr)))
+        .filter(Boolean)
+    )
+
+    return seedIds.size
+  }, [accounts, seedIdByKeyAddr, selectedAddrs])
 
   const discardPayload = useCallback(() => setPayload(null), [])
 
@@ -33,8 +61,14 @@ const useAccountsSyncExport = () => {
   const reset = useCallback(() => {
     resetCount.current += 1
     setSelectedAddrs([])
+    setIncludeSeeds(true)
     setPayload(null)
   }, [])
+
+  const toggleIncludeSeeds = useCallback(() => {
+    discardPayload()
+    setIncludeSeeds((prev) => !prev)
+  }, [discardPayload])
 
   const toggleAccount = useCallback(
     (addr: Account['addr']) => {
@@ -61,7 +95,7 @@ const useAccountsSyncExport = () => {
     try {
       const nextPayload = await dispatchAndWait<'exportAccountsForSync', string>({
         type: 'method',
-        params: { method: 'exportAccountsForSync', args: [selectedAddrs] }
+        params: { method: 'exportAccountsForSync', args: [selectedAddrs, includeSeeds] }
       })
 
       if (resetCount.current !== resetCountAtStart) return
@@ -74,12 +108,15 @@ const useAccountsSyncExport = () => {
     } finally {
       setIsPreparing(false)
     }
-  }, [dispatchAndWait, isPreparing, selectedAddrs])
+  }, [dispatchAndWait, includeSeeds, isPreparing, selectedAddrs])
 
   return {
     accounts,
     selectedAddrs,
     areAllSelected,
+    selectedSeedsCount,
+    includeSeeds,
+    toggleIncludeSeeds,
     toggleAccount,
     toggleAllAccounts,
     prepareExport,

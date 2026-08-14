@@ -31,6 +31,10 @@ interface Props {
   accounts: Account[]
   selectedAddrs: Account['addr'][]
   areAllSelected: boolean
+  /** How many stored recovery phrases the selected accounts were derived from */
+  selectedSeedsCount: number
+  includeSeeds: boolean
+  onToggleIncludeSeeds: () => void
   onToggleAccount: (addr: Account['addr']) => void
   onToggleAllAccounts: () => void
   onConfirm: () => void
@@ -49,6 +53,9 @@ const SelectAccountsToSyncSheet = ({
   accounts,
   selectedAddrs,
   areAllSelected,
+  selectedSeedsCount,
+  includeSeeds,
+  onToggleIncludeSeeds,
   onToggleAccount,
   onToggleAllAccounts,
   onConfirm,
@@ -79,6 +86,16 @@ const SelectAccountsToSyncSheet = ({
     ),
     [onToggleAccount, selectedAddrs]
   )
+
+  // A single account can still sit on keys from more than one phrase, so the two
+  // plurals are counted separately
+  const includeSeedsLabel = useMemo(() => {
+    const s = selectedSeedsCount > 1 ? 's' : ''
+
+    return selectedAddrs.length > 1
+      ? t('Also export the stored recovery phrase{{s}} these accounts come from', { s })
+      : t('Also export the stored recovery phrase{{s}} this account comes from', { s })
+  }, [selectedAddrs.length, selectedSeedsCount, t])
 
   const flatListProps = useMemo(
     () => ({
@@ -136,6 +153,17 @@ const SelectAccountsToSyncSheet = ({
             }
           ]}
         >
+          {/* Only worth asking when the selection actually brings a stored phrase along */}
+          {!!selectedSeedsCount && (
+            <Checkbox
+              testID="include-seeds-in-sync"
+              value={includeSeeds}
+              onValueChange={onToggleIncludeSeeds}
+              label={includeSeedsLabel}
+              labelProps={{ fontSize: 14, appearance: 'primaryText' }}
+              style={spacings.mbMd}
+            />
+          )}
           <Button
             testID="confirm-accounts-to-sync"
             text={t('Confirm')}
