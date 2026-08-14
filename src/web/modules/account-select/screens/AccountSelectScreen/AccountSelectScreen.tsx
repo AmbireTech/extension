@@ -158,7 +158,9 @@ const AccountSelectScreen = () => {
               hasBottomSpacing={false}
               onPress={openSyncBottomSheet as any}
               childrenPosition="left"
-              style={[flexbox.flex1, spacings.mrTy]}
+              // Only as wide as its own label, so it never wraps on two rows. The
+              // primary action next to it takes whatever is left.
+              style={spacings.mrTy}
             >
               <SyncIcon width={24} height={24} color={theme.primaryText} style={spacings.mrTy} />
             </Button>

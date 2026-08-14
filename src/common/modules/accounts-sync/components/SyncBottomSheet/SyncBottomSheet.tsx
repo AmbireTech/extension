@@ -9,7 +9,6 @@ import ModalHeader from '@common/components/BottomSheet/ModalHeader'
 import Button from '@common/components/Button'
 import { isMobile } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
-import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
@@ -31,7 +30,6 @@ interface Props {
  */
 const SyncBottomSheet = ({ sheetRef, closeBottomSheet, onExportPress, onImportPress }: Props) => {
   const { t } = useTranslation()
-  const { theme } = useTheme()
 
   return (
     <BottomSheet id="sync-accounts" sheetRef={sheetRef} closeBottomSheet={closeBottomSheet}>
@@ -43,7 +41,7 @@ const SyncBottomSheet = ({ sheetRef, closeBottomSheet, onExportPress, onImportPr
         <SyncDevicesIcon />
       </View>
       <Button
-        type="secondary"
+        type="tertiary"
         text={isMobile ? t('Export to extension') : t('Export to mobile')}
         onPress={onExportPress}
         childrenPosition="left"
@@ -52,7 +50,7 @@ const SyncBottomSheet = ({ sheetRef, closeBottomSheet, onExportPress, onImportPr
         <ExportIcon width={20} height={20} style={EXPORT_ICON_STYLE} />
       </Button>
       <Button
-        type="secondary"
+        type="tertiary"
         text={isMobile ? t('Import from extension') : t('Import from mobile')}
         onPress={onImportPress}
         childrenPosition="left"
