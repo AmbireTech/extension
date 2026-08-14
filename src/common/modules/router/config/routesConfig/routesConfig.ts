@@ -438,10 +438,10 @@ const routesConfig: RouteConfig = {
     title: Platform.select({ default: i18n.t('Camera permission') }),
     name: Platform.select({ default: i18n.t('Camera permission') })
   },
-  [ROUTES.syncWithMobile]: {
-    route: ROUTES.syncWithMobile,
-    title: Platform.select({ default: i18n.t('Sync with mobile') }),
-    name: Platform.select({ default: i18n.t('Sync with mobile') })
+  [ROUTES.exportAccounts]: {
+    route: ROUTES.exportAccounts,
+    title: Platform.select({ default: i18n.t('Export accounts') }),
+    name: Platform.select({ default: i18n.t('Export accounts') })
   },
   [ROUTES.syncFromMobile]: {
     route: ROUTES.syncFromMobile,

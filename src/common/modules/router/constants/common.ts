@@ -83,7 +83,7 @@ const WEB_ROUTES = {
   optOuts: 'settings/opt-outs',
   survey: 'survey',
   qrPermission: 'qr-permission',
-  syncWithMobile: 'sync-with-mobile',
+  exportAccounts: 'export-accounts',
   syncFromMobile: 'sync-from-mobile',
   // INTERNAL ROUTES
   internalLogs: 'internal/logs'

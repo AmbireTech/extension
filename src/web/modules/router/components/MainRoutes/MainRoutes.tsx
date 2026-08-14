@@ -160,7 +160,7 @@ const MainRoutes = () => {
 
             <Route element={<AuthenticatedRoute />}>
               <Route
-                path={WEB_ROUTES.syncWithMobile}
+                path={WEB_ROUTES.exportAccounts}
                 element={<AuthGroupScreen pick={(m) => m.SyncWithMobileScreen} />}
               />
               <Route element={<SettingsRoutesProvider />}>

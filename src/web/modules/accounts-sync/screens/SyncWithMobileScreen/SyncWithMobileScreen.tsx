@@ -1,38 +1,48 @@
-import React, { useCallback } from 'react'
-import { Image, ImageSourcePropType, View } from 'react-native'
+import React, { useCallback, useMemo } from 'react'
+import { Image, ImageSourcePropType, StyleSheet, View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
+import QRCode from 'react-native-qrcode-svg'
 
 import ambireMobilePhoneMockup from '@common/assets/images/how-to-sync-on-mobile.png'
 
+import { ACCOUNTS_SYNC_UR_TYPE } from '@ambire-common/libs/accountsSync/accountsSync'
 import AppStoreBadgeIcon from '@common/assets/svg/AppStoreBadgeIcon'
 import GooglePlayBadgeIcon from '@common/assets/svg/GooglePlayBadgeIcon'
-import InvisibilityIcon from '@common/assets/svg/InvisibilityIcon'
+import InformationIcon from '@common/assets/svg/InformationIcon'
+import ShieldInvisibilityIcon from '@common/assets/svg/ShieldInvisibilityIcon'
 import Panel from '@common/components/Panel'
-import ScrollableWrapper from '@common/components/ScrollableWrapper'
+import { PanelBackButton, PanelTitle } from '@common/components/Panel/Panel'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
 import { AnimatedPressable, useCustomHover } from '@common/hooks/useHover'
 import useNavigation from '@common/hooks/useNavigation'
 import useTheme from '@common/hooks/useTheme'
-import { ACCOUNTS_SYNC_QR_CAPACITY } from '@common/modules/accounts-sync/consts'
+import useWindowSize from '@common/hooks/useWindowSize'
 import SelectAccountsToSyncSheet from '@common/modules/accounts-sync/components/SelectAccountsToSyncSheet'
+import { ACCOUNTS_SYNC_QR_CAPACITY } from '@common/modules/accounts-sync/consts'
 import useAccountsSyncExport from '@common/modules/accounts-sync/hooks/useAccountsSyncExport'
 import AnimatedQrCode from '@common/modules/hardware-wallets/components/AnimatedQrCode'
-import { ACCOUNTS_SYNC_UR_TYPE } from '@ambire-common/libs/accountsSync/accountsSync'
 import { WEB_ROUTES } from '@common/modules/router/constants/common'
-import spacings from '@common/styles/spacings'
+import spacings, { SPACING_SM, SPACING_XL } from '@common/styles/spacings'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
 import { TabLayoutContainer, TabLayoutWrapperMainContent } from '@web/components/TabLayoutWrapper'
 
+import getStyles from './styles'
+
+const PANEL_WIDTH = 400
 const QR_SIZE = 280
 const PHONE_MOCKUP_HEIGHT = 300
+// Dummy value rendered behind the scrim before the accounts are picked, so the
+// placeholder hints at a QR code instead of showing a flat empty box.
+const PLACEHOLDER_QR_VALUE = '0123456789ABCDEF'.repeat(24)
 
 const SyncWithMobileScreen = () => {
   const { t } = useTranslation()
-  const { theme } = useTheme()
+  const { theme, styles } = useTheme(getStyles)
   const { navigate, goBack, canGoBack } = useNavigation()
+  const { minHeightSize } = useWindowSize()
   const {
     accounts,
     selectedAddrs,
@@ -67,42 +77,100 @@ const SyncWithMobileScreen = () => {
     navigate(WEB_ROUTES.accountSelect)
   }, [canGoBack, goBack, navigate])
 
+  // `TabLayoutWrapperMainContent` applies this to the onboarding routes only, and the
+  // export is not one of them, so the panels sit where the onboarding ones do
+  const contentContainerStyle = useMemo(
+    () => (minHeightSize('xl') ? spacings.pv : spacings.pt2Xl),
+    [minHeightSize]
+  )
+
+  const storeBadgeStyle = {
+    ...spacings.phSm,
+    ...spacings.pvTy,
+    borderWidth: 1,
+    borderColor: theme.secondaryBorder,
+    borderRadius: BORDER_RADIUS_PRIMARY
+  }
+
   return (
-    <TabLayoutContainer backgroundColor={theme.secondaryBackground}>
-      <TabLayoutWrapperMainContent>
-        <Panel
-          type="onboarding"
-          spacingsSize="small"
-          withBackButton
-          onBackButtonPress={handleBackButtonPress}
-          title={t('Sync with mobile')}
+    <TabLayoutContainer backgroundColor={theme.secondaryBackground} width="lg">
+      <TabLayoutWrapperMainContent withScroll={false} contentContainerStyle={contentContainerStyle}>
+        {/* The two steps are separate cards next to each other, so neither of them scrolls */}
+        <View
+          style={[
+            flexbox.directionRow,
+            flexbox.alignSelfCenter,
+            { columnGap: SPACING_XL, maxWidth: PANEL_WIDTH * 2 + SPACING_XL }
+          ]}
         >
-          <ScrollableWrapper style={flexbox.flex1}>
-            <Text fontSize={16} weight="medium" style={spacings.mbTy}>
-              {t('1. Download Ambire Wallet mobile')}
-            </Text>
+          <Panel
+            type="onboarding"
+            spacingsSize="small"
+            panelWidth={PANEL_WIDTH}
+            style={flexbox.flex1}
+          >
+            <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mbLg]}>
+              <PanelBackButton onPress={handleBackButtonPress} />
+              <PanelTitle title={t('1. Download Ambire Wallet mobile')} size={16} />
+              <View style={{ width: 20 }} />
+            </View>
             {/* Labels only - the store listings are not live yet */}
-            <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mbSm]}>
-              <AppStoreBadgeIcon style={spacings.mrTy} />
-              <GooglePlayBadgeIcon />
+            <View
+              style={[
+                flexbox.directionRow,
+                flexbox.justifyCenter,
+                spacings.mbLg,
+                { columnGap: SPACING_SM }
+              ]}
+            >
+              <View style={storeBadgeStyle}>
+                <AppStoreBadgeIcon />
+              </View>
+              <View style={storeBadgeStyle}>
+                <GooglePlayBadgeIcon />
+              </View>
             </View>
             <Image
               source={ambireMobilePhoneMockup as ImageSourcePropType}
-              style={{ width: '100%', height: PHONE_MOCKUP_HEIGHT }}
+              style={{ flex: 1, width: '100%', minHeight: PHONE_MOCKUP_HEIGHT }}
               resizeMode="contain"
             />
+          </Panel>
 
-            <Text fontSize={16} weight="medium" style={[spacings.mtLg, spacings.mbTy]}>
-              {t('2. Scan with Ambire Wallet mobile')}
-            </Text>
-            <Text fontSize={14} appearance="secondaryText" style={spacings.mbSm}>
-              {t(
-                'The QR codes contain your accounts and their keys. Show them to your phone only, never to anyone else.'
-              )}
-            </Text>
+          <Panel
+            type="onboarding"
+            spacingsSize="small"
+            panelWidth={PANEL_WIDTH}
+            style={flexbox.flex1}
+          >
+            <PanelTitle title={t('2. Scan with Ambire Wallet mobile')} size={16} />
+            <View
+              style={[
+                flexbox.directionRow,
+                flexbox.justifyCenter,
+                spacings.mtTy,
+                spacings.mbLg,
+                spacings.phSm
+              ]}
+            >
+              <InformationIcon
+                width={16}
+                height={16}
+                color={theme.secondaryText}
+                style={[spacings.mrMi, spacings.mtMi]}
+              />
+              <Text
+                fontSize={14}
+                appearance="secondaryText"
+                style={[text.center, flexbox.flex1]}
+                testID="sync-qr-warning"
+              >
+                {t('Your QR code includes sensitive information. Do not share it with anyone.')}
+              </Text>
+            </View>
 
             {qrCbor ? (
-              <View style={flexbox.alignCenter}>
+              <View style={[flexbox.flex1, flexbox.alignCenter, flexbox.justifySpaceBetween]}>
                 <AnimatedQrCode
                   type={ACCOUNTS_SYNC_UR_TYPE}
                   cbor={qrCbor}
@@ -133,25 +201,42 @@ const SyncWithMobileScreen = () => {
                 disabled={isPreparing}
                 style={[
                   flexbox.center,
+                  spacings.phXl,
                   qrPlaceholderAnimStyle,
                   {
                     height: QR_SIZE,
                     borderRadius: BORDER_RADIUS_PRIMARY,
+                    overflow: 'hidden',
                     backgroundColor: theme.tertiaryBackground
                   }
                 ]}
                 {...bindQrPlaceholderAnim}
               >
-                <InvisibilityIcon color={theme.primaryText} width={32} height={32} />
-                <Text fontSize={14} weight="medium" style={[spacings.mtSm, text.center]}>
+                <View
+                  style={[StyleSheet.absoluteFill, flexbox.center, styles.blurredPlaceholderQr]}
+                  pointerEvents="none"
+                >
+                  <QRCode value={PLACEHOLDER_QR_VALUE} size={QR_SIZE} quietZone={0} ecl="L" />
+                </View>
+                <View
+                  style={[StyleSheet.absoluteFill, { backgroundColor: theme.backdrop }]}
+                  pointerEvents="none"
+                />
+                <ShieldInvisibilityIcon color={theme.neutral200} width={44} height={50} />
+                <Text
+                  fontSize={14}
+                  weight="medium"
+                  color={theme.neutral200}
+                  style={[spacings.mtSm, text.center]}
+                >
                   {isPreparing
                     ? t('Preparing the QR codes...')
                     : t('Click to select accounts and show QR codes')}
                 </Text>
               </AnimatedPressable>
             )}
-          </ScrollableWrapper>
-        </Panel>
+          </Panel>
+        </View>
       </TabLayoutWrapperMainContent>
 
       <SelectAccountsToSyncSheet
