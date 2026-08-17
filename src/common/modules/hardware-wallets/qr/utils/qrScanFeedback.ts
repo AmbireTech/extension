@@ -12,6 +12,12 @@ export type QrScanProgress = {
    * fragment is read, and unchanged for the rest of the scan afterwards.
    */
   expectedParts: number
+  /**
+   * How much of the payload is in, from 0 to 1. Fragments are kept for as long as the
+   * scanner is up, so this only ever grows, even if the camera loses sight of the codes in
+   * between.
+   */
+  progress: number
 }
 
 /** The last code that was read, which is all the feedback is worked out from */

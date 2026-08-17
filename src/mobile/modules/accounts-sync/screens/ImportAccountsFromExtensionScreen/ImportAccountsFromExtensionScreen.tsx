@@ -7,6 +7,7 @@ import scanQrCodes from '@common/assets/images/scan-qr-codes.png'
 import syncStepsOnTheExtension from '@common/assets/images/sync-steps-on-the-extension.gif'
 import Alert from '@common/components/Alert'
 import BottomSheet from '@common/components/BottomSheet'
+import Button from '@common/components/Button'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
 import { DEVICE_SECURITY_LEVEL } from '@common/contexts/biometricsContext/constants'
@@ -206,10 +207,9 @@ const ImportAccountsFromExtensionScreen = () => {
     if (hasScannedPayload) openPasswordSheet()
   }, [hasScannedPayload, openPasswordSheet])
 
-  const handleClosePasswordSheet = useCallback(() => {
-    closePasswordSheet()
-    retryScan()
-  }, [closePasswordSheet, retryScan])
+  // Closing the sheet keeps the scanned accounts, so that the user can pick the password
+  // step back up from the alert instead of scanning all the codes again
+  const handleClosePasswordSheet = useCallback(() => closePasswordSheet(), [closePasswordSheet])
 
   // The steps are swipeable, so the carousel owns the current step and `stepIndex`
   // follows it. Changing the step from the outside means scrolling the carousel.
@@ -223,8 +223,13 @@ const ImportAccountsFromExtensionScreen = () => {
   )
 
   const handleBackButtonPress = useCallback(() => {
-    // The scanner is a step of this screen, so going back returns to the instructions
-    if (isScanning) return setIsScanning(false)
+    // The scanner is a step of this screen, so going back returns to the instructions. This
+    // is where the scanned accounts are dropped, so that leaving and coming back starts a
+    // fresh scan - dismissing the password prompt keeps them.
+    if (isScanning) {
+      retryScan()
+      return setIsScanning(false)
+    }
 
     // Same for the instructions themselves, which are a couple of steps
     if (stepIndex) return handleStepIndexChange(stepIndex - 1)
@@ -245,6 +250,7 @@ const ImportAccountsFromExtensionScreen = () => {
     handleStepIndexChange,
     isScanning,
     navigate,
+    retryScan,
     stepIndex
   ])
 
@@ -264,7 +270,27 @@ const ImportAccountsFromExtensionScreen = () => {
     <MobileLayoutContainer
       footer={
         isScanning ? (
-          <SyncScanFeedbackAlert progress={scanProgress} />
+          <>
+            <SyncScanFeedbackAlert
+              // A rejected code puts its own message over the scanner, so the aiming hints
+              // (and the progress of a scan that led nowhere) step aside
+              progress={scanError ? null : scanProgress}
+              hasScannedPayload={hasScannedPayload}
+              scannedAccountsCount={scannedAccounts.length}
+            />
+            {/* The password prompt opens on its own, so this is how the user gets back to
+            it after dismissing it, without having to scan everything again */}
+            {!!hasScannedPayload && (
+              <Button
+                testID="continue-after-sync-scan"
+                type="primary"
+                text={t('Continue')}
+                onPress={openPasswordSheet as () => void}
+                hasBottomSpacing={false}
+                style={spacings.mtMd}
+              />
+            )}
+          </>
         ) : (
           <SyncImportStepsFooter
             steps={steps}

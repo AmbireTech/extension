@@ -6,6 +6,7 @@ import scanQrCodes from '@common/assets/images/scan-qr-codes.png'
 import syncStepsOnTheMobile from '@common/assets/images/sync-steps-on-the-mobile.gif'
 import ScanIcon from '@common/assets/svg/ScanIcon'
 import Alert from '@common/components/Alert'
+import Button from '@common/components/Button'
 import Panel from '@common/components/Panel'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
@@ -209,8 +210,13 @@ const ImportAccountsFromMobileScreen = () => {
   }, [])
 
   const handleBackButtonPress = useCallback(() => {
-    // The scanner is a step of this screen, so going back returns to the instructions
-    if (isScanning) return setIsScanning(false)
+    // The scanner is a step of this screen, so going back returns to the instructions. This
+    // is where the scanned accounts are dropped, so that leaving and coming back starts a
+    // fresh scan - dismissing the password prompt keeps them.
+    if (isScanning) {
+      retryScan()
+      return setIsScanning(false)
+    }
 
     // Same for the instructions themselves, which are a couple of steps
     if (stepIndex) return setStepIndex(stepIndex - 1)
@@ -228,7 +234,7 @@ const ImportAccountsFromMobileScreen = () => {
       replace: true,
       state: { backTo: WEB_ROUTES.dashboard }
     })
-  }, [accountsCount, canGoBack, goBack, goToPrevRoute, isScanning, navigate, stepIndex])
+  }, [accountsCount, canGoBack, goBack, goToPrevRoute, isScanning, navigate, retryScan, stepIndex])
 
   const togglePasswordReuse = useCallback(() => setIsPasswordReused((prev) => !prev), [])
 
@@ -237,11 +243,9 @@ const ImportAccountsFromMobileScreen = () => {
     [isBiometricsEnabled]
   )
 
-  // Closing the sheet without entering the password means scanning again
-  const handleClosePasswordSheet = useCallback(() => {
-    closePasswordSheet()
-    retryScan()
-  }, [closePasswordSheet, retryScan])
+  // Closing the sheet keeps the scanned accounts, so that the user can pick the password
+  // step back up from the alert instead of scanning all the codes again
+  const handleClosePasswordSheet = useCallback(() => closePasswordSheet(), [closePasswordSheet])
 
   return (
     <TabLayoutContainer backgroundColor={theme.secondaryBackground}>
@@ -284,7 +288,25 @@ const ImportAccountsFromMobileScreen = () => {
                   />
                 </View>
               </View>
-              <SyncScanFeedbackAlert progress={scanProgress} />
+              <SyncScanFeedbackAlert
+                // A rejected code puts its own message over the scanner, so the aiming hints
+                // (and the progress of a scan that led nowhere) step aside
+                progress={scanError ? null : scanProgress}
+                hasScannedPayload={hasScannedPayload}
+                scannedAccountsCount={scannedAccounts.length}
+              />
+              {/* The password prompt opens on its own, so this is how the user gets back to
+              it after dismissing it, without having to scan everything again */}
+              {!!hasScannedPayload && (
+                <Button
+                  testID="continue-after-sync-scan"
+                  type="primary"
+                  text={t('Continue')}
+                  onPress={openPasswordSheet as () => void}
+                  hasBottomSpacing={false}
+                  style={spacings.mtMd}
+                />
+              )}
             </>
           ) : (
             <>

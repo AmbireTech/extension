@@ -63,14 +63,16 @@ const QrScannerWithPermission = ({
 
       const progress = {
         feedback: getQrScanFeedback(lastReadRef.current),
-        expectedParts: decoderRef.current.expectedPartCount()
+        expectedParts: decoderRef.current.expectedPartCount(),
+        progress: decoderRef.current.progress()
       }
 
-      // Only on change, so that the message the user is reading is not re-rendered twice a
-      // second for as long as the scanner is up
+      // Only on change, so that the message the user is reading is not re-rendered while
+      // nothing about the scan moved
       if (
         progress.feedback === lastProgressRef.current?.feedback &&
-        progress.expectedParts === lastProgressRef.current?.expectedParts
+        progress.expectedParts === lastProgressRef.current?.expectedParts &&
+        progress.progress === lastProgressRef.current?.progress
       )
         return
 
