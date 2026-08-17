@@ -18,7 +18,10 @@ import useNavigation from '@common/hooks/useNavigation'
 import useTheme from '@common/hooks/useTheme'
 import useWindowSize from '@common/hooks/useWindowSize'
 import SelectAccountsToSyncSheet from '@common/modules/accounts-sync/components/SelectAccountsToSyncSheet'
-import { ACCOUNTS_SYNC_QR_CAPACITY } from '@common/modules/accounts-sync/consts'
+import {
+  ACCOUNTS_SYNC_QR_CAPACITY,
+  ACCOUNTS_SYNC_QR_INTERVAL
+} from '@common/modules/accounts-sync/consts'
 import useAccountsSyncExport from '@common/modules/accounts-sync/hooks/useAccountsSyncExport'
 import AnimatedQrCode from '@common/modules/hardware-wallets/components/AnimatedQrCode'
 import { WEB_ROUTES } from '@common/modules/router/constants/common'
@@ -231,6 +234,7 @@ const SyncWithMobileScreen = () => {
                     cbor={qrCbor}
                     size={qrSize}
                     capacity={ACCOUNTS_SYNC_QR_CAPACITY}
+                    interval={ACCOUNTS_SYNC_QR_INTERVAL}
                   />
                 </>
               ) : (

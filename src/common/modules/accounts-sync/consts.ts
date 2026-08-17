@@ -1,9 +1,18 @@
 /**
- * Bytes per animated QR fragment. Bigger than the default used for hardware wallet
- * signing, because a sync payload is much larger (~1.2KB per account) and would
- * otherwise loop through too many frames before the other device sees them all.
+ * Bytes per animated QR fragment. Keeps the code at version 11 (61x61 modules) for any
+ * realistic payload, while 400 bytes pushed it to version 16-17 (81x81 to 85x85), whose
+ * modules get too small for a camera to tell apart reliably. The payload is gzipped, so
+ * the frame count stays low despite the smaller fragments.
  */
-export const ACCOUNTS_SYNC_QR_CAPACITY = 400
+export const ACCOUNTS_SYNC_QR_CAPACITY = 200
+
+/**
+ * How long each animated QR fragment stays on screen. The scanner is what caps the pace:
+ * the web one decodes at most 8 frames per second (see `maxScansPerSecond` in QrScanner),
+ * so a shorter interval is not scanned any faster - it only makes the camera more likely
+ * to catch a code mid-repaint, wasting the frame entirely.
+ */
+export const ACCOUNTS_SYNC_QR_INTERVAL = 150
 
 /**
  * Deriving the other device's main key from its password runs scrypt, which takes a

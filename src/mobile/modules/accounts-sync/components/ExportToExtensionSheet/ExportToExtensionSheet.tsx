@@ -17,6 +17,7 @@ import useTheme from '@common/hooks/useTheme'
 import SelectAccountsToSyncSheet from '@common/modules/accounts-sync/components/SelectAccountsToSyncSheet'
 import {
   ACCOUNTS_SYNC_QR_CAPACITY,
+  ACCOUNTS_SYNC_QR_INTERVAL,
   GET_AMBIRE_EXTENSION_LINK
 } from '@common/modules/accounts-sync/consts'
 import useAccountsSyncExport from '@common/modules/accounts-sync/hooks/useAccountsSyncExport'
@@ -129,6 +130,7 @@ const ExportToExtensionSheet = ({ sheetRef, closeBottomSheet }: Props) => {
               cbor={qrCbor}
               size={qrSize}
               capacity={ACCOUNTS_SYNC_QR_CAPACITY}
+              interval={ACCOUNTS_SYNC_QR_INTERVAL}
               quietZone={qrQuietZone}
             />
             {windowHeight >= SHORT_SCREEN_HEIGHT && (
