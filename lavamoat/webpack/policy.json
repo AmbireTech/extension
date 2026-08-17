@@ -1759,6 +1759,7 @@
       "packages": {
         "react-native>@react-native/assets-registry": true,
         "expo>expo-modules-core": true,
+        "react": true,
         "react-native-web": true
       }
     },

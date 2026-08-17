@@ -17,7 +17,7 @@ interface Style {
 const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
   StyleSheet.create<Style>({
     simulationSection: {
-      ...(isMobile ? spacings.pb : spacings.pbMd)
+      ...(isMobile ? spacings.pbSm : spacings.pbMd)
     },
     simulationScrollView: {
       ...spacings.phSm,
@@ -35,7 +35,10 @@ const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
     simulationContainerHeader: {
       backgroundColor: theme.secondaryBackground,
       ...spacings.phSm,
-      ...spacings.pvTy
+      ...spacings.pvTy,
+      ...flexbox.directionRow,
+      ...flexbox.alignCenter,
+      ...flexbox.justifySpaceBetween
     },
     spinner: {
       alignSelf: 'center'

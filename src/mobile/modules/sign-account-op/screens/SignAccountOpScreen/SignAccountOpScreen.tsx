@@ -25,7 +25,6 @@ import SafeOwners from '@common/modules/sign-account-op/components/SafeOwners'
 import SafetyChecksOverlay from '@common/modules/sign-account-op/components/SafetyChecksOverlay'
 import SectionHeading from '@common/modules/sign-account-op/components/SectionHeading'
 import Simulation from '@common/modules/sign-account-op/components/Simulation'
-import TenderlySimulation from '@common/modules/sign-account-op/components/TenderlySimulation'
 import KeySelect from '@common/modules/sign-message/components/KeySelect'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
@@ -232,7 +231,7 @@ const SignAccountOpScreen = () => {
             {!estimationFailed &&
             signAccountOpState?.canBroadcast &&
             signAccountOpState?.status?.type !== SigningStatus.Queued ? (
-              <View style={spacings.mbMd}>
+              <View style={spacings.mbTy}>
                 <Estimation
                   signAccountOpState={signAccountOpState}
                   disabled={isSignLoading}
@@ -329,12 +328,7 @@ const SignAccountOpScreen = () => {
           showsVerticalScrollIndicator={false}
         >
           {signAccountOpState?.account.safeCreation ? (
-            <>
-              <View style={spacings.mbSm}>
-                <SectionHeading withMb={false}>{t('Overview')}</SectionHeading>
-              </View>
-              <SafeNonce />
-            </>
+            <SafeNonce />
           ) : (
             <View
               style={[
@@ -369,7 +363,6 @@ const SignAccountOpScreen = () => {
               isEstimationComplete={!!signAccountOpState?.isInitialized && !!network}
             />
           )}
-          <TenderlySimulation />
           {signAccountOpState?.hasSafeApiFailed && (
             <Alert
               size="sm"

@@ -35,14 +35,16 @@ const PendingTransactions: FC<Props> = ({
   const { humanization, banners } = signAccountOpState || controllerSignAccountOpState || {}
 
   return (
-    <View style={isWeb ? spacings.mbMd : spacings.mb}>
+    <View style={isWeb ? spacings.mbMd : spacings.mbSm}>
       {!!banners && !!banners.length && (
         <View style={spacings.mbTy}>
           {banners.map((banner) => (
             <SafetyChecksBanner
               key={banner.id}
               type={banner.type}
+              title={banner.title}
               text={banner.text}
+              secondaryText={banner.secondaryText}
               style={spacings.mbTy}
             />
           ))}

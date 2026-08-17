@@ -1,4 +1,11 @@
 /* eslint-disable */
+// Boot profiling: this is the earliest JS the app runs (index.js imports './shim'
+// first, and the web build resolves that to shim.web.js instead), so importing the
+// profiler here stamps the true start of the RN realm. Imported directly rather
+// than through the folder's index so the report module — which pulls in
+// react-native and expo-file-system — does not load ahead of the shims below.
+import './src/mobile/services/bootProfiler/bootProfiler'
+
 import { install } from 'react-native-quick-crypto'
 install()
 

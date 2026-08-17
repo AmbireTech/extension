@@ -1,9 +1,3 @@
-// MUST be first: installs a BigInt-safe structuredClone before any controller
-// code runs. iOS < 17.4's native structuredClone corrupts BigInt-containing
-// portfolio state (see structuredCloneShim.ts), crashing the dashboard. Kept as
-// a bare side-effect import so the editor's organize-imports leaves it in place.
-import './structuredCloneShim'
-
 import { EventEmitter as Emitter } from 'events'
 
 import { EventEmitterRegistryController } from '@ambire-common/controllers/eventEmitterRegistry/eventEmitterRegistry'
@@ -29,20 +23,20 @@ import { handleActions } from '@mobile/handlers/handleActions'
 import LedgerController from '@mobile/modules/hardware-wallet/controllers/LedgerController'
 import NfcController from '@mobile/modules/hardware-wallet/controllers/NfcController'
 import TrezorController from '@mobile/modules/hardware-wallet/controllers/TrezorController'
+import { BOOT_MARK, BOOT_MARK_PREFIX } from '@mobile/services/bootProfiler/constants'
 
-import {
-  buildStateForFE,
-  getBootPhase,
-  isControllerSubscribed,
-  isCriticalController,
-  isSubscriptionGateActive,
-  queueDeferredCtrlPayload,
-  queueSuppressedCtrlPayload,
-  setCriticalControllers
-} from './bootPhase'
+import { buildStateForFE, queueCtrlStateIfGated, setCriticalControllers } from './bootPhase'
 import { decode, encode } from './bridgeCodec'
 import { createBridgedFetch } from './bridgedFetch'
 import { sendToReactEvent } from './webviewLogger'
+import { workerBootProfiler } from './workerBootProfiler'
+
+import type { SerializedStorageSnapshot } from '@common/services/storage/types'
+
+// Everything the worker bundle pulls in (ambire-common, ethers, the controllers)
+// has now been evaluated. The gap to `worker.bundle.evalStart` is the cost of the
+// module graph alone, before a single controller is constructed.
+workerBootProfiler.mark(BOOT_MARK.workerImportsEvaluated)
 
 // Bridge setup
 const pendingPromises: Record<number, { resolve: any; reject: any }> = {}
@@ -81,27 +75,7 @@ function debounceFrontEndEventUpdatesOnSameTick(
     return 'EMITTED'
   }
 
-  // During the critical boot phase, hold back updates for non-critical
-  // controllers. We keep only the latest state so the eventual drain emits
-  // one update per deferred controller, not the full history.
-  if (getBootPhase() === 'critical' && !isCriticalController(ctrlName)) {
-    queueDeferredCtrlPayload(ctrlName, ctrl, forceEmit)
-    return 'DEBOUNCED'
-  }
-
-  // Suppress non-critical controllers that no screen is currently displaying.
-  // The expensive toJSON + stringify + bridge + parse round trip only happens
-  // for state the UI actually consumes. We keep the latest reference so the
-  // moment a screen subscribes, the queued state is flushed (see
-  // setSubscribedControllers) and the UI never renders stale data.
-  if (
-    isSubscriptionGateActive() &&
-    !isCriticalController(ctrlName) &&
-    !isControllerSubscribed(ctrlName)
-  ) {
-    queueSuppressedCtrlPayload(ctrlName, ctrl, forceEmit)
-    return 'DEBOUNCED'
-  }
+  if (queueCtrlStateIfGated(ctrlName, ctrl, forceEmit)) return 'DEBOUNCED'
 
   if (ctrlOnUpdateIsDirtyFlags[ctrlName]) return 'DEBOUNCED'
   ctrlOnUpdateIsDirtyFlags[ctrlName] = true
@@ -154,31 +128,53 @@ const bridgedFetch = createBridgedFetch(sendToRNAsync)
 window.fetch = bridgedFetch
 
 // PERF: in-memory mirror of async storage, seeded once from the init snapshot
-// (RN dumps the whole MMKV instance at init). Holds the same RAW serialized
-// strings RN's storage layer stores, so reads parse with richJson exactly as a
-// bridged storage.get would have. Lets the ~79 controller-boot reads resolve
-// locally instead of each making a separate injectJavaScript round-trip.
+// (RN dumps the MMKV instance at init). Holds the same RAW serialized strings
+// RN's storage layer stores, so reads parse with richJson exactly as a bridged
+// storage.get would have. Lets the ~79 controller-boot reads resolve locally
+// instead of each making a separate injectJavaScript round-trip.
 const storageCache: Record<string, string> = {}
 let storageCacheSeeded = false
+// Every key RN's storage holds, including the bulk ones left out of the snapshot
+// to keep them off the boot path. What tells "not stored" apart from "stored but
+// not snapshotted", which is the difference between returning the default value
+// and going to the bridge for it.
+const storedKeys = new Set<string>()
 
-const seedStorageCache = (snapshot: Record<string, string> | undefined) => {
+const seedStorageCache = (snapshot: SerializedStorageSnapshot | undefined) => {
   if (!snapshot) return
-  Object.entries(snapshot).forEach(([key, serialized]) => {
+  Object.entries(snapshot.values).forEach(([key, serialized]) => {
     storageCache[key] = serialized
   })
+  snapshot.allKeys.forEach((key) => storedKeys.add(key))
   storageCacheSeeded = true
+}
+
+// Records the first read of each storage key.
+const markFirstStorageRead = (key: string) => {
+  const markName = `${BOOT_MARK_PREFIX.workerStorageRead}${key}`
+  if (workerBootProfiler.reserveOnce(markName)) workerBootProfiler.mark(markName)
 }
 
 // Proxied Storage API
 const storageAPI = {
   get: (key: string, defaultValue?: any) => {
-    // Serve from the seeded cache to avoid a bridge round-trip. A missing key in
-    // a seeded cache means it genuinely isn't in storage → return defaultValue,
-    // matching RN's storage.get semantics (no bridge hop needed).
+    markFirstStorageRead(key)
+
+    // Serve from the seeded cache to avoid a bridge round-trip.
     if (storageCacheSeeded) {
       const serialized = storageCache[key]
-      const value = serialized !== undefined ? richJson.parse(serialized) : defaultValue
-      return Promise.resolve(value)
+      if (serialized !== undefined) return Promise.resolve(richJson.parse(serialized))
+
+      // A key RN listed as stored but did not snapshot is a bulk key held back from
+      // the init payload (the phishing list, the dapp catalog): fetch it over the
+      // bridge on this first read, off the boot path. A miss on both means the key
+      // genuinely isn't stored → defaultValue, matching RN's storage.get semantics.
+      // Do NOT go to the bridge in that case: ~30 of the keys read at boot are absent
+      // from storage, and one round-trip each is what the snapshot was introduced to
+      // get rid of.
+      if (storedKeys.has(key)) return sendToRNAsync('storage.get', { key, defaultValue })
+
+      return Promise.resolve(defaultValue)
     }
     // Cache not seeded yet (no snapshot for some reason) → fall back to bridge.
     return sendToRNAsync('storage.get', { key, defaultValue })
@@ -186,10 +182,12 @@ const storageAPI = {
   set: (key: string, value: any) => {
     // Keep the cache coherent with the write, then persist through the bridge.
     storageCache[key] = richJson.stringify(value)
+    storedKeys.add(key)
     return sendToRNAsync('storage.set', { key, value })
   },
   remove: (key: string) => {
     delete storageCache[key]
+    storedKeys.delete(key)
     return sendToRNAsync('storage.remove', { key })
   }
 }
@@ -230,7 +228,11 @@ const initControllers = (config: any) => {
 
     // PERF: seed the storage cache BEFORE constructing controllers, so their
     // initial-load storage reads hit the in-memory cache instead of the bridge.
-    seedStorageCache(config.__storageSnapshot)
+    workerBootProfiler.measure(
+      BOOT_MARK.workerStorageCacheSeeded,
+      () => seedStorageCache(config.__storageSnapshot),
+      { count: Object.keys(config.__storageSnapshot?.values || {}).length }
+    )
     if (Array.isArray(config.criticalControllers)) {
       setCriticalControllers(config.criticalControllers)
     }
@@ -248,6 +250,7 @@ const initControllers = (config: any) => {
     // happen in the RN UI layer and exchange payloads via controller state.
     const qrCtrl = new QrHardwareController(new UrQrProtocolAdapter(), eventEmitterRegistry)
 
+    workerBootProfiler.startSpan(BOOT_MARK.workerMainCtrlConstructed)
     // NFC cards (Keycard, ...) tap-to-sign: the controller only forwards signing to
     // the tapped card's native service, which owns the NFC radio and the credentials.
     const nfcCtrl = new NfcController()
@@ -332,23 +335,30 @@ const initControllers = (config: any) => {
       }
     })
 
+    workerBootProfiler.endSpan(BOOT_MARK.workerMainCtrlConstructed)
+
+    workerBootProfiler.startSpan(BOOT_MARK.workerWalletStateCtrlConstructed)
     walletStateCtrl = new WalletStateController({
       eventEmitterRegistry,
       onLogLevelUpdateCallback: () => Promise.resolve(),
       storage: storageAPI
     })
+    workerBootProfiler.endSpan(BOOT_MARK.workerWalletStateCtrlConstructed)
 
+    workerBootProfiler.startSpan(BOOT_MARK.workerAutoLockCtrlConstructed)
     autoLockCtrl = new AutoLockController(
       eventEmitterRegistry,
       () => mainCtrl.keystore.lock(),
       storageAPI
     )
+    workerBootProfiler.endSpan(BOOT_MARK.workerAutoLockCtrlConstructed)
 
     // Initialize UI view inside the WebView worker context natively
     mainCtrl.ui.addView({ id: 'default-mobile-app-view', type: 'mobile' })
 
     // Notify RN that we are ready with ALL controller names
     const allControllerNames = eventEmitterRegistry.values().map((c) => c.name)
+    workerBootProfiler.mark(BOOT_MARK.workerReady, { count: allControllerNames.length })
     sendToReactEvent('system.ready', { controllers: allControllerNames })
     isConfigured = true
   } catch (e: any) {
@@ -369,6 +379,11 @@ window.addEventListener('message', (event) => {
       else pendingPromises[id]?.resolve(result)
       delete pendingPromises[id]
     } else if (data.type === 'init') {
+      // Recorded after the decode above, so the gap to `rn.initPayload.injected`
+      // is the injectJavaScript hop plus the richJson parse of the storage snapshot.
+      workerBootProfiler.mark(BOOT_MARK.workerInitReceived, {
+        bytes: typeof event.data === 'string' ? event.data.length : undefined
+      })
       initControllers(data.config)
     } else if (data.type === 'dispatchAction') {
       if (!isConfigured) {

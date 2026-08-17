@@ -28,9 +28,11 @@ import useAddressInput from '@common/hooks/useAddressInput'
 import useController from '@common/hooks/useController'
 import useHasGasTank from '@common/hooks/useHasGasTank'
 import useNavigation from '@common/hooks/useNavigation'
+import useShouldRenderRequestInPanel from '@common/hooks/useShouldRenderRequestInPanel'
 import useSyncedState from '@common/hooks/useSyncedState'
 import useToast from '@common/hooks/useToast'
 import { ROUTES, WEB_ROUTES } from '@common/modules/router/constants/common'
+import { getRouteForUserRequest } from '@common/modules/router/helpers'
 import BatchAdded from '@common/modules/sign-account-op/components/OneClick/BatchModal/BatchAdded'
 import Buttons from '@common/modules/sign-account-op/components/OneClick/Buttons'
 import Estimation from '@common/modules/sign-account-op/components/OneClick/Estimation'
@@ -81,6 +83,7 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
   }, [amountInFiat])
 
   const { navigate } = useNavigation()
+  const shouldRenderRequestInPanel = useShouldRenderRequestInPanel()
   const { t } = useTranslation()
   const { visibleUserRequests } = useController('RequestsController').state
   const {
@@ -359,6 +362,15 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
             args: [request.id]
           }
         })
+        // Side-panel routing only auto-navigates on request id changes. Re-opening the
+        // same queued batch from Send must navigate explicitly.
+        if (shouldRenderRequestInPanel) {
+          const targetRoute = getRouteForUserRequest({
+            currentUserRequest: request,
+            transferState
+          })
+          if (targetRoute) navigate(targetRoute)
+        }
         return
       }
 
@@ -427,8 +439,7 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
     [
       isSendingBatch,
       isFormValid,
-      transferState.selectedToken,
-      transferState.amount,
+      transferState,
       amountInFiatBigInt,
       visibleUserRequests,
       requestsDispatch,
@@ -439,7 +450,10 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
       resetTransferForm,
       networkUserRequests.length,
       openEstimationModalAndDispatch,
-      account?.safeCreation
+      account?.safeCreation,
+      navigate,
+      shouldRenderRequestInPanel,
+      domains
     ]
   )
 
@@ -463,7 +477,7 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
         }
         proceedBtnText={submitButtonText}
         isBatchDisabled={isSendingBatch || isSignAccountOpInProgress}
-        isNotReadyToProceed={!isTransferFormValid}
+        isNotReadyToProceed={!isSendingBatch && !isTransferFormValid}
         signAccountOpErrors={[]}
         networkUserRequests={networkUserRequests}
         isLocalStateOutOfSync={isLocalStateOutOfSync}

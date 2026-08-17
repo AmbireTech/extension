@@ -212,6 +212,14 @@ type DisconnectWcSessionAction = {
   }
 }
 
+type DispatchDappTabFocusAction = {
+  type: 'DISPATCH_DAPP_TAB_FOCUS'
+  params: {
+    targets: { tabId: number; windowId?: number }[]
+    delayMs?: number
+  }
+}
+
 type SetBootPhaseAction = {
   type: 'SET_BOOT_PHASE'
   params: { phase: 'critical' | 'full' }
@@ -223,6 +231,18 @@ type SetBootPhaseAction = {
 type SetSubscribedControllersAction = {
   type: 'SET_SUBSCRIBED_CONTROLLERS'
   params: { controllers: string[] }
+}
+
+// Mobile-only, boot profiling. Asks the WebView worker to post its boot marks so
+// the RN side can assemble one timeline across both JS realms.
+type FlushBootProfileAction = {
+  type: 'FLUSH_BOOT_PROFILE'
+}
+
+// Mobile-only. Loads the dapp catalog and phishing lists in the WebView worker after
+// the dashboard has rendered, keeping them off the boot path. Idempotent in the worker.
+type InitDeferredControllersAction = {
+  type: 'INIT_DEFERRED_CONTROLLERS'
 }
 
 export type Action =
@@ -255,5 +275,8 @@ export type Action =
   | SetupWcSessionMessengerAction
   | RestoreWcSessionsAction
   | DisconnectWcSessionAction
+  | DispatchDappTabFocusAction
   | SetBootPhaseAction
   | SetSubscribedControllersAction
+  | FlushBootProfileAction
+  | InitDeferredControllersAction

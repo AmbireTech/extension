@@ -4,13 +4,17 @@ import { isMobile, isWeb } from '@common/config/env'
 import spacings, { SPACING_TY } from '@common/styles/spacings'
 import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
+import { getUiType } from '@common/utils/uiType'
+
+const { isSidePanel } = getUiType()
 
 interface Style {
   accountContainer: ViewStyle
 }
 
-// Mobile stacks name / address / balance+badges on three rows, so it needs more height
-export const ACCOUNT_SELECT_ACCOUNT_HEIGHT = isMobile ? 88 : 57
+// Mobile and the side panel stack name / address / balance+badges on three rows, so they need
+// more height
+export const ACCOUNT_SELECT_ACCOUNT_HEIGHT = isMobile || isSidePanel ? 88 : 57
 export const ACCOUNT_SELECT_ACCOUNT_MB = SPACING_TY
 
 const getStyles = () =>

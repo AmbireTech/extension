@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { useForm } from 'react-hook-form'
-import { Animated, FlatListProps, Pressable, View } from 'react-native'
+import { Animated, FlatListProps, View } from 'react-native'
 
 import { PINNED_TOKENS } from '@ambire-common/consts/pinnedTokens'
 import { Network } from '@ambire-common/interfaces/network'
@@ -8,15 +8,10 @@ import { AssetType } from '@ambire-common/libs/defiPositions/types'
 import { PORTFOLIO_LIB_ERROR_NAMES } from '@ambire-common/libs/portfolio/errorNames'
 import { getTokenAmount, getTokenBalanceInUSD } from '@ambire-common/libs/portfolio/helpers'
 import { TokenResult } from '@ambire-common/libs/portfolio/interfaces'
-import RightArrowIcon from '@common/assets/svg/RightArrowIcon'
-import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
-import useNavigation from '@common/hooks/useNavigation'
-import useTheme from '@common/hooks/useTheme'
-import { WEB_ROUTES } from '@common/modules/router/constants/common'
+import useDebounce from '@common/hooks/useDebounce'
 import spacings from '@common/styles/spacings'
-import flexbox from '@common/styles/utils/flexbox'
 import { tokenOrCollectionSearch } from '@common/utils/search'
 import { getTokenId } from '@common/utils/token'
 import { getUiType } from '@common/utils/uiType'
@@ -24,11 +19,25 @@ import { getUiType } from '@common/utils/uiType'
 import DashboardBanners from '../DashboardBanners'
 import DashboardPageScrollContainer from '../DashboardPageScrollContainer'
 import FloatingBottomBar from '../FloatingBottomBar'
-import TabsAndSearch from '../TabsAndSearch'
 import { TabType } from '../TabsAndSearch/Tabs/Tab/Tab'
+import HiddenTokensFooter from './HiddenTokensFooter'
 import OtherTokensSummary from './OtherTokensSummary'
 import TokenItem from './TokenItem'
+import TokensEmptyState from './TokensEmptyState'
+import TokensListHeader from './TokensListHeader'
 import Skeleton from './TokensSkeleton'
+
+import type { NetworksController } from '@ambire-common/controllers/networks/networks'
+import type { PortfolioController } from '@ambire-common/controllers/portfolio/portfolio'
+import type { SelectedAccountController } from '@ambire-common/controllers/selectedAccount/selectedAccount'
+
+const selectNetworks = (state: NetworksController) => state.networks
+const selectCustomTokens = (state: PortfolioController) => state.customTokens
+const selectPortfolio = (state: SelectedAccountController) => state.portfolio
+const selectBalanceAffectingErrors = (state: SelectedAccountController) =>
+  state.balanceAffectingErrors
+const selectDashboardNetworkFilter = (state: SelectedAccountController) =>
+  state.dashboardNetworkFilter
 
 interface Props {
   openTab: TabType
@@ -63,11 +72,20 @@ const HIGH_VALUE_TOKEN_USD = 1
 const HIGH_VALUE_TOKEN_COUNT_THRESHOLD = 100
 const LOWER_VALUE_TOKEN_MAX_USD = 1
 const DUST_TOKEN_MAX_USD = 0.01
+const SEARCH_DEBOUNCE_MS = 200
 
 const hasUSDPrice = (token: TokenResult) =>
   token.priceIn.some((price) => price.baseCurrency === 'usd')
 
-const isCollapsibleToken = (token: TokenResult, isLargePortfolio: boolean): boolean => {
+const PINNED_TOKEN_KEYS = new Set(
+  PINNED_TOKENS.map(({ address, chainId }) => getTokenId({ address, chainId }))
+)
+
+const isCollapsibleToken = (
+  token: TokenResult,
+  balanceUSD: number,
+  isLargePortfolio: boolean
+): boolean => {
   // Rewards and vesting tokens should never be hidden as lower-value tokens
   if (
     token.flags.rewardsType === 'wallet-rewards' ||
@@ -94,8 +112,6 @@ const isCollapsibleToken = (token: TokenResult, isLargePortfolio: boolean): bool
     return true
   }
 
-  const balanceUSD = getTokenBalanceInUSD(token)
-
   if (isLargePortfolio) {
     return balanceUSD <= LOWER_VALUE_TOKEN_MAX_USD
   }
@@ -118,15 +134,17 @@ const Tokens = ({
   onRefresh
 }: Props) => {
   const { t } = useTranslation()
-  const { navigate } = useNavigation()
-  const { theme } = useTheme()
-  const {
-    state: { networks }
-  } = useController('NetworksController')
-  const { customTokens } = useController('PortfolioController').state
-  const {
-    state: { portfolio, balanceAffectingErrors, dashboardNetworkFilter }
-  } = useController('SelectedAccountController')
+  const { state: networks } = useController('NetworksController', selectNetworks)
+  const { state: customTokens } = useController('PortfolioController', selectCustomTokens)
+  const { state: portfolio } = useController('SelectedAccountController', selectPortfolio)
+  const { state: balanceAffectingErrors } = useController(
+    'SelectedAccountController',
+    selectBalanceAffectingErrors
+  )
+  const { state: dashboardNetworkFilter } = useController(
+    'SelectedAccountController',
+    selectDashboardNetworkFilter
+  )
   const { control, watch, setValue } = useForm({
     mode: 'all',
     defaultValues: {
@@ -135,7 +153,9 @@ const Tokens = ({
   })
 
   const [isDustExpanded, setIsDustExpanded] = useState(false)
-  const searchValue = watch('search')
+  const inputSearchValue = watch('search')
+  // Debounced so a keystroke doesn't rebuild the search index
+  const searchValue = useDebounce({ value: inputSearchValue, delay: SEARCH_DEBOUNCE_MS })
 
   const networkIdsWithPriceError = useMemo(() => {
     const networkIds = new Set<string>()
@@ -176,82 +196,70 @@ const Tokens = ({
     [tokens]
   )
 
-  const sortedTokens = useMemo(
-    () =>
-      tokens
-        .filter((token) => {
-          if (isGasTankTokenOnCustomNetwork(token, networks)) return false
-          if (token?.flags.isHidden || token.flags.rewardsType === 'wallet-projected-rewards')
-            return false
+  const balancesInUSD = useMemo(() => {
+    const balances = new Map<TokenResult, number>()
 
-          const hasTokenAmount = hasAmount(token)
-          const isCustom = customTokens.find(
-            ({ address, chainId }) =>
-              token.address.toLowerCase() === address.toLowerCase() &&
-              token.chainId === chainId &&
-              !token.flags.rewardsType // exclude rewards from custom tokens
-          )
-          const isPinned = PINNED_TOKENS.find(
-            ({ address, chainId }) =>
-              token.address.toLowerCase() === address.toLowerCase() &&
-              token.chainId === chainId &&
-              // exclude projected rewards from pinned tokens
-              token.flags.rewardsType !== 'wallet-projected-rewards'
-          )
+    tokens.forEach((token) => balances.set(token, getTokenBalanceInUSD(token)))
 
-          return (
-            hasTokenAmount ||
-            isCustom ||
-            // Don't display pinned tokens until we are sure the user has no balance
-            (isPinned && userHasNoBalance && portfolio?.isAllReady)
-          )
-        })
-        .sort((a, b) => {
-          // pending tokens go on top
-          if (
-            typeof a.amountPostSimulation === 'bigint' &&
-            a.amountPostSimulation !== BigInt(a.amount)
-          ) {
-            return -1
-          }
-          if (
-            typeof b.amountPostSimulation === 'bigint' &&
-            b.amountPostSimulation !== BigInt(b.amount)
-          ) {
-            return 1
-          }
+    return balances
+  }, [tokens])
 
-          // If a is a rewards token and b is not, a should come before b.
-          if (a.flags.rewardsType && !b.flags.rewardsType) {
-            return -1
-          }
-          if (!a.flags.rewardsType && b.flags.rewardsType) {
-            // If b is a rewards token and a is not, b should come before a.
-            return 1
-          }
-
-          const aBalance = getTokenBalanceInUSD(a)
-          const bBalance = getTokenBalanceInUSD(b)
-
-          if (a.flags.rewardsType === b.flags.rewardsType) {
-            if (aBalance === bBalance) {
-              return Number(getTokenAmount(b)) - Number(getTokenAmount(a))
-            }
-
-            return bBalance - aBalance
-          }
-
-          if (a.flags.onGasTank && !b.flags.onGasTank) {
-            return -1
-          }
-          if (!a.flags.onGasTank && b.flags.onGasTank) {
-            return 1
-          }
-
-          return 0
-        }),
-    [tokens, networks, customTokens, userHasNoBalance, portfolio?.isAllReady]
+  const customTokenKeys = useMemo(
+    () => new Set(customTokens.map(({ address, chainId }) => getTokenId({ address, chainId }))),
+    [customTokens]
   )
+
+  const sortedTokens = useMemo(() => {
+    const visible = tokens.filter((token) => {
+      if (isGasTankTokenOnCustomNetwork(token, networks)) return false
+      if (token?.flags.isHidden || token.flags.rewardsType === 'wallet-projected-rewards')
+        return false
+
+      const tokenKey = getTokenId(token)
+      // exclude rewards from custom tokens
+      const isCustom = customTokenKeys.has(tokenKey) && !token.flags.rewardsType
+      // projected rewards are already filtered out by the guard above
+      const isPinned = PINNED_TOKEN_KEYS.has(tokenKey)
+
+      return (
+        hasAmount(token) ||
+        isCustom ||
+        // Don't display pinned tokens until we are sure the user has no balance
+        (isPinned && userHasNoBalance && portfolio?.isAllReady)
+      )
+    })
+
+    const decorated = visible.map((token) => ({
+      token,
+      balanceUSD: balancesInUSD.get(token) ?? 0,
+      amount: Number(getTokenAmount(token)),
+      isSimulated:
+        typeof token.amountPostSimulation === 'bigint' &&
+        token.amountPostSimulation !== BigInt(token.amount),
+      rewardsType: token.flags.rewardsType,
+      onGasTank: token.flags.onGasTank
+    }))
+
+    decorated.sort((a, b) => {
+      // pending tokens go on top
+      if (a.isSimulated !== b.isSimulated) return a.isSimulated ? -1 : 1
+
+      // rewards tokens come before regular ones
+      if (!a.rewardsType !== !b.rewardsType) return a.rewardsType ? -1 : 1
+
+      if (a.rewardsType === b.rewardsType) {
+        if (a.balanceUSD === b.balanceUSD) return b.amount - a.amount
+
+        return b.balanceUSD - a.balanceUSD
+      }
+
+      if (a.onGasTank !== b.onGasTank) return a.onGasTank ? -1 : 1
+
+      return 0
+    })
+
+    return decorated.map(({ token }) => token)
+  }, [tokens, networks, customTokenKeys, userHasNoBalance, portfolio?.isAllReady, balancesInUSD])
 
   const { visibleTokens, dustTokens } = useMemo(() => {
     if (userHasNoBalance || searchValue.length > 0) {
@@ -259,7 +267,7 @@ const Tokens = ({
     }
 
     const highValueTokensCount = sortedTokens.filter(
-      (token) => hasUSDPrice(token) && getTokenBalanceInUSD(token) > HIGH_VALUE_TOKEN_USD
+      (token) => hasUSDPrice(token) && (balancesInUSD.get(token) ?? 0) > HIGH_VALUE_TOKEN_USD
     ).length
 
     const isLargePortfolio = highValueTokensCount > HIGH_VALUE_TOKEN_COUNT_THRESHOLD
@@ -269,7 +277,7 @@ const Tokens = ({
         // If there is a price fetch error for a network every token will be considered
         // lower-value, so we need to show all tokens in that case, regardless of their balance
         if (
-          isCollapsibleToken(token, isLargePortfolio) &&
+          isCollapsibleToken(token, balancesInUSD.get(token) ?? 0, isLargePortfolio) &&
           !networkIdsWithPriceError.has(token.chainId.toString())
         ) {
           acc.dustTokens.push(token)
@@ -280,11 +288,11 @@ const Tokens = ({
       },
       { visibleTokens: [] as TokenResult[], dustTokens: [] as TokenResult[] }
     )
-  }, [networkIdsWithPriceError, sortedTokens, userHasNoBalance, searchValue])
+  }, [networkIdsWithPriceError, sortedTokens, userHasNoBalance, searchValue, balancesInUSD])
 
   const dustTotalUSD = useMemo(
-    () => dustTokens.reduce((sum, token) => sum + getTokenBalanceInUSD(token), 0),
-    [dustTokens]
+    () => dustTokens.reduce((sum, token) => sum + (balancesInUSD.get(token) ?? 0), 0),
+    [dustTokens, balancesInUSD]
   )
 
   const hiddenTokensCount = useMemo(
@@ -332,37 +340,21 @@ const Tokens = ({
     return data
   }, [hasAnyTokens, portfolio?.isAllReady, showTokens, visibleTokens, dustTokens, isDustExpanded])
 
+  const expandDust = useCallback(() => setIsDustExpanded(true), [])
+  const collapseDust = useCallback(() => setIsDustExpanded(false), [])
+
   const renderItem = useCallback(
-    ({ item, index }: any) => {
+    ({ item }: any) => {
       if (item === 'header') {
-        return (
-          <View style={{ backgroundColor: theme.primaryBackground }}>
-            <TabsAndSearch
-              openTab={openTab}
-              setOpenTab={setOpenTab}
-              currentTab="tokens"
-              sessionId={sessionId}
-            />
-          </View>
-        )
+        return <TokensListHeader openTab={openTab} setOpenTab={setOpenTab} sessionId={sessionId} />
       }
 
       if (item === 'empty') {
         return (
-          <View style={[flexbox.alignCenter, spacings.pv]}>
-            <Text testID="no-tokens-text" fontSize={16} weight="medium">
-              {!searchValue && !dashboardNetworkFilterName && t("You don't have any tokens yet.")}
-              {!searchValue &&
-                dashboardNetworkFilterName &&
-                t(`No tokens found on ${dashboardNetworkFilterName}.`)}
-              {searchValue &&
-                t(
-                  `No tokens match "${searchValue}"${
-                    dashboardNetworkFilterName ? ` on ${dashboardNetworkFilterName}` : ''
-                  }.`
-                )}
-            </Text>
-          </View>
+          <TokensEmptyState
+            searchValue={searchValue}
+            dashboardNetworkFilterName={dashboardNetworkFilterName}
+          />
         )
       }
 
@@ -374,43 +366,15 @@ const Tokens = ({
           </View>
         )
 
+      // Always the last entry in listData, so it renders once all tokens are
+      // laid out and doesn't cause a layout shift
       if (item === 'footer') {
-        return portfolio?.isAllReady &&
-          // A trick to render the button once all tokens have been rendered. Otherwise
-          // there will be layout shifts
-          index === listData.length - 1 ? (
-          <View style={hiddenTokensCount ? spacings.ptTy : spacings.ptSm}>
-            {!!hiddenTokensCount && (
-              <Pressable
-                style={[
-                  flexbox.directionRow,
-                  flexbox.alignCenter,
-                  flexbox.justifySpaceBetween,
-                  spacings.pvMi,
-                  spacings.phTy,
-                  spacings.mhTy,
-                  spacings.mbLg,
-                  {
-                    borderRadius: 4,
-                    backgroundColor: theme.secondaryBackground
-                  }
-                ]}
-                onPress={() => {
-                  navigate(WEB_ROUTES.manageTokens)
-                }}
-              >
-                <Text appearance="secondaryText" fontSize={12}>
-                  {t('You have {{count}} hidden {{tokensLabel}}', {
-                    count: hiddenTokensCount,
-                    tokensLabel: hiddenTokensCount > 1 ? t('tokens') : t('token')
-                  })}{' '}
-                  {!!dashboardNetworkFilter && t('on this network')}
-                </Text>
-                <RightArrowIcon height={12} color={theme.secondaryText as string} />
-              </Pressable>
-            )}
-          </View>
-        ) : null
+        return (
+          <HiddenTokensFooter
+            hiddenTokensCount={hiddenTokensCount}
+            isNetworkFiltered={!!dashboardNetworkFilter}
+          />
+        )
       }
 
       if (item === 'dust-summary') {
@@ -419,18 +383,14 @@ const Tokens = ({
             variant="summary"
             count={dustTokens.length}
             totalUSD={dustTotalUSD}
-            onPress={() => setIsDustExpanded(true)}
+            onPress={expandDust}
           />
         )
       }
 
       if (item === 'dust-collapse') {
         return (
-          <OtherTokensSummary
-            variant="collapse"
-            count={dustTokens.length}
-            onPress={() => setIsDustExpanded(false)}
-          />
+          <OtherTokensSummary variant="collapse" count={dustTokens.length} onPress={collapseDust} />
         )
       }
 
@@ -440,22 +400,17 @@ const Tokens = ({
     },
     [
       initTab?.tokens,
-      theme.primaryBackground,
-      theme.secondaryBackground,
-      theme.secondaryText,
       openTab,
       setOpenTab,
       sessionId,
       searchValue,
       dashboardNetworkFilterName,
-      t,
-      listData.length,
       hiddenTokensCount,
-      portfolio?.isAllReady,
       dashboardNetworkFilter,
-      navigate,
       dustTokens.length,
-      dustTotalUSD
+      dustTotalUSD,
+      expandDust,
+      collapseDust
     ]
   )
 

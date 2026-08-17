@@ -11,6 +11,7 @@ import { WEB_ROUTES } from '@common/modules/router/constants/common'
 import TrendingTokenDetailsScreen from '@common/modules/token-details/screens/TrendingTokenDetailsScreen'
 import AccountSelectScreen from '@web/modules/account-select/screens/AccountSelectScreen'
 import GetEncryptionPublicKeyRequestScreen from '@web/modules/action-requests/screens/GetEncryptionPublicKeyRequestScreen'
+import SidePanelNoAccountsScreen from '@web/modules/auth/screens/SidePanelNoAccountsScreen'
 import ExploreScreen from '@web/modules/explore/screens/ExploreScreen'
 import ExploreSectionScreen from '@web/modules/explore/screens/ExploreSectionScreen'
 import ExtensionRewardsScreen from '@web/modules/extension-rewards/screens/ExtensionRewardsScreen'
@@ -48,6 +49,8 @@ const MainRoutes = () => {
     <Suspense fallback={null}>
       <Routes>
         <Route path={WEB_ROUTES.noConnection} element={<NoConnectionScreen />} />
+        {/* Side-panel empty state: must stay outside TabOnlyRoute so it can render in-panel. */}
+        <Route path={WEB_ROUTES.sidePanelNoAccounts} element={<SidePanelNoAccountsScreen />} />
 
         <Route element={<TabOnlyRoute />}>
           <Route
