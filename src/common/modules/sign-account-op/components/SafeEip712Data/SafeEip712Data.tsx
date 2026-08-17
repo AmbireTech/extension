@@ -84,7 +84,7 @@ const SafeEip712Data: FC<Props> = ({
         {withTitle && (
           <View style={styles.header}>
             <Text fontSize={14} weight="medium" appearance="secondaryText" numberOfLines={1}>
-              {t('hashes and JSON')}
+              {t('Hashes and JSON')}
             </Text>
           </View>
         )}
