@@ -53,7 +53,7 @@ const PendingTransactions = () => {
           flexbox.alignCenter,
           flexbox.justifySpaceBetween,
           spacings.phSm,
-          spacings.mbSm
+          spacings.mbTy
         ]}
       >
         <Text fontSize={14} weight="medium" appearance="secondaryText">

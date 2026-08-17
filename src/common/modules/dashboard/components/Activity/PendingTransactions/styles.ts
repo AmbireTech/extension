@@ -36,7 +36,7 @@ interface Styles {
 const getStyles = (theme: ThemeProps) =>
   StyleSheet.create<Styles>({
     pendingHeader: {
-      minHeight: 52,
+      minHeight: 42,
       borderBottomWidth: 1,
       borderBottomColor: theme.secondaryBorder
     },
