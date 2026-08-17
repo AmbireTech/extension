@@ -9,6 +9,7 @@ import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import HoldToProceedButton from '@common/components/HoldToProceedButton'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
+import ActionsPagination from '@common/modules/action-requests/components/ActionsPagination'
 import spacings, { SPACING_SM } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
@@ -144,6 +145,7 @@ const Footer = ({
           </View>
         )}
       </View>
+      <ActionsPagination />
     </View>
   )
 }

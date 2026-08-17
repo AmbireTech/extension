@@ -6,20 +6,17 @@ import LeftArrowIcon from '@common/assets/svg/LeftArrowIcon'
 import RightArrowIcon from '@common/assets/svg/RightArrowIcon'
 import HoverablePressable from '@common/components/HoverablePressable'
 import Text from '@common/components/Text'
-import { isWeb } from '@common/config/env'
+import { isMobile } from '@common/config/env'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
+import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
-import { getUiType } from '@common/utils/uiType'
 
 const SET_CURRENT_REQUEST_PARAMS = {
   skipFocus: true
 }
-
-const { isPopup, isRequestWindow } = getUiType()
-const shouldUseFixedWidth = isPopup || isRequestWindow
 
 const ActionsPagination = () => {
   const {
@@ -27,7 +24,7 @@ const ActionsPagination = () => {
     dispatch: requestsDispatch
   } = useController('RequestsController')
   const { t } = useTranslation()
-  const { theme } = useTheme()
+  const { theme, themeType } = useTheme()
   const currentRequestIndex = useMemo(() => {
     if (!currentUserRequest) return undefined
 
@@ -97,68 +94,51 @@ const ActionsPagination = () => {
         flexbox.directionRow,
         flexbox.alignCenter,
         flexbox.justifyCenter,
-        spacings.phSm,
-        isWeb && !shouldUseFixedWidth ? spacings.mhMi : !isWeb ? spacings.mhSm : undefined,
-        isWeb ? spacings.mbMi : spacings.mbSm,
-        shouldUseFixedWidth ? { alignSelf: 'center', width: 260 } : { alignSelf: 'stretch' },
-        {
-          minHeight: 30,
-          borderBottomLeftRadius: 12,
-          borderBottomRightRadius: 12,
-          backgroundColor: theme.secondaryBackground
-        }
+        isMobile ? spacings.ptLg : spacings.pt
       ]}
     >
-      <View
-        style={[
-          flexbox.directionRow,
-          flexbox.alignCenter,
-          flexbox.justifySpaceBetween,
-          { width: '100%', maxWidth: 640 }
-        ]}
+      <HoverablePressable
+        style={isFirstRequest && { opacity: 0.4 }}
+        disabled={isFirstRequest}
+        onPress={handleLargePageStepDecrement}
       >
-        <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-          <HoverablePressable
-            style={isFirstRequest && { opacity: 0.4 }}
-            disabled={isFirstRequest}
-            onPress={handleLargePageStepDecrement}
-          >
-            <View style={flexbox.directionRow}>
-              <LeftArrowIcon />
-              <LeftArrowIcon />
-            </View>
-          </HoverablePressable>
-          <HoverablePressable
-            style={[spacings.mlLg, isFirstRequest && { opacity: 0.4 }]}
-            disabled={isFirstRequest}
-            onPress={handleSmallPageStepDecrement}
-          >
-            <LeftArrowIcon />
-          </HoverablePressable>
+        <View style={flexbox.directionRow}>
+          <LeftArrowIcon />
+          <LeftArrowIcon />
         </View>
-        <Text fontSize={14} color={theme.primaryText} style={text.center}>
-          {requestLabel}
-        </Text>
-        <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-          <HoverablePressable
-            style={[spacings.mrLg, isLastRequest && { opacity: 0.4 }]}
-            disabled={isLastRequest}
-            onPress={handleSmallPageStepIncrement}
-          >
-            <RightArrowIcon />
-          </HoverablePressable>
-          <HoverablePressable
-            style={isLastRequest && { opacity: 0.4 }}
-            disabled={isLastRequest}
-            onPress={handleLargePageStepIncrement}
-          >
-            <View style={flexbox.directionRow}>
-              <RightArrowIcon />
-              <RightArrowIcon />
-            </View>
-          </HoverablePressable>
+      </HoverablePressable>
+      <HoverablePressable
+        style={[spacings.mlTy, isFirstRequest && { opacity: 0.4 }]}
+        disabled={isFirstRequest}
+        onPress={handleSmallPageStepDecrement}
+      >
+        <LeftArrowIcon />
+      </HoverablePressable>
+      <Text
+        fontSize={14}
+        color={themeType === THEME_TYPES.DARK ? theme.linkText : theme.primary}
+        underline
+        style={[text.center, spacings.mh]}
+      >
+        {requestLabel}
+      </Text>
+      <HoverablePressable
+        style={[spacings.mrTy, isLastRequest && { opacity: 0.4 }]}
+        disabled={isLastRequest}
+        onPress={handleSmallPageStepIncrement}
+      >
+        <RightArrowIcon />
+      </HoverablePressable>
+      <HoverablePressable
+        style={isLastRequest && { opacity: 0.4 }}
+        disabled={isLastRequest}
+        onPress={handleLargePageStepIncrement}
+      >
+        <View style={flexbox.directionRow}>
+          <RightArrowIcon />
+          <RightArrowIcon />
         </View>
-      </View>
+      </HoverablePressable>
     </View>
   )
 }

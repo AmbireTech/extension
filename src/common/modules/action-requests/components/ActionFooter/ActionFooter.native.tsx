@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 
 import Button, { Props as ButtonProps } from '@common/components/Button'
+import ActionsPagination from '@common/modules/action-requests/components/ActionsPagination'
 import spacings, { SPACING_TY } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
@@ -67,6 +68,7 @@ const ActionFooter = ({
           </View>
         )}
       </View>
+      <ActionsPagination />
     </View>
   )
 }

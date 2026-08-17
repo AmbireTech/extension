@@ -11,6 +11,7 @@ import { isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
+import ActionsPagination from '@common/modules/action-requests/components/ActionsPagination'
 import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import spacings, { SPACING_SM, SPACING_TY } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
@@ -218,22 +219,26 @@ const Footer = ({
             {rejectButton({ fullWidth: true })}
           </View>
         )}
+        <ActionsPagination />
       </View>
     )
   }
 
   return (
-    <View style={styles.container}>
-      <View style={[!isAddToCartDisplayed && flexbox.flex1, flexbox.alignStart]}>
-        {rejectButton({ fullWidth: false })}
+    <>
+      <View style={styles.container}>
+        <View style={[!isAddToCartDisplayed && flexbox.flex1, flexbox.alignStart]}>
+          {rejectButton({ fullWidth: false })}
+        </View>
+        <View
+          style={[flexbox.directionRow, !isAddToCartDisplayed && flexbox.flex1, flexbox.justifyEnd]}
+        >
+          {isAddToCartDisplayed && batchButton({ fullWidth: false })}
+          {signButton(false)}
+        </View>
       </View>
-      <View
-        style={[flexbox.directionRow, !isAddToCartDisplayed && flexbox.flex1, flexbox.justifyEnd]}
-      >
-        {isAddToCartDisplayed && batchButton({ fullWidth: false })}
-        {signButton(false)}
-      </View>
-    </View>
+      <ActionsPagination />
+    </>
   )
 }
 
