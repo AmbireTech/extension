@@ -20,6 +20,12 @@ import { Props } from './Footer'
 import getStyles from './styles'
 import useRejectConfirmation from './useRejectConfirmation'
 
+// An exception to the `size="large"` height (56). The sign screen is dense and the
+// footer is always visible, so all of its buttons are slightly shorter in order to
+// free up vertical space for the transaction details above. Keep every button in
+// the footer on this height, otherwise they won't line up.
+const FOOTER_BUTTON_HEIGHT = 52
+
 const Footer = ({
   onReject,
   onAddToCart,
@@ -91,7 +97,7 @@ const Footer = ({
           hasBottomSpacing={false}
           size="large"
           disabled={isSignLoading}
-          style={{ width: 100, height: 52 }}
+          style={{ width: 100, height: FOOTER_BUTTON_HEIGHT }}
         />
       </View>
       <ActionsPagination />
@@ -107,7 +113,7 @@ const Footer = ({
             onPress={onAddToCart}
             disabled={isAddToCartDisabled}
             hasBottomSpacing={false}
-            style={{ minWidth: 160, ...spacings.ph }}
+            style={{ minWidth: 160, height: FOOTER_BUTTON_HEIGHT, ...spacings.ph }}
             size="large"
             {...(!isMultisigSigned && {
               tooltipDataSet: createGlobalTooltipDataSet({
@@ -139,7 +145,7 @@ const Footer = ({
               disabled={isSignDisabled}
               onHoldComplete={onSign}
               testID="proceed-btn"
-              style={[spacings.mlLg, { height: 52 }]}
+              style={[spacings.mlLg, { height: FOOTER_BUTTON_HEIGHT }]}
               size="large"
             />
           )}
@@ -152,7 +158,7 @@ const Footer = ({
               text={isSignLoading ? inProgressButtonText : buttonText}
               onPress={onSign}
               size="large"
-              style={[{ minWidth: 100, height: 52 }, spacings.ml]}
+              style={[{ minWidth: 100, height: FOOTER_BUTTON_HEIGHT }, spacings.ml]}
             />
           )}
           <BottomSheet
