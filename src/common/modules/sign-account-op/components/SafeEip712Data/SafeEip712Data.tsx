@@ -2,8 +2,6 @@ import React, { FC, useCallback, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { GestureResponderEvent, Pressable, View } from 'react-native'
 
-import type { ISignMessageController } from '@ambire-common/interfaces/signMessage'
-import type { Message } from '@ambire-common/interfaces/userRequest'
 import { stringify } from '@ambire-common/libs/richJson/richJson'
 import CopyText from '@common/components/CopyText'
 import Text from '@common/components/Text'
@@ -15,15 +13,18 @@ import spacings from '@common/styles/spacings'
 import { getSafeEip712DataValue, getSafeEip712HashRows } from './helpers'
 import getStyles from './styles'
 
+import type { ISignMessageController } from '@ambire-common/interfaces/signMessage'
+import type { Message } from '@ambire-common/interfaces/userRequest'
 interface Props {
   accountAddr?: string
   chainId?: bigint
   safeEip712Data?: unknown | null
+  withTitle?: boolean
 }
 
 type ActiveTab = 'hashes' | 'parsed' | 'raw'
 
-const SafeEip712Data: FC<Props> = ({ accountAddr, chainId, safeEip712Data }) => {
+const SafeEip712Data: FC<Props> = ({ accountAddr, chainId, safeEip712Data, withTitle = true }) => {
   const { t } = useTranslation()
   const { theme, styles } = useTheme(getStyles)
   const [activeTab, setActiveTab] = useState<ActiveTab>('hashes')
@@ -44,7 +45,7 @@ const SafeEip712Data: FC<Props> = ({ accountAddr, chainId, safeEip712Data }) => 
   }, [accountAddr, chainId, data])
   const rawMessageContent = useMemo(
     () => (messageToSign?.content ? stringify(messageToSign.content, { pretty: true }) : ''),
-    [messageToSign?.content]
+    [messageToSign]
   )
   const setHasReachedBottom = useCallback(() => {}, [])
   const rows = useMemo<[string, string][]>(() => (data ? getSafeEip712HashRows(data) : []), [data])
@@ -73,11 +74,13 @@ const SafeEip712Data: FC<Props> = ({ accountAddr, chainId, safeEip712Data }) => 
   return (
     <View style={isWeb ? spacings.mbLg : spacings.mbSm}>
       <View style={styles.container}>
-        <View style={styles.header}>
-          <Text fontSize={14} weight="medium" appearance="secondaryText" numberOfLines={1}>
-            {t('Safe hashes and JSON')}
-          </Text>
-        </View>
+        {withTitle && (
+          <View style={styles.header}>
+            <Text fontSize={14} weight="medium" appearance="secondaryText" numberOfLines={1}>
+              {t('hashes and JSON')}
+            </Text>
+          </View>
+        )}
         <View style={styles.tabHeader}>
           {tabs.map(([tab, label]) => {
             const isActive = activeTab === tab
