@@ -96,7 +96,7 @@ const SafeNonce = () => {
           containerStyle={[spacings.mb0 as ViewStyle, isWeb ? { width: 80 } : flexbox.flex1]}
           inputWrapperStyle={{
             height: isMobile ? 30 : 32,
-            borderRadius: 8,
+            borderRadius: 50,
             ...(canEdit && !!validationMessage ? { borderColor: theme.errorDecorative } : {})
           }}
           inputStyle={[spacings.phTy as ViewStyle, { height: 30 }]}
