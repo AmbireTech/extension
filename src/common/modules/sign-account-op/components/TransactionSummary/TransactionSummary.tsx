@@ -61,7 +61,7 @@ interface Props {
 
 export { sizeMultiplier }
 
-type Tab = 'description' | 'raw' | 'parsed'
+type Tab = 'intent' | 'description' | 'raw' | 'parsed'
 
 const approveAbi = parseAbi(['function approve(address spender, uint256 amount) returns (bool)'])
 const permitAbi = parseAbi([
@@ -196,16 +196,22 @@ const TransactionSummary = ({
     }
   }, [erc7730Visualization])
 
-  const [currentTxDataTab, setCurrentTxDataTab] = useState<Tab>(
-    !!erc7730DescriptionVisualization ? 'description' : 'raw'
-  )
+  const hasResolvedInterpolatedIntent = !!erc7730Visualization?.titleParts?.length
+  const erc7730IntentVisualization = useMemo(() => {
+    if (!erc7730Visualization || !hasResolvedInterpolatedIntent) return null
+
+    return {
+      ...erc7730Visualization,
+      titleParts: undefined
+    }
+  }, [erc7730Visualization, hasResolvedInterpolatedIntent])
 
   const shouldUseDetailedErc7730Layout = useMemo(
     () => !!erc7730Visualization && shouldUseErc7730DetailedLayout(erc7730Visualization),
     [erc7730Visualization]
   )
   const shouldUseErc7730TransactionSummaryLayout =
-    !!erc7730Visualization && !shouldUseDetailedErc7730Layout
+    !!erc7730Visualization && (hasResolvedInterpolatedIntent || !shouldUseDetailedErc7730Layout)
 
   const erc7730DetailedTitle = useMemo(() => {
     if (!erc7730Visualization) return ''
@@ -217,6 +223,18 @@ const TransactionSummary = ({
     () => `${call.id || ''}-${call.to || ''}-${call.data}-${call.value.toString()}-${index || ''}`,
     [call.id, call.to, call.data, call.value, index]
   )
+  const defaultTxDataTab: Tab = hasResolvedInterpolatedIntent
+    ? 'intent'
+    : erc7730DescriptionVisualization
+      ? 'description'
+      : 'raw'
+  const txDataTabsKey = `${erc7730VisualizationKey}-${defaultTxDataTab}`
+  const [selectedTxDataTab, setSelectedTxDataTab] = useState<{
+    key: string
+    tab: Tab
+  } | null>(null)
+  const currentTxDataTab =
+    selectedTxDataTab?.key === txDataTabsKey ? selectedTxDataTab.tab : defaultTxDataTab
 
   const [bindDeleteIconAnim, deleteIconAnimStyle] = useHover({
     preset: 'opacityInverted'
@@ -258,10 +276,13 @@ const TransactionSummary = ({
     }
   }, [isCallRemovedOptimistic])
 
-  const handleErc7730ExpandedTabPress = useCallback((event: GestureResponderEvent, tab: Tab) => {
-    event.stopPropagation()
-    setCurrentTxDataTab(tab)
-  }, [])
+  const handleErc7730ExpandedTabPress = useCallback(
+    (event: GestureResponderEvent, tab: Tab) => {
+      event.stopPropagation()
+      setSelectedTxDataTab({ key: txDataTabsKey, tab })
+    },
+    [txDataTabsKey]
+  )
 
   const humanizerWarningLabels = useMemo(() => {
     if (type !== 'default') return null
@@ -585,7 +606,8 @@ const TransactionSummary = ({
   const shouldShowRightControl = !!rightIcon && !!onRightIconPress && !hasCallFailed
   const shouldOverlayErc7730TransactionSummaryControls =
     !isMobile && shouldUseErc7730TransactionSummaryLayout
-  const shouldOverlayDetailedErc7730Controls = !isMobile && shouldUseDetailedErc7730Layout
+  const shouldOverlayDetailedErc7730Controls =
+    !isMobile && shouldUseDetailedErc7730Layout && !hasResolvedInterpolatedIntent
   const rightControl = useMemo(() => {
     if (!shouldShowDeleteControl && !shouldShowRightControl) return null
 
@@ -638,9 +660,26 @@ const TransactionSummary = ({
     shouldUseErc7730TransactionSummaryLayout
   ])
   const shouldRenderRightControlInDetailedErc7730Header =
-    !isMobile && shouldUseDetailedErc7730Layout && !!rightControl
+    !isMobile && shouldUseDetailedErc7730Layout && !hasResolvedInterpolatedIntent && !!rightControl
   const mobileErc7730Title = useMemo(() => {
     if (!erc7730Visualization) return null
+
+    if (hasResolvedInterpolatedIntent) {
+      return (
+        <HumanizedVisualization
+          data={[erc7730Visualization]}
+          sizeMultiplierSize={sizeMultiplier[size]}
+          textSize={textSize}
+          imageSize={imageSize}
+          chainId={chainId}
+          type={type}
+          hasPadding={false}
+          isErc7730TransactionSummaryLayout
+          hideErc7730TransactionSummaryRows
+          editApprovalCallInfo={editApprovalCallInfo}
+        />
+      )
+    }
 
     const icon = shouldUseDetailedErc7730Layout
       ? erc7730DetailedIcon
@@ -678,12 +717,17 @@ const TransactionSummary = ({
       </View>
     )
   }, [
+    chainId,
+    editApprovalCallInfo,
     erc7730DetailedIcon,
     erc7730DetailedTitle,
     erc7730Visualization,
+    hasResolvedInterpolatedIntent,
+    imageSize,
     shouldUseDetailedErc7730Layout,
     size,
     textSize,
+    type,
     theme
   ])
   const mobileFlatVisualization = useMemo(() => {
@@ -724,13 +768,14 @@ const TransactionSummary = ({
 
   const tabOptions = useMemo(() => {
     let tabs: ([Tab, string] | null)[] = [
+      !!erc7730IntentVisualization ? ['intent', t('Intent')] : null,
       !!erc7730DescriptionVisualization ? ['description', t('Additional description')] : null,
       ['raw', t('Raw data')],
       decodedFunction ? ['parsed', t('Parsed data')] : null
     ]
 
     return tabs.filter((x) => !!x)
-  }, [erc7730DescriptionVisualization, decodedFunction, t])
+  }, [erc7730DescriptionVisualization, erc7730IntentVisualization, decodedFunction, t])
   const shouldAlignContentStart = useMemo(() => {
     if (shouldUseErc7730TransactionSummaryLayout) return true
     if (type !== 'default') return false
@@ -759,14 +804,14 @@ const TransactionSummary = ({
       mobileHeaderContent={isMobile ? rightControl : undefined}
       mobileHeaderTitle={isMobile ? mobileErc7730Title || mobileFlatVisualization : undefined}
       mobileHeaderStyle={
-        isMobile && mobileFlatVisualization
+        isMobile && (mobileFlatVisualization || hasResolvedInterpolatedIntent)
           ? spacings.pvTy
           : isMobile && shouldUseDetailedErc7730Layout
             ? spacings.pt
             : undefined
       }
-      hideMobileContent={!!mobileFlatVisualization}
-      overlayMobileHeaderControls={!!mobileFlatVisualization}
+      hideMobileContent={!!mobileFlatVisualization || (isMobile && hasResolvedInterpolatedIntent)}
+      overlayMobileHeaderControls={!!mobileFlatVisualization || hasResolvedInterpolatedIntent}
       style={{
         ...(call.warnings?.length && type === 'default'
           ? { ...styles.warningContainer, ...style }
@@ -786,7 +831,9 @@ const TransactionSummary = ({
       content={
         <>
           {callVisualization ? (
-            shouldUseDetailedErc7730Layout && erc7730Visualization ? (
+            shouldUseDetailedErc7730Layout &&
+            !hasResolvedInterpolatedIntent &&
+            erc7730Visualization ? (
               <View style={{ flex: 1, minWidth: 0 }}>
                 {!isMobile && (
                   <>
@@ -871,6 +918,7 @@ const TransactionSummary = ({
                   shouldOverlayErc7730TransactionSummaryControls &&
                   (shouldShowDeleteControl || shouldShowRightControl)
                 }
+                hideErc7730TransactionSummaryRows={hasResolvedInterpolatedIntent}
                 style={
                   shouldUseErc7730TransactionSummaryLayout
                     ? { width: '100%', minWidth: 0 }
@@ -945,7 +993,20 @@ const TransactionSummary = ({
               })}
             </View>
           )}
-          {!!erc7730DescriptionVisualization && currentTxDataTab === 'description' ? (
+          {!!erc7730IntentVisualization && currentTxDataTab === 'intent' ? (
+            <HumanizedVisualization
+              data={[erc7730IntentVisualization]}
+              sizeMultiplierSize={sizeMultiplier[size]}
+              textSize={textSize}
+              imageSize={imageSize}
+              chainId={chainId}
+              type={type}
+              hasPadding={false}
+              isErc7730TransactionSummaryLayout
+              editApprovalCallInfo={editApprovalCallInfo}
+              style={{ width: '100%', minWidth: 0 }}
+            />
+          ) : !!erc7730DescriptionVisualization && currentTxDataTab === 'description' ? (
             <HumanizedVisualization
               data={[erc7730DescriptionVisualization]}
               sizeMultiplierSize={sizeMultiplier[size]}

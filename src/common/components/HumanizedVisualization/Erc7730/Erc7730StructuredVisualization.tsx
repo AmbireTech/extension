@@ -46,6 +46,7 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
   isTransactionSummaryLayout = false,
   hasTransactionSummaryHeaderLeftControl = false,
   hasTransactionSummaryHeaderRightControl = false,
+  hideTransactionSummaryRows = false,
   showDescriptionTitle = false
 }) => {
   const { theme } = useTheme()
@@ -394,55 +395,57 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
                   )}
             </View>
           )}
-          <View
-            style={[
-              !shouldHideTransactionSummaryTitle && {
-                marginTop: SPACING_TY * sizeMultiplierSize
-              },
-              { width: '100%', minWidth: 0 }
-            ]}
-          >
-            {visibleRows.map((row) => (
-              <View
-                key={`${item.id}-transaction-summary-${row.label}-${row.value
-                  .map((value) => value.id)
-                  .join('-')}`}
-                style={[
-                  flexbox.directionRow,
-                  flexbox.alignCenter,
-                  flexbox.justifySpaceBetween,
-                  { marginTop: SPACING_SM * sizeMultiplierSize },
-                  { width: '100%', minWidth: 0 }
-                ]}
-              >
-                {!!row.label.trim() && (
-                  <Text
-                    fontSize={12}
-                    weight="regular"
-                    appearance="secondaryText"
-                    style={[spacings.mrSm, { flexShrink: 1 }]}
-                  >
-                    {getTransactionSummaryRowLabel(row.label)}
-                  </Text>
-                )}
+          {!hideTransactionSummaryRows && (
+            <View
+              style={[
+                !shouldHideTransactionSummaryTitle && {
+                  marginTop: SPACING_TY * sizeMultiplierSize
+                },
+                { width: '100%', minWidth: 0 }
+              ]}
+            >
+              {visibleRows.map((row) => (
                 <View
+                  key={`${item.id}-transaction-summary-${row.label}-${row.value
+                    .map((value) => value.id)
+                    .join('-')}`}
                   style={[
                     flexbox.directionRow,
                     flexbox.alignCenter,
-                    flexbox.justifyEnd,
-                    flexbox.wrap,
-                    { minWidth: 0, flexShrink: 1 }
+                    flexbox.justifySpaceBetween,
+                    { marginTop: SPACING_SM * sizeMultiplierSize },
+                    { width: '100%', minWidth: 0 }
                   ]}
                 >
-                  {row.value.map((value, valueIndex) => (
-                    <View key={value.id} style={valueIndex > 0 && spacings.mlTy}>
-                      {renderValue(value)}
-                    </View>
-                  ))}
+                  {!!row.label.trim() && (
+                    <Text
+                      fontSize={12}
+                      weight="regular"
+                      appearance="secondaryText"
+                      style={[spacings.mrSm, { flexShrink: 1 }]}
+                    >
+                      {getTransactionSummaryRowLabel(row.label)}
+                    </Text>
+                  )}
+                  <View
+                    style={[
+                      flexbox.directionRow,
+                      flexbox.alignCenter,
+                      flexbox.justifyEnd,
+                      flexbox.wrap,
+                      { minWidth: 0, flexShrink: 1 }
+                    ]}
+                  >
+                    {row.value.map((value, valueIndex) => (
+                      <View key={value.id} style={valueIndex > 0 && spacings.mlTy}>
+                        {renderValue(value)}
+                      </View>
+                    ))}
+                  </View>
                 </View>
-              </View>
-            ))}
-          </View>
+              ))}
+            </View>
+          )}
         </View>
       )
     }
