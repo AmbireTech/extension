@@ -4,7 +4,7 @@ import { useModalize } from 'react-native-modalize'
 
 import scanQrCodes from '@common/assets/images/scan-qr-codes.png'
 import syncStepsOnTheMobile from '@common/assets/images/sync-steps-on-the-mobile.gif'
-import SyncIcon from '@common/assets/svg/SyncIcon'
+import ScanIcon from '@common/assets/svg/ScanIcon'
 import Alert from '@common/components/Alert'
 import Panel from '@common/components/Panel'
 import Text from '@common/components/Text'
@@ -55,7 +55,7 @@ const selectHasPasswordSecret = (state: AllControllersMappingType['KeystoreContr
 const selectAccountsCount = (state: AllControllersMappingType['AccountsController']) =>
   state.accounts.length
 
-const SyncFromMobileScreen = () => {
+const ImportAccountsFromMobileScreen = () => {
   const { t } = useTranslation()
   const { theme } = useTheme()
   const { navigate, goBack, canGoBack } = useNavigation()
@@ -300,8 +300,8 @@ const SyncFromMobileScreen = () => {
                 steps={steps}
                 stepIndex={stepIndex}
                 onStepIndexChange={setStepIndex}
-                finishText={t('Sync from mobile')}
-                finishIcon={<SyncIcon width={24} height={24} color="#fff" style={spacings.mrTy} />}
+                finishText={t('Scan QR code')}
+                finishIcon={<ScanIcon width={24} height={24} color="#fff" style={spacings.mrTy} />}
                 onFinish={startScanning}
                 style={spacings.mtLg}
               />
@@ -343,4 +343,4 @@ const SyncFromMobileScreen = () => {
   )
 }
 
-export default React.memo(SyncFromMobileScreen)
+export default React.memo(ImportAccountsFromMobileScreen)

@@ -184,11 +184,11 @@ const AccountSelectScreen = () => {
         closeBottomSheet={closeSyncBottomSheet}
         onExportPress={() => {
           closeSyncBottomSheet()
-          navigate(WEB_ROUTES.exportAccounts)
+          navigate(WEB_ROUTES.exportAccountsToMobile)
         }}
         onImportPress={() => {
           closeSyncBottomSheet()
-          navigate(WEB_ROUTES.syncFromMobile)
+          navigate(WEB_ROUTES.importAccountsFromMobile)
         }}
       />
     </LayoutWrapper>

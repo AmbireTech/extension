@@ -174,8 +174,8 @@ const OnboardingNavigationProvider = ({ children }: { children: React.ReactNode 
           false
         ),
         new RouteNode(WEB_ROUTES.viewOnlyAccountAdder, common, false, false),
-        new RouteNode(WEB_ROUTES.syncFromMobile, common, false, false),
-        new RouteNode(MOBILE_ROUTES.syncFromExtension, common, false, false)
+        new RouteNode(WEB_ROUTES.importAccountsFromMobile, common, false, false),
+        new RouteNode(MOBILE_ROUTES.importAccountsFromExtension, common, false, false)
       ],
       authStatus !== AUTH_STATUS.NOT_AUTHENTICATED,
       false

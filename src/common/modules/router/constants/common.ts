@@ -55,7 +55,7 @@ const MOBILE_ROUTES = {
   dappWebView: 'explore/webview',
   qrReader: 'qr-reader',
   migrationOnboarding: 'migration-onboarding',
-  syncFromExtension: 'sync-from-extension'
+  importAccountsFromExtension: 'import-accounts-from-extension'
 }
 
 const WEB_ROUTES = {
@@ -83,8 +83,8 @@ const WEB_ROUTES = {
   optOuts: 'settings/opt-outs',
   survey: 'survey',
   qrPermission: 'qr-permission',
-  exportAccounts: 'export-accounts',
-  syncFromMobile: 'sync-from-mobile',
+  exportAccountsToMobile: 'export-accounts-to-mobile',
+  importAccountsFromMobile: 'import-accounts-from-mobile',
   // INTERNAL ROUTES
   internalLogs: 'internal/logs'
 }
@@ -108,8 +108,8 @@ const ONBOARDING_WEB_ROUTES = [
   COMMON_ROUTES.safeImportAddress,
   COMMON_ROUTES.safeImportByOwner,
   COMMON_ROUTES.qrConnect,
-  WEB_ROUTES.syncFromMobile,
-  MOBILE_ROUTES.syncFromExtension
+  WEB_ROUTES.importAccountsFromMobile,
+  MOBILE_ROUTES.importAccountsFromExtension
 ] as const
 
 export { MOBILE_ROUTES, ONBOARDING_WEB_ROUTES, ROUTES, WEB_ROUTES }

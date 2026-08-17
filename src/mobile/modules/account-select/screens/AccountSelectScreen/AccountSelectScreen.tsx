@@ -192,7 +192,7 @@ const AccountSelectScreen = () => {
         }}
         onImportPress={() => {
           closeSyncBottomSheet()
-          navigate(ROUTES.syncFromExtension)
+          navigate(ROUTES.importAccountsFromExtension)
         }}
       />
       <ExportToExtensionSheet sheetRef={exportSheetRef} closeBottomSheet={closeExportSheet} />

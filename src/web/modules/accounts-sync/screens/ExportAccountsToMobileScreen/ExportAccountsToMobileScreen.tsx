@@ -49,7 +49,7 @@ const SECOND_ROW_MIN_HEIGHT = 52
 // placeholder hints at a QR code instead of showing a flat empty box.
 const PLACEHOLDER_QR_VALUE = '0123456789ABCDEF'.repeat(24)
 
-const SyncWithMobileScreen = () => {
+const ExportAccountsToMobileScreen = () => {
   const { t } = useTranslation()
   const { theme, themeType, styles } = useTheme(getStyles)
   const { navigate, goBack, canGoBack } = useNavigation()
@@ -312,4 +312,4 @@ const SyncWithMobileScreen = () => {
   )
 }
 
-export default React.memo(SyncWithMobileScreen)
+export default React.memo(ExportAccountsToMobileScreen)

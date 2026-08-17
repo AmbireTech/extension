@@ -84,7 +84,7 @@ const GetStartedScreen = () => {
             type="outline"
             hasBottomSpacing={false}
             style={spacings.mt2Xl}
-            onPress={() => goToNextRoute(ROUTES.syncFromExtension)}
+            onPress={() => goToNextRoute(ROUTES.importAccountsFromExtension)}
             text={t('Already an Ambire user')}
           >
             <RightArrowIcon color={theme.primaryText} style={spacings.mlTy} />

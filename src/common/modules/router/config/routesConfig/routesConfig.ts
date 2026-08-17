@@ -438,18 +438,18 @@ const routesConfig: RouteConfig = {
     title: Platform.select({ default: i18n.t('Camera permission') }),
     name: Platform.select({ default: i18n.t('Camera permission') })
   },
-  [ROUTES.exportAccounts]: {
-    route: ROUTES.exportAccounts,
-    title: Platform.select({ default: i18n.t('Export accounts') }),
-    name: Platform.select({ default: i18n.t('Export accounts') })
+  [ROUTES.exportAccountsToMobile]: {
+    route: ROUTES.exportAccountsToMobile,
+    title: Platform.select({ default: i18n.t('Export accounts to mobile') }),
+    name: Platform.select({ default: i18n.t('Export accounts to mobile') })
   },
-  [ROUTES.syncFromMobile]: {
-    route: ROUTES.syncFromMobile,
-    title: Platform.select({ default: i18n.t('Sync from mobile') }),
-    name: Platform.select({ default: i18n.t('Sync from mobile') })
+  [ROUTES.importAccountsFromMobile]: {
+    route: ROUTES.importAccountsFromMobile,
+    title: Platform.select({ default: i18n.t('Import from mobile') }),
+    name: Platform.select({ default: i18n.t('Import from mobile') })
   },
-  [ROUTES.syncFromExtension]: {
-    route: ROUTES.syncFromExtension,
+  [ROUTES.importAccountsFromExtension]: {
+    route: ROUTES.importAccountsFromExtension,
     title: Platform.select({ default: i18n.t('Import from extension') }),
     name: Platform.select({ default: i18n.t('Import from extension') })
   }

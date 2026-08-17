@@ -111,7 +111,7 @@ const GetStartedScreen = () => {
               testID="already-an-ambire-user-button"
               type="outline"
               hasBottomSpacing={false}
-              onPress={() => goToNextRoute(WEB_ROUTES.syncFromMobile)}
+              onPress={() => goToNextRoute(WEB_ROUTES.importAccountsFromMobile)}
               text={t('Already an Ambire user')}
             >
               <RightArrowIcon color={theme.primaryText} style={spacings.mlTy} />

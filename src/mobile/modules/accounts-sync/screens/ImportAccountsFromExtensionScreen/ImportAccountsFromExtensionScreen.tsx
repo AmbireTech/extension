@@ -50,7 +50,7 @@ const selectHasPasswordSecret = (state: AllControllersMappingType['KeystoreContr
 const selectAccountsCount = (state: AllControllersMappingType['AccountsController']) =>
   state.accounts.length
 
-const SyncFromExtensionScreen = () => {
+const ImportAccountsFromExtensionScreen = () => {
   const { t } = useTranslation()
   const { theme } = useTheme()
   const { navigate, goBack, canGoBack } = useNavigation()
@@ -367,4 +367,4 @@ const SyncFromExtensionScreen = () => {
   )
 }
 
-export default React.memo(SyncFromExtensionScreen)
+export default React.memo(ImportAccountsFromExtensionScreen)
