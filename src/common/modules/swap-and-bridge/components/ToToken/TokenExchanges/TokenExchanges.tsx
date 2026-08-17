@@ -52,7 +52,7 @@ const TokenExchanges: FC<Props> = ({ chainId, address }) => {
   if (!marketData) return null
 
   if (marketData.status === 'LOADING')
-    return <Spinner style={{ width: LOGO_SIZE, height: LOGO_SIZE }} />
+    return <Spinner style={{ width: LOGO_SIZE, height: LOGO_SIZE, ...spacings.mlTy }} />
 
   // Nothing to show for a failed fetch, the controller retries it shortly
   if (marketData.status === 'FAIL') return null
