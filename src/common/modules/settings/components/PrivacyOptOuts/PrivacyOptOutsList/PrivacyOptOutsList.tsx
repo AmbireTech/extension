@@ -43,7 +43,7 @@ const PrivacyOptOutsList = () => {
       <OptOutControlOption
         title={t('Enrich swap and bridge token info')}
         description={t(
-          'Show the 24 hour price change and the exchanges a token is traded on when picking a token to receive. This sends the addresses of the listed tokens to Ambire’s price API.'
+          'Show the exchanges a token is traded on when picking a token to receive. This sends the addresses of the listed tokens to Ambire’s price API.'
         )}
         icon={<SwapAndBridgeIcon width={24} height={24} color={theme.iconPrimary} />}
         flag="swapAndBridgeTokenInfo"
