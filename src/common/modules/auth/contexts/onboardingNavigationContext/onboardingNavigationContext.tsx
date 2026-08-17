@@ -174,9 +174,6 @@ const OnboardingNavigationProvider = ({ children }: { children: React.ReactNode 
           false
         ),
         new RouteNode(WEB_ROUTES.viewOnlyAccountAdder, common, false, false),
-        // Syncing from the other Ambire product brings the accounts in, then the device
-        // password is set and the accounts are personalized, like in every other import
-        // flow. Only one of the two is ever reachable, depending on the product.
         new RouteNode(WEB_ROUTES.syncFromMobile, common, false, false),
         new RouteNode(MOBILE_ROUTES.syncFromExtension, common, false, false)
       ],

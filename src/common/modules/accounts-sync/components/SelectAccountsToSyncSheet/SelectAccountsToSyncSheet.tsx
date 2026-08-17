@@ -96,8 +96,6 @@ const SelectAccountsToSyncSheet = ({
     [onToggleAccount, selectedAddrs]
   )
 
-  // A single account can still sit on keys from more than one phrase, so the two
-  // plurals are counted separately
   const includeSeedsLabel = useMemo(() => {
     const s = selectedSeedsCount > 1 ? 's' : ''
 

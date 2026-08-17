@@ -28,8 +28,6 @@ import getStyles from './styles'
 
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 
-// The copy and receive buttons sit next to the account instead of inline with the address, which
-// gives the address the whole row. Only mobile needs the bigger touch target size.
 const ACTION_ICON_SIZE = isMobile ? 32 : 24
 
 const selectMainStatuses = (state: AllControllersMappingType['MainController']) => state.statuses

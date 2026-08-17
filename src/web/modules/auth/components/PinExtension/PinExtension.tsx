@@ -15,8 +15,6 @@ import { engine } from '@web/constants/browserapi'
 
 import getStyles from './styles'
 
-// Distance from the right edge of the window, so the card sits under the toolbar icon it
-// points at - the same on every browser and whether the extension is pinned or not
 const RIGHT_OFFSET = 32
 
 const PinExtension = () => {

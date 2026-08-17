@@ -1,10 +1,11 @@
 /**
- * Bytes per animated QR fragment. Keeps the code at version 11 (61x61 modules) for any
- * realistic payload, while 400 bytes pushed it to version 16-17 (81x81 to 85x85), whose
- * modules get too small for a camera to tell apart reliably. The payload is gzipped, so
- * the frame count stays low despite the smaller fragments.
+ * Bytes per animated QR fragment. Keeps the code at version 8 (49x49 modules) for any
+ * realistic payload, while 200 bytes put it at version 11-12 (61x61 to 65x65) and 400
+ * bytes at version 16-17 (81x81 to 85x85), whose modules get too small for a laptop
+ * camera to tell apart reliably. The payload is gzipped, so the frame count stays low
+ * despite the smaller fragments.
  */
-export const ACCOUNTS_SYNC_QR_CAPACITY = 200
+export const ACCOUNTS_SYNC_QR_CAPACITY = 100
 
 /**
  * How long each animated QR fragment stays on screen. The scanner is what caps the pace:
