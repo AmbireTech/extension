@@ -26,6 +26,7 @@ import useAccountsSyncExport from '@common/modules/accounts-sync/hooks/useAccoun
 import AnimatedQrCode from '@common/modules/hardware-wallets/components/AnimatedQrCode'
 import { WEB_ROUTES } from '@common/modules/router/constants/common'
 import spacings, { SPACING_SM, SPACING_XL } from '@common/styles/spacings'
+import { THEME_TYPES } from '@common/styles/themeConfig'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
@@ -50,7 +51,7 @@ const PLACEHOLDER_QR_VALUE = '0123456789ABCDEF'.repeat(24)
 
 const SyncWithMobileScreen = () => {
   const { t } = useTranslation()
-  const { theme, styles } = useTheme(getStyles)
+  const { theme, themeType, styles } = useTheme(getStyles)
   const { navigate, goBack, canGoBack } = useNavigation()
   const { minHeightSize } = useWindowSize()
   const {
@@ -76,6 +77,10 @@ const SyncWithMobileScreen = () => {
 
     setQrSize(Math.max(0, Math.min(width, height - CAPTION_ROW_HEIGHT)))
   }, [])
+
+  // The card is already white on the light theme, so the QR's own white quiet zone is
+  // invisible there - drop it and let the code fill that space instead.
+  const qrQuietZone = themeType === THEME_TYPES.LIGHT ? 0 : undefined
 
   const [bindQrPlaceholderAnim, qrPlaceholderAnimStyle] = useCustomHover({
     property: 'opacity',
@@ -235,6 +240,7 @@ const SyncWithMobileScreen = () => {
                     size={qrSize}
                     capacity={ACCOUNTS_SYNC_QR_CAPACITY}
                     interval={ACCOUNTS_SYNC_QR_INTERVAL}
+                    quietZone={qrQuietZone}
                   />
                 </>
               ) : (
