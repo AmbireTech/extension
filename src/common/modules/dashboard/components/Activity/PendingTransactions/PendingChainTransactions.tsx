@@ -11,7 +11,7 @@ import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
-import { SafeQueueNetworkGroup } from '../../SafeQueueBottomSheet/helpers'
+import type { SafeQueueNetworkGroup } from '@common/modules/dashboard/hooks/usePendingSafeTransactions/usePendingSafeTransactions'
 import PendingTransactionBundle from './PendingTransactionBundle'
 import getStyles from './styles'
 

@@ -9,6 +9,9 @@ import common, { hexToRgba } from '@common/styles/utils/common'
 export const OR_DIVIDER_HEIGHT = 28
 
 interface Styles {
+  pendingHeader: ViewStyle
+  fetchButton: ViewStyle
+  fetchButtonLoading: ViewStyle
   chainWrapper: ViewStyle
   chainHeader: ViewStyle
   animatedContentWrapper: ViewStyle
@@ -32,6 +35,19 @@ interface Styles {
 
 const getStyles = (theme: ThemeProps) =>
   StyleSheet.create<Styles>({
+    pendingHeader: {
+      minHeight: 52,
+      borderBottomWidth: 1,
+      borderBottomColor: theme.secondaryBorder
+    },
+    fetchButton: {
+      height: 34,
+      borderRadius: 17,
+      backgroundColor: theme.primaryAccent100
+    },
+    fetchButtonLoading: {
+      backgroundColor: theme.tertiaryBackground
+    },
     // Hidden overflow, so that a bundle filling the box gets clipped by the rounded corners
     chainWrapper: {
       borderWidth: 2,
