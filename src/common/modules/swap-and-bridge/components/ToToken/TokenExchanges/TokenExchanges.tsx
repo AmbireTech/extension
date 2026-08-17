@@ -13,7 +13,7 @@ import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { getExchangesWithData } from '@common/utils/exchanges'
 
-import useTokenMarketData from './useTokenMarketData'
+import useTokenExchanges from './useTokenExchanges'
 
 const LOGO_SIZE = 16
 // Each logo is pulled onto the previous one, so that they read as a single stack
@@ -31,7 +31,7 @@ type Props = {
 const TokenExchanges: FC<Props> = ({ chainId, address }) => {
   const { t } = useTranslation()
   const { theme } = useTheme()
-  const marketData = useTokenMarketData(chainId, address)
+  const marketData = useTokenExchanges(chainId, address)
   const { state: exchangeData } = useController(
     'PortfolioController',
     (state) => state.exchangeState.exchanges
