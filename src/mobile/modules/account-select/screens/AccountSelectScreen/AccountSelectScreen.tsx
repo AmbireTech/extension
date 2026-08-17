@@ -26,7 +26,7 @@ import { ROUTES, WEB_ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { MobileLayoutContainer } from '@mobile/components/MobileLayoutWrapper'
-import ExportToExtensionSheet from '@mobile/modules/accounts-sync/components/ExportToExtensionSheet'
+import ExportAccountsToExtensionSheet from '@mobile/modules/accounts-sync/components/ExportAccountsToExtensionSheet'
 
 import getStyles from './styles'
 
@@ -195,7 +195,7 @@ const AccountSelectScreen = () => {
           navigate(ROUTES.importAccountsFromExtension)
         }}
       />
-      <ExportToExtensionSheet sheetRef={exportSheetRef} closeBottomSheet={closeExportSheet} />
+      <ExportAccountsToExtensionSheet sheetRef={exportSheetRef} closeBottomSheet={closeExportSheet} />
     </MobileLayoutContainer>
   ) : (
     <DashboardSkeleton />

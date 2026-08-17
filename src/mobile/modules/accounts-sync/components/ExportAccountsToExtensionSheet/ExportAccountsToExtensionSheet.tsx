@@ -46,7 +46,7 @@ interface Props {
  * Shows the accounts the user picked as animated QR codes, for the Ambire extension to
  * scan with the computer's camera.
  */
-const ExportToExtensionSheet = ({ sheetRef, closeBottomSheet }: Props) => {
+const ExportAccountsToExtensionSheet = ({ sheetRef, closeBottomSheet }: Props) => {
   const { t } = useTranslation()
   const { theme, themeType } = useTheme()
   const {
@@ -226,4 +226,4 @@ const ExportToExtensionSheet = ({ sheetRef, closeBottomSheet }: Props) => {
   )
 }
 
-export default React.memo(ExportToExtensionSheet)
+export default React.memo(ExportAccountsToExtensionSheet)
