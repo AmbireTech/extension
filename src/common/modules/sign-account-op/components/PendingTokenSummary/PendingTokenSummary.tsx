@@ -111,7 +111,7 @@ const PendingTokenSummary = ({ token, chainId, hasBottomSpacing = true }: Props)
           withNetworkIcon={false}
         />
       ),
-    [chainId, theme.neutral200, theme.tertiaryText, token.address, token.flags.onGasTank]
+    [chainId, theme.neutral200, theme.primaryAccent, token.address, token.flags.onGasTank]
   )
   const suspiciousTokenWarning = useMemo(
     () =>
