@@ -228,6 +228,29 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
     [chainId, editApprovalCallInfo, mode, sizeMultiplierSize, textSize, theme]
   )
 
+  // Renders an interpolated title (e.g. "Swap {amount} for at least {amount}")
+  // as inline parts instead of a single string, reusing `renderValue` so a
+  // `type: 'token'` part gets the same live decimals/symbol/price lookup as a
+  // row value - this doesn't depend on a static token registry being
+  // exhaustive, unlike the plain-text `title` fallback used when there's no
+  // `titleParts` (e.g. non-interpolated intents).
+  const renderTitleParts = useCallback(
+    (overrideTextSize: number) =>
+      item.titleParts?.length ? (
+        <View
+          style={[
+            flexbox.directionRow,
+            flexbox.alignCenter,
+            flexbox.wrap,
+            { minWidth: 0, flexShrink: 1 }
+          ]}
+        >
+          {item.titleParts.map((part) => renderValue(part, overrideTextSize))}
+        </View>
+      ) : null,
+    [item.titleParts, renderValue]
+  )
+
   const renderDetailedValueLine = useCallback(
     (values: HumanizerVisualization[], alignment: 'start' | 'end' = 'end') => (
       <View
@@ -356,17 +379,19 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
                   hideOnError
                 />
               )}
-              {!!item.title && (
-                <Text
-                  fontSize={textSize + 2}
-                  weight="semiBold"
-                  color={theme.secondaryAccent400}
-                  numberOfLines={1}
-                  style={{ flexShrink: 1 }}
-                >
-                  {item.title}
-                </Text>
-              )}
+              {item.titleParts?.length
+                ? renderTitleParts(textSize + 2)
+                : !!item.title && (
+                    <Text
+                      fontSize={textSize + 2}
+                      weight="semiBold"
+                      color={theme.secondaryAccent400}
+                      numberOfLines={1}
+                      style={{ flexShrink: 1 }}
+                    >
+                      {item.title}
+                    </Text>
+                  )}
             </View>
           )}
           <View
@@ -486,16 +511,18 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
               }
             ]}
           >
-            {!!item.title && (
-              <Text
-                fontSize={textSize + 2}
-                color={theme.secondaryAccent400}
-                numberOfLines={1}
-                style={spacings.mrSm}
-              >
-                {item.title}
-              </Text>
-            )}
+            {item.titleParts?.length
+              ? renderTitleParts(textSize + 2)
+              : !!item.title && (
+                  <Text
+                    fontSize={textSize + 2}
+                    color={theme.secondaryAccent400}
+                    numberOfLines={1}
+                    style={spacings.mrSm}
+                  >
+                    {item.title}
+                  </Text>
+                )}
             {spenderRow && (
               <View
                 style={[
@@ -603,9 +630,13 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
       <View style={{ width: '100%' }}>
         {shouldShowDescriptionTitle && (
           <View style={{ width: '100%', paddingVertical: SPACING_TY }}>
-            <Text fontSize={textSize} color={theme.secondaryAccent400}>
-              {item.title}
-            </Text>
+            {item.titleParts?.length ? (
+              renderTitleParts(textSize)
+            ) : (
+              <Text fontSize={textSize} color={theme.secondaryAccent400}>
+                {item.title}
+              </Text>
+            )}
           </View>
         )}
         {detailedRows.map((row) => {
@@ -670,9 +701,13 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
     <View style={{ width: '100%' }}>
       {shouldShowDescriptionTitle && (
         <View style={{ width: '100%', paddingVertical: SPACING_TY }}>
-          <Text fontSize={textSize} color={theme.secondaryAccent400}>
-            {item.title}
-          </Text>
+          {item.titleParts?.length ? (
+            renderTitleParts(textSize)
+          ) : (
+            <Text fontSize={textSize} color={theme.secondaryAccent400}>
+              {item.title}
+            </Text>
+          )}
         </View>
       )}
       {detailedRows.map((row) => {
