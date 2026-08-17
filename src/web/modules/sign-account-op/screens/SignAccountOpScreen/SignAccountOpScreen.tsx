@@ -497,6 +497,7 @@ const SignAccountOpScreen = () => {
                 chainId={signAccountOpState?.accountOp.chainId}
                 safeEip712Data={signAccountOpState?.safeEip712Data}
                 withTitle={false}
+                withTwoColumnParsedData
               />
             )}
           </ScrollView>

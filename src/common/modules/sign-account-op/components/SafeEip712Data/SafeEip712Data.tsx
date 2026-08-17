@@ -20,11 +20,18 @@ interface Props {
   chainId?: bigint
   safeEip712Data?: unknown | null
   withTitle?: boolean
+  withTwoColumnParsedData?: boolean
 }
 
 type ActiveTab = 'hashes' | 'parsed' | 'raw'
 
-const SafeEip712Data: FC<Props> = ({ accountAddr, chainId, safeEip712Data, withTitle = true }) => {
+const SafeEip712Data: FC<Props> = ({
+  accountAddr,
+  chainId,
+  safeEip712Data,
+  withTitle = true,
+  withTwoColumnParsedData = false
+}) => {
   const { t } = useTranslation()
   const { theme, styles } = useTheme(getStyles)
   const [activeTab, setActiveTab] = useState<ActiveTab>('hashes')
@@ -149,8 +156,10 @@ const SafeEip712Data: FC<Props> = ({ accountAddr, chainId, safeEip712Data, withT
             setHasReachedBottom={setHasReachedBottom}
             hasReachedBottom
             scrollEnabled={false}
-            withCompactDataRow
+            withCompactDataRow={!withTwoColumnParsedData}
+            withTwoColumnDataRow={withTwoColumnParsedData}
             withDecimalIntegerRows
+            withRegularParsedText={withTwoColumnParsedData}
             hideTabs
             containerStyle={styles.fallbackVisualization}
             separatorColor={theme.secondaryBackground}
