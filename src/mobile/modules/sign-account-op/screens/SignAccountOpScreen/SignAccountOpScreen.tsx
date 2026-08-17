@@ -231,7 +231,7 @@ const SignAccountOpScreen = () => {
             {!estimationFailed &&
             signAccountOpState?.canBroadcast &&
             signAccountOpState?.status?.type !== SigningStatus.Queued ? (
-              <View style={spacings.mbMd}>
+              <View style={spacings.mbTy}>
                 <Estimation
                   signAccountOpState={signAccountOpState}
                   disabled={isSignLoading}
@@ -328,12 +328,7 @@ const SignAccountOpScreen = () => {
           showsVerticalScrollIndicator={false}
         >
           {signAccountOpState?.account.safeCreation ? (
-            <>
-              <View style={spacings.mbSm}>
-                <SectionHeading withMb={false}>{t('Overview')}</SectionHeading>
-              </View>
-              <SafeNonce />
-            </>
+            <SafeNonce />
           ) : (
             <View
               style={[

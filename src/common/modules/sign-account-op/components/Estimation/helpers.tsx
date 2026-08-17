@@ -108,7 +108,7 @@ const mapFeeOptions = (
     } else if (!feeOption.token.priceIn.length) {
       disabledReason = 'No price data'
     } else {
-      disabledReason = 'Insufficient amount'
+      disabledReason = 'insufficient amount'
     }
   }
 
@@ -117,7 +117,7 @@ const mapFeeOptions = (
     feeOption.paidBy === signAccountOpState.account.addr &&
     !feeOption.token.flags.onGasTank
   ) {
-    disabledReason = 'Not supported'
+    disabledReason = 'not supported'
   }
 
   // TODO: TBD, should we refactor and move `disabledReason` logic together with `speedCoverage` into controller.
@@ -134,7 +134,7 @@ const mapFeeOptions = (
   )
 
   if (isExternal && canNotBecomeSmarter && feeOption.token.address !== ZERO_ADDRESS) {
-    disabledReason = 'Coming soon for more hardware wallets'
+    disabledReason = 'Coming soon for more hardware wallets.'
     disabledTextAppearance = 'infoText'
   }
 
@@ -145,7 +145,7 @@ const mapFeeOptions = (
     : undefined
 
   if (signAccountOpState.hasCustomGasPrices && feeOption.token.address !== ZeroAddress) {
-    disabledReason = 'Option not available for advanced gas prices'
+    disabledReason = 'Option not available for advanced gas prices.'
     disabledTextAppearance = 'errorText'
   }
 
