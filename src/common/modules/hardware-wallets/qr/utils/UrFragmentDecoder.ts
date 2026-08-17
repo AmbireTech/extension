@@ -12,6 +12,14 @@ export class UrFragmentDecoder {
     return this.decoder.isComplete()
   }
 
+  /**
+   * How many fragments the whole payload was split into, which the first fragment that
+   * arrives already tells. 0 until then.
+   */
+  expectedPartCount() {
+    return this.decoder.expectedPartCount()
+  }
+
   result(): Uint8Array {
     const ur = this.decoder.resultUR()
 

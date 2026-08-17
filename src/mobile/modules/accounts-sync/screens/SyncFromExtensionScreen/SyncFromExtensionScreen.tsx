@@ -20,9 +20,11 @@ import SyncImportSteps, {
   SyncImportStepsFooter
 } from '@common/modules/accounts-sync/components/SyncImportSteps'
 import SyncPasswordOptions from '@common/modules/accounts-sync/components/SyncPasswordOptions'
+import SyncScanFeedbackAlert from '@common/modules/accounts-sync/components/SyncScanFeedbackAlert'
 import useAccountsSyncImport from '@common/modules/accounts-sync/hooks/useAccountsSyncImport'
 import useSyncedPasswordSetup from '@common/modules/accounts-sync/hooks/useSyncedPasswordSetup'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
+import { QrScanProgress } from '@common/modules/hardware-wallets/qr/utils/qrScanFeedback'
 import QrScannerWithPermission from '@common/modules/hardware-wallets/screens/QrScannerWithPermission'
 import { ROUTES } from '@common/modules/router/constants/common'
 import PasswordConfirmation from '@common/modules/settings/components/PasswordConfirmation'
@@ -62,6 +64,7 @@ const SyncFromExtensionScreen = () => {
     close: closePasswordSheet
   } = useModalize()
   const [isScanning, setIsScanning] = useState(false)
+  const [scanProgress, setScanProgress] = useState<QrScanProgress | null>(null)
   const [stepIndex, setStepIndex] = useState(0)
   // Onboarding only: the extension's password becomes this app's password as well, so
   // there is no second one to set. Off means the app asks for its own password next.
@@ -245,7 +248,10 @@ const SyncFromExtensionScreen = () => {
     stepIndex
   ])
 
-  const handleStartScanning = useCallback(() => setIsScanning(true), [])
+  const handleStartScanning = useCallback(() => {
+    setScanProgress(null)
+    setIsScanning(true)
+  }, [])
 
   const togglePasswordReuse = useCallback(() => setIsPasswordReused((prev) => !prev), [])
 
@@ -258,11 +264,7 @@ const SyncFromExtensionScreen = () => {
     <MobileLayoutContainer
       footer={
         isScanning ? (
-          <Alert
-            type="info"
-            size="sm"
-            title={t('Hold your phone still until the process is complete.')}
-          />
+          <SyncScanFeedbackAlert progress={scanProgress} />
         ) : (
           <SyncImportStepsFooter
             steps={steps}
@@ -304,6 +306,7 @@ const SyncFromExtensionScreen = () => {
                 disabled={hasScannedPayload || isImporting}
                 externalError={scanError}
                 onExternalRetry={retryScan}
+                onProgress={setScanProgress}
               />
             </View>
           </>

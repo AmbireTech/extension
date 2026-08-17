@@ -19,6 +19,7 @@ import SyncImportSteps, {
   SyncImportStepsFooter
 } from '@common/modules/accounts-sync/components/SyncImportSteps'
 import SyncPasswordOptions from '@common/modules/accounts-sync/components/SyncPasswordOptions'
+import SyncScanFeedbackAlert from '@common/modules/accounts-sync/components/SyncScanFeedbackAlert'
 import useAccountsSyncImport from '@common/modules/accounts-sync/hooks/useAccountsSyncImport'
 import useSyncedPasswordSetup from '@common/modules/accounts-sync/hooks/useSyncedPasswordSetup'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
@@ -28,6 +29,7 @@ import common, { BORDER_RADIUS_SECONDARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
 import { TabLayoutContainer, TabLayoutWrapperMainContent } from '@web/components/TabLayoutWrapper'
+import { QrScanProgress } from '@common/modules/hardware-wallets/qr/utils/qrScanFeedback'
 import QrScannerWithPermission from '@web/modules/hardware-wallet/screens/QrScannerWithPermission'
 import BottomSheetPasswordConfirmation from '@web/modules/settings/components/BottomSheetPasswordConfirmation'
 
@@ -67,6 +69,7 @@ const SyncFromMobileScreen = () => {
     close: closePasswordSheet
   } = useModalize()
   const [isScanning, setIsScanning] = useState(false)
+  const [scanProgress, setScanProgress] = useState<QrScanProgress | null>(null)
   const [stepIndex, setStepIndex] = useState(0)
   // Onboarding only: the mobile app's password becomes the extension's password as well,
   // so there is no second one to set. Off means the extension asks for its own next.
@@ -200,6 +203,11 @@ const SyncFromMobileScreen = () => {
     if (hasScannedPayload) openPasswordSheet()
   }, [hasScannedPayload, openPasswordSheet])
 
+  const startScanning = useCallback(() => {
+    setScanProgress(null)
+    setIsScanning(true)
+  }, [])
+
   const handleBackButtonPress = useCallback(() => {
     // The scanner is a step of this screen, so going back returns to the instructions
     if (isScanning) return setIsScanning(false)
@@ -272,14 +280,11 @@ const SyncFromMobileScreen = () => {
                     disabled={hasScannedPayload || isImporting}
                     externalError={scanError}
                     onExternalRetry={retryScan}
+                    onProgress={setScanProgress}
                   />
                 </View>
               </View>
-              <Alert
-                type="info"
-                size="sm"
-                title={t('Hold your phone still until the process is complete.')}
-              />
+              <SyncScanFeedbackAlert progress={scanProgress} />
             </>
           ) : (
             <>
@@ -297,7 +302,7 @@ const SyncFromMobileScreen = () => {
                 onStepIndexChange={setStepIndex}
                 finishText={t('Sync from mobile')}
                 finishIcon={<SyncIcon width={24} height={24} color="#fff" style={spacings.mrTy} />}
-                onFinish={() => setIsScanning(true)}
+                onFinish={startScanning}
                 style={spacings.mtLg}
               />
             </>

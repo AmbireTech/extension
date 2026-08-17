@@ -12,6 +12,7 @@ import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import { getUiType } from '@common/utils/uiType'
 import { browser, engine, isSafari } from '@web/constants/browserapi'
+import { QrScanProgress } from '@common/modules/hardware-wallets/qr/utils/qrScanFeedback'
 import QrScanner from '@web/modules/hardware-wallet/screens/QrScannerWithPermission/QrScanner'
 
 type Props = {
@@ -20,6 +21,8 @@ type Props = {
   disabled?: boolean
   externalError?: string | null
   onExternalRetry?: () => void
+  /** Reports how the scan is going, so the caller can tell the user what to do */
+  onProgress?: (progress: QrScanProgress) => void
 }
 
 // Chromium is the only engine that lets an extension open the browser's own settings,
@@ -61,7 +64,8 @@ const QrScannerWithPermission = ({
   onOpenFullScreenScanner,
   disabled,
   externalError,
-  onExternalRetry
+  onExternalRetry,
+  onProgress
 }: Props) => {
   const { isPopup, isSidePanel } = getUiType()
   const needsFullScreenCameraFallback = isPopup || isSidePanel
@@ -289,6 +293,7 @@ const QrScannerWithPermission = ({
         disabled={disabled || !!cameraError || !!externalError || showFullScreenFallback}
         onComplete={handleComplete}
         onError={handleError}
+        onProgress={onProgress}
       />
 
       {cameraError || externalError ? (
