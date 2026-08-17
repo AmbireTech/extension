@@ -9,14 +9,18 @@ import Alert from '@common/components/Alert'
 import Panel from '@common/components/Panel'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
+import useBiometrics from '@common/hooks/useBiometrics'
 import useController from '@common/hooks/useController'
 import useNavigation from '@common/hooks/useNavigation'
 import useTheme from '@common/hooks/useTheme'
+import useToast from '@common/hooks/useToast'
 import SyncImportSteps, {
   SyncImportStep,
   SyncImportStepsFooter
 } from '@common/modules/accounts-sync/components/SyncImportSteps'
+import SyncPasswordOptions from '@common/modules/accounts-sync/components/SyncPasswordOptions'
 import useAccountsSyncImport from '@common/modules/accounts-sync/hooks/useAccountsSyncImport'
+import useSyncedPasswordSetup from '@common/modules/accounts-sync/hooks/useSyncedPasswordSetup'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
 import { WEB_ROUTES } from '@common/modules/router/constants/common'
 import spacings, { SPACING_LG } from '@common/styles/spacings'
@@ -38,6 +42,9 @@ const ILLUSTRATION_CARD_HEIGHT = 300
 // The scanner is shorter than the steps, so the panel is kept as tall as the steps make
 // it, no matter which of the two is on screen
 const PANEL_HEIGHT = 620
+// The panel's own default, spelled out here because the password modal is kept exactly
+// as wide as the panel it opens over
+const PANEL_WIDTH = 400
 const ANIMATION_HEIGHT = ILLUSTRATION_CARD_HEIGHT - SPACING_LG * 2
 const ANIMATION_ASPECT_RATIO = 374 / 664
 
@@ -50,6 +57,7 @@ const SyncFromMobileScreen = () => {
   const { t } = useTranslation()
   const { theme } = useTheme()
   const { navigate, goBack, canGoBack } = useNavigation()
+  const { addToast } = useToast()
   const { state: hasPasswordSecret } = useController('KeystoreController', selectHasPasswordSecret)
   const { state: accountsCount } = useController('AccountsController', selectAccountsCount)
   const { goToNextRoute, goToPrevRoute } = useOnboardingNavigation()
@@ -60,6 +68,16 @@ const SyncFromMobileScreen = () => {
   } = useModalize()
   const [isScanning, setIsScanning] = useState(false)
   const [stepIndex, setStepIndex] = useState(0)
+  // Onboarding only: the mobile app's password becomes the extension's password as well,
+  // so there is no second one to set. Off means the extension asks for its own next.
+  const [isPasswordReused, setIsPasswordReused] = useState(true)
+  const [isBiometricsToggled, setIsBiometricsToggled] = useState<boolean | null>(null)
+  const { isLoading, hasBiometricsHardware, saveBiometricsSecret } = useBiometrics()
+  // Biometrics on the extension are a WebAuthn credential, so what matters is whether
+  // the browser and the computer support one, not whether one is already stored
+  const isBiometricsAvailable = !isLoading && !!hasBiometricsHardware
+  // On by default once biometrics turn out to be available, until the user says otherwise
+  const isBiometricsEnabled = isBiometricsToggled ?? isBiometricsAvailable
 
   const steps: SyncImportStep[] = useMemo(
     () => [
@@ -119,14 +137,54 @@ const SyncFromMobileScreen = () => {
     [t, theme]
   )
 
-  const handleImported = useCallback(() => {
+  const handlePasswordSet = useCallback(() => {
     closePasswordSheet()
-    // During onboarding the accounts arrive before this device has a password of its
-    // own, so setting one comes next. Otherwise the freshly imported accounts can be
-    // named right away. Both are onboarding routes reachable through internal navigation
-    // only, so going there with `navigate` gets bounced back to this screen.
-    goToNextRoute(hasPasswordSecret ? WEB_ROUTES.accountPersonalize : WEB_ROUTES.keyStoreSetup)
-  }, [closePasswordSheet, goToNextRoute, hasPasswordSecret])
+    goToNextRoute(WEB_ROUTES.accountPersonalize)
+  }, [closePasswordSheet, goToNextRoute])
+
+  const { setPasswordFromSync, isSettingPassword } = useSyncedPasswordSetup({
+    onPasswordSet: handlePasswordSet
+  })
+
+  const handleImported = useCallback(
+    async (password: string) => {
+      // During onboarding the accounts arrive before the extension has a password of its
+      // own. Reusing the mobile app's one sets it (and biometrics) right here, so the
+      // keystore setup screen is skipped and the modal stays up until it lands.
+      if (!hasPasswordSecret && isPasswordReused) {
+        // A cancelled biometrics prompt returns no secret. The accounts are already
+        // imported and the password still has to be set, so the flow goes on without
+        // biometrics and only says so.
+        const biometricsSecret = isBiometricsEnabled ? await saveBiometricsSecret() : null
+
+        if (isBiometricsEnabled && !biometricsSecret)
+          addToast(t('Biometrics were not enabled. You can turn them on in Settings.'), {
+            type: 'info'
+          })
+
+        setPasswordFromSync({ password, biometricsSecret })
+        return
+      }
+
+      closePasswordSheet()
+      // Without a password of its own, setting one comes next. Otherwise the freshly
+      // imported accounts can be named right away. Both are onboarding routes reachable
+      // through internal navigation only, so going there with `navigate` gets bounced
+      // back to this screen.
+      goToNextRoute(hasPasswordSecret ? WEB_ROUTES.accountPersonalize : WEB_ROUTES.keyStoreSetup)
+    },
+    [
+      addToast,
+      closePasswordSheet,
+      goToNextRoute,
+      hasPasswordSecret,
+      isBiometricsEnabled,
+      isPasswordReused,
+      saveBiometricsSecret,
+      setPasswordFromSync,
+      t
+    ]
+  )
 
   const {
     handleScanComplete,
@@ -164,6 +222,13 @@ const SyncFromMobileScreen = () => {
     })
   }, [accountsCount, canGoBack, goBack, goToPrevRoute, isScanning, navigate, stepIndex])
 
+  const togglePasswordReuse = useCallback(() => setIsPasswordReused((prev) => !prev), [])
+
+  const toggleBiometrics = useCallback(
+    () => setIsBiometricsToggled(!isBiometricsEnabled),
+    [isBiometricsEnabled]
+  )
+
   // Closing the sheet without entering the password means scanning again
   const handleClosePasswordSheet = useCallback(() => {
     closePasswordSheet()
@@ -180,6 +245,7 @@ const SyncFromMobileScreen = () => {
           onBackButtonPress={handleBackButtonPress}
           title={t('Import from mobile')}
           titleContainerStyle={spacings.mb}
+          panelWidth={PANEL_WIDTH}
           style={{ minHeight: PANEL_HEIGHT }}
         >
           {isScanning ? (
@@ -245,8 +311,9 @@ const SyncFromMobileScreen = () => {
         closeBottomSheet={handleClosePasswordSheet}
         title={t('Verify mobile password')}
         text={t('Enter your mobile app password')}
+        style={{ maxWidth: PANEL_WIDTH }}
         submitText={t('Confirm')}
-        isSubmitting={isImporting}
+        isSubmitting={isImporting || isSettingPassword}
         onCustomSubmit={importScannedAccounts}
         // Only called when the local keystore gets unlocked, which this flow never does
         onPasswordConfirmed={() => {}}
@@ -254,19 +321,17 @@ const SyncFromMobileScreen = () => {
         <Alert
           type="info"
           size="sm"
-          style={spacings.mtSm}
-          title={t('Note')}
-          text={t(
-            'Make sure you are entering the password of your Ambire mobile app, not the one of this extension.'
-          )}
+          title={t('Make sure you are entering the password of your Ambire extension.')}
         />
-        {!!scannedAccounts.length && (
-          <Text fontSize={14} appearance="secondaryText" style={spacings.mtSm}>
-            {t('{{count}} account{{s}} will be imported.', {
-              count: scannedAccounts.length,
-              s: scannedAccounts.length > 1 ? 's' : ''
-            })}
-          </Text>
+
+        {!hasPasswordSecret && (
+          <SyncPasswordOptions
+            isPasswordReused={isPasswordReused}
+            onTogglePasswordReuse={togglePasswordReuse}
+            isBiometricsAvailable={isBiometricsAvailable}
+            isBiometricsEnabled={isBiometricsEnabled}
+            onToggleBiometrics={toggleBiometrics}
+          />
         )}
       </BottomSheetPasswordConfirmation>
     </TabLayoutContainer>

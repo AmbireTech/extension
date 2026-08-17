@@ -9,14 +9,19 @@ import Alert from '@common/components/Alert'
 import BottomSheet from '@common/components/BottomSheet'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
+import { DEVICE_SECURITY_LEVEL } from '@common/contexts/biometricsContext/constants'
+import useBiometrics from '@common/hooks/useBiometrics'
 import useController from '@common/hooks/useController'
 import useNavigation from '@common/hooks/useNavigation'
 import useTheme from '@common/hooks/useTheme'
+import useToast from '@common/hooks/useToast'
 import SyncImportSteps, {
   SyncImportStep,
   SyncImportStepsFooter
 } from '@common/modules/accounts-sync/components/SyncImportSteps'
+import SyncPasswordOptions from '@common/modules/accounts-sync/components/SyncPasswordOptions'
 import useAccountsSyncImport from '@common/modules/accounts-sync/hooks/useAccountsSyncImport'
+import useSyncedPasswordSetup from '@common/modules/accounts-sync/hooks/useSyncedPasswordSetup'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
 import QrScannerWithPermission from '@common/modules/hardware-wallets/screens/QrScannerWithPermission'
 import { ROUTES } from '@common/modules/router/constants/common'
@@ -47,6 +52,7 @@ const SyncFromExtensionScreen = () => {
   const { t } = useTranslation()
   const { theme } = useTheme()
   const { navigate, goBack, canGoBack } = useNavigation()
+  const { addToast } = useToast()
   const { goToPrevRoute } = useOnboardingNavigation()
   const { state: hasPasswordSecret } = useController('KeystoreController', selectHasPasswordSecret)
   const { state: accountsCount } = useController('AccountsController', selectAccountsCount)
@@ -57,6 +63,18 @@ const SyncFromExtensionScreen = () => {
   } = useModalize()
   const [isScanning, setIsScanning] = useState(false)
   const [stepIndex, setStepIndex] = useState(0)
+  // Onboarding only: the extension's password becomes this app's password as well, so
+  // there is no second one to set. Off means the app asks for its own password next.
+  const [isPasswordReused, setIsPasswordReused] = useState(true)
+  const [isBiometricsToggled, setIsBiometricsToggled] = useState<boolean | null>(null)
+  const { isEnrolled, deviceSecurityLevel, saveBiometricsSecret } = useBiometrics()
+  // The secret is stored behind a key that only a strong (Class 3) biometric can release,
+  // so a weak one (e.g. 2D face unlock on Android) would fail to save it.
+  const isStrongBiometricsEnrolled =
+    isEnrolled && deviceSecurityLevel === DEVICE_SECURITY_LEVEL.BIOMETRIC_STRONG
+  // On by default once the device turns out to have biometrics, the same as on the
+  // keystore setup screen, until the user says otherwise
+  const isBiometricsEnabled = isBiometricsToggled ?? isStrongBiometricsEnrolled
   const carouselRef = useRef<ICarouselInstance>(null)
   // The carousel needs an explicit width equal to its container's actual laid-out
   // width, so we measure it instead of guessing from the window
@@ -124,13 +142,52 @@ const SyncFromExtensionScreen = () => {
     [t, theme]
   )
 
-  const handleImported = useCallback(() => {
+  const handlePasswordSet = useCallback(() => {
     closePasswordSheet()
-    // During onboarding the accounts arrive before this device has a password of its
-    // own, so setting one comes next. Otherwise the freshly imported accounts can be
-    // named right away.
-    navigate(hasPasswordSecret ? ROUTES.accountPersonalize : ROUTES.keyStoreSetup)
-  }, [closePasswordSheet, hasPasswordSecret, navigate])
+    navigate(ROUTES.accountPersonalize)
+  }, [closePasswordSheet, navigate])
+
+  const { setPasswordFromSync, isSettingPassword } = useSyncedPasswordSetup({
+    onPasswordSet: handlePasswordSet
+  })
+
+  const handleImported = useCallback(
+    async (password: string) => {
+      // During onboarding the accounts arrive before this device has a password of its
+      // own. Reusing the extension's one sets it (and biometrics) right here, so the
+      // keystore setup screen is skipped and the sheet stays up until it lands.
+      if (!hasPasswordSecret && isPasswordReused) {
+        // A refused biometric prompt returns no secret. The accounts are already
+        // imported and the password still has to be set, so the flow goes on without
+        // biometrics and only says so.
+        const biometricsSecret = isBiometricsEnabled ? await saveBiometricsSecret() : null
+
+        if (isBiometricsEnabled && !biometricsSecret)
+          addToast(t('Biometrics were not enabled. You can turn them on in Settings.'), {
+            type: 'info'
+          })
+
+        setPasswordFromSync({ password, biometricsSecret })
+        return
+      }
+
+      closePasswordSheet()
+      // Without a password of its own, setting one comes next. Otherwise the freshly
+      // imported accounts can be named right away.
+      navigate(hasPasswordSecret ? ROUTES.accountPersonalize : ROUTES.keyStoreSetup)
+    },
+    [
+      addToast,
+      closePasswordSheet,
+      hasPasswordSecret,
+      isBiometricsEnabled,
+      isPasswordReused,
+      navigate,
+      saveBiometricsSecret,
+      setPasswordFromSync,
+      t
+    ]
+  )
 
   const {
     handleScanComplete,
@@ -189,6 +246,13 @@ const SyncFromExtensionScreen = () => {
   ])
 
   const handleStartScanning = useCallback(() => setIsScanning(true), [])
+
+  const togglePasswordReuse = useCallback(() => setIsPasswordReused((prev) => !prev), [])
+
+  const toggleBiometrics = useCallback(
+    () => setIsBiometricsToggled(!isBiometricsEnabled),
+    [isBiometricsEnabled]
+  )
 
   return (
     <MobileLayoutContainer
@@ -271,7 +335,10 @@ const SyncFromExtensionScreen = () => {
           title={t('Verify extension password')}
           text={t('Enter your extension password')}
           submitText={t('Confirm')}
-          isSubmitting={isImporting}
+          // The sheet opens after this mounts, so an automatic focus would land off
+          // screen and leave the keyboard down - the field is tapped instead
+          withAutoFocus={false}
+          isSubmitting={isImporting || isSettingPassword}
           onCustomSubmit={importScannedAccounts}
           // Only called when the local keystore gets unlocked, which this flow never does
           onPasswordConfirmed={() => {}}
@@ -280,19 +347,16 @@ const SyncFromExtensionScreen = () => {
           <Alert
             type="info"
             size="sm"
-            style={spacings.mtSm}
-            title={t('Note')}
-            text={t(
-              'Make sure you are entering the password of your Ambire extension, not the one of this app.'
-            )}
+            title={t('Make sure you are entering the password of your Ambire extension.')}
           />
-          {!!scannedAccounts.length && (
-            <Text fontSize={14} appearance="secondaryText" style={spacings.mtSm}>
-              {t('{{count}} account{{s}} will be imported.', {
-                count: scannedAccounts.length,
-                s: scannedAccounts.length > 1 ? 's' : ''
-              })}
-            </Text>
+          {!hasPasswordSecret && (
+            <SyncPasswordOptions
+              isPasswordReused={isPasswordReused}
+              onTogglePasswordReuse={togglePasswordReuse}
+              isBiometricsAvailable={isStrongBiometricsEnrolled}
+              isBiometricsEnabled={isBiometricsEnabled}
+              onToggleBiometrics={toggleBiometrics}
+            />
           )}
         </PasswordConfirmation>
       </BottomSheet>

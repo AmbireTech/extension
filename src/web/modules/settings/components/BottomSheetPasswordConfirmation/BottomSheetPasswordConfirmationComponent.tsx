@@ -1,4 +1,5 @@
 import React from 'react'
+import { ViewStyle } from 'react-native'
 import { Modalize } from 'react-native-modalize'
 
 import BottomSheet from '@common/components/BottomSheet'
@@ -17,6 +18,8 @@ interface Props {
   children?: React.ReactNode
   submitText?: string
   isSubmitting?: boolean
+  /** Merged over the sheet's own sizing, e.g. to match the width of the panel behind it */
+  style?: ViewStyle
 }
 
 const BottomSheetPasswordConfirmationComponent: React.FC<Props> = ({
@@ -29,7 +32,8 @@ const BottomSheetPasswordConfirmationComponent: React.FC<Props> = ({
   id = 'confirm-password-bottom-sheet',
   children,
   submitText,
-  isSubmitting
+  isSubmitting,
+  style
 }) => {
   return (
     <BottomSheet
@@ -39,7 +43,7 @@ const BottomSheetPasswordConfirmationComponent: React.FC<Props> = ({
       closeBottomSheet={closeBottomSheet}
       scrollViewProps={{ contentContainerStyle: { flex: 1 } }}
       containerInnerWrapperStyles={{ flex: 1 }}
-      style={{ maxWidth: 432, minHeight: 432, ...spacings.pvLg }}
+      style={{ maxWidth: 432, minHeight: 432, ...spacings.pvLg, ...style }}
     >
       <PasswordConfirmation
         text={text}

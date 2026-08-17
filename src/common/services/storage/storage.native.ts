@@ -22,7 +22,7 @@ const clearAllStorages = () => {
   syncSessionStorageInstance.clearAll()
 }
 
-// clearAllStorages()
+clearAllStorages()
 
 function get<K extends keyof StorageProps>(key: K): Promise<StorageProps[K] | undefined>
 function get<K extends keyof StorageProps>(

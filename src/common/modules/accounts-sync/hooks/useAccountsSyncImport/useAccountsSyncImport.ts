@@ -15,7 +15,12 @@ import { ACCOUNTS_SYNC_IMPORT_TIMEOUT } from '@common/modules/accounts-sync/cons
  * rejected before the user is asked for a password (and so the UI can tell how many
  * accounts are about to be imported).
  */
-const useAccountsSyncImport = ({ onImported }: { onImported: () => void }) => {
+const useAccountsSyncImport = ({
+  onImported
+}: {
+  /** Receives the password of the exporting device, which this one can adopt as its own */
+  onImported: (password: string) => void | Promise<void>
+}) => {
   const { t } = useTranslation()
   const { dispatchAndWait } = useController('MainController')
 
@@ -65,7 +70,7 @@ const useAccountsSyncImport = ({ onImported }: { onImported: () => void }) => {
           ACCOUNTS_SYNC_IMPORT_TIMEOUT
         )
 
-        onImported()
+        await onImported(password)
       } catch {
         // A wrong password is displayed by the password form itself (through the
         // keystore's error message), anything else is emitted by the controller

@@ -333,6 +333,36 @@ in `onboardingNavigationContext` are pre-existing - identical count with and wit
 
 **Gate: feature complete.**
 
+## Step 12 — Reusing the other device's password during onboarding
+
+**Done.** On a first onboarding the password step now offers to keep the password that was just
+entered, so the freshly installed product doesn't ask for a second one right after.
+
+- `SyncPasswordOptions` (shared) renders in the password sheet/modal, but only while the device has no
+  `password` secret: **"Set up Ambire mobile / extension with the same password"**, on by default, and
+  an **"Enable biometrics"** toggle nested under it, also on by default when biometrics are available.
+  Availability differs per product: mobile needs a strong (Class 3) biometric enrolled, the extension
+  needs WebAuthn support (`hasBiometricsHardware`), since there biometrics are a WebAuthn credential
+  created on the spot rather than an already enrolled one.
+- `useSyncedPasswordSetup` (shared) does what the skipped keystore setup screen would have: registers
+  the password with `addSecret('password', …, leaveUnlocked: true)`, which also flushes the keys and
+  seeds queued by the import, then registers the biometrics secret (saved from the prompt before the
+  password, exactly as the keystore setup screen does) and records the terms acceptance. It reads the
+  keystore's `hasPasswordSecret` + `isReadyToStoreKeys` instead of the transient `addSecret` SUCCESS
+  status, which mobile can collapse, and re-enables the submit button if `addSecret` errors.
+- With the toggle on, the sheet stays up with a submitting state until the password lands and then
+  goes straight to personalize; with it off, the flow is unchanged (keystore setup screen next).
+- A refused biometric prompt cannot abort anything (the accounts are already imported), so the
+  password is still set and a toast says biometrics stayed off.
+- `useAccountsSyncImport` now hands the entered password to `onImported`, which is what makes adopting
+  it possible.
+- `PasswordConfirmation` gained `withAutoFocus` (default unchanged) and the mobile sheet turns it off:
+  the sheet opens after the component mounts, so the automatic focus landed off screen and left the
+  keyboard down. The field is tapped instead. Its focus timer is now also cleared on unmount.
+
+Verified: `yarn extension:type:check-new` → 0 new errors, eslint clean on the touched files.
+**Still to check on a device/browser:** the two toggles in the onboarding case, both directions.
+
 ---
 
 ## Security notes to keep in review
