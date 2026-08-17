@@ -12,11 +12,14 @@ import { isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import useTheme from '@common/hooks/useTheme'
 import AccountRow from '@common/modules/account-select/components/Account'
-import spacings, { SPACING, SPACING_SM } from '@common/styles/spacings'
+import spacings, { SPACING, SPACING_SM, SPACING_TY } from '@common/styles/spacings'
 import text from '@common/styles/utils/text'
 
 // The design shortens the address, so it fits on one line next to the copy button
 const SHORTENED_ADDRESS_LENGTH = 20
+
+// The design keeps this sheet narrower than the default width of the web modals
+const SHEET_STYLE = { ...spacings.ph0, ...(isWeb ? { maxWidth: 400 } : {}) }
 
 /**
  * The whole sheet keeps this one distance from the edge of the screen: the sheet's own
@@ -24,6 +27,13 @@ const SHORTENED_ADDRESS_LENGTH = 20
  * checkboxes line up with everything else.
  */
 const SHEET_HORIZONTAL_PADDING = isWeb ? SPACING : SPACING_SM
+
+/**
+ * The rows keep the small horizontal padding of their own, so their hover background does not
+ * start right at the checkbox. The list gives up as much of its padding, which keeps the
+ * checkboxes of the rows in line with the select all checkbox of the header.
+ */
+const LIST_HORIZONTAL_PADDING = SHEET_HORIZONTAL_PADDING - SPACING_TY
 
 interface Props {
   sheetRef: React.RefObject<any>
@@ -74,7 +84,6 @@ const SelectAccountsToSyncSheet = ({
         withSettings={false}
         withBalance={false}
         maxAccountAddrLength={SHORTENED_ADDRESS_LENGTH}
-        containerStyle={spacings.ph0}
         renderLeftChildren={() => (
           <Checkbox
             value={selectedAddrs.includes(item.addr)}
@@ -103,7 +112,7 @@ const SelectAccountsToSyncSheet = ({
       renderItem,
       keyExtractor: (item: Account) => item.addr,
       contentContainerStyle: {
-        paddingHorizontal: SHEET_HORIZONTAL_PADDING,
+        paddingHorizontal: LIST_HORIZONTAL_PADDING,
         paddingBottom: SPACING_SM
       },
       ListEmptyComponent: (
@@ -120,7 +129,7 @@ const SelectAccountsToSyncSheet = ({
       id="select-accounts-to-sync"
       sheetRef={sheetRef}
       closeBottomSheet={closeBottomSheet}
-      style={spacings.ph0}
+      style={SHEET_STYLE}
       HeaderComponent={
         <View
           style={[
@@ -148,7 +157,7 @@ const SelectAccountsToSyncSheet = ({
             spacings.ptSm,
             {
               paddingHorizontal: SHEET_HORIZONTAL_PADDING,
-              paddingBottom: bottom || SPACING_SM,
+              paddingBottom: isWeb ? 0 : bottom || SPACING_SM,
               backgroundColor: theme.primaryBackground
             }
           ]}
@@ -160,7 +169,7 @@ const SelectAccountsToSyncSheet = ({
               value={includeSeeds}
               onValueChange={onToggleIncludeSeeds}
               label={includeSeedsLabel}
-              labelProps={{ fontSize: 14, appearance: 'primaryText' }}
+              labelProps={{ fontSize: 14, appearance: 'secondaryText' }}
               style={spacings.mbMd}
             />
           )}
