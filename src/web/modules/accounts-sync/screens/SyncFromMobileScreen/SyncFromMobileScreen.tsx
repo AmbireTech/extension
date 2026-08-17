@@ -153,11 +153,15 @@ const SyncFromMobileScreen = () => {
     if (!accountsCount) return goToPrevRoute()
 
     // Going back instead of navigating, so the screen the user came from doesn't end up
-    // with this one still ahead of it in the history. There is nothing to go back to when
-    // the route was opened in a fresh tab.
+    // with this one still ahead of it in the history
     if (canGoBack) return goBack()
 
-    navigate(WEB_ROUTES.accountSelect)
+    // Opened in a fresh tab, whose history holds this screen only, so it is replaced
+    // instead of pushed over and the account select screen is pointed at the dashboard
+    navigate(WEB_ROUTES.accountSelect, {
+      replace: true,
+      state: { backTo: WEB_ROUTES.dashboard }
+    })
   }, [accountsCount, canGoBack, goBack, goToPrevRoute, isScanning, navigate, stepIndex])
 
   // Closing the sheet without entering the password means scanning again

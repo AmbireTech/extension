@@ -1,11 +1,10 @@
-import React, { useCallback, useMemo } from 'react'
-import { Image, ImageSourcePropType, StyleSheet, View } from 'react-native'
+import React, { useCallback, useMemo, useState } from 'react'
+import { Image, ImageSourcePropType, LayoutChangeEvent, StyleSheet, View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 import QRCode from 'react-native-qrcode-svg'
 
-import ambireMobilePhoneMockup from '@common/assets/images/how-to-sync-on-mobile.png'
-
 import { ACCOUNTS_SYNC_UR_TYPE } from '@ambire-common/libs/accountsSync/accountsSync'
+import ambireMobilePhoneMockup from '@common/assets/images/how-to-sync-on-mobile.png'
 import AppStoreBadgeIcon from '@common/assets/svg/AppStoreBadgeIcon'
 import GooglePlayBadgeIcon from '@common/assets/svg/GooglePlayBadgeIcon'
 import ShieldInvisibilityIcon from '@common/assets/svg/ShieldInvisibilityIcon'
@@ -23,7 +22,7 @@ import { ACCOUNTS_SYNC_QR_CAPACITY } from '@common/modules/accounts-sync/consts'
 import useAccountsSyncExport from '@common/modules/accounts-sync/hooks/useAccountsSyncExport'
 import AnimatedQrCode from '@common/modules/hardware-wallets/components/AnimatedQrCode'
 import { WEB_ROUTES } from '@common/modules/router/constants/common'
-import spacings, { SPACING_LG, SPACING_SM, SPACING_XL } from '@common/styles/spacings'
+import spacings, { SPACING_SM, SPACING_XL } from '@common/styles/spacings'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
@@ -32,13 +31,14 @@ import { TabLayoutContainer, TabLayoutWrapperMainContent } from '@web/components
 import getStyles from './styles'
 
 const PANEL_WIDTH = 400
-// `spacingsSize="small"` pads the panel by this much on both sides, so the QR code and its
-// placeholder fill the card the way they fill the sheet on mobile
-const QR_SIZE = PANEL_WIDTH - SPACING_LG * 2
 const PHONE_MOCKUP_HEIGHT = 300
-// The two steps keep the same vertical rhythm, so the store buttons line up with the
-// warning and the phone mockup with the QR code. Both are the height of the taller side:
-// the back button for the titles, a store tile for the row under them.
+// The panels shrink below `PANEL_WIDTH` on narrower screens, so the QR code is sized from
+// the space its container actually got instead of from the constant, otherwise its white
+// quiet zone spills over the horizontal padding of the card
+const CAPTION_ROW_HEIGHT = 32
+// The two steps keep the same vertical rhythm, so the titles and the row under them line
+// up. Both are the height of the taller side: the back button for the titles, a store
+// tile for the row under them.
 const TITLE_ROW_HEIGHT = 28
 const SECOND_ROW_MIN_HEIGHT = 52
 // Dummy value rendered behind the scrim before the accounts are picked, so the
@@ -64,6 +64,15 @@ const SyncWithMobileScreen = () => {
     qrCbor
   } = useAccountsSyncExport()
   const { ref: sheetRef, open: openSelectSheet, close: closeSelectSheet } = useModalize()
+  const [qrSize, setQrSize] = useState(0)
+
+  // The QR code is square, so it takes the smaller of the two sides its container got. The
+  // caption above it is a part of that container, so its row is left out of the height.
+  const handleQrContainerLayout = useCallback(({ nativeEvent }: LayoutChangeEvent) => {
+    const { width, height } = nativeEvent.layout
+
+    setQrSize(Math.max(0, Math.min(width, height - CAPTION_ROW_HEIGHT)))
+  }, [])
 
   const [bindQrPlaceholderAnim, qrPlaceholderAnimStyle] = useCustomHover({
     property: 'opacity',
@@ -76,12 +85,16 @@ const SyncWithMobileScreen = () => {
   }, [closeSelectSheet, prepareExport])
 
   // Going back instead of navigating, so the screen the user came from doesn't end up with
-  // this one still ahead of it in the history. There is nothing to go back to when the
-  // route was opened in a fresh tab.
+  // this one still ahead of it in the history.
   const handleBackButtonPress = useCallback(() => {
     if (canGoBack) return goBack()
 
-    navigate(WEB_ROUTES.accountSelect)
+    // Opened in a fresh tab, whose history holds this screen only, so it is replaced
+    // instead of pushed over and the account select screen is pointed at the dashboard
+    navigate(WEB_ROUTES.accountSelect, {
+      replace: true,
+      state: { backTo: WEB_ROUTES.dashboard }
+    })
   }, [canGoBack, goBack, navigate])
 
   // `TabLayoutWrapperMainContent` applies this to the onboarding routes only, and the
@@ -172,89 +185,101 @@ const SyncWithMobileScreen = () => {
               <PanelTitle title={t('2. Scan with Ambire Wallet mobile')} size={16} />
             </View>
             <View
-              style={[flexbox.justifyCenter, spacings.mbLg, { minHeight: SECOND_ROW_MIN_HEIGHT }]}
+              style={[flexbox.justifyCenter, spacings.mbTy, { minHeight: SECOND_ROW_MIN_HEIGHT }]}
             >
               <Alert
                 testID="sync-qr-warning"
                 type="info"
                 size="sm"
+                style={spacings.pvTy}
                 title={t(
                   'Your QR code includes sensitive information. Do not share it with anyone.'
                 )}
               />
             </View>
 
-            {qrCbor ? (
-              <View style={[flexbox.flex1, flexbox.alignCenter, flexbox.justifySpaceBetween]}>
-                <AnimatedQrCode
-                  type={ACCOUNTS_SYNC_UR_TYPE}
-                  cbor={qrCbor}
-                  size={QR_SIZE}
-                  capacity={ACCOUNTS_SYNC_QR_CAPACITY}
-                />
-                <Text fontSize={14} appearance="secondaryText" style={spacings.mtSm}>
-                  {t('{{count}} account{{s}} selected.', {
-                    count: selectedAddrs.length,
-                    s: selectedAddrs.length > 1 ? 's' : ''
-                  })}{' '}
+            {/* The QR code (and the placeholder standing in for it) sits at the bottom of the
+            card, so the space the warning leaves over is above it, where the caption goes */}
+            <View
+              style={[flexbox.flex1, flexbox.alignCenter, flexbox.justifyEnd]}
+              onLayout={handleQrContainerLayout}
+            >
+              {qrCbor ? (
+                <>
                   <Text
                     fontSize={14}
-                    weight="medium"
-                    underline
-                    onPress={openSelectSheet as any}
-                    color={theme.primary}
+                    appearance="secondaryText"
+                    style={[spacings.mbTy, text.center]}
                   >
-                    {t('Edit')}
-                  </Text>{' '}
-                  {t('your selection')}
-                </Text>
-              </View>
-            ) : (
-              <AnimatedPressable
-                testID="show-sync-qr-code"
-                onPress={openSelectSheet as any}
-                disabled={isPreparing}
-                style={[
-                  flexbox.center,
-                  qrPlaceholderAnimStyle,
-                  {
-                    // Square and as wide as the QR code it stands in for
-                    width: '100%',
-                    aspectRatio: 1,
-                    borderRadius: BORDER_RADIUS_PRIMARY,
-                    overflow: 'hidden',
-                    backgroundColor: theme.tertiaryBackground
-                  }
-                ]}
-                {...bindQrPlaceholderAnim}
-              >
-                <View
-                  style={[StyleSheet.absoluteFill, flexbox.center, styles.blurredPlaceholderQr]}
-                  pointerEvents="none"
-                >
-                  <QRCode value={PLACEHOLDER_QR_VALUE} size={QR_SIZE} quietZone={0} ecl="L" />
-                </View>
-                <View
-                  style={[StyleSheet.absoluteFill, { backgroundColor: theme.backdrop }]}
-                  pointerEvents="none"
-                />
-                {/* An `<svg>` is not positioned, so the absolutely positioned layers above
-                would paint over the icon without a wrapper of its own to lift it */}
-                <View style={[flexbox.center, spacings.phXl, { zIndex: 1 }]}>
-                  <ShieldInvisibilityIcon color={theme.neutral200} width={44} height={50} />
-                  <Text
-                    fontSize={14}
-                    weight="medium"
-                    color={theme.neutral200}
-                    style={[spacings.mtSm, text.center]}
-                  >
-                    {isPreparing
-                      ? t('Preparing the QR codes...')
-                      : t('Click to select accounts and show QR codes')}
+                    {t('{{count}} account{{s}} selected.', {
+                      count: selectedAddrs.length,
+                      s: selectedAddrs.length > 1 ? 's' : ''
+                    })}{' '}
+                    <Text
+                      fontSize={14}
+                      weight="medium"
+                      underline
+                      onPress={openSelectSheet as any}
+                      color={theme.primary}
+                    >
+                      {t('Edit')}
+                    </Text>{' '}
+                    {t('your selection')}
                   </Text>
-                </View>
-              </AnimatedPressable>
-            )}
+                  <AnimatedQrCode
+                    type={ACCOUNTS_SYNC_UR_TYPE}
+                    cbor={qrCbor}
+                    size={qrSize}
+                    capacity={ACCOUNTS_SYNC_QR_CAPACITY}
+                  />
+                </>
+              ) : (
+                <AnimatedPressable
+                  testID="show-sync-qr-code"
+                  onPress={openSelectSheet as any}
+                  disabled={isPreparing}
+                  style={[
+                    flexbox.center,
+                    qrPlaceholderAnimStyle,
+                    {
+                      // Exactly the box the QR code it stands in for will take
+                      width: qrSize,
+                      height: qrSize,
+                      borderRadius: BORDER_RADIUS_PRIMARY,
+                      overflow: 'hidden',
+                      backgroundColor: theme.tertiaryBackground
+                    }
+                  ]}
+                  {...bindQrPlaceholderAnim}
+                >
+                  <View
+                    style={[StyleSheet.absoluteFill, flexbox.center, styles.blurredPlaceholderQr]}
+                    pointerEvents="none"
+                  >
+                    <QRCode value={PLACEHOLDER_QR_VALUE} size={qrSize} quietZone={0} ecl="L" />
+                  </View>
+                  <View
+                    style={[StyleSheet.absoluteFill, { backgroundColor: theme.backdrop }]}
+                    pointerEvents="none"
+                  />
+                  {/* An `<svg>` is not positioned, so the absolutely positioned layers above
+                  would paint over the icon without a wrapper of its own to lift it */}
+                  <View style={[flexbox.center, spacings.phXl, { zIndex: 1 }]}>
+                    <ShieldInvisibilityIcon color={theme.neutral200} width={44} height={50} />
+                    <Text
+                      fontSize={14}
+                      weight="medium"
+                      color={theme.neutral200}
+                      style={[spacings.mtSm, text.center]}
+                    >
+                      {isPreparing
+                        ? t('Preparing the QR codes...')
+                        : t('Click to select accounts and show QR codes')}
+                    </Text>
+                  </View>
+                </AnimatedPressable>
+              )}
+            </View>
           </Panel>
         </View>
       </TabLayoutWrapperMainContent>
