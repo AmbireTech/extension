@@ -10,7 +10,7 @@ import Spinner from '@common/components/Spinner'
 import ActionsPagination from '@common/modules/action-requests/components/ActionsPagination'
 import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import SafeOwners from '@common/modules/sign-account-op/components/SafeOwners'
-import spacings, { SPACING_SM, SPACING_TY } from '@common/styles/spacings'
+import spacings, { SPACING, SPACING_SM, SPACING_TY } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
 const SafeFooter = ({
@@ -154,8 +154,8 @@ const SafeFooter = ({
   }
 
   return (
-    <View style={[isSingle ? flexbox.alignCenter : '', spacings.pbMd, spacings.ph]}>
-      <GlassView borderRadius={28} cssStyle={{ flexDirection: 'column' }}>
+    <View style={[isSingle ? flexbox.alignCenter : '', spacings.pb, spacings.ph]}>
+      <GlassView borderRadius={28} cssStyle={{ flexDirection: 'column', paddingBottom: SPACING }}>
         {showSafeSigners && (
           <SafeOwners
             account={account}
@@ -170,7 +170,7 @@ const SafeFooter = ({
           />
         )}
         {threshold === 0 && (
-          <View style={[flexbox.directionRow, flexbox.justifyCenter, spacings.pv, spacings.ph]}>
+          <View style={[flexbox.directionRow, flexbox.justifyCenter, spacings.pt, spacings.ph]}>
             <Button
               text={t('Reject')}
               type="danger"
@@ -182,7 +182,7 @@ const SafeFooter = ({
           </View>
         )}
         {threshold > 0 && isSingle ? (
-          <View style={[flexbox.directionRow, flexbox.justifyCenter, spacings.pv, spacings.ph]}>
+          <View style={[flexbox.directionRow, flexbox.justifyCenter, spacings.pt, spacings.ph]}>
             <View style={[flexbox.directionRow]}>
               <Button
                 text={t('Reject')}
@@ -203,7 +203,7 @@ const SafeFooter = ({
             </View>
           </View>
         ) : threshold > 0 ? (
-          <View style={[flexbox.directionRow, flexbox.justifyCenter, spacings.pv, spacings.ph]}>
+          <View style={[flexbox.directionRow, flexbox.justifyCenter, spacings.pt, spacings.ph]}>
             {threshold > signed.length ? (
               <View style={[flexbox.directionRow, flexbox.justifySpaceBetween, { width: '100%' }]}>
                 <Button
