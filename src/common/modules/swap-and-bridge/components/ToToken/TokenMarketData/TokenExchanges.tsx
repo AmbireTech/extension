@@ -1,9 +1,10 @@
-import React, { FC, memo, useMemo } from 'react'
+import React, { FC, memo, useCallback, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Image, View } from 'react-native'
+import { View } from 'react-native'
 
 import HelpIcon from '@common/assets/svg/HelpIcon'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
+import ManifestImage from '@common/components/ManifestImage'
 import Spinner from '@common/components/Spinner'
 import Text from '@common/components/Text'
 import useController from '@common/hooks/useController'
@@ -39,6 +40,12 @@ const TokenExchanges: FC<Props> = ({ chainId, address }) => {
   const exchangesWithData = useMemo(
     () => getExchangesWithData(marketData?.exchanges || [], exchangeData),
     [marketData?.exchanges, exchangeData]
+  )
+
+  // Shown in place of a logo that failed to load, instead of leaving an empty circle
+  const renderFallbackIcon = useCallback(
+    () => <HelpIcon width={LOGO_SIZE - 6} height={LOGO_SIZE - 6} color={theme.secondaryText} />,
+    [theme.secondaryText]
   )
 
   // Opted out of the feature
@@ -87,6 +94,7 @@ const TokenExchanges: FC<Props> = ({ chainId, address }) => {
       {exchangesToDisplay.map((exchange, index) => (
         <View
           key={exchange.id}
+          accessibilityLabel={exchange.name}
           style={{
             ...flexbox.center,
             width: LOGO_SIZE,
@@ -98,14 +106,12 @@ const TokenExchanges: FC<Props> = ({ chainId, address }) => {
             zIndex: exchangesToDisplay.length - index
           }}
         >
-          <Image
-            source={{ uri: exchange.image }}
-            accessibilityLabel={exchange.name}
-            style={{
-              width: LOGO_SIZE - 2,
-              height: LOGO_SIZE - 2,
-              borderRadius: (LOGO_SIZE - 2) / 2
-            }}
+          <ManifestImage
+            uri={exchange.image}
+            size={LOGO_SIZE - 2}
+            isRound
+            fallback={renderFallbackIcon}
+            containerStyle={{ backgroundColor: 'transparent' }}
           />
         </View>
       ))}
