@@ -1,5 +1,6 @@
 import { StyleSheet, TextStyle, ViewStyle } from 'react-native'
 
+import { isMobile } from '@common/config/env'
 import spacings from '@common/styles/spacings'
 import { ThemeProps } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
@@ -13,6 +14,8 @@ interface Styles {
   badge: ViewStyle
   secondaryContainer: ViewStyle
   secondaryText: TextStyle
+  actions: ViewStyle
+  primaryAction: ViewStyle
 }
 
 const getStyles = (theme: ThemeProps) =>
@@ -64,6 +67,13 @@ const getStyles = (theme: ThemeProps) =>
     secondaryText: {
       ...flexbox.flex1,
       ...spacings.mlTy
+    },
+    actions: {
+      ...(isMobile ? {} : flexbox.directionRow),
+      ...spacings.mtSm
+    },
+    primaryAction: {
+      ...(isMobile ? spacings.mbTy : spacings.mrTy)
     }
   })
 
