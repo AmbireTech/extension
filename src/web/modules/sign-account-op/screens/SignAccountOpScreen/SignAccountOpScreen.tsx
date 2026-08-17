@@ -25,6 +25,7 @@ import Estimation from '@common/modules/sign-account-op/components/Estimation'
 import Footer from '@common/modules/sign-account-op/components/Footer'
 import PendingTransactions from '@common/modules/sign-account-op/components/PendingTransactions'
 import SafeEip712Data from '@common/modules/sign-account-op/components/SafeEip712Data'
+import type { ActiveTab as SafeEip712ActiveTab } from '@common/modules/sign-account-op/components/SafeEip712Data'
 import SafeNonce from '@common/modules/sign-account-op/components/SafeNonce'
 import SafeNonceConflictNotice from '@common/modules/sign-account-op/components/SafeNonceConflictNotice'
 import SafeOwners from '@common/modules/sign-account-op/components/SafeOwners'
@@ -492,12 +493,17 @@ const SignAccountOpScreen = () => {
                 )}
               </>
             ) : (
+              // The Hashes/Parsed/Raw sub-tabs are flattened into SafeAccountTabs above, so the
+              // active one drives this instance instead of it rendering its own tab bar.
               <SafeEip712Data
                 accountAddr={signAccountOpState?.accountOp.accountAddr}
                 chainId={signAccountOpState?.accountOp.chainId}
                 safeEip712Data={signAccountOpState?.safeEip712Data}
                 withTitle={false}
                 withTwoColumnParsedData
+                hideTabs
+                activeTab={activeSafeAccountTab as SafeEip712ActiveTab}
+                onTabChange={handleSafeAccountTabChange}
               />
             )}
           </ScrollView>
