@@ -19,15 +19,22 @@ import useStackEntries from './useStackEntries'
 
 type Card = { entry: StackEntry; isClosing: boolean }
 
-const transitionId = ({ entry, isClosing }: Card) => `${entry.key}:${isClosing ? 'close' : 'open'}`
+const transitionId = ({ entry, isClosing }: Card) =>
+  `${entry.cardKey}:${isClosing ? 'close' : 'open'}`
 
 /** How far from the left edge a swipe has to start, as UIKit's edge gesture does. */
 const GESTURE_RESPONSE_DISTANCE = 50
 /** How much the fling velocity counts towards committing the swipe. */
 const GESTURE_VELOCITY_IMPACT = 0.3
-const GESTURE_ACTIVATION_OFFSET_X = 10
-/** Beyond this much vertical movement the gesture gives way to scrolling. */
-const GESTURE_FAIL_OFFSET_Y = 5
+/**
+ * A swipe is claimed as soon as it travels this far sideways, and given up if it
+ * drifts this far vertically first. The vertical tolerance is deliberately the
+ * larger of the two: a thumb swipe arcs, so a tighter one would fail the gesture
+ * before it ever got going, while a genuine vertical scroll still crosses it long
+ * before the sideways threshold. Both are UIKit's own figures.
+ */
+const GESTURE_ACTIVATION_OFFSET_X = 5
+const GESTURE_FAIL_OFFSET_Y = 20
 
 /**
  * Renders the router's history as a stack of cards instead of a single screen,
@@ -49,7 +56,9 @@ const NavigationStack = () => {
   const cards: Card[] = useMemo(
     () => [
       ...entries.map((entry) => ({ entry, isClosing: false })),
-      ...closing.map((entry) => ({ entry, isClosing: true }))
+      // Sorted, so that several cards leaving at once keep the order they had in
+      // the stack rather than the order they were popped in.
+      ...[...closing].sort((a, b) => a.index - b.index).map((entry) => ({ entry, isClosing: true }))
     ],
     [entries, closing]
   )
@@ -73,7 +82,7 @@ const NavigationStack = () => {
   const cardOffsets = useMemo(
     () =>
       cards.map(({ entry }, index) =>
-        getOffset(entry.key, index === 0 || entry.key === settledKey)
+        getOffset(entry.cardKey, index === 0 || entry.cardKey === settledKey)
       ),
     [cards, settledKey, getOffset]
   )
@@ -86,19 +95,21 @@ const NavigationStack = () => {
       if (startedTransitions.current.has(id)) return
       startedTransitions.current.add(id)
 
-      const offset = offsets.get(card.entry.key)
+      const offset = offsets.get(card.entry.cardKey)
       if (!offset) return
 
       if (card.isClosing) {
-        const { key } = card.entry
+        const { cardKey } = card.entry
 
         hasStartedATransition = true
         driveOffset(
           offset,
-          animateOffset(width, CLOSE_SPEC, undefined, (finished) => {
+          // Removed whatever the outcome: an interrupted close animation must not
+          // leave the card mounted forever, and nothing else drives its offset.
+          animateOffset(width, CLOSE_SPEC, undefined, () => {
             'worklet'
 
-            if (finished) runOnJS(removeClosingEntry)(key)
+            runOnJS(removeClosingEntry)(cardKey)
           })
         )
 
@@ -115,7 +126,7 @@ const NavigationStack = () => {
     // otherwise keep the keyboard up over the screen coming in.
     if (hasStartedATransition) void KeyboardController.dismiss()
 
-    const liveKeys = new Set(cards.map(({ entry }) => entry.key))
+    const liveKeys = new Set(cards.map(({ entry }) => entry.cardKey))
     const liveTransitions = new Set(cards.map(transitionId))
 
     offsets.forEach((offset, key) => {
@@ -129,31 +140,38 @@ const NavigationStack = () => {
     })
   }, [cards, offsets, width, removeClosingEntry])
 
-  const topKey = entries[entries.length - 1]?.key
+  const topCardKey = entries[entries.length - 1]?.cardKey
   const topEntry = entries[entries.length - 1]
-  const topOffset = cardOffsets[cardOffsets.length - 1]
+  // The offset of the top *entry*, not of the last card: while a pop animates,
+  // the last card is the one leaving, and the gesture must never drive that one.
+  const topOffset = cardOffsets[entries.length - 1]
 
   const isSheetOpen = useOpenBottomSheetsCount() > 0
   // The in-app browser walks its own page history before the route is popped, so
   // the card must not follow the finger there - there may be nothing to reveal.
   const isBrowserRoute = topEntry?.location.pathname === `/${ROUTES.dappWebView}`
-  const canPop = entries.length > 1 && !closing.length
+  // Deliberately not gated on a card still animating away: that card is inert and
+  // is not the one the gesture drives, so there is no reason to refuse the drag
+  // until it has gone.
+  const canPop = entries.length > 1
   const hasOwnBackBehaviour = isSheetOpen || isBrowserRoute
   const canDragCard = canPop && !hasOwnBackBehaviour
 
   const triggerBack = useBackAction()
   const { goBack } = useNavigation()
 
-  // Android has no edge swipe convention - the system back gesture reaches the
-  // app as a hardware back press instead, and is handled by `useBackAction`.
-  const isGestureEnabled = isiOS && (canPop || hasOwnBackBehaviour)
-
   // Memoized so the detector is not handed a freshly built gesture on every
   // render; the deps only change on navigation or when a sheet opens.
   const swipeBackGesture = useMemo(
     () =>
       Gesture.Pan()
-        .enabled(isGestureEnabled)
+        // Enabled purely by platform, never by navigation state: toggling this
+        // changes the native handler's configuration, and the back arrow sits
+        // inside the edge strip - so a tap on it would reconfigure the handler
+        // mid-touch. What the gesture may do is decided in the callbacks instead.
+        // Android has no edge swipe convention; there the system back gesture
+        // arrives as a hardware back press and `useBackAction` handles it.
+        .enabled(isiOS)
         .activeOffsetX(GESTURE_ACTIVATION_OFFSET_X)
         .failOffsetY([-GESTURE_FAIL_OFFSET_Y, GESTURE_FAIL_OFFSET_Y])
         .hitSlop({ left: 0, width: GESTURE_RESPONSE_DISTANCE })
@@ -188,7 +206,7 @@ const NavigationStack = () => {
             })
           )
         }),
-    [isGestureEnabled, canDragCard, topOffset, width, triggerBack, goBack]
+    [canDragCard, topOffset, width, triggerBack, goBack]
   )
 
   return (
@@ -196,11 +214,10 @@ const NavigationStack = () => {
       <View style={flexbox.flex1}>
         {cards.map(({ entry, isClosing }, index) => (
           <ScreenCard
-            key={entry.key}
+            key={entry.cardKey}
             offset={cardOffsets[index]!}
             nextOffset={cardOffsets[index + 1] || null}
-            isInteractive={entry.key === topKey && !closing.length}
-            isFocused={!isClosing && entry.key === topKey}
+            isFocused={entry.cardKey === topCardKey && !isClosing}
             isClosing={isClosing}
           >
             <AppRoutes location={entry.location} />

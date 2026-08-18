@@ -18,23 +18,17 @@ type Props = {
   offset: SharedValue<number>
   /** The offset of the card stacked on top of this one, which parallaxes it away. */
   nextOffset: SharedValue<number> | null
-  /** Only the top card receives touches; the ones below it are covered by it. */
-  isInteractive: boolean
-  /** The screen the user is on. Cards below the top one, and cards on their way
-   * out, are mounted but not focused. */
+  /**
+   * The screen the user is on: the top card, unless it is on its way out. Cards
+   * below it stay mounted but are neither focused nor able to take touches - they
+   * are covered by the card above them.
+   */
   isFocused: boolean
   /** This card was popped and is animating out. */
   isClosing: boolean
 }
 
-const ScreenCard = ({
-  children,
-  offset,
-  nextOffset,
-  isInteractive,
-  isFocused,
-  isClosing
-}: Props) => {
+const ScreenCard = ({ children, offset, nextOffset, isFocused, isClosing }: Props) => {
   const { theme } = useTheme()
   const { width } = useWindowDimensions()
 
@@ -50,7 +44,7 @@ const ScreenCard = ({
   const shadowStyle = useAnimatedStyle(() => ({ shadowOpacity: values.value.shadowOpacity }))
 
   return (
-    <View style={StyleSheet.absoluteFill} pointerEvents={isInteractive ? 'auto' : 'none'}>
+    <View style={StyleSheet.absoluteFill} pointerEvents={isFocused ? 'auto' : 'none'}>
       {!!isiOS && (
         <Animated.View
           style={[StyleSheet.absoluteFill, styles.overlay, overlayStyle]}

@@ -11,7 +11,15 @@ const useStackEntries = () => {
   const history = useMemoryHistory()
 
   const [state, setState] = useState<StackState>(() => ({
-    entries: [{ key: location.key, location, index: history.index }],
+    entries: [
+      {
+        cardKey: location.key,
+        key: location.key,
+        location,
+        index: history.index,
+        firstIndex: history.index
+      }
+    ],
     closing: []
   }))
 
@@ -30,8 +38,8 @@ const useStackEntries = () => {
     )
   }
 
-  const removeClosingEntry = useCallback((key: string) => {
-    setState((prev) => ({ ...prev, closing: prev.closing.filter((e) => e.key !== key) }))
+  const removeClosingEntry = useCallback((cardKey: string) => {
+    setState((prev) => ({ ...prev, closing: prev.closing.filter((e) => e.cardKey !== cardKey) }))
   }, [])
 
   return {

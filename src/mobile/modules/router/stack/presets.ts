@@ -166,7 +166,16 @@ const animateOffset = (
 ) => {
   'worklet'
 
-  if (spec.type === 'spring') return withSpring(toValue, { ...spec.config, velocity }, onDone)
+  // The key is left out entirely when there is no release velocity to hand over:
+  // `velocity: undefined` reaches Reanimated's initial energy calculation as NaN,
+  // and the spring's "has it come to rest" test then never passes - the animation
+  // runs correctly but reports completion to nobody.
+  if (spec.type === 'spring')
+    return withSpring(
+      toValue,
+      velocity === undefined ? spec.config : { ...spec.config, velocity },
+      onDone
+    )
 
   return withTiming(toValue, spec.config, onDone)
 }

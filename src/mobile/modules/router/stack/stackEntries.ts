@@ -7,10 +7,23 @@ export type StackNavigationType = 'PUSH' | 'POP' | 'REPLACE'
 
 /** One card in the stack - the screens matching `location`, kept mounted. */
 export type StackEntry = {
+  /**
+   * Identity of the card, for React and for its animated offset. Stays the same
+   * while the same screen is on top, so a navigation that only changes the search
+   * params updates the card instead of remounting the screen inside it.
+   */
+  cardKey: string
+  /** Location key of the entry this card currently shows. */
   key: string
   location: Location
-  /** The memory history index this entry was created at. */
+  /** The memory history index this card currently shows. */
   index: number
+  /**
+   * The first history index this card was created at. A card can own a range of
+   * them, because an in-place update (new search params on the same screen)
+   * pushes a history entry without adding a card.
+   */
+  firstIndex: number
 }
 
 export type StackState = {
@@ -32,9 +45,11 @@ export type NavigationEvent = {
 }
 
 const toEntry = ({ location, index }: NavigationEvent): StackEntry => ({
+  cardKey: location.key,
   key: location.key,
   location,
-  index
+  index,
+  firstIndex: index
 })
 
 /**
@@ -53,17 +68,41 @@ const reduceStack = (state: StackState, event: NavigationEvent): StackState => {
   const entry = toEntry(event)
   const top = state.entries[state.entries.length - 1]
 
+  // Navigating to the screen that is already on top is not a new card: it is the
+  // same screen with different search params (the dashboard writes its session id
+  // and its open tab that way), or a redundant redirect. Keeping the card's
+  // identity is what stops the screen from remounting - and remounting a screen
+  // that navigates on mount is an endless loop.
+  if (top && top.location.pathname === entry.location.pathname)
+    return {
+      ...state,
+      entries: [
+        ...state.entries.slice(0, -1),
+        { ...entry, cardKey: top.cardKey, firstIndex: top.firstIndex }
+      ],
+      settledKey: undefined
+    }
+
   if (event.navigationType === 'POP') {
-    const remaining = state.entries.filter((e) => e.index <= event.index)
-    const newTop = remaining[remaining.length - 1]
+    // The card that owns the history index being popped to. Compared against the
+    // range a card covers, so popping an in-place update lands on the card that
+    // pushed it rather than looking like a stranger.
+    const ownerIndex = state.entries.findLastIndex((e) => e.firstIndex <= event.index)
+    const owner = state.entries[ownerIndex]
 
     // The stack drifted from the history (it was collapsed by a reset, or the
     // app deep linked into it), so there is nothing to reveal - resync to the
     // single entry the history points at.
-    if (!newTop || newTop.key !== entry.key)
-      return { entries: [entry], closing: [], settledKey: entry.key }
+    if (!owner) return { entries: [entry], closing: [], settledKey: entry.cardKey }
 
-    return { entries: remaining, closing: top && top.key !== newTop.key ? [top] : [] }
+    return {
+      entries: [
+        ...state.entries.slice(0, ownerIndex),
+        { ...entry, cardKey: owner.cardKey, firstIndex: owner.firstIndex }
+      ],
+      closing: top && top.cardKey !== owner.cardKey ? [...state.closing, top] : state.closing,
+      settledKey: owner.cardKey
+    }
   }
 
   if (isBackwardsPush(event.location) && top) {
@@ -74,8 +113,8 @@ const reduceStack = (state: StackState, event: NavigationEvent): StackState => {
 
     return {
       entries: [...state.entries.slice(0, isReturningToTheCardBelow ? -2 : -1), entry],
-      closing: [top],
-      settledKey: entry.key
+      closing: [...state.closing, top],
+      settledKey: entry.cardKey
     }
   }
 
@@ -84,19 +123,21 @@ const reduceStack = (state: StackState, event: NavigationEvent): StackState => {
   // cases, so that popping to a root path still animates as a back transition.
   if (MOBILE_ROOT_ROUTE_PATHS.includes(event.location.pathname)) {
     // Screens that send the user home navigate to the dashboard rather than pop
-    // (see the swap and account-select back buttons). That is still a way back to
-    // a card the stack already has, so it animates like one.
-    const isReturningToACardBelow =
-      !!top &&
-      state.entries.some(
-        (e) => e.key !== top.key && e.location.pathname === entry.location.pathname
-      )
+    // (see the transfer and account-select back buttons). The card already showing
+    // that screen is reused, so going home reveals it - with its state - instead of
+    // rebuilding it, and the screen being left behind animates away.
+    const revealed = state.entries.find(
+      (e) => e.cardKey !== top?.cardKey && e.location.pathname === entry.location.pathname
+    )
 
-    return {
-      entries: [entry],
-      closing: isReturningToACardBelow ? [top] : [],
-      settledKey: entry.key
-    }
+    if (revealed && top)
+      return {
+        entries: [{ ...entry, cardKey: revealed.cardKey, firstIndex: revealed.firstIndex }],
+        closing: [...state.closing, top],
+        settledKey: revealed.cardKey
+      }
+
+    return { entries: [entry], closing: [], settledKey: entry.cardKey }
   }
 
   if (event.navigationType === 'REPLACE')
