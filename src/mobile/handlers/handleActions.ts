@@ -1,17 +1,24 @@
 import { getSessionId, Session } from '@ambire-common/classes/session'
 import { MainController } from '@ambire-common/controllers/main/main'
 import { IEventEmitterRegistryController } from '@ambire-common/interfaces/eventEmitter'
-import { getDappIdFromUrl } from '@ambire-common/libs/dapps/helpers'
+import { getDappIdFromUrl, getNormalizedHostnameFromUrl } from '@ambire-common/libs/dapps/helpers'
 import { KeyIterator } from '@ambire-common/libs/keyIterator/keyIterator'
 import LedgerKeyIterator from '@common/modules/hardware-wallet/libs/ledgerKeyIterator'
 import TrezorKeyIterator from '@common/modules/hardware-wallet/libs/trezorKeyIterator'
+import NfcKeyIterator from '@common/modules/hardware-wallets/libs/nfcKeyIterator'
 import QrKeyIterator from '@common/modules/hardware-wallets/libs/qrKeyIterator'
 import handleProviderRequests from '@common/modules/provider/handleProviderRequests'
 import { Action, MethodAction } from '@common/types/actions'
 import { getWcTabIdFromTopic } from '@mobile/modules/wallet-connect/utils'
-import { setBootPhase, setSubscribedControllers } from '@mobile/modules/webview/services/bootPhase'
+import {
+  buildStateForFE,
+  queueCtrlStateIfBootPhaseDeferred,
+  setBootPhase,
+  setSubscribedControllers
+} from '@mobile/modules/webview/services/bootPhase'
 import { mobileMessenger } from '@mobile/modules/webview/services/mobileMessenger'
 import { createWcBridgeMessenger } from '@mobile/modules/webview/services/wcBridgeMessenger'
+import { flushWorkerBootProfile } from '@mobile/modules/webview/services/workerBootProfiler'
 
 export const handleActions = async (
   action: MethodAction | Action,
@@ -50,7 +57,7 @@ export const handleActions = async (
 
       sendToReactEvent('ctrl.update', {
         ctrlName: params.controller,
-        state: ctrl?.toJSON() || null
+        state: ctrl ? buildStateForFE(params.controller, ctrl) : null
       })
 
       break
@@ -60,7 +67,14 @@ export const handleActions = async (
       params.controllers.forEach((ctrlName: string) => {
         const ctrl = eventEmitterRegistry.values().find((c) => c.name === ctrlName)
 
-        sendToReactEvent('ctrl.update', { ctrlName, state: ctrl?.toJSON() || null })
+        if (!ctrl) {
+          sendToReactEvent('ctrl.update', { ctrlName, state: null })
+          return
+        }
+
+        if (queueCtrlStateIfBootPhaseDeferred(ctrlName, ctrl)) return
+
+        sendToReactEvent('ctrl.update', { ctrlName, state: buildStateForFE(ctrlName, ctrl) })
       })
       break
     }
@@ -86,6 +100,22 @@ export const handleActions = async (
 
     case 'SET_SUBSCRIBED_CONTROLLERS': {
       setSubscribedControllers(params.controllers)
+      break
+    }
+
+    case 'FLUSH_BOOT_PROFILE': {
+      flushWorkerBootProfile()
+      break
+    }
+
+    // Fired once from the dashboard after its first render, so the dapp catalog and
+    // phishing storage reads stay off the boot path.
+    case 'INIT_DEFERRED_CONTROLLERS': {
+      void mainCtrl.phishing.init()
+      void mainCtrl.dapps.init()
+      console.log(
+        'handleActions: INIT_DEFERRED_CONTROLLERS dispatched, dapp catalog and phishing lists initialized'
+      )
       break
     }
 
@@ -211,6 +241,10 @@ export const handleActions = async (
 
     case 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_QR_WALLET': {
       return await mainCtrl.handleAccountPickerInitQr(QrKeyIterator, params.payload)
+    }
+
+    case 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_NFC_WALLET': {
+      return await mainCtrl.handleAccountPickerInitNfc(NfcKeyIterator, params.payload)
     }
 
     case 'WEBVIEW_ORIGIN_CHANGED': {
@@ -358,6 +392,8 @@ export const handleActions = async (
     }
 
     case 'SETUP_WC_SESSION_MESSENGER': {
+      // Shoudln't be needed but just in case
+      await mainCtrl.dapps.init()
       // Remove temp session if it exists (the one that was created during handshake)
       if (params.tempSessionTopic) {
         mainCtrl.dapps.deleteDappSessionByWcTopic(params.tempSessionTopic)
@@ -378,7 +414,7 @@ export const handleActions = async (
       await mainCtrl.dapps.addDappFromIdentity(
         {
           id: dappId,
-          name: params.name ?? new URL(params.url).hostname,
+          name: params.name ?? getNormalizedHostnameFromUrl(params.url) ?? params.url,
           url: params.url,
           icon: params.icon ?? null,
           chainId: params.chainId,
@@ -391,6 +427,8 @@ export const handleActions = async (
     }
 
     case 'RESTORE_WC_SESSIONS': {
+      // Shoudln't be needed but just in case
+      await mainCtrl.dapps.init()
       for (const wcSession of params.sessions) {
         const { topic, name, icon, url, chainId, candidateChainIds } = wcSession
         try {
@@ -410,7 +448,7 @@ export const handleActions = async (
           await mainCtrl.dapps.addDappFromIdentity(
             {
               id: dappId,
-              name: name ?? new URL(url).hostname,
+              name: name ?? getNormalizedHostnameFromUrl(url) ?? url,
               url,
               icon: icon ?? null,
               chainId,

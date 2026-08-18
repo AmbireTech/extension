@@ -2,6 +2,9 @@ import { StyleSheet, ViewStyle } from 'react-native'
 
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
+import { getUiType } from '@common/utils/uiType'
+
+const { isSidePanel } = getUiType()
 
 interface Style {
   panel: ViewStyle
@@ -21,7 +24,9 @@ const getStyles = () =>
       maxWidth: 352,
       width: '100%',
       marginHorizontal: 'auto',
-      ...flexbox.alignCenter
+      ...flexbox.alignCenter,
+      // Narrow side panel width can match maxWidth, so keep form controls inset from the edges.
+      ...(isSidePanel ? spacings.phSm : {})
     },
     biometricsContainer: {
       width: '100%',

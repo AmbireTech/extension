@@ -95,17 +95,17 @@ async function createBaseConfig(env, argv) {
     // writeToDisk: output dev bundled files (in /webkit-dev or /gecko-dev) to import them as unpacked extension in the browser
     config.devServer.devMiddleware.writeToDisk = true
 
-    // The extension loads two entries (main + rootTheme). Without a shared runtime each one
-    // embeds its own webpack runtime, so the page ends up with two competing HMR runtimes
-    // and hot reloading breaks. Give main + rootTheme a single shared runtime chunk.
-    // Every other entry returns `false` to keep its runtime embedded — they run in separate
-    // contexts (service worker, content script, injected script) and can't load an external
-    // runtime file. Don't return the entry name here: that points `runtime` at the entry's
-    // own chunk and webpack errors out.
+    // Give the extension's main UI entry a shared runtime chunk so the page has a
+    // single HMR runtime. rootTheme is no longer a webpack entry (it ships as a
+    // plain static file), so only `main` needs this. Every other entry returns
+    // `false` to keep its runtime embedded — they run in separate contexts
+    // (service worker, content script, injected script) and can't load an
+    // external runtime file. Don't return the entry name here: that points
+    // `runtime` at the entry's own chunk and webpack errors out.
     config.optimization = {
       ...config.optimization,
       runtimeChunk: {
-        name: (entrypoint) => (['main', 'rootTheme'].includes(entrypoint.name) ? 'runtime' : false)
+        name: (entrypoint) => (entrypoint.name === 'main' ? 'runtime' : false)
       }
     }
   }

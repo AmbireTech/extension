@@ -24,6 +24,7 @@ export interface BottomSheetProps {
   scrollViewProps?: ModalizeProps['scrollViewProps']
   customRenderer?: ModalizeProps['customRenderer']
   HeaderComponent?: ModalizeProps['HeaderComponent']
+  FooterComponent?: ModalizeProps['FooterComponent']
   backgroundColor?: 'primaryBackground' | 'secondaryBackground'
   autoWidth?: boolean
   autoOpen?: boolean

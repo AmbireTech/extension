@@ -2,19 +2,21 @@ import { isHexString } from 'ethers'
 import React, { FC, useEffect, useMemo, useState } from 'react'
 import { View } from 'react-native'
 
-import { SigningStatus } from '@ambire-common/interfaces/signAccountOp'
 import { Network } from '@ambire-common/interfaces/network'
+import { SigningStatus } from '@ambire-common/interfaces/signAccountOp'
 import { isSmartAccount } from '@ambire-common/libs/account/account'
 import SuccessIcon from '@common/assets/svg/SuccessIcon'
 import Alert from '@common/components/Alert'
-import ScrollableWrapper from '@common/components/ScrollableWrapper'
+import ScrollableWrapper, { WRAPPER_TYPES } from '@common/components/ScrollableWrapper'
 import Text from '@common/components/Text'
 import Nft from '@common/components/TokenOrNft/components/Nft'
-import { isMobile, isWeb } from '@common/config/env'
+import { isMobile } from '@common/config/env'
 import { Trans, useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
+import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import PendingTokenSummary from '@common/modules/sign-account-op/components/PendingTokenSummary'
+import TenderlySimulation from '@common/modules/sign-account-op/components/TenderlySimulation'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
@@ -32,6 +34,9 @@ interface Props {
 const Simulation: FC<Props> = ({ network, isEstimationComplete, isViewOnly }) => {
   const { t } = useTranslation()
   const { styles, theme } = useTheme(getStyles)
+  // Side by side, the two cards are too narrow for an amount, a symbol and a fiat value to fit on
+  // one line, so a compact layout stacks them the way mobile does
+  const { isCompactLayout } = useCompactActionRequestLayout()
   const signAccountOpState = useController('SignAccountOpController').state
   const {
     state: {
@@ -87,6 +92,9 @@ const Simulation: FC<Props> = ({ network, isEstimationComplete, isViewOnly }) =>
     () => pendingTokens.filter((token) => token.simulationAmount! > 0),
     [pendingTokens]
   )
+
+  const hasAssetsOut = !!pendingSendTokens.length || !!pendingSendCollection.length
+  const hasAssetsIn = !!pendingReceiveTokens.length || !!pendingReceiveCollection.length
 
   const simulationErrorMsg = useMemo(() => {
     if (portfolioNetworkState?.isLoading && !initialSimulationLoaded) return ''
@@ -215,21 +223,22 @@ const Simulation: FC<Props> = ({ network, isEstimationComplete, isViewOnly }) =>
   return (
     <View style={styles.simulationSection}>
       {simulationView === 'changes' && (
-        <View style={[isWeb && flexbox.directionRow, flexbox.flex1]}>
-          {(!!pendingSendTokens.length || !!pendingSendCollection.length) && (
+        <View style={[!isCompactLayout && flexbox.directionRow, flexbox.flex1]}>
+          {hasAssetsOut && (
             <View
               style={[
                 styles.simulationContainer,
-                isWeb && !!pendingReceiveTokens.length && spacings.mrTy,
-                isMobile && spacings.mbTy
+                hasAssetsIn && (isCompactLayout ? spacings.mbTy : spacings.mrTy)
               ]}
             >
               <View style={styles.simulationContainerHeader}>
                 <Text fontSize={14} weight="semiBold" appearance="secondaryText" numberOfLines={1}>
                   {t('Assets out')}
                 </Text>
+                {!hasAssetsIn && <TenderlySimulation />}
               </View>
               <ScrollableWrapper
+                type={isMobile ? WRAPPER_TYPES.VIEW : WRAPPER_TYPES.SCROLL_VIEW}
                 style={styles.simulationScrollView}
                 contentContainerStyle={{ flexGrow: 1 }}
               >
@@ -239,7 +248,9 @@ const Simulation: FC<Props> = ({ network, isEstimationComplete, isViewOnly }) =>
                       key={token.address}
                       token={token}
                       chainId={network?.chainId}
-                      hasBottomSpacing={i < pendingTokens.length - 1}
+                      hasBottomSpacing={
+                        i < pendingSendTokens.length - 1 || pendingSendCollection.length > 0
+                      }
                     />
                   )
                 })}
@@ -268,14 +279,16 @@ const Simulation: FC<Props> = ({ network, isEstimationComplete, isViewOnly }) =>
               </ScrollableWrapper>
             </View>
           )}
-          {(!!pendingReceiveTokens.length || !!pendingReceiveCollection.length) && (
+          {hasAssetsIn && (
             <View style={styles.simulationContainer}>
               <View style={styles.simulationContainerHeader}>
                 <Text fontSize={14} weight="semiBold" appearance="secondaryText" numberOfLines={1}>
                   {t('Assets in')}
                 </Text>
+                <TenderlySimulation />
               </View>
               <ScrollableWrapper
+                type={isMobile ? WRAPPER_TYPES.VIEW : WRAPPER_TYPES.SCROLL_VIEW}
                 style={styles.simulationScrollView}
                 contentContainerStyle={{ flexGrow: 1 }}
               >
@@ -286,7 +299,7 @@ const Simulation: FC<Props> = ({ network, isEstimationComplete, isViewOnly }) =>
                       token={token}
                       chainId={network?.chainId}
                       hasBottomSpacing={
-                        i < pendingTokens.length - 1 || pendingReceiveCollection.length > 0
+                        i < pendingReceiveTokens.length - 1 || pendingReceiveCollection.length > 0
                       }
                     />
                   )
@@ -333,17 +346,32 @@ const Simulation: FC<Props> = ({ network, isEstimationComplete, isViewOnly }) =>
         />
       )}
       {simulationView === 'no-changes' && (
-        <View style={[flexbox.directionRow, flexbox.flex1, flexbox.alignCenter]}>
-          <SuccessIcon color={theme.successDecorative} />
-          <Text
-            color={theme.successDecorative}
-            style={spacings.mlSm}
-            fontSize={16}
-            appearance="secondaryText"
-            numberOfLines={1}
+        <View style={styles.simulationContainer}>
+          <View style={styles.simulationContainerHeader}>
+            <Text fontSize={14} weight="semiBold" appearance="secondaryText" numberOfLines={1}>
+              {t('Assets in/out')}
+            </Text>
+            <TenderlySimulation />
+          </View>
+          <View
+            style={[
+              styles.simulationScrollView,
+              flexbox.directionRow,
+              flexbox.flex1,
+              flexbox.alignCenter
+            ]}
           >
-            {t('No token balance changes detected')}
-          </Text>
+            <SuccessIcon color={theme.successDecorative} />
+            <Text
+              color={theme.successDecorative}
+              style={spacings.mlSm}
+              fontSize={16}
+              appearance="secondaryText"
+              numberOfLines={1}
+            >
+              {t('No token balance changes detected')}
+            </Text>
+          </View>
         </View>
       )}
       {simulationView === 'simulation-not-supported' && (

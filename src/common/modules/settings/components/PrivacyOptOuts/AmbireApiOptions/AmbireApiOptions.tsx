@@ -38,7 +38,7 @@ const AmbireApiOptions = () => {
         <View style={[spacings.plTy, spacings.pbTy]}>
           <OptOutControlOption
             title={t('Gas Tank')}
-            description={t('We use the Ambire API to fetch your gas tank balance.')}
+            description={t('Pay network fees cross chain')}
             icon={<GasTankIcon width={24} height={24} color={theme.iconPrimary} />}
             flag="gasTank"
           />

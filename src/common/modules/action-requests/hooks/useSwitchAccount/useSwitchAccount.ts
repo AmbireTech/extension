@@ -102,6 +102,7 @@ const useSwitchAccount = () => {
     t,
     account,
     isAuthorizing,
+    isRequestBroken: !nextAccount || !nextAccountData,
     userRequest,
     nextAccount,
     nextRequestType,

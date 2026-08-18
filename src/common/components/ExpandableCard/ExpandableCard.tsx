@@ -8,8 +8,12 @@ import { AnimatedPressable } from '@common/hooks/useHover'
 import useTheme from '@common/hooks/useTheme'
 import spacings, { SPACING_SM, SPACING_TY } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
+import { getUiType } from '@common/utils/uiType'
 
 import getStyles from './styles'
+
+const { isSidePanel } = getUiType()
+const withMobileLayout = isMobile || isSidePanel
 
 type ContentRenderProps = {
   isExpanded: boolean
@@ -52,7 +56,7 @@ const ExpandableCard = ({
 }: Props) => {
   const { styles } = useTheme(getStyles)
   const [isExpanded, setIsExpanded] = useState(!!isInitiallyExpanded)
-  const hasMobileHeader = isMobile && (!!mobileHeaderContent || !!mobileHeaderTitle)
+  const hasMobileHeader = withMobileLayout && (!!mobileHeaderContent || !!mobileHeaderTitle)
 
   const Element = enableToggleExpand ? AnimatedPressable : View
   const renderedContent = typeof content === 'function' ? content({ isExpanded }) : content
@@ -74,7 +78,7 @@ const ExpandableCard = ({
   )
 
   return (
-    <View style={[styles.container, isMobile && isExpanded && { flexGrow: 1 }, style]}>
+    <View style={[styles.container, withMobileLayout && isExpanded && { flexGrow: 1 }, style]}>
       <Element onPress={() => !!enableToggleExpand && setIsExpanded((prevState) => !prevState)}>
         {hasMobileHeader && overlayMobileHeaderControls && (
           <View style={[spacings.phSm, spacings.ptTy, mobileHeaderStyle]}>
@@ -123,14 +127,13 @@ const ExpandableCard = ({
             {!!hasArrow && arrowPosition === 'right' && icon}
           </View>
         )}
-        {(!isMobile || !hideMobileContent) && (
+        {(!withMobileLayout || !hideMobileContent) && (
           <View
             style={[
               flexbox.directionRow,
               flexbox.alignCenter,
               spacings.phSm,
-              isWeb && spacings.pvSm,
-              isMobile && spacings.pvTy,
+              withMobileLayout ? spacings.pvTy : isWeb && spacings.pvSm,
               contentStyle
             ]}
           >

@@ -9,6 +9,7 @@ import EditApproval from '@common/components/HumanizedVisualization/EditApproval
 import { Erc7730StructuredVisualizationProps } from '@common/components/HumanizedVisualization/Erc7730/interfaces'
 import MobileErc7730SummaryVisualization from '@common/components/HumanizedVisualization/Erc7730/MobileErc7730SummaryVisualization'
 import HumanizerAddress from '@common/components/HumanizerAddress'
+import ManifestImage from '@common/components/ManifestImage'
 import Text from '@common/components/Text'
 import TokenOrNft from '@common/components/TokenOrNft'
 import { isMobile } from '@common/config/env'
@@ -17,7 +18,7 @@ import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import spacings, { SPACING_SM, SPACING_TY } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import ManifestImage from '@web/components/ManifestImage'
+import { getUiType } from '@common/utils/uiType'
 
 import {
   getDetailedActionParts,
@@ -33,6 +34,9 @@ import {
   shouldShowErc7730SpenderRowInSummary,
   shouldShowErc7730SummaryRowLabel
 } from './helpers'
+
+const { isSidePanel } = getUiType()
+const withMobileLayout = isMobile || isSidePanel
 
 const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = ({
   item,
@@ -55,7 +59,7 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
   } = useController('NetworksController')
   const { benzinNetworks } = useNetworksContext()
   const networks = controllerNetworks ?? benzinNetworks
-  const shouldHideTransactionSummaryTitle = isMobile && hideMobileSummaryTitle
+  const shouldHideTransactionSummaryTitle = withMobileLayout && hideMobileSummaryTitle
   const nativeAssetSymbol = useMemo(
     () => networks.find((network) => network.chainId === chainId)?.nativeAssetSymbol,
     [chainId, networks]
@@ -104,7 +108,8 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
                 flexbox.justifyEnd,
                 {
                   minWidth: 0,
-                  maxWidth: '100%'
+                  maxWidth: '100%',
+                  flexShrink: 1
                 }
               ]}
             >
@@ -276,7 +281,7 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
             {
               width: '100%',
               minWidth: 0,
-              paddingLeft: SPACING_SM
+              paddingLeft: isSidePanel ? 0 : SPACING_SM
             },
             nestedIndex > 0 && {
               marginTop: SPACING_TY,
@@ -428,7 +433,7 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
       : undefined
     const subtitleTextSize = Math.max(textSize - 3, 11)
 
-    if (isMobile) {
+    if (withMobileLayout) {
       return (
         <MobileErc7730SummaryVisualization
           item={item}
@@ -597,7 +602,7 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
     )
   }
 
-  if (isMobile) {
+  if (withMobileLayout) {
     return (
       <View style={{ width: '100%' }}>
         {shouldShowDescriptionTitle && (

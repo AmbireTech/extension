@@ -3,16 +3,18 @@ import { useTranslation } from 'react-i18next'
 import { View, ViewStyle } from 'react-native'
 
 import ErrorIcon from '@common/assets/svg/ErrorIcon'
+import InfoIcon from '@common/assets/svg/InfoIcon'
 import WarningIcon from '@common/assets/svg/WarningIcon'
 import Badge from '@common/components/Badge'
 import Text from '@common/components/Text'
 import useTheme from '@common/hooks/useTheme'
-import spacings from '@common/styles/spacings'
-import common from '@common/styles/utils/common'
-import flexbox from '@common/styles/utils/flexbox'
+
+import getStyles from './styles'
 
 interface Props {
+  title?: string
   text: string | React.ReactNode
+  secondaryText?: string | React.ReactNode
   type: 'error' | 'warning'
   style?: ViewStyle
 }
@@ -22,9 +24,9 @@ const ICON_MAP = {
   warning: WarningIcon
 }
 
-const SafetyCheckBanner = ({ type, text, style }: Props) => {
+const SafetyCheckBanner = ({ type, title, text, secondaryText, style }: Props) => {
   const Icon = ICON_MAP[type]
-  const { theme } = useTheme()
+  const { styles, theme } = useTheme(getStyles)
   const { t } = useTranslation()
 
   const TITLE_MAP = useMemo(
@@ -43,43 +45,44 @@ const SafetyCheckBanner = ({ type, text, style }: Props) => {
     [t]
   )
 
+  const translatedTitle = title ? t(title) : TITLE_MAP[type]
+  const translatedText = typeof text === 'string' ? t(text) : text
+  const translatedSecondaryText =
+    typeof secondaryText === 'string' ? t(secondaryText) : secondaryText
+
   return (
     <View
       style={[
-        spacings.phSm,
-        spacings.pvSm,
-        common.borderRadiusPrimary,
+        styles.container,
         {
-          backgroundColor: theme[`${type}Background`]
+          borderLeftColor: theme[`${type}Decorative`]
         },
         style
       ]}
     >
-      <View style={flexbox.flex1}>
-        <View
-          style={[
-            flexbox.directionRow,
-            flexbox.alignCenter,
-            flexbox.justifySpaceBetween,
-            spacings.mbTy
-          ]}
-        >
-          <Text
-            selectable
-            appearance={`${type}Text`}
-            fontSize={20}
-            weight="semiBold"
-            numberOfLines={1}
-          >
-            {TITLE_MAP[type]}
+      <View style={[styles.iconContainer, { backgroundColor: theme[`${type}Background`] }]}>
+        <Icon width={28} height={28} color={theme[`${type}Decorative`]} />
+      </View>
+      <View style={styles.content}>
+        <View style={styles.header}>
+          <Text selectable fontSize={16} weight="semiBold" style={styles.title}>
+            {translatedTitle}
           </Text>
-          <Badge type={type} text={BADGE_TEXT_MAP[type]} size="sm">
-            <Icon width={16} height={16} color={theme[`${type}Decorative`]} style={spacings.mlMi} />
-          </Badge>
+          <Badge type={type} text={BADGE_TEXT_MAP[type]} size="sm" style={styles.badge} />
         </View>
-        <Text fontSize={12} appearance={`${type}Text`} weight="medium">
-          {text}
+        <Text selectable fontSize={12} appearance="secondaryText">
+          {translatedText}
         </Text>
+        {!!translatedSecondaryText && (
+          <View
+            style={[styles.secondaryContainer, { backgroundColor: theme[`${type}Background`] }]}
+          >
+            <InfoIcon width={16} height={16} color={theme[`${type}Text`]} />
+            <Text selectable fontSize={12} appearance={`${type}Text`} style={styles.secondaryText}>
+              {translatedSecondaryText}
+            </Text>
+          </View>
+        )}
       </View>
     </View>
   )

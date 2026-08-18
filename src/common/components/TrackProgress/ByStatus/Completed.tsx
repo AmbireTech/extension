@@ -14,7 +14,7 @@ import CopyText from '@common/components/CopyText'
 type CompletedProps = {
   isLoading?: boolean
   title: string
-  titleSecondary: string
+  titleSecondary?: string
   openExplorerText: string
   explorerLink?: string
   beforeLinkOpenHandler?: Function
@@ -46,12 +46,19 @@ const Completed: FC<CompletedProps> = ({
   return (
     <View style={flexbox.alignCenter}>
       <SuccessAnimation style={spacings.mbSm} isLoading={isLoading} />
-      <Text fontSize={20} weight="medium" style={spacings.mbTy} testID="txn-status">
+      <Text
+        fontSize={20}
+        weight="medium"
+        style={titleSecondary ? spacings.mbTy : spacings.mbXl}
+        testID="txn-status"
+      >
         {title}
       </Text>
-      <Text weight="medium" appearance="secondaryText" style={spacings.mbXl}>
-        {titleSecondary}
-      </Text>
+      {!!titleSecondary && (
+        <Text weight="medium" appearance="secondaryText" style={spacings.mbXl}>
+          {titleSecondary}
+        </Text>
+      )}
       {(!!explorerLink || isLoading) && (
         <Pressable
           onPress={handleOpenExplorer}

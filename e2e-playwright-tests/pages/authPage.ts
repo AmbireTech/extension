@@ -9,7 +9,6 @@ import { BasePage } from './basePage'
 export class AuthPage extends BasePage {
   extensionURL: string
 
-  generatedSeed: string = ''
 
   constructor(opts: BootstrapContext) {
     super(opts)
@@ -34,7 +33,7 @@ export class AuthPage extends BasePage {
   // TODO: improve method assertions
   async importViewOnlyAccount(account: string): Promise<void> {
     await this.click(selectors.getStarted.watchAddress)
-    await this.entertext(selectors.getStarted.addressEnsField, account)
+    await this.page.locator(locators.viewOnlyInputAddressField).fill(account)
     await this.click(selectors.getStarted.viewOnlyBtnImport)
     await this.setExtensionPassword()
     await this.compareText(
@@ -51,45 +50,9 @@ export class AuthPage extends BasePage {
     // assertion on Dashboard after login
   }
 
-  async verifyRecoveryPhraseScreen(): Promise<string> {
-    this.generatedSeed = ''
-
-    const locator = this.page.getByTestId('info-0').locator('div').nth(3)
-    if (
-      await this.page
-        .getByText('Page was restarted because')
-        .isVisible()
-        .catch(() => false)
-    ) {
-      await locator.waitFor({ state: 'visible' })
-      await locator.click()
-    }
-    await this.isVisible(selectors.getStarted.recoveryPhraseHeader)
-    await this.context.grantPermissions(['clipboard-read'])
-    await this.click(selectors.getStarted.copyRecoveryPhraseButton)
-    await this.compareText(
-      selectors.getStarted.recoveryPhraseCopiedSnackbar,
-      'Recovery phrase copied to clipboard'
-    )
-    this.generatedSeed = await this.page.evaluate(() => navigator.clipboard.readText())
-    await this.page
-      .getByTestId(selectors.getStarted.recoveryPhraseCopiedSnackbar)
-      .waitFor({ state: 'hidden' })
-    await this.click(selectors.getStarted.savedPhraseButton)
-
-    return this.generatedSeed
-  }
-
   // TODO: imporove method assertions
-  async createNewAccount(): Promise<string> {
-    this.generatedSeed = ''
-
+  async createNewAccount(): Promise<void> {
     await this.click(selectors.getStarted.createNewAccountButton)
-    for (let index = 0; index < 3; index++) {
-      await this.click(selectors.getStarted.checkbox, index)
-    }
-    await this.click(selectors.getStarted.createRecoveryPhraseButton)
-    await this.verifyRecoveryPhraseScreen()
     await this.setExtensionPassword()
     // assertion on Dashboard after login
     await this.compareText(
@@ -104,8 +67,6 @@ export class AuthPage extends BasePage {
       'Ambire Wallet is ready to use'
     )
     await this.click(selectors.getStarted.openDashboardButton)
-
-    return this.generatedSeed
   }
 
   // TODO: imporove method assertions
@@ -167,10 +128,10 @@ export class AuthPage extends BasePage {
   async importCoupleOfViewOnlyAccount(account1: string, account2: string): Promise<void> {
     await this.click(selectors.getStarted.watchAddress)
     // add address 1
-    await this.entertext(selectors.getStarted.addressEnsField, account1)
+    await this.page.locator(locators.viewOnlyInputAddressField).fill(account1)
     // add address 2
     await this.click(selectors.getStarted.addOneMoreAddress)
-    await this.entertext(selectors.getStarted.addressEnsField, account2, 1)
+    await this.page.locator(locators.viewOnlySecondInputAddressField).fill(account2)
     // import
     await this.click(selectors.getStarted.viewOnlyBtnImport)
     // set pass and name
@@ -192,11 +153,6 @@ export class AuthPage extends BasePage {
 
   async createNewHotWalletAndPersonalizeName(): Promise<void> {
     await this.click(selectors.getStarted.createNewAccountButton)
-    for (let index = 0; index < 3; index++) {
-      await this.click(selectors.getStarted.checkbox, index)
-    }
-    await this.click(selectors.getStarted.createRecoveryPhraseButton)
-    await this.verifyRecoveryPhraseScreen()
     await this.setExtensionPassword()
     await this.click(selectors.getStarted.addMoreAccountsButton)
     await this.page.locator(locators.smartAccountPicker).click()
@@ -228,11 +184,6 @@ export class AuthPage extends BasePage {
 
   async createAccountAndImportFromDifferentHDPath(): Promise<void> {
     await this.click(selectors.getStarted.createNewAccountButton)
-    for (let index = 0; index < 3; index++) {
-      await this.click(selectors.getStarted.checkbox, index)
-    }
-    await this.click(selectors.getStarted.createRecoveryPhraseButton)
-    await this.verifyRecoveryPhraseScreen()
     await this.setExtensionPassword()
     await this.page.waitForTimeout(1000)
     await this.expectButtonEnabled(selectors.getStarted.addMoreAccountsButton)

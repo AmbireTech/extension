@@ -4,7 +4,7 @@ import { useForm } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
 import { Pressable, View } from 'react-native'
 
-import { Dapp } from '@ambire-common/interfaces/dapp'
+import { Dapp, TrendingToken } from '@ambire-common/interfaces/dapp'
 import { isValidHostname, isValidURL } from '@ambire-common/services/validations'
 import GlobeIcon from '@common/assets/svg/GlobeIcon'
 import GoogleIcon from '@common/assets/svg/GoogleIcon'
@@ -21,9 +21,12 @@ import DappItem from '@common/modules/explore/components/DappItem'
 import DappsSkeletonLoader from '@common/modules/explore/components/DappsSkeletonLoader'
 import HorizontalDappsRow from '@common/modules/explore/components/HorizontalDappsRow'
 import SectionHeader from '@common/modules/explore/components/SectionHeader'
+import TrendingTokenItem from '@common/modules/explore/components/TrendingTokenItem'
+import { filterTrendingTokensBySearch } from '@common/modules/explore/helpers/filterTrendingTokens'
 import useExploreSections, {
   ExploreSection
 } from '@common/modules/explore/hooks/useExploreSections'
+import { MAX_TRENDING_TOKENS_ON_EXPLORE } from '@common/modules/explore/constants/trending'
 import { ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
@@ -35,6 +38,7 @@ import {
 type SearchItem =
   | { type: 'googleSearch'; query: string }
   | { type: 'openPage'; query: string }
+  | { type: 'trendingToken'; token: TrendingToken }
   | { type: 'dapp'; dapp: Dapp }
 
 const ExploreScreen = () => {
@@ -56,8 +60,14 @@ const ExploreScreen = () => {
   )
 
   const handleOpenSection = useCallback(
-    (section: ExploreSection) =>
-      navigate(ROUTES.exploreSection, { state: { type: section.type, title: section.title } }),
+    (section: ExploreSection) => {
+      // Trending has its own "see all" screen since its items are tokens, not dapps.
+      if (section.type === 'trending') {
+        navigate(ROUTES.trendingTokens)
+        return
+      }
+      navigate(ROUTES.exploreSection, { state: { type: section.type, title: section.title } })
+    },
     [navigate]
   )
 
@@ -80,6 +90,9 @@ const ExploreScreen = () => {
     if (isValidURL(debouncedSearch) || isValidHostname(debouncedSearch)) {
       items.push({ type: 'openPage', query: debouncedSearch })
     }
+    filterTrendingTokensBySearch(state.trendingTokens || [], debouncedSearch).forEach((token) =>
+      items.push({ type: 'trendingToken', token })
+    )
     const fuse = new Fuse(searchableDapps, {
       keys: [
         { name: 'name', weight: 0.7 },
@@ -92,7 +105,7 @@ const ExploreScreen = () => {
     })
     fuse.search(debouncedSearch).forEach((r) => items.push({ type: 'dapp', dapp: r.item.dapp }))
     return items
-  }, [debouncedSearch, searchableDapps])
+  }, [debouncedSearch, searchableDapps, state.trendingTokens])
 
   const renderSearchItem = useCallback(
     ({ item }: { item: SearchItem }) => {
@@ -153,30 +166,45 @@ const ExploreScreen = () => {
           </AnimatedPressable>
         )
       }
+      if (item.type === 'trendingToken') return <TrendingTokenItem token={item.token} />
       return <DappItem {...item.dapp} />
     },
     [t, theme.secondaryBackground, handleNavigateToUrl]
   )
 
-  // Wrap each section's data into a single carousel item for Recent/Connected/Favorites.
-  // "apps" stays vertical and renders DappItem per entry.
+  // Wrap each section's data into renderable items. "apps" and "trending" stay vertical (one item
+  // per entry); Recent/Connected/Favorites collapse into a single horizontal carousel item.
   const sectionListData = useMemo(
     () =>
-      sections.map((s) => ({
-        ...s,
-        // For horizontal sections we pass a single sentinel item; the carousel renders all dapps internally.
-        data:
-          s.type === 'apps'
-            ? s.data.map((d) => ({ kind: 'dapp' as const, dapp: d }))
-            : [{ kind: 'row' as const, dapps: s.data }]
-      })),
+      sections.map((s) => {
+        if (s.type === 'trending') {
+          return {
+            ...s,
+            data: s.trendingTokens
+              .slice(0, MAX_TRENDING_TOKENS_ON_EXPLORE)
+              .map((token) => ({ kind: 'trendingToken' as const, token }))
+          }
+        }
+        return {
+          ...s,
+          // For horizontal sections we pass a single sentinel item; the carousel renders all dapps internally.
+          data:
+            s.type === 'apps'
+              ? s.data.map((d) => ({ kind: 'dapp' as const, dapp: d }))
+              : [{ kind: 'row' as const, dapps: s.data }]
+        }
+      }),
     [sections]
   )
 
-  type SectionItem = { kind: 'dapp'; dapp: Dapp } | { kind: 'row'; dapps: Dapp[] }
+  type SectionItem =
+    | { kind: 'dapp'; dapp: Dapp }
+    | { kind: 'row'; dapps: Dapp[] }
+    | { kind: 'trendingToken'; token: TrendingToken }
 
   const renderSectionItem = useCallback(({ item }: { item: SectionItem }) => {
     if (item.kind === 'row') return <HorizontalDappsRow data={item.dapps} />
+    if (item.kind === 'trendingToken') return <TrendingTokenItem token={item.token} />
     return <DappItem {...item.dapp} />
   }, [])
 
@@ -203,10 +231,11 @@ const ExploreScreen = () => {
     [sections, handleOpenSection]
   )
 
-  const sectionKeyExtractor = useCallback(
-    (item: SectionItem, index: number) => (item.kind === 'dapp' ? item.dapp.id : `row-${index}`),
-    []
-  )
+  const sectionKeyExtractor = useCallback((item: SectionItem, index: number) => {
+    if (item.kind === 'dapp') return item.dapp.id
+    if (item.kind === 'trendingToken') return `trending-${item.token.id}`
+    return `row-${index}`
+  }, [])
 
   return (
     <MobileLayoutContainer>
@@ -227,7 +256,7 @@ const ExploreScreen = () => {
           <View style={flexbox.flex1}>
             <View style={[spacings.mbSm]}>
               <Search
-                placeholder={t('Search apps or URLs')}
+                placeholder={t('Search apps, tokens or URLs')}
                 control={control}
                 // @ts-ignore
                 setValue={setValue}

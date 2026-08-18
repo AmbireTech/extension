@@ -10,7 +10,6 @@ import {
 
 import {
   getErc7730DescriptionRows,
-  getErc7730SummaryRows,
   getVisibleErc7730Rows,
   hasErc7730NativeValueRow,
   shouldShowErc7730SummaryRowLabel
@@ -67,12 +66,12 @@ describe('getErc7730DescriptionRows', () => {
     )
   })
 
-  test('keeps swap token rows in summary and extra rows in additional description', () => {
+  test('does not show additional description outside Morpho Bundler3 multicalls', () => {
     const baseWeth = '0x4200000000000000000000000000000000000006'
     const baseCbBtc = '0xcbb7c0000ab88b473b1f5afd9ef808440eed33bf'
     const visualization: HumanizerErc7730Visualization = {
       type: 'erc7730',
-      title: 'Fill order',
+      title: 'Multicall',
       rows: [
         {
           label: 'Amount to Send',
@@ -89,11 +88,9 @@ describe('getErc7730DescriptionRows', () => {
       ]
     }
 
-    const summaryRows = getErc7730SummaryRows(visualization)
     const descriptionRows = getErc7730DescriptionRows(visualization)
 
-    expect(summaryRows.map((row) => row.label)).toEqual(['Amount to Send', 'Minimum to Receive'])
-    expect(descriptionRows.map((row) => row.label)).toEqual(['Additional action'])
+    expect(descriptionRows).toEqual([])
   })
 })
 

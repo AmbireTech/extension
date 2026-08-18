@@ -31,6 +31,7 @@ interface Props extends TextProps {
   shouldWrapInlineActions?: boolean
   verification?: BlacklistedStatus
   isDisplayingPlainAddress?: boolean
+  isToken?: boolean
 }
 
 const BaseAddress: FC<Props> = ({
@@ -41,6 +42,7 @@ const BaseAddress: FC<Props> = ({
   shouldWrapInlineActions = true,
   verification,
   isDisplayingPlainAddress,
+  isToken,
   ...rest
 }) => {
   const { t } = useTranslation()
@@ -74,7 +76,7 @@ const BaseAddress: FC<Props> = ({
         address === ZeroAddress
           ? // Exception for native tokens, they don't have a block explorer URLs
             getCoinGeckoTokenUrl(network.nativeAssetId)
-          : `${network.explorerUrl}/address/${address}`
+          : `${network.explorerUrl}/${isToken ? 'token' : 'address'}/${address}`
 
       // use Linking instead of openInTab as openInTab may trigger
       // a close of the action window. We don't want to close it, we
@@ -85,7 +87,7 @@ const BaseAddress: FC<Props> = ({
         type: 'error'
       })
     }
-  }, [addToast, address, network, t])
+  }, [addToast, address, network, isToken, t])
 
   // The uuid must be unique for each tooltip, otherwise multiple tooltips
   // will be show at the same time. We cannot use a shared tooltip as the content
@@ -143,13 +145,16 @@ const BaseAddress: FC<Props> = ({
               >
                 {displayValue}
               </Text>
-              <View style={[!isMobile ? { marginLeft: 2, marginTop: -8 } : {}, flexbox.center]}>
-                <OpenIcon
-                  color={hovered ? theme.primaryText : theme.secondaryText}
-                  width={isMobile ? 14 : 10}
-                  height={isMobile ? 14 : 10}
-                />
-              </View>
+              {/* On mobile the icon clutters the rows and the whole value is tappable anyway */}
+              {!isMobile && (
+                <View style={[{ marginLeft: 2, marginTop: -8 }, flexbox.center]}>
+                  <OpenIcon
+                    color={hovered ? theme.primaryText : theme.secondaryText}
+                    width={10}
+                    height={10}
+                  />
+                </View>
+              )}
             </>
           )}
         </Pressable>

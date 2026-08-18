@@ -15,7 +15,7 @@ import { getUiType } from '@common/utils/uiType'
 
 import ExtremeSwapConfirmationField from './ExtremeSwapConfirmationField'
 
-const { isTab } = getUiType()
+const { isTab, isSidePanel } = getUiType()
 
 type Props = {
   sheetRef: React.RefObject<any>
@@ -128,7 +128,7 @@ const PriceImpactWarningModal: FC<Props> = ({
       id="warning-modal"
       closeBottomSheet={closeBottomSheetWrapped}
       sheetRef={sheetRef}
-      type={isTab ? 'modal' : 'bottom-sheet'}
+      type={isTab && !isSidePanel ? 'modal' : 'bottom-sheet'}
       withBackdropBlur={false}
       shouldBeClosableOnDrag={false}
     >

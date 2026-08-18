@@ -224,6 +224,8 @@ const AccountsOnPageList = ({
     return state.accountsOnPage.some((p) => isSmartAccount(p.account))
   }, [state.accountsOnPage])
 
+  const shouldDisplaySmartAccountsSection = state.smartAccountsLoading || hasSmartAccounts
+
   // Prevents the user from temporarily seeing (flashing) empty (error) states
   // while being navigated back (resetting the Account Picker state).
   if (!state.isInitialized) return null
@@ -281,7 +283,7 @@ const AccountsOnPageList = ({
                   )
                 })}
               </View>
-              {hasSmartAccounts && (
+              {shouldDisplaySmartAccountsSection && (
                 <View style={[styles.smartAccountWrapper, isMobile && spacings.ptSm]}>
                   <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mbSm]}>
                     <Text fontSize={16} weight="medium" style={[text.center, spacings.mrTy]}>
@@ -295,6 +297,16 @@ const AccountsOnPageList = ({
                         flexbox.alignCenter
                       ]}
                     >
+                      {state.smartAccountsLoading && (
+                        <View style={[flexbox.alignCenter, flexbox.directionRow]}>
+                          <Spinner
+                            style={{ width: isMobile ? 14 : 16, height: isMobile ? 14 : 16 }}
+                          />
+                          <Text appearance="primary" style={[spacings.mlTy]} fontSize={12}>
+                            {t('Loading smart accounts')}
+                          </Text>
+                        </View>
+                      )}
                       {lookingForLinkedAccounts && (
                         <View style={[flexbox.alignCenter, flexbox.directionRow]}>
                           <Spinner
@@ -384,13 +396,7 @@ const AccountsOnPageList = ({
                   ]}
                 >
                   {!isImportingFromPrivateKey && (
-                    <Pagination
-                      page={state.page}
-                      maxPages={1000}
-                      setPage={setPage}
-                      isDisabled={state.accountsLoading}
-                      hideLastPage
-                    />
+                    <Pagination page={state.page} maxPages={1000} setPage={setPage} hideLastPage />
                   )}
                 </View>
               )}
@@ -402,13 +408,7 @@ const AccountsOnPageList = ({
       {!isMobile && (
         <View style={[flexbox.alignEnd, spacings.mbMd]}>
           {!isImportingFromPrivateKey && (
-            <Pagination
-              page={state.page}
-              maxPages={1000}
-              setPage={setPage}
-              isDisabled={state.accountsLoading}
-              hideLastPage
-            />
+            <Pagination page={state.page} maxPages={1000} setPage={setPage} hideLastPage />
           )}
         </View>
       )}

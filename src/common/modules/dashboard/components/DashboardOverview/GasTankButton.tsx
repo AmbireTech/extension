@@ -35,12 +35,15 @@ const GasTankButton = ({ onPress, portfolio, account }: Props) => {
   const [isSafeGasTankBannerDismissed, setIsSafeGasTankBannerDismissed] = useState(true)
   const [isSafeGasTankBannerDismissalLoaded, setIsSafeGasTankBannerDismissalLoaded] =
     useState(false)
-  const { canUseGasTank } = useHasGasTank({ account })
+  const { canUseGasTank, requiresEip7702 } = useHasGasTank({ account })
   const { isPrivacyModeEnabled } = useController('WalletStateController').state
   const {
     state: { flags }
   } = useController('FeatureFlagsController')
-  const isGasTankEnabled = flags.erc4337 && flags.gasTank && flags.tokenPrices
+  const isErc4337Enabled = flags.erc4337
+  const isEip7702Enabled = flags.eip7702
+  const isGasTankEnabled =
+    isErc4337Enabled && flags.gasTank && flags.tokenPrices && (!requiresEip7702 || isEip7702Enabled)
 
   const {
     state: { networks }

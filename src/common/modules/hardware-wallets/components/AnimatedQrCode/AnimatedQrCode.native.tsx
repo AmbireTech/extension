@@ -4,13 +4,15 @@ import React, { useEffect, useMemo, useState } from 'react'
 import { View } from 'react-native'
 import QRCode from 'react-native-qrcode-svg'
 
+import { SPACING_MD } from '@common/styles/spacings'
+
 import { AnimatedQrCodeProps } from './AnimatedQrCode'
 
 const DEFAULT_SIZE = 300
 const DEFAULT_INTERVAL = 300
-// Matches @keystonehq/animated-qr's capacity so the fragments a QR device
-// expects are chunked identically on web and native.
-const MAX_FRAGMENT_LENGTH = 400
+const MAX_FRAGMENT_LENGTH = 200
+const QR_BACKGROUND_COLOR = '#fff'
+const QR_FOREGROUND_COLOR = '#000'
 
 // Native counterpart of the web AnimatedQRCode. Encodes the same UR payload
 // (type + cbor) into multi-part fragments and cycles them on an interval,
@@ -36,7 +38,14 @@ const AnimatedQrCode = ({
 
   return (
     <View>
-      <QRCode value={frame} size={size} />
+      <QRCode
+        value={frame}
+        size={size}
+        quietZone={SPACING_MD}
+        color={QR_FOREGROUND_COLOR}
+        backgroundColor={QR_BACKGROUND_COLOR}
+        ecl="L"
+      />
     </View>
   )
 }

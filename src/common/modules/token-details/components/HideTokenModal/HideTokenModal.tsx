@@ -6,9 +6,11 @@ import BottomSheet from '@common/components/BottomSheet'
 import Button from '@common/components/Button'
 import Checkbox from '@common/components/Checkbox'
 import Text from '@common/components/Text'
+import { isWeb } from '@common/config/env'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
-import spacings from '@common/styles/spacings'
+import spacings, { SPACING_TY } from '@common/styles/spacings'
+import flexbox from '@common/styles/utils/flexbox'
 
 import getStyles from './styles'
 
@@ -21,7 +23,7 @@ const HideTokenModal = ({
   handleHideToken: (doNotShowModalAgain: boolean) => Promise<void>
   modalRef: any
 }) => {
-  const { styles, theme, themeType } = useTheme(getStyles)
+  const { styles, theme } = useTheme(getStyles)
   const [doNotShowModalAgain, setDoNotShowModalAgain] = useState(false)
   const { addToast } = useToast()
   const { t } = useTranslation()
@@ -30,11 +32,11 @@ const HideTokenModal = ({
     <BottomSheet
       sheetRef={modalRef}
       // id="confirm-password-bottom-sheet"
-      type="modal"
+      type={isWeb ? 'modal' : 'bottom-sheet'}
       closeBottomSheet={handleClose}
-      scrollViewProps={{ contentContainerStyle: { flex: 1 } }}
-      containerInnerWrapperStyles={{ flex: 1 }}
-      style={styles.modal}
+      scrollViewProps={isWeb ? { contentContainerStyle: { flex: 1 } } : undefined}
+      containerInnerWrapperStyles={isWeb ? { flex: 1 } : undefined}
+      style={isWeb ? styles.modal : undefined}
     >
       <Text testID="hide-token-modal-title" style={spacings.mbSm} weight="semiBold">
         {t('Are you sure you want to hide this token?')}
@@ -45,7 +47,7 @@ const HideTokenModal = ({
 
       <Pressable
         onPress={() => setDoNotShowModalAgain(!doNotShowModalAgain)}
-        style={[spacings.mt2Xl, { flexDirection: 'row', alignSelf: 'flex-start' }]}
+        style={[spacings.mt2Xl, flexbox.directionRow, flexbox.alignSelfStart]}
       >
         <Checkbox onValueChange={() => {}} value={doNotShowModalAgain} />
         <Text style={{ color: theme.secondaryText }}>{t("Don't ask me again")}</Text>
@@ -54,17 +56,22 @@ const HideTokenModal = ({
       <View
         style={[
           spacings.mtLg,
-          {
-            flexDirection: 'row',
-            justifyContent: 'space-between'
-          }
+          flexbox.directionRow,
+          flexbox.justifySpaceBetween,
+          { columnGap: SPACING_TY }
         ]}
       >
-        <Button text={t('Cancel')} type="tertiary" onPress={handleClose} />
+        <Button
+          text={t('Cancel')}
+          type="tertiary"
+          onPress={handleClose}
+          style={isWeb ? undefined : flexbox.flex1}
+        />
         <Button
           testID="yes-hide-it-text"
           type="primary"
           text={t('Yes, hide it!')}
+          style={isWeb ? undefined : flexbox.flex1}
           onPress={() => {
             handleHideToken(doNotShowModalAgain).catch(() =>
               addToast('Failed to hide token. Please refresh and try again.', { type: 'error' })

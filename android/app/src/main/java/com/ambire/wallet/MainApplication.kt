@@ -2,6 +2,7 @@ package com.ambire.wallet
 
 import android.app.Application
 import android.content.res.Configuration
+import android.os.Process
 
 import com.facebook.react.PackageList
 import com.facebook.react.ReactApplication
@@ -9,6 +10,8 @@ import com.facebook.react.ReactNativeApplicationEntryPoint.loadReactNative
 import com.facebook.react.ReactNativeHost
 import com.facebook.react.ReactPackage
 import com.facebook.react.ReactHost
+import com.facebook.react.bridge.ReactMarker
+import com.facebook.react.bridge.ReactMarkerConstants
 import com.facebook.react.common.ReleaseLevel
 import com.facebook.react.defaults.DefaultNewArchitectureEntryPoint
 import com.facebook.react.defaults.DefaultReactNativeHost
@@ -54,6 +57,10 @@ class MainApplication : Application(), ReactApplication {
       ReleaseLevel.STABLE
     }
     loadReactNative(this)
+
+    // Marks the start of the launch for `performance.rnStartupTiming`, which the boot
+    // profiler reads.
+    ReactMarker.logMarker(ReactMarkerConstants.APP_STARTUP_START, Process.getStartUptimeMillis())
     ApplicationLifecycleDispatcher.onApplicationCreate(this)
   }
 

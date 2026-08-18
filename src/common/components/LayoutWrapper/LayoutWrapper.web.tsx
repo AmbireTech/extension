@@ -10,7 +10,11 @@ import { getUiType } from '@common/utils/uiType'
 
 import { LayoutWrapperProps } from './types'
 
-const { isPopup, isRequestWindow } = getUiType()
+const { isPopup, isSidePanel, isRequestWindow } = getUiType()
+
+// The popup and the side panel are overlay surfaces that should fill their window
+// instead of rendering a centered, fixed-height card like the tab layout does.
+const fillsWindow = isPopup || isSidePanel
 
 const LayoutWrapper: FC<LayoutWrapperProps> = ({ children, backgroundStyle = {}, style = {} }) => {
   const { theme } = useTheme()
@@ -22,7 +26,7 @@ const LayoutWrapper: FC<LayoutWrapperProps> = ({ children, backgroundStyle = {},
 
       return SPACING_2XL
     }
-    if (isPopup) return 0
+    if (fillsWindow) return 0
 
     if (minHeightSize(700)) return SPACING_LG
 
@@ -45,11 +49,11 @@ const LayoutWrapper: FC<LayoutWrapperProps> = ({ children, backgroundStyle = {},
     >
       <View
         style={{
-          maxWidth: 600,
+          maxWidth: fillsWindow ? '100%' : 600,
           width: '100%',
-          height: 600,
+          height: fillsWindow ? '100%' : 600,
           backgroundColor: theme.primaryBackground,
-          borderRadius: isPopup ? 0 : BORDER_RADIUS_PRIMARY,
+          borderRadius: fillsWindow ? 0 : BORDER_RADIUS_PRIMARY,
           overflow: 'hidden',
           shadowColor: theme.neutral400,
           shadowOffset: { width: 0, height: 12 },

@@ -507,9 +507,8 @@ run-tests.sh
 # Kiro editor
 /.kiro
 
-# WebView bundles
-webview-bundle.json
-webview-bundle-ota.json
+# WebView bundles.
+webview-bundle*.json
 *inpage-bundle.json
 /ios/Ambire/Resources/webview/
 /android/app/src/main/assets/webview/

@@ -207,14 +207,18 @@ const HoldToProceedButton: FC<Props> = ({
     >
       <Button
         onLayout={(e) => {
-          setButtonWidth(e.nativeEvent.layout.width)
+          setButtonWidth(Math.max(e.nativeEvent.layout.width, buttonWidth || 0))
         }}
         style={[
           {
             minWidth: buttonWidth || 108,
             position: 'relative'
           },
-          style
+          style,
+          // since margin is applied to both parent and child, it is double counted for the button
+          // but counted once for the hover effect
+          // which results in floating misaligned loader overlay
+          { margin: 0 }
         ]}
         textStyle={[textStyle]}
         size={isWeb ? 'smaller' : 'regular'}

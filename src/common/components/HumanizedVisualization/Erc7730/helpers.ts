@@ -182,18 +182,9 @@ export const shouldShowErc7730SummaryRowLabel = (
 }
 
 export const getErc7730DescriptionRows = (item: HumanizerErc7730Visualization) => {
-  if (isMorphoBundlerMulticall(item)) {
-    const transferRows = item.rows.filter(isTransferActionRow)
+  if (!isMorphoBundlerMulticall(item)) return []
 
-    if (transferRows.length) return transferRows
-  }
-
-  const visibleSummaryRows = [
-    shouldShowErc7730SpenderRowInSummary(item) ? getErc7730SpenderRow(item) : undefined,
-    ...getErc7730SummaryRows(item)
-  ].filter((row): row is Erc7730Row => !!row)
-
-  return getVisibleErc7730Rows(item).filter((row) => !visibleSummaryRows.includes(row))
+  return item.rows.filter(isTransferActionRow)
 }
 
 export const shouldUseErc7730DetailedLayout = (item: HumanizerErc7730Visualization) => {

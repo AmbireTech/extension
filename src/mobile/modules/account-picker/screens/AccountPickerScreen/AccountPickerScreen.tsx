@@ -57,14 +57,7 @@ const AccountPickerScreen = () => {
         withBackButton
         onBackButtonPress={goToPrevRoute}
         title={setTitle(accountPickerState.type, accountPickerState.subType)}
-        rightIcon={
-          !!shouldDisplayChangeHdPath && (
-            <ChangeHdPath
-              disabled={accountPickerState.accountsLoading || !!isLoading}
-              setPage={setPage}
-            />
-          )
-        }
+        rightIcon={!!shouldDisplayChangeHdPath && <ChangeHdPath />}
       >
         <AccountsOnPageList
           state={accountPickerState}

@@ -18,7 +18,8 @@ import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { getUiType } from '@common/utils/uiType'
 
-const { isTab } = getUiType()
+const { isTab, isSidePanel } = getUiType()
+const withMobileLayout = isMobile || isSidePanel
 
 type Props = {
   isVisible: boolean
@@ -71,16 +72,16 @@ const QrSigningFlowScreen = ({
       id="qr-signing-flow-screen"
       sheetRef={ref}
       autoWidth={false}
-      adjustToContentHeight={isMobile}
-      modalHeight={isWeb ? 585 : undefined}
+      adjustToContentHeight={withMobileLayout}
+      modalHeight={isWeb && !withMobileLayout ? 585 : undefined}
       onClosed={handleClose}
       autoOpen={isVisible}
       type={!isTab ? 'bottom-sheet' : 'modal'}
       withBackdropBlur={false}
       shouldBeClosableOnDrag={false}
-      containerInnerWrapperStyles={isWeb ? flexbox.flex1 : undefined}
+      containerInnerWrapperStyles={isWeb && !withMobileLayout ? flexbox.flex1 : undefined}
       scrollViewProps={
-        isWeb
+        isWeb && !withMobileLayout
           ? {
               contentContainerStyle: flexbox.flex1
             }

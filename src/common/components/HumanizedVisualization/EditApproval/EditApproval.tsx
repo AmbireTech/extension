@@ -6,17 +6,18 @@ import { useModalize } from 'react-native-modalize'
 
 import { getTokenAmount } from '@ambire-common/libs/portfolio/helpers'
 import { getSafeAmountFromFieldValue } from '@ambire-common/utils/numbers/formatters'
-import EditPenIcon from '@common/assets/svg/EditPenIcon'
 import AmountInput from '@common/components/AmountInput'
 import BottomSheet from '@common/components/BottomSheet'
+import ModalHeader from '@common/components/BottomSheet/ModalHeader'
 import Button from '@common/components/Button'
+import EditButton from '@common/components/EditButton'
 import FooterGlassView from '@common/components/FooterGlassView'
 import Text from '@common/components/Text'
 import TokenIcon from '@common/components/TokenIcon'
 import { isMobile, isWeb } from '@common/config/env'
 import useController from '@common/hooks/useController'
-import useHover, { AnimatedPressable } from '@common/hooks/useHover'
 import useTheme from '@common/hooks/useTheme'
+import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import MaxAmount from '@common/modules/swap-and-bridge/components/MaxAmount'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
@@ -123,9 +124,8 @@ const EditApproval = ({
 }) => {
   const { t } = useTranslation()
   const { theme } = useTheme()
-  const [bindEditApprovals, , isEditApprovalsHovered] = useHover({
-    preset: 'opacityInverted'
-  })
+  const { isCompactLayout, isCompactSidePanelLayout } = useCompactActionRequestLayout()
+  const footerButtonStyle = isCompactLayout ? flexbox.flex1 : isWeb ? { width: 100 } : undefined
   const {
     ref: editApprovalsSheetRef,
     open: openEditApprovals,
@@ -196,42 +196,24 @@ const EditApproval = ({
 
   return (
     <>
-      <AnimatedPressable
-        style={[
-          flexbox.directionRow,
-          flexbox.alignCenter,
-          spacings.mrTy,
-          { marginLeft: -8 },
-          style
-        ]}
-        {...bindEditApprovals}
+      <EditButton
         onPress={handleOpenEditApprovals}
-      >
-        <Text fontSize={14} color={theme.linkText}>
-          {'['}
-        </Text>
-        <EditPenIcon width={20} height={20} color={theme.linkText} />
-        {!isMobile && (
-          <Text fontSize={14} color={theme.linkText} underline={isEditApprovalsHovered}>
-            {t('Edit')}
-          </Text>
-        )}
-        <Text fontSize={14} color={theme.linkText}>
-          {']'}
-        </Text>
-      </AnimatedPressable>
+        style={[spacings.mrTy, { marginLeft: -8 }, style]}
+      />
       <BottomSheet
         sheetRef={editApprovalsSheetRef}
         id={`edit-approvals-bottom-sheet-${id}`}
-        type="modal"
+        type={isCompactSidePanelLayout ? 'bottom-sheet' : 'modal'}
         closeBottomSheet={closeEditApprovals}
-        style={{ maxWidth: 460 }}
-        shouldBeClosableOnDrag={false}
+        style={isCompactLayout ? { width: '100%' } : { maxWidth: 460 }}
+        shouldBeClosableOnDrag={isMobile}
       >
+        <ModalHeader
+          title={t('Grant approval for')}
+          handleClose={closeEditApprovals}
+          style={isMobile ? spacings.mbSm : spacings.mbLg}
+        />
         <View style={flexbox.alignCenter}>
-          <Text fontSize={20} weight="medium" style={[spacings.mbXl, spacings.mtTy]}>
-            {t('Grant approval for')}
-          </Text>
           <View style={{ width: '100%' }}>
             <EditApprovalAmountInput
               initialAmount={initialAmount}
@@ -249,25 +231,49 @@ const EditApproval = ({
             style={{ ...spacings.mt2Xl }}
             mobileStyle={{
               ...flexbox.directionRow,
-              ...spacings.mtLg
+              ...spacings.mt2Xl
             }}
+            innerContainerStyle={isCompactLayout && !isMobile ? { width: '100%' } : undefined}
           >
-            <Button
-              type="secondary"
-              text={t('Cancel')}
-              onPress={() => closeEditApprovals()}
-              hasBottomSpacing={false}
-              size="smaller"
-              style={[spacings.mrTy, isWeb && { width: 100 }, isMobile && flexbox.flex1]}
-            />
-            <Button
-              type="primary"
-              text={t('Save')}
-              onPress={() => editCall(amountRef.current, token, chainId, closeEditApprovals)}
-              hasBottomSpacing={false}
-              size="smaller"
-              style={[isWeb && { width: 100 }, isMobile && flexbox.flex1]}
-            />
+            {isMobile ? (
+              <>
+                <Button
+                  type="outline"
+                  text={t('Cancel')}
+                  onPress={() => closeEditApprovals()}
+                  hasBottomSpacing={false}
+                  size="smaller"
+                  style={footerButtonStyle}
+                />
+                <Button
+                  type="primary"
+                  text={t('Save')}
+                  onPress={() => editCall(amountRef.current, token, chainId, closeEditApprovals)}
+                  hasBottomSpacing={false}
+                  size="smaller"
+                  style={footerButtonStyle}
+                />
+              </>
+            ) : (
+              <>
+                <Button
+                  type="primary"
+                  text={t('Save')}
+                  onPress={() => editCall(amountRef.current, token, chainId, closeEditApprovals)}
+                  hasBottomSpacing={false}
+                  size="smaller"
+                  style={footerButtonStyle}
+                />
+                <Button
+                  type="outline"
+                  text={t('Cancel')}
+                  onPress={() => closeEditApprovals()}
+                  hasBottomSpacing={false}
+                  size="smaller"
+                  style={footerButtonStyle}
+                />
+              </>
+            )}
           </FooterGlassView>
         </View>
       </BottomSheet>

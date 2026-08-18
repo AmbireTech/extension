@@ -18,12 +18,13 @@ import HoldToProceedButton from '@common/components/HoldToProceedButton'
 import NoKeysToSignAlert from '@common/components/NoKeysToSignAlert'
 import { isMobile, isWeb } from '@common/config/env'
 import useSign from '@common/hooks/useSign'
+import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import Estimation from '@common/modules/sign-account-op/components/Estimation'
 import BundlerWarning from '@common/modules/sign-account-op/components/Estimation/components/bundlerWarning'
 import SafetyChecksBanner from '@common/modules/sign-account-op/components/SafetyChecksBanner'
 import { ModalsProps } from '@common/modules/sign-account-op/types/modals'
 import KeySelect from '@common/modules/sign-message/components/KeySelect'
-import spacings from '@common/styles/spacings'
+import spacings, { SPACING_TY } from '@common/styles/spacings'
 import { getUiType } from '@common/utils/uiType'
 
 export type OneClickEstimationProps = {
@@ -40,7 +41,7 @@ export type OneClickEstimationProps = {
   Modals: React.ComponentType<ModalsProps>
 }
 
-const { isRequestWindow, isTab } = getUiType()
+const { isRequestWindow, isTab, isSidePanel } = getUiType()
 
 const OneClickEstimation = ({
   closeEstimationModal,
@@ -56,6 +57,7 @@ const OneClickEstimation = ({
   Modals
 }: OneClickEstimationProps) => {
   const { t } = useTranslation()
+  const { isCompactSidePanelLayout } = useCompactActionRequestLayout()
   const hasFreshActionPressRef = useRef(false)
 
   const signingErrors = useMemo(() => {
@@ -132,7 +134,7 @@ const OneClickEstimation = ({
       <BottomSheet
         id="estimation-modal"
         sheetRef={estimationModalRef}
-        type={isTab ? 'modal' : 'bottom-sheet'}
+        type={isTab && !isSidePanel ? 'modal' : 'bottom-sheet'}
         // NOTE: This must be lower than SigningKeySelect's z-index
         customZIndex={5}
         style={spacings.pb}
@@ -148,7 +150,9 @@ const OneClickEstimation = ({
               <SafetyChecksBanner
                 key={banner.id}
                 type={banner.type}
+                title={banner.title}
                 text={banner.text}
+                secondaryText={banner.secondaryText}
                 style={spacings.mbTy}
               />
             ))}
@@ -210,8 +214,13 @@ const OneClickEstimation = ({
               absolute={false}
               isSimpleBlur={false}
               style={isMobile ? spacings.ptLg : spacings.pt}
+              innerContainerStyle={
+                isCompactSidePanelLayout
+                  ? { width: '100%', gap: SPACING_TY, alignItems: 'stretch' }
+                  : undefined
+              }
             >
-              {!isMobile && (
+              {!isMobile && !isCompactSidePanelLayout && (
                 <Button
                   testID="back-button"
                   type="secondary"
@@ -233,6 +242,7 @@ const OneClickEstimation = ({
                   onPressIn={markFreshActionPress}
                   onHoldComplete={() => runWithFreshActionPress(onSignButtonClick)}
                   size={isMobile ? 'regular' : 'smaller'}
+                  style={isCompactSidePanelLayout ? { flex: 1, minWidth: 0 } : undefined}
                 />
               ) : (
                 <ButtonWithLoader
@@ -244,6 +254,21 @@ const OneClickEstimation = ({
                   onPressIn={markFreshActionPress}
                   onPress={() => runWithFreshActionPress(onSignButtonClick)}
                   size={isMobile ? 'regular' : 'smaller'}
+                  style={isCompactSidePanelLayout ? { flex: 1, minWidth: 0 } : undefined}
+                />
+              )}
+
+              {/* Side panel only: stack Back under the primary action */}
+              {!isMobile && isCompactSidePanelLayout && (
+                <Button
+                  testID="back-button"
+                  type="secondary"
+                  text={t('Back')}
+                  onPress={closeEstimationModal}
+                  hasBottomSpacing={false}
+                  disabled={isSignLoading}
+                  style={{ flex: 1, minWidth: 0 }}
+                  size="smaller"
                 />
               )}
             </ButtonsWrapper>

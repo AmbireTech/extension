@@ -1,10 +1,9 @@
 import React from 'react'
-import { useTranslation } from 'react-i18next'
 
 import FooterGlassView from '@common/components/FooterGlassView'
-import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import LayoutWrapper from '@common/components/LayoutWrapper'
 import ScrollableWrapper from '@common/components/ScrollableWrapper'
+import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import getAndFormatTokenDetails from '@common/modules/dashboard/helpers/getTokenDetails'
 import Header from '@common/modules/header/components/Header/Header'
 import TokenDetailsButton from '@common/modules/token-details/components/Button'
@@ -15,11 +14,11 @@ import TokenData from '@common/modules/token-details/components/TokenData'
 import TokenPriceDisplay from '@common/modules/token-details/components/TokenPriceDisplay'
 import TokenDetailsTransactionHistory from '@common/modules/token-details/components/TransactionHistory'
 import useTokenDetails from '@common/modules/token-details/hooks/useTokenDetails'
-import spacings from '@common/styles/spacings'
+import spacings, { SPACING_MI } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
 const TokenDetailsScreen = () => {
-  const { t } = useTranslation()
+  const { isCompactSidePanelLayout } = useCompactActionRequestLayout()
   const {
     token,
     networks,
@@ -90,7 +89,20 @@ const TokenDetailsScreen = () => {
         <Exchanges exchanges={token.meta?.exchanges || []} />
         <TokenDetailsTransactionHistory />
       </ScrollableWrapper>
-      <FooterGlassView size="sm">
+      <FooterGlassView
+        size="sm"
+        style={isCompactSidePanelLayout ? spacings.phSm : undefined}
+        glassViewProps={
+          isCompactSidePanelLayout
+            ? { cssStyle: { width: '100%', alignSelf: 'stretch' } }
+            : undefined
+        }
+        innerContainerStyle={
+          isCompactSidePanelLayout
+            ? { gap: SPACING_MI, width: '100%', alignItems: 'stretch' }
+            : undefined
+        }
+      >
         {actions.map((action) => (
           <TokenDetailsButton
             key={action.id}

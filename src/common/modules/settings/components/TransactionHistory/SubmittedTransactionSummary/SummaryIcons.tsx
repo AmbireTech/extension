@@ -6,12 +6,12 @@ import AmbireLogo from '@common/assets/svg/AmbireLogo'
 import GasTankIcon from '@common/assets/svg/GasTankIcon'
 import SendIcon from '@common/assets/svg/SendIcon'
 import SwapIcon from '@common/assets/svg/SwapIcon'
+import ManifestImage from '@common/components/ManifestImage'
 import TokenIcon from '@common/components/TokenIcon'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import common from '@common/styles/utils/common'
 import { checkIfImageExists } from '@common/utils/checkIfImageExists'
-import ManifestImage from '@web/components/ManifestImage'
 
 import { DappInteraction, DisplayBalanceChange } from './types'
 

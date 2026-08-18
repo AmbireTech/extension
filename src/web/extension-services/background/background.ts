@@ -29,10 +29,15 @@ import { controllersNestedInMainMapping } from '@common/constants/controllersMap
 import { AutoLockController } from '@common/controllers/auto-lock'
 import { WalletStateController } from '@common/controllers/wallet-state'
 import LedgerSigner from '@common/modules/hardware-wallet/libs/LedgerSigner'
+import TrezorSigner from '@common/modules/hardware-wallet/libs/TrezorSigner'
+import QrHardwareController from '@common/modules/hardware-wallets/controllers/QrHardwareController/QrHardwareController'
+import UrQrProtocolAdapter from '@common/modules/hardware-wallets/qr/protocol/UrQrProtocolAdapter'
+import QrHardwareSigner from '@common/modules/hardware-wallets/signers/QrHardwareSigner'
 import handleProviderRequests from '@common/modules/provider/handleProviderRequests'
 import { storage } from '@common/services/storage'
 import { Action, MethodAction } from '@common/types/actions'
 import { LOG_LEVELS, logInfoWithPrefix } from '@common/utils/logger'
+import { serializeControllerForUI } from '@common/utils/serializeControllerForUI'
 import {
   BROWSER_EXTENSION_LOG_UPDATED_CONTROLLER_STATE_ONLY,
   BROWSER_EXTENSION_MEMORY_INTENSIVE_LOGS,
@@ -55,6 +60,10 @@ import {
   handleRegisterScripts
 } from '@web/extension-services/background/handlers/handleScripting'
 import { notificationManager } from '@web/extension-services/background/webapi/notification'
+import {
+  getDappTabFocusDispatcher,
+  getPanelManager
+} from '@web/extension-services/background/webapi/panel'
 import windowManager from '@web/extension-services/background/webapi/window'
 import {
   initializeMessenger,
@@ -64,23 +73,21 @@ import {
 } from '@web/extension-services/messengers'
 import LatticeController from '@web/modules/hardware-wallet/controllers/LatticeController'
 import LedgerController from '@web/modules/hardware-wallet/controllers/LedgerController'
-import QrHardwareController from '@common/modules/hardware-wallets/controllers/QrHardwareController/QrHardwareController'
 import TrezorController from '@web/modules/hardware-wallet/controllers/TrezorController'
 import LatticeSigner from '@web/modules/hardware-wallet/libs/LatticeSigner'
-import TrezorSigner from '@common/modules/hardware-wallet/libs/TrezorSigner'
-import UrQrProtocolAdapter from '@common/modules/hardware-wallets/qr/protocol/UrQrProtocolAdapter'
-import QrHardwareSigner from '@common/modules/hardware-wallets/signers/QrHardwareSigner'
 import { providerRequestTransport } from '@web/modules/provider/providerRequestTransport'
 import { getExtensionInstanceId } from '@web/utils/analytics'
+import { isExtensionOverlayPort } from '@web/utils/sidePanel'
 
+import { buildScrubFailureFallbackEvent } from './buildScrubFailureFallbackEvent'
 import {
   captureBackgroundException,
   CRASH_ANALYTICS_BACKGROUND_CONFIG,
   setBackgroundExtraContext,
   setBackgroundUserContext
 } from './CrashAnalytics'
-import { buildScrubFailureFallbackEvent } from './buildScrubFailureFallbackEvent'
 import { getReportableAction } from './getReportableAction'
+import { syncRequestWindowRoute } from './initialRoute'
 
 const debugLogs: {
   key: string
@@ -285,16 +292,24 @@ providerRequestTransport.reply(async ({ method, id, providerId, params }, meta) 
   // wait for mainCtrl to be initialized before handling dapp requests
   while (!mainCtrl || !walletStateCtrl) await wait(200)
 
-  const tabId = meta.sender?.tab?.id
-  const windowId = meta.sender?.tab?.windowId
-  if (tabId === undefined || windowId === undefined || !meta.sender?.url) {
+  const senderTab = meta.sender?.tab
+  const tabId = senderTab?.id
+  const windowId = senderTab?.windowId
+  if (!senderTab || tabId === undefined || windowId === undefined || !meta.sender?.url) {
     return
   }
 
   const session = await mainCtrl.dapps.getOrCreateDappSession({
     tabId,
     windowId,
-    url: meta.sender.url
+    url: meta.sender.url,
+    // SECURITY: `frameId` and `tab.url` come from the browser, not from the page, so an embedded
+    // dApp cannot lie about sitting inside a phishing top-level document. `sender.url` is the
+    // requesting frame's URL, while `sender.tab.url` is the tab's top-level document URL.
+    // Default to the top frame when the browser omits `frameId`, so the frame context is always
+    // refreshed on the extension - leaving it undefined would preserve a previous visit's value.
+    frameId: meta.sender.frameId ?? 0,
+    topFrameUrl: senderTab.url
   })
 
   await mainCtrl.dapps.initialLoadPromise
@@ -479,6 +494,11 @@ const init = async () => {
               setBackgroundExtraContext('account', selectedAccountCtrl.account.addr)
             }
           }
+
+          // Update the UI requests route if needed
+          if (ctrl.name === 'RequestsController' || ctrl.name === 'KeystoreController') {
+            syncRequestWindowRoute({ pm, mainCtrl }).catch(captureBackgroundException)
+          }
         }, 'background')
       }
     })
@@ -539,6 +559,8 @@ const init = async () => {
         ...windowManager,
         remove: async (winId: number | 'popup') => {
           if (winId === 'popup') {
+            // Only the popup is closed here. The side panel can't be closed programmatically,
+            // and it doesn't need to be - requests are rendered in it while it is open.
             return new Promise((resolve) => {
               const popupPort = pm.ports.find((p) => p.name === 'popup')
               if (!popupPort) {
@@ -560,6 +582,8 @@ const init = async () => {
           await windowManager.remove(winId, pm)
         }
       },
+      panel: getPanelManager(pm),
+      dispatchDappTabFocus: getDappTabFocusDispatcher(pm),
       notification: notificationManager,
       message: {
         sendToastMessage: (text, options) => {
@@ -575,6 +599,10 @@ const init = async () => {
       }
     }
   })
+
+  // Load them immediately (the optimization is for mobile only)
+  void mainCtrl.phishing.init()
+  void mainCtrl.dapps.init()
 
   walletStateCtrl = new WalletStateController({
     eventEmitterRegistry,
@@ -615,17 +643,9 @@ const init = async () => {
       const registeredCtrl = eventEmitterRegistry.values().find((ctrl) => ctrl.name === ctrlName)
       if (!registeredCtrl) return
 
-      // Controller updates
-      const stateToSendToFE = registeredCtrl.toJSON()
-
-      if (ctrlName === 'MainController') {
-        // We are removing the state of the nested controllers in main to avoid the CPU-intensive task of parsing + stringifying.
-        // We should access the state of the nested controllers directly from their context instead of accessing them through the main ctrl state on the FE.
-        // Keep in mind: if we just spread `ctrl` instead of calling `ctrl.toJSON()`, the getters won't be included.
-        controllersNestedInMainMapping.forEach((nestedCtrlName) => {
-          delete (stateToSendToFE as any)[nestedCtrlName]
-        })
-      }
+      // Controller updates. We should access the state of the nested controllers
+      // directly from their context instead of through the main ctrl state on the FE.
+      const stateToSendToFE = serializeControllerForUI(registeredCtrl)
 
       pm.send('> ui', { method: ctrlName, params: stateToSendToFE, forceEmit })
 
@@ -684,12 +704,29 @@ const init = async () => {
   // listen for messages from UI
   browser.runtime.onConnect.addListener(async (port: Port) => {
     const [name, id] = port.name.split(':') as [Port['name'], Port['id']]
-    if (['popup', 'tab', 'request-window'].includes(name)) {
+    if (['popup', 'tab', 'request-window', 'side-panel'].includes(name)) {
+      // These port names grant access to every controller method (exporting keys and
+      // the seed phrase included), so only our own extension pages may claim them.
+      const senderUrl = port.sender?.url
+      const isFromOurExtension = port.sender?.id === browser.runtime.id
+      const isFromExtensionPage = !senderUrl || senderUrl.startsWith(browser.runtime.getURL(''))
+
+      if (!isFromOurExtension || !isFromExtensionPage) {
+        port.disconnect()
+        return
+      }
+
       port.id = id || nanoid()
 
       port.name = name
       pm.addOrUpdatePort(port, () => {
         mainCtrl.ui.addView({ id: port.id, type: port.name })
+
+        if (isExtensionOverlayPort(port.name)) {
+          mainCtrl.onPopupOpen(port.id).catch((error) => {
+            console.error('Failed to initialize overlay view', error)
+          })
+        }
 
         pm.addConnectListener(
           port.id,
@@ -700,7 +737,7 @@ const init = async () => {
 
             try {
               if (messageType === '> background' && type) {
-                await handleActions(action, { pm, port, eventEmitterRegistry, mainCtrl })
+                await handleActions(action, { pm, port, eventEmitterRegistry, mainCtrl, meta })
               }
             } catch (err: any) {
               console.error(`${type} action failed:`, err)
@@ -746,7 +783,7 @@ const init = async () => {
           // state will remain reset until an automatic update is triggered.
           // Example: the user has the dashboard opened in tab, opens the popup
           // and closes it immediately.
-          if (disconnectedPort.name === 'popup') mainCtrl.portfolio.forceEmitUpdate()
+          if (isExtensionOverlayPort(disconnectedPort.name)) mainCtrl.portfolio.forceEmitUpdate()
           if (disconnectedPort.name === 'tab' || disconnectedPort.name === 'request-window') {
             // eslint-disable-next-line @typescript-eslint/no-floating-promises
             ledgerCtrl.cleanUp()
@@ -776,6 +813,13 @@ const setupStorageForTesting = async () => {
 
   await checkE2EStorage()
 }
+
+// Ensures controllers are initialized as soon as the service worker starts,
+// so UI ports (popup, side panel, tab) can connect without waiting for a ping.
+init().catch((err) => {
+  captureBackgroundException(err)
+  console.error(err)
+})
 
 // Ensures controllers are initialized when the browser starts.
 browser.runtime.onStartup.addListener(() => {
@@ -828,12 +872,9 @@ try {
     // wait for mainCtrl to be initialized before handling dapp requests
     while (!mainCtrl) await wait(200)
 
-    // Match by the session's own tabId: keys are `windowId-tabId-dappId`, so the
+    // Sessions are matched by their own tabId: keys are `windowId-tabId-dappId`, so the
     // old `${tabId}-` prefix never matched and leaked sessions past tab close.
-    const { dappSessions } = mainCtrl.dapps
-    for (const key of Object.keys(dappSessions)) {
-      if (dappSessions[key]?.tabId === tabId) mainCtrl.dapps.deleteDappSession(key)
-    }
+    mainCtrl.dapps.deleteDappSessionsForTab(tabId)
   })
 } catch (error) {
   console.error('Failed to register browser.tabs.onRemoved.addListener', error)

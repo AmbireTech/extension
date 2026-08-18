@@ -18,6 +18,14 @@ const searchWithNetworkName = <T extends object>({
     return items
   }
 
+  // Without networks there is no network name to match on, so index the items
+  // as they are instead of cloning every one of them just to add an empty field.
+  if (!networks.length) {
+    const fuse = new Fuse(items, { keys, threshold: 0.3 })
+
+    return fuse.search(search).map(({ item }) => item)
+  }
+
   // Use this map to avoid searching the network name for every token using find
   const networkChainIdToNameMap: { [chainId: string]: string } = {}
 

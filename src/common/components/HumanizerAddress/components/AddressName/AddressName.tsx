@@ -15,6 +15,7 @@ interface Props extends TextProps {
   chainId: bigint
   actionsMode?: 'tooltip' | 'inline'
   fallbackLabel?: string
+  isToken?: boolean
 }
 
 const AddressName: FC<Props> = ({
@@ -22,6 +23,7 @@ const AddressName: FC<Props> = ({
   chainId,
   actionsMode = 'tooltip',
   fallbackLabel,
+  isToken,
   ...rest
 }) => {
   const { name, isLoading } = useReverseLookup({ address })
@@ -62,6 +64,7 @@ const AddressName: FC<Props> = ({
         isDisplayingPlainAddress={!name && !fallbackLabel && !contractName}
         actionsMode={actionsMode}
         chainId={chainId}
+        isToken={isToken}
         {...rest}
       >
         {name || fallbackLabel || contractName || address}

@@ -38,6 +38,9 @@ import {
 } from '@mobile/components/MobileLayoutWrapper'
 
 const TYPE_TITLES: Record<ExploreSectionType, string> = {
+  // 'trending' is listed for type completeness; trending has its own dedicated screen (it never
+  // routes to this dapp-only section screen).
+  trending: 'Trending',
   recent: 'Recent',
   connected: 'Connected',
   favorites: 'Favorites',

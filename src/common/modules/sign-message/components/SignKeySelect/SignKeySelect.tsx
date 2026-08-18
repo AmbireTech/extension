@@ -1,12 +1,15 @@
-import React from 'react'
+import React, { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Pressable, View } from 'react-native'
 
 import { Account } from '@ambire-common/interfaces/account'
 import { Key } from '@ambire-common/interfaces/keystore'
 import AccountKey from '@common/components/AccountKey'
+import { openBottomSheetsCount } from '@common/components/BottomSheet/bottomSheetEventStream'
+import { BOTTOM_SHEET_Z_INDEX } from '@common/components/BottomSheet/styles'
 import Spinner from '@common/components/Spinner'
 import Text from '@common/components/Text'
+import { isMobile } from '@common/config/env'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import spacings, { SPACING_LG } from '@common/styles/spacings'
@@ -37,14 +40,29 @@ const SigningKeySelect = ({
   const { theme, styles } = useTheme(getStyles)
   const { keys } = useController('KeystoreController').state
 
+  // On mobile the sign flow lives in a BottomSheet portalled into the same
+  // "global" host, so sit one step above the topmost sheet that was open when
+  // this opened. Sheets opened later (the NFC PIN prompt) take the next step up
+  // and stay on top. Read non-reactively, or opening one would bump this too.
+  const mobileZIndex = useMemo(
+    () =>
+      isVisible ? BOTTOM_SHEET_Z_INDEX + Math.max(0, openBottomSheetsCount.value - 1) * 2 + 1 : 0,
+    [isVisible]
+  )
+
   if (!isVisible) return null
 
   return (
     <Portal hostName="global">
-      <Pressable onPress={handleClose} style={styles.overlay} />
+      <Pressable
+        onPress={handleClose}
+        style={[styles.overlay, isMobile && { zIndex: mobileZIndex }]}
+      />
+      {/* Shares the overlay's zIndex on mobile, but renders above it as the later sibling */}
       <View
         style={[
           styles.container,
+          isMobile && { zIndex: mobileZIndex },
           {
             right: SPACING_LG
           }

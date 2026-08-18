@@ -6,8 +6,11 @@ import NetworkIcon from '@common/components/NetworkIcon'
 import Text, { TextWeight } from '@common/components/Text'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
-import { SPACING_SM, SPACING_TY } from '@common/styles/spacings'
+import { SPACING_MI, SPACING_SM, SPACING_TY } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
+import { getUiType } from '@common/utils/uiType'
+
+const { isSidePanel } = getUiType()
 
 interface Props {
   chainId?: bigint
@@ -47,6 +50,8 @@ const NetworkBadge: FC<Props> = ({
   const networkName = useMemo(() => network?.name || t('Unknown network'), [network?.name, t])
 
   const iconSizeScaled = useMemo(() => {
+    if (isSidePanel) return iconSize || 16
+
     return (iconSize || 24) * responsiveSizeMultiplier
   }, [iconSize, responsiveSizeMultiplier])
 
@@ -57,20 +62,23 @@ const NetworkBadge: FC<Props> = ({
       style={{
         ...flexbox.directionRow,
         ...flexbox.alignCenter,
-        paddingLeft: SPACING_SM * responsiveSizeMultiplier,
-        paddingRight: SPACING_TY * responsiveSizeMultiplier,
+        paddingLeft: isSidePanel ? SPACING_TY : SPACING_SM * responsiveSizeMultiplier,
+        paddingRight: isSidePanel ? SPACING_TY : SPACING_TY * responsiveSizeMultiplier,
         paddingVertical: 2,
-        borderRadius: 50 * responsiveSizeMultiplier,
+        borderRadius: isSidePanel ? 20 : 50 * responsiveSizeMultiplier,
         borderWidth: 1,
-        height: 40,
+        height: isSidePanel ? 32 : 40,
         borderColor: theme.primaryBorder,
+        ...(isSidePanel ? { flexShrink: 1, minWidth: 0 } : {}),
         ...style
       }}
     >
       <Text
-        fontSize={fontSize || 16 * responsiveSizeMultiplier}
+        fontSize={isSidePanel ? 12 : fontSize || 16 * responsiveSizeMultiplier}
         weight={weight || 'medium'}
         appearance="secondaryText"
+        numberOfLines={isSidePanel ? 1 : undefined}
+        style={isSidePanel ? { flexShrink: 1, minWidth: 0 } : undefined}
       >
         {withOnPrefix ? t('on ') : null}
         {!renderNetworkName ? networkName : renderNetworkName(networkName)}
@@ -79,7 +87,8 @@ const NetworkBadge: FC<Props> = ({
         <NetworkIcon
           key={network?.chainId.toString() || networkName}
           style={{
-            marginLeft: SPACING_TY * responsiveSizeMultiplier,
+            marginLeft: isSidePanel ? SPACING_MI : SPACING_TY * responsiveSizeMultiplier,
+            flexShrink: 0,
             ...iconStyle
           }}
           id={network?.chainId.toString() || networkName}

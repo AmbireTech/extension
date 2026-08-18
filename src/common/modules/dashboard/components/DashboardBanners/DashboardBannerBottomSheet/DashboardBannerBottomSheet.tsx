@@ -6,10 +6,12 @@ import { getIsBridgeRoute } from '@ambire-common/libs/swapAndBridge/swapAndBridg
 import BottomSheet from '@common/components/BottomSheet'
 import DualChoiceModal from '@common/components/DualChoiceModal'
 import Text from '@common/components/Text'
+import { isMobile } from '@common/config/env'
 import useController from '@common/hooks/useController'
 import ActiveRouteCard from '@common/modules/swap-and-bridge/components/ActiveRouteCard'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
+import text from '@common/styles/utils/text'
 
 type Props = {
   id: string
@@ -70,7 +72,11 @@ const DashboardBannerBottomSheet: FC<Props> = ({ id, sheetRef, closeBottomSheet 
       )}
       {id === 'bridge-in-progress' && (
         <View style={[flexbox.flex1, spacings.ptSm]}>
-          <Text fontSize={16} weight="medium" style={spacings.mbLg}>
+          <Text
+            fontSize={isMobile ? 20 : 16}
+            weight="medium"
+            style={[spacings.mbLg, isMobile && text.center]}
+          >
             {t('Pending bridge transactions')}
           </Text>
           {activeRoutes

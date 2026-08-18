@@ -1,9 +1,10 @@
-import React, { useCallback, useRef, useState } from 'react'
+import React, { useCallback, useContext, useRef, useState } from 'react'
 import { Animated, NativeScrollEvent, NativeSyntheticEvent, View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 
 import GasTankModal from '@common/components/GasTankModal'
 import LayoutWrapper from '@common/components/LayoutWrapper'
+import { ControllersStateLoadedContext } from '@common/contexts/controllersStateLoadedContext'
 import useController from '@common/hooks/useController'
 import useDebounce from '@common/hooks/useDebounce'
 import useTheme from '@common/hooks/useTheme'
@@ -13,6 +14,7 @@ import DashboardPages from '@common/modules/dashboard/components/DashboardPages'
 import PendingActionWindowModal from '@common/modules/dashboard/components/PendingActionWindowModal'
 import getStyles from '@common/modules/dashboard/screens/styles'
 import { getUiType } from '@common/utils/uiType'
+import DashboardShell from '@web/modules/dashboard/components/DashboardShell'
 
 const { isPopup } = getUiType()
 
@@ -32,6 +34,11 @@ const DashboardScreen = () => {
   const {
     state: { account, portfolio }
   } = useController('SelectedAccountController')
+  // The splash hides as soon as the account is known, but the full dashboard reads
+  // many deferred controllers (keystore, requests, portfolio, banners, ...). Until
+  // they all arrive, render a lightweight shell (real header, menu buttons and
+  // skeletons); mount the full dashboard only once every controller is ready.
+  const { areAllControllerStatesLoaded } = useContext(ControllersStateLoadedContext)
 
   const onScroll = useCallback(
     (event: NativeSyntheticEvent<NativeScrollEvent>) => {
@@ -79,27 +86,35 @@ const DashboardScreen = () => {
 
   return (
     <LayoutWrapper>
-      <GasTankModal
-        modalRef={gasTankModalRef}
-        handleClose={closeGasTankModal}
-        portfolio={portfolio}
-        account={account}
-      />
+      {!areAllControllerStatesLoaded ? (
+        <View style={styles.container}>
+          <DashboardShell />
+        </View>
+      ) : (
+        <>
+          <GasTankModal
+            modalRef={gasTankModalRef}
+            handleClose={closeGasTankModal}
+            portfolio={portfolio}
+            account={account}
+          />
 
-      <PendingActionWindowModal />
-      <View style={styles.container}>
-        <DashboardOverview
-          openGasTankModal={openGasTankModal}
-          animatedOverviewHeight={animatedOverviewHeight}
-          dashboardOverviewSize={debouncedDashboardOverviewSize}
-          setDashboardOverviewSize={setDashboardOverviewSize}
-        />
-        <DashboardPages
-          onScroll={onScroll}
-          animatedOverviewHeight={animatedOverviewHeight}
-          isSearchHidden={isSearchHidden}
-        />
-      </View>
+          <PendingActionWindowModal />
+          <View style={styles.container}>
+            <DashboardOverview
+              openGasTankModal={openGasTankModal}
+              animatedOverviewHeight={animatedOverviewHeight}
+              dashboardOverviewSize={debouncedDashboardOverviewSize}
+              setDashboardOverviewSize={setDashboardOverviewSize}
+            />
+            <DashboardPages
+              onScroll={onScroll}
+              animatedOverviewHeight={animatedOverviewHeight}
+              isSearchHidden={isSearchHidden}
+            />
+          </View>
+        </>
+      )}
     </LayoutWrapper>
   )
 }

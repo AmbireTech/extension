@@ -15,6 +15,8 @@ type TokenPriceDisplayProps = Pick<TokenResult, 'symbol' | 'address' | 'chainId'
     'priceUSDFormatted' | 'change24h' | 'change24hFormatted'
   > & {
     onGasTank?: boolean
+    /** Fallback image and network badge for tokens not resolvable from the portfolio (e.g. trending). */
+    uri?: string
   }
 
 const TokenPriceDisplay = ({
@@ -22,6 +24,7 @@ const TokenPriceDisplay = ({
   address,
   chainId,
   onGasTank,
+  uri,
   priceUSDFormatted,
   change24h,
   change24hFormatted
@@ -39,6 +42,7 @@ const TokenPriceDisplay = ({
           height={12}
           withContainer
           withNetworkIcon={false}
+          uri={uri}
           address={address}
           onGasTank={onGasTank}
           chainId={chainId as any}

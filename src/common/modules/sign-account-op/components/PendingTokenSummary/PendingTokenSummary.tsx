@@ -170,7 +170,7 @@ const PendingTokenSummary = ({ token, chainId, hasBottomSpacing = true }: Props)
                 fontSize={16}
                 weight="medium"
                 appearance="secondaryText"
-              >{` ($${priceInUsd}) `}</Text>
+              >{` ($${priceInUsd})`}</Text>
             )}
           </Text>
           {suspiciousTokenWarning}

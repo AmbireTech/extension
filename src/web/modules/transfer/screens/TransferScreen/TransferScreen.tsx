@@ -12,7 +12,7 @@ import { CallsUserRequest, RequestExecutionType } from '@ambire-common/interface
 import { AccountOpStatus } from '@ambire-common/libs/accountOp/types'
 import { getSanitizedAmount } from '@ambire-common/libs/transfer/amount'
 import { getBenzinUrlParams } from '@ambire-common/utils/benzin'
-import { getAddressFromAddressState, getDomainFromAddressState } from '@ambire-common/utils/domains'
+import { getAddressFromAddressState, getResolvedDomainName } from '@ambire-common/utils/domains'
 import { getCallsCount } from '@ambire-common/utils/userRequest'
 import Alert from '@common/components/Alert'
 import { PanelBackButton, PanelTitle } from '@common/components/Panel/Panel'
@@ -28,9 +28,11 @@ import useAddressInput from '@common/hooks/useAddressInput'
 import useController from '@common/hooks/useController'
 import useHasGasTank from '@common/hooks/useHasGasTank'
 import useNavigation from '@common/hooks/useNavigation'
+import useShouldRenderRequestInPanel from '@common/hooks/useShouldRenderRequestInPanel'
 import useSyncedState from '@common/hooks/useSyncedState'
 import useToast from '@common/hooks/useToast'
 import { ROUTES, WEB_ROUTES } from '@common/modules/router/constants/common'
+import { getRouteForUserRequest } from '@common/modules/router/helpers'
 import BatchAdded from '@common/modules/sign-account-op/components/OneClick/BatchModal/BatchAdded'
 import Buttons from '@common/modules/sign-account-op/components/OneClick/Buttons'
 import Estimation from '@common/modules/sign-account-op/components/OneClick/Estimation'
@@ -50,7 +52,7 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
   const { addToast } = useToast()
   const { state: transferState, dispatch: transferDispatch } = useController('TransferController')
   const { dispatch: requestsDispatch } = useController('RequestsController')
-  const { verifiedDomainsStatus } = useController('DomainsController').state
+  const { verifiedDomainsStatus, domains } = useController('DomainsController').state
   const {
     isTopUp,
     validationFormMsgs,
@@ -81,6 +83,7 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
   }, [amountInFiat])
 
   const { navigate } = useNavigation()
+  const shouldRenderRequestInPanel = useShouldRenderRequestInPanel()
   const { t } = useTranslation()
   const { visibleUserRequests } = useController('RequestsController').state
   const {
@@ -359,6 +362,15 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
             args: [request.id]
           }
         })
+        // Side-panel routing only auto-navigates on request id changes. Re-opening the
+        // same queued batch from Send must navigate explicitly.
+        if (shouldRenderRequestInPanel) {
+          const targetRoute = getRouteForUserRequest({
+            currentUserRequest: request,
+            transferState
+          })
+          if (targetRoute) navigate(targetRoute)
+        }
         return
       }
 
@@ -382,7 +394,7 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
                         ? FEE_COLLECTOR
                         : getAddressFromAddressState(addressState),
                       executionType,
-                      recipientDomain: getDomainFromAddressState(addressState)
+                      recipientDomain: getResolvedDomainName(domains, addressState)
                     }
                   }
                 ]
@@ -411,7 +423,7 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
                     ? FEE_COLLECTOR
                     : getAddressFromAddressState(addressState),
                   executionType,
-                  recipientDomain: getDomainFromAddressState(addressState)
+                  recipientDomain: getResolvedDomainName(domains, addressState)
                 }
               }
             ]
@@ -427,8 +439,7 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
     [
       isSendingBatch,
       isFormValid,
-      transferState.selectedToken,
-      transferState.amount,
+      transferState,
       amountInFiatBigInt,
       visibleUserRequests,
       requestsDispatch,
@@ -439,7 +450,10 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
       resetTransferForm,
       networkUserRequests.length,
       openEstimationModalAndDispatch,
-      account?.safeCreation
+      account?.safeCreation,
+      navigate,
+      shouldRenderRequestInPanel,
+      domains
     ]
   )
 
@@ -463,7 +477,7 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
         }
         proceedBtnText={submitButtonText}
         isBatchDisabled={isSendingBatch || isSignAccountOpInProgress}
-        isNotReadyToProceed={!isTransferFormValid}
+        isNotReadyToProceed={!isSendingBatch && !isTransferFormValid}
         signAccountOpErrors={[]}
         networkUserRequests={networkUserRequests}
         isLocalStateOutOfSync={isLocalStateOutOfSync}

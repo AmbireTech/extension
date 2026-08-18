@@ -1,4 +1,4 @@
-name: Publish OTA update - iOS 📲
+name: 🍎 Publish OTA · iOS
 
 on:
   workflow_dispatch: # Manual trigger, usually from a release branch

@@ -52,8 +52,6 @@ const ViewOnlyAccountAdderScreen = () => {
       <MobileLayoutWrapperMainContent
         withBackButton
         onBackButtonPress={goToPrevRoute}
-        step={1}
-        totalSteps={2}
         title={t('Import a view-only address')}
         withScroll
       >

@@ -15,9 +15,12 @@ import useToast from '@common/hooks/useToast'
 import spacings from '@common/styles/spacings'
 import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
+import { getUiType } from '@common/utils/uiType'
 
 import ManageContact from './ManageContact'
 import getStyles from './styles'
+
+const { isSidePanel } = getUiType()
 
 interface Props {
   address: string
@@ -120,7 +123,14 @@ const AddressBookContact: FC<Props> = ({
       {...(onPress ? bindAnim : {})}
       testID={testID}
     >
-      <View style={[flexbox.directionRow, flexbox.alignCenter, flexbox.flex1]}>
+      <View
+        style={[
+          flexbox.directionRow,
+          flexbox.alignCenter,
+          flexbox.flex1,
+          isSidePanel && { minWidth: 0 }
+        ]}
+      >
         <Avatar
           {...(avatarSize && { size: avatarSize })}
           pfp={address}
@@ -128,7 +138,7 @@ const AddressBookContact: FC<Props> = ({
           smartAccountType={smartAccountType}
           displayTypeBadge={displayTypeBadge}
         />
-        <View style={{ flex: 1 }}>
+        <View style={[{ flex: 1 }, isSidePanel && { minWidth: 0 }]}>
           {isEditable ? (
             <Editable
               fontSize={fontSize}
@@ -142,8 +152,15 @@ const AddressBookContact: FC<Props> = ({
               onSave={onSave}
             />
           ) : (
-            <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-              <Text fontSize={fontSize} weight="medium" style={!name && spacings.mrTy}>
+            <View
+              style={[flexbox.directionRow, flexbox.alignCenter, isSidePanel && { minWidth: 0 }]}
+            >
+              <Text
+                fontSize={fontSize}
+                weight="medium"
+                numberOfLines={isSidePanel ? 1 : undefined}
+                style={!name && spacings.mrTy}
+              >
                 {name ||
                   (account?.addr === selectedAccount?.addr
                     ? account?.preferences.label
@@ -151,7 +168,13 @@ const AddressBookContact: FC<Props> = ({
               </Text>
             </View>
           )}
-          <View style={[flexbox.directionRow, flexbox.alignCenter]}>
+          <View
+            style={[
+              flexbox.directionRow,
+              flexbox.alignCenter,
+              isSidePanel && { flex: 1, minWidth: 0 }
+            ]}
+          >
             <AccountAddress
               {...reverseLookup}
               address={address}

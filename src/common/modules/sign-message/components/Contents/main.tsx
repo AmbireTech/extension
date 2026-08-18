@@ -29,8 +29,11 @@ import Info from '@common/modules/sign-message/components/Info'
 import isErc7730Visualization from '@common/modules/sign-message/utils/isErc7730Visualization'
 import spacings, { SPACING_LG, SPACING_MD, SPACING_TY } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
+import { getUiType } from '@common/utils/uiType'
 
 import getStyles from './styles'
+
+const { isSidePanel } = getUiType()
 
 interface Props {
   shouldDisplayLedgerConnectModal: boolean
@@ -120,45 +123,71 @@ const Main = ({
       : 'fallback'
   const messageVisualizationKey = `${signMessageState.messageToSign?.fromRequestId}-${messageVisualizationMode}`
 
+  const messageTypeBadge = isWeb ? (
+    <View style={styles.kindOfMessage}>
+      <Text fontSize={12} color={theme.infoText} numberOfLines={1}>
+        {signMessageState.messageToSign?.content.kind === 'typedMessage' && t('EIP-712')}
+        {signMessageState.messageToSign?.content.kind === 'message' && t('Standard')}
+        {signMessageState.messageToSign?.content.kind === 'authorization-7702' &&
+          t('EIP-7702')}{' '}
+        {t('Type')}
+      </Text>
+    </View>
+  ) : null
+
   return (
     <Container withScroll={shouldUseErc7730TypedMessageCard || isMobile}>
-      <View
-        style={[
-          flexbox.directionRow,
-          flexbox.alignCenter,
-          flexbox.justifySpaceBetween,
-          {
-            marginBottom: SPACING_MD * responsiveSizeMultiplier
-          }
-        ]}
-      >
-        <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-          <Text
-            weight="medium"
-            fontSize={isMobile ? 20 : 24 * responsiveSizeMultiplier}
-            style={[spacings.mrSm]}
-          >
+      {isSidePanel ? (
+        <View style={{ marginBottom: SPACING_MD * responsiveSizeMultiplier }}>
+          <Text weight="medium" fontSize={24 * responsiveSizeMultiplier}>
             {t('Sign message')}
           </Text>
-          {isWeb && (
-            <View style={styles.kindOfMessage}>
-              <Text fontSize={12} color={theme.infoText} numberOfLines={1}>
-                {signMessageState.messageToSign?.content.kind === 'typedMessage' && t('EIP-712')}
-                {signMessageState.messageToSign?.content.kind === 'message' && t('Standard')}
-                {signMessageState.messageToSign?.content.kind === 'authorization-7702' &&
-                  t('EIP-7702')}{' '}
-                {t('Type')}
-              </Text>
-            </View>
-          )}
+          <View
+            style={[
+              flexbox.directionRow,
+              flexbox.alignCenter,
+              flexbox.wrap,
+              spacings.mtTy,
+              { minWidth: 0, rowGap: SPACING_TY, columnGap: SPACING_TY }
+            ]}
+          >
+            {messageTypeBadge}
+            <NetworkBadge
+              chainId={signMessageState.messageToSign?.chainId}
+              responsiveSizeMultiplier={responsiveSizeMultiplier}
+              withOnPrefix
+            />
+          </View>
         </View>
-        <NetworkBadge
-          chainId={signMessageState.messageToSign?.chainId}
-          responsiveSizeMultiplier={responsiveSizeMultiplier}
-          withOnPrefix
-        />
-        {/* @TODO: Replace with Badge; add size prop to badge; add tooltip  */}
-      </View>
+      ) : (
+        <View
+          style={[
+            flexbox.directionRow,
+            flexbox.alignCenter,
+            flexbox.justifySpaceBetween,
+            {
+              marginBottom: SPACING_MD * responsiveSizeMultiplier
+            }
+          ]}
+        >
+          <View style={[flexbox.directionRow, flexbox.alignCenter]}>
+            <Text
+              weight="medium"
+              fontSize={isMobile ? 20 : 24 * responsiveSizeMultiplier}
+              style={[spacings.mrSm]}
+            >
+              {t('Sign message')}
+            </Text>
+            {messageTypeBadge}
+          </View>
+          <NetworkBadge
+            chainId={signMessageState.messageToSign?.chainId}
+            responsiveSizeMultiplier={responsiveSizeMultiplier}
+            withOnPrefix
+          />
+          {/* @TODO: Replace with Badge; add size prop to badge; add tooltip  */}
+        </View>
+      )}
       {isMobile && (
         <View style={[flexbox.alignStart, { height: 24, marginBottom: -24 }]}>
           <View style={[styles.kindOfMessage, { transform: [{ translateY: -18 }] }]}>
@@ -178,7 +207,9 @@ const Main = ({
             <SafetyChecksBanner
               key={banner.id}
               type={banner.type}
+              title={banner.title}
               text={banner.text}
+              secondaryText={banner.secondaryText}
               style={spacings.mbTy}
             />
           ))}
@@ -309,7 +340,9 @@ const Main = ({
         </View>
         {signMessageState.signer &&
           signMessageState.signer.key.type !== 'internal' &&
-          signMessageState.signer.key.type !== 'qr' && (
+          signMessageState.signer.key.type !== 'qr' &&
+          // NFC cards drive their own tap/PIN modal, mounted globally
+          signMessageState.signer.key.type !== 'nfc' && (
             <HardwareWalletSigningModal
               keyType={signMessageState.signer.key.type}
               isVisible={signStatus === 'LOADING'}

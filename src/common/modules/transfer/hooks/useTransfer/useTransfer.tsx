@@ -4,13 +4,13 @@ import { useTranslation } from 'react-i18next'
 import { useModalize } from 'react-native-modalize'
 
 import { FEE_COLLECTOR } from '@ambire-common/consts/addresses'
-import { SigningStatus } from '@ambire-common/interfaces/signAccountOp'
 import { AddressStateOptional } from '@ambire-common/interfaces/domains'
 import { Key } from '@ambire-common/interfaces/keystore'
+import { SigningStatus } from '@ambire-common/interfaces/signAccountOp'
 import { CallsUserRequest, RequestExecutionType } from '@ambire-common/interfaces/userRequest'
 import { getSanitizedAmount } from '@ambire-common/libs/transfer/amount'
 import { getBenzinUrlParams } from '@ambire-common/utils/benzin'
-import { getAddressFromAddressState, getDomainFromAddressState } from '@ambire-common/utils/domains'
+import { getAddressFromAddressState, getResolvedDomainName } from '@ambire-common/utils/domains'
 import { getCallsCount } from '@ambire-common/utils/userRequest'
 import useAddressInput from '@common/hooks/useAddressInput'
 import useController from '@common/hooks/useController'
@@ -29,7 +29,7 @@ const useTransfer = (isTopUpScreen: boolean) => {
   const { addToast } = useToast()
   const { state: transferState, dispatch: transferDispatch } = useController('TransferController')
   const { dispatch: requestsDispatch } = useController('RequestsController')
-  const { verifiedDomainsStatus } = useController('DomainsController').state
+  const { verifiedDomainsStatus, domains } = useController('DomainsController').state
   const {
     isTopUp,
     validationFormMsgs,
@@ -362,7 +362,7 @@ const useTransfer = (isTopUpScreen: boolean) => {
                         ? FEE_COLLECTOR
                         : getAddressFromAddressState(addressState),
                       executionType,
-                      recipientDomain: getDomainFromAddressState(addressState)
+                      recipientDomain: getResolvedDomainName(domains, addressState)
                     }
                   }
                 ]
@@ -391,7 +391,7 @@ const useTransfer = (isTopUpScreen: boolean) => {
                     ? FEE_COLLECTOR
                     : getAddressFromAddressState(addressState),
                   executionType,
-                  recipientDomain: getDomainFromAddressState(addressState)
+                  recipientDomain: getResolvedDomainName(domains, addressState)
                 }
               }
             ]
@@ -443,7 +443,7 @@ const useTransfer = (isTopUpScreen: boolean) => {
         }
         proceedBtnText={submitButtonText}
         isBatchDisabled={isSendingBatch || isSignAccountOpInProgress}
-        isNotReadyToProceed={!isTransferFormValid}
+        isNotReadyToProceed={!isSendingBatch && !isTransferFormValid}
         signAccountOpErrors={[]}
         networkUserRequests={networkUserRequests}
         isLocalStateOutOfSync={isLocalStateOutOfSync}

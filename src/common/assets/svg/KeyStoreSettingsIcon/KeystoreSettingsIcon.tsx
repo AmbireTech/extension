@@ -13,7 +13,7 @@ const KeyStoreSettingsIcon: React.FC<SvgProps> = ({ width = 24, height = 24, col
         x="5"
         y="1"
         stroke={color || theme.iconPrimary}
-        strokeWidth="1.5"
+        strokeWidth="1.58"
         rx="2"
       />
       <Path stroke={color || theme.iconPrimary} strokeLinecap="round" d="M17 14.375H7" />

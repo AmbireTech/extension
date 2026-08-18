@@ -22,6 +22,7 @@ interface Props extends TextProps {
   shouldWrapInlineActions?: boolean
   chainId: bigint
   verification?: BlacklistedStatus
+  isToken?: boolean
 }
 const HUMANIZER_META = humanizerInfo as HumanizerMeta
 
@@ -32,6 +33,7 @@ const HumanizerAddress: FC<Props> = ({
   hideLogo = false,
   actionsMode = 'tooltip',
   chainId,
+  isToken,
   ...rest
 }) => {
   const addressInfo: HumanizerMetaAddress | undefined = useMemo(() => {
@@ -67,6 +69,7 @@ const HumanizerAddress: FC<Props> = ({
         highestPriorityAlias={highestPriorityAlias}
         actionsMode={actionsMode}
         chainId={chainId}
+        isToken={isToken}
         {...rest}
       />
     </View>
