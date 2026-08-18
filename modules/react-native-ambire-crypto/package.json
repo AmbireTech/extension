@@ -26,8 +26,8 @@
     "!**/__mocks__"
   ],
   "scripts": {
-    "ubrn:android": "ubrn build android --config ubrn.config.yaml --release --and-generate && yarn ubrn:postgenerate",
-    "ubrn:ios": "ubrn build ios --config ubrn.config.yaml --release --and-generate && yarn ubrn:postgenerate",
+    "ubrn:android": "../../node_modules/.bin/ubrn build android --config ubrn.config.yaml --release --and-generate && yarn ubrn:postgenerate",
+    "ubrn:ios": "../../node_modules/.bin/ubrn build ios --config ubrn.config.yaml --release --and-generate && yarn ubrn:postgenerate",
     "ubrn:postgenerate": "node scripts/forceNativeStringDecoder.js",
     "ubrn:clean": "rm -rfv cpp/ android/CMakeLists.txt android/src/main/java android/*.cpp ios/ src/Native* src/index.*ts* src/generated/"
   },

@@ -2,29 +2,28 @@
 // Trust me, you don't want to mess with it!
 /* tslint:disable */
 /* eslint-disable */
+// @ts-nocheck
+import nativeModule from './ambire_crypto-ffi'
 import {
+  type UniffiRustFutureContinuationCallback,
+  type UniffiForeignFutureDroppedCallback,
+  type UniffiForeignFutureDroppedCallbackStruct
+} from './ambire_crypto-ffi'
+import {
+  type UniffiByteArray,
   AbstractFfiConverterByteArray,
   FfiConverterArrayBuffer,
   FfiConverterInt32,
   FfiConverterUInt32,
   FfiConverterUInt8,
   RustBuffer,
-  type UniffiByteArray,
-  uniffiCreateFfiConverterString,
   UniffiError,
   UniffiInternalError,
   UniffiRustCaller,
+  uniffiCreateFfiConverterString,
   uniffiTypeNameSymbol,
   variantOrdinalSymbol
 } from '@ubjs/core'
-
-// @ts-nocheck
-import nativeModule, {
-  type UniffiForeignFutureDroppedCallback,
-  type UniffiForeignFutureDroppedCallbackStruct,
-  type UniffiRustFutureContinuationCallback
-} from './ambire_crypto-ffi'
-
 const uniffiCaller = new UniffiRustCaller(() => ({ code: 0 }))
 
 const uniffiIsDebug =
@@ -241,10 +240,7 @@ const stringConverter = (() => {
   // JS, which decodes every string Rust returns byte-by-byte on the JS thread.
   const decoder: { decode(input: UniffiByteArray): string } = {
     decode: (bytes: UniffiByteArray) =>
-      nativeModule().ubrn_uniffi_internal_fn_func_ffi__string_from_buffer(
-        bytes,
-        undefined as any
-      ) as string
+      nativeModule().ubrn_uniffi_internal_fn_func_ffi__string_from_buffer(bytes, undefined as any) as string
   }
   return {
     // Single-string lower() uses the C++ helper — TextEncoder.encode

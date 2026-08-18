@@ -1,4 +1,27 @@
 PODS:
+  - AmbireCrypto (0.1.0):
+    - hermes-engine
+    - RCTRequired
+    - RCTTypeSafety
+    - React-Core
+    - React-Core-prebuilt
+    - React-debug
+    - React-Fabric
+    - React-featureflags
+    - React-graphics
+    - React-ImageManager
+    - React-jsi
+    - React-NativeModulesApple
+    - React-RCTFabric
+    - React-renderercss
+    - React-rendererdebug
+    - React-utils
+    - ReactCodegen
+    - ReactCommon/turbomodule/bridging
+    - ReactCommon/turbomodule/core
+    - ReactNativeDependencies
+    - uniffi-bindgen-react-native (= 0.31.0-3)
+    - Yoga
   - AsyncStorage (3.0.2):
     - hermes-engine
     - RCTRequired
@@ -2124,7 +2147,7 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
-  - RNReanimated (4.1.1):
+  - RNReanimated (4.3.0):
     - hermes-engine
     - RCTRequired
     - RCTTypeSafety
@@ -2146,10 +2169,11 @@ PODS:
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
-    - RNReanimated/reanimated (= 4.1.1)
+    - RNReanimated/apple (= 4.3.0)
+    - RNReanimated/common (= 4.3.0)
     - RNWorklets
     - Yoga
-  - RNReanimated/reanimated (4.1.1):
+  - RNReanimated/apple (4.3.0):
     - hermes-engine
     - RCTRequired
     - RCTTypeSafety
@@ -2171,10 +2195,9 @@ PODS:
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
-    - RNReanimated/reanimated/apple (= 4.1.1)
     - RNWorklets
     - Yoga
-  - RNReanimated/reanimated/apple (4.1.1):
+  - RNReanimated/common (4.3.0):
     - hermes-engine
     - RCTRequired
     - RCTTypeSafety
@@ -2243,7 +2266,7 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
-  - RNWorklets (0.5.1):
+  - RNWorklets (0.8.3):
     - hermes-engine
     - RCTRequired
     - RCTTypeSafety
@@ -2265,33 +2288,10 @@ PODS:
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
-    - RNWorklets/worklets (= 0.5.1)
+    - RNWorklets/apple (= 0.8.3)
+    - RNWorklets/common (= 0.8.3)
     - Yoga
-  - RNWorklets/worklets (0.5.1):
-    - hermes-engine
-    - RCTRequired
-    - RCTTypeSafety
-    - React-Core
-    - React-Core-prebuilt
-    - React-debug
-    - React-Fabric
-    - React-featureflags
-    - React-graphics
-    - React-hermes
-    - React-ImageManager
-    - React-jsi
-    - React-NativeModulesApple
-    - React-RCTFabric
-    - React-renderercss
-    - React-rendererdebug
-    - React-utils
-    - ReactCodegen
-    - ReactCommon/turbomodule/bridging
-    - ReactCommon/turbomodule/core
-    - ReactNativeDependencies
-    - RNWorklets/worklets/apple (= 0.5.1)
-    - Yoga
-  - RNWorklets/worklets/apple (0.5.1):
+  - RNWorklets/apple (0.8.3):
     - hermes-engine
     - RCTRequired
     - RCTTypeSafety
@@ -2314,6 +2314,31 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
+  - RNWorklets/common (0.8.3):
+    - hermes-engine
+    - RCTRequired
+    - RCTTypeSafety
+    - React-Core
+    - React-Core-prebuilt
+    - React-debug
+    - React-Fabric
+    - React-featureflags
+    - React-graphics
+    - React-hermes
+    - React-ImageManager
+    - React-jsi
+    - React-NativeModulesApple
+    - React-RCTFabric
+    - React-renderercss
+    - React-rendererdebug
+    - React-utils
+    - ReactCodegen
+    - ReactCommon/turbomodule/bridging
+    - ReactCommon/turbomodule/core
+    - ReactNativeDependencies
+    - Yoga
+  - uniffi-bindgen-react-native (0.31.0-3):
+    - React-Core
   - Yoga (0.0.0)
   - YttriumWrapper (0.10.50)
   - ZIPFoundation (0.9.20)
@@ -2324,6 +2349,7 @@ PODS:
     - ZXingObjC/Core
 
 DEPENDENCIES:
+  - AmbireCrypto (from `../modules/react-native-ambire-crypto`)
   - "AsyncStorage (from `../node_modules/@react-native-async-storage/async-storage`)"
   - BVLinearGradient (from `../node_modules/react-native-linear-gradient`)
   - EXApplication (from `../node_modules/expo-application/ios`)
@@ -2436,6 +2462,7 @@ DEPENDENCIES:
   - RNReanimated (from `../node_modules/react-native-reanimated`)
   - RNSVG (from `../node_modules/react-native-svg`)
   - RNWorklets (from `../node_modules/react-native-worklets`)
+  - uniffi-bindgen-react-native (from `../node_modules/uniffi-bindgen-react-native`)
   - Yoga (from `../node_modules/react-native/ReactCommon/yoga`)
 
 SPEC REPOS:
@@ -2447,6 +2474,8 @@ SPEC REPOS:
     - ZXingObjC
 
 EXTERNAL SOURCES:
+  AmbireCrypto:
+    :path: "../modules/react-native-ambire-crypto"
   AsyncStorage:
     :path: "../node_modules/@react-native-async-storage/async-storage"
   BVLinearGradient:
@@ -2670,10 +2699,13 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native-svg"
   RNWorklets:
     :path: "../node_modules/react-native-worklets"
+  uniffi-bindgen-react-native:
+    :path: "../node_modules/uniffi-bindgen-react-native"
   Yoga:
     :path: "../node_modules/react-native/ReactCommon/yoga"
 
 SPEC CHECKSUMS:
+  AmbireCrypto: f9f0a64c49505c4d53aef1a76d7cc00f6a36fcfc
   AsyncStorage: 2e1d431842588f5af845737e6435c1fcbecdab51
   BVLinearGradient: 7815a70ab485b7b155186dd0cc836363e0288cad
   EXApplication: 1e98d4b1dccdf30627f92917f4b2c5a53c330e5f
@@ -2784,9 +2816,10 @@ SPEC CHECKSUMS:
   ReactNativeDependencies: 71ce9c28beb282aa720ea7b46980fff9669f428a
   RNCMaskedView: d2578d41c59b936db122b2798ba37e4722d21035
   RNGestureHandler: 2914750df066d89bf9d8f48a10ad5f0051108ac3
-  RNReanimated: 6e0147e13f8906f63703143f40237f84347e6ca1
+  RNReanimated: a1feff5d7563e472480f982dce4ef38b044c6178
   RNSVG: 31d6639663c249b7d5abc9728dde2041eb2a3c34
-  RNWorklets: 76fce72926e28e304afb44f0da23b2d24f2c1fa0
+  RNWorklets: e31a7cd9e9b3d3cf8cb79a1c5f01e6573b5476f9
+  uniffi-bindgen-react-native: 5a59022841548d4c890e8f259016bdb8a797208a
   Yoga: 5934998fbeaef7845dbf698f698518695ab4cd1a
   YttriumWrapper: d7f63336830536f1da41b745ed8bacedb04228c4
   ZIPFoundation: dfd3d681c4053ff7e2f7350bc4e53b5dba3f5351

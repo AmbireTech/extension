@@ -6,13 +6,12 @@
 // @ts-nocheck
 
 import {
-  StructuralEquality as UniffiStructuralEquality,
-  type,
-  UniffiForeignFuture as RuntimeUniffiForeignFuture,
-  UniffiGcObject,
-  UniffiResult,
-  UniffiRustCallStatus,
-  UniffiRustFutureContinuationCallback as RuntimeUniffiRustFutureContinuationCallback
+  type StructuralEquality as UniffiStructuralEquality,
+  type UniffiForeignFuture as RuntimeUniffiForeignFuture,
+  type UniffiRustCallStatus,
+  type UniffiGcObject,
+  type UniffiRustFutureContinuationCallback as RuntimeUniffiRustFutureContinuationCallback,
+  type UniffiResult
 } from '@ubjs/core'
 
 interface NativeModuleInterface {
