@@ -25,7 +25,7 @@ import {
   getDetailedValueLines,
   getErc7730SpenderRow,
   getErc7730SummaryRows,
-  getVisibleErc7730Rows,
+  getVisibleErc7730RowsExcludingTitleParts,
   hasErc7730NativeValueRow,
   hasTokenValue,
   isNestedErc7730Row,
@@ -83,7 +83,9 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
     showDescriptionTitle &&
     !!item.title?.trim() &&
     detailedRows[0]?.label.trim() !== item.title.trim()
-  const visibleRows = useMemo(() => getVisibleErc7730Rows(item), [item])
+  // Rows shown directly under the transaction-summary title/intent should not repeat
+  // values already rendered as part of the interpolated intent (item.titleParts).
+  const visibleRows = useMemo(() => getVisibleErc7730RowsExcludingTitleParts(item), [item])
   const renderValue = useCallback(
     (valueItem: HumanizerVisualization, overrideTextSize = textSize): React.ReactNode => {
       if (!valueItem || ('isHidden' in valueItem && valueItem.isHidden)) return null
