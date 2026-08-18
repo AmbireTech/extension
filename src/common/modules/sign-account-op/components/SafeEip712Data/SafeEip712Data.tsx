@@ -5,10 +5,11 @@ import { GestureResponderEvent, Pressable, View } from 'react-native'
 import { stringify } from '@ambire-common/libs/richJson/richJson'
 import CopyText from '@common/components/CopyText'
 import Text from '@common/components/Text'
-import { isWeb } from '@common/config/env'
+import { isMobile, isWeb } from '@common/config/env'
 import useTheme from '@common/hooks/useTheme'
 import FallbackVisualization from '@common/modules/sign-message/components/FallbackVisualization'
 import spacings from '@common/styles/spacings'
+import { getUiType } from '@common/utils/uiType'
 
 import { getSafeEip712DataValue, getSafeEip712HashRows } from './helpers'
 import getStyles from './styles'
@@ -20,7 +21,6 @@ interface Props {
   chainId?: bigint
   safeEip712Data?: unknown | null
   withTitle?: boolean
-  withTwoColumnParsedData?: boolean
   /** Controls the active tab from the outside, e.g. when the tab bar is rendered elsewhere. */
   activeTab?: ActiveTab
   onTabChange?: (tab: ActiveTab) => void
@@ -30,12 +30,13 @@ interface Props {
 
 export type ActiveTab = 'hashes' | 'parsed' | 'raw'
 
+const { isSidePanel } = getUiType()
+
 const SafeEip712Data: FC<Props> = ({
   accountAddr,
   chainId,
   safeEip712Data,
   withTitle = true,
-  withTwoColumnParsedData = false,
   activeTab: controlledActiveTab,
   onTabChange,
   hideTabs = false
@@ -174,10 +175,10 @@ const SafeEip712Data: FC<Props> = ({
             setHasReachedBottom={setHasReachedBottom}
             hasReachedBottom
             scrollEnabled={false}
-            withCompactDataRow={!withTwoColumnParsedData}
-            withTwoColumnDataRow={withTwoColumnParsedData}
+            withTwoColumnDataRow
             withDecimalIntegerRows
-            withRegularParsedText={withTwoColumnParsedData}
+            withRegularParsedText
+            parsedValueMaxLength={isMobile || isSidePanel ? 24 : undefined}
             hideTabs
             containerStyle={styles.fallbackVisualization}
             separatorColor={theme.secondaryBackground}

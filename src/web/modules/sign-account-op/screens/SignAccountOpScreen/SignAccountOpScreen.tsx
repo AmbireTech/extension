@@ -19,7 +19,6 @@ import useController from '@common/hooks/useController'
 import useSign from '@common/hooks/useSign'
 import useTheme from '@common/hooks/useTheme'
 import ActionHeader from '@common/modules/action-requests/components/ActionHeader'
-import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import ErrorInformation from '@common/modules/sign-account-op/components/ErrorInformation'
 import Estimation from '@common/modules/sign-account-op/components/Estimation'
 import Footer from '@common/modules/sign-account-op/components/Footer'
@@ -64,7 +63,6 @@ const SignAccountOpScreen = () => {
     useController('SignAccountOpController')
   const { t } = useTranslation()
   const { theme } = useTheme()
-  const { isCompactSidePanelLayout } = useCompactActionRequestLayout()
   const closeActionWindow = useCloseActionWindow()
   const [containerHeight, setContainerHeight] = useState(0)
   const [contentHeight, setContentHeight] = useState(0)
@@ -411,6 +409,8 @@ const SignAccountOpScreen = () => {
               networkChainId={network?.chainId}
               onTabChange={handleSafeAccountTabChange}
             />
+          ) : isSidePanel && signAccountOpState?.account.safeCreation ? (
+            <SafeNonce withNetwork />
           ) : (
             <View
               style={[
@@ -421,13 +421,7 @@ const SignAccountOpScreen = () => {
               ]}
             >
               <SectionHeading withMb={false}>{t('Overview')}</SectionHeading>
-              <View
-                style={[
-                  flexbox.directionRow,
-                  flexbox.alignCenter,
-                  isCompactSidePanelLayout && [spacings.mtTy, flexbox.justifySpaceBetween]
-                ]}
-              >
+              <View style={[flexbox.directionRow, flexbox.alignCenter]}>
                 <SafeNonce />
                 <NetworkBadge
                   chainId={network?.chainId}
@@ -500,7 +494,6 @@ const SignAccountOpScreen = () => {
                 chainId={signAccountOpState?.accountOp.chainId}
                 safeEip712Data={signAccountOpState?.safeEip712Data}
                 withTitle={false}
-                withTwoColumnParsedData
                 hideTabs
                 activeTab={activeSafeAccountTab as SafeEip712ActiveTab}
                 onTabChange={handleSafeAccountTabChange}

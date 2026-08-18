@@ -5,7 +5,7 @@ import { View, ViewStyle } from 'react-native'
 import NetworkIcon from '@common/components/NetworkIcon'
 import NumberInput from '@common/components/NumberInput'
 import Text from '@common/components/Text'
-import { isMobile, isWeb } from '@common/config/env'
+import { isMobile } from '@common/config/env'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import spacings, { SPACING_MI, SPACING_TY } from '@common/styles/spacings'
@@ -16,7 +16,11 @@ import { isValidSafeNonce } from './helpers'
 const getNonce = (safeTxNonce: string | undefined, accountOpNonce: bigint | null) =>
   safeTxNonce === undefined ? (accountOpNonce ?? 0n) : BigInt(safeTxNonce)
 
-const SafeNonce = () => {
+interface Props {
+  withNetwork?: boolean
+}
+
+const SafeNonce = ({ withNetwork = false }: Props) => {
   const { t } = useTranslation()
   const { theme } = useTheme()
   const { state: signAccountOpState, dispatch } = useController('SignAccountOpController')
@@ -55,6 +59,7 @@ const SafeNonce = () => {
     !signAccountOpState?.isSignInProgress &&
     !signAccountOpState?.accountOp.signed?.length &&
     !signAccountOpState?.accountOp.safeTx?.confirmations?.length
+  const hasNetworkLayout = isMobile || withNetwork
   const isDraftValid = isValidSafeNonce(draftNonce, latestNonce)
   const isDraftBelowLatestNonce =
     latestNonce !== undefined && isValidSafeNonce(draftNonce) && BigInt(draftNonce) < latestNonce
@@ -93,28 +98,31 @@ const SafeNonce = () => {
           onChangeText={handleNonceChange}
           precision={0}
           disabled={!canEdit}
-          containerStyle={[spacings.mb0 as ViewStyle, isWeb ? { width: 80 } : flexbox.flex1]}
+          containerStyle={[
+            spacings.mb0 as ViewStyle,
+            hasNetworkLayout ? flexbox.flex1 : { width: 80 }
+          ]}
           inputWrapperStyle={{
-            height: isMobile ? 30 : 32,
+            height: hasNetworkLayout ? 30 : 32,
             borderRadius: 50,
             ...(canEdit && !!validationMessage ? { borderColor: theme.errorDecorative } : {})
           }}
           inputStyle={[spacings.phTy as ViewStyle, { height: 30 }]}
           nativeInputStyle={{
             color: theme.primaryText,
-            fontSize: isWeb ? 14 : 16,
+            fontSize: hasNetworkLayout ? 16 : 14,
             textAlign: 'center'
           }}
           backgroundColor={theme.tertiaryBackground}
         />
       </View>
     ),
-    [canEdit, draftNonce, handleNonceChange, nonce, theme, validationMessage]
+    [canEdit, draftNonce, handleNonceChange, hasNetworkLayout, nonce, theme, validationMessage]
   )
 
   if (!signAccountOpState?.account.safeCreation) return null
 
-  return isWeb ? (
+  return !hasNetworkLayout ? (
     <View style={{ width: 165, height: 40 }}>
       <View
         style={[

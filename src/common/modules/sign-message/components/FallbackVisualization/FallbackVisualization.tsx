@@ -138,6 +138,7 @@ const FallbackVisualization: FC<{
   withTwoColumnDataRow?: boolean
   withDecimalIntegerRows?: boolean
   withRegularParsedText?: boolean
+  parsedValueMaxLength?: number
   disableScroll?: boolean
   hideTabs?: boolean
   containerStyle?: StyleProp<ViewStyle>
@@ -155,6 +156,7 @@ const FallbackVisualization: FC<{
   withTwoColumnDataRow = false,
   withDecimalIntegerRows = false,
   withRegularParsedText = false,
+  parsedValueMaxLength,
   disableScroll = false,
   hideTabs = false,
   containerStyle,
@@ -324,11 +326,21 @@ const FallbackVisualization: FC<{
                     : null
                 const hasPlainValue = plainValue !== null
                 const displayedValue = hasPlainValue
-                  ? getParsedMessageValue(i.label, plainValue, integerFieldNames)
+                  ? getParsedMessageValue(
+                      i.label,
+                      plainValue,
+                      integerFieldNames,
+                      parsedValueMaxLength
+                    )
                   : i.componentToReturn
                 const copyValue =
                   typeof plainValue === 'string' &&
-                  isParsedMessageValueShortened(i.label, plainValue, integerFieldNames)
+                  isParsedMessageValueShortened(
+                    i.label,
+                    plainValue,
+                    integerFieldNames,
+                    parsedValueMaxLength
+                  )
                     ? plainValue
                     : null
 
@@ -337,6 +349,7 @@ const FallbackVisualization: FC<{
                     key={`${i.path}-${i.value}`}
                     style={[
                       styles.parsedRow,
+                      withTwoColumnDataRow && { flexWrap: 'nowrap' },
                       withStackedParsedRows && {
                         flexDirection: 'column',
                         alignItems: 'stretch',
@@ -358,6 +371,7 @@ const FallbackVisualization: FC<{
                       appearance="secondaryText"
                       style={[
                         styles.parsedLabel,
+                        withTwoColumnDataRow && { minWidth: 0 },
                         withStackedParsedRows && { flex: 0, minWidth: 0, width: '100%' },
                         {
                           marginLeft: Math.max(i.n - 1, 0) * SPACING_SM * responsiveSizeMultiplier
@@ -369,6 +383,7 @@ const FallbackVisualization: FC<{
                     <View
                       style={[
                         styles.parsedValue,
+                        withTwoColumnDataRow && { minWidth: 0 },
                         withStackedParsedRows && {
                           flex: 0,
                           minWidth: 0,
