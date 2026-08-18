@@ -353,8 +353,21 @@ const initControllers = (config: any) => {
 
 // Proxy Listener
 window.addEventListener('message', (event) => {
+  let data: any
   try {
-    const data = typeof event.data === 'string' ? decode(event.data) : event.data
+    data = typeof event.data === 'string' ? decode(event.data) : event.data
+  } catch (e) {
+    // NEVER log the raw message nor the parse error itself in production.
+    // Dispatched actions could carry secrets (keystore password, extra entropy) and V8
+    // quotes a slice of the offending input inside its JSON.parse error message,
+    // so both would leak them into logcat. DefinePlugin inlines __DEV__ (see
+    // webpack.webview.config.js), so this branch is stripped from prod bundles.
+    if (__DEV__) console.error('WebView failed to decode message', e, event.data)
+    else console.error('WebView failed to decode an incoming message')
+    return
+  }
+
+  try {
     if (data.type === 'response') {
       const { id, result, error } = data
       if (error) pendingPromises[id]?.reject(new Error(error))
@@ -369,7 +382,7 @@ window.addEventListener('message', (event) => {
       handleActions(data.action, { eventEmitterRegistry, mainCtrl, sendToReactEvent })
     }
   } catch (e) {
-    console.error('WebView failed to parse message', e, event.data)
+    console.error('WebView failed to handle message', data?.type, e)
   }
 })
 
