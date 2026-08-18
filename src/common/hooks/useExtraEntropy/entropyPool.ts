@@ -1,4 +1,4 @@
-import { concat, keccak256, toUtf8Bytes } from 'ethers'
+import { concatBytes, keccak256, stringToBytes } from 'viem'
 
 /**
  * A pool of unpredictable user input - the timing and position of whichever events each platform's
@@ -20,21 +20,29 @@ import { concat, keccak256, toUtf8Bytes } from 'ethers'
  * Kept at module level so the pool survives remounts and accumulates across the lifetime of this JS
  * context, and so collecting never goes through React state, which would re-render every consumer
  * of the hook on every event.
+ *
+ * Kept as bytes rather than a hex string, because folding is the one thing here that runs per event:
+ * a hex pool would mean encoding the digest to hex and parsing it back on every single fold.
  */
-let entropyPool: string | null = null
+let entropyPool: Uint8Array | null = null
 
 export const foldIntoEntropyPool = (sample: string) => {
-  const sampleBytes = toUtf8Bytes(sample)
+  const sampleBytes = stringToBytes(sample)
 
-  entropyPool = keccak256(entropyPool ? concat([entropyPool, sampleBytes]) : sampleBytes)
+  entropyPool = keccak256(
+    entropyPool ? concatBytes([entropyPool, sampleBytes]) : sampleBytes,
+    'bytes'
+  )
 
   return entropyPool
 }
 
-// Deliberately unthrottled, capping total work instead of the rate. A fold is ~11us on V8 and so
-// ~30-50us on Hermes, against an 8.3ms frame at 120Hz, while rate limiting is lossy exactly where
+// Deliberately unthrottled, capping total work instead of the rate. A fold is ~5us on V8 and so
+// ~15-25us on Hermes, against an 8.3ms frame at 120Hz, while rate limiting is lossy exactly where
 // events are scarcest: a mobile tap is a handful of touch events over ~100ms, of which a 50ms
-// throttle keeps two or three.
+// throttle keeps two or three. The cap is also what bounds the total: at two sources on mobile it is
+// ~1000 folds, so ~25ms of work for the whole lifetime of the JS context, spread over thousands of
+// events.
 //
 // The pool saturates its 256 bits within the first few dozen samples, so 512 is a wide margin even if
 // the per-event estimates in each hook turn out optimistic, and observing past it buys nothing. What
@@ -89,8 +97,9 @@ export const takeExtraEntropy = () => {
   const pool = foldIntoEntropyPool(`${performance.now()}-${Date.now()}`)
 
   // A hash of the pool rather than the pool itself, so one leaked extraEntropy reveals nothing about
-  // the pool that produced it, and therefore cannot derive what any later call will hand out.
-  const extraEntropy = keccak256(toUtf8Bytes(`take-${pool}`))
+  // the pool that produced it, and therefore cannot derive what any later call will hand out. The
+  // `take-` prefix separates this hash from the fold above, so the two can never collide.
+  const extraEntropy = keccak256(concatBytes([stringToBytes('take-'), pool]))
 
   // For debugging: uncomment to see how much had been collected from each source when a secret was
   // generated. An empty observedSamples means nothing is being collected at all, leaving the two
