@@ -45,7 +45,6 @@ interface Props {
   isErc7730TransactionSummaryLayout: boolean
   hasErc7730TransactionSummaryHeaderLeftControl: boolean
   hasErc7730TransactionSummaryHeaderRightControl: boolean
-  hideErc7730TransactionSummaryRows: boolean
   marginRight: number
 }
 
@@ -63,7 +62,6 @@ const HumanizedVisualizationItem: FC<Props> = ({
   isErc7730TransactionSummaryLayout,
   hasErc7730TransactionSummaryHeaderLeftControl,
   hasErc7730TransactionSummaryHeaderRightControl,
-  hideErc7730TransactionSummaryRows,
   marginRight
 }) => {
   const { theme } = useTheme()
@@ -82,7 +80,6 @@ const HumanizedVisualizationItem: FC<Props> = ({
         isTransactionSummaryLayout={isErc7730TransactionSummaryLayout}
         hasTransactionSummaryHeaderLeftControl={hasErc7730TransactionSummaryHeaderLeftControl}
         hasTransactionSummaryHeaderRightControl={hasErc7730TransactionSummaryHeaderRightControl}
-        hideTransactionSummaryRows={hideErc7730TransactionSummaryRows}
       />
     )
   }

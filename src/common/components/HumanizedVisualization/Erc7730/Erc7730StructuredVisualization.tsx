@@ -25,7 +25,7 @@ import {
   getDetailedValueLines,
   getErc7730SpenderRow,
   getErc7730SummaryRows,
-  getVisibleErc7730Rows,
+  getVisibleErc7730RowsExcludingTitleParts,
   hasErc7730NativeValueRow,
   hasTokenValue,
   isNestedErc7730Row,
@@ -46,7 +46,6 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
   isTransactionSummaryLayout = false,
   hasTransactionSummaryHeaderLeftControl = false,
   hasTransactionSummaryHeaderRightControl = false,
-  hideTransactionSummaryRows = false,
   showDescriptionTitle = false
 }) => {
   const { theme } = useTheme()
@@ -84,7 +83,9 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
     showDescriptionTitle &&
     !!item.title?.trim() &&
     detailedRows[0]?.label.trim() !== item.title.trim()
-  const visibleRows = useMemo(() => getVisibleErc7730Rows(item), [item])
+  // Rows shown directly under the transaction-summary title/intent should not repeat
+  // values already rendered as part of the interpolated intent (item.titleParts).
+  const visibleRows = useMemo(() => getVisibleErc7730RowsExcludingTitleParts(item), [item])
   const renderValue = useCallback(
     (valueItem: HumanizerVisualization, overrideTextSize = textSize): React.ReactNode => {
       if (!valueItem || ('isHidden' in valueItem && valueItem.isHidden)) return null
@@ -395,50 +396,55 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
                   )}
             </View>
           )}
-          {!hideTransactionSummaryRows && (
-            <View style={{ width: '100%', minWidth: 0 }}>
-              {visibleRows.map((row) => (
+          <View
+            style={[
+              !shouldHideTransactionSummaryTitle && {
+                marginTop: SPACING_TY * sizeMultiplierSize
+              },
+              { width: '100%', minWidth: 0 }
+            ]}
+          >
+            {visibleRows.map((row) => (
+              <View
+                key={`${item.id}-transaction-summary-${row.label}-${row.value
+                  .map((value) => value.id)
+                  .join('-')}`}
+                style={[
+                  flexbox.directionRow,
+                  flexbox.alignCenter,
+                  flexbox.justifySpaceBetween,
+                  { marginTop: SPACING_SM * sizeMultiplierSize },
+                  { width: '100%', minWidth: 0 }
+                ]}
+              >
+                {!!row.label.trim() && (
+                  <Text
+                    fontSize={12}
+                    weight="regular"
+                    appearance="secondaryText"
+                    style={[spacings.mrSm, { flexShrink: 1 }]}
+                  >
+                    {getTransactionSummaryRowLabel(row.label)}
+                  </Text>
+                )}
                 <View
-                  key={`${item.id}-transaction-summary-${row.label}-${row.value
-                    .map((value) => value.id)
-                    .join('-')}`}
                   style={[
                     flexbox.directionRow,
                     flexbox.alignCenter,
-                    flexbox.justifySpaceBetween,
-                    { marginTop: SPACING_SM * sizeMultiplierSize },
-                    { width: '100%', minWidth: 0 }
+                    flexbox.justifyEnd,
+                    flexbox.wrap,
+                    { minWidth: 0, flexShrink: 1 }
                   ]}
                 >
-                  {!!row.label.trim() && (
-                    <Text
-                      fontSize={12}
-                      weight="regular"
-                      appearance="secondaryText"
-                      style={[spacings.mrSm, { flexShrink: 1 }]}
-                    >
-                      {getTransactionSummaryRowLabel(row.label)}
-                    </Text>
-                  )}
-                  <View
-                    style={[
-                      flexbox.directionRow,
-                      flexbox.alignCenter,
-                      flexbox.justifyEnd,
-                      flexbox.wrap,
-                      { minWidth: 0, flexShrink: 1 }
-                    ]}
-                  >
-                    {row.value.map((value, valueIndex) => (
-                      <View key={value.id} style={valueIndex > 0 && spacings.mlTy}>
-                        {renderValue(value)}
-                      </View>
-                    ))}
-                  </View>
+                  {row.value.map((value, valueIndex) => (
+                    <View key={value.id} style={valueIndex > 0 && spacings.mlTy}>
+                      {renderValue(value)}
+                    </View>
+                  ))}
                 </View>
-              ))}
-            </View>
-          )}
+              </View>
+            ))}
+          </View>
         </View>
       )
     }

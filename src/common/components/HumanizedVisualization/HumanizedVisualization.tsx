@@ -25,7 +25,6 @@ interface Props {
   isErc7730TransactionSummaryLayout?: boolean
   hasErc7730TransactionSummaryHeaderLeftControl?: boolean
   hasErc7730TransactionSummaryHeaderRightControl?: boolean
-  hideErc7730TransactionSummaryRows?: boolean
   disableFlex?: boolean
   dapp?: IrCall['dapp']
   editApprovalCallInfo?: {
@@ -53,7 +52,6 @@ const HumanizedVisualization: FC<Props> = ({
   isErc7730TransactionSummaryLayout = false,
   hasErc7730TransactionSummaryHeaderLeftControl = false,
   hasErc7730TransactionSummaryHeaderRightControl = false,
-  hideErc7730TransactionSummaryRows = false,
   disableFlex = false,
   dapp
 }) => {
@@ -108,7 +106,6 @@ const HumanizedVisualization: FC<Props> = ({
             hasErc7730TransactionSummaryHeaderRightControl={
               hasErc7730TransactionSummaryHeaderRightControl
             }
-            hideErc7730TransactionSummaryRows={hideErc7730TransactionSummaryRows}
             marginRight={marginRight}
           />
         ) : null

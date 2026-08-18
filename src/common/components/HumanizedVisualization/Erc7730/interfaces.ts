@@ -25,7 +25,6 @@ export interface Erc7730StructuredVisualizationProps {
   isTransactionSummaryLayout?: boolean
   hasTransactionSummaryHeaderLeftControl?: boolean
   hasTransactionSummaryHeaderRightControl?: boolean
-  hideTransactionSummaryRows?: boolean
   showDescriptionTitle?: boolean
 }
 
