@@ -160,6 +160,10 @@ const NavigationStack = () => {
   const triggerBack = useBackAction()
   const { goBack } = useNavigation()
 
+  // Cards hidden behind the top one are frozen, so they have to be woken up as
+  // soon as a finger lands in the edge strip - before the drag moves anything.
+  const [isBackGesturePending, setIsBackGesturePending] = useState(false)
+
   // Memoized so the detector is not handed a freshly built gesture on every
   // render; the deps only change on navigation or when a sheet opens.
   const swipeBackGesture = useMemo(
@@ -175,6 +179,16 @@ const NavigationStack = () => {
         .activeOffsetX(GESTURE_ACTIVATION_OFFSET_X)
         .failOffsetY([-GESTURE_FAIL_OFFSET_Y, GESTURE_FAIL_OFFSET_Y])
         .hitSlop({ left: 0, width: GESTURE_RESPONSE_DISTANCE })
+        .onBegin(() => {
+          'worklet'
+
+          runOnJS(setIsBackGesturePending)(true)
+        })
+        .onFinalize(() => {
+          'worklet'
+
+          runOnJS(setIsBackGesturePending)(false)
+        })
         .onUpdate((e) => {
           'worklet'
 
@@ -219,6 +233,7 @@ const NavigationStack = () => {
             nextOffset={cardOffsets[index + 1] || null}
             isFocused={entry.cardKey === topCardKey && !isClosing}
             isClosing={isClosing}
+            isBackGesturePending={isBackGesturePending}
           >
             <AppRoutes location={entry.location} />
           </ScreenCard>

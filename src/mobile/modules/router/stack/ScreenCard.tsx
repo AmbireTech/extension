@@ -1,6 +1,13 @@
-import React, { ReactNode } from 'react'
+import React, { ReactNode, useState } from 'react'
 import { StyleSheet, useWindowDimensions, View } from 'react-native'
-import Animated, { SharedValue, useAnimatedStyle, useDerivedValue } from 'react-native-reanimated'
+import { Freeze } from 'react-freeze'
+import Animated, {
+  runOnJS,
+  SharedValue,
+  useAnimatedReaction,
+  useAnimatedStyle,
+  useDerivedValue
+} from 'react-native-reanimated'
 
 import { isiOS } from '@common/config/env'
 import { ScreenFocusProvider } from '@common/contexts/screenFocusContext'
@@ -26,11 +33,42 @@ type Props = {
   isFocused: boolean
   /** This card was popped and is animating out. */
   isClosing: boolean
+  /**
+   * A finger is down in the back gesture's edge strip. Nothing has moved yet, so
+   * this is the earliest warning a hidden card gets that it is about to be
+   * revealed and has to be rendering again by then.
+   */
+  isBackGesturePending: boolean
 }
 
-const ScreenCard = ({ children, offset, nextOffset, isFocused, isClosing }: Props) => {
+const ScreenCard = ({
+  children,
+  offset,
+  nextOffset,
+  isFocused,
+  isClosing,
+  isBackGesturePending
+}: Props) => {
   const { theme } = useTheme()
   const { width } = useWindowDimensions()
+
+  const [isCoveredByCardAbove, setIsCoveredByCardAbove] = useState(false)
+
+  // Watched on the UI thread, so the moment the card above leaves its resting
+  // place - dragged or animating - this card is rendering again before any of it
+  // can be seen.
+  useAnimatedReaction(
+    () => !!nextOffset && nextOffset.value === 0,
+    (isCovered, wasCovered) => {
+      if (isCovered !== wasCovered) runOnJS(setIsCoveredByCardAbove)(isCovered)
+    }
+  )
+
+  // A frozen subtree renders nothing at all, so only a card that is completely
+  // hidden behind another one may be frozen - anything still visible would go
+  // blank. In exchange, a screen sitting under another one stops re-rendering on
+  // every controller update it can no longer show.
+  const isFrozen = isCoveredByCardAbove && !isFocused && !isBackGesturePending
 
   const values = useDerivedValue(() =>
     getCardStyleValues(offset.value, nextOffset ? nextOffset.value : width, width, isClosing)
@@ -60,7 +98,9 @@ const ScreenCard = ({ children, offset, nextOffset, isFocused, isClosing }: Prop
             pointerEvents="none"
           />
         )}
-        <ScreenFocusProvider isFocused={isFocused}>{children}</ScreenFocusProvider>
+        <ScreenFocusProvider isFocused={isFocused}>
+          <Freeze freeze={isFrozen}>{children}</Freeze>
+        </ScreenFocusProvider>
       </Animated.View>
     </View>
   )
