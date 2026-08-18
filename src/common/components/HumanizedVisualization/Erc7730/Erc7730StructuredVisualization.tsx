@@ -396,14 +396,7 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
             </View>
           )}
           {!hideTransactionSummaryRows && (
-            <View
-              style={[
-                !shouldHideTransactionSummaryTitle && {
-                  marginTop: SPACING_TY * sizeMultiplierSize
-                },
-                { width: '100%', minWidth: 0 }
-              ]}
-            >
+            <View style={{ width: '100%', minWidth: 0 }}>
               {visibleRows.map((row) => (
                 <View
                   key={`${item.id}-transaction-summary-${row.label}-${row.value
