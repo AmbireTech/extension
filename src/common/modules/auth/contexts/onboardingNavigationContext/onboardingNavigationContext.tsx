@@ -293,7 +293,10 @@ const OnboardingNavigationProvider = ({ children }: { children: React.ReactNode 
       }
 
       if (!prevRoute.disabled) {
-        navigate(prevRoute.name, { state: { internal: true } })
+        // Onboarding walks its own route tree, so going back is a forward
+        // navigation as far as the history is concerned. `navDirection` tells
+        // the mobile card stack to play it as a back transition anyway.
+        navigate(prevRoute.name, { state: { internal: true, navDirection: 'back' } })
         setHistory(newHistory)
         return
       }

@@ -88,6 +88,18 @@ const WEB_ROUTES = {
 
 const ROUTES = { ...MOBILE_ROUTES, ...WEB_ROUTES }
 
+/**
+ * The paths a mobile navigation stack resets to: the app root and the two screens
+ * the route guards redirect to. Reaching one of them means the flow starts over,
+ * so there is nothing left to go back to. Pathnames, hence the leading slash.
+ */
+const MOBILE_ROOT_ROUTE_PATHS = [
+  '/',
+  `/${COMMON_ROUTES.dashboard}`,
+  `/${COMMON_ROUTES.keyStoreUnlock}`,
+  `/${COMMON_ROUTES.getStarted}`
+]
+
 const ONBOARDING_WEB_ROUTES = [
   COMMON_ROUTES.getStarted,
   COMMON_ROUTES.importExistingAccount,
@@ -107,4 +119,4 @@ const ONBOARDING_WEB_ROUTES = [
   COMMON_ROUTES.qrConnect
 ] as const
 
-export { MOBILE_ROUTES, ONBOARDING_WEB_ROUTES, ROUTES, WEB_ROUTES }
+export { MOBILE_ROOT_ROUTE_PATHS, MOBILE_ROUTES, ONBOARDING_WEB_ROUTES, ROUTES, WEB_ROUTES }

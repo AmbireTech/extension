@@ -1,5 +1,5 @@
 import React from 'react'
-import { Route, Routes } from 'react-router-native'
+import { Location, Route, Routes } from 'react-router-native'
 
 import AuthenticatedRoute from '@common/modules/router/components/AuthenticatedRoute'
 import KeystoreUnlockedRoute from '@common/modules/router/components/KeystoreUnlockedRoute'
@@ -46,9 +46,9 @@ import TrendingTokensScreen from '@common/modules/explore/screens/TrendingTokens
 import TransferScreen from '@mobile/modules/transfer/screens/TransferScreen'
 import DappWebViewScreen from '@mobile/modules/webview/screens/DappWebViewScreen'
 
-const MainRoutes = () => {
+const MainRoutes = ({ location }: { location?: Location }) => {
   return (
-    <Routes>
+    <Routes location={location}>
       <Route path={ROUTES.keyStoreSetup} element={<KeyStoreSetupScreen />} />
       <Route element={<KeystoreUnlockedRoute />}>
         <Route path={ROUTES.getStarted} element={<GetStartedScreen />} />
