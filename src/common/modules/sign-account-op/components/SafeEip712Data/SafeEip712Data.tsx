@@ -21,16 +21,30 @@ interface Props {
   chainId?: bigint
   safeEip712Data?: unknown | null
   withTitle?: boolean
+  /** Controls the active tab from the outside, e.g. when the tab bar is rendered elsewhere. */
+  activeTab?: ActiveTab
+  onTabChange?: (tab: ActiveTab) => void
+  /** Hides the internal tab bar, for when it is already rendered by a parent component. */
+  hideTabs?: boolean
 }
 
-type ActiveTab = 'hashes' | 'parsed' | 'raw'
+export type ActiveTab = 'hashes' | 'parsed' | 'raw'
 
 const { isSidePanel } = getUiType()
 
-const SafeEip712Data: FC<Props> = ({ accountAddr, chainId, safeEip712Data, withTitle = true }) => {
+const SafeEip712Data: FC<Props> = ({
+  accountAddr,
+  chainId,
+  safeEip712Data,
+  withTitle = true,
+  activeTab: controlledActiveTab,
+  onTabChange,
+  hideTabs = false
+}) => {
   const { t } = useTranslation()
   const { theme, styles } = useTheme(getStyles)
-  const [activeTab, setActiveTab] = useState<ActiveTab>('hashes')
+  const [internalActiveTab, setInternalActiveTab] = useState<ActiveTab>('hashes')
+  const activeTab = controlledActiveTab ?? internalActiveTab
   const data = useMemo(() => getSafeEip712DataValue(safeEip712Data), [safeEip712Data])
   const messageToSign = useMemo<ISignMessageController['messageToSign']>(() => {
     if (!data || !accountAddr || !chainId) return null
@@ -61,9 +75,16 @@ const SafeEip712Data: FC<Props> = ({ accountAddr, chainId, safeEip712Data, withT
       ] as const,
     [t]
   )
-  const handleTabPress = useCallback((tab: ActiveTab) => {
-    setActiveTab(tab)
-  }, [])
+  const handleTabPress = useCallback(
+    (tab: ActiveTab) => {
+      if (onTabChange) {
+        onTabChange(tab)
+        return
+      }
+      setInternalActiveTab(tab)
+    },
+    [onTabChange]
+  )
   const handlePressTab = useCallback(
     (event: GestureResponderEvent, tab: ActiveTab) => {
       event.stopPropagation()
@@ -84,32 +105,34 @@ const SafeEip712Data: FC<Props> = ({ accountAddr, chainId, safeEip712Data, withT
             </Text>
           </View>
         )}
-        <View style={styles.tabHeader}>
-          {tabs.map(([tab, label]) => {
-            const isActive = activeTab === tab
+        {!hideTabs && (
+          <View style={styles.tabHeader}>
+            {tabs.map(([tab, label]) => {
+              const isActive = activeTab === tab
 
-            return (
-              <Pressable
-                key={tab}
-                onPress={(event) => handlePressTab(event, tab)}
-                style={[
-                  styles.tabButton,
-                  {
-                    borderBottomColor: isActive ? theme.secondaryAccent400 : 'transparent'
-                  }
-                ]}
-              >
-                <Text
-                  fontSize={14}
-                  weight={isActive ? 'semiBold' : 'medium'}
-                  color={isActive ? theme.secondaryAccent400 : theme.secondaryText}
+              return (
+                <Pressable
+                  key={tab}
+                  onPress={(event) => handlePressTab(event, tab)}
+                  style={[
+                    styles.tabButton,
+                    {
+                      borderBottomColor: isActive ? theme.secondaryAccent400 : 'transparent'
+                    }
+                  ]}
                 >
-                  {label}
-                </Text>
-              </Pressable>
-            )
-          })}
-        </View>
+                  <Text
+                    fontSize={14}
+                    weight={isActive ? 'semiBold' : 'medium'}
+                    color={isActive ? theme.secondaryAccent400 : theme.secondaryText}
+                  >
+                    {label}
+                  </Text>
+                </Pressable>
+              )
+            })}
+          </View>
+        )}
         {activeTab === 'hashes' && (
           <View style={styles.rows}>
             {rows.map(([label, value]) => (
