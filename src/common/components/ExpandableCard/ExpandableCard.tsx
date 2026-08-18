@@ -30,7 +30,6 @@ type Props = {
   mobileHeaderStyle?: ViewStyle
   hideMobileContent?: boolean
   overlayMobileHeaderControls?: boolean
-  overlayArrow?: boolean
 }
 
 const ExpandableCard = ({
@@ -47,8 +46,7 @@ const ExpandableCard = ({
   mobileHeaderTitle,
   mobileHeaderStyle,
   hideMobileContent = false,
-  overlayMobileHeaderControls = false,
-  overlayArrow = false
+  overlayMobileHeaderControls = false
 }: Props) => {
   const { styles } = useTheme(getStyles)
   const [isExpanded, setIsExpanded] = useState(!!isInitiallyExpanded)
@@ -64,6 +62,9 @@ const ExpandableCard = ({
           opacity: enableToggleExpand ? 1 : 0.5,
           width: 28,
           height: 24,
+          // Stays centered against the always visible content even when the row
+          // aligns its other children to the start
+          alignSelf: 'center',
           ...flexbox.center
         }}
       >
@@ -76,37 +77,7 @@ const ExpandableCard = ({
   return (
     <View style={[styles.container, isMobile && isExpanded && { flexGrow: 1 }, style]}>
       <Element onPress={() => !!enableToggleExpand && setIsExpanded((prevState) => !prevState)}>
-        {hasMobileHeader && overlayMobileHeaderControls && (
-          <View style={[spacings.phSm, spacings.ptTy, mobileHeaderStyle]}>
-            {!!hasArrow && arrowPosition === 'left' && (
-              <View style={{ position: 'absolute', top: SPACING_TY, left: SPACING_SM }}>
-                {icon}
-              </View>
-            )}
-            <View
-              style={{
-                paddingLeft: hasArrow && arrowPosition === 'left' ? 28 + SPACING_TY : 0,
-                paddingRight:
-                  mobileHeaderContent || (hasArrow && arrowPosition === 'right')
-                    ? 28 + SPACING_TY
-                    : 0
-              }}
-            >
-              {mobileHeaderTitle}
-            </View>
-            {!!mobileHeaderContent && (
-              <View style={{ position: 'absolute', top: SPACING_TY, right: SPACING_SM }}>
-                {mobileHeaderContent}
-              </View>
-            )}
-            {!!hasArrow && arrowPosition === 'right' && (
-              <View style={{ position: 'absolute', top: SPACING_TY, right: SPACING_SM }}>
-                {icon}
-              </View>
-            )}
-          </View>
-        )}
-        {hasMobileHeader && !overlayMobileHeaderControls && (
+        {hasMobileHeader && (
           <View
             style={[
               flexbox.directionRow,
@@ -118,9 +89,25 @@ const ExpandableCard = ({
             ]}
           >
             {!!hasArrow && arrowPosition === 'left' && icon}
-            <View style={[flexbox.flex1, spacings.mlTy]}>{mobileHeaderTitle}</View>
-            {mobileHeaderContent}
+            <View
+              style={[
+                flexbox.flex1,
+                spacings.mlTy,
+                // Reserve room for the overlaid controls so the title never runs under them
+                overlayMobileHeaderControls && !!mobileHeaderContent
+                  ? { paddingRight: 28 + SPACING_TY }
+                  : {}
+              ]}
+            >
+              {mobileHeaderTitle}
+            </View>
+            {!overlayMobileHeaderControls && mobileHeaderContent}
             {!!hasArrow && arrowPosition === 'right' && icon}
+            {overlayMobileHeaderControls && !!mobileHeaderContent && (
+              <View style={{ position: 'absolute', top: SPACING_TY, right: SPACING_SM }}>
+                {mobileHeaderContent}
+              </View>
+            )}
           </View>
         )}
         {(!isMobile || !hideMobileContent) && (
@@ -134,23 +121,13 @@ const ExpandableCard = ({
               contentStyle
             ]}
           >
-            {!hasMobileHeader && !!hasArrow && arrowPosition === 'left' && overlayArrow && (
-              <View style={{ position: 'absolute', top: SPACING_SM, left: SPACING_SM }}>
-                {icon}
-              </View>
-            )}
-            {!hasMobileHeader && !!hasArrow && arrowPosition === 'left' && !overlayArrow && icon}
+            {!hasMobileHeader && !!hasArrow && arrowPosition === 'left' && icon}
             <View
               style={[flexbox.directionRow, flexbox.alignCenter, flexbox.flex1, { minWidth: 0 }]}
             >
               {!!renderedContent && renderedContent}
             </View>
-            {!hasMobileHeader && !!hasArrow && arrowPosition === 'right' && overlayArrow && (
-              <View style={{ position: 'absolute', top: SPACING_SM, right: SPACING_SM }}>
-                {icon}
-              </View>
-            )}
-            {!hasMobileHeader && !!hasArrow && arrowPosition === 'right' && !overlayArrow && icon}
+            {!hasMobileHeader && !!hasArrow && arrowPosition === 'right' && icon}
           </View>
         )}
         {children}

@@ -585,7 +585,6 @@ const TransactionSummary = ({
   const shouldShowRightControl = !!rightIcon && !!onRightIconPress && !hasCallFailed
   const shouldOverlayErc7730TransactionSummaryControls =
     !isMobile && shouldUseErc7730TransactionSummaryLayout
-  const shouldOverlayDetailedErc7730Controls = !isMobile && shouldUseDetailedErc7730Layout
   const rightControl = useMemo(() => {
     if (!shouldShowDeleteControl && !shouldShowRightControl) return null
 
@@ -753,9 +752,6 @@ const TransactionSummary = ({
     <ExpandableCard
       enableToggleExpand={enableExpand}
       hasArrow={enableExpand}
-      overlayArrow={
-        shouldOverlayErc7730TransactionSummaryControls || shouldOverlayDetailedErc7730Controls
-      }
       mobileHeaderContent={isMobile ? rightControl : undefined}
       mobileHeaderTitle={isMobile ? mobileErc7730Title || mobileFlatVisualization : undefined}
       mobileHeaderStyle={
@@ -765,7 +761,12 @@ const TransactionSummary = ({
             ? spacings.pt
             : undefined
       }
-      hideMobileContent={!!mobileFlatVisualization}
+      hideMobileContent={
+        !!mobileFlatVisualization ||
+        // On mobile the title is already in the header and the rows moved below,
+        // so the content row would only add empty space
+        (shouldUseErc7730TransactionSummaryLayout && !!mobileErc7730Title && !hasCallFailed)
+      }
       overlayMobileHeaderControls={!!mobileFlatVisualization}
       style={{
         ...(call.warnings?.length && type === 'default'
@@ -797,8 +798,7 @@ const TransactionSummary = ({
                         {
                           marginBottom: SPACING_TY * sizeMultiplier[size],
                           minWidth: 0,
-                          width: '100%',
-                          paddingLeft: enableExpand ? 28 + SPACING_TY : 0
+                          width: '100%'
                         }
                       ]}
                     >
@@ -864,8 +864,10 @@ const TransactionSummary = ({
                 editApprovalCallInfo={editApprovalCallInfo}
                 hideMobileErc7730Title={!!mobileErc7730Title}
                 isErc7730TransactionSummaryLayout={shouldUseErc7730TransactionSummaryLayout}
-                hasErc7730TransactionSummaryHeaderLeftControl={
-                  shouldOverlayErc7730TransactionSummaryControls && enableExpand
+                // The rows are rendered below the always visible row instead, so the
+                // dropdown arrow stays centered against the title alone
+                erc7730TransactionSummarySection={
+                  shouldUseErc7730TransactionSummaryLayout ? 'title' : 'all'
                 }
                 hasErc7730TransactionSummaryHeaderRightControl={
                   shouldOverlayErc7730TransactionSummaryControls &&
@@ -979,6 +981,31 @@ const TransactionSummary = ({
         </View>
       }
     >
+      {shouldUseErc7730TransactionSummaryLayout && !!erc7730Visualization && (
+        <View
+          style={{
+            // Full width of the card rather than indented under the title, so the row
+            // labels and their values sit symmetrically against both edges
+            paddingLeft: SPACING_SM,
+            paddingRight: SPACING_SM,
+            paddingBottom: SPACING_SM * sizeMultiplier[size]
+          }}
+        >
+          <HumanizedVisualization
+            data={[erc7730Visualization]}
+            sizeMultiplierSize={sizeMultiplier[size]}
+            textSize={textSize}
+            imageSize={imageSize}
+            chainId={chainId}
+            type={type}
+            hasPadding={false}
+            editApprovalCallInfo={editApprovalCallInfo}
+            isErc7730TransactionSummaryLayout
+            erc7730TransactionSummarySection="rows"
+            style={{ width: '100%', minWidth: 0 }}
+          />
+        </View>
+      )}
       <View
         style={{
           paddingHorizontal:

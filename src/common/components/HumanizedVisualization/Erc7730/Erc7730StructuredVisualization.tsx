@@ -44,8 +44,8 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
   hideNestedRows = false,
   hideMobileSummaryTitle = false,
   isTransactionSummaryLayout = false,
-  hasTransactionSummaryHeaderLeftControl = false,
   hasTransactionSummaryHeaderRightControl = false,
+  transactionSummarySection = 'all',
   showDescriptionTitle = false
 }) => {
   const { theme } = useTheme()
@@ -56,6 +56,9 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
   const { benzinNetworks } = useNetworksContext()
   const networks = controllerNetworks ?? benzinNetworks
   const shouldHideTransactionSummaryTitle = isMobile && hideMobileSummaryTitle
+  const shouldShowTransactionSummaryTitle =
+    !shouldHideTransactionSummaryTitle && transactionSummarySection !== 'rows'
+  const shouldShowTransactionSummaryRows = transactionSummarySection !== 'title'
   const nativeAssetSymbol = useMemo(
     () => networks.find((network) => network.chainId === chainId)?.nativeAssetSymbol,
     [chainId, networks]
@@ -356,14 +359,13 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
     if (isTransactionSummaryLayout) {
       return (
         <View style={{ width: '100%', minWidth: 0 }}>
-          {!shouldHideTransactionSummaryTitle && (
+          {shouldShowTransactionSummaryTitle && (
             <View
               style={[
                 flexbox.directionRow,
                 flexbox.alignCenter,
                 {
                   minWidth: 0,
-                  paddingLeft: hasTransactionSummaryHeaderLeftControl ? 28 + SPACING_TY : 0,
                   paddingRight: hasTransactionSummaryHeaderRightControl ? 28 + SPACING_TY : 0
                 }
               ]}
@@ -396,55 +398,59 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
                   )}
             </View>
           )}
-          <View
-            style={[
-              !shouldHideTransactionSummaryTitle && {
-                marginTop: SPACING_TY * sizeMultiplierSize
-              },
-              { width: '100%', minWidth: 0 }
-            ]}
-          >
-            {visibleRows.map((row) => (
-              <View
-                key={`${item.id}-transaction-summary-${row.label}-${row.value
-                  .map((value) => value.id)
-                  .join('-')}`}
-                style={[
-                  flexbox.directionRow,
-                  flexbox.alignCenter,
-                  flexbox.justifySpaceBetween,
-                  { marginTop: SPACING_SM * sizeMultiplierSize },
-                  { width: '100%', minWidth: 0 }
-                ]}
-              >
-                {!!row.label.trim() && (
-                  <Text
-                    fontSize={12}
-                    weight="regular"
-                    appearance="secondaryText"
-                    style={[spacings.mrSm, { flexShrink: 1 }]}
-                  >
-                    {getTransactionSummaryRowLabel(row.label)}
-                  </Text>
-                )}
+          {shouldShowTransactionSummaryRows && (
+            <View
+              style={[
+                // Only needed when the title sits directly above the rows. When the rows are
+                // rendered into their own slot the gap comes from the slot itself.
+                shouldShowTransactionSummaryTitle && {
+                  marginTop: SPACING_TY * sizeMultiplierSize
+                },
+                { width: '100%', minWidth: 0 }
+              ]}
+            >
+              {visibleRows.map((row) => (
                 <View
+                  key={`${item.id}-transaction-summary-${row.label}-${row.value
+                    .map((value) => value.id)
+                    .join('-')}`}
                   style={[
                     flexbox.directionRow,
                     flexbox.alignCenter,
-                    flexbox.justifyEnd,
-                    flexbox.wrap,
-                    { minWidth: 0, flexShrink: 1 }
+                    flexbox.justifySpaceBetween,
+                    { marginTop: SPACING_SM * sizeMultiplierSize },
+                    { width: '100%', minWidth: 0 }
                   ]}
                 >
-                  {row.value.map((value, valueIndex) => (
-                    <View key={value.id} style={valueIndex > 0 && spacings.mlTy}>
-                      {renderValue(value)}
-                    </View>
-                  ))}
+                  {!!row.label.trim() && (
+                    <Text
+                      fontSize={12}
+                      weight="regular"
+                      appearance="secondaryText"
+                      style={[spacings.mrSm, { flexShrink: 1 }]}
+                    >
+                      {getTransactionSummaryRowLabel(row.label)}
+                    </Text>
+                  )}
+                  <View
+                    style={[
+                      flexbox.directionRow,
+                      flexbox.alignCenter,
+                      flexbox.justifyEnd,
+                      flexbox.wrap,
+                      { minWidth: 0, flexShrink: 1 }
+                    ]}
+                  >
+                    {row.value.map((value, valueIndex) => (
+                      <View key={value.id} style={valueIndex > 0 && spacings.mlTy}>
+                        {renderValue(value)}
+                      </View>
+                    ))}
+                  </View>
                 </View>
-              </View>
-            ))}
-          </View>
+              ))}
+            </View>
+          )}
         </View>
       )
     }
