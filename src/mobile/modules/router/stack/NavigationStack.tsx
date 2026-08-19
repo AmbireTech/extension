@@ -1,17 +1,14 @@
-import React, { useCallback, useEffect } from 'react'
-import { StyleSheet } from 'react-native'
+import React, { useCallback, useEffect, useState } from 'react'
 import { KeyboardController } from 'react-native-keyboard-controller'
-import { enableFreeze, ScreenStack, ScreenStackItem } from 'react-native-screens'
+import { enableFreeze, ScreenStack } from 'react-native-screens'
 
 import { useOpenBottomSheetsCount } from '@common/components/BottomSheet/bottomSheetEventStream'
-import { ScreenFocusProvider } from '@common/contexts/screenFocusContext'
 import useNavigation from '@common/hooks/useNavigation'
-import useTheme from '@common/hooks/useTheme'
 import { ROUTES } from '@common/modules/router/constants/common'
 import { useCanGoBackInWebViewHistory } from '@common/services/webview/webViewBackNavigation'
 import flexbox from '@common/styles/utils/flexbox'
-import AppRoutes from '@mobile/modules/router/components/AppRoutes'
 
+import StackScreen from './StackScreen'
 import useStackEntries from './useStackEntries'
 
 // Screens that are not on top are only frozen once this is switched on. Without
@@ -28,7 +25,6 @@ enableFreeze(true)
  */
 const NavigationStack = () => {
   const entries = useStackEntries()
-  const { theme } = useTheme()
   const { navigate } = useNavigation()
   const isSheetOpen = useOpenBottomSheetsCount() > 0
   const canGoBackInWebViewHistory = useCanGoBackInWebViewHistory()
@@ -42,6 +38,24 @@ const NavigationStack = () => {
   // over again and popping the route is the right thing to do.
   const isBrowserWalkingItsOwnHistory =
     topEntry?.location.pathname === `/${ROUTES.dappWebView}` && canGoBackInWebViewHistory
+
+  const stackSignature = entries.map((e) => `${e.location.pathname}#${e.cardKey}`).join(' | ')
+
+  /**
+   * Which arrangement of screens the platform has finished transitioning to. A
+   * screen is only frozen - it renders nothing while it is - once the stack has
+   * come to rest in a state where that screen is not the one on top, so a screen
+   * that is still sliding, or still visible underneath one that is, keeps
+   * rendering. Driven by the stack's own event rather than by focus, which flips
+   * at the start of a transition, while both screens are still on screen.
+   */
+  const [settledSignature, setSettledSignature] = useState('')
+  const hasSettled = settledSignature === stackSignature
+
+  const handleFinishTransitioning = useCallback(
+    () => setSettledSignature(stackSignature),
+    [stackSignature]
+  )
 
   // The screen left behind stays mounted, so its focused input would otherwise
   // hold the keyboard up over the screen coming in.
@@ -60,26 +74,16 @@ const NavigationStack = () => {
   )
 
   return (
-    <ScreenStack style={flexbox.flex1}>
+    <ScreenStack style={flexbox.flex1} onFinishTransitioning={handleFinishTransitioning}>
       {entries.map((entry, index) => (
-        <ScreenStackItem
+        <StackScreen
           key={entry.cardKey}
-          screenId={entry.cardKey}
-          style={StyleSheet.absoluteFill}
-          contentStyle={{ backgroundColor: theme.primaryBackground }}
-          // The app draws its own headers inside the screens.
-          headerConfig={{ hidden: true }}
-          stackPresentation="push"
-          stackAnimation="default"
+          entry={entry}
+          isFocused={entry.cardKey === topCardKey}
+          shouldFreeze={entry.cardKey !== topCardKey && hasSettled}
           gestureEnabled={index > 0 && !isSheetOpen && !isBrowserWalkingItsOwnHistory}
-          hideKeyboardOnSwipe
-          freezeOnBlur
-          onDismissed={(e) => handleDismissed(e.nativeEvent.dismissCount)}
-        >
-          <ScreenFocusProvider isFocused={entry.cardKey === topCardKey}>
-            <AppRoutes location={entry.location} />
-          </ScreenFocusProvider>
-        </ScreenStackItem>
+          onDismissed={handleDismissed}
+        />
       ))}
     </ScreenStack>
   )

@@ -1,14 +1,14 @@
 import { useState } from 'react'
 import { useLocation, useNavigationType } from 'react-router-native'
 
-import useMemoryHistory from '@common/hooks/useMemoryHistory'
+import useRouterHistory from '@common/hooks/useRouterHistory'
 
 import { reduceStack, StackNavigationType, StackState } from './stackEntries'
 
 const useStackEntries = (): StackState => {
   const location = useLocation()
   const navigationType = useNavigationType()
-  const history = useMemoryHistory()
+  const history = useRouterHistory()
 
   const [entries, setEntries] = useState<StackState>(() => [
     {

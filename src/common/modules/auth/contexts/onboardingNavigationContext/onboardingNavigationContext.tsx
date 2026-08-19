@@ -1,4 +1,12 @@
-import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
+import React, {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState
+} from 'react'
 import { NavigateOptions } from 'react-router-dom'
 
 import { Account } from '@ambire-common/interfaces/account'
@@ -7,6 +15,7 @@ import { ControllersStateLoadedContext } from '@common/contexts/controllersState
 import useController from '@common/hooks/useController'
 import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useNavigation from '@common/hooks/useNavigation'
+import useRouterHistory from '@common/hooks/useRouterHistory'
 import usePrevious from '@common/hooks/usePrevious'
 import useRoute from '@common/hooks/useRoute'
 import { AUTH_STATUS } from '@common/modules/auth/constants/authStatus'
@@ -66,6 +75,9 @@ const OnboardingNavigationProvider = ({ children }: { children: React.ReactNode 
   const { path, params } = useRoute()
   const prevPath: string | undefined = usePrevious(path)
   const { navigate } = useNavigation()
+  // Read straight off the router, so the callbacks below can resolve the route
+  // they are moving on from without depending on a re-render for it.
+  const routerHistory = useRouterHistory()
   const { authStatus } = useAuth()
   const { dispatch } = useControllersMiddleware()
   const { isSetupComplete } = useController('WalletStateController').state
@@ -237,9 +249,27 @@ const OnboardingNavigationProvider = ({ children }: { children: React.ReactNode 
     []
   )
 
+  /**
+   * `navigate` is rebuilt on every navigation. Keeping the latest one in a ref is
+   * what lets the two callbacks below hold a stable identity: an effect that both
+   * calls one of them and lists it as a dependency would otherwise re-run right
+   * after its own navigation, and `goToNextRoute()` with no argument advances from
+   * wherever the flow is by then - one step too far.
+   */
+  const navigateRef = useRef(navigate)
+  const onboardingHistoryRef = useRef(history)
+
+  useEffect(() => {
+    navigateRef.current = navigate
+  }, [navigate])
+
+  useEffect(() => {
+    onboardingHistoryRef.current = history
+  }, [history])
+
   const goToNextRoute = useCallback(
     (routeName?: OnboardingRoute, routeParams?: NavigateOptions) => {
-      const currentRoute = path?.substring(1) || '/'
+      const currentRoute = routerHistory.location.pathname?.substring(1) || '/'
 
       let nextRoute: RouteNode | null = null
       if (routeName && ONBOARDING_WEB_ROUTES.includes(routeName)) {
@@ -253,31 +283,29 @@ const OnboardingNavigationProvider = ({ children }: { children: React.ReactNode 
         if (nextRoute.name === '/' && !getUiType().isMobileApp) {
           dispatch({ type: 'OPEN_EXTENSION_POPUP' })
         } else {
-          navigate(nextRoute.name, {
+          navigateRef.current(nextRoute.name, {
             state: { ...routeParams, internal: true }
           })
         }
-        if (!history.includes(currentRoute)) {
-          setHistory((prevHistory) => [...prevHistory, currentRoute])
-        }
+        // Checked inside the updater rather than against a captured copy, so the
+        // breadcrumb cannot pick up a duplicate from a stale read.
+        setHistory((prevHistory) =>
+          prevHistory.includes(currentRoute) ? prevHistory : [...prevHistory, currentRoute]
+        )
       }
     },
-    [
-      onboardingRoutesTree,
-      findNextEnabledRoute,
-      navigate,
-      deepSearchRouteNode,
-      path,
-      history,
-      dispatch
-    ]
+    [routerHistory, onboardingRoutesTree, findNextEnabledRoute, deepSearchRouteNode, dispatch]
   )
 
   const goToPrevRoute = useCallback(() => {
-    const newHistory = [...history]
+    // The breadcrumb is read through its ref for the same reason as `navigate`
+    // above. This one only ever runs from a back button, long after the render
+    // that produced the value, so it is always the current one by then.
+    const currentOnboardingHistory = onboardingHistoryRef.current
+    const newHistory = [...currentOnboardingHistory]
 
-    if (!history.length) {
-      navigate('/')
+    if (!currentOnboardingHistory.length) {
+      navigateRef.current('/')
       setHistory([])
       return
     }
@@ -287,7 +315,7 @@ const OnboardingNavigationProvider = ({ children }: { children: React.ReactNode 
       const prevRoute = deepSearchRouteNode(onboardingRoutesTree, prevRouteName!)
       newHistory.pop()
       if (!prevRoute) {
-        navigate('/')
+        navigateRef.current('/')
         setHistory([])
         return
       }
@@ -296,12 +324,12 @@ const OnboardingNavigationProvider = ({ children }: { children: React.ReactNode 
         // Onboarding walks its own route tree, so going back is a forward
         // navigation as far as the history is concerned. `navDirection` tells
         // the mobile card stack to play it as a back transition anyway.
-        navigate(prevRoute.name, { state: { internal: true, navDirection: 'back' } })
+        navigateRef.current(prevRoute.name, { state: { internal: true, navDirection: 'back' } })
         setHistory(newHistory)
         return
       }
     }
-  }, [history, deepSearchRouteNode, onboardingRoutesTree, navigate])
+  }, [deepSearchRouteNode, onboardingRoutesTree])
 
   const [onboardingInitialized, setOnboardingInitialized] = useState(false)
   const [triggeredHwWalletFlow, setTriggeredHwWalletFlow] = useState<HwWalletsNeedingRedirect>(null)

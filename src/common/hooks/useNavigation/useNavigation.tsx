@@ -2,7 +2,9 @@ import { useCallback, useMemo } from 'react'
 import { useLocation, useNavigate } from 'react-router-native'
 import { Subject } from 'rxjs'
 
-import useMemoryHistory from '@common/hooks/useMemoryHistory'
+import { isDev } from '@common/config/env'
+import { useIsScreenFocused } from '@common/contexts/screenFocusContext'
+import useRouterHistory from '@common/hooks/useRouterHistory'
 
 import { TitleChangeEventStreamType, UseNavigationReturnType } from './types'
 
@@ -12,7 +14,28 @@ export const titleChangeEventStream: TitleChangeEventStreamType = new Subject<st
 const useNavigation = (): UseNavigationReturnType => {
   const nav = useNavigate()
   const currentRoute = useLocation()
-  const history = useMemoryHistory()
+  const history = useRouterHistory()
+  const isFocused = useIsScreenFocused()
+
+  /**
+   * Screens stay mounted underneath the one on top, and they keep reacting to
+   * controller state. Navigating is only ever the business of the screen the user
+   * is looking at: an effect on a screen further back would otherwise send the
+   * user somewhere else entirely, or move a flow on a step too far. Refused here
+   * rather than guarded at each call site, so a screen cannot reintroduce it.
+   */
+  const refuseFromBackgroundScreen = useCallback(
+    (action: string) => {
+      if (isFocused) return false
+
+      if (isDev) {
+        console.warn(`navigation: ignored ${action} from a screen that is not on top`)
+      }
+
+      return true
+    },
+    [isFocused]
+  )
 
   // Native doesn't have useSearchParams out of the box like DOM
   const searchParams = useMemo(
@@ -22,6 +45,8 @@ const useNavigation = (): UseNavigationReturnType => {
 
   const navigate = useCallback<UseNavigationReturnType['navigate']>(
     (to, options) => {
+      if (refuseFromBackgroundScreen(`navigate to ${to}`)) return undefined
+
       // react-router navigate signature supports number (for going back/forward)
       if (typeof to === 'number') {
         return nav(to)
@@ -40,10 +65,14 @@ const useNavigation = (): UseNavigationReturnType => {
         }
       })
     },
-    [nav, currentRoute]
+    [nav, currentRoute, refuseFromBackgroundScreen]
   )
 
-  const goBack = useCallback(() => nav(-1), [nav])
+  const goBack = useCallback(() => {
+    if (refuseFromBackgroundScreen('goBack')) return
+
+    nav(-1)
+  }, [nav, refuseFromBackgroundScreen])
 
   const setOptions = useCallback<UseNavigationReturnType['setOptions']>(({ headerTitle }) => {
     if (headerTitle) {
