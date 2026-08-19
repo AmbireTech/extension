@@ -49,7 +49,7 @@ export const BalanceChangeToken = ({ change }: { change: DisplayBalanceChange })
     return (
       <View style={spacings.mlTy}>
         <View style={[stylesForIcons.balanceIconWrapper, { backgroundColor: theme.neutral200 }]}>
-          <GasTankIcon width={10} height={10} color={theme.tertiaryText} />
+          <GasTankIcon width={10} height={10} color={theme.primaryAccent} />
         </View>
       </View>
     )

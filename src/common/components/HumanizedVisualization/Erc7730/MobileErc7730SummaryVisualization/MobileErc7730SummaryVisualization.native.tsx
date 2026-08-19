@@ -58,6 +58,27 @@ const MobileErc7730SummaryVisualization = ({
     ),
     [renderValue]
   )
+  // Same reasoning as the desktop Erc7730StructuredVisualization: prefer the
+  // structured `titleParts` (rendered via the shared `renderValue`, so a
+  // `type: 'token'` part gets a live decimals/symbol lookup) over the plain
+  // `title` string, which is only a best-effort fallback for tokens that
+  // aren't statically known.
+  const renderTitleParts = useCallback(
+    (overrideTextSize?: number) =>
+      item.titleParts?.length ? (
+        <View
+          style={[
+            flexbox.directionRow,
+            flexbox.alignCenter,
+            flexbox.wrap,
+            { minWidth: 0, flexShrink: 1 }
+          ]}
+        >
+          {item.titleParts.map((part) => renderValue(part, overrideTextSize))}
+        </View>
+      ) : null,
+    [item.titleParts, renderValue]
+  )
 
   return (
     <View style={{ width: '100%', minWidth: 0 }}>
@@ -73,11 +94,13 @@ const MobileErc7730SummaryVisualization = ({
             </View>
           )}
           <View style={{ flex: 1, minWidth: 0 }}>
-            {!!item.title && (
-              <Text fontSize={textSize + 2} color={theme.secondaryAccent400}>
-                {item.title}
-              </Text>
-            )}
+            {item.titleParts?.length
+              ? renderTitleParts(textSize + 2)
+              : !!item.title && (
+                  <Text fontSize={textSize + 2} color={theme.secondaryAccent400}>
+                    {item.title}
+                  </Text>
+                )}
           </View>
         </View>
       )}
