@@ -1,36 +1,33 @@
-import { useCallback, useState } from 'react'
+import { useState } from 'react'
 import { useLocation, useNavigationType } from 'react-router-native'
 
 import useMemoryHistory from '@common/hooks/useMemoryHistory'
 
 import { reduceStack, StackNavigationType, StackState } from './stackEntries'
 
-const useStackEntries = () => {
+const useStackEntries = (): StackState => {
   const location = useLocation()
   const navigationType = useNavigationType()
   const history = useMemoryHistory()
 
-  const [state, setState] = useState<StackState>(() => ({
-    entries: [
-      {
-        cardKey: location.key,
-        key: location.key,
-        location,
-        index: history.index,
-        firstIndex: history.index
-      }
-    ],
-    closing: []
-  }))
+  const [entries, setEntries] = useState<StackState>(() => [
+    {
+      cardKey: location.key,
+      key: location.key,
+      location,
+      index: history.index,
+      firstIndex: history.index
+    }
+  ])
 
-  const top = state.entries[state.entries.length - 1]
+  const top = entries[entries.length - 1]
 
-  // Adjusting the stack while rendering (instead of in an effect) commits the
-  // new card in the same frame as the location change, so the screen never
-  // renders one frame behind the router.
+  // Adjusting the stack while rendering (instead of in an effect) commits the new
+  // screen in the same frame as the location change, so the stack never renders
+  // one frame behind the router.
   if (top?.key !== location.key) {
-    setState(
-      reduceStack(state, {
+    setEntries(
+      reduceStack(entries, {
         location,
         index: history.index,
         navigationType: navigationType as StackNavigationType
@@ -38,16 +35,7 @@ const useStackEntries = () => {
     )
   }
 
-  const removeClosingEntry = useCallback((cardKey: string) => {
-    setState((prev) => ({ ...prev, closing: prev.closing.filter((e) => e.cardKey !== cardKey) }))
-  }, [])
-
-  return {
-    entries: state.entries,
-    closing: state.closing,
-    settledKey: state.settledKey,
-    removeClosingEntry
-  }
+  return entries
 }
 
 export default useStackEntries
