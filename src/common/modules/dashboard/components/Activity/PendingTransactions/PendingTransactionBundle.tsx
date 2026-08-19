@@ -103,8 +103,9 @@ const PendingTransactionBundle: FC<Props> = ({
                 textSize={12}
                 imageSize={12}
                 hasPadding={false}
+                isErc7730TransactionSummaryLayout
                 disableFlex
-                style={flexbox.wrap}
+                style={{ width: '100%', minWidth: 0 }}
                 dapp={call.dapp}
               />
             ) : (
