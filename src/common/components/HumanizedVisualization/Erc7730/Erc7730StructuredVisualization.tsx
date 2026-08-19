@@ -221,7 +221,10 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
                     ? theme.secondaryAccent400
                     : theme.primaryText
             }
-            style={[{ textAlign: 'right', flexShrink: 1 }, valueItem.mlMi && spacings.mlMi]}
+            style={[
+              { textAlign: 'right', flexShrink: 1, minWidth: 0 },
+              valueItem.mlMi && spacings.mlMi
+            ]}
           >
             {valueItem.content}
           </Text>
@@ -442,7 +445,14 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
                     ]}
                   >
                     {row.value.map((value, valueIndex) => (
-                      <View key={value.id} style={valueIndex > 0 && spacings.mlTy}>
+                      // `flexShrink`/`minWidth` let the wrapper shrink below the value's
+                      // content width. Without them a long unbreakable value (e.g. a
+                      // non-EVM recipient hash) keeps its full width and, because the
+                      // container is right-aligned, overflows to the left over the label.
+                      <View
+                        key={value.id}
+                        style={[{ flexShrink: 1, minWidth: 0 }, valueIndex > 0 && spacings.mlTy]}
+                      >
                         {renderValue(value)}
                       </View>
                     ))}
