@@ -365,6 +365,14 @@ OTA bundles are signed (RS256), so a tampered bundle cannot reach a device: the 
 
 Once an OTA is downloaded, the app shows an "Update Available" banner. The active OTA version and build are listed in Settings - About.
 
+#### Two copies of the webview worker bundle
+
+Every build has the webview worker bundle (the `background`) baked into the app binary. An OTA can only replace JS, never a file inside the binary, so that copy on its own would keep the wallet's core logic frozen at whatever the store build shipped.
+
+That is why the same bundle now travels inside the OTA JS bundle as well. On the first launch after an install or an update, the app writes it out into its own private folder and the WebView loads it from there via `file://`; later launches reuse what is already on disk. If that write ever fails, the app falls back to the copy baked into the binary, so it always has a working bundle to boot from.
+
+Loading from disk keeps the protections the baked-in copy had: the page may only run scripts from `file://` (CSP), and its HTML carries a SHA-384 hash (SRI) pinning the exact JS file it loads, so the two can never drift apart. That hash only proves the HTML and the JS belong together, though - what makes OTA'd code trustworthy in the first place is the signature check above.
+
 ## Explorer (Old name: Benzin)
 
 Ambire's transaction explorer, that makes human readable ERC-4337 transactions and contract interactions.
