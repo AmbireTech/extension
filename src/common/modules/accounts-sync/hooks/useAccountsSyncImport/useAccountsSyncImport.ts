@@ -70,6 +70,11 @@ const useAccountsSyncImport = ({
           ACCOUNTS_SYNC_IMPORT_TIMEOUT
         )
 
+        // The scanned data carries the other device's password wrapped main key, so it is
+        // dropped as soon as the background is done with it (which is before the password
+        // of this device gets set, a step the user can spend a while on)
+        setPayload(null)
+
         await onImported(password)
       } catch {
         // A wrong password is displayed by the password form itself (through the
