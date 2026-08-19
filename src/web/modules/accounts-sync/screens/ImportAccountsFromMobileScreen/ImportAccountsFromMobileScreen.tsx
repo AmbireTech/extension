@@ -24,13 +24,13 @@ import SyncScanFeedbackAlert from '@common/modules/accounts-sync/components/Sync
 import useAccountsSyncImport from '@common/modules/accounts-sync/hooks/useAccountsSyncImport'
 import useSyncedPasswordSetup from '@common/modules/accounts-sync/hooks/useSyncedPasswordSetup'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
+import { QrScanProgress } from '@common/modules/hardware-wallets/qr/utils/qrScanFeedback'
 import { WEB_ROUTES } from '@common/modules/router/constants/common'
 import spacings, { SPACING_LG } from '@common/styles/spacings'
 import common, { BORDER_RADIUS_SECONDARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
 import { TabLayoutContainer, TabLayoutWrapperMainContent } from '@web/components/TabLayoutWrapper'
-import { QrScanProgress } from '@common/modules/hardware-wallets/qr/utils/qrScanFeedback'
 import QrScannerWithPermission from '@web/modules/hardware-wallet/screens/QrScannerWithPermission'
 import BottomSheetPasswordConfirmation from '@web/modules/settings/components/BottomSheetPasswordConfirmation'
 
@@ -348,7 +348,7 @@ const ImportAccountsFromMobileScreen = () => {
         <Alert
           type="info"
           size="sm"
-          title={t('Make sure you are entering the password of your Ambire extension.')}
+          title={t('Make sure you are entering the password of your Ambire mobile.')}
         />
 
         {!hasPasswordSecret && (
