@@ -4,14 +4,9 @@ import { buildSelector } from '@helpers/buildSelector'
 const selectors = {
   getStarted: {
     createNewAccountButton: 'create-new-account-btn',
-    createRecoveryPhraseButton: 'review-seed-phrase-btn',
     importAccountButton: 'button-import-account',
     confirmationMessageForViewOnly: 'added-successfully-text',
     confirmationMessageAmbireWallet: 'wallet-ready-to-use-text',
-    savedPhraseButton: 'create-seed-phrase-write-continue-btn',
-    recoveryPhraseHeader: 'back-up-recovery-phrase-text',
-    copyRecoveryPhraseButton: 'copy-recovery-phrase',
-    recoveryPhraseCopiedSnackbar: 'success-0', // first snackbar that appears has value 0 after dash
     checkbox: 'checkbox',
     enterPassField: 'enter-pass-field',
     repeatPassField: 'repeat-pass-field',
@@ -97,7 +92,6 @@ const selectors = {
     importAccountButton: 'import-account',
     connectHardwareWallet: 'connect-hardware-wallet',
     watchAnAddressButton: 'watch-an-address-button',
-    viewOnlyAddressField: 'address-ens-field',
     viewOnlyImportButton: 'view-only-button-import',
     validENSDomainText: '//div[contains(text(),"Valid ENS domain")]',
     addedSuccessfullyText: '//div[contains(text(),"Added successfully")]',
@@ -243,7 +237,6 @@ const selectors = {
   createSeedPrepareCheckboxDyn: 'create-seed-prepare-checkbox',
   reviewSeedPhraseBtn: 'review-seed-phrase-btn',
   recoveryWithSeedWordDyn: 'recovery-with-seed-word',
-  createSeedPhraseWriteContinueBtn: 'create-seed-phrase-write-continue-btn',
   seedWordNumberToBeEntered: 'seed-word-number-to-be-entered',
   seedWordPositionFieldDyn: 'seed-word-position-field',
   createSeedPhraseConfirmContinueBtn: 'create-seed-phrase-confirm-continue-btn',

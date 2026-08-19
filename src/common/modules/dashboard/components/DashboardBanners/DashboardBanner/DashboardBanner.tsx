@@ -1,4 +1,5 @@
 import React, { useCallback, useMemo } from 'react'
+import { View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 
 import {
@@ -9,12 +10,16 @@ import {
 import BatchIcon from '@common/assets/svg/BatchIcon'
 import Banner from '@common/components/Banner'
 import NetworkIcon from '@common/components/NetworkIcon'
+import Text from '@common/components/Text'
+import { isMobile } from '@common/config/env'
+import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import useNavigation from '@common/hooks/useNavigation'
 import useToast from '@common/hooks/useToast'
 import DashboardBannerBottomSheet from '@common/modules/dashboard/components/DashboardBanners/DashboardBannerBottomSheet'
 import { ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
+import flexbox from '@common/styles/utils/flexbox'
 
 import applyOtaUpdate from './applyOtaUpdate'
 
@@ -24,19 +29,24 @@ const DashboardBanner = ({
   banner: Omit<BannerType, 'type'> & { type: NonMarketingBannerType }
 }) => {
   const { type, category, title, text, actions = [], dismissAction, meta } = banner
+  const { t } = useTranslation()
   const { addToast } = useToast()
   const { navigate } = useNavigation()
   const {
     state: { visibleUserRequests },
     dispatch: requestsDispatch
   } = useController('RequestsController')
-  const { dispatch: networksDispatch } = useController('NetworksController')
+  const {
+    state: { networks },
+    dispatch: networksDispatch
+  } = useController('NetworksController')
   const { dispatch: selectedAccountDispatch } = useController('SelectedAccountController')
   const { dispatch: mainDispatch } = useController('MainController')
   const { dispatch: emailVaultDispatch } = useController('EmailVaultController')
   const { dispatch: extensionUpdateDispatch } = useController('ExtensionUpdateController')
   const { ref: sheetRef, close: closeBottomSheet, open: openBottomSheet } = useModalize()
   const primaryAction = actions[0]
+  const isPendingAccountOp = category === 'pending-to-be-signed-acc-op'
 
   const Icon = useMemo(() => {
     if (category === 'pending-to-be-signed-acc-op') return BatchIcon
@@ -44,11 +54,27 @@ const DashboardBanner = ({
     return null
   }, [category])
 
-  const titleAfter = useMemo(() => {
-    if (category !== 'pending-to-be-signed-acc-op' || !meta?.chainId) return null
+  // the network goes on a second row so the banner stays short on every screen size
+  const subtitle = useMemo(() => {
+    if (!isPendingAccountOp || !meta?.chainId) return null
 
-    return <NetworkIcon id={meta.chainId.toString()} size={20} withTooltip style={spacings.mlMi} />
-  }, [category, meta])
+    const networkName = networks.find(({ chainId }) => chainId === meta.chainId)?.name
+    const fontSize = isMobile ? 12 : 14
+
+    return (
+      <View style={[flexbox.directionRow, flexbox.alignCenter, { marginTop: 2 }]}>
+        <Text fontSize={fontSize} appearance="secondaryText">
+          {t('On')}
+        </Text>
+        <NetworkIcon id={meta.chainId.toString()} size={18} style={spacings.mhMi} />
+        {!!networkName && (
+          <Text fontSize={fontSize} appearance="secondaryText">
+            {networkName}
+          </Text>
+        )}
+      </View>
+    )
+  }, [isPendingAccountOp, meta, networks, t])
 
   const handleActionPress = useCallback(
     (action: Action) => {
@@ -244,11 +270,11 @@ const DashboardBanner = ({
       <Banner
         CustomIcon={Icon}
         title={title}
-        titleAfter={titleAfter}
+        subtitle={subtitle}
         type={type}
         text={text}
-        singleRow={category === 'pending-to-be-signed-acc-op'}
-        style={category === 'pending-to-be-signed-acc-op' ? spacings.pbTy : undefined}
+        singleRow={isPendingAccountOp}
+        style={isPendingAccountOp ? spacings.pbTy : undefined}
         buttonText={primaryAction?.label}
         onCloseIconPress={
           dismissAction && !dismissAction.label ? () => handleActionPress(dismissAction) : undefined

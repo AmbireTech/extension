@@ -1,10 +1,11 @@
 import { getSessionId, Session } from '@ambire-common/classes/session'
 import { MainController } from '@ambire-common/controllers/main/main'
 import { IEventEmitterRegistryController } from '@ambire-common/interfaces/eventEmitter'
-import { getDappIdFromUrl } from '@ambire-common/libs/dapps/helpers'
+import { getDappIdFromUrl, getNormalizedHostnameFromUrl } from '@ambire-common/libs/dapps/helpers'
 import { KeyIterator } from '@ambire-common/libs/keyIterator/keyIterator'
 import LedgerKeyIterator from '@common/modules/hardware-wallet/libs/ledgerKeyIterator'
 import TrezorKeyIterator from '@common/modules/hardware-wallet/libs/trezorKeyIterator'
+import NfcKeyIterator from '@common/modules/hardware-wallets/libs/nfcKeyIterator'
 import QrKeyIterator from '@common/modules/hardware-wallets/libs/qrKeyIterator'
 import handleProviderRequests from '@common/modules/provider/handleProviderRequests'
 import { Action, MethodAction } from '@common/types/actions'
@@ -213,6 +214,10 @@ export const handleActions = async (
       return await mainCtrl.handleAccountPickerInitQr(QrKeyIterator, params.payload)
     }
 
+    case 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_NFC_WALLET': {
+      return await mainCtrl.handleAccountPickerInitNfc(NfcKeyIterator, params.payload)
+    }
+
     case 'WEBVIEW_ORIGIN_CHANGED': {
       try {
         const oldDappId = getDappIdFromUrl(new URL(params.previousOrigin).origin)
@@ -378,7 +383,7 @@ export const handleActions = async (
       await mainCtrl.dapps.addDappFromIdentity(
         {
           id: dappId,
-          name: params.name ?? new URL(params.url).hostname,
+          name: params.name ?? getNormalizedHostnameFromUrl(params.url) ?? params.url,
           url: params.url,
           icon: params.icon ?? null,
           chainId: params.chainId,
@@ -410,7 +415,7 @@ export const handleActions = async (
           await mainCtrl.dapps.addDappFromIdentity(
             {
               id: dappId,
-              name: name ?? new URL(url).hostname,
+              name: name ?? getNormalizedHostnameFromUrl(url) ?? url,
               url,
               icon: icon ?? null,
               chainId,

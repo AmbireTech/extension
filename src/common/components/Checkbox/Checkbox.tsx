@@ -15,6 +15,7 @@ interface Props {
   value: boolean
   children?: any
   style?: ViewProps['style']
+  checkboxWrapperStyle?: ViewProps['style']
   uncheckedBorderColor?: ColorValue
   checkedColor?: ColorValue
   isDisabled?: boolean
@@ -28,6 +29,7 @@ const Checkbox = ({
   onValueChange,
   value,
   style,
+  checkboxWrapperStyle,
   uncheckedBorderColor,
   checkedColor,
   isDisabled,
@@ -40,7 +42,7 @@ const Checkbox = ({
 
   return (
     <View style={[styles.container, style, isDisabled && { opacity: 0.6 }]}>
-      <View style={styles.checkboxWrapper}>
+      <View style={[styles.checkboxWrapper, checkboxWrapperStyle]}>
         <TouchableOpacity
           style={[
             styles.webCheckbox,

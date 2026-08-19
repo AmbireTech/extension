@@ -178,7 +178,9 @@ const Main = ({
             <SafetyChecksBanner
               key={banner.id}
               type={banner.type}
+              title={banner.title}
               text={banner.text}
+              secondaryText={banner.secondaryText}
               style={spacings.mbTy}
             />
           ))}
@@ -309,7 +311,9 @@ const Main = ({
         </View>
         {signMessageState.signer &&
           signMessageState.signer.key.type !== 'internal' &&
-          signMessageState.signer.key.type !== 'qr' && (
+          signMessageState.signer.key.type !== 'qr' &&
+          // NFC cards drive their own tap/PIN modal, mounted globally
+          signMessageState.signer.key.type !== 'nfc' && (
             <HardwareWalletSigningModal
               keyType={signMessageState.signer.key.type}
               isVisible={signStatus === 'LOADING'}

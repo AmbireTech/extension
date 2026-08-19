@@ -48,8 +48,10 @@ const GasTankModal = ({ modalRef, handleClose, portfolio, account }: Props) => {
     dispatch: featureFlagsDispatch,
     state: { flags }
   } = useController('FeatureFlagsController')
-  const { canUseGasTank, disabledReason } = useHasGasTank({ account })
+  const { canUseGasTank, disabledReason, requiresEip7702 } = useHasGasTank({ account })
   const isErc4337Enabled = flags.erc4337
+  const isEip7702Enabled = flags.eip7702
+  const isGasTankEnabled = isErc4337Enabled && (!requiresEip7702 || isEip7702Enabled)
 
   // Note: total balance Gas Tank details
   const { token, balanceFormatted } = useMemo(
@@ -65,15 +67,45 @@ const GasTankModal = ({ modalRef, handleClose, portfolio, account }: Props) => {
     }
   }, [addToast])
 
-  const handleEnableErc4337 = useCallback(() => {
-    featureFlagsDispatch({
-      type: 'method',
-      params: {
-        method: 'setFeatureFlag',
-        args: ['erc4337', true]
-      }
-    })
-  }, [featureFlagsDispatch])
+  const handleEnableGasTankFeatures = useCallback(() => {
+    if (!isErc4337Enabled) {
+      featureFlagsDispatch({
+        type: 'method',
+        params: {
+          method: 'setFeatureFlag',
+          args: ['erc4337', true]
+        }
+      })
+    }
+
+    if (requiresEip7702 && !isEip7702Enabled) {
+      featureFlagsDispatch({
+        type: 'method',
+        params: {
+          method: 'setFeatureFlag',
+          args: ['eip7702', true]
+        }
+      })
+    }
+  }, [featureFlagsDispatch, isEip7702Enabled, isErc4337Enabled, requiresEip7702])
+
+  const enableGasTankText = useMemo(() => {
+    if (!requiresEip7702 || isEip7702Enabled) {
+      return t(
+        'Enable ERC-4337 to use smart account gas estimation, gas tank, sponsored gas, and token fee payments.'
+      )
+    }
+
+    if (isErc4337Enabled) {
+      return t(
+        'Enable EIP-7702 to use smart account gas estimation, gas tank, sponsored gas, and token fee payments.'
+      )
+    }
+
+    return t(
+      'Enable ERC-4337 and EIP-7702 to use smart account gas estimation, gas tank, sponsored gas, and token fee payments.'
+    )
+  }, [isEip7702Enabled, isErc4337Enabled, requiresEip7702, t])
 
   return (
     <BottomSheet
@@ -86,7 +118,7 @@ const GasTankModal = ({ modalRef, handleClose, portfolio, account }: Props) => {
       isScrollEnabled={false}
     >
       <ModalHeader title={t('Gas Tank')} handleClose={handleClose} />
-      {isErc4337Enabled || !canUseGasTank ? (
+      {isGasTankEnabled || !canUseGasTank ? (
         <View style={[flexbox.alignStart, spacings.mbLg]}>
           <Text fontSize={16} weight="medium" style={[spacings.mbTy]}>
             {t('Use Gas Tank to cover gas fees across most chains.')}
@@ -108,18 +140,16 @@ const GasTankModal = ({ modalRef, handleClose, portfolio, account }: Props) => {
           type="info"
           size="sm"
           title={t('Enable the gas tank right now!')}
-          text={t(
-            'Enable ERC-4337 to use smart account gas estimation, gas tank, sponsored gas, and token fee payments.'
-          )}
+          text={enableGasTankText}
           style={spacings.mbSm}
           buttonProps={{
             text: t('Enable'),
-            onPress: handleEnableErc4337
+            onPress: handleEnableGasTankFeatures
           }}
         />
       )}
 
-      {!isErc4337Enabled ? null : (
+      {!isGasTankEnabled ? null : (
         <FooterGlassView
           size="sm"
           style={{ ...flexbox.flex1, alignItems: 'stretch' }}

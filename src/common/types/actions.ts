@@ -2,6 +2,7 @@ import { Account } from '@ambire-common/interfaces/account'
 import { Contact } from '@ambire-common/interfaces/addressBook'
 import { ConnectionSource, Dapp } from '@ambire-common/interfaces/dapp'
 import { Key, ReadyToAddKeys } from '@ambire-common/interfaces/keystore'
+import { NfcExportedKey } from '@common/modules/hardware-wallets/nfc/types'
 
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 
@@ -78,6 +79,10 @@ type MainControllerAccountPickerInitLatticeAction = {
 type MainControllerAccountPickerInitQrWalletAction = {
   type: 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_QR_WALLET'
   params: { payload: string | Uint8Array }
+}
+type MainControllerAccountPickerInitNfcWalletAction = {
+  type: 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_NFC_WALLET'
+  params: { payload: NfcExportedKey }
 }
 type MainControllerAccountPickerInitFromSavedSeedPhraseAction = {
   type: 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_FROM_SAVED_SEED_PHRASE'
@@ -225,6 +230,7 @@ export type Action =
   | UpdateUiViewRoute
   | SetViewFocusAction
   | MainControllerAccountPickerInitQrWalletAction
+  | MainControllerAccountPickerInitNfcWalletAction
   | MainControllerAccountPickerInitLatticeAction
   | MainControllerAccountPickerInitTrezorAction
   | MainControllerAccountPickerInitLedgerAction
