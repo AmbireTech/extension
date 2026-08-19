@@ -38,12 +38,16 @@ More about the environment setup and prerequisites [here](https://reactnative.de
 
 Toolchain versions are pinned in the repo, so use a version manager that reads them (nvm, rbenv, jenv, etc.)
 
-| Tool  | File             | Target   |
-| ----- | ---------------- | -------- |
-| Node  | `.nvmrc`         | All apps |
-| Ruby  | `.ruby-version`  | iOS      |
-| Xcode | `.xcode-version` | iOS      |
-| JDK   | `.java-version`  | Android  |
+| Tool      | File             | Target   |
+| --------- | ---------------- | -------- |
+| Node      | `.nvmrc`         | All apps |
+| Yarn      | `package.json`   | All apps |
+| Ruby      | `.ruby-version`  | iOS      |
+| Xcode     | `.xcode-version` | iOS      |
+| CocoaPods | `Gemfile`        | iOS      |
+| JDK       | `.java-version`  | Android  |
+
+Yarn and CocoaPods are not picked up by a version manager: Yarn is pinned via `packageManager`/`engines` in `package.json`, CocoaPods via the `Gemfile` (run it through `bundle exec`, see "Mobile Apps").
 
 ## Install
 
@@ -254,13 +258,35 @@ Run the webview dev server in one terminal (the app shows an explicit error scre
 yarn dev:webview
 ```
 
-Then, in another terminal, build and run the app on a simulator/emulator or a connected device:
+Then, in another terminal, compile a new native build and run it on a simulator/emulator or a connected device:
 
 ```bash
 yarn ios
 # or
 yarn android
 ```
+
+These recompile the native app every time, which is slow. If the app is already installed, only the Metro bundler is needed - start it with a cleared cache and launch the app from the device:
+
+```bash
+yarn start:clean
+```
+
+A new native build is only needed after changing native code or native dependencies.
+
+#### Webview dev server
+
+It listens on port `8182` and is separate from the Metro bundler (port `8081`), which `yarn ios`/`yarn android` start on their own. The app resolves its host automatically:
+
+| Target           | Host                           |
+| ---------------- | ------------------------------ |
+| iOS simulator    | `localhost`                    |
+| Android emulator | `10.0.2.2`                     |
+| Physical device  | `WEBVIEW_DEV_HOST` from `.env` |
+
+On a physical device, set `WEBVIEW_DEV_HOST` to the LAN IP of the machine running the dev server and keep both on the same network.
+
+The error screen prints the exact URL the app expects. The app also keeps re-probing the server and remounts the webview by itself once it is back up, so starting the dev server late doesn't require restarting the app.
 
 ## Explorer (Old name: Benzin)
 
