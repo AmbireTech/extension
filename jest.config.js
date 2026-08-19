@@ -20,5 +20,5 @@ module.exports = {
     path.join('<rootDir>', 'recorder/'), // E2E tests video recorder files
     path.join('<rootDir>', 'vendor/') // Ruby
   ],
-  setupFiles: []
+  setupFiles: [path.join('<rootDir>', 'jest.setup.js')]
 }
