@@ -9,6 +9,7 @@ import FatToggle from '@common/components/FatToggle'
 import { DEVICE_SECURITY_LEVEL } from '@common/contexts/biometricsContext/constants'
 import useBiometrics from '@common/hooks/useBiometrics'
 import useController from '@common/hooks/useController'
+import useExtraEntropy from '@common/hooks/useExtraEntropy'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import { THEME_TYPES } from '@common/styles/themeConfig'
@@ -18,6 +19,7 @@ const BiometricsOption = () => {
   const { selectedThemeType } = useTheme()
   const { isEnrolled, deviceSecurityLevel, saveBiometricsSecret, removeBiometricsSecret } =
     useBiometrics()
+  const { getExtraEntropy } = useExtraEntropy()
 
   const {
     state: { hasBiometricsSecret, statuses },
@@ -53,7 +55,7 @@ const BiometricsOption = () => {
         type: 'method',
         params: {
           method: 'addSecret',
-          args: ['biometrics', secret, '', true]
+          args: ['biometrics', secret, getExtraEntropy(), true]
         }
       })
     }
