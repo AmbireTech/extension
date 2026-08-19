@@ -30,6 +30,13 @@ export interface Erc7730StructuredVisualizationProps {
    */
   transactionSummarySection?: 'all' | 'title' | 'rows'
   showDescriptionTitle?: boolean
+  /**
+   * How many levels of calls embedded in other calls are already rendered above this one.
+   * Calls nested deeper than MAX_DISPLAYED_NESTED_CALLDATA_DEPTH are decoded by the
+   * humanizer (so their warnings are not lost) but are not shown, because they make the
+   * transaction unreadable.
+   */
+  nestingDepth?: number
 }
 
 export type Erc7730Row = HumanizerErc7730Visualization['rows'][number]
