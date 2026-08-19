@@ -288,6 +288,83 @@ On a physical device, set `WEBVIEW_DEV_HOST` to the LAN IP of the machine runnin
 
 The error screen prints the exact URL the app expects. The app also keeps re-probing the server and remounts the webview by itself once it is back up, so starting the dev server late doesn't require restarting the app.
 
+### Production-optimized Builds
+
+Both platforms run `yarn build:inject:mobile-ota-config` (seeds the Stallion OTA config into `Info.plist`/`strings.xml`) and `yarn build:webview` before the native build, so no manual prep is needed.
+
+Local production builds are normally **not** OTA-capable: without the `STALLION_*` variables in ".env" the injection is skipped, the committed placeholders stay, and the app never pulls an OTA update. That is fine for testing. Fill them in (see "Over-the-Air (OTA) Updates") only if you specifically need to test the OTA flow locally. In CI they are mandatory - a missing one fails the build instead of shipping an app that silently cannot update.
+
+- iOS, for a simulator (unsigned `.app`, useful for sharing test builds):
+
+  ```bash
+  yarn build:ios:simulator
+  ```
+
+  Find the result in "ios/build/Build/Products/Release-iphonesimulator/Ambire.app", and install it on the booted simulator with:
+
+  ```bash
+  yarn build:ios:simulator:install
+  ```
+
+- iOS, for the App Store (signed `.ipa`):
+
+  ```bash
+  yarn build:ios:production
+  ```
+
+  This archives the app and exports it with "ios/ExportOptions.plist". Find the result in the "ios/build/ipa" folder.
+
+  Requires the Ambire distribution certificate in your keychain and the matching provisioning profile installed.
+
+  For an ad-hoc/development `.ipa` (installable on registered test devices) use `yarn build:ios:production-for-testing`, which exports with "ios/ExportOptions-Development.plist" into "ios/build/ipa-for-testing".
+
+- Android, APK (for testing, easiest to install directly on a device):
+
+  ```bash
+  yarn build:android:production:apk
+  ```
+
+  Find the result in the "android/app/build/outputs/apk/release" folder. To build, reinstall and restart on a connected device in one go:
+
+  ```bash
+  yarn build:android:production:apk:install
+  ```
+
+- Android, AAB (for the Play Store):
+
+  ```bash
+  yarn build:android:production:aab
+  ```
+
+  Find the result in the "android/app/build/outputs/bundle/release" folder.
+
+  NOTE: Locally, release builds are signed with the debug keystore unless a "credentials.json" file with the release keystore details exists in the root directory. That's fine for testing, but a Play Store upload requires the real upload keystore, so use the CI build for store releases.
+
+### CI Builds (GitHub Actions)
+
+Store-ready artifacts are built in CI, so nobody has to keep signing material locally. All four are manually triggered (`workflow_dispatch`) and upload a zipped artifact named `ambire-<platform>-v<VERSION>-<TYPE>`, where the version is read from "app.json":
+
+| Workflow                      | Yarn command                        | Artifact                     | Signed |
+| ----------------------------- | ----------------------------------- | ---------------------------- | ------ |
+| 🍎 Build · iOS Simulator      | `yarn build:ios:simulator`          | `Ambire.app`                 | No     |
+| 🍎 Build · iOS App Store      | `yarn build:ios:production`         | `Ambire.ipa`                 | Yes    |
+| 🤖 Build · Android APK        | `yarn build:android:production:apk` | `Ambire.apk` (arm64-v8a)     | No     |
+| 🤖 Build · Android Play Store | `yarn build:android:production:aab` | `Ambire.aab` (+ armeabi-v7a) | Yes    |
+
+The shared steps live in `.github/workflows/_build-ios.yml` and `.github/workflows/_build-android.yml`. The signing material (Apple certificate and provisioning profile, Android upload keystore), the Stallion OTA credentials and all API keys come from the GitHub environment.
+
+### Over-the-Air (OTA) Updates
+
+JS-only changes can be shipped to already installed apps without a store release, via [Stallion](https://stalliontech.io/). Both the React Native bundle and the webview worker bundle (the `background`) ride the OTA, so the core business logic can be updated too.
+
+A build can only receive OTA updates if it was made with the Stallion credentials in place: `yarn build:inject:mobile-ota-config` swaps the placeholders in "Info.plist"/"strings.xml" for `STALLION_PROJECT_ID`, `STALLION_APP_TOKEN` and `STALLION_PUBLIC_SIGNING_KEY`. CI always has them, a local ".env" usually doesn't.
+
+NOTE: that injection rewrites the committed "Info.plist" and "strings.xml" in place. Never commit the result - restore them with `git checkout` first.
+
+OTA bundles are signed (RS256), so a tampered bundle cannot reach a device: the app verifies every incoming bundle against the `STALLION_PUBLIC_SIGNING_KEY` embedded into it at build time.
+
+Once an OTA is downloaded, the app shows an "Update Available" banner. The active OTA version and build are listed in Settings - About.
+
 ## Explorer (Old name: Benzin)
 
 Ambire's transaction explorer, that makes human readable ERC-4337 transactions and contract interactions.
