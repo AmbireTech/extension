@@ -36,6 +36,15 @@ This project is built with Expo's bare workflow, allowing us to extend the defau
 
 More about the environment setup and prerequisites [here](https://reactnative.dev/docs/environment-setup).
 
+Toolchain versions are pinned in the repo, so use a version manager that reads them (nvm, rbenv, jenv, etc.)
+
+| Tool  | File             | Target   |
+| ----- | ---------------- | -------- |
+| Node  | `.nvmrc`         | All apps |
+| Ruby  | `.ruby-version`  | iOS      |
+| Xcode | `.xcode-version` | iOS      |
+| JDK   | `.java-version`  | Android  |
+
 ## Install
 
 Install all dependencies:
@@ -225,7 +234,33 @@ And find the resulting zips in the "build" folder as `ambire-extension-<VERSION>
 
 ## Mobile Apps
 
-The Ambire v2 compatible mobile apps are yet to be developed. Coming sometime in the near future 🤞
+The mobile apps share the same codebase, but the business logic (the `background`) runs inside a WebView worker (`src/mobile/services/WebViewWorker/`) instead of a service worker. That's why every mobile build needs the webview bundle built (or the webview dev server running).
+
+### Install
+
+- For iOS: Make sure you have Xcode + CocoaPods via bundler (see the "Environment Setup" section), then install the pods:
+
+  ```bash
+  cd ios && bundle install && bundle exec pod install
+  ```
+
+- For Android: Make sure you have Android Studio with the Android SDK and the NDK required by React Native (see "Environment Setup" section).
+
+### Development-optimized Builds
+
+Run the webview dev server in one terminal (the app shows an explicit error screen if it isn't running):
+
+```bash
+yarn dev:webview
+```
+
+Then, in another terminal, build and run the app on a simulator/emulator or a connected device:
+
+```bash
+yarn ios
+# or
+yarn android
+```
 
 ## Explorer (Old name: Benzin)
 
