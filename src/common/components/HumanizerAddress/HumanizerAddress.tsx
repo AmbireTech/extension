@@ -18,6 +18,7 @@ interface Props extends TextProps {
   highestPriorityAlias?: string
   marginRight?: number
   hideLogo?: boolean
+  hideActions?: boolean
   actionsMode?: 'tooltip' | 'inline'
   shouldWrapInlineActions?: boolean
   chainId: bigint
@@ -31,6 +32,7 @@ const HumanizerAddress: FC<Props> = ({
   highestPriorityAlias,
   marginRight,
   hideLogo = false,
+  hideActions = false,
   actionsMode = 'tooltip',
   chainId,
   isToken,
@@ -67,6 +69,7 @@ const HumanizerAddress: FC<Props> = ({
         address={address}
         humanizerInfo={addressInfo}
         highestPriorityAlias={highestPriorityAlias}
+        hideActions={hideActions}
         actionsMode={actionsMode}
         chainId={chainId}
         isToken={isToken}
