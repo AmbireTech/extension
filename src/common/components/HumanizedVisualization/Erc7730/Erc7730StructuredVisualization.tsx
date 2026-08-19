@@ -1,6 +1,7 @@
 import React, { FC, memo, useCallback, useMemo } from 'react'
 import { View } from 'react-native'
 
+import { MAX_DISPLAYED_NESTED_CALLDATA_DEPTH } from '@ambire-common/libs/humanizer/erc7730/consts'
 import { HumanizerVisualization } from '@ambire-common/libs/humanizer/interfaces'
 import useNetworksContext from '@benzin/hooks/useBenzinNetworksContext'
 import RightArrowIcon from '@common/assets/svg/RightArrowIcon'
@@ -46,7 +47,8 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
   isTransactionSummaryLayout = false,
   hasTransactionSummaryHeaderRightControl = false,
   transactionSummarySection = 'all',
-  showDescriptionTitle = false
+  showDescriptionTitle = false,
+  nestingDepth = 0
 }) => {
   const { theme } = useTheme()
   const { t } = useTranslation()
@@ -194,6 +196,23 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
       }
 
       if (valueItem.type === 'erc7730') {
+        // The humanizer decodes all the levels of calls hidden in other calls, but showing
+        // all of them makes the transaction unreadable, so the deepest ones are replaced
+        // with a short note.
+        if (nestingDepth >= MAX_DISPLAYED_NESTED_CALLDATA_DEPTH) {
+          return (
+            <Text
+              key={valueItem.id}
+              fontSize={overrideTextSize}
+              weight="medium"
+              color={theme.secondaryText}
+              style={{ textAlign: 'right', flexShrink: 1 }}
+            >
+              {t('More transactions are hidden inside this one')}
+            </Text>
+          )
+        }
+
         return (
           <Erc7730StructuredVisualization
             key={valueItem.id}
@@ -202,6 +221,7 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
             sizeMultiplierSize={sizeMultiplierSize}
             textSize={overrideTextSize}
             mode="description"
+            nestingDepth={nestingDepth + 1}
           />
         )
       }
@@ -221,7 +241,10 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
                     ? theme.secondaryAccent400
                     : theme.primaryText
             }
-            style={[{ textAlign: 'right', flexShrink: 1 }, valueItem.mlMi && spacings.mlMi]}
+            style={[
+              { textAlign: 'right', flexShrink: 1, minWidth: 0 },
+              valueItem.mlMi && spacings.mlMi
+            ]}
           >
             {valueItem.content}
           </Text>
@@ -230,7 +253,7 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
 
       return null
     },
-    [chainId, editApprovalCallInfo, mode, sizeMultiplierSize, textSize, theme]
+    [chainId, editApprovalCallInfo, mode, nestingDepth, sizeMultiplierSize, t, textSize, theme]
   )
 
   // Renders an interpolated title (e.g. "Swap {amount} for at least {amount}")
@@ -290,6 +313,22 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
   const renderNestedVisualization = useCallback(
     (nestedVisualization: HumanizerVisualization, nestedIndex: number) => {
       if (!isNestedErc7730Value(nestedVisualization)) return null
+      // The humanizer decodes all the levels of calls hidden in other calls, but showing
+      // all of them makes the transaction unreadable, so the deepest ones are replaced
+      // with a short note.
+      if (nestingDepth >= MAX_DISPLAYED_NESTED_CALLDATA_DEPTH) {
+        return (
+          <Text
+            key={nestedVisualization.id}
+            fontSize={textSize}
+            weight="medium"
+            color={theme.secondaryText}
+            style={[spacings.plSm, nestedIndex > 0 && spacings.mtTy]}
+          >
+            {t('More transactions are hidden inside this one')}
+          </Text>
+        )
+      }
 
       const nestedTitle = nestedVisualization.title?.trim()
       const shouldShowNestedConnector = getDetailedRows(nestedVisualization).some(
@@ -347,12 +386,21 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
               textSize={textSize}
               mode="description"
               showDescriptionTitle
+              nestingDepth={nestingDepth + 1}
             />
           </View>
         </View>
       )
     },
-    [chainId, sizeMultiplierSize, textSize, theme.secondaryBorder, theme.secondaryText]
+    [
+      chainId,
+      nestingDepth,
+      sizeMultiplierSize,
+      t,
+      textSize,
+      theme.secondaryBorder,
+      theme.secondaryText
+    ]
   )
 
   if (mode === 'summary') {
@@ -442,7 +490,14 @@ const Erc7730StructuredVisualization: FC<Erc7730StructuredVisualizationProps> = 
                     ]}
                   >
                     {row.value.map((value, valueIndex) => (
-                      <View key={value.id} style={valueIndex > 0 && spacings.mlTy}>
+                      // `flexShrink`/`minWidth` let the wrapper shrink below the value's
+                      // content width. Without them a long unbreakable value (e.g. a
+                      // non-EVM recipient hash) keeps its full width and, because the
+                      // container is right-aligned, overflows to the left over the label.
+                      <View
+                        key={value.id}
+                        style={[{ flexShrink: 1, minWidth: 0 }, valueIndex > 0 && spacings.mlTy]}
+                      >
                         {renderValue(value)}
                       </View>
                     ))}
