@@ -238,7 +238,7 @@ And find the resulting zips in the "build" folder as `ambire-extension-<VERSION>
 
 ## Mobile Apps
 
-The mobile apps share the same codebase, but the business logic (the `background`) runs inside a WebView worker (`src/mobile/services/WebViewWorker/`) instead of a service worker. That's why every mobile build needs the webview bundle built (or the webview dev server running).
+The mobile apps share the same codebase, but the business logic (the `background`) runs inside a WebView worker (`src/mobile/modules/webview/services/`) instead of a service worker. That's why every mobile build needs the webview bundle built (or the webview dev server running).
 
 ### Install
 
