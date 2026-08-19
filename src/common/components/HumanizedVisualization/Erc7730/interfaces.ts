@@ -23,8 +23,12 @@ export interface Erc7730StructuredVisualizationProps {
   hideNestedRows?: boolean
   hideMobileSummaryTitle?: boolean
   isTransactionSummaryLayout?: boolean
-  hasTransactionSummaryHeaderLeftControl?: boolean
   hasTransactionSummaryHeaderRightControl?: boolean
+  /**
+   * Lets the transaction summary render the title and the rows into separate slots,
+   * so the title stays on the dropdown arrow's line while the rows sit below it.
+   */
+  transactionSummarySection?: 'all' | 'title' | 'rows'
   showDescriptionTitle?: boolean
 }
 

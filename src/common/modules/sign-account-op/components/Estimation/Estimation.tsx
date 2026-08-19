@@ -73,7 +73,7 @@ const FeeSpeedLabel = ({
 
   if (isValue) {
     return (
-      <Text weight="semiBold" fontSize={16} testID={SPEED_TEST_IDS[speed.type]}>
+      <Text fontSize={14} appearance="secondaryText" testID={SPEED_TEST_IDS[speed.type]}>
         {t(getFeeSpeedLabelText(speed))}
       </Text>
     )
@@ -89,7 +89,7 @@ const FeeSpeedLabel = ({
       ]}
       testID={SPEED_TEST_IDS[speed.type]}
     >
-      <Text weight="medium" fontSize={isMobile ? 14 : 12} style={spacings.mrMi}>
+      <Text fontSize={isMobile ? 14 : 12} style={spacings.mrMi}>
         {t(getFeeSpeedLabelText(speed))}
       </Text>
       <Text
@@ -543,12 +543,7 @@ const Estimation = ({
     const advancedButtonContent = (
       <View style={[flexbox.directionRow, flexbox.alignCenter]}>
         <SettingsWheelIcon width={16} height={16} color={theme.secondaryText} />
-        <Text
-          fontSize={14}
-          weight="medium"
-          appearance="secondaryText"
-          style={[spacings.mlTy, spacings.mrMi]}
-        >
+        <Text fontSize={14} appearance="secondaryText" style={[spacings.mlTy, spacings.mrMi]}>
           {t('Advanced')}
         </Text>
         <RightArrowIcon width={6} height={12} color={theme.secondaryText} weight="2" />
@@ -575,6 +570,7 @@ const Estimation = ({
         disabled={!canSetCustomGasPrices}
         onPress={openAdvancedOptions}
         hasBottomSpacing={false}
+        shouldScaleChildrenOnHover={false}
         testID="advanced-options-button"
         style={{
           alignSelf: 'flex-end',
@@ -646,7 +642,6 @@ const Estimation = ({
         // Display a wider menu if the fee token price is unavailable
         // as the native amount takes up more space
         menuLeftHorizontalOffset={feeTokenPriceUnavailableWarning ? 160 : 100}
-        menuStyle={{ width: feeTokenPriceUnavailableWarning ? 200 : 148 }}
         menuPosition="top"
         bottomSheetTitle={t('Network fee')}
         withSearch={false}
@@ -783,13 +778,13 @@ const Estimation = ({
           flexbox.directionRow,
           flexbox.alignCenter,
           flexbox.justifySpaceBetween,
-          spacings.mbSm,
+          spacings.mbTy,
           isMobile && spacings.ptSm
         ]}
       >
         {isMobile ? (
           <View style={[flexbox.flex1, flexbox.directionRow, flexbox.alignCenter, spacings.mrTy]}>
-            <Text fontSize={20} weight="medium">
+            <Text fontSize={18} weight="medium">
               {estimationTitle}
             </Text>
             {signAccountOpState.canAccountBroadcastByItself && (
@@ -810,7 +805,7 @@ const Estimation = ({
           </View>
         ) : (
           <>
-            <Text fontSize={20} weight="medium">
+            <Text fontSize={18} weight="medium">
               {estimationTitle}
             </Text>
             {signAccountOpState.canAccountBroadcastByItself && (
@@ -833,9 +828,27 @@ const Estimation = ({
       </View>
       <View>
         {!isMobile && (
-          <Text fontSize={16} weight="medium" appearance="secondaryText" style={spacings.mbTy}>
-            {t('Pay with')}
-          </Text>
+          <View
+            style={[
+              flexbox.directionRow,
+              flexbox.alignCenter,
+              flexbox.justifySpaceBetween,
+              spacings.mbTy
+            ]}
+          >
+            <Text fontSize={14} appearance="secondaryText">
+              {t('Pay with')}
+            </Text>
+            <DefaultFeeSelector
+              networkName={network?.name}
+              payValue={payValue}
+              signAccountOpState={signAccountOpState}
+              dispatchUpdate={dispatchUpdate}
+              hasManyPayOptionsByUsOrGasTank={payOptionsPaidByUsOrGasTank.length > 1}
+              baselineFeeOption={baselineFeeOption}
+              style={[flexbox.alignCenter, spacings.mb0]}
+            />
+          </View>
         )}
         <SectionedSelect
           setValue={setFeeOption}
@@ -861,21 +874,20 @@ const Estimation = ({
           menuPosition="top"
           bottomSheetTitle={t('Network fee')}
         />
-        <DefaultFeeSelector
-          networkName={network?.name}
-          payValue={payValue}
-          signAccountOpState={signAccountOpState}
-          dispatchUpdate={dispatchUpdate}
-          hasManyPayOptionsByUsOrGasTank={payOptionsPaidByUsOrGasTank.length > 1}
-          baselineFeeOption={baselineFeeOption}
-          style={isMobile ? [spacings.mtSm, spacings.mb0] : undefined}
-        />
+        {isMobile && (
+          <DefaultFeeSelector
+            networkName={network?.name}
+            payValue={payValue}
+            signAccountOpState={signAccountOpState}
+            dispatchUpdate={dispatchUpdate}
+            hasManyPayOptionsByUsOrGasTank={payOptionsPaidByUsOrGasTank.length > 1}
+            baselineFeeOption={baselineFeeOption}
+            style={[flexbox.alignCenter, spacings.mtSm, spacings.mb0]}
+          />
+        )}
       </View>
       {!isMobile && (
         <>
-          <View
-            style={{ height: 1, backgroundColor: theme.tertiaryBackground, ...spacings.mtSm }}
-          />
           {!!selectedFee && (
             <View
               style={[
@@ -885,7 +897,7 @@ const Estimation = ({
                 spacings.mtSm
               ]}
             >
-              <Text fontSize={16} weight="medium" appearance="secondaryText">
+              <Text fontSize={14} appearance="secondaryText">
                 {t('Speed')}
               </Text>
               {renderFeeSpeedSelect()}
