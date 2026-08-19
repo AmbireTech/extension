@@ -26,6 +26,7 @@ import DappItem from '@common/modules/explore/components/DappItem'
 import DisconnectAllBottomSheet, {
   DisconnectAllBottomSheetHandle
 } from '@common/modules/explore/components/DisconnectAllBottomSheet'
+import WalletStaking from '@common/modules/explore/components/WalletStaking'
 import useExploreFilteredDapps from '@common/modules/explore/hooks/useExploreFilteredDapps'
 import { ExploreSectionType } from '@common/modules/explore/hooks/useExploreSections'
 import { ROUTES } from '@common/modules/router/constants/common'
@@ -266,12 +267,15 @@ const ExploreSectionScreen = () => {
             data={dapps}
             renderItem={renderItem}
             keyExtractor={(item: Dapp) => item.id}
+            ListHeaderComponent={sectionType === 'apps' ? WalletStaking : undefined}
             ListEmptyComponent={
-              <View style={[flexbox.center, spacings.pv]}>
-                <Text appearance="secondaryText" style={text.center}>
-                  {t('No apps found')}
-                </Text>
-              </View>
+              sectionType === 'apps' ? null : (
+                <View style={[flexbox.center, spacings.pv]}>
+                  <Text appearance="secondaryText" style={text.center}>
+                    {t('No apps found')}
+                  </Text>
+                </View>
+              )
             }
           />
         </View>

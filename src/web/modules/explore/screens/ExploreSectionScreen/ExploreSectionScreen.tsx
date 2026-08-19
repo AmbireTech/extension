@@ -18,6 +18,7 @@ import useDebounce from '@common/hooks/useDebounce'
 import useRoute from '@common/hooks/useRoute'
 import useTheme from '@common/hooks/useTheme'
 import DappItem from '@common/modules/explore/components/DappItem'
+import WalletStaking from '@common/modules/explore/components/WalletStaking'
 import useExploreFilteredDapps from '@common/modules/explore/hooks/useExploreFilteredDapps'
 import { ExploreSectionType } from '@common/modules/explore/hooks/useExploreSections'
 import { HeaderWithTitle } from '@common/modules/header/components/Header/Header'
@@ -213,14 +214,17 @@ const ExploreSectionScreen = () => {
           data={dapps}
           renderItem={renderItem}
           keyExtractor={(item: Dapp) => item.id}
+          ListHeaderComponent={sectionType === 'apps' ? WalletStaking : undefined}
           style={spacings.phSm}
           contentContainerStyle={spacings.pr0}
           ListEmptyComponent={
-            <View style={[flexbox.center, spacings.pv]}>
-              <Text appearance="secondaryText" style={text.center}>
-                {t('No apps found')}
-              </Text>
-            </View>
+            sectionType === 'apps' ? null : (
+              <View style={[flexbox.center, spacings.pv]}>
+                <Text appearance="secondaryText" style={text.center}>
+                  {t('No apps found')}
+                </Text>
+              </View>
+            )
           }
         />
       </View>

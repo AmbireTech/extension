@@ -25,6 +25,7 @@ import DisconnectAllBottomSheet, {
 import HorizontalDappsRow from '@common/modules/explore/components/HorizontalDappsRow'
 import SectionHeader from '@common/modules/explore/components/SectionHeader'
 import TrendingTokenItem from '@common/modules/explore/components/TrendingTokenItem'
+import WalletStaking from '@common/modules/explore/components/WalletStaking'
 import { MAX_TRENDING_TOKENS_ON_EXPLORE } from '@common/modules/explore/constants/trending'
 import { filterTrendingTokensBySearch } from '@common/modules/explore/helpers/filterTrendingTokens'
 import useExploreSections, {
@@ -39,6 +40,7 @@ type SectionItem =
   | { kind: 'dapp'; dapp: Dapp }
   | { kind: 'row'; dapps: Dapp[] }
   | { kind: 'trendingToken'; token: TrendingToken }
+  | { kind: 'walletStaking' }
 
 type SearchResult = { kind: 'dapp'; dapp: Dapp } | { kind: 'trendingToken'; token: TrendingToken }
 
@@ -128,7 +130,10 @@ const ExploreScreen = () => {
           ...s,
           data:
             s.type === 'apps'
-              ? s.data.map((d) => ({ kind: 'dapp' as const, dapp: d }))
+              ? [
+                  { kind: 'walletStaking' as const },
+                  ...s.data.map((d) => ({ kind: 'dapp' as const, dapp: d }))
+                ]
               : [{ kind: 'row' as const, dapps: s.data }]
         }
       }),
@@ -136,6 +141,7 @@ const ExploreScreen = () => {
   )
 
   const renderSectionItem = useCallback(({ item }: { item: SectionItem }) => {
+    if (item.kind === 'walletStaking') return <WalletStaking />
     if (item.kind === 'row') return <HorizontalDappsRow data={item.dapps} />
     if (item.kind === 'trendingToken') return <TrendingTokenItem token={item.token} />
     return <DappItem {...item.dapp} />
@@ -170,6 +176,7 @@ const ExploreScreen = () => {
   )
 
   const sectionKeyExtractor = useCallback((item: SectionItem, index: number) => {
+    if (item.kind === 'walletStaking') return 'wallet-staking'
     if (item.kind === 'dapp') return item.dapp.id
     if (item.kind === 'trendingToken') return `trending-${item.token.id}`
     return `row-${index}`
