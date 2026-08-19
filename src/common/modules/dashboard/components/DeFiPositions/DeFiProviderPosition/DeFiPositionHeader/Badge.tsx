@@ -24,6 +24,7 @@ const Badge = ({
         isMobile
           ? {}
           : {
+              alignSelf: 'flex-start',
               ...spacings.phTy,
               ...spacings.mrTy,
               ...flexbox.justifyCenter,

@@ -1,4 +1,5 @@
 import React, { useCallback, useMemo } from 'react'
+import { View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 
 import {
@@ -9,14 +10,23 @@ import {
 import BatchIcon from '@common/assets/svg/BatchIcon'
 import Banner from '@common/components/Banner'
 import NetworkIcon from '@common/components/NetworkIcon'
+import Text from '@common/components/Text'
+import { isMobile } from '@common/config/env'
+import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import useNavigation from '@common/hooks/useNavigation'
+import useShouldRenderRequestInPanel from '@common/hooks/useShouldRenderRequestInPanel'
 import useToast from '@common/hooks/useToast'
 import DashboardBannerBottomSheet from '@common/modules/dashboard/components/DashboardBanners/DashboardBannerBottomSheet'
 import { ROUTES } from '@common/modules/router/constants/common'
+import { getRouteForUserRequest } from '@common/modules/router/helpers'
 import spacings from '@common/styles/spacings'
+import { getUiType } from '@common/utils/uiType'
+import flexbox from '@common/styles/utils/flexbox'
 
 import applyOtaUpdate from './applyOtaUpdate'
+
+const { isSidePanel } = getUiType()
 
 const DashboardBanner = ({
   banner
@@ -24,19 +34,26 @@ const DashboardBanner = ({
   banner: Omit<BannerType, 'type'> & { type: NonMarketingBannerType }
 }) => {
   const { type, category, title, text, actions = [], dismissAction, meta } = banner
+  const { t } = useTranslation()
   const { addToast } = useToast()
   const { navigate } = useNavigation()
+  const shouldRenderRequestInPanel = useShouldRenderRequestInPanel()
   const {
     state: { visibleUserRequests },
     dispatch: requestsDispatch
   } = useController('RequestsController')
-  const { dispatch: networksDispatch } = useController('NetworksController')
+  const transferState = useController('TransferController').state
+  const {
+    state: { networks },
+    dispatch: networksDispatch
+  } = useController('NetworksController')
   const { dispatch: selectedAccountDispatch } = useController('SelectedAccountController')
   const { dispatch: mainDispatch } = useController('MainController')
   const { dispatch: emailVaultDispatch } = useController('EmailVaultController')
   const { dispatch: extensionUpdateDispatch } = useController('ExtensionUpdateController')
   const { ref: sheetRef, close: closeBottomSheet, open: openBottomSheet } = useModalize()
   const primaryAction = actions[0]
+  const isPendingAccountOp = category === 'pending-to-be-signed-acc-op'
 
   const Icon = useMemo(() => {
     if (category === 'pending-to-be-signed-acc-op') return BatchIcon
@@ -44,11 +61,27 @@ const DashboardBanner = ({
     return null
   }, [category])
 
-  const titleAfter = useMemo(() => {
-    if (category !== 'pending-to-be-signed-acc-op' || !meta?.chainId) return null
+  // the network goes on a second row so the banner stays short on every screen size
+  const subtitle = useMemo(() => {
+    if (!isPendingAccountOp || !meta?.chainId) return null
 
-    return <NetworkIcon id={meta.chainId.toString()} size={20} withTooltip style={spacings.mlMi} />
-  }, [category, meta])
+    const networkName = networks.find(({ chainId }) => chainId === meta.chainId)?.name
+    const fontSize = isMobile ? 12 : 14
+
+    return (
+      <View style={[flexbox.directionRow, flexbox.alignCenter, { marginTop: 2 }]}>
+        <Text fontSize={fontSize} appearance="secondaryText">
+          {t('On')}
+        </Text>
+        <NetworkIcon id={meta.chainId.toString()} size={18} style={spacings.mhMi} />
+        {!!networkName && (
+          <Text fontSize={fontSize} appearance="secondaryText">
+            {networkName}
+          </Text>
+        )}
+      </View>
+    )
+  }, [isPendingAccountOp, meta, networks, t])
 
   const handleActionPress = useCallback(
     (action: Action) => {
@@ -57,17 +90,30 @@ const DashboardBanner = ({
           if (!visibleUserRequests.length) break
           const dappRequests = visibleUserRequests.filter((r) => r.kind !== 'calls')
           if (!dappRequests.length) break
+          const targetRequest = dappRequests[0]!
+          // Opens/focuses the request window via RequestsController when the side
+          // panel is closed; when the side panel is open we also navigate in-panel.
           requestsDispatch({
             type: 'method',
             params: {
               method: 'setCurrentUserRequestById',
-              args: [dappRequests[0]!.id]
+              args: [targetRequest.id]
             }
           })
+          if (shouldRenderRequestInPanel) {
+            const targetRoute = getRouteForUserRequest({
+              currentUserRequest: targetRequest,
+              transferState
+            })
+            if (targetRoute) navigate(targetRoute)
+          }
           break
         }
 
-        case 'open-accountOp':
+        case 'open-accountOp': {
+          const targetRequest = visibleUserRequests.find(
+            (request) => String(request.id) === String(action.meta.requestId)
+          )
           requestsDispatch({
             type: 'method',
             params: {
@@ -75,7 +121,15 @@ const DashboardBanner = ({
               args: [action.meta.requestId]
             }
           })
+          if (shouldRenderRequestInPanel && targetRequest) {
+            const targetRoute = getRouteForUserRequest({
+              currentUserRequest: targetRequest,
+              transferState
+            })
+            if (targetRoute) navigate(targetRoute)
+          }
           break
+        }
 
         case 'reject-accountOp':
           requestsDispatch({
@@ -232,6 +286,8 @@ const DashboardBanner = ({
       navigate,
       addToast,
       visibleUserRequests,
+      shouldRenderRequestInPanel,
+      transferState,
       type,
       openBottomSheet,
       selectedAccountDispatch,
@@ -244,11 +300,11 @@ const DashboardBanner = ({
       <Banner
         CustomIcon={Icon}
         title={title}
-        titleAfter={titleAfter}
+        subtitle={subtitle}
         type={type}
         text={text}
-        singleRow={category === 'pending-to-be-signed-acc-op'}
-        style={category === 'pending-to-be-signed-acc-op' ? spacings.pbTy : undefined}
+        singleRow={isPendingAccountOp}
+        style={isPendingAccountOp ? spacings.pbTy : undefined}
         buttonText={primaryAction?.label}
         onCloseIconPress={
           dismissAction && !dismissAction.label ? () => handleActionPress(dismissAction) : undefined

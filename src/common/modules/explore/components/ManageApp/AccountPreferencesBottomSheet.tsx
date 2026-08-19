@@ -16,6 +16,9 @@ import ToggleDAppScopedAccounts from '@common/modules/dapp-catalog/components/To
 import useDAppAccountPreferences from '@common/modules/dapp-catalog/hooks/useDAppAccountPreferences'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
+import { getUiType } from '@common/utils/uiType'
+
+const { isSidePanel } = getUiType()
 
 interface AccountPreferencesBottomSheetProps {
   dapp: Dapp
@@ -82,7 +85,7 @@ const AccountPreferencesBottomSheet = ({
         /* Placeholder to rendering the content behind buttons */
         <View style={{ height: 120 }} />
       )}
-      <FooterGlassView size="sm">
+      <FooterGlassView size="sm" absolute={isSidePanel} preferGlassFooter={isSidePanel}>
         <Button
           type="secondary"
           size="smaller"

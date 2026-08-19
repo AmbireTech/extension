@@ -5,6 +5,8 @@ import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 
 interface Style {
   modal: ViewStyle
+  sidePanelSheet: ViewStyle
+  sidePanelContent: ViewStyle
   imageContainer: ViewStyle
   image: ImageStyle
 }
@@ -17,6 +19,17 @@ const getStyles = () =>
       ...spacings.phSm,
       ...spacings.pvSm,
       maxWidth: COLLECTIBLE_IMAGE_SIZE + SPACING_SM * 2
+    },
+    sidePanelSheet: {
+      ...spacings.phSm,
+      ...spacings.pvSm,
+      width: '100%',
+      maxWidth: '100%'
+    },
+    sidePanelContent: {
+      width: '100%',
+      maxWidth: COLLECTIBLE_IMAGE_SIZE + SPACING_SM * 2,
+      alignSelf: 'center'
     },
     imageContainer: {
       ...spacings.mbLg

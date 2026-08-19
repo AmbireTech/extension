@@ -44,6 +44,17 @@ const routesConfig: RouteConfig = {
       web: i18n.t('Onboarding')
     })
   },
+  [ROUTES.sidePanelNoAccounts]: {
+    route: ROUTES.sidePanelNoAccounts,
+    title: Platform.select({
+      default: i18n.t('No accounts'),
+      web: i18n.t('No accounts')
+    }),
+    name: Platform.select({
+      default: i18n.t('No accounts'),
+      web: i18n.t('No accounts')
+    })
+  },
   [ROUTES.importExistingAccount]: {
     route: ROUTES.importExistingAccount,
     title: Platform.select({
@@ -295,20 +306,6 @@ const routesConfig: RouteConfig = {
       default: i18n.t('Welcome to Ambire Wallet')
     }),
     name: Platform.select({ default: i18n.t('Import Smart Account JSON') })
-  },
-  [ROUTES.createSeedPhrasePrepare]: {
-    route: ROUTES.createSeedPhrasePrepare,
-    title: Platform.select({
-      default: i18n.t('Welcome to Ambire Wallet')
-    }),
-    name: Platform.select({ default: i18n.t('Create New Recovery Phrase') })
-  },
-  [ROUTES.createSeedPhraseWrite]: {
-    route: ROUTES.createSeedPhraseWrite,
-    title: Platform.select({
-      default: i18n.t('Backup Recovery Phrase')
-    }),
-    name: Platform.select({ default: i18n.t('Backup Recovery Phrase') })
   },
   [ROUTES.onboardingCompleted]: {
     route: ROUTES.onboardingCompleted,

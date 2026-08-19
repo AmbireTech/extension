@@ -4,6 +4,12 @@ const baseConfig = require('./src/ambire-common/jest.config.js')
 module.exports = {
   ...baseConfig,
   displayName: 'Ambire Extension Unit Tests',
+  // The tsconfig path aliases, so tests can cover modules that import through them
+  moduleNameMapper: {
+    ...baseConfig.moduleNameMapper,
+    '^@ambire-common/(.*)$': path.join('<rootDir>', 'src/ambire-common/src/$1'),
+    '^@common/(.*)$': path.join('<rootDir>', 'src/common/$1')
+  },
   testPathIgnorePatterns: [
     path.join('<rootDir>', 'e2e-playwright-tests/'), // E2E tests, handled by another configuration
     path.join('<rootDir>', 'src/ambire-common/'), // Tests for the ambire-common library, handled by another configuration

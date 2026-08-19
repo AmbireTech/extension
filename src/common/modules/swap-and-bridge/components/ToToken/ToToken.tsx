@@ -19,6 +19,7 @@ import useController from '@common/hooks/useController'
 import useGetTokenSelectProps from '@common/hooks/useGetTokenSelectProps'
 import useNetworks from '@common/hooks/useNetworks'
 import useTheme from '@common/hooks/useTheme'
+import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import SwitchTokensButton from '@common/modules/swap-and-bridge/components/SwitchTokensButton'
 import ToTokenSelect from '@common/modules/swap-and-bridge/components/ToToken/ToTokenSelect'
 import spacings, { SPACING, SPACING_SM } from '@common/styles/spacings'
@@ -36,6 +37,7 @@ type Props = {
 const ToToken: FC<Props> = ({ simulationFailed }) => {
   const { theme, themeType } = useTheme(getStyles)
   const { t } = useTranslation()
+  const { isCompactSidePanelLayout } = useCompactActionRequestLayout()
   const {
     statuses: swapAndBridgeCtrlStatuses,
     toSelectedToken,
@@ -85,7 +87,7 @@ const ToToken: FC<Props> = ({ simulationFailed }) => {
               toChainId: networks.filter((n) => String(n.chainId) === networkOption.value)[0]
                 ?.chainId
             },
-            undefined
+            { isToSelectionByUser: true }
           ]
         }
       })
@@ -206,7 +208,7 @@ const ToToken: FC<Props> = ({ simulationFailed }) => {
               // Reset the from token if it's the same. undefined acts as "do nothing", null as reset
               fromSelectedToken: isSameAsFromToken ? null : undefined
             },
-            undefined
+            { isToSelectionByUser: true }
           ]
         }
       })
@@ -270,14 +272,26 @@ const ToToken: FC<Props> = ({ simulationFailed }) => {
         }
       />
       <View
-        style={[flexbox.directionRow, flexbox.alignEnd, flexbox.justifySpaceBetween, spacings.mbMi]}
+        style={[
+          isCompactSidePanelLayout
+            ? [{ width: '100%' }, spacings.mbSm]
+            : [flexbox.directionRow, flexbox.alignEnd, flexbox.justifySpaceBetween, spacings.mbMi]
+        ]}
       >
-        <Text appearance="secondaryText" fontSize={14} weight="medium" style={spacings.mbSm}>
+        <Text
+          appearance="secondaryText"
+          fontSize={14}
+          weight="medium"
+          style={isCompactSidePanelLayout ? spacings.mbTy : spacings.mbSm}
+        >
           {t('You receive')}
         </Text>
         <Select
           setValue={handleSetToNetworkValue}
-          containerStyle={{ ...spacings.mb0, width: isMobile ? 150 : 168 }}
+          containerStyle={{
+            ...spacings.mb0,
+            width: isCompactSidePanelLayout ? '100%' : isMobile ? 150 : 168
+          }}
           options={toNetworksOptions}
           selectStyle={{ ...spacings.phMi, ...spacings.prTy }}
           size="sm"
@@ -289,12 +303,16 @@ const ToToken: FC<Props> = ({ simulationFailed }) => {
       </View>
       <View
         style={[
-          flexbox.directionRow,
-          flexbox.alignCenter,
-          { columnGap: isMobile ? SPACING_SM : SPACING }
+          isCompactSidePanelLayout
+            ? { width: '100%', gap: SPACING_SM }
+            : [
+                flexbox.directionRow,
+                flexbox.alignCenter,
+                { columnGap: isMobile ? SPACING_SM : SPACING }
+              ]
         ]}
       >
-        <View style={[flexbox.flex1]}>
+        <View style={isCompactSidePanelLayout ? { width: '100%' } : [flexbox.flex1]}>
           <ToTokenSelect
             toTokenOptions={toTokenOptions}
             toTokenValue={toTokenValue}
@@ -304,7 +322,13 @@ const ToToken: FC<Props> = ({ simulationFailed }) => {
             handleAddToTokenByAddress={handleAddToTokenByAddress}
           />
         </View>
-        <View style={[flexbox.flex1, isMobile ? { maxWidth: '40%' } : {}]}>
+        <View
+          style={
+            isCompactSidePanelLayout
+              ? { width: '100%', alignItems: 'flex-end' }
+              : [flexbox.flex1, isMobile ? { maxWidth: '40%' } : {}]
+          }
+        >
           {isReadyToDisplayAmounts ? (
             <Text
               fontSize={20}

@@ -1,6 +1,13 @@
 import React from 'react'
 import Svg, { Circle, Path, SvgProps } from 'react-native-svg'
 
+/**
+ * SafeIcon is a full-bleed disc, while the icons it sits next to inset their artwork in
+ * their box (the badge icons draw a r=10 circle in a 24x24 one). Multiply the size shared
+ * with those icons by this ratio so the Safe disc reads the same size as theirs.
+ */
+export const SAFE_ICON_INLINE_SCALE = 20 / 24
+
 const SafeIcon: React.FC<SvgProps> = ({ width = 57, height = 57, style }) => {
   return (
     <Svg width={width} height={height} viewBox="0 0 100 100" fill="none" style={style}>

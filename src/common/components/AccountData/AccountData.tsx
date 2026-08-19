@@ -16,6 +16,7 @@ import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import useWindowSize from '@common/hooks/useWindowSize'
 import spacings from '@common/styles/spacings'
+import flexbox from '@common/styles/utils/flexbox'
 import { setStringAsync } from '@common/utils/clipboard'
 import { getUiType } from '@common/utils/uiType'
 
@@ -36,7 +37,7 @@ const AccountData: FC<Props> = ({ onPress, withArrowRightIcon }) => {
   const { addToast } = useToast()
   const { styles } = useTheme(getStyles)
   const { maxWidthSize } = useWindowSize()
-  const { isPopup } = getUiType()
+  const { isPopup, isSidePanel } = getUiType()
   const { isStoreReady } = useControllerStore()
 
   const { account } = useController('SelectedAccountController').state
@@ -71,6 +72,16 @@ const AccountData: FC<Props> = ({ onPress, withArrowRightIcon }) => {
     return undefined
   }, [account])
 
+  const formattedAddress = useMemo(() => {
+    if (!account) return ''
+
+    if (isSidePanel) return account.addr
+
+    if (isMobile) return shortenAddress(account.addr, 18, 4)
+
+    return shortenAddress(account.addr, 13)
+  }, [account, isSidePanel])
+
   if (!account) return null
 
   return (
@@ -89,7 +100,7 @@ const AccountData: FC<Props> = ({ onPress, withArrowRightIcon }) => {
           {
             backgroundColor: '#000000A3',
             flexShrink: 1,
-            // @ts-ignore
+            ...(isSidePanel ? { minWidth: 0 } : {}),
             ...(isWeb && !onPress ? { cursor: 'auto' } : {})
           },
           isMobile && {
@@ -111,35 +122,91 @@ const AccountData: FC<Props> = ({ onPress, withArrowRightIcon }) => {
           ) : (
             <SkeletonLoader width={32} height={32} borderRadius={16} style={spacings.mrTy} />
           )}
-          <Text
-            numberOfLines={1}
-            weight={isMobile ? 'medium' : 'semiBold'}
-            style={[spacings.mrMi, { maxWidth: isPopup ? 112 : 160, flexShrink: 1 }]}
-            color="#FFFFFF"
-            fontSize={14}
-          >
-            {account.preferences.label}
-          </Text>
-
-          <>
-            <Text
-              color="#B9BFC9"
-              style={[isWeb ? spacings.mrTy : undefined]}
-              weight="mono_regular"
-              fontSize={12}
-            >
-              ({shortenAddress(account.addr, 13)})
-            </Text>
-            {isWeb && (
-              <AnimatedPressable
-                style={addressAnimStyle}
-                onPress={handleCopyText}
-                {...bindAddressAnim}
+          {isSidePanel ? (
+            <>
+              <Text
+                numberOfLines={1}
+                ellipsizeMode="tail"
+                weight={isMobile ? 'medium' : 'semiBold'}
+                style={[
+                  spacings.mrMi,
+                  // While the address is next to the name, the name keeps its width and the
+                  // address shrinks. On a narrow panel the address is hidden, so the name is
+                  // the only thing that can give way to a long label.
+                  maxWidthSize('s')
+                    ? { flexShrink: 0, minWidth: 0, maxWidth: '55%' }
+                    : { flexShrink: 1, minWidth: 0 }
+                ]}
+                color="#FFFFFF"
+                fontSize={14}
               >
-                <CopyIcon width={24} height={24} color="#E3E6EB" />
-              </AnimatedPressable>
-            )}
-          </>
+                {account.preferences.label}
+              </Text>
+              {maxWidthSize('s') && (
+                <View
+                  style={[
+                    flexbox.directionRow,
+                    flexbox.alignCenter,
+                    { flexShrink: 1, minWidth: 0 }
+                  ]}
+                >
+                  <Text
+                    color="#B9BFC9"
+                    numberOfLines={1}
+                    ellipsizeMode="tail"
+                    style={[{ flexShrink: 1, minWidth: 0 }, isWeb ? spacings.mrTy : undefined]}
+                    weight="mono_regular"
+                    fontSize={12}
+                  >
+                    ({formattedAddress})
+                  </Text>
+                  {isWeb && (
+                    <AnimatedPressable
+                      style={addressAnimStyle}
+                      onPress={handleCopyText}
+                      {...bindAddressAnim}
+                    >
+                      <CopyIcon width={24} height={24} color="#E3E6EB" />
+                    </AnimatedPressable>
+                  )}
+                </View>
+              )}
+            </>
+          ) : (
+            <>
+              <Text
+                numberOfLines={1}
+                weight={isMobile ? 'medium' : 'semiBold'}
+                style={[
+                  spacings.mrMi,
+                  { maxWidth: isPopup ? 112 : 160, flexShrink: 1, minWidth: 0 }
+                ]}
+                color="#FFFFFF"
+                fontSize={14}
+              >
+                {account.preferences.label}
+              </Text>
+              <>
+                <Text
+                  color="#B9BFC9"
+                  style={[isWeb ? spacings.mrTy : undefined]}
+                  weight="mono_regular"
+                  fontSize={12}
+                >
+                  ({formattedAddress})
+                </Text>
+                {isWeb && (
+                  <AnimatedPressable
+                    style={addressAnimStyle}
+                    onPress={handleCopyText}
+                    {...bindAddressAnim}
+                  >
+                    <CopyIcon width={24} height={24} color="#E3E6EB" />
+                  </AnimatedPressable>
+                )}
+              </>
+            </>
+          )}
 
           {!!withArrowRightIcon && (
             <Animated.View style={accountBtnAnimStyle}>

@@ -25,7 +25,6 @@ import SafeOwners from '@common/modules/sign-account-op/components/SafeOwners'
 import SafetyChecksOverlay from '@common/modules/sign-account-op/components/SafetyChecksOverlay'
 import SectionHeading from '@common/modules/sign-account-op/components/SectionHeading'
 import Simulation from '@common/modules/sign-account-op/components/Simulation'
-import TenderlySimulation from '@common/modules/sign-account-op/components/TenderlySimulation'
 import KeySelect from '@common/modules/sign-message/components/KeySelect'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
@@ -54,6 +53,14 @@ const SignAccountOpScreen = () => {
   const [hasReachedBottom, setHasReachedBottom] = useState<boolean | null>(null)
   const { navigate } = useNavigation()
   const isInsideBottomSheet = useIsInsideBottomSheet()
+  const handleAddToCart = useCallback(() => {
+    if (isInsideBottomSheet && closeRequestModal) {
+      closeRequestModal()
+    } else {
+      navigate(ROUTES.dashboard)
+    }
+  }, [isInsideBottomSheet, closeRequestModal, navigate])
+
   const handleUpdateStatus = useCallback(
     (status: SigningStatus) => {
       signAccountOpDispatch({
@@ -88,6 +95,7 @@ const SignAccountOpScreen = () => {
     setIsChooseSignerShown,
     onSignButtonClick,
     handleChangeSigningKey,
+    handleChangeSigningKeyAndClose,
     warningToPromptBeforeSign,
     handleDismissLedgerConnectModal,
     slowPaymasterRequest,
@@ -125,7 +133,8 @@ const SignAccountOpScreen = () => {
     handleUpdateStatus,
     signAccountOpState,
     handleUpdate: updateController,
-    hasReachedBottom
+    hasReachedBottom,
+    onSafeSignComplete: handleAddToCart
   })
 
   const accountOpRequest = useMemo(() => {
@@ -148,14 +157,6 @@ const SignAccountOpScreen = () => {
       }
     })
   }, [requestsDispatch, accountOpRequest, visibleUserRequests.length])
-
-  const handleAddToCart = useCallback(() => {
-    if (isInsideBottomSheet && closeRequestModal) {
-      closeRequestModal()
-    } else {
-      navigate(ROUTES.dashboard)
-    }
-  }, [isInsideBottomSheet, closeRequestModal, navigate])
 
   useEffect(() => {
     if (isSignDisabled || !containerHeight || !contentHeight) return
@@ -230,7 +231,7 @@ const SignAccountOpScreen = () => {
             {!estimationFailed &&
             signAccountOpState?.canBroadcast &&
             signAccountOpState?.status?.type !== SigningStatus.Queued ? (
-              <View style={spacings.mbMd}>
+              <View style={spacings.mbTy}>
                 <Estimation
                   signAccountOpState={signAccountOpState}
                   disabled={isSignLoading}
@@ -255,6 +256,7 @@ const SignAccountOpScreen = () => {
                   <SafeOwners
                     account={signAccountOpState.account}
                     onSign={handleChangeSigningKey}
+                    onSignAndClose={handleChangeSigningKeyAndClose}
                     isSignLoading={isSignLoading}
                     signingKeyAddr={signAccountOpState.accountOp.signingKeyAddr}
                     chainId={signAccountOpState.accountOp.chainId.toString()}
@@ -326,12 +328,7 @@ const SignAccountOpScreen = () => {
           showsVerticalScrollIndicator={false}
         >
           {signAccountOpState?.account.safeCreation ? (
-            <>
-              <View style={spacings.mbSm}>
-                <SectionHeading withMb={false}>{t('Overview')}</SectionHeading>
-              </View>
-              <SafeNonce />
-            </>
+            <SafeNonce />
           ) : (
             <View
               style={[
@@ -366,7 +363,6 @@ const SignAccountOpScreen = () => {
               isEstimationComplete={!!signAccountOpState?.isInitialized && !!network}
             />
           )}
-          <TenderlySimulation />
           {signAccountOpState?.hasSafeApiFailed && (
             <Alert
               size="sm"
