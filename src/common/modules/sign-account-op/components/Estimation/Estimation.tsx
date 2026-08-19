@@ -15,7 +15,6 @@ import DownArrowIcon from '@common/assets/svg/DownArrowIcon'
 import FeeIcon from '@common/assets/svg/FeeIcon'
 import RightArrowIcon from '@common/assets/svg/RightArrowIcon'
 import SettingsIcon from '@common/assets/svg/SettingsIcon'
-import SettingsWheelIcon from '@common/assets/svg/SettingsWheelIcon'
 import UpArrowIcon from '@common/assets/svg/UpArrowIcon'
 import Alert from '@common/components/Alert'
 import Button from '@common/components/Button'
@@ -542,7 +541,7 @@ const Estimation = ({
   const renderAdvancedButton = useCallback(() => {
     const advancedButtonContent = (
       <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-        <SettingsWheelIcon width={16} height={16} color={theme.secondaryText} />
+        <SettingsIcon width={16} height={16} color={theme.secondaryText} />
         <Text fontSize={14} appearance="secondaryText" style={[spacings.mlTy, spacings.mrMi]}>
           {t('Advanced')}
         </Text>
