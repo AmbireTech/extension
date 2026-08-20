@@ -31,7 +31,7 @@ import { filterTrendingTokensBySearch } from '@common/modules/explore/helpers/fi
 import useExploreSections, {
   ExploreSection
 } from '@common/modules/explore/hooks/useExploreSections'
-import { HeaderWithTitle } from '@common/modules/header/components/Header/Header'
+import Header from '@common/modules/header/components/Header/Header'
 import { ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
@@ -56,6 +56,10 @@ const ExploreScreen = () => {
   const disconnectAllRef = useRef<DisconnectAllBottomSheetHandle>(null)
 
   const sections = useExploreSections()
+
+  const handleBack = useCallback(() => {
+    navigate(ROUTES.dashboard, { replace: true })
+  }, [navigate])
 
   const handleOpenSection = useCallback(
     (section: ExploreSection) => {
@@ -184,7 +188,15 @@ const ExploreScreen = () => {
 
   return (
     <LayoutWrapper>
-      <HeaderWithTitle />
+      <Header.Wrapper>
+        <Header.Container side="left">
+          <Header.BackButton forceBack onGoBackPress={handleBack} />
+        </Header.Container>
+        <Header.Title>{t('Explore')}</Header.Title>
+        <Header.Container side="right">
+          <Header.Logo />
+        </Header.Container>
+      </Header.Wrapper>
       {!state.isReadyToDisplayDapps || !state.dapps?.length ? (
         <DappsSkeletonLoader />
       ) : (

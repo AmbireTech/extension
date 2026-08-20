@@ -125,6 +125,7 @@ const WalletStakingScreen = () => {
   const [amount, setAmount] = useState('')
   const [shareValue, setShareValue] = useState<bigint | null>(null)
   const [isLoadingShareValue, setIsLoadingShareValue] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
   const shareValueRequestIdRef = useRef(0)
 
   const walletToken = useMemo(
@@ -177,7 +178,14 @@ const WalletStakingScreen = () => {
   )
   const tokenSymbol = mode === 'stake' ? '$WALLET' : 'stkWALLET'
   const isSubmitDisabled =
-    !account || amountInWei <= 0n || hasInsufficientBalance || isLoadingShareValue
+    !account || amountInWei <= 0n || hasInsufficientBalance || isLoadingShareValue || isSubmitting
+  const submitButtonText = isSubmitting
+    ? mode === 'stake'
+      ? t('Staking...')
+      : t('Unstaking...')
+    : mode === 'stake'
+      ? t('Stake')
+      : t('Unstake')
 
   const loadShareValue = useCallback(async () => {
     if (shareValue || isLoadingShareValue) return
@@ -218,6 +226,7 @@ const WalletStakingScreen = () => {
     (nextMode: Mode) => {
       setMode(nextMode)
       setAmount('')
+      setIsSubmitting(false)
       if (nextMode === 'unstake') void loadShareValue()
     },
     [loadShareValue]
@@ -251,6 +260,8 @@ const WalletStakingScreen = () => {
   }, [navigate])
 
   const handleBack = useCallback(async () => {
+    setIsSubmitting(false)
+
     if (isWeb) {
       try {
         await storage.remove(WALLET_STAKING_ROUTE_STORAGE_KEY)
@@ -271,10 +282,12 @@ const WalletStakingScreen = () => {
     navigate(ROUTES.explore, { replace: true })
   }, [addToast, navigate, params?.prevRoute?.pathname, t])
 
-  const handleCancel = useCallback(() => setAmount(''), [])
+  const handleCancel = useCallback(() => {
+    void handleBack()
+  }, [handleBack])
 
   const handleSubmit = useCallback(() => {
-    if (!account || amountInWei <= 0n || hasInsufficientBalance) return
+    if (isSubmitting || !account || amountInWei <= 0n || hasInsufficientBalance) return
 
     if (mode === 'unstake' && !shareValue) {
       addToast(t("We couldn't load the unstaking details. Please try again."), { type: 'error' })
@@ -287,6 +300,7 @@ const WalletStakingScreen = () => {
         ? getStakeWalletCalls(amountInWei)
         : getUnstakeWalletCalls(amountInWei, shareValue!)
 
+    setIsSubmitting(true)
     requestsDispatch({
       type: 'method',
       params: {
@@ -313,6 +327,7 @@ const WalletStakingScreen = () => {
     addToast,
     amountInWei,
     hasInsufficientBalance,
+    isSubmitting,
     loadShareValue,
     mode,
     requestsDispatch,
@@ -461,22 +476,26 @@ const WalletStakingScreen = () => {
         </View>
 
         {!shouldShowEmptyState && (
-          <View style={styles.footer}>
-            <Button
-              type="secondary"
-              text={t('Cancel')}
-              onPress={handleCancel}
-              hasBottomSpacing={false}
-              style={styles.footerButton}
-            />
-            <Button
-              type="primary"
-              text={mode === 'stake' ? t('Stake') : t('Unstake')}
-              onPress={handleSubmit}
-              disabled={isSubmitDisabled || (mode === 'unstake' && !shareValue)}
-              hasBottomSpacing={false}
-              style={styles.footerButton}
-            />
+          <View style={styles.footerRow}>
+            <GlassView borderRadius={32} cssStyle={{ overflow: 'hidden' }}>
+              <View style={styles.footer}>
+                <Button
+                  type="secondary"
+                  text={t('Cancel')}
+                  onPress={handleCancel}
+                  hasBottomSpacing={false}
+                  style={styles.footerButton}
+                />
+                <Button
+                  type="primary"
+                  text={submitButtonText}
+                  onPress={handleSubmit}
+                  disabled={isSubmitDisabled || (mode === 'unstake' && !shareValue)}
+                  hasBottomSpacing={false}
+                  style={styles.footerButton}
+                />
+              </View>
+            </GlassView>
           </View>
         )}
       </View>

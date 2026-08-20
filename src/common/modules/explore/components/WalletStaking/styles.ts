@@ -1,6 +1,6 @@
-import { StyleSheet, TextStyle, ViewStyle } from 'react-native'
+import { ImageStyle, StyleSheet, TextStyle, ViewStyle } from 'react-native'
 
-import spacings, { SPACING, SPACING_SM, SPACING_TY } from '@common/styles/spacings'
+import spacings, { SPACING, SPACING_TY } from '@common/styles/spacings'
 import { ThemeProps } from '@common/styles/themeConfig'
 import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
@@ -12,7 +12,8 @@ interface Styles {
   cardHeader: ViewStyle
   cardTitleWrapper: ViewStyle
   cardDescription: TextStyle
-  iconFallback: ViewStyle
+  walletStakingIconWrapper: ViewStyle
+  walletStakingIcon: ImageStyle
   screenContent: ViewStyle
   learnMore: ViewStyle
   tabs: ViewStyle
@@ -32,6 +33,7 @@ interface Styles {
   percentageButton: ViewStyle
   details: ViewStyle
   detailRow: ViewStyle
+  footerRow: ViewStyle
   footer: ViewStyle
   footerButton: ViewStyle
   validation: TextStyle
@@ -72,24 +74,29 @@ const getStyles = (theme: ThemeProps) =>
     cardDescription: {
       lineHeight: 18
     },
-    iconFallback: {
+    walletStakingIconWrapper: {
       ...flexbox.center,
       width: 40,
       height: 40,
       backgroundColor: theme.primaryBackground,
       borderRadius: 8
     },
+    walletStakingIcon: {
+      width: 40,
+      height: 40,
+      borderRadius: 8
+    },
     screenContent: {
       ...flexbox.flex1,
       ...flexbox.justifySpaceBetween,
-      ...spacings.phSm,
+      ...spacings.ph2Xl,
       ...spacings.pbSm
     },
     learnMore: {
       ...flexbox.directionRow,
       ...flexbox.justifyCenter,
       ...flexbox.wrap,
-      ...spacings.mbXl
+      ...spacings.mb2Xl
     },
     tabs: {
       ...flexbox.directionRow,
@@ -188,25 +195,20 @@ const getStyles = (theme: ThemeProps) =>
       ...spacings.mbSm,
       columnGap: SPACING
     },
+    footerRow: {
+      ...flexbox.directionRow,
+      ...flexbox.justifyCenter
+    },
     footer: {
       ...flexbox.directionRow,
       ...flexbox.alignCenter,
-      ...flexbox.alignSelfCenter,
-      ...spacings.phTy,
-      ...spacings.pvTy,
-      ...spacings.mt2Xl,
-      minWidth: 230,
-      maxWidth: 320,
-      width: '75%',
-      columnGap: SPACING_SM,
-      borderRadius: 28,
-      borderWidth: 1,
-      borderColor: theme.primaryBorder,
-      backgroundColor: theme.secondaryBackground
+      ...spacings.ph,
+      ...spacings.pvSm,
+      columnGap: SPACING
     },
     footerButton: {
-      ...flexbox.flex1,
       ...spacings.mb0,
+      ...spacings.phLg,
       height: 48,
       borderRadius: 18
     },
