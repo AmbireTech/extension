@@ -9,7 +9,6 @@ import { BasePage } from './basePage'
 export class AuthPage extends BasePage {
   extensionURL: string
 
-
   constructor(opts: BootstrapContext) {
     super(opts)
     this.extensionURL = opts.extensionURL
