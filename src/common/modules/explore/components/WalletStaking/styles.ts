@@ -1,6 +1,5 @@
 import { StyleSheet, TextStyle, ViewStyle } from 'react-native'
 
-import { isMobile } from '@common/config/env'
 import spacings, { SPACING, SPACING_SM, SPACING_TY } from '@common/styles/spacings'
 import { ThemeProps } from '@common/styles/themeConfig'
 import common from '@common/styles/utils/common'
@@ -14,11 +13,16 @@ interface Styles {
   cardTitleWrapper: ViewStyle
   cardDescription: TextStyle
   iconFallback: ViewStyle
-  sheetContent: ViewStyle
+  screenContent: ViewStyle
   learnMore: ViewStyle
   tabs: ViewStyle
   tab: ViewStyle
   activeTab: ViewStyle
+  emptyState: ViewStyle
+  emptyIcon: ViewStyle
+  emptyText: TextStyle
+  buyWalletWrapper: ViewStyle
+  buyWalletButton: ViewStyle
   amountCard: ViewStyle
   balanceRow: ViewStyle
   amountInput: ViewStyle
@@ -75,9 +79,11 @@ const getStyles = (theme: ThemeProps) =>
       backgroundColor: theme.primaryBackground,
       borderRadius: 8
     },
-    sheetContent: {
-      minHeight: isMobile ? 500 : 470,
-      ...flexbox.justifySpaceBetween
+    screenContent: {
+      ...flexbox.flex1,
+      ...flexbox.justifySpaceBetween,
+      ...spacings.phSm,
+      ...spacings.pbSm
     },
     learnMore: {
       ...flexbox.directionRow,
@@ -88,17 +94,48 @@ const getStyles = (theme: ThemeProps) =>
     tabs: {
       ...flexbox.directionRow,
       ...flexbox.justifyCenter,
-      ...spacings.mb2Xl,
-      columnGap: SPACING_TY
+      ...spacings.mbXl
     },
     tab: {
       ...spacings.phSm,
-      ...spacings.pbTy,
+      ...spacings.pbMi,
       borderBottomWidth: 2,
-      borderBottomColor: theme.secondaryBorder
+      borderBottomColor: theme.primaryBorder
     },
     activeTab: {
       borderBottomColor: theme.primaryText
+    },
+    emptyState: {
+      ...flexbox.alignCenter,
+      ...spacings.phMd
+    },
+    emptyIcon: {
+      ...flexbox.center,
+      ...spacings.mbLg,
+      width: 78,
+      height: 78,
+      borderRadius: 44,
+      backgroundColor: theme.infoBackground
+    },
+    emptyText: {
+      ...spacings.mbXl,
+      maxWidth: 480,
+      lineHeight: 28,
+      textAlign: 'center'
+    },
+    buyWalletWrapper: {
+      ...spacings.phSm,
+      ...spacings.pvSm,
+      width: 170,
+      borderRadius: 18,
+      borderWidth: 1,
+      borderColor: theme.primaryBorder,
+      backgroundColor: theme.secondaryBackground
+    },
+    buyWalletButton: {
+      ...spacings.mb0,
+      height: 48,
+      borderRadius: 16
     },
     amountCard: {
       ...spacings.phSm,

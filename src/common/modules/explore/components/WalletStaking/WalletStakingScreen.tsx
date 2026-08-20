@@ -1,32 +1,40 @@
 import { formatUnits, parseUnits } from 'ethers'
-import React, { useCallback, useMemo, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { View } from 'react-native'
-import { Modalize } from 'react-native-modalize'
 
 import { STK_WALLET, WALLET_STAKING_ADDR, WALLET_TOKEN } from '@ambire-common/consts/addresses'
-import { AllControllersMappingType } from '@common/constants/controllersMapping'
+import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
+import InfoIcon from '@common/assets/svg/InfoIcon'
 import SwapAndBridgeIcon from '@common/assets/svg/SwapAndBridgeIcon'
-import BottomSheet from '@common/components/BottomSheet'
-import ModalHeader from '@common/components/BottomSheet/ModalHeader'
 import Button from '@common/components/Button'
+import GlassView from '@common/components/GlassView'
+import LayoutWrapper from '@common/components/LayoutWrapper'
 import NumberInput from '@common/components/NumberInput'
 import Text from '@common/components/Text'
 import { captureException } from '@common/config/analytics/CrashAnalytics'
+import { isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
+import { AllControllersMappingType } from '@common/constants/controllersMapping'
 import useController from '@common/hooks/useController'
 import { AnimatedPressable } from '@common/hooks/useHover'
+import useNavigation from '@common/hooks/useNavigation'
+import useRoute from '@common/hooks/useRoute'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
+import { WALLET_STAKING_ROUTE_STORAGE_KEY } from '@common/modules/explore/constants/walletStaking'
+import Header from '@common/modules/header/components/Header/Header'
+import { ROUTES } from '@common/modules/router/constants/common'
+import { storage } from '@common/services/storage'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { openInTab } from '@common/utils/links'
-import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
 
 import { getStakeWalletCalls, getUnstakeWalletCalls } from './calls'
 import getStyles from './styles'
 
 const ETHEREUM_CHAIN_ID = 1n
 const TOKEN_DECIMALS = 18
+const EMPTY_STATE_BALANCE_THRESHOLD = parseUnits('0.001', TOKEN_DECIMALS)
 const STAKING_HELP_URL = 'https://help.ambire.com/en/collections/18211458-wallet-token-governance'
 const PERCENTAGES = [25, 50, 75, 100] as const
 
@@ -43,6 +51,8 @@ const selectAccount = (state: AllControllersMappingType['SelectedAccountControll
   state.account
 const selectPortfolioTokens = (state: AllControllersMappingType['SelectedAccountController']) =>
   state.portfolio.tokens
+const selectIsPortfolioReady = (state: AllControllersMappingType['SelectedAccountController']) =>
+  state.portfolio.isReadyToVisualize
 
 interface TabProps {
   mode: Mode
@@ -94,19 +104,20 @@ const PercentageButton = ({ percentage, onSelect }: PercentageButtonProps) => {
 
 const MemoizedPercentageButton = React.memo(PercentageButton)
 
-interface Props {
-  sheetRef: React.RefObject<Modalize>
-  closeBottomSheet: () => void
-}
-
-const WalletStakingBottomSheet = ({ sheetRef, closeBottomSheet }: Props) => {
+const WalletStakingScreen = () => {
   const { t } = useTranslation()
   const { styles, theme } = useTheme(getStyles)
+  const { navigate } = useNavigation()
+  const { params } = useRoute()
   const { addToast } = useToast()
   const { state: account } = useController('SelectedAccountController', selectAccount)
   const { state: portfolioTokens } = useController(
     'SelectedAccountController',
     selectPortfolioTokens
+  )
+  const { state: isPortfolioReady } = useController(
+    'SelectedAccountController',
+    selectIsPortfolioReady
   )
   const { dispatch: requestsDispatch } = useController('RequestsController')
   const { dispatchAndWait: providersDispatchAndWait } = useController('ProvidersController')
@@ -134,8 +145,17 @@ const WalletStakingBottomSheet = ({ sheetRef, closeBottomSheet }: Props) => {
       ),
     [portfolioTokens]
   )
+  const walletBalance = useMemo(() => BigInt(walletToken?.amount || 0n), [walletToken?.amount])
+  const stkWalletBalance = useMemo(
+    () => BigInt(stkWalletToken?.amount || 0n),
+    [stkWalletToken?.amount]
+  )
+  const shouldShowEmptyState =
+    isPortfolioReady &&
+    walletBalance < EMPTY_STATE_BALANCE_THRESHOLD &&
+    stkWalletBalance < EMPTY_STATE_BALANCE_THRESHOLD
   const activeToken = mode === 'stake' ? walletToken : stkWalletToken
-  const balance = useMemo(() => BigInt(activeToken?.amount || 0n), [activeToken?.amount])
+  const balance = mode === 'stake' ? walletBalance : stkWalletBalance
   const price = useMemo(
     () =>
       activeToken?.priceIn.find(({ baseCurrency }) => baseCurrency.toLowerCase() === 'usd')
@@ -219,6 +239,40 @@ const WalletStakingBottomSheet = ({ sheetRef, closeBottomSheet }: Props) => {
     })
   }, [addToast, t])
 
+  const handleBuyWallet = useCallback(() => {
+    navigate(ROUTES.swapAndBridge, {
+      state: {
+        preselectedToToken: {
+          address: WALLET_TOKEN,
+          chainId: ETHEREUM_CHAIN_ID
+        }
+      }
+    })
+  }, [navigate])
+
+  const handleBack = useCallback(async () => {
+    if (isWeb) {
+      try {
+        await storage.remove(WALLET_STAKING_ROUTE_STORAGE_KEY)
+      } catch (error) {
+        console.error('Failed to clear the WALLET staking route', error)
+        captureException(error)
+        addToast(t("We couldn't leave the staking page. Please try again."), { type: 'error' })
+        return
+      }
+    }
+
+    const previousPath = params?.prevRoute?.pathname
+    if (previousPath && previousPath !== '/') {
+      navigate(-1)
+      return
+    }
+
+    navigate(ROUTES.explore, { replace: true })
+  }, [addToast, navigate, params?.prevRoute?.pathname, t])
+
+  const handleCancel = useCallback(() => setAmount(''), [])
+
   const handleSubmit = useCallback(() => {
     if (!account || amountInWei <= 0n || hasInsufficientBalance) return
 
@@ -233,7 +287,6 @@ const WalletStakingBottomSheet = ({ sheetRef, closeBottomSheet }: Props) => {
         ? getStakeWalletCalls(amountInWei)
         : getUnstakeWalletCalls(amountInWei, shareValue!)
 
-    closeBottomSheet()
     requestsDispatch({
       type: 'method',
       params: {
@@ -259,7 +312,6 @@ const WalletStakingBottomSheet = ({ sheetRef, closeBottomSheet }: Props) => {
     account,
     addToast,
     amountInWei,
-    closeBottomSheet,
     hasInsufficientBalance,
     loadShareValue,
     mode,
@@ -268,154 +320,168 @@ const WalletStakingBottomSheet = ({ sheetRef, closeBottomSheet }: Props) => {
     t
   ])
 
-  const handleClosed = useCallback(() => {
-    shareValueRequestIdRef.current += 1
-    setMode('stake')
-    setAmount('')
-    setShareValue(null)
-    setIsLoadingShareValue(false)
-  }, [])
-
-  const headerComponent = useMemo(
-    () => (
-      <ModalHeader
-        handleClose={closeBottomSheet}
-        title={t('$WALLET Staking')}
-        forceBackButtonOnMobile
-      />
-    ),
-    [closeBottomSheet, t]
+  useEffect(
+    () => () => {
+      shareValueRequestIdRef.current += 1
+    },
+    []
   )
 
   return (
-    <BottomSheet
-      id="wallet-staking"
-      sheetRef={sheetRef}
-      closeBottomSheet={closeBottomSheet}
-      onClosed={handleClosed}
-      HeaderComponent={headerComponent}
-      containerInnerWrapperStyles={styles.sheetContent}
-    >
-      <View>
-        <View style={styles.learnMore}>
-          <Text fontSize={12} appearance="secondaryText">
-            {t('Learn more about')}{' '}
-          </Text>
-          <AnimatedPressable onPress={handleOpenHelp}>
-            <Text
-              fontSize={12}
-              color={theme.primaryAccent200}
-              style={{ textDecorationLine: 'underline' }}
-            >
-              {t('how staking works')}
-            </Text>
-          </AnimatedPressable>
-        </View>
-
-        <View style={styles.tabs}>
-          <MemoizedStakingTab
-            mode="stake"
-            activeMode={mode}
-            label={t('Stake')}
-            onSelect={handleSelectMode}
-          />
-          <MemoizedStakingTab
-            mode="unstake"
-            activeMode={mode}
-            label={t('Unstake')}
-            onSelect={handleSelectMode}
-          />
-        </View>
-
-        <View style={styles.amountCard}>
-          <View style={styles.balanceRow}>
-            <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-              <SwapAndBridgeIcon
-                width={14}
-                height={14}
-                color={theme.primaryAccent200}
-                strokeWidth={1.8}
-              />
-              <Text fontSize={12} appearance="secondaryText" style={spacings.mlTy}>
-                {amountInUsd}
-              </Text>
-            </View>
+    <LayoutWrapper>
+      <Header.Wrapper>
+        <Header.Container side="left">
+          <Header.BackButton forceBack onGoBackPress={handleBack} />
+        </Header.Container>
+        <Header.Title>{t('$WALLET Staking')}</Header.Title>
+        <Header.Container side="right" />
+      </Header.Wrapper>
+      <View style={styles.screenContent}>
+        <View>
+          <View style={styles.learnMore}>
             <Text fontSize={12} appearance="secondaryText">
-              {t('Balance: {{balance}}', { balance: balanceLabel })}
+              {t('Learn more about')}{' '}
             </Text>
+            <AnimatedPressable onPress={handleOpenHelp}>
+              <Text fontSize={12} color={theme.primaryAccent200}>
+                {t('how staking works')}
+              </Text>
+            </AnimatedPressable>
           </View>
 
-          <NumberInput
-            value={amount}
-            onChangeText={setAmount}
-            precision={TOKEN_DECIMALS}
-            placeholder="0.00"
-            borderless
-            containerStyle={styles.amountInput}
-            inputWrapperStyle={styles.amountInputWrapper}
-            nativeInputStyle={styles.amountNativeInput}
-            childrenBeforeButtons={
-              <Text fontSize={13} appearance="secondaryText" style={spacings.mlSm}>
-                {tokenSymbol}
-              </Text>
-            }
-          />
-
-          <View style={styles.percentages}>
-            {PERCENTAGES.map((percentage) => (
-              <MemoizedPercentageButton
-                key={percentage}
-                percentage={percentage}
-                onSelect={handleSelectPercentage}
-              />
-            ))}
+          <View style={styles.tabs}>
+            <MemoizedStakingTab
+              mode="stake"
+              activeMode={mode}
+              label={t('Stake')}
+              onSelect={handleSelectMode}
+            />
+            <MemoizedStakingTab
+              mode="unstake"
+              activeMode={mode}
+              label={t('Unstake')}
+              onSelect={handleSelectMode}
+            />
           </View>
-        </View>
 
-        <View style={styles.details}>
-          <View style={styles.detailRow}>
-            <Text fontSize={13} appearance="secondaryText">
-              {t('APY')}
-            </Text>
-            <Text fontSize={13} appearance="secondaryText">
-              {t('2%')}
-            </Text>
-          </View>
-          {mode === 'unstake' && (
-            <View style={styles.detailRow}>
-              <Text fontSize={13} appearance="secondaryText">
-                {t('Lock')}
+          {shouldShowEmptyState ? (
+            <View style={styles.emptyState}>
+              <View style={styles.emptyIcon}>
+                <InfoIcon width={64} height={64} color={theme.infoText} />
+              </View>
+              <Text fontSize={16} style={styles.emptyText}>
+                {t('You don’t have any $WALLET or stkWALLET tokens in your portfolio.')}
               </Text>
-              <Text fontSize={13} appearance="secondaryText">
-                {t('30 days unbond period')}
-              </Text>
+              <GlassView borderRadius={32} cssStyle={{ overflow: 'hidden' }}>
+                <View style={styles.buyWalletWrapper}>
+                  <Button
+                    type="primary"
+                    text={t('Buy $WALLET')}
+                    onPress={handleBuyWallet}
+                    hasBottomSpacing={false}
+                    style={styles.buyWalletButton}
+                    testID="wallet-staking-buy-wallet"
+                    size="smaller"
+                  />
+                </View>
+              </GlassView>
             </View>
-          )}
-          <Text fontSize={11} appearance="errorText" style={styles.validation}>
-            {hasInsufficientBalance ? t('The amount is higher than your balance.') : ''}
-          </Text>
-        </View>
-      </View>
+          ) : (
+            <>
+              <View style={styles.amountCard}>
+                <View style={styles.balanceRow}>
+                  <View style={[flexbox.directionRow, flexbox.alignCenter]}>
+                    <SwapAndBridgeIcon
+                      width={14}
+                      height={14}
+                      color={theme.primaryAccent200}
+                      strokeWidth={1.8}
+                    />
+                    <Text fontSize={12} appearance="secondaryText" style={spacings.mlTy}>
+                      {amountInUsd}
+                    </Text>
+                  </View>
+                  <Text fontSize={12} appearance="secondaryText">
+                    {t('Balance: {{balance}}', { balance: balanceLabel })}
+                  </Text>
+                </View>
 
-      <View style={styles.footer}>
-        <Button
-          type="secondary"
-          text={t('Cancel')}
-          onPress={closeBottomSheet}
-          hasBottomSpacing={false}
-          style={styles.footerButton}
-        />
-        <Button
-          type="primary"
-          text={mode === 'stake' ? t('Stake') : t('Unstake')}
-          onPress={handleSubmit}
-          disabled={isSubmitDisabled || (mode === 'unstake' && !shareValue)}
-          hasBottomSpacing={false}
-          style={styles.footerButton}
-        />
+                <NumberInput
+                  value={amount}
+                  onChangeText={setAmount}
+                  precision={TOKEN_DECIMALS}
+                  placeholder="0.00"
+                  borderless
+                  containerStyle={styles.amountInput}
+                  inputWrapperStyle={styles.amountInputWrapper}
+                  nativeInputStyle={styles.amountNativeInput}
+                  childrenBeforeButtons={
+                    <Text fontSize={13} appearance="secondaryText" style={spacings.mlSm}>
+                      {tokenSymbol}
+                    </Text>
+                  }
+                />
+
+                <View style={styles.percentages}>
+                  {PERCENTAGES.map((percentage) => (
+                    <MemoizedPercentageButton
+                      key={percentage}
+                      percentage={percentage}
+                      onSelect={handleSelectPercentage}
+                    />
+                  ))}
+                </View>
+              </View>
+
+              <View style={styles.details}>
+                <View style={styles.detailRow}>
+                  <Text fontSize={13} appearance="secondaryText">
+                    {t('APY')}
+                  </Text>
+                  <Text fontSize={13} appearance="secondaryText">
+                    {t('2%')}
+                  </Text>
+                </View>
+                {mode === 'unstake' && (
+                  <View style={styles.detailRow}>
+                    <Text fontSize={13} appearance="secondaryText">
+                      {t('Lock')}
+                    </Text>
+                    <Text fontSize={13} appearance="secondaryText">
+                      {t('30 days unbond period')}
+                    </Text>
+                  </View>
+                )}
+                <Text fontSize={11} appearance="errorText" style={styles.validation}>
+                  {hasInsufficientBalance ? t('The amount is higher than your balance.') : ''}
+                </Text>
+              </View>
+            </>
+          )}
+        </View>
+
+        {!shouldShowEmptyState && (
+          <View style={styles.footer}>
+            <Button
+              type="secondary"
+              text={t('Cancel')}
+              onPress={handleCancel}
+              hasBottomSpacing={false}
+              style={styles.footerButton}
+            />
+            <Button
+              type="primary"
+              text={mode === 'stake' ? t('Stake') : t('Unstake')}
+              onPress={handleSubmit}
+              disabled={isSubmitDisabled || (mode === 'unstake' && !shareValue)}
+              hasBottomSpacing={false}
+              style={styles.footerButton}
+            />
+          </View>
+        )}
       </View>
-    </BottomSheet>
+    </LayoutWrapper>
   )
 }
 
-export default React.memo(WalletStakingBottomSheet)
+export default React.memo(WalletStakingScreen)

@@ -1,9 +1,13 @@
 import { IEventEmitterRegistryController } from '@ambire-common/interfaces/eventEmitter'
 import { View } from '@ambire-common/interfaces/ui'
 import { AUTH_STATUS } from '@common/modules/auth/constants/authStatus'
+import { WALLET_STAKING_ROUTE_STORAGE_KEY } from '@common/modules/explore/constants/walletStaking'
+import { ROUTES } from '@common/modules/router/constants/common'
 import { getInitialRoute } from '@common/modules/router/helpers'
+import { storage } from '@common/services/storage'
 import { serializeControllerForUI } from '@common/utils/serializeControllerForUI'
 import { ROUTE_CRITICAL_CONTROLLERS } from '@web/constants/criticalControllers'
+import { captureBackgroundException } from '@web/extension-services/background/CrashAnalytics'
 import { Port, PortMessenger } from '@web/extension-services/messengers'
 
 import type { MainController } from '@ambire-common/controllers/main/main'
@@ -47,7 +51,17 @@ export const resolveInitialRoute = async (
     ? AUTH_STATUS.AUTHENTICATED
     : AUTH_STATUS.NOT_AUTHENTICATED
 
-  return getInitialRoute({ ...routeControllers, authStatus, isRequestWindow, isSidePanel })
+  const route = getInitialRoute({ ...routeControllers, authStatus, isRequestWindow, isSidePanel })
+  if (route !== ROUTES.dashboard) return route
+
+  try {
+    const isWalletStakingRouteOpen = await storage.get(WALLET_STAKING_ROUTE_STORAGE_KEY, false)
+    return isWalletStakingRouteOpen ? ROUTES.walletStaking : route
+  } catch (error) {
+    console.error('Failed to restore the WALLET staking route', error)
+    captureBackgroundException(error)
+    return route
+  }
 }
 
 /** A route can carry search params (benzin), while a view reports its path alone. */
