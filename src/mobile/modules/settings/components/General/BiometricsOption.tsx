@@ -8,6 +8,7 @@ import ControlOption from '@common/components/ControlOption'
 import FatToggle from '@common/components/FatToggle'
 import useBiometrics from '@common/hooks/useBiometrics'
 import useController from '@common/hooks/useController'
+import useExtraEntropy from '@common/hooks/useExtraEntropy'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import { THEME_TYPES } from '@common/styles/themeConfig'
@@ -16,6 +17,7 @@ const BiometricsOption = () => {
   const { t } = useTranslation()
   const { selectedThemeType } = useTheme()
   const { isEnrolled, saveBiometricsSecret, removeBiometricsSecret } = useBiometrics()
+  const { getExtraEntropy } = useExtraEntropy()
 
   const {
     state: { hasBiometricsSecret, statuses },
@@ -46,7 +48,7 @@ const BiometricsOption = () => {
         type: 'method',
         params: {
           method: 'addSecret',
-          args: ['biometrics', secret, '', true]
+          args: ['biometrics', secret, getExtraEntropy(), true]
         }
       })
     }
