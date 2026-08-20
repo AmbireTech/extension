@@ -589,7 +589,6 @@ const TransactionSummary = ({
   const shouldShowRightControl = !!rightIcon && !!onRightIconPress && !hasCallFailed
   const shouldOverlayErc7730TransactionSummaryControls =
     !withMobileLayout && shouldUseErc7730TransactionSummaryLayout
-  const shouldOverlayDetailedErc7730Controls = !withMobileLayout && shouldUseDetailedErc7730Layout
   const rightControl = useMemo(() => {
     if (!shouldShowDeleteControl && !shouldShowRightControl) return null
 
@@ -757,9 +756,6 @@ const TransactionSummary = ({
     <ExpandableCard
       enableToggleExpand={enableExpand}
       hasArrow={enableExpand}
-      overlayArrow={
-        shouldOverlayErc7730TransactionSummaryControls || shouldOverlayDetailedErc7730Controls
-      }
       mobileHeaderContent={withMobileLayout ? rightControl : undefined}
       mobileHeaderTitle={
         withMobileLayout ? mobileErc7730Title || mobileFlatVisualization : undefined
