@@ -33,6 +33,11 @@ interface Props {
   customIcon?: React.FC<SvgProps>
   withIcon?: boolean
   onClose?: () => void
+  /**
+   * Turns the alert's own background into a progress bar, filling it from the left with the
+   * decorative color of its type. Takes 0 to 1, and leaves the alert as it is when omitted.
+   */
+  progress?: number
   testID?: string
 }
 
@@ -121,12 +126,18 @@ const Alert = ({
   customIcon: CustomIcon,
   withIcon = true,
   onClose,
+  progress,
   testID
 }: Props) => {
   const Icon = ICON_MAP[type]
   const { theme } = useTheme()
   const isSmall = size === 'sm' || isPopup
   const fontSize = !isSmall ? DEFAULT_MD_FONT_SIZE : DEFAULT_SM_FONT_SIZE
+  const hasProgress = progress !== undefined
+  // Set outright rather than animated: an animation runs on the JS thread, which the work
+  // that produces the progress in the first place keeps busy, so the fill would paint
+  // behind the value it was given and read as less progress than there is
+  const progressWidth = `${Math.min(Math.max(progress || 0, 0), 1) * 100}%` as const
 
   const renderButton = (buttonStyle?: StyleProp<ViewStyle>) => {
     if (!buttonProps) return null
@@ -217,10 +228,26 @@ const Alert = ({
         {
           backgroundColor: theme[`${type}Background`]
         },
+        // Keeps the fill below inside the rounded corners
+        hasProgress && { overflow: 'hidden' },
         style
       ]}
       testID={testID}
     >
+      {/* First, so that the content painted after it stays on top */}
+      {hasProgress && (
+        <View
+          pointerEvents="none"
+          style={{
+            position: 'absolute',
+            top: 0,
+            bottom: 0,
+            left: 0,
+            width: progressWidth,
+            backgroundColor: theme[`${type}Decorative`]
+          }}
+        />
+      )}
       <View style={flexbox.flex1}>
         {isButtonTopRight ? (
           <View style={[flexbox.directionRow, flexbox.alignStart]}>
