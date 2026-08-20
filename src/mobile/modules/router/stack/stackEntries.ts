@@ -1,9 +1,22 @@
 import type { Location } from 'react-router-native'
 
-import { MOBILE_ROOT_ROUTE_PATHS } from '@common/modules/router/constants/common'
+import {
+  BACK_NAVIGATION_STATE,
+  FORWARD_NAVIGATION_STATE,
+  MOBILE_BACKWARDS_ROUTE_PATHS,
+  MOBILE_ROOT_ROUTE_PATHS
+} from '@common/modules/router/constants/common'
 
 /** The history action behind a location change, as `useNavigationType` reports it. */
 export type StackNavigationType = 'PUSH' | 'POP' | 'REPLACE'
+
+/**
+ * The direction a card is animated in when it takes the place of the one that was
+ * on top. Only used for that case: a card the stack grows onto is always pushed,
+ * and a card that a pop reveals is always popped, because the platform derives
+ * those from the cards themselves.
+ */
+export type StackReplaceAnimation = 'push' | 'pop'
 
 /** One screen in the stack - the routes matching `location`, kept mounted. */
 export type StackEntry = {
@@ -25,6 +38,7 @@ export type StackEntry = {
    * pushes a history entry without adding a card.
    */
   firstIndex: number
+  replaceAnimation: StackReplaceAnimation
 }
 
 /** The screens the native stack renders, ordered bottom to top. */
@@ -36,29 +50,67 @@ export type NavigationEvent = {
   navigationType: StackNavigationType
 }
 
+/**
+ * Not a screen but the router's redirect hub: no route matches it, and `Router`
+ * sends the user on from it as soon as it can resolve where to.
+ */
+const REDIRECT_HUB_PATH = '/'
+
+/**
+ * The direction a navigation declares, for the cases the history action cannot
+ * tell: a flow that goes back by pushing rather than by popping (the onboarding
+ * steps, the buttons that send the user home), or one that steps forward onto a
+ * screen it already has a card for. See `BACK_NAVIGATION_STATE` /
+ * `FORWARD_NAVIGATION_STATE`.
+ */
+const declaredDirection = (location: Location) =>
+  (location.state as { navDirection?: 'back' | 'forward' } | null)?.navDirection
+
+const isBackwardsPush = (location: Location) =>
+  declaredDirection(location) === BACK_NAVIGATION_STATE.navDirection
+
+/**
+ * Which way a screen that replaces the one on top is animated. Forward is the
+ * default - the app's automatic navigations move the user on (unlocking lands on
+ * the dashboard). Going backwards has to be said explicitly: the flow marked its
+ * push as a back step, or the destination is one the app sends the user to when
+ * it takes them out of the wallet.
+ */
+const resolveReplaceAnimation = (location: Location): StackReplaceAnimation =>
+  isBackwardsPush(location) || MOBILE_BACKWARDS_ROUTE_PATHS.includes(location.pathname)
+    ? 'pop'
+    : 'push'
+
 const toEntry = ({ location, index }: NavigationEvent): StackEntry => ({
   cardKey: location.key,
   key: location.key,
   location,
   index,
-  firstIndex: index
+  firstIndex: index,
+  replaceAnimation: resolveReplaceAnimation(location)
 })
 
 /**
- * The onboarding flow navigates backwards by pushing the previous route (see
- * `onboardingNavigationContext`), so the history action alone cannot tell the
- * direction. That flow marks its own navigations instead.
- */
-const isBackwardsPush = (location: Location) =>
-  (location.state as { navDirection?: 'back' } | null)?.navDirection === 'back'
-
-/**
  * Derives the card stack from the router's memory history. Pure, so the
- * direction rules can be reasoned about (and tested) on their own.
+ * direction rules can be reasoned about (and tested) on their own. Returns the
+ * stack it was given when the navigation changes no screen, so the caller can
+ * tell a no-op apart by identity.
  */
 const reduceStack = (entries: StackState, event: NavigationEvent): StackState => {
-  const entry = toEntry(event)
   const top = entries[entries.length - 1]
+
+  // The redirect hub is passed through rather than shown: the card on top keeps
+  // its screen and only follows the history position, so the redirect that comes
+  // next is a single transition from the screen the user was on - and no blank
+  // card is put up in between. On boot there is no card yet, and the first real
+  // route becomes the first one, which the platform shows without animating.
+  if (event.location.pathname === REDIRECT_HUB_PATH) {
+    if (!top) return entries
+
+    return [...entries.slice(0, -1), { ...top, key: event.location.key, index: event.index }]
+  }
+
+  const entry = toEntry(event)
 
   // Navigating to the screen that is already on top is not a new card: it is the
   // same screen with different search params (the dashboard writes its session id
@@ -77,8 +129,8 @@ const reduceStack = (entries: StackState, event: NavigationEvent): StackState =>
 
     // The stack drifted from the history (it was collapsed by a reset, or the
     // app deep linked into it), so there is nothing to reveal - resync to the
-    // single entry the history points at.
-    if (!owner) return [entry]
+    // single entry the history points at, still animated as the back step it is.
+    if (!owner) return [{ ...entry, replaceAnimation: 'pop' }]
 
     return [
       ...entries.slice(0, ownerIndex),
@@ -86,31 +138,37 @@ const reduceStack = (entries: StackState, event: NavigationEvent): StackState =>
     ]
   }
 
-  if (isBackwardsPush(event.location) && top) {
-    const below = entries[entries.length - 2]
-    // The pushed route is the one already sitting below the top, so that screen
-    // is swapped for the new entry instead of being duplicated behind it.
-    const isReturningToTheScreenBelow = below?.location.pathname === entry.location.pathname
+  // Navigating to a screen that is already in the stack goes back to it instead of
+  // stacking a second copy of it - the same thing react-navigation's `navigate`
+  // does. The screen is revealed with its state, the screens above it are dropped,
+  // and the platform sees a real pop. This is what makes the buttons that send the
+  // user home (they navigate rather than pop) and a flow returning to an earlier
+  // step read as back transitions, with nothing to declare at the call site. A flow
+  // that means to go deeper into a screen it has already been on says so, the way
+  // react-navigation's `push` is the counterpart of its `navigate`.
+  const revealedIndex =
+    declaredDirection(event.location) === FORWARD_NAVIGATION_STATE.navDirection
+      ? -1
+      : entries.findLastIndex((e) => e.location.pathname === entry.location.pathname)
 
-    return [...entries.slice(0, isReturningToTheScreenBelow ? -2 : -1), entry]
+  if (revealedIndex >= 0) {
+    const revealed = entries[revealedIndex]!
+
+    return [
+      ...entries.slice(0, revealedIndex),
+      { ...entry, cardKey: revealed.cardKey, firstIndex: revealed.firstIndex }
+    ]
   }
 
-  // Landing on a root path collapses the stack, so a swipe back can never reveal
-  // a screen from before a lock or before onboarding. Checked after the backwards
-  // cases, so that popping to a root path still reads as a back transition.
-  if (MOBILE_ROOT_ROUTE_PATHS.includes(event.location.pathname)) {
-    // Screens that send the user home navigate to the dashboard rather than pop
-    // (see the transfer and account-select back buttons). The screen already
-    // showing that route is reused, so going home reveals it - with its state -
-    // instead of rebuilding it.
-    const revealed = entries.find(
-      (e) => e.cardKey !== top?.cardKey && e.location.pathname === entry.location.pathname
-    )
+  // A flow that goes back to a step it has no card for - the onboarding steps can
+  // skip screens - swaps the screen on top for it instead of stacking it on. When
+  // the step does have a card, it was revealed above.
+  if (isBackwardsPush(event.location) && top) return [...entries.slice(0, -1), entry]
 
-    if (revealed) return [{ ...entry, cardKey: revealed.cardKey, firstIndex: revealed.firstIndex }]
-
-    return [entry]
-  }
+  // Landing on a root path collapses the stack, so a swipe back can never reveal a
+  // screen from before a lock or before onboarding. Only reached when that screen
+  // is not in the stack already - when it is, it was revealed above.
+  if (MOBILE_ROOT_ROUTE_PATHS.includes(event.location.pathname)) return [entry]
 
   if (event.navigationType === 'REPLACE') return [...entries.slice(0, -1), entry]
 

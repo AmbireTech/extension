@@ -39,6 +39,10 @@ const StackScreen = ({ entry, isFocused, shouldFreeze, gestureEnabled, onDismiss
       headerConfig={{ hidden: true }}
       stackPresentation="push"
       stackAnimation="default"
+      // Which direction a screen that takes the place of another one is animated
+      // in. The platform defaults it to `pop`, so without this every automatic
+      // navigation - the boot redirects, unlocking - would look like going back.
+      replaceAnimation={entry.replaceAnimation}
       gestureEnabled={gestureEnabled}
       hideKeyboardOnSwipe
       freezeOnBlur

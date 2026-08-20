@@ -103,6 +103,37 @@ const MOBILE_ROOT_ROUTE_PATHS = [
   `/${COMMON_ROUTES.getStarted}`
 ]
 
+/**
+ * Location state marking a navigation that means "back" although it is performed
+ * as a push or a replace: some flows return to the previous step, or send the user
+ * home, instead of popping (the onboarding steps, the "go home" back buttons, the
+ * in-app browser leaving for the apps catalog). The mobile stack reads it to
+ * animate the transition backwards - other environments ignore it.
+ */
+const BACK_NAVIGATION_STATE = { navDirection: 'back' } as const
+
+/**
+ * Location state marking a navigation as a step *forward* onto a screen that is
+ * already in the stack, so the mobile stack puts a second one on top instead of
+ * revealing the one it has - what react-navigation's `push` does, as opposed to
+ * its `navigate`. Only a flow that deliberately re-enters an earlier screen needs
+ * it (the account personalize screen opens the account picker it may have come
+ * from). Other environments ignore it.
+ */
+const FORWARD_NAVIGATION_STATE = { navDirection: 'forward' } as const
+
+/**
+ * Landing on one of these means the app took the user out of the wallet - the
+ * keystore locked, or the last account was removed - rather than moving them
+ * forward. The mobile stack animates the transition backwards, the way
+ * react-navigation's `animationTypeForReplace: 'pop'` does. Pathnames, hence the
+ * leading slash.
+ */
+const MOBILE_BACKWARDS_ROUTE_PATHS = [
+  `/${COMMON_ROUTES.keyStoreUnlock}`,
+  `/${COMMON_ROUTES.getStarted}`
+]
+
 const ONBOARDING_WEB_ROUTES = [
   COMMON_ROUTES.getStarted,
   COMMON_ROUTES.importExistingAccount,
@@ -124,4 +155,13 @@ const ONBOARDING_WEB_ROUTES = [
   MOBILE_ROUTES.importAccountsFromExtension
 ] as const
 
-export { MOBILE_ROOT_ROUTE_PATHS, MOBILE_ROUTES, ONBOARDING_WEB_ROUTES, ROUTES, WEB_ROUTES }
+export {
+  BACK_NAVIGATION_STATE,
+  FORWARD_NAVIGATION_STATE,
+  MOBILE_BACKWARDS_ROUTE_PATHS,
+  MOBILE_ROOT_ROUTE_PATHS,
+  MOBILE_ROUTES,
+  ONBOARDING_WEB_ROUTES,
+  ROUTES,
+  WEB_ROUTES
+}

@@ -152,9 +152,9 @@ An entry is `{ key: location.key, location, index }`.
 |---|---|---|
 | Normal `navigate(path)` | `PUSH`, `index` increased | push (forward) |
 | `goBack()` / `navigate(-1)` | `POP`, `index` decreased | pop (backward), drop entries above `index` |
-| `navigate(path, { replace: true })` | `REPLACE` | swap top entry, no animation |
-| Boot `<Navigate to={startRoute} replace />` (`Router.tsx:123`) | first entry | no animation |
-| Guard redirect (`AuthenticatedRoute`, `KeystoreUnlockedRoute`) | target is a **root route** (`dashboard`, `unlock`, `get-started`) | collapse the stack to one entry, no animation |
+| `navigate(path, { replace: true })` | `REPLACE` | swap top entry, animated in the direction the destination declares (see §9) |
+| Boot `<Navigate to={startRoute} replace />` (`Router.tsx:123`) | the route is the first card there ever was | no animation |
+| Guard redirect (`AuthenticatedRoute`, `KeystoreUnlockedRoute`) | target is a **root route** (`dashboard`, `unlock`, `get-started`) | collapse the stack to one entry, animated in the destination's direction (§9) |
 | Onboarding `goToPrevRoute()` — a forward push that means "back" | opt in explicitly: add `state: { navDirection: 'back' }` in `onboardingNavigationContext.goToPrevRoute` (one call site, `onboardingNavigationContext.tsx:296`) | pop animation, and the entry it returns to is reused instead of duplicated |
 | Gesture-driven pop | stack already animated it; mark `pendingGesturePopKey` before calling `navigate(-1)` so the resulting `POP` is applied without re-animating | none (already at final position) |
 
@@ -349,6 +349,76 @@ Each milestone is independently shippable and independently verifiable on a devi
 - [Callstack: Custom screen transitions in React Navigation](https://www.callstack.com/blog/custom-screen-transitions-in-react-navigation)
 
 ---
+
+## 9. Animation direction — the rules the stack follows
+
+`react-native-screens` picks the transition from the diff between the old and the new
+list of cards, and there are only three outcomes:
+
+| What changed | What the platform plays | Where it takes the animation from |
+|---|---|---|
+| A card was added on top | push | the incoming card |
+| The top card was removed, revealing one that is still there | pop | the outgoing card |
+| The top card was swapped for one that was not in the stack (**replace**) | whatever the incoming card's `replaceAnimation` says | incoming card if `push`, outgoing card if `pop` |
+
+The first two need no configuration. Every transition the app performs *on its own* —
+boot redirects, guard redirects, unlocking — is the third one, because those collapse
+the stack to a single card. `replaceAnimation` defaults to **`pop`** in
+`react-native-screens`, which is why they all used to look like a back navigation.
+react-navigation's native stack overrides the same default (`animationTypeForReplace`,
+default `push`); this app now does too, with these rules:
+
+1. **`/` is a redirect hub, not a screen.** No route matches it; `Router` resolves where
+   to go and navigates on. So it never gets a card: on boot the first *real* route is the
+   first card, which the platform puts up without animating (splash → unlock is silent),
+   and later (`useKeyStoreUnlock` sends the user through `/` after unlocking) the card on
+   top keeps its screen and only follows the history position — so unlock → `/` →
+   dashboard is **one** forward transition instead of two backward ones.
+2. **Forward is the default.** A screen taking the place of another is a step forward
+   unless something says otherwise, which is what makes automatic navigations
+   (unlock → dashboard, the end of onboarding → dashboard) read correctly.
+3. **Leaving the wallet is backwards** — `MOBILE_BACKWARDS_ROUTE_PATHS` (`unlock`,
+   `get-started`). These are the destinations of the two route guards: the keystore
+   locking, or the last account going away. They have no call site to annotate, and they
+   always mean the user was taken *out* of the app, so the destination itself declares
+   the direction.
+4. **Navigating to a screen that is already in the stack goes back to it** — it is
+   revealed with its state, the screens above it are dropped, and the platform sees a
+   real pop. Same semantic as react-navigation's `navigate` (`push` is the one that
+   stacks a duplicate). This is what covers the buttons that send the user home by
+   navigating rather than popping, the in-app browser leaving for the apps catalog, and
+   a flow returning to an earlier step — with nothing to declare at the call site. A flow
+   that means to go *deeper* into a screen it has already been on is the `push` case and
+   declares `state: FORWARD_NAVIGATION_STATE` — the account personalize screen opening the
+   account picker it may itself have arrived from (hardware wallets), so completing that
+   picker reveals the same personalize screen instead of building a second one. Note
+   the key is the **live card stack**, not a list of routes visited earlier: the stack
+   is exactly "what is behind you right now", while a visited list cannot tell going
+   forward to a screen you once saw from going back to one still behind you, and could
+   not be invalidated on a lock or a sign-out.
+5. **A back step to a screen with no card says so at the call site**, with
+   `state: BACK_NAVIGATION_STATE` — the onboarding flow can skip steps, so the step it
+   returns to is not always in the stack. The remaining cases where a destination has no
+   card are genuinely ambiguous (the dashboard is entered forward from unlock and
+   backwards from a screen above it), which is why direction is a property of the
+   navigation there, not of the destination.
+6. **A pop that has to resync** (the history points at an entry the stack no longer has)
+   is animated backwards, since it is still a back navigation even though the card it
+   lands on has to be rebuilt.
+
+**One stable location per card.** `<Routes location={...}>` cannot be used to render a
+card: react-router spreads the location into the context it provides, so the object is
+rebuilt on every render, and everything derived from it - `navigate` first of all -
+changes identity every render, re-running every effect that depends on it. With a screen
+kept mounted across a redirect (rule 1) that turns a one-shot redirect effect
+(`useKeyStoreUnlock`) into an unbounded navigation loop - "Maximum update depth
+exceeded". `AppRoutes` therefore provides the scoped `LocationContext` itself, memoized on
+the card's location.
+
+Rules 1–6 live in `stackEntries.ts` (`resolveReplaceAnimation`, `REDIRECT_HUB_PATH`) and
+are covered by the reducer's unit tests. Only the transitions that build a *new* card on
+top of an old one need a direction at all — a revealed card (rule 4) and a real pop are
+animated by the platform from the cards themselves.
 
 # Implementation status
 

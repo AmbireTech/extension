@@ -7,7 +7,6 @@ import React, {
   useRef,
   useState
 } from 'react'
-import { NavigateOptions } from 'react-router-dom'
 
 import { Account } from '@ambire-common/interfaces/account'
 import { parse, stringify } from '@ambire-common/libs/richJson/richJson'
@@ -21,6 +20,7 @@ import useRoute from '@common/hooks/useRoute'
 import { AUTH_STATUS } from '@common/modules/auth/constants/authStatus'
 import useAuth from '@common/modules/auth/hooks/useAuth'
 import {
+  BACK_NAVIGATION_STATE,
   MOBILE_ROUTES,
   ONBOARDING_WEB_ROUTES,
   WEB_ROUTES
@@ -33,7 +33,7 @@ type HwWalletsNeedingRedirect = 'trezor' | 'lattice' | null
 
 const OnboardingNavigationContext = createContext<{
   isOnboardingRoute: boolean
-  goToNextRoute: (routeName?: OnboardingRoute, routeParams?: NavigateOptions) => void
+  goToNextRoute: (routeName?: OnboardingRoute, routeState?: Record<string, unknown>) => void
   goToPrevRoute: () => void
   setTriggeredHwWalletFlow: React.Dispatch<React.SetStateAction<HwWalletsNeedingRedirect>>
   setAccountsToPersonalize: React.Dispatch<React.SetStateAction<Account[]>>
@@ -274,7 +274,7 @@ const OnboardingNavigationProvider = ({ children }: { children: React.ReactNode 
   }, [history])
 
   const goToNextRoute = useCallback(
-    (routeName?: OnboardingRoute, routeParams?: NavigateOptions) => {
+    (routeName?: OnboardingRoute, routeState?: Record<string, unknown>) => {
       const currentRoute = routerHistory.location.pathname?.substring(1) || '/'
 
       let nextRoute: RouteNode | null = null
@@ -290,7 +290,7 @@ const OnboardingNavigationProvider = ({ children }: { children: React.ReactNode 
           dispatch({ type: 'OPEN_EXTENSION_POPUP' })
         } else {
           navigateRef.current(nextRoute.name, {
-            state: { ...routeParams, internal: true }
+            state: { ...routeState, internal: true }
           })
         }
         // Checked inside the updater rather than against a captured copy, so the
@@ -330,7 +330,9 @@ const OnboardingNavigationProvider = ({ children }: { children: React.ReactNode 
         // Onboarding walks its own route tree, so going back is a forward
         // navigation as far as the history is concerned. `navDirection` tells
         // the mobile card stack to play it as a back transition anyway.
-        navigateRef.current(prevRoute.name, { state: { internal: true, navDirection: 'back' } })
+        navigateRef.current(prevRoute.name, {
+          state: { internal: true, ...BACK_NAVIGATION_STATE }
+        })
         setHistory(newHistory)
         return
       }

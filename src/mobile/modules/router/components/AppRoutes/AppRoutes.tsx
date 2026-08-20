@@ -1,5 +1,11 @@
-import React from 'react'
-import { Location, Route, Routes } from 'react-router-native'
+import React, { useMemo } from 'react'
+import {
+  Location,
+  NavigationType,
+  Route,
+  Routes,
+  UNSAFE_LocationContext as LocationContext
+} from 'react-router-native'
 
 import AuthenticatedRoute from '@common/modules/router/components/AuthenticatedRoute'
 import KeystoreUnlockedRoute from '@common/modules/router/components/KeystoreUnlockedRoute'
@@ -16,9 +22,22 @@ import MainRoutes from '@mobile/modules/router/components/MainRoutes'
  * params while a transition to the next screen plays.
  */
 const AppRoutes = ({ location }: { location?: Location }) => {
-  return (
+  /**
+   * The scoped location is provided here rather than through `<Routes location>`,
+   * which rebuilds the location object on every render (react-router spreads it
+   * into the context it provides). That would churn the identity of everything
+   * derived from it - `navigate` above all - and re-run every effect that depends
+   * on it, on every render. The stack already holds one stable location per card.
+   * `Pop` matches what react-router reports for an overridden location.
+   */
+  const scopedLocation = useMemo(
+    () => (location ? { location, navigationType: NavigationType.Pop } : null),
+    [location]
+  )
+
+  const routes = (
     <>
-      <Routes location={location}>
+      <Routes>
         <Route element={<KeystoreUnlockedRoute />}>
           <Route element={<AuthenticatedRoute />}>
             <Route path={ROUTES.dashboard} element={<DashboardScreen />} />
@@ -28,9 +47,13 @@ const AppRoutes = ({ location }: { location?: Location }) => {
         {/* Fallback route to suppress "No routes matched location" warnings when multiple Routes blocks are rendered */}
         <Route path="*" element={null} />
       </Routes>
-      <MainRoutes location={location} />
+      <MainRoutes />
     </>
   )
+
+  if (!scopedLocation) return routes
+
+  return <LocationContext.Provider value={scopedLocation}>{routes}</LocationContext.Provider>
 }
 
 // Memoized because the stack renders one instance per card: a re-render of the

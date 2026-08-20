@@ -1,5 +1,5 @@
 import React from 'react'
-import { Location, Route, Routes } from 'react-router-native'
+import { Route, Routes } from 'react-router-native'
 
 import AuthenticatedRoute from '@common/modules/router/components/AuthenticatedRoute'
 import KeystoreUnlockedRoute from '@common/modules/router/components/KeystoreUnlockedRoute'
@@ -47,9 +47,10 @@ import TransferScreen from '@mobile/modules/transfer/screens/TransferScreen'
 import ImportAccountsFromExtensionScreen from '@mobile/modules/accounts-sync/screens/ImportAccountsFromExtensionScreen'
 import DappWebViewScreen from '@mobile/modules/webview/screens/DappWebViewScreen'
 
-const MainRoutes = ({ location }: { location?: Location }) => {
+// The location these routes match is the one `AppRoutes` scopes the context to.
+const MainRoutes = () => {
   return (
-    <Routes location={location}>
+    <Routes>
       <Route path={ROUTES.keyStoreSetup} element={<KeyStoreSetupScreen />} />
       <Route element={<KeystoreUnlockedRoute />}>
         <Route path={ROUTES.getStarted} element={<GetStartedScreen />} />
@@ -67,7 +68,10 @@ const MainRoutes = ({ location }: { location?: Location }) => {
         <Route path={ROUTES.ledgerConnect} element={<LedgerConnectScreen />} />
         <Route path={ROUTES.trezorConnect} element={<TrezorConnectScreen />} />
         <Route path={ROUTES.qrConnect} element={<QrConnectScreen />} />
-        <Route path={ROUTES.importAccountsFromExtension} element={<ImportAccountsFromExtensionScreen />} />
+        <Route
+          path={ROUTES.importAccountsFromExtension}
+          element={<ImportAccountsFromExtensionScreen />}
+        />
 
         <Route path={ROUTES.importPrivateKey} element={<PrivateKeyImportScreen />} />
         <Route path={ROUTES.importSeedPhrase} element={<SeedPhraseImportScreen />} />
