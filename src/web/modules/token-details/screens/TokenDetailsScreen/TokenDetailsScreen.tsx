@@ -84,6 +84,7 @@ const TokenDetailsScreen = () => {
           change24hFormatted={change24hFormatted}
           isRewards={isRewards}
           isVesting={isVesting}
+          xWalletAmount={token.amount}
         />
         <TokenData token={token} />
         <Exchanges exchanges={token.meta?.exchanges || []} />

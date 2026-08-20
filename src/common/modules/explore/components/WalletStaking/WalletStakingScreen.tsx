@@ -2,7 +2,7 @@ import { formatUnits, parseUnits } from 'ethers'
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { View } from 'react-native'
 
-import { STK_WALLET, WALLET_STAKING_ADDR, WALLET_TOKEN } from '@ambire-common/consts/addresses'
+import { STK_WALLET, WALLET_TOKEN } from '@ambire-common/consts/addresses'
 import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
 import InfoIcon from '@common/assets/svg/InfoIcon'
 import SwapAndBridgeIcon from '@common/assets/svg/SwapAndBridgeIcon'
@@ -201,19 +201,14 @@ const WalletStakingScreen = () => {
     const requestId = ++shareValueRequestIdRef.current
     setIsLoadingShareValue(true)
     try {
-      const nextShareValue = await providersDispatchAndWait<'callContractAndSendResToUi', bigint>({
+      const nextShareValue = await providersDispatchAndWait<
+        'getXWalletShareValueAndSendResToUi',
+        bigint
+      >({
         type: 'method',
         params: {
-          method: 'callContractAndSendResToUi',
-          args: [
-            {
-              chainId: ETHEREUM_CHAIN_ID,
-              address: WALLET_STAKING_ADDR,
-              abi: 'function shareValue() view returns (uint256)',
-              method: 'shareValue',
-              args: []
-            }
-          ]
+          method: 'getXWalletShareValueAndSendResToUi',
+          args: []
         }
       })
       if (requestId === shareValueRequestIdRef.current) {

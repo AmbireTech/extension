@@ -9,6 +9,7 @@ import PendingToBeConfirmedIcon from '@common/assets/svg/PendingToBeConfirmedIco
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import Text from '@common/components/Text'
 import TokenIcon from '@common/components/TokenIcon'
+import XWalletConversionTooltip from '@common/components/XWalletConversionTooltip'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import { AnimatedPressable, useCustomHover } from '@common/hooks/useHover'
@@ -191,16 +192,24 @@ const BaseTokenItem = ({
               ]}
             >
               <View style={spacings.mbMi}>
-                <Text
-                  selectable
-                  color={textColor}
-                  fontSize={16}
-                  weight="semiBold"
-                  numberOfLines={1}
-                  style={{ lineHeight: 22 }}
-                >
-                  {symbol}
-                </Text>
+                <View style={[flexboxStyles.directionRow, flexboxStyles.alignCenter]}>
+                  <Text
+                    selectable
+                    color={textColor}
+                    fontSize={16}
+                    weight="semiBold"
+                    numberOfLines={1}
+                    style={{ lineHeight: 22 }}
+                  >
+                    {symbol}
+                  </Text>
+                  <XWalletConversionTooltip
+                    address={address}
+                    chainId={chainId}
+                    xWalletAmount={token.amount}
+                    tooltipId={`dashboard-x-wallet-conversion-${tokenId}`}
+                  />
+                </View>
                 <Text
                   selectable
                   fontSize={12}
