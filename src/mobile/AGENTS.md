@@ -53,7 +53,9 @@ It is a WebView, so there is no React Native, no Expo, no native module inside i
 The worker has to boot before any controller exists, so the boot path is tuned and easy to regress:
 
 - The RN side ships a one-shot storage snapshot when it injects the worker, instead of the worker making N separate `storage.get` round-trips.
-- Controllers are initialized in tiers - critical first, the rest via `INIT_DEFERRED_CONTROLLERS`. See `modules/webview/services/bootPhase.ts`.
+- Controllers are all initialized together; only `PhishingController` and `DappsController` are held back, because the lists they read are too large to sit on the boot path (with the goal of displaying the splash screen for less time). The dashboard fires `INIT_DEFERRED_CONTROLLERS` for them after its first render.
+- What _is_ tiered is the streaming of state to the RN side. Only the controllers in `constants/criticalControllers.ts` stream during boot - the rest are queued and drained once the splash hides and the RN side flips the phase to `full`, so the heavy stringify+bridge+parse never contends with the first paint. See `modules/webview/services/bootPhase.ts`.
+- Past boot, that same file also suppresses state for any controller the UI has no subscriber for, and flushes it the moment one appears.
 - The worker bundle is minified with `keep_classnames`. It must stay: controller identity comes from `this.constructor.name`, and mangling it breaks the app.
 
 Before adding work to the boot path, measure it. See `services/bootProfiler/README.md`.
