@@ -36,7 +36,7 @@ const FeeValue = React.memo(({ fee, token }: FeeValueProps) => {
     <View style={[flexbox.directionRow, flexbox.alignCenter]}>
       {token.flags.onGasTank ? (
         <View style={styles.gasTankIconWrapper}>
-          <GasTankIcon color={theme.primaryAccent300} width={20} height={20} />
+          <GasTankIcon color={theme.primaryAccent} width={20} height={20} />
         </View>
       ) : (
         <TokenIcon
