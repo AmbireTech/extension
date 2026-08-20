@@ -704,7 +704,6 @@ const TransactionSummary = ({
         imageSize={imageSize}
         chainId={chainId}
         type={type}
-        testID={`recipient-address-${index}`}
         hasPadding={false}
         style={{ width: '100%', alignContent: 'flex-start' }}
         disableFlex
@@ -719,7 +718,6 @@ const TransactionSummary = ({
     editApprovalCallInfo,
     erc7730Visualization,
     imageSize,
-    index,
     size,
     textSize,
     type
@@ -754,6 +752,9 @@ const TransactionSummary = ({
 
   return (
     <ExpandableCard
+      // Set on the whole card rather than on the humanized visualization alone, because
+      // the ERC-7730 summary layout splits the intent and its rows into separate slots
+      testID={`recipient-address-${index}`}
       enableToggleExpand={enableExpand}
       hasArrow={enableExpand}
       mobileHeaderContent={withMobileLayout ? rightControl : undefined}
@@ -851,7 +852,6 @@ const TransactionSummary = ({
                   imageSize={imageSize}
                   chainId={chainId}
                   type={type}
-                  testID={`recipient-address-${index}`}
                   hasPadding={false}
                   erc7730Mode="description"
                   editApprovalCallInfo={editApprovalCallInfo}
@@ -865,7 +865,6 @@ const TransactionSummary = ({
                 imageSize={imageSize}
                 chainId={chainId}
                 type={type}
-                testID={`recipient-address-${index}`}
                 hasPadding={enableExpand && !shouldUseErc7730TransactionSummaryLayout}
                 editApprovalCallInfo={editApprovalCallInfo}
                 hideMobileErc7730Title={!!mobileErc7730Title}
