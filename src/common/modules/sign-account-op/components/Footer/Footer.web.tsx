@@ -22,6 +22,12 @@ import { Props } from './Footer'
 import getStyles from './styles'
 import useRejectConfirmation from './useRejectConfirmation'
 
+// An exception to the `size="large"` height (56). The sign screen is dense and the
+// footer is always visible, so all of its buttons are slightly shorter in order to
+// free up vertical space for the transaction details above. Keep every button in
+// the footer on this height, otherwise they won't line up.
+const FOOTER_BUTTON_HEIGHT = 52
+
 const Footer = ({
   onReject,
   onAddToCart,
@@ -129,7 +135,9 @@ const Footer = ({
       hasBottomSpacing={false}
       size={compact ? 'smaller' : 'large'}
       disabled={isSignLoading}
-      style={fullWidth ? { width: '100%', minWidth: 0 } : { width: 98 }}
+      style={
+        fullWidth ? { width: '100%', minWidth: 0 } : { width: 98, height: FOOTER_BUTTON_HEIGHT }
+      }
     />
   )
 
@@ -148,7 +156,11 @@ const Footer = ({
       onPress={onAddToCart}
       disabled={isAddToCartDisabled}
       hasBottomSpacing={false}
-      style={fullWidth ? { width: '100%', minWidth: 0 } : { minWidth: 160, ...spacings.ph }}
+      style={
+        fullWidth
+          ? { width: '100%', minWidth: 0 }
+          : { minWidth: 160, height: FOOTER_BUTTON_HEIGHT, ...spacings.ph }
+      }
       size={compact ? 'smaller' : 'large'}
       textStyle={
         compact && isWeb
@@ -193,7 +205,7 @@ const Footer = ({
           disabled={isSignDisabled}
           onHoldComplete={onSign}
           testID="proceed-btn"
-          style={fullWidth ? { width: '100%' } : spacings.mlLg}
+          style={fullWidth ? { width: '100%' } : [spacings.ml, { height: FOOTER_BUTTON_HEIGHT }]}
           size="large"
         />
       )}
@@ -206,7 +218,11 @@ const Footer = ({
           text={isSignLoading ? inProgressButtonText : buttonText}
           onPress={onSign}
           size="large"
-          style={fullWidth ? { width: '100%' } : [{ minWidth: 128 }, spacings.mlLg]}
+          style={
+            fullWidth
+              ? { width: '100%' }
+              : [{ minWidth: 128, height: FOOTER_BUTTON_HEIGHT }, spacings.ml]
+          }
         />
       )}
     </View>
