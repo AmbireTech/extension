@@ -8,7 +8,10 @@ const stkWalletInterface = new Interface([
   'function enter(uint256 amount)',
   'function unwrap(uint256 shareAmount)'
 ])
-const walletStakingInterface = new Interface(['function leave(uint256 shares, bool skipMint)'])
+const walletStakingInterface = new Interface([
+  'function leave(uint256 shares, bool skipMint)',
+  'function withdraw(uint256 shares, uint256 unlocksAt, bool skipMint)'
+])
 
 /** Builds the Ethereum calls that approve WALLET and stake it into stkWALLET. */
 export const getStakeWalletCalls = (amount: bigint): Call[] => [
@@ -43,3 +46,12 @@ export const getUnstakeWalletCalls = (amount: bigint, shareValue: bigint): Call[
     }
   ]
 }
+
+/** Builds the Ethereum call that completes an unlocked WALLET withdrawal. */
+export const getWithdrawWalletCalls = (shares: bigint, unlocksAt: bigint): Call[] => [
+  {
+    to: WALLET_STAKING_ADDR,
+    value: 0n,
+    data: walletStakingInterface.encodeFunctionData('withdraw', [shares, unlocksAt, true])
+  }
+]

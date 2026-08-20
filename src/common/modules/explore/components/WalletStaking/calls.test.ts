@@ -2,14 +2,17 @@ import { Interface, parseUnits } from 'ethers'
 
 import { STK_WALLET, WALLET_STAKING_ADDR, WALLET_TOKEN } from '@ambire-common/consts/addresses'
 
-import { getStakeWalletCalls, getUnstakeWalletCalls } from './calls'
+import { getStakeWalletCalls, getUnstakeWalletCalls, getWithdrawWalletCalls } from './calls'
 
 const walletInterface = new Interface(['function approve(address spender, uint256 amount)'])
 const stkWalletInterface = new Interface([
   'function enter(uint256 amount)',
   'function unwrap(uint256 shareAmount)'
 ])
-const walletStakingInterface = new Interface(['function leave(uint256 shares, bool skipMint)'])
+const walletStakingInterface = new Interface([
+  'function leave(uint256 shares, bool skipMint)',
+  'function withdraw(uint256 shares, uint256 unlocksAt, bool skipMint)'
+])
 
 describe('WALLET staking calls', () => {
   test('approves WALLET and enters stkWALLET', () => {
@@ -48,5 +51,19 @@ describe('WALLET staking calls', () => {
     expect(() => getUnstakeWalletCalls(1n, 0n)).toThrow(
       'The staking share value must be greater than zero.'
     )
+  })
+
+  test('withdraws an unlocked commitment without minting vesting tokens', () => {
+    const shares = parseUnits('10', 18)
+    const unlocksAt = 2_592_000n
+    const calls = getWithdrawWalletCalls(shares, unlocksAt)
+
+    expect(calls).toHaveLength(1)
+    expect(calls[0]?.to).toBe(WALLET_STAKING_ADDR)
+    expect(walletStakingInterface.decodeFunctionData('withdraw', calls[0]!.data)).toEqual([
+      shares,
+      unlocksAt,
+      true
+    ])
   })
 })

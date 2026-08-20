@@ -19,6 +19,12 @@ interface Styles {
   tabs: ViewStyle
   tab: ViewStyle
   activeTab: ViewStyle
+  stakingFormContainer: ViewStyle
+  pendingWithdrawalCard: ViewStyle
+  pendingWithdrawalIcon: ViewStyle
+  pendingWithdrawalText: TextStyle
+  pendingWithdrawalDescription: TextStyle
+  disabledStakingForm: ViewStyle
   emptyState: ViewStyle
   emptyIcon: ViewStyle
   emptyText: TextStyle
@@ -111,6 +117,35 @@ const getStyles = (theme: ThemeProps) =>
     },
     activeTab: {
       borderBottomColor: theme.primaryText
+    },
+    stakingFormContainer: {
+      position: 'relative'
+    },
+    pendingWithdrawalCard: {
+      ...flexbox.alignCenter,
+      ...spacings.phMd,
+      position: 'absolute',
+      top: 0,
+      right: 0,
+      left: 0,
+      zIndex: 1
+    },
+    pendingWithdrawalIcon: {
+      ...flexbox.center,
+      ...spacings.mbSm
+    },
+    pendingWithdrawalText: {
+      ...spacings.mbTy,
+      textAlign: 'center'
+    },
+    pendingWithdrawalDescription: {
+      ...spacings.mtMd,
+      maxWidth: 460,
+      lineHeight: 20,
+      textAlign: 'center'
+    },
+    disabledStakingForm: {
+      opacity: 0.18
     },
     emptyState: {
       ...flexbox.alignCenter,
