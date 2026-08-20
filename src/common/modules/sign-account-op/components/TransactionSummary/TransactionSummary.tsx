@@ -13,7 +13,6 @@ import {
 
 import { DecodedCall } from '@ambire-common/interfaces/decodeCall'
 import { noStateUpdateStatuses, SigningStatus } from '@ambire-common/interfaces/signAccountOp'
-import { HumanizerErc7730Visualization, IrCall } from '@ambire-common/libs/humanizer/interfaces'
 import {
   getAction,
   getAddressVisualization,
@@ -45,6 +44,10 @@ import { getUiType } from '@common/utils/uiType'
 import { sizeMultiplier } from './sizeMultiplier'
 import getStyles from './styles'
 
+import type {
+  HumanizerErc7730Visualization,
+  IrCall
+} from '@ambire-common/libs/humanizer/interfaces'
 const { isSidePanel } = getUiType()
 const withMobileLayout = isMobile || isSidePanel
 
@@ -589,7 +592,6 @@ const TransactionSummary = ({
   const shouldShowRightControl = !!rightIcon && !!onRightIconPress && !hasCallFailed
   const shouldOverlayErc7730TransactionSummaryControls =
     !withMobileLayout && shouldUseErc7730TransactionSummaryLayout
-  const shouldOverlayDetailedErc7730Controls = !withMobileLayout && shouldUseDetailedErc7730Layout
   const rightControl = useMemo(() => {
     if (!shouldShowDeleteControl && !shouldShowRightControl) return null
 
@@ -757,9 +759,6 @@ const TransactionSummary = ({
     <ExpandableCard
       enableToggleExpand={enableExpand}
       hasArrow={enableExpand}
-      overlayArrow={
-        shouldOverlayErc7730TransactionSummaryControls || shouldOverlayDetailedErc7730Controls
-      }
       mobileHeaderContent={withMobileLayout ? rightControl : undefined}
       mobileHeaderTitle={
         withMobileLayout ? mobileErc7730Title || mobileFlatVisualization : undefined
