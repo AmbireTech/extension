@@ -6,8 +6,23 @@
 // react-native and expo-file-system — does not load ahead of the shims below.
 import './src/mobile/services/bootProfiler/bootProfiler'
 
-import { install } from 'react-native-quick-crypto'
+import { getRandomValues, install } from 'react-native-quick-crypto'
 install()
+
+// Every secret the wallet generates - the keystore main key, seed phrases, scrypt salts, AES IVs -
+// traces back to this one function, and two of the polyfills below compete for it: whichever runs last
+// owns `global.crypto.getRandomValues`. react-native-get-random-values only claims the slot if it is
+// still empty, but when it does own it and its native module is unreachable it answers from a
+// Math.random() loop, with a console warning and nothing more.
+//
+// `install()` wins because every import in this file is hoisted above it, so all of them have already
+// run by the time it assigns. That ordering is invisible in the source and one bare import moved
+// around would silently flip it, so it is asserted rather than trusted. Failing to boot is the right
+// outcome here: a build that could seed keys from a non-cryptographic source must never ship.
+if (global.crypto.getRandomValues !== getRandomValues)
+  throw new Error(
+    'shim.js: global.crypto.getRandomValues is not the one from react-native-quick-crypto, so key generation could fall back to a non-cryptographic random source. Refusing to start.'
+  )
 
 // 3. Ethers/Legacy shims
 // Keep these for ethers v5/v6 compatibility until you fully migrate

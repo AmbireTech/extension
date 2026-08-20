@@ -11,6 +11,7 @@ import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
 import useBiometrics from '@common/hooks/useBiometrics'
 import useController from '@common/hooks/useController'
+import useExtraEntropy from '@common/hooks/useExtraEntropy'
 import useTheme from '@common/hooks/useTheme'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
 import KeyStoreSetupForm from '@common/modules/keystore/components/KeyStoreSetupForm'
@@ -33,6 +34,7 @@ const KeyStoreSetupScreen = () => {
   const animation = useRef(new Animated.Value(0)).current
 
   const { isEnrolled, isLoading, saveBiometricsSecret } = useBiometrics()
+  const { getExtraEntropy } = useExtraEntropy()
   const {
     state: { isReadyToStoreKeys, statuses },
     dispatch: keystoreDispatch
@@ -56,12 +58,12 @@ const KeyStoreSetupScreen = () => {
         type: 'method',
         params: {
           method: 'addSecret',
-          args: ['biometrics', pendingBiometricsSecret.current, '', true]
+          args: ['biometrics', pendingBiometricsSecret.current, getExtraEntropy(), true]
         }
       })
       pendingBiometricsSecret.current = null
     }
-  }, [isReadyToStoreKeys, statuses.addSecret, keystoreDispatch])
+  }, [isReadyToStoreKeys, statuses.addSecret, keystoreDispatch, getExtraEntropy])
 
   useEffect(() => {
     Animated.timing(animation, {
