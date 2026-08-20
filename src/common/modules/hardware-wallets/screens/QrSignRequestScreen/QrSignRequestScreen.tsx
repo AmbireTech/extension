@@ -25,7 +25,9 @@ type Props = {
   signingRequest?: HardwareWalletSigningRequest | null
 }
 
-const ANIMATION_INTERVAL = 300
+// Matches what the QR wallets themselves animate at (the Keycard Shell firmware uses
+// 200ms), so the pace is one their cameras are known to keep up with
+const ANIMATION_INTERVAL = 200
 const BASE_QR_SIZE = 300
 const BASE_QR_SIZE_WITH_PROGRESS = 280
 const MOBILE_QR_SIZE = 284
