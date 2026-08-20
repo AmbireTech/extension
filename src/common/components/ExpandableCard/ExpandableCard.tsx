@@ -34,6 +34,7 @@ type Props = {
   mobileHeaderStyle?: ViewStyle
   hideMobileContent?: boolean
   overlayMobileHeaderControls?: boolean
+  testID?: string
 }
 
 const ExpandableCard = ({
@@ -50,7 +51,8 @@ const ExpandableCard = ({
   mobileHeaderTitle,
   mobileHeaderStyle,
   hideMobileContent = false,
-  overlayMobileHeaderControls = false
+  overlayMobileHeaderControls = false,
+  testID
 }: Props) => {
   const { styles } = useTheme(getStyles)
   const [isExpanded, setIsExpanded] = useState(!!isInitiallyExpanded)
@@ -79,7 +81,10 @@ const ExpandableCard = ({
   )
 
   return (
-    <View style={[styles.container, withMobileLayout && isExpanded && { flexGrow: 1 }, style]}>
+    <View
+      testID={testID}
+      style={[styles.container, withMobileLayout && isExpanded && { flexGrow: 1 }, style]}
+    >
       <Element onPress={() => !!enableToggleExpand && setIsExpanded((prevState) => !prevState)}>
         {hasMobileHeader && (
           <View

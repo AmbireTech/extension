@@ -23,6 +23,7 @@ import DeleteIcon from '@common/assets/svg/DeleteIcon'
 import ExpandableCard from '@common/components/ExpandableCard'
 import HumanizedVisualization, {
   getErc7730DescriptionRows,
+  getVisibleErc7730RowsExcludingTitleParts,
   shouldUseErc7730DetailedLayout
 } from '@common/components/HumanizedVisualization'
 import HumanizerAddress from '@common/components/HumanizerAddress'
@@ -48,9 +49,9 @@ import type {
   HumanizerErc7730Visualization,
   IrCall
 } from '@ambire-common/libs/humanizer/interfaces'
+
 const { isSidePanel } = getUiType()
 const withMobileLayout = isMobile || isSidePanel
-
 interface Props {
   style: ViewStyle
   call: IrCall
@@ -213,6 +214,12 @@ const TransactionSummary = ({
   )
   const shouldUseErc7730TransactionSummaryLayout =
     !!erc7730Visualization && !shouldUseDetailedErc7730Layout
+  const hasErc7730TransactionSummaryRows = useMemo(
+    () =>
+      !!erc7730Visualization &&
+      getVisibleErc7730RowsExcludingTitleParts(erc7730Visualization).length > 0,
+    [erc7730Visualization]
+  )
 
   const erc7730DetailedTitle = useMemo(() => {
     if (!erc7730Visualization) return ''
@@ -707,7 +714,6 @@ const TransactionSummary = ({
         imageSize={imageSize}
         chainId={chainId}
         type={type}
-        testID={`recipient-address-${index}`}
         hasPadding={false}
         style={{ width: '100%', alignContent: 'flex-start' }}
         disableFlex
@@ -722,7 +728,6 @@ const TransactionSummary = ({
     editApprovalCallInfo,
     erc7730Visualization,
     imageSize,
-    index,
     size,
     textSize,
     type
@@ -757,6 +762,9 @@ const TransactionSummary = ({
 
   return (
     <ExpandableCard
+      // Set on the whole card rather than on the humanized visualization alone, because
+      // the ERC-7730 summary layout splits the intent and its rows into separate slots
+      testID={`recipient-address-${index}`}
       enableToggleExpand={enableExpand}
       hasArrow={enableExpand}
       mobileHeaderContent={withMobileLayout ? rightControl : undefined}
@@ -854,7 +862,6 @@ const TransactionSummary = ({
                   imageSize={imageSize}
                   chainId={chainId}
                   type={type}
-                  testID={`recipient-address-${index}`}
                   hasPadding={false}
                   erc7730Mode="description"
                   editApprovalCallInfo={editApprovalCallInfo}
@@ -868,7 +875,6 @@ const TransactionSummary = ({
                 imageSize={imageSize}
                 chainId={chainId}
                 type={type}
-                testID={`recipient-address-${index}`}
                 hasPadding={enableExpand && !shouldUseErc7730TransactionSummaryLayout}
                 editApprovalCallInfo={editApprovalCallInfo}
                 hideMobileErc7730Title={!!mobileErc7730Title}
@@ -990,31 +996,33 @@ const TransactionSummary = ({
         </View>
       }
     >
-      {shouldUseErc7730TransactionSummaryLayout && !!erc7730Visualization && (
-        <View
-          style={{
-            // Full width of the card rather than indented under the title, so the row
-            // labels and their values sit symmetrically against both edges
-            paddingLeft: SPACING_SM,
-            paddingRight: SPACING_SM,
-            paddingBottom: SPACING_SM * sizeMultiplier[size]
-          }}
-        >
-          <HumanizedVisualization
-            data={[erc7730Visualization]}
-            sizeMultiplierSize={sizeMultiplier[size]}
-            textSize={textSize}
-            imageSize={imageSize}
-            chainId={chainId}
-            type={type}
-            hasPadding={false}
-            editApprovalCallInfo={editApprovalCallInfo}
-            isErc7730TransactionSummaryLayout
-            erc7730TransactionSummarySection="rows"
-            style={{ width: '100%', minWidth: 0 }}
-          />
-        </View>
-      )}
+      {shouldUseErc7730TransactionSummaryLayout &&
+        hasErc7730TransactionSummaryRows &&
+        !!erc7730Visualization && (
+          <View
+            style={{
+              // Full width of the card rather than indented under the title, so the row
+              // labels and their values sit symmetrically against both edges
+              paddingLeft: SPACING_SM,
+              paddingRight: SPACING_SM,
+              paddingBottom: SPACING_SM * sizeMultiplier[size]
+            }}
+          >
+            <HumanizedVisualization
+              data={[erc7730Visualization]}
+              sizeMultiplierSize={sizeMultiplier[size]}
+              textSize={textSize}
+              imageSize={imageSize}
+              chainId={chainId}
+              type={type}
+              hasPadding={false}
+              editApprovalCallInfo={editApprovalCallInfo}
+              isErc7730TransactionSummaryLayout
+              erc7730TransactionSummarySection="rows"
+              style={{ width: '100%', minWidth: 0 }}
+            />
+          </View>
+        )}
       <View
         style={{
           paddingHorizontal:
