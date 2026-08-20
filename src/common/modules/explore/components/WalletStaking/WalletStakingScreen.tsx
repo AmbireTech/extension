@@ -8,9 +8,11 @@ import InfoIcon from '@common/assets/svg/InfoIcon'
 import SwapAndBridgeIcon from '@common/assets/svg/SwapAndBridgeIcon'
 import Button from '@common/components/Button'
 import GlassView from '@common/components/GlassView'
+import HoverablePressable from '@common/components/HoverablePressable'
 import LayoutWrapper from '@common/components/LayoutWrapper'
 import NumberInput from '@common/components/NumberInput'
 import Text from '@common/components/Text'
+import Tooltip from '@common/components/Tooltip'
 import { captureException } from '@common/config/analytics/CrashAnalytics'
 import { isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
@@ -36,6 +38,9 @@ const ETHEREUM_CHAIN_ID = 1n
 const TOKEN_DECIMALS = 18
 const EMPTY_STATE_BALANCE_THRESHOLD = parseUnits('0.001', TOKEN_DECIMALS)
 const STAKING_HELP_URL = 'https://help.ambire.com/en/collections/18211458-wallet-token-governance'
+const STAKING_APY_PROPOSAL_URL =
+  'https://snapshot.org/#/s:ambire.eth/proposal/0xfc8edfdf451b2aa25575ea198019572de9dd0cdc1949d83e2176c75b62d6c913'
+const STAKING_APY_TOOLTIP_ID = 'wallet-staking-apy-tooltip'
 const PERCENTAGES = [25, 50, 75, 100] as const
 
 type Mode = 'stake' | 'unstake'
@@ -126,7 +131,9 @@ const WalletStakingScreen = () => {
   const [shareValue, setShareValue] = useState<bigint | null>(null)
   const [isLoadingShareValue, setIsLoadingShareValue] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [hasMadeRequest, setHasMadeRequest] = useState(false)
   const shareValueRequestIdRef = useRef(0)
+  const shouldPersistStakingRouteRef = useRef(false)
 
   const walletToken = useMemo(
     () =>
@@ -186,6 +193,7 @@ const WalletStakingScreen = () => {
     : mode === 'stake'
       ? t('Stake')
       : t('Unstake')
+  const shouldPersistStakingRoute = Boolean(amount.trim()) && !hasMadeRequest
 
   const loadShareValue = useCallback(async () => {
     if (shareValue || isLoadingShareValue) return
@@ -227,6 +235,7 @@ const WalletStakingScreen = () => {
       setMode(nextMode)
       setAmount('')
       setIsSubmitting(false)
+      shouldPersistStakingRouteRef.current = false
       if (nextMode === 'unstake') void loadShareValue()
     },
     [loadShareValue]
@@ -247,6 +256,34 @@ const WalletStakingScreen = () => {
       addToast(t("We couldn't open the staking guide."), { type: 'error' })
     })
   }, [addToast, t])
+
+  const handleOpenStakingApyProposal = useCallback(() => {
+    openInTab({ url: STAKING_APY_PROPOSAL_URL }).catch((error) => {
+      console.error('Failed to open the WALLET staking APY proposal', error)
+      captureException(error)
+      addToast(t("We couldn't open the DAO vote."), { type: 'error' })
+    })
+  }, [addToast, t])
+
+  const stakingApyTooltipContent = useMemo(
+    () => (
+      <View style={[flexbox.directionRow, flexbox.alignCenter, flexbox.wrap]}>
+        <Text fontSize={14} appearance="secondaryText">
+          {t('Currently')}{' '}
+        </Text>
+        <HoverablePressable onPress={handleOpenStakingApyProposal}>
+          <Text fontSize={14} weight="medium" appearance="primary">
+            {t('voted by the DAO')}
+          </Text>
+        </HoverablePressable>
+        <Text fontSize={14} appearance="secondaryText">
+          {' '}
+          {t('as a fair staking incentive')}
+        </Text>
+      </View>
+    ),
+    [handleOpenStakingApyProposal, t]
+  )
 
   const handleBuyWallet = useCallback(() => {
     navigate(ROUTES.swapAndBridge, {
@@ -300,6 +337,8 @@ const WalletStakingScreen = () => {
         ? getStakeWalletCalls(amountInWei)
         : getUnstakeWalletCalls(amountInWei, shareValue!)
 
+    shouldPersistStakingRouteRef.current = false
+    setHasMadeRequest(true)
     setIsSubmitting(true)
     requestsDispatch({
       type: 'method',
@@ -335,9 +374,40 @@ const WalletStakingScreen = () => {
     t
   ])
 
+  useEffect(() => {
+    shouldPersistStakingRouteRef.current = shouldPersistStakingRoute
+    if (!isWeb) return undefined
+
+    let isActive = true
+    const persistenceRequest = shouldPersistStakingRoute
+      ? storage.set(WALLET_STAKING_ROUTE_STORAGE_KEY, true)
+      : storage.remove(WALLET_STAKING_ROUTE_STORAGE_KEY)
+
+    persistenceRequest.catch((error) => {
+      console.error('Failed to update the WALLET staking route persistence', error)
+      captureException(error)
+      if (isActive) {
+        addToast(t("We couldn't remember whether to reopen the staking page. Please try again."), {
+          type: 'error'
+        })
+      }
+    })
+
+    return () => {
+      isActive = false
+    }
+  }, [addToast, shouldPersistStakingRoute, t])
+
   useEffect(
     () => () => {
       shareValueRequestIdRef.current += 1
+
+      if (!isWeb || shouldPersistStakingRouteRef.current) return
+
+      storage.remove(WALLET_STAKING_ROUTE_STORAGE_KEY).catch((error) => {
+        console.error('Failed to clear the WALLET staking route on unmount', error)
+        captureException(error)
+      })
     },
     []
   )
@@ -453,9 +523,21 @@ const WalletStakingScreen = () => {
                   <Text fontSize={13} appearance="secondaryText">
                     {t('APY')}
                   </Text>
-                  <Text fontSize={13} appearance="secondaryText">
-                    {t('2%')}
-                  </Text>
+                  <View style={[flexbox.directionRow, flexbox.alignCenter]}>
+                    <Text fontSize={13} appearance="secondaryText">
+                      {t('2% (variable rate)')}
+                    </Text>
+                    <InfoIcon
+                      width={14}
+                      height={14}
+                      color={theme.secondaryText}
+                      data-tooltip-id={STAKING_APY_TOOLTIP_ID}
+                      style={spacings.mlTy}
+                    />
+                    <Tooltip id={STAKING_APY_TOOLTIP_ID} clickable>
+                      {stakingApyTooltipContent}
+                    </Tooltip>
+                  </View>
                 </View>
                 {mode === 'unstake' && (
                   <View style={styles.detailRow}>
