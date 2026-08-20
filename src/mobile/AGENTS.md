@@ -58,8 +58,6 @@ The worker has to boot before any controller exists, so the boot path is tuned a
 - Past boot, that same file also suppresses state for any controller the UI has no subscriber for, and flushes it the moment one appears.
 - The worker bundle is minified with `keep_classnames`. It must stay: controller identity comes from `this.constructor.name`, and mangling it breaks the app.
 
-Before adding work to the boot path, measure it. See `services/bootProfiler/README.md`.
-
 ## Where the non-obvious code lives
 
 - `modules/webview/services/` - the bridge. `WebViewWorker.tsx` (RN side), `injectedLogic.ts` (worker entry), `bridgeCodec.ts`, `bootPhase.ts`, `materializeWorkerBundle.ts`, `webpack.webview.config.js`.
