@@ -106,9 +106,10 @@ const DefaultFeeSelector = ({
     <Checkbox
       value={isDefaultFeeOptionSelected}
       style={style || [spacings.mt, spacings.mb0, flexbox.alignSelfEnd]}
+      checkboxWrapperStyle={spacings.mrMi}
       onValueChange={onSetDefaultFeeOption}
       label={defaultFeeOptionCheckboxLabel}
-      labelProps={{ fontSize: 14 }}
+      labelProps={{ fontSize: 12 }}
       testID="default-fee-option-checkbox"
     />
   )

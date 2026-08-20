@@ -7,6 +7,7 @@ import {
   openBottomSheetsCount
 } from '@common/components/BottomSheet/bottomSheetEventStream'
 import { isAndroid } from '@common/config/env'
+import { entropyTouchHandlers } from '@common/hooks/useExtraEntropy/useExtraEntropy.native'
 import useNavigation from '@common/hooks/useNavigation'
 import usePrevious from '@common/hooks/usePrevious'
 import useRoute from '@common/hooks/useRoute'
@@ -101,7 +102,13 @@ const GestureHandler = ({ children }: { children: ReactNode }) => {
   )
 
   return (
-    <GestureHandlerRootView style={[flexbox.flex1, { backgroundColor: theme.primaryBackground }]}>
+    // The touch handlers only read the coordinates of touches bubbling up from the tree, to
+    // feed the extra entropy pool used when generating seeds and Keystore secrets. They do not
+    // participate in responder negotiation, so they cannot interfere with the gestures below.
+    <GestureHandlerRootView
+      style={[flexbox.flex1, { backgroundColor: theme.primaryBackground }]}
+      {...entropyTouchHandlers}
+    >
       {/* Only the edge-swipe-back Pan gesture remains. The former app-wide */}
       {/* Gesture.Manual() touch observer (used to dismiss dropdowns on an outside */}
       {/* tap) was removed: left unresolved — and its manager.fail() was a no-op */}

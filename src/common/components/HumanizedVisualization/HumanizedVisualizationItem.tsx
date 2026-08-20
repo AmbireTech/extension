@@ -43,7 +43,7 @@ interface Props {
   hideNestedErc7730Rows: boolean
   hideMobileErc7730Title: boolean
   isErc7730TransactionSummaryLayout: boolean
-  hasErc7730TransactionSummaryHeaderLeftControl: boolean
+  erc7730TransactionSummarySection: 'all' | 'title' | 'rows'
   hasErc7730TransactionSummaryHeaderRightControl: boolean
   marginRight: number
 }
@@ -60,7 +60,7 @@ const HumanizedVisualizationItem: FC<Props> = ({
   hideNestedErc7730Rows,
   hideMobileErc7730Title,
   isErc7730TransactionSummaryLayout,
-  hasErc7730TransactionSummaryHeaderLeftControl,
+  erc7730TransactionSummarySection,
   hasErc7730TransactionSummaryHeaderRightControl,
   marginRight
 }) => {
@@ -78,7 +78,7 @@ const HumanizedVisualizationItem: FC<Props> = ({
         hideNestedRows={hideNestedErc7730Rows}
         hideMobileSummaryTitle={hideMobileErc7730Title}
         isTransactionSummaryLayout={isErc7730TransactionSummaryLayout}
-        hasTransactionSummaryHeaderLeftControl={hasErc7730TransactionSummaryHeaderLeftControl}
+        transactionSummarySection={erc7730TransactionSummarySection}
         hasTransactionSummaryHeaderRightControl={hasErc7730TransactionSummaryHeaderRightControl}
       />
     )

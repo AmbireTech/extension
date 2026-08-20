@@ -6,9 +6,13 @@ import InfoIcon from '@common/assets/svg/InfoIcon'
 import NetworkIcon from '@common/components/NetworkIcon'
 import SkeletonLoader from '@common/components/SkeletonLoader'
 import Text from '@common/components/Text'
+import { isMobile } from '@common/config/env'
 import useController from '@common/hooks/useController'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
+
+// The default NetworkIcon size (32) is too large next to the humanized text on mobile
+const CHAIN_ICON_SIZE = isMobile ? 26 : 32
 
 interface Props {
   chainId: bigint
@@ -36,6 +40,7 @@ const ChainVisualization: FC<Props> = ({ chainId, marginRight }) => {
           <NetworkIcon
             id={destinationNetwork.chainId.toString()}
             benzinNetwork={destinationNetwork}
+            size={CHAIN_ICON_SIZE}
           />
           <Text onPress={handleLink} weight="semiBold" style={spacings.mlMi}>
             {destinationNetwork.name}

@@ -97,7 +97,7 @@ const PendingTokenSummary = ({ token, chainId, hasBottomSpacing = true }: Props)
             common.borderRadiusPrimary
           ]}
         >
-          <GasTankIcon width={14} height={14} color={theme.tertiaryText} />
+          <GasTankIcon width={14} height={14} color={theme.primaryAccent} />
         </View>
       ) : (
         <TokenIcon
@@ -111,7 +111,7 @@ const PendingTokenSummary = ({ token, chainId, hasBottomSpacing = true }: Props)
           withNetworkIcon={false}
         />
       ),
-    [chainId, theme.neutral200, theme.tertiaryText, token.address, token.flags.onGasTank]
+    [chainId, theme.neutral200, theme.primaryAccent, token.address, token.flags.onGasTank]
   )
   const suspiciousTokenWarning = useMemo(
     () =>

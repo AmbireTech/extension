@@ -12,9 +12,8 @@ import ModalHeader from '@common/components/BottomSheet/ModalHeader'
 import Button from '@common/components/Button'
 import EditButton from '@common/components/EditButton'
 import FooterGlassView from '@common/components/FooterGlassView'
-import Text from '@common/components/Text'
 import TokenIcon from '@common/components/TokenIcon'
-import { isMobile, isWeb } from '@common/config/env'
+import { isMobile } from '@common/config/env'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
@@ -125,7 +124,6 @@ const EditApproval = ({
   const { t } = useTranslation()
   const { theme } = useTheme()
   const { isCompactLayout, isCompactSidePanelLayout } = useCompactActionRequestLayout()
-  const footerButtonStyle = isCompactLayout ? flexbox.flex1 : isWeb ? { width: 100 } : undefined
   const {
     ref: editApprovalsSheetRef,
     open: openEditApprovals,
@@ -230,47 +228,47 @@ const EditApproval = ({
             absolute={false}
             style={{ ...spacings.mt2Xl }}
             mobileStyle={{
-              ...flexbox.directionRow,
+              ...flexbox.directionRowReverse,
               ...spacings.mt2Xl
             }}
-            innerContainerStyle={isCompactLayout && !isMobile ? { width: '100%' } : undefined}
+            fullWidth={isCompactSidePanelLayout}
           >
-            {isMobile ? (
+            {isMobile || isCompactSidePanelLayout ? (
               <>
-                <Button
-                  type="outline"
-                  text={t('Cancel')}
-                  onPress={() => closeEditApprovals()}
-                  hasBottomSpacing={false}
-                  size="smaller"
-                  style={footerButtonStyle}
-                />
                 <Button
                   type="primary"
                   text={t('Save')}
                   onPress={() => editCall(amountRef.current, token, chainId, closeEditApprovals)}
                   hasBottomSpacing={false}
                   size="smaller"
-                  style={footerButtonStyle}
+                  style={flexbox.flex1}
+                />
+                <Button
+                  type={isCompactSidePanelLayout ? 'outline' : 'secondary'}
+                  text={t('Cancel')}
+                  onPress={() => closeEditApprovals()}
+                  hasBottomSpacing={false}
+                  size="smaller"
+                  style={[flexbox.flex1, isMobile && spacings.mrTy]}
                 />
               </>
             ) : (
               <>
                 <Button
+                  type="secondary"
+                  text={t('Cancel')}
+                  onPress={() => closeEditApprovals()}
+                  hasBottomSpacing={false}
+                  size="smaller"
+                  style={[{ width: 100 }, spacings.mrTy]}
+                />
+                <Button
                   type="primary"
                   text={t('Save')}
                   onPress={() => editCall(amountRef.current, token, chainId, closeEditApprovals)}
                   hasBottomSpacing={false}
                   size="smaller"
-                  style={footerButtonStyle}
-                />
-                <Button
-                  type="outline"
-                  text={t('Cancel')}
-                  onPress={() => closeEditApprovals()}
-                  hasBottomSpacing={false}
-                  size="smaller"
-                  style={footerButtonStyle}
+                  style={[{ width: 100 }, flexbox.flex1]}
                 />
               </>
             )}

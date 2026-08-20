@@ -33,6 +33,53 @@ const isZeroAddressBeneficiaryRow = (row: Erc7730Row) =>
 export const getVisibleErc7730Rows = (item: HumanizerErc7730Visualization) =>
   item.rows.filter((row) => !isZeroAddressBeneficiaryRow(row))
 
+const isSameTitlePartValue = (
+  rowValue: HumanizerVisualization,
+  titlePart: HumanizerVisualization
+) => {
+  if (rowValue.type === 'token' && titlePart.type === 'token') {
+    return (
+      rowValue.address.toLowerCase() === titlePart.address.toLowerCase() &&
+      rowValue.value === titlePart.value &&
+      (rowValue.chainId ?? undefined) === (titlePart.chainId ?? undefined)
+    )
+  }
+
+  if (rowValue.type === 'address' && titlePart.type === 'address') {
+    return (
+      !!rowValue.address &&
+      rowValue.address.toLowerCase() === titlePart.address?.toLowerCase() &&
+      (rowValue.chainId ?? undefined) === (titlePart.chainId ?? undefined)
+    )
+  }
+
+  return false
+}
+
+// A row is redundant with the interpolated intent (titleParts) only if every one of
+// its values (token amounts, addresses) is already rendered as part of the intent
+// title - a partial match keeps the row, since it still carries info the title
+// doesn't show. Plain text/label/action title parts are intentionally not matched:
+// they carry no stable identity to compare against, so treating them as duplicates
+// risks hiding unrelated rows that happen to share the same text.
+const isRowRedundantWithTitleParts = (row: Erc7730Row, titleParts: HumanizerVisualization[]) =>
+  row.value.length > 0 &&
+  row.value.every((rowValue) =>
+    titleParts.some((titlePart) => isSameTitlePartValue(rowValue, titlePart))
+  )
+
+// Same as getVisibleErc7730Rows, but additionally drops rows whose values are
+// already shown in the interpolated intent title (item.titleParts), per the
+// ERC-7730 spec: wallets MAY show both the interpolated intent and the field
+// rows, but shouldn't repeat the same data twice.
+export const getVisibleErc7730RowsExcludingTitleParts = (item: HumanizerErc7730Visualization) => {
+  const visibleRows = getVisibleErc7730Rows(item)
+  if (!item.titleParts?.length) return visibleRows
+
+  const { titleParts } = item
+  return visibleRows.filter((row) => !isRowRedundantWithTitleParts(row, titleParts))
+}
+
 export const hasTokenValue = (row: Erc7730Row) => row.value.some((value) => value.type === 'token')
 
 export const hasErc7730NativeValueRow = (item: HumanizerErc7730Visualization) =>

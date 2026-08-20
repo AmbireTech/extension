@@ -1,23 +1,23 @@
 import { StyleSheet, ViewStyle } from 'react-native'
 
-import spacings from '@common/styles/spacings'
-import { ThemeProps, ThemeType } from '@common/styles/themeConfig'
+import { ThemeProps } from '@common/styles/themeConfig'
+import flexbox from '@common/styles/utils/flexbox'
 
 interface Style {
-  gasTankBadge: ViewStyle
+  gasTankIconContainer: ViewStyle
   // Note: Under discussion
   // walletBalanceBadge: ViewStyle
 }
 
-const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
+const getStyles = (theme: ThemeProps) =>
   StyleSheet.create<Style>({
-    gasTankBadge: {
-      borderRadius: 50,
-      backgroundColor: theme.primaryAccent,
-      borderColor: theme.primaryAccent,
-      borderWidth: 1,
-      ...spacings.phMi,
-      ...spacings.mlMi
+    gasTankIconContainer: {
+      width: 32,
+      height: 32,
+      borderRadius: 30,
+      backgroundColor: theme.neutral200,
+      ...flexbox.alignCenter,
+      ...flexbox.justifyCenter
     }
     // Note: Under discussion
     // walletBalanceBadge: {

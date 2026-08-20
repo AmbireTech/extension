@@ -4,14 +4,10 @@ import { StyleProp, View, ViewStyle } from 'react-native'
 import { IrCall } from '@ambire-common/libs/humanizer/interfaces'
 import ManifestImage from '@common/components/ManifestImage'
 import { isMobile } from '@common/config/env'
-import spacings, { SPACING_SM, SPACING_TY } from '@common/styles/spacings'
+import { SPACING_SM, SPACING_TY } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import { getUiType } from '@common/utils/uiType'
 
 import HumanizedVisualizationItem from './HumanizedVisualizationItem'
-
-const { isSidePanel } = getUiType()
-const withMobileLayout = isMobile || isSidePanel
 
 interface Props {
   data: IrCall['fullVisualization']
@@ -27,7 +23,7 @@ interface Props {
   hideNestedErc7730Rows?: boolean
   hideMobileErc7730Title?: boolean
   isErc7730TransactionSummaryLayout?: boolean
-  hasErc7730TransactionSummaryHeaderLeftControl?: boolean
+  erc7730TransactionSummarySection?: 'all' | 'title' | 'rows'
   hasErc7730TransactionSummaryHeaderRightControl?: boolean
   disableFlex?: boolean
   dapp?: IrCall['dapp']
@@ -54,67 +50,71 @@ const HumanizedVisualization: FC<Props> = ({
   hideNestedErc7730Rows = false,
   hideMobileErc7730Title = false,
   isErc7730TransactionSummaryLayout = false,
-  hasErc7730TransactionSummaryHeaderLeftControl = false,
+  erc7730TransactionSummarySection = 'all',
   hasErc7730TransactionSummaryHeaderRightControl = false,
   disableFlex = false,
   dapp
 }) => {
   const marginRight = SPACING_TY * sizeMultiplierSize
+  const horizontalPadding = hasPadding
+    ? (isMobile ? SPACING_TY : SPACING_SM) * sizeMultiplierSize
+    : 0
   const dappIcon = dapp?.icon || undefined
   const shouldShowDappIcon = !!dappIcon && !data.some((item) => item?.type === 'erc7730')
 
   return (
-    <View
-      testID={testID}
-      style={[
-        !disableFlex && flexbox.flex1,
-        flexbox.directionRow,
-        flexbox.alignCenter,
-        flexbox.wrap,
-        {
-          marginHorizontal: hasPadding
-            ? (withMobileLayout ? SPACING_TY : SPACING_SM) * sizeMultiplierSize
-            : 0
-        },
-        style
-      ]}
-    >
+    <>
       {shouldShowDappIcon && (
         <ManifestImage
           uri={dappIcon}
-          containerStyle={spacings.mrSm}
+          containerStyle={{
+            marginLeft: SPACING_TY * sizeMultiplierSize,
+            // When the content has padding its own left margin already separates it
+            // from the icon, so adding a right margin here would double the gap
+            marginRight: horizontalPadding ? 0 : SPACING_TY * sizeMultiplierSize
+          }}
           size={24 * sizeMultiplierSize}
           skeletonAppearance="secondaryBackground"
           imageStyle={{ borderRadius: 12 * sizeMultiplierSize, backgroundColor: 'transparent' }}
           hideOnError
         />
       )}
-      {data.map((item) =>
-        item ? (
-          <HumanizedVisualizationItem
-            key={item.id}
-            item={item}
-            editApprovalCallInfo={editApprovalCallInfo}
-            sizeMultiplierSize={sizeMultiplierSize}
-            textSize={textSize}
-            chainId={chainId}
-            type={type}
-            imageSize={imageSize}
-            erc7730Mode={erc7730Mode}
-            hideNestedErc7730Rows={hideNestedErc7730Rows}
-            hideMobileErc7730Title={hideMobileErc7730Title}
-            isErc7730TransactionSummaryLayout={isErc7730TransactionSummaryLayout}
-            hasErc7730TransactionSummaryHeaderLeftControl={
-              hasErc7730TransactionSummaryHeaderLeftControl
-            }
-            hasErc7730TransactionSummaryHeaderRightControl={
-              hasErc7730TransactionSummaryHeaderRightControl
-            }
-            marginRight={marginRight}
-          />
-        ) : null
-      )}
-    </View>
+      <View
+        testID={testID}
+        style={[
+          !disableFlex && flexbox.flex1,
+          flexbox.directionRow,
+          flexbox.alignCenter,
+          flexbox.wrap,
+          { marginHorizontal: horizontalPadding },
+          style
+        ]}
+      >
+        {data.map((item) =>
+          item ? (
+            <HumanizedVisualizationItem
+              key={item.id}
+              item={item}
+              editApprovalCallInfo={editApprovalCallInfo}
+              sizeMultiplierSize={sizeMultiplierSize}
+              textSize={textSize}
+              chainId={chainId}
+              type={type}
+              imageSize={imageSize}
+              erc7730Mode={erc7730Mode}
+              hideNestedErc7730Rows={hideNestedErc7730Rows}
+              hideMobileErc7730Title={hideMobileErc7730Title}
+              isErc7730TransactionSummaryLayout={isErc7730TransactionSummaryLayout}
+              erc7730TransactionSummarySection={erc7730TransactionSummarySection}
+              hasErc7730TransactionSummaryHeaderRightControl={
+                hasErc7730TransactionSummaryHeaderRightControl
+              }
+              marginRight={marginRight}
+            />
+          ) : null
+        )}
+      </View>
+    </>
   )
 }
 
