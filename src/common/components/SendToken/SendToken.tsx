@@ -106,7 +106,7 @@ const SendToken: FC<Props> = ({
             // magic number to match the curve of the outer container
             // which is with borderRadius: 16
             borderRadius: 13,
-            ...spacings.pv,
+            ...spacings.pvSm,
             ...(isWeb ? spacings.prMd : spacings.prSm),
             ...(isError ? styles.containerError : {})
           }}
