@@ -10,6 +10,7 @@ import {
 } from '@ambire-common/libs/banners/banners'
 import PrivacyIcon from '@common/assets/svg/PrivacyIcon'
 import Text from '@common/components/Text'
+import { isMobile } from '@common/config/env'
 import useController from '@common/hooks/useController'
 import useNavigation from '@common/hooks/useNavigation'
 import usePrevious from '@common/hooks/usePrevious'
@@ -36,10 +37,10 @@ interface Props {
   setOpenTab: React.Dispatch<React.SetStateAction<TabType>>
   initTab?: { [key: string]: boolean }
   sessionId: string
-  onScroll: FlatListProps<any>['onScroll']
+  onScroll?: FlatListProps<any>['onScroll']
   dashboardNetworkFilterName: string | null
   animatedOverviewHeight: Animated.Value
-  isSearchHidden: boolean
+  isSearchHidden?: boolean
   refreshing?: boolean
   onRefresh?: () => void
 }
@@ -271,7 +272,7 @@ const DeFiPositions: FC<Props> = ({
   }, [])
 
   const dataItems = useMemo(() => {
-    const items = ['header']
+    const items: string[] = isMobile ? [] : ['header']
 
     if (currentAccountBanners.length > 0) {
       items.push('banners')
@@ -300,7 +301,7 @@ const DeFiPositions: FC<Props> = ({
       <DashboardPageScrollContainer
         tab="defi"
         openTab={openTab}
-        ListHeaderComponent={<DashboardBanners />}
+        ListHeaderComponent={isMobile ? undefined : <DashboardBanners />}
         data={dataItems}
         renderItem={renderItem}
         keyExtractor={keyExtractor}
@@ -316,7 +317,7 @@ const DeFiPositions: FC<Props> = ({
       {openTab === 'defi' && (
         <FloatingBottomBar
           control={control}
-          isHidden={isSearchHidden}
+          isHidden={!!isSearchHidden}
           searchPlaceholder={t('Search DeFi')}
         />
       )}

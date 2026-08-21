@@ -11,7 +11,7 @@ import Banner from '@common/components/Banner'
 import Button from '@common/components/Button'
 import Spinner from '@common/components/Spinner'
 import Text from '@common/components/Text'
-import { isWeb } from '@common/config/env'
+import { isMobile, isWeb } from '@common/config/env'
 import useController from '@common/hooks/useController'
 import usePrevious from '@common/hooks/usePrevious'
 import useTheme from '@common/hooks/useTheme'
@@ -35,7 +35,7 @@ interface Props {
   setOpenTab: React.Dispatch<React.SetStateAction<TabType>>
   initTab?: { [key: string]: boolean }
   sessionId: string
-  onScroll: FlatListProps<any>['onScroll']
+  onScroll?: FlatListProps<any>['onScroll']
   animatedOverviewHeight: Animated.Value
   network: Network | null
   refreshing?: boolean
@@ -308,9 +308,9 @@ const ActivityPositions: FC<Props> = ({
     <DashboardPageScrollContainer
       tab="activity"
       openTab={openTab}
-      ListHeaderComponent={<DashboardBanners />}
+      ListHeaderComponent={isMobile ? undefined : <DashboardBanners />}
       data={[
-        'header',
+        ...(isMobile ? [] : ['header']),
         !accountsOps ? 'skeleton' : 'keep-this-to-avoid-key-warning',
         ...(initTab?.activity && accountsOps?.[sessionId]?.result.items.length
           ? accountsOps[sessionId].result.items

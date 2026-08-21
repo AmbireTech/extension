@@ -1,0 +1,18 @@
+import React, { ReactNode } from 'react'
+
+import { TabType } from '@common/modules/dashboard/components/TabsAndSearch/Tabs/Tab/Tab'
+
+export interface DashboardPagesCarouselProps {
+  openTab: TabType
+  setOpenTab: React.Dispatch<React.SetStateAction<TabType>>
+  sessionId: string
+  /**
+   * Called once on mount by the platforms that keep every page swipeable, so the
+   * pages the user hasn't opened yet are populated before they are swiped into view.
+   */
+  initAllTabs: () => void
+  children: ReactNode
+}
+
+declare const DashboardPagesCarousel: React.FC<DashboardPagesCarouselProps>
+export default DashboardPagesCarousel

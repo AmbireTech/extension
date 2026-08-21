@@ -1,14 +1,16 @@
-import React, { FC, useEffect, useMemo, useRef } from 'react'
+import React, { FC, useContext, useEffect, useMemo, useRef } from 'react'
 import { Animated, FlatList, FlatListProps, RefreshControl, ViewStyle } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
-import { isMobile, isWeb } from '@common/config/env'
+import { isMobile } from '@common/config/env'
 import useTheme from '@common/hooks/useTheme'
 import spacings, { SPACING_SM } from '@common/styles/spacings'
+import flexbox from '@common/styles/utils/flexbox'
 
-import useBanners from '../../hooks/useBanners'
+import DashboardCarouselContext from '../DashboardPagesCarousel/context'
 import { OVERVIEW_CONTENT_MAX_HEIGHT } from '../DashboardOverview/DashboardOverview'
 import { TabType } from '../TabsAndSearch/Tabs/Tab/Tab'
+import useListTopSpacing from './useListTopSpacing'
 
 interface Props extends FlatListProps<any> {
   tab: TabType
@@ -27,10 +29,17 @@ const HIDDEN_STYLE: ViewStyle = {
   pointerEvents: 'none'
 }
 
-const getFlatListStyle = (tab: TabType, openTab: TabType) => [
-  spacings.phSm,
-  openTab !== tab ? HIDDEN_STYLE : {}
-]
+const getFlatListStyle = (tab: TabType, openTab: TabType) => {
+  // On mobile every page is a slide of the dashboard carousel, so they are all
+  // laid out next to each other instead of only the open one being visible.
+  if (isMobile) return [spacings.phSm, flexbox.flex1]
+
+  return [spacings.phSm, openTab !== tab ? HIDDEN_STYLE : {}]
+}
+
+// The pages of the carousel report their scroll offset natively, so the header
+// laid over them can collapse without a round trip through JS.
+const AnimatedFlatList = Animated.FlatList as unknown as typeof FlatList
 
 const DashboardPageScrollContainer: FC<Props> = ({
   tab,
@@ -38,20 +47,37 @@ const DashboardPageScrollContainer: FC<Props> = ({
   animatedOverviewHeight,
   refreshing,
   onRefresh,
+  onScroll,
   ...rest
 }) => {
-  const [controllerBanners] = useBanners()
+  const topSpacing = useListTopSpacing()
   const flatlistRef = useRef<FlatList | null>(null)
   const { bottom } = useSafeAreaInsets()
   const style = useMemo(() => getFlatListStyle(tab, openTab), [openTab, tab])
   const { theme } = useTheme()
+  const carousel = useContext(DashboardCarouselContext)
   const contentContainerStyle = useMemo(() => {
     return [
-      controllerBanners.length && isWeb ? spacings.ptTy : spacings.pt0,
+      topSpacing,
       { flexGrow: 1 },
-      isMobile && { paddingBottom: bottom || SPACING_SM }
+      isMobile && { paddingBottom: bottom || SPACING_SM },
+      // Must come last, as it overrides the padding of the non-carousel layout
+      !!carousel && { paddingTop: carousel.headerHeight }
     ]
-  }, [bottom, controllerBanners.length])
+  }, [bottom, carousel, topSpacing])
+
+  // Bound to the value and not to the whole context, so measuring the header
+  // doesn't detach and reattach the native scroll listener. Mobile passes no
+  // onScroll, which leaves the offset to be mapped natively with no JS listener.
+  const carouselScrollY = carousel?.scrollY
+  const handleScroll = useMemo(() => {
+    if (!carouselScrollY) return onScroll
+
+    return Animated.event(
+      [{ nativeEvent: { contentOffset: { y: carouselScrollY } } }],
+      onScroll ? { useNativeDriver: true, listener: onScroll } : { useNativeDriver: true }
+    )
+  }, [carouselScrollY, onScroll])
 
   // Reset scroll position when switching tabs (new)
   useEffect(() => {
@@ -72,16 +98,30 @@ const DashboardPageScrollContainer: FC<Props> = ({
     }
   }, [animatedOverviewHeight, openTab, tab])
 
+  // A swipe resets every page, not only the open one, because any of them can be
+  // the one the swipe lands on.
+  const carouselResetToken = carousel?.resetToken
+
+  useEffect(() => {
+    if (carouselResetToken === undefined) return
+
+    flatlistRef.current?.scrollToOffset({ offset: 0, animated: false })
+  }, [carouselResetToken])
+
+  const ListComponent = carousel ? AnimatedFlatList : FlatList
+
   return (
-    <FlatList
+    <ListComponent
       ref={flatlistRef}
       style={style}
       contentContainerStyle={contentContainerStyle}
-      stickyHeaderIndices={[1]} // Makes the header sticky
+      // Makes the header sticky. The carousel lays its own header over the pages instead
+      stickyHeaderIndices={carousel ? undefined : [1]}
       removeClippedSubviews
       bounces
       alwaysBounceVertical
       scrollEventThrottle={16}
+      onScroll={handleScroll}
       refreshControl={
         isMobile ? (
           <RefreshControl
@@ -89,6 +129,7 @@ const DashboardPageScrollContainer: FC<Props> = ({
             onRefresh={onRefresh}
             tintColor={theme.iconPrimary}
             progressBackgroundColor={theme.secondaryBackground}
+            progressViewOffset={carousel?.headerHeight}
           />
         ) : undefined
       }
@@ -97,4 +138,4 @@ const DashboardPageScrollContainer: FC<Props> = ({
   )
 }
 
-export default DashboardPageScrollContainer
+export default React.memo(DashboardPageScrollContainer)

@@ -1,13 +1,14 @@
 import { nanoid } from 'nanoid'
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Animated, NativeScrollEvent, NativeSyntheticEvent, View } from 'react-native'
+import { Animated, NativeScrollEvent, NativeSyntheticEvent } from 'react-native'
 import { useSearchParams } from 'react-router-dom'
 
+import { isMobile } from '@common/config/env'
 import useController from '@common/hooks/useController'
 import usePrevious from '@common/hooks/usePrevious'
 import useRoute from '@common/hooks/useRoute'
-import flexbox from '@common/styles/utils/flexbox'
+import DashboardPagesCarousel from '@common/modules/dashboard/components/DashboardPagesCarousel'
 
 import Activity from '../Activity'
 import Collections from '../Collections'
@@ -16,9 +17,10 @@ import { TabType } from '../TabsAndSearch/Tabs/Tab/Tab'
 import Tokens from '../Tokens'
 
 interface Props {
-  onScroll: (event: NativeSyntheticEvent<NativeScrollEvent>) => void
+  /** Only web collapses the overview and hides the search on scroll. */
+  onScroll?: (event: NativeSyntheticEvent<NativeScrollEvent>) => void
   animatedOverviewHeight: Animated.Value
-  isSearchHidden: boolean
+  isSearchHidden?: boolean
   refreshing?: boolean
   onRefresh?: () => void
 }
@@ -55,6 +57,19 @@ const DashboardPages = ({
   const [initTab, setInitTab] = useState<{
     [key: string]: boolean
   }>({})
+
+  // The mobile carousel keeps all pages mounted side by side, so they must be
+  // populated upfront instead of when the tab is opened.
+  const initAllTabs = useCallback(() => {
+    setInitTab({ tokens: true, collectibles: true, defi: true, activity: true })
+  }, [])
+
+  // Every page must stay mounted on mobile, because the carousel maps a page
+  // index to a tab and an unmounted page would shift the ones after it.
+  const shouldRenderPage = useCallback(
+    (tab: TabType) => isMobile || openTab === tab || !!initTab?.[tab],
+    [initTab, openTab]
+  )
 
   const network = useMemo(() => {
     if (!dashboardNetworkFilter || dashboardNetworkFilter === 'rewards') return null
@@ -104,7 +119,12 @@ const DashboardPages = ({
   }, [activityDispatch, sessionId])
 
   return (
-    <View style={flexbox.flex1}>
+    <DashboardPagesCarousel
+      openTab={openTab}
+      setOpenTab={setOpenTab}
+      sessionId={sessionId}
+      initAllTabs={initAllTabs}
+    >
       <Tokens
         openTab={openTab}
         sessionId={sessionId}
@@ -117,7 +137,7 @@ const DashboardPages = ({
         onRefresh={onRefresh}
         refreshing={refreshing}
       />
-      {(openTab === 'collectibles' || initTab?.collectibles) && (
+      {shouldRenderPage('collectibles') && (
         <Collections
           openTab={openTab}
           sessionId={sessionId}
@@ -133,7 +153,7 @@ const DashboardPages = ({
         />
       )}
 
-      {(openTab === 'defi' || initTab?.defi) && (
+      {shouldRenderPage('defi') && (
         <DeFiPositions
           openTab={openTab}
           sessionId={sessionId}
@@ -148,7 +168,7 @@ const DashboardPages = ({
         />
       )}
 
-      {(openTab === 'activity' || initTab?.activity) && (
+      {shouldRenderPage('activity') && (
         <Activity
           openTab={openTab}
           sessionId={sessionId}
@@ -161,7 +181,7 @@ const DashboardPages = ({
           refreshing={refreshing}
         />
       )}
-    </View>
+    </DashboardPagesCarousel>
   )
 }
 

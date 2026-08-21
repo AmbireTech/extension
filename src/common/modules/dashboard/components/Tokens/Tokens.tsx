@@ -8,6 +8,7 @@ import { AssetType } from '@ambire-common/libs/defiPositions/types'
 import { PORTFOLIO_LIB_ERROR_NAMES } from '@ambire-common/libs/portfolio/errorNames'
 import { getTokenAmount, getTokenBalanceInUSD } from '@ambire-common/libs/portfolio/helpers'
 import { TokenResult } from '@ambire-common/libs/portfolio/interfaces'
+import { isMobile } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import useDebounce from '@common/hooks/useDebounce'
@@ -46,10 +47,10 @@ interface Props {
   initTab?: {
     [key: string]: boolean
   }
-  onScroll: FlatListProps<any>['onScroll']
+  onScroll?: FlatListProps<any>['onScroll']
   dashboardNetworkFilterName: string | null
   animatedOverviewHeight: Animated.Value
-  isSearchHidden: boolean
+  isSearchHidden?: boolean
   refreshing?: boolean
   onRefresh?: () => void
 }
@@ -304,7 +305,7 @@ const Tokens = ({
   const hasAnyTokens = visibleTokens.length > 0 || dustTokens.length > 0
 
   const listData = useMemo(() => {
-    const data: any[] = ['header']
+    const data: any[] = isMobile ? [] : ['header']
 
     // Skeleton 1, order matters
     if (!hasAnyTokens && !portfolio?.isAllReady) {
@@ -431,7 +432,7 @@ const Tokens = ({
       <DashboardPageScrollContainer
         tab="tokens"
         openTab={openTab}
-        ListHeaderComponent={<DashboardBanners />}
+        ListHeaderComponent={isMobile ? undefined : <DashboardBanners />}
         animatedOverviewHeight={animatedOverviewHeight}
         data={listData}
         renderItem={renderItem}
@@ -449,7 +450,7 @@ const Tokens = ({
           control={control}
           displayCurrentApp
           displayNetworkFilter
-          isHidden={isSearchHidden}
+          isHidden={!!isSearchHidden}
           searchPlaceholder={t('Search token')}
         />
       )}
