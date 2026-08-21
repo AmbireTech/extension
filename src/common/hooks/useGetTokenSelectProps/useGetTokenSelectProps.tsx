@@ -235,7 +235,9 @@ const useGetTokenSelectProps = ({
               numberOfLines={1}
               style={{ lineHeight: 20, flexShrink: 1 }}
               dataSet={
-                isNameDifferentThanSymbol
+                // Displaying the name of the token is confusing for native tokens. Example
+                // ETH (Ethereum) may confuse the user that the ETH is on Ethereum.
+                isNameDifferentThanSymbol && !isNative
                   ? createGlobalTooltipDataSet({
                       id: `token-${currentToken.chainId}-${currentToken.address}-name`,
                       content: name
