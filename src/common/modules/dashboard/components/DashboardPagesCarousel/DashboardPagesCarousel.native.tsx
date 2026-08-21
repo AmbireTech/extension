@@ -125,14 +125,18 @@ const DashboardPagesCarousel: React.FC<DashboardPagesCarouselProps> = ({
     setTabsHeight(layout.height)
   }, [])
 
-  // Follows the tab that was selected by pressing a tab. Selecting it by swiping
-  // resolves to a no-op, because the pager already sits at that offset. Aligning
-  // after a resize or on mount (a deep link may open another tab) must not animate.
+  // Follows the tab that was selected by pressing a tab. Aligning after a resize or
+  // on mount (a deep link may open another tab) must not animate.
   const alignedTabIndexRef = useRef(openTabIndex)
+  const isPagerDrivenRef = useRef(false)
+  const dragStartTabRef = useRef(openTab)
 
   useEffect(() => {
     const animated = alignedTabIndexRef.current !== openTabIndex
     alignedTabIndexRef.current = openTabIndex
+
+    // A swipe already put the pager where the open tab followed it to
+    if (isPagerDrivenRef.current) return
 
     scrollRef.current?.scrollTo({ x: openTabIndex * pageSize.width, animated })
   }, [openTabIndex, pageSize.width])
@@ -163,19 +167,45 @@ const DashboardPagesCarousel: React.FC<DashboardPagesCarouselProps> = ({
   // The pages a swipe can reach are rendered here too, in case it comes in before
   // they were reached in order.
   const onScrollBeginDrag = useCallback(() => {
+    isPagerDrivenRef.current = true
+    dragStartTabRef.current = openTab
     scrollY.setValue(0)
     setResetToken((prev) => prev + 1)
     renderTabs([TABS[openTabIndex - 1], TABS[openTabIndex + 1]])
-  }, [openTabIndex, renderTabs, scrollY])
+  }, [openTab, openTabIndex, renderTabs, scrollY])
 
-  const onMomentumScrollEnd = useCallback(
+  // The open tab follows the pager as soon as it is past the halfway point, so the
+  // tabs row doesn't wait for the swipe to settle to catch up with it. Only while the
+  // pager follows a gesture - scrolling it to a tab that was pressed reports every
+  // page it passes on the way, and those are not the selection.
+  const onPagerScroll = useCallback(
     (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+      if (!isPagerDrivenRef.current) return
+
       const tab = TABS[Math.round(event.nativeEvent.contentOffset.x / pageSize.width)]
 
       if (!tab || tab === openTab) return
 
       setOpenTab(tab)
-      setSearchParams({ tab, sessionId })
+    },
+    [openTab, pageSize.width, setOpenTab]
+  )
+
+  const onMomentumScrollEnd = useCallback(
+    (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+      const wasDragged = isPagerDrivenRef.current
+      isPagerDrivenRef.current = false
+
+      const tab = TABS[Math.round(event.nativeEvent.contentOffset.x / pageSize.width)]
+
+      if (!tab) return
+
+      if (tab !== openTab) setOpenTab(tab)
+
+      // Left until the swipe is over, so it doesn't drag a route update through the
+      // gesture. A swipe that ends back where it started changed nothing, and a tab
+      // that was pressed wrote it already.
+      if (wasDragged && tab !== dragStartTabRef.current) setSearchParams({ tab, sessionId })
     },
     [openTab, pageSize.width, sessionId, setOpenTab, setSearchParams]
   )
@@ -213,6 +243,8 @@ const DashboardPagesCarousel: React.FC<DashboardPagesCarouselProps> = ({
             directionalLockEnabled
             showsHorizontalScrollIndicator={false}
             decelerationRate="fast"
+            scrollEventThrottle={16}
+            onScroll={onPagerScroll}
             onScrollBeginDrag={onScrollBeginDrag}
             onMomentumScrollEnd={onMomentumScrollEnd}
           >

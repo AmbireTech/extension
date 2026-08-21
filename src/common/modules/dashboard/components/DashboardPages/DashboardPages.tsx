@@ -1,5 +1,5 @@
 import { nanoid } from 'nanoid'
-import React, { useCallback, useEffect, useMemo, useState } from 'react'
+import React, { useCallback, useDeferredValue, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Animated, NativeScrollEvent, NativeSyntheticEvent } from 'react-native'
 import { useSearchParams } from 'react-router-dom'
@@ -51,6 +51,10 @@ const DashboardPages = ({
     return (params.get('tab') as TabType) || 'tokens'
   })
   const prevOpenTab = usePrevious(openTab)
+  // The tabs row reads the open tab directly, the pages read it one render behind, so
+  // pressing a tab or swiping to it repaints the row without waiting for four lists
+  // to reconcile first.
+  const pagesOpenTab = useDeferredValue(openTab)
   // To prevent initial load of all tabs but load them when requested by the user
   // Persist the rendered list of items for each tab once opened
   // This technique improves the initial loading speed of the dashboard
@@ -126,7 +130,7 @@ const DashboardPages = ({
       initAllTabs={initAllTabs}
     >
       <Tokens
-        openTab={openTab}
+        openTab={pagesOpenTab}
         sessionId={sessionId}
         setOpenTab={setOpenTab}
         onScroll={onScroll}
@@ -139,7 +143,7 @@ const DashboardPages = ({
       />
       {shouldRenderPage('collectibles') && (
         <Collections
-          openTab={openTab}
+          openTab={pagesOpenTab}
           sessionId={sessionId}
           setOpenTab={setOpenTab}
           initTab={initTab}
@@ -155,7 +159,7 @@ const DashboardPages = ({
 
       {shouldRenderPage('defi') && (
         <DeFiPositions
-          openTab={openTab}
+          openTab={pagesOpenTab}
           sessionId={sessionId}
           setOpenTab={setOpenTab}
           onScroll={onScroll}
@@ -170,7 +174,7 @@ const DashboardPages = ({
 
       {shouldRenderPage('activity') && (
         <Activity
-          openTab={openTab}
+          openTab={pagesOpenTab}
           sessionId={sessionId}
           setOpenTab={setOpenTab}
           onScroll={onScroll}
