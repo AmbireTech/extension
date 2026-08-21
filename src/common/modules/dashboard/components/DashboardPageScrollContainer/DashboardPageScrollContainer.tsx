@@ -1,13 +1,5 @@
 import React, { FC, useCallback, useContext, useEffect, useMemo, useRef } from 'react'
-import {
-  Animated,
-  FlatList,
-  FlatListProps,
-  NativeScrollEvent,
-  NativeSyntheticEvent,
-  RefreshControl,
-  ViewStyle
-} from 'react-native'
+import { Animated, FlatList, FlatListProps, RefreshControl, ViewStyle } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import { isMobile } from '@common/config/env'
@@ -19,7 +11,6 @@ import { OVERVIEW_CONTENT_MAX_HEIGHT } from '../DashboardOverview/DashboardOverv
 import DashboardCarouselContext, {
   DashboardFloatingBarProps
 } from '../DashboardPagesCarousel/context'
-import debugCarousel from '../DashboardPagesCarousel/debug'
 import { TabType } from '../TabsAndSearch/Tabs/Tab/Tab'
 import useListTopSpacing from './useListTopSpacing'
 
@@ -153,32 +144,9 @@ const DashboardPageScrollContainer: FC<Props> = ({
   // the list it is laid over, and a swipe has to take every page to the top.
   const registerPage = carousel?.registerPage
 
-  const scrollToOffset = useCallback(
-    (offset: number) => {
-      debugCarousel('page:scrollToOffset', {
-        tab,
-        offset,
-        canScroll: typeof flatlistRef.current?.scrollToOffset === 'function'
-      })
-      flatlistRef.current?.scrollToOffset({ offset, animated: false })
-    },
-    [tab]
-  )
-
-  // TEMPORARY: reports where the list actually came to rest, to compare against the
-  // offset the carousel reads off the native animated node.
-  const onScrollSettled = useCallback(
-    (event: NativeSyntheticEvent<NativeScrollEvent>) => {
-      debugCarousel('page:settled', { tab, offset: event.nativeEvent.contentOffset.y })
-    },
-    [tab]
-  )
-
-  useEffect(() => {
-    debugCarousel('page:mounted', { tab })
-
-    return () => debugCarousel('page:unmounted', { tab })
-  }, [tab])
+  const scrollToOffset = useCallback((offset: number) => {
+    flatlistRef.current?.scrollToOffset({ offset, animated: false })
+  }, [])
 
   useEffect(() => {
     if (!registerPage) return undefined
@@ -212,8 +180,6 @@ const DashboardPageScrollContainer: FC<Props> = ({
       alwaysBounceVertical
       scrollEventThrottle={16}
       onScroll={handleScroll}
-      onScrollEndDrag={carousel ? onScrollSettled : undefined}
-      onMomentumScrollEnd={carousel ? onScrollSettled : undefined}
       refreshControl={
         isMobile ? (
           <RefreshControl

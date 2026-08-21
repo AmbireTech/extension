@@ -22,7 +22,6 @@ import flexbox from '@common/styles/utils/flexbox'
 
 import CarouselPage from './CarouselPage'
 import DashboardCarouselContext, { DashboardFloatingBarProps, DashboardPageHandle } from './context'
-import debugCarousel from './debug'
 import { DashboardPagesCarouselProps } from './DashboardPagesCarousel'
 import getStyles from './styles'
 
@@ -91,7 +90,6 @@ const DashboardPagesCarousel: React.FC<DashboardPagesCarouselProps> = ({
     }
 
     pageHandles.current[tab] = handle
-    debugCarousel('registerPage', { tab, collapsedBy: collapsedBy.current })
     // A page rendered while the banners are already collapsed would start below them
     if (collapsedBy.current) handle.scrollToOffset(collapsedBy.current)
   }, [])
@@ -103,26 +101,15 @@ const DashboardPagesCarousel: React.FC<DashboardPagesCarouselProps> = ({
   // The offset has to be read back from the native side: the pages report their scroll
   // straight into the native animated node, so the value this side holds is only ever
   // whatever JS last wrote to it.
-  const takePagesToTop = useCallback(
-    (reason: string) => {
-      debugCarousel('takePagesToTop:requested', {
-        reason,
-        bannersHeight,
-        registered: Object.keys(pageHandles.current)
-      })
+  const takePagesToTop = useCallback(() => {
+    scrollY.stopAnimation((offset) => {
+      const carried = Math.min(Math.max(offset, 0), bannersHeight)
 
-      scrollY.stopAnimation((offset) => {
-        const carried = Math.min(Math.max(offset, 0), bannersHeight)
-
-        debugCarousel('takePagesToTop:applying', { reason, nativeOffset: offset, carried })
-
-        collapsedBy.current = carried
-        scrollY.setValue(carried)
-        TABS.forEach((tab) => pageHandles.current[tab]?.scrollToOffset(carried))
-      })
-    },
-    [bannersHeight, scrollY]
-  )
+      collapsedBy.current = carried
+      scrollY.setValue(carried)
+      TABS.forEach((tab) => pageHandles.current[tab]?.scrollToOffset(carried))
+    })
+  }, [bannersHeight, scrollY])
 
   const renderTabs = useCallback((tabs: (TabType | undefined)[]) => {
     setRenderedTabs((prev) => {
@@ -188,7 +175,6 @@ const DashboardPagesCarousel: React.FC<DashboardPagesCarouselProps> = ({
   }, [])
 
   const onBannersLayout = useCallback(({ nativeEvent: { layout } }: LayoutChangeEvent) => {
-    debugCarousel('bannersLayout', { height: layout.height })
     setBannersHeight(layout.height)
   }, [])
 
@@ -209,16 +195,9 @@ const DashboardPagesCarousel: React.FC<DashboardPagesCarouselProps> = ({
 
     // A swipe already put the pager where the open tab followed it to, and took the
     // pages to the top when it started
-    debugCarousel('align', {
-      previousTabIndex,
-      openTabIndex,
-      hasTabChanged,
-      isPagerDriven: isPagerDrivenRef.current
-    })
-
     if (isPagerDrivenRef.current) return
 
-    if (hasTabChanged) takePagesToTop('tabPress')
+    if (hasTabChanged) takePagesToTop()
 
     scrollRef.current?.scrollTo({ x: openTabIndex * pageSize.width, animated: hasTabChanged })
   }, [openTab, openTabIndex, pageSize.width, takePagesToTop])
@@ -243,10 +222,9 @@ const DashboardPagesCarousel: React.FC<DashboardPagesCarouselProps> = ({
   // The pages a swipe can reach are rendered here too, in case it comes in before
   // they were reached in order.
   const onScrollBeginDrag = useCallback(() => {
-    debugCarousel('pager:dragBegin', { openTab })
     isPagerDrivenRef.current = true
     dragStartTabRef.current = openTab
-    takePagesToTop('swipe')
+    takePagesToTop()
     renderTabs([TABS[openTabIndex - 1], TABS[openTabIndex + 1]])
   }, [openTab, openTabIndex, renderTabs, takePagesToTop])
 
@@ -262,7 +240,6 @@ const DashboardPagesCarousel: React.FC<DashboardPagesCarouselProps> = ({
 
       if (!tab || tab === openTab) return
 
-      debugCarousel('pager:passedHalfway', { from: openTab, to: tab })
       setOpenTab(tab)
     },
     [openTab, pageSize.width, setOpenTab]
@@ -272,7 +249,6 @@ const DashboardPagesCarousel: React.FC<DashboardPagesCarouselProps> = ({
     (event: NativeSyntheticEvent<NativeScrollEvent>) => {
       const wasDragged = isPagerDrivenRef.current
       isPagerDrivenRef.current = false
-      debugCarousel('pager:momentumEnd', { wasDragged })
 
       const tab = TABS[Math.round(event.nativeEvent.contentOffset.x / pageSize.width)]
 
