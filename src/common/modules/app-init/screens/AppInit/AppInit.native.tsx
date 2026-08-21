@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import { KeyboardProvider } from 'react-native-keyboard-controller'
 import { SafeAreaProvider } from 'react-native-safe-area-context'
 import { NativeRouter } from 'react-router-native'
@@ -18,8 +18,13 @@ import { ControllersMiddlewareProvider } from '@mobile/contexts/controllersMiddl
 import { ControllersStateLoadedProvider } from '@mobile/contexts/controllersStateLoadedContext'
 import NfcCardSessionModal from '@mobile/modules/hardware-wallet/components/NfcCardSessionModal'
 import { WalletConnectProvider } from '@mobile/modules/wallet-connect/contexts/walletConnectContext'
+import { BOOT_MARK, markBoot } from '@mobile/services/bootProfiler'
 
 const AppInit = () => {
+  // React runs child effects before the parent's, so this fires once the whole
+  // provider tree below has mounted.
+  useEffect(() => markBoot(BOOT_MARK.rnAppInitMounted), [])
+
   return (
     <NativeRouter>
       <PortalProvider>

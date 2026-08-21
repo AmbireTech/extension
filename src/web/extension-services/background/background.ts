@@ -38,6 +38,7 @@ import { resolveViewRoute } from '@common/modules/router/helpers'
 import { storage } from '@common/services/storage'
 import { Action, MethodAction } from '@common/types/actions'
 import { LOG_LEVELS, logInfoWithPrefix } from '@common/utils/logger'
+import { serializeControllerForUI } from '@common/utils/serializeControllerForUI'
 import {
   BROWSER_EXTENSION_LOG_UPDATED_CONTROLLER_STATE_ONLY,
   BROWSER_EXTENSION_MEMORY_INTENSIVE_LOGS,
@@ -59,8 +60,11 @@ import {
   handleKeepBridgeContentScriptAcrossSessions,
   handleRegisterScripts
 } from '@web/extension-services/background/handlers/handleScripting'
-import { serializeControllerForUI } from '@web/extension-services/background/serializeControllerForUI'
 import { notificationManager } from '@web/extension-services/background/webapi/notification'
+import {
+  getDappTabFocusDispatcher,
+  getPanelManager
+} from '@web/extension-services/background/webapi/panel'
 import windowManager from '@web/extension-services/background/webapi/window'
 import {
   initializeMessenger,
@@ -74,6 +78,7 @@ import TrezorController from '@web/modules/hardware-wallet/controllers/TrezorCon
 import LatticeSigner from '@web/modules/hardware-wallet/libs/LatticeSigner'
 import { providerRequestTransport } from '@web/modules/provider/providerRequestTransport'
 import { getExtensionInstanceId } from '@web/utils/analytics'
+import { isExtensionOverlayPort } from '@web/utils/sidePanel'
 
 import { buildScrubFailureFallbackEvent } from './buildScrubFailureFallbackEvent'
 import {
@@ -550,6 +555,8 @@ const init = async () => {
         ...windowManager,
         remove: async (winId: number | 'popup') => {
           if (winId === 'popup') {
+            // Only the popup is closed here. The side panel can't be closed programmatically,
+            // and it doesn't need to be - requests are rendered in it while it is open.
             return new Promise((resolve) => {
               const popupPort = pm.ports.find((p) => p.name === 'popup')
               if (!popupPort) {
@@ -571,6 +578,8 @@ const init = async () => {
           await windowManager.remove(winId, pm)
         }
       },
+      panel: getPanelManager(pm),
+      dispatchDappTabFocus: getDappTabFocusDispatcher(pm),
       notification: notificationManager,
       message: {
         sendToastMessage: (text, options) => {
@@ -591,6 +600,10 @@ const init = async () => {
       resolveViewRoute: (view: View) => resolveViewRoute(mainCtrl, view)
     }
   })
+
+  // Load them immediately (the optimization is for mobile only)
+  void mainCtrl.phishing.init()
+  void mainCtrl.dapps.init()
 
   walletStateCtrl = new WalletStateController({
     eventEmitterRegistry,
@@ -692,7 +705,18 @@ const init = async () => {
   // listen for messages from UI
   browser.runtime.onConnect.addListener(async (port: Port) => {
     const [name, id] = port.name.split(':') as [Port['name'], Port['id']]
-    if (['popup', 'tab', 'request-window'].includes(name)) {
+    if (['popup', 'tab', 'request-window', 'side-panel'].includes(name)) {
+      // These port names grant access to every controller method (exporting keys and
+      // the seed phrase included), so only our own extension pages may claim them.
+      const senderUrl = port.sender?.url
+      const isFromOurExtension = port.sender?.id === browser.runtime.id
+      const isFromExtensionPage = !senderUrl || senderUrl.startsWith(browser.runtime.getURL(''))
+
+      if (!isFromOurExtension || !isFromExtensionPage) {
+        port.disconnect()
+        return
+      }
+
       port.id = id || nanoid()
 
       port.name = name
@@ -704,6 +728,11 @@ const init = async () => {
         sendCriticalControllerStates({ pm, port, eventEmitterRegistry }).catch(
           captureBackgroundException
         )
+        if (isExtensionOverlayPort(port.name)) {
+          mainCtrl.onPopupOpen(port.id).catch((error) => {
+            console.error('Failed to initialize overlay view', error)
+          })
+        }
 
         pm.addConnectListener(
           port.id,
@@ -714,7 +743,7 @@ const init = async () => {
 
             try {
               if (messageType === '> background' && type) {
-                await handleActions(action, { pm, port, eventEmitterRegistry, mainCtrl })
+                await handleActions(action, { pm, port, eventEmitterRegistry, mainCtrl, meta })
               }
             } catch (err: any) {
               console.error(`${type} action failed:`, err)
@@ -760,7 +789,7 @@ const init = async () => {
           // state will remain reset until an automatic update is triggered.
           // Example: the user has the dashboard opened in tab, opens the popup
           // and closes it immediately.
-          if (disconnectedPort.name === 'popup') mainCtrl.portfolio.forceEmitUpdate()
+          if (isExtensionOverlayPort(disconnectedPort.name)) mainCtrl.portfolio.forceEmitUpdate()
           if (disconnectedPort.name === 'tab' || disconnectedPort.name === 'request-window') {
             // eslint-disable-next-line @typescript-eslint/no-floating-promises
             ledgerCtrl.cleanUp()
@@ -790,6 +819,13 @@ const setupStorageForTesting = async () => {
 
   await checkE2EStorage()
 }
+
+// Ensures controllers are initialized as soon as the service worker starts,
+// so UI ports (popup, side panel, tab) can connect without waiting for a ping.
+init().catch((err) => {
+  captureBackgroundException(err)
+  console.error(err)
+})
 
 // Ensures controllers are initialized when the browser starts.
 browser.runtime.onStartup.addListener(() => {

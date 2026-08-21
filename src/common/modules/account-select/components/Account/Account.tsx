@@ -28,6 +28,8 @@ import getStyles from './styles'
 
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 
+const ACTION_ICON_SIZE = isMobile ? 32 : 24
+
 const selectMainStatuses = (state: AllControllersMappingType['MainController']) => state.statuses
 const selectSelectedAccount = (state: AllControllersMappingType['SelectedAccountController']) =>
   state.account
@@ -40,6 +42,7 @@ const Account = ({
   withSettings = true,
   isSelectable = true,
   withKeyType = true,
+  renderLeftChildren,
   renderRightChildren,
   inverseInteractionColors = false,
   options = {
@@ -47,7 +50,9 @@ const Account = ({
   },
   containerStyle,
   withReceive = false,
-  withCopy = true
+  withCopy = true,
+  switchAccountOnPress = true,
+  withBalance = true
 }: {
   account: AccountInterface
   onSelect?: (addr: string) => void
@@ -56,6 +61,8 @@ const Account = ({
   isSelectable?: boolean
   inverseInteractionColors?: boolean
   withKeyType?: boolean
+  /** Rendered before the avatar, e.g. a checkbox when the row is pickable */
+  renderLeftChildren?: () => React.ReactNode
   renderRightChildren?: () => React.ReactNode
   options?: {
     withOptionsButton?: boolean
@@ -67,6 +74,9 @@ const Account = ({
   containerStyle?: ViewStyle
   withReceive?: boolean
   withCopy?: boolean
+  /** Set to false when pressing the row means something else than switching to it */
+  switchAccountOnPress?: boolean
+  withBalance?: boolean
 }) => {
   const { addr, preferences } = account
   const { t } = useTranslation()
@@ -108,7 +118,7 @@ const Account = ({
       return
     }
 
-    if (selectedAccount?.addr !== addr) {
+    if (switchAccountOnPress && selectedAccount?.addr !== addr) {
       mainDispatch({
         type: 'method',
         params: { method: 'selectAccount', args: [addr] }
@@ -116,7 +126,14 @@ const Account = ({
     }
 
     onSelect && onSelect(addr)
-  }, [addr, mainDispatch, onSelect, selectedAccount, options.setAccountToImportOrExport])
+  }, [
+    addr,
+    mainDispatch,
+    onSelect,
+    selectedAccount,
+    switchAccountOnPress,
+    options.setAccountToImportOrExport
+  ])
 
   const onSave = useCallback(
     (value: string) => {
@@ -199,41 +216,25 @@ const Account = ({
           }
       ]}
     >
-      <View style={[flexbox.flex1, flexbox.directionRow, isMobile && flexbox.alignCenter]}>
+      <View style={[flexbox.flex1, flexbox.directionRow, flexbox.alignCenter]}>
+        {renderLeftChildren && renderLeftChildren()}
         <Avatar
           address={account.addr}
           pfp={account.preferences.pfp}
           smartAccountType={(account.creation && 'Ambire') || (account.safeCreation && 'Safe')}
           showTooltip
         />
-        <View style={[flexbox.flex1, isMobile && flexbox.justifyCenter]}>
-          <View
-            style={[
-              isWeb && flexbox.flex1,
-              flexbox.directionRow,
-              flexbox.alignCenter,
-              spacings.mrTy
-            ]}
-          >
+        <View style={[flexbox.flex1, flexbox.justifyCenter]}>
+          <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mrTy]}>
             {!withSettings ? (
-              <>
-                <Text
-                  fontSize={withSettings ? 16 : 14}
-                  weight="medium"
-                  numberOfLines={1}
-                  style={{ flexShrink: 1 }}
-                >
-                  {account.preferences.label}
-                </Text>
-                {/* On mobile the key icons and badges move to the balance row below */}
-                {isWeb && !!withKeyType && (
-                  <View style={[spacings.mlMi]}>
-                    <AccountKeyIcons isExtended account={account} />
-                  </View>
-                )}
-
-                {isWeb && <AccountBadges accountData={account} />}
-              </>
+              <Text
+                fontSize={withSettings ? 16 : 14}
+                weight="medium"
+                numberOfLines={1}
+                style={{ flexShrink: 1 }}
+              >
+                {account.preferences.label}
+              </Text>
             ) : (
               <Editable
                 initialValue={account.preferences.label}
@@ -245,15 +246,7 @@ const Account = ({
                 }}
                 minWidth={120}
                 maxLength={40}
-              >
-                {isWeb && !!withKeyType && (
-                  <View style={[spacings.mlMi]}>
-                    <AccountKeyIcons isExtended account={account} />
-                  </View>
-                )}
-
-                {isWeb && <AccountBadges accountData={account} />}
-              </Editable>
+              />
             )}
           </View>
           <View style={[flexbox.directionRow, flexbox.alignCenter]}>
@@ -262,59 +255,42 @@ const Account = ({
               containerStyle={spacings.pb0}
               address={addr}
               plainAddressMaxLength={maxAccountAddrLength}
+              // On web the copy button fits next to the address, unlike on mobile, where it
+              // sits next to the account to keep the touch targets apart
               withCopy={isWeb && withCopy}
-              withReceive={isWeb && withReceive}
+              withReceive={false}
               withUpdateEnsInTooltip={isSelectable}
             />
           </View>
-          {isMobile && (
-            <View
-              style={[
-                flexbox.directionRow,
-                flexbox.alignCenter,
-                spacings.mtMi,
-                { columnGap: SPACING_TY }
-              ]}
-            >
-              {balance !== null && (
-                <Text fontSize={14} weight="semiBold" color={theme.secondaryText}>
-                  {formatDecimals(balance, 'value')}
-                </Text>
-              )}
-              {!!withKeyType && (
-                <AccountKeyIcons isExtended account={account} withContainerSpacing={false} />
-              )}
-              <AccountBadges accountData={account} withSpacing={false} />
-            </View>
-          )}
+          {/* The balance, the key icons and the badges share the row below the address */}
+          <View
+            style={[
+              flexbox.directionRow,
+              flexbox.alignCenter,
+              spacings.mtMi,
+              { columnGap: SPACING_TY }
+            ]}
+          >
+            {balance !== null && withBalance && (
+              <Text fontSize={14} weight="semiBold" color={theme.secondaryText}>
+                {formatDecimals(balance, 'value')}
+              </Text>
+            )}
+            {!!withKeyType && (
+              <AccountKeyIcons isExtended account={account} withContainerSpacing={false} />
+            )}
+            <AccountBadges accountData={account} withSpacing={false} />
+          </View>
         </View>
       </View>
       <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mlTy]}>
-        {balance !== null && !withSettings && !isMobile && (
-          <Text
-            fontSize={14}
-            weight="semiBold"
-            color={theme.secondaryText}
-            style={[
-              isMobile || renderRightChildren ? spacings.mrTy : {},
-              isMobile || renderRightChildren ? flexbox.alignSelfCenter : flexbox.alignSelfStart,
-              { textAlign: 'right' }
-            ]}
-          >
-            {formatDecimals(balance, 'value')}
-          </Text>
-        )}
         {renderRightChildren && renderRightChildren()}
-        {isMobile && (
-          <>
-            {withCopy && (
-              <AnimatedPressable onPress={handleCopy} style={opacityAnimStyle} {...bindOpacityAnim}>
-                <CopyIcon width={32} height={32} strokeWidth="1" />
-              </AnimatedPressable>
-            )}
-            {withReceive && <ReceiveButton address={addr} fontSize={24} />}
-          </>
+        {!isWeb && withCopy && (
+          <AnimatedPressable onPress={handleCopy} style={opacityAnimStyle} {...bindOpacityAnim}>
+            <CopyIcon width={ACTION_ICON_SIZE} height={ACTION_ICON_SIZE} strokeWidth="1" />
+          </AnimatedPressable>
         )}
+        {withReceive && <ReceiveButton address={addr} fontSize={ACTION_ICON_SIZE - 8} />}
         {!!options.withOptionsButton && (
           <Dropdown
             data={submenu}

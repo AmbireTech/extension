@@ -24,6 +24,7 @@ import TokenDetailsTitle from '@common/modules/token-details/components/Title'
 import TokenBalanceCard from '@common/modules/token-details/components/TokenBalanceCard'
 import TokenData from '@common/modules/token-details/components/TokenData'
 import TokenPriceDisplay from '@common/modules/token-details/components/TokenPriceDisplay'
+import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import useTokenActions from '@common/modules/token-details/hooks/useTokenActions'
 import spacings, { SPACING_MI } from '@common/styles/spacings'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
@@ -66,6 +67,7 @@ const TrendingTokenDetailsScreen = () => {
   const {
     state: { portfolio }
   } = useController('SelectedAccountController')
+  const { isCompactSidePanelLayout } = useCompactActionRequestLayout()
 
   const token: TrendingToken | undefined = useMemo(
     () =>
@@ -233,16 +235,43 @@ const TrendingTokenDetailsScreen = () => {
           )}
         </ScrollableWrapper>
       )}
-      {!!displayToken && (
-        <FooterGlassView size="sm">
-          <View
-            style={[
-              flexbox.directionRow,
-              flexbox.alignStart,
-              isMobile && { columnGap: SPACING_MI },
-              isMobile && spacings.ptTy,
-              isMobile && spacings.phSm
-            ]}
+      {!!displayToken &&
+        (isMobile ? (
+          <FooterGlassView size="sm">
+            <View
+              style={[
+                flexbox.directionRow,
+                flexbox.alignStart,
+                { columnGap: SPACING_MI },
+                spacings.ptTy,
+                spacings.phSm
+              ]}
+            >
+              {actions.map((action) => (
+                <TokenDetailsButton
+                  key={action.id}
+                  {...action}
+                  isDisabled={!!action.isDisabled}
+                  token={displayToken}
+                  iconWidth={action.iconWidth}
+                />
+              ))}
+            </View>
+          </FooterGlassView>
+        ) : (
+          <FooterGlassView
+            size="sm"
+            style={isCompactSidePanelLayout ? spacings.phSm : undefined}
+            glassViewProps={
+              isCompactSidePanelLayout
+                ? { cssStyle: { width: '100%', alignSelf: 'stretch' } }
+                : undefined
+            }
+            innerContainerStyle={
+              isCompactSidePanelLayout
+                ? { gap: SPACING_MI, width: '100%', alignItems: 'stretch' }
+                : undefined
+            }
           >
             {actions.map((action) => (
               <TokenDetailsButton
@@ -253,9 +282,8 @@ const TrendingTokenDetailsScreen = () => {
                 iconWidth={action.iconWidth}
               />
             ))}
-          </View>
-        </FooterGlassView>
-      )}
+          </FooterGlassView>
+        ))}
     </LayoutWrapper>
   )
 }

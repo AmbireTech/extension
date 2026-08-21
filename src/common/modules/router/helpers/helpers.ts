@@ -11,6 +11,58 @@ import { awaitControllersInitialLoad } from '@common/utils/controllers'
 
 import type { MainController } from '@ambire-common/controllers/main/main'
 
+/**
+ * Maps the current user request to the route that renders it. Shared between the request
+ * window's initial route resolution and the side panel, which renders the same action
+ * screens in-place (over the dashboard) instead of opening a separate window.
+ */
+const getRouteForUserRequest = ({
+  currentUserRequest,
+  transferState
+}: {
+  currentUserRequest: IRequestsController['currentUserRequest']
+  transferState: ITransferController
+}): string | null => {
+  if (!currentUserRequest) return null
+
+  if (currentUserRequest.kind === 'dappConnect') return ROUTES.dappConnectRequest
+  if (currentUserRequest.kind === 'walletAddEthereumChain') return ROUTES.addChain
+  if (currentUserRequest.kind === 'walletWatchAsset') return ROUTES.watchAsset
+  if (currentUserRequest.kind === 'ethGetEncryptionPublicKey')
+    return ROUTES.getEncryptionPublicKeyRequest
+  if (currentUserRequest.kind === 'ethDecrypt') return ROUTES.decryptRequest
+  if (currentUserRequest.kind === 'calls') return ROUTES.signAccountOp
+
+  if (
+    currentUserRequest.kind === 'message' ||
+    currentUserRequest.kind === 'typedMessage' ||
+    currentUserRequest.kind === 'authorization-7702' ||
+    currentUserRequest.kind === 'siwe'
+  )
+    return ROUTES.signMessage
+
+  if (currentUserRequest.kind === 'swapAndBridge') return ROUTES.swapAndBridge
+
+  if (currentUserRequest.kind === 'transfer')
+    return transferState.isTopUp ? ROUTES.topUpGasTank : ROUTES.transfer
+
+  if (currentUserRequest.kind === 'benzin') {
+    return (
+      ROUTES.benzin +
+      getBenzinUrlParams({
+        chainId: currentUserRequest.meta.chainId,
+        isInternal: true,
+        txnId: currentUserRequest.meta?.txnId, // can be undefined
+        identifiedBy: currentUserRequest.meta?.identifiedBy
+      })
+    )
+  }
+
+  if (currentUserRequest.kind === 'switchAccount') return ROUTES.switchAccount
+
+  return null
+}
+
 const getInitialRoute = ({
   keystoreState,
   authStatus,
@@ -18,7 +70,8 @@ const getInitialRoute = ({
   swapAndBridgeState,
   transferState,
   surveyState,
-  isRequestWindow
+  isRequestWindow,
+  isSidePanel
 }: {
   keystoreState: IKeystoreController
   authStatus?: AUTH_STATUS
@@ -27,61 +80,22 @@ const getInitialRoute = ({
   transferState: ITransferController
   surveyState?: ISurveyController
   isRequestWindow: boolean
+  isSidePanel?: boolean
 }) => {
   if (keystoreState.isReadyToStoreKeys && !keystoreState.isUnlocked) {
     return ROUTES.keyStoreUnlock
   }
 
   if (authStatus === AUTH_STATUS.NOT_AUTHENTICATED) {
-    return ROUTES.getStarted
+    // Full onboarding is tab-only; side panel shows a dedicated empty-state page.
+    return isSidePanel ? ROUTES.sidePanelNoAccounts : ROUTES.getStarted
   }
 
   if (isRequestWindow && requestsState.currentUserRequest) {
-    const { currentUserRequest } = requestsState
-    if (currentUserRequest.kind === 'dappConnect') return ROUTES.dappConnectRequest
-
-    if (currentUserRequest.kind === 'walletAddEthereumChain') return ROUTES.addChain
-
-    if (currentUserRequest.kind === 'walletWatchAsset') return ROUTES.watchAsset
-
-    if (currentUserRequest.kind === 'ethGetEncryptionPublicKey')
-      return ROUTES.getEncryptionPublicKeyRequest
-    if (currentUserRequest.kind === 'ethDecrypt') return ROUTES.decryptRequest
-
-    if (currentUserRequest.kind === 'calls') return ROUTES.signAccountOp
-
-    if (
-      currentUserRequest.kind === 'message' ||
-      currentUserRequest.kind === 'typedMessage' ||
-      currentUserRequest.kind === 'authorization-7702' ||
-      currentUserRequest.kind === 'siwe'
-    ) {
-      return ROUTES.signMessage
-    }
-
-    if (currentUserRequest.kind === 'swapAndBridge') return ROUTES.swapAndBridge
-
-    if (currentUserRequest.kind === 'transfer') {
-      if (transferState.isTopUp) {
-        return ROUTES.topUpGasTank
-      }
-
-      return ROUTES.transfer
-    }
-
-    if (currentUserRequest.kind === 'benzin') {
-      const link =
-        ROUTES.benzin +
-        getBenzinUrlParams({
-          chainId: currentUserRequest.meta.chainId,
-          isInternal: true,
-          txnId: currentUserRequest.meta?.txnId, // can be undefined
-          identifiedBy: currentUserRequest.meta?.identifiedBy
-        })
-      return link
-    }
-
-    if (currentUserRequest.kind === 'switchAccount') return ROUTES.switchAccount
+    return getRouteForUserRequest({
+      currentUserRequest: requestsState.currentUserRequest,
+      transferState
+    })
   } else if (!isRequestWindow) {
     // TODO: Always redirects to Dashboard, which for initial extension load is okay, but
     // for other scenarios, ideally, it should be the last route before the keystore got locked.
@@ -128,7 +142,8 @@ const resolveViewRoute = async (mainCtrl: MainController, view: View): Promise<s
   return getInitialRoute({
     ...routeControllers,
     authStatus,
-    isRequestWindow: view.type === REQUEST_VIEW_TYPE
+    isRequestWindow: view.type === REQUEST_VIEW_TYPE,
+    isSidePanel: view.type === 'side-panel'
   })
 }
 
@@ -138,4 +153,4 @@ const resolveViewRoute = async (mainCtrl: MainController, view: View): Promise<s
  */
 const toAbsoluteRoute = (route: string) => (route.startsWith('/') ? route : `/${route}`)
 
-export { getInitialRoute, resolveViewRoute, toAbsoluteRoute }
+export { getInitialRoute, resolveViewRoute, toAbsoluteRoute, getRouteForUserRequest }

@@ -10,7 +10,7 @@ react, react-native, react-native-web, typescript, expo (bare workflow), ethers,
 - `background` in the wallet refers to:
   - Service worker on Chrome (`src/web/extension-services/background/`)
   - Background script on Firefox (`src/web/extension-services/background/`)
-  - Webview worker on mobile (`src/mobile/services/WebViewWorker/`)
+  - Webview worker on mobile (`src/mobile/modules/webview/services/`)
 - Unlike typical manifest version 3 extensions where the service worker is allowed to sleep, this extension is designed to stay alive: the UI periodically sends `ambire-extension-ping` messages, the background responds with `ambire-extension-pong` to prevent the service worker from being suspended, and the background's `init()` function (which bootstraps all controllers) is called on every incoming message - a no-op if already initialized, but essential after a service worker suspension because the JS context is destroyed on sleep and `isInitialized` resets
 - The business logic and persistent state is handled primarily using `controllers` (JS classes), which usually run in the `background`
 - The websites run some controllers separately without a `background`

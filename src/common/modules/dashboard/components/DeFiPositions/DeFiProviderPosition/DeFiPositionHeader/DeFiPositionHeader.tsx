@@ -11,6 +11,7 @@ import useController from '@common/hooks/useController'
 import useHover, { AnimatedPressable, useMultiHover } from '@common/hooks/useHover'
 import useNavigation from '@common/hooks/useNavigation'
 import useTheme from '@common/hooks/useTheme'
+import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import getStyles from '@common/modules/dashboard/components/DeFiPositions/DeFiProviderPosition/styles'
 import { ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
@@ -61,6 +62,7 @@ const DeFiPositionHeader: FC<Props> = ({
   } = useController('DappsController')
   const { styles, theme } = useTheme(getStyles)
   const { navigate } = useNavigation()
+  const { isCompactLayout } = useCompactActionRequestLayout()
 
   const [bindAnim, animStyle] = useMultiHover({
     values: [
@@ -107,6 +109,13 @@ const DeFiPositionHeader: FC<Props> = ({
     }
   }, [dappUrl, navigate])
 
+  const healthRateBadgeType =
+    HEALTH_RATE_LEVELS.find((level) => level.to >= (healthRate || 0))?.color || 'success'
+  const healthRateBadgeText = healthRate
+    ? `Health Rate: ${healthRate <= 10 ? formatDecimals(healthRate) : '>10'}`
+    : ''
+  const shouldStackHealthRateBadge = isMobile || (isWeb && isCompactLayout)
+
   return (
     <AnimatedPressable
       onPress={toggleExpanded}
@@ -121,11 +130,31 @@ const DeFiPositionHeader: FC<Props> = ({
       ]}
       {...bindAnim}
     >
-      <View style={styles.providerData}>
+      <View
+        style={[
+          styles.providerData,
+          shouldStackHealthRateBadge && { flex: 1, minWidth: 0, flexShrink: 1 }
+        ]}
+      >
         <ProtocolIcon iconUrl={iconUrl} providerName={providerName} chainId={chainId} />
-        <View>
-          <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-            <Text fontSize={16} weight="semiBold" style={spacings.mrMi}>
+        <View style={shouldStackHealthRateBadge ? { flex: 1, minWidth: 0 } : undefined}>
+          <View
+            style={[
+              flexbox.directionRow,
+              flexbox.alignCenter,
+              shouldStackHealthRateBadge && { minWidth: 0 }
+            ]}
+          >
+            <Text
+              fontSize={isCompactLayout ? 14 : 16}
+              weight="semiBold"
+              numberOfLines={shouldStackHealthRateBadge ? 1 : undefined}
+              ellipsizeMode={shouldStackHealthRateBadge ? 'tail' : undefined}
+              style={[
+                spacings.mrMi,
+                shouldStackHealthRateBadge && { flexShrink: 1, minWidth: 0 }
+              ]}
+            >
               {providerName}
             </Text>
             {dappUrl && (
@@ -138,32 +167,28 @@ const DeFiPositionHeader: FC<Props> = ({
               </AnimatedPressable>
             )}
           </View>
-          {isMobile && !!healthRate && (
+          {shouldStackHealthRateBadge && !!healthRate && (
             <Badge
-              text={`Health Rate: ${healthRate <= 10 ? formatDecimals(healthRate) : '>10'}`}
-              type={HEALTH_RATE_LEVELS.find((level) => level.to >= healthRate)?.color || 'success'}
+              text={healthRateBadgeText}
+              type={healthRateBadgeType}
               style={spacings.mtMi}
             />
           )}
         </View>
-        <View
-          style={[
-            flexbox.directionRow,
-            flexbox.alignCenter,
-            isMobile ? spacings.mlTy : spacings.mlLg
-          ]}
-        >
-          {isWeb && !!healthRate && (
-            <Badge
-              text={`Health Rate: ${healthRate <= 10 ? formatDecimals(healthRate) : '>10'}`}
-              type={HEALTH_RATE_LEVELS.find((level) => level.to >= healthRate)?.color || 'success'}
-            />
-          )}
-          {/* @TODO: TOTAL APY {APY && <Badge text={`Total APY: ${formatDecimals(APY)}`} type="info" />} */}
-        </View>
+        {isWeb && !isCompactLayout && !!healthRate && (
+          <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mlLg]}>
+            <Badge text={healthRateBadgeText} type={healthRateBadgeType} />
+          </View>
+        )}
       </View>
-      <View style={styles.positionData}>
-        <Text fontSize={16} weight="semiBold" style={spacings.mrSm}>
+      <View style={[styles.positionData, { flexShrink: 0 }]}>
+        <Text
+          fontSize={isCompactLayout ? 14 : 16}
+          weight="semiBold"
+          numberOfLines={1}
+          ellipsizeMode="tail"
+          style={spacings.mrSm}
+        >
           {positionInUSD}
         </Text>
         <Animated.View style={{ transform: [{ rotate: isExpanded ? '180deg' : '0deg' }] }}>

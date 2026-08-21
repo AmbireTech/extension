@@ -19,8 +19,12 @@ import { toAbsoluteRoute } from '@common/modules/router/helpers/helpers'
 import eventBus from '@common/services/event/eventBus'
 import { Action, MethodAction } from '@common/types/actions'
 import { BUNGEE_API_KEY, RELAYER_URL, SQUID_INTEGRATOR_ID, UNISWAP_API_KEY, VELCRO_URL } from '@env'
-import { MOBILE_CRITICAL_CONTROLLERS } from '@mobile/constants/criticalControllers'
+import {
+  MOBILE_CRITICAL_CONTROLLERS,
+  MOBILE_DEFERRED_CONTROLLERS
+} from '@mobile/constants/criticalControllers'
 import { MOBILE_VIEW_ID } from '@mobile/constants/ui'
+import useBootProfileReport from '@mobile/hooks/useBootProfileReport'
 import useDappsControllerHelpers from '@mobile/hooks/useDappsControllerHelpers'
 import useRequestsControllerHelpers from '@mobile/hooks/useRequestsControllerHelpers'
 import { WebViewWorker, WebViewWorkerRef } from '@mobile/modules/webview/services/WebViewWorker'
@@ -31,6 +35,7 @@ export const ControllersMiddlewareProvider: React.FC<{
 }> = ({ children }) => {
   const { controllerStore, stateSubscriptionManager } = useContext(ControllerStoreContext)
   const webviewRef = useRef<WebViewWorkerRef>(null)
+  const hasRequestedDeferredControllers = useRef(false)
   const route = useRoute()
   const isFocused = useIsAppFocused()
   const { navigate } = useNavigation()
@@ -122,9 +127,14 @@ export const ControllersMiddlewareProvider: React.FC<{
         UNISWAP_API_KEY
       })
       .then((ctrlsNames) => {
-        controllerStore.init(ctrlsNames as any[], MOBILE_CRITICAL_CONTROLLERS, () => {
-          dispatch({ type: 'INIT_ALL_CONTROLLERS', params: { controllers: ctrlsNames as any[] } })
-        })
+        controllerStore.init(
+          ctrlsNames as any[],
+          MOBILE_CRITICAL_CONTROLLERS,
+          () => {
+            dispatch({ type: 'INIT_ALL_CONTROLLERS', params: { controllers: ctrlsNames as any[] } })
+          },
+          MOBILE_DEFERRED_CONTROLLERS
+        )
         setIsWorkerReady(true)
       })
   }, [controllerStore, dispatch])
@@ -172,8 +182,31 @@ export const ControllersMiddlewareProvider: React.FC<{
     dispatch({ type: 'SET_VIEW_FOCUS', params: { id: MOBILE_VIEW_ID } })
   }, [isFocused, dispatch])
 
+  // The dapp catalog and the phishing lists are the two heaviest storage reads, so
+  // they stay off the boot path and only start once the dashboard is the current
+  // route. Fired after a frame so the dashboard gets to paint first, and skipped
+  // entirely when both controllers already reported ready (a returning visit to the
+  // dashboard, or a flow that needed them earlier and initialized them on demand).
+  useEffect(() => {
+    if (hasRequestedDeferredControllers.current) return
+    if (route.pathname?.replace('/', '') !== ROUTES.dashboard) return
+
+    const areDeferredControllersLoaded = MOBILE_DEFERRED_CONTROLLERS.every(
+      (ctrlName) => (controllerStore.getSnapshot(ctrlName) as { isReady?: boolean }).isReady
+    )
+    if (areDeferredControllersLoaded) return
+
+    const frameHandle = requestAnimationFrame(() => {
+      dispatch({ type: 'INIT_DEFERRED_CONTROLLERS' })
+      hasRequestedDeferredControllers.current = true
+    })
+
+    return () => cancelAnimationFrame(frameHandle)
+  }, [route.pathname, controllerStore, dispatch])
+
   useRequestsControllerHelpers(dispatch)
   useDappsControllerHelpers(dispatch)
+  useBootProfileReport(dispatch)
 
   return (
     <ControllersMiddlewareContext.Provider value={useMemo(() => ({ dispatch }), [dispatch])}>

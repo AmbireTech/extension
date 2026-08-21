@@ -1,4 +1,4 @@
-import React, { FC, useEffect, useMemo } from 'react'
+import React, { FC, useCallback, useEffect, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 import { Modalize } from 'react-native-modalize'
@@ -13,6 +13,7 @@ import Alert from '@common/components/Alert'
 import Badge from '@common/components/Badge'
 import BottomSheet from '@common/components/BottomSheet'
 import Button from '@common/components/Button'
+import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import NetworkIcon from '@common/components/NetworkIcon'
 import { PanelBackButton, PanelTitle } from '@common/components/Panel/Panel'
 import SkeletonLoader from '@common/components/SkeletonLoader'
@@ -24,6 +25,8 @@ import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
 import { TAB_CONTENT_WIDTH } from '@web/constants/spacings'
+
+import { getIsDelegationEnableDisabled } from './helpers'
 
 interface Props {
   sheetRef: React.RefObject<Modalize>
@@ -39,6 +42,10 @@ const AccountSmartSettingsBottomSheet: FC<Props> = ({ sheetRef, closeBottomSheet
   const { keys } = useController('KeystoreController').state
   const { networks } = useController('NetworksController').state
   const { dispatch: requestsDispatch } = useController('RequestsController')
+  const {
+    dispatch: featureFlagsDispatch,
+    state: { flags }
+  } = useController('FeatureFlagsController')
   const { theme } = useTheme()
   const { t } = useTranslation()
   const accountStateCheckedForRef = React.useRef<string | null>(null)
@@ -76,9 +83,24 @@ const AccountSmartSettingsBottomSheet: FC<Props> = ({ sheetRef, closeBottomSheet
     )
   }, [account, keys])
 
+  const isEip7702Enabled = flags.eip7702
+
+  const enableEip7702 = useCallback(() => {
+    featureFlagsDispatch({
+      type: 'method',
+      params: {
+        method: 'setFeatureFlag',
+        args: ['eip7702', true]
+      }
+    })
+  }, [featureFlagsDispatch])
+
   const delegate = (chainId: bigint) => {
     const network = networks.find((n) => n.chainId === chainId)
     if (!network || !account || !accountState || !accountState[chainId.toString()]) return
+
+    const delegatedContract = accountState[chainId.toString()]?.delegatedContract
+    if (getIsDelegationEnableDisabled(isEip7702Enabled, delegatedContract)) return
 
     requestsDispatch({
       type: 'method',
@@ -130,6 +152,35 @@ const AccountSmartSettingsBottomSheet: FC<Props> = ({ sheetRef, closeBottomSheet
                   'While we support multiple networks, only those that have implemented EIP-7702 are listed here. As more networks adopt this upgrade, we will update the list to reflect broader availability.'
                 )}
               </Text>
+              {!isEip7702Enabled && (
+                <View
+                  style={[
+                    {
+                      borderBottomWidth: 1,
+                      borderBottomColor: theme.secondaryBorder
+                    },
+                    flexbox.directionRow,
+                    flexbox.alignCenter,
+                    spacings.pbTy,
+                    spacings.mbTy
+                  ]}
+                >
+                  <View style={flexbox.flex1}>
+                    <Text fontSize={14} weight="medium">
+                      {t('Enable EIP-7702')}
+                    </Text>
+                  </View>
+                  <View style={[flexbox.flex1, flexbox.alignEnd]}>
+                    <Button
+                      type="primary"
+                      size="tiny"
+                      style={[spacings.mb0, { minWidth: 78, height: 32 }]}
+                      onPress={enableEip7702}
+                      text={t('Enable')}
+                    />
+                  </View>
+                </View>
+              )}
               <View
                 style={[
                   {
@@ -199,7 +250,20 @@ const AccountSmartSettingsBottomSheet: FC<Props> = ({ sheetRef, closeBottomSheet
                   </View>
                   <View style={[flexbox.flex1, flexbox.alignEnd]}>
                     {accountState && accountState[net.chainId.toString()] ? (
-                      <View style={[flexbox.directionRow]}>
+                      <View
+                        style={[flexbox.directionRow]}
+                        dataSet={
+                          getIsDelegationEnableDisabled(
+                            isEip7702Enabled,
+                            accountState[net.chainId.toString()]?.delegatedContract
+                          )
+                            ? createGlobalTooltipDataSet({
+                                id: `enable-eip-7702-${net.chainId.toString()}`,
+                                content: t('Enable EIP-7702 first')
+                              })
+                            : {}
+                        }
+                      >
                         <Button
                           type={
                             !accountState?.[net.chainId.toString()]?.delegatedContract
@@ -208,6 +272,10 @@ const AccountSmartSettingsBottomSheet: FC<Props> = ({ sheetRef, closeBottomSheet
                           }
                           size="tiny"
                           style={[spacings.mb0, { minWidth: 78, height: 32 }]}
+                          disabled={getIsDelegationEnableDisabled(
+                            isEip7702Enabled,
+                            accountState[net.chainId.toString()]?.delegatedContract
+                          )}
                           onPress={() => delegate(net.chainId)}
                           text={
                             !accountState?.[net.chainId.toString()]?.delegatedContract

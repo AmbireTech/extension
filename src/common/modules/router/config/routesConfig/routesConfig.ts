@@ -44,6 +44,17 @@ const routesConfig: RouteConfig = {
       web: i18n.t('Onboarding')
     })
   },
+  [ROUTES.sidePanelNoAccounts]: {
+    route: ROUTES.sidePanelNoAccounts,
+    title: Platform.select({
+      default: i18n.t('No accounts'),
+      web: i18n.t('No accounts')
+    }),
+    name: Platform.select({
+      default: i18n.t('No accounts'),
+      web: i18n.t('No accounts')
+    })
+  },
   [ROUTES.importExistingAccount]: {
     route: ROUTES.importExistingAccount,
     title: Platform.select({
@@ -426,6 +437,21 @@ const routesConfig: RouteConfig = {
     route: ROUTES.qrPermission,
     title: Platform.select({ default: i18n.t('Camera permission') }),
     name: Platform.select({ default: i18n.t('Camera permission') })
+  },
+  [ROUTES.exportAccountsToMobile]: {
+    route: ROUTES.exportAccountsToMobile,
+    title: Platform.select({ default: i18n.t('Export accounts to mobile') }),
+    name: Platform.select({ default: i18n.t('Export accounts to mobile') })
+  },
+  [ROUTES.importAccountsFromMobile]: {
+    route: ROUTES.importAccountsFromMobile,
+    title: Platform.select({ default: i18n.t('Import from mobile') }),
+    name: Platform.select({ default: i18n.t('Import from mobile') })
+  },
+  [ROUTES.importAccountsFromExtension]: {
+    route: ROUTES.importAccountsFromExtension,
+    title: Platform.select({ default: i18n.t('Import from extension') }),
+    name: Platform.select({ default: i18n.t('Import from extension') })
   }
 }
 

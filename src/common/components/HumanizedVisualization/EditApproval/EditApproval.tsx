@@ -12,11 +12,11 @@ import ModalHeader from '@common/components/BottomSheet/ModalHeader'
 import Button from '@common/components/Button'
 import EditButton from '@common/components/EditButton'
 import FooterGlassView from '@common/components/FooterGlassView'
-import Text from '@common/components/Text'
 import TokenIcon from '@common/components/TokenIcon'
-import { isMobile, isWeb } from '@common/config/env'
+import { isMobile } from '@common/config/env'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
+import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import MaxAmount from '@common/modules/swap-and-bridge/components/MaxAmount'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
@@ -123,6 +123,7 @@ const EditApproval = ({
 }) => {
   const { t } = useTranslation()
   const { theme } = useTheme()
+  const { isCompactLayout, isCompactSidePanelLayout } = useCompactActionRequestLayout()
   const {
     ref: editApprovalsSheetRef,
     open: openEditApprovals,
@@ -200,9 +201,9 @@ const EditApproval = ({
       <BottomSheet
         sheetRef={editApprovalsSheetRef}
         id={`edit-approvals-bottom-sheet-${id}`}
-        type={isMobile ? 'bottom-sheet' : 'modal'}
+        type={isCompactSidePanelLayout ? 'bottom-sheet' : 'modal'}
         closeBottomSheet={closeEditApprovals}
-        style={isMobile ? undefined : { maxWidth: 460 }}
+        style={isCompactLayout ? { width: '100%' } : { maxWidth: 460 }}
         shouldBeClosableOnDrag={isMobile}
       >
         <ModalHeader
@@ -227,26 +228,50 @@ const EditApproval = ({
             absolute={false}
             style={{ ...spacings.mt2Xl }}
             mobileStyle={{
-              ...flexbox.directionRow,
+              ...flexbox.directionRowReverse,
               ...spacings.mt2Xl
             }}
+            fullWidth={isCompactSidePanelLayout}
           >
-            <Button
-              type="secondary"
-              text={t('Cancel')}
-              onPress={() => closeEditApprovals()}
-              hasBottomSpacing={false}
-              size="smaller"
-              style={[spacings.mrTy, isWeb && { width: 100 }, isMobile && flexbox.flex1]}
-            />
-            <Button
-              type="primary"
-              text={t('Save')}
-              onPress={() => editCall(amountRef.current, token, chainId, closeEditApprovals)}
-              hasBottomSpacing={false}
-              size="smaller"
-              style={[isWeb && { width: 100 }, isMobile && flexbox.flex1]}
-            />
+            {isMobile || isCompactSidePanelLayout ? (
+              <>
+                <Button
+                  type="primary"
+                  text={t('Save')}
+                  onPress={() => editCall(amountRef.current, token, chainId, closeEditApprovals)}
+                  hasBottomSpacing={false}
+                  size="smaller"
+                  style={flexbox.flex1}
+                />
+                <Button
+                  type={isCompactSidePanelLayout ? 'outline' : 'secondary'}
+                  text={t('Cancel')}
+                  onPress={() => closeEditApprovals()}
+                  hasBottomSpacing={false}
+                  size="smaller"
+                  style={[flexbox.flex1, isMobile && spacings.mrTy]}
+                />
+              </>
+            ) : (
+              <>
+                <Button
+                  type="secondary"
+                  text={t('Cancel')}
+                  onPress={() => closeEditApprovals()}
+                  hasBottomSpacing={false}
+                  size="smaller"
+                  style={[{ width: 100 }, spacings.mrTy]}
+                />
+                <Button
+                  type="primary"
+                  text={t('Save')}
+                  onPress={() => editCall(amountRef.current, token, chainId, closeEditApprovals)}
+                  hasBottomSpacing={false}
+                  size="smaller"
+                  style={[{ width: 100 }, flexbox.flex1]}
+                />
+              </>
+            )}
           </FooterGlassView>
         </View>
       </BottomSheet>

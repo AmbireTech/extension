@@ -4,7 +4,7 @@ import { FlatList, ListRenderItemInfo, StyleSheet, View, ViewStyle } from 'react
 import { useModalize } from 'react-native-modalize'
 
 import { HD_PATH_TEMPLATE_TYPE } from '@ambire-common/consts/derivation'
-import SettingsWheelIcon from '@common/assets/svg/SettingsWheelIcon'
+import SettingsIcon from '@common/assets/svg/SettingsIcon'
 import BottomSheet from '@common/components/BottomSheet'
 import Button from '@common/components/Button'
 import Panel from '@common/components/Panel/Panel'
@@ -87,12 +87,7 @@ const RecoveryPhrasesSettingsScreen = () => {
             style={spacings.ph0}
             innerContainerStyle={() => spacings.ph0 as ViewStyle}
           >
-            <SettingsWheelIcon
-              width={20}
-              height={20}
-              style={spacings.mrMi}
-              color={theme.primaryText}
-            />
+            <SettingsIcon width={20} height={20} style={spacings.mrMi} color={theme.primaryText} />
           </Button>
         </View>
         {associatedAccounts.map((a) => {

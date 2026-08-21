@@ -1,9 +1,8 @@
 import { IEventEmitterRegistryController } from '@ambire-common/interfaces/eventEmitter'
 import { awaitControllersInitialLoad } from '@common/utils/controllers'
+import { serializeControllerForUI } from '@common/utils/serializeControllerForUI'
 import { CRITICAL_CONTROLLERS } from '@web/constants/criticalControllers'
 import { Port, PortMessenger } from '@web/extension-services/messengers'
-
-import { serializeControllerForUI } from './serializeControllerForUI'
 
 /**
  * Pushes the states a view needs before it can paint anything, so its first screen doesn't have to

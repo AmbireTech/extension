@@ -21,6 +21,7 @@ import useLedgerConnectionLifecycle from '@mobile/modules/hardware-wallet/hooks/
 import KeyStoreUnlockScreen from '@mobile/modules/keystore/screens/KeyStoreUnlockScreen'
 import MainRoutes from '@mobile/modules/router/components/MainRoutes'
 import RequestsBottomSheet from '@mobile/modules/router/components/RequestsBottomSheet'
+import { markSplashHidden } from '@mobile/services/bootProfiler'
 
 const Router = () => {
   const { authStatus } = useAuth()
@@ -61,7 +62,10 @@ const Router = () => {
       splashHideRequested.current = true
       SplashScreen.setOptions({ duration: 200, fade: true })
       SplashScreen.hideAsync()
-        .finally(() => setIsSplashHidden(true))
+        .finally(() => {
+          setIsSplashHidden(true)
+          markSplashHidden()
+        })
         .catch(() => {})
       // Now that the splash is hidden, let the webview worker stream the
       // heavy controller states (portfolio, dapps, activity, ...) that were

@@ -30,7 +30,6 @@ const useAccountPicker = () => {
       subType,
       isInitialized,
       initParams,
-      selectedAccountsFromCurrentSession,
       addAccountsStatus,
       accountsLoading,
       selectedAccounts,
@@ -106,7 +105,8 @@ const useAccountPicker = () => {
     }
   }, [pageSize, isReady, ACCOUNT_PICKER_PAGE_SIZE])
 
-  // it will enter here only if onImportReady is called with selectedAccountsFromCurrentSession.length = 0
+  // Controller actions are fire-and-forget, so wait until the selected accounts have been added
+  // before opening the personalization screen.
   useEffect(() => {
     if (onImportPressed && addAccountsStatus === 'SUCCESS') {
       goToNextRoute(WEB_ROUTES.accountPersonalize)
@@ -123,10 +123,7 @@ const useAccountPicker = () => {
         args: []
       }
     })
-    if (selectedAccountsFromCurrentSession.length) {
-      goToNextRoute(WEB_ROUTES.accountPersonalize)
-    }
-  }, [goToNextRoute, accountPickerDispatch, selectedAccountsFromCurrentSession])
+  }, [accountPickerDispatch])
 
   useEffect(() => {
     return () => {

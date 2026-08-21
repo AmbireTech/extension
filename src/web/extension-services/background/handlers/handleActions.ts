@@ -1,17 +1,25 @@
 import { MainController } from '@ambire-common/controllers/main/main'
+import { Dapp } from '@ambire-common/interfaces/dapp'
 import { IEventEmitterRegistryController } from '@ambire-common/interfaces/eventEmitter'
 import { KeyIterator } from '@ambire-common/libs/keyIterator/keyIterator'
 import wait from '@ambire-common/utils/wait'
 import LedgerKeyIterator from '@common/modules/hardware-wallet/libs/ledgerKeyIterator'
 import TrezorKeyIterator from '@common/modules/hardware-wallet/libs/trezorKeyIterator'
 import QrKeyIterator from '@common/modules/hardware-wallets/libs/qrKeyIterator/qrKeyIterator'
+import { storage } from '@common/services/storage'
 import { Action, MethodAction } from '@common/types/actions'
+import { serializeControllerForUI } from '@common/utils/serializeControllerForUI'
 import { browser } from '@web/constants/browserapi'
-import { Port, PortMessenger } from '@web/extension-services/messengers'
+import { openPanel } from '@web/extension-services/background/webapi/panel'
+import { MessageMeta, Port, PortMessenger } from '@web/extension-services/messengers'
 import LatticeKeyIterator from '@web/modules/hardware-wallet/libs/latticeKeyIterator'
 
-import { serializeControllerForUI } from '../serializeControllerForUI'
 import sessionStorage from '../webapi/sessionStorage'
+import {
+  dispatchDappTabFocusFromMainCtrl,
+  getDappTabTargetsFromDappId,
+  getDappTabTargetsFromDappIds
+} from './dispatchDappTabFocus'
 
 export const handleActions = async (
   action: MethodAction | Action,
@@ -19,15 +27,17 @@ export const handleActions = async (
     eventEmitterRegistry,
     mainCtrl,
     pm,
-    port
+    port,
+    meta
   }: {
     eventEmitterRegistry: IEventEmitterRegistryController
     mainCtrl: MainController
     pm?: PortMessenger
     port?: Port
+    meta?: MessageMeta
   }
 ) => {
-  // @ts-ignore
+  // @ts-expect-error action is a discriminated union; narrowing happens in the switch below
   const { type, params } = action
   switch (type) {
     case 'method': {
@@ -184,6 +194,8 @@ export const handleActions = async (
     }
 
     case 'DAPPS_CONTROLLER_DISCONNECT_DAPP': {
+      const tabTargets = getDappTabTargetsFromDappId(mainCtrl, params.id, params.source)
+
       if (params.source) {
         await mainCtrl.dapps.disconnectDappSource(params.id, params.source)
       } else {
@@ -199,9 +211,21 @@ export const handleActions = async (
         await mainCtrl.autoLogin.revokeAllPoliciesForDomain(params.id, params.url)
       }
 
+      dispatchDappTabFocusFromMainCtrl(mainCtrl, tabTargets)
+
       break
     }
     case 'DAPPS_CONTROLLER_DISCONNECT_ALL_DAPPS': {
+      const dappIdsToDisconnect = (mainCtrl.dapps.dapps as Dapp[])
+        .filter((dapp) => {
+          if (!dapp.isConnected) return false
+          if (!params.source) return true
+
+          return dapp.connectedSources?.includes(params.source)
+        })
+        .map((dapp) => dapp.id)
+      const tabTargets = getDappTabTargetsFromDappIds(mainCtrl, dappIdsToDisconnect, params.source)
+
       const disconnectedDapps = await mainCtrl.dapps.disconnectAllDapps(params.source)
 
       // Process sequentially: each disconnect may call `revokeAllPoliciesForDomain`, which
@@ -212,6 +236,8 @@ export const handleActions = async (
           await mainCtrl.autoLogin.revokeAllPoliciesForDomain(dapp.id, dapp.url)
         }
       }
+
+      dispatchDappTabFocusFromMainCtrl(mainCtrl, tabTargets)
 
       break
     }
@@ -231,9 +257,32 @@ export const handleActions = async (
     case 'OPEN_EXTENSION_POPUP': {
       if (!pm) return
 
-      async function waitForPopupOpen(timeout = 10000, interval = 100) {
+      const isSidePanelModeEnabled = await storage.get('isSidePanelModeEnabled', false)
+      const overlayPortName = isSidePanelModeEnabled ? 'side-panel' : 'popup'
+      const targetWindowId = meta?.windowId ?? port?.sender?.tab?.windowId
+
+      const getOverlayPort = () => pm!.ports.find((p) => p.name === overlayPortName)
+
+      const focusOverlay = async () => {
+        if (isSidePanelModeEnabled) {
+          await openPanel(targetWindowId)
+          return
+        }
+
+        await browser.action.openPopup()
+      }
+
+      const navigateOverlayToDashboard = async () => {
+        const overlayPort = getOverlayPort()
+        if (!overlayPort) return
+
+        pm!.sendToPort(overlayPort, '> ui', { method: 'navigate', params: { route: '/' } })
+        await mainCtrl.onPopupOpen(overlayPort.id)
+      }
+
+      async function waitForOverlayOpen(timeout = 10000, interval = 100) {
         const startTime = Date.now()
-        while (!pm!.ports.some((p) => p.name === 'popup')) {
+        while (!getOverlayPort()) {
           if (Date.now() - startTime > timeout) break
           await wait(interval)
         }
@@ -241,21 +290,34 @@ export const handleActions = async (
 
       try {
         const isLoading = await sessionStorage.get('isOpenExtensionPopupLoading', false)
-        const isPopupAlreadyOpened = pm.ports.some((p) => p.name === 'popup')
-        if (isLoading || isPopupAlreadyOpened) return
+        if (isLoading) return
+
+        const overlayPort = getOverlayPort()
+        if (overlayPort && isSidePanelModeEnabled) {
+          await focusOverlay()
+          await navigateOverlayToDashboard()
+          return
+        }
+
+        if (overlayPort) return
 
         await sessionStorage.set('isOpenExtensionPopupLoading', true)
-        await browser.action.openPopup()
-        await waitForPopupOpen()
-      } catch (error) {
+        await focusOverlay()
+        await waitForOverlayOpen()
+      } catch {
         try {
-          await chrome.action.openPopup()
-          await waitForPopupOpen()
-        } catch (e) {
+          await focusOverlay()
+          await waitForOverlayOpen()
+        } catch {
           pm.send('> ui', { method: 'navigate', params: { route: '/', options: {} } })
         }
       }
       await sessionStorage.set('isOpenExtensionPopupLoading', false)
+      break
+    }
+
+    case 'DISPATCH_DAPP_TAB_FOCUS': {
+      dispatchDappTabFocusFromMainCtrl(mainCtrl, params.targets, params.delayMs)
       break
     }
 

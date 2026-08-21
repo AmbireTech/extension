@@ -9,7 +9,6 @@ import { BasePage } from './basePage'
 export class AuthPage extends BasePage {
   extensionURL: string
 
-
   constructor(opts: BootstrapContext) {
     super(opts)
     this.extensionURL = opts.extensionURL
@@ -32,7 +31,9 @@ export class AuthPage extends BasePage {
 
   // TODO: improve method assertions
   async importViewOnlyAccount(account: string): Promise<void> {
-    await this.click(selectors.getStarted.watchAddress)
+    await this.click(selectors.getStarted.importExistingAccBtn)
+    await this.click(selectors.getStarted.showMoreBtn)
+    await this.click(selectors.getStarted.importMethodWatchAddress)
     await this.page.locator(locators.viewOnlyInputAddressField).fill(account)
     await this.click(selectors.getStarted.viewOnlyBtnImport)
     await this.setExtensionPassword()
@@ -126,7 +127,9 @@ export class AuthPage extends BasePage {
 
   // TODO: imporove method assertions
   async importCoupleOfViewOnlyAccount(account1: string, account2: string): Promise<void> {
-    await this.click(selectors.getStarted.watchAddress)
+    await this.click(selectors.getStarted.importExistingAccBtn)
+    await this.click(selectors.getStarted.showMoreBtn)
+    await this.click(selectors.getStarted.importMethodWatchAddress)
     // add address 1
     await this.page.locator(locators.viewOnlyInputAddressField).fill(account1)
     // add address 2
