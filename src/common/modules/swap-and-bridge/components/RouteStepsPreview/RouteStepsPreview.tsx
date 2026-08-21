@@ -37,7 +37,8 @@ const RouteStepsPreview = ({
   routeStatus,
   disabledReason = 'Route failed',
   providerId,
-  isBridge
+  isBridge,
+  bottomLeftSlot
 }: {
   steps: SwapAndBridgeStep[]
   inputValueInUsd?: number
@@ -50,6 +51,8 @@ const RouteStepsPreview = ({
   disabledReason?: string
   providerId: string
   isBridge: boolean
+  /** Rendered on the left of the provider logo row, replacing the estimation text */
+  bottomLeftSlot?: React.ReactNode
 }) => {
   const { theme } = useTheme()
   const { t } = useTranslation()
@@ -246,26 +249,30 @@ const RouteStepsPreview = ({
         {!isDisabled ? (
           <>
             <View>
-              {!!shouldWarnForLongEstimation && (
-                <WarningIcon
-                  color={theme.warningDecorative}
-                  width={14}
-                  height={14}
-                  style={spacings.mrMi}
-                  strokeWidth={2.2}
-                />
+              {bottomLeftSlot || (
+                <>
+                  {!!shouldWarnForLongEstimation && (
+                    <WarningIcon
+                      color={theme.warningDecorative}
+                      width={14}
+                      height={14}
+                      style={spacings.mrMi}
+                      strokeWidth={2.2}
+                    />
+                  )}
+                  <Text
+                    fontSize={12}
+                    weight={shouldWarnForLongEstimation ? 'semiBold' : 'medium'}
+                    appearance={shouldWarnForLongEstimation ? 'warningText' : 'primaryText'}
+                  >
+                    {isBridge && !!estimationInSeconds
+                      ? t('Estimation: around {{time}}', {
+                          time: formatTime(estimationInSeconds)
+                        })
+                      : ''}
+                  </Text>
+                </>
               )}
-              <Text
-                fontSize={12}
-                weight={shouldWarnForLongEstimation ? 'semiBold' : 'medium'}
-                appearance={shouldWarnForLongEstimation ? 'warningText' : 'primaryText'}
-              >
-                {isBridge && !!estimationInSeconds
-                  ? t('Estimation: around {{time}}', {
-                      time: formatTime(estimationInSeconds)
-                    })
-                  : ''}
-              </Text>
             </View>
 
             {providerId === 'socket' || providerId === 'socketv3' ? (

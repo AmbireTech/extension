@@ -305,7 +305,7 @@ const SignInWithEthereum = ({
               backgroundColor: theme.secondaryBackground,
               paddingHorizontal: SPACING_SM * responsiveSizeMultiplier,
               paddingVertical: SPACING * responsiveSizeMultiplier,
-              marginBottom: SPACING * responsiveSizeMultiplier,
+              marginBottom: isMobile ? SPACING_SM : SPACING * responsiveSizeMultiplier,
               borderRadius: BORDER_RADIUS_PRIMARY,
               minHeight: 200
             }}
@@ -401,9 +401,9 @@ const SignInWithEthereum = ({
                 setValue={({ value }) => {
                   updateAutoLoginExpirationTime(Number(value))
                 }}
-                containerStyle={
-                  isMobile ? { width: '100%', marginBottom: 0 } : { width: 120, marginBottom: 0 }
-                }
+                // On mobile the select is the last element above the footer, so it keeps
+                // its default bottom spacing
+                containerStyle={isMobile ? { width: '100%' } : { width: 120, marginBottom: 0 }}
                 size={isMobile ? 'md' : 'sm'}
                 value={AUTO_LOGIN_DURATION_OPTIONS.find(
                   (option) =>
