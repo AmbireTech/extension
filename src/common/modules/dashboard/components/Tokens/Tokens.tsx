@@ -427,9 +427,21 @@ const Tokens = ({
     setValue('search', '')
   }, [setValue])
 
+  // Rendered above the carousel on mobile, so it stays put through a swipe
+  const floatingBar = useMemo(
+    () => ({
+      control,
+      displayCurrentApp: true,
+      displayNetworkFilter: true,
+      searchPlaceholder: t('Search token')
+    }),
+    [control, t]
+  )
+
   return (
     <>
       <DashboardPageScrollContainer
+        floatingBar={floatingBar}
         tab="tokens"
         openTab={openTab}
         ListHeaderComponent={isMobile ? undefined : <DashboardBanners />}
@@ -445,14 +457,9 @@ const Tokens = ({
         refreshing={refreshing}
         onRefresh={onRefresh}
       />
-      {openTab === 'tokens' && (
-        <FloatingBottomBar
-          control={control}
-          displayCurrentApp
-          displayNetworkFilter
-          isHidden={!!isSearchHidden}
-          searchPlaceholder={t('Search token')}
-        />
+      {/* The carousel renders this above the pages instead, so a swipe leaves it be */}
+      {!isMobile && openTab === 'tokens' && (
+        <FloatingBottomBar {...floatingBar} isHidden={!!isSearchHidden} />
       )}
     </>
   )

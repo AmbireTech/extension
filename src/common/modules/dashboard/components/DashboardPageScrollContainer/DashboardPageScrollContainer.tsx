@@ -16,7 +16,9 @@ import spacings, { SPACING_SM } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
 import { OVERVIEW_CONTENT_MAX_HEIGHT } from '../DashboardOverview/DashboardOverview'
-import DashboardCarouselContext from '../DashboardPagesCarousel/context'
+import DashboardCarouselContext, {
+  DashboardFloatingBarProps
+} from '../DashboardPagesCarousel/context'
 import debugCarousel from '../DashboardPagesCarousel/debug'
 import { TabType } from '../TabsAndSearch/Tabs/Tab/Tab'
 import useListTopSpacing from './useListTopSpacing'
@@ -27,6 +29,8 @@ interface Props extends FlatListProps<any> {
   animatedOverviewHeight: Animated.Value
   refreshing?: boolean
   onRefresh?: () => void
+  /** What the page wants in the bar the carousel renders above the pager. */
+  floatingBar?: DashboardFloatingBarProps
 }
 
 // We do this instead of unmounting the component to prevent component rerendering when switching tabs.
@@ -68,6 +72,7 @@ const DashboardPageScrollContainer: FC<Props> = ({
   refreshing,
   onRefresh,
   onScroll,
+  floatingBar,
   ...rest
 }) => {
   const topSpacing = useListTopSpacing()
@@ -182,6 +187,16 @@ const DashboardPageScrollContainer: FC<Props> = ({
 
     return () => registerPage(tab, null)
   }, [registerPage, scrollToOffset, tab])
+
+  const registerFloatingBar = carousel?.registerFloatingBar
+
+  useEffect(() => {
+    if (!registerFloatingBar) return undefined
+
+    registerFloatingBar(tab, floatingBar || null)
+
+    return () => registerFloatingBar(tab, null)
+  }, [floatingBar, registerFloatingBar, tab])
 
   const ListComponent = carousel ? AnimatedFlatList : FlatList
 

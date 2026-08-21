@@ -14,13 +14,14 @@ import { useSearchParams } from 'react-router-dom'
 
 import useTheme from '@common/hooks/useTheme'
 import DashboardBanners from '@common/modules/dashboard/components/DashboardBanners'
+import FloatingBottomBar from '@common/modules/dashboard/components/FloatingBottomBar'
 import TabsAndSearch from '@common/modules/dashboard/components/TabsAndSearch'
 import { TabType } from '@common/modules/dashboard/components/TabsAndSearch/Tabs/Tab/Tab'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
 import CarouselPage from './CarouselPage'
-import DashboardCarouselContext, { DashboardPageHandle } from './context'
+import DashboardCarouselContext, { DashboardFloatingBarProps, DashboardPageHandle } from './context'
 import debugCarousel from './debug'
 import { DashboardPagesCarouselProps } from './DashboardPagesCarousel'
 import getStyles from './styles'
@@ -59,6 +60,25 @@ const DashboardPagesCarousel: React.FC<DashboardPagesCarouselProps> = ({
   }))
   const openTabIndex = Math.max(TABS.indexOf(openTab), 0)
   const pageHandles = useRef<Partial<Record<TabType, DashboardPageHandle>>>({})
+  const [floatingBars, setFloatingBars] = useState<
+    Partial<Record<TabType, DashboardFloatingBarProps>>
+  >({})
+
+  const registerFloatingBar = useCallback((tab: TabType, bar: DashboardFloatingBarProps | null) => {
+    setFloatingBars((prev) => {
+      if (prev[tab] === (bar || undefined)) return prev
+
+      const next = { ...prev }
+
+      if (bar) {
+        next[tab] = bar
+      } else {
+        delete next[tab]
+      }
+
+      return next
+    })
+  }, [])
 
   // How far the banners are collapsed, which every page shares. A page whose items
   // start right below the tabs row sits at this offset, not at zero.
@@ -274,9 +294,10 @@ const DashboardPagesCarousel: React.FC<DashboardPagesCarouselProps> = ({
       headerHeight: bannersHeight + tabsHeight,
       collapsibleHeight: bannersHeight,
       pageHeight: pageSize.height,
-      registerPage
+      registerPage,
+      registerFloatingBar
     }),
-    [bannersHeight, pageSize.height, registerPage, scrollY, tabsHeight]
+    [bannersHeight, pageSize.height, registerFloatingBar, registerPage, scrollY, tabsHeight]
   )
 
   // Enough banners cover a page whole, and the header is laid over it, so without
@@ -315,6 +336,8 @@ const DashboardPagesCarousel: React.FC<DashboardPagesCarouselProps> = ({
     },
     [openTab]
   )
+
+  const openTabFloatingBar = floatingBars[openTab]
 
   const pages = useMemo(
     () =>
@@ -375,6 +398,9 @@ const DashboardPagesCarousel: React.FC<DashboardPagesCarouselProps> = ({
           />
         </View>
       </Animated.View>
+      {/* Outside the pager, so a swipe doesn't carry it along, and only what the open
+      tab put in it changes */}
+      {!!openTabFloatingBar && <FloatingBottomBar {...openTabFloatingBar} isHidden={false} />}
     </View>
   )
 }

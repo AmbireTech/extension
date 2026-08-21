@@ -296,9 +296,16 @@ const DeFiPositions: FC<Props> = ({
     portfolio.isAllReady
   ])
 
+  // Rendered above the carousel on mobile, so it stays put through a swipe
+  const floatingBar = useMemo(
+    () => ({ control, searchPlaceholder: t('Search DeFi') }),
+    [control, t]
+  )
+
   return (
     <>
       <DashboardPageScrollContainer
+        floatingBar={floatingBar}
         tab="defi"
         openTab={openTab}
         ListHeaderComponent={isMobile ? undefined : <DashboardBanners />}
@@ -314,12 +321,9 @@ const DeFiPositions: FC<Props> = ({
         refreshing={refreshing}
         onRefresh={onRefresh}
       />
-      {openTab === 'defi' && (
-        <FloatingBottomBar
-          control={control}
-          isHidden={!!isSearchHidden}
-          searchPlaceholder={t('Search DeFi')}
-        />
+      {/* The carousel renders this above the pages instead, so a swipe leaves it be */}
+      {!isMobile && openTab === 'defi' && (
+        <FloatingBottomBar {...floatingBar} isHidden={!!isSearchHidden} />
       )}
     </>
   )

@@ -190,6 +190,9 @@ const Collections: FC<Props> = ({
     setValue('search', '')
   }, [openTab, setValue])
 
+  // Rendered above the carousel on mobile, so it stays put through a swipe
+  const floatingBar = useMemo(() => ({ control, searchPlaceholder: t('Search NFT') }), [control, t])
+
   return (
     <>
       <CollectibleModal
@@ -198,6 +201,7 @@ const Collections: FC<Props> = ({
         selectedCollectible={selectedCollectible}
       />
       <DashboardPageScrollContainer
+        floatingBar={floatingBar}
         tab="collectibles"
         openTab={openTab}
         ListHeaderComponent={isMobile ? undefined : <DashboardBanners />}
@@ -217,12 +221,9 @@ const Collections: FC<Props> = ({
         refreshing={refreshing}
         onRefresh={onRefresh}
       />
-      {openTab === 'collectibles' && (
-        <FloatingBottomBar
-          control={control}
-          isHidden={!!isSearchHidden}
-          searchPlaceholder={t('Search NFT')}
-        />
+      {/* The carousel renders this above the pages instead, so a swipe leaves it be */}
+      {!isMobile && openTab === 'collectibles' && (
+        <FloatingBottomBar {...floatingBar} isHidden={!!isSearchHidden} />
       )}
     </>
   )
