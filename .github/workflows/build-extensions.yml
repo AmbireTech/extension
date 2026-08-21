@@ -2,6 +2,11 @@ name: 🌐 Build · Browser Extensions
 
 on:
   workflow_dispatch: # Manual trigger
+    inputs:
+      submit_next_to_chrome_web_store:
+        description: 'Submit the Ambire Next build to the Chrome Web Store for review'
+        type: boolean
+        default: false
   release:
     types: [published] # Triggers on new releases (from any branch)
 
@@ -125,3 +130,65 @@ jobs:
         with:
           name: ambire-extension-v${{ steps.version.outputs.VERSION }}-${{ matrix.artifact_suffix }}-with-sourcemaps
           path: ./build/*.zip
+
+      # Only Ambire Next is submitted automatically, because it is the variant
+      # that gets released most often. The production webkit and gecko builds are
+      # still submitted by hand, as their reviews need extra care (e.g. the
+      # separate source code .zip that Firefox requires).
+      - name: Submit Ambire Next to the Chrome Web Store for review 🚀
+        if: matrix.build_variant == 'next:webkit' && inputs.submit_next_to_chrome_web_store
+        env:
+          BROWSER_EXTENSION_PUBLIC_KEY: ${{ vars.BROWSER_EXTENSION_PUBLIC_KEY }}
+          CLIENT_ID: ${{ secrets.CHROME_WEB_STORE_CLIENT_ID }}
+          CLIENT_SECRET: ${{ secrets.CHROME_WEB_STORE_CLIENT_SECRET }}
+          REFRESH_TOKEN: ${{ secrets.CHROME_WEB_STORE_REFRESH_TOKEN }}
+          VERSION: ${{ steps.version.outputs.VERSION }}
+        run: |
+          # The build produces two .zip files, so the extension one must be picked explicitly
+          ZIP="./build/ambire-extension-v${VERSION}-next-webkit.zip"
+          test -f "$ZIP" || { echo "::error::Extension .zip not found: $ZIP"; exit 1; }
+
+          # The store item ID is derived from the very same public key that
+          # webpack writes into manifest.key, so it is never hardcoded here:
+          # Chrome takes the first 128 bits of the key's SHA-256 and remaps the
+          # hex digits 0-f onto the letters a-p. Because every build variant
+          # reads its key from its own GitHub environment, this step stays
+          # correct if it is ever enabled for the stable build too.
+          test -n "$BROWSER_EXTENSION_PUBLIC_KEY" || { echo "::error::BROWSER_EXTENSION_PUBLIC_KEY is empty, so the Chrome Web Store item ID cannot be derived."; exit 1; }
+          ITEM_ID=$(printf '%s' "$BROWSER_EXTENSION_PUBLIC_KEY" | base64 -d | sha256sum | head -c 32 | tr '0-9a-f' 'a-p')
+          echo "Derived Chrome Web Store item ID: $ITEM_ID"
+
+          ACCESS_TOKEN=$(curl -s --fail-with-body -X POST https://oauth2.googleapis.com/token \
+            -d "client_id=$CLIENT_ID" \
+            -d "client_secret=$CLIENT_SECRET" \
+            -d "refresh_token=$REFRESH_TOKEN" \
+            -d "grant_type=refresh_token" | jq -er '.access_token') \
+            || { echo "::error::Could not refresh the Chrome Web Store access token. Note that the refresh token silently expires after 7 days while the Google OAuth consent screen is in Testing mode. Publish the consent screen (or set it to Internal) and generate a new refresh token."; exit 1; }
+
+          echo "Uploading $ZIP as a new version of item $ITEM_ID"
+          # This endpoint responds with HTTP 200 even for a rejected upload, so
+          # the uploadState in the body is what actually tells us if it worked.
+          UPLOAD=$(curl -s --fail-with-body -X PUT -T "$ZIP" \
+            -H "Authorization: Bearer $ACCESS_TOKEN" \
+            -H "x-goog-api-version: 2" \
+            "https://www.googleapis.com/upload/chromewebstore/v1.1/items/$ITEM_ID")
+          echo "$UPLOAD"
+          [ "$(jq -r '.uploadState' <<< "$UPLOAD")" = "SUCCESS" ] \
+            || { echo "::error::Upload failed: $(jq -r '[.itemError[]?.error_detail] | join("; ")' <<< "$UPLOAD")"; exit 1; }
+
+          echo "Submitting version $VERSION for review"
+          # Once the review passes, the version goes live automatically. To keep
+          # control over the go-live moment, switch the item to "Publish manually
+          # after review" in the Developer Dashboard - the API has no
+          # submit-without-publishing call.
+          PUBLISH=$(curl -s --fail-with-body -X POST \
+            -H "Authorization: Bearer $ACCESS_TOKEN" \
+            -H "x-goog-api-version: 2" \
+            -H "Content-Length: 0" \
+            "https://www.googleapis.com/chromewebstore/v1.1/items/$ITEM_ID/publish")
+          echo "$PUBLISH"
+          jq -e '.status | index("OK")' <<< "$PUBLISH" > /dev/null \
+            || { echo "::error::Submitting for review failed: $(jq -r '.statusDetail | join("; ")' <<< "$PUBLISH")"; exit 1; }
+
+          echo "✅ Ambire Next v${VERSION} submitted for review"
+        shell: bash
