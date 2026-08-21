@@ -50,6 +50,8 @@ const CAROUSEL_VIRTUALIZATION = {
   windowSize: 10
 }
 
+const NO_PROPS = {}
+
 const DashboardPageScrollContainer: FC<Props> = ({
   tab,
   openTab,
@@ -74,6 +76,19 @@ const DashboardPageScrollContainer: FC<Props> = ({
       !!carousel && { paddingTop: carousel.headerHeight }
     ]
   }, [bottom, carousel, topSpacing])
+
+  // iOS draws the scroll indicator against the scroll view's frame rather than its
+  // content, so padding the content away from the overlaid header leaves the
+  // indicator running underneath it. It has to be inset by the header separately.
+  const carouselIndicatorProps = useMemo(() => {
+    if (!carousel) return NO_PROPS
+
+    return {
+      scrollIndicatorInsets: { top: carousel.headerHeight },
+      // Left on, iOS recomputes the insets off the safe area and drops the one above
+      automaticallyAdjustsScrollIndicatorInsets: false
+    }
+  }, [carousel])
 
   // Bound to the value and not to the whole context, so measuring the header
   // doesn't detach and reattach the native scroll listener. Mobile passes no
@@ -143,7 +158,8 @@ const DashboardPageScrollContainer: FC<Props> = ({
         ) : undefined
       }
       {...rest}
-      {...(carousel ? CAROUSEL_VIRTUALIZATION : {})}
+      {...(carousel ? CAROUSEL_VIRTUALIZATION : NO_PROPS)}
+      {...carouselIndicatorProps}
     />
   )
 }
