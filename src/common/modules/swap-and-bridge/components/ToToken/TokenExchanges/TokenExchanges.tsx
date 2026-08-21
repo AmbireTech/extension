@@ -84,7 +84,7 @@ const TokenExchanges: FC<Props> = ({ chainId, address }) => {
       dataSet={createGlobalTooltipDataSet({
         id: `token-${chainId}-${address}-exchanges`,
         // Names the exchanges beyond the displayed logos too, up to a readable limit
-        content: t('Traded on {{exchanges}}', { exchanges: tooltipContent })
+        content: t('Listed on {{exchanges}}', { exchanges: tooltipContent })
       })}
     >
       {exchangesToDisplay.map((exchange, index) => (
