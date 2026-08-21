@@ -1,10 +1,12 @@
-import React, { useCallback, useMemo, useState } from 'react'
-import { View, ViewStyle } from 'react-native'
+import { memo, useCallback, useMemo, useState } from 'react'
+import { View } from 'react-native'
 
-import Button, { Props as ButtonProps } from '@common/components/Button'
+import Button from '@common/components/Button'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import { useTranslation } from '@common/config/localization'
 
+import type { Props as ButtonProps } from '@common/components/Button'
+import type { ViewStyle } from 'react-native'
 type Props = {
   onReject: () => void
   isSignLoading: boolean
@@ -64,4 +66,4 @@ const RejectButton = ({
   )
 }
 
-export default React.memo(RejectButton)
+export default memo(RejectButton)

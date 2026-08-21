@@ -1,9 +1,10 @@
-import { StyleSheet, ViewStyle } from 'react-native'
+import type { ViewStyle } from 'react-native'
+import { StyleSheet } from 'react-native'
 
 import { SPACING_SM } from '@common/styles/spacings'
-import { ThemeProps } from '@common/styles/themeConfig'
 import common, { hexToRgba } from '@common/styles/utils/common'
 
+import type { ThemeProps } from '@common/styles/themeConfig'
 /** The height the OR divider floats over. The bundles on both sides of it reserve half of
  * it each, so that the divider needs no background of its own. */
 export const OR_DIVIDER_HEIGHT = 28

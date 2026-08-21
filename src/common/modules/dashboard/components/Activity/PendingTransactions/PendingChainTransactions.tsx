@@ -1,4 +1,5 @@
-import React, { FC, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import type { FC } from 'react'
+import { Fragment, memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Animated, Easing, LayoutChangeEvent, View } from 'react-native'
 
 import LeftArrowIcon from '@common/assets/svg/LeftArrowIcon'
@@ -11,10 +12,10 @@ import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
-import type { SafeQueueNetworkGroup } from '@common/modules/dashboard/hooks/usePendingSafeTransactions/usePendingSafeTransactions'
 import PendingTransactionBundle from './PendingTransactionBundle'
 import getStyles from './styles'
 
+import type { SafeQueueNetworkGroup } from '@common/modules/dashboard/hooks/usePendingSafeTransactions/usePendingSafeTransactions'
 interface Props {
   group: SafeQueueNetworkGroup
   currentNonce: bigint | undefined
@@ -182,7 +183,7 @@ const PendingChainTransactions: FC<Props> = ({ group, currentNonce }) => {
             the transaction summaries keep as much space as possible */}
         <View onLayout={handleContentLayout} style={styles.measuredContent}>
           {nonceGroup.requests.map((request, index) => (
-            <React.Fragment key={request.id}>
+            <Fragment key={request.id}>
               {index > 0 && (
                 <View pointerEvents="none" style={styles.orDividerAnchor}>
                   <View style={[styles.orDividerRow, flexbox.directionRow, flexbox.alignCenter]}>
@@ -204,7 +205,7 @@ const PendingChainTransactions: FC<Props> = ({ group, currentNonce }) => {
                 hasDividerAbove={index > 0}
                 hasDividerBelow={index < nonceGroup.requests.length - 1}
               />
-            </React.Fragment>
+            </Fragment>
           ))}
         </View>
       </Animated.View>
@@ -212,4 +213,4 @@ const PendingChainTransactions: FC<Props> = ({ group, currentNonce }) => {
   )
 }
 
-export default React.memo(PendingChainTransactions)
+export default memo(PendingChainTransactions)

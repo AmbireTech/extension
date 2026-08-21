@@ -2,7 +2,7 @@ import { ZeroAddress } from 'ethers'
 
 import { jest } from '@jest/globals'
 
-import { SubmittedAccountOpLike } from '@ambire-common/libs/accountOp/submittedAccountOp'
+import type { SubmittedAccountOpLike } from '@ambire-common/libs/accountOp/submittedAccountOp'
 
 import { getDappInteractions } from './humanizedHelpers'
 

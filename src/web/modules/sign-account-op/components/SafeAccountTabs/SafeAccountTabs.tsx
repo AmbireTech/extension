@@ -1,4 +1,5 @@
-import React, { FC, useMemo } from 'react'
+import type { FC } from 'react'
+import { memo, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 
@@ -7,10 +8,10 @@ import NetworkBadge from '@common/components/NetworkBadge'
 import Text from '@common/components/Text'
 import useTheme from '@common/hooks/useTheme'
 import SafeNonce from '@common/modules/sign-account-op/components/SafeNonce'
-import type { ActiveTab as SafeEip712ActiveTab } from '@common/modules/sign-account-op/components/SafeEip712Data'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
+import type { ActiveTab as SafeEip712ActiveTab } from '@common/modules/sign-account-op/components/SafeEip712Data'
 // The Hashes/Parsed/Raw tabs used to be sub-tabs nested inside a single "Hashes and JSON" tab.
 // They are flattened into top-level tabs here, alongside Overview, to remove that extra level.
 export type SafeAccountTab = 'overview' | SafeEip712ActiveTab
@@ -97,4 +98,4 @@ const SafeAccountTabs: FC<Props> = ({ activeTab, networkChainId, onTabChange }) 
   )
 }
 
-export default React.memo(SafeAccountTabs)
+export default memo(SafeAccountTabs)

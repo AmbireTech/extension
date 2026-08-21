@@ -1,8 +1,7 @@
 import { LinearGradient } from 'expo-linear-gradient'
-import React, { FC, useCallback, useMemo } from 'react'
+import { memo, useCallback, useMemo } from 'react'
 import { View } from 'react-native'
 
-import { CallsUserRequest } from '@ambire-common/interfaces/userRequest'
 import CheckIcon from '@common/assets/svg/CheckIcon'
 import EditPenIcon from '@common/assets/svg/EditPenIcon'
 import Button from '@common/components/Button'
@@ -13,11 +12,13 @@ import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import FallbackVisualization from '@common/modules/sign-account-op/components/TransactionSummary/FallbackVisualization'
 import spacings from '@common/styles/spacings'
-import flexbox from '@common/styles/utils/flexbox'
 import { hexToRgba } from '@common/styles/utils/common'
+import flexbox from '@common/styles/utils/flexbox'
 
 import getStyles from './styles'
 
+import type { CallsUserRequest } from '@ambire-common/interfaces/userRequest'
+import type { FC } from 'react'
 interface Props {
   request: CallsUserRequest
   /** Whether the nonce of the transaction is the one that executes next on its chain. A
@@ -184,4 +185,4 @@ const PendingTransactionBundle: FC<Props> = ({
   )
 }
 
-export default React.memo(PendingTransactionBundle)
+export default memo(PendingTransactionBundle)

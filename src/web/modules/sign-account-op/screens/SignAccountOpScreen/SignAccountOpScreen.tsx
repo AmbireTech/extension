@@ -1,16 +1,8 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react'
+import { memo, useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import {
-  LayoutChangeEvent,
-  NativeScrollEvent,
-  NativeSyntheticEvent,
-  ScrollView,
-  View
-} from 'react-native'
+import { ScrollView, View } from 'react-native'
 
-import { Key } from '@ambire-common/interfaces/keystore'
 import { SigningStatus } from '@ambire-common/interfaces/signAccountOp'
-import { CallsUserRequest } from '@ambire-common/interfaces/userRequest'
 import Alert from '@common/components/Alert'
 import GlassView from '@common/components/GlassView'
 import NetworkBadge from '@common/components/NetworkBadge'
@@ -24,7 +16,6 @@ import Estimation from '@common/modules/sign-account-op/components/Estimation'
 import Footer from '@common/modules/sign-account-op/components/Footer'
 import PendingTransactions from '@common/modules/sign-account-op/components/PendingTransactions'
 import SafeEip712Data from '@common/modules/sign-account-op/components/SafeEip712Data'
-import type { ActiveTab as SafeEip712ActiveTab } from '@common/modules/sign-account-op/components/SafeEip712Data'
 import SafeNonce from '@common/modules/sign-account-op/components/SafeNonce'
 import SafeNonceConflictNotice from '@common/modules/sign-account-op/components/SafeNonceConflictNotice'
 import SafeOwners from '@common/modules/sign-account-op/components/SafeOwners'
@@ -43,10 +34,13 @@ import {
 import useCloseActionWindow from '@web/hooks/useCloseActionWindow'
 import useDappVerificationHoldButtonType from '@web/hooks/useDappVerificationHoldButtonType'
 import Modals from '@web/modules/sign-account-op/components/Modals/Modals'
-import SafeAccountTabs, {
-  SafeAccountTab
-} from '@web/modules/sign-account-op/components/SafeAccountTabs'
+import SafeAccountTabs from '@web/modules/sign-account-op/components/SafeAccountTabs'
 
+import type { Key } from '@ambire-common/interfaces/keystore'
+import type { CallsUserRequest } from '@ambire-common/interfaces/userRequest'
+import type { ActiveTab as SafeEip712ActiveTab } from '@common/modules/sign-account-op/components/SafeEip712Data'
+import type { SafeAccountTab } from '@web/modules/sign-account-op/components/SafeAccountTabs'
+import type { LayoutChangeEvent, NativeScrollEvent, NativeSyntheticEvent } from 'react-native'
 const { isSidePanel } = getUiType()
 
 const isCloseToBottom = ({ layoutMeasurement, contentOffset, contentSize }: NativeScrollEvent) => {
@@ -506,4 +500,4 @@ const SignAccountOpScreen = () => {
   )
 }
 
-export default React.memo(SignAccountOpScreen)
+export default memo(SignAccountOpScreen)
